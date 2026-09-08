@@ -1,4 +1,7 @@
 "use client";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,10 +27,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { emptyEditorContent } from "~/app/constants";
-import {
-  useFindFirstRepositoryFolders,
-  useUpdateRepositoryFolders,
-} from "~/lib/hooks";
 
 const parseTipTapContent = (content: any) => {
   if (!content) return emptyEditorContent;
@@ -67,16 +66,18 @@ export function EditFolderModal({
 }: EditRepositoryFolderModalProps) {
   const t = useTranslations();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateRepositoryFolder } = useUpdateRepositoryFolders();
+  const { mutateAsync: updateRepositoryFolder } =
+    useClientQueries(schema).repositoryFolders.useUpdate();
   const [editorKey, setEditorKey] = useState(0);
 
-  const { data: folder, isLoading: isLoadingFolder } =
-    useFindFirstRepositoryFolders({
-      where: {
-        id: folderId,
-        isDeleted: false,
-      },
-    });
+  const { data: folder, isLoading: isLoadingFolder } = useClientQueries(
+    schema
+  ).repositoryFolders.useFindFirst({
+    where: {
+      id: folderId,
+      isDeleted: false,
+    },
+  });
 
   const handleCancel = () => onClose();
 
@@ -132,15 +133,7 @@ export function EditFolderModal({
       onClose();
       setIsSubmitting(false);
     } catch (err: any) {
-      // Check for Prisma unique constraint errors in different possible locations
-      // ZenStack may wrap the error differently depending on the context
-      const isPrismaError =
-        err.info?.prisma ||
-        err.code === "P2002" ||
-        err.message?.includes("Unique constraint");
-      const errorCode = err.info?.code || err.code;
-
-      if (isPrismaError && errorCode === "P2002") {
+      if (isUniqueConstraintError(err)) {
         form.setError("name", {
           type: "custom",
           message: t("repository.editFolder.errors.nameExists"),

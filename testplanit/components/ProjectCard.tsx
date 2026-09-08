@@ -1,11 +1,11 @@
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import React from "react";
 
 import { DateFormatter } from "@/components/DateFormatter";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { ProjectIcon } from "@/components/ProjectIcon";
-import { Projects } from "@prisma/client";
+import type { Projects } from "~/zenstack/models";
 
 import { MemberList } from "@/components/MemberList";
 import {
@@ -16,8 +16,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Link } from "@/lib/navigation";
+import { Link, useRouter } from "@/lib/navigation";
 import {
+  Bot,
   Bug,
   CirclePlay,
   Compass,
@@ -40,15 +41,29 @@ interface ProjectCardProps {
   project: Projects & { _count?: ProjectCounts | null };
   users: { userId: string }[];
   isLoadingIssueCounts?: boolean;
+  /** In-progress automated runs — the same set the project runs page shows
+   *  in its "Automation Runs in Progress" card. */
+  automationRunCount?: number;
 }
 
 export const ProjectCard: React.FC<ProjectCardProps> = ({
   project,
   users,
   isLoadingIssueCounts = false,
+  automationRunCount = 0,
 }) => {
   const { data: session } = useSession();
+  const locale = useLocale();
   const t = useTranslations();
+  const router = useRouter();
+
+  // Navigate to the project overview when the card is clicked, unless the
+  // click originated from a nested link or button (e.g. the count links,
+  // which navigate to their own destinations).
+  const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if ((e.target as HTMLElement).closest("a, button")) return;
+    router.push(`/projects/overview/${project.id}`);
+  };
 
   // Extract counts, defaulting to 0 if not present
   const milestoneCount = project._count?.milestones ?? 0;
@@ -59,7 +74,8 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
 
   return (
     <Card
-      className={`group transition-colors ${project.isCompleted ? "bg-muted-foreground/20 border-muted-foreground" : "border-primary"}`}
+      onClick={handleCardClick}
+      className={`group cursor-pointer transition-all duration-200 ease-in hover:ring-offset-2 hover:ring-4 hover:ring-primary ${project.isCompleted ? "bg-muted-foreground/20 border-muted-foreground" : "border-primary"}`}
     >
       <CardHeader>
         <CardTitle className="text-primary text-xl">
@@ -69,7 +85,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           >
             <ProjectIcon iconUrl={project.iconUrl} height={25} width={25} />
             <div className="truncate">{project.name}</div>
-            <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover/title:opacity-100 transition-opacity shrink-0" />
+            <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover/title:opacity-100 transition-opacity shrink-0" />
           </Link>
         </CardTitle>
         {project.note && (
@@ -90,7 +106,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
               })}
             >
               <ListChecks className="w-4 h-4 text-muted-foreground mt-1" />
-              <span>{testCaseCount.toLocaleString()}</span>
+              <span>{testCaseCount.toLocaleString(locale)}</span>
             </Link>
           )}
           {milestoneCount > 0 && (
@@ -102,7 +118,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
               })}
             >
               <Milestone className="w-4 h-4 text-muted-foreground mt-1" />
-              <span>{milestoneCount.toLocaleString()}</span>
+              <span>{milestoneCount.toLocaleString(locale)}</span>
             </Link>
           )}
           {runCount > 0 && (
@@ -114,7 +130,19 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
               })}
             >
               <CirclePlay className="w-4 h-4 text-muted-foreground mt-1" />
-              <span>{runCount.toLocaleString()}</span>
+              <span>{runCount.toLocaleString(locale)}</span>
+            </Link>
+          )}
+          {automationRunCount > 0 && (
+            <Link
+              href={`/projects/runs/${project.id}?runType=automated`}
+              className="flex items-center gap-1"
+              title={t("home.counts.automationRunsInProgress", {
+                count: automationRunCount,
+              })}
+            >
+              <Bot className="w-4 h-4 text-muted-foreground mt-1" />
+              <span>{automationRunCount.toLocaleString(locale)}</span>
             </Link>
           )}
           {sessionCount > 0 && (
@@ -126,13 +154,13 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
               })}
             >
               <Compass className="w-4 h-4 text-muted-foreground mt-1" />
-              <span>{sessionCount.toLocaleString()}</span>
+              <span>{sessionCount.toLocaleString(locale)}</span>
             </Link>
           )}
           {isLoadingIssueCounts ? (
             <div className="flex items-center gap-1">
               <Bug className="w-4 h-4 text-muted-foreground mt-1" />
-              <LoadingSpinner className="ml-1 w-2 h-2 text-muted-foreground" />
+              <LoadingSpinner className="ms-1 w-2 h-2 text-muted-foreground" />
             </div>
           ) : (
             issueCount > 0 && (
@@ -144,7 +172,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 })}
               >
                 <Bug className="w-4 h-4 text-muted-foreground mt-1" />
-                <span>{issueCount.toLocaleString()}</span>
+                <span>{issueCount.toLocaleString(locale)}</span>
               </Link>
             )
           )}

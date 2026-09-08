@@ -9,6 +9,8 @@ files:
     languages_mapping:
       locale:
         # Map Crowdin locale codes to our locale format
+        ar: "ar-SA"
+        cs: "cs-CZ"
         de: "de-DE"
         es-ES: "es-ES"
         fr: "fr-FR"

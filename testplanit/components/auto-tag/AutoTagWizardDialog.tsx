@@ -100,14 +100,14 @@ function EntityJobStatus({
         {analyzed}/{total}
         {")"}
         {isFinalizing && (
-          <span className="ml-1 italic">{` — ${t("progress.finalizing")}`}</span>
+          <span className="ms-1 italic">{` — ${t("progress.finalizing")}`}</span>
         )}
       </span>
       {isActive && (
         <button
           type="button"
           onClick={onCancel}
-          className="ml-1 rounded-sm p-0.5 text-muted-foreground transition-colors hover:text-destructive"
+          className="ms-1 rounded-sm p-0.5 text-muted-foreground transition-colors hover:text-destructive"
           title={cancelLabel}
         >
           <XCircle className="h-3.5 w-3.5" />
@@ -439,7 +439,7 @@ export function AutoTagWizardDialog({
         }
       }
     }
-    return Array.from(names).sort();
+    return Array.from(names).sort((a, b) => a.localeCompare(b));
   }, [allJobs]);
 
   // Check whether a new tag is currently selected for any entity across all jobs
@@ -607,6 +607,20 @@ export function AutoTagWizardDialog({
     }));
     setReviewPage(1);
   }, []);
+
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleReviewSortColumn = useCallback(
+    (column: string, direction: "asc" | "desc" | null) => {
+      if (direction === null) {
+        setReviewSortConfig({ column: "name", direction: "asc" });
+      } else {
+        setReviewSortConfig({ column, direction });
+      }
+      setReviewPage(1);
+    },
+    []
+  );
 
   const filteredReviewRows = useMemo(() => {
     let rows = reviewRows;
@@ -1066,12 +1080,12 @@ export function AutoTagWizardDialog({
             {reviewRows.length > 0 && (
               <div className="flex items-center gap-3">
                 <div className="relative flex-1">
-                  <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Search className="absolute start-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     placeholder={t("review.filterEntities")}
                     value={reviewSearch}
                     onChange={(e) => setReviewSearch(e.target.value)}
-                    className="pl-8 h-8 text-sm"
+                    className="ps-8 h-8 text-sm"
                   />
                 </div>
                 {/* Only show toggles if results contain multiple entity types */}
@@ -1091,7 +1105,7 @@ export function AutoTagWizardDialog({
                       <ToggleGroupItem
                         value="repositoryCase"
                         size="sm"
-                        className="h-8 w-8 rounded-none first:rounded-l-md last:rounded-r-md border-r-0 last:border-r data-[state=on]:bg-muted-foreground/20"
+                        className="h-8 w-8 rounded-none first:rounded-s-md last:rounded-e-md border-e-0 last:border-e data-[state=on]:bg-muted-foreground/20"
                         aria-label={t("actions.entityTypes.repositoryCase", {
                           count: 2,
                         })}
@@ -1106,7 +1120,7 @@ export function AutoTagWizardDialog({
                       <ToggleGroupItem
                         value="testRun"
                         size="sm"
-                        className="h-8 w-8 rounded-none first:rounded-l-md last:rounded-r-md border-r-0 last:border-r data-[state=on]:bg-muted-foreground/20"
+                        className="h-8 w-8 rounded-none first:rounded-s-md last:rounded-e-md border-e-0 last:border-e data-[state=on]:bg-muted-foreground/20"
                         aria-label={t("actions.entityTypes.testRun", {
                           count: 2,
                         })}
@@ -1121,7 +1135,7 @@ export function AutoTagWizardDialog({
                       <ToggleGroupItem
                         value="session"
                         size="sm"
-                        className="h-8 w-8 rounded-none first:rounded-l-md last:rounded-r-md border-r-0 last:border-r data-[state=on]:bg-muted-foreground/20"
+                        className="h-8 w-8 rounded-none first:rounded-s-md last:rounded-e-md border-e-0 last:border-e data-[state=on]:bg-muted-foreground/20"
                         aria-label={t("actions.entityTypes.session", {
                           count: 2,
                         })}
@@ -1159,6 +1173,7 @@ export function AutoTagWizardDialog({
                     columnVisibility={reviewColumnVisibility}
                     onColumnVisibilityChange={setReviewColumnVisibility}
                     onSortChange={handleReviewSortChange}
+                    onSortColumn={handleReviewSortColumn}
                     sortConfig={reviewSortConfig}
                     pageSize={effectivePageSize}
                   />
@@ -1177,7 +1192,7 @@ export function AutoTagWizardDialog({
                         setReviewPage(1);
                       }}
                     />
-                    <div className="ml-auto">
+                    <div className="ms-auto">
                       <PaginationComponent
                         currentPage={reviewPage}
                         totalPages={totalFilteredPages}

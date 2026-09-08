@@ -4,6 +4,8 @@ import { useTranslations } from "next-intl";
 import React, { useState } from "react";
 import { cn } from "~/utils";
 
+import { preventDismissFromInsideContent } from "./layerDismissGuard";
+
 const Dialog = DialogPrimitive.Root;
 const DialogTrigger = DialogPrimitive.Trigger;
 const DialogPortal = DialogPrimitive.Portal;
@@ -26,22 +28,45 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => {
-  const [isFullScreen, setIsFullScreen] = useState(false);
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
+    // Optional controlled mode for the full-screen toggle, so callers (e.g.
+    // the attachments carousel) can react to it or drive it themselves.
+    // Uncontrolled callers keep the internal-state behavior unchanged.
+    fullScreen?: boolean;
+    onFullScreenChange?: (fullScreen: boolean) => void;
+  }
+>(({ className, children, fullScreen, onFullScreenChange, ...props }, ref) => {
+  const [internalFullScreen, setInternalFullScreen] = useState(false);
+  const isFullScreen = fullScreen ?? internalFullScreen;
   const t = useTranslations("common.ui.dialog");
   const tGlobal = useTranslations();
 
+  const contentRef = React.useRef<HTMLDivElement | null>(null);
+  const setContentRef = React.useCallback(
+    (node: HTMLDivElement | null) => {
+      contentRef.current = node;
+      if (typeof ref === "function") {
+        ref(node);
+      } else if (ref) {
+        ref.current = node;
+      }
+    },
+    [ref]
+  );
+
   const toggleFullScreen = (e: any) => {
     e.stopPropagation();
-    setIsFullScreen(!isFullScreen);
+    if (fullScreen === undefined) {
+      setInternalFullScreen(!isFullScreen);
+    }
+    onFullScreenChange?.(!isFullScreen);
   };
 
   return (
     <DialogPortal>
       <DialogOverlay />
       <DialogPrimitive.Content
-        ref={ref}
+        ref={setContentRef}
         className={cn(
           "overflow-y-auto fixed z-50 grid sm:rounded-lg gap-4 border bg-background p-6 pt-8 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
           isFullScreen
@@ -50,10 +75,15 @@ const DialogContent = React.forwardRef<
           className
         )}
         {...props}
+        onPointerDownOutside={(event) => {
+          props.onPointerDownOutside?.(event);
+          preventDismissFromInsideContent(contentRef.current, event);
+        }}
       >
         {children}
-        <div className="absolute right-4 top-4 space-x-2">
+        <div className="absolute end-4 top-4 space-x-2">
           <button
+            type="button"
             className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 disabled:pointer-events-none"
             onClick={toggleFullScreen}
           >
@@ -79,7 +109,7 @@ const DialogHeader = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col space-y-1.5 text-center sm:text-left",
+      "flex flex-col space-y-1.5 text-center sm:text-start",
       className
     )}
     {...props}

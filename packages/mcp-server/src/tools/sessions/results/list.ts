@@ -1,5 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { Prisma } from "@prisma/client";
+import type {
+  SessionResultsWhereInput,
+} from "@db/input";
 import * as z from "zod/v4";
 import { zenstack } from "../../../api.js";
 import type { EnvConfig } from "../../../env.js";
@@ -39,11 +41,11 @@ export function registerSessionResultsList(
         const limit = input.limit ?? DEFAULT_LIMIT;
 
         // R4 / Pitfall 4 invariant: SessionResults has NO `testCaseId` column.
-        // The annotation `Prisma.SessionResultsWhereInput` would TS2353 if any
+        // The annotation `SessionResultsWhereInput` would TS2353 if any
         // `testCaseId` assignment were ever introduced. The input schema does
         // not declare `testCaseId` either; zod's raw-shape validator strips
         // unknown fields before this handler runs.
-        const where: Prisma.SessionResultsWhereInput = { isDeleted: false };
+        const where: SessionResultsWhereInput = { isDeleted: false };
         if (input.sessionId !== undefined) where.sessionId = input.sessionId;
         if (input.createdById) where.createdById = input.createdById;
         if (input.statusId !== undefined) where.statusId = input.statusId;

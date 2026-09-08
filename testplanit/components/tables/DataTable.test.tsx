@@ -17,6 +17,7 @@ import {
 import { fireEvent, render, screen } from "@testing-library/react";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { reconcileColumnOrder } from "./DataTable";
 
 vi.mock("~/lib/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
@@ -641,5 +642,65 @@ describe("DataTable rendering", () => {
 
     // 'Actions' column has enableSorting: false — no sort button
     expect(screen.queryByTestId("sort-actions")).not.toBeInTheDocument();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Logic: column order reconciliation
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("reconcileColumnOrder", () => {
+  const natural = ["select", "name", "tags", "issues", "actions"];
+
+  it("falls back to natural order when nothing is stored", () => {
+    expect(reconcileColumnOrder(natural, null)).toEqual(natural);
+    expect(reconcileColumnOrder(natural, [])).toEqual(natural);
+  });
+
+  it("keeps a stored arrangement of still-present columns", () => {
+    const stored = ["select", "issues", "name", "tags", "actions"];
+    expect(reconcileColumnOrder(natural, stored)).toEqual(stored);
+  });
+
+  it("drops stored ids that no longer exist, keeping the rest in stored order", () => {
+    // "issues" reordered to the front, plus a stale "removedField".
+    const stored = [
+      "issues",
+      "select",
+      "removedField",
+      "name",
+      "tags",
+      "actions",
+    ];
+    expect(reconcileColumnOrder(natural, stored)).toEqual([
+      "issues",
+      "select",
+      "name",
+      "tags",
+      "actions",
+    ]);
+  });
+
+  it("splices a new column in after its nearest preceding natural neighbour", () => {
+    // stored is missing "issues"; it should land after "tags" (its natural
+    // predecessor), not at the end after "actions".
+    const stored = ["select", "name", "tags", "actions"];
+    expect(reconcileColumnOrder(natural, stored)).toEqual([
+      "select",
+      "name",
+      "tags",
+      "issues",
+      "actions",
+    ]);
+  });
+
+  it("inserts a new leading column at the front", () => {
+    // e.g. the expander column appears (natural index 0) but stored predates it.
+    const withExpander = ["expander", ...natural];
+    const stored = [...natural];
+    expect(reconcileColumnOrder(withExpander, stored)).toEqual([
+      "expander",
+      ...natural,
+    ]);
   });
 });

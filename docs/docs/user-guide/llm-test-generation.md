@@ -30,6 +30,7 @@ Choose your test generation source:
 - Issues directly linked to your selected issue (one hop) are also included automatically — for example, the Stories under an Epic, or the issues an issue blocks / is-blocked-by. Each linked issue contributes its own title, description, and comments to the context.
 - A "Linked issues that will be included" section appears in the issue preview after selection, listing each linked issue's key and link type so you can preview what context the AI will see before generating.
 - Linked-issue traversal is capped at one hop. Issues linked to your linked issues are not followed.
+- Image attachments on the selected issue — screenshots pasted into Jira descriptions and comments, files attached to Azure DevOps work items — are offered as visual context; see [Images as Generation Context](#images-as-generation-context).
 - "Linked" means whatever the tracker reports as a linked relationship:
   - **Jira**: `issuelinks` (blocks/blocked-by, relates-to, duplicates, custom Jira link types), parent/subtask hierarchy, and the Epic-Link custom field
   - **GitHub**: native sub-issues and timeline cross-references (mentions in other issues or pull requests that link both ways)
@@ -37,8 +38,8 @@ Choose your test generation source:
 
 **From Document:**
 
-- Enter requirements directly into the form
-- Provide title, description, and priority
+- Paste or write requirements into a rich-text editor
+- Images embedded in the document — pasted screenshots, uploaded mockups — can be sent to the AI as visual context; see [Images as Generation Context](#images-as-generation-context)
 - Ideal for early-stage requirements or internal specifications
 
 **From URL:**
@@ -59,8 +60,11 @@ Choose your test generation source:
 - Choose the test case template to use for generated cases
 - All template fields are displayed for review
 - Select which fields to populate with AI-generated content
-- Required fields are automatically included
-- Optional fields can be included or excluded based on your needs
+- Fields start selected or deselected according to the template's per-field generation default, configured by an administrator in Templates & Fields (fields are included by default unless excluded there)
+- Required fields are always included and cannot be deselected
+- Optional fields can be included or excluded based on your needs, regardless of the template default
+- Deselected fields are named in the AI request as fields it must not return, and any value it returns for one is discarded — so an excluded field is never populated, never shown in the review step, and never written on import
+- Your selection persists for the rest of the wizard. Changing the template resets it to that template's defaults.
 
 ### Step 3: Configure Generation
 
@@ -154,7 +158,11 @@ The **Generate Test Cases** button only appears when all of the above are met. I
 
 ### Context and parity
 
-Generation from the panel assembles the same LLM context as the in-app wizard's streaming generation: the issue's title, description, and comments; **linked Jira issues** (one hop) with their own titles, bodies, and comments; and existing test cases in the destination folder (when you generate into an existing folder). The same token-budgeting and trimming rules apply.
+Generation from the panel assembles the same LLM context as the in-app wizard's streaming generation: the issue's title, description, and comments; **linked Jira issues** (one hop) with their own titles, bodies, and comments; the test cases already linked to the issue, wherever they live in the repository; and existing test cases in the destination folder (when you generate into an existing folder). The same token-budgeting and trimming rules apply.
+
+When the generating model is vision-capable, the issue's image attachments ride along automatically under the same limits as the wizard (up to 5 images, 4 MB each) — the panel offers no image picker.
+
+Because linked cases do not depend on a folder, the panel has meaningful existing-case context even on the first generation for an issue that has no destination folder picked yet.
 
 :::note
 Parameter and starter-dataset generation is not offered from the Jira panel.
@@ -166,7 +174,7 @@ When you click "Generate":
 
 **For Issue/Document sources:**
 
-1. **Context Analysis**: The AI analyzes the source material and existing test cases in the folder
+1. **Context Analysis**: The AI analyzes the source material, the test cases already linked to the source issue, and existing test cases in the folder
 2. **Streaming Generation**: Test cases appear in real-time as the AI generates them, with partial field previews as data arrives
 3. **Field Population**: Custom fields are populated with relevant content
 4. **Quality Validation**: Generated content is validated for completeness
@@ -178,11 +186,45 @@ When you click "Generate":
 3. **Per-Page Generation**: The AI generates test cases for each crawled page via streaming, with progress saved after each page
 4. **Folder Organization**: Test cases are organized by source page for easy navigation
 
+## Images as Generation Context
+
+Screenshots and other images from your source material can be sent to the AI alongside the text, so mockups, error screenshots, and UI captures inform the generated test cases.
+
+### Where images come from
+
+- **From Issue**: image attachments on the selected issue — Jira attachments (including screenshots pasted into the description or comments) and files attached to Azure DevOps work items. Images referenced inline in a Jira description render as `[image: filename]` placeholders in the issue preview so you can see where they sit in the text.
+- **From Document**: images embedded in the requirements editor. The saved preview marks each one as `[image N: filename]` at its position in the text.
+- **From URL**: when screenshot capture is enabled for your installation, the crawler captures a screenshot of each page and offers it as context. Deployments using the official workers image (Docker Compose and Helm) have this on by default — an administrator turns it off with the `CRAWL_SCREENSHOTS=false` environment variable (`workers.crawlScreenshots: false` in Helm). Installations running workers outside the official image enable it with `CRAWL_SCREENSHOTS=true` plus a Chromium executable (see `.env.example`).
+
+### The image picker
+
+After you select an issue or save a document, an **Images to include as context** section lists the images found:
+
+- Up to **5 images** can be sent, each up to **4 MB**; PNG, JPEG, GIF, and WebP are supported
+- Eligible images start **selected** — untick any you don't want sent
+- Images over the size limit are listed but marked and cannot be selected
+
+### Vision-capable models
+
+Images are only sent when the model handling the generation supports image input. TestPlanIt detects this from the model name, and an administrator can override the detection per model — see [Model capability overrides](./llm-integrations.md#test-connection--model-capability-probing).
+
+When the configured model does not support images, the picker stays visible but shows: _"The configured AI model does not support image input — selected images will not be sent."_ Generation proceeds with text only.
+
+### Review notices
+
+The review step reports what actually happened:
+
+- _"N images sent as context: …"_ lists the images the AI received
+- _"N images skipped (too large or unsupported): …"_ lists any that were excluded
+- If images were selected but the model was not vision-capable, a notice reports they were not sent
+
+Images are fetched by the TestPlanIt server at generation time and held in a short-lived cache for the duration of the generation; they are not copied into TestPlanIt's file storage.
+
 ## Generated Content Structure
 
 ### Test Case Fields
 
-The AI populates fields based on your selected template. Only template-defined fields are included in the output.
+The AI populates the fields you selected in Step 2. Fields outside that selection — including template fields you deselected — are never populated.
 
 **Common Fields:**
 
@@ -215,16 +257,19 @@ Expected Result: User is redirected to the dashboard
 The AI considers:
 
 - **Existing Test Cases**: Avoids duplication of current test scenarios in the folder
+- **Cases Already Linked to the Source Issue**: Test cases anywhere in the repository that are already linked to the issue you are generating from are included first, ahead of folder cases, so regenerating for an issue extends its coverage instead of repeating it. This applies to any connected issue source — Jira, GitHub, Azure DevOps, or a manual issue — and does not depend on a folder, so it is the context that carries surfaces where no folder is involved, such as the milestone issue list or the Jira panel. A case that is both linked to the issue and in the folder is only sent once.
 - **Project Domain**: Understands your application type and testing needs
 - **Template Structure**: Adapts content to fit your specific template fields
 - **Source Issue Comments**: The full comment thread on the selected issue is included alongside its title and description.
 - **Linked Issues (1 hop)**: When the selected issue has linked issues in the same tracker, each linked issue's title, description, and comments are also included. Hierarchical relationships (Epic→Stories, parent→subtasks), bidirectional links (blocks/blocked-by, relates-to, duplicates), and tracker-specific link types are all followed. Linked-issue traversal does not recurse — issues linked to your linked issues are not followed.
-- **Token Budget**: When the assembled context would exceed the LLM's token budget, linked-issue content is trimmed first (preserving the source issue's full body and comments), and the dropped linked issues are surfaced in an alert on the generated-cases surface.
+- **Token Budget**: When the assembled context would exceed the LLM's token budget, linked-issue content is trimmed first (preserving the source issue's full body and comments), and the dropped linked issues are surfaced in an alert on the generated-cases surface. Selected context images reserve a fixed share of the budget before text context is packed.
+- **Context Images**: On vision-capable models, the selected source images (issue screenshots, embedded document images, page screenshots) are sent alongside the text — see [Images as Generation Context](#images-as-generation-context).
 
 ### Field Selection Optimization
 
 - **Required Fields**: Always populated with essential content
 - **Optional Fields**: Can be selectively included based on your workflow
+- **Deselected Fields**: Named in the request as fields the AI must not return, which also keeps them from consuming output tokens
 - **Field Types**: Content is formatted appropriately for each field type:
   - **Text String**: Short text values relevant to the test case
   - **Text Long**: Rich text with detailed, multi-sentence content
@@ -256,8 +301,9 @@ When generating from a URL:
 - **SPA detection**: Single-page applications that require JavaScript rendering are flagged with a warning
 - **Polite crawling**: A 500ms delay between page fetches prevents overloading target servers
 - **robots.txt**: Disallowed paths are skipped (the seed URL itself is always fetched)
-- **SSRF protection**: Private/internal IP addresses and cloud metadata endpoints are blocked
+- **SSRF protection**: Private/internal IP addresses and cloud metadata endpoints are blocked. When screenshot capture is enabled, the same blocking applies to every sub-resource the page itself loads during rendering
 - **Incremental saves**: Test cases are saved to a server-side cache after each page completes, so closing the wizard mid-generation preserves all completed pages
+- **Page screenshots**: when screenshot capture is enabled (the default on the official workers image), each crawled page is also captured as a screenshot and offered to vision-capable models as context — see [Images as Generation Context](#images-as-generation-context)
 
 ## Best Practices
 
@@ -338,6 +384,13 @@ When generating from a URL:
 
 - The cached results have expired (7-day limit) or were removed
 - Start a new generation from the Generate Test Cases wizard
+
+**Images were not sent to the AI:**
+
+- The configured model may not support image input — the picker shows a notice when this is the case; switch the generation to a vision-capable model or override the detection (see [Model capability overrides](./llm-integrations.md#test-connection--model-capability-probing))
+- Images over 4 MB are always skipped, as is anything beyond the 5-image limit
+- Only PNG, JPEG, GIF, and WebP are sent
+- The review step's context notice reports exactly which images were sent and which were skipped
 
 ### Error Messages
 

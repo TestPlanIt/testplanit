@@ -93,13 +93,47 @@ describe("createBatches", () => {
     const batches = createBatches([], defaultConfig);
     expect(batches).toHaveLength(0);
   });
+
+  it("keeps the content budget positive when the system prompt exceeds it", () => {
+    // A global tag list large enough to outgrow the context window would drive
+    // the raw budget negative, making `slice(0, maxChars)` trim from the end.
+    const config: BatchConfig = {
+      maxTokensPerRequest: 4096,
+      contentBudgetRatio: 0.65,
+      systemPromptTokens: 100_000,
+    };
+    const entity = makeEntity(1, 5000);
+    const seenMaxChars: number[] = [];
+    const batches = createBatches(
+      [entity],
+      config,
+      (item: EntityContent, maxChars: number) => {
+        seenMaxChars.push(maxChars);
+        return {
+          ...item,
+          textContent: item.textContent.slice(0, maxChars),
+          estimatedTokens: Math.ceil(
+            Math.min(item.textContent.length, maxChars) / 4
+          ),
+        };
+      }
+    );
+
+    expect(seenMaxChars.every((n) => n > 0)).toBe(true);
+    const truncated = batches[0]![0]!;
+    expect(truncated.textContent.length).toBeGreaterThan(0);
+    expect(truncated.textContent.length).toBeLessThan(
+      entity.textContent.length
+    );
+    expect(entity.textContent.startsWith(truncated.textContent)).toBe(true);
+  });
 });
 
 // ─── TagAnalysisService unit tests ───────────────────────────────────────────
 
 describe("TagAnalysisService", () => {
   // Mock factories
-  const mockPrisma = {
+  const mockDb = {
     llmProviderConfig: {
       findFirst: vi.fn(),
     },
@@ -136,7 +170,7 @@ describe("TagAnalysisService", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     service = new TagAnalysisService(
-      mockPrisma,
+      mockDb,
       mockLlmManager,
       mockPromptResolver
     );
@@ -146,10 +180,10 @@ describe("TagAnalysisService", () => {
     mockLlmManager.getDefaultIntegration.mockResolvedValue(1);
     mockLlmManager.getProjectIntegration.mockResolvedValue(1);
     mockLlmManager.resolveIntegration.mockResolvedValue({ integrationId: 1 });
-    mockPrisma.llmProviderConfig.findFirst.mockResolvedValue({
+    mockDb.llmProviderConfig.findFirst.mockResolvedValue({
       maxTokensPerRequest: 4096,
     });
-    mockPrisma.tags.findMany.mockResolvedValue([
+    mockDb.tags.findMany.mockResolvedValue([
       { id: 1, name: "login" },
       { id: 2, name: "regression" },
     ]);
@@ -165,7 +199,7 @@ describe("TagAnalysisService", () => {
   it("returns tag suggestions from valid LLM response", async () => {
     setupDefaults();
 
-    mockPrisma.repositoryCases.findMany.mockResolvedValue([
+    mockDb.repositoryCases.findMany.mockResolvedValue([
       {
         id: 1,
         name: "Login test case",
@@ -209,7 +243,7 @@ describe("TagAnalysisService", () => {
   it("resolves prompt via PromptResolver with correct feature and projectId", async () => {
     setupDefaults();
 
-    mockPrisma.repositoryCases.findMany.mockResolvedValue([
+    mockDb.repositoryCases.findMany.mockResolvedValue([
       {
         id: 1,
         name: "Test",
@@ -241,7 +275,7 @@ describe("TagAnalysisService", () => {
   it("handles invalid LLM JSON gracefully with empty suggestions", async () => {
     setupDefaults();
 
-    mockPrisma.repositoryCases.findMany.mockResolvedValue([
+    mockDb.repositoryCases.findMany.mockResolvedValue([
       {
         id: 1,
         name: "Test",
@@ -288,7 +322,7 @@ describe("TagAnalysisService", () => {
   it("handles LLM call failure gracefully per batch", async () => {
     setupDefaults();
 
-    mockPrisma.repositoryCases.findMany.mockResolvedValue([
+    mockDb.repositoryCases.findMany.mockResolvedValue([
       {
         id: 1,
         name: "Test",
@@ -320,7 +354,7 @@ describe("TagAnalysisService", () => {
     // forcing 2 separate batches. Budget = floor(4096 * 0.65 - systemPromptTokens) ~2400.
     // Each entity with ~6000 char name → ~1500 tokens → 2 batches.
     const longName = "x".repeat(6000);
-    mockPrisma.repositoryCases.findMany.mockResolvedValue([
+    mockDb.repositoryCases.findMany.mockResolvedValue([
       {
         id: 1,
         name: longName + " entity1",
@@ -377,7 +411,7 @@ describe("TagAnalysisService", () => {
   it("calls onBatchComplete even when a batch fails", async () => {
     setupDefaults();
 
-    mockPrisma.repositoryCases.findMany.mockResolvedValue([
+    mockDb.repositoryCases.findMany.mockResolvedValue([
       {
         id: 1,
         name: "Test",
@@ -409,13 +443,13 @@ describe("TagAnalysisService", () => {
   it("properly fuzzy-matches LLM suggestions against existing tags", async () => {
     setupDefaults();
 
-    mockPrisma.repositoryCases.findMany.mockResolvedValue([
+    mockDb.repositoryCases.findMany.mockResolvedValue([
       {
         id: 1,
         name: "Login test",
         steps: [],
         caseFieldValues: [],
-        tags: [{ name: "regression" }],
+        caseTags: [{ tag: { name: "regression" } }],
         folder: null,
       },
     ]);
@@ -457,10 +491,266 @@ describe("TagAnalysisService", () => {
     expect(newSugg?.isExisting).toBe(false);
   });
 
+  // ── Large-selection guards ─────────────────────────────────────────────
+
+  /** Minimal repositoryCase rows, small enough that only the entity cap bites. */
+  function makeCases(count: number, folder: any = null) {
+    return Array.from({ length: count }, (_, i) => ({
+      id: i + 1,
+      name: `Case ${i + 1}`,
+      steps: [],
+      caseFieldValues: [],
+      caseTags: [],
+      folder,
+    }));
+  }
+
+  it("caps entities per LLM request even when the token budget allows more", async () => {
+    setupDefaults();
+    // Budgets generous enough that nothing but the ceiling limits batch size:
+    // 128k context, and 16384 output tokens is room for 409 entities.
+    mockDb.llmProviderConfig.findFirst.mockResolvedValue({
+      maxTokensPerRequest: 128_000,
+    });
+    mockPromptResolver.resolve.mockResolvedValue({
+      systemPrompt: "You are a tag suggestion assistant.",
+      userPrompt: "",
+      temperature: 0.3,
+      maxOutputTokens: 16384,
+      source: "fallback",
+    });
+
+    mockDb.repositoryCases.findMany.mockResolvedValue(makeCases(200));
+
+    const batchSizes: number[] = [];
+    mockLlmManager.chat.mockImplementation(async (_id: number, req: any) => {
+      batchSizes.push(
+        (req.messages[1].content.match(/--- Entity /g) ?? []).length
+      );
+      return {
+        content: JSON.stringify({ suggestions: [] }),
+        model: "gpt-4",
+        promptTokens: 50,
+        completionTokens: 10,
+        totalTokens: 60,
+      };
+    });
+
+    await service.analyzeTags({
+      entityIds: Array.from({ length: 200 }, (_, i) => i + 1),
+      entityType: "repositoryCase",
+      projectId: 5,
+      userId: "u1",
+    });
+
+    expect(batchSizes.length).toBeGreaterThan(1);
+    expect(Math.max(...batchSizes)).toBe(150);
+    expect(batchSizes.reduce((a, b) => a + b, 0)).toBe(200);
+  });
+
+  it("clamps an over-large prompt-config maxOutputTokens to the provider ceiling", async () => {
+    setupDefaults();
+    // Admin set 200k output tokens on a provider that only serves 8192.
+    mockDb.llmProviderConfig.findFirst.mockResolvedValue({
+      maxTokensPerRequest: 8192,
+    });
+    mockPromptResolver.resolve.mockResolvedValue({
+      systemPrompt: "You are a tag suggestion assistant.",
+      userPrompt: "",
+      temperature: 0.3,
+      maxOutputTokens: 200_000,
+      source: "fallback",
+    });
+
+    mockDb.repositoryCases.findMany.mockResolvedValue(makeCases(1));
+    mockLlmManager.chat.mockResolvedValue({
+      content: JSON.stringify({ suggestions: [] }),
+      model: "gpt-4",
+      promptTokens: 50,
+      completionTokens: 10,
+      totalTokens: 60,
+    });
+
+    await service.analyzeTags({
+      entityIds: [1],
+      entityType: "repositoryCase",
+      projectId: 5,
+      userId: "u1",
+    });
+
+    // Sent verbatim, the provider would reject the request outright
+    expect(mockLlmManager.chat.mock.calls[0][1].maxTokens).toBe(8192);
+  });
+
+  it("lets the output-token budget bind before the entity cap", async () => {
+    setupDefaults();
+    // 4096 output tokens leaves room for fewer than the 150 ceiling, so the
+    // token math — not the ceiling — decides the batch size.
+    mockDb.llmProviderConfig.findFirst.mockResolvedValue({
+      maxTokensPerRequest: 128_000,
+    });
+    mockPromptResolver.resolve.mockResolvedValue({
+      systemPrompt: "You are a tag suggestion assistant.",
+      userPrompt: "",
+      temperature: 0.3,
+      maxOutputTokens: 4096,
+      source: "fallback",
+    });
+
+    mockDb.repositoryCases.findMany.mockResolvedValue(makeCases(250));
+
+    const batchSizes: number[] = [];
+    mockLlmManager.chat.mockImplementation(async (_id: number, req: any) => {
+      batchSizes.push(
+        (req.messages[1].content.match(/--- Entity /g) ?? []).length
+      );
+      return {
+        content: JSON.stringify({ suggestions: [] }),
+        model: "gpt-4",
+        promptTokens: 50,
+        completionTokens: 10,
+        totalTokens: 60,
+      };
+    });
+
+    await service.analyzeTags({
+      entityIds: Array.from({ length: 250 }, (_, i) => i + 1),
+      entityType: "repositoryCase",
+      projectId: 5,
+      userId: "u1",
+    });
+
+    // floor(4096 / 40) = 102 — the batch size this feature shipped with
+    expect(Math.max(...batchSizes)).toBe(102);
+    expect(batchSizes.reduce((a, b) => a + b, 0)).toBe(250);
+  });
+
+  it("caps the existing-tag list sent in the prompt but still matches against all tags", async () => {
+    setupDefaults();
+    // 600 tags, one of which the model will echo back from beyond the cap.
+    const tagNames = Array.from({ length: 600 }, (_, i) => `tag-${i}`);
+    mockDb.tags.findMany.mockResolvedValue(
+      tagNames.map((name, i) => ({ id: i + 1, name }))
+    );
+    mockDb.repositoryCases.findMany.mockResolvedValue(makeCases(1));
+
+    let promptedTagCount = 0;
+    mockLlmManager.chat.mockImplementation(async (_id: number, req: any) => {
+      const listed = req.messages[1].content
+        .split("EXISTING PROJECT TAGS:")[1]
+        .split("\n")[1];
+      promptedTagCount = listed.split(", ").length;
+      return {
+        content: JSON.stringify({
+          suggestions: [{ entityId: 1, tags: ["tag-599"] }],
+        }),
+        model: "gpt-4",
+        promptTokens: 50,
+        completionTokens: 10,
+        totalTokens: 60,
+      };
+    });
+
+    const result = await service.analyzeTags({
+      entityIds: [1],
+      entityType: "repositoryCase",
+      projectId: 5,
+      userId: "u1",
+    });
+
+    expect(promptedTagCount).toBe(500);
+    // "tag-599" was never listed in the prompt, but matching uses the full set
+    expect(result.suggestions[0]?.isExisting).toBe(true);
+    expect(result.suggestions[0]?.matchedExistingTag).toBe("tag-599");
+  });
+
+  it("stops instead of looping when a single entity's response stays truncated", async () => {
+    setupDefaults();
+    mockDb.repositoryCases.findMany.mockResolvedValue(makeCases(1));
+
+    // Unterminated JSON that salvages to a response about a different entity,
+    // so entity 1 is always missing from the parsed suggestions.
+    mockLlmManager.chat.mockResolvedValue({
+      content: '{"suggestions":[{"entityId":999,"tags":["a"]}',
+      model: "gpt-4",
+      promptTokens: 50,
+      completionTokens: 10,
+      totalTokens: 60,
+    });
+
+    const result = await service.analyzeTags({
+      entityIds: [1],
+      entityType: "repositoryCase",
+      projectId: 5,
+      userId: "u1",
+    });
+
+    expect(mockLlmManager.chat).toHaveBeenCalledTimes(1);
+    expect(result.truncatedEntityIds).toEqual([1]);
+    expect(result.suggestions).toEqual([]);
+  });
+
+  it("resolves each folder path once instead of per case", async () => {
+    setupDefaults();
+    const folder = { id: 10, name: "Checkout", parentId: 5 };
+    mockDb.repositoryCases.findMany.mockResolvedValue(makeCases(5, folder));
+    mockDb.repositoryFolders.findUnique.mockResolvedValue({
+      id: 5,
+      name: "Web",
+      parentId: null,
+    });
+
+    mockLlmManager.chat.mockResolvedValue({
+      content: JSON.stringify({ suggestions: [] }),
+      model: "gpt-4",
+      promptTokens: 50,
+      completionTokens: 10,
+      totalTokens: 60,
+    });
+
+    await service.analyzeTags({
+      entityIds: [1, 2, 3, 4, 5],
+      entityType: "repositoryCase",
+      projectId: 5,
+      userId: "u1",
+    });
+
+    // Without memoization this walks the tree once per case
+    expect(mockDb.repositoryFolders.findUnique).toHaveBeenCalledTimes(1);
+  });
+
+  it("fetches entities in id-chunks rather than one giant IN list", async () => {
+    setupDefaults();
+    const entityIds = Array.from({ length: 1200 }, (_, i) => i + 1);
+    mockDb.repositoryCases.findMany.mockImplementation(async ({ where }: any) =>
+      makeCases(where.id.in.length)
+    );
+
+    mockLlmManager.chat.mockResolvedValue({
+      content: JSON.stringify({ suggestions: [] }),
+      model: "gpt-4",
+      promptTokens: 50,
+      completionTokens: 10,
+      totalTokens: 60,
+    });
+
+    await service.analyzeTags({
+      entityIds,
+      entityType: "repositoryCase",
+      projectId: 5,
+      userId: "u1",
+    });
+
+    const idCounts = mockDb.repositoryCases.findMany.mock.calls.map(
+      ([args]: any[]) => args.where.id.in.length
+    );
+    expect(idCounts).toEqual([500, 500, 200]);
+  });
+
   it("filters out new tags when allowNewTags is false", async () => {
     setupDefaults();
 
-    mockPrisma.repositoryCases.findMany.mockResolvedValue([
+    mockDb.repositoryCases.findMany.mockResolvedValue([
       {
         id: 1,
         name: "Login test",

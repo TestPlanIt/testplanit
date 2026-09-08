@@ -1,15 +1,17 @@
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Loading } from "@/components/Loading";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
 import React, { useEffect, useState } from "react";
-import { useFindManyColor, useUpdateMilestones } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import {
   createColorMap,
   MilestonesWithTypes,
   sortMilestones,
 } from "~/utils/milestoneUtils";
+import { toCalendarDate } from "~/utils/calendarDate";
 import { CompleteMilestoneDialog } from "../CompleteMilestoneDialog";
 import { DeleteMilestoneModal } from "./DeleteMilestoneModal";
 import MilestoneItemCard from "./MilestoneItemCard";
@@ -24,23 +26,59 @@ interface ColorMap {
 interface MilestoneDisplayProps {
   milestones: MilestonesWithTypes[];
   projectId?: number;
-  compact?: boolean;
 }
 
 const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
   milestones,
   projectId,
-  compact = false,
 }) => {
   const { data: session } = useSession();
   const { resolvedTheme } = useTheme();
-  const { data: colors, isLoading: isColorsLoading } = useFindManyColor({
+  const { data: colors, isLoading: isColorsLoading } = useClientQueries(
+    schema
+  ).color.useFindMany({
     include: { colorFamily: true },
     orderBy: { colorFamily: { order: "asc" } },
   });
-  const { mutateAsync: updateMilestones } = useUpdateMilestones();
+  const { mutateAsync: updateMilestones } =
+    useClientQueries(schema).milestones.useUpdate();
   const router = useRouter();
   const queryClient = useQueryClient();
+
+  // Distinct synced-integration ids among these milestones, so the mapping
+  // lookup below fires ONE request per integration for the whole list rather
+  // than one per milestone (the milestones-page passive-refresh does the same).
+  const integrationIds = React.useMemo(() => {
+    const ids = new Set<number>();
+    for (const m of milestones) {
+      if (m.integrationId != null) ids.add(m.integrationId);
+    }
+    return Array.from(ids);
+  }, [milestones]);
+
+  // Active IntegrationProject mappings (key + full name) for those
+  // integrations, scoped to THIS project so a shared integration doesn't leak
+  // another project's mappings. Threaded to each card's source badge to
+  // render the Jira project ("space") segment.
+  const { data: integrationProjects } = useClientQueries(
+    schema
+  ).integrationProject.useFindMany(
+    {
+      where: {
+        isActive: true,
+        projectIntegration: {
+          projectId,
+          integrationId: { in: integrationIds },
+        },
+      },
+      select: {
+        externalProjectKey: true,
+        externalProjectName: true,
+        projectIntegration: { select: { integrationId: true } },
+      },
+    },
+    { enabled: projectId != null && integrationIds.length > 0 }
+  );
 
   const [colorMap, setColorMap] = useState<ColorMap | null>(null);
   const [selectedMilestoneForAction, setSelectedMilestoneForAction] =
@@ -69,7 +107,10 @@ const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
   };
 
   const handleStartMilestone = async (milestone: MilestonesWithTypes) => {
-    const startDate = new Date();
+    // `startedAt` is a calendar date, so today's date rather than this instant:
+    // storing the raw time would read back as tomorrow for an evening click
+    // west of Greenwich, since the field renders without tz conversion.
+    const startDate = toCalendarDate(new Date());
     await updateMilestones({
       where: { id: milestone.id },
       data: { isStarted: true, startedAt: startDate },
@@ -117,6 +158,7 @@ const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
           <MilestoneItemCard
             milestone={currentMilestone}
             projectId={projectId}
+            integrationProjects={integrationProjects}
             theme={resolvedTheme}
             colorMap={colorMap}
             session={session}
@@ -128,7 +170,6 @@ const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
             onOpenEditModal={openEditModal}
             onOpenDeleteModal={openDeleteModal}
             level={level}
-            compact={compact}
           />
           {renderIncompleteMilestones(
             milestonesToRender,
@@ -149,6 +190,7 @@ const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
           key={currentMilestone.id}
           milestone={currentMilestone}
           projectId={projectId}
+          integrationProjects={integrationProjects}
           theme={resolvedTheme}
           colorMap={colorMap}
           session={session}
@@ -159,7 +201,6 @@ const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
           onReopenMilestone={handleReopenMilestone}
           onOpenEditModal={openEditModal}
           onOpenDeleteModal={openDeleteModal}
-          compact={compact}
         />
       ));
   };

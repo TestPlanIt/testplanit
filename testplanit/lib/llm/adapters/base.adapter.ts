@@ -13,26 +13,14 @@ import type {
   RateLimitInfo,
   SettingsWithCapabilities,
 } from "../types";
+import { isCloudMetadataHostname } from "~/lib/utils/ssrf";
 
 /**
- * SSRF prevention for LLM adapter URLs.
- *
- * Unlike the stricter `isSsrfSafe` in `utils/ssrf.ts` (which blocks all
- * private IPs), this check intentionally allows localhost and private
+ * Validates an adapter base URL at construction time: http(s) only and no
+ * cloud metadata endpoints — the same policy `safeFetch` re-applies to the
+ * full URL of every request. Intentionally allows localhost and private
  * network addresses because adapters like Ollama legitimately use local
- * endpoints. It only blocks cloud metadata services and non-HTTP protocols.
- */
-const SSRF_BLOCKED_HOSTS = [
-  "169.254.169.254", // AWS/GCP/Azure instance metadata
-  "metadata.google.internal", // GCP metadata
-  "metadata.google",
-  "100.100.100.200", // Alibaba Cloud metadata
-];
-
-/**
- * Validates a URL against the SSRF blocklist and returns a sanitized URL
- * string derived from the parsed URL object (breaks the taint chain for
- * static analysis tools like CodeQL).
+ * endpoints.
  */
 function sanitizeUrl(url: string): string {
   let parsed: URL;
@@ -47,7 +35,7 @@ function sanitizeUrl(url: string): string {
   }
 
   const hostname = parsed.hostname.toLowerCase();
-  if (SSRF_BLOCKED_HOSTS.includes(hostname)) {
+  if (isCloudMetadataHostname(hostname)) {
     throw new Error(`Requests to ${hostname} are not allowed`);
   }
 
@@ -58,6 +46,15 @@ function sanitizeUrl(url: string): string {
 
 export abstract class BaseLlmAdapter {
   protected config: LlmAdapterConfig;
+
+  /**
+   * Detail about why the most recent `testConnection()` attempt failed
+   * (HTTP status + provider message, or a network/timeout description).
+   * Adapters set this so callers can surface the real reason instead of a
+   * generic "failed to connect". Undefined after a successful attempt or
+   * when an adapter doesn't record detail.
+   */
+  protected lastTestConnectionError?: string;
 
   constructor(config: LlmAdapterConfig) {
     this.config = config;
@@ -144,6 +141,74 @@ export abstract class BaseLlmAdapter {
   }
 
   /**
+   * Return the reason the most recent `testConnection()` call failed, if the
+   * adapter recorded one. See {@link lastTestConnectionError}.
+   */
+  getLastTestConnectionError(): string | undefined {
+    return this.lastTestConnectionError;
+  }
+
+  /**
+   * Strip the query string and any embedded credentials from a URL so it's
+   * safe to include in user-facing error messages / logs (e.g. Gemini passes
+   * the API key as a `?key=` query param). Returns the input unchanged if it
+   * can't be parsed.
+   */
+  protected redactUrlForDisplay(url: string): string {
+    try {
+      const parsed = new URL(url);
+      return `${parsed.origin}${parsed.pathname}`;
+    } catch {
+      return url;
+    }
+  }
+
+  /**
+   * Build a concise one-line reason from a failed HTTP response. Handles the
+   * common JSON error shapes — Anthropic/OpenAI `{ error: { message } }`,
+   * FastAPI/LiteLLM `{ detail }`, and plain `{ message }` — and falls back to
+   * a truncated raw body. Used by `testConnection()` implementations to record
+   * why a connection attempt failed instead of dropping the reason.
+   */
+  protected summarizeHttpError(
+    status: number,
+    statusText: string,
+    body: string
+  ): string {
+    let detail = "";
+    try {
+      const json = JSON.parse(body);
+      const candidate =
+        json?.error?.message ??
+        (typeof json?.error === "string" ? json.error : undefined) ??
+        json?.detail ??
+        json?.message;
+      if (typeof candidate === "string") {
+        detail = candidate;
+      }
+    } catch {
+      detail = body.trim().slice(0, 300);
+    }
+    const base = statusText ? `${status} ${statusText}` : `${status}`;
+    return detail ? `${base}: ${detail}` : base;
+  }
+
+  /**
+   * Turn an exception thrown while attempting a connection into a concise,
+   * human-readable reason, distinguishing timeouts from other network errors.
+   * The URL is redacted so it's safe to surface.
+   */
+  protected describeConnectionError(url: string, error: any): string {
+    const safeUrl = this.redactUrlForDisplay(url);
+    if (error?.name === "TimeoutError" || error?.name === "AbortError") {
+      return `Request timed out (${safeUrl}).`;
+    }
+    return `Network error reaching ${safeUrl}: ${
+      error?.message ?? "unknown error"
+    }`;
+  }
+
+  /**
    * Get timeout for requests
    */
   getTimeout(): number {
@@ -154,8 +219,13 @@ export abstract class BaseLlmAdapter {
    * Fetch wrapper that validates the URL against SSRF blocklist before
    * making the request. Use this instead of bare `fetch()` in adapters.
    *
-   * Hostname comparisons are inlined with explicit `===` checks so that
-   * CodeQL's HostnameSanitizerGuard recognises them as barrier guards.
+   * Unlike the stricter `ssrfSafeFetch` in `utils/ssrf.ts` (which blocks all
+   * private IPs), this check intentionally allows localhost and private
+   * network addresses because adapters like Ollama legitimately use local
+   * endpoints. It only blocks cloud metadata services and non-HTTP protocols.
+   * The hostname check stays a guard condition in this function — with the
+   * comparisons one call deep as explicit `===` checks — so CodeQL's
+   * HostnameSanitizerGuard recognises it as a barrier guard.
    */
   protected safeFetch(url: string, init?: RequestInit): Promise<Response> {
     const parsed = new URL(url);
@@ -165,12 +235,7 @@ export abstract class BaseLlmAdapter {
     }
 
     const h = parsed.hostname;
-    if (
-      h === "169.254.169.254" ||
-      h === "metadata.google.internal" ||
-      h === "metadata.google" ||
-      h === "100.100.100.200"
-    ) {
+    if (isCloudMetadataHostname(h)) {
       throw new Error(`Requests to ${h} are not allowed`);
     }
 
@@ -194,12 +259,7 @@ export abstract class BaseLlmAdapter {
     }
 
     const h = parsed.hostname;
-    if (
-      h === "169.254.169.254" ||
-      h === "metadata.google.internal" ||
-      h === "metadata.google" ||
-      h === "100.100.100.200"
-    ) {
+    if (isCloudMetadataHostname(h)) {
       throw new Error(`Requests to ${h} are not allowed`);
     }
 
@@ -261,6 +321,21 @@ export abstract class BaseLlmAdapter {
     if (!request.messages || request.messages.length === 0) {
       throw this.createError(
         "Messages array cannot be empty",
+        "INVALID_REQUEST",
+        400
+      );
+    }
+
+    // A parts-array content with zero parts is a caller bug (an all-images
+    // message whose images were stripped upstream should flatten to text
+    // markers, not to []). Catch it here once instead of per provider.
+    if (
+      request.messages.some(
+        (m) => Array.isArray(m.content) && m.content.length === 0
+      )
+    ) {
+      throw this.createError(
+        "Message content parts cannot be empty",
         "INVALID_REQUEST",
         400
       );

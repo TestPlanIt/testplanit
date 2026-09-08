@@ -8,7 +8,7 @@
  *
  * Gating: the cache-behavior assertions are pure unit (plain `describe`) and inject a spy lookup
  * so no DB is needed to prove the cache hit/miss/refetch contract. The optional `describeDb` block
- * exercises the real prismaBase lookup and copies the captureMatrix.test.ts RUN_DB_INTEGRATION gate
+ * exercises the real rawDb lookup and copies the captureMatrix.test.ts RUN_DB_INTEGRATION gate
  * verbatim, so it skips cleanly in the unit lane. The not-yet-existing `~/lib/audit/humanize`
  * module is imported via a runtime-built specifier + /* @vite-ignore *​/ so Vite cannot resolve it
  * at transform time (keeps the suite RED rather than failing to load).
@@ -44,7 +44,7 @@ type HumanizeModule = {
     lookup: LookupFn,
     opts: { ttlMs: number }
   ) => HumanizeCache;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   humanize: (
     cache: HumanizeCache,
     tableName: string,
@@ -67,22 +67,22 @@ describe("humanize (COR-03) — FK → display name with TTL cache", () => {
     expect(lookup).toHaveBeenCalledWith("CaseFields", "displayName", 42);
   });
 
-  it("relabels an implicit m2m join (_RepositoryCasesToTags) to the named tag, dropping the A/B owner column", async () => {
+  it("relabels an explicit m2m join (RepositoryCaseTag) to the named tag, dropping the caseId owner column", async () => {
     const { createHumanizeCache, humanize } = await loadModule();
     const lookup = vi.fn<LookupFn>(async () => "regression");
     const cache = createHumanizeCache(lookup, { ttlMs: 60_000 });
 
-    // A = RepositoryCases (owner, dropped); B = Tags (kept + named).
-    const out = await humanize(cache, "_RepositoryCasesToTags", {
-      A: { old: null, new: 4 },
-      B: { old: null, new: 13 },
+    // caseId = RepositoryCases (owner, dropped); tagId = Tags (kept + named).
+    const out = await humanize(cache, "RepositoryCaseTag", {
+      caseId: { old: null, new: 4 },
+      tagId: { old: null, new: 13 },
     });
 
     expect(out).toEqual({
       Tags: { old: null, new: 13, oldName: null, newName: "regression" },
     });
-    expect(out.A).toBeUndefined();
-    expect(out.B).toBeUndefined();
+    expect(out.caseId).toBeUndefined();
+    expect(out.tagId).toBeUndefined();
     expect(lookup).toHaveBeenCalledWith("Tags", "name", 13);
   });
 
@@ -141,7 +141,115 @@ describe("humanize (COR-03) — FK → display name with TTL cache", () => {
   });
 });
 
-describeDb("humanize (COR-03) — live prismaBase catalog lookup", () => {
+describe("humanize — root-table rich-text (TipTap) columns flatten to plain text", () => {
+  const tiptapDoc = (text: string) => ({
+    type: "doc",
+    content: [{ type: "paragraph", content: [{ type: "text", text }] }],
+  });
+
+  it("flattens a Milestones.note change (object-encoded TipTap) to plain text", async () => {
+    const { createHumanizeCache, humanize } = await loadModule();
+    const cache = createHumanizeCache(async () => null, { ttlMs: 60_000 });
+
+    const out = await humanize(cache, "Milestones", {
+      note: {
+        old: tiptapDoc("Old description"),
+        new: tiptapDoc("New description"),
+      },
+    });
+
+    expect(out).toEqual({
+      note: { old: "Old description", new: "New description" },
+    });
+  });
+
+  it("flattens a string-encoded TipTap doc and both configured Milestones columns", async () => {
+    const { createHumanizeCache, humanize } = await loadModule();
+    const cache = createHumanizeCache(async () => null, { ttlMs: 60_000 });
+
+    const out = await humanize(cache, "Milestones", {
+      docs: { old: null, new: JSON.stringify(tiptapDoc("Runbook link")) },
+    });
+
+    expect(out).toEqual({ docs: { old: null, new: "Runbook link" } });
+  });
+
+  it("keeps a null old side null and renders a present-but-empty doc as (empty)", async () => {
+    const { createHumanizeCache, humanize } = await loadModule();
+    const cache = createHumanizeCache(async () => null, { ttlMs: 60_000 });
+
+    const out = await humanize(cache, "Comment", {
+      content: { old: null, new: { type: "doc", content: [] } },
+    });
+
+    expect(out).toEqual({ content: { old: null, new: "(empty)" } });
+  });
+
+  it("does not flatten a non-rich-text column on the same table (name passes through)", async () => {
+    const { createHumanizeCache, humanize } = await loadModule();
+    const cache = createHumanizeCache(async () => null, { ttlMs: 60_000 });
+
+    const out = await humanize(cache, "Milestones", {
+      name: { old: "8.13", new: "8.14" },
+      note: { old: tiptapDoc("a"), new: tiptapDoc("b") },
+    });
+
+    expect(out).toEqual({
+      name: { old: "8.13", new: "8.14" },
+      note: { old: "a", new: "b" },
+    });
+  });
+});
+
+describe("humanize — un-mapped Json columns never render as [object Object]", () => {
+  const tiptapDoc = (text: string) => ({
+    type: "doc",
+    content: [{ type: "paragraph", content: [{ type: "text", text }] }],
+  });
+
+  it("flattens a TestRunResults.notes TipTap doc even though the table isn't in RICH_TEXT_COLUMNS", async () => {
+    const { createHumanizeCache, humanize } = await loadModule();
+    const cache = createHumanizeCache(async () => null, { ttlMs: 60_000 });
+
+    const out = await humanize(cache, "TestRunResults", {
+      notes: { old: null, new: tiptapDoc("Repro steps") },
+    });
+
+    expect(out.notes).toEqual({ old: null, new: "Repro steps" });
+  });
+
+  it("renders an empty TipTap doc as (empty), not the raw doc JSON or [object Object]", async () => {
+    const { createHumanizeCache, humanize } = await loadModule();
+    const cache = createHumanizeCache(async () => null, { ttlMs: 60_000 });
+
+    const out = await humanize(cache, "TestRunResults", {
+      notes: {
+        old: null,
+        new: { type: "doc", content: [{ type: "paragraph" }] },
+      },
+    });
+
+    expect(out.notes.new).toBe("(empty)");
+  });
+
+  it("renders an empty evidence {} as (empty) and populated JSON as text, never [object Object]", async () => {
+    const { createHumanizeCache, humanize } = await loadModule();
+    const cache = createHumanizeCache(async () => null, { ttlMs: 60_000 });
+
+    const out = await humanize(cache, "TestRunResults", {
+      evidence: { old: null, new: {} },
+    });
+    expect(out.evidence.new).toBe("(empty)");
+
+    const populated = await humanize(cache, "TestRunResults", {
+      evidence: { old: null, new: { screenshots: 2 } },
+    });
+    expect(populated.evidence.new).toBe(JSON.stringify({ screenshots: 2 }));
+    expect(String(populated.evidence.new)).not.toContain("[object Object]");
+  });
+});
+
+describeDb("humanize (COR-03) — live rawDb catalog lookup", () => {
   it("resolves a seeded CaseFields.id to its displayName via the real lookup", async () => {
     const { Client } = await import("pg");
     const direct = new Client({ connectionString: DIRECT_URL });
@@ -167,18 +275,18 @@ describeDb("humanize (COR-03) — live prismaBase catalog lookup", () => {
       const fieldId = ins.rows[0].id as number;
 
       const humanizeModSpecifier = "~/lib/audit/humanize";
-      const prismaModSpecifier = "~/lib/prismaBase";
+      const dbModSpecifier = "~/lib/rawDb";
       const { createHumanizeCache } = (await import(
         /* @vite-ignore */ humanizeModSpecifier
       )) as HumanizeModule;
-      // lib/prismaBase exports the base (extension-free) client as `prisma`.
-      const { prisma: prismaBase } = (await import(
-        /* @vite-ignore */ prismaModSpecifier
-      )) as { prisma: any };
+      // lib/rawDb exports the base (extension-free) client as `rawDb`.
+      const { rawDb: rawDb } = (await import(
+        /* @vite-ignore */ dbModSpecifier
+      )) as { rawDb: any };
 
-      // The real lookup hits prismaBase; assert it round-trips the seeded displayName.
+      // The real lookup hits rawDb; assert it round-trips the seeded displayName.
       const lookup: LookupFn = async (table, field, id) => {
-        const row = await prismaBase.caseFields.findUnique({
+        const row = await rawDb.caseFields.findUnique({
           where: { id: Number(id) },
           select: { displayName: true },
         });

@@ -3,9 +3,9 @@
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { badgeVariants } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Prisma } from "@prisma/client";
+import type { ProjectsWhereInput } from "~/zenstack/input";
 import { BoxesIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import React, { useCallback, useMemo } from "react";
 import { Link } from "~/lib/navigation";
 import { cn } from "~/utils";
@@ -13,7 +13,7 @@ import { ProjectIcon } from "../ProjectIcon";
 
 interface ProjectListProps {
   projects?: Array<{ projectId: number } | ProjectLike>;
-  filter?: Prisma.ProjectsWhereInput;
+  filter?: ProjectsWhereInput;
   count?: number;
   usePopover?: boolean;
   pageSize?: number;
@@ -42,6 +42,7 @@ export const ProjectListDisplay: React.FC<ProjectListProps> = ({
   pageSize = DEFAULT_PAGE_SIZE,
   isLoading = false,
 }) => {
+  const locale = useLocale();
   const t = useTranslations("common");
 
   const { projectIds, prefetchedProjects } = useMemo(() => {
@@ -76,7 +77,7 @@ export const ProjectListDisplay: React.FC<ProjectListProps> = ({
         : undefined);
 
   const baseConditions = useMemo(() => {
-    const conditions: Prisma.ProjectsWhereInput[] = [{ isDeleted: false }];
+    const conditions: ProjectsWhereInput[] = [{ isDeleted: false }];
 
     if (filter) {
       conditions.push(filter);
@@ -191,8 +192,7 @@ export const ProjectListDisplay: React.FC<ProjectListProps> = ({
     // Navigation handled inside rendered option link
   }, []);
 
-  // Show skeleton while loading and count is undefined
-  if (isLoading && computedCount === undefined) {
+  if (isLoading) {
     return <Skeleton className="h-6 w-12" />;
   }
 
@@ -206,7 +206,7 @@ export const ProjectListDisplay: React.FC<ProjectListProps> = ({
 
   const triggerLabel =
     computedCount !== undefined && computedCount > 0
-      ? computedCount.toLocaleString()
+      ? computedCount.toLocaleString(locale)
       : "";
 
   const searchPlaceholder = t("searchProjects", {
@@ -219,20 +219,17 @@ export const ProjectListDisplay: React.FC<ProjectListProps> = ({
     }
 
     return (
-      <div className="flex flex-wrap gap-2">
+      <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 sm:grid-cols-3">
         {prefetchedProjects.map((project) => (
           <Link
             key={project.id}
             href={`/projects/overview/${project.id}`}
-            className={cn(
-              badgeVariants({ variant: "default" }),
-              "items-center px-3"
-            )}
+            className="flex items-center gap-2 text-sm hover:underline"
           >
-            <div className="max-w-5 max-h-5 shrink-0">
-              <ProjectIcon iconUrl={project.iconUrl} />
+            <div className="max-w-4 max-h-4 shrink-0">
+              <ProjectIcon iconUrl={project.iconUrl} width={16} height={16} />
             </div>
-            <span>{project.name}</span>
+            <span className="truncate">{project.name}</span>
           </Link>
         ))}
       </div>

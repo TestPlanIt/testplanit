@@ -18,7 +18,7 @@ To access this page, enter the Administration area and select **Tags** from the 
 The Tags page displays a table listing all defined tags (excluding those marked as deleted). Key features include:
 
 - **Filtering**: Use the filter input above the table to search for tags by name.
-- **Pagination**: If there are many tags, use the pagination controls at the top-right to navigate through pages and adjust the number of tags shown per page.
+- **Loading More**: The list loads more tags automatically as you scroll toward the bottom — there are no page controls. A count above the table shows how many tags are loaded out of the total.
 - **Sorting**: Click on the "Name" column header to sort the tags alphabetically in ascending or descending order.
 - **Column Selection**: Use the **Columns** control to show or hide specific columns. Your choice is remembered in this browser for this table, so it persists across visits.
 - **Columns**: The table includes columns for:

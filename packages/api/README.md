@@ -265,21 +265,29 @@ const { testRunId } = await client.importTestResults(
 );
 ```
 
-## Pipeline-Owned Test Runs
+## CLI
 
-A suite executed as several separate reporter invocations — shards across
-agents, or retry waves — would otherwise create one run per invocation. The
-[`@testplanit/cli`](https://www.npmjs.com/package/@testplanit/cli) package
-creates the run up front so every invocation attaches to it:
+The package installs a `testplanit` command for owning a test run's lifecycle
+from a pipeline. A suite executed as several separate reporter invocations —
+shards across agents, or retry waves — would otherwise create one run per
+invocation. Create the run up front and export its ID so every invocation
+attaches to it:
 
 ```bash
-RUN_ID=$(testplanit run create --project 9 --name "Web Regression - DEV #984" --type MOCHA)
+export TESTPLANIT_URL="https://testplanit.example.com"
+export TESTPLANIT_API_TOKEN="tpi_your_token_here"
+
+RUN_ID=$(testplanit create-run --project 9 --name "Web Regression - DEV #984" --type MOCHA)
 export TESTPLANIT_RUN_ID="$RUN_ID"
 
 # ...run every shard, agent and retry wave...
 
-testplanit run complete --id "$RUN_ID"
+testplanit complete-run --id "$RUN_ID"
 ```
+
+`create-run` prints only the new run ID to stdout, so it is safe to capture in a
+shell variable; diagnostics go to stderr. `complete-run` reads the project from
+the run when `--project` is omitted. Run `testplanit --help` for all options.
 
 Both the [WebdriverIO](https://www.npmjs.com/package/@testplanit/wdio-reporter)
 and [Playwright](https://www.npmjs.com/package/@testplanit/playwright-reporter)

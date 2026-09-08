@@ -1,5 +1,5 @@
 import { expect, test } from "../../fixtures";
-import type { Page } from "@playwright/test";
+import type { APIRequestContext, Page } from "@playwright/test";
 
 /**
  * Repository Case > Activity (audit history) surface
@@ -20,14 +20,48 @@ import type { Page } from "@playwright/test";
 // Close+reopen the sheet to remount CaseAuditLogContent (refetch) until a row
 // appears — the initial query can fire before the worker correlates.
 async function waitForCaseRows(page: Page): Promise<boolean> {
+  const table = page.getByTestId("case-audit-log-table");
   for (let i = 0; i < 5; i++) {
     const row = page.locator('[data-testid^="case-audit-log-row-"]').first();
     if (await row.isVisible({ timeout: 3000 }).catch(() => false)) return true;
+    // Close the sheet and wait for the dialog itself to unmount before
+    // reopening. The table unmounts the instant `open` flips false, but the
+    // SheetContent keeps animating out — and its dismissable overlay swallows
+    // a trigger click fired during that window.
     await page.keyboard.press("Escape");
-    await page.getByTestId("case-history-trigger").click();
-    await expect(page.getByTestId("case-audit-log-table")).toBeVisible({
+    await expect(page.getByRole("dialog").first()).toBeHidden({
       timeout: 5000,
     });
+    await page.getByTestId("case-history-trigger").click();
+    await expect(table).toBeVisible({ timeout: 5000 });
+  }
+  return false;
+}
+
+/**
+ * Poll the model API until the CDC correlation worker has materialized at
+ * least one audit row for the case, so the sheet's first query already sees
+ * rows and the close/reopen fallback is rarely needed.
+ */
+async function waitForAuditRowInDb(
+  request: APIRequestContext,
+  baseURL: string,
+  caseId: number
+): Promise<boolean> {
+  for (let i = 0; i < 20; i++) {
+    const res = await request.get(`${baseURL}/api/model/auditLog/findMany`, {
+      params: {
+        q: JSON.stringify({
+          where: { entityType: "RepositoryCases", entityId: String(caseId) },
+          select: { id: true },
+        }),
+      },
+    });
+    if (res.ok()) {
+      const rows = (await res.json()).data as unknown[];
+      if (rows.length > 0) return true;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1000));
   }
   return false;
 }
@@ -36,6 +70,8 @@ test.describe("Repository Case — Activity (audit history)", () => {
   test("opens the history sheet and renders the case's scoped audit trail", async ({
     api,
     page,
+    request,
+    baseURL,
   }) => {
     let projectId: number;
     let caseId: number;
@@ -46,6 +82,15 @@ test.describe("Repository Case — Activity (audit history)", () => {
       const folderId = await api.createFolder(projectId, `Folder ${stamp}`);
       caseId = await api.createTestCase(projectId, folderId, `Case ${stamp}`);
       await api.updateTestCaseName(caseId, `Renamed Case ${stamp}`);
+    });
+
+    await test.step("Wait for the CDC worker to materialize the audit rows", async () => {
+      const materialized = await waitForAuditRowInDb(request, baseURL!, caseId);
+      if (!materialized) {
+        console.warn(
+          "[case-history] audit rows not materialized after 20s — the row assertions below will fall back to best-effort"
+        );
+      }
     });
 
     await test.step("Open the case detail page", async () => {

@@ -1,4 +1,4 @@
-import { getCurrentTenantId } from "@/lib/multiTenantPrisma";
+import { getCurrentTenantId } from "@/lib/multiTenantDb";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -24,7 +24,7 @@ import { authOptions } from "~/server/auth";
  * materializes the snapshot + iteration rows in one of three modes:
  *
  *   - sync (count ≤ asyncCap, default 500): runs `materializeIterations`
- *     inside a single prisma.$transaction synchronously; returns
+ *     inside a single db.$transaction synchronously; returns
  *     `{ async: false, iterationCount, perCase }`.
  *
  *   - async (asyncCap < count ≤ hardCap, default 501..5000): enqueues a

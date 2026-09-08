@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
 
 const updateProjectIntegrationSchema = z.object({
@@ -31,10 +31,10 @@ export const PATCH = withAuditContext(
         session.user.access === "PROJECTADMIN";
 
       const project = isSystemAdmin
-        ? await prisma.projects.findUnique({
+        ? await baseDb.projects.findUnique({
             where: { id: projectId, isDeleted: false },
           })
-        : await prisma.projects.findFirst({
+        : await baseDb.projects.findFirst({
             where: {
               id: projectId,
               isDeleted: false,
@@ -57,7 +57,7 @@ export const PATCH = withAuditContext(
       const validatedData = updateProjectIntegrationSchema.parse(body);
 
       // Update project integration settings
-      const projectIntegration = await prisma.projectIntegration.update({
+      const projectIntegration = await baseDb.projectIntegration.update({
         where: {
           id: integrationProjectId,
           projectId,
@@ -111,10 +111,10 @@ export const DELETE = withAuditContext(
         session.user.access === "PROJECTADMIN";
 
       const project = isSystemAdmin
-        ? await prisma.projects.findUnique({
+        ? await baseDb.projects.findUnique({
             where: { id: projectId, isDeleted: false },
           })
-        : await prisma.projects.findFirst({
+        : await baseDb.projects.findFirst({
             where: {
               id: projectId,
               isDeleted: false,
@@ -134,7 +134,7 @@ export const DELETE = withAuditContext(
       }
 
       // Delete project integration
-      await prisma.projectIntegration.delete({
+      await baseDb.projectIntegration.delete({
         where: {
           id: integrationProjectId,
           projectId,

@@ -1,9 +1,10 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserRoundCog, UsersRound } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useFindUniqueGroups } from "~/lib/hooks";
 
 interface GroupNameCellProps {
   groupId: string;
@@ -18,7 +19,7 @@ export function GroupNameCell({ groupId }: GroupNameCellProps) {
     data: group,
     isLoading,
     error,
-  } = useFindUniqueGroups(
+  } = useClientQueries(schema).groups.useFindUnique(
     {
       where: { id: !isNaN(groupIdNum) ? groupIdNum : undefined },
       select: { name: true, scimDisplayName: true },
@@ -48,14 +49,14 @@ export function GroupNameCell({ groupId }: GroupNameCellProps) {
     <span className="flex items-center">
       {isScimManaged ? (
         <UserRoundCog
-          className="mr-1 h-4 w-4"
+          className="me-1 h-4 w-4"
           aria-label={tGroups("scimManagedTooltip")}
           data-testid="scim-managed-group-icon"
         >
           <title>{tGroups("scimManagedTooltip")}</title>
         </UserRoundCog>
       ) : (
-        <UsersRound className="mr-1 h-4 w-4" />
+        <UsersRound className="me-1 h-4 w-4" />
       )}
       {group.name}
     </span>

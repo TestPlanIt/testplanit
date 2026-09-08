@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { z } from "zod/v4";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
 
 const querySchema = z.object({
@@ -34,7 +34,7 @@ export async function GET(request: Request) {
     const { projectId, cursor, limit } = parsed.data;
     const take = limit + 1; // Fetch one extra for nextCursor detection
 
-    const items = await prisma.duplicateScanResult.findMany({
+    const items = await baseDb.duplicateScanResult.findMany({
       where: { projectId, isDeleted: false, status: "PENDING" },
       orderBy: { score: "desc" },
       take,

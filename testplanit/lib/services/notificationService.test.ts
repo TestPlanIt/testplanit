@@ -1,4 +1,4 @@
-import { ApplicationArea, NotificationType } from "@prisma/client";
+import { ApplicationArea, NotificationType } from "~/zenstack/models";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getNotificationQueue } from "../queues";
 import { NotificationService } from "./notificationService";
@@ -13,23 +13,23 @@ vi.mock("~/server/db", () => ({
   },
 }));
 
-// Mock ~/lib/prisma for resolveRoleHolderUserIds (uses await import internally)
-const mockPrismaUserProjectPermissionFindMany = vi.fn();
-const mockPrismaGroupProjectPermissionFindMany = vi.fn();
-const mockPrismaRolePermissionFindUnique = vi.fn();
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+// Mock ~/lib/baseDb for resolveRoleHolderUserIds (uses await import internally)
+const mockDbUserProjectPermissionFindMany = vi.fn();
+const mockDbGroupProjectPermissionFindMany = vi.fn();
+const mockDbRolePermissionFindUnique = vi.fn();
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     userProjectPermission: {
       findMany: (...args: unknown[]) =>
-        mockPrismaUserProjectPermissionFindMany(...args),
+        mockDbUserProjectPermissionFindMany(...args),
     },
     groupProjectPermission: {
       findMany: (...args: unknown[]) =>
-        mockPrismaGroupProjectPermissionFindMany(...args),
+        mockDbGroupProjectPermissionFindMany(...args),
     },
     rolePermission: {
       findUnique: (...args: unknown[]) =>
-        mockPrismaRolePermissionFindUnique(...args),
+        mockDbRolePermissionFindUnique(...args),
     },
   },
 }));
@@ -419,6 +419,60 @@ describe("NotificationService", () => {
 
       // Simulate no call when unassigning
       expect(callCount).toBe(0);
+    });
+  });
+
+  describe("createRunReadyToCompleteNotification", () => {
+    it("queues one notification per recipient with the payload the renderers read", async () => {
+      mockQueue.add.mockResolvedValue({ id: "job-ready" } as any);
+
+      await NotificationService.createRunReadyToCompleteNotification({
+        targetUserIds: ["user-1", "user-2"],
+        testRunId: 42,
+        testRunName: "Regression sweep",
+        projectId: 7,
+        projectName: "Checkout",
+        caseCount: 12,
+        tenantId: "acme",
+      });
+
+      expect(mockQueue.add).toHaveBeenCalledTimes(2);
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        "create-notification",
+        {
+          userId: "user-1",
+          type: NotificationType.RUN_READY_TO_COMPLETE,
+          title: "Test run ready to complete",
+          message: expect.stringContaining('"Regression sweep"'),
+          relatedEntityId: "42",
+          relatedEntityType: "TestRuns",
+          // The worker has no ambient tenant context, so the caller's
+          // tenantId must survive the hop or a multi-tenant deployment
+          // writes the row into the wrong database.
+          tenantId: "acme",
+          data: {
+            testRunId: 42,
+            testRunName: "Regression sweep",
+            projectId: 7,
+            projectName: "Checkout",
+            caseCount: 12,
+          },
+        },
+        { removeOnComplete: true, removeOnFail: false }
+      );
+    });
+
+    it("queues nothing when nobody can complete the run", async () => {
+      await NotificationService.createRunReadyToCompleteNotification({
+        targetUserIds: [],
+        testRunId: 42,
+        testRunName: "Regression sweep",
+        projectId: 7,
+        projectName: "Checkout",
+        caseCount: 12,
+      });
+
+      expect(mockQueue.add).not.toHaveBeenCalled();
     });
   });
 
@@ -970,18 +1024,16 @@ describe("NotificationService", () => {
 
   describe("resolveRoleHolderUserIds canApprove option", () => {
     beforeEach(() => {
-      mockPrismaUserProjectPermissionFindMany.mockReset().mockResolvedValue([]);
-      mockPrismaGroupProjectPermissionFindMany
-        .mockReset()
-        .mockResolvedValue([]);
-      mockPrismaRolePermissionFindUnique.mockReset();
+      mockDbUserProjectPermissionFindMany.mockReset().mockResolvedValue([]);
+      mockDbGroupProjectPermissionFindMany.mockReset().mockResolvedValue([]);
+      mockDbRolePermissionFindUnique.mockReset();
     });
 
     it("when option is omitted, does not consult rolePermission.findUnique and runs all four findManys", async () => {
-      mockPrismaUserProjectPermissionFindMany
+      mockDbUserProjectPermissionFindMany
         .mockResolvedValueOnce([{ userId: "u-1" }])
         .mockResolvedValueOnce([{ userId: "u-2" }]);
-      mockPrismaGroupProjectPermissionFindMany
+      mockDbGroupProjectPermissionFindMany
         .mockResolvedValueOnce([
           { group: { assignedUsers: [{ userId: "u-3" }] } },
         ])
@@ -994,14 +1046,14 @@ describe("NotificationService", () => {
         99,
         "requester"
       );
-      expect(mockPrismaRolePermissionFindUnique).not.toHaveBeenCalled();
-      expect(mockPrismaUserProjectPermissionFindMany).toHaveBeenCalledTimes(2);
-      expect(mockPrismaGroupProjectPermissionFindMany).toHaveBeenCalledTimes(2);
+      expect(mockDbRolePermissionFindUnique).not.toHaveBeenCalled();
+      expect(mockDbUserProjectPermissionFindMany).toHaveBeenCalledTimes(2);
+      expect(mockDbGroupProjectPermissionFindMany).toHaveBeenCalledTimes(2);
       expect(new Set(result)).toEqual(new Set(["u-1", "u-2", "u-3", "u-4"]));
     });
 
     it("when option is present and the role lacks canApprove, returns [] and skips the four findManys", async () => {
-      mockPrismaRolePermissionFindUnique.mockResolvedValue({
+      mockDbRolePermissionFindUnique.mockResolvedValue({
         canApprove: false,
       });
       const result = await NotificationService.resolveRoleHolderUserIds(
@@ -1010,7 +1062,7 @@ describe("NotificationService", () => {
         "requester",
         { requireCanApproveOn: ApplicationArea.TestCaseRepository }
       );
-      expect(mockPrismaRolePermissionFindUnique).toHaveBeenCalledWith({
+      expect(mockDbRolePermissionFindUnique).toHaveBeenCalledWith({
         where: {
           roleId_area: {
             roleId: 99,
@@ -1019,19 +1071,19 @@ describe("NotificationService", () => {
         },
         select: { canApprove: true },
       });
-      expect(mockPrismaUserProjectPermissionFindMany).not.toHaveBeenCalled();
-      expect(mockPrismaGroupProjectPermissionFindMany).not.toHaveBeenCalled();
+      expect(mockDbUserProjectPermissionFindMany).not.toHaveBeenCalled();
+      expect(mockDbGroupProjectPermissionFindMany).not.toHaveBeenCalled();
       expect(result).toEqual([]);
     });
 
     it("when option is present and the role has canApprove, requester is still excluded from the fanout", async () => {
-      mockPrismaRolePermissionFindUnique.mockResolvedValue({
+      mockDbRolePermissionFindUnique.mockResolvedValue({
         canApprove: true,
       });
-      mockPrismaUserProjectPermissionFindMany
+      mockDbUserProjectPermissionFindMany
         .mockResolvedValueOnce([{ userId: "u-1" }, { userId: "requester" }])
         .mockResolvedValueOnce([]);
-      mockPrismaGroupProjectPermissionFindMany
+      mockDbGroupProjectPermissionFindMany
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([]);
 

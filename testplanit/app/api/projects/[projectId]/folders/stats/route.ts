@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { getUserAccessibleProjects } from "~/app/actions/getUserAccessibleProjects";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
 
 interface FolderStats {
@@ -33,7 +33,7 @@ export async function GET(
     const runId = searchParams.get("runId");
 
     // Verify project exists
-    const project = await prisma.projects.findUnique({
+    const project = await baseDb.projects.findUnique({
       where: { id: projectId, isDeleted: false },
     });
 
@@ -50,7 +50,7 @@ export async function GET(
     }
 
     // Get all folders for the project
-    const folders = await prisma.repositoryFolders.findMany({
+    const folders = await baseDb.repositoryFolders.findMany({
       where: {
         projectId,
         isDeleted: false,
@@ -76,7 +76,7 @@ export async function GET(
 
     if (runId) {
       // For test runs, count test run cases
-      const testRunCases = await prisma.testRunCases.findMany({
+      const testRunCases = await baseDb.testRunCases.findMany({
         where: {
           testRunId: parseInt(runId),
           isDeleted: false,
@@ -104,7 +104,7 @@ export async function GET(
       );
     } else {
       // For repository view, count all cases
-      const cases = await prisma.repositoryCases.findMany({
+      const cases = await baseDb.repositoryCases.findMany({
         where: {
           projectId,
           isDeleted: false,

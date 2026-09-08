@@ -59,11 +59,11 @@ Follow these steps to get TestPlanIt running locally for development.
       - Review other settings like `NEXTAUTH_SECRET` (generate a new secret for production), email server details, etc.
 
 4.  **Run database migrations:**
-    Navigate back to the application directory (`testplanit/testplanit`) and run the Prisma migrations to set up the database schema:
+    Navigate back to the application directory (`testplanit/testplanit`) and sync the database schema (ZenStack pushes from schema.zmodel; this project does not use migrations):
 
     ```bash
     cd testplanit
-    pnpm prisma migrate dev
+    pnpm generate
     ```
 
 5.  **Run the development server:**

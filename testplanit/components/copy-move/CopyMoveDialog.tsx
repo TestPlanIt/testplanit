@@ -1,8 +1,11 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { HighlightedMatch } from "@/components/HighlightedMatch";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { Input } from "@/components/ui/input";
 import {
@@ -34,13 +37,7 @@ import {
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  useFindManyProjects,
-  useFindFirstRepositories,
-  useCreateRepositoryFolders,
-  useFindManyRepositoryCases,
-} from "~/lib/hooks";
-import { useFindManyRepositoryFolders } from "~/lib/hooks/repository-folders";
+import { useFindManyRepositoryCasesByDescendants } from "~/hooks/useRepositoryCasesByDescendants";
 import { Link } from "~/lib/navigation";
 import { cn } from "~/utils";
 import type { FolderTreeNode } from "~/workers/copyMoveWorker";
@@ -92,25 +89,29 @@ export function CopyMoveDialog({
   const job = useCopyMoveJob();
 
   // ── Data hooks ───────────────────────────────────────────────────────────
-  const { data: projects = [], isLoading: projectsLoading } =
-    useFindManyProjects({
-      where: { isDeleted: false },
-      orderBy: [{ isCompleted: "asc" }, { name: "asc" }],
-      select: { id: true, name: true, iconUrl: true, isCompleted: true },
-    });
+  const { data: projects = [], isLoading: projectsLoading } = useClientQueries(
+    schema
+  ).projects.useFindMany({
+    where: { isDeleted: false },
+    orderBy: [{ isCompleted: "asc" }, { name: "asc" }],
+    select: { id: true, name: true, iconUrl: true, isCompleted: true },
+  });
 
-  const { data: folders = [], isLoading: foldersLoading } =
-    useFindManyRepositoryFolders(
-      {
-        where: { projectId: targetProjectId ?? 0, isDeleted: false },
-        select: { id: true, name: true, parentId: true, order: true },
-        orderBy: { order: "asc" },
-      },
-      { enabled: !!targetProjectId }
-    );
+  const { data: folders = [], isLoading: foldersLoading } = useClientQueries(
+    schema
+  ).repositoryFolders.useFindMany(
+    {
+      where: { projectId: targetProjectId ?? 0, isDeleted: false },
+      select: { id: true, name: true, parentId: true, order: true },
+      orderBy: { order: "asc" },
+    },
+    { enabled: !!targetProjectId }
+  );
 
   // Target project's repository (needed for creating folders)
-  const { data: targetRepo } = useFindFirstRepositories(
+  const { data: targetRepo } = useClientQueries(
+    schema
+  ).repositories.useFindFirst(
     {
       where: {
         projectId: targetProjectId ?? 0,
@@ -122,10 +123,13 @@ export function CopyMoveDialog({
     { enabled: !!targetProjectId }
   );
 
-  const { mutateAsync: createFolder } = useCreateRepositoryFolders();
+  const { mutateAsync: createFolder } =
+    useClientQueries(schema).repositoryFolders.useCreate();
 
   // ── Folder-mode data hooks ────────────────────────────────────────────────
-  const { data: sourceFolders = [] } = useFindManyRepositoryFolders(
+  const { data: sourceFolders = [] } = useClientQueries(
+    schema
+  ).repositoryFolders.useFindMany(
     sourceFolderId
       ? {
           where: { projectId: sourceProjectId, isDeleted: false },
@@ -156,15 +160,17 @@ export function CopyMoveDialog({
     return new Set(folderSubtreeIds);
   }, [sourceFolderId, targetProjectId, sourceProjectId, folderSubtreeIds]);
 
-  const { data: folderCases = [] } = useFindManyRepositoryCases(
-    folderSubtreeIds.length > 0
-      ? {
-          where: { folderId: { in: folderSubtreeIds }, isDeleted: false },
-          select: { id: true, folderId: true },
-        }
-      : undefined,
-    { enabled: folderSubtreeIds.length > 0 }
-  );
+  // Fetch every case in the source subtree via POST (single root folderId → the
+  // server resolves descendants with a recursive CTE) so a deep tree can't
+  // overflow the GET query string with a huge `folderId: { in: [...] }` array
+  // (HTTP 414). Returns the same { id, folderId } rows as the old useFindMany.
+  const { data: folderCases = [] } = useFindManyRepositoryCasesByDescendants({
+    projectId: sourceProjectId,
+    folderId: sourceFolderId ?? 0,
+    where: { isDeleted: false },
+    select: { id: true, folderId: true },
+    enabled: !!sourceFolderId,
+  });
 
   // In folder mode use cases from subtree; otherwise fall back to selectedCaseIds
   const effectiveCaseIds = useMemo(() => {
@@ -176,7 +182,9 @@ export function CopyMoveDialog({
 
   // Case-mode: look up the source folders of the selected cases so we can
   // detect same-folder moves when sourceFolderId is not provided.
-  const { data: selectedCases = [] } = useFindManyRepositoryCases(
+  const { data: selectedCases = [] } = useClientQueries(
+    schema
+  ).repositoryCases.useFindMany(
     sourceFolderId === undefined && selectedCaseIds.length > 0
       ? {
           where: { id: { in: selectedCaseIds }, isDeleted: false },
@@ -541,13 +549,13 @@ export function CopyMoveDialog({
                       {p.isCurrent && (
                         <span
                           data-testid="copy-move-project-current-suffix"
-                          className="ml-1 text-xs opacity-60"
+                          className="ms-1 text-xs opacity-60"
                         >
                           {tGlobal("repository.dragDrop.currentSuffix")}
                         </span>
                       )}
                       {p.isCompleted && (
-                        <span className="ml-auto text-xs text-muted-foreground">
+                        <span className="ms-auto text-xs text-muted-foreground">
                           {t("completed")}
                         </span>
                       )}
@@ -571,14 +579,20 @@ export function CopyMoveDialog({
                       fetchOptions={fetchFolders}
                       getOptionValue={(f) => f.id}
                       isOptionDisabled={(f) => disabledFolderIds.has(f.id)}
-                      renderOption={(f) => (
+                      renderOption={(f, query) => (
                         <div
                           data-testid={`copy-move-folder-option-${f.id}`}
                           className="flex items-center gap-1.5"
-                          style={{ paddingLeft: `${f.depth * 12}px` }}
+                          style={{ paddingInlineStart: `${f.depth * 12}px` }}
                         >
                           <FolderOpen className="h-4 w-4 shrink-0 text-muted-foreground" />
-                          <span className="truncate">{f.name}</span>
+                          <span className="truncate">
+                            <HighlightedMatch
+                              text={f.name}
+                              query={query}
+                              testId="folder-filter-match"
+                            />
+                          </span>
                         </div>
                       )}
                       placeholder={tRepo("selectFolderPlaceholder")}
@@ -742,7 +756,7 @@ export function CopyMoveDialog({
                 <Alert className="border-yellow-400 bg-yellow-50 dark:bg-yellow-950/20">
                   <AlertTitle>{t("templateMismatch")}</AlertTitle>
                   <AlertDescription>
-                    <ul className="list-disc pl-4 mt-1 space-y-0.5">
+                    <ul className="list-disc ps-4 mt-1 space-y-0.5">
                       {preflight.missingTemplates.map((tpl) => (
                         <li key={tpl.id} className="text-xs">
                           {tpl.name}
@@ -779,7 +793,7 @@ export function CopyMoveDialog({
                 <Alert className="border-yellow-400 bg-yellow-50 dark:bg-yellow-950/20">
                   <AlertTitle>{t("workflowFallback")}</AlertTitle>
                   <AlertDescription>
-                    <ul className="list-disc pl-4 mt-1 space-y-0.5">
+                    <ul className="list-disc ps-4 mt-1 space-y-0.5">
                       {workflowFallbacks.map((m) => (
                         <li key={m.sourceStateId} className="text-xs">
                           {m.sourceStateName} {"->"} {m.targetStateName}{" "}
@@ -938,6 +952,7 @@ export function CopyMoveDialog({
                   {job.result.errors.length > 0 && (
                     <div className="flex flex-col gap-1">
                       <button
+                        type="button"
                         className="flex items-center gap-1.5 text-sm text-destructive"
                         onClick={() => setErrorsExpanded((v) => !v)}
                       >
@@ -945,7 +960,7 @@ export function CopyMoveDialog({
                         {t("errorCount", { count: job.result.errors.length })}
                       </button>
                       {errorsExpanded && (
-                        <ul className="text-xs space-y-1 pl-5 list-disc">
+                        <ul className="text-xs space-y-1 ps-5 list-disc">
                           {job.result.errors.map((err) => (
                             <li key={err.caseId}>
                               <span className="font-medium">
@@ -1011,7 +1026,7 @@ export function CopyMoveDialog({
                 disabled={!canGo}
               >
                 {job.isPrefighting ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  <Loader2 className="h-4 w-4 animate-spin me-2" />
                 ) : null}
                 {t("go")}
               </Button>

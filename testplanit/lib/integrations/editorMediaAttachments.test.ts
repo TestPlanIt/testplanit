@@ -133,6 +133,7 @@ describe("editorMediaAttachments", () => {
           filename: "shot.png",
           buffer: Buffer.from("png-bytes"),
           mimeType: "image/png",
+          src: "/api/storage/uploads/document-images/5/shot.png_1753651200000_shot.png",
         },
       ]);
     });
@@ -190,6 +191,7 @@ describe("editorMediaAttachments", () => {
           filename: "embedded-media-1.png",
           buffer: Buffer.from("inline"),
           mimeType: "image/png",
+          src: `data:image/png;base64,${Buffer.from("inline").toString("base64")}`,
         },
       ]);
     });
@@ -214,6 +216,7 @@ describe("editorMediaAttachments", () => {
           filename: "ok.jpg",
           buffer: Buffer.from("ok-bytes"),
           mimeType: "image/jpeg",
+          src: "/api/storage/uploads/ok.jpg",
         },
       ]);
       expect(consoleError).toHaveBeenCalled();

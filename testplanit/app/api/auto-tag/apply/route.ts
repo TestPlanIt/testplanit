@@ -4,7 +4,7 @@ import { z } from "zod/v4";
 import { updateAuditContext } from "~/lib/auditContext";
 import { auditedTransaction } from "~/lib/audit/auditedTransaction";
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
 
 const applySchema = z.object({
@@ -44,25 +44,51 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     // Deduplicate tag names
     const uniqueTagNames = [...new Set(suggestions.map((s) => s.tagName))];
 
-    // Check which tags already exist before the transaction
-    const existingTags = await prisma.tags.findMany({
-      where: { name: { in: uniqueTagNames } },
+    // Check which tags already exist before the transaction — case-insensitive
+    // and active only. Tag identity is case-insensitive everywhere else in the
+    // app (see app/api/admin/tags/create/route.ts); an exact `in` match here
+    // let the LLM tagger create fresh "regression"/"Regression"-style
+    // duplicates whenever it suggested a different casing than what already
+    // existed.
+    const existingTags = await baseDb.tags.findMany({
+      where: {
+        isDeleted: false,
+        OR: uniqueTagNames.map((name) => ({
+          name: { equals: name, mode: "insensitive" as const },
+        })),
+      },
       select: { id: true, name: true },
     });
-    const existingTagNames = new Set(existingTags.map((t) => t.name));
 
-    // Upsert all tags outside the transaction (idempotent, safe without tx)
+    // Map each suggested name (whatever case the LLM produced) to the id of
+    // the existing tag it case-insensitively matches, if any.
     const tagMap = new Map<string, number>();
-    for (const tag of existingTags) {
-      tagMap.set(tag.name, tag.id);
+    for (const suggestedName of uniqueTagNames) {
+      const match = existingTags.find(
+        (t) => t.name.toLowerCase() === suggestedName.toLowerCase()
+      );
+      if (match) tagMap.set(suggestedName, match.id);
     }
-    const newTagNames = uniqueTagNames.filter((n) => !existingTagNames.has(n));
+
+    // Upsert genuinely new tags outside the transaction (idempotent, safe
+    // without tx). A case-variant may exist soft-deleted — restore that
+    // instead of creating a duplicate, mirroring the admin/CLI tag flows.
+    const newTagNames = uniqueTagNames.filter((n) => !tagMap.has(n));
     for (const name of newTagNames) {
-      const tag = await prisma.tags.upsert({
-        where: { name },
-        create: { name },
-        update: {},
+      const deletedTag = await baseDb.tags.findFirst({
+        where: { name: { equals: name, mode: "insensitive" }, isDeleted: true },
+        select: { id: true },
       });
+      const tag = deletedTag
+        ? await baseDb.tags.update({
+            where: { id: deletedTag.id },
+            data: { isDeleted: false },
+          })
+        : await baseDb.tags.upsert({
+            where: { name },
+            create: { name },
+            update: {},
+          });
       tagMap.set(name, tag.id);
     }
 
@@ -77,46 +103,52 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     }
 
     // Connect tags to entities in a single transaction with extended timeout
-    await auditedTransaction(
-      async (tx) => {
-        for (const [key, tagIds] of entityOps) {
-          const [entityType, entityIdStr] = key.split(":");
-          const entityId = Number(entityIdStr);
-          const connectData = tagIds.map((id) => ({ id }));
+    await auditedTransaction(async (tx) => {
+      for (const [key, tagIds] of entityOps) {
+        const [entityType, entityIdStr] = key.split(":");
+        const entityId = Number(entityIdStr);
+        const connectData = tagIds.map((id) => ({ id }));
 
-          switch (entityType) {
-            case "repositoryCase":
-              await tx.repositoryCases.update({
-                where: { id: entityId },
-                data: { tags: { connect: connectData } },
-              });
-              break;
-            case "testRun":
-              await tx.testRuns.update({
-                where: { id: entityId },
-                data: { tags: { connect: connectData } },
-              });
-              break;
-            case "session":
-              await tx.sessions.update({
-                where: { id: entityId },
-                data: { tags: { connect: connectData } },
-              });
-              break;
+        switch (entityType) {
+          case "repositoryCase": {
+            // Ensure the case exists so a missing entity still rolls back
+            // the transaction (preserves "Record to update not found").
+            const existingCase = await tx.repositoryCases.findUnique({
+              where: { id: entityId },
+              select: { id: true },
+            });
+            if (!existingCase) {
+              throw new Error("Record to update not found");
+            }
+            await tx.repositoryCaseTag.createMany({
+              data: tagIds.map((tagId) => ({
+                caseId: entityId,
+                tagId,
+              })),
+              skipDuplicates: true,
+            });
+            break;
           }
+          case "testRun":
+            await tx.testRuns.update({
+              where: { id: entityId },
+              data: { tags: { connect: connectData } },
+            });
+            break;
+          case "session":
+            await tx.sessions.update({
+              where: { id: entityId },
+              data: { tags: { connect: connectData } },
+            });
+            break;
         }
-      },
-      { timeout: 30000 }
-    );
-
-    const tagsCreated = uniqueTagNames.filter(
-      (name) => !existingTagNames.has(name)
-    ).length;
+      }
+    });
 
     return NextResponse.json({
       applied: suggestions.length,
-      tagsCreated,
-      tagsReused: uniqueTagNames.length - tagsCreated,
+      tagsCreated: newTagNames.length,
+      tagsReused: uniqueTagNames.length - newTagNames.length,
     });
   } catch (error: any) {
     console.error("Auto-tag apply error:", error);

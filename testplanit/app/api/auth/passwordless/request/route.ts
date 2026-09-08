@@ -53,26 +53,28 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     return NextResponse.json({ error: "Invalid CSRF token" }, { status: 403 });
   }
 
-  // Exact-match semantics (trim only) — the same lookup behavior as the
-  // stock EmailProvider flow and /api/auth/send-magic-link.
+  // Trimmed, then matched case-insensitively — the same lookup behavior as
+  // the stock EmailProvider flow and /api/auth/send-magic-link.
   const email = body.email.trim();
   const auditCtx = extractAuditContextFromRequest(req);
   const ip = auditCtx.ipAddress ?? "unknown";
 
   // Throttle before any account lookup so limits apply uniformly to real and
   // unknown emails (no enumeration signal via 429s).
-  const ipAllowed = checkRateLimit(`passwordless:request:ip:${ip}`, {
-    windowMs: 60_000,
-    maxAttempts: 10,
-  });
-  // Case-folded key so case variants can't sidestep the per-email limit.
-  const emailAllowed = checkRateLimit(
-    `passwordless:request:email:${email.toLowerCase()}`,
-    {
+  // Promise.all rather than two sequential awaits so BOTH limiters are always
+  // counted — `await a || await b` would short-circuit and leave the per-email
+  // counter un-incremented whenever the IP limit already tripped.
+  const [ipAllowed, emailAllowed] = await Promise.all([
+    checkRateLimit(`passwordless:request:ip:${ip}`, {
+      windowMs: 60_000,
+      maxAttempts: 10,
+    }),
+    // Case-folded key so case variants can't sidestep the per-email limit.
+    checkRateLimit(`passwordless:request:email:${email.toLowerCase()}`, {
       windowMs: 60_000,
       maxAttempts: 3,
-    }
-  );
+    }),
+  ]);
   if (!ipAllowed || !emailAllowed) {
     return NextResponse.json(
       { error: "Too many requests. Please wait a moment and try again." },
@@ -94,14 +96,17 @@ export const POST = withAuditContext(async (req: NextRequest) => {
   // respond than unknown ones.
   void (async () => {
     try {
-      const user = await db.user.findUnique({
-        where: { email },
-        select: {
-          id: true,
-          isActive: true,
-          userPreferences: { select: { locale: true } },
-        },
-      });
+      const select = {
+        id: true,
+        isActive: true,
+        userPreferences: { select: { locale: true } },
+      } as const;
+      const user =
+        (await db.user.findUnique({ where: { email }, select })) ??
+        (await db.user.findFirst({
+          where: { email: { equals: email, mode: "insensitive" } },
+          select,
+        }));
       if (!user || !user.isActive) return;
 
       const baseUrl = getAppBaseUrl(req);

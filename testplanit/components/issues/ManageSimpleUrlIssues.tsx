@@ -1,5 +1,7 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { Button } from "@/components/ui/button";
 import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
@@ -24,11 +26,10 @@ import { Label } from "@/components/ui/label";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { Asterisk, ExternalLink, Link2, Plus, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod/v4";
-import { useFindManyIssue, useUpsertIssue } from "~/lib/hooks";
 import { buildSimpleUrlLink } from "~/lib/integrations/simpleUrl";
 
 interface ManageSimpleUrlIssuesProps {
@@ -80,14 +81,15 @@ export function ManageSimpleUrlIssues({
   }, [isAddOpen, form]);
 
   // Fetch linked issues
-  const { data: issues, refetch } = useFindManyIssue({
+  const { data: issues, refetch } = useClientQueries(schema).issue.useFindMany({
     where: {
       id: { in: linkedIssueIds },
       isDeleted: false,
     },
   });
 
-  const { mutateAsync: upsertIssue } = useUpsertIssue();
+  const { mutateAsync: upsertIssue } =
+    useClientQueries(schema).issue.useUpsert();
 
   const watchedIssueId =
     useWatch({ control: form.control, name: "issueId" }) || "";
@@ -133,6 +135,58 @@ export function ManageSimpleUrlIssues({
     }
   };
 
+  // AsyncCombobox refetches whenever `fetchOptions` changes identity, so it
+  // must stay referentially stable across renders — an inline arrow resets
+  // the dropdown to page 0 on every render and it can never load more.
+  const fetchLinkableIssues = useCallback(
+    async (query: string, page: number, pageSize: number) => {
+      // Search existing SIMPLE_URL issues for this integration,
+      // excluding ones already linked. Use the ZenStack REST API.
+      const whereClause: any = {
+        integrationId,
+        isDeleted: false,
+      };
+      if (linkedIssueIds.length > 0) {
+        whereClause.id = { notIn: linkedIssueIds };
+      }
+      if (query) {
+        whereClause.OR = [
+          { name: { contains: query, mode: "insensitive" } },
+          { title: { contains: query, mode: "insensitive" } },
+          { externalId: { contains: query, mode: "insensitive" } },
+        ];
+      }
+
+      try {
+        const q = encodeURIComponent(
+          JSON.stringify({
+            where: whereClause,
+            orderBy: { name: "asc" },
+            take: pageSize,
+            skip: page * pageSize,
+            select: { id: true, name: true, title: true },
+          })
+        );
+        const countQ = encodeURIComponent(
+          JSON.stringify({ where: whereClause })
+        );
+        const [listRes, countRes] = await Promise.all([
+          fetch(`/api/model/issue/findMany?q=${q}`),
+          fetch(`/api/model/issue/count?q=${countQ}`),
+        ]);
+        const listJson = await listRes.json();
+        const countJson = await countRes.json();
+        return {
+          results: listJson.data ?? listJson ?? [],
+          total: countJson.data ?? countJson ?? 0,
+        };
+      } catch {
+        return { results: [], total: 0 };
+      }
+    },
+    [integrationId, linkedIssueIds]
+  );
+
   const handleRemoveIssue = (removeId: number) => {
     setLinkedIssueIds(linkedIssueIds.filter((id) => id !== removeId));
     toast.success(t("common.status.deleted"));
@@ -161,7 +215,7 @@ export function ManageSimpleUrlIssues({
           return (
             <div
               key={issue.id}
-              className="inline-flex items-center rounded-md bg-primary text-primary-foreground pl-0.5 pr-0.5 py-0 gap-0.5"
+              className="inline-flex items-center rounded-md bg-primary text-primary-foreground ps-0.5 pe-0.5 py-0 gap-0.5"
             >
               <IssuesDisplay
                 id={issue.id}
@@ -341,51 +395,7 @@ export function ManageSimpleUrlIssues({
             <AsyncCombobox<{ id: number; name: string; title: string | null }>
               value={selectedExisting}
               onValueChange={setSelectedExisting}
-              fetchOptions={async (query, page, pageSize) => {
-                // Search existing SIMPLE_URL issues for this integration,
-                // excluding ones already linked. Use the ZenStack REST API.
-                const whereClause: any = {
-                  integrationId,
-                  isDeleted: false,
-                };
-                if (linkedIssueIds.length > 0) {
-                  whereClause.id = { notIn: linkedIssueIds };
-                }
-                if (query) {
-                  whereClause.OR = [
-                    { name: { contains: query, mode: "insensitive" } },
-                    { title: { contains: query, mode: "insensitive" } },
-                    { externalId: { contains: query, mode: "insensitive" } },
-                  ];
-                }
-
-                try {
-                  const q = encodeURIComponent(
-                    JSON.stringify({
-                      where: whereClause,
-                      orderBy: { name: "asc" },
-                      take: pageSize,
-                      skip: page * pageSize,
-                      select: { id: true, name: true, title: true },
-                    })
-                  );
-                  const countQ = encodeURIComponent(
-                    JSON.stringify({ where: whereClause })
-                  );
-                  const [listRes, countRes] = await Promise.all([
-                    fetch(`/api/model/issue/findMany?q=${q}`),
-                    fetch(`/api/model/issue/count?q=${countQ}`),
-                  ]);
-                  const listJson = await listRes.json();
-                  const countJson = await countRes.json();
-                  return {
-                    results: listJson.data ?? listJson ?? [],
-                    total: countJson.data ?? countJson ?? 0,
-                  };
-                } catch {
-                  return { results: [], total: 0 };
-                }
-              }}
+              fetchOptions={fetchLinkableIssues}
               renderOption={(issue) => (
                 <span className="truncate">
                   {issue.name}

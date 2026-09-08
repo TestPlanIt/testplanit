@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { useTranslations } from "next-intl";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NotificationContent } from "./NotificationContent";
@@ -94,6 +94,8 @@ describe("NotificationContent", () => {
         aiStepsDerivedMessage:
           "{count} test cases were given AI-derived steps — review for accuracy.",
         aiStepsDerivedReviewLink: "Review test run",
+        runReadyToCompleteTitle: "Test Run Ready to Complete",
+        runReadyToCompleteExecuted: "All {count} cases have been executed.",
       };
 
       let result = translations[key] || key;
@@ -316,6 +318,55 @@ describe("NotificationContent", () => {
 
       expect(screen.getByText("stored fallback message")).toBeInTheDocument();
       // No run link when projectId/testRunId are missing
+      expect(screen.queryByRole("link")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("Run Ready To Complete", () => {
+    it("should render the run link and the localized message", () => {
+      const notification = {
+        id: "ready-1",
+        type: "RUN_READY_TO_COMPLETE",
+        title: "Test run ready to complete",
+        message: "stored fallback message",
+        data: {
+          projectId: 456,
+          testRunId: 123,
+          testRunName: "Nightly CI",
+          projectName: "Checkout",
+          caseCount: 12,
+        },
+      };
+
+      render(<NotificationContent notification={notification} />);
+
+      expect(
+        screen.getByTestId("notification-run-ready-to-complete")
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(/All 12 cases have been executed/)
+      ).toBeInTheDocument();
+      // The run is named the same way every other notification names one.
+      expect(screen.getByText("Nightly CI")).toBeInTheDocument();
+      // The Link mock in this file drops extra props, so assert by role the
+      // way the sibling AI_STEPS_DERIVED case does.
+      const link = screen.getByRole("link");
+      expect(link).toHaveAttribute("href", "/projects/runs/456/123");
+      expect(screen.getByText("Nightly CI")).toBeInTheDocument();
+    });
+
+    it("should fall back to the stored title/message when data is incomplete", () => {
+      const notification = {
+        id: "ready-2",
+        type: "RUN_READY_TO_COMPLETE",
+        title: "Test run ready to complete",
+        message: "stored fallback message",
+        data: {},
+      };
+
+      render(<NotificationContent notification={notification} />);
+
+      expect(screen.getByText("stored fallback message")).toBeInTheDocument();
       expect(screen.queryByRole("link")).not.toBeInTheDocument();
     });
   });
@@ -753,6 +804,58 @@ describe("NotificationContent", () => {
       expect(
         screen.queryByText("reviewReminderHoursPending")
       ).not.toBeInTheDocument();
+    });
+
+    it("renders a 0-hour reminder exactly like one with no hoursPending at all", () => {
+      // A manually sent reminder has no minimum age — nudge a request seconds
+      // after creating it and hoursPending is 0. The scheduled scan can never
+      // produce that (its threshold floor is a full day), so this path was
+      // unreachable until reminders became sendable on demand.
+      //
+      // Asserting the two renders are textually IDENTICAL is what catches the
+      // bug: under `data.hoursPending && (...)`, 0 short-circuits to the
+      // number 0, which React renders as a bare text node with no surrounding
+      // whitespace ("...reviewTransition0"). Matching on a "0" substring is
+      // too weak to notice that; equality with the absent-value render is not.
+      const base = {
+        reviewRequestId: "rr-3",
+        requesterUserId: "user-r",
+        requesterName: "Alice",
+        projectId: 100,
+        projectName: "Project Alpha",
+        entityType: "CASE",
+        entityId: 7,
+        entityName: "Login flow",
+        fromStateName: "Draft",
+        toStateName: "Approved",
+      };
+      const notification = (data: Record<string, unknown>) => ({
+        id: "rr-3",
+        type: "REVIEW_REMINDER",
+        title: "Review still pending",
+        message: "fallback",
+        data,
+      });
+
+      const absent = render(
+        <NotificationContent notification={notification({ ...base })} />
+      );
+      const absentText = absent.container.textContent;
+      cleanup();
+
+      const zero = render(
+        <NotificationContent
+          notification={notification({ ...base, hoursPending: 0 })}
+        />
+      );
+
+      expect(zero.container.textContent).toBe(absentText);
+      expect(zero.container.textContent).not.toMatch(/0$/);
+      expect(
+        screen.queryByText("reviewReminderHoursPending")
+      ).not.toBeInTheDocument();
+      expect(screen.getByText("reviewReminderTitle")).toBeInTheDocument();
+      expect(screen.getByText("reviewReminderAction")).toBeInTheDocument();
     });
   });
 

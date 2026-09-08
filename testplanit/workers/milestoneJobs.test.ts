@@ -9,8 +9,8 @@ vi.mock("../lib/services/notificationService", () => ({
   },
 }));
 
-// Mock prisma with milestone methods
-const mockPrisma = {
+// Mock baseDb with milestone methods
+const mockDb = {
   milestones: {
     findMany: vi.fn(),
     update: vi.fn(),
@@ -20,13 +20,13 @@ const mockPrisma = {
   },
 };
 
-vi.mock("../lib/prisma", () => ({
-  prisma: mockPrisma,
+vi.mock("../lib/db", () => ({
+  baseDb: mockDb,
 }));
 
-// Mock multiTenantPrisma
-vi.mock("../lib/multiTenantPrisma", () => ({
-  getPrismaClientForJob: vi.fn(() => mockPrisma),
+// Mock multiTenantDb
+vi.mock("../lib/multiTenantDb", () => ({
+  getDbClientForJob: vi.fn(() => mockDb),
   isMultiTenantMode: vi.fn(() => false),
   validateMultiTenantJobData: vi.fn(),
   disconnectAllTenantClients: vi.fn(),
@@ -47,6 +47,22 @@ vi.mock("../services/forecastService", () => ({
   updateRepositoryCaseForecast: vi.fn(),
   getUniqueCaseGroupIds: vi.fn(),
   updateTestRunForecast: vi.fn(),
+}));
+
+// Mock audit context + audit log so the real `processor` can run end-to-end
+// without touching AsyncLocalStorage or a real audit sink.
+vi.mock("../lib/auditContext", () => ({
+  runWithAuditContext: (_context: unknown, fn: () => unknown) => fn(),
+}));
+const mockCaptureAuditEvent = vi.fn().mockResolvedValue(undefined);
+vi.mock("../lib/services/auditLog", () => ({
+  captureAuditEvent: (...args: any[]) => mockCaptureAuditEvent(...args),
+}));
+vi.mock("../lib/services/reviewReminderConfig", () => ({
+  getReviewReminderThresholdDays: vi.fn().mockResolvedValue(0),
+}));
+vi.mock("../lib/webhooks/event-emitters/reviewEvents", () => ({
+  emitReviewReminderEvent: vi.fn(),
 }));
 
 describe("Milestone Auto-Completion Job", () => {
@@ -85,15 +101,15 @@ describe("Milestone Auto-Completion Job", () => {
         },
       ];
 
-      mockPrisma.milestones.findMany.mockResolvedValue(mockMilestones);
-      mockPrisma.milestones.update.mockResolvedValue({});
+      mockDb.milestones.findMany.mockResolvedValue(mockMilestones);
+      mockDb.milestones.update.mockResolvedValue({});
 
       // The query should filter for:
       // - isCompleted: false
       // - isDeleted: false
       // - automaticCompletion: true
       // - completedAt <= now (due date has passed)
-      expect(mockPrisma.milestones.findMany).not.toHaveBeenCalled();
+      expect(mockDb.milestones.findMany).not.toHaveBeenCalled();
     });
 
     it("should not auto-complete milestones without automaticCompletion flag", async () => {
@@ -103,10 +119,10 @@ describe("Milestone Auto-Completion Job", () => {
       // Milestone without automaticCompletion should not be returned
       const mockMilestones: any[] = [];
 
-      mockPrisma.milestones.findMany.mockResolvedValue(mockMilestones);
+      mockDb.milestones.findMany.mockResolvedValue(mockMilestones);
 
       // No milestones should be updated
-      expect(mockPrisma.milestones.update).not.toHaveBeenCalled();
+      expect(mockDb.milestones.update).not.toHaveBeenCalled();
     });
 
     it("should not auto-complete milestones with future due date", async () => {
@@ -116,9 +132,82 @@ describe("Milestone Auto-Completion Job", () => {
       // Milestone with future due date should not be returned by the query
       const mockMilestones: any[] = [];
 
-      mockPrisma.milestones.findMany.mockResolvedValue(mockMilestones);
+      mockDb.milestones.findMany.mockResolvedValue(mockMilestones);
 
-      expect(mockPrisma.milestones.update).not.toHaveBeenCalled();
+      expect(mockDb.milestones.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("JOB_AUTO_COMPLETE_MILESTONES — LOCK-04 (real processor invocation)", () => {
+    it("queries local-or-detached only so an actively-synced milestone is never returned even when automaticCompletion is true and completedAt is in the past", async () => {
+      const { processor, JOB_AUTO_COMPLETE_MILESTONES } =
+        await import("./forecastWorker");
+
+      // Real query behavior: an actively-synced milestone (integrationId
+      // set, detachedAt null) with automaticCompletion=true and a past
+      // completedAt would match every OTHER filter — only the
+      // local-or-detached OR clause excludes it (LOCK-04 + HOOK-02: a
+      // converted milestone keeps integrationId non-null but becomes
+      // eligible again once detachedAt is set). The mock simply returns []
+      // (as a correctly-scoped real Postgres query would when the only
+      // matching row is actively synced) so this test asserts the
+      // where-clause shape itself, not simulated DB filtering.
+      mockDb.milestones.findMany.mockResolvedValue([]);
+
+      const job = {
+        id: "job-lock04",
+        name: JOB_AUTO_COMPLETE_MILESTONES,
+        data: { tenantId: undefined, actorContext: {} },
+      } as any;
+
+      await processor(job);
+
+      expect(mockDb.milestones.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            OR: [{ integrationId: null }, { detachedAt: { not: null } }],
+          }),
+        })
+      );
+      // No milestone was returned (the synced one is filtered out), so
+      // nothing gets auto-completed.
+      expect(mockDb.milestones.update).not.toHaveBeenCalled();
+    });
+
+    it("auto-completes a LOCAL milestone (integrationId: null) matching all criteria", async () => {
+      const { processor, JOB_AUTO_COMPLETE_MILESTONES } =
+        await import("./forecastWorker");
+
+      const pastDueDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      mockDb.milestones.findMany.mockResolvedValue([
+        {
+          id: 42,
+          name: "Local Milestone",
+          projectId: 100,
+        },
+      ]);
+      mockDb.milestones.update.mockResolvedValue({});
+
+      const job = {
+        id: "job-lock04-local",
+        name: JOB_AUTO_COMPLETE_MILESTONES,
+        data: { tenantId: undefined, actorContext: {} },
+      } as any;
+
+      await processor(job);
+
+      expect(mockDb.milestones.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            OR: [{ integrationId: null }, { detachedAt: { not: null } }],
+          }),
+        })
+      );
+      expect(mockDb.milestones.update).toHaveBeenCalledWith({
+        where: { id: 42 },
+        data: { isCompleted: true },
+      });
+      void pastDueDate; // fixture context only — the mocked findMany already returns the "matching" row
     });
   });
 });
@@ -152,21 +241,21 @@ describe("Milestone Due Notifications Job", () => {
         },
       ];
 
-      mockPrisma.milestones.findMany.mockResolvedValue(mockMilestones);
+      mockDb.milestones.findMany.mockResolvedValue(mockMilestones);
 
       // The query should filter for:
       // - isCompleted: false
       // - isDeleted: false
       // - notifyDaysBefore > 0
       // - completedAt is set (has a due date)
-      expect(mockPrisma.milestones.findMany).not.toHaveBeenCalled();
+      expect(mockDb.milestones.findMany).not.toHaveBeenCalled();
     });
 
     it("should not send notifications for milestones with notifyDaysBefore = 0", async () => {
       // Milestones with notifyDaysBefore = 0 should not be in the query results
       const mockMilestones: any[] = [];
 
-      mockPrisma.milestones.findMany.mockResolvedValue(mockMilestones);
+      mockDb.milestones.findMany.mockResolvedValue(mockMilestones);
 
       expect(mockCreateMilestoneDueNotification).not.toHaveBeenCalled();
     });
@@ -175,7 +264,7 @@ describe("Milestone Due Notifications Job", () => {
       // Milestones without completedAt should not be in the query results
       const mockMilestones: any[] = [];
 
-      mockPrisma.milestones.findMany.mockResolvedValue(mockMilestones);
+      mockDb.milestones.findMany.mockResolvedValue(mockMilestones);
 
       expect(mockCreateMilestoneDueNotification).not.toHaveBeenCalled();
     });

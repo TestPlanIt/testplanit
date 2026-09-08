@@ -1,5 +1,5 @@
-import { getCurrentTenantId, isMultiTenantMode } from "@/lib/multiTenantPrisma";
-import { prisma } from "@/lib/prisma";
+import { getCurrentTenantId, isMultiTenantMode } from "@/lib/multiTenantDb";
+import { baseDb } from "@/lib/db";
 import { getAllQueues } from "@/lib/queues";
 import { Job, Queue } from "bullmq";
 import { NextRequest, NextResponse } from "next/server";
@@ -54,7 +54,7 @@ export async function GET(
     }
 
     if (!userAccess) {
-      const user = await prisma.user.findUnique({
+      const user = await baseDb.user.findUnique({
         where: { id: userId },
         select: { access: true },
       });

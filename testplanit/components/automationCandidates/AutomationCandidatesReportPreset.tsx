@@ -1,5 +1,7 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,9 +24,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
-import { ApplicationArea, RepositoryCaseSource } from "@prisma/client";
+import { ApplicationArea, RepositoryCaseSource } from "~/zenstack/models";
 import { keepPreviousData, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Loader2, Bot, Trash2 } from "lucide-react";
+import { AlertTriangle, Loader2, Bot, Trash } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
@@ -33,12 +35,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "~/lib/navigation";
 
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import {
-  useFindManyLlmReportSnapshot,
-  useFindManyRepositoryCases,
-} from "~/lib/hooks";
 
 import {
+  dedupeCandidatesByCaseId,
   extractCandidatesFromBuffer,
   extractSummaryFromBuffer,
   type PartialCandidate,
@@ -154,7 +153,7 @@ export function AutomationCandidatesReportPreset({
     data: history,
     isLoading: historyLoadingRaw,
     refetch: refetchHistory,
-  } = useFindManyLlmReportSnapshot(
+  } = useClientQueries(schema).llmReportSnapshot.useFindMany(
     {
       where: {
         projectId,
@@ -222,18 +221,28 @@ export function AutomationCandidatesReportPreset({
 
   // Default to the newest snapshot whenever the list changes — flips to a
   // freshly generated one without the user having to do anything.
+  //
+  // IMPORTANT: this auto-default updates LOCAL state only and must NOT write the
+  // URL. This effect fires on mount, and when the preset mounts as part of
+  // switching to the Reports tab (automation-candidates is the first pre-built
+  // report), an automatic router.replace built from the still-stale searchParams
+  // overwrites the in-flight tab/reportType navigation — bouncing the user back
+  // to Report Builder and leaving a stray ?snapshotId. Explicit snapshot
+  // selection (the dropdown) still goes through setSelectedSnapshotId and writes
+  // the URL for share fidelity; an un-pinned auto-default resolves to "latest"
+  // anyway, which is exactly the newest snapshot selected here.
   useEffect(() => {
     if (snapshots.length === 0) {
-      if (selectedSnapshotId !== null) setSelectedSnapshotId(null);
+      if (selectedSnapshotId !== null) setSelectedSnapshotIdState(null);
       return;
     }
     if (
       selectedSnapshotId === null ||
       !snapshots.some((s) => s.id === selectedSnapshotId)
     ) {
-      setSelectedSnapshotId(snapshots[0]!.id);
+      setSelectedSnapshotIdState(snapshots[0]!.id);
     }
-  }, [snapshots, selectedSnapshotId, setSelectedSnapshotId]);
+  }, [snapshots, selectedSnapshotId]);
 
   const selectedSnapshot = snapshots.find((s) => s.id === selectedSnapshotId);
 
@@ -477,11 +486,18 @@ export function AutomationCandidatesReportPreset({
 
   // --- Derived render data --------------------------------------------
 
-  const renderedCandidates = generating
-    ? liveCandidates
-    : selectedSnapshot?.status === "complete" && selectedSnapshot.output != null
-      ? (selectedSnapshot.output as unknown as SnapshotOutput).candidates
-      : [];
+  // Dedupe on render (not just at snapshot-write time) so live streams and
+  // snapshots persisted with a repeated caseId still render one row per case
+  // — RankedList keys rows by caseId.
+  const renderedCandidates = useMemo(() => {
+    const candidates = generating
+      ? liveCandidates
+      : selectedSnapshot?.status === "complete" &&
+          selectedSnapshot.output != null
+        ? (selectedSnapshot.output as unknown as SnapshotOutput).candidates
+        : [];
+    return dedupeCandidatesByCaseId(candidates);
+  }, [generating, liveCandidates, selectedSnapshot]);
 
   const renderedSummary = generating
     ? liveSummary
@@ -668,12 +684,12 @@ export function AutomationCandidatesReportPreset({
                 void onDeleteConfirm();
               }}
               disabled={deleting}
-              className="bg-destructive hover:bg-destructive/90"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {deleting ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <Trash2 className="h-4 w-4" />
+                <Trash className="h-4 w-4" />
               )}
               {t("delete.confirm")}
             </AlertDialogAction>
@@ -956,7 +972,7 @@ function SnapshotMetaBar({
           strategy: strategyLabel,
         })
       : t("sourcedFromAll", {
-          total: String(output.totalManualCases),
+          total: output.totalManualCases,
           strategy: strategyLabel,
         })
     : null;
@@ -982,7 +998,7 @@ function SnapshotMetaBar({
           onClick={onDeleteRequest}
           data-testid="automation-candidates-delete"
         >
-          <Trash2 className="h-4 w-4" />
+          <Trash className="h-4 w-4" />
           {t("delete.button")}
         </Button>
       )}
@@ -1026,7 +1042,9 @@ function RankedList({
   // may have been renamed since the snapshot was generated) — the
   // snapshot stores the ranking, the cases keep their own state.
   const caseIds = useMemo(() => candidates.map((c) => c.caseId), [candidates]);
-  const { data: caseRecords } = useFindManyRepositoryCases(
+  const { data: caseRecords } = useClientQueries(
+    schema
+  ).repositoryCases.useFindMany(
     {
       where: { id: { in: caseIds }, projectId },
       select: {
@@ -1120,7 +1138,7 @@ function RankedList({
                   className="grid grid-cols-[auto_1fr_auto] gap-3 items-start border rounded-md p-3"
                   data-testid={`automation-candidate-${c.caseId}`}
                 >
-                  <div className="text-sm font-mono text-muted-foreground w-8 text-right shrink-0 pt-0.5">
+                  <div className="text-sm font-mono text-muted-foreground w-8 text-end shrink-0 pt-0.5">
                     {`#${c.rank}`}
                   </div>
                   <div className="min-w-0 space-y-1">
@@ -1152,7 +1170,7 @@ function RankedList({
                       {c.rationale}
                     </p>
                   </div>
-                  <div className="flex flex-col items-end gap-1 max-w-[140px] text-xs text-right pt-0.5 break-words [&_*]:whitespace-normal">
+                  <div className="flex flex-col items-end gap-1 max-w-[140px] text-xs text-end pt-0.5 break-words [&_*]:whitespace-normal">
                     <Badge variant="default">
                       {t("rankedList.score", {
                         score: String(Math.round(c.score)),

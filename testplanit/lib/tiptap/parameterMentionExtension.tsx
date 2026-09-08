@@ -368,8 +368,7 @@ export function createParameterMentionExtension(
             },
             render: () => {
               let component:
-                | ReactRenderer<ParameterMentionSuggestionRef>
-                | undefined;
+                ReactRenderer<ParameterMentionSuggestionRef> | undefined;
               let popup: TippyInstance[] | undefined;
 
               return {

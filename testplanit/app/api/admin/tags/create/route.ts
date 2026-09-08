@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
-import { Prisma } from "@prisma/client";
-import { prisma } from "~/lib/prisma";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
+import { baseDb } from "~/lib/db";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { getServerAuthSession } from "~/server/auth";
 
@@ -39,7 +39,7 @@ const createSchema = z.object({
   name: z.string().min(1),
 });
 
-// Wrapped in withAuditContext so the audit entry emitted by the prisma.tags
+// Wrapped in withAuditContext so the audit entry emitted by the baseDb.tags
 // create hook carries the actor: the wrapper seeds the ALS frame and the
 // NextAuth session callback (fired by getServerAuthSession below) enriches it
 // with userId/userEmail/userName. Without the frame that enrichment is a no-op.
@@ -68,7 +68,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
   }
 
   // Detection step (case-insensitive match per existing UX).
-  const existing = await prisma.tags.findFirst({
+  const existing = await baseDb.tags.findFirst({
     where: { name: { equals: body.name, mode: "insensitive" } },
     select: { id: true, name: true, isDeleted: true },
   });
@@ -91,7 +91,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
   }
 
   try {
-    const newTag = await prisma.tags.create({
+    const newTag = await baseDb.tags.create({
       data: { name: body.name },
       select: { id: true, name: true },
     });
@@ -101,11 +101,8 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     // detection and create (DB constraint is case-sensitive, so two
     // requests with "Foo" and "foo" can both pass detection). Fall back
     // to the same detection logic.
-    if (
-      err instanceof Prisma.PrismaClientKnownRequestError &&
-      err.code === "P2002"
-    ) {
-      const racing = await prisma.tags.findFirst({
+    if (isUniqueConstraintError(err)) {
+      const racing = await baseDb.tags.findFirst({
         where: { name: { equals: body.name, mode: "insensitive" } },
         select: { id: true, name: true, isDeleted: true },
       });

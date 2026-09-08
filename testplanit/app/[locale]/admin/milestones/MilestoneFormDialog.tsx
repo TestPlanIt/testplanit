@@ -1,5 +1,7 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import DynamicIcon from "@/components/DynamicIcon";
 import { DatePickerField } from "@/components/forms/DatePickerField";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
@@ -40,9 +42,9 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { z } from "zod/v4";
 import { emptyEditorContent } from "~/app/constants";
-import { useFindManyMilestoneTypes } from "~/lib/hooks";
 import { IconName } from "~/types/globals";
 import { MilestoneFormData } from "./AddMilestonesToProjectsWizard";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 function buildFormSchema(t: (key: any) => string) {
   return z.object({
@@ -94,7 +96,7 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
 
   // Fetch milestone types for all selected projects
   const { data: allMilestoneTypes, isLoading: milestoneTypesLoading } =
-    useFindManyMilestoneTypes({
+    useClientQueries(schema).milestoneTypes.useFindMany({
       where: {
         AND: [
           {
@@ -145,7 +147,7 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
               className="w-5 h-5"
               name={milestoneType.icon?.name as IconName}
             />
-            <span className="ml-1">{milestoneType.name}</span>
+            <span className="ms-1">{milestoneType.name}</span>
           </div>
         ),
       })) || [],
@@ -260,7 +262,7 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
         session.user.id
       );
     } catch (err: any) {
-      if (err.info?.prisma && err.info?.code === "P2002") {
+      if (isUniqueConstraintError(err)) {
         form.setError("name", {
           type: "custom",
           message: t("milestones.errors.nameExists"),
@@ -425,6 +427,7 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
                           <DatePickerField
                             control={control}
                             name="startedAt"
+                            dateOnly
                             label={t("common.fields.startDate")}
                             placeholder={t("common.fields.startDate")}
                             helpKey="milestone.startDate"
@@ -464,6 +467,7 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
                           <DatePickerField
                             control={control}
                             name="completedAt"
+                            dateOnly
                             label={t("milestones.fields.dueDate")}
                             placeholder={t("milestones.fields.dueDate")}
                             helpKey="milestone.dueDate"

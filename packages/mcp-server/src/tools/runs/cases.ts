@@ -1,11 +1,13 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { Prisma } from "@prisma/client";
+import type {
+  TestRunCasesWhereInput,
+} from "@db/input";
 import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
 import {
-  RUN_DETAIL_TESTCASE_INCLUDE,
+  runDetailTestCaseInclude,
   mapRunDetailTestCase,
   type RawRunDetailTestCase,
 } from "./shared.js";
@@ -25,7 +27,7 @@ export function registerRunsCasesList(
     "testplanit_test_runs_cases_list",
     {
       description:
-        "List the test cases assigned to a specific run. Filters: isCompleted, statusId, assignedToId (user id, string). Cursor pagination ordered by `order` then `id`. NOTE: TestRunCases does not have a soft-delete field — case removal from a run is via direct deletion (cascading from the run), not isDeleted. Each row carries `latestResult` (most recent executedAt) inline. (per EXEC-03 / D7-05)",
+        "List the test cases assigned to a specific run. Filters: isCompleted, statusId, assignedToId (user id, string). Cursor pagination ordered by `order` then `id`. Cases removed from the run (soft-deleted rows) are excluded; restore one via testplanit_runs_cases_add. Each row carries `latestResult` (most recent executedAt) inline — a union of manual TestRunResults and run-scoped automated JUnit results, discriminated by `source` (\"TestRun\" | \"JUnit\"); pass both the id and source to testplanit_test_run_results_get. Row `status` is the junction row's status when set, falling back to latestResult.status; the statusId FILTER matches only the junction column, which automated runs (testRunType != REGULAR) never set — filter automated results by status via testplanit_test_run_results_list({runId, statusId}) instead. (per EXEC-03 / D7-05)",
       inputSchema: {
         runId: z.number().int().positive(),
         isCompleted: z.boolean().optional(),
@@ -40,10 +42,10 @@ export function registerRunsCasesList(
     async (input) => {
       try {
         const limit = input.limit ?? DEFAULT_LIMIT;
-        // R1: TestRunCases has NO isDeleted column. The
-        // `Prisma.TestRunCasesWhereInput` annotation makes adding one a TS2353.
-        const where: Prisma.TestRunCasesWhereInput = {
+        // R1 (revised): exclude soft-removed run cases.
+        const where: TestRunCasesWhereInput = {
           testRunId: input.runId,
+          isDeleted: false,
         };
         if (input.isCompleted !== undefined) where.isCompleted = input.isCompleted;
         if (input.statusId !== undefined) where.statusId = input.statusId;
@@ -51,7 +53,10 @@ export function registerRunsCasesList(
 
         const body: Record<string, unknown> = {
           where,
-          include: RUN_DETAIL_TESTCASE_INCLUDE,
+          // Run-scoped include: the latestResult union needs this runId to
+          // scope the JUnit half (JUnitTestResult reaches the run only via
+          // testSuite.testRunId).
+          include: runDetailTestCaseInclude(input.runId),
           // BL-04 deterministic ordering. `order` is the user-facing sort
           // index; `id` breaks ties for cases inserted with the same order.
           orderBy: [{ order: "asc" }, { id: "asc" }],

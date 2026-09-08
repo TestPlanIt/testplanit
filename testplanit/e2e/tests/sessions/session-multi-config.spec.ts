@@ -228,7 +228,7 @@ test.describe("Session Multi-Configuration Creation", () => {
     }
   });
 
-  test("should clear all configurations via Clear All link", async ({
+  test("should clear all configurations from the dropdown", async ({
     api,
     page,
   }) => {
@@ -282,12 +282,16 @@ test.describe("Session Multi-Configuration Creation", () => {
       const dialog = page.locator('[role="dialog"]').first();
       const configLabel = dialog.locator('label:has-text("Configurations")');
 
-      // Click "Clear All" link
-      const clearAll = configLabel
+      // Clear All lives in the dropdown, so reopen it first
+      await configLabel
         .locator("..")
-        .locator('span:has-text("Clear All")');
+        .locator('button[role="combobox"]')
+        .click();
+
+      const clearAll = page.getByTestId("multi-async-combobox-clear-all");
       await expect(clearAll).toBeVisible({ timeout: 5000 });
       await clearAll.click();
+      await page.keyboard.press("Escape");
 
       // Count should no longer be visible
       await expect(configLabel).not.toContainText("(1)", { timeout: 5000 });

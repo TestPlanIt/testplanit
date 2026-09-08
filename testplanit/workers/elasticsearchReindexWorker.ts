@@ -14,11 +14,11 @@ import {
 import { SearchableEntityType } from "~/types/search";
 import {
   disconnectAllTenantClients,
-  getPrismaClientForJob,
+  getDbClientForJob,
   isMultiTenantMode,
   MultiTenantJobData,
   validateMultiTenantJobData,
-} from "../lib/multiTenantPrisma";
+} from "../lib/multiTenantDb";
 import { ELASTICSEARCH_REINDEX_QUEUE_NAME } from "../lib/queueNames";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
@@ -38,6 +38,30 @@ export interface ReindexJobData extends MultiTenantJobData {
   userId: string; // User who initiated the reindex
 }
 
+/**
+ * Count non-deleted issues linked to a test run in the project.
+ *
+ * Equivalent to `db.issue.count({ where: { isDeleted: false,
+ * testRuns: { some: { projectId } } } })`, but ZenStack v3 compiles that `some`
+ * filter inside a count into a correlated nested-loop semi-join that materializes
+ * every project run against every issue (~413M-row cost, ~60s per call on
+ * production data — it stalled the whole reindex). Counting through the join
+ * table is a hash join (~25ms). See lib/projectIssueIds.ts for the same pattern.
+ */
+async function countProjectIssuesLinkedToRuns(
+  db: any,
+  projectId: number
+): Promise<number> {
+  const rows = (await db.$queryRaw`
+    SELECT count(DISTINCT i."id")::int AS count
+    FROM "Issue" i
+    JOIN "_IssueToTestRuns" it ON it."A" = i."id"
+    JOIN "TestRuns" tr ON tr."id" = it."B"
+    WHERE i."isDeleted" = false AND tr."projectId" = ${projectId}
+  `) as Array<{ count: number }>;
+  return Number(rows[0]?.count ?? 0);
+}
+
 const processor = async (job: Job<ReindexJobData>) => {
   console.log(
     `Processing Elasticsearch reindex job ${job.id}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`
@@ -47,7 +71,7 @@ const processor = async (job: Job<ReindexJobData>) => {
   validateMultiTenantJobData(job.data);
 
   // Get the appropriate Prisma client (tenant-specific or default)
-  const prisma = getPrismaClientForJob(job.data);
+  const db = getDbClientForJob(job.data);
 
   const { entityType, projectId, tenantId } = job.data;
 
@@ -100,13 +124,13 @@ const processor = async (job: Job<ReindexJobData>) => {
 
     await job.updateProgress(5);
     await job.log("Creating indices with current mappings...");
-    await createAllEntityIndices(prisma, tenantId);
+    await createAllEntityIndices(db, tenantId);
 
     const projects = projectId
-      ? await prisma.projects.findMany({
+      ? await db.projects.findMany({
           where: { id: projectId, isDeleted: false },
         })
-      : await prisma.projects.findMany({
+      : await db.projects.findMany({
           where: { isDeleted: false },
         });
 
@@ -129,7 +153,7 @@ const processor = async (job: Job<ReindexJobData>) => {
       if (entityType === "all" || entityType === "repositoryCases") {
         totalCounts.repositoryCases =
           (totalCounts.repositoryCases || 0) +
-          (await prisma.repositoryCases.count({
+          (await db.repositoryCases.count({
             where: {
               projectId: project.id,
               isDeleted: false,
@@ -140,38 +164,33 @@ const processor = async (job: Job<ReindexJobData>) => {
       if (entityType === "all" || entityType === "sharedSteps") {
         totalCounts.sharedSteps =
           (totalCounts.sharedSteps || 0) +
-          (await prisma.sharedStepGroup.count({
+          (await db.sharedStepGroup.count({
             where: { projectId: project.id, isDeleted: false },
           }));
       }
       if (entityType === "all" || entityType === "testRuns") {
         totalCounts.testRuns =
           (totalCounts.testRuns || 0) +
-          (await prisma.testRuns.count({
+          (await db.testRuns.count({
             where: { projectId: project.id, isDeleted: false },
           }));
       }
       if (entityType === "all" || entityType === "sessions") {
         totalCounts.sessions =
           (totalCounts.sessions || 0) +
-          (await prisma.sessions.count({
+          (await db.sessions.count({
             where: { projectId: project.id, isDeleted: false },
           }));
       }
       if (entityType === "all" || entityType === "issues") {
         totalCounts.issues =
           (totalCounts.issues || 0) +
-          (await prisma.issue.count({
-            where: {
-              isDeleted: false,
-              testRuns: { some: { projectId: project.id } },
-            },
-          }));
+          (await countProjectIssuesLinkedToRuns(db, project.id));
       }
       if (entityType === "all" || entityType === "milestones") {
         totalCounts.milestones =
           (totalCounts.milestones || 0) +
-          (await prisma.milestones.count({
+          (await db.milestones.count({
             where: { projectId: project.id, isDeleted: false },
           }));
       }
@@ -190,8 +209,8 @@ const processor = async (job: Job<ReindexJobData>) => {
     if (entityType === "all" || entityType === "projects") {
       await job.updateProgress(currentProgress);
       await job.log("Indexing projects...");
-      await syncAllProjectsToElasticsearch(prisma, tenantId);
-      results.projects = await prisma.projects.count({
+      await syncAllProjectsToElasticsearch(db, tenantId);
+      results.projects = await db.projects.count({
         where: { isDeleted: false },
       });
     }
@@ -203,7 +222,7 @@ const processor = async (job: Job<ReindexJobData>) => {
       await job.log(`Processing project: ${project.name}`);
 
       if (entityType === "all" || entityType === "repositoryCases") {
-        const count = await prisma.repositoryCases.count({
+        const count = await db.repositoryCases.count({
           where: {
             projectId: project.id,
             isDeleted: false,
@@ -232,7 +251,7 @@ const processor = async (job: Job<ReindexJobData>) => {
             project.id,
             100,
             progressCallback,
-            prisma,
+            db,
             tenantId
           );
           results.repositoryCases += count;
@@ -241,7 +260,7 @@ const processor = async (job: Job<ReindexJobData>) => {
       }
 
       if (entityType === "all" || entityType === "sharedSteps") {
-        const count = await prisma.sharedStepGroup.count({
+        const count = await db.sharedStepGroup.count({
           where: {
             projectId: project.id,
             isDeleted: false,
@@ -254,7 +273,7 @@ const processor = async (job: Job<ReindexJobData>) => {
           await syncProjectSharedStepsToElasticsearch(
             project.id,
             100,
-            prisma,
+            db,
             tenantId
           );
           results.sharedSteps += count;
@@ -262,7 +281,7 @@ const processor = async (job: Job<ReindexJobData>) => {
       }
 
       if (entityType === "all" || entityType === "testRuns") {
-        const count = await prisma.testRuns.count({
+        const count = await db.testRuns.count({
           where: {
             projectId: project.id,
             isDeleted: false,
@@ -272,17 +291,13 @@ const processor = async (job: Job<ReindexJobData>) => {
           await job.log(
             `Syncing ${count} test runs for project ${project.name}`
           );
-          await syncProjectTestRunsToElasticsearch(
-            project.id,
-            prisma,
-            tenantId
-          );
+          await syncProjectTestRunsToElasticsearch(project.id, db, tenantId);
           results.testRuns += count;
         }
       }
 
       if (entityType === "all" || entityType === "sessions") {
-        const count = await prisma.sessions.count({
+        const count = await db.sessions.count({
           where: {
             projectId: project.id,
             isDeleted: false,
@@ -292,35 +307,22 @@ const processor = async (job: Job<ReindexJobData>) => {
           await job.log(
             `Syncing ${count} sessions for project ${project.name}`
           );
-          await syncProjectSessionsToElasticsearch(
-            project.id,
-            prisma,
-            tenantId
-          );
+          await syncProjectSessionsToElasticsearch(project.id, db, tenantId);
           results.sessions += count;
         }
       }
 
       if (entityType === "all" || entityType === "issues") {
-        const count = await prisma.issue.count({
-          where: {
-            isDeleted: false,
-            testRuns: {
-              some: {
-                projectId: project.id,
-              },
-            },
-          },
-        });
+        const count = await countProjectIssuesLinkedToRuns(db, project.id);
         if (count > 0) {
           await job.log(`Syncing ${count} issues for project ${project.name}`);
-          await syncProjectIssuesToElasticsearch(project.id, prisma, tenantId);
+          await syncProjectIssuesToElasticsearch(project.id, db, tenantId);
           results.issues += count;
         }
       }
 
       if (entityType === "all" || entityType === "milestones") {
-        const count = await prisma.milestones.count({
+        const count = await db.milestones.count({
           where: {
             projectId: project.id,
             isDeleted: false,
@@ -330,11 +332,7 @@ const processor = async (job: Job<ReindexJobData>) => {
           await job.log(
             `Syncing ${count} milestones for project ${project.name}`
           );
-          await syncProjectMilestonesToElasticsearch(
-            project.id,
-            prisma,
-            tenantId
-          );
+          await syncProjectMilestonesToElasticsearch(project.id, db, tenantId);
           results.milestones += count;
         }
       }

@@ -1,6 +1,10 @@
 import { Locator, Page } from "@playwright/test";
 import { expect, test } from "../fixtures";
 import { RepositoryPage } from "../page-objects/repository/repository.page";
+import {
+  clickOverflowAction,
+  expectOverflowActionAvailable,
+} from "../utils/action-overflow";
 
 /**
  * Regression tests for the modal form-state-leak bug class on non-admin
@@ -121,7 +125,6 @@ test("Repository AddCase modal resets between opens", async ({ page, api }) => {
 
   const repositoryPage = new RepositoryPage(page);
 
-  const addCaseButton = page.getByTestId("add-case-button");
   const dialog = page.getByTestId("add-case-dialog");
   const caseNameInput = dialog.getByTestId("case-name-input");
   const caseCancelButton = page.getByTestId("case-cancel-button");
@@ -129,11 +132,19 @@ test("Repository AddCase modal resets between opens", async ({ page, api }) => {
   await test.step("Create a folder and open the project repository", async () => {
     await api.createFolder(projectId, `Leak Case Folder ${Date.now()}`);
     await repositoryPage.goto(projectId);
-    await expect(addCaseButton).toBeEnabled({ timeout: 10000 });
+    await expectOverflowActionAvailable(
+      page,
+      "add-case-button",
+      "repository-actions-menu"
+    );
   });
 
   await test.step("Fill the Add Case name field and cancel", async () => {
-    await addCaseButton.click();
+    await clickOverflowAction(
+      page,
+      "add-case-button",
+      "repository-actions-menu"
+    );
     await expect(caseNameInput).toBeVisible({ timeout: 5000 });
 
     const uniqueName = `Leak Case ${Date.now()}`;
@@ -145,7 +156,11 @@ test("Repository AddCase modal resets between opens", async ({ page, api }) => {
   });
 
   await test.step("Reopen Add Case and verify the name field is empty", async () => {
-    await addCaseButton.click();
+    await clickOverflowAction(
+      page,
+      "add-case-button",
+      "repository-actions-menu"
+    );
     await expect(caseNameInput).toBeVisible({ timeout: 5000 });
     await expect(caseNameInput).toHaveValue("");
 
@@ -168,7 +183,7 @@ test("Project Milestones AddMilestone modal resets between opens", async ({
 
   await test.step("Open the project milestones page", async () => {
     await page.goto(`/en-US/projects/milestones/${projectId}`);
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
     await expect(addMilestoneButton).toBeVisible({ timeout: 10000 });
   });
 
@@ -215,7 +230,7 @@ test("Project Sessions AddSessionModal resets between opens", async ({
 
   await test.step("Open the project sessions page", async () => {
     await page.goto(`/en-US/projects/sessions/${projectId}`);
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
     await expect(addSessionButton).toBeVisible({ timeout: 10000 });
   });
 
@@ -266,7 +281,7 @@ test("Project Test Runs AddTestRunModal resets between opens", async ({
 
   await test.step("Open the project test runs page", async () => {
     await page.goto(`/en-US/projects/runs/${projectId}`);
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
     await expect(addRunButton).toBeVisible({ timeout: 10000 });
   });
 

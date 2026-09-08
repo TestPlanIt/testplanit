@@ -81,12 +81,9 @@ test.describe("Issues", () => {
 
     await test.step("Open the test case detail page", async () => {
       // Navigate to test case detail page by clicking the test case link
-      const testCaseLink = page
-        .locator(`a[href*="/projects/repository/${projectId}/${testCaseId}"]`)
-        .first();
-      await expect(testCaseLink).toBeVisible({ timeout: 10000 });
-      await testCaseLink.click();
-
+      // Clicking a case in the table opens the side panel; these tests are
+      // about the full detail page, so navigate to it directly.
+      await page.goto(`/en-US/projects/repository/${projectId}/${testCaseId}`);
       await page.waitForLoadState("networkidle");
 
       // Verify we're on the test case detail page
@@ -139,12 +136,9 @@ test.describe("Issues", () => {
 
     await test.step("Open the test case detail page", async () => {
       // Navigate to test case detail page
-      const testCaseLink = page
-        .locator(`a[href*="/projects/repository/${projectId}/${testCaseId}"]`)
-        .first();
-      await expect(testCaseLink).toBeVisible({ timeout: 10000 });
-      await testCaseLink.click();
-
+      // Clicking a case in the table opens the side panel; these tests are
+      // about the full detail page, so navigate to it directly.
+      await page.goto(`/en-US/projects/repository/${projectId}/${testCaseId}`);
       await page.waitForLoadState("networkidle");
     });
 
@@ -201,10 +195,10 @@ test.describe("Issues", () => {
       await columnsButton.click({ force: true });
 
       // Wait for the popover content to appear
-      const selectAllButton = page
-        .getByRole("button", { name: /Select All/i })
-        .first();
-      await expect(selectAllButton).toBeVisible({ timeout: 10000 });
+      // "Select All" is a Radix checkbox (role=checkbox) with an adjacent
+      // label, not a button.
+      const selectAllLabel = page.getByText(/Select All/i).first();
+      await expect(selectAllLabel).toBeVisible({ timeout: 10000 });
     });
 
     await test.step("Verify the Issues option appears and close the popover", async () => {
@@ -282,41 +276,38 @@ test.describe("Issues", () => {
       await page.waitForLoadState("networkidle");
     });
 
-    await test.step("Open the test case detail page and verify its name", async () => {
-      // Navigate to test case detail page
+    await test.step("Open the case detail panel and verify its name", async () => {
+      // Clicking a case in the table opens the detail panel in place; the URL
+      // records it as a ?case=<id> query param rather than a new route.
       const testCaseLink = page
         .locator(`a[href*="/projects/repository/${projectId}/${testCaseId}"]`)
         .first();
       await expect(testCaseLink).toBeVisible({ timeout: 10000 });
       await testCaseLink.click();
 
-      await page.waitForLoadState("networkidle");
-
-      // Verify we're on the test case detail page
       await expect(page).toHaveURL(
-        new RegExp(`/projects/repository/${projectId}/${testCaseId}`)
+        new RegExp(`[?&]case=${testCaseId}(?:&|$)`),
+        { timeout: 10000 }
       );
 
-      // Verify the test case name is displayed
+      // Verify the test case name is displayed in the panel
       await expect(page.locator(`text="${caseName}"`).first()).toBeVisible({
         timeout: 5000,
       });
     });
 
-    await test.step("Navigate back to the repository page", async () => {
-      // Click the back button to return to repository
-      const backButton = page
-        .locator("button")
-        .filter({ has: page.locator("svg") })
-        .first();
-      await backButton.click();
-
+    await test.step("Navigate back to the repository listing", async () => {
+      // Browser Back closes the panel: the case param is removed and we are
+      // back on the repository listing in a single step.
+      await page.goBack();
       await page.waitForLoadState("networkidle");
 
-      // Verify we're back on the repository page
       await expect(page).toHaveURL(
         new RegExp(`/projects/repository/${projectId}`)
       );
+      await expect(page).not.toHaveURL(new RegExp(`[?&]case=`), {
+        timeout: 5000,
+      });
     });
   });
 
@@ -346,12 +337,9 @@ test.describe("Issues", () => {
 
     await test.step("Open the test case detail page", async () => {
       // Navigate to test case detail page
-      const testCaseLink = page
-        .locator(`a[href*="/projects/repository/${projectId}/${testCaseId}"]`)
-        .first();
-      await expect(testCaseLink).toBeVisible({ timeout: 10000 });
-      await testCaseLink.click();
-
+      // Clicking a case in the table opens the side panel; these tests are
+      // about the full detail page, so navigate to it directly.
+      await page.goto(`/en-US/projects/repository/${projectId}/${testCaseId}`);
       await page.waitForLoadState("networkidle");
     });
 
@@ -483,12 +471,9 @@ test.describe("Issues", () => {
 
     await test.step("Open the test case detail page", async () => {
       // Navigate to test case detail page
-      const testCaseLink = page
-        .locator(`a[href*="/projects/repository/${projectId}/${testCaseId}"]`)
-        .first();
-      await expect(testCaseLink).toBeVisible({ timeout: 10000 });
-      await testCaseLink.click();
-
+      // Clicking a case in the table opens the side panel; these tests are
+      // about the full detail page, so navigate to it directly.
+      await page.goto(`/en-US/projects/repository/${projectId}/${testCaseId}`);
       await page.waitForLoadState("networkidle");
     });
 

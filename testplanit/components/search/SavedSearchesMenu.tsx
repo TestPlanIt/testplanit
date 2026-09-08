@@ -1,5 +1,7 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,12 +35,11 @@ import {
   Loader2,
   Pencil,
   Search,
-  Trash2,
+  Trash,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useFindManyShareLink, useUpdateShareLink } from "~/lib/hooks";
 import {
   parseSavedSearchConfig,
   type SavedSearchCriteria,
@@ -85,7 +86,7 @@ export function SavedSearchesMenu({
     data: savedSearches,
     isLoading,
     refetch,
-  } = useFindManyShareLink(
+  } = useClientQueries(schema).shareLink.useFindMany(
     {
       where: { entityType: "SEARCH", isDeleted: false, isRevoked: false },
       orderBy: { updatedAt: "desc" },
@@ -94,7 +95,7 @@ export function SavedSearchesMenu({
   );
 
   const { mutateAsync: updateShareLink, isPending: isMutating } =
-    useUpdateShareLink();
+    useClientQueries(schema).shareLink.useUpdate();
 
   const handleLoad = (saved: {
     id: string;
@@ -178,7 +179,7 @@ export function SavedSearchesMenu({
               setOpen(false);
               setSaveDialogOpen(true);
             }}
-            className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm font-medium hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
+            className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-start text-sm font-medium hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
             data-testid="save-search-button"
           >
             <BookmarkPlus className="h-4 w-4 shrink-0" />
@@ -207,7 +208,7 @@ export function SavedSearchesMenu({
                     type="button"
                     onClick={() => handleLoad(saved)}
                     title={saved.description ?? undefined}
-                    className="group/item flex min-w-0 flex-1 items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent hover:text-accent-foreground"
+                    className="group/item flex min-w-0 flex-1 items-center gap-2 rounded-sm px-2 py-1.5 text-start text-sm hover:bg-accent hover:text-accent-foreground"
                     data-testid="saved-search-item"
                   >
                     <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground group-hover/item:text-accent-foreground" />
@@ -242,7 +243,7 @@ export function SavedSearchesMenu({
                       setOpen(false);
                     }}
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
+                    <Trash className="h-3.5 w-3.5" />
                   </Button>
                 </li>
               ))}

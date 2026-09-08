@@ -136,8 +136,7 @@ function parseInlineStep(text: string): ParsedMarkdownStep {
 function parseStepsFromTokens(tokens: Token[]): ParsedMarkdownStep[] {
   // Look for list tokens first
   const listToken = tokens.find((t) => t.type === "list") as
-    | Tokens.List
-    | undefined;
+    Tokens.List | undefined;
 
   if (listToken) {
     return listToken.items.map((item) => parseInlineStep(item.text));
@@ -191,8 +190,7 @@ function mergeExpectedResultsFromTokens(
   tokens: Token[]
 ): void {
   const listToken = tokens.find((t) => t.type === "list") as
-    | Tokens.List
-    | undefined;
+    Tokens.List | undefined;
 
   if (listToken) {
     listToken.items.forEach((item, index) => {
@@ -216,8 +214,7 @@ function mergeExpectedResultsFromTokens(
  */
 function parseTagsList(tokens: Token[]): string[] {
   const listToken = tokens.find((t) => t.type === "list") as
-    | Tokens.List
-    | undefined;
+    Tokens.List | undefined;
   if (listToken) {
     return listToken.items.map((item) => item.text.trim()).filter(Boolean);
   }
@@ -513,8 +510,7 @@ export function parseMarkdownTestCases(markdown: string): MarkdownParseResult {
 
   // 1. Check for table-based format
   const tableToken = tokens.find((t) => t.type === "table") as
-    | Tokens.Table
-    | undefined;
+    Tokens.Table | undefined;
   if (tableToken && isTestCaseTable(tableToken)) {
     return parseTableFormat(tableToken);
   }

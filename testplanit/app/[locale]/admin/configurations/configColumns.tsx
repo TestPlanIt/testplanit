@@ -15,7 +15,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Configurations } from "@prisma/client";
+import type { Configurations } from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
 import {
   Boxes,
@@ -23,7 +23,7 @@ import {
   CircleSlash2,
   Component,
   SquarePen,
-  Trash2,
+  Trash,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useMemo, useState } from "react";
@@ -247,7 +247,7 @@ export const useColumns = (
                   >
                     <Badge>
                       {" "}
-                      <Component className="w-4 h-4 mr-1" />
+                      <Component className="w-4 h-4 me-1" />
                       {row.original.variants.length}
                     </Badge>
                   </PopoverTrigger>
@@ -259,7 +259,7 @@ export const useColumns = (
                         ) : (
                           <CircleSlash2 className="w-4 h-4 text-destructive" />
                         )}
-                        <span className="ml-1">{variant.variant.name}</span>
+                        <span className="ms-1">{variant.variant.name}</span>
                       </Badge>
                     ))}
                   </PopoverContent>
@@ -289,7 +289,7 @@ export const useColumns = (
                     }}
                   >
                     <Badge>
-                      <Boxes className="w-4 h-4 mr-1" />
+                      <Boxes className="w-4 h-4 me-1" />
                       {projects.length}
                     </Badge>
                   </PopoverTrigger>
@@ -324,7 +324,7 @@ export const useColumns = (
         meta: { isPinned: "right" },
         size: 80,
         cell: ({ row }) => (
-          <div className="bg-primary-foreground whitespace-nowrap flex justify-center gap-1">
+          <div className="bg-primary-foreground whitespace-nowrap flex justify-end gap-1">
             <Button
               variant="ghost"
               className="px-2 py-1 h-auto"
@@ -339,7 +339,7 @@ export const useColumns = (
               onClick={() => onDeleteConfiguration?.(row.original)}
               aria-label={t("actions.delete")}
             >
-              <Trash2 className="h-5 w-5" />
+              <Trash className="h-5 w-5" />
             </Button>
           </div>
         ),

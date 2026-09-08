@@ -5,7 +5,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Attachments } from "@prisma/client";
+import type { Attachments } from "~/zenstack/models";
 import { Paperclip } from "lucide-react";
 import React, { useState } from "react";
 
@@ -33,7 +33,7 @@ export const AttachmentsListDisplay: React.FC<AttachmentsListProps> = ({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Badge className="cursor-pointer">
-          <Paperclip className="w-4 h-4 mr-1" />
+          <Paperclip className="w-4 h-4 me-1" />
           {attachments.length}
         </Badge>
       </PopoverTrigger>

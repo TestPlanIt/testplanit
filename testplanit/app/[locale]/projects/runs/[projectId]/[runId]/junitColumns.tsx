@@ -1,4 +1,5 @@
 import { DateFormatter } from "@/components/DateFormatter";
+import { RecordId } from "@/components/RecordId";
 import SystemErrorPopover from "@/components/junit/SystemErrorPopover";
 import SystemOutputPopover from "@/components/junit/SystemOutputPopover";
 import { AttachmentsListDisplay } from "@/components/tables/AttachmentsListDisplay";
@@ -6,9 +7,19 @@ import { CasesListDisplay } from "@/components/tables/CaseListDisplay";
 import { UserNameCell } from "@/components/tables/UserNameCell";
 import { TestCaseNameDisplay } from "@/components/TestCaseNameDisplay";
 import { Badge } from "@/components/ui/badge";
-import type { Attachments } from "@prisma/client";
-import { LinkIcon } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import type { Attachments } from "~/zenstack/models";
+import { LinkIcon, Zap } from "lucide-react";
 import type { Session } from "next-auth";
+import { RECORD_TYPES } from "~/lib/recordKey";
+import {
+  perceptualTextColor,
+  statusSurfaceVars,
+} from "~/utils/contrastingTextColor";
 import { toHumanReadable } from "~/utils/duration";
 
 export function getJunitColumns({
@@ -33,19 +44,35 @@ export function getJunitColumns({
       cell: ({ row }: { row: { original: any } }) => {
         const isDeleted = row.original.isDeleted;
         return (
-          <span className="flex items-center group">
+          <span className="flex items-center group min-w-0">
             <TestCaseNameDisplay
               testCase={{
                 id: row.original.id,
                 name: row.original.name,
                 isDeleted,
                 source: row.original.source,
+                automated: row.original.automated,
                 hasParameters: row.original.hasParameters,
               }}
               projectId={isDeleted ? undefined : projectId}
+              className="truncate"
             />
+            {row.original.isFlaky && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Zap
+                    className="w-3.5 h-3.5 inline ms-1 shrink-0 text-amber-500"
+                    aria-label={t("common.labels.flakyTestHint")}
+                    data-testid="flaky-test-badge"
+                  />
+                </TooltipTrigger>
+                <TooltipContent>
+                  {t("common.labels.flakyTestHint")}
+                </TooltipContent>
+              </Tooltip>
+            )}
             {!isDeleted && (
-              <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+              <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
             )}
           </span>
         );
@@ -90,7 +117,11 @@ export function getJunitColumns({
         isVisible: false,
       },
       cell: ({ row }: { row: { original: any } }) => (
-        <span>{row.original.id}</span>
+        <RecordId
+          type={RECORD_TYPES.TEST_CASE}
+          id={row.original.id}
+          projectId={Number(projectId)}
+        />
       ),
       size: 85,
       maxSize: 125,
@@ -144,7 +175,7 @@ export function getJunitColumns({
       cell: ({ row }: { row: { original: any } }) =>
         Array.isArray(row.original.properties) &&
         row.original.properties.length > 0 ? (
-          <ul className="list-disc ml-2">
+          <ul className="list-disc ms-2">
             {row.original.properties.map((prop: any) => (
               <li key={prop.id}>
                 <span>{prop.name}</span>: {prop.value}
@@ -207,6 +238,15 @@ export function getJunitColumns({
       size: 80,
     },
     {
+      id: "worker",
+      header: t("common.fields.worker"),
+      accessorKey: "worker",
+      enableSorting: true,
+      meta: { isVisible: false },
+      cell: ({ row }: { row: { original: any } }) => row.original.worker,
+      size: 80,
+    },
+    {
       id: "systemOutput",
       header: t("common.fields.systemOutput"),
       accessorKey: "systemOutput",
@@ -252,8 +292,13 @@ export function getJunitColumns({
         <div className="flex items-center justify-end h-full">
           <Badge
             variant="default"
-            className="text-primary-foreground font-semibold h-full"
-            style={{ backgroundColor: row.original.resultColor }}
+            className="font-semibold h-full"
+            data-status-surface
+            style={{
+              ...statusSurfaceVars(row.original.resultColor),
+              backgroundColor: row.original.resultColor,
+              color: perceptualTextColor(row.original.resultColor),
+            }}
           >
             {row.original.resultStatus}
           </Badge>

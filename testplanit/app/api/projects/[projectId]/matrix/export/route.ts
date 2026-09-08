@@ -1,4 +1,4 @@
-import { ApplicationArea } from "@prisma/client";
+import { ApplicationArea } from "~/zenstack/models";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import Papa from "papaparse";
@@ -9,7 +9,9 @@ import {
   runMatrixAggregation,
 } from "~/lib/matrix/matrixAggregation";
 import { cellKey } from "~/lib/matrix/types";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
+import { readRecordKeyConfig } from "~/lib/services/recordKeyConfig";
+import { formatRecordKey, RECORD_TYPES } from "~/lib/recordKey";
 import { matrixFiltersSchema } from "~/lib/schemas/matrixFiltersSchema";
 import { authOptions } from "~/server/auth";
 
@@ -64,7 +66,7 @@ import { authOptions } from "~/server/auth";
  * System admins always pass.
  */
 async function resolveCanReadSensitive(userId: string): Promise<boolean> {
-  const u = await prisma.user.findUnique({
+  const u = await baseDb.user.findUnique({
     where: { id: userId },
     include: { role: { include: { rolePermissions: true } } },
   });
@@ -102,11 +104,14 @@ export async function GET(
     const db = await getEnhancedDb(session);
     const project = await db.projects.findFirst({
       where: { id: projectId, isDeleted: false },
-      select: { id: true },
+      select: { id: true, key: true },
     });
     if (!project) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
+
+    const { enabled: recordKeyEnabled, tokens: recordKeyTokens } =
+      await readRecordKeyConfig(db);
 
     const sp = request.nextUrl.searchParams;
     const filtersInput: Record<string, unknown> = {
@@ -134,7 +139,7 @@ export async function GET(
     let axes;
     try {
       axes = await runMatrixAggregation(
-        prisma,
+        baseDb,
         projectId,
         parsed.data,
         viewerCanReadSensitive
@@ -164,6 +169,17 @@ export async function GET(
             : null;
           const row: Record<string, unknown> = {
             Case: c.caseName,
+            ...(recordKeyEnabled
+              ? {
+                  "Case key":
+                    formatRecordKey({
+                      projectKey: project.key,
+                      type: RECORD_TYPES.TEST_CASE,
+                      id: c.caseId,
+                      tokens: recordKeyTokens,
+                    }) ?? "",
+                }
+              : {}),
             Configuration: cfg.configName,
             "Parameter row label": r.label ?? "",
           };
@@ -198,6 +214,7 @@ export async function GET(
     }
     const fields = [
       "Case",
+      ...(recordKeyEnabled ? ["Case key"] : []),
       "Configuration",
       "Parameter row label",
       ...Array.from(parameterFieldNames),

@@ -174,7 +174,7 @@ describe("CustomFieldDisplay Component", () => {
     expect(screen.getByTestId("icon-clock")).toBeInTheDocument();
   });
 
-  it("should render link field", () => {
+  it("should render link field as text, not a nested anchor", () => {
     const customFields = [
       {
         fieldId: 6,
@@ -186,10 +186,9 @@ describe("CustomFieldDisplay Component", () => {
 
     render(<CustomFieldDisplay customFields={customFields} />);
     expect(screen.getByText("Documentation:")).toBeInTheDocument();
-    const link = screen.getByRole("link", { name: "https://example.com" });
-    expect(link).toHaveAttribute("href", "https://example.com");
-    expect(link).toHaveAttribute("target", "_blank");
-    expect(link).toHaveAttribute("rel", "noopener noreferrer");
+    expect(screen.getByText("https://example.com")).toBeInTheDocument();
+    // The search result card is itself a link; an anchor here would nest.
+    expect(screen.queryByRole("link")).not.toBeInTheDocument();
   });
 
   it("should not render text fields", () => {

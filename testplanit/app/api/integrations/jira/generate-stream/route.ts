@@ -3,7 +3,7 @@ import { integrationManager } from "@/lib/integrations";
 import { LlmManager } from "@/lib/llm/services/llm-manager.service";
 import { PromptResolver } from "@/lib/llm/services/prompt-resolver.service";
 import type { LlmRequest } from "@/lib/llm/types";
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import {
   FORGE_CORS_HEADERS,
   forgeUserHasProjectAccess,
@@ -17,12 +17,24 @@ import {
   buildSystemPrompt,
   buildUserPrompt,
   extractStreamedTestCases,
-  fetchHierarchyContext,
+  fetchExistingCasesContext,
   fetchLinkedIssuesContext,
   type GenerationContext,
   type IssueData,
 } from "@/api/llm/generate-test-cases/shared";
 import { NextRequest, NextResponse } from "next/server";
+import {
+  contextImageTokens,
+  sanitizeContextImages,
+  toContextImageMeta,
+  toImageParts,
+  type ContextImage,
+  type ContextImageSkip,
+} from "~/lib/llm/context-images";
+import {
+  resolveAttachmentImageMime,
+  resolveIssueAttachmentImages,
+} from "@/api/llm/generate-test-cases/context-image-sources";
 
 /**
  * Token-authenticated streaming generation for the Jira panel. The browser
@@ -40,7 +52,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const user = await prisma.user.findFirst({
+  const user = await baseDb.user.findFirst({
     where: { id: payload.userId, isActive: true, isDeleted: false },
     select: { id: true, name: true, email: true, access: true },
   });
@@ -121,8 +133,8 @@ export async function POST(req: NextRequest) {
 
         send(controller, { type: "stage", stage: "resolving" });
 
-        const manager = LlmManager.getInstance(prisma);
-        const resolver = new PromptResolver(prisma);
+        const manager = LlmManager.getInstance(baseDb);
+        const resolver = new PromptResolver(baseDb);
         const resolvedPrompt = await resolver.resolve(
           LLM_FEATURES.TEST_CASE_GENERATION,
           projectId
@@ -202,7 +214,7 @@ export async function POST(req: NextRequest) {
         let maxTokensPerRequest = 4096;
         let maxTokens = resolvedPrompt.maxOutputTokens ?? 4096;
         const providerConfig = await (
-          prisma as any
+          baseDb as any
         ).llmProviderConfig.findFirst({
           where: { llmIntegrationId: resolved.integrationId },
         });
@@ -214,11 +226,59 @@ export async function POST(req: NextRequest) {
             4096;
         }
 
+        // Issue-attachment images as context. The panel has no selection UI:
+        // the first images up to the cap ride along automatically when the
+        // resolved model takes image input. One SSE meta event tells the
+        // panel what was included/skipped.
+        let panelImages: ContextImage[] = [];
+        let panelImagesOmittedForVision = 0;
+        let panelImagesSkipped: ContextImageSkip[] = [];
+        if (adapter.listAttachments && adapter.downloadAttachment) {
+          try {
+            const listed = await adapter.listAttachments(lookupId);
+            const imageIds = listed
+              .filter((meta) => !!resolveAttachmentImageMime(meta))
+              .map((meta) => meta.id);
+            const resolvedImages = await resolveIssueAttachmentImages({
+              adapter,
+              issueKey: lookupId,
+              attachmentIds: imageIds,
+              source: "jira-attachment",
+            });
+            const sanitized = sanitizeContextImages(resolvedImages);
+            panelImagesSkipped = sanitized.skipped;
+            if (sanitized.included.length > 0) {
+              const visionSupported = await manager.supportsVision(
+                resolved.integrationId,
+                resolved.model
+              );
+              if (visionSupported) {
+                panelImages = sanitized.included;
+              } else {
+                panelImagesOmittedForVision = sanitized.included.length;
+              }
+            }
+          } catch (err) {
+            console.warn(
+              `[jira-panel] Failed to resolve context images for %s:`,
+              lookupId,
+              err
+            );
+          }
+        }
+        send(controller, {
+          type: "context",
+          images: toContextImageMeta(panelImages),
+          skipped: panelImagesSkipped,
+          imagesOmittedForVision: panelImagesOmittedForVision,
+        });
+
         const CONTENT_BUDGET_RATIO = 0.65;
         const systemPromptTokens = Math.ceil(systemPrompt.length / 4);
         const contentBudget =
           Math.floor(maxTokensPerRequest * CONTENT_BUDGET_RATIO) -
-          systemPromptTokens;
+          systemPromptTokens -
+          contextImageTokens(panelImages);
 
         const baseContext: GenerationContext = {
           folderContext: folderId ?? 0,
@@ -253,23 +313,26 @@ export async function POST(req: NextRequest) {
                 tokensUsed: 0,
               };
 
-        const hierarchyBudget = Math.max(
+        const caseContextBudget = Math.max(
           0,
           remainingBudget - linkedResult.tokensUsed
         );
-        const hierarchyContext =
-          hierarchyBudget > 0
-            ? await fetchHierarchyContext(
-                prisma,
+        const existingCases =
+          caseContextBudget > 0
+            ? await fetchExistingCasesContext(
+                baseDb,
                 projectId,
-                folderId ?? 0,
-                hierarchyBudget
+                {
+                  folderId: folderId ?? 0,
+                  issueRef: { issueKey, externalId: issueId, integrationId },
+                },
+                caseContextBudget
               )
             : [];
 
         const enrichedContext: GenerationContext = {
           ...baseContext,
-          existingTestCases: hierarchyContext,
+          existingTestCases: existingCases,
           linkedIssues: linkedResult.included,
         };
         let userPrompt = buildUserPrompt(
@@ -302,7 +365,16 @@ export async function POST(req: NextRequest) {
         const llmRequest: LlmRequest = {
           messages: [
             { role: "system", content: systemPrompt },
-            { role: "user", content: userPrompt },
+            {
+              role: "user",
+              content:
+                panelImages.length > 0
+                  ? [
+                      { type: "text" as const, text: userPrompt },
+                      ...toImageParts(panelImages),
+                    ]
+                  : userPrompt,
+            },
           ],
           temperature: resolvedPrompt.temperature,
           maxTokens,
@@ -315,6 +387,12 @@ export async function POST(req: NextRequest) {
             issueKey: issue.key,
             templateId: template.id,
             timestamp: new Date().toISOString(),
+            ...(panelImages.length > 0
+              ? {
+                  imageCount: panelImages.length,
+                  imageTokensEstimated: contextImageTokens(panelImages),
+                }
+              : {}),
           },
         };
 

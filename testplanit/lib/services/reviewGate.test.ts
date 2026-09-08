@@ -1,9 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
-import { ReviewEntityType } from "@prisma/client";
+import { ReviewEntityType, WorkflowScope } from "~/zenstack/models";
 import { ReviewGateError } from "~/lib/utils/errors";
 import {
+  applyApprovedReviewTransition,
   assertBulkReviewGatePasses,
   assertReviewGatePasses,
+  resolveCreateStateRemap,
 } from "./reviewGate";
 
 /**
@@ -19,6 +21,8 @@ import {
  *   - Transitive (Scenario 2): gates at 4 + 5 each need their own approval
  *   - Strict (Scenario 3): approval for 5 does NOT satisfy gate at 4
  *   - Helper is read-only (does not mutate ReviewRequest)
+ *   - applyApprovedReviewTransition: approval performs the move + consume,
+ *     and returns false (never throws) for every expected no-move case
  *
  * Pattern: hand-rolled mock `tx` injected per test. No module-level
  * `vi.mock` needed — the helper takes a Prisma TransactionClient by
@@ -38,6 +42,14 @@ interface MockTxOptions {
   reviewWorkflowEnabled?: boolean;
   /** System feature-flag AppConfig row. Defaults to enabled. */
   systemFeatureEnabled?: boolean;
+  /** Entity row is absent (soft-deleted / bad id). Defaults to present. */
+  entityMissing?: boolean;
+  /**
+   * `count` the `consumedAt` stamp returns. Defaults to "every requested id
+   * was stamped"; set 0 to simulate a concurrent transition that already
+   * spent one of the approvals.
+   */
+  stampCount?: number;
 }
 
 function createMockTx(opts: MockTxOptions) {
@@ -45,13 +57,15 @@ function createMockTx(opts: MockTxOptions) {
   const systemFeatureEnabled = opts.systemFeatureEnabled ?? true;
   const approvalsByGateId = opts.approvalsByGateId ?? {};
 
-  const entityRow = {
-    project: { reviewWorkflowEnabled },
-    state:
-      opts.currentStateOrder === null
-        ? null
-        : { order: opts.currentStateOrder },
-  };
+  const entityRow = opts.entityMissing
+    ? null
+    : {
+        project: { reviewWorkflowEnabled },
+        state:
+          opts.currentStateOrder === null
+            ? null
+            : { order: opts.currentStateOrder },
+      };
 
   return {
     workflows: {
@@ -64,15 +78,21 @@ function createMockTx(opts: MockTxOptions) {
         return approvalsByGateId[toStateId] ?? null;
       }),
       update: vi.fn(),
+      updateMany: vi.fn(async (args: any) => ({
+        count: opts.stampCount ?? args?.where?.id?.in?.length ?? 0,
+      })),
     },
     repositoryCases: {
       findUnique: vi.fn().mockResolvedValue(entityRow),
+      update: vi.fn(),
     },
     sessions: {
       findUnique: vi.fn().mockResolvedValue(entityRow),
+      update: vi.fn(),
     },
     testRuns: {
       findUnique: vi.fn().mockResolvedValue(entityRow),
+      update: vi.fn(),
     },
     appConfig: {
       findUnique: vi
@@ -85,6 +105,85 @@ function createMockTx(opts: MockTxOptions) {
 }
 
 describe("assertReviewGatePasses (strict transitive)", () => {
+  describe("system-admin bypass", () => {
+    it("returns null + queries nothing at all when userAccess is ADMIN, even with an unapproved gate in the path", async () => {
+      const tx = createMockTx({
+        currentStateOrder: 3,
+        targetState: { order: 6 },
+        // Gate at 4 with NO approval — a non-admin would throw here.
+        gatedStates: [{ id: 40, order: 4 }],
+        approvalsByGateId: {},
+      });
+
+      const result = await assertReviewGatePasses(
+        tx,
+        ReviewEntityType.CASE,
+        1,
+        6,
+        "ADMIN"
+      );
+
+      expect(result).toBeNull();
+      // Bypass is evaluated before the system kill switch, so not even the
+      // AppConfig row is read.
+      expect(tx.appConfig.findUnique).not.toHaveBeenCalled();
+      expect(tx.repositoryCases.findUnique).not.toHaveBeenCalled();
+      expect(tx.workflows.findUnique).not.toHaveBeenCalled();
+      expect(tx.workflows.findMany).not.toHaveBeenCalled();
+      expect(tx.reviewRequest.findFirst).not.toHaveBeenCalled();
+    });
+
+    it("does NOT consume a pending approval when an admin crosses a gate that has one", async () => {
+      const tx = createMockTx({
+        currentStateOrder: 3,
+        targetState: { order: 4 },
+        gatedStates: [{ id: 40, order: 4 }],
+        approvalsByGateId: { 40: { id: "req-40" } },
+      });
+
+      const result = await assertReviewGatePasses(
+        tx,
+        ReviewEntityType.CASE,
+        1,
+        4,
+        "ADMIN"
+      );
+
+      // null (not `{ approvedRequestIds: ["req-40"] }`) — the reviewer's
+      // decision stays available for the transition it was raised for.
+      expect(result).toBeNull();
+      expect(tx.reviewRequest.updateMany).not.toHaveBeenCalled();
+      expect(tx.reviewRequest.update).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ["PROJECTADMIN", "PROJECTADMIN"],
+      ["USER", "USER"],
+      ["undefined", undefined],
+      ["null", null],
+    ])(
+      "still enforces the gate for non-admin access %s",
+      async (_label, access) => {
+        const tx = createMockTx({
+          currentStateOrder: 3,
+          targetState: { order: 4 },
+          gatedStates: [{ id: 40, order: 4 }],
+          approvalsByGateId: {},
+        });
+
+        await expect(
+          assertReviewGatePasses(
+            tx,
+            ReviewEntityType.CASE,
+            1,
+            4,
+            access as string | null | undefined
+          )
+        ).rejects.toBeInstanceOf(ReviewGateError);
+      }
+    );
+  });
+
   describe("feature-flag short-circuits", () => {
     it("returns null + no entity / workflow / reviewRequest queries when system flag is off", async () => {
       const tx = createMockTx({
@@ -544,6 +643,50 @@ function createBulkMockTx(opts: BulkMockTxOptions) {
 }
 
 describe("assertBulkReviewGatePasses (strict transitive, bulk)", () => {
+  describe("system-admin bypass", () => {
+    it("returns null + queries nothing when userAccess is ADMIN, even with entities missing approvals", async () => {
+      const tx = createBulkMockTx({
+        targetState: { order: 6 },
+        gatedStates: [{ id: 40, order: 4 }],
+        approvals: [],
+      });
+
+      const result = await assertBulkReviewGatePasses(
+        tx,
+        ReviewEntityType.RUN,
+        [
+          { id: 1, currentStateOrder: 1 },
+          { id: 2, currentStateOrder: null },
+        ],
+        60,
+        "ADMIN"
+      );
+
+      expect(result).toBeNull();
+      expect(tx.workflows.findUnique).not.toHaveBeenCalled();
+      expect(tx.workflows.findMany).not.toHaveBeenCalled();
+      expect(tx.reviewRequest.findMany).not.toHaveBeenCalled();
+    });
+
+    it("still enforces the gate for a non-admin caller", async () => {
+      const tx = createBulkMockTx({
+        targetState: { order: 6 },
+        gatedStates: [{ id: 40, order: 4 }],
+        approvals: [],
+      });
+
+      await expect(
+        assertBulkReviewGatePasses(
+          tx,
+          ReviewEntityType.RUN,
+          [{ id: 1, currentStateOrder: 1 }],
+          60,
+          "PROJECTADMIN"
+        )
+      ).rejects.toBeInstanceOf(ReviewGateError);
+    });
+  });
+
   describe("short-circuits", () => {
     it("returns null when entities array is empty (zero work)", async () => {
       const tx = createBulkMockTx({
@@ -751,5 +894,341 @@ describe("assertBulkReviewGatePasses (strict transitive, bulk)", () => {
       expect(tx.reviewRequest.update).not.toHaveBeenCalled();
       expect(tx.reviewRequest.updateMany).not.toHaveBeenCalled();
     });
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// applyApprovedReviewTransition — approval IS the transition.
+//
+// The reviewer's approval performs the state change the requester asked for,
+// so nobody has to come back and repeat it by hand. These tests pin the two
+// halves of that contract: the move + consume on the happy path, and the
+// "return false rather than throw" posture for every expected no-move case,
+// since the decision must survive an entity that can't move yet.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("applyApprovedReviewTransition", () => {
+  const APPROVAL_ID = "approval-under-decision";
+
+  it("moves the entity to the target state and consumes the approval", async () => {
+    const tx = createMockTx({
+      currentStateOrder: 3,
+      targetState: { order: 4 },
+      gatedStates: [{ id: 40, order: 4 }],
+      approvalsByGateId: { 40: { id: APPROVAL_ID } },
+    });
+
+    const applied = await applyApprovedReviewTransition(tx, {
+      reviewRequestId: APPROVAL_ID,
+      entityType: ReviewEntityType.CASE,
+      entityId: 1,
+      toStateId: 40,
+    });
+
+    expect(applied).toBe(true);
+    expect(tx.repositoryCases.update).toHaveBeenCalledWith({
+      where: { id: 1 },
+      data: { stateId: 40 },
+    });
+    expect(tx.reviewRequest.updateMany).toHaveBeenCalledWith({
+      where: { id: { in: [APPROVAL_ID] }, consumedAt: null },
+      data: { consumedAt: expect.any(Date) },
+    });
+  });
+
+  it("consumes every approval the crossing spends when one transition clears several gates", async () => {
+    // Entity at 1 moving to gate 5; gate 4 was approved earlier and never
+    // redeemed (the requester approved both before either was applied).
+    const tx = createMockTx({
+      currentStateOrder: 1,
+      targetState: { order: 5 },
+      gatedStates: [
+        { id: 40, order: 4 },
+        { id: 50, order: 5 },
+      ],
+      approvalsByGateId: {
+        40: { id: "approval-for-4" },
+        50: { id: APPROVAL_ID },
+      },
+    });
+
+    const applied = await applyApprovedReviewTransition(tx, {
+      reviewRequestId: APPROVAL_ID,
+      entityType: ReviewEntityType.CASE,
+      entityId: 1,
+      toStateId: 50,
+    });
+
+    expect(applied).toBe(true);
+    expect(tx.reviewRequest.updateMany).toHaveBeenCalledWith({
+      where: {
+        id: { in: ["approval-for-4", APPROVAL_ID] },
+        consumedAt: null,
+      },
+      data: { consumedAt: expect.any(Date) },
+    });
+  });
+
+  it("consumes the approving request even when the target state is no longer gated", async () => {
+    // `requiresReview` was switched off on the target after the request was
+    // raised, so the gate matches nothing. The move still happens and the
+    // approval is still spent — otherwise it would linger as a live token.
+    const tx = createMockTx({
+      currentStateOrder: 3,
+      targetState: { order: 4 },
+      gatedStates: [],
+    });
+
+    const applied = await applyApprovedReviewTransition(tx, {
+      reviewRequestId: APPROVAL_ID,
+      entityType: ReviewEntityType.CASE,
+      entityId: 1,
+      toStateId: 40,
+    });
+
+    expect(applied).toBe(true);
+    expect(tx.repositoryCases.update).toHaveBeenCalledWith({
+      where: { id: 1 },
+      data: { stateId: 40 },
+    });
+    expect(tx.reviewRequest.updateMany).toHaveBeenCalledWith({
+      where: { id: { in: [APPROVAL_ID] }, consumedAt: null },
+      data: { consumedAt: expect.any(Date) },
+    });
+  });
+
+  it("updates testRuns for RUN and sessions for SESSION", async () => {
+    const runTx = createMockTx({
+      currentStateOrder: 3,
+      targetState: { order: 4 },
+      gatedStates: [{ id: 40, order: 4 }],
+      approvalsByGateId: { 40: { id: APPROVAL_ID } },
+    });
+    await applyApprovedReviewTransition(runTx, {
+      reviewRequestId: APPROVAL_ID,
+      entityType: ReviewEntityType.RUN,
+      entityId: 7,
+      toStateId: 40,
+    });
+    expect(runTx.testRuns.update).toHaveBeenCalledWith({
+      where: { id: 7 },
+      data: { stateId: 40 },
+    });
+    expect(runTx.repositoryCases.update).not.toHaveBeenCalled();
+
+    const sessionTx = createMockTx({
+      currentStateOrder: 3,
+      targetState: { order: 4 },
+      gatedStates: [{ id: 40, order: 4 }],
+      approvalsByGateId: { 40: { id: APPROVAL_ID } },
+    });
+    await applyApprovedReviewTransition(sessionTx, {
+      reviewRequestId: APPROVAL_ID,
+      entityType: ReviewEntityType.SESSION,
+      entityId: 9,
+      toStateId: 40,
+    });
+    expect(sessionTx.sessions.update).toHaveBeenCalledWith({
+      where: { id: 9 },
+      data: { stateId: 40 },
+    });
+  });
+
+  describe("expected no-move cases return false instead of throwing", () => {
+    it("an earlier unapproved gate blocks the move but leaves the approval intact", async () => {
+      // Gate 4 was never requested; this approval targets gate 5. Strict
+      // transitive semantics keep the entity where it is, and the approval
+      // stays unconsumed so it applies once gate 4 clears.
+      const tx = createMockTx({
+        currentStateOrder: 1,
+        targetState: { order: 5 },
+        gatedStates: [
+          { id: 40, order: 4 },
+          { id: 50, order: 5 },
+        ],
+        approvalsByGateId: { 50: { id: APPROVAL_ID } },
+      });
+
+      const applied = await applyApprovedReviewTransition(tx, {
+        reviewRequestId: APPROVAL_ID,
+        entityType: ReviewEntityType.CASE,
+        entityId: 1,
+        toStateId: 50,
+      });
+
+      expect(applied).toBe(false);
+      expect(tx.repositoryCases.update).not.toHaveBeenCalled();
+      expect(tx.reviewRequest.updateMany).not.toHaveBeenCalled();
+    });
+
+    it("an entity already at the target state is left alone", async () => {
+      const tx = createMockTx({
+        currentStateOrder: 4,
+        targetState: { order: 4 },
+        gatedStates: [{ id: 40, order: 4 }],
+        approvalsByGateId: { 40: { id: APPROVAL_ID } },
+      });
+
+      const applied = await applyApprovedReviewTransition(tx, {
+        reviewRequestId: APPROVAL_ID,
+        entityType: ReviewEntityType.CASE,
+        entityId: 1,
+        toStateId: 40,
+      });
+
+      expect(applied).toBe(false);
+      expect(tx.repositoryCases.update).not.toHaveBeenCalled();
+      expect(tx.reviewRequest.updateMany).not.toHaveBeenCalled();
+    });
+
+    it("an entity already past the target state is not dragged backward", async () => {
+      const tx = createMockTx({
+        currentStateOrder: 6,
+        targetState: { order: 4 },
+        gatedStates: [{ id: 40, order: 4 }],
+        approvalsByGateId: { 40: { id: APPROVAL_ID } },
+      });
+
+      const applied = await applyApprovedReviewTransition(tx, {
+        reviewRequestId: APPROVAL_ID,
+        entityType: ReviewEntityType.CASE,
+        entityId: 1,
+        toStateId: 40,
+      });
+
+      expect(applied).toBe(false);
+      expect(tx.repositoryCases.update).not.toHaveBeenCalled();
+    });
+
+    it("a missing entity row is a no-op", async () => {
+      const tx = createMockTx({
+        currentStateOrder: 3,
+        targetState: { order: 4 },
+        gatedStates: [{ id: 40, order: 4 }],
+        approvalsByGateId: { 40: { id: APPROVAL_ID } },
+        entityMissing: true,
+      });
+
+      const applied = await applyApprovedReviewTransition(tx, {
+        reviewRequestId: APPROVAL_ID,
+        entityType: ReviewEntityType.CASE,
+        entityId: 1,
+        toStateId: 40,
+      });
+
+      expect(applied).toBe(false);
+      expect(tx.repositoryCases.update).not.toHaveBeenCalled();
+    });
+
+    it("a missing target state row is a no-op", async () => {
+      const tx = createMockTx({
+        currentStateOrder: 3,
+        targetState: null,
+        gatedStates: [{ id: 40, order: 4 }],
+        approvalsByGateId: { 40: { id: APPROVAL_ID } },
+      });
+
+      const applied = await applyApprovedReviewTransition(tx, {
+        reviewRequestId: APPROVAL_ID,
+        entityType: ReviewEntityType.CASE,
+        entityId: 1,
+        toStateId: 40,
+      });
+
+      expect(applied).toBe(false);
+      expect(tx.repositoryCases.update).not.toHaveBeenCalled();
+    });
+  });
+
+  it("throws ReviewGateError when a concurrent transition already spent an approval", async () => {
+    // The one-shot invariant (D-05) outranks the move: a short stamp count
+    // means someone else redeemed the approval between the gate read and the
+    // stamp, so the caller's transaction must roll back rather than commit a
+    // half-consumed crossing.
+    const tx = createMockTx({
+      currentStateOrder: 3,
+      targetState: { order: 4 },
+      gatedStates: [{ id: 40, order: 4 }],
+      approvalsByGateId: { 40: { id: APPROVAL_ID } },
+      stampCount: 0,
+    });
+
+    await expect(
+      applyApprovedReviewTransition(tx, {
+        reviewRequestId: APPROVAL_ID,
+        entityType: ReviewEntityType.CASE,
+        entityId: 1,
+        toStateId: 40,
+      })
+    ).rejects.toBeInstanceOf(ReviewGateError);
+  });
+});
+
+describe("resolveCreateStateRemap — system-admin bypass", () => {
+  /**
+   * Minimal tx for the create-time remap: a project row carrying the
+   * per-project flag plus the scope's workflow list (the helper reads
+   * `isDefault` / `requiresReview` / `order` off it).
+   */
+  function createRemapMockTx() {
+    return {
+      appConfig: {
+        findUnique: vi.fn().mockResolvedValue({ value: true }),
+      },
+      projects: {
+        findUnique: vi.fn().mockResolvedValue({ reviewWorkflowEnabled: true }),
+      },
+      workflows: {
+        findMany: vi.fn().mockResolvedValue([
+          { id: 10, order: 1, isDefault: true, requiresReview: false },
+          { id: 40, order: 4, isDefault: false, requiresReview: true },
+        ]),
+      },
+    } as any;
+  }
+
+  it("returns the candidate unchanged and queries nothing when userAccess is ADMIN", async () => {
+    const tx = createRemapMockTx();
+
+    // Candidate 40 is the gate itself — a non-admin would be remapped to 10.
+    const result = await resolveCreateStateRemap(
+      tx,
+      1,
+      WorkflowScope.CASES,
+      40,
+      "ADMIN"
+    );
+
+    expect(result).toBe(40);
+    expect(tx.appConfig.findUnique).not.toHaveBeenCalled();
+    expect(tx.projects.findUnique).not.toHaveBeenCalled();
+    expect(tx.workflows.findMany).not.toHaveBeenCalled();
+  });
+
+  it("remaps a gated candidate to the project default for a non-admin", async () => {
+    const tx = createRemapMockTx();
+
+    const result = await resolveCreateStateRemap(
+      tx,
+      1,
+      WorkflowScope.CASES,
+      40,
+      "USER"
+    );
+
+    expect(result).toBe(10);
+  });
+
+  it("remaps when no actor is supplied (importer / worker contexts)", async () => {
+    const tx = createRemapMockTx();
+
+    const result = await resolveCreateStateRemap(
+      tx,
+      1,
+      WorkflowScope.CASES,
+      40
+    );
+
+    expect(result).toBe(10);
   });
 });

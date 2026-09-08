@@ -3,6 +3,18 @@
     "name": "Nome",
     "cancel": "Cancellare",
     "dismiss": "Congedare",
+    "bulk": {
+      "selectItem": "Seleziona elemento",
+      "editAction": "Modifica ({count})",
+      "completeAction": "Completa ({count})",
+      "deleteAction": "Elimina ({count})",
+      "editTitle": "Modifica in blocco ({count})",
+      "applyToCount": "Le modifiche si applicano a {count, plural, one {# elemento} other {# elementi}}.",
+      "tagsAdditiveHint": "I tag selezionati vengono aggiunti a ogni elemento; i tag esistenti vengono mantenuti.",
+      "completeSuccess": "{count, plural, one {# elemento completato} other {# elementi completati}}",
+      "deleteSuccess": "{count, plural, one {# elemento eliminato} other {# elementi eliminati}}",
+      "partialFailure": "{failedCount} di {totalCount} elementi non è stato possibile aggiornare"
+    },
     "of": "di",
     "on": "su",
     "at": "a",
@@ -13,11 +25,13 @@
     "file": "File",
     "selectMultiple": "Seleziona più...",
     "searchUsers": "Cerca utenti...",
+    "searchGroups": "Cerca gruppi...",
     "searchCases": "{count, plural, =0 {Cerca casi} one {Cerca # caso} other {Cerca # casi}}",
     "searchProjects": "{count, plural, =0 {Cerca progetti} one {Cerca # progetto} other {Cerca # progetti}}",
     "searchTags": "Cerca i tag...",
     "searchRuns": "{count, plural, =0 {Cerca esecuzioni di test} one {Cerca # esecuzione di test} other {Cerca # esecuzione di test}}",
     "searchSessions": "{count, plural, =0 {Cerca sessioni} one {Cerca # sessione} other {Cerca # sessioni}}",
+    "searchMilestones": "{count, plural, =0 {Cerca traguardi} one {Cerca # traguardo} other {Cerca # traguardi}}",
     "search": "Ricerca...",
     "defaultOption": "Opzione predefinita",
     "yes": "SÌ",
@@ -27,6 +41,7 @@
     "lastEditedBy": "Ultima modifica di",
     "actions": {
       "edit": "Modificare",
+      "editTestCase": "Modifica caso di prova",
       "save": "Salva",
       "delete": "Eliminare",
       "create": "Creare",
@@ -73,6 +88,7 @@
       "editResult": "Modifica risultato test",
       "resultDetails": "Dettagli del risultato",
       "actionsLabel": "Azioni",
+      "actionsWithAlerts": "Azioni ({count, number} non lette)",
       "assign": "Assegnare",
       "assignSelected": "Assegna {count, plural, one {# caso} other {# casi}}",
       "refresh": "Aggiorna",
@@ -216,8 +232,11 @@
       "high": "Alto"
     },
     "filters": {
+      "all": "Tutto",
       "allStatuses": "Tutti gli stati",
-      "allPriorities": "Tutte le priorità"
+      "allPriorities": "Tutte le priorità",
+      "allIssueTypes": "Tutti i tipi di problema",
+      "noIssueType": "Nessun tipo di problema"
     },
     "fields": {
       "groupName": "Nome del gruppo",
@@ -240,6 +259,13 @@
       "totalElapsed": "Tempo totale trascorso",
       "totalEstimate": "Tempo stimato rimanente",
       "completionRate": "Tasso di completamento",
+      "runDuration": "Durata dell'esecuzione",
+      "passRate": "Tasso di superamento",
+      "parallelization": "Parallelizzazione",
+      "avgTestTime": "Tempo medio del test",
+      "medianTestTime": "Tempo mediano del test",
+      "retries": "Tentativi",
+      "flakyTests": "Test instabili",
       "attachments": "Allegati",
       "documentation": "Documentazione",
       "state": "Stato",
@@ -290,6 +316,7 @@
       "account": "Account",
       "accountHistory": "Cronologia dell'account",
       "activity": "Attività",
+      "activityLog": "Registro attività",
       "lastActive": "Ultimo attivo",
       "theme": "Tema",
       "locale": "Lingua",
@@ -317,12 +344,17 @@
       "fieldType": "Tipo di campo",
       "templates": "Modelli",
       "started": "Iniziato",
+      "ended": "Terminato",
       "startDate": "Data di inizio",
       "automated": "Automatizzato",
       "manual": "Manuale",
       "notAutomated": "Non automatizzato",
       "parameterized": "Programmato",
       "notParameterized": "Non parametrizzabile",
+      "hasAttachments": "Con allegati",
+      "noAttachments": "Senza allegati",
+      "inReview": "In revisione",
+      "notInReview": "Non in revisione",
       "testRuns": "Esecuzioni di prova",
       "title": "Titolo",
       "project": "Progetto",
@@ -378,7 +410,8 @@
         "notificationSettings": "Impostazione globale di notifica",
         "elasticsearch_replicas": "Repliche di Elasticsearch",
         "review_feature_enabled": "Revisione e approvazioni abilitate",
-        "review_reminder_threshold_days": "Ricorda ai revisori i giorni limite"
+        "review_reminder_threshold_days": "Ricorda ai revisori i giorni limite",
+        "record_key_enabled": "Chiavi di record abilitate"
       },
       "options": {
         "label": "Etichetta",
@@ -415,7 +448,8 @@
         "stateRequired": "Lo stato è obbligatorio",
         "urlRequired": "L'URL è obbligatorio",
         "invalidUrl": "Formato URL non valido"
-      }
+      },
+      "worker": "Lavoratore"
     },
     "filter": {
       "placeholder": "Filtro {item}..."
@@ -524,6 +558,15 @@
       "selectState": "Seleziona lo stato",
       "selectConfiguration": "Seleziona la configurazione",
       "selectConfigurations": "Selezionare le configurazioni",
+      "selectFolders": "Seleziona cartelle",
+      "selectIssues": "Seleziona problemi",
+      "selectMilestones": "Seleziona milestone",
+      "selectProjects": "Seleziona progetti",
+      "selectStates": "Seleziona stati",
+      "selectTags": "Seleziona tag",
+      "addFieldTo": "Aggiungi un campo a {section}",
+      "selectTemplates": "Seleziona modelli",
+      "selectUsers": "Seleziona utenti",
       "selectOption": "Seleziona un'opzione",
       "date": "Seleziona una data",
       "selectEncoding": "Seleziona la codifica...",
@@ -543,12 +586,15 @@
       "stepCount": "conteggio dei passi",
       "enterText": "Inserisci il testo...",
       "enterUrl": "Inserisci URL",
+      "enterUrlPattern": "Inserisci modello URL...",
+      "domainExample": "esempio.com",
       "issueIdExample": "NUMERO 123",
       "selectPriorityValuesOrEmpty": "Seleziona i valori di priorità (oppure lascia vuoto per tutte le priorità)"
     },
     "errors": {
       "error": "Errore",
       "somethingWentWrong": "Si è verificato un errore imprevisto. Riprova più tardi.",
+      "completeNotPermitted": "Non hai l'autorizzazione per completare questo elemento.",
       "emailRequired": "Inserisci il tuo indirizzo email.",
       "emailInvalid": "Questo non è un indirizzo email valido.",
       "passwordRequired": "È richiesta la password.",
@@ -718,6 +764,24 @@
       "selectDeselectAllApprove": "Seleziona o deseleziona l'opzione \"approva\" per tutte le aree pertinenti.",
       "selectDeselectAllReadSensitive": "Seleziona o deseleziona \"Leggi sensibile\" per tutte le aree pertinenti"
     },
+    "configurationGroup": {
+      "title": "Gruppo di configurazione",
+      "notLinkedRun": "Non collegato a nessun'altra esecuzione di test.",
+      "notLinkedSession": "Non collegato a nessun'altra sessione.",
+      "linkRun": "Collega a un'esecuzione di test",
+      "linkSession": "Collega a una sessione",
+      "changeRun": "Collega a un'esecuzione di test diversa",
+      "changeSession": "Collega a una sessione diversa",
+      "unlink": "Scollega",
+      "pending": "Salva per applicare questa modifica.",
+      "saveError": "Impossibile aggiornare il gruppo di configurazione",
+      "candidateInGroupRun": "{count, plural, one {# esecuzione} other {# esecuzioni}}",
+      "candidateInGroupSession": "{count, plural, one {# sessione} other {# sessioni}}",
+      "linkHintRun": "Collegandoti a un'esecuzione, ti colleghi anche a tutte le esecuzioni già raggruppate con essa.",
+      "linkHintSession": "Collegandoti a una sessione, ti colleghi anche a tutte le sessioni già raggruppate con essa.",
+      "candidateInGroupTooltipRun": "{count, plural, one {# esecuzione in questo gruppo} other {# esecuzioni in questo gruppo}}",
+      "candidateInGroupTooltipSession": "{count, plural, one {# sessione in questo gruppo} other {# sessioni in questo gruppo}}"
+    },
     "labels": {
       "projects": "{count, plural, =1 {# Progetto} other {# Progetti}}",
       "templates": "Modelli e campi",
@@ -731,6 +795,16 @@
       "existingAttachments": "Allegati esistenti",
       "new": "Nuovo",
       "noElapsedTime": "Nessun tempo registrato",
+      "runDurationHint": "Tempo dal primo all'ultimo risultato",
+      "totalElapsedHint": "Somma dei tempi dei singoli test",
+      "parallelizationHint": "Numero medio di test eseguiti contemporaneamente",
+      "parallelizationPeakHint": "Picco di {peak, number} test in esecuzione contemporaneamente, {average}× in media",
+      "passRateHint": "{passed, number} di {total, number} test superati",
+      "retriesHint": "Tentativi oltre la prima esecuzione di ciascun test",
+      "flakyTestHint": "Falliti, poi superati al tentativo successivo in questa esecuzione",
+      "executionMetrics": "Metriche di esecuzione",
+      "metricsAndCharts": "Metriche e grafici",
+      "slowestTests": "Test più lenti",
       "untested": "Non testato",
       "noResults": "Nessun risultato",
       "resultsWithNoElapsedTime": "Nessun tempo registrato per i risultati",
@@ -738,6 +812,7 @@
       "noCases": "Nessun caso di prova",
       "unknown": "Sconosciuto",
       "selectedTestCases": "Casi di test selezionati",
+      "selectedTestCasesCount": "{count, plural, one {# Caso di Test Selezionato} other {# Casi di Test Selezionati}}",
       "editToModifyCasesTitle": "Questo elenco non può essere modificato.",
       "editToModifyCases": "Modificare l'esecuzione del test e fare clic su Casi di test selezionati per modificare l'elenco.",
       "noTestCasesSelected": "Nessun caso di test selezionato",
@@ -749,9 +824,13 @@
       "sortByDate": "Ordina per data",
       "testRuns": "{count, plural, =0 {Nessuna esecuzione di test} =1 {1 esecuzione di test} other {# esecuzioni di test}}",
       "sessions": "{count, plural, =0 {Nessuna sessione} =1 {1 sessione} other {# sessioni}}",
+      "issues": "{count, plural, =0 {Nessun problema} =1 {1 Problema} other {# Problemi}}",
       "noOptions": "Nessuna opzione disponibile",
       "multiConfiguration": "Parte di un gruppo multiconfigurazione",
+      "compositionLocked": "Composizione bloccata — l'insieme di casi è congelato",
       "otherConfigurations": "Altre configurazioni",
+      "noConfiguration": "Nessuna configurazione",
+      "configurationWithName": "{configuration} — {name}",
       "selected": "Selezionato: {count}",
       "defaultProjectAccess": "Accesso predefinito al progetto",
       "defaultAccessType": "Tipo di accesso predefinito",
@@ -794,7 +873,8 @@
     "table": {
       "columns": {
         "columns": "Colonne",
-        "required": "(necessario)"
+        "required": "(necessario)",
+        "resetColumns": "Ripristina le colonne predefinite"
       },
       "filter": "Elenco filtri...",
       "selectNone": "Seleziona Nessuno",
@@ -802,7 +882,13 @@
       "sortAscending": "Ordinato in ordine crescente",
       "sortDescending": "Ordinato in ordine decrescente",
       "sortNone": "Non ordinato",
-      "resize": "Ridimensiona colonna"
+      "resize": "Ridimensiona colonna",
+      "reorderColumn": "Trascina per riordinare la colonna",
+      "sortAsc": "Ordina in ordine crescente",
+      "sortDesc": "Ordina in ordine decrescente",
+      "removeSort": "Rimuovi ordinamento",
+      "hideColumn": "Nascondi colonna",
+      "columnOptions": "Opzioni colonna"
     },
     "pagination": {
       "selectPage": "Seleziona pagina",
@@ -815,7 +901,8 @@
       "showing": "Mostrando",
       "total": "totale {count, plural, =1 {# articolo} other {# articoli}}",
       "filtered": "filtrato da",
-      "pageOfPages": "Pagina {current} di {total}"
+      "pageOfPages": "Pagina {current} di {total}",
+      "loadedOfTotal": "{loaded, number} di {total, number}"
     },
     "upload": {
       "title": "Carica una nuova immagine del profilo",
@@ -1006,10 +1093,10 @@
       },
       "charts": {
         "resultsDistribution": "Distribuzione dei risultati",
-        "statusTimeline": "Cronologia dello stato",
+        "executionTimeline": "Cronologia di esecuzione",
         "testDurationHistogram": "Istogramma della durata del test",
         "zoomDonutChart": "Grafico a ciambella Zoom",
-        "zoomStatusTimeline": "Cronologia dello stato dello zoom",
+        "zoomExecutionTimeline": "Cronologia di esecuzione dello zoom",
         "zoomHistogramChart": "Grafico istogramma zoom",
         "duration": "Durata: {seconds} secondi",
         "durationLabel": "Durata"
@@ -1053,7 +1140,35 @@
     "invalidProject": "ID progetto non valido.",
     "visualization": "Visualizzazione",
     "results": "Risultati",
-    "loading": "Caricamento..."
+    "loading": "Caricamento...",
+    "operators": {
+      "eq": "Uguale a",
+      "ne": "Diverso da",
+      "lt": "Minore di",
+      "lte": "Minore o uguale a",
+      "gt": "Maggiore di",
+      "gte": "Maggiore o uguale a",
+      "between": "Tra",
+      "contains": "Contiene",
+      "notContains": "Non contiene",
+      "startsWith": "Inizia con",
+      "endsWith": "Termina con",
+      "domain": "Il dominio contiene",
+      "on": "Il",
+      "before": "Prima di",
+      "after": "Dopo",
+      "last7": "Ultimi 7 giorni",
+      "last30": "Ultimi 30 giorni",
+      "last90": "Ultimi 90 giorni",
+      "thisYear": "Quest'anno",
+      "anyOf": "Uno qualsiasi di",
+      "allOf": "Tutti",
+      "noneOf": "Nessuno di",
+      "is": "È",
+      "in": "È uno qualsiasi di",
+      "hasValue": "Ha valore",
+      "isEmpty": "È vuoto"
+    }
   },
   "api": {
     "testResults": {
@@ -1253,15 +1368,15 @@
     "overview": {
       "title": "Panoramica",
       "currentMilestones": "Traguardi attuali",
-      "seeAllMilestones": "{count, plural, =1 {Vedi # Milestone} other {Vedi tutti i # Milestone}}",
-      "seeAllTestCases": "{count, plural, =1 {Vedi # Caso di prova} other {Vedi tutti i # Casi di prova}}",
+      "seeAllMilestones": "{count, plural, =1 {Vedi # Traguardo} =2 {Vedi entrambi i Traguardi} other {Vedi tutti i # Traguardi}}",
+      "seeAllTestCases": "{count, plural, =1 {Vedi # Caso di test} =2 {Vedi entrambi i Casi di test} other {Vedi tutti i # Casi di test}}",
       "latestTestCases": "Ultimi casi di prova",
       "createdOn": "Creato il",
-      "seeAllTags": "Vedi tutti i tag",
-      "seeAllActiveSessions": "{count, plural, =1 {Vedi # Sessione attiva} other {Vedi tutte le # Sessioni attive}}",
+      "seeAllTagsCount": "{count, plural, =1 {Vedi # Tag} =2 {Vedi entrambi i Tag} other {Vedi tutti i # Tag}}",
+      "seeAllActiveSessions": "{count, plural, =1 {Vedi # Sessione attiva} =2 {Vedi entrambe le Sessioni attive} other {Vedi tutte le # Sessioni attive}}",
       "latestSessions": "Ultime sessioni",
       "activeTestRuns": "Esecuzioni di test attive",
-      "seeAllActiveTestRuns": "{count, plural, =1 {Vedi # Esecuzione test attiva} other {Vedi tutte le # Esecuzioni test attive}}",
+      "seeAllActiveTestRuns": "{count, plural, =1 {Vedi # Esecuzione di test attiva} =2 {Vedi entrambe le Esecuzioni di test attive} other {Vedi tutte le # Esecuzioni di test attive}}",
       "latestTestRuns": "Ultimi test eseguiti",
       "testCaseBreakdown": "Analisi del caso di prova",
       "noTestCases": "Il repository del progetto è vuoto. Aggiungi casi di test utilizzando il repository.",
@@ -1292,7 +1407,14 @@
         "saveButton": "Salva",
         "saveSuccess": "Nomi delle proprietà di iterazione salvati.",
         "saveError": "Impossibile salvare i nomi delle proprietà di iterazione.",
-        "removeAria": "Rimuovi {name}"
+        "removeAria": "Rimuovi {name}",
+        "counter": "{count}/{max}",
+        "constraints": "Fino a {max} proprietà, ciascuna di massimo {maxLength} caratteri, senza spazi.",
+        "limitReached": "Hai raggiunto il numero massimo di {max} proprietà. Rimuovine una per aggiungerne un'altra.",
+        "errorTooLong": "Mantieni ogni nome di proprietà entro {maxLength} caratteri o meno.",
+        "errorWhitespace": "I nomi delle proprietà non possono contenere spazi.",
+        "errorReserved": "“{name}” è una parola riservata e non può essere utilizzata.",
+        "errorDuplicate": "“{name}” è già presente nell'elenco."
       },
       "integrations": {
         "description": "Gestisci le integrazioni di problemi di terze parti per questo progetto",
@@ -1379,7 +1501,19 @@
           "importStart": "Importa",
           "importStarted": "Importazione avviata. I problemi appariranno a breve.",
           "importFailed": "Importazione non riuscita",
-          "importPreviewFailed": "Impossibile stimare le corrispondenze"
+          "importPreviewFailed": "Impossibile stimare le corrispondenze",
+          "milestoneSync": {
+            "title": "Sincronizzazione traguardi",
+            "description": "Sincronizza i traguardi di TestPlanIt dagli artefatti basati sul tempo di questo tracker.",
+            "enableLabel": "Abilita la sincronizzazione dei traguardi",
+            "releasesLabel": "Release",
+            "sprintsLabel": "Sprint",
+            "kindsLabel": "Tipi da sincronizzare",
+            "autoTrackLabel": "Aggiungi automaticamente i nuovi",
+            "autoTrackProjectsLabel": "Analizza questi progetti collegati per nuovi traguardi",
+            "settingsSaved": "Impostazioni di sincronizzazione dei traguardi salvate",
+            "saveError": "Impossibile salvare le impostazioni di sincronizzazione dei traguardi"
+          }
         },
         "integrationAssigned": "Integrazione assegnata con successo",
         "integrationAssignError": "Impossibile assegnare l'integrazione del problema al progetto",
@@ -1621,6 +1755,7 @@
         "setupStepsGiteaStep5": "Fai clic su \"Aggiungi Webhook\". Utilizza \"Invia webhook di prova\" qui sotto per verificare la pipeline.",
         "deliveriesTab": "Consegne",
         "filterConfigPlaceholder": "Tutti i webhook",
+        "filterEventPlaceholder": "Tutti gli eventi",
         "filterStatusAll": "Tutto",
         "filterStatusFailed": "Fallito",
         "filterStatusSuccess": "Successo",
@@ -1634,6 +1769,7 @@
         "deliveriesLoadMore": "Carica altro",
         "tableHeaderConfig": "Webhook",
         "tableHeaderEvent": "Evento",
+        "tableHeaderSubjectRef": "Riferimento",
         "tableHeaderStatus": "Stato",
         "tableHeaderError": "Errore",
         "tableHeaderReceivedAt": "Ricevuto",
@@ -1651,6 +1787,7 @@
         "drawerLabelError": "Errore",
         "drawerLabelPayloadDigest": "Analisi del carico utile",
         "drawerLabelEventId": "ID evento",
+        "drawerLabelSubjectRef": "Riferimento",
         "drawerLabelAttempt": "Tentativo",
         "drawerLabelReceivedAt": "Ricevuto alle",
         "drawerNoError": "—",
@@ -1897,7 +2034,9 @@
           "description": "I file vengono memorizzati nella cache di Valkey per un accesso rapido durante la generazione dell'IA.",
           "enableLabel": "Abilita la memorizzazione nella cache dei file",
           "disabledWarning": "La memorizzazione nella cache dei file è disabilitata. I file del repository verranno scaricati direttamente dal tuo provider al momento dell'esportazione e non verranno memorizzati in TestPlanIt. QuickScript, basato sull'intelligenza artificiale, includerà comunque il contesto del codice, ma ogni esportazione effettuerà una richiesta in tempo reale al tuo repository.",
-          "ttlLabel": "Durata della cache (giorni)",
+          "ttlBefore": "Memorizza nella cache per",
+          "ttlDays": "{count, plural, one {giorno} other {giorni}}",
+          "ttlAriaLabel": "Durata della cache in giorni",
           "statusTitle": "Stato della cache",
           "refreshButton": "Aggiorna la cache",
           "listingFiles": "Elenco dei file…",
@@ -1906,6 +2045,8 @@
           "statusPending": "Rinfrescante...",
           "lastFetched": "Ultimo recuperato",
           "filesCached": "File memorizzati nella cache",
+          "contentsCached": "Contenuti memorizzati nella cache",
+          "contentsIncomplete": "Solo {cached} di {total} contenuti di file sono memorizzati nella cache — gli script generati non utilizzeranno i file mancanti. Aggiorna di nuovo per completare.",
           "totalSize": "Dimensione totale"
         },
         "save": "Salva configurazione",
@@ -1949,9 +2090,20 @@
       "advanced": {
         "title": "Avanzato",
         "description": "Opzioni di attivazione specifiche per ogni progetto, relative a funzionalità predefinite. Le nuove opzioni verranno visualizzate qui man mano che saranno introdotte.",
+        "recordKey": {
+          "label": "Codice progetto",
+          "description": "Un codice breve utilizzato nelle chiavi cosmetiche dei record come {example}. 2–10 lettere maiuscole, senza cifre. Lascia vuoto per mostrare ID numerici semplici.",
+          "placeholder": "es. PROJECT",
+          "previewLabel": "Chiave di esempio:",
+          "useSuggestion": "Usa il codice suggerito: {code}",
+          "invalid": "Usa 2–10 lettere maiuscole (senza cifre).",
+          "taken": "Questo codice è già utilizzato da un altro progetto. Scegline un altro.",
+          "savedToast": "Codice progetto salvato.",
+          "saveError": "Impossibile salvare il codice del progetto. Potrebbe essere già utilizzato da un altro progetto."
+        },
         "reviewWorkflow": {
           "label": "Abilita il flusso di lavoro di revisione",
-          "description": "Quando abilitata, la transizione verso stati che richiedono una revisione è vincolata a una richiesta di revisione approvata. I tester visualizzano il pulsante Richiedi revisione; i revisori ricevono notifiche.",
+          "description": "Quando abilitata, le transizioni verso stati che richiedono una revisione sono vincolate a una richiesta di revisione approvata. I tester visualizzano il pulsante Richiedi revisione; i revisori ricevono notifiche e l'approvazione di una richiesta applica la transizione.",
           "enabledToast": "Revisione del flusso di lavoro abilitata per questo progetto",
           "disabledToast": "Revisione del flusso di lavoro disabilitata per questo progetto.",
           "saveError": "Impossibile aggiornare le impostazioni del flusso di lavoro di revisione.",
@@ -1982,13 +2134,23 @@
           "saveError": "Impossibile aggiornare l'impostazione di esclusione del caso di bozza.",
           "skippedToast": "{count, plural, =1 {1 caso di bozza è stato saltato perché si trova nello stato Non avviato} other {# casi di bozza sono stati saltati perché si trovano nello stato Non avviato}}"
         },
+        "autoLockComposition": {
+          "label": "Blocca la composizione dell'Esecuzione test quando inizia l'esecuzione",
+          "description": "Se abilitata, la composizione dei casi di un'esecuzione test viene bloccata automaticamente nel momento in cui l'esecuzione passa allo stato In corso. Il blocco congela quali casi sono presenti nell'esecuzione (senza possibilità di aggiungere, rimuovere o riordinare) mentre l'esecuzione e l'assegnazione continuano. Il creatore dell'esecuzione o un Amministratore del progetto può sbloccarla per modificare l'insieme dei casi.",
+          "enabledToast": "Le Esecuzioni test bloccheranno la loro composizione quando inizia l'esecuzione",
+          "disabledToast": "Le Esecuzioni test non bloccheranno più automaticamente la loro composizione",
+          "saveError": "Impossibile aggiornare l'impostazione di blocco automatico della composizione"
+        },
         "editWindow": {
           "label": "Finestra di modifica dei risultati",
           "description": "Per quanto tempo dopo la registrazione di un risultato è ancora possibile modificarlo direttamente. Una volta chiusa la finestra, per apportare correzioni è necessario un nuovo tentativo. Gli amministratori di sistema possono sempre effettuare modifiche.",
-          "modeInherit": "Eredita le impostazioni predefinite del sistema",
+          "modeInheritMinutes": "Eredita l'impostazione predefinita del sistema ({minutes, plural, one {# minuto} other {# minuti}})",
+          "modeInheritNoLimit": "Eredita l'impostazione predefinita del sistema (nessun limite)",
           "modeDisable": "Disabilita la modifica per questo progetto",
           "modeCustom": "Finestra personalizzata",
-          "minutesLabel": "Modificabile per (minuti)",
+          "minutesBefore": "Modificabile per",
+          "minutesUnit": "{minutes, plural, one {minuto} other {minuti}}",
+          "minutesAriaLabel": "Finestra di modifica in minuti",
           "systemMaxHint": "Massimo del sistema: {minutes} minuti",
           "systemLockedTitle": "La modifica è disabilitata a livello di sistema.",
           "systemLockedDescription": "Un amministratore di sistema ha disabilitato la modifica dei risultati in loco per tutti i progetti, pertanto questo progetto non può abilitarla.",
@@ -1996,6 +2158,23 @@
           "save": "Salva finestra di modifica",
           "savedToast": "Finestra di modifica aggiornata per questo progetto",
           "saveError": "Impossibile aggiornare le impostazioni della finestra di modifica."
+        },
+        "abandonedRuns": {
+          "label": "Pulizia automazione abbandonata",
+          "description": "Quanto tempo attendere per il risultato successivo prima che un'esecuzione automatizzata venga chiusa come abbandonata. Le esecuzioni manuali non vengono mai influenzate.",
+          "modeInheritMinutes": "Eredita l'impostazione predefinita del sistema ({minutes, plural, one {# minuto} other {# minuti}})",
+          "modeInheritOff": "Eredita l'impostazione predefinita del sistema (disattivata)",
+          "modeDisable": "Disabilita per questo progetto",
+          "modeCustom": "Soglia di inattività personalizzata",
+          "minutesBefore": "Chiudi quando inattivo per",
+          "minutesUnit": "{minutes, plural, one {minuto} other {minuti}}",
+          "minutesAriaLabel": "Soglia di inattività in minuti",
+          "invalidMinutes": "Inserisci almeno {min} minuti",
+          "targetStateLabel": "Sposta le esecuzioni chiuse in",
+          "targetStateAria": "Stato di destinazione per le esecuzioni abbandonate",
+          "save": "Salva impostazioni di pulizia",
+          "savedToast": "Pulizia automazione abbandonata aggiornata per questo progetto",
+          "saveError": "Impossibile aggiornare la pulizia automazione abbandonata"
         }
       }
     },
@@ -2044,6 +2223,9 @@
   },
   "milestones": {
     "title": "Dettagli della pietra miliare",
+    "auditLog": {
+      "description": "Tutte le modifiche registrate per questo traguardo."
+    },
     "fields": {
       "parent": "Traguardo dei genitori",
       "dueDate": "Scadenza",
@@ -2067,7 +2249,18 @@
       "description": "Nessuna descrizione fornita",
       "documentation": "Nessuna documentazione fornita",
       "testRuns": "Nessuna prova",
+      "noMatchingTestRuns": "Nessuna esecuzione di test corrisponde ai filtri selezionati.",
+      "noMatchingSessions": "Nessuna sessione corrisponde ai filtri selezionati.",
       "forecasts": "Nessun dato di previsione disponibile"
+    },
+    "cardFilters": {
+      "labelRuns": "Filtra esecuzioni di test",
+      "labelSessions": "Filtra sessioni"
+    },
+    "browser": {
+      "kindAll": "Tutti i traguardi",
+      "kindReleases": "Release sincronizzate",
+      "kindSprints": "Sprint sincronizzati"
     },
     "statusLabels": {
       "NOT_STARTED": "Non iniziato",
@@ -2111,6 +2304,7 @@
     "delete": {
       "title": "Elimina Milestone",
       "confirmMessage": "Sei sicuro di voler eliminare la milestone {name}?",
+      "childrenWarning": "{count, plural, one {Verrà eliminato anche il suo # traguardo figlio.} other {Verranno eliminati anche i suoi # traguardi figli e discendenti.}}",
       "warning": "Questa milestone verrà rimossa dal progetto. I dati storici relativi a questa milestone rimarranno comunque nel progetto.",
       "toast": {
         "loading": "Eliminazione della milestone in corso...",
@@ -2138,12 +2332,128 @@
     "notifications": {
       "dueSoon": "La tappa \"{name}\" è prevista per il {dueDate}",
       "overdue": "La tappa \"{name}\" era prevista per il {dueDate}"
+    },
+    "import": {
+      "importTitle": "Importa da Jira",
+      "importDescription": "Seleziona le Fix Version di Jira e gli Sprint da sincronizzare come Traguardi di TestPlanIt.",
+      "showClosed": "Mostra chiusi",
+      "alreadyLinked": "Già collegato",
+      "selectedCount": "{count, plural, one {# selezionato} other {# selezionati}}",
+      "confirmSelection": "Importa selezionati",
+      "confirmSelectionCount": "{count, plural, one {Importa # milestone} other {Importa # milestone}}",
+      "empty": "Nessun traguardo trovato",
+      "previewFailed": "Impossibile caricare i traguardi da Jira",
+      "importFailed": "Impossibile importare i traguardi selezionati",
+      "requestTimedOut": "Jira ha impiegato troppo tempo a rispondere e la richiesta è andata in timeout. Questo di solito significa che i progetti Jira collegati hanno un numero elevato di versioni o board. Riprova e mantieni disattivata l'opzione \"Mostra chiusi\" per restringere la richiesta.",
+      "serviceUnavailable": "Il server è temporaneamente non disponibile. Riprova tra un momento.",
+      "unexpectedResponse": "Risposta imprevista dal server (HTTP {status}). Riprova e contatta il tuo amministratore se il problema persiste.",
+      "importStarted": "Importazione avviata",
+      "kindRelease": "Rilascio",
+      "kindSprint": "Sprint",
+      "selectAll": "Seleziona tutto",
+      "searchPlaceholder": "Cerca release e sprint...",
+      "emptyFiltered": "Nessun traguardo corrisponde ai filtri selezionati.",
+      "partialWarning": "Alcuni progetti Jira non sono stati recuperati:",
+      "importing": "Importazione di {count, plural, one {# traguardo} other {# traguardi}} da Jira…",
+      "completed": "Importati {count, plural, one {# traguardo} other {# traguardi}} da Jira",
+      "stillRunning": "L'importazione è ancora in esecuzione in background — i traguardi appariranno al termine."
+    },
+    "sync": {
+      "managedByJira": "Gestito da Jira",
+      "lastSynced": "Ultima sincronizzazione {time}",
+      "openInJira": "Apri in Jira",
+      "providerJira": "Jira",
+      "sourceBadge": "{provider} · {kind} · {state}",
+      "syncNow": "Sincronizza ora",
+      "unlinkMenuItem": "Scollega da {provider}",
+      "unlinkConfirmTitle": "Scollegare il traguardo?",
+      "unlinkConfirmDescription": "Questo interrompe la sincronizzazione con il tracker: i campi diventano nuovamente modificabili, i link ai problemi sincronizzati diventano manuali (a te la scelta di conservarli o rimuoverli), e sarà possibile ricollegare in seguito importando di nuovo questo artefatto.",
+      "unlinkConfirmAction": "Scollega",
+      "unlinkSuccess": "Traguardo scollegato dal tracker.",
+      "unlinkError": "Impossibile scollegare il traguardo.",
+      "sourceRemoved": "origine rimossa in {provider}",
+      "mergedInto": "unito a {target}"
+    },
+    "summary": {
+      "inScope": "{count, plural, one {# nell'ambito} other {# nell'ambito}}",
+      "foundInTesting": "{count, plural, one {# trovato nei test} other {# trovati nei test}}",
+      "includesChildMilestones": "Include i traguardi figli"
+    },
+    "burndown": {
+      "title": "Burndown",
+      "remaining": "Elementi rimanenti",
+      "ideal": "Ideale",
+      "today": "Oggi",
+      "tooltipRemaining": "{count, number} rimanenti",
+      "heatAhead": "In anticipo sull'ideale",
+      "heatOnTrack": "In linea",
+      "heatBehind": "In ritardo sull'ideale",
+      "tooltipBehind": "{count, number} in ritardo sull'ideale",
+      "tooltipAhead": "{count, number} in anticipo sull'ideale"
+    },
+    "members": {
+      "cardTitle": "Problemi",
+      "casesOtherProjects": "{count, plural, one {# caso di test in un altro progetto} other {# casi di test in altri progetti}}",
+      "inScope": "Nell'ambito",
+      "foundInTesting": "Trovato nei test",
+      "foundInTestingEmpty": "Nessun problema trovato nei test.",
+      "inScopeCrossBadge": "Nell'ambito",
+      "refresh": "Aggiorna",
+      "columnKey": "Nome",
+      "columnStatus": "Stato",
+      "columnCoverage": "Copertura",
+      "columnSource": "Origine",
+      "sourceSynced": "Sincronizzato",
+      "sourceManual": "Manuale",
+      "coveragePassed": "Superato",
+      "coverageFailed": "Fallito",
+      "coverageInProgress": "In corso",
+      "coverageNotRun": "Non eseguito",
+      "coverageUncovered": "Non coperto",
+      "filterAllCoverage": "Tutta la copertura",
+      "filterAllSources": "Tutte le origini",
+      "filterAllTypes": "Tutti i tipi",
+      "empty": "Nessun problema collegato a questo traguardo.",
+      "emptyFiltered": "Nessun problema corrisponde ai filtri correnti.",
+      "unlink": "Scollega",
+      "managedByJira": "Gestito da Jira — rimuovilo dalla versione/sprint in Jira",
+      "linkSuccess": "Problema collegato a questo traguardo.",
+      "linkError": "Impossibile collegare il problema a questo traguardo.",
+      "unlinkSuccess": "Problema rimosso da questo traguardo.",
+      "unlinkError": "Impossibile rimuovere il problema da questo traguardo.",
+      "overflowTitle": "Altri problemi in Jira",
+      "overflowDescription": "Questi problemi si trovano nella versione/sprint Jira collegata ma non sono ancora collegati qui.",
+      "overflowCapped": "Limitato a {cap, number} — altri {overflowTotal, number} in Jira",
+      "overflowMoreAvailable": "Altri {overflowTotal, number} disponibili in Jira",
+      "overflowImportAction": "Importa e collega",
+      "overflowImportSuccess": "Importazione avviata — i problemi appariranno durante la sincronizzazione.",
+      "overflowImportError": "Impossibile importare i problemi associati da Jira.",
+      "emptyCta": "Collega un problema per iniziare.",
+      "columnDescription": "Descrizione",
+      "unlinkConfirmTitle": "Scollegare il problema?",
+      "unlinkConfirmDescription": "Questo rimuove il problema da questo traguardo. Il problema stesso viene conservato e può essere collegato di nuovo in seguito.",
+      "totalsUncovered": "{count, plural, one {# problema non coperto} other {# problemi non coperti}}",
+      "percentReady": "{percent, number}% pronto",
+      "readinessSummary": "{passed, number} superati · {failed, number} falliti · {inProgress, number} in corso · {notRun, number} non eseguiti · {uncovered, number} non coperti (su {total, number} problemi)",
+      "filterHasUntested": "Con casi non testati",
+      "createRunNoCases": "Nessuno dei problemi selezionati ha casi di test collegati.",
+      "createTestRunDetailed": "Crea esecuzione test ({issues, plural, one {# problema} other {# problemi}} · {cases, plural, one {# caso} other {# casi}})"
+    },
+    "complete": {
+      "skippedForPermission": "Il milestone è stato completato. Le sue esecuzioni di test e sessioni sono state lasciate aperte perché non hai il permesso di completarle.",
+      "skippedTestRunsForPermission": "Il milestone è stato completato. Le sue esecuzioni di test sono state lasciate aperte perché non hai il permesso di completarle.",
+      "skippedSessionsForPermission": "Il milestone è stato completato. Le sue Sessioni sono state lasciate aperte perché non hai il permesso di completarle."
     }
   },
   "sessions": {
+    "bulk": {
+      "completeTitle": "Completa {count, plural, one {# Sessione} other {# Sessioni}}",
+      "completeDescription": "Sei sicuro di voler completare {count, plural, one {questa Sessione} other {queste Sessioni}}?",
+      "deleteTitle": "Elimina {count, plural, one {# Sessione} other {# Sessioni}}",
+      "deleteDescription": "Sei sicuro di voler eliminare {count, plural, one {questa Sessione} other {queste Sessioni}}?"
+    },
     "auditLog": {
       "trigger": "Attività",
-      "title": "Registro attività",
       "description": "Tutte le modifiche registrate per questa sessione."
     },
     "title": "{count, plural, =1 {Sessione} other {Sessioni}}",
@@ -2153,7 +2463,12 @@
       "overtime": "Oltre la stima di: {time}"
     },
     "empty": {
-      "noMatchingCompleted": "Nessuna sessione completata corrisponde al tuo filtro."
+      "noMatchingCompleted": "Nessuna sessione completata corrisponde al tuo filtro.",
+      "noMatchingActive": "Nessuna sessione attiva corrisponde ai tuoi filtri."
+    },
+    "sessionFilters": {
+      "label": "Filtra sessioni",
+      "mine": "Le mie sessioni"
     },
     "filter": {
       "placeholder": "Filtra sessioni..."
@@ -2167,6 +2482,9 @@
       "viewSessionDetails": "Visualizza sessione"
     },
     "noMilestone": "Nessuna pietra miliare",
+    "milestoneGroup": {
+      "sessionCount": "{count, plural, one {# sessione} other {# sessioni}}"
+    },
     "completeDialog": {
       "noWorkflowsConfigured": "Non sono configurati flussi di lavoro di completamento per questo progetto. Configurare i flussi di lavoro nelle impostazioni di amministrazione per abilitare il completamento della sessione."
     },
@@ -2313,6 +2631,12 @@
       "adminAddProject": "Aggiungi il tuo primo progetto per iniziare!",
       "footer": "L'accesso è necessario per visualizzare e partecipare alle attività di pianificazione dei test."
     },
+    "getStarted": {
+      "title": "Inizia",
+      "description": "Aggiungi il tuo Progetto quando sei pronto per iniziare a pianificare.",
+      "adminAddProject": "Crea il tuo primo Progetto",
+      "footer": "Il Progetto Demo contiene dati di esempio che puoi esplorare o rimuovere in qualsiasi momento."
+    },
     "noProjectAccess": {
       "description": "Non hai accesso a questo progetto.",
       "contact": "Contatta l'amministratore del progetto per richiedere l'accesso."
@@ -2321,6 +2645,7 @@
       "testCases": "{count, plural, =0 {# Casi di test} =1 {# Caso di test} other {# Casi di test}}",
       "activeMilestones": "{count, plural, =0 {# Traguardi attivi} =1 {# Traguardo attivo} other {# Traguardi attivi}}",
       "activeRuns": "{count, plural, =0 {# Corse attive} =1 {# Corse attive} other {# Corse attive}}",
+      "automationRunsInProgress": "{count, plural, =0 {# Esecuzioni Automatiche in Corso} =1 {# Esecuzione Automatica in Corso} other {# Esecuzioni Automatiche in Corso}}",
       "activeSessions": "{count, plural, =0 {# Sessioni attive} =1 {# Sessione attiva} other {# Sessioni attive}}",
       "issues": "{count, plural, =0 {# Problemi} =1 {# Problema} other {# Problemi}}"
     }
@@ -2349,6 +2674,13 @@
       },
       "access": {
         "title": "Accesso"
+      },
+      "assignments": {
+        "title": "Incarichi",
+        "empty": "Nessun incarico aperto.",
+        "reviews": "{count, plural, =1 {# Revisione} other {# Revisioni}}",
+        "remaining": "Rimanenti",
+        "pendingRuns": "{count, plural, =1 {# Test Run attivo include} other {# Test Run attivi includono}} {cases, plural, =1 {# caso di test} other {# casi di test}}"
       },
       "directory": {
         "title": "Profilo della directory",
@@ -2421,12 +2753,18 @@
         "noMatchingEntries": "Nessuna voce corrisponde ai filtri selezionati.",
         "showing": "{loaded} di {total} voci"
       },
-      "mentionedComments": {
-        "title": "Citato nei commenti",
-        "description": "Commenti in cui vieni menzionato",
-        "noComments": "Non sei ancora stato menzionato in nessun commento.",
-        "comment": "Commento",
-        "showingResults": "Visualizzazione di {start} - {end} di {total}"
+      "myComments": {
+        "title": "I miei commenti",
+        "description": "Commenti scritti da te o in cui sei menzionato",
+        "noComments": "Non hai ancora scritto né sei stato menzionato in nessun commento.",
+        "noMatchingComments": "Nessun commento corrisponde ai filtri correnti.",
+        "searchPlaceholder": "Cerca commenti",
+        "filterLabel": "Filtra i commenti",
+        "filterAll": "Tutti i commenti",
+        "filterMentioned": "Che mi menzionano",
+        "filterAuthored": "Scritti da me",
+        "showing": "Visualizzazione di {loaded} su {total} commenti",
+        "matching": "{matched} corrispondenti · cercati {loaded} su {total} commenti"
       },
       "twoFactor": {
         "enable": "Abilita l'autenticazione a due fattori",
@@ -2500,7 +2838,8 @@
       "green": "Verde",
       "purple": "Viola",
       "orange": "Arancia",
-      "accessible": "Accessibile"
+      "accessible": "Accessibile",
+      "accessibledark": "Accessibile (Scuro)"
     }
   },
   "repository": {
@@ -2508,13 +2847,12 @@
       "notFound": "Versione del caso di prova non trovata.",
       "detailsRegion": "Dettagli del caso di prova",
       "metadataRegion": "Metadati del caso di prova",
-      "versionCreated": "Versione {version} creata",
-      "latestVersionUpdated": "Ultima versione {version, number} Aggiornato",
+      "versionCreated": "Versione {version}",
+      "latestVersionUpdated": "Versione {version, number} (Più recente)",
       "historyView": "Visualizzazione cronologia casi di test"
     },
     "auditLog": {
       "trigger": "Attività",
-      "title": "Registro attività",
       "description": "Tutte le modifiche registrate per questo caso di test."
     },
     "fields": {
@@ -2537,6 +2875,7 @@
       "add": "Aggiungi passaggio",
       "addSharedSteps": "Aggiungi passaggi condivisi",
       "delete": "Elimina passaggio",
+      "removedFromCase": "Rimosso dal caso di test",
       "confirmDelete": "Conferma l'eliminazione del passaggio {number, number}?",
       "createSharedSteps": "Crea condiviso {number, plural, one {Passaggio} other {Passaggi}}",
       "sharedStepsName": "Nome dei passaggi condivisi",
@@ -2547,7 +2886,8 @@
         "sharedStepGroupCreatedSuccess": "Passaggi condivisi creati con successo!",
         "genericSharedStepCreationError": "Si è verificato un errore sconosciuto durante la creazione dei passaggi condivisi. Riprova.",
         "errorCreatingSharedGroup": "Impossibile creare passaggi condivisi. Riprova.",
-        "sharedGroupCreatedSuccess": "Gruppo di passaggi condivisi creato con successo!"
+        "sharedGroupCreatedSuccess": "Gruppo di passaggi condivisi creato con successo!",
+        "failedToCreateSharedGroupError": "Impossibile creare il gruppo condiviso. Riprova."
       },
       "selectSharedStepsTitle": "Seleziona Passaggi condivisi",
       "selectSharedStepsDescription": "Scegli i passaggi condivisi da aggiungere al tuo caso di test.",
@@ -2564,7 +2904,8 @@
       "reviewSelectedStepsTitle": "Rivedi i passaggi selezionati",
       "noStepsInSelectedGroup": "Il gruppo selezionato non ha passaggi.",
       "sharedGroupSuffix": "(Passaggi condivisi)",
-      "unnamedSharedGroup": "Passaggi condivisi senza nome"
+      "unnamedSharedGroup": "Passaggi condivisi senza nome",
+      "noStepsInSelectedSharedGroup": "Il gruppo condiviso selezionato non ha passaggi."
     },
     "testCase": {
       "toggleAutomated": "Attiva/disattiva test automatizzati",
@@ -2579,16 +2920,23 @@
     "showDescendants": "Mostra tutti i discendenti",
     "addFolder": "Aggiungi cartella",
     "emptyFolders": "Fare clic sul pulsante Aggiungi cartella in alto per aggiungere la prima cartella.",
-    "selectedAllCases": "{count, plural, =0 {Selezionati tutti i casi} one {Selezionato il numero di casi su tutte le pagine} other {Selezionato il numero di casi su tutte le pagine}}",
+    "selectedAllCases": "{count, plural, =0 {Selezionati tutti i casi} one {Selezionato # caso su tutte le pagine} other {Selezionati # casi su tutte le pagine}}",
     "deselectedAllCases": "Deselezionati tutti i casi in tutte le pagine",
     "selectAllTooltip": "Seleziona/Deseleziona tutti i casi in questa pagina",
     "selectAllShiftTooltip": "{count, plural, =0 {Seleziona/Deseleziona tutti i casi in tutte le pagine} one {Seleziona/Deseleziona # casi in tutte le pagine} other {Seleziona/Deseleziona # casi in tutte le pagine}}",
     "deselectAllShiftTooltip": "Deseleziona/Seleziona tutti i casi in tutte le pagine",
     "shiftClickHint": "Tieni premuto Maiusc per selezionare/deselezionare tutte le pagine",
     "treeView": {
-      "expandAll": "Espandi tutto",
-      "collapseAll": "Comprimi tutto",
-      "altKey": "Tieni premuto il tasto Alt per espandere/comprimere tutti i figli"
+      "expandFolder": "Espandi cartella",
+      "collapseFolder": "Comprimi cartella",
+      "expandSubfolders": "Espandi tutte le sottocartelle",
+      "collapseSubfolders": "Comprimi tutte le sottocartelle",
+      "expandAll": "Espandi tutte le cartelle",
+      "collapseAll": "Comprimi tutte le cartelle",
+      "altHintMac": "Tieni premuto ⌥ per espandere o comprimere tutte le sottocartelle",
+      "altHintWin": "Tieni premuto Alt per espandere o comprimere tutte le sottocartelle",
+      "altHintAllMac": "Tieni premuto ⌥ per espandere o comprimere tutte le cartelle",
+      "altHintAllWin": "Tieni premuto Alt per espandere o comprimere tutte le cartelle"
     },
     "dragDrop": {
       "move": "Mossa",
@@ -2605,7 +2953,13 @@
       "dragPreviewCase": "Caso di prova",
       "dragPreviewCount": "{count, plural, =1 {# caso di test} other {# casi di test}}",
       "modifierHintMac": "Tieni premuto ⇧ per spostare o ⌥ per copiare mentre trascini per saltare questo menu.",
-      "modifierHintWin": "Tieni premuto Maiusc per spostare o Ctrl per copiare mentre trascini per saltare questo menu."
+      "modifierHintWin": "Tieni premuto Maiusc per spostare o Ctrl per copiare mentre trascini per saltare questo menu.",
+      "dropZoneReorder": "Rilascia per riordinare",
+      "dropZoneFolder": "Rilascia su una cartella per annidarla, oppure tra le cartelle per riordinarle",
+      "dropZoneTreeMac": "Rilascia su una cartella — tieni premuto ⇧ per spostare, ⌥ per copiare",
+      "dropZoneTreeWin": "Rilascia su una cartella — tieni premuto Shift per spostare, Ctrl per copiare",
+      "dropZoneTreeMove": "Rilascia su una cartella per spostare",
+      "dropZoneTreeCopy": "Rilascia su una cartella per copiare"
     },
     "folderActions": {
       "edit": "Modifica cartella",
@@ -2618,12 +2972,22 @@
       "selectCases": "Seleziona casi di prova",
       "noTestCases": "Nessun caso di test da visualizzare.",
       "addCase": "Aggiungi caso",
+      "caseDetails": "Dettagli del caso di prova",
+      "expandDetails": "Espandi a larghezza intera",
+      "collapseDetails": "Comprimi a vista divisa",
+      "openFullPage": "Apri pagina intera",
+      "previousCase": "Caso di prova precedente",
+      "nextCase": "Caso di prova successivo",
+      "caseNavPosition": "{position} di {total}",
       "notFound": "Caso di prova non trovato.",
       "selectFilter": "Seleziona filtro",
       "testResultHistory": "Cronologia dei risultati dei test",
       "testResultHistoryDescription": "Visualizza la cronologia dei risultati dei test per questo caso di test",
+      "viewElapsedTimeReport": "Report tempo trascorso",
       "noTestResults": "Nessun risultato di test trovato per questo caso di test",
       "unknownRun": "Corsa sconosciuta",
+      "currentRunBadge": "Attuale",
+      "currentRunTooltip": "L'esecuzione del test che stai visualizzando",
       "attempt": "Tentativo",
       "invalidProject": "Progetto non valido",
       "noSearchResults": "Nessun caso corrisponde ai tuoi criteri di ricerca.",
@@ -2651,7 +3015,9 @@
         "title": "Importa casi di test",
         "fields": {
           "workflowState": "Stato del flusso di lavoro",
-          "column": "Colonna {number}"
+          "column": "Colonna {number}",
+          "caseId": "ID caso",
+          "caseIdDescription": "ID caso TestPlanIt"
         },
         "success": {
           "description": "{count, plural, one {# caso di test} other {# casi di test}} importato con successo"
@@ -2661,7 +3027,15 @@
           "folderRequired": "Per questa posizione di importazione è richiesta la selezione della cartella",
           "fileRequired": "È richiesto un file CSV o Markdown",
           "markdownParseFailed": "Impossibile analizzare il file Markdown",
-          "markdownLlmFailed": "Analisi sintattica tramite IA non disponibile, utilizzo del parser standard."
+          "markdownLlmFailed": "Analisi sintattica tramite IA non disponibile, utilizzo del parser standard.",
+          "validationTitle": "Convalida importazione non riuscita",
+          "validationSummary": "{count, plural, one {# problema è stato trovato} other {# problemi sono stati trovati}} nel file. Nessun caso di test è stato importato.",
+          "validationEntry": "Riga {row, number} · {field}: {message}",
+          "validationEntryNamed": "Riga {row, number} \"{name}\" · {field}: {message}",
+          "validationMore": "{count, plural, one {# altro problema non è} other {# altri problemi non sono}} mostrati.",
+          "validationMultiRowNote": "I numeri di riga si riferiscono ai casi di test raggruppati mostrati nell'anteprima, non alle righe CSV originali.",
+          "partialTitle": "Alcuni casi di test non sono stati importati",
+          "partialSummary": "{failed, plural, one {# riga non poteva essere importata} other {# righe non potevano essere importate}}. {imported, plural, one {# caso di test è stato importato} other {# casi di test sono stati importati}} correttamente."
         },
         "page1": {
           "fileType": {
@@ -2693,7 +3067,8 @@
           "title": "Mappa le colonne CSV sui campi",
           "description": "Associa ogni colonna CSV a un campo nel modello oppure scegli di ignorarla.",
           "ignoreColumn": "Ignora colonna",
-          "requiredFieldsWarning": "{count, plural, one {# il campo obbligatorio non è} other {# i campi obbligatori non sono}} mappati"
+          "requiredFieldsWarning": "{count, plural, one {# il campo obbligatorio non è} other {# i campi obbligatori non sono}} mappati",
+          "caseIdHint": "Deve essere l'ID caso numerico — i casi corrispondenti vengono sovrascritti."
         },
         "page3": {
           "title": "Riepilogo della mappatura del campo",
@@ -2737,7 +3112,7 @@
     "columns": {
       "selectCase": "Seleziona caso",
       "runOrder": "Ordine di esecuzione",
-      "lastTestResult": "Risultato rosso",
+      "latestResults": "Ultimi risultati",
       "testedOn": "Ultimo test effettuato"
     },
     "actions": {
@@ -2768,6 +3143,8 @@
     "views": {
       "byAutomation": "Automazione",
       "byParameterized": "Parametrizzazione",
+      "byAttachments": "Allegati",
+      "byReview": "Revisione",
       "allTemplates": "Tutti i modelli",
       "allStates": "Tutti gli stati",
       "allCreators": "Tutti i creatori",
@@ -2890,7 +3267,7 @@
       "searchPlaceholder": "Modelli di ricerca...",
       "noTemplatesFound": "Nessun modello trovato.",
       "outputModeLabel": "Modalità di uscita",
-      "outputModeSingle": "File singolo ({count, plural, one {# caso} other {tutti i # casi}})",
+      "outputModeSingle": "File singolo ({count, plural, one {# caso} =2 {entrambi i casi} other {tutti i # casi}})",
       "outputModeIndividual": "{count, plural, one {File singolo (.zip)} other {File singoli (.zip)}}",
       "casesToExport": "{count, plural, one {# caso} other {# casi}} da esportare",
       "exportSuccess": "Esportazione completata con successo.",
@@ -2924,7 +3301,6 @@
       "scanFailed": "Analisi duplicata non riuscita",
       "scanFailedDescription": "Si è verificato un errore imprevisto",
       "pageTitle": "Candidati duplicati",
-      "pageDescription": "Esaminare i potenziali casi di test duplicati rilevati durante l'ultima scansione.",
       "rescan": "Riscansione",
       "cancelScan": "Annulla scansione",
       "loading": "Caricamento dei candidati duplicati...",
@@ -3032,7 +3408,7 @@
         "followLinksHint": "Verranno indicizzate solo le pagine appartenenti allo stesso dominio dell'URL inserito.",
         "maxDepth": "Profondità massima",
         "maxPages": "Pagine massime",
-        "crawlProgress": "{current, plural, one {Pagine scaricate finora...} other {Pagine scaricate finora...}}",
+        "crawlProgress": "{current, plural, one {# pagina scaricata finora...} other {# pagine scaricate finora...}}",
         "generatingSinglePage": "Generazione dei casi di test in corso...",
         "generatingSetup": "Preparazione alla generazione dei casi di test...",
         "robotsSkipped": "{count, plural, one {# pagine saltate} other {# pagine saltate}} (robots.txt)"
@@ -3203,7 +3579,63 @@
       },
       "linkedIssuesDroppedTitle": "Alcuni problemi correlati non sono stati inclusi",
       "linkedIssuesDropped": "{count, plural, =1 {# il problema collegato è stato eliminato} other {# i problemi collegati sono stati eliminati}} a causa del budget dei token: {keys}.",
-      "linkedIssuesPreviewHeading": "Problemi correlati che saranno inclusi"
+      "linkedIssuesPreviewHeading": "Problemi correlati che saranno inclusi",
+      "contextImages": {
+        "pickerHeading": "Immagini da includere come contesto (fino a {max})",
+        "tooLarge": "Troppo grande",
+        "noVisionHint": "Il modello di IA configurato non supporta l'inserimento di immagini: le immagini selezionate non verranno inviate.",
+        "visionSkippedTitle": "Le immagini non sono state inviate",
+        "visionSkipped": "{count, plural, =1 {# immagine non è stata inviata} other {# immagini non sono state inviate}} — il modello di IA configurato non supporta l'inserimento di immagini.",
+        "includedSummary": "{count, plural, =1 {# immagine inviata} other {# immagini inviate}} come contesto: {names}",
+        "skippedSummary": "{count, plural, =1 {# immagine saltata (troppo grande o non supportata)} other {# immagini saltate (troppo grandi o non supportate)}}: {names}",
+        "includeUrlScreenshots": "Includi screenshot della pagina quando disponibili"
+      }
+    },
+    "filterBar": {
+      "addFilter": "Aggiungi filtro",
+      "removeFilter": "Rimuovi filtro: {name}",
+      "editFilter": "Modifica filtro: {name}",
+      "activeCount": "{count, plural, =1 {# filtro attivo} other {# filtri attivi}}",
+      "assignedToMe": "Assegnato a me",
+      "noFilters": "Nessun filtro attivo",
+      "noMatchingCases": "Nessun caso di test corrisponde ai filtri selezionati",
+      "searchTruncated": "Filtro applicato ai primi {count, number} risultati",
+      "sortedByRelevance": "Ordinato per rilevanza",
+      "countsUpdating": "Aggiornamento dei conteggi...",
+      "filterLimitReached": "Limite di filtri raggiunto ({count} massimo)",
+      "valueLimitReached": "Limite di valori raggiunto ({count} massimo per filtro)",
+      "filtersTruncated": "Alcuni filtri sono stati rimossi ({count} massimo)",
+      "valuesTruncated": "{count, plural, =1 {# valore} other {# valori}} massimo per filtro — i valori aggiuntivi sono stati rimossi"
+    },
+    "savedViews": {
+      "title": "Visualizzazioni salvate",
+      "save": "Salva visualizzazione",
+      "saveTitle": "Salva visualizzazione",
+      "saveDescription": "Assegna un nome a questa visualizzazione per poter tornare a questi filtri in seguito.",
+      "namePlaceholder": "ad es. Casi smoke, non automatizzati",
+      "descriptionPlaceholder": "A cosa serve questa visualizzazione",
+      "nameRequired": "Inserisci un nome per questa visualizzazione.",
+      "loginRequired": "Devi aver effettuato l'accesso per salvare le visualizzazioni.",
+      "nothingToSave": "Aggiungi prima un filtro o un raggruppamento.",
+      "saved": "Visualizzazione salvata",
+      "savedDescription": "“{name}” è ora nelle tue visualizzazioni salvate.",
+      "saveFailed": "Impossibile salvare la visualizzazione. Riprova.",
+      "empty": "Nessuna visualizzazione salvata al momento",
+      "emptyHint": "Salva i filtri attuali per tornare a utilizzarli in seguito.",
+      "apply": "Applica visualizzazione: {name}",
+      "applied": "Applicato “{name}”",
+      "droppedFilters": "{count, plural, =1 {# filtro non esiste più ed è stato ignorato} other {# filtri non esistono più e sono stati ignorati}}",
+      "droppedGrouping": "Il suo raggruppamento non è più disponibile, quindi viene utilizzato quello predefinito.",
+      "unreadable": "Impossibile leggere {count, plural, =1 {# visualizzazione salvata} other {# visualizzazioni salvate}}",
+      "rename": "Rinomina",
+      "renameTitle": "Rinomina visualizzazione salvata",
+      "renamed": "Visualizzazione salvata aggiornata",
+      "renameFailed": "Impossibile aggiornare la visualizzazione. Riprova.",
+      "delete": "Elimina",
+      "deleteTitle": "Eliminare la visualizzazione salvata?",
+      "deleteConfirm": "“{name}” verrà rimossa dalle tue visualizzazioni salvate. Questa azione non può essere annullata.",
+      "deleted": "Visualizzazione salvata eliminata",
+      "deleteFailed": "Impossibile eliminare la visualizzazione. Riprova."
     }
   },
   "tags": {
@@ -3251,11 +3683,20 @@
     "delete": {
       "confirmMessage": "Sei sicuro di voler eliminare questo allegato?",
       "deferredMessage": "Questo allegato verrà eliminato al momento del salvataggio."
+    },
+    "preview": {
+      "unavailable": "Anteprima non disponibile",
+      "tooLarge": "Questo file è troppo grande per l'anteprima.",
+      "empty": "Questo documento sembra essere vuoto.",
+      "download": "Scarica per visualizzare",
+      "slideCounter": "Diapositiva {current} di {total}",
+      "previousSlide": "Diapositiva precedente",
+      "nextSlide": "Diapositiva successiva"
     }
   },
   "reviews": {
     "banner": {
-      "pendingMessage": "Revisione richiesta da <assignee></assignee> per la transizione <fromState></fromState> → <toState></toState> <ago></ago>",
+      "pendingMessage": "In attesa di revisione da <assignee></assignee> per la transizione <fromState></fromState> → <toState></toState> <ago></ago>",
       "changesRequestedTitle": "Modifiche richieste",
       "rejectedTitle": "Revisione respinta",
       "requestAgain": "Richiedi nuovamente la revisione",
@@ -3268,6 +3709,13 @@
       "success": "Richiesta di revisione annullata.",
       "error": "Impossibile annullare la richiesta di revisione. Riprova tra un attimo."
     },
+    "nudge": {
+      "success": "{count, plural, one {Promemoria inviato a # revisore.} other {Promemoria inviato a # revisori.}}",
+      "error": "Impossibile inviare il promemoria. Riprova tra un attimo.",
+      "tooSoon": "Un promemoria per questa richiesta è già stato inviato nell'ultima ora. Riprova più tardi.",
+      "cooldownTooltip": "Promemoria già inviato {ago}",
+      "noRecipients": "Nessuno può agire su questa richiesta al momento. Verifica che l'assegnatario abbia ancora accesso al progetto."
+    },
     "list": {
       "pendingTooltip": "In attesa di revisione da parte di {assignee}"
     },
@@ -3276,35 +3724,43 @@
       "gatedOptionBadge": "Richiede revisione",
       "gatedStatesNotSelectable": "Gli stati che si trovano in prossimità o oltre un punto di controllo non possono essere selezionati durante la creazione. Scegli uno stato prima del primo punto di controllo, quindi utilizza la funzione Richiedi revisione per superarlo.",
       "saveBlockedByFormErrors": "Risolvi gli errori evidenziati nel modulo prima di salvare.",
-      "bulkBlockedSummary": "{count, plural, one {# caso} other {# casi}} bloccati dal gate \"{gateName}\": {sampleNames}{more, plural, =0 {} other {, e # altro}}. Ogni caso bloccato necessita di una revisione approvata per \"{gateName}\" prima di questa transizione.",
-      "toastReviewRequired": "È necessaria l'approvazione prima di procedere con la transizione. Richiedi una revisione e riprova dopo l'approvazione.",
+      "bulkBlockedHeading": "{count, plural, one {# caso bloccato} other {# casi bloccati}} dal gate \"{gateName}\":",
+      "bulkBlockedHeadingMixed": "{count, plural, one {# caso richiede} other {# casi richiedono}} l'approvazione prima di questa transizione:",
+      "bulkBlockedMore": "e {count, plural, one {# altro caso} other {# altri casi}}",
+      "bulkBlockedFooter": "Ogni caso bloccato richiede una revisione approvata prima di questa transizione.",
+      "toastReviewRequired": "È necessaria l'approvazione prima di questa transizione. Richiedi una revisione: la transizione verrà applicata automaticamente una volta approvata.",
       "toastPendingReviewExists": "È già in corso una valutazione per questa transizione. Attendi la decisione oppure annullala prima di riprovare."
     },
     "inbox": {
       "iconAria": "{count, plural, =0 {Posta in arrivo per le revisioni} one {Posta in arrivo per le revisioni, # in sospeso} other {Posta in arrivo per le revisioni, # in sospeso}}",
       "pageTitle": "Recensioni",
-      "pageDescription": "Richieste di revisione in sospeso assegnate a te (direttamente o tramite un ruolo che ricopri).",
-      "pageDescriptionDecided": "Rivedi le richieste che hai già deciso di accettare.",
       "tabPending": "In attesa di",
       "tabDecided": "Deciso",
-      "emptyDecided": "Non hai ancora deciso di pubblicare recensioni.",
-      "empty": "Nessuna revisione in sospeso. Sei in regola con tutto.",
+      "emptyDecided": "Nessuna revisione decisa ancora. Le revisioni che decidi e le decisioni sulle revisioni che richiedi appariranno qui.",
+      "empty": "Nessuna revisione in sospeso. Non c'è nulla in attesa e ogni revisione richiesta è stata decisa.",
       "featureDisabled": "La funzionalità di gestione del flusso di lavoro di revisione è attualmente disabilitata. Le revisioni in sospeso vengono conservate e saranno nuovamente disponibili quando la funzionalità verrà riattivata.",
       "columnEntity": "Entità",
       "columnProject": "Progetto",
       "columnRequester": "Richiedente",
+      "columnAssignee": "Assegnatario",
       "columnTransition": "Transizione",
-      "columnTransitionFrom": "Da",
-      "columnTransitionTo": "A",
       "columnRequestedAt": "Richiesto a",
+      "columnDecidedBy": "Decisa da",
       "columnDecidedAt": "Decisa a",
       "columnStatus": "Stato",
       "columnActions": "Azioni",
       "actionApprove": "Approvare",
       "actionRequestChanges": "Richiesta di modifiche",
       "actionReject": "Rifiutare",
+      "actionNudge": "Invia promemoria",
       "filterEntityType": "Tipo di entità",
       "filterProject": "Progetto",
+      "filterRequester": "Richiedente",
+      "filterAllRequesters": "Tutti i richiedenti",
+      "filterDecidedBy": "Decisa da",
+      "filterAllDeciders": "Tutti i decisori",
+      "filterStatus": "Stato",
+      "filterAllStatuses": "Tutti gli stati",
       "filterAllEntityTypes": "Tutti i tipi di entità",
       "filterEntityTypeCase": "Casi di prova",
       "filterEntityTypeRun": "Prove di corsa",
@@ -3316,7 +3772,7 @@
       "sheetDescription": "Invia questa entità per la revisione prima di passare allo stato di destinazione.",
       "assigneeLabel": "Assegnatario",
       "assigneePlaceholder": "Seleziona un utente o un ruolo",
-      "usersHoldRole": "{count, plural, one {# l'utente detiene questo ruolo} other {# gli utenti detengono questo ruolo}}",
+      "usersNotified": "{count, plural, =0 {Nessuno riceverà una notifica} one {# utente riceverà una notifica} other {# utenti riceveranno una notifica}}",
       "targetStateLabel": "Stato bersaglio",
       "targetStatePlaceholder": "Seleziona uno stato di destinazione",
       "commentLabel": "Commento",
@@ -3332,6 +3788,20 @@
       "ineligibleAssigneeErrorUser": "{name} non può approvare le recensioni per quest'area. Scegli un altro utente o un ruolo.",
       "ineligibleAssigneeErrorRole": "Il ruolo {roleName} non può approvare le recensioni per quest'area. Scegli un altro ruolo o un altro utente."
     },
+    "bulkRequester": {
+      "saveAndRequestButton": "Salva e richiedi revisione",
+      "sheetDescription": "{count, plural, one {# caso selezionato richiede} other {# casi selezionati richiedono}} l'approvazione prima di raggiungere \"{targetStateName}\". Ciascuno viene inviato per il primo stato vincolato che deve attraversare.",
+      "breakdownLabel": "Revisioni da richiedere",
+      "breakdownRow": "{count, plural, one {# caso} other {# casi}}",
+      "autoCommentNote": "Ogni caso riceve un commento automatico che indica la propria transizione e il revisore viene notificato una sola volta per l'intero gruppo.",
+      "otherEditsNote": "Le altre modifiche ai campi vengono applicate al momento dell'invio. La modifica dello stato attende l'approvazione.",
+      "pendingSkipNote": "{count, plural, one {# caso è} other {# casi sono}} già in attesa di revisione e verranno saltati.",
+      "submitSuccess": "{count, plural, one {# richiesta di revisione creata} other {# richieste di revisione create}}.",
+      "submitSuccessWithSkips": "{created, plural, one {# richiesta di revisione creata} other {# richieste di revisione create}}, {skipped, plural, one {# saltata} other {# saltate}} (già in attesa di revisione).",
+      "nothingToRequest": "Non è stata necessaria alcuna richiesta di revisione per i casi selezionati.",
+      "editsAppliedNoRequests": "Le modifiche sono state salvate. Non è stata necessaria alcuna richiesta di revisione.",
+      "selectionTooLarge": "Troppi casi selezionati per richiedere una revisione contemporaneamente. Selezionane meno e riprova."
+    },
     "assigneeChip": {
       "emptyMembers": "Nessun membro idoneo al progetto ricopre questo ruolo.",
       "unnamedUser": "(utente anonimo)"
@@ -3341,7 +3811,7 @@
       "requestChanges": "Richiesta di modifiche",
       "reject": "Rifiutare",
       "approveConfirmTitle": "Approvare questa richiesta di revisione?",
-      "approveConfirmDescription": "L'approvazione consentirà a <requester></requester> di passare da <name></name> a <state></state>.",
+      "approveConfirmDescription": "L'approvazione sposta <name></name> a <state></state> per <requester></requester>.",
       "approvalNoteLabel": "Nota di approvazione",
       "approvalNotePlaceholder": "Aggiungi una nota facoltativa per il richiedente (visibile accanto all'approvazione).",
       "requestChangesDescription": "Spiega al richiedente quali modifiche sono necessarie prima che tu possa approvare questa transizione.",
@@ -3361,9 +3831,60 @@
     }
   },
   "runs": {
+    "bulk": {
+      "completeTitle": "Completa {count, plural, one {# Esecuzione di prova} other {# Esecuzioni di prova}}",
+      "completeDescription": "Sei sicuro di voler completare {count, plural, one {questa esecuzione di prova} other {queste esecuzioni di prova}}?",
+      "deleteTitle": "Elimina {count, plural, one {# Esecuzione di prova} other {# Esecuzioni di prova}}",
+      "deleteDescription": "Sei sicuro di voler eliminare {count, plural, one {questa esecuzione di prova} other {queste esecuzioni di prova}}? I risultati verranno conservati per analisi storiche."
+    },
+    "composition": {
+      "lock": "Casi bloccati",
+      "unlocked": "Casi sbloccati",
+      "unlock": "Sblocca",
+      "locked": "Composizione bloccata",
+      "lockHint": "Blocca quali casi sono presenti in questa esecuzione. Gli utenti possono comunque assegnare ed eseguire i casi di test.",
+      "lockedBy": "Composizione bloccata da {name}.",
+      "lockedAutomatically": "Composizione bloccata automaticamente all'avvio dell'esecuzione.",
+      "frozenNotice": "La composizione è bloccata — i casi di test non possono essere aggiunti, rimossi o riordinati. Puoi comunque assegnare ed eseguire i casi di test.",
+      "lockError": "Impossibile bloccare la composizione dell'esecuzione",
+      "unlockError": "Impossibile sbloccare la composizione dell'esecuzione",
+      "addBlocked": "La composizione di questa esecuzione è bloccata, quindi non è possibile aggiungere casi di test. Sbloccala prima per modificare l'insieme dei casi."
+    },
+    "distribute": {
+      "title": "Distribuisci assegnazioni",
+      "description": "Assegna in modo uniforme i casi di test di questa esecuzione tra i membri del team, mantenendo insieme i casi correlati.",
+      "selectUsers": "Membri del team",
+      "usersPlaceholder": "Seleziona i membri del team",
+      "scopeAllConfigs": "Tutte le configurazioni",
+      "scopeThisRun": "Solo questa esecuzione",
+      "strategyLabel": "Strategia di configurazione",
+      "strategyKeepTogether": "Mantieni le configurazioni insieme",
+      "strategyKeepTogetherHint": "Ogni tester possiede un insieme di casi in tutte le configurazioni.",
+      "strategySplitByConfig": "Dividi per configurazione",
+      "strategySplitByConfigHint": "Ogni tester possiede configurazioni intere.",
+      "groupingLabel": "Raggruppa casi simili",
+      "groupingHint": "Mantieni i casi della stessa sezione e con tag condivisi con un solo tester.",
+      "balancingLabel": "Bilancia per",
+      "balancingEffort": "Tempo stimato",
+      "balancingCount": "Numero di casi",
+      "balancingFallbackHint": "Nessuna stima su questi casi — bilanciamento in base al numero di casi.",
+      "existingLabel": "Assegnazioni esistenti",
+      "existingOnlyUnassigned": "Riempi solo i casi non assegnati",
+      "existingReassignAll": "Riassegna tutto",
+      "previewTitle": "Anteprima",
+      "previewNoUsers": "Seleziona i membri del team per visualizzare l'anteprima della distribuzione.",
+      "previewUser": "Membro del team",
+      "previewCases": "Casi",
+      "previewSkipped": "{count, plural, one {# caso saltato} other {# casi saltati}} (già assegnato o completato)",
+      "confirming": "Assegnazione in corso…",
+      "success": "Distribuiti {count, plural, one {# caso} other {# casi}} tra {users, plural, one {# membro} other {# membri}}",
+      "errorGeneric": "Impossibile distribuire le assegnazioni",
+      "errorRunCompleted": "Questa esecuzione è completata e non può più essere modificata",
+      "errorNeedUsers": "Seleziona almeno un membro del progetto a cui distribuire",
+      "errorNoAssignable": "Non ci sono casi da distribuire in questa esecuzione"
+    },
     "auditLog": {
       "trigger": "Attività",
-      "title": "Registro attività",
       "description": "Tutte le modifiche registrate per questa esecuzione di test."
     },
     "notFound": "Esecuzione del test non trovata.",
@@ -3466,6 +3987,8 @@
       "recentResultsDescription": "Visualizza i risultati recenti del test eseguito",
       "recentAutomatedResultsTitle": "Risultati automatizzati recenti",
       "noRecentAutomatedResults": "Nessun risultato automatico recente trovato.",
+      "automationRunsInProgress": "{count, plural, =1 {# Esecuzione Automatizzata in Corso} other {# Esecuzioni Automatizzate in Corso}}",
+      "automationRunsInProgressDescription": "Stato in tempo reale delle run di test automatizzate in esecuzione.",
       "recentResultsDateRange": "Intervallo di date",
       "recentResultsElapsed": "Trascorso",
       "noRecentResults": "Nessun risultato recente trovato.",
@@ -3498,20 +4021,43 @@
           "copy": "Copia le assegnazioni dei casi di test esistenti",
           "assign": "Tutti i casi di test nell'esecuzione del test duplicato manterranno le loro assegnazioni esistenti",
           "unassign": "Tutti i casi di test nell'esecuzione del test duplicato non saranno assegnati"
+        },
+        "configurationGroup": {
+          "label": "Gruppo di configurazione",
+          "separate": "Le copie sono raggruppate solo tra loro. L'esecuzione di test in fase di duplicazione resta fuori da quel gruppo",
+          "join": "L'esecuzione di test in fase di duplicazione e ogni copia entrano a far parte dello stesso gruppo di configurazione"
         }
       },
       "successMessage": "Esecuzione del test duplicata con successo '{name}'.",
       "errorMessage": "Impossibile duplicare l'esecuzione del test. Errore: {error}"
     },
+    "removeCasesDialog": {
+      "title": "Rimuovi casi di prova",
+      "description": "Sei sicuro di voler rimuovere questi casi di prova da questa prova?",
+      "warning": "Questa azione non può essere annullata. Eventuali risultati registrati per questi casi di prova in questa prova verranno persi. I casi di prova rimarranno nel repository."
+    },
     "filter": {
       "placeholder": "Esecuzione del test del filtro..."
     },
+    "empty": {
+      "noMatchingCompleted": "Nessun test completato corrisponde al filtro.",
+      "noMatchingActive": "Nessuna esecuzione di test attiva corrisponde ai tuoi filtri."
+    },
+    "milestoneGroup": {
+      "runCount": "{count, plural, one {# esecuzione} other {# esecuzioni}}",
+      "altHintMac": "Tieni premuto ⌥ per espandere o comprimere tutti i gruppi",
+      "altHintWin": "Tieni premuto Alt per espandere o comprimere tutti i gruppi"
+    },
+    "runFilters": {
+      "label": "Filtra esecuzioni test",
+      "mine": "Le mie esecuzioni test"
+    },
     "typeFilter": {
-      "label": "Spettacolo",
       "both": "Manuale e automatizzato"
     },
-    "empty": {
-      "noMatchingCompleted": "Nessun test completato corrisponde al filtro."
+    "junitFilters": {
+      "retried": "Ripetuto",
+      "clear": "Cancella filtri"
     }
   },
   "admin": {
@@ -3530,6 +4076,7 @@
       "tags": "Etichette",
       "issues": "Problemi",
       "appConfig": "Configurazione dell'applicazione",
+      "recordKeys": "Chiavi dei record",
       "notifications": "Notifiche",
       "imports": "Importazioni di dati",
       "integrations": "Integrazioni dei problemi",
@@ -3559,6 +4106,7 @@
       "peopleAndAccess": "Persone e accesso",
       "authentication": "Autenticazione",
       "toolsAndIntegrations": "Strumenti e integrazioni",
+      "aiTools": "Strumenti AI",
       "system": "Sistema"
     },
     "imports": {
@@ -3735,7 +4283,8 @@
           "namePlaceholder": "Inserisci un nome per il flusso di lavoro",
           "scopePlaceholder": "Seleziona ambito",
           "iconColorLabel": "Icona e colore",
-          "typeLabel": "Tipo di flusso di lavoro"
+          "typeLabel": "Tipo di flusso di lavoro",
+          "scopeLabel": "Ambito del flusso di lavoro"
         },
         "mappingDatasets": "Set di dati che richiedono revisione",
         "mappingImportConfiguration": "Importa configurazione",
@@ -3761,6 +4310,12 @@
           "actionMap": "Mappa esistente",
           "actionCreate": "Crea nuovo",
           "workflowTypePlaceholder": "Seleziona il tipo",
+          "workflowScope": {
+            "default": "Altro",
+            "cases": "Casi di test",
+            "runs": "Esecuzioni dei test",
+            "sessions": "Sessioni"
+          },
           "noWorkflowsAvailable": "Nessun flusso di lavoro disponibile.",
           "noStatusesAvailable": "Nessuno stato disponibile.",
           "noGroupsAvailable": "Nessun gruppo disponibile.",
@@ -3885,7 +4440,9 @@
           "templateFieldTemplateLabelPlural": "modelli",
           "templateFieldTargetGroupCase": "Casi di studio",
           "templateFieldTargetGroupResult": "Campi di risultato",
-          "columnAction": "Azione"
+          "columnAction": "Azione",
+          "configurationVariantSelectPlaceholder": "Seleziona la variante di configurazione",
+          "configurationVariantCategoryPlaceholder": "Seleziona categoria"
         },
         "nextSteps": "Una volta completata l'importazione in background, è possibile rivedere i dati migrati dai progetti di destinazione.",
         "nextStepsDescription": "Le importazioni in background vengono eseguite in modo asincrono. Puoi monitorare lo stato qui sopra o aggiornare la pagina per visualizzare gli aggiornamenti."
@@ -4297,6 +4854,10 @@
           "warning": "Il campo Caso verrà rimosso da tutti i modelli. Questa azione non può essere annullata."
         }
       },
+      "generateDefaultOn": "Incluso per impostazione predefinita nella procedura guidata Genera casi di test. Fai clic per escluderlo per impostazione predefinita.",
+      "generateDefaultOff": "Escluso per impostazione predefinita nella procedura guidata Genera casi di test. Fai clic per includerlo per impostazione predefinita.",
+      "jiraPanelOn": "Mostrato nel pannello del plugin Jira per i casi di test collegati. Fai clic per nasconderlo.",
+      "jiraPanelOff": "Nascosto dal pannello del plugin Jira. Fai clic per mostrarlo per i casi di test collegati.",
       "resultFields": {
         "description": "Gestisci i campi dei risultati",
         "add": {
@@ -4396,7 +4957,6 @@
       "allFileExtensions": "Tutte le estensioni",
       "allLanguages": "Tutte le lingue",
       "showEnabled": "Solo abilitato",
-      "showAll": "Tutto",
       "variableInserter": {
         "placeholder": "Inserisci variabile...",
         "groups": {
@@ -4656,6 +5216,7 @@
     },
     "workflows": {
       "description": "Gestire i flussi di lavoro dei casi di prova",
+      "reviewsTitle": "Revisione del flusso di lavoro",
       "systemFeatureCard": {
         "title": "Revisione del flusso di lavoro",
         "description": "Applica le revisioni bloccando le transizioni del flusso di lavoro fino all'approvazione. Quando questa opzione è abilitata, i progetti possono attivarla o disattivarla singolarmente tramite le impostazioni avanzate. Disabilitala per impedire il blocco delle approvazioni del flusso di lavoro.",
@@ -4664,10 +5225,10 @@
         "updateSuccessEnabled": "Revisione del flusso di lavoro abilitata.",
         "updateSuccessDisabled": "Revisione del flusso di lavoro disabilitata.",
         "updateError": "Impossibile aggiornare le impostazioni del flusso di lavoro di revisione. Riprova tra un attimo.",
-        "remindersToggleLabel": "Invia notifiche di promemoria per le revisioni in sospeso",
+        "remindersToggleLabel": "Invia notifiche di promemoria per le revisioni in sospeso dopo",
         "remindersToggleAriaLabel": "Attiva/disattiva le notifiche di promemoria per la revisione",
         "thresholdLabel": "Ricorda ai revisori dopo",
-        "thresholdUnit": "giorno(i)",
+        "thresholdUnit": "{count, plural, one {giorno} other {giorni}}",
         "thresholdSaveButton": "Salva",
         "thresholdHelp": "Per quanti giorni una richiesta di revisione può rimanere in sospeso prima che i revisori ricevano una notifica di promemoria? Per le nuove richieste, il conteggio inizia al momento dell'invio.",
         "thresholdUpdateSuccess": "Le impostazioni del promemoria per la revisione sono state aggiornate.",
@@ -4716,6 +5277,10 @@
     },
     "roles": {
       "description": "Definisci quali azioni gli utenti possono eseguire attivando o disattivando le autorizzazioni per ciascuna area dell'applicazione.",
+      "confirmDefaultDescription": "Vuoi davvero impostare questo Ruolo come predefinito?",
+      "defaultWarning": "Ai nuovi utenti verrà assegnato questo Ruolo per impostazione predefinita.",
+      "defaultLockedTitle": "Ruolo predefinito",
+      "defaultLockedDescription": "Per modificare l'impostazione predefinita, modifica un Ruolo diverso e impostalo come predefinito.",
       "filterPlaceholder": "Filtra i ruoli...",
       "add": {
         "button": "Aggiungi ruolo",
@@ -4750,11 +5315,24 @@
         "modeNone": "Nessuna restrizione (decidono i progetti)",
         "modeDisabled": "Disabilita la modifica ovunque",
         "modeMax": "Consenti la modifica fino a una finestra massima",
-        "minutesLabel": "Intervallo massimo (minuti)",
+        "minutesBefore": "Intervallo massimo:",
+        "minutesUnit": "{minutes, plural, one {minuto} other {minuti}}",
+        "minutesAriaLabel": "Intervallo massimo in minuti",
         "invalidMinutes": "Inserisci un numero di minuti maggiore di zero",
         "save": "Salva le politiche",
         "savedToast": "Politica di modifica dei risultati aggiornata",
         "saveError": "Impossibile aggiornare la politica di modifica dei risultati"
+      },
+      "abandonedRunPolicy": {
+        "title": "Pulizia automazione abbandonata",
+        "modeOn": "Chiudi automaticamente le esecuzioni automatizzate abbandonate",
+        "minutesBefore": "Inattiva per almeno:",
+        "minutesUnit": "{minutes, plural, one {minuto} other {minuti}}",
+        "minutesAriaLabel": "Soglia di inattività in minuti",
+        "invalidMinutes": "Inserisci almeno {min} minuti",
+        "save": "Salva politica",
+        "savedToast": "Pulizia automazione abbandonata aggiornata",
+        "saveError": "Impossibile aggiornare la politica di pulizia automazione abbandonata"
       },
       "add": {
         "button": "Aggiungi stato",
@@ -4793,6 +5371,20 @@
         "forSession": "Per la sessione",
         "color": "Colore"
       }
+    },
+    "recordKeys": {
+      "pageDescription": "Configura identificatori cosmetici con prefisso di progetto, come PROJECT-TC-1234, che permettono di individuare facilmente a quale progetto appartiene un record e di che tipo di record si tratta. L'ID numerico sottostante rimane invariato e continua a funzionare ovunque.",
+      "title": "Chiavi dei record con prefisso di progetto",
+      "description": "Se abilitata, i record mostrano una chiave opzionale che combina il codice del progetto, un token di tipo e l'ID numerico del record. Imposta il codice di ciascun progetto in Impostazioni progetto → Avanzate.",
+      "toggleAriaLabel": "Attiva/disattiva le chiavi dei record con prefisso di progetto",
+      "tokensHeading": "Token di tipo",
+      "tokensHelp": "Il token utilizzato per ciascun tipo di record. 1–6 lettere maiuscole, senza cifre o trattini. I token devono essere univoci.",
+      "invalidToken": "Non valido",
+      "duplicateToken": "Token duplicato",
+      "tokensSaved": "Token di tipo salvati.",
+      "enableSuccess": "Chiavi dei record con prefisso di progetto abilitate.",
+      "disableSuccess": "Chiavi dei record con prefisso di progetto disabilitate.",
+      "saveError": "Impossibile salvare. Riprova."
     },
     "appConfig": {
       "description": "Gestire le configurazioni globali delle applicazioni",
@@ -4936,6 +5528,8 @@
       "confirmDefault": "Conferma predefinito",
       "confirmDefaultDescription": "Vuoi davvero impostare questo tipo di traguardo come predefinito?",
       "warning": "Questo tipo di traguardo verrà aggiunto a tutti i progetti.",
+      "defaultLockedTitle": "Tipo di Traguardo Predefinito",
+      "defaultLockedDescription": "Per modificare l'impostazione predefinita, modifica un Tipo di Traguardo diverso e impostalo come predefinito.",
       "wizard": {
         "selectProjects": "Seleziona progetti",
         "projectsSelected": "{count, plural, =0 {Nessun progetto selezionato} one {# progetto selezionato} other {# progetti selezionati}}",
@@ -5033,7 +5627,8 @@
         "repositoryCaseVersions": "Versioni del caso del repository",
         "testRunStepResults": "Risultati della fase di esecuzione del test",
         "issueConfigs": "Configurazioni dei problemi",
-        "sharedStepGroups": "Gruppi di passi condivisi"
+        "sharedStepGroups": "Gruppi di passi condivisi",
+        "dataSets": "Set di dati"
       },
       "table": {
         "title": "Eliminato {itemType}",
@@ -5043,7 +5638,9 @@
         "noResults": "Nessun {itemType} eliminato trovato corrispondente alla tua ricerca per \"{query}\".",
         "restoreConfirmationMessage": "Vuoi davvero ripristinare questa riga dalla tabella {itemType} ? Potrebbero essere ripristinati anche i dati associati.",
         "purgeConfirmationMessage": "Vuoi davvero eliminare definitivamente questa riga dalla tabella {itemType} ? Questa azione non può essere annullata e potrebbe rimuovere i dati associati."
-      }
+      },
+      "filterTypesPlaceholder": "Filtra i tipi di elemento...",
+      "summary": "{count, plural, =0 {Il cestino è vuoto} one {# elemento nel cestino} other {# elementi nel cestino}}"
     },
     "notifications": {
       "title": "Amministrazione delle notifiche",
@@ -5210,19 +5807,19 @@
         "authType": "Tipo di autenticazione",
         "authTypeHelp": "Scegli come autenticarti con il servizio esterno",
         "emailPlaceholder": "la-tua-email@esempio.com",
-        "emailHelp": "Your account email address. Required for Jira Cloud (paired with an API token below). Not used for Jira Server / Data Center — leave blank there and use either the API Token field alone (Personal Access Token) or the Username / Password fields below.",
+        "emailHelp": "L'indirizzo email del tuo account. Obbligatorio per Jira Cloud (associato a un token API riportato di seguito). Non utilizzato per Jira Server / Data Center — lascialo vuoto in tal caso e usa il campo Token API da solo (Personal Access Token) oppure i campi Nome utente / Password riportati di seguito.",
         "apiToken": "Token API",
         "apiTokenPlaceholder": "Inserisci il tuo token API",
-        "apiTokenHelp": "Jira Cloud: generate an API token from your Atlassian account settings and pair it with your email above. Jira Server / Data Center: paste a Personal Access Token (sent as Bearer). Leave this blank if you're using the Username / Password fields below instead.",
-        "username": "Username",
-        "usernamePlaceholder": "Enter your username",
-        "usernameHelp": "Jira Server / Data Center only — your account username, paired with the password below (Basic auth). Leave blank for Jira Cloud or when using a Personal Access Token in the API Token field.",
+        "apiTokenHelp": "Jira Cloud: genera un token API dalle impostazioni del tuo account Atlassian e associalo all'email indicata sopra. Jira Server / Data Center: incolla un Personal Access Token (inviato come Bearer). Lascia vuoto questo campo se stai utilizzando invece i campi Nome utente / Password riportati di seguito.",
+        "username": "Nome utente",
+        "usernamePlaceholder": "Inserisci il tuo nome utente",
+        "usernameHelp": "Solo per Jira Server / Data Center — il nome utente del tuo account, associato alla password riportata di seguito (autenticazione Basic). Lascia vuoto per Jira Cloud o quando utilizzi un Personal Access Token nel campo Token API.",
         "password": "Password",
-        "passwordPlaceholder": "Enter your password",
-        "passwordHelp": "Jira Server / Data Center only — your account password, paired with the username above (Basic auth). Leave blank for Jira Cloud or when using a Personal Access Token in the API Token field.",
+        "passwordPlaceholder": "Inserisci la tua password",
+        "passwordHelp": "Solo per Jira Server / Data Center — la password del tuo account, associata al nome utente indicato sopra (autenticazione Basic). Lascia vuoto per Jira Cloud o quando utilizzi un Personal Access Token nel campo Token API.",
         "jiraUrl": "URL di Jira",
-        "jiraUrlPlaceholder": "https://your-site.atlassian.net or https://jira.mycompany.domain",
-        "jiraUrlHelp": "The base URL of your Jira instance — Atlassian Cloud (https://your-site.atlassian.net) or self-hosted Server / Data Center (https://jira.mycompany.domain).",
+        "jiraUrlPlaceholder": "https://your-site.atlassian.net oppure https://jira.mycompany.domain",
+        "jiraUrlHelp": "L'URL di base della tua istanza Jira — Atlassian Cloud (https://your-site.atlassian.net) o Server / Data Center self-hosted (https://jira.mycompany.domain).",
         "clientId": "ID cliente",
         "clientIdPlaceholder": "Inserisci il tuo ID client OAuth",
         "clientIdHelp": "L'ID client della tua applicazione OAuth",
@@ -5264,6 +5861,7 @@
         "encrypted": "Criptato",
         "encryptedHelp": "Questo campo è crittografato e archiviato in modo sicuro",
         "changeCredential": "Modifica",
+        "leaveBlankToKeep": "Lascia vuoto per mantenere il valore esistente",
         "apiKeyWarningTitle": "Avviso di autenticazione della chiave API",
         "apiKeyWarningDescription": "Con l'autenticazione tramite chiave API, l'autore della segnalazione dei problemi creati potrebbe non corrispondere all'utente di TestPlanIt che li ha creati, anche se gli indirizzi email coincidono:",
         "apiKeyWarningPoint1": "Per impostare il reporter di Jira, l'account del token API deve disporre dell'autorizzazione di amministratore di Jira (\"Modifica reporter\"). In caso contrario, Jira ignora il reporter e il proprietario del token API viene registrato come creatore.",
@@ -5384,6 +5982,8 @@
         "billingPeriodStartDayDescription": "Giorno del mese (1-31) in cui inizia il periodo di fatturazione. I valori dal 29 al 31 utilizzano l'ultimo giorno dei mesi più brevi.",
         "defaultTemperature": "Temperatura predefinita",
         "defaultMaxTokens": "Token massimi predefiniti",
+        "repoContextBudgetLabel": "Budget di contesto del repository (QuickScript)",
+        "repoContextBudgetAuto": "Dimensionato automaticamente in base alla finestra di contesto di ~{window} del modello — circa {budget} token di codice del repository per generazione.",
         "timeout": "Timeout della richiesta (ms)",
         "timeoutDescription": "Tempo massimo di attesa per la risposta del modello AI (5000-600000 ms). Non si applica alle richieste in streaming.",
         "streamingEnabled": "Abilita lo streaming",
@@ -5393,6 +5993,12 @@
         "fetchingModels": "Recupero modelli in corso...",
         "failedToFetchModels": "Impossibile recuperare i modelli disponibili",
         "selectModel": "Seleziona un modello",
+        "modelsFound": "{count, plural, one {Trovato {count} modello disponibile} other {Trovati {count} modelli disponibili}}",
+        "modelsFoundDescription": "Selezionato \"{model}\" come modello predefinito",
+        "noModelsFoundDescription": "Il provider non ha restituito modelli disponibili",
+        "pricingAutoFilled": "Prezzo del modello compilato automaticamente",
+        "pricingAutoFilledDescription": "{model}: ${input} input / ${output} output per 1M token",
+        "customLlmModelsHint": "Inserisci l'URL del tuo endpoint. Se è compatibile con OpenAI (ad es. LiteLLM), modelli e prezzi vengono recuperati automaticamente.",
         "connectionSuccessfulDescription": "La connessione del modello AI è stata verificata e funziona correttamente",
         "failedToConnect": "Impossibile connettersi al provider del modello AI",
         "integrationCreated": "Integrazione del modello AI creata con successo",
@@ -5409,6 +6015,7 @@
         "statusDescription": "Abilita o disabilita questa integrazione",
         "apiKeyPlaceholder": "Inserisci una nuova chiave API per aggiornare...",
         "update": "Aggiornamento",
+        "modelListUpdated": "Elenco modelli aggiornato con successo",
         "integrationUpdated": "Integrazione del modello AI aggiornata con successo",
         "failedToUpdate": "Impossibile aggiornare l'integrazione del modello AI",
         "validation": {
@@ -5517,6 +6124,11 @@
     "elasticsearch": {
       "title": "Gestione Elasticsearch",
       "description": "Gestire l'indicizzazione e la manutenzione dei motori di ricerca",
+      "health": {
+        "healthy": "Integro",
+        "warning": "Avviso",
+        "unhealthy": "Non integro"
+      },
       "status": {
         "title": "Stato di Elasticsearch",
         "description": "Connessione attuale e stato di salute del motore di ricerca",
@@ -5540,7 +6152,7 @@
         "error": "Errore durante il salvataggio delle impostazioni",
         "errorDescription": "Impossibile salvare la configurazione. Riprova.",
         "note": {
-          "description": "Le modifiche si applicano immediatamente ai nuovi indici. Gli indici esistenti vengono aggiornati al momento del salvataggio. Impostare le repliche su 0 per risolvere lo stato GIALLO nei cluster a nodo singolo."
+          "description": "Le modifiche si applicano immediatamente ai nuovi indici. Gli indici esistenti vengono aggiornati al momento del salvataggio. Impostare le repliche su 0 per risolvere lo stato di Avviso nei cluster a nodo singolo."
         }
       },
       "reindex": {
@@ -5687,7 +6299,6 @@
     },
     "auditLogs": {
       "description": "Visualizza il registro di controllo a livello di sistema per il monitoraggio della sicurezza e della conformità.",
-      "projectDescription": "Visualizza il registro di controllo delle azioni eseguite in questo progetto.",
       "filterPlaceholder": "Cerca per entità, utente o azione...",
       "filterAction": "Azione",
       "filterEntityType": "Tipo di entità",
@@ -5709,7 +6320,8 @@
         "entityName": "Nome dell'entità",
         "userId": "ID utente",
         "ipAddress": "Indirizzo IP",
-        "userAgent": "Agente utente"
+        "userAgent": "Agente utente",
+        "source": "Origine"
       },
       "exportCsv": "Esporta in formato CSV",
       "timeRange": "Intervallo di tempo",
@@ -5807,6 +6419,13 @@
         "reviewEntityLabelCase": "caso di test",
         "reviewEntityLabelRun": "esecuzione del test",
         "reviewEntityLabelSession": "sessione",
+        "reviewBulkEntityLabelCase": "casi di test",
+        "reviewBulkEntityLabelRun": "esecuzioni di test",
+        "reviewBulkEntityLabelSession": "sessioni",
+        "reviewBulkSummaryCase": "{count} casi di test",
+        "reviewBulkSummaryRun": "{count} esecuzioni di test",
+        "reviewBulkSummarySession": "{count} sessioni",
+        "reviewBulkRequestedEmailMessage": "{actorName} ha richiesto la tua revisione di {count} {entityLabel} nel progetto \"{projectName}\".",
         "reviewTransition": "Transizione: {from} → {to}",
         "reviewCommentPreview": "Commento: {comment}",
         "reviewRequestedEmailMessage": "{actorName} ha richiesto la tua revisione di {entityLabel} \"{entityName}\" nel progetto \"{projectName}\".",
@@ -5820,7 +6439,14 @@
         "reviewReminderHoursPending": "In attesa da {hoursPending, plural, one {# ore} other {# ore}}",
         "aiStepsDerivedTitle": "Passaggi di test derivati dall'AI pronti",
         "aiStepsDerivedMessage": "{count, plural, one {# caso di test ha} other {# casi di test hanno}} ricevuto passaggi derivati dall'AI — verificane l'accuratezza.",
-        "aiStepsDerivedReviewLink": "Rivedi l'esecuzione del test"
+        "aiStepsDerivedReviewLink": "Rivedi l'esecuzione del test",
+        "integrationAuthExpiredTitle": "Connessione all'integrazione scaduta",
+        "integrationAuthExpiredMessage": "La connessione a \"{integrationName}\" è scaduta. Riconnettiti per riprendere la sincronizzazione dei problemi.",
+        "integrationAuthExpiredReconnect": "Riconnetti",
+        "runReadyToCompleteTitle": "Esecuzione Test Pronta per il Completamento",
+        "runReadyToCompleteExecuted": "{count, plural, one {Il caso # è stato eseguito} =2 {Entrambi i casi sono stati eseguiti} other {Tutti i # casi sono stati eseguiti}}.",
+        "runReadyToCompleteEmailMessage": "{caseCount, plural, one {# caso è stato eseguito} =2 {Entrambi i casi sono stati eseguiti} other {Tutti i # casi sono stati eseguiti}} nel test run \"{testRunName}\" (progetto \"{projectName}\"). Il test run è pronto per essere contrassegnato come completato.",
+        "runReadyToCompleteReason": "Ricevi questa notifica perché puoi completare le esecuzioni dei test in questo progetto."
       }
     },
     "issues": {
@@ -5998,7 +6624,13 @@
     "filterAll": "Tutto",
     "fanOutPartialFailure": "Impossibile raggiungere il/i progetto/i {count, number} . Vengono mostrati i risultati del/i progetto/i {successCount, number}.",
     "projectSelectorLabel": "Progetto",
-    "searchFailedTitle": "Ricerca non riuscita"
+    "searchFailedTitle": "Ricerca non riuscita",
+    "authComplete": {
+      "successTitle": "Autorizzazione completata",
+      "successDescription": "Il tuo account è ora connesso. Puoi chiudere questa finestra e tornare a quello che stavi facendo.",
+      "errorTitle": "Autorizzazione non riuscita",
+      "errorDescription": "Non è stato possibile completare l'autorizzazione. Chiudi questa finestra e riprova."
+    }
   },
   "Pages": {
     "Issues": {
@@ -6044,7 +6676,9 @@
     "testCases": "{count, plural, one {# caso di test} other {# casi di test}}",
     "estimate": "Previsione: {value}",
     "partOf": "(Parte di {parent})",
-    "status": "Stato: {status}"
+    "status": "Stato: {status}",
+    "lane": "Corsia {number}",
+    "worker": "Worker {id}"
   },
   "linkedCases": {
     "title": "Casi di test collegati",
@@ -6073,9 +6707,85 @@
     "starts": "Inizio:",
     "scheduledCompletion": "Completamento programmato:",
     "estWorkEffort": "Sforzo lavorativo stimato:",
-    "noTasks": "Nessuna attività da visualizzare nel diagramma di Gantt."
+    "noTasks": "Nessuna attività da visualizzare nel diagramma di Gantt.",
+    "businessHours": "{hours, number, ::.0} ore lavorative"
   },
   "help": {
+    "auditLogs": "## Registri di controllo\nVisualizza il registro di controllo a livello di sistema per il monitoraggio della sicurezza e della conformità",
+    "statuses": "## Stati\nGestisci gli stati che i tester assegnano quando registrano un risultato del test, come Superato, Non superato e Bloccato.",
+    "configurations": "## Configurazioni\nLe configurazioni sono una combinazione di categorie e varianti utilizzate per definire un ambiente di test. Ad esempio, sistema operativo/browser, server di test, lingua, ecc.",
+    "categories": "## Categorie\nLe categorie raggruppano varianti correlate, come Browser o Sistema Operativo, che si combinano per definire un ambiente di test.",
+    "stepDuplicates": "## Duplicati di sequenze di passaggi\nEsamina le sequenze di passaggi corrispondenti nei vari casi di test. Converti le corrispondenze in gruppi di passaggi condivisi o scarta i falsi positivi.",
+    "templates": "## Modelli\nGestisci modelli e campi dei casi di test",
+    "caseFields": "## Campi caso\nCampi personalizzati disponibili nei casi di test, assegnati ai modelli per controllare quali casi li utilizzano.",
+    "resultFields": "## Campi risultato\nCampi personalizzati raccolti al momento della registrazione di un risultato del test, assegnati ai modelli per controllare dove vengono applicati.",
+    "milestoneTypes": "## Tipi di traguardo\nI tipi di traguardo classificano i traguardi, come Sprint, Release o Versione, e possono essere riutilizzati in più progetti.",
+    "tags": "## Tag\nI tag etichettano e organizzano i casi di test e le sessioni, permettendoti di raggruppare e trovare facilmente il lavoro correlato tra i progetti.",
+    "issues": "## Problemi\nI problemi sono elementi di tracker esterni, provenienti da Jira, GitHub, Azure DevOps e altre integrazioni, sincronizzati in TestPlanIt in modo da poter essere collegati a casi di test, esecuzioni e sessioni.",
+    "crossProjectReports": "## Report tra progetti\nCrea, esegui e analizza report che coprono più progetti, come le tendenze di automazione nell'intera suite di test.",
+    "users": "## Utenti\nUna directory delle persone con cui collabori — utenti che condividono con te almeno un progetto — e i progetti che condividi con ciascuno di loro. Gli amministratori vedono ogni utente e l'elenco completo dei loro progetti.",
+    "documentation": "## Documentazione\nDocumentazione libera per questo progetto: note, riferimenti e dettagli di introduzione.",
+    "projectMilestones": "## Traguardi\nI traguardi raggruppano e monitorano il lavoro di questo progetto in base all'obiettivo, come release, sprint o tipi personalizzati, negli stati attivi e completati.",
+    "projectRepository": "## Repository dei casi di test\nLa libreria dei casi di test di questo progetto, organizzata in cartelle.",
+    "repositoryDuplicates": "## Candidati duplicati\nPotenziali test case duplicati trovati durante l'ultima scansione del repository di questo progetto. Una nuova scansione analizza nuovamente il repository e aggiorna l'elenco con i candidati più recenti.",
+    "projectSharedSteps": "## Passaggi condivisi\nGruppi riutilizzabili di passaggi di test che più casi di test possono condividere: l'aggiornamento di un gruppo aggiorna ogni caso che lo referenzia.",
+    "projectRuns": "## Esecuzioni dei test\nLe esecuzioni dei test eseguono un insieme selezionato di casi di test e registrano i relativi risultati, monitorando l'avanzamento dall'inizio al completamento.",
+    "projectSessions": "## Sessioni\nSessioni di test esplorativo: test a tempo limitato e non scritti, registrati come note e risultati negli stati attivi e completati.",
+    "projectTags": "## Tag\nI tag etichettano e raggruppano i casi di test, le sessioni e le esecuzioni di questo progetto, in modo che il lavoro correlato sia facile da trovare.",
+    "projectIssues": "## Problemi\nProblemi provenienti dai tracker collegati a questo progetto, collegati ai casi di test, alle esecuzioni e alle sessioni in cui sono stati individuati o referenziati.",
+    "projectReports": "## Report\nI report riassumono i test di questo progetto, tra cui esecuzioni, sessioni e risultati, sotto forma di grafici e tabelle che puoi filtrare ed esportare.",
+    "projectAuditLogs": "## Registri di controllo\nIl registro di controllo delle azioni eseguite in questo progetto, ovvero chi ha modificato cosa e quando, per il monitoraggio della sicurezza e della conformità.",
+    "projectIntegrations": "## Integrazioni dei problemi\nCollega questo progetto a un tracker dei problemi in modo che i suoi casi di test, esecuzioni e sessioni possano collegarsi e sincronizzarsi con problemi e traguardi esterni.",
+    "projectWebhooks": "## Webhook\nInvia e ricevi notifiche di eventi per questo progetto: gli hook in entrata portano le modifiche esterne, gli hook in uscita inviano gli eventi di test e le consegne registrano ciò che è stato inviato.",
+    "projectAiModels": "## Modelli IA\nScegli il modello di IA e la configurazione dei prompt che questo progetto utilizza per le sue funzionalità basate sull'IA, come la generazione di casi di test e l'assegnazione automatica dei tag.",
+    "projectQuickScript": "## QuickScript\nCollega un repository di codice in modo che questo progetto possa generare casi di test dai tuoi file di test automatizzati, scegliendo quale branch e percorsi includere.",
+    "projectParameters": "## Parametri dei casi di test\nConfigura i test basati sui dati di questo progetto: nomi delle proprietà di iterazione JUnit per i risultati importati e set di dati riutilizzabili per i casi parametrizzati.",
+    "projectAdvanced": "## Avanzate\nImpostazioni avanzate per questo progetto: il prefisso dell'ID record, il flusso di lavoro di revisione dei risultati, la creazione automatica di problemi in caso di errore e la finestra di modifica dei risultati.",
+    "projectShares": "## Gestisci condivisioni\nLink condivisibili ai report di questo progetto, ciascuno con il proprio livello di accesso: pubblico, con accesso richiesto o protetto da password. Revocare un link ne interrompe l'accesso.",
+    "groups": "## Gruppi\nI gruppi permettono di assegnare l'accesso ai progetti e i ruoli a più utenti contemporaneamente. Aggiungi membri direttamente, oppure associa un gruppo dal tuo provider di identità.",
+    "roles": "## Ruoli\nI ruoli controllano cosa possono fare gli utenti: ciascuno attiva o disattiva le autorizzazioni per area applicativa. Assegna un ruolo agli utenti direttamente o come predefinito del progetto.",
+    "sso": "## Autenticazione\nGestisci le modalità di accesso degli utenti e se è possibile registrare nuovi account.",
+    "ssoProviders": "## Provider di accesso\nConfigura le modalità di accesso degli utenti alla tua applicazione.",
+    "ssoRegistration": "## Impostazioni di registrazione\nControlla chi può registrarsi per nuovi account.",
+    "ssoAllowRegistration": "## Consenti l'autoregistrazione\nQuando questa opzione è disabilitata, i nuovi utenti non possono registrarsi direttamente né creare un account tramite SSO. Gli utenti già registrati possono comunque accedere.",
+    "ssoDefaultAccess": "## Livello di accesso predefinito\nIl livello di accesso al sistema assegnato ai nuovi utenti al momento della registrazione.",
+    "ssoRequireEmailVerification": "## Richiedi verifica email\nGli utenti devono verificare il proprio indirizzo email prima di accedere al sistema.",
+    "ssoRestrictDomains": "## Limita i domini email\nConsenti la registrazione solo da domini di posta elettronica specifici.",
+    "security": "## Sicurezza\nConfigura le impostazioni di controllo dell'accesso, i criteri per le password, le impostazioni di blocco e le azioni di applicazione.",
+    "securitySignInEnforcement": "## Applicazione dell'accesso\nRichiedere l'SSO e imporre l'autenticazione a due fattori.",
+    "securityForceSso": "## Forza l'accesso SSO\nDisabilitare l'accesso tramite email e richiedere agli utenti di utilizzare l'SSO.",
+    "securityForce2FANonSSO": "## Richiedi 2FA per gli accessi con password\nGli utenti che accedono con email/password devono configurare e utilizzare l'autenticazione a due fattori.",
+    "securityForce2FAAllLogins": "## Richiedi 2FA per tutti gli accessi\nTutti gli utenti devono verificare l'identità tramite 2FA dopo aver effettuato l'accesso, inclusi gli utenti SSO.",
+    "securityPasswordPolicy": "## Criteri password\nDefinisci i requisiti per le password degli utenti.",
+    "securityLockoutPolicy": "## Criteri di blocco\nConfigura il blocco dell'account dopo tentativi di accesso non riusciti.",
+    "securityEnforcement": "## Azioni di applicazione\nForza la modifica della password per gli utenti basati su credenziali.",
+    "apiTokens": "## Token API\nVisualizza e gestisci i token API di tutti gli utenti. Revoca i token in caso di problemi di sicurezza.",
+    "scim": "## Provisioning SCIM\nEffettua il provisioning degli utenti dal tuo provider di identità in TestPlanIt tramite SCIM 2.0.",
+    "scimConflicts": "## Registro dei conflitti ID esterno\nEventi di identità SCIM che hanno richiesto l'intervento del sistema (collegamento, ripristino, sovrascrittura del nome visualizzato, membri ignorati).",
+    "scimFallbackDefault": "## Accesso mappato predefinito\nLivello di accesso assegnato agli utenti non coperti da alcuna mappatura di gruppo.",
+    "integrations": "## Integrazioni dei problemi\nGestire le integrazioni di terze parti per il monitoraggio dei problemi.",
+    "notifications": "## Amministrazione delle notifiche\nImposta le preferenze di notifica predefinite (che gli utenti possono modificare) e invia notifiche di sistema.",
+    "notificationsSystem": "## Notifiche di sistema\nInvia annunci importanti a tutti gli utenti.",
+    "notificationsHistory": "## Cronologia delle notifiche\nNotifiche di sistema precedentemente inviate a tutti gli utenti.",
+    "aiModels": "## Modelli IA\nGestisci i provider e le connessioni dei modelli di IA utilizzati per le funzionalità basate sull'IA, inclusi i limiti di utilizzo e i budget.",
+    "prompts": "## Configurazioni dei prompt\nGestisci le configurazioni dei prompt che le funzionalità di IA utilizzano per generare contenuti, e assegnale ai progetti.",
+    "quickscripts": "## Modelli QuickScript\nGestisci i modelli utilizzati da QuickScript per convertire i casi di test in script di automazione.",
+    "codeRepositories": "## Repository di codice\nGestisci le connessioni al repository del codice per il contesto QuickScript.",
+    "recordKeys": "## Chiavi dei record\nConfigura identificatori estetici con prefisso di progetto, come PROJECT-TC-1234, che rendono facile capire a quale progetto appartiene un record e di che tipo di record si tratti. L'ID numerico sottostante rimane invariato e continua a funzionare ovunque.",
+    "recordKeysEnabled": "## Chiavi dei record con prefisso di progetto\nQuando questa opzione è abilitata, i record mostrano una chiave opzionale che combina il codice del progetto, un token di tipo e l'ID numerico del record. Imposta il codice di ciascun progetto in Impostazioni progetto → Avanzate.",
+    "imports": "## Importazioni di dati\nImporta i dati da strumenti esterni di gestione dei test in TestPlanIt.",
+    "elasticsearchStatus": "## Stato di Elasticsearch\nConnessione attuale e stato di salute del motore di ricerca.",
+    "elasticsearchConfig": "## Configurazione di Elasticsearch\nConfigura le impostazioni di Elasticsearch per la tua distribuzione.",
+    "elasticsearchReindex": "## Reindicizza i dati\nRicostruisci gli indici di ricerca per migliorare le prestazioni di ricerca.",
+    "queues": "## Code dei lavori in background\nMonitorare e gestire le code di elaborazione dei lavori in background.",
+    "trash": "## Cestino\nRipristina o elimina definitivamente i record eliminati temporaneamente in tutto il sistema.",
+    "systemWebhooks": "## Webhook di sistema\nDestinazioni webhook in uscita per eventi a livello di sistema non legati a un singolo progetto, attualmente gli eventi del ciclo di vita di utenti e gruppi SCIM 2.0. Configura i webhook in entrata e in uscita a livello di progetto dalla pagina delle impostazioni del progetto.",
+    "workflows": "## Flussi di lavoro\nGestisci gli stati del flusso di lavoro per i casi di test, le esecuzioni dei test e le sessioni.",
+    "workflowReviews": "## Flusso di lavoro di revisione\nApplica le revisioni bloccando le transizioni del flusso di lavoro fino all'approvazione. Quando questa opzione è abilitata, i progetti possono attivarla o disattivarla singolarmente tramite le impostazioni avanzate. Disabilitala per impedire il blocco delle approvazioni del flusso di lavoro.",
+    "reviewReminders": "## Promemoria di revisione\nNumero di giorni durante i quali una richiesta di revisione può rimanere in sospeso prima che i revisori ricevano una notifica di promemoria. Per le nuove richieste, il conteggio inizia al momento dell'invio.",
+    "reviews": "## Revisioni\nLe richieste di revisione assegnate a te, direttamente o tramite un ruolo che ricopri. In sospeso è la tua coda di richieste ancora in attesa di una decisione; Decise elenca quelle che hai già approvato, rifiutato o per cui hai richiesto modifiche.",
+    "resultEditingPolicy": "## Criteri di modifica dei risultati\nControlla per quanto tempo dopo la registrazione di un risultato è ancora possibile modificarlo, in tutti i progetti. I progetti possono restringere questo limite nelle impostazioni avanzate, ma non possono mai allentarlo. Gli amministratori di sistema possono sempre apportare modifiche.",
+    "abandonedRunPolicy": "## Pulizia delle Automazioni Abbandonate\nQuando un job CI viene interrotto o il suo agente si arresta, l'esecuzione di test automatizzata che ha creato non riceve mai la chiamata di completamento e rimane In Corso per sempre. Con questa politica attiva, una scansione in background viene eseguita ogni 15 minuti e chiude qualsiasi esecuzione automatizzata incompleta che non ha ricevuto risultati per il tempo di inattività configurato (minimo 15 minuti). Le esecuzioni manuali non vengono mai interessate. Ogni progetto può sovrascrivere la soglia — o disattivarla — nelle proprie impostazioni Avanzate, e può scegliere in quale stato vengono spostate le esecuzioni ripulite. Scegli un tempo di inattività comodamente più lungo del periodo di inattività più lungo di un'esecuzione sana; un giorno intero è un valore predefinito sicuro.",
     "project": {
       "name": "## Nome del progetto\nL'identificatore univoco per il tuo progetto.\n\n- Deve essere univoco in tutti i progetti\n- Utilizzato nella navigazione e nei report\n- Deve essere chiaro e descrittivo\n- Aiuta i membri del team a identificare l'ambito del progetto",
       "description": "## Descrizione del progetto\nDettagli aggiuntivi sullo scopo e l'ambito del progetto.\n\n- Facoltativo ma consigliato\n- Aiuta i membri del team a comprendere gli obiettivi del progetto\n- Può includere obiettivi o requisiti chiave\n- Limitato a 256 caratteri",
@@ -6086,6 +6796,7 @@
       "issueTracker": "## Configurazione del tracker dei problemi\nSeleziona la configurazione del tracker dei problemi da utilizzare per gestire i problemi relativi a questo progetto."
     },
     "projects": {
+      "overview": "## Progetti\nI progetti sono i contenitori di primo livello per i tuoi casi di test, le esecuzioni, le sessioni e i traguardi. Crea e gestisci ogni progetto da qui.",
       "settings": {
         "integrations": {
           "externalProjectHelp": "## Progetto esterno\nSeleziona il progetto o il repository nel sistema esterno da collegare a questo progetto TestPlanIt.\n\n- I problemi creati da TestPlanIt verranno creati in questo progetto\n- Abilita l'integrazione del tracciamento dei problemi tra i sistemi\n- Deve disporre delle autorizzazioni appropriate nel sistema esterno",
@@ -6125,12 +6836,14 @@
       "description": "## Descrizione\nInformazioni dettagliate sullo scopo, i requisiti e l'ambito della milestone.\n\n- Fornisce il contesto per i membri del team\n- Documenta i requisiti e gli obiettivi chiave\n- Supporta la collaborazione e l'allineamento",
       "documentation": "## Documentazione\nDettagli aggiuntivi, riferimenti e materiali di supporto.\n\n- Specifiche tecniche\n- Documenti di progettazione\n- Riferimenti esterni\n- Appunti e decisioni delle riunioni",
       "automaticCompletion": "## Completamento automatico alla data di scadenza\nContrassegna automaticamente questa milestone come completata al raggiungimento della data di scadenza.\n\n- La milestone verrà completata all'ora programmata alla data di scadenza\n- Utile per milestone a tempo limitato che devono essere chiuse indipendentemente dallo stato di completamento\n- Può essere sovrascritto completando manualmente la milestone prima della data di scadenza\n- Richiede l'impostazione di una data di scadenza",
-      "notifyDaysBefore": "## Notifica giorni prima della data di scadenza\nInvia notifiche ai membri del team assegnati quando si avvicina la data di scadenza della milestone.\n\n- Attiva per abilitare le notifiche, disattiva per disabilitarle\n- Inserisci il numero di giorni prima della data di scadenza per iniziare a inviare promemoria\n- Le notifiche vengono inviate agli utenti assegnati alle esecuzioni di test e alle sessioni all'interno di questa milestone\n- Le milestone in ritardo continueranno a inviare promemoria fino al completamento"
+      "notifyDaysBefore": "## Notifica giorni prima della data di scadenza\nInvia notifiche ai membri del team assegnati quando si avvicina la data di scadenza della milestone.\n\n- Attiva per abilitare le notifiche, disattiva per disabilitarle\n- Inserisci il numero di giorni prima della data di scadenza per iniziare a inviare promemoria\n- Le notifiche vengono inviate agli utenti assegnati alle esecuzioni di test e alle sessioni all'interno di questa milestone\n- Le milestone in ritardo continueranno a inviare promemoria fino al completamento",
+      "managedByJira": "## Gestito da Jira\nIl nome, le date e lo stato di questo traguardo sono gestiti da Jira. Apporta le modifiche lì per aggiornarli anche qui."
     },
     "session": {
       "name": "## Nome sessione\nUn nome chiaro e descrittivo che identifichi lo scopo della sessione di test.\n\n- Deve essere univoco e significativo\n- Aiuta i membri del team a capire cosa viene testato\n- Utilizzato nei report e nel monitoraggio",
       "template": "## Template\nI template definiscono la struttura e il contenuto della sessione di test.\n\n- Fornisce un formato coerente per la documentazione dei test\n- Include sezioni e campi predefiniti\n- Aiuta a mantenere gli standard di test in tutto il progetto",
       "configuration": "## Configurazione\nL'ambiente o la configurazione specifici richiesti per questa sessione di test.\n\n- Ambiente di test (ad esempio, Staging, Produzione)\n- Configurazioni o impostazioni speciali\n- Dati o condizioni di test richiesti",
+      "configurationGroup": "## Gruppo di configurazione\nLe sessioni in un gruppo di configurazione riguardano lo stesso test svolto con configurazioni diverse, così puoi passare da una all'altra e confrontare i risultati in un unico posto.\n\nLe sessioni create insieme per diverse configurazioni vengono raggruppate automaticamente. Collega qui una sessione quando è stata creata singolarmente.\n\nColleghi una sessione, ma ti unisci a tutto ciò a cui quella sessione è già raggruppata — un gruppo non ha un proprietario, quindi ogni membro è collegato a tutti gli altri.\n\nIl raggruppamento cambia solo il modo in cui le sessioni vengono presentate insieme. Non sposta mai i casi di test o i risultati.",
       "milestone": "## Milestone\nAssocia questa sessione a una milestone del progetto.\n\n- Aiuta a monitorare i progressi dei test verso gli obiettivi del progetto\n- Raggruppa le sessioni di test correlate\n- Supporta la creazione di report basati su milestone",
       "description": "## Descrizione\nUna breve panoramica di ciò che copre questa sessione di test.\n\n- Aree o funzionalità chiave sottoposte a test\n- Contesto o background importante\n- Considerazioni o requisiti speciali",
       "mission": "## Missione\nLa missione definisce gli obiettivi e le finalità specifiche per questa sessione di test.\n\n- Cosa stai testando?\n- Quali sono le aree chiave su cui concentrarti?\n- Quali sono i risultati attesi?\n\nUna missione chiara aiuta a mantenere i test concentrati e produttivi.",
@@ -6146,6 +6859,7 @@
       "name": "## Nome esecuzione test\nInserisci un nome descrittivo per questa esecuzione test per identificarla facilmente in seguito.",
       "description": "## Descrizione\nFornisci un breve riepilogo o delle note su questa esecuzione del test.",
       "configuration": "## Configurazioni\nSeleziona una o più configurazioni (ad esempio, ambiente, browser, dispositivo) in base alle quali verranno eseguite le prove. Selezionando più configurazioni, verranno create prove separate per ciascuna.",
+      "configurationGroup": "## Gruppo di configurazione\nLe esecuzioni di test in un gruppo di configurazione riguardano lo stesso lavoro svolto con configurazioni diverse, così puoi passare da una all'altra e confrontare i risultati in un unico posto.\n\nLe esecuzioni create insieme per diverse configurazioni vengono raggruppate automaticamente. Collega qui un'esecuzione quando è stata creata singolarmente — ad esempio, una che hai duplicato successivamente per un'altra configurazione.\n\nColleghi un'esecuzione, ma ti unisci a tutto ciò a cui quell'esecuzione è già raggruppata — un gruppo non ha un proprietario, quindi ogni membro è collegato a tutti gli altri.\n\nIl raggruppamento cambia solo il modo in cui le esecuzioni vengono presentate insieme. Non sposta mai i casi di test o i risultati.",
       "milestone": "## Milestone\nAssocia questa esecuzione di test a una specifica milestone del progetto per monitorare i progressi verso obiettivi più ampi.",
       "docs": "## Documentazione\nIncludere qualsiasi documentazione pertinente, link o note dettagliate per questa esecuzione del test.",
       "state": "## Stato\nIndica lo stato attuale o il risultato di questa esecuzione del test in base al flusso di lavoro del tuo progetto.",
@@ -6154,7 +6868,8 @@
       "attachments": "## Allegati\nCarica eventuali file di supporto, screenshot o registri relativi a questa esecuzione del test.",
       "duplicate": {
         "statusesToInclude": "## Stati da includere\nSeleziona gli stati dei casi di test che desideri includere nell'esecuzione del test duplicato.",
-        "copyAssignments": "## Copia assegnazioni\nSe abilitata, le assegnazioni dei casi di test verranno copiate nell'esecuzione del test duplicata."
+        "copyAssignments": "## Copia assegnazioni\nSe abilitata, le assegnazioni dei casi di test verranno copiate nell'esecuzione del test duplicata.",
+        "configurationGroup": "## Gruppo di configurazione\nLe esecuzioni di test che riguardano lo stesso lavoro svolto con configurazioni diverse condividono un gruppo di configurazione, e il selettore di configurazione permette di passare dall'una all'altra.\n\nLascia questa opzione disattivata e le copie saranno raggruppate solo tra loro, esattamente come prima. Attivala e l'esecuzione di test in fase di duplicazione entra a far parte dello stesso gruppo, in modo che essa e ogni copia appaiano come elementi dello stesso livello — anche una singola copia si unisce."
       }
     },
     "appConfig": {
@@ -6190,7 +6905,7 @@
       "name": "## Nome modello\nUn nome univoco e descrittivo per questo modello (ad esempio, 'Caso di test standard', 'Risultati del test API').",
       "isEnabled": "## Abilitato\nSe selezionato, questo modello sarà disponibile per la selezione durante la creazione di nuovi casi di test o la definizione di strutture di esecuzione dei test. Se un modello è impostato come \"Predefinito\", deve essere anche \"Abilitato\".",
       "isDefault": "## Predefinito\nSe selezionato, questo modello verrà selezionato automaticamente per i nuovi progetti o come predefinito per tutti i progetti se non è impostato alcun valore predefinito specifico per il progetto. Solo un modello può essere predefinito per tutti i progetti. Abilitando questa opzione, verranno disabilitati tutti gli altri modelli attualmente impostati come predefiniti.",
-      "caseFields": "## Campi del caso\nSeleziona e ordina i campi personalizzati che saranno disponibili durante la creazione o la modifica dei casi di test utilizzando questo modello.\n\n- Aggiungi campi dal menu a tendina per includerli nel modello\n- Trascina e rilascia per riordinare i campi\n- L'ordine determina come i campi vengono visualizzati nei moduli\n- Solo i campi del caso abilitati sono disponibili per la selezione\n- I campi del caso definiscono la struttura e i dati acquisiti per i casi di test",
+      "caseFields": "## Campi del caso\nSeleziona e ordina i campi personalizzati che saranno disponibili durante la creazione o la modifica dei casi di test utilizzando questo modello.\n\n- Aggiungi campi dal menu a tendina per includerli nel modello\n- Trascina e rilascia per riordinare i campi\n- L'ordine determina come i campi vengono visualizzati nei moduli\n- Solo i campi del caso abilitati sono disponibili per la selezione\n- I campi del caso definiscono la struttura e i dati acquisiti per i casi di test\n- L'interruttore a forma di scintille controlla se un campo inizia selezionato nella procedura guidata Genera casi di test; gli utenti possono comunque modificare la selezione lì",
       "resultFields": "## Campi dei risultati\nSeleziona e ordina i campi personalizzati che saranno disponibili quando aggiungi i risultati dei test utilizzando questo modello.\n\n- Aggiungi i campi dal menu a tendina per includerli nel modello\n- Trascina e rilascia per riordinare i campi\n- L'ordine determina come appaiono i campi quando inserisci i risultati dei test\n- Solo i campi dei risultati abilitati sono disponibili per la selezione\n- I campi dei risultati acquisiscono dati aggiuntivi specifici per gli esiti dell'esecuzione dei test",
       "projects": "## Progetti associati\nSeleziona per quali progetti sarà disponibile questo modello. Se non viene selezionato alcun progetto, il modello sarà disponibile a livello globale. L'assegnazione di un modello a progetti specifici ne limita l'utilizzo solo a tali progetti."
     },
@@ -6200,12 +6915,13 @@
       "apiKey": "## Chiave API\nLa tua chiave di autenticazione per l'API del provider LLM.\n\n- Ottienila dalla console per sviluppatori del tuo provider\n- Mantenuta crittografata e mai visualizzata dopo il salvataggio\n- Non richiesta per Ollama (distribuzione locale)",
       "endpoint": "## Endpoint API\nL'URL di base per l'API del provider LLM.\n\n- Lasciare vuoto per OpenAI, Anthropic e Gemini: gli URL ufficiali vengono utilizzati automaticamente\n- Obbligatorio per Ollama (ad esempio `http://localhost:11434`), Azure OpenAI e LLM personalizzato\n- Facoltativo per qualsiasi provider: puntare a un proxy compatibile con OpenAI (ad esempio LiteLLM) inserendo il suo URL\n- **Gli indirizzi privati/interni** (localhost, 127.0.0.1, IP privati, metadati cloud) sono bloccati a meno che non siano esplicitamente consentiti tramite la variabile di ambiente `ALLOWED_PRIVATE_HOSTS`",
       "deploymentName": "## Nome della distribuzione di Azure\nIl nome della distribuzione del modello Azure OpenAI.\n\n- Si trova in Azure OpenAI Studio in Distribuzioni\n- Diverso dal nome del modello, ad esempio `my-gpt4-deploy` corrisponde a `gpt-4`\n- Richiesto solo per Azure OpenAI",
-      "defaultModel": "## Modello predefinito\nIl modello utilizzato per le richieste AI con questa integrazione.\n\n- Per OpenAI, Anthropic e Gemini: i modelli disponibili vengono recuperati automaticamente dalla tua chiave API\n- Assicurati che il modello sia abilitato nel tuo account provider\n- Esempio: `gpt-4o`, `claude-3-5-sonnet-20241022`, `gemini-1.5-pro`",
-      "maxTokensPerRequest": "## Numero massimo di token per richiesta\nIl **limite massimo** di token di output per ogni singola richiesta.\n\n- Le richieste che superano questo limite vengono **rifiutate con un errore** prima di raggiungere l'LLM\n- Imposta questo valore sulla capacità massima effettiva di token di output del tuo modello\n- Esempio: `16384` per GPT-4o, `8192` per Claude 3.5 Sonnet\n- Impostare questo valore troppo basso causa il fallimento delle funzionalità AI o la produzione di output troncato",
-      "defaultMaxTokens": "## Token massimi predefiniti\nIl limite di token di output **di ripiego** utilizzato quando una richiesta non specifica il proprio.\n\n- Ogni funzionalità AI (generazione di test, esportazione del codice, ecc.) imposta il proprio limite in **Amministrazione → Configurazione prompt**\n- Questo valore viene utilizzato solo come ripiego per le funzionalità senza un limite specifico configurato\n- Dovrebbe essere ≤ Token massimi per richiesta",
+      "defaultModel": "## Modello predefinito\nIl modello utilizzato per le richieste AI con questa integrazione.\n\n- Per OpenAI, Anthropic, Gemini, Ollama ed endpoint personalizzati compatibili con OpenAI (ad es. LiteLLM) — i modelli disponibili vengono recuperati automaticamente\n- Quando il provider comunica anche i prezzi del modello, i campi dei costi vengono compilati automaticamente alla selezione\n- Assicurati che il modello sia abilitato nel tuo account provider\n- Esempio: `gpt-4o`, `claude-3-5-sonnet-20241022`, `gemini-1.5-pro`",
+      "maxTokensPerRequest": "## Token massimi per richiesta\nIl **limite massimo di token di _output_** che il modello può generare in una singola risposta.\n\n- Limita la lunghezza della **risposta** del modello — non quanto contesto gli invii\n- Le richieste che ne chiedono più di questo valore vengono **rifiutate prima di raggiungere il modello**\n- Impostalo sul massimo output reale del tuo modello — ad es. `128000` per Claude Opus/Sonnet, `64000` per Claude Haiku, `65536` per Gemini, `16384` per GPT-4o\n- Troppo basso → le funzionalità IA falliscono o producono output troncato",
+      "defaultMaxTokens": "## Token massimi predefiniti\nLa **lunghezza di _output_** richiesta a questo modello IA, limitata da _Token massimi per richiesta_.\n\n- **Generazione di casi di test** (ogni fonte, incluso il pannello dei problemi Jira), **Analisi Markdown dei casi di test**, **Assistente di scrittura dell'editor** e **Selezione intelligente dei casi di test** usano sempre questo valore — il loro _Numero massimo di token di output_ nella Configurazione prompt non viene applicato\n- **Generazione codice di esportazione**, **Suggerimenti tag IA**, **Derivazione passaggi IA** e il **Report candidati per l'automazione** utilizzano invece il proprio _Numero massimo di token di output_ da **Admin → Configurazione prompt**\n- I modelli che ragionano prima di rispondere (ad es. Claude Opus 5) utilizzano parte di questo budget per il ragionamento — lascia spazio per la risposta\n- **Non** controlla quanto codice del repository QuickScript invia al modello — quel budget viene calcolato automaticamente dalla finestra di contesto del modello\n- Mantienilo ≤ a _Token massimi per richiesta_",
+      "repoContextBudget": "## Budget di contesto del repository\nQuanto codice del tuo repository collegato QuickScript fornisce al modello durante la generazione di uno script.\n\n- **Impostato automaticamente** in base alla finestra di contesto di input del modello selezionato — non c'è nulla da configurare qui\n- I modelli con contesto più ampio (Claude, Gemini) ne ricevono di più; i piccoli modelli locali ricevono una quantità sicura che non causerà overflow\n- Più contesto rende lo script più fedele ai tuoi page object e fixture reali — non modifica la lunghezza dello script generato",
       "maxRequestsPerMinute": "## Richieste massime al minuto\nLimita il numero di chiamate API che possono essere effettuate a questo provider al minuto.\n\n- Imposta in modo che corrisponda al limite di frequenza del tuo piano provider\n- Le richieste in eccesso vengono messe in coda, non rifiutate\n- Controlla la documentazione del tuo provider per il limite del tuo piano",
-      "costPerInputToken": "## Costo per token di input (USD)\nIl costo in USD per ogni token di input (prompt) inviato al modello.\n\n- Utilizzato per il monitoraggio dei costi e gli avvisi di budget\n- Trova questo nella pagina dei prezzi del tuo fornitore\n- Esempio: `0,000005` = $5 per milione di token di input",
-      "costPerOutputToken": "## Costo per token di output (USD)\nIl costo in USD per ogni token di output (completamento) generato dal modello.\n\n- Solitamente superiore al costo del token di input\n- Utilizzato per il monitoraggio dei costi e gli avvisi di budget\n- Esempio: `0,000015` = $15 per milione di token di output",
+      "costPerInputToken": "## Costo per 1M di token di input (USD)\nIl costo in USD per **milione** di token di input (prompt) inviati al modello.\n\n- Utilizzato per il monitoraggio dei costi e gli avvisi di budget\n- Compilato automaticamente quando il tuo provider comunica i prezzi del modello (LiteLLM, OpenRouter, Together AI) — applicato quando selezioni un modello o esegui Verifica connessione\n- In caso contrario, trovalo nella pagina dei prezzi del tuo provider\n- Esempio: `0.15` = $0.15 per milione di token di input",
+      "costPerOutputToken": "## Costo per 1M di token di output (USD)\nIl costo in USD per **milione** di token di output (completamento) generati dal modello.\n\n- Solitamente più alto del costo dei token di input\n- Utilizzato per il monitoraggio dei costi e gli avvisi di budget\n- Compilato automaticamente quando il tuo provider comunica i prezzi del modello (LiteLLM, OpenRouter, Together AI) — applicato quando selezioni un modello o esegui Verifica connessione\n- In caso contrario, trovalo nella pagina dei prezzi del tuo provider\n- Esempio: `0.60` = $0.60 per milione di token di output",
       "monthlyBudget": "## Budget mensile (USD)\nUn obiettivo di spesa facoltativo per questa integrazione.\n\n- Imposta su `0` per disabilitare il monitoraggio del budget\n- Il budget è **solo informativo** — non blocca l'utilizzo di LLM\n- Riceverai notifiche all'80%, al 90% e al 100% del budget\n- I costi vengono calcolati utilizzando le tariffe per token sopra indicate",
       "billingPeriodStartDay": "## Giorno di inizio del periodo di fatturazione\nIl giorno del mese (1–31) in cui inizia il periodo di fatturazione.\n\n- Il valore predefinito `1` si allinea con il mese del calendario\n- Impostare su `15` per un ciclo dal 15 al 15 (ad esempio, per corrispondere alla data di fattura del fornitore)\n- I valori `29–31` vengono automaticamente impostati sull'ultimo giorno dei mesi più corti (febbraio negli anni non bisestili, ecc.)\n- Influisce sulla finestra di spesa del **Budget mensile** e sull'azione **Reimposta spesa**",
       "defaultTemperature": "## Temperatura predefinita\nControlla la casualità delle risposte del modello (0–2).\n\n- **0:** Deterministico — output identico per lo stesso input\n- **0.3:** Focalizzato — consigliato per la generazione di test e l'output del codice\n- **1+:** Creativo — risposte più varie\n- Le singole funzionalità possono sovrascrivere questo valore in Prompt Config",
@@ -6292,7 +7008,7 @@
       "isDefault": "## Predefinito\nIndica se questo flusso di lavoro è quello predefinito per il tuo progetto.\n\n- Il flusso di lavoro predefinito è preselezionato per nuove esecuzioni di test, sessioni e automazioni.",
       "isEnabled": "## Abilitato\nIndica se questo flusso di lavoro è abilitato.",
       "isActive": "## Attivo\nIndica se questo stato del flusso di lavoro è attivo e disponibile per l'uso.\n\n- I flussi di lavoro attivi possono essere selezionati durante l'aggiornamento di esecuzioni di test, sessioni o automazioni.\n- I flussi di lavoro inattivi sono nascosti dalla selezione ma conservati negli elementi esistenti.",
-      "requiresReview": "## Richiede revisione\nQuando è ATTIVO, il passaggio di un caso, di un'esecuzione di test o di una sessione IN questo stato è vincolato da una richiesta di revisione approvata. Senza una richiesta approvata, la transizione è bloccata.\n\n- Le revisioni in sospeso esistenti vengono conservate silenziosamente quando la funzionalità a livello di sistema è DISATTIVATA e riappaiono quando viene riattivata.\n- Il revisore viene selezionato quando un tester fa clic su Richiedi revisione dalla pagina dei dettagli dell'entità.\n\nSe la funzionalità a livello di sistema è disabilitata, questo interruttore è bloccato. Riattivarlo dalla scheda Flusso di lavoro di revisione sopra per attivarlo.",
+      "requiresReview": "## Richiede revisione\nQuando è ATTIVO, il passaggio di un caso, di un'esecuzione di test o di una sessione IN questo stato è vincolato da una richiesta di revisione approvata. Senza una richiesta approvata, la transizione è bloccata.\n\n- L'approvazione di una richiesta esegue la transizione. L'approvazione del revisore sposta il caso, l'esecuzione o la sessione nello stato richiesto; il richiedente non deve ripetere manualmente il cambio di stato.\n- Le revisioni in sospeso esistenti vengono conservate silenziosamente quando la funzionalità a livello di sistema è DISATTIVATA e riappaiono quando viene riattivata.\n- Il revisore viene selezionato quando un tester fa clic su Richiedi revisione dalla pagina dei dettagli dell'entità.\n\nSe la funzionalità a livello di sistema è disabilitata, questo interruttore è bloccato. Riattivarlo dalla scheda Flusso di lavoro di revisione sopra per attivarlo.",
       "projects": "## Progetti\nIndica i progetti che possono utilizzare questo flusso di lavoro."
     },
     "testResult": {
@@ -6392,7 +7108,15 @@
       "issueCount": "## Numero di problemi\nNumero totale di problemi monitorati.",
       "milestoneCount": "## Conteggio traguardi\nNumero totale di traguardi.",
       "milestoneCompletionRate": "## Tasso di completamento delle pietre miliari\nPercentuale di pietre miliari completate.",
-      "averageMilestoneDuration": "## Durata media delle pietre miliari\nDurata media delle pietre miliari in giorni."
+      "averageMilestoneDuration": "## Durata media delle pietre miliari\nDurata media delle pietre miliari in giorni.",
+      "llmCallCount": "## Chiamate LLM\nNumero di richieste LLM effettuate in questo gruppo, incluse le chiamate non riuscite.",
+      "promptTokens": "## Token del prompt\nToken inviati al modello come input in tutte le chiamate di questo gruppo.",
+      "completionTokens": "## Token di completamento\nToken generati dal modello in tutte le chiamate di questo gruppo.",
+      "totalTokens": "## Token totali\nToken del prompt e di completamento combinati in tutte le chiamate di questo gruppo.",
+      "totalCost": "## Costo totale\nCosto stimato del provider in USD per le chiamate di questo gruppo. I modelli ospitati localmente registrano un costo pari a zero.",
+      "avgLatency": "## Latenza media\nTempo medio impiegato dal provider per rispondere a una chiamata in questo gruppo.",
+      "successRate": "## Tasso di successo\nPercentuale di chiamate in questo gruppo completate senza errori.",
+      "errorCount": "## Chiamate non riuscite\nNumero di chiamate in questo gruppo terminate con un errore."
     },
     "reportDimensions": {
       "user": "## Dimensione utente\nRaggruppa i risultati in base all'utente che ha eseguito i test o a cui sono assegnati gli elementi.",
@@ -6415,12 +7139,17 @@
       "issueStatus": "## Dimensione Stato Problema\nRaggruppa i risultati in base allo stato attuale dei problemi (ad esempio, Aperto, In corso, Risolto, Chiuso).",
       "priority": "## Dimensione priorità\nRaggruppa i risultati in base al livello di priorità del problema (ad esempio, Alta, Media, Bassa).",
       "source": "## Dimensione sorgente\nRaggruppa i risultati in base alla sorgente di esecuzione del test (ad esempio, Manuale, JUnit, API).",
-      "date": "## Dimensione data\nRaggruppa i risultati per data per analisi e tendenze basate sul tempo."
+      "date": "## Dimensione data\nRaggruppa i risultati per data per analisi e tendenze basate sul tempo.",
+      "feature": "## Dimensione Funzionalità\nRaggruppa l'utilizzo LLM in base alla funzionalità dell'applicazione che ha effettuato la chiamata (ad es. Generazione di casi di test).",
+      "model": "## Dimensione Modello\nRaggruppa l'utilizzo LLM in base al modello che ha gestito la chiamata.",
+      "integration": "## Dimensione Integrazione\nRaggruppa l'utilizzo LLM in base all'integrazione LLM configurata che ha gestito la chiamata.",
+      "outcome": "## Dimensione Risultato\nDivide l'utilizzo LLM in chiamate riuscite e non riuscite."
     },
     "reportBuilder": {
       "dimensions": "## Dimensioni\nSeleziona le dimensioni che desideri analizzare nel tuo report. Le dimensioni sono attributi che categorizzano i dati, come Data, Utente, Stato, ecc. Puoi trascinarle per riordinarle.",
       "metrics": "## Metriche\nSeleziona le metriche che desideri misurare nel tuo report. Le metriche sono misurazioni quantitative derivate dai tuoi dati, come il conteggio dei risultati dei test, il tasso di superamento, il tempo medio trascorso, ecc. Puoi trascinarle per riordinarle.",
-      "dateRange": "## Intervallo di date\nFiltra i dati del report in base a un periodo di tempo specifico. Puoi selezionare intervalli predefiniti come \"Ultimi 7 giorni\" o \"Mese precedente\", oppure definire un intervallo di date personalizzato. Questo filtro si applica al campo data pertinente per ciascun tipo di report (ad esempio, data di esecuzione per i risultati dei test, data di creazione per i casi di test)."
+      "dateRange": "## Intervallo di date\nFiltra i dati del report in base a un periodo di tempo specifico. Puoi selezionare intervalli predefiniti come \"Ultimi 7 giorni\" o \"Mese precedente\", oppure definire un intervallo di date personalizzato. Questo filtro si applica al campo data pertinente per ciascun tipo di report (ad esempio, data di esecuzione per i risultati dei test, data di creazione per i casi di test).",
+      "dimensionFilters": "## Filtri\nRestringi il report a valori specifici di ciascuna dimensione selezionata. Lascia vuoto un filtro per includere tutti i valori di quella dimensione. Le dimensioni di data vengono invece filtrate con il selettore di intervallo di date."
     },
     "codeRepository": {
       "name": "## Nome del repository\nUn nome visualizzato descrittivo per questa connessione al repository.\n\n- Utilizzato per identificarlo nelle impostazioni del contesto del codice del progetto.\n- Non deve necessariamente corrispondere al nome del repository sul provider.",
@@ -6453,7 +7182,7 @@
       "systemPrompt": "## Richiesta di sistema\nIstruzioni inviate al modello AI prima di qualsiasi input dell'utente. Definisce il ruolo del modello, il formato di output e i vincoli.\n\n- Supporta segnaposto con doppie parentesi graffe (ad es. FRAMEWORK, LANGUAGE, CASE_NAME) che vengono sostituiti in fase di esecuzione.\n- Le modifiche qui apportate influiscono su ogni progetto che utilizza questa configurazione.",
       "userPrompt": "## Richiesta utente\nIl messaggio inviato all'IA per conto dell'utente. Lasciare vuoto se la funzionalità costruisce il messaggio utente interamente tramite codice.\n\n- Supporta segnaposto con doppie parentesi graffe (ad es. ISSUE_TITLE, CASE_NAME, CODE_CONTEXT) che vengono sostituiti in fase di esecuzione.\n- I segnaposto disponibili per ciascuna funzionalità sono elencati nella sezione Variabili qui sotto.",
       "temperature": "## Temperatura\nControlla la casualità dell'output dell'IA. Intervallo: 0–2.\n\n- **0,0–0,3** — Altamente deterministico, ideale per output strutturati (JSON, codice).\n- **0,4–0,7** — Bilanciato, adatto per la generazione di casi di test.\n- **0,8–2,0** — Più creativo e vario, adatto per testi aperti.",
-      "maxOutputTokens": "## Numero massimo di token di output\nIl numero massimo di token che il modello genererà in una singola risposta.\n\n- Valori più alti consentono risposte più lunghe ma aumentano i costi e la latenza.\n- Intervalli tipici: 2048 per testo breve, 4096 per la generazione di codice, 6000+ per output multi-caso."
+      "maxOutputTokens": "## Numero massimo di token di output\nIl numero massimo di token che il modello genererà in una singola risposta.\n\n- Valori più alti consentono risposte più lunghe ma aumentano i costi e la latenza.\n- Intervalli tipici: 2048 per testo breve, 4096 per la generazione di codice, 6000+ per output multi-caso.\n- Si applica a Generazione codice di esportazione, Suggerimenti tag IA, Derivazione passaggi IA e Report candidati per l'automazione.\n- Generazione di casi di test, Analisi Markdown dei casi di test, Assistente di scrittura dell'editor e Selezione intelligente dei casi di test utilizzano invece il _Numero massimo di token predefinito_ del modello IA."
     },
     "menu": {
       "startTour": "Visita guidata di benvenuto",
@@ -6708,7 +7437,9 @@
           "content": "Da qui è possibile gestire le integrazioni a livello di progetto, le configurazioni dei modelli di intelligenza artificiale e i link condivisi."
         }
       }
-    }
+    },
+    "projectRunsFilters": "## Filtraggio delle esecuzioni test\n\nAttiva o disattiva un chip per restringere l'elenco. I chip si applicano sia alla scheda Attive che a quella Completate e vengono memorizzati su questo dispositivo per questo progetto.\n\n- **Manuale** / **Automatizzato** — limita l'elenco a quel tipo di esecuzione. Attivando entrambi (o disattivandoli entrambi) vengono mostrate tutte le esecuzioni.\n- **Le mie esecuzioni test** — solo le esecuzioni a cui partecipi: hai creato l'esecuzione, ti è stato assegnato un caso di prova al suo interno, oppure hai registrato un risultato di test al suo interno.",
+    "projectSessionsFilters": "## Filtraggio delle sessioni\n\nAttiva un filtro per restringere l'elenco. I filtri si applicano sia alla scheda Attive che a quella Completate e vengono memorizzati su questo dispositivo per questo progetto.\n\n- **Le mie sessioni** — solo le sessioni a cui partecipi: quelle che hai creato o che ti sono state assegnate."
   },
   "reports": {
     "ui": {
@@ -6816,6 +7547,10 @@
         "projectHealth": {
           "label": "Progetto Salute",
           "description": "Avanzamento del progetto, traguardi e stato di completamento"
+        },
+        "milestoneReadiness": {
+          "label": "Prontezza del traguardo",
+          "description": "Prontezza del rilascio per traguardo: percentuale di problemi nell'ambito completamente superati e i conteggi per stato"
         },
         "sessionAnalysis": {
           "label": "Analisi della sessione",
@@ -6955,7 +7690,7 @@
         "heuristicBadge": "Euristico",
         "heuristicBadgeTooltip": "Per questo progetto non è configurata alcuna integrazione LLM, pertanto la classifica è stata creata direttamente in base alla metrica della strategia di selezione. Configura un LLM (Amministrazione → Modelli AI) per un ragionamento più ricco che tenga conto dei campi personalizzati, del contesto dei problemi collegati e del contenuto del caso.",
         "sourcedFromNewestN": "I primi {ranked} casi manuali idonei su {total} tramite {strategy}",
-        "sourcedFromAll": "Classifica tutti i {total} casi manuali idonei tramite {strategy}",
+        "sourcedFromAll": "{total, plural, one {# caso manuale idoneo classificato} =2 {entrambi i casi manuali idonei classificati} other {tutti i # casi manuali idonei classificati}} tramite {strategy}",
         "metric": {
           "executions": "{count} corse",
           "forecast": "{value} previsione",
@@ -7101,6 +7836,10 @@
           "label": "Monitoraggio dei problemi tra progetti",
           "description": "Creazione di problemi, risoluzione e analisi dell'impatto nei progetti"
         },
+        "llmUsage": {
+          "label": "Utilizzo LLM",
+          "description": "Utilizzo di token, costo e affidabilità delle funzionalità LLM tra i progetti"
+        },
         "automationTrends": {
           "label": "Tendenze dell'automazione interprogetto",
           "description": "Monitora i progressi dell'automazione settimana dopo settimana, in base alla priorità, per tutti i progetti."
@@ -7125,6 +7864,9 @@
       "folderDescendants": {
         "label": "Includi sottocartelle",
         "description": "Conta i risultati delle sottocartelle rispetto a ciascuna cartella principale."
+      },
+      "dimensionFilters": {
+        "allValues": "Tutti i valori"
       }
     },
     "errors": {
@@ -7169,9 +7911,20 @@
       "issueType": "Tipo di problema",
       "issueTracker": "Strumento di tracciamento dei problemi",
       "issueStatus": "Stato del problema",
-      "tag": "Etichetta"
+      "tag": "Etichetta",
+      "feature": "Funzionalità",
+      "model": "Modello",
+      "integration": "Integrazione",
+      "outcome": "Risultato"
     },
     "metrics": {
+      "percentReady": "Pronto (%)",
+      "passed": "Superato",
+      "failed": "Fallito",
+      "inProgress": "In corso",
+      "notRun": "Non eseguito",
+      "uncovered": "Non coperto",
+      "totalIssues": "Totale problemi",
       "testResults": "Risultati del test",
       "testResultCount": "Conteggio dei risultati dei test",
       "passRate": "Tasso di superamento (%)",
@@ -7206,7 +7959,15 @@
       "activeMilestones": "Traguardi attivi",
       "milestoneCompletion": "Completamento della tappa (%)",
       "averageDuration": "Durata media",
-      "totalDuration": "Durata totale"
+      "totalDuration": "Durata totale",
+      "llmCallCount": "Chiamate LLM",
+      "promptTokens": "Token del prompt",
+      "completionTokens": "Token di completamento",
+      "totalTokens": "Token totali",
+      "totalCost": "Costo totale",
+      "avgLatency": "Latenza media",
+      "successRate": "Tasso di successo (%)",
+      "errorCount": "Chiamate non riuscite"
     },
     "drillDown": {
       "title": "Registri dettagliati",
@@ -7486,15 +8247,19 @@
     },
     "stepDuplicates": {
       "pageTitle": "Sequenza dei passaggi Duplicati",
-      "pageDescription": "Esamina le sequenze di passaggi corrispondenti nei vari casi di test. Converti le corrispondenze in gruppi di passaggi condivisi o scarta i falsi positivi.",
       "noResultsFound": "Non sono state trovate sequenze di passaggi duplicate.",
       "noResultsDescription": "Esegui una scansione per rilevare sequenze di passaggi ripetute nei tuoi casi di test.",
       "filterPlaceholder": "Filtra per nome del caso...",
+      "minCasesLabel": "Casi min",
+      "minStepsLabel": "Passaggi min",
+      "minThresholdOption": "{count, number}+",
+      "noMatchesForFilters": "Nessuna corrispondenza soddisfa i filtri attuali. Riduci i valori minimi per ampliare i risultati.",
       "selected": "{count, plural, one {# selezionato} other {# selezionato}}",
       "bulkDismiss": "Ignora ({count, number})",
       "bulkDismissSuccess": "{count, plural, one {# partita annullata} other {# partite annullate}}",
       "bulkError": "Alcune operazioni non sono andate a buon fine. Riprova.",
       "tableHint": "Fai clic su una riga per visualizzare in anteprima i passaggi corrispondenti. Seleziona le righe con le caselle di controllo per eseguire azioni in blocco.",
+      "matchedStepsCount": "{count, plural, one {# passaggio corrispondente} other {# passaggi corrispondenti}}",
       "columns": {
         "matchedSteps": "Passi abbinati",
         "casesCount": "Casi",
@@ -7526,6 +8291,7 @@
         "viewSharedStep": "Visualizza il gruppo di passi condivisi",
         "skippedWarning": "{count, plural, one {# caso saltato} other {# casi saltati}} (obsoleto o già convertito).",
         "noCasesSelected": "Seleziona almeno un caso da convertire.",
+        "stepsUnavailable": "I passaggi corrispondenti non sono più presenti in questo caso di test. Ignora questa corrispondenza ed esegui una nuova scansione.",
         "selectAll": "Seleziona tutto"
       }
     },
@@ -7640,7 +8406,6 @@
       "apply": "Applica filtri",
       "common": "Filtri comuni",
       "entitySpecific": "Filtri specifici per tipo",
-      "searchPlaceholder": "Opzioni del filtro di ricerca...",
       "states": "Stati del flusso di lavoro",
       "createdAt": "Data di creazione",
       "updatedAt": "Data di aggiornamento",
@@ -7658,9 +8423,7 @@
       "elapsedRange": "Intervallo di tempo trascorso",
       "minValue": "Minimo",
       "maxValue": "Massimo",
-      "hasExternalId": "Ha un ID esterno",
       "dueDateRange": "Intervallo di date di scadenza",
-      "hasParent": "Ha raggiunto il traguardo genitoriale",
       "milestoneType": "Tipo di traguardo",
       "minutes": "minuti",
       "hours": "ore",
@@ -7669,6 +8432,8 @@
       "includeDeleted": "Includi elementi eliminati",
       "filterActive": "Filtro attivo:",
       "applyFilter": "Applica filtro",
+      "invalidDate": "Data non valida",
+      "stepsCount": "{count, plural, one {# passo} other {# passi}}",
       "validation": {
         "firstValueMustBeLessThanSecond": "Il primo valore deve essere minore del secondo valore",
         "firstDateMustBeBeforeSecond": "Il primo appuntamento deve essere precedente al secondo appuntamento."
@@ -7718,6 +8483,7 @@
   },
   "comments": {
     "title": "Commenti",
+    "titleWithCount": "{count, plural, =0 {Nessun commento} =1 {# commento} other {# commenti}}",
     "placeholder": "Scrivi un commento... (usa @ per menzionare gli utenti)",
     "editPlaceholder": "Modifica il tuo commento...",
     "postComment": "Pubblica commento",
@@ -7901,7 +8667,7 @@
     "selectSourceConfirm": "Cambia sorgente",
     "datasetRowSelectAria": "Seleziona riga",
     "datasetSelectAllPageTooltip": "Fai clic per selezionare tutte le righe di questa pagina. Fai clic tenendo premuto Maiusc per selezionare tutte le righe di tutte le pagine.",
-    "datasetSelectAllAcrossPagesTooltip": "Seleziona tutto {count, plural, =1 {# riga} other {# righe}} su tutte le pagine",
+    "datasetSelectAllAcrossPagesTooltip": "Seleziona {count, plural, =1 {# riga} =2 {entrambe le righe} other {tutte le # righe}} su tutte le pagine",
     "datasetDeselectAllAcrossPagesTooltip": "Deseleziona tutte le righe in tutte le pagine",
     "datasetLabelColumn": "Etichetta",
     "datasetAddRow": "Aggiungi riga",
@@ -8089,7 +8855,7 @@
     "iterationBulkConfirmDescription": "Ogni iterazione selezionata riceverà un nuovo risultato con stato \"{statusName}\".",
     "iterationBulkConfirm": "Contrassegna {action}",
     "iterationBulkConfirmReplace": "Sostituisci con {action}",
-    "iterationBulkOverwriteWarning": "{count, plural, =1 {Il numero di iterazioni selezionate ha già} other {Il numero di iterazioni selezionate ha già}} un risultato. Verrà registrato un nuovo risultato e l'ultimo sostituirà quello corrente.",
+    "iterationBulkOverwriteWarning": "{count, plural, =1 {# delle iterazioni selezionate ha già} other {# delle iterazioni selezionate hanno già}} un risultato. Verrà registrato un nuovo risultato e l'ultimo sostituirà quello corrente.",
     "iterationBulkReasonLabel": "Motivo (facoltativo)",
     "iterationBulkReasonHelp": "Registrato per ogni risultato.",
     "iterationBulkSuccess": "{count, plural, =1 {# iterazione} other {# iterazioni}} contrassegnato {action}",
@@ -8145,5 +8911,35 @@
     "mappingSkipColumn": "Salta colonna",
     "mappingRequiredAlert": "I parametri richiesti non sono mappati: {names}.",
     "mappingRequiredUnmapped": "Il parametro obbligatorio \"@{name}\" non ha una colonna mappata."
+  },
+  "linkPreview": {
+    "siteName": "TestPlanIt",
+    "genericTitle": "{label} · TestPlanIt",
+    "namedTitle": "{name} · {project}",
+    "signInCta": "Accedi a TestPlanIt",
+    "testCaseLabel": "Caso di prova",
+    "testRunLabel": "Esecuzione del test",
+    "sessionLabel": "Sessione esplorativa",
+    "projectLabel": "Progetto",
+    "milestoneLabel": "Pietra miliare",
+    "appLabel": "Gestione dei test",
+    "testCaseGeneric": "Un caso di prova in TestPlanIt. Accedi per visualizzarne i passaggi, i risultati e la cronologia.",
+    "testRunGeneric": "Un'esecuzione del test in TestPlanIt. Accedi per visualizzarne l'avanzamento e i risultati.",
+    "sessionGeneric": "Una sessione di test esplorativo in TestPlanIt. Accedi per visualizzarne le note e i risultati.",
+    "projectGeneric": "Un progetto in TestPlanIt. Accedi per visualizzarne i casi di prova, le esecuzioni e i report.",
+    "milestoneGeneric": "Una pietra miliare in TestPlanIt. Accedi per visualizzarne l'ambito e l'avanzamento.",
+    "appGeneric": "Gestione dei test moderna — pianifica, esegui e monitora i tuoi test in un unico posto.",
+    "shareReportLabel": "Report condiviso",
+    "shareDashboardLabel": "Dashboard condivisa",
+    "shareSearchLabel": "Ricerca condivisa",
+    "shareViewLabel": "Vista condivisa",
+    "shareGeneric": "Condiviso con te da TestPlanIt.",
+    "shareUnavailable": "Questo link condiviso non è più disponibile.",
+    "shareInProject": "Condiviso da {project}",
+    "signInTitle": "Accedi a TestPlanIt",
+    "signInDescription": "Accedi al tuo spazio di lavoro TestPlanIt per pianificare, eseguire e monitorare i tuoi test.",
+    "inProject": "{label} in {project}",
+    "testRunSummary": "{count, plural, =0 {Nessun caso di prova} =1 {{count} caso di prova} other {{count} casi di prova}} in {project}",
+    "projectSummary": "{cases, plural, =1 {{cases} caso di prova} other {{cases} casi di prova}} · {runs, plural, =1 {{runs} esecuzione del test} other {{runs} esecuzioni del test}}"
   }
 }

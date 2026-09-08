@@ -1,14 +1,15 @@
 import { EmailCell } from "@/components/EmailDisplay";
 import { UserNameCell } from "@/components/tables/UserNameCell";
-import { UserProjectsDisplay } from "@/components/tables/UserProjectsDisplay";
-import { User } from "@prisma/client";
+import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
+import type { AccessibleProject } from "~/app/actions/getUserAccessibleProjects";
+import type { User } from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
 
 export interface ExtendedUser extends User {
-  projects: {
-    projectId: number;
-  }[];
+  // Effective accessible projects, batched by the page and rendered by the
+  // Projects column. `undefined` while the batch is still loading.
+  accessibleProjects?: AccessibleProject[];
 }
 
 // Remove the hooks and only accept the translation function
@@ -45,10 +46,13 @@ export const useUserColumns = (tCommon: any): ColumnDef<ExtendedUser>[] =>
         header: tCommon("fields.projects"),
         enableSorting: false,
         enableResizing: true,
-        size: 75,
+        size: 130,
         cell: ({ row }) => (
           <div className="bg-primary-foreground text-center">
-            <UserProjectsDisplay userId={row.original.id} />
+            <ProjectListDisplay
+              projects={row.original.accessibleProjects ?? []}
+              isLoading={row.original.accessibleProjects === undefined}
+            />
           </div>
         ),
       },

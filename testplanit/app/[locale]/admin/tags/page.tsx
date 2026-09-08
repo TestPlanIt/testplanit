@@ -1,58 +1,35 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
-import {
-  PaginationProvider,
-  usePagination,
-} from "~/lib/contexts/PaginationContext";
-import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
+import { useLocale, useTranslations } from "next-intl";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "~/lib/navigation";
 
 import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
-import { PaginationComponent } from "@/components/tables/Pagination";
-import { PaginationInfo } from "@/components/tables/PaginationControls";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { SectionHeader } from "@/components/ui/typography";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CirclePlus } from "lucide-react";
-import { useCountTags, useFindManyTags } from "~/lib/hooks";
 import { AddTag } from "./AddTag";
 import { ExtendedTags, useColumns } from "./columns";
 import { DeleteTag } from "./DeleteTag";
 import { EditTag } from "./EditTag";
 
+const PAGE_SIZE = 50;
+
 export default function TagListPage() {
-  return (
-    <PaginationProvider>
-      <TagList />
-    </PaginationProvider>
-  );
+  return <TagList />;
 }
 
 function TagList() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const {
-    currentPage,
-    setCurrentPage,
-    pageSize,
-    setPageSize,
-    totalItems,
-    setTotalItems,
-    startIndex,
-    endIndex,
-    totalPages,
-  } = usePagination();
   const [sortConfig, setSortConfig] = useState<{
     column: string;
     direction: "asc" | "desc";
@@ -65,13 +42,9 @@ function TagList() {
   const [addTagOpen, setAddTagOpen] = useState(false);
   const [editingTag, setEditingTag] = useState<ExtendedTags | null>(null);
   const [deletingTag, setDeletingTag] = useState<ExtendedTags | null>(null);
+  const locale = useLocale();
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
-
-  // Calculate skip and take based on pageSize
-  const effectivePageSize =
-    typeof pageSize === "number" ? pageSize : totalItems;
-  const skip = (currentPage - 1) * effectivePageSize;
 
   const nameFilter = useMemo(() => {
     if (!debouncedSearchString.trim()) {
@@ -109,29 +82,40 @@ function TagList() {
     };
   }, [sortConfig]);
 
-  const shouldPaginate = typeof effectivePageSize === "number";
-  const paginationArgs = {
-    skip: shouldPaginate ? skip : undefined,
-    take: shouldPaginate ? effectivePageSize : undefined,
-  };
-
   // Fetch ONLY basic tag data - no includes at all
-  // ZenStack's access control on includes causes bind variable explosion (even with limits)
-  // Projects and counts are fetched separately via direct Prisma queries
-  const { data: tags, isLoading: isLoadingTags } = useFindManyTags(
-    tagsWhere
-      ? {
-          where: tagsWhere,
-          orderBy,
-          ...paginationArgs,
-        }
-      : undefined,
-    {
-      enabled: !!tagsWhere && status === "authenticated",
-    }
+  // ZenStack's access control on includes causes bind variable explosion (even
+  // with limits). Projects and counts are fetched separately (see below).
+  // Infinite scroll accumulates pages of PAGE_SIZE; the virtualized table
+  // renders only the visible window.
+  const infiniteBaseArgs = useMemo(
+    () => ({
+      where: tagsWhere ?? undefined,
+      orderBy,
+      take: PAGE_SIZE,
+    }),
+    [tagsWhere, orderBy]
   );
 
-  const { data: tagsCount } = useCountTags(
+  const {
+    data: infinitePages,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: isLoadingTags,
+  } = useClientQueries(schema).tags.useInfiniteFindMany(infiniteBaseArgs, {
+    getNextPageParam: (lastPage, allPages) => {
+      if (!lastPage || lastPage.length < PAGE_SIZE) return undefined;
+      return { ...infiniteBaseArgs, skip: allPages.flat().length };
+    },
+    enabled: !!tagsWhere && status === "authenticated",
+  });
+
+  const tags = useMemo(
+    () => infinitePages?.pages.flat() ?? [],
+    [infinitePages]
+  );
+
+  const { data: tagsCount } = useClientQueries(schema).tags.useCount(
     tagsWhere
       ? {
           where: tagsWhere,
@@ -166,16 +150,24 @@ function TagList() {
   >({});
 
   const [isLoadingCounts, setIsLoadingCounts] = useState(false);
+  // Counts/projects are cached per tag id for the life of the page, so once
+  // fetched they never need re-requesting as the infinite list appends new ids.
+  const fetchedTagIdsRef = useRef<Set<number>>(new Set());
 
   useEffect(() => {
     if (!tags || tags.length === 0) {
       setTagCounts({});
       setTagProjects({});
       setIsLoadingCounts(false);
+      fetchedTagIdsRef.current = new Set();
       return;
     }
 
-    const tagIds = tags.map((t) => t.id);
+    const newIds = tags
+      .map((t) => t.id)
+      .filter((id) => !fetchedTagIdsRef.current.has(id));
+    if (newIds.length === 0) return;
+    newIds.forEach((id) => fetchedTagIdsRef.current.add(id));
 
     const fetchCountsAndProjects = async () => {
       setIsLoadingCounts(true);
@@ -185,23 +177,23 @@ function TagList() {
           fetch("/api/tags/counts", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ tagIds }),
+            body: JSON.stringify({ tagIds: newIds }),
           }),
           fetch("/api/tags/projects", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ tagIds }),
+            body: JSON.stringify({ tagIds: newIds }),
           }),
         ]);
 
         if (countsResponse.ok) {
           const data = await countsResponse.json();
-          setTagCounts(data.counts || {});
+          setTagCounts((prev) => ({ ...prev, ...(data.counts || {}) }));
         }
 
         if (projectsResponse.ok) {
           const data = await projectsResponse.json();
-          setTagProjects(data.projects || {});
+          setTagProjects((prev) => ({ ...prev, ...(data.projects || {}) }));
         }
       } catch (error) {
         console.error("Failed to fetch tag data:", error);
@@ -237,22 +229,6 @@ function TagList() {
   }, [tags, tagCounts, tagProjects]);
 
   useEffect(() => {
-    setTotalItems(tagsCount ?? 0);
-  }, [tagsCount, setTotalItems]);
-
-  const pageSizeOptions = usePageSizeOptions(totalItems);
-
-  // Reset to first page when search changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchString, setCurrentPage]);
-
-  // Reset to first page when page size changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [pageSize, setCurrentPage]);
-
-  useEffect(() => {
     if (status !== "loading" && !session) {
       router.push("/");
     }
@@ -267,6 +243,10 @@ function TagList() {
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >({});
+  // Hide-column requests from the table's header menu are routed through the
+  // Columns control (the visibility owner) so persistence and its checkboxes
+  // stay in sync.
+  const hideColumnRef = useRef<((columnId: string) => void) | null>(null);
 
   if (status === "loading" || !tagsWhere) return null;
 
@@ -282,38 +262,49 @@ function TagList() {
         ? "desc"
         : "asc";
     setSortConfig({ column, direction });
-    setCurrentPage(1);
+  };
+
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig({ column: "name", direction: "asc" });
+    } else {
+      setSortConfig({ column, direction });
+    }
   };
 
   return (
     <main>
       <Card>
         <CardHeader className="w-full">
-          <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
-            <div>
+          <div className="flex items-center justify-between gap-2">
+            <SectionHeader className="flex items-center gap-2">
               <CardTitle data-testid="tags-page-title">
                 {tGlobal("common.fields.tags")}
               </CardTitle>
-            </div>
-            <div>
-              <Button onClick={() => setAddTagOpen(true)}>
-                <CirclePlus className="w-4" />
-                <span className="hidden md:inline">
-                  {tGlobal("tags.add.button")}
-                </span>
-              </Button>
-              {addTagOpen && (
-                <AddTag
-                  open={addTagOpen}
-                  onClose={() => setAddTagOpen(false)}
-                />
-              )}
-            </div>
+              <HelpPopover helpKey="tags" />
+            </SectionHeader>
+            <Button
+              onClick={() => setAddTagOpen(true)}
+              aria-label={tGlobal("tags.add.button")}
+              className="group gap-0 transition-all duration-200 hover:gap-2"
+            >
+              <CirclePlus className="h-4 w-4" />
+              <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+                {tGlobal("tags.add.button")}
+              </span>
+            </Button>
           </div>
-          <CardDescription>{tGlobal("tags.description")}</CardDescription>
+          {addTagOpen && (
+            <AddTag open={addTagOpen} onClose={() => setAddTagOpen(false)} />
+          )}
         </CardHeader>
         <CardContent>
-          <div className="flex flex-row items-start">
+          <div className="flex flex-row items-start justify-between gap-4">
             <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
               <div className="text-muted-foreground w-full text-nowrap">
                 <Filter
@@ -325,31 +316,16 @@ function TagList() {
               </div>
             </div>
 
-            <div className="flex flex-col w-full sm:w-2/3 items-end">
-              {totalItems > 0 && (
-                <>
-                  <div className="justify-end">
-                    <PaginationInfo
-                      key="tag-pagination-info"
-                      startIndex={startIndex}
-                      endIndex={endIndex}
-                      totalRows={totalItems}
-                      searchString={searchString}
-                      pageSize={typeof pageSize === "number" ? pageSize : "All"}
-                      pageSizeOptions={pageSizeOptions}
-                      handlePageSizeChange={(size) => setPageSize(size)}
-                    />
-                  </div>
-                  <div className="justify-end -mx-4">
-                    <PaginationComponent
-                      currentPage={currentPage}
-                      totalPages={totalPages}
-                      onPageChange={setCurrentPage}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
+            {mappedTags.length > 0 && (
+              <p className="text-sm text-muted-foreground shrink-0">
+                {tGlobal("admin.auditLogs.showing", {
+                  loaded: mappedTags.length.toLocaleString(locale),
+                  total: (tagsCount ?? mappedTags.length).toLocaleString(
+                    locale
+                  ),
+                })}
+              </p>
+            )}
           </div>
           <div className="mt-4 flex justify-between">
             <ColumnSelection
@@ -357,18 +333,27 @@ function TagList() {
               storageKey="admin-tags"
               columns={columns}
               onVisibilityChange={setColumnVisibility}
+              hideColumnRef={hideColumnRef}
             />
           </div>
-          <div className="mt-4 flex justify-between">
+          <div className="mt-4 w-full">
             <DataTable
-              columns={columns}
+              virtualized
+              fillViewport
+              columns={columns as any}
               data={mappedTags}
               onSortChange={handleSortChange}
+              onSortColumn={handleSortColumn}
+              onHideColumn={(columnId) => hideColumnRef.current?.(columnId)}
               sortConfig={sortConfig}
               columnVisibility={columnVisibility}
               onColumnVisibilityChange={setColumnVisibility}
-              isLoading={isLoadingTags || !tagsWhere}
-              pageSize={effectivePageSize}
+              isLoading={isLoadingTags || isFetchingNextPage}
+              hasMore={!!hasNextPage}
+              onLoadMore={fetchNextPage}
+              resetKey={`${debouncedSearchString}|${sortConfig.column}|${sortConfig.direction}`}
+              testIdPrefix="admin-tags-table"
+              rowTestIdPrefix="admin-tag-row"
             />
           </div>
         </CardContent>

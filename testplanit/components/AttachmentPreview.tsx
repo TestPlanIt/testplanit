@@ -1,6 +1,7 @@
 import { LinkFavicon } from "@/components/LinkFavicon";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { Attachments } from "@prisma/client";
+import { OfficeDocumentPreview } from "@/components/OfficeDocumentPreview";
+import type { Attachments } from "~/zenstack/models";
 import { ExternalLink, File } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
@@ -8,6 +9,7 @@ import type { Components } from "react-markdown";
 import Markdown from "react-markdown";
 import { Link } from "~/lib/navigation";
 import { highlightCode, mapLanguageToPrism } from "~/lib/utils/codeHighlight";
+import { getOfficeKind } from "~/lib/utils/officeDocuments";
 import { getStorageUrlClient } from "~/utils/storageUrl";
 import "prismjs/themes/prism-tomorrow.css";
 
@@ -20,7 +22,9 @@ function codeToText(children: unknown): string {
 
 interface AttachmentPreviewProps {
   attachment: Attachments;
-  size?: "small" | "medium" | "large";
+  /** "full" scales the preview to fill its parent, which must have a definite
+   *  height (used by the carousel's expanded mode). */
+  size?: "small" | "medium" | "large" | "full";
 }
 
 export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
@@ -32,6 +36,7 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
   // Convert MinIO URLs to proxy URLs for trial instances
   const fileURL = getStorageUrlClient(attachment.url) || attachment.url;
   const fileType = attachment.mimeType;
+  const officeKind = getOfficeKind(fileType, attachment.name);
 
   useEffect(() => {
     if (fileType.startsWith("image/")) {
@@ -77,11 +82,15 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
     );
   }
 
+  const isFull = size === "full";
+
   const getSizeClasses = (baseSize: number) => {
     const sizeMap = {
       small: baseSize,
       medium: baseSize * 2,
       large: baseSize * 3,
+      // Types without dedicated full-size handling fall back to "large".
+      full: baseSize * 3,
     };
 
     return {
@@ -91,7 +100,6 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
   };
 
   if (fileType.startsWith("image/")) {
-    const { height, width } = getSizeClasses(100);
     // SVGs bypass next/image: the built-in optimizer refuses SVG unless
     // `images.dangerouslyAllowSVG` is enabled, and we don't want to opt into
     // that (SVG can carry inline <script>). Browsers don't execute scripts in
@@ -99,6 +107,29 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
     const isSvg =
       fileType === "image/svg+xml" ||
       attachment.name.toLowerCase().endsWith(".svg");
+    if (isFull) {
+      return (
+        <div className="relative w-full h-full">
+          {isSvg ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={fileURL}
+              alt={attachment.name}
+              className="absolute inset-0 h-full w-full object-contain"
+            />
+          ) : (
+            <Image
+              src={fileURL}
+              alt={attachment.name}
+              fill
+              sizes="100vw"
+              className="object-contain"
+            />
+          )}
+        </div>
+      );
+    }
+    const { height, width } = getSizeClasses(100);
     return (
       <div
         className="flex justify-center items-center max-h-[350px]"
@@ -125,12 +156,28 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
       </div>
     );
   } else if (fileType === "application/pdf") {
-    const { height: _height } = getSizeClasses(32);
+    // A bare iframe defaults to 150px tall, and `h-full` collapsed here because
+    // the flex ancestors have no definite height — so the PDF rendered short
+    // with empty space below it. Give large previews (details page + carousel)
+    // a tall height that their containers clamp via overflow-hidden: the details
+    // page caps at max-h-96, the carousel at max-h-[80vh]. Compact list badges
+    // (small/medium) stay proportionally sized.
+    const pdfHeight = isFull
+      ? "h-full"
+      : size === "large"
+        ? "h-[70vh] min-h-[384px]"
+        : size === "medium"
+          ? "h-48"
+          : "h-24";
     return (
       <iframe
         src={fileURL}
-        className={`w-full h-full rounded-lg`}
+        className={`w-full ${pdfHeight} rounded-lg`}
         title={attachment.name}
+        // Keep the PDF viewer out of the tab order so it doesn't grab focus when
+        // the carousel dialog opens — focus inside the iframe swallows Escape and
+        // arrow keys. It's still clickable to interact with the document.
+        tabIndex={-1}
       />
     );
   } else if (fileType.startsWith("text/uri")) {
@@ -138,7 +185,7 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
     // we don't inherit `text-primary` / `bg-accent` from wrappers like the
     // compact badge in AttachmentsListDisplay (which produced a low-contrast
     // violet pill across themes).
-    const isLarge = size === "large";
+    const isLarge = size === "large" || isFull;
     return (
       <Link
         href={fileURL}
@@ -196,13 +243,13 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
         ),
         ul: ({ node, ...props }) => (
           <ul
-            className="list-disc pl-5 mb-3 text-foreground marker:text-foreground"
+            className="list-disc ps-5 mb-3 text-foreground marker:text-foreground"
             {...props}
           />
         ),
         ol: ({ node, ...props }) => (
           <ol
-            className="list-decimal pl-5 mb-3 text-foreground marker:text-foreground"
+            className="list-decimal ps-5 mb-3 text-foreground marker:text-foreground"
             {...props}
           />
         ),
@@ -251,7 +298,7 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
         pre: ({ children }: any) => <>{children}</>,
         blockquote: ({ node, ...props }) => (
           <blockquote
-            className="border-l-4 border-border pl-4 italic my-3"
+            className="border-s-4 border-border ps-4 italic my-3"
             {...props}
           />
         ),
@@ -261,12 +308,12 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
         ),
         th: ({ node, ...props }) => (
           <th
-            className="border border-border bg-muted p-2 text-left font-semibold"
+            className="border border-border bg-muted p-2 text-start font-semibold"
             {...props}
           />
         ),
         td: ({ node, ...props }) => (
-          <td className="border border-border p-2 text-left" {...props} />
+          <td className="border border-border p-2 text-start" {...props} />
         ),
         strong: ({ node, ...props }) => (
           <strong className="font-semibold text-foreground" {...props} />
@@ -278,8 +325,10 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
 
       return (
         <div
-          className="w-fit border-2 border-primary/50 rounded-lg p-4 max-h-[650px] overflow-auto prose prose-sm dark:prose-invert bg-background"
-          style={{ maxWidth: `${width}px` }}
+          className={`border-2 border-primary/50 rounded-lg p-4 overflow-auto prose prose-sm dark:prose-invert bg-background ${
+            isFull ? "w-full h-full" : "w-fit max-h-[650px]"
+          }`}
+          style={isFull ? undefined : { maxWidth: `${width}px` }}
         >
           <Markdown components={markdownComponents}>{textContent}</Markdown>
         </div>
@@ -288,13 +337,24 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
 
     return (
       <pre
-        className="w-fit border-2 border-primary/50 rounded-lg p-2 max-h-[650px] overflow-auto"
-        style={{ maxWidth: `${width}px` }}
+        className={`border-2 border-primary/50 rounded-lg p-2 overflow-auto ${
+          isFull ? "w-full h-full" : "w-fit max-h-[650px]"
+        }`}
+        style={isFull ? undefined : { maxWidth: `${width}px` }}
       >
         {textContent || attachment.name}
       </pre>
     );
   } else if (fileType.startsWith("video/")) {
+    if (isFull) {
+      return (
+        <video
+          src={fileURL}
+          controls
+          className="w-full h-full object-contain rounded-lg"
+        />
+      );
+    }
     const { height } = getSizeClasses(32);
     return (
       <video
@@ -312,6 +372,16 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
         controls
         className="min-h-[50px] rounded-lg"
         style={{ width: `${width}px` }}
+      />
+    );
+  } else if (officeKind) {
+    return (
+      <OfficeDocumentPreview
+        fileURL={fileURL}
+        name={attachment.name}
+        kind={officeKind}
+        size={isFull ? "large" : size}
+        sizeBytes={attachment.size}
       />
     );
   } else {

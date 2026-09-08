@@ -6,8 +6,8 @@ vi.mock("~/lib/api-token-auth", () => ({
   authenticateApiToken: vi.fn(),
 }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     $queryRaw: vi.fn(),
   },
 }));
@@ -43,7 +43,7 @@ vi.mock("~/lib/auditContextWrappers", () => {
 });
 
 import { authenticateApiToken } from "~/lib/api-token-auth";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 
 import { GET } from "./route";
 
@@ -80,7 +80,7 @@ describe("GET /api/mcp/milestones-descendants — batched recursive CTE", () => 
       userId: "u1",
       scopes: [],
     });
-    (prisma.$queryRaw as any).mockResolvedValue([
+    (baseDb.$queryRaw as any).mockResolvedValue([
       { root_milestone_id: 1, descendant_count: 5 },
       { root_milestone_id: 2, descendant_count: 0 },
       // id 3 absent → defaults to 0 in the response
@@ -111,7 +111,7 @@ describe("GET /api/mcp/milestones-descendants — batched recursive CTE", () => 
     expect(response.status).toBe(401);
     const body = await response.json();
     expect(body.code).toBe("INVALID_TOKEN");
-    expect(prisma.$queryRaw).not.toHaveBeenCalled();
+    expect(baseDb.$queryRaw).not.toHaveBeenCalled();
   });
 
   it("empty milestoneIds returns {data:{}} without querying the database", async () => {
@@ -127,7 +127,7 @@ describe("GET /api/mcp/milestones-descendants — batched recursive CTE", () => 
     expect(response.status).toBe(200);
     const body = await response.json();
     expect(body.data).toEqual({});
-    expect(prisma.$queryRaw).not.toHaveBeenCalled();
+    expect(baseDb.$queryRaw).not.toHaveBeenCalled();
   });
 
   it("missing q query param returns {data:{}} without querying the database", async () => {
@@ -141,7 +141,7 @@ describe("GET /api/mcp/milestones-descendants — batched recursive CTE", () => 
     expect(response.status).toBe(200);
     const body = await response.json();
     expect(body.data).toEqual({});
-    expect(prisma.$queryRaw).not.toHaveBeenCalled();
+    expect(baseDb.$queryRaw).not.toHaveBeenCalled();
   });
 
   it("$queryRaw is called with a Prisma.sql tagged template containing WITH RECURSIVE / ANY / isDeleted=false / GROUP BY", async () => {
@@ -150,13 +150,13 @@ describe("GET /api/mcp/milestones-descendants — batched recursive CTE", () => 
       userId: "u1",
       scopes: [],
     });
-    (prisma.$queryRaw as any).mockResolvedValue([]);
+    (baseDb.$queryRaw as any).mockResolvedValue([]);
 
     await GET(createMockRequest(JSON.stringify({ milestoneIds: [10, 20] })));
-    expect(prisma.$queryRaw).toHaveBeenCalledTimes(1);
+    expect(baseDb.$queryRaw).toHaveBeenCalledTimes(1);
     // Tagged-template invocation form: first arg is the "strings" array
     // (TemplateStringsArray-like), subsequent args are the bound values.
-    const callArgs = (prisma.$queryRaw as any).mock.calls[0];
+    const callArgs = (baseDb.$queryRaw as any).mock.calls[0];
     const strings = callArgs[0] as unknown as ArrayLike<string>;
     const staticParts = Array.from(
       { length: strings.length },
@@ -179,7 +179,7 @@ describe("GET /api/mcp/milestones-descendants — batched recursive CTE", () => 
     });
     // Caller asks for ids [1,2,3] but ZenStack policies only let them read 1.
     findManyMock.mockResolvedValueOnce([{ id: 1 }]);
-    (prisma.$queryRaw as any).mockResolvedValue([
+    (baseDb.$queryRaw as any).mockResolvedValue([
       { root_milestone_id: 1, descendant_count: 4 },
     ]);
 
@@ -192,7 +192,7 @@ describe("GET /api/mcp/milestones-descendants — batched recursive CTE", () => 
     // those ids exist in another tenant.
     expect(body.data).toEqual({ "1": 4, "2": 0, "3": 0 });
     // The CTE was only invoked with the accessible subset.
-    const callArgs = (prisma.$queryRaw as any).mock.calls[0];
+    const callArgs = (baseDb.$queryRaw as any).mock.calls[0];
     expect(callArgs[1]).toEqual([1]);
   });
 
@@ -210,7 +210,7 @@ describe("GET /api/mcp/milestones-descendants — batched recursive CTE", () => 
     expect(response.status).toBe(200);
     const body = await response.json();
     expect(body.data).toEqual({ "1": 0, "2": 0, "3": 0 });
-    expect(prisma.$queryRaw).not.toHaveBeenCalled();
+    expect(baseDb.$queryRaw).not.toHaveBeenCalled();
   });
 
   it("rejects milestoneIds arrays exceeding the per-request cap with 400", async () => {
@@ -227,7 +227,7 @@ describe("GET /api/mcp/milestones-descendants — batched recursive CTE", () => 
     expect(response.status).toBe(400);
     const body = await response.json();
     expect(body.error).toContain("milestoneIds exceeds maximum");
-    expect(prisma.$queryRaw).not.toHaveBeenCalled();
+    expect(baseDb.$queryRaw).not.toHaveBeenCalled();
     expect(findManyMock).not.toHaveBeenCalled();
   });
 
@@ -241,7 +241,7 @@ describe("GET /api/mcp/milestones-descendants — batched recursive CTE", () => 
 
     const response = await GET(createMockRequest(huge));
     expect(response.status).toBe(400);
-    expect(prisma.$queryRaw).not.toHaveBeenCalled();
+    expect(baseDb.$queryRaw).not.toHaveBeenCalled();
     expect(findManyMock).not.toHaveBeenCalled();
   });
 
@@ -260,7 +260,7 @@ describe("GET /api/mcp/milestones-descendants — batched recursive CTE", () => 
       userId: "u1",
       scopes: [],
     });
-    (prisma.$queryRaw as any).mockResolvedValue([]);
+    (baseDb.$queryRaw as any).mockResolvedValue([]);
 
     const response = await GET(
       createMockRequest(
@@ -271,7 +271,7 @@ describe("GET /api/mcp/milestones-descendants — batched recursive CTE", () => 
     const body = await response.json();
     // Only 1 and 7 survive; 0, -5, "x", 9.5 are filtered out.
     expect(body.data).toEqual({ "1": 0, "7": 0 });
-    const callArgs = (prisma.$queryRaw as any).mock.calls[0];
+    const callArgs = (baseDb.$queryRaw as any).mock.calls[0];
     expect(callArgs[1]).toEqual([1, 7]);
   });
 });

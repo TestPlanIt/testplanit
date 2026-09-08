@@ -1,6 +1,5 @@
-import { PrismaClient } from "@prisma/client";
-
 import { expect, test } from "../../fixtures/index";
+import { createRawDbClient } from "~/lib/rawDbClient";
 import {
   startStubServer,
   type StubServerHandle,
@@ -32,7 +31,7 @@ test.describe.configure({ mode: "serial" });
 test.describe("Webhook delivery replay — single outbound", () => {
   let projectId: number;
   let stub: StubServerHandle;
-  let prisma: PrismaClient;
+  let db: ReturnType<typeof createRawDbClient>;
   let originalDeliveryId: string;
   let webhookConfigId: string;
 
@@ -41,12 +40,12 @@ test.describe("Webhook delivery replay — single outbound", () => {
     // First attempt fails (500) → seeds the failed row; subsequent requests
     // (the replay) succeed with 200.
     stub = await startStubServer({ failNTimes: 1 });
-    prisma = new PrismaClient();
+    db = createRawDbClient();
   });
 
   test.afterAll(async () => {
     if (stub) await stub.close();
-    if (prisma) await prisma.$disconnect();
+    if (db) await db.$disconnect();
   });
 
   test("admin clicks failed outbound row, drawer opens, replay creates a new row with replayedFromDeliveryId set", async ({
@@ -97,7 +96,7 @@ test.describe("Webhook delivery replay — single outbound", () => {
     });
 
     await test.step("Wait for the failed delivery row and verify its fields", async () => {
-      const failedRows = await waitForDelivery(prisma, {
+      const failedRows = await waitForDelivery(db, {
         projectId,
         where: {
           direction: "OUTBOUND",
@@ -170,7 +169,7 @@ test.describe("Webhook delivery replay — single outbound", () => {
     await test.step("Wait for the replay delivery row and verify it links back to the original and succeeded", async () => {
       // The replay re-dispatches against the stub which now returns 200
       // (failNTimes was 1).
-      const replayRows = await waitForDelivery(prisma, {
+      const replayRows = await waitForDelivery(db, {
         projectId,
         where: {
           direction: "OUTBOUND",
@@ -195,7 +194,7 @@ test.describe("Webhook delivery replay — single outbound", () => {
  * arbitrary `setTimeout` waits that flake under load.
  */
 async function waitForDelivery(
-  prisma: PrismaClient,
+  db: ReturnType<typeof createRawDbClient>,
   args: {
     projectId: number;
     where: Record<string, unknown>;
@@ -214,7 +213,7 @@ async function waitForDelivery(
 > {
   const startedAt = Date.now();
   while (Date.now() - startedAt < args.timeoutMs) {
-    const rows = await prisma.webhookDelivery.findMany({
+    const rows = await db.webhookDelivery.findMany({
       where: {
         webhookConfig: { projectId: args.projectId },
         ...args.where,

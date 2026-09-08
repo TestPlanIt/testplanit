@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mocks must be hoisted before the SUT import.
-vi.mock("../lib/multiTenantPrisma", () => ({
+vi.mock("../lib/multiTenantDb", () => ({
   validateMultiTenantJobData: vi.fn(),
-  getPrismaClientForJob: vi.fn().mockReturnValue({ __mock: "prisma" }),
+  getDbClientForJob: vi.fn().mockReturnValue({ __mock: "db" }),
   isMultiTenantMode: vi.fn().mockReturnValue(false),
   disconnectAllTenantClients: vi.fn().mockResolvedValue(undefined),
 }));
@@ -42,9 +42,9 @@ vi.mock("../lib/tenantContext", () => ({
 }));
 
 import {
-  getPrismaClientForJob,
+  getDbClientForJob,
   validateMultiTenantJobData,
-} from "../lib/multiTenantPrisma";
+} from "../lib/multiTenantDb";
 import { dispatchWebhook } from "../lib/webhooks/dispatch";
 
 import {
@@ -56,9 +56,7 @@ import {
 const mockedValidate = validateMultiTenantJobData as unknown as ReturnType<
   typeof vi.fn
 >;
-const mockedGetPrisma = getPrismaClientForJob as unknown as ReturnType<
-  typeof vi.fn
->;
+const mockedGetDb = getDbClientForJob as unknown as ReturnType<typeof vi.fn>;
 const mockedDispatch = dispatchWebhook as unknown as ReturnType<typeof vi.fn>;
 
 /**
@@ -84,7 +82,7 @@ function buildJob(opts: {
 describe("webhookDispatchWorker.processor", () => {
   beforeEach(() => {
     mockedValidate.mockClear();
-    mockedGetPrisma.mockClear();
+    mockedGetDb.mockClear();
     mockedDispatch.mockClear();
   });
 
@@ -124,11 +122,11 @@ describe("webhookDispatchWorker.processor", () => {
     await processor(job);
 
     expect(mockedDispatch).toHaveBeenCalledTimes(1);
-    const [calledData, calledPrisma] = mockedDispatch.mock.calls[0];
+    const [calledData, calledDb] = mockedDispatch.mock.calls[0];
     expect(calledData.outboxEventId).toBe("ev1");
     expect(calledData.webhookConfigId).toBe("c1");
     expect(calledData.tenantId).toBe("tenant-A");
-    expect(calledPrisma).toEqual({ __mock: "prisma" });
+    expect(calledDb).toEqual({ __mock: "db" });
   });
 
   it("3. processor rethrows when dispatchWebhook rejects (BullMQ relies on the throw to retry)", async () => {
@@ -258,7 +256,7 @@ describe("webhookDispatchWorker.processor", () => {
     expect(mockedValidate).not.toHaveBeenCalled();
   });
 
-  it("11. cron path passes the tenant-scoped prisma client", async () => {
+  it("11. cron path passes the tenant-scoped db client", async () => {
     mockRetireExpiredSecrets.mockResolvedValue({ retiredCount: 0 });
     const job = {
       id: "cron-2",
@@ -269,9 +267,9 @@ describe("webhookDispatchWorker.processor", () => {
 
     await processor(job);
 
-    expect(mockedGetPrisma).toHaveBeenCalledWith({ tenantId: "tenant-A" });
-    const [calledPrisma] = mockRetireExpiredSecrets.mock.calls[0];
-    expect(calledPrisma).toEqual({ __mock: "prisma" });
+    expect(mockedGetDb).toHaveBeenCalledWith({ tenantId: "tenant-A" });
+    const [calledDb] = mockRetireExpiredSecrets.mock.calls[0];
+    expect(calledDb).toEqual({ __mock: "db" });
   });
 });
 

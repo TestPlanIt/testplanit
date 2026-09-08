@@ -1,3 +1,4 @@
+import type { Locator, Page } from "@playwright/test";
 import { expect, test } from "../../../fixtures";
 import { RepositoryPage } from "../../../page-objects/repository/repository.page";
 
@@ -5,8 +6,37 @@ import { RepositoryPage } from "../../../page-objects/repository/repository.page
  * View Switching Tests
  *
  * Test cases for switching between different view modes in the repository.
- * The view switcher is a Select component (combobox) in the left panel header.
+ * The view switcher is a Select component (combobox) in the left panel header
+ * and is a pure GROUPING control: switching the axis never seeds and never
+ * clears the FilterBar's chips. Filtering happens by clicking an option row,
+ * which toggles a `filter-chip-{dimension}-{operator}` chip and a `?f=` URL
+ * param.
  */
+
+/** A clickable option row in the left panel (rows carry no test id). */
+function sidebarRow(page: Page, name: string | RegExp): Locator {
+  return page
+    .getByTestId("repository-left-panel")
+    .locator('[role="button"]')
+    .filter({ hasText: name })
+    .first();
+}
+
+/** The `f` params currently serialized into the URL, form-decoded. */
+function filterParams(page: Page): string[] {
+  return new URL(page.url()).searchParams.getAll("f");
+}
+
+async function expectFilterParam(page: Page, pattern: RegExp): Promise<void> {
+  await expect
+    .poll(() => filterParams(page).join("|"), { timeout: 10000 })
+    .toMatch(pattern);
+}
+
+async function expectNoFilterParams(page: Page): Promise<void> {
+  await expect.poll(() => filterParams(page)).toEqual([]);
+}
+
 test.describe("View Switching", () => {
   let repositoryPage: RepositoryPage;
 
@@ -175,6 +205,12 @@ test.describe("View Switching", () => {
 
   test("Switch to Tag View", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
+    const caseName = `Untagged Case ${Date.now()}`;
+
+    await test.step("Create an untagged test case", async () => {
+      const rootFolderId = await api.getRootFolderId(projectId);
+      await api.createTestCase(projectId, rootFolderId, caseName);
+    });
 
     await test.step("Open the repository for a new project", async () => {
       await repositoryPage.goto(projectId);
@@ -189,15 +225,36 @@ test.describe("View Switching", () => {
       const viewSwitcher = await getViewSwitcher(page);
       await expect(viewSwitcher).toContainText(/Tag/i);
 
-      // The left panel should show tag filter options
-      // The tags view shows available tags or "Any Tag" option
-      await expect(repositoryPage.leftPanel).toBeVisible();
+      // The left panel shows the pinned Any Tag / No Tags rows
+      await expect(sidebarRow(page, "Any Tag")).toBeVisible({ timeout: 10000 });
+    });
+
+    await test.step("Verify the axis switch seeded no tag filter", async () => {
+      // Switching to the Tag axis used to seed `tags any`, hiding every
+      // untagged case. Grouping no longer filters.
+      await expect(page.getByTestId("filter-chip-tags-any")).not.toBeVisible();
+      await expectNoFilterParams(page);
+      await expect(page.locator(`text="${caseName}"`).first()).toBeVisible({
+        timeout: 10000,
+      });
     });
   });
 
   test("Switch Back to Folders View", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
     let viewSwitcher: Awaited<ReturnType<typeof getViewSwitcher>> | undefined;
+
+    await test.step("Create a folder with a test case", async () => {
+      const folderId = await api.createFolder(
+        projectId,
+        `Switch Back Folder ${Date.now()}`
+      );
+      await api.createTestCase(
+        projectId,
+        folderId,
+        `Switch Back Case ${Date.now()}`
+      );
+    });
 
     await test.step("Open the repository for a new project", async () => {
       await repositoryPage.goto(projectId);
@@ -208,6 +265,20 @@ test.describe("View Switching", () => {
       await switchToView(page, "Template");
       viewSwitcher = await getViewSwitcher(page);
       await expect(viewSwitcher).toContainText(/Template/i);
+    });
+
+    await test.step("Apply a template filter chip from the sidebar", async () => {
+      // The first individual template row (row 0 is "All Templates").
+      const templateRow = repositoryPage.leftPanel
+        .locator('[role="button"]')
+        .nth(1);
+      await expect(templateRow).toBeVisible({ timeout: 10000 });
+      await templateRow.click();
+
+      await expect(page.getByTestId("filter-chip-templates-in")).toBeVisible({
+        timeout: 10000,
+      });
+      await expectFilterParam(page, /templates:in:\d+/);
     });
 
     await test.step("Switch back to the Folders view", async () => {
@@ -223,6 +294,15 @@ test.describe("View Switching", () => {
         hasText: "Root Folder",
       });
       await expect(rootFolder.first()).toBeVisible({ timeout: 5000 });
+    });
+
+    await test.step("Verify the filter chip survived the axis round-trip", async () => {
+      // Axis switches used to clear the active filter; they no longer touch
+      // predicates in either direction.
+      await expect(page.getByTestId("filter-chip-templates-in")).toBeVisible({
+        timeout: 10000,
+      });
+      await expectFilterParam(page, /templates:in:\d+/);
     });
   });
 
@@ -490,18 +570,18 @@ test.describe("View Switching", () => {
     });
   });
 
-  test("Clicking Filter Option Updates View", async ({ api, page }) => {
+  test("Clicking Filter Option Toggles a Filter Chip", async ({
+    api,
+    page,
+  }) => {
     const projectId = await getTestProjectId(api);
+    const caseName = `Filter Case ${Date.now()}`;
 
     await test.step("Create a folder with a test case to filter", async () => {
       // Create test cases so there's data to filter
       const folderName = `Filter Test Folder ${Date.now()}`;
       const folderId = await api.createFolder(projectId, folderName);
-      await api.createTestCase(
-        projectId,
-        folderId,
-        `Filter Case ${Date.now()}`
-      );
+      await api.createTestCase(projectId, folderId, caseName);
     });
 
     await test.step("Open the repository and switch to the Template view", async () => {
@@ -509,18 +589,50 @@ test.describe("View Switching", () => {
       await switchToView(page, "Template");
     });
 
-    await test.step("Click the All Templates filter and verify the view stays Template", async () => {
-      // Click on "All Templates" option
-      const allTemplatesOption = repositoryPage.leftPanel
-        .locator('[role="button"]')
-        .filter({
-          hasText: /All Templates/i,
-        })
-        .first();
+    const templateRow = () =>
+      repositoryPage.leftPanel.locator('[role="button"]').nth(1);
+
+    await test.step("Click a template row and verify a chip is created", async () => {
+      // A row click no longer just "updates the view" — it toggles the
+      // dimension's `in` predicate, which renders as a FilterBar chip and a
+      // `?f=` URL param.
+      await expect(templateRow()).toBeVisible({ timeout: 10000 });
+      await templateRow().click();
+
+      await expect(page.getByTestId("filter-chip-templates-in")).toBeVisible({
+        timeout: 10000,
+      });
+      await expectFilterParam(page, /templates:in:\d+/);
+
+      // The row highlights while its value is in an active predicate.
+      await expect(async () => {
+        const highlighted = await templateRow().evaluate((el) =>
+          el.className.includes("bg-primary")
+        );
+        expect(highlighted).toBe(true);
+      }).toPass({ timeout: 10000 });
+
+      // The case uses the default template, so it stays listed.
+      await expect(page.locator(`text="${caseName}"`).first()).toBeVisible({
+        timeout: 10000,
+      });
+
+      // Should remain in Template view with the filter applied
+      const viewSwitcher = await getViewSwitcher(page);
+      await expect(viewSwitcher).toContainText(/Template/i);
+    });
+
+    await test.step("Click All Templates and verify the chip is removed", async () => {
+      const allTemplatesOption = sidebarRow(page, /All Templates/i);
       await expect(allTemplatesOption).toBeVisible({ timeout: 5000 });
       await allTemplatesOption.click();
 
-      // Should remain in Template view with filter applied
+      await expect(
+        page.getByTestId("filter-chip-templates-in")
+      ).not.toBeVisible({ timeout: 10000 });
+      await expectNoFilterParams(page);
+      await expect(allTemplatesOption).toHaveClass(/bg-primary/);
+
       const viewSwitcher = await getViewSwitcher(page);
       await expect(viewSwitcher).toContainText(/Template/i);
     });

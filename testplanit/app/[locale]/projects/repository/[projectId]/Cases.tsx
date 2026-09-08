@@ -1,4 +1,8 @@
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
+import AddTestRunModal from "@/[locale]/projects/runs/[projectId]/AddTestRunModal";
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
+import { Button } from "@/components/ui/button";
 import { AutoTagWizardDialog } from "@/components/auto-tag/AutoTagWizardDialog";
 import { useDebounce } from "@/components/Debounce";
 import {
@@ -10,18 +14,55 @@ import {
   ColumnMetadata,
   ColumnSelection,
   CustomColumnDef,
+  readStoredColumnSort,
+  writeStoredColumnSort,
 } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
-import { Button } from "@/components/ui/button";
+import {
+  ActionOverflow,
+  useContainerCompact,
+} from "@/components/ui/action-bar";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Prisma } from "@prisma/client";
+import type {
+  RepositoryCasesFindManyArgs,
+  RepositoryCasesSelect,
+  RepositoryCasesWhereInput,
+  TestRunCasesFindManyArgs,
+  TestRunCasesSelect,
+  TestRunCasesWhereInput,
+} from "~/zenstack/input";
+import type { Tags as TagModel, Issue as IssueModel } from "~/zenstack/models";
+
+// The repositoryCases/testRunCases query results are typed loosely for the
+// list (the select's relations aren't fully reflected), but at runtime they
+// carry the explicit-join rows. This documents that known shape so the legacy
+// tags/issues arrays can be derived without an `as any`.
+type CaseJoinRels = {
+  caseTags?: { tag: TagModel }[];
+  caseIssues?: { issue: IssueModel }[];
+};
+
+// In multi-config run mode the mapped case carries a testRunCaseId; the list
+// item union doesn't declare it, so reads use this scoped assertion.
+type MaybeRunModeCase = { testRunCaseId?: number };
 import {
   RowSelectionState,
   Updater as TableUpdater,
 } from "@tanstack/react-table";
+import {
+  IN_REVIEW_DIMENSION,
+  type FilterDimensionRegistry,
+} from "~/lib/repository/filterDimensions";
+import {
+  compileRepoPredicates,
+  compileRunPredicates,
+  extractPostFetchFilters,
+} from "~/lib/repository/filterWhereCompiler";
+import { serializeWhereForTransport } from "~/lib/repository/whereTransport";
+import type { FilterPredicate } from "~/lib/schemas/repositoryFilterPredicates";
 import {
   ArrowRightLeft,
   PenSquare,
@@ -47,43 +88,184 @@ import { toast } from "sonner";
 import { fetchAllCasesForExport as fetchAllCasesAction } from "~/app/actions/exportActions";
 import { TFunction, useExportData } from "~/hooks/useExportData";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import { useFindManyRepositoryCasesByDescendants } from "~/hooks/useRepositoryCasesByDescendants";
 import {
-  PostFetchFilter,
-  useFindManyRepositoryCasesFiltered,
-} from "~/hooks/useRepositoryCasesWithFilteredFields";
+  useRepositoryCasesInvalidation,
+  useRepositoryCasesQuery,
+} from "~/hooks/useRepositoryCasesQuery";
+import type { PostFetchFilter } from "~/hooks/useRepositoryCasesWithFilteredFields";
 import { usePagination } from "~/lib/contexts/PaginationContext";
-import {
-  useCountProjects,
-  useCountRepositoryCases,
-  useCountTestRunCases,
-  useFindFirstTestRuns,
-  useFindManyProjectLlmIntegration,
-  useFindManyRepositoryFolders,
-  useFindManyReviewRequest,
-  useFindManyTemplates,
-  useFindManyTestRunCases,
-  useFindUniqueProjects,
-  useUpdateRepositoryCases,
-  useUpdateTestRunCases,
-} from "~/lib/hooks";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
 import { usePathname, useRouter } from "~/lib/navigation";
-import { computeLastTestResult } from "~/lib/utils/computeLastTestResult";
+import { LatestResultsCell } from "@/components/tables/LatestResultsCell";
+import { useLatestTestResults } from "~/hooks/useLatestTestResults";
+import { useCaseIdsByLatestStatus } from "~/hooks/useCaseIdsByLatestStatus";
+import { useCaseIdsByFieldOption } from "~/hooks/useCaseIdsByFieldOption";
+import { LATEST_RESULTS_COUNT } from "~/lib/types/latestTestResults";
 import { AddCaseRow } from "./AddCaseRow";
 import { AddResultModal } from "./AddResultModal";
+import { AssignTestCaseModal } from "./AssignTestCase";
 import { BulkEditModal } from "./BulkEditModal";
 import { CopyMoveDialog } from "@/components/copy-move/CopyMoveDialog";
-import { getColumns } from "./columns";
+import { ExtendedCases, getColumns } from "./columns";
+import { DeleteCaseModal } from "./DeleteCase";
 import { ExportModal, ExportOptions } from "./ExportModal";
 import { QuickScriptModal } from "./QuickScriptModal";
 
 type PageSizeOption = number | "All";
 
-// Shared select shape for repository case list queries. Used by both the
-// ZenStack useFindManyRepositoryCases hook (default GET path) and the
-// by-folder-descendants POST endpoint (used when "Show all descendants" is
-// active on a deeply nested folder) so both return identical row shapes.
+// Shared select fragments for the repository-case row shape. Both the
+// repository list query (REPOSITORY_CASE_LIST_SELECT) and the run-mode
+// testRunCases query further down embed these identical fragments so the
+// shared column renderers in ./columns receive the same row shape in either
+// mode. Keeping them in one place stops the two query paths from silently
+// drifting — run mode previously rendered raw field values because its
+// caseFieldValues select omitted the nested field.type the renderer keys off.
+const CASE_STATE_SELECT = {
+  select: {
+    id: true,
+    name: true,
+    workflowType: true,
+    icon: {
+      select: {
+        name: true,
+      },
+    },
+    color: {
+      select: {
+        value: true,
+      },
+    },
+  },
+} as const;
+
+const CASE_TEMPLATE_SELECT = {
+  select: {
+    id: true,
+    templateName: true,
+    caseFields: {
+      select: {
+        caseField: {
+          select: {
+            id: true,
+            defaultValue: true,
+            displayName: true,
+            type: {
+              select: {
+                type: true,
+              },
+            },
+            fieldOptions: {
+              select: {
+                fieldOption: {
+                  select: {
+                    id: true,
+                    icon: true,
+                    iconColor: true,
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+} as const;
+
+const CASE_FIELD_VALUES_SELECT = {
+  select: {
+    id: true,
+    value: true,
+    fieldId: true,
+    field: {
+      select: {
+        id: true,
+        displayName: true,
+        type: {
+          select: {
+            type: true,
+          },
+        },
+      },
+    },
+  },
+  where: { field: { isEnabled: true, isDeleted: false } },
+} as const;
+
+const CASE_ATTACHMENTS_SELECT = {
+  orderBy: { createdAt: "desc" },
+  where: { isDeleted: false },
+} as const;
+
+// Kept as a standalone (non-`as const`) array so the OR clause types as a
+// mutable WhereInput[]; a readonly tuple produced by `as const` is rejected by
+// the generated query-args type.
+const STEP_VISIBILITY_OR = [
+  { sharedStepGroupId: null },
+  { sharedStepGroup: { isDeleted: false } },
+];
+
+const CASE_STEPS_SELECT = {
+  where: {
+    isDeleted: false,
+    OR: STEP_VISIBILITY_OR,
+  },
+  orderBy: { order: "asc" },
+  select: {
+    id: true,
+    order: true,
+    step: true,
+    expectedResult: true,
+    sharedStepGroupId: true,
+    sharedStepGroup: {
+      select: {
+        name: true,
+      },
+    },
+  },
+} as const;
+
+const CASE_TAGS_SELECT = {
+  where: { tag: { isDeleted: false } },
+  include: { tag: true },
+} as const;
+
+const CASE_ISSUES_SELECT = {
+  where: { issue: { isDeleted: false } },
+  include: {
+    issue: {
+      include: {
+        integration: true,
+      },
+    },
+  },
+} as const;
+
+// UI sort columns that map 1:1 to a RepositoryCases scalar column. The
+// remembered sort (localStorage, per project) can hold ANY column id from
+// either the repository or the run view — including UI-computed ones like
+// latestResults/forecast and numeric custom-field ids. Both orderBy builders
+// pass through only these names; anything else falls back to the default
+// order, because one unknown field in orderBy makes the server reject the
+// whole findMany and the table renders empty. Columns that can't be an
+// orderBy but ARE sortable (latestResults, Dropdown custom fields) order via
+// server-resolved page ids instead — see sortedPageIds.
+const REPOSITORY_CASE_SORTABLE_SCALARS = new Set([
+  "id",
+  "name",
+  "estimate",
+  "stateId",
+  "automated",
+  "currentVersion",
+  "createdAt",
+  "order",
+  "source",
+]);
+
+// Select shape for the repository case list. Module-level so the query key
+// never has to hash it — callers name the shape with a short `selectKey`
+// instead.
 const REPOSITORY_CASE_LIST_SELECT = {
   id: true,
   projectId: true,
@@ -107,115 +289,13 @@ const REPOSITORY_CASE_LIST_SELECT = {
   isDeleted: true,
   currentVersion: true,
   source: true,
-  state: {
-    select: {
-      id: true,
-      name: true,
-      workflowType: true,
-      icon: {
-        select: {
-          name: true,
-        },
-      },
-      color: {
-        select: {
-          value: true,
-        },
-      },
-    },
-  },
-  template: {
-    select: {
-      id: true,
-      templateName: true,
-      caseFields: {
-        select: {
-          caseField: {
-            select: {
-              id: true,
-              defaultValue: true,
-              displayName: true,
-              type: {
-                select: {
-                  type: true,
-                },
-              },
-              fieldOptions: {
-                select: {
-                  fieldOption: {
-                    select: {
-                      id: true,
-                      icon: true,
-                      iconColor: true,
-                      name: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  },
-  caseFieldValues: {
-    select: {
-      id: true,
-      value: true,
-      fieldId: true,
-      field: {
-        select: {
-          id: true,
-          displayName: true,
-          type: {
-            select: {
-              type: true,
-            },
-          },
-        },
-      },
-    },
-    where: { field: { isEnabled: true, isDeleted: false } },
-  },
-  attachments: {
-    orderBy: { createdAt: "desc" },
-    where: { isDeleted: false },
-  },
-  steps: {
-    where: {
-      isDeleted: false,
-      OR: [
-        { sharedStepGroupId: null },
-        { sharedStepGroup: { isDeleted: false } },
-      ],
-    },
-    orderBy: { order: "asc" },
-    select: {
-      id: true,
-      order: true,
-      step: true,
-      expectedResult: true,
-      sharedStepGroupId: true,
-      sharedStepGroup: {
-        select: {
-          name: true,
-        },
-      },
-    },
-  },
-  tags: {
-    where: {
-      isDeleted: false,
-    },
-  },
-  issues: {
-    where: {
-      isDeleted: false,
-    },
-    include: {
-      integration: true,
-    },
-  },
+  state: CASE_STATE_SELECT,
+  template: CASE_TEMPLATE_SELECT,
+  caseFieldValues: CASE_FIELD_VALUES_SELECT,
+  attachments: CASE_ATTACHMENTS_SELECT,
+  steps: CASE_STEPS_SELECT,
+  caseTags: CASE_TAGS_SELECT,
+  caseIssues: CASE_ISSUES_SELECT,
   testRuns: {
     select: {
       id: true,
@@ -227,30 +307,6 @@ const REPOSITORY_CASE_LIST_SELECT = {
           isDeleted: true,
           isCompleted: true,
         },
-      },
-      results: {
-        select: {
-          id: true,
-          executedAt: true,
-          status: {
-            select: {
-              id: true,
-              name: true,
-              color: {
-                select: {
-                  value: true,
-                },
-              },
-            },
-          },
-        },
-        where: {
-          isDeleted: false,
-        },
-        orderBy: {
-          executedAt: "desc",
-        },
-        take: 1,
       },
     },
   },
@@ -268,39 +324,6 @@ const REPOSITORY_CASE_LIST_SELECT = {
       isDeleted: true,
     },
   },
-  junitResults: {
-    select: {
-      id: true,
-      executedAt: true,
-      status: {
-        select: {
-          id: true,
-          name: true,
-          color: {
-            select: {
-              value: true,
-            },
-          },
-        },
-      },
-      testSuite: {
-        select: {
-          id: true,
-          testRun: {
-            select: {
-              id: true,
-              name: true,
-              isDeleted: true,
-            },
-          },
-        },
-      },
-    },
-    orderBy: {
-      executedAt: "desc",
-    },
-    take: 1,
-  },
   _count: {
     select: {
       comments: {
@@ -310,12 +333,160 @@ const REPOSITORY_CASE_LIST_SELECT = {
       },
     },
   },
-} as const satisfies Prisma.RepositoryCasesSelect;
+} as const satisfies RepositoryCasesSelect;
+
+// Select shape for the run-mode case list (TestRunCases rows with the
+// repository case nested under `repositoryCase`). Module-level so the query
+// key never has to hash it and so the run list and its id list agree.
+const TEST_RUN_CASE_LIST_SELECT = {
+  id: true,
+  repositoryCaseId: true,
+  order: true,
+  statusId: true,
+  status: {
+    select: {
+      id: true,
+      name: true,
+      color: {
+        select: {
+          value: true,
+        },
+      },
+    },
+  },
+  assignedToId: true,
+  assignedTo: {
+    select: {
+      id: true,
+      name: true,
+    },
+  },
+  isCompleted: true,
+  notes: true,
+  startedAt: true,
+  completedAt: true,
+  elapsed: true,
+  // Phase 3 — surface iteration count so the status cell can detect
+  // parameterized cases and render its read-only sheet-opener.
+  totalIterations: true,
+  testRun: {
+    select: {
+      id: true,
+      configuration: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+  },
+  repositoryCase: {
+    select: {
+      id: true,
+      projectId: true,
+      project: true,
+      creator: true,
+      folder: true,
+      repositoryId: true,
+      folderId: true,
+      templateId: true,
+      name: true,
+      stateId: true,
+      estimate: true,
+      forecastManual: true,
+      forecastAutomated: true,
+      order: true,
+      createdAt: true,
+      creatorId: true,
+      automated: true,
+      hasParameters: true,
+      isArchived: true,
+      isDeleted: true,
+      currentVersion: true,
+      source: true,
+      state: CASE_STATE_SELECT,
+      template: CASE_TEMPLATE_SELECT,
+      caseFieldValues: CASE_FIELD_VALUES_SELECT,
+      attachments: CASE_ATTACHMENTS_SELECT,
+      steps: CASE_STEPS_SELECT,
+      caseTags: CASE_TAGS_SELECT,
+      caseIssues: CASE_ISSUES_SELECT,
+      testRuns: {
+        select: {
+          id: true,
+          testRun: {
+            select: {
+              id: true,
+              name: true,
+              projectId: true,
+              isDeleted: true,
+              isCompleted: true,
+            },
+          },
+        },
+      },
+      linksFrom: {
+        select: {
+          caseBId: true,
+          type: true,
+          isDeleted: true,
+        },
+      },
+      linksTo: {
+        select: {
+          caseAId: true,
+          type: true,
+          isDeleted: true,
+        },
+      },
+      _count: {
+        select: {
+          comments: {
+            where: {
+              isDeleted: false,
+            },
+          },
+        },
+      },
+    },
+  },
+} as const satisfies TestRunCasesSelect;
+
+/**
+ * Prev/next context for the docked case-details panel. Cases owns the list's
+ * filter/sort so it derives the ordered id set and the selected case's position
+ * within it; ProjectRepository consumes this to drive the panel's stepper.
+ */
+export interface CaseNav {
+  /** 1-based position of the selected case in the full filtered set, or null. */
+  position: number | null;
+  /** Total cases in the current filtered result set. */
+  total: number;
+  prevId: number | null;
+  nextId: number | null;
+  hasPrev: boolean;
+  hasNext: boolean;
+}
 
 interface CasesProps {
   folderId: number | null;
   viewType: string;
-  filterId: Array<string | number> | null;
+  /** Active filter predicates (implicit AND). Compiled to where fragments via
+   * lib/repository/filterWhereCompiler; folder scoping stays separate. */
+  predicates: FilterPredicate[];
+  /** The active mode's dimension registry (buildFilterDimensions). */
+  filterRegistry: FilterDimensionRegistry;
+  /** Canonical serialization of `predicates` (useRepositoryFilters.canonicalKey).
+   * Keys every reset effect and remount key that previously keyed on the
+   * single-axis filterId. */
+  predicatesKey: string;
+  /** Clears all active predicates — the zero-result empty state's CTA. */
+  onClearFilters?: () => void;
+  /** Case ids carrying a PENDING review — how the `inReview` predicate
+   * compiles (ReviewRequest has no relation to traverse from a case where).
+   * `undefined` = unresolved: the list holds rather than answering an
+   * `inReview` filter from the empty set. */
+  inReviewCaseIds?: number[];
   isSelectionMode?: boolean;
   selectedTestCases?: number[];
   selectedRunIds?: number[];
@@ -324,7 +495,13 @@ interface CasesProps {
   hideHeader?: boolean;
   isRunMode?: boolean;
   onTestCaseClick?: (caseId: number) => void;
+  /** Lifts prev/next context for the selected `?case` up to ProjectRepository,
+   * which renders the docked details panel. Null when no case is selected. */
+  onCaseNavChange?: (nav: CaseNav | null) => void;
   isCompleted?: boolean;
+  /** When the run's composition is locked, reordering is frozen — hides drag
+   * handles and disables drag-to-reorder. */
+  compositionLocked?: boolean;
   canAddEdit: boolean;
   canAddEditRun: boolean;
   canDelete: boolean;
@@ -337,8 +514,25 @@ interface CasesProps {
     totalItems: number;
     setTotalItems: (total: number) => void;
   };
-  /** When provided, restricts displayed cases to these IDs (from Elasticsearch search) */
+  /** Relevance-ordered id set from Elasticsearch. Intersected with the folder
+   * scope, the predicates and the in-table name filter (spec §9) — never a
+   * bypass. Null when no search is active; an empty array means the search
+   * matched nothing. */
   searchResultIds?: number[] | null;
+  /** Identity of `searchResultIds` for query keys — the debounced query string
+   * the ids were resolved for, never the array itself. */
+  searchKey?: string;
+  /** The search text the table is scoped to, resolved or not. Part of the
+   * "current view" identity alongside folder/axis/predicates: a change to it
+   * invalidates the bulk selection and any in-flight select-all. */
+  searchText?: string;
+  /** A query is on screen but its id set has not resolved yet. The ids are an
+   * AND'd filter, so the list must show loading rather than the unfiltered
+   * repository (spec §9). */
+  searchPending?: boolean;
+  /** The search could not be resolved. Same reasoning as `searchPending`, but
+   * terminal: the table shows the error state instead of an unfiltered list. */
+  searchFailed?: boolean;
   /** When set, opens CopyMoveDialog in folder mode for the given folder */
   copyMoveFolderId?: number | null;
   copyMoveFolderName?: string;
@@ -354,7 +548,11 @@ interface CasesProps {
 export default function Cases({
   folderId,
   viewType,
-  filterId,
+  predicates,
+  filterRegistry,
+  predicatesKey,
+  onClearFilters,
+  inReviewCaseIds,
   isSelectionMode = false,
   selectedTestCases = [],
   selectedRunIds,
@@ -363,13 +561,19 @@ export default function Cases({
   hideHeader = false,
   isRunMode = false,
   onTestCaseClick,
+  onCaseNavChange,
   isCompleted = false,
+  compositionLocked = false,
   canAddEdit,
   canAddEditRun,
   canDelete,
   selectedFolderCaseCount,
   overridePagination,
   searchResultIds,
+  searchKey,
+  searchText = "",
+  searchPending = false,
+  searchFailed = false,
   copyMoveFolderId,
   copyMoveFolderName,
   onCopyMoveFolderDialogClose,
@@ -401,6 +605,36 @@ export default function Cases({
   const runId = params?.runId ? Number(params.runId) : undefined;
   const isRunIdValidNumeric = runId !== undefined && !isNaN(runId);
 
+  // The selected case (`case` URL param) is rendered by ProjectRepository as a
+  // docked details panel to the right of the list. Cases only needs it to build
+  // the prev/next navigation context (see `onCaseNavChange` below). Only in plain
+  // repository browsing — run mode has its own run-page sheet, and selection mode
+  // opens the case in a new tab.
+  const selectedCaseIdParam =
+    !isRunMode && !isSelectionMode ? searchParams.get("case") : null;
+
+  // Collapse the pagination controls when the list pane is narrow (e.g. the
+  // details panel is open in split mode). Measured via ResizeObserver on the
+  // pagination footer so it reflects the actual available width in any context.
+  const [paginationCompact, setPaginationCompact] = useState(false);
+  const paginationResizeObserverRef = useRef<ResizeObserver | null>(null);
+  const setPaginationFooterRef = useCallback((node: HTMLDivElement | null) => {
+    paginationResizeObserverRef.current?.disconnect();
+    if (node && typeof ResizeObserver !== "undefined") {
+      const ro = new ResizeObserver((entries) => {
+        const width = entries[0]?.contentRect.width ?? 0;
+        setPaginationCompact(width > 0 && width < 440);
+      });
+      ro.observe(node);
+      paginationResizeObserverRef.current = ro;
+    }
+  }, []);
+
+  // Collapse the bulk-action buttons into a single kebab menu when the list
+  // pane is narrow, mirroring the run/session/milestone header action bars.
+  const { ref: casesHeaderRef, compact: casesToolbarCompact } =
+    useContainerCompact();
+
   // Use override pagination if provided (for modal), otherwise use context (for normal page)
   const contextPagination = usePagination();
 
@@ -425,21 +659,32 @@ export default function Cases({
   const totalPages =
     effectivePageSize > 0 ? Math.ceil(totalItems / effectivePageSize) : 1;
 
+  // Restore a remembered sort (per project, alongside column visibility/order/
+  // width). No stored sort means the default order — isDefaultSort stays true.
   const [sortConfig, setSortConfig] = useState<
     { column: string; direction: "asc" | "desc" } | undefined
-  >({
-    column: "order",
-    direction: "asc",
-  });
-  const [isDefaultSort, setIsDefaultSort] = useState(true);
+  >(
+    () =>
+      readStoredColumnSort(`repository-cases:${projectId}`) ?? {
+        column: "order",
+        direction: "asc",
+      }
+  );
+  const [isDefaultSort, setIsDefaultSort] = useState(
+    () => readStoredColumnSort(`repository-cases:${projectId}`) === null
+  );
   const [searchString, setSearchString] = useState("");
   const debouncedSearchString = useDebounce(searchString, 500);
   const deferredSearchString = useDeferredValue(debouncedSearchString);
 
-  const { mutateAsync: updateRepositoryCases } = useUpdateRepositoryCases({
+  const { mutateAsync: updateRepositoryCases } = useClientQueries(
+    schema
+  ).repositoryCases.useUpdate({
     optimisticUpdate: false,
   });
-  const { mutateAsync: updateTestRunCases } = useUpdateTestRunCases({
+  const { mutateAsync: updateTestRunCases } = useClientQueries(
+    schema
+  ).testRunCases.useUpdate({
     optimisticUpdate: false,
   });
   const [, startTransition] = useTransition();
@@ -463,6 +708,20 @@ export default function Cases({
     selectedCases?: any[];
     steps?: any[];
     configuration?: { id: number; name: string } | null;
+  }>({ isOpen: false });
+
+  // State for AssignTestCaseModal - lifted from TestRunStatusCell for the same
+  // reason as AddResultModal above
+  const [assignModalState, setAssignModalState] = useState<{
+    isOpen: boolean;
+    testRunId?: number;
+    testRunCaseId?: number;
+    caseId?: number;
+    caseName?: string;
+    projectId?: number;
+    currentAssigneeId?: string | null;
+    isBulkAssign?: boolean;
+    selectedCases?: ExtendedCases[];
   }>({ isOpen: false });
 
   // State for bulk edit selection
@@ -507,13 +766,20 @@ export default function Cases({
   const canAddEditResults = testRunResultPermissions?.canAddEdit ?? false;
 
   // Check if user has access to more than 1 project (needed for copy/move visibility)
-  const { data: projectCount } = useCountProjects({
+  const { data: projectCount } = useClientQueries(schema).projects.useCount({
     where: { isDeleted: false },
   });
   const showCopyMove = canAddEdit && (projectCount ?? 0) > 1;
 
-  // *** NEW: Fetch total project case count ***
-  const { data: totalProjectCasesCountData } = useCountRepositoryCases(
+  // Total project case count — and the ANCHOR for seam 2 of
+  // useRepositoryCasesInvalidation. It is the live ZenStack RepositoryCases
+  // query that a hand-rolled `queryClient.invalidateQueries` (AddCase's inline
+  // save) lands on, which is how that path reaches the POST-routed list. Do not
+  // remove or disable it without giving that seam another RepositoryCases query
+  // to observe.
+  const { data: totalProjectCasesCountData } = useClientQueries(
+    schema
+  ).repositoryCases.useCount(
     {
       where: {
         projectId: projectId,
@@ -529,7 +795,9 @@ export default function Cases({
   );
   const totalProjectCases = totalProjectCasesCountData ?? 0;
 
-  const { data: projectSettings } = useFindUniqueProjects(
+  const { data: projectSettings } = useClientQueries(
+    schema
+  ).projects.useFindUnique(
     {
       where: { id: projectId },
       select: {
@@ -544,7 +812,9 @@ export default function Cases({
     projectSettings?.excludeNotStartedFromRuns ?? false;
 
   // Check if project has an active LLM integration (for auto-tag)
-  const { data: projectLlmIntegrations } = useFindManyProjectLlmIntegration(
+  const { data: projectLlmIntegrations } = useClientQueries(
+    schema
+  ).projectLlmIntegration.useFindMany(
     {
       where: { projectId },
     },
@@ -555,7 +825,7 @@ export default function Cases({
 
   // Lightweight project-wide template field discovery
   const { data: projectTemplates, isLoading: isTemplatesLoading } =
-    useFindManyTemplates(
+    useClientQueries(schema).templates.useFindMany(
       {
         where: {
           projects: { some: { projectId: projectId } },
@@ -587,17 +857,31 @@ export default function Cases({
       },
       {
         enabled: Boolean(
-          // Skip query if we know the selected folder has 0 cases
-          viewType === "folders" && selectedFolderCaseCount === 0
+          // Skip query if we know the selected folder has 0 cases. Active
+          // predicates bypass the folder wall (spec §7.1), so they also bypass
+          // this shortcut.
+          predicates.length === 0 &&
+            viewType === "folders" &&
+            selectedFolderCaseCount === 0
             ? false
             : !!projectId
         ),
       }
     );
 
+  const uniqueCaseFieldList = useMemo(() => {
+    const caseFieldMap = new Map();
+    projectTemplates?.forEach((template) => {
+      template.caseFields.forEach((field) => {
+        caseFieldMap.set(field.caseField.id, field.caseField);
+      });
+    });
+    return Array.from(caseFieldMap.values());
+  }, [projectTemplates]);
+
   // Fetch folders to auto-select first folder when needed
   const { data: projectFolders, isLoading: isFoldersLoading } =
-    useFindManyRepositoryFolders(
+    useClientQueries(schema).repositoryFolders.useFindMany(
       {
         where: {
           projectId: projectId,
@@ -617,7 +901,7 @@ export default function Cases({
     );
 
   // Fetch test run configuration for run mode
-  const { data: testRunData } = useFindFirstTestRuns(
+  const { data: testRunData } = useClientQueries(schema).testRuns.useFindFirst(
     {
       where: {
         id: runId,
@@ -685,7 +969,8 @@ export default function Cases({
         // Also dispatch a popstate event to simulate URL change
         // Skip this if a tour is active — popstate closes the NextStep overlay
         // Use global flag instead of URL params since navigation can strip them
-        const activeTour = (window as any).__activeTour;
+        const activeTour = (window as Window & { __activeTour?: unknown })
+          .__activeTour;
         if (!activeTour) {
           window.dispatchEvent(new PopStateEvent("popstate", { state: null }));
         }
@@ -745,6 +1030,54 @@ export default function Cases({
     }
   };
 
+  // Explicit-direction sort from the column header menu (asc/desc/clear),
+  // unlike handleSortChange which only cycles.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (isCompleted) return;
+    if (direction === null) {
+      setSortConfig(undefined);
+      setIsDefaultSort(true);
+    } else {
+      setSortConfig({ column, direction });
+      setIsDefaultSort(false);
+    }
+  };
+
+  // Remember the active sort per project. Store nothing for the default order
+  // (isDefaultSort) so a reload restores the default rather than a stale sort.
+  useEffect(() => {
+    writeStoredColumnSort(
+      `repository-cases:${projectId}`,
+      isDefaultSort || !sortConfig ? null : sortConfig
+    );
+  }, [projectId, sortConfig, isDefaultSort]);
+
+  // Single, stable visibility setter shared by the Columns control and the
+  // header "Hide column" menu. Stable (useCallback) so ColumnSelection's emit
+  // effect doesn't re-fire on every render, and shallow-equal-guarded so an
+  // equal-but-new-reference map (the two controls echoing each other) bails
+  // instead of looping.
+  const handleColumnVisibilityChange = useCallback(
+    (next: Record<string, boolean>) => {
+      setColumnVisibility((prev) => {
+        const keys = new Set([...Object.keys(prev), ...Object.keys(next)]);
+        for (const key of keys) {
+          if (prev[key] !== next[key]) return next;
+        }
+        return prev;
+      });
+    },
+    []
+  );
+
+  // ColumnSelection assigns its "hide a column" function here; the header "Hide
+  // column" menu calls it so the hide goes through the Columns control's own
+  // state (persists + keeps the checkboxes in sync), not a table round-trip.
+  const columnHideRef = useRef<((columnId: string) => void) | null>(null);
+
   // This callback is passed to Filter, which Filter should call with its internally debounced value.
   const handleFilterChange = useCallback((value: string) => {
     setSearchString(value);
@@ -775,900 +1108,116 @@ export default function Cases({
 
   // Build repository case where clause (used for filtering by folder, view, template, etc.)
   // This excludes test run-specific filters like assignedTo and status
-  // NOTE: When searchResultIds is active, ZenStack hooks are disabled and data comes from POST fetch instead
-  const repositoryCaseWhereClause: Prisma.RepositoryCasesWhereInput =
-    useMemo(() => {
-      const baseConditions: Prisma.RepositoryCasesWhereInput[] = [
-        {
-          name: {
-            contains: deferredSearchString,
-            mode: "insensitive" as Prisma.QueryMode,
-          },
+  // NOTE: While the POST route owns the list (active search, or a where too
+  // large for a GET) the ZenStack hooks are disabled and this same clause
+  // travels in the request body instead.
+  const repositoryCaseWhereClause: RepositoryCasesWhereInput = useMemo(() => {
+    const baseConditions: RepositoryCasesWhereInput[] = [
+      {
+        name: {
+          contains: deferredSearchString,
+          mode: "insensitive" as "default" | "insensitive",
         },
-        {
-          isDeleted: false,
-          isArchived: false,
-          projectId,
-        },
-      ];
+      },
+      {
+        isDeleted: false,
+        isArchived: false,
+        projectId,
+      },
+    ];
 
-      if (isSelectionMode && excludeNotStartedFromRuns) {
-        baseConditions.push({
-          state: { workflowType: { not: "NOT_STARTED" } },
-        });
-      }
-
-      // --- Apply folder/view/filter logic ---
-      // Skip assignedTo and status filters here - they're handled separately for test run cases
-      const isTestRunSpecificView =
-        viewType === "assignedTo" || viewType === "status";
-
-      if (viewType === "folders" && folderId) {
-        // 1. Folder view with specific folder (or folder + all descendants)
-        if (descendantFolderIds && descendantFolderIds.length > 0) {
-          baseConditions.push({ folderId: { in: descendantFolderIds } });
-        } else {
-          baseConditions.push({ folderId: { equals: folderId } });
-        }
-      } else if (
-        !isTestRunSpecificView &&
-        (filterId === null ||
-          (Array.isArray(filterId) && filterId.length === 0))
-      ) {
-        // 2. Filter is null - means "All Values/All Items", so add no condition
-      } else if (!isTestRunSpecificView) {
-        // 4. Filter has specific value(s)
-        const filterArray = Array.isArray(filterId) ? filterId : [filterId];
-        const filterConditions: any[] = [];
-
-        // Build a condition for each filter value
-        for (const singleFilterId of filterArray) {
-          if (viewType.startsWith("dynamic_")) {
-            // Apply specific filter for dynamic views
-            const [_, ...fieldParts] = viewType.split("_");
-            const fieldKey = fieldParts.join("_");
-            const [fieldId, fieldType] = fieldKey.split("_");
-            const numericFieldId = parseInt(fieldId);
-
-            // Add the dynamic filtering logic here (Link, Dropdown, etc.)
-            if (fieldType === "Link") {
-              // Support both numeric IDs (legacy) and string IDs (new)
-              if (
-                (singleFilterId as number) === 1 ||
-                singleFilterId === "hasValue"
-              ) {
-                // Has link
-                filterConditions.push({
-                  caseFieldValues: {
-                    some: {
-                      fieldId: numericFieldId,
-                      AND: [
-                        { value: { not: Prisma.JsonNull } },
-                        { value: { not: { equals: "" } } },
-                      ],
-                    },
-                  },
-                });
-              } else if (
-                (singleFilterId as number) === 2 ||
-                singleFilterId === "none"
-              ) {
-                // No link
-                filterConditions.push({
-                  OR: [
-                    { caseFieldValues: { none: { fieldId: numericFieldId } } },
-                    {
-                      caseFieldValues: {
-                        some: {
-                          fieldId: numericFieldId,
-                          OR: [
-                            { value: { equals: Prisma.JsonNull } },
-                            { value: { equals: "" } },
-                          ],
-                        },
-                      },
-                    },
-                  ],
-                });
-              } else if (
-                typeof singleFilterId === "string" &&
-                singleFilterId.includes("|")
-              ) {
-                // Operator-based link filtering
-                const parts = singleFilterId.split("|");
-                const searchValue = parts[1];
-
-                if (searchValue) {
-                  // For link operators, we fetch all non-null values and filter in application logic
-                  filterConditions.push({
-                    caseFieldValues: {
-                      some: {
-                        fieldId: numericFieldId,
-                        value: { not: Prisma.JsonNull },
-                      },
-                    },
-                  });
-                  // Note: Actual URL filtering will happen after fetch in application logic
-                }
-              }
-            } else if (fieldType === "Dropdown") {
-              // Handle special "none" value to filter for cases without this field
-              if (singleFilterId === "none") {
-                filterConditions.push({
-                  OR: [
-                    // Case 1: No record exists for this fieldId
-                    { caseFieldValues: { none: { fieldId: numericFieldId } } },
-                    // Case 2: Record exists, but value is explicitly null
-                    {
-                      caseFieldValues: {
-                        some: {
-                          fieldId: numericFieldId,
-                          value: { equals: Prisma.JsonNull },
-                        },
-                      },
-                    },
-                  ],
-                });
-              } else {
-                filterConditions.push({
-                  caseFieldValues: {
-                    some: {
-                      fieldId: numericFieldId,
-                      OR: [
-                        {
-                          value: {
-                            equals: (
-                              singleFilterId as string | number
-                            ).toString(),
-                          },
-                        },
-                        {
-                          value: { equals: singleFilterId as string | number },
-                        },
-                      ],
-                    },
-                  },
-                });
-              }
-            } else if (fieldType === "Multi-Select") {
-              // Handle special "none" value to filter for cases without this field
-              if (singleFilterId === "none") {
-                filterConditions.push({
-                  OR: [
-                    // Case 1: No record exists for this fieldId
-                    { caseFieldValues: { none: { fieldId: numericFieldId } } },
-                    // Case 2: Record exists, but value is explicitly null
-                    {
-                      caseFieldValues: {
-                        some: {
-                          fieldId: numericFieldId,
-                          value: { equals: Prisma.JsonNull },
-                        },
-                      },
-                    },
-                  ],
-                });
-              } else {
-                filterConditions.push({
-                  caseFieldValues: {
-                    some: {
-                      fieldId: numericFieldId,
-                      value: {
-                        array_contains: [singleFilterId as string | number],
-                      },
-                    },
-                  },
-                });
-              }
-            } else if (fieldType === "Steps") {
-              // Support both numeric IDs (legacy) and string IDs (new)
-              if (
-                (singleFilterId as number) === 1 ||
-                singleFilterId === "hasValue"
-              ) {
-                // Has steps
-                filterConditions.push({
-                  steps: { some: { isDeleted: false } },
-                });
-              } else if (
-                (singleFilterId as number) === 2 ||
-                singleFilterId === "none"
-              ) {
-                // No steps
-                filterConditions.push({
-                  steps: { none: { isDeleted: false } },
-                });
-              }
-            } else if (fieldType === "Checkbox") {
-              // singleFilterId 1 = Checked, singleFilterId 2 = Unchecked
-              filterConditions.push({
-                caseFieldValues: {
-                  some: {
-                    fieldId: numericFieldId,
-                    value: {
-                      equals: (singleFilterId as number) === 1 ? true : false,
-                    },
-                  },
-                },
-              });
-            } else if (fieldType === "Integer" || fieldType === "Number") {
-              // Handle special "none" value for cases without this field
-              if (singleFilterId === "none") {
-                filterConditions.push({
-                  OR: [
-                    { caseFieldValues: { none: { fieldId: numericFieldId } } },
-                    {
-                      caseFieldValues: {
-                        some: {
-                          fieldId: numericFieldId,
-                          value: { equals: Prisma.JsonNull },
-                        },
-                      },
-                    },
-                  ],
-                });
-              } else if (singleFilterId === "hasValue") {
-                // Has any value (not null)
-                filterConditions.push({
-                  caseFieldValues: {
-                    some: {
-                      fieldId: numericFieldId,
-                      value: { not: Prisma.JsonNull },
-                    },
-                  },
-                });
-              } else if (
-                typeof singleFilterId === "string" &&
-                singleFilterId.includes(":")
-              ) {
-                // Operator-based filter: format is "operator:value1" or "operator:value1:value2"
-                const parts = singleFilterId.split(":");
-                const operator = parts[0];
-                const value1 = parseFloat(parts[1]);
-
-                if (!isNaN(value1)) {
-                  if (operator === "eq") {
-                    // Equals
-                    filterConditions.push({
-                      caseFieldValues: {
-                        some: {
-                          fieldId: numericFieldId,
-                          OR: [
-                            { value: { equals: value1 } },
-                            { value: { equals: value1.toString() } },
-                          ],
-                        },
-                      },
-                    });
-                  } else if (operator === "ne") {
-                    // Not equals
-                    filterConditions.push({
-                      OR: [
-                        {
-                          caseFieldValues: {
-                            none: { fieldId: numericFieldId },
-                          },
-                        },
-                        {
-                          caseFieldValues: {
-                            some: {
-                              fieldId: numericFieldId,
-                              value: { equals: Prisma.JsonNull },
-                            },
-                          },
-                        },
-                        {
-                          caseFieldValues: {
-                            some: {
-                              fieldId: numericFieldId,
-                              AND: [
-                                { value: { not: { equals: value1 } } },
-                                {
-                                  value: { not: { equals: value1.toString() } },
-                                },
-                              ],
-                            },
-                          },
-                        },
-                      ],
-                    });
-                  } else if (operator === "lt") {
-                    // Less than
-                    filterConditions.push({
-                      caseFieldValues: {
-                        some: {
-                          fieldId: numericFieldId,
-                          OR: [
-                            { value: { lt: value1 } },
-                            { value: { lt: value1.toString() } },
-                          ],
-                        },
-                      },
-                    });
-                  } else if (operator === "lte") {
-                    // Less than or equal
-                    filterConditions.push({
-                      caseFieldValues: {
-                        some: {
-                          fieldId: numericFieldId,
-                          OR: [
-                            { value: { lte: value1 } },
-                            { value: { lte: value1.toString() } },
-                          ],
-                        },
-                      },
-                    });
-                  } else if (operator === "gt") {
-                    // Greater than
-                    filterConditions.push({
-                      caseFieldValues: {
-                        some: {
-                          fieldId: numericFieldId,
-                          OR: [
-                            { value: { gt: value1 } },
-                            { value: { gt: value1.toString() } },
-                          ],
-                        },
-                      },
-                    });
-                  } else if (operator === "gte") {
-                    // Greater than or equal
-                    filterConditions.push({
-                      caseFieldValues: {
-                        some: {
-                          fieldId: numericFieldId,
-                          OR: [
-                            { value: { gte: value1 } },
-                            { value: { gte: value1.toString() } },
-                          ],
-                        },
-                      },
-                    });
-                  } else if (operator === "between" && parts.length === 3) {
-                    // Between two values
-                    const value2 = parseFloat(parts[2]);
-                    if (!isNaN(value2)) {
-                      filterConditions.push({
-                        caseFieldValues: {
-                          some: {
-                            fieldId: numericFieldId,
-                            OR: [
-                              {
-                                AND: [
-                                  { value: { gte: value1 } },
-                                  { value: { lte: value2 } },
-                                ],
-                              },
-                              {
-                                AND: [
-                                  { value: { gte: value1.toString() } },
-                                  { value: { lte: value2.toString() } },
-                                ],
-                              },
-                            ],
-                          },
-                        },
-                      });
-                    }
-                  }
-                }
-              } else {
-                // Filter by specific numeric value (legacy support)
-                filterConditions.push({
-                  caseFieldValues: {
-                    some: {
-                      fieldId: numericFieldId,
-                      OR: [
-                        {
-                          value: {
-                            equals: (
-                              singleFilterId as string | number
-                            ).toString(),
-                          },
-                        },
-                        {
-                          value: { equals: singleFilterId as string | number },
-                        },
-                      ],
-                    },
-                  },
-                });
-              }
-            } else if (fieldType === "Date") {
-              // Handle special "none" value for cases without this field
-              if (singleFilterId === "none") {
-                filterConditions.push({
-                  OR: [
-                    { caseFieldValues: { none: { fieldId: numericFieldId } } },
-                    {
-                      caseFieldValues: {
-                        some: {
-                          fieldId: numericFieldId,
-                          value: { equals: Prisma.JsonNull },
-                        },
-                      },
-                    },
-                  ],
-                });
-              } else if (singleFilterId === "hasValue") {
-                // Has any date (not null, not JSON null, and not empty string)
-                filterConditions.push({
-                  caseFieldValues: {
-                    some: {
-                      fieldId: numericFieldId,
-                      AND: [
-                        { value: { not: Prisma.JsonNull } },
-                        { NOT: { value: { equals: Prisma.JsonNull } } },
-                        { NOT: { value: { equals: "" } } },
-                        { NOT: { value: { equals: null } } },
-                      ],
-                    },
-                  },
-                });
-              } else if (singleFilterId === "last7") {
-                // Last 7 days
-                const now = new Date();
-                const sevenDaysAgo = new Date(
-                  now.getTime() - 7 * 24 * 60 * 60 * 1000
-                );
-                const sevenDaysAgoStr = sevenDaysAgo
-                  .toISOString()
-                  .split("T")[0];
-                filterConditions.push({
-                  caseFieldValues: {
-                    some: {
-                      fieldId: numericFieldId,
-                      OR: [
-                        { value: { gte: sevenDaysAgoStr } },
-                        { value: { gte: sevenDaysAgo.toISOString() } },
-                      ],
-                    },
-                  },
-                });
-              } else if (singleFilterId === "last30") {
-                // Last 30 days
-                const now = new Date();
-                const thirtyDaysAgo = new Date(
-                  now.getTime() - 30 * 24 * 60 * 60 * 1000
-                );
-                const thirtyDaysAgoStr = thirtyDaysAgo
-                  .toISOString()
-                  .split("T")[0];
-                filterConditions.push({
-                  caseFieldValues: {
-                    some: {
-                      fieldId: numericFieldId,
-                      OR: [
-                        { value: { gte: thirtyDaysAgoStr } },
-                        { value: { gte: thirtyDaysAgo.toISOString() } },
-                      ],
-                    },
-                  },
-                });
-              } else if (singleFilterId === "last90") {
-                // Last 90 days
-                const now = new Date();
-                const ninetyDaysAgo = new Date(
-                  now.getTime() - 90 * 24 * 60 * 60 * 1000
-                );
-                const ninetyDaysAgoStr = ninetyDaysAgo
-                  .toISOString()
-                  .split("T")[0];
-                filterConditions.push({
-                  caseFieldValues: {
-                    some: {
-                      fieldId: numericFieldId,
-                      OR: [
-                        { value: { gte: ninetyDaysAgoStr } },
-                        { value: { gte: ninetyDaysAgo.toISOString() } },
-                      ],
-                    },
-                  },
-                });
-              } else if (singleFilterId === "thisYear") {
-                // This year
-                const now = new Date();
-                const startOfYear = new Date(now.getFullYear(), 0, 1);
-                const startOfYearStr = startOfYear.toISOString().split("T")[0];
-                filterConditions.push({
-                  caseFieldValues: {
-                    some: {
-                      fieldId: numericFieldId,
-                      OR: [
-                        { value: { gte: startOfYearStr } },
-                        { value: { gte: startOfYear.toISOString() } },
-                      ],
-                    },
-                  },
-                });
-              } else if (
-                typeof singleFilterId === "string" &&
-                singleFilterId.includes("|")
-              ) {
-                // Operator-based filter: format is "operator|date1" or "operator|date1|date2"
-                const parts = singleFilterId.split("|");
-                const operator = parts[0];
-
-                if (operator === "on" && parts.length >= 2) {
-                  // On date (exact match)
-                  const date = new Date(parts[1]);
-                  if (!isNaN(date.getTime())) {
-                    const dateStr = date.toISOString().split("T")[0];
-                    filterConditions.push({
-                      caseFieldValues: {
-                        some: {
-                          fieldId: numericFieldId,
-                          OR: [
-                            { value: { equals: dateStr } },
-                            { value: { equals: date.toISOString() } },
-                          ],
-                        },
-                      },
-                    });
-                  }
-                } else if (operator === "before" && parts.length >= 2) {
-                  // Before date
-                  const date = new Date(parts[1]);
-                  if (!isNaN(date.getTime())) {
-                    const dateStr = date.toISOString().split("T")[0];
-                    filterConditions.push({
-                      caseFieldValues: {
-                        some: {
-                          fieldId: numericFieldId,
-                          OR: [
-                            { value: { lt: dateStr } },
-                            { value: { lt: date.toISOString() } },
-                          ],
-                        },
-                      },
-                    });
-                  }
-                } else if (operator === "after" && parts.length >= 2) {
-                  // After date
-                  const date = new Date(parts[1]);
-                  if (!isNaN(date.getTime())) {
-                    const dateStr = date.toISOString().split("T")[0];
-                    filterConditions.push({
-                      caseFieldValues: {
-                        some: {
-                          fieldId: numericFieldId,
-                          OR: [
-                            { value: { gt: dateStr } },
-                            { value: { gt: date.toISOString() } },
-                          ],
-                        },
-                      },
-                    });
-                  }
-                } else if (operator === "between" && parts.length === 3) {
-                  // Between two dates
-                  const date1 = new Date(parts[1]);
-                  const date2 = new Date(parts[2]);
-                  if (!isNaN(date1.getTime()) && !isNaN(date2.getTime())) {
-                    const dateStr1 = date1.toISOString().split("T")[0];
-                    const dateStr2 = date2.toISOString().split("T")[0];
-                    filterConditions.push({
-                      caseFieldValues: {
-                        some: {
-                          fieldId: numericFieldId,
-                          OR: [
-                            {
-                              AND: [
-                                { value: { gte: dateStr1 } },
-                                { value: { lte: dateStr2 } },
-                              ],
-                            },
-                            {
-                              AND: [
-                                { value: { gte: date1.toISOString() } },
-                                { value: { lte: date2.toISOString() } },
-                              ],
-                            },
-                          ],
-                        },
-                      },
-                    });
-                  }
-                }
-              } else if ((singleFilterId as number) === 1) {
-                // Legacy: Has date
-                filterConditions.push({
-                  caseFieldValues: {
-                    some: {
-                      fieldId: numericFieldId,
-                      value: { not: Prisma.JsonNull },
-                    },
-                  },
-                });
-              } else if ((singleFilterId as number) === 2) {
-                // Legacy: No date
-                filterConditions.push({
-                  OR: [
-                    { caseFieldValues: { none: { fieldId: numericFieldId } } },
-                    {
-                      caseFieldValues: {
-                        some: {
-                          fieldId: numericFieldId,
-                          value: { equals: Prisma.JsonNull },
-                        },
-                      },
-                    },
-                  ],
-                });
-              }
-            } else if (
-              fieldType === "Text Long" ||
-              fieldType === "Text String"
-            ) {
-              // Handle hasValue/none special filters
-              if (singleFilterId === "hasValue") {
-                // Has text - filter for non-null, non-empty values
-                filterConditions.push({
-                  caseFieldValues: {
-                    some: {
-                      fieldId: numericFieldId,
-                      AND: [
-                        { value: { not: Prisma.JsonNull } },
-                        { value: { not: { equals: "" } } },
-                      ],
-                    },
-                  },
-                });
-              } else if (singleFilterId === "none") {
-                // No text - filter for null, empty, or non-existent
-                filterConditions.push({
-                  OR: [
-                    { caseFieldValues: { none: { fieldId: numericFieldId } } },
-                    {
-                      caseFieldValues: {
-                        some: {
-                          fieldId: numericFieldId,
-                          OR: [
-                            { value: { equals: Prisma.JsonNull } },
-                            { value: { equals: "" } },
-                          ],
-                        },
-                      },
-                    },
-                  ],
-                });
-              } else if (
-                typeof singleFilterId === "string" &&
-                singleFilterId.includes("|")
-              ) {
-                // Operator-based text filtering
-                const parts = singleFilterId.split("|");
-                const _operator = parts[0];
-                const searchValue = parts[1];
-
-                if (searchValue) {
-                  // For text operators, we fetch all non-null values and filter in application logic
-                  // This is necessary because Prisma doesn't support advanced string operations on JSON fields
-                  filterConditions.push({
-                    caseFieldValues: {
-                      some: {
-                        fieldId: numericFieldId,
-                        value: { not: Prisma.JsonNull },
-                      },
-                    },
-                  });
-                  // Note: Actual text filtering will happen after fetch in application logic
-                }
-              }
-            }
-          } else {
-            // Apply specific filter for standard views (using switch)
-            switch (viewType) {
-              case "templates":
-                filterConditions.push({
-                  templateId: { equals: Number(singleFilterId) },
-                });
-                break;
-              case "states":
-                filterConditions.push({
-                  stateId: { equals: Number(singleFilterId) },
-                });
-                break;
-              case "creators":
-                filterConditions.push({
-                  creatorId: { equals: singleFilterId?.toString() },
-                });
-                break;
-              case "automated":
-                filterConditions.push({
-                  automated: (singleFilterId as number) === 1 ? true : false,
-                });
-                break;
-              case "parameterized":
-                filterConditions.push({
-                  hasParameters: (singleFilterId as number) === 1,
-                });
-                break;
-              case "tags":
-                if (singleFilterId === "any") {
-                  filterConditions.push({
-                    tags: { some: { isDeleted: false } },
-                  });
-                } else if (singleFilterId === "none") {
-                  filterConditions.push({
-                    tags: { none: { isDeleted: false } },
-                  });
-                } else {
-                  filterConditions.push({
-                    tags: {
-                      some: { id: Number(singleFilterId), isDeleted: false },
-                    },
-                  });
-                }
-                break;
-              case "issues":
-                if (singleFilterId === "any") {
-                  filterConditions.push({
-                    issues: { some: { isDeleted: false } },
-                  });
-                } else if (singleFilterId === "none") {
-                  filterConditions.push({
-                    issues: { none: { isDeleted: false } },
-                  });
-                } else {
-                  filterConditions.push({
-                    issues: {
-                      some: { id: Number(singleFilterId), isDeleted: false },
-                    },
-                  });
-                }
-                break;
-            }
-          }
-        }
-
-        // Combine all filter conditions with OR (union of results)
-        if (filterConditions.length > 0) {
-          baseConditions.push({ OR: filterConditions });
-        }
-      }
-
-      const finalWhereClause: Prisma.RepositoryCasesWhereInput = {
-        AND: baseConditions,
-      };
-      return finalWhereClause;
-    }, [
-      deferredSearchString,
-      projectId,
-      viewType,
-      folderId,
-      filterId,
-      descendantFolderIds,
-      isSelectionMode,
-      excludeNotStartedFromRuns,
-    ]);
-
-  // When `showDescendants` is on with a selected folder, the descendant folder
-  // IDs are fetched via a POST endpoint that resolves them server-side (recursive
-  // CTE). This avoids serializing a very large `folderId: { in: [...] }` array
-  // into the URL of the ZenStack GET request, which triggers HTTP 414 on deep
-  // folder trees.
-  const isDescendantsMode =
-    showDescendants &&
-    folderId !== null &&
-    folderId !== undefined &&
-    viewType === "folders" &&
-    !isRunMode &&
-    (descendantFolderIds?.length ?? 0) > 0;
-
-  // The descendants POST body omits the folder filter — the server injects it
-  // after resolving the subtree.
-  const repositoryCaseWhereClauseWithoutFolderFilter: Prisma.RepositoryCasesWhereInput =
-    useMemo(() => {
-      if (!isDescendantsMode) return repositoryCaseWhereClause;
-      const andList = Array.isArray(repositoryCaseWhereClause.AND)
-        ? (repositoryCaseWhereClause.AND as Prisma.RepositoryCasesWhereInput[])
-        : repositoryCaseWhereClause.AND
-          ? [repositoryCaseWhereClause.AND as Prisma.RepositoryCasesWhereInput]
-          : [];
-      return {
-        AND: andList.filter((cond) => !("folderId" in (cond ?? {}))),
-      };
-    }, [isDescendantsMode, repositoryCaseWhereClause]);
-
-  // Build post-fetch filters for text/link/steps operators
-  const postFetchFilters: PostFetchFilter[] = useMemo(() => {
-    const filters: PostFetchFilter[] = [];
-
-    if (!filterId || !viewType) {
-      return filters;
+    if (isSelectionMode && excludeNotStartedFromRuns) {
+      baseConditions.push({
+        state: { workflowType: { not: "NOT_STARTED" } },
+      });
     }
 
-    if (!viewType.startsWith("dynamic_")) {
-      return filters;
-    }
-
-    const filterArray = Array.isArray(filterId) ? filterId : [filterId];
-
-    for (const singleFilterId of filterArray) {
-      if (typeof singleFilterId === "string" && singleFilterId.includes("|")) {
-        // Extract field info from viewType
-        const parts = viewType.split("_");
-        const fieldId = parseInt(parts[1]);
-        const fieldType = parts.slice(2).join("_");
-
-        if (fieldType === "Text Long" || fieldType === "Text String") {
-          const filterParts = singleFilterId.split("|");
-          filters.push({
-            fieldId,
-            type: "text",
-            operator: filterParts[0],
-            value1: filterParts[1],
-          });
-        } else if (fieldType === "Link") {
-          const filterParts = singleFilterId.split("|");
-          filters.push({
-            fieldId,
-            type: "link",
-            operator: filterParts[0],
-            value1: filterParts[1],
-          });
-        } else if (fieldType === "Steps") {
-          const filterParts = singleFilterId.split("|");
-          const count1 = parseInt(filterParts[1]);
-          const count2 = filterParts[2] ? parseInt(filterParts[2]) : undefined;
-          if (!isNaN(count1)) {
-            filters.push({
-              fieldId,
-              type: "steps",
-              operator: filterParts[0],
-              value1: count1,
-              value2: count2,
-            });
-          }
-        }
+    if (viewType === "folders" && folderId) {
+      // Folder view with specific folder (or folder + all descendants)
+      if (descendantFolderIds && descendantFolderIds.length > 0) {
+        baseConditions.push({ folderId: { in: descendantFolderIds } });
+      } else {
+        baseConditions.push({ folderId: { equals: folderId } });
       }
     }
 
-    return filters;
-  }, [filterId, viewType]);
+    // One self-contained fragment per predicate, AND'd with the base
+    // conditions. Run-scoped predicates (status/assignedTo) are skipped by the
+    // compiler and applied to the TestRunCases where instead; text/link/steps
+    // operator predicates compile to their value-not-null SQL pre-filter only —
+    // postFetchFilters below carries their in-memory half.
+    baseConditions.push(
+      ...compileRepoPredicates(predicates, filterRegistry, { inReviewCaseIds })
+    );
 
-  // Build test run case where clause (used for filtering by assignedTo and status)
-  const testRunCaseWhereClause: Prisma.TestRunCasesWhereInput = useMemo(() => {
-    if (
-      !isRunMode ||
-      !filterId ||
-      (viewType !== "assignedTo" && viewType !== "status")
-    ) {
-      return {};
-    }
+    const finalWhereClause: RepositoryCasesWhereInput = {
+      AND: baseConditions,
+    };
+    return finalWhereClause;
+  }, [
+    deferredSearchString,
+    projectId,
+    viewType,
+    folderId,
+    predicates,
+    filterRegistry,
+    inReviewCaseIds,
+    descendantFolderIds,
+    isSelectionMode,
+    excludeNotStartedFromRuns,
+  ]);
 
-    const filterArray = Array.isArray(filterId) ? filterId : [filterId];
-    const filterConditions: any[] = [];
+  // An `inReview` predicate is answered from a separately fetched id set. Until
+  // it resolves the compiler's empty-set default would render "no cases in
+  // review" — same failure mode as running a search before its ids land, so it
+  // gets the same treatment: gate the queries off and show loading.
+  const inReviewUnresolved =
+    inReviewCaseIds === undefined &&
+    predicates.some((predicate) => predicate.dimension === IN_REVIEW_DIMENSION);
 
-    for (const singleFilterId of filterArray) {
-      if (viewType === "assignedTo") {
-        if (singleFilterId === "unassigned") {
-          filterConditions.push({ assignedToId: { equals: null } });
-        } else {
-          filterConditions.push({
-            assignedToId: { equals: singleFilterId as string },
-          });
-        }
-      } else if (viewType === "status") {
-        if (singleFilterId === "untested") {
-          filterConditions.push({ statusId: { equals: null } });
-        } else {
-          filterConditions.push({
-            statusId: { equals: singleFilterId as number },
-          });
-        }
-      }
-    }
+  // Post-fetch filters for text/link/steps operator predicates — the in-memory
+  // half of the fragments compileRepoPredicates pre-filters as value-not-null.
+  const postFetchFilters: PostFetchFilter[] = useMemo(
+    () => extractPostFetchFilters(predicates, filterRegistry),
+    [predicates, filterRegistry]
+  );
 
-    if (filterConditions.length > 0) {
-      return { OR: filterConditions };
-    }
-    return {};
-  }, [isRunMode, viewType, filterId]);
+  // --- One transport (spec §9) ---------------------------------------------
+  // The list, the count and the id list all come from POST /cases/query, in
+  // repository AND run mode. The table used to choose per query between the
+  // ZenStack GET hooks, the by-folder-descendants POST and this route, based on
+  // whether a search was active and how long the serialized `where` was — and
+  // the list query and the count query made that choice independently, so a
+  // disagreement showed rows and a total that did not match. "Show all
+  // descendants" needs no separate endpoint here: `descendantFolderIds` is
+  // already resolved client-side into `repositoryCaseWhereClause`, and a POST
+  // body has no URI length to overflow.
+  const searchActive = Array.isArray(searchResultIds);
+  // A search is in play whose id set is unusable — still resolving, or failed.
+  // Before Phase 4 the ids were a bypass and a missing set simply meant "no
+  // search"; now they are an AND'd filter, so falling through to the ordinary
+  // query would render the ENTIRE repository as if the search had matched
+  // everything. Every list/count query is gated off here and the render shows
+  // loading (pending) or the error state (failed) instead — spec §9's "no
+  // silent fallback to unfiltered".
+  const searchUnresolved = searchPending || searchFailed;
+
+  // A plain useQuery sits outside ZenStack's model-keyed query graph, so the
+  // automatic post-mutation invalidation the GET hooks had is re-established
+  // centrally here — one seam for every mutation site, present and future.
+  // It also hands back the manual invalidator the few call sites below use.
+  const invalidateCaseList = useRepositoryCasesInvalidation();
+
+  // Run-scoped predicate fragments (status/assignedTo). Every fragment carries
+  // an OR key, so they MUST be combined in an explicit AND array — spreading
+  // two as siblings silently overwrites the first (compiler contract).
+  const runPredicateFragments: TestRunCasesWhereInput[] = useMemo(
+    () => (isRunMode ? compileRunPredicates(predicates, filterRegistry) : []),
+    [isRunMode, predicates, filterRegistry]
+  );
 
   // Create orderBy for TestRunCases based on sortConfig
-  const testRunCasesOrderBy: Prisma.TestRunCasesOrderByWithRelationInput =
+  const testRunCasesOrderBy: NonNullable<TestRunCasesFindManyArgs["orderBy"]> =
     useMemo(() => {
       if (!sortConfig || isDefaultSort) {
         return { order: "asc" }; // Default to run order
@@ -1705,15 +1254,22 @@ export default function Cases({
       } else if (column === "attachments") {
         return { repositoryCase: { attachments: { _count: direction } } };
       } else if (column === "steps") {
-        return { repositoryCase: { steps: { _count: direction } } };
+        // Not `steps: { _count }`: a relation count orderBy takes no `where`, so it
+        // counts retired (soft-deleted) steps the column does not display. The
+        // trigger-maintained scalar counts live steps only.
+        return { repositoryCase: { liveStepCount: direction } };
       } else if (column === "tags") {
-        return { repositoryCase: { tags: { _count: direction } } };
+        return { repositoryCase: { caseTags: { _count: direction } } };
       } else if (column === "issues") {
-        return { repositoryCase: { issues: { _count: direction } } };
-      } else {
-        // For any other column, try to order by the repositoryCase field
+        return { repositoryCase: { caseIssues: { _count: direction } } };
+      } else if (REPOSITORY_CASE_SORTABLE_SCALARS.has(column)) {
         return { repositoryCase: { [column]: direction } };
       }
+      // UI-only sorts (latestResults, forecast, custom-field columns) have no
+      // TestRunCases counterpart. The sort is remembered per project and shared
+      // with the repository view, so an orderBy the server rejects would empty
+      // the whole table — fall back to run order instead.
+      return { order: "asc" };
     }, [sortConfig, isDefaultSort]);
 
   // Determine which run IDs to query - use selectedRunIds if provided (multi-config), otherwise use single runId
@@ -1724,260 +1280,17 @@ export default function Cases({
         ? [runId]
         : [];
 
-  // Fetch test run cases and their related repository cases for run mode
-  const { data: testRunCasesData, refetch: refetchTestRunCases } =
-    useFindManyTestRunCases(
-      {
-        where: {
-          testRunId:
-            effectiveRunIds.length === 1
-              ? effectiveRunIds[0]
-              : { in: effectiveRunIds },
-          isDeleted: false,
-          ...testRunCaseWhereClause,
-          repositoryCase: repositoryCaseWhereClause,
-        },
-        orderBy: testRunCasesOrderBy,
-        skip: (currentPage - 1) * (pageSize === "All" ? 0 : pageSize),
-        take: pageSize === "All" ? undefined : pageSize,
-        select: {
-          id: true,
-          repositoryCaseId: true,
-          order: true,
-          statusId: true,
-          status: {
-            select: {
-              id: true,
-              name: true,
-              color: {
-                select: {
-                  value: true,
-                },
-              },
-            },
-          },
-          assignedToId: true,
-          assignedTo: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-          isCompleted: true,
-          notes: true,
-          startedAt: true,
-          completedAt: true,
-          elapsed: true,
-          // Phase 3 — surface iteration count so the status cell can detect
-          // parameterized cases and render its read-only sheet-opener.
-          totalIterations: true,
-          testRun: {
-            select: {
-              id: true,
-              configuration: {
-                select: {
-                  id: true,
-                  name: true,
-                },
-              },
-            },
-          },
-          repositoryCase: {
-            select: {
-              id: true,
-              projectId: true,
-              project: true,
-              creator: true,
-              folder: true,
-              repositoryId: true,
-              folderId: true,
-              templateId: true,
-              name: true,
-              stateId: true,
-              estimate: true,
-              forecastManual: true,
-              forecastAutomated: true,
-              order: true,
-              createdAt: true,
-              creatorId: true,
-              automated: true,
-              hasParameters: true,
-              isArchived: true,
-              isDeleted: true,
-              currentVersion: true,
-              source: true,
-              state: {
-                select: {
-                  id: true,
-                  name: true,
-                  icon: {
-                    select: {
-                      name: true,
-                    },
-                  },
-                  color: {
-                    select: {
-                      value: true,
-                    },
-                  },
-                },
-              },
-              template: {
-                select: {
-                  id: true,
-                  templateName: true,
-                  caseFields: {
-                    select: {
-                      caseField: {
-                        select: {
-                          id: true,
-                          defaultValue: true,
-                          displayName: true,
-                          type: {
-                            select: {
-                              type: true,
-                            },
-                          },
-                          fieldOptions: {
-                            select: {
-                              fieldOption: {
-                                select: {
-                                  id: true,
-                                  icon: true,
-                                  iconColor: true,
-                                  name: true,
-                                },
-                              },
-                            },
-                          },
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-              caseFieldValues: true,
-              attachments: true,
-              steps: true,
-              tags: true,
-              issues: true,
-              testRuns: {
-                select: {
-                  id: true,
-                  testRun: {
-                    select: {
-                      id: true,
-                      name: true,
-                      projectId: true,
-                      isDeleted: true,
-                      isCompleted: true,
-                    },
-                  },
-                },
-              },
-              linksFrom: {
-                select: {
-                  caseBId: true,
-                  type: true,
-                  isDeleted: true,
-                },
-              },
-              linksTo: {
-                select: {
-                  caseAId: true,
-                  type: true,
-                  isDeleted: true,
-                },
-              },
-              _count: {
-                select: {
-                  comments: {
-                    where: {
-                      isDeleted: false,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-      {
-        enabled:
-          isRunMode &&
-          !!session?.user &&
-          isValidProjectId &&
-          effectiveRunIds.length > 0,
-        refetchOnWindowFocus: true,
-      }
-    ) as {
-      data:
-        | Prisma.TestRunCasesGetPayload<{
-            select: {
-              id: true;
-              repositoryCaseId: true;
-              order: true;
-              statusId: true;
-              status: {
-                select: {
-                  id: true;
-                  name: true;
-                  color: {
-                    select: {
-                      value: true;
-                    };
-                  };
-                };
-              };
-              assignedToId: true;
-              assignedTo: {
-                select: {
-                  id: true;
-                  name: true;
-                };
-              };
-              isCompleted: true;
-              notes: true;
-              startedAt: true;
-              completedAt: true;
-              elapsed: true;
-              testRun: {
-                select: {
-                  id: true;
-                  configuration: {
-                    select: {
-                      id: true;
-                      name: true;
-                    };
-                  };
-                };
-              };
-              repositoryCase: {
-                select: {
-                  id: true;
-                  projectId: true;
-                  folderId: true;
-                  templateId: true;
-                  name: true;
-                  stateId: true;
-                  order: true;
-                  createdAt: true;
-                  creatorId: true;
-                  automated: true;
-                  hasParameters: true;
-                  isArchived: true;
-                  isDeleted: true;
-                  source: true;
-                };
-              };
-            };
-          }>[]
-        | undefined;
-      refetch: any;
-    };
+  // Run-mode TestRunCases predicate. The route forces the run scope, the
+  // project on both ends and (in search) the case id set; this carries only
+  // what the client owns — soft-delete plus the run-scoped predicate fragments
+  // (status/assignedTo). The repository half travels as `repositoryCaseWhere`.
+  const testRunCasesWhere = useMemo(
+    () => ({ isDeleted: false, AND: runPredicateFragments }),
+    [runPredicateFragments]
+  );
 
   // orderBy for repository cases (used in non-run mode)
-  const orderBy: Prisma.RepositoryCasesOrderByWithRelationInput =
+  const orderBy: NonNullable<RepositoryCasesFindManyArgs["orderBy"]> =
     useMemo(() => {
       if (isDefaultSort) {
         return { order: "asc" };
@@ -2003,13 +1316,15 @@ export default function Cases({
         return { attachments: { _count: direction } };
       }
       if (column === "steps") {
-        return { steps: { _count: direction } };
+        // See the run-mode builder above: a relation count orderBy cannot exclude
+        // retired steps, so sort on the trigger-maintained live count instead.
+        return { liveStepCount: direction };
       }
       if (column === "tags") {
-        return { tags: { _count: direction } };
+        return { caseTags: { _count: direction } };
       }
       if (column === "issues") {
-        return { issues: { _count: direction } };
+        return { caseIssues: { _count: direction } };
       }
 
       // Text-based sorting on related entities
@@ -2020,97 +1335,132 @@ export default function Cases({
         return { creator: { name: direction } };
       }
 
-      // Direct field sorting (existing behavior)
-      return { [column]: direction };
+      // Ordered by a window function over the result tables instead, so the
+      // query keeps its default order and the page ids come from
+      // useCaseIdsByLatestStatus below.
+      if (column === "latestResults") {
+        return { order: "asc" };
+      }
+
+      if (REPOSITORY_CASE_SORTABLE_SCALARS.has(column)) {
+        return { [column]: direction };
+      }
+      // Dropdown custom-field sorts order via resolved page ids (see
+      // fieldOptionPageIds below), so the query keeps its default order here.
+      // Remaining UI-only sorts (forecast, non-dropdown custom-field columns)
+      // and run-view sorts remembered under the shared per-project key
+      // (status, assignedTo) have no RepositoryCases column — an orderBy the
+      // server rejects would empty the whole table, so fall back to the
+      // default order instead.
+      return { order: "asc" };
     }, [sortConfig, isDefaultSort]);
 
-  // Add filtered count query for accurate pagination
-  // For repository mode: count repository cases
-  const { data: filteredCountData, refetch: refetchFilteredCount } =
-    useCountRepositoryCases(
-      {
-        where: repositoryCaseWhereClause,
-      },
-      {
-        enabled: Boolean(
-          // Disable when ES search is active (data comes from POST fetch instead)
-          searchResultIds
-            ? false
-            : // Disable in descendants mode (count comes from the POST endpoint)
-              isDescendantsMode
-              ? false
-              : // Skip query if we know the selected folder has 0 cases
-                viewType === "folders" && selectedFolderCaseCount === 0
-                ? false
-                : !isRunMode && // Don't run this in run mode
-                  ((!!session?.user && deferredSearchString.length === 0) ||
-                    deferredSearchString.length > 0)
-        ),
-        refetchOnWindowFocus: false,
-        // Keep previous data to prevent count from dropping to 0 during refetch
-        // This prevents pagination from resetting when switching pages
-        placeholderData: (previousData) => previousData,
-      }
-    );
+  // Counts no longer have a query of their own: the list response carries
+  // the total for the same intersection it paged, so rows and total cannot
+  // disagree. The only exception is an id-resolved sort, whose page request is
+  // scoped to one page of ids — see postQueryCountResult below.
 
-  // For run mode: count test run cases matching the filters
-  const { data: testRunCasesCountData } = useCountTestRunCases(
-    {
-      where: {
-        testRunId:
-          effectiveRunIds.length === 1
-            ? effectiveRunIds[0]
-            : { in: effectiveRunIds },
-        isDeleted: false,
-        ...testRunCaseWhereClause,
-        repositoryCase: repositoryCaseWhereClause,
-      },
-    },
-    {
-      enabled: Boolean(
-        isRunMode &&
-        !!session?.user &&
-        isValidProjectId &&
-        effectiveRunIds.length > 0
-      ),
-      refetchOnWindowFocus: false,
-      // Keep previous data to prevent count from dropping to 0 during refetch
-      placeholderData: (previousData) => previousData,
+  // Text/link/steps filters are applied in JS to the fetched rows, so the
+  // select-all ids query has to carry the relations those filters read — with
+  // the same visibility rules as the list query, or select-all would resolve to
+  // a different set of cases than the one on screen.
+  const selectAllIdsSelect = useMemo<RepositoryCasesSelect>(() => {
+    const select: RepositoryCasesSelect = { id: true, isDeleted: true };
+    if (postFetchFilters.length === 0) return select;
+
+    const valueFieldIds = postFetchFilters
+      .filter((filter) => filter.type === "text" || filter.type === "link")
+      .map((filter) => filter.fieldId);
+
+    if (valueFieldIds.length > 0) {
+      select.template = {
+        select: {
+          caseFields: { select: { caseField: { select: { id: true } } } },
+        },
+      };
+      select.caseFieldValues = {
+        where: {
+          ...CASE_FIELD_VALUES_SELECT.where,
+          fieldId: { in: valueFieldIds },
+        },
+        select: { fieldId: true, value: true },
+      };
     }
+
+    if (postFetchFilters.some((filter) => filter.type === "steps")) {
+      select.steps = {
+        where: { isDeleted: false, OR: STEP_VISIBILITY_OR },
+        select: { id: true },
+      };
+    }
+
+    return select;
+  }, [postFetchFilters]);
+
+  // Stable name of the select-all row shape for the query key. The select
+  // itself varies only with the post-fetch filters it has to feed, so the field
+  // ids it carries are the whole of its identity — hashing the object would
+  // just be a bigger way of saying this.
+  const selectAllIdsSelectKey = useMemo(
+    () =>
+      postFetchFilters.length === 0
+        ? "ids"
+        : `selectAll:${postFetchFilters
+            .map((filter) => `${filter.type}:${filter.fieldId}`)
+            .sort()
+            .join(",")}`,
+    [postFetchFilters]
   );
 
-  // Query to fetch all case IDs when Shift+click Select All is used
-  const { data: allCaseIdsDataZenStack } = useFindManyRepositoryCasesFiltered(
+  // Search active + default sort => Elasticsearch relevance wins, and that
+  // order lives only in the position of searchResultIds, so the route is asked
+  // for it by omitting orderBy. A user-chosen (or remembered) column sort wins
+  // over relevance — the table must obey its own sort header (spec §9).
+  const useRelevanceOrder = searchActive && isDefaultSort;
+
+  // The full intersected id list behind select-all and the details panel's
+  // prev/next. `idsOnly` is enough unless text/link/steps matchers have to run
+  // in memory — those need the rows the matchers read, so the same request
+  // carries the select-all select instead.
+  const allIdsNeedRows = postFetchFilters.length > 0;
+  const allIdsWanted =
+    fetchAllIdsForSelection ||
+    Boolean(selectedCaseIdParam && !isRunMode && !isSelectionMode);
+  const postQueryAllIdsResult = useRepositoryCasesQuery(
     {
+      projectId,
       where: repositoryCaseWhereClause,
-      select: {
-        id: true,
-        isDeleted: true,
-      },
+      orderBy: useRelevanceOrder ? undefined : orderBy,
+      select: allIdsNeedRows ? selectAllIdsSelect : undefined,
+      selectKey: selectAllIdsSelectKey,
+      idsOnly: !allIdsNeedRows,
+      searchCaseIds: searchResultIds ?? undefined,
+      searchKey,
+      enabled: Boolean(
+        allIdsWanted && !isRunMode && !searchUnresolved && !!session?.user
+      ),
+      // The ids are consumed as soon as they arrive; a previous view's set must
+      // never be applied to the cases now on screen.
+      keepPreviousData: false,
     },
-    postFetchFilters.length > 0 ? postFetchFilters : undefined,
-    {
-      enabled: fetchAllIdsForSelection && !isRunMode && !isDescendantsMode,
-      refetchOnWindowFocus: false,
-    }
+    allIdsNeedRows ? postFetchFilters : undefined
   );
 
-  // Parallel select-all-IDs fetch for descendants mode (POST to avoid 414)
-  const { data: allCaseIdsDataDescendants } =
-    useFindManyRepositoryCasesByDescendants(
-      {
-        projectId,
-        folderId: folderId ?? 0,
-        where: repositoryCaseWhereClauseWithoutFolderFilter,
-        select: { id: true, isDeleted: true },
-        enabled: fetchAllIdsForSelection && !isRunMode && isDescendantsMode,
-      },
-      postFetchFilters.length > 0 ? postFetchFilters : undefined
-    );
+  const postQueryAllCaseIds = useMemo<number[] | undefined>(() => {
+    if (allIdsNeedRows) {
+      return postQueryAllIdsResult.data?.map((row: { id: number }) => row.id);
+    }
+    return postQueryAllIdsResult.ids;
+  }, [allIdsNeedRows, postQueryAllIdsResult.data, postQueryAllIdsResult.ids]);
 
-  const allCaseIdsData = isDescendantsMode
-    ? allCaseIdsDataDescendants
-    : allCaseIdsDataZenStack;
+  // Memoized: it keys the select-all effect below, and an unstable identity
+  // would re-run that effect on every render. `idsOnly` returns bare ids; the
+  // effect reads {id, isDeleted} rows (policy and isDeleted filtering already
+  // happened server-side).
+  const allCaseIdsData = useMemo(
+    () => postQueryAllCaseIds?.map((id) => ({ id, isDeleted: false })),
+    [postQueryAllCaseIds]
+  );
 
   const isTotalLoading = false;
 
@@ -2150,407 +1500,252 @@ export default function Cases({
     }
   }, [allCaseIdsData, selectAllAction, isSelectionMode, onSelectionChange, t]);
 
-  const result = useFindManyRepositoryCasesFiltered(
-    {
-      orderBy: orderBy,
-      where: repositoryCaseWhereClause,
-      select: REPOSITORY_CASE_LIST_SELECT,
-      // When post-fetch filtering is active, fetch all data (no pagination)
-      // Otherwise apply server-side pagination for repository mode
-      skip:
-        postFetchFilters.length > 0
-          ? undefined
-          : (currentPage - 1) * (pageSize === "All" ? 0 : pageSize),
-      take:
-        postFetchFilters.length > 0
-          ? undefined
-          : pageSize === "All"
-            ? undefined
-            : pageSize,
-    },
-    postFetchFilters.length > 0 ? postFetchFilters : undefined,
-    {
-      enabled: Boolean(
-        // Disable when ES search is active (data comes from POST fetch instead)
-        searchResultIds
-          ? false
-          : // Disable in descendants mode (data comes from POST endpoint)
-            isDescendantsMode
-            ? false
-            : // Skip query if we know the selected folder has 0 cases
-              viewType === "folders" && selectedFolderCaseCount === 0
-              ? false
-              : !isRunMode && // Don't run this query in run mode - we use testRunCasesData instead
-                ((!!session?.user && deferredSearchString.length === 0) ||
-                  deferredSearchString.length > 0)
-      ),
-      refetchOnWindowFocus: false,
-    },
-    // When post-fetch filtering is active, apply client-side pagination
-    postFetchFilters.length > 0
-      ? {
-          skip: (currentPage - 1) * (pageSize === "All" ? 0 : pageSize),
-          take: pageSize === "All" ? undefined : pageSize,
-        }
-      : undefined
-  ) as {
-    data:
-      | Prisma.RepositoryCasesGetPayload<{
-          select: {
-            id: true;
-            projectId: true;
-            project: true;
-            creator: true;
-            folder: true;
-            repositoryId: true;
-            folderId: true;
-            templateId: true;
-            name: true;
-            stateId: true;
-            estimate: true;
-            forecastManual: true;
-            forecastAutomated: true;
-            order: true;
-            createdAt: true;
-            creatorId: true;
-            automated: true;
-            hasParameters: true;
-            isArchived: true;
-            isDeleted: true;
-            currentVersion: true;
-            source: true;
-            state: {
-              select: {
-                id: true;
-                name: true;
-                icon: {
-                  select: {
-                    name: true;
-                  };
-                };
-                color: {
-                  select: {
-                    value: true;
-                  };
-                };
-              };
-            };
-            template: {
-              select: {
-                id: true;
-                templateName: true;
-                caseFields: {
-                  select: {
-                    caseField: {
-                      select: {
-                        id: true;
-                        defaultValue: true;
-                        displayName: true;
-                        type: {
-                          select: {
-                            type: true;
-                          };
-                        };
-                        fieldOptions: {
-                          select: {
-                            fieldOption: {
-                              select: {
-                                id: true;
-                                icon: true;
-                                iconColor: true;
-                                name: true;
-                              };
-                            };
-                          };
-                        };
-                      };
-                    };
-                  };
-                };
-              };
-            };
-            caseFieldValues: {
-              select: {
-                id: true;
-                value: true;
-                fieldId: true;
-                field: {
-                  select: {
-                    id: true;
-                    displayName: true;
-                    type: {
-                      select: {
-                        type: true;
-                      };
-                    };
-                  };
-                };
-              };
-              where: { field: { isEnabled: true; isDeleted: false } };
-            };
-            attachments: {
-              orderBy: { createdAt: "desc" };
-              where: { isDeleted: false };
-            };
-            steps: {
-              where: {
-                isDeleted: false;
-                OR: [
-                  { sharedStepGroupId: null },
-                  { sharedStepGroup: { isDeleted: false } },
-                ];
-              };
-              orderBy: { order: "asc" };
-              select: {
-                id: true;
-                order: true;
-                step: true;
-                expectedResult: true;
-                sharedStepGroupId: true;
-                sharedStepGroup: {
-                  select: {
-                    name: true;
-                  };
-                };
-              };
-            };
-            tags: {
-              where: {
-                isDeleted: false;
-              };
-            };
-            issues: {
-              where: {
-                isDeleted: false;
-              };
-            };
-            testRuns: {
-              select: {
-                id: true;
-                testRun: {
-                  select: {
-                    id: true;
-                    name: true;
-                    projectId: true;
-                    isDeleted: true;
-                    isCompleted: true;
-                  };
-                };
-                results: {
-                  select: {
-                    id: true;
-                    executedAt: true;
-                    status: {
-                      select: {
-                        id: true;
-                        name: true;
-                        color: {
-                          select: {
-                            value: true;
-                          };
-                        };
-                      };
-                    };
-                  };
-                  where: {
-                    isDeleted: false;
-                  };
-                  orderBy: {
-                    executedAt: "desc";
-                  };
-                  take: 1;
-                };
-              };
-            };
-            linksFrom: {
-              select: {
-                caseBId: true;
-                type: true;
-                isDeleted: true;
-              };
-            };
-            linksTo: {
-              select: {
-                caseAId: true;
-                type: true;
-                isDeleted: true;
-              };
-            };
-          };
-        }>[]
-      | undefined;
-    isLoading: boolean;
-    totalCount: number;
-    refetch: any;
-  };
-
-  const {
-    data: zenStackData,
-    isLoading: zenStackIsLoading,
-    totalCount: zenStackFilteredTotalCount,
-    refetch: zenStackRefetchData,
-  } = result;
-
-  // Descendants POST path: same shape as `result`, used when the folder subtree
-  // is too large to serialize into the ZenStack GET query string.
-  const descendantsResult = useFindManyRepositoryCasesByDescendants(
-    {
-      projectId,
-      folderId: folderId ?? 0,
-      where: repositoryCaseWhereClauseWithoutFolderFilter,
-      orderBy,
-      select: REPOSITORY_CASE_LIST_SELECT,
-      skip:
-        postFetchFilters.length > 0
-          ? undefined
-          : (currentPage - 1) * (pageSize === "All" ? 0 : pageSize),
-      take:
-        postFetchFilters.length > 0
-          ? undefined
-          : pageSize === "All"
-            ? undefined
-            : pageSize,
-      enabled: Boolean(
-        isDescendantsMode && !!session?.user && isValidProjectId
-      ),
-    },
-    postFetchFilters.length > 0 ? postFetchFilters : undefined,
-    postFetchFilters.length > 0
-      ? {
-          skip: (currentPage - 1) * (pageSize === "All" ? 0 : pageSize),
-          take: pageSize === "All" ? undefined : pageSize,
-        }
-      : undefined
+  // The id-resolved sorts run during a search too, by AND'ing the resolved
+  // Elasticsearch ids into the where they resolve against. Skipping them
+  // instead (the pre-review behaviour) silently degraded the table to default
+  // order while the sort header still claimed the sort and the relevance pill
+  // stayed hidden — the UI would name an order it was not using. Both
+  // resolvers are server actions, so the where travels in a POST body and even
+  // a 10,000-id set cannot overflow a URL.
+  const idSortWhere = useMemo(
+    () =>
+      searchActive
+        ? {
+            AND: [
+              repositoryCaseWhereClause,
+              { id: { in: searchResultIds as number[] } },
+            ],
+          }
+        : repositoryCaseWhereClause,
+    [searchActive, repositoryCaseWhereClause, searchResultIds]
   );
 
-  const data = isDescendantsMode ? descendantsResult.data : zenStackData;
-  const isLoading = isDescendantsMode
-    ? descendantsResult.isLoading
-    : zenStackIsLoading;
-  const filteredTotalCount = isDescendantsMode
-    ? descendantsResult.totalCount
-    : zenStackFilteredTotalCount;
-  const refetchData = isDescendantsMode
-    ? descendantsResult.refetch
-    : zenStackRefetchData;
+  // Sorting by Latest Results orders on the status of each case's most recent
+  // result, which no ZenStack orderBy can express. The ids for the page are
+  // resolved first, then handed to the query below as the whole filter, so the
+  // existing hook still does the hydration, policy checks and caching.
+  const isLatestResultsSort =
+    !isDefaultSort && sortConfig?.column === "latestResults";
+  const { pageIds: latestStatusPageIds } = useCaseIdsByLatestStatus({
+    where: idSortWhere,
+    direction: sortConfig?.direction ?? "asc",
+    skip: (currentPage - 1) * (pageSize === "All" ? 0 : pageSize),
+    take: pageSize === "All" ? undefined : pageSize,
+    enabled: Boolean(
+      isLatestResultsSort &&
+      !isRunMode &&
+      // An unresolved search would resolve the page against the un-searched
+      // superset.
+      !searchUnresolved &&
+      // Works in descendants mode too: this is a server action (the where goes
+      // in the POST body), so a large folder subtree can't overflow a URL.
+      postFetchFilters.length === 0
+    ),
+  });
 
-  // --- ES search POST-based data fetching ---
-  // When searchResultIds is active, fetch case data via POST to avoid URL length limits.
-  const [searchData, setSearchData] = useState<any[] | null>(null);
-  const [searchDataLoading, setSearchDataLoading] = useState(false);
+  // A custom-field column stores its numeric field id as the sort column id.
+  // Only Dropdown fields sort this way — their options carry an admin-defined
+  // order — so resolve the id back to a field and keep it only when that field
+  // is a Dropdown. Like latest results, the option order lives behind a Json
+  // value no ZenStack orderBy can reach, so the ordered page ids are resolved
+  // by a server action and handed to the query below as the whole filter.
+  const fieldOptionSortFieldId = useMemo(() => {
+    if (isDefaultSort || !sortConfig) return null;
+    if (!/^\d+$/.test(sortConfig.column)) return null;
+    const fieldId = Number(sortConfig.column);
+    const field = uniqueCaseFieldList.find((f) => f.id === fieldId);
+    return field?.type?.type === "Dropdown" ? fieldId : null;
+  }, [isDefaultSort, sortConfig, uniqueCaseFieldList]);
+  const isFieldOptionSort = fieldOptionSortFieldId !== null;
+  const { pageIds: fieldOptionPageIds } = useCaseIdsByFieldOption({
+    where: idSortWhere,
+    fieldId: fieldOptionSortFieldId ?? 0,
+    direction: sortConfig?.direction ?? "asc",
+    skip: (currentPage - 1) * (pageSize === "All" ? 0 : pageSize),
+    take: pageSize === "All" ? undefined : pageSize,
+    enabled: Boolean(
+      isFieldOptionSort &&
+      !isRunMode &&
+      !searchUnresolved &&
+      postFetchFilters.length === 0
+    ),
+  });
 
+  // Whichever id-resolved sort is active (they are mutually exclusive: one
+  // sort column at a time).
+  const sortedPageIds = latestStatusPageIds ?? fieldOptionPageIds;
+
+  // Whether an id-resolved sort governs the list right now. Downstream
+  // total-count plumbing must branch on this MODE, not on `sortedPageIds`
+  // presence: the resolved ids flicker to undefined while a page flip
+  // re-resolves, and in that gap an ids-presence branch falls back to the list
+  // query's page-sized totalCount — which collapses totalPages to 1 and lets
+  // the page clamp yank the user back to page 1.
+  const idResolvedSortActive =
+    (isLatestResultsSort || isFieldOptionSort) &&
+    !isRunMode &&
+    !searchUnresolved &&
+    !inReviewUnresolved &&
+    postFetchFilters.length === 0;
+
+  // An id-resolved sort that resolved to an empty page: the ordered page-id
+  // list came back empty (no matching cases, or a transient during the sort).
+  // The list derives empty from this anyway, so skip the id-filtered fetch that
+  // would otherwise query `id: { in: [] }`.
+  const sortedPageEmpty =
+    (isLatestResultsSort || isFieldOptionSort) &&
+    Array.isArray(sortedPageIds) &&
+    sortedPageIds.length === 0;
+
+  // ---- THE list query -----------------------------------------------------
+  // Repository mode and run mode differ only in scope operands and row shape,
+  // so both go through the same POST hook. The response carries the rows AND
+  // the total for the same intersection, which is why there is no separate
+  // count query to drift out of step with it.
+  // Text/link/steps matchers run in memory, so those requests fetch the whole
+  // matching set and paginate client-side. Run mode does NOT do this — it never
+  // has, and the matchers would have to reach through `repositoryCase` — so a
+  // text predicate there still pre-filters in SQL only.
+  const clientPaginated = !isRunMode && postFetchFilters.length > 0;
+  const postQuerySkip = (currentPage - 1) * (pageSize === "All" ? 0 : pageSize);
+  const postQueryTake = pageSize === "All" ? undefined : pageSize;
+
+  // The selected folder is known to be empty and no predicate is active, so the
+  // answer is "no rows" without asking (spec §7.1).
+  const knownEmptyFolder =
+    predicates.length === 0 &&
+    viewType === "folders" &&
+    selectedFolderCaseCount === 0;
+
+  const listEnabled = Boolean(
+    !!session?.user &&
+    isValidProjectId &&
+    // A search whose ids are unresolved or failed must not fall through to a
+    // query without them — that would render the whole repository as if the
+    // search had matched everything.
+    !searchUnresolved &&
+    !inReviewUnresolved &&
+    (isRunMode
+      ? effectiveRunIds.length > 0
+      : // An id-resolved sort that resolved to an empty page has nothing to
+        // fetch; the list derives empty from it anyway.
+        !sortedPageEmpty && !knownEmptyFolder)
+  );
+
+  const postQueryResult = useRepositoryCasesQuery(
+    {
+      projectId,
+      testRunIds: isRunMode ? effectiveRunIds : undefined,
+      // An id-resolved sort narrows the page to the ids it resolved, but the
+      // predicates travel WITH them: the resolution and this fetch are separate
+      // round trips, and in the window where the predicates changed and the
+      // ids have not re-resolved, an id-only where would show rows the active
+      // filters exclude. The where rides in a POST body, so no size argument
+      // for an id-only form applies.
+      where: isRunMode
+        ? testRunCasesWhere
+        : sortedPageIds
+          ? { ...repositoryCaseWhereClause, id: { in: sortedPageIds } }
+          : repositoryCaseWhereClause,
+      repositoryCaseWhere: isRunMode ? repositoryCaseWhereClause : undefined,
+      orderBy: isRunMode
+        ? testRunCasesOrderBy
+        : useRelevanceOrder
+          ? undefined
+          : orderBy,
+      select: isRunMode
+        ? TEST_RUN_CASE_LIST_SELECT
+        : REPOSITORY_CASE_LIST_SELECT,
+      selectKey: isRunMode ? "runList" : "list",
+      skip: clientPaginated || sortedPageIds ? undefined : postQuerySkip,
+      take: clientPaginated || sortedPageIds ? undefined : postQueryTake,
+      searchCaseIds: searchResultIds ?? undefined,
+      searchKey,
+      enabled: listEnabled,
+      // Run rows carry other people's live results; the repository list does
+      // not change under you the same way.
+      refetchOnWindowFocus: isRunMode,
+    },
+    clientPaginated ? postFetchFilters : undefined,
+    clientPaginated ? { skip: postQuerySkip, take: postQueryTake } : undefined
+  );
+
+  // An id-resolved sort's page request above is scoped to one page of ids, so
+  // its totalCount is the page size. The honest total comes from a count-only
+  // request (no `select`) carrying the real where.
+  const postQueryCountResult = useRepositoryCasesQuery({
+    projectId,
+    where: repositoryCaseWhereClause,
+    selectKey: "count",
+    searchCaseIds: searchResultIds ?? undefined,
+    searchKey,
+    enabled: Boolean(
+      idResolvedSortActive && !!session?.user && isValidProjectId
+    ),
+  });
+
+  // Run mode's rows are TestRunCases with the case nested under
+  // `repositoryCase`; repository mode's rows ARE the cases. Downstream consumers
+  // still read the two under their historical names.
+  const testRunCasesData = isRunMode
+    ? (postQueryResult.data ?? undefined)
+    : undefined;
+  const data = isRunMode ? undefined : postQueryResult.data;
+  const isLoading =
+    searchPending || inReviewUnresolved
+      ? // Every list query is gated off while the ids resolve, so nothing is
+        // "loading" in React Query's sense — but the rows on screen do not
+        // answer the query the user just typed (or arrived with in `?q=`), and
+        // showing them unfiltered is the corruption this state exists to
+        // prevent.
+        true
+      : postQueryResult.isLoading;
+  const filteredTotalCount = idResolvedSortActive
+    ? postQueryCountResult.totalCount
+    : postQueryResult.totalCount;
+
+  // A failed query keeps the previous rows on screen (keepPreviousData) — the
+  // toast is the only signal, because silently falling back to an unfiltered
+  // list would show cases the filters exclude.
+  const postQueryError = postQueryResult.error ?? postQueryCountResult.error;
+  const reportedQueryErrorRef = useRef<unknown>(null);
   useEffect(() => {
-    if (!searchResultIds || searchResultIds.length === 0) {
-      setSearchData(searchResultIds?.length === 0 ? [] : null);
+    if (!postQueryError) {
+      reportedQueryErrorRef.current = null;
       return;
     }
+    if (reportedQueryErrorRef.current === postQueryError) return;
+    reportedQueryErrorRef.current = postQueryError;
+    console.error("Repository cases query failed:", postQueryError);
+    toast.error(t("common.errors.fetchFailed"));
+  }, [postQueryError, t]);
 
-    let cancelled = false;
+  // Every consumer that used to reach for one query's `refetch` now goes
+  // through the shared invalidator, so the list, the count and the id list are
+  // refreshed together and no caller has to know how many queries there are.
+  const refetchData = invalidateCaseList;
 
-    const fetchSearchData = async () => {
-      setSearchDataLoading(true);
-      try {
-        // Paginate the IDs client-side, then fetch the page via POST
-        const skip =
-          (currentPage - 1) * (typeof pageSize === "number" ? pageSize : 0);
-        const take = typeof pageSize === "number" ? pageSize : undefined;
-
-        const response = await fetch(
-          `/api/projects/${projectId}/cases/fetch-many`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              caseIds: searchResultIds,
-              skip,
-              take,
-            }),
-          }
-        );
-
-        if (cancelled) return;
-
-        if (response.ok) {
-          const result = await response.json();
-          setSearchData(result.cases);
-        }
-      } catch (err) {
-        console.error("Search data fetch error:", err);
-      } finally {
-        if (!cancelled) setSearchDataLoading(false);
-      }
-    };
-
-    void fetchSearchData();
-    return () => {
-      cancelled = true;
-    };
-  }, [searchResultIds, currentPage, pageSize, projectId]);
-
-  // Calculate total count based on mode
+  // The list response's count is the intersection's real size: it applies the
+  // predicates, the folder scope, the run scope, the name filter AND row-level
+  // read policy, where the old search path just counted the raw Elasticsearch
+  // id array (over-counting archived and policy-hidden hits).
   const totalRepositoryCases = useMemo(() => {
-    // When ES search is active, use the search result count
-    if (searchResultIds) {
-      return searchResultIds.length;
-    }
-    // If we know the selected folder has 0 cases, return 0 immediately
-    if (viewType === "folders" && selectedFolderCaseCount === 0) {
-      return 0;
-    }
-    if (isRunMode) {
-      // In run mode, use the test run cases count
-      return testRunCasesCountData || 0;
-    }
-    // In descendants mode, the count comes from the descendants POST endpoint
-    // (the separate count hook is disabled to avoid a duplicate 414).
-    if (isDescendantsMode) {
-      return filteredTotalCount ?? 0;
-    }
-    // In repository mode, use post-fetch filtered count if available, otherwise use database count
-    if (postFetchFilters.length > 0 && filteredTotalCount !== undefined) {
-      return filteredTotalCount;
-    }
-    return filteredCountData || 0;
-  }, [
-    isRunMode,
-    testRunCasesCountData,
-    filteredCountData,
-    filteredTotalCount,
-    postFetchFilters,
-    viewType,
-    selectedFolderCaseCount,
-    searchResultIds,
-    isDescendantsMode,
-  ]);
+    // A folder known to be empty with no predicate active answers 0 without a
+    // query (spec §7.1) — the list query is gated off in that case, so its
+    // placeholder total must not leak through.
+    if (!isRunMode && knownEmptyFolder) return 0;
+    return filteredTotalCount ?? 0;
+  }, [isRunMode, knownEmptyFolder, filteredTotalCount]);
 
   // Update total items in pagination context
   useEffect(() => {
     setTotalItems(totalRepositoryCases);
   }, [totalRepositoryCases, setTotalItems]);
 
-  // Refetch all repository cases data (both list and count)
-  const refetchRepositoryCases = useCallback(() => {
-    refetchData();
-    void refetchFilteredCount();
-  }, [refetchData, refetchFilteredCount]);
-
-  // Listen for repository cases changes (e.g., after import or bulk delete)
-  useEffect(() => {
-    const handleRepositoryCasesChanged = () => {
-      refetchRepositoryCases();
-    };
-
-    window.addEventListener(
-      "repositoryCasesChanged",
-      handleRepositoryCasesChanged as EventListener
-    );
-    return () => {
-      window.removeEventListener(
-        "repositoryCasesChanged",
-        handleRepositoryCasesChanged as EventListener
-      );
-    };
-  }, [refetchRepositoryCases]);
+  // Kept as a named alias because callers throughout this file (bulk edit,
+  // reorder recovery, modals) read as "refresh the cases". List, count and id
+  // list are one invalidation now, so there is nothing else to fan out to.
+  const refetchRepositoryCases = refetchData;
 
   // For isRunMode, flatten testRunCasesData for the table
   const cases = useMemo(() => {
@@ -2559,19 +1754,20 @@ export default function Cases({
       return optimisticReorder.cases;
     }
 
-    // When ES search is active, use POST-fetched data
-    if (searchResultIds && searchData) {
-      return searchData.map((caseItem: any) => ({
-        ...caseItem,
-        lastTestResult: computeLastTestResult(caseItem),
-      }));
-    }
-
     if (isRunMode && testRunCasesData) {
       // In run mode, testRunCasesData is already filtered and paginated server-side
       // Just map it to include all the test run-specific fields
       return testRunCasesData.map((trc) => ({
         ...trc.repositoryCase,
+        // Derive the legacy tags/issues array shape from the explicit join rows
+        // so downstream consumers (columns) are unaffected.
+        tags:
+          (trc.repositoryCase as CaseJoinRels).caseTags?.map((ct) => ct.tag) ??
+          [],
+        issues:
+          (trc.repositoryCase as CaseJoinRels).caseIssues?.map(
+            (ci) => ci.issue
+          ) ?? [],
         testRunCaseId: trc.id,
         testRunStatus: trc.status,
         testRunStatusId: trc.statusId,
@@ -2591,32 +1787,28 @@ export default function Cases({
       }));
     }
     // Not in isRunMode. Use 'data' directly (already server-side paginated and filtered).
-    // Compute lastTestResult for each case using the shared server-side function
     if (data) {
-      return data.map((caseItem) => ({
+      const mapped = data.map((caseItem) => ({
         ...caseItem,
-        lastTestResult: computeLastTestResult(caseItem),
+        // Derive the legacy tags/issues array shape from the explicit join rows
+        // so downstream consumers (columns) are unaffected.
+        tags: (caseItem as CaseJoinRels).caseTags?.map((ct) => ct.tag) ?? [],
+        issues:
+          (caseItem as CaseJoinRels).caseIssues?.map((ci) => ci.issue) ?? [],
       }));
+
+      // The query was filtered by the ordered page ids but returns them in its
+      // own order, so re-impose the one they were resolved in.
+      if (sortedPageIds) {
+        const byId = new Map(mapped.map((c) => [c.id, c]));
+        return sortedPageIds
+          .map((id) => byId.get(id))
+          .filter((c): c is (typeof mapped)[number] => c !== undefined);
+      }
+      return mapped;
     }
     return [];
-  }, [
-    isRunMode,
-    testRunCasesData,
-    data,
-    optimisticReorder,
-    searchResultIds,
-    searchData,
-  ]);
-
-  const uniqueCaseFieldList = useMemo(() => {
-    const caseFieldMap = new Map();
-    projectTemplates?.forEach((template) => {
-      template.caseFields.forEach((field) => {
-        caseFieldMap.set(field.caseField.id, field.caseField);
-      });
-    });
-    return Array.from(caseFieldMap.values());
-  }, [projectTemplates]);
+  }, [isRunMode, testRunCasesData, data, optimisticReorder, sortedPageIds]);
 
   // Bulk-fetch PENDING ReviewRequests for the visible page (D-06; one round
   // trip per page render — never per-row, per RESEARCH §"Pitfall 6").
@@ -2625,7 +1817,124 @@ export default function Cases({
     () => cases.map((c: { id: number }) => c.id),
     [cases]
   );
-  const { data: pendingReviewsForVisibleCases } = useFindManyReviewRequest(
+
+  // Ordered id list of the FULL filtered result set (all pages), powering the
+  // docked details panel's prev/next stepper. It comes from the same POST route
+  // the list does — `postQueryAllIdsResult` above, whose `idsOnly` response is
+  // the intersected, ordered id set (NOT the raw Elasticsearch ids, which still
+  // contain archived, policy-hidden and filtered-out cases).
+
+  // Same window-function ordering the list applies through `latestStatusPageIds`,
+  // but unpaginated: the details panel's prev/next must step across the whole
+  // filtered set, not just the current page. Latest-results sort can't be
+  // expressed as an `orderBy`, so the ids-only list stays in default order
+  // and can't drive prev/next when this sort is active. Works in descendants
+  // mode too — the where scopes to the resolved descendant folders and this is
+  // a POST server action, so a deep subtree can't overflow a URL.
+  const { pageIds: latestStatusAllIds } = useCaseIdsByLatestStatus({
+    where: idSortWhere,
+    direction: sortConfig?.direction ?? "asc",
+    enabled: Boolean(
+      isLatestResultsSort &&
+      !isRunMode &&
+      !isSelectionMode &&
+      !!selectedCaseIdParam &&
+      !searchUnresolved &&
+      postFetchFilters.length === 0 &&
+      !!session?.user
+    ),
+  });
+
+  // Dropdown-field sort's counterpart to `latestStatusAllIds`: same option
+  // ordering the list applies through `fieldOptionPageIds`, but unpaginated so
+  // prev/next steps across the whole filtered set.
+  const { pageIds: fieldOptionAllIds } = useCaseIdsByFieldOption({
+    where: idSortWhere,
+    fieldId: fieldOptionSortFieldId ?? 0,
+    direction: sortConfig?.direction ?? "asc",
+    enabled: Boolean(
+      isFieldOptionSort &&
+      !isRunMode &&
+      !isSelectionMode &&
+      !!selectedCaseIdParam &&
+      !searchUnresolved &&
+      postFetchFilters.length === 0 &&
+      !!session?.user
+    ),
+  });
+
+  const allCaseIds = useMemo<number[]>(() => {
+    // Id-resolved sorts (latest results, dropdown field option) order through
+    // `sortedPageIds` for the list, not via `orderBy`, so the ids-only list is
+    // in default order. Walk the full id-resolved ordering instead to keep
+    // prev/next in step with the sorted list. During a search they resolve
+    // against the intersected id set (idSortWhere), so they agree with the
+    // list there too; relevance order only applies when no column sort is on.
+    if (latestStatusAllIds) return latestStatusAllIds;
+    if (fieldOptionAllIds) return fieldOptionAllIds;
+    if (!postQueryAllCaseIds) return visibleCaseIds;
+    // A drag-reorder only shuffles the current page, but the ids-only list
+    // keeps the pre-reorder order until its query refetches. The current page
+    // is a contiguous block within `ids` (same orderBy), so while the
+    // optimistic reorder is in flight, overwrite that block with the reordered
+    // visible ids — otherwise prev/next steps through the stale order.
+    if (optimisticReorder.inProgress) {
+      const visibleSet = new Set(visibleCaseIds);
+      let vi = 0;
+      return postQueryAllCaseIds.map((id) =>
+        visibleSet.has(id) ? visibleCaseIds[vi++] : id
+      );
+    }
+    return postQueryAllCaseIds;
+  }, [
+    postQueryAllCaseIds,
+    latestStatusAllIds,
+    fieldOptionAllIds,
+    visibleCaseIds,
+    optimisticReorder.inProgress,
+  ]);
+
+  // Lift the selected case's prev/next context up to ProjectRepository, which
+  // renders the docked details panel.
+  useEffect(() => {
+    if (!onCaseNavChange) return;
+    if (isRunMode || isSelectionMode || !selectedCaseIdParam) {
+      onCaseNavChange(null);
+      return;
+    }
+    const id = Number(selectedCaseIdParam);
+    const idx = allCaseIds.indexOf(id);
+    const total = allCaseIds.length;
+    if (idx === -1) {
+      onCaseNavChange({
+        position: null,
+        total,
+        prevId: null,
+        nextId: null,
+        hasPrev: false,
+        hasNext: false,
+      });
+      return;
+    }
+    onCaseNavChange({
+      position: idx + 1,
+      total,
+      prevId: idx > 0 ? allCaseIds[idx - 1] : null,
+      nextId: idx < total - 1 ? allCaseIds[idx + 1] : null,
+      hasPrev: idx > 0,
+      hasNext: idx < total - 1,
+    });
+  }, [
+    allCaseIds,
+    selectedCaseIdParam,
+    isRunMode,
+    isSelectionMode,
+    onCaseNavChange,
+  ]);
+
+  const { data: pendingReviewsForVisibleCases } = useClientQueries(
+    schema
+  ).reviewRequest.useFindMany(
     {
       where: {
         entityType: "CASE",
@@ -2642,16 +1951,15 @@ export default function Cases({
         assigneeUser: { select: { name: true } },
         assigneeRole: { select: { name: true } },
       },
-    } as any,
+    },
     {
       enabled: reviewFeatureEnabled === true && visibleCaseIds.length > 0,
-    } as any
+    }
   );
   const pendingByCaseId = useMemo(() => {
     const map = new Map<number, PendingReviewSummary>();
     const rows = pendingReviewsForVisibleCases as
-      | Array<PendingReviewSummary & { entityId: number }>
-      | undefined;
+      Array<PendingReviewSummary & { entityId: number }> | undefined;
     rows?.forEach((row) => {
       map.set(row.entityId, row);
     });
@@ -2664,10 +1972,25 @@ export default function Cases({
     [pendingByCaseId]
   );
 
+  // Recent executions for the visible page, one round trip per render like the
+  // review badges above.
+  const latestResultsByCase = useLatestTestResults(visibleCaseIds);
+  const renderLatestResults = useCallback(
+    (caseId: number, caseProjectId: number) => (
+      <LatestResultsCell
+        executions={latestResultsByCase[caseId] ?? []}
+        slots={LATEST_RESULTS_COUNT}
+        projectId={caseProjectId}
+        testCaseId={caseId}
+      />
+    ),
+    [latestResultsByCase]
+  );
+
   // Clear optimistic reorder when underlying data changes
   useEffect(() => {
     setOptimisticReorder({ inProgress: false, cases: null });
-  }, [currentPage, sortConfig, folderId, viewType, filterId]);
+  }, [currentPage, sortConfig, folderId, viewType, predicatesKey, searchText]);
 
   // Scope the bulk-edit selection to the current view. Switching folders (or
   // changing the view/filter that determines which cases are shown) clears the
@@ -2676,11 +1999,14 @@ export default function Cases({
   // selection (that is what the cross-page merge logic is for). Run-mode
   // selection is owned by the parent and may legitimately span folders, so it
   // is left untouched here.
+  // The search text is part of that identity: it narrows the visible set
+  // exactly like a predicate does, so a selection made before a search must not
+  // survive it.
   const previousViewKeyRef = useRef<string | null>(null);
   useEffect(() => {
     if (isSelectionMode) return;
 
-    const viewKey = `${folderId}-${viewType}-${JSON.stringify(filterId)}`;
+    const viewKey = `${folderId}-${viewType}-${predicatesKey}-${searchText}`;
     if (
       previousViewKeyRef.current !== null &&
       previousViewKeyRef.current !== viewKey
@@ -2690,7 +2016,16 @@ export default function Cases({
       setLastSelectedIndex(null);
     }
     previousViewKeyRef.current = viewKey;
-  }, [folderId, viewType, filterId, isSelectionMode]);
+  }, [folderId, viewType, predicatesKey, searchText, isSelectionMode]);
+
+  // A Shift+click select-all belongs to the view it was started from. Changing
+  // the view — including changing the search that scopes it — abandons the
+  // in-flight ids fetch so its result can't be applied to the cases the user is
+  // now looking at.
+  useEffect(() => {
+    setFetchAllIdsForSelection(false);
+    setSelectAllAction(null);
+  }, [folderId, viewType, predicatesKey, searchText]);
 
   // Check if we're in multi-config mode (multiple test runs selected)
   const isMultiConfigMode =
@@ -2701,8 +2036,8 @@ export default function Cases({
     if (!isSelectionMode || !onSelectionChange || !cases) return;
     // In multi-config mode, use testRunCaseId for unique identification
     const currentPageIds = cases.map((tc) =>
-      isMultiConfigMode && (tc as any).testRunCaseId
-        ? (tc as any).testRunCaseId
+      isMultiConfigMode && (tc as MaybeRunModeCase).testRunCaseId
+        ? (tc as MaybeRunModeCase).testRunCaseId
         : tc.id
     );
     const allSelected = currentPageIds.every((id) =>
@@ -2740,8 +2075,8 @@ export default function Cases({
       // In multi-config mode, use testRunCaseId for unique identification
       // Otherwise use repositoryCaseId (caseItem.id)
       const caseKey =
-        isMultiConfigMode && (caseItem as any).testRunCaseId
-          ? (caseItem as any).testRunCaseId
+        isMultiConfigMode && (caseItem as MaybeRunModeCase).testRunCaseId
+          ? (caseItem as MaybeRunModeCase).testRunCaseId
           : caseItem.id;
 
       if (currentExternalSelection.includes(caseKey)) {
@@ -2781,8 +2116,9 @@ export default function Cases({
           const caseItem = MappedCases[rowIndex];
           if (!caseItem) return undefined;
           // Use testRunCaseId in multi-config mode for unique row identification
-          return isMultiConfigMode && (caseItem as any).testRunCaseId
-            ? (caseItem as any).testRunCaseId
+          return isMultiConfigMode &&
+            (caseItem as MaybeRunModeCase).testRunCaseId
+            ? (caseItem as MaybeRunModeCase).testRunCaseId
             : caseItem.id;
         })
         .filter((id): id is number => id !== undefined);
@@ -2790,8 +2126,8 @@ export default function Cases({
       if (isSelectionMode && onSelectionChange) {
         // Get IDs of all cases currently visible in the DataTable
         const allCaseIdsOnCurrentPage = MappedCases.map((tc) =>
-          isMultiConfigMode && (tc as any).testRunCaseId
-            ? (tc as any).testRunCaseId
+          isMultiConfigMode && (tc as MaybeRunModeCase).testRunCaseId
+            ? (tc as MaybeRunModeCase).testRunCaseId
             : tc.id
         );
 
@@ -2817,8 +2153,8 @@ export default function Cases({
       } else if (!isSelectionMode) {
         // Bulk edit mode - preserve selections from other pages
         const allCaseIdsOnCurrentPage = MappedCases.map((tc) =>
-          isMultiConfigMode && (tc as any).testRunCaseId
-            ? (tc as any).testRunCaseId
+          isMultiConfigMode && (tc as MaybeRunModeCase).testRunCaseId
+            ? (tc as MaybeRunModeCase).testRunCaseId
             : tc.id
         );
 
@@ -2884,8 +2220,8 @@ export default function Cases({
 
         // Convert to IDs for the global selection
         const getCaseId = (tc: (typeof MappedCases)[number]) =>
-          isMultiConfigMode && (tc as any).testRunCaseId
-            ? (tc as any).testRunCaseId
+          isMultiConfigMode && (tc as MaybeRunModeCase).testRunCaseId
+            ? (tc as MaybeRunModeCase).testRunCaseId
             : tc.id;
         const selectedIds = Object.entries(rangeSelection)
           .filter(([_, isSelected]) => isSelected)
@@ -2922,6 +2258,7 @@ export default function Cases({
     },
     [
       cases,
+      isMultiConfigMode,
       lastSelectedIndex,
       rowSelection,
       handleTableRowSelectionChange,
@@ -2948,29 +2285,10 @@ export default function Cases({
           (index) => rowSelection[index.toString()]
         );
 
-        if (searchResultIds) {
-          // When ES search is active, use searchResultIds directly instead of querying DB
-          if (allSelectableSelected) {
-            if (isSelectionMode && onSelectionChange) {
-              onSelectionChange([]);
-            } else {
-              setSelectedCaseIdsForBulkEdit([]);
-            }
-            setRowSelection({});
-            toast.success(t("repository.deselectedAllCases"));
-          } else {
-            if (isSelectionMode && onSelectionChange) {
-              onSelectionChange(searchResultIds);
-            } else {
-              setSelectedCaseIdsForBulkEdit(searchResultIds);
-            }
-            toast.success(
-              t("repository.selectedAllCases", {
-                count: searchResultIds.length,
-              })
-            );
-          }
-        } else if (allSelectableSelected) {
+        // Search takes the same path as everything else now: the ids come from
+        // the intersected route result, never from the raw Elasticsearch set
+        // (which still holds archived, policy-hidden and filtered-out cases).
+        if (allSelectableSelected) {
           // Deselect all cases across all pages
           setFetchAllIdsForSelection(true);
           setSelectAllAction("deselect");
@@ -2999,8 +2317,8 @@ export default function Cases({
           setRowSelection(newSelection);
 
           const getDeselectCaseId = (tc: (typeof MappedCases)[number]) =>
-            isMultiConfigMode && (tc as any).testRunCaseId
-              ? (tc as any).testRunCaseId
+            isMultiConfigMode && (tc as MaybeRunModeCase).testRunCaseId
+              ? (tc as MaybeRunModeCase).testRunCaseId
               : tc.id;
           const currentPageIds = selectableRows.map(getDeselectCaseId);
 
@@ -3026,8 +2344,8 @@ export default function Cases({
           setRowSelection(newSelection);
 
           const getSelectAllCaseId = (tc: (typeof MappedCases)[number]) =>
-            isMultiConfigMode && (tc as any).testRunCaseId
-              ? (tc as any).testRunCaseId
+            isMultiConfigMode && (tc as MaybeRunModeCase).testRunCaseId
+              ? (tc as MaybeRunModeCase).testRunCaseId
               : tc.id;
           const selectedIds = selectableRows.map(getSelectAllCaseId);
 
@@ -3053,14 +2371,13 @@ export default function Cases({
     },
     [
       cases,
+      isMultiConfigMode,
       rowSelection,
       isSelectionMode,
       onSelectionChange,
       selectedTestCases,
       selectedCaseIdsForBulkEdit,
       setSelectedCaseIdsForBulkEdit,
-      searchResultIds,
-      t,
     ]
   );
 
@@ -3078,6 +2395,14 @@ export default function Cases({
       setSelectedCaseIdsForBulkEdit(caseIds);
     }
     setIsCopyMoveOpen(true);
+  }, []);
+
+  // Delete confirmation is owned by this component, not by the row action cell:
+  // rebuilding `columns` (or any table remount) would otherwise unmount the cell
+  // and silently close the dialog.
+  const [caseToDelete, setCaseToDelete] = useState<ExtendedCases | null>(null);
+  const handleDeleteCase = useCallback((testcase: ExtendedCases) => {
+    setCaseToDelete(testcase);
   }, []);
 
   // Open dialog in folder mode when copyMoveFolderId prop is set by ProjectRepository
@@ -3120,7 +2445,7 @@ export default function Cases({
         clickToViewFullContent: t("repository.fields.clickToViewFullContent"),
         comments: t("comments.title"),
         configuration: t("common.fields.configuration"),
-        lastTestResult: t("repository.columns.lastTestResult"),
+        latestResults: t("repository.columns.latestResults"),
         newBadge: t("common.labels.new"),
       },
       isRunMode,
@@ -3155,10 +2480,12 @@ export default function Cases({
         ? selectedTestCases.length
         : selectedCaseIdsForBulkEdit.length,
       // Pass enableReorder to show/hide grip handle
-      // Disabled in multi-config mode: ordering a merged view of multiple runs is undefined
+      // Disabled in multi-config mode: ordering a merged view of multiple runs is undefined.
+      // Disabled when the run's composition is locked: reordering is frozen.
       isDefaultSort &&
         !isSelectionMode &&
         !isCompleted &&
+        !compositionLocked &&
         !isMultiConfigMode &&
         ((isRunMode && canAddEditRun) || (!isRunMode && canAddEdit)),
       // QuickScript per-row action
@@ -3178,7 +2505,13 @@ export default function Cases({
       showDescendants,
       folderPathMap,
       renderPendingBadge,
-      excludeNotStartedFromRuns
+      renderLatestResults,
+      excludeNotStartedFromRuns,
+      handleDeleteCase,
+      // Callback to open AssignTestCaseModal from TestRunStatusCell
+      (modalData) => {
+        setAssignModalState({ isOpen: true, ...modalData });
+      }
     );
   }, [
     userPreferencesForColumns,
@@ -3210,7 +2543,11 @@ export default function Cases({
     showDescendants,
     folderPathMap,
     renderPendingBadge,
+    renderLatestResults,
     excludeNotStartedFromRuns,
+    handleDeleteCase,
+    compositionLocked,
+    isMultiConfigMode,
   ]);
 
   // Create lightweight column metadata for ColumnSelection component
@@ -3317,14 +2654,6 @@ export default function Cases({
     }
   }, [deferredSearchString, searchString, setCurrentPage]);
 
-  // Add effect to force refetch when folder changes
-  useEffect(() => {
-    if (viewType === "folders" && folderId) {
-      refetchRepositoryCases();
-      refetchData();
-    }
-  }, [folderId, viewType, refetchRepositoryCases, refetchData]);
-
   const handlePageSizeChange = (value: string | number) => {
     const newSize =
       value === "All" ? totalItems : parseInt(value.toString(), 10);
@@ -3428,7 +2757,8 @@ export default function Cases({
         const updates = reorderedCases
           .map((item, index) => {
             // testRunCaseId is only present in run mode
-            const testRunCaseIdToUpdate = (item as any).testRunCaseId;
+            const testRunCaseIdToUpdate = (item as MaybeRunModeCase)
+              .testRunCaseId;
             if (testRunCaseIdToUpdate && item.order !== index + 1) {
               return updateTestRunCases({
                 where: { id: testRunCaseIdToUpdate },
@@ -3488,26 +2818,24 @@ export default function Cases({
       setOptimisticReorder({ inProgress: false, cases: null });
 
       // If needed, we can still manually refetch to ensure consistency
-      if (isRunMode) {
-        await refetchTestRunCases();
-        await refetchData();
-      } else {
-        await refetchRepositoryCases();
-        await refetchData();
-      }
+      await refetchData();
     }
   };
 
   const handleCloseBulkEditModal = (refetchNeeded?: boolean) => {
     setIsBulkEditModalOpen(false);
     if (refetchNeeded) {
-      refetchRepositoryCases(); // This refetches both data and count
-      refetchTestRunCases();
+      void refetchRepositoryCases(); // list, count and id list in one go
       // Clear selection after successful bulk edit operation
       setRowSelection({});
       setSelectedCaseIdsForBulkEdit([]);
     }
   };
+
+  // In-place Add Test Run wizard seed — non-null mounts the modal.
+  const [createRunSeedIds, setCreateRunSeedIds] = useState<number[] | null>(
+    null
+  );
 
   // Add the handler for the new button
   const handleCreateTestRun = useCallback(async () => {
@@ -3554,19 +2882,12 @@ export default function Cases({
       }
     }
 
-    sessionStorage.setItem(
-      "createTestRun_selectedCases",
-      JSON.stringify(idsToSeed)
-    );
-
-    const queryParams = new URLSearchParams({
-      openAddRun: "true",
-    });
-    router.push(`/projects/runs/${projectId}?${queryParams.toString()}`);
+    // Open the Add Test Run wizard in place — no navigation to the runs
+    // page, so cancelling doesn't strand the user; the wizard's own toasts
+    // report success/failure.
+    setCreateRunSeedIds(idsToSeed);
   }, [
     selectedCaseIdsForBulkEdit,
-    router,
-    projectId,
     isValidProjectId,
     excludeNotStartedFromRuns,
     t,
@@ -3583,9 +2904,22 @@ export default function Cases({
 
       const response = await fetchAllCasesAction({
         orderBy,
-        where: repositoryCaseWhereClause,
+        // React Flight cannot encode the Json-null sentinels the compiled where
+        // carries — unserialized they reach the action as opaque temporary
+        // references and ZenStack rejects the query, so every filtered export
+        // came back empty. The action rebuilds them (whereTransport).
+        where: serializeWhereForTransport(repositoryCaseWhereClause),
         scope: actionScope,
         projectId: projectId,
+        // Text/link/steps operator filters are applied post-fetch (the where
+        // clause only pre-filters value-not-null); the action runs the same
+        // matchers so "all filtered" exports match the table's row set.
+        postFetchFilters:
+          postFetchFilters.length > 0 ? postFetchFilters : undefined,
+        // "All filtered" during an active search means the intersection, not
+        // the un-searched superset (spec §9). Rows come back in `orderBy`
+        // order, not relevance — export files carry no ranking.
+        searchCaseIds: searchResultIds ?? undefined,
       });
 
       if (response.success) {
@@ -3597,7 +2931,13 @@ export default function Cases({
         return []; // Or throw new Error(response.error);
       }
     },
-    [orderBy, repositoryCaseWhereClause, projectId]
+    [
+      orderBy,
+      repositoryCaseWhereClause,
+      projectId,
+      postFetchFilters,
+      searchResultIds,
+    ]
   );
 
   // Instantiate the hook
@@ -3652,24 +2992,38 @@ export default function Cases({
   return (
     <Card className="border-0">
       <CardHeader>
-        <div className="flex flex-row items-start">
+        <div ref={casesHeaderRef} className="flex flex-row items-start">
           <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
             {/* filterComponent should always be rendered if we've reached this point */}
             {filterComponent}
+            {/* Which order the rows are in is otherwise invisible: a remembered
+                per-project sort silently outranks relevance, so say when
+                relevance is what's on screen (spec §9). Lives here rather than
+                in the FilterBar because only this component owns the sort. */}
+            {useRelevanceOrder && (
+              <div
+                className="mt-1 text-xs text-muted-foreground italic"
+                data-testid="sorted-by-relevance"
+              >
+                {t("repository.filterBar.sortedByRelevance")}
+              </div>
+            )}
             <div className="mt-4">
               <ColumnSelection
                 key="repository-cases-column-selection"
                 storageKey={`repository-cases:${projectId}`}
                 columns={columns}
                 columnMetadata={columnMetadata}
-                onVisibilityChange={(newVisibility) => {
-                  setColumnVisibility(newVisibility);
-                }}
+                hideColumnRef={columnHideRef}
+                onVisibilityChange={handleColumnVisibilityChange}
               />
             </div>
           </div>
 
-          <div className="flex flex-col w-full sm:w-2/3 items-end">
+          <div
+            ref={setPaginationFooterRef}
+            className="flex flex-col w-full sm:w-2/3 items-end"
+          >
             {isSelectionMode && onSelectionChange && !hideHeader && (
               <div className="mb-4">
                 <SelectedTestCasesDrawer
@@ -3689,6 +3043,7 @@ export default function Cases({
                 pageSize={typeof pageSize === "number" ? pageSize : "All"}
                 pageSizeOptions={pageSizeOptions}
                 handlePageSizeChange={handlePageSizeChange}
+                compact={paginationCompact}
               />
             </div>
             <div className="justify-end -mx-4">
@@ -3696,127 +3051,127 @@ export default function Cases({
                 currentPage={currentPage}
                 totalPages={totalPages}
                 onPageChange={setCurrentPage}
+                compact={paginationCompact}
               />
             </div>
             <div className="flex gap-2 pt-2 items-center -mb-2">
-              {canAddEdit &&
-                !isSelectionMode &&
-                !isRunMode &&
-                selectedCaseIdsForBulkEdit.length > 0 && (
-                  <Button
-                    onClick={() => setIsBulkEditModalOpen(true)}
-                    disabled={selectedCaseIdsForBulkEdit.length === 0}
-                    variant="outline"
-                    data-testid="bulk-edit-button"
-                    className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
-                  >
-                    <PenSquare className="w-4 h-4 shrink-0" />
-                    <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                      {t("repository.cases.bulkEdit")} {"("}
-                      {selectedCaseIdsForBulkEdit.length}
-                      {")"}
-                    </span>
-                  </Button>
-                )}
-              {canAddEdit &&
-                hasLlmIntegration &&
-                !isSelectionMode &&
-                !isRunMode &&
-                selectedCaseIdsForBulkEdit.length > 0 && (
-                  <Button
-                    onClick={() => setIsAutoTagOpen(true)}
-                    variant="outline"
-                    data-testid="auto-tag-cases-button"
-                    className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
-                  >
-                    <Tags className="w-4 h-4 shrink-0" />
-                    <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                      {t("autoTag.actions.aiAutoTag")} {"("}
-                      {selectedCaseIdsForBulkEdit.length}
-                      {")"}
-                    </span>
-                  </Button>
-                )}
-              {!isRunMode &&
-                !isSelectionMode &&
-                canAddEditRun &&
-                selectedCaseIdsForBulkEdit.length > 0 && (
-                  <Button
-                    onClick={handleCreateTestRun}
-                    disabled={selectedCaseIdsForBulkEdit.length === 0}
-                    variant="outline"
-                    data-testid="create-test-run-button"
-                    className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
-                  >
-                    <PlayCircle className="w-4 h-4 shrink-0" />
-                    <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                      {t("repository.cases.createTestRun")} {"("}
-                      {selectedCaseIdsForBulkEdit.length}
-                      {")"}
-                    </span>
-                  </Button>
-                )}
-              {showCopyMove &&
-                !isSelectionMode &&
-                !isRunMode &&
-                selectedCaseIdsForBulkEdit.length > 0 && (
-                  <Button
-                    onClick={() => setIsCopyMoveOpen(true)}
-                    variant="outline"
-                    data-testid="copy-move-button"
-                    className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
-                  >
-                    <ArrowRightLeft className="w-4 h-4 shrink-0" />
-                    <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                      {t("repository.cases.copyMoveToProject")} {"("}
-                      {selectedCaseIdsForBulkEdit.length}
-                      {")"}
-                    </span>
-                  </Button>
-                )}
-              {canAddEdit && !isSelectionMode && !isRunMode && (
-                <Button
-                  onClick={() => setIsExportModalOpen(true)}
-                  disabled={totalItems === 0}
-                  variant="outline"
-                  data-testid="export-cases-button"
-                  className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
-                >
-                  <Upload className="w-4 h-4 shrink-0" />
-                  <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                    {t("repository.cases.export")}
-                  </span>
-                </Button>
-              )}
-              {canAddEdit &&
-                quickScriptEnabled &&
-                !isSelectionMode &&
-                !isRunMode &&
-                selectedCaseIdsForBulkEdit.length > 0 && (
-                  <Button
-                    onClick={() => {
+              <ActionOverflow
+                compact={casesToolbarCompact}
+                menuLabel={t("common.actions.actionsLabel")}
+                menuTestId="cases-actions-menu"
+                actions={[
+                  {
+                    key: "bulkEdit",
+                    icon: PenSquare,
+                    label: `${t("repository.cases.bulkEdit")} (${selectedCaseIdsForBulkEdit.length})`,
+                    onClick: () => setIsBulkEditModalOpen(true),
+                    hidden: !(
+                      canAddEdit &&
+                      !isSelectionMode &&
+                      !isRunMode &&
+                      selectedCaseIdsForBulkEdit.length > 0
+                    ),
+                    testId: "bulk-edit-button",
+                  },
+                  {
+                    key: "autoTag",
+                    icon: Tags,
+                    label: `${t("autoTag.actions.aiAutoTag")} (${selectedCaseIdsForBulkEdit.length})`,
+                    onClick: () => setIsAutoTagOpen(true),
+                    hidden: !(
+                      canAddEdit &&
+                      hasLlmIntegration &&
+                      !isSelectionMode &&
+                      !isRunMode &&
+                      selectedCaseIdsForBulkEdit.length > 0
+                    ),
+                    testId: "auto-tag-cases-button",
+                  },
+                  {
+                    key: "createRun",
+                    icon: PlayCircle,
+                    label: `${t("repository.cases.createTestRun")} (${selectedCaseIdsForBulkEdit.length})`,
+                    onClick: handleCreateTestRun,
+                    hidden: !(
+                      !isRunMode &&
+                      !isSelectionMode &&
+                      canAddEditRun &&
+                      selectedCaseIdsForBulkEdit.length > 0
+                    ),
+                    testId: "create-test-run-button",
+                  },
+                  {
+                    key: "copyMove",
+                    icon: ArrowRightLeft,
+                    label: `${t("repository.cases.copyMoveToProject")} (${selectedCaseIdsForBulkEdit.length})`,
+                    onClick: () => setIsCopyMoveOpen(true),
+                    hidden: !(
+                      showCopyMove &&
+                      !isSelectionMode &&
+                      !isRunMode &&
+                      selectedCaseIdsForBulkEdit.length > 0
+                    ),
+                    testId: "copy-move-button",
+                  },
+                  {
+                    key: "export",
+                    icon: Upload,
+                    label: t("repository.cases.export"),
+                    onClick: () => setIsExportModalOpen(true),
+                    disabled: totalItems === 0,
+                    hidden: !(canAddEdit && !isSelectionMode && !isRunMode),
+                    testId: "export-cases-button",
+                  },
+                  {
+                    key: "quickScript",
+                    icon: ScrollText,
+                    label: t("repository.cases.quickScript"),
+                    onClick: () => {
                       setQuickScriptCaseIds(null);
                       setIsQuickScriptModalOpen(true);
-                    }}
-                    variant="outline"
-                    data-testid="quickscript-cases-button"
-                    className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
-                  >
-                    <ScrollText className="w-4 h-4 shrink-0" />
-                    <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                      {t("repository.cases.quickScript")}
-                    </span>
-                  </Button>
-                )}
+                    },
+                    hidden: !(
+                      canAddEdit &&
+                      quickScriptEnabled &&
+                      !isSelectionMode &&
+                      !isRunMode &&
+                      selectedCaseIdsForBulkEdit.length > 0
+                    ),
+                    testId: "quickscript-cases-button",
+                  },
+                ]}
+              />
             </div>
           </div>
         </div>
       </CardHeader>
       <CardContent>
         {(() => {
+          // A search that could not be resolved is terminal: its ids are an
+          // AND'd filter, so there is no honest list to show. Anything else
+          // here would be the unfiltered repository presented as the search
+          // result (spec §9).
+          if (searchFailed) {
+            return (
+              <div
+                className="text-muted-foreground text-pretty m-2"
+                data-testid="search-failed-message"
+              >
+                {t("search.errors.searchFailed")}
+              </div>
+            );
+          }
+
           // Handle preliminary states first (where DataTable might not be relevant)
-          // Skip folder check when ES search results are active
-          if (!folderId && viewType === "folders" && !searchResultIds) {
+          // Skip folder check when ES search results are active or predicates
+          // are set — active filters query project-wide (spec §7.1).
+          if (
+            !folderId &&
+            viewType === "folders" &&
+            !searchResultIds &&
+            !searchPending &&
+            predicates.length === 0
+          ) {
             return (
               <div className="text-muted-foreground text-pretty m-2">
                 {t("repository.cases.selectFolder")}
@@ -3826,30 +3181,49 @@ export default function Cases({
 
           // If loading or column visibility not initialized, DataTable will show its own skeleton
           if (
-            (searchResultIds ? searchDataLoading : isLoading) ||
+            isLoading ||
             isTotalLoading ||
             isTemplatesLoading ||
             Object.keys(columnVisibility).length === 0
           ) {
             return (
               <DataTable
-                key={`${folderId}-${viewType}-${filterId}-loading`}
+                key={`${folderId}-${viewType}-${predicatesKey}-loading`}
                 columns={columns}
                 data={[]} // Pass empty data while loading
                 onSortChange={isCompleted ? undefined : handleSortChange}
+                onSortColumn={isCompleted ? undefined : handleSortColumn}
+                onHideColumn={(columnId) => columnHideRef.current?.(columnId)}
                 sortConfig={isCompleted ? undefined : sortConfig}
                 enableReorder={false} // No reorder while loading
                 onReorder={handleReorder}
                 columnVisibility={columnVisibility}
-                onColumnVisibilityChange={setColumnVisibility}
+                onColumnVisibilityChange={handleColumnVisibilityChange}
                 isLoading={true}
                 pageSize={typeof pageSize === "number" ? pageSize : totalItems}
+                storageKey={`repository-cases:${projectId}`}
               />
             );
           }
 
           // Handle empty states after loading and not in preliminary states
           if (cases.length === 0) {
+            // Active filters are the likeliest cause of an empty result set —
+            // say so and offer the way out, in every mode.
+            if (predicates.length > 0) {
+              return (
+                <div className="m-2 flex flex-col items-start space-y-2">
+                  <div className="text-muted-foreground text-pretty">
+                    {t("repository.filterBar.noMatchingCases")}
+                  </div>
+                  {onClearFilters && (
+                    <Button variant="ghost" size="sm" onClick={onClearFilters}>
+                      {t("common.actions.clearAll")}
+                    </Button>
+                  )}
+                </div>
+              );
+            }
             if (isRunMode) {
               if (viewType === "folders" && folderId) {
                 // Case: In a folder in run mode, no cases
@@ -3871,9 +3245,6 @@ export default function Cases({
                 <div className="m-1 mb-4 text-muted-foreground">
                   {t("repository.cases.noTestCases")}
                 </div>
-                {!isSelectionMode && folderId && canAddEdit && (
-                  <AddCaseRow folderId={folderId} />
-                )}
               </>
             );
           }
@@ -3882,36 +3253,52 @@ export default function Cases({
           return (
             <>
               <DataTable
-                key={`${folderId}-${viewType}-${filterId}-datatable`}
+                key={`${folderId}-${viewType}-${predicatesKey}-datatable`}
                 columns={columns}
                 data={cases}
+                storageKey={`repository-cases:${projectId}`}
+                selectedRowId={
+                  selectedCaseIdParam ? Number(selectedCaseIdParam) : null
+                }
+                scrollToSelectedRow={false}
                 onSortChange={isCompleted ? undefined : handleSortChange}
+                onSortColumn={isCompleted ? undefined : handleSortColumn}
+                onHideColumn={(columnId) => columnHideRef.current?.(columnId)}
                 sortConfig={isCompleted ? undefined : sortConfig}
                 enableReorder={
                   isDefaultSort &&
+                  // Rows sit in relevance order during a search, so a drag
+                  // would compute `order` values from relevance-ordered
+                  // neighbours and corrupt the persisted case order. Filter
+                  // chips do NOT disable reordering (parity with the pre-chip
+                  // ViewSelector filters) — they narrow the set without
+                  // changing its order.
+                  !searchActive &&
                   !isSelectionMode &&
                   !isCompleted &&
+                  !compositionLocked &&
                   !isMultiConfigMode &&
                   ((isRunMode && canAddEditRun) || (!isRunMode && canAddEdit))
                 }
                 onReorder={handleReorder}
                 columnVisibility={columnVisibility}
-                onColumnVisibilityChange={setColumnVisibility}
+                onColumnVisibilityChange={handleColumnVisibilityChange}
                 isLoading={false} // Explicitly false as loading is handled above
                 pageSize={typeof pageSize === "number" ? pageSize : totalItems}
-                canEdit={
-                  (!isRunMode && canAddEdit) || (isRunMode && canAddEditRun)
-                }
                 rowSelection={rowSelection}
                 onRowSelectionChange={handleTableRowSelectionChange}
                 selectedItemsForDrag={selectedItemsForDrag}
               />
-              {!isSelectionMode && !isRunMode && folderId && canAddEdit && (
-                <AddCaseRow folderId={folderId} />
-              )}
             </>
           );
         })()}
+        {/* Render the inline add-case row once, outside the loading/empty/
+            populated branch swap above, so it is never unmounted when the
+            folder transitions empty→populated (adding the first case). A
+            remount there discards the just-restored input focus. */}
+        {!isSelectionMode && !isRunMode && folderId && canAddEdit && (
+          <AddCaseRow folderId={folderId} />
+        )}
         {selectedAttachmentIndex !== null && (
           <AttachmentsCarousel
             attachments={selectedAttachments}
@@ -3921,6 +3308,16 @@ export default function Cases({
           />
         )}
       </CardContent>
+
+      {/* Delete Case Confirmation */}
+      {caseToDelete && (
+        <DeleteCaseModal
+          key={`delete-case-${caseToDelete.id}`}
+          testcase={caseToDelete}
+          open
+          onClose={() => setCaseToDelete(null)}
+        />
+      )}
 
       {/* Bulk Edit Modal */}
       {isValidProjectId && (
@@ -4027,6 +3424,43 @@ export default function Cases({
               : addResultModalState.steps
           }
           configuration={addResultModalState.configuration}
+        />
+      )}
+
+      {/* AssignTestCaseModal - lifted from TestRunStatusCell to prevent re-render issues */}
+      {assignModalState.isOpen && assignModalState.testRunId != null && (
+        <AssignTestCaseModal
+          isOpen={assignModalState.isOpen}
+          onClose={() => {
+            setAssignModalState({ isOpen: false });
+            const event = new CustomEvent("modalStateChange", {
+              detail: { isOpen: false },
+            });
+            window.dispatchEvent(event);
+          }}
+          testRunId={assignModalState.testRunId}
+          testRunCaseId={
+            assignModalState.isBulkAssign
+              ? undefined
+              : assignModalState.testRunCaseId
+          }
+          caseId={assignModalState.caseId || 0}
+          caseName={assignModalState.caseName || ""}
+          currentAssigneeId={assignModalState.currentAssigneeId}
+          projectId={assignModalState.projectId || 0}
+          isBulkAssign={assignModalState.isBulkAssign}
+          selectedCases={assignModalState.selectedCases}
+        />
+      )}
+
+      {createRunSeedIds && (
+        <AddTestRunModal
+          open
+          onClose={() => setCreateRunSeedIds(null)}
+          initialSelectedCaseIds={createRunSeedIds}
+          onSelectedCasesChange={(cases: number[]) =>
+            setCreateRunSeedIds(cases)
+          }
         />
       )}
     </Card>

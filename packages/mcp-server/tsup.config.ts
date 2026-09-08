@@ -5,10 +5,7 @@ export default defineConfig([
     entry: ["src/index.ts"],
     format: ["cjs", "esm"],
     dts: true,
-    // tsup runs the two configs concurrently, so this clean must not remove the
-    // CLI bundle the other config emits — a wiped dist/cli.js publishes a
-    // package whose `bin` points at nothing.
-    clean: ["!cli.js", "!cli.js.map"],
+    clean: true,
     sourcemap: true,
     splitting: false,
     treeshake: true,

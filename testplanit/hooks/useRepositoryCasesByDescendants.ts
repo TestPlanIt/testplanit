@@ -2,9 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import {
   filterOrphanedFieldValues,
-  matchesLinkOperator,
-  matchesStepsOperator,
-  matchesTextOperator,
+  matchesPostFetchFilters,
   type PostFetchFilter,
 } from "./useRepositoryCasesWithFilteredFields";
 
@@ -17,6 +15,7 @@ interface Params {
   skip?: number;
   take?: number;
   enabled?: boolean;
+  keepPreviousData?: boolean;
 }
 
 // Parallel to useFindManyRepositoryCasesFiltered but fetches via POST so a deep
@@ -36,6 +35,7 @@ export function useFindManyRepositoryCasesByDescendants(
     skip,
     take,
     enabled = true,
+    keepPreviousData = true,
   } = params;
 
   const query = useQuery({
@@ -76,7 +76,9 @@ export function useFindManyRepositoryCasesByDescendants(
         totalCount: number;
       }>;
     },
-    placeholderData: (previousData) => previousData,
+    placeholderData: keepPreviousData
+      ? (previousData) => previousData
+      : undefined,
     refetchOnWindowFocus: false,
   });
 
@@ -94,42 +96,9 @@ export function useFindManyRepositoryCasesByDescendants(
     let cases = resultCases.map(filterOrphanedFieldValues);
 
     if (postFetchFilters && postFetchFilters.length > 0) {
-      cases = cases.filter((testCase: any) => {
-        for (const filter of postFetchFilters) {
-          const fieldValue = testCase.caseFieldValues?.find(
-            (cfv: any) => cfv.fieldId === filter.fieldId
-          );
-          let matches = false;
-          if (filter.type === "text" && typeof filter.value1 === "string") {
-            matches = matchesTextOperator(
-              fieldValue?.value,
-              filter.operator,
-              filter.value1
-            );
-          } else if (
-            filter.type === "link" &&
-            typeof filter.value1 === "string"
-          ) {
-            matches = matchesLinkOperator(
-              fieldValue?.value,
-              filter.operator,
-              filter.value1
-            );
-          } else if (
-            filter.type === "steps" &&
-            typeof filter.value1 === "number"
-          ) {
-            matches = matchesStepsOperator(
-              testCase,
-              filter.operator,
-              filter.value1,
-              filter.value2
-            );
-          }
-          if (!matches) return false;
-        }
-        return true;
-      });
+      cases = cases.filter((testCase: any) =>
+        matchesPostFetchFilters(testCase, postFetchFilters)
+      );
     }
 
     const totalCount =

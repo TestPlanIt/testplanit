@@ -32,9 +32,7 @@ vi.mock("@/components/tables/ProjectNameCell", () => ({
 
 // Mock UserListDisplay
 vi.mock("@/components/tables/UserListDisplay", () => ({
-  UserListDisplay: ({ users }: { users: { userId: string }[] }) => (
-    <span data-testid="user-list-display">{users.length} users</span>
-  ),
+  UserListDisplay: () => <span data-testid="user-list-display" />,
 }));
 
 // Mock GroupListDisplay
@@ -130,9 +128,11 @@ function renderCell(
 const testProject: ExtendedProjects = {
   id: 1,
   name: "Test Project",
+  key: null,
   note: null,
   iconUrl: null,
   isDeleted: false,
+  deletedAt: null,
   isCompleted: false,
   completedAt: null,
   createdAt: new Date(),
@@ -149,6 +149,9 @@ const testProject: ExtendedProjects = {
   editResultsDurationSeconds: null,
   requireIssueOnFailure: false,
   excludeNotStartedFromRuns: false,
+  autoLockCompositionOnInProgress: false,
+  abandonedRunIdleMinutes: null,
+  abandonedRunStateId: null,
   creator: {
     id: "user-1",
     name: "Test User",

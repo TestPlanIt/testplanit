@@ -28,7 +28,6 @@ import {
   endOfQuarter,
   endOfWeek,
   endOfYear,
-  format,
   startOfDay,
   startOfMonth,
   startOfQuarter,
@@ -45,7 +44,7 @@ import { useState } from "react";
 import { DateRange } from "react-day-picker";
 import { Control, FieldPath, FieldValues } from "react-hook-form";
 import { cn, type ClassValue } from "~/utils";
-import { getDateFnsLocale } from "~/utils/locales";
+import { formatDateRange } from "~/utils/dateFormat";
 
 interface DateRangePickerFieldProps<T extends FieldValues = FieldValues> {
   control: Control<T>;
@@ -57,6 +56,12 @@ interface DateRangePickerFieldProps<T extends FieldValues = FieldValues> {
   maxDate?: Date;
   className?: ClassValue;
   helpKey?: string;
+  /**
+   * Preset key the picker starts on, matching a key in `rangeCategories`
+   * (e.g. "thisWeek"). Set it alongside a pre-seeded form value so the preset
+   * dropdown names the range instead of reading "Custom".
+   */
+  defaultPreset?: string;
 }
 
 interface PredefinedRange {
@@ -79,12 +84,13 @@ export function DateRangePickerField<T extends FieldValues = FieldValues>({
   maxDate = new Date("2099-12-31"),
   className,
   helpKey,
+  defaultPreset = "custom",
 }: DateRangePickerFieldProps<T>) {
   const locale = useLocale();
   const t = useTranslations("common.actions");
   const tReports = useTranslations("reports.ui");
   const [popoverOpen, setPopoverOpen] = useState(false);
-  const [selectedPreset, setSelectedPreset] = useState<string>("custom");
+  const [selectedPreset, setSelectedPreset] = useState<string>(defaultPreset);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -258,21 +264,6 @@ export function DateRangePickerField<T extends FieldValues = FieldValues>({
     return found?.range.label || tReports("dateRange.custom");
   };
 
-  const formatDateRange = (dateRange: DateRange | undefined) => {
-    if (!dateRange?.from) return null;
-    const formatStr = "MMM d, yyyy";
-    const localeObj = getDateFnsLocale(locale);
-
-    if (dateRange.to) {
-      return `${format(dateRange.from, formatStr, { locale: localeObj })} - ${format(
-        dateRange.to,
-        formatStr,
-        { locale: localeObj }
-      )}`;
-    }
-    return format(dateRange.from, formatStr, { locale: localeObj });
-  };
-
   return (
     <FormField
       control={control}
@@ -297,20 +288,22 @@ export function DateRangePickerField<T extends FieldValues = FieldValues>({
                 <Button
                   variant="outline"
                   className={cn(
-                    "w-full justify-start text-left font-normal",
+                    "w-full justify-start text-start font-normal",
                     !field.value && "text-muted-foreground"
                   )}
                   disabled={disabled}
                   data-testid="date-range-button"
                 >
                   {field.value ? (
-                    formatDateRange(field.value)
+                    formatDateRange(field.value.from, field.value.to, {
+                      locale,
+                    })
                   ) : (
                     <span>
                       {placeholder || tReports("dateRange.selectDateRange")}
                     </span>
                   )}
-                  <CalendarDays className="ml-auto h-4 w-4 opacity-50" />
+                  <CalendarDays className="ms-auto h-4 w-4 opacity-50" />
                 </Button>
               </FormControl>
             </PopoverTrigger>
@@ -333,7 +326,7 @@ export function DateRangePickerField<T extends FieldValues = FieldValues>({
                       data-testid="date-range-preset-select"
                     >
                       {getSelectedLabel()}
-                      <CalendarDays className="ml-2 h-4 w-4 opacity-50" />
+                      <CalendarDays className="ms-2 h-4 w-4 opacity-50" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="w-56">

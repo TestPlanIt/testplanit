@@ -23,12 +23,7 @@ const { mockJobState, mockProjectsData, mockFoldersData } = vi.hoisted(() => ({
   mockJobState: {
     jobId: null as string | null,
     status: "idle" as
-      | "idle"
-      | "prefighting"
-      | "waiting"
-      | "active"
-      | "completed"
-      | "failed",
+      "idle" | "prefighting" | "waiting" | "active" | "completed" | "failed",
     progress: null as { processed: number; total: number } | null,
     result: null as {
       copiedCount: number;
@@ -69,17 +64,25 @@ vi.mock("./useCopyMoveJob", () => ({
   useCopyMoveJob: () => mockJobState,
 }));
 
-vi.mock("~/lib/hooks", () => ({
-  useFindManyProjects: () => mockProjectsData,
-  useFindFirstRepositories: () => ({ data: { id: 100 } }),
-  useCreateRepositoryFolders: () => ({
-    mutateAsync: vi.fn().mockResolvedValue({ id: 99 }),
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    projects: { useFindMany: () => mockProjectsData },
+    repositories: { useFindFirst: () => ({ data: { id: 100 } }) },
+    repositoryFolders: {
+      useCreate: () => ({
+        mutateAsync: vi.fn().mockResolvedValue({ id: 99 }),
+      }),
+      useFindMany: () => mockFoldersData,
+    },
+    repositoryCases: { useFindMany: () => ({ data: [] }) },
   }),
-  useFindManyRepositoryCases: () => ({ data: [] }),
 }));
 
-vi.mock("~/lib/hooks/repository-folders", () => ({
-  useFindManyRepositoryFolders: () => mockFoldersData,
+// Folder-subtree cases are fetched via a POST hook (recursive-CTE endpoint) to
+// avoid the GET query-string 414 on deep trees; mock it to the same empty shape
+// the ZenStack repositoryCases.useFindMany mock returned for folderCases.
+vi.mock("~/hooks/useRepositoryCasesByDescendants", () => ({
+  useFindManyRepositoryCasesByDescendants: () => ({ data: [] }),
 }));
 
 vi.mock("~/lib/navigation", () => ({

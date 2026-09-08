@@ -1,8 +1,9 @@
 "use client";
-import { Groups } from "@prisma/client";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
+import type { Groups } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { useUpdateGroups } from "~/lib/hooks";
 
 import { useForm } from "react-hook-form";
 
@@ -32,7 +33,8 @@ export function DeleteGroup({ group, open, onClose }: DeleteGroupProps) {
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateGroup } = useUpdateGroups();
+  const { mutateAsync: updateGroup } =
+    useClientQueries(schema).groups.useUpdate();
 
   const form = useForm();
   const {
@@ -62,7 +64,7 @@ export function DeleteGroup({ group, open, onClose }: DeleteGroupProps) {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center">
-                <TriangleAlert className="w-6 h-6 mr-2" />
+                <TriangleAlert className="w-6 h-6 me-2" />
                 {t("deleteGroup")}
               </AlertDialogTitle>
               <AlertDialogDescription>

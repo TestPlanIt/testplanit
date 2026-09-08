@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { isReviewFeatureSystemEnabled } from "~/lib/services/reviewFeatureFlag";
 
 /**
@@ -17,6 +17,6 @@ import { isReviewFeatureSystemEnabled } from "~/lib/services/reviewFeatureFlag";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const enabled = await isReviewFeatureSystemEnabled(prisma);
+  const enabled = await isReviewFeatureSystemEnabled(baseDb);
   return NextResponse.json({ enabled });
 }

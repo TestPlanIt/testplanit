@@ -42,7 +42,7 @@ const TENANT_ID = `tenant-fanout-${randomUUID().slice(0, 8)}`;
 // the only thing diverging from prod is who owns the pub client.
 let publisher: IORedis;
 
-vi.mock("~/lib/multiTenantPrisma", () => ({
+vi.mock("~/lib/multiTenantDb", () => ({
   getCurrentTenantId: () => TENANT_ID,
 }));
 

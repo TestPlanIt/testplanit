@@ -10,8 +10,8 @@ vi.mock("~/server/auth", () => ({
   authOptions: {},
 }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     testRuns: {
       findMany: vi.fn(),
     },
@@ -24,7 +24,7 @@ vi.mock("~/utils/testResultTypes", () => ({
 }));
 
 import { getServerSession } from "next-auth";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { isAutomatedTestRunType } from "~/utils/testResultTypes";
 
 describe("Test Run Summaries (Batch) API Route", () => {
@@ -89,9 +89,9 @@ describe("Test Run Summaries (Batch) API Route", () => {
     vi.clearAllMocks();
     (getServerSession as any).mockResolvedValue(mockSession);
     (isAutomatedTestRunType as any).mockReturnValue(false);
-    (prisma.testRuns.findMany as any).mockResolvedValue(mockTestRuns);
+    (baseDb.testRuns.findMany as any).mockResolvedValue(mockTestRuns);
     // $queryRaw called multiple times: comments, status counts, elapsed, estimates, forecasts, case details
-    (prisma.$queryRaw as any).mockResolvedValue([]);
+    (baseDb.$queryRaw as any).mockResolvedValue([]);
   });
 
   describe("Authentication", () => {
@@ -150,7 +150,7 @@ describe("Test Run Summaries (Batch) API Route", () => {
 
   describe("Successful GET", () => {
     it("returns empty summaries object when no test runs found", async () => {
-      (prisma.testRuns.findMany as any).mockResolvedValue([]);
+      (baseDb.testRuns.findMany as any).mockResolvedValue([]);
 
       const request = createRequest({ testRunIds: "999" });
       const response = await GET(request);
@@ -163,7 +163,7 @@ describe("Test Run Summaries (Batch) API Route", () => {
 
     it("returns summaries keyed by test run ID", async () => {
       // Set up more realistic mock data so summaries are built
-      (prisma.$queryRaw as any)
+      (baseDb.$queryRaw as any)
         .mockResolvedValueOnce([]) // comments counts
         .mockResolvedValueOnce(mockStatusCounts) // status counts
         .mockResolvedValueOnce([
@@ -183,11 +183,37 @@ describe("Test Run Summaries (Batch) API Route", () => {
       expect(Object.keys(data.summaries).length).toBeGreaterThan(0);
     });
 
+    it("returns each run's execution window, null where there are no results", async () => {
+      (baseDb.$queryRaw as any)
+        .mockResolvedValueOnce([]) // comments counts
+        .mockResolvedValueOnce(mockStatusCounts) // status counts
+        .mockResolvedValueOnce([]) // elapsed
+        .mockResolvedValueOnce([]) // estimates
+        .mockResolvedValueOnce([]) // case details
+        .mockResolvedValueOnce([
+          {
+            testRunId: 1,
+            firstResultAt: new Date("2026-07-16T10:00:00.000Z"),
+            lastResultAt: new Date("2026-07-22T15:30:00.000Z"),
+          },
+        ]); // result windows — run 2 has no results
+
+      const request = createRequest({ testRunIds: "1,2" });
+      const response = await GET(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.summaries[1].firstResultAt).toBe("2026-07-16T10:00:00.000Z");
+      expect(data.summaries[1].lastResultAt).toBe("2026-07-22T15:30:00.000Z");
+      expect(data.summaries[2].firstResultAt).toBeNull();
+      expect(data.summaries[2].lastResultAt).toBeNull();
+    });
+
     it("parses comma-separated test run IDs correctly", async () => {
       const request = createRequest({ testRunIds: "1, 2, 3" });
       await GET(request);
 
-      const findManyCall = (prisma.testRuns.findMany as any).mock.calls[0][0];
+      const findManyCall = (baseDb.testRuns.findMany as any).mock.calls[0][0];
       expect(findManyCall.where.id.in).toEqual([1, 2, 3]);
     });
 
@@ -195,14 +221,14 @@ describe("Test Run Summaries (Batch) API Route", () => {
       const request = createRequest({ testRunIds: "1,abc,2" });
       await GET(request);
 
-      const findManyCall = (prisma.testRuns.findMany as any).mock.calls[0][0];
+      const findManyCall = (baseDb.testRuns.findMany as any).mock.calls[0][0];
       expect(findManyCall.where.id.in).toEqual([1, 2]);
     });
   });
 
   describe("Error Handling", () => {
     it("returns 500 when database query fails", async () => {
-      (prisma.testRuns.findMany as any).mockRejectedValue(
+      (baseDb.testRuns.findMany as any).mockRejectedValue(
         new Error("DB Error")
       );
 

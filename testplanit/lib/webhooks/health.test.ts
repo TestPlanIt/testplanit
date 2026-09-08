@@ -23,7 +23,7 @@ const mockedCaptureAudit = captureAuditEvent as unknown as ReturnType<
  * `webhookConfig.findUnique` and writes the next state via `webhookConfig.update`.
  * We capture both calls' arguments to assert on the exact shape.
  */
-function buildPrismaMock(opts: {
+function buildDbMock(opts: {
   config: {
     id?: string;
     projectId?: number;
@@ -55,15 +55,15 @@ describe("lib/webhooks/health.transition()", () => {
   });
 
   it("failure-from-HEALTHY-counter-1: increments counter, no state flip, no audit", async () => {
-    const prisma = buildPrismaMock({
+    const db = buildDbMock({
       config: { endpointHealth: "HEALTHY", consecutiveFailureCount: 0 },
     });
 
-    const result = await transition("cfg-1", "failure", prisma);
+    const result = await transition("cfg-1", "failure", db);
 
     expect(result).toEqual({ from: "HEALTHY", to: "HEALTHY", counter: 1 });
 
-    const updateCall = prisma.webhookConfig.update.mock.calls[0][0];
+    const updateCall = db.webhookConfig.update.mock.calls[0][0];
     expect(updateCall.where).toEqual({ id: "cfg-1" });
     expect(updateCall.data.endpointHealth).toBe("HEALTHY");
     expect(updateCall.data.consecutiveFailureCount).toBe(1);
@@ -73,15 +73,15 @@ describe("lib/webhooks/health.transition()", () => {
   });
 
   it("failure-crosses-DEGRADED-threshold-counter-5: HEALTHY → DEGRADED at counter==5, ONE audit", async () => {
-    const prisma = buildPrismaMock({
+    const db = buildDbMock({
       config: { endpointHealth: "HEALTHY", consecutiveFailureCount: 4 },
     });
 
-    const result = await transition("cfg-1", "failure", prisma);
+    const result = await transition("cfg-1", "failure", db);
 
     expect(result).toEqual({ from: "HEALTHY", to: "DEGRADED", counter: 5 });
 
-    const updateCall = prisma.webhookConfig.update.mock.calls[0][0];
+    const updateCall = db.webhookConfig.update.mock.calls[0][0];
     expect(updateCall.data.endpointHealth).toBe("DEGRADED");
     expect(updateCall.data.consecutiveFailureCount).toBe(5);
     expect(updateCall.data.lastFailureAt).toBeInstanceOf(Date);
@@ -105,15 +105,15 @@ describe("lib/webhooks/health.transition()", () => {
   });
 
   it("failure-stays-DEGRADED-counter-7: increments counter, no state flip, no audit", async () => {
-    const prisma = buildPrismaMock({
+    const db = buildDbMock({
       config: { endpointHealth: "DEGRADED", consecutiveFailureCount: 6 },
     });
 
-    const result = await transition("cfg-1", "failure", prisma);
+    const result = await transition("cfg-1", "failure", db);
 
     expect(result).toEqual({ from: "DEGRADED", to: "DEGRADED", counter: 7 });
 
-    const updateCall = prisma.webhookConfig.update.mock.calls[0][0];
+    const updateCall = db.webhookConfig.update.mock.calls[0][0];
     expect(updateCall.data.endpointHealth).toBe("DEGRADED");
     expect(updateCall.data.consecutiveFailureCount).toBe(7);
     expect(updateCall.data.lastFailureAt).toBeInstanceOf(Date);
@@ -122,15 +122,15 @@ describe("lib/webhooks/health.transition()", () => {
   });
 
   it("failure-crosses-DISABLED-threshold-counter-10: DEGRADED → DISABLED at counter==10, ONE audit", async () => {
-    const prisma = buildPrismaMock({
+    const db = buildDbMock({
       config: { endpointHealth: "DEGRADED", consecutiveFailureCount: 9 },
     });
 
-    const result = await transition("cfg-1", "failure", prisma);
+    const result = await transition("cfg-1", "failure", db);
 
     expect(result).toEqual({ from: "DEGRADED", to: "DISABLED", counter: 10 });
 
-    const updateCall = prisma.webhookConfig.update.mock.calls[0][0];
+    const updateCall = db.webhookConfig.update.mock.calls[0][0];
     expect(updateCall.data.endpointHealth).toBe("DISABLED");
     expect(updateCall.data.consecutiveFailureCount).toBe(10);
     expect(updateCall.data.lastFailureAt).toBeInstanceOf(Date);
@@ -152,15 +152,15 @@ describe("lib/webhooks/health.transition()", () => {
   });
 
   it("success-from-DEGRADED-resets-to-HEALTHY: counter→0, ONE audit", async () => {
-    const prisma = buildPrismaMock({
+    const db = buildDbMock({
       config: { endpointHealth: "DEGRADED", consecutiveFailureCount: 4 },
     });
 
-    const result = await transition("cfg-1", "success", prisma);
+    const result = await transition("cfg-1", "success", db);
 
     expect(result).toEqual({ from: "DEGRADED", to: "HEALTHY", counter: 0 });
 
-    const updateCall = prisma.webhookConfig.update.mock.calls[0][0];
+    const updateCall = db.webhookConfig.update.mock.calls[0][0];
     expect(updateCall.data.endpointHealth).toBe("HEALTHY");
     expect(updateCall.data.consecutiveFailureCount).toBe(0);
     expect(updateCall.data.lastSuccessAt).toBeInstanceOf(Date);
@@ -182,15 +182,15 @@ describe("lib/webhooks/health.transition()", () => {
   });
 
   it("success-from-HEALTHY-no-state-change: counter stays 0, no audit", async () => {
-    const prisma = buildPrismaMock({
+    const db = buildDbMock({
       config: { endpointHealth: "HEALTHY", consecutiveFailureCount: 0 },
     });
 
-    const result = await transition("cfg-1", "success", prisma);
+    const result = await transition("cfg-1", "success", db);
 
     expect(result).toEqual({ from: "HEALTHY", to: "HEALTHY", counter: 0 });
 
-    const updateCall = prisma.webhookConfig.update.mock.calls[0][0];
+    const updateCall = db.webhookConfig.update.mock.calls[0][0];
     expect(updateCall.data.endpointHealth).toBe("HEALTHY");
     expect(updateCall.data.consecutiveFailureCount).toBe(0);
 
@@ -198,17 +198,17 @@ describe("lib/webhooks/health.transition()", () => {
   });
 
   it("success-from-HEALTHY-counter-already-zero-still-updates-lastSuccessAt", async () => {
-    const prisma = buildPrismaMock({
+    const db = buildDbMock({
       config: { endpointHealth: "HEALTHY", consecutiveFailureCount: 0 },
     });
 
-    await transition("cfg-1", "success", prisma);
+    await transition("cfg-1", "success", db);
 
-    const updateCall = prisma.webhookConfig.update.mock.calls[0][0];
+    const updateCall = db.webhookConfig.update.mock.calls[0][0];
     expect(updateCall.data.lastSuccessAt).toBeInstanceOf(Date);
   });
 
-  it("transition-accepts-injected-tx-client: uses injected client, not the default module prisma", async () => {
+  it("transition-accepts-injected-tx-client: uses injected client, not the default module db", async () => {
     const injectedFindUnique = vi.fn().mockResolvedValue({
       id: "cfg-9",
       projectId: 42,
@@ -231,15 +231,15 @@ describe("lib/webhooks/health.transition()", () => {
   });
 
   it("DISABLED-success-still-resets: DISABLED → HEALTHY, counter 0, ONE audit", async () => {
-    const prisma = buildPrismaMock({
+    const db = buildDbMock({
       config: { endpointHealth: "DISABLED", consecutiveFailureCount: 10 },
     });
 
-    const result = await transition("cfg-1", "success", prisma);
+    const result = await transition("cfg-1", "success", db);
 
     expect(result).toEqual({ from: "DISABLED", to: "HEALTHY", counter: 0 });
 
-    const updateCall = prisma.webhookConfig.update.mock.calls[0][0];
+    const updateCall = db.webhookConfig.update.mock.calls[0][0];
     expect(updateCall.data.endpointHealth).toBe("HEALTHY");
     expect(updateCall.data.consecutiveFailureCount).toBe(0);
     expect(updateCall.data.lastSuccessAt).toBeInstanceOf(Date);
@@ -256,15 +256,15 @@ describe("lib/webhooks/health.transition()", () => {
   });
 
   it("failure-on-DISABLED-noop-via-counter-clamp: counter increments, stays DISABLED, no audit", async () => {
-    const prisma = buildPrismaMock({
+    const db = buildDbMock({
       config: { endpointHealth: "DISABLED", consecutiveFailureCount: 10 },
     });
 
-    const result = await transition("cfg-1", "failure", prisma);
+    const result = await transition("cfg-1", "failure", db);
 
     expect(result).toEqual({ from: "DISABLED", to: "DISABLED", counter: 11 });
 
-    const updateCall = prisma.webhookConfig.update.mock.calls[0][0];
+    const updateCall = db.webhookConfig.update.mock.calls[0][0];
     expect(updateCall.data.endpointHealth).toBe("DISABLED");
     expect(updateCall.data.consecutiveFailureCount).toBe(11);
     expect(updateCall.data.lastFailureAt).toBeInstanceOf(Date);

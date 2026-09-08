@@ -10,6 +10,7 @@ import type {
   LinkedIssueRef,
 } from "~/lib/integrations/adapters/IssueAdapter";
 import { parameterCreateSchema } from "~/lib/schemas/parameterSchema";
+import { normalizeGeneratedSteps } from "~/utils/generatedSteps";
 
 // Hard cap on starter dataset rows emitted by the LLM (DoS guard).
 // Rows beyond this index are truncated with a `dataset_capped` warning.
@@ -127,6 +128,12 @@ export interface TemplateData {
     required: boolean;
     options?: string[];
   }>;
+  /**
+   * Display names of fields the caller left out of `fields`, named in the
+   * prompt as forbidden keys. Advisory — `stripUnknownFieldValues` is the
+   * enforcement.
+   */
+  excludedFields?: string[];
 }
 
 export interface GenerationContext {
@@ -278,33 +285,10 @@ function estimateNameOnlyTokens(c: ExistingTestCaseContext): number {
 
 export type HierarchyContextMode = "full" | "names";
 
-/**
- * Fetch existing test cases from the folder hierarchy as context for LLM
- * generation, prioritised: current folder → ancestors → descendants.
- *
- * `mode: "full"` (default) loads names, descriptions, steps, and field
- * values — used by the single-shot and stream generators where the LLM
- * benefits from rich examples.
- *
- * `mode: "names"` loads names only and bills the budget per name length.
- * Use this for the outline phase where the prompt only renders titles
- * (descriptions and steps would add latency without improving dedup).
- *
- * Returns at most `tokenBudget` estimated tokens worth of cases.
- * `prisma` must be the *raw* (non-enhanced) client so access control
- * does not interfere — the caller has already verified project access.
- */
-export async function fetchHierarchyContext(
-  prisma: any,
-  projectId: number,
-  folderId: number,
-  tokenBudget: number,
-  mode: HierarchyContextMode = "full"
-): Promise<ExistingTestCaseContext[]> {
-  const namesOnly = mode === "names";
-
-  // Shared select shape for case queries
+/** Shared `select` shape for the existing-case context queries. */
+function buildCaseSelect(namesOnly: boolean): Record<string, any> {
   const caseSelect: Record<string, any> = {
+    id: true,
     name: true,
     template: { select: { templateName: true } },
   };
@@ -322,6 +306,167 @@ export async function fetchHierarchyContext(
       orderBy: { order: "asc" as const },
     };
   }
+  return caseSelect;
+}
+
+/** Identifies the Issue whose linked cases to use as context. */
+export interface IssueCaseLinkRef {
+  /** Internal `Issue.id` — exact, preferred when the caller knows it. */
+  issueId?: number | null;
+  issueKey?: string | null;
+  externalId?: string | null;
+  integrationId?: number | null;
+}
+
+/** Null when the ref carries no usable identity. */
+function buildIssueMatchWhere(
+  ref: IssueCaseLinkRef
+): Record<string, any> | null {
+  if (ref.issueId != null) return { id: ref.issueId };
+
+  const or: Record<string, any>[] = [];
+  if (ref.externalId) or.push({ externalId: ref.externalId });
+  if (ref.issueKey) {
+    // A synced issue carries the key in `externalKey`; a manual one carries it
+    // in `name`. Match both — the caller doesn't know which it has.
+    or.push({ externalKey: ref.issueKey }, { name: ref.issueKey });
+  }
+  if (or.length === 0) return null;
+
+  return {
+    OR: or,
+    ...(ref.integrationId != null ? { integrationId: ref.integrationId } : {}),
+  };
+}
+
+/**
+ * Fetch the test cases already linked to `ref`'s issue as generation context.
+ * The folder hierarchy comes up empty when generation starts without a folder
+ * (the Jira panel and the milestone issue list both pass folderId 0), where
+ * these are the only existing cases available — and the ones not to duplicate.
+ *
+ * Returned case ids let the caller skip them in the hierarchy pass. `db` must
+ * be the *raw* client — the caller has already verified project access.
+ */
+export async function fetchIssueLinkedCasesContext(
+  db: any,
+  projectId: number,
+  ref: IssueCaseLinkRef,
+  tokenBudget: number,
+  mode: HierarchyContextMode = "full"
+): Promise<{
+  cases: ExistingTestCaseContext[];
+  caseIds: Set<number>;
+  tokensUsed: number;
+}> {
+  const empty = { cases: [], caseIds: new Set<number>(), tokensUsed: 0 };
+  if (tokenBudget <= 0) return empty;
+
+  const issueWhere = buildIssueMatchWhere(ref);
+  if (!issueWhere) return empty;
+
+  const namesOnly = mode === "names";
+  const rows = await db.repositoryCases.findMany({
+    where: {
+      projectId,
+      isDeleted: false,
+      isArchived: false,
+      caseIssues: { some: { issue: issueWhere } },
+    },
+    select: buildCaseSelect(namesOnly),
+    orderBy: { order: "asc" },
+    take: 100, // generous upper bound; the token budget trims
+  });
+
+  const cases: ExistingTestCaseContext[] = [];
+  const caseIds = new Set<number>();
+  let tokensUsed = 0;
+
+  for (const row of rows) {
+    const ctx = namesOnly ? toNameOnlyCaseContext(row) : toCaseContext(row);
+    const tokens = namesOnly
+      ? estimateNameOnlyTokens(ctx)
+      : estimateCaseTokens(ctx);
+    if (tokensUsed + tokens > tokenBudget) break;
+    cases.push(ctx);
+    caseIds.add(row.id);
+    tokensUsed += tokens;
+  }
+
+  return { cases, caseIds, tokensUsed };
+}
+
+/**
+ * Existing-case context: issue-linked cases first, then the folder hierarchy
+ * with the remaining budget. Both feed the same "do not duplicate" prompt
+ * section, so a case is emitted at most once across the two.
+ */
+export async function fetchExistingCasesContext(
+  db: any,
+  projectId: number,
+  source: {
+    folderId?: number | null;
+    issueRef?: IssueCaseLinkRef | null;
+  },
+  tokenBudget: number,
+  mode: HierarchyContextMode = "full"
+): Promise<ExistingTestCaseContext[]> {
+  if (tokenBudget <= 0) return [];
+
+  const linked = source.issueRef
+    ? await fetchIssueLinkedCasesContext(
+        db,
+        projectId,
+        source.issueRef,
+        tokenBudget,
+        mode
+      )
+    : { cases: [], caseIds: new Set<number>(), tokensUsed: 0 };
+
+  const hierarchyBudget = tokenBudget - linked.tokensUsed;
+  if (typeof source.folderId !== "number" || hierarchyBudget <= 0) {
+    return linked.cases;
+  }
+
+  const hierarchy = await fetchHierarchyContext(
+    db,
+    projectId,
+    source.folderId,
+    hierarchyBudget,
+    mode,
+    linked.caseIds
+  );
+
+  return [...linked.cases, ...hierarchy];
+}
+
+/**
+ * Fetch existing test cases from the folder hierarchy as context for LLM
+ * generation, prioritised: current folder → ancestors → descendants.
+ *
+ * `mode: "full"` (default) loads names, descriptions, steps, and field
+ * values — used by the single-shot and stream generators where the LLM
+ * benefits from rich examples.
+ *
+ * `mode: "names"` loads names only and bills the budget per name length.
+ * Use this for the outline phase where the prompt only renders titles
+ * (descriptions and steps would add latency without improving dedup).
+ *
+ * Returns at most `tokenBudget` estimated tokens worth of cases.
+ * `db` must be the *raw* (non-enhanced) client so access control
+ * does not interfere — the caller has already verified project access.
+ */
+export async function fetchHierarchyContext(
+  db: any,
+  projectId: number,
+  folderId: number,
+  tokenBudget: number,
+  mode: HierarchyContextMode = "full",
+  excludeCaseIds?: Set<number>
+): Promise<ExistingTestCaseContext[]> {
+  const namesOnly = mode === "names";
+
+  const caseSelect = buildCaseSelect(namesOnly);
 
   const caseWhere = {
     projectId,
@@ -331,7 +476,7 @@ export async function fetchHierarchyContext(
 
   // 1. Load all folder ids + parentIds for the project (lightweight)
   const allFolders: { id: number; parentId: number | null }[] =
-    await prisma.repositoryFolders.findMany({
+    await db.repositoryFolders.findMany({
       where: { projectId, isDeleted: false },
       select: { id: true, parentId: true },
     });
@@ -379,7 +524,7 @@ export async function fetchHierarchyContext(
   for (const folderIds of groups) {
     if (folderIds.length === 0 || tokensUsed >= tokenBudget) continue;
 
-    const rows = await prisma.repositoryCases.findMany({
+    const rows = await db.repositoryCases.findMany({
       where: { ...caseWhere, folderId: { in: folderIds } },
       select: { ...caseSelect, folderId: true },
       take: 100, // generous upper bound; token budget will trim
@@ -395,6 +540,8 @@ export async function fetchHierarchyContext(
     }
 
     for (const row of rows) {
+      // Already emitted by the issue-linked pass — don't list it twice.
+      if (excludeCaseIds?.has(row.id)) continue;
       const ctx = namesOnly ? toNameOnlyCaseContext(row) : toCaseContext(row);
       const tokens = namesOnly
         ? estimateNameOnlyTokens(ctx)
@@ -722,7 +869,7 @@ export function buildSystemPrompt(
     )
     .join("\n");
   const stepsInstruction = includeSteps
-    ? "\n- For the Steps field in fieldValues, provide detailed step objects with 'step' and 'expectedResult' keys"
+    ? "\n- For the Steps field in fieldValues, provide an ARRAY of detailed step objects, each with a 'step' and an 'expectedResult' key. Emit one object per individual action — a test case normally needs several. Never return the steps as a string, and never pack a numbered list of actions into a single step object."
     : "";
   const priorityField = template.fields.find((f) =>
     f.name.toLowerCase().includes("priority")
@@ -743,6 +890,24 @@ export function buildSystemPrompt(
     ? buildParameterInstructionBlock(STARTER_DATASET_ROW_CAP)
     : "";
 
+  // Listing only the wanted fields is not enough: a model that sees
+  // "Preconditions" on the folder's existing cases will add it back.
+  const excludedFieldNames = Array.from(
+    new Set(
+      (template.excludedFields ?? [])
+        .map((name) => name?.trim())
+        .filter((name): name is string => Boolean(name))
+    )
+  ).filter((name) => !template.fields.some((f) => f.name === name));
+  const exclusionInstruction =
+    excludedFieldNames.length > 0
+      ? `EXCLUDED FIELDS (the user deselected these — NEVER emit them):
+${excludedFieldNames.map((name) => `- ${name}`).join("\n")}
+
+- CRITICAL: fieldValues must contain ONLY the field names listed under REQUIRED FIELDS and ADDITIONAL FIELDS. Never add a key for an excluded field — not as text, not as an empty string, not as null, not as a placeholder.
+- Do not mention excluded fields anywhere else in the JSON either. Any excluded key is discarded before the response is shown, so emitting one only wastes output.`
+      : "";
+
   // Keep each test case's top-level `name` in the same language as its
   // fieldValues. Injected for every prompt source (the marker check below
   // avoids duplicating it when a customized prompt already carries the line).
@@ -750,10 +915,18 @@ export function buildSystemPrompt(
     "- LANGUAGE CONSISTENCY: Write the top-level `name` of every test case in the SAME language you use for the values inside `fieldValues`. The `name` is human-readable content — never leave it in English (or reuse the English wording from this prompt) when the field values are generated in another language.";
 
   if (baseTemplate) {
+    // A prompt that renders the variable itself owns the wording.
+    const usesExclusionVariable = baseTemplate.includes(
+      "{{EXCLUDED_FIELDS_LIST}}"
+    );
     const rendered = baseTemplate
       .replace("{{EXAMPLE_STRUCTURE}}", exampleStructure)
       .replace("{{REQUIRED_FIELDS_LIST}}", requiredFieldsList)
       .replace("{{OPTIONAL_FIELDS_LIST}}", optionalFieldsList)
+      .replace(
+        "{{EXCLUDED_FIELDS_LIST}}",
+        excludedFieldNames.map((name) => `- ${name}`).join("\n") || "- (none)"
+      )
       .replace("{{QUANTITY_GUIDANCE}}", quantityGuidance)
       .replace("{{STEPS_INSTRUCTION}}", stepsInstruction)
       .replace("{{PRIORITY_INSTRUCTION}}", priorityInstruction)
@@ -761,7 +934,12 @@ export function buildSystemPrompt(
     const languageTail = rendered.includes("LANGUAGE CONSISTENCY")
       ? ""
       : languageConsistencyInstruction;
-    return [rendered, parameterInstructions, languageTail]
+    return [
+      rendered,
+      usesExclusionVariable ? "" : exclusionInstruction,
+      parameterInstructions,
+      languageTail,
+    ]
       .filter(Boolean)
       .join("\n\n");
   }
@@ -782,7 +960,7 @@ ${requiredFieldsList}
 
 ADDITIONAL FIELDS (include ALL of these in fieldValues):
 ${optionalFieldsList}
-
+${exclusionInstruction ? `\n${exclusionInstruction}\n` : ""}
 REQUIREMENTS:
 - Generate ${quantityGuidance} that are SPECIFIC to the provided issue
 - Each test case object must contain ONLY: id, name, fieldValues${autoGenerateTags ? ", tags" : ""}. Do NOT include priority, automated, steps, or any other top-level keys.
@@ -791,12 +969,12 @@ REQUIREMENTS:
 ${languageConsistencyInstruction}
 - CRITICAL: ALL REQUIRED FIELDS must be included in fieldValues with meaningful content
 - IMPORTANT: Include ALL optional fields in fieldValues
-- For text/textarea fields (Description, Preconditions, Post Conditions, etc.):
+- For every text/textarea field listed above (and ONLY those):
   * Always provide substantial, detailed content (minimum 2-3 sentences)
   * Include specific details relevant to the issue being tested
-  * Description should explain what the test validates and why it's important
-  * Preconditions should list all prerequisites needed before testing
-  * Post Conditions should describe the expected system state after the test
+  * A description field should explain what the test validates and why it's important
+  * A preconditions field should list all prerequisites needed before testing
+  * A post-conditions field should describe the expected system state after the test
 - For single-select fields with options, use exactly one of the provided options
 - For multiselect fields, provide an array of 1-3 relevant options from the list
 - CRITICAL: Never create new option values for dropdown/select fields - always use provided options exactly
@@ -870,35 +1048,53 @@ Worked example (single test case for a login feature with a "role" SELECT and a 
 }`;
 }
 
+/**
+ * Render the source issue's comment thread as a prompt section. Shared by the
+ * single-shot, outline, and expand prompt builders so issue-based generation
+ * enriches identically regardless of which path assembles the prompt.
+ * Returns "" when there are no comments.
+ */
+export function buildCommentsSection(comments?: IssueComment[]): string {
+  if (!comments || comments.length === 0) return "";
+  let section = `\n\nRELEVANT COMMENTS:`;
+  comments.forEach((c, i) => {
+    section += `\n${i + 1}. ${c.author}: ${c.body}`;
+  });
+  return section;
+}
+
+/**
+ * Render one-hop linked issues (title + body + comments each) as a prompt
+ * section. Shared by the single-shot, outline, and expand prompt builders.
+ * Returns "" when there are no linked issues.
+ */
+export function buildLinkedIssuesSection(
+  linkedIssues?: LinkedIssueContext[]
+): string {
+  if (!linkedIssues || linkedIssues.length === 0) return "";
+  let section = `\n\nRELATED LINKED ISSUES:`;
+  linkedIssues.forEach((li, i) => {
+    const idLabel = li.ref.key ?? li.ref.id;
+    section += `\n${i + 1}. ${idLabel} (${li.ref.linkType}, ${li.ref.direction}): ${li.title}`;
+    if (li.body) {
+      section += `\n   Body: ${li.body}`;
+    }
+    if (li.comments.length > 0) {
+      li.comments.forEach((c, ci) => {
+        section += `\n   Comment ${ci + 1} (${c.author}): ${c.body}`;
+      });
+    }
+  });
+  return section;
+}
+
 export function buildUserPrompt(
   issue: IssueData,
   context: GenerationContext,
   baseTemplate?: string
 ): string {
-  let commentsSection = "";
-  if (issue.comments && issue.comments.length > 0) {
-    commentsSection = `\n\nRELEVANT COMMENTS:`;
-    issue.comments.forEach((c, i) => {
-      commentsSection += `\n${i + 1}. ${c.author}: ${c.body}`;
-    });
-  }
-
-  let linkedIssuesSection = "";
-  if (context.linkedIssues && context.linkedIssues.length > 0) {
-    linkedIssuesSection = `\n\nRELATED LINKED ISSUES:`;
-    context.linkedIssues.forEach((li, i) => {
-      const idLabel = li.ref.key ?? li.ref.id;
-      linkedIssuesSection += `\n${i + 1}. ${idLabel} (${li.ref.linkType}, ${li.ref.direction}): ${li.title}`;
-      if (li.body) {
-        linkedIssuesSection += `\n   Body: ${li.body}`;
-      }
-      if (li.comments.length > 0) {
-        li.comments.forEach((c, ci) => {
-          linkedIssuesSection += `\n   Comment ${ci + 1} (${c.author}): ${c.body}`;
-        });
-      }
-    });
-  }
+  const commentsSection = buildCommentsSection(issue.comments);
+  const linkedIssuesSection = buildLinkedIssuesSection(context.linkedIssues);
 
   let userNotesSection = "";
   if (context.userNotes) {
@@ -1043,6 +1239,14 @@ ${issue.description || "No description provided"}
 
 STATUS: ${issue.status}${issue.priority ? ` | PRIORITY: ${issue.priority}` : ""}`;
 
+  // Enrich scenario selection with the source issue's comments and one-hop
+  // linked issues (title/body/comments). This is where the SET of test cases
+  // is chosen, so it's the highest-value place for this context. Both sections
+  // are "" when the issue has no comments / no linked issues (e.g. manual
+  // issues), so this is a no-op for the un-enriched case.
+  prompt += buildCommentsSection(issue.comments);
+  prompt += buildLinkedIssuesSection(context.linkedIssues);
+
   if (context.userNotes) {
     prompt += `\n\nADDITIONAL TESTING GUIDANCE: ${context.userNotes}`;
   }
@@ -1087,6 +1291,14 @@ export function buildExpandUserPrompt(
 ): string {
   const outlineSection = `\n\nTEST CASE TO GENERATE:\nTitle: "${outline.title}"\nSummary: ${outline.summary}\n\nGenerate a complete test case for the title and summary above. The test case must match that title exactly.`;
 
+  // Ground each expanded case in the same issue context the outline saw:
+  // source comments + one-hop linked issues. The enrichment is fetched once
+  // during the outline phase and threaded back in via `issue.comments` /
+  // `context.linkedIssues`, so expand does not re-hit the integration adapter.
+  // Both sections are "" when the issue is un-enriched.
+  const commentsSection = buildCommentsSection(issue.comments);
+  const linkedIssuesSection = buildLinkedIssuesSection(context.linkedIssues);
+
   if (baseTemplate) {
     return baseTemplate
       .replace("{{ISSUE_KEY}}", issue.key)
@@ -1100,8 +1312,8 @@ export function buildExpandUserPrompt(
         "{{ISSUE_PRIORITY}}",
         issue.priority ? ` | PRIORITY: ${issue.priority}` : ""
       )
-      .replace("{{COMMENTS_SECTION}}", "")
-      .replace("{{LINKED_ISSUES_SECTION}}", "")
+      .replace("{{COMMENTS_SECTION}}", commentsSection)
+      .replace("{{LINKED_ISSUES_SECTION}}", linkedIssuesSection)
       .replace(
         "{{USER_NOTES_SECTION}}",
         context.userNotes
@@ -1117,6 +1329,9 @@ ISSUE DETAILS:
 ${issue.description || "No description provided"}
 
 STATUS: ${issue.status}${issue.priority ? ` | PRIORITY: ${issue.priority}` : ""}`;
+
+  prompt += commentsSection;
+  prompt += linkedIssuesSection;
 
   if (context.userNotes) {
     prompt += `\n\nADDITIONAL TESTING GUIDANCE: ${context.userNotes}`;
@@ -1142,7 +1357,8 @@ export function parseAndValidateTestCases(
   template: TemplateData,
   issue: IssueData,
   autoGenerateTags?: boolean,
-  quantity?: string
+  quantity?: string,
+  finishReason?: string
 ): {
   testCases: GeneratedTestCase[];
   warnings?: ParseWarning[];
@@ -1289,11 +1505,24 @@ export function parseAndValidateTestCases(
       parseError instanceof Error ? parseError.message : String(parseError);
 
     const responseLength = rawContent.length;
-    const seemsTruncated =
-      responseLength > 20000 ||
-      !rawContent.trim().endsWith("}") ||
+    // A trailing code fence is formatting, not a truncation signal.
+    const trimmedRaw = rawContent
+      .trim()
+      .replace(/```\s*$/, "")
+      .trim();
+    const structurallyCut =
       errorMessage.includes("Unexpected end") ||
-      (errorMessage.includes("Expected") && errorMessage.includes("JSON"));
+      (!trimmedRaw.endsWith("}") && !trimmedRaw.endsWith("]"));
+    // The provider's finish reason wins when known: "length" is a truncation,
+    // and a completed ("stop") response only counts as one when the JSON is
+    // visibly cut off.
+    const seemsTruncated =
+      finishReason === "length" ||
+      (finishReason === "stop"
+        ? structurallyCut
+        : responseLength > 20000 ||
+          structurallyCut ||
+          (errorMessage.includes("Expected") && errorMessage.includes("JSON")));
 
     let userError: string;
     let userSuggestions: string[];
@@ -1342,7 +1571,10 @@ export function parseAndValidateTestCases(
   const warnings: ParseWarning[] = [];
   const testCases =
     parsedResponse.testCases?.map((tc, index) => {
-      const validatedFieldValues = { ...tc.fieldValues };
+      const validatedFieldValues = stripUnknownFieldValues(
+        tc.fieldValues,
+        template
+      );
 
       template.fields.forEach((field) => {
         if (field.options && validatedFieldValues[field.name]) {
@@ -1368,17 +1600,7 @@ export function parseAndValidateTestCases(
         }
       });
 
-      // If the LLM put steps at the top level instead of in fieldValues,
-      // move them into fieldValues for any Steps-type field
-      if (Array.isArray(tc.steps) && tc.steps.length > 0) {
-        const stepsFieldDef = template.fields.find(
-          (f) =>
-            f.type.toLowerCase() === "steps" || f.name.toLowerCase() === "steps"
-        );
-        if (stepsFieldDef && !validatedFieldValues[stepsFieldDef.name]) {
-          validatedFieldValues[stepsFieldDef.name] = tc.steps;
-        }
-      }
+      normalizeStepsFieldValue(validatedFieldValues, template, tc.steps);
 
       // If the LLM put priority at the top level instead of in fieldValues,
       // move it into fieldValues for any priority-like field
@@ -1613,6 +1835,46 @@ function extractRawTestCaseStrings(text: string): string[] {
 }
 
 /**
+ * Keep only the fieldValues keys naming a field in `template.fields` (already
+ * narrowed to the user's selection), so a deselected field cannot reach the
+ * preview or the import. Exact match by display name — what the import does.
+ */
+/**
+ * Settle the Steps field on the canonical array of `{ step, expectedResult }`
+ * pairs. Sources it from fieldValues, or from a top-level `steps` key when the
+ * model put it there, and normalizes the shape — a model answers with a single
+ * object, a numbered-list string, or `action`/`expected` keys as readily as
+ * with the requested array, and every one of those renders as one step (or
+ * none) downstream.
+ */
+function normalizeStepsFieldValue(
+  fieldValues: Record<string, any>,
+  template: TemplateData,
+  topLevelSteps: unknown
+): void {
+  const stepsFieldDef = template.fields.find(
+    (f) => f.type.toLowerCase() === "steps" || f.name.toLowerCase() === "steps"
+  );
+  if (!stepsFieldDef) return;
+
+  const raw = fieldValues[stepsFieldDef.name] ?? topLevelSteps;
+  const steps = normalizeGeneratedSteps(raw);
+  if (steps.length > 0) fieldValues[stepsFieldDef.name] = steps;
+}
+
+function stripUnknownFieldValues(
+  fieldValues: Record<string, any> | undefined,
+  template: TemplateData
+): Record<string, any> {
+  const allowedNames = new Set(template.fields.map((f) => f.name));
+  const kept: Record<string, any> = {};
+  for (const [name, value] of Object.entries(fieldValues ?? {})) {
+    if (allowedNames.has(name)) kept[name] = value;
+  }
+  return kept;
+}
+
+/**
  * Validate and sanitize a single raw test case object against the template.
  */
 export function validateTestCase(
@@ -1620,7 +1882,10 @@ export function validateTestCase(
   index: number,
   template: TemplateData
 ): GeneratedTestCase {
-  const validatedFieldValues = { ...tc.fieldValues };
+  const validatedFieldValues = stripUnknownFieldValues(
+    tc.fieldValues,
+    template
+  );
   template.fields.forEach((field) => {
     if (field.options && validatedFieldValues[field.name]) {
       const fieldValue = validatedFieldValues[field.name];
@@ -1644,16 +1909,7 @@ export function validateTestCase(
     }
   });
 
-  // If the LLM put steps at the top level, move into fieldValues
-  if (Array.isArray(tc.steps) && tc.steps.length > 0) {
-    const stepsFieldDef = template.fields.find(
-      (f) =>
-        f.type.toLowerCase() === "steps" || f.name.toLowerCase() === "steps"
-    );
-    if (stepsFieldDef && !validatedFieldValues[stepsFieldDef.name]) {
-      validatedFieldValues[stepsFieldDef.name] = tc.steps;
-    }
-  }
+  normalizeStepsFieldValue(validatedFieldValues, template, tc.steps);
 
   // If the LLM put priority at the top level, move into fieldValues
   if (tc.priority && typeof tc.priority === "string") {

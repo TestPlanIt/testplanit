@@ -1,3 +1,4 @@
+import type { Page } from "@playwright/test";
 import { expect, test } from "../../../fixtures";
 import { RepositoryPage } from "../../../page-objects/repository/repository.page";
 
@@ -10,7 +11,19 @@ import { RepositoryPage } from "../../../page-objects/repository/repository.page
  * - Sort direction cycles: Default → Ascending → Descending → Default
  * - Pagination with sorting
  * - Actual data order verification
+ * - Sorting under an active grouping axis AND an active FilterBar chip
  */
+
+/** The `f` params currently serialized into the URL, form-decoded. */
+function filterParams(page: Page): string[] {
+  return new URL(page.url()).searchParams.getAll("f");
+}
+
+async function expectFilterParam(page: Page, pattern: RegExp): Promise<void> {
+  await expect
+    .poll(() => filterParams(page).join("|"), { timeout: 10000 })
+    .toMatch(pattern);
+}
 test.describe("Sorting", () => {
   let repositoryPage: RepositoryPage;
 
@@ -86,15 +99,40 @@ test.describe("Sorting", () => {
     page: import("@playwright/test").Page,
     columnName: string
   ) {
-    const table = page.locator("table").first();
-    const header = table.locator("th").filter({ hasText: columnName }).first();
-    await expect(header).toBeVisible({ timeout: 5000 });
-
-    const sortButton = header
-      .getByRole("button", { name: "Sort column" })
+    // Advance the sort one step through the same cycle the old toggle button
+    // used: Not sorted -> ascending -> descending -> Not sorted, driven through
+    // the column header's "Column options" menu.
+    const current = await getSortIconState(page, columnName);
+    const nextItem =
+      current === "Sorted ascending"
+        ? "Sort descending"
+        : current === "Sorted descending"
+          ? "Remove sort"
+          : "Sort ascending";
+    const button = page
+      .locator("table")
+      .first()
+      .locator("th")
+      .filter({ hasText: columnName })
+      .first()
+      .getByRole("button", { name: "Column options" })
       .first();
-    await expect(sortButton).toBeVisible({ timeout: 5000 });
-    await sortButton.click();
+    await button.scrollIntoViewIfNeeded();
+    await expect(button).toBeVisible({ timeout: 5000 });
+    // Open the menu via keyboard: a pointer click on a neighbouring header can
+    // be intercepted by a sticky column (e.g. Name, z-index 21) overlapping it.
+    // Keyboard activation has no such interception and also dismisses any menu
+    // left open from a previous step.
+    await button.focus();
+    await button.press("Enter");
+    // Scope to the OPEN menu: a menu closed moments earlier is still in the
+    // DOM while its exit animation runs, so both it and its items match an
+    // unscoped role lookup (strict mode violation).
+    const openMenu = page.locator('[role="menu"][data-state="open"]').first();
+    await openMenu.waitFor({ state: "visible" });
+    const item = openMenu.getByRole("menuitem", { name: nextItem });
+    await expect(item).toBeVisible();
+    await item.click();
 
     await waitForTableStable(page);
   }
@@ -106,13 +144,20 @@ test.describe("Sorting", () => {
     page: import("@playwright/test").Page,
     columnName: string
   ): Promise<string> {
-    const table = page.locator("table").first();
-    const header = table.locator("th").filter({ hasText: columnName }).first();
-    const sortButton = header
-      .getByRole("button", { name: "Sort column" })
+    // Sort state lives on the indicator icon inside the column header's
+    // "Column options" menu button ("Not sorted"/"Sorted ascending"/
+    // "Sorted descending"); the chevron is aria-hidden so it is excluded.
+    const icon = page
+      .locator("table")
+      .first()
+      .locator("th")
+      .filter({ hasText: columnName })
+      .first()
+      .getByRole("button", { name: "Column options" })
+      .first()
+      .getByRole("img")
       .first();
-    const sortIcon = sortButton.getByRole("img");
-    return (await sortIcon.getAttribute("aria-label")) || "";
+    return (await icon.getAttribute("aria-label")) || "";
   }
 
   /**
@@ -244,22 +289,24 @@ test.describe("Sorting", () => {
       );
     });
 
-    const table = page.locator("table").first();
-    const rows = table.locator("tbody tr");
+    // Scope to the cases table (data-row-id rows only) so the count ignores
+    // the `pageSize` skeleton rows the DataTable renders while a query/refetch
+    // is in flight, which previously produced a "Received: 10" mismatch.
+    const table = repositoryPage.casesTable;
+    const rows = table.locator("tbody tr[data-row-id]");
 
     await test.step("Open the folder and confirm 3 rows are shown", async () => {
       await repositoryPage.goto(projectId);
 
       await repositoryPage.selectFolder(folderId!);
-      await page.waitForLoadState("networkidle");
+      await waitForTableStable(page);
 
       // Verify the table is visible
       await expect(table).toBeVisible({ timeout: 10000 });
 
-      // Wait for rows to appear in tbody
-      await expect(rows.first()).toBeVisible({ timeout: 10000 });
-      const count = await rows.count();
-      expect(count).toBe(3);
+      // Auto-retrying assertion waits out the loading skeleton until the
+      // folder's 3 real rows render.
+      await expect(rows).toHaveCount(3, { timeout: 10000 });
     });
 
     await test.step("Reload and confirm the order is maintained", async () => {
@@ -267,12 +314,11 @@ test.describe("Sorting", () => {
       await page.reload();
       await repositoryPage.waitForRepositoryLoad();
       await repositoryPage.selectFolder(folderId!);
-      await page.waitForLoadState("networkidle");
+      await waitForTableStable(page);
 
       // Verify order is maintained (same number of rows)
       await expect(table).toBeVisible({ timeout: 10000 });
-      await expect(rows.first()).toBeVisible({ timeout: 10000 });
-      expect(await rows.count()).toBe(3);
+      await expect(rows).toHaveCount(3, { timeout: 10000 });
     });
   });
 
@@ -294,9 +340,9 @@ test.describe("Sorting", () => {
     const rows = table.locator("tbody tr");
     const nameHeader = table.locator("th").filter({ hasText: "Name" }).first();
     const sortButton = nameHeader
-      .getByRole("button", { name: "Sort column" })
+      .getByRole("button", { name: "Column options" })
       .first();
-    const sortIcon = sortButton.getByRole("img");
+    const sortIcon = sortButton.getByRole("img").first();
 
     await test.step("Open the folder and confirm the Name sort starts unsorted", async () => {
       await repositoryPage.goto(projectId);
@@ -308,30 +354,27 @@ test.describe("Sorting", () => {
 
       await expect(rows.first()).toBeVisible({ timeout: 10000 });
 
-      // Find the Name column header and sort button
+      // Find the Name column header menu button
       await expect(sortButton).toBeVisible({ timeout: 5000 });
 
       // Initial state: "Not sorted" - check the sort icon inside the button
       await expect(sortIcon).toHaveAccessibleName("Not sorted");
     });
 
-    await test.step("First click sorts ascending", async () => {
-      // Click 1: Should change to ascending
-      await sortButton.click();
+    await test.step("First step sorts ascending", async () => {
+      await clickSortButton(page, "Name");
       await expect(rows.first()).toBeVisible({ timeout: 10000 });
       await expect(sortIcon).toHaveAccessibleName("Sorted ascending");
     });
 
-    await test.step("Second click sorts descending", async () => {
-      // Click 2: Should change to descending
-      await sortButton.click();
+    await test.step("Second step sorts descending", async () => {
+      await clickSortButton(page, "Name");
       await expect(rows.first()).toBeVisible({ timeout: 10000 });
       await expect(sortIcon).toHaveAccessibleName("Sorted descending");
     });
 
-    await test.step("Third click returns to unsorted", async () => {
-      // Click 3: Should return to default (not sorted)
-      await sortButton.click();
+    await test.step("Third step returns to unsorted", async () => {
+      await clickSortButton(page, "Name");
       await expect(rows.first()).toBeVisible({ timeout: 10000 });
       await expect(sortIcon).toHaveAccessibleName("Not sorted");
     });
@@ -366,6 +409,15 @@ test.describe("Sorting", () => {
     });
 
     await test.step("Verify the Name column is in ascending order", async () => {
+      // Wait for the table to settle to exactly the 3 real data rows before
+      // reading the column. The DataTable shows skeleton rows (no data-row-id)
+      // during the post-sort refetch window, and getColumnValues would
+      // otherwise read those placeholders (count 10 = pageSize). Mirrors the
+      // toHaveCount pattern the other sorting tests use.
+      await expect(
+        repositoryPage.casesTable.locator("tbody tr[data-row-id]")
+      ).toHaveCount(3, { timeout: 10000 });
+
       // Get the values from the Name column
       const nameValues = await getColumnValues(page, "Name");
 
@@ -407,6 +459,14 @@ test.describe("Sorting", () => {
     });
 
     await test.step("Verify the Name column is in descending order", async () => {
+      // Wait for the table to settle to exactly the 3 real data rows before
+      // reading the column (skeleton rows during the post-sort refetch have no
+      // data-row-id and would otherwise be read as 10 placeholders). Mirrors
+      // the Ascending test + the toHaveCount pattern the other sorting tests use.
+      await expect(
+        repositoryPage.casesTable.locator("tbody tr[data-row-id]")
+      ).toHaveCount(3, { timeout: 10000 });
+
       // Get the values from the Name column
       const nameValues = await getColumnValues(page, "Name");
 
@@ -472,20 +532,20 @@ test.describe("Sorting", () => {
       // Check if ID column is visible
       if (await idHeader.isVisible()) {
         const sortButton = idHeader
-          .getByRole("button", { name: "Sort column" })
+          .getByRole("button", { name: "Column options" })
           .first();
         await expect(sortButton).toBeVisible({ timeout: 5000 });
 
         // Click to sort ascending
-        await sortButton.click();
+        await clickSortButton(page, "ID");
         await waitForTableStable(page);
 
         // Verify sort icon shows ascending
-        const sortIcon = sortButton.getByRole("img");
+        const sortIcon = sortButton.getByRole("img").first();
         await expect(sortIcon).toHaveAccessibleName("Sorted ascending");
 
         // Click again to sort descending
-        await sortButton.click();
+        await clickSortButton(page, "ID");
         await waitForTableStable(page);
 
         // Verify sort icon shows descending
@@ -523,26 +583,26 @@ test.describe("Sorting", () => {
 
       if (await tagsHeader.isVisible()) {
         const sortButton = tagsHeader
-          .getByRole("button", { name: "Sort column" })
+          .getByRole("button", { name: "Column options" })
           .first();
 
         if (await sortButton.isVisible()) {
           // Initial state should be "Not sorted"
-          const sortIcon = sortButton.getByRole("img");
+          const sortIcon = sortButton.getByRole("img").first();
           await expect(sortIcon).toHaveAccessibleName("Not sorted");
 
           // Click to sort ascending
-          await sortButton.click();
+          await clickSortButton(page, "Tags");
           await waitForTableStable(page);
           await expect(sortIcon).toHaveAccessibleName("Sorted ascending");
 
           // Click to sort descending
-          await sortButton.click();
+          await clickSortButton(page, "Tags");
           await waitForTableStable(page);
           await expect(sortIcon).toHaveAccessibleName("Sorted descending");
 
           // Click to return to default
-          await sortButton.click();
+          await clickSortButton(page, "Tags");
           await waitForTableStable(page);
           await expect(sortIcon).toHaveAccessibleName("Not sorted");
         }
@@ -599,16 +659,16 @@ test.describe("Sorting", () => {
     });
 
     await test.step("Verify the first page is sorted ascending", async () => {
-      // Wait for the table to have content (not empty rows)
+      // The sorted refetch replaces the table contents asynchronously after
+      // the header click — a one-shot read can catch the pre-sort page (the
+      // failure screenshot shows the sorted table rendered moments after the
+      // stale read). Poll until the first row is "Alfa" (first
+      // alphabetically) instead of asserting a single snapshot.
       await expect(async () => {
         const firstPageNames = await getColumnValues(page, "Name");
         expect(firstPageNames.length).toBeGreaterThan(0);
-        expect(firstPageNames[0]).toBeTruthy(); // Not empty
-      }).toPass({ timeout: 5000 });
-
-      // Verify first item is "Alfa" (first alphabetically)
-      const firstPageNames = await getColumnValues(page, "Name");
-      expect(firstPageNames[0]).toContain("Alfa");
+        expect(firstPageNames[0]).toContain("Alfa");
+      }).toPass({ timeout: 10000 });
 
       // Get the sort icon state
       const sortState = await getSortIconState(page, "Name");
@@ -805,23 +865,28 @@ test.describe("Sorting", () => {
       await repositoryPage.selectFolder(folderId!);
       await waitForTableStable(page);
 
-      // Initial count
-      const initialCount = await rows.count();
-      expect(initialCount).toBe(testCaseCount);
+      // Auto-retrying assertion so the count is sampled after the loading
+      // skeleton clears, not during the refetch window.
+      await expect(rows).toHaveCount(testCaseCount, { timeout: 10000 });
     });
 
     await test.step("Cycle the sort and verify row count is preserved", async () => {
+      // Each sort click triggers a refetch; the DataTable swaps in `pageSize`
+      // skeleton rows (no data-row-id) while the query is in flight. Use the
+      // auto-retrying assertion so the count is read after the rows repaint,
+      // not during the empty skeleton window (which sampled 0 immediately).
+
       // Sort ascending
       await clickSortButton(page, "Name");
-      expect(await rows.count()).toBe(testCaseCount);
+      await expect(rows).toHaveCount(testCaseCount, { timeout: 10000 });
 
       // Sort descending
       await clickSortButton(page, "Name");
-      expect(await rows.count()).toBe(testCaseCount);
+      await expect(rows).toHaveCount(testCaseCount, { timeout: 10000 });
 
       // Reset sort
       await clickSortButton(page, "Name");
-      expect(await rows.count()).toBe(testCaseCount);
+      await expect(rows).toHaveCount(testCaseCount, { timeout: 10000 });
     });
   });
 
@@ -895,9 +960,9 @@ test.describe("Sorting", () => {
     const table = page.locator("table").first();
     const nameHeader = table.locator("th").filter({ hasText: "Name" }).first();
     const sortButton = nameHeader
-      .getByRole("button", { name: "Sort column" })
+      .getByRole("button", { name: "Column options" })
       .first();
-    const sortIcon = sortButton.getByRole("img");
+    const sortIcon = sortButton.getByRole("img").first();
 
     await test.step("Open the folder and confirm the unsorted icon", async () => {
       await repositoryPage.goto(projectId);
@@ -909,15 +974,15 @@ test.describe("Sorting", () => {
     });
 
     await test.step("Click through ascending, descending, and back to unsorted", async () => {
-      await sortButton.click();
+      await clickSortButton(page, "Name");
       await waitForTableStable(page);
       await expect(sortIcon).toHaveAccessibleName("Sorted ascending");
 
-      await sortButton.click();
+      await clickSortButton(page, "Name");
       await waitForTableStable(page);
       await expect(sortIcon).toHaveAccessibleName("Sorted descending");
 
-      await sortButton.click();
+      await clickSortButton(page, "Name");
       await waitForTableStable(page);
       await expect(sortIcon).toHaveAccessibleName("Not sorted");
     });
@@ -950,13 +1015,13 @@ test.describe("Sorting", () => {
 
       // Verify sort button has correct accessible name
       const sortButton = nameHeader.getByRole("button", {
-        name: "Sort column",
+        name: "Column options",
       });
       await expect(sortButton).toBeVisible();
-      await expect(sortButton).toHaveAttribute("aria-label", "Sort column");
+      await expect(sortButton).toHaveAttribute("aria-label", "Column options");
 
       // Verify the sort icon has an accessible name
-      const sortIcon = sortButton.getByRole("img");
+      const sortIcon = sortButton.getByRole("img").first();
       await expect(sortIcon).toBeVisible();
       const ariaLabel = await sortIcon.getAttribute("aria-label");
       expect(ariaLabel).toBeTruthy();
@@ -980,7 +1045,7 @@ test.describe("Sorting", () => {
     const table = page.locator("table").first();
     const nameHeader = table.locator("th").filter({ hasText: "Name" }).first();
     const sortButton = nameHeader
-      .getByRole("button", { name: "Sort column" })
+      .getByRole("button", { name: "Column options" })
       .first();
 
     await test.step("Open the folder", async () => {
@@ -991,9 +1056,9 @@ test.describe("Sorting", () => {
 
     await test.step("Click the sort button three times in rapid succession", async () => {
       // Rapid clicks - should cycle through states correctly
-      await sortButton.click();
-      await sortButton.click();
-      await sortButton.click();
+      await clickSortButton(page, "Name");
+      await clickSortButton(page, "Name");
+      await clickSortButton(page, "Name");
 
       // Wait for all operations to complete
       await page.waitForLoadState("networkidle");
@@ -1002,7 +1067,7 @@ test.describe("Sorting", () => {
 
     await test.step("Verify the sort reset to unsorted and rows are intact", async () => {
       // Should be back to "Not sorted" after 3 clicks
-      const sortIcon = sortButton.getByRole("img");
+      const sortIcon = sortButton.getByRole("img").first();
       await expect(sortIcon).toHaveAccessibleName("Not sorted");
 
       // Verify table still has correct number of rows
@@ -1188,15 +1253,40 @@ test.describe("Sorting with ViewSelector Filters", () => {
     page: import("@playwright/test").Page,
     columnName: string
   ) {
-    const table = page.locator("table").first();
-    const header = table.locator("th").filter({ hasText: columnName }).first();
-    await expect(header).toBeVisible({ timeout: 5000 });
-
-    const sortButton = header
-      .getByRole("button", { name: "Sort column" })
+    // Advance the sort one step through the same cycle the old toggle button
+    // used: Not sorted -> ascending -> descending -> Not sorted, driven through
+    // the column header's "Column options" menu.
+    const current = await getSortIconState(page, columnName);
+    const nextItem =
+      current === "Sorted ascending"
+        ? "Sort descending"
+        : current === "Sorted descending"
+          ? "Remove sort"
+          : "Sort ascending";
+    const button = page
+      .locator("table")
+      .first()
+      .locator("th")
+      .filter({ hasText: columnName })
+      .first()
+      .getByRole("button", { name: "Column options" })
       .first();
-    await expect(sortButton).toBeVisible({ timeout: 5000 });
-    await sortButton.click();
+    await button.scrollIntoViewIfNeeded();
+    await expect(button).toBeVisible({ timeout: 5000 });
+    // Open the menu via keyboard: a pointer click on a neighbouring header can
+    // be intercepted by a sticky column (e.g. Name, z-index 21) overlapping it.
+    // Keyboard activation has no such interception and also dismisses any menu
+    // left open from a previous step.
+    await button.focus();
+    await button.press("Enter");
+    // Scope to the OPEN menu: a menu closed moments earlier is still in the
+    // DOM while its exit animation runs, so both it and its items match an
+    // unscoped role lookup (strict mode violation).
+    const openMenu = page.locator('[role="menu"][data-state="open"]').first();
+    await openMenu.waitFor({ state: "visible" });
+    const item = openMenu.getByRole("menuitem", { name: nextItem });
+    await expect(item).toBeVisible();
+    await item.click();
 
     await waitForTableStable(page);
   }
@@ -1205,13 +1295,20 @@ test.describe("Sorting with ViewSelector Filters", () => {
     page: import("@playwright/test").Page,
     columnName: string
   ): Promise<string> {
-    const table = page.locator("table").first();
-    const header = table.locator("th").filter({ hasText: columnName }).first();
-    const sortButton = header
-      .getByRole("button", { name: "Sort column" })
+    // Sort state lives on the indicator icon inside the column header's
+    // "Column options" menu button ("Not sorted"/"Sorted ascending"/
+    // "Sorted descending"); the chevron is aria-hidden so it is excluded.
+    const icon = page
+      .locator("table")
+      .first()
+      .locator("th")
+      .filter({ hasText: columnName })
+      .first()
+      .getByRole("button", { name: "Column options" })
+      .first()
+      .getByRole("img")
       .first();
-    const sortIcon = sortButton.getByRole("img");
-    return (await sortIcon.getAttribute("aria-label")) || "";
+    return (await icon.getAttribute("aria-label")) || "";
   }
 
   async function getColumnCount(
@@ -1257,27 +1354,41 @@ test.describe("Sorting with ViewSelector Filters", () => {
   }
 
   /**
-   * Helper to select a ViewSelector option
+   * Select a ViewSelector grouping axis. The trigger's test id is
+   * `view-selector-trigger` — the older `view-selector` id never matched, so
+   * these tests silently skipped the view switch entirely.
    */
-  async function selectView(
-    page: import("@playwright/test").Page,
-    viewName: string
-  ) {
-    // Click the view selector dropdown
-    const viewSelector = page.locator('[data-testid="view-selector"]').first();
-    if (await viewSelector.isVisible()) {
-      await viewSelector.click();
-      await page.waitForTimeout(300);
+  async function selectView(page: Page, viewName: string) {
+    const viewSelector = page.getByTestId("view-selector-trigger");
+    await expect(viewSelector).toBeVisible({ timeout: 10000 });
+    await viewSelector.click();
 
-      // Select the view option
-      const viewOption = page
-        .getByRole("option", { name: new RegExp(viewName, "i") })
-        .first();
-      if (await viewOption.isVisible()) {
-        await viewOption.click();
-        await page.waitForLoadState("networkidle");
-      }
-    }
+    const viewOption = page
+      .getByRole("option", { name: new RegExp(`^${viewName}$`, "i") })
+      .first();
+    await expect(viewOption).toBeVisible({ timeout: 5000 });
+    await viewOption.click();
+
+    await expect(viewSelector).toContainText(new RegExp(viewName, "i"), {
+      timeout: 10000,
+    });
+    await page.waitForLoadState("networkidle");
+  }
+
+  /**
+   * Click the first real option row of the current axis (row 0 is the
+   * "All …" row) and wait for the resulting filter chip.
+   */
+  async function applyFirstRowFilter(page: Page, chipTestId: string) {
+    const optionRow = page
+      .getByTestId("repository-left-panel")
+      .locator('[role="button"]')
+      .nth(1);
+    await expect(optionRow).toBeVisible({ timeout: 10000 });
+    await optionRow.click();
+
+    await expect(page.getByTestId(chipTestId)).toBeVisible({ timeout: 10000 });
+    await page.waitForLoadState("networkidle");
   }
 
   test("Sort After Switching to States View", async ({ api, page }) => {
@@ -1325,7 +1436,7 @@ test.describe("Sorting with ViewSelector Filters", () => {
       initialColumnCount = await getColumnCount(page);
 
       // Try to switch to States view if available
-      await selectView(page, "States");
+      await selectView(page, "State");
       await page.waitForTimeout(500);
     });
 
@@ -1373,9 +1484,21 @@ test.describe("Sorting with ViewSelector Filters", () => {
 
       initialColumnCount = await getColumnCount(page);
 
-      // Try to switch to Templates view
-      await selectView(page, "Templates");
+      await selectView(page, "Template");
       await page.waitForTimeout(500);
+    });
+
+    await test.step("Apply a template filter chip from the sidebar", async () => {
+      // Switching the axis no longer filters anything, so the filter has to
+      // be applied explicitly — otherwise the rest of the test would sort an
+      // unfiltered table and pass vacuously.
+      await applyFirstRowFilter(page, "filter-chip-templates-in");
+      await expectFilterParam(page, /templates:in:\d+/);
+      await waitForTableStable(page);
+
+      // All three cases use the default template, so they survive the filter.
+      const rows = page.locator("table").first().locator("tbody tr");
+      await expect(rows).toHaveCount(3, { timeout: 10000 });
     });
 
     await test.step("Cycle the Name sort and verify state and column count", async () => {
@@ -1417,9 +1540,19 @@ test.describe("Sorting with ViewSelector Filters", () => {
 
       initialColumnCount = await getColumnCount(page);
 
-      // Try to switch to Creators view
-      await selectView(page, "Creators");
+      await selectView(page, "Creator");
       await page.waitForTimeout(500);
+    });
+
+    await test.step("Apply a creator filter chip from the sidebar", async () => {
+      // Both cases were created by the same (admin) user, so the chip keeps
+      // them while proving the filter is really active.
+      await applyFirstRowFilter(page, "filter-chip-creators-in");
+      await expectFilterParam(page, /creators:in:.+/);
+      await waitForTableStable(page);
+
+      const rows = page.locator("table").first().locator("tbody tr");
+      await expect(rows).toHaveCount(2, { timeout: 10000 });
     });
 
     await test.step("Sort by Name and verify state and column count", async () => {
@@ -1427,6 +1560,8 @@ test.describe("Sorting with ViewSelector Filters", () => {
       await clickSortButton(page, "Name");
       expect(await getSortIconState(page, "Name")).toBe("Sorted ascending");
       expect(await getColumnCount(page)).toBe(initialColumnCount);
+      // The chip survives sorting.
+      await expect(page.getByTestId("filter-chip-creators-in")).toBeVisible();
     });
   });
 
@@ -1464,7 +1599,7 @@ test.describe("Sorting with ViewSelector Filters", () => {
 
     await test.step("Switch to States view and sort, confirming column count", async () => {
       // Switch to States view
-      await selectView(page, "States");
+      await selectView(page, "State");
       await page.waitForTimeout(500);
       await waitForTableStable(page);
 
@@ -1477,9 +1612,12 @@ test.describe("Sorting with ViewSelector Filters", () => {
     });
 
     await test.step("Switch back to Folders view and confirm column count", async () => {
-      // Switch back to Folders view
+      // Switch back to Folders view. Choosing the Folders axis clears the
+      // folder selection and the tree auto-selects the project's first root
+      // folder, which is not this test's folder — re-open it so the column
+      // count is measured against the same cases as the earlier steps.
       await selectView(page, "Folders");
-      await page.waitForTimeout(500);
+      await repositoryPage.selectFolder(folderId!);
       await waitForTableStable(page);
 
       // Column count should still be preserved
@@ -1521,13 +1659,28 @@ test.describe("Sorting with ViewSelector Filters", () => {
     const rows = table.locator("tbody tr");
 
     let initialColumnCount: number | undefined;
-    await test.step("Open the folder and search for Feature", async () => {
+    await test.step("Open the folder and capture the column count", async () => {
       await repositoryPage.goto(projectId);
       await repositoryPage.selectFolder(folderId!);
       await waitForTableStable(page);
 
       initialColumnCount = await getColumnCount(page);
+    });
 
+    await test.step("Apply a state filter chip from the sidebar", async () => {
+      // Filter chips and the in-table name filter are independent conditions
+      // that AND together — the chip must stay active while the name filter
+      // narrows further.
+      await selectView(page, "State");
+      await applyFirstRowFilter(page, "filter-chip-states-in");
+      await expectFilterParam(page, /states:in:\d+/);
+      await waitForTableStable(page);
+
+      // All four cases share the seeded default state.
+      await expect(rows).toHaveCount(4, { timeout: 10000 });
+    });
+
+    await test.step("Search for Feature within the filtered set", async () => {
       // Apply search filter
       const searchInput = page.getByTestId("search-input");
       await searchInput.fill("Feature");
@@ -1536,6 +1689,7 @@ test.describe("Sorting with ViewSelector Filters", () => {
 
       // Should have 3 results matching "Feature"
       await expect(rows).toHaveCount(3, { timeout: 10000 });
+      await expect(page.getByTestId("filter-chip-states-in")).toBeVisible();
     });
 
     await test.step("Sort the filtered results and verify state, count, and order", async () => {
@@ -1591,7 +1745,7 @@ test.describe("Sorting with ViewSelector Filters", () => {
 
     await test.step("Switch to States view, sort again, and verify state and column count", async () => {
       // Try switching to States view if available
-      await selectView(page, "States");
+      await selectView(page, "State");
       await page.waitForTimeout(300);
       await waitForTableStable(page);
 
@@ -1671,16 +1825,33 @@ test.describe("Run Mode Sorting", () => {
     page: import("@playwright/test").Page,
     columnName: string
   ) {
-    const table = page.locator("table").first();
-    const header = table.locator("th").filter({ hasText: columnName }).first();
-    await expect(header).toBeVisible({ timeout: 5000 });
-
-    const sortButton = header
-      .getByRole("button", { name: "Sort column" })
+    const current = await getSortIconState(page, columnName);
+    const nextItem =
+      current === "Sorted ascending"
+        ? "Sort descending"
+        : current === "Sorted descending"
+          ? "Remove sort"
+          : "Sort ascending";
+    const button = page
+      .locator("table")
+      .first()
+      .locator("th")
+      .filter({ hasText: columnName })
+      .first()
+      .getByRole("button", { name: "Column options" })
       .first();
-    await expect(sortButton).toBeVisible({ timeout: 5000 });
-    // Use force: true to bypass element interception in run mode layout
-    await sortButton.click({ force: true });
+    await button.scrollIntoViewIfNeeded();
+    await expect(button).toBeVisible({ timeout: 5000 });
+    await button.focus();
+    await button.press("Enter");
+    // Scope to the OPEN menu: a menu closed moments earlier is still in the
+    // DOM while its exit animation runs, so both it and its items match an
+    // unscoped role lookup (strict mode violation).
+    const openMenu = page.locator('[role="menu"][data-state="open"]').first();
+    await openMenu.waitFor({ state: "visible" });
+    const item = openMenu.getByRole("menuitem", { name: nextItem });
+    await expect(item).toBeVisible();
+    await item.click();
 
     await waitForTableStable(page);
   }
@@ -1689,13 +1860,20 @@ test.describe("Run Mode Sorting", () => {
     page: import("@playwright/test").Page,
     columnName: string
   ): Promise<string> {
-    const table = page.locator("table").first();
-    const header = table.locator("th").filter({ hasText: columnName }).first();
-    const sortButton = header
-      .getByRole("button", { name: "Sort column" })
+    // Sort state lives on the indicator icon inside the column header's
+    // "Column options" menu button ("Not sorted"/"Sorted ascending"/
+    // "Sorted descending"); the chevron is aria-hidden so it is excluded.
+    const icon = page
+      .locator("table")
+      .first()
+      .locator("th")
+      .filter({ hasText: columnName })
+      .first()
+      .getByRole("button", { name: "Column options" })
+      .first()
+      .getByRole("img")
       .first();
-    const sortIcon = sortButton.getByRole("img");
-    return (await sortIcon.getAttribute("aria-label")) || "";
+    return (await icon.getAttribute("aria-label")) || "";
   }
 
   async function getColumnCount(
@@ -1781,20 +1959,20 @@ test.describe("Run Mode Sorting", () => {
       // Check if ID column is visible
       if (await idHeader.isVisible()) {
         const sortButton = idHeader
-          .getByRole("button", { name: "Sort column" })
+          .getByRole("button", { name: "Column options" })
           .first();
         await expect(sortButton).toBeVisible({ timeout: 5000 });
 
         // Sort by ID ascending
-        await sortButton.click({ force: true });
+        await clickSortButton(page, "ID");
         await waitForTableStable(page);
 
         // Verify sort icon shows ascending
-        const sortIcon = sortButton.getByRole("img");
+        const sortIcon = sortButton.getByRole("img").first();
         await expect(sortIcon).toHaveAccessibleName("Sorted ascending");
 
         // Sort descending
-        await sortButton.click({ force: true });
+        await clickSortButton(page, "ID");
         await waitForTableStable(page);
         await expect(sortIcon).toHaveAccessibleName("Sorted descending");
       }
@@ -1920,6 +2098,14 @@ test.describe("Run Mode Sorting", () => {
     const table = page.locator("table").first();
     const rows = table.locator("tbody tr");
 
+    // Run mode seeds an "assigned to me" chip only when the viewer actually
+    // has assignments; none of these run cases are assigned, so the table must
+    // start unfiltered.
+    await expect(page.getByTestId("filter-chip-assignedTo-in")).not.toBeVisible(
+      { timeout: 10000 }
+    );
+    expect(new URL(page.url()).searchParams.getAll("f")).toEqual([]);
+
     // Initial count should be 3 (we added 3 cases)
     expect(await rows.count()).toBe(3);
 
@@ -1948,25 +2134,25 @@ test.describe("Run Mode Sorting", () => {
     const table = page.locator("table").first();
     const nameHeader = table.locator("th").filter({ hasText: "Name" }).first();
     const sortButton = nameHeader
-      .getByRole("button", { name: "Sort column" })
+      .getByRole("button", { name: "Column options" })
       .first();
-    const sortIcon = sortButton.getByRole("img");
+    const sortIcon = sortButton.getByRole("img").first();
 
     // Initial state: "Not sorted"
     await expect(sortIcon).toHaveAccessibleName("Not sorted");
 
     // Click 1: Should change to ascending
-    await sortButton.click();
+    await clickSortButton(page, "Name");
     await waitForTableStable(page);
     await expect(sortIcon).toHaveAccessibleName("Sorted ascending");
 
     // Click 2: Should change to descending
-    await sortButton.click();
+    await clickSortButton(page, "Name");
     await waitForTableStable(page);
     await expect(sortIcon).toHaveAccessibleName("Sorted descending");
 
     // Click 3: Should return to default (not sorted)
-    await sortButton.click();
+    await clickSortButton(page, "Name");
     await waitForTableStable(page);
     await expect(sortIcon).toHaveAccessibleName("Not sorted");
   });
@@ -2012,13 +2198,13 @@ test.describe("Run Mode Sorting", () => {
 
     if (await idHeader.isVisible()) {
       const sortButton = idHeader
-        .getByRole("button", { name: "Sort column" })
+        .getByRole("button", { name: "Column options" })
         .first();
       await expect(sortButton).toBeVisible({ timeout: 5000 });
-      await sortButton.click({ force: true });
+      await clickSortButton(page, "ID");
       await waitForTableStable(page);
 
-      const sortIcon = sortButton.getByRole("img");
+      const sortIcon = sortButton.getByRole("img").first();
       await expect(sortIcon).toHaveAccessibleName("Sorted ascending");
 
       // Verify Name column is now "Not sorted"

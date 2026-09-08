@@ -1,12 +1,18 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
+import {
+  ActionButtonContent,
+  collapsibleActionClass,
+  useActionBarCompact,
+} from "@/components/ui/action-bar";
 import { Button } from "@/components/ui/button";
 import { MessageSquareWarning } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
-import { useFindFirstReviewRequest } from "~/lib/hooks";
 
 import type { AssigneeOption } from "./AssigneeCombobox";
 import {
@@ -34,7 +40,7 @@ export interface RequestReviewButtonProps {
    * the N+1 fan-out from RESEARCH §"Pitfall 6".
    *
    * On single-entity pages (case/run/session detail), pass `undefined` and
-   * the component falls back to its own `useFindFirstReviewRequest` query
+   * the component falls back to its own `useClientQueries(schema).reviewRequest.useFindFirst` query
    * — TanStack Query dedupes against the same key the
    * `ReviewStatusBanner` uses, so the trigger auto-hides the moment a
    * PENDING request lands (and the banner appears) without any prop
@@ -60,6 +66,9 @@ export function RequestReviewButton({
   const t = useTranslations();
   const { enabled, isLoading } = useReviewFeatureEnabled(projectId);
   const [sheetOpen, setSheetOpen] = useState(false);
+  // Inside an ActionBar, follow its responsive collapse; outside one, keep the
+  // legacy always-collapsed look.
+  const collapsed = useActionBarCompact() ?? true;
 
   // Hook fallback when the parent didn't bulk-supply `pendingRequest` (i.e.
   // single-entity pages — see prop docstring). The `enabled` flag gates the
@@ -68,7 +77,9 @@ export function RequestReviewButton({
   // pages worked hard to avoid.
   const shouldAutoFetchPending =
     enabled === true && pendingRequest === undefined;
-  const { data: autoFetchedPending } = useFindFirstReviewRequest(
+  const { data: autoFetchedPending } = useClientQueries(
+    schema
+  ).reviewRequest.useFindFirst(
     {
       where: {
         entityType,
@@ -103,12 +114,13 @@ export function RequestReviewButton({
         variant="outline"
         onClick={() => setSheetOpen(true)}
         data-testid="request-review-button"
-        className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
+        className={collapsibleActionClass(collapsed)}
       >
-        <MessageSquareWarning className="h-4 w-4 shrink-0" />
-        <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-          {t("reviews.requester.openButton")}
-        </span>
+        <ActionButtonContent
+          icon={MessageSquareWarning}
+          label={t("reviews.requester.openButton")}
+          compact={collapsed}
+        />
       </Button>
       <RequestReviewSheet
         open={sheetOpen}

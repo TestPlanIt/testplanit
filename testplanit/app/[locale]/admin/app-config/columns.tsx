@@ -7,9 +7,18 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ColumnDef } from "@tanstack/react-table";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Trash } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { AppConfigRow } from "./types";
+
+/**
+ * Title-case a snake_case config key ("record_key_enabled" -> "Record Key
+ * Enabled"). Used as a fallback when a key has no `common.fields.configKeys.*`
+ * translation, so a new config key never shows its raw i18n path in the UI.
+ */
+function humanizeConfigKey(key: string): string {
+  return key.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
+}
 
 export function getColumns(
   t: ReturnType<typeof useTranslations<"common">>,
@@ -34,12 +43,17 @@ export function getColumns(
       enableSorting: true,
       enableResizing: true,
       enableHiding: false,
-      meta: { isPinned: "left" },
       size: 220,
       cell: ({ row }) => {
         const key = row.original.key;
         const translatedKey = t(`fields.configKeys.${key}` as any);
-        return <div>{translatedKey}</div>;
+        // A missing translation makes next-intl echo the raw key path; fall back
+        // to a humanized label so an untranslated config key never leaks its
+        // i18n path into the UI.
+        const label = translatedKey.includes("configKeys.")
+          ? humanizeConfigKey(key)
+          : translatedKey;
+        return <div>{label}</div>;
       },
     },
     {
@@ -73,11 +87,11 @@ export function getColumns(
     {
       id: "actions",
       header: t("actions.actionsLabel"),
-      enableResizing: true,
+      enableResizing: false,
       enableSorting: false,
       enableHiding: false,
-      size: 80,
-      meta: { isPinned: "right" },
+      size: 96,
+      minSize: 96,
       cell: ({ row }) => (
         <div className="whitespace-nowrap flex justify-center gap-1">
           <Button
@@ -96,7 +110,7 @@ export function getColumns(
             aria-label={t("actions.delete")}
             onClick={() => onDeleteConfig?.(row.original)}
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash className="h-4 w-4" />
           </Button>
         </div>
       ),

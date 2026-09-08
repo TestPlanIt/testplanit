@@ -2,11 +2,11 @@ import { Job, Worker } from "bullmq";
 import { DuplicateScanService } from "../lib/services/duplicateScanService";
 import {
   disconnectAllTenantClients,
-  getPrismaClientForJob,
+  getDbClientForJob,
   isMultiTenantMode,
   MultiTenantJobData,
   validateMultiTenantJobData,
-} from "../lib/multiTenantPrisma";
+} from "../lib/multiTenantDb";
 import { DUPLICATE_SCAN_QUEUE_NAME } from "../lib/queueNames";
 import { getElasticsearchClient } from "../services/elasticsearchService";
 import { withTenantContext } from "../lib/tenantContext";
@@ -50,11 +50,11 @@ export const processor = async (
   validateMultiTenantJobData(job.data);
 
   // 2. Get tenant-specific Prisma client
-  const prisma = getPrismaClientForJob(job.data);
+  const db = getDbClientForJob(job.data);
 
   // 3. Create DuplicateScanService instance
   const esClient = getElasticsearchClient();
-  const service = new DuplicateScanService(prisma as any, esClient);
+  const service = new DuplicateScanService(db as any, esClient);
 
   // 4. Check for pre-start cancellation
   const redis = await worker!.client;
@@ -65,7 +65,7 @@ export const processor = async (
   }
 
   // 5. Fetch all non-deleted cases for the project with steps and tags for richer matching
-  const cases = await prisma.repositoryCases.findMany({
+  const cases = await db.repositoryCases.findMany({
     where: { projectId: job.data.projectId, isDeleted: false },
     select: {
       id: true,
@@ -74,12 +74,12 @@ export const processor = async (
         select: { step: true, expectedResult: true },
         orderBy: { order: "asc" },
       },
-      tags: { select: { name: true } },
+      caseTags: { select: { tag: { select: { name: true } } } },
     },
   });
 
   // 5b. Load previously resolved pairs (dismissed, linked, merged) so they are excluded from results
-  const resolvedRows = await prisma.duplicateScanResult.findMany({
+  const resolvedRows = await db.duplicateScanResult.findMany({
     where: {
       projectId: job.data.projectId,
       status: { in: ["DISMISSED", "LINKED", "MERGED"] },
@@ -96,7 +96,7 @@ export const processor = async (
   );
 
   // 5c. Load active provenance/source links — exclude pairs already marked DUPLICATED_FROM or SAME_TEST_DIFFERENT_SOURCE
-  const provenanceLinks = await prisma.repositoryCaseLink.findMany({
+  const provenanceLinks = await db.repositoryCaseLink.findMany({
     where: {
       type: { in: ["DUPLICATED_FROM", "SAME_TEST_DIFFERENT_SOURCE"] },
       isDeleted: false,
@@ -149,7 +149,7 @@ export const processor = async (
             id: testCase.id,
             name: testCase.name,
             steps: testCase.steps as { step: string; expectedResult: string }[],
-            tags: testCase.tags as { name: string }[],
+            tags: testCase.caseTags.map((ct) => ct.tag) as { name: string }[],
           },
           job.data.projectId,
           job.data.tenantId
@@ -183,11 +183,8 @@ export const processor = async (
   await job.updateProgress({ analyzed: total, total, phase: "ai" });
   let finalPairs: Array<(typeof allPairs)[0] & { detectionMethod: string }>;
   try {
-    const llmManager = LlmManager.createForWorker(
-      prisma as any,
-      job.data.tenantId
-    );
-    const promptResolver = new PromptResolver(prisma as any);
+    const llmManager = LlmManager.createForWorker(db as any, job.data.tenantId);
+    const promptResolver = new PromptResolver(db as any);
     const semanticService = new DuplicateAnalysisService(
       llmManager,
       promptResolver
@@ -201,9 +198,7 @@ export const processor = async (
     let maxTokensPerRequest = 4096;
     let retryOptions: { maxRetries?: number; baseDelayMs?: number } | undefined;
     if (resolved) {
-      const llmProviderConfig = await (
-        prisma as any
-      ).llmProviderConfig.findFirst({
+      const llmProviderConfig = await (db as any).llmProviderConfig.findFirst({
         where: { llmIntegrationId: resolved.integrationId },
       });
       if (llmProviderConfig) {
@@ -263,39 +258,36 @@ export const processor = async (
 
   // 8. Soft-delete old pending results, then insert new ones atomically
   //    Use a longer timeout for large result sets
-  await prisma.$transaction(
-    async (tx: any) => {
-      await tx.duplicateScanResult.updateMany({
-        where: {
-          projectId: job.data.projectId,
-          status: "PENDING",
-          isDeleted: false,
-        },
-        data: { isDeleted: true },
-      });
+  await db.$transaction(async (tx: any) => {
+    await tx.duplicateScanResult.updateMany({
+      where: {
+        projectId: job.data.projectId,
+        status: "PENDING",
+        isDeleted: false,
+      },
+      data: { isDeleted: true },
+    });
 
-      if (finalPairs.length > 0) {
-        // Batch createMany in chunks of 500 to avoid query size limits
-        const CHUNK_SIZE = 500;
-        for (let i = 0; i < finalPairs.length; i += CHUNK_SIZE) {
-          const chunk = finalPairs.slice(i, i + CHUNK_SIZE);
-          await tx.duplicateScanResult.createMany({
-            data: chunk.map((p) => ({
-              projectId: job.data.projectId,
-              caseAId: p.caseAId,
-              caseBId: p.caseBId,
-              score: p.score,
-              matchedFields: p.matchedFields,
-              detectionMethod: p.detectionMethod,
-              scanJobId: job.id,
-            })),
-            skipDuplicates: true,
-          });
-        }
+    if (finalPairs.length > 0) {
+      // Batch createMany in chunks of 500 to avoid query size limits
+      const CHUNK_SIZE = 500;
+      for (let i = 0; i < finalPairs.length; i += CHUNK_SIZE) {
+        const chunk = finalPairs.slice(i, i + CHUNK_SIZE);
+        await tx.duplicateScanResult.createMany({
+          data: chunk.map((p) => ({
+            projectId: job.data.projectId,
+            caseAId: p.caseAId,
+            caseBId: p.caseBId,
+            score: p.score,
+            matchedFields: p.matchedFields,
+            detectionMethod: p.detectionMethod,
+            scanJobId: job.id,
+          })),
+          skipDuplicates: true,
+        });
       }
-    },
-    { timeout: 30000 }
-  );
+    }
+  });
 
   return {
     pairsFound: finalPairs.length,

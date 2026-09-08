@@ -74,13 +74,13 @@ vi.mock("~/server/auth", () => ({
   })),
 }));
 
-// Minimal prisma stub: just enough surface so each action reaches the
+// Minimal baseDb stub: just enough surface so each action reaches the
 // captureAuditEvent call. The transactional create returns a fixed id so
 // the assertions can pin it.
 const REVIEW_REQUEST_ID = "rr-audit-ctx-fixture";
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     appConfig: { findUnique: vi.fn(async () => null) },
     projects: {
       findUnique: vi.fn(async () => ({ reviewWorkflowEnabled: true })),

@@ -9,6 +9,12 @@ import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 import { authOptions } from "~/server/auth";
 
+// The search dialog opens this URL in a popup, so the callback should land on
+// the neutral auth-complete page (accessible to every signed-in user), not an
+// admin-only settings page.
+const buildOAuthKickoffUrl = (provider: string, integrationId: number) =>
+  `/api/integrations/oauth/${provider.toLowerCase()}/auth?integrationId=${integrationId}&returnUrl=${encodeURIComponent("/integrations/auth-complete")}`;
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -26,6 +32,16 @@ export async function GET(
   if (!query) {
     return Response.json(
       { error: "Query parameter is required" },
+      { status: 400 }
+    );
+  }
+
+  // Backstop for the client-side 255-char cap: an oversized term would be
+  // forwarded into the tracker's GET URL and bounce off URL-length limits
+  // (CloudFront 414) — reject with a clean message instead.
+  if (query.length > 512) {
+    return Response.json(
+      { error: "Search query is too long (max 512 characters)" },
       { status: 400 }
     );
   }
@@ -68,20 +84,14 @@ export async function GET(
       // For OAuth integrations, check user-specific auth
       const userAuth = integration.userIntegrationAuths[0];
       if (!userAuth || !userAuth.accessToken) {
-        // Generate auth URL for this integration
-        const manager = IntegrationManager.getInstance();
-        const adapter = await manager.getAdapter(integrationId.toString());
-
-        if (!adapter || !adapter.getAuthorizationUrl) {
-          return Response.json({ error: "Adapter not found" }, { status: 404 });
-        }
-
-        const authUrl = await adapter.getAuthorizationUrl(session.user.id);
-
+        // Point the client at the internal OAuth kickoff route: it generates
+        // AND stores the state parameter the callback verifies. Handing out
+        // the provider's raw authorize URL here skipped that step, so every
+        // authorization bounced off the callback with invalid_state.
         return Response.json(
           {
             error: "Authentication required",
-            authUrl,
+            authUrl: buildOAuthKickoffUrl(integration.provider, integrationId),
             requiresAuth: true,
           },
           { status: 401 }
@@ -144,26 +154,31 @@ export async function GET(
     } catch (error: any) {
       const integrationError = toIntegrationError(error, integration.provider);
 
-      // Only an OAuth integration can recover by re-authorizing. Offering that
-      // for an API-key integration would send the admin through a flow that
-      // cannot fix rejected API-key credentials.
-      if (
-        integrationError.kind === "auth" &&
-        integration.authType === "OAUTH2"
-      ) {
-        const authUrl =
-          typeof adapter.getAuthorizationUrl === "function"
-            ? await adapter.getAuthorizationUrl(session.user.id)
-            : undefined;
+      if (integrationError.kind === "auth") {
+        // Only OAuth integrations can be repaired by the user re-authorizing;
+        // expired API keys/PATs are fixed by an admin on the integration, so
+        // those get the actionable message instead of a re-auth prompt that
+        // cannot resolve them.
+        if (
+          integration.authType !== "API_KEY" &&
+          integration.authType !== "PERSONAL_ACCESS_TOKEN"
+        ) {
+          return Response.json(
+            {
+              ...integrationErrorBody(integrationError),
+              authUrl: buildOAuthKickoffUrl(
+                integration.provider,
+                integrationId
+              ),
+              requiresAuth: true,
+            },
+            { status: 401 }
+          );
+        }
 
-        return Response.json(
-          {
-            ...integrationErrorBody(integrationError),
-            ...(authUrl ? { authUrl } : {}),
-            requiresAuth: true,
-          },
-          { status: 401 }
-        );
+        return Response.json(integrationErrorBody(integrationError), {
+          status: responseStatusForIntegrationError(integrationError),
+        });
       }
 
       throw integrationError;

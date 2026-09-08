@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// Mock the default prisma singleton — the helper accepts an injected client,
+// Mock the default baseDb singleton — the helper accepts an injected client,
 // so the real test surface is the where/data shape passed to updateMany.
 const mockUpdateMany = vi.fn();
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     webhookConfigSecret: {
       updateMany: (...args: unknown[]) => mockUpdateMany(...args),
     },
@@ -64,7 +64,7 @@ describe("retireExpiredSecrets (/ daily auto-retire)", () => {
     expect(second.retiredCount).toBe(0);
   });
 
-  it("accepts an injected prisma/tx client (used from worker)", async () => {
+  it("accepts an injected baseDb/tx client (used from worker)", async () => {
     const injectedUpdateMany = vi.fn().mockResolvedValue({ count: 2 });
     const injected = {
       webhookConfigSecret: { updateMany: injectedUpdateMany },

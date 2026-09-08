@@ -10,21 +10,23 @@
 //   cd testplanit && RUN_DB_INTEGRATION=1 pnpm test testrun-group-permission-update --run
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { PrismaClient, WorkflowScope } from "@prisma/client";
-import { enhance } from "@zenstackhq/runtime";
+import { createRawDbClient } from "~/lib/rawDbClient";
+import { WorkflowScope } from "~/zenstack/models";
+
+import { getAuthDb } from "~/lib/zenstack";
 
 const RUN_INTEGRATION = process.env.RUN_DB_INTEGRATION === "1";
 const HAS_DB_URL = Boolean(process.env.DATABASE_URL);
 const describeIntegration =
   RUN_INTEGRATION && HAS_DB_URL ? describe : describe.skip;
 
-const prisma = new PrismaClient();
+const db = createRawDbClient();
 const RUN_TAG = `tr-grp-${Date.now()}`;
 
 type AuthUser = Awaited<ReturnType<typeof fetchAuthUser>>;
 
 async function fetchAuthUser(userId: string) {
-  return prisma.user.findUniqueOrThrow({
+  return db.user.findUniqueOrThrow({
     where: { id: userId },
     include: { role: { include: { rolePermissions: true } } },
   });
@@ -40,13 +42,13 @@ interface Fixture {
 let fixture: Fixture | null = null;
 
 async function setupFixture(): Promise<Fixture> {
-  const userRole = await prisma.roles.findFirst({ where: { name: "user" } });
+  const userRole = await db.roles.findFirst({ where: { name: "user" } });
   if (!userRole) {
     throw new Error(
-      "Dev DB missing seeded `user` role. Run `pnpm tsx prisma/seed.ts` first."
+      "Dev DB missing seeded `user` role. Run `pnpm tsx db/seed.ts` first."
     );
   }
-  const runWorkflow = await prisma.workflows.findFirst({
+  const runWorkflow = await db.workflows.findFirst({
     where: { scope: WorkflowScope.RUNS, isDeleted: false, isEnabled: true },
   });
   if (!runWorkflow) {
@@ -56,7 +58,7 @@ async function setupFixture(): Promise<Fixture> {
   // A custom role granting TestRuns.canAddEdit (so we exercise the
   // rolePermissions[area == 'TestRuns' && canAddEdit] branch, not the
   // role.name == 'Project Admin' short-circuit).
-  const editorRole = await prisma.roles.create({
+  const editorRole = await db.roles.create({
     data: {
       name: `${RUN_TAG}-runEditor`,
       rolePermissions: {
@@ -66,7 +68,7 @@ async function setupFixture(): Promise<Fixture> {
   });
 
   // Creator of the project + test run.
-  const creatorCreated = await prisma.user.create({
+  const creatorCreated = await db.user.create({
     data: {
       email: `${RUN_TAG}-creator@example.test`,
       name: `${RUN_TAG} Creator`,
@@ -76,7 +78,7 @@ async function setupFixture(): Promise<Fixture> {
   });
 
   // The user whose only path to the project is group membership.
-  const groupMemberCreated = await prisma.user.create({
+  const groupMemberCreated = await db.user.create({
     data: {
       email: `${RUN_TAG}-groupMember@example.test`,
       name: `${RUN_TAG} Group Member`,
@@ -88,7 +90,7 @@ async function setupFixture(): Promise<Fixture> {
   // Negative control: not in the group, not the creator, no direct perms.
   // The project below also grants no blanket default access (see defaultRoleId:
   // null), so this user has NO path to the project at all.
-  const outsiderCreated = await prisma.user.create({
+  const outsiderCreated = await db.user.create({
     data: {
       email: `${RUN_TAG}-outsider@example.test`,
       name: `${RUN_TAG} Outsider`,
@@ -105,7 +107,7 @@ async function setupFixture(): Promise<Fixture> {
   // authenticated user, so the "outsider" below would no longer be an outsider.
   // A null default role grants nothing by default — access must come from the
   // explicit group permission, which is exactly what these tests exercise.
-  const project = await prisma.projects.create({
+  const project = await db.projects.create({
     data: {
       name: `${RUN_TAG}-project`,
       createdBy: creatorCreated.id,
@@ -114,14 +116,14 @@ async function setupFixture(): Promise<Fixture> {
     },
   });
 
-  const group = await prisma.groups.create({
+  const group = await db.groups.create({
     data: {
       name: `${RUN_TAG}-group`,
       assignedUsers: { create: [{ userId: groupMember.id }] },
     },
   });
 
-  await prisma.groupProjectPermission.create({
+  await db.groupProjectPermission.create({
     data: {
       groupId: group.id,
       projectId: project.id,
@@ -130,7 +132,7 @@ async function setupFixture(): Promise<Fixture> {
     },
   });
 
-  const testRun = await prisma.testRuns.create({
+  const testRun = await db.testRuns.create({
     data: {
       projectId: project.id,
       name: `${RUN_TAG}-run`,
@@ -158,46 +160,46 @@ async function cleanupFixture(f: Fixture | null): Promise<void> {
   };
 
   await safe(() =>
-    prisma.testRuns.updateMany({
+    db.testRuns.updateMany({
       where: { name: { startsWith: RUN_TAG } },
       data: { isDeleted: true },
     })
   );
   await safe(() =>
-    prisma.groupProjectPermission.deleteMany({
+    db.groupProjectPermission.deleteMany({
       where: { project: { name: { startsWith: RUN_TAG } } },
     })
   );
   await safe(() =>
-    prisma.groupAssignment.deleteMany({
+    db.groupAssignment.deleteMany({
       where: { group: { name: { startsWith: RUN_TAG } } },
     })
   );
   await safe(() =>
-    prisma.groups.updateMany({
+    db.groups.updateMany({
       where: { name: { startsWith: RUN_TAG } },
       data: { isDeleted: true },
     })
   );
   await safe(() =>
-    prisma.rolePermission.deleteMany({
+    db.rolePermission.deleteMany({
       where: { role: { name: { startsWith: RUN_TAG } } },
     })
   );
   await safe(() =>
-    prisma.roles.updateMany({
+    db.roles.updateMany({
       where: { name: { startsWith: RUN_TAG } },
       data: { isDeleted: true },
     })
   );
   await safe(() =>
-    prisma.projects.updateMany({
+    db.projects.updateMany({
       where: { name: { startsWith: RUN_TAG } },
       data: { isDeleted: true },
     })
   );
   await safe(() =>
-    prisma.user.updateMany({
+    db.user.updateMany({
       where: { email: { startsWith: RUN_TAG } },
       data: { isDeleted: true, isActive: false },
     })
@@ -212,13 +214,13 @@ beforeAll(async () => {
 afterAll(async () => {
   if (!RUN_INTEGRATION || !HAS_DB_URL) return;
   await cleanupFixture(fixture);
-  await prisma.$disconnect();
+  await db.$disconnect();
 }, 30_000);
 
 describeIntegration("TestRun update via group-assigned SPECIFIC_ROLE", () => {
   it("allows a user whose only access is through a group with TestRuns.canAddEdit to update a TestRun created by someone else", async () => {
     if (!fixture) throw new Error("fixture not initialized");
-    const enhancedDb = enhance(prisma, { user: fixture.groupMember });
+    const enhancedDb = await getAuthDb(fixture.groupMember);
 
     const updated = await enhancedDb.testRuns.update({
       where: { id: fixture.testRun.id },
@@ -230,7 +232,7 @@ describeIntegration("TestRun update via group-assigned SPECIFIC_ROLE", () => {
 
   it("denies an outsider with no group, no direct permission, and no global role on the project", async () => {
     if (!fixture) throw new Error("fixture not initialized");
-    const enhancedDb = enhance(prisma, { user: fixture.outsider });
+    const enhancedDb = await getAuthDb(fixture.outsider);
 
     await expect(
       enhancedDb.testRuns.update({

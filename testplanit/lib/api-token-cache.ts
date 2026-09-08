@@ -2,9 +2,9 @@
  * API Token Cache
  *
  * Short-TTL Valkey cache for successful token lookups. Extracted from
- * api-token-auth.ts so that the Prisma client extensions (in prisma.ts)
+ * api-token-auth.ts so that the Prisma client extensions (in db.ts)
  * can invalidate cache entries on revoke/delete without creating a
- * circular import (prisma.ts → api-token-auth.ts → prisma.ts).
+ * circular import (db.ts → api-token-auth.ts → db.ts).
  *
  * Cache key:  apiToken:<tokenHash>
  * Cache TTL:  see API_TOKEN_CACHE_TTL_SECONDS
@@ -19,6 +19,9 @@ export interface CachedTokenInfo {
   tokenId: string;
   userId: string;
   userAccess: string | null;
+  /** Optional: entries written before these fields existed lack them (30s TTL). */
+  userName?: string | null;
+  userEmail?: string | null;
   scopes: string[];
   expiresAt: string | null;
 }

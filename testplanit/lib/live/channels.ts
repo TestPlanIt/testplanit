@@ -50,3 +50,46 @@ export function testRunProjectChannel(
   }
   return `live:tenant:${tenantId}:project:${projectId}:testruns`;
 }
+
+/**
+ * Per-milestone wake-up channel (D-13/D-14). Mirrors `testRunChannel`
+ * exactly — the milestone detail page subscribes here.
+ */
+export function milestoneChannel(
+  tenantId: string,
+  milestoneId: number
+): string {
+  if (!tenantId) {
+    throw new Error("live/channels.milestoneChannel: tenantId is required");
+  }
+  if (!Number.isInteger(milestoneId) || milestoneId <= 0) {
+    throw new Error(
+      "live/channels.milestoneChannel: milestoneId must be a positive integer"
+    );
+  }
+  return `live:tenant:${tenantId}:milestone:${milestoneId}`;
+}
+
+/**
+ * Project-level milestone wake-up channel. Mirrors `testRunProjectChannel`
+ * — list pages and the import picker subscribe here so a project holds
+ * ONE EventSource regardless of how many milestones it has, avoiding the
+ * same HTTP/1.1 6-connection-per-origin cap that motivated the Test Runs
+ * per-project channel (D-14/D-15).
+ */
+export function milestoneProjectChannel(
+  tenantId: string,
+  projectId: number
+): string {
+  if (!tenantId) {
+    throw new Error(
+      "live/channels.milestoneProjectChannel: tenantId is required"
+    );
+  }
+  if (!Number.isInteger(projectId) || projectId <= 0) {
+    throw new Error(
+      "live/channels.milestoneProjectChannel: projectId must be a positive integer"
+    );
+  }
+  return `live:tenant:${tenantId}:project:${projectId}:milestones`;
+}

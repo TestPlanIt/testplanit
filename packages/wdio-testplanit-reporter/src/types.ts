@@ -590,6 +590,8 @@ export interface TrackedTestResult {
   screenshots: string[];
   /** Retry attempt number (0-based) */
   retryAttempt: number;
+  /** Worker process id the test ran in (WebdriverIO cid, e.g. "0-1") */
+  worker?: string;
   /** Unique identifier for this test (cid + fullTitle) */
   uid: string;
   /** Spec file path */
@@ -682,6 +684,8 @@ export interface ReporterState {
   folderPathMap: Map<string, number>;
   /** Dedup of in-flight step writes per case id (write steps at most once per case per run) */
   caseStepsMap: Map<number, Promise<void>>;
+  /** Map of case IDs to an in-flight/settled automated-flip check, so each explicitly linked case is checked once per run */
+  caseAutomatedMap: Map<number, Promise<void>>;
   /** Status ID mappings */
   statusIds: {
     passed?: number;

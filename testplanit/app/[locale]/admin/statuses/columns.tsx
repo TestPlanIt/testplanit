@@ -2,9 +2,9 @@ import DynamicIcon from "@/components/DynamicIcon";
 import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Status } from "@prisma/client";
+import type { Status } from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
-import { SquarePen, Trash2 } from "lucide-react";
+import { SquarePen, Trash } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { IconName } from "~/types/globals";
 
@@ -242,7 +242,7 @@ export const getColumns = (
       meta: { isPinned: "right" },
       size: 80,
       cell: ({ row }) => (
-        <div className="bg-primary-foreground whitespace-nowrap flex justify-center gap-1">
+        <div className="bg-primary-foreground whitespace-nowrap flex justify-end gap-1">
           {row.original.systemName === "untested" ? (
             <Button
               variant="ghost"
@@ -269,7 +269,7 @@ export const getColumns = (
               onClick={() => onDeleteStatus?.(row.original)}
               aria-label={tCommon("actions.delete")}
             >
-              <Trash2 className="h-5 w-5" />
+              <Trash className="h-5 w-5" />
             </Button>
           ) : (
             <Button
@@ -278,7 +278,7 @@ export const getColumns = (
               disabled
               aria-label={tCommon("actions.delete")}
             >
-              <Trash2 className="h-5 w-5" />
+              <Trash className="h-5 w-5" />
             </Button>
           )}
         </div>

@@ -1,8 +1,51 @@
+import { queryProjectRelevantIssueIds } from "~/lib/projectIssueIdsQuery";
 import {
   buildFolderAncestorMap,
   groupResults,
   type GroupingOptions,
 } from "~/utils/reportGrouping";
+import {
+  buildDateFilter,
+  engagementUserSelect,
+  fetchEngagementExecutionRows,
+  fetchJunitResultRows,
+  groupEngagementRows,
+  junitResultWhere,
+  manualResultWhere,
+} from "~/utils/resultUnion";
+
+// Re-export: the date-filter helper predates the union module and many
+// callers import it from here.
+export { buildDateFilter } from "~/utils/resultUnion";
+
+/**
+ * Project-scoped issue population for the issue-tracking report: issues
+ * filed under the project directly PLUS issues linked to the project's
+ * cases, runs, sessions, and results. Fetching by id keeps the query off
+ * the correlated-EXISTS path (see lib/projectIssueIds.ts). Runs the union
+ * on the passed db — this module is bundled into client components, so it
+ * must never import the server-only prisma stack.
+ */
+async function findProjectIssues(
+  db: any,
+  projectId: number,
+  args: { where?: Record<string, any> } & Record<string, any> = {}
+) {
+  const relevantIssueIds = await queryProjectRelevantIssueIds(
+    db,
+    Number(projectId)
+  );
+  if (relevantIssueIds.length === 0) return [];
+  const { where, ...rest } = args;
+  return db.issue.findMany({
+    where: {
+      id: { in: relevantIssueIds },
+      isDeleted: false,
+      ...(where ?? {}),
+    },
+    ...rest,
+  });
+}
 
 /**
  * Conditional `select` fragment for the executed case, included only when a
@@ -26,9 +69,9 @@ function caseSelectFor(groupBy: string[]) {
                   ...(needsFolder ? { folderId: true } : {}),
                   ...(needsTag
                     ? {
-                        tags: {
-                          where: { isDeleted: false },
-                          select: { id: true },
+                        caseTags: {
+                          where: { tag: { isDeleted: false } },
+                          select: { tagId: true },
                         },
                       }
                     : {}),
@@ -60,7 +103,12 @@ function repositoryCaseSelect(
     folderId: true,
     createdAt: true,
     ...(groupBy.includes("tagId")
-      ? { tags: { where: { isDeleted: false }, select: { id: true } } }
+      ? {
+          caseTags: {
+            where: { tag: { isDeleted: false } },
+            select: { tagId: true },
+          },
+        }
       : {}),
     ...extra,
   };
@@ -72,7 +120,7 @@ function repositoryCaseSelect(
  * to `groupResults`.
  */
 async function folderGroupingOptions(
-  prisma: any,
+  db: any,
   projectId: number | undefined,
   isProjectSpecific: boolean,
   groupBy: string[],
@@ -81,7 +129,7 @@ async function folderGroupingOptions(
   if (groupBy.includes("folderId") && filters?.folderIncludeDescendants) {
     return {
       folderAncestors: await buildFolderAncestorMap(
-        prisma,
+        db,
         projectId,
         isProjectSpecific
       ),
@@ -194,36 +242,6 @@ export function getSourceDisplayInfo(sourceName: string) {
   return sourceMap[sourceName] || { icon: "help-circle", color: "#6b7280" };
 }
 
-// Helper to build date filter conditions
-export function buildDateFilter(
-  filters?: { startDate?: string; endDate?: string },
-  dateField: string = "executedAt"
-) {
-  const conditions: any = {};
-
-  if (filters?.startDate) {
-    // Normalize start date to UTC midnight (start of day)
-    const startDate = new Date(filters.startDate);
-    startDate.setUTCHours(0, 0, 0, 0);
-    conditions[dateField] = { gte: startDate };
-  }
-
-  if (filters?.endDate) {
-    // Use next day as exclusive boundary to include the entire end date
-    const nextDay = new Date(filters.endDate);
-    nextDay.setUTCDate(nextDay.getUTCDate() + 1);
-    nextDay.setUTCHours(0, 0, 0, 0);
-
-    if (conditions[dateField]) {
-      conditions[dateField].lt = nextDay;
-    } else {
-      conditions[dateField] = { lt: nextDay };
-    }
-  }
-
-  return conditions;
-}
-
 // Shared dimension registry factory
 export function createTestExecutionDimensionRegistry(
   isProjectSpecific: boolean = true
@@ -233,8 +251,8 @@ export function createTestExecutionDimensionRegistry(
       ? {
           id: "project",
           label: "Project",
-          getValues: async (prisma: any, _projectId?: number) => {
-            const projects = await prisma.projects.findMany({
+          getValues: async (db: any, _projectId?: number) => {
+            const projects = await db.projects.findMany({
               where: {
                 isDeleted: false,
                 testRuns: {
@@ -256,19 +274,28 @@ export function createTestExecutionDimensionRegistry(
     status: {
       id: "status",
       label: "Status",
-      getValues: async (prisma: any, projectId?: number) => {
-        const statuses = await prisma.status.findMany({
+      getValues: async (db: any, projectId?: number) => {
+        const runScope = {
+          ...(isProjectSpecific && projectId
+            ? { projectId: Number(projectId) }
+            : {}),
+          isDeleted: false,
+        };
+        const statuses = await db.status.findMany({
           where: {
-            testRunResults: {
-              some: {
-                testRun: {
-                  ...(isProjectSpecific && projectId
-                    ? { projectId: Number(projectId) }
-                    : {}),
-                  isDeleted: false,
+            // Untested rows are placeholders, not executions — every
+            // result-level metric excludes them, so the filter value would
+            // always produce an empty report.
+            systemName: { not: "untested" },
+            OR: [
+              { testRunResults: { some: { testRun: runScope } } },
+              // Statuses used only by automated (JUnit) results
+              {
+                junitTestResults: {
+                  some: { testSuite: { testRun: runScope } },
                 },
               },
-            },
+            ],
           },
           select: { id: true, name: true, color: { select: { value: true } } },
           orderBy: { name: "asc" },
@@ -286,20 +313,25 @@ export function createTestExecutionDimensionRegistry(
     user: {
       id: "user",
       label: "Executor",
-      getValues: async (prisma: any, projectId?: number) => {
-        const users = await prisma.user.findMany({
+      getValues: async (db: any, projectId?: number) => {
+        const runScope = {
+          ...(isProjectSpecific && projectId
+            ? { projectId: Number(projectId) }
+            : {}),
+          isDeleted: false,
+        };
+        const users = await db.user.findMany({
           where: {
             isDeleted: false,
-            testRunResults: {
-              some: {
-                testRun: {
-                  ...(isProjectSpecific && projectId
-                    ? { projectId: Number(projectId) }
-                    : {}),
-                  isDeleted: false,
+            OR: [
+              { testRunResults: { some: { testRun: runScope } } },
+              // Users who only submitted automated (JUnit) results
+              {
+                junitTestResults: {
+                  some: { testSuite: { testRun: runScope } },
                 },
               },
-            },
+            ],
           },
           select: { id: true, name: true, email: true },
           orderBy: { name: "asc" },
@@ -313,8 +345,8 @@ export function createTestExecutionDimensionRegistry(
     configuration: {
       id: "configuration",
       label: "Configuration",
-      getValues: async (prisma: any, projectId?: number) => {
-        const configurations = await prisma.configurations.findMany({
+      getValues: async (db: any, projectId?: number) => {
+        const configurations = await db.configurations.findMany({
           where: {
             testRuns: {
               some: {
@@ -341,11 +373,11 @@ export function createTestExecutionDimensionRegistry(
       id: "date",
       label: "Execution Date",
       getValues: async (
-        prisma: any,
+        db: any,
         projectId?: number,
         filters?: { startDate?: string; endDate?: string }
       ) => {
-        const dates = await prisma.testRunResults.findMany({
+        const dates = await db.testRunResults.findMany({
           where: {
             testRun: {
               ...(isProjectSpecific && projectId
@@ -385,8 +417,8 @@ export function createTestExecutionDimensionRegistry(
     testRun: {
       id: "testRun",
       label: "Test Run",
-      getValues: async (prisma: any, projectId?: number) => {
-        const testRuns = await prisma.testRuns.findMany({
+      getValues: async (db: any, projectId?: number) => {
+        const testRuns = await db.testRuns.findMany({
           where: {
             ...(isProjectSpecific && projectId
               ? { projectId: Number(projectId) }
@@ -405,51 +437,87 @@ export function createTestExecutionDimensionRegistry(
     testCase: {
       id: "testCase",
       label: "Test Case",
-      getValues: async (prisma: any, projectId?: number) => {
-        const testCases = await prisma.testRunCases.findMany({
+      // Grouped by REPOSITORY case, not run-case instance: one row/series
+      // per case across every run, and it covers JUnit results that were
+      // matched to a case without ever being added to a run's case list
+      // (those have no TestRunCases record at all).
+      getValues: async (db: any, projectId?: number) => {
+        const runScope = {
+          ...(isProjectSpecific && projectId
+            ? { projectId: Number(projectId) }
+            : {}),
+          isDeleted: false,
+        };
+        const cases = await db.repositoryCases.findMany({
           where: {
-            testRun: {
-              ...(isProjectSpecific && projectId
-                ? { projectId: Number(projectId) }
-                : {}),
-              isDeleted: false,
-            },
+            OR: [
+              { testRuns: { some: { testRun: runScope } } },
+              {
+                junitResults: {
+                  some: { testSuite: { testRun: runScope } },
+                },
+              },
+            ],
           },
           select: {
             id: true,
-            repositoryCase: {
-              select: {
-                name: true,
-                isDeleted: true,
-                source: true,
-                automated: true,
-                hasParameters: true,
-              },
-            },
+            name: true,
+            isDeleted: true,
+            source: true,
+            automated: true,
+            hasParameters: true,
           },
           orderBy: { id: "asc" },
         });
-        return testCases.map(
-          (tc: {
-            id: any;
-            repositoryCase: {
-              name: any;
-              isDeleted: boolean;
-              source: string;
-              automated: boolean;
-              hasParameters: boolean;
-            };
-          }) => ({
-            id: tc.id,
-            name: tc.repositoryCase?.name || `Case ${tc.id}`,
-            isDeleted: tc.repositoryCase?.isDeleted || false,
-            source: tc.repositoryCase?.source || "MANUAL",
-            automated: tc.repositoryCase?.automated || false,
-            hasParameters: tc.repositoryCase?.hasParameters || false,
-          })
-        );
+        return cases;
       },
-      groupBy: "testRunCaseId",
+      groupBy: "repositoryCaseId",
+      // Dedicated picker lookup with DB-side search and pagination (the
+      // full executed-case list is too large to ship per keystroke).
+      filterValues: async (
+        db: any,
+        projectId: number | undefined,
+        opts: { search?: string; ids?: string[]; skip: number; take: number }
+      ) => {
+        const runScope = {
+          ...(isProjectSpecific && projectId
+            ? { projectId: Number(projectId) }
+            : {}),
+          isDeleted: false,
+        };
+        const where = {
+          ...(opts.ids ? { id: { in: opts.ids.map(Number) } } : {}),
+          ...(opts.search
+            ? { name: { contains: opts.search, mode: "insensitive" } }
+            : {}),
+          OR: [
+            { testRuns: { some: { testRun: runScope } } },
+            {
+              junitResults: {
+                some: { testSuite: { testRun: runScope } },
+              },
+            },
+          ],
+        };
+        const [cases, total] = await Promise.all([
+          db.repositoryCases.findMany({
+            where,
+            select: {
+              id: true,
+              name: true,
+              source: true,
+              automated: true,
+              hasParameters: true,
+              isDeleted: true,
+            },
+            orderBy: { name: "asc" },
+            skip: opts.skip,
+            take: opts.take,
+          }),
+          db.repositoryCases.count({ where }),
+        ]);
+        return { results: cases, total };
+      },
       join: {
         testRunCase: {
           include: {
@@ -493,8 +561,8 @@ export function createTestExecutionDimensionRegistry(
     milestone: {
       id: "milestone",
       label: "Milestone",
-      getValues: async (prisma: any, projectId?: number) => {
-        const milestones = await prisma.milestones.findMany({
+      getValues: async (db: any, projectId?: number) => {
+        const milestones = await db.milestones.findMany({
           where: {
             testRuns: {
               some: {
@@ -555,8 +623,8 @@ export function createTestExecutionDimensionRegistry(
       label: "Folder",
       // All non-deleted folders in scope, so both direct and rolled-up
       // (descendants) folder rows resolve to a name in the display lookup.
-      getValues: async (prisma: any, projectId?: number) => {
-        const folders = await prisma.repositoryFolders.findMany({
+      getValues: async (db: any, projectId?: number) => {
+        const folders = await db.repositoryFolders.findMany({
           where: {
             ...(isProjectSpecific && projectId
               ? { projectId: Number(projectId) }
@@ -577,16 +645,18 @@ export function createTestExecutionDimensionRegistry(
       label: "Tag",
       // Tags carried by executed cases in scope. A case with no tags falls into
       // a null "None" group handled by the response formatter.
-      getValues: async (prisma: any, projectId?: number) => {
-        const tags = await prisma.tags.findMany({
+      getValues: async (db: any, projectId?: number) => {
+        const tags = await db.tags.findMany({
           where: {
             isDeleted: false,
-            repositoryCases: {
+            caseTags: {
               some: {
-                ...(isProjectSpecific && projectId
-                  ? { projectId: Number(projectId) }
-                  : {}),
-                isDeleted: false,
+                case: {
+                  ...(isProjectSpecific && projectId
+                    ? { projectId: Number(projectId) }
+                    : {}),
+                  isDeleted: false,
+                },
               },
             },
           },
@@ -611,7 +681,7 @@ export function createTestExecutionMetricRegistry(
       id: "testResults",
       label: "Test Results Count",
       aggregate: async (
-        prisma: any,
+        db: any,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,
@@ -621,41 +691,44 @@ export function createTestExecutionMetricRegistry(
           return [];
         }
 
-        const where = {
-          testRun: {
-            ...(isProjectSpecific && projectId
-              ? { projectId: Number(projectId) }
-              : {}),
-            isDeleted: false,
-          },
-          status: {
-            systemName: { not: "untested" },
-          },
-          ...buildDateFilter(filters, "executedAt"),
-        };
+        const where = manualResultWhere(projectId, isProjectSpecific, filters);
 
         if (groupBy.length === 0) {
-          const count = await prisma.testRunResults.count({ where });
-          return [{ testResults: count }];
+          const [manualCount, junitCount] = await Promise.all([
+            db.testRunResults.count({ where }),
+            db.jUnitTestResult.count({
+              where: junitResultWhere(projectId, isProjectSpecific, filters),
+            }),
+          ]);
+          return [{ testResults: manualCount + junitCount }];
         }
 
-        const results = await prisma.testRunResults.findMany({
-          where,
-          select: {
-            executedAt: true,
-            executedById: true,
-            statusId: true,
-            testRunId: true,
-            testRunCaseId: true,
-            testRun: {
-              select: { projectId: true, configId: true, milestoneId: true },
+        const [results, junitRows] = await Promise.all([
+          db.testRunResults.findMany({
+            where,
+            select: {
+              executedAt: true,
+              executedById: true,
+              statusId: true,
+              testRunId: true,
+              testRunCaseId: true,
+              testRun: {
+                select: { projectId: true, configId: true, milestoneId: true },
+              },
+              ...caseSelectFor(groupBy),
             },
-            ...caseSelectFor(groupBy),
-          },
-        });
+          }),
+          fetchJunitResultRows(
+            db,
+            projectId,
+            isProjectSpecific,
+            groupBy,
+            filters
+          ),
+        ]);
 
         const options = await folderGroupingOptions(
-          prisma,
+          db,
           projectId,
           isProjectSpecific,
           groupBy,
@@ -663,7 +736,7 @@ export function createTestExecutionMetricRegistry(
         );
 
         return groupResults(
-          results,
+          [...results, ...junitRows],
           groupBy,
           {
             create: () => ({ count: 0 }),
@@ -680,7 +753,7 @@ export function createTestExecutionMetricRegistry(
       id: "passRate",
       label: "Pass Rate (%)",
       aggregate: async (
-        prisma: any,
+        db: any,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,
@@ -690,45 +763,72 @@ export function createTestExecutionMetricRegistry(
           return [];
         }
 
-        const where = {
-          testRun: {
-            ...(isProjectSpecific && projectId
-              ? { projectId: Number(projectId) }
-              : {}),
-            isDeleted: false,
-          },
-          status: {
-            systemName: { not: "untested" },
-          },
-          ...buildDateFilter(filters, "executedAt"),
-        };
+        const where = manualResultWhere(projectId, isProjectSpecific, filters);
+        const junitWhere = junitResultWhere(
+          projectId,
+          isProjectSpecific,
+          filters
+        );
 
         if (groupBy.length === 0) {
-          const total = await prisma.testRunResults.count({ where });
-          const passed = await prisma.testRunResults.count({
-            where: { ...where, status: { ...where.status, isSuccess: true } },
-          });
-          return [{ passRate: total > 0 ? (passed / total) * 100 : 0 }];
+          const [total, passed, junitTotal, junitPassed] = await Promise.all([
+            db.testRunResults.count({ where }),
+            db.testRunResults.count({
+              where: {
+                ...where,
+                status: { ...where.status, isSuccess: true },
+              },
+            }),
+            db.jUnitTestResult.count({ where: junitWhere }),
+            db.jUnitTestResult.count({
+              where: {
+                ...junitWhere,
+                status: { ...junitWhere.status, isSuccess: true },
+              },
+            }),
+          ]);
+          const combinedTotal = total + junitTotal;
+          const combinedPassed = passed + junitPassed;
+          // An empty population has no pass rate — null renders as "—",
+          // distinguishing "nothing ran" from "everything failed".
+          return [
+            {
+              passRate:
+                combinedTotal > 0
+                  ? (combinedPassed / combinedTotal) * 100
+                  : null,
+            },
+          ];
         }
 
-        const results = await prisma.testRunResults.findMany({
-          where,
-          select: {
-            executedAt: true,
-            executedById: true,
-            statusId: true,
-            testRunId: true,
-            testRunCaseId: true,
-            status: { select: { isSuccess: true } },
-            testRun: {
-              select: { projectId: true, configId: true, milestoneId: true },
+        const [results, junitRows] = await Promise.all([
+          db.testRunResults.findMany({
+            where,
+            select: {
+              executedAt: true,
+              executedById: true,
+              statusId: true,
+              testRunId: true,
+              testRunCaseId: true,
+              status: { select: { isSuccess: true } },
+              testRun: {
+                select: { projectId: true, configId: true, milestoneId: true },
+              },
+              ...caseSelectFor(groupBy),
             },
-            ...caseSelectFor(groupBy),
-          },
-        });
+          }),
+          fetchJunitResultRows(
+            db,
+            projectId,
+            isProjectSpecific,
+            groupBy,
+            filters,
+            { includeStatusFlags: true }
+          ),
+        ]);
 
         const options = await folderGroupingOptions(
-          prisma,
+          db,
           projectId,
           isProjectSpecific,
           groupBy,
@@ -736,7 +836,7 @@ export function createTestExecutionMetricRegistry(
         );
 
         return groupResults(
-          results,
+          [...results, ...junitRows],
           groupBy,
           {
             create: () => ({ total: 0, passed: 0 }),
@@ -745,7 +845,7 @@ export function createTestExecutionMetricRegistry(
               if (result.status?.isSuccess) acc.passed++;
             },
             finalize: (acc: { total: number; passed: number }) => ({
-              passRate: acc.total > 0 ? (acc.passed / acc.total) * 100 : 0,
+              passRate: acc.total > 0 ? (acc.passed / acc.total) * 100 : null,
             }),
           },
           options
@@ -756,7 +856,7 @@ export function createTestExecutionMetricRegistry(
       id: "avgElapsedTime",
       label: "Avg. Elapsed Time",
       aggregate: async (
-        prisma: any,
+        db: any,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,
@@ -766,49 +866,63 @@ export function createTestExecutionMetricRegistry(
           return [];
         }
 
-        const where = {
-          testRun: {
-            ...(isProjectSpecific && projectId
-              ? { projectId: Number(projectId) }
-              : {}),
-            isDeleted: false,
-          },
-          elapsed: { not: null },
-          ...buildDateFilter(filters, "executedAt"),
-        };
+        const where = manualResultWhere(projectId, isProjectSpecific, filters, {
+          requireElapsed: true,
+        });
 
         if (groupBy.length === 0) {
-          const result = await prisma.testRunResults.aggregate({
-            where,
-            _avg: { elapsed: true },
-          });
+          const [manual, manualCount, junit, junitCount] = await Promise.all([
+            db.testRunResults.aggregate({ where, _sum: { elapsed: true } }),
+            db.testRunResults.count({ where }),
+            db.jUnitTestResult.aggregate({
+              where: junitResultWhere(projectId, isProjectSpecific, filters, {
+                requireTime: true,
+              }),
+              _sum: { time: true },
+            }),
+            db.jUnitTestResult.count({
+              where: junitResultWhere(projectId, isProjectSpecific, filters, {
+                requireTime: true,
+              }),
+            }),
+          ]);
+          const total = (manual._sum.elapsed || 0) + (junit._sum.time || 0);
+          const count = manualCount + junitCount;
           return [
-            {
-              avgElapsedTime: result._avg.elapsed
-                ? Math.round(result._avg.elapsed)
-                : 0,
-            },
+            { avgElapsedTime: count > 0 ? Math.round(total / count) : 0 },
           ];
         }
 
-        const results = await prisma.testRunResults.findMany({
-          where,
-          select: {
-            executedAt: true,
-            executedById: true,
-            statusId: true,
-            elapsed: true,
-            testRunId: true,
-            testRunCaseId: true,
-            testRun: {
-              select: { projectId: true, configId: true, milestoneId: true },
+        const [results, junitRows] = await Promise.all([
+          db.testRunResults.findMany({
+            where,
+            select: {
+              executedAt: true,
+              executedById: true,
+              statusId: true,
+              elapsed: true,
+              testRunId: true,
+              testRunCaseId: true,
+              testRun: {
+                select: { projectId: true, configId: true, milestoneId: true },
+              },
+              ...caseSelectFor(groupBy),
             },
-            ...caseSelectFor(groupBy),
-          },
-        });
+          }),
+          fetchJunitResultRows(
+            db,
+            projectId,
+            isProjectSpecific,
+            groupBy,
+            filters,
+            {
+              requireTime: true,
+            }
+          ),
+        ]);
 
         const options = await folderGroupingOptions(
-          prisma,
+          db,
           projectId,
           isProjectSpecific,
           groupBy,
@@ -816,7 +930,7 @@ export function createTestExecutionMetricRegistry(
         );
 
         return groupResults(
-          results,
+          [...results, ...junitRows],
           groupBy,
           {
             create: () => ({ total: 0, count: 0 }),
@@ -839,7 +953,7 @@ export function createTestExecutionMetricRegistry(
       id: "totalElapsedTime",
       label: "Total Elapsed Time",
       aggregate: async (
-        prisma: any,
+        db: any,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,
@@ -849,43 +963,58 @@ export function createTestExecutionMetricRegistry(
           return [];
         }
 
-        const where = {
-          testRun: {
-            ...(isProjectSpecific && projectId
-              ? { projectId: Number(projectId) }
-              : {}),
-            isDeleted: false,
-          },
-          elapsed: { not: null },
-          ...buildDateFilter(filters, "executedAt"),
-        };
-
-        if (groupBy.length === 0) {
-          const result = await prisma.testRunResults.aggregate({
-            where,
-            _sum: { elapsed: true },
-          });
-          return [{ totalElapsedTime: result._sum.elapsed || 0 }];
-        }
-
-        const results = await prisma.testRunResults.findMany({
-          where,
-          select: {
-            executedAt: true,
-            executedById: true,
-            statusId: true,
-            elapsed: true,
-            testRunId: true,
-            testRunCaseId: true,
-            testRun: {
-              select: { projectId: true, configId: true, milestoneId: true },
-            },
-            ...caseSelectFor(groupBy),
-          },
+        const where = manualResultWhere(projectId, isProjectSpecific, filters, {
+          requireElapsed: true,
         });
 
+        if (groupBy.length === 0) {
+          const [manual, junit] = await Promise.all([
+            db.testRunResults.aggregate({ where, _sum: { elapsed: true } }),
+            db.jUnitTestResult.aggregate({
+              where: junitResultWhere(projectId, isProjectSpecific, filters, {
+                requireTime: true,
+              }),
+              _sum: { time: true },
+            }),
+          ]);
+          return [
+            {
+              totalElapsedTime:
+                (manual._sum.elapsed || 0) + (junit._sum.time || 0),
+            },
+          ];
+        }
+
+        const [results, junitRows] = await Promise.all([
+          db.testRunResults.findMany({
+            where,
+            select: {
+              executedAt: true,
+              executedById: true,
+              statusId: true,
+              elapsed: true,
+              testRunId: true,
+              testRunCaseId: true,
+              testRun: {
+                select: { projectId: true, configId: true, milestoneId: true },
+              },
+              ...caseSelectFor(groupBy),
+            },
+          }),
+          fetchJunitResultRows(
+            db,
+            projectId,
+            isProjectSpecific,
+            groupBy,
+            filters,
+            {
+              requireTime: true,
+            }
+          ),
+        ]);
+
         const options = await folderGroupingOptions(
-          prisma,
+          db,
           projectId,
           isProjectSpecific,
           groupBy,
@@ -893,7 +1022,7 @@ export function createTestExecutionMetricRegistry(
         );
 
         return groupResults(
-          results,
+          [...results, ...junitRows],
           groupBy,
           {
             create: () => ({ total: 0 }),
@@ -914,7 +1043,7 @@ export function createTestExecutionMetricRegistry(
       label: "Test Result Count", // Slightly different label to avoid exact duplicate
       hidden: true, // Hide from UI but keep for backward compatibility
       aggregate: async (
-        prisma: any,
+        db: any,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,
@@ -923,7 +1052,7 @@ export function createTestExecutionMetricRegistry(
         // Reuse testResults logic but return testResultCount property
         const registry = createTestExecutionMetricRegistry(isProjectSpecific);
         const results = await registry.testResults.aggregate(
-          prisma,
+          db,
           projectId,
           groupBy,
           filters,
@@ -939,7 +1068,7 @@ export function createTestExecutionMetricRegistry(
       id: "testRunCount",
       label: "Test Runs Count",
       aggregate: async (
-        prisma: any,
+        db: any,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,
@@ -949,13 +1078,13 @@ export function createTestExecutionMetricRegistry(
           return [];
         }
 
-        // Result-level groupings (and case-level folder/tag) require execution
-        // data so we can count the distinct runs that touched each group. A run
-        // spans many cases, so its folder/tag membership is only knowable here.
+        // A "run" counts whether or not it has results (product ruling):
+        // date ranges and the date dimension use the run's createdAt, and
+        // "by user" means the run's creator. Only groupings that exist
+        // through execution data (status, case, folder, tag) derive run
+        // membership from the union of manual and automated results.
         const needsResultLevel = groupBy.some((field) =>
           [
-            "executedAt",
-            "executedById",
             "statusId",
             "folderId",
             "tagId",
@@ -964,40 +1093,48 @@ export function createTestExecutionMetricRegistry(
           ].includes(field)
         );
 
-        if (needsResultLevel) {
-          const results = await prisma.testRunResults.findMany({
-            where: {
-              testRun: {
-                ...(isProjectSpecific && projectId
-                  ? { projectId: Number(projectId) }
-                  : {}),
-                isDeleted: false,
-              },
-            },
-            select: {
-              executedAt: true,
-              executedById: true,
-              statusId: true,
-              testRunId: true,
-              testRun: {
-                select: { projectId: true, configId: true, milestoneId: true },
-              },
-              ...caseSelectFor(groupBy),
-            },
-          });
+        const runWhere = {
+          ...(isProjectSpecific && projectId
+            ? { projectId: Number(projectId) }
+            : {}),
+          isDeleted: false,
+          ...buildDateFilter(filters, "createdAt"),
+        };
 
-          // Preserve the prior behavior of dropping results with no valid
-          // execution date when the date dimension is in play.
-          const rows = groupBy.includes("executedAt")
-            ? results.filter(
-                (result: any) =>
-                  result.executedAt &&
-                  !isNaN(new Date(result.executedAt).getTime())
-              )
-            : results;
+        if (needsResultLevel) {
+          const [results, junitRows] = await Promise.all([
+            db.testRunResults.findMany({
+              where: {
+                ...manualResultWhere(projectId, isProjectSpecific),
+                testRun: { ...runWhere },
+              },
+              select: {
+                executedAt: true,
+                executedById: true,
+                statusId: true,
+                testRunId: true,
+                testRun: {
+                  select: {
+                    projectId: true,
+                    configId: true,
+                    milestoneId: true,
+                  },
+                },
+                ...caseSelectFor(groupBy),
+              },
+            }),
+            fetchJunitResultRows(
+              db,
+              projectId,
+              isProjectSpecific,
+              groupBy,
+              undefined,
+              { runFilter: runWhere }
+            ),
+          ]);
 
           const options = await folderGroupingOptions(
-            prisma,
+            db,
             projectId,
             isProjectSpecific,
             groupBy,
@@ -1005,7 +1142,7 @@ export function createTestExecutionMetricRegistry(
           );
 
           return groupResults(
-            rows,
+            [...results, ...junitRows],
             groupBy,
             {
               create: () => ({ runs: new Set<number>() }),
@@ -1021,26 +1158,15 @@ export function createTestExecutionMetricRegistry(
         }
 
         if (groupBy.length === 0) {
-          const count = await prisma.testRuns.count({
-            where: {
-              ...(isProjectSpecific && projectId
-                ? { projectId: Number(projectId) }
-                : {}),
-              isDeleted: false,
-            },
-          });
+          const count = await db.testRuns.count({ where: runWhere });
           return [{ testRunCount: count }];
         }
 
-        const results = await prisma.testRuns.findMany({
-          where: {
-            ...(isProjectSpecific && projectId
-              ? { projectId: Number(projectId) }
-              : {}),
-            isDeleted: false,
-          },
+        const runs = await db.testRuns.findMany({
+          where: runWhere,
           select: {
             id: true,
+            createdAt: true,
             createdById: true,
             projectId: true,
             configId: true,
@@ -1048,49 +1174,34 @@ export function createTestExecutionMetricRegistry(
           },
         });
 
-        const grouped = new Map<string, any>();
-        results.forEach((result: any) => {
-          const key = groupBy
-            .map((field) => {
-              if (field === "projectId") return result.projectId;
-              if (field === "configId") return result.configId;
-              if (field === "executedById") return result.createdById;
-              if (field === "milestoneId") return result.milestoneId;
-              if (field === "testRunId") return result.id;
-              return null;
-            })
-            .join("|");
+        // Shape runs like result rows so groupResults handles the shared
+        // dimension keys: the date key is the run's creation day and the
+        // user key is the run's creator.
+        const runRows = runs.map((run: any) => ({
+          executedAt: run.createdAt,
+          executedById: run.createdById,
+          testRunId: run.id,
+          testRun: {
+            projectId: run.projectId,
+            configId: run.configId,
+            milestoneId: run.milestoneId,
+          },
+        }));
 
-          if (!grouped.has(key)) {
-            const groupData: any = {};
-            groupBy.forEach((field) => {
-              if (field === "projectId") {
-                groupData.projectId = result.projectId;
-              } else if (field === "configId") {
-                groupData.configId = result.configId;
-              } else if (field === "executedById") {
-                groupData.executedById = result.createdById;
-              } else if (field === "milestoneId") {
-                groupData.milestoneId = result.milestoneId;
-              } else if (field === "testRunId") {
-                groupData.testRunId = result.id;
-              }
-            });
-            groupData.testRunCount = 0;
-            grouped.set(key, groupData);
-          }
-
-          grouped.get(key).testRunCount++;
+        return groupResults(runRows, groupBy, {
+          create: () => ({ count: 0 }),
+          add: (acc: { count: number }) => {
+            acc.count++;
+          },
+          finalize: (acc: { count: number }) => ({ testRunCount: acc.count }),
         });
-
-        return Array.from(grouped.values());
       },
     },
     testCaseCount: {
       id: "testCaseCount",
       label: "Test Cases Count",
       aggregate: async (
-        prisma: any,
+        db: any,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,
@@ -1101,52 +1212,63 @@ export function createTestExecutionMetricRegistry(
         }
 
         const where = {
-          testRun: {
-            ...(isProjectSpecific && projectId
-              ? { projectId: Number(projectId) }
-              : {}),
-            isDeleted: false,
-          },
-          status: {
-            systemName: { not: "untested" },
-          },
+          ...manualResultWhere(projectId, isProjectSpecific, filters),
           testRunCase: {
             repositoryCase: { isDeleted: false },
           },
-          ...buildDateFilter(filters, "executedAt"),
+        };
+        const junitWhere = {
+          ...junitResultWhere(projectId, isProjectSpecific, filters),
+          repositoryCase: { isDeleted: false },
         };
 
         if (groupBy.length === 0) {
-          const results = await prisma.testRunResults.findMany({
-            where,
-            select: { testRunCase: { select: { repositoryCaseId: true } } },
-          });
-          const uniqueCases = new Set(
-            results
+          const [results, junitResults] = await Promise.all([
+            db.testRunResults.findMany({
+              where,
+              select: { testRunCase: { select: { repositoryCaseId: true } } },
+            }),
+            db.jUnitTestResult.findMany({
+              where: junitWhere,
+              select: { repositoryCaseId: true },
+            }),
+          ]);
+          const uniqueCases = new Set([
+            ...results
               .map((r: any) => r.testRunCase?.repositoryCaseId)
-              .filter((id: number | undefined) => id !== undefined)
-          );
+              .filter((id: number | undefined) => id !== undefined),
+            ...junitResults.map((r: any) => r.repositoryCaseId),
+          ]);
           return [{ testCaseCount: uniqueCases.size }];
         }
 
-        const results = await prisma.testRunResults.findMany({
-          where,
-          select: {
-            executedAt: true,
-            executedById: true,
-            statusId: true,
-            testRunId: true,
-            testRun: {
-              select: { projectId: true, configId: true, milestoneId: true },
+        const [results, junitRows] = await Promise.all([
+          db.testRunResults.findMany({
+            where,
+            select: {
+              executedAt: true,
+              executedById: true,
+              statusId: true,
+              testRunId: true,
+              testRun: {
+                select: { projectId: true, configId: true, milestoneId: true },
+              },
+              // Always carry the repository case id (to count unique cases) plus
+              // whatever folder/tag selects the grouping requires.
+              ...caseSelectFor([...groupBy, "repositoryCaseId"]),
             },
-            // Always carry the repository case id (to count unique cases) plus
-            // whatever folder/tag selects the grouping requires.
-            ...caseSelectFor([...groupBy, "repositoryCaseId"]),
-          },
-        });
+          }),
+          fetchJunitResultRows(
+            db,
+            projectId,
+            isProjectSpecific,
+            groupBy,
+            filters
+          ),
+        ]);
 
         const options = await folderGroupingOptions(
-          prisma,
+          db,
           projectId,
           isProjectSpecific,
           groupBy,
@@ -1154,7 +1276,7 @@ export function createTestExecutionMetricRegistry(
         );
 
         return groupResults(
-          results,
+          [...results, ...junitRows],
           groupBy,
           {
             create: () => ({ cases: new Set<number>() }),
@@ -1182,8 +1304,8 @@ export function createRepositoryStatsDimensionRegistry(
       ? {
           id: "project",
           label: "Project",
-          getValues: async (prisma: any, _projectId?: number) => {
-            const projects = await prisma.projects.findMany({
+          getValues: async (db: any, _projectId?: number) => {
+            const projects = await db.projects.findMany({
               where: {
                 isDeleted: false,
                 repositoryCases: {
@@ -1205,8 +1327,8 @@ export function createRepositoryStatsDimensionRegistry(
     template: {
       id: "template",
       label: "Template",
-      getValues: async (prisma: any, projectId?: number) => {
-        const templates = await prisma.repositoryCases.findMany({
+      getValues: async (db: any, projectId?: number) => {
+        const templates = await db.repositoryCases.findMany({
           where: {
             ...(isProjectSpecific && projectId
               ? { projectId: Number(projectId) }
@@ -1237,8 +1359,8 @@ export function createRepositoryStatsDimensionRegistry(
     creator: {
       id: "creator",
       label: "Creator",
-      getValues: async (prisma: any, projectId?: number) => {
-        const creators = await prisma.repositoryCases.findMany({
+      getValues: async (db: any, projectId?: number) => {
+        const creators = await db.repositoryCases.findMany({
           where: {
             ...(isProjectSpecific && projectId
               ? { projectId: Number(projectId) }
@@ -1261,8 +1383,8 @@ export function createRepositoryStatsDimensionRegistry(
     state: {
       id: "state",
       label: "State",
-      getValues: async (prisma: any, projectId?: number) => {
-        const states = await prisma.repositoryCases.findMany({
+      getValues: async (db: any, projectId?: number) => {
+        const states = await db.repositoryCases.findMany({
           where: {
             ...(isProjectSpecific && projectId
               ? { projectId: Number(projectId) }
@@ -1306,8 +1428,8 @@ export function createRepositoryStatsDimensionRegistry(
     source: {
       id: "source",
       label: "Source",
-      getValues: async (prisma: any, projectId?: number) => {
-        const sources = await prisma.repositoryCases.groupBy({
+      getValues: async (db: any, projectId?: number) => {
+        const sources = await db.repositoryCases.groupBy({
           where: {
             ...(isProjectSpecific && projectId
               ? { projectId: Number(projectId) }
@@ -1330,8 +1452,8 @@ export function createRepositoryStatsDimensionRegistry(
       label: "Folder",
       // All non-deleted folders so rolled-up (descendants) ancestor folders
       // still resolve to a name in the display lookup.
-      getValues: async (prisma: any, projectId?: number) => {
-        const folders = await prisma.repositoryFolders.findMany({
+      getValues: async (db: any, projectId?: number) => {
+        const folders = await db.repositoryFolders.findMany({
           where: {
             ...(isProjectSpecific && projectId
               ? { projectId: Number(projectId) }
@@ -1350,16 +1472,18 @@ export function createRepositoryStatsDimensionRegistry(
     tag: {
       id: "tag",
       label: "Tag",
-      getValues: async (prisma: any, projectId?: number) => {
-        const tags = await prisma.tags.findMany({
+      getValues: async (db: any, projectId?: number) => {
+        const tags = await db.tags.findMany({
           where: {
             isDeleted: false,
-            repositoryCases: {
+            caseTags: {
               some: {
-                ...(isProjectSpecific && projectId
-                  ? { projectId: Number(projectId) }
-                  : {}),
-                isDeleted: false,
+                case: {
+                  ...(isProjectSpecific && projectId
+                    ? { projectId: Number(projectId) }
+                    : {}),
+                  isDeleted: false,
+                },
               },
             },
           },
@@ -1375,8 +1499,8 @@ export function createRepositoryStatsDimensionRegistry(
     date: {
       id: "date",
       label: "Creation Date",
-      getValues: async (prisma: any, projectId?: number) => {
-        const dates = await prisma.repositoryCases.findMany({
+      getValues: async (db: any, projectId?: number) => {
+        const dates = await db.repositoryCases.findMany({
           where: {
             ...(isProjectSpecific && projectId
               ? { projectId: Number(projectId) }
@@ -1416,8 +1540,8 @@ export function createRepositoryStatsDimensionRegistry(
     testCase: {
       id: "testCase",
       label: "Test Case",
-      getValues: async (prisma: any, projectId?: number) => {
-        const cases = await prisma.repositoryCases.findMany({
+      getValues: async (db: any, projectId?: number) => {
+        const cases = await db.repositoryCases.findMany({
           where: {
             ...(isProjectSpecific && projectId
               ? { projectId: Number(projectId) }
@@ -1445,7 +1569,7 @@ export function createRepositoryStatsMetricRegistry(
       id: "testCaseCount",
       label: "Test Case Count",
       aggregate: async (
-        prisma: any,
+        db: any,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,
@@ -1464,17 +1588,17 @@ export function createRepositoryStatsMetricRegistry(
         };
 
         if (groupBy.length === 0) {
-          const count = await prisma.repositoryCases.count({ where });
+          const count = await db.repositoryCases.count({ where });
           return [{ testCaseCount: count }];
         }
 
-        const cases = await prisma.repositoryCases.findMany({
+        const cases = await db.repositoryCases.findMany({
           where,
           select: repositoryCaseSelect(groupBy),
         });
 
         const options = await folderGroupingOptions(
-          prisma,
+          db,
           projectId,
           isProjectSpecific,
           groupBy,
@@ -1501,7 +1625,7 @@ export function createRepositoryStatsMetricRegistry(
       id: "automationRate",
       label: "Automation Rate (%)",
       aggregate: async (
-        prisma: any,
+        db: any,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,
@@ -1520,8 +1644,8 @@ export function createRepositoryStatsMetricRegistry(
         };
 
         if (groupBy.length === 0) {
-          const total = await prisma.repositoryCases.count({ where });
-          const automated = await prisma.repositoryCases.count({
+          const total = await db.repositoryCases.count({ where });
+          const automated = await db.repositoryCases.count({
             where: { ...where, automated: true },
           });
           return [
@@ -1529,13 +1653,13 @@ export function createRepositoryStatsMetricRegistry(
           ];
         }
 
-        const cases = await prisma.repositoryCases.findMany({
+        const cases = await db.repositoryCases.findMany({
           where,
           select: repositoryCaseSelect(groupBy, { automated: true }),
         });
 
         const options = await folderGroupingOptions(
-          prisma,
+          db,
           projectId,
           isProjectSpecific,
           groupBy,
@@ -1564,7 +1688,7 @@ export function createRepositoryStatsMetricRegistry(
       id: "automatedCount",
       label: "Automated Cases",
       aggregate: async (
-        prisma: any,
+        db: any,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,
@@ -1584,17 +1708,17 @@ export function createRepositoryStatsMetricRegistry(
         };
 
         if (groupBy.length === 0) {
-          const count = await prisma.repositoryCases.count({ where });
+          const count = await db.repositoryCases.count({ where });
           return [{ automatedCount: count }];
         }
 
-        const cases = await prisma.repositoryCases.findMany({
+        const cases = await db.repositoryCases.findMany({
           where,
           select: repositoryCaseSelect(groupBy),
         });
 
         const options = await folderGroupingOptions(
-          prisma,
+          db,
           projectId,
           isProjectSpecific,
           groupBy,
@@ -1621,7 +1745,7 @@ export function createRepositoryStatsMetricRegistry(
       id: "manualCount",
       label: "Manual Cases",
       aggregate: async (
-        prisma: any,
+        db: any,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,
@@ -1641,17 +1765,17 @@ export function createRepositoryStatsMetricRegistry(
         };
 
         if (groupBy.length === 0) {
-          const count = await prisma.repositoryCases.count({ where });
+          const count = await db.repositoryCases.count({ where });
           return [{ manualCount: count }];
         }
 
-        const cases = await prisma.repositoryCases.findMany({
+        const cases = await db.repositoryCases.findMany({
           where,
           select: repositoryCaseSelect(groupBy),
         });
 
         const options = await folderGroupingOptions(
-          prisma,
+          db,
           projectId,
           isProjectSpecific,
           groupBy,
@@ -1676,7 +1800,7 @@ export function createRepositoryStatsMetricRegistry(
       id: "averageSteps",
       label: "Average Steps per Case",
       aggregate: async (
-        prisma: any,
+        db: any,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,
@@ -1698,7 +1822,7 @@ export function createRepositoryStatsMetricRegistry(
         };
 
         if (groupBy.length === 0) {
-          const repositoryCases = await prisma.repositoryCases.findMany({
+          const repositoryCases = await db.repositoryCases.findMany({
             where,
             select: { id: true, ...stepsSelect },
           });
@@ -1712,13 +1836,13 @@ export function createRepositoryStatsMetricRegistry(
           ];
         }
 
-        const cases = await prisma.repositoryCases.findMany({
+        const cases = await db.repositoryCases.findMany({
           where,
           select: repositoryCaseSelect(groupBy, stepsSelect),
         });
 
         const options = await folderGroupingOptions(
-          prisma,
+          db,
           projectId,
           isProjectSpecific,
           groupBy,
@@ -1746,7 +1870,7 @@ export function createRepositoryStatsMetricRegistry(
       id: "totalSteps",
       label: "Total Steps",
       aggregate: async (
-        prisma: any,
+        db: any,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,
@@ -1768,7 +1892,7 @@ export function createRepositoryStatsMetricRegistry(
         };
 
         if (groupBy.length === 0) {
-          const repositoryCases = await prisma.repositoryCases.findMany({
+          const repositoryCases = await db.repositoryCases.findMany({
             where,
             select: stepsSelect,
           });
@@ -1779,13 +1903,13 @@ export function createRepositoryStatsMetricRegistry(
           return [{ totalSteps }];
         }
 
-        const cases = await prisma.repositoryCases.findMany({
+        const cases = await db.repositoryCases.findMany({
           where,
           select: repositoryCaseSelect(groupBy, stepsSelect),
         });
 
         const options = await folderGroupingOptions(
-          prisma,
+          db,
           projectId,
           isProjectSpecific,
           groupBy,
@@ -1810,6 +1934,7 @@ export function createRepositoryStatsMetricRegistry(
 }
 
 // Shared dimension registry factory for user engagement
+
 export function createUserEngagementDimensionRegistry(
   isProjectSpecific: boolean = true
 ) {
@@ -1818,8 +1943,8 @@ export function createUserEngagementDimensionRegistry(
       ? {
           id: "project",
           label: "Project",
-          getValues: async (prisma: any, _projectId?: number) => {
-            const projects = await prisma.projects.findMany({
+          getValues: async (db: any, _projectId?: number) => {
+            const projects = await db.projects.findMany({
               where: {
                 isDeleted: false,
                 OR: [
@@ -1865,8 +1990,8 @@ export function createUserEngagementDimensionRegistry(
     user: {
       id: "user",
       label: "User",
-      getValues: async (prisma: any, projectId?: number) => {
-        const users = await prisma.user.findMany({
+      getValues: async (db: any, projectId?: number) => {
+        const users = await db.user.findMany({
           where: {
             isDeleted: false,
             OR: [
@@ -1909,6 +2034,7 @@ export function createUserEngagementDimensionRegistry(
               {
                 testRunResults: {
                   some: {
+                    isDeleted: false,
                     testRun: {
                       ...(isProjectSpecific && projectId
                         ? { projectId: Number(projectId) }
@@ -1918,10 +2044,26 @@ export function createUserEngagementDimensionRegistry(
                   },
                 },
               },
+              // Users who submitted automated results
+              {
+                junitTestResults: {
+                  some: {
+                    testSuite: {
+                      testRun: {
+                        ...(isProjectSpecific && projectId
+                          ? { projectId: Number(projectId) }
+                          : {}),
+                        isDeleted: false,
+                      },
+                    },
+                  },
+                },
+              },
               // Users who participated in sessions
               {
                 sessionResults: {
                   some: {
+                    isDeleted: false,
                     session: {
                       ...(isProjectSpecific && projectId
                         ? { projectId: Number(projectId) }
@@ -1945,9 +2087,9 @@ export function createUserEngagementDimensionRegistry(
     role: {
       id: "role",
       label: "Role",
-      getValues: async (prisma: any, projectId?: number) => {
+      getValues: async (db: any, projectId?: number) => {
         // Get roles of users who have any user engagement activity for the project
-        const roles = await prisma.roles.findMany({
+        const roles = await db.roles.findMany({
           where: {
             isDeleted: false,
             users: {
@@ -1969,6 +2111,7 @@ export function createUserEngagementDimensionRegistry(
                   {
                     testRunResults: {
                       some: {
+                        isDeleted: false,
                         testRun: {
                           ...(isProjectSpecific && projectId
                             ? { projectId: Number(projectId) }
@@ -1978,10 +2121,26 @@ export function createUserEngagementDimensionRegistry(
                       },
                     },
                   },
+                  // Users who submitted automated results
+                  {
+                    junitTestResults: {
+                      some: {
+                        testSuite: {
+                          testRun: {
+                            ...(isProjectSpecific && projectId
+                              ? { projectId: Number(projectId) }
+                              : {}),
+                            isDeleted: false,
+                          },
+                        },
+                      },
+                    },
+                  },
                   // Users who participated in sessions
                   {
                     sessionResults: {
                       some: {
+                        isDeleted: false,
                         session: {
                           ...(isProjectSpecific && projectId
                             ? { projectId: Number(projectId) }
@@ -2007,9 +2166,9 @@ export function createUserEngagementDimensionRegistry(
     group: {
       id: "group",
       label: "Group",
-      getValues: async (prisma: any, projectId?: number) => {
+      getValues: async (db: any, projectId?: number) => {
         // Get groups that contain users who have any user engagement activity for the project
-        const groups = await prisma.groups.findMany({
+        const groups = await db.groups.findMany({
           where: {
             isDeleted: false,
             assignedUsers: {
@@ -2032,6 +2191,7 @@ export function createUserEngagementDimensionRegistry(
                     {
                       testRunResults: {
                         some: {
+                          isDeleted: false,
                           testRun: {
                             ...(isProjectSpecific && projectId
                               ? { projectId: Number(projectId) }
@@ -2041,10 +2201,26 @@ export function createUserEngagementDimensionRegistry(
                         },
                       },
                     },
+                    // Users who submitted automated results
+                    {
+                      junitTestResults: {
+                        some: {
+                          testSuite: {
+                            testRun: {
+                              ...(isProjectSpecific && projectId
+                                ? { projectId: Number(projectId) }
+                                : {}),
+                              isDeleted: false,
+                            },
+                          },
+                        },
+                      },
+                    },
                     // Users who participated in sessions
                     {
                       sessionResults: {
                         some: {
+                          isDeleted: false,
                           session: {
                             ...(isProjectSpecific && projectId
                               ? { projectId: Number(projectId) }
@@ -2071,10 +2247,12 @@ export function createUserEngagementDimensionRegistry(
     date: {
       id: "date",
       label: "Activity Date",
-      getValues: async (prisma: any, projectId?: number) => {
+      getValues: async (db: any, projectId?: number) => {
         // Get unique activity dates from various user activities
-        const testExecutions = await prisma.testRunResults.findMany({
+        const testExecutions = await db.testRunResults.findMany({
           where: {
+            isDeleted: false,
+            executedAt: { not: null },
             testRun: {
               ...(isProjectSpecific && projectId
                 ? { projectId: Number(projectId) }
@@ -2087,8 +2265,18 @@ export function createUserEngagementDimensionRegistry(
           orderBy: { executedAt: "asc" },
         });
 
-        const sessionResults = await prisma.sessionResults.findMany({
+        const junitExecutions = await db.jUnitTestResult.findMany({
+          where: junitResultWhere(projectId, isProjectSpecific, undefined, {
+            requireExecutedAt: true,
+          }),
+          select: { executedAt: true },
+          distinct: ["executedAt"],
+          orderBy: { executedAt: "asc" },
+        });
+
+        const sessionResults = await db.sessionResults.findMany({
           where: {
+            isDeleted: false,
             session: {
               ...(isProjectSpecific && projectId
                 ? { projectId: Number(projectId) }
@@ -2101,7 +2289,7 @@ export function createUserEngagementDimensionRegistry(
           orderBy: { createdAt: "asc" },
         });
 
-        const caseCreations = await prisma.repositoryCases.findMany({
+        const caseCreations = await db.repositoryCases.findMany({
           where: {
             ...(isProjectSpecific && projectId
               ? { projectId: Number(projectId) }
@@ -2116,9 +2304,10 @@ export function createUserEngagementDimensionRegistry(
         // Combine all dates and group by day
         const allDates = [
           ...testExecutions.map((t: any) => t.executedAt),
+          ...junitExecutions.map((t: any) => t.executedAt),
           ...sessionResults.map((s: any) => s.createdAt),
           ...caseCreations.map((c: any) => c.createdAt),
-        ];
+        ].filter(Boolean);
 
         const datesByDay = allDates.reduce((acc: any, date: any) => {
           const day = new Date(date);
@@ -2158,197 +2347,39 @@ export function createUserEngagementMetricRegistry(
       id: "executionCount",
       label: "Test Executions",
       aggregate: async (
-        prisma: any,
+        db: any,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,
         _dims?: string[]
       ) => {
-        if (groupBy.includes("executedAt")) {
-          const results = await prisma.testRunResults.findMany({
-            where: {
-              testRun: {
-                ...(isProjectSpecific && projectId
-                  ? { projectId: Number(projectId) }
-                  : {}),
-                isDeleted: false,
-              },
-              ...buildDateFilter(filters, "executedAt"),
-            },
-            select: {
-              executedAt: true,
-              executedById: true,
-              testRun: {
-                select: {
-                  projectId: true,
-                },
-              },
-            },
-          });
-
-          const groupedResults = results.reduce((acc: any, result: any) => {
-            const key = groupBy
-              .map((field) => {
-                if (field === "executedAt") {
-                  const date = new Date(result.executedAt);
-                  date.setUTCHours(0, 0, 0, 0);
-                  return date.toISOString();
-                } else if (field === "userId") {
-                  return result.executedById;
-                } else if (field === "projectId") {
-                  return result.testRun.projectId;
-                }
-                return result[field];
-              })
-              .join("|");
-
-            if (!acc[key]) {
-              acc[key] = {
-                ...groupBy.reduce((obj: any, field) => {
-                  if (field === "executedAt") {
-                    const date = new Date(result.executedAt);
-                    date.setUTCHours(0, 0, 0, 0);
-                    obj["executedAt"] = date.toISOString();
-                  } else if (field === "userId") {
-                    obj[field] = result.executedById;
-                  } else if (field === "projectId") {
-                    obj[field] = result.testRun.projectId;
-                  } else {
-                    obj[field] = result[field];
-                  }
-                  return obj;
-                }, {}),
-                executionCount: 0,
-              };
-            }
-            acc[key].executionCount++;
-            return acc;
-          }, {});
-
-          return Object.values(groupedResults);
-        }
-
         if (groupBy.length === 0) {
-          const count = await prisma.testRunResults.count({
-            where: {
-              testRun: {
-                ...(isProjectSpecific && projectId
-                  ? { projectId: Number(projectId) }
-                  : {}),
-                isDeleted: false,
-              },
-              ...buildDateFilter(filters, "executedAt"),
-            },
-          });
-          return [{ executionCount: count }];
+          const [manualCount, junitCount] = await Promise.all([
+            db.testRunResults.count({
+              where: manualResultWhere(projectId, isProjectSpecific, filters),
+            }),
+            db.jUnitTestResult.count({
+              where: junitResultWhere(projectId, isProjectSpecific, filters),
+            }),
+          ]);
+          return [{ executionCount: manualCount + junitCount }];
         }
 
-        // Manual grouping for other cases
-        const results = await prisma.testRunResults.findMany({
-          where: {
-            testRun: {
-              ...(isProjectSpecific && projectId
-                ? { projectId: Number(projectId) }
-                : {}),
-              isDeleted: false,
-            },
-            ...buildDateFilter(filters, "executedAt"),
-          },
-          select: {
-            executedById: true,
-            executedBy: {
-              select: {
-                roleId: true,
-                groups: {
-                  select: {
-                    groupId: true,
-                  },
-                },
-              },
-            },
-            testRun: {
-              select: {
-                projectId: true,
-              },
-            },
-          },
-        });
-
-        const grouped = new Map<string, any>();
-        results.forEach((result: any) => {
-          // Handle groupId specially - a user can be in multiple groups
-          if (groupBy.includes("groupId")) {
-            const userGroups = result.executedBy.groups || [];
-            if (userGroups.length === 0) {
-              // User is not in any group, skip this result for group dimension
-              return;
-            }
-
-            // Create a separate entry for each group the user belongs to
-            userGroups.forEach((groupAssignment: any) => {
-              const key = groupBy
-                .map((field) => {
-                  if (field === "userId") return result.executedById;
-                  if (field === "projectId") return result.testRun.projectId;
-                  if (field === "roleId") return result.executedBy.roleId;
-                  if (field === "groupId") return groupAssignment.groupId;
-                  return result[field];
-                })
-                .join("|");
-
-              if (!grouped.has(key)) {
-                const groupData: any = {};
-                groupBy.forEach((field) => {
-                  if (field === "userId") {
-                    groupData.userId = result.executedById;
-                  } else if (field === "projectId") {
-                    groupData.projectId = result.testRun.projectId;
-                  } else if (field === "roleId") {
-                    groupData.roleId = result.executedBy.roleId;
-                  } else if (field === "groupId") {
-                    groupData.groupId = groupAssignment.groupId;
-                  } else {
-                    groupData[field] = result[field];
-                  }
-                });
-                groupData.executionCount = 0;
-                grouped.set(key, groupData);
-              }
-
-              grouped.get(key).executionCount++;
-            });
-          } else {
-            // Normal grouping without groups
-            const key = groupBy
-              .map((field) => {
-                if (field === "userId") return result.executedById;
-                if (field === "projectId") return result.testRun.projectId;
-                if (field === "roleId") return result.executedBy.roleId;
-                return result[field];
-              })
-              .join("|");
-
-            if (!grouped.has(key)) {
-              const groupData: any = {};
-              groupBy.forEach((field) => {
-                if (field === "userId") {
-                  groupData.userId = result.executedById;
-                } else if (field === "projectId") {
-                  groupData.projectId = result.testRun.projectId;
-                } else if (field === "roleId") {
-                  groupData.roleId = result.executedBy.roleId;
-                } else {
-                  groupData[field] = result[field];
-                }
-              });
-              groupData.executionCount = 0;
-              grouped.set(key, groupData);
-            }
-
-            grouped.get(key).executionCount++;
+        const rows = await fetchEngagementExecutionRows(
+          db,
+          projectId,
+          isProjectSpecific,
+          groupBy,
+          filters
+        );
+        const grouped = groupEngagementRows(
+          rows,
+          groupBy,
+          () => ({ executionCount: 0 }),
+          (bucket) => {
+            bucket.executionCount++;
           }
-        });
-
+        );
         return Array.from(grouped.values());
       },
     },
@@ -2356,7 +2387,7 @@ export function createUserEngagementMetricRegistry(
       id: "createdCaseCount",
       label: "Created Test Case Count",
       aggregate: async (
-        prisma: any,
+        db: any,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,
@@ -2370,7 +2401,7 @@ export function createUserEngagementMetricRegistry(
           : "executedAt";
 
         if (hasDateDimension) {
-          const results = await prisma.repositoryCases.findMany({
+          const results = await db.repositoryCases.findMany({
             where: {
               ...(isProjectSpecific && projectId
                 ? { projectId: Number(projectId) }
@@ -2424,7 +2455,7 @@ export function createUserEngagementMetricRegistry(
         }
 
         if (groupBy.length === 0) {
-          const count = await prisma.repositoryCases.count({
+          const count = await db.repositoryCases.count({
             where: {
               ...(isProjectSpecific && projectId
                 ? { projectId: Number(projectId) }
@@ -2437,7 +2468,7 @@ export function createUserEngagementMetricRegistry(
         }
 
         // Manual grouping for other cases
-        const results = await prisma.repositoryCases.findMany({
+        const results = await db.repositoryCases.findMany({
           where: {
             ...(isProjectSpecific && projectId
               ? { projectId: Number(projectId) }
@@ -2543,7 +2574,7 @@ export function createUserEngagementMetricRegistry(
       id: "sessionResultCount",
       label: "Session Result Count",
       aggregate: async (
-        prisma: any,
+        db: any,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,
@@ -2554,8 +2585,9 @@ export function createUserEngagementMetricRegistry(
           groupBy.includes("createdAt") || groupBy.includes("executedAt");
 
         if (hasDateDimension) {
-          const results = await prisma.sessionResults.findMany({
+          const results = await db.sessionResults.findMany({
             where: {
+              isDeleted: false,
               session: {
                 ...(isProjectSpecific && projectId
                   ? { projectId: Number(projectId) }
@@ -2618,8 +2650,9 @@ export function createUserEngagementMetricRegistry(
         }
 
         if (groupBy.length === 0) {
-          const count = await prisma.sessionResults.count({
+          const count = await db.sessionResults.count({
             where: {
+              isDeleted: false,
               session: {
                 ...(isProjectSpecific && projectId
                   ? { projectId: Number(projectId) }
@@ -2633,8 +2666,9 @@ export function createUserEngagementMetricRegistry(
         }
 
         // Manual grouping for other cases
-        const results = await prisma.sessionResults.findMany({
+        const results = await db.sessionResults.findMany({
           where: {
+            isDeleted: false,
             session: {
               ...(isProjectSpecific && projectId
                 ? { projectId: Number(projectId) }
@@ -2743,342 +2777,191 @@ export function createUserEngagementMetricRegistry(
     },
     averageElapsed: {
       id: "averageElapsed",
-      label: "Average Time per Execution (seconds)",
+      label: "Average Time per Execution",
       aggregate: async (
-        prisma: any,
+        db: any,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,
         _dims?: string[]
       ) => {
-        if (groupBy.includes("executedAt")) {
-          const results = await prisma.testRunResults.findMany({
-            where: {
-              testRun: {
-                ...(isProjectSpecific && projectId
-                  ? { projectId: Number(projectId) }
-                  : {}),
-                isDeleted: false,
-              },
-              elapsed: {
-                not: null,
-              },
-              ...buildDateFilter(filters, "executedAt"),
-            },
-            select: {
-              executedAt: true,
-              executedById: true,
-              elapsed: true,
-              testRun: {
-                select: {
-                  projectId: true,
-                },
-              },
-            },
-          });
-
-          const groupedResults = results.reduce((acc: any, result: any) => {
-            const key = groupBy
-              .map((field) => {
-                if (field === "executedAt") {
-                  const date = new Date(result.executedAt);
-                  date.setUTCHours(0, 0, 0, 0);
-                  return date.toISOString();
-                } else if (field === "userId") {
-                  return result.executedById;
-                } else if (field === "projectId") {
-                  return result.testRun.projectId;
-                }
-                return result[field];
-              })
-              .join("|");
-
-            if (!acc[key]) {
-              acc[key] = {
-                ...groupBy.reduce((obj: any, field) => {
-                  if (field === "executedAt") {
-                    const date = new Date(result.executedAt);
-                    date.setUTCHours(0, 0, 0, 0);
-                    obj["executedAt"] = date.toISOString();
-                  } else if (field === "userId") {
-                    obj[field] = result.executedById;
-                  } else if (field === "projectId") {
-                    obj[field] = result.testRun.projectId;
-                  } else {
-                    obj[field] = result[field];
-                  }
-                  return obj;
-                }, {}),
-                totalElapsed: 0,
-                count: 0,
-              };
-            }
-            acc[key].totalElapsed += result.elapsed || 0;
-            acc[key].count++;
-            return acc;
-          }, {});
-
-          return Object.values(groupedResults).map((group: any) => ({
-            ...Object.fromEntries(
-              Object.entries(group).filter(
-                ([key]) => !["totalElapsed", "count"].includes(key)
-              )
-            ),
-            averageElapsed:
-              group.count > 0 ? group.totalElapsed / group.count / 1000 : 0,
-          }));
-        }
-
         if (groupBy.length === 0) {
-          const result = await prisma.testRunResults.aggregate({
-            where: {
-              testRun: {
-                ...(isProjectSpecific && projectId
-                  ? { projectId: Number(projectId) }
-                  : {}),
-                isDeleted: false,
-              },
-              elapsed: {
-                not: null,
-              },
-              ...buildDateFilter(filters, "executedAt"),
-            },
-            _avg: {
-              elapsed: true,
-            },
-          });
-          // If no results with elapsed time, return 0
-          // Otherwise, return the average in seconds (null values are already filtered out)
-          return [
-            {
-              averageElapsed: result._avg.elapsed
-                ? result._avg.elapsed / 1000
-                : 0,
-            },
-          ];
+          const [manualAgg, junitAgg] = await Promise.all([
+            db.testRunResults.aggregate({
+              where: manualResultWhere(projectId, isProjectSpecific, filters, {
+                requireElapsed: true,
+              }),
+              _sum: { elapsed: true },
+              _count: { elapsed: true },
+            }),
+            db.jUnitTestResult.aggregate({
+              where: junitResultWhere(projectId, isProjectSpecific, filters, {
+                requireTime: true,
+              }),
+              _sum: { time: true },
+              _count: { time: true },
+            }),
+          ]);
+          const count =
+            (manualAgg._count.elapsed ?? 0) + (junitAgg._count.time ?? 0);
+          const sum = (manualAgg._sum.elapsed ?? 0) + (junitAgg._sum.time ?? 0);
+          return [{ averageElapsed: count > 0 ? sum / count : null }];
         }
 
-        const results = await prisma.testRunResults.findMany({
-          where: {
-            testRun: {
-              ...(isProjectSpecific && projectId
-                ? { projectId: Number(projectId) }
-                : {}),
-              isDeleted: false,
-            },
-            elapsed: {
-              not: null,
-            },
-            ...buildDateFilter(filters, "executedAt"),
-          },
-          select: {
-            executedById: true,
-            elapsed: true,
-            executedBy: {
-              select: {
-                roleId: true,
-              },
-            },
-            testRun: {
-              select: {
-                projectId: true,
-              },
-            },
-          },
-        });
-
-        const grouped = new Map<string, any>();
-        results.forEach((result: any) => {
-          const key = groupBy
-            .map((field) => {
-              if (field === "userId") return result.executedById;
-              if (field === "projectId") return result.testRun.projectId;
-              if (field === "roleId") return result.executedBy.roleId;
-              return result[field];
-            })
-            .join("|");
-
-          if (!grouped.has(key)) {
-            const groupData: any = {};
-            groupBy.forEach((field) => {
-              if (field === "userId") {
-                groupData.userId = result.executedById;
-              } else if (field === "projectId") {
-                groupData.projectId = result.testRun.projectId;
-              } else if (field === "roleId") {
-                groupData.roleId = result.executedBy.roleId;
-              } else {
-                groupData[field] = result[field];
-              }
-            });
-            groupData.totalElapsed = 0;
-            groupData.count = 0;
-            grouped.set(key, groupData);
+        const rows = await fetchEngagementExecutionRows(
+          db,
+          projectId,
+          isProjectSpecific,
+          groupBy,
+          filters,
+          { requireElapsed: true }
+        );
+        const grouped = groupEngagementRows(
+          rows,
+          groupBy,
+          () => ({ totalElapsed: 0, count: 0 }),
+          (bucket, row) => {
+            bucket.totalElapsed += row.elapsed || 0;
+            bucket.count++;
           }
-
-          const group = grouped.get(key);
-          // Only count results with non-null elapsed time
-          if (result.elapsed !== null && result.elapsed !== undefined) {
-            group.totalElapsed += result.elapsed;
-            group.count++;
-          }
-        });
-
-        return Array.from(grouped.values()).map((group: any) => ({
-          ...Object.fromEntries(
-            Object.entries(group).filter(
-              ([key]) => !["totalElapsed", "count"].includes(key)
-            )
-          ),
-          averageElapsed:
-            group.count > 0 ? group.totalElapsed / group.count / 1000 : 0,
-        }));
+        );
+        return Array.from(grouped.values()).map(
+          ({ totalElapsed, count, ...dims }: any) => ({
+            ...dims,
+            averageElapsed: count > 0 ? totalElapsed / count : null,
+          })
+        );
       },
     },
     lastActiveDate: {
       id: "lastActiveDate",
       label: "Last Active Date",
       aggregate: async (
-        prisma: any,
+        db: any,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,
         _dims?: string[]
       ) => {
+        // "Active" spans everything this report counts as engagement:
+        // manual + automated executions, session results, and case creation.
+        const projectScope =
+          isProjectSpecific && projectId
+            ? { projectId: Number(projectId) }
+            : {};
+
         if (groupBy.length === 0) {
-          const result = await prisma.testRunResults.aggregate({
-            where: {
-              testRun: {
-                ...(isProjectSpecific && projectId
-                  ? { projectId: Number(projectId) }
-                  : {}),
+          const [manualAgg, junitAgg, sessionAgg, caseAgg] = await Promise.all([
+            db.testRunResults.aggregate({
+              where: manualResultWhere(projectId, isProjectSpecific, filters),
+              _max: { executedAt: true },
+            }),
+            db.jUnitTestResult.aggregate({
+              where: junitResultWhere(projectId, isProjectSpecific, filters),
+              _max: { executedAt: true, createdAt: true },
+            }),
+            db.sessionResults.aggregate({
+              where: {
                 isDeleted: false,
+                session: { ...projectScope, isDeleted: false },
+                ...buildDateFilter(filters, "createdAt"),
               },
-              ...buildDateFilter(filters, "executedAt"),
-            },
-            _max: {
-              executedAt: true,
-            },
-          });
-          return [{ lastActiveDate: result._max.executedAt }];
+              _max: { createdAt: true },
+            }),
+            db.repositoryCases.aggregate({
+              where: {
+                ...projectScope,
+                isDeleted: false,
+                ...buildDateFilter(filters, "createdAt"),
+              },
+              _max: { createdAt: true },
+            }),
+          ]);
+          const candidates = [
+            manualAgg._max.executedAt,
+            junitAgg._max.executedAt ?? junitAgg._max.createdAt,
+            sessionAgg._max.createdAt,
+            caseAgg._max.createdAt,
+          ].filter(Boolean);
+          const lastActiveDate = candidates.length
+            ? new Date(
+                Math.max(...candidates.map((d: any) => new Date(d).getTime()))
+              )
+            : null;
+          return [{ lastActiveDate }];
         }
 
-        const results = await prisma.testRunResults.findMany({
-          where: {
-            testRun: {
-              ...(isProjectSpecific && projectId
-                ? { projectId: Number(projectId) }
-                : {}),
-              isDeleted: false,
-            },
-            ...buildDateFilter(filters, "executedAt"),
-          },
-          select: {
-            executedAt: true,
-            executedById: true,
-            executedBy: {
-              select: {
-                roleId: true,
-                groups: {
-                  select: {
-                    groupId: true,
-                  },
-                },
+        const [executionRows, sessionRows, caseRows] = await Promise.all([
+          fetchEngagementExecutionRows(
+            db,
+            projectId,
+            isProjectSpecific,
+            groupBy,
+            filters
+          ),
+          db.sessionResults
+            .findMany({
+              where: {
+                isDeleted: false,
+                session: { ...projectScope, isDeleted: false },
+                ...buildDateFilter(filters, "createdAt"),
               },
-            },
-            testRun: {
               select: {
+                createdAt: true,
+                createdById: true,
+                createdBy: engagementUserSelect,
+                session: { select: { projectId: true } },
+              },
+            })
+            .then((rows: any[]) =>
+              rows.map((r: any) => ({
+                executedAt: r.createdAt,
+                userId: r.createdById,
+                roleId: r.createdBy?.roleId ?? null,
+                groupIds: (r.createdBy?.groups ?? []).map(
+                  (g: any) => g.groupId
+                ),
+                projectId: r.session.projectId,
+              }))
+            ),
+          db.repositoryCases
+            .findMany({
+              where: {
+                ...projectScope,
+                isDeleted: false,
+                ...buildDateFilter(filters, "createdAt"),
+              },
+              select: {
+                createdAt: true,
+                creatorId: true,
+                creator: engagementUserSelect,
                 projectId: true,
               },
-            },
-          },
-        });
+            })
+            .then((rows: any[]) =>
+              rows.map((r: any) => ({
+                executedAt: r.createdAt,
+                userId: r.creatorId,
+                roleId: r.creator?.roleId ?? null,
+                groupIds: (r.creator?.groups ?? []).map((g: any) => g.groupId),
+                projectId: r.projectId,
+              }))
+            ),
+        ]);
 
-        const grouped = new Map<string, any>();
-        results.forEach((result: any) => {
-          // Handle groupId specially - a user can be in multiple groups
-          if (groupBy.includes("groupId")) {
-            const userGroups = result.executedBy.groups || [];
-            if (userGroups.length === 0) {
-              // User is not in any group, skip this result for group dimension
-              return;
-            }
-
-            // Create a separate entry for each group the user belongs to
-            userGroups.forEach((groupAssignment: any) => {
-              const key = groupBy
-                .map((field) => {
-                  if (field === "userId") return result.executedById;
-                  if (field === "projectId") return result.testRun.projectId;
-                  if (field === "roleId") return result.executedBy.roleId;
-                  if (field === "groupId") return groupAssignment.groupId;
-                  return result[field];
-                })
-                .join("|");
-
-              if (!grouped.has(key)) {
-                const groupData: any = {};
-                groupBy.forEach((field) => {
-                  if (field === "userId") {
-                    groupData.userId = result.executedById;
-                  } else if (field === "projectId") {
-                    groupData.projectId = result.testRun.projectId;
-                  } else if (field === "roleId") {
-                    groupData.roleId = result.executedBy.roleId;
-                  } else if (field === "groupId") {
-                    groupData.groupId = groupAssignment.groupId;
-                  } else {
-                    groupData[field] = result[field];
-                  }
-                });
-                groupData.lastActiveDate = result.executedAt;
-                grouped.set(key, groupData);
-              } else {
-                const group = grouped.get(key);
-                if (
-                  new Date(result.executedAt) > new Date(group.lastActiveDate)
-                ) {
-                  group.lastActiveDate = result.executedAt;
-                }
-              }
-            });
-          } else {
-            // Normal grouping without groups
-            const key = groupBy
-              .map((field) => {
-                if (field === "userId") return result.executedById;
-                if (field === "projectId") return result.testRun.projectId;
-                if (field === "roleId") return result.executedBy.roleId;
-                return result[field];
-              })
-              .join("|");
-
-            if (!grouped.has(key)) {
-              const groupData: any = {};
-              groupBy.forEach((field) => {
-                if (field === "userId") {
-                  groupData.userId = result.executedById;
-                } else if (field === "projectId") {
-                  groupData.projectId = result.testRun.projectId;
-                } else if (field === "roleId") {
-                  groupData.roleId = result.executedBy.roleId;
-                } else {
-                  groupData[field] = result[field];
-                }
-              });
-              groupData.lastActiveDate = result.executedAt;
-              grouped.set(key, groupData);
-            } else {
-              const group = grouped.get(key);
-              if (
-                new Date(result.executedAt) > new Date(group.lastActiveDate)
-              ) {
-                group.lastActiveDate = result.executedAt;
-              }
+        const grouped = groupEngagementRows(
+          [...executionRows, ...sessionRows, ...caseRows],
+          groupBy,
+          () => ({ lastActiveDate: null }),
+          (bucket, row) => {
+            if (
+              !bucket.lastActiveDate ||
+              new Date(row.executedAt) > new Date(bucket.lastActiveDate)
+            ) {
+              bucket.lastActiveDate = row.executedAt;
             }
           }
-        });
-
+        );
         return Array.from(grouped.values());
       },
     },
@@ -3094,8 +2977,8 @@ export function createIssueTrackingDimensionRegistry(
       ? {
           id: "project",
           label: "Project",
-          getValues: async (prisma: any, _projectId?: number) => {
-            const projects = await prisma.projects.findMany({
+          getValues: async (db: any, _projectId?: number) => {
+            const projects = await db.projects.findMany({
               where: {
                 isDeleted: false,
                 // Only include projects that have issues
@@ -3103,9 +2986,11 @@ export function createIssueTrackingDimensionRegistry(
                   {
                     repositoryCases: {
                       some: {
-                        issues: {
+                        caseIssues: {
                           some: {
-                            isDeleted: false,
+                            issue: {
+                              isDeleted: false,
+                            },
                           },
                         },
                       },
@@ -3152,32 +3037,24 @@ export function createIssueTrackingDimensionRegistry(
     creator: {
       id: "creator",
       label: "Creator",
-      getValues: async (prisma: any, projectId?: number) => {
+      getValues: async (db: any, projectId?: number) => {
         if (isProjectSpecific && projectId) {
-          // Project-specific: Get creators from the project's issue config
-          const project = await prisma.projects.findUnique({
-            where: { id: Number(projectId) },
+          // Project-specific: creators across the project-relevant issues
+          const issues = await findProjectIssues(db, Number(projectId), {
             include: {
-              issues: {
-                where: { isDeleted: false },
-                include: {
-                  createdBy: {
-                    select: { id: true, name: true, email: true },
-                  },
-                },
-                distinct: ["createdById"],
+              createdBy: {
+                select: { id: true, name: true, email: true },
               },
             },
+            distinct: ["createdById"],
           });
 
-          if (!project?.issues) return [];
-
-          return project.issues
+          return issues
             .map((issue: any) => issue.createdBy)
             .filter((creator: any) => creator);
         } else {
           // Cross-project: Get all users who have created issues
-          const users = await prisma.user.findMany({
+          const users = await db.user.findMany({
             where: {
               isDeleted: false,
               createdIssues: {
@@ -3203,7 +3080,7 @@ export function createIssueTrackingDimensionRegistry(
     issueType: {
       id: "issueType",
       label: "Issue Type",
-      getValues: async (prisma: any, projectId?: number) => {
+      getValues: async (db: any, projectId?: number) => {
         const results: Array<{
           id: string | null;
           name: string;
@@ -3211,26 +3088,18 @@ export function createIssueTrackingDimensionRegistry(
         }> = [];
 
         if (isProjectSpecific && projectId) {
-          // Project-specific: Get distinct issue types from project's issues
-          const project = await prisma.projects.findUnique({
-            where: { id: Number(projectId) },
-            include: {
-              issues: {
-                where: { isDeleted: false },
-                select: {
-                  issueTypeName: true,
-                  issueTypeId: true,
-                  issueTypeIconUrl: true,
-                },
-                distinct: ["issueTypeName"],
-              },
+          // Project-specific: distinct types across the project-relevant issues
+          const issues = await findProjectIssues(db, Number(projectId), {
+            select: {
+              issueTypeName: true,
+              issueTypeId: true,
+              issueTypeIconUrl: true,
             },
+            distinct: ["issueTypeName"],
           });
 
-          if (!project?.issues) return results;
-
           // Check if there are issues without an issue type
-          const hasUnknownType = project.issues.some(
+          const hasUnknownType = issues.some(
             (issue: any) => issue.issueTypeName === null
           );
           if (hasUnknownType) {
@@ -3238,7 +3107,7 @@ export function createIssueTrackingDimensionRegistry(
           }
 
           // Add known issue types
-          project.issues.forEach((issue: any) => {
+          issues.forEach((issue: any) => {
             if (issue.issueTypeName) {
               results.push({
                 id: issue.issueTypeId || issue.issueTypeName,
@@ -3249,7 +3118,7 @@ export function createIssueTrackingDimensionRegistry(
           });
         } else {
           // Cross-project: Check for issues without issue type
-          const unknownTypeCount = await prisma.issue.count({
+          const unknownTypeCount = await db.issue.count({
             where: {
               isDeleted: false,
               issueTypeName: null,
@@ -3260,7 +3129,7 @@ export function createIssueTrackingDimensionRegistry(
           }
 
           // Get all distinct issue types
-          const issues = await prisma.issue.findMany({
+          const issues = await db.issue.findMany({
             where: {
               isDeleted: false,
               issueTypeName: { not: null },
@@ -3296,7 +3165,7 @@ export function createIssueTrackingDimensionRegistry(
     issueTracker: {
       id: "issueTracker",
       label: "Issue Tracker",
-      getValues: async (prisma: any, projectId?: number) => {
+      getValues: async (db: any, projectId?: number) => {
         const results: Array<{
           id: number | null;
           name: string;
@@ -3304,26 +3173,18 @@ export function createIssueTrackingDimensionRegistry(
         }> = [];
 
         if (isProjectSpecific && projectId) {
-          // Project-specific: Get integrations used by project's issues
-          const project = await prisma.projects.findUnique({
-            where: { id: Number(projectId) },
+          // Project-specific: trackers across the project-relevant issues
+          const issues = await findProjectIssues(db, Number(projectId), {
             include: {
-              issues: {
-                where: { isDeleted: false },
-                include: {
-                  integration: {
-                    select: { id: true, name: true, provider: true },
-                  },
-                },
-                distinct: ["integrationId"],
+              integration: {
+                select: { id: true, name: true, provider: true },
               },
             },
+            distinct: ["integrationId"],
           });
 
-          if (!project?.issues) return results;
-
           // Check if there are issues without an integration (internal)
-          const hasInternalIssues = project.issues.some(
+          const hasInternalIssues = issues.some(
             (issue: any) => issue.integrationId === null
           );
           if (hasInternalIssues) {
@@ -3331,14 +3192,14 @@ export function createIssueTrackingDimensionRegistry(
           }
 
           // Add external integrations
-          project.issues.forEach((issue: any) => {
+          issues.forEach((issue: any) => {
             if (issue.integration) {
               results.push(issue.integration);
             }
           });
         } else {
           // Cross-project: Check for internal issues
-          const internalIssueCount = await prisma.issue.count({
+          const internalIssueCount = await db.issue.count({
             where: {
               isDeleted: false,
               integrationId: null,
@@ -3349,7 +3210,7 @@ export function createIssueTrackingDimensionRegistry(
           }
 
           // Get all integrations that have issues
-          const integrations = await prisma.integration.findMany({
+          const integrations = await db.integration.findMany({
             where: {
               isDeleted: false,
               issues: {
@@ -3377,32 +3238,23 @@ export function createIssueTrackingDimensionRegistry(
     issueStatus: {
       id: "issueStatus",
       label: "Issue Status",
-      getValues: async (prisma: any, projectId?: number) => {
+      getValues: async (db: any, projectId?: number) => {
         if (isProjectSpecific && projectId) {
-          // Project-specific: Get distinct statuses from project's issues
-          const project = await prisma.projects.findUnique({
-            where: { id: Number(projectId) },
-            include: {
-              issues: {
-                where: {
-                  isDeleted: false,
-                  status: { not: null },
-                },
-                select: { status: true },
-                distinct: ["status"],
-              },
-            },
+          // Project-specific: distinct statuses across the project-relevant
+          // issues
+          const issues = await findProjectIssues(db, Number(projectId), {
+            where: { status: { not: null } },
+            select: { status: true },
+            distinct: ["status"],
           });
 
-          if (!project?.issues) return [];
-
-          return project.issues.map((issue: any) => ({
+          return issues.map((issue: any) => ({
             id: issue.status,
             name: issue.status,
           }));
         } else {
           // Cross-project: Get all distinct statuses
-          const issues = await prisma.issue.findMany({
+          const issues = await db.issue.findMany({
             where: {
               isDeleted: false,
               status: { not: null },
@@ -3428,7 +3280,7 @@ export function createIssueTrackingDimensionRegistry(
     priority: {
       id: "priority",
       label: "Priority",
-      getValues: async (prisma: any, projectId?: number) => {
+      getValues: async (db: any, projectId?: number) => {
         // Helper to normalize priority for case-insensitive grouping
         const normalizePriority = (priority: string) => {
           const lower = priority.toLowerCase().trim();
@@ -3437,26 +3289,17 @@ export function createIssueTrackingDimensionRegistry(
         };
 
         if (isProjectSpecific && projectId) {
-          // Project-specific: Get distinct priorities from project's issues
-          const project = await prisma.projects.findUnique({
-            where: { id: Number(projectId) },
-            include: {
-              issues: {
-                where: {
-                  isDeleted: false,
-                  priority: { not: null },
-                },
-                select: { priority: true },
-                distinct: ["priority"],
-              },
-            },
+          // Project-specific: distinct priorities across the
+          // project-relevant issues
+          const issues = await findProjectIssues(db, Number(projectId), {
+            where: { priority: { not: null } },
+            select: { priority: true },
+            distinct: ["priority"],
           });
-
-          if (!project?.issues) return [];
 
           // Normalize priorities for case-insensitive grouping
           const uniquePriorities = new Map<string, string>();
-          project.issues.forEach((issue: any) => {
+          issues.forEach((issue: any) => {
             const normalized = normalizePriority(issue.priority);
             const key = normalized.toLowerCase();
             if (!uniquePriorities.has(key)) {
@@ -3470,7 +3313,7 @@ export function createIssueTrackingDimensionRegistry(
           }));
         } else {
           // Cross-project: Get all distinct priorities
-          const issues = await prisma.issue.findMany({
+          const issues = await db.issue.findMany({
             where: {
               isDeleted: false,
               priority: { not: null },
@@ -3506,25 +3349,18 @@ export function createIssueTrackingDimensionRegistry(
     date: {
       id: "date",
       label: "Creation Date",
-      getValues: async (prisma: any, projectId?: number) => {
+      getValues: async (db: any, projectId?: number) => {
         if (isProjectSpecific && projectId) {
-          // Project-specific: Get dates from the project's issue config issues
-          const project = await prisma.projects.findUnique({
-            where: { id: Number(projectId) },
-            include: {
-              issues: {
-                where: { isDeleted: false },
-                select: { createdAt: true },
-                distinct: ["createdAt"],
-                orderBy: { createdAt: "asc" },
-              },
-            },
+          // Project-specific: creation days across the project-relevant
+          // issues
+          const issues = await findProjectIssues(db, Number(projectId), {
+            select: { createdAt: true },
+            distinct: ["createdAt"],
+            orderBy: { createdAt: "asc" },
           });
 
-          if (!project?.issues) return [];
-
           // Group dates by day
-          const datesByDay = project.issues.reduce((acc: any, curr: any) => {
+          const datesByDay = issues.reduce((acc: any, curr: any) => {
             const day = new Date(curr.createdAt);
             day.setUTCHours(0, 0, 0, 0);
             const dayStr = day.toISOString();
@@ -3536,7 +3372,7 @@ export function createIssueTrackingDimensionRegistry(
           return Object.values(datesByDay).map((d: any) => ({ createdAt: d }));
         } else {
           // Cross-project: Get all issue creation dates
-          const dates = await prisma.issue.findMany({
+          const dates = await db.issue.findMany({
             where: { isDeleted: false },
             select: { createdAt: true },
             distinct: ["createdAt"],
@@ -3586,37 +3422,24 @@ export function createIssueTrackingMetricRegistry(
       id: "issueCount",
       label: "Issue Count",
       aggregate: async (
-        prisma: any,
+        db: any,
         projectId: number | undefined,
         groupBy: string[],
         filters?: any,
         _dims?: string[]
       ) => {
         if (isProjectSpecific && projectId) {
-          // Project-specific implementation
-          const project = await prisma.projects.findUnique({
-            where: { id: Number(projectId) },
+          // Project-specific implementation: direct-FK issues plus issues
+          // linked through the project's cases, runs, and sessions.
+          const issues = await findProjectIssues(db, Number(projectId), {
+            where: buildDateFilter(filters, "createdAt"),
             include: {
-              issues: {
-                where: {
-                  isDeleted: false,
-                  ...buildDateFilter(filters, "createdAt"),
-                },
-                include: {
-                  ...(groupBy.includes("createdById")
-                    ? { createdBy: true }
-                    : {}),
-                  ...(groupBy.includes("integrationId")
-                    ? { integration: true }
-                    : {}),
-                },
-              },
+              ...(groupBy.includes("createdById") ? { createdBy: true } : {}),
+              ...(groupBy.includes("integrationId")
+                ? { integration: true }
+                : {}),
             },
           });
-
-          if (!project?.issues) return [];
-
-          const issues = project.issues;
 
           // Handle no grouping (total count)
           if (groupBy.length === 0) {
@@ -3703,7 +3526,7 @@ export function createIssueTrackingMetricRegistry(
         } else {
           // Cross-project implementation
           if (groupBy.includes("createdAt")) {
-            const results = await prisma.issue.findMany({
+            const results = await db.issue.findMany({
               where: { isDeleted: false },
               select: {
                 createdAt: true,
@@ -3716,8 +3539,8 @@ export function createIssueTrackingMetricRegistry(
                 priority: true,
                 projectId: true,
                 // Get project ID through related entities as fallback
-                repositoryCases: {
-                  select: { projectId: true },
+                caseIssues: {
+                  select: { case: { select: { projectId: true } } },
                   take: 1,
                 },
                 sessions: {
@@ -3735,7 +3558,7 @@ export function createIssueTrackingMetricRegistry(
               // Determine project ID from direct field or related entities
               const projectId =
                 result.projectId ||
-                result.repositoryCases[0]?.projectId ||
+                result.caseIssues[0]?.case?.projectId ||
                 result.sessions[0]?.projectId ||
                 result.testRuns[0]?.projectId ||
                 null;
@@ -3784,7 +3607,7 @@ export function createIssueTrackingMetricRegistry(
           }
 
           if (groupBy.length === 0) {
-            const count = await prisma.issue.count({
+            const count = await db.issue.count({
               where: { isDeleted: false },
             });
             return [{ issueCount: count }];
@@ -3792,7 +3615,7 @@ export function createIssueTrackingMetricRegistry(
 
           // For simple groupBy without project
           if (!groupBy.includes("projectId")) {
-            const rawResults = await prisma.issue.groupBy({
+            const rawResults = await db.issue.groupBy({
               by: groupBy as any[],
               where: { isDeleted: false },
               _count: { _all: true },
@@ -3831,7 +3654,7 @@ export function createIssueTrackingMetricRegistry(
           }
 
           // For groupBy with project, we need a more complex query
-          const results = await prisma.issue.findMany({
+          const results = await db.issue.findMany({
             where: { isDeleted: false },
             select: {
               createdById: true,
@@ -3842,8 +3665,8 @@ export function createIssueTrackingMetricRegistry(
               status: true,
               priority: true,
               projectId: true,
-              repositoryCases: {
-                select: { projectId: true },
+              caseIssues: {
+                select: { case: { select: { projectId: true } } },
                 take: 1,
               },
               sessions: {
@@ -3860,7 +3683,7 @@ export function createIssueTrackingMetricRegistry(
           const groupedResults = results.reduce((acc: any, result: any) => {
             const projectId =
               result.projectId ||
-              result.repositoryCases[0]?.projectId ||
+              result.caseIssues[0]?.case?.projectId ||
               result.sessions[0]?.projectId ||
               result.testRuns[0]?.projectId ||
               null;
@@ -3934,8 +3757,8 @@ export function createAutomationTrendsDimensionRegistry(
       ? {
           id: "project",
           label: "Project",
-          getValues: async (prisma: any, projectId?: number, filters?: any) => {
-            const projects = await prisma.projects.findMany({
+          getValues: async (db: any, projectId?: number, filters?: any) => {
+            const projects = await db.projects.findMany({
               where: {
                 isDeleted: false,
                 repositoryCases: {
@@ -3962,9 +3785,9 @@ export function createAutomationTrendsDimensionRegistry(
     weekEnding: {
       id: "weekEnding",
       label: "Week Ending",
-      getValues: async (prisma: any, projectId?: number, filters?: any) => {
+      getValues: async (db: any, projectId?: number, filters?: any) => {
         // Get all repository cases within the date range
-        const cases = await prisma.repositoryCases.findMany({
+        const cases = await db.repositoryCases.findMany({
           where: {
             ...(isProjectSpecific && projectId
               ? { projectId: Number(projectId) }
@@ -4008,9 +3831,9 @@ export function createAutomationTrendsDimensionRegistry(
     priority: {
       id: "priority",
       label: "Priority",
-      getValues: async (prisma: any, projectId?: number, filters?: any) => {
+      getValues: async (db: any, projectId?: number, filters?: any) => {
         // Get the priority field
-        const priorityField = await prisma.caseFields.findUnique({
+        const priorityField = await db.caseFields.findUnique({
           where: { systemName: "priority" },
           select: { id: true },
         });
@@ -4018,7 +3841,7 @@ export function createAutomationTrendsDimensionRegistry(
         if (!priorityField) return [];
 
         // Get distinct priority values from case field values
-        const values = await prisma.caseFieldValues.findMany({
+        const values = await db.caseFieldValues.findMany({
           where: {
             fieldId: priorityField.id,
             testCase: {
@@ -4070,473 +3893,27 @@ export function createAutomationTrendsDimensionRegistry(
 
 // Automation Trends Metric Registry
 export function createAutomationTrendsMetricRegistry(
-  isProjectSpecific: boolean = true
+  _isProjectSpecific: boolean = true
 ) {
+  // Listing-only registry: the automation-trends POST is served by
+  // handleAutomationTrendsPOST (utils/automationTrendsUtils.ts), so these
+  // entries exist purely for the GET dimension/metric picker.
   return {
     automatedCount: {
       id: "automatedCount",
       label: "Automated Count",
-      aggregate: async (
-        prisma: any,
-        projectId: number | undefined,
-        groupBy: string[],
-        filters?: any,
-        dims?: string[]
-      ) => {
-        if (!groupBy || !Array.isArray(groupBy)) {
-          return [];
-        }
-
-        // Get priority field if priority dimension is being used
-        const priorityField = dims?.includes("priority")
-          ? await prisma.caseFields.findUnique({
-              where: { systemName: "priority" },
-              select: { id: true },
-            })
-          : null;
-
-        // Build priority filter if specified in filters
-        const priorityFilter =
-          filters?.priorityValues && priorityField
-            ? {
-                caseFieldValues: {
-                  some: {
-                    fieldId: priorityField.id,
-                    value: { in: filters.priorityValues },
-                  },
-                },
-              }
-            : {};
-
-        if (groupBy.includes("weekEnding")) {
-          // Get all week ending dates from the dimension registry
-          const dateFilter = buildDateFilter(filters, "createdAt");
-
-          // Get all cases that could appear in any week snapshot
-          const allCases = await prisma.repositoryCases.findMany({
-            where: {
-              ...(isProjectSpecific && projectId
-                ? { projectId: Number(projectId) }
-                : {}),
-              automated: true,
-              ...dateFilter,
-              ...priorityFilter,
-            },
-            select: {
-              id: true,
-              createdAt: true,
-              isDeleted: true,
-              projectId: true,
-              automated: true,
-              ...(priorityField
-                ? {
-                    caseFieldValues: {
-                      where: { fieldId: priorityField.id },
-                      select: { value: true },
-                    },
-                  }
-                : {}),
-            },
-          });
-
-          // Get all unique week ending dates from cases
-          const weekEndDates = new Set<string>();
-          allCases.forEach((c: any) => {
-            const weekEnd = getWeekEndDate(new Date(c.createdAt));
-            weekEndDates.add(weekEnd.toISOString());
-          });
-
-          // Sort week dates
-          const sortedWeeks = Array.from(weekEndDates).sort();
-
-          // For each week, count cases that existed as of that week end
-          const groupedResults: any = {};
-
-          sortedWeeks.forEach((weekEndStr) => {
-            const weekEnd = new Date(weekEndStr);
-
-            // Count cases for this week snapshot
-            allCases.forEach((testCase: any) => {
-              const createdDate = new Date(testCase.createdAt);
-
-              // Include if: created <= weekEnd AND not deleted
-              const existedInWeek =
-                createdDate <= weekEnd && !testCase.isDeleted;
-
-              if (existedInWeek) {
-                const key = groupBy
-                  .map((field) => {
-                    if (field === "weekEnding") {
-                      return weekEndStr;
-                    } else if (field === "projectId") {
-                      return testCase.projectId;
-                    } else if (field === "priority") {
-                      const priorityValue =
-                        testCase.caseFieldValues?.[0]?.value;
-                      return priorityValue || "None";
-                    } else if (field === "automated") {
-                      return testCase.automated ? "automated" : "manual";
-                    }
-                    return null;
-                  })
-                  .join("|");
-
-                if (!groupedResults[key]) {
-                  groupedResults[key] = {
-                    ...groupBy.reduce((obj: any, field) => {
-                      if (field === "weekEnding") {
-                        obj[field] = weekEndStr;
-                      } else if (field === "projectId") {
-                        obj[field] = testCase.projectId;
-                      } else if (field === "priority") {
-                        const priorityValue =
-                          testCase.caseFieldValues?.[0]?.value;
-                        obj[field] = priorityValue || "None";
-                      } else if (field === "automated") {
-                        obj[field] = testCase.automated;
-                      }
-                      return obj;
-                    }, {}),
-                    automatedCount: 0,
-                  };
-                }
-                groupedResults[key].automatedCount++;
-              }
-            });
-          });
-
-          return Object.values(groupedResults);
-        }
-
-        // Non-week-based aggregation - current snapshot
-        const count = await prisma.repositoryCases.count({
-          where: {
-            ...(isProjectSpecific && projectId
-              ? { projectId: Number(projectId) }
-              : {}),
-            isDeleted: false,
-            automated: true,
-            ...buildDateFilter(filters, "createdAt"),
-            ...priorityFilter,
-          },
-        });
-
-        return [{ automatedCount: count }];
-      },
     },
     manualCount: {
       id: "manualCount",
       label: "Manual Count",
-      aggregate: async (
-        prisma: any,
-        projectId: number | undefined,
-        groupBy: string[],
-        filters?: any,
-        dims?: string[]
-      ) => {
-        if (!groupBy || !Array.isArray(groupBy)) {
-          return [];
-        }
-
-        // Get priority field if priority dimension is being used
-        const priorityField = dims?.includes("priority")
-          ? await prisma.caseFields.findUnique({
-              where: { systemName: "priority" },
-              select: { id: true },
-            })
-          : null;
-
-        // Build priority filter if specified in filters
-        const priorityFilter =
-          filters?.priorityValues && priorityField
-            ? {
-                caseFieldValues: {
-                  some: {
-                    fieldId: priorityField.id,
-                    value: { in: filters.priorityValues },
-                  },
-                },
-              }
-            : {};
-
-        if (groupBy.includes("weekEnding")) {
-          const dateFilter = buildDateFilter(filters, "createdAt");
-
-          // Get all cases that could appear in any week snapshot
-          const allCases = await prisma.repositoryCases.findMany({
-            where: {
-              ...(isProjectSpecific && projectId
-                ? { projectId: Number(projectId) }
-                : {}),
-              automated: false,
-              ...dateFilter,
-              ...priorityFilter,
-            },
-            select: {
-              id: true,
-              createdAt: true,
-              isDeleted: true,
-              projectId: true,
-              automated: true,
-              ...(priorityField
-                ? {
-                    caseFieldValues: {
-                      where: { fieldId: priorityField.id },
-                      select: { value: true },
-                    },
-                  }
-                : {}),
-            },
-          });
-
-          // Get all unique week ending dates from cases
-          const weekEndDates = new Set<string>();
-          allCases.forEach((c: any) => {
-            const weekEnd = getWeekEndDate(new Date(c.createdAt));
-            weekEndDates.add(weekEnd.toISOString());
-          });
-
-          // Sort week dates
-          const sortedWeeks = Array.from(weekEndDates).sort();
-
-          // For each week, count cases that existed as of that week end
-          const groupedResults: any = {};
-
-          sortedWeeks.forEach((weekEndStr) => {
-            const weekEnd = new Date(weekEndStr);
-
-            // Count cases for this week snapshot
-            allCases.forEach((testCase: any) => {
-              const createdDate = new Date(testCase.createdAt);
-
-              // Include if: created <= weekEnd AND not deleted
-              const existedInWeek =
-                createdDate <= weekEnd && !testCase.isDeleted;
-
-              if (existedInWeek) {
-                const key = groupBy
-                  .map((field) => {
-                    if (field === "weekEnding") {
-                      return weekEndStr;
-                    } else if (field === "projectId") {
-                      return testCase.projectId;
-                    } else if (field === "priority") {
-                      const priorityValue =
-                        testCase.caseFieldValues?.[0]?.value;
-                      return priorityValue || "None";
-                    } else if (field === "automated") {
-                      return testCase.automated ? "automated" : "manual";
-                    }
-                    return null;
-                  })
-                  .join("|");
-
-                if (!groupedResults[key]) {
-                  groupedResults[key] = {
-                    ...groupBy.reduce((obj: any, field) => {
-                      if (field === "weekEnding") {
-                        obj[field] = weekEndStr;
-                      } else if (field === "projectId") {
-                        obj[field] = testCase.projectId;
-                      } else if (field === "priority") {
-                        const priorityValue =
-                          testCase.caseFieldValues?.[0]?.value;
-                        obj[field] = priorityValue || "None";
-                      } else if (field === "automated") {
-                        obj[field] = testCase.automated;
-                      }
-                      return obj;
-                    }, {}),
-                    manualCount: 0,
-                  };
-                }
-                groupedResults[key].manualCount++;
-              }
-            });
-          });
-
-          return Object.values(groupedResults);
-        }
-
-        // Non-week-based aggregation - current snapshot
-        const count = await prisma.repositoryCases.count({
-          where: {
-            ...(isProjectSpecific && projectId
-              ? { projectId: Number(projectId) }
-              : {}),
-            isDeleted: false,
-            automated: false,
-            ...buildDateFilter(filters, "createdAt"),
-            ...priorityFilter,
-          },
-        });
-
-        return [{ manualCount: count }];
-      },
     },
     totalCount: {
       id: "totalCount",
       label: "Total Count",
-      aggregate: async (
-        prisma: any,
-        projectId: number | undefined,
-        groupBy: string[],
-        filters?: any,
-        dims?: string[]
-      ) => {
-        if (!groupBy || !Array.isArray(groupBy)) {
-          return [];
-        }
-
-        // Get priority field if priority dimension is being used
-        const priorityField = dims?.includes("priority")
-          ? await prisma.caseFields.findUnique({
-              where: { systemName: "priority" },
-              select: { id: true },
-            })
-          : null;
-
-        // Build priority filter if specified in filters
-        const priorityFilter =
-          filters?.priorityValues && priorityField
-            ? {
-                caseFieldValues: {
-                  some: {
-                    fieldId: priorityField.id,
-                    value: { in: filters.priorityValues },
-                  },
-                },
-              }
-            : {};
-
-        if (groupBy.includes("weekEnding")) {
-          const dateFilter = buildDateFilter(filters, "createdAt");
-
-          // Get all cases that could appear in any week snapshot
-          const allCases = await prisma.repositoryCases.findMany({
-            where: {
-              ...(isProjectSpecific && projectId
-                ? { projectId: Number(projectId) }
-                : {}),
-              ...dateFilter,
-              ...priorityFilter,
-            },
-            select: {
-              id: true,
-              createdAt: true,
-              isDeleted: true,
-              projectId: true,
-              automated: true,
-              ...(priorityField
-                ? {
-                    caseFieldValues: {
-                      where: { fieldId: priorityField.id },
-                      select: { value: true },
-                    },
-                  }
-                : {}),
-            },
-          });
-
-          // Get all unique week ending dates from cases
-          const weekEndDates = new Set<string>();
-          allCases.forEach((c: any) => {
-            const weekEnd = getWeekEndDate(new Date(c.createdAt));
-            weekEndDates.add(weekEnd.toISOString());
-          });
-
-          // Sort week dates
-          const sortedWeeks = Array.from(weekEndDates).sort();
-
-          // For each week, count cases that existed as of that week end
-          const groupedResults: any = {};
-
-          sortedWeeks.forEach((weekEndStr) => {
-            const weekEnd = new Date(weekEndStr);
-
-            // Count cases for this week snapshot
-            allCases.forEach((testCase: any) => {
-              const createdDate = new Date(testCase.createdAt);
-
-              // Include if: created <= weekEnd AND not deleted
-              const existedInWeek =
-                createdDate <= weekEnd && !testCase.isDeleted;
-
-              if (existedInWeek) {
-                const key = groupBy
-                  .map((field) => {
-                    if (field === "weekEnding") {
-                      return weekEndStr;
-                    } else if (field === "projectId") {
-                      return testCase.projectId;
-                    } else if (field === "priority") {
-                      const priorityValue =
-                        testCase.caseFieldValues?.[0]?.value;
-                      return priorityValue || "None";
-                    } else if (field === "automated") {
-                      return testCase.automated ? "automated" : "manual";
-                    }
-                    return null;
-                  })
-                  .join("|");
-
-                if (!groupedResults[key]) {
-                  groupedResults[key] = {
-                    ...groupBy.reduce((obj: any, field) => {
-                      if (field === "weekEnding") {
-                        obj[field] = weekEndStr;
-                      } else if (field === "projectId") {
-                        obj[field] = testCase.projectId;
-                      } else if (field === "priority") {
-                        const priorityValue =
-                          testCase.caseFieldValues?.[0]?.value;
-                        obj[field] = priorityValue || "None";
-                      } else if (field === "automated") {
-                        obj[field] = testCase.automated;
-                      }
-                      return obj;
-                    }, {}),
-                    totalCount: 0,
-                  };
-                }
-                groupedResults[key].totalCount++;
-              }
-            });
-          });
-
-          return Object.values(groupedResults);
-        }
-
-        // Non-week-based aggregation - current snapshot
-        const count = await prisma.repositoryCases.count({
-          where: {
-            ...(isProjectSpecific && projectId
-              ? { projectId: Number(projectId) }
-              : {}),
-            isDeleted: false,
-            ...buildDateFilter(filters, "createdAt"),
-            ...priorityFilter,
-          },
-        });
-
-        return [{ totalCount: count }];
-      },
     },
     automationRate: {
       id: "automationRate",
       label: "Automation Rate %",
-      aggregate: async (
-        _prisma: any,
-        _projectId: number | undefined,
-        _groupBy: string[],
-        _filters?: any,
-        _dims?: string[]
-      ) => {
-        // This metric requires calculating from automatedCount and totalCount
-        // It will be calculated on the frontend by combining those two metrics
-        return [];
-      },
-      hidden: true, // Hide from UI as it's calculated on frontend
     },
   };
 }

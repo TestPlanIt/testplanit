@@ -1,14 +1,19 @@
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { DateFormatter } from "@/components/DateFormatter";
 import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Projects, PromptConfig, PromptConfigPrompt } from "@prisma/client";
+import type {
+  Projects,
+  PromptConfig,
+  PromptConfigPrompt,
+} from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
-import { Edit, MessageSquareCode, Trash2 } from "lucide-react";
+import { Edit, MessageSquareCode, Trash } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
-import { useCountProjects } from "~/lib/hooks/projects";
 
 export interface PromptConfigPromptWithIntegration extends PromptConfigPrompt {
   llmIntegration?: { id: number; name: string } | null;
@@ -24,7 +29,7 @@ function DefaultPromptProjectList({ configId }: { configId: string }) {
   const filter = {
     OR: [{ promptConfigId: configId }, { promptConfigId: null }],
   };
-  const { data: count } = useCountProjects({
+  const { data: count } = useClientQueries(schema).projects.useCount({
     where: { isDeleted: false, ...filter },
   });
 
@@ -59,7 +64,7 @@ export const useColumns = (
         enableResizing: true,
         enableHiding: false,
         meta: { isPinned: "left" },
-        size: 300,
+        size: 240,
         cell: ({ row }) => (
           <div className="bg-primary-foreground flex items-center gap-2">
             <MessageSquareCode className="h-4 w-4 text-muted-foreground" />
@@ -78,7 +83,7 @@ export const useColumns = (
         header: tCommon("fields.description"),
         enableSorting: true,
         enableResizing: true,
-        size: 300,
+        size: 250,
         cell: ({ row }) => (
           <span className="text-sm text-muted-foreground">
             {row.original.description || "-"}
@@ -228,7 +233,7 @@ export const useColumns = (
         size: 100,
         meta: { isPinned: "right" },
         cell: ({ row }) => (
-          <div className="bg-primary-foreground whitespace-nowrap flex justify-center gap-1">
+          <div className="bg-primary-foreground whitespace-nowrap flex justify-end gap-1">
             <Button
               variant="ghost"
               size="icon"
@@ -249,7 +254,7 @@ export const useColumns = (
               }
               aria-label={tCommon("actions.delete")}
             >
-              <Trash2 className="h-4 w-4" />
+              <Trash className="h-4 w-4" />
             </Button>
           </div>
         ),

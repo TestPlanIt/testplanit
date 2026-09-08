@@ -68,11 +68,9 @@ test.describe("Prompt Configurations - Navigation and Display", () => {
       await page.goto("/en-US/admin/projects");
       await page.waitForLoadState("networkidle");
 
-      // The prompts link is in the "Tools & Integrations" section which may be collapsed
+      // The prompts link is in the "AI Tools" section which may be collapsed
       // Expand it if needed
-      const toolsSection = page.getByTestId(
-        "admin-menu-section-toolsAndIntegrations"
-      );
+      const toolsSection = page.getByTestId("admin-menu-section-aiTools");
       const toolsTrigger = toolsSection
         .locator("[data-radix-collection-item]")
         .first();
@@ -337,8 +335,9 @@ test.describe("Prompt Configurations - Delete Operations", () => {
     });
 
     await test.step("Verify the default config delete button is disabled", async () => {
-      // Find the row with the "Default" badge
-      const defaultRow = promptsPage.dataTable.locator("tbody tr", {
+      // Find the row with the "Default" badge (virtualized DataTable data rows
+      // carry data-row-id; there is no <tbody>/<tr>)
+      const defaultRow = promptsPage.dataTable.locator("[data-row-id]", {
         hasText: "Default",
       });
 

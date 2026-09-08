@@ -1,8 +1,6 @@
-import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
+import { baseDb } from "@/lib/db";
 import { NextRequest } from "next/server";
-import { authenticateRequest } from "~/lib/api-token-auth";
-import { authOptions } from "~/server/auth";
+import { authorizeReportRequest } from "~/utils/reportApiUtils";
 
 interface PeriodData {
   periodStart: string;
@@ -86,24 +84,93 @@ function getPeriodDates(
   }
 }
 
+/**
+ * Generate a contiguous list of periods spanning [lo, hi] at the given grouping.
+ * Unlike deriving periods only from dates that have activity, this fills gaps so
+ * the cumulative trend line is continuous.
+ */
+export function generatePeriods(
+  lo: Date,
+  hi: Date,
+  grouping: DateGrouping
+): { start: Date; end: Date }[] {
+  const periods: { start: Date; end: Date }[] = [];
+  if (lo > hi) return periods;
+
+  let cursor = getPeriodDates(lo, grouping).start;
+  const hiTime = hi.getTime();
+  let guard = 0;
+  while (cursor.getTime() <= hiTime && guard < 100000) {
+    const period = getPeriodDates(cursor, grouping);
+    periods.push(period);
+    // Jump into the next period (1ms past the current period's end)
+    cursor = new Date(period.end.getTime() + 1);
+    guard++;
+  }
+  return periods;
+}
+
+/**
+ * Min / max over a numeric array WITHOUT spreading it into function arguments.
+ * `Math.min(...arr)` / `Math.max(...arr)` throw `RangeError: Maximum call stack
+ * size exceeded` once the array is large enough — which the cross-project
+ * (admin) Automation Trends report hits, since it spans every case and every
+ * case version across all projects (the single-project report is always small
+ * enough to spread safely). Returns Infinity / -Infinity for an empty array,
+ * so `Math.max(arrayMax(a), arrayMax(b))` correctly ignores an empty side.
+ */
+export function arrayMin(values: number[]): number {
+  let min = Infinity;
+  for (const v of values) if (v < min) min = v;
+  return min;
+}
+
+export function arrayMax(values: number[]): number {
+  let max = -Infinity;
+  for (const v of values) if (v > max) max = v;
+  return max;
+}
+
+/**
+ * Resolve a case's automated state as of a point in time using its version
+ * timeline. `history` must be sorted ascending by timestamp. Returns whether the
+ * case existed yet (created on/before the time) and its automated value then.
+ */
+export function automatedStateAt(
+  history: { at: number; automated: boolean }[] | undefined,
+  atTime: number
+): { existed: boolean; automated: boolean } {
+  if (!history || history.length === 0) {
+    return { existed: false, automated: false };
+  }
+  // Not yet created as of this time
+  if (atTime < history[0].at) {
+    return { existed: false, automated: false };
+  }
+  // Latest version whose snapshot was taken on/before atTime
+  let automated = history[0].automated;
+  for (const point of history) {
+    if (point.at <= atTime) {
+      automated = point.automated;
+    } else {
+      break;
+    }
+  }
+  return { existed: true, automated };
+}
+
 export async function handleAutomationTrendsPOST(
   req: NextRequest,
   isCrossProject: boolean
 ) {
   try {
-    // Check admin access for cross-project
-    if (isCrossProject) {
-      const session = await getServerSession(authOptions);
-      const auth = await authenticateRequest(req, session);
-      if (!auth.authenticated) {
-        return Response.json({ error: auth.error }, { status: auth.status });
-      }
-      if (auth.user.access !== "ADMIN") {
-        return Response.json({ error: "Unauthorized" }, { status: 401 });
-      }
-    }
-
     const body = await req.json();
+
+    const authz = await authorizeReportRequest(req, {
+      requiresAdmin: isCrossProject,
+      projectId: body?.projectId ? Number(body.projectId) : undefined,
+    });
+    if (!authz.ok) return authz.response;
     const {
       projectId,
       dimensions: _dimensions = [],
@@ -135,24 +202,24 @@ export async function handleAutomationTrendsPOST(
       );
     }
 
-    // Build date filter
-    const dateFilter: any = {};
-    if (startDate) {
-      dateFilter.gte = new Date(startDate);
-    }
-    if (endDate) {
-      dateFilter.lte = new Date(endDate);
-    }
-
-    // Build base where clause with standard filters
+    // Build base where clause with standard filters.
+    // NOTE: The date range (startDate/endDate) intentionally does NOT filter the
+    // case population here — it governs the period axis below. Excluding cases by
+    // createdAt would drop cases created before the window that still exist during
+    // it, understating the cumulative counts. All field filters read the CURRENT
+    // RepositoryCases record; only the automation timing comes from versions.
+    //
+    // `isDeleted` is deliberately NOT filtered either, for the same reason in the
+    // other direction: a case deleted today genuinely existed during every earlier
+    // period, so excluding it by current state retroactively rewrites the whole
+    // trend line every time someone deletes a case. Deleted cases are dropped
+    // per-period below, from the point they were actually deleted.
     const baseWhere: any = {
       ...(isCrossProject
         ? projectIds.length > 0
           ? { projectId: { in: projectIds.map(Number) } } // Filtered projects for cross-project
           : {} // All projects for cross-project
         : { projectId: Number(projectId) }), // Single project
-      isDeleted: false,
-      ...(Object.keys(dateFilter).length > 0 ? { createdAt: dateFilter } : {}),
     };
 
     // Add templateIds filter if provided
@@ -186,12 +253,13 @@ export async function handleAutomationTrendsPOST(
       // Fetch with caseFieldValues for dynamic field filtering
       const fieldIds = Object.keys(dynamicFieldFilters).map(Number);
 
-      const allCasesRaw = await prisma.repositoryCases.findMany({
+      const allCasesRaw = await baseDb.repositoryCases.findMany({
         where: baseWhere,
         select: {
           id: true,
           createdAt: true,
           isDeleted: true,
+          deletedAt: true,
           automated: true,
           projectId: true,
           project: {
@@ -248,12 +316,13 @@ export async function handleAutomationTrendsPOST(
       });
     } else {
       // Fetch without caseFieldValues
-      allCases = await prisma.repositoryCases.findMany({
+      allCases = await baseDb.repositoryCases.findMany({
         where: baseWhere,
         select: {
           id: true,
           createdAt: true,
           isDeleted: true,
+          deletedAt: true,
           automated: true,
           projectId: true,
           project: {
@@ -269,6 +338,58 @@ export async function handleAutomationTrendsPOST(
       });
     }
 
+    // Cases whose project row was hard-deleted come back orphaned: projectId is
+    // still set but the `project` relation resolves to null. They can't be
+    // attributed to a project in this project-grouped report, so drop them
+    // before grouping — otherwise reading `project.name` below throws and the
+    // endpoint 500s.
+    allCases = allCases.filter((testCase) => testCase.project !== null);
+
+    // Resolve WHEN each deleted case was deleted, so it can be counted for the
+    // periods it was alive and dropped afterwards. `deletedAt` is the intended
+    // source but was added late — most soft-deleted rows still have it NULL —
+    // so fall back to the audit trail, which recorded a DELETE for every one.
+    // A deleted case we cannot date is excluded outright (deletion time
+    // -Infinity): better to omit it than to have it linger in every period.
+    const deletionTimeByCase = new Map<number, number>();
+    const undatedDeletedIds: number[] = [];
+    for (const testCase of allCases) {
+      if (!testCase.isDeleted) continue;
+      if (testCase.deletedAt) {
+        deletionTimeByCase.set(
+          testCase.id,
+          new Date(testCase.deletedAt).getTime()
+        );
+      } else {
+        deletionTimeByCase.set(testCase.id, -Infinity);
+        undatedDeletedIds.push(testCase.id);
+      }
+    }
+    // Same id-chunking rationale as the version fetch below: `IN (...)` on a
+    // large id list overflows Postgres's 16-bit bind-parameter count.
+    const AUDIT_ID_CHUNK = 10_000;
+    for (let i = 0; i < undatedDeletedIds.length; i += AUDIT_ID_CHUNK) {
+      const chunk = undatedDeletedIds.slice(i, i + AUDIT_ID_CHUNK);
+      const rows = await baseDb.auditLog.findMany({
+        where: {
+          entityType: "RepositoryCases",
+          action: "DELETE",
+          entityId: { in: chunk.map(String) },
+        },
+        select: { entityId: true, timestamp: true },
+      });
+      for (const row of rows) {
+        const caseId = Number(row.entityId);
+        const at = new Date(row.timestamp).getTime();
+        // A case can be deleted, restored, and deleted again; the latest DELETE
+        // is the one that reflects its current state.
+        const known = deletionTimeByCase.get(caseId);
+        if (known === undefined || at > known) {
+          deletionTimeByCase.set(caseId, at);
+        }
+      }
+    }
+
     if (allCases.length === 0) {
       return Response.json({
         data: [],
@@ -278,25 +399,90 @@ export async function handleAutomationTrendsPOST(
       });
     }
 
-    // Get all unique periods based on date grouping
-    const periodKeys = new Set<string>();
-    const periodMap = new Map<string, { start: Date; end: Date }>();
+    // Fetch the version history for the matched cases so we can determine each
+    // case's automated state AS OF each period. Manual→automated flips are
+    // captured as version snapshots with a truthful createdAt, which the current
+    // RepositoryCases.automated flag alone cannot tell us.
+    const caseIds = allCases.map((c) => c.id);
+    // Fetch versions in id-chunks. At cross-project scale `caseIds` can hold
+    // 100k+ ids, and a single `IN (...)` overflows Postgres's bind-parameter
+    // limit (a 16-bit count), failing the whole query. Batch the ids so each
+    // query stays well under the limit.
+    const VERSION_ID_CHUNK = 10_000;
+    const versions: {
+      repositoryCaseId: number;
+      createdAt: Date;
+      automated: boolean;
+      version: number;
+    }[] = [];
+    for (let i = 0; i < caseIds.length; i += VERSION_ID_CHUNK) {
+      const chunk = caseIds.slice(i, i + VERSION_ID_CHUNK);
+      const rows = await baseDb.repositoryCaseVersions.findMany({
+        where: { repositoryCaseId: { in: chunk } },
+        select: {
+          repositoryCaseId: true,
+          createdAt: true,
+          automated: true,
+          version: true,
+        },
+        orderBy: [{ repositoryCaseId: "asc" }, { version: "asc" }],
+      });
+      for (const r of rows) versions.push(r);
+    }
 
-    allCases.forEach((testCase) => {
-      const period = getPeriodDates(
-        new Date(testCase.createdAt),
-        dateGrouping as DateGrouping
-      );
-      const key = `${period.start.toISOString()}_${period.end.toISOString()}`;
-      periodKeys.add(key);
-      if (!periodMap.has(key)) {
-        periodMap.set(key, period);
+    // Build a chronological automated-state timeline per case.
+    const historyByCase = new Map<
+      number,
+      { at: number; automated: boolean }[]
+    >();
+    for (const v of versions) {
+      const timeline = historyByCase.get(v.repositoryCaseId) ?? [];
+      timeline.push({
+        at: new Date(v.createdAt).getTime(),
+        automated: v.automated,
+      });
+      historyByCase.set(v.repositoryCaseId, timeline);
+    }
+    // Sort defensively by timestamp (imports may set explicit createdAt out of
+    // version order), and guarantee every case has at least a creation baseline
+    // in case a version row is somehow missing.
+    for (const timeline of historyByCase.values()) {
+      timeline.sort((a, b) => a.at - b.at);
+    }
+    for (const testCase of allCases) {
+      if (!historyByCase.has(testCase.id)) {
+        historyByCase.set(testCase.id, [
+          {
+            at: new Date(testCase.createdAt).getTime(),
+            automated: testCase.automated,
+          },
+        ]);
       }
-    });
+    }
 
-    const sortedPeriods = Array.from(periodKeys)
-      .sort()
-      .map((key) => periodMap.get(key)!);
+    // Build the period axis. The date range (if provided) governs the axis;
+    // otherwise span from the earliest case creation to the latest activity.
+    const creationTimes = allCases.map((c) => new Date(c.createdAt).getTime());
+    const versionTimes = versions.map((v) => new Date(v.createdAt).getTime());
+    // Use loop-based min/max (not `Math.min(...arr)`) — at cross-project scale
+    // these arrays hold every case + version, and spreading them into function
+    // args overflows the call stack. `arrayMax([])` is -Infinity, so an empty
+    // versionTimes side is ignored by the outer Math.max.
+    const lo = startDate
+      ? new Date(startDate)
+      : new Date(arrayMin(creationTimes));
+    const requestedHi = endDate
+      ? new Date(endDate)
+      : new Date(Math.max(arrayMax(creationTimes), arrayMax(versionTimes)));
+    // Never project past today. Every period is evaluated by asking "what was
+    // the state as of this period's end", which for a future date just returns
+    // the state right now — so an end date months out used to emit a long run
+    // of identical rows that read as real, flat data. Clamping ends the series
+    // at the current period instead. A range entirely in the future correctly
+    // yields no periods at all.
+    const hi = new Date(Math.min(requestedHi.getTime(), Date.now()));
+
+    const sortedPeriods = generatePeriods(lo, hi, dateGrouping as DateGrouping);
 
     // Get unique projects
     const projectsMap = new Map<number, string>();
@@ -311,6 +497,17 @@ export async function handleAutomationTrendsPOST(
       name,
     }));
 
+    // Bucket cases by project once. The counting loop below is already
+    // periods × projects × cases; re-scanning the full case list for every
+    // project multiplied that by the project count for no reason, which the
+    // cross-project report feels most (it now also carries deleted cases).
+    const casesByProject = new Map<number, typeof allCases>();
+    for (const testCase of allCases) {
+      const bucket = casesByProject.get(testCase.projectId);
+      if (bucket) bucket.push(testCase);
+      else casesByProject.set(testCase.projectId, [testCase]);
+    }
+
     // Build data structure: one row per period with pivoted columns per project
     const periodData: PeriodData[] = sortedPeriods.map((period) => {
       const row: PeriodData = {
@@ -322,17 +519,26 @@ export async function handleAutomationTrendsPOST(
       projects.forEach((project) => {
         let automatedCount = 0;
         let manualCount = 0;
+        const periodEndTime = period.end.getTime();
 
-        // Count cases that existed as of this period end
-        allCases.forEach((testCase) => {
-          if (testCase.projectId !== project.id) return;
+        // Count cases by their automated state AS OF this period end, using the
+        // version timeline rather than the current flag. A case created manual
+        // and later flipped counts as manual until the period of its flip.
+        (casesByProject.get(project.id) ?? []).forEach((testCase) => {
+          // Already deleted by the close of this period — it counted for the
+          // earlier periods it was alive, but not from here on.
+          const deletedAtTime = deletionTimeByCase.get(testCase.id);
+          if (deletedAtTime !== undefined && deletedAtTime <= periodEndTime) {
+            return;
+          }
 
-          const createdDate = new Date(testCase.createdAt);
-          const existedInPeriod =
-            createdDate <= period.end && !testCase.isDeleted;
+          const { existed, automated } = automatedStateAt(
+            historyByCase.get(testCase.id),
+            periodEndTime
+          );
 
-          if (existedInPeriod) {
-            if (testCase.automated) {
+          if (existed) {
+            if (automated) {
               automatedCount++;
             } else {
               manualCount++;

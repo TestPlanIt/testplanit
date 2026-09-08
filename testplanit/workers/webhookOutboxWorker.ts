@@ -1,12 +1,12 @@
-import type { PrismaClient } from "@prisma/client";
+import type { DbClient } from "~/lib/zenstack";
 
 import {
   disconnectAllTenantClients,
   getAllTenantIds,
-  getTenantPrismaClient,
+  getTenantDbClient,
   isMultiTenantMode,
-} from "../lib/multiTenantPrisma";
-import { prisma } from "../lib/prisma";
+} from "../lib/multiTenantDb";
+import { baseDb } from "../lib/db";
 import { getWebhookDispatchQueue } from "../lib/queues";
 import { createTenantPollBackoff } from "../lib/tenantPollBackoff";
 import { claimOutboxBatch, fanoutToConfigs } from "../lib/webhooks/outbox";
@@ -19,7 +19,7 @@ import { claimOutboxBatch, fanoutToConfigs } from "../lib/webhooks/outbox";
  * can run concurrently without double-claiming.
  *
  * Multi-tenant mode: iterates getAllTenantIds() once per cadence and
- * polls each due tenant's database via getTenantPrismaClient(tenantId) —
+ * polls each due tenant's database via getTenantDbClient(tenantId) —
  * idle tenants back off adaptively (see tenantBackoff below). The
  * per-tenant tenantId is stamped onto every enqueued dispatch job so the
  * dispatch worker routes to the correct tenant DB.
@@ -57,7 +57,7 @@ let stopRequested = false;
 let inflight: Promise<number> | null = null;
 
 export async function pollOnce(
-  client: PrismaClient = prisma,
+  client: DbClient = baseDb,
   tenantId?: string
 ): Promise<number> {
   const claimed = await claimOutboxBatch(client, BATCH_SIZE);
@@ -141,7 +141,7 @@ export async function pollAllTenantsOnce(): Promise<number> {
       continue;
     }
     try {
-      const client = getTenantPrismaClient(tenantId);
+      const client = getTenantDbClient(tenantId);
       const claimed = await pollOnce(client, tenantId);
       total += claimed;
       if (claimed > 0) {

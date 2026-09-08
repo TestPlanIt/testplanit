@@ -1,5 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { Prisma } from "@prisma/client";
+import type {
+  RepositoryCasesInclude,
+} from "@db/input";
 import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
@@ -36,14 +38,22 @@ export const CASE_DETAIL_INCLUDE = {
   folder: { select: { id: true, name: true, parentId: true } },
   state: { select: { id: true, name: true } },
   creator: { select: { id: true, name: true, email: true } },
-  tags: { select: { id: true, name: true } },
-  issues: {
+  // RepositoryCases tags / issues now live on the explicit
+  // RepositoryCaseTag / RepositoryCaseIssue join models — select through
+  // caseTags.tag and caseIssues.issue (the implicit `tags` / `issues`
+  // relations no longer exist and would 422).
+  caseTags: { select: { tag: { select: { id: true, name: true } } } },
+  caseIssues: {
     select: {
-      id: true,
-      externalKey: true,
-      integration: { select: { provider: true } },
-      title: true,
-      externalStatus: true,
+      issue: {
+        select: {
+          id: true,
+          externalKey: true,
+          integration: { select: { provider: true } },
+          title: true,
+          externalStatus: true,
+        },
+      },
     },
   },
   steps: {
@@ -83,7 +93,44 @@ export const CASE_DETAIL_INCLUDE = {
       caseA: { select: { id: true, name: true, source: true } },
     },
   },
-} as const satisfies Prisma.RepositoryCasesInclude;
+  // Same latest-version / latest-result sub-includes as CASE_ROW_INCLUDE so
+  // detail responses (get/create/update) carry truthful lastUpdatedAt,
+  // latestResult, hasAutomatedResults, and lastAutomatedResultAt instead of
+  // the always-null placeholders the mapper emits when these are absent.
+  repositoryCaseVersions: {
+    orderBy: [{ version: "desc" }, { id: "desc" }],
+    take: 1,
+    select: { createdAt: true, version: true },
+  },
+  // nulls:"last" — executedAt is nullable and plain desc puts NULLs first
+  // in Postgres, which would let a timestampless row shadow the latest
+  // real result (see CASE_ROW_INCLUDE).
+  junitResults: {
+    orderBy: [{ executedAt: { sort: "desc", nulls: "last" } }, { id: "desc" }],
+    take: 1,
+    select: {
+      id: true,
+      executedAt: true,
+      status: { select: { id: true, name: true } },
+    },
+  },
+  testRuns: {
+    orderBy: [{ id: "desc" }],
+    take: 1,
+    select: {
+      results: {
+        where: { isDeleted: false },
+        orderBy: [{ executedAt: "desc" }, { id: "desc" }],
+        take: 1,
+        select: {
+          id: true,
+          executedAt: true,
+          status: { select: { id: true, name: true } },
+        },
+      },
+    },
+  },
+} as const satisfies RepositoryCasesInclude;
 
 export interface CasesGetDeps {
   env: EnvConfig;

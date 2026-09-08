@@ -1,8 +1,9 @@
 "use client";
-import { Projects } from "@prisma/client";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
+import type { Projects } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { useUpdateProjects } from "~/lib/hooks";
 
 import { useForm } from "react-hook-form";
 
@@ -32,7 +33,8 @@ export function DeleteProject({ project, open, onClose }: DeleteProjectProps) {
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateProjects } = useUpdateProjects();
+  const { mutateAsync: updateProjects } =
+    useClientQueries(schema).projects.useUpdate();
 
   const form = useForm();
   const {
@@ -65,7 +67,7 @@ export function DeleteProject({ project, open, onClose }: DeleteProjectProps) {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center">
-                <TriangleAlert className="w-6 h-6 mr-2" />
+                <TriangleAlert className="w-6 h-6 me-2" />
                 {t("title")}
               </AlertDialogTitle>
               <AlertDialogDescription>

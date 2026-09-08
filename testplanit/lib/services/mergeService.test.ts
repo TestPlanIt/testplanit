@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-// ----- Mock prismaBase module -----
+// ----- Mock rawDb module -----
 // Use vi.hoisted() so that the mock objects are available before vi.mock() factories run
 // (vi.mock is hoisted to the top of the file by Vitest).
 
-const { mockTx, mockPrisma } = vi.hoisted(() => {
+const { mockTx, mockDb } = vi.hoisted(() => {
   const mockTx = {
     $executeRaw: vi.fn().mockResolvedValue([]),
     $queryRaw: vi.fn().mockResolvedValue([]),
@@ -25,6 +25,18 @@ const { mockTx, mockPrisma } = vi.hoisted(() => {
       findUnique: vi.fn(),
       update: vi.fn(),
     },
+    repositoryCaseTag: {
+      findMany: vi.fn(),
+      create: vi.fn(),
+      createMany: vi.fn(),
+      deleteMany: vi.fn(),
+    },
+    repositoryCaseIssue: {
+      findMany: vi.fn(),
+      create: vi.fn(),
+      createMany: vi.fn(),
+      deleteMany: vi.fn(),
+    },
     repositoryCaseVersions: {
       findMany: vi.fn(),
       update: vi.fn(),
@@ -42,7 +54,7 @@ const { mockTx, mockPrisma } = vi.hoisted(() => {
     duplicateScanResult: { updateMany: vi.fn() },
   };
 
-  const mockPrisma = {
+  const mockDb = {
     $transaction: vi.fn((fn: any) => {
       if (typeof fn === "function") return fn(mockTx);
       // Array form (linkCases uses static array)
@@ -57,11 +69,11 @@ const { mockTx, mockPrisma } = vi.hoisted(() => {
     },
   };
 
-  return { mockTx, mockPrisma };
+  return { mockTx, mockDb };
 });
 
-vi.mock("~/lib/prismaBase", () => ({
-  prisma: mockPrisma,
+vi.mock("~/lib/rawDb", () => ({
+  rawDb: mockDb,
 }));
 
 // Mock the ES sync — best-effort fire-and-forget
@@ -98,8 +110,8 @@ function resetMocks() {
   // Survivor has currentVersion = 3
   mockTx.repositoryCases.findUnique.mockResolvedValue({
     currentVersion: 3,
-    tags: [],
-    issues: [],
+    caseTags: [],
+    caseIssues: [],
   });
   mockTx.repositoryCases.update.mockResolvedValue({});
 
@@ -113,20 +125,30 @@ function resetMocks() {
   mockTx.jUnitTestStep.updateMany.mockResolvedValue({ count: 0 });
   mockTx.comment.updateMany.mockResolvedValue({ count: 0 });
 
-  // Victim M2M: no tags/issues
+  // Victim M2M: no tags/issues (explicit join shape)
   mockTx.repositoryCases.findUnique.mockImplementation(({ where }: any) => {
     if (where.id === 2) {
       // victim
       return Promise.resolve({
         id: 2,
         currentVersion: 2,
-        tags: [],
-        issues: [],
+        caseTags: [],
+        caseIssues: [],
       });
     }
     // survivor
     return Promise.resolve({ id: 1, currentVersion: 3 });
   });
+
+  // Explicit M2M join models: no rows created by default
+  mockTx.repositoryCaseTag.findMany.mockResolvedValue([]);
+  mockTx.repositoryCaseTag.create.mockResolvedValue({});
+  mockTx.repositoryCaseTag.createMany.mockResolvedValue({ count: 0 });
+  mockTx.repositoryCaseTag.deleteMany.mockResolvedValue({ count: 0 });
+  mockTx.repositoryCaseIssue.findMany.mockResolvedValue([]);
+  mockTx.repositoryCaseIssue.create.mockResolvedValue({});
+  mockTx.repositoryCaseIssue.createMany.mockResolvedValue({ count: 0 });
+  mockTx.repositoryCaseIssue.deleteMany.mockResolvedValue({ count: 0 });
 
   // Victim has no existing links
   mockTx.repositoryCaseLink.findMany.mockResolvedValue([]);
@@ -135,12 +157,12 @@ function resetMocks() {
 
   mockTx.duplicateScanResult.updateMany.mockResolvedValue({ count: 0 });
 
-  // Reset outer prisma mocks
-  mockPrisma.$transaction.mockImplementation(
+  // Reset outer rawDb mocks
+  mockDb.$transaction.mockImplementation(
     (fn: (tx: typeof mockTx) => Promise<any>) => fn(mockTx)
   );
-  mockPrisma.repositoryCaseLink.create.mockResolvedValue({});
-  mockPrisma.duplicateScanResult.updateMany.mockResolvedValue({ count: 0 });
+  mockDb.repositoryCaseLink.create.mockResolvedValue({});
+  mockDb.duplicateScanResult.updateMany.mockResolvedValue({ count: 0 });
 }
 
 // ---- Tests ----
@@ -154,9 +176,9 @@ describe("mergeService", () => {
   // 1. Happy-path merge: transaction is called, victim soft-deleted
   // ----------------------------------------------------------------
   describe("mergeCases - happy path", () => {
-    it("calls prisma.$transaction once", async () => {
+    it("calls rawDb.$transaction once", async () => {
       await mergeCases(1, 2, "user-123");
-      expect(mockPrisma.$transaction).toHaveBeenCalledOnce();
+      expect(mockDb.$transaction).toHaveBeenCalledOnce();
     });
 
     it("soft-deletes the victim inside the transaction", async () => {
@@ -350,14 +372,14 @@ describe("mergeService", () => {
   // 5. Tags and Issues M2M connect (idempotent)
   // ----------------------------------------------------------------
   describe("mergeCases - M2M connect for tags/issues", () => {
-    it("connects victim tags to survivor", async () => {
+    it("connects victim tags to survivor via the join model", async () => {
       mockTx.repositoryCases.findUnique.mockImplementation(({ where }: any) => {
         if (where.id === 2) {
           return Promise.resolve({
             id: 2,
             currentVersion: 1,
-            tags: [{ id: 10 }, { id: 11 }],
-            issues: [],
+            caseTags: [{ tagId: 10 }, { tagId: 11 }],
+            caseIssues: [],
           });
         }
         return Promise.resolve({ id: 1, currentVersion: 3 });
@@ -365,24 +387,25 @@ describe("mergeService", () => {
 
       await mergeCases(1, 2, "user-123");
 
-      expect(mockTx.repositoryCases.update).toHaveBeenCalledWith(
+      expect(mockTx.repositoryCaseTag.createMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { id: 1 },
-          data: expect.objectContaining({
-            tags: { connect: [{ id: 10 }, { id: 11 }] },
-          }),
+          data: [
+            { caseId: 1, tagId: 10 },
+            { caseId: 1, tagId: 11 },
+          ],
+          skipDuplicates: true,
         })
       );
     });
 
-    it("connects victim issues to survivor", async () => {
+    it("connects victim issues to survivor via the join model", async () => {
       mockTx.repositoryCases.findUnique.mockImplementation(({ where }: any) => {
         if (where.id === 2) {
           return Promise.resolve({
             id: 2,
             currentVersion: 1,
-            tags: [],
-            issues: [{ id: 20 }],
+            caseTags: [],
+            caseIssues: [{ issueId: 20 }],
           });
         }
         return Promise.resolve({ id: 1, currentVersion: 3 });
@@ -390,25 +413,20 @@ describe("mergeService", () => {
 
       await mergeCases(1, 2, "user-123");
 
-      expect(mockTx.repositoryCases.update).toHaveBeenCalledWith(
+      expect(mockTx.repositoryCaseIssue.createMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { id: 1 },
-          data: expect.objectContaining({
-            issues: { connect: [{ id: 20 }] },
-          }),
+          data: [{ caseId: 1, issueId: 20 }],
+          skipDuplicates: true,
         })
       );
     });
 
-    it("does not call tag/issue update when victim has none", async () => {
+    it("does not call tag/issue createMany when victim has none", async () => {
       // Default mock: victim has no tags or issues
       await mergeCases(1, 2, "user-123");
 
-      // The update calls that do happen should be for other things
-      const tagConnectCall = mockTx.repositoryCases.update.mock.calls.find(
-        (call: any) => call[0].data?.tags || call[0].data?.issues
-      );
-      expect(tagConnectCall).toBeUndefined();
+      expect(mockTx.repositoryCaseTag.createMany).not.toHaveBeenCalled();
+      expect(mockTx.repositoryCaseIssue.createMany).not.toHaveBeenCalled();
     });
   });
 
@@ -477,12 +495,12 @@ describe("mergeService", () => {
   // 7. Transaction atomicity
   // ----------------------------------------------------------------
   describe("mergeCases - transaction atomicity", () => {
-    it("all operations run inside $transaction (not bare prisma calls)", async () => {
+    it("all operations run inside $transaction (not bare rawDb calls)", async () => {
       await mergeCases(1, 2, "user-123");
-      // The outer prisma.$transaction was called once
-      expect(mockPrisma.$transaction).toHaveBeenCalledOnce();
-      // Core operations happen on mockTx (inside transaction), not on bare mockPrisma
-      // e.g. testRunCases.updateMany should be on mockTx, not mockPrisma
+      // The outer rawDb.$transaction was called once
+      expect(mockDb.$transaction).toHaveBeenCalledOnce();
+      // Core operations happen on mockTx (inside transaction), not on bare mockDb
+      // e.g. testRunCases.updateMany should be on mockTx, not mockDb
       expect(mockTx.testRunCases.updateMany).toHaveBeenCalled();
     });
   });
@@ -492,15 +510,13 @@ describe("mergeService", () => {
   // ----------------------------------------------------------------
   describe("linkCases", () => {
     it("upserts a RepositoryCaseLink with SAME_TEST_DIFFERENT_SOURCE", async () => {
-      mockPrisma.$transaction.mockImplementation((ops: any[]) =>
-        Promise.all(ops)
-      );
-      mockPrisma.repositoryCaseLink.upsert.mockResolvedValue({ id: 1 });
-      mockPrisma.duplicateScanResult.updateMany.mockResolvedValue({ count: 1 });
+      mockDb.$transaction.mockImplementation((ops: any[]) => Promise.all(ops));
+      mockDb.repositoryCaseLink.upsert.mockResolvedValue({ id: 1 });
+      mockDb.duplicateScanResult.updateMany.mockResolvedValue({ count: 1 });
 
       await linkCases(1, 2, "user-123", 5);
 
-      expect(mockPrisma.repositoryCaseLink.upsert).toHaveBeenCalledWith(
+      expect(mockDb.repositoryCaseLink.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
             caseAId_caseBId_type: {
@@ -520,15 +536,13 @@ describe("mergeService", () => {
     });
 
     it("updates DuplicateScanResult status to LINKED", async () => {
-      mockPrisma.$transaction.mockImplementation((ops: any[]) =>
-        Promise.all(ops)
-      );
-      mockPrisma.repositoryCaseLink.upsert.mockResolvedValue({ id: 1 });
-      mockPrisma.duplicateScanResult.updateMany.mockResolvedValue({ count: 1 });
+      mockDb.$transaction.mockImplementation((ops: any[]) => Promise.all(ops));
+      mockDb.repositoryCaseLink.upsert.mockResolvedValue({ id: 1 });
+      mockDb.duplicateScanResult.updateMany.mockResolvedValue({ count: 1 });
 
       await linkCases(1, 2, "user-123", 5);
 
-      expect(mockPrisma.duplicateScanResult.updateMany).toHaveBeenCalledWith(
+      expect(mockDb.duplicateScanResult.updateMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: {
             OR: expect.arrayContaining([
@@ -542,11 +556,9 @@ describe("mergeService", () => {
     });
 
     it("returns { linked: true }", async () => {
-      mockPrisma.$transaction.mockImplementation((ops: any[]) =>
-        Promise.all(ops)
-      );
-      mockPrisma.repositoryCaseLink.upsert.mockResolvedValue({ id: 1 });
-      mockPrisma.duplicateScanResult.updateMany.mockResolvedValue({ count: 1 });
+      mockDb.$transaction.mockImplementation((ops: any[]) => Promise.all(ops));
+      mockDb.repositoryCaseLink.upsert.mockResolvedValue({ id: 1 });
+      mockDb.duplicateScanResult.updateMany.mockResolvedValue({ count: 1 });
 
       const result = await linkCases(1, 2, "user-123", 5);
       expect(result).toEqual({ linked: true });
@@ -558,11 +570,11 @@ describe("mergeService", () => {
   // ----------------------------------------------------------------
   describe("dismissPair", () => {
     it("updates DuplicateScanResult status to DISMISSED", async () => {
-      mockPrisma.duplicateScanResult.updateMany.mockResolvedValue({ count: 1 });
+      mockDb.duplicateScanResult.updateMany.mockResolvedValue({ count: 1 });
 
       await dismissPair(1, 2, 5);
 
-      expect(mockPrisma.duplicateScanResult.updateMany).toHaveBeenCalledWith(
+      expect(mockDb.duplicateScanResult.updateMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
             OR: expect.arrayContaining([
@@ -577,7 +589,7 @@ describe("mergeService", () => {
     });
 
     it("returns { dismissed: true }", async () => {
-      mockPrisma.duplicateScanResult.updateMany.mockResolvedValue({ count: 1 });
+      mockDb.duplicateScanResult.updateMany.mockResolvedValue({ count: 1 });
 
       const result = await dismissPair(1, 2, 5);
       expect(result).toEqual({ dismissed: true });

@@ -1,4 +1,4 @@
-import { ApplicationArea } from "@prisma/client";
+import { ApplicationArea } from "~/zenstack/models";
 
 /**
  * The two ApplicationArea values where `canReadSensitive` gates whether a

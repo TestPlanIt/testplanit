@@ -14,7 +14,7 @@ vi.mock("~/services/elasticsearchService", () => ({
   getElasticsearchClient: vi.fn(),
 }));
 
-vi.mock("~/lib/multiTenantPrisma", () => ({
+vi.mock("~/lib/multiTenantDb", () => ({
   getCurrentTenantId: vi.fn(),
 }));
 
@@ -32,7 +32,7 @@ vi.mock("~/lib/services/searchQueryBuilder", () => ({
 }));
 
 import { getServerSession } from "next-auth/next";
-import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
+import { getCurrentTenantId } from "~/lib/multiTenantDb";
 import {
   buildElasticsearchQuery,
   buildSearchAggregations,

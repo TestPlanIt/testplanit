@@ -10,11 +10,11 @@ import { LLM_FEATURES } from "../lib/llm/constants";
 import type { LlmRequest } from "../lib/llm/types/index";
 import {
   disconnectAllTenantClients,
-  getPrismaClientForJob,
+  getDbClientForJob,
   isMultiTenantMode,
   MultiTenantJobData,
   validateMultiTenantJobData,
-} from "../lib/multiTenantPrisma";
+} from "../lib/multiTenantDb";
 import { MAGIC_SELECT_QUEUE_NAME } from "../lib/queueNames";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
@@ -476,12 +476,7 @@ Name: ${testRunMetadata.name}`;
   // Compress test case data to reduce token usage
   const compressedCaseData = testCases.map((tc) => {
     const result: (
-      | number
-      | string
-      | string[]
-      | number[]
-      | Record<string, string>
-      | null
+      number | string | string[] | number[] | Record<string, string> | null
     )[] = [tc.id, tc.name];
     if (tc.folderPath !== "/") result.push(tc.folderPath);
     else result.push(null);
@@ -576,9 +571,9 @@ export const processor = async (
   }
 
   // 3. Get tenant-specific Prisma client
-  const prisma = getPrismaClientForJob(job.data);
+  const db = getDbClientForJob(job.data);
 
-  const projectFlag = await (prisma as any).projects.findUnique({
+  const projectFlag = await (db as any).projects.findUnique({
     where: { id: projectId },
     select: { excludeNotStartedFromRuns: true },
   });
@@ -588,11 +583,8 @@ export const processor = async (
       : {};
 
   // 4. Create worker-safe LlmManager (fresh instance per job, not singleton)
-  const llmManager = LlmManager.createForWorker(
-    prisma as any,
-    job.data.tenantId
-  );
-  const promptResolver = new PromptResolver(prisma as any);
+  const llmManager = LlmManager.createForWorker(db as any, job.data.tenantId);
+  const promptResolver = new PromptResolver(db as any);
 
   // 4. TOKEN-04 — Fetch provider config for token limits and retry settings
   const resolved = await llmManager.resolveIntegration(
@@ -605,11 +597,9 @@ export const processor = async (
   let retryOptions: { maxRetries?: number; baseDelayMs?: number } | undefined;
 
   if (resolved) {
-    const llmProviderConfig = await (prisma as any).llmProviderConfig.findFirst(
-      {
-        where: { llmIntegrationId: resolved.integrationId },
-      }
-    );
+    const llmProviderConfig = await (db as any).llmProviderConfig.findFirst({
+      where: { llmIntegrationId: resolved.integrationId },
+    });
     if (llmProviderConfig) {
       maxTokensPerRequest = llmProviderConfig.maxTokensPerRequest ?? 4096;
       maxTokens = llmProviderConfig.defaultMaxTokens ?? 2000;
@@ -634,7 +624,7 @@ export const processor = async (
   // 7. Fetch linked issue details
   let issues: IssueData[] = [];
   if (testRunMetadata.linkedIssueIds.length > 0) {
-    const issueRecords = await (prisma as any).issue.findMany({
+    const issueRecords = await (db as any).issue.findMany({
       where: {
         id: { in: testRunMetadata.linkedIssueIds },
         isDeleted: false,
@@ -662,7 +652,7 @@ export const processor = async (
   );
   let searchPreFiltered = false;
 
-  const repositoryTotalCount = await (prisma as any).repositoryCases.count({
+  const repositoryTotalCount = await (db as any).repositoryCases.count({
     where: {
       projectId,
       isArchived: false,
@@ -808,7 +798,7 @@ export const processor = async (
     testCaseWhere.id = { in: searchResultIds };
   }
 
-  const repositoryCases = await (prisma as any).repositoryCases.findMany({
+  const repositoryCases = await (db as any).repositoryCases.findMany({
     where: testCaseWhere,
     include: {
       folder: {
@@ -822,7 +812,7 @@ export const processor = async (
           },
         },
       },
-      tags: { select: { name: true } },
+      caseTags: { select: { tag: { select: { name: true } } } },
       caseFieldValues: {
         include: {
           field: {
@@ -890,7 +880,7 @@ export const processor = async (
         id: tc.id,
         name: truncateText(tc.name, TRUNCATION_LIMITS.testCaseName),
         folderPath: buildFolderPath(tc.folder),
-        tags: tc.tags.map((t: any) => t.name),
+        tags: tc.caseTags.map((ct: any) => ct.tag.name),
         fields,
         linksTo: tc.linksFrom.map((l: any) => l.caseBId),
         linksFrom: tc.linksTo.map((l: any) => l.caseAId),

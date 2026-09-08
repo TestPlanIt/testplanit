@@ -48,14 +48,14 @@ const describeIntegration =
 describeIntegration(
   "importGeneratedTestCases — inline parameters + dataset",
   () => {
-    const importPrisma = async () => {
-      const { prisma } = await import("~/lib/prisma");
-      return prisma;
+    const importDb = async () => {
+      const { baseDb } = await import("~/lib/db");
+      return baseDb;
     };
 
     beforeAll(async () => {
-      const prisma = await importPrisma();
-      const user = await prisma.user.findFirst({ select: { id: true } });
+      const baseDb = await importDb();
+      const user = await baseDb.user.findFirst({ select: { id: true } });
       if (!user) throw new Error("Seed DB before running this test");
       fixtureUserId.current = user.id;
     });
@@ -67,6 +67,7 @@ describeIntegration(
       testCaseParameterIds: number[];
       repositoryCaseIds: number[];
       repositoryFolderIds: number[];
+      issueIds: number[];
       repositoryIds: number[];
       workflowIds: number[];
       templateIds: number[];
@@ -78,6 +79,7 @@ describeIntegration(
       testCaseParameterIds: [],
       repositoryCaseIds: [],
       repositoryFolderIds: [],
+      issueIds: [],
       repositoryIds: [],
       workflowIds: [],
       templateIds: [],
@@ -85,7 +87,9 @@ describeIntegration(
     };
 
     afterEach(async () => {
-      const prisma = await importPrisma();
+      const baseDb = await importDb();
+      // RepositoryCaseIssue has a composite PK and cascades on case/issue
+      // delete, so deleting the cases/issues below removes the join rows.
       for (const [model, ids] of [
         ["dataSetRow", cleanup.dataSetRowIds],
         ["dataSetVersion", cleanup.dataSetVersionIds],
@@ -93,13 +97,14 @@ describeIntegration(
         ["testCaseParameter", cleanup.testCaseParameterIds],
         ["repositoryCases", cleanup.repositoryCaseIds],
         ["repositoryFolders", cleanup.repositoryFolderIds],
+        ["issue", cleanup.issueIds],
         ["repositories", cleanup.repositoryIds],
         ["workflows", cleanup.workflowIds],
         ["templates", cleanup.templateIds],
         ["projects", cleanup.projectIds],
       ] as const) {
         if (ids.length) {
-          await (prisma as any)[model]
+          await (baseDb as any)[model]
             .deleteMany({ where: { id: { in: ids } } })
             .catch(() => {});
         }
@@ -109,11 +114,11 @@ describeIntegration(
       }
     });
 
-    async function seedFixture(prisma: any) {
-      const creator = await prisma.user.findFirst({ select: { id: true } });
+    async function seedFixture(baseDb: any) {
+      const creator = await baseDb.user.findFirst({ select: { id: true } });
       if (!creator) throw new Error("Seed DB before running this test");
-      const anyColor = await prisma.color.findFirst({ select: { id: true } });
-      const anyIcon = await prisma.fieldIcon.findFirst({
+      const anyColor = await baseDb.color.findFirst({ select: { id: true } });
+      const anyIcon = await baseDb.fieldIcon.findFirst({
         select: { id: true },
       });
       if (!anyColor || !anyIcon)
@@ -123,13 +128,13 @@ describeIntegration(
         .toString(36)
         .slice(2, 8)}`;
 
-      const project = await prisma.projects.create({
+      const project = await baseDb.projects.create({
         data: { name: tag, createdBy: creator.id },
         select: { id: true, name: true },
       });
       cleanup.projectIds.push(project.id);
 
-      const template = await prisma.templates.create({
+      const template = await baseDb.templates.create({
         data: {
           templateName: `${tag}-tpl`,
           isEnabled: true,
@@ -139,7 +144,7 @@ describeIntegration(
       });
       cleanup.templateIds.push(template.id);
 
-      const workflow = await prisma.workflows.create({
+      const workflow = await baseDb.workflows.create({
         data: {
           name: `${tag}-state`,
           order: 0,
@@ -152,13 +157,13 @@ describeIntegration(
       });
       cleanup.workflowIds.push(workflow.id);
 
-      const repo = await prisma.repositories.create({
+      const repo = await baseDb.repositories.create({
         data: { projectId: project.id },
         select: { id: true },
       });
       cleanup.repositoryIds.push(repo.id);
 
-      const folder = await prisma.repositoryFolders.create({
+      const folder = await baseDb.repositoryFolders.create({
         data: {
           name: `${tag}-folder`,
           repositoryId: repo.id,
@@ -176,11 +181,11 @@ describeIntegration(
       "persists TestCaseParameter + DataSet + DataSetVersion + DataSetRow when both are provided",
       { timeout: 60_000 },
       async () => {
-        const prisma = await importPrisma();
+        const baseDb = await importDb();
         const { importGeneratedTestCases } =
           await import("./importGeneratedTestCases");
         const { tag, project, template, workflow, repo, folder } =
-          await seedFixture(prisma);
+          await seedFixture(baseDb);
 
         const result = await importGeneratedTestCases({
           projectId: project.id,
@@ -227,7 +232,7 @@ describeIntegration(
         const caseId = result.importedIds[0];
         cleanup.repositoryCaseIds.push(caseId);
 
-        const params = await prisma.testCaseParameter.findMany({
+        const params = await baseDb.testCaseParameter.findMany({
           where: { testCaseId: caseId },
           orderBy: { order: "asc" },
           select: {
@@ -243,14 +248,14 @@ describeIntegration(
         expect(params[0].required).toBe(true);
         expect(params[1].sensitive).toBe(true);
 
-        const dataset = await prisma.dataSet.findFirst({
+        const dataset = await baseDb.dataSet.findFirst({
           where: { ownerCaseId: caseId },
           select: { id: true },
         });
         expect(dataset).not.toBeNull();
         cleanup.dataSetIds.push(dataset!.id);
 
-        const version = await prisma.dataSetVersion.findFirst({
+        const version = await baseDb.dataSetVersion.findFirst({
           where: { dataSetId: dataset!.id, version: 1 },
           select: { id: true, rowCount: true },
         });
@@ -258,7 +263,7 @@ describeIntegration(
         expect(version!.rowCount).toBe(2);
         cleanup.dataSetVersionIds.push(version!.id);
 
-        const rows = await prisma.dataSetRow.findMany({
+        const rows = await baseDb.dataSetRow.findMany({
           where: { dataSetId: dataset!.id },
           orderBy: { rowIndex: "asc" },
           select: { id: true, rowIndex: true, label: true },
@@ -267,7 +272,7 @@ describeIntegration(
         expect(rows.map((r: any) => r.rowIndex)).toEqual([0, 1]);
         expect(rows[0].label).toBe("happy path");
 
-        const caseRow = await prisma.repositoryCases.findUnique({
+        const caseRow = await baseDb.repositoryCases.findUnique({
           where: { id: caseId },
           select: { hasParameters: true },
         });
@@ -279,11 +284,11 @@ describeIntegration(
       "rejects datasetRows without parameters and rolls back the whole case",
       { timeout: 60_000 },
       async () => {
-        const prisma = await importPrisma();
+        const baseDb = await importDb();
         const { importGeneratedTestCases } =
           await import("./importGeneratedTestCases");
         const { tag, project, template, workflow, repo, folder } =
-          await seedFixture(prisma);
+          await seedFixture(baseDb);
 
         const result = await importGeneratedTestCases({
           projectId: project.id,
@@ -323,11 +328,11 @@ describeIntegration(
       "rejects duplicate parameter names and rolls back the case",
       { timeout: 60_000 },
       async () => {
-        const prisma = await importPrisma();
+        const baseDb = await importDb();
         const { importGeneratedTestCases } =
           await import("./importGeneratedTestCases");
         const { tag, project, template, workflow, repo, folder } =
-          await seedFixture(prisma);
+          await seedFixture(baseDb);
 
         const result = await importGeneratedTestCases({
           projectId: project.id,
@@ -359,6 +364,137 @@ describeIntegration(
 
         expect(result.importedCount).toBe(0);
         expect(result.errors[0]).toMatch(/duplicate parameter name/i);
+      }
+    );
+
+    it(
+      "lands cases in a per-issue folder (create-on-save, root-level) and links them to an existing issue",
+      { timeout: 60_000 },
+      async () => {
+        const baseDb = await importDb();
+        const { importGeneratedTestCases } =
+          await import("./importGeneratedTestCases");
+        const { tag, creator, project, template, workflow, repo, folder } =
+          await seedFixture(baseDb);
+
+        // An existing internal issue, standing in for a milestone scope issue.
+        const issue = await baseDb.issue.create({
+          data: {
+            name: `${tag}-ISSUE-1`,
+            title: "Password reset",
+            description: "User can reset their password",
+            projectId: project.id,
+            createdById: creator.id,
+          },
+          select: { id: true },
+        });
+        cleanup.issueIds.push(issue.id);
+
+        const destFolderName = `${tag}-ISSUE-1`;
+        const baseInput = {
+          projectId: project.id,
+          projectName: project.name,
+          repositoryId: repo.id,
+          // The seeded folder is intentionally passed but must be OVERRIDDEN
+          // by destinationFolder.
+          folderId: folder.id,
+          folderName: folder.name,
+          templateId: template.id,
+          templateName: template.templateName,
+          stateId: workflow.id,
+          stateName: workflow.name,
+          maxOrder: 0,
+          autoGenerateTags: false,
+          source: "MANUAL" as const,
+          fieldMappings: [],
+          linkIssueId: issue.id,
+          destinationFolder: { name: destFolderName, parentId: null },
+        };
+
+        const result = await importGeneratedTestCases({
+          ...baseInput,
+          testCases: [
+            {
+              id: `${tag}-c0`,
+              name: `${tag}-generated-case`,
+              fieldValues: {},
+              steps: [],
+            },
+          ],
+        } as any);
+
+        expect(result.status).toBe("success");
+        expect(result.importedIds.length).toBe(1);
+        const caseId = result.importedIds[0];
+        cleanup.repositoryCaseIds.push(caseId);
+
+        // A new ROOT-level (parentId null) folder was created with the issue's
+        // name — the null-parent path through findOrCreateFolder.
+        const perIssueFolder = await baseDb.repositoryFolders.findFirst({
+          where: {
+            projectId: project.id,
+            repositoryId: repo.id,
+            parentId: null,
+            name: destFolderName,
+            isDeleted: false,
+          },
+          select: { id: true },
+        });
+        expect(perIssueFolder).not.toBeNull();
+        cleanup.repositoryFolderIds.push(perIssueFolder!.id);
+
+        // The case landed in the per-issue folder, NOT the seeded folderId.
+        const caseRow = await baseDb.repositoryCases.findUnique({
+          where: { id: caseId },
+          select: { folderId: true },
+        });
+        expect(caseRow?.folderId).toBe(perIssueFolder!.id);
+        expect(caseRow?.folderId).not.toBe(folder.id);
+
+        // The case is linked to the pre-existing issue by id. (RepositoryCaseIssue
+        // has a composite PK (caseId, issueId) — no `id` column.)
+        const links = await baseDb.repositoryCaseIssue.findMany({
+          where: { caseId },
+          select: { caseId: true, issueId: true },
+        });
+        expect(links.map((l: any) => l.issueId)).toContain(issue.id);
+
+        // The version snapshot records the per-issue folder name + linked issue.
+        const version = await baseDb.repositoryCaseVersions.findFirst({
+          where: { repositoryCaseId: caseId, version: 1 },
+          select: { folderName: true, issues: true },
+        });
+        expect(version?.folderName).toBe(destFolderName);
+        const versionIssues = (version?.issues as any[]) ?? [];
+        expect(versionIssues.some((i) => i.id === issue.id)).toBe(true);
+
+        // A second import into the same destination REUSES the folder rather
+        // than creating a duplicate (find-or-create).
+        const result2 = await importGeneratedTestCases({
+          ...baseInput,
+          testCases: [
+            {
+              id: `${tag}-c1`,
+              name: `${tag}-generated-case-2`,
+              fieldValues: {},
+              steps: [],
+            },
+          ],
+        } as any);
+        expect(result2.status).toBe("success");
+        cleanup.repositoryCaseIds.push(...result2.importedIds);
+
+        const rootFolders = await baseDb.repositoryFolders.findMany({
+          where: {
+            projectId: project.id,
+            repositoryId: repo.id,
+            parentId: null,
+            name: destFolderName,
+            isDeleted: false,
+          },
+          select: { id: true },
+        });
+        expect(rootFolders.length).toBe(1);
       }
     );
   }

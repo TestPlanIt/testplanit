@@ -1,5 +1,7 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useDebounce } from "@/components/Debounce";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import { Filter } from "@/components/tables/Filter";
@@ -15,8 +17,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ApplicationArea } from "@prisma/client";
-import { CirclePlus, Maximize2 } from "lucide-react";
+import { ApplicationArea } from "~/zenstack/models";
+import { CircleCheck, CircleDot, CirclePlus, Maximize2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import * as React from "react";
 import { use, useCallback, useEffect, useMemo, useState } from "react";
@@ -28,17 +30,21 @@ import {
   usePagination,
 } from "~/lib/contexts/PaginationContext";
 import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
-import {
-  useFindFirstProjects,
-  useFindFirstSessionResults,
-  useFindManyMilestones,
-  useFindManySessionResults,
-  useFindManySessions,
-} from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { AddSessionModal } from "./AddSessionModal";
 import SessionDisplay from "./SessionDisplay";
+import { SessionFilterChips } from "./SessionFilterChips";
+import {
+  EMPTY_SESSION_FILTERS,
+  isAnySessionFilterActive,
+  isMySession,
+  parseStoredSessionFilters,
+  sessionFiltersStorageKey,
+} from "./sessionFilters";
+import { usePersistedFilter } from "~/hooks/usePersistedFilter";
 
+import { CollapsibleSummarySection } from "@/components/CollapsibleSummarySection";
+import { SummaryCardGrid } from "@/components/SummaryCardGrid";
 import CompletedRunsLineChart, {
   type MonthlyCount,
 } from "@/components/dataVisualizations/CompletedRunsLineChart";
@@ -60,6 +66,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { PageTitle, SectionHeader } from "@/components/ui/typography";
+import { HelpPopover } from "@/components/ui/help-popover";
 
 interface ProjectSessionsProps {
   params: Promise<{ projectId: string }>;
@@ -123,6 +131,17 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
     500
   );
 
+  // Session list filter ("My Sessions"), applied to both the Active and
+  // Completed tabs and remembered per project in localStorage — the same
+  // treatment the runs page gives its chips.
+  const [sessionFilters, setSessionFilters] = usePersistedFilter(
+    sessionFiltersStorageKey(projectId),
+    EMPTY_SESSION_FILTERS,
+    parseStoredSessionFilters
+  );
+  const sessionFiltersActive = isAnySessionFilterActive(sessionFilters);
+  const currentUserId = sessionData?.user?.id;
+
   // Calculate pagination for completed sessions
   const effectiveCompletedPageSize =
     typeof completedSessionsPageSize === "number"
@@ -148,7 +167,9 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
     return isNaN(id) ? null : id;
   }, [projectId]);
 
-  const { data: project, isLoading: isProjectLoading } = useFindFirstProjects(
+  const { data: project, isLoading: isProjectLoading } = useClientQueries(
+    schema
+  ).projects.useFindFirst(
     {
       where: {
         AND: [
@@ -207,7 +228,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
     data: incompleteSessions,
     isLoading: isLoadingIncomplete,
     refetch: refetchIncompleteSessions,
-  } = useFindManySessions(
+  } = useClientQueries(schema).sessions.useFindMany(
     {
       where: {
         AND: [
@@ -230,7 +251,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
     data: allCompletedSessions,
     isLoading: isLoadingAllCompleted,
     refetch: refetchCompletedSessions,
-  } = useFindManySessions(
+  } = useClientQueries(schema).sessions.useFindMany(
     {
       where: {
         AND: [
@@ -258,7 +279,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
   }, []);
 
   const { data: completedSessionsForChart, isLoading: isLoadingChartData } =
-    useFindManySessions(
+    useClientQueries(schema).sessions.useFindMany(
       {
         where: {
           AND: [
@@ -282,16 +303,42 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
   // Determine if we need to filter
   const hasFilter = debouncedCompletedSessionsSearchString.trim().length > 0;
 
+  // The chips narrow the two lists only. `incompleteSessions` itself stays
+  // whole: the work-distribution sunburst below reads it and must keep
+  // reflecting every in-flight session, not just the current user's.
+  const visibleIncompleteSessions = useMemo(() => {
+    if (!incompleteSessions) return [];
+    if (!sessionFilters.mine) return incompleteSessions;
+    return incompleteSessions.filter((session) =>
+      isMySession(session, currentUserId)
+    );
+  }, [incompleteSessions, sessionFilters.mine, currentUserId]);
+
   // Client-side filtering when filter is active (avoids extra query on every keystroke)
+  // The chip predicate folds in here rather than after the page slice below,
+  // because the count, page-size options and pagination all read this array.
   const filteredData = useMemo(() => {
-    if (!hasFilter || !allCompletedSessions) {
-      return allCompletedSessions || [];
+    let sessions = allCompletedSessions || [];
+
+    if (sessionFilters.mine) {
+      sessions = sessions.filter((session) =>
+        isMySession(session, currentUserId)
+      );
     }
+
+    if (!hasFilter) return sessions;
+
     const searchLower = debouncedCompletedSessionsSearchString.toLowerCase();
-    return allCompletedSessions.filter((session) =>
+    return sessions.filter((session) =>
       session.name.toLowerCase().includes(searchLower)
     );
-  }, [allCompletedSessions, debouncedCompletedSessionsSearchString, hasFilter]);
+  }, [
+    allCompletedSessions,
+    debouncedCompletedSessionsSearchString,
+    hasFilter,
+    sessionFilters.mine,
+    currentUserId,
+  ]);
 
   // Pagination on filtered data
   const totalCompletedSessionsCount = filteredData.length;
@@ -326,39 +373,44 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
     [setActiveTab, refetchCompletedSessions, refetchIncompleteSessions]
   );
 
-  const { data: milestones, isLoading: isLoadingMilestones } =
-    useFindManyMilestones({
-      where: {
-        projectId: numericProjectId ?? undefined,
-        isDeleted: false,
-      },
-      include: {
-        milestoneType: {
-          include: {
-            icon: true,
-          },
+  const { data: milestones, isLoading: isLoadingMilestones } = useClientQueries(
+    schema
+  ).milestones.useFindMany({
+    where: {
+      projectId: numericProjectId ?? undefined,
+      isDeleted: false,
+    },
+    include: {
+      milestoneType: {
+        include: {
+          icon: true,
         },
-        children: {
-          include: {
-            milestoneType: {
-              include: {
-                icon: true,
-              },
+      },
+      children: {
+        include: {
+          milestoneType: {
+            include: {
+              icon: true,
             },
           },
         },
       },
-    });
+    },
+  });
 
   // Reset to first page when search changes
   useEffect(() => {
     setCompletedSessionsPage(1);
   }, [debouncedCompletedSessionsSearchString, setCompletedSessionsPage]);
 
-  // Reset to first page when page size changes
+  // Reset to first page when page size or the list filter changes
   useEffect(() => {
     setCompletedSessionsPage(1);
-  }, [completedSessionsPageSize, setCompletedSessionsPage]);
+  }, [
+    completedSessionsPageSize,
+    sessionFilters.mine,
+    setCompletedSessionsPage,
+  ]);
 
   useEffect(() => {
     const isDataLoading =
@@ -514,7 +566,9 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
   // Chart data, success rate, and date range are derived via useMemo below.
 
   // Query 1: Get the most recent session result to determine the date range
-  const { data: latestSessionResult } = useFindFirstSessionResults(
+  const { data: latestSessionResult } = useClientQueries(
+    schema
+  ).sessionResults.useFindFirst(
     {
       where: {
         session: { projectId: numericProjectId ?? undefined },
@@ -546,7 +600,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
   const {
     data: recentRawSessionResults,
     isLoading: isLoadingRecentSessionResults,
-  } = useFindManySessionResults(
+  } = useClientQueries(schema).sessionResults.useFindMany(
     {
       where: {
         session: { projectId: numericProjectId ?? undefined },
@@ -684,9 +738,9 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
     return (
       <Card className="flex flex-col w-full min-w-[400px] h-full">
         <CardContent className="flex flex-col items-center justify-center h-full">
-          <h2 className="text-2xl font-semibold mb-2">
+          <PageTitle className="mb-2">
             {t("common.errors.projectNotFound")}
-          </h2>
+          </PageTitle>
           <p className="text-muted-foreground">
             {t("common.errors.projectNotFoundDescription")}
           </p>
@@ -701,37 +755,36 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
         <Card className="flex w-full min-w-[400px]">
           <div className="flex-1 w-full">
             <CardHeader id="sessions-page-header">
-              <CardTitle>
-                <div className="flex items-center justify-between text-primary text-xl md:text-2xl">
-                  <div>
-                    <CardTitle>{t("sessions.title", { count: 2 })}</CardTitle>
-                  </div>
-                  <div>
-                    {canAddEditSession && (
-                      <>
-                        <Button
-                          variant="default"
-                          data-testid="new-session-button"
-                          onClick={() => setIsAddSessionOpen(true)}
-                        >
-                          <CirclePlus className="h-4 w-4" />
-                          <span className="hidden md:inline">
-                            {t("sessions.actions.add")}
-                          </span>
-                        </Button>
-                        {isAddSessionOpen && (
-                          <AddSessionModal
-                            open={isAddSessionOpen}
-                            onClose={() => setIsAddSessionOpen(false)}
-                          />
-                        )}
-                      </>
+              <div className="flex items-center justify-between gap-2">
+                <SectionHeader className="flex items-center gap-2">
+                  <CardTitle>{t("sessions.title", { count: 2 })}</CardTitle>
+                  <HelpPopover helpKey="projectSessions" />
+                </SectionHeader>
+                {canAddEditSession && (
+                  <>
+                    <Button
+                      variant="default"
+                      data-testid="new-session-button"
+                      onClick={() => setIsAddSessionOpen(true)}
+                      aria-label={t("sessions.actions.add")}
+                      className="group gap-0 transition-all duration-200 hover:gap-2"
+                    >
+                      <CirclePlus className="h-4 w-4" />
+                      <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+                        {t("sessions.actions.add")}
+                      </span>
+                    </Button>
+                    {isAddSessionOpen && (
+                      <AddSessionModal
+                        open={isAddSessionOpen}
+                        onClose={() => setIsAddSessionOpen(false)}
+                      />
                     )}
-                  </div>
-                </div>
-              </CardTitle>
-              <CardDescription className="uppercase">
-                <span className="flex items-center gap-2 uppercase shrink-0">
+                  </>
+                )}
+              </div>
+              <CardDescription>
+                <span className="flex items-center gap-2">
                   <ProjectIcon iconUrl={project?.iconUrl} />
                   {project?.name}
                 </span>
@@ -739,229 +792,248 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
             </CardHeader>
             <CardContent className="flex flex-col">
               {/* --- Summary Metrics Display --- */}
-              <div className="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {/* Card 1: Work Distribution - (Modified above) */}
-                {(isLoadingIncomplete ||
-                  (workDistributionChartData.children &&
-                    workDistributionChartData.children.length > 0)) && (
-                  <Card>
-                    <CardHeader className="pb-2 flex flex-row items-start justify-between">
-                      <div>
-                        <CardTitle className="font-medium">
-                          {t("runs.summary.workDistributionTitle")}
-                        </CardTitle>
-                        <CardDescription>
-                          <div className="flex flex-row gap-1">
-                            <p>
-                              {t(
-                                "sessions.summary.workDistributionDescription"
-                              )}
-                            </p>
-                            <p>
-                              {toHumanReadable(totalSunburstEstimate, {
-                                isSeconds: true,
-                              })}
-                            </p>
-                          </div>
-                        </CardDescription>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={() =>
-                          handleOpenChartOverlay({
-                            type: "sunburst",
-                            title: t("runs.summary.workDistributionTitle"),
-                            data: workDistributionChartData,
-                            projectId: projectId,
-                            onLegendDataGenerated: handleSunburstLegend,
-                            onTotalCalculated: handleSunburstTotal,
-                            onSessionClick: handleSessionSunburstClick,
-                            isZoomed: true,
-                          })
-                        }
-                      >
-                        <Maximize2 className="h-4 w-4" />
-                        <span className="sr-only">
-                          {tCommon("actions.expand")}
-                        </span>
-                      </Button>
-                    </CardHeader>
-                    <CardContent className="flex justify-center items-center p-2">
-                      {isLoadingIncomplete ? (
-                        <LoadingSpinner />
-                      ) : workDistributionChartData.children &&
-                        workDistributionChartData.children.length > 0 ? (
-                        <SummarySunburstChart
-                          data={workDistributionChartData}
-                          projectId={projectId}
-                          onLegendDataGenerated={handleSunburstLegend}
-                          onTotalCalculated={handleSunburstTotal}
-                          onSessionClick={handleSessionSunburstClick}
-                        />
-                      ) : (
-                        <p className="text-sm text-muted-foreground text-center px-4 h-[210px] flex items-center justify-center">
-                          {t("runs.summary.noWorkDistributionData")}
-                        </p>
-                      )}
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Card 2: Recent Session Results - Conditional Render */}
-                {(isLoadingRecentSessionResults ||
-                  recentSessionResultsChartData.length > 0) && (
-                  <Card>
-                    <CardHeader className="pb-2 flex flex-row items-start justify-between">
-                      <div>
-                        <CardTitle className="font-medium">
-                          {t("sessions.summary.recentResultsTitle")}
-                        </CardTitle>
-                        <CardDescription className="flex flex-col">
-                          {!isLoadingRecentSessionResults &&
-                            recentSessionResultsDateRange.first &&
-                            recentSessionResultsDateRange.last && (
-                              <span>
-                                <DateFormatter
-                                  date={recentSessionResultsDateRange.first}
-                                  formatString={
-                                    sessionData?.user.preferences?.dateFormat +
-                                    " " +
-                                    sessionData?.user.preferences?.timeFormat
-                                  }
-                                  timezone={
-                                    sessionData?.user.preferences?.timezone
-                                  }
-                                />
-                                {" – "}
-                                <DateFormatter
-                                  date={recentSessionResultsDateRange.last}
-                                  formatString={
-                                    sessionData?.user.preferences?.dateFormat +
-                                    " " +
-                                    sessionData?.user.preferences?.timeFormat
-                                  }
-                                  timezone={
-                                    sessionData?.user.preferences?.timezone
-                                  }
-                                />
-                              </span>
-                            )}
-                        </CardDescription>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={() =>
-                          handleOpenChartOverlay({
-                            type: "donut",
-                            title: t("sessions.summary.recentResultsTitle"),
-                            data: recentSessionResultsChartData,
-                            isZoomed: true,
-                          })
-                        }
-                      >
-                        <Maximize2 className="h-4 w-4" />
-                        <span className="sr-only">
-                          {tCommon("actions.expand")}
-                        </span>
-                      </Button>
-                    </CardHeader>
-                    <CardContent className="flex justify-center items-center p-2">
-                      {isLoadingRecentSessionResults ? (
-                        <LoadingSpinner />
-                      ) : recentSessionResultsChartData.length > 0 ? (
-                        <RecentResultsDonut
-                          data={recentSessionResultsChartData}
-                        />
-                      ) : (
-                        <p className="text-sm text-muted-foreground text-center px-4 h-[210px] flex items-center justify-center">
-                          {t("sessions.summary.noRecentResults")}
-                        </p>
-                      )}
-                    </CardContent>
-                    <CardFooter className="flex justify-center items-center">
-                      {!isLoadingRecentSessionResults &&
-                        recentSessionResultsChartData.length > 0 && (
-                          <span className="font-semibold">{`${recentSessionResultsSuccessRate.toFixed(1)}% ${tCommon("labels.successRate")}`}</span>
+              <CollapsibleSummarySection
+                storageKey={`tpi.sessions.${numericProjectId}.summaryCollapsed`}
+              >
+                <SummaryCardGrid>
+                  {/* Card 1: Work Distribution - (Modified above) */}
+                  {(isLoadingIncomplete ||
+                    (workDistributionChartData.children &&
+                      workDistributionChartData.children.length > 0)) && (
+                    <Card>
+                      <CardHeader className="pb-2 flex flex-row items-start justify-between">
+                        <div>
+                          <CardTitle className="font-medium">
+                            {t("runs.summary.workDistributionTitle")}
+                          </CardTitle>
+                          <CardDescription>
+                            <div className="flex flex-row gap-1">
+                              <p>
+                                {t(
+                                  "sessions.summary.workDistributionDescription"
+                                )}
+                              </p>
+                              <p>
+                                {toHumanReadable(totalSunburstEstimate, {
+                                  isSeconds: true,
+                                })}
+                              </p>
+                            </div>
+                          </CardDescription>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() =>
+                            handleOpenChartOverlay({
+                              type: "sunburst",
+                              title: t("runs.summary.workDistributionTitle"),
+                              data: workDistributionChartData,
+                              projectId: projectId,
+                              onLegendDataGenerated: handleSunburstLegend,
+                              onTotalCalculated: handleSunburstTotal,
+                              onSessionClick: handleSessionSunburstClick,
+                              isZoomed: true,
+                            })
+                          }
+                        >
+                          <Maximize2 className="h-4 w-4" />
+                          <span className="sr-only">
+                            {tCommon("actions.expand")}
+                          </span>
+                        </Button>
+                      </CardHeader>
+                      <CardContent className="flex justify-center items-center p-2">
+                        {isLoadingIncomplete ? (
+                          <LoadingSpinner />
+                        ) : workDistributionChartData.children &&
+                          workDistributionChartData.children.length > 0 ? (
+                          <SummarySunburstChart
+                            data={workDistributionChartData}
+                            projectId={projectId}
+                            onLegendDataGenerated={handleSunburstLegend}
+                            onTotalCalculated={handleSunburstTotal}
+                            onSessionClick={handleSessionSunburstClick}
+                          />
+                        ) : (
+                          <p className="text-sm text-muted-foreground text-center px-4 h-[210px] flex items-center justify-center">
+                            {t("runs.summary.noWorkDistributionData")}
+                          </p>
                         )}
-                    </CardFooter>
-                  </Card>
-                )}
+                      </CardContent>
+                    </Card>
+                  )}
 
-                {/* Card 3: Session Completion Trend - Conditional Render */}
-                {(isLoadingChartData ||
-                  completedSessionsMonthlyData.length > 0) && (
-                  <Card>
-                    <CardHeader className="pb-2 flex flex-row items-start justify-between">
-                      <div>
-                        <CardTitle className="font-medium">
-                          {t("sessions.summary.completionTrendTitle6Mo")}
-                        </CardTitle>
-                        <CardDescription>
-                          {t("sessions.summary.completionTrendDescription")}
-                        </CardDescription>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={() =>
-                          handleOpenChartOverlay({
-                            type: "line",
-                            title: t(
-                              "sessions.summary.completionTrendTitle6Mo"
-                            ),
-                            data: completedSessionsMonthlyData,
-                            isZoomed: true,
-                          })
-                        }
-                      >
-                        <Maximize2 className="h-4 w-4" />
-                        <span className="sr-only">
-                          {tCommon("actions.expand")}
-                        </span>
-                      </Button>
-                    </CardHeader>
-                    <CardContent className="p-2">
-                      {isLoadingChartData ? (
-                        <LoadingSpinner />
-                      ) : completedSessionsMonthlyData.length > 0 ? (
-                        <CompletedRunsLineChart
-                          data={completedSessionsMonthlyData}
-                        />
-                      ) : (
-                        <p className="text-sm text-muted-foreground text-center px-4 h-[210px] flex items-center justify-center">
-                          {t("sessions.summary.noCompletedSessions6Mo")}
-                        </p>
-                      )}
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
+                  {/* Card 2: Recent Session Results - Conditional Render */}
+                  {(isLoadingRecentSessionResults ||
+                    recentSessionResultsChartData.length > 0) && (
+                    <Card>
+                      <CardHeader className="pb-2 flex flex-row items-start justify-between">
+                        <div>
+                          <CardTitle className="font-medium">
+                            {t("sessions.summary.recentResultsTitle")}
+                          </CardTitle>
+                          <CardDescription className="flex flex-col">
+                            {!isLoadingRecentSessionResults &&
+                              recentSessionResultsDateRange.first &&
+                              recentSessionResultsDateRange.last && (
+                                <span>
+                                  <DateFormatter
+                                    date={recentSessionResultsDateRange.first}
+                                    formatString={
+                                      sessionData?.user.preferences
+                                        ?.dateFormat +
+                                      " " +
+                                      sessionData?.user.preferences?.timeFormat
+                                    }
+                                    timezone={
+                                      sessionData?.user.preferences?.timezone
+                                    }
+                                  />
+                                  {" – "}
+                                  <DateFormatter
+                                    date={recentSessionResultsDateRange.last}
+                                    formatString={
+                                      sessionData?.user.preferences
+                                        ?.dateFormat +
+                                      " " +
+                                      sessionData?.user.preferences?.timeFormat
+                                    }
+                                    timezone={
+                                      sessionData?.user.preferences?.timezone
+                                    }
+                                  />
+                                </span>
+                              )}
+                          </CardDescription>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() =>
+                            handleOpenChartOverlay({
+                              type: "donut",
+                              title: t("sessions.summary.recentResultsTitle"),
+                              data: recentSessionResultsChartData,
+                              isZoomed: true,
+                            })
+                          }
+                        >
+                          <Maximize2 className="h-4 w-4" />
+                          <span className="sr-only">
+                            {tCommon("actions.expand")}
+                          </span>
+                        </Button>
+                      </CardHeader>
+                      <CardContent className="flex justify-center items-center p-2">
+                        {isLoadingRecentSessionResults ? (
+                          <LoadingSpinner />
+                        ) : recentSessionResultsChartData.length > 0 ? (
+                          <RecentResultsDonut
+                            data={recentSessionResultsChartData}
+                          />
+                        ) : (
+                          <p className="text-sm text-muted-foreground text-center px-4 h-[210px] flex items-center justify-center">
+                            {t("sessions.summary.noRecentResults")}
+                          </p>
+                        )}
+                      </CardContent>
+                      <CardFooter className="flex justify-center items-center">
+                        {!isLoadingRecentSessionResults &&
+                          recentSessionResultsChartData.length > 0 && (
+                            <span className="font-semibold">{`${recentSessionResultsSuccessRate.toFixed(1)}% ${tCommon("labels.successRate")}`}</span>
+                          )}
+                      </CardFooter>
+                    </Card>
+                  )}
+
+                  {/* Card 3: Session Completion Trend - Conditional Render */}
+                  {(isLoadingChartData ||
+                    completedSessionsMonthlyData.length > 0) && (
+                    <Card>
+                      <CardHeader className="pb-2 flex flex-row items-start justify-between">
+                        <div>
+                          <CardTitle className="font-medium">
+                            {t("sessions.summary.completionTrendTitle6Mo")}
+                          </CardTitle>
+                          <CardDescription>
+                            {t("sessions.summary.completionTrendDescription")}
+                          </CardDescription>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() =>
+                            handleOpenChartOverlay({
+                              type: "line",
+                              title: t(
+                                "sessions.summary.completionTrendTitle6Mo"
+                              ),
+                              data: completedSessionsMonthlyData,
+                              isZoomed: true,
+                            })
+                          }
+                        >
+                          <Maximize2 className="h-4 w-4" />
+                          <span className="sr-only">
+                            {tCommon("actions.expand")}
+                          </span>
+                        </Button>
+                      </CardHeader>
+                      <CardContent className="p-2">
+                        {isLoadingChartData ? (
+                          <LoadingSpinner />
+                        ) : completedSessionsMonthlyData.length > 0 ? (
+                          <CompletedRunsLineChart
+                            data={completedSessionsMonthlyData}
+                          />
+                        ) : (
+                          <p className="text-sm text-muted-foreground text-center px-4 h-[210px] flex items-center justify-center">
+                            {t("sessions.summary.noCompletedSessions6Mo")}
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  )}
+                </SummaryCardGrid>
+              </CollapsibleSummarySection>
               {/* --- End Summary Metrics Display --- */}
+
+              <SessionFilterChips
+                filters={sessionFilters}
+                onChange={setSessionFilters}
+              />
 
               {/* --- Start Restored Tabs Component --- */}
               <Tabs value={activeTab} onValueChange={handleTabChange}>
                 <TabsList className="w-full">
                   <TabsTrigger value="active" className="w-1/2">
+                    <CircleDot className="h-4 w-4 me-2" />
                     {t("common.fields.isActive")}
                   </TabsTrigger>
                   <TabsTrigger value="completed" className="w-1/2">
+                    <CircleCheck className="h-4 w-4 me-2" />
                     {t("common.fields.completed")}
                   </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="active">
                   <div className="flex flex-col">
-                    {incompleteSessions?.length === 0 ? (
+                    {visibleIncompleteSessions.length === 0 ? (
                       <div className="mt-4 flex flex-col items-center justify-center gap-4">
                         <p className="text-center text-muted-foreground">
-                          {t("common.empty.activeSessions")}
+                          {sessionFiltersActive
+                            ? t("sessions.empty.noMatchingActive")
+                            : t("common.empty.activeSessions")}
                         </p>
-                        {canAddEditSession && (
+                        {/* No Create CTA while a chip is on: the project may
+                            well have active sessions, just none of the user's,
+                            so offering to create one answers the wrong
+                            question. */}
+                        {canAddEditSession && !sessionFiltersActive && (
                           <>
                             <Button
                               variant="default"
@@ -983,7 +1055,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
                       </div>
                     ) : (
                       <SessionDisplay
-                        testSessions={incompleteSessions || []}
+                        testSessions={visibleIncompleteSessions}
                         milestones={transformedMilestones}
                         canAddEdit={showAddButtonPerm}
                         canCloseSession={showCompleteOptionPerm}
@@ -1040,7 +1112,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
                     {/* Sessions Display */}
                     {completedSessions?.length === 0 ? (
                       <div className="mt-4 text-center text-muted-foreground">
-                        {completedSessionsSearchString
+                        {completedSessionsSearchString || sessionFiltersActive
                           ? t("sessions.empty.noMatchingCompleted")
                           : t("common.empty.completedSessions")}
                       </div>

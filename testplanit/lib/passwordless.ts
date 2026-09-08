@@ -1,5 +1,5 @@
 import { createHash, createHmac, randomBytes, timingSafeEqual } from "crypto";
-import type { PrismaClient } from "@prisma/client";
+import type { DbClient } from "~/lib/zenstack";
 
 /**
  * Device-bound magic-link + OTP sign-in ("passwordless").
@@ -45,9 +45,14 @@ export const PASSWORDLESS_CODE_LENGTH = 8;
  */
 export const PASSWORDLESS_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTVWXYZ23456789";
 
-/** Feature flag: enables the device-bound flow for this deployment. */
+/**
+ * Feature flag: the device-bound flow (scanner-proof magic link + sign-in
+ * code) is the default. A deployment opts out by setting
+ * PASSWORDLESS_DEVICE_BOUND to "false", which falls back to the stock NextAuth
+ * email flow (a plain clickable link).
+ */
 export function isPasswordlessDeviceBoundEnabled(): boolean {
-  return process.env.PASSWORDLESS_DEVICE_BOUND === "true";
+  return process.env.PASSWORDLESS_DEVICE_BOUND?.toLowerCase() !== "false";
 }
 
 function secureCookiesEnabled(): boolean {
@@ -288,9 +293,9 @@ export interface CreatedPendingAuth {
   expiresAt: Date;
 }
 
-// The subset of PrismaClient the flow touches — keeps tests free to pass a
+// The subset of the db client the flow touches — keeps tests free to pass a
 // narrow mock and keeps this module decoupled from the hooked client.
-export type PendingAuthDb = Pick<PrismaClient, "pendingAuth" | "user">;
+export type PendingAuthDb = Pick<DbClient, "pendingAuth" | "user">;
 
 /**
  * Create a new pending sign-in for an email address.
@@ -316,7 +321,10 @@ export async function createPendingAuth(
   const expiresAt = new Date(Date.now() + PASSWORDLESS_TTL_MINUTES * 60_000);
 
   await db.pendingAuth.updateMany({
-    where: { email: args.email, status: "PENDING" },
+    where: {
+      email: { equals: args.email, mode: "insensitive" },
+      status: "PENDING",
+    },
     data: { status: "SUPERSEDED" },
   });
 
@@ -504,8 +512,7 @@ export const PASSWORDLESS_ERRORS = {
 export function authorizePasswordlessComplete(prisma: PendingAuthDb) {
   return async (
     credentials:
-      | Partial<Record<"pendingId" | "linkToken" | "code", string>>
-      | undefined,
+      Partial<Record<"pendingId" | "linkToken" | "code", string>> | undefined,
     req: { headers?: Record<string, unknown> }
   ): Promise<{ id: string; email: string; name: string | null } | null> => {
     if (!isPasswordlessDeviceBoundEnabled()) return null;
@@ -556,10 +563,17 @@ export function authorizePasswordlessComplete(prisma: PendingAuthDb) {
       );
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: result.email },
-      select: { id: true, email: true, name: true, isActive: true },
-    });
+    // Emails match case-insensitively; an exact-cased row wins when
+    // case-variant duplicates exist.
+    const user =
+      (await prisma.user.findUnique({
+        where: { email: result.email },
+        select: { id: true, email: true, name: true, isActive: true },
+      })) ??
+      (await prisma.user.findFirst({
+        where: { email: { equals: result.email, mode: "insensitive" } },
+        select: { id: true, email: true, name: true, isActive: true },
+      }));
     if (!user || !user.isActive) {
       // Row was created for an unknown address (anti-enumeration) or the
       // account was deactivated since the request. Generic failure.

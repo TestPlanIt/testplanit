@@ -44,11 +44,9 @@ export function SortableDatasetRow({ id, children }: SortableDatasetRowProps) {
   //  - if active is moving DOWN (activeIndex < overIndex), draw below the over row
   //  - if active is moving UP (activeIndex > overIndex), draw above the over row
   const overData = over?.data?.current as
-    | { sortable?: { index?: number } }
-    | undefined;
+    { sortable?: { index?: number } } | undefined;
   const activeData = active?.data?.current as
-    | { sortable?: { index?: number } }
-    | undefined;
+    { sortable?: { index?: number } } | undefined;
   let dropIndicator: "top" | "bottom" | null = null;
   if (over && active && over.id === id && active.id !== id) {
     const overIndex = overData?.sortable?.index ?? index;

@@ -2,17 +2,26 @@ import { LLM_FEATURES, SYNC_RETRY_PROFILE } from "@/lib/llm/constants";
 import { LlmManager } from "@/lib/llm/services/llm-manager.service";
 import { PromptResolver } from "@/lib/llm/services/prompt-resolver.service";
 import type { LlmRequest, LlmResponse } from "@/lib/llm/types";
-import { prisma } from "@/lib/prisma";
-import { ProjectAccessType } from "@prisma/client";
+import { baseDb } from "@/lib/db";
+import { ProjectAccessType } from "~/zenstack/models";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
+import { IntegrationManager } from "~/lib/integrations/IntegrationManager";
+import type {
+  IssueAdapter,
+  IssueComment,
+  LinkedIssueRef,
+} from "~/lib/integrations/adapters/IssueAdapter";
 import { authOptions } from "~/server/auth";
 import {
   buildOutlineSystemPrompt,
   buildOutlineUserPrompt,
-  fetchHierarchyContext,
+  fetchExistingCasesContext,
+  fetchLinkedIssuesContext,
   type GenerationContext,
+  type IssueCaseLinkRef,
   type IssueData,
+  type LinkedIssueContext,
   type TestCaseOutline,
 } from "../shared";
 import {
@@ -22,6 +31,21 @@ import {
   isTimeoutError,
   recordWorkingBudget,
 } from "./adaptive-budget";
+import { classifyLlmParseFailure } from "../classify-parse-failure";
+import { randomUUID } from "crypto";
+import {
+  contextImageTokens,
+  sanitizeContextImages,
+  toContextImageMeta,
+  toImageParts,
+  type ContextImage,
+} from "~/lib/llm/context-images";
+import { stashContextImages } from "~/lib/llm/context-image-stash";
+import {
+  resolveEditorImages,
+  resolveIssueAttachmentImages,
+  type ContextImagesRequestBody,
+} from "../context-image-sources";
 
 export async function POST(request: NextRequest) {
   try {
@@ -34,12 +58,41 @@ export async function POST(request: NextRequest) {
     // The outline endpoint accepts `includeParameters` for uniform wizard
     // plumbing but ignores it — outlines are titles + summaries only.
     // The expand endpoint applies the flag.
-    const { projectId, issue, context, quantity } = body as {
+    const {
+      projectId,
+      issue,
+      context,
+      quantity,
+      enrichFromIssue,
+      integrationId: sourceIntegrationId,
+      issueRef,
+      contextImages: contextImagesRequest,
+      documentDoc,
+    } = body as {
       projectId: number;
       issue: IssueData;
       context: GenerationContext;
       quantity?: string;
       includeParameters?: boolean;
+      // Opt-in: fetch the source issue's comments + one-hop linked issues from
+      // its tracker and fold them into the prompt. Set only for real synced
+      // issues (repository issue-search flow, milestone SYNCED rows). Left
+      // false for documents, URLs, and manual issues so we never make a
+      // pointless/incorrect adapter call.
+      enrichFromIssue?: boolean;
+      // Optional source integration for enrichment. Milestone-issue generation
+      // passes the issue's own integration; the repository wizard omits it and
+      // falls back to the project's first active integration.
+      integrationId?: number;
+      issueRef?: IssueCaseLinkRef;
+      // Opaque selectors for images to include as generation context —
+      // attachment ids of the source issue and/or editor image srcs. The
+      // server re-derives candidates from its own sources and intersects;
+      // client-supplied URLs/bytes are never accepted.
+      contextImages?: ContextImagesRequestBody;
+      // Document-tab rich text (TipTap JSON). Source of truth for editor
+      // image srcs; resolution only reads own storage / data URIs.
+      documentDoc?: unknown;
     };
 
     if (!projectId || !issue) {
@@ -83,9 +136,14 @@ export async function POST(request: NextRequest) {
           ],
         };
 
-    const project = await prisma.projects.findFirst({
+    const project = await baseDb.projects.findFirst({
       where: projectAccessWhere,
-      select: { id: true },
+      include: {
+        projectIntegrations: {
+          where: { isActive: true },
+          include: { integration: true },
+        },
+      },
     });
 
     if (!project) {
@@ -95,8 +153,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const manager = LlmManager.getInstance(prisma);
-    const resolver = new PromptResolver(prisma);
+    const manager = LlmManager.getInstance(baseDb);
+    const resolver = new PromptResolver(baseDb);
     const resolvedPrompt = await resolver.resolve(
       LLM_FEATURES.TEST_CASE_GENERATION,
       projectId
@@ -123,7 +181,7 @@ export async function POST(request: NextRequest) {
     const systemPrompt = buildOutlineSystemPrompt(quantity, styleGuidance);
 
     let maxTokens = resolvedPrompt.maxOutputTokens ?? 2048;
-    const providerConfig = await (prisma as any).llmProviderConfig.findFirst({
+    const providerConfig = await (baseDb as any).llmProviderConfig.findFirst({
       where: { llmIntegrationId: resolved.integrationId },
     });
     if (providerConfig) {
@@ -136,6 +194,113 @@ export async function POST(request: NextRequest) {
     const integrationId = resolved.integrationId;
     const { maxRetries, baseDelayMs } = SYNC_RETRY_PROFILE;
 
+    // --- Issue enrichment (parity with the single-shot /stream path) ---
+    // Resolve the issue-tracking adapter best-effort. Prefer an explicit
+    // source integration (milestone issues carry their own), otherwise fall
+    // back to the project's first active integration (the repository wizard's
+    // flow). A client-supplied integrationId must belong to the project.
+    let adapter: IssueAdapter | null = null;
+    const allowedIntegrationIds = new Set(
+      project.projectIntegrations.map((pi) => pi.integrationId)
+    );
+    const targetIntegrationId =
+      sourceIntegrationId && allowedIntegrationIds.has(sourceIntegrationId)
+        ? sourceIntegrationId
+        : project.projectIntegrations[0]?.integrationId;
+    // The adapter serves two independent consumers: issue enrichment
+    // (comments + linked issues) and attachment-image context. Either one
+    // justifies resolving it; the enrichment fetches below stay gated on
+    // `enrichFromIssue` so an attachments-only request doesn't grow scope.
+    const wantsAttachmentImages =
+      (contextImagesRequest?.attachmentIds?.length ?? 0) > 0;
+    if (
+      (enrichFromIssue || wantsAttachmentImages) &&
+      targetIntegrationId &&
+      issue.key
+    ) {
+      try {
+        adapter = await IntegrationManager.getInstance().getAdapter(
+          String(targetIntegrationId)
+        );
+      } catch (err) {
+        console.warn(
+          `[outline] Failed to resolve issue-tracking adapter for project %s:`,
+          projectId,
+          err
+        );
+        adapter = null;
+      }
+    }
+
+    // Source-issue comments come from the adapter server-side (server is the
+    // source of truth). Fail-soft to [] — e.g. manual issues with no adapter.
+    let sourceComments: IssueComment[] = [];
+    if (enrichFromIssue && adapter?.getIssueComments && issue.key) {
+      try {
+        sourceComments = await adapter.getIssueComments(issue.key);
+      } catch (err) {
+        console.warn(
+          `[outline] Failed to fetch source-issue comments for %s:`,
+          issue.key,
+          err
+        );
+        sourceComments = [];
+      }
+    }
+    const issueWithComments: IssueData = { ...issue, comments: sourceComments };
+
+    // One-hop linked issues, fetched ONCE here (outside the adaptive-budget
+    // retry loop). They don't change between retries, and re-fetching would
+    // re-hit the adapter. Bounded by the starting context budget; folder
+    // hierarchy cases claim whatever budget the linked issues don't use and
+    // shrink first on a timeout retry.
+    // --- Context images (issue attachments; editor images arrive with the
+    // document-tab rework). Resolved before the budget so the flat per-image
+    // token charge is subtracted from what text context may claim. ---
+    const sourceProvider = project.projectIntegrations.find(
+      (pi) => pi.integrationId === targetIntegrationId
+    )?.integration.provider;
+    const resolvedImages: ContextImage[] = [
+      ...(await resolveIssueAttachmentImages({
+        adapter,
+        issueKey: issue.key,
+        attachmentIds: contextImagesRequest?.attachmentIds,
+        source:
+          sourceProvider === "AZURE_DEVOPS"
+            ? "ado-attachment"
+            : "jira-attachment",
+      })),
+      ...(await resolveEditorImages(
+        documentDoc,
+        contextImagesRequest?.editorSrcs
+      )),
+    ];
+    const { included: sanitizedImages, skipped: skippedImages } =
+      sanitizeContextImages(resolvedImages);
+    const visionSupported =
+      sanitizedImages.length > 0
+        ? await manager.supportsVision(integrationId, resolved.model)
+        : true;
+    const attachedImages = visionSupported ? sanitizedImages : [];
+    const imagesOmittedForVision = visionSupported ? 0 : sanitizedImages.length;
+    const imageTokens = contextImageTokens(attachedImages);
+
+    const startingBudget = Math.max(
+      0,
+      getStartingBudget(integrationId) - imageTokens
+    );
+    const linkedResult: {
+      included: LinkedIssueContext[];
+      dropped: LinkedIssueRef[];
+      tokensUsed: number;
+    } =
+      enrichFromIssue &&
+      startingBudget > 0 &&
+      adapter?.getLinkedIssues &&
+      issue.key
+        ? await fetchLinkedIssuesContext(adapter, issue.key, startingBudget)
+        : { included: [], dropped: [], tokensUsed: 0 };
+
     // Run the LLM with an adaptive existing-cases context budget. On a
     // timeout we halve the budget and retry within the same request, up to
     // OUTLINE_RETRY_MAX_DEPTH halvings. The smaller working budget is
@@ -146,27 +311,45 @@ export async function POST(request: NextRequest) {
     ): Promise<{ response: LlmResponse; finalBudget: number }> => {
       const effectiveBudget = budget < OUTLINE_CTX_MIN_USEFUL ? 0 : budget;
 
-      const hierarchyContext =
-        effectiveBudget > 0 && typeof context.folderContext === "number"
-          ? await fetchHierarchyContext(
-              prisma,
+      // Linked issues (fetched once above) get first claim on the budget.
+      const caseContextBudget = Math.max(
+        0,
+        effectiveBudget - linkedResult.tokensUsed
+      );
+      const existingCases =
+        caseContextBudget > 0
+          ? await fetchExistingCasesContext(
+              baseDb,
               projectId,
-              context.folderContext,
-              effectiveBudget,
+              { folderId: context.folderContext, issueRef },
+              caseContextBudget,
               "names"
             )
           : [];
 
       const enrichedContext: GenerationContext = {
         ...context,
-        existingTestCases: hierarchyContext,
+        existingTestCases: existingCases,
+        linkedIssues: linkedResult.included,
       };
-      const userPrompt = buildOutlineUserPrompt(issue, enrichedContext);
+      const userPrompt = buildOutlineUserPrompt(
+        issueWithComments,
+        enrichedContext
+      );
 
       const llmRequest: LlmRequest = {
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
+          {
+            role: "user",
+            content:
+              attachedImages.length > 0
+                ? [
+                    { type: "text" as const, text: userPrompt },
+                    ...toImageParts(attachedImages),
+                  ]
+                : userPrompt,
+          },
         ],
         temperature: resolvedPrompt.temperature,
         maxTokens,
@@ -177,6 +360,12 @@ export async function POST(request: NextRequest) {
           projectId,
           issueKey: issue.key,
           timestamp: new Date().toISOString(),
+          ...(attachedImages.length > 0
+            ? {
+                imageCount: attachedImages.length,
+                imageTokensEstimated: imageTokens,
+              }
+            : {}),
         },
       };
 
@@ -203,14 +392,14 @@ export async function POST(request: NextRequest) {
       }
     };
 
-    const startingBudget = getStartingBudget(integrationId);
     const { response, finalBudget } = await runWithBudget(startingBudget, 0);
 
     // Remember the budget that worked so the next call starts at a sane size
     // (then grows on subsequent successes via getStartingBudget).
     recordWorkingBudget(integrationId, finalBudget);
 
-    const raw = response.content.trim();
+    const raw =
+      typeof response.content === "string" ? response.content.trim() : "";
     const finishReason = response.finishReason;
     let parsed: { outlines: TestCaseOutline[] };
 
@@ -230,7 +419,7 @@ export async function POST(request: NextRequest) {
       console.error("Response length:", responseLength);
       console.error("Response preview:", responsePreview);
 
-      const { code, details, suggestions } = classifyOutlineParseFailure({
+      const { code, details, suggestions } = classifyLlmParseFailure({
         raw,
         finishReason,
         errMsg,
@@ -271,88 +460,55 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ outlines: parsed.outlines });
+    // Stash the attached images so the parallel expand calls can reuse them
+    // server-side without re-downloading (bytes never round-trip through the
+    // client). Fail-soft: a stash failure only costs expand-time images.
+    let contextImagesId: string | undefined;
+    if (attachedImages.length > 0) {
+      contextImagesId = randomUUID();
+      try {
+        await stashContextImages(
+          contextImagesId,
+          { userId: session.user.id, projectId },
+          attachedImages
+        );
+      } catch (err) {
+        console.warn(`[outline] Failed to stash context images:`, err);
+        contextImagesId = undefined;
+      }
+    }
+
+    // Return the assembled enrichment so the client can thread it into each
+    // expand call (fetched once here) and surface any linked issues that were
+    // dropped for budget. `comments`/`linkedIssues` are empty for un-enriched
+    // (e.g. manual) issues.
+    return NextResponse.json({
+      outlines: parsed.outlines,
+      enrichment: {
+        comments: sourceComments,
+        linkedIssues: linkedResult.included,
+        droppedLinkedIssues: linkedResult.dropped.map(
+          (r) => r.key ?? String(r.id)
+        ),
+        // Image context actually used (metadata only — never bytes), plus
+        // everything that was requested and did not go, with reasons.
+        contextImages: {
+          contextId: contextImagesId,
+          included: toContextImageMeta(attachedImages),
+          skipped: skippedImages,
+          imagesOmittedForVision,
+        },
+      },
+    });
   } catch (error) {
     console.error("Error in POST /api/llm/generate-test-cases/outline:", error);
     return NextResponse.json(
       {
         error: "Failed to generate outlines",
+        code: "generic",
         details: error instanceof Error ? error.message : String(error),
       },
       { status: 500 }
     );
   }
-}
-
-function classifyOutlineParseFailure(input: {
-  raw: string;
-  finishReason: string | undefined;
-  errMsg: string;
-}): { code: string; details: string; suggestions: string[] } {
-  const { raw, finishReason, errMsg } = input;
-  const trimmed = raw.trim();
-
-  if (!trimmed) {
-    return {
-      code: "generic",
-      details:
-        "The model returned an empty response. This is usually transient or a connectivity issue with the provider.",
-      suggestions: [
-        "Try again — empty responses are typically transient",
-        "Check the LLM integration's status page",
-        "Verify the model and API key in LLM settings",
-      ],
-    };
-  }
-
-  if (
-    finishReason === "length" ||
-    errMsg.includes("Unexpected end") ||
-    (!trimmed.endsWith("}") && !trimmed.endsWith("]"))
-  ) {
-    return {
-      code: "generic",
-      details: `The model's response was cut off before it finished${
-        finishReason === "length" ? " (hit the max-tokens limit)" : ""
-      }. The JSON was incomplete and could not be parsed.`,
-      suggestions: [
-        'Try a smaller quantity (e.g. "Few" instead of "Many")',
-        "Shorten the issue description or testing guidance",
-        "Raise the model's max-output-tokens in LLM settings",
-      ],
-    };
-  }
-
-  const refusalMarkers = [
-    "i cannot",
-    "i can't",
-    "i am unable",
-    "i'm unable",
-    "i'm not able",
-    "sorry,",
-    "as an ai",
-  ];
-  const lower = trimmed.toLowerCase();
-  if (refusalMarkers.some((m) => lower.includes(m)) && !lower.includes("{")) {
-    return {
-      code: "generic",
-      details:
-        "The model returned a refusal or explanatory text instead of JSON. The issue content may have triggered safety filters or the prompt may be unclear.",
-      suggestions: [
-        "Rephrase the issue description or testing guidance",
-        "Try a different model — providers have different safety thresholds",
-        "Remove any content that might look like instructions to the model",
-      ],
-    };
-  }
-
-  return {
-    code: "generic",
-    details: `The model returned text but its JSON could not be parsed (${errMsg}). The response preview is included for debugging.`,
-    suggestions: [
-      "Try again — JSON-format slips are often transient",
-      "Switch to a model with stronger JSON adherence (e.g. with native JSON mode)",
-      "Check server logs for the full raw response",
-    ],
-  };
 }

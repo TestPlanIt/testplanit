@@ -1,13 +1,24 @@
-import { NotificationMode } from "@prisma/client";
+import { NotificationMode } from "~/zenstack/models";
 import { render, screen, waitFor } from "@testing-library/react";
 import { useSession } from "next-auth/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { useFindUniqueAppConfig, useUpdateUserPreferences } from "~/lib/hooks";
 import { NotificationPreferences } from "./NotificationPreferences";
+
+// v3: component reads appConfig.useFindUnique + userPreferences.useUpdate via
+// useClientQueries(schema).
+const { useFindUniqueAppConfig, useUpdateUserPreferences } = vi.hoisted(() => ({
+  useFindUniqueAppConfig: vi.fn(),
+  useUpdateUserPreferences: vi.fn(),
+}));
 
 // Mock dependencies
 vi.mock("next-auth/react");
-vi.mock("~/lib/hooks");
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    appConfig: { useFindUnique: useFindUniqueAppConfig },
+    userPreferences: { useUpdate: useUpdateUserPreferences },
+  }),
+}));
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string, _values?: any) => {
     const translations: Record<string, string> = {

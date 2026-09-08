@@ -1,10 +1,11 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { useEffect } from "react";
-import { useFindFirstRepositoryCases } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 
 export default function TestCaseDetails() {
@@ -13,7 +14,9 @@ export default function TestCaseDetails() {
   const { caseId } = useParams();
   const t = useTranslations();
 
-  const { data, isLoading } = useFindFirstRepositoryCases({
+  const { data, isLoading } = useClientQueries(
+    schema
+  ).repositoryCases.useFindFirst({
     where: { id: Number(caseId), isDeleted: false },
     select: { projectId: true },
   });

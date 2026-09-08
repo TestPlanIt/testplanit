@@ -1,7 +1,7 @@
-import { Prisma } from "@prisma/client";
+import type { JsonValue } from "@zenstackhq/orm";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
 import { AUTOMATED_TEST_RUN_TYPES } from "~/utils/testResultTypes";
 
@@ -13,8 +13,8 @@ export type CompletedTestRunsResponse = {
     testRunType: string;
     completedAt: Date | null;
     createdAt: Date;
-    note: Prisma.JsonValue | null;
-    docs: Prisma.JsonValue | null;
+    note: JsonValue | null;
+    docs: JsonValue | null;
     projectId: number;
     configId: number | null;
     milestoneId: number | null;
@@ -100,6 +100,7 @@ export async function GET(req: NextRequest) {
     const pageSize = Number(searchParams.get("pageSize")) || 25;
     const search = searchParams.get("search") || "";
     const runType = searchParams.get("runType") || "both"; // both, manual, automated
+    const participant = searchParams.get("participant") || "all"; // all, mine
 
     if (isNaN(projectId)) {
       return NextResponse.json(
@@ -130,15 +131,34 @@ export async function GET(req: NextRequest) {
       where.testRunType = { in: AUTOMATED_TEST_RUN_TYPES };
     }
 
+    // "Runs I'm involved in": created the run, is assigned a case in it, or
+    // recorded a result in it — the same three roles the row's contributor
+    // avatars credit (see TestRunItem's MemberList).
+    if (participant === "mine") {
+      where.OR = [
+        { createdById: session.user.id },
+        {
+          testCases: {
+            some: { isDeleted: false, assignedToId: session.user.id },
+          },
+        },
+        {
+          results: {
+            some: { isDeleted: false, executedById: session.user.id },
+          },
+        },
+      ];
+    }
+
     // Get total count for pagination
-    const totalCount = await prisma.testRuns.count({ where });
+    const totalCount = await baseDb.testRuns.count({ where });
 
     // Calculate pagination
     const skip = (page - 1) * pageSize;
     const pageCount = Math.ceil(totalCount / pageSize);
 
     // Fetch paginated runs with optimized select
-    const runs = await prisma.testRuns.findMany({
+    const runs = await baseDb.testRuns.findMany({
       where,
       orderBy: [{ completedAt: "desc" }],
       skip,

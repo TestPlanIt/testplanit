@@ -124,6 +124,71 @@ describe("GET /api/integrations/oauth/[type]/callback", () => {
     expect(location).toContain("oauth_callback_failed");
   });
 
+  it("redirects to the returnUrl stored with the OAuth state, with success appended", async () => {
+    verifyOAuthStateMock.mockResolvedValue({
+      valid: true,
+      userId: "user-1",
+      returnUrl: "/integrations/auth-complete",
+    });
+
+    const response = await GET(buildGet("?code=abc&state=xyz"), params);
+
+    expect([302, 307]).toContain(response.status);
+    const location = response.headers.get("location") ?? "";
+    expect(location).toContain("/integrations/auth-complete");
+    expect(location).toContain("success=connected");
+  });
+
+  it("skips the integration status flip when the integration is already connected", async () => {
+    // A regular project member re-authorizing: Integration updates are
+    // ADMIN-only, so the flip must not even be attempted.
+    integrationFindManyMock.mockResolvedValue([
+      {
+        id: 18,
+        provider: "GITEA",
+        status: "ACTIVE",
+        settings: { connected: true },
+      },
+    ]);
+
+    const response = await GET(buildGet("?code=abc&state=xyz"), params);
+
+    expect([302, 307]).toContain(response.status);
+    expect(response.headers.get("location") ?? "").toContain(
+      "success=connected"
+    );
+    expect(integrationUpdateMock).not.toHaveBeenCalled();
+    expect(storeUserAuthMock).toHaveBeenCalled();
+  });
+
+  it("still succeeds when the status flip is denied by the access policy", async () => {
+    // First-connect shape but the caller lacks Integration update rights: the
+    // token exchange already succeeded, so the flow must not turn a policy
+    // denial into an error redirect.
+    integrationUpdateMock.mockRejectedValue(
+      new Error("denied by policy: integration entities failed 'update' check")
+    );
+
+    const response = await GET(buildGet("?code=abc&state=xyz"), params);
+
+    expect([302, 307]).toContain(response.status);
+    expect(response.headers.get("location") ?? "").toContain(
+      "success=connected"
+    );
+    expect(storeUserAuthMock).toHaveBeenCalled();
+  });
+
+  it("redirects invalid state to the auth-complete page every user can view", async () => {
+    verifyOAuthStateMock.mockResolvedValue({ valid: false });
+
+    const response = await GET(buildGet("?code=abc&state=xyz"), params);
+
+    expect([302, 307]).toContain(response.status);
+    const location = response.headers.get("location") ?? "";
+    expect(location).toContain("/integrations/auth-complete");
+    expect(location).toContain("invalid_state");
+  });
+
   it("builds the redirect from NEXTAUTH_URL, not the (internal) request host", async () => {
     // Behind the k8s ingress the request arrives with the pod hostname; the
     // post-auth redirect must use the public app URL or the browser lands on

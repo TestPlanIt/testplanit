@@ -10,8 +10,8 @@ vi.mock("~/server/auth", () => ({
   authOptions: {},
 }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     testRuns: {
       findUnique: vi.fn(),
     },
@@ -24,7 +24,7 @@ vi.mock("~/utils/testResultTypes", () => ({
 }));
 
 import { getServerSession } from "next-auth";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { isAutomatedTestRunType } from "~/utils/testResultTypes";
 
 describe("Test Run Summary API Route", () => {
@@ -66,6 +66,12 @@ describe("Test Run Summary API Route", () => {
   const mockElapsedResult = [{ totalElapsed: BigInt(1200) }];
   const mockEstimateResult = [{ totalEstimate: BigInt(600) }];
   const mockCommentsCount = [{ count: BigInt(2) }];
+  const mockResultWindow = [
+    {
+      firstResultAt: new Date("2026-07-16T10:00:00.000Z"),
+      lastResultAt: new Date("2026-07-22T15:30:00.000Z"),
+    },
+  ];
 
   const createRequest = (
     testRunId: string = "1",
@@ -82,13 +88,14 @@ describe("Test Run Summary API Route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (getServerSession as any).mockResolvedValue(mockSession);
-    (prisma.testRuns.findUnique as any).mockResolvedValue(mockTestRun);
+    (baseDb.testRuns.findUnique as any).mockResolvedValue(mockTestRun);
     (isAutomatedTestRunType as any).mockReturnValue(false);
-    (prisma.$queryRaw as any)
+    (baseDb.$queryRaw as any)
       .mockResolvedValueOnce(mockCommentsCount) // comments count
       .mockResolvedValueOnce(mockStatusCounts) // status counts
       .mockResolvedValueOnce(mockElapsedResult) // elapsed
-      .mockResolvedValueOnce(mockEstimateResult); // estimate
+      .mockResolvedValueOnce(mockEstimateResult) // estimate
+      .mockResolvedValueOnce(mockResultWindow); // first/last result
   });
 
   describe("Authentication", () => {
@@ -128,7 +135,7 @@ describe("Test Run Summary API Route", () => {
 
   describe("Not Found", () => {
     it("returns 404 when test run does not exist", async () => {
-      (prisma.testRuns.findUnique as any).mockResolvedValue(null);
+      (baseDb.testRuns.findUnique as any).mockResolvedValue(null);
 
       const [request, context] = createRequest();
       const response = await GET(request, context);
@@ -174,6 +181,34 @@ describe("Test Run Summary API Route", () => {
       expect(data.completionRate).toBeCloseTo(62.5, 1);
     });
 
+    it("returns the execution window from the earliest and latest result", async () => {
+      const [request, context] = createRequest();
+      const response = await GET(request, context);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.firstResultAt).toBe("2026-07-16T10:00:00.000Z");
+      expect(data.lastResultAt).toBe("2026-07-22T15:30:00.000Z");
+    });
+
+    it("returns a null execution window when the run has no results", async () => {
+      (baseDb.$queryRaw as any)
+        .mockReset()
+        .mockResolvedValueOnce(mockCommentsCount)
+        .mockResolvedValueOnce(mockStatusCounts)
+        .mockResolvedValueOnce(mockElapsedResult)
+        .mockResolvedValueOnce(mockEstimateResult)
+        .mockResolvedValueOnce([{ firstResultAt: null, lastResultAt: null }]);
+
+      const [request, context] = createRequest();
+      const response = await GET(request, context);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.firstResultAt).toBeNull();
+      expect(data.lastResultAt).toBeNull();
+    });
+
     it("converts BigInt elapsed to number", async () => {
       const [request, context] = createRequest();
       const response = await GET(request, context);
@@ -215,7 +250,7 @@ describe("Test Run Summary API Route", () => {
           },
         ],
       };
-      (prisma.testRuns.findUnique as any).mockResolvedValue(testRunWithIssues);
+      (baseDb.testRuns.findUnique as any).mockResolvedValue(testRunWithIssues);
 
       const [request, context] = createRequest();
       const response = await GET(request, context);
@@ -231,7 +266,7 @@ describe("Test Run Summary API Route", () => {
         ...mockTestRun,
         forecastManual: 9999,
       };
-      (prisma.testRuns.findUnique as any).mockResolvedValue(
+      (baseDb.testRuns.findUnique as any).mockResolvedValue(
         testRunWithForecast
       );
 
@@ -273,16 +308,17 @@ describe("Test Run Summary API Route", () => {
 
     beforeEach(() => {
       (isAutomatedTestRunType as any).mockReturnValue(true);
-      (prisma.testRuns.findUnique as any).mockResolvedValue({
+      (baseDb.testRuns.findUnique as any).mockResolvedValue({
         ...mockTestRun,
         testRunType: "JUNIT",
       });
       // Reset and re-mock for JUnit queries
-      (prisma.$queryRaw as any)
+      (baseDb.$queryRaw as any)
         .mockReset()
         .mockResolvedValueOnce(mockCommentsCount) // comments count
         .mockResolvedValueOnce(mockJUnitAggregates) // result aggregates
-        .mockResolvedValueOnce(mockJUnitTime); // total time
+        .mockResolvedValueOnce(mockJUnitTime) // total time
+        .mockResolvedValueOnce(mockResultWindow); // first/last result
     });
 
     it("returns junitSummary for automated test runs", async () => {
@@ -315,7 +351,7 @@ describe("Test Run Summary API Route", () => {
 
   describe("Error Handling", () => {
     it("returns 500 when database query fails", async () => {
-      (prisma.testRuns.findUnique as any).mockRejectedValue(
+      (baseDb.testRuns.findUnique as any).mockRejectedValue(
         new Error("DB Error")
       );
 

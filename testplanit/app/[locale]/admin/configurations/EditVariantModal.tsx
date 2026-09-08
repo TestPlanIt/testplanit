@@ -1,10 +1,11 @@
 "use client";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
-import { useUpdateConfigVariants } from "~/lib/hooks";
 import { Variant } from "./Categories";
 
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ import {
 } from "@/components/ui/dialog";
 
 import { HelpPopover } from "@/components/ui/help-popover";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 const FormSchema = (t: any) =>
   z.object({
@@ -51,7 +53,8 @@ export function EditVariantModal({
   onSave,
 }: EditVariantModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateConfigVariants } = useUpdateConfigVariants();
+  const { mutateAsync: updateConfigVariants } =
+    useClientQueries(schema).configVariants.useUpdate();
   const t = useTranslations("admin.configurations.variants.edit");
   const tCommon = useTranslations("common");
 
@@ -80,7 +83,7 @@ export function EditVariantModal({
       onClose();
       setIsSubmitting(false);
     } catch (err: any) {
-      if (err.info?.prisma && err.info?.code === "P2002") {
+      if (isUniqueConstraintError(err)) {
         form.setError("name", {
           type: "custom",
           message: tCommon("errors.variantNameExists"),

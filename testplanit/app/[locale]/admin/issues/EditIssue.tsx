@@ -1,7 +1,9 @@
 "use client";
-import { IntegrationProvider, Issue } from "@prisma/client";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
+import { IntegrationProvider } from "~/zenstack/models";
+import type { Issue } from "~/zenstack/models";
 import { useState } from "react";
-import { useFindUniqueIntegration, useUpdateIssue } from "~/lib/hooks";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useForm } from "react-hook-form";
@@ -98,10 +100,13 @@ export function EditIssue({ issue, open, onClose }: EditIssueProps) {
   const t = useTranslations("admin.issues.edit");
   const tCommon = useTranslations("common");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateIssue } = useUpdateIssue();
+  const { mutateAsync: updateIssue } =
+    useClientQueries(schema).issue.useUpdate();
 
   // Fetch integration details if issue has an integration
-  const { data: integration } = useFindUniqueIntegration(
+  const { data: integration } = useClientQueries(
+    schema
+  ).integration.useFindUnique(
     {
       where: { id: issue.integrationId || 0 },
     },

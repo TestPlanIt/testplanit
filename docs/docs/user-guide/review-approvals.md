@@ -21,7 +21,9 @@ Gates apply per workflow scope (Test Cases, Test Runs, Sessions) independently. 
 
 A request asks a reviewer (a specific user, or any holder of a chosen role) to approve a transition for a specific entity to a specific target state. The request includes an optional comment from the requester, and the reviewer leaves a comment with their decision.
 
-A request is one-shot: once it has been approved AND consumed by an actual transition, it can't be reused. Requesters can also cancel a request before a reviewer has decided.
+Approving a request performs the transition it asked for. The reviewer's decision moves the entity into the target state and consumes the approval in the same act, so the requester never has to go back and repeat the state change by hand.
+
+A request is one-shot: once it has been approved AND consumed by a transition, it can't be reused. While a request is still undecided, the requester can send its reviewer a reminder or cancel it outright.
 
 ### Strict transitive gates
 
@@ -54,7 +56,7 @@ Each project carries its own `Review Workflow` toggle. By default new projects a
 Either path works:
 
 - **Per project** — open the project, navigate to **Settings → Advanced**, toggle **Review Workflow** on. Useful for project administrators managing their own project.
-- **Bulk from the admin surface** — open **Administration → Workflows**. While the system feature is on, the Review Workflow card lists every project with an inline switch; flip any project on or off without leaving the page. The list is searchable, sortable, and paginated. Useful for system administrators rolling the feature out across many projects.
+- **Bulk from the admin surface** — open **Administration → Workflows**. While the system feature is on, the Review Workflow card lists every project with an inline switch; flip any project on or off without leaving the page. The list is searchable and sortable, and loads more projects automatically as you scroll. Useful for system administrators rolling the feature out across many projects.
 
 When the system-level kill switch is off, the per-project toggle has no effect. When it is on, only projects with their own toggle on actually enforce gates.
 
@@ -73,6 +75,19 @@ By default the seeded `admin` role carries Can approve on all three review-relev
 5. Save.
 
 System administrators (access = ADMIN) bypass the Can Approve check at decision time, so an admin can always decide on a pending review even if their project role doesn't carry the permission. This is intentional — admins can unblock stalled reviews — but they still only appear in the assignee dropdown if their role grants Can approve, so the day-to-day reviewer pool stays predictable.
+
+### System administrators bypass the gates entirely
+
+Beyond deciding on reviews, system administrators (access = ADMIN) are never blocked by a workflow-state gate. An admin can move any test case, test run, or session to **any** workflow state — including states marked as gated, and including states several gates ahead of where the entity currently sits — without an approved review request. The same applies when creating an entity: admins can pick a gated state directly instead of being remapped to the project's default state.
+
+This holds everywhere state changes happen: the entity edit forms, bulk edit, milestone completion, the first-result auto-transition, and direct API calls.
+
+A few details worth knowing:
+
+- **No approval is consumed.** When an admin crosses a gate that already has an approved review request waiting, that approval stays unspent and remains available for the transition it was raised for.
+- **The review workflow still runs.** Gated states keep their "requires review" marker in the UI for admins, pending review requests stay visible, and admins can still request reviews like anyone else. Only the block is lifted.
+- **Project administrators do not get this.** The bypass is scoped to system administrators (access = ADMIN). Users with PROJECTADMIN access are gated normally.
+- **Everything is audited.** Admin state changes flow through the same audit trail as any other transition, so a bypass is always attributable.
 
 ### Step 4 — Mark workflow states as gated
 
@@ -114,13 +129,41 @@ When the reviewer is a role, the banner renders a role chip with a small role ic
 
 ![The role chip on a pending review banner expanded to its hover tooltip, listing every project-eligible holder of the role](/img/screenshots/user-guide/review-approvals/role-assignee-chip-tooltip.png)
 
+There is nothing left for the requester to do once the request is in. An approval moves the entity into the target state on its own; the requester is notified and the banner clears.
+
+### Tracking requests you submitted
+
+Requests you're waiting on someone else to decide appear on the **Pending** tab of your **Review inbox**, alongside the requests assigned to you. That makes the inbox the single place to see everything still awaiting a decision, without opening each entity to check. An **Assignee** column says who each request is parked with; for role-assigned requests, hovering the role chip lists every project-eligible holder who could act on it.
+
+Your own requests carry two row actions instead of the reviewer's Approve / Request changes / Reject:
+
+- **Send reminder** — pings the assignee (or every holder of the assigned role) right away with the same reminder notification the scheduled reminders send. See [Nudging a reviewer](#nudging-a-reviewer) below.
+- **Cancel request** — withdraws the request. See [Cancelling a request](#cancelling-a-request) below.
+
+Once a request you submitted is decided, it moves off the Pending tab and onto the **Decided** tab, where the **Decided by** column shows who acted on it.
+
+### Nudging a reviewer
+
+When a request has been sitting longer than you'd like, you don't have to wait for the next scheduled reminder:
+
+1. Open your **Review inbox** and stay on the **Pending** tab.
+2. Find the row you submitted.
+3. Click the **Send reminder** (bell) action.
+
+The assignee — or, for a role-assigned request, every project-eligible holder of that role — gets the same **Review still pending** notification the scheduled reminders send, including the elapsed pending time, and the same `review_reminder` webhook event fires. Reviewers can't tell a nudge from an automatic reminder; both mean "this is still waiting on you."
+
+To keep a reviewer from being pinged twice for the same request, the action shares its cooldown with the scheduled reminders: for one hour after *either* fires, the button is greyed out and its tooltip says when the last reminder went out. If the assigned role currently has no project-eligible holders, the reminder isn't sent and TestPlanIt says so rather than reporting a silent success.
+
+System administrators can also send a reminder on a request they didn't submit. The notification still names the original requester.
+
 ### Cancelling a request
 
-If the requester changes their mind before a decision lands, they can cancel:
+If the requester changes their mind before a decision lands, they can cancel from either surface:
 
-1. Open the entity.
-2. Click the **Pending review** banner.
-3. Click **Cancel request**.
+- From the entity — open it, click the **Pending review** banner, then **Cancel request**.
+- From the **Review inbox** — on the **Pending** tab, click the **Cancel request** action on the row you submitted.
+
+Either path asks for confirmation first.
 
 Cancelling does not affect the entity's current state. Anyone who was asked to review the request — the direct assignee or every role holder — is notified so they can drop the item from their queue, and the cancellation is emitted as a `review_completed` webhook event with `decision: "CANCELLED"`.
 
@@ -128,10 +171,10 @@ Cancelling does not affect the entity's current state. Anyone who was asked to r
 
 Reviewers find pending requests in their inbox:
 
-1. Click the **Review inbox** icon in the top navigation bar (an inbox icon with a count badge when there are pending items). The icon is hidden for users who have no access to any project with **Review Workflow** turned on — there's nothing for them to act on.
+1. Click the **Review inbox** icon in the top navigation bar (an inbox icon with a count badge). The badge counts only the requests waiting on *you* to decide, so it stays an accurate "work to do" signal — requests you submitted are listed inside the inbox but never inflate the badge. The icon is hidden for users who have no access to any project with **Review Workflow** turned on — there's nothing for them to act on.
 2. The inbox shows two tabs:
-    - **Pending** — requests assigned to you, directly or via a role you hold.
-    - **Decided** — requests you've already decided on.
+    - **Pending** — everything still awaiting a decision: requests assigned to you (directly or via a role you hold), plus requests you submitted and are waiting on someone else to decide. Row actions differ per row — the reviewer's three decisions on requests assigned to you, **Send reminder** and **Cancel request** on the ones you submitted.
+    - **Decided** — requests you've decided, plus decided requests you originally submitted, with a **Decided by** column showing who acted.
 3. Click a request to open the entity in a side panel showing:
     - Requester name and comment
     - Current state and target state
@@ -141,7 +184,7 @@ Reviewers find pending requests in their inbox:
 
 To decide:
 
-- **Approve** — the request flips to APPROVED. The next time the entity is transitioned to the target state (by the requester saving the form, by a bulk edit, or by milestone completion), the approval is consumed.
+- **Approve** — the request flips to APPROVED and the entity moves into the target state, consuming the approval. When an earlier gate in the entity's path is still unapproved, the entity stays put and the approval waits, unconsumed, until that gate clears and the transition is retried (by the requester saving the form, by a bulk edit, or by milestone completion).
 - **Reject** — the request flips to REJECTED. The transition is not allowed; the requester can submit a new request after addressing feedback.
 - **Comment** — leave a note without deciding (useful for asking the requester for clarification). The request stays in PENDING.
 
@@ -184,6 +227,8 @@ If users on this instance use the daily-digest email mode and you set the remind
 :::
 
 ### Slack and webhook subscribers (stretch)
+
+Requesters don't have to wait for the threshold: the **Send reminder** action on their own rows in the Review inbox fires the same reminder on demand, sharing the same one-hour cooldown so a reviewer can't be pinged twice for one request. See [Nudging a reviewer](#nudging-a-reviewer).
 
 Each reminder also emits an outbound webhook event, in three entity-scoped variants — `case.review_reminder`, `test_run.review_reminder`, and `session.review_reminder`. Subscribers configured on a project's **Settings → Webhooks** can route these to Slack (formatted with a "Review reminder" header showing the pending duration alongside the entity / requester / assignee context) or to any generic HMAC endpoint as structured JSON.
 
@@ -237,7 +282,7 @@ Reviewers receive an in-app notification (and an email, if email notifications a
 - A request is **assigned** to them directly, or to a role they hold.
 - A request they own (or are watching) is **decided**.
 - A request is **cancelled** by the requester.
-- A request they're assigned to has **been pending past the reminder threshold** (see [Review reminders](#review-reminders) above).
+- A request they're assigned to has **been pending past the reminder threshold** (see [Review reminders](#review-reminders) above), or the requester **sent a reminder** manually (see [Nudging a reviewer](#nudging-a-reviewer)).
 
 Requesters receive a notification when a reviewer decides on a request they submitted.
 
@@ -249,7 +294,7 @@ Review events can be delivered to external systems (Slack, generic HMAC endpoint
 | --- | --- |
 | `case.review_requested` / `test_run.review_requested` / `session.review_requested` | A reviewer is requested on a Test Case / Test Run / Session |
 | `case.review_completed` / `test_run.review_completed` / `session.review_completed` | The request is approved, sent back for changes, rejected, or cancelled |
-| `case.review_reminder` / `test_run.review_reminder` / `session.review_reminder` | The scheduled reminder fires on a request that's been pending past the configured threshold (see [Review reminders](#review-reminders)) |
+| `case.review_reminder` / `test_run.review_reminder` / `session.review_reminder` | The scheduled reminder fires on a request that's been pending past the configured threshold, or a requester sends one manually (see [Review reminders](#review-reminders)) |
 
 To subscribe:
 
@@ -269,10 +314,10 @@ Not today. A request has one assignee — either one user or one role. The first
 A role-assigned request that resolves to zero project-eligible reviewers is still visible in the requester's UI but cannot be acted on until project access is restored or the request is reassigned (cancel and re-submit).
 
 **Can I see who has approved which transitions for an entity?**
-Yes. The **Decided** tab in the Review inbox shows requests you decided. Per-entity history is also available — open the entity, scroll to the review history section, and you'll see the chain of requests and decisions.
+Yes. The **Decided** tab in the Review inbox shows requests you decided and decisions made on requests you submitted, with filters for status, requester, and decider. Per-entity history is also available — open the entity, scroll to the review history section, and you'll see the chain of requests and decisions.
 
 **Does Review & Approval apply to API-driven updates?**
-Yes. The gate is enforced at the API layer, so updates from the ZenStack auto-API, server actions, and direct HTTP routes all honor the gate. Service accounts that bypass the gate must be granted explicit project administrator access AND the per-project toggle must be turned off; there is no per-request bypass.
+Yes. The gate is enforced at the API layer, so updates from the ZenStack auto-API, server actions, and direct HTTP routes all honor the gate. There is no per-request bypass flag — the only accounts that skip the gate are system administrators (see [System administrators bypass the gates entirely](#system-administrators-bypass-the-gates-entirely)), and that applies to their API tokens too. To let a service account write gated states, either give it ADMIN access or turn the per-project toggle off.
 
 **Does the feature support custom workflow states per project?**
 Yes — gates honor the project assignments on the underlying workflow state (see [Workflows](./workflows.md)). A gate marked on a state assigned to specific projects only applies to those projects.

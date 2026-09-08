@@ -34,7 +34,7 @@ export const LinkPreviewPanel = ({
       </Tooltip>
       <Tooltip title={t("removeLink")}>
         <Toolbar.Button onClick={onClear}>
-          <Icon name="Trash2" />
+          <Icon name="Trash" />
         </Toolbar.Button>
       </Tooltip>
     </Surface>

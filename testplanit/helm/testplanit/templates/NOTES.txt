@@ -1,0 +1,58 @@
+TestPlanIt has been deployed as release "{{ .Release.Name }}" in namespace "{{ .Release.Namespace }}".
+
+1. The migrate/seed job runs on install/upgrade. Watch it complete:
+
+   kubectl -n {{ .Release.Namespace }} get jobs -l app.kubernetes.io/instance={{ .Release.Name }}
+   kubectl -n {{ .Release.Namespace }} logs -l app.kubernetes.io/component=migrate --tail=100
+
+2. Check the app is healthy:
+
+   kubectl -n {{ .Release.Namespace }} rollout status deploy/{{ include "testplanit.fullname" . }}
+   kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "testplanit.fullname" . }} 3000:{{ .Values.service.port }}
+   # then: curl -s localhost:3000/api/health | jq
+
+{{- if .Values.ingress.enabled }}
+
+3. Access the application at:
+
+   {{ .Values.appUrl }}
+   {{- if not .Values.ingress.tls.enabled }}
+
+   NOTE: ingress.tls is disabled. Terminate TLS at your ingress/load balancer
+   (e.g. cert-manager) before exposing this publicly — TestPlanIt must be served
+   over HTTPS at {{ .Values.appUrl }}.
+   {{- end }}
+{{- else }}
+
+3. Ingress is disabled. Expose the Service ({{ include "testplanit.fullname" . }}:{{ .Values.service.port }})
+   with your own ingress/gateway, or port-forward as shown above.
+{{- end }}
+
+4. Sign in as the initial admin:
+
+   email:    {{ .Values.config.admin.email }}
+   password: (the value of secrets.adminPassword)
+
+{{- if not .Values.secrets.encryptionKey }}
+
+⚠  ENCRYPTION_KEY was auto-generated and stored in the "{{ include "testplanit.secretName" . }}"
+   Secret. It is preserved across `helm upgrade`, but you MUST back it up — if it
+   is ever lost, all encrypted data (integration credentials, API tokens) becomes
+   unreadable. Retrieve and store it securely:
+
+   kubectl -n {{ .Release.Namespace }} get secret {{ include "testplanit.secretName" . }} \
+     -o jsonpath='{.data.ENCRYPTION_KEY}' | base64 -d
+{{- end }}
+
+{{- $bundled := list }}
+{{- if .Values.postgresql.enabled }}{{ $bundled = append $bundled "PostgreSQL" }}{{ end }}
+{{- if .Values.redis.enabled }}{{ $bundled = append $bundled "Valkey" }}{{ end }}
+{{- if .Values.elasticsearch.enabled }}{{ $bundled = append $bundled "Elasticsearch" }}{{ end }}
+{{- if .Values.objectStorage.minio.enabled }}{{ $bundled = append $bundled "MinIO" }}{{ end }}
+{{- if $bundled }}
+
+5. Bundled datastores in-cluster: {{ join ", " $bundled }}.
+   These are single-replica and meant for evaluation / small installs. For
+   production, disable them and point at managed services (RDS / ElastiCache /
+   OpenSearch / S3). See the chart README.
+{{- end }}

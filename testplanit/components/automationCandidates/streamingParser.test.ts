@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  dedupeCandidatesByCaseId,
   extractCandidatesFromBuffer,
   extractSummaryFromBuffer,
 } from "./streamingParser";
@@ -74,6 +75,32 @@ describe("extractCandidatesFromBuffer", () => {
       { caseId: 1, rank: 1, score: 90, rationale: "x" },
       { caseId: 2, rank: 2, score: 85, rationale: "y" },
     ]);
+  });
+});
+
+describe("dedupeCandidatesByCaseId", () => {
+  it("keeps the first (best-ranked) occurrence of a repeated caseId", () => {
+    const deduped = dedupeCandidatesByCaseId([
+      { caseId: 20519, rank: 1, score: 95, rationale: "best" },
+      { caseId: 7, rank: 2, score: 90, rationale: "unique" },
+      { caseId: 20519, rank: 3, score: 80, rationale: "repeat" },
+    ]);
+    expect(deduped).toEqual([
+      { caseId: 20519, rank: 1, score: 95, rationale: "best" },
+      { caseId: 7, rank: 2, score: 90, rationale: "unique" },
+    ]);
+  });
+
+  it("returns an already-unique list unchanged", () => {
+    const candidates = [
+      { caseId: 1, rank: 1, score: 90, rationale: "x" },
+      { caseId: 2, rank: 2, score: 85, rationale: "y" },
+    ];
+    expect(dedupeCandidatesByCaseId(candidates)).toEqual(candidates);
+  });
+
+  it("handles an empty list", () => {
+    expect(dedupeCandidatesByCaseId([])).toEqual([]);
   });
 });
 

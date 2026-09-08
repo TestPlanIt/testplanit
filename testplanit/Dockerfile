@@ -47,9 +47,15 @@ RUN if [ -f ".docker-version.json" ]; then \
         node scripts/generate-version.js || echo "Version generation skipped (git info not available)"; \
     fi
 
-ENV NODE_OPTIONS="--max-old-space-size=4096"
-RUN pnpm zenstack generate
-RUN node scripts/fix-zenstack-symlink.js
+# 8192 is ample headroom: the ZenStack generate step peaks ~0.5 GB and the whole
+# build tree peaks ~7 GB (next build self-caps at 4096 via the build script).
+ENV NODE_OPTIONS="--max-old-space-size=8192"
+# `-o zenstack` writes the v3 client to testplanit/zenstack (the `~/zenstack/*`
+# import path), matching package.json's `generate` script. The flag is required:
+# without it generate uses the default output dir and the build stage's
+# `next build` cannot resolve `~/zenstack/models`. (Install runs with
+# --ignore-scripts, so the postinstall generate never fires here.)
+RUN pnpm zenstack generate --schema schema.zmodel -o zenstack
 RUN apk del .gyp
 
 COPY testplanit/wait-for-postgres.sh /usr/local/bin/wait-for-postgres.sh
@@ -122,7 +128,20 @@ RUN cd /app/deploy/node_modules/.pnpm && \
 # ---- Build ----
 FROM base AS build
 ARG BASE_DOMAIN
+# SELF_HOSTED=true builds a domain-agnostic image (Next image optimizer off, no
+# baked remotePatterns allowlist) so one published image runs on any host. The
+# SaaS build leaves it unset and bakes BASE_DOMAIN instead. See next.config.ts.
+ARG SELF_HOSTED
+ENV SELF_HOSTED=${SELF_HOSTED}
+# Sizes serverActions.bodySizeLimit in next.config.ts. Next freezes experimental
+# config into the standalone output, so this has to be present at BUILD time --
+# a runtime-only value is too late. The production stage re-declares it for
+# app/actions/uploadFile.ts, which reads it at runtime.
+ARG UPLOAD_MAX_MB
+ENV UPLOAD_MAX_MB=${UPLOAD_MAX_MB}
 ENV NODE_ENV=production
+# next build self-caps at 4096 (build script); the whole build tree peaks ~7 GB,
+# so 8192 leaves comfortable headroom.
 ENV NODE_OPTIONS="--max-old-space-size=8192"
 ENV VALKEY_URL=valkey://dummy:6379
 ENV DATABASE_URL=postgresql://dummy:dummy@dummy:5432/dummy
@@ -131,15 +150,23 @@ ENV NEXTAUTH_URL=http://localhost:3000
 ENV SKIP_VALKEY_CONNECTION=true
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV UV_THREADPOOL_SIZE=4
+# Container layers start clean, so the Turbopack build cache is never restored.
+ENV DOCKER_BUILD=true
 ENV BASE_DOMAIN=${BASE_DOMAIN}
 WORKDIR /app/testplanit
-RUN pnpm prisma generate
-RUN node scripts/fix-zenstack-symlink.js
+# The ZenStack v3 client is generated in the base stage (`pnpm zenstack
+# generate`), which this stage inherits — there is no `prisma generate` anymore.
 RUN npm run build
 
 # ---- Production ----
 FROM node:24-alpine AS production
 WORKDIR /app
+# Read at runtime by app/actions/uploadFile.ts. Defaulted from the same build arg
+# so an image built for a larger ceiling stays self-consistent under plain
+# `docker run`; compose passes it again via `environment:` so one variable in
+# .env drives both the baked body limit and the runtime per-file limit.
+ARG UPLOAD_MAX_MB
+ENV UPLOAD_MAX_MB=${UPLOAD_MAX_MB}
 ENV NODE_ENV=production
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN apk add --no-cache curl
@@ -165,39 +192,18 @@ COPY --from=build --chown=nextjs:nodejs /app/testplanit/workers ./testplanit/wor
 COPY --from=build --chown=nextjs:nodejs /app/testplanit/scheduler.ts ./testplanit/scheduler.ts
 COPY --from=build --chown=nextjs:nodejs /app/testplanit/ecosystem.config.js ./testplanit/ecosystem.config.js
 COPY --from=build --chown=nextjs:nodejs /app/testplanit/lib ./testplanit/lib
-COPY --from=build --chown=nextjs:nodejs /app/testplanit/prisma ./testplanit/prisma
-# Self-contained production node_modules from the deploy stage (overlays the
-# standalone-traced node_modules with the full prod set: prisma client, etc.).
+COPY --from=build --chown=nextjs:nodejs /app/testplanit/db ./testplanit/db
+# Self-contained production node_modules from the deploy stage.
 COPY --from=deps --chown=nextjs:nodejs /app/deploy/node_modules ./testplanit/node_modules
-# ZenStack generated files (deploy ran with --ignore-scripts, so the deployed
-# @zenstackhq/runtime has no .zenstack yet — create and populate it).
-RUN --mount=from=base,source=/app/node_modules/.pnpm,target=/base-pnpm \
-    zenstack_src=$(find /base-pnpm -type d -name ".zenstack" | head -1) && \
-    runtime_pkg=$(find ./testplanit/node_modules/.pnpm -type d -path "*@zenstackhq+runtime*/node_modules/@zenstackhq/runtime" | head -1) && \
-    if [ -n "$zenstack_src" ] && [ -n "$runtime_pkg" ]; then \
-        zenstack_dest="$(dirname "$(dirname "$runtime_pkg")")/.zenstack" && \
-        mkdir -p "$zenstack_dest" && \
-        cp -r "$zenstack_src"/* "$zenstack_dest"/ && \
-        chown -R nextjs:nodejs "$zenstack_dest" && \
-        echo "Done copying zenstack files ($zenstack_dest)"; \
-    else \
-        echo "Warning: zenstack_src=$zenstack_src runtime_pkg=$runtime_pkg"; \
-    fi
-
-# Generated Prisma client into the deployed tree (deploy ran --ignore-scripts),
-# so tsx-run services (e.g. Elasticsearch reindex) have a working client.
-RUN --mount=from=build,source=/app/node_modules/.pnpm,target=/build-pnpm \
-    prisma_src=$(find /build-pnpm -type d -name ".prisma" -path "*@prisma+client*" | head -1) && \
-    dest_client=$(find ./testplanit/node_modules/.pnpm -type d -path "*@prisma+client*/node_modules/@prisma/client" | head -1) && \
-    if [ -n "$prisma_src" ] && [ -n "$dest_client" ]; then \
-        dest_dir="$(dirname "$(dirname "$dest_client")")/.prisma" && \
-        mkdir -p "$dest_dir" && \
-        cp -r "$prisma_src"/* "$dest_dir"/ && \
-        chown -R nextjs:nodejs "$dest_dir" && \
-        echo "Done copying Prisma client to production ($dest_dir)"; \
-    else \
-        echo "Warning: prisma_src=$prisma_src dest_client=$dest_client"; \
-    fi
+# ZenStack v3 generated client + the schema it pushes from. tsx-run services
+# (Elasticsearch reindex, audit triggers, seed) import from ~/zenstack at
+# runtime, and `zenstack db push` reads schema.zmodel — both from source, so
+# they must be present in the deployed tree. (v3 has no @zenstackhq/runtime
+# .zenstack cache and no @prisma/client to copy.)
+COPY --from=build --chown=nextjs:nodejs /app/testplanit/zenstack ./testplanit/zenstack
+COPY --from=build --chown=nextjs:nodejs /app/testplanit/schema.zmodel ./testplanit/schema.zmodel
+# Migration history — `zenstack migrate deploy` (docker-entrypoint.sh) applies it at startup.
+COPY --from=build --chown=nextjs:nodejs /app/testplanit/migrations ./testplanit/migrations
 
 COPY --from=build --chown=nextjs:nodejs /app/testplanit/services ./testplanit/services
 COPY --from=build --chown=nextjs:nodejs /app/testplanit/utils ./testplanit/utils
@@ -207,9 +213,11 @@ COPY --from=build --chown=nextjs:nodejs /app/testplanit/docker-entrypoint.sh ./t
 RUN chmod +x ./testplanit/docker-entrypoint.sh
 
 WORKDIR /app/testplanit
-RUN node scripts/fix-zenstack-symlink.js
 RUN npm install -g tsx
-RUN npm install -g prisma@6
+# ZenStack CLI for the db-init `zenstack db push` (the prod deploy tree is
+# --prod, so the devDep CLI isn't present; install it globally). It pulls
+# Prisma's schema engine internally to perform the push.
+RUN npm install -g @zenstackhq/cli@3.8.0
 
 USER nextjs
 EXPOSE 3000
@@ -222,6 +230,12 @@ FROM node:24-alpine AS workers
 ENV NODE_ENV=production
 WORKDIR /app/testplanit
 RUN apk add --no-cache postgresql-client
+# System chromium for the URL-crawl screenshot capture. playwright-core
+# drives it — no browser download. Capture is ON by default in this image;
+# set CRAWL_SCREENSHOTS=false in the deployment env to disable.
+RUN apk add --no-cache chromium nss freetype harfbuzz ca-certificates ttf-freefont
+ENV CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium-browser
+ENV CRAWL_SCREENSHOTS=true
 RUN npm install -g pm2 && pm2 install pm2-logrotate && \
     pm2 set pm2-logrotate:max_size 50M && \
     pm2 set pm2-logrotate:retain 3 && \
@@ -236,38 +250,14 @@ COPY --from=build /app/testplanit/ecosystem.config.js ./ecosystem.config.js
 COPY --from=build /app/testplanit/package.json ./package.json
 COPY --from=deps-workers /app/deploy/node_modules ./node_modules
 
-# ZenStack generated files for the workers runtime.
-RUN --mount=from=base,source=/app/node_modules/.pnpm,target=/base-pnpm \
-    zenstack_src=$(find /base-pnpm -type d -name ".zenstack" | head -1) && \
-    runtime_pkg=$(find ./node_modules/.pnpm -type d -path "*@zenstackhq+runtime*/node_modules/@zenstackhq/runtime" | head -1) && \
-    if [ -n "$zenstack_src" ] && [ -n "$runtime_pkg" ]; then \
-        zenstack_dest=$(dirname $(dirname "$runtime_pkg"))/.zenstack && \
-        mkdir -p "$zenstack_dest" && \
-        cp -r "$zenstack_src"/* "$zenstack_dest"/ && \
-        echo "Done copying zenstack files to workers"; \
-    else \
-        echo "Warning: zenstack_src=$zenstack_src runtime_pkg=$runtime_pkg"; \
-    fi
-
-# Generated Prisma client from the build stage. In a pnpm workspace the virtual
-# store lives at the workspace root (/app/node_modules/.pnpm); the --prod deploy
-# tree may use a different peer-hash dir than the build tree, so locate the
-# destination by the deployed @prisma/client rather than reusing the build path.
-RUN --mount=from=build,source=/app/node_modules/.pnpm,target=/build-pnpm \
-    prisma_src=$(find /build-pnpm -type d -name ".prisma" -path "*@prisma+client*" | head -1) && \
-    dest_client=$(find ./node_modules/.pnpm -type d -path "*@prisma+client*/node_modules/@prisma/client" | head -1) && \
-    if [ -n "$prisma_src" ] && [ -n "$dest_client" ]; then \
-        dest_dir="$(dirname "$(dirname "$dest_client")")/.prisma" && \
-        mkdir -p "$dest_dir" && \
-        cp -r "$prisma_src"/* "$dest_dir"/ && \
-        echo "Done copying Prisma client to workers ($dest_dir)"; \
-    else \
-        echo "ERROR: prisma_src=$prisma_src dest_client=$dest_client" && exit 1; \
-    fi
+# ZenStack v3 generated client for the workers runtime (tsx-run workers import
+# ~/zenstack from source). v3 has no @zenstackhq/runtime .zenstack cache and no
+# @prisma/client to copy.
+COPY --from=build /app/testplanit/zenstack ./zenstack
 
 COPY --from=build /app/testplanit/lib ./lib
 COPY --from=build /app/testplanit/workers ./workers
-COPY --from=build /app/testplanit/prisma ./prisma
+COPY --from=build /app/testplanit/db ./db
 COPY --from=build /app/testplanit/services ./services
 COPY --from=build /app/testplanit/utils ./utils
 COPY --from=build /app/testplanit/types ./types
@@ -276,7 +266,6 @@ COPY --from=build /app/testplanit/tsconfig.json ./tsconfig.json
 COPY --from=build /app/testplanit/messages ./messages
 COPY --from=build /app/testplanit/messages ./dist/messages
 COPY --from=build /app/testplanit/scripts ./scripts
-RUN node scripts/fix-zenstack-symlink.js
 COPY --from=base /usr/local/bin/wait-for-postgres.sh /usr/local/bin/wait-for-postgres.sh
 
 RUN echo '#!/bin/sh' > /app/start-workers.sh && \

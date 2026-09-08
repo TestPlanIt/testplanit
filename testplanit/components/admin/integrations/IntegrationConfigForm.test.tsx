@@ -2,21 +2,6 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// Mock @prisma/client enums for jsdom
-vi.mock("@prisma/client", () => ({
-  IntegrationProvider: {
-    JIRA: "JIRA",
-    GITHUB: "GITHUB",
-    AZURE_DEVOPS: "AZURE_DEVOPS",
-    SIMPLE_URL: "SIMPLE_URL",
-  },
-  IntegrationAuthType: {
-    API_KEY: "API_KEY",
-    OAUTH2: "OAUTH2",
-    PERSONAL_ACCESS_TOKEN: "PERSONAL_ACCESS_TOKEN",
-  },
-}));
-
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key.split(".").pop() ?? key,
 }));
@@ -381,8 +366,8 @@ describe("IntegrationConfigForm", () => {
     });
   });
 
-  describe("isEdit=true - encrypted badge display", () => {
-    it("shows encrypted badge on credential fields when value is empty in edit mode", () => {
+  describe("isEdit=true - credential fields are editable", () => {
+    it("renders empty credential fields as editable inputs with a leave-blank hint in edit mode", () => {
       render(
         <IntegrationConfigForm
           {...defaultProps}
@@ -393,17 +378,21 @@ describe("IntegrationConfigForm", () => {
         />
       );
 
-      // When isEdit=true and credential field is empty, shows encrypted badge
-      const badges = screen.getAllByTestId("badge");
-      expect(badges.length).toBeGreaterThan(0);
-      // Badge should show "encrypted" key
-      const encryptedBadge = badges.find((b) =>
-        b.textContent?.match(/encrypted/i)
+      // The encrypted-badge affordance was removed; credential fields are now
+      // always shown as editable inputs in edit mode.
+      expect(screen.queryAllByTestId("badge")).toHaveLength(0);
+
+      // Empty credential fields (email + apiToken + username + password)
+      // hint that leaving them blank keeps the stored (encrypted) value,
+      // and remain editable.
+      const keepHints = screen.getAllByPlaceholderText("leaveBlankToKeep");
+      expect(keepHints).toHaveLength(4);
+      keepHints.forEach((input) =>
+        expect((input as HTMLInputElement).disabled).toBe(false)
       );
-      expect(encryptedBadge).toBeTruthy();
     });
 
-    it("does not show encrypted badge when credential has a value", () => {
+    it("shows stored credential values as editable inputs without the leave-blank hint", () => {
       render(
         <IntegrationConfigForm
           {...defaultProps}
@@ -412,20 +401,22 @@ describe("IntegrationConfigForm", () => {
           credentials={{
             email: "user@example.com",
             apiToken: "mytoken123",
-            username: "user@example.com",
-            password: "mytoken123",
+            username: "alice",
+            password: "secret456",
           }}
           isEdit={true}
         />
       );
 
-      // When credential has a value, no encrypted badge for that field
-      const badges = screen.queryAllByTestId("badge");
-      // May have fewer badges since some credentials are filled in
-      expect(
-        badges.every((b) => b.textContent !== "encrypted") ||
-          badges.length === 0
-      ).toBe(true);
+      expect(screen.queryAllByTestId("badge")).toHaveLength(0);
+      // Filled credentials display their value and drop the leave-blank hint.
+      expect(screen.queryAllByPlaceholderText("leaveBlankToKeep")).toHaveLength(
+        0
+      );
+      expect(screen.getByDisplayValue("user@example.com")).toBeTruthy();
+      expect(screen.getByDisplayValue("mytoken123")).toBeTruthy();
+      expect(screen.getByDisplayValue("alice")).toBeTruthy();
+      expect(screen.getByDisplayValue("secret456")).toBeTruthy();
     });
   });
 

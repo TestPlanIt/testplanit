@@ -14,8 +14,8 @@
  * enforces that the mapped user actually has access to the target project.
  */
 
-import { prisma as db } from "@/lib/prisma";
-import { IntegrationProvider, ProjectAccessType } from "@prisma/client";
+import { baseDb as db } from "@/lib/db";
+import { IntegrationProvider, ProjectAccessType } from "~/zenstack/models";
 import { createHmac, timingSafeEqual } from "crypto";
 
 /** CORS headers shared by the Forge endpoints (mirrors `test-info`). */
@@ -97,7 +97,11 @@ export async function resolveForgeUser(identity: {
 
   if (email) {
     user = await db.user.findFirst({
-      where: { email, isActive: true, isDeleted: false },
+      where: {
+        email: { equals: email, mode: "insensitive" },
+        isActive: true,
+        isDeleted: false,
+      },
       select: { id: true, name: true, email: true, access: true },
     });
   }

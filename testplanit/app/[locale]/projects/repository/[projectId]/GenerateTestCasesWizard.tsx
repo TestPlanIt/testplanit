@@ -1,5 +1,7 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { DateFormatter } from "@/components/DateFormatter";
 import { IssuePriorityDisplay } from "@/components/IssuePriorityDisplay";
 import { SearchIssuesDialog } from "@/components/issues/search-issues-dialog";
@@ -56,7 +58,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ApplicationArea } from "@prisma/client";
+import { ApplicationArea } from "~/zenstack/models";
 import type { LucideIcon } from "lucide-react";
 import {
   AlertTriangle,
@@ -74,6 +76,7 @@ import {
   Info,
   ListChecks,
   Loader2,
+  RefreshCw,
   Search,
   Settings,
   Sparkles,
@@ -97,12 +100,6 @@ import {
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import {
-  useFindFirstProjects,
-  useFindFirstWorkflows,
-  useFindManyRepositoryCases,
-  useFindManyTemplates,
-} from "~/lib/hooks";
 import { importGeneratedTestCases } from "~/app/actions/importGeneratedTestCases";
 import {
   convertHtmlToTipTapJSON,
@@ -110,6 +107,20 @@ import {
   serializeTipTapJSON,
 } from "~/utils/tiptapConversion";
 import { generateHTMLFallback } from "~/utils/tiptapToHtml";
+import {
+  findGeneratedStepsEntry,
+  normalizeGeneratedSteps,
+} from "~/utils/generatedSteps";
+import { extractCompleteJsonFields } from "~/utils/partialJson";
+import {
+  extractTextFromNode,
+  extractTextWithImageMarkers,
+} from "~/utils/extractTextFromJson";
+import {
+  extractEditorMediaSrcs,
+  filenameForEditorMediaSrc,
+} from "~/lib/tiptap/editorMediaSrcs";
+import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { sanitizeName } from "~/utils";
 import type { LinkedIssueRef } from "~/lib/integrations/adapters/IssueAdapter";
 import FieldValueRenderer from "./[caseId]/FieldValueRenderer";
@@ -132,8 +143,87 @@ interface ExternalIssue {
 interface DocumentRequirements {
   id: string;
   title: string;
+  /** Flattened text (image nodes become [image N: name] markers). */
   description: string;
+  /** The TipTap JSON — source of truth for embedded image srcs. */
+  doc?: object;
   isDocument: true;
+}
+
+interface ContextImageOption {
+  /** Attachment id (issue source) or editor src (document source). */
+  id: string;
+  filename: string;
+  byteSize?: number;
+  tooLarge: boolean;
+  checked: boolean;
+}
+
+/**
+ * Checkbox list offering images as generation context — shared by the
+ * issue tab (tracker attachments) and the document tab (editor embeds).
+ */
+function ContextImagesPicker({
+  options,
+  max,
+  visionSupported,
+  labels,
+  onToggle,
+}: {
+  options: ContextImageOption[];
+  max: number;
+  visionSupported: boolean;
+  labels: { heading: string; tooLarge: string; noVisionHint: string };
+  onToggle: (id: string, checked: boolean) => void;
+}) {
+  if (options.length === 0) return null;
+  const checkedCount = options.filter((o) => o.checked).length;
+  return (
+    <div data-testid="context-images-picker">
+      <Label className="text-xs font-medium text-muted-foreground mb-1">
+        {labels.heading}
+      </Label>
+      <div className="text-sm text-foreground space-y-1">
+        {options.map((opt) => {
+          const disabled =
+            opt.tooLarge || (!opt.checked && checkedCount >= max);
+          return (
+            <div key={opt.id} className="flex items-center gap-2">
+              <Checkbox
+                id={`context-image-${opt.id}`}
+                checked={opt.checked}
+                disabled={disabled}
+                onCheckedChange={(checked) =>
+                  onToggle(opt.id, checked === true)
+                }
+              />
+              <label
+                htmlFor={`context-image-${opt.id}`}
+                className={
+                  opt.tooLarge ? "text-muted-foreground line-through" : ""
+                }
+              >
+                {opt.filename}
+              </label>
+              {typeof opt.byteSize === "number" && (
+                <span className="text-xs text-muted-foreground">
+                  {formatBytes(opt.byteSize)}
+                </span>
+              )}
+              {opt.tooLarge && (
+                <Badge variant="outline" className="text-xs">
+                  {labels.tooLarge}
+                </Badge>
+              )}
+            </div>
+          );
+        })}
+        {!visionSupported && (
+          <p className="text-xs text-muted-foreground">{labels.noVisionHint}</p>
+        )}
+      </div>
+    </div>
+  );
 }
 
 interface GeneratedTestCase {
@@ -174,6 +264,13 @@ interface GeneratedTestCase {
 }
 
 /** Derive folder name from a URL — mirrors the logic in importGeneratedTestCases.ts */
+/** Whole-number KB/MB label for the context-image picker. */
+function formatBytes(bytes: number): string {
+  if (bytes >= 1024 * 1024) return `${Math.round(bytes / (1024 * 1024))} MB`;
+  if (bytes >= 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${bytes} B`;
+}
+
 function folderNameFromUrl(url: string): string {
   try {
     const parsed = new URL(url);
@@ -193,7 +290,19 @@ function folderNameFromUrl(url: string): string {
   }
 }
 
-/** Get the steps array from a test case, checking both fieldValues (new) and top-level steps (legacy) */
+/** Plain text for the streaming stub, which renders steps without an editor. */
+function stepPreviewText(value: any): string {
+  if (typeof value === "string") return value;
+  if (value === null || value === undefined) return "";
+  return extractTextFromNode(value);
+}
+
+/**
+ * Get the steps array from a test case, checking both fieldValues (new) and
+ * top-level steps (legacy). The value is normalized because a model answers
+ * with a single object, a numbered-list string, or `action`/`expected` keys as
+ * readily as with the requested array of `{ step, expectedResult }` pairs.
+ */
 function getTestCaseSteps(
   testCase: GeneratedTestCase,
   templateFields?: Array<{
@@ -204,13 +313,15 @@ function getTestCaseSteps(
   if (templateFields) {
     for (const field of templateFields) {
       if (field.caseField.type.type === "Steps") {
-        const val = testCase.fieldValues[field.caseField.displayName];
-        if (Array.isArray(val) && val.length > 0) return val;
+        const steps = normalizeGeneratedSteps(
+          testCase.fieldValues[field.caseField.displayName]
+        );
+        if (steps.length > 0) return steps;
       }
     }
   }
   // Fallback to top-level steps (legacy LLM responses)
-  return testCase.steps ?? [];
+  return normalizeGeneratedSteps(testCase.steps);
 }
 
 /**
@@ -280,108 +391,35 @@ function extractPartialTestCases(
   if (depth > 0 && objectStart >= 0) {
     const partialJson = content.slice(objectStart);
 
-    // Extract "name": "value"
-    const nameMatch = partialJson.match(/"name"\s*:\s*"([^"]*?)"/);
-    if (!nameMatch) return results; // Name not complete yet
+    // Only the *top-level* keys of the object: a scan that ignores nesting
+    // reads the `step` / `expectedResult` keys inside the Steps array as
+    // fieldValues of their own, and keeps overwriting them, so a case with
+    // many steps renders as a single one.
+    const topLevel = extractCompleteJsonFields(partialJson);
 
-    const name = nameMatch[1];
+    const name = topLevel.complete.name;
+    if (typeof name !== "string") return results; // Name not complete yet
 
-    // Extract individual fieldValues
-    const fieldValues: Record<string, any> = {};
-    const fvStart = partialJson.indexOf('"fieldValues"');
-    if (fvStart !== -1) {
-      const fvBrace = partialJson.indexOf("{", fvStart);
-      if (fvBrace !== -1) {
-        const fvContent = partialJson.slice(fvBrace);
-        // Match complete "key": "value" pairs (string values)
-        const stringPairs = fvContent.matchAll(
-          /"([^"]+?)"\s*:\s*"((?:[^"\\]|\\.)*)"/g
-        );
-        for (const m of stringPairs) {
-          fieldValues[m[1]] = m[2].replace(/\\"/g, '"').replace(/\\n/g, "\n");
-        }
-        // Match complete "key": number pairs
-        const numPairs = fvContent.matchAll(/"([^"]+?)"\s*:\s*(\d+)/g);
-        for (const m of numPairs) {
-          fieldValues[m[1]] = parseInt(m[2], 10);
-        }
-        // Match complete "key": ["val1", "val2"] array pairs
-        const arrPairs = fvContent.matchAll(/"([^"]+?)"\s*:\s*\[([^\]]*)\]/g);
-        for (const m of arrPairs) {
-          try {
-            fieldValues[m[1]] = JSON.parse(`[${m[2]}]`);
-          } catch {
-            // Array not complete yet
-          }
-        }
-      }
-    }
+    const fieldValues: Record<string, any> =
+      topLevel.complete.fieldValues &&
+      typeof topLevel.complete.fieldValues === "object"
+        ? { ...topLevel.complete.fieldValues }
+        : topLevel.partialKey === "fieldValues" && topLevel.partialValue
+          ? extractCompleteJsonFields(topLevel.partialValue).complete
+          : {};
 
-    // Extract tags
-    let tags: string[] | undefined;
-    const tagsMatch = partialJson.match(/"tags"\s*:\s*\[(.*?)\]/s);
-    if (tagsMatch) {
-      try {
-        tags = JSON.parse(`[${tagsMatch[1]}]`);
-      } catch {
-        // tags not complete
-      }
-    }
+    const tags: string[] | undefined = Array.isArray(topLevel.complete.tags)
+      ? topLevel.complete.tags
+      : undefined;
 
-    // Extract steps (complete step objects only)
-    let steps: Array<{ step: string; expectedResult: string }> | undefined;
-    const stepsStart = partialJson.indexOf('"steps"');
-    if (stepsStart !== -1) {
-      const stepsArr = partialJson.indexOf("[", stepsStart);
-      if (stepsArr !== -1) {
-        const stepsContent = partialJson.slice(stepsArr);
-        // Find complete step objects — handle both field orderings
-        // Extract each {...} block in the steps array
-        steps = [];
-        let sDepth = 0;
-        let sObjStart = -1;
-        let sInStr = false;
-        let sEsc = false;
-        for (let si = 0; si < stepsContent.length; si++) {
-          const sc = stepsContent[si];
-          if (sEsc) {
-            sEsc = false;
-            continue;
-          }
-          if (sc === "\\") {
-            sEsc = true;
-            continue;
-          }
-          if (sc === '"') {
-            sInStr = !sInStr;
-            continue;
-          }
-          if (sInStr) continue;
-          if (sc === "{") {
-            if (sDepth === 0) sObjStart = si;
-            sDepth++;
-          } else if (sc === "}") {
-            sDepth--;
-            if (sDepth === 0 && sObjStart >= 0) {
-              try {
-                const stepObj = JSON.parse(
-                  stepsContent.slice(sObjStart, si + 1)
-                );
-                if (stepObj.step || stepObj.expectedResult) {
-                  steps.push({
-                    step: String(stepObj.step ?? ""),
-                    expectedResult: String(stepObj.expectedResult ?? ""),
-                  });
-                }
-              } catch {
-                /* incomplete */
-              }
-              sObjStart = -1;
-            }
-          }
-        }
-      }
-    }
+    // Steps live under the template's Steps field inside fieldValues; older
+    // responses put them at the top level.
+    const stepsEntry = findGeneratedStepsEntry(fieldValues);
+    const steps = stepsEntry
+      ? stepsEntry.steps
+      : normalizeGeneratedSteps(topLevel.complete.steps);
+    // Rendered by the stub's own steps section — not as raw JSON alongside it.
+    if (stepsEntry) delete fieldValues[stepsEntry.key];
 
     results.push({
       id: `streaming_${alreadyFinalized + 1}`,
@@ -389,7 +427,7 @@ function extractPartialTestCases(
       fieldValues,
       automated: false,
       tags,
-      steps,
+      steps: steps.length > 0 ? steps : undefined,
       _streaming: true,
     });
   }
@@ -423,12 +461,38 @@ interface LlmErrorState {
   timestamp: string;
 }
 
+/**
+ * Seed for opening the wizard pre-focused on a specific existing issue (the
+ * milestone "Generate Test Cases" action). When provided, the wizard skips the
+ * issue-picker step, and on import lands the cases in a per-issue folder and
+ * links them back to this issue so they show up in the milestone's coverage.
+ */
+export interface GenerateTestCasesSeedIssue {
+  /** Internal Issue.id — used to link generated cases back to the issue. */
+  issueId: number;
+  /** Display key, e.g. "PROJ-123". */
+  key: string;
+  title: string;
+  description?: string;
+  status?: string;
+  priority?: string;
+  externalId?: string | null;
+  externalUrl?: string | null;
+  /**
+   * Source integration id when the issue is synced from a tracker; enables
+   * comment + linked-issue enrichment. Omit for manual issues.
+   */
+  integrationId?: number | null;
+}
+
 interface GenerateTestCasesWizardProps {
   folderId: number;
   folderName?: string | null;
   onImportComplete?: () => void;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** When set, seed the wizard from an existing issue (milestone flow). */
+  seedIssue?: GenerateTestCasesSeedIssue;
 }
 
 enum WizardStep {
@@ -476,7 +540,7 @@ interface GeneratedTestCaseCardProps {
   caseWarnings?: Array<{ caseIndex: number; message: string }>;
 }
 
-const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
+export const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
   testCase,
   template,
   selectedFieldIds,
@@ -732,10 +796,16 @@ const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
     formState: { errors },
   } = formMethods;
 
+  // Seed the form when the card enters edit mode. `defaultValues` is rebuilt
+  // whenever the test case, the template, or the field selection arrives as a
+  // fresh object — a query refetch is enough — so resetting on that identity
+  // alone would drop whatever the user had already changed in the open form.
+  const wasEditingRef = useRef(false);
   useEffect(() => {
-    if (isEditing) {
+    if (isEditing && !wasEditingRef.current) {
       reset(defaultValues);
     }
+    wasEditingRef.current = isEditing;
   }, [isEditing, defaultValues, reset]);
 
   const handleSave = handleSubmit((data) => {
@@ -825,6 +895,7 @@ const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
         sharedStepGroup,
         isShared: step?.isShared ?? Boolean(step?.sharedStepGroupId),
         isDeleted: step?.isDeleted ?? false,
+        deletedAt: step?.deletedAt ?? null,
         testCaseId: typeof step?.testCaseId === "number" ? step.testCaseId : 0,
       };
     });
@@ -871,7 +942,13 @@ const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
             session,
             projectId,
             previousFieldValue: undefined,
-            fieldValue: testCase.fieldValues[displayName],
+            // Steps: hand the edit form the normalized list, not the raw model
+            // value — it seeds its field array from this prop, and after a save
+            // the raw value is gone (handleSave moves steps out of fieldValues).
+            fieldValue:
+              fieldType === "Steps"
+                ? stepsForDisplay
+                : testCase.fieldValues[displayName],
             stepsForDisplay:
               fieldType === "Steps" ? stepsForDisplay : undefined,
             explicitFieldNameForSteps:
@@ -960,7 +1037,7 @@ const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
                                   {tag}
                                   <button
                                     type="button"
-                                    className="ml-0.5 rounded-full hover:bg-muted p-0.5"
+                                    className="ms-0.5 rounded-full hover:bg-muted p-0.5"
                                     onClick={() => {
                                       field.onChange(
                                         tags.filter((_, i) => i !== idx)
@@ -1099,7 +1176,7 @@ const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
                 {testCase.steps.map((step, si) => (
                   <div
                     key={si}
-                    className="pl-2 border-l-2 border-muted text-xs text-muted-foreground"
+                    className="ps-2 border-s-2 border-muted text-xs text-muted-foreground"
                   >
                     <div>
                       <span className="font-medium">
@@ -1107,12 +1184,12 @@ const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
                         {si + 1}
                         {":"}
                       </span>{" "}
-                      {step.step}
+                      {stepPreviewText(step.step)}
                     </div>
                     {step.expectedResult && (
                       <div className="text-muted-foreground/70">
                         {"Expected: "}
-                        {step.expectedResult}
+                        {stepPreviewText(step.expectedResult)}
                       </div>
                     )}
                   </div>
@@ -1149,14 +1226,14 @@ const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
           <div className="flex-1 min-w-0">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
               <div className="space-y-1 min-w-0">
-                <CollapsibleTrigger className="flex items-center gap-1.5 text-left group">
+                <CollapsibleTrigger className="flex items-center gap-1.5 text-start group">
                   <ChevronDown className="w-4 h-4 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
                   <h4 className="font-medium wrap-break-word">
                     {testCase.name}
                   </h4>
                 </CollapsibleTrigger>
                 {folderLabel && (
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground ml-5.5">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground ms-5.5">
                     <FolderOpen className="w-3 h-3 shrink-0" />
                     <span>{folderLabel}</span>
                   </div>
@@ -1169,7 +1246,7 @@ const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
                   onClick={onStartEdit}
                   disabled={disabled}
                 >
-                  <SquarePen className="w-4 h-4 mr-1" />
+                  <SquarePen className="w-4 h-4 me-1" />
                   {tCommon("actions.edit")}
                 </Button>
               </div>
@@ -1177,7 +1254,7 @@ const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
           </div>
         </div>
         <CollapsibleContent>
-          <div className="px-4 pb-4 pl-[4.25rem] space-y-3">
+          <div className="px-4 pb-4 ps-[4.25rem] space-y-3">
             {renderFieldList(false)}
 
             <div className="flex flex-wrap items-center gap-2">
@@ -1188,7 +1265,7 @@ const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
                     variant="outline"
                     className="text-xs text-primary"
                   >
-                    <Tag className="h-3 w-3 shrink-0 mr-1" />
+                    <Tag className="h-3 w-3 shrink-0 me-1" />
                     {tag}
                   </Badge>
                 ))}
@@ -1212,11 +1289,11 @@ const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
                       data-testid="wizard-preview-parameter-chip"
                     >
                       {p.name}
-                      <span className="ml-1 text-muted-foreground">
+                      <span className="ms-1 text-muted-foreground">
                         {`(${p.type.toLowerCase()})`}
                       </span>
                       {p.sensitive && (
-                        <span className="ml-1 text-destructive">
+                        <span className="ms-1 text-destructive">
                           {`· ${_t("generateTestCases.parameterChipSensitive")}`}
                         </span>
                       )}
@@ -1263,7 +1340,7 @@ const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
                         {testCase.parameters?.map((p) => (
                           <th
                             key={`${testCase.id}-th-${p.name}`}
-                            className="px-2 py-1 text-left font-medium"
+                            className="px-2 py-1 text-start font-medium"
                           >
                             {p.name}
                           </th>
@@ -1311,10 +1388,12 @@ export function GenerateTestCasesWizard({
   onImportComplete,
   open,
   onOpenChange,
+  seedIssue,
 }: GenerateTestCasesWizardProps) {
   // Alias kept for minimal diff — prefer calling onOpenChange directly
   // for future call sites.
   const setOpen = onOpenChange;
+  const isSeeded = Boolean(seedIssue);
   const t = useTranslations("repository");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
@@ -1332,6 +1411,8 @@ export function GenerateTestCasesWizard({
   );
   const [documentRequirements, setDocumentRequirements] =
     useState<DocumentRequirements | null>(null);
+  // Live TipTap JSON while the document tab's editor is open (pre-save).
+  const [documentDraftDoc, setDocumentDraftDoc] = useState<object | null>(null);
   const [urlInput, setUrlInput] = useState("");
   const [urlMode, setUrlMode] = useState<"requirements" | "application">(
     "application"
@@ -1340,6 +1421,9 @@ export function GenerateTestCasesWizard({
     null
   );
   const [followLinks, setFollowLinks] = useState(false);
+  // URL mode: attach the crawl worker's page screenshots (when the server
+  // has capture enabled) to each page's generation call.
+  const [includeUrlScreenshots, setIncludeUrlScreenshots] = useState(true);
   const [maxDepth, setMaxDepth] = useState(2);
   const [maxPages, setMaxPages] = useState(10);
   const [urlJobId, setUrlJobId] = useState<string | null>(null);
@@ -1354,6 +1438,7 @@ export function GenerateTestCasesWizard({
     url: string;
     title?: string;
     spaWarning: boolean;
+    hasScreenshot?: boolean;
   }
   const [crawledPagesResult, setCrawledPagesResult] = useState<
     CrawledPageDisplay[]
@@ -1385,6 +1470,35 @@ export function GenerateTestCasesWizard({
   const isAdmin = session?.user?.access === "ADMIN";
   const [linkedIssueRefs, setLinkedIssueRefs] = useState<LinkedIssueRef[]>([]);
   const [droppedLinkedIssues, setDroppedLinkedIssues] = useState<string[]>([]);
+  // Images offered as generation context — issue attachments (issue tab)
+  // or editor embeds (document tab). Auto-checked up to the server's cap;
+  // the user can uncheck before generating. `tooLarge` entries render
+  // disabled.
+  const [contextImageOptions, setContextImageOptions] = useState<
+    ContextImageOption[]
+  >([]);
+  const [contextImageMax, setContextImageMax] = useState(5);
+  const [contextVisionSupported, setContextVisionSupported] = useState(true);
+  // What the outline actually sent (metadata from the enrichment envelope),
+  // surfaced on the review step.
+  const [contextImagesUsed, setContextImagesUsed] = useState<{
+    included: Array<{ filename: string }>;
+    skipped: Array<{ filename: string; reason: string }>;
+    imagesOmittedForVision: number;
+  } | null>(null);
+
+  const contextImagePickerLabels = {
+    heading: t("generateTestCases.contextImages.pickerHeading", {
+      max: contextImageMax,
+    }),
+    tooLarge: t("generateTestCases.contextImages.tooLarge"),
+    noVisionHint: t("generateTestCases.contextImages.noVisionHint"),
+  };
+  const toggleContextImage = (id: string, checked: boolean) => {
+    setContextImageOptions((prev) =>
+      prev.map((o) => (o.id === id ? { ...o, checked } : o))
+    );
+  };
   const [generatedTestCases, setGeneratedTestCases] = useState<
     GeneratedTestCase[]
   >([]);
@@ -1408,6 +1522,15 @@ export function GenerateTestCasesWizard({
   const expandAbortControllersRef = useRef<Map<number, AbortController>>(
     new Map()
   );
+  // Kept so a single failed card can be retried without redoing the outline.
+  const expandPayloadRef = useRef<{
+    issue: unknown;
+    template: unknown;
+    context: unknown;
+    autoGenerateTags: boolean;
+    includeParameters: boolean;
+    contextImagesId?: string;
+  } | null>(null);
   const [urlStreamingPageInfo, setUrlStreamingPageInfo] = useState<{
     current: number;
     total: number;
@@ -1503,6 +1626,115 @@ export function GenerateTestCasesWizard({
     return () => ctrl.abort();
   }, [selectedIssue, sourceType, projectId]);
 
+  // Offer the selected issue's image attachments as generation context.
+  // Metadata only; the first `maxImages` non-oversized entries come
+  // pre-checked.
+  useEffect(() => {
+    if (!selectedIssue || sourceType !== "issue") {
+      setContextImageOptions([]);
+      return;
+    }
+    const issueKey =
+      selectedIssue.key ||
+      selectedIssue.externalKey ||
+      String(selectedIssue.id);
+    const ctrl = new AbortController();
+    fetch("/api/llm/generate-test-cases/context-images", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        projectId,
+        issueKey,
+        ...(seedIssue?.integrationId
+          ? { integrationId: seedIssue.integrationId }
+          : {}),
+      }),
+      signal: ctrl.signal,
+    })
+      .then((r) =>
+        r.ok ? r.json() : { attachments: [], visionSupported: true }
+      )
+      .then(
+        (data: {
+          attachments?: Array<{
+            id: string;
+            filename: string;
+            byteSize?: number;
+            tooLarge: boolean;
+          }>;
+          visionSupported?: boolean;
+          maxImages?: number;
+        }) => {
+          const max = data.maxImages ?? 5;
+          let checkedCount = 0;
+          setContextImageMax(max);
+          setContextVisionSupported(data.visionSupported ?? true);
+          setContextImageOptions(
+            (data.attachments ?? []).map((att) => {
+              const checked = !att.tooLarge && checkedCount < max;
+              if (checked) checkedCount++;
+              return { ...att, checked };
+            })
+          );
+        }
+      )
+      .catch((err) => {
+        if (err?.name !== "AbortError") {
+          console.warn(
+            "[GenerateTestCasesWizard] context-images fetch failed:",
+            err
+          );
+          setContextImageOptions([]);
+        }
+      });
+    return () => ctrl.abort();
+  }, [selectedIssue, sourceType, projectId, seedIssue?.integrationId]);
+
+  // Document tab: image options come from the saved document's own TipTap
+  // JSON (no server round trip — sizes are enforced server-side at
+  // generation). Declared after the issue effect on purpose: both fire on a
+  // sourceType switch and this one owns document mode.
+  useEffect(() => {
+    if (sourceType !== "document") return;
+    const doc = documentRequirements?.doc;
+    if (!doc) {
+      setContextImageOptions([]);
+      return;
+    }
+    const srcs = extractEditorMediaSrcs(doc).filter(
+      (src) =>
+        !src.startsWith("data:video/") && !/\.(mp4|webm|ogg)(\?|#|$)/i.test(src)
+    );
+    setContextImageOptions(
+      srcs.map((src, i) => ({
+        id: src,
+        filename: filenameForEditorMediaSrc(src, i),
+        // Data URIs carry their size in the string; storage srcs are
+        // validated server-side.
+        byteSize: src.startsWith("data:")
+          ? Math.floor((src.length * 3) / 4)
+          : undefined,
+        tooLarge: false,
+        checked: i < contextImageMax,
+      }))
+    );
+    // Vision capability for the notice — reuses the listing route without an
+    // issue key (attachments skipped server-side).
+    const ctrl = new AbortController();
+    fetch("/api/llm/generate-test-cases/context-images", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ projectId, visionOnly: true }),
+      signal: ctrl.signal,
+    })
+      .then((r) => (r.ok ? r.json() : { visionSupported: true }))
+      .then((data: { visionSupported?: boolean }) =>
+        setContextVisionSupported(data.visionSupported ?? true)
+      )
+      .catch(() => {});
+    return () => ctrl.abort();
+  }, [sourceType, documentRequirements?.doc, projectId, contextImageMax]);
+
   const [isImporting, setIsImporting] = useState(false);
   const [showImportLoader, setShowImportLoader] = useState(false);
   const [importProgress, setImportProgress] = useState(0);
@@ -1522,6 +1754,10 @@ export function GenerateTestCasesWizard({
   const [selectedFieldIds, setSelectedFieldIds] = useState<Set<number>>(
     new Set()
   );
+  // Template whose field selection has been seeded. Without this, unrelated
+  // re-runs of the auto-select-all effect (step navigation, a templates
+  // refetch) wipe out the user's deselections.
+  const seededFieldsTemplateIdRef = useRef<number | null>(null);
   const [llmError, setLlmError] = useState<LlmErrorState | null>(null);
   const [showErrorDetails, setShowErrorDetails] = useState(false);
   const [editingTestCaseIds, setEditingTestCaseIds] = useState<Set<string>>(
@@ -1534,7 +1770,7 @@ export function GenerateTestCasesWizard({
   const formSubmitHandlersRef = useRef<Map<string, () => void>>(new Map());
 
   // Fetch project data
-  const { data: project } = useFindFirstProjects({
+  const { data: project } = useClientQueries(schema).projects.useFindFirst({
     where: {
       id: projectId,
       isDeleted: false,
@@ -1557,9 +1793,10 @@ export function GenerateTestCasesWizard({
   });
 
   // Fetch templates
-  const { data: templates } = useFindManyTemplates({
+  const { data: templates } = useClientQueries(schema).templates.useFindMany({
     where: {
       isDeleted: false,
+      isEnabled: true,
       projects: {
         some: {
           projectId,
@@ -1568,13 +1805,19 @@ export function GenerateTestCasesWizard({
     },
     include: {
       caseFields: {
+        // Only surface case fields that are still enabled and not soft-deleted.
+        // Disabled/deleted fields remain in the template assignment but must
+        // never be selectable for generation.
+        where: { caseField: { isEnabled: true, isDeleted: false } },
         select: {
           caseFieldId: true,
           templateId: true,
           order: true,
+          generateDefaultEnabled: true,
           caseField: {
             include: {
               fieldOptions: {
+                where: { fieldOption: { isEnabled: true, isDeleted: false } },
                 include: {
                   fieldOption: { include: { icon: true, iconColor: true } },
                 },
@@ -1600,7 +1843,9 @@ export function GenerateTestCasesWizard({
 
   // Fetch existing test cases in current folder for context
   // Fetch the maximum order value separately for accurate ordering
-  const { data: maxOrderData } = useFindManyRepositoryCases({
+  const { data: maxOrderData } = useClientQueries(
+    schema
+  ).repositoryCases.useFindMany({
     where: {
       projectId: projectId,
       folderId: folderId,
@@ -1617,7 +1862,9 @@ export function GenerateTestCasesWizard({
   });
 
   // Fetch default workflow state for new test cases
-  const { data: defaultWorkflow } = useFindFirstWorkflows({
+  const { data: defaultWorkflow } = useClientQueries(
+    schema
+  ).workflows.useFindFirst({
     where: {
       projects: {
         some: {
@@ -1641,6 +1888,39 @@ export function GenerateTestCasesWizard({
   );
   const canAddEdit = permissions?.canAddEdit ?? false;
 
+  // Restricted case fields are only offered to users who can add/edit them.
+  // Super admins always qualify; everyone else needs explicit add/edit on the
+  // TestCaseRestrictedFields area.
+  const { permissions: restrictedFieldsPermissions } = useProjectPermissions(
+    projectId,
+    ApplicationArea.TestCaseRestrictedFields
+  );
+  const canEditRestrictedFields =
+    (restrictedFieldsPermissions?.canAddEdit ?? false) || isAdmin;
+
+  // A template case field may be offered for generation only when it is
+  // enabled, not soft-deleted, and — if restricted — the user is allowed to
+  // edit restricted fields. The query already filters enabled/deleted, but we
+  // re-check defensively so callers can rely on this predicate alone.
+  const isTemplateFieldVisible = useCallback(
+    (cf: any) =>
+      cf?.caseField?.isEnabled !== false &&
+      cf?.caseField?.isDeleted !== true &&
+      (!cf?.caseField?.isRestricted || canEditRestrictedFields),
+    [canEditRestrictedFields]
+  );
+
+  // Fields hidden from the user (disabled, deleted, restricted) are omitted, so
+  // the model never learns those names.
+  const excludedFieldNamesFor = useCallback(
+    (template: any, fieldIds: Set<number>): string[] =>
+      (template?.caseFields ?? [])
+        .filter(isTemplateFieldVisible)
+        .filter((cf: any) => !fieldIds.has(cf.caseFieldId))
+        .map((cf: any) => cf.caseField.displayName),
+    [isTemplateFieldVisible]
+  );
+
   useEffect(() => {
     if (project) {
       const hasIntegrations = project.projectIntegrations.length > 0;
@@ -1662,24 +1942,64 @@ export function GenerateTestCasesWizard({
     }
   }, [templates]);
 
-  // Auto-select all fields when the user changes template in the wizard flow.
-  // Skip when currentStep is REVIEW_GENERATED — that means we restored from a
-  // job result and selectedFieldIds was already set explicitly.
+  // Auto-select the template's default fields when the user changes template
+  // in the wizard flow: fields the admin marked generateDefaultEnabled, plus
+  // required fields (which can never be deselected). Skip when currentStep is
+  // REVIEW_GENERATED — that means we restored from a job result and
+  // selectedFieldIds was already set explicitly.
   useEffect(() => {
     if (
       selectedTemplateId &&
       templates &&
-      currentStep !== WizardStep.REVIEW_GENERATED
+      currentStep !== WizardStep.REVIEW_GENERATED &&
+      seededFieldsTemplateIdRef.current !== selectedTemplateId
     ) {
       const template = templates.find((t) => t.id === selectedTemplateId);
       if (template) {
-        const allFieldIds = new Set(
-          template.caseFields.map((cf) => cf.caseFieldId)
+        const visibleFields = template.caseFields.filter(
+          isTemplateFieldVisible
         );
-        setSelectedFieldIds(allFieldIds);
+        const defaultFieldIds = new Set(
+          visibleFields
+            .filter(
+              (cf) =>
+                cf.generateDefaultEnabled !== false || cf.caseField.isRequired
+            )
+            .map((cf) => cf.caseFieldId)
+        );
+        // An empty caseFields array (still loading) must not lock the
+        // selection at zero fields.
+        if (visibleFields.length > 0) {
+          seededFieldsTemplateIdRef.current = selectedTemplateId;
+        }
+        setSelectedFieldIds(defaultFieldIds);
       }
     }
-  }, [selectedTemplateId, templates, currentStep]);
+  }, [selectedTemplateId, templates, currentStep, isTemplateFieldVisible]);
+
+  // Safety net: never let a hidden field (disabled, deleted, or restricted
+  // without permission) linger in the selection — e.g. when restoring a prior
+  // job's field IDs. This keeps the generation payload and preview in sync
+  // with what the user is actually allowed to select.
+  useEffect(() => {
+    if (!selectedTemplateId || !templates) return;
+    const template = templates.find((t) => t.id === selectedTemplateId);
+    if (!template) return;
+    const visibleIds = new Set(
+      template.caseFields
+        .filter(isTemplateFieldVisible)
+        .map((cf) => cf.caseFieldId)
+    );
+    setSelectedFieldIds((prev) => {
+      let changed = false;
+      const next = new Set<number>();
+      prev.forEach((id) => {
+        if (visibleIds.has(id)) next.add(id);
+        else changed = true;
+      });
+      return changed ? next : prev;
+    });
+  }, [selectedTemplateId, templates, isTemplateFieldVisible]);
 
   // Convert option names → IDs for dropdown/multi-select fields in generated test cases.
   // The worker returns string names but the UI expects numeric option IDs.
@@ -1721,19 +2041,26 @@ export function GenerateTestCasesWizard({
     (resultTemplateId?: number, resultFieldIds?: number[]) => {
       if (!resultTemplateId || !templates) return;
       setSelectedTemplateId(resultTemplateId);
+      seededFieldsTemplateIdRef.current = resultTemplateId;
+      const tmpl = templates.find((t) => t.id === resultTemplateId);
+      // Only restore fields the user is still allowed to select — a prior job
+      // may have included fields that are now disabled/deleted or restricted
+      // beyond the current user's permission.
+      const visibleIds = new Set(
+        (tmpl?.caseFields ?? [])
+          .filter(isTemplateFieldVisible)
+          .map((cf: any) => cf.caseFieldId)
+      );
       if (resultFieldIds && resultFieldIds.length > 0) {
-        setSelectedFieldIds(new Set(resultFieldIds));
+        setSelectedFieldIds(
+          new Set(resultFieldIds.filter((id) => visibleIds.has(id)))
+        );
       } else {
-        // Fallback: select all fields if the job didn't carry field IDs
-        const tmpl = templates.find((t) => t.id === resultTemplateId);
-        if (tmpl) {
-          setSelectedFieldIds(
-            new Set(tmpl.caseFields.map((cf: any) => cf.caseFieldId))
-          );
-        }
+        // Fallback: select all visible fields if the job didn't carry field IDs
+        setSelectedFieldIds(new Set(visibleIds));
       }
     },
-    [templates]
+    [templates, isTemplateFieldVisible]
   );
 
   // Poll URL job status while a job is active
@@ -1980,7 +2307,9 @@ export function GenerateTestCasesWizard({
       const template = templates.find((t) => t.id === selectedTemplateId);
       if (template) {
         const allFieldIds = new Set(
-          template.caseFields.map((cf) => cf.caseFieldId)
+          template.caseFields
+            .filter(isTemplateFieldVisible)
+            .map((cf) => cf.caseFieldId)
         );
         setSelectedFieldIds(allFieldIds);
       }
@@ -1991,10 +2320,12 @@ export function GenerateTestCasesWizard({
     if (selectedTemplateId && templates) {
       const template = templates.find((t) => t.id === selectedTemplateId);
       if (template) {
-        // Keep only required fields
+        // Keep only required fields that are still visible to this user
         const requiredFieldIds = new Set(
           template.caseFields
-            .filter((cf) => cf.caseField.isRequired)
+            .filter(
+              (cf) => cf.caseField.isRequired && isTemplateFieldVisible(cf)
+            )
             .map((cf) => cf.caseFieldId)
         );
         setSelectedFieldIds(requiredFieldIds);
@@ -2011,31 +2342,33 @@ export function GenerateTestCasesWizard({
     }
   }
 
-  // Define wizard steps with icons
+  // Define wizard steps with icons. When seeded from an issue the picker step
+  // is hidden — the issue is fixed and the wizard opens on template selection.
   const wizardSteps = useMemo<WizardStepDefinition[]>(
-    () => [
-      {
-        id: WizardStep.SELECT_ISSUE,
-        label: t(stepTitles[0] as any),
-        icon: Search,
-      },
-      {
-        id: WizardStep.SELECT_TEMPLATE,
-        label: t(stepTitles[1] as any),
-        icon: Settings,
-      },
-      {
-        id: WizardStep.ADD_NOTES,
-        label: t(stepTitles[2] as any),
-        icon: FileText,
-      },
-      {
-        id: WizardStep.REVIEW_GENERATED,
-        label: t(stepTitles[3] as any),
-        icon: ListChecks,
-      },
-    ],
-    [t]
+    () =>
+      [
+        {
+          id: WizardStep.SELECT_ISSUE,
+          label: t(stepTitles[0] as any),
+          icon: Search,
+        },
+        {
+          id: WizardStep.SELECT_TEMPLATE,
+          label: t(stepTitles[1] as any),
+          icon: Settings,
+        },
+        {
+          id: WizardStep.ADD_NOTES,
+          label: t(stepTitles[2] as any),
+          icon: FileText,
+        },
+        {
+          id: WizardStep.REVIEW_GENERATED,
+          label: t(stepTitles[3] as any),
+          icon: ListChecks,
+        },
+      ].filter((step) => !isSeeded || step.id !== WizardStep.SELECT_ISSUE),
+    [t, isSeeded]
   );
 
   // Determine which steps are unlocked based on validation
@@ -2130,13 +2463,17 @@ export function GenerateTestCasesWizard({
   }, [maxUnlockedStep]);
 
   const goPrev = useCallback(() => {
+    // When seeded, the issue picker is hidden — don't let Back reach it.
+    const floor = isSeeded
+      ? WizardStep.SELECT_TEMPLATE
+      : WizardStep.SELECT_ISSUE;
     setCurrentStep((previous) => {
-      if (previous > WizardStep.SELECT_ISSUE) {
+      if (previous > floor) {
         return (previous - 1) as WizardStep;
       }
       return previous;
     });
-  }, []);
+  }, [isSeeded]);
 
   const handleBack = useCallback(() => {
     goPrev();
@@ -2149,6 +2486,35 @@ export function GenerateTestCasesWizard({
       goNext();
     }
   };
+
+  // Seed the wizard from an existing issue (milestone Generate flow). Runs once
+  // per opened issue: pre-selects the issue and jumps past the issue picker to
+  // the template step. Re-seeds if a different issue is opened while mounted.
+  const seededIssueIdRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!open) {
+      seededIssueIdRef.current = null;
+      return;
+    }
+    if (!seedIssue || seededIssueIdRef.current === seedIssue.issueId) return;
+    seededIssueIdRef.current = seedIssue.issueId;
+    setSourceType("issue");
+    setSelectedIssue({
+      id: seedIssue.externalId ?? String(seedIssue.issueId),
+      key: seedIssue.key,
+      title: seedIssue.title,
+      description: seedIssue.description,
+      status: seedIssue.status ?? "",
+      priority: seedIssue.priority,
+      externalId: seedIssue.externalId ?? undefined,
+      externalKey: seedIssue.key,
+      externalUrl: seedIssue.externalUrl ?? undefined,
+      url: seedIssue.externalUrl ?? undefined,
+      isExternal: Boolean(seedIssue.integrationId),
+    });
+    // The issue is fixed — skip the picker and land on template selection.
+    setCurrentStep(WizardStep.SELECT_TEMPLATE);
+  }, [open, seedIssue]);
 
   const resetWizard = () => {
     // Abort any in-progress SSE stream
@@ -2181,6 +2547,9 @@ export function GenerateTestCasesWizard({
     setSelectedTemplateId(
       templates?.find((t) => t.isDefault)?.id || templates?.[0]?.id || null
     );
+    // Released, not set to the default id — that id is usually unchanged, and
+    // the auto-select-all effect must repopulate the cleared selection.
+    seededFieldsTemplateIdRef.current = null;
     setSelectedFieldIds(new Set());
     setUserNotes("");
     setQuantity("several");
@@ -2235,6 +2604,7 @@ export function GenerateTestCasesWizard({
       title?: string;
       spaWarning: boolean;
       markdown?: string;
+      hasScreenshot?: boolean;
     }>,
     fieldIdsOverride?: number[]
   ) => {
@@ -2273,6 +2643,7 @@ export function GenerateTestCasesWizard({
       id: template.id,
       name: template.templateName,
       fields: templateFields,
+      excludedFields: excludedFieldNamesFor(template, fieldIds),
     };
 
     const llmFeature =
@@ -2337,6 +2708,9 @@ export function GenerateTestCasesWizard({
             autoGenerateTags,
             includeParameters,
             feature: llmFeature,
+            ...(includeUrlScreenshots && page.hasScreenshot && urlJobId
+              ? { urlJobId, pageIndex: pageIdx, includeScreenshot: true }
+              : {}),
           }),
           signal: abortController.signal,
         });
@@ -2660,6 +3034,7 @@ export function GenerateTestCasesWizard({
     setGeneratedTestCases([]);
     setSelectedTestCases(new Set());
     setDroppedLinkedIssues([]);
+    setContextImagesUsed(null);
     setLlmWarnings([]);
     setCaseOutlines([]);
     setExpandedCases([]);
@@ -2693,39 +3068,24 @@ export function GenerateTestCasesWizard({
         throw new Error(t("generateTestCases.errors.invalidSourceConfig"));
       }
 
-      // Helper: convert option names → IDs for a single test case
-      const convertFieldOptionIds = (
-        tc: GeneratedTestCase
-      ): GeneratedTestCase => {
-        if (!template) return tc;
-        const converted: Record<string, any> = { ...tc.fieldValues };
-        template.caseFields.forEach((cf: any) => {
-          const name = cf.caseField.displayName;
-          const type = cf.caseField.type.type;
-          const val = converted[name];
-          if (!val) return;
-          if (type === "Dropdown" && typeof val === "string") {
-            const opt = cf.caseField.fieldOptions?.find(
-              (fo: any) => fo.fieldOption.name === val
-            );
-            if (opt) converted[name] = opt.fieldOption.id;
-          } else if (type === "Multi-Select" && Array.isArray(val)) {
-            converted[name] = val
-              .map((n: string) => {
-                const opt = cf.caseField.fieldOptions?.find(
-                  (fo: any) => fo.fieldOption.name === n
-                );
-                return opt?.fieldOption.id;
-              })
-              .filter((id: number | undefined) => id !== undefined);
-          }
-        });
-        return { ...tc, fieldValues: converted };
-      };
+      // The milestone flow knows the internal Issue.id (exact match); the
+      // repository search flow only has tracker identity.
+      const issueRefPayload =
+        sourceType === "issue" && selectedIssue
+          ? {
+              ...(seedIssue?.issueId ? { issueId: seedIssue.issueId } : {}),
+              issueKey: selectedIssue.key || selectedIssue.externalKey,
+              ...(selectedIssue.id ? { externalId: selectedIssue.id } : {}),
+              ...(seedIssue?.integrationId
+                ? { integrationId: seedIssue.integrationId }
+                : {}),
+            }
+          : undefined;
 
       const templatePayload = {
         id: template?.id,
         name: template?.templateName,
+        excludedFields: excludedFieldNamesFor(template, selectedFieldIds),
         fields: template?.caseFields
           .filter((cf) => selectedFieldIds.has(cf.caseFieldId))
           .sort((a, b) => a.order - b.order)
@@ -2753,9 +3113,50 @@ export function GenerateTestCasesWizard({
           issue: issueData,
           context: contextPayload,
           quantity,
+          // Enrich real synced issues with their comments + one-hop linked
+          // issues. The document flow (issue.key = a document id) never maps to
+          // a tracker issue; a seeded MANUAL milestone issue has no source
+          // integration — both stay un-enriched.
+          enrichFromIssue:
+            sourceType === "issue" &&
+            (!seedIssue || Boolean(seedIssue.integrationId)),
+          // For a seeded synced issue, enrich via its own source integration;
+          // the repository search flow omits it and the server falls back to
+          // the project's first active integration.
+          ...(seedIssue?.integrationId
+            ? { integrationId: seedIssue.integrationId }
+            : {}),
+          ...(issueRefPayload ? { issueRef: issueRefPayload } : {}),
           // outline endpoint accepts-but-ignores includeParameters — kept for
           // uniform wizard plumbing.
           includeParameters,
+          // Selected context images (opaque selectors — the server
+          // re-derives candidates from its own sources and intersects;
+          // bytes never travel through the client). Issue mode sends
+          // attachment ids; document mode sends editor srcs + the doc they
+          // must come from.
+          ...(sourceType === "issue" &&
+          contextImageOptions.some((o) => o.checked)
+            ? {
+                contextImages: {
+                  attachmentIds: contextImageOptions
+                    .filter((o) => o.checked)
+                    .map((o) => o.id),
+                },
+              }
+            : {}),
+          ...(sourceType === "document" &&
+          documentRequirements?.doc &&
+          contextImageOptions.some((o) => o.checked)
+            ? {
+                documentDoc: documentRequirements.doc,
+                contextImages: {
+                  editorSrcs: contextImageOptions
+                    .filter((o) => o.checked)
+                    .map((o) => o.id),
+                },
+              }
+            : {}),
         }),
         signal: abortController.signal,
       });
@@ -2773,7 +3174,7 @@ export function GenerateTestCasesWizard({
         );
       }
 
-      const { outlines } = await outlineRes.json();
+      const { outlines, enrichment } = await outlineRes.json();
       if (!Array.isArray(outlines) || outlines.length === 0) {
         throw new Error(
           JSON.stringify({
@@ -2781,6 +3182,45 @@ export function GenerateTestCasesWizard({
           })
         );
       }
+
+      // The outline endpoint fetches the source issue's comments + one-hop
+      // linked issues once and returns them here. Thread that context into
+      // every expand call (so each case is grounded in the same context) and
+      // surface any linked issues dropped for the token budget.
+      const enrichedIssueData = {
+        ...issueData,
+        comments: enrichment?.comments ?? [],
+      };
+      const expandContextPayload = {
+        ...contextPayload,
+        linkedIssues: enrichment?.linkedIssues ?? [],
+      };
+      setDroppedLinkedIssues(enrichment?.droppedLinkedIssues ?? []);
+      // Image context the outline actually used, for the review-step panel;
+      // the stash id lets every expand call reuse the same images
+      // server-side.
+      const contextImagesEnvelope = enrichment?.contextImages as
+        | {
+            contextId?: string;
+            included?: Array<{ filename: string }>;
+            skipped?: Array<{ filename: string; reason: string }>;
+            imagesOmittedForVision?: number;
+          }
+        | undefined;
+      setContextImagesUsed(
+        contextImagesEnvelope &&
+          ((contextImagesEnvelope.included?.length ?? 0) > 0 ||
+            (contextImagesEnvelope.skipped?.length ?? 0) > 0 ||
+            (contextImagesEnvelope.imagesOmittedForVision ?? 0) > 0)
+          ? {
+              included: contextImagesEnvelope.included ?? [],
+              skipped: contextImagesEnvelope.skipped ?? [],
+              imagesOmittedForVision:
+                contextImagesEnvelope.imagesOmittedForVision ?? 0,
+            }
+          : null
+      );
+      const contextImagesId = contextImagesEnvelope?.contextId;
 
       // Show outline cards immediately — user sees titles before details arrive
       setCaseOutlines(
@@ -2793,127 +3233,17 @@ export function GenerateTestCasesWizard({
       setGeneratingStatus("streaming");
 
       // Phase 2: Expand each outline in parallel
+      expandPayloadRef.current = {
+        issue: enrichedIssueData,
+        template: templatePayload,
+        context: expandContextPayload,
+        autoGenerateTags,
+        includeParameters,
+        contextImagesId,
+      };
       await Promise.all(
-        outlines.map(
-          async (outline: { title: string; summary: string }, i: number) => {
-            if (abortController.signal.aborted) return;
-
-            const ac = new AbortController();
-            expandAbortControllersRef.current.set(i, ac);
-            abortController.signal.addEventListener("abort", () => ac.abort());
-
-            setCaseOutlines((prev) => {
-              const next = [...prev];
-              next[i] = { ...next[i], status: "generating" };
-              return next;
-            });
-
-            try {
-              const expandRes = await fetch(
-                "/api/llm/generate-test-cases/expand",
-                {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    projectId,
-                    issue: issueData,
-                    template: templatePayload,
-                    context: contextPayload,
-                    outline,
-                    autoGenerateTags,
-                    includeParameters,
-                  }),
-                  signal: ac.signal,
-                }
-              );
-
-              if (!expandRes.ok) {
-                const errData = await expandRes.json().catch(() => ({}));
-                setCaseOutlines((prev) => {
-                  const next = [...prev];
-                  next[i] = {
-                    ...next[i],
-                    status: "error",
-                    errorMessage:
-                      errData.error ||
-                      t("generateTestCases.errors.generateFailed"),
-                  };
-                  return next;
-                });
-                return;
-              }
-
-              // Consume the SSE stream — we only care about the final "done" event
-              const reader = expandRes.body!.getReader();
-              const decoder = new TextDecoder();
-              let buffer = "";
-
-              while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                buffer += decoder.decode(value, { stream: true });
-                const parts = buffer.split("\n\n");
-                buffer = parts.pop() ?? "";
-                for (const part of parts) {
-                  const line = part.trim();
-                  if (!line.startsWith("data: ")) continue;
-                  try {
-                    const data = JSON.parse(line.slice(6));
-                    if (data.type === "done" && data.testCase) {
-                      const tc = convertFieldOptionIds({
-                        ...data.testCase,
-                        id: `expand_${i}_${data.testCase.id ?? i}`,
-                      });
-                      setExpandedCases((prev) => {
-                        const next = [...prev];
-                        next[i] = tc;
-                        return next;
-                      });
-                      setGeneratedTestCases((prev) => [...prev, tc]);
-                      setSelectedTestCases((prev) => new Set([...prev, tc.id]));
-                      setCaseOutlines((prev) => {
-                        const next = [...prev];
-                        next[i] = { ...next[i], status: "done" };
-                        return next;
-                      });
-                    } else if (data.type === "error") {
-                      setCaseOutlines((prev) => {
-                        const next = [...prev];
-                        next[i] = {
-                          ...next[i],
-                          status: "error",
-                          errorMessage: data.message,
-                        };
-                        return next;
-                      });
-                    }
-                  } catch (e) {
-                    if (e instanceof SyntaxError) continue;
-                  }
-                }
-              }
-            } catch (err: any) {
-              if (err.name === "AbortError") {
-                setCaseOutlines((prev) => {
-                  const next = [...prev];
-                  if (next[i]?.status !== "cancelled") {
-                    next[i] = { ...next[i], status: "cancelled" };
-                  }
-                  return next;
-                });
-                return;
-              }
-              setCaseOutlines((prev) => {
-                const next = [...prev];
-                next[i] = {
-                  ...next[i],
-                  status: "error",
-                  errorMessage: err.message,
-                };
-                return next;
-              });
-            }
-          }
+        outlines.map((outline: { title: string; summary: string }, i: number) =>
+          expandOutline(i, outline, abortController.signal)
         )
       );
 
@@ -3193,6 +3523,140 @@ export function GenerateTestCasesWizard({
     void generateTestCases();
   };
 
+  // Shared by the initial fan-out and the per-card Retry button.
+  const expandOutline = async (
+    i: number,
+    outline: { title: string; summary: string },
+    parentSignal?: AbortSignal
+  ) => {
+    const payload = expandPayloadRef.current;
+    if (!payload || parentSignal?.aborted) return;
+
+    const ac = new AbortController();
+    expandAbortControllersRef.current.set(i, ac);
+    parentSignal?.addEventListener("abort", () => ac.abort());
+
+    setCaseOutlines((prev) => {
+      const next = [...prev];
+      next[i] = { ...next[i], status: "generating", errorMessage: undefined };
+      return next;
+    });
+
+    try {
+      const expandRes = await fetch("/api/llm/generate-test-cases/expand", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectId,
+          issue: payload.issue,
+          template: payload.template,
+          context: payload.context,
+          outline,
+          autoGenerateTags: payload.autoGenerateTags,
+          includeParameters: payload.includeParameters,
+          ...(payload.contextImagesId
+            ? { contextImagesId: payload.contextImagesId }
+            : {}),
+        }),
+        signal: ac.signal,
+      });
+
+      if (!expandRes.ok) {
+        const errData = await expandRes.json().catch(() => ({}));
+        setCaseOutlines((prev) => {
+          const next = [...prev];
+          next[i] = {
+            ...next[i],
+            status: "error",
+            errorMessage:
+              errData.error || t("generateTestCases.errors.generateFailed"),
+          };
+          return next;
+        });
+        return;
+      }
+
+      // Consume the SSE stream — we only care about the final "done" event
+      const reader = expandRes.body!.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const parts = buffer.split("\n\n");
+        buffer = parts.pop() ?? "";
+        for (const part of parts) {
+          const line = part.trim();
+          if (!line.startsWith("data: ")) continue;
+          try {
+            const data = JSON.parse(line.slice(6));
+            if (data.type === "done" && data.testCase) {
+              const tc = convertFieldOptionIds({
+                ...data.testCase,
+                id: `expand_${i}_${data.testCase.id ?? i}`,
+              });
+              setExpandedCases((prev) => {
+                const next = [...prev];
+                next[i] = tc;
+                return next;
+              });
+              setGeneratedTestCases((prev) => [...prev, tc]);
+              setSelectedTestCases((prev) => new Set([...prev, tc.id]));
+              setCaseOutlines((prev) => {
+                const next = [...prev];
+                next[i] = { ...next[i], status: "done" };
+                return next;
+              });
+            } else if (data.type === "error") {
+              setCaseOutlines((prev) => {
+                const next = [...prev];
+                next[i] = {
+                  ...next[i],
+                  status: "error",
+                  errorMessage: data.message,
+                };
+                return next;
+              });
+            }
+          } catch (e) {
+            if (e instanceof SyntaxError) continue;
+          }
+        }
+      }
+    } catch (err: any) {
+      if (err.name === "AbortError") {
+        setCaseOutlines((prev) => {
+          const next = [...prev];
+          if (next[i]?.status !== "cancelled") {
+            next[i] = { ...next[i], status: "cancelled" };
+          }
+          return next;
+        });
+        return;
+      }
+      setCaseOutlines((prev) => {
+        const next = [...prev];
+        next[i] = {
+          ...next[i],
+          status: "error",
+          errorMessage: err.message,
+        };
+        return next;
+      });
+    }
+  };
+
+  const handleRetryExpand = (index: number) => {
+    const outline = caseOutlines[index];
+    if (!outline) return;
+    void expandOutline(index, {
+      title: outline.title,
+      summary: outline.summary,
+    });
+  };
+
   const handleCancelExpand = (index: number) => {
     const ac = expandAbortControllersRef.current.get(index);
     if (ac) ac.abort();
@@ -3271,8 +3735,11 @@ export function GenerateTestCasesWizard({
         maxOrder = maxOrderData[0].order || 0;
       }
 
-      // Build field mappings from the template for the server action
+      // Scoped to the user's selection: the import writes a value for every
+      // fieldValues key that has a mapping, so leaving a field unmapped is what
+      // keeps a volunteered value from being persisted.
       const fieldMappings = selectedTemplate.caseFields
+        .filter((cf) => selectedFieldIds.has(cf.caseFieldId))
         .filter(
           (cf) =>
             cf.caseField.displayName !== "Steps" &&
@@ -3300,7 +3767,10 @@ export function GenerateTestCasesWizard({
           }
         | undefined;
 
-      if (sourceType === "issue" && selectedIssue) {
+      // The repository search flow upserts an external issue to link against.
+      // The seeded (milestone) flow links to the EXISTING internal issue by id
+      // instead (via linkIssueId below), so skip the external upsert here.
+      if (sourceType === "issue" && selectedIssue && !seedIssue) {
         const issueKey = selectedIssue.key || selectedIssue.externalKey;
         const integrationId = project?.projectIntegrations?.[0]?.integrationId;
         if (integrationId && issueKey) {
@@ -3346,6 +3816,17 @@ export function GenerateTestCasesWizard({
         }),
         fieldMappings,
         issue,
+        // Milestone flow: link every case to the existing issue and land them
+        // in a per-issue folder (created on save, at the repository root).
+        ...(seedIssue
+          ? {
+              linkIssueId: seedIssue.issueId,
+              destinationFolder: {
+                name: seedIssue.key.slice(0, 100),
+                parentId: null,
+              },
+            }
+          : {}),
       });
 
       if (result.status === "error") {
@@ -3568,7 +4049,7 @@ export function GenerateTestCasesWizard({
             </DialogDescription>
             <Alert className="mt-2 bg-primary/10 border-primary/50">
               <AlertDescription>
-                <div className="flex items-center gap-2 text-xs text-left">
+                <div className="flex items-center gap-2 text-xs text-start">
                   <Info className="w-4 h-4 text-muted-foreground shrink-0" />
                   {t("generateTestCases.selectSource.folderContextTip", {
                     folderName:
@@ -3629,9 +4110,9 @@ export function GenerateTestCasesWizard({
                               {page.title || page.url}
                             </span>
                             {page.spaWarning && (
-                              <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0 inline ml-1" />
+                              <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0 inline ms-1" />
                             )}
-                            <span className="text-muted-foreground ml-1">
+                            <span className="text-muted-foreground ms-1">
                               {"("}
                               {pageTestCount}
                               {")"}
@@ -3714,7 +4195,7 @@ export function GenerateTestCasesWizard({
                               `${llmErrorTranslationKey}.suggestionsHeading` as any
                             )}
                           </p>
-                          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+                          <ul className="mt-2 list-disc space-y-1 ps-5 text-sm text-muted-foreground">
                             {llmError.suggestions.map((suggestion) => (
                               <li key={suggestion}>{suggestion}</li>
                             ))}
@@ -4001,13 +4482,22 @@ export function GenerateTestCasesWizard({
                                           </div>
                                         </div>
                                       )}
+
+                                      {/* Image attachments offered as generation context */}
+                                      <ContextImagesPicker
+                                        options={contextImageOptions}
+                                        max={contextImageMax}
+                                        visionSupported={contextVisionSupported}
+                                        labels={contextImagePickerLabels}
+                                        onToggle={toggleContextImage}
+                                      />
                                     </div>
 
                                     <Button
                                       variant="outline"
                                       size="sm"
                                       onClick={() => setSelectedIssue(null)}
-                                      className="ml-4"
+                                      className="ms-4"
                                     >
                                       {tCommon("cancel")}
                                     </Button>
@@ -4018,6 +4508,7 @@ export function GenerateTestCasesWizard({
                                   onClick={() => setIsSearchOpen(true)}
                                   variant="outline"
                                   className="w-full"
+                                  data-testid="search-issues-button"
                                 >
                                   <Search className="w-4 h-4 " />
                                   {t(
@@ -4054,7 +4545,7 @@ export function GenerateTestCasesWizard({
                                         >
                                           <button
                                             type="button"
-                                            className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                                            className="flex items-center gap-3 flex-1 min-w-0 text-start"
                                             onClick={() => {
                                               if (isInProgress) {
                                                 setUrlJobId(job.jobId);
@@ -4121,14 +4612,14 @@ export function GenerateTestCasesWizard({
                                                       }
                                                     />
                                                     {job.hasGeneratedResults ? (
-                                                      <span className="ml-1 text-primary">
+                                                      <span className="ms-1 text-primary">
                                                         {"·"}{" "}
                                                         {t(
                                                           "generateTestCases.selectSource.recentJobHasResults"
                                                         )}
                                                       </span>
                                                     ) : (
-                                                      <span className="ml-1">
+                                                      <span className="ms-1">
                                                         {"·"}{" "}
                                                         {t(
                                                           "generateTestCases.selectSource.recentJobClickToGenerate"
@@ -4248,6 +4739,21 @@ export function GenerateTestCasesWizard({
                                     {urlValidationError}
                                   </p>
                                 )}
+                              </div>
+
+                              {/* Page screenshots (used only when the server
+                                  has capture enabled — CRAWL_SCREENSHOTS) */}
+                              <div className="flex items-center space-x-2">
+                                <Switch
+                                  id="include-url-screenshots"
+                                  checked={includeUrlScreenshots}
+                                  onCheckedChange={setIncludeUrlScreenshots}
+                                />
+                                <Label htmlFor="include-url-screenshots">
+                                  {t(
+                                    "generateTestCases.contextImages.includeUrlScreenshots"
+                                  )}
+                                </Label>
                               </div>
 
                               {/* Follow Links Toggle */}
@@ -4385,20 +4891,31 @@ export function GenerateTestCasesWizard({
                             {documentRequirements ? (
                               <div className="border rounded-lg p-4 max-h-64 overflow-y-auto">
                                 <div className="flex items-start justify-between">
-                                  <div className="space-y-2">
+                                  <div className="space-y-2 min-w-0">
                                     <h4 className="font-medium">
                                       {documentRequirements.title}
                                     </h4>
                                     <p className="text-sm text-muted-foreground line-clamp-3">
                                       {documentRequirements.description}
                                     </p>
+                                    <ContextImagesPicker
+                                      options={contextImageOptions}
+                                      max={contextImageMax}
+                                      visionSupported={contextVisionSupported}
+                                      labels={contextImagePickerLabels}
+                                      onToggle={toggleContextImage}
+                                    />
                                   </div>
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() =>
-                                      setDocumentRequirements(null)
-                                    }
+                                    onClick={() => {
+                                      setDocumentDraftDoc(
+                                        (documentRequirements.doc as object) ??
+                                          null
+                                      );
+                                      setDocumentRequirements(null);
+                                    }}
                                   >
                                     {tCommon("actions.change")}
                                   </Button>
@@ -4407,38 +4924,54 @@ export function GenerateTestCasesWizard({
                             ) : (
                               <div className="space-y-4">
                                 <div>
-                                  <Label
-                                    htmlFor="doc-description"
-                                    className="text-sm font-medium"
-                                  >
+                                  <Label className="text-sm font-medium">
                                     {t(
                                       "generateTestCases.selectSource.documentDescription"
                                     )}
                                   </Label>
-                                  <Textarea
-                                    id="doc-description"
-                                    placeholder={t(
-                                      "generateTestCases.selectSource.documentDescriptionPlaceholder"
-                                    )}
-                                    rows={8}
+                                  {/* Rich text: pasted screenshots and
+                                      uploaded images become generation
+                                      context alongside the text. */}
+                                  <div
                                     className="mt-1"
-                                  />
+                                    data-testid="document-requirements-editor"
+                                  >
+                                    <TipTapEditor
+                                      content={
+                                        documentDraftDoc ?? {
+                                          type: "doc",
+                                          content: [],
+                                        }
+                                      }
+                                      onUpdate={(newContent: object) =>
+                                        setDocumentDraftDoc(newContent)
+                                      }
+                                      placeholder={t(
+                                        "generateTestCases.selectSource.documentDescriptionPlaceholder"
+                                      )}
+                                      projectId={String(projectId)}
+                                    />
+                                  </div>
                                 </div>
                                 <Button
                                   onClick={() => {
-                                    const description = (
-                                      document.getElementById(
-                                        "doc-description"
-                                      ) as HTMLTextAreaElement
-                                    )?.value;
-
-                                    if (description) {
+                                    if (!documentDraftDoc) return;
+                                    const description =
+                                      extractTextWithImageMarkers(
+                                        documentDraftDoc
+                                      );
+                                    if (
+                                      description ||
+                                      extractEditorMediaSrcs(documentDraftDoc)
+                                        .length > 0
+                                    ) {
                                       setDocumentRequirements({
                                         id: `doc_${Date.now()}`,
                                         title: t(
                                           "generateTestCases.selectSource.documentDescription"
                                         ),
                                         description,
+                                        doc: documentDraftDoc,
                                         isDocument: true,
                                       });
                                     }
@@ -4494,9 +5027,9 @@ export function GenerateTestCasesWizard({
                                   <span>{template.templateName}</span>
                                   {template.isDefault && (
                                     <Tooltip>
-                                      <TooltipTrigger className="ml-1" asChild>
+                                      <TooltipTrigger className="ms-1" asChild>
                                         <Badge variant="secondary">
-                                          <Star className="h-3 w-3 fill-current text-primary-background" />
+                                          <Star className="h-3 w-3 fill-current" />
                                         </Badge>
                                       </TooltipTrigger>
                                       <TooltipContent>
@@ -4548,6 +5081,7 @@ export function GenerateTestCasesWizard({
                               {templates
                                 ?.find((t) => t.id === selectedTemplateId)
                                 ?.caseFields.slice()
+                                .filter(isTemplateFieldVisible)
                                 .sort((a, b) => a.order - b.order)
                                 .map((field) => (
                                   <div
@@ -4932,6 +5466,62 @@ export function GenerateTestCasesWizard({
                               </AlertDescription>
                             </Alert>
                           )}
+                          {contextImagesUsed &&
+                            contextImagesUsed.imagesOmittedForVision > 0 && (
+                              <Alert data-testid="context-images-vision-skipped">
+                                <AlertTriangle className="h-4 w-4" />
+                                <AlertTitle>
+                                  {t(
+                                    "generateTestCases.contextImages.visionSkippedTitle"
+                                  )}
+                                </AlertTitle>
+                                <AlertDescription>
+                                  {t(
+                                    "generateTestCases.contextImages.visionSkipped",
+                                    {
+                                      count:
+                                        contextImagesUsed.imagesOmittedForVision,
+                                    }
+                                  )}
+                                </AlertDescription>
+                              </Alert>
+                            )}
+                          {contextImagesUsed &&
+                            (contextImagesUsed.included.length > 0 ||
+                              contextImagesUsed.skipped.length > 0) && (
+                              <div
+                                className="text-xs text-muted-foreground"
+                                data-testid="context-images-summary"
+                              >
+                                {contextImagesUsed.included.length > 0 && (
+                                  <p>
+                                    {t(
+                                      "generateTestCases.contextImages.includedSummary",
+                                      {
+                                        count:
+                                          contextImagesUsed.included.length,
+                                        names: contextImagesUsed.included
+                                          .map((i) => i.filename)
+                                          .join(", "),
+                                      }
+                                    )}
+                                  </p>
+                                )}
+                                {contextImagesUsed.skipped.length > 0 && (
+                                  <p>
+                                    {t(
+                                      "generateTestCases.contextImages.skippedSummary",
+                                      {
+                                        count: contextImagesUsed.skipped.length,
+                                        names: contextImagesUsed.skipped
+                                          .map((s) => s.filename)
+                                          .join(", "),
+                                      }
+                                    )}
+                                  </p>
+                                )}
+                              </div>
+                            )}
                           {caseOutlines.length > 0 && (
                             <div className="space-y-1.5">
                               <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -5061,17 +5651,31 @@ export function GenerateTestCasesWizard({
                                   return (
                                     <div
                                       key={`outline-${i}`}
-                                      className="rounded-lg border border-destructive/50 bg-destructive/5 p-4"
+                                      className="rounded-lg border border-destructive/50 bg-destructive/5 p-4 flex items-start justify-between gap-3"
                                     >
-                                      <p className="text-sm font-medium">
-                                        {outline.title}
-                                      </p>
-                                      <p className="text-xs text-destructive mt-1">
-                                        {outline.errorMessage ||
-                                          t(
-                                            "generateTestCases.errors.generateFailed"
-                                          )}
-                                      </p>
+                                      <div className="min-w-0">
+                                        <p className="text-sm font-medium">
+                                          {outline.title}
+                                        </p>
+                                        <p className="text-xs text-destructive mt-1">
+                                          {outline.errorMessage ||
+                                            t(
+                                              "generateTestCases.errors.generateFailed"
+                                            )}
+                                        </p>
+                                      </div>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="shrink-0"
+                                        onClick={() => handleRetryExpand(i)}
+                                        data-testid={`retry-expand-${i}`}
+                                      >
+                                        <RefreshCw className="h-3.5 w-3.5" />
+                                        {t(
+                                          "generateTestCases.errors.llm.retryButton"
+                                        )}
+                                      </Button>
                                     </div>
                                   );
                                 }
@@ -5080,11 +5684,23 @@ export function GenerateTestCasesWizard({
                                 return (
                                   <div
                                     key={`outline-${i}`}
-                                    className="rounded-lg border bg-muted/30 p-4 opacity-50"
+                                    className="rounded-lg border bg-muted/30 p-4 flex items-center justify-between gap-3"
                                   >
-                                    <p className="text-sm font-medium line-through text-muted-foreground">
+                                    <p className="text-sm font-medium line-through text-muted-foreground opacity-50 min-w-0 truncate">
                                       {outline.title}
                                     </p>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="shrink-0"
+                                      onClick={() => handleRetryExpand(i)}
+                                      data-testid={`retry-expand-${i}`}
+                                    >
+                                      <RefreshCw className="h-3.5 w-3.5" />
+                                      {t(
+                                        "generateTestCases.errors.llm.retryButton"
+                                      )}
+                                    </Button>
                                   </div>
                                 );
                               })

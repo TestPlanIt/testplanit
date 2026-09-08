@@ -1,3 +1,5 @@
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { ColorPicker } from "@/components/ColorPicker";
 import { Input } from "@/components/ui/input";
 import {
@@ -9,9 +11,8 @@ import {
 import { Ellipsis } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useRef, useState } from "react";
-import { useFindManyColor, useFindManyFieldIcon } from "~/lib/hooks";
 import { IconName } from "~/types/globals";
-import DynamicIcon from "./DynamicIcon";
+import DynamicIcon, { isKnownIconName } from "./DynamicIcon";
 
 interface FieldIconPickerProps {
   onIconSelect: (iconId: number) => void;
@@ -27,10 +28,14 @@ export const FieldIconPicker: React.FC<FieldIconPickerProps> = ({
   initialColorId,
 }) => {
   const tCommon = useTranslations("common");
-  const { data: allIcons, isLoading: isIconsLoading } = useFindManyFieldIcon({
+  const { data: allIcons, isLoading: isIconsLoading } = useClientQueries(
+    schema
+  ).fieldIcon.useFindMany({
     orderBy: { name: "asc" },
   });
-  const { data: colors, isLoading: isColorsLoading } = useFindManyColor({
+  const { data: colors, isLoading: isColorsLoading } = useClientQueries(
+    schema
+  ).color.useFindMany({
     include: { colorFamily: true },
     orderBy: { colorFamily: { order: "asc" } },
   });
@@ -82,8 +87,13 @@ export const FieldIconPicker: React.FC<FieldIconPickerProps> = ({
     }
   }, [colors, onColorSelect, selectedColorId, initialColorId]);
 
-  const filteredIcons = allIcons?.filter((icon) =>
-    icon.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredIcons = allIcons?.filter(
+    (icon) =>
+      // Don't offer icons that no longer exist in the installed lucide version
+      // (removed/renamed brand logos, etc.). Existing DB rows self-heal here
+      // without a migration.
+      isKnownIconName(icon.name) &&
+      icon.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleIconSelect = (iconId: number) => {
@@ -122,7 +132,7 @@ export const FieldIconPicker: React.FC<FieldIconPickerProps> = ({
           onValueChange={(value) => handleIconSelect(parseInt(value))}
         >
           <SelectTrigger
-            className="w-15 pl-2 pr-0 m-0"
+            className="w-15 ps-2 pe-0 m-0"
             aria-label="icon-picker"
           >
             {selectedIcon && (

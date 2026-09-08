@@ -1,7 +1,7 @@
 /**
  * app.audit_context GUC injection helpers for the Phase 13 CDC substrate.
  *
- * The generic audit_row_change() trigger (prisma/audit_row_change.sql) reads
+ * The generic audit_row_change() trigger (db/audit_row_change.sql) reads
  * actor/operation/tenant attribution from the `app.audit_context` Postgres GUC.
  * These two helpers set that GUC so every captured DataChangeLog row is
  * attributed to the originating request (hooked client) or job (worker).
@@ -18,14 +18,15 @@
  * and sets the GUC before running any caller mutation.
  * ───────────────────────────────────────────────────────────────────────────
  */
-import type { Prisma } from "@prisma/client";
+import type { TxClient } from "~/lib/zenstack";
+import { TransactionIsolationLevel } from "@zenstackhq/orm";
 import { getAuditContext } from "~/lib/auditContext";
-import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
+import { getCurrentTenantId } from "~/lib/multiTenantDb";
 
 /**
  * Shape of the JSON written into the `app.audit_context` GUC and read back by
  * the audit_row_change() trigger (`ctx->>'userId'` etc.). Consumed by 13-04
- * (lib/prisma.ts hook wrapping + worker entry points).
+ * (lib/db.ts hook wrapping + worker entry points).
  *
  * Phase 14 CTX-03: `operationId` correlates all DataChangeLog rows written
  * within one logical save (e.g. the three writes of a single case save). The
@@ -96,9 +97,7 @@ export function buildGucPayload(
   };
 }
 
-export async function injectAuditGuc(
-  tx: Prisma.TransactionClient
-): Promise<void> {
+export async function injectAuditGuc(tx: TxClient): Promise<void> {
   const payload = buildGucPayload();
   await tx.$executeRaw`SELECT set_config('app.audit_context', ${JSON.stringify(
     payload
@@ -109,7 +108,7 @@ export async function injectAuditGuc(
  * Open a transaction, set `app.audit_context` from an explicit payload, then run
  * the caller's mutations inside it (the worker/raw-client path, CTX-02).
  *
- * Workers and other raw-client (prismaBase) entry points have no ALS request
+ * Workers and other raw-client (rawDb) entry points have no ALS request
  * context, so the payload is passed explicitly (e.g. userId from job.data.userId,
  * tenantId from job.data.tenantId ?? getCurrentTenantId()). The GUC is set as the
  * first statement inside the transaction this helper owns, satisfying the
@@ -118,14 +117,14 @@ export async function injectAuditGuc(
 export async function withAuditGuc<T>(
   client: { $transaction: Function },
   payload: GucPayload,
-  fn: (tx: Prisma.TransactionClient) => Promise<T>,
+  fn: (tx: TxClient) => Promise<T>,
   options?: {
     maxWait?: number;
     timeout?: number;
-    isolationLevel?: Prisma.TransactionIsolationLevel;
+    isolationLevel?: TransactionIsolationLevel;
   }
 ): Promise<T> {
-  return client.$transaction(async (tx: Prisma.TransactionClient) => {
+  return client.$transaction(async (tx: TxClient) => {
     await tx.$executeRaw`SELECT set_config('app.audit_context', ${JSON.stringify(
       payload
     )}, true)`;

@@ -27,6 +27,8 @@ The header displays:
     - **Edit**: Switches the page to Edit mode (if user has permission).
     - **Duplicate**: Opens the duplication dialog to create a copy of the test run.
     - **Export PDF**: Exports the test run to a PDF document including all metadata, description, documentation, test cases (ordered by run order) with their execution status, results, step results, custom field values, and attachments. Available for both regular and JUnit/automated test runs.
+    - **Assign**: Opens the [Distribute assignments](#distributing-assignments) dialog to spread the run's test cases across several team members at once (requires add/edit permission on Test Runs).
+    - **Lock composition**: A toggle that freezes the run's case set. See [Composition lock](#composition-lock).
     - **Complete**: Opens a confirmation dialog to mark the run as finished. Here you select the final "Done" state from the workflow and set the completion date. This action is irreversible (if user has permission).
   - **View Mode (Completed Run)**:
     - Displays a "Completed On [Date]" badge.
@@ -47,13 +49,15 @@ The header displays:
 - **Test Cases Section**:
   - **Title**: "Cases in this Run".
   - **List**: Displays the [Test Case Repository](./repository.md) view, filtered to show only the test cases included in _this specific run_.
-    - **View Mode**: Shows test cases with their current execution status (pass, fail, blocked, untested) and allows clicking on a case to view its execution details in the right panel.
-    - **Edit Mode**: Allows selecting/deselecting test cases to be included in the run. The standard repository filtering and folder structure are available. A confirmation dialog appears if removing test cases, as this action deletes associated results.
+    - **View Mode**: Shows test cases with their current execution status (pass, fail, blocked, untested) and allows clicking on a case to view its execution details in the right panel. Alongside the repository's own filters, the list adds **Status** and **Assigned To** dimensions. When you open a run that has cases assigned to you, an **Assigned to me** filter chip is applied for you — remove it like any other chip to see the whole run. The full-text search box is not offered here; use the filter chips to narrow the list.
+    - **Edit Mode**: Allows selecting/deselecting test cases to be included in the run. This is the case-selection view: the folder tree and the filter chips work as they do in the [repository](./repository.md), and a full-text search box is offered alongside them — see [Searching](./repository.md#searching). Filters and search text applied here are not written to the page URL. A confirmation dialog appears if removing test cases, as this action deletes associated results.
     - **Run Mode**: When viewing a case in the right panel, the left panel shows the test cases list, allowing navigation between them.
 
 ## Multi-Configuration Support
 
-When a test run is part of a Configuration Group (created during test run creation), you can view and analyze test results across multiple configurations simultaneously.
+When a test run is part of a Configuration Group, you can view and analyze test results across multiple configurations simultaneously.
+
+Groups are usually formed when a multi-configuration test run is created, but you can also join, change, or leave a group afterwards — see [Configuration Group](#configuration-group) below.
 
 ### Configuration Selector
 
@@ -71,7 +75,7 @@ When multiple configurations are selected:
 - **Status Distribution**: The donut chart displays combined status counts for all selected configurations
 - **Test Cases Table**: Shows test cases with their configuration name displayed, allowing you to see status differences across environments
 - **Tooltips**: Hovering over status indicators shows the configuration name for each test case
-- **Filtering**: The ViewSelector filters work across all selected configurations, showing accurate counts
+- **Filtering**: Filter chips apply across all selected configurations, and the left panel's option counts are calculated over the same set
 
 This feature is useful for:
 
@@ -79,14 +83,86 @@ This feature is useful for:
 - Getting an overview of testing progress across a matrix of configurations
 - Identifying test cases that fail in specific configurations
 
+### Configuration Group
+
+The **Configuration Group** field sits under **Configuration** in the run's details panel. It lists the other runs in the group, each linked and labelled by its configuration, so you can jump between environments of the same test effort.
+
+In **Edit** mode the field also lets you change which group the run belongs to. This matters when a group was not set up front — for example when you create one run, duplicate it for other configurations, and then want the original grouped with its duplicates:
+
+- **Link to a test run** — join the group of the run you pick
+- **Link to a different test run** — move to another group
+- **Unlink** — leave the group
+
+Membership is staged like any other edit and applied when you click **Save**.
+
+All members of a group are equal peers, so linking to a run that already has peers joins you to all of them — the picker shows each candidate's group size for that reason. Because a group needs at least two members, leaving a group of two also unlinks the run left behind.
+
+The controls are unavailable on completed runs, which cannot be edited, and while multiple configurations are selected in the configuration selector, since it is ambiguous which run you mean.
+
+## Distributing Assignments
+
+The **Assign** button in the header (View mode, active runs) opens the **Distribute assignments** dialog, which spreads the run's test cases across several team members in one step — instead of assigning each case individually. It is available to users with add/edit permission on Test Runs and is disabled once a run is completed.
+
+Rather than splitting cases at random, the distributor keeps related work together and balances the load, so testers spend less time switching context.
+
+### Team members
+
+Select one or more members to distribute the cases among. Only users with access to the project are listed.
+
+### Options
+
+- **Configurations** (multi-configuration runs only): distribute across **All configurations** in the group, or **This run only** (the currently viewed configuration).
+- **Configuration strategy** (multi-configuration runs only):
+  - **Split by configuration** (default): each tester owns whole configurations. Best when environments are expensive to set up, or specific people own specific environments, since each tester stays in one environment.
+  - **Keep configurations together**: each tester owns a set of cases across every configuration. Best when the cost of learning a case outweighs the cost of switching environments, since each case is learned once and then repeated across configurations.
+- **Group similar cases** (on by default): keeps cases in the same repository section — and sharing the same tags — with one tester, reducing context switching. (Applies to the Keep configurations together strategy.)
+- **Balance by**:
+  - **Estimated time** (default): balances the summed case estimates so each tester receives roughly equal _effort_. Cases without an estimate fall back to the median estimate; if no case has an estimate, this falls back to case count.
+  - **Number of cases**: balances the case count so each tester receives roughly the same _number_ of cases.
+- **Existing assignments**:
+  - **Only fill unassigned cases** (default): leaves already-assigned cases untouched and distributes the rest.
+  - **Reassign everything**: redistributes every case, overwriting existing assignees.
+
+Completed cases are always skipped, as they can no longer be modified.
+
+### Preview
+
+A live preview updates as you change the options, showing each selected member with the number of **Cases** and the total **Estimate** they will receive. For multi-configuration runs, a column per configuration shows the per-environment breakdown; the **Team Member** and **Cases** columns stay pinned while the configuration columns scroll. Any skipped cases (already assigned, or completed) are noted below the table.
+
+Click **Assign** to apply the distribution. Each assignee is notified of their newly assigned cases.
+
+## Composition Lock
+
+Composition locking freezes **which cases are in a run** so a cycle can start against a fixed scope. A locked run's case set can't change — but the run keeps running.
+
+When a run is locked:
+
+- **Frozen**: adding cases (including from the repository **Add to Test Run** action), removing cases, and reordering them. In the run's case table the drag handles disappear, and Edit mode shows the cases read-only.
+- **Still works**: recording results, assigning testers, editing run metadata (name, state, configuration, milestone, tags, attachments), and adding comments.
+
+A locked run is marked with a **lock icon** next to its name — on the run page and in the [Test Runs](./runs.md) list — and the cases section shows a banner explaining that the composition is frozen.
+
+This is different from **completing** a run: completion permanently freezes _everything_ (composition and results), whereas a composition lock freezes only the case set while execution continues, and it can be unlocked.
+
+### Locking and unlocking
+
+- **Lock**: use the **Lock composition** toggle in the run header. Any user with add/edit permission on Test Runs can lock a run.
+- **Unlock**: only the run's **creator**, a **Project Admin**, or a **system administrator** can unlock. For everyone else the toggle appears but is disabled, so an in‑flight scope can't be quietly reopened by any editor.
+
+### Automatic locking
+
+A project can lock runs automatically when they enter execution — enable **Lock run composition when execution starts** in the project's [Advanced settings](settings/advanced.md#lock-run-composition-when-execution-starts). Auto‑locked runs behave exactly like manually locked ones and can be unlocked the same way.
+
+The lock is enforced everywhere — in the interface, through the API, and at the database — so a locked run's composition can't be changed by any path, whether or not the lock was applied automatically.
+
 ## Right Panel Content
 
 - **Default View / Edit Mode**: Displays metadata and controls:
   - **State**: Shows the current workflow state. In Edit mode, it becomes a dropdown to change the state.
   - **Configuration**: Shows the linked configuration. In Edit mode, it becomes a dropdown limited to [Configurations](../configurations.md) assigned to this project.
-  - **Milestone**: Shows the linked milestone. In Edit mode, it becomes a dropdown (only active milestones are shown; completed milestones are excluded).
+  - **Milestone**: Shows the linked milestone. In Edit mode, it becomes a searchable dropdown (type to filter; only active milestones are shown; completed milestones are excluded).
   - **Tags**: Displays assigned tags. In Edit mode, allows managing tags.
-  - **Attachments**: Displays attachments. In Edit mode, allows uploading and managing attachments.
+  - **Attachments**: Displays attachments. Image, PDF, and Office (Word/Excel/PowerPoint) attachments can be previewed inline — click one to open the keyboard-navigable [large-preview carousel](../../file-storage.md#inline-previews). In Edit mode, allows uploading and managing attachments.
   - **Created By**: Shows the user who created the run (View mode only).
 - **Test Case Execution View** (When a test case is selected from the left panel in View mode):
   - The right panel switches to display the `TestRunCaseDetails` component.
@@ -115,4 +191,46 @@ This table lists all the test cases included in the current test run:
     - **Execute**: Starts the test case execution flow.
     - **View Execution(s)**: Shows the history of attempts for this case in this run.
     - **Assign**: Allows changing the assigned tester.
-    - **Remove**: Removes the test case from this run (often only possible before execution starts).
+    - **Remove**: Removes the test case from this run (not available once the run's [composition is locked](#composition-lock) or completed).
+
+## Automated Test Runs
+
+For automated (JUnit) runs, the page replaces the manual execution layout with a results view built from the reported result rows. Reporters that stream results as they finish — such as the [Playwright](../../sdk/playwright-overview.md) and [WebdriverIO](../../sdk/wdio-overview.md) reporters — record one row per attempt, so retries appear individually.
+
+### Results Table
+
+Each reported attempt is a row. Available columns include the test name, linked cases, suite, class name, execution time, duration, assertions, worker (hidden by default — the worker/thread the attempt ran on, when the reporter sent it), system output and error (opened from popovers), attachments, and the result status. A ⚡ badge next to a name marks a [flaky test](#flaky-and-retried-tests). The filter box, column selection, and pagination work as in other tables.
+
+### Filtering Results
+
+A filter bar above the table narrows the rows:
+
+- **Result** and **Suite**: multi-select comboboxes with search, **Select All**, and **Clear All**. Option counts show how many rows match each value.
+- **Flaky** and **Retried** toggles: shown only when the run recorded retries. Flaky limits the table to fail-then-pass cases; Retried to any case with more than one attempt. Both show every attempt of the matching cases, so the retry history stays visible.
+- **Clear filters** resets everything at once.
+
+Facet filters combine with the text filter box, and the counts in the pagination info reflect the narrowed set.
+
+### Execution Metrics
+
+The right panel's **Metrics & Charts** section opens with an **Execution Metrics** card:
+
+- **Pass Rate**: passed results as a share of all results.
+- **Parallelization**: the peak number of tests running at the same moment, reconstructed from each result's finish time and duration. The tooltip adds the time-weighted average. Shown only when the run's timestamps support the reconstruction — results imported in one bulk upload share a single timestamp and cannot be measured.
+- **Run Duration**: wall-clock time from the first to the last recorded result.
+- **Total Elapsed**: the sum of every test's own duration.
+- **Avg / Median Test Time**.
+- **Retries** and **Flaky Tests**: shown when the run recorded retries. Clicking either tile applies the matching [table filter](#filtering-results).
+- **Slowest Tests**: the five longest results, linked to their repository cases, with ⚡ marking flaky ones.
+
+#### Flaky and Retried Tests
+
+A case is **retried** when it has more than one attempt row in the run, and **flaky** when an earlier attempt failed and the final attempt passed. Detection is within this run only and requires a reporter that records every attempt; parameterized cases are excluded because their rows are iterations, not retries.
+
+### Charts
+
+Below the metrics card, a carousel cycles through three charts, each with a zoom button:
+
+- **Results Distribution**: a donut of results by status.
+- **Execution Timeline**: a swimlane of the run on a real time axis — one bar per result, colored by status, one lane per worker. Lanes use the worker/thread ids the reporter sent (Playwright worker lanes, WebdriverIO runner cids); results without worker ids get lanes inferred from overlapping execution windows. Bulk XML imports without real execution timestamps fall back to one lane per suite with durations laid end to end. Clicking a bar opens the repository case.
+- **Test Duration Histogram**: the distribution of test durations.

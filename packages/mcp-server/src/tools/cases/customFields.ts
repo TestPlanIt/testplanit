@@ -1,4 +1,11 @@
-import type { Prisma } from "@prisma/client";
+import type {
+  CaseFieldValuesSelect,
+  CaseFieldValuesWhereInput,
+  CaseFieldsSelect,
+  CaseFieldsWhereInput,
+  TemplateCaseAssignmentSelect,
+  TemplateCaseAssignmentWhereInput,
+} from "@db/input";
 import { zenstack } from "../../api.js";
 import { TestPlanItHttpError } from "../../http.js";
 import type { EnvConfig } from "../../env.js";
@@ -33,7 +40,7 @@ const CASE_FIELD_RESOLVE_SELECT = {
       fieldOption: { select: { id: true, name: true } },
     },
   },
-} as const satisfies Prisma.CaseFieldsSelect;
+} as const satisfies CaseFieldsSelect;
 
 // Template-scoped select — resolves against the chosen template's assigned
 // fields. This scopes display-name resolution to the template, so a display
@@ -53,7 +60,7 @@ const TEMPLATE_FIELD_RESOLVE_SELECT = {
       },
     },
   },
-} as const satisfies Prisma.TemplateCaseAssignmentSelect;
+} as const satisfies TemplateCaseAssignmentSelect;
 
 /**
  * Coerce a value to an option ID. Mirrors the read-side coercion in
@@ -134,7 +141,7 @@ export async function resolveCustomFields(
         where: {
           templateId,
           caseField: { isDeleted: false, isEnabled: true },
-        } satisfies Prisma.TemplateCaseAssignmentWhereInput,
+        } satisfies TemplateCaseAssignmentWhereInput,
         select: TEMPLATE_FIELD_RESOLVE_SELECT,
       },
       env,
@@ -155,7 +162,7 @@ export async function resolveCustomFields(
           displayName: { in: names },
           isDeleted: false,
           isEnabled: true,
-        } satisfies Prisma.CaseFieldsWhereInput,
+        } satisfies CaseFieldsWhereInput,
         select: CASE_FIELD_RESOLVE_SELECT,
       },
       env,
@@ -250,8 +257,8 @@ export async function writeCustomFieldValues(
       "caseFieldValues",
       "findFirst",
       {
-        where: { testCaseId: caseId, fieldId: r.fieldId } satisfies Prisma.CaseFieldValuesWhereInput,
-        select: { id: true } satisfies Prisma.CaseFieldValuesSelect,
+        where: { testCaseId: caseId, fieldId: r.fieldId } satisfies CaseFieldValuesWhereInput,
+        select: { id: true } satisfies CaseFieldValuesSelect,
       },
       env,
     );

@@ -14,22 +14,44 @@ import {
   useSortable,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
-import { GripVertical, Trash2 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { GripVertical, Sparkles, Trash } from "lucide-react";
+import { siJira } from "simple-icons";
 
 import { CSS } from "@dnd-kit/utilities";
 
 export interface DraggableField {
   id: string | number;
   label: string;
+  // Per-template default for the Generate Test Cases wizard. Only meaningful
+  // when the list is rendered with onToggleGenerateDefault.
+  generateDefaultEnabled?: boolean;
+  // Per-template opt-in to show the field's value in the Jira plugin panel.
+  // Only meaningful when the list is rendered with onToggleJiraPanel.
+  jiraPanelEnabled?: boolean;
 }
 
 const DraggableItem = ({
   id,
   label,
+  generateDefaultEnabled,
+  jiraPanelEnabled,
   onRemove,
-}: DraggableField & { onRemove: (id: string | number) => void }) => {
+  onToggleGenerateDefault,
+  onToggleJiraPanel,
+}: DraggableField & {
+  onRemove: (id: string | number) => void;
+  onToggleGenerateDefault?: (id: string | number) => void;
+  onToggleJiraPanel?: (id: string | number) => void;
+}) => {
+  const t = useTranslations("admin.templates");
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id });
 
@@ -42,6 +64,23 @@ const DraggableItem = ({
     e.preventDefault();
     e.stopPropagation();
     onRemove(id);
+  };
+
+  const generateOn = generateDefaultEnabled !== false;
+  // Opposite default from the generate toggle: nothing is exposed to the Jira
+  // panel unless an admin explicitly turns it on.
+  const jiraOn = jiraPanelEnabled === true;
+
+  const handleToggleGenerate = (e: any) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onToggleGenerateDefault?.(id);
+  };
+
+  const handleToggleJira = (e: any) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onToggleJiraPanel?.(id);
   };
 
   return (
@@ -57,14 +96,66 @@ const DraggableItem = ({
           <GripVertical size={20} />
           {label}
         </div>
-        <Button
-          type="button"
-          variant="link"
-          onClick={handleClick}
-          className="text-destructive p-0 -my-1"
-        >
-          <Trash2 size={20} />
-        </Button>
+        <div className="flex items-center">
+          {onToggleJiraPanel && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="link"
+                  onClick={handleToggleJira}
+                  aria-pressed={jiraOn}
+                  className={`p-0 -my-1 mr-2 ${
+                    jiraOn ? "text-primary" : "text-muted-foreground/40"
+                  }`}
+                  data-testid={`jira-panel-toggle-${id}`}
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    width={20}
+                    height={20}
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path d={siJira.path} />
+                  </svg>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {jiraOn ? t("jiraPanelOn") : t("jiraPanelOff")}
+              </TooltipContent>
+            </Tooltip>
+          )}
+          {onToggleGenerateDefault && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="link"
+                  onClick={handleToggleGenerate}
+                  aria-pressed={generateOn}
+                  className={`p-0 -my-1 mr-2 ${
+                    generateOn ? "text-primary" : "text-muted-foreground/40"
+                  }`}
+                  data-testid={`generate-default-toggle-${id}`}
+                >
+                  <Sparkles size={20} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {generateOn ? t("generateDefaultOn") : t("generateDefaultOff")}
+              </TooltipContent>
+            </Tooltip>
+          )}
+          <Button
+            type="button"
+            variant="link"
+            onClick={handleClick}
+            className="text-destructive p-0 -my-1"
+          >
+            <Trash size={20} />
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -74,10 +165,14 @@ const DraggableList = ({
   items,
   setItems,
   onRemove,
+  onToggleGenerateDefault,
+  onToggleJiraPanel,
 }: {
   items: DraggableField[];
   setItems: (items: DraggableField[]) => void;
   onRemove: (id: string | number) => void;
+  onToggleGenerateDefault?: (id: string | number) => void;
+  onToggleJiraPanel?: (id: string | number) => void;
 }) => {
   const activationConstraint: PointerActivationConstraint = {
     distance: 5, // Requires the pointer to move 5 pixels before activating
@@ -113,7 +208,11 @@ const DraggableList = ({
             key={item.id}
             id={item.id}
             label={item.label}
+            generateDefaultEnabled={item.generateDefaultEnabled}
+            jiraPanelEnabled={item.jiraPanelEnabled}
             onRemove={onRemove}
+            onToggleGenerateDefault={onToggleGenerateDefault}
+            onToggleJiraPanel={onToggleJiraPanel}
           />
         ))}
       </SortableContext>

@@ -1,5 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
-import type { AdapterType } from "@prisma/client";
+import type { AdapterType } from "~/zenstack/models";
 import type {
   ParsedWebhookPayload,
   VerifyResult,

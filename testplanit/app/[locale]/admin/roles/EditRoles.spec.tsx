@@ -21,31 +21,6 @@ vi.mock("@/components/ui/help-popover", () => ({
   HelpPopover: () => null,
 }));
 
-// Mock @prisma/client to provide the ApplicationArea enum
-vi.mock("@prisma/client", () => ({
-  ApplicationArea: {
-    Documentation: "Documentation",
-    Milestones: "Milestones",
-    TestCaseRepository: "TestCaseRepository",
-    TestCaseRestrictedFields: "TestCaseRestrictedFields",
-    TestRuns: "TestRuns",
-    ClosedTestRuns: "ClosedTestRuns",
-    TestRunResults: "TestRunResults",
-    TestRunResultRestrictedFields: "TestRunResultRestrictedFields",
-    Sessions: "Sessions",
-    SessionsRestrictedFields: "SessionsRestrictedFields",
-    ClosedSessions: "ClosedSessions",
-    SessionResults: "SessionResults",
-    Tags: "Tags",
-    SharedSteps: "SharedSteps",
-    Issues: "Issues",
-    IssueIntegration: "IssueIntegration",
-    Forecasting: "Forecasting",
-    Reporting: "Reporting",
-    Settings: "Settings",
-  },
-}));
-
 // Use vi.hoisted() to create stable mock refs to prevent OOM from infinite re-renders
 const {
   mockUpdateRole,
@@ -95,14 +70,20 @@ const {
   };
 });
 
-vi.mock("~/lib/hooks", () => ({
-  useFindManyRolePermission: () => ({
-    data: stableExistingPermissions,
-    isLoading: stableLoadingState.isLoading,
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    rolePermission: {
+      useFindMany: () => ({
+        data: stableExistingPermissions,
+        isLoading: stableLoadingState.isLoading,
+      }),
+      useUpsert: () => ({ mutateAsync: mockUpsertRolePermission }),
+    },
+    roles: {
+      useUpdate: () => ({ mutateAsync: mockUpdateRole }),
+      useUpdateMany: () => ({ mutateAsync: mockUpdateManyRoles }),
+    },
   }),
-  useUpdateRoles: () => ({ mutateAsync: mockUpdateRole }),
-  useUpdateManyRoles: () => ({ mutateAsync: mockUpdateManyRoles }),
-  useUpsertRolePermission: () => ({ mutateAsync: mockUpsertRolePermission }),
 }));
 
 // Test role data

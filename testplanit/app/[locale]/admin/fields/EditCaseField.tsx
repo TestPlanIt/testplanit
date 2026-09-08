@@ -1,18 +1,11 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library -- This file consumes a library API (TanStack Table / TanStack Virtual / react-hook-form watch) that returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it. */
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useEffect, useMemo, useState } from "react";
-import {
-  useCreateFieldOptions,
-  useFindManyCaseFields,
-  useFindManyCaseFieldTypes,
-  useFindManyResultFields,
-  useUpdateCaseFields,
-  useUpdateFieldOptions,
-  useUpdateManyFieldOptions,
-} from "~/lib/hooks";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { FieldOptions } from "@prisma/client";
+import type { FieldOptions } from "~/zenstack/models";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { ExtendedCaseFields } from "./caseFieldColumns";
@@ -45,6 +38,7 @@ import { HelpPopover } from "@/components/ui/help-popover";
 import { Select, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useTranslations } from "next-intl";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 interface EditCaseFieldProps {
   casefield: ExtendedCaseFields;
@@ -121,20 +115,28 @@ export function EditCaseField({
   const [error, setError] = useState<string | null>(null);
   const [defaultItem, setDefaultItem] = useState<number | null>(null);
 
-  const { mutateAsync: updateCaseField } = useUpdateCaseFields();
-  const { mutateAsync: createFieldOptions } = useCreateFieldOptions();
-  const { mutateAsync: updateManyFieldOptions } = useUpdateManyFieldOptions();
-  const { mutateAsync: updateFieldOptions } = useUpdateFieldOptions();
+  const { mutateAsync: updateCaseField } =
+    useClientQueries(schema).caseFields.useUpdate();
+  const { mutateAsync: createFieldOptions } =
+    useClientQueries(schema).fieldOptions.useCreate();
+  const { mutateAsync: updateManyFieldOptions } =
+    useClientQueries(schema).fieldOptions.useUpdateMany();
+  const { mutateAsync: updateFieldOptions } =
+    useClientQueries(schema).fieldOptions.useUpdate();
 
-  const { data: types } = useFindManyCaseFieldTypes({
+  const { data: types } = useClientQueries(schema).caseFieldTypes.useFindMany({
     orderBy: { type: "asc" },
   });
 
-  const { data: existingCaseFields } = useFindManyCaseFields({
+  const { data: existingCaseFields } = useClientQueries(
+    schema
+  ).caseFields.useFindMany({
     select: { id: true, systemName: true },
   });
 
-  const { data: existingResultFields } = useFindManyResultFields({
+  const { data: existingResultFields } = useClientQueries(
+    schema
+  ).resultFields.useFindMany({
     select: { id: true, systemName: true },
   });
 
@@ -323,6 +325,7 @@ export function EditCaseField({
             ? fieldOption.iconColor.value
             : undefined,
           isDeleted: false,
+          deletedAt: null,
         }))
         .sort((a, b) => a.order - b.order);
 
@@ -378,6 +381,7 @@ export function EditCaseField({
           isEnabled: true,
           order: prevOptions.length + 1,
           isDeleted: false,
+          deletedAt: null,
         },
       ];
     });
@@ -666,7 +670,7 @@ export function EditCaseField({
       setIsSubmitting(false);
       onClose();
     } catch (err: any) {
-      if (err.info?.prisma && err.info?.code === "P2002") {
+      if (isUniqueConstraintError(err)) {
         form.setError("systemName", {
           type: "custom",
           message: tCommon("fields.options.validation.systemNameError"),
@@ -765,7 +769,7 @@ export function EditCaseField({
                         onCheckedChange={field.onChange}
                       />
                     </FormControl>
-                    <FormLabel className="ml-2 flex items-center">
+                    <FormLabel className="ms-2 flex items-center">
                       {tCommon("fields.enabled")}
                       <HelpPopover helpKey="caseField.enabled" />
                     </FormLabel>
@@ -784,7 +788,7 @@ export function EditCaseField({
                         onCheckedChange={field.onChange}
                       />
                     </FormControl>
-                    <FormLabel className="ml-2 flex items-center">
+                    <FormLabel className="ms-2 flex items-center">
                       {tCommon("fields.required")}
                       <HelpPopover helpKey="caseField.required" />
                     </FormLabel>
@@ -803,7 +807,7 @@ export function EditCaseField({
                         onCheckedChange={field.onChange}
                       />
                     </FormControl>
-                    <FormLabel className="ml-2 flex items-center">
+                    <FormLabel className="ms-2 flex items-center">
                       {tCommon("fields.restricted")}
                       <HelpPopover helpKey="caseField.restricted" />
                     </FormLabel>

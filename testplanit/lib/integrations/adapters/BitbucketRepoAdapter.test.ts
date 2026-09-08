@@ -388,4 +388,96 @@ describe("BitbucketRepoAdapter", () => {
       expect(result).toBe("const x = 1;");
     });
   });
+
+  describe("getAllFileContents (archive)", () => {
+    async function makeZipResponse(
+      entries: Record<string, string>,
+      topDir = "myworkspace-myrepo-abc123"
+    ) {
+      const JSZip = (await import("jszip")).default;
+      const zip = new JSZip();
+      for (const [path, content] of Object.entries(entries)) {
+        zip.file(`${topDir}/${path}`, content);
+      }
+      const buf: Buffer = await zip.generateAsync({ type: "nodebuffer" });
+      const ab = buf.buffer.slice(
+        buf.byteOffset,
+        buf.byteOffset + buf.byteLength
+      );
+      return {
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        headers: new Headers(),
+        arrayBuffer: () => Promise.resolve(ab),
+      };
+    }
+
+    it("downloads the zip archive from bitbucket.org and strips the top-level dir", async () => {
+      mockFetch.mockResolvedValueOnce(
+        await makeZipResponse({
+          "src/foo.ts": "export const foo = 1;",
+          "README.md": "# readme",
+        })
+      );
+
+      const result = await adapter.getAllFileContents("main");
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://bitbucket.org/myworkspace/myrepo/get/main.zip",
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: expect.stringMatching(/^Basic /),
+          }),
+        })
+      );
+      expect(result).not.toBeNull();
+      expect(result!.get("src/foo.ts")).toBe("export const foo = 1;");
+      expect(result!.get("README.md")).toBe("# readme");
+      // Top-level wrapper dir must be stripped from the keys.
+      expect(
+        [...result!.keys()].some((k) => k.startsWith("myworkspace-"))
+      ).toBe(false);
+    });
+
+    it("returns only wantedPaths when provided", async () => {
+      mockFetch.mockResolvedValueOnce(
+        await makeZipResponse({
+          "src/foo.ts": "foo",
+          "src/bar.ts": "bar",
+          "README.md": "readme",
+        })
+      );
+
+      const result = await adapter.getAllFileContents(
+        "main",
+        new Set(["src/foo.ts"])
+      );
+
+      expect([...result!.keys()]).toEqual(["src/foo.ts"]);
+    });
+
+    it("downloadArchiveTree derives the file list and lazily extracts contents", async () => {
+      mockFetch.mockResolvedValueOnce(
+        await makeZipResponse({
+          "src/foo.ts": "foo",
+          "src/bar.ts": "bar",
+        })
+      );
+
+      const tree = await adapter.downloadArchiveTree("main");
+      expect(tree).not.toBeNull();
+      // File list derived from the archive (top-level dir stripped) — no
+      // separate API tree-walk needed.
+      expect(tree!.files.map((f) => f.path).sort()).toEqual([
+        "src/bar.ts",
+        "src/foo.ts",
+      ]);
+
+      // Contents are decompressed only for the requested subset.
+      const contents = await tree!.getContents(new Set(["src/foo.ts"]));
+      expect([...contents.keys()]).toEqual(["src/foo.ts"]);
+      expect(contents.get("src/foo.ts")).toBe("foo");
+    });
+  });
 });

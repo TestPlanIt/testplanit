@@ -1,4 +1,4 @@
-import { User } from "@prisma/client";
+import type { User } from "~/zenstack/models";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -10,7 +10,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { CircleSlash2, Trash2, X } from "lucide-react";
+import { CircleSlash2, Trash, X } from "lucide-react";
 
 interface RemoveAvatarProps {
   user: User;
@@ -76,7 +76,7 @@ export function RemoveAvatar({ user }: RemoveAvatarProps) {
             <Button
               type="button"
               variant="secondary"
-              className="ml-auto"
+              className="ms-auto"
               onClick={() => setOpenPopover(false)}
               disabled={isLoading}
             >
@@ -88,10 +88,10 @@ export function RemoveAvatar({ user }: RemoveAvatarProps) {
               type="button"
               variant="destructive"
               onClick={onRemove}
-              className="ml-auto"
+              className="ms-auto"
               disabled={isLoading}
             >
-              <Trash2 className="h-4 w-4" /> {tCommon("actions.delete")}
+              <Trash className="h-4 w-4" /> {tCommon("actions.delete")}
             </Button>
           </div>
         </div>

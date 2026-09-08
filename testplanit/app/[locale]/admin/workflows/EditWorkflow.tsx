@@ -1,15 +1,11 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library */
-import { Projects, Workflows, WorkflowType } from "@prisma/client";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
+import { WorkflowType } from "~/zenstack/models";
+import type { Projects, Workflows } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
-import {
-  useCreateManyProjectWorkflowAssignment,
-  useDeleteManyProjectWorkflowAssignment,
-  useFindManyProjects,
-  useUpdateManyWorkflows,
-  useUpdateWorkflows,
-} from "~/lib/hooks";
+import { useCallback, useEffect, useState } from "react";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { Controller, useForm } from "react-hook-form";
@@ -19,6 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 import { FieldIconPicker } from "@/components/FieldIconPicker";
+import { ProjectIcon } from "@/components/ProjectIcon";
+import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
 
 import {
   Form,
@@ -50,11 +48,9 @@ import {
 
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Switch } from "@/components/ui/switch";
-import { useTheme } from "next-themes";
-import MultiSelect from "react-select";
 import { scopeDisplayData } from "~/app/constants";
-import { getCustomStyles } from "~/styles/multiSelectStyles";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 const scopeKeys = Object.keys(scopeDisplayData) as [
   keyof typeof scopeDisplayData,
@@ -70,7 +66,7 @@ const getWorkflowTypeOptions = (
 ];
 
 interface ExtendedWorkflows extends Workflows {
-  projects: { projectId: number }[];
+  _count: { projects: number };
 }
 
 interface EditWorkflowsProps {
@@ -108,33 +104,45 @@ export function EditWorkflows({
     workflows.colorId
   );
 
-  const { mutateAsync: updateWorkflows } = useUpdateWorkflows();
-  const { mutateAsync: updateManyWorkflows } = useUpdateManyWorkflows();
+  const { mutateAsync: updateWorkflows } =
+    useClientQueries(schema).workflows.useUpdate();
   const { mutateAsync: createManyProjectWorkflowAssignment } =
-    useCreateManyProjectWorkflowAssignment();
+    useClientQueries(schema).projectWorkflowAssignment.useCreateMany();
   const { mutateAsync: deleteManyProjectWorkflowAssignment } =
-    useDeleteManyProjectWorkflowAssignment();
+    useClientQueries(schema).projectWorkflowAssignment.useDeleteMany();
 
-  const { theme } = useTheme();
-  const customStyles = getCustomStyles({ theme });
-
-  const { data: projects } = useFindManyProjects({
+  const { data: projects } = useClientQueries(schema).projects.useFindMany({
     where: { isDeleted: false },
     orderBy: { name: "asc" },
   });
 
-  const projectOptions =
-    projects && projects.length > 0
-      ? projects.map((project) => ({
-          value: project.id,
-          label: `${project.name}`,
-        }))
-      : [];
+  // The edited workflow's current project assignments — fetched here (one
+  // workflow's worth) rather than eagerly included for EVERY workflow in the
+  // admin table query. Populated into the form once loaded; Save is gated on it
+  // so a premature submit can't delete-and-recreate against an empty list.
+  const { data: currentAssignments } = useClientQueries(
+    schema
+  ).projectWorkflowAssignment.useFindMany({
+    where: { workflowId: workflows.id },
+    select: { projectId: true },
+  });
+  const assignmentsLoaded = currentAssignments !== undefined;
 
-  const selectAllProjects = () => {
-    const allProjectIds = projectOptions.map((option) => option.value);
-    setValue("projects", allProjectIds);
-  };
+  type ProjectOption = NonNullable<typeof projects>[number];
+
+  const fetchProjectOptions = useCallback(
+    (query: string, page: number, pageSize: number) => {
+      const q = query.toLowerCase();
+      const filtered = (projects ?? []).filter((project) =>
+        project.name.toLowerCase().includes(q)
+      );
+      return Promise.resolve({
+        results: filtered.slice(page * pageSize, page * pageSize + pageSize),
+        total: filtered.length,
+      });
+    },
+    [projects]
+  );
 
   const handleIconSelect = (iconId: number) => {
     setSelectedIconId(iconId);
@@ -184,7 +192,7 @@ export function EditWorkflows({
       requiresReview: workflows.requiresReview,
       scope: workflows.scope,
       workflowType: workflows.workflowType,
-      projects: workflows.projects.map((p) => p.projectId),
+      projects: [],
     },
   });
 
@@ -194,21 +202,23 @@ export function EditWorkflows({
     formState: { errors },
   } = form;
 
+  // Seed the projects multiselect from the fetched assignments once they load.
+  // Save is disabled until then, so there's no window for the user to edit this
+  // field before it's populated.
+  useEffect(() => {
+    if (currentAssignments) {
+      setValue(
+        "projects",
+        currentAssignments.map((a) => a.projectId)
+      );
+    }
+  }, [currentAssignments, setValue]);
+
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     setIsSubmitting(true);
     try {
-      if (data.isDefault) {
-        await updateManyWorkflows({
-          where: {
-            isDefault: true,
-            scope: data.scope!,
-          },
-          data: {
-            isDefault: false,
-          },
-        });
-      }
-
+      // The single-default DB trigger (tpl_single_default_workflows) clears the
+      // previous default for this scope atomically.
       const newWorkflow = await updateWorkflows({
         where: { id: workflows.id },
         data: {
@@ -247,7 +257,7 @@ export function EditWorkflows({
       onClose();
       setIsSubmitting(false);
     } catch (err: any) {
-      if (err.info?.prisma && err.info?.code === "P2002") {
+      if (isUniqueConstraintError(err)) {
         form.setError("name", {
           type: "nameExists",
           message: tCommon("errors.workflowStateNameExists"),
@@ -492,44 +502,51 @@ export function EditWorkflows({
             <FormField
               control={form.control}
               name="projects"
-              render={({ field: _field }) => (
+              render={() => (
                 <FormItem>
-                  <FormLabel className="flex justify-between items-center">
-                    <span className="flex items-center">
-                      {tCommon("fields.projects")}
-                      <HelpPopover helpKey="workflow.projects" />
-                    </span>
-                    <div
-                      onClick={selectAllProjects}
-                      style={{ cursor: "pointer" }}
-                    >
-                      {tCommon("actions.selectAll")}
-                    </div>
-                  </FormLabel>{" "}
+                  <FormLabel className="flex items-center">
+                    {tCommon("fields.projects")}
+                    <HelpPopover helpKey="workflow.projects" />
+                  </FormLabel>
                   <FormControl>
                     <Controller
                       control={control}
                       name="projects"
-                      render={({ field }) => (
-                        <MultiSelect
-                          {...field}
-                          isMulti
-                          maxMenuHeight={300}
-                          className="w-[445px] sm:w-[550px] lg:w-[950px]"
-                          classNamePrefix="select"
-                          styles={customStyles}
-                          options={projectOptions}
-                          onChange={(selected: any) => {
-                            const value = selected
-                              ? selected.map((option: any) => option.value)
-                              : [];
-                            field.onChange(value);
-                          }}
-                          value={projectOptions.filter((option) =>
-                            field.value?.includes(option.value)
-                          )}
-                        />
-                      )}
+                      render={({ field }) => {
+                        const selectedProjects = (projects ?? []).filter(
+                          (project) => field.value?.includes(project.id)
+                        );
+                        return (
+                          <MultiAsyncCombobox<ProjectOption>
+                            value={selectedProjects}
+                            onValueChange={(selected) =>
+                              field.onChange(
+                                selected.map((project) => project.id)
+                              )
+                            }
+                            fetchOptions={fetchProjectOptions}
+                            renderOption={(project) => (
+                              <div className="flex min-w-0 items-center gap-2">
+                                <ProjectIcon
+                                  iconUrl={project.iconUrl}
+                                  width={16}
+                                  height={16}
+                                />
+                                <span className="truncate">{project.name}</span>
+                              </div>
+                            )}
+                            renderSelectedOption={(project) => (
+                              <span>{project.name}</span>
+                            )}
+                            getOptionValue={(project) => project.id}
+                            getOptionLabel={(project) => project.name}
+                            placeholder={tCommon("fields.projects")}
+                            className="w-full"
+                            pageSize={20}
+                            showTotal
+                          />
+                        );
+                      }}
                     />
                   </FormControl>
                   <FormMessage />
@@ -551,7 +568,10 @@ export function EditWorkflows({
               <Button variant="outline" type="button" onClick={onClose}>
                 {tCommon("cancel")}
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button
+                type="submit"
+                disabled={isSubmitting || !assignmentsLoaded}
+              >
                 {isSubmitting
                   ? tCommon("actions.submitting")
                   : tCommon("actions.submit")}

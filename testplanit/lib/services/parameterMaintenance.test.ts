@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { Prisma } from "@prisma/client";
+import type { TxClient } from "~/lib/zenstack";
 
 import { updateHasParameters } from "./parameterMaintenance";
 
 /**
- * Builds a minimal Prisma.TransactionClient mock that exposes only the two
+ * Builds a minimal TxClient mock that exposes only the two
  * methods the helper is contracted to call: testCaseParameter.count and
  * repositoryCases.update.
  */
@@ -15,7 +15,7 @@ function createMockTx(countReturn: number) {
     tx: {
       testCaseParameter: { count },
       repositoryCases: { update },
-    } as unknown as Prisma.TransactionClient,
+    } as unknown as TxClient,
     count,
     update,
   };

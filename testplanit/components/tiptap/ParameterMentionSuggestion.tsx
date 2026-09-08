@@ -81,7 +81,7 @@ export const ParameterMentionSuggestion = forwardRef<
           key={item.id}
           type="button"
           className={cn(
-            "w-full text-left px-2 py-1.5 text-sm rounded-sm flex items-center gap-2",
+            "w-full text-start px-2 py-1.5 text-sm rounded-sm flex items-center gap-2",
             index === selectedIndex && "bg-accent text-accent-foreground"
           )}
           onClick={() => command(item)}

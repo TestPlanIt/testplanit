@@ -1,4 +1,4 @@
-import { LucideProps } from "lucide-react";
+import { LucideProps, Shapes } from "lucide-react";
 import dynamicIconImports from "lucide-react/dynamicIconImports";
 import React, { ComponentType, FC, useEffect, useState } from "react";
 import { type ClassValue } from "~/utils";
@@ -12,6 +12,16 @@ interface IconProps {
   strokeWidth?: number | string;
   style?: React.CSSProperties;
 }
+
+// lucide removes/renames icons between releases (brand logos were dropped for
+// trademark reasons, for example). Names chosen by users are persisted in the
+// database, so a name can outlive the icon it points to. Guard against that:
+// an unknown name renders a neutral fallback instead of throwing, and consumers
+// (e.g. the icon picker) can avoid offering icons that no longer exist.
+export const isKnownIconName = (
+  name: string
+): name is keyof typeof dynamicIconImports =>
+  Object.prototype.hasOwnProperty.call(dynamicIconImports, name);
 
 // Cache to store dynamically loaded icon components
 const iconCache = new Map<string, ComponentType<LucideProps>>();
@@ -36,9 +46,6 @@ const loadIconToCache = async (
       const iconModule = await dynamicIconImports[name]();
       const component = iconModule.default || iconModule;
       iconCache.set(name, component);
-    } catch (err) {
-      console.error(`Failed to load icon: ${name}`);
-      throw err;
     } finally {
       loadingPromises.delete(name);
     }
@@ -55,12 +62,24 @@ const useDynamicIcon = (name: keyof typeof dynamicIconImports) => {
       return iconCache.get(name) || null;
     });
   const [isLoading, setIsLoading] = useState(() => {
-    // Only start loading if not in cache
-    return !iconCache.has(name);
+    // Only start loading if the icon exists and isn't already cached
+    return isKnownIconName(name) && !iconCache.has(name);
   });
 
   useEffect(() => {
     let mounted = true;
+
+    // Unknown icon (e.g. removed from the installed lucide version) — skip the
+    // dynamic import entirely and let DynamicIcon render its fallback quietly.
+    if (!isKnownIconName(name)) {
+      if (mounted) {
+        setIconComponent(null);
+        setIsLoading(false);
+      }
+      return () => {
+        mounted = false;
+      };
+    }
 
     const loadIcon = async () => {
       // Skip if already in cache
@@ -70,6 +89,10 @@ const useDynamicIcon = (name: keyof typeof dynamicIconImports) => {
           setIsLoading(false);
         }
         return;
+      }
+
+      if (mounted) {
+        setIsLoading(true);
       }
 
       try {
@@ -112,12 +135,13 @@ const DynamicIcon: FC<IconProps> = ({
     return <LoadingSpinner className={className} />;
   }
 
-  if (!IconComponent) {
-    return null;
-  }
+  // Fall back to a neutral glyph when the requested icon can't be resolved
+  // (removed/renamed in the installed lucide version) so the slot never renders
+  // blank and the user's stored selection is preserved rather than destroyed.
+  const Icon = IconComponent ?? Shapes;
 
   return (
-    <IconComponent
+    <Icon
       {...({ color, className, size, strokeWidth, style } as LucideProps)}
     />
   );

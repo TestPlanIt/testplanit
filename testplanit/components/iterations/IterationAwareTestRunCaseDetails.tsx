@@ -1,5 +1,7 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -8,11 +10,6 @@ import { toast } from "sonner";
 
 import { TestRunCaseDetails } from "@/components/TestRunCaseDetails";
 import { useActiveIterationFromUrl } from "~/hooks/useActiveIterationFromUrl";
-import {
-  useFindFirstTestRunCaseDataSetSnapshot,
-  useFindManyStatus,
-  useFindManyTestRunCaseIteration,
-} from "~/lib/hooks";
 import type { OverrideParameterSchemaEntry } from "~/lib/schemas/iterationOverrideSchema";
 import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 
@@ -63,14 +60,15 @@ function deepEqual(a: unknown, b: unknown): boolean {
 }
 
 /**
- * Wraps the existing TestRunCaseDetails surface with the Phase 3 iteration
- * UI: sidebar (Surface A), header (B.2), values strip (B.3), and override
- * banner (B.4). Mounted only when the active test-run case has
- * `totalIterations > 0` (PARAM-07 invariant).
+ * Wraps the existing TestRunCaseDetails surface with the iteration UI:
+ * sidebar (Surface A), header (B.2), values strip (B.3), and override banner
+ * (B.4). Mounted only when the active test-run case has `totalIterations > 0`
+ * (PARAM-07 invariant).
  *
- * Override / Skip / Reset menu actions are stubbed for Wave 4 — Task 12
- * wires the Override dialog, Task 13 wires bulk-skip + single-iteration
- * skip + reset.
+ * The Override / Skip / Reset menu actions are wired here:
+ * `handleIterationMenuAction` opens the Override dialog, routes Skip through
+ * the bulk-confirm dialog (single-iteration skip reuses the bulk path), and
+ * runs Reset inline.
  */
 export function IterationAwareTestRunCaseDetails({
   testRunCaseId,
@@ -100,23 +98,27 @@ export function IterationAwareTestRunCaseDetails({
   // Project Test-Run statuses (deduped via React Query with the same call
   // in IterationResultPanel / IterationStatusLegendPopover). Used by
   // handleResetIteration to find a target status without a custom endpoint.
-  const { data: projectStatuses } = useFindManyStatus({
-    where: {
-      AND: [
-        { isEnabled: true },
-        { isDeleted: false },
-        { projects: { some: { projectId: innerProps.projectId } } },
-        { scope: { some: { scope: { name: "Test Run" } } } },
-      ],
-    },
-    orderBy: { order: "asc" },
-  });
+  const { data: projectStatuses } = useClientQueries(schema).status.useFindMany(
+    {
+      where: {
+        AND: [
+          { isEnabled: true },
+          { isDeleted: false },
+          { projects: { some: { projectId: innerProps.projectId } } },
+          { scope: { some: { scope: { name: "Test Run" } } } },
+        ],
+      },
+      orderBy: { order: "asc" },
+    }
+  );
 
   // Iteration list — DO NOT include dataSetSnapshot here. The snapshot is
   // identical for every iteration row; including it duplicates the entire
   // payload N times and overflows Prisma's napi string buffer above ~1500
-  // iterations. Snapshot is fetched once below via useFindFirstTestRunCaseDataSetSnapshot.
-  const { data: iterationsRaw } = useFindManyTestRunCaseIteration(
+  // iterations. Snapshot is fetched once below via useClientQueries(schema).testRunCaseDataSetSnapshot.useFindFirst.
+  const { data: iterationsRaw } = useClientQueries(
+    schema
+  ).testRunCaseIteration.useFindMany(
     {
       where: { testRunCaseId, isDeleted: false },
       include: {
@@ -131,7 +133,9 @@ export function IterationAwareTestRunCaseDetails({
     { enabled: !!testRunCaseId }
   );
 
-  const { data: snapshotRaw } = useFindFirstTestRunCaseDataSetSnapshot(
+  const { data: snapshotRaw } = useClientQueries(
+    schema
+  ).testRunCaseDataSetSnapshot.useFindFirst(
     {
       where: { testRunCaseId },
       select: { parametersJson: true, rowsJson: true },

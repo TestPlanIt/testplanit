@@ -1,5 +1,7 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { DateFormatter } from "@/components/DateFormatter";
 import { Loading } from "@/components/Loading";
 import { ProjectIcon } from "@/components/ProjectIcon";
@@ -43,6 +45,8 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import { PageTitle, SectionHeader } from "@/components/ui/typography";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import {
   AlertTriangle,
@@ -52,7 +56,8 @@ import {
   Loader2,
   Plus,
   RefreshCw,
-  Trash2,
+  Save,
+  Trash,
   Unlink,
   XCircle,
 } from "lucide-react";
@@ -62,16 +67,9 @@ import { useEffect, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod/v4";
+import { ApplicationArea } from "~/zenstack/models";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
-import {
-  useCreateProjectCodeRepositoryConfig,
-  useDeleteProjectCodeRepositoryConfig,
-  useFindFirstProjectCodeRepositoryConfig,
-  useFindFirstProjects,
-  useFindManyCodeRepository,
-  useUpdateProjectCodeRepositoryConfig,
-  useUpdateProjects,
-} from "~/lib/hooks";
 import { ExportTemplateAssignmentSection } from "./ExportTemplateAssignmentSection";
 import { Link } from "~/lib/navigation";
 
@@ -144,29 +142,35 @@ export default function QuickScriptPage() {
   const [showDisconnectDialog, setShowDisconnectDialog] = useState(false);
 
   // Load existing config
-  const { data: existingConfig, refetch: refetchConfig } =
-    useFindFirstProjectCodeRepositoryConfig({
-      where: { projectId },
-      include: {
-        repository: {
-          select: { id: true, name: true, provider: true },
-        },
+  const { data: existingConfig, refetch: refetchConfig } = useClientQueries(
+    schema
+  ).projectCodeRepositoryConfig.useFindFirst({
+    where: { projectId },
+    include: {
+      repository: {
+        select: { id: true, name: true, provider: true },
       },
-    });
+    },
+  });
 
   // Load available repositories for selector
   const { data: repositories, isLoading: repositoriesLoading } =
-    useFindManyCodeRepository({
+    useClientQueries(schema).codeRepository.useFindMany({
       where: { isDeleted: false, status: "ACTIVE" },
       select: { id: true, name: true, provider: true },
     });
 
-  const createConfig = useCreateProjectCodeRepositoryConfig();
-  const updateConfig = useUpdateProjectCodeRepositoryConfig();
-  const deleteConfig = useDeleteProjectCodeRepositoryConfig();
+  const createConfig =
+    useClientQueries(schema).projectCodeRepositoryConfig.useCreate();
+  const updateConfig =
+    useClientQueries(schema).projectCodeRepositoryConfig.useUpdate();
+  const deleteConfig =
+    useClientQueries(schema).projectCodeRepositoryConfig.useDelete();
 
   // Fetch project data (allow global admin access or project assignment)
-  const { data: project, isLoading: projectLoading } = useFindFirstProjects(
+  const { data: project, isLoading: projectLoading } = useClientQueries(
+    schema
+  ).projects.useFindFirst(
     {
       where: { id: projectId },
       select: {
@@ -197,22 +201,24 @@ export default function QuickScriptPage() {
       retryDelay: 1000,
     }
   );
-  const updateProject = useUpdateProjects();
+  const updateProject = useClientQueries(schema).projects.useUpdate();
 
-  // Access control check - must be ADMIN or PROJECTADMIN
+  // Project-admin authority, resolved server-side by
+  // `authorizeProjectAdminForProject`: system ADMIN, the project's creator, a
+  // holder of the per-project "Project Admin" role, or a system PROJECTADMIN
+  // assigned to this project. Gating on `session.user.access` alone 404'd the
+  // creator/role-holder tiers that the settings APIs already accept.
+  const { isProjectAdmin, isLoading: permissionsLoading } =
+    useProjectPermissions(projectId, ApplicationArea.Settings);
+
+  // Access control check - must hold project-admin authority here
   useEffect(() => {
-    if (!projectLoading && project && session?.user) {
-      const hasAccess =
-        session.user.access === "ADMIN" ||
-        session.user.access === "PROJECTADMIN";
+    if (projectLoading || permissionsLoading || !session?.user) return;
 
-      if (!hasAccess) {
-        notFound();
-      }
-    } else if (!projectLoading && !project && session?.user) {
+    if (!project || !isProjectAdmin) {
       notFound();
     }
-  }, [project, projectLoading, session]);
+  }, [project, projectLoading, permissionsLoading, isProjectAdmin, session]);
 
   const handleToggleQuickScript = async (enabled: boolean) => {
     await updateProject.mutateAsync({
@@ -514,6 +520,7 @@ export default function QuickScriptPage() {
         cacheStatus: string | null;
         cacheLastFetchedAt: string | Date | null;
         cacheFileCount: number | null;
+        cacheContentFileCount: number | null;
         cacheTotalSize: bigint | number | null;
         cacheError: string | null;
       })
@@ -526,7 +533,7 @@ export default function QuickScriptPage() {
   }
 
   // Wait for data to load
-  if (projectLoading || repositoriesLoading) {
+  if (projectLoading || permissionsLoading || repositoriesLoading) {
     return <Loading />;
   }
 
@@ -535,9 +542,9 @@ export default function QuickScriptPage() {
     return (
       <Card className="flex flex-col w-full min-w-100 h-full">
         <CardContent className="flex flex-col items-center justify-center h-full">
-          <h2 className="text-2xl font-semibold mb-2">
+          <PageTitle className="mb-2">
             {tCommon("errors.projectNotFound")}
-          </h2>
+          </PageTitle>
           <p className="text-muted-foreground">
             {tCommon("errors.projectNotFoundDescription")}
           </p>
@@ -550,12 +557,11 @@ export default function QuickScriptPage() {
     <main>
       <Card>
         <CardHeader className="w-full">
-          <div className="flex items-center justify-between text-primary text-xl md:text-2xl pb-2 pt-1">
-            <CardTitle>
-              <span>{t("title")}</span>
-            </CardTitle>
-          </div>
-          <CardDescription className="uppercase">
+          <SectionHeader className="flex items-center gap-2">
+            <CardTitle>{t("title")}</CardTitle>
+            <HelpPopover helpKey="projectQuickScript" />
+          </SectionHeader>
+          <CardDescription>
             <span className="flex items-center gap-2">
               <ProjectIcon iconUrl={project?.iconUrl} />
               {project?.name}
@@ -669,8 +675,7 @@ export default function QuickScriptPage() {
                             <SelectContent>
                               {(
                                 (repositories as
-                                  | CodeRepository[]
-                                  | undefined) ?? []
+                                  CodeRepository[] | undefined) ?? []
                               ).map((repo) => (
                                 <SelectItem
                                   key={repo.id}
@@ -765,7 +770,7 @@ export default function QuickScriptPage() {
                           onClick={() => remove(index)}
                           disabled={fields.length === 1}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash className="h-4 w-4" />
                         </Button>
                       </div>
                     ))}
@@ -898,188 +903,262 @@ export default function QuickScriptPage() {
                       )}
                     />
 
-                    {!cacheEnabled && (
-                      <Alert>
-                        <AlertDescription>
-                          {t("cache.disabledWarning")}
-                        </AlertDescription>
-                      </Alert>
-                    )}
+                    <div>
+                      {/* Caching off: warning collapses in/out */}
+                      <div
+                        aria-hidden={cacheEnabled}
+                        className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${
+                          !cacheEnabled ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+                        }`}
+                      >
+                        <div className="overflow-hidden">
+                          <Alert>
+                            <AlertDescription>
+                              {t("cache.disabledWarning")}
+                            </AlertDescription>
+                          </Alert>
+                        </div>
+                      </div>
 
-                    {cacheEnabled && (
-                      <>
-                        <FormField
-                          control={form.control as any}
-                          name="cacheTtlDays"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>{t("cache.ttlLabel")}</FormLabel>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  type="number"
-                                  min={1}
-                                  max={30}
-                                  onChange={(e) =>
-                                    field.onChange(
-                                      parseInt(e.target.value) || 7
-                                    )
-                                  }
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        {/* Cache Status Panel */}
-                        {configData && (
-                          <>
-                            <Separator />
-                            <div className="space-y-3">
-                              <div className="flex items-center justify-between">
-                                <h4 className="text-sm font-medium">
-                                  {t("cache.statusTitle")}
-                                </h4>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={handleRefreshCache}
-                                  disabled={isRefreshing}
-                                >
-                                  {isRefreshing ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                  ) : (
-                                    <RefreshCw className="h-4 w-4" />
-                                  )}
-                                  {isRefreshing && refreshStep
-                                    ? refreshStep
-                                    : t("cache.refreshButton")}
-                                </Button>
-                              </div>
-
-                              <div className="grid grid-cols-2 gap-3 text-sm">
-                                <div>
-                                  <span className="text-muted-foreground">
-                                    {tCommon("actions.status")}
-                                  </span>
-                                  <div className="mt-1 flex items-center gap-2">
-                                    {!configData.cacheStatus && (
-                                      <Badge variant="secondary">
-                                        {t("cache.statusNeverFetched")}
-                                      </Badge>
-                                    )}
-                                    {configData.cacheStatus === "success" && (
-                                      <>
-                                        <CheckCircle className="h-4 w-4 text-success" />
-                                        <Badge variant="default">
-                                          {tCommon("fields.success")}
-                                        </Badge>
-                                      </>
-                                    )}
-                                    {configData.cacheStatus === "error" && (
-                                      <>
-                                        <XCircle className="h-4 w-4 text-destructive" />
-                                        <Badge variant="destructive">
-                                          {tCommon("errors.error")}
-                                        </Badge>
-                                      </>
-                                    )}
-                                    {configData.cacheStatus === "pending" && (
-                                      <>
-                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                        <Badge variant="secondary">
-                                          {t("cache.statusPending")}
-                                        </Badge>
-                                      </>
-                                    )}
-                                  </div>
-                                </div>
-
-                                <div>
-                                  <span className="text-muted-foreground">
-                                    {t("cache.lastFetched")}
-                                  </span>
-                                  <div className="mt-1">
-                                    {configData.cacheLastFetchedAt ? (
-                                      <DateFormatter
-                                        date={
-                                          new Date(
-                                            configData.cacheLastFetchedAt
+                      {/* Caching on: TTL + status collapse in/out */}
+                      <div
+                        aria-hidden={!cacheEnabled}
+                        className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${
+                          cacheEnabled ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+                        }`}
+                      >
+                        <div className="overflow-hidden">
+                          <div className="space-y-4">
+                            <FormField
+                              control={form.control as any}
+                              name="cacheTtlDays"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <div className="flex items-center gap-2 text-sm">
+                                    <FormLabel className="font-normal">
+                                      {t("cache.ttlBefore")}
+                                    </FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        {...field}
+                                        type="number"
+                                        min={1}
+                                        max={30}
+                                        className="w-16"
+                                        aria-label={t("cache.ttlAriaLabel")}
+                                        onChange={(e) =>
+                                          field.onChange(
+                                            parseInt(e.target.value) || 7
                                           )
                                         }
-                                        formatString={
-                                          session?.user.preferences
-                                            ?.dateFormat &&
-                                          session?.user.preferences?.timeFormat
-                                            ? `${session.user.preferences.dateFormat} ${session.user.preferences.timeFormat}`
-                                            : session?.user.preferences
-                                                ?.dateFormat
-                                        }
-                                        timezone={
-                                          session?.user.preferences?.timezone
-                                        }
                                       />
-                                    ) : (
-                                      "\u2014"
-                                    )}
+                                    </FormControl>
+                                    <span>
+                                      {t("cache.ttlDays", {
+                                        count: field.value,
+                                      })}
+                                    </span>
                                   </div>
-                                </div>
-
-                                <div>
-                                  <span className="text-muted-foreground">
-                                    {t("cache.filesCached")}
-                                  </span>
-                                  <div className="mt-1">
-                                    {configData.cacheFileCount ?? "\u2014"}
-                                  </div>
-                                </div>
-
-                                <div>
-                                  <span className="text-muted-foreground">
-                                    {t("cache.totalSize")}
-                                  </span>
-                                  <div className="mt-1">
-                                    {configData.cacheTotalSize != null
-                                      ? formatBytes(
-                                          Number(configData.cacheTotalSize)
-                                        )
-                                      : "\u2014"}
-                                  </div>
-                                </div>
-                              </div>
-
-                              {configData.cacheStatus === "error" &&
-                                configData.cacheError && (
-                                  <Alert variant="destructive">
-                                    <XCircle className="h-4 w-4" />
-                                    <AlertDescription>
-                                      {configData.cacheError}
-                                    </AlertDescription>
-                                  </Alert>
-                                )}
-
-                              {refreshError && (
-                                <Alert variant="destructive">
-                                  <AlertDescription className="flex items-center gap-2 font-mono text-xs break-all select-all">
-                                    <XCircle className="h-4 w-4 shrink-0" />
-                                    {refreshError}
-                                  </AlertDescription>
-                                </Alert>
+                                  <FormMessage />
+                                </FormItem>
                               )}
-                            </div>
-                          </>
-                        )}
-                      </>
-                    )}
+                            />
+
+                            {/* Cache Status Panel */}
+                            {configData && (
+                              <>
+                                <Separator />
+                                <div className="space-y-3">
+                                  <div className="flex items-center justify-between">
+                                    <h4 className="text-sm font-medium">
+                                      {t("cache.statusTitle")}
+                                    </h4>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={handleRefreshCache}
+                                      disabled={isRefreshing}
+                                    >
+                                      {isRefreshing ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                      ) : (
+                                        <RefreshCw className="h-4 w-4" />
+                                      )}
+                                      {isRefreshing && refreshStep
+                                        ? refreshStep
+                                        : t("cache.refreshButton")}
+                                    </Button>
+                                  </div>
+
+                                  <div className="grid grid-cols-2 gap-3 text-sm">
+                                    <div>
+                                      <span className="text-muted-foreground">
+                                        {tCommon("actions.status")}
+                                      </span>
+                                      <div className="mt-1 flex items-center gap-2">
+                                        {!configData.cacheStatus && (
+                                          <Badge variant="secondary">
+                                            {t("cache.statusNeverFetched")}
+                                          </Badge>
+                                        )}
+                                        {configData.cacheStatus ===
+                                          "success" && (
+                                          <>
+                                            <CheckCircle className="h-4 w-4 text-success" />
+                                            <Badge variant="default">
+                                              {tCommon("fields.success")}
+                                            </Badge>
+                                          </>
+                                        )}
+                                        {configData.cacheStatus === "error" && (
+                                          <>
+                                            <XCircle className="h-4 w-4 text-destructive" />
+                                            <Badge variant="destructive">
+                                              {tCommon("errors.error")}
+                                            </Badge>
+                                          </>
+                                        )}
+                                        {configData.cacheStatus ===
+                                          "pending" && (
+                                          <>
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                            <Badge variant="secondary">
+                                              {t("cache.statusPending")}
+                                            </Badge>
+                                          </>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    <div>
+                                      <span className="text-muted-foreground">
+                                        {t("cache.lastFetched")}
+                                      </span>
+                                      <div className="mt-1">
+                                        {configData.cacheLastFetchedAt ? (
+                                          <DateFormatter
+                                            date={
+                                              new Date(
+                                                configData.cacheLastFetchedAt
+                                              )
+                                            }
+                                            formatString={
+                                              session?.user.preferences
+                                                ?.dateFormat &&
+                                              session?.user.preferences
+                                                ?.timeFormat
+                                                ? `${session.user.preferences.dateFormat} ${session.user.preferences.timeFormat}`
+                                                : session?.user.preferences
+                                                    ?.dateFormat
+                                            }
+                                            timezone={
+                                              session?.user.preferences
+                                                ?.timezone
+                                            }
+                                          />
+                                        ) : (
+                                          "\u2014"
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    <div>
+                                      <span className="text-muted-foreground">
+                                        {t("cache.filesCached")}
+                                      </span>
+                                      <div className="mt-1">
+                                        {configData.cacheFileCount ?? "\u2014"}
+                                      </div>
+                                    </div>
+
+                                    <div>
+                                      <span className="text-muted-foreground">
+                                        {t("cache.contentsCached")}
+                                      </span>
+                                      <div className="mt-1">
+                                        {configData.cacheContentFileCount ??
+                                          "\u2014"}
+                                      </div>
+                                    </div>
+
+                                    <div>
+                                      <span className="text-muted-foreground">
+                                        {t("cache.totalSize")}
+                                      </span>
+                                      <div className="mt-1">
+                                        {configData.cacheTotalSize != null
+                                          ? formatBytes(
+                                              Number(configData.cacheTotalSize)
+                                            )
+                                          : "\u2014"}
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {configData.cacheStatus === "error" &&
+                                    configData.cacheError && (
+                                      <Alert variant="destructive">
+                                        <XCircle className="h-4 w-4" />
+                                        <AlertDescription>
+                                          {configData.cacheError}
+                                        </AlertDescription>
+                                      </Alert>
+                                    )}
+
+                                  {configData.cacheStatus === "success" &&
+                                    configData.cacheContentFileCount != null &&
+                                    configData.cacheFileCount != null &&
+                                    configData.cacheContentFileCount <
+                                      configData.cacheFileCount && (
+                                      <Alert>
+                                        <AlertTriangle className="h-4 w-4" />
+                                        <AlertDescription>
+                                          {t("cache.contentsIncomplete", {
+                                            cached: String(
+                                              configData.cacheContentFileCount
+                                            ),
+                                            total: String(
+                                              configData.cacheFileCount
+                                            ),
+                                          })}
+                                        </AlertDescription>
+                                      </Alert>
+                                    )}
+
+                                  {refreshError && (
+                                    <Alert variant="destructive">
+                                      <AlertDescription className="flex items-center gap-2 font-mono text-xs break-all select-all">
+                                        <XCircle className="h-4 w-4 shrink-0" />
+                                        {refreshError}
+                                      </AlertDescription>
+                                    </Alert>
+                                  )}
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
 
                 <div className="flex justify-end">
-                  <Button type="submit" disabled={isSaving}>
-                    {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
-                    {t("save")}
+                  <Button
+                    type="submit"
+                    disabled={isSaving}
+                    aria-label={t("save")}
+                    className="group gap-0 transition-all duration-200 hover:gap-2"
+                  >
+                    {isSaving ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Save className="h-4 w-4" />
+                    )}
+                    <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                      {t("save")}
+                    </span>
                   </Button>
                 </div>
               </form>
@@ -1106,7 +1185,7 @@ export default function QuickScriptPage() {
               </p>
               <div>
                 <p className="font-medium">{t("disconnectWarningTitle")}</p>
-                <ul className="list-disc pl-5 mt-1">
+                <ul className="list-disc ps-5 mt-1">
                   <li>{t("disconnectWarning1")}</li>
                   <li>{t("disconnectWarning2")}</li>
                   <li>{t("disconnectWarning3")}</li>

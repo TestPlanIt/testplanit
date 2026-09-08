@@ -8,10 +8,15 @@
  *   COV-01 — Cases / Runs / Sessions families + every child/value table.
  *   COV-02 — implicit many-to-many join tables linking Tags/Issue to those entities.
  *   COV-04 — all remaining app-audited data entities (45 tables, Phase 15).
- *   SAF-02 — per-table denylist: camelCase timestamps (where the table has them) + named
- *            TipTap rich-text columns (Steps.step/expectedResult, Sessions.note/mission,
- *            SessionVersions.note/mission, Comment.content, Issue.note/externalData/data,
- *            Milestones.note/docs) + credential columns on Integration/LlmIntegration/CodeRepository.
+ *   SAF-02 — per-table denylist: camelCase timestamps (where the table has them) + credential
+ *            columns on User/Integration/LlmIntegration/CodeRepository/WebhookConfig + the
+ *            machine-written WebhookConfig delivery telemetry (last*At, consecutiveFailureCount) +
+ *            opaque
+ *            machine-written integration payloads (Issue.externalData/data) + the high-volume TipTap
+ *            step columns (Steps.step/expectedResult). Human-authored rich-text description columns
+ *            (Milestones.note/docs, Sessions.note/mission, Issue.note, Comment.content) are NOT
+ *            denylisted — they are captured and flattened to plain text at render
+ *            (lib/audit/humanize.ts RICH_TEXT_COLUMNS), mirroring how case Text-Long field values show.
  *   SAF-04 — credential/token tables are deliberately ABSENT (see the exclusion block below);
  *            DataChangeLog/AuditLog can never appear (REGISTRY_PROHIBITED + assertRegistrySafe).
  */
@@ -63,14 +68,17 @@ export const TRIGGER_REGISTRY: TriggerConfig[] = [
   }, // step/expectedResult are TipTap
   { table: "TestCaseParameter", denylist: ["createdAt", "updatedAt"] },
 
-  // Cases implicit m2m join tables (no timestamps; composite (A,B) PK → pkCol 'A')
-  { table: "_RepositoryCasesToTags", pkCol: "A", denylist: [] },
-  { table: "_IssueToRepositoryCases", pkCol: "A", denylist: [] },
+  // Cases <-> Tags/Issue explicit join tables (composite (caseId,X) PK → pkCol 'caseId')
+  { table: "RepositoryCaseTag", pkCol: "caseId", denylist: [] },
+  { table: "RepositoryCaseIssue", pkCol: "caseId", denylist: [] },
 
   // ── Runs family ───────────────────────────────────────────────────────────
   {
+    // readyToCompleteNotifiedAt is bookkeeping for the "ready to complete"
+    // notification, not a change anyone reviewing a run's history cares
+    // about — and it flips on every execution/re-arm cycle.
     table: "TestRuns",
-    denylist: ["createdAt", "updatedAt"],
+    denylist: ["createdAt", "updatedAt", "readyToCompleteNotifiedAt"],
     nameCol: "name",
     projectCol: "projectId",
   },
@@ -101,10 +109,10 @@ export const TRIGGER_REGISTRY: TriggerConfig[] = [
   // ── Sessions family ───────────────────────────────────────────────────────
   {
     table: "Sessions",
-    denylist: ["createdAt", "updatedAt", "note", "mission"],
+    denylist: ["createdAt", "updatedAt"],
     nameCol: "name",
     projectCol: "projectId",
-  }, // note/mission are TipTap
+  }, // note/mission are TipTap descriptions — captured, flattened at render (humanize.ts)
   { table: "SessionResults", denylist: ["createdAt", "updatedAt"] },
   { table: "SessionFieldValues", denylist: [], captureCols: ["fieldId"] }, // no timestamps; fieldId identifies which field
   // SessionVersions deliberately NOT audited — it is a version snapshot the app
@@ -144,26 +152,29 @@ export const TRIGGER_REGISTRY: TriggerConfig[] = [
     nameCol: "name",
     projectCol: "id",
   }, // no updatedAt column; a Projects audit belongs to its own id
-  // note/externalData/data are TipTap or opaque integration payloads; no updatedAt column.
+  // externalData/data are opaque machine-written integration payloads (denylisted); note is a
+  // human-authored TipTap description — captured, flattened at render (humanize.ts). No updatedAt.
   {
     table: "Issue",
-    denylist: ["createdAt", "note", "externalData", "data"],
+    denylist: ["createdAt", "externalData", "data"],
     // Issue.name is the reference key (e.g. "#213"); title is the human summary
     // ("[FEATURE] Webhook System"), which reads far better in the audit log.
     nameCol: "title",
     projectCol: "projectId",
   },
-  // note/docs are TipTap (confirmed: AddMilestoneModal and page.tsx use TipTapEditor); no updatedAt.
+  // note/docs are human-authored TipTap description columns — captured and flattened to plain text
+  // at render (humanize.ts RICH_TEXT_COLUMNS). No updatedAt column.
   {
     table: "Milestones",
-    denylist: ["createdAt", "note", "docs"],
+    denylist: ["createdAt"],
     nameCol: "name",
     projectCol: "projectId",
   },
-  // content is explicitly TipTap JSON (schema comment: "TipTap JSON format").
+  // content is a human-authored TipTap description — captured and flattened to plain text at render
+  // (humanize.ts RICH_TEXT_COLUMNS).
   {
     table: "Comment",
-    denylist: ["createdAt", "updatedAt", "content"],
+    denylist: ["createdAt", "updatedAt"],
     projectCol: "projectId",
   },
   {
@@ -264,9 +275,24 @@ export const TRIGGER_REGISTRY: TriggerConfig[] = [
   // Webhook configuration. token + secret are credential material and are
   // DENYLISTED so they never land in the append-only DataChangeLog (SAF-02/04);
   // the dedicated WebhookConfigSecret table stays excluded entirely.
+  // The last*At timestamps and consecutiveFailureCount are machine-written delivery telemetry
+  // bumped on every receipt/dispatch, always alongside the real change they follow. Denylisted so
+  // a pure heartbeat bump produces an empty diff and the trigger's no-op short-circuit drops the
+  // row entirely. A health transition still audits: endpointHealth stays captured, and health.ts
+  // additionally emits WEBHOOK_HEALTH_CHANGED.
   {
     table: "WebhookConfig",
-    denylist: ["createdAt", "updatedAt", "token", "secret"],
+    denylist: [
+      "createdAt",
+      "updatedAt",
+      "token",
+      "secret",
+      "lastReceivedAt",
+      "lastDispatchedAt",
+      "lastSuccessAt",
+      "lastFailureAt",
+      "consecutiveFailureCount",
+    ],
     nameCol: "name",
     projectCol: "projectId",
   },
@@ -323,3 +349,115 @@ export function assertRegistrySafe(): void {
     );
   }
 }
+
+/**
+ * Single-default enforcement (a business rule, NOT audit capture). Each listed
+ * table enforces "at most one row with isDefault = true" (per `scopeCol` when
+ * set) via a `tpl_single_default_<table>` trigger that clears the other
+ * in-scope defaults in the SAME transaction whenever a row is set default. This
+ * replaces the app's non-atomic "updateMany-clear-all → set-one" client
+ * sequence (which could leave zero defaults on a mid-sequence failure and
+ * churned the target isDefault true→false→true). The clear excludes the target
+ * row, so setting an already-default row is a no-op rather than a churn.
+ *
+ * The `tpl_single_default_` prefix keeps these out of the `tpl_audit_%` drift
+ * self-check in scripts/apply-triggers.ts. Attaching the trigger is idempotent
+ * and applied on the same startup / db-push paths as the audit triggers.
+ */
+export interface SingleDefaultConfig {
+  table: string;
+  /**
+   * Column that scopes uniqueness (e.g. `Workflows.scope` — one default per
+   * scope). Omit for a single global default across the whole table.
+   */
+  scopeCol?: string;
+}
+
+export const SINGLE_DEFAULT_REGISTRY: SingleDefaultConfig[] = [
+  { table: "MilestoneTypes" }, // one default milestone type (global)
+  { table: "Workflows", scopeCol: "scope" }, // one default per RUNS/SESSIONS scope
+  { table: "Roles" }, // one default role
+  { table: "CaseExportTemplate" }, // QuickScript admin: one default export template
+  { table: "Templates" }, // one default case/result field template
+  { table: "LlmProviderConfig" }, // one default LLM provider
+  { table: "PromptConfig" }, // one default prompt config
+  { table: "IntegrationProject", scopeCol: "projectIntegrationId" }, // one default external project per project-integration
+];
+
+/**
+ * Soft-delete deletedAt stamping (a business rule, NOT audit capture). Every table
+ * carrying an `isDeleted` boolean also carries a nullable `deletedAt` timestamp
+ * (Option A — additive; `isDeleted` stays the queryable liveness flag). Each listed
+ * table gets a `tpl_stamp_deleted_at_<table>` BEFORE UPDATE trigger that stamps
+ * `deletedAt = now()` on the isDeleted false→true flip and clears it (→ NULL) on a
+ * true→false restore, in the SAME write. The trigger is gated on an actual flip
+ * (WHEN NEW.isDeleted IS DISTINCT FROM OLD.isDeleted), so normal updates never enter
+ * the function — no overhead on hot write paths. Doing it in the DB, not app code,
+ * means every soft-delete write path (both Prisma clients, raw SQL, future code) is
+ * covered with zero drift; an explicit deletedAt in the flip write is respected
+ * (only stamped when NULL).
+ *
+ * The `tpl_stamp_deleted_at_` prefix keeps these out of the `tpl_audit_%` and
+ * `tpl_single_default_%` drift self-checks in scripts/apply-triggers.ts. Attaching is
+ * idempotent and runs on the same startup / db-push paths as the other triggers.
+ *
+ * INVARIANT: this list must equal the set of models declaring `isDeleted` in
+ * schema.zmodel — enforced by scripts/__tests__/softDeleteRegistry.test.ts, so a new
+ * soft-deletable model that forgets its trigger fails the unit lane, not silently in prod.
+ */
+export interface SoftDeleteConfig {
+  /** Postgres table name (exact case, no quotes — the apply script quotes it). Must have an `isDeleted` boolean + a nullable `deletedAt` column. */
+  table: string;
+}
+
+export const SOFT_DELETE_REGISTRY: SoftDeleteConfig[] = [
+  { table: "User" },
+  { table: "Groups" },
+  { table: "Roles" },
+  { table: "Projects" },
+  { table: "Milestones" },
+  { table: "MilestoneTypes" },
+  { table: "CaseFields" },
+  { table: "ResultFields" },
+  { table: "FieldOptions" },
+  { table: "Templates" },
+  { table: "CaseExportTemplate" },
+  { table: "Status" },
+  { table: "Workflows" },
+  { table: "ConfigCategories" },
+  { table: "ConfigVariants" },
+  { table: "Configurations" },
+  { table: "Tags" },
+  { table: "Repositories" },
+  { table: "RepositoryFolders" },
+  { table: "RepositoryCaseLink" },
+  { table: "DuplicateScanResult" },
+  { table: "StepSequenceMatch" },
+  { table: "StepSequenceMatchCase" },
+  { table: "RepositoryCases" },
+  { table: "RepositoryCaseVersions" },
+  { table: "Attachments" },
+  { table: "Steps" },
+  { table: "TestCaseParameter" },
+  { table: "Sessions" },
+  { table: "SessionResults" },
+  { table: "TestRuns" },
+  { table: "TestRunCases" },
+  { table: "TestRunResults" },
+  { table: "TestRunStepResults" },
+  { table: "TestRunCaseIteration" },
+  { table: "TestRunCaseDataSetSnapshot" },
+  { table: "Issue" },
+  { table: "Integration" },
+  { table: "CodeRepository" },
+  { table: "LlmIntegration" },
+  { table: "SharedStepGroup" },
+  { table: "DataSet" },
+  { table: "DataSetRow" },
+  { table: "Notification" },
+  { table: "ReviewRequest" },
+  { table: "ShareLink" },
+  { table: "PromptConfig" },
+  { table: "LlmReportSnapshot" },
+  { table: "Comment" },
+];

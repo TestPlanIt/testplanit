@@ -1,5 +1,6 @@
-import { ApplicationArea } from "@prisma/client";
+import { ApplicationArea } from "~/zenstack/models";
 import { getServerSession } from "next-auth";
+import { isValidReportBypass } from "~/lib/internalReportBypass";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 
@@ -8,7 +9,7 @@ import {
   MatrixCellCapExceededError,
   runMatrixAggregation,
 } from "~/lib/matrix/matrixAggregation";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { matrixFiltersSchema } from "~/lib/schemas/matrixFiltersSchema";
 import { authOptions } from "~/server/auth";
 
@@ -52,7 +53,7 @@ import { authOptions } from "~/server/auth";
  * System admins always pass.
  */
 async function resolveCanReadSensitive(userId: string): Promise<boolean> {
-  const u = await prisma.user.findUnique({
+  const u = await baseDb.user.findUnique({
     where: { id: userId },
     include: { role: { include: { rolePermissions: true } } },
   });
@@ -94,8 +95,9 @@ export async function POST(request: NextRequest) {
     // — the share link IS the read grant — and default sensitive-param
     // visibility to false so unauthenticated viewers can't see redacted
     // values. Mirrors `utils/reportApiUtils.ts`'s pattern.
-    const isSharedReportBypass =
-      request.headers.get("x-shared-report-bypass") === "true";
+    const isSharedReportBypass = isValidReportBypass(
+      request.headers.get("x-shared-report-bypass")
+    );
 
     const session = await getServerSession(authOptions);
     if (!session?.user && !isSharedReportBypass) {
@@ -121,7 +123,7 @@ export async function POST(request: NextRequest) {
     if (isSharedReportBypass) {
       // Raw existence check — the share link already authorized the read;
       // ZenStack's policy enforcement would reject without a session.
-      const project = await prisma.projects.findFirst({
+      const project = await baseDb.projects.findFirst({
         where: { id: projectId, isDeleted: false },
         select: { id: true },
       });
@@ -146,7 +148,7 @@ export async function POST(request: NextRequest) {
 
     try {
       const axes = await runMatrixAggregation(
-        prisma,
+        baseDb,
         projectId,
         filters,
         viewerCanReadSensitive

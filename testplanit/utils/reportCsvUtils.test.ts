@@ -192,7 +192,7 @@ describe("buildReportCsvRows", () => {
     expect(row["Pass Rate"]).toBe("87.5%");
   });
 
-  it("custom report: date dimension uses UTC (no off-by-one) and elapsed is ms", () => {
+  it("custom report: date dimension uses UTC (no off-by-one) and elapsed is seconds", () => {
     const [row] = buildReportCsvRows({
       ...base,
       reportType: "test-execution",
@@ -200,7 +200,7 @@ describe("buildReportCsvRows", () => {
         {
           // UTC midnight — must stay 03-28 regardless of the runner's timezone.
           date: { executedAt: "2025-03-28T00:00:00.000Z" },
-          "Avg. Elapsed Time": 60000, // milliseconds
+          "Avg. Elapsed Time": 60, // seconds
         },
       ],
       dimensions: [{ value: "date", label: "Date" }],

@@ -13,8 +13,8 @@ vi.mock("../services/forecastService", () => ({
   updateTestRunForecast: (...args: any[]) => mockUpdateTestRunForecast(...args),
 }));
 
-// Mock prisma. Each test seeds the relevant mocks before invoking the processor.
-const mockPrisma = {
+// Mock baseDb. Each test seeds the relevant mocks before invoking the processor.
+const mockDb = {
   testRuns: {
     findMany: vi.fn(),
     findUnique: vi.fn(),
@@ -22,6 +22,7 @@ const mockPrisma = {
   reviewRequest: {
     findMany: vi.fn(),
     update: vi.fn(),
+    updateMany: vi.fn(),
   },
   projects: {
     findUnique: vi.fn(),
@@ -45,18 +46,18 @@ const mockPrisma = {
     findUnique: vi.fn(),
   },
   // Default: invoke the callback with a tx whose reviewRequest.update is the
-  // same spy as prisma.reviewRequest.update — so tests can assert on the
+  // same spy as baseDb.reviewRequest.update — so tests can assert on the
   // stamp call regardless of whether it happens inside or outside the tx.
   $transaction: vi.fn(),
 };
 
-vi.mock("../lib/prisma", () => ({
-  prisma: mockPrisma,
+vi.mock("../lib/db", () => ({
+  baseDb: mockDb,
 }));
 
-// Multi-tenant module — return our mock prisma client for every job.
-vi.mock("../lib/multiTenantPrisma", () => ({
-  getPrismaClientForJob: vi.fn(() => mockPrisma),
+// Multi-tenant module — return our mock baseDb client for every job.
+vi.mock("../lib/multiTenantDb", () => ({
+  getDbClientForJob: vi.fn(() => mockDb),
   isMultiTenantMode: vi.fn(() => false),
   validateMultiTenantJobData: vi.fn(),
   disconnectAllTenantClients: vi.fn(),
@@ -247,32 +248,33 @@ describe("JOB_REVIEW_REMINDERS", () => {
   );
 
   const seedContextHappyPath = () => {
-    mockPrisma.projects.findUnique.mockResolvedValue({
+    mockDb.projects.findUnique.mockResolvedValue({
       id: 1,
       name: "Project Alpha",
     });
-    mockPrisma.workflows.findUnique.mockImplementation((args: any) =>
+    mockDb.workflows.findUnique.mockImplementation((args: any) =>
       Promise.resolve({
         name: args.where.id === 10 ? "Draft" : "Approved",
         color: { value: "#22c55e" },
       })
     );
-    mockPrisma.user.findUnique.mockResolvedValue({ name: "Requester Name" });
-    mockPrisma.roles.findUnique.mockResolvedValue({ name: "QA Reviewers" });
-    mockPrisma.repositoryCases.findUnique.mockResolvedValue({
+    mockDb.user.findUnique.mockResolvedValue({ name: "Requester Name" });
+    mockDb.roles.findUnique.mockResolvedValue({ name: "QA Reviewers" });
+    mockDb.repositoryCases.findUnique.mockResolvedValue({
       name: "Login flow",
     });
-    mockPrisma.testRuns.findUnique.mockResolvedValue({ name: "Smoke Run" });
-    mockPrisma.sessions.findUnique.mockResolvedValue({ name: "Exploration" });
-    mockPrisma.reviewRequest.update.mockResolvedValue({});
+    mockDb.testRuns.findUnique.mockResolvedValue({ name: "Smoke Run" });
+    mockDb.sessions.findUnique.mockResolvedValue({ name: "Exploration" });
+    mockDb.reviewRequest.update.mockResolvedValue({});
+    mockDb.reviewRequest.updateMany.mockResolvedValue({ count: 1 });
     // Default $transaction handler: invoke the callback with a tx whose
-    // reviewRequest.update is the same spy as prisma.reviewRequest.update so
+    // reviewRequest.update is the same spy as baseDb.reviewRequest.update so
     // tests can assert on the stamp call regardless of whether it landed
     // inside or outside the transaction.
-    mockPrisma.$transaction.mockImplementation(
+    mockDb.$transaction.mockImplementation(
       async (fn: (tx: unknown) => Promise<unknown>) => {
         const tx = {
-          reviewRequest: { update: mockPrisma.reviewRequest.update },
+          reviewRequest: { update: mockDb.reviewRequest.update },
         };
         return fn(tx);
       }
@@ -302,12 +304,12 @@ describe("JOB_REVIEW_REMINDERS", () => {
   };
 
   it("Test 1: scan predicate filters by status / isDeleted / createdAt / lastRemindedAt", async () => {
-    mockPrisma.reviewRequest.findMany.mockResolvedValue([]);
+    mockDb.reviewRequest.findMany.mockResolvedValue([]);
 
     await runProcessor();
 
-    expect(mockPrisma.reviewRequest.findMany).toHaveBeenCalledTimes(1);
-    const arg = mockPrisma.reviewRequest.findMany.mock.calls[0][0];
+    expect(mockDb.reviewRequest.findMany).toHaveBeenCalledTimes(1);
+    const arg = mockDb.reviewRequest.findMany.mock.calls[0][0];
     const cutoff = new Date(FIXED_NOW.getTime() - 24 * 60 * 60 * 1000);
 
     expect(arg.where.status).toBe("PENDING");
@@ -320,7 +322,7 @@ describe("JOB_REVIEW_REMINDERS", () => {
   });
 
   it("Test 2: direct assignee path enqueues one reminder for the assignee", async () => {
-    mockPrisma.reviewRequest.findMany.mockResolvedValue([
+    mockDb.reviewRequest.findMany.mockResolvedValue([
       {
         id: "rr-1",
         projectId: 1,
@@ -348,7 +350,7 @@ describe("JOB_REVIEW_REMINDERS", () => {
 
   it("Test 3: role assignee path fans out via resolveRoleHolderUserIds", async () => {
     mockResolveRoleHolderUserIds.mockResolvedValueOnce(["user-a", "user-b"]);
-    mockPrisma.reviewRequest.findMany.mockResolvedValue([
+    mockDb.reviewRequest.findMany.mockResolvedValue([
       {
         id: "rr-role",
         projectId: 1,
@@ -372,7 +374,7 @@ describe("JOB_REVIEW_REMINDERS", () => {
   });
 
   it("Test 4: requester is excluded on direct self-assignment edge case (stamp anyway)", async () => {
-    mockPrisma.reviewRequest.findMany.mockResolvedValue([
+    mockDb.reviewRequest.findMany.mockResolvedValue([
       {
         id: "rr-self",
         projectId: 1,
@@ -391,7 +393,7 @@ describe("JOB_REVIEW_REMINDERS", () => {
 
     expect(mockCreateReviewReminderNotification).not.toHaveBeenCalled();
     // lastRemindedAt MUST still be stamped so the row doesn't loop every interval.
-    expect(mockPrisma.reviewRequest.update).toHaveBeenCalledWith({
+    expect(mockDb.reviewRequest.update).toHaveBeenCalledWith({
       where: { id: "rr-self" },
       data: { lastRemindedAt: FIXED_NOW },
     });
@@ -402,12 +404,12 @@ describe("JOB_REVIEW_REMINDERS", () => {
     mockCreateReviewReminderNotification.mockImplementationOnce(async () => {
       callOrder.push("dispatch");
     });
-    mockPrisma.reviewRequest.update.mockImplementationOnce(async () => {
+    mockDb.reviewRequest.update.mockImplementationOnce(async () => {
       callOrder.push("stamp");
       return {};
     });
 
-    mockPrisma.reviewRequest.findMany.mockResolvedValue([
+    mockDb.reviewRequest.findMany.mockResolvedValue([
       {
         id: "rr-order",
         projectId: 1,
@@ -429,7 +431,7 @@ describe("JOB_REVIEW_REMINDERS", () => {
 
   it("Test 6: idempotent within interval — recently-stamped rows are not re-included by findMany", async () => {
     // Simulate the cutoff filter excluding a row stamped 1h ago.
-    mockPrisma.reviewRequest.findMany.mockResolvedValue([]);
+    mockDb.reviewRequest.findMany.mockResolvedValue([]);
 
     // Sanity: even if a row were stamped 1h ago, the where clause demands
     // lastRemindedAt < cutoff (24h ago). 1h ago > 24h ago so it would NOT match.
@@ -440,11 +442,11 @@ describe("JOB_REVIEW_REMINDERS", () => {
     await runProcessor();
 
     expect(mockCreateReviewReminderNotification).not.toHaveBeenCalled();
-    expect(mockPrisma.reviewRequest.update).not.toHaveBeenCalled();
+    expect(mockDb.reviewRequest.update).not.toHaveBeenCalled();
   });
 
   it("Test 7: re-reminds after threshold — a row stamped 26h ago IS included by the OR predicate", async () => {
-    mockPrisma.reviewRequest.findMany.mockResolvedValue([
+    mockDb.reviewRequest.findMany.mockResolvedValue([
       {
         id: "rr-recur",
         projectId: 1,
@@ -465,7 +467,7 @@ describe("JOB_REVIEW_REMINDERS", () => {
     // The OR clause carries `{ lastRemindedAt: { lt: cutoff } }` — that's
     // the recurring branch (a row last reminded 26h ago is older than the
     // 24h cutoff and is re-eligible). Assert the clause shape exists.
-    const arg = mockPrisma.reviewRequest.findMany.mock.calls[0][0];
+    const arg = mockDb.reviewRequest.findMany.mock.calls[0][0];
     expect(arg.where.OR[1]).toEqual({
       lastRemindedAt: { lt: expect.any(Date) },
     });
@@ -473,11 +475,11 @@ describe("JOB_REVIEW_REMINDERS", () => {
 
   it("Test 8: soft-deleted rows are excluded by the where clause", async () => {
     // The findMany call carries `isDeleted: false` — assert the predicate.
-    mockPrisma.reviewRequest.findMany.mockResolvedValue([]);
+    mockDb.reviewRequest.findMany.mockResolvedValue([]);
 
     await runProcessor();
 
-    const arg = mockPrisma.reviewRequest.findMany.mock.calls[0][0];
+    const arg = mockDb.reviewRequest.findMany.mock.calls[0][0];
     expect(arg.where.isDeleted).toBe(false);
 
     // No dispatch call ever happens for a row not returned by findMany.
@@ -485,7 +487,7 @@ describe("JOB_REVIEW_REMINDERS", () => {
   });
 
   it("emits a REVIEW_REMINDED audit row with system actor and metadata", async () => {
-    mockPrisma.reviewRequest.findMany.mockResolvedValue([
+    mockDb.reviewRequest.findMany.mockResolvedValue([
       {
         id: "rr-audit",
         projectId: 1,
@@ -516,11 +518,11 @@ describe("JOB_REVIEW_REMINDERS", () => {
 
   it("respects a custom AppConfig threshold from getReviewReminderThresholdDays", async () => {
     mockGetReviewReminderThresholdDays.mockResolvedValueOnce(2);
-    mockPrisma.reviewRequest.findMany.mockResolvedValue([]);
+    mockDb.reviewRequest.findMany.mockResolvedValue([]);
 
     await runProcessor();
 
-    const arg = mockPrisma.reviewRequest.findMany.mock.calls[0][0];
+    const arg = mockDb.reviewRequest.findMany.mock.calls[0][0];
     const expectedCutoff = new Date(
       FIXED_NOW.getTime() - 2 * 24 * 60 * 60 * 1000
     );
@@ -529,15 +531,121 @@ describe("JOB_REVIEW_REMINDERS", () => {
 
   it("short-circuits without scanning when threshold is 0 (reminders disabled)", async () => {
     mockGetReviewReminderThresholdDays.mockResolvedValueOnce(0);
-    mockPrisma.reviewRequest.findMany.mockClear();
+    mockDb.reviewRequest.findMany.mockClear();
 
     await runProcessor();
 
-    expect(mockPrisma.reviewRequest.findMany).not.toHaveBeenCalled();
+    expect(mockDb.reviewRequest.findMany).not.toHaveBeenCalled();
+  });
+
+  // Liveness gate — a review whose subject row is deleted can never be acted
+  // on: `app/[locale]/reviews/page.tsx` hides those rows, so the assignee sees
+  // an empty inbox while the reminder keeps arriving. Normally the delete
+  // cancels what it strands (sideEffectsPlugin), but delete paths running on a
+  // plugin-free client skip that hook, so the scan is the backstop.
+  const staleReviewRow = (overrides: Record<string, unknown> = {}) => ({
+    id: "rr-stale",
+    projectId: 1,
+    entityType: "CASE",
+    entityId: 5,
+    fromStateId: 10,
+    toStateId: 11,
+    requestedByUserId: "user-r",
+    assigneeUserId: "user-a",
+    assigneeRoleId: null,
+    createdAt: THIRTY_SIX_HOURS_AGO,
+    ...overrides,
+  });
+
+  it("skips the reminder and cancels the review when the case is soft-deleted", async () => {
+    mockDb.repositoryCases.findUnique.mockResolvedValue({
+      name: "Moved away",
+      isDeleted: true,
+    });
+    mockDb.reviewRequest.findMany.mockResolvedValue([staleReviewRow()]);
+
+    await runProcessor();
+
+    expect(mockCreateReviewReminderNotification).not.toHaveBeenCalled();
+    expect(mockEmitReviewReminderEvent).not.toHaveBeenCalled();
+    // Cancelled, not stamped — stamping would leave the row PENDING forever.
+    expect(mockDb.reviewRequest.update).not.toHaveBeenCalled();
+    expect(mockDb.reviewRequest.updateMany).toHaveBeenCalledWith({
+      where: { id: "rr-stale", status: "PENDING" },
+      data: { status: "CANCELLED" },
+    });
+  });
+
+  it("treats a hard-deleted subject the same as a soft-deleted one", async () => {
+    mockDb.repositoryCases.findUnique.mockResolvedValue(null);
+    mockDb.reviewRequest.findMany.mockResolvedValue([staleReviewRow()]);
+
+    await runProcessor();
+
+    expect(mockCreateReviewReminderNotification).not.toHaveBeenCalled();
+    expect(mockDb.reviewRequest.updateMany).toHaveBeenCalledTimes(1);
+  });
+
+  it("selects isDeleted on the subject lookup so the raw client cannot hide it", async () => {
+    mockDb.reviewRequest.findMany.mockResolvedValue([staleReviewRow()]);
+
+    await runProcessor();
+
+    const arg = mockDb.repositoryCases.findUnique.mock.calls[0][0];
+    expect(arg).toEqual({
+      where: { id: 5 },
+      select: { name: true, isDeleted: true },
+    });
+  });
+
+  it("routes the liveness lookup to the model matching entityType", async () => {
+    mockDb.reviewRequest.findMany.mockResolvedValue([
+      staleReviewRow({ id: "rr-run", entityType: "RUN", entityId: 77 }),
+    ]);
+
+    await runProcessor();
+
+    expect(mockDb.testRuns.findUnique).toHaveBeenCalledWith({
+      where: { id: 77 },
+      select: { name: true, isDeleted: true },
+    });
+    expect(mockDb.repositoryCases.findUnique).not.toHaveBeenCalled();
+  });
+
+  it("records an ENTITY_DELETED audit row for a cancelled stale review", async () => {
+    mockDb.repositoryCases.findUnique.mockResolvedValue({
+      name: "Moved away",
+      isDeleted: true,
+    });
+    mockDb.reviewRequest.findMany.mockResolvedValue([staleReviewRow()]);
+
+    await runProcessor();
+
+    expect(mockCaptureAuditEvent).toHaveBeenCalledTimes(1);
+    const auditArgs = mockCaptureAuditEvent.mock.calls[0][0];
+    expect(auditArgs.action).toBe("REVIEW_CANCELLED");
+    expect(auditArgs.entityId).toBe("rr-stale");
+    expect(auditArgs.metadata.cancelledBy).toBe("ENTITY_DELETED");
+    expect(auditArgs.metadata.source).toBe("review-reminder-worker");
+  });
+
+  it("does not audit when the cancel loses the race to a concurrent decision", async () => {
+    mockDb.repositoryCases.findUnique.mockResolvedValue({
+      name: "Moved away",
+      isDeleted: true,
+    });
+    // updateMany is scoped to status PENDING; count 0 means someone decided it
+    // between the scan and the flip, and that decision must stand.
+    mockDb.reviewRequest.updateMany.mockResolvedValue({ count: 0 });
+    mockDb.reviewRequest.findMany.mockResolvedValue([staleReviewRow()]);
+
+    await runProcessor();
+
+    expect(mockCaptureAuditEvent).not.toHaveBeenCalled();
   });
 
   it("Test 9: webhook emission per dispatched row — fires once with the eventName-aligned payload", async () => {
-    mockPrisma.reviewRequest.findMany.mockResolvedValue([
+    mockDb.reviewRequest.findMany.mockResolvedValue([
       {
         id: "rr-emit",
         projectId: 1,
@@ -577,14 +685,14 @@ describe("JOB_REVIEW_REMINDERS", () => {
 
   it("Test 10: transactional atomicity (success) — emit and stamp both run inside the same $transaction callback", async () => {
     const callOrder: string[] = [];
-    mockPrisma.$transaction.mockImplementationOnce(
+    mockDb.$transaction.mockImplementationOnce(
       async (fn: (tx: unknown) => Promise<unknown>) => {
         callOrder.push("tx-open");
         const tx = {
           reviewRequest: {
             update: vi.fn(async (args: any) => {
               callOrder.push("stamp");
-              return mockPrisma.reviewRequest.update(args);
+              return mockDb.reviewRequest.update(args);
             }),
           },
         };
@@ -596,7 +704,7 @@ describe("JOB_REVIEW_REMINDERS", () => {
     mockEmitReviewReminderEvent.mockImplementationOnce(async () => {
       callOrder.push("emit");
     });
-    mockPrisma.reviewRequest.findMany.mockResolvedValue([
+    mockDb.reviewRequest.findMany.mockResolvedValue([
       {
         id: "rr-tx",
         projectId: 1,
@@ -615,8 +723,8 @@ describe("JOB_REVIEW_REMINDERS", () => {
 
     // Both writes commit inside the same callback boundary.
     expect(callOrder).toEqual(["tx-open", "emit", "stamp", "tx-close"]);
-    expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
-    expect(mockPrisma.reviewRequest.update).toHaveBeenCalledWith({
+    expect(mockDb.$transaction).toHaveBeenCalledTimes(1);
+    expect(mockDb.reviewRequest.update).toHaveBeenCalledWith({
       where: { id: "rr-tx" },
       data: { lastRemindedAt: FIXED_NOW },
     });
@@ -626,7 +734,7 @@ describe("JOB_REVIEW_REMINDERS", () => {
     mockEmitReviewReminderEvent.mockRejectedValueOnce(
       new Error("outbox unavailable")
     );
-    mockPrisma.reviewRequest.findMany.mockResolvedValue([
+    mockDb.reviewRequest.findMany.mockResolvedValue([
       {
         id: "rr-fail",
         projectId: 1,
@@ -653,13 +761,13 @@ describe("JOB_REVIEW_REMINDERS", () => {
     };
 
     // No stamp landed (neither inside tx nor standalone).
-    expect(mockPrisma.reviewRequest.update).not.toHaveBeenCalled();
+    expect(mockDb.reviewRequest.update).not.toHaveBeenCalled();
     expect(result.successCount).toBe(0);
     expect(result.failCount).toBe(1);
   });
 
   it("Test 12: empty-target-list keeps the standalone stamp and does NOT call the webhook emitter", async () => {
-    mockPrisma.reviewRequest.findMany.mockResolvedValue([
+    mockDb.reviewRequest.findMany.mockResolvedValue([
       {
         id: "rr-empty",
         projectId: 1,
@@ -678,8 +786,8 @@ describe("JOB_REVIEW_REMINDERS", () => {
     await runProcessor();
 
     expect(mockEmitReviewReminderEvent).not.toHaveBeenCalled();
-    expect(mockPrisma.$transaction).not.toHaveBeenCalled();
-    expect(mockPrisma.reviewRequest.update).toHaveBeenCalledWith({
+    expect(mockDb.$transaction).not.toHaveBeenCalled();
+    expect(mockDb.reviewRequest.update).toHaveBeenCalledWith({
       where: { id: "rr-empty" },
       data: { lastRemindedAt: FIXED_NOW },
     });

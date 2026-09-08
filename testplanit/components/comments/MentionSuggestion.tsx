@@ -103,7 +103,7 @@ export const MentionSuggestion = forwardRef<
             key={item.id}
             type="button"
             className={cn(
-              "flex w-full items-center gap-2 px-3 py-2 text-left text-sm group",
+              "flex w-full items-center gap-2 px-3 py-2 text-start text-sm group",
               "hover:bg-accent hover:text-accent-foreground",
               index === selectedIndex && "bg-accent text-accent-foreground"
             )}

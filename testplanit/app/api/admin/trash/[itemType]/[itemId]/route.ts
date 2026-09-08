@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { DeleteObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateApiToken } from "~/lib/api-token-auth";
@@ -7,6 +7,8 @@ import {
   withAuditContext,
 } from "~/lib/auditContextWrappers";
 import { captureAuditEvent } from "~/lib/services/auditLog";
+import { syncRunCaseStatusAfterResultRemoval } from "~/lib/services/runCaseStatusSync";
+import { isForeignKeyError, isNotFoundError } from "~/lib/utils/errors";
 import { getServerAuthSession } from "~/server/auth";
 import { db } from "~/server/db";
 
@@ -32,7 +34,11 @@ async function checkAdminAuth(
     userAccess = apiAuth.access;
 
     if (apiAuth.userId) {
-      enrichFromApiAuth({ userId: apiAuth.userId });
+      enrichFromApiAuth({
+        userId: apiAuth.userId,
+        userName: apiAuth.userName,
+        userEmail: apiAuth.userEmail,
+      });
     }
   }
 
@@ -43,7 +49,7 @@ async function checkAdminAuth(
   }
 
   if (!userAccess) {
-    const user = await prisma.user.findUnique({
+    const user = await baseDb.user.findUnique({
       where: { id: userId },
       select: { access: true },
     });
@@ -154,6 +160,7 @@ const itemTypeToModelMap: Record<string, { model: any; modelName: string }> = {
     modelName: "CaseExportTemplate",
   },
   SharedStepGroup: { model: db.sharedStepGroup, modelName: "SharedStepGroup" },
+  DataSet: { model: db.dataSet, modelName: "DataSet" },
   // Ensure all models that can be soft-deleted and purged are in this map with the correct structure.
 };
 
@@ -226,6 +233,7 @@ export const PATCH = withAuditContext(
         "PromptConfig",
         "CaseExportTemplate",
         "SharedStepGroup",
+        "DataSet",
       ];
 
       if (intIdModels.includes(modelMapEntry.modelName)) {
@@ -246,6 +254,27 @@ export const PATCH = withAuditContext(
         data: { isDeleted: false },
       });
 
+      // Restoring a result can make it the newest one for its run-case again,
+      // so re-derive the case's denormalized status. Without this the run keeps
+      // showing the outcome it fell back to when the result was deleted. Same
+      // helper the delete path uses, so both directions agree.
+      //
+      // The purge (DELETE) handler needs no equivalent: it only ever removes
+      // rows that are already soft-deleted, which the status was already
+      // re-derived without.
+      if (modelMapEntry.modelName === "TestRunResults") {
+        const restored = restoredItem as {
+          testRunCaseId?: number;
+          iterationId?: number | null;
+        };
+        if (restored.testRunCaseId != null) {
+          await syncRunCaseStatusAfterResultRemoval(db as any, {
+            testRunCaseId: restored.testRunCaseId,
+            iterationId: restored.iterationId ?? null,
+          });
+        }
+      }
+
       // Audit the restore operation
       await captureAuditEvent({
         action: "UPDATE",
@@ -263,7 +292,7 @@ export const PATCH = withAuditContext(
       return NextResponse.json(restoredItem);
     } catch (error: any) {
       console.error(`Failed to restore ${itemType} with ID ${itemId}:`, error);
-      if (error.code === "P2025") {
+      if (isNotFoundError(error)) {
         return NextResponse.json(
           {
             error: `${modelMapEntry.modelName} with ID ${itemId} not found or already not deleted.`,
@@ -351,6 +380,7 @@ export const DELETE = withAuditContext(
       "PromptConfig",
       "CaseExportTemplate",
       "SharedStepGroup",
+      "DataSet",
     ];
 
     if (intIdModels.includes(modelMapEntry.modelName)) {
@@ -456,13 +486,13 @@ export const DELETE = withAuditContext(
         `Failed to purge ${modelMapEntry.modelName} with ID ${itemId}:`,
         error
       ); // Use modelMapEntry.modelName
-      if (error.code === "P2025") {
+      if (isNotFoundError(error)) {
         return NextResponse.json(
           { error: `${modelMapEntry.modelName} with ID ${itemId} not found.` }, // Use modelMapEntry.modelName
           { status: 404 }
         );
       }
-      if (error.code === "P2003" || error.code === "P2014") {
+      if (isForeignKeyError(error)) {
         return NextResponse.json(
           {
             error: `Failed to purge ${modelMapEntry.modelName} due to existing related data. Please ensure related items are also removed or handle cascading deletes appropriately.`,

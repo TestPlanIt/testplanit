@@ -1,16 +1,17 @@
 import { Job, Worker } from "bullmq";
+import { isEmailServerConfigured } from "../lib/email/emailConfig";
 import {
   sendDigestEmail,
   sendNotificationEmail,
 } from "../lib/email/notificationTemplates";
 import {
   disconnectAllTenantClients,
-  getPrismaClientForJob,
+  getDbClientForJob,
   getTenantConfig,
   isMultiTenantMode,
   MultiTenantJobData,
   validateMultiTenantJobData,
-} from "../lib/multiTenantPrisma";
+} from "../lib/multiTenantDb";
 import { EMAIL_QUEUE_NAME } from "../lib/queues";
 import {
   formatLocaleForUrl,
@@ -44,11 +45,20 @@ const processor = async (job: Job) => {
     `Processing email job ${job.id} of type ${job.name}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`
   );
 
+  // Without an SMTP transport every send is doomed; completing the job as a
+  // no-op beats failing it through the queue's five retry attempts.
+  if (!isEmailServerConfigured()) {
+    console.warn(
+      `Skipping email job ${job.name}: no email server configured (EMAIL_SERVER_* env not fully set)`
+    );
+    return;
+  }
+
   // Validate multi-tenant job data if in multi-tenant mode
   validateMultiTenantJobData(job.data);
 
   // Get the appropriate Prisma client (tenant-specific or default)
-  const prisma = getPrismaClientForJob(job.data);
+  const db = getDbClientForJob(job.data);
 
   switch (job.name) {
     case "send-notification-email":
@@ -56,7 +66,7 @@ const processor = async (job: Job) => {
 
       try {
         // Get notification details with user preferences
-        const notification = await prisma.notification.findUnique({
+        const notification = await db.notification.findUnique({
           where: { id: notificationData.notificationId },
           include: {
             user: {
@@ -114,6 +124,15 @@ const processor = async (job: Job) => {
         } else if (notification.type === "LLM_BUDGET_ALERT") {
           // Same destination as the bell-icon link (`data.link`) — admin LLM page.
           notificationUrl = `${baseUrl}/${urlLocale}${data.link ?? "/admin/llm"}`;
+        } else if (notification.type === "INTEGRATION_AUTH_EXPIRED") {
+          // OAuth re-auth kickoff is an API route — deliberately no locale prefix.
+          if (data.provider && data.integrationId) {
+            notificationUrl = `${baseUrl}/api/integrations/oauth/${String(data.provider).toLowerCase()}/auth?integrationId=${data.integrationId}&returnUrl=${encodeURIComponent("/integrations/auth-complete")}`;
+          }
+        } else if (notification.type === "RUN_READY_TO_COMPLETE") {
+          if (data.projectId && data.testRunId) {
+            notificationUrl = `${baseUrl}/${urlLocale}/projects/runs/${data.projectId}/${data.testRunId}`;
+          }
         } else if (
           notification.type === "REVIEW_REQUESTED" ||
           notification.type === "REVIEW_APPROVED" ||
@@ -122,7 +141,15 @@ const processor = async (job: Job) => {
           notification.type === "REVIEW_CANCELLED" ||
           notification.type === "REVIEW_REMINDER"
         ) {
-          if (data.projectId && data.entityType && data.entityId) {
+          if (
+            typeof data.bulkCount === "number" &&
+            data.bulkCount > 1 &&
+            notification.type === "REVIEW_REQUESTED"
+          ) {
+            // The batch spans many entities; the representative one in the
+            // payload is not a meaningful destination. Send them to the inbox.
+            notificationUrl = `${baseUrl}/${urlLocale}/reviews`;
+          } else if (data.projectId && data.entityType && data.entityId) {
             const entityPath =
               data.entityType === "CASE"
                 ? `repository/${data.projectId}/${data.entityId}`
@@ -344,12 +371,29 @@ const processor = async (job: Job) => {
             REVIEW_CANCELLED: "reviewCancelledEmailMessage",
             REVIEW_REMINDER: "reviewReminderEmailMessage",
           } as const;
+          // A bulk review request covers many entities and potentially
+          // several different gates, so the single-entity copy ("your review
+          // of test case X") and the transition line are both wrong for it.
+          // Swap in count-based copy; count === 1 falls through to the
+          // single-entity wording, which is accurate for a batch of one.
+          const reviewBulkCount =
+            notification.type === "REVIEW_REQUESTED" &&
+            typeof data.bulkCount === "number" &&
+            data.bulkCount > 1
+              ? data.bulkCount
+              : null;
           const entityLabelKey =
             data.entityType === "CASE"
-              ? "reviewEntityLabelCase"
+              ? reviewBulkCount !== null
+                ? "reviewBulkEntityLabelCase"
+                : "reviewEntityLabelCase"
               : data.entityType === "RUN"
-                ? "reviewEntityLabelRun"
-                : "reviewEntityLabelSession";
+                ? reviewBulkCount !== null
+                  ? "reviewBulkEntityLabelRun"
+                  : "reviewEntityLabelRun"
+                : reviewBulkCount !== null
+                  ? "reviewBulkEntityLabelSession"
+                  : "reviewEntityLabelSession";
           const entityLabel = await getServerTranslation(
             userLocale,
             `components.notifications.content.${entityLabelKey}`
@@ -360,7 +404,9 @@ const processor = async (job: Job) => {
           );
           translatedMessage = await getServerTranslation(
             userLocale,
-            `components.notifications.content.${emailMessageKeyByType[notification.type as keyof typeof emailMessageKeyByType]}`,
+            reviewBulkCount !== null
+              ? "components.notifications.content.reviewBulkRequestedEmailMessage"
+              : `components.notifications.content.${emailMessageKeyByType[notification.type as keyof typeof emailMessageKeyByType]}`,
             {
               actorName:
                 (notification.type === "REVIEW_REQUESTED"
@@ -374,9 +420,14 @@ const processor = async (job: Job) => {
               entityName: data.entityName ?? "",
               projectName: data.projectName ?? "",
               hoursPending: data.hoursPending ?? 0,
+              count: reviewBulkCount ?? 0,
             }
           );
-          if (data.fromStateName && data.toStateName) {
+          if (
+            reviewBulkCount === null &&
+            data.fromStateName &&
+            data.toStateName
+          ) {
             const transitionLine = await getServerTranslation(
               userLocale,
               "components.notifications.content.reviewTransition",
@@ -402,6 +453,30 @@ const processor = async (job: Job) => {
             );
             translatedMessage += `\n\n${commentLine}`;
           }
+        } else if (notification.type === "INTEGRATION_AUTH_EXPIRED") {
+          translatedTitle = await getServerTranslation(
+            userLocale,
+            "components.notifications.content.integrationAuthExpiredTitle"
+          );
+          translatedMessage = await getServerTranslation(
+            userLocale,
+            "components.notifications.content.integrationAuthExpiredMessage",
+            { integrationName: data.integrationName ?? "" }
+          );
+        } else if (notification.type === "RUN_READY_TO_COMPLETE") {
+          translatedTitle = await getServerTranslation(
+            userLocale,
+            "components.notifications.content.runReadyToCompleteTitle"
+          );
+          translatedMessage = await getServerTranslation(
+            userLocale,
+            "components.notifications.content.runReadyToCompleteEmailMessage",
+            {
+              caseCount: Number(data.caseCount ?? 0),
+              testRunName: data.testRunName ?? "",
+              projectName: data.projectName ?? "",
+            }
+          );
         }
 
         // Get email template translations
@@ -429,6 +504,11 @@ const processor = async (job: Job) => {
             "components.notifications.content.milestoneNotificationContinue"
           );
           additionalInfo = `${reasonMessage} ${continueMessage}`;
+        } else if (notification.type === "RUN_READY_TO_COMPLETE") {
+          additionalInfo = await getServerTranslation(
+            userLocale,
+            "components.notifications.content.runReadyToCompleteReason"
+          );
         }
 
         await sendNotificationEmail({
@@ -457,7 +537,7 @@ const processor = async (job: Job) => {
 
       try {
         // Get user details with preferences
-        const user = await prisma.user.findUnique({
+        const user = await db.user.findUnique({
           where: { id: digestData.userId },
           include: {
             userPreferences: true,
@@ -469,12 +549,22 @@ const processor = async (job: Job) => {
           return;
         }
 
-        // Fetch full notification data to build URLs
-        const fullNotifications = await prisma.notification.findMany({
+        // Fetch full notification data to build URLs. Re-check isRead/isDeleted
+        // here because the user may have read or dismissed notifications
+        // between the digest being queued and this job running.
+        const fullNotifications = await db.notification.findMany({
           where: {
             id: { in: digestData.notifications.map((n) => n.id) },
+            userId: digestData.userId,
+            isRead: false,
+            isDeleted: false,
           },
+          orderBy: { createdAt: "desc" },
         });
+
+        if (fullNotifications.length === 0) {
+          return;
+        }
 
         // Build URLs and translate content for each notification
         // In multi-tenant mode, use the tenant's baseUrl from config
@@ -532,6 +622,15 @@ const processor = async (job: Job) => {
               if (data.projectId && data.jobId && !data.error) {
                 url = `${baseUrl}/${urlLocale}/projects/repository/${data.projectId}?urlJobId=${data.jobId}`;
               }
+            } else if (notification.type === "INTEGRATION_AUTH_EXPIRED") {
+              // OAuth re-auth kickoff is an API route — no locale prefix.
+              if (data.provider && data.integrationId) {
+                url = `${baseUrl}/api/integrations/oauth/${String(data.provider).toLowerCase()}/auth?integrationId=${data.integrationId}&returnUrl=${encodeURIComponent("/integrations/auth-complete")}`;
+              }
+            } else if (notification.type === "RUN_READY_TO_COMPLETE") {
+              if (data.projectId && data.testRunId) {
+                url = `${baseUrl}/${urlLocale}/projects/runs/${data.projectId}/${data.testRunId}`;
+              }
             } else if (
               notification.type === "REVIEW_REQUESTED" ||
               notification.type === "REVIEW_APPROVED" ||
@@ -540,7 +639,14 @@ const processor = async (job: Job) => {
               notification.type === "REVIEW_CANCELLED" ||
               notification.type === "REVIEW_REMINDER"
             ) {
-              if (data.projectId && data.entityType && data.entityId) {
+              if (
+                typeof data.bulkCount === "number" &&
+                data.bulkCount > 1 &&
+                notification.type === "REVIEW_REQUESTED"
+              ) {
+                // See the immediate-send branch — a batch has no single entity.
+                url = `${baseUrl}/${urlLocale}/reviews`;
+              } else if (data.projectId && data.entityType && data.entityId) {
                 const entityPath =
                   data.entityType === "CASE"
                     ? `repository/${data.projectId}/${data.entityId}`
@@ -654,12 +760,25 @@ const processor = async (job: Job) => {
                 REVIEW_CANCELLED: "reviewCancelledEmailMessage",
                 REVIEW_REMINDER: "reviewReminderEmailMessage",
               } as const;
+              // Bulk-request copy — see the immediate-send branch above.
+              const reviewBulkCount =
+                notification.type === "REVIEW_REQUESTED" &&
+                typeof data.bulkCount === "number" &&
+                data.bulkCount > 1
+                  ? data.bulkCount
+                  : null;
               const entityLabelKey =
                 data.entityType === "CASE"
-                  ? "reviewEntityLabelCase"
+                  ? reviewBulkCount !== null
+                    ? "reviewBulkEntityLabelCase"
+                    : "reviewEntityLabelCase"
                   : data.entityType === "RUN"
-                    ? "reviewEntityLabelRun"
-                    : "reviewEntityLabelSession";
+                    ? reviewBulkCount !== null
+                      ? "reviewBulkEntityLabelRun"
+                      : "reviewEntityLabelRun"
+                    : reviewBulkCount !== null
+                      ? "reviewBulkEntityLabelSession"
+                      : "reviewEntityLabelSession";
               const entityLabel = await getServerTranslation(
                 userLocale,
                 `components.notifications.content.${entityLabelKey}`
@@ -670,7 +789,9 @@ const processor = async (job: Job) => {
               );
               translatedMessage = await getServerTranslation(
                 userLocale,
-                `components.notifications.content.${emailMessageKeyByType[notification.type as keyof typeof emailMessageKeyByType]}`,
+                reviewBulkCount !== null
+                  ? "components.notifications.content.reviewBulkRequestedEmailMessage"
+                  : `components.notifications.content.${emailMessageKeyByType[notification.type as keyof typeof emailMessageKeyByType]}`,
                 {
                   actorName:
                     (notification.type === "REVIEW_REQUESTED"
@@ -684,6 +805,31 @@ const processor = async (job: Job) => {
                   entityName: data.entityName ?? "",
                   projectName: data.projectName ?? "",
                   hoursPending: data.hoursPending ?? 0,
+                  count: reviewBulkCount ?? 0,
+                }
+              );
+            } else if (notification.type === "INTEGRATION_AUTH_EXPIRED") {
+              translatedTitle = await getServerTranslation(
+                userLocale,
+                "components.notifications.content.integrationAuthExpiredTitle"
+              );
+              translatedMessage = await getServerTranslation(
+                userLocale,
+                "components.notifications.content.integrationAuthExpiredMessage",
+                { integrationName: data.integrationName ?? "" }
+              );
+            } else if (notification.type === "RUN_READY_TO_COMPLETE") {
+              translatedTitle = await getServerTranslation(
+                userLocale,
+                "components.notifications.content.runReadyToCompleteTitle"
+              );
+              translatedMessage = await getServerTranslation(
+                userLocale,
+                "components.notifications.content.runReadyToCompleteEmailMessage",
+                {
+                  caseCount: Number(data.caseCount ?? 0),
+                  testRunName: data.testRunName ?? "",
+                  projectName: data.projectName ?? "",
                 }
               );
             }
@@ -729,15 +875,15 @@ const processor = async (job: Job) => {
         });
 
         // Mark notifications as read after sending digest
-        await prisma.notification.updateMany({
+        await db.notification.updateMany({
           where: {
-            id: { in: digestData.notifications.map((n) => n.id) },
+            id: { in: fullNotifications.map((n: any) => n.id) },
           },
           data: { isRead: true },
         });
 
         console.log(
-          `Sent digest email to ${user.email} with ${digestData.notifications.length} notifications`
+          `Sent digest email to ${user.email} with ${fullNotifications.length} notifications`
         );
       } catch (error) {
         console.error(`Failed to send digest email:`, error);

@@ -157,7 +157,7 @@ export function ChangePasswordModal({
               </div>
             )}
             {hasPassword && (
-              <div className="grid grid-cols-4 items-center gap-4 text-right">
+              <div className="grid grid-cols-4 items-center gap-4 text-end">
                 <Label htmlFor="currentPassword" className="flex justify-end">
                   {t("currentPasswordLabel")}
                   <sup>
@@ -174,7 +174,7 @@ export function ChangePasswordModal({
                 />
               </div>
             )}
-            <div className="grid grid-cols-4 items-center gap-4 text-right">
+            <div className="grid grid-cols-4 items-center gap-4 text-end">
               <Label htmlFor="newPassword" className="flex justify-end">
                 {t("newPasswordLabel")}
                 <sup>
@@ -195,7 +195,7 @@ export function ChangePasswordModal({
                 />
               </div>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4 text-right">
+            <div className="grid grid-cols-4 items-center gap-4 text-end">
               <Label htmlFor="confirmPassword" className="flex justify-end">
                 {t("confirmPasswordLabel")}{" "}
                 <sup>

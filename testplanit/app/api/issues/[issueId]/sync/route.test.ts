@@ -18,8 +18,8 @@ vi.mock("~/server/auth", () => ({
   authOptions: {},
 }));
 
-vi.mock("@/lib/prisma", () => ({
-  prisma: {
+vi.mock("@/lib/db", () => ({
+  baseDb: {
     issue: {
       findUnique: mockFindUnique,
     },

@@ -7,7 +7,7 @@ import { getEnhancedDb } from "~/lib/auth/utils";
  *
  * The schema's `@@deny('create, update, delete', true)` policy blocks ALL
  * client-side writes through ZenStack RPC. Server actions perform writes via
- * raw `prisma` (bypassing the policy) and use this helper to verify the
+ * raw `db` (bypassing the policy) and use this helper to verify the
  * caller has the same authority that the prior `@@allow('create,update,delete', ...)`
  * clause encoded — namely:
  *

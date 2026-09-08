@@ -67,12 +67,12 @@ services:
     env_file:
       - .env.development # Needs DB_URL and other env vars for prisma/zenstack
     working_dir: /app/testplanit # Set working directory for commands within the container
-    # Push schema and seed database (no migrations)
+    # Apply migrations and seed database
     command:
       [
         "sh",
         "-c",
-        "echo 'Waiting for DB...' && /usr/local/bin/wait-for-postgres.sh postgres 5432 -- echo 'DB ready, pushing schema...' && pnpm prisma db push --accept-data-loss && echo 'Schema pushed, seeding...' && pnpm tsx prisma/seed.ts && echo 'DB initialized and seeded.'",
+        "echo 'Waiting for DB...' && /usr/local/bin/wait-for-postgres.sh postgres 5432 -- echo 'DB ready, applying migrations...' && npx zenstack migrate deploy --schema schema.zmodel --no-version-check && echo 'Migrations applied, seeding...' && pnpm tsx db/seed.ts && echo 'DB initialized and seeded.'",
       ]
     networks:
       - testplanit-net
@@ -87,6 +87,12 @@ services:
       POSTGRES_USER: user # Must match the user in DATABASE_URL
       POSTGRES_PASSWORD: password # Must match the password in DATABASE_URL
       POSTGRES_DB: testplanit_dev # Creates this DB initially. Prod app uses testplanit_prod
+      # ICU as the default collation provider: the alpine image's musl libc
+      # cannot collate locales, so without this every ORDER BY on text sorts in
+      # byte order (all capitals before all lowercase). Only applies when the
+      # data volume is first initialized; existing databases are covered by the
+      # app's migrations, which re-collate the sorted display-name columns.
+      POSTGRES_INITDB_ARGS: "--locale-provider=icu --icu-locale=und"
       # Postgres 18 defaults PGDATA to a version-specific subdirectory
       # (/var/lib/postgresql/18/docker) and expects the volume mounted at
       # /var/lib/postgresql instead of .../data. Pin the old flat layout so the

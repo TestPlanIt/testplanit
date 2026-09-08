@@ -1,5 +1,7 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { DateFormatter } from "@/components/DateFormatter";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import {
@@ -45,7 +47,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import type { Attachments, SessionResults, User } from "@prisma/client";
+import type { Attachments, SessionResults, User } from "~/zenstack/models";
 import {
   ChevronRight,
   Clock,
@@ -53,34 +55,25 @@ import {
   Edit,
   FileText,
   LinkIcon,
-  Trash2,
+  Trash,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import parseDuration from "parse-duration";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod/v4";
 import { emptyEditorContent, MAX_DURATION } from "~/app/constants";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import {
-  useCreateAttachments,
-  useCreateResultFieldValues,
-  useFindFirstProjects,
-  useFindManySessionResults,
-  useFindManyStatus,
-  useFindManyTemplateResultAssignment,
-  useUpdateAttachments,
-  useUpdateResultFieldValues,
-  useUpdateSessionResults,
-} from "~/lib/hooks";
 import { usePathname, useRouter } from "~/lib/navigation";
 import { getBackgroundStyle } from "~/utils/colorUtils";
+import { statusSurfaceVars } from "~/utils/contrastingTextColor";
 import { toHumanReadable } from "~/utils/duration";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
+import { editorMinHeightStyle } from "~/utils/editorHeight";
 import { AttachmentsCarousel } from "./AttachmentsCarousel";
 import { AttachmentChanges, AttachmentsDisplay } from "./AttachmentsDisplay";
 import { SimpleUnifiedIssueManager } from "./issues/UnifiedIssueManager";
@@ -288,7 +281,9 @@ export function SessionResultsList({
     restrictedFieldPermissions?.canAddEdit ?? false;
 
   // Load statuses for the session result edit form
-  const { data: statuses, isLoading: isLoadingStatuses } = useFindManyStatus({
+  const { data: statuses, isLoading: isLoadingStatuses } = useClientQueries(
+    schema
+  ).status.useFindMany({
     where: {
       isDeleted: false,
       isEnabled: true,
@@ -318,25 +313,28 @@ export function SessionResultsList({
   });
 
   // Fetch project data for issueConfigId
-  const { data: projectData, isLoading: isLoadingProject } =
-    useFindFirstProjects(
-      {
-        where: { id: Number(projectId) },
-        select: {
-          projectIntegrations: {
-            where: { isActive: true },
-            include: { integration: true },
-          },
+  const { data: projectData, isLoading: isLoadingProject } = useClientQueries(
+    schema
+  ).projects.useFindFirst(
+    {
+      where: { id: Number(projectId) },
+      select: {
+        projectIntegrations: {
+          where: { isActive: true },
+          include: { integration: true },
         },
       },
-      {
-        enabled: !isNaN(Number(projectId)),
-      }
-    );
+    },
+    {
+      enabled: !isNaN(Number(projectId)),
+    }
+  );
 
   // Add this line to get the createAttachments hook
-  const { mutateAsync: createAttachments } = useCreateAttachments();
-  const { mutateAsync: updateAttachments } = useUpdateAttachments();
+  const { mutateAsync: createAttachments } =
+    useClientQueries(schema).attachments.useCreate();
+  const { mutateAsync: updateAttachments } =
+    useClientQueries(schema).attachments.useUpdate();
 
   // Initialize the form with dynamic schema
   const form = useForm<FieldFormValues>({
@@ -352,7 +350,7 @@ export function SessionResultsList({
     data: sessionResults,
     isLoading,
     refetch,
-  } = useFindManySessionResults({
+  } = useClientQueries(schema).sessionResults.useFindMany({
     where: {
       sessionId: sessionId,
       isDeleted: false,
@@ -429,18 +427,21 @@ export function SessionResultsList({
     },
   });
 
-  const { mutateAsync: updateSessionResult } = useUpdateSessionResults();
+  const { mutateAsync: updateSessionResult } =
+    useClientQueries(schema).sessionResults.useUpdate();
 
   // Add hooks for field values operations
-  const { mutateAsync: createResultFieldValue } = useCreateResultFieldValues();
-  const { mutateAsync: updateResultFieldValue } = useUpdateResultFieldValues();
+  const { mutateAsync: createResultFieldValue } =
+    useClientQueries(schema).resultFieldValues.useCreate();
+  const { mutateAsync: updateResultFieldValue } =
+    useClientQueries(schema).resultFieldValues.useUpdate();
 
   // Fetch template fields when the session result is being edited
   const [editTemplateFields, setEditTemplateFields] = useState<any[]>([]);
 
   // Add template field fetching when opening edit dialog
   const { data: templateResultFields, isLoading: isLoadingTemplateFields } =
-    useFindManyTemplateResultAssignment({
+    useClientQueries(schema).templateResultAssignment.useFindMany({
       where: {
         templateId:
           sessionResults && sessionResults.length > 0
@@ -972,9 +973,27 @@ export function SessionResultsList({
   }, [refreshResults, refetch]);
 
   // Use an effect to handle hash scrolling that works with Next.js
+  const scrolledHashRef = useRef<string | null>(null);
   useEffect(() => {
     // Function to scroll to result based on hash
     const scrollToResult = () => {
+      if (typeof window === "undefined") return;
+
+      const hash = window.location.hash;
+      if (!hash || !hash.startsWith("#result-")) {
+        scrolledHashRef.current = null;
+        return;
+      }
+
+      // Scroll once per hash so data refetches don't yank the viewport back
+      if (scrolledHashRef.current === hash) return;
+
+      const resultId = hash.replace("#result-", "");
+      const resultElement = document.getElementById(`result-${resultId}`);
+      if (!resultElement) return;
+
+      scrolledHashRef.current = hash;
+
       // Remove any existing highlights
       document.querySelectorAll(".result-highlight").forEach((el) => {
         el.classList.remove(
@@ -985,41 +1004,30 @@ export function SessionResultsList({
         );
       });
 
-      // Check if there's a hash in the URL
-      if (typeof window !== "undefined") {
-        const hash = window.location.hash;
-        if (hash && hash.startsWith("#result-")) {
-          const resultId = hash.replace("#result-", "");
-          const resultElement = document.getElementById(`result-${resultId}`);
+      // Add highlight and scroll into view
+      resultElement.classList.add(
+        "result-highlight",
+        "ring-2",
+        "ring-primary",
+        "ring-opacity-70"
+      );
 
-          if (resultElement) {
-            // Add highlight and scroll into view
-            resultElement.classList.add(
-              "result-highlight",
-              "ring-2",
-              "ring-primary",
-              "ring-opacity-70"
-            );
+      // Smooth scroll to the element
+      setTimeout(() => {
+        resultElement.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
 
-            // Smooth scroll to the element
-            setTimeout(() => {
-              resultElement.scrollIntoView({
-                behavior: "smooth",
-                block: "start",
-              });
-
-              // Remove highlight after 3 seconds
-              setTimeout(() => {
-                resultElement.classList.remove(
-                  "ring-2",
-                  "ring-primary",
-                  "ring-opacity-70"
-                );
-              }, 3000);
-            }, 100);
-          }
-        }
-      }
+        // Remove highlight after 3 seconds
+        setTimeout(() => {
+          resultElement.classList.remove(
+            "ring-2",
+            "ring-primary",
+            "ring-opacity-70"
+          );
+        }, 3000);
+      }, 100);
     };
 
     // Run on initial load and when results are loaded
@@ -1192,9 +1200,7 @@ export function SessionResultsList({
         const isRequired = field.resultField.isRequired;
         // Get initialHeight
         const initialHeight = field.resultField.initialHeight;
-        const editorClassName = `min-h-[100px] border rounded-md w-full ${
-          initialHeight ? `min-h-[${initialHeight}px]` : ""
-        }`;
+        const editorClassName = "border rounded-md w-full";
 
         return (
           <FormField
@@ -1215,6 +1221,7 @@ export function SessionResultsList({
                     onUpdate={updateFieldValue}
                     projectId={projectId.toString()}
                     className={editorClassName}
+                    style={editorMinHeightStyle(initialHeight)}
                     placeholder={`Enter ${displayName.toLowerCase()} here...`}
                     readOnly={isFieldDisabled}
                   />
@@ -1398,7 +1405,9 @@ export function SessionResultsList({
             <CardHeader className="p-0">
               <div
                 className="flex justify-between items-center p-2 rounded-t-md text-background"
+                data-status-surface
                 style={{
+                  ...statusSurfaceVars(getColorValue(result.status.color)),
                   backgroundColor: getColorValue(result.status.color),
                   color: "#fff",
                 }}
@@ -1442,7 +1451,7 @@ export function SessionResultsList({
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="text-md pr-2">
+                  <div className="text-md pe-2">
                     <DateFormatter
                       date={result.createdAt}
                       formatString={
@@ -1481,7 +1490,7 @@ export function SessionResultsList({
                         onClick={() => handleDeleteClick(result.id)}
                         title={tCommon("actions.delete")}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash className="h-4 w-4" />
                       </Button>
                     )}
                   </span>
@@ -1611,7 +1620,7 @@ export function SessionResultsList({
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmDelete}
-              className="bg-destructive hover:bg-destructive/90"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {tCommon("actions.delete")}
             </AlertDialogAction>
@@ -1727,7 +1736,7 @@ export function SessionResultsList({
                             >
                               <div className="flex items-center">
                                 <div
-                                  className="w-3 h-3 rounded-full mr-2"
+                                  className="w-3 h-3 rounded-full me-2"
                                   style={{
                                     backgroundColor: getColorValue(
                                       status.color

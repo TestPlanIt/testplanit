@@ -1,10 +1,8 @@
 "use client";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import {
-  useCreateMilestoneTypes,
-  useUpdateManyMilestoneTypes,
-} from "~/lib/hooks";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useForm } from "react-hook-form";
@@ -33,6 +31,7 @@ import {
 } from "@/components/ui/dialog";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Switch } from "@/components/ui/switch";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 interface AddMilestoneTypeProps {
   open: boolean;
@@ -53,9 +52,8 @@ export function AddMilestoneType({ open, onClose }: AddMilestoneTypeProps) {
     isDefault: z.boolean(),
   });
 
-  const { mutateAsync: createMilestoneType } = useCreateMilestoneTypes();
-  const { mutateAsync: updateManyMilestoneTypes } =
-    useUpdateManyMilestoneTypes();
+  const { mutateAsync: createMilestoneType } =
+    useClientQueries(schema).milestoneTypes.useCreate();
 
   const handleIconSelect = (iconId: number) => {
     setSelectedIconId(iconId);
@@ -76,14 +74,8 @@ export function AddMilestoneType({ open, onClose }: AddMilestoneTypeProps) {
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     setIsSubmitting(true);
     try {
-      if (data.isDefault) {
-        await updateManyMilestoneTypes({
-          where: { isDefault: true },
-          data: {
-            isDefault: false,
-          },
-        });
-      }
+      // A new default clears the previous one atomically via the
+      // tpl_single_default_milestonetypes DB trigger — no app-side clear needed.
       await createMilestoneType({
         data: {
           name: data.name,
@@ -94,7 +86,7 @@ export function AddMilestoneType({ open, onClose }: AddMilestoneTypeProps) {
       onClose();
       setIsSubmitting(false);
     } catch (err: any) {
-      if (err.info?.prisma && err.info?.code === "P2002") {
+      if (isUniqueConstraintError(err)) {
         form.setError("name", {
           type: "custom",
           message: t("errors.nameExists"),

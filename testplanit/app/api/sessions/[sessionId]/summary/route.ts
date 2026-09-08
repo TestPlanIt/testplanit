@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
 
 export type SessionSummaryData = {
@@ -8,6 +8,14 @@ export type SessionSummaryData = {
   estimate: number | null;
   totalElapsed: number;
   commentsCount: number;
+  /** Earliest recorded result (ISO string), or null on a session nobody has
+   *  logged a result against. The session's start date is derived from
+   *  execution, not from when the session was created. */
+  firstResultAt: string | null;
+  /** Latest recorded result (ISO string). Callers show it as the session's
+   *  end date only once the session is completed — on an open session the
+   *  newest result is just the last thing that happened, not an ending. */
+  lastResultAt: string | null;
   results: Array<{
     id: number;
     createdAt: Date;
@@ -72,7 +80,7 @@ export async function GET(
     }
 
     // Get session details
-    const sessionData = await prisma.sessions.findUnique({
+    const sessionData = await baseDb.sessions.findUnique({
       where: { id: sessionId },
       select: {
         id: true,
@@ -106,7 +114,7 @@ export async function GET(
     }
 
     // Get session results with optimized query
-    const results = await prisma.$queryRaw<
+    const results = await baseDb.$queryRaw<
       Array<{
         id: number;
         createdAt: Date;
@@ -137,7 +145,7 @@ export async function GET(
     const resultIssuesMap = new Map<number, number[]>();
     if (results.length > 0) {
       const resultIds = results.map((r) => r.id);
-      const issueLinks = await prisma.$queryRaw<
+      const issueLinks = await baseDb.$queryRaw<
         Array<{
           sessionResultId: number;
           issueId: number;
@@ -165,7 +173,7 @@ export async function GET(
     // Fetch all unique issues from results
     const resultIssues =
       allResultIssueIds.size > 0
-        ? await prisma.issue.findMany({
+        ? await baseDb.issue.findMany({
             where: {
               id: { in: Array.from(allResultIssueIds) },
             },
@@ -195,7 +203,7 @@ export async function GET(
     const totalElapsed = results.reduce((sum, r) => sum + (r.elapsed || 0), 0);
 
     // Get comments count for this session
-    const commentsCountResult = await prisma.$queryRaw<
+    const commentsCountResult = await baseDb.$queryRaw<
       Array<{ count: bigint }>
     >`
       SELECT COUNT(*) as count
@@ -211,11 +219,16 @@ export async function GET(
       issueIds: resultIssuesMap.get(result.id) || [],
     }));
 
+    // `results` is ordered by createdAt ASC above, so the ends of the array
+    // are the session's execution window.
     const response: SessionSummaryData = {
       sessionId: sessionData.id,
       estimate: sessionData.estimate,
       totalElapsed,
       commentsCount,
+      firstResultAt: results[0]?.createdAt.toISOString() ?? null,
+      lastResultAt:
+        results[results.length - 1]?.createdAt.toISOString() ?? null,
       results: resultsWithIssues,
       sessionIssues: sessionData.issues,
       resultIssues,

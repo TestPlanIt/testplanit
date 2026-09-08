@@ -10,20 +10,54 @@ vi.mock("~/server/auth", () => ({
   authOptions: {},
 }));
 
-vi.mock("@/lib/prisma", () => ({
-  prisma: {
+vi.mock("@/lib/db", () => ({
+  baseDb: {
     status: { findMany: vi.fn() },
+    issue: { findMany: vi.fn(), count: vi.fn() },
   },
 }));
 
-vi.mock("~/utils/drillDownQueryBuilders", () => ({
-  getModelForMetric: vi.fn(),
-  getQueryBuilderForMetric: vi.fn(),
+vi.mock("@/lib/projectIssueIds", () => ({
+  getProjectRelevantIssueIds: vi.fn(),
 }));
 
-import { prisma } from "@/lib/prisma";
+vi.mock("~/lib/services/milestoneMemberCoverage", () => ({
+  getMemberCoverage: vi.fn(),
+}));
+
+vi.mock("~/lib/services/effectiveCaseStatus", () => ({
+  getEffectiveRunCaseStatuses: vi.fn(),
+}));
+
+vi.mock("~/lib/authContext", () => ({
+  resolveViewerProjectScope: vi.fn(),
+}));
+
+vi.mock("~/utils/drillDownQueryBuilders", async (importOriginal) => {
+  const actual = await importOriginal<any>();
+  return {
+    DRILL_DOWN_DIMENSIONS_BY_REPORT: actual.DRILL_DOWN_DIMENSIONS_BY_REPORT,
+    getModelForMetric: vi.fn(),
+    getQueryBuilderForMetric: vi.fn(),
+    buildTestExecutionQuery: vi.fn(),
+    buildJunitResultQuery: vi.fn(),
+  };
+});
+
+vi.mock("~/lib/auth/utils", () => ({
+  getEnhancedDb: vi.fn(),
+}));
+
+import { baseDb } from "@/lib/db";
+import { getProjectRelevantIssueIds } from "@/lib/projectIssueIds";
+import { getEnhancedDb } from "~/lib/auth/utils";
+import { resolveViewerProjectScope } from "~/lib/authContext";
+import { getEffectiveRunCaseStatuses } from "~/lib/services/effectiveCaseStatus";
+import { getMemberCoverage } from "~/lib/services/milestoneMemberCoverage";
 import { getServerSession } from "next-auth";
 import {
+  buildJunitResultQuery,
+  buildTestExecutionQuery,
   getModelForMetric,
   getQueryBuilderForMetric,
 } from "~/utils/drillDownQueryBuilders";
@@ -73,11 +107,28 @@ describe("POST /api/report-builder/drill-down", () => {
       where: { testRun: { projectId: 1 } },
       include: { testRunCase: true },
     }));
+    // Dual-source path defaults: manual query realistic, JUnit side skipped
+    // so single-source expectations keep holding.
+    (buildTestExecutionQuery as any).mockReturnValue({
+      where: { testRun: { projectId: 1 } },
+      include: { testRunCase: true },
+    });
+    (buildJunitResultQuery as any).mockReturnValue(null);
+    (baseDb as any).jUnitTestResult = {
+      findMany: vi.fn().mockResolvedValue([]),
+      count: vi.fn().mockResolvedValue(0),
+      groupBy: vi.fn().mockResolvedValue([]),
+    };
 
-    // Inject mockModel by mocking prisma as dynamic
-    (prisma as any).testRunResults = mockModel;
+    // Inject mockModel by mocking baseDb as dynamic
+    (baseDb as any).testRunResults = mockModel;
 
-    (prisma.status.findMany as any).mockResolvedValue([]);
+    (baseDb.status.findMany as any).mockResolvedValue([]);
+
+    // Default: the caller can read the project (membership gate passes)
+    (getEnhancedDb as any).mockResolvedValue({
+      projects: { findFirst: vi.fn().mockResolvedValue({ id: 1 }) },
+    });
   });
 
   describe("Authentication", () => {
@@ -127,6 +178,21 @@ describe("POST /api/report-builder/drill-down", () => {
 
       expect(response.status).toBe(400);
       expect(data.error).toContain("drill-down context");
+    });
+
+    it("returns 403 when the user cannot read the requested project", async () => {
+      (getServerSession as any).mockResolvedValue(mockSession);
+      (getEnhancedDb as any).mockResolvedValue({
+        projects: { findFirst: vi.fn().mockResolvedValue(null) },
+      });
+
+      const response = await POST(
+        createRequest({ context: validDrillDownContext })
+      );
+      const data = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(data.error).toBe("Forbidden");
     });
 
     it("returns 403 when cross-project mode and user is not admin", async () => {
@@ -181,7 +247,7 @@ describe("POST /api/report-builder/drill-down", () => {
       (getServerSession as any).mockResolvedValue(mockSession);
 
       // Mock: 10 items returned, total is 100
-      const mockModel = (prisma as any).testRunResults;
+      const mockModel = (baseDb as any).testRunResults;
       mockModel.findMany.mockResolvedValue(
         Array.from({ length: 10 }, (_, i) => ({ id: i + 1, testRunCase: null }))
       );
@@ -231,7 +297,9 @@ describe("POST /api/report-builder/drill-down", () => {
       (getModelForMetric as any).mockReturnValue("nonExistentModel");
 
       const response = await POST(
-        createRequest({ context: validDrillDownContext })
+        createRequest({
+          context: { ...validDrillDownContext, metricId: "testRuns" },
+        })
       );
       const data = await response.json();
 
@@ -239,18 +307,45 @@ describe("POST /api/report-builder/drill-down", () => {
       expect(data.error).toContain("Invalid model");
     });
 
-    it("includes passRate aggregates when metricId is passRate", async () => {
+    it("includes dual-source passRate aggregates judged by isSuccess", async () => {
       (getServerSession as any).mockResolvedValue(mockSession);
+      (buildTestExecutionQuery as any).mockReturnValue({
+        where: { testRun: { projectId: 1 } },
+        include: {},
+      });
+      (buildJunitResultQuery as any).mockReturnValue({
+        where: { statusId: { not: null } },
+        include: {},
+      });
 
-      const mockModel = (prisma as any).testRunResults;
-      mockModel.groupBy = vi.fn().mockResolvedValue([
-        { statusId: 1, _count: { id: 3 } },
-        { statusId: 2, _count: { id: 1 } },
-      ]);
-
-      (prisma.status.findMany as any).mockResolvedValue([
-        { id: 1, name: "Passed", color: { value: "#22c55e" } },
-        { id: 2, name: "Failed", color: { value: "#ef4444" } },
+      (baseDb as any).testRunResults = {
+        findMany: vi.fn().mockResolvedValue([]),
+        count: vi.fn().mockResolvedValue(4),
+        groupBy: vi.fn().mockResolvedValue([
+          { statusId: 1, _count: { id: 3 } },
+          { statusId: 2, _count: { id: 1 } },
+        ]),
+      };
+      (baseDb as any).jUnitTestResult = {
+        findMany: vi.fn().mockResolvedValue([]),
+        count: vi.fn().mockResolvedValue(6),
+        groupBy: vi
+          .fn()
+          .mockResolvedValue([{ statusId: 1, _count: { id: 6 } }]),
+      };
+      (baseDb.status.findMany as any).mockResolvedValue([
+        {
+          id: 1,
+          name: "Passed",
+          isSuccess: true,
+          color: { value: "#22c55e" },
+        },
+        {
+          id: 2,
+          name: "Failed",
+          isSuccess: false,
+          color: { value: "#ef4444" },
+        },
       ]);
 
       const response = await POST(
@@ -259,15 +354,413 @@ describe("POST /api/report-builder/drill-down", () => {
             metricId: "passRate",
             reportType: "test-execution",
             projectId: 1,
+            dimensions: {},
           },
         })
       );
       const data = await response.json();
 
       expect(response.status).toBe(200);
-      expect(data).toHaveProperty("aggregates");
-      expect(data.aggregates).toHaveProperty("passRate");
-      expect(data.aggregates).toHaveProperty("statusCounts");
+      // 3 manual passed + 6 junit passed of 10 total (isSuccess-based)
+      expect(data.aggregates.passRate).toBe(90);
+      expect(data.aggregates.statusCounts).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ statusId: 1, count: 9 }),
+          expect.objectContaining({ statusId: 2, count: 1 }),
+        ])
+      );
+      expect(data.total).toBe(10);
+    });
+  });
+
+  describe("Elapsed metric drill-down (manual + JUnit)", () => {
+    const elapsedContext = {
+      metricId: "avgElapsedTime",
+      reportType: "test-execution",
+      projectId: 1,
+      dimensions: {},
+    };
+
+    const manualRecord = {
+      id: 10,
+      elapsed: 30,
+      executedAt: "2024-01-01T10:00:00Z",
+      testRunCase: { repositoryCase: { name: "Manual Case" } },
+    };
+
+    const junitRecord = {
+      id: 10, // Same numeric id as the manual record on purpose
+      time: 58.5,
+      executedAt: "2024-01-01T11:00:00Z",
+      createdById: "user-2",
+      createdBy: { id: "user-2", name: "Bot" },
+      statusId: 2,
+      status: { id: 2, name: "Passed", color: { value: "#22c55e" } },
+      repositoryCase: { id: 42, name: "Automated Case", hasParameters: false },
+      testSuite: { testRun: { id: 200, name: "CI Run", projectId: 1 } },
+    };
+
+    beforeEach(() => {
+      (getServerSession as any).mockResolvedValue(mockSession);
+      (buildTestExecutionQuery as any).mockReturnValue({
+        where: { testRun: { projectId: 1 } },
+        include: {},
+        skip: 0,
+        take: 50,
+      });
+      (buildJunitResultQuery as any).mockReturnValue({
+        where: { time: { gt: 0 } },
+        include: {},
+      });
+
+      (baseDb as any).testRunResults = {
+        findMany: vi.fn().mockResolvedValue([manualRecord]),
+        count: vi.fn().mockResolvedValue(1),
+      };
+      (baseDb as any).jUnitTestResult = {
+        findMany: vi.fn().mockResolvedValue([junitRecord]),
+        count: vi.fn().mockResolvedValue(1),
+      };
+    });
+
+    it("combines manual and JUnit rows with a shared total", async () => {
+      const response = await POST(createRequest({ context: elapsedContext }));
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.total).toBe(2);
+      expect(data.data).toHaveLength(2);
+      expect(data.data[0].name).toBe("Manual Case");
+      expect(data.data[1]).toMatchObject({
+        id: "junit-10",
+        name: "Automated Case",
+        elapsed: 58.5,
+        executedById: "user-2",
+        testRunId: 200,
+      });
+    });
+
+    it("filters the manual side to duration-bearing rows", async () => {
+      await POST(createRequest({ context: elapsedContext }));
+
+      const manualWhere = (baseDb as any).testRunResults.count.mock.calls[0][0]
+        .where;
+      expect(manualWhere.elapsed).toEqual({ not: null });
+    });
+
+    it("pages into the JUnit block once manual rows are exhausted", async () => {
+      (baseDb as any).testRunResults.count.mockResolvedValue(3);
+      (baseDb as any).jUnitTestResult.count.mockResolvedValue(10);
+
+      await POST(
+        createRequest({ context: elapsedContext, offset: 5, limit: 50 })
+      );
+
+      expect((baseDb as any).testRunResults.findMany).not.toHaveBeenCalled();
+      const junitArgs = (baseDb as any).jUnitTestResult.findMany.mock
+        .calls[0][0];
+      expect(junitArgs.skip).toBe(2); // offset 5 - 3 manual rows
+    });
+
+    it("passes the drill-down context straight to the JUnit builder", async () => {
+      const context = {
+        ...elapsedContext,
+        dimensions: { testCase: { id: 108205, name: "SCORM export case" } },
+      };
+      await POST(createRequest({ context }));
+
+      expect(buildJunitResultQuery).toHaveBeenCalledWith(
+        expect.objectContaining({
+          dimensions: { testCase: { id: 108205, name: "SCORM export case" } },
+        }),
+        { requireTime: true }
+      );
+    });
+
+    it("skips the JUnit side entirely when the builder returns null", async () => {
+      (buildJunitResultQuery as any).mockReturnValue(null);
+
+      const response = await POST(createRequest({ context: elapsedContext }));
+      const data = await response.json();
+
+      expect((baseDb as any).jUnitTestResult.findMany).not.toHaveBeenCalled();
+      expect(data.total).toBe(1);
+      expect(data.data).toHaveLength(1);
+    });
+  });
+
+  describe("milestone-readiness drill-down", () => {
+    beforeEach(() => {
+      (getServerSession as any).mockResolvedValue(mockSession);
+      (getEnhancedDb as any).mockResolvedValue({
+        projects: { findFirst: vi.fn().mockResolvedValue({ id: 1 }) },
+      });
+      (resolveViewerProjectScope as any).mockResolvedValue(null);
+    });
+
+    it("drills a readiness cell into the member issues in that state", async () => {
+      // Issue 101 fully passes, 102 fails, 103 has no linked cases.
+      (getMemberCoverage as any).mockResolvedValue({
+        101: {
+          uncovered: false,
+          linkedCaseCount: 2,
+          failed: 0,
+          inProgress: 0,
+          notRun: 0,
+        },
+        102: {
+          uncovered: false,
+          linkedCaseCount: 1,
+          failed: 1,
+          inProgress: 0,
+          notRun: 0,
+        },
+        103: {
+          uncovered: true,
+          linkedCaseCount: 0,
+          failed: 0,
+          inProgress: 0,
+          notRun: 0,
+        },
+      });
+      ((baseDb as any).issue.findMany as any).mockResolvedValue([
+        { id: 102, name: "ISS-102", title: "Broken" },
+      ]);
+
+      const response = await POST(
+        createRequest({
+          context: {
+            metricId: "failed",
+            metricLabel: "Failed",
+            metricValue: 1,
+            reportType: "milestone-readiness",
+            mode: "project",
+            projectId: 1,
+            dimensions: { milestone: { id: 55, name: "R1" } },
+          },
+        })
+      );
+
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(data.total).toBe(1);
+      expect(data.data[0].id).toBe(102);
+      expect((baseDb as any).issue.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: { in: [102] } } })
+      );
+      expect(getMemberCoverage).toHaveBeenCalledWith(55, {
+        projectId: 1,
+        accessibleProjectIds: null,
+      });
+    });
+
+    it("percentReady drills into the fully-passing member issues", async () => {
+      (getMemberCoverage as any).mockResolvedValue({
+        101: {
+          uncovered: false,
+          linkedCaseCount: 2,
+          failed: 0,
+          inProgress: 0,
+          notRun: 0,
+        },
+        102: {
+          uncovered: false,
+          linkedCaseCount: 1,
+          failed: 1,
+          inProgress: 0,
+          notRun: 0,
+        },
+      });
+      ((baseDb as any).issue.findMany as any).mockResolvedValue([
+        { id: 101, name: "ISS-101" },
+      ]);
+
+      const response = await POST(
+        createRequest({
+          context: {
+            metricId: "percentReady",
+            metricLabel: "Ready (%)",
+            metricValue: 50,
+            reportType: "milestone-readiness",
+            mode: "project",
+            projectId: 1,
+            dimensions: { milestone: { id: 55, name: "R1" } },
+          },
+        })
+      );
+
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(data.total).toBe(1);
+      expect((baseDb as any).issue.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: { in: [101] } } })
+      );
+    });
+
+    it("requires a milestone dimension", async () => {
+      const response = await POST(
+        createRequest({
+          context: {
+            metricId: "passed",
+            metricLabel: "Passed",
+            metricValue: 1,
+            reportType: "milestone-readiness",
+            mode: "project",
+            projectId: 1,
+            dimensions: {},
+          },
+        })
+      );
+
+      expect(response.status).toBe(400);
+    });
+  });
+
+  describe("dimension whitelist", () => {
+    it("rejects unknown dimension keys for whitelisted report types", async () => {
+      (getServerSession as any).mockResolvedValue(mockAdminSession);
+
+      const response = await POST(
+        createRequest({
+          context: {
+            metricId: "testResults",
+            metricLabel: "Test Results",
+            metricValue: 1,
+            reportType: "test-execution",
+            mode: "project",
+            projectId: 1,
+            dimensions: { bogus: { id: 1, name: "?" } },
+          },
+        })
+      );
+
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toContain("bogus");
+    });
+  });
+
+  describe("issue drill-down population", () => {
+    it("project-scoped issue drill-downs use the project-relevant issue ids", async () => {
+      (getServerSession as any).mockResolvedValue(mockSession);
+      (getEnhancedDb as any).mockResolvedValue({
+        projects: { findFirst: vi.fn().mockResolvedValue({ id: 1 }) },
+      });
+      (getModelForMetric as any).mockReturnValue("issue");
+      (getQueryBuilderForMetric as any).mockReturnValue(() => ({
+        where: { isDeleted: false, projectId: 1 },
+        include: {},
+      }));
+      (getProjectRelevantIssueIds as any).mockResolvedValue([7, 8]);
+      ((baseDb as any).issue.findMany as any).mockResolvedValue([
+        { id: 7, name: "ISS-7" },
+        { id: 8, name: "ISS-8" },
+      ]);
+      ((baseDb as any).issue.count as any).mockResolvedValue(2);
+
+      const response = await POST(
+        createRequest({
+          context: {
+            metricId: "issueCount",
+            metricLabel: "Issue Count",
+            metricValue: 2,
+            reportType: "issue-tracking",
+            mode: "project",
+            projectId: 1,
+            dimensions: {},
+          },
+        })
+      );
+
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(data.total).toBe(2);
+      // Direct-FK scoping is swapped for the linked population.
+      expect((baseDb as any).issue.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { isDeleted: false, id: { in: [7, 8] } },
+        })
+      );
+    });
+  });
+
+  // Automated runs leave TestRunCases.statusId empty and record the outcome in
+  // JUnitTestResult, so the milestone-completion drill-down resolves the
+  // status through the effective-case-status accessor — otherwise it renders
+  // "Completed: No" for every automated case and contradicts the metric it
+  // drills into.
+  describe("milestoneCompletion automated status resolution", () => {
+    const passed = {
+      id: 2,
+      name: "Passed",
+      isCompleted: true,
+      color: { value: "#0f0" },
+    };
+
+    const setUpRunCases = (rows: any[]) => {
+      (getModelForMetric as any).mockReturnValue("testRunCases");
+      (getQueryBuilderForMetric as any).mockReturnValue(() => ({
+        where: { isDeleted: false },
+        include: { status: { include: { color: true } } },
+      }));
+      (baseDb as any).testRunCases = {
+        findMany: vi.fn().mockResolvedValue(rows),
+        count: vi.fn().mockResolvedValue(rows.length),
+        groupBy: vi.fn().mockResolvedValue([]),
+      };
+      (getEffectiveRunCaseStatuses as any).mockResolvedValue(new Map());
+    };
+
+    const request = () =>
+      createRequest({
+        context: {
+          metricId: "milestoneCompletion",
+          reportType: "project-health",
+          projectId: 1,
+          dimensions: {},
+        },
+      });
+
+    it("fills a status-less run-case from its effective status", async () => {
+      setUpRunCases([
+        { id: 11, repositoryCaseId: 501, testRunId: 90, status: null },
+      ]);
+      (getEffectiveRunCaseStatuses as any).mockResolvedValue(
+        new Map([[11, passed]])
+      );
+
+      const data = await (await POST(request())).json();
+
+      expect(data.data[0].status).toEqual(passed);
+      expect(getEffectiveRunCaseStatuses).toHaveBeenCalledWith([11]);
+    });
+
+    it("leaves a genuinely unexecuted run-case without a status", async () => {
+      setUpRunCases([
+        { id: 12, repositoryCaseId: 502, testRunId: 90, status: null },
+      ]);
+
+      const data = await (await POST(request())).json();
+
+      expect(data.data[0].status).toBeNull();
+    });
+
+    it("does not overwrite a manual run-case's own status", async () => {
+      const failed = {
+        id: 3,
+        name: "Failed",
+        isCompleted: true,
+        color: { value: "#f00" },
+      };
+      setUpRunCases([
+        { id: 13, repositoryCaseId: 503, testRunId: 91, status: failed },
+      ]);
+
+      const data = await (await POST(request())).json();
+
+      expect(data.data[0].status).toEqual(failed);
+      // A row that already has a status is never looked up.
+      expect(getEffectiveRunCaseStatuses).not.toHaveBeenCalled();
     });
   });
 });

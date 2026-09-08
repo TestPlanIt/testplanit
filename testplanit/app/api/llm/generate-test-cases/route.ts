@@ -1,10 +1,15 @@
-import { prisma } from "@/lib/prisma";
-import { ProjectAccessType } from "@prisma/client";
+import { baseDb } from "@/lib/db";
+import { ProjectAccessType } from "~/zenstack/models";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "~/server/auth";
 import { generateTestCasesForProject } from "./core";
-import type { GenerationContext, IssueData, TemplateData } from "./shared";
+import type {
+  GenerationContext,
+  IssueCaseLinkRef,
+  IssueData,
+  TemplateData,
+} from "./shared";
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,6 +27,7 @@ export async function POST(request: NextRequest) {
       quantity,
       autoGenerateTags,
       includeParameters,
+      issueRef,
     } = body as {
       projectId: number;
       issue: IssueData;
@@ -30,6 +36,7 @@ export async function POST(request: NextRequest) {
       quantity?: string;
       autoGenerateTags?: boolean;
       includeParameters?: boolean;
+      issueRef?: IssueCaseLinkRef;
     };
 
     if (!projectId || !issue || !template) {
@@ -109,7 +116,7 @@ export async function POST(request: NextRequest) {
           ],
         };
 
-    const project = await prisma.projects.findFirst({
+    const project = await baseDb.projects.findFirst({
       where: projectAccessWhere,
       select: { id: true },
     });
@@ -129,6 +136,7 @@ export async function POST(request: NextRequest) {
       quantity,
       autoGenerateTags,
       includeParameters,
+      issueRef,
       userId: session.user.id,
     });
 

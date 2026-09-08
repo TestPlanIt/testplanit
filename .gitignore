@@ -53,6 +53,8 @@ testplanit/playwright-report/**
 
 # AI Agent Configuration (developers can maintain their own local versions)
 CLAUDE.md
+# `next dev` (16.3+) auto-generates and upserts these at the Next project root.
+AGENTS.md
 .cursorrules
 **/.cursorrules
 .*-mcp/**

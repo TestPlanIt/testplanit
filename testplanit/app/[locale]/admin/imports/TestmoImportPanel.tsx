@@ -10,7 +10,7 @@ import {
   useState,
 } from "react";
 import { filesize } from "filesize";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import type { LucideIcon } from "lucide-react";
 import {
   Activity,
@@ -24,7 +24,7 @@ import {
   UploadCloud,
 } from "lucide-react";
 import { DurationDisplay } from "@/components/DurationDisplay";
-import { Access } from "@prisma/client";
+import { Access } from "~/zenstack/models";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
@@ -139,6 +139,7 @@ interface WizardStepDefinition {
 }
 
 export function TestmoImportPanel() {
+  const locale = useLocale();
   const t = useTranslations("admin.imports");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
@@ -2281,11 +2282,11 @@ export function TestmoImportPanel() {
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <SummaryTile
           label={t("testmo.summary.datasets")}
-          value={analysis.meta.totalDatasets.toLocaleString()}
+          value={analysis.meta.totalDatasets.toLocaleString(locale)}
         />
         <SummaryTile
           label={tGlobal("admin.imports.testmo.datasetTable.rows")}
-          value={analysis.meta.totalRows.toLocaleString()}
+          value={analysis.meta.totalRows.toLocaleString(locale)}
         />
         <SummaryTile
           label={t("testmo.summary.fileName")}
@@ -2324,7 +2325,7 @@ export function TestmoImportPanel() {
               <TableHeader>
                 <TableRow>
                   <TableHead>{t("testmo.datasetTable.name")}</TableHead>
-                  <TableHead className="text-right">
+                  <TableHead className="text-end">
                     {t("testmo.datasetTable.rows")}
                   </TableHead>
                 </TableRow>
@@ -2343,8 +2344,8 @@ export function TestmoImportPanel() {
                       <TableCell className="font-medium">
                         {dataset.name}
                       </TableCell>
-                      <TableCell className="text-right">
-                        {dataset.rowCount.toLocaleString()}
+                      <TableCell className="text-end">
+                        {dataset.rowCount.toLocaleString(locale)}
                       </TableCell>
                     </TableRow>
                   );
@@ -2481,7 +2482,7 @@ export function TestmoImportPanel() {
           <AlertTitle>{t("testmo.mappingOutstandingTitle")}</AlertTitle>
           <AlertDescription>
             <p>{t("testmo.mappingOutstandingDescription")}</p>
-            <ul className="mt-2 list-disc space-y-1 pl-4">
+            <ul className="mt-2 list-disc space-y-1 ps-4">
               {blockingDatasets.map((item) => (
                 <li key={item.key}>
                   {t("testmo.mappingOutstandingItem", {
@@ -2511,10 +2512,12 @@ export function TestmoImportPanel() {
                     className="flex items-center gap-2 border"
                   >
                     <span className="truncate">{datasetLabelFor(key)}</span>
-                    <Badge variant="secondary">{count.toLocaleString()}</Badge>
+                    <Badge variant="secondary">
+                      {count.toLocaleString(locale)}
+                    </Badge>
                     {outstanding > 0 && (
                       <Badge variant="destructive">
-                        {outstanding.toLocaleString()}
+                        {outstanding.toLocaleString(locale)}
                       </Badge>
                     )}
                   </TabsTrigger>
@@ -3023,7 +3026,9 @@ export function TestmoImportPanel() {
                         <span className="font-medium">
                           {t("testmo.job.rowsProcessedLabel")}
                         </span>
-                        <span>{currentJob.processedRows.toLocaleString()}</span>
+                        <span>
+                          {currentJob.processedRows.toLocaleString(locale)}
+                        </span>
                       </div>
                     )}
                 </div>
@@ -3089,7 +3094,7 @@ export function TestmoImportPanel() {
             </div>
           </div>
           <ScrollArea className="h-64">
-            <div className="space-y-3 pr-2">
+            <div className="space-y-3 pe-2">
               {displayedActivityLogEntries.map((entry, index) => (
                 <div
                   key={`${entry.type}-${entry.timestamp ?? "no-time"}-${index}`}

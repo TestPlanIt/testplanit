@@ -17,7 +17,7 @@ import { ENTITY_AUDIT_MODELS } from "./entityAuditHooks";
 //   - The RPC route shim only audits an accessor in AUDITED_RPC_ENTITY_ACCESSORS
 //     when it equals the real Prisma client field. `issues` (vs `issue`) /
 //     `sharedStepGroups` (vs `sharedStepGroup`) never matched → no audit.
-//   - The lib/prisma.ts `$extends` query block is cast `as any`, so a hook keyed
+//   - The lib/db.ts `$extends` query block is cast `as any`, so a hook keyed
 //     to a non-existent model (`sharedStepGroups:`, `attachment:`) is silent
 //     dead code — the audit + ES-sync + webhook side effects never run.
 // Both surfaces are validated here against the schema (source of truth) so a
@@ -156,26 +156,28 @@ describe("RPC audit wiring guard", () => {
   );
 });
 
-describe("lib/prisma.ts $extends hook keys are real Prisma models", () => {
-  const prismaSource = readFileSync(resolve(here, "../prisma.ts"), "utf8");
-  // The $extends query block keys each model hook at 6-space indentation, e.g.
-  //   "      repositoryCases: {". A key that is not a real accessor is dead code
-  // (the block is cast `as any`). Extract them and validate against the schema.
-  const hookKeys = [
-    ...prismaSource.matchAll(/^ {6}([a-zA-Z][a-zA-Z0-9_]*): \{$/gm),
+describe("sideEffectsPlugin model dispatch keys are real models", () => {
+  // The v3 side-effects (ES sync / webhook emit / business logic) moved from the
+  // lib/db.ts `$extends` block into the sideEffectsPlugin afterEntityMutation
+  // switch, which dispatches by PascalCase model name at 8-space indentation,
+  // e.g. `        case "RepositoryCases": {`. TypeScript already enforces these
+  // against GetModels<Schema>, but this stays as a cheap dead-branch guard.
+  const pluginSource = readFileSync(
+    resolve(here, "../zenstack-plugins/sideEffectsPlugin.ts"),
+    "utf8"
+  );
+  const hookModels = [
+    ...pluginSource.matchAll(/^ {8}case "([A-Z][a-zA-Z0-9_]*)":/gm),
   ].map((m) => m[1]);
 
-  it("extracts the expected hook block keys (sanity)", () => {
-    expect(hookKeys).toContain("repositoryCases");
-    expect(hookKeys).toContain("issue");
-    expect(hookKeys.length).toBeGreaterThanOrEqual(15);
-    // The dead plural/singular forms must never reappear as hook keys.
-    expect(hookKeys).not.toContain("sharedStepGroups");
-    expect(hookKeys).not.toContain("attachment");
+  it("dispatches on the expected models (sanity)", () => {
+    expect(hookModels).toContain("RepositoryCases");
+    expect(hookModels).toContain("Issue");
+    expect(hookModels.length).toBeGreaterThanOrEqual(10);
   });
 
-  it.each(hookKeys)("hook key %s maps to a real Prisma model", (key) => {
-    expect(validAccessors.has(key)).toBe(true);
+  it.each(hookModels)("hook model %s is a real Prisma model", (model) => {
+    expect(modelNames.has(model)).toBe(true);
   });
 });
 
@@ -243,6 +245,10 @@ describe("project-scope completeness for generically-audited types", () => {
       // Parent-relation-scoped types reach projectId through an ancestor and
       // legitimately lack a scalar column.
       if (PROJECT_SCOPE_PARENTS[entityType]) continue;
+      // Projects is self-scoped: its own id IS the project, so
+      // resolveAuditEntityScope answers from the entityId with no column and no
+      // re-read. It is neither scalar- nor parent-scoped.
+      if (entityType === "Projects") continue;
       expect(
         modelsWithScalarProjectId.has(entityType),
         `${entityType} is in PROJECT_SCOPED_ENTITY_TYPES but has no scalar projectId column and no PROJECT_SCOPE_PARENTS entry`

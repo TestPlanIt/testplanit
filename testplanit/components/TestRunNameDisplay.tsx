@@ -1,10 +1,13 @@
+"use client";
+
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { CirclePlay, Combine, Trash2 } from "lucide-react";
+import { CirclePlay, Combine, Lock, Trash } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "~/lib/navigation";
 import { cn } from "~/utils";
 
@@ -14,8 +17,9 @@ interface TestRunNameDisplayProps {
         id?: number | string;
         name?: string;
         isDeleted?: boolean;
-        configurationGroupId?: number | null;
+        configurationGroupId?: number | string | null;
         configuration?: { id: number; name: string } | null;
+        compositionLockedAt?: Date | string | null;
       }
     | null
     | undefined;
@@ -36,6 +40,20 @@ export function TestRunNameDisplay({
 }: TestRunNameDisplayProps) {
   const t = useTranslations("common.labels");
 
+  // Show the full name in a tooltip only when the rendered span is
+  // actually clipped (e.g. a `truncate` className in a narrow layout).
+  const nameRef = useRef<HTMLSpanElement>(null);
+  const [isTruncated, setIsTruncated] = useState(false);
+  useEffect(() => {
+    const el = nameRef.current;
+    if (!el) return;
+    const measure = () => setIsTruncated(el.scrollWidth > el.clientWidth);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [testRun?.name]);
+
   if (!testRun) {
     return <span>{t("unknown")}</span>;
   }
@@ -46,12 +64,13 @@ export function TestRunNameDisplay({
   const isDeleted = testRun.isDeleted || false;
   const configurationGroupId = testRun.configurationGroupId;
   const configuration = testRun.configuration;
+  const isCompositionLocked = !!testRun.compositionLockedAt;
 
   // Determine which icon to show
   let icon = null;
   if (showIcon) {
     if (isDeleted) {
-      icon = <Trash2 className="h-4 w-4 shrink-0" />;
+      icon = <Trash className="h-4 w-4 shrink-0" />;
     } else {
       icon = <CirclePlay className="h-4 w-4 shrink-0" />;
     }
@@ -64,7 +83,7 @@ export function TestRunNameDisplay({
   const configIndicator = configurationGroupId ? (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span className="ml-1 shrink-0">
+        <span className="ms-1 shrink-0">
           <Combine className="w-3 h-3 text-muted-foreground" />
         </span>
       </TooltipTrigger>
@@ -72,7 +91,7 @@ export function TestRunNameDisplay({
         <p className="text-background/50">{t("multiConfiguration")}</p>
         {configuration && (
           <p className="flex text-xs text-background">
-            <Combine className="w-3 h-3 shrink-0 mr-1" />
+            <Combine className="w-3 h-3 shrink-0 me-1" />
             {configuration.name}
           </p>
         )}
@@ -80,11 +99,31 @@ export function TestRunNameDisplay({
     </Tooltip>
   ) : null;
 
+  // Composition-lock indicator (BOR-1): shown when the run's case set is frozen.
+  const lockIndicator = isCompositionLocked ? (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="ms-1 shrink-0">
+          <Lock className="w-3 h-3 text-muted-foreground" />
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>{t("compositionLocked")}</TooltipContent>
+    </Tooltip>
+  ) : null;
+
   const content = (
     <>
       {icon}
-      <span className={cn("min-w-0", className)}>{displayName}</span>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span ref={nameRef} className={cn("min-w-0", className)}>
+            {displayName}
+          </span>
+        </TooltipTrigger>
+        {isTruncated && <TooltipContent>{displayName}</TooltipContent>}
+      </Tooltip>
       {configIndicator}
+      {lockIndicator}
     </>
   );
 

@@ -10,12 +10,13 @@
  */
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { internalReportBypassToken } from "~/lib/internalReportBypass";
 
 vi.mock("next-auth", () => ({ getServerSession: vi.fn() }));
 vi.mock("~/server/auth", () => ({ authOptions: {} }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     projectLlmIntegration: { findFirst: vi.fn() },
     projects: { findUnique: vi.fn() },
     repositoryCases: { findMany: vi.fn() },
@@ -28,7 +29,7 @@ vi.mock("~/lib/auth/utils", () => ({ getEnhancedDb: vi.fn() }));
 
 import { getServerSession } from "next-auth";
 import { getEnhancedDb } from "~/lib/auth/utils";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { POST } from "./route";
 
 function reqWithBody(
@@ -44,16 +45,16 @@ function reqWithBody(
   );
 }
 
-const findLlm = prisma.projectLlmIntegration.findFirst as unknown as ReturnType<
+const findLlm = baseDb.projectLlmIntegration.findFirst as unknown as ReturnType<
   typeof vi.fn
 >;
-const findProject = prisma.projects.findUnique as unknown as ReturnType<
+const findProject = baseDb.projects.findUnique as unknown as ReturnType<
   typeof vi.fn
 >;
-const findCases = prisma.repositoryCases.findMany as unknown as ReturnType<
+const findCases = baseDb.repositoryCases.findMany as unknown as ReturnType<
   typeof vi.fn
 >;
-const findSnapshot = prisma.llmReportSnapshot
+const findSnapshot = baseDb.llmReportSnapshot
   .findFirst as unknown as ReturnType<typeof vi.fn>;
 
 describe("POST /api/reports/automation-candidates (pre-stream gates)", () => {
@@ -144,7 +145,7 @@ describe("POST /api/reports/automation-candidates (pre-stream gates)", () => {
         createdAt: new Date("2026-01-01T00:00:00Z"),
         steps: [{ id: 1 }],
         caseFieldValues: [],
-        issues: [],
+        caseIssues: [],
         _count: { testRuns: 0 },
       },
     ]);
@@ -180,7 +181,10 @@ describe("POST /api/reports/automation-candidates (shared-report bypass)", () =>
       generatedBy: { id: "u1", name: "Alice", email: "a@example.com" },
     });
     const res = await POST(
-      reqWithBody({ projectId: 7 }, { "x-shared-report-bypass": "true" })
+      reqWithBody(
+        { projectId: 7 },
+        { "x-shared-report-bypass": internalReportBypassToken() }
+      )
     );
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -191,7 +195,10 @@ describe("POST /api/reports/automation-candidates (shared-report bypass)", () =>
     vi.mocked(getServerSession).mockResolvedValue(null);
     findSnapshot.mockResolvedValue(null);
     const res = await POST(
-      reqWithBody({ projectId: 7 }, { "x-shared-report-bypass": "true" })
+      reqWithBody(
+        { projectId: 7 },
+        { "x-shared-report-bypass": internalReportBypassToken() }
+      )
     );
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -201,7 +208,10 @@ describe("POST /api/reports/automation-candidates (shared-report bypass)", () =>
   it("400s when bypass is set but the body has no projectId (defends against config drift)", async () => {
     vi.mocked(getServerSession).mockResolvedValue(null);
     const res = await POST(
-      reqWithBody({ somethingElse: 1 }, { "x-shared-report-bypass": "true" })
+      reqWithBody(
+        { somethingElse: 1 },
+        { "x-shared-report-bypass": internalReportBypassToken() }
+      )
     );
     expect(res.status).toBe(400);
     expect(findSnapshot).not.toHaveBeenCalled();
@@ -211,7 +221,10 @@ describe("POST /api/reports/automation-candidates (shared-report bypass)", () =>
     vi.mocked(getServerSession).mockResolvedValue(null);
     findSnapshot.mockResolvedValue(null);
     await POST(
-      reqWithBody({ projectId: 7 }, { "x-shared-report-bypass": "true" })
+      reqWithBody(
+        { projectId: 7 },
+        { "x-shared-report-bypass": internalReportBypassToken() }
+      )
     );
     const args = findSnapshot.mock.calls[0]![0];
     expect(args.where).toMatchObject({
@@ -235,7 +248,7 @@ describe("POST /api/reports/automation-candidates (shared-report bypass)", () =>
     const res = await POST(
       reqWithBody(
         { projectId: 7, snapshotId: 42 },
-        { "x-shared-report-bypass": "true" }
+        { "x-shared-report-bypass": internalReportBypassToken() }
       )
     );
     expect(res.status).toBe(200);
@@ -259,7 +272,7 @@ describe("POST /api/reports/automation-candidates (shared-report bypass)", () =>
     const res = await POST(
       reqWithBody(
         { projectId: 7, snapshotId: 9999 },
-        { "x-shared-report-bypass": "true" }
+        { "x-shared-report-bypass": internalReportBypassToken() }
       )
     );
     expect(res.status).toBe(200);

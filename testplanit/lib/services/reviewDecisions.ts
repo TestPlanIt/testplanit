@@ -1,14 +1,16 @@
-import { Prisma, type AuditAction, type ReviewRequest } from "@prisma/client";
+import type { AuditAction, ReviewRequest } from "~/zenstack/models";
+import { ORMError, ORMErrorReason } from "@zenstackhq/orm";
 import type { JSONContent } from "@tiptap/core";
 import type { Session } from "next-auth";
 
 import { auditedTransaction } from "~/lib/audit/auditedTransaction";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { CommentService } from "~/lib/services/commentService";
 import { resolveEffectiveProjectRoleId } from "~/lib/services/effectiveRole";
 import { NotificationService } from "~/lib/services/notificationService";
 import { isReviewFeatureSystemEnabled } from "~/lib/services/reviewFeatureFlag";
+import { applyApprovedReviewTransition } from "~/lib/services/reviewGate";
 import {
   FeatureDisabledError,
   IneligibleReviewerError,
@@ -73,12 +75,12 @@ export type DecideOutcome = "APPROVED" | "CHANGES_REQUESTED" | "REJECTED";
  *      future ZenStack release, this check authoritatively gates the
  *      mutation.
  *
- *   4. On qualification, mutate atomically via raw `prisma.updateMany`
+ *   4. On qualification, mutate atomically via raw `baseDb.updateMany`
  *      scoped to `status: 'PENDING'`. The combined WHERE + UPDATE is a
  *      single statement at the database, so two concurrent decide calls
  *      cannot both pass the load-time PENDING check and both commit —
  *      the loser gets `count === 0` and we throw "already decided".
- *      Raw prisma is still required here because the schema-layer
+ *      Raw baseDb is still required here because the schema-layer
  *      `@@deny('update', status != 'PENDING')` rule denies any update
  *      where the post-state differs from PENDING; raw bypasses ZenStack
  *      policy enforcement, which is appropriate because the eligibility
@@ -109,7 +111,7 @@ export async function decideReviewRequest(
   // same round-trip whether the request exists or not; project flag is
   // checked alongside the main load below to keep the request-lookup
   // single-statement.
-  const systemEnabled = await isReviewFeatureSystemEnabled(prisma);
+  const systemEnabled = await isReviewFeatureSystemEnabled(baseDb);
   if (!systemEnabled) {
     throw new FeatureDisabledError();
   }
@@ -119,7 +121,7 @@ export async function decideReviewRequest(
   // branches without making a second query. `project.name` and
   // `requester.name` are pulled here so the paired-Comment fan-out below
   // doesn't need a second round-trip.
-  const req = await prisma.reviewRequest.findUniqueOrThrow({
+  const req = await baseDb.reviewRequest.findUniqueOrThrow({
     where: { id: reviewRequestId },
     include: {
       project: {
@@ -172,7 +174,7 @@ export async function decideReviewRequest(
     groupPermissions.some((g) => g.accessType === "GLOBAL_ROLE");
   let callerGlobalRoleId: number | null = null;
   if (req.assigneeRoleId !== null && hasAnyGlobalRolePermission) {
-    const callerUser = await prisma.user.findUnique({
+    const callerUser = await baseDb.user.findUnique({
       where: { id: userId },
       select: { roleId: true },
     });
@@ -220,10 +222,10 @@ export async function decideReviewRequest(
     const callerEffectiveRoleId = await resolveEffectiveProjectRoleId(
       userId,
       req.projectId,
-      prisma
+      baseDb
     );
     if (callerEffectiveRoleId !== null) {
-      const perm = await prisma.rolePermission.findUnique({
+      const perm = await baseDb.rolePermission.findUnique({
         where: { roleId_area: { roleId: callerEffectiveRoleId, area } },
         select: { canApprove: true },
       });
@@ -275,7 +277,7 @@ export async function decideReviewRequest(
 
   // Combined status flip + paired Comment create in a single transaction
   // so a decision never commits without its conversation-thread record
-  // (hybrid-comments D-21 follow-up). Raw prisma is still used inside the
+  // (hybrid-comments D-21 follow-up). Raw baseDb is still used inside the
   // tx for the same documented-exception reason as before — the schema
   // `@@deny('update', status != 'PENDING')` rule would block the
   // PENDING→APPROVED/etc. flip via ZenStack policy, but the eligibility
@@ -308,10 +310,9 @@ export async function decideReviewRequest(
         select: { id: true },
       });
       if (!after) {
-        throw new Prisma.PrismaClientKnownRequestError(
-          "No ReviewRequest found",
-          { code: "P2025", clientVersion: Prisma.prismaVersion.client }
-        );
+        // Was Prisma P2025; v3 uses ORMError with reason NOT_FOUND.
+        // Phase 6: ensure lib/utils/errors.ts isNotFoundError() detects this.
+        throw new ORMError(ORMErrorReason.NOT_FOUND, "No ReviewRequest found");
       }
       throw new Error("Review request already decided");
     }
@@ -330,6 +331,42 @@ export async function decideReviewRequest(
 
     return { commentId: created.id };
   });
+
+  // Approval IS the transition. The requester asked to move the entity from
+  // `fromState` to `toState`; approving that request performs the move
+  // instead of handing the requester a token they have to redeem by editing
+  // the entity themselves.
+  //
+  // Deliberately a SECOND transaction, not part of the decision tx above.
+  // The reviewer's decision is the durable act and must never be lost to a
+  // problem with the entity write — a concurrent transition that consumed a
+  // shared approval, an FK violation, a failing side-effect hook. Those
+  // roll back only the move; the decision stands and the entity can still be
+  // transitioned by hand, which is exactly the pre-auto-apply behavior.
+  // `applyApprovedReviewTransition` returns false (no throw) for the
+  // expected no-move cases: an earlier unapproved gate on the path, or an
+  // entity already at/past the target.
+  //
+  // The window between the two commits is invisible to the caller: this
+  // await completes before the decide response returns, so the client's
+  // post-decision refetch always observes the moved state.
+  if (decision === "APPROVED") {
+    try {
+      await auditedTransaction((tx) =>
+        applyApprovedReviewTransition(tx, {
+          reviewRequestId,
+          entityType: req.entityType as "CASE" | "RUN" | "SESSION",
+          entityId: req.entityId,
+          toStateId: req.toStateId,
+        })
+      );
+    } catch (transitionErr) {
+      console.error(
+        "decideReviewRequest: approved-transition application failed",
+        transitionErr
+      );
+    }
+  }
 
   // Persist mention rows (so the decision comment renders its in-thread
   // @mention highlight) and dispatch the dedicated REVIEW_APPROVED /
@@ -445,7 +482,7 @@ export async function decideReviewRequest(
     console.error("decideReviewRequest: audit emission failed", auditErr);
   }
 
-  return prisma.reviewRequest.findUniqueOrThrow({
+  return baseDb.reviewRequest.findUniqueOrThrow({
     where: { id: reviewRequestId },
   });
 }
@@ -455,20 +492,20 @@ async function loadEntityName(
   entityId: number
 ): Promise<string | null> {
   if (entityType === "CASE") {
-    const row = await prisma.repositoryCases.findUnique({
+    const row = await baseDb.repositoryCases.findUnique({
       where: { id: entityId },
       select: { name: true },
     });
     return row?.name ?? null;
   }
   if (entityType === "RUN") {
-    const row = await prisma.testRuns.findUnique({
+    const row = await baseDb.testRuns.findUnique({
       where: { id: entityId },
       select: { name: true },
     });
     return row?.name ?? null;
   }
-  const row = await prisma.sessions.findUnique({
+  const row = await baseDb.sessions.findUnique({
     where: { id: entityId },
     select: { name: true },
   });

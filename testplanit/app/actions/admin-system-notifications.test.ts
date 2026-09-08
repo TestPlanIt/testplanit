@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { NotificationService } from "~/lib/services/notificationService";
 import { getServerAuthSession } from "~/server/auth";
 import {
@@ -8,8 +8,8 @@ import {
 } from "./admin-system-notifications";
 
 // Mock dependencies
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     user: {
       findMany: vi.fn(),
     },
@@ -72,7 +72,7 @@ describe("admin-system-notifications", () => {
 
       const mockUsers = [{ id: "user1" }, { id: "user2" }, { id: "user3" }];
 
-      vi.mocked(prisma.user.findMany).mockResolvedValue(mockUsers as any);
+      vi.mocked(baseDb.user.findMany).mockResolvedValue(mockUsers as any);
       vi.mocked(NotificationService.createNotification).mockResolvedValue(
         undefined
       );
@@ -86,7 +86,7 @@ describe("admin-system-notifications", () => {
       expect(result.sentToCount).toBe(3);
 
       // Verify user query filters
-      expect(prisma.user.findMany).toHaveBeenCalledWith({
+      expect(baseDb.user.findMany).toHaveBeenCalledWith({
         where: {
           isDeleted: false,
           isActive: true,
@@ -119,7 +119,7 @@ describe("admin-system-notifications", () => {
         user: { id: "admin1", access: "ADMIN", name: "Admin User" },
       } as any);
 
-      vi.mocked(prisma.user.findMany).mockResolvedValue([
+      vi.mocked(baseDb.user.findMany).mockResolvedValue([
         { id: "user1" },
       ] as any);
       vi.mocked(NotificationService.createNotification).mockResolvedValue(
@@ -197,10 +197,10 @@ describe("admin-system-notifications", () => {
         },
       ];
 
-      vi.mocked(prisma.notification.findMany).mockResolvedValue(
+      vi.mocked(baseDb.notification.findMany).mockResolvedValue(
         mockNotifications as any
       );
-      vi.mocked(prisma.notification.groupBy).mockResolvedValue([
+      vi.mocked(baseDb.notification.groupBy).mockResolvedValue([
         { title: "Test 1", message: "Message 1", _count: 5 },
         { title: "Test 2", message: "Message 2", _count: 3 },
       ] as any);
@@ -217,7 +217,7 @@ describe("admin-system-notifications", () => {
       expect(result.totalPages).toBe(1);
 
       // Verify query parameters
-      expect(prisma.notification.findMany).toHaveBeenCalledWith({
+      expect(baseDb.notification.findMany).toHaveBeenCalledWith({
         where: {
           type: "SYSTEM_ANNOUNCEMENT",
         },
@@ -242,8 +242,8 @@ describe("admin-system-notifications", () => {
         user: { id: "admin1", access: "ADMIN" },
       } as any);
 
-      vi.mocked(prisma.notification.findMany).mockResolvedValue([]);
-      vi.mocked(prisma.notification.groupBy).mockResolvedValue(
+      vi.mocked(baseDb.notification.findMany).mockResolvedValue([]);
+      vi.mocked(baseDb.notification.groupBy).mockResolvedValue(
         Array(25).fill({ title: "Test", message: "Message", _count: 1 })
       );
 
@@ -257,7 +257,7 @@ describe("admin-system-notifications", () => {
       expect(result.totalPages).toBe(3);
 
       // Verify skip calculation
-      expect(prisma.notification.findMany).toHaveBeenCalledWith(
+      expect(baseDb.notification.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           skip: 10, // (page 2 - 1) * pageSize 10
           take: 10,

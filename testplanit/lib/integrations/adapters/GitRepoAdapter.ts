@@ -4,15 +4,8 @@
  * Does NOT extend BaseAdapter (which is for issue tracking, not git file fetching).
  */
 
-import {
-  assertSsrfSafeResolved,
-  createPinnedDispatcher,
-  isSsrfSafe,
-} from "~/utils/ssrf";
+import { assertSsrfSafeResolved, isSsrfSafe } from "~/utils/ssrf";
 import { getAllowedPrivateHosts } from "~/lib/utils/ssrf";
-
-/** fetch() RequestInit plus undici's `dispatcher` (absent from the DOM types). */
-type FetchInit = RequestInit & { dispatcher?: unknown };
 
 export interface RepoFileEntry {
   path: string;
@@ -31,12 +24,23 @@ export interface ListFilesResult {
   truncated?: boolean; // true if provider returned incomplete results (GitHub limit)
 }
 
+export interface ArchiveTree {
+  /** Every file in the archive (repo-relative paths; `size` is 0 — resolve it
+   * from the decompressed content when needed). */
+  files: RepoFileEntry[];
+  /** Decompress the contents of the given paths (a subset of `files`). */
+  getContents(wantedPaths: Set<string>): Promise<Map<string, string>>;
+}
+
 export abstract class GitRepoAdapter {
   protected rateLimitDelay: number = 500; // ms between requests (baseline)
   protected lastRequestTime: number = 0;
   protected maxRetries: number = 3;
   protected retryDelay: number = 1000;
   protected requestTimeout: number = 30000; // 30 seconds
+  // Archive downloads transfer the whole tree in one request and can be large,
+  // so they get a longer ceiling than per-call API requests.
+  protected archiveTimeout: number = 120000; // 2 minutes
   // Longest a single request will block waiting out a rate-limit window before
   // giving up. Brief/secondary limits (short reset) are absorbed transparently;
   // primary limits (reset minutes away) fail fast with an actionable message
@@ -117,23 +121,17 @@ export abstract class GitRepoAdapter {
         () => controller.abort(),
         this.requestTimeout
       );
-      let dispatcher: ReturnType<typeof createPinnedDispatcher> | undefined;
 
       try {
         const safeUrl = this.sanitizeUrl(url);
-        // Resolve DNS, verify the IP is not private, and pin the connection to
-        // that exact IP so fetch() cannot re-resolve to a different (private)
-        // address between the check and the connect (DNS-rebinding TOCTOU).
-        const pinnedIp = await assertSsrfSafeResolved(safeUrl);
-        dispatcher = pinnedIp ? createPinnedDispatcher(pinnedIp) : undefined;
+        // Resolve DNS and verify the IP is not private (closes DNS rebinding)
+        await assertSsrfSafeResolved(safeUrl);
 
-        const init: FetchInit = {
+        const response = await fetch(safeUrl, {
           ...options,
           signal: controller.signal,
           redirect: "manual", // prevent redirect-based SSRF bypass
-        };
-        if (dispatcher) init.dispatcher = dispatcher;
-        const response = await fetch(safeUrl, init);
+        });
 
         // If the server redirects, validate the target before following
         if (response.status >= 300 && response.status < 400) {
@@ -215,9 +213,6 @@ export abstract class GitRepoAdapter {
         }
       } finally {
         clearTimeout(timeoutId);
-        // Release the pinned connection pool. Fire-and-forget: undici keeps an
-        // in-flight response alive until its body has been read.
-        dispatcher?.close().catch(() => {});
       }
     });
   }
@@ -238,21 +233,16 @@ export abstract class GitRepoAdapter {
         () => controller.abort(),
         this.requestTimeout
       );
-      let dispatcher: ReturnType<typeof createPinnedDispatcher> | undefined;
 
       try {
         const safeUrl = this.sanitizeUrl(url);
-        // Validate + pin the connection to the resolved IP (DNS-rebinding guard).
-        const pinnedIp = await assertSsrfSafeResolved(safeUrl);
-        dispatcher = pinnedIp ? createPinnedDispatcher(pinnedIp) : undefined;
+        await assertSsrfSafeResolved(safeUrl);
 
-        const init: FetchInit = {
+        const response = await fetch(safeUrl, {
           ...options,
           signal: controller.signal,
           redirect: "manual",
-        };
-        if (dispatcher) init.dispatcher = dispatcher;
-        const response = await fetch(safeUrl, init);
+        });
 
         if (response.status >= 300 && response.status < 400) {
           return this.followSafeRedirect<string>(
@@ -290,11 +280,162 @@ export abstract class GitRepoAdapter {
         return await response.text();
       } finally {
         clearTimeout(timeoutId);
-        // Release the pinned connection pool. Fire-and-forget: undici keeps an
-        // in-flight response alive until its body has been read.
-        dispatcher?.close().catch(() => {});
       }
     });
+  }
+
+  /**
+   * Download a binary payload (e.g. a repository archive) with the same SSRF +
+   * single-redirect + rate-limit handling as the JSON/text requests. Archives
+   * can be large and slow, so this uses a longer timeout than API calls.
+   */
+  protected async makeBinaryRequest(
+    url: string,
+    options: RequestInit = {}
+  ): Promise<Buffer> {
+    await this.applyRateLimit();
+
+    return this.executeWithRetry(async () => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(
+        () => controller.abort(),
+        this.archiveTimeout
+      );
+
+      try {
+        const safeUrl = this.sanitizeUrl(url);
+        await assertSsrfSafeResolved(safeUrl);
+
+        const response = await fetch(safeUrl, {
+          ...options,
+          signal: controller.signal,
+          redirect: "manual",
+        });
+
+        if (response.status >= 300 && response.status < 400) {
+          return this.followSafeRedirect<Buffer>(
+            response,
+            options,
+            controller.signal,
+            "binary"
+          );
+        }
+
+        this.trackRateLimitHeaders(response);
+        const remaining = response.headers.get("X-RateLimit-Remaining");
+        const retryAfter = response.headers.get("Retry-After");
+
+        if (!response.ok) {
+          const isRateLimited =
+            response.status === 429 ||
+            (response.status === 403 &&
+              (remaining === "0" || retryAfter !== null));
+          if (isRateLimited) {
+            this.rateLimitRemaining = 0;
+            if (!this.rateLimitResetAt) {
+              this.rateLimitResetAt = Math.floor(Date.now() / 1000) + 60;
+            }
+            throw new Error(`Rate limit exceeded.`);
+          }
+          const errorText = await response.text().catch(() => "");
+          throw new Error(
+            `HTTP ${response.status} ${response.statusText}: ${errorText.slice(0, 200)}`
+          );
+        }
+
+        return Buffer.from(await response.arrayBuffer());
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    });
+  }
+
+  /**
+   * Build the single-request archive download for a ref (a zip of the whole
+   * tree at that ref). Adapters that support archive download override this;
+   * the default returns null so the caller falls back to per-file fetching.
+   */
+  protected buildArchiveRequest(
+    _ref: string
+  ): { url: string; headers: Record<string, string> } | null {
+    return null;
+  }
+
+  /**
+   * Whether the provider's archive wraps every entry in a single top-level
+   * directory (e.g. `workspace-repo-<hash>/…`). True for GitHub/GitLab/Gitea/
+   * Bitbucket; adapters whose archive is rooted at the repo root set this false.
+   */
+  protected archiveStripsTopDir = true;
+
+  /**
+   * Download the repository archive (zip) for `ref` ONCE and expose both the
+   * full file list AND lazy content extraction from it — the same idea as
+   * `git clone`. This lets the cache refresh derive its file list from the
+   * archive it already downloads instead of a slow, rate-limited API tree-walk,
+   * then decompress only the path-matched files. Returns null when the adapter
+   * doesn't support archive download (caller falls back to the tree-walk +
+   * per-file path). Throws on network/rate-limit errors like the other requests.
+   */
+  async downloadArchiveTree(ref: string): Promise<ArchiveTree | null> {
+    const request = this.buildArchiveRequest(ref);
+    if (!request) return null;
+
+    const buffer = await this.makeBinaryRequest(request.url, {
+      headers: request.headers,
+    });
+    const JSZip = (await import("jszip")).default;
+    const zip = await JSZip.loadAsync(buffer);
+    const stripTopDir = this.archiveStripsTopDir;
+
+    // Enumerate entries cheaply (no decompression) to build the file list.
+    // Contents are decompressed lazily, and only for the paths the caller wants.
+    const byPath = new Map<
+      string,
+      { async(type: "string"): Promise<string> }
+    >();
+    const files: RepoFileEntry[] = [];
+    for (const entry of Object.values(zip.files)) {
+      if (entry.dir) continue;
+      const path = stripTopDir
+        ? entry.name.replace(/^[^/]*\//, "")
+        : entry.name;
+      if (!path) continue;
+      files.push({ path, size: 0, type: "file" });
+      byPath.set(path, entry);
+    }
+
+    return {
+      files,
+      async getContents(
+        wantedPaths: Set<string>
+      ): Promise<Map<string, string>> {
+        const out = new Map<string, string>();
+        await Promise.all(
+          [...wantedPaths].map(async (path) => {
+            const entry = byPath.get(path);
+            if (entry) out.set(path, await entry.async("string"));
+          })
+        );
+        return out;
+      },
+    };
+  }
+
+  /**
+   * Bulk-fetch file contents in ONE archive download. Returns path→content,
+   * limited to `wantedPaths` when provided. Returns null when the adapter has no
+   * archive support (caller falls back to per-file fetching).
+   */
+  async getAllFileContents(
+    ref: string,
+    wantedPaths?: Set<string>
+  ): Promise<Map<string, string> | null> {
+    const tree = await this.downloadArchiveTree(ref);
+    if (!tree) return null;
+    return tree.getContents(
+      wantedPaths ?? new Set(tree.files.map((f) => f.path))
+    );
   }
 
   /**
@@ -333,7 +474,7 @@ export abstract class GitRepoAdapter {
     response: Response,
     options: RequestInit,
     signal: AbortSignal,
-    mode: "json" | "text"
+    mode: "json" | "text" | "binary"
   ): Promise<T> {
     const location = response.headers.get("Location");
     if (!location) {
@@ -342,33 +483,29 @@ export abstract class GitRepoAdapter {
 
     // Resolve relative redirects against the original request URL
     const redirectUrl = this.sanitizeUrl(new URL(location, response.url).href);
-    const pinnedIp = await assertSsrfSafeResolved(redirectUrl);
-    const dispatcher = pinnedIp ? createPinnedDispatcher(pinnedIp) : undefined;
+    await assertSsrfSafeResolved(redirectUrl);
 
-    try {
-      const init: FetchInit = {
-        ...options,
-        signal,
-        redirect: "error", // no further redirects
-      };
-      if (dispatcher) init.dispatcher = dispatcher;
-      const redirectResponse = await fetch(redirectUrl, init);
+    const redirectResponse = await fetch(redirectUrl, {
+      ...options,
+      signal,
+      redirect: "error", // no further redirects
+    });
 
-      this.trackRateLimitHeaders(redirectResponse);
+    this.trackRateLimitHeaders(redirectResponse);
 
-      if (!redirectResponse.ok) {
-        const errorText = await redirectResponse.text().catch(() => "");
-        throw new Error(
-          `HTTP ${redirectResponse.status} ${redirectResponse.statusText}: ${errorText.slice(0, 200)}`
-        );
-      }
-
-      return mode === "json"
-        ? ((await redirectResponse.json()) as T)
-        : ((await redirectResponse.text()) as T);
-    } finally {
-      dispatcher?.close().catch(() => {});
+    if (!redirectResponse.ok) {
+      const errorText = await redirectResponse.text().catch(() => "");
+      throw new Error(
+        `HTTP ${redirectResponse.status} ${redirectResponse.statusText}: ${errorText.slice(0, 200)}`
+      );
     }
+
+    if (mode === "binary") {
+      return Buffer.from(await redirectResponse.arrayBuffer()) as T;
+    }
+    return mode === "json"
+      ? ((await redirectResponse.json()) as T)
+      : ((await redirectResponse.text()) as T);
   }
 
   /**

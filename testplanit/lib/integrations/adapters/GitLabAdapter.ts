@@ -46,6 +46,7 @@ export class GitLabAdapter extends BaseAdapter {
       attachments: false,
       linkedIssues: false,
       comments: true,
+      milestones: false,
     };
   }
 

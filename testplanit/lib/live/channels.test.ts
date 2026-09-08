@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { testRunChannel, testRunProjectChannel } from "./channels";
+import {
+  milestoneChannel,
+  milestoneProjectChannel,
+  testRunChannel,
+  testRunProjectChannel,
+} from "./channels";
 
 describe("testRunChannel", () => {
   it("formats the channel key as live:tenant:<id>:testrun:<runId>", () => {
@@ -50,6 +55,72 @@ describe("testRunProjectChannel", () => {
     expect(() => testRunProjectChannel("acme", 0)).toThrow(/positive integer/);
     expect(() => testRunProjectChannel("acme", -1)).toThrow(/positive integer/);
     expect(() => testRunProjectChannel("acme", 1.5)).toThrow(
+      /positive integer/
+    );
+  });
+});
+
+describe("milestoneChannel", () => {
+  it("formats the channel key as live:tenant:<id>:milestone:<milestoneId>", () => {
+    expect(milestoneChannel("acme", 42)).toBe("live:tenant:acme:milestone:42");
+  });
+
+  it("scopes by tenant — different tenants don't share a channel", () => {
+    expect(milestoneChannel("acme", 42)).not.toBe(
+      milestoneChannel("globex", 42)
+    );
+  });
+
+  it("rejects missing tenantId", () => {
+    expect(() => milestoneChannel("", 42)).toThrow(/tenantId is required/);
+  });
+
+  it("rejects non-positive milestoneId", () => {
+    expect(() => milestoneChannel("acme", 0)).toThrow(/positive integer/);
+    expect(() => milestoneChannel("acme", -1)).toThrow(/positive integer/);
+    expect(() => milestoneChannel("acme", 1.5)).toThrow(/positive integer/);
+  });
+});
+
+describe("milestoneProjectChannel", () => {
+  it("formats the key as live:tenant:<id>:project:<projectId>:milestones", () => {
+    expect(milestoneProjectChannel("acme", 7)).toBe(
+      "live:tenant:acme:project:7:milestones"
+    );
+  });
+
+  it("scopes by tenant", () => {
+    expect(milestoneProjectChannel("acme", 7)).not.toBe(
+      milestoneProjectChannel("globex", 7)
+    );
+  });
+
+  it("does not collide with milestoneChannel for an id-sharing project/milestone pair", () => {
+    expect(milestoneProjectChannel("acme", 42)).not.toBe(
+      milestoneChannel("acme", 42)
+    );
+  });
+
+  it("does not collide with testRunProjectChannel for a shared project id", () => {
+    expect(milestoneProjectChannel("acme", 7)).not.toBe(
+      testRunProjectChannel("acme", 7)
+    );
+  });
+
+  it("rejects missing tenantId", () => {
+    expect(() => milestoneProjectChannel("", 7)).toThrow(
+      /tenantId is required/
+    );
+  });
+
+  it("rejects non-positive projectId", () => {
+    expect(() => milestoneProjectChannel("acme", 0)).toThrow(
+      /positive integer/
+    );
+    expect(() => milestoneProjectChannel("acme", -1)).toThrow(
+      /positive integer/
+    );
+    expect(() => milestoneProjectChannel("acme", 1.5)).toThrow(
       /positive integer/
     );
   });

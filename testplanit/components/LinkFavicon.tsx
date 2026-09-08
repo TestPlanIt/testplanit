@@ -37,6 +37,10 @@ export function LinkFavicon({
     );
   }
   return (
+    // Raw <img> is intentional: next/image would proxy the favicon through our
+    // optimizer, defeating the privacy design above (internal hostnames must
+    // never touch the server) and requiring remotePatterns for arbitrary origins.
+    // eslint-disable-next-line @next/next/no-img-element
     <img
       src={iconUrl}
       alt=""

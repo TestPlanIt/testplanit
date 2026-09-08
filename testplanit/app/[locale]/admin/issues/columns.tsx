@@ -1,8 +1,10 @@
 import { DateFormatter } from "@/components/DateFormatter";
+import { stripHtmlTags } from "~/utils/stripHtmlTags";
 import { IssuePriorityDisplay } from "@/components/IssuePriorityDisplay";
 import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
 import { CasesListDisplay } from "@/components/tables/CaseListDisplay";
 import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
+import { MilestonesCountDisplay } from "@/components/tables/MilestonesCountDisplay";
 import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
 import { SessionsListDisplay } from "@/components/tables/SessionListDisplay";
 import { TestRunsListDisplay } from "@/components/tables/TestRunsListDisplay";
@@ -12,28 +14,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Issue } from "@prisma/client";
+import type { Issue } from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
 import DOMPurify from "dompurify";
-import { Plug, SquarePen, Trash2 } from "lucide-react";
+import { Plug, SquarePen, Trash } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { SyncIssue } from "./SyncIssue";
-
-// Helper function to strip HTML tags and get plain text
-function stripHtmlTags(html: string | null): string {
-  if (!html) return "";
-  // Remove HTML tags and decode HTML entities
-  return html
-    .replace(/<[^>]*>/g, "") // Remove HTML tags
-    .replace(/&nbsp;/g, " ") // Replace &nbsp; with space
-    .replace(/&amp;/g, "&") // Replace &amp; with &
-    .replace(/&lt;/g, "<") // Replace &lt; with <
-    .replace(/&gt;/g, ">") // Replace &gt; with >
-    .replace(/&quot;/g, '"') // Replace &quot; with "
-    .replace(/&#39;/g, "'") // Replace &#39; with '
-    .trim();
-}
 
 export interface ExtendedIssue extends Issue {
   repositoryCases: { id: number }[];
@@ -45,6 +32,7 @@ export interface ExtendedIssue extends Issue {
   repositoryCasesCount?: number;
   sessionsCount?: number;
   testRunsCount?: number;
+  milestonesCount?: number;
 }
 
 /**
@@ -166,7 +154,7 @@ export function useIssueColumns({
                       }}
                     />
                   ) : (
-                    <p className="text-sm whitespace-pre-wrap">{title}</p>
+                    <p className="text-sm whitespace-pre-wrap">{plainText}</p>
                   )}
                 </div>
               </PopoverContent>
@@ -211,7 +199,7 @@ export function useIssueColumns({
                   </h4>
                   {hasHtml ? (
                     <div
-                      className="text-sm [&_a]:text-primary [&_a]:underline [&_p]:mb-2 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:ml-4 [&_ol]:list-decimal [&_ol]:ml-4"
+                      className="text-sm [&_a]:text-primary [&_a]:underline [&_p]:mb-2 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:ms-4 [&_ol]:list-decimal [&_ol]:ms-4"
                       dangerouslySetInnerHTML={{
                         __html: DOMPurify.sanitize(description, {
                           ALLOWED_TAGS: [
@@ -239,7 +227,7 @@ export function useIssueColumns({
                       }}
                     />
                   ) : (
-                    <p className="text-sm whitespace-pre-wrap">{description}</p>
+                    <p className="text-sm whitespace-pre-wrap">{plainText}</p>
                   )}
                 </div>
               </PopoverContent>
@@ -320,9 +308,11 @@ export function useIssueColumns({
               <CasesListDisplay
                 count={count}
                 filter={{
-                  issues: {
+                  caseIssues: {
                     some: {
-                      id: row.original.id,
+                      issue: {
+                        id: row.original.id,
+                      },
                     },
                   },
                 }}
@@ -391,6 +381,36 @@ export function useIssueColumns({
         },
       },
       {
+        id: "milestones",
+        accessorKey: "milestones",
+        accessorFn: (row) => row.milestonesCount ?? 0,
+        header: tCommon("fields.milestones"),
+        enableSorting: false,
+        enableResizing: true,
+        size: 75,
+        minSize: 60,
+        maxSize: 150,
+        cell: ({ row }) => {
+          const count = row.original.milestonesCount;
+          return (
+            <div className="text-center">
+              <MilestonesCountDisplay
+                count={count}
+                filter={{
+                  milestoneIssues: {
+                    some: {
+                      issueId: row.original.id,
+                    },
+                  },
+                  isDeleted: false,
+                }}
+                isLoading={isLoadingCounts}
+              />
+            </div>
+          );
+        },
+      },
+      {
         id: "projects",
         accessorKey: "projects",
         header: tCommon("fields.projects"),
@@ -443,7 +463,7 @@ export function useIssueColumns({
         minSize: 120,
         maxSize: 200,
         cell: ({ row }) => (
-          <div className="bg-primary-foreground whitespace-nowrap flex justify-center gap-1">
+          <div className="bg-primary-foreground whitespace-nowrap flex justify-end gap-1">
             <SyncIssue key={`sync-${row.original.id}`} issue={row.original} />
             <Button
               variant="ghost"
@@ -459,12 +479,12 @@ export function useIssueColumns({
               onClick={() => onDeleteIssue?.(row.original)}
               aria-label={tCommon("actions.delete")}
             >
-              <Trash2 className="h-5 w-5" />
+              <Trash className="h-5 w-5" />
             </Button>
           </div>
         ),
       },
     ],
-    [tCommon, onEditIssue, onDeleteIssue]
+    [tCommon, onEditIssue, onDeleteIssue, isLoadingCounts]
   );
 }

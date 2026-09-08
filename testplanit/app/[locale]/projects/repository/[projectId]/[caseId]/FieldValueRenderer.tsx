@@ -25,14 +25,15 @@ import StepsForm from "../StepsForm";
 import { StepsDisplay } from "./StepsDisplay";
 import { StepsResults } from "./StepsResults";
 
-import { Steps as PrismaSteps } from "@prisma/client";
+import type { Steps as DbSteps } from "~/zenstack/models";
 import { Minus, Plus } from "lucide-react";
 import { Link } from "~/lib/navigation";
 import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 import { ensureTipTapJSON } from "~/utils/tiptapConversion";
+import { editorMinHeightStyle } from "~/utils/editorHeight";
 
 // Re-defining DisplayStep here for clarity, assuming it's similar to StepsDisplay's internal type
-interface DisplayStep extends PrismaSteps {
+interface DisplayStep extends DbSteps {
   isShared?: boolean;
   sharedStepGroupId: number | null;
   sharedStepGroupName?: string | null;
@@ -191,7 +192,7 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
                       name={option.fieldOption.icon?.name as IconName}
                       color={option.fieldOption.iconColor?.value}
                     />
-                    <span className="pr-1">{option.fieldOption.name}</span>
+                    <span className="pe-1">{option.fieldOption.name}</span>
                   </div>
                 ) : (
                   <div key={val} className="text-gray-500">
@@ -218,7 +219,7 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
 
               return (
                 <MultiSelect
-                  className="ml-1"
+                  className="ms-1"
                   value={caseField.caseField.fieldOptions
                     .filter((option: any) =>
                       valueArray.includes(option.fieldOption.id)
@@ -228,7 +229,7 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
                       label: (
                         <div className="flex items-center">
                           <DynamicIcon
-                            className="h-4 w-4 mr-1"
+                            className="h-4 w-4 me-1"
                             name={option.fieldOption.icon?.name as IconName}
                             color={option.fieldOption.iconColor?.value}
                           />
@@ -252,7 +253,7 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
                       label: (
                         <div className="flex items-center">
                           <DynamicIcon
-                            className="h-4 w-4 mr-1"
+                            className="h-4 w-4 me-1"
                             name={option.fieldOption.icon?.name as IconName}
                             color={option.fieldOption.iconColor?.value}
                           />
@@ -280,13 +281,13 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
             (option: any) => option.fieldOption.id === value
           );
           return (
-            <div className="flex items-center space-x-1 ml-1 w-fit">
+            <div className="flex items-center space-x-1 ms-1 w-fit">
               <DynamicIcon
                 className="w-5 h-5 min-w-5 min-h-5"
                 name={option?.fieldOption.icon?.name as IconName}
                 color={option?.fieldOption.iconColor?.value}
               />
-              <span className="pr-1">{option?.fieldOption.name}</span>
+              <span className="pe-1">{option?.fieldOption.name}</span>
             </div>
           );
         };
@@ -321,7 +322,7 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
                       >
                         <div className="flex items-center">
                           <DynamicIcon
-                            className="shrink-0 mr-1"
+                            className="shrink-0 me-1"
                             name={option.fieldOption.icon?.name as IconName}
                             color={option.fieldOption.iconColor?.value}
                           />
@@ -511,22 +512,16 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
                 (cf: any) => cf.caseField.id === fieldId
               )?.caseField;
               const initialHeight = caseFieldDefinition?.initialHeight;
-              const editorClassName = `ring-2 ring-muted rounded-lg ${
-                initialHeight ? `min-h-[${initialHeight}px]` : "min-h-[300px]"
-              }`;
 
               return (
-                <div className={editorClassName}>
+                <div className="ring-2 ring-muted rounded-lg">
                   <TipTapEditor
                     key={fieldId}
                     content={initialEditorContent}
                     onUpdate={handleEditorUpdate}
                     projectId={projectId ? String(projectId) : undefined}
-                    className={
-                      initialHeight
-                        ? `min-h-[${initialHeight}px]`
-                        : "min-h-[100px]" // Keep inner class if needed, or adjust
-                    }
+                    className=""
+                    style={editorMinHeightStyle(initialHeight)}
                     readOnly={!isEditorEditable}
                   />
                 </div>

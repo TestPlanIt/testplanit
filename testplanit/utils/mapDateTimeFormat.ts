@@ -1,4 +1,4 @@
-import { DateFormat, TimeFormat } from "@prisma/client";
+import { DateFormat, TimeFormat } from "~/zenstack/models";
 
 // Mapping enums to date-fns format strings
 const dateFormats: Record<DateFormat, string> = {

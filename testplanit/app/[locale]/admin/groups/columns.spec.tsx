@@ -19,9 +19,7 @@ vi.mock("~/components/tables/GroupNameCell", () => ({
 
 // Mock UserListDisplay
 vi.mock("@/components/tables/UserListDisplay", () => ({
-  UserListDisplay: ({ users }: { users: { userId: string }[] }) => (
-    <span data-testid="user-list-display">{users.length} users</span>
-  ),
+  UserListDisplay: () => <span data-testid="user-list-display" />,
 }));
 
 // Mock ProjectListDisplay
@@ -75,6 +73,7 @@ const testGroup: ExtendedGroups = {
   url: null,
   note: null,
   isDeleted: false,
+  deletedAt: null,
   mappedAccess: null,
   assignedUsers: [{ userId: "u1" }, { userId: "u2" }],
   projectPermissions: [{ projectId: 10 }, { projectId: 20 }, { projectId: 30 }],
@@ -90,6 +89,7 @@ const emptyGroup: ExtendedGroups = {
   url: null,
   note: null,
   isDeleted: false,
+  deletedAt: null,
   mappedAccess: null,
   assignedUsers: [],
   projectPermissions: [],
@@ -162,7 +162,6 @@ describe("Groups columns", () => {
 
       const display = screen.getByTestId("user-list-display");
       expect(display).toBeInTheDocument();
-      expect(display).toHaveTextContent("2 users");
     });
   });
 

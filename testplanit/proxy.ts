@@ -3,6 +3,9 @@ import createMiddleware from "next-intl/middleware";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { checkApiRateLimit, type RateLimitResult } from "~/lib/api-rate-limit";
+import { isLinkPreviewBot, matchPreviewRoute } from "~/lib/linkPreview";
+import { normalizeRecordKeyPath } from "~/lib/recordKeyRoutes";
+import { getCachedSessionUser } from "~/lib/session-cache";
 import { defaultLocale, locales } from "./i18n/navigation";
 
 const middleware = createMiddleware({
@@ -71,9 +74,43 @@ function isExternalApiRequest(request: NextRequest): boolean {
   return true;
 }
 
+/**
+ * Matches the OAuth "connect an integration" routes (e.g.
+ * /api/integrations/oauth/jira/auth and /api/integrations/oauth/jira/callback).
+ *
+ * The callback leg is hit via a genuine cross-site browser redirect: the
+ * provider (auth.atlassian.com, github.com, etc.) navigates the user's
+ * browser back to us with Origin/Referer set to the provider's own domain,
+ * not ours. That trips isExternalApiRequest() even though this is an
+ * ordinary session-cookie-authenticated browser flow, not a programmatic
+ * API call — the route itself still enforces auth via getServerSession.
+ * Both legs are exempted for symmetry.
+ */
+function isOAuthIntegrationRoute(pathname: string): boolean {
+  return /^\/api\/integrations\/oauth\/[^/]+\/(auth|callback)$/.test(pathname);
+}
+
 export default async function middlewareWithPreferences(request: NextRequest) {
   const url = new URL(request.url);
   const pathname = url.pathname;
+
+  // Cosmetic project-prefixed record keys: if a detail-route URL carries a
+  // prefixed key (e.g. /projects/repository/5/PROJECT-TC-1234),
+  // redirect to the canonical numeric URL (/projects/repository/5/1234) before
+  // anything else runs. The number is embedded in the key, so this is a pure
+  // string transform — no DB lookup. Browser routes only (never /api/*).
+  if (!pathname.startsWith("/api/")) {
+    const firstSegment = pathname.split("/")[1] ?? "";
+    const hasLocale = (locales as readonly string[]).includes(firstSegment);
+    const localePrefix = hasLocale ? `/${firstSegment}` : "";
+    const pathAfterLocale = pathname.slice(localePrefix.length);
+    const normalized = normalizeRecordKeyPath(pathAfterLocale);
+    if (normalized) {
+      const redirectUrl = new URL(request.url);
+      redirectUrl.pathname = `${localePrefix}${normalized}`;
+      return NextResponse.redirect(redirectUrl);
+    }
+  }
 
   // Handle /share and /passwordless routes - redirect to localized version
   // These are entered from emailed (locale-less) URLs, so we redirect to the
@@ -202,13 +239,29 @@ export default async function middlewareWithPreferences(request: NextRequest) {
     }
 
     // Check if this is an external API request
-    // Share API routes and internal shared-report fetches are exempt
-    const isShareBypass =
-      pathname.startsWith("/api/share/") ||
-      request.headers.get("x-shared-report-bypass") === "true";
-    if (!isShareBypass && isExternalApiRequest(request)) {
+    // Share API routes are exempt. (Internal shared-report fetches no longer
+    // need an exemption here: they carry no cookies, so they fall through the
+    // no-token branch above and are authorized by the report routes via the
+    // internal bypass token.)
+    const isShareBypass = pathname.startsWith("/api/share/");
+    const isOAuthBypass = isOAuthIntegrationRoute(pathname);
+    if (!isShareBypass && !isOAuthBypass && isExternalApiRequest(request)) {
       // For external API requests, user must have isApi enabled
-      if (!token.isApi) {
+      let hasApiAccess = token.isApi === true;
+
+      // token.isApi is baked into the JWT at login/refresh time and can lag
+      // a DB grant for the life of the session (its JWT is only refreshed on
+      // sign-in or an explicit client-side update — enabling the admin
+      // toggle doesn't touch a user's existing session). Before blocking,
+      // re-check against the same short-TTL cache the session callback uses
+      // (see lib/session-cache.ts), so a grant takes effect within seconds
+      // instead of requiring the user to log out and back in.
+      if (!hasApiAccess && token.sub) {
+        const cached = await getCachedSessionUser(token.sub);
+        hasApiAccess = cached?.isApi === true;
+      }
+
+      if (!hasApiAccess) {
         return NextResponse.json(
           { error: "External API access not enabled for this account" },
           { status: 403 }
@@ -297,9 +350,34 @@ export default async function middlewareWithPreferences(request: NextRequest) {
 
     // For unauthenticated users trying to access protected routes
     if (!token) {
-      // Redirect to signin page
       const pathSegments = pathname.split("/").filter(Boolean);
       const locale = pathSegments[0] || defaultLocale;
+
+      // Link unfurlers (Slack, Teams, iMessage, …) fetch the URL with no
+      // cookies. Redirecting them to /signin makes every shared deep link
+      // preview as the sign-in page's metadata — one generic card for the whole
+      // app. Rewrite to a metadata-only document instead so the card reflects
+      // what was actually shared. The rewrite keeps the URL and status, renders
+      // none of the app shell, and reads no record data unless the instance
+      // opted in via LINK_PREVIEW_MODE.
+      if (isLinkPreviewBot(request.headers.get("user-agent"))) {
+        const { entity, id } = matchPreviewRoute(pathWithoutLocale);
+
+        // The handler still sees the *incoming* URL after a rewrite, so the
+        // destination's query string never reaches it — pass what it needs as
+        // request headers, which Next does propagate to rewrite destinations.
+        const previewHeaders = new Headers(request.headers);
+        previewHeaders.set("x-link-preview-entity", entity);
+        previewHeaders.set("x-link-preview-locale", locale);
+        previewHeaders.set("x-link-preview-path", pathname);
+        if (id !== null) previewHeaders.set("x-link-preview-id", String(id));
+
+        return NextResponse.rewrite(new URL("/api/link-preview", request.url), {
+          request: { headers: previewHeaders },
+        });
+      }
+
+      // Redirect to signin page
       const redirectUrl = new URL(request.url);
       redirectUrl.pathname = `/${locale}/signin`;
       // Preserve error parameter from NextAuth (e.g., expired magic link)

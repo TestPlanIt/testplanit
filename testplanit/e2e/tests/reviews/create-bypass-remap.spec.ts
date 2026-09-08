@@ -1,8 +1,10 @@
 import { expect, test } from "../../fixtures";
+import { sameOriginRequestHeaders } from "../../utils/secondary-context-login";
 import {
   createGatedTestWorkflow,
   getProjectWorkflowIds,
   setProjectReviewWorkflowEnabled,
+  signInGateActor,
   softDeleteWorkflow,
 } from "./helpers";
 
@@ -20,6 +22,7 @@ import {
 
 test.describe("create-time state remap (gated create bypass)", () => {
   let gatedWorkflowId: number | null = null;
+  const createdUserIds: string[] = [];
 
   test.afterEach(async ({ request, baseURL }) => {
     const url = baseURL!;
@@ -27,9 +30,20 @@ test.describe("create-time state remap (gated create bypass)", () => {
       await softDeleteWorkflow(request, url, gatedWorkflowId);
       gatedWorkflowId = null;
     }
+    while (createdUserIds.length) {
+      const id = createdUserIds.pop();
+      if (id) {
+        await request
+          .patch(`${url}/api/model/user/update`, {
+            data: { where: { id }, data: { isDeleted: true } },
+          })
+          .catch(() => {});
+      }
+    }
   });
 
   test("create with gated state.connect.id remaps to default state", async ({
+    browser,
     request,
     baseURL,
     api,
@@ -107,12 +121,24 @@ test.describe("create-time state remap (gated create bypass)", () => {
       );
     });
 
-    await test.step("Create a case with a gated state.connect.id", async () => {
+    // The remap only applies to non-admins — system ADMINs bypass gating and
+    // keep the state they asked for — so the create must come from a
+    // non-admin session.
+    const { context: actorContext, userId: actorUserId } =
+      await signInGateActor(browser, request, url, api, createdUserIds);
+
+    // Assign the actor to the project: the PROJECTADMIN blanket-write branch
+    // in the schema is assignment-gated, which keeps this create authorized
+    // even while a parallel admin spec edits role permission grids (the
+    // default-access write branch depends on the actor's role grid).
+    await api.assignUserToProject(actorUserId, projectId!);
+
+    await test.step("Create a case with a gated state.connect.id as a non-admin", async () => {
       // POST a create with state.connect.id pointing at the gated workflow.
       // The auto-API path should remap to the default state.
-      const res = await request.post(
-        `${url}/api/model/repositoryCases/create`,
-        {
+      const postCreate = () =>
+        actorContext.request.post(`${url}/api/model/repositoryCases/create`, {
+          headers: sameOriginRequestHeaders(),
           data: {
             data: {
               name: caseName,
@@ -129,10 +155,21 @@ test.describe("create-time state remap (gated create bypass)", () => {
               state: { connect: { id: gatedWorkflowId } },
             },
           },
-        }
-      );
+        });
 
-      expect(res.status()).toBeLessThan(300);
+      // The remap resolves "the default state" through the project's workflow
+      // assignments, and admin-workflows-default-edit.spec.ts saves the seeded
+      // default workflow by delete-then-recreating those assignment rows for
+      // EVERY project. While that window is open the remap finds no default
+      // and the route fails loudly with 422 by design. That is an unrelated
+      // spec's window, not this contract — retry briefly before failing.
+      let res = await postCreate();
+      for (let attempt = 0; res.status() === 422 && attempt < 4; attempt++) {
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        res = await postCreate();
+      }
+
+      expect(res.status(), await res.text()).toBeLessThan(300);
       const body = await res.json();
       created = body?.data;
       expect(created?.id).toBeTruthy();
@@ -144,5 +181,7 @@ test.describe("create-time state remap (gated create bypass)", () => {
       expect(created.stateId).toBe(defaultStateId);
       expect(created.stateId).not.toBe(gatedWorkflowId);
     });
+
+    await actorContext.close();
   });
 });

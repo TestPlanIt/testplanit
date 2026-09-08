@@ -1,4 +1,4 @@
-import { IntegrationProvider } from "@prisma/client";
+import { IntegrationProvider } from "~/zenstack/models";
 import { Bug } from "lucide-react";
 import { siGithub, siGitlab, siJira, siRedmine } from "simple-icons";
 import { GiteaPlatformIcon } from "@/components/shared/gitea-family-icon";

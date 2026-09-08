@@ -2,7 +2,7 @@
  * Shared (client-safe) types and helpers for test-run summary data.
  *
  * Lives separately from `testRunSummary.ts` because that module imports
- * `~/lib/prisma`, which pulls server-only deps into client bundles. Pure
+ * `~/lib/db`, which pulls server-only deps into client bundles. Pure
  * data shapes and aggregation helpers belong here so both the in-app
  * TestRunCasesSummary component and the test_run.completed Slack
  * formatter can call them.
@@ -11,6 +11,19 @@
 export type TestRunSummaryData = {
   testRunType: string;
   workflowType?: "NOT_STARTED" | "IN_PROGRESS" | "DONE" | null;
+  /** For automated runs: newest imported suite/result write, falling back to
+   *  the run's creation (ISO string). The runs-page Automation card uses it
+   *  to stop the "importing" spinner on runs that have gone quiet. Only the
+   *  batch summaries endpoint populates it. */
+  lastActivityAt?: string | null;
+  /** Earliest recorded result for the run (ISO string), or null on a run
+   *  nobody has executed yet. The run's start date is derived from execution,
+   *  not from when the run was created. */
+  firstResultAt?: string | null;
+  /** Latest recorded result (ISO string). Callers show it as the run's end
+   *  date only once the run is completed — on an open run the newest result
+   *  is just the last thing that happened, not an ending. */
+  lastResultAt?: string | null;
   totalCases: number;
   statusCounts: Array<{
     statusId: number | null;

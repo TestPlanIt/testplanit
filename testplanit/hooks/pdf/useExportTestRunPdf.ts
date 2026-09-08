@@ -1,8 +1,11 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useCallback, useState } from "react";
-import { useFindUniqueTestRuns } from "~/lib/hooks";
 import { logDataExport } from "~/lib/services/auditClient";
+import { useRecordKeyConfig } from "~/hooks/useRecordKeyConfig";
+import { RECORD_TYPES } from "~/lib/recordKey";
 import { toHumanReadable } from "~/utils/duration";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import { formatFieldValue, PdfRenderer, preloadImages } from "./pdfHelpers";
@@ -14,7 +17,7 @@ import { formatFieldValue, PdfRenderer, preloadImages } from "./pdfHelpers";
  * rather than on every run-page load.
  */
 const EXPORT_INCLUDE = {
-  project: { select: { id: true, name: true } },
+  project: { select: { id: true, name: true, key: true } },
   configuration: { select: { name: true } },
   milestone: { select: { name: true } },
   state: { select: { name: true } },
@@ -87,10 +90,24 @@ const EXPORT_INCLUDE = {
           stepResults: {
             where: { isDeleted: false },
             select: {
+              id: true,
               stepId: true,
               sharedStepItemId: true,
               notes: true,
               elapsed: true,
+              // Read through the result's own to-one relations so a result
+              // whose step was soft-deleted still has content to render.
+              step: {
+                select: {
+                  step: true,
+                  expectedResult: true,
+                  order: true,
+                  testCaseId: true,
+                },
+              },
+              sharedStepItem: {
+                select: { step: true, expectedResult: true },
+              },
               stepStatus: {
                 select: { name: true, color: { select: { value: true } } },
               },
@@ -135,9 +152,10 @@ export function useExportTestRunPdf({
   locale = "en-US",
 }: UseExportTestRunPdfProps) {
   const [isExporting, setIsExporting] = useState(false);
+  const { formatKey } = useRecordKeyConfig();
 
   // Disabled query; the heavy data is fetched only when the user exports.
-  const { refetch } = useFindUniqueTestRuns(
+  const { refetch } = useClientQueries(schema).testRuns.useFindUnique(
     { where: { id: testRunId ?? 0 }, include: EXPORT_INCLUDE },
     { enabled: false }
   );
@@ -171,6 +189,14 @@ export function useExportTestRunPdf({
 
       // --- Test Run Header ---
       pdf.renderSectionHeader(testRunData.name);
+      pdf.renderField(
+        "Key",
+        formatKey(
+          RECORD_TYPES.TEST_RUN,
+          testRunData.project?.key,
+          testRunData.id
+        )
+      );
 
       // --- Metadata ---
       if (testRunData.testRunType && testRunData.testRunType !== "REGULAR") {
@@ -289,6 +315,16 @@ export function useExportTestRunPdf({
 
           pdf.ensureSpace(20);
           pdf.renderSubHeader(caseName);
+          if (tc.repositoryCase?.id != null) {
+            pdf.renderField(
+              "Key",
+              formatKey(
+                RECORD_TYPES.TEST_CASE,
+                testRunData.project?.key,
+                tc.repositoryCase.id
+              )
+            );
+          }
           pdf.renderField("Status", statusName, {
             color: hexToRgb(statusObj?.color?.value),
           });
@@ -326,7 +362,8 @@ export function useExportTestRunPdf({
           // recorded result overlaid when the step has one.
           const stepRows = buildStepRows(
             tc.repositoryCase?.steps,
-            latestResult?.stepResults
+            latestResult?.stepResults,
+            tc.repositoryCase?.id
           );
           if (stepRows.length > 0) {
             pdf.addSpace(2);
@@ -334,6 +371,9 @@ export function useExportTestRunPdf({
             for (const row of stepRows) {
               pdf.ensureSpace(18);
               pdf.renderStepHeading(row.num, row.stepText || "");
+              if (row.removed) {
+                pdf.renderDetail("Note", "Removed from test case");
+              }
               if (row.sharedGroup) {
                 pdf.renderDetail("Shared step", row.sharedGroup);
               }
@@ -425,7 +465,7 @@ export function useExportTestRunPdf({
     } finally {
       setIsExporting(false);
     }
-  }, [testRunId, projectId, refetch, embedImages, locale]);
+  }, [testRunId, projectId, refetch, embedImages, locale, formatKey]);
 
   return { isExporting, handleExport };
 }
@@ -435,6 +475,8 @@ interface StepRow {
   stepText: string | null;
   expectedText: string | null;
   sharedGroup?: string;
+  /** Result whose step is no longer on the case (soft-deleted after the run). */
+  removed?: boolean;
   result?: any;
 }
 
@@ -443,14 +485,19 @@ interface StepRow {
  * placeholders into their group items, and matches each row to its recorded
  * step result (by step id, plus shared-step item id for shared steps).
  *
+ * Results with no matching authored step are appended rather than dropped:
+ * their step was soft-deleted from the case after the run was executed, but
+ * the result is still a record of what was run. Those rows are flagged
+ * `removed` so the PDF can say so. Such a result is only adopted when its step
+ * is known to belong to `testCaseId`, so a stray result can never leak in.
+ *
  * Exported for unit testing.
  */
 export function buildStepRows(
   steps: any[] | undefined,
-  stepResults: any[] | undefined
+  stepResults: any[] | undefined,
+  testCaseId?: number
 ): StepRow[] {
-  if (!steps || steps.length === 0) return [];
-
   const resultByKey = new Map<string, any>();
   for (const sr of stepResults ?? []) {
     resultByKey.set(`${sr.stepId}:${sr.sharedStepItemId ?? ""}`, sr);
@@ -458,7 +505,9 @@ export function buildStepRows(
 
   const rows: StepRow[] = [];
   let num = 0;
-  const ordered = [...steps].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  const ordered = [...(steps ?? [])].sort(
+    (a, b) => (a.order ?? 0) - (b.order ?? 0)
+  );
 
   for (const step of ordered) {
     const sharedItems = step.sharedStepGroup?.items;
@@ -485,6 +534,28 @@ export function buildStepRows(
         result: resultByKey.get(`${step.id}:`),
       });
     }
+  }
+
+  const matched = new Set(rows.map((row) => row.result).filter(Boolean));
+  const orphans = (stepResults ?? [])
+    .filter(
+      (sr) =>
+        !matched.has(sr) &&
+        testCaseId !== undefined &&
+        sr.step?.testCaseId === testCaseId
+    )
+    .sort((a, b) => (a.step?.order ?? 0) - (b.step?.order ?? 0) || a.id - b.id);
+
+  for (const sr of orphans) {
+    const content = sr.sharedStepItem ?? sr.step;
+    num++;
+    rows.push({
+      num,
+      stepText: extractJsonText(content?.step),
+      expectedText: extractJsonText(content?.expectedResult),
+      result: sr,
+      removed: true,
+    });
   }
 
   return rows;

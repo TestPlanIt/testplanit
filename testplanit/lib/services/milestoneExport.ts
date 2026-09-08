@@ -1,4 +1,5 @@
 import type { MilestoneSegment } from "~/lib/services/milestoneSummary";
+import type { MilestoneExternalKind } from "~/zenstack/models";
 
 /**
  * Pure shaping helpers for the milestone export snapshot.
@@ -57,6 +58,40 @@ export type MilestoneExportIssue = {
   status: string | null;
 };
 
+export type MilestoneExportMemberIssue = {
+  key: string;
+  title: string;
+  status: string | null;
+  source: "SYNCED" | "MANUAL";
+  /** Completed-outcome counts per real project status (matrix model). */
+  coverageStatuses: { statusName: string; count: number; colorValue: string }[];
+  untested: number;
+  /** No completed outcome in scope (issue-level gap state). */
+  uncovered: boolean;
+};
+
+export type MilestoneExportMemberCoverageTotals = {
+  statuses: { statusName: string; count: number; colorValue: string }[];
+  untested: number;
+  uncoveredIssues: number;
+};
+
+/**
+ * One row of the traceability matrix (READY, D4): a member issue paired with a
+ * linked test case and that case's latest in-scope result. Issues with no
+ * linked cases appear once with a null `caseName` (a coverage gap); a linked
+ * case with no in-scope result has a null `statusName` ("Not run").
+ */
+export type MilestoneExportTraceabilityRow = {
+  issueKey: string;
+  issueTitle: string;
+  caseName: string | null;
+  statusName: string | null;
+  statusColor: string | null;
+  runName: string | null;
+  executedAt: string | null;
+};
+
 export type MilestoneExportReviewDecision = {
   entityType: "RUN" | "SESSION";
   entityId: number;
@@ -75,6 +110,8 @@ export type MilestoneExportData = {
     startedAt: string | null;
     completedAt: string | null;
     createdAt: string;
+    /** Distinguishes calendar dates from instants; see `hasCalendarDates`. */
+    externalKind: MilestoneExternalKind | null;
     ownerName: string | null;
     typeName: string | null;
     parentPath: string[];
@@ -84,6 +121,9 @@ export type MilestoneExportData = {
   sessions: MilestoneExportSession[];
   descendants: MilestoneExportDescendant[];
   issues: MilestoneExportIssue[];
+  memberIssues: MilestoneExportMemberIssue[];
+  memberCoverageTotals: MilestoneExportMemberCoverageTotals;
+  traceability: MilestoneExportTraceabilityRow[];
   reviewDecisions: MilestoneExportReviewDecision[];
   generatedAt: string;
   projectId: number;

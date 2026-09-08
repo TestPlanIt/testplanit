@@ -1,0 +1,5 @@
+---
+"@testplanit/mcp-server": minor
+---
+
+Add run-case editing tools. `testplanit_runs_cases_update` edits a test case's row within a run — assign or unassign a tester (`assignedToId`, null to unassign) and change its position (`order`) — returning the row in the same shape as `testplanit_test_runs_cases_list`. `testplanit_runs_cases_remove` removes cases from a run by repository case ID (the counterpart of `testplanit_runs_cases_add`), soft-deleting the junction rows along with their results, step results, and iterations to match the web UI's remove-cases flow; completed and composition-locked runs are rejected with a clear error. `testplanit_runs_cases_add` now restores a previously removed case instead of silently skipping it, and reports a `restored` count. Run listings and rollups (`testplanit_test_runs_list` / `testplanit_test_runs_get` / `testplanit_test_runs_cases_list`) now exclude soft-removed run cases, matching the web UI — previously cases removed from a run in the app still appeared in MCP results and status counts.

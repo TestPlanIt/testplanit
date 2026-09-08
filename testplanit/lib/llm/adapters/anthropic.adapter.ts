@@ -7,11 +7,19 @@ import type {
   ModelCapabilities,
   RateLimitInfo,
 } from "../types";
+import { contentImages, flattenToText } from "../content";
 import { BaseLlmAdapter } from "./base.adapter";
+
+type AnthropicContentBlock =
+  | { type: "text"; text: string }
+  | {
+      type: "image";
+      source: { type: "base64"; media_type: string; data: string };
+    };
 
 interface AnthropicMessage {
   role: "user" | "assistant";
-  content: string;
+  content: string | AnthropicContentBlock[];
 }
 
 interface AnthropicRequest {
@@ -25,14 +33,20 @@ interface AnthropicRequest {
   system?: string;
 }
 
+/**
+ * A block in a Messages API response. Only `text` blocks carry `text`;
+ * `thinking` / `redacted_thinking` / `tool_use` blocks do not.
+ */
+interface AnthropicResponseBlock {
+  type: string;
+  text?: string;
+}
+
 interface AnthropicResponse {
   id: string;
   type: string;
   role: string;
-  content: Array<{
-    type: string;
-    text: string;
-  }>;
+  content: AnthropicResponseBlock[];
   model: string;
   stop_reason: string;
   stop_sequence: string | null;
@@ -58,6 +72,24 @@ interface AnthropicStreamEvent {
   };
 }
 
+/**
+ * Concatenate the `text` blocks of a response. Thinking-enabled models
+ * (Claude Opus 5 and later) return a `thinking` block first, so the text is
+ * not `content[0]`; no text blocks yields "" and callers read `finishReason`.
+ */
+export function extractTextContent(
+  content: AnthropicResponseBlock[] | undefined
+): string {
+  if (!Array.isArray(content)) return "";
+  return content
+    .filter(
+      (block): block is AnthropicResponseBlock & { text: string } =>
+        block?.type === "text" && typeof block.text === "string"
+    )
+    .map((block) => block.text)
+    .join("");
+}
+
 export class AnthropicAdapter extends BaseLlmAdapter {
   private apiKey: string;
   private baseUrl: string;
@@ -72,7 +104,13 @@ export class AnthropicAdapter extends BaseLlmAdapter {
   constructor(config: LlmAdapterConfig) {
     super(config);
     this.apiKey = config.apiKey || "";
-    this.baseUrl = config.baseUrl || "https://api.anthropic.com/v1";
+    // Strip trailing slashes so appending `/messages` can't produce a double
+    // slash (e.g. a user-supplied `.../v1/` becoming `.../v1//messages`).
+    // Mirrors the normalization the available-models route already does.
+    this.baseUrl = (config.baseUrl || "https://api.anthropic.com/v1").replace(
+      /\/+$/,
+      ""
+    );
 
     if (!this.apiKey) {
       throw this.createError(
@@ -211,7 +249,8 @@ export class AnthropicAdapter extends BaseLlmAdapter {
                 currentModel = event.message.model;
               } else if (
                 event.type === "content_block_delta" &&
-                event.delta?.text
+                event.delta?.type === "text_delta" &&
+                event.delta.text
               ) {
                 yield {
                   delta: event.delta.text,
@@ -257,10 +296,12 @@ export class AnthropicAdapter extends BaseLlmAdapter {
   }
 
   async testConnection(): Promise<boolean> {
+    this.lastTestConnectionError = undefined;
+    const url = `${this.baseUrl}/messages`;
     try {
       // Send a minimal chat request to the same endpoint used by actual calls.
       // This catches misconfigurations like a missing /v1 path segment.
-      const response = await this.safeFetch(`${this.baseUrl}/messages`, {
+      const response = await this.safeFetch(url, {
         method: "POST",
         headers: this.getAnthropicHeaders(),
         body: JSON.stringify({
@@ -272,8 +313,23 @@ export class AnthropicAdapter extends BaseLlmAdapter {
       });
 
       // 200 = success, 400 = bad request (but endpoint is reachable and authenticated)
-      return response.status === 200 || response.status === 400;
-    } catch {
+      if (response.status === 200 || response.status === 400) {
+        return true;
+      }
+
+      // Capture the real reason (status + provider message) so the admin UI
+      // can show it instead of a generic "failed to connect". A proxy like
+      // LiteLLM, for example, returns 401/403 here when the key isn't
+      // authorized for the selected model.
+      const body = await response.text().catch(() => "");
+      this.lastTestConnectionError = this.summarizeHttpError(
+        response.status,
+        response.statusText,
+        body
+      );
+      return false;
+    } catch (error: any) {
+      this.lastTestConnectionError = this.describeConnectionError(url, error);
       return false;
     }
   }
@@ -340,7 +396,7 @@ export class AnthropicAdapter extends BaseLlmAdapter {
     const data = (await response.json()) as AnthropicResponse;
 
     return {
-      content: data.content[0].text,
+      content: extractTextContent(data.content),
       model: data.model,
       promptTokens: data.usage.input_tokens,
       completionTokens: data.usage.output_tokens,
@@ -471,18 +527,37 @@ export class AnthropicAdapter extends BaseLlmAdapter {
 
     for (const message of messages) {
       if (message.role === "system") {
-        systemMessage = systemMessage
-          ? `${systemMessage}\n\n${message.content}`
-          : message.content;
+        // The top-level `system` field is text-only by API contract.
+        const text = flattenToText(message.content);
+        systemMessage = systemMessage ? `${systemMessage}\n\n${text}` : text;
       } else if (message.role === "user" || message.role === "assistant") {
         userMessages.push({
           role: message.role,
-          content: message.content,
+          content: this.toAnthropicContent(message.content),
         });
       }
     }
 
     return { systemMessage, userMessages };
+  }
+
+  private toAnthropicContent(
+    content: LlmRequest["messages"][number]["content"]
+  ): string | AnthropicContentBlock[] {
+    if (typeof content === "string") return content;
+    if (contentImages(content).length === 0) return flattenToText(content);
+    return content.map((part): AnthropicContentBlock =>
+      part.type === "text"
+        ? { type: "text", text: part.text }
+        : {
+            type: "image",
+            source: {
+              type: "base64",
+              media_type: part.mimeType,
+              data: part.base64,
+            },
+          }
+    );
   }
 
   private async handleErrorResponse(response: Response): Promise<never> {
@@ -529,6 +604,8 @@ export class AnthropicAdapter extends BaseLlmAdapter {
         return "stop";
       case "max_tokens":
         return "length";
+      case "refusal":
+        return "content_filter";
       default:
         return "error";
     }

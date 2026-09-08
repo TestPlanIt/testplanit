@@ -6,6 +6,7 @@ import TestRunResultsDonut, {
 
 // Mock next-intl
 vi.mock("next-intl", () => ({
+  useLocale: () => "en-US",
   useTranslations: () => (key: string, params?: Record<string, any>) => {
     if (params) {
       return `${key}: ${JSON.stringify(params)}`;

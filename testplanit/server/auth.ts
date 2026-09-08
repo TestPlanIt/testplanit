@@ -1,4 +1,5 @@
-import type { PrismaClient, UserPreferences } from "@prisma/client";
+import type { UserPreferences } from "~/zenstack/models";
+import type { DbClient } from "~/lib/zenstack";
 import { compare } from "bcrypt";
 
 // Pre-computed bcrypt hash of a random string (cost=10).
@@ -29,7 +30,7 @@ import { getCachedSessionUser, touchLastActive } from "~/lib/session-cache";
 import { auditAuthEvent } from "~/lib/services/auditLog";
 import { isEmailDomainAllowed } from "~/lib/utils/email-domain-validation";
 import { db } from "~/server/db";
-import { createCustomPrismaAdapter } from "./auth-adapter";
+import { createCustomDbAdapter } from "./auth-adapter";
 
 /**
  * Helper function to generate Apple client secret from database config
@@ -235,15 +236,28 @@ async function getDynamicProviders() {
                   // Check if user exists and is active. Pull
                   // `userPreferences.locale` so the email is rendered
                   // in the recipient's language; fall back to en_US.
+                  // Emails match case-insensitively; an exact-cased row
+                  // wins when case-variant duplicates exist.
+                  const magicLinkUserSelect = {
+                    id: true,
+                    isActive: true,
+                    userPreferences: { select: { locale: true } },
+                  } as const;
                   const user = await db.user
                     .findUnique({
                       where: { email },
-                      select: {
-                        id: true,
-                        isActive: true,
-                        userPreferences: { select: { locale: true } },
-                      },
+                      select: magicLinkUserSelect,
                     })
+                    .then(
+                      (found) =>
+                        found ??
+                        db.user.findFirst({
+                          where: {
+                            email: { equals: email, mode: "insensitive" },
+                          },
+                          select: magicLinkUserSelect,
+                        })
+                    )
                     .catch((err) => {
                       console.error("Database error checking user:", err);
                       return null;
@@ -323,16 +337,29 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
             void touchLastActive(session.user.id, user);
           }
 
-          // SECURITY-03: Check if password was changed after JWT was issued.
-          // This uses a direct DB query, NOT the Valkey cache, because the cache
-          // TTL (60s) would allow stale sessions to persist after password change.
-          // Only check for credential-based users (SECURITY-04).
-          if (user?.authMethod === "INTERNAL" || user?.authMethod === "BOTH") {
-            const freshUser = await db.user.findUnique({
-              where: { id: session.user.id },
-              select: { passwordChangedAt: true },
-            });
+          // ONE query for both mid-session guards below.
+          //
+          // Both MUST read the database directly rather than the projection from
+          // getCachedSessionUser: its 60s TTL would let a stale session outlive a
+          // password change (SECURITY-03) or a deactivation. That requirement is
+          // unchanged — this is still an uncached read on every session check.
+          //
+          // What changed is that these were two separate findUnique calls
+          // against the SAME row, which made them the two highest-count queries
+          // on the instance (14.0M calls each, 8/s apiece, together 16% of all
+          // query volume). Selecting both columns at once halves that without
+          // weakening either guard. passwordChangedAt is now fetched even for
+          // auth methods that ignore it, which costs one extra column on a
+          // primary-key lookup and saves a whole round trip.
+          const freshUser = await db.user.findUnique({
+            where: { id: session.user.id },
+            select: { passwordChangedAt: true, isActive: true },
+          });
 
+          // SECURITY-03: password changed after this JWT was issued. Only
+          // meaningful for credential-based users (SECURITY-04). Evaluated
+          // FIRST so its invalidation short-circuits before anything below.
+          if (user?.authMethod === "INTERNAL" || user?.authMethod === "BOTH") {
             const dbPasswordChangedAt = freshUser?.passwordChangedAt ?? null;
             const tokenPasswordChangedAt = token.passwordChangedAt
               ? new Date(token.passwordChangedAt)
@@ -351,19 +378,11 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
             }
           }
 
-          // Mid-session deactivation guard: the cached projection in
-          // getCachedSessionUser does not include isActive, and its 60s TTL
-          // would let a deactivated user retain access until the cache
-          // expires. Re-read isActive directly from the DB on every
-          // session check across ALL authMethods — credential, SSO,
-          // and identity-source-provisioned users alike. A missing row
-          // does NOT short-circuit (a deleted user is a separate concern
-          // handled by the existing not-found behavior downstream).
-          const freshIsActiveRow = await db.user.findUnique({
-            where: { id: session.user.id },
-            select: { isActive: true },
-          });
-          if (freshIsActiveRow && freshIsActiveRow.isActive === false) {
+          // Mid-session deactivation guard, across ALL authMethods —
+          // credential, SSO, and identity-source-provisioned users alike. A
+          // missing row does NOT short-circuit (a deleted user is a separate
+          // concern handled by the existing not-found behavior downstream).
+          if (freshUser && freshUser.isActive === false) {
             return {} as Session;
           }
 
@@ -391,18 +410,27 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
       async signIn({ user, account }) {
         // For OAuth/SSO sign-ins
         if (account?.provider !== "credentials") {
-          // First check if user exists by email (not by ID, since ID might not exist yet)
+          // First check if user exists by email (not by ID, since ID might not
+          // exist yet). Emails match case-insensitively; an exact-cased row
+          // wins when case-variant duplicates exist.
+          const signInUserSelect = {
+            id: true,
+            authMethod: true,
+            isActive: true,
+            email: true,
+            name: true,
+          } as const;
           const dbUser = user.email
-            ? await db.user.findUnique({
+            ? ((await db.user.findUnique({
                 where: { email: user.email },
-                select: {
-                  id: true,
-                  authMethod: true,
-                  isActive: true,
-                  email: true,
-                  name: true,
+                select: signInUserSelect,
+              })) ??
+              (await db.user.findFirst({
+                where: {
+                  email: { equals: user.email, mode: "insensitive" },
                 },
-              })
+                select: signInUserSelect,
+              })))
             : null;
 
           // Prevent inactive users from signing in
@@ -590,7 +618,7 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
         return token;
       },
     },
-    adapter: createCustomPrismaAdapter(db),
+    adapter: createCustomDbAdapter(db),
     providers: [
       CredentialsProvider({
         credentials: {
@@ -713,16 +741,30 @@ export const authOptions: NextAuthOptions = {
           void touchLastActive(session.user.id, user);
         }
 
-        // SECURITY-03: Check if password was changed after JWT was issued.
-        // This uses a direct DB query, NOT the Valkey cache, because the cache
-        // TTL (60s) would allow stale sessions to persist after password change.
-        // Only check for credential-based users (SECURITY-04).
-        if (user?.authMethod === "INTERNAL" || user?.authMethod === "BOTH") {
-          const freshUser = await db.user.findUnique({
-            where: { id: session.user.id },
-            select: { passwordChangedAt: true },
-          });
+        // ONE query for both mid-session guards below.
+        //
+        // Both MUST read the database directly rather than the projection from
+        // getCachedSessionUser: its 60s TTL would let a stale session outlive a
+        // password change (SECURITY-03) or a deactivation. That requirement is
+        // unchanged — this is still an uncached read on every session check.
+        //
+        // What changed is that these were two separate findUnique calls against
+        // the SAME row. This callback runs on every getServerSession() across
+        // ~176 call sites, which made them the two highest-count queries on the
+        // instance (14.0M calls each, 8/s apiece, together 16% of all query
+        // volume). Selecting both columns at once halves that without weakening
+        // either guard. passwordChangedAt is now fetched even for auth methods
+        // that ignore it, which costs one extra column on a primary-key lookup
+        // and saves a whole round trip.
+        const freshUser = await db.user.findUnique({
+          where: { id: session.user.id },
+          select: { passwordChangedAt: true, isActive: true },
+        });
 
+        // SECURITY-03: password changed after this JWT was issued. Only
+        // meaningful for credential-based users (SECURITY-04). Evaluated FIRST
+        // so its invalidation short-circuits before anything below.
+        if (user?.authMethod === "INTERNAL" || user?.authMethod === "BOTH") {
           const dbPasswordChangedAt = freshUser?.passwordChangedAt ?? null;
           const tokenPasswordChangedAt = token.passwordChangedAt
             ? new Date(token.passwordChangedAt)
@@ -741,19 +783,11 @@ export const authOptions: NextAuthOptions = {
           }
         }
 
-        // Mid-session deactivation guard: the cached projection in
-        // getCachedSessionUser does not include isActive, and its 60s TTL
-        // would let a deactivated user retain access until the cache
-        // expires. Re-read isActive directly from the DB on every
-        // session check across ALL authMethods — credential, SSO,
-        // and identity-source-provisioned users alike. A missing row
-        // does NOT short-circuit (a deleted user is a separate concern
-        // handled by the existing not-found behavior downstream).
-        const freshIsActiveRow = await db.user.findUnique({
-          where: { id: session.user.id },
-          select: { isActive: true },
-        });
-        if (freshIsActiveRow && freshIsActiveRow.isActive === false) {
+        // Mid-session deactivation guard, across ALL authMethods — credential,
+        // SSO, and identity-source-provisioned users alike. A missing row does
+        // NOT short-circuit (a deleted user is a separate concern handled by the
+        // existing not-found behavior downstream).
+        if (freshUser && freshUser.isActive === false) {
           return {} as Session;
         }
 
@@ -781,18 +815,27 @@ export const authOptions: NextAuthOptions = {
     async signIn({ user, account }) {
       // For OAuth/SSO sign-ins
       if (account?.provider !== "credentials") {
-        // First check if user exists by email (not by ID, since ID might not exist yet)
+        // First check if user exists by email (not by ID, since ID might not
+        // exist yet). Emails match case-insensitively; an exact-cased row
+        // wins when case-variant duplicates exist.
+        const signInUserSelect = {
+          id: true,
+          authMethod: true,
+          isActive: true,
+          email: true,
+          twoFactorEnabled: true,
+        } as const;
         const dbUser = user.email
-          ? await db.user.findUnique({
+          ? ((await db.user.findUnique({
               where: { email: user.email },
-              select: {
-                id: true,
-                authMethod: true,
-                isActive: true,
-                email: true,
-                twoFactorEnabled: true,
+              select: signInUserSelect,
+            })) ??
+            (await db.user.findFirst({
+              where: {
+                email: { equals: user.email, mode: "insensitive" },
               },
-            })
+              select: signInUserSelect,
+            })))
           : null;
 
         // Prevent inactive users from signing in
@@ -959,7 +1002,7 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
   },
-  adapter: createCustomPrismaAdapter(db),
+  adapter: createCustomDbAdapter(db),
   providers: [
     CredentialsProvider({
       credentials: {
@@ -1009,7 +1052,7 @@ export const authOptions: NextAuthOptions = {
   ] as any[],
 };
 
-function authorize(prisma: PrismaClient) {
+function authorize(db: DbClient) {
   return async (
     credentials:
       | Record<
@@ -1032,7 +1075,7 @@ function authorize(prisma: PrismaClient) {
           throw new Error("Invalid pending auth token");
         }
 
-        const user = await prisma.user.findUnique({
+        const user = await db.user.findUnique({
           where: { id: pendingAuth.userId },
           select: {
             id: true,
@@ -1063,7 +1106,7 @@ function authorize(prisma: PrismaClient) {
         if (isLegacyEncryption(user.twoFactorSecret)) {
           try {
             const upgraded = encryptSecret(secret);
-            await prisma.user.update({
+            await db.user.update({
               where: { id: user.id },
               data: { twoFactorSecret: upgraded },
             });
@@ -1089,7 +1132,7 @@ function authorize(prisma: PrismaClient) {
             verified = true;
             // Remove used backup code
             hashedCodes.splice(codeIndex, 1);
-            await prisma.user.update({
+            await db.user.update({
               where: { id: user.id },
               data: { twoFactorBackupCodes: JSON.stringify(hashedCodes) },
             });
@@ -1130,21 +1173,29 @@ function authorize(prisma: PrismaClient) {
       throw new Error('"email" is required in credentials');
     if (!credentials.password)
       throw new Error('"password" is required in credentials');
-    const maybeUser = await prisma.user.findFirst({
-      where: { email: credentials.email },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        password: true,
-        isActive: true,
-        twoFactorEnabled: true,
-        authMethod: true,
-        failedLoginAttempts: true,
-        lockedUntil: true,
-        passwordChangedAt: true,
-      },
-    });
+    // Emails match case-insensitively; an exact-cased row wins when
+    // case-variant duplicates exist (so each keeps its own password).
+    const credentialsUserSelect = {
+      id: true,
+      email: true,
+      name: true,
+      password: true,
+      isActive: true,
+      twoFactorEnabled: true,
+      authMethod: true,
+      failedLoginAttempts: true,
+      lockedUntil: true,
+      passwordChangedAt: true,
+    } as const;
+    const maybeUser =
+      (await db.user.findFirst({
+        where: { email: credentials.email },
+        select: credentialsUserSelect,
+      })) ??
+      (await db.user.findFirst({
+        where: { email: { equals: credentials.email, mode: "insensitive" } },
+        select: credentialsUserSelect,
+      }));
 
     if (!maybeUser?.password) {
       // SECURITY-02: Run dummy bcrypt compare to prevent timing-based account enumeration.
@@ -1186,7 +1237,7 @@ function authorize(prisma: PrismaClient) {
     if (!isValid) {
       if (isCredentialUser) {
         // SECURITY-01: Atomically increment failed login counter
-        const settings = await prisma.registrationSettings.findFirst({
+        const settings = await db.registrationSettings.findFirst({
           select: { lockoutThreshold: true, lockoutDurationMinutes: true },
         });
         const threshold = settings?.lockoutThreshold ?? 5;
@@ -1197,7 +1248,7 @@ function authorize(prisma: PrismaClient) {
           ? new Date(Date.now() + durationMinutes * 60 * 1000)
           : null;
 
-        await prisma.user.update({
+        await db.user.update({
           where: { id: maybeUser.id },
           data: {
             failedLoginAttempts: { increment: 1 },
@@ -1226,7 +1277,7 @@ function authorize(prisma: PrismaClient) {
     ) {
       const wasLocked =
         maybeUser.lockedUntil && maybeUser.lockedUntil > new Date();
-      await prisma.user.update({
+      await db.user.update({
         where: { id: maybeUser.id },
         data: { failedLoginAttempts: 0, lockedUntil: null },
       });
@@ -1240,7 +1291,7 @@ function authorize(prisma: PrismaClient) {
     // POLICY-04: Check password expiration
     if (isCredentialUser && maybeUser.passwordChangedAt) {
       const registrationSettingsForExpiry =
-        await prisma.registrationSettings.findFirst({
+        await db.registrationSettings.findFirst({
           select: { passwordExpirationDays: true },
         });
       const expirationDays =
@@ -1252,7 +1303,7 @@ function authorize(prisma: PrismaClient) {
         );
         if (new Date() > expiresAt) {
           // Password has expired — set mustChangePassword flag
-          await prisma.user.update({
+          await db.user.update({
             where: { id: maybeUser.id },
             data: { mustChangePassword: true },
           });
@@ -1261,7 +1312,7 @@ function authorize(prisma: PrismaClient) {
     }
 
     // Check system 2FA settings
-    const registrationSettings = await prisma.registrationSettings.findFirst();
+    const registrationSettings = await db.registrationSettings.findFirst();
     const force2FANonSSO =
       registrationSettings?.force2FANonSSO ||
       registrationSettings?.force2FAAllLogins ||

@@ -84,7 +84,11 @@ test.describe("Session Lifecycle", () => {
     await api.createConfiguration(configName, projectId);
     const milestoneId = await api.createMilestone(projectId, milestoneName);
 
-    const dialog = page.locator('[role="dialog"]');
+    // Scope to the Add Session dialog by name: interacting with the config /
+    // milestone selects leaves a Radix popover (also role="dialog") in the DOM,
+    // so a bare [role="dialog"] matches two elements and breaks strict-mode
+    // assertions like .not.toBeVisible().
+    const dialog = page.getByRole("dialog", { name: /add session/i });
     const submitButton = dialog.locator('button[type="submit"]');
 
     await test.step("Open the new session dialog from the session list", async () => {

@@ -9,6 +9,7 @@ import { AddSessionModal } from "~/app/[locale]/projects/sessions/[projectId]/Ad
 import {
   getStatus,
   getStatusStyle,
+  hasCalendarDates,
   MilestonesWithTypes,
   sortMilestones,
 } from "./milestoneUtils";
@@ -207,12 +208,12 @@ export const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
         key={`milestone-${milestone.id}`}
         className={
           depth > 0
-            ? "w-full pl-4 bg-muted rounded-lg mb-4"
+            ? "w-full ps-4 bg-muted rounded-lg mb-4"
             : "w-full rounded-lg bg-muted mb-4"
         }
       >
         <div
-          className={`milestone-grid bg-primary/10 p-2 pr-4 ${depth === 0 ? "rounded-t-lg" : ""}`}
+          className={`milestone-grid bg-primary/10 p-2 pe-4 ${depth === 0 ? "rounded-t-lg" : ""}`}
           style={{ borderColor: border, backgroundColor: bg }}
         >
           {/* Milestone Name */}
@@ -259,6 +260,7 @@ export const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
                 </Button>
               )}
               <DateTextDisplay
+                dateOnly={hasCalendarDates(milestone)}
                 startDate={
                   milestone.startedAt ? new Date(milestone.startedAt) : null
                 }
@@ -273,7 +275,7 @@ export const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
 
         {/* Render items under this milestone FIRST */}
         {hasItemsUnderMilestone && (
-          <div className="sessions-container bg-muted pr-4 pb-2 mb-2">
+          <div className="sessions-container bg-muted pe-4 pb-2 mb-2">
             {itemGroup.items.map((item) => (
               <div
                 key={item.id}
@@ -283,7 +285,7 @@ export const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
                     ? "ring-2 ring-primary ring-offset-2"
                     : ""
                 }`}
-                style={{ paddingLeft: "1.5rem" }}
+                style={{ paddingInlineStart: "1.5rem" }}
               >
                 <RenderItem
                   item={item}
@@ -323,7 +325,7 @@ export const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
     return (
       <div key={`milestone-${milestone.id}`} className="w-full rounded-lg mb-4">
         <div
-          className={`milestone-grid bg-primary/10 p-2 pr-4 ${depth === 0 ? "rounded-t-lg" : ""}`}
+          className={`milestone-grid bg-primary/10 p-2 pe-4 ${depth === 0 ? "rounded-t-lg" : ""}`}
           style={{ borderColor: border, backgroundColor: bg }}
         >
           {/* Milestone Name */}
@@ -370,6 +372,7 @@ export const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
                 </Button>
               )}
               <DateTextDisplay
+                dateOnly={hasCalendarDates(milestone)}
                 startDate={
                   milestone.startedAt ? new Date(milestone.startedAt) : null
                 }
@@ -384,7 +387,7 @@ export const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
 
         {/* Render items under this milestone FIRST */}
         {hasItemsUnderMilestone && (
-          <div className="sessions-container bg-muted pr-4 pb-2 mb-2">
+          <div className="sessions-container bg-muted pe-4 pb-2 mb-2">
             {itemGroup.items.map((item) => (
               <div
                 key={item.id}
@@ -394,7 +397,7 @@ export const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
                     ? "ring-2 ring-primary ring-offset-2"
                     : ""
                 }`}
-                style={{ paddingLeft: "1.5rem" }}
+                style={{ paddingInlineStart: "1.5rem" }}
               >
                 <RenderItem
                   item={item}
@@ -445,7 +448,7 @@ export const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
           </div>
         </div>
         {grouped.unscheduled.map((item) => (
-          <div key={item.id} className="pl-4 pr-4">
+          <div key={item.id} className="ps-4 pe-4">
             <div
               id={`${itemIdPrefix}-${item.id}`}
               className={`transition-all duration-500 ${
@@ -461,7 +464,7 @@ export const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
             </div>
           </div>
         ))}
-        <div className="flex justify-end pr-4 pb-2"></div>
+        <div className="flex justify-end pe-4 pb-2"></div>
       </div>
     );
   }

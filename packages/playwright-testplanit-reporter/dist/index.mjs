@@ -230,6 +230,7 @@ var TestPlanItReporter = class {
       testRunCaseMap: /* @__PURE__ */ new Map(),
       caseStepsMap: /* @__PURE__ */ new Map(),
       folderPathMap: /* @__PURE__ */ new Map(),
+      caseAutomatedMap: /* @__PURE__ */ new Map(),
       statusIds: {},
       initialized: false,
       stats: {
@@ -338,6 +339,9 @@ ${error.stack}` : "";
       browser: projectName,
       platform: process.platform,
       retryAttempt: result.retry,
+      // parallelIndex is the stable 0..workers-1 lane; workerIndex increments
+      // on worker restarts and would fragment the timeline.
+      worker: typeof result.parallelIndex === "number" ? String(result.parallelIndex) : void 0,
       uid,
       specFile,
       systemOut: this.joinOutput(result.stdout),
@@ -450,6 +454,7 @@ ${error.stack}` : "";
       let repositoryCaseId;
       if (caseIds.length > 0) {
         repositoryCaseId = caseIds[0];
+        await this.ensureCaseAutomated(repositoryCaseId);
         if (this.options.overwriteSteps) {
           await this.writeCaseSteps(repositoryCaseId, result.stepTitles, true);
         }
@@ -475,6 +480,7 @@ ${error.stack}` : "";
         // ms → seconds
         executedAt: result.finishedAt,
         file: result.specFile,
+        worker: result.worker,
         systemOut: result.systemOut,
         systemErr: result.systemErr
       });
@@ -583,6 +589,29 @@ ${error.stack}` : "";
     })();
     this.state.caseStepsMap.set(testCaseId, promise);
     promise.catch(() => this.state.caseStepsMap.delete(testCaseId));
+    return promise;
+  }
+  /**
+   * Flip an explicitly linked case to `automated: true` when it isn't
+   * already, so a case that started manual but now receives automated results
+   * reflects that in TestPlanIt. Checked once per case per run (memoized).
+   * Skips the write when the case is already automated and never throws — a
+   * failure logs and is swallowed so it can't abort reporting the result.
+   */
+  ensureCaseAutomated(caseId) {
+    let promise = this.state.caseAutomatedMap.get(caseId);
+    if (promise) return promise;
+    promise = (async () => {
+      try {
+        const testCase = await this.client.getTestCase(caseId);
+        if (testCase?.automated === true) return;
+        await this.client.updateTestCase(caseId, { automated: true });
+        this.log("Flipped case to automated:", caseId);
+      } catch (error) {
+        this.logError(`Failed to set automated on case ${caseId}; continuing:`, error);
+      }
+    })();
+    this.state.caseAutomatedMap.set(caseId, promise);
     return promise;
   }
   /** Resolve (and cache) the folder ID for a describe path. */

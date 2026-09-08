@@ -3,8 +3,9 @@
 import { AutomationCandidatesReportPreset } from "@/components/automationCandidates/AutomationCandidatesReportPreset";
 import { ReportChart } from "@/components/dataVisualizations/ReportChart";
 import { DateFormatter } from "@/components/DateFormatter";
+import { Loading } from "@/components/Loading";
 import { MatrixReportPreset } from "@/components/matrix/MatrixReportPreset";
-import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { DataTable } from "@/components/tables/DataTable";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -25,7 +26,7 @@ import {
   VisibilityState,
 } from "@tanstack/react-table";
 import { Download } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { useAutomationTrendsColumns } from "~/hooks/useAutomationTrendsColumns";
 import { useExecutionLogColumns } from "~/hooks/useExecutionLogColumns";
@@ -123,6 +124,7 @@ interface ReportRendererProps {
   // Sorting
   sortConfig?: { column: string; direction: "asc" | "desc" } | null;
   onSortChange: (columnId: string) => void;
+  onSortColumn?: (columnId: string, direction: "asc" | "desc" | null) => void;
 
   // Column visibility
   columnVisibility: VisibilityState;
@@ -141,6 +143,11 @@ interface ReportRendererProps {
 
   // Read-only mode (for shared links - hides share button, etc.)
   readOnly?: boolean;
+
+  // A report run is pending or in flight and no run has completed yet, so an
+  // empty `results` means "still loading", not "no data" — render the Loading
+  // indicator instead of the no-results card.
+  awaitingFirstRun?: boolean;
 
   // Children (for ShareButton in ReportBuilder, omitted in shared view)
   headerActions?: React.ReactNode;
@@ -175,6 +182,7 @@ export function ReportRenderer({
   isExportingCsv = false,
   sortConfig,
   onSortChange,
+  onSortColumn,
   columnVisibility,
   onColumnVisibilityChange,
   grouping,
@@ -185,8 +193,10 @@ export function ReportRenderer({
   reportGeneratedAt,
   userTimezone,
   readOnly = false,
+  awaitingFirstRun = false,
   headerActions,
 }: ReportRendererProps) {
+  const locale = useLocale();
   const tCommon = useTranslations("common");
   const tReports = useTranslations("reports.ui");
 
@@ -364,6 +374,7 @@ export function ReportRenderer({
     isFlakyTests,
     isTestCaseHealth,
     isIssueTestCoverage,
+    isExecutionLog,
   ]);
 
   // Iteration Matrix preset bypasses the chart/table pipeline entirely.
@@ -403,6 +414,9 @@ export function ReportRenderer({
   }
 
   if (!results || results.length === 0) {
+    if (awaitingFirstRun) {
+      return <Loading />;
+    }
     return (
       <div className="flex items-center justify-center h-full">
         <Card className="max-w-md">
@@ -463,8 +477,9 @@ export function ReportRenderer({
                 {memoizedChart.isTruncated && (
                   <p className="text-xs text-muted-foreground mt-1">
                     {tReports("chartDataTruncated.message", {
-                      shown: MAX_CHART_DATA_POINTS.toLocaleString(),
-                      total: memoizedChart.totalDataPoints.toLocaleString(),
+                      shown: MAX_CHART_DATA_POINTS.toLocaleString(locale),
+                      total:
+                        memoizedChart.totalDataPoints.toLocaleString(locale),
                     })}
                   </p>
                 )}
@@ -519,13 +534,17 @@ export function ReportRenderer({
             </div>
           </CardHeader>
           <CardContent className="h-[calc(100%-4rem)] p-6 pt-0">
-            <VirtualizedDataTable
+            <DataTable
+              virtualized
+              pinLastColumn={false}
               columns={columns as ColumnDef<any>[]}
               data={results}
               columnVisibility={columnVisibility}
               onColumnVisibilityChange={onColumnVisibilityChange}
+              columnSizingStorageKey={`report:${getBaseReportType(reportType)}`}
               sortConfig={sortConfig || undefined}
               onSortChange={onSortChange}
+              onSortColumn={onSortColumn}
               grouping={grouping}
               onGroupingChange={onGroupingChange}
               expanded={expanded}

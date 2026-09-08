@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  * UserIntegrationAuth audit emission (no token leakage).
  *
  * UserIntegrationAuth is a credential table (CDC-excluded per SAF-04), and its
- * real mutations run through the raw prismaBase client in AuthenticationService
+ * real mutations run through the raw rawDb client in AuthenticationService
  * — so they bypass the $extends entity-audit hooks entirely. These tests pin the
  * explicit semantic audit added here: connect → CREATE, re-auth → UPDATE,
  * revoke → DELETE, lastUsedAt bump → no audit, and NEVER the encrypted tokens.
@@ -15,15 +15,27 @@ const mockUpsert = vi.fn();
 const mockFindFirst = vi.fn();
 const mockUpdateMany = vi.fn();
 const mockCaptureAuditEvent = vi.fn();
+const mockIntegrationFindUnique = vi.fn();
+const mockCreateAuthExpiredNotification = vi.fn();
 
-vi.mock("@/lib/prismaBase", () => ({
-  prisma: {
+vi.mock("@/lib/rawDb", () => ({
+  rawDb: {
     userIntegrationAuth: {
       findUnique: (...a: unknown[]) => mockFindUnique(...a),
       upsert: (...a: unknown[]) => mockUpsert(...a),
       findFirst: (...a: unknown[]) => mockFindFirst(...a),
       updateMany: (...a: unknown[]) => mockUpdateMany(...a),
     },
+    integration: {
+      findUnique: (...a: unknown[]) => mockIntegrationFindUnique(...a),
+    },
+  },
+}));
+
+vi.mock("@/lib/services/notificationService", () => ({
+  NotificationService: {
+    createIntegrationAuthExpiredNotification: (...a: unknown[]) =>
+      mockCreateAuthExpiredNotification(...a),
   },
 }));
 
@@ -50,6 +62,8 @@ describe("AuthenticationService — UserIntegrationAuth audit", () => {
     mockUpdateMany.mockReset();
     mockCaptureAuditEvent.mockReset();
     mockCaptureAuditEvent.mockResolvedValue(undefined);
+    mockIntegrationFindUnique.mockReset();
+    mockCreateAuthExpiredNotification.mockReset();
   });
 
   it("storeUserAuth emits a CREATE audit on first auth, with NO tokens in the payload", async () => {
@@ -153,6 +167,61 @@ describe("AuthenticationService — UserIntegrationAuth audit", () => {
 
     await expect(
       AuthenticationService.storeUserAuth("user-1", 42, { accessToken: "tok" })
+    ).resolves.toBeUndefined();
+    expect(errSpy).toHaveBeenCalled();
+    errSpy.mockRestore();
+  });
+});
+
+describe("AuthenticationService — markNeedsReauth", () => {
+  beforeEach(() => {
+    mockUpdateMany.mockReset();
+    mockIntegrationFindUnique.mockReset();
+    mockCreateAuthExpiredNotification.mockReset();
+  });
+
+  it("marks the active row and notifies the owner on the first transition", async () => {
+    mockUpdateMany.mockResolvedValue({ count: 1 });
+    mockIntegrationFindUnique.mockResolvedValue({
+      name: "Jira Prod",
+      provider: "JIRA",
+    });
+
+    await AuthenticationService.markNeedsReauth("user-1", 42);
+
+    // Only rows not already marked are eligible — that guard is the dedupe.
+    expect(mockUpdateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          userId: "user-1",
+          integrationId: 42,
+          isActive: true,
+          needsReauthAt: null,
+        }),
+      })
+    );
+    expect(mockCreateAuthExpiredNotification).toHaveBeenCalledWith({
+      userId: "user-1",
+      integrationId: 42,
+      integrationName: "Jira Prod",
+      provider: "JIRA",
+    });
+  });
+
+  it("does NOT re-notify when the row is already marked", async () => {
+    mockUpdateMany.mockResolvedValue({ count: 0 });
+
+    await AuthenticationService.markNeedsReauth("user-1", 42);
+
+    expect(mockCreateAuthExpiredNotification).not.toHaveBeenCalled();
+  });
+
+  it("never breaks the calling sync path on failure", async () => {
+    mockUpdateMany.mockRejectedValue(new Error("db down"));
+    const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await expect(
+      AuthenticationService.markNeedsReauth("user-1", 42)
     ).resolves.toBeUndefined();
     expect(errSpy).toHaveBeenCalled();
     errSpy.mockRestore();

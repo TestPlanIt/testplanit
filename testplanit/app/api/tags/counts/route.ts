@@ -1,7 +1,7 @@
-import { ProjectAccessType } from "@prisma/client";
+import { ProjectAccessType } from "~/zenstack/models";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
 
 export async function POST(request: Request) {
@@ -74,59 +74,52 @@ export async function POST(request: Request) {
           },
         };
 
-    // Fetch counts for each tag using individual queries
-    // This avoids the bind variable explosion from complex joins
-    const counts = await Promise.all(
-      tagIds.map(async (tagId) => {
-        const [repositoryCasesCount, sessionsCount, testRunsCount] =
-          await Promise.all([
-            prisma.repositoryCases.count({
-              where: {
-                isDeleted: false,
-                tags: { some: { id: tagId } },
-                ...projectAccessWhere,
-              },
-            }),
-            prisma.sessions.count({
-              where: {
-                isDeleted: false,
-                tags: { some: { id: tagId } },
-                ...projectAccessWhere,
-              },
-            }),
-            prisma.testRuns.count({
-              where: {
-                isDeleted: false,
-                tags: { some: { id: tagId } },
-                ...projectAccessWhere,
-              },
-            }),
-          ]);
-
-        return {
-          tagId,
-          repositoryCasesCount,
-          sessionsCount,
-          testRunsCount,
-        };
-      })
-    );
-
-    // Convert to map for easy lookup
-    const countsMap = counts.reduce(
-      (acc, item) => {
-        acc[item.tagId] = {
-          repositoryCases: item.repositoryCasesCount,
-          sessions: item.sessionsCount,
-          testRuns: item.testRunsCount,
-        };
-        return acc;
+    // Fetch all requested tags with their linked entities in ONE tag-driven
+    // query. Driving from the tag side (a small set of ids) makes the m2m
+    // relation loads compile to join lookups keyed by the tag ids, instead of
+    // the correlated EXISTS subqueries ZenStack v3 generates for
+    // `tags: { some: { id } }` filters — those scanned the large
+    // RepositoryCases / TestRuns tables once per tag. Counts are derived in
+    // memory; each linked row is distinct per (entity, tag) so a plain
+    // length is the distinct count.
+    const tags = await baseDb.tags.findMany({
+      where: { id: { in: tagIds } },
+      select: {
+        id: true,
+        caseTags: {
+          where: { case: { isDeleted: false, ...projectAccessWhere } },
+          select: { caseId: true },
+        },
+        sessions: {
+          where: { isDeleted: false, ...projectAccessWhere },
+          select: { id: true },
+        },
+        testRuns: {
+          where: { isDeleted: false, ...projectAccessWhere },
+          select: { id: true },
+        },
       },
-      {} as Record<
-        number,
-        { repositoryCases: number; sessions: number; testRuns: number }
-      >
-    );
+    });
+
+    const countsMap: Record<
+      number,
+      { repositoryCases: number; sessions: number; testRuns: number }
+    > = {};
+
+    for (const tag of tags) {
+      countsMap[tag.id] = {
+        repositoryCases: tag.caseTags.length,
+        sessions: tag.sessions.length,
+        testRuns: tag.testRuns.length,
+      };
+    }
+
+    // Ensure every requested id has an entry (tag not found / no links).
+    for (const id of tagIds) {
+      if (!countsMap[id]) {
+        countsMap[id] = { repositoryCases: 0, sessions: 0, testRuns: 0 };
+      }
+    }
 
     return NextResponse.json({ counts: countsMap });
   } catch (error) {

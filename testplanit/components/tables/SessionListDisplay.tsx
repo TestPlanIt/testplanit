@@ -4,16 +4,16 @@ import { SessionTableDisplay } from "@/components/tables/SessionTableDisplay";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { badgeVariants } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Prisma } from "@prisma/client";
+import type { SessionsWhereInput } from "~/zenstack/input";
 import { Compass } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import React, { useCallback, useMemo } from "react";
 import { cn } from "~/utils";
 
 interface SessionsListProps {
   sessionIds?: number[];
   sessions?: SessionOption[];
-  filter?: Prisma.SessionsWhereInput;
+  filter?: SessionsWhereInput;
   count?: number;
   pageSize?: number;
   isCompleted?: boolean;
@@ -37,6 +37,7 @@ export const SessionsListDisplay: React.FC<SessionsListProps> = ({
   pageSize = DEFAULT_PAGE_SIZE,
   isLoading = false,
 }) => {
+  const locale = useLocale();
   const t = useTranslations("common");
 
   const prefetchedSessions = useMemo(() => sessions ?? [], [sessions]);
@@ -50,7 +51,7 @@ export const SessionsListDisplay: React.FC<SessionsListProps> = ({
         : undefined);
 
   const baseConditions = useMemo(() => {
-    const conditions: Prisma.SessionsWhereInput[] = [{ isDeleted: false }];
+    const conditions: SessionsWhereInput[] = [{ isDeleted: false }];
 
     if (filter) {
       conditions.push(filter);
@@ -163,8 +164,7 @@ export const SessionsListDisplay: React.FC<SessionsListProps> = ({
     // Navigation handled by SessionTableDisplay
   }, []);
 
-  // Show skeleton while loading and count is undefined
-  if (isLoading && computedCount === undefined) {
+  if (isLoading) {
     return <Skeleton className="h-6 w-12" />;
   }
 
@@ -178,7 +178,7 @@ export const SessionsListDisplay: React.FC<SessionsListProps> = ({
 
   const triggerLabel =
     computedCount !== undefined && computedCount > 0
-      ? computedCount.toLocaleString()
+      ? computedCount.toLocaleString(locale)
       : "";
 
   const searchPlaceholder = t("searchSessions", {

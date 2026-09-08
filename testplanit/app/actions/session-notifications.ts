@@ -1,6 +1,6 @@
 "use server";
 
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { NotificationService } from "~/lib/services/notificationService";
 import { getServerAuthSession } from "~/server/auth";
 
@@ -21,7 +21,7 @@ export async function notifySessionAssignment(
 
   try {
     // Get session details with related information
-    const sessionData = await prisma.sessions.findUnique({
+    const sessionData = await baseDb.sessions.findUnique({
       where: { id: sessionId },
       include: {
         project: true,
@@ -33,7 +33,7 @@ export async function notifySessionAssignment(
     }
 
     // Get the assignee details
-    const _assignee = await prisma.user.findUnique({
+    const _assignee = await baseDb.user.findUnique({
       where: { id: newAssigneeId },
       select: { name: true },
     });

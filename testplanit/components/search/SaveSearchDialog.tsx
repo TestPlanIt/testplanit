@@ -1,5 +1,7 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   auditShareLinkCreation,
   prepareShareLinkData,
@@ -21,7 +23,6 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { useCreateShareLink } from "~/lib/hooks";
 import {
   buildSavedSearchConfig,
   type SavedSearchCriteria,
@@ -49,7 +50,8 @@ export function SaveSearchDialog({
 }: SaveSearchDialogProps) {
   const t = useTranslations();
   const { data: session } = useSession();
-  const { mutateAsync: createShareLink, isPending } = useCreateShareLink();
+  const { mutateAsync: createShareLink, isPending } =
+    useClientQueries(schema).shareLink.useCreate();
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -116,7 +118,7 @@ export function SaveSearchDialog({
           shareLink.projectId !== null ? shareLink.projectId : undefined,
         expiresAt: shareLink.expiresAt,
         notifyOnView: shareLink.notifyOnView,
-        passwordHash: shareLink.passwordHash,
+        hasPassword: !!passwordHash,
       });
 
       toast.success(t("search.savedSearches.saved"), {

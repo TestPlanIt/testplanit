@@ -40,7 +40,13 @@ const baseCase = {
 
 interface TxStub {
   repositoryCases: { findUnique: ReturnType<typeof vi.fn> };
+  appConfig: { findUnique: ReturnType<typeof vi.fn> };
 }
+
+// readRecordKeyConfig reads two AppConfig rows; a null row keeps the
+// record-key feature disabled so displayKey resolves to null (no project
+// lookup fired).
+const appConfigStub = () => ({ findUnique: vi.fn(async () => null) });
 
 function makeTx(
   caseFieldValues: Array<{ id: number; value: unknown }> = [],
@@ -54,6 +60,7 @@ function makeTx(
         steps,
       })),
     },
+    appConfig: appConfigStub(),
   };
 }
 
@@ -136,6 +143,7 @@ describe("emitCaseUpdated — resolved changes", () => {
         color: { value: "#FFAA00" },
       })),
     },
+    appConfig: appConfigStub(),
   };
 
   it("resolves stateId to a State row with the workflow color", async () => {
@@ -183,6 +191,7 @@ describe("emitCaseFieldValueChanged", () => {
         ],
       })),
     },
+    appConfig: appConfigStub(),
   };
 
   it("emits case.updated with the resolved option label change", async () => {

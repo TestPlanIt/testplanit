@@ -14,7 +14,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ApplicationArea } from "@prisma/client";
+import { ApplicationArea } from "~/zenstack/models";
 import {
   BookText as DocumentationIcon,
   Bug as IssuesIcon,
@@ -40,7 +40,7 @@ import {
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useParams, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { Link, usePathname } from "~/lib/navigation";
 import { cn } from "~/utils";
@@ -111,7 +111,7 @@ function MenuLink({
               : "hover:bg-primary/10 hover:text-primary"
           )}
         >
-          <IconComponent className="min-w-6 min-h-6" />
+          <IconComponent className="size-5 shrink-0" />
           <span
             className={`hidden md:inline-block ${isActive ? "font-bold" : ""} ${
               isCollapsed
@@ -170,19 +170,22 @@ export default function ProjectsMenu({
     session?.user?.access === "ADMIN" ||
     session?.user?.access === "PROJECTADMIN";
 
-  // Check if user can see Settings
-  // Settings should be visible to:
+  // Check if user can see Settings. `isProjectAdmin` is the same resolution
+  // the settings pages and their server actions gate on
+  // (`authorizeProjectAdminForProject` / `canManageWebhookConfig`):
   // 1. System ADMIN users (always have access to all projects)
-  // 2. System PROJECTADMIN users (have access to settings for any project they can access)
-  // 3. Users with Settings area permissions (Project Admin role)
-  const { permissions: settingsPerms } = useProjectPermissions(
+  // 2. System PROJECTADMIN users, on projects they are assigned to
+  // 3. Users holding the per-project "Project Admin" role
+  // 4. The project's creator
+  //
+  // This deliberately no longer keys off the `Settings` area's `canAddEdit`
+  // bit: nothing on the server honours that bit, so a role carrying it got a
+  // full settings menu whose every page 404'd and whose every write 403'd.
+  const { isProjectAdmin } = useProjectPermissions(
     safeProjectId,
     ApplicationArea.Settings
   );
-  const canSeeSettings =
-    session?.user?.access === "ADMIN" || // System admins always have access
-    session?.user?.access === "PROJECTADMIN" || // PROJECTADMIN users always see settings for accessible projects
-    (settingsPerms && settingsPerms.canAddEdit); // Has Settings permissions
+  const canSeeSettings = isProjectAdmin;
 
   const menuOptions: MenuOption[] = [
     // Project
@@ -348,20 +351,31 @@ export default function ProjectsMenu({
   // Stable key for tracking which sections exist (used as useEffect dependency)
   const groupKeys = groups.map((g) => g.key).join(",");
 
-  const [openSections, setOpenSections] = useState<string[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const stored = localStorage.getItem("projectMenu:openSections");
-        // First visit: no stored value → expand all sections so users discover the full menu
-        return stored ? (JSON.parse(stored) as string[]) : [...sectionOrder];
-      } catch {
-        return [...sectionOrder];
-      }
-    }
-    return [...sectionOrder];
-  });
+  // First visit: no stored value → expand all sections so users discover the full menu
+  const [openSections, setOpenSections] = useState<string[]>(() => [
+    ...sectionOrder,
+  ]);
+  const ssrDefaultSections = useRef(openSections);
 
   useEffect(() => {
+    // The server has no localStorage, so it always renders every section
+    // expanded. Seeding this state from storage in the initializer would give
+    // the Accordion a different set of open items on the client and make React
+    // discard the whole server tree on hydration; adopt the stored value here,
+    // after the markup has matched.
+    try {
+      const stored = localStorage.getItem("projectMenu:openSections");
+      if (stored) setOpenSections(JSON.parse(stored) as string[]);
+    } catch {
+      // ignore storage errors
+    }
+  }, []);
+
+  useEffect(() => {
+    // Until the effect above swaps in the stored value, this still holds the
+    // all-expanded default the server rendered; writing it would overwrite the
+    // very preference that effect is reading back.
+    if (openSections === ssrDefaultSections.current) return;
     try {
       localStorage.setItem(
         "projectMenu:openSections",
@@ -381,8 +395,14 @@ export default function ProjectsMenu({
     const activeSection = groups.find((group) =>
       group.items.some((item) => item.path === activePage)
     );
-    if (activeSection && !openSections.includes(activeSection.key)) {
-      setOpenSections((prev) => [...prev, activeSection.key]);
+    // Test membership inside the updater rather than against the rendered
+    // `openSections`: on mount the restore effect has already queued the stored
+    // value, and only the updater sees it. Returning `prev` unchanged keeps
+    // React from re-rendering when the section is already open.
+    if (activeSection) {
+      setOpenSections((prev) =>
+        prev.includes(activeSection.key) ? prev : [...prev, activeSection.key]
+      );
     }
   }, [page, settingsSubPage, groupKeys]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -393,7 +413,7 @@ export default function ProjectsMenu({
     >
       <CardContent className="bg-primary-foreground h-full p-0 flex flex-col">
         <CardHeader
-          className={`${isCollapsed ? "mb-0 -ml-6" : "mb-0 md:-mb-6"}`}
+          className={`${isCollapsed ? "mb-0 -ms-6" : "mb-0 md:-mb-6"}`}
         >
           <CardTitle>
             <ProjectDropdownMenu isCollapsed={isCollapsed} />
@@ -416,7 +436,7 @@ export default function ProjectsMenu({
                 >
                   <AccordionTrigger
                     className={cn(
-                      "ml-3 py-2 mt-2 px-0 bg-transparent hover:bg-transparent uppercase text-xs hover:no-underline flex border-b-2 border-primary/40 md:border-b-0",
+                      "ms-3 py-2 mt-2 px-0 bg-transparent hover:bg-transparent uppercase text-xs hover:no-underline flex border-b-2 border-primary/40 md:border-b-0",
                       isCollapsed &&
                         "md:max-h-0 md:opacity-0 md:overflow-hidden md:p-0 md:m-0"
                     )}

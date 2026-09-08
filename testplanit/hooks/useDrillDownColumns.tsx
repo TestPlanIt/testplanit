@@ -26,13 +26,30 @@ import { Link } from "~/lib/navigation";
 interface UseDrillDownColumnsProps {
   /** The metric ID to determine which columns to show */
   metricId: string;
+  /** The report type, for metrics whose domain depends on the report */
+  reportType?: string;
 }
+
+/**
+ * Milestone-readiness metrics count member ISSUES per readiness state, so
+ * their drill-downs list issues.
+ */
+const READINESS_ISSUE_METRICS = new Set([
+  "percentReady",
+  "passed",
+  "failed",
+  "inProgress",
+  "notRun",
+  "uncovered",
+  "totalIssues",
+]);
 
 /**
  * Hook to generate columns for drill-down tables based on metric type
  */
 export function useDrillDownColumns({
   metricId,
+  reportType,
 }: UseDrillDownColumnsProps): ColumnDef<DrillDownRecord, any>[] {
   const tCommon = useTranslations("common");
   const tLinkedCases = useTranslations("linkedCases");
@@ -434,7 +451,7 @@ export function useDrillDownColumns({
           cell: (info) => {
             const value = info.getValue();
             if (value === null || value === undefined) return <span>-</span>;
-            return <span>{toHumanReadable(value)}</span>;
+            return <span>{toHumanReadable(value, { isSeconds: true })}</span>;
           },
           enableSorting: false,
           size: 120,
@@ -473,7 +490,7 @@ export function useDrillDownColumns({
           cell: (info) => {
             const value = info.getValue();
             if (value === null || value === undefined) return <span>-</span>;
-            return <span>{toHumanReadable(value)}</span>;
+            return <span>{toHumanReadable(value, { isSeconds: true })}</span>;
           },
           enableSorting: false,
           size: 150,
@@ -577,7 +594,7 @@ export function useDrillDownColumns({
           cell: (info) => {
             const value = info.getValue();
             if (value === null || value === undefined) return <span>-</span>;
-            return <span>{toHumanReadable(value)}</span>;
+            return <span>{toHumanReadable(value, { isSeconds: true })}</span>;
           },
           enableSorting: false,
           size: 150,
@@ -1157,7 +1174,6 @@ export function useDrillDownColumns({
 
     // Session Duration metric columns
     if (
-      metricId === "sessionDuration" ||
       metricId === "averageTimeSpent" ||
       metricId === "averageDuration" ||
       metricId === "totalDuration"
@@ -1357,7 +1373,12 @@ export function useDrillDownColumns({
     }
 
     // Issues columns
-    if (metricId === "issues" || metricId === "issueCount") {
+    if (
+      metricId === "issues" ||
+      metricId === "issueCount" ||
+      (reportType === "milestone-readiness" &&
+        READINESS_ISSUE_METRICS.has(metricId))
+    ) {
       return [
         columnHelper.accessor((row: any) => row.externalKey || row.name, {
           id: "key",
@@ -1570,5 +1591,5 @@ export function useDrillDownColumns({
         maxSize: 150,
       }),
     ];
-  }, [metricId, translations, dateFnsLocale, columnHelper]);
+  }, [metricId, reportType, translations, dateFnsLocale, columnHelper]);
 }

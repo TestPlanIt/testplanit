@@ -1,12 +1,13 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
+import {
+  ActionButtonContent,
+  collapsibleActionClass,
+} from "@/components/ui/action-bar";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { WarningAlert } from "@/components/ui/warning-alert";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -28,7 +29,6 @@ import { UserMention } from "~/components/UserMention";
 import { WorkflowStateDisplay } from "~/components/WorkflowStateDisplay";
 import { useEffectiveRoleOnProject } from "~/hooks/useEffectiveRoleOnProject";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
-import { useFindFirstReviewRequest } from "~/lib/hooks";
 
 import type { AssigneeOption } from "./AssigneeCombobox";
 import { CancelRequestButton } from "./CancelRequestButton";
@@ -75,6 +75,17 @@ export interface ReviewStatusBannerProps {
 type BannerRequest = ReviewStatusBannerRequest;
 
 /**
+ * ZenStack query keys are `["zenstack", <Model>, ...]`, so invalidating the
+ * entity after a decision needs the generated model name — not the
+ * polymorphic ReviewEntityType the banner is parameterized on.
+ */
+const ENTITY_QUERY_MODEL: Record<ReviewableEntityType, string> = {
+  CASE: "RepositoryCases",
+  RUN: "TestRuns",
+  SESSION: "Sessions",
+};
+
+/**
  * Status banner rendered directly above the entity's `WorkflowStateDisplay`
  * (per D-05). Three variant branches:
  *
@@ -118,7 +129,7 @@ export function ReviewStatusBanner({
   const [requestChangesOpen, setRequestChangesOpen] = useState(false);
   const [rejectOpen, setRejectOpen] = useState(false);
 
-  const { data } = useFindFirstReviewRequest(
+  const { data } = useClientQueries(schema).reviewRequest.useFindFirst(
     {
       where: { entityType, entityId, isDeleted: false },
       orderBy: { createdAt: "desc" },
@@ -149,7 +160,7 @@ export function ReviewStatusBanner({
             kind: "role",
             id: latest.assigneeRole.id,
             name: latest.assigneeRole.name,
-            userCount: 0,
+            notifyCount: 0,
           }
         : undefined;
 
@@ -201,6 +212,13 @@ export function ReviewStatusBanner({
         entityId
       ),
     });
+    // Approving applies the transition server-side, so the entity's own
+    // workflow state is stale the moment the decision lands. Invalidate the
+    // entity model too or the page keeps rendering the pre-approval state
+    // pill until the next unrelated refetch.
+    void queryClient.invalidateQueries({
+      queryKey: ["zenstack", ENTITY_QUERY_MODEL[entityType]],
+    });
   };
 
   const targetState = latest.toState ?? null;
@@ -208,7 +226,10 @@ export function ReviewStatusBanner({
   if (latest.status === "PENDING") {
     return (
       <>
-        <WarningAlert data-testid="review-status-banner-pending">
+        <WarningAlert
+          className="my-4"
+          data-testid="review-status-banner-pending"
+        >
           <MessageSquareWarning className="h-5 w-5" />
           {/*
             `flex-wrap` keeps the prose + pills from overflowing into the
@@ -224,7 +245,10 @@ export function ReviewStatusBanner({
               {t.rich("reviews.banner.pendingMessage", {
                 assignee: () =>
                   latest.assigneeUser ? (
-                    <UserMention userId={latest.assigneeUser.id} />
+                    <UserMention
+                      userId={latest.assigneeUser.id}
+                      className="px-1 py-0 text-xs"
+                    />
                   ) : latest.assigneeRole ? (
                     <RoleAssigneeChip
                       projectId={projectId}
@@ -235,7 +259,7 @@ export function ReviewStatusBanner({
                     <>{assigneeLabel}</>
                   ),
                 // `WorkflowStateDisplay`'s state requires non-null icon +
-                // color, but the prisma include returns them as nullable
+                // color, but the db include returns them as nullable
                 // joins. Cast at the seam — matches the decision dialogs.
                 fromState: () => (
                   <span className="inline-flex align-middle [&_.truncate]:max-w-[10rem]">
@@ -259,71 +283,49 @@ export function ReviewStatusBanner({
             <div className="flex items-center gap-2 shrink-0">
               {canDecide && (
                 <>
-                  {/*
-                    Default to icon+text; below `md` (768px viewport) the
-                    label hides and the button collapses to icon-only with
-                    a Tooltip on hover for discoverability. `md:hidden` on
-                    TooltipContent suppresses the hover label on wider
-                    viewports where the text is already visible.
-                  */}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        type="button"
-                        onClick={() => setApproveOpen(true)}
-                        data-testid="review-approve-button"
-                        aria-label={tReviewer("approve")}
-                        className="bg-success text-success-foreground hover:bg-success/90 max-md:px-2"
-                      >
-                        <CheckCircle2 className="h-4 w-4" />
-                        <span className="hidden md:inline">
-                          {tReviewer("approve")}
-                        </span>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent className="md:hidden">
-                      {tReviewer("approve")}
-                    </TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        type="button"
-                        onClick={() => setRequestChangesOpen(true)}
-                        data-testid="review-request-changes-button"
-                        aria-label={tReviewer("requestChanges")}
-                        className="bg-warning text-warning-foreground hover:bg-warning/90 max-md:px-2"
-                      >
-                        <MessageCircleWarning className="h-4 w-4" />
-                        <span className="hidden md:inline">
-                          {tReviewer("requestChanges")}
-                        </span>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent className="md:hidden">
-                      {tReviewer("requestChanges")}
-                    </TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        onClick={() => setRejectOpen(true)}
-                        data-testid="review-reject-button"
-                        aria-label={tReviewer("reject")}
-                        className="max-md:px-2"
-                      >
-                        <XCircle className="h-4 w-4" />
-                        <span className="hidden md:inline">
-                          {tReviewer("reject")}
-                        </span>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent className="md:hidden">
-                      {tReviewer("reject")}
-                    </TooltipContent>
-                  </Tooltip>
+                  <Button
+                    type="button"
+                    onClick={() => setApproveOpen(true)}
+                    data-testid="review-approve-button"
+                    aria-label={tReviewer("approve")}
+                    className={collapsibleActionClass(
+                      undefined,
+                      "bg-success text-success-foreground hover:bg-success/90"
+                    )}
+                  >
+                    <ActionButtonContent
+                      icon={CheckCircle2}
+                      label={tReviewer("approve")}
+                    />
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => setRequestChangesOpen(true)}
+                    data-testid="review-request-changes-button"
+                    aria-label={tReviewer("requestChanges")}
+                    className={collapsibleActionClass(
+                      undefined,
+                      "bg-warning text-warning-foreground hover:bg-warning/90"
+                    )}
+                  >
+                    <ActionButtonContent
+                      icon={MessageCircleWarning}
+                      label={tReviewer("requestChanges")}
+                    />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={() => setRejectOpen(true)}
+                    data-testid="review-reject-button"
+                    aria-label={tReviewer("reject")}
+                    className={collapsibleActionClass()}
+                  >
+                    <ActionButtonContent
+                      icon={XCircle}
+                      label={tReviewer("reject")}
+                    />
+                  </Button>
                 </>
               )}
               <CancelRequestButton
@@ -394,12 +396,12 @@ export function ReviewStatusBanner({
             : "review-status-banner-changes-requested"
         }
         {...(isRejected ? { variant: "destructive" as const } : {})}
-        // `pr-44` reserves the right gutter for the "Request review
+        // `pe-44` reserves the right gutter for the "Request review
         // again" button so the description text doesn't run under it.
         // The button itself is absolute-positioned below, anchored to
         // the top-right corner so reviewers find the call-to-action in
         // the same spot the PENDING banner puts "Cancel request".
-        className="mb-2 pr-44"
+        className="my-4 pe-44"
       >
         <DecisionIcon className="h-5 w-5" />
         <AlertTitle>
@@ -417,8 +419,8 @@ export function ReviewStatusBanner({
               data-testid="review-status-banner-attribution"
             >
               <span>{t("reviews.banner.decidedBy")}</span>
-              <UserMention userId={decider.id} />
-              <RelativeTimeTooltip date={decidedAt} className="ml-1" />
+              <UserMention userId={decider.id} className="px-1 py-0 text-xs" />
+              <RelativeTimeTooltip date={decidedAt} className="ms-1" />
             </div>
           )}
 
@@ -433,7 +435,7 @@ export function ReviewStatusBanner({
           */}
           {latest.decisionComment && (
             <p
-              className="line-clamp-6 break-words whitespace-pre-line border-l-2 border-current pl-2"
+              className="line-clamp-6 break-words whitespace-pre-line border-s-2 border-current ps-2"
               data-testid="review-status-banner-decision-comment"
             >
               {latest.decisionComment}
@@ -446,11 +448,11 @@ export function ReviewStatusBanner({
           size="sm"
           onClick={() => setRequestAgainOpen(true)}
           data-testid="request-review-again-button"
-          // The Alert root applies `[&>svg~*]:pl-7` to every sibling of
+          // The Alert root applies `[&>svg~*]:ps-7` to every sibling of
           // its icon — including this absolute-positioned button. Reset
           // back to size="sm"'s normal x-padding so the text isn't
           // shoved off-center.
-          className="absolute right-3 top-3 !pl-3"
+          className="absolute end-3 top-3 !ps-3"
         >
           {t("reviews.banner.requestAgain")}
         </Button>

@@ -193,7 +193,7 @@ export const TimeTracker = React.forwardRef<TimeTrackerRef, TimeTrackerProps>(
         <Tooltip>
           <TooltipTrigger asChild>
             <Clock
-              className={`h-4 w-4 shrink-0 mr-1 ${
+              className={`h-4 w-4 shrink-0 me-1 ${
                 isRunning
                   ? "text-destructive animate-spin"
                   : seconds > 0 ||
@@ -241,7 +241,7 @@ export const TimeTracker = React.forwardRef<TimeTrackerRef, TimeTrackerProps>(
           size="sm"
           variant="secondary"
           onClick={toggleTimer}
-          className="ml-2"
+          className="ms-2"
         >
           {isRunning ? (
             <Tooltip>

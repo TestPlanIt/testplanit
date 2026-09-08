@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { authenticateApiToken } from "~/lib/api-token-auth";
-import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
+import { getCurrentTenantId } from "~/lib/multiTenantDb";
 import { getServerAuthSession } from "~/server/auth";
 import {
   getSearchSuggestions,
@@ -40,7 +40,7 @@ const searchSchema = z.object({
         .array(
           z.strictObject({
             fieldId: z.number(),
-            value: z.any(),
+            value: z.any().optional(),
           })
         )
         .optional(),

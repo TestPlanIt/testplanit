@@ -7,6 +7,10 @@ sidebar_position: 4 # Adjust position as needed
 
 This guide outlines the steps to deploy TestPlanIt to production using the comprehensive Docker Compose setup that includes all required services.
 
+:::tip Deploying on Kubernetes?
+If you already run your internal tools on Kubernetes, see the **[Kubernetes (Helm)](./kubernetes-deployment.md)** guide to deploy with the official Helm chart instead.
+:::
+
 ## Prerequisites
 
 - A server with Docker and Docker Compose installed
@@ -148,7 +152,7 @@ docker compose -f docker-compose.prod.yml $PROFILES up -d
 What happens during startup:
 
 - Application and worker images are built
-- **Database migrations run automatically** - The `migrate` service runs `prisma db push` to sync the database schema with the application before starting
+- **Database migrations run automatically** - The `migrate` service runs `zenstack migrate deploy` to apply pending migrations to the database schema before starting
 - Selected services start (based on profiles)
 - Database is seeded with initial data (if using `with-postgres` profile for first-time setup)
 - MinIO buckets are created (if using `with-minio`)
@@ -404,6 +408,8 @@ docker exec testplanit-nginx rm /etc/nginx/maintenance.json
 
   :::warning
   The encryption key must remain consistent across deployments. If you change or lose this key, encrypted data will become unreadable. Store it securely and include it in your backup procedures.
+
+  An integration whose credentials can no longer be decrypted refuses to make outbound requests rather than sending a value it could not read, and reports that its stored credentials could not be read. Recover by editing the integration, re-entering its credentials, and saving — that rewrites them with the current key.
   :::
 
 - **Secrets Management**: Never commit production secrets to git. Use secure methods:
@@ -412,6 +418,7 @@ docker exec testplanit-nginx rm /etc/nginx/maintenance.json
   - Secrets management tools (Vault, AWS Secrets Manager)
 - **HTTPS**: Configure external reverse proxy for SSL/TLS termination
 - **Firewall**: Restrict access to internal service ports (5432, 6379, 9200, 9000)
+- **Link previews**: When a TestPlanIt link is pasted into a chat client, the client fetches it without a session to build its preview card. By default (`LINK_PREVIEW_MODE=safe`) the card names only the kind of record — "Test Run", "Test Case" — so no project or record name can reach a channel whose members lack access. Set `LINK_PREVIEW_MODE=names` to put record and project names on the card instead; anyone who can reach the link then sees them without signing in, so enable it only where that is acceptable.
 
 ### Monitoring & Maintenance
 

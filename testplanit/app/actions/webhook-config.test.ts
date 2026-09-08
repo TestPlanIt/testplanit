@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ORMError, ORMErrorReason } from "@zenstackhq/orm";
 import { createHmac } from "node:crypto";
 
 // ─── Mocks ────────────────────────────────────────────────────────────────
@@ -21,8 +22,8 @@ const mockWebhookDeliveryFindUnique = vi.fn();
 const mockWebhookDeliveryFindMany = vi.fn();
 const mockAuditLogFindMany = vi.fn();
 const mockTransaction = vi.fn();
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     webhookConfig: {
       findFirst: (...args: unknown[]) => mockWebhookConfigFindFirst(...args),
       findUnique: (...args: unknown[]) => mockWebhookConfigFindUnique(...args),
@@ -228,10 +229,12 @@ describe("webhook-config server actions", () => {
       // findFirst() return null, both attempt create(), one wins and the
       // loser hits P2002. The loser should fall through to the
       // isUniqueConstraintError branch and rotate the now-existing row.
-      const Prisma = await import("@prisma/client");
-      const p2002 = new Prisma.Prisma.PrismaClientKnownRequestError(
-        "Unique constraint failed",
-        { code: "P2002", clientVersion: "test" }
+      const p2002 = Object.assign(
+        new ORMError(
+          ORMErrorReason.DB_QUERY_ERROR,
+          'duplicate key value violates unique constraint "x"'
+        ),
+        { dbErrorCode: "23505" }
       );
       // First findFirst (pre-create check): no row yet.
       // Second findFirst (retry-after-P2002): the winner's row.
@@ -558,7 +561,7 @@ describe("webhook-config server actions", () => {
   });
 
   describe("setWebhookActive (CR-02 — replaces ZenStack RPC update)", () => {
-    it("happy path: project admin toggles isActive=false, raw prisma.update is invoked with the correct shape", async () => {
+    it("happy path: project admin toggles isActive=false, raw baseDb.update is invoked with the correct shape", async () => {
       mockWebhookConfigFindUnique.mockResolvedValue({ projectId: 42 });
       mockWebhookConfigUpdate.mockResolvedValue({ id: "cfg-1" });
       const { setWebhookActive } = await import("./webhook-config");
@@ -1177,10 +1180,12 @@ describe("webhook-config server actions", () => {
       // The schema-level @@unique([projectId, adapterType, direction]) was
       // dropped, so the dedicated "already exists" branch is gone — any
       // unexpected DB error now surfaces as the generic save-failure error.
-      const Prisma = await import("@prisma/client");
-      const p2002 = new Prisma.Prisma.PrismaClientKnownRequestError(
-        "Unique constraint failed",
-        { code: "P2002", clientVersion: "test" }
+      const p2002 = Object.assign(
+        new ORMError(
+          ORMErrorReason.DB_QUERY_ERROR,
+          'duplicate key value violates unique constraint "x"'
+        ),
+        { dbErrorCode: "23505" }
       );
       mockWebhookConfigCreate.mockRejectedValueOnce(p2002);
       const { createOutboundWebhook } = await import("./webhook-config");

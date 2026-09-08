@@ -1,4 +1,6 @@
-import type { Prisma } from "@prisma/client";
+import type {
+  RepositoryFoldersSelect,
+} from "@db/input";
 import { zenstack, lookup } from "../../api.js";
 import { TestPlanItHttpError } from "../../http.js";
 import type { EnvConfig } from "../../env.js";
@@ -199,7 +201,7 @@ export async function buildFolderBreadcrumb(
       "findUnique",
       {
         where: { id: parentId },
-        select: { id: true, name: true, parentId: true } satisfies Prisma.RepositoryFoldersSelect,
+        select: { id: true, name: true, parentId: true } satisfies RepositoryFoldersSelect,
       },
       env,
     );
@@ -338,7 +340,9 @@ interface RawCaseRow {
   folder: { id: number; name: string; parentId: number | null };
   state: { id: number; name: string };
   creator: { id: string; name: string | null; email: string };
-  tags: Array<{ id: number; name: string }>;
+  // RepositoryCases tags now arrive through the explicit RepositoryCaseTag
+  // join model: caseTags[].tag rather than a flat tags[] relation.
+  caseTags: Array<{ tag: { id: number; name: string } }>;
   // Phase-8 D8-02 sub-includes for lastUpdatedAt + latestResult.
   // All three are optional; rows fetched without the new include shape
   // (e.g. existing call sites in fetchDetail.ts) read undefined and
@@ -348,7 +352,17 @@ interface RawCaseRow {
   testRuns?: Array<{ results: RawLatestRunResult[] }>;
 }
 
-export function mapCaseRow(raw: RawCaseRow) {
+export function mapCaseRow(
+  raw: RawCaseRow,
+  // Optional whole-project path map (folders/tree.ts buildPathInfo) — when
+  // present, the folder object widens to carry path/ancestorIds/rootId/
+  // rootName so a leaf-to-area mapping needs no per-folder lookups.
+  folderPaths?: Map<
+    number,
+    { path: string; ancestorIds: number[]; rootId: number; rootName: string }
+  >,
+) {
+  const pathInfo = folderPaths?.get(raw.folder.id);
   return {
     id: raw.id,
     name: raw.name,
@@ -356,27 +370,49 @@ export function mapCaseRow(raw: RawCaseRow) {
     automated: raw.automated,
     createdAt: raw.createdAt,
     project: raw.project ? { id: raw.project.id, name: raw.project.name } : null,
-    folder: { id: raw.folder.id, name: raw.folder.name },
+    folder: pathInfo
+      ? {
+          id: raw.folder.id,
+          name: raw.folder.name,
+          path: pathInfo.path,
+          ancestorIds: pathInfo.ancestorIds,
+          rootId: pathInfo.rootId,
+          rootName: pathInfo.rootName,
+        }
+      : { id: raw.folder.id, name: raw.folder.name },
     state: raw.state ? { id: raw.state.id, name: raw.state.name } : null,
     creator: raw.creator
       ? { id: raw.creator.id, name: raw.creator.name, email: raw.creator.email }
       : null,
-    tags: (raw.tags ?? []).map((t) => ({ id: t.id, name: t.name })),
+    tags: (raw.caseTags ?? []).map((ct) => ({
+      id: ct.tag.id,
+      name: ct.tag.name,
+    })),
     lastUpdatedAt: lastUpdatedAtFromRaw(raw),
     latestResult: resolveLatestResult(
       raw.junitResults?.[0],
       raw.testRuns?.[0]?.results?.[0],
     ),
+    // Automation reality (distinct from the user-set `automated` flag): a
+    // JUnit result row is execution evidence. The include shapes order
+    // junitResults executedAt desc NULLS LAST, so slot 0 carries the most
+    // recent real timestamp when one exists.
+    hasAutomatedResults: (raw.junitResults?.length ?? 0) > 0,
+    lastAutomatedResultAt: raw.junitResults?.[0]?.executedAt ?? null,
   };
 }
 
 interface RawCaseDetail extends RawCaseRow {
-  issues: Array<{
-    id: number;
-    externalKey: string | null;
-    integration: { provider: string } | null;
-    title: string | null;
-    externalStatus: string | null;
+  // RepositoryCases issues now arrive through the explicit
+  // RepositoryCaseIssue join model: caseIssues[].issue.
+  caseIssues: Array<{
+    issue: {
+      id: number;
+      externalKey: string | null;
+      integration: { provider: string } | null;
+      title: string | null;
+      externalStatus: string | null;
+    };
   }>;
   steps: Array<{
     id: number;
@@ -429,12 +465,12 @@ export function mapCaseDetail(
       expectedResult: extractProseMirrorText(s.expectedResult),
     })),
     customFields: denormalizeCustomFields(raw.caseFieldValues),
-    issues: (raw.issues ?? []).map((i) => ({
-      id: i.id,
-      externalKey: i.externalKey,
-      externalSystem: i.integration?.provider ?? null,
-      title: i.title,
-      externalStatus: i.externalStatus,
+    issues: (raw.caseIssues ?? []).map((ci) => ({
+      id: ci.issue.id,
+      externalKey: ci.issue.externalKey,
+      externalSystem: ci.issue.integration?.provider ?? null,
+      title: ci.issue.title,
+      externalStatus: ci.issue.externalStatus,
     })),
     linkedAutomatedTests,
     codeRepository,

@@ -69,13 +69,13 @@ export function RunCardinalityHardRefuseDialog({
             <TableHeader>
               <TableRow>
                 <TableHead>{t("hardRefuseColumnCase")}</TableHead>
-                <TableHead className="text-right">
+                <TableHead className="text-end">
                   {t("hardRefuseColumnRows")}
                 </TableHead>
-                <TableHead className="text-right">
+                <TableHead className="text-end">
                   {t("hardRefuseColumnConfigs")}
                 </TableHead>
-                <TableHead className="text-right">
+                <TableHead className="text-end">
                   {t("hardRefuseColumnIterations")}
                 </TableHead>
               </TableRow>
@@ -87,13 +87,13 @@ export function RunCardinalityHardRefuseDialog({
                   data-testid={`hard-refuse-row-${row.caseId}`}
                 >
                   <TableCell className="font-medium">{row.caseTitle}</TableCell>
-                  <TableCell className="text-right tabular-nums">
+                  <TableCell className="text-end tabular-nums">
                     {row.rowCount}
                   </TableCell>
-                  <TableCell className="text-right tabular-nums">
+                  <TableCell className="text-end tabular-nums">
                     {fanOut}
                   </TableCell>
-                  <TableCell className="text-right tabular-nums">
+                  <TableCell className="text-end tabular-nums">
                     {row.iterations}
                   </TableCell>
                 </TableRow>
@@ -104,7 +104,7 @@ export function RunCardinalityHardRefuseDialog({
                 <TableCell colSpan={3} className="font-semibold">
                   {t("hardRefuseTotalRow")}
                 </TableCell>
-                <TableCell className="text-right font-semibold tabular-nums">
+                <TableCell className="text-end font-semibold tabular-nums">
                   {result.total}
                 </TableCell>
               </TableRow>
@@ -116,7 +116,7 @@ export function RunCardinalityHardRefuseDialog({
           <p className="text-xs font-medium text-muted-foreground">
             {t("hardRefuseSuggestionsHeading")}
           </p>
-          <ul className="list-disc pl-6 text-sm space-y-1">
+          <ul className="list-disc ps-6 text-sm space-y-1">
             <li>{t("hardRefuseSuggestion1")}</li>
             <li>{t("hardRefuseSuggestion2")}</li>
             <li>{t("hardRefuseSuggestion3")}</li>

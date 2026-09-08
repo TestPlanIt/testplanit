@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
 
 /**
@@ -31,7 +31,7 @@ export const POST = withAuditContext(async (_request: NextRequest) => {
 
     // Update all users without emailVerified to set it to now
     // Exclude SSO users as they don't need email verification
-    const result = await prisma.user.updateMany({
+    const result = await baseDb.user.updateMany({
       where: {
         emailVerified: null,
         authMethod: {

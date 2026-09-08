@@ -1,4 +1,5 @@
-import type { Prisma, PrismaClient } from "@prisma/client";
+import type { JsonValue } from "@zenstackhq/orm";
+import type { DbClient, TxClient } from "~/lib/zenstack";
 
 /**
  * Outbound webhook outbox helpers.
@@ -22,7 +23,7 @@ export interface ClaimedOutboxEvent {
   eventId: string;
   eventTimestamp: Date;
   actorUserId: string | null;
-  payload: Prisma.JsonValue;
+  payload: JsonValue;
   dispatchedAt: Date;
   createdAt: Date;
 }
@@ -38,10 +39,10 @@ export interface ClaimedOutboxEvent {
  * UI is the recovery path).
  */
 export async function claimOutboxBatch(
-  prisma: PrismaClient | Prisma.TransactionClient,
+  db: DbClient | TxClient,
   batchSize: number = DEFAULT_CLAIM_BATCH_SIZE
 ): Promise<ClaimedOutboxEvent[]> {
-  const rows = await prisma.$queryRaw<ClaimedOutboxEvent[]>`
+  const rows = await db.$queryRaw<ClaimedOutboxEvent[]>`
     WITH claimed AS (
       SELECT id FROM "WebhookOutboxEvent"
        WHERE "dispatchedAt" IS NULL
@@ -79,7 +80,7 @@ export async function claimOutboxBatch(
  */
 export async function fanoutToConfigs(
   row: Pick<ClaimedOutboxEvent, "projectId" | "eventName" | "payload">,
-  prisma: PrismaClient | Prisma.TransactionClient
+  db: DbClient | TxClient
 ): Promise<string[]> {
   if (row.eventName === "webhook.test") {
     const targetConfigId =
@@ -89,7 +90,7 @@ export async function fanoutToConfigs(
         ? (row.payload as { configId?: unknown }).configId
         : undefined;
     if (typeof targetConfigId !== "string") return [];
-    const config = await prisma.webhookConfig.findUnique({
+    const config = await db.webhookConfig.findUnique({
       where: { id: targetConfigId },
       select: { id: true, projectId: true, direction: true, isActive: true },
     });
@@ -104,7 +105,7 @@ export async function fanoutToConfigs(
     return [config.id];
   }
 
-  const configs = await prisma.webhookConfig.findMany({
+  const configs = await db.webhookConfig.findMany({
     where: {
       projectId: row.projectId,
       direction: "OUTBOUND",

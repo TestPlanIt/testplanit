@@ -10,6 +10,8 @@ The Security page provides centralized control over sign-in enforcement, passwor
 
 To access Security Settings, navigate to **Admin → Authentication → Security** from the left-hand navigation menu.
 
+![The admin Security page listing the sign-in enforcement, password policy, and account lockout controls](/img/screenshots/user-guide/administration/security-settings.png)
+
 ## Sign-in Enforcement
 
 The Sign-in Enforcement section combines three toggles that govern how users sign in. All three save immediately when flipped; there is no separate Save step.

@@ -3,6 +3,18 @@
     "name": "姓名",
     "cancel": "取消",
     "dismiss": "解僱",
+    "bulk": {
+      "selectItem": "選取項目",
+      "editAction": "編輯（{count}）",
+      "completeAction": "完成（{count}）",
+      "deleteAction": "刪除（{count}）",
+      "editTitle": "批量編輯（{count}）",
+      "applyToCount": "變更套用至 {count, plural, other {# 個項目}}。",
+      "tagsAdditiveHint": "所選標籤會新增至每個項目；現有標籤將被保留。",
+      "completeSuccess": "{count, plural, other {已完成 # 個項目}}",
+      "deleteSuccess": "{count, plural, other {已刪除 # 個項目}}",
+      "partialFailure": "{totalCount} 個項目中有 {failedCount} 個無法更新"
+    },
     "of": "的",
     "on": "在",
     "at": "在",
@@ -13,11 +25,13 @@
     "file": "文件",
     "selectMultiple": "選擇多個...",
     "searchUsers": "搜尋用戶...",
+    "searchGroups": "尋找群組……",
     "searchCases": "{count, plural, =0 {搜尋案例} other {搜尋 # 個案例}}",
     "searchProjects": "{count, plural, =0 {搜尋專案} other {搜尋 # 個專案}}",
     "searchTags": "搜尋標籤...",
     "searchRuns": "{count, plural, =0 {搜尋測試執行} other {搜尋 # 個測試執行}}",
-    "searchSessions": "{count, plural, =0 {搜尋會話數} one {搜尋會話數} other {搜尋會話數}}",
+    "searchSessions": "{count, plural, =0 {搜尋會話數} one {搜尋會話#} other {搜尋會話#}}",
+    "searchMilestones": "{count, plural, =0 {搜尋里程碑} other {搜尋 # 個里程碑}}",
     "search": "搜尋...",
     "defaultOption": "預設選項",
     "yes": "是的",
@@ -27,6 +41,7 @@
     "lastEditedBy": "最後編輯於",
     "actions": {
       "edit": "編輯",
+      "editTestCase": "編輯測試用例",
       "save": "節省",
       "delete": "刪除",
       "create": "創造",
@@ -73,6 +88,7 @@
       "editResult": "編輯測試結果",
       "resultDetails": "結果詳情",
       "actionsLabel": "行動",
+      "actionsWithAlerts": "操作（{count, number} 未讀）",
       "assign": "分配",
       "assignSelected": "分配 {count, plural, one {# 情況} other {# 情況}}",
       "refresh": "重新整理",
@@ -216,8 +232,11 @@
       "high": "高的"
     },
     "filters": {
+      "all": "全部",
       "allStatuses": "所有狀態",
-      "allPriorities": "所有優先事項"
+      "allPriorities": "所有優先事項",
+      "allIssueTypes": "所有問題類型",
+      "noIssueType": "無問題類型"
     },
     "fields": {
       "groupName": "組名",
@@ -240,6 +259,13 @@
       "totalElapsed": "總經過時間",
       "totalEstimate": "預計剩餘時間",
       "completionRate": "完成率",
+      "runDuration": "執行時間",
+      "passRate": "通過率",
+      "parallelization": "並行化",
+      "avgTestTime": "平均測試時間",
+      "medianTestTime": "測試時間中位數",
+      "retries": "重試次數",
+      "flakyTests": "不穩定的測試",
       "attachments": "附件",
       "documentation": "文件",
       "state": "狀態",
@@ -290,6 +316,7 @@
       "account": "帳戶",
       "accountHistory": "帳戶歷史記錄",
       "activity": "活動",
+      "activityLog": "活動記錄",
       "lastActive": "最後活躍時間",
       "theme": "主題",
       "locale": "語言",
@@ -317,12 +344,17 @@
       "fieldType": "字段類型",
       "templates": "範本",
       "started": "開始",
+      "ended": "結束",
       "startDate": "開始日期",
       "automated": "自動化",
       "manual": "手動的",
       "notAutomated": "非自動化",
       "parameterized": "參數化",
       "notParameterized": "未參數化",
+      "hasAttachments": "有附件",
+      "noAttachments": "無附件",
+      "inReview": "審查中",
+      "notInReview": "非審查中",
       "testRuns": "測試運行",
       "title": "標題",
       "project": "專案",
@@ -378,7 +410,8 @@
         "notificationSettings": "通知全域設定",
         "elasticsearch_replicas": "Elasticsearch 副本",
         "review_feature_enabled": "已啟用審核和批准功能",
-        "review_reminder_threshold_days": "提醒審稿者閾值日"
+        "review_reminder_threshold_days": "提醒審稿者閾值日",
+        "record_key_enabled": "記錄鍵已啟用"
       },
       "options": {
         "label": "標籤",
@@ -415,7 +448,8 @@
         "stateRequired": "州政府要求",
         "urlRequired": "必須提供網址",
         "invalidUrl": "無效的 URL 格式"
-      }
+      },
+      "worker": "工作者"
     },
     "filter": {
       "placeholder": "篩檢 {item}..."
@@ -524,6 +558,15 @@
       "selectState": "選擇州",
       "selectConfiguration": "選擇配置",
       "selectConfigurations": "選擇配置",
+      "selectFolders": "選擇資料夾",
+      "selectIssues": "選擇問題",
+      "selectMilestones": "選擇里程碑",
+      "selectProjects": "選擇項目",
+      "selectStates": "選擇狀態",
+      "selectTags": "選擇標籤",
+      "addFieldTo": "新增欄位至 {section}",
+      "selectTemplates": "選擇模板",
+      "selectUsers": "選擇用戶",
       "selectOption": "選擇一個選項",
       "date": "選擇日期",
       "selectEncoding": "選擇編碼方式...",
@@ -543,12 +586,15 @@
       "stepCount": "步數",
       "enterText": "請輸入文字...",
       "enterUrl": "輸入網址",
+      "enterUrlPattern": "輸入 URL 模式……",
+      "domainExample": "example.com",
       "issueIdExample": "第123期",
       "selectPriorityValuesOrEmpty": "選擇優先值（或留空表示全部不選）"
     },
     "errors": {
       "error": "錯誤",
       "somethingWentWrong": "發生意外錯誤，請稍後重試。",
+      "completeNotPermitted": "您沒有權限完成此項目。",
       "emailRequired": "請輸入您的電子郵件地址。",
       "emailInvalid": "這是一個無效的電子郵件地址。",
       "passwordRequired": "需要輸入密碼。",
@@ -718,6 +764,24 @@
       "selectDeselectAllApprove": "選取或取消選取「核准」以確認所有相關區域",
       "selectDeselectAllReadSensitive": "選取或取消選取所有相關區域的「讀取敏感資訊」選項"
     },
+    "configurationGroup": {
+      "title": "配置群組",
+      "notLinkedRun": "未連結至任何其他測試運行。",
+      "notLinkedSession": "未連結至任何其他工作階段。",
+      "linkRun": "連結至測試運行",
+      "linkSession": "連結至工作階段",
+      "changeRun": "連結至其他測試運行",
+      "changeSession": "連結至其他工作階段",
+      "unlink": "取消連結",
+      "pending": "儲存以套用此變更。",
+      "saveError": "更新配置群組失敗",
+      "candidateInGroupRun": "{count, plural, other {# 次運行}}",
+      "candidateInGroupSession": "{count, plural, other {# 個工作階段}}",
+      "linkHintRun": "連結至某次運行，也會將您連結至已與該運行分組的所有其他運行。",
+      "linkHintSession": "連結至某個工作階段，也會將您連結至已與該工作階段分組的所有其他工作階段。",
+      "candidateInGroupTooltipRun": "{count, plural, other {此群組中有 # 次運行}}",
+      "candidateInGroupTooltipSession": "{count, plural, other {此群組中有 # 個工作階段}}"
+    },
     "labels": {
       "projects": "{count, plural, =1 {# 項目} other {# 項目集}}",
       "templates": "模板和字段",
@@ -731,6 +795,16 @@
       "existingAttachments": "現有附件",
       "new": "新的",
       "noElapsedTime": "未記錄時間",
+      "runDurationHint": "從第一個結果到最後一個結果的時間",
+      "totalElapsedHint": "個別測試時間總和",
+      "parallelizationHint": "同時執行的測試平均數量",
+      "parallelizationPeakHint": "尖峰時段同時執行 {peak, number} 個測試，平均為 {average}×",
+      "passRateHint": "已通過 {total, number} 個測試中的 {passed, number} 個",
+      "retriesHint": "每個測試首次執行之外的嘗試次數",
+      "flakyTestHint": "失敗後於此次執行中重試通過",
+      "executionMetrics": "執行指標",
+      "metricsAndCharts": "指標與圖表",
+      "slowestTests": "最慢的測試",
       "untested": "未經測試",
       "noResults": "無結果",
       "resultsWithNoElapsedTime": "未記錄結果所需時間",
@@ -738,6 +812,7 @@
       "noCases": "沒有測試用例",
       "unknown": "未知",
       "selectedTestCases": "選定的測試用例",
+      "selectedTestCasesCount": "{count, plural, other {# 個已選取的測試案例}}",
       "editToModifyCasesTitle": "此清單無法修改。",
       "editToModifyCases": "編輯測試運行，然後按一下「選定的測試案例」來修改清單。",
       "noTestCasesSelected": "未選擇任何測試用例",
@@ -749,9 +824,13 @@
       "sortByDate": "按日期排序",
       "testRuns": "{count, plural, =0 {沒有測試執行} =1 {1 個測試執行} other {# 個測試執行}}",
       "sessions": "{count, plural, =0 {沒有工作階段} =1 {1 個工作階段} other {# 個工作階段}}",
+      "issues": "{count, plural, =0 {無問題} =1 {1 個問題} other {# 個問題}}",
       "noOptions": "暫無選項",
       "multiConfiguration": "屬於多配置組",
+      "compositionLocked": "組成已鎖定 — 案例集已凍結",
       "otherConfigurations": "其他配置",
+      "noConfiguration": "無配置",
+      "configurationWithName": "{configuration} － {name}",
       "selected": "已選擇： {count}",
       "defaultProjectAccess": "預設項目存取權限",
       "defaultAccessType": "預設存取類型",
@@ -794,7 +873,8 @@
     "table": {
       "columns": {
         "columns": "列",
-        "required": "（必需的）"
+        "required": "（必需的）",
+        "resetColumns": "重設欄位為預設值"
       },
       "filter": "篩選列表...",
       "selectNone": "選擇“無”",
@@ -802,7 +882,13 @@
       "sortAscending": "按升序排列",
       "sortDescending": "按降序排列",
       "sortNone": "未分類",
-      "resize": "調整列寬"
+      "resize": "調整列寬",
+      "reorderColumn": "拖曳以重新排序欄",
+      "sortAsc": "升序排列",
+      "sortDesc": "降序排列",
+      "removeSort": "移除排序",
+      "hideColumn": "隱藏欄",
+      "columnOptions": "欄選項"
     },
     "pagination": {
       "selectPage": "選擇頁面",
@@ -815,7 +901,8 @@
       "showing": "顯示",
       "total": "總計 {count, plural, =1 {# 件數} other {# 件數}}",
       "filtered": "已篩選",
-      "pageOfPages": "第 {current} 頁，共 {total} 頁"
+      "pageOfPages": "第 {current} 頁，共 {total} 頁",
+      "loadedOfTotal": "{loaded, number} / {total, number}"
     },
     "upload": {
       "title": "上傳新的個人資料圖片",
@@ -823,7 +910,7 @@
       "attachments": {
         "title": "上傳附件",
         "description": "拖放檔案或點擊下方按鈕選擇檔案。",
-        "selectFiles": "{count, plural, =0 {選擇檔案} one {已選檔案 1 個} other {已選檔案數量 ~<[⌇⌇3⌇⌇⌇]>~ 已選檔案數}}",
+        "selectFiles": "{count, plural, =0 {選擇檔案} one {已選檔案 1 個} other {已選檔案# ~<[⌇⌇3⌇⌇⌇]>~ 已選檔案數}}",
         "selectFile": "{count, plural, =0 {選取檔案} other {選取 1 個檔案}}",
         "filesSelected": "{count, plural, one {已選取 1 個檔案} other {已選取 # 個檔案}}",
         "addMoreFiles": "新增更多檔案...",
@@ -1006,10 +1093,10 @@
       },
       "charts": {
         "resultsDistribution": "結果分佈",
-        "statusTimeline": "狀態時間表",
+        "executionTimeline": "執行時間軸",
         "testDurationHistogram": "測試時長直方圖",
         "zoomDonutChart": "縮放甜甜圈圖",
-        "zoomStatusTimeline": "Zoom 狀態時間軸",
+        "zoomExecutionTimeline": "縮放執行時間軸",
         "zoomHistogramChart": "縮放直方圖",
         "duration": "持續時間： {seconds} 秒",
         "durationLabel": "期間"
@@ -1053,7 +1140,35 @@
     "invalidProject": "項目ID無效。",
     "visualization": "視覺化",
     "results": "結果",
-    "loading": "載入中..."
+    "loading": "載入中...",
+    "operators": {
+      "eq": "等於",
+      "ne": "不等於",
+      "lt": "少於",
+      "lte": "小於或等於",
+      "gt": "大於",
+      "gte": "大於或等於",
+      "between": "之間",
+      "contains": "包含",
+      "notContains": "不含",
+      "startsWith": "以……開始",
+      "endsWith": "以……結尾",
+      "domain": "網域包含",
+      "on": "在",
+      "before": "之前",
+      "after": "之後",
+      "last7": "過去7天",
+      "last30": "過去30天",
+      "last90": "過去90天",
+      "thisYear": "今年",
+      "anyOf": "任一",
+      "allOf": "全部",
+      "noneOf": "無一",
+      "is": "是",
+      "in": "為任一",
+      "hasValue": "有值",
+      "isEmpty": "為空"
+    }
   },
   "api": {
     "testResults": {
@@ -1253,15 +1368,15 @@
     "overview": {
       "title": "概述",
       "currentMilestones": "目前里程碑",
-      "seeAllMilestones": "{count, plural, =1 {看里程碑 # 里程碑} other {看全部里程碑 # 里程碑}}",
-      "seeAllTestCases": "{count, plural, =1 {查看 # 測試案例} other {看全部 # 測試案例}}",
+      "seeAllMilestones": "{count, plural, =1 {查看 # 個里程碑} =2 {查看兩個里程碑} other {查看全部 # 個里程碑}}",
+      "seeAllTestCases": "{count, plural, =1 {查看 # 個測試案例} =2 {查看兩個測試案例} other {查看全部 # 個測試案例}}",
       "latestTestCases": "最新測試案例",
       "createdOn": "創建於",
-      "seeAllTags": "查看所有標籤",
-      "seeAllActiveSessions": "{count, plural, =1 {看目前會話數} other {查看所有目前會話數}}",
+      "seeAllTagsCount": "{count, plural, =1 {查看 # 個標籤} =2 {查看兩個標籤} other {查看全部 # 個標籤}}",
+      "seeAllActiveSessions": "{count, plural, =1 {查看 # 個活動工作階段} =2 {查看兩個活動工作階段} other {查看全部 # 個活動工作階段}}",
       "latestSessions": "最新會話",
       "activeTestRuns": "正在進行的測試運行",
-      "seeAllActiveTestRuns": "{count, plural, =1 {查看目前運行的測試次數} other {查看所有目前運行的測試次數}}",
+      "seeAllActiveTestRuns": "{count, plural, =1 {查看 # 個活動測試執行} =2 {查看兩個活動測試執行} other {查看全部 # 個活動測試執行}}",
       "latestTestRuns": "最新測試運行",
       "testCaseBreakdown": "測試用例分解",
       "noTestCases": "專案倉庫為空。請使用倉庫新增測試案例。",
@@ -1292,7 +1407,14 @@
         "saveButton": "節省",
         "saveSuccess": "迭代屬性名稱已儲存。",
         "saveError": "無法保存迭代屬性名稱。",
-        "removeAria": "移除 {name}"
+        "removeAria": "移除 {name}",
+        "counter": "{count}/{max}",
+        "constraints": "最多 {max} 個屬性，每個屬性最多 {maxLength} 個字元，且不含空格。",
+        "limitReached": "您已達到 {max} 個屬性的上限。請移除一個以新增其他屬性。",
+        "errorTooLong": "請將每個屬性名稱保持在 {maxLength} 個字元以內。",
+        "errorWhitespace": "屬性名稱不能包含空格。",
+        "errorReserved": "「{name}」為保留字，無法使用。",
+        "errorDuplicate": "「{name}」已在清單中。"
       },
       "integrations": {
         "description": "管理此項目的第三方問題集成",
@@ -1379,7 +1501,19 @@
           "importStart": "匯入",
           "importStarted": "匯入已開始。問題將很快顯示。",
           "importFailed": "匯入失敗",
-          "importPreviewFailed": "無法估算符合項目"
+          "importPreviewFailed": "無法估算符合項目",
+          "milestoneSync": {
+            "title": "里程碑同步",
+            "description": "從此追蹤器的時間性產物同步 TestPlanIt 里程碑。",
+            "enableLabel": "啟用里程碑同步",
+            "releasesLabel": "發行版本",
+            "sprintsLabel": "衝刺",
+            "kindsLabel": "要同步的類型",
+            "autoTrackLabel": "自動新增新項目",
+            "autoTrackProjectsLabel": "掃描這些已連結的專案以尋找新的里程碑",
+            "settingsSaved": "里程碑同步設定已儲存",
+            "saveError": "儲存里程碑同步設定失敗"
+          }
         },
         "integrationAssigned": "整合任務已成功分配",
         "integrationAssignError": "未能將問題整合分配給項目",
@@ -1621,6 +1755,7 @@
         "setupStepsGiteaStep5": "點擊“新增 Webhook”。使用下面的「發送測試 Webhook」來驗證管道。",
         "deliveriesTab": "送貨",
         "filterConfigPlaceholder": "所有 webhook",
+        "filterEventPlaceholder": "所有事件",
         "filterStatusAll": "全部",
         "filterStatusFailed": "失敗的",
         "filterStatusSuccess": "成功",
@@ -1634,6 +1769,7 @@
         "deliveriesLoadMore": "加載更多",
         "tableHeaderConfig": "Webhook",
         "tableHeaderEvent": "事件",
+        "tableHeaderSubjectRef": "參考",
         "tableHeaderStatus": "地位",
         "tableHeaderError": "錯誤",
         "tableHeaderReceivedAt": "已收到",
@@ -1651,6 +1787,7 @@
         "drawerLabelError": "錯誤",
         "drawerLabelPayloadDigest": "有效載荷摘要",
         "drawerLabelEventId": "事件 ID",
+        "drawerLabelSubjectRef": "參考",
         "drawerLabelAttempt": "試圖",
         "drawerLabelReceivedAt": "收到於",
         "drawerNoError": "—",
@@ -1897,7 +2034,9 @@
           "description": "Valkey 會快取文件，以便在 AI 生成過程中快速存取。",
           "enableLabel": "啟用檔案快取",
           "disabledWarning": "文件緩存已禁用。匯出時，程式碼庫檔案將直接從您的程式碼提供者取得，不會儲存在 TestPlanIt 中。 AI 驅動的 QuickScript 仍將包含程式碼上下文，但每次匯出都會向您的程式碼庫發出即時請求。",
-          "ttlLabel": "快取持續時間（天）",
+          "ttlBefore": "快取",
+          "ttlDays": "{count, plural, other {天}}",
+          "ttlAriaLabel": "以天為單位的快取持續時間",
           "statusTitle": "快取狀態",
           "refreshButton": "刷新快取",
           "listingFiles": "文件列表…",
@@ -1906,6 +2045,8 @@
           "statusPending": "令人耳目一新…",
           "lastFetched": "最後獲取時間",
           "filesCached": "文件已快取",
+          "contentsCached": "內容已快取",
+          "contentsIncomplete": "僅快取了 {total} 個檔案內容中的 {cached} 個 — 產生的腳本將不會使用缺失的檔案。請再次重新整理以完成。",
           "totalSize": "總尺寸"
         },
         "save": "儲存配置",
@@ -1949,9 +2090,20 @@
       "advanced": {
         "title": "先進的",
         "description": "每個項目都設有針對特定功能的開關。新增的開關將在此處顯示。",
+        "recordKey": {
+          "label": "專案代碼",
+          "description": "用於裝飾性記錄鍵中的簡短代碼，例如 {example}。使用 2 至 10 個大寫字母，不含數字。留空則顯示純數字 ID。",
+          "placeholder": "例如 PROJECT",
+          "previewLabel": "範例鍵：",
+          "useSuggestion": "使用建議代碼：{code}",
+          "invalid": "請使用 2 至 10 個大寫字母（不含數字）。",
+          "taken": "該代碼已被其他專案使用。請選擇其他代碼。",
+          "savedToast": "專案代碼已儲存。",
+          "saveError": "無法儲存專案代碼。該代碼可能已被其他專案使用。"
+        },
         "reviewWorkflow": {
           "label": "啟用審核工作流程",
-          "description": "啟用此功能後，需要審核的狀態轉換將由已核准的審核請求控制。測試人員會看到「請求審核」按鈕；審核人員會收到通知。",
+          "description": "啟用此功能後，需要審核的狀態轉換將由已核准的審核請求控制。測試人員會看到「請求審核」按鈕；審核人員會收到通知，核准請求後即會套用該轉換。",
           "enabledToast": "此項目已啟用審核工作流程",
           "disabledToast": "此項目的審核工作流程已停用",
           "saveError": "更新審核工作流程設定失敗",
@@ -1982,13 +2134,23 @@
           "saveError": "更新草稿案例排除設定失敗",
           "skippedToast": "{count, plural, =1 {已跳過 1 個草稿案例，因其處於未開始狀態} other {已跳過 # 個草稿案例，因其處於未開始狀態}}"
         },
+        "autoLockComposition": {
+          "label": "執行開始時鎖定測試執行的組成",
+          "description": "啟用後，當測試執行進入「進行中」狀態時，其案例組成將自動鎖定。鎖定會凍結執行中的案例（無法新增、移除或重新排序），同時仍可繼續執行和指派。測試執行的建立者或專案管理員可以解鎖以變更案例集。",
+          "enabledToast": "測試執行將在開始執行時鎖定其組成",
+          "disabledToast": "測試執行將不再自動鎖定其組成",
+          "saveError": "更新組成自動鎖定設定失敗"
+        },
         "editWindow": {
           "label": "結果編輯視窗",
           "description": "結果記錄後，仍可在一段時間內進行編輯。視窗關閉後，修改需要重新嘗試。系統管理員始終可以進行編輯。",
-          "modeInherit": "繼承系統預設值",
+          "modeInheritMinutes": "繼承系統預設值（{minutes, plural, other {# 分鐘}}）",
+          "modeInheritNoLimit": "繼承系統預設值（無限制）",
           "modeDisable": "停用此項目的編輯功能",
           "modeCustom": "自訂視窗",
-          "minutesLabel": "可編輯時長（分鐘）",
+          "minutesBefore": "可編輯時間為",
+          "minutesUnit": "{minutes, plural, other {分鐘}}",
+          "minutesAriaLabel": "以分鐘為單位的編輯視窗",
           "systemMaxHint": "系統最大值： {minutes} 分鐘",
           "systemLockedTitle": "系統範圍內已停用編輯功能",
           "systemLockedDescription": "系統管理員已停用所有項目的就地結果編輯功能，因此本項目無法啟用此功能。",
@@ -1996,6 +2158,23 @@
           "save": "儲存編輯視窗",
           "savedToast": "已更新此項目的編輯視窗",
           "saveError": "更新編輯視窗設定失敗"
+        },
+        "abandonedRuns": {
+          "label": "廢棄自動化清理",
+          "description": "在自動化執行被關閉為廢棄之前，等待下一個結果的時長。手動執行不受影響。",
+          "modeInheritMinutes": "繼承系統預設值（{minutes, plural, other {# 分鐘}}）",
+          "modeInheritOff": "繼承系統預設值（關閉）",
+          "modeDisable": "停用此項目的此功能",
+          "modeCustom": "自訂閒置門檻",
+          "minutesBefore": "閒置達以下時間即關閉",
+          "minutesUnit": "{minutes, plural, other {分鐘}}",
+          "minutesAriaLabel": "閒置門檻(分鐘)",
+          "invalidMinutes": "請輸入至少 {min} 分鐘",
+          "targetStateLabel": "將已關閉的執行移動至",
+          "targetStateAria": "廢棄執行的目標狀態",
+          "save": "儲存清理設定",
+          "savedToast": "此專案的廢棄自動化清理已更新",
+          "saveError": "更新廢棄自動化清理失敗"
         }
       }
     },
@@ -2044,6 +2223,9 @@
   },
   "milestones": {
     "title": "里程碑詳情",
+    "auditLog": {
+      "description": "此里程碑的所有變更都會被記錄。"
+    },
     "fields": {
       "parent": "家長里程碑",
       "dueDate": "到期日",
@@ -2067,7 +2249,18 @@
       "description": "未提供描述",
       "documentation": "未提供任何文件。",
       "testRuns": "沒有測試運行",
+      "noMatchingTestRuns": "沒有符合您篩選條件的測試執行。",
+      "noMatchingSessions": "沒有符合您篩選條件的Session。",
       "forecasts": "暫無預測數據"
+    },
+    "cardFilters": {
+      "labelRuns": "篩選測試執行",
+      "labelSessions": "篩選Session"
+    },
+    "browser": {
+      "kindAll": "所有里程碑",
+      "kindReleases": "已同步的發行版本",
+      "kindSprints": "已同步的衝刺"
     },
     "statusLabels": {
       "NOT_STARTED": "尚未開始",
@@ -2111,6 +2304,7 @@
     "delete": {
       "title": "刪除里程碑",
       "confirmMessage": "您確定要刪除里程碑 {name} 嗎？",
+      "childrenWarning": "{count, plural, other {其 # 個子項及後代里程碑}} 也將被刪除。",
       "warning": "此里程碑將從專案中移除。該里程碑的歷史數據仍將保留在專案中。",
       "toast": {
         "loading": "刪除里程碑…",
@@ -2138,12 +2332,128 @@
     "notifications": {
       "dueSoon": "里程碑「{name}」將於 {dueDate}到期。",
       "overdue": "里程碑「{name}」應於 {dueDate}日到期。"
+    },
+    "import": {
+      "importTitle": "從 Jira 匯入",
+      "importDescription": "選擇要同步為 TestPlanIt 里程碑的 Jira 修復版本和衝刺。",
+      "showClosed": "顯示已關閉",
+      "alreadyLinked": "已連結",
+      "selectedCount": "{count, plural, other {已選擇 # 個}}",
+      "confirmSelection": "匯入所選項目",
+      "confirmSelectionCount": "{count, plural, other {匯入 # 個里程碑}}",
+      "empty": "找不到里程碑",
+      "previewFailed": "從 Jira 載入里程碑失敗",
+      "importFailed": "匯入所選里程碑失敗",
+      "requestTimedOut": "Jira 回應時間過長，請求已逾時。這通常表示所連結的 Jira 專案版本或看板數量過多。請再試一次，並保持「顯示已關閉」選項為關閉狀態，以縮小請求範圍。",
+      "serviceUnavailable": "伺服器暫時無法使用，請稍後再試。",
+      "unexpectedResponse": "伺服器傳回非預期的回應（HTTP {status}）。請再試一次，若問題持續發生，請聯絡您的管理員。",
+      "importStarted": "匯入已開始",
+      "kindRelease": "發行版本",
+      "kindSprint": "衝刺",
+      "selectAll": "全選",
+      "searchPlaceholder": "搜尋發行版本和衝刺……",
+      "emptyFiltered": "沒有符合您篩選條件的里程碑。",
+      "partialWarning": "部分 Jira 專案無法取得：",
+      "importing": "正在從 Jira 匯入 {count, plural, other {# 個里程碑}}…",
+      "completed": "已從 Jira 匯入 {count, plural, other {# 個里程碑}}",
+      "stillRunning": "匯入仍在背景執行中 — 里程碑將在完成後出現。"
+    },
+    "sync": {
+      "managedByJira": "由 Jira 管理",
+      "lastSynced": "上次同步時間 {time}",
+      "openInJira": "在 Jira 中開啟",
+      "providerJira": "吉拉",
+      "sourceBadge": "{provider} · {kind} · {state}",
+      "syncNow": "立即同步",
+      "unlinkMenuItem": "取消與 {provider} 的連結",
+      "unlinkConfirmTitle": "取消連結里程碑？",
+      "unlinkConfirmDescription": "這將停止與追蹤器的同步：欄位將重新變為可編輯，已同步的問題連結將變為手動（由您保留或移除），日後可透過重新匯入此產物來重新連結。",
+      "unlinkConfirmAction": "取消連結",
+      "unlinkSuccess": "里程碑已與追蹤器取消連結。",
+      "unlinkError": "取消連結里程碑失敗。",
+      "sourceRemoved": "來源已在 {provider} 中移除",
+      "mergedInto": "已合併至 {target}"
+    },
+    "summary": {
+      "inScope": "{count, plural, other {# 個在範圍內}}",
+      "foundInTesting": "{count, plural, other {# 個在測試中發現}}",
+      "includesChildMilestones": "包含子里程碑"
+    },
+    "burndown": {
+      "title": "燃盡圖",
+      "remaining": "剩餘項目",
+      "ideal": "理想",
+      "today": "今天",
+      "tooltipRemaining": "剩餘 {count, number} 個",
+      "heatAhead": "超前理想進度",
+      "heatOnTrack": "符合進度",
+      "heatBehind": "落後理想進度",
+      "tooltipBehind": "落後理想進度 {count, number} 個",
+      "tooltipAhead": "超前理想進度 {count, number} 個"
+    },
+    "members": {
+      "cardTitle": "問題",
+      "casesOtherProjects": "{count, plural, other {# 個測試案例在其他專案中}}",
+      "inScope": "範圍內",
+      "foundInTesting": "在測試中發現",
+      "foundInTestingEmpty": "測試中未發現任何問題。",
+      "inScopeCrossBadge": "範圍內",
+      "refresh": "重新整理",
+      "columnKey": "名稱",
+      "columnStatus": "狀態",
+      "columnCoverage": "涵蓋範圍",
+      "columnSource": "來源",
+      "sourceSynced": "已同步",
+      "sourceManual": "手動",
+      "coveragePassed": "通過",
+      "coverageFailed": "失敗",
+      "coverageInProgress": "進行中",
+      "coverageNotRun": "未執行",
+      "coverageUncovered": "未涵蓋",
+      "filterAllCoverage": "所有涵蓋範圍",
+      "filterAllSources": "所有來源",
+      "filterAllTypes": "所有類型",
+      "empty": "尚無問題連結至此里程碑。",
+      "emptyFiltered": "沒有符合目前篩選條件的問題。",
+      "unlink": "取消連結",
+      "managedByJira": "由 Jira 管理 — 請在 Jira 中的版本/衝刺中移除它",
+      "linkSuccess": "問題已連結至此里程碑。",
+      "linkError": "將問題連結至此里程碑失敗。",
+      "unlinkSuccess": "問題已從此里程碑移除。",
+      "unlinkError": "從此里程碑移除問題失敗。",
+      "overflowTitle": "Jira 中的更多問題",
+      "overflowDescription": "這些問題位於已連結的 Jira 版本/衝刺中，但尚未連結至此處。",
+      "overflowCapped": "上限為 {cap, number} — Jira 中還有 {overflowTotal, number} 個",
+      "overflowMoreAvailable": "Jira 中還有 {overflowTotal, number} 個可用",
+      "overflowImportAction": "匯入並連結",
+      "overflowImportSuccess": "匯入已開始 — 問題將在同步時出現。",
+      "overflowImportError": "從 Jira 匯入成員問題失敗。",
+      "emptyCta": "連結問題以開始使用。",
+      "columnDescription": "描述",
+      "unlinkConfirmTitle": "取消連結問題？",
+      "unlinkConfirmDescription": "這將從此里程碑移除問題。問題本身將被保留，可日後重新連結。",
+      "totalsUncovered": "{count, plural, other {# 個未涵蓋問題}}",
+      "percentReady": "{percent, number}% 已就緒",
+      "readinessSummary": "{passed, number} 個通過 · {failed, number} 個失敗 · {inProgress, number} 個進行中 · {notRun, number} 個未執行 · {uncovered, number} 個未涵蓋（共 {total, number} 個問題）",
+      "filterHasUntested": "有未測試的案例",
+      "createRunNoCases": "所選問題均未連結測試案例。",
+      "createTestRunDetailed": "建立測試執行（{issues, plural, other {# 個問題}} · {cases, plural, other {# 個案例}}）"
+    },
+    "complete": {
+      "skippedForPermission": "里程碑已完成。由於您沒有權限完成其測試執行和會話,因此它們保持開啟狀態。",
+      "skippedTestRunsForPermission": "里程碑已完成。由於您沒有權限完成其測試執行,因此它們保持開啟狀態。",
+      "skippedSessionsForPermission": "里程碑已完成。由於您沒有權限完成其會話,因此它們保持開啟狀態。"
     }
   },
   "sessions": {
+    "bulk": {
+      "completeTitle": "完成 {count, plural, other {# 個工作階段}}",
+      "completeDescription": "您確定要完成 {count, plural, other {這些工作階段}} 嗎？",
+      "deleteTitle": "刪除 {count, plural, other {# 個工作階段}}",
+      "deleteDescription": "您確定要刪除 {count, plural, other {這些工作階段}} 嗎？"
+    },
     "auditLog": {
       "trigger": "活動",
-      "title": "活動日誌",
       "description": "此工作階段的所有變更記錄。"
     },
     "title": "{count, plural, =1 {會話} other {會話}}",
@@ -2153,7 +2463,12 @@
       "overtime": "超出估計值： {time}"
     },
     "empty": {
-      "noMatchingCompleted": "沒有符合您篩選條件的已完成會話。"
+      "noMatchingCompleted": "沒有符合您篩選條件的已完成會話。",
+      "noMatchingActive": "沒有符合您篩選條件的活動中會話。"
+    },
+    "sessionFilters": {
+      "label": "篩選會話",
+      "mine": "我的會話"
     },
     "filter": {
       "placeholder": "篩選會話..."
@@ -2167,6 +2482,9 @@
       "viewSessionDetails": "查看會話"
     },
     "noMilestone": "沒有里程碑",
+    "milestoneGroup": {
+      "sessionCount": "{count, plural, other {# 個會話}}"
+    },
     "completeDialog": {
       "noWorkflowsConfigured": "此項目未配置任何完成工作流程。請在管理設定中配置工作流程以啟用會話完成功能。"
     },
@@ -2288,7 +2606,7 @@
       "noItems": "你目前無需處理任何分配給你的任務。",
       "pendingRuns": "待測試運行",
       "activeSessions": "活躍會話",
-      "yourActiveSessions": "{count, plural, =0 {無活動會話} =1 {活動會話數} other {活動會話數}}",
+      "yourActiveSessions": "{count, plural, =0 {無活動會話} =1 {活動會話#} other {活動會話#}}",
       "yourPendingRuns": "{count, plural, =0 {沒有待處理的測試執行} =1 {# 個活動測試執行} other {# 個活動測試執行}}",
       "yourAssignments": "你的作業",
       "totalTime": "預計總時間： ",
@@ -2313,6 +2631,12 @@
       "adminAddProject": "添加您的第一個項目即可開始！",
       "footer": "需要獲得存取權限才能查看和參與測試計劃活動。"
     },
+    "getStarted": {
+      "title": "開始使用",
+      "description": "當您準備開始規劃時，新增您自己的專案。",
+      "adminAddProject": "建立您的第一個專案",
+      "footer": "示範專案包含範例資料，您可以隨時探索或移除。"
+    },
     "noProjectAccess": {
       "description": "您無權存取此項目。",
       "contact": "請聯絡您的專案管理員申請存取權限。"
@@ -2321,6 +2645,7 @@
       "testCases": "{count, plural, =0 {# 個測試案例} =1 {# 個測試案例} other {# 個測試案例}}",
       "activeMilestones": "{count, plural, =0 {# 個活動里程碑} =1 {# 個活動里程碑} other {# 個活動里程碑}}",
       "activeRuns": "{count, plural, =0 {# 個活動測試執行} =1 {# 個活動測試執行} other {# 個活動測試執行}}",
+      "automationRunsInProgress": "{count, plural, =0 {# 個自動化執行進行中} =1 {# 個自動化執行進行中} other {# 個自動化執行進行中}}",
       "activeSessions": "{count, plural, =0 {# 個活動工作階段} =1 {# 個活動工作階段} other {# 個活動工作階段}}",
       "issues": "{count, plural, =0 {# 問題} =1 {# 問題} other {# 問題}}"
     }
@@ -2349,6 +2674,13 @@
       },
       "access": {
         "title": "使用權"
+      },
+      "assignments": {
+        "title": "作業",
+        "empty": "沒有未完成的作業。",
+        "reviews": "{count, plural, =1 {# 項審核} other {# 項審核}}",
+        "remaining": "剩餘",
+        "pendingRuns": "{count, plural, =1 {# 個進行中的測試執行包含} other {# 個進行中的測試執行包含}} {cases, plural, =1 {# 個測試案例} other {# 個測試案例}}"
       },
       "directory": {
         "title": "目錄設定檔",
@@ -2421,12 +2753,18 @@
         "noMatchingEntries": "沒有符合所選篩選條件的項目。",
         "showing": "{total} 個項目中的 {loaded} 個"
       },
-      "mentionedComments": {
-        "title": "評論中提到",
-        "description": "在提及你的評論中",
-        "noComments": "目前還沒有人提到過你。",
-        "comment": "評論",
-        "showingResults": "顯示 {start} - {end} 共 {total}"
+      "myComments": {
+        "title": "我的評論",
+        "description": "你撰寫或被提及的評論",
+        "noComments": "你尚未撰寫任何評論,也還沒有人在評論中提到過你。",
+        "noMatchingComments": "沒有符合目前篩選條件的評論。",
+        "searchPlaceholder": "搜尋評論",
+        "filterLabel": "篩選評論",
+        "filterAll": "所有評論",
+        "filterMentioned": "提及我的",
+        "filterAuthored": "由我撰寫",
+        "showing": "顯示 {total} 則評論中的 {loaded} 則",
+        "matching": "{matched} 個相符 · 已搜尋 {total} 則評論中的 {loaded} 則"
       },
       "twoFactor": {
         "enable": "啟用雙重認證",
@@ -2500,7 +2838,8 @@
       "green": "綠色的",
       "purple": "紫色的",
       "orange": "橘子",
-      "accessible": "無障礙"
+      "accessible": "無障礙",
+      "accessibledark": "無障礙（深色）"
     }
   },
   "repository": {
@@ -2508,13 +2847,12 @@
       "notFound": "未找到測試用例版本。",
       "detailsRegion": "測試用例詳情",
       "metadataRegion": "測試用例元數據",
-      "versionCreated": "版本 {version} 創建",
-      "latestVersionUpdated": "最新版本 {version, number} 已更新",
+      "versionCreated": "版本 {version}",
+      "latestVersionUpdated": "版本 {version, number}（最新）",
       "historyView": "測試用例歷史記錄視圖"
     },
     "auditLog": {
       "trigger": "活動",
-      "title": "活動日誌",
       "description": "此測試案例的所有變更記錄。"
     },
     "fields": {
@@ -2537,6 +2875,7 @@
       "add": "新增步驟",
       "addSharedSteps": "新增共享步驟",
       "delete": "刪除步驟",
+      "removedFromCase": "已從測試案例中移除",
       "confirmDelete": "確認刪除步驟 {number, number}？",
       "createSharedSteps": "建立共享 {number, plural, one {步驟} other {步驟}}",
       "sharedStepsName": "共享步驟名稱",
@@ -2547,7 +2886,8 @@
         "sharedStepGroupCreatedSuccess": "共享步驟創建成功！",
         "genericSharedStepCreationError": "建立共用步驟時發生未知錯誤。請重試。",
         "errorCreatingSharedGroup": "建立共用步驟失敗，請重試。",
-        "sharedGroupCreatedSuccess": "共享步驟組創建成功！"
+        "sharedGroupCreatedSuccess": "共享步驟組創建成功！",
+        "failedToCreateSharedGroupError": "建立共用群組失敗，請重試。"
       },
       "selectSharedStepsTitle": "選擇共享步驟",
       "selectSharedStepsDescription": "選擇要新增至測試案例中的共用步驟。",
@@ -2564,7 +2904,8 @@
       "reviewSelectedStepsTitle": "回顧選定步驟",
       "noStepsInSelectedGroup": "所選組沒有步驟。",
       "sharedGroupSuffix": "（共同步驟）",
-      "unnamedSharedGroup": "未命名的共享步驟"
+      "unnamedSharedGroup": "未命名的共享步驟",
+      "noStepsInSelectedSharedGroup": "所選共用群組沒有步驟。"
     },
     "testCase": {
       "toggleAutomated": "切換自動測試",
@@ -2586,9 +2927,16 @@
     "deselectAllShiftTooltip": "取消選擇/選擇所有頁面上的所有案例",
     "shiftClickHint": "按住 Shift 鍵可選擇/取消選擇所有頁面",
     "treeView": {
-      "expandAll": "全部展開",
-      "collapseAll": "全部收起",
-      "altKey": "按住 Alt 鍵展開/折疊所有子項"
+      "expandFolder": "展開資料夾",
+      "collapseFolder": "收起資料夾",
+      "expandSubfolders": "展開所有子資料夾",
+      "collapseSubfolders": "收起所有子資料夾",
+      "expandAll": "展開所有資料夾",
+      "collapseAll": "收起所有資料夾",
+      "altHintMac": "按住 ⌥ 鍵展開或收起所有子資料夾",
+      "altHintWin": "按住 Alt 鍵展開或收起所有子資料夾",
+      "altHintAllMac": "按住 ⌥ 鍵展開或收起每個資料夾",
+      "altHintAllWin": "按住 Alt 鍵展開或收起每個資料夾"
     },
     "dragDrop": {
       "move": "移動",
@@ -2605,7 +2953,13 @@
       "dragPreviewCase": "測試用例",
       "dragPreviewCount": "{count, plural, =1 {# 測試案例} other {# 測試案例}}",
       "modifierHintMac": "按住 ⇧ 移動或按住 ⌥ 複製，拖曳即可跳過此選單。",
-      "modifierHintWin": "按住Shift鍵移動或按住Ctrl鍵複製，拖曳即可跳過此選單。"
+      "modifierHintWin": "按住Shift鍵移動或按住Ctrl鍵複製，拖曳即可跳過此選單。",
+      "dropZoneReorder": "放置以重新排序",
+      "dropZoneFolder": "拖放至資料夾以巢狀化，或拖放至資料夾之間以重新排序",
+      "dropZoneTreeMac": "放置到資料夾 — 按住 ⇧ 移動，按住 ⌥ 複製",
+      "dropZoneTreeWin": "放置到資料夾 — 按住 Shift 移動，按住 Ctrl 複製",
+      "dropZoneTreeMove": "放置到資料夾以移動",
+      "dropZoneTreeCopy": "放置到資料夾以複製"
     },
     "folderActions": {
       "edit": "編輯資料夾",
@@ -2618,12 +2972,22 @@
       "selectCases": "選擇測試用例",
       "noTestCases": "沒有要顯示的測試案例。",
       "addCase": "新增案例",
+      "caseDetails": "測試用例詳情",
+      "expandDetails": "展開為全寬",
+      "collapseDetails": "收合為分割視圖",
+      "openFullPage": "開啟完整頁面",
+      "previousCase": "上一個測試用例",
+      "nextCase": "下一個測試用例",
+      "caseNavPosition": "{total} 之 {position}",
       "notFound": "未找到測試用例。",
       "selectFilter": "選擇篩選器",
       "testResultHistory": "測試結果歷史記錄",
       "testResultHistoryDescription": "查看此測試案例的測試結果歷史記錄",
+      "viewElapsedTimeReport": "經過時間報表",
       "noTestResults": "未找到此測試案例的測試結果",
       "unknownRun": "未知運行",
+      "currentRunBadge": "目前的",
+      "currentRunTooltip": "您正在檢視的測試執行",
       "attempt": "試圖",
       "invalidProject": "無效項目",
       "noSearchResults": "沒有符合您搜尋條件的案例。",
@@ -2651,7 +3015,9 @@
         "title": "導入測試用例",
         "fields": {
           "workflowState": "工作流程狀態",
-          "column": "列 {number}"
+          "column": "列 {number}",
+          "caseId": "案例 ID",
+          "caseIdDescription": "TestPlanIt 案例 ID"
         },
         "success": {
           "description": "{count, plural, one {# 測試案例} other {# 測試案例}} 匯入成功"
@@ -2661,7 +3027,15 @@
           "folderRequired": "此導入位置需要選擇資料夾。",
           "fileRequired": "需要 CSV 或 Markdown 檔案。",
           "markdownParseFailed": "解析 Markdown 文件失敗",
-          "markdownLlmFailed": "AI解析不可用，使用標準解析器"
+          "markdownLlmFailed": "AI解析不可用，使用標準解析器",
+          "validationTitle": "匯入驗證失敗",
+          "validationSummary": "{count, plural, other {在您的檔案中發現 # 個問題}}。未匯入任何測試案例。",
+          "validationEntry": "第 {row, number} 列 · {field}：{message}",
+          "validationEntryNamed": "第 {row, number} 列「{name}」· {field}：{message}",
+          "validationMore": "{count, plural, other {還有 # 個問題}} 未顯示。",
+          "validationMultiRowNote": "列號指的是預覽中顯示的分組測試案例，而非原始 CSV 行。",
+          "partialTitle": "部分測試案例未匯入",
+          "partialSummary": "{failed, plural, other {# 列}} 無法匯入。{imported, plural, other {# 個測試案例}} 已成功匯入。"
         },
         "page1": {
           "fileType": {
@@ -2693,7 +3067,8 @@
           "title": "將 CSV 欄位對應到字段",
           "description": "將 CSV 檔案中的每一列對應到範本中的一個字段，或選擇忽略它。",
           "ignoreColumn": "忽略列",
-          "requiredFieldsWarning": "{count, plural, one {# 必填欄位為} other {# 必填欄位為}} 未對映"
+          "requiredFieldsWarning": "{count, plural, one {# 必填欄位為} other {# 必填欄位為}} 未對映",
+          "caseIdHint": "這必須是數字案例 ID — 相符的案例將被覆寫。"
         },
         "page3": {
           "title": "田間測繪概要",
@@ -2737,7 +3112,7 @@
     "columns": {
       "selectCase": "選擇個案",
       "runOrder": "運行順序",
-      "lastTestResult": "最新結果",
+      "latestResults": "最新結果",
       "testedOn": "上次測試"
     },
     "actions": {
@@ -2768,6 +3143,8 @@
     "views": {
       "byAutomation": "自動化",
       "byParameterized": "參數化",
+      "byAttachments": "附件",
+      "byReview": "審查",
       "allTemplates": "所有模板",
       "allStates": "所有州",
       "allCreators": "所有創作者",
@@ -2890,7 +3267,7 @@
       "searchPlaceholder": "搜尋模板...",
       "noTemplatesFound": "未找到模板。",
       "outputModeLabel": "輸出模式",
-      "outputModeSingle": "單一文件（{count, plural, one {# 案例} other {所有 # 案例}}）",
+      "outputModeSingle": "單一檔案（{count, plural, =2 {兩個案例} other {全部 # 個案例}}）",
       "outputModeIndividual": "{count, plural, one {單一檔案 (.zip)} other {單一檔案 (.zip)}}",
       "casesToExport": "{count, plural, one {# 情況} other {# 情況}} 匯出",
       "exportSuccess": "匯出成功。",
@@ -2909,7 +3286,7 @@
       "aiGenerated": "人工智慧生成",
       "templateGenerated": "模板已生成",
       "truncatedWarning": "輸出被截斷——模型已達到令牌限制。請嘗試減小批次大小或在提示配置中增加最大輸出令牌數。",
-      "contextFiles": "{count, plural, one {（上下文文件數）} other {（上下文文件數）}}",
+      "contextFiles": "{count, plural, one {（上下文文件#）} other {（上下文文件#）}}",
       "noCodeContextHint": "未配置代碼倉庫。人工智慧將使用標準框架模式。",
       "generatingParallelProgress": "已產生 {done, number} 個文件，共 {total, number} 個檔案...",
       "cancelledGeneration": "取消"
@@ -2924,7 +3301,6 @@
       "scanFailed": "重複分析失敗",
       "scanFailedDescription": "發生意外錯誤",
       "pageTitle": "重複候選人",
-      "pageDescription": "查看上次掃描中發現的潛在重複測試案例。",
       "rescan": "重新掃描",
       "cancelScan": "取消掃描",
       "loading": "正在載入重複的候選對象...",
@@ -3203,7 +3579,63 @@
       },
       "linkedIssuesDroppedTitle": "部分相關問題未包含在內。",
       "linkedIssuesDropped": "{count, plural, =1 {# 個連結問題已被捨棄} other {# 個連結問題已被捨棄}}，原因是權杖預算限制：{keys}。",
-      "linkedIssuesPreviewHeading": "將會包含的相關問題"
+      "linkedIssuesPreviewHeading": "將會包含的相關問題",
+      "contextImages": {
+        "pickerHeading": "要納入為情境的圖片（最多 {max} 張）",
+        "tooLarge": "檔案過大",
+        "noVisionHint": "目前設定的 AI 模型不支援圖片輸入 — 所選圖片將不會被傳送。",
+        "visionSkippedTitle": "圖片未傳送",
+        "visionSkipped": "{count, plural, =1 {# 張圖片} other {# 張圖片}}未傳送 — 因為所設定的 AI 模型不支援影像輸入。",
+        "includedSummary": "{count, plural, =1 {# 張圖片} other {# 張圖片}}已作為背景資訊傳送：{names}",
+        "skippedSummary": "{count, plural, =1 {# 張圖片} other {# 張圖片}}已跳過（檔案過大或不受支援）：{names}",
+        "includeUrlScreenshots": "若有可用的頁面螢幕擷取畫面，則一併納入"
+      }
+    },
+    "filterBar": {
+      "addFilter": "新增篩選器",
+      "removeFilter": "移除篩選器：{name}",
+      "editFilter": "編輯篩選器：{name}",
+      "activeCount": "{count, plural, =1 {# 個使用中的篩選條件} other {# 個使用中的篩選條件}}",
+      "assignedToMe": "指派給我",
+      "noFilters": "無啟用篩選器",
+      "noMatchingCases": "沒有符合您篩選條件的測試案例",
+      "searchTruncated": "在前 {count, number} 個匹配項目中篩選",
+      "sortedByRelevance": "依相關性排序",
+      "countsUpdating": "正在更新計數……",
+      "filterLimitReached": "已達篩選器上限（最多 {count} 個）",
+      "valueLimitReached": "已達值上限（每個篩選器最多 {count} 個）",
+      "filtersTruncated": "部分篩選器已被捨棄（最多 {count} 個）",
+      "valuesTruncated": "每個篩選條件最多 {count, plural, =1 {# 個值} other {# 個值}} — 多餘的值已被捨棄"
+    },
+    "savedViews": {
+      "title": "已儲存的檢視",
+      "save": "儲存檢視",
+      "saveTitle": "儲存檢視",
+      "saveDescription": "為此檢視命名，以便日後返回這些篩選條件。",
+      "namePlaceholder": "例如：Smoke 案例，未自動化",
+      "descriptionPlaceholder": "此檢視的用途",
+      "nameRequired": "請輸入此檢視的名稱。",
+      "loginRequired": "您必須登入才能儲存檢視。",
+      "nothingToSave": "請先新增篩選器或分組。",
+      "saved": "檢視已儲存",
+      "savedDescription": "「{name}」已加入您已儲存的檢視。",
+      "saveFailed": "無法儲存檢視，請再試一次。",
+      "empty": "暫無已儲存的檢視",
+      "emptyHint": "儲存目前的篩選條件，以便日後返回使用。",
+      "apply": "套用檢視：{name}",
+      "applied": "已套用「{name}」",
+      "droppedFilters": "{count, plural, =1 {# 個篩選條件已不存在，已略過} other {# 個篩選條件已不存在，已略過}}",
+      "droppedGrouping": "其分組已不再可用，因此使用預設值。",
+      "unreadable": "{count, plural, =1 {# 個已儲存檢視} other {# 個已儲存檢視}}無法讀取",
+      "rename": "重新命名",
+      "renameTitle": "重新命名已儲存的檢視",
+      "renamed": "已儲存的檢視已更新",
+      "renameFailed": "無法更新檢視，請再試一次。",
+      "delete": "刪除",
+      "deleteTitle": "刪除已儲存的檢視？",
+      "deleteConfirm": "「{name}」將從您已儲存的檢視中移除。此操作無法復原。",
+      "deleted": "已儲存的檢視已刪除",
+      "deleteFailed": "無法刪除檢視，請再試一次。"
     }
   },
   "tags": {
@@ -3251,11 +3683,20 @@
     "delete": {
       "confirmMessage": "您確定要刪除此附件嗎？",
       "deferredMessage": "儲存時，此附件將被刪除。"
+    },
+    "preview": {
+      "unavailable": "無法預覽",
+      "tooLarge": "此檔案太大，無法預覽。",
+      "empty": "此文件似乎是空的。",
+      "download": "下載以檢視",
+      "slideCounter": "第 {current} 張投影片，共 {total} 張",
+      "previousSlide": "上一張投影片",
+      "nextSlide": "下一張投影片"
     }
   },
   "reviews": {
     "banner": {
-      "pendingMessage": "已向 <assignee></assignee> 請求審核，用於轉換 <fromState></fromState> → <toState></toState> <ago></ago>",
+      "pendingMessage": "待 <assignee></assignee> 審核轉換 <fromState></fromState> → <toState></toState> <ago></ago>",
       "changesRequestedTitle": "請求更改",
       "rejectedTitle": "審查被拒絕",
       "requestAgain": "再次請求復審",
@@ -3268,6 +3709,13 @@
       "success": "審核請求已取消。",
       "error": "無法取消審核請求。請稍後再試。"
     },
+    "nudge": {
+      "success": "{count, plural, other {已向 # 位審核者傳送提醒。}}",
+      "error": "無法傳送提醒，請稍後再試。",
+      "tooSoon": "此請求已在過去一小時內傳送過提醒，請稍後再試。",
+      "cooldownTooltip": "提醒已於 {ago} 傳送",
+      "noRecipients": "目前沒有人可以處理此請求，請確認受指派人是否仍擁有此專案的存取權限。"
+    },
     "list": {
       "pendingTooltip": "待審核來自 {assignee}"
     },
@@ -3276,35 +3724,43 @@
       "gatedOptionBadge": "需要審核",
       "gatedStatesNotSelectable": "建立時無法選擇位於或超出限制狀態的狀態。請選擇第一個限制狀態之前的狀態，然後使用「請求審核」功能跨越該限制。",
       "saveBlockedByFormErrors": "儲存前請解決高亮顯示的表單錯誤。",
-      "bulkBlockedSummary": "{count, plural, other {# 個案例}} 被關卡「{gateName}」阻擋：{sampleNames}{more, plural, =0 {} other {，以及另外 # 個}}。每個被阻擋的案例在此轉換前都需要通過「{gateName}」的已核准審核。",
-      "toastReviewRequired": "此變更需經批准後方可生效。請申請審核，待審核通過後再試。",
+      "bulkBlockedHeading": "{count, plural, other {# 個測試案例}}被閘門「{gateName}」封鎖：",
+      "bulkBlockedHeadingMixed": "{count, plural, other {# 個測試案例需要}}核准才能進行此轉換：",
+      "bulkBlockedMore": "以及{count, plural, other {另外 # 個測試案例}}",
+      "bulkBlockedFooter": "每個被封鎖的測試案例都需要經過核准的審核才能進行此轉換。",
+      "toastReviewRequired": "此轉換需要先獲得核准。請提出審核請求——一旦核准，系統將自動為您套用該轉換。",
       "toastPendingReviewExists": "此次變更申請已進入審核階段。請等待審核結果，或在重試前取消申請。"
     },
     "inbox": {
       "iconAria": "{count, plural, =0 {審核收件箱} other {審核收件箱，# 個待處理}}",
       "pageTitle": "評論",
-      "pageDescription": "指派給您的待審核請求（直接指派給您或透過您所擔任的角色指派給您）。",
-      "pageDescriptionDecided": "審核您已決定的請求。",
       "tabPending": "待辦的",
       "tabDecided": "已決定",
-      "emptyDecided": "您尚未決定撰寫任何評論。",
-      "empty": "沒有待審核的評論。您已全部完成審核。",
+      "emptyDecided": "尚無已決定的審核。您所決定的審核，以及您所請求審核的決定，將會顯示在這裡。",
+      "empty": "沒有待處理的審核。目前沒有任何項目在等待您處理，且您所提出的所有審核請求皆已做出決定。",
       "featureDisabled": "審核工作流程功能目前已停用。待審核的審核內容將會保留，並在該功能重新啟用後重新顯示。",
       "columnEntity": "實體",
       "columnProject": "專案",
       "columnRequester": "請求者",
+      "columnAssignee": "受指派人",
       "columnTransition": "過渡",
-      "columnTransitionFrom": "從",
-      "columnTransitionTo": "到",
       "columnRequestedAt": "已請求",
+      "columnDecidedBy": "決定者",
       "columnDecidedAt": "決定於",
       "columnStatus": "地位",
       "columnActions": "行動",
       "actionApprove": "核准",
       "actionRequestChanges": "請求更改",
       "actionReject": "拒絕",
+      "actionNudge": "傳送提醒",
       "filterEntityType": "實體類型",
       "filterProject": "專案",
+      "filterRequester": "請求者",
+      "filterAllRequesters": "所有請求者",
+      "filterDecidedBy": "決定者",
+      "filterAllDeciders": "所有決定者",
+      "filterStatus": "狀態",
+      "filterAllStatuses": "所有狀態",
       "filterAllEntityTypes": "所有實體類型",
       "filterEntityTypeCase": "測試用例",
       "filterEntityTypeRun": "測試運行",
@@ -3316,7 +3772,7 @@
       "sheetDescription": "在過渡到目標狀態之前，請將此實體傳送給我們進行審核。",
       "assigneeLabel": "受讓人",
       "assigneePlaceholder": "選擇使用者或角色",
-      "usersHoldRole": "{count, plural, one {# 使用者擁有此角色} other {# 使用者擁有此角色}}",
+      "usersNotified": "{count, plural, =0 {沒有人會收到通知} other {將通知 # 位使用者}}",
       "targetStateLabel": "目標狀態",
       "targetStatePlaceholder": "選擇目標狀態",
       "commentLabel": "評論",
@@ -3332,6 +3788,20 @@
       "ineligibleAssigneeErrorUser": "{name} 無法審核此區域的評論。請選擇其他使用者或角色。",
       "ineligibleAssigneeErrorRole": "{roleName} 角色無權審查此區域的評論。請選擇其他角色或使用者。"
     },
+    "bulkRequester": {
+      "saveAndRequestButton": "儲存並請求審核",
+      "sheetDescription": "{count, plural, other {已選取的 # 個測試案例需要}}核准才能到達「{targetStateName}」。每個案例都會針對其必須經過的第一個閘門狀態提交審核。",
+      "breakdownLabel": "待請求的審核",
+      "breakdownRow": "{count, plural, other {# 個測試案例}}",
+      "autoCommentNote": "每個案例都會自動新增一則說明其轉換的留言，審核人員則會針對整批案例收到一次通知。",
+      "otherEditsNote": "您對其他欄位所做的編輯會在提交時套用。狀態變更則會等待核准。",
+      "pendingSkipNote": "{count, plural, other {# 個測試案例已經}}在等待審核，將會被跳過。",
+      "submitSuccess": "{count, plural, other {已建立 # 個審核請求}}。",
+      "submitSuccessWithSkips": "{created, plural, other {已建立 # 個審核請求}}，{skipped, plural, other {已跳過 # 個}}（已經在等待審核）。",
+      "nothingToRequest": "所選取的測試案例不需要任何審核請求。",
+      "editsAppliedNoRequests": "您的編輯已儲存。不需要任何審核請求。",
+      "selectionTooLarge": "選取的測試案例過多，無法一次請求審核。請選取較少數量後再試一次。"
+    },
     "assigneeChip": {
       "emptyMembers": "目前沒有符合專案資格的成員擔任此職務。",
       "unnamedUser": "（匿名用戶）"
@@ -3341,7 +3811,7 @@
       "requestChanges": "請求更改",
       "reject": "拒絕",
       "approveConfirmTitle": "批准此審核請求？",
-      "approveConfirmDescription": "核准將允許 <requester></requester> 將 <name></name> 轉換為 <state></state>。",
+      "approveConfirmDescription": "核准後將把 <name></name> 移動至 <state></state>，此操作適用於 <requester></requester>。",
       "approvalNoteLabel": "批准說明",
       "approvalNotePlaceholder": "可為請求者新增選用備註（顯示在核准資訊旁）。",
       "requestChangesDescription": "在您批准此變更之前，請告知請求者需要更改哪些內容。",
@@ -3361,9 +3831,60 @@
     }
   },
   "runs": {
+    "bulk": {
+      "completeTitle": "完成 {count, plural, other {# 個測試運行}}",
+      "completeDescription": "您確定要完成 {count, plural, other {這些測試運行}} 嗎？",
+      "deleteTitle": "刪除 {count, plural, other {# 個測試運行}}",
+      "deleteDescription": "您確定要刪除 {count, plural, other {這些測試運行}} 嗎？結果將保留以供歷史分析。"
+    },
+    "composition": {
+      "lock": "案例已鎖定",
+      "unlocked": "已解鎖的案例",
+      "unlock": "解鎖",
+      "locked": "組成已鎖定",
+      "lockHint": "凍結此執行中包含的案例。使用者仍可指派和執行測試案例。",
+      "lockedBy": "組成已由 {name} 鎖定。",
+      "lockedAutomatically": "執行開始時自動鎖定組成。",
+      "frozenNotice": "組成已鎖定 — 無法新增、移除或重新排序測試案例。您仍可指派和執行測試案例。",
+      "lockError": "鎖定執行組成失敗",
+      "unlockError": "解鎖執行組成失敗",
+      "addBlocked": "此執行的組成已鎖定，因此無法新增測試案例。請先解鎖以變更案例集。"
+    },
+    "distribute": {
+      "title": "分配任務",
+      "description": "將此執行的測試案例平均分配給團隊成員，並保持相關案例集中在一起。",
+      "selectUsers": "團隊成員",
+      "usersPlaceholder": "選擇團隊成員",
+      "scopeAllConfigs": "所有配置",
+      "scopeThisRun": "僅此執行",
+      "strategyLabel": "配置策略",
+      "strategyKeepTogether": "保持配置集中",
+      "strategyKeepTogetherHint": "每位測試人員擁有跨所有配置的一組案例。",
+      "strategySplitByConfig": "依配置拆分",
+      "strategySplitByConfigHint": "每位測試人員擁有整個配置。",
+      "groupingLabel": "群組相似案例",
+      "groupingHint": "將位於同一區段且共用標籤的案例分配給同一位測試人員。",
+      "balancingLabel": "依此平衡",
+      "balancingEffort": "預估時間",
+      "balancingCount": "案例數量",
+      "balancingFallbackHint": "這些案例沒有預估時間 — 改為依案例數量平衡。",
+      "existingLabel": "現有任務",
+      "existingOnlyUnassigned": "僅填補未指派的案例",
+      "existingReassignAll": "重新指派所有項目",
+      "previewTitle": "預覽",
+      "previewNoUsers": "選擇團隊成員以預覽分配結果。",
+      "previewUser": "團隊成員",
+      "previewCases": "案例",
+      "previewSkipped": "{count, plural, other {# 個案例已跳過}}（已指派或已完成）",
+      "confirming": "指派中…",
+      "success": "已將 {count, plural, other {# 個案例}} 分配給 {users, plural, other {# 位成員}}",
+      "errorGeneric": "分配任務失敗",
+      "errorRunCompleted": "此執行已完成，無法再變更",
+      "errorNeedUsers": "請選擇至少一位專案成員以進行分配",
+      "errorNoAssignable": "此執行中沒有可分配的案例"
+    },
     "auditLog": {
       "trigger": "活動",
-      "title": "活動日誌",
       "description": "此測試執行的所有變更記錄。"
     },
     "notFound": "未找到測試運行。",
@@ -3466,6 +3987,8 @@
       "recentResultsDescription": "查看測試運行的最新結果",
       "recentAutomatedResultsTitle": "近期自動結果",
       "noRecentAutomatedResults": "未找到最近的自動搜尋結果。",
+      "automationRunsInProgress": "{count, plural, =1 {# 個自動化執行進行中} other {# 個自動化執行進行中}}",
+      "automationRunsInProgressDescription": "執行中自動化測試執行的即時狀態。",
       "recentResultsDateRange": "日期範圍",
       "recentResultsElapsed": "過去",
       "noRecentResults": "未找到最新結果。",
@@ -3498,20 +4021,43 @@
           "copy": "複製現有測試用例分配",
           "assign": "重複測試運行中的所有測試案例將保留其現有分配。",
           "unassign": "重複測試運行中的所有測試案例都將被取消分配。"
+        },
+        "configurationGroup": {
+          "label": "配置群組",
+          "separate": "複本僅彼此分組。正在複製的測試運行不在該群組內",
+          "join": "正在複製的測試運行與每個複本會加入相同的配置群組"
         }
       },
       "successMessage": "測試運行“{name}”已成功複製。",
       "errorMessage": "測試運行失敗。錯誤： {error}"
     },
+    "removeCasesDialog": {
+      "title": "移除測試用例",
+      "description": "您確定要從此測試運行中移除這些測試用例嗎？",
+      "warning": "此操作無法復原。此運行中針對這些測試用例記錄的任何結果都將遺失。測試用例本身將保留在儲存庫中。"
+    },
     "filter": {
       "placeholder": "過濾器測試運行..."
     },
+    "empty": {
+      "noMatchingCompleted": "沒有符合您篩選條件的已完成測試運行。",
+      "noMatchingActive": "沒有符合您篩選條件的進行中測試運行。"
+    },
+    "milestoneGroup": {
+      "runCount": "{count, plural, other {# 次運行}}",
+      "altHintMac": "按住 ⌥ 鍵以展開或折疊所有群組",
+      "altHintWin": "按住 Alt 鍵以展開或折疊所有群組"
+    },
+    "runFilters": {
+      "label": "篩選測試運行",
+      "mine": "我的測試運行"
+    },
     "typeFilter": {
-      "label": "展示",
       "both": "手動和自動"
     },
-    "empty": {
-      "noMatchingCompleted": "沒有符合您篩選條件的已完成測試運行。"
+    "junitFilters": {
+      "retried": "已重試",
+      "clear": "清除過濾器"
     }
   },
   "admin": {
@@ -3530,6 +4076,7 @@
       "tags": "標籤",
       "issues": "問題",
       "appConfig": "應用程式配置",
+      "recordKeys": "記錄鍵",
       "notifications": "通知",
       "imports": "數據導入",
       "integrations": "問題整合",
@@ -3559,6 +4106,7 @@
       "peopleAndAccess": "人員與通道",
       "authentication": "驗證",
       "toolsAndIntegrations": "工具與集成",
+      "aiTools": "AI 工具",
       "system": "系統"
     },
     "imports": {
@@ -3703,7 +4251,7 @@
         "mappingDatasetEmptyTitle": "未保存任何資料集",
         "mappingDatasetEmptyDescription": "分析過程中未保留任何用於配置的資料集。如果您需要其他數據，請上傳其他匯出檔案。",
         "importProgressTitle": "導入進度",
-        "importProgressDescription": "{count, plural, =0 {所有已匯入的記錄（涵蓋所有追蹤實體）。} =1 {已匯入的記錄（涵蓋所有追蹤實體）共 1 個。} other {已匯入的記錄（涵蓋所有追蹤實體）共 7 個。}}",
+        "importProgressDescription": "{count, plural, =0 {所有記錄均已匯入（涵蓋所有追蹤實體）。} =1 {還剩 1 筆記錄（涵蓋所有追蹤實體）。} other {還剩 # 筆記錄（涵蓋所有追蹤實體）。}}",
         "importProgressTotalRemaining": "{count, plural, =0 {沒有剩餘記錄} =1 {剩餘 1 筆記錄} other {剩餘 # 筆記錄}}",
         "importProgressProcessed": "{processed, number}/{total, number} 記錄已匯入",
         "importProgressAria": "匯入已完成 {percent, number}%",
@@ -3735,7 +4283,8 @@
           "namePlaceholder": "輸入工作流程名稱",
           "scopePlaceholder": "選擇範圍",
           "iconColorLabel": "圖示和顏色",
-          "typeLabel": "工作流程類型"
+          "typeLabel": "工作流程類型",
+          "scopeLabel": "工作流程範圍"
         },
         "mappingDatasets": "需要審核的資料集",
         "mappingImportConfiguration": "導入配置",
@@ -3761,6 +4310,12 @@
           "actionMap": "映射到現有",
           "actionCreate": "創建新的",
           "workflowTypePlaceholder": "選擇類型",
+          "workflowScope": {
+            "default": "其他",
+            "cases": "測試案例",
+            "runs": "測試運行",
+            "sessions": "會話"
+          },
           "noWorkflowsAvailable": "暫無可用工作流程。",
           "noStatusesAvailable": "暫無狀態資訊。",
           "noGroupsAvailable": "暫無可用群組。",
@@ -3885,7 +4440,9 @@
           "templateFieldTemplateLabelPlural": "範本",
           "templateFieldTargetGroupCase": "案例字段",
           "templateFieldTargetGroupResult": "結果字段",
-          "columnAction": "行動"
+          "columnAction": "行動",
+          "configurationVariantSelectPlaceholder": "選擇配置變體",
+          "configurationVariantCategoryPlaceholder": "選擇類別"
         },
         "nextSteps": "後台匯入完成後，您可以查看從目標專案遷移的資料。",
         "nextStepsDescription": "後台導入是異步運行的。您可以監控上方的狀態或刷新頁面查看更新。"
@@ -4297,6 +4854,10 @@
           "warning": "案例欄位將從所有模板中移除。此操作無法撤銷。"
         }
       },
+      "generateDefaultOn": "預設包含在產生測試案例精靈中。點擊以預設排除它。",
+      "generateDefaultOff": "預設排除於產生測試案例精靈中。點擊以預設包含它。",
+      "jiraPanelOn": "顯示在已連結測試案例的 Jira 外掛面板中。點擊以隱藏。",
+      "jiraPanelOff": "已從 Jira 外掛面板中隱藏。點擊以顯示已連結測試案例。",
       "resultFields": {
         "description": "管理結果字段",
         "add": {
@@ -4396,7 +4957,6 @@
       "allFileExtensions": "所有擴充",
       "allLanguages": "所有語言",
       "showEnabled": "僅啟用",
-      "showAll": "全部",
       "variableInserter": {
         "placeholder": "插入變數...",
         "groups": {
@@ -4656,6 +5216,7 @@
     },
     "workflows": {
       "description": "管理測試用例工作流程",
+      "reviewsTitle": "審查工作流程",
       "systemFeatureCard": {
         "title": "審查工作流程",
         "description": "透過限制工作流程轉換直到獲得批准來強制執行審核。啟用此功能後，項目可以透過其進階設定單獨選擇啟用或停用。停用此功能可阻止工作流程核准限制。",
@@ -4664,10 +5225,10 @@
         "updateSuccessEnabled": "已啟用審核工作流程。",
         "updateSuccessDisabled": "審核工作流程已停用。",
         "updateError": "更新審核工作流程設定失敗。請稍後再試。",
-        "remindersToggleLabel": "發送待審核提醒通知",
+        "remindersToggleLabel": "在以下天數後發送待審核提醒通知",
         "remindersToggleAriaLabel": "切換評論提醒通知",
         "thresholdLabel": "提醒審稿人",
-        "thresholdUnit": "天）",
+        "thresholdUnit": "{count, plural, other {天}}",
         "thresholdSaveButton": "節省",
         "thresholdHelp": "審核請求最多可以保留多少天才會向審核員發送提醒通知？新請求從提交之日起開始計時。",
         "thresholdUpdateSuccess": "查看提醒設定是否已更新。",
@@ -4716,6 +5277,10 @@
     },
     "roles": {
       "description": "透過切換每個應用程式區域的權限，定義使用者可以執行哪些操作。",
+      "confirmDefaultDescription": "您確定要將此角色設定為預設角色嗎？",
+      "defaultWarning": "新使用者將預設被指派此角色。",
+      "defaultLockedTitle": "預設角色",
+      "defaultLockedDescription": "若要變更預設值，請編輯其他角色並將其設為預設值。",
       "filterPlaceholder": "篩選角色...",
       "add": {
         "button": "添加角色",
@@ -4750,11 +5315,24 @@
         "modeNone": "無限制（專案決定）",
         "modeDisabled": "停用所有編輯功能",
         "modeMax": "允許在最大視窗範圍內編輯",
-        "minutesLabel": "最大窗口期（分鐘）",
+        "minutesBefore": "最大窗口期：",
+        "minutesUnit": "{minutes, plural, other {分鐘}}",
+        "minutesAriaLabel": "以分鐘為單位的最大窗口期",
         "invalidMinutes": "請輸入大於零的分鐘數。",
         "save": "保存策略",
         "savedToast": "結果編輯政策已更新",
         "saveError": "更新結果編輯策略失敗"
+      },
+      "abandonedRunPolicy": {
+        "title": "已放棄自動化清理",
+        "modeOn": "自動關閉已放棄的自動化執行",
+        "minutesBefore": "閒置至少：",
+        "minutesUnit": "{minutes, plural, other {分鐘}}",
+        "minutesAriaLabel": "閒置門檻(分鐘)",
+        "invalidMinutes": "請輸入至少 {min} 分鐘",
+        "save": "儲存原則",
+        "savedToast": "已放棄自動化清理已更新",
+        "saveError": "無法更新已放棄自動化清理原則"
       },
       "add": {
         "button": "新增狀態",
@@ -4793,6 +5371,20 @@
         "forSession": "會議期間",
         "color": "顏色"
       }
+    },
+    "recordKeys": {
+      "pageDescription": "設定裝飾性、以專案為前綴的識別碼，例如 PROJECT-TC-1234，可輕鬆辨識記錄所屬的專案及記錄類型。底層的數字 ID 不會改變，並可繼續在所有地方使用。",
+      "title": "以專案為前綴的記錄鍵",
+      "description": "啟用後，記錄將顯示一個結合專案代碼、類型代碼和記錄數字 ID 的可選鍵。請在「專案設定 → 進階」中設定各專案的代碼。",
+      "toggleAriaLabel": "切換以專案為前綴的記錄鍵",
+      "tokensHeading": "類型代碼",
+      "tokensHelp": "用於每種記錄類型的代碼。使用 1 至 6 個大寫字母，不含數字或連字號。代碼必須是唯一的。",
+      "invalidToken": "無效",
+      "duplicateToken": "重複的代碼",
+      "tokensSaved": "類型代碼已儲存。",
+      "enableSuccess": "已啟用以專案為前綴的記錄鍵。",
+      "disableSuccess": "已停用以專案為前綴的記錄鍵。",
+      "saveError": "無法儲存，請再試一次。"
     },
     "appConfig": {
       "description": "管理全域應用程式配置",
@@ -4936,6 +5528,8 @@
       "confirmDefault": "確認預設設定",
       "confirmDefaultDescription": "您確定要將此里程碑類型設為預設值嗎？",
       "warning": "此里程碑類型將會新增至所有項目。",
+      "defaultLockedTitle": "預設里程碑類型",
+      "defaultLockedDescription": "若要變更預設值，請編輯其他里程碑類型並將其設為預設值。",
       "wizard": {
         "selectProjects": "選擇項目",
         "projectsSelected": "{count, plural, =0 {未選擇專案} other {已選擇 # 個專案}}",
@@ -5033,7 +5627,8 @@
         "repositoryCaseVersions": "儲存庫案例版本",
         "testRunStepResults": "測試運行步驟結果",
         "issueConfigs": "問題配置",
-        "sharedStepGroups": "共同步驟小組"
+        "sharedStepGroups": "共同步驟小組",
+        "dataSets": "數據集"
       },
       "table": {
         "title": "已刪除 {itemType}",
@@ -5043,7 +5638,9 @@
         "noResults": "沒有找到與您的搜尋「{query}」相符的已刪除的 {itemType}。",
         "restoreConfirmationMessage": "您確定要從 {itemType} 表格中還原此行嗎？關聯資料也可能會恢復。",
         "purgeConfirmationMessage": "您確定要從 {itemType} 表格中永久刪除此行嗎？此操作無法撤銷，並且可能會刪除關聯資料。"
-      }
+      },
+      "filterTypesPlaceholder": "篩選項目類型……",
+      "summary": "{count, plural, =0 {回收桶是空的} other {回收桶中有 # 個項目}}"
     },
     "notifications": {
       "title": "通知管理",
@@ -5210,19 +5807,19 @@
         "authType": "身份驗證類型",
         "authTypeHelp": "選擇如何透過外部服務進行身份驗證",
         "emailPlaceholder": "您的郵件地址@example.com",
-        "emailHelp": "Your account email address. Required for Jira Cloud (paired with an API token below). Not used for Jira Server / Data Center — leave blank there and use either the API Token field alone (Personal Access Token) or the Username / Password fields below.",
+        "emailHelp": "您的帳戶電子郵件地址。Jira Cloud 為必填（需與下方的 API 令牌配對使用）。Jira Server / Data Center 不需使用此欄位 — 請留空，並單獨使用 API 令牌欄位（個人存取令牌）或下方的使用者名稱 / 密碼欄位。",
         "apiToken": "API令牌",
         "apiTokenPlaceholder": "請輸入您的 API 令牌",
-        "apiTokenHelp": "Jira Cloud: generate an API token from your Atlassian account settings and pair it with your email above. Jira Server / Data Center: paste a Personal Access Token (sent as Bearer). Leave this blank if you're using the Username / Password fields below instead.",
-        "username": "Username",
-        "usernamePlaceholder": "Enter your username",
-        "usernameHelp": "Jira Server / Data Center only — your account username, paired with the password below (Basic auth). Leave blank for Jira Cloud or when using a Personal Access Token in the API Token field.",
-        "password": "Password",
-        "passwordPlaceholder": "Enter your password",
-        "passwordHelp": "Jira Server / Data Center only — your account password, paired with the username above (Basic auth). Leave blank for Jira Cloud or when using a Personal Access Token in the API Token field.",
+        "apiTokenHelp": "Jira Cloud：請從您的 Atlassian 帳戶設定產生 API 令牌，並與上方的電子郵件配對使用。Jira Server / Data Center：請貼上個人存取令牌（以 Bearer 方式傳送）。若您改用下方的使用者名稱 / 密碼欄位，請將此欄位留空。",
+        "username": "使用者名稱",
+        "usernamePlaceholder": "請輸入您的使用者名稱",
+        "usernameHelp": "僅適用於 Jira Server / Data Center — 您的帳戶使用者名稱，需與下方的密碼配對使用（基本驗證）。若使用 Jira Cloud 或在 API 令牌欄位中使用個人存取令牌，請留空。",
+        "password": "密碼",
+        "passwordPlaceholder": "請輸入您的密碼",
+        "passwordHelp": "僅適用於 Jira Server / Data Center — 您的帳戶密碼，需與上方的使用者名稱配對使用（基本驗證）。若使用 Jira Cloud 或在 API 令牌欄位中使用個人存取令牌，請留空。",
         "jiraUrl": "Jira 網址",
-        "jiraUrlPlaceholder": "https://your-site.atlassian.net or https://jira.mycompany.domain",
-        "jiraUrlHelp": "The base URL of your Jira instance — Atlassian Cloud (https://your-site.atlassian.net) or self-hosted Server / Data Center (https://jira.mycompany.domain).",
+        "jiraUrlPlaceholder": "https://your-site.atlassian.net 或 https://jira.mycompany.domain",
+        "jiraUrlHelp": "您的 Jira 執行個體的基礎網址 — Atlassian Cloud（https://your-site.atlassian.net）或自行架設的 Server / Data Center（https://jira.mycompany.domain）。",
         "clientId": "客戶ID",
         "clientIdPlaceholder": "請輸入您的 OAuth 用戶端 ID",
         "clientIdHelp": "來自您的 OAuth 應用程式的用戶端 ID",
@@ -5264,6 +5861,7 @@
         "encrypted": "加密",
         "encryptedHelp": "該欄位已加密並安全儲存。",
         "changeCredential": "改變",
+        "leaveBlankToKeep": "留空以保留現有值",
         "apiKeyWarningTitle": "API金鑰認證通知",
         "apiKeyWarningDescription": "使用 API 金鑰驗證時，即使電子郵件地址相符，建立問題的報告者也可能與建立該問題的 TestPlanIt 使用者不符：",
         "apiKeyWarningPoint1": "設定 Jira 報告人需要 API 令牌帳戶擁有 Jira 管理員（「修改報告人」）權限。否則，Jira 將忽略該報告人，並將 API 令牌所有者記錄為建立者。",
@@ -5384,6 +5982,8 @@
         "billingPeriodStartDayDescription": "帳單週期開始的日期（1-31）。 29-31 使用的是較短月份的最後一天。",
         "defaultTemperature": "預設溫度",
         "defaultMaxTokens": "預設最大令牌數",
+        "repoContextBudgetLabel": "儲存庫上下文預算（QuickScript）",
+        "repoContextBudgetAuto": "根據模型約 {window} 的上下文視窗自動調整大小 — 每次產生約使用 {budget} 個 token 的儲存庫程式碼。",
         "timeout": "請求超時時間（毫秒）",
         "timeoutDescription": "等待 AI 模型響應的最長時間（5000-600000 毫秒）。不適用於串流請求。",
         "streamingEnabled": "啟用串流媒體",
@@ -5393,6 +5993,12 @@
         "fetchingModels": "正在取得模型...",
         "failedToFetchModels": "取得可用模型失敗",
         "selectModel": "選擇型號",
+        "modelsFound": "{count, plural, other {找到 {count} 個可用模型}}",
+        "modelsFoundDescription": "已選擇「{model}」作為預設模型",
+        "noModelsFoundDescription": "供應商未回傳任何可用模型",
+        "pricingAutoFilled": "模型定價已自動填入",
+        "pricingAutoFilledDescription": "{model}：${input} 輸入 / ${output} 輸出，每 1M 個權杖",
+        "customLlmModelsHint": "輸入您的端點 URL。如果它與 OpenAI 相容（例如 LiteLLM），系統將自動擷取模型與定價。",
         "connectionSuccessfulDescription": "AI模型連線已驗證，運作正常。",
         "failedToConnect": "無法連接 AI 模型提供商",
         "integrationCreated": "AI模型整合已成功創建",
@@ -5409,6 +6015,7 @@
         "statusDescription": "啟用或停用此集成",
         "apiKeyPlaceholder": "請輸入新的 API 金鑰進行更新...",
         "update": "更新",
+        "modelListUpdated": "模型清單已成功更新",
         "integrationUpdated": "AI模型整合已成功更新",
         "failedToUpdate": "AI模型整合更新失敗",
         "validation": {
@@ -5517,6 +6124,11 @@
     "elasticsearch": {
       "title": "Elasticsearch 管理",
       "description": "管理搜尋引擎索引和維護",
+      "health": {
+        "healthy": "健康",
+        "warning": "警告",
+        "unhealthy": "不健康"
+      },
       "status": {
         "title": "Elasticsearch 狀態",
         "description": "搜尋引擎的當前連線和運作狀況",
@@ -5540,7 +6152,7 @@
         "error": "儲存設定時出錯",
         "errorDescription": "配置儲存失敗，請重試。",
         "note": {
-          "description": "變更會立即套用至新建立的索引。現有索引會在儲存時更新。將副本數設為 0 可以解決單節點叢集上的黃色狀態問題。"
+          "description": "變更會立即套用至新建立的索引。現有索引會在儲存時更新。將副本數設為 0 可以解決單節點叢集上的警告狀態問題。"
         }
       },
       "reindex": {
@@ -5687,7 +6299,6 @@
     },
     "auditLogs": {
       "description": "查看系統範圍內的審計跟踪，以進行安全性和合規性跟踪",
-      "projectDescription": "查看此專案中執行操作的審計追蹤記錄。",
       "filterPlaceholder": "按實體、使用者或操作搜尋…",
       "filterAction": "行動",
       "filterEntityType": "實體類型",
@@ -5709,7 +6320,8 @@
         "entityName": "實體名稱",
         "userId": "使用者身分",
         "ipAddress": "IP位址",
-        "userAgent": "使用者代理"
+        "userAgent": "使用者代理",
+        "source": "來源"
       },
       "exportCsv": "匯出 CSV 文件",
       "timeRange": "時間範圍",
@@ -5807,6 +6419,13 @@
         "reviewEntityLabelCase": "測試用例",
         "reviewEntityLabelRun": "測試運行",
         "reviewEntityLabelSession": "會議",
+        "reviewBulkEntityLabelCase": "測試案例",
+        "reviewBulkEntityLabelRun": "測試運行",
+        "reviewBulkEntityLabelSession": "工作階段",
+        "reviewBulkSummaryCase": "{count} 個測試案例",
+        "reviewBulkSummaryRun": "{count} 個測試運行",
+        "reviewBulkSummarySession": "{count} 個工作階段",
+        "reviewBulkRequestedEmailMessage": "{actorName} 請求您審核專案「{projectName}」中的 {count} 個{entityLabel}。",
         "reviewTransition": "轉場： {from} → {to}",
         "reviewCommentPreview": "評論： {comment}",
         "reviewRequestedEmailMessage": "{actorName} 請您審核項目「{projectName}」中的 {entityLabel} 「{entityName}」進行審核。",
@@ -5817,10 +6436,17 @@
         "reviewReminderTitle": "審核仍在進行中",
         "reviewReminderAction": "仍在等待您的評論",
         "reviewReminderEmailMessage": "提醒：{actorName} 在專案「{projectName}」中針對 {entityLabel}「{entityName}」的審核請求已待處理 {hoursPending} 小時。",
-        "reviewReminderHoursPending": "等待 {hoursPending, plural, one {小時} other {小時}}",
+        "reviewReminderHoursPending": "等待 {hoursPending, plural, one {# 小時} other {# 小時}}",
         "aiStepsDerivedTitle": "AI 推導測試步驟已就緒",
         "aiStepsDerivedMessage": "{count, plural, other {# 個測試案例}} 已獲得 AI 推導的步驟 — 請檢查其準確性。",
-        "aiStepsDerivedReviewLink": "檢查測試執行"
+        "aiStepsDerivedReviewLink": "檢查測試執行",
+        "integrationAuthExpiredTitle": "整合連線已過期",
+        "integrationAuthExpiredMessage": "您與「{integrationName}」的連線已過期。請重新連線以繼續問題同步。",
+        "integrationAuthExpiredReconnect": "重新連線",
+        "runReadyToCompleteTitle": "測試執行已準備好完成",
+        "runReadyToCompleteExecuted": "{count, plural, =2 {兩個測試案例均已執行完成。} other {所有 # 個測試案例均已執行完成。}}",
+        "runReadyToCompleteEmailMessage": "測試執行「{testRunName}」（專案「{projectName}」）中的{caseCount, plural, one {# 個案例已} =2 {兩個案例皆已} other {全部 # 個案例皆已}}執行完畢。此執行已可標記為完成。",
+        "runReadyToCompleteReason": "您收到此通知是因為您可以完成此專案中的測試執行。"
       }
     },
     "issues": {
@@ -5998,7 +6624,13 @@
     "filterAll": "全部",
     "fanOutPartialFailure": "無法存取 {count, number} 個項目。顯示來自 {successCount, number} 個項目的結果。",
     "projectSelectorLabel": "專案",
-    "searchFailedTitle": "搜尋失敗"
+    "searchFailedTitle": "搜尋失敗",
+    "authComplete": {
+      "successTitle": "授權完成",
+      "successDescription": "您的帳戶已連接。您可以關閉此視窗並返回您先前的操作。",
+      "errorTitle": "授權失敗",
+      "errorDescription": "無法完成授權。請關閉此視窗並重試。"
+    }
   },
   "Pages": {
     "Issues": {
@@ -6044,7 +6676,9 @@
     "testCases": "{count, plural, one {# 測試案例} other {# 測試案例}}",
     "estimate": "估計： {value}",
     "partOf": "（ {parent}的一部份）",
-    "status": "狀態： {status}"
+    "status": "狀態： {status}",
+    "lane": "分道 {number}",
+    "worker": "工作者 {id}"
   },
   "linkedCases": {
     "title": "關聯測試用例",
@@ -6073,9 +6707,85 @@
     "starts": "開始：",
     "scheduledCompletion": "預計完工日期：",
     "estWorkEffort": "預計工作量：",
-    "noTasks": "甘特圖中沒有要顯示的任務。"
+    "noTasks": "甘特圖中沒有要顯示的任務。",
+    "businessHours": "{hours, number, ::.0} 個工作小時"
   },
   "help": {
+    "auditLogs": "## 稽核記錄\n查看系統範圍內的稽核記錄，以進行安全性和合規性追蹤",
+    "statuses": "## 狀態\n管理測試人員在記錄測試結果時指派的狀態，例如通過、失敗和已封鎖。",
+    "configurations": "## 配置\n配置是用於定義測試環境的類別和變體的組合。例如，作業系統/瀏覽器、測試伺服器、語言等。",
+    "categories": "## 類別\n類別可將相關的變體——例如瀏覽器或作業系統——進行分組，這些變體組合起來即可定義測試環境。",
+    "stepDuplicates": "## 步驟序列重複項目\n檢查測試案例中符合的步驟序列。將符合項目轉換為共用步驟群組，或排除誤報。",
+    "templates": "## 範本\n管理測試案例範本和欄位",
+    "caseFields": "## 案例欄位\n測試案例上可用的自訂欄位，會指派給範本以控制哪些案例會使用它們。",
+    "resultFields": "## 結果欄位\n記錄測試結果時擷取的自訂欄位，會指派給範本以控制其套用範圍。",
+    "milestoneTypes": "## 里程碑類型\n里程碑類型用於為里程碑分類——例如衝刺、發布或版本——並可在多個專案中重複使用。",
+    "tags": "## 標籤\n標籤用於標記和組織測試案例與會話，方便您在各專案中分組並尋找相關工作。",
+    "issues": "## 問題\n問題是來自 Jira、GitHub、Azure DevOps 及其他整合項目的外部追蹤項目，會同步至 TestPlanIt，以便與測試案例、測試運行及會話建立連結。",
+    "crossProjectReports": "## 跨專案報告\n建立、執行並分析涵蓋多個專案的報告，例如整個測試套件的自動化趨勢。",
+    "users": "## 使用者\n您所協作的人員目錄 — 與您至少共用一個專案的使用者 — 以及您與他們各自共用的專案。管理員可以看到所有使用者及其完整的專案清單。",
+    "documentation": "## 文件\n此專案的自由格式文件，包括備註、參考資料及入門詳情。",
+    "projectMilestones": "## 里程碑\n里程碑依目標——如發布、衝刺或自訂類型——對此專案的工作進行分組並追蹤，涵蓋進行中與已完成的狀態。",
+    "projectRepository": "## 測試案例儲存庫\n此專案的測試案例庫，以資料夾組織。",
+    "repositoryDuplicates": "## 重複候選項目\n在上次掃描此專案的儲存庫時發現了潛在的重複測試案例。重新掃描會再次分析儲存庫，並以最新的候選項目更新清單。",
+    "projectSharedSteps": "## 共用步驟\n多個測試案例可共用的可重複使用測試步驟群組——更新群組會同時更新所有參照該群組的案例。",
+    "projectRuns": "## 測試運行\n測試運行會執行所選的一組測試案例並記錄其結果，追蹤從開始到完成的進度。",
+    "projectSessions": "## 會話\n探索性測試會話——限時、無腳本的測試，以備註和結果的形式記錄，涵蓋進行中與已完成的狀態。",
+    "projectTags": "## 標籤\n標籤用於標記和分組此專案的測試案例、會話及測試運行，方便尋找相關工作。",
+    "projectIssues": "## 問題\n來自此專案已連接追蹤系統的問題，並與發現或參照這些問題的測試案例、測試運行及會話建立連結。",
+    "projectReports": "## 報告\n報告以圖表和表格的形式彙總此專案的測試情況——包括測試運行、會話及結果，您可以篩選並匯出。",
+    "projectAuditLogs": "## 稽核記錄\n此專案中執行動作的稽核記錄——記錄誰在何時變更了什麼——用於安全性與合規性追蹤。",
+    "projectIntegrations": "## 問題整合\n將此專案連接至問題追蹤系統，讓其測試案例、測試運行及會話能夠與外部問題及里程碑建立連結並同步。",
+    "projectWebhooks": "## Webhooks\n傳送並接收此專案的事件通知——傳入掛鉤會帶入外部變更，傳出掛鉤會推送測試事件，傳遞記錄則會記錄已傳送的內容。",
+    "projectAiModels": "## AI 模型\n選擇此專案 AI 輔助功能，例如測試案例產生和自動標記，所使用的 AI 模型與提示詞設定。",
+    "projectQuickScript": "## QuickScript\n連接程式碼庫，讓此專案能夠從您的自動化測試檔案產生測試案例，並選擇要包含的分支與路徑。",
+    "projectParameters": "## 測試案例參數\n設定此專案的資料驅動測試——包括匯入結果的 JUnit 迭代屬性名稱，以及用於參數化案例的可重複使用資料集。",
+    "projectAdvanced": "## 進階\n此專案的進階設定——包括記錄 ID 前綴、結果審核工作流程、失敗時自動建立問題，以及結果編輯視窗。",
+    "projectShares": "## 管理分享\n此專案報告的可分享連結，每個連結都有各自的存取層級——公開、需要登入或密碼保護。撤銷連結會中斷其存取權限。",
+    "groups": "## 群組\n群組可讓您一次為多個使用者指派專案存取權限與角色。您可以直接新增成員，或從身分提供者對應群組。",
+    "roles": "## 角色\n角色控制使用者可以執行的操作——每個角色會針對各應用程式區域切換權限。您可以直接將角色指派給使用者，或將其設為專案預設值。",
+    "sso": "## 驗證\n管理使用者的登入方式，以及是否可以註冊新帳戶。",
+    "ssoProviders": "## 登入提供者\n配置使用者如何登入您的應用程式。",
+    "ssoRegistration": "## 註冊設定\n控制誰可以註冊新帳戶。",
+    "ssoAllowRegistration": "## 允許自行註冊\n停用此功能後，新使用者無法直接註冊或透過 SSO 建立帳戶。現有使用者仍可登入。",
+    "ssoDefaultAccess": "## 預設存取層級\n新使用者註冊時指派的系統存取層級。",
+    "ssoRequireEmailVerification": "## 需要電子郵件驗證\n使用者必須先驗證其電子郵件地址才能存取系統。",
+    "ssoRestrictDomains": "## 限制電子郵件網域\n僅允許來自特定電子郵件網域的註冊。",
+    "security": "## 安全性\n設定登入強制執行、密碼政策、鎖定設定和強制執行措施。",
+    "securitySignInEnforcement": "## 登入強制執行\n要求單一登入並強制執行雙重驗證。",
+    "securityForceSso": "## 強制 SSO 登入\n停用電子郵件登入，並要求使用者使用 SSO。",
+    "securityForce2FANonSSO": "## 密碼登入需要 2FA\n使用電子郵件/密碼登入的使用者必須設定並使用雙重驗證。",
+    "securityForce2FAAllLogins": "## 所有登入均需要 2FA\n所有使用者，包括 SSO 使用者，登入後都必須通過 2FA 驗證。",
+    "securityPasswordPolicy": "## 密碼政策\n設定使用者密碼要求。",
+    "securityLockoutPolicy": "## 鎖定政策\n設定登入嘗試失敗後的帳戶鎖定。",
+    "securityEnforcement": "## 強制執行措施\n強制要求基於憑證登入的使用者變更密碼。",
+    "apiTokens": "## API 權杖\n檢視並管理所有使用者的 API 權杖。如有安全性疑慮，可撤銷權杖。",
+    "scim": "## SCIM 佈建\n透過 SCIM 2.0 將身分提供者的使用者佈建至 TestPlanIt。",
+    "scimConflicts": "## 外部 ID 衝突記錄\n需要系統介入的 SCIM 身分事件（連結、復原、顯示名稱覆寫、跳過成員）。",
+    "scimFallbackDefault": "## 預設對應存取權限\n未被任何群組對應涵蓋之使用者所指派的存取層級。",
+    "integrations": "## 問題整合\n管理用於問題追蹤的第三方整合。",
+    "notifications": "## 通知管理\n設定預設通知偏好設定（使用者可以覆蓋），並發送系統通知。",
+    "notificationsSystem": "## 系統通知\n向所有使用者發送重要公告。",
+    "notificationsHistory": "## 通知歷史記錄\n先前發送給所有使用者的系統通知。",
+    "aiModels": "## AI 模型\n管理用於 AI 輔助功能的 AI 模型提供者與連線，包括使用限制與預算。",
+    "prompts": "## 提示詞設定\n管理 AI 功能用於產生內容的提示詞設定，並將其指派給專案。",
+    "quickscripts": "## QuickScript 範本\n管理 QuickScript 用於將測試案例轉換為自動化腳本的範本。",
+    "codeRepositories": "## 程式碼儲存庫\n管理 QuickScript 上下文的程式碼庫連線。",
+    "recordKeys": "## 記錄鍵值\n設定外觀性的專案前綴識別碼，例如 PROJECT-TC-1234，讓您輕鬆辨識記錄所屬的專案及記錄類型。底層的數字 ID 保持不變，並持續在各處正常運作。",
+    "recordKeysEnabled": "## 專案前綴記錄鍵值\n啟用後，記錄會顯示一個選用的鍵值，結合專案代碼、類型代碼及記錄的數字 ID。請於「專案設定」→「進階」中設定各專案的代碼。",
+    "imports": "## 資料匯入\n將外部測試管理工具中的資料匯入 TestPlanIt。",
+    "elasticsearchStatus": "## Elasticsearch 狀態\n搜尋引擎目前的連線與運作狀況。",
+    "elasticsearchConfig": "## Elasticsearch 設定\n為您的部署配置 Elasticsearch 設定。",
+    "elasticsearchReindex": "## 重新建立索引資料\n重建搜尋索引以提升搜尋效能。",
+    "queues": "## 背景工作佇列\n監控並管理背景作業處理佇列。",
+    "trash": "## 垃圾桶\n還原或永久清除系統中已軟刪除的記錄。",
+    "systemWebhooks": "## 系統 Webhooks\n用於處理不與單一專案關聯的系統級事件的出站 Webhook 目標－目前是 SCIM 2.0 使用者和群組生命週期事件。請改用專案設定頁面配置入站和專案範圍的出站 Webhook。",
+    "workflows": "## 工作流程\n管理測試案例、測試運行及會話的工作流程狀態。",
+    "workflowReviews": "## 審核工作流程\n透過限制工作流程轉換直到獲得核准來強制執行審核。啟用此功能後，專案可以透過其進階設定單獨選擇啟用或停用。停用此功能可防止工作流程核准限制。",
+    "reviewReminders": "## 審核提醒\n審核請求最多可保留多少天處於待處理狀態，才會向審核員發送提醒通知。新請求會從提交時開始計時。",
+    "reviews": "## 審核\n指派給您的審核請求，無論是直接指派還是透過您所擔任的角色指派。「待處理」是您仍在等待決定的請求佇列；「已決定」則列出您已核准、拒絕或要求修改的請求。",
+    "resultEditingPolicy": "## 結果編輯政策\n控制結果記錄後多長時間內仍可進行原地編輯，此限制適用於所有專案。專案可以在其進階設定中收緊此限制，但不能放寬。系統管理員始終可以編輯。",
+    "abandonedRunPolicy": "## 已放棄自動化清理\n當 CI 工作被中止或其代理程式當機時，它所建立的自動化測試執行永遠不會收到完成回呼，並會永遠停留在「進行中」狀態。啟用此政策後，背景清理程序會每 15 分鐘執行一次，並關閉任何在設定的閒置時間內（最少 15 分鐘）未收到任何結果的未完成自動化執行。手動執行永遠不會受到影響。每個專案可以在其進階設定中覆寫此閾值——或選擇停用——並可以選擇被清理的執行會被移動到哪個執行狀態。請選擇一個明顯長於健康執行中最長靜默期間的閒置時間；預設值為一整天是安全的選擇。",
     "project": {
       "name": "## 專案名稱\n您專案的唯一識別碼。\n\n- 必須在所有專案中保持唯一\n- 用於導覽和報告\n- 應清晰且具描述性\n- 幫助團隊成員了解專案範圍",
       "description": "## 專案描述\n有關專案目的和範圍的額外詳細資訊。\n\n- 非必填但建議填寫\n- 幫助團隊成員了解專案目標\n- 可包含主要目標或需求\n- 限制為 256 個字元",
@@ -6086,6 +6796,7 @@
       "issueTracker": "## 問題追蹤器配置\n選擇用於管理與此項目相關的問題的追蹤器配置。"
     },
     "projects": {
+      "overview": "## 專案\n專案是您測試案例、測試運行、會話及里程碑的頂層容器。您可以在此建立並管理每個專案。",
       "settings": {
         "integrations": {
           "externalProjectHelp": "## 外部項目\n選擇要與此 TestPlanIt 項目關聯的外部系統中的項目或儲存庫。\n\n- 從 TestPlanIt 建立的問題將在此專案中建立。\n- 啟用系統間的問題追蹤整合。\n- 必須在外部系統中擁有對應的權限。",
@@ -6125,12 +6836,14 @@
       "description": "## 描述\n里程碑的目的、要求和範圍的詳細資訊。\n\n- 提供團隊成員背景資訊\n- 記錄關鍵要求和目標\n- 支援協作和目標一致性",
       "documentation": "## 文件\n更多詳情、參考資料和支援資料。\n\n- 技術規格\n- 設計文件\n- 外部參考資料\n- 會議記錄與決議",
       "automaticCompletion": "## 截止日期自動完成\n當里程碑的截止日期到來時，會自動標記為已完成。\n\n- 里程碑將在截止日期當天按計畫時間完成。\n- 適用於無論完成狀態如何都應關閉的限時里程碑。\n- 可以透過在截止日期前手動完成里程碑來覆蓋此設定。\n- 需要設定截止日期。",
-      "notifyDaysBefore": "## 截止日期前通知\n當里程碑截止日期臨近時，向指定的團隊成員發送通知。\n\n- 開啟此開關以啟用通知，關閉此開關以停用通知。\n- 輸入截止日期前開始發送提醒的天數。\n- 通知將傳送給指派到此里程碑內測試運行和會話的使用者。\n- 逾期里程碑將持續傳送提醒，直至完成。"
+      "notifyDaysBefore": "## 截止日期前通知\n當里程碑截止日期臨近時，向指定的團隊成員發送通知。\n\n- 開啟此開關以啟用通知，關閉此開關以停用通知。\n- 輸入截止日期前開始發送提醒的天數。\n- 通知將傳送給指派到此里程碑內測試運行和會話的使用者。\n- 逾期里程碑將持續傳送提醒，直至完成。",
+      "managedByJira": "## 由 Jira 管理\n此里程碑的名稱、日期和狀態由 Jira 管理。請在 Jira 中進行變更以更新此處的資訊。"
     },
     "session": {
       "name": "## 會話名稱\n一個清晰、描述性的名稱，用於明確測試會話的目的。\n\n- 應唯一且有意義。\n- 幫助團隊成員了解測驗內容。\n- 用於報告和追蹤。",
       "template": "## 範本\n範本定義了測驗會話的結構和內容。\n\n- 為測試文件提供一致的格式\n- 包含預先定義的部分和欄位\n- 有助於在整個專案中維護測試標準",
       "configuration": "## 設定\n此測試會話所需的特定環境或設定。\n\n- 測試環境（例如，預發布環境、生產環境）\n- 特殊配置或設定\n- 所需的測試資料或條件",
+      "configurationGroup": "## 配置群組\n配置群組中的工作階段涵蓋相同的測試內容，但使用不同的配置，因此您可以在它們之間切換並在同一處比較其結果。\n\n為多個配置一起建立的工作階段會自動分組。當工作階段是單獨建立時，可在此處將其連結。\n\n您連結至一個工作階段，但會加入該工作階段已分組的所有其他工作階段——群組沒有擁有者，因此每個成員都與其他所有成員連結。\n\n分組僅會變更工作階段一起呈現的方式，絕不會移動測試案例或結果。",
       "milestone": "## 里程碑\n將此會話與專案里程碑關聯。\n\n- 協助追蹤測試進度，以達成專案目標。\n- 將相關的測驗會話分組。\n- 支援基於里程碑的報告。",
       "description": "## 描述\n本測試內容的簡要概述。\n\n- 測試的關鍵領域或功能\n- 重要的背景資訊\n- 特殊注意事項或要求",
       "mission": "## 任務\n任務定義了本次測驗的具體目標和目的。\n\n- 你要測試什麼？\n- 重點在於哪些面向？\n- 預期結果是什麼？\n\n清晰的任務有助於維持測驗的專注性和高效率。",
@@ -6146,6 +6859,7 @@
       "name": "## 測試運行名稱\n輸入此測試運行的描述性名稱，以便日後輕鬆識別。",
       "description": "## 說明\n提供有關本測試運行的簡要總結或說明。",
       "configuration": "## 配置\n選擇一個或多個配置（例如，環境、瀏覽器、設備），測試運行將在這些配置下執行。選擇多個配置將為每個配置建立單獨的測試運行。",
+      "configurationGroup": "## 配置群組\n配置群組中的運行涵蓋相同的測試內容，但使用不同的配置，因此您可以在它們之間切換並在同一處比較其結果。\n\n為多個配置一起建立的運行會自動分組。當運行是單獨建立時，可在此處將其連結——例如，稍後為另一個配置複製的運行。\n\n您連結至一次運行，但會加入該運行已分組的所有其他運行——群組沒有擁有者，因此每個成員都與其他所有成員連結。\n\n分組僅會變更運行一起呈現的方式，絕不會移動測試案例或結果。",
       "milestone": "## 里程碑\n將此測試運行與特定的專案里程碑關聯起來，以追蹤實現更大目標的進度。",
       "docs": "## 文件\n包含本測試運行的任何相關文件、連結或詳細註解。",
       "state": "## 狀態\n根據專案的工作流程，指示此測試運行的目前狀態或結果。",
@@ -6154,7 +6868,8 @@
       "attachments": "## 附件\n上傳與本測試運行相關的任何支援檔案、螢幕截圖或日誌。",
       "duplicate": {
         "statusesToInclude": "## 要包含的狀態\n選擇要包含在重複測試運行中的測試案例的狀態。",
-        "copyAssignments": "## 複製分配\n如果啟用，測試案例的分配將複製到複製的測試運行中。"
+        "copyAssignments": "## 複製分配\n如果啟用，測試案例的分配將複製到複製的測試運行中。",
+        "configurationGroup": "## 配置群組\n涵蓋不同配置下相同工作的測試運行會共用一個配置群組，配置切換器可在它們之間切換。\n\n保持關閉時，複本僅彼此分組，與之前完全相同。開啟後，正在複製的測試運行會加入該相同群組，因此它與每個複本都會以同層級的方式呈現——即使只有一個複本也會加入。"
       }
     },
     "appConfig": {
@@ -6190,7 +6905,7 @@
       "name": "## 範本名稱\n此範本的唯一描述性名稱（例如，「標準測試案例」、「API 測試結果」）。",
       "isEnabled": "## 已啟用\n如果選中，則在建立新測試案例或定義測試運行結構時，可以選擇此範本。如果範本設為“預設”，則也必須將其設為“已啟用”。",
       "isDefault": "## 預設值\n如果選取此項，則新項目將自動選擇此範本；如果未設定項目特定的預設值，則此範本將作為所有項目的預設範本。所有項目只能有一個預設模板。啟用此選項將停用目前設定為預設範本的任何其他範本。",
-      "caseFields": "## 使用案例欄位\n選擇並排序使用此範本建立或編輯測試案例時可用的自訂欄位。\n\n- 從下拉清單中新增欄位以將其包含在範本中。\n- 拖曳以重新排序欄位。\n- 順序決定欄位在表單中的顯示方式。\n- 只有已啟用的使用案例欄位才可供選擇。\n- 用例欄位定義測試用例的結構和擷取的資料。",
+      "caseFields": "## 使用案例欄位\n選擇並排序使用此範本建立或編輯測試案例時可用的自訂欄位。\n\n- 從下拉清單中新增欄位以將其包含在範本中\n- 拖曳以重新排序欄位\n- 順序決定欄位在表單中的顯示方式\n- 只有已啟用的使用案例欄位才可供選擇\n- 用例欄位定義測試用例的結構和擷取的資料\n- 閃爍圖示切換控制欄位在產生測試案例精靈中是否預設被選取；使用者仍可在該處變更選擇",
       "resultFields": "## 結果欄位\n選擇並排序使用此範本新增測試結果時可用的自訂欄位。\n\n- 從下拉清單中新增欄位以將其包含在範本中。\n- 拖曳以重新排序欄位。\n- 順序決定輸入測試結果時欄位的顯示方式。\n- 只有已啟用的結果欄位才可供選擇。\n- 結果欄位擷取特定於測試執行結果的其他資料。",
       "projects": "## 關聯項目\n選擇此範本將適用於哪些項目。如果未選擇任何項目，則該範本將全域可用。將範本指派給特定項目後，其使用範圍將僅限於這些項目。"
     },
@@ -6200,12 +6915,13 @@
       "apiKey": "## API 金鑰\n您的 LLM 提供者 API 的驗證金鑰。\n\n- 從提供者的開發者控制台取得。\n- 儲存後將保持加密狀態，不會顯示。\n- Ollama（本地部署）不需要此金鑰。",
       "endpoint": "## API 端點\nLLM 提供者 API 的基本 URL。\n\n- OpenAI、Anthropic 和 Gemini 留空 — 系統會自動使用官方 URL。\n- Ollama（例如 `http://localhost:11434`）、Azure OpenAI 和自訂 LLM 為必填項。\n- 所有提供者均為可選 — 透過輸入 URL 指向 OpenAI 相容的代理程式（例如 LiteLLM）。\n- **私有/內部位址**（localhost、127.0.0.1、私人 IP、雲元資料）將被阻止，除非透過 `ALLOWED_PRIVATE_HOSTS` 環境變數明確允許。",
       "deploymentName": "## Azure 部署名稱\n您的 Azure OpenAI 模式部署的名稱。\n\n- 在 Azure OpenAI Studio 的「部署」下找到。\n- 與模型名稱不同，例如 `my-gpt4-deploy` 對應到 `gpt-4`。\n- 僅 Azure OpenAI 需要。",
-      "defaultModel": "## 預設模型\n此整合用於 AI 請求的模型。\n\n- 對於 OpenAI、Anthropic 和 Gemini — 可用模型將根據您的 API 金鑰自動取得。\n- 請確保已在您的提供者帳戶中啟用該模型。\n- 例如：`gpt-4o`、`claude-3-5-sonnet-20241022`、`gemini-1.5-pro`",
-      "maxTokensPerRequest": "## 每次請求的最大令牌數\n單一請求輸出令牌數的**硬性上限**。\n\n- 超過此值的請求會在到達 LLM 之前被**拒絕並傳回錯誤**。\n- 將此值設定為模型的實際最大輸出令牌容量。\n- 例如：GPT-4o 為 `16384`，Claude 3.5 Sonnet 為 `8192`。\n- 此值設定過低會導致 AI 功能失效或產生截斷的輸出。",
-      "defaultMaxTokens": "## 預設最大令牌數\n當請求未指定自身令牌數限制時，使用此**備用**輸出令牌數限制。\n\n- 每個 AI 功能（測試產生、程式碼匯出等）在**管理 → 提示設定**中設定自己的限制。\n- 此值僅用作未配置特定限制的功能的備用值。\n- 應≤每個請求的最大令牌數。",
+      "defaultModel": "## 預設模型\n此整合用於 AI 請求的模型。\n\n- 對於 OpenAI、Anthropic、Gemini、Ollama 以及與 OpenAI 相容的自訂端點（例如 LiteLLM）— 可用模型將自動擷取\n- 當供應商也回報模型定價時，選擇模型後成本欄位將自動填入\n- 請確保已在您的提供者帳戶中啟用該模型\n- 例如：`gpt-4o`、`claude-3-5-sonnet-20241022`、`gemini-1.5-pro`",
+      "maxTokensPerRequest": "## 每次請求的最大 Token 數\n模型在單次回應中可產生的**_輸出_ token 硬性上限**。\n\n- 限制模型**回覆**的長度 — 而非您傳送給它的上下文量\n- 要求超過此限制的請求會**在到達模型之前被拒絕**\n- 請將其設定為您模型真實的最大輸出量 — 例如 Claude Opus/Sonnet 為 `128000`，Claude Haiku 為 `64000`，Gemini 為 `65536`，GPT-4o 為 `16384`\n- 設定過低 → AI 功能會失敗或產生被截斷的輸出",
+      "defaultMaxTokens": "## 預設最大詞元數\n此 AI 模型請求所要求的**_輸出_長度**，受限於「每次請求的最大詞元數」。\n\n- **測試案例產生**（每個來源，包括 Jira 問題面板）、**Markdown 測試案例解析**、**編輯器寫作助手**及**智慧測試案例選取**皆一律使用此值 — 不會套用其提示設定中的_最大輸出詞元數_\n- **匯出程式碼產生**、**AI 標籤建議**、**AI 步驟推導**及**自動化候選報告**則改用**管理員 → 提示設定**中各自的_最大輸出詞元數_\n- 在回答前會先「思考」的模型（例如 Claude Opus 5）會將此預算的一部分用於推理 — 請為回覆保留空間\n- 此設定**不會**控制 QuickScript 傳送給模型的儲存庫程式碼量 — 該預算是根據模型的上下文視窗自動推算的\n- 請將其保持在「每次請求的最大詞元數」以下",
+      "repoContextBudget": "## 儲存庫上下文預算\nQuickScript 在產生腳本時，會傳送多少已連結儲存庫的程式碼給模型。\n\n- 根據所選模型的輸入上下文視窗**自動設定** — 此處無需進行任何設定\n- 上下文視窗較大的模型(Claude, Gemini)會獲得更多；小型本地模型則會獲得一個不會溢出的安全數量\n- 更多的上下文能讓腳本更貼合您真實的頁面物件和固定裝置 — 但不會改變產生腳本的長度",
       "maxRequestsPerMinute": "## 每分鐘最大請求數\n限制每分鐘可向此提供者發出的 API 呼叫次數。\n\n- 設定以符合您的供應商套餐的速率限制。\n- 超出限制的請求將被排隊，不會被拒絕。\n- 請查看您的提供者文件以了解您的套餐限制。",
-      "costPerInputToken": "## 每個輸入令牌的成本（美元）\n發送到模型的每個輸入（提示）令牌的成本（以美元計）。\n\n- 用於成本追蹤和預算提醒。\n- 可在服務提供者的定價頁面找到。\n- 例如：`0.000005` = 每百萬個輸入令牌 5 美元",
-      "costPerOutputToken": "## 每個輸出代幣的成本（美元）\n模型產生的每個輸出（完成）代幣的成本（以美元計）。\n\n- 通常高於輸入代幣的成本\n- 通常高於輸入代幣的成本 \n - 用於成本追蹤與預算提醒\n- 例如：`0.000015` = 每百萬個輸出代幣 155 美元",
+      "costPerInputToken": "## 每 1M 個輸入權杖的成本（USD）\n傳送給模型的每 **百萬** 個輸入（提示）權杖的美元成本。\n\n- 用於成本追蹤與預算警示\n- 當您的供應商回報模型定價時（LiteLLM、OpenRouter、Together AI）會自動填入 — 在您選擇模型或執行測試連線時套用\n- 否則，請至您供應商的定價頁面查詢\n- 範例：`0.15` = 每百萬個輸入權杖 $0.15",
+      "costPerOutputToken": "## 每 1M 個輸出權杖的成本（USD）\n模型產生的每 **百萬** 個輸出（完成）權杖的美元成本。\n\n- 通常高於輸入權杖成本\n- 用於成本追蹤與預算警示\n- 當您的供應商回報模型定價時（LiteLLM、OpenRouter、Together AI）會自動填入 — 在您選擇模型或執行測試連線時套用\n- 否則，請至您供應商的定價頁面查詢\n- 範例：`0.60` = 每百萬個輸出權杖 $0.60",
       "monthlyBudget": "## 每月預算（美元）\n此整合的選用支出目標。\n\n- 設定為 `0` 可停用預算追蹤。\n- 預算僅供參考，不會影響 LLM 的使用。\n- 您將在達到預算的 80%、90% 和 100% 時收到通知。\n- 費用是根據上述每個代幣的價格計算。",
       "billingPeriodStartDay": "## 帳單週期起始日\n帳單週期開始的日期（1-31）。\n\n- 預設值 `1` 與日曆月一致。\n- 設定為 `15` 表示每月 15 日至 15 日的週期（例如，與您的供應商發票日期一致）。\n- 值 `29-31` 會自動鎖定到較短月份的最後一天（例如，非閏年的 2 月）。\n- 影響**月度預算**支出窗口和**重置支出**操作。",
       "defaultTemperature": "## 預設溫度\n控制模型回應的隨機性（0–2）。\n\n- **0：**確定性——相同輸入產生相同輸出\n- **0.3：**聚焦——建議用於測試生成與程式碼輸出\n- **1+：**創意——回應更多樣化\n- 個別功能可在提示設定中覆寫此設定",
@@ -6292,7 +7008,7 @@
       "isDefault": "## 預設值\n指示此工作流程是否為專案的預設工作流程。\n\n- 預設工作流程已預先選中，用於新的測試運行、會話和自動化。",
       "isEnabled": "## 已啟用\n指示此工作流程是否已啟用。",
       "isActive": "## 活動\n指示此工作流程狀態是否處於作用中且可供使用。\n\n- 更新測試運行、會話或自動化時，可以選擇活動工作流程。\n- 非活動工作流程將會隱藏，但會保留在現有項目中。",
-      "requiresReview": "## 需要審核\n啟用後，案例、測試運行或會話進入此狀態需要經過審核請求並獲得批准。如果沒有獲得批准的請求，則轉換將被阻止。\n\n- 當系統級功能關閉時，現有待審核的請求將靜默保留，並在重新啟用後重新出現。\n- 當測試人員從實體詳情頁點選「要求審核」時，系統會選擇審核者。\n\n若係統級功能已停用，則此開關將被鎖定。若要重新啟用此功能，請從上方的「審核工作流程」卡片中操作。",
+      "requiresReview": "## 需要審核\n啟用後，將測試案例、測試運行或工作階段轉換至此狀態時，需要經過核准的審核請求才能進行。如果沒有獲得核准的請求，則轉換將被封鎖。\n\n- 核准請求即會執行該轉換。審核人員的核准會將測試案例、測試運行或工作階段移動至請求的狀態；請求者不需要手動重複進行狀態變更。\n- 當系統層級功能關閉時，現有待處理的審核會被靜默保留，並在重新啟用後重新出現。\n- 當測試人員從實體詳細資料頁面點選「請求審核」時，系統會選擇審核人員。\n\n若系統層級功能已停用，此開關將被鎖定。請從上方的「審核工作流程」卡片重新啟用此功能，以切換此設定。",
       "projects": "## 項目\n指示可以使用此工作流程的項目。"
     },
     "testResult": {
@@ -6392,7 +7108,15 @@
       "issueCount": "## 問題計數\n追蹤的總問題數。",
       "milestoneCount": "## 里程碑數\n里程碑總數。",
       "milestoneCompletionRate": "## 里程碑完成率\n已完成里程碑的百分比。",
-      "averageMilestoneDuration": "## 平均里程碑持續時間\n里程碑的平均持續時間（以天為單位）。"
+      "averageMilestoneDuration": "## 平均里程碑持續時間\n里程碑的平均持續時間（以天為單位）。",
+      "llmCallCount": "## LLM 呼叫\n此群組中發出的 LLM 請求數量，包括失敗的呼叫。",
+      "promptTokens": "## 提示權杖\n此群組中所有呼叫作為輸入傳送給模型的權杖數。",
+      "completionTokens": "## 完成權杖\n此群組中模型產生的所有呼叫的權杖數。",
+      "totalTokens": "## 總權杖數\n此群組中所有呼叫的提示與完成權杖總和。",
+      "totalCost": "## 總成本\n此群組中呼叫的預估提供商成本為美元。本地託管的模型成本記錄為零。",
+      "avgLatency": "## 平均延遲\n此群組中提供商回應呼叫所花費的平均時間。",
+      "successRate": "## 成功率\n此群組中未發生錯誤而完成的呼叫百分比。",
+      "errorCount": "## 失敗呼叫\n此群組中以錯誤結束的呼叫數量。"
     },
     "reportDimensions": {
       "user": "## 使用者維度\n依執行測試或指派給專案的使用者將結果分組。",
@@ -6415,12 +7139,17 @@
       "issueStatus": "## 問題狀態維度\n依問題的目前狀態（例如，開啟、進行中、已解決、已關閉）將結果分組。",
       "priority": "## 優先權維度\n依問題優先順序（例如，高、中、低）將結果分組。",
       "source": "## 來源維度\n依測試執行的來源（例如，手動、JUnit、API）將結果分組。",
-      "date": "## 日期維度\n將結果依日期分組，以便進行基於時間的分析和趨勢分析。"
+      "date": "## 日期維度\n將結果依日期分組，以便進行基於時間的分析和趨勢分析。",
+      "feature": "## 功能維度\n依發出呼叫的應用程式功能（例如測試案例產生）對 LLM 使用情況進行分組。",
+      "model": "## 模型維度\n依處理呼叫的模型對 LLM 使用情況進行分組。",
+      "integration": "## 整合維度\n依處理呼叫的已設定 LLM 整合對 LLM 使用情況進行分組。",
+      "outcome": "## 結果維度\n將 LLM 使用情況分為成功與失敗的呼叫。"
     },
     "reportBuilder": {
       "dimensions": "## 維度\n選擇要在報告中分析的維度。維度是用於對資料進行分類的屬性，例如日期、使用者、狀態等。您可以拖曳來重新排序。",
       "metrics": "## 指標\n選擇您希望在報告中衡量的指標。指標是從您的數據中提取的定量測量值，例如測試結果計數、通過率、平均耗時等。您可以拖曳它們來重新排序。",
-      "dateRange": "## 日期範圍\n依特定時段篩選報告資料。您可以從預先定義的範圍中選擇，例如“最近 7 天”或“上個月”，也可以定義自訂日期範圍。此篩選器適用於每種報表類型的相關日期欄位（例如，測試結果的執行日期，測試案例的建立日期）。"
+      "dateRange": "## 日期範圍\n依特定時段篩選報告資料。您可以從預先定義的範圍中選擇，例如“最近 7 天”或“上個月”，也可以定義自訂日期範圍。此篩選器適用於每種報表類型的相關日期欄位（例如，測試結果的執行日期，測試案例的建立日期）。",
+      "dimensionFilters": "## 篩選器\n將報告縮小到每個所選維度的特定值。將篩選器留空以包含該維度的所有值。日期維度則改用日期範圍選擇器進行篩選。"
     },
     "codeRepository": {
       "name": "## 儲存庫名稱\n此儲存庫連接的友善顯示名稱。\n\n- 用於在項目代碼上下文設定中標識它。\n- 不需要與提供者上的儲存庫名稱相符。",
@@ -6453,7 +7182,7 @@
       "systemPrompt": "## 系統提示\n在使用者輸入任何內容之前發送給 AI 模型的指令。定義模型的角色、輸出格式和限制條件。\n\n- 支援雙花括號佔位符（例如 FRAMEWORK、LANGUAGE、CASE_NAME），這些佔位符會在運行時進行替換。\n- 此處所做的變更會影響使用此配置的所有項目。",
       "userPrompt": "## 使用者提示\n代表使用者傳送給 AI 的訊息。如果該功能完全透過程式碼建立使用者訊息，則留空。\n\n- 支援雙花括號佔位符（例如 ISSUE_TITLE、CASE_NAME、CODE_CONTEXT），這些佔位符會在運行時進行替換。\n- 每個功能可用的佔位符列於下方的「變數」部分。",
       "temperature": "## 溫度\n控制 AI 輸出的隨機性。範圍：0–2。\n\n- **0.0–0.3** — 高度確定性，最適合結構化輸出（JSON、程式碼）。\n- **0.4–0.7** — 平衡，適合產生測試案例。\n- **0.8–2.0** — 更具創造性和多樣性，適合開放式文字。",
-      "maxOutputTokens": "## 最大輸出詞元數\n模型在單一回應中產生的最大詞元數。\n\n- 更高的值允許更長的反應，但會增加成本和延遲。\n- 典型範圍：短文字為 2048，程式碼產生為 4096，多大小寫輸出為 6000 以上。"
+      "maxOutputTokens": "## 最大輸出詞元數\n模型在單一回應中產生的最大詞元數。\n\n- 較高的值可讓回應更長，但會增加成本與延遲。\n- 典型範圍：短文字為 2048，程式碼產生為 4096，多筆案例輸出為 6000 以上。\n- 適用於匯出程式碼產生、AI 標籤建議、AI 步驟推導及自動化候選報告。\n- 測試案例產生、Markdown 測試案例解析、編輯器寫作助手及智慧測試案例選取則改用 AI 模型的_預設最大詞元數_。"
     },
     "menu": {
       "startTour": "導覽歡迎之旅",
@@ -6708,7 +7437,9 @@
           "content": "從這裡管理專案級整合、AI 模型配置和共享連結。"
         }
       }
-    }
+    },
+    "projectRunsFilters": "## 篩選測試運行\n\n切換標籤以縮小列表範圍。標籤同時適用於「進行中」和「已完成」分頁，並會在此裝置上針對此專案記住設定。\n\n- **手動** / **自動化** — 將列表限制為該類型的運行。同時開啟（或同時關閉）兩者將顯示所有運行。\n- **我的測試運行** — 僅顯示您參與的運行：您建立了該運行、您被指派了其中的測試用例，或您在其中記錄了測試結果。",
+    "projectSessionsFilters": "## 篩選工作階段\n\n切換晶片以縮小清單範圍。晶片同時套用於「進行中」及「已完成」分頁，並會針對此裝置和此專案記住設定。\n\n- **我的工作階段** — 僅顯示您參與的工作階段：由您建立的工作階段，或指派給您的工作階段。"
   },
   "reports": {
     "ui": {
@@ -6816,6 +7547,10 @@
         "projectHealth": {
           "label": "項目健康",
           "description": "專案進度、里程碑和完成狀態"
+        },
+        "milestoneReadiness": {
+          "label": "里程碑就緒度",
+          "description": "每個里程碑的發行就緒度：範圍內問題完全通過的百分比，以及各狀態的數量"
         },
         "sessionAnalysis": {
           "label": "會話分析",
@@ -6955,7 +7690,7 @@
         "heuristicBadge": "啟發式",
         "heuristicBadgeTooltip": "此項目未配置 LLM 集成，因此此排名直接基於選擇策略指標建構。請配置 LLM（管理 → AI 模型）以實現更豐富的推理，該推理會考慮自訂欄位、關聯問題上下文和案例內容。",
         "sourcedFromNewestN": "透過 {strategy} 提交的 {ranked} 個符合條件的手動案例中，排名前 {ranked} 的案例共 {total} 個。",
-        "sourcedFromAll": "將所有符合資格的 {total} 個手動案例進行排名，排名依據為 {strategy}",
+        "sourcedFromAll": "已透過 {strategy} 對{total, plural, =2 {兩個符合資格的手動測試案例} other {全部 # 個符合資格的手動測試案例}}進行排名",
         "metric": {
           "executions": "{count} 運行",
           "forecast": "{value} 預測",
@@ -7101,6 +7836,10 @@
           "label": "跨專案問題追蹤",
           "description": "項目間的問題產生、解決與影響分析"
         },
+        "llmUsage": {
+          "label": "LLM 使用情況",
+          "description": "跨專案的 LLM 功能權杖使用量、成本與可靠性"
+        },
         "automationTrends": {
           "label": "跨專案自動化趨勢",
           "description": "按優先順序逐週追蹤各專案的自動化進度"
@@ -7125,6 +7864,9 @@
       "folderDescendants": {
         "label": "包含子資料夾",
         "description": "統計每個父資料夾中子資料夾的結果數量。"
+      },
+      "dimensionFilters": {
+        "allValues": "所有值"
       }
     },
     "errors": {
@@ -7169,9 +7911,20 @@
       "issueType": "問題類型",
       "issueTracker": "問題追蹤器",
       "issueStatus": "問題狀態",
-      "tag": "標籤"
+      "tag": "標籤",
+      "feature": "功能",
+      "model": "模型",
+      "integration": "整合",
+      "outcome": "結果"
     },
     "metrics": {
+      "percentReady": "就緒（%）",
+      "passed": "通過",
+      "failed": "失敗",
+      "inProgress": "進行中",
+      "notRun": "未執行",
+      "uncovered": "未涵蓋",
+      "totalIssues": "問題總數",
       "testResults": "測試結果",
       "testResultCount": "檢測結果計數",
       "passRate": "通過率（%）",
@@ -7206,7 +7959,15 @@
       "activeMilestones": "活躍里程碑",
       "milestoneCompletion": "里程碑完成率（%）",
       "averageDuration": "平均持續時間",
-      "totalDuration": "總時長"
+      "totalDuration": "總時長",
+      "llmCallCount": "LLM 呼叫",
+      "promptTokens": "提示權杖",
+      "completionTokens": "完成權杖",
+      "totalTokens": "總權杖數",
+      "totalCost": "總成本",
+      "avgLatency": "平均延遲",
+      "successRate": "成功率 (%)",
+      "errorCount": "失敗呼叫"
     },
     "drillDown": {
       "title": "詳細記錄",
@@ -7486,15 +8247,19 @@
     },
     "stepDuplicates": {
       "pageTitle": "步驟序列重複",
-      "pageDescription": "檢查測試案例中符合的步驟序列。將符合項目轉換為共用步驟群組，或排除誤報。",
       "noResultsFound": "未發現重複步驟。",
       "noResultsDescription": "執行掃描以檢測測試案例中重複的步驟序列。",
       "filterPlaceholder": "按案例名稱篩選...",
+      "minCasesLabel": "最少案例數",
+      "minStepsLabel": "最少步驟數",
+      "minThresholdOption": "{count, number}+",
+      "noMatchesForFilters": "沒有符合目前篩選條件的結果。請降低最小值以擴大搜尋範圍。",
       "selected": "{count, plural, one {# 已選擇} other {# 已選擇}}",
       "bulkDismiss": "駁回（{count, number}）",
       "bulkDismissSuccess": "{count, plural, one {# 比賽已取消} other {# 比賽已取消}}",
       "bulkError": "部分操作失敗，請重試。",
       "tableHint": "點選行可預覽配對的步驟。選取具有複選框的行可進行批次操作。",
+      "matchedStepsCount": "{count, plural, other {# 個相符步驟}}",
       "columns": {
         "matchedSteps": "配對步驟",
         "casesCount": "案例",
@@ -7526,6 +8291,7 @@
         "viewSharedStep": "查看共享步驟組",
         "skippedWarning": "{count, plural, one {# 跳過案例} other {# 跳過案例}} （已過時或已轉換）。",
         "noCasesSelected": "至少選擇一個案例進行轉換。",
+        "stepsUnavailable": "符合的步驟已不在此測試案例中。請忽略此符合項目並重新執行掃描。",
         "selectAll": "全選"
       }
     },
@@ -7640,7 +8406,6 @@
       "apply": "應用篩選條件",
       "common": "常用過濾器",
       "entitySpecific": "類型特定篩選器",
-      "searchPlaceholder": "搜尋篩選選項…",
       "states": "工作流程狀態",
       "createdAt": "建立日期",
       "updatedAt": "更新日期",
@@ -7658,9 +8423,7 @@
       "elapsedRange": "經過時間範圍",
       "minValue": "敏感",
       "maxValue": "最大限度",
-      "hasExternalId": "具有外部 ID",
       "dueDateRange": "到期日範圍",
-      "hasParent": "具有父級里程碑",
       "milestoneType": "里程碑類型",
       "minutes": "分分鐘",
       "hours": "小時",
@@ -7669,6 +8432,8 @@
       "includeDeleted": "包括已刪除的項目",
       "filterActive": "篩選器已啟用：",
       "applyFilter": "應用篩選器",
+      "invalidDate": "無效日期",
+      "stepsCount": "{count, plural, other {# 個步驟}}",
       "validation": {
         "firstValueMustBeLessThanSecond": "第一個值必須小於第二個值",
         "firstDateMustBeBeforeSecond": "第一次約會必須在第二次約會之前。"
@@ -7718,6 +8483,7 @@
   },
   "comments": {
     "title": "評論",
+    "titleWithCount": "{count, plural, =0 {沒有留言} =1 {# 則留言} other {# 則留言}}",
     "placeholder": "請留言…（使用@提及用戶）",
     "editPlaceholder": "編輯您的評論…",
     "postComment": "發表評論",
@@ -7901,7 +8667,7 @@
     "selectSourceConfirm": "更改來源",
     "datasetRowSelectAria": "選擇行",
     "datasetSelectAllPageTooltip": "按一下以選取此頁面上的每一行。按住 Shift 鍵並點擊以選取所有頁面上的每一行。",
-    "datasetSelectAllAcrossPagesTooltip": "選取所有頁面中的 {count, plural, =1 {# 行} other {# 行}}",
+    "datasetSelectAllAcrossPagesTooltip": "選取所有頁面中的 {count, plural, =1 {# 行} =2 {兩行} other {全部 # 行}}",
     "datasetDeselectAllAcrossPagesTooltip": "取消選擇所有頁面上的所有行",
     "datasetLabelColumn": "標籤",
     "datasetAddRow": "新增行",
@@ -8145,5 +8911,35 @@
     "mappingSkipColumn": "跳過列",
     "mappingRequiredAlert": "必需參數未對映： {names}。",
     "mappingRequiredUnmapped": "必需參數“@{name}”沒有對應列。"
+  },
+  "linkPreview": {
+    "siteName": "TestPlanIt",
+    "genericTitle": "{label} · TestPlanIt",
+    "namedTitle": "{name} · {project}",
+    "signInCta": "登入 TestPlanIt",
+    "testCaseLabel": "測試用例",
+    "testRunLabel": "測試運行",
+    "sessionLabel": "探索性會議",
+    "projectLabel": "專案",
+    "milestoneLabel": "里程碑",
+    "appLabel": "測試管理",
+    "testCaseGeneric": "TestPlanIt 中的測試用例。請登入以檢視其步驟、結果與歷史記錄。",
+    "testRunGeneric": "TestPlanIt 中的測試運行。請登入以檢視其進度與結果。",
+    "sessionGeneric": "TestPlanIt 中的探索性測試會議。請登入以檢視其筆記與發現。",
+    "projectGeneric": "TestPlanIt 中的專案。請登入以檢視其測試用例、測試運行與報告。",
+    "milestoneGeneric": "TestPlanIt 中的里程碑。請登入以檢視其範圍與進度。",
+    "appGeneric": "現代化測試管理——在同一個地方規劃、執行並追蹤您的測試。",
+    "shareReportLabel": "共享報告",
+    "shareDashboardLabel": "共享儀錶板",
+    "shareSearchLabel": "共享搜尋",
+    "shareViewLabel": "共享檢視",
+    "shareGeneric": "TestPlanIt 已與您共享。",
+    "shareUnavailable": "此共享連結已不再可用。",
+    "shareInProject": "來自 {project} 的共享",
+    "signInTitle": "登入 TestPlanIt",
+    "signInDescription": "登入您的 TestPlanIt 工作區以規劃、執行並追蹤您的測試。",
+    "inProject": "{project} 中的 {label}",
+    "testRunSummary": "{project} 中{count, plural, =0 {沒有測試用例} =1 {{count} 個測試用例} other {{count} 個測試用例}}",
+    "projectSummary": "{cases, plural, =1 {{cases} 個測試用例} other {{cases} 個測試用例}} · {runs, plural, =1 {{runs} 個測試運行} other {{runs} 個測試運行}}"
   }
 }

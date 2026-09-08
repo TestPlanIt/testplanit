@@ -1,5 +1,7 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { ColorPicker } from "@/components/ColorPicker";
 import { FieldIconPicker } from "@/components/FieldIconPicker";
 import StatusDotDisplay from "@/components/StatusDotDisplay";
@@ -27,7 +29,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { WorkflowType } from "@prisma/client";
+import { WorkflowType } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { scopeDisplayData } from "~/app/constants";
@@ -39,7 +41,8 @@ import { AddResultFieldModal } from "~/app/[locale]/admin/fields/AddResultField"
 import { generateRandomPassword } from "~/utils/randomPassword";
 
 import DynamicIcon from "@/components/DynamicIcon";
-import { Access, ApplicationArea, type FieldOptions } from "@prisma/client";
+import { Access, ApplicationArea } from "~/zenstack/models";
+import type { FieldOptions } from "~/zenstack/models";
 import type { LucideIcon } from "lucide-react";
 import {
   AlertTriangle,
@@ -48,7 +51,6 @@ import {
   FilePlus2,
   SquareDashed,
 } from "lucide-react";
-import { useFindManyColor, useFindManyStatusScope } from "~/lib/hooks";
 import type {
   TestmoConfigurationMappingConfig,
   TestmoConfigurationSuggestion,
@@ -992,9 +994,7 @@ export default function TestmoMappingConfigurator({
       suggestion
         ? (() => {
             let matchedField:
-              | TestmoExistingCaseField
-              | TestmoExistingResultField
-              | undefined;
+              TestmoExistingCaseField | TestmoExistingResultField | undefined;
             if (
               suggestion.fieldId !== null &&
               suggestion.fieldId !== undefined
@@ -1532,7 +1532,7 @@ function WorkflowMappingSection({
                                 <SelectItem
                                   key={option.value}
                                   value={option.value}
-                                  className="ml-2"
+                                  className="ms-2"
                                 >
                                   {option.label}
                                 </SelectItem>
@@ -2607,7 +2607,7 @@ function ConfigurationMappingSection({
                                             key={option.value}
                                             value={option.value}
                                           >
-                                            <div className="flex flex-col text-left">
+                                            <div className="flex flex-col text-start">
                                               <span>{option.label}</span>
                                               {option.categoryName && (
                                                 <span className="text-xs text-muted-foreground">
@@ -2888,18 +2888,19 @@ function TemplateMappingSection({
                 .map((fieldId) => {
                   const fieldSuggestion = templateFieldMap.get(fieldId) ?? null;
                   const fallback:
-                    | Partial<TestmoTemplateFieldMappingConfig>
-                    | undefined = fieldSuggestion
-                    ? {
-                        action: fieldSuggestion.fieldId ? "map" : undefined,
-                        targetType: fieldSuggestion.targetType,
-                        displayName: fieldSuggestion.displayName ?? undefined,
-                        systemName: fieldSuggestion.systemName ?? undefined,
-                        templateName: fieldSuggestion.templateName ?? undefined,
-                        typeName: fieldSuggestion.fieldType ?? undefined,
-                        typeId: fieldSuggestion.fieldId ?? null,
-                      }
-                    : undefined;
+                    Partial<TestmoTemplateFieldMappingConfig> | undefined =
+                    fieldSuggestion
+                      ? {
+                          action: fieldSuggestion.fieldId ? "map" : undefined,
+                          targetType: fieldSuggestion.targetType,
+                          displayName: fieldSuggestion.displayName ?? undefined,
+                          systemName: fieldSuggestion.systemName ?? undefined,
+                          templateName:
+                            fieldSuggestion.templateName ?? undefined,
+                          typeName: fieldSuggestion.fieldType ?? undefined,
+                          typeId: fieldSuggestion.fieldId ?? null,
+                        }
+                      : undefined;
                   const fieldConfig = ensureTemplateFieldConfig(
                     configuration,
                     fieldId,
@@ -3490,7 +3491,7 @@ function StatusMappingSection({
   const tStatuses = useTranslations("admin.statuses");
   const systemNameEditedRef = useRef<Map<number, boolean>>(new Map());
 
-  const { data: colorData } = useFindManyColor({
+  const { data: colorData } = useClientQueries(schema).color.useFindMany({
     select: { id: true, value: true },
     orderBy: { order: "asc" },
   });
@@ -3509,7 +3510,9 @@ function StatusMappingSection({
     [colorData]
   );
 
-  const { data: statusScopeData } = useFindManyStatusScope({
+  const { data: statusScopeData } = useClientQueries(
+    schema
+  ).statusScope.useFindMany({
     select: { id: true, name: true },
     orderBy: { name: "asc" },
   });
@@ -5437,7 +5440,7 @@ function TemplateFieldMappingSection({
                                     <SelectItem
                                       key={`${group.key}-${option.value}`}
                                       value={option.value}
-                                      className="pl-6"
+                                      className="ps-6"
                                       disabled={isDisabled}
                                     >
                                       {renderTargetOption(
@@ -5478,7 +5481,7 @@ function TemplateFieldMappingSection({
                           ) {
                             return (
                               <p className="text-xs text-primary font-bold flex items-start">
-                                <AlertTriangle className="w-4 h-4 mr-1 inline" />
+                                <AlertTriangle className="w-4 h-4 me-1 inline" />
                                 {t("templateFieldTypeMismatchWarning", {
                                   source: field.fieldType,
                                   target: selected.typeName,
@@ -5490,13 +5493,13 @@ function TemplateFieldMappingSection({
                         })()}
                         {missingTarget && (
                           <p className="text-xs text-destructive flex items-start">
-                            <AlertTriangle className="w-4 h-4 mr-1 inline" />
+                            <AlertTriangle className="w-4 h-4 me-1 inline" />
                             {t("templateFieldIssueMissingTarget")}
                           </p>
                         )}
                         {isTargetInUse && (
                           <p className="text-xs text-destructive flex items-start">
-                            <AlertTriangle className="w-4 h-4 mr-1 inline" />
+                            <AlertTriangle className="w-4 h-4 me-1 inline" />
                             {t("templateFieldDuplicateTargetWarning")}
                           </p>
                         )}
@@ -5588,7 +5591,7 @@ function TemplateFieldMappingSection({
                       )}
                       {missingCreateDetails && (
                         <p className="text-xs text-destructive flex items-start">
-                          <AlertTriangle className="w-4 h-4 mr-1 inline" />
+                          <AlertTriangle className="w-4 h-4 me-1 inline" />
                           {t("templateFieldIssueMissingDetails")}
                         </p>
                       )}
@@ -6153,7 +6156,7 @@ function MilestoneTypeMappingSection({
                                 ) : null}
                                 <span>{option.label}</span>
                                 {option.isDefault && (
-                                  <Badge variant="outline" className="ml-2">
+                                  <Badge variant="outline" className="ms-2">
                                     {t("milestoneDefaultLabel")}
                                   </Badge>
                                 )}

@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod/v4";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { getServerAuthSession } from "~/server/auth";
 
 // Define the input schema using Zod
@@ -50,7 +50,7 @@ export async function getAssignmentsForRunCases(
   const { originalRunId, repositoryCaseIds } = validation.data;
 
   try {
-    const assignments = await prisma.testRunCases.findMany({
+    const assignments = await baseDb.testRunCases.findMany({
       where: {
         testRunId: originalRunId,
         repositoryCaseId: {

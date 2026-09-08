@@ -1,10 +1,10 @@
 "use server";
 
-import { ApplicationArea } from "@prisma/client";
+import { ApplicationArea } from "~/zenstack/models";
 import { z } from "zod/v4";
 import { runWithAuditContext } from "~/lib/auditContext";
 import { auditedTransaction } from "~/lib/audit/auditedTransaction";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { getAllDescendantMilestoneIds } from "~/lib/services/milestoneDescendants";
 import {
   AlreadyPendingError,
@@ -14,6 +14,7 @@ import {
 import { isReviewFeatureSystemEnabled } from "~/lib/services/reviewFeatureFlag";
 import { assertBulkReviewGatePasses } from "~/lib/services/reviewGate";
 import { getServerAuthSession } from "~/server/auth";
+import { calendarDateToInstant } from "~/utils/calendarDate";
 import { checkUserPermission } from "./permissions";
 
 const CompleteMilestoneSchema = z.object({
@@ -38,6 +39,14 @@ interface ServerActionResult {
   status: "success" | "confirmation_required" | "error";
   message?: string;
   impact?: CompletionImpact;
+  /**
+   * Set when the milestone completed but a requested cascade half was dropped
+   * because the caller lacks canClose on that area.
+   */
+  skippedForPermission?: {
+    skippedTestRuns: boolean;
+    skippedSessions: boolean;
+  };
 }
 
 /**
@@ -69,14 +78,21 @@ export async function completeMilestoneCascade(
         completionDate,
         isPreview: _isPreview,
         forceCompleteDependencies,
-        completeTestRuns = true,
-        completeSessions = true,
+        completeTestRuns: requestedCompleteTestRuns = true,
+        completeSessions: requestedCompleteSessions = true,
         testRunStateId,
         sessionStateId,
       } = parseResult.data;
 
+      // The dialog sends a calendar date (UTC midnight), which is what the
+      // milestone's own date fields want. Runs and sessions cascaded off it
+      // hold real instants and render in the viewer's timezone, so they need
+      // that day widened — stamping them at UTC midnight would show the
+      // previous evening west of Greenwich.
+      const cascadeCompletedAt = calendarDateToInstant(completionDate);
+
       // Fetch the milestone to check its current status and get projectId
-      const currentMilestone = await prisma.milestones.findUnique({
+      const currentMilestone = await baseDb.milestones.findUnique({
         where: { id: milestoneId },
         select: { startedAt: true, projectId: true },
       });
@@ -104,6 +120,33 @@ export async function completeMilestoneCascade(
         };
       }
 
+      // Completing the milestone's runs and sessions is the same act as
+      // completing them individually, which requires canClose on their own
+      // areas — Milestones.canClose alone must not be a side door. The cascade
+      // degrades rather than failing: the milestone still completes, and the
+      // caller is told which halves were skipped.
+      const [canCloseTestRuns, canCloseSessions] = await Promise.all([
+        checkUserPermission(
+          session.user.id,
+          projectId,
+          session,
+          ApplicationArea.TestRuns,
+          "canClose"
+        ),
+        checkUserPermission(
+          session.user.id,
+          projectId,
+          session,
+          ApplicationArea.Sessions,
+          "canClose"
+        ),
+      ]);
+
+      const completeTestRuns = requestedCompleteTestRuns && canCloseTestRuns;
+      const completeSessions = requestedCompleteSessions && canCloseSessions;
+      const skippedTestRuns = requestedCompleteTestRuns && !canCloseTestRuns;
+      const skippedSessions = requestedCompleteSessions && !canCloseSessions;
+
       // --- Determine target completed stateId for Test Runs ---
       let completedTestRunStateId: number | undefined = undefined;
       if (completeTestRuns) {
@@ -112,7 +155,7 @@ export async function completeMilestoneCascade(
           completedTestRunStateId = testRunStateId;
         } else {
           // Fallback to lowest order DONE workflow (existing behavior)
-          const doneRunWorkflow = await prisma.workflows.findFirst({
+          const doneRunWorkflow = await baseDb.workflows.findFirst({
             where: {
               scope: "RUNS",
               workflowType: "DONE",
@@ -141,7 +184,7 @@ export async function completeMilestoneCascade(
           completedSessionStateId = sessionStateId;
         } else {
           // Fallback to lowest order DONE workflow (existing behavior)
-          const doneSessionWorkflow = await prisma.workflows.findFirst({
+          const doneSessionWorkflow = await baseDb.workflows.findFirst({
             where: {
               scope: "SESSIONS",
               workflowType: "DONE",
@@ -167,7 +210,7 @@ export async function completeMilestoneCascade(
       // when the project has opted out of review. Doing this outside the tx
       // keeps a contended write transaction short under deadlock-prone
       // conditions (project memory `Deadlock Issues (40P01)`).
-      const projectReviewFlag = await prisma.projects.findUnique({
+      const projectReviewFlag = await baseDb.projects.findUnique({
         where: { id: projectId },
         select: { reviewWorkflowEnabled: true },
       });
@@ -184,7 +227,7 @@ export async function completeMilestoneCascade(
       // targetOrder] per entity without a per-row roundtrip inside the tx.
       // `name` is loaded so a gate-rejected error message can refer to the
       // entity by name (e.g. "run 'Sprint 2 - Regression'") instead of numeric id.
-      const activeTestRuns = await prisma.testRuns.findMany({
+      const activeTestRuns = await baseDb.testRuns.findMany({
         where: {
           milestoneId: { in: allRelevantMilestoneIds },
           isCompleted: false,
@@ -197,7 +240,7 @@ export async function completeMilestoneCascade(
         },
       });
 
-      const activeSessions = await prisma.sessions.findMany({
+      const activeSessions = await baseDb.sessions.findMany({
         where: {
           milestoneId: { in: allRelevantMilestoneIds },
           isCompleted: false,
@@ -211,7 +254,7 @@ export async function completeMilestoneCascade(
       });
 
       // Descendant milestones that are not yet complete (excluding the main one being completed)
-      const descendantMilestonesToComplete = await prisma.milestones.findMany({
+      const descendantMilestonesToComplete = await baseDb.milestones.findMany({
         where: {
           id: { in: descendantMilestoneIds }, // Only look within descendants
           isCompleted: false,
@@ -284,7 +327,7 @@ export async function completeMilestoneCascade(
               stateId?: number;
             } = {
               isCompleted: true,
-              completedAt: completionDate,
+              completedAt: cascadeCompletedAt,
             };
             if (completedTestRunStateId !== undefined) {
               testRunUpdateData.stateId = completedTestRunStateId;
@@ -313,7 +356,8 @@ export async function completeMilestoneCascade(
                     currentStateOrder: tr.state?.order ?? null,
                   })
                 ),
-                completedTestRunStateId
+                completedTestRunStateId,
+                session.user.access
               );
               consumedApprovalIds = gateResult?.approvedRequestIds ?? [];
             }
@@ -356,7 +400,7 @@ export async function completeMilestoneCascade(
               stateId?: number;
             } = {
               isCompleted: true,
-              completedAt: completionDate,
+              completedAt: cascadeCompletedAt,
             };
             if (completedSessionStateId !== undefined) {
               sessionUpdateData.stateId = completedSessionStateId;
@@ -378,7 +422,8 @@ export async function completeMilestoneCascade(
                     currentStateOrder: s.state?.order ?? null,
                   })
                 ),
-                completedSessionStateId
+                completedSessionStateId,
+                session.user.access
               );
               consumedSessionApprovalIds = gateResult?.approvedRequestIds ?? [];
             }
@@ -413,7 +458,12 @@ export async function completeMilestoneCascade(
 
         // Success path returns no `message`; the client renders a localized
         // toast based on whether dependencies were involved.
-        return { status: "success" };
+        return {
+          status: "success",
+          ...(skippedTestRuns || skippedSessions
+            ? { skippedForPermission: { skippedTestRuns, skippedSessions } }
+            : {}),
+        };
       } catch (error) {
         // Review & Approval (Plan 01-04). When a per-entity preflight rejects
         // an in-flight cascade, surface the typed code through the server
@@ -433,7 +483,7 @@ export async function completeMilestoneCascade(
             activeSessions
           );
           const blockingStateId = error.blockingStateId ?? error.toStateId;
-          const blockingState = await prisma.workflows.findUnique({
+          const blockingState = await baseDb.workflows.findUnique({
             where: { id: blockingStateId },
             select: { name: true },
           });

@@ -1,11 +1,15 @@
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ReviewDecisionBadge } from "@/components/comments/CommentTypeBadge";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { ReviewRequest, ReviewStatus } from "@prisma/client";
+import type {
+  RepositoryCaseSource,
+  ReviewRequest,
+  ReviewStatus,
+} from "~/zenstack/models";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
   ArrowRight,
@@ -17,10 +21,13 @@ import {
 import { useMemo } from "react";
 
 import { RelativeTimeTooltip } from "~/components/RelativeTimeTooltip";
+import { NudgeReviewButton } from "~/components/reviews/NudgeReviewButton";
+import { RoleAssigneeChip } from "~/components/reviews/RoleAssigneeChip";
 import { ProjectNameDisplay } from "~/components/search/ProjectNameDisplay";
-import { SessionNameDisplay } from "~/components/SessionNameDisplay";
 import { TestRunNameDisplay } from "~/components/TestRunNameDisplay";
 import { CaseDisplay } from "~/components/tables/CaseDisplay";
+import { SessionTableDisplay } from "~/components/tables/SessionTableDisplay";
+import type { CustomColumnMeta } from "~/components/tables/ColumnSelection";
 import { UserNameCell } from "~/components/tables/UserNameCell";
 import { WorkflowStateDisplay } from "~/components/WorkflowStateDisplay";
 import type { IconName } from "~/types/globals";
@@ -52,7 +59,7 @@ interface InboxWorkflowState {
 export interface InboxCaseRow {
   id: number;
   name: string;
-  source: import("@prisma/client").RepositoryCaseSource;
+  source: RepositoryCaseSource;
   automated?: boolean;
   hasParameters?: boolean;
   isDeleted?: boolean;
@@ -62,6 +69,7 @@ export interface InboxTestRunRow {
   id: number;
   name: string;
   isDeleted?: boolean;
+  compositionLockedAt?: Date | string | null;
 }
 
 export interface InboxSessionRow {
@@ -90,6 +98,11 @@ export interface ExtendedReviewRequest extends ReviewRequest {
     image: string | null;
   } | null;
   assigneeRole: { id: number; name: string } | null;
+  decidedBy?: {
+    id: string;
+    name: string | null;
+    image: string | null;
+  } | null;
 }
 
 /**
@@ -103,12 +116,20 @@ export type InboxTableRow = ExtendedReviewRequest & { name: string };
 /**
  * Callbacks the inbox table wires into each row's inline action buttons.
  * The table owns the dialog state — these callbacks just record which row
- * the reviewer is acting on so the right dialog opens with the right id.
+ * the viewer is acting on so the right dialog opens with the right id.
+ *
+ * The first three belong to the reviewer; `onCancel` belongs to the
+ * requester, on rows they submitted and are waiting on someone else to
+ * decide. "Send reminder" isn't here because it needs no dialog — see
+ * {@link NudgeReviewButton}, which fires the action itself.
  */
 export interface InboxActionHandlers {
   onApprove: (row: ExtendedReviewRequest) => void;
   onRequestChanges: (row: ExtendedReviewRequest) => void;
   onReject: (row: ExtendedReviewRequest) => void;
+  onCancel: (row: ExtendedReviewRequest) => void;
+  /** Refresh the queue after a reminder lands so the cooldown re-reads. */
+  onNudged: () => void;
 }
 
 /**
@@ -124,62 +145,40 @@ interface UseColumnsArgs {
   view: InboxView;
   /** Required when `view === 'pending'`. Ignored on the Decided tab. */
   actions?: InboxActionHandlers;
+  /**
+   * The signed-in viewer. The Pending tab mixes two kinds of row — reviews
+   * waiting on the viewer and reviews the viewer is waiting on someone else
+   * for — so each row's action set is decided per row, not per tab.
+   */
+  viewerUserId: string;
+  /** Roles the viewer can be reached through as an assignee (global + SPECIFIC_ROLE). */
+  viewerRoleIds: number[];
   caseById: Map<number, InboxCaseRow>;
   testRunById: Map<number, InboxTestRunRow>;
   sessionById: Map<number, InboxSessionRow>;
+  /**
+   * When set, a plain click on a CASE row's name opens the docked details
+   * panel instead of navigating to the full case page. Modified and middle
+   * clicks still follow the link, so "open in a new tab" keeps working.
+   */
+  onOpenCase?: (caseId: number, projectId: number) => void;
 }
 
 /**
- * Outcome-badge content for the Decided tab. Matches the badge treatment
- * used in `CommentItem` for `REVIEW_DECISION` so the two surfaces read
- * consistently.
+ * Outcome-badge content for the Decided tab. Delegates the per-status
+ * visuals to the shared `ReviewDecisionBadge`; undecided rows render a
+ * plain dash.
  */
-function DecisionStatusBadge({
-  status,
-  t,
-}: {
-  status: ReviewStatus | null;
-  t: TranslateFn;
-}) {
-  // Filled-background badges so the outcome color is the primary visual
-  // signal (success / warning / destructive / neutral), with white text +
-  // icon for readable contrast across light + dark themes. Tokens
-  // `success` and `warning` come from the project Tailwind config; only
-  // `success` has a paired `success-foreground`, so the warning row falls
-  // back to plain `text-white`.
-  if (status === "APPROVED") {
-    return (
-      <Badge className="gap-1 bg-success text-success-foreground border-success hover:bg-success/90">
-        <CheckCircle2 className="h-3 w-3 shrink-0" />
-        {t("comments.type.reviewDecision.approved")}
-      </Badge>
-    );
+function DecisionStatusBadge({ status }: { status: ReviewStatus | null }) {
+  if (
+    status !== "APPROVED" &&
+    status !== "CHANGES_REQUESTED" &&
+    status !== "REJECTED" &&
+    status !== "CANCELLED"
+  ) {
+    return <span className="text-muted-foreground">-</span>;
   }
-  if (status === "CHANGES_REQUESTED") {
-    return (
-      <Badge className="gap-1 bg-warning text-white border-warning hover:bg-warning/90">
-        <MessageCircleWarning className="h-3 w-3 shrink-0" />
-        {t("comments.type.reviewDecision.changesRequested")}
-      </Badge>
-    );
-  }
-  if (status === "REJECTED") {
-    return (
-      <Badge variant="destructive" className="gap-1">
-        <XCircle className="h-3 w-3 shrink-0" />
-        {t("comments.type.reviewDecision.rejected")}
-      </Badge>
-    );
-  }
-  if (status === "CANCELLED") {
-    return (
-      <Badge className="gap-1 bg-muted-foreground text-background border-muted-foreground hover:bg-muted-foreground/90">
-        <Ban className="h-3 w-3 shrink-0" />
-        {t("comments.type.reviewDecision.cancelled")}
-      </Badge>
-    );
-  }
-  return <span className="text-muted-foreground">-</span>;
+  return <ReviewDecisionBadge status={status} />;
 }
 
 /**
@@ -228,9 +227,12 @@ export const useColumns = ({
   t,
   view,
   actions,
+  viewerUserId,
+  viewerRoleIds,
   caseById,
   testRunById,
   sessionById,
+  onOpenCase,
 }: UseColumnsArgs): ColumnDef<InboxTableRow>[] => {
   return useMemo(() => {
     const baseColumns: ColumnDef<InboxTableRow>[] = [
@@ -240,12 +242,11 @@ export const useColumns = ({
         header: t("reviews.inbox.columnEntity"),
         enableSorting: true,
         size: 440,
-        minSize: 320,
+        minSize: 100,
+        meta: { isPinned: "left" } satisfies CustomColumnMeta,
         cell: ({ row }) => {
           const entityType = row.original.entityType as
-            | "CASE"
-            | "RUN"
-            | "SESSION";
+            "CASE" | "RUN" | "SESSION";
           const projectId = row.original.projectId;
           const entityId = row.original.entityId;
           if (entityType === "CASE") {
@@ -255,7 +256,7 @@ export const useColumns = ({
                 <span className="font-mono text-xs text-muted-foreground">{`CASE #${entityId}`}</span>
               );
             }
-            return (
+            const display = (
               <CaseDisplay
                 id={c.id}
                 name={c.name}
@@ -263,10 +264,41 @@ export const useColumns = ({
                 automated={c.automated}
                 hasParameters={c.hasParameters}
                 isDeleted={c.isDeleted}
-                link={`/projects/repository/${projectId}/${c.id}`}
+                link={
+                  c.isDeleted
+                    ? undefined
+                    : `/projects/repository/${projectId}/${c.id}`
+                }
                 size="medium"
-                maxLines={2}
+                maxLines={1}
               />
+            );
+            if (!onOpenCase || c.isDeleted) return display;
+            // Capture phase so this runs before the `next-intl` Link's own
+            // click handler — stopping propagation there is what keeps the
+            // reviewer on the inbox and opens the docked panel instead.
+            // Modified / non-primary clicks fall through untouched so the
+            // full case page still opens in a new tab.
+            return (
+              <div
+                className="min-w-0"
+                onClickCapture={(e) => {
+                  if (
+                    e.metaKey ||
+                    e.ctrlKey ||
+                    e.shiftKey ||
+                    e.altKey ||
+                    e.button !== 0
+                  ) {
+                    return;
+                  }
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onOpenCase(c.id, projectId);
+                }}
+              >
+                {display}
+              </div>
             );
           }
           if (entityType === "RUN") {
@@ -276,12 +308,18 @@ export const useColumns = ({
                 testRun={r ?? { id: entityId }}
                 projectId={projectId}
                 showIcon
+                className="truncate"
               />
             );
           }
           const s = sessionById.get(entityId);
           return (
-            <SessionNameDisplay session={s ?? { id: entityId }} showIcon />
+            <SessionTableDisplay
+              id={entityId}
+              name={s?.name ?? `Session ${entityId}`}
+              link={`/projects/sessions/${projectId}/${entityId}`}
+              maxLines={1}
+            />
           );
         },
       },
@@ -290,6 +328,7 @@ export const useColumns = ({
         accessorKey: "projectId",
         header: t("reviews.inbox.columnProject"),
         enableSorting: true,
+        minSize: 110,
         size: 220,
         cell: ({ row }) => {
           const project = row.original.project;
@@ -302,6 +341,7 @@ export const useColumns = ({
               projectId={project.id}
               iconUrl={project.iconUrl}
               showLink
+              fitContainer
             />
           );
         },
@@ -311,72 +351,38 @@ export const useColumns = ({
         accessorKey: "requestedByUserId",
         header: t("reviews.inbox.columnRequester"),
         enableSorting: true,
+        minSize: 125,
         size: 220,
         cell: ({ row }) => {
           const requester = row.original.requestedBy;
           if (!requester) {
             return <span className="text-muted-foreground">-</span>;
           }
-          return (
-            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-secondary text-secondary-foreground border border-muted-foreground/50 cursor-pointer hover:bg-secondary/80 transition-colors [&_*]:cursor-pointer [&_a]:no-underline">
-              <UserNameCell userId={requester.id} shrinkLink />
-            </span>
-          );
+          return <UserNameCell userId={requester.id} />;
         },
       },
       {
-        id: "transitionFrom",
-        accessorKey: "fromStateId",
-        header: t("reviews.inbox.columnTransitionFrom"),
+        id: "transition",
+        // Sorts by destination — the state a reviewer is being asked to
+        // approve into is the one worth grouping the queue by.
+        accessorKey: "toStateId",
+        header: t("reviews.inbox.columnTransition"),
         enableSorting: true,
-        size: 100,
-        maxSize: 140,
+        minSize: 180,
+        size: 260,
         cell: ({ row }) => (
-          // `data-transition-inner` is the sentinel the page-level wrapper
-          // keys on to hide the vertical column-divider lines that flank
-          // the arrow column.
-          //
-          // The `[&>span]:!shrink [&>span]:!min-w-0` overrides are how we
-          // force WorkflowStateDisplay's outer `shrink-0` span to actually
-          // shrink within the cell so the inner `truncate` on the name
-          // span engages — without forking that shared component.
-          <div
-            data-transition-inner
-            className="flex min-w-0 max-w-full overflow-hidden [&>span]:!shrink [&>span]:!min-w-0"
-          >
+          // `[&>span]:!shrink [&>span]:!min-w-0` forces WorkflowStateDisplay's
+          // outer `shrink-0` span to shrink so its inner `truncate` engages,
+          // without forking that shared component.
+          <div className="flex min-w-0 max-w-full items-center gap-1 overflow-hidden [&>span]:!shrink [&>span]:!min-w-0">
             <WorkflowStateDisplay
               state={row.original.fromState as any}
               size="sm"
             />
-          </div>
-        ),
-      },
-      {
-        id: "transitionArrow",
-        // No header — purely visual separator between from/to columns.
-        header: () => null,
-        enableSorting: false,
-        enableHiding: false,
-        size: 40,
-        maxSize: 40,
-        cell: () => (
-          <div data-transition-inner>
             <ArrowRight
-              className="h-4 w-4 text-muted-foreground"
+              className="h-4 w-4 shrink-0 text-muted-foreground"
               aria-hidden="true"
             />
-          </div>
-        ),
-      },
-      {
-        id: "transitionTo",
-        accessorKey: "toStateId",
-        header: t("reviews.inbox.columnTransitionTo"),
-        enableSorting: true,
-        size: 100,
-        maxSize: 140,
-        cell: ({ row }) => (
-          <div className="flex min-w-0 max-w-full overflow-hidden [&>span]:!shrink [&>span]:!min-w-0">
             <WorkflowStateDisplay
               state={row.original.toState as any}
               size="sm"
@@ -396,6 +402,8 @@ export const useColumns = ({
             header: t("reviews.inbox.columnRequestedAt"),
             enableSorting: true,
             size: 160,
+            minSize: 150,
+
             cell: ({ getValue }) => {
               const value = getValue() as Date | string | null;
               if (!value) {
@@ -421,6 +429,7 @@ export const useColumns = ({
             header: t("reviews.inbox.columnDecidedAt"),
             enableSorting: true,
             size: 160,
+            minSize: 150,
             cell: ({ getValue }) => {
               const value = getValue() as Date | string | null;
               if (!value) {
@@ -437,6 +446,54 @@ export const useColumns = ({
             },
           };
 
+    // Pending tab only — the queue mixes rows waiting on the viewer with
+    // rows the viewer is waiting on someone else for, so "who is this
+    // parked with?" stops being answerable from the tab alone. Role
+    // assignees render the shared chip, whose tooltip lists the people who
+    // could actually act — the question a requester chasing a stalled
+    // review asks next.
+    const assigneeColumn: ColumnDef<InboxTableRow> = {
+      id: "assignee",
+      accessorKey: "assigneeUserId",
+      header: t("reviews.inbox.columnAssignee"),
+      enableSorting: true,
+      minSize: 125,
+      size: 220,
+      cell: ({ row }) => {
+        const { assigneeUser, assigneeRole, projectId } = row.original;
+        if (assigneeUser) return <UserNameCell userId={assigneeUser.id} />;
+        if (assigneeRole) {
+          return (
+            <RoleAssigneeChip
+              projectId={projectId}
+              roleId={assigneeRole.id}
+              roleName={assigneeRole.name}
+            />
+          );
+        }
+        return <span className="text-muted-foreground">-</span>;
+      },
+    };
+
+    // Decided tab only — the tab now lists decisions on reviews the viewer
+    // requested alongside their own decisions, so the row has to say who
+    // actually decided it.
+    const decidedByColumn: ColumnDef<InboxTableRow> = {
+      id: "decidedBy",
+      accessorKey: "decidedByUserId",
+      header: t("reviews.inbox.columnDecidedBy"),
+      enableSorting: true,
+      minSize: 125,
+      size: 220,
+      cell: ({ row }) => {
+        const decidedBy = row.original.decidedBy;
+        if (!decidedBy) {
+          return <span className="text-muted-foreground">-</span>;
+        }
+        return <UserNameCell userId={decidedBy.id} />;
+      },
+    };
+
     const tailColumn: ColumnDef<InboxTableRow> =
       view === "pending"
         ? {
@@ -445,34 +502,85 @@ export const useColumns = ({
             enableSorting: false,
             enableHiding: false,
             size: 122,
-            cell: ({ row }) => (
-              <div
-                className="flex items-center gap-1"
-                data-testid="reviews-inbox-row-actions"
-              >
-                <ActionIconButton
-                  label={t("reviews.inbox.actionApprove")}
-                  testId={`reviews-inbox-approve-${row.original.id}`}
-                  icon={CheckCircle2}
-                  onClick={() => actions?.onApprove(row.original)}
-                  iconClassName="h-4 w-4 text-emerald-500"
-                />
-                <ActionIconButton
-                  label={t("reviews.inbox.actionRequestChanges")}
-                  testId={`reviews-inbox-request-changes-${row.original.id}`}
-                  icon={MessageCircleWarning}
-                  onClick={() => actions?.onRequestChanges(row.original)}
-                  iconClassName="h-4 w-4 text-amber-500"
-                />
-                <ActionIconButton
-                  label={t("reviews.inbox.actionReject")}
-                  testId={`reviews-inbox-reject-${row.original.id}`}
-                  icon={XCircle}
-                  onClick={() => actions?.onReject(row.original)}
-                  iconClassName="h-4 w-4 text-destructive"
-                />
-              </div>
-            ),
+            meta: { isPinned: "right" } satisfies CustomColumnMeta,
+            cell: ({ row }) => {
+              const {
+                id,
+                assigneeUserId,
+                assigneeRoleId,
+                requestedByUserId,
+                lastRemindedAt,
+              } = row.original;
+
+              // Same predicate the Pending where-clause reaches these rows
+              // by: direct assignee, or holder of the assigned role.
+              const isAssignee =
+                assigneeUserId === viewerUserId ||
+                (assigneeRoleId !== null &&
+                  viewerRoleIds.includes(assigneeRoleId));
+
+              // Deciding beats chasing: a viewer who is both the requester
+              // and an eligible role-holder can resolve the row outright, so
+              // they get the decision cluster. Cancel is still reachable for
+              // them from the entity's own review banner.
+              if (isAssignee) {
+                return (
+                  <div
+                    className="flex items-center gap-1"
+                    data-testid="reviews-inbox-row-actions"
+                  >
+                    <ActionIconButton
+                      label={t("reviews.inbox.actionApprove")}
+                      testId={`reviews-inbox-approve-${id}`}
+                      icon={CheckCircle2}
+                      onClick={() => actions?.onApprove(row.original)}
+                      iconClassName="h-4 w-4 text-emerald-500"
+                    />
+                    <ActionIconButton
+                      label={t("reviews.inbox.actionRequestChanges")}
+                      testId={`reviews-inbox-request-changes-${id}`}
+                      icon={MessageCircleWarning}
+                      onClick={() => actions?.onRequestChanges(row.original)}
+                      iconClassName="h-4 w-4 text-amber-500"
+                    />
+                    <ActionIconButton
+                      label={t("reviews.inbox.actionReject")}
+                      testId={`reviews-inbox-reject-${id}`}
+                      icon={XCircle}
+                      onClick={() => actions?.onReject(row.original)}
+                      iconClassName="h-4 w-4 text-destructive"
+                    />
+                  </div>
+                );
+              }
+
+              // Requester's own row. Nothing here decides the review — the
+              // two things they can do are withdraw it or re-ping whoever
+              // owes them the decision.
+              if (requestedByUserId === viewerUserId) {
+                return (
+                  <div
+                    className="flex items-center gap-1"
+                    data-testid="reviews-inbox-row-requester-actions"
+                  >
+                    <NudgeReviewButton
+                      reviewRequestId={id}
+                      lastRemindedAt={lastRemindedAt}
+                      onNudged={() => actions?.onNudged()}
+                    />
+                    <ActionIconButton
+                      label={t("reviews.cancel.confirm")}
+                      testId={`reviews-inbox-cancel-${id}`}
+                      icon={Ban}
+                      onClick={() => actions?.onCancel(row.original)}
+                      iconClassName="h-4 w-4 text-destructive"
+                    />
+                  </div>
+                );
+              }
+
+              return null;
+            },
           }
         : {
             id: "status",
@@ -480,11 +588,24 @@ export const useColumns = ({
             header: t("reviews.inbox.columnStatus"),
             enableSorting: true,
             size: 180,
+            meta: { isPinned: "right" } satisfies CustomColumnMeta,
             cell: ({ row }) => (
-              <DecisionStatusBadge status={row.original.status} t={t} />
+              <DecisionStatusBadge status={row.original.status} />
             ),
           };
 
-    return [...baseColumns, timestampColumn, tailColumn];
-  }, [t, view, actions, caseById, testRunById, sessionById]);
+    return view === "decided"
+      ? [...baseColumns, decidedByColumn, timestampColumn, tailColumn]
+      : [...baseColumns, assigneeColumn, timestampColumn, tailColumn];
+  }, [
+    t,
+    view,
+    actions,
+    viewerUserId,
+    viewerRoleIds,
+    caseById,
+    testRunById,
+    sessionById,
+    onOpenCase,
+  ]);
 };

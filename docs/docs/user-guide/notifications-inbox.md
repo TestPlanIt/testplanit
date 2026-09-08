@@ -42,6 +42,7 @@ TestPlanIt sends notifications for, among others:
 - **Session assigned** — an exploratory session assigned to you.
 - **Comment mention** — you were @-mentioned on a case, run, session, or milestone.
 - **Milestone due reminder** — a milestone is due soon or overdue.
+- **Test run ready to complete** — every case in a test run has been executed, and you are someone who can close it (see [Test Runs](projects/runs.md#ready-to-complete-notifications)).
 - **Share link accessed** — someone opened a share link you own.
 - **Review activity** — a review was requested, approved, rejected, had changes requested, was cancelled, or is still pending (see [Review & Approval](review-approvals.md) and the [Reviews inbox](reviews-inbox.md)).
 - **Job complete** — a long-running job such as copy/move or generate-from-URL finished.

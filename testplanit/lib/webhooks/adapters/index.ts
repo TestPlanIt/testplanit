@@ -1,4 +1,4 @@
-import type { AdapterType } from "@prisma/client";
+import type { AdapterType } from "~/zenstack/models";
 import { azureDevopsAdapter } from "./azure-devops";
 import { genericHmacAdapter } from "./generic-hmac";
 import { giteaAdapter } from "./gitea";

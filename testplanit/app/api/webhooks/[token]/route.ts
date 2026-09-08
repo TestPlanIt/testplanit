@@ -1,14 +1,16 @@
 import { createHash } from "node:crypto";
-import type { AdapterType } from "@prisma/client";
+import type { AdapterType } from "~/zenstack/models";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { getAdapter } from "~/lib/webhooks/adapters";
+import { isMilestoneEventType } from "~/lib/webhooks/adapters/types";
 import type { VerifyResult } from "~/lib/webhooks/adapters/types";
 import { redactToken } from "~/lib/webhooks/redaction";
 import { applyInboundIssueUpdate } from "~/lib/webhooks/services/applyInboundIssueUpdate";
+import { applyInboundMilestoneEvent } from "~/lib/webhooks/services/applyInboundMilestoneEvent";
 import { decrypt } from "~/utils/encryption";
 
 /**
@@ -77,7 +79,7 @@ async function handleWebhookReceive(
   }
 
   // 2. Resolve the WebhookConfig by token. Public endpoint, no user session,
-  //    so we use raw prisma per `feedback_default_to_enhanced_db.md` (the
+  //    so we use raw baseDb per `feedback_default_to_enhanced_db.md` (the
   //    enhanced/policy-bound client would reject the read). The model's
   //    @@deny('create, update, delete', true) policy still gates writes.
   let webhookConfig: {
@@ -88,7 +90,7 @@ async function handleWebhookReceive(
     isActive: boolean;
   } | null = null;
   try {
-    webhookConfig = await prisma.webhookConfig.findUnique({
+    webhookConfig = await baseDb.webhookConfig.findUnique({
       where: { token },
       select: {
         id: true,
@@ -196,17 +198,36 @@ async function handleWebhookReceive(
   //    itself looks up the adapter and runs the linked-ref + external-status
   //    extractors — the receiver shell stays adapter-agnostic and does NOT
   //    call extractors directly.
-  const result = await applyInboundIssueUpdate({
-    webhookConfigId: webhookConfig.id,
-    projectId: webhookConfig.projectId,
-    adapterType: webhookConfig.adapterType,
-    eventType: verify.payload.eventType,
-    payload: verify.payload,
-    payloadDigest,
-    receivedAt,
-    latencyMs,
-    statusCode: 200,
-  });
+  //
+  //    Dispatch on eventType SHAPE (isMilestoneEventType), not a hardcoded
+  //    provider check — a jira:version_*/sprint_* eventType routes to
+  //    applyInboundMilestoneEvent (HOOK-01/HOOK-02, resolves its OWN project
+  //    from the payload, never webhookConfig.projectId — Pitfall 6); every
+  //    other eventType continues to applyInboundIssueUpdate UNCHANGED. Both
+  //    services return a DeliveryOutcome-shaped result the tail below maps
+  //    to 200/500 identically.
+  const result = isMilestoneEventType(verify.payload.eventType)
+    ? await applyInboundMilestoneEvent({
+        webhookConfigId: webhookConfig.id,
+        adapterType: webhookConfig.adapterType,
+        eventType: verify.payload.eventType,
+        payload: verify.payload,
+        payloadDigest,
+        receivedAt,
+        latencyMs,
+        statusCode: 200,
+      })
+    : await applyInboundIssueUpdate({
+        webhookConfigId: webhookConfig.id,
+        projectId: webhookConfig.projectId,
+        adapterType: webhookConfig.adapterType,
+        eventType: verify.payload.eventType,
+        payload: verify.payload,
+        payloadDigest,
+        receivedAt,
+        latencyMs,
+        statusCode: 200,
+      });
 
   if (result.outcome === "error") {
     console.error(

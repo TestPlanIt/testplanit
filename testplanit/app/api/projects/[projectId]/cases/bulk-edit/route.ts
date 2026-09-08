@@ -1,10 +1,10 @@
-import { ProjectAccessType } from "@prisma/client";
+import { ProjectAccessType } from "~/zenstack/models";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { auditedTransaction } from "~/lib/audit/auditedTransaction";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { auditBulkUpdate } from "~/lib/services/auditLog";
 import { assertReviewGatePasses } from "~/lib/services/reviewGate";
 import { createTestCaseVersionInTransaction } from "~/lib/services/testCaseVersionService";
@@ -41,7 +41,10 @@ const bulkEditSchema = z.object({
     .array(
       z.object({
         fieldId: z.number(),
-        value: z.any(),
+        // `.optional()` is load-bearing on z.any(): JSON.stringify drops
+        // undefined-valued keys, and zod 4.4+ rejects a MISSING key on a
+        // bare z.any() property.
+        value: z.any().optional(),
         operation: z.enum(["create", "update", "delete"]),
       })
     )
@@ -60,8 +63,8 @@ const bulkEditSchema = z.object({
       newSteps: z
         .array(
           z.object({
-            step: z.any(),
-            expectedResult: z.any(),
+            step: z.any().optional(),
+            expectedResult: z.any().optional(),
             order: z.number(),
           })
         )
@@ -149,7 +152,7 @@ export const POST = withAuditContext(
             ],
           };
 
-      const project = await prisma.projects.findFirst({
+      const project = await baseDb.projects.findFirst({
         where: projectAccessWhere,
       });
 
@@ -165,7 +168,7 @@ export const POST = withAuditContext(
       const validatedData: BulkEditRequest = bulkEditSchema.parse(body);
 
       // Verify all cases belong to this project
-      const cases = await prisma.repositoryCases.findMany({
+      const cases = await baseDb.repositoryCases.findMany({
         where: {
           id: { in: validatedData.caseIds },
           projectId,
@@ -176,8 +179,8 @@ export const POST = withAuditContext(
             where: { isDeleted: false },
             orderBy: { order: "asc" },
           },
-          tags: true,
-          issues: true,
+          caseTags: { include: { tag: true } },
+          caseIssues: { include: { issue: true } },
           caseFieldValues: true,
           project: true,
           folder: true,
@@ -230,28 +233,29 @@ export const POST = withAuditContext(
             if (validatedData.updates.estimate !== undefined) {
               updateData.estimate = validatedData.updates.estimate;
             }
-            if (validatedData.updates.tags) {
-              updateData.tags = validatedData.updates.tags;
-            }
-            if (validatedData.updates.issues) {
-              updateData.issues = validatedData.updates.issues;
-            }
+            // Tag/issue links live on the explicit RepositoryCaseTag /
+            // RepositoryCaseIssue join models, so they are applied as separate
+            // join-row writes after the case update (see below) rather than as
+            // nested connect/disconnect on the case itself.
 
             // Review & Approval preflight (Plan 01-04). When the bulk edit
             // includes a stateId change, assert the target state's review
             // gate passes for this specific case BEFORE the update fires.
-            // The bulk-edit route uses raw prisma (not the auto-API), so the
+            // The bulk-edit route uses raw baseDb (not the auto-API), so the
             // schema `@@deny` rule does NOT fire here — this app preflight is
-            // the sole gate. A throw inside `prisma.$transaction` rolls back
+            // the sole gate. A throw inside `baseDb.$transaction` rolls back
             // every prior case in the loop; partial-bulk semantics ("fail
-            // closed") are correct for Phase 1.
+            // closed") are correct for Phase 1. System admins bypass the
+            // gate outright (`session.user.access`), so an admin bulk edit
+            // never fails closed on a missing approval.
             let gateApprovals: { approvedRequestIds: string[] } | null = null;
             if (updateData.stateId !== undefined) {
               gateApprovals = await assertReviewGatePasses(
                 tx,
                 "CASE",
                 caseId,
-                updateData.stateId
+                updateData.stateId,
+                session.user.access
               );
             }
 
@@ -261,6 +265,48 @@ export const POST = withAuditContext(
               data: updateData,
             });
             updateResults.casesUpdated++;
+
+            // Apply tag link changes against the explicit join model.
+            // disconnect removes the matching join rows; connect adds new ones
+            // (skipDuplicates keeps an already-linked tag from erroring).
+            if (validatedData.updates.tags) {
+              const tagDisconnect = validatedData.updates.tags.disconnect;
+              if (tagDisconnect && tagDisconnect.length > 0) {
+                await tx.repositoryCaseTag.deleteMany({
+                  where: {
+                    caseId,
+                    tagId: { in: tagDisconnect.map((t) => t.id) },
+                  },
+                });
+              }
+              const tagConnect = validatedData.updates.tags.connect;
+              if (tagConnect && tagConnect.length > 0) {
+                await tx.repositoryCaseTag.createMany({
+                  data: tagConnect.map((t) => ({ caseId, tagId: t.id })),
+                  skipDuplicates: true,
+                });
+              }
+            }
+
+            // Apply issue link changes against the explicit join model.
+            if (validatedData.updates.issues) {
+              const issueDisconnect = validatedData.updates.issues.disconnect;
+              if (issueDisconnect && issueDisconnect.length > 0) {
+                await tx.repositoryCaseIssue.deleteMany({
+                  where: {
+                    caseId,
+                    issueId: { in: issueDisconnect.map((i) => i.id) },
+                  },
+                });
+              }
+              const issueConnect = validatedData.updates.issues.connect;
+              if (issueConnect && issueConnect.length > 0) {
+                await tx.repositoryCaseIssue.createMany({
+                  data: issueConnect.map((i) => ({ caseId, issueId: i.id })),
+                  skipDuplicates: true,
+                });
+              }
+            }
 
             // Strict transitive gates can return multiple approvals when one
             // transition crosses several gates. Stamp every returned id in
@@ -330,9 +376,14 @@ export const POST = withAuditContext(
             // Handle steps updates
             if (validatedData.stepsUpdates) {
               if (validatedData.stepsUpdates.operation === "replace") {
-                // Delete existing steps
-                await tx.steps.deleteMany({
-                  where: { testCaseId: caseId },
+                // Soft-delete the existing steps. TestRunStepResults.stepId is
+                // `onDelete: Cascade`, so a hard delete here would destroy every
+                // recorded step result in past and in-flight runs for this case.
+                // The replacement steps are created below and pick up the case
+                // via testCaseId; read paths filter `isDeleted: false`.
+                await tx.steps.updateMany({
+                  where: { testCaseId: caseId, isDeleted: false },
+                  data: { isDeleted: true },
                 });
 
                 // Create new steps

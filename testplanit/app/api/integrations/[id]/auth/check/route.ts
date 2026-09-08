@@ -46,12 +46,24 @@ export async function GET(
       },
     });
 
-    // URL the client opens to (re)authorize this integration as the current user.
-    const authUrl = `/api/integrations/oauth/${integration.provider.toLowerCase()}/auth?integrationId=${integrationId}`;
+    // URL the client opens to (re)authorize this integration as the current
+    // user. Consumers open it in a popup, so the callback should land on the
+    // auth-complete page every signed-in user can view.
+    const authUrl = `/api/integrations/oauth/${integration.provider.toLowerCase()}/auth?integrationId=${integrationId}&returnUrl=${encodeURIComponent("/integrations/auth-complete")}`;
 
     if (!userAuth) {
       return NextResponse.json(
         { error: "No authentication found", authUrl },
+        { status: 401 }
+      );
+    }
+
+    // A set needsReauthAt means a refresh was already tried and terminally
+    // rejected by the provider (or no refresh token exists) — prompt for
+    // re-authorization even though the row is still active.
+    if (userAuth.needsReauthAt) {
+      return NextResponse.json(
+        { error: "Token expired", authUrl },
         { status: 401 }
       );
     }

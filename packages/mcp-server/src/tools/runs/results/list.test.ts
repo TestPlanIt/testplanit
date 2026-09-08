@@ -123,8 +123,19 @@ describe("registerRunResultsList", () => {
 
     // mapper enforces no extra keys leaked from raw rows
     expect(Object.keys(first).sort()).toEqual(
-      ["attempt", "executedAt", "executedBy", "id", "status", "testRunCase"].sort(),
+      [
+        "attempt",
+        "executedAt",
+        "executedBy",
+        "id",
+        "repositoryCase",
+        "source",
+        "status",
+        "testRun",
+        "testRunCase",
+      ].sort(),
     );
+    expect(first.source).toBe("TestRun");
   });
 
   // ── Filters ──────────────────────────────────────────────────────────────
@@ -236,7 +247,8 @@ describe("registerRunResultsList", () => {
     const items = data.items as unknown[];
     expect(items.length).toBe(25);
     expect(data.hasNextPage).toBe(true);
-    expect(data.nextCursor).toBe(25);
+    // Compound per-source cursor: last CONSUMED TestRunResults id.
+    expect(data.nextCursor).toBe("tr:25");
   });
 
   it("pagination: hasNextPage FALSE when rows.length <= limit", async () => {
@@ -370,5 +382,214 @@ describe("registerRunResultsList", () => {
     );
     expect(tool).toBeDefined();
     expect(tool?.description).toMatch(/^List test run results/);
+  });
+});
+
+// ── JUnit union (automated-run results) ──────────────────────────────────────
+
+interface RawJunitRow {
+  id: number;
+  type: string;
+  message: string | null;
+  time: number | null;
+  executedAt: string | null;
+  status: { id: number; name: string } | null;
+  createdBy: { id: string; name: string | null; email: string } | null;
+  repositoryCase: { id: number; name: string; source: string } | null;
+  testSuite: {
+    id: number;
+    name: string;
+    testRunId: number;
+    testRun: { id: number; name: string } | null;
+  } | null;
+}
+
+function makeRawJunit(id = 1, overrides: Partial<RawJunitRow> = {}): RawJunitRow {
+  return {
+    id,
+    type: "PASSED",
+    message: null,
+    time: 0.5,
+    executedAt: "2026-02-01T00:00:00.000Z",
+    status: { id: 1, name: "Passed" },
+    createdBy: { id: "u9", name: "CI Bot", email: "ci@b" },
+    repositoryCase: { id: 300 + id, name: `Spec ${id}`, source: "JUNIT" },
+    testSuite: {
+      id: 40,
+      name: "auth.spec.ts",
+      testRunId: 60,
+      testRun: { id: 60, name: "Nightly" },
+    },
+    ...overrides,
+  };
+}
+
+function getCallModel(index: number) {
+  return mockZenstack.mock.calls[index]?.[0] as string | undefined;
+}
+
+describe("registerRunResultsList — JUnit union", () => {
+  beforeEach(() => {
+    mockZenstack.mockReset();
+  });
+
+  it("queries BOTH testRunResults and jUnitTestResult by default", async () => {
+    mockZenstack.mockResolvedValue([]);
+    const { client } = await setupClient();
+    await client.callTool({
+      name: "testplanit_test_run_results_list",
+      arguments: {},
+    });
+    expect(mockZenstack).toHaveBeenCalledTimes(2);
+    expect(getCallModel(0)).toBe("testRunResults");
+    expect(getCallModel(1)).toBe("jUnitTestResult");
+  });
+
+  it("junit where projection: runId -> testSuite.testRunId, caseIds -> repositoryCaseId.in, executedById -> createdById; NO isDeleted (model has none)", async () => {
+    mockZenstack.mockResolvedValue([]);
+    const { client } = await setupClient();
+    await client.callTool({
+      name: "testplanit_test_run_results_list",
+      arguments: {
+        runId: 60,
+        caseIds: [1, 2],
+        executedById: "u9",
+        statusId: 3,
+        from: "2026-01-01T00:00:00Z",
+        to: "2026-02-01T00:00:00Z",
+      },
+    });
+    const juWhere = getCallBody(1)?.where as Record<string, unknown>;
+    expect(juWhere.testSuite).toEqual({ testRunId: 60 });
+    expect(juWhere.repositoryCaseId).toEqual({ in: [1, 2] });
+    expect(juWhere.createdById).toBe("u9");
+    expect(juWhere.statusId).toBe(3);
+    expect(juWhere).toHaveProperty("executedAt");
+    // JUnitTestResult has no soft-delete column — the filter must NOT exist.
+    expect(juWhere).not.toHaveProperty("isDeleted");
+  });
+
+  it("automated run scenario: no TestRunResults rows -> items come back with source JUnit", async () => {
+    mockZenstack.mockResolvedValueOnce([]); // testRunResults
+    mockZenstack.mockResolvedValueOnce([makeRawJunit(7), makeRawJunit(6)]);
+    const { client } = await setupClient();
+    const result = await client.callTool({
+      name: "testplanit_test_run_results_list",
+      arguments: { runId: 60 },
+    });
+    const data = structured(result);
+    const items = data.items as Array<Record<string, unknown>>;
+    expect(items.length).toBe(2);
+    expect(items[0].source).toBe("JUnit");
+    expect(items[0].id).toBe(7);
+    expect(items[0].junitType).toBe("PASSED");
+    expect(items[0].repositoryCase).toEqual({
+      id: 307,
+      name: "Spec 7",
+      source: "JUNIT",
+    });
+    expect(items[0].testRun).toEqual({ id: 60, name: "Nightly" });
+    expect(items[0].suite).toEqual({ id: 40, name: "auth.spec.ts" });
+    expect(items[0].testRunCase).toBeNull();
+  });
+
+  it("merged ordering: interleaves the two sources by executedAt desc", async () => {
+    mockZenstack.mockResolvedValueOnce([
+      makeRawResult(1, { executedAt: "2026-02-04T00:00:00.000Z" }),
+      makeRawResult(2, { executedAt: "2026-02-02T00:00:00.000Z" }),
+    ]);
+    mockZenstack.mockResolvedValueOnce([
+      makeRawJunit(9, { executedAt: "2026-02-03T00:00:00.000Z" }),
+    ]);
+    const { client } = await setupClient();
+    const result = await client.callTool({
+      name: "testplanit_test_run_results_list",
+      arguments: {},
+    });
+    const items = structured(result).items as Array<Record<string, unknown>>;
+    expect(items.map((i) => `${i.source}:${i.id}`)).toEqual([
+      "TestRun:1",
+      "JUnit:9",
+      "TestRun:2",
+    ]);
+  });
+
+  it("source filter 'TestRun' -> junit table not queried", async () => {
+    mockZenstack.mockResolvedValue([]);
+    const { client } = await setupClient();
+    await client.callTool({
+      name: "testplanit_test_run_results_list",
+      arguments: { source: "TestRun" },
+    });
+    expect(mockZenstack).toHaveBeenCalledTimes(1);
+    expect(getCallModel(0)).toBe("testRunResults");
+  });
+
+  it("source filter 'JUnit' -> testRunResults not queried", async () => {
+    mockZenstack.mockResolvedValue([]);
+    const { client } = await setupClient();
+    await client.callTool({
+      name: "testplanit_test_run_results_list",
+      arguments: { source: "JUnit" },
+    });
+    expect(mockZenstack).toHaveBeenCalledTimes(1);
+    expect(getCallModel(0)).toBe("jUnitTestResult");
+  });
+
+  it("compound cursor fans out to per-source keyset cursors", async () => {
+    mockZenstack.mockResolvedValue([]);
+    const { client } = await setupClient();
+    await client.callTool({
+      name: "testplanit_test_run_results_list",
+      arguments: { cursor: "tr:100|ju:50", limit: 10 },
+    });
+    const trBody = getCallBody(0);
+    const juBody = getCallBody(1);
+    expect(trBody?.cursor).toEqual({ id: 100 });
+    expect(trBody?.skip).toBe(1);
+    expect(trBody?.take).toBe(11);
+    expect(juBody?.cursor).toEqual({ id: 50 });
+    expect(juBody?.skip).toBe(1);
+    expect(juBody?.take).toBe(11);
+  });
+
+  it("legacy numeric cursor applies to testRunResults only (junit starts from top)", async () => {
+    mockZenstack.mockResolvedValue([]);
+    const { client } = await setupClient();
+    await client.callTool({
+      name: "testplanit_test_run_results_list",
+      arguments: { cursor: 100 },
+    });
+    expect(getCallBody(0)?.cursor).toEqual({ id: 100 });
+    expect(getCallBody(1)?.cursor).toBeUndefined();
+    expect(getCallBody(1)?.skip).toBeUndefined();
+  });
+
+  it("malformed cursor -> input error, no queries issued", async () => {
+    const { client } = await setupClient();
+    const result = await client.callTool({
+      name: "testplanit_test_run_results_list",
+      arguments: { cursor: "bogus" },
+    });
+    expect(result.isError).toBe(true);
+    expect(mockZenstack).not.toHaveBeenCalled();
+  });
+
+  it("junit-only pagination emits a ju: cursor", async () => {
+    mockZenstack.mockResolvedValueOnce([]); // testRunResults exhausted
+    mockZenstack.mockResolvedValueOnce([
+      makeRawJunit(9),
+      makeRawJunit(8),
+      makeRawJunit(7),
+    ]);
+    const { client } = await setupClient();
+    const result = await client.callTool({
+      name: "testplanit_test_run_results_list",
+      arguments: { limit: 2 },
+    });
+    const data = structured(result);
+    expect((data.items as unknown[]).length).toBe(2);
+    expect(data.hasNextPage).toBe(true);
+    expect(data.nextCursor).toBe("ju:8");
   });
 });

@@ -2,11 +2,11 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { SCIM_LAST_SYNC_THROTTLE_MS } from "./constants";
 
-// Hoist-safe mock of the prisma client. The helper uses
-// `prisma.scimToken.updateMany`; we hand back a vi.fn() the tests inspect.
+// Hoist-safe mock of the baseDb client. The helper uses
+// `baseDb.scimToken.updateMany`; we hand back a vi.fn() the tests inspect.
 const mockUpdateMany = vi.fn();
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     scimToken: {
       updateMany: (...args: unknown[]) => mockUpdateMany(...args),
     },

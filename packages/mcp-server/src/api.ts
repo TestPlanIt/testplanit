@@ -219,6 +219,88 @@ export async function lookup(
   return JSON.parse(text) as LookupResponse;
 }
 
+// LLM script generation runs synchronously on the host and can take tens of
+// seconds — well past the 10s used for CRUD RPC. Give it its own ceiling.
+const GENERATE_TIMEOUT_MS = 120000;
+
+export type QuickScriptOutputMode = "combined" | "perCase";
+
+export interface GenerateQuickScriptRequest {
+  projectId: number;
+  caseIds: number[];
+  templateId?: number;
+  outputMode?: QuickScriptOutputMode;
+}
+
+export interface QuickScriptFile {
+  code: string;
+  generatedBy: "ai" | "template";
+  error?: string;
+  truncated?: boolean;
+  caseId: number;
+  caseName: string;
+  contextFiles?: string[];
+}
+
+export interface GenerateQuickScriptResponse {
+  projectId: number;
+  templateId: number;
+  templateName: string;
+  framework: string;
+  language: string;
+  fileExtension: string;
+  outputMode: QuickScriptOutputMode;
+  hasCodeContext: boolean;
+  missingCaseIds?: number[];
+  results: QuickScriptFile[];
+}
+
+/**
+ * Generate a QuickScript (AI test-script) from stored cases via
+ * `/api/export/quickscript`. Synchronous — the full script text comes back in
+ * one response (no streaming), matching the buffered fetch model the MCP layer
+ * uses everywhere.
+ */
+export async function generateQuickScript(
+  options: GenerateQuickScriptRequest,
+  env: EnvConfig,
+): Promise<GenerateQuickScriptResponse> {
+  const response = await fetch(`${env.apiUrl}/api/export/quickscript`, {
+    method: "POST",
+    headers: bearerHeaders(env),
+    body: JSON.stringify(options),
+    signal: AbortSignal.timeout(GENERATE_TIMEOUT_MS),
+  });
+  const text = await response.text();
+  if (!response.ok) {
+    // Mirror the zenstack()/lookup() error parser so a host validation message
+    // ("QuickScript is not enabled for this project") reaches the agent.
+    let code: string | undefined;
+    let parsedMessage: string | undefined;
+    try {
+      const parsed = JSON.parse(text) as Record<string, unknown>;
+      if (typeof parsed?.["code"] === "string") code = parsed["code"] as string;
+      const errField = parsed?.["error"];
+      if (errField && typeof errField === "object") {
+        const errObj = errField as Record<string, unknown>;
+        if (typeof errObj["code"] === "string") code = errObj["code"] as string;
+        if (typeof errObj["message"] === "string")
+          parsedMessage = errObj["message"] as string;
+      } else if (typeof errField === "string") {
+        parsedMessage = errField;
+      }
+    } catch {
+      // body is not JSON; leave parsedMessage / code undefined
+    }
+    // T-06-05 / T-05-06b: NEVER include the bearer token in error messages.
+    throw new TestPlanItHttpError(
+      `HTTP ${response.status} from /api/export/quickscript${parsedMessage ? `: ${parsedMessage}` : ""}`,
+      { statusCode: response.status, code },
+    );
+  }
+  return JSON.parse(text) as GenerateQuickScriptResponse;
+}
+
 /**
  * Resolve the single active repository for a project. Cases and folders
  * require `repositoryId` on create; the active repository is selected by

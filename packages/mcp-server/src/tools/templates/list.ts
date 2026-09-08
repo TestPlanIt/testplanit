@@ -1,5 +1,8 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { Prisma } from "@prisma/client";
+import type {
+  TemplatesSelect,
+  TemplatesWhereInput,
+} from "@db/input";
 import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
@@ -45,7 +48,7 @@ const TEMPLATE_LIST_SELECT = {
       },
     },
   },
-} as const satisfies Prisma.TemplatesSelect;
+} as const satisfies TemplatesSelect;
 
 /**
  * List a project's enabled templates with the case fields each defines.
@@ -83,7 +86,7 @@ export function registerTemplatesList(
               isDeleted: false,
               isEnabled: true,
               projects: { some: { projectId: input.projectId } },
-            } satisfies Prisma.TemplatesWhereInput,
+            } satisfies TemplatesWhereInput,
             select: TEMPLATE_LIST_SELECT,
             orderBy: { templateName: "asc" },
           },

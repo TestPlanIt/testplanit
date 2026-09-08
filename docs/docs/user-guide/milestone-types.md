@@ -22,6 +22,14 @@ The Milestone Types page displays a table listing all configured milestone types
 - **Default**: Indicates whether this Milestone Type is the default type. There can only be one default Milestone Type. Milestones associated with a deleted type will be reassigned to the default type.
 - **Actions**: Provides options to **Edit** or **Delete** the Milestone Type.
 
+## Sync-Managed Types
+
+Enabling [milestone sync](./projects/settings/integrations.md#milestone-sync) for a project auto-provisions two milestone types — **Release** and **Sprint** — and assigns both to the project if they aren't already assigned. A milestone imported from the tracker is assigned the matching type: a Fix Version imports as **Release**, a Sprint imports as **Sprint**.
+
+:::note
+These types are re-created and re-assigned on every sync pass, so deleting or renaming them doesn't stick for a project with milestone sync enabled — the next sync pass provisions them again.
+:::
+
 ## Adding a Milestone Type
 
 1. Click the **Add Milestone Type** button located at the top right of the table.

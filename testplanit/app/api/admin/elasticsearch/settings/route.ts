@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateApiToken } from "~/lib/api-token-auth";
 import {
@@ -31,7 +31,11 @@ async function checkAdminAuth(
     userAccess = apiAuth.access;
 
     if (apiAuth.userId) {
-      enrichFromApiAuth({ userId: apiAuth.userId });
+      enrichFromApiAuth({
+        userId: apiAuth.userId,
+        userName: apiAuth.userName,
+        userEmail: apiAuth.userEmail,
+      });
     }
   }
 
@@ -42,7 +46,7 @@ async function checkAdminAuth(
   }
 
   if (!userAccess) {
-    const user = await prisma.user.findUnique({
+    const user = await baseDb.user.findUnique({
       where: { id: userId },
       select: { access: true },
     });
@@ -68,7 +72,7 @@ export const GET = withAuditContext(async (request: NextRequest) => {
     if (auth.error) return auth.error;
 
     // Get settings from database
-    const config = await prisma.appConfig.findUnique({
+    const config = await baseDb.appConfig.findUnique({
       where: { key: "elasticsearch_replicas" },
     });
 
@@ -105,13 +109,13 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     }
 
     // Get old value for audit
-    const oldConfig = await prisma.appConfig.findUnique({
+    const oldConfig = await baseDb.appConfig.findUnique({
       where: { key: "elasticsearch_replicas" },
     });
     const oldValue = oldConfig?.value ?? null;
 
     // Save to database
-    await prisma.appConfig.upsert({
+    await baseDb.appConfig.upsert({
       where: { key: "elasticsearch_replicas" },
       update: { value: numberOfReplicas },
       create: {

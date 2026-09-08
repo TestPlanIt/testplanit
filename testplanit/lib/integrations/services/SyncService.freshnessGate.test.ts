@@ -17,8 +17,8 @@ const mockIssueFindUnique = vi.fn();
 const mockUserFindUnique = vi.fn();
 const mockIntegrationFindUnique = vi.fn();
 
-vi.mock("@/lib/prismaBase", () => ({
-  prisma: {
+vi.mock("@/lib/rawDb", () => ({
+  rawDb: {
     issue: {
       findFirst: (...args: any[]) => mockIssueFindFirst(...args),
       findUnique: (...args: any[]) => mockIssueFindUnique(...args),
@@ -53,7 +53,7 @@ vi.mock("~/services/issueSearch", () => ({
   syncIssueToElasticsearch: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock("../../multiTenantPrisma", () => ({
+vi.mock("../../multiTenantDb", () => ({
   getCurrentTenantId: vi.fn(),
 }));
 

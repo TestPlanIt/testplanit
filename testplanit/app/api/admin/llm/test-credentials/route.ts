@@ -7,7 +7,8 @@ import {
   OpenAIAdapter,
 } from "@/lib/llm/adapters";
 import type { LlmAdapterConfig } from "@/lib/llm/types";
-import { Prisma } from "@prisma/client";
+import { Decimal } from "decimal.js";
+import type { JsonValue } from "@zenstackhq/orm";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "~/server/auth";
@@ -50,8 +51,9 @@ export async function POST(request: NextRequest) {
         settings: {
           deploymentName,
           apiVersion: provider === "AZURE_OPENAI" ? "2024-02-01" : undefined,
-        },
+        } as JsonValue,
         isDeleted: false,
+        deletedAt: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
@@ -63,15 +65,15 @@ export async function POST(request: NextRequest) {
         maxTokensPerRequest: 4096,
         maxRequestsPerMinute: 60,
         maxRequestsPerDay: null,
-        costPerInputToken: new Prisma.Decimal(0),
-        costPerOutputToken: new Prisma.Decimal(0),
+        costPerInputToken: new Decimal(0),
+        costPerOutputToken: new Decimal(0),
         defaultTemperature: 0.7,
         defaultMaxTokens: 1000,
         timeout: 10000,
         retryAttempts: 1,
         streamingEnabled: true,
         isDefault: false,
-        monthlyBudget: new Prisma.Decimal(0),
+        monthlyBudget: new Decimal(0),
         billingPeriodStartDay: 1,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -112,6 +114,14 @@ export async function POST(request: NextRequest) {
       // Connection test result obtained
 
       if (!isConnected) {
+        // The adapter records the real failure reason (HTTP status + provider
+        // message) when it can; prefer it over the generic fallback so admins
+        // see what actually went wrong (bad key, model not permitted, etc.).
+        const detail = adapter.getLastTestConnectionError();
+        if (detail) {
+          console.warn("Test connection failed for %s: %s", provider, detail);
+        }
+
         // Try to provide more specific error messages
         let errorMessage: string;
 
@@ -131,6 +141,8 @@ export async function POST(request: NextRequest) {
           errorMessage = `Failed to connect to Ollama at ${endpoint || "http://localhost:11434"}. Make sure Ollama is running.`;
         } else if (!endpoint) {
           errorMessage = "Endpoint URL is required";
+        } else if (detail) {
+          errorMessage = `Failed to connect to ${provider}: ${detail}`;
         } else {
           errorMessage = `Failed to connect to ${provider}. Please check your credentials and endpoint.`;
         }

@@ -11,7 +11,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { authenticateApiToken, extractBearerToken } from "~/lib/api-token-auth";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { enqueueDeriveCaseSteps } from "~/lib/services/llmStepDerivation";
 import { getServerAuthSession } from "~/server/auth";
 
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
   // belong to the given project.
   const ownedCaseIds = new Set(
     (
-      await prisma.repositoryCases.findMany({
+      await baseDb.repositoryCases.findMany({
         where: {
           id: { in: body.cases.map((c) => c.testCaseId) },
           projectId: body.projectId,
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
   }
 
   const enqueued = await enqueueDeriveCaseSteps({
-    prisma,
+    baseDb,
     projectId: body.projectId,
     testRunId: body.testRunId,
     userId,

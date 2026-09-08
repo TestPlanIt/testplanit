@@ -5,13 +5,13 @@ import DynamicIcon from "@/components/DynamicIcon";
 import { UserNameCell } from "@/components/tables/UserNameCell";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { Badge } from "@/components/ui/badge";
-import {
+import type {
   Attachments,
   Color,
   FieldIcon,
   SessionVersions,
   Workflows,
-} from "@prisma/client";
+} from "~/zenstack/models";
 import { Minus, Plus } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
@@ -425,7 +425,7 @@ export function SessionVersionRenderer({
             </span>
             <DynamicIcon name="check-circle" className="h-6 w-6 shrink-0" />
             <div className="flex items-center truncate">
-              <span className="mr-1">{t("common.fields.completedOn")}</span>
+              <span className="me-1">{t("common.fields.completedOn")}</span>
               <span className="truncate">
                 <DateFormatter
                   date={testSession.completedAt}

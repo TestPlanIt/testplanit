@@ -1,12 +1,11 @@
-import { getCurrentTenantId } from "@/lib/multiTenantPrisma";
-import { enhance } from "@zenstackhq/runtime";
+import { getCurrentTenantId } from "@/lib/multiTenantDb";
+import { getAuthDb } from "~/lib/zenstack";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { z } from "zod/v4";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { convertMatch } from "~/lib/services/stepSequenceConversionService";
 import { authOptions } from "~/server/auth";
-import { db } from "~/server/db";
 
 const editedStepSchema = z.object({
   step: z.string().nullable(),
@@ -45,13 +44,13 @@ export async function POST(request: Request) {
 
   try {
     // 3. User fetch + enhance for access control
-    const user = await prisma.user.findUnique({
+    const user = await baseDb.user.findUnique({
       where: { id: session.user.id },
       include: { role: { include: { rolePermissions: true } } },
     });
 
     getCurrentTenantId();
-    const enhancedDb = enhance(db, { user: user ?? undefined });
+    const enhancedDb = await getAuthDb(user ?? undefined);
 
     // 4. Load match via enhanced DB (ZenStack policy enforces read access)
     const match = await enhancedDb.stepSequenceMatch.findUnique({

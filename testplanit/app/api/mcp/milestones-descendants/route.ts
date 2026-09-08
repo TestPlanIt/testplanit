@@ -21,7 +21,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { authenticateApiToken } from "~/lib/api-token-auth";
 import { getEnhancedDb } from "~/lib/auth/utils";
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 
 interface QueryShape {
   milestoneIds: number[];
@@ -108,7 +108,7 @@ export const GET = withAuditContext(async (request: NextRequest) => {
     // descendants reachable via parentId chains where every node is
     // non-soft-deleted. Parameterized via the Prisma.sql tagged template —
     // `${filteredIds}` is bound as a typed int array, never string-interpolated.
-    const rows = await prisma.$queryRaw<
+    const rows = await baseDb.$queryRaw<
       Array<{ root_milestone_id: number; descendant_count: number }>
     >`
       WITH RECURSIVE descendants AS (

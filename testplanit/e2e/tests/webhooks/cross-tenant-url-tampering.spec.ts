@@ -1,6 +1,10 @@
-import type { BrowserContext } from "@playwright/test";
+import type { APIResponse, BrowserContext } from "@playwright/test";
 
 import { expect, test } from "../../fixtures/index";
+import {
+  sameOriginRequestHeaders,
+  signInSecondaryContext,
+} from "../../utils/secondary-context-login";
 
 /**
  * v0.23.0 Section K-01 — cross-tenant URL tampering on the webhooks admin page.
@@ -102,21 +106,18 @@ test.describe("Webhook cross-tenant — URL tampering blocked at UI + ZenStack p
     await api.setUserAccess(bOnlyUserId, "PROJECTADMIN");
     await api.assignUserToProject(bOnlyUserId, projectBId);
 
-    // Sign in as the B-only PROJECTADMIN in a fresh browser context so they
-    // never inherit the admin's storageState. extraHTTPHeaders matches the
-    // ACL spec — the proxy middleware gates same-origin classification on
-    // Sec-Fetch-Site for API calls from this context.
-    bOnlyCtx = await browser.newContext({
-      storageState: undefined,
-      extraHTTPHeaders: { "Sec-Fetch-Site": "same-origin" },
-    });
-    const signinPage = await bOnlyCtx.newPage();
-    await signinPage.goto(`${baseURL}/en-US/signin`, { waitUntil: "load" });
-    await signinPage.getByTestId("email-input").fill(bOnlyEmail);
-    await signinPage.getByTestId("password-input").fill(bOnlyPassword);
-    await signinPage.locator('button[type="submit"]').first().click();
-    await signinPage.waitForURL(/\/en-US\/?$/, { timeout: 30_000 });
-    await signinPage.close();
+    // Sign in as the B-only PROJECTADMIN in a fresh sessionless context so they
+    // never inherit the admin's storageState. The context is kept clean (no
+    // extraHTTPHeaders) so the signin page — and the webhook pages navigated to
+    // below, including the positive control — hydrate and load their assets.
+    // Same-origin classification for the ctx.request.* API probes is applied
+    // per-request via sameOriginRequestHeaders().
+    bOnlyCtx = await signInSecondaryContext(
+      browser,
+      baseURL!,
+      bOnlyEmail,
+      bOnlyPassword
+    );
   });
 
   test.afterAll(async ({ api }) => {
@@ -196,11 +197,12 @@ test.describe("Webhook cross-tenant — URL tampering blocked at UI + ZenStack p
     // assigned. Project A has none of those for this user, so the result
     // must be an empty array (200, not 422 — silent filter, per ACL-03
     // pattern).
-    let response: Awaited<ReturnType<typeof bOnlyCtx.request.get>> | undefined;
+    let response: APIResponse | undefined;
     await test.step("Probe webhookConfig findMany scoped to Project A", async () => {
       response = await bOnlyCtx.request.get(
         `${baseURL}/api/model/webhookConfig/findMany`,
         {
+          headers: sameOriginRequestHeaders(),
           params: {
             q: JSON.stringify({ where: { projectId: projectAId } }),
           },
@@ -226,11 +228,12 @@ test.describe("Webhook cross-tenant — URL tampering blocked at UI + ZenStack p
     // rows. We don't seed delivery rows for this assertion — the clause is
     // identical regardless of count, and the empty result is the
     // observable contract.
-    let response: Awaited<ReturnType<typeof bOnlyCtx.request.get>> | undefined;
+    let response: APIResponse | undefined;
     await test.step("Probe webhookDelivery findMany scoped to Project A", async () => {
       response = await bOnlyCtx.request.get(
         `${baseURL}/api/model/webhookDelivery/findMany`,
         {
+          headers: sameOriginRequestHeaders(),
           params: {
             q: JSON.stringify({
               where: { webhookConfig: { projectId: projectAId } },

@@ -1,10 +1,11 @@
+import { JsonNull } from "@zenstackhq/orm";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock dependencies
 const mockFindMany = vi.fn();
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     repositoryCases: {
       findMany: (...args: any[]) => mockFindMany(...args),
     },
@@ -84,6 +85,37 @@ describe("exportActions", () => {
           expect.objectContaining({
             where: baseArgs.where,
           })
+        );
+      });
+
+      it("rebuilds the Json-null sentinels the where arrives with", async () => {
+        mockFindMany.mockResolvedValue([]);
+
+        // React Flight cannot encode ZenStack's JsonNull instance, so the
+        // client serializes it to this plain form. Left unrevived it reached
+        // the ORM as an opaque temporary reference and the whole query was
+        // rejected — every export with a custom-field filter came back empty.
+        await fetchAllCasesForExport({
+          ...baseArgs,
+          scope: "allFiltered",
+          where: {
+            AND: [
+              { projectId: 1 },
+              {
+                caseFieldValues: {
+                  some: {
+                    fieldId: 7,
+                    AND: [{ value: { not: { __brand: "JsonNull" } } }],
+                  },
+                },
+              },
+            ],
+          } as any,
+        });
+
+        const passedWhere = mockFindMany.mock.calls.at(-1)![0].where;
+        expect(passedWhere.AND[1].caseFieldValues.some.AND[0].value.not).toBe(
+          JsonNull
         );
       });
 
@@ -297,6 +329,168 @@ describe("exportActions", () => {
       });
     });
 
+    describe("postFetchFilters", () => {
+      const textFilter = {
+        fieldId: 10,
+        type: "text" as const,
+        operator: "contains",
+        value1: "hello",
+      };
+
+      it("should apply text filters to the exported row set", async () => {
+        const mockCases = [
+          {
+            id: 1,
+            name: "Matching",
+            caseFieldValues: [{ fieldId: 10, value: "hello world" }],
+            linksFrom: [],
+            linksTo: [],
+          },
+          {
+            id: 2,
+            name: "Not matching",
+            caseFieldValues: [{ fieldId: 10, value: "goodbye" }],
+            linksFrom: [],
+            linksTo: [],
+          },
+          {
+            id: 3,
+            name: "No value",
+            caseFieldValues: [],
+            linksFrom: [],
+            linksTo: [],
+          },
+        ];
+        mockFindMany.mockResolvedValue(mockCases);
+
+        const result = await fetchAllCasesForExport({
+          ...baseArgs,
+          scope: "allFiltered",
+          postFetchFilters: [textFilter],
+        });
+
+        expect(result.success).toBe(true);
+        expect(result.data.map((c: any) => c.id)).toEqual([1]);
+      });
+
+      it("should apply steps filters against pre-expansion step rows", async () => {
+        const mockCases = [
+          {
+            id: 1,
+            name: "Two steps",
+            steps: [
+              { id: 1, sharedStepGroupId: null },
+              { id: 2, sharedStepGroupId: null },
+            ],
+            linksFrom: [],
+            linksTo: [],
+          },
+          {
+            id: 2,
+            name: "One step",
+            steps: [{ id: 3, sharedStepGroupId: null }],
+            linksFrom: [],
+            linksTo: [],
+          },
+        ];
+        mockFindMany.mockResolvedValue(mockCases);
+
+        const result = await fetchAllCasesForExport({
+          ...baseArgs,
+          scope: "allFiltered",
+          postFetchFilters: [
+            { fieldId: 30, type: "steps", operator: "gte", value1: 2 },
+          ],
+        });
+
+        expect(result.data.map((c: any) => c.id)).toEqual([1]);
+      });
+
+      it("should not let orphaned field values satisfy a filter", async () => {
+        const mockCases = [
+          {
+            id: 1,
+            name: "Orphaned value",
+            template: { caseFields: [{ caseField: { id: 99 } }] },
+            caseFieldValues: [{ fieldId: 10, value: "hello world" }],
+            linksFrom: [],
+            linksTo: [],
+          },
+        ];
+        mockFindMany.mockResolvedValue(mockCases);
+
+        const result = await fetchAllCasesForExport({
+          ...baseArgs,
+          scope: "allFiltered",
+          postFetchFilters: [textFilter],
+        });
+
+        expect(result.data).toEqual([]);
+      });
+
+      it("should keep exported row content unfiltered (only the row set shrinks)", async () => {
+        const mockCases = [
+          {
+            id: 1,
+            name: "Matching",
+            template: { caseFields: [{ caseField: { id: 10 } }] },
+            caseFieldValues: [
+              { fieldId: 10, value: "hello world" },
+              { fieldId: 99, value: "orphaned but exported" },
+            ],
+            linksFrom: [],
+            linksTo: [],
+          },
+        ];
+        mockFindMany.mockResolvedValue(mockCases);
+
+        const result = await fetchAllCasesForExport({
+          ...baseArgs,
+          scope: "allFiltered",
+          postFetchFilters: [textFilter],
+        });
+
+        expect((result.data[0] as any).caseFieldValues).toHaveLength(2);
+      });
+
+      it("should ignore filters for allProject scope", async () => {
+        const mockCases = [
+          {
+            id: 1,
+            name: "Not matching",
+            caseFieldValues: [{ fieldId: 10, value: "goodbye" }],
+            linksFrom: [],
+            linksTo: [],
+          },
+        ];
+        mockFindMany.mockResolvedValue(mockCases);
+
+        const result = await fetchAllCasesForExport({
+          ...baseArgs,
+          scope: "allProject",
+          projectId: 42,
+          postFetchFilters: [textFilter],
+        });
+
+        expect(result.data.map((c: any) => c.id)).toEqual([1]);
+      });
+
+      it("should export all rows when no filters are provided", async () => {
+        const mockCases = [
+          { id: 1, name: "A", linksFrom: [], linksTo: [] },
+          { id: 2, name: "B", linksFrom: [], linksTo: [] },
+        ];
+        mockFindMany.mockResolvedValue(mockCases);
+
+        const result = await fetchAllCasesForExport({
+          ...baseArgs,
+          scope: "allFiltered",
+        });
+
+        expect(result.data.map((c: any) => c.id)).toEqual([1, 2]);
+      });
+    });
+
     describe("error handling", () => {
       it("should return error on database failure", async () => {
         mockFindMany.mockRejectedValue(new Error("DB error"));
@@ -330,7 +524,8 @@ describe("exportActions", () => {
               projectId: true,
               source: true,
               steps: expect.any(Object),
-              tags: expect.any(Object),
+              caseTags: expect.any(Object),
+              caseIssues: expect.any(Object),
               attachments: expect.any(Object),
               template: expect.any(Object),
               state: expect.any(Object),

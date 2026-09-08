@@ -11,12 +11,32 @@ vi.mock("next-intl", () => ({
   useTranslations: mockUseTranslations,
 }));
 
+vi.mock("~/lib/navigation", () => ({
+  useRouter: () => ({ refresh: vi.fn() }),
+  Link: ({ children, href }: any) => <a href={href}>{children}</a>,
+}));
+
+let mockIsProjectAdmin = true;
+vi.mock("~/hooks/useProjectPermissions", () => ({
+  useProjectPermissions: () => ({
+    permissions: null,
+    isProjectAdmin: mockIsProjectAdmin,
+    isLoading: false,
+  }),
+}));
+
 vi.stubGlobal("fetch", mockFetch);
 
 // Mock sub-components that fetch data or have complex deps
 vi.mock("@/components/MilestoneSummary", () => ({
   MilestoneSummary: ({ milestoneId }: any) => (
     <div data-testid="milestone-summary" data-milestone={milestoneId} />
+  ),
+}));
+
+vi.mock("@/components/MilestoneForecastChips", () => ({
+  MilestoneForecastChips: ({ milestoneId }: any) => (
+    <div data-testid="milestone-forecast" data-milestone={milestoneId} />
   ),
 }));
 
@@ -29,12 +49,6 @@ vi.mock("~/components/LoadingSpinner", () => ({
 vi.mock("@/components/ForecastDisplay", () => ({
   ForecastDisplay: ({ seconds, type }: any) => (
     <div data-testid={`forecast-${type}`} data-seconds={seconds} />
-  ),
-}));
-
-vi.mock("@/components/MilestoneIconAndName", () => ({
-  MilestoneIconAndName: ({ milestone }: any) => (
-    <div data-testid="milestone-icon-name">{milestone.name}</div>
   ),
 }));
 
@@ -63,8 +77,23 @@ vi.mock("@/components/TextFromJson", () => ({
 
 // Mock shadcn/ui badge
 vi.mock("@/components/ui/badge", () => ({
-  Badge: ({ children, style, className }: any) => (
-    <span data-testid="status-badge" style={style} className={className}>
+  Badge: ({
+    children,
+    style,
+    className,
+    role,
+    title,
+    onClick,
+    "data-testid": dataTestId,
+  }: any) => (
+    <span
+      data-testid={dataTestId ?? "status-badge"}
+      style={style}
+      className={className}
+      role={role}
+      title={title}
+      onClick={onClick}
+    >
       {children}
     </span>
   ),
@@ -101,12 +130,23 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
   DropdownMenuGroup: ({ children }: any) => (
     <div data-testid="dropdown-group">{children}</div>
   ),
-  DropdownMenuItem: ({ children, onSelect, disabled, className }: any) => (
+  DropdownMenuItem: ({
+    children,
+    onSelect,
+    onClick,
+    disabled,
+    className,
+    "data-testid": testId,
+  }: any) => (
     <div
-      data-testid="dropdown-item"
+      data-testid={testId ?? "dropdown-item"}
       data-disabled={String(!!disabled)}
+      aria-disabled={disabled ? "true" : undefined}
       className={className}
-      onClick={() => onSelect?.()}
+      onClick={() => {
+        onSelect?.();
+        onClick?.();
+      }}
       role="menuitem"
     >
       {children}
@@ -186,6 +226,7 @@ const mockCallbacks = () => ({
 });
 
 beforeEach(() => {
+  mockIsProjectAdmin = true;
   // Translation: return last key segment
   mockUseTranslations.mockReturnValue((key: string, _opts?: any) => {
     const parts = key.split(".");
@@ -234,7 +275,7 @@ describe("MilestoneItemCard", () => {
   });
 
   describe("basic rendering", () => {
-    it("renders milestone name via MilestoneIconAndName", () => {
+    it("renders the milestone name", () => {
       const milestone = createMilestone({ name: "My Sprint" });
       const cbs = mockCallbacks();
       render(
@@ -278,6 +319,22 @@ describe("MilestoneItemCard", () => {
       );
       const summary = screen.getByTestId("milestone-summary");
       expect(summary.getAttribute("data-milestone")).toBe("99");
+    });
+
+    it("renders the remaining-effort forecast for the milestone", () => {
+      const milestone = createMilestone({ id: 99 });
+      const cbs = mockCallbacks();
+      render(
+        <MilestoneItemCard
+          milestone={milestone}
+          session={adminSession}
+          colorMap={mockColorMap}
+          theme="light"
+          {...cbs}
+        />
+      );
+      const forecast = screen.getByTestId("milestone-forecast");
+      expect(forecast.getAttribute("data-milestone")).toBe("99");
     });
   });
 
@@ -601,6 +658,107 @@ describe("MilestoneItemCard", () => {
     });
   });
 
+  describe("synced milestone (integrationId != null) action gating", () => {
+    it("hides Start for a synced not-started milestone but keeps Edit and Delete", () => {
+      const milestone = createMilestone({
+        integrationId: 5,
+        externalId: "10001",
+        isStarted: false,
+        isCompleted: false,
+      });
+      const cbs = mockCallbacks();
+      render(
+        <MilestoneItemCard
+          milestone={milestone}
+          session={adminSession}
+          colorMap={mockColorMap}
+          theme="light"
+          {...cbs}
+        />
+      );
+
+      const items = screen.getAllByTestId("dropdown-item");
+      const itemTexts = items.map((el) => el.textContent);
+      expect(itemTexts.some((t) => t?.includes("start"))).toBe(false);
+      expect(itemTexts.some((t) => t?.includes("edit"))).toBe(true);
+      expect(itemTexts.some((t) => t?.includes("delete"))).toBe(true);
+    });
+
+    it("hides Stop and Complete for a synced started milestone", () => {
+      const milestone = createMilestone({
+        integrationId: 5,
+        externalId: "10001",
+        isStarted: true,
+        isCompleted: false,
+        startedAt: new Date("2024-01-01"),
+      });
+      const cbs = mockCallbacks();
+      render(
+        <MilestoneItemCard
+          milestone={milestone}
+          session={adminSession}
+          colorMap={mockColorMap}
+          theme="light"
+          {...cbs}
+        />
+      );
+
+      const items = screen.getAllByTestId("dropdown-item");
+      const itemTexts = items.map((el) => el.textContent);
+      expect(itemTexts.some((t) => t?.includes("stop"))).toBe(false);
+      expect(itemTexts.some((t) => t?.includes("complete"))).toBe(false);
+    });
+
+    it("hides Reopen for a synced completed milestone", () => {
+      const milestone = createMilestone({
+        integrationId: 5,
+        externalId: "10001",
+        isStarted: false,
+        isCompleted: true,
+        completedAt: new Date("2024-03-01"),
+      });
+      const cbs = mockCallbacks();
+      render(
+        <MilestoneItemCard
+          milestone={milestone}
+          session={adminSession}
+          colorMap={mockColorMap}
+          theme="light"
+          {...cbs}
+        />
+      );
+
+      const items = screen.getAllByTestId("dropdown-item");
+      const itemTexts = items.map((el) => el.textContent);
+      expect(itemTexts.some((t) => t?.includes("reopen"))).toBe(false);
+      expect(itemTexts.some((t) => t?.includes("edit"))).toBe(true);
+      expect(itemTexts.some((t) => t?.includes("delete"))).toBe(true);
+    });
+
+    it("still shows the state-mutating actions for a local (non-synced) milestone", () => {
+      const milestone = createMilestone({
+        integrationId: null,
+        isStarted: true,
+        isCompleted: false,
+      });
+      const cbs = mockCallbacks();
+      render(
+        <MilestoneItemCard
+          milestone={milestone}
+          session={adminSession}
+          colorMap={mockColorMap}
+          theme="light"
+          {...cbs}
+        />
+      );
+
+      const items = screen.getAllByTestId("dropdown-item");
+      const itemTexts = items.map((el) => el.textContent);
+      expect(itemTexts.some((t) => t?.includes("stop"))).toBe(true);
+      expect(itemTexts.some((t) => t?.includes("complete"))).toBe(true);
+    });
+  });
+
   describe("callback invocations", () => {
     it("calls onOpenEditModal when Edit is clicked", () => {
       const milestone = createMilestone({
@@ -647,7 +805,118 @@ describe("MilestoneItemCard", () => {
     });
   });
 
-  describe("level and compact props", () => {
+  describe("external tracker link safety", () => {
+    // The badge (shared MilestoneSourceBadge) is a DropdownMenu trigger
+    // (D-09); the open-in-tracker action now lives in its menu. This test
+    // file's DropdownMenu mock (above) always renders content, so no
+    // explicit "open" interaction is needed to reach the menu item.
+
+    it("opens an https externalUrl in a new tab with noopener,noreferrer", () => {
+      const openSpy = vi
+        .spyOn(window, "open")
+        .mockImplementation(() => null as any);
+      const milestone = createMilestone({
+        integrationId: 5,
+        externalId: "10001",
+        externalUrl: "https://jira.example.com/versions/10001",
+      });
+      const cbs = mockCallbacks();
+      render(
+        <MilestoneItemCard
+          milestone={milestone}
+          session={adminSession}
+          colorMap={mockColorMap}
+          theme="light"
+          {...cbs}
+        />
+      );
+
+      expect(
+        screen.getByTestId("milestone-open-in-tracker")
+      ).toBeInTheDocument();
+      fireEvent.click(screen.getByTestId("milestone-source-menu-open"));
+      expect(openSpy).toHaveBeenCalledWith(
+        "https://jira.example.com/versions/10001",
+        "_blank",
+        "noopener,noreferrer"
+      );
+      openSpy.mockRestore();
+    });
+
+    it("does not render the open button for a javascript: externalUrl", () => {
+      const milestone = createMilestone({
+        integrationId: 5,
+        externalId: "10001",
+        externalUrl: "javascript:alert(1)",
+      });
+      const cbs = mockCallbacks();
+      render(
+        <MilestoneItemCard
+          milestone={milestone}
+          session={adminSession}
+          colorMap={mockColorMap}
+          theme="light"
+          {...cbs}
+        />
+      );
+
+      expect(screen.queryByTestId("milestone-open-in-tracker")).toBeNull();
+    });
+
+    it("does not render the open button for a non-http scheme", () => {
+      const milestone = createMilestone({
+        integrationId: 5,
+        externalId: "10001",
+        externalUrl: "data:text/html,<script>alert(1)</script>",
+      });
+      const cbs = mockCallbacks();
+      render(
+        <MilestoneItemCard
+          milestone={milestone}
+          session={adminSession}
+          colorMap={mockColorMap}
+          theme="light"
+          {...cbs}
+        />
+      );
+
+      expect(screen.queryByTestId("milestone-open-in-tracker")).toBeNull();
+    });
+
+    it("renders no unlink menu item for a non-project-admin, but still opens the tracker on click", () => {
+      mockIsProjectAdmin = false;
+      const openSpy = vi
+        .spyOn(window, "open")
+        .mockImplementation(() => null as any);
+      const milestone = createMilestone({
+        integrationId: 5,
+        externalId: "10001",
+        externalUrl: "https://jira.example.com/versions/10001",
+      });
+      const cbs = mockCallbacks();
+      render(
+        <MilestoneItemCard
+          milestone={milestone}
+          session={adminSession}
+          colorMap={mockColorMap}
+          theme="light"
+          projectId={42}
+          {...cbs}
+        />
+      );
+
+      expect(screen.queryByTestId("milestone-source-menu-unlink")).toBeNull();
+      fireEvent.click(screen.getByTestId("milestone-source-badge"));
+      expect(openSpy).toHaveBeenCalledWith(
+        "https://jira.example.com/versions/10001",
+        "_blank",
+        "noopener,noreferrer"
+      );
+      openSpy.mockRestore();
+    });
+  });
+
+  describe("level prop", () => {
     it("applies margin-left based on level prop", () => {
       const milestone = createMilestone();
       const cbs = mockCallbacks();
@@ -662,7 +931,7 @@ describe("MilestoneItemCard", () => {
         />
       );
       const card = container.firstChild as HTMLElement;
-      expect(card.style.marginLeft).toBe("40px");
+      expect(card.style.marginInlineStart).toBe("40px");
     });
 
     it("applies no margin-left when level=0 (default)", () => {
@@ -679,25 +948,7 @@ describe("MilestoneItemCard", () => {
         />
       );
       const card = container.firstChild as HTMLElement;
-      expect(card.style.marginLeft).toBe("0px");
-    });
-
-    it("renders in compact mode without sm:grid classes", () => {
-      const milestone = createMilestone();
-      const cbs = mockCallbacks();
-      const { container } = render(
-        <MilestoneItemCard
-          milestone={milestone}
-          session={adminSession}
-          colorMap={mockColorMap}
-          theme="light"
-          compact={true}
-          {...cbs}
-        />
-      );
-      const card = container.firstChild as HTMLElement;
-      // Compact mode removes sm:grid classes
-      expect(card.className).not.toContain("sm:grid");
+      expect(card.style.marginInlineStart).toBe("0px");
     });
   });
 

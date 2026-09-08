@@ -1,5 +1,7 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Bug, Plus, X } from "lucide-react";
@@ -7,11 +9,6 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
-import {
-  useFindManyIssue,
-  useFindManyProjectIntegration,
-  useUpsertIssue,
-} from "~/lib/hooks";
 import { SearchIssuesDialog } from "./search-issues-dialog";
 
 interface DeferredIssueManagerProps {
@@ -52,7 +49,8 @@ export function DeferredIssueManager({
   const { data: session } = useSession();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
-  const { mutateAsync: upsertIssue } = useUpsertIssue();
+  const { mutateAsync: upsertIssue } =
+    useClientQueries(schema).issue.useUpsert();
 
   // Utility function to format provider names for display
   const formatProviderName = (provider: string): string => {
@@ -81,7 +79,9 @@ export function DeferredIssueManager({
   };
 
   // Get the project's active integration to set the correct integrationId
-  const { data: projectIntegrations } = useFindManyProjectIntegration({
+  const { data: projectIntegrations } = useClientQueries(
+    schema
+  ).projectIntegration.useFindMany({
     where: {
       projectId,
       isActive: true,
@@ -94,7 +94,7 @@ export function DeferredIssueManager({
   const activeIntegration = projectIntegrations?.[0];
 
   // Fetch the actual Issue records to display
-  const { data: issues, refetch } = useFindManyIssue({
+  const { data: issues, refetch } = useClientQueries(schema).issue.useFindMany({
     where: {
       id: { in: linkedIssueIds },
       isDeleted: false,
@@ -196,7 +196,7 @@ export function DeferredIssueManager({
             className={`hover:bg-accent hover:text-accent-foreground hover:border-primary transition-colors group overflow-hidden ${maxBadgeWidth}`}
           >
             <div className="flex items-center min-w-0">
-              <Bug className="w-4 h-4 shrink-0 mr-1" />
+              <Bug className="w-4 h-4 shrink-0 me-1" />
               {issue.externalUrl ? (
                 <a
                   href={issue.externalUrl}
@@ -221,7 +221,7 @@ export function DeferredIssueManager({
                 title={t("common.aria.removeIssue")}
                 onClick={() => handleRemoveIssue(issue.id)}
                 disabled={disabled}
-                className="ml-2 shrink-0 opacity-60 hover:opacity-100 transition-opacity disabled:opacity-30"
+                className="ms-2 shrink-0 opacity-60 hover:opacity-100 transition-opacity disabled:opacity-30"
               >
                 <X className="h-3 w-3" />
               </button>

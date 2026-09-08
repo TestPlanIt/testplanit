@@ -1,55 +1,38 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useIssueFilterOptions } from "~/hooks/useIssueFilterOptions";
 import {
-  PaginationProvider,
-  usePagination,
-} from "~/lib/contexts/PaginationContext";
-import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
+  issueFacetConditions,
+  type IssueFacetValue,
+} from "~/lib/issues/issueFacetConditions";
 import { useRouter } from "~/lib/navigation";
 
 import { useDebounce } from "@/components/Debounce";
+import { IssueListFilters } from "@/components/issues/IssueListFilters";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
-import { PaginationComponent } from "@/components/tables/Pagination";
-import { PaginationInfo } from "@/components/tables/PaginationControls";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { useCountIssue, useFindManyIssue } from "~/lib/hooks";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { SectionHeader } from "@/components/ui/typography";
 import { ExtendedIssue, useIssueColumns } from "./columns";
 import { DeleteIssue } from "./DeleteIssue";
 import { EditIssue } from "./EditIssue";
 
+const PAGE_SIZE = 50;
+
 export default function IssueListPage() {
-  return (
-    <PaginationProvider>
-      <IssueList />
-    </PaginationProvider>
-  );
+  return <IssueList />;
 }
 
 function IssueList() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const {
-    currentPage,
-    setCurrentPage,
-    pageSize,
-    setPageSize,
-    totalItems,
-    setTotalItems,
-    startIndex,
-    endIndex,
-    totalPages,
-  } = usePagination();
   const [sortConfig, setSortConfig] = useState<{
     column: string;
     direction: "asc" | "desc";
@@ -59,14 +42,13 @@ function IssueList() {
   });
   const [searchString, setSearchString] = useState("");
   const debouncedSearchString = useDebounce(searchString, 500);
+  const [statusFilter, setStatusFilter] = useState<IssueFacetValue[]>([]);
+  const [priorityFilter, setPriorityFilter] = useState<IssueFacetValue[]>([]);
+  const [issueTypeFilter, setIssueTypeFilter] = useState<IssueFacetValue[]>([]);
+  const locale = useLocale();
   const t = useTranslations("admin.issues");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
-
-  // Calculate skip and take based on pageSize
-  const effectivePageSize =
-    typeof pageSize === "number" ? pageSize : totalItems;
-  const skip = (currentPage - 1) * effectivePageSize;
 
   const searchFilter = useMemo(() => {
     if (!debouncedSearchString.trim()) {
@@ -98,16 +80,38 @@ function IssueList() {
     };
   }, [debouncedSearchString]);
 
+  // Distinct status/priority/issue type values for the filter dropdowns.
+  const { statuses, priorities, issueTypes } = useIssueFilterOptions({
+    enabled: status === "authenticated",
+  });
+
   const issuesWhere = useMemo(() => {
     if (!session?.user) {
       return null;
     }
 
-    return {
-      isDeleted: false,
-      ...searchFilter,
-    };
-  }, [session?.user, searchFilter]);
+    const conditions: Array<Record<string, unknown>> = [{ isDeleted: false }];
+
+    if (searchFilter.OR) {
+      conditions.push(searchFilter);
+    }
+
+    conditions.push(
+      ...issueFacetConditions({
+        status: statusFilter,
+        priority: priorityFilter,
+        issueTypeName: issueTypeFilter,
+      })
+    );
+
+    return { AND: conditions };
+  }, [
+    session?.user,
+    searchFilter,
+    statusFilter,
+    priorityFilter,
+    issueTypeFilter,
+  ]);
 
   const orderBy = useMemo(() => {
     if (!sortConfig?.column) {
@@ -159,44 +163,59 @@ function IssueList() {
     };
   }, [sortConfig]);
 
-  const shouldPaginate = typeof effectivePageSize === "number";
-  const paginationArgs = {
-    skip: shouldPaginate ? skip : undefined,
-    take: shouldPaginate ? effectivePageSize : undefined,
-  };
-
-  // Fetch ONLY basic issue data - no includes at all
-  // Projects and counts are fetched separately via direct Prisma queries
-  const { data: issues, isLoading: isLoadingIssues } = useFindManyIssue(
-    issuesWhere
-      ? {
-          where: issuesWhere,
-          orderBy,
-          ...paginationArgs,
-          include: {
-            project: {
-              select: {
-                id: true,
-                name: true,
-                iconUrl: true,
-              },
-            },
-            integration: {
-              select: {
-                id: true,
-                name: true,
-                provider: true,
-              },
-            },
-          },
-        }
-      : undefined,
-    {
-      enabled: !!issuesWhere && status === "authenticated",
-    }
+  const include = useMemo(
+    () => ({
+      project: {
+        select: {
+          id: true,
+          name: true,
+          iconUrl: true,
+        },
+      },
+      integration: {
+        select: {
+          id: true,
+          name: true,
+          provider: true,
+        },
+      },
+    }),
+    []
   );
 
-  const { data: issuesCount } = useCountIssue(
+  // Infinite scroll accumulates pages of PAGE_SIZE; the virtualized table
+  // renders only the visible window. Projects and counts are fetched separately
+  // (see below) to avoid bind-variable explosion on access-controlled includes.
+  const infiniteBaseArgs = useMemo(
+    () => ({
+      where: issuesWhere ?? undefined,
+      orderBy,
+      include,
+      take: PAGE_SIZE,
+    }),
+    [issuesWhere, orderBy, include]
+  );
+
+  const {
+    data: infinitePages,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: isLoadingIssues,
+  } = useClientQueries(schema).issue.useInfiniteFindMany(infiniteBaseArgs, {
+    getNextPageParam: (lastPage, allPages) => {
+      if (!lastPage || lastPage.length < PAGE_SIZE) return undefined;
+      return { ...infiniteBaseArgs, skip: allPages.flat().length };
+    },
+    enabled: !!issuesWhere && status === "authenticated",
+  });
+
+  const issues = useMemo(
+    () => infinitePages?.pages.flat() ?? [],
+    [infinitePages]
+  );
+
+  const { data: issuesCount } = useClientQueries(schema).issue.useCount(
     issuesWhere
       ? {
           where: issuesWhere,
@@ -215,6 +234,7 @@ function IssueList() {
         repositoryCases: number;
         sessions: number;
         testRuns: number;
+        milestones: number;
       }
     >
   >({});
@@ -224,16 +244,24 @@ function IssueList() {
   >({});
 
   const [isLoadingCounts, setIsLoadingCounts] = useState(false);
+  // Counts/projects are cached per issue id for the life of the page, so once
+  // fetched they never need re-requesting as the infinite list appends new ids.
+  const fetchedIssueIdsRef = useRef<Set<number>>(new Set());
 
   useEffect(() => {
     if (!issues || issues.length === 0) {
       setIssueCounts({});
       setIssueProjects({});
       setIsLoadingCounts(false);
+      fetchedIssueIdsRef.current = new Set();
       return;
     }
 
-    const issueIds = issues.map((i) => i.id);
+    const newIds = issues
+      .map((i) => i.id)
+      .filter((id) => !fetchedIssueIdsRef.current.has(id));
+    if (newIds.length === 0) return;
+    newIds.forEach((id) => fetchedIssueIdsRef.current.add(id));
 
     const fetchCountsAndProjects = async () => {
       setIsLoadingCounts(true);
@@ -243,23 +271,23 @@ function IssueList() {
           fetch("/api/issues/counts", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ issueIds }),
+            body: JSON.stringify({ issueIds: newIds }),
           }),
           fetch("/api/issues/projects", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ issueIds }),
+            body: JSON.stringify({ issueIds: newIds }),
           }),
         ]);
 
         if (countsResponse.ok) {
           const data = await countsResponse.json();
-          setIssueCounts(data.counts || {});
+          setIssueCounts((prev) => ({ ...prev, ...(data.counts || {}) }));
         }
 
         if (projectsResponse.ok) {
           const data = await projectsResponse.json();
-          setIssueProjects(data.projects || {});
+          setIssueProjects((prev) => ({ ...prev, ...(data.projects || {}) }));
         }
       } catch (error) {
         console.error("Failed to fetch issue data:", error);
@@ -290,32 +318,10 @@ function IssueList() {
         repositoryCasesCount: counts?.repositoryCases ?? 0,
         sessionsCount: counts?.sessions ?? 0,
         testRunsCount: counts?.testRuns ?? 0,
+        milestonesCount: counts?.milestones ?? 0,
       };
     });
   }, [issues, issueCounts, issueProjects]);
-
-  useEffect(() => {
-    setTotalItems(issuesCount ?? 0);
-  }, [issuesCount, setTotalItems]);
-
-  const pageSizeOptions = usePageSizeOptions(totalItems);
-
-  const prevSearchStringRef = useRef(searchString);
-  const prevPageSizeRef = useRef(pageSize);
-
-  // Reset to first page when search changes
-  useEffect(() => {
-    if (searchString === prevSearchStringRef.current) return;
-    prevSearchStringRef.current = searchString;
-    setCurrentPage(1);
-  }, [searchString, setCurrentPage]);
-
-  // Reset to first page when page size changes
-  useEffect(() => {
-    if (pageSize === prevPageSizeRef.current) return;
-    prevPageSizeRef.current = pageSize;
-    setCurrentPage(1);
-  }, [pageSize, setCurrentPage]);
 
   useEffect(() => {
     if (status !== "loading" && !session) {
@@ -336,6 +342,10 @@ function IssueList() {
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >({});
+  // Hide-column requests from the table's header menu are routed through the
+  // Columns control (the visibility owner) so persistence and its checkboxes
+  // stay in sync.
+  const hideColumnRef = useRef<((columnId: string) => void) | null>(null);
 
   if (status === "loading" || !issuesWhere) return null;
 
@@ -351,60 +361,68 @@ function IssueList() {
         ? "desc"
         : "asc";
     setSortConfig({ column, direction });
-    setCurrentPage(1);
+  };
+
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig({ column: "name", direction: "asc" });
+    } else {
+      setSortConfig({ column, direction });
+    }
   };
 
   return (
     <main>
       <Card>
         <CardHeader className="w-full">
-          <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
-            <div>
-              <CardTitle data-testid="issues-page-title">
-                {tGlobal("common.fields.issues")}
-              </CardTitle>
-            </div>
-          </div>
-          <CardDescription>{t("description")}</CardDescription>
+          <SectionHeader className="flex items-center gap-2">
+            <CardTitle data-testid="issues-page-title">
+              {tGlobal("common.fields.issues")}
+            </CardTitle>
+            <HelpPopover helpKey="issues" />
+          </SectionHeader>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-row items-start">
-            <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
-              <div className="text-muted-foreground w-full text-nowrap">
+          <div className="flex flex-row items-start justify-between gap-4">
+            <div className="flex flex-col grow w-full min-w-[250px]">
+              <div className="flex items-center gap-2 text-muted-foreground w-full flex-wrap">
                 <Filter
                   key="issue-filter"
                   placeholder={t("filterPlaceholder")}
                   initialSearchString={searchString}
                   onSearchChange={setSearchString}
+                  className="grow shrink basis-[160px] min-w-[160px] max-w-lg"
+                />
+                <IssueListFilters
+                  statuses={statuses}
+                  priorities={priorities}
+                  issueTypes={issueTypes}
+                  statusFilter={statusFilter}
+                  priorityFilter={priorityFilter}
+                  issueTypeFilter={issueTypeFilter}
+                  onStatusChange={setStatusFilter}
+                  onPriorityChange={setPriorityFilter}
+                  onIssueTypeChange={setIssueTypeFilter}
+                  testIdPrefix="admin-issues"
                 />
               </div>
             </div>
 
-            <div className="flex flex-col w-full sm:w-2/3 items-end">
-              {totalItems > 0 && (
-                <>
-                  <div className="justify-end">
-                    <PaginationInfo
-                      key="issue-pagination-info"
-                      startIndex={startIndex}
-                      endIndex={endIndex}
-                      totalRows={totalItems}
-                      searchString={searchString}
-                      pageSize={typeof pageSize === "number" ? pageSize : "All"}
-                      pageSizeOptions={pageSizeOptions}
-                      handlePageSizeChange={(size) => setPageSize(size)}
-                    />
-                  </div>
-                  <div className="justify-end -mx-4">
-                    <PaginationComponent
-                      currentPage={currentPage}
-                      totalPages={totalPages}
-                      onPageChange={setCurrentPage}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
+            {mappedIssues.length > 0 && (
+              <p className="text-sm text-muted-foreground shrink-0">
+                {tGlobal("admin.auditLogs.showing", {
+                  loaded: mappedIssues.length.toLocaleString(locale),
+                  total: (issuesCount ?? mappedIssues.length).toLocaleString(
+                    locale
+                  ),
+                })}
+              </p>
+            )}
           </div>
           <div className="mt-4 flex justify-between">
             <ColumnSelection
@@ -412,18 +430,28 @@ function IssueList() {
               storageKey="admin-issues"
               columns={columns}
               onVisibilityChange={setColumnVisibility}
+              hideColumnRef={hideColumnRef}
             />
           </div>
-          <div className="mt-4 flex justify-between">
+          <div className="mt-4 w-full">
             <DataTable
-              columns={columns}
+              virtualized
+              fillViewport
+              columns={columns as any}
               data={mappedIssues}
               onSortChange={handleSortChange}
+              onSortColumn={handleSortColumn}
+              onHideColumn={(columnId) => hideColumnRef.current?.(columnId)}
               sortConfig={sortConfig}
               columnVisibility={columnVisibility}
               onColumnVisibilityChange={setColumnVisibility}
-              isLoading={isLoadingIssues || !issuesWhere}
-              pageSize={effectivePageSize}
+              isLoading={isLoadingIssues || isFetchingNextPage}
+              hasMore={!!hasNextPage}
+              onLoadMore={fetchNextPage}
+              estimateSize={60}
+              resetKey={`${debouncedSearchString}|${JSON.stringify(statusFilter)}|${JSON.stringify(priorityFilter)}|${JSON.stringify(issueTypeFilter)}|${sortConfig.column}|${sortConfig.direction}`}
+              testIdPrefix="admin-issues-table"
+              rowTestIdPrefix="admin-issue-row"
             />
           </div>
         </CardContent>

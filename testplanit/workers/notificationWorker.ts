@@ -1,16 +1,24 @@
 import { Job, Worker } from "bullmq";
 import {
   disconnectAllTenantClients,
-  getPrismaClientForJob,
+  getDbClientForJob,
   isMultiTenantMode,
   MultiTenantJobData,
   validateMultiTenantJobData,
-} from "../lib/multiTenantPrisma";
+} from "../lib/multiTenantDb";
+import { isEmailServerConfigured } from "../lib/email/emailConfig";
 import {
   tenantBroadcastChannel,
   userChannel,
 } from "../lib/notifications/channels";
 import { getEmailQueue, NOTIFICATION_QUEUE_NAME } from "../lib/queues";
+import { NotificationService } from "../lib/services/notificationService";
+import { resolveRunCompletionRecipients } from "../lib/services/runCompletionRecipients";
+import {
+  claimRunReadyTransition,
+  JOB_CHECK_RUN_READY,
+  type RunReadyCheckJobData,
+} from "../lib/services/runReadyCheck";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
 import { BULLMQ_PREFIX } from "../lib/bullPrefix";
@@ -48,7 +56,7 @@ const processor = async (job: Job) => {
   validateMultiTenantJobData(job.data);
 
   // Get the appropriate Prisma client (tenant-specific or default)
-  const prisma = getPrismaClientForJob(job.data);
+  const db = getDbClientForJob(job.data);
 
   switch (job.name) {
     case JOB_CREATE_NOTIFICATION:
@@ -56,12 +64,12 @@ const processor = async (job: Job) => {
 
       try {
         // Check user preferences first
-        const userPreferences = await prisma.userPreferences.findUnique({
+        const userPreferences = await db.userPreferences.findUnique({
           where: { userId: createData.userId },
         });
 
         // Get global notification settings from AppConfig
-        const globalSettings = await prisma.appConfig.findUnique({
+        const globalSettings = await db.appConfig.findUnique({
           where: { key: "notificationSettings" },
         });
 
@@ -84,7 +92,7 @@ const processor = async (job: Job) => {
         }
 
         // Create the in-app notification (for all modes except NONE)
-        const notification = await prisma.notification.create({
+        const notification = await db.notification.create({
           data: {
             userId: createData.userId,
             type: createData.type as any,
@@ -158,7 +166,7 @@ const processor = async (job: Job) => {
 
       try {
         // Get unread notifications for the user
-        const notifications = await prisma.notification.findMany({
+        const notifications = await db.notification.findMany({
           where: {
             userId: processData.userId,
             isRead: false,
@@ -179,9 +187,16 @@ const processor = async (job: Job) => {
     case JOB_SEND_DAILY_DIGEST:
       const digestData = job.data as SendDailyDigestJobData;
 
+      if (!isEmailServerConfigured()) {
+        console.log(
+          "Skipping daily digest: no email server configured (EMAIL_SERVER_* env not fully set)"
+        );
+        break;
+      }
+
       try {
         // Get global settings from AppConfig
-        const globalSettings = await prisma.appConfig.findUnique({
+        const globalSettings = await db.appConfig.findUnique({
           where: { key: "notificationSettings" },
         });
         const settingsValue = globalSettings?.value as {
@@ -190,7 +205,7 @@ const processor = async (job: Job) => {
         const globalDefaultMode = settingsValue?.defaultMode || "IN_APP";
 
         // Get all users with IN_APP_EMAIL_DAILY preference or USE_GLOBAL where global is daily
-        const users = await prisma.userPreferences.findMany({
+        const users = await db.userPreferences.findMany({
           where: {
             OR: [
               { notificationMode: "IN_APP_EMAIL_DAILY" },
@@ -212,7 +227,7 @@ const processor = async (job: Job) => {
           const yesterday = new Date();
           yesterday.setDate(yesterday.getDate() - 1);
 
-          const notifications = await prisma.notification.findMany({
+          const notifications = await db.notification.findMany({
             where: {
               userId: userPref.userId,
               isRead: false,
@@ -242,6 +257,52 @@ const processor = async (job: Job) => {
         throw error;
       }
       break;
+
+    case JOB_CHECK_RUN_READY: {
+      const readyData = job.data as RunReadyCheckJobData;
+
+      try {
+        // The raw per-tenant client on purpose: the marker write is
+        // bookkeeping and must not re-run the run's search sync or webhook
+        // emitters, which a plugin-carrying client would.
+        const outcome = await claimRunReadyTransition(
+          db as never,
+          readyData.runId
+        );
+
+        if (!outcome.notify) {
+          console.log(
+            `Run ${readyData.runId} readiness check: ${outcome.reason}`
+          );
+          break;
+        }
+
+        const targetUserIds = await resolveRunCompletionRecipients(
+          outcome.notify.projectId
+        );
+
+        await NotificationService.createRunReadyToCompleteNotification({
+          targetUserIds,
+          testRunId: outcome.notify.runId,
+          testRunName: outcome.notify.runName,
+          projectId: outcome.notify.projectId,
+          projectName: outcome.notify.projectName,
+          caseCount: outcome.notify.caseCount,
+          tenantId: readyData.tenantId,
+        });
+
+        console.log(
+          `Run ${readyData.runId} is ready to complete; notified ${targetUserIds.length} user(s)`
+        );
+      } catch (error) {
+        console.error(
+          `Failed readiness check for run ${readyData.runId}:`,
+          error
+        );
+        throw error;
+      }
+      break;
+    }
 
     default:
       throw new Error(`Unknown job type: ${job.name}`);

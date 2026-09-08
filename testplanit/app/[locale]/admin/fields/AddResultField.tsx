@@ -1,16 +1,12 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library */
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import {
-  useCreateResultFields,
-  useFindManyCaseFields,
-  useFindManyCaseFieldTypes,
-  useFindManyResultFields,
-} from "~/lib/hooks";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { FieldOptions } from "@prisma/client";
+import type { FieldOptions } from "~/zenstack/models";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod/v4";
 
@@ -52,6 +48,7 @@ import {
 
 import { HelpPopover } from "@/components/ui/help-popover";
 import type { FieldDraftOption } from "./AddCaseField";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 // Schema is built per-render so Zod messages reflect the active locale.
 // `t` is the unscoped translator from useTranslations(); keep paths
@@ -162,17 +159,24 @@ export function AddResultFieldModal({
   const applyOptionOrder = (options: FieldOptions[]): FieldOptions[] =>
     options.map((option, index) => ({ ...option, order: index }));
 
-  const { mutateAsync: createResultField } = useCreateResultFields();
+  const { mutateAsync: createResultField } =
+    useClientQueries(schema).resultFields.useCreate();
 
-  const { data: types, isLoading: typesLoading } = useFindManyCaseFieldTypes({
+  const { data: types, isLoading: typesLoading } = useClientQueries(
+    schema
+  ).caseFieldTypes.useFindMany({
     orderBy: { type: "asc" },
   });
 
-  const { data: existingCaseFields } = useFindManyCaseFields({
+  const { data: existingCaseFields } = useClientQueries(
+    schema
+  ).caseFields.useFindMany({
     select: { systemName: true },
   });
 
-  const { data: existingResultFields } = useFindManyResultFields({
+  const { data: existingResultFields } = useClientQueries(
+    schema
+  ).resultFields.useFindMany({
     select: { systemName: true },
   });
 
@@ -316,6 +320,7 @@ export function AddResultFieldModal({
         isDefault: prevOptions.length === 0,
         order: prevOptions.length,
         isDeleted: false,
+        deletedAt: null,
       };
       return applyOptionOrder([...prevOptions, newOption]);
     });
@@ -406,6 +411,7 @@ export function AddResultFieldModal({
             : index === 0,
           order: index,
           isDeleted: false,
+          deletedAt: null,
         })
       );
 
@@ -688,7 +694,7 @@ export function AddResultFieldModal({
       setOpen(false);
     } catch (err: any) {
       setIsSubmitting(false);
-      if (err.info?.prisma && err.info?.code === "P2002") {
+      if (isUniqueConstraintError(err)) {
         form.setError("systemName", {
           type: "custom",
           message: tCommon("fields.options.validation.systemNameError"),
@@ -749,7 +755,7 @@ export function AddResultFieldModal({
                   <FormLabel className="flex items-center">
                     <span>{tCommon("fields.systemName")}</span>
                     <HelpPopover helpKey="resultField.systemName" />
-                    <div className="text-muted-foreground text-sm ml-2">
+                    <div className="text-muted-foreground text-sm ms-2">
                       {tCommon("fields.hints.systemName")}
                     </div>
                   </FormLabel>

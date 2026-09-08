@@ -1,8 +1,15 @@
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { DateTextDisplay } from "@/components/DateTextDisplay";
 import DynamicIcon from "@/components/DynamicIcon";
 import { DatePickerField } from "@/components/forms/DatePickerField";
+import {
+  MilestoneSelect,
+  transformMilestones,
+} from "@/components/forms/MilestoneSelect";
 import { UserDisplay } from "@/components/search/UserDisplay";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
+import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import {
   FormControl,
@@ -22,22 +29,19 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import { Cloud, ExternalLink } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { emptyEditorContent } from "~/app/constants";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
-import {
-  useFindManyColor,
-  useFindManyMilestones,
-  useFindManyMilestoneTypes,
-} from "~/lib/hooks";
 import { IconName } from "~/types/globals";
 import {
   ColorMap,
   createColorMap,
   getStatus,
+  hasCalendarDates,
   getStatusStyle,
 } from "~/utils/milestoneUtils";
 
@@ -86,7 +90,7 @@ export default function MilestoneFormControls({
   const t = useTranslations("milestones");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
-  const { data: colors } = useFindManyColor({
+  const { data: colors } = useClientQueries(schema).color.useFindMany({
     include: { colorFamily: true },
     orderBy: { colorFamily: { order: "asc" } },
   });
@@ -101,7 +105,9 @@ export default function MilestoneFormControls({
   }, [colors]);
 
   // Fetch milestone types
-  const { data: milestoneTypes } = useFindManyMilestoneTypes({
+  const { data: milestoneTypes } = useClientQueries(
+    schema
+  ).milestoneTypes.useFindMany({
     where: {
       AND: [
         {
@@ -118,7 +124,7 @@ export default function MilestoneFormControls({
   });
 
   // Fetch milestones for parent selection
-  const { data: milestones } = useFindManyMilestones({
+  const { data: milestones } = useClientQueries(schema).milestones.useFindMany({
     where: {
       projectId: Number(projectId),
       isDeleted: false,
@@ -141,7 +147,7 @@ export default function MilestoneFormControls({
         <div className="flex items-center">
           <DynamicIcon
             name={(type.icon?.name as IconName) || "milestone"}
-            className="w-4 h-4 mr-2 shrink-0"
+            className="w-4 h-4 me-2 shrink-0"
           />
           <span>{type.name}</span>
         </div>
@@ -149,47 +155,60 @@ export default function MilestoneFormControls({
     }));
   }, [milestoneTypes]);
 
-  const milestonesOptions = useMemo(() => {
-    if (!milestones) return [];
-    return milestones.map((m) => ({
-      value: m.id.toString(),
-      label: (
-        <div className="flex items-center">
-          <DynamicIcon
-            name={(m.milestoneType?.icon?.name as IconName) || "milestone"}
-            className="w-4 h-4 mr-2"
-          />
-          <span>{m.name}</span>
-        </div>
-      ),
-      parentId: m.parentId,
-    }));
-  }, [milestones]);
+  const milestonesOptions = useMemo(
+    () => transformMilestones(milestones || []),
+    [milestones]
+  );
 
-  const renderMilestoneOptions = (
-    milestones: {
-      value: string;
-      label: React.ReactElement;
-      parentId: number | null;
-    }[],
-    parentId: number | null = null,
-    level: number = 0
-  ) => {
-    const filteredMilestones = milestones.filter(
-      (m) => m.parentId === parentId
-    );
-    return filteredMilestones.map((m) => (
-      <React.Fragment key={m.value}>
-        <SelectItem value={m.value} className={`pl-${level * 4 + 2}`}>
-          {m.label}
-        </SelectItem>
-        {renderMilestoneOptions(milestones, Number(m.value), level + 1)}
-      </React.Fragment>
-    ));
-  };
+  // LOCK-01/04: tracker-owned fields (name/note/dates/started/completed) are
+  // locked once a milestone is synced from Jira; automaticCompletion is
+  // force-disabled since the tracker — not the local auto-complete worker —
+  // owns isCompleted for a synced milestone (see forecastWorker LOCK-04).
+  const isSynced = milestone?.integrationId != null;
+
+  // Tracker-provided deep link to the source version/sprint. Only linkable when
+  // it's a real http(s) URL (never `javascript:` etc.), mirroring the safety
+  // check in MilestoneSourceBadge.
+  const jiraUrl =
+    typeof milestone?.externalUrl === "string" &&
+    /^https?:\/\//i.test(milestone.externalUrl)
+      ? milestone.externalUrl
+      : null;
 
   return (
     <div className="space-y-4">
+      {isSynced && (
+        <Alert
+          data-testid="milestone-sync-locked-alert"
+          className="bg-inherit border-muted-foreground w-fit"
+        >
+          {/* Title only, with the explanatory copy tucked behind a help popover
+              so the locked-sync notice stays a single compact line. The icon +
+              title share a flex row (not the Alert's default absolute-svg slot,
+              which is positioned for a taller title+description alert) so they
+              stay vertically centered. */}
+          <div className="flex items-center">
+            <Cloud className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <AlertTitle className="mb-0 ms-2 flex items-center">
+              {jiraUrl ? (
+                <a
+                  href={jiraUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 hover:underline"
+                  title={t("sync.openInJira")}
+                >
+                  {t("sync.managedByJira")}
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              ) : (
+                t("sync.managedByJira")
+              )}
+              <HelpPopover helpKey="milestone.managedByJira" />
+            </AlertTitle>
+          </div>
+        </Alert>
+      )}
       {isEditMode ? (
         <>
           <div className="space-y-2">
@@ -202,7 +221,7 @@ export default function MilestoneFormControls({
                     <Switch
                       checked={field.value}
                       onCheckedChange={field.onChange}
-                      disabled={!isEditMode}
+                      disabled={!isEditMode || isSynced}
                     />
                   </FormControl>
                   <FormLabel>{tCommon("fields.started")}</FormLabel>
@@ -213,9 +232,10 @@ export default function MilestoneFormControls({
             <DatePickerField
               control={control}
               name="startedAt"
+              dateOnly
               label={tCommon("fields.startDate")}
               placeholder={tCommon("fields.startDate")}
-              disabled={!isEditMode}
+              disabled={!isEditMode || isSynced}
             />
           </div>
           <Separator />
@@ -229,7 +249,7 @@ export default function MilestoneFormControls({
                     <Switch
                       checked={field.value}
                       onCheckedChange={field.onChange}
-                      disabled={!isEditMode}
+                      disabled={!isEditMode || isSynced}
                     />
                   </FormControl>
                   <FormLabel>{tCommon("fields.completed")}</FormLabel>
@@ -240,30 +260,33 @@ export default function MilestoneFormControls({
             <DatePickerField
               control={control}
               name="completedAt"
+              dateOnly
               label={tGlobal("milestones.fields.dueDate")}
               placeholder={tGlobal("milestones.fields.dueDate")}
-              disabled={!isEditMode}
+              disabled={!isEditMode || isSynced}
             />
-            <FormField
-              control={control}
-              name="automaticCompletion"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      disabled={!isEditMode || !hasDueDate}
-                    />
-                  </FormControl>
-                  <FormLabel className="flex items-center">
-                    {t("fields.automaticCompletion")}
-                    <HelpPopover helpKey="milestone.automaticCompletion" />
-                  </FormLabel>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {!isSynced && (
+              <FormField
+                control={control}
+                name="automaticCompletion"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={!isEditMode || !hasDueDate}
+                      />
+                    </FormControl>
+                    <FormLabel className="flex items-center">
+                      {t("fields.automaticCompletion")}
+                      <HelpPopover helpKey="milestone.automaticCompletion" />
+                    </FormLabel>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
             <FormField
               control={control}
               name="enableNotifications"
@@ -323,15 +346,21 @@ export default function MilestoneFormControls({
             >
               {t(`statusLabels.${getStatus(milestone)}` as any)}
             </Badge>
-            <DateTextDisplay
-              startDate={
-                milestone.startedAt ? new Date(milestone.startedAt) : null
-              }
-              endDate={
-                milestone.completedAt ? new Date(milestone.completedAt) : null
-              }
-              isCompleted={milestone.isCompleted}
-            />
+            {/* Shrink to the date text so the shared DateTextDisplay's baked-in
+                text-end has no slack to push against, and the fit-content box
+                sits at the start (left) of the sidebar. */}
+            <div className="w-fit">
+              <DateTextDisplay
+                dateOnly={hasCalendarDates(milestone)}
+                startDate={
+                  milestone.startedAt ? new Date(milestone.startedAt) : null
+                }
+                endDate={
+                  milestone.completedAt ? new Date(milestone.completedAt) : null
+                }
+                isCompleted={milestone.isCompleted}
+              />
+            </div>
             {milestone.completedAt && (
               <div className="space-y-1 pt-2">
                 <div className="flex items-center gap-2 text-sm">
@@ -378,11 +407,11 @@ export default function MilestoneFormControls({
                     field.value ? JSON.parse(field.value) : emptyEditorContent
                   }
                   onUpdate={(newContent) => {
-                    if (isEditMode) {
+                    if (isEditMode && !isSynced) {
                       field.onChange(JSON.stringify(newContent));
                     }
                   }}
-                  readOnly={!isEditMode}
+                  readOnly={!isEditMode || isSynced}
                   className="h-auto"
                   placeholder={t("placeholders.description")}
                   projectId={projectId}
@@ -433,23 +462,16 @@ export default function MilestoneFormControls({
         render={({ field }) => (
           <FormItem>
             <FormLabel>{t("fields.parent")}</FormLabel>
-            <Select
-              disabled={!isEditMode || isSubmitting}
-              onValueChange={(value) =>
-                field.onChange(value === "none" ? null : Number(value))
-              }
-              value={field.value ? field.value.toString() : "none"}
-            >
-              <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder={t("placeholders.selectParent")} />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                <SelectItem value="none">{tCommon("access.none")}</SelectItem>
-                {renderMilestoneOptions(milestonesOptions)}
-              </SelectContent>
-            </Select>
+            <FormControl>
+              <MilestoneSelect
+                value={field.value ?? null}
+                onChange={(value) =>
+                  field.onChange(value == null ? null : Number(value))
+                }
+                milestones={milestonesOptions}
+                disabled={!isEditMode || isSubmitting}
+              />
+            </FormControl>
             <FormMessage />
           </FormItem>
         )}
@@ -464,6 +486,14 @@ export default function MilestoneFormControls({
             userImage={milestone.creator.image}
             size="small"
           />
+        </div>
+      )}
+
+      {isSynced && milestone?.lastSyncedAt && (
+        <div className="text-xs text-muted-foreground">
+          {t("sync.lastSynced", {
+            time: new Date(milestone.lastSyncedAt).toLocaleString(),
+          })}
         </div>
       )}
     </div>

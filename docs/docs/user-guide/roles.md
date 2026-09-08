@@ -14,7 +14,7 @@ To access this page, enter the Administration area and select **Roles** from the
 The Roles page displays a table listing all defined roles (excluding those marked as deleted). Key features include:
 
 - **Filtering**: Use the filter input to search for roles by name.
-- **Pagination**: Navigate through pages of roles if the list is long.
+- **Loading More**: The list loads more roles automatically as you scroll if it is long; there are no page controls.
 - **Columns**: The table includes columns for:
   - **Name**: The name of the Role.
   - **Default**: A switch indicating if this is the default Role assigned to new users. Only one role can be the default.

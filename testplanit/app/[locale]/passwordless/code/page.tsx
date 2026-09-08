@@ -32,7 +32,7 @@ export default async function PasswordlessCodePage({
 }) {
   const { locale } = await params;
   const { code: rawCode } = await searchParams;
-  const t = await getTranslations({ locale, namespace: "auth.passwordless" });
+  const t = await getTranslations({ locale });
 
   const code = normalizePasswordlessCode(rawCode ?? "");
   if (!isValidPasswordlessCodeFormat(code)) {
@@ -46,9 +46,11 @@ export default async function PasswordlessCodePage({
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
             <KeyRound className="h-6 w-6 text-primary" />
           </div>
-          <h2 className="text-lg font-semibold">{t("codeTitle")}</h2>
+          <h2 className="text-lg font-semibold">
+            {t("auth.passwordless.codeTitle")}
+          </h2>
           <p className="text-sm text-muted-foreground">
-            {t("codeInstructions")}
+            {t("auth.passwordless.codeInstructions")}
           </p>
           <p
             className="rounded-md bg-muted px-6 py-3 font-mono text-3xl font-bold tracking-[0.3em]"
@@ -57,7 +59,7 @@ export default async function PasswordlessCodePage({
             {formatPasswordlessCode(code)}
           </p>
           <p className="text-xs text-muted-foreground">
-            {t("codeCloseNotice")}
+            {t("auth.passwordless.codeCloseNotice")}
           </p>
         </CardContent>
       </Card>

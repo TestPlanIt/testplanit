@@ -134,6 +134,12 @@ var TestPlanItClient = class {
   headers;
   // Cache for statuses to avoid repeated lookups
   statusCache = /* @__PURE__ */ new Map();
+  /**
+   * Set after a create is rejected while carrying `worker` — an older server
+   * (schema without JUnitTestResult.worker) fails the whole create over this
+   * optional metadata, so stop sending it for the rest of the run.
+   */
+  junitWorkerFieldUnsupported = false;
   constructor(config) {
     if (!config.baseUrl) {
       throw new TestPlanItError("baseUrl is required");
@@ -172,7 +178,7 @@ var TestPlanItClient = class {
     const fetchOptions = {
       method,
       headers,
-      signal: AbortSignal.timeout(this.timeout)
+      signal: AbortSignal.timeout(options?.timeout ?? this.timeout)
     };
     if (options?.body && method !== "GET") {
       fetchOptions.body = JSON.stringify(options.body);
@@ -340,7 +346,7 @@ var TestPlanItClient = class {
       method,
       headers,
       body: formData,
-      signal: AbortSignal.timeout(this.timeout)
+      signal: AbortSignal.timeout(options?.timeout ?? this.timeout)
     };
     const response = await fetch(url.toString(), fetchOptions);
     if (!response.ok) {
@@ -1380,6 +1386,34 @@ var TestPlanItClient = class {
     );
   }
   // ============================================================================
+  // QuickScript (AI test-script generation)
+  // ============================================================================
+  /**
+   * Generate a QuickScript (AI-authored automation script) from one or more
+   * stored test cases. The server resolves the project's export template and —
+   * when a code repository is connected — pulls repo context so the script
+   * follows the repo's existing framework/fixtures/page objects. On LLM failure
+   * or when no LLM integration is configured, each file falls back to the
+   * deterministic template render (`generatedBy: "template"`).
+   */
+  async generateQuickScript(options) {
+    return this.request(
+      "POST",
+      "/api/export/quickscript",
+      {
+        body: {
+          projectId: options.projectId,
+          caseIds: options.caseIds,
+          ...options.templateId != null ? { templateId: options.templateId } : {},
+          ...options.outputMode ? { outputMode: options.outputMode } : {}
+        },
+        // LLM generation can take much longer than a normal API call; default
+        // to a generous timeout unless the caller overrides the client's.
+        timeout: options.timeoutMs ?? 18e4
+      }
+    );
+  }
+  // ============================================================================
   // Test Run Cases (linking cases to runs)
   // ============================================================================
   /**
@@ -1774,11 +1808,23 @@ var TestPlanItClient = class {
     if (options.assertions !== void 0) data.assertions = options.assertions;
     if (options.file) data.file = options.file;
     if (options.line !== void 0) data.line = options.line;
+    if (options.worker && !this.junitWorkerFieldUnsupported) {
+      data.worker = options.worker;
+    }
     if (options.systemOut) data.systemOut = options.systemOut;
     if (options.systemErr) data.systemErr = options.systemErr;
-    return this.zenstack("jUnitTestResult", "create", {
-      data
-    });
+    try {
+      return await this.zenstack("jUnitTestResult", "create", {
+        data
+      });
+    } catch (error) {
+      if (data.worker === void 0) throw error;
+      this.junitWorkerFieldUnsupported = true;
+      delete data.worker;
+      return this.zenstack("jUnitTestResult", "create", {
+        data
+      });
+    }
   }
   /**
    * Update a JUnit test suite

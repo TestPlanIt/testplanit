@@ -1,3 +1,45 @@
+## [1.0.0](https://github.com/TestPlanIt/testplanit/compare/v0.44.3...v1.0.0) (2026-09-08)
+
+TestPlanIt 1.0 graduates the `beta` line — 21 pre-releases and 725 commits since
+v0.44.3 — and completes the feature set the platform set out to build. See the
+[1.0 release announcement](https://docs.testplanit.com/blog/v1.0-release) for the
+full write-up.
+
+From here on the project follows semantic versioning: breaking changes mean a
+major version, and upgrades within 1.x are routine.
+
+### Upgrading
+
+**Back up your database first.** 1.0 moves schema changes to versioned
+migrations, and a database created by a 0.x release needs a one-time baseline
+step before its first v1.0 start — see the
+[upgrade notes](https://docs.testplanit.com/docs/installation#upgrading).
+
+### Features
+
+* **jira:** milestone sync, a release-readiness cockpit with burndown and per-case traceability, AI generation from the issue panel, and self-refreshing OAuth
+* **ai:** image context for generation — screenshots from linked issues, embedded rich-text images, and crawled pages — across every connected provider
+* **automation:** per-run execution metrics, an execution timeline, retry-aware flaky detection, and automated status resolved through a single effective-status source
+* **repository:** a dockable case-details panel, a sortable latest-result column, reorderable and resizable columns, multi-dimension filters with shareable URLs, and saved views
+* **reviews:** bulk approval requests, a dedicated review inbox with decision badges, and a pending queue with reminders
+* **runs:** composition lock at execution start, even assignment distribution, in-place case editing mid-run, and ready-to-complete notifications
+* **platform:** official Docker images and a single-tenant Helm chart, opt-in read-replica routing, and configurable API rate limits and upload ceilings
+* **i18n:** 17 languages, including full right-to-left support for Arabic
+
+### Performance Improvements
+
+* **data-layer:** access control enforced at the query layer with two-phase pagination — the heaviest lists drop from ~22s to ~270ms
+* **acl:** project access resolved once per request instead of re-asked per query
+* **lists:** runs, users, and audit logs window, prefetch, and stream on scroll
+
+### Bug Fixes
+
+* **search:** indexing moved to post-commit sync so results always match the database, and deletes remove their documents
+* **audit:** correct actor attribution including API tokens, rich-text edits captured, and integration credentials encrypted on every write path
+* **live-updates:** no reconnect refetch storms; connections defer until the browser is idle
+* **webhooks:** Issue events reach every linked project, and deliveries show which record each one was about
+* **a11y:** an Accessible Dark theme meeting WCAG AA, enforced by a CI contrast gate
+
 ## [0.44.3](https://github.com/TestPlanIt/testplanit/compare/v0.44.2...v0.44.3) (2026-08-12)
 
 ### Bug Fixes

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("~/lib/prisma", () => {
+vi.mock("~/lib/db", () => {
   const tx = {
     user: {
       findFirst: vi.fn(),
@@ -21,7 +21,7 @@ vi.mock("~/lib/prisma", () => {
     },
   };
   return {
-    prisma: {
+    baseDb: {
       $transaction: vi.fn(async (cb: (tx: unknown) => unknown) => cb(tx)),
       __tx: tx,
       user: tx.user,
@@ -56,11 +56,11 @@ vi.mock("~/lib/scim/filter", async () => {
     );
   return {
     ...actual,
-    scimFilterToPrismaWhere: vi.fn(actual.scimFilterToPrismaWhere),
+    scimFilterToDbWhere: vi.fn(actual.scimFilterToDbWhere),
   };
 });
 
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import {
   emitScimUserCreated,
@@ -84,7 +84,7 @@ import {
   putScimUser,
 } from "./users";
 import { ScimPatchApplyError } from "../patch";
-import { scimFilterToPrismaWhere } from "../filter";
+import { scimFilterToDbWhere } from "../filter";
 
 import type { ScimUserBody } from "../mapping/user";
 
@@ -102,9 +102,9 @@ interface TxLike {
   appConfig: { findUnique: ReturnType<typeof vi.fn> };
 }
 
-// Expose the internal tx mock object on prisma during vi.mock setup so tests
+// Expose the internal tx mock object on baseDb during vi.mock setup so tests
 // can configure return values per-test.
-const tx = (prisma as unknown as { __tx: TxLike }).__tx;
+const tx = (baseDb as unknown as { __tx: TxLike }).__tx;
 
 const CTX = { tokenId: "tok_test", systemUserId: SCIM_SYSTEM_USER_ID } as const;
 
@@ -546,13 +546,13 @@ describe("listScimUsers", () => {
     expect(tombGate).toBeDefined();
   });
 
-  it("F2: filter calls scimFilterToPrismaWhere and ANDs with tombstone gate", async () => {
+  it("F2: filter calls scimFilterToDbWhere and ANDs with tombstone gate", async () => {
     tx.user.findMany.mockResolvedValue([]);
     tx.user.count.mockResolvedValue(0);
 
     await listScimUsers({ filter: 'userName eq "alice"' }, CTX);
 
-    expect(scimFilterToPrismaWhere).toHaveBeenCalledWith('userName eq "alice"');
+    expect(scimFilterToDbWhere).toHaveBeenCalledWith('userName eq "alice"');
     const args = tx.user.findMany.mock.calls[0][0] as {
       where: { AND: Array<Record<string, unknown>> };
     };
@@ -977,12 +977,12 @@ describe("deleteScimUser", () => {
   });
 });
 
-describe("J — raw-prisma + tx invariants (anti-pattern guards)", () => {
+describe("J — raw-baseDb + tx invariants (anti-pattern guards)", () => {
   // These are static source assertions; they read the on-disk file and look
   // for forbidden tokens. They guard the planning-locked rules.
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
+
   const fs = require("fs") as typeof import("fs");
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
+
   const path = require("path") as typeof import("path");
   const source = fs.readFileSync(path.join(__dirname, "users.ts"), "utf-8");
 

@@ -2,10 +2,10 @@
  * Idempotent trigger DDL applier — the SOLE source of audit trigger DDL (CAP-02).
  *
  * Attaches one capture trigger per TRIGGER_REGISTRY entry (each writes "DataChangeLog") plus the
- * DataChangeLog append-only enforcement triggers and grants. `prisma db push` silently DROPS these
+ * DataChangeLog append-only enforcement triggers and grants. `db push` silently DROPS these
  * triggers, and not every launch path re-runs the applier, so the substrate is re-attached from
  * three places — losing it means silent audit-capture loss with no error:
- *   - `pnpm generate` / `pnpm db:push`, immediately AFTER `prisma db push` (every schema sync),
+ *   - `pnpm generate` / `pnpm db:push`, immediately AFTER `db push` (every schema sync),
  *   - the deploy entrypoint (docker-entrypoint.sh), after db push,
  *   - the application's own boot, launch-agnostic, via the exported applyAuditTriggers() — called by
  *     lib/audit/ensureAuditTriggers from instrumentation.ts (web tier) and the audit-log worker
@@ -14,7 +14,7 @@
  * In order, against a DIRECT (pooler-bypassing) connection, it:
  *   1. resolves DIRECT_DATABASE_URL ?? DATABASE_URL,
  *   2. asserts the registry is safe (no prohibited table),
- *   3. executes prisma/audit_row_change.sql (CREATE OR REPLACE FUNCTION — idempotent),
+ *   3. executes db/audit_row_change.sql (CREATE OR REPLACE FUNCTION — idempotent),
  *   4. attaches one tpl_audit_<table> trigger per registry entry (DROP IF EXISTS + CREATE),
  *   5. installs the append-only ENFORCEMENT triggers on DataChangeLog regardless of ownership
  *      (the REAL SAF-03 guarantee — a BEFORE DELETE and a BEFORE UPDATE trigger that RAISE a
@@ -23,8 +23,14 @@
  *      INSERT/SELECT/UPDATE/DELETE (the worker advances the processed cursor and the retention job
  *      purges rows), UPDATE/DELETE are revoked from PUBLIC, and the enforcement triggers above
  *      remain the real guard,
- *   7. self-checks: count(DISTINCT trigger_name) over tpl_audit_% against the registry length, and
- *      asserts the connecting role holds INSERT/SELECT/UPDATE/DELETE on DataChangeLog.
+ *   7. self-checks: every registry entry's tpl_audit_% trigger is attached (strict lockstep with the
+ *      registry, unless a table was skipped — see below), and asserts the connecting role holds
+ *      INSERT/SELECT/UPDATE/DELETE on DataChangeLog.
+ *
+ * Cross-version boots: a registry entry whose table does not exist in the connected database (42P01)
+ * is skipped with a warning rather than aborting the bootstrap, and any skip suppresses the
+ * orphan-trigger cleanup and relaxes the drift check — the schema was migrated by a different release
+ * channel, and its own triggers must not be treated as orphans.
  *
  * Run as a CLI:  cd testplanit && tsx scripts/apply-triggers.ts
  * Or import applyAuditTriggers() to apply from the running app. Safe to run repeatedly — every
@@ -38,13 +44,15 @@ import { Client } from "pg";
 
 import {
   TRIGGER_REGISTRY,
+  SINGLE_DEFAULT_REGISTRY,
+  SOFT_DELETE_REGISTRY,
   DEFAULT_DENYLIST,
   assertRegistrySafe,
 } from "./trigger-registry";
 import { ROLLUP_MAP } from "../lib/audit/rollupMap";
 
 /**
- * Locate prisma/audit_row_change.sql robustly. `__dirname` is correct under tsx (scripts/), but when
+ * Locate db/audit_row_change.sql robustly. `__dirname` is correct under tsx (scripts/), but when
  * this module is imported from the running app (the instrumentation boot hook) it may be bundled and
  * `__dirname` repointed, so we also try the process working directory and the monorepo layout. First
  * existing candidate wins; otherwise fall back to the original path so readFileSync raises a clear
@@ -52,9 +60,9 @@ import { ROLLUP_MAP } from "../lib/audit/rollupMap";
  */
 function resolveAuditFnSqlPath(): string {
   const candidates = [
-    join(process.cwd(), "prisma", "audit_row_change.sql"),
-    join(__dirname, "..", "prisma", "audit_row_change.sql"),
-    join(process.cwd(), "testplanit", "prisma", "audit_row_change.sql"),
+    join(process.cwd(), "db", "audit_row_change.sql"),
+    join(__dirname, "..", "db", "audit_row_change.sql"),
+    join(process.cwd(), "testplanit", "db", "audit_row_change.sql"),
   ];
   return candidates.find((p) => existsSync(p)) ?? candidates[0];
 }
@@ -79,6 +87,143 @@ export interface ApplyAuditTriggersOptions {
 function triggerNameFor(table: string): string {
   return "tpl_audit_" + table.toLowerCase().replace(/[^a-z0-9]/g, "_");
 }
+
+/** tpl_single_default_<lowercased table>. Distinct prefix keeps these out of the tpl_audit_% drift check. */
+function singleDefaultTriggerNameFor(table: string): string {
+  return "tpl_single_default_" + table.toLowerCase().replace(/[^a-z0-9]/g, "_");
+}
+
+/** The single live-step-count trigger. Its own prefix keeps it out of the tpl_audit_% / tpl_single_default_% / tpl_stamp_deleted_at_% drift checks. */
+const CASE_STEP_COUNT_TRIGGER = "tpl_case_step_count_steps";
+
+/** tpl_stamp_deleted_at_<lowercased table>. Distinct prefix keeps these out of the tpl_audit_% / tpl_single_default_% drift checks. */
+function stampDeletedAtTriggerNameFor(table: string): string {
+  return (
+    "tpl_stamp_deleted_at_" + table.toLowerCase().replace(/[^a-z0-9]/g, "_")
+  );
+}
+
+/**
+ * Business-rule trigger (NOT audit): enforce "at most one isDefault = true" per
+ * table (optionally scoped by TG_ARGV[0]). Fires AFTER a row is set default and
+ * clears the OTHER in-scope defaults in the same transaction — so exclusivity is
+ * atomic and the app never has to run its own non-atomic clear-all. Excludes the
+ * target row (`id <> NEW.id`), so re-saving an already-default row is a no-op.
+ * The clear sets isDefault = false, and the WHEN clause fires only on TRUE, so
+ * the trigger's own UPDATE never re-fires it (no recursion).
+ */
+const SINGLE_DEFAULT_FN_SQL = `
+CREATE OR REPLACE FUNCTION tpl_enforce_single_default() RETURNS TRIGGER AS $$
+DECLARE
+  scope_col text := NULLIF(TG_ARGV[0], '');
+  scope_val text;
+BEGIN
+  -- Only enforce when a row BECOMES default (INSERT with true, or an UPDATE
+  -- transitioning false→true). Re-saving an already-default row (e.g. editing
+  -- its name) must NOT clear sibling defaults — that would be a surprising side
+  -- effect, and it lets a pre-existing multi-default state be reconciled
+  -- explicitly rather than by an unrelated edit.
+  IF TG_OP = 'UPDATE' AND OLD."isDefault" IS TRUE THEN
+    RETURN NULL;
+  END IF;
+  IF scope_col IS NULL THEN
+    EXECUTE format(
+      'UPDATE %I SET "isDefault" = false WHERE "isDefault" = true AND "id" <> $1',
+      TG_TABLE_NAME
+    ) USING NEW."id";
+  ELSE
+    scope_val := to_jsonb(NEW) ->> scope_col;
+    EXECUTE format(
+      'UPDATE %I SET "isDefault" = false WHERE "isDefault" = true AND "id" <> $1 AND (%I)::text IS NOT DISTINCT FROM $2',
+      TG_TABLE_NAME, scope_col
+    ) USING NEW."id", scope_val;
+  END IF;
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+`;
+
+/**
+ * Live step-count maintenance (a business rule, NOT audit). Keeps
+ * `RepositoryCases."liveStepCount"` equal to the number of that case's `Steps` rows
+ * with `isDeleted = false`.
+ *
+ * It exists because the repository/run list can sort by the Steps column, and
+ * `orderBy: { steps: { _count } }` cannot take a `where` — ZenStack's
+ * applyRelationOrderBy builds a correlated `count(1)` with only the join predicate,
+ * so retired steps are counted and the sort disagrees with the number the column
+ * shows. A denormalized scalar is the only form the ORM can sort by in BOTH the
+ * repository and run lists (the ordered-page-ids pattern used for latestResults is
+ * disabled in run mode).
+ *
+ * In the DB rather than app code because steps are written from many paths —
+ * the step editor, bulk edit, CSV/Excel import, copy/move, the Testmo importer,
+ * the shared-step conversion service, and one-off SQL scripts. A trigger cannot
+ * drift; a counter maintained by hand in eight call sites will.
+ *
+ * AFTER INSERT/UPDATE/DELETE, and it recomputes rather than applying a delta:
+ * recomputing is idempotent, so a re-run, a bulk `updateMany`, or a row moving
+ * between cases can never accumulate error. Both the old and new `testCaseId` are
+ * refreshed so a step reparented by an UPDATE settles both sides.
+ */
+const CASE_STEP_COUNT_FN_SQL = `
+CREATE OR REPLACE FUNCTION tpl_refresh_case_step_count() RETURNS TRIGGER AS $$
+DECLARE
+  affected int[];
+BEGIN
+  affected := ARRAY(
+    SELECT DISTINCT x FROM unnest(ARRAY[
+      CASE WHEN TG_OP <> 'INSERT' THEN OLD."testCaseId" END,
+      CASE WHEN TG_OP <> 'DELETE' THEN NEW."testCaseId" END
+    ]) AS x WHERE x IS NOT NULL
+  );
+
+  UPDATE "RepositoryCases" rc
+     SET "liveStepCount" = COALESCE(s.cnt, 0)
+    FROM unnest(affected) AS a(case_id)
+    LEFT JOIN LATERAL (
+      SELECT count(*) AS cnt FROM "Steps" st
+       WHERE st."testCaseId" = a.case_id AND st."isDeleted" = false
+    ) s ON true
+   WHERE rc.id = a.case_id
+     AND rc."liveStepCount" IS DISTINCT FROM COALESCE(s.cnt, 0);
+
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+`;
+
+/**
+ * Soft-delete stamping (a business rule, NOT audit). Records WHEN a row was soft-deleted so a
+ * retention/purge job has a timestamp to key off (Option A — additive alongside `isDeleted`, which
+ * stays the queryable liveness flag). This is a BEFORE UPDATE trigger because it MODIFIES the row
+ * being written (sets NEW."deletedAt") rather than running a side-effect UPDATE like the AFTER
+ * business-rule/audit triggers.
+ *
+ * The attaching trigger is gated `WHEN (NEW."isDeleted" IS DISTINCT FROM OLD."isDeleted")`, so the
+ * function body runs ONLY on an actual flip — a no-op re-save or any unrelated column update never
+ * enters it (no overhead on hot write paths, and no risk of re-stamping an already-deleted row).
+ * Given that gate, NEW."isDeleted" TRUE means false→true (stamp) and FALSE means true→false (restore,
+ * clear). An explicit deletedAt supplied in the same flip write is respected (stamped only when NULL).
+ * Deliberately UPDATE-only: a row INSERTed already-deleted keeps deletedAt NULL (a safe omission — the
+ * purge job simply never sweeps a NULL-deletedAt row; it is not a wrong deletion time).
+ */
+const STAMP_DELETED_AT_FN_SQL = `
+CREATE OR REPLACE FUNCTION tpl_stamp_deleted_at() RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW."isDeleted" IS TRUE THEN
+    -- false -> true: stamp the deletion moment, unless the write set one explicitly.
+    IF NEW."deletedAt" IS NULL THEN
+      NEW."deletedAt" := now();
+    END IF;
+  ELSE
+    -- true -> false (restore): the row is live again, so drop the tombstone timestamp.
+    NEW."deletedAt" := NULL;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+`;
 
 /**
  * Append-only ENFORCEMENT for DataChangeLog. These BEFORE triggers RAISE a 42501 privilege error
@@ -154,9 +299,62 @@ CREATE UNIQUE INDEX IF NOT EXISTS audit_log_cdc_idempotency
 `;
 
 /**
+ * Execution-start composition lock (BOR-1) — the authoritative DB-level guard.
+ * When a TestRun is composition-locked (compositionLockedAt IS NOT NULL) its case
+ * SET is frozen: no adding cases (INSERT) and no removing/reordering
+ * (UPDATE of "isDeleted"/"order"). Execution and assignment writes (statusId,
+ * iteration counts, assignedToId, notes, timestamps) are untouched — the UPDATE
+ * trigger is scoped to the two composition columns, so those never reach here.
+ *
+ * Mirrors the ZenStack @@deny/@deny policy rules on TestRunCases and holds even
+ * for raw SQL / baseDb / rawClient paths that bypass the ORM policy layer.
+ *
+ * Intentionally NOT a BEFORE DELETE guard: the app removes a case by
+ * soft-deleting it (UPDATE "isDeleted" = true, caught above), never by hard
+ * DELETE. Hard DELETE of a TestRunCases row happens only via ON DELETE CASCADE
+ * (deleting the run or its repository case) or the retention purge — legitimate
+ * operations a delete guard would wrongly block (the parent run row is still
+ * visible mid-cascade and would look "locked"). The distinct tpl_composition_*
+ * prefix keeps these out of the tpl_audit_% / tpl_single_default_% / tpl_stamp_%
+ * drift checks.
+ */
+export const COMPOSITION_LOCK_GUARD_SQL = `
+CREATE OR REPLACE FUNCTION tpl_composition_lock_guard() RETURNS TRIGGER AS $$
+DECLARE
+  locked timestamptz;
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    SELECT "compositionLockedAt" INTO locked FROM "TestRuns" WHERE "id" = NEW."testRunId";
+    IF locked IS NOT NULL THEN
+      RAISE EXCEPTION 'Test run % composition is locked: cannot add cases', NEW."testRunId" USING ERRCODE = 'check_violation'; -- 23514
+    END IF;
+    RETURN NEW;
+  END IF;
+  -- UPDATE (fires only on "order"/"isDeleted" via UPDATE OF); re-check the value actually changed.
+  IF NEW."order" IS DISTINCT FROM OLD."order"
+     OR NEW."isDeleted" IS DISTINCT FROM OLD."isDeleted" THEN
+    SELECT "compositionLockedAt" INTO locked FROM "TestRuns" WHERE "id" = NEW."testRunId";
+    IF locked IS NOT NULL THEN
+      RAISE EXCEPTION 'Test run % composition is locked: cannot add, remove, or reorder cases', NEW."testRunId" USING ERRCODE = 'check_violation'; -- 23514
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS tpl_composition_lock_guard_ins ON "TestRunCases";
+CREATE TRIGGER tpl_composition_lock_guard_ins BEFORE INSERT ON "TestRunCases"
+  FOR EACH ROW EXECUTE FUNCTION tpl_composition_lock_guard();
+
+DROP TRIGGER IF EXISTS tpl_composition_lock_guard_upd ON "TestRunCases";
+CREATE TRIGGER tpl_composition_lock_guard_upd BEFORE UPDATE OF "order", "isDeleted" ON "TestRunCases"
+  FOR EACH ROW EXECUTE FUNCTION tpl_composition_lock_guard();
+`;
+
+/**
  * Apply the full audit-trigger substrate to one database, idempotently. Importable so the app can
  * self-install on boot (see lib/audit/ensureAuditTriggers + instrumentation.ts) in addition to the
- * CLI / deploy-entrypoint paths — `prisma db push` silently drops these triggers, so they must be
+ * CLI / deploy-entrypoint paths — `db push` silently drops these triggers, so they must be
  * re-attached on every schema sync AND on every app start, regardless of how the app is launched.
  */
 export async function applyAuditTriggers(
@@ -199,6 +397,13 @@ export async function applyAuditTriggers(
     await client.query(auditFnSql);
 
     // 2. One audit trigger per registry entry (DROP IF EXISTS + CREATE — idempotent).
+    //    A registry entry whose TABLE does not exist (42P01) is skipped with a warning
+    //    instead of aborting the whole bootstrap: this code may boot against a database
+    //    migrated by a different release channel (e.g. a main-era checkout on a DB whose
+    //    implicit m2m tables became explicit models), and one phantom entry must not cost
+    //    the remaining tables their re-attach. Skips flip the applier into a conservative
+    //    cross-version mode: see the orphan-drop and drift-check gates below.
+    const skippedMissingTables: string[] = [];
     for (const entry of TRIGGER_REGISTRY) {
       const triggerName = triggerNameFor(entry.table);
       const pkCol = entry.pkCol ?? "id";
@@ -220,43 +425,167 @@ export async function applyAuditTriggers(
       ].join(",");
 
       // Identifiers/args come ONLY from the static in-repo registry — no user input in this DDL.
-      await client.query(
-        `DROP TRIGGER IF EXISTS ${triggerName} ON "${entry.table}";`
-      );
-      await client.query(
-        `CREATE TRIGGER ${triggerName}
-           AFTER INSERT OR UPDATE OR DELETE ON "${entry.table}"
-           FOR EACH ROW EXECUTE FUNCTION audit_row_change('${pkCol}', '${denylistCsv}', '${nameCol}', '${projectCol}', '${captureCols}');`
-      );
+      try {
+        await client.query(
+          `DROP TRIGGER IF EXISTS ${triggerName} ON "${entry.table}";`
+        );
+        await client.query(
+          `CREATE TRIGGER ${triggerName}
+             AFTER INSERT OR UPDATE OR DELETE ON "${entry.table}"
+             FOR EACH ROW EXECUTE FUNCTION audit_row_change('${pkCol}', '${denylistCsv}', '${nameCol}', '${projectCol}', '${captureCols}');`
+        );
+      } catch (err) {
+        if ((err as { code?: string }).code === "42P01") {
+          skippedMissingTables.push(entry.table);
+          log(
+            `[apply-triggers] WARNING: table "${entry.table}" does not exist in this database — skipping its audit trigger (schema/registry version mismatch?)`
+          );
+          continue;
+        }
+        throw err;
+      }
     }
 
     // 2b. Drop orphaned audit triggers — tables removed from the registry. Without this a removed
     //     entry leaves its tpl_audit_* trigger live (still writing DataChangeLog) and fails the
     //     drift self-check below. This keeps the live trigger set in exact lockstep with the registry.
-    const expectedTriggerNames = new Set(
-      TRIGGER_REGISTRY.map((e) => triggerNameFor(e.table))
+    //
+    //     GATED on zero skips above: a skipped entry means this code's registry does not match the
+    //     database's schema (cross-version boot), so a trigger this registry doesn't know is NOT an
+    //     orphan — it is live capture belonging to the schema's own release (e.g. beta's explicit
+    //     RepositoryCaseTag trigger, seen from a main-era registry). Dropping it would silently
+    //     lose capture until the matching release next boots. In mismatch mode only ADD, never remove.
+    if (skippedMissingTables.length === 0) {
+      const expectedTriggerNames = new Set(
+        TRIGGER_REGISTRY.map((e) => triggerNameFor(e.table))
+      );
+      const { rows: liveAuditTriggers } = await client.query<{
+        trigger_name: string;
+        event_object_table: string;
+      }>(
+        `SELECT DISTINCT trigger_name, event_object_table
+           FROM information_schema.triggers
+          WHERE trigger_name LIKE 'tpl_audit_%'`
+      );
+      for (const t of liveAuditTriggers) {
+        if (!expectedTriggerNames.has(t.trigger_name)) {
+          await client.query(
+            `DROP TRIGGER IF EXISTS ${t.trigger_name} ON "${t.event_object_table}";`
+          );
+          log(
+            `[apply-triggers] dropped orphaned trigger ${t.trigger_name} on "${t.event_object_table}"`
+          );
+        }
+      }
+    } else {
+      log(
+        `[apply-triggers] WARNING: ${skippedMissingTables.length} registry table(s) missing from this database (${skippedMissingTables.join(", ")}) — skipping orphan-trigger cleanup (cross-version boot; leaving unrecognized triggers in place)`
+      );
+    }
+
+    // 2c. Single-default enforcement (business rule). CREATE OR REPLACE the shared
+    //     function, then attach one tpl_single_default_<table> trigger per entry and
+    //     drop orphans. Distinct prefix keeps these out of the tpl_audit_% drift check.
+    await client.query(SINGLE_DEFAULT_FN_SQL);
+    for (const entry of SINGLE_DEFAULT_REGISTRY) {
+      const triggerName = singleDefaultTriggerNameFor(entry.table);
+      const scopeArg = entry.scopeCol ?? "";
+      await client.query(
+        `DROP TRIGGER IF EXISTS ${triggerName} ON "${entry.table}";`
+      );
+      await client.query(
+        `CREATE TRIGGER ${triggerName}
+           AFTER INSERT OR UPDATE OF "isDefault" ON "${entry.table}"
+           FOR EACH ROW WHEN (NEW."isDefault" IS TRUE)
+           EXECUTE FUNCTION tpl_enforce_single_default('${scopeArg}');`
+      );
+    }
+    const expectedSingleDefault = new Set(
+      SINGLE_DEFAULT_REGISTRY.map((e) => singleDefaultTriggerNameFor(e.table))
     );
-    const { rows: liveAuditTriggers } = await client.query<{
+    const { rows: liveSingleDefault } = await client.query<{
       trigger_name: string;
       event_object_table: string;
     }>(
       `SELECT DISTINCT trigger_name, event_object_table
          FROM information_schema.triggers
-        WHERE trigger_name LIKE 'tpl_audit_%'`
+        WHERE trigger_name LIKE 'tpl_single_default_%'`
     );
-    for (const t of liveAuditTriggers) {
-      if (!expectedTriggerNames.has(t.trigger_name)) {
+    for (const t of liveSingleDefault) {
+      if (!expectedSingleDefault.has(t.trigger_name)) {
         await client.query(
           `DROP TRIGGER IF EXISTS ${t.trigger_name} ON "${t.event_object_table}";`
         );
         log(
-          `[apply-triggers] dropped orphaned trigger ${t.trigger_name} on "${t.event_object_table}"`
+          `[apply-triggers] dropped orphaned single-default trigger ${t.trigger_name} on "${t.event_object_table}"`
         );
       }
     }
 
+    // 2d. Soft-delete deletedAt stamping (business rule). CREATE OR REPLACE the shared function, then
+    //     attach one tpl_stamp_deleted_at_<table> BEFORE UPDATE OF "isDeleted" trigger per entry and
+    //     drop orphans. The WHEN gate fires the function only on a real isDeleted flip. Distinct prefix
+    //     keeps these out of the tpl_audit_% / tpl_single_default_% drift checks.
+    await client.query(STAMP_DELETED_AT_FN_SQL);
+    for (const entry of SOFT_DELETE_REGISTRY) {
+      const triggerName = stampDeletedAtTriggerNameFor(entry.table);
+      await client.query(
+        `DROP TRIGGER IF EXISTS ${triggerName} ON "${entry.table}";`
+      );
+      await client.query(
+        `CREATE TRIGGER ${triggerName}
+           BEFORE UPDATE OF "isDeleted" ON "${entry.table}"
+           FOR EACH ROW WHEN (NEW."isDeleted" IS DISTINCT FROM OLD."isDeleted")
+           EXECUTE FUNCTION tpl_stamp_deleted_at();`
+      );
+    }
+    const expectedStampDeletedAt = new Set(
+      SOFT_DELETE_REGISTRY.map((e) => stampDeletedAtTriggerNameFor(e.table))
+    );
+    const { rows: liveStampDeletedAt } = await client.query<{
+      trigger_name: string;
+      event_object_table: string;
+    }>(
+      `SELECT DISTINCT trigger_name, event_object_table
+         FROM information_schema.triggers
+        WHERE trigger_name LIKE 'tpl_stamp_deleted_at_%'`
+    );
+    for (const t of liveStampDeletedAt) {
+      if (!expectedStampDeletedAt.has(t.trigger_name)) {
+        await client.query(
+          `DROP TRIGGER IF EXISTS ${t.trigger_name} ON "${t.event_object_table}";`
+        );
+        log(
+          `[apply-triggers] dropped orphaned stamp-deletedAt trigger ${t.trigger_name} on "${t.event_object_table}"`
+        );
+      }
+    }
+
+    // 2e. Live step-count maintenance (business rule). One trigger on "Steps" keeps
+    //     RepositoryCases."liveStepCount" in step with the live rows so the Steps
+    //     column can be sorted on (a relation _count orderBy cannot exclude retired
+    //     steps). Its own prefix keeps it out of the three drift checks above.
+    await client.query(CASE_STEP_COUNT_FN_SQL);
+    await client.query(
+      `DROP TRIGGER IF EXISTS ${CASE_STEP_COUNT_TRIGGER} ON "Steps";`
+    );
+    await client.query(
+      `CREATE TRIGGER ${CASE_STEP_COUNT_TRIGGER}
+         AFTER INSERT OR UPDATE OR DELETE ON "Steps"
+         FOR EACH ROW EXECUTE FUNCTION tpl_refresh_case_step_count();`
+    );
+    // No reconciliation pass here: the column is populated once by the migration
+    // that adds it, and this trigger keeps it in step from then on. If a `db push`
+    // ever drops the trigger, steps written before the next apply leave stale
+    // counts — recompute them with the UPDATE in that migration.
+
     // 3. Append-only ENFORCEMENT triggers on DataChangeLog (the real SAF-03 guarantee).
     await client.query(APPEND_ONLY_ENFORCEMENT_SQL);
+
+    // 3b. Composition-lock ENFORCEMENT on TestRunCases (BOR-1). Idempotent
+    //     CREATE OR REPLACE + DROP/CREATE TRIGGER. Distinct tpl_composition_*
+    //     prefix keeps it out of every drift self-check below.
+    await client.query(COMPOSITION_LOCK_GUARD_SQL);
 
     // 4. GRANT/REVOKE defense-in-depth: the connecting role keeps INSERT/SELECT/UPDATE/DELETE (the
     //    worker cursor + retention purge need UPDATE/DELETE); UPDATE/DELETE revoked from PUBLIC. The
@@ -269,31 +598,46 @@ export async function applyAuditTriggers(
 
     // 6. Drift self-check: count DISTINCT tpl_audit_* triggers (the tpl_dcl_* enforcement
     //    triggers are intentionally excluded by the tpl_audit_% prefix) and assert == registry length.
-    const { rows } = await client.query<{ n: number }>(
-      `SELECT count(DISTINCT trigger_name)::int AS n
+    //    In cross-version mode (skips above) the strict count is meaningless — skipped entries have
+    //    no trigger and the schema's own release may hold triggers this registry doesn't know — so
+    //    assert only that every NON-skipped entry's trigger is attached, and warn instead of throw
+    //    on extras.
+    const skippedNames = new Set(
+      skippedMissingTables.map((t) => triggerNameFor(t))
+    );
+    const { rows: present } = await client.query<{ trigger_name: string }>(
+      `SELECT DISTINCT trigger_name
          FROM information_schema.triggers
         WHERE trigger_name LIKE 'tpl_audit_%'`
     );
-    const liveCount = rows[0]?.n ?? 0;
-    if (liveCount !== TRIGGER_REGISTRY.length) {
-      const { rows: present } = await client.query<{ trigger_name: string }>(
-        `SELECT DISTINCT trigger_name
-           FROM information_schema.triggers
-          WHERE trigger_name LIKE 'tpl_audit_%'`
-      );
-      const presentNames = new Set(present.map((r) => r.trigger_name));
-      const expectedNames = TRIGGER_REGISTRY.map((e) =>
-        triggerNameFor(e.table)
-      );
-      const missing = expectedNames.filter((n) => !presentNames.has(n));
-      const extra = [...presentNames].filter((n) => !expectedNames.includes(n));
+    const presentNames = new Set(present.map((r) => r.trigger_name));
+    const expectedNames = TRIGGER_REGISTRY.map((e) => triggerNameFor(e.table));
+    const missing = expectedNames.filter(
+      (n) => !presentNames.has(n) && !skippedNames.has(n)
+    );
+    const extra = [...presentNames].filter((n) => !expectedNames.includes(n));
+    if (missing.length) {
       console.error(
-        `[apply-triggers] DRIFT: live tpl_audit_* count ${liveCount} != registry ${TRIGGER_REGISTRY.length}.`
+        `[apply-triggers] DRIFT: live tpl_audit_* count ${presentNames.size} != registry ${TRIGGER_REGISTRY.length}.`
       );
-      if (missing.length) console.error(`  missing: ${missing.join(", ")}`);
+      console.error(`  missing: ${missing.join(", ")}`);
       if (extra.length) console.error(`  extra:   ${extra.join(", ")}`);
       throw new Error(
         "Trigger drift detected after apply (see missing/extra above)."
+      );
+    }
+    if (extra.length) {
+      if (skippedMissingTables.length === 0) {
+        console.error(
+          `[apply-triggers] DRIFT: live tpl_audit_* count ${presentNames.size} != registry ${TRIGGER_REGISTRY.length}.`
+        );
+        console.error(`  extra:   ${extra.join(", ")}`);
+        throw new Error(
+          "Trigger drift detected after apply (see missing/extra above)."
+        );
+      }
+      log(
+        `[apply-triggers] cross-version boot: leaving unrecognized trigger(s) in place: ${extra.join(", ")}`
       );
     }
 
@@ -332,7 +676,13 @@ export async function applyAuditTriggers(
     }
 
     log(
-      `[apply-triggers] applied audit_row_change() + ${TRIGGER_REGISTRY.length} tpl_audit_* triggers ` +
+      `[apply-triggers] applied audit_row_change() + ${TRIGGER_REGISTRY.length - skippedMissingTables.length} tpl_audit_* triggers` +
+        (skippedMissingTables.length
+          ? ` (${skippedMissingTables.length} skipped — tables missing in this database) `
+          : " ") +
+        `+ tpl_enforce_single_default() + ${SINGLE_DEFAULT_REGISTRY.length} tpl_single_default_* triggers ` +
+        `+ tpl_stamp_deleted_at() + ${SOFT_DELETE_REGISTRY.length} tpl_stamp_deleted_at_* triggers ` +
+        `+ tpl_refresh_case_step_count() + ${CASE_STEP_COUNT_TRIGGER} ` +
         `+ DataChangeLog append-only enforcement (tpl_dcl_no_delete/tpl_dcl_no_update) + GRANT/REVOKE defense-in-depth ` +
         `+ AuditLog CDC idempotency index (audit_log_cdc_idempotency) ` +
         `(idempotent, via ${usingDirect ? "DIRECT_DATABASE_URL" : "DATABASE_URL"}).`

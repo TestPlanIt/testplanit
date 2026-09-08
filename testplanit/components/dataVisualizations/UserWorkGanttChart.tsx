@@ -297,7 +297,9 @@ const UserWorkGanttChart: React.FC<UserWorkGanttChartProps> = ({
             if (!tooltipRef.current || !taskData) return;
 
             const businessHours = toBusinessHours(taskData.start, taskData.end);
-            const readableWorkEffort = `${businessHours.toFixed(1)} business hours`;
+            const readableWorkEffort = t("ganttTooltip.businessHours", {
+              hours: businessHours,
+            });
 
             // Format dates using browser's local timezone for the tooltip
             const startDateStr = taskData.start.toLocaleDateString(locale, {

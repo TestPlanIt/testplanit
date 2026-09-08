@@ -1,4 +1,5 @@
 import { expect, test } from "../../fixtures/index";
+import type { APIResponse } from "@playwright/test";
 
 /**
  * Integration Setup E2E Tests
@@ -27,7 +28,7 @@ test.describe("Integration Setup - Admin CRUD via API", () => {
     request,
     baseURL,
   }) => {
-    let response: Awaited<ReturnType<typeof request.post>> | undefined;
+    let response: APIResponse | undefined;
     await test.step("Create a Jira integration via API", async () => {
       response = await request.post(`${baseURL}/api/integrations`, {
         data: {
@@ -39,6 +40,11 @@ test.describe("Integration Setup - Admin CRUD via API", () => {
             apiToken: "fake-api-token-for-e2e",
             baseUrl: "https://example.atlassian.net",
           },
+          // Vouch explicitly: creation defaults to INACTIVE until a
+          // test-connection succeeds, and fake credentials never pass one.
+          // The ACTIVE row is also what the duplicate-name test below
+          // collides with (only ACTIVE rows reject duplicates).
+          status: "ACTIVE",
         },
       });
     });
@@ -58,7 +64,7 @@ test.describe("Integration Setup - Admin CRUD via API", () => {
     request,
     baseURL,
   }) => {
-    let response: Awaited<ReturnType<typeof request.post>> | undefined;
+    let response: APIResponse | undefined;
     await test.step("Create a GitHub integration via API", async () => {
       response = await request.post(`${baseURL}/api/integrations`, {
         data: {
@@ -78,6 +84,10 @@ test.describe("Integration Setup - Admin CRUD via API", () => {
       expect(body).toHaveProperty("id");
       expect(body.provider).toBe("GITHUB");
       expect(body.authType).toBe("PERSONAL_ACCESS_TOKEN");
+      // No status was supplied: creation defaults to INACTIVE until a
+      // successful test-connection (or an explicit status) vouches for the
+      // credentials.
+      expect(body.status).toBe("INACTIVE");
       _githubIntegrationId = body.id;
     });
   });
@@ -86,7 +96,7 @@ test.describe("Integration Setup - Admin CRUD via API", () => {
     request,
     baseURL,
   }) => {
-    let response: Awaited<ReturnType<typeof request.post>> | undefined;
+    let response: APIResponse | undefined;
     await test.step("Create an Azure DevOps integration via API", async () => {
       response = await request.post(`${baseURL}/api/integrations`, {
         data: {
@@ -115,7 +125,7 @@ test.describe("Integration Setup - Admin CRUD via API", () => {
     request,
     baseURL,
   }) => {
-    let response: Awaited<ReturnType<typeof request.post>> | undefined;
+    let response: APIResponse | undefined;
     await test.step("Create a SIMPLE_URL integration via API", async () => {
       response = await request.post(`${baseURL}/api/integrations`, {
         data: {
@@ -190,7 +200,7 @@ test.describe("Integration Setup - Admin CRUD via API", () => {
     request,
     baseURL,
   }) => {
-    let response: Awaited<ReturnType<typeof request.post>> | undefined;
+    let response: APIResponse | undefined;
     await test.step("Attempt to create an integration with a duplicate name", async () => {
       response = await request.post(`${baseURL}/api/integrations`, {
         data: {
@@ -233,7 +243,7 @@ test.describe("Integration Setup - Test Connection Endpoint", () => {
     request,
     baseURL,
   }) => {
-    let response: Awaited<ReturnType<typeof request.post>> | undefined;
+    let response: APIResponse | undefined;
     await test.step("Test connection for a SIMPLE_URL with a valid URL pattern", async () => {
       response = await request.post(
         `${baseURL}/api/integrations/test-connection`,
@@ -261,7 +271,7 @@ test.describe("Integration Setup - Test Connection Endpoint", () => {
     request,
     baseURL,
   }) => {
-    let response: Awaited<ReturnType<typeof request.post>> | undefined;
+    let response: APIResponse | undefined;
     await test.step("Test connection for a SIMPLE_URL missing the {issueId} placeholder", async () => {
       response = await request.post(
         `${baseURL}/api/integrations/test-connection`,
@@ -290,7 +300,7 @@ test.describe("Integration Setup - Test Connection Endpoint", () => {
     request,
     baseURL,
   }) => {
-    let response: Awaited<ReturnType<typeof request.post>> | undefined;
+    let response: APIResponse | undefined;
     await test.step("Test connection with a missing provider", async () => {
       response = await request.post(
         `${baseURL}/api/integrations/test-connection`,
@@ -315,7 +325,7 @@ test.describe("Integration Setup - Test Connection Endpoint", () => {
     request,
     baseURL,
   }) => {
-    let response: Awaited<ReturnType<typeof request.post>> | undefined;
+    let response: APIResponse | undefined;
     await test.step("Test Jira connection with fake credentials", async () => {
       response = await request.post(
         `${baseURL}/api/integrations/test-connection`,
@@ -350,7 +360,7 @@ test.describe("Integration Setup - Test Connection Endpoint", () => {
     request,
     baseURL,
   }) => {
-    let response: Awaited<ReturnType<typeof request.post>> | undefined;
+    let response: APIResponse | undefined;
     await test.step("Test GitHub connection with a fake PAT", async () => {
       response = await request.post(
         `${baseURL}/api/integrations/test-connection`,
@@ -378,7 +388,7 @@ test.describe("Integration Setup - Test Connection Endpoint", () => {
     request,
     baseURL,
   }) => {
-    let response: Awaited<ReturnType<typeof request.post>> | undefined;
+    let response: APIResponse | undefined;
     await test.step("Test Azure DevOps connection with a fake PAT", async () => {
       response = await request.post(
         `${baseURL}/api/integrations/test-connection`,
@@ -440,7 +450,7 @@ test.describe("Integration Setup - Project Integration Linking", () => {
     request,
     baseURL,
   }) => {
-    let response: Awaited<ReturnType<typeof request.post>> | undefined;
+    let response: APIResponse | undefined;
     await test.step("Link the SIMPLE_URL integration to the project", async () => {
       response = await request.post(
         `${baseURL}/api/model/projectIntegration/create`,
@@ -471,7 +481,7 @@ test.describe("Integration Setup - Project Integration Linking", () => {
     request,
     baseURL,
   }) => {
-    let response: Awaited<ReturnType<typeof request.get>> | undefined;
+    let response: APIResponse | undefined;
     await test.step("Query the project integrations for the linked integration", async () => {
       response = await request.get(
         `${baseURL}/api/model/projectIntegration/findMany`,
@@ -541,7 +551,7 @@ test.describe("Integration Setup - Code Repository Integration (INTG-03)", () =>
     request,
     baseURL,
   }) => {
-    let response: Awaited<ReturnType<typeof request.post>> | undefined;
+    let response: APIResponse | undefined;
     await test.step("Link the GitHub code repo integration to the project", async () => {
       response = await request.post(
         `${baseURL}/api/model/projectIntegration/create`,
@@ -570,7 +580,7 @@ test.describe("Integration Setup - Code Repository Integration (INTG-03)", () =>
     request,
     baseURL,
   }) => {
-    let response: Awaited<ReturnType<typeof request.get>> | undefined;
+    let response: APIResponse | undefined;
     await test.step("Query the project integrations including integration detail", async () => {
       response = await request.get(
         `${baseURL}/api/model/projectIntegration/findMany`,

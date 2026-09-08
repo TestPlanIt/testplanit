@@ -1,8 +1,9 @@
 "use client";
 
-import { ProjectAccessType, Roles, User } from "@prisma/client";
+import { ProjectAccessType } from "~/zenstack/models";
+import type { Roles, User } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Control,
   UseFormGetValues,
@@ -27,7 +28,7 @@ import {
   SelectSeparator,
   SelectTrigger,
 } from "@/components/ui/select";
-import { Loader2, Trash2 } from "lucide-react";
+import { Loader2, Trash } from "lucide-react";
 
 // Type for user data including their global role
 type UserWithRole = User & { role: Roles | null };
@@ -161,29 +162,36 @@ export function ProjectUserPermissions({
 
   // --- Derived State ---
   const assignedUserIds = Object.keys(userPermissionsState || {});
-  const availableUsersToAdd =
-    allUsers?.filter((u) => !userPermissionsState?.[u.id]) ?? [];
+  const availableUsersToAdd = useMemo(
+    () => allUsers?.filter((u) => !userPermissionsState?.[u.id]) ?? [],
+    [allUsers, userPermissionsState]
+  );
 
-  // AsyncCombobox functions
-  const fetchUsers = async (
-    query: string,
-    page: number,
-    pageSize: number
-  ): Promise<{ results: UserWithRole[]; total: number }> => {
-    const filtered = availableUsersToAdd.filter((user) => {
-      const searchString = `${user.name} ${user.email}`.toLowerCase();
-      return searchString.includes(query.toLowerCase());
-    });
+  // AsyncCombobox refetches whenever `fetchOptions` changes identity, so it
+  // must stay referentially stable across renders — an inline arrow resets
+  // the dropdown to page 0 on every render and it can never load more.
+  const fetchUsers = useCallback(
+    async (
+      query: string,
+      page: number,
+      pageSize: number
+    ): Promise<{ results: UserWithRole[]; total: number }> => {
+      const filtered = availableUsersToAdd.filter((user) => {
+        const searchString = `${user.name} ${user.email}`.toLowerCase();
+        return searchString.includes(query.toLowerCase());
+      });
 
-    const start = page * pageSize;
-    const end = start + pageSize;
-    const paginatedResults = filtered.slice(start, end);
+      const start = page * pageSize;
+      const end = start + pageSize;
+      const paginatedResults = filtered.slice(start, end);
 
-    return {
-      results: paginatedResults,
-      total: filtered.length,
-    };
-  };
+      return {
+        results: paginatedResults,
+        total: filtered.length,
+      };
+    },
+    [availableUsersToAdd]
+  );
 
   const renderUserOption = (user: UserWithRole) => (
     <UserNameCell userId={user.id} hideLink={true} />
@@ -233,17 +241,17 @@ export function ProjectUserPermissions({
   return (
     <div className="space-y-4">
       {/* Table/List of Assigned Users */}
-      <div className="rounded-md border">
+      <div className="rounded-md border max-h-[55vh] overflow-y-auto">
         <table className="w-full caption-bottom text-sm">
-          <thead className="[&_tr]:border-b">
+          <thead className="[&_tr]:border-b sticky top-0 z-10 bg-background">
             <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+              <th className="h-12 px-4 text-start align-middle font-medium text-muted-foreground">
                 {tGlobal("common.access.user")}
               </th>
-              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+              <th className="h-12 px-4 text-start align-middle font-medium text-muted-foreground">
                 {t("tableHeaders.globalRole")}
               </th>
-              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+              <th className="h-12 px-4 text-start align-middle font-medium text-muted-foreground">
                 {t("tableHeaders.projectAccess")}
               </th>
               <th className="h-12 px-4 text-center align-middle font-medium text-muted-foreground">
@@ -338,15 +346,15 @@ export function ProjectUserPermissions({
                   key={userId}
                   className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
                 >
-                  <td className="pl-4 align-middle">
+                  <td className="ps-4 align-middle">
                     <UserNameCell userId={userId} hideLink={true} />
                   </td>
-                  <td className="pl-4 align-middle text-muted-foreground">
+                  <td className="ps-4 align-middle text-muted-foreground">
                     <RoleNameCell
                       roleId={user.roleId ? user.roleId.toString() : null}
                     />
                   </td>
-                  <td className="pl-1 align-middle">
+                  <td className="ps-1 align-middle">
                     <Select
                       value={combinedValue}
                       onValueChange={(value) =>
@@ -365,7 +373,7 @@ export function ProjectUserPermissions({
                             >
                               {effectiveAccessDisplay}
                             </span>
-                            <span className="ml-1 text-xs text-muted-foreground truncate flex items-center">
+                            <span className="ms-1 text-xs text-muted-foreground truncate flex items-center">
                               {/* Show the role based on current form state */}
                               {currentAccessType === "SPECIFIC_ROLE" &&
                               currentRoleId &&
@@ -430,7 +438,7 @@ export function ProjectUserPermissions({
                       aria-label={t("actions.removeUser")}
                       disabled={!permission}
                     >
-                      <Trash2 className="h-4 w-4 text-destructive" />
+                      <Trash className="h-4 w-4 text-destructive" />
                     </Button>
                   </td>
                 </tr>

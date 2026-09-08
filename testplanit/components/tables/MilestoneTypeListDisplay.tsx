@@ -1,13 +1,14 @@
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Badge } from "@/components/ui/badge";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { FieldIcon, MilestoneTypes } from "@prisma/client";
+import type { FieldIcon, MilestoneTypes } from "~/zenstack/models";
 import { Milestone } from "lucide-react";
 import React from "react";
-import { useFindManyMilestoneTypes } from "~/lib/hooks";
 import { IconName } from "~/types/globals";
 import DynamicIcon from "../DynamicIcon";
 
@@ -26,7 +27,9 @@ export const MilestoneTypeListDisplay: React.FC<MilestoneTypeListProps> = ({
     milestoneTypes = [];
   }
 
-  const { data: allMilestoneTypes } = useFindManyMilestoneTypes({
+  const { data: allMilestoneTypes } = useClientQueries(
+    schema
+  ).milestoneTypes.useFindMany({
     orderBy: { name: "asc" },
     where: {
       AND: [
@@ -53,7 +56,7 @@ export const MilestoneTypeListDisplay: React.FC<MilestoneTypeListProps> = ({
     <Popover>
       <PopoverTrigger>
         <Badge>
-          <Milestone className="w-4 h-4 mr-1" />
+          <Milestone className="w-4 h-4 me-1" />
           {allMilestoneTypes.length}
         </Badge>
       </PopoverTrigger>

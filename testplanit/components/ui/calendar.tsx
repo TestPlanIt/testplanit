@@ -43,9 +43,9 @@ function Calendar({
           "text-muted-foreground rounded-md w-8 font-normal text-[0.8rem]",
         week: "flex w-full mt-2",
         day: cn(
-          "relative p-0 text-center text-sm focus-within:relative focus-within:z-20 [&:has([aria-selected])]:bg-accent [&:has([aria-selected].outside)]:bg-accent/50 [&:has([aria-selected].range-end)]:rounded-r-md",
+          "relative p-0 text-center text-sm focus-within:relative focus-within:z-20 [&:has([aria-selected])]:bg-accent [&:has([aria-selected].outside)]:bg-accent/50 [&:has([aria-selected].range-end)]:rounded-e-md",
           props.mode === "range"
-            ? "[&:has(>.range-end)]:rounded-r-md [&:has(>.range-start)]:rounded-l-md first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md"
+            ? "[&:has(>.range-end)]:rounded-e-md [&:has(>.range-start)]:rounded-s-md first:[&:has([aria-selected])]:rounded-s-md last:[&:has([aria-selected])]:rounded-e-md"
             : "[&:has([aria-selected])]:rounded-md"
         ),
         day_button: cn(
@@ -68,9 +68,19 @@ function Calendar({
       components={{
         Chevron: (({ ...props }: any) => {
           if (props.orientation === "left") {
-            return <ChevronLeftIcon className={cn("h-4 w-4")} {...props} />;
+            return (
+              <ChevronLeftIcon
+                className={cn("h-4 w-4 rtl:rotate-180")}
+                {...props}
+              />
+            );
           }
-          return <ChevronRightIcon className={cn("h-4 w-4")} {...props} />;
+          return (
+            <ChevronRightIcon
+              className={cn("h-4 w-4 rtl:rotate-180")}
+              {...props}
+            />
+          );
         }) as any,
       }}
       {...props}

@@ -1,8 +1,8 @@
-import { Prisma } from "@prisma/client";
 import { describe, expect, it } from "vitest";
 import type { DrillDownContext } from "~/lib/types/reportDrillDown";
 import {
   buildIssuesQuery,
+  buildJunitResultQuery,
   buildMilestoneCompletionQuery,
   buildMilestonesQuery,
   buildRepositoryStatsQuery,
@@ -11,9 +11,16 @@ import {
   buildTestCasesQuery,
   buildTestExecutionQuery,
   buildTestRunsQuery,
+  DRILL_DOWN_DIMENSIONS_BY_REPORT,
   getModelForMetric,
   getQueryBuilderForMetric,
 } from "./drillDownQueryBuilders";
+import {
+  createIssueTrackingDimensionRegistry,
+  createRepositoryStatsDimensionRegistry,
+  createTestExecutionDimensionRegistry,
+  createUserEngagementDimensionRegistry,
+} from "./reportUtils";
 
 // Helper to create a base context
 function createBaseContext(
@@ -37,10 +44,14 @@ describe("drillDownQueryBuilders", () => {
       const context = createBaseContext({ projectId: 5 });
       const result = buildTestExecutionQuery(context, 0, 10);
 
-      expect(result.where?.testRun).toEqual({ projectId: 5 });
+      expect(result.where?.testRun).toEqual({
+        projectId: 5,
+        isDeleted: false,
+      });
+      expect(result.where?.isDeleted).toBe(false);
       expect(result.skip).toBe(0);
       expect(result.take).toBe(10);
-      expect(result.orderBy).toEqual({ executedAt: Prisma.SortOrder.desc });
+      expect(result.orderBy).toEqual({ executedAt: "desc" });
     });
 
     it("should apply user dimension filter", () => {
@@ -59,6 +70,17 @@ describe("drillDownQueryBuilders", () => {
       const result = buildTestExecutionQuery(context, 0, 10);
 
       expect(result.where?.statusId).toBe(2);
+    });
+
+    it("should filter the testCase dimension by repository case id", () => {
+      const context = createBaseContext({
+        dimensions: { testCase: { id: 108205, name: "SCORM export case" } },
+      });
+      const result = buildTestExecutionQuery(context, 0, 10);
+
+      expect(result.where?.testRunCase).toMatchObject({
+        repositoryCaseId: 108205,
+      });
     });
 
     it("should apply configuration dimension filter", () => {
@@ -128,7 +150,7 @@ describe("drillDownQueryBuilders", () => {
 
       expect(result.where?.executedAt).toBeDefined();
       expect((result.where?.executedAt as any).gte).toBeInstanceOf(Date);
-      expect((result.where?.executedAt as any).lte).toBeInstanceOf(Date);
+      expect((result.where?.executedAt as any).lt).toBeInstanceOf(Date);
     });
 
     it("should exclude untested status by default", () => {
@@ -172,6 +194,84 @@ describe("drillDownQueryBuilders", () => {
     });
   });
 
+  describe("buildJunitResultQuery", () => {
+    it("should build basic query with project filter through the suite's run", () => {
+      const context = createBaseContext({ projectId: 5 });
+      const result = buildJunitResultQuery(context);
+
+      expect(result?.where).toMatchObject({
+        statusId: { not: null },
+        status: { systemName: { not: "untested" } },
+        testSuite: { testRun: { projectId: 5 } },
+      });
+      expect(result?.where.time).toBeUndefined();
+      expect(result?.orderBy).toEqual({ executedAt: "desc" });
+    });
+
+    it("requires a duration only for elapsed metrics", () => {
+      const context = createBaseContext({ projectId: 5 });
+      const result = buildJunitResultQuery(context, { requireTime: true });
+
+      expect(result?.where.time).toEqual({ gt: 0 });
+    });
+
+    it("should map user dimension to createdById", () => {
+      const context = createBaseContext({
+        dimensions: { user: { id: "user-123", name: "Test User" } },
+      });
+      const result = buildJunitResultQuery(context);
+
+      expect(result?.where.createdById).toBe("user-123");
+    });
+
+    it("should apply status and date dimension filters", () => {
+      const context = createBaseContext({
+        dimensions: {
+          status: { id: 2, name: "Passed" },
+          date: { id: "2024-01-15", executedAt: "2024-01-15T00:00:00.000Z" },
+        },
+      });
+      const result = buildJunitResultQuery(context);
+
+      expect(result?.where.statusId).toBe(2);
+      expect(result?.where.executedAt.gte).toEqual(
+        new Date("2024-01-15T00:00:00.000Z")
+      );
+    });
+
+    it("should match the testCase dimension's repository case id directly", () => {
+      const context = createBaseContext({
+        dimensions: { testCase: { id: 42, name: "Login Test" } },
+      });
+      const result = buildJunitResultQuery(context);
+
+      expect(result?.where.repositoryCaseId).toBe(42);
+    });
+
+    it("should return null for a testCase dimension without an id", () => {
+      const context = createBaseContext({
+        dimensions: { testCase: { id: null as any, name: "None" } },
+      });
+
+      expect(buildJunitResultQuery(context)).toBeNull();
+    });
+
+    it("should apply folder and tag filters on the linked repository case", () => {
+      const context = createBaseContext({
+        dimensions: {
+          folder: { id: 7, name: "Smoke" },
+          tag: { id: 3, name: "regression" },
+        },
+      });
+      const result = buildJunitResultQuery(context);
+
+      expect(result?.where.repositoryCase).toEqual({
+        folderId: 7,
+        caseTags: { some: { tag: { id: 3 } } },
+      });
+    });
+  });
+
   describe("buildTestRunsQuery", () => {
     it("should build basic query with project filter", () => {
       const context = createBaseContext({ projectId: 5 });
@@ -180,29 +280,43 @@ describe("drillDownQueryBuilders", () => {
       expect(result.where?.projectId).toBe(5);
       expect(result.skip).toBe(0);
       expect(result.take).toBe(10);
-      expect(result.orderBy).toEqual({ createdAt: Prisma.SortOrder.desc });
+      expect(result.orderBy).toEqual({ createdAt: "desc" });
     });
 
-    it("should apply user dimension filter to results", () => {
+    it("maps the user dimension to the run creator", () => {
       const context = createBaseContext({
         dimensions: { user: { id: "user-456", name: "User" } },
       });
       const result = buildTestRunsQuery(context, 0, 10);
 
-      expect(result.where?.results).toEqual({
-        some: { executedById: "user-456" },
-      });
+      expect(result.where?.createdById).toBe("user-456");
     });
 
-    it("should apply status dimension filter to results", () => {
+    it("derives status membership from both result sources", () => {
       const context = createBaseContext({
         dimensions: { status: { id: 3, name: "Failed" } },
       });
       const result = buildTestRunsQuery(context, 0, 10);
 
-      expect(result.where?.results).toEqual({
-        some: { statusId: 3 },
+      expect(result.where?.OR).toEqual([
+        { results: { some: { isDeleted: false, statusId: 3 } } },
+        {
+          junitTestSuites: {
+            some: { results: { some: { statusId: 3 } } },
+          },
+        },
+      ]);
+    });
+
+    it("applies the date dimension and range to the run's createdAt", () => {
+      const context = createBaseContext({
+        dimensions: { date: { id: "2024-06-15", executedAt: "2024-06-15" } },
+        endDate: "2024-06-30",
       });
+      const result = buildTestRunsQuery(context, 0, 10);
+
+      expect(result.where?.createdAt).toBeDefined();
+      expect((result.where?.createdAt as any).gte).toBeInstanceOf(Date);
     });
 
     it("should apply configuration dimension filter", () => {
@@ -368,54 +482,70 @@ describe("drillDownQueryBuilders", () => {
       expect(result.where?.isDeleted).toBe(false);
     });
 
-    it("should filter by testRun project, not RepositoryCases project", () => {
+    it("should filter by testRun project through both membership branches", () => {
       const context = createBaseContext({ projectId: 10 });
       const result = buildTestCasesQuery(context, 0, 10);
 
-      // Should be filtered through results.testRun, not directly on projectId
+      // Filtered through the run scope in each OR branch, not directly on
+      // the repository case's own projectId
       expect(result.where?.projectId).toBeUndefined();
-      expect(result.where?.testRuns).toBeDefined();
+      const [manualBranch, junitBranch] = result.where?.OR as any[];
+      expect(manualBranch.testRuns.some.results.some.testRun.projectId).toBe(
+        10
+      );
+      expect(junitBranch.junitResults.some.testSuite.testRun.projectId).toBe(
+        10
+      );
     });
 
-    it("should apply user dimension filter to execution results", () => {
+    it("should apply user dimension filter to both sources", () => {
       const context = createBaseContext({
         dimensions: { user: { id: "exec-user", name: "Executor" } },
       });
       const result = buildTestCasesQuery(context, 0, 10);
 
-      expect(result.where?.testRuns?.some?.results?.some?.executedById).toBe(
+      const [manualBranch, junitBranch] = result.where?.OR as any[];
+      expect(manualBranch.testRuns.some.results.some.executedById).toBe(
         "exec-user"
       );
+      expect(junitBranch.junitResults.some.createdById).toBe("exec-user");
     });
 
-    it("should apply status dimension filter", () => {
+    it("should apply status dimension filter to both sources", () => {
       const context = createBaseContext({
         dimensions: { status: { id: 4, name: "Blocked" } },
       });
       const result = buildTestCasesQuery(context, 0, 10);
 
-      expect(result.where?.testRuns?.some?.results?.some?.statusId).toBe(4);
+      const [manualBranch, junitBranch] = result.where?.OR as any[];
+      expect(manualBranch.testRuns.some.results.some.statusId).toBe(4);
+      expect(junitBranch.junitResults.some.statusId).toBe(4);
     });
 
-    it("should exclude untested for testCaseCount metric", () => {
+    it("excludes untested placeholders from both membership branches", () => {
       const context = createBaseContext({ metricId: "testCaseCount" });
       const result = buildTestCasesQuery(context, 0, 10);
 
-      expect(result.where?.testRuns?.some?.results?.some?.status).toEqual({
+      const [manualBranch, junitBranch] = result.where?.OR as any[];
+      expect(manualBranch.testRuns.some.results.some.status).toEqual({
         systemName: { not: "untested" },
       });
+      expect(junitBranch.junitResults.some.status).toEqual({
+        systemName: { not: "untested" },
+      });
+      expect(junitBranch.junitResults.some.statusId).toEqual({ not: null });
     });
 
-    it("should apply date range filters to execution", () => {
+    it("should apply date range filters to both sources", () => {
       const context = createBaseContext({
         startDate: "2024-03-01",
         endDate: "2024-03-31",
       });
       const result = buildTestCasesQuery(context, 0, 10);
 
-      expect(
-        result.where?.testRuns?.some?.results?.some?.executedAt
-      ).toBeDefined();
+      const [manualBranch, junitBranch] = result.where?.OR as any[];
+      expect(manualBranch.testRuns.some.results.some.executedAt).toBeDefined();
+      expect(junitBranch.junitResults.some.executedAt).toBeDefined();
     });
   });
 
@@ -425,7 +555,7 @@ describe("drillDownQueryBuilders", () => {
       const result = buildSessionsQuery(context, 0, 10);
 
       expect(result.where?.projectId).toBe(12);
-      expect(result.orderBy).toEqual({ createdAt: Prisma.SortOrder.desc });
+      expect(result.orderBy).toEqual({ createdAt: "desc" });
     });
 
     it("should apply user dimension filter to createdById", () => {
@@ -592,13 +722,34 @@ describe("drillDownQueryBuilders", () => {
       expect(result.where?.testRun?.milestoneId).toBe(60);
     });
 
-    it("should handle null milestone", () => {
+    it("scopes to live milestones and live run-cases", () => {
+      // The metric only aggregates runs attached to live milestones, so a
+      // "None" milestone population cannot exist and every drill-down keeps
+      // the same scoping.
       const context = createBaseContext({
         dimensions: { milestone: { id: null as any, name: "None" } },
       });
       const result = buildMilestoneCompletionQuery(context, 0, 10);
 
-      expect(result.where?.testRun?.milestoneId).toBeNull();
+      expect(result.where?.testRun?.milestoneId).toBeUndefined();
+      expect(result.where?.testRun?.milestone).toMatchObject({
+        isDeleted: false,
+      });
+      expect(result.where?.isDeleted).toBe(false);
+    });
+
+    it("applies the report-level date range to the milestone creation date", () => {
+      const context = createBaseContext({
+        startDate: "2026-01-01",
+        endDate: "2026-02-01",
+      });
+      const result = buildMilestoneCompletionQuery(context, 0, 10);
+
+      // The end day is included in full — exclusive next-day bound.
+      expect((result.where?.testRun?.milestone as any)?.createdAt).toEqual({
+        gte: new Date("2026-01-01T00:00:00.000Z"),
+        lt: new Date("2026-02-02T00:00:00.000Z"),
+      });
     });
 
     it("should apply creator dimension filter", () => {
@@ -623,7 +774,7 @@ describe("drillDownQueryBuilders", () => {
       const context = createBaseContext();
       const result = buildMilestoneCompletionQuery(context, 0, 10);
 
-      expect(result.orderBy).toEqual({ order: Prisma.SortOrder.asc });
+      expect(result.orderBy).toEqual({ order: "asc" });
     });
   });
 
@@ -712,8 +863,8 @@ describe("drillDownQueryBuilders", () => {
     describe("session metrics", () => {
       it.each([
         "sessions",
-        "sessionDuration",
         "sessionCount",
+        "activeSessions",
         "averageDuration",
         "totalDuration",
       ])("should return buildSessionsQuery for %s", (metricId) => {
@@ -802,8 +953,8 @@ describe("drillDownQueryBuilders", () => {
     describe("session metrics", () => {
       it.each([
         "sessions",
-        "sessionDuration",
         "sessionCount",
+        "activeSessions",
         "averageDuration",
         "totalDuration",
       ])("should return sessions for %s", (metricId) => {
@@ -840,6 +991,185 @@ describe("drillDownQueryBuilders", () => {
       const result2 = buildTestExecutionQuery(context, 50, 100);
       expect(result2.skip).toBe(50);
       expect(result2.take).toBe(100);
+    });
+  });
+
+  // User-engagement dimensions (role, group) filter on the executor /
+  // submitter / creator across every builder its metrics reach.
+  describe("role and group dimension filters", () => {
+    it("buildTestExecutionQuery filters the executor by role and group", () => {
+      const context = createBaseContext({
+        reportType: "user-engagement",
+        metricId: "executionCount",
+        dimensions: {
+          role: { id: 5, name: "QA" },
+          group: { id: 9, name: "Web Team" },
+        },
+      });
+      const result = buildTestExecutionQuery(context, 0, 10);
+
+      expect(result.where?.executedBy).toEqual({
+        roleId: 5,
+        groups: { some: { groupId: 9 } },
+      });
+    });
+
+    it("buildJunitResultQuery filters the submitter by role and group", () => {
+      const context = createBaseContext({
+        reportType: "user-engagement",
+        metricId: "executionCount",
+        dimensions: {
+          role: { id: 5, name: "QA" },
+          group: { id: 9, name: "Web Team" },
+        },
+      });
+      const result = buildJunitResultQuery(context);
+
+      expect(result?.where.createdBy).toEqual({
+        roleId: 5,
+        groups: { some: { groupId: 9 } },
+      });
+    });
+
+    it("buildSessionResultsQuery filters live results by creator role/group", () => {
+      const context = createBaseContext({
+        reportType: "user-engagement",
+        metricId: "sessionResultCount",
+        dimensions: { role: { id: 5, name: "QA" } },
+      });
+      const result = buildSessionResultsQuery(context, 0, 10);
+
+      expect(result.where?.isDeleted).toBe(false);
+      expect(result.where?.createdBy).toEqual({ roleId: 5 });
+    });
+
+    it("buildRepositoryStatsQuery filters the case creator by role/group", () => {
+      const context = createBaseContext({
+        reportType: "user-engagement",
+        metricId: "createdCaseCount",
+        dimensions: { group: { id: 9, name: "Web Team" } },
+      });
+      const result = buildRepositoryStatsQuery(context, 0, 10);
+
+      expect(result.where?.creator).toEqual({
+        groups: { some: { groupId: 9 } },
+      });
+    });
+  });
+
+  describe("session-analysis dimension and metric handling", () => {
+    it("buildSessionsQuery excludes deleted sessions and honors the session dimensions", () => {
+      const context = createBaseContext({
+        reportType: "session-analysis",
+        metricId: "sessionCount",
+        dimensions: {
+          session: { id: 12, name: "Session 12" },
+          assignedTo: { id: "user-9", name: "Sam" },
+          milestone: { id: 3, name: "M3" },
+          template: { id: 4, name: "T4" },
+          state: { id: 6, name: "Open" },
+          creator: { id: "user-1", name: "Alex" },
+          date: { id: "d", createdAt: "2026-07-01T00:00:00.000Z" } as any,
+        },
+      });
+      const result = buildSessionsQuery(context, 0, 10);
+
+      expect(result.where?.isDeleted).toBe(false);
+      expect(result.where?.id).toBe(12);
+      expect(result.where?.assignedToId).toBe("user-9");
+      expect(result.where?.milestoneId).toBe(3);
+      expect(result.where?.templateId).toBe(4);
+      expect(result.where?.stateId).toBe(6);
+      expect(result.where?.createdById).toBe("user-1");
+      expect((result.where?.createdAt as any)?.gte).toEqual(
+        new Date("2026-07-01T00:00:00.000Z")
+      );
+    });
+
+    it("activeSessions restricts to in-progress sessions and maps to the sessions model", () => {
+      const context = createBaseContext({
+        reportType: "session-analysis",
+        metricId: "activeSessions",
+        dimensions: {},
+      });
+      const result = buildSessionsQuery(context, 0, 10);
+
+      expect(result.where?.isCompleted).toBe(false);
+      expect(getQueryBuilderForMetric("activeSessions")).toBe(
+        buildSessionsQuery
+      );
+      expect(getModelForMetric("activeSessions")).toBe("sessions");
+    });
+  });
+
+  describe("issue-tracking dimension handling", () => {
+    it("buildIssuesQuery excludes deleted issues and honors the issue dimensions", () => {
+      const context = createBaseContext({
+        reportType: "issue-tracking",
+        metricId: "issueCount",
+        dimensions: {
+          creator: { id: "user-1", name: "Alex" },
+          issueType: { id: "10001", name: "Bug" },
+          issueTracker: { id: 4, name: "Jira" },
+          issueStatus: { id: "Done", name: "Done" },
+          priority: { id: "high", name: "High" },
+          date: { id: "d", createdAt: "2026-07-01T00:00:00.000Z" } as any,
+        },
+      });
+      const result = buildIssuesQuery(context, 0, 10);
+
+      expect(result.where?.isDeleted).toBe(false);
+      expect(result.where?.createdById).toBe("user-1");
+      expect(result.where?.issueTypeName).toBe("Bug");
+      expect(result.where?.integrationId).toBe(4);
+      expect(result.where?.status).toBe("Done");
+      expect(result.where?.priority).toEqual({
+        equals: "high",
+        mode: "insensitive",
+      });
+      expect((result.where?.createdAt as any)?.gte).toEqual(
+        new Date("2026-07-01T00:00:00.000Z")
+      );
+    });
+
+    it("maps null issueType/issueTracker ids to the Unspecified/Internal populations", () => {
+      const context = createBaseContext({
+        reportType: "issue-tracking",
+        metricId: "issueCount",
+        dimensions: {
+          issueType: { id: null as any, name: "Unspecified" },
+          issueTracker: { id: null as any, name: "Internal" },
+        },
+      });
+      const result = buildIssuesQuery(context, 0, 10);
+
+      expect(result.where?.issueTypeName).toBeNull();
+      expect(result.where?.integrationId).toBeNull();
+    });
+  });
+
+  // The whitelist must cover every dimension a registry can emit — a missing
+  // entry would 400 legitimate drill-downs; an extra one would let a
+  // silently-ignored filter through.
+  describe("DRILL_DOWN_DIMENSIONS_BY_REPORT", () => {
+    it.each([
+      ["test-execution", createTestExecutionDimensionRegistry],
+      ["user-engagement", createUserEngagementDimensionRegistry],
+      ["issue-tracking", createIssueTrackingDimensionRegistry],
+      ["repository-stats", createRepositoryStatsDimensionRegistry],
+    ] as const)("covers every %s dimension id", (reportType, factory) => {
+      // isProjectSpecific=false includes the cross-project project dimension.
+      const registry = factory(false) as Record<string, any>;
+      const ids = Object.values(registry)
+        .filter(Boolean)
+        .map((d: any) => d.id);
+      const allowed = DRILL_DOWN_DIMENSIONS_BY_REPORT[reportType];
+      expect(ids.length).toBeGreaterThan(0);
+      ids.forEach((id: string) => {
+        expect(allowed.has(id), `${reportType} whitelist missing ${id}`).toBe(
+          true
+        );
+      });
     });
   });
 });

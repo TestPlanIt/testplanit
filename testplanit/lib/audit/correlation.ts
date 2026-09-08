@@ -7,12 +7,12 @@
  * root entity via ROLLUP_MAP (COR-02), humanizes the FK ids in the diff to display names (COR-03),
  * maps an isDeleted false→true soft-delete to a DELETE action (Phase 12 Decision 4), and inserts
  * AuditLog rows idempotently. `pollDataChangeLogsAcrossTenants(listClients, …)` runs the loop forever
- * as the worker's Loop B (one poll pass per tenant per cycle); `pollDataChangeLogsOnce(prisma, …)`
+ * as the worker's Loop B (one poll pass per tenant per cycle); `pollDataChangeLogsOnce(db, …)`
  * does a single pass (the supervisor's per-tenant unit + the test + manual-drain entry).
  *
  * ── LOAD-BEARING INVARIANTS ────────────────────────────────────────────────────────────────────
  *  1. SOLE AUTHORIZED READER. DataChangeLog is `@@deny('all', true)` at the ZenStack policy layer.
- *     This module reads + marks it ONLY through the raw `prismaBase` client (passed in), which
+ *     This module reads + marks it ONLY through the raw `rawDb` client (passed in), which
  *     bypasses policy by design — the same raw-client pattern the existing AuditLog writes use. No
  *     other code path reads DataChangeLog. The `processed=true` UPDATE is the single sanctioned
  *     exception to Phase 13's append-only enforcement triggers (the worker-cursor write).
@@ -48,7 +48,7 @@ import {
 } from "~/lib/audit/rollupMap";
 import {
   createHumanizeCache,
-  createPrismaLookup,
+  createDbLookup,
   humanize,
   type ChangedCols,
   type ChangedColEntry,
@@ -382,12 +382,16 @@ function mergeColumnEntries(
   a: ChangedColEntry | HumanizedColEntry,
   b: ChangedColEntry | HumanizedColEntry
 ): HumanizedColEntry {
+  const render = (v: unknown): string =>
+    // Values are humanized (flattened) before merge, so this normally sees strings/numbers; guard
+    // anyway so a stray object never becomes the literal "[object Object]" in the joined diff.
+    typeof v === "object" ? JSON.stringify(v) : String(v);
   const join = (x: unknown, y: unknown): string | null => {
     const seen = new Set<string>();
     const parts: string[] = [];
     for (const v of [x, y]) {
       if (v === null || v === undefined) continue;
-      for (const piece of String(v).split(", ")) {
+      for (const piece of render(v).split(", ")) {
         if (piece !== "" && !seen.has(piece)) {
           seen.add(piece);
           parts.push(piece);
@@ -422,7 +426,7 @@ function mergeColumnEntries(
 function mergeByIdentity(rows: MaterializedRow[]): MaterializedRow[] {
   const byKey = new Map<string, MaterializedRow>();
   for (const r of rows) {
-    const key = `${r.operationId ?? ""} ${r.sourceTable} ${r.entityId} ${r.action}`;
+    const key = `${r.operationId ?? ""} ${r.sourceTable} ${r.entityId} ${r.action}`;
     const existing = byKey.get(key);
     if (!existing) {
       byKey.set(key, { ...r, changes: { ...r.changes } });
@@ -482,6 +486,9 @@ export function summarizeBulkCaseChanges(
 /** Savepoint names for the FK-poison isolation backstop in writeAuditLogRows (constant, not row data). */
 const BATCH_SAVEPOINT = "audit_cdc_batch";
 const ROW_SAVEPOINT = "audit_cdc_row";
+/** Savepoint names for the per-group isolation in pollDataChangeLogsOnce (constant, not row data). */
+const GROUP_SAVEPOINT = "audit_cdc_group";
+const WRITE_SAVEPOINT = "audit_cdc_write";
 
 /** Coerce a materialized row's projectId to a finite integer, or null when absent/unparseable. */
 function toProjectId(raw: string | null): number | null {
@@ -513,6 +520,180 @@ async function resolveExistingProjectIds(
     Array<{ id: number | bigint | string }>
   >(`SELECT id FROM "Projects" WHERE id = ANY($1::int[])`, [...referenced]);
   return new Set(rows.map((r) => Number(r.id)));
+}
+
+/**
+ * Audited root tables carrying a scalar `projectId`, mapped to their primary-key
+ * type. A row attributed to one of these — either because it IS such a row or
+ * because a child rolled up to it — can always be scoped by reading the owner's
+ * project.
+ *
+ * Every entry must be a table in scripts/trigger-registry.ts (an unaudited table
+ * never appears as an entityType) AND declare `projectId Int` in schema.zmodel.
+ * The pk type selects the array cast for the batched lookup: casting `id` itself
+ * would work for both but defeats the primary-key index on tables large enough
+ * for this to matter.
+ */
+const PROJECT_SCOPED_ROOT_TABLES: Record<string, "int" | "text"> = {
+  RepositoryCases: "int",
+  RepositoryCaseVersions: "int",
+  TestRuns: "int",
+  Sessions: "int",
+  Milestones: "int",
+  SharedStepGroup: "int",
+  Repositories: "int",
+  RepositoryFolders: "int",
+  DataSet: "int",
+  Issue: "int",
+  DuplicateScanResult: "int",
+  StepSequenceMatch: "int",
+  ReviewRequest: "text",
+  ProjectIntegration: "text",
+  WebhookConfig: "text",
+  Comment: "text",
+};
+
+/**
+ * Ids that cannot address a single row: empty, composite ("5:390"), or the
+ * synthetic placeholders bulk operations mint.
+ */
+function isAddressableId(entityId: string): boolean {
+  return (
+    entityId !== "" &&
+    !entityId.includes(":") &&
+    !/^(bulk|createMany|deleteMany|create|update|delete)-/.test(entityId)
+  );
+}
+
+/**
+ * Resolve every attachment's project in ONE query. Attachments has no `projectId`
+ * column and no single owner: it hangs off a case, a session, a session result, a
+ * run, a run result, a run step result, or a JUnit result. Each parent reaches a
+ * project by a different number of hops, so they are resolved together as
+ * LEFT JOINs and COALESCEd in FK-declaration order (only one is ever non-null).
+ */
+async function resolveAttachmentProjectIds(
+  tx: RawTxClient,
+  attachmentIds: number[]
+): Promise<Map<string, number>> {
+  const rows = await tx.$queryRawUnsafe<
+    Array<{ id: number | string; projectId: number | string | null }>
+  >(
+    `SELECT a.id,
+            COALESCE(rc."projectId", s1."projectId", s2."projectId",
+                     tr1."projectId", tr2."projectId", tr3."projectId", tr4."projectId") AS "projectId"
+       FROM "Attachments" a
+       LEFT JOIN "RepositoryCases"    rc   ON rc.id   = a."testCaseId"
+       LEFT JOIN "Sessions"           s1   ON s1.id   = a."sessionId"
+       LEFT JOIN "SessionResults"     sr   ON sr.id   = a."sessionResultsId"
+       LEFT JOIN "Sessions"           s2   ON s2.id   = sr."sessionId"
+       LEFT JOIN "TestRuns"           tr1  ON tr1.id  = a."testRunsId"
+       LEFT JOIN "TestRunResults"     trr  ON trr.id  = a."testRunResultsId"
+       LEFT JOIN "TestRuns"           tr2  ON tr2.id  = trr."testRunId"
+       LEFT JOIN "TestRunStepResults" tsr  ON tsr.id  = a."testRunStepResultId"
+       LEFT JOIN "TestRunResults"     trr2 ON trr2.id = tsr."testRunResultId"
+       LEFT JOIN "TestRuns"           tr3  ON tr3.id  = trr2."testRunId"
+       LEFT JOIN "JUnitTestResult"    jr   ON jr.id   = a."junitTestResultId"
+       LEFT JOIN "JUnitTestSuite"     js   ON js.id   = jr."testSuiteId"
+       LEFT JOIN "TestRuns"           tr4  ON tr4.id  = js."testRunId"
+      WHERE a.id = ANY($1::int[])`,
+    attachmentIds
+  );
+  const out = new Map<string, number>();
+  for (const r of rows) {
+    if (r.projectId != null) out.set(String(r.id), Number(r.projectId));
+  }
+  return out;
+}
+
+/**
+ * Last-resort project scoping for rows the capture substrate could not scope.
+ *
+ * `project_id` is written by the trigger from the row's own `projectCol` or the
+ * GUC subject (db/audit_row_change.sql). Child, value and join tables declare
+ * neither, so they rely on the owning root row's snapshot being present in the
+ * SAME operation (ownerSnapshot passes 1-3 above). When the owner was written by
+ * an EARLIER request — a reporter adding cases to a run it created minutes ago, a
+ * tag applied to an existing case — no snapshot exists and the row lands with no
+ * project, which drops it out of the project audit log entirely.
+ *
+ * Reading the owner's project live is sound in a way a live `entityName` read
+ * would NOT be: an entity never moves between projects, so the value cannot drift
+ * from what it was at write time. `entityName` therefore keeps its write-time
+ * snapshot and is deliberately left alone here.
+ *
+ * Batched: one query per owning table for the whole poll batch, plus one for
+ * attachments — never per row.
+ */
+export async function backfillProjectIds(
+  tx: RawTxClient,
+  materialized: MaterializedRow[]
+): Promise<void> {
+  const gaps = materialized.filter((m) => toProjectId(m.projectId) == null);
+  if (gaps.length === 0) return;
+
+  // A Projects row IS its own scope — the entityId is the project id.
+  for (const m of gaps) {
+    if (m.entityType === "Projects" && /^\d+$/.test(m.entityId)) {
+      m.projectId = m.entityId;
+    }
+  }
+
+  // Group the remaining gaps by owning table, one batched lookup each.
+  const idsByTable = new Map<string, Set<string>>();
+  for (const m of gaps) {
+    if (toProjectId(m.projectId) != null) continue;
+    const pkType = PROJECT_SCOPED_ROOT_TABLES[m.entityType];
+    if (pkType == null) continue;
+    if (!isAddressableId(m.entityId)) continue;
+    if (pkType === "int" && !/^\d+$/.test(m.entityId)) continue;
+    const ids = idsByTable.get(m.entityType);
+    if (ids) ids.add(m.entityId);
+    else idsByTable.set(m.entityType, new Set([m.entityId]));
+  }
+
+  for (const [table, ids] of idsByTable) {
+    // `table` and its pk cast come only from the static PROJECT_SCOPED_ROOT_TABLES
+    // registry (never row data), so interpolating them is safe; ids are bound as $1.
+    const pkType = PROJECT_SCOPED_ROOT_TABLES[table];
+    const rows = await tx.$queryRawUnsafe<
+      Array<{ id: number | string; projectId: number | string | null }>
+    >(
+      `SELECT id, "projectId" FROM "${table}" WHERE id = ANY($1::${pkType}[])`,
+      pkType === "int" ? [...ids].map(Number) : [...ids]
+    );
+    const found = new Map<string, number>();
+    for (const r of rows) {
+      if (r.projectId != null) found.set(String(r.id), Number(r.projectId));
+    }
+    for (const m of gaps) {
+      if (m.entityType !== table) continue;
+      const pid = found.get(m.entityId);
+      if (pid != null) m.projectId = String(pid);
+    }
+  }
+
+  // Attachments self-attribute (they carry their own filename, which is what the
+  // auditor wants to read) but have no owning column, so they resolve separately.
+  const attachmentIds = gaps
+    .filter(
+      (m) =>
+        m.entityType === "Attachments" &&
+        toProjectId(m.projectId) == null &&
+        /^\d+$/.test(m.entityId)
+    )
+    .map((m) => Number(m.entityId));
+  // (Attachments.id is an autoincrement int — the numeric guard is the pk check.)
+  if (attachmentIds.length > 0) {
+    const found = await resolveAttachmentProjectIds(tx, [
+      ...new Set(attachmentIds),
+    ]);
+    for (const m of gaps) {
+      if (m.entityType !== "Attachments") continue;
+      const pid = found.get(m.entityId);
+      if (pid != null) m.projectId = String(pid);
+    }
+  }
 }
 
 /**
@@ -655,7 +836,7 @@ export async function writeAuditLogRows(
   }
 }
 
-/** The minimal raw-client surface this module needs (prismaBase satisfies it). */
+/** The minimal raw-client surface this module needs (rawDb satisfies it). */
 export interface RawTxClient {
   $queryRaw: <T = unknown>(
     query: TemplateStringsArray,
@@ -672,34 +853,44 @@ export interface RawTxClient {
   /** Used for the FK-poison isolation savepoints in writeAuditLogRows (SAVEPOINT/RELEASE/ROLLBACK TO). */
   $executeRawUnsafe: (query: string, ...values: unknown[]) => Promise<number>;
 }
-export interface RawPrismaClient extends RawTxClient {
+export interface RawDbClient extends RawTxClient {
   $transaction: <T>(fn: (tx: RawTxClient) => Promise<T>) => Promise<T>;
 }
 
 /** A correlation target: one tenant's raw client (tenantId undefined in single-tenant mode). */
 export interface TenantPollClient {
   tenantId: string | undefined;
-  client: RawPrismaClient;
+  client: RawDbClient;
 }
 
 /**
  * One poll pass: read up to `batchSize` unprocessed rows under FOR UPDATE SKIP LOCKED, materialize
  * them into AuditLog, and (unless markProcessed=false) mark the source rows processed=true — ALL in
  * a single transaction so a crash rolls back both the cursor advance and the inserts.
+ *
+ * Every per-group step runs under a SAVEPOINT: a SQL error anywhere aborts the whole Postgres
+ * transaction, and a bare try/catch cannot un-abort it — every later statement fails with 25P02, so
+ * without the savepoints one poison group would mark nothing and re-poll the same head-of-line batch
+ * forever. A failed group's source rows stay processed=false (retried next poll once the underlying
+ * issue clears); the rest of the batch drains normally.
+ *
+ * Returns `processed` = rows whose group COMPLETED this pass (materialized and written), not rows
+ * fetched — the supervisor treats processed>0 as "had work" and skips its idle sleep, so counting a
+ * failed group as progress would spin the loop at full speed against a poison-only batch.
  */
 export async function pollDataChangeLogsOnce(
-  prisma: RawPrismaClient,
+  db: RawDbClient,
   opts: PollOnceOptions = {}
 ): Promise<PollOnceResult> {
   const batchSize = opts.batchSize ?? DEFAULT_BATCH_SIZE;
   const markProcessed = opts.markProcessed ?? true;
 
-  const cache = createHumanizeCache(createPrismaLookup(prisma), {
+  const cache = createHumanizeCache(createDbLookup(db), {
     ttlMs: HUMANIZE_TTL_MS,
   });
 
   // The batched two-hop lookup, bound to this transaction's client (set inside the tx below).
-  return prisma.$transaction(async (tx) => {
+  return db.$transaction(async (tx) => {
     const rows = await tx.$queryRaw<RawDclRow[]>`
       SELECT * FROM "DataChangeLog"
       WHERE processed = false
@@ -728,14 +919,20 @@ export async function pollDataChangeLogsOnce(
     };
 
     const groups = groupByOperationId(rows);
-    const materialized: MaterializedRow[] = [];
-    // Source ids of every row in a successfully-materialized group — including
-    // no-op rows that were cancelled (they produce no AuditLog row but ARE done,
-    // so they must still be marked processed or they would re-poll forever).
-    const processedSourceIds = new Set<string>();
+    // One entry per successfully-materialized group: its AuditLog-bound rows plus
+    // the source ids to mark done — including no-op rows that were cancelled (they
+    // produce no AuditLog row but ARE done, so they must still be marked processed
+    // or they would re-poll forever). Kept per group so a write-path failure can
+    // release exactly one group's rows back to the queue (see below).
+    const units: Array<{
+      materialized: MaterializedRow[];
+      sourceIds: string[];
+    }> = [];
 
     for (const group of groups) {
+      await tx.$executeRawUnsafe(`SAVEPOINT ${GROUP_SAVEPOINT}`);
       try {
+        const materialized: MaterializedRow[] = [];
         const rolled = await applyRollupMap(group, twoHopQuery);
 
         // No-op association churn cancel: when a save re-applies an UNCHANGED
@@ -884,7 +1081,7 @@ export async function pollDataChangeLogsOnce(
           }
           const owner = ownerSnapshot.get(`${entityType}:${entityId}`);
 
-          // A captured row with no GUC actor (raw prismaBase writes, seeds,
+          // A captured row with no GUC actor (raw rawDb writes, seeds,
           // migrations, or any path without a session) is attributed to the
           // system sentinel so every materialized AuditLog row answers "who".
           let actor = row.actor || SYSTEM_ACTOR_ID;
@@ -957,13 +1154,20 @@ export async function pollDataChangeLogsOnce(
             changes,
           });
         }
-        // The whole group materialized successfully — mark every source row done
-        // (materialized OR cancelled) so none re-polls.
-        for (const { row } of rolled) processedSourceIds.add(String(row.id));
+        // The whole group materialized successfully — record every source row as
+        // done (materialized OR cancelled) so none re-polls.
+        units.push({
+          materialized,
+          sourceIds: rolled.map(({ row }) => String(row.id)),
+        });
+        await tx.$executeRawUnsafe(`RELEASE SAVEPOINT ${GROUP_SAVEPOINT}`);
       } catch (err) {
         // Per-group isolation (T-14-05-04): a malformed diff in one group must not wedge the batch.
-        // The group's source rows stay processed=false (we never add them to `ids` below) and are
-        // retried on the next poll once the underlying issue clears.
+        // The rollback also clears any transaction-abort a failed materialization statement caused,
+        // so the remaining groups still drain. The group's source rows stay processed=false (it
+        // never becomes a unit) and are retried on the next poll once the underlying issue clears.
+        await tx.$executeRawUnsafe(`ROLLBACK TO SAVEPOINT ${GROUP_SAVEPOINT}`);
+        await tx.$executeRawUnsafe(`RELEASE SAVEPOINT ${GROUP_SAVEPOINT}`);
         console.error(
           "[correlation] group materialization failed, skipping group:",
           err
@@ -971,17 +1175,73 @@ export async function pollDataChangeLogsOnce(
       }
     }
 
-    // Merge same-identity rows so multiple children of one owner in one operation
-    // are all preserved instead of being dropped by the idempotency index.
-    const auditLogsWritten = await writeAuditLogRows(
-      tx,
-      summarizeBulkCaseChanges(mergeByIdentity(materialized))
-    );
+    // Source ids of every completed group; a write failure below removes the failed
+    // group's ids again so only completed rows are marked and counted.
+    const processedSourceIds = new Set(units.flatMap((u) => u.sourceIds));
+    const materialized = units.flatMap((u) => u.materialized);
+    let auditLogsWritten = 0;
+
+    if (materialized.length > 0) {
+      // The shared write path runs under its own SAVEPOINT: writeAuditLogRows isolates
+      // constraint errors internally (the FK-poison backstop), but a failure OUTSIDE
+      // that guard — a project-backfill lookup error, or an abort the backstop cannot
+      // absorb — would otherwise poison the transaction and wedge the batch. On failure
+      // the write rolls back and each group retries in isolation, so one poison group
+      // costs only its own rows (they stay queued) — never the batch.
+      await tx.$executeRawUnsafe(`SAVEPOINT ${WRITE_SAVEPOINT}`);
+      try {
+        // Scope any row the capture substrate could not: rolled-up children whose
+        // owner was written by an earlier request, and attachments (no project
+        // column of their own). Runs before the merge so every row of a merged
+        // identity carries the same project.
+        await backfillProjectIds(tx, materialized);
+
+        // Merge same-identity rows so multiple children of one owner in one operation
+        // are all preserved instead of being dropped by the idempotency index.
+        auditLogsWritten = await writeAuditLogRows(
+          tx,
+          summarizeBulkCaseChanges(mergeByIdentity(materialized))
+        );
+        await tx.$executeRawUnsafe(`RELEASE SAVEPOINT ${WRITE_SAVEPOINT}`);
+      } catch (batchErr) {
+        await tx.$executeRawUnsafe(`ROLLBACK TO SAVEPOINT ${WRITE_SAVEPOINT}`);
+        await tx.$executeRawUnsafe(`RELEASE SAVEPOINT ${WRITE_SAVEPOINT}`);
+        console.error(
+          "[correlation] batch write path failed; retrying groups in isolation:",
+          batchErr
+        );
+        // mergeByIdentity keys on operationId and summarizeBulkCaseChanges maps rows
+        // independently, so per-group output is identical to the batch output — no
+        // merge crosses a group boundary.
+        for (const unit of units) {
+          if (unit.materialized.length === 0) continue; // cancelled-only group: nothing to write
+          await tx.$executeRawUnsafe(`SAVEPOINT ${WRITE_SAVEPOINT}`);
+          try {
+            await backfillProjectIds(tx, unit.materialized);
+            auditLogsWritten += await writeAuditLogRows(
+              tx,
+              summarizeBulkCaseChanges(mergeByIdentity(unit.materialized))
+            );
+            await tx.$executeRawUnsafe(`RELEASE SAVEPOINT ${WRITE_SAVEPOINT}`);
+          } catch (groupErr) {
+            await tx.$executeRawUnsafe(
+              `ROLLBACK TO SAVEPOINT ${WRITE_SAVEPOINT}`
+            );
+            await tx.$executeRawUnsafe(`RELEASE SAVEPOINT ${WRITE_SAVEPOINT}`);
+            for (const id of unit.sourceIds) processedSourceIds.delete(id);
+            console.error(
+              `[correlation] write failed for group ${unit.materialized[0]?.operationId ?? "?"}; leaving its ${unit.sourceIds.length} source row(s) queued:`,
+              groupErr
+            );
+          }
+        }
+      }
+    }
 
     if (markProcessed) {
-      // Mark ONLY the rows whose group materialized successfully (processedSourceIds includes both
-      // the written rows and the no-op-cancelled rows). A group that threw above added nothing, so
-      // its source ids are excluded and it will be re-polled.
+      // Mark ONLY the rows whose group completed (processedSourceIds includes both
+      // the written rows and the no-op-cancelled rows). A group that failed above is
+      // excluded and will be re-polled.
       const ids = rows
         .filter((r) => processedSourceIds.has(String(r.id)))
         .map((r) => BigInt(r.id));
@@ -992,7 +1252,7 @@ export async function pollDataChangeLogsOnce(
       }
     }
 
-    return { processed: rows.length, auditLogsWritten };
+    return { processed: processedSourceIds.size, auditLogsWritten };
   });
 }
 

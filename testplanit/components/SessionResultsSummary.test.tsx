@@ -5,7 +5,7 @@ import {
   NotificationMode,
   Theme,
   TimeFormat,
-} from "@prisma/client";
+} from "~/zenstack/models";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { Session } from "next-auth";
@@ -63,13 +63,18 @@ function renderWithQueryClient(ui: React.ReactElement) {
 }
 
 // Mock Hooks
-vi.mock("~/lib/hooks", () => ({
+const { useFindManySessionResults, useFindFirstStatus } = vi.hoisted(() => ({
   useFindManySessionResults: vi.fn(),
   useFindFirstStatus: vi.fn(),
 }));
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    sessionResults: { useFindMany: useFindManySessionResults },
+    status: { useFindFirst: useFindFirstStatus },
+  }),
+}));
 
 // Import the mocked hooks AFTER vi.mock
-import { useFindFirstStatus, useFindManySessionResults } from "~/lib/hooks";
 
 // Mock next/navigation
 vi.mock("next/navigation", () => ({

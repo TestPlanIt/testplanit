@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z, ZodError } from "zod/v4";
 
 import { getEnhancedDb } from "~/lib/auth/utils";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 import { authOptions } from "~/server/auth";
 
 /**
@@ -130,13 +131,7 @@ export async function POST(
         // surface them rather than silently retrying with a different
         // index than the caller asked for.
         if (data.rowIndex !== undefined) throw e;
-        const msg = e?.message ?? "";
-        const code = e?.code ?? e?.info?.code;
-        const isUnique =
-          code === "P2002" ||
-          msg.includes("Unique constraint failed") ||
-          msg.includes("(`dataSetId`,`rowIndex`)");
-        if (!isUnique) throw e;
+        if (!isUniqueConstraintError(e)) throw e;
         lastErr = e;
         // fall through to retry with next attempt
       }

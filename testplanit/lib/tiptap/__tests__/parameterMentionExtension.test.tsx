@@ -21,8 +21,7 @@ describe("createParameterMentionExtension", () => {
     const extension = createParameterMentionExtension(PARAMS);
     const attrs = (
       extension.config.addAttributes as
-        | (() => Record<string, unknown>)
-        | undefined
+        (() => Record<string, unknown>) | undefined
     )?.call({ parent: () => ({}) });
     expect(attrs).toBeDefined();
     expect(attrs).toHaveProperty("paramId");

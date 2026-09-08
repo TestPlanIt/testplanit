@@ -1,29 +1,23 @@
 "use client";
-/* eslint-disable react-hooks/incompatible-library -- This file consumes a library API (TanStack Table / TanStack Virtual / react-hook-form watch) that returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it. */
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { DateTimeDisplay } from "@/components/search/DateTimeDisplay";
 import { CasesListDisplay } from "@/components/tables/CaseListDisplay";
 import { UserNameCell } from "@/components/tables/UserNameCell";
 import { Button } from "@/components/ui/button";
+import { DataTable } from "@/components/tables/DataTable";
+import { type ColumnDef } from "@tanstack/react-table";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  type ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
-import { BookLock, Database, Loader2, SquarePen, Trash2 } from "lucide-react";
+  Database,
+  DatabaseArrowUp,
+  Loader2,
+  SquarePen,
+  Trash,
+} from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { useFindManyDataSet } from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
 import { DatasetDeleteConfirmDialog } from "./dataset-delete-confirm-dialog";
 
@@ -64,12 +58,16 @@ export function DatasetsList({ projectId }: DatasetsListProps) {
     name: string;
   } | null>(null);
 
+  const [columnVisibility, setColumnVisibility] = useState<
+    Record<string, boolean>
+  >({});
+
   const {
     data: datasets,
     isLoading,
     error,
     refetch,
-  } = useFindManyDataSet({
+  } = useClientQueries(schema).dataSet.useFindMany({
     where: { projectId, isShared: true, isDeleted: false },
     orderBy: { name: "asc" },
     select: {
@@ -101,7 +99,7 @@ export function DatasetsList({ projectId }: DatasetsListProps) {
           className="flex items-center gap-2 font-medium"
           data-testid={`dataset-list-name-${row.original.id}`}
         >
-          <BookLock
+          <DatabaseArrowUp
             className="h-4 w-4 shrink-0 text-muted-foreground"
             aria-hidden
           />
@@ -195,7 +193,7 @@ export function DatasetsList({ projectId }: DatasetsListProps) {
       id: "actions",
       header: () => t("columns.actions"),
       cell: ({ row }) => (
-        <div className="bg-primary-foreground whitespace-nowrap flex justify-center gap-1">
+        <div className="bg-primary-foreground whitespace-nowrap flex justify-end gap-1">
           <Button variant="ghost" className="px-2 py-1 h-auto" asChild>
             <Link
               href={`/projects/settings/${projectId}/datasets/${row.original.id}`}
@@ -217,19 +215,12 @@ export function DatasetsList({ projectId }: DatasetsListProps) {
             aria-label={t("actionDelete")}
             data-testid={`dataset-list-delete-${row.original.id}`}
           >
-            <Trash2 className="h-5 w-5" />
+            <Trash className="h-5 w-5" />
           </Button>
         </div>
       ),
     },
   ];
-
-  const table = useReactTable<DatasetRow>({
-    data: (datasets ?? []) as unknown as DatasetRow[],
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getRowId: (row) => String(row.id),
-  });
 
   if (isLoading) {
     return (
@@ -274,33 +265,13 @@ export function DatasetsList({ projectId }: DatasetsListProps) {
   return (
     <>
       <div data-testid="datasets-list">
-        <Table className="w-auto">
-          <TableHeader>
-            {table.getHeaderGroups().map((hg) => (
-              <TableRow key={hg.id}>
-                {hg.headers.map((h) => (
-                  <TableHead key={h.id}>
-                    {flexRender(h.column.columnDef.header, h.getContext())}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows.map((row) => (
-              <TableRow
-                key={row.id}
-                data-testid={`dataset-list-row-${row.original.id}`}
-              >
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <DataTable
+          columns={columns}
+          data={(datasets ?? []) as unknown as DatasetRow[]}
+          columnVisibility={columnVisibility}
+          onColumnVisibilityChange={setColumnVisibility}
+          rowTestIdPrefix="dataset-list-row"
+        />
       </div>
 
       {pendingDelete ? (

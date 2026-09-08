@@ -17,7 +17,7 @@
  *     the telemetry write failed.
  */
 
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { SCIM_LAST_SYNC_THROTTLE_MS } from "~/lib/scim/constants";
 
 /**
@@ -30,7 +30,7 @@ import { SCIM_LAST_SYNC_THROTTLE_MS } from "~/lib/scim/constants";
 export function touchLastSync(tokenId: string): void {
   const now = new Date();
   const cutoff = new Date(now.getTime() - SCIM_LAST_SYNC_THROTTLE_MS);
-  void prisma.scimToken
+  void baseDb.scimToken
     .updateMany({
       where: {
         id: tokenId,

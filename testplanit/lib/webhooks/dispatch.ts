@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
-import type { Prisma, PrismaClient } from "@prisma/client";
+import type { WebhookConfigUncheckedUpdateInput } from "~/zenstack/input";
+import type { TxClient } from "~/lib/zenstack";
 
 import { SYSTEM_ACTOR_ID } from "~/lib/auditContext";
 import { SYSTEM_PROJECT_ID } from "~/lib/scim/constants";
@@ -48,7 +49,7 @@ export interface DispatchJobData {
   outboxEventId: string;
   webhookConfigId: string;
   attempt: number;
-  // Aligned with MultiTenantJobData (lib/multiTenantPrisma.ts) and the
+  // Aligned with MultiTenantJobData (lib/multiTenantDb.ts) and the
   // withTenantContext shape (lib/tenantContext.ts) — both expect
   // `tenantId?: string`. Single-tenant deployments simply omit this.
   tenantId?: string;
@@ -79,14 +80,14 @@ const DIAGNOSTIC_EVENT_NAME = "webhook.test" as const;
 
 export async function dispatchWebhook(
   jobData: DispatchJobData,
-  prisma: PrismaClient | Prisma.TransactionClient
+  db: TxClient
 ): Promise<DispatchOutcome> {
   // 1. Load outbox event + webhook config + active/retiring secrets concurrently.
   const [outboxEvent, config] = await Promise.all([
-    prisma.webhookOutboxEvent.findUnique({
+    db.webhookOutboxEvent.findUnique({
       where: { id: jobData.outboxEventId },
     }),
-    prisma.webhookConfig.findUnique({
+    db.webhookConfig.findUnique({
       where: { id: jobData.webhookConfigId },
       include: {
         secrets: {
@@ -138,7 +139,7 @@ export async function dispatchWebhook(
     const stubDigest = createHash("sha256")
       .update(JSON.stringify(outboxEvent.payload))
       .digest("hex");
-    const delivery = await prisma.webhookDelivery.create({
+    const delivery = await db.webhookDelivery.create({
       data: {
         webhookConfigId: config.id,
         direction: "OUTBOUND",
@@ -212,7 +213,7 @@ export async function dispatchWebhook(
         s.autoRetireAt !== null && s.retiredAt === null
     );
     if (!activeRow) {
-      const delivery = await prisma.webhookDelivery.create({
+      const delivery = await db.webhookDelivery.create({
         data: {
           webhookConfigId: config.id,
           direction: "OUTBOUND",
@@ -287,7 +288,7 @@ export async function dispatchWebhook(
   // replay path can find the source outbox row by `delivery.eventId`.
   // replayedFromDeliveryId threads from BullMQ job data when this dispatch
   // is itself a replay (lib/webhooks/replay.ts enqueues the field).
-  const delivery = await prisma.webhookDelivery.create({
+  const delivery = await db.webhookDelivery.create({
     data: {
       webhookConfigId: config.id,
       direction: "OUTBOUND",
@@ -312,7 +313,7 @@ export async function dispatchWebhook(
   // on terminal `failed` / `completed`. The contract is event-level
   // (not per-attempt) for the failure counter.
   const now = new Date();
-  const timestampUpdate: Prisma.WebhookConfigUncheckedUpdateInput = {
+  const timestampUpdate: WebhookConfigUncheckedUpdateInput = {
     lastDispatchedAt: now,
   };
   if (errorSentinel === null) {
@@ -320,7 +321,7 @@ export async function dispatchWebhook(
   } else {
     timestampUpdate.lastFailureAt = now;
   }
-  await prisma.webhookConfig.update({
+  await db.webhookConfig.update({
     where: { id: config.id },
     data: timestampUpdate,
   });

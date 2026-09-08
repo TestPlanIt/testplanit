@@ -1,6 +1,6 @@
 "use server";
 
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 
 /**
  * Search and paginate configurations that are actually used by the
@@ -33,7 +33,7 @@ export async function searchProjectMatrixConfigurations(
     if (nameFilter) params.push(`%${nameFilter}%`);
 
     // Count distinct configurations matching the scope.
-    const totalRows = await prisma.$queryRawUnsafe<Array<{ count: bigint }>>(
+    const totalRows = await baseDb.$queryRawUnsafe<Array<{ count: bigint }>>(
       `
       SELECT COUNT(DISTINCT c.id)::bigint AS count
       FROM "Configurations" c
@@ -58,7 +58,7 @@ export async function searchProjectMatrixConfigurations(
 
     const limit = pageSize;
     const offset = page * pageSize;
-    const rows = await prisma.$queryRawUnsafe<
+    const rows = await baseDb.$queryRawUnsafe<
       Array<{ id: number; name: string }>
     >(
       `

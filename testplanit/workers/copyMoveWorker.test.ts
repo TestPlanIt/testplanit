@@ -41,7 +41,7 @@ vi.mock("../lib/queueNames", () => ({
   COPY_MOVE_QUEUE_NAME: "test-copy-move-queue",
 }));
 
-// ─── Mock prisma ──────────────────────────────────────────────────────────────
+// ─── Mock db ──────────────────────────────────────────────────────────────
 
 const mockTx = {
   // Phase 13 CTX-02 — the worker stamps app.audit_context via tx.$executeRaw
@@ -49,6 +49,11 @@ const mockTx = {
   // copy/move flow runs without a real connection.
   $executeRaw: vi.fn().mockResolvedValue(0),
   repositoryCases: {
+    // findFirst: the copy/move flow now probes for a soft-deleted row at
+    // the target's (projectId, name, className, source) tuple before
+    // creating, so it can resurrect instead of 23505ing. Default to null
+    // (no soft-deleted match) so existing tests hit the create path.
+    findFirst: vi.fn().mockResolvedValue(null),
     create: vi.fn(),
     update: vi.fn(),
     deleteMany: vi.fn(),
@@ -56,11 +61,25 @@ const mockTx = {
   steps: { create: vi.fn() },
   caseFieldValues: { create: vi.fn() },
   attachments: { create: vi.fn() },
-  sharedStepGroup: { findFirst: vi.fn(), create: vi.fn() },
-  repositoryCaseVersions: {
+  // Tags/issues are now EXPLICIT join models — the worker writes to them
+  // via createMany({ data: [{ caseId, tagId }] }) instead of the old
+  // repositoryCases.update({ data: { tags: { connect } } }) implicit m2m.
+  repositoryCaseTag: {
     create: vi.fn(),
+    createMany: vi.fn(),
+    deleteMany: vi.fn(),
     findMany: vi.fn(),
   },
+  repositoryCaseIssue: {
+    create: vi.fn(),
+    createMany: vi.fn(),
+    deleteMany: vi.fn(),
+    findMany: vi.fn(),
+  },
+  sharedStepGroup: { findFirst: vi.fn(), create: vi.fn() },
+  // Same-project relocation reparents/merges folders inside its transaction.
+  repositoryFolders: { update: vi.fn(), updateMany: vi.fn() },
+  repositoryCaseVersions: { create: vi.fn(), findMany: vi.fn() },
   comment: { create: vi.fn() },
   repositoryCaseLink: { create: vi.fn() },
   // resolveCreateStateRemap short-circuit: feature disabled returns candidate unchanged.
@@ -69,16 +88,18 @@ const mockTx = {
   workflows: { findMany: vi.fn().mockResolvedValue([]), findUnique: vi.fn() },
 };
 
-const mockPrisma = {
+const mockDb = {
   repositoryCases: {
     findFirst: vi.fn(),
     findMany: vi.fn(),
+    update: vi.fn(),
     updateMany: vi.fn(),
     deleteMany: vi.fn(),
   },
   repositoryCaseVersions: { findMany: vi.fn() },
   repositoryFolders: {
     findFirst: vi.fn(),
+    findMany: vi.fn(),
     create: vi.fn(),
     updateMany: vi.fn(),
   },
@@ -88,12 +109,20 @@ const mockPrisma = {
   // templates can be preserved per case when still assigned. Default to
   // empty so existing tests fall through to job.data.targetTemplateId.
   templateProjectAssignment: { findMany: vi.fn().mockResolvedValue([]) },
+  // Worker pre-fetches the target project's CASES workflow states to keep
+  // each case's status. Default to empty so existing tests fall through to
+  // job.data.targetDefaultWorkflowStateId.
+  projectWorkflowAssignment: { findMany: vi.fn().mockResolvedValue([]) },
+  workflows: { findMany: vi.fn().mockResolvedValue([]), findUnique: vi.fn() },
+  // resolveCreateStateRemap short-circuit: feature disabled returns candidate unchanged.
+  appConfig: { findUnique: vi.fn().mockResolvedValue({ value: false }) },
+  projects: { findUnique: vi.fn() },
   $transaction: vi.fn((fn: Function) => fn(mockTx)),
   $disconnect: vi.fn(),
 };
 
-vi.mock("../lib/multiTenantPrisma", () => ({
-  getPrismaClientForJob: vi.fn(() => mockPrisma),
+vi.mock("../lib/multiTenantDb", () => ({
+  getDbClientForJob: vi.fn(() => mockDb),
   getCurrentTenantId: vi.fn(() => undefined),
   isMultiTenantMode: vi.fn(() => false),
   validateMultiTenantJobData: vi.fn(),
@@ -122,6 +151,22 @@ vi.mock("../lib/services/auditLog", () => ({
   captureAuditEvent: (...args: any[]) => mockCaptureAuditEvent(...args),
 }));
 
+// ─── Mock review cancellation ─────────────────────────────────────────────────
+// A move soft-deletes its source cases on the raw (plugin-free) client, so
+// sideEffectsPlugin's cancel hook never fires — the worker calls these
+// directly instead. Default to "nothing was in flight".
+
+const mockCancelReviewsForDeletedEntities = vi.fn().mockResolvedValue([]);
+const mockAnnounceDeletionCancelledReviews = vi
+  .fn()
+  .mockResolvedValue(undefined);
+vi.mock("../lib/services/reviewCancellation", () => ({
+  cancelReviewsForDeletedEntities: (...args: any[]) =>
+    mockCancelReviewsForDeletedEntities(...args),
+  announceDeletionCancelledReviews: (...args: any[]) =>
+    mockAnnounceDeletionCancelledReviews(...args),
+}));
+
 // ─── Test fixtures ────────────────────────────────────────────────────────────
 
 const baseCopyJobData = {
@@ -144,6 +189,7 @@ const mockSourceCase = {
   templateId: 30,
   className: null,
   source: null,
+  folderId: 1000,
   automated: false,
   estimate: null,
   creatorId: "user-1",
@@ -166,8 +212,8 @@ const mockSourceCase = {
       repositoryCaseId: 1,
     },
   ],
-  tags: [{ id: 50 }],
-  issues: [{ id: 60 }],
+  caseTags: [{ tag: { id: 50 } }],
+  caseIssues: [{ issue: { id: 60 } }],
   attachments: [
     {
       id: 70,
@@ -243,6 +289,13 @@ type JobData = Omit<
   operation: "copy" | "move";
   sharedStepGroupResolution: "reuse" | "create_new";
   conflictResolution: "skip" | "rename";
+  folderTree?: Array<{
+    localKey: string;
+    sourceFolderId: number;
+    name: string;
+    parentLocalKey: string | null;
+    caseIds: number[];
+  }>;
 };
 
 function makeMockJob(
@@ -273,35 +326,41 @@ describe("CopyMoveWorker", () => {
     mockUpdateProgress.mockResolvedValue(undefined);
 
     // No existing cases in target folder (maxOrder = null)
-    mockPrisma.repositoryCases.findFirst.mockResolvedValue(null);
+    mockDb.repositoryCases.findFirst.mockResolvedValue(null);
+    mockDb.repositoryCases.update.mockResolvedValue({});
 
     // Source cases default
-    mockPrisma.repositoryCases.findMany.mockResolvedValue([mockSourceCase]);
+    mockDb.repositoryCases.findMany.mockResolvedValue([mockSourceCase]);
 
     // No template field assignments by default (override in tests that need them)
-    mockPrisma.templateCaseAssignment.findMany.mockResolvedValue([]);
-    mockPrisma.caseFieldAssignment.findMany.mockResolvedValue([]);
+    mockDb.templateCaseAssignment.findMany.mockResolvedValue([]);
+    mockDb.caseFieldAssignment.findMany.mockResolvedValue([]);
 
     // Reset $transaction so it uses the default fn(mockTx) behavior after rollback tests
-    mockPrisma.$transaction.mockReset();
-    mockPrisma.$transaction.mockImplementation((fn: Function) => fn(mockTx));
+    mockDb.$transaction.mockReset();
+    mockDb.$transaction.mockImplementation((fn: Function) => fn(mockTx));
 
     // Folder mocks: no existing folders by default
-    mockPrisma.repositoryFolders.findFirst.mockResolvedValue(null);
-    mockPrisma.repositoryFolders.create.mockResolvedValue({ id: 5000 });
-    mockPrisma.repositoryFolders.updateMany.mockResolvedValue({ count: 0 });
+    mockDb.repositoryFolders.findFirst.mockResolvedValue(null);
+    mockDb.repositoryFolders.create.mockResolvedValue({ id: 5000 });
+    mockDb.repositoryFolders.updateMany.mockResolvedValue({ count: 0 });
 
-    // Transaction: create returns a new case with id 1001. The copy/move
-    // flow always creates a fresh case (it never resurrects a tombstone).
+    // Transaction: findFirst returns null (no soft-deleted), create
+    // returns new case with id 1001.
+    mockTx.repositoryCases.findFirst.mockResolvedValue(null);
     mockTx.repositoryCases.create.mockResolvedValue({ id: 1001 });
     mockTx.repositoryCases.update.mockResolvedValue({});
+
+    // Explicit-join tag/issue writes resolve successfully by default
+    mockTx.repositoryCaseTag.createMany.mockResolvedValue({ count: 1 });
+    mockTx.repositoryCaseIssue.createMany.mockResolvedValue({ count: 1 });
 
     // Shared step group: no existing group by default
     mockTx.sharedStepGroup.findFirst.mockResolvedValue(null);
     mockTx.sharedStepGroup.create.mockResolvedValue({ id: 999 });
 
     // Version history: empty by default
-    mockPrisma.repositoryCaseVersions.findMany.mockResolvedValue([]);
+    mockDb.repositoryCaseVersions.findMany.mockResolvedValue([]);
 
     // Audit + provenance link mock resets
     mockCaptureAuditEvent.mockClear();
@@ -315,38 +374,36 @@ describe("CopyMoveWorker", () => {
   function setupTemplateFieldMocks() {
     // templateCaseAssignment.findMany returns assignments for source template (id 30)
     // and for target template (id 50)
-    mockPrisma.templateCaseAssignment.findMany.mockImplementation(
-      (args: any) => {
-        const templateId = args?.where?.templateId;
-        if (templateId === 30) {
-          // source template
-          return Promise.resolve([
-            {
-              caseField: {
-                id: 5,
-                systemName: "priority",
-                type: { type: "Dropdown" },
-              },
+    mockDb.templateCaseAssignment.findMany.mockImplementation((args: any) => {
+      const templateId = args?.where?.templateId;
+      if (templateId === 30) {
+        // source template
+        return Promise.resolve([
+          {
+            caseField: {
+              id: 5,
+              systemName: "priority",
+              type: { type: "Dropdown" },
             },
-          ]);
-        } else if (templateId === 50) {
-          // target template
-          return Promise.resolve([
-            {
-              caseField: {
-                id: 7,
-                systemName: "priority",
-                type: { type: "Dropdown" },
-              },
+          },
+        ]);
+      } else if (templateId === 50) {
+        // target template
+        return Promise.resolve([
+          {
+            caseField: {
+              id: 7,
+              systemName: "priority",
+              type: { type: "Dropdown" },
             },
-          ]);
-        }
-        return Promise.resolve([]);
+          },
+        ]);
       }
-    );
+      return Promise.resolve([]);
+    });
 
     // caseFieldAssignment.findMany returns option assignments
-    mockPrisma.caseFieldAssignment.findMany.mockImplementation((args: any) => {
+    mockDb.caseFieldAssignment.findMany.mockImplementation((args: any) => {
       const caseFieldId = args?.where?.caseFieldId;
       if (caseFieldId === 5) {
         // source field options
@@ -406,50 +463,46 @@ describe("CopyMoveWorker", () => {
 
     it("DATA-02: should drop field value when option cannot be resolved in target", async () => {
       // Target template has no matching option name
-      mockPrisma.templateCaseAssignment.findMany.mockImplementation(
-        (args: any) => {
-          const templateId = args?.where?.templateId;
-          if (templateId === 30) {
-            return Promise.resolve([
-              {
-                caseField: {
-                  id: 5,
-                  systemName: "priority",
-                  type: { type: "Dropdown" },
-                },
+      mockDb.templateCaseAssignment.findMany.mockImplementation((args: any) => {
+        const templateId = args?.where?.templateId;
+        if (templateId === 30) {
+          return Promise.resolve([
+            {
+              caseField: {
+                id: 5,
+                systemName: "priority",
+                type: { type: "Dropdown" },
               },
-            ]);
-          } else if (templateId === 50) {
-            return Promise.resolve([
-              {
-                caseField: {
-                  id: 7,
-                  systemName: "priority",
-                  type: { type: "Dropdown" },
-                },
+            },
+          ]);
+        } else if (templateId === 50) {
+          return Promise.resolve([
+            {
+              caseField: {
+                id: 7,
+                systemName: "priority",
+                type: { type: "Dropdown" },
               },
-            ]);
-          }
-          return Promise.resolve([]);
+            },
+          ]);
         }
-      );
+        return Promise.resolve([]);
+      });
 
-      mockPrisma.caseFieldAssignment.findMany.mockImplementation(
-        (args: any) => {
-          const caseFieldId = args?.where?.caseFieldId;
-          if (caseFieldId === 5) {
-            return Promise.resolve([
-              { fieldOption: { id: 500, name: "High", isDeleted: false } },
-            ]);
-          } else if (caseFieldId === 7) {
-            // Target has different option name — no match for "High"
-            return Promise.resolve([
-              { fieldOption: { id: 700, name: "Critical", isDeleted: false } },
-            ]);
-          }
-          return Promise.resolve([]);
+      mockDb.caseFieldAssignment.findMany.mockImplementation((args: any) => {
+        const caseFieldId = args?.where?.caseFieldId;
+        if (caseFieldId === 5) {
+          return Promise.resolve([
+            { fieldOption: { id: 500, name: "High", isDeleted: false } },
+          ]);
+        } else if (caseFieldId === 7) {
+          // Target has different option name — no match for "High"
+          return Promise.resolve([
+            { fieldOption: { id: 700, name: "Critical", isDeleted: false } },
+          ]);
         }
-      );
+        return Promise.resolve([]);
+      });
 
       const { processor } = await loadWorker();
       await processor(makeMockJob() as Job);
@@ -462,12 +515,9 @@ describe("CopyMoveWorker", () => {
       const { processor } = await loadWorker();
       await processor(makeMockJob() as Job);
 
-      expect(mockTx.repositoryCases.update).toHaveBeenCalledWith(
+      expect(mockTx.repositoryCaseTag.createMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { id: 1001 },
-          data: expect.objectContaining({
-            tags: { connect: [{ id: 50 }] },
-          }),
+          data: [{ caseId: 1001, tagId: 50 }],
         })
       );
     });
@@ -476,12 +526,9 @@ describe("CopyMoveWorker", () => {
       const { processor } = await loadWorker();
       await processor(makeMockJob() as Job);
 
-      expect(mockTx.repositoryCases.update).toHaveBeenCalledWith(
+      expect(mockTx.repositoryCaseIssue.createMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { id: 1001 },
-          data: expect.objectContaining({
-            issues: { connect: [{ id: 60 }] },
-          }),
+          data: [{ caseId: 1001, issueId: 60 }],
         })
       );
     });
@@ -518,122 +565,6 @@ describe("CopyMoveWorker", () => {
       );
     });
 
-    it("REPEAT-COPY-01: same case copied twice with rename creates distinct cases, no version collision", async () => {
-      // Faithful reproduction of the production failure (tenant "cint"):
-      // copy a case into the same project/folder, delete the resulting
-      // "(copy)", then copy again. The name search must skip the tombstoned
-      // "(copy)" name and create a brand-new "(copy 2)" case — never reusing
-      // the tombstone (whose version-1 row still exists), which would 23505 on
-      // RepositoryCaseVersions_repositoryCaseId_version_key.
-      const store: { id: number; name: string; isDeleted: boolean }[] = [
-        // The original source case, live in the target project.
-        { id: 1, name: "Test Case 1", isDeleted: false },
-      ];
-      let nextId = 8613;
-
-      // prisma.repositoryCases.findFirst serves three probes:
-      //  - folderMaxOrder (where.folderId) → null
-      //  - existingCase live-conflict probe (where.isDeleted === false)
-      //  - nameIsTaken probe (no isDeleted key → live OR tombstoned both block)
-      mockPrisma.repositoryCases.findFirst.mockImplementation(
-        async (args: any) => {
-          const where = args?.where ?? {};
-          if (where.folderId !== undefined) return null;
-          const match = store.find((c) => {
-            if (c.name !== where.name) return false;
-            if (where.isDeleted === false) return c.isDeleted === false;
-            return true; // nameIsTaken: any live OR tombstoned row blocks
-          });
-          return match ? { id: match.id } : null;
-        }
-      );
-
-      mockTx.repositoryCases.create.mockImplementation(async (args: any) => {
-        const row = { id: nextId++, name: args.data.name, isDeleted: false };
-        store.push(row);
-        return { id: row.id };
-      });
-
-      const renameJob = makeMockJob({
-        data: { ...baseCopyJobData, conflictResolution: "rename" as const },
-      });
-
-      const { processor } = await loadWorker();
-
-      // First copy → fresh "Test Case 1 (copy)".
-      await processor(renameJob as Job);
-      const firstCopy = store.find((c) => c.name === "Test Case 1 (copy)");
-      expect(firstCopy).toBeDefined();
-      expect(mockCreateVersion).toHaveBeenCalledWith(
-        mockTx,
-        firstCopy!.id,
-        expect.objectContaining({ version: 1 })
-      );
-
-      // User soft-deletes the first copy; its version-1 row remains.
-      firstCopy!.isDeleted = true;
-      mockCreateVersion.mockClear();
-      mockTx.repositoryCases.update.mockClear();
-
-      // Second copy → must skip the tombstoned "(copy)" → fresh "(copy 2)".
-      await processor(renameJob as Job);
-
-      const secondCopy = store.find((c) => c.name === "Test Case 1 (copy 2)");
-      expect(secondCopy).toBeDefined();
-      expect(secondCopy!.id).not.toBe(firstCopy!.id);
-
-      // The tombstone must NOT be touched (no update reviving its id).
-      expect(mockTx.repositoryCases.update).not.toHaveBeenCalledWith(
-        expect.objectContaining({ where: { id: firstCopy!.id } })
-      );
-
-      // Fresh case → version 1, no (repositoryCaseId, version) collision.
-      expect(mockCreateVersion).toHaveBeenCalledWith(
-        mockTx,
-        secondCopy!.id,
-        expect.objectContaining({ version: 1 })
-      );
-    });
-
-    it("REPEAT-COPY-02: copy whose name matches only a tombstone creates a fresh, distinct case (never resurrects)", async () => {
-      // A copy (here with the default "skip" resolution) whose name collides
-      // ONLY with a soft-deleted case — no live duplicate — must still create
-      // a brand-new case under a disambiguated name, NOT reuse the tombstone's
-      // id. The tombstone's stale version-1 row stays untouched, so version 1
-      // is free on the new case.
-      mockPrisma.repositoryCases.findFirst.mockImplementation(
-        async (args: any) => {
-          const where = args?.where ?? {};
-          if (where.folderId !== undefined) return null; // folderMaxOrder
-          // Live-conflict probe (isDeleted:false): no live duplicate exists.
-          if (where.isDeleted === false) return null;
-          // nameIsTaken probe: the original name is held by a tombstone (id
-          // 8613); the disambiguated "(copy)" name is free.
-          if (where.name === "Test Case 1") return { id: 8613 };
-          return null;
-        }
-      );
-
-      const { processor } = await loadWorker();
-      await processor(makeMockJob() as Job); // baseCopyJobData = copy + skip
-
-      // Created fresh (id 1001 from the default create mock), under the
-      // disambiguated name — the tombstone id 8613 is never reused.
-      expect(mockTx.repositoryCases.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({ name: "Test Case 1 (copy)" }),
-        })
-      );
-      expect(mockTx.repositoryCases.update).not.toHaveBeenCalledWith(
-        expect.objectContaining({ where: { id: 8613 } })
-      );
-      expect(mockCreateVersion).toHaveBeenCalledWith(
-        mockTx,
-        1001,
-        expect.objectContaining({ version: 1 })
-      );
-    });
-
     it("should report progress via job.updateProgress", async () => {
       const { processor } = await loadWorker();
       await processor(makeMockJob() as Job);
@@ -647,7 +578,7 @@ describe("CopyMoveWorker", () => {
       const { processor } = await loadWorker();
       await processor(makeMockJob() as Job);
 
-      expect(mockSyncToES).toHaveBeenCalledWith(1001, undefined, mockPrisma);
+      expect(mockSyncToES).toHaveBeenCalledWith(1001, undefined, mockDb);
     });
 
     it("should NOT copy comments on copy operation", async () => {
@@ -670,36 +601,34 @@ describe("CopyMoveWorker", () => {
         ],
       };
 
-      mockPrisma.repositoryCases.findMany.mockResolvedValue([textFieldCase]);
+      mockDb.repositoryCases.findMany.mockResolvedValue([textFieldCase]);
 
       // Source template has a text field
-      mockPrisma.templateCaseAssignment.findMany.mockImplementation(
-        (args: any) => {
-          const templateId = args?.where?.templateId;
-          if (templateId === 30) {
-            return Promise.resolve([
-              {
-                caseField: {
-                  id: 8,
-                  systemName: "notes",
-                  type: { type: "Text" },
-                },
+      mockDb.templateCaseAssignment.findMany.mockImplementation((args: any) => {
+        const templateId = args?.where?.templateId;
+        if (templateId === 30) {
+          return Promise.resolve([
+            {
+              caseField: {
+                id: 8,
+                systemName: "notes",
+                type: { type: "Text" },
               },
-            ]);
-          } else if (templateId === 50) {
-            return Promise.resolve([
-              {
-                caseField: {
-                  id: 9,
-                  systemName: "notes",
-                  type: { type: "Text" },
-                },
+            },
+          ]);
+        } else if (templateId === 50) {
+          return Promise.resolve([
+            {
+              caseField: {
+                id: 9,
+                systemName: "notes",
+                type: { type: "Text" },
               },
-            ]);
-          }
-          return Promise.resolve([]);
+            },
+          ]);
         }
-      );
+        return Promise.resolve([]);
+      });
 
       const { processor } = await loadWorker();
       await processor(makeMockJob() as Job);
@@ -822,7 +751,7 @@ describe("CopyMoveWorker", () => {
     ];
 
     beforeEach(() => {
-      mockPrisma.repositoryCaseVersions.findMany.mockResolvedValue(
+      mockDb.repositoryCaseVersions.findMany.mockResolvedValue(
         mockSourceVersions
       );
     });
@@ -880,7 +809,7 @@ describe("CopyMoveWorker", () => {
           },
         ],
       };
-      mockPrisma.repositoryCases.findMany.mockResolvedValue([
+      mockDb.repositoryCases.findMany.mockResolvedValue([
         sourceCaseWithComments,
       ]);
 
@@ -906,7 +835,7 @@ describe("CopyMoveWorker", () => {
         { ...mockSourceCase, id: 1 },
         { ...mockSourceCase, id: 2 },
       ];
-      mockPrisma.repositoryCases.findMany.mockResolvedValue(twoSourceCases);
+      mockDb.repositoryCases.findMany.mockResolvedValue(twoSourceCases);
 
       // Return different IDs for each transaction call
       let callCount = 0;
@@ -915,7 +844,7 @@ describe("CopyMoveWorker", () => {
         return Promise.resolve({ id: callCount === 1 ? 1001 : 1002 });
       });
 
-      mockPrisma.repositoryCaseVersions.findMany.mockResolvedValue([]);
+      mockDb.repositoryCaseVersions.findMany.mockResolvedValue([]);
 
       const moveJobData = {
         ...baseMoveJobData,
@@ -928,13 +857,13 @@ describe("CopyMoveWorker", () => {
       );
 
       // Source soft-delete should be called AFTER all transactions complete
-      expect(mockPrisma.repositoryCases.updateMany).toHaveBeenCalledWith({
+      expect(mockDb.repositoryCases.updateMany).toHaveBeenCalledWith({
         where: { id: { in: [1, 2] } },
         data: { isDeleted: true },
       });
 
       // Ensure it's called only once (after all copies, not per case)
-      expect(mockPrisma.repositoryCases.updateMany).toHaveBeenCalledTimes(1);
+      expect(mockDb.repositoryCases.updateMany).toHaveBeenCalledTimes(1);
     });
 
     it("DATA-LOSS-01: should NOT soft-delete source cases when all are skipped (real collision + skip)", async () => {
@@ -952,11 +881,11 @@ describe("CopyMoveWorker", () => {
 
       // First findFirst = max-order pre-fetch → null.
       // Second findFirst = collision check → unrelated case with same name.
-      mockPrisma.repositoryCases.findFirst
+      mockDb.repositoryCases.findFirst
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce({ id: 9999 });
 
-      mockPrisma.repositoryCaseVersions.findMany.mockResolvedValue([]);
+      mockDb.repositoryCaseVersions.findMany.mockResolvedValue([]);
 
       const { processor } = await loadWorker();
       const result = await processor(
@@ -964,68 +893,84 @@ describe("CopyMoveWorker", () => {
       );
 
       // Every case was skipped — source should NOT be soft-deleted
-      expect(mockPrisma.repositoryCases.updateMany).not.toHaveBeenCalled();
+      expect(mockDb.repositoryCases.updateMany).not.toHaveBeenCalled();
       expect(result.skippedCount).toBe(1);
       expect(result.copiedCount).toBe(0);
       expect(result.movedCount).toBe(0);
     });
 
-    it("SELF-COLLISION-01: same-project move does NOT treat source as its own collision", async () => {
-      // Customer-reported: moving a case within the same project showed a
-      // Skip/Rename conflict because the (name, className, source) tuple
-      // matched the case being moved. Fix excludes the move source IDs
-      // from the collision lookup.
-      const sameProjMoveJobData = {
+    it("cancels reviews left in flight on the moved-away source cases", async () => {
+      // The move soft-deletes the sources through the raw, plugin-free client
+      // (getDbClientForJob -> rawDb), so sideEffectsPlugin's soft-delete hook
+      // never runs. Without this explicit call the reviews stay PENDING
+      // against rows the inbox hides and the assignee is reminded daily for
+      // work they cannot open.
+      const { processor } = await loadWorker();
+      await processor(
+        makeMockJob({ id: "job-move-rev", data: baseMoveJobData }) as Job
+      );
+
+      expect(mockCancelReviewsForDeletedEntities).toHaveBeenCalledTimes(1);
+      const [, entityType, ids] =
+        mockCancelReviewsForDeletedEntities.mock.calls[0];
+      expect(entityType).toBe("CASE");
+      expect(ids).toEqual([1]);
+    });
+
+    it("announces cancelled reviews with the source case names", async () => {
+      mockCancelReviewsForDeletedEntities.mockResolvedValueOnce([
+        { id: "rr-1", entityId: 1, projectId: 10 },
+      ]);
+
+      const { processor } = await loadWorker();
+      await processor(
+        makeMockJob({ id: "job-move-rev2", data: baseMoveJobData }) as Job
+      );
+
+      expect(mockAnnounceDeletionCancelledReviews).toHaveBeenCalledTimes(1);
+      const [cancelled, names] =
+        mockAnnounceDeletionCancelledReviews.mock.calls[0];
+      expect(cancelled).toHaveLength(1);
+      // Names come off the pre-fetched source rows — by announcement time the
+      // subjects are already soft-deleted.
+      expect(names.get(1)).toBe("Test Case 1");
+    });
+
+    it("does not cancel reviews when nothing was actually moved", async () => {
+      const skipMoveJobData = {
         ...baseMoveJobData,
-        sourceProjectId: 20,
-        targetProjectId: 20,
         caseIds: [1],
         conflictResolution: "skip" as const,
       };
+      mockDb.repositoryCases.findFirst
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({ id: 9999 });
+      mockDb.repositoryCaseVersions.findMany.mockResolvedValue([]);
 
-      mockPrisma.repositoryCaseVersions.findMany.mockResolvedValue([]);
+      const { processor } = await loadWorker();
+      await processor(makeMockJob({ data: skipMoveJobData }) as Job);
+
+      expect(mockCancelReviewsForDeletedEntities).not.toHaveBeenCalled();
+    });
+
+    it("completes the move when review cancellation fails", async () => {
+      // Best-effort: a failure here must not strand a half-finished move.
+      mockCancelReviewsForDeletedEntities.mockRejectedValueOnce(
+        new Error("reviewRequest table unavailable")
+      );
 
       const { processor } = await loadWorker();
       const result = await processor(
-        makeMockJob({ data: sameProjMoveJobData }) as Job
+        makeMockJob({ id: "job-move-rev3", data: baseMoveJobData }) as Job
       );
 
-      // The collision query must scope out the source case
-      const collisionCall =
-        mockPrisma.repositoryCases.findFirst.mock.calls[1]?.[0];
-      expect(collisionCall?.where?.id).toEqual({ notIn: [1] });
-
-      // Case is actually moved, not skipped
-      expect(mockTx.repositoryCases.create).toHaveBeenCalledTimes(1);
       expect(result.movedCount).toBe(1);
-      expect(result.skippedCount).toBe(0);
-      expect(mockPrisma.repositoryCases.updateMany).toHaveBeenCalledWith({
+      expect(result.copiedCount).toBe(0);
+      // The sources are still soft-deleted — the move itself is unaffected.
+      expect(mockDb.repositoryCases.updateMany).toHaveBeenCalledWith({
         where: { id: { in: [1] } },
         data: { isDeleted: true },
       });
-    });
-
-    it("SELF-COLLISION-02: same-project move + rename does NOT append (copy) suffix when no real collision exists", async () => {
-      // Companion to SELF-COLLISION-01: Rename used to land "Foo (copy)"
-      // because the source matched itself. Post-fix the name is preserved.
-      const sameProjRenameMoveJobData = {
-        ...baseMoveJobData,
-        sourceProjectId: 20,
-        targetProjectId: 20,
-        caseIds: [1],
-        conflictResolution: "rename" as const,
-      };
-
-      mockPrisma.repositoryCaseVersions.findMany.mockResolvedValue([]);
-
-      const { processor } = await loadWorker();
-      await processor(makeMockJob({ data: sameProjRenameMoveJobData }) as Job);
-
-      expect(mockTx.repositoryCases.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({ name: "Test Case 1" }),
-        })
-      );
     });
 
     it("should set movedCount equal to copiedCount on successful move", async () => {
@@ -1039,6 +984,246 @@ describe("CopyMoveWorker", () => {
     });
   });
 
+  // ─── Same-project move: relocation ────────────────────────────────────────
+
+  describe("same-project move (relocation)", () => {
+    const relocateJobData = {
+      ...baseCopyJobData,
+      operation: "move" as const,
+      sourceProjectId: 20,
+      targetProjectId: 20,
+      caseIds: [1],
+    };
+
+    beforeEach(() => {
+      // Target folder lookup — the folder, not the job payload, is the
+      // authority on the repository the moved rows land in.
+      mockDb.repositoryFolders.findFirst.mockResolvedValue({
+        id: 2000,
+        repositoryId: 200,
+      });
+      mockDb.repositoryFolders.findMany.mockResolvedValue([]);
+    });
+
+    it("RELOCATE-01: updates only the row's location — no create, no collision check, no soft-delete", async () => {
+      const { processor } = await loadWorker();
+      const result = await processor(
+        makeMockJob({ data: relocateJobData }) as Job
+      );
+
+      // No collision lookup at all — a case cannot conflict with itself.
+      const collisionCalls = mockDb.repositoryCases.findFirst.mock.calls.filter(
+        (c: any[]) => c[0]?.where?.name !== undefined
+      );
+      expect(collisionCalls).toHaveLength(0);
+
+      expect(mockTx.repositoryCases.create).not.toHaveBeenCalled();
+      const relocateCall = mockTx.repositoryCases.update.mock.calls.find(
+        (c: any[]) => c[0]?.where?.id === 1
+      );
+      // Only the location moves — the case keeps its state, template, name
+      // and everything else it was authored with, and the repository comes
+      // from the target folder row.
+      expect(Object.keys(relocateCall![0].data).sort()).toEqual([
+        "folderId",
+        "order",
+        "repositoryId",
+      ]);
+      expect(relocateCall![0].data.repositoryId).toBe(200);
+
+      // The row is still live under the same id — nothing to soft-delete.
+      expect(mockDb.repositoryCases.updateMany).not.toHaveBeenCalled();
+      expect(result.movedCount).toBe(1);
+      expect(result.skippedCount).toBe(0);
+    });
+
+    it("RELOCATE-02: rename conflict resolution never renames a relocation", async () => {
+      const { processor } = await loadWorker();
+      await processor(
+        makeMockJob({
+          data: { ...relocateJobData, conflictResolution: "rename" as const },
+        }) as Job
+      );
+
+      const relocateCall = mockTx.repositoryCases.update.mock.calls.find(
+        (c: any[]) => c[0]?.where?.id === 1
+      );
+      expect(relocateCall).toBeDefined();
+      expect(relocateCall?.[0]?.data?.name).toBeUndefined();
+      expect(mockTx.repositoryCases.create).not.toHaveBeenCalled();
+    });
+
+    it("RELOCATE-03: a case already in the target folder is a no-op", async () => {
+      mockDb.repositoryCases.findMany.mockResolvedValue([
+        { ...mockSourceCase, folderId: 2000 },
+      ]);
+
+      const { processor } = await loadWorker();
+      const result = await processor(
+        makeMockJob({ data: relocateJobData }) as Job
+      );
+
+      expect(mockTx.repositoryCases.update).not.toHaveBeenCalled();
+      expect(result.movedCount).toBe(1);
+    });
+
+    it("RELOCATE-04: folder-tree move reparents the folder; its cases ride along untouched", async () => {
+      mockDb.repositoryFolders.findFirst
+        .mockReset()
+        .mockResolvedValueOnce({ id: 2000, repositoryId: 200 }) // target folder
+        .mockResolvedValueOnce(null) // same-named sibling under target
+        .mockResolvedValueOnce(null); // max folder order under target
+      mockDb.repositoryFolders.findMany.mockResolvedValue([
+        { id: 3000, parentId: 999, name: "Sub" },
+      ]);
+
+      const { processor } = await loadWorker();
+      const result = await processor(
+        makeMockJob({
+          data: {
+            ...relocateJobData,
+            folderTree: [
+              {
+                localKey: "3000",
+                sourceFolderId: 3000,
+                name: "Sub",
+                parentLocalKey: null,
+                caseIds: [1],
+              },
+            ],
+          },
+        }) as Job
+      );
+
+      expect(mockTx.repositoryFolders.update).toHaveBeenCalledWith({
+        where: { id: 3000 },
+        data: { parentId: 2000, repositoryId: 200, order: 0 },
+      });
+      // The subtree and its cases ride along with the reparented folder.
+      expect(mockTx.repositoryCases.update).not.toHaveBeenCalled();
+      // The folder survives — nothing was recreated, so nothing is deleted.
+      expect(mockTx.repositoryFolders.updateMany).not.toHaveBeenCalled();
+      expect(mockDb.repositoryFolders.updateMany).not.toHaveBeenCalled();
+      expect(result.movedCount).toBe(1);
+    });
+
+    it("RELOCATE-05: folder-tree move merges into an existing same-named folder and soft-deletes the emptied source", async () => {
+      mockDb.repositoryFolders.findFirst
+        .mockReset()
+        .mockResolvedValueOnce({ id: 2000, repositoryId: 200 }) // target folder
+        .mockResolvedValueOnce({ id: 4000 }); // same-named sibling -> merge
+      mockDb.repositoryFolders.findMany.mockResolvedValue([
+        { id: 3000, parentId: 999, name: "Sub" },
+      ]);
+
+      const { processor } = await loadWorker();
+      await processor(
+        makeMockJob({
+          data: {
+            ...relocateJobData,
+            folderTree: [
+              {
+                localKey: "3000",
+                sourceFolderId: 3000,
+                name: "Sub",
+                parentLocalKey: null,
+                caseIds: [1],
+              },
+            ],
+          },
+        }) as Job
+      );
+
+      // Direct cases move into the surviving sibling...
+      expect(mockTx.repositoryCases.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { folderId: 4000, repositoryId: 200, order: 0 },
+      });
+      // ...and the emptied source folder is soft-deleted; the sibling stays.
+      expect(mockTx.repositoryFolders.update).not.toHaveBeenCalled();
+      expect(mockTx.repositoryFolders.updateMany).toHaveBeenCalledWith({
+        where: { id: { in: [3000] } },
+        data: { isDeleted: true },
+      });
+    });
+
+    it("RELOCATE-06: moving a folder that already lives under the target parent changes nothing", async () => {
+      // Regression guard: the old recreate-and-delete flow "merged" the
+      // folder with itself and then soft-deleted it, orphaning its live
+      // cases from the tree.
+      mockDb.repositoryFolders.findFirst
+        .mockReset()
+        .mockResolvedValueOnce({ id: 2000, repositoryId: 200 }); // target folder
+      mockDb.repositoryFolders.findMany.mockResolvedValue([
+        { id: 3000, parentId: 2000, name: "Sub" },
+      ]);
+
+      const { processor } = await loadWorker();
+      const result = await processor(
+        makeMockJob({
+          data: {
+            ...relocateJobData,
+            folderTree: [
+              {
+                localKey: "3000",
+                sourceFolderId: 3000,
+                name: "Sub",
+                parentLocalKey: null,
+                caseIds: [1],
+              },
+            ],
+          },
+        }) as Job
+      );
+
+      expect(mockTx.repositoryCases.update).not.toHaveBeenCalled();
+      expect(mockTx.repositoryFolders.update).not.toHaveBeenCalled();
+      expect(mockTx.repositoryFolders.updateMany).not.toHaveBeenCalled();
+      expect(result.movedCount).toBe(1);
+    });
+
+    it("RELOCATE-07: rejects moving a folder into its own subtree", async () => {
+      const { processor } = await loadWorker();
+      await expect(
+        processor(
+          makeMockJob({
+            data: {
+              ...relocateJobData,
+              folderTree: [
+                {
+                  localKey: "2000",
+                  sourceFolderId: 2000,
+                  name: "Self",
+                  parentLocalKey: null,
+                  caseIds: [1],
+                },
+              ],
+            },
+          }) as Job
+        )
+      ).rejects.toThrow("Cannot move a folder into itself or its own subtree");
+    });
+
+    it("RELOCATE-08: a failed relocation is atomic — no partial state, no rollback deletes", async () => {
+      mockDb.$transaction.mockRejectedValue(new Error("relocation failed"));
+
+      const { processor } = await loadWorker();
+      await expect(
+        processor(makeMockJob({ data: relocateJobData }) as Job)
+      ).rejects.toThrow("relocation failed");
+
+      expect(mockDb.repositoryCases.deleteMany).not.toHaveBeenCalled();
+      expect(mockDb.repositoryCases.updateMany).not.toHaveBeenCalled();
+    });
+
+    it("RELOCATE-09: re-syncs every moved case to ES after the transaction commits", async () => {
+      const { processor } = await loadWorker();
+      await processor(makeMockJob({ data: relocateJobData }) as Job);
+
+      expect(mockSyncToES).toHaveBeenCalledWith(1, undefined, mockDb);
+    });
+  });
+
   // ─── Per-case template preservation ───────────────────────────────────────
 
   describe("target template selection", () => {
@@ -1048,7 +1233,7 @@ describe("CopyMoveWorker", () => {
       // templateId with job.data.targetTemplateId (the target's first
       // assignment) regardless of what was assigned. Now we preserve the
       // source template when it is still assigned to the target.
-      mockPrisma.templateProjectAssignment.findMany.mockResolvedValue([
+      mockDb.templateProjectAssignment.findMany.mockResolvedValue([
         { templateId: 30 }, // source case uses templateId 30
         { templateId: 50 }, // job.data.targetTemplateId — would have been used previously
       ]);
@@ -1064,7 +1249,7 @@ describe("CopyMoveWorker", () => {
     });
 
     it("TEMPLATE-02: falls back to job.data.targetTemplateId when the source template is not assigned to the target project", async () => {
-      mockPrisma.templateProjectAssignment.findMany.mockResolvedValue([
+      mockDb.templateProjectAssignment.findMany.mockResolvedValue([
         { templateId: 50 }, // only job.data.targetTemplateId is assigned
       ]);
 
@@ -1083,7 +1268,7 @@ describe("CopyMoveWorker", () => {
 
   describe("shared step group handling", () => {
     it("DATA-08: should recreate shared step group in target project", async () => {
-      mockPrisma.repositoryCases.findMany.mockResolvedValue([
+      mockDb.repositoryCases.findMany.mockResolvedValue([
         mockSourceCaseWithSharedSteps,
       ]);
 
@@ -1120,18 +1305,18 @@ describe("CopyMoveWorker", () => {
         ...mockSourceCaseWithSharedSteps,
         id: 2,
         caseFieldValues: [],
-        tags: [],
-        issues: [],
+        caseTags: [],
+        caseIssues: [],
         attachments: [],
         comments: [],
       };
-      mockPrisma.repositoryCases.findMany.mockResolvedValue([case1, case2]);
+      mockDb.repositoryCases.findMany.mockResolvedValue([case1, case2]);
 
       // No existing groups
       mockTx.sharedStepGroup.findFirst.mockResolvedValue(null);
       mockTx.sharedStepGroup.create.mockResolvedValue({ id: 999 });
 
-      mockPrisma.$transaction.mockImplementation(async (fn: Function) => {
+      mockDb.$transaction.mockImplementation(async (fn: Function) => {
         return fn(mockTx);
       });
 
@@ -1148,7 +1333,7 @@ describe("CopyMoveWorker", () => {
     });
 
     it("DATA-09: should reuse existing group when resolution is reuse", async () => {
-      mockPrisma.repositoryCases.findMany.mockResolvedValue([
+      mockDb.repositoryCases.findMany.mockResolvedValue([
         mockSourceCaseWithSharedSteps,
       ]);
 
@@ -1179,7 +1364,7 @@ describe("CopyMoveWorker", () => {
     });
 
     it("DATA-09: should create new group with (copy) suffix when resolution is create_new", async () => {
-      mockPrisma.repositoryCases.findMany.mockResolvedValue([
+      mockDb.repositoryCases.findMany.mockResolvedValue([
         mockSourceCaseWithSharedSteps,
       ]);
 
@@ -1215,7 +1400,7 @@ describe("CopyMoveWorker", () => {
         { ...mockSourceCase, id: 1 },
         { ...mockSourceCase, id: 2 },
       ];
-      mockPrisma.repositoryCases.findMany.mockResolvedValue(twoSourceCases);
+      mockDb.repositoryCases.findMany.mockResolvedValue(twoSourceCases);
 
       const jobData = {
         ...baseCopyJobData,
@@ -1224,7 +1409,7 @@ describe("CopyMoveWorker", () => {
 
       // First transaction succeeds, second fails
       let txCallCount = 0;
-      mockPrisma.$transaction.mockImplementation(async (fn: Function) => {
+      mockDb.$transaction.mockImplementation(async (fn: Function) => {
         txCallCount++;
         if (txCallCount === 1) {
           mockTx.repositoryCases.create.mockResolvedValue({ id: 1001 });
@@ -1240,7 +1425,7 @@ describe("CopyMoveWorker", () => {
       ).rejects.toThrow("Database error on second case");
 
       // Should rollback the first case that was successfully created
-      expect(mockPrisma.repositoryCases.deleteMany).toHaveBeenCalledWith({
+      expect(mockDb.repositoryCases.deleteMany).toHaveBeenCalledWith({
         where: { id: { in: [1001] } },
       });
     });
@@ -1250,7 +1435,7 @@ describe("CopyMoveWorker", () => {
         { ...mockSourceCase, id: 1 },
         { ...mockSourceCase, id: 2 },
       ];
-      mockPrisma.repositoryCases.findMany.mockResolvedValue(twoSourceCases);
+      mockDb.repositoryCases.findMany.mockResolvedValue(twoSourceCases);
 
       const moveJobData = {
         ...baseCopyJobData,
@@ -1260,7 +1445,7 @@ describe("CopyMoveWorker", () => {
 
       // Second transaction fails
       let txCallCount = 0;
-      mockPrisma.$transaction.mockImplementation(async (fn: Function) => {
+      mockDb.$transaction.mockImplementation(async (fn: Function) => {
         txCallCount++;
         if (txCallCount === 1) {
           mockTx.repositoryCases.create.mockResolvedValue({ id: 1001 });
@@ -1278,7 +1463,7 @@ describe("CopyMoveWorker", () => {
       ).rejects.toThrow("Move failure");
 
       // Source cases should NOT be soft-deleted since operation failed
-      expect(mockPrisma.repositoryCases.updateMany).not.toHaveBeenCalled();
+      expect(mockDb.repositoryCases.updateMany).not.toHaveBeenCalled();
     });
   });
 
@@ -1295,7 +1480,7 @@ describe("CopyMoveWorker", () => {
       ).rejects.toThrow("Job cancelled by user");
 
       // No Prisma calls should have been made (aside from the max order check before start)
-      expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+      expect(mockDb.$transaction).not.toHaveBeenCalled();
     });
 
     it("should stop processing between cases when cancellation detected", async () => {
@@ -1303,7 +1488,7 @@ describe("CopyMoveWorker", () => {
         { ...mockSourceCase, id: 1 },
         { ...mockSourceCase, id: 2 },
       ];
-      mockPrisma.repositoryCases.findMany.mockResolvedValue(twoSourceCases);
+      mockDb.repositoryCases.findMany.mockResolvedValue(twoSourceCases);
 
       const jobData = {
         ...baseCopyJobData,
@@ -1325,10 +1510,10 @@ describe("CopyMoveWorker", () => {
       ).rejects.toThrow("Job cancelled by user");
 
       // Only 1 transaction should have completed (the first case)
-      expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(mockDb.$transaction).toHaveBeenCalledTimes(1);
 
       // Rollback should delete the first created case
-      expect(mockPrisma.repositoryCases.deleteMany).toHaveBeenCalledWith({
+      expect(mockDb.repositoryCases.deleteMany).toHaveBeenCalledWith({
         where: { id: { in: [1001] } },
       });
     });
@@ -1354,25 +1539,23 @@ describe("CopyMoveWorker", () => {
     it("should drop field value when target template has no matching field", async () => {
       // Source has a field with systemName "custom_field"
       // Target template has no field with matching systemName
-      mockPrisma.templateCaseAssignment.findMany.mockImplementation(
-        (args: any) => {
-          const templateId = args?.where?.templateId;
-          if (templateId === 30) {
-            // source template has "custom_field"
-            return Promise.resolve([
-              {
-                caseField: {
-                  id: 5,
-                  systemName: "custom_field",
-                  type: { type: "Dropdown" },
-                },
+      mockDb.templateCaseAssignment.findMany.mockImplementation((args: any) => {
+        const templateId = args?.where?.templateId;
+        if (templateId === 30) {
+          // source template has "custom_field"
+          return Promise.resolve([
+            {
+              caseField: {
+                id: 5,
+                systemName: "custom_field",
+                type: { type: "Dropdown" },
               },
-            ]);
-          }
-          // target template has NO "custom_field"
-          return Promise.resolve([]);
+            },
+          ]);
         }
-      );
+        // target template has NO "custom_field"
+        return Promise.resolve([]);
+      });
 
       const { processor } = await loadWorker();
       await processor(makeMockJob() as Job);
@@ -1389,7 +1572,7 @@ describe("CopyMoveWorker", () => {
         { ...mockSourceCase, id: 1 },
         { ...mockSourceCase, id: 2 },
       ];
-      mockPrisma.repositoryCases.findMany.mockResolvedValue(twoSourceCases);
+      mockDb.repositoryCases.findMany.mockResolvedValue(twoSourceCases);
 
       const jobData = {
         ...baseCopyJobData,
@@ -1406,8 +1589,8 @@ describe("CopyMoveWorker", () => {
       await processor(makeMockJob({ id: "job-es-1", data: jobData }) as Job);
 
       // ES sync called for both created target case IDs
-      expect(mockSyncToES).toHaveBeenCalledWith(1001, undefined, mockPrisma);
-      expect(mockSyncToES).toHaveBeenCalledWith(1002, undefined, mockPrisma);
+      expect(mockSyncToES).toHaveBeenCalledWith(1001, undefined, mockDb);
+      expect(mockSyncToES).toHaveBeenCalledWith(1002, undefined, mockDb);
       expect(mockSyncToES).toHaveBeenCalledTimes(2);
     });
 
@@ -1449,8 +1632,8 @@ describe("CopyMoveWorker", () => {
       ...mockSourceCase,
       id: 2,
       folderId: 101,
-      tags: [],
-      issues: [],
+      caseTags: [],
+      caseIssues: [],
       attachments: [],
       caseFieldValues: [],
       steps: [],
@@ -1464,14 +1647,14 @@ describe("CopyMoveWorker", () => {
     };
 
     beforeEach(() => {
-      mockPrisma.repositoryCases.findMany.mockResolvedValue([
+      mockDb.repositoryCases.findMany.mockResolvedValue([
         sourceCase1,
         sourceCase2,
       ]);
 
       // Folder creation: root → id 5001, child → id 5002
       let folderCreateCount = 0;
-      mockPrisma.repositoryFolders.create.mockImplementation(() => {
+      mockDb.repositoryFolders.create.mockImplementation(() => {
         folderCreateCount++;
         return Promise.resolve({ id: folderCreateCount === 1 ? 5001 : 5002 });
       });
@@ -1491,7 +1674,7 @@ describe("CopyMoveWorker", () => {
       );
 
       // Root folder created with parentId = targetFolderId (2000)
-      expect(mockPrisma.repositoryFolders.create).toHaveBeenCalledWith(
+      expect(mockDb.repositoryFolders.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
             name: "Root Folder",
@@ -1503,7 +1686,7 @@ describe("CopyMoveWorker", () => {
       );
 
       // Child folder created with parentId = 5001 (the newly created root folder ID)
-      expect(mockPrisma.repositoryFolders.create).toHaveBeenCalledWith(
+      expect(mockDb.repositoryFolders.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
             name: "Child Folder",
@@ -1535,7 +1718,7 @@ describe("CopyMoveWorker", () => {
 
     it("merges into existing folder when a folder with the same name exists under the same parent", async () => {
       // Simulate root folder already existing in target
-      mockPrisma.repositoryFolders.findFirst.mockImplementation((args: any) => {
+      mockDb.repositoryFolders.findFirst.mockImplementation((args: any) => {
         if (
           args?.where?.name === "Root Folder" &&
           args?.where?.parentId === 2000
@@ -1551,14 +1734,14 @@ describe("CopyMoveWorker", () => {
       );
 
       // Only child folder should be created; root was merged (reused existing id 9999)
-      const createCalls = mockPrisma.repositoryFolders.create.mock.calls;
+      const createCalls = mockDb.repositoryFolders.create.mock.calls;
       const rootCreateCall = createCalls.find(
         (call: any[]) => call[0]?.data?.name === "Root Folder"
       );
       expect(rootCreateCall).toBeUndefined();
 
       // Child folder created with parentId = 9999 (the merged root folder)
-      expect(mockPrisma.repositoryFolders.create).toHaveBeenCalledWith(
+      expect(mockDb.repositoryFolders.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
             name: "Child Folder",
@@ -1574,7 +1757,7 @@ describe("CopyMoveWorker", () => {
         operation: "move" as const,
       };
 
-      mockPrisma.repositoryCaseVersions.findMany.mockResolvedValue([]);
+      mockDb.repositoryCaseVersions.findMany.mockResolvedValue([]);
 
       const { processor } = await loadWorker();
       await processor(
@@ -1582,7 +1765,7 @@ describe("CopyMoveWorker", () => {
       );
 
       // Source folders should be soft-deleted
-      expect(mockPrisma.repositoryFolders.updateMany).toHaveBeenCalledWith({
+      expect(mockDb.repositoryFolders.updateMany).toHaveBeenCalledWith({
         where: { id: { in: [100, 101] } },
         data: { isDeleted: true },
       });
@@ -1626,13 +1809,11 @@ describe("CopyMoveWorker", () => {
         attachments: [],
       };
 
-      mockPrisma.repositoryCaseVersions.findMany.mockImplementation(
-        (args: any) => {
-          if (args?.where?.repositoryCaseId === 1)
-            return Promise.resolve([mockVersionForCase1]);
-          return Promise.resolve([]);
-        }
-      );
+      mockDb.repositoryCaseVersions.findMany.mockImplementation((args: any) => {
+        if (args?.where?.repositoryCaseId === 1)
+          return Promise.resolve([mockVersionForCase1]);
+        return Promise.resolve([]);
+      });
 
       const { processor } = await loadWorker();
       await processor(
@@ -1651,14 +1832,14 @@ describe("CopyMoveWorker", () => {
 
     it("when folderTree is undefined, existing flat behavior is unchanged (regression guard)", async () => {
       // Use default single source case with no folderTree
-      mockPrisma.repositoryCases.findMany.mockResolvedValue([mockSourceCase]);
+      mockDb.repositoryCases.findMany.mockResolvedValue([mockSourceCase]);
 
       const { processor } = await loadWorker();
       await processor(makeMockJob() as Job);
 
       // No folder creation calls should have been made
-      expect(mockPrisma.repositoryFolders.create).not.toHaveBeenCalled();
-      expect(mockPrisma.repositoryFolders.updateMany).not.toHaveBeenCalled();
+      expect(mockDb.repositoryFolders.create).not.toHaveBeenCalled();
+      expect(mockDb.repositoryFolders.updateMany).not.toHaveBeenCalled();
 
       // Case should be created with the flat targetFolderId (2000)
       expect(mockTx.repositoryCases.create).toHaveBeenCalledWith(
@@ -1704,6 +1885,13 @@ describe("CopyMoveWorker", () => {
     });
 
     it("does NOT write link for move operation (even within-project)", async () => {
+      // Same-project move takes the relocation path, which needs the target
+      // folder row.
+      mockDb.repositoryFolders.findFirst.mockResolvedValue({
+        id: 2000,
+        repositoryId: 200,
+      });
+
       const { processor } = await loadWorker();
       await processor(
         makeMockJob({
@@ -1785,7 +1973,7 @@ describe("CopyMoveWorker", () => {
 
   describe("multi-source duplication (DUP-07)", () => {
     it("writes one link + one DUPLICATED audit per source case", async () => {
-      mockPrisma.repositoryCases.findMany.mockResolvedValue([
+      mockDb.repositoryCases.findMany.mockResolvedValue([
         { ...mockSourceCase, id: 1 },
         { ...mockSourceCase, id: 2, name: "Test Case 2" },
         { ...mockSourceCase, id: 3, name: "Test Case 3" },
@@ -1823,7 +2011,7 @@ describe("CopyMoveWorker", () => {
     it("rolls back created cases when a subsequent link write throws", async () => {
       // Two sources: first link write succeeds; second throws — outer catch
       // then deletes the first successfully-committed target case.
-      mockPrisma.repositoryCases.findMany.mockResolvedValue([
+      mockDb.repositoryCases.findMany.mockResolvedValue([
         { ...mockSourceCase, id: 1 },
         { ...mockSourceCase, id: 2, name: "Test Case 2" },
       ]);
@@ -1851,7 +2039,7 @@ describe("CopyMoveWorker", () => {
         )
       ).rejects.toThrow();
 
-      expect(mockPrisma.repositoryCases.deleteMany).toHaveBeenCalledWith({
+      expect(mockDb.repositoryCases.deleteMany).toHaveBeenCalledWith({
         where: { id: { in: [1001] } },
       });
     });

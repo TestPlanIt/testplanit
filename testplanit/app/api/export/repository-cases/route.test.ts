@@ -1,22 +1,34 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("~/lib/services/recordKeyConfig", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("~/lib/services/recordKeyConfig")>();
+  return {
+    ...actual,
+    readRecordKeyConfig: async () => ({
+      enabled: false,
+      tokens: actual.DEFAULT_TYPE_TOKENS,
+    }),
+  };
+});
+
 vi.mock("next-auth", () => ({ getServerSession: vi.fn() }));
 vi.mock("~/server/auth", () => ({ authOptions: {} }));
 vi.mock("~/lib/api-token-auth", () => ({ authenticateRequest: vi.fn() }));
-vi.mock("@zenstackhq/runtime", () => ({ enhance: vi.fn() }));
+vi.mock("~/lib/zenstack", () => ({ getAuthDb: vi.fn() }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     user: { findUnique: vi.fn() },
     projects: { findFirst: vi.fn() },
     repositoryCases: { findMany: vi.fn() },
   },
 }));
 
-import { enhance } from "@zenstackhq/runtime";
+import { getAuthDb } from "~/lib/zenstack";
 import { authenticateRequest } from "~/lib/api-token-auth";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { GET } from "./route";
 
 async function readNdjson(res: Response): Promise<unknown[]> {
@@ -90,10 +102,10 @@ describe("GET /api/export/repository-cases", () => {
       authenticated: true,
       user: PROJECT_USER,
     });
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+    vi.mocked(baseDb.user.findUnique).mockResolvedValue({
       id: "user-1",
     } as never);
-    vi.mocked(enhance).mockReturnValue({
+    vi.mocked(getAuthDb).mockReturnValue({
       projects: { findFirst: vi.fn().mockResolvedValue(null) },
     } as never);
     const res = await GET(req("/api/export/repository-cases?projectId=100"));
@@ -106,7 +118,7 @@ describe("GET /api/export/repository-cases", () => {
       user: ADMIN_USER,
     });
     const t1 = new Date("2026-05-01T10:00:00.000Z");
-    vi.mocked(prisma.repositoryCases.findMany).mockResolvedValue([
+    vi.mocked(baseDb.repositoryCases.findMany).mockResolvedValue([
       buildCaseRow(1, t1, { hasParameters: true }),
       buildCaseRow(2, t1),
     ] as never);
@@ -140,7 +152,7 @@ describe("GET /api/export/repository-cases", () => {
     });
     const ts = new Date("2026-05-01T00:00:00.000Z");
     const rows = Array.from({ length: 3 }, (_, i) => buildCaseRow(i + 1, ts));
-    vi.mocked(prisma.repositoryCases.findMany).mockResolvedValue(rows as never);
+    vi.mocked(baseDb.repositoryCases.findMany).mockResolvedValue(rows as never);
 
     const res = await GET(req("/api/export/repository-cases?pageSize=3"));
     const lines = (await readNdjson(res)) as Array<Record<string, unknown>>;
@@ -159,9 +171,9 @@ describe("GET /api/export/repository-cases", () => {
       authenticated: true,
       user: ADMIN_USER,
     });
-    vi.mocked(prisma.repositoryCases.findMany).mockResolvedValue([] as never);
+    vi.mocked(baseDb.repositoryCases.findMany).mockResolvedValue([] as never);
     await GET(req("/api/export/repository-cases?projectId=99"));
-    const call = vi.mocked(prisma.repositoryCases.findMany).mock.calls[0]![0]!;
+    const call = vi.mocked(baseDb.repositoryCases.findMany).mock.calls[0]![0]!;
     expect((call.where as { projectId: number }).projectId).toBe(99);
   });
 
@@ -170,9 +182,9 @@ describe("GET /api/export/repository-cases", () => {
       authenticated: true,
       user: ADMIN_USER,
     });
-    vi.mocked(prisma.repositoryCases.findMany).mockResolvedValue([] as never);
+    vi.mocked(baseDb.repositoryCases.findMany).mockResolvedValue([] as never);
     await GET(req("/api/export/repository-cases?since=2026-01-01T00:00:00Z"));
-    const call = vi.mocked(prisma.repositoryCases.findMany).mock.calls[0]![0]!;
+    const call = vi.mocked(baseDb.repositoryCases.findMany).mock.calls[0]![0]!;
     expect(
       (call.where as { createdAt: { gte: Date } }).createdAt.gte.toISOString()
     ).toBe("2026-01-01T00:00:00.000Z");

@@ -30,9 +30,10 @@ import { LLM_FEATURES, SYNC_RETRY_PROFILE } from "@/lib/llm/constants";
 import { LlmManager } from "@/lib/llm/services/llm-manager.service";
 import { PromptResolver } from "@/lib/llm/services/prompt-resolver.service";
 import type { LlmRequest } from "@/lib/llm/types";
-import { prisma } from "@/lib/prisma";
-import type { Prisma } from "@prisma/client";
+import { baseDb } from "@/lib/db";
+import type { JsonValue } from "@zenstackhq/orm";
 import { getServerSession } from "next-auth";
+import { isValidReportBypass } from "~/lib/internalReportBypass";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 
@@ -163,8 +164,9 @@ export async function POST(req: NextRequest) {
   // the latest persisted snapshot to display. Mirrors how
   // `/api/report-builder/iteration-matrix` and others recognize the
   // bypass header.
-  const isSharedReportBypass =
-    req.headers.get("x-shared-report-bypass") === "true";
+  const isSharedReportBypass = isValidReportBypass(
+    req.headers.get("x-shared-report-bypass")
+  );
 
   if (isSharedReportBypass) {
     return handleSharedReportBypass(req);
@@ -208,7 +210,7 @@ export async function POST(req: NextRequest) {
 
   // --- Pre-snapshot gates (no row written until these all pass) ---------
 
-  const projectLlm = await prisma.projectLlmIntegration.findFirst({
+  const projectLlm = await baseDb.projectLlmIntegration.findFirst({
     where: {
       projectId,
       isActive: true,
@@ -297,7 +299,7 @@ export async function POST(req: NextRequest) {
   // Resolve the prompt + substitute variables. (LLM mode only — the
   // heuristic fallback emits a static rationale per case and doesn't
   // call the LLM.)
-  const resolver = new PromptResolver(prisma);
+  const resolver = new PromptResolver(baseDb);
   const resolvedPrompt = useHeuristic
     ? null
     : await resolver.resolve(LLM_FEATURES.AUTOMATION_CANDIDATES, projectId);
@@ -357,7 +359,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const manager = LlmManager.getInstance(prisma);
+  const manager = LlmManager.getInstance(baseDb);
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -390,7 +392,7 @@ export async function POST(req: NextRequest) {
           // copy to whoever ran the report (same characteristic as the
           // LLM path, which renders in whatever language the model
           // chose to respond in).
-          const generatorPrefs = await prisma.user.findUnique({
+          const generatorPrefs = await baseDb.user.findUnique({
             where: { id: session.user.id },
             select: { userPreferences: { select: { locale: true } } },
           });
@@ -443,7 +445,7 @@ export async function POST(req: NextRequest) {
             data: {
               status: "complete",
               completedAt: new Date(),
-              output: output as unknown as Prisma.InputJsonValue,
+              output: output as unknown as JsonValue,
             },
           });
           send(controller, {
@@ -500,7 +502,8 @@ export async function POST(req: NextRequest) {
         }
 
         // Hallucination guard: drop any caseId the LLM invented that wasn't
-        // in the input set, and re-sort by rank so the snapshot is canonical.
+        // in the input set, drop repeats of the same caseId (keeping the
+        // best-ranked one), and re-sort by rank so the snapshot is canonical.
         const metricsByCaseId = new Map<number, CandidateMetrics>(
           cappedCases.map((c) => [
             c.id,
@@ -515,9 +518,15 @@ export async function POST(req: NextRequest) {
         const nameByCaseId = new Map<number, string>(
           cappedCases.map((c) => [c.id, c.name])
         );
+        const seenCaseIds = new Set<number>();
         const filtered = parsedOutput.candidates
           .filter((c) => metricsByCaseId.has(c.caseId))
           .sort((a, b) => a.rank - b.rank)
+          .filter((c) => {
+            if (seenCaseIds.has(c.caseId)) return false;
+            seenCaseIds.add(c.caseId);
+            return true;
+          })
           .map((c) => ({
             ...c,
             // Persist the metrics that drove the ranking so a viewer can
@@ -546,7 +555,7 @@ export async function POST(req: NextRequest) {
           data: {
             status: "complete",
             completedAt: new Date(),
-            output: output as unknown as Prisma.InputJsonValue,
+            output: output as unknown as JsonValue,
           },
         });
 
@@ -626,7 +635,7 @@ async function handleSharedReportBypass(
     typeof requestedSnapshotId === "number" &&
     Number.isInteger(requestedSnapshotId);
 
-  const snapshot = await prisma.llmReportSnapshot.findFirst({
+  const snapshot = await baseDb.llmReportSnapshot.findFirst({
     where: {
       projectId,
       reportType: REPORT_TYPE,

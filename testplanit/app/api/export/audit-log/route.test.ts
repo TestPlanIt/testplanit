@@ -4,19 +4,19 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("next-auth", () => ({ getServerSession: vi.fn() }));
 vi.mock("~/server/auth", () => ({ authOptions: {} }));
 vi.mock("~/lib/api-token-auth", () => ({ authenticateRequest: vi.fn() }));
-vi.mock("@zenstackhq/runtime", () => ({ enhance: vi.fn() }));
+vi.mock("~/lib/zenstack", () => ({ getAuthDb: vi.fn() }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     user: { findUnique: vi.fn() },
     projects: { findFirst: vi.fn() },
     auditLog: { findMany: vi.fn() },
   },
 }));
 
-import { enhance } from "@zenstackhq/runtime";
+import { getAuthDb } from "~/lib/zenstack";
 import { authenticateRequest } from "~/lib/api-token-auth";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { GET } from "./route";
 
 async function readNdjson(res: Response): Promise<unknown[]> {
@@ -80,10 +80,10 @@ describe("GET /api/export/audit-log", () => {
       authenticated: true,
       user: PROJECT_USER,
     });
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+    vi.mocked(baseDb.user.findUnique).mockResolvedValue({
       id: "user-1",
     } as never);
-    vi.mocked(enhance).mockReturnValue({
+    vi.mocked(getAuthDb).mockReturnValue({
       projects: { findFirst: vi.fn().mockResolvedValue(null) },
     } as never);
     const res = await GET(req("/api/export/audit-log?projectId=100"));
@@ -96,7 +96,7 @@ describe("GET /api/export/audit-log", () => {
       user: ADMIN_USER,
     });
     const t1 = new Date("2026-05-01T10:00:00.000Z");
-    vi.mocked(prisma.auditLog.findMany).mockResolvedValue([
+    vi.mocked(baseDb.auditLog.findMany).mockResolvedValue([
       buildAuditRow("audit-a", t1),
       buildAuditRow("audit-b", t1),
     ] as never);
@@ -132,7 +132,7 @@ describe("GET /api/export/audit-log", () => {
     const rows = ["audit-a", "audit-b", "audit-c"].map((id) =>
       buildAuditRow(id, ts)
     );
-    vi.mocked(prisma.auditLog.findMany).mockResolvedValue(rows as never);
+    vi.mocked(baseDb.auditLog.findMany).mockResolvedValue(rows as never);
 
     const res = await GET(req("/api/export/audit-log?pageSize=3"));
     const lines = (await readNdjson(res)) as Array<Record<string, unknown>>;

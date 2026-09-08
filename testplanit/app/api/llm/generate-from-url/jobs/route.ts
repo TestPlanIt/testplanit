@@ -1,4 +1,4 @@
-import { getCurrentTenantId, isMultiTenantMode } from "@/lib/multiTenantPrisma";
+import { getCurrentTenantId, isMultiTenantMode } from "@/lib/multiTenantDb";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { getGenerateFromUrlQueue } from "~/lib/queues";

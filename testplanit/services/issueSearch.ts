@@ -1,5 +1,6 @@
-import type { Issue, PrismaClient } from "@prisma/client";
-import { prisma as defaultPrisma } from "~/lib/prismaBase";
+import type { Issue } from "~/zenstack/models";
+import type { DbClient } from "~/lib/zenstack";
+import { rawDb as defaultDb } from "~/lib/rawDb";
 import { SearchableEntityType } from "~/types/search";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import {
@@ -16,8 +17,8 @@ type IssueForIndexing = Issue & {
   // Direct project relationship (preferred)
   project?: { id: number; name: string; iconUrl?: string | null } | null;
   // Fallback: Try to get project from any relationship
-  repositoryCases?: Array<{
-    project: { id: number; name: string; iconUrl?: string | null };
+  caseIssues?: Array<{
+    case: { project: { id: number; name: string; iconUrl?: string | null } };
   }>;
   sessions?: Array<{
     project: { id: number; name: string; iconUrl?: string | null };
@@ -59,8 +60,8 @@ function getProjectFromIssue(issue: IssueForIndexing): {
   }
 
   // Fallback: Try repository cases
-  if (issue.repositoryCases?.[0]?.project) {
-    return issue.repositoryCases[0].project;
+  if (issue.caseIssues?.[0]?.case?.project) {
+    return issue.caseIssues[0].case.project;
   }
 
   // Try sessions
@@ -191,15 +192,15 @@ export async function deleteIssueFromIndex(
 /**
  * Sync a single issue to Elasticsearch
  * @param issueId - The ID of the issue to sync
- * @param prismaClient - Optional Prisma client for tenant-specific queries
+ * @param dbClient - Optional Prisma client for tenant-specific queries
  * @param tenantId - Optional tenant ID for multi-tenant mode
  */
 export async function syncIssueToElasticsearch(
   issueId: number,
-  prismaClient?: PrismaClient,
+  dbClient?: DbClient,
   tenantId?: string
 ): Promise<boolean> {
-  const prisma = prismaClient || defaultPrisma;
+  const rawDb = dbClient || defaultDb;
   const client = getElasticsearchClient();
   if (!client) {
     console.warn("Elasticsearch client not available");
@@ -207,7 +208,7 @@ export async function syncIssueToElasticsearch(
   }
 
   try {
-    const issue = await prisma.issue.findUnique({
+    const issue = await rawDb.issue.findUnique({
       where: { id: issueId },
       include: {
         createdBy: true,
@@ -215,10 +216,14 @@ export async function syncIssueToElasticsearch(
         // Include direct project relationship (preferred)
         project: true,
         // Fallback: Check all possible relationships to find project
-        repositoryCases: {
+        caseIssues: {
           take: 1,
           include: {
-            project: true,
+            case: {
+              include: {
+                project: true,
+              },
+            },
           },
         },
         sessions: {
@@ -317,8 +322,8 @@ export async function syncProjectIssuesToElasticsearch(
         { projectId, project: { isDeleted: false } },
         // Fallback: Find through relationships
         {
-          repositoryCases: {
-            some: { projectId, project: { isDeleted: false } },
+          caseIssues: {
+            some: { case: { projectId, project: { isDeleted: false } } },
           },
         },
         {
@@ -382,10 +387,10 @@ export async function syncProjectIssuesToElasticsearch(
       // Include direct project relationship (preferred)
       project: true,
       // Fallback relationships
-      repositoryCases: {
-        where: { projectId, project: { isDeleted: false } },
+      caseIssues: {
+        where: { case: { projectId, project: { isDeleted: false } } },
         take: 1,
-        include: { project: true },
+        include: { case: { include: { project: true } } },
       },
       sessions: {
         where: { projectId, isDeleted: false, project: { isDeleted: false } },

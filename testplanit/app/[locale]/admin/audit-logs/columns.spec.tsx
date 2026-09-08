@@ -12,14 +12,17 @@ vi.mock("@/components/DateFormatter", () => ({
   DateFormatter: () => null,
 }));
 
+// The record-key config hook reads AppConfig via React Query; stub it so the
+// columns hook renders without a QueryClient (feature-off: formatKey → null).
+vi.mock("~/hooks/useRecordKeyConfig", () => ({
+  useRecordKeyConfig: () => ({ formatKey: () => null }),
+}));
+
 const tAuditLogs = ((key: string) => `admin.auditLogs.${key}`) as ReturnType<
   typeof import("next-intl").useTranslations<"admin.auditLogs">
 >;
 const tCommon = ((key: string) => `common.${key}`) as ReturnType<
   typeof import("next-intl").useTranslations<"common">
->;
-const tUserMenu = ((key: string) => `userMenu.${key}`) as ReturnType<
-  typeof import("next-intl").useTranslations<"userMenu">
 >;
 const userPreferences = {
   user: { preferences: { timezone: "Etc/UTC" } },
@@ -27,7 +30,7 @@ const userPreferences = {
 
 describe("admin/audit-logs columns", () => {
   const { result } = renderHook(() =>
-    useColumns(userPreferences, vi.fn(), tAuditLogs, tCommon, tUserMenu)
+    useColumns(userPreferences, vi.fn(), tAuditLogs, tCommon)
   );
   const columns = result.current;
 

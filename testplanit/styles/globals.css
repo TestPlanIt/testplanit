@@ -41,6 +41,12 @@
     --tp-tooltip-border: hsl(var(--border));
     --tp-axis-label-text: hsl(var(--muted-foreground));
     --tp-grid-line-color: hsl(var(--border));
+    /* Data-table surfaces and grid line. */
+    --tp-table-row: 210 40% 96.7%;
+    --tp-table-row-hover: 210 40% 92.4%;
+    --tp-table-row-nested: 210 40% 92.4%;
+    --tp-table-row-nested-hover: 210 40% 89%;
+    --tp-table-grid-line: 214.3 31.8% 76%;
   }
 
   .dark {
@@ -84,6 +90,12 @@
     --tp-tooltip-border: hsl(var(--border));
     --tp-axis-label-text: hsl(var(--muted-foreground));
     --tp-grid-line-color: hsl(var(--border));
+    /* Data-table surfaces and grid line. */
+    --tp-table-row: 217.5 75% 6.3%;
+    --tp-table-row-hover: 216.9 59.1% 8.6%;
+    --tp-table-row-nested: 216.9 59.1% 8.6%;
+    --tp-table-row-nested-hover: 215.6 50.9% 10.4%;
+    --tp-table-grid-line: 215.2 30.5% 18.6%;
   }
 
   /* Theme wipe transition using scale */
@@ -172,7 +184,9 @@
 
   .milestone-grid {
     display: grid;
-    grid-template-columns: 1fr auto auto; /* Three columns: Name (flexible), Status (fixed), Dates (fixed) */
+    /* minmax(0, 1fr) — a bare 1fr floors at min-content, so the name track
+       could never give way and the fixed side columns won instead. */
+    grid-template-columns: minmax(0, 1fr) auto auto;
     gap: 1rem; /* Adjust spacing between columns */
     align-items: center; /* Vertically align items */
     width: 100%;
@@ -186,13 +200,20 @@
   }
 
   .milestone-status {
-    width: 120px; /* Fixed width for status column */
+    /* A floor, not a fixed width: 120px was reserved whether the cell held a
+       status badge or nothing at all, starving the milestone name beside it.
+       Keep the floor below the natural width of a status badge, so it only
+       pads the empty (unscheduled) case and never reserves space. */
+    min-width: 4rem;
     text-align: center; /* Center-align status */
   }
 
   .milestone-dates {
-    width: 200px; /* Fixed width for dates column */
-    text-align: right; /* Right-align dates */
+    /* Same reasoning as .milestone-status. Well below a rendered date range,
+       so groups with dates size to them and the unscheduled group — which has
+       only the add button — stops holding 160px it never uses. */
+    min-width: 5rem;
+    text-align: end; /* End-align dates */
   }
 }
 
@@ -245,6 +266,12 @@ svg[class*="plot-"] .gantt-task-label text {
   --border: 20 5.9% 90%;
   --input: 20 5.9% 90%;
   --ring: 24.6 95% 53.1%;
+  /* Data-table surfaces and grid line. */
+  --tp-table-row: 60 4.8% 96.5%;
+  --tp-table-row-hover: 60 4.8% 92.2%;
+  --tp-table-row-nested: 60 4.8% 92.2%;
+  --tp-table-row-nested-hover: 60 4.8% 88.8%;
+  --tp-table-grid-line: 20 5.9% 76%;
 }
 
 .green {
@@ -271,6 +298,12 @@ svg[class*="plot-"] .gantt-task-label text {
   --border: 240 5.9% 90%;
   --input: 240 5.9% 90%;
   --ring: 142.1 76.2% 36.3%;
+  /* Data-table surfaces and grid line. */
+  --tp-table-row: 240 4.8% 96.5%;
+  --tp-table-row-hover: 240 4.8% 92.2%;
+  --tp-table-row-nested: 240 4.8% 92.2%;
+  --tp-table-row-nested-hover: 240 4.8% 88.8%;
+  --tp-table-grid-line: 240 5.9% 76%;
 }
 
 .purple {
@@ -297,6 +330,12 @@ svg[class*="plot-"] .gantt-task-label text {
   --border: 220 13% 91%;
   --input: 220 13% 91%;
   --ring: 262.1 83.3% 57.8%;
+  /* Data-table surfaces and grid line. */
+  --tp-table-row: 220 14.3% 96.7%;
+  --tp-table-row-hover: 220 14.3% 92.2%;
+  --tp-table-row-nested: 220 14.3% 92.2%;
+  --tp-table-row-nested-hover: 220 14.3% 88.8%;
+  --tp-table-grid-line: 220 13% 76%;
 }
 
 /*
@@ -330,18 +369,74 @@ svg[class*="plot-"] .gantt-task-label text {
   --input: 215 16% 40%;
   --ring: 217 91% 40%; /* strong, clearly visible focus indicator */
   --radius: 0.5rem;
+  color-scheme: light;
+  /* Data-table surfaces and grid line. Rows sit at the page background so
+     text keeps the theme's full contrast ratio; the grid line and the hover
+     state carry the row structure instead of a tinted fill. The states are
+     stepped harder than in the other themes — against a white row a subtle
+     tint is not a usable hover cue for someone who needs high contrast. */
+  --tp-table-row: var(--background);
+  --tp-table-row-hover: 214 20% 76%;
+  --tp-table-row-nested: 214 20% 86%;
+  --tp-table-row-nested-hover: 214 20% 68%;
+  --tp-table-grid-line: var(--border);
 }
 
-/* Override layer — the part that actually enforces conformance. */
-.accessible [class*="text-muted-foreground/"] {
+/*
+ * Accessible Dark theme — the dark-mode counterpart of .accessible.
+ * A high-contrast dark palette that meets the same WCAG 2.2 AA presentation
+ * criteria (every text pair >=4.5:1, UI/border/focus >=3:1) so users who need
+ * a dark UI (e.g. light sensitivity) still get a conformant option. Class name
+ * is "accessibledark" so the Theme enum -> lowercase -> class convention holds.
+ */
+.accessibledark {
+  --background: 222 47% 9%;
+  --foreground: 210 40% 98%;
+  --card: 222 47% 11%;
+  --card-foreground: 210 40% 98%;
+  --popover: 222 47% 11%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 210 40% 96%;
+  --primary-foreground: 222 47% 11%;
+  --secondary: 217 33% 24%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 217 33% 20%;
+  --muted-foreground: 215 25% 78%; /* ~10.6:1 on bg, 7.7:1 on muted */
+  --accent: 217 33% 26%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 65% 45%; /* white text 6.0:1, 3.1:1 vs bg */
+  --destructive-foreground: 0 0% 100%;
+  --warning: 38 92% 60%;
+  --warning-foreground: 38 92% 12%;
+  --success: 142 60% 30%; /* white text 5.4:1, 3.5:1 vs bg */
+  --success-foreground: 0 0% 100%;
+  --border: 215 20% 48%; /* 4.0:1 non-text contrast (1.4.11) */
+  --input: 215 20% 52%;
+  --ring: 210 90% 72%; /* bright, clearly visible focus indicator on dark */
+  --radius: 0.5rem;
+  color-scheme: dark;
+  /* Data-table surfaces and grid line. Mirrors the light accessible theme:
+     rows sit at the page background so text keeps the theme's full contrast
+     ratio, and the states are stepped harder than in the other themes so the
+     hover cue stays visible. */
+  --tp-table-row: var(--background);
+  --tp-table-row-hover: 220 25% 26%;
+  --tp-table-row-nested: 220 25% 19%;
+  --tp-table-row-nested-hover: 220 25% 32%;
+  --tp-table-grid-line: var(--border);
+}
+
+/* Override layer — the part that actually enforces conformance.
+   Applies to both accessible variants (light + dark). */
+:is(.accessible, .accessibledark) [class*="text-muted-foreground/"] {
   /* 1.4.3 Contrast: neutralize the opacity modifiers that drop muted text below 4.5:1 */
   color: hsl(var(--muted-foreground)) !important;
 }
-.accessible [class*="text-primary/"] {
+:is(.accessible, .accessibledark) [class*="text-primary/"] {
   /* 1.4.3 Contrast: same problem on de-emphasized primary text (e.g. breadcrumb links) */
   color: hsl(var(--primary)) !important;
 }
-.accessible
+:is(.accessible, .accessibledark)
   :is(
     button,
     [role="button"],
@@ -355,21 +450,78 @@ svg[class*="plot-"] .gantt-task-label text {
   min-height: 1.5rem;
   min-width: 1.5rem;
 }
-.accessible :focus-visible {
+:is(.accessible, .accessibledark) :focus-visible {
   /* 2.4.7 Focus Visible: consistent, high-contrast focus ring */
   outline: 2px solid hsl(var(--ring)) !important;
   outline-offset: 2px;
 }
-
-/* Style the close button specifically for the TestRunCaseDetails sheet */
-.test-run-details-sheet > button.absolute.right-4.top-4 {
-  background-color: hsl(var(--primary-foreground));
-  color: hsl(
-    var(--primary-background)
-  ); /* Optional: Adjust icon color if needed */
+html:not(.accessible):not(.accessibledark) [data-status-bar] {
+  /* The bar scrolls (see overflow-x-auto on the element) once its segments hit
+     their 4px floor. At 10px tall a native scrollbar would be most of the bar,
+     so hide it here — the segments are links, so keyboard users still reach
+     every one and focus scrolls it into view, and the counts below the bar
+     carry the totals regardless. The accessible themes keep their scrollbar:
+     the rule below grows the bar to 24px, where one fits. */
+  scrollbar-width: none;
+}
+html:not(.accessible):not(.accessibledark)
+  [data-status-bar]::-webkit-scrollbar {
+  display: none;
+}
+:is(.accessible, .accessibledark) [data-status-bar] {
+  /* 2.5.8 Target Size: every segment of a status bar links to a case, so each
+     one is a target, but the bar is 10px tall and a segment can be a few
+     pixels wide. Under these themes the bar grows to the 24px minimum and
+     scrolls instead of clipping the segments that no longer fit. Widths stay
+     proportional above the minimum; below it segments stop shrinking, so a run
+     with many cases trades an exact-width bar for reachable targets. */
+  height: 1.5rem;
+  overflow-x: auto;
+}
+:is(.accessible, .accessibledark) [data-status-bar] > * {
+  min-width: 1.5rem !important;
+}
+:is(.accessible, .accessibledark) [data-status-surface] {
+  /* 1.4.3 Contrast: statuses, tags and result colours are picked by admins, so
+     no fixed foreground is safe on them — white on the seeded green is 2.95:1.
+     The element supplies --status-surface-fg (black or white, whichever
+     contrasts better; see utils/contrastingTextColor.ts) and only the
+     accessible themes consume it, so the brand themes keep their own text
+     colour. !important because the colour is set inline alongside the
+     background. */
+  color: var(--status-surface-fg) !important;
+}
+:is(.accessible, .accessibledark) [data-review-status] {
+  /* Review-decision badges paint with theme tokens, not admin-chosen hexes,
+     so the readable foreground is known per theme rather than computed at
+     render time: each accessible theme's paired *-foreground token is the
+     black/white pick contrastingTextColor.ts makes for that theme's
+     background value (e.g. --warning flips from dark amber in .accessible
+     to light amber in .accessibledark, so its foreground flips white →
+     near-black). Publishing it as --status-surface-fg lets the badge reuse
+     the [data-status-surface] consumption rule above. */
+  --status-surface-fg: hsl(var(--primary-foreground));
+}
+:is(.accessible, .accessibledark) [data-review-status="approved"] {
+  --status-surface-fg: hsl(var(--success-foreground));
+}
+:is(.accessible, .accessibledark) [data-review-status="changes_requested"] {
+  --status-surface-fg: hsl(var(--warning-foreground));
+}
+:is(.accessible, .accessibledark) [data-review-status="rejected"] {
+  --status-surface-fg: hsl(var(--destructive-foreground));
+}
+:is(.accessible, .accessibledark) [data-review-status="cancelled"] {
+  --status-surface-fg: hsl(var(--background));
 }
 
-.test-run-details-sheet > button.absolute.right-4.top-4:hover {
+/* Style the close button specifically for the TestRunCaseDetails sheet */
+.test-run-details-sheet > button.absolute.end-4.top-4 {
+  background-color: hsl(var(--primary-foreground));
+  color: hsl(var(--primary));
+}
+
+.test-run-details-sheet > button.absolute.end-4.top-4:hover {
   background-color: hsl(
     var(--primary-foreground) / 0.9
   ); /* Optional: Adjust hover */
@@ -385,6 +537,92 @@ svg[class*="plot-"] .gantt-task-label text {
   }
 }
 
+/* Data-table row surfaces and grid.
+
+   Colours come from the --tp-table-* theme tokens defined in each theme block
+   above, alongside --tp-grid-line-color and the --tp-tooltip-* tokens.
+   They are separate tokens rather than --card/--muted because those equal
+   --background in the dark theme, which would leave the fill invisible.
+
+   The surfaces are opaque so a pinned cell can reuse the exact same colour and
+   still hide the row scrolling underneath it. */
+.table-row-surface {
+  background-color: hsl(var(--tp-table-row));
+}
+
+.table-row-surface-nested {
+  /* A nested row is a percentage tint of its parent's surface (mixed toward the
+     foreground) rather than a separately-tuned colour, so sub-rows read as a
+     shade of their parent consistently across every theme. */
+  background-color: color-mix(
+    in srgb,
+    hsl(var(--tp-table-row)),
+    hsl(var(--foreground)) 8%
+  );
+}
+
+.table-row-surface-hover:hover {
+  background-color: hsl(var(--tp-table-row-hover));
+}
+
+.table-row-surface-nested-hover:hover {
+  background-color: hsl(var(--tp-table-row-nested-hover));
+}
+
+/* A pinned cell paints its own opaque fill so the row cannot show through it,
+   which would otherwise leave it behind when the row is hovered. */
+.table-row-surface-hover:hover .table-row-surface {
+  background-color: hsl(var(--tp-table-row-hover));
+}
+
+.table-row-surface-nested-hover:hover .table-row-surface-nested {
+  background-color: hsl(var(--tp-table-row-nested-hover));
+}
+
+/* One colour on both axes so row dividers and column separators match: the row
+   itself (div-based table), its cells' inline-end borders, and the bottom
+   border below. The divider has to be drawn on the cells for DataTable, whose
+   border-separate table never paints <tr> borders. */
+.table-row-divider,
+.table-row-divider > td,
+.table-row-divider [role="cell"] {
+  border-color: hsl(var(--tp-table-grid-line));
+}
+
+.table-row-divider > td {
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+}
+
+tbody > tr:last-child.table-row-divider > td {
+  border-bottom-width: 0;
+}
+
+/* Keep the divider around a nested group tied to the same percentage tint as
+   the nested fill: the dividers between sub-rows (and the sub-rows' own column
+   separators) plus the boundary from a parent row into its first sub-row, so a
+   parent and its children read as one cohesive block instead of being split by
+   the full-strength grid line. */
+.table-row-surface-nested.table-row-divider,
+.table-row-surface-nested.table-row-divider > td,
+.table-row-surface-nested.table-row-divider [role="cell"] {
+  border-color: color-mix(
+    in srgb,
+    hsl(var(--tp-table-row)),
+    hsl(var(--foreground)) 16%
+  );
+}
+
+.table-row-divider:has(+ .table-row-surface-nested),
+.table-row-divider:has(+ .table-row-surface-nested) > td,
+.table-row-divider:has(+ .table-row-surface-nested) [role="cell"] {
+  border-bottom-color: color-mix(
+    in srgb,
+    hsl(var(--tp-table-row)),
+    hsl(var(--foreground)) 16%
+  );
+}
+
 /* Search result highlighting - outside @layer to override browser defaults */
 mark {
   background-color: hsl(var(--warning) / 0.3);
@@ -393,7 +631,8 @@ mark {
   border-radius: 0.125rem;
 }
 
-.dark mark {
+.dark mark,
+.accessibledark mark {
   background-color: hsl(var(--warning) / 0.45);
 }
 
@@ -478,4 +717,15 @@ mark {
   [data-panel-group]:has([data-resize-handle-state="drag"]) iframe {
     pointer-events: none !important;
   }
+}
+
+/* react-resizable-panels v4 renders each panel with overflow:visible (v3 clipped).
+   A panel collapsed to size 0 therefore still shows its content, because flex
+   items keep a min-width:auto (min-content) and spill out of the 0-width panel.
+   Restore v3's clipping so collapsing actually hides content. The resize handle
+   sits outside the panel and popovers/menus render in portals, so this only
+   affects in-panel content (in-panel scrolling stays on the inner wrapper).
+   Uses !important to win over the library's inline style. */
+[data-panel] {
+  overflow: hidden !important;
 }

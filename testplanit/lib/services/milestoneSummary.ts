@@ -1,4 +1,5 @@
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
+import { getEffectiveCaseCompletion } from "~/lib/services/effectiveCaseStatus";
 import { AUTOMATED_TEST_RUN_TYPES } from "~/utils/testResultTypes";
 
 export type MilestoneSegment = {
@@ -20,11 +21,14 @@ export type MilestoneIssue = {
   id: number;
   name: string;
   title: string;
+  description: string | null;
   externalId: string | null;
   externalKey: string | null;
   externalUrl: string | null;
   externalStatus: string | null;
   data: any;
+  issueTypeName: string | null;
+  issueTypeIconUrl: string | null;
   integrationId: number | null;
   lastSyncedAt: Date | null;
   integration: {
@@ -44,49 +48,22 @@ export type MilestoneSummaryData = {
   commentsCount: number;
   segments: MilestoneSegment[];
   issues: MilestoneIssue[];
+  // Count of `MilestoneIssue` rows for THIS milestone only (D-15 — never
+  // descendant-scoped), unlike `issues` above which rolls up children.
+  scopeCount: number;
 };
 
-export async function calculateMilestoneCompletion(
+/**
+ * Split a milestone (rollup)'s non-deleted test runs into manual vs.
+ * automated/imported (JUnit, TestNG, Mocha, etc.) run IDs. Automated runs
+ * record their outcomes in JUnitTestResult, not TestRunCases.statusId /
+ * TestRunResults, so any per-case status or elapsed aggregation needs to
+ * treat the two separately.
+ */
+async function splitRunIdsByAutomation(
   milestoneIds: number[]
-): Promise<number> {
-  // Get total test cases in all test runs for these milestones
-  const totalCasesResult = await prisma.$queryRaw<Array<{ count: bigint }>>`
-    SELECT COUNT(*) as count
-    FROM "TestRunCases" trc
-    JOIN "TestRuns" tr ON trc."testRunId" = tr.id
-    WHERE tr."milestoneId" = ANY(${milestoneIds}::int[])
-      AND tr."isDeleted" = false
-  `;
-  const totalTestCases = Number(totalCasesResult[0]?.count || 0);
-
-  if (totalTestCases === 0) {
-    return 0;
-  }
-
-  // Get count of completed test cases (where TestRunCases.status.isCompleted = true)
-  const completedCasesResult = await prisma.$queryRaw<Array<{ count: bigint }>>`
-    SELECT COUNT(*) as count
-    FROM "TestRunCases" trc
-    JOIN "TestRuns" tr ON trc."testRunId" = tr.id
-    JOIN "Status" s ON trc."statusId" = s.id
-    WHERE tr."milestoneId" = ANY(${milestoneIds}::int[])
-      AND tr."isDeleted" = false
-      AND s."isCompleted" = true
-  `;
-  const completedTestCases = Number(completedCasesResult[0]?.count || 0);
-
-  // Calculate percentage, capped at 100%
-  return Math.min((completedTestCases / totalTestCases) * 100, 100);
-}
-
-export async function getTestRunSegments(
-  milestoneIds: number[]
-): Promise<MilestoneSegment[]> {
-  // Split the milestone's runs into manual vs. automated. Automated/imported
-  // runs (JUnit, TestNG, etc.) record their outcomes in JUnitTestResult, not
-  // TestRunResults, so they need a separate aggregation path — otherwise every
-  // automated case looks "pending" with zero elapsed.
-  const runs = await prisma.$queryRaw<
+): Promise<{ regularRunIds: number[]; automatedRunIds: number[] }> {
+  const runs = await baseDb.$queryRaw<
     Array<{ id: number; testRunType: string }>
   >`
     SELECT id, "testRunType"
@@ -101,6 +78,34 @@ export async function getTestRunSegments(
   const automatedRunIds = runs
     .filter((r) => automatedTypes.has(r.testRunType))
     .map((r) => r.id);
+  return { regularRunIds, automatedRunIds };
+}
+
+export async function calculateMilestoneCompletion(
+  milestoneIds: number[]
+): Promise<number> {
+  // Manual and automated run-cases record their outcomes in different
+  // tables; the accessor owns that split.
+  const { total, completed } = await getEffectiveCaseCompletion({
+    milestoneIds,
+  });
+  if (total === 0) {
+    return 0;
+  }
+
+  // Calculate percentage, capped at 100%
+  return Math.min((completed / total) * 100, 100);
+}
+
+export async function getTestRunSegments(
+  milestoneIds: number[]
+): Promise<MilestoneSegment[]> {
+  // Split the milestone's runs into manual vs. automated. Automated/imported
+  // runs (JUnit, TestNG, etc.) record their outcomes in JUnitTestResult, not
+  // TestRunResults, so they need a separate aggregation path — otherwise every
+  // automated case looks "pending" with zero elapsed.
+  const { regularRunIds, automatedRunIds } =
+    await splitRunIdsByAutomation(milestoneIds);
 
   const [manual, automated] = await Promise.all([
     getManualTestRunSegments(regularRunIds),
@@ -115,7 +120,7 @@ async function getManualTestRunSegments(
   if (runIds.length === 0) return [];
 
   // Get test runs with aggregated case data (manual runs only)
-  const testRuns = await prisma.$queryRaw<
+  const testRuns = await baseDb.$queryRaw<
     Array<{
       testRunId: number;
       testRunName: string;
@@ -159,6 +164,7 @@ async function getManualTestRunSegments(
       LEFT JOIN "Color" c ON s."colorId" = c.id
       WHERE tr.id = ANY(${runIds}::int[])
         AND tr."isDeleted" = false
+        AND trc."isDeleted" = false
       GROUP BY tr.id, tr.name, tr."testRunType", trc."statusId", s.name, c.value, s.order
     )
     SELECT
@@ -254,7 +260,7 @@ async function getAutomatedTestRunSegments(
 ): Promise<MilestoneSegment[]> {
   if (runIds.length === 0) return [];
 
-  const rows = await prisma.$queryRaw<
+  const rows = await baseDb.$queryRaw<
     Array<{
       testRunId: number;
       testRunName: string;
@@ -307,7 +313,7 @@ export async function getSessionSegments(
   milestoneIds: number[]
 ): Promise<MilestoneSegment[]> {
   // Get sessions for this milestone with their latest results
-  const sessions = await prisma.$queryRaw<
+  const sessions = await baseDb.$queryRaw<
     Array<{
       sessionId: number;
       sessionName: string;
@@ -385,32 +391,36 @@ export async function getMilestoneLinkedIssues(
 ): Promise<MilestoneIssue[]> {
   const issueIds = new Set<number>();
 
+  // Implicit m2m join columns are named alphabetically by related model, so for
+  // _IssueTo{TestRuns,Sessions,SessionResults} the columns are A=Issue and B=the
+  // other side. (The original raw SQL assumed the reverse and silently dropped
+  // every linked issue under v3.) issueId = "A"; filter on "B".
   const testRunIssues =
     testRunIds.length > 0
-      ? await prisma.$queryRaw<Array<{ issueId: number }>>`
-        SELECT DISTINCT "B" as "issueId"
+      ? await baseDb.$queryRaw<Array<{ issueId: number }>>`
+        SELECT DISTINCT "A" as "issueId"
         FROM "_IssueToTestRuns"
-        WHERE "A" = ANY(${testRunIds}::int[])
+        WHERE "B" = ANY(${testRunIds}::int[])
       `
       : [];
   testRunIssues.forEach((link) => issueIds.add(link.issueId));
 
   const sessionIssues =
     sessionIds.length > 0
-      ? await prisma.$queryRaw<Array<{ issueId: number }>>`
-        SELECT DISTINCT "B" as "issueId"
+      ? await baseDb.$queryRaw<Array<{ issueId: number }>>`
+        SELECT DISTINCT "A" as "issueId"
         FROM "_IssueToSessions"
-        WHERE "A" = ANY(${sessionIds}::int[])
+        WHERE "B" = ANY(${sessionIds}::int[])
       `
       : [];
   sessionIssues.forEach((link) => issueIds.add(link.issueId));
 
   const sessionResultIssues =
     sessionIds.length > 0
-      ? await prisma.$queryRaw<Array<{ issueId: number }>>`
-        SELECT DISTINCT irs."B" as "issueId"
+      ? await baseDb.$queryRaw<Array<{ issueId: number }>>`
+        SELECT DISTINCT irs."A" as "issueId"
         FROM "_IssueToSessionResults" irs
-        JOIN "SessionResults" sr ON irs."A" = sr.id
+        JOIN "SessionResults" sr ON irs."B" = sr.id
         WHERE sr."sessionId" = ANY(${sessionIds}::int[])
           AND sr."isDeleted" = false
       `
@@ -419,7 +429,7 @@ export async function getMilestoneLinkedIssues(
 
   const issues =
     issueIds.size > 0
-      ? await prisma.issue.findMany({
+      ? await baseDb.issue.findMany({
           where: {
             id: { in: Array.from(issueIds) },
           },
@@ -427,11 +437,14 @@ export async function getMilestoneLinkedIssues(
             id: true,
             name: true,
             title: true,
+            description: true,
             externalId: true,
             externalKey: true,
             externalUrl: true,
             externalStatus: true,
             data: true,
+            issueTypeName: true,
+            issueTypeIconUrl: true,
             integrationId: true,
             lastSyncedAt: true,
             integration: {

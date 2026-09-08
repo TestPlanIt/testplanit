@@ -1,5 +1,7 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { UserNameCell } from "@/components/tables/UserNameCell";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { Button } from "@/components/ui/button";
@@ -13,14 +15,13 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
 import {
   notifyBulkTestCaseAssignment,
   notifyTestCaseAssignment,
 } from "~/app/actions/test-run-notifications";
-import { useUpdateTestRunCases } from "~/lib/hooks";
 import { ExtendedCases } from "./columns";
 
 interface AssignTestCaseModalProps {
@@ -57,8 +58,17 @@ export function AssignTestCaseModal({
   } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // AsyncCombobox refetches whenever `fetchOptions` changes identity, so an
+  // inline arrow would refetch on every render of this component.
+  const fetchMemberOptions = useCallback(
+    (query: string, page: number, pageSize: number) =>
+      searchProjectMembers(projectId, query, page, pageSize),
+    [projectId]
+  );
+
   // Update mutation
-  const { mutateAsync: updateTestRunCase } = useUpdateTestRunCases();
+  const { mutateAsync: updateTestRunCase } =
+    useClientQueries(schema).testRunCases.useUpdate();
 
   const handleAssign = async () => {
     setIsSubmitting(true);
@@ -207,9 +217,7 @@ export function AssignTestCaseModal({
               <AsyncCombobox
                 value={selectedUser}
                 onValueChange={setSelectedUser}
-                fetchOptions={(query, page, pageSize) =>
-                  searchProjectMembers(projectId, query, page, pageSize)
-                }
+                fetchOptions={fetchMemberOptions}
                 renderOption={(user) => (
                   <UserNameCell userId={user.id} hideLink />
                 )}

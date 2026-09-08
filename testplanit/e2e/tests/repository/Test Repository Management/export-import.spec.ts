@@ -1,5 +1,6 @@
 import { expect, test } from "../../../fixtures";
 import { RepositoryPage } from "../../../page-objects/repository/repository.page";
+import { clickOverflowAction } from "../../../utils/action-overflow";
 
 /**
  * Export & Import Tests
@@ -271,12 +272,11 @@ some data,without,proper,structure`;
 
     await test.step("Open the export dialog and configure CSV export", async () => {
       // Click export button - use the data-testid from Cases.tsx
-      const exportButton = page
-        .locator('[data-testid="export-cases-button"]')
-        .first();
-      await expect(exportButton).toBeVisible({ timeout: 10000 });
-      await expect(exportButton).toBeEnabled({ timeout: 5000 });
-      await exportButton.click();
+      await clickOverflowAction(
+        page,
+        "export-cases-button",
+        "cases-actions-menu"
+      );
 
       // Export dialog should open
       await expect(exportDialog.first()).toBeVisible({ timeout: 5000 });
@@ -370,12 +370,11 @@ some data,without,proper,structure`;
 
     await test.step("Open the export dialog and select CSV format", async () => {
       // Click export button - use the data-testid from Cases.tsx
-      const exportButton = page
-        .locator('[data-testid="export-cases-button"]')
-        .first();
-      await expect(exportButton).toBeVisible({ timeout: 10000 });
-      await expect(exportButton).toBeEnabled({ timeout: 5000 });
-      await exportButton.click();
+      await clickOverflowAction(
+        page,
+        "export-cases-button",
+        "cases-actions-menu"
+      );
 
       await expect(exportDialog.first()).toBeVisible({ timeout: 5000 });
 
@@ -444,12 +443,11 @@ some data,without,proper,structure`;
 
     await test.step("Open the export dialog and select PDF format", async () => {
       // Click export button
-      const exportButton = page
-        .locator('[data-testid="export-cases-button"]')
-        .first();
-      await expect(exportButton).toBeVisible({ timeout: 10000 });
-      await expect(exportButton).toBeEnabled({ timeout: 5000 });
-      await exportButton.click();
+      await clickOverflowAction(
+        page,
+        "export-cases-button",
+        "cases-actions-menu"
+      );
 
       // Export dialog should open
       await expect(exportDialog.first()).toBeVisible({ timeout: 5000 });
@@ -566,10 +564,11 @@ some data,without,proper,structure`;
 
     await test.step("Open the export dialog and configure PDF, all-filtered", async () => {
       // Open export dialog
-      const exportButton = page
-        .locator('[data-testid="export-cases-button"]')
-        .first();
-      await exportButton.click();
+      await clickOverflowAction(
+        page,
+        "export-cases-button",
+        "cases-actions-menu"
+      );
 
       await expect(exportDialog.first()).toBeVisible({ timeout: 5000 });
 
@@ -660,11 +659,11 @@ some data,without,proper,structure`;
 
     await test.step("Open the export dialog and select PDF format", async () => {
       // Click export button
-      const exportButton = page
-        .locator('[data-testid="export-cases-button"]')
-        .first();
-      await expect(exportButton).toBeVisible({ timeout: 10000 });
-      await exportButton.click();
+      await clickOverflowAction(
+        page,
+        "export-cases-button",
+        "cases-actions-menu"
+      );
 
       await expect(exportDialog.first()).toBeVisible({ timeout: 5000 });
 
@@ -723,11 +722,11 @@ some data,without,proper,structure`;
 
     await test.step("Open the export dialog and select PDF format", async () => {
       // Click export button
-      const exportButton = page
-        .locator('[data-testid="export-cases-button"]')
-        .first();
-      await expect(exportButton).toBeVisible({ timeout: 10000 });
-      await exportButton.click();
+      await clickOverflowAction(
+        page,
+        "export-cases-button",
+        "cases-actions-menu"
+      );
 
       await expect(exportDialog.first()).toBeVisible({ timeout: 5000 });
 
@@ -808,11 +807,11 @@ some data,without,proper,structure`;
 
     await test.step("Open the export dialog and select PDF format", async () => {
       // Click export button
-      const exportButton = page
-        .locator('[data-testid="export-cases-button"]')
-        .first();
-      await expect(exportButton).toBeVisible({ timeout: 10000 });
-      await exportButton.click();
+      await clickOverflowAction(
+        page,
+        "export-cases-button",
+        "cases-actions-menu"
+      );
 
       await expect(exportDialog.first()).toBeVisible({ timeout: 5000 });
 
@@ -892,11 +891,11 @@ some data,without,proper,structure`;
 
     await test.step("Open the export dialog with CSV selected by default", async () => {
       // Click export button
-      const exportButton = page
-        .locator('[data-testid="export-cases-button"]')
-        .first();
-      await expect(exportButton).toBeVisible({ timeout: 10000 });
-      await exportButton.click();
+      await clickOverflowAction(
+        page,
+        "export-cases-button",
+        "cases-actions-menu"
+      );
 
       await expect(exportDialog.first()).toBeVisible({ timeout: 5000 });
 

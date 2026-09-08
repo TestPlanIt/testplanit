@@ -1,16 +1,11 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library */
-import { useEffect, useMemo, useState } from "react";
-import {
-  useCreateManyProjectWorkflowAssignment,
-  useCreateWorkflows,
-  useFindFirstColor,
-  useFindFirstFieldIcon,
-  useFindManyProjects,
-  useUpdateManyWorkflows,
-} from "~/lib/hooks";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { Projects, WorkflowType } from "@prisma/client";
+import { WorkflowType } from "~/zenstack/models";
+import type { Projects } from "~/zenstack/models";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { Controller, useForm } from "react-hook-form";
@@ -20,6 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 import { FieldIconPicker } from "@/components/FieldIconPicker";
+import { ProjectIcon } from "@/components/ProjectIcon";
+import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
 
 import {
   Select,
@@ -52,11 +49,9 @@ import {
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Switch } from "@/components/ui/switch";
 import { useTranslations } from "next-intl";
-import { useTheme } from "next-themes";
-import MultiSelect from "react-select";
 import { scopeDisplayData } from "~/app/constants";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
-import { getCustomStyles } from "~/styles/multiSelectStyles";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 const scopeKeys = Object.keys(scopeDisplayData) as [
   keyof typeof scopeDisplayData,
@@ -95,9 +90,15 @@ function buildFormSchema(t: (key: any) => string): any {
 interface AddWorkflowsProps {
   open: boolean;
   onClose: () => void;
+  /** Pre-select the scope (e.g. when opened from a specific scope's card). */
+  defaultScope?: (typeof scopeKeys)[number];
 }
 
-export function AddWorkflows({ open, onClose }: AddWorkflowsProps) {
+export function AddWorkflows({
+  open,
+  onClose,
+  defaultScope,
+}: AddWorkflowsProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const t = useTranslations("admin.workflows");
@@ -110,38 +111,41 @@ export function AddWorkflows({ open, onClose }: AddWorkflowsProps) {
     useReviewFeatureEnabled();
   const reviewFeatureDisabled = reviewFeatureSystemEnabled === false;
 
-  const { data: defaultIconData } = useFindFirstFieldIcon({
+  const { data: defaultIconData } = useClientQueries(
+    schema
+  ).fieldIcon.useFindFirst({
     where: { name: "layout-list" },
   });
-  const { data: defaultColorData } = useFindFirstColor();
+  const { data: defaultColorData } =
+    useClientQueries(schema).color.useFindFirst();
   const [selectedIconId, setSelectedIconId] = useState<number | null>(null);
   const [selectedColorId, setSelectedColorId] = useState<number | null>(null);
 
-  const { mutateAsync: createWorkflows } = useCreateWorkflows();
-  const { mutateAsync: updateManyWorkflows } = useUpdateManyWorkflows();
+  const { mutateAsync: createWorkflows } =
+    useClientQueries(schema).workflows.useCreate();
   const { mutateAsync: createManyProjectWorkflowAssignment } =
-    useCreateManyProjectWorkflowAssignment();
+    useClientQueries(schema).projectWorkflowAssignment.useCreateMany();
 
-  const { theme } = useTheme();
-  const customStyles = getCustomStyles({ theme });
-
-  const { data: projects } = useFindManyProjects({
+  const { data: projects } = useClientQueries(schema).projects.useFindMany({
     where: { isDeleted: false },
     orderBy: { name: "asc" },
   });
 
-  const projectOptions =
-    projects && projects.length > 0
-      ? projects.map((project) => ({
-          value: project.id,
-          label: `${project.name}`,
-        }))
-      : [];
+  type ProjectOption = NonNullable<typeof projects>[number];
 
-  const selectAllProjects = () => {
-    const allProjectIds = projectOptions.map((option) => option.value);
-    setValue("projects", allProjectIds);
-  };
+  const fetchProjectOptions = useCallback(
+    (query: string, page: number, pageSize: number) => {
+      const q = query.toLowerCase();
+      const filtered = (projects ?? []).filter((project) =>
+        project.name.toLowerCase().includes(q)
+      );
+      return Promise.resolve({
+        results: filtered.slice(page * pageSize, page * pageSize + pageSize),
+        total: filtered.length,
+      });
+    },
+    [projects]
+  );
 
   const handleIconSelect = (iconId: number) => {
     setSelectedIconId(iconId);
@@ -155,7 +159,7 @@ export function AddWorkflows({ open, onClose }: AddWorkflowsProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: standardSchemaResolver(formSchema),
     defaultValues: {
-      scope: undefined,
+      scope: defaultScope,
       name: "",
       isDefault: false,
       isEnabled: true,
@@ -166,7 +170,6 @@ export function AddWorkflows({ open, onClose }: AddWorkflowsProps) {
 
   const {
     control,
-    setValue,
     formState: { errors },
   } = form;
 
@@ -180,18 +183,8 @@ export function AddWorkflows({ open, onClose }: AddWorkflowsProps) {
   async function onSubmit(data: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     try {
-      if (data.isDefault) {
-        await updateManyWorkflows({
-          where: {
-            isDefault: true,
-            scope: data.scope,
-          },
-          data: {
-            isDefault: false,
-          },
-        });
-      }
-
+      // The single-default DB trigger (tpl_single_default_workflows) clears the
+      // previous default for this scope atomically.
       const newWorkflow = await createWorkflows({
         data: {
           name: data.name,
@@ -228,7 +221,7 @@ export function AddWorkflows({ open, onClose }: AddWorkflowsProps) {
       onClose();
       setIsSubmitting(false);
     } catch (err: any) {
-      if (err.info?.prisma && err.info?.code === "P2002") {
+      if (isUniqueConstraintError(err)) {
         form.setError("name", {
           type: "custom",
           message: tCommon("errors.workflowStateExists"),
@@ -452,44 +445,51 @@ export function AddWorkflows({ open, onClose }: AddWorkflowsProps) {
             <FormField
               control={form.control}
               name="projects"
-              render={({ field: _field }) => (
+              render={() => (
                 <FormItem>
-                  <FormLabel className="flex justify-between items-center">
-                    <span className="flex items-center">
-                      {tCommon("fields.projects")}
-                      <HelpPopover helpKey="workflow.projects" />
-                    </span>
-                    <div
-                      onClick={selectAllProjects}
-                      style={{ cursor: "pointer" }}
-                    >
-                      {tCommon("actions.selectAll")}
-                    </div>
-                  </FormLabel>{" "}
+                  <FormLabel className="flex items-center">
+                    {tCommon("fields.projects")}
+                    <HelpPopover helpKey="workflow.projects" />
+                  </FormLabel>
                   <FormControl>
                     <Controller
                       control={control}
                       name="projects"
-                      render={({ field }) => (
-                        <MultiSelect
-                          {...field}
-                          isMulti
-                          maxMenuHeight={300}
-                          className="w-[445px] sm:w-[550px] lg:w-[950px]"
-                          classNamePrefix="select"
-                          styles={customStyles}
-                          options={projectOptions}
-                          onChange={(selected: any) => {
-                            const value = selected
-                              ? selected.map((option: any) => option.value)
-                              : [];
-                            field.onChange(value);
-                          }}
-                          value={projectOptions.filter((option) =>
-                            field.value?.includes(option.value)
-                          )}
-                        />
-                      )}
+                      render={({ field }) => {
+                        const selectedProjects = (projects ?? []).filter(
+                          (project) => field.value?.includes(project.id)
+                        );
+                        return (
+                          <MultiAsyncCombobox<ProjectOption>
+                            value={selectedProjects}
+                            onValueChange={(selected) =>
+                              field.onChange(
+                                selected.map((project) => project.id)
+                              )
+                            }
+                            fetchOptions={fetchProjectOptions}
+                            renderOption={(project) => (
+                              <div className="flex min-w-0 items-center gap-2">
+                                <ProjectIcon
+                                  iconUrl={project.iconUrl}
+                                  width={16}
+                                  height={16}
+                                />
+                                <span className="truncate">{project.name}</span>
+                              </div>
+                            )}
+                            renderSelectedOption={(project) => (
+                              <span>{project.name}</span>
+                            )}
+                            getOptionValue={(project) => project.id}
+                            getOptionLabel={(project) => project.name}
+                            placeholder={tCommon("fields.projects")}
+                            className="w-full"
+                            pageSize={20}
+                            showTotal
+                          />
+                        );
+                      }}
                     />
                   </FormControl>
                   <FormMessage />

@@ -7,11 +7,18 @@ import type {
 } from "~/lib/integrations/adapters/IssueAdapter";
 import { parameterCreateSchema } from "~/lib/schemas/parameterSchema";
 import {
+  buildCommentsSection,
+  buildExpandUserPrompt,
+  buildLinkedIssuesSection,
   buildOutlineSystemPrompt,
   buildOutlineUserPrompt,
   buildSystemPrompt,
+  fetchExistingCasesContext,
+  fetchIssueLinkedCasesContext,
   fetchLinkedIssuesContext,
   parseAndValidateTestCases,
+  type GenerationContext,
+  type LinkedIssueContext,
   type TemplateData,
   type IssueData as LlmIssueData,
 } from "./shared";
@@ -477,6 +484,416 @@ describe("buildSystemPrompt — INT-06 includeParameters extension", () => {
   });
 });
 
+describe("existing-case context — issue-linked cases", () => {
+  /**
+   * Minimal stand-in for the raw client: `repositoryCases.findMany` records the
+   * where-clause it was called with and returns the rows the test queued for
+   * that call, `repositoryFolders.findMany` backs the hierarchy walk.
+   */
+  function makeContextDb(opts: {
+    caseRowsPerCall?: any[][];
+    folders?: { id: number; parentId: number | null }[];
+  }) {
+    const calls: any[] = [];
+    const queue = [...(opts.caseRowsPerCall ?? [])];
+    return {
+      calls,
+      db: {
+        repositoryCases: {
+          findMany: vi.fn(async (args: any) => {
+            calls.push(args);
+            return queue.shift() ?? [];
+          }),
+        },
+        repositoryFolders: {
+          findMany: vi.fn(async () => opts.folders ?? []),
+        },
+      },
+    };
+  }
+
+  const caseRow = (id: number, name: string) => ({
+    id,
+    name,
+    template: { templateName: "Functional" },
+    caseFieldValues: [],
+    steps: [],
+  });
+
+  it("matches on the internal Issue.id when the caller knows it", async () => {
+    const { db, calls } = makeContextDb({
+      caseRowsPerCall: [[caseRow(1, "Existing linked case")]],
+    });
+
+    const result = await fetchIssueLinkedCasesContext(
+      db,
+      7,
+      { issueId: 42, issueKey: "PROJ-1" },
+      1000
+    );
+
+    expect(result.cases.map((c) => c.name)).toEqual(["Existing linked case"]);
+    expect(result.caseIds).toEqual(new Set([1]));
+    expect(calls[0].where).toMatchObject({
+      projectId: 7,
+      isDeleted: false,
+      isArchived: false,
+      caseIssues: { some: { issue: { id: 42 } } },
+    });
+  });
+
+  it("falls back to tracker identity, scoped by integration when known", async () => {
+    const { db, calls } = makeContextDb({
+      caseRowsPerCall: [[caseRow(1, "Linked by key")]],
+    });
+
+    await fetchIssueLinkedCasesContext(
+      db,
+      7,
+      { issueKey: "PROJ-1", externalId: "10042", integrationId: 3 },
+      1000
+    );
+
+    const issueWhere = calls[0].where.caseIssues.some.issue;
+    expect(issueWhere.integrationId).toBe(3);
+    // A synced issue carries the key in externalKey, a manual one in name.
+    expect(issueWhere.OR).toEqual([
+      { externalId: "10042" },
+      { externalKey: "PROJ-1" },
+      { name: "PROJ-1" },
+    ]);
+  });
+
+  it("queries nothing when the ref carries no usable identity", async () => {
+    const { db } = makeContextDb({});
+
+    const result = await fetchIssueLinkedCasesContext(db, 7, {}, 1000);
+
+    expect(result.cases).toEqual([]);
+    expect(db.repositoryCases.findMany).not.toHaveBeenCalled();
+  });
+
+  it("still returns context when there is no folder (Jira panel / milestone)", async () => {
+    // folderId 0 is what both no-folder flows pass — the hierarchy walk finds
+    // nothing, so issue-linked cases are the only context available.
+    const { db } = makeContextDb({
+      caseRowsPerCall: [[caseRow(1, "Only linked case")], []],
+      folders: [],
+    });
+
+    const cases = await fetchExistingCasesContext(
+      db,
+      7,
+      { folderId: 0, issueRef: { issueId: 42 } },
+      1000,
+      "names"
+    );
+
+    expect(cases.map((c) => c.name)).toEqual(["Only linked case"]);
+  });
+
+  it("puts issue-linked cases first and never lists a case twice", async () => {
+    const { db } = makeContextDb({
+      // Call 1: issue-linked. Call 2: the folder, which also contains case 1.
+      caseRowsPerCall: [
+        [caseRow(1, "Linked and in folder")],
+        [
+          { ...caseRow(1, "Linked and in folder"), folderId: 5 },
+          { ...caseRow(2, "Folder sibling"), folderId: 5 },
+        ],
+      ],
+      folders: [{ id: 5, parentId: null }],
+    });
+
+    const cases = await fetchExistingCasesContext(
+      db,
+      7,
+      { folderId: 5, issueRef: { issueId: 42 } },
+      1000,
+      "names"
+    );
+
+    expect(cases.map((c) => c.name)).toEqual([
+      "Linked and in folder",
+      "Folder sibling",
+    ]);
+  });
+
+  it("bills the shared budget — linked cases claim it first", async () => {
+    const { db, calls } = makeContextDb({
+      caseRowsPerCall: [
+        [caseRow(1, "A".repeat(200))],
+        [{ ...caseRow(2, "Folder case"), folderId: 5 }],
+      ],
+      folders: [{ id: 5, parentId: null }],
+    });
+
+    const linkedOnly = await fetchIssueLinkedCasesContext(
+      db,
+      7,
+      { issueId: 42 },
+      1000,
+      "names"
+    );
+    expect(linkedOnly.tokensUsed).toBeGreaterThan(0);
+    expect(calls).toHaveLength(1);
+
+    // A budget too small for even the first linked case yields nothing, and the
+    // hierarchy pass is still reached with what's left.
+    const { db: tightDb } = makeContextDb({
+      caseRowsPerCall: [[caseRow(1, "A".repeat(400))], []],
+      folders: [{ id: 5, parentId: null }],
+    });
+    const tight = await fetchExistingCasesContext(
+      tightDb,
+      7,
+      { folderId: 5, issueRef: { issueId: 42 } },
+      5,
+      "names"
+    );
+    expect(tight).toEqual([]);
+  });
+});
+
+describe("deselected fields — prompt exclusion + response strip", () => {
+  const templateWithExclusions: TemplateData = {
+    ...sampleTemplate,
+    excludedFields: ["Preconditions", "Post Conditions"],
+  };
+
+  it("names every excluded field as a forbidden key in the fallback prompt", () => {
+    const prompt = buildSystemPrompt(
+      templateWithExclusions,
+      { folderContext: 0 },
+      "few",
+      false,
+      undefined,
+      false
+    );
+
+    expect(prompt).toContain("EXCLUDED FIELDS");
+    expect(prompt).toContain("- Preconditions");
+    expect(prompt).toContain("- Post Conditions");
+    // The exclusion list must land after the field lists it refers back to.
+    expect(prompt.indexOf("EXCLUDED FIELDS")).toBeGreaterThan(
+      prompt.indexOf("ADDITIONAL FIELDS")
+    );
+  });
+
+  it("omits the exclusion section entirely when nothing was deselected", () => {
+    const prompt = buildSystemPrompt(
+      sampleTemplate,
+      { folderContext: 0 },
+      "few",
+      false,
+      undefined,
+      false
+    );
+
+    expect(prompt).not.toContain("EXCLUDED FIELDS");
+  });
+
+  it("never lists a field as both included and excluded", () => {
+    const prompt = buildSystemPrompt(
+      { ...sampleTemplate, excludedFields: ["Priority", "Preconditions"] },
+      { folderContext: 0 },
+      "few",
+      false,
+      undefined,
+      false
+    );
+
+    // "Priority" is a real template field — a caller that also lists it as
+    // excluded must not produce contradictory instructions.
+    expect(prompt).toContain("- Preconditions");
+    expect(prompt).not.toMatch(/EXCLUDED FIELDS[\s\S]*^- Priority$/m);
+  });
+
+  it("appends the exclusion block to custom prompts that lack the variable", () => {
+    const customTemplate =
+      "{{EXAMPLE_STRUCTURE}}\n\nREQUIRED:\n{{REQUIRED_FIELDS_LIST}}\n\nADDITIONAL FIELDS:\n{{OPTIONAL_FIELDS_LIST}}\n\nReturn ONLY the JSON.";
+
+    const prompt = buildSystemPrompt(
+      templateWithExclusions,
+      { folderContext: 0 },
+      "few",
+      false,
+      customTemplate,
+      false
+    );
+
+    expect(prompt).toContain("EXCLUDED FIELDS");
+    expect(prompt).toContain("- Preconditions");
+  });
+
+  it("lets a custom prompt own the wording via {{EXCLUDED_FIELDS_LIST}}", () => {
+    const customTemplate =
+      "{{EXAMPLE_STRUCTURE}}\n\nSKIP THESE:\n{{EXCLUDED_FIELDS_LIST}}\n\nReturn ONLY the JSON.";
+
+    const prompt = buildSystemPrompt(
+      templateWithExclusions,
+      { folderContext: 0 },
+      "few",
+      false,
+      customTemplate,
+      false
+    );
+
+    expect(prompt).toContain("SKIP THESE:\n- Preconditions\n- Post Conditions");
+    // No appended block — the custom prompt already rendered the list.
+    expect(prompt).not.toContain("EXCLUDED FIELDS (");
+  });
+
+  it("renders the variable as (none) when nothing was deselected", () => {
+    const prompt = buildSystemPrompt(
+      sampleTemplate,
+      { folderContext: 0 },
+      "few",
+      false,
+      "{{EXAMPLE_STRUCTURE}}\n\nSKIP THESE:\n{{EXCLUDED_FIELDS_LIST}}",
+      false
+    );
+
+    expect(prompt).toContain("SKIP THESE:\n- (none)");
+  });
+
+  it("drops fieldValues keys outside the template, whatever the model emits", () => {
+    const { testCases } = parseAndValidateTestCases(
+      JSON.stringify({
+        testCases: [
+          {
+            id: "tc_1",
+            name: "Login succeeds",
+            fieldValues: {
+              Description: "Validates login",
+              Steps: [{ step: "Open login", expectedResult: "Form shows" }],
+              Priority: "High",
+              // Deselected by the user — the model volunteered them anyway.
+              Preconditions: "User exists",
+              "Post Conditions": "Session created",
+            },
+          },
+        ],
+      }),
+      templateWithExclusions,
+      sampleIssue
+    );
+
+    expect(Object.keys(testCases[0].fieldValues).sort()).toEqual([
+      "Description",
+      "Priority",
+      "Steps",
+    ]);
+  });
+
+  it("keeps the top-level steps/priority migration working after the strip", () => {
+    const { testCases } = parseAndValidateTestCases(
+      JSON.stringify({
+        testCases: [
+          {
+            id: "tc_1",
+            name: "Login succeeds",
+            fieldValues: { Description: "Validates login", Notes: "ignore me" },
+            steps: [{ step: "Open login", expectedResult: "Form shows" }],
+            priority: "High",
+          },
+        ],
+      }),
+      sampleTemplate,
+      sampleIssue
+    );
+
+    expect(testCases[0].fieldValues.Steps).toHaveLength(1);
+    expect(testCases[0].fieldValues.Priority).toBe("High");
+    expect(testCases[0].fieldValues).not.toHaveProperty("Notes");
+  });
+});
+
+describe("Steps field — shape normalization", () => {
+  function parseSteps(fieldValues: Record<string, any>, extra = {}) {
+    const { testCases } = parseAndValidateTestCases(
+      JSON.stringify({
+        testCases: [{ id: "tc_1", name: "Case", fieldValues, ...extra }],
+      }),
+      sampleTemplate,
+      sampleIssue
+    );
+    return testCases[0].fieldValues.Steps;
+  }
+
+  it("keeps every step of a well-formed array", () => {
+    const steps = parseSteps({
+      Steps: [
+        { step: "one", expectedResult: "r1" },
+        { step: "two", expectedResult: "r2" },
+        { step: "three", expectedResult: "r3" },
+      ],
+    });
+
+    expect(steps).toHaveLength(3);
+    expect(steps.map((s: any) => s.step)).toEqual(["one", "two", "three"]);
+  });
+
+  it("expands a numbered list emitted as a single string", () => {
+    const steps = parseSteps({ Steps: "1. Open page\n2. Click save" });
+
+    expect(steps).toHaveLength(2);
+    expect(steps[0].step).toBe("Open page");
+    expect(steps[1].step).toBe("Click save");
+  });
+
+  it("wraps a lone step object in an array", () => {
+    const steps = parseSteps({ Steps: { step: "only", expectedResult: "ok" } });
+    expect(steps).toEqual([{ step: "only", expectedResult: "ok" }]);
+  });
+
+  it("accepts action / expected key spellings", () => {
+    const steps = parseSteps({
+      Steps: [{ action: "click", expected: "modal opens" }],
+    });
+
+    expect(steps[0]).toMatchObject({
+      step: "click",
+      expectedResult: "modal opens",
+    });
+  });
+
+  it("normalizes steps migrated from the top level too", () => {
+    const { testCases } = parseAndValidateTestCases(
+      JSON.stringify({
+        testCases: [
+          {
+            id: "tc_1",
+            name: "Case",
+            fieldValues: { Description: "d" },
+            steps: [{ action: "a", expected: "b" }],
+          },
+        ],
+      }),
+      sampleTemplate,
+      sampleIssue
+    );
+
+    expect(testCases[0].fieldValues.Steps).toEqual([
+      expect.objectContaining({ step: "a", expectedResult: "b" }),
+    ]);
+  });
+
+  it("tells the model to emit one object per action", () => {
+    const prompt = buildSystemPrompt(
+      sampleTemplate,
+      { folderContext: 0 },
+      "few",
+      false,
+      undefined,
+      false
+    );
+
+    expect(prompt).toContain("ARRAY of detailed step objects");
+    expect(prompt).toContain("one object per individual action");
+  });
+});
+
 describe("buildSystemPrompt — name field language consistency", () => {
   it("fallback (inline) prompt instructs that the name match the fieldValues language", () => {
     const prompt = buildSystemPrompt(
@@ -863,5 +1280,234 @@ describe("buildOutlineUserPrompt — existing cases context", () => {
     expect(prompt).not.toContain("Some description");
     expect(prompt).not.toContain("Open page");
     expect(prompt).not.toContain("Modal opens");
+  });
+});
+
+// Enrichment restored after the two-phase refactor (#304) dropped it: the
+// outline and expand prompts must fold in the source issue's comments and its
+// one-hop linked issues (title/body/comments).
+describe("issue enrichment sections — comments + linked issues", () => {
+  const enrichedIssue: LlmIssueData = {
+    key: "PROJ-9",
+    title: "Password reset",
+    description: "User can reset their password",
+    status: "Open",
+    priority: "High",
+    comments: [
+      {
+        author: "alice",
+        body: "Reset link must expire after 15 minutes",
+        created: "2026-01-01T00:00:00Z",
+      },
+      {
+        author: "bob",
+        body: "Rate-limit reset requests",
+        created: "2026-01-02T00:00:00Z",
+      },
+    ],
+  };
+
+  const linkedIssues: LinkedIssueContext[] = [
+    {
+      ref: {
+        id: "100",
+        key: "PROJ-2",
+        linkType: "blocks",
+        direction: "outward",
+      },
+      title: "Email delivery service",
+      body: "Sends the reset emails",
+      comments: [
+        {
+          author: "carol",
+          body: "Handle SMTP timeouts",
+          created: "2026-01-03T00:00:00Z",
+        },
+      ],
+    },
+  ];
+
+  const enrichedContext: GenerationContext = {
+    folderContext: 0,
+    linkedIssues,
+  };
+
+  describe("buildCommentsSection", () => {
+    it("returns '' for undefined or empty comments", () => {
+      expect(buildCommentsSection(undefined)).toBe("");
+      expect(buildCommentsSection([])).toBe("");
+    });
+
+    it("renders each comment as a numbered author: body line", () => {
+      const section = buildCommentsSection(enrichedIssue.comments);
+      expect(section).toContain("RELEVANT COMMENTS:");
+      expect(section).toContain(
+        "1. alice: Reset link must expire after 15 minutes"
+      );
+      expect(section).toContain("2. bob: Rate-limit reset requests");
+    });
+  });
+
+  describe("buildLinkedIssuesSection", () => {
+    it("returns '' for undefined or empty linked issues", () => {
+      expect(buildLinkedIssuesSection(undefined)).toBe("");
+      expect(buildLinkedIssuesSection([])).toBe("");
+    });
+
+    it("renders key, link type/direction, title, body, and comments", () => {
+      const section = buildLinkedIssuesSection(linkedIssues);
+      expect(section).toContain("RELATED LINKED ISSUES:");
+      expect(section).toContain(
+        "1. PROJ-2 (blocks, outward): Email delivery service"
+      );
+      expect(section).toContain("Body: Sends the reset emails");
+      expect(section).toContain("Comment 1 (carol): Handle SMTP timeouts");
+    });
+
+    it("falls back to the ref id when no key is present", () => {
+      const section = buildLinkedIssuesSection([
+        {
+          ref: { id: "555", linkType: "relates to", direction: "inward" },
+          title: "Untitled dep",
+          comments: [],
+        },
+      ]);
+      expect(section).toContain("1. 555 (relates to, inward): Untitled dep");
+    });
+  });
+
+  describe("buildOutlineUserPrompt — enrichment", () => {
+    it("folds comments and linked issues into the outline prompt", () => {
+      const prompt = buildOutlineUserPrompt(enrichedIssue, enrichedContext);
+      expect(prompt).toContain("RELEVANT COMMENTS:");
+      expect(prompt).toContain(
+        "1. alice: Reset link must expire after 15 minutes"
+      );
+      expect(prompt).toContain("RELATED LINKED ISSUES:");
+      expect(prompt).toContain(
+        "1. PROJ-2 (blocks, outward): Email delivery service"
+      );
+      expect(prompt).toContain("Comment 1 (carol): Handle SMTP timeouts");
+    });
+
+    it("omits both sections for an un-enriched (e.g. manual) issue", () => {
+      const prompt = buildOutlineUserPrompt(sampleIssue, { folderContext: 0 });
+      expect(prompt).not.toContain("RELEVANT COMMENTS:");
+      expect(prompt).not.toContain("RELATED LINKED ISSUES:");
+    });
+  });
+
+  describe("buildExpandUserPrompt — enrichment", () => {
+    const outline = {
+      title: "Reset link expires",
+      summary: "Link expires in 15m",
+    };
+
+    it("inline prompt grounds the case in comments + linked issues", () => {
+      const prompt = buildExpandUserPrompt(
+        enrichedIssue,
+        outline,
+        enrichedContext
+      );
+      expect(prompt).toContain("RELEVANT COMMENTS:");
+      expect(prompt).toContain("RELATED LINKED ISSUES:");
+      expect(prompt).toContain('Title: "Reset link expires"');
+    });
+
+    it("base-template prompt fills the comments + linked-issue placeholders", () => {
+      const baseTemplate =
+        "ISSUE {{ISSUE_KEY}} {{ISSUE_TITLE}}{{COMMENTS_SECTION}}{{LINKED_ISSUES_SECTION}}{{USER_NOTES_SECTION}}{{EXISTING_CASES_SECTION}}";
+      const prompt = buildExpandUserPrompt(
+        enrichedIssue,
+        outline,
+        enrichedContext,
+        baseTemplate
+      );
+      expect(prompt).toContain("RELEVANT COMMENTS:");
+      expect(prompt).toContain(
+        "1. PROJ-2 (blocks, outward): Email delivery service"
+      );
+      expect(prompt).toContain('Title: "Reset link expires"');
+    });
+
+    it("omits both sections for an un-enriched issue", () => {
+      const prompt = buildExpandUserPrompt(sampleIssue, outline, {
+        folderContext: 0,
+      });
+      expect(prompt).not.toContain("RELEVANT COMMENTS:");
+      expect(prompt).not.toContain("RELATED LINKED ISSUES:");
+    });
+  });
+});
+
+describe("parseAndValidateTestCases — finish-reason-aware truncation classification", () => {
+  // Malformed on purpose: a trailing comma makes JSON.parse throw with an
+  // "Expected ... JSON" message, which the heuristics alone read as truncation.
+  const malformedButComplete =
+    '{"testCases": [{"id": "tc_1", "name": "A", "fieldValues": {},}]}';
+  const cutOff =
+    '{"testCases": [{"id": "tc_1", "name": "A", "fieldValues": {"Steps": [{"step": "Open';
+
+  it("reports a completed response with a JSON slip as invalid format, not truncation", () => {
+    const { parseError } = parseAndValidateTestCases(
+      malformedButComplete,
+      sampleTemplate,
+      sampleIssue,
+      false,
+      "few",
+      "stop"
+    );
+
+    expect(parseError).toBeDefined();
+    expect(parseError!.seemsTruncated).toBe(false);
+    expect(parseError!.userError).toBe("AI generated invalid response format");
+  });
+
+  it("keeps the truncation verdict when the provider reports length", () => {
+    const { parseError } = parseAndValidateTestCases(
+      malformedButComplete,
+      sampleTemplate,
+      sampleIssue,
+      false,
+      "few",
+      "length"
+    );
+
+    expect(parseError).toBeDefined();
+    expect(parseError!.seemsTruncated).toBe(true);
+    expect(parseError!.userError).toBe(
+      "AI response was too long and got truncated"
+    );
+  });
+
+  it("still calls a visibly cut-off completed response truncated", () => {
+    const { parseError, testCases } = parseAndValidateTestCases(
+      cutOff,
+      sampleTemplate,
+      sampleIssue,
+      false,
+      "few",
+      "stop"
+    );
+
+    // Either the repair path recovers it, or the classifier must say truncated.
+    if (parseError) {
+      expect(parseError.seemsTruncated).toBe(true);
+    } else {
+      expect(testCases.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("falls back to the heuristics when no finish reason is known", () => {
+    const { parseError } = parseAndValidateTestCases(
+      malformedButComplete,
+      sampleTemplate,
+      sampleIssue,
+      false,
+      "few"
+    );
+
+    expect(parseError).toBeDefined();
+    expect(parseError!.seemsTruncated).toBe(true);
   });
 });

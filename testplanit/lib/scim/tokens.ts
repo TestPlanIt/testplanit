@@ -21,10 +21,10 @@
 import crypto from "crypto";
 
 import { hashToken } from "~/lib/api-tokens";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { encrypt, decrypt } from "~/utils/encryption";
 import { SCIM_SYSTEM_USER_ID, SCIM_TOKEN_PREFIX } from "~/lib/scim/constants";
-import type { IdpName, ScimToken } from "@prisma/client";
+import type { IdpName, ScimToken } from "~/zenstack/models";
 
 const SCIM_TOKEN_BYTES = 32;
 
@@ -63,7 +63,7 @@ export async function mintScimToken(
   const tokenPrefix = plaintext.substring(0, 12);
   const encryptedSecret = await encrypt(plaintext);
 
-  const token = await prisma.scimToken.create({
+  const token = await baseDb.scimToken.create({
     data: {
       name: input.name,
       idpName: input.idpName,
@@ -89,7 +89,7 @@ export async function revokeScimToken(
   id: string,
   revokedById: string
 ): Promise<ScimToken> {
-  return prisma.scimToken.update({
+  return baseDb.scimToken.update({
     where: { id },
     data: {
       isActive: false,
@@ -103,7 +103,18 @@ export async function revokeScimToken(
  * Direct findUnique passthrough. Returns null when no row matches.
  */
 export async function getScimTokenById(id: string): Promise<ScimToken | null> {
-  return prisma.scimToken.findUnique({ where: { id } });
+  return baseDb.scimToken.findUnique({ where: { id } });
+}
+
+/**
+ * Like {@link getScimTokenById} but opts the `@omit`'d `secret` column back
+ * in (still encrypted at rest) for callers that need to decrypt it.
+ */
+export async function getScimTokenWithSecret(id: string) {
+  return baseDb.scimToken.findUnique({
+    where: { id },
+    omit: { secret: false },
+  });
 }
 
 /**
@@ -116,7 +127,7 @@ export async function listScimTokens(opts: {
   showRevoked?: boolean;
   search?: string;
 }): Promise<ScimToken[]> {
-  return prisma.scimToken.findMany({
+  return baseDb.scimToken.findMany({
     where: {
       AND: [
         opts.showRevoked ? {} : { isActive: true },

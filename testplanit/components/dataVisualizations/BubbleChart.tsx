@@ -1,4 +1,5 @@
 import * as d3 from "d3";
+import { useLocale } from "next-intl";
 import React, { useCallback, useEffect, useRef } from "react";
 
 // Type for the raw tag data input
@@ -33,6 +34,7 @@ export const BubbleChart: React.FC<BubbleChartProps> = ({
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const resizeFrameRef = useRef<number | null>(null);
+  const locale = useLocale();
 
   const drawChart = useCallback(() => {
     if (
@@ -175,7 +177,7 @@ export const BubbleChart: React.FC<BubbleChartProps> = ({
 
     leafNodes.append("title").text((d) => {
       const nodeData = d.data as LeafHierarchyData;
-      return `${nodeData.name}\n${d3.format(",d")(nodeData.value)}`;
+      return `${nodeData.name}\n${nodeData.value.toLocaleString(locale)}`;
     });
 
     leafNodes
@@ -192,15 +194,16 @@ export const BubbleChart: React.FC<BubbleChartProps> = ({
       })
       .style("cursor", "pointer")
       .on("mouseenter", function (_event, d) {
+        // Named transition so it doesn't cancel the entrance animation
         d3.select(this)
-          .transition()
+          .transition("hover")
           .duration(300)
           .attr("r", d.r * 1.4)
           .style("filter", "brightness(1.15)");
       })
       .on("mouseleave", function (_event, d) {
         d3.select(this)
-          .transition()
+          .transition("hover")
           .duration(200)
           .attr("r", d.r)
           .style("filter", "brightness(1)");
@@ -269,7 +272,7 @@ export const BubbleChart: React.FC<BubbleChartProps> = ({
         </div>`
       );
     });
-  }, [tags, onTagClick]);
+  }, [tags, onTagClick, locale]);
 
   useEffect(() => {
     const scheduleDraw = () => {

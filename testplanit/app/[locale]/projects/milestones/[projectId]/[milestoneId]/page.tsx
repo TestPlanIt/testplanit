@@ -1,10 +1,22 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
+import DynamicIcon from "@/components/DynamicIcon";
+import { RecordId } from "@/components/RecordId";
 import { ForecastDisplay } from "@/components/ForecastDisplay";
 import LoadingSpinnerPage from "@/components/LoadingSpinnerAlert";
 import { MilestoneSummary } from "@/components/MilestoneSummary";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
+import {
+  ActionBar,
+  ActionButtonContent,
+  ActionOverflow,
+  collapsibleActionClass,
+  useContainerCompact,
+} from "@/components/ui/action-bar";
 import { Button } from "@/components/ui/button";
+import { MilestoneAuditLogSheet } from "@/components/milestones/MilestoneAuditLogSheet";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   FormControl,
@@ -20,62 +32,81 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { Textarea } from "@/components/ui/textarea";
-import type { TestRunItemProps } from "@/projects/runs/[projectId]/TestRunItem";
 import TestRunItem from "@/projects/runs/[projectId]/TestRunItem";
 import { SessionsWithDetails } from "@/projects/sessions/[projectId]/SessionDisplay";
 import SessionItem from "@/projects/sessions/[projectId]/SessionItem";
+import { isMySession } from "@/projects/sessions/[projectId]/sessionFilters";
 import {
   CompletableSession,
   CompleteSessionDialog,
 } from "@/projects/sessions/[projectId]/[sessionId]/CompleteSessionDialog";
+import { CardFilterChips } from "./CardFilterChips";
+import {
+  EMPTY_CARD_FILTERS,
+  isAnyCardFilterActive,
+  matchesCardStatus,
+  parseStoredCardFilters,
+  runsCardFiltersStorageKey,
+  sessionsCardFiltersStorageKey,
+} from "./cardFilters";
+import { usePersistedFilter } from "~/hooks/usePersistedFilter";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { ApplicationArea } from "@prisma/client";
-import { useQuery } from "@tanstack/react-query";
+import { ApplicationArea } from "~/zenstack/models";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
   CircleCheckBig,
   CircleSlash2,
   Compass,
   FileDown,
+  History,
   PlayCircle,
   Save,
   SquarePen,
-  Trash2,
+  Trash,
+  TrendingDown,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { useParams, useSearchParams } from "next/navigation";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
+import { PanelImperativeHandle } from "react-resizable-panels";
 import { toast } from "sonner";
 import { z } from "zod/v4";
 import type { BatchTestRunSummaryResponse } from "~/app/api/test-runs/summaries/route";
 import { emptyEditorContent } from "~/app/constants";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
+import type { IconName } from "~/types/globals";
+import { CollapsibleSection } from "~/components/CollapsibleSection";
 import { CommentsSection } from "~/components/comments/CommentsSection";
+import MilestoneBurndownChart from "~/components/dataVisualizations/MilestoneBurndownChart";
 import LoadingSpinner from "~/components/LoadingSpinner";
+import { VirtualizedCardList } from "~/components/VirtualizedCardList";
 import { useExportMilestonePdf } from "~/hooks/pdf/useExportMilestonePdf";
+import { useMilestoneBurndown } from "~/hooks/useMilestoneBurndown";
+import { usePendingReviewsByEntity } from "~/hooks/usePendingReviewsByEntity";
+import { useMilestoneLiveStream } from "~/hooks/useMilestoneLiveStream";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import {
-  useFindFirstMilestones,
-  useFindManyColor,
-  useFindManyMilestones,
-  useFindManyMilestoneTypes,
-  useFindManySessions,
-  useFindManyTestRuns,
-  useUpdateMilestones,
-} from "~/lib/hooks";
 import { Link, useRouter } from "~/lib/navigation";
 import {
   ColorMap,
   createColorMap,
   MilestonesWithTypes,
+  sortMilestones,
 } from "~/utils/milestoneUtils";
+import { toCalendarDate } from "~/utils/calendarDate";
 import { CompleteMilestoneDialog } from "../../CompleteMilestoneDialog";
 import { DeleteMilestoneModal } from "../DeleteMilestoneModal";
-import ChildMilestoneItem from "./ChildMilestoneItem";
+import MilestoneItemCard from "../MilestoneItemCard";
+import { MilestoneSourceBadge } from "@/components/MilestoneSourceBadge";
+import { IssuesCard, type IssuesCardHandle } from "./IssuesCard";
 import MilestoneFormControls from "./MilestoneFormControls";
+import { buildMilestoneUpdatePayload } from "./milestoneUpdatePayload";
+import { Loading } from "~/components/Loading";
 
 interface MilestoneForecastData {
   manualEstimate: number;
@@ -108,11 +139,46 @@ export default function MilestoneDetailsPage() {
     useState<MilestoneForecastData | null>(null);
   const [isLoadingForecast, setIsLoadingForecast] = useState(false);
   const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
+  // The child rows carry their own lifecycle actions, so the delete and
+  // complete dialogs need a second, child-scoped instance — the ones above
+  // are bound to the milestone this page is about.
+  const [selectedChildMilestone, setSelectedChildMilestone] =
+    useState<MilestonesWithTypes | null>(null);
+  const [isChildDeleteModalOpen, setIsChildDeleteModalOpen] = useState(false);
+  const [isChildCompleteDialogOpen, setIsChildCompleteDialogOpen] =
+    useState(false);
+  // Action bar collapses into a kebab when the header is narrow (mirrors the
+  // repository case details bar).
+  const { ref: headerRef, compact: headerCompact } = useContainerCompact();
+  const [auditOpen, setAuditOpen] = useState(false);
+  const [isCollapsedLeft, setIsCollapsedLeft] = useState(false);
+  const [isCollapsedRight, setIsCollapsedRight] = useState(false);
+  const [isTransitioningLeft, setIsTransitioningLeft] = useState(false);
+  const [isTransitioningRight, setIsTransitioningRight] = useState(false);
+  const panelLeftRef = useRef<PanelImperativeHandle>(null);
+  const panelRightRef = useRef<PanelImperativeHandle>(null);
+  const issuesCardRef = useRef<IssuesCardHandle>(null);
   const router = useRouter();
   const { resolvedTheme } = useTheme();
 
   const { data: sessionAuth } = useSession();
   const locale = useLocale();
+  const currentUserId = sessionAuth?.user?.id;
+
+  // Per-card list filters (status + "mine"), remembered per milestone. They
+  // narrow the two card lists only — every rollup on this page (summaries,
+  // burndown, forecast, coverage, PDF export, the milestone-completion
+  // cascade) keeps reading the unfiltered data.
+  const [runsCardFilters, setRunsCardFilters] = usePersistedFilter(
+    runsCardFiltersStorageKey(milestoneId),
+    EMPTY_CARD_FILTERS,
+    parseStoredCardFilters
+  );
+  const [sessionsCardFilters, setSessionsCardFilters] = usePersistedFilter(
+    sessionsCardFiltersStorageKey(milestoneId),
+    EMPTY_CARD_FILTERS,
+    parseStoredCardFilters
+  );
 
   const { isExporting: isExportingPdf, handleExport: handleExportPdf } =
     useExportMilestonePdf({
@@ -165,45 +231,95 @@ export default function MilestoneDetailsPage() {
     resolver: standardSchemaResolver(MilestoneFormSchema),
   });
 
-  const { data: milestone, isLoading: isMilestoneLoading } =
-    useFindFirstMilestones({
-      where: {
-        id: Number(milestoneId),
-        projectId: Number(projectId),
-        isDeleted: false,
+  const { data: milestone, isLoading: isMilestoneLoading } = useClientQueries(
+    schema
+  ).milestones.useFindFirst({
+    where: {
+      id: Number(milestoneId),
+      projectId: Number(projectId),
+      isDeleted: false,
+    },
+    include: {
+      milestoneType: {
+        include: {
+          icon: true,
+        },
       },
-      include: {
-        milestoneType: {
-          include: {
-            icon: true,
-          },
+      creator: {
+        select: {
+          id: true,
+          name: true,
+          image: true,
         },
-        creator: {
-          select: {
-            id: true,
-            name: true,
-            image: true,
-          },
-        },
-        children: {
-          include: {
-            milestoneType: {
-              include: {
-                icon: true,
-              },
+      },
+      children: {
+        include: {
+          milestoneType: {
+            include: {
+              icon: true,
             },
           },
         },
       },
-    });
+    },
+  });
 
-  const { data: milestoneTypes, isLoading: isTypesLoading } =
-    useFindManyMilestoneTypes({
-      include: { icon: true },
-    });
+  const queryClient = useQueryClient();
+
+  // D-15/D-16: subscribe this detail page to its per-entity milestone
+  // stream so the fields, badge, member table, and coverage all react live
+  // on a wake-up — no bespoke 45s passive-refresh window exists on this
+  // page today, so this is a net-new subscriber, not a retirement.
+  useMilestoneLiveStream({
+    milestoneId: Number(milestoneId),
+    onWakeUp: React.useCallback(
+      (event) => {
+        // The `sync` checkpoint fires on every (re)subscribe — including the
+        // routine EventSource reconnects that happen on any transport blip or
+        // dev-mode HMR recompile — and is NOT a data change. Refetching the
+        // whole page on it turns reconnect churn into a request flood that can
+        // saturate the browser's per-origin connection pool. Only react to real
+        // change events (mirrors MemberIssuesOverflowPanel's membership_changed
+        // filter).
+        if (event.event === "sync") return;
+        void queryClient.invalidateQueries({
+          predicate: (query) =>
+            JSON.stringify(query.queryKey).includes("Milestones") ||
+            JSON.stringify(query.queryKey).includes("MilestoneIssue"),
+        });
+        void queryClient.invalidateQueries({
+          queryKey: ["milestoneMemberCoverage", Number(milestoneId)],
+        });
+        void queryClient.invalidateQueries({
+          queryKey: ["milestoneMemberOverflow", Number(milestoneId)],
+        });
+        // Both the MilestoneSummary chips (scopeCount) and the sibling "Found
+        // in testing" section (issues) read this same cache entry.
+        void queryClient.invalidateQueries({
+          queryKey: ["milestoneSummary", Number(milestoneId)],
+        });
+        // Burndown re-derives from execution, so refresh it on the same wake-up.
+        void queryClient.invalidateQueries({
+          queryKey: ["milestoneBurndown", Number(milestoneId)],
+        });
+      },
+      [queryClient, milestoneId]
+    ),
+  });
+
+  // Burndown series for the milestone/sprint window (fast-follow READY, D4).
+  const { data: burndown } = useMilestoneBurndown(
+    milestone?.id ?? Number(milestoneId)
+  );
+
+  const { data: milestoneTypes, isLoading: isTypesLoading } = useClientQueries(
+    schema
+  ).milestoneTypes.useFindMany({
+    include: { icon: true },
+  });
 
   const { data: allProjectMilestones, isLoading: isProjectMilestonesLoading } =
-    useFindManyMilestones({
+    useClientQueries(schema).milestones.useFindMany({
       where: {
         projectId: Number(projectId),
         isDeleted: false,
@@ -217,7 +333,34 @@ export default function MilestoneDetailsPage() {
       },
     });
 
-  const { data: colors } = useFindManyColor({
+  // Every active IntegrationProject mapping for this project — feeds the
+  // Jira project ("space") segment on the header badge AND on the child rows'
+  // badges. Scoped to the project rather than to this milestone's integration
+  // because a local parent can own synced children; each badge filters the
+  // list down to its own integration. Skipped entirely when nothing on the
+  // page is synced.
+  const { data: milestoneIntegrationProjects } = useClientQueries(
+    schema
+  ).integrationProject.useFindMany(
+    {
+      where: {
+        isActive: true,
+        projectIntegration: { projectId: Number(projectId) },
+      },
+      select: {
+        externalProjectKey: true,
+        externalProjectName: true,
+        projectIntegration: { select: { integrationId: true } },
+      },
+    },
+    {
+      enabled:
+        milestone?.integrationId != null ||
+        (allProjectMilestones ?? []).some((m) => m.integrationId != null),
+    }
+  );
+
+  const { data: colors } = useClientQueries(schema).color.useFindMany({
     include: { colorFamily: true },
     orderBy: { colorFamily: { order: "asc" } },
   });
@@ -240,7 +383,9 @@ export default function MilestoneDetailsPage() {
     [milestoneId, descendantsData]
   );
 
-  const { data: milestoneSessions } = useFindManySessions({
+  const { data: milestoneSessions } = useClientQueries(
+    schema
+  ).sessions.useFindMany({
     where: {
       milestoneId: { in: allMilestoneIds },
       isDeleted: false,
@@ -270,7 +415,9 @@ export default function MilestoneDetailsPage() {
     orderBy: [{ isCompleted: "asc" }, { createdAt: "desc" }],
   });
 
-  const { data: milestoneTestRuns } = useFindManyTestRuns({
+  const { data: milestoneTestRuns } = useClientQueries(
+    schema
+  ).testRuns.useFindMany({
     where: {
       milestoneId: { in: allMilestoneIds },
       isDeleted: false,
@@ -282,6 +429,7 @@ export default function MilestoneDetailsPage() {
           name: true,
           isEnabled: true,
           isDeleted: true,
+          deletedAt: true,
         },
       },
       state: {
@@ -311,24 +459,119 @@ export default function MilestoneDetailsPage() {
     [milestoneTestRuns]
   );
 
-  // Batch-fetch test run summaries for all test runs
-  const { data: batchSummaries } = useQuery<BatchTestRunSummaryResponse>({
-    queryKey: ["batchTestRunSummaries", testRunIds],
-    queryFn: async () => {
-      if (testRunIds.length === 0) {
-        return { summaries: {} };
-      }
-      const response = await fetch(
-        `/api/test-runs/summaries?testRunIds=${testRunIds.join(",")}`
-      );
-      if (!response.ok) {
-        throw new Error("Failed to fetch batch test run summaries");
-      }
-      return response.json();
+  const sessionIds = useMemo(
+    () => milestoneSessions?.map((s) => s.id) ?? [],
+    [milestoneSessions]
+  );
+
+  // Pending-review badges on the run/session rows, matching the runs and
+  // sessions list pages.
+  const pendingReviewsByRunId = usePendingReviewsByEntity("RUN", testRunIds);
+  const pendingReviewsBySessionId = usePendingReviewsByEntity(
+    "SESSION",
+    sessionIds
+  );
+
+  // Ids of the runs the signed-in user participates in — created it, is
+  // assigned a case in it, or recorded a result in it, the same triad the runs
+  // list page's "My Test Runs" chip uses and the same three roles the row's
+  // contributor avatars credit. It needs its own id-only query because the
+  // list query above deliberately omits `testCases` and `results`.
+  //
+  // Scoped by `allMilestoneIds` rather than by `testRunIds`: the latter's
+  // identity churns with every list refetch and would re-key this query.
+  const { data: mineRunRows } = useClientQueries(schema).testRuns.useFindMany(
+    {
+      where: {
+        milestoneId: { in: allMilestoneIds },
+        isDeleted: false,
+        OR: [
+          { createdById: currentUserId },
+          {
+            testCases: {
+              some: { isDeleted: false, assignedToId: currentUserId },
+            },
+          },
+          {
+            results: {
+              some: { isDeleted: false, executedById: currentUserId },
+            },
+          },
+        ],
+      },
+      select: { id: true },
     },
-    enabled: testRunIds.length > 0,
-    staleTime: 30000, // Cache for 30 seconds
-  });
+    {
+      enabled:
+        runsCardFilters.mine && !!currentUserId && allMilestoneIds.length > 0,
+      staleTime: 30000,
+    }
+  ) ?? { data: [] };
+
+  const mineRunIds = useMemo(
+    () => new Set((mineRunRows ?? []).map((run) => run.id)),
+    [mineRunRows]
+  );
+
+  // The two card lists. Everything else on this page — batch summaries,
+  // pending reviews, the milestone summary, burndown, forecast, the PDF
+  // export and the "complete associated runs/sessions" cascade — keeps
+  // reading milestoneTestRuns / milestoneSessions whole.
+  const visibleTestRuns = useMemo(() => {
+    if (!milestoneTestRuns) return [];
+    return milestoneTestRuns.filter(
+      (run) =>
+        matchesCardStatus(runsCardFilters, run.isCompleted) &&
+        (!runsCardFilters.mine || mineRunIds.has(run.id))
+    );
+  }, [milestoneTestRuns, runsCardFilters, mineRunIds]);
+
+  // "Mine" for a session is created-by or assigned-to — the two roles the
+  // session row credits — so it needs no companion query.
+  const visibleSessions = useMemo(() => {
+    if (!milestoneSessions) return [];
+    return milestoneSessions.filter(
+      (testSession) =>
+        matchesCardStatus(sessionsCardFilters, testSession.isCompleted) &&
+        (!sessionsCardFilters.mine || isMySession(testSession, currentUserId))
+    );
+  }, [milestoneSessions, sessionsCardFilters, currentUserId]);
+
+  // Batch-fetch test run summaries for all test runs. The route caps a
+  // batch at 100 ids — milestones with many runs (especially via nested
+  // child milestones, D-06) exceed that, so chunk and merge.
+  const { data: batchSummaries, isLoading: isBatchSummariesLoading } =
+    useQuery<BatchTestRunSummaryResponse>({
+      queryKey: ["batchTestRunSummaries", testRunIds],
+      queryFn: async () => {
+        if (testRunIds.length === 0) {
+          return { summaries: {} };
+        }
+        const CHUNK_SIZE = 100;
+        const chunks: number[][] = [];
+        for (let i = 0; i < testRunIds.length; i += CHUNK_SIZE) {
+          chunks.push(testRunIds.slice(i, i + CHUNK_SIZE));
+        }
+        const responses = await Promise.all(
+          chunks.map(async (chunk) => {
+            const response = await fetch(
+              `/api/test-runs/summaries?testRunIds=${chunk.join(",")}`
+            );
+            if (!response.ok) {
+              throw new Error("Failed to fetch batch test run summaries");
+            }
+            return response.json() as Promise<BatchTestRunSummaryResponse>;
+          })
+        );
+        const merged: BatchTestRunSummaryResponse = { summaries: {} };
+        for (const part of responses) {
+          Object.assign(merged.summaries, part.summaries);
+        }
+        return merged;
+      },
+      enabled: testRunIds.length > 0,
+      staleTime: 30000, // Cache for 30 seconds
+    });
 
   useEffect(() => {
     if (colors) {
@@ -360,7 +603,8 @@ export default function MilestoneDetailsPage() {
     void fetchMilestoneForecast();
   }, [milestoneId, tCommon]);
 
-  const { mutateAsync: updateMilestone } = useUpdateMilestones();
+  const { mutateAsync: updateMilestone } =
+    useClientQueries(schema).milestones.useUpdate();
 
   const isLoading =
     isMilestoneLoading ||
@@ -433,17 +677,14 @@ export default function MilestoneDetailsPage() {
 
     setIsSubmitting(true);
     try {
-      // Transform enableNotifications checkbox to notifyDaysBefore value
-      const { enableNotifications, ...restData } = data;
-      const updateData = {
-        ...restData,
-        parentId: data.parentId ? Number(data.parentId) : null,
-        automaticCompletion: data.completedAt
-          ? data.automaticCompletion
-          : false,
-        notifyDaysBefore:
-          data.completedAt && enableNotifications ? data.notifyDaysBefore : 0,
-      };
+      // Transforms enableNotifications into notifyDaysBefore, and strips the
+      // tracker-owned fields (name/note/dates/state) for synced milestones —
+      // those are locked by field-level @deny rules and their mere presence
+      // in the payload would reject the whole update.
+      const updateData = buildMilestoneUpdatePayload(
+        data,
+        milestone.integrationId != null
+      );
 
       await updateMilestone({
         where: { id: Number(milestoneId) },
@@ -509,37 +750,79 @@ export default function MilestoneDetailsPage() {
     }
   };
 
+  // Child rows are the same entity as the milestones LIST rows, so they are
+  // the same component — one place owns the layout, the responsive collapse,
+  // the source badge, and the lifecycle actions below.
+  const handleStartChildMilestone = async (child: MilestonesWithTypes) => {
+    await updateMilestone({
+      where: { id: child.id },
+      data: { isStarted: true, startedAt: toCalendarDate(new Date()) },
+    });
+  };
+
+  const handleStopChildMilestone = async (child: MilestonesWithTypes) => {
+    await updateMilestone({
+      where: { id: child.id },
+      data: { isStarted: false, startedAt: null },
+    });
+  };
+
+  const handleReopenChildMilestone = async (child: MilestonesWithTypes) => {
+    await updateMilestone({
+      where: { id: child.id },
+      data: { isCompleted: false, completedAt: null },
+    });
+  };
+
+  const handleOpenChildEditModal = (child: MilestonesWithTypes) => {
+    router.push(`/projects/milestones/${projectId}/${child.id}?edit=true`);
+  };
+
+  const handleOpenChildDeleteModal = (child: MilestonesWithTypes) => {
+    setSelectedChildMilestone(child);
+    setIsChildDeleteModalOpen(true);
+  };
+
+  const handleOpenChildCompleteDialog = (child: MilestonesWithTypes) => {
+    setSelectedChildMilestone(child);
+    setIsChildCompleteDialogOpen(true);
+  };
+
+  const isParentCompleted = (parentId: number | null): boolean => {
+    if (!parentId) return false;
+    return Boolean(
+      (allProjectMilestones || []).find((m) => m.id === parentId)?.isCompleted
+    );
+  };
+
   const renderChildMilestones = (
     milestones: MilestonesWithTypes[],
     parentId: number,
     level: number = 0
   ): React.ReactNode[] => {
-    const handleMilestoneClick =
-      (clickedMilestoneId: number) => (e: React.MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        router.push(`/projects/milestones/${projectId}/${clickedMilestoneId}`);
-      };
-
-    const milestonesWithChildren: MilestonesWithTypes[] = (
-      allProjectMilestones || []
-    ).map((m) => ({ ...m, children: [] }));
-
-    return milestones
-      .filter((m) => m.parentId === parentId)
-      .map((currentChildMilestone) => (
-        <ChildMilestoneItem
-          key={currentChildMilestone.id}
+    return sortMilestones(
+      milestones.filter((m) => m.parentId === parentId)
+    ).map((currentChildMilestone) => (
+      <React.Fragment key={currentChildMilestone.id}>
+        <MilestoneItemCard
           milestone={currentChildMilestone}
-          projectId={projectId}
+          projectId={Number(projectId)}
+          integrationProjects={milestoneIntegrationProjects}
           theme={resolvedTheme}
           colorMap={colorMap}
+          session={sessionAuth}
           level={level}
-          onMilestoneClick={handleMilestoneClick}
-          renderChildNodes={renderChildMilestones}
-          allMilestones={milestonesWithChildren}
+          isParentCompleted={isParentCompleted}
+          onOpenCompleteDialog={handleOpenChildCompleteDialog}
+          onStartMilestone={handleStartChildMilestone}
+          onStopMilestone={handleStopChildMilestone}
+          onReopenMilestone={handleReopenChildMilestone}
+          onOpenEditModal={handleOpenChildEditModal}
+          onOpenDeleteModal={handleOpenChildDeleteModal}
         />
-      ));
+        {renderChildMilestones(milestones, currentChildMilestone.id, level + 1)}
+      </React.Fragment>
+    ));
   };
 
   const handleCompleteSession = (testSession: any) => {
@@ -551,7 +834,39 @@ export default function MilestoneDetailsPage() {
     router.refresh();
   };
 
-  if (!isFormReady || isLoading) return <LoadingSpinnerPage />;
+  const toggleCollapseLeft = () => {
+    setIsTransitioningLeft(true);
+    if (panelLeftRef.current) {
+      if (isCollapsedLeft) {
+        panelLeftRef.current.expand();
+      } else {
+        panelLeftRef.current.collapse();
+      }
+      setIsCollapsedLeft(!isCollapsedLeft);
+    }
+    setTimeout(() => setIsTransitioningLeft(false), 300);
+  };
+
+  const toggleCollapseRight = () => {
+    setIsTransitioningRight(true);
+    if (panelRightRef.current) {
+      if (isCollapsedRight) {
+        panelRightRef.current.expand();
+      } else {
+        panelRightRef.current.collapse();
+      }
+      setIsCollapsedRight(!isCollapsedRight);
+    }
+    setTimeout(() => setIsTransitioningRight(false), 300);
+  };
+
+  if (!isFormReady || isLoading) return <Loading />;
+
+  // Completed milestones tint the outer card (below); the nested Issues, Test
+  // Runs, and Sessions cards take the same tint so they don't read as active.
+  const completedCardClassName = milestone?.isCompleted
+    ? "bg-muted-foreground/20 border-muted-foreground"
+    : undefined;
 
   return (
     <FormProvider {...methods}>
@@ -574,7 +889,10 @@ export default function MilestoneDetailsPage() {
         >
           {isSubmitting && <LoadingSpinnerPage />}
           <CardHeader>
-            <div className="flex justify-between items-start">
+            <div
+              ref={headerRef}
+              className="flex justify-between items-center gap-2"
+            >
               <div className="flex items-start gap-2 grow">
                 {!isEditMode && (
                   <Link href={`/projects/milestones/${projectId}`}>
@@ -583,7 +901,7 @@ export default function MilestoneDetailsPage() {
                     </Button>
                   </Link>
                 )}
-                <CardTitle className="w-full text-xl md:text-2xl">
+                <CardTitle className="grow min-w-0 text-xl md:text-2xl">
                   {isEditMode ? (
                     <FormField
                       control={methods.control}
@@ -593,6 +911,7 @@ export default function MilestoneDetailsPage() {
                           <FormControl>
                             <Textarea
                               {...field}
+                              disabled={milestone?.integrationId != null}
                               className="text-xl md:text-2xl w-full"
                             />
                           </FormControl>
@@ -601,101 +920,146 @@ export default function MilestoneDetailsPage() {
                       )}
                     />
                   ) : (
-                    milestone?.name
+                    <span className="flex items-center gap-2 min-w-0">
+                      <DynamicIcon
+                        name={
+                          (milestone?.milestoneType?.icon?.name as IconName) ||
+                          "milestone"
+                        }
+                        className="h-6 w-6 shrink-0"
+                      />
+                      <span className="min-w-0">{milestone?.name}</span>
+                    </span>
+                  )}
+                  {!isEditMode && milestone && (
+                    <MilestoneSourceBadge
+                      milestone={milestone}
+                      projectId={Number(projectId)}
+                      integrationProjects={milestoneIntegrationProjects}
+                      className="mt-2"
+                    />
                   )}
                 </CardTitle>
               </div>
-              <div className="flex flex-col gap-2 ml-4">
+              <ActionBar
+                compact={headerCompact}
+                className="flex-col items-stretch gap-2 ms-4"
+              >
+                {!isEditMode && milestone && (
+                  <RecordId
+                    type="MILESTONE"
+                    id={milestone.id}
+                    projectId={Number(projectId)}
+                    className="self-end shrink-0 whitespace-nowrap"
+                  />
+                )}
                 {isEditMode ? (
                   <>
                     <div className="flex gap-2">
                       <Button
                         type="submit"
-                        variant="default"
+                        variant="outline"
                         disabled={isSubmitting}
                         data-testid="milestone-save"
+                        className={collapsibleActionClass(headerCompact)}
                       >
-                        <Save className="h-4 w-4" />
-                        {isSubmitting
-                          ? tCommon("actions.saving")
-                          : tCommon("actions.save")}
+                        <ActionButtonContent
+                          icon={Save}
+                          label={
+                            isSubmitting
+                              ? tCommon("actions.saving")
+                              : tCommon("actions.save")
+                          }
+                        />
                       </Button>
                       <Button
                         type="button"
                         variant="outline"
                         onClick={handleCancel}
                         disabled={isSubmitting}
+                        className={collapsibleActionClass(headerCompact)}
                       >
-                        <CircleSlash2 className="h-4 w-4" />
-                        {tCommon("cancel")}
+                        <ActionButtonContent
+                          icon={CircleSlash2}
+                          label={tCommon("cancel")}
+                        />
                       </Button>
                     </div>
                     {showDeleteButtonPerm && (
                       <Button
                         type="button"
                         onClick={handleDelete}
-                        variant="secondary"
+                        variant="outline"
                         disabled={isSubmitting}
-                        className="text-destructive"
+                        className={collapsibleActionClass(
+                          headerCompact,
+                          "text-destructive"
+                        )}
                       >
-                        <Trash2 className="h-4 w-4" />
-                        {tCommon("actions.delete")}
+                        <ActionButtonContent
+                          icon={Trash}
+                          label={tCommon("actions.delete")}
+                        />
                       </Button>
                     )}
                   </>
                 ) : (
                   <div className="flex items-center gap-1">
-                    {showEditButtonPerm && (
-                      <Button
-                        type="button"
-                        onClick={handleEditClick}
-                        variant="secondary"
-                        data-testid="milestone-edit"
-                        className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
-                      >
-                        <SquarePen className="h-4 w-4 shrink-0" />
-                        <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                          {tCommon("actions.edit")}
-                        </span>
-                      </Button>
-                    )}
                     {milestone && (
-                      <Button
-                        type="button"
-                        onClick={handleExportPdf}
-                        variant="secondary"
-                        disabled={isExportingPdf}
-                        data-testid="milestone-export-pdf"
-                        className={`group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2 ${
-                          isExportingPdf ? "animate-pulse" : ""
-                        }`}
-                      >
-                        <FileDown className="h-4 w-4 shrink-0" />
-                        <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                          {isExportingPdf
-                            ? tCommon("actions.exportingPdf")
-                            : tCommon("actions.exportPdf")}
-                        </span>
-                      </Button>
+                      <MilestoneAuditLogSheet
+                        milestoneId={milestone.id}
+                        hideTrigger
+                        open={auditOpen}
+                        onOpenChange={setAuditOpen}
+                      />
                     )}
-                    {milestone &&
-                      !milestone.isCompleted &&
-                      canCompleteMilestonePerm && (
-                        <Button
-                          type="button"
-                          onClick={() => setIsCompleteDialogOpen(true)}
-                          variant="secondary"
-                          className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
-                        >
-                          <CircleCheckBig className="h-4 w-4 shrink-0" />
-                          <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                            {tCommon("actions.complete")}
-                          </span>
-                        </Button>
-                      )}
+                    <ActionOverflow
+                      compact={headerCompact}
+                      menuLabel={tCommon("actions.actionsLabel")}
+                      actions={[
+                        {
+                          key: "activity",
+                          icon: History,
+                          label: tCommon("fields.activityLog"),
+                          onClick: () => setAuditOpen(true),
+                          hidden: !milestone,
+                        },
+                        {
+                          key: "edit",
+                          icon: SquarePen,
+                          label: tCommon("actions.edit"),
+                          onClick: handleEditClick,
+                          testId: "milestone-edit",
+                          hidden: !showEditButtonPerm,
+                        },
+                        {
+                          key: "export",
+                          icon: FileDown,
+                          label: isExportingPdf
+                            ? tCommon("actions.exportingPdf")
+                            : tCommon("actions.exportPdf"),
+                          onClick: handleExportPdf,
+                          disabled: isExportingPdf,
+                          testId: "milestone-export-pdf",
+                          hidden: !milestone,
+                          className: isExportingPdf ? "animate-pulse" : "",
+                        },
+                        {
+                          key: "complete",
+                          icon: CircleCheckBig,
+                          label: tCommon("actions.complete"),
+                          onClick: () => setIsCompleteDialogOpen(true),
+                          hidden: !(
+                            milestone &&
+                            !milestone.isCompleted &&
+                            canCompleteMilestonePerm
+                          ),
+                        },
+                      ]}
+                    />
                   </div>
                 )}
-              </div>
+              </ActionBar>
             </div>
           </CardHeader>
 
@@ -706,6 +1070,12 @@ export default function MilestoneDetailsPage() {
                 <MilestoneSummary
                   milestoneId={milestone.id}
                   projectId={projectId}
+                  onScopeChipClick={() =>
+                    issuesCardRef.current?.expandInScope()
+                  }
+                  onFoundInTestingChipClick={() =>
+                    issuesCardRef.current?.expandFoundInTesting()
+                  }
                 />
               </div>
             )}
@@ -718,10 +1088,20 @@ export default function MilestoneDetailsPage() {
               <ResizablePanel
                 id="milestone-left"
                 order={1}
+                ref={panelLeftRef}
                 defaultSize={80}
+                collapsible
                 minSize={20}
+                collapsedSize={0}
+                onCollapse={() => setIsCollapsedLeft(true)}
+                onExpand={() => setIsCollapsedLeft(false)}
+                className={
+                  isTransitioningLeft
+                    ? "transition-all duration-300 ease-in-out"
+                    : ""
+                }
               >
-                <div className="px-4 h-full space-y-4">
+                <div className="px-4 h-full space-y-4 pb-8">
                   <FormField
                     name="docs"
                     render={({ field }) => (
@@ -827,7 +1207,7 @@ export default function MilestoneDetailsPage() {
                     allProjectMilestones.length > 0 && (
                       <div className="mt-6">
                         <Label>{t("labels.childMilestones")}</Label>
-                        <div className="mt-2">
+                        <div className="mt-2 flex w-full flex-col">
                           {(() => {
                             const childMilestones = allProjectMilestones
                               .map((milestone) => ({
@@ -858,132 +1238,175 @@ export default function MilestoneDetailsPage() {
                       </div>
                     )}
 
-                  {!isEditMode && (
-                    <div className="mt-6">
-                      <Label className="flex items-center gap-1">
-                        <PlayCircle className="h-4 w-4" />
-                        {tCommon("labels.testRuns", {
-                          count: milestoneTestRuns?.length || 0,
-                        })}
-                      </Label>
-                      <div className="mt-2">
-                        {milestoneTestRuns && milestoneTestRuns.length > 0 ? (
-                          <div className="space-y-2">
-                            {milestoneTestRuns.map((testRun) => {
-                              const transformedTestRun: TestRunItemProps["testRun"] =
-                                {
-                                  id: testRun.id,
-                                  name: testRun.name,
-                                  testRunType: testRun.testRunType,
-                                  isCompleted: testRun.isCompleted,
-                                  configuration: testRun.configuration,
-                                  configurationGroupId:
-                                    testRun.configurationGroupId,
-                                  state: {
-                                    id: testRun.state.id,
-                                    name: testRun.state.name,
-                                    icon: testRun.state.icon,
-                                    color: testRun.state.color,
-                                  },
-                                  note:
-                                    typeof testRun.note === "string"
-                                      ? testRun.note
-                                      : testRun.note
-                                        ? JSON.stringify(testRun.note)
-                                        : "",
-                                  completedAt: testRun.completedAt || undefined,
-                                  milestone: testRun.milestone
-                                    ? {
-                                        id: testRun.milestone.id,
-                                        name: testRun.milestone.name,
-                                        startedAt: testRun.milestone.startedAt,
-                                        completedAt:
-                                          testRun.milestone.completedAt,
-                                        isCompleted:
-                                          testRun.milestone.isCompleted,
-                                        milestoneType: {
-                                          id: testRun.milestone.milestoneType
-                                            .id,
-                                          name: testRun.milestone.milestoneType
-                                            .name,
-                                          icon: testRun.milestone.milestoneType
-                                            .icon,
-                                        },
-                                      }
-                                    : undefined,
-                                  projectId: testRun.projectId,
-                                  createdBy: testRun.createdBy,
-                                  forecastManual: testRun.forecastManual,
-                                  forecastAutomated: testRun.forecastAutomated,
-                                };
-                              return (
-                                <TestRunItem
-                                  key={testRun.id}
-                                  testRun={transformedTestRun}
-                                  showMilestone={
-                                    testRun.milestoneId !== Number(milestoneId)
-                                  }
-                                  summaryData={
-                                    batchSummaries?.summaries[testRun.id]
-                                  }
-                                />
-                              );
-                            })}
-                          </div>
-                        ) : (
-                          <div className="text-muted-foreground text-sm">
-                            {t("empty.testRuns")}
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                  {/* Burndown, Issues, Test Runs, and Sessions stack as sibling
+                      cards in the left panel: the execution burndown over the
+                      window, then in-scope + found-in-testing issues, then the
+                      milestone's test runs and sessions. The burndown only
+                      appears once there's a window anchor and executable scope
+                      (a fresh, empty milestone has nothing to plot). */}
+                  {!isEditMode &&
+                    milestone &&
+                    burndown &&
+                    burndown.start &&
+                    burndown.actual.length > 0 && (
+                      <CollapsibleSection
+                        data-testid="milestone-burndown-card"
+                        className={completedCardClassName}
+                        storageKey="tpi.milestone.burndown.collapsed"
+                        icon={<TrendingDown className="h-5 w-5" />}
+                        title={t("burndown.title")}
+                      >
+                        <div className="h-64 w-full">
+                          <MilestoneBurndownChart data={burndown} />
+                        </div>
+                      </CollapsibleSection>
+                    )}
+
+                  {!isEditMode && milestone && (
+                    <IssuesCard
+                      ref={issuesCardRef}
+                      milestoneId={milestone.id}
+                      projectId={Number(projectId)}
+                      className={completedCardClassName}
+                    />
                   )}
 
                   {!isEditMode && (
-                    <div className="mt-6">
-                      <Label className="flex items-center gap-1">
-                        <Compass className="h-4 w-4" />
-                        {tCommon("labels.sessions", {
-                          count: milestoneSessions?.length || 0,
-                        })}
-                      </Label>
-                      <div className="mt-2">
-                        {milestoneSessions && milestoneSessions.length > 0 ? (
-                          <div className="space-y-2">
-                            {milestoneSessions.map((testSession) => (
-                              <SessionItem
-                                key={testSession.id}
-                                testSession={testSession as SessionsWithDetails}
-                                isCompleted={testSession.isCompleted}
-                                onComplete={handleCompleteSession}
-                                canComplete={canCompleteSession}
+                    <CollapsibleSection
+                      data-testid="milestone-test-runs-card"
+                      className={completedCardClassName}
+                      storageKey="tpi.milestone.testRuns.collapsed"
+                      icon={<PlayCircle className="h-5 w-5" />}
+                      title={tCommon("labels.testRuns", {
+                        count: visibleTestRuns.length,
+                      })}
+                    >
+                      <CardFilterChips
+                        variant="runs"
+                        filters={runsCardFilters}
+                        onChange={setRunsCardFilters}
+                      />
+                      {visibleTestRuns.length > 0 ? (
+                        <VirtualizedCardList
+                          items={visibleTestRuns}
+                          getKey={(testRun) => testRun.id}
+                          data-testid="milestone-test-runs-list"
+                          renderItem={(testRun) => {
+                            return (
+                              <TestRunItem
+                                testRun={testRun}
                                 showMilestone={
-                                  testSession.milestoneId !==
-                                  Number(milestoneId)
+                                  testRun.milestoneId !== Number(milestoneId)
                                 }
+                                summaryData={
+                                  batchSummaries?.summaries[testRun.id]
+                                }
+                                summaryLoading={isBatchSummariesLoading}
+                                pendingRequest={pendingReviewsByRunId.get(
+                                  testRun.id
+                                )}
                               />
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="text-muted-foreground text-sm">
-                            {tGlobal("common.empty.sessions")}
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                            );
+                          }}
+                        />
+                      ) : (
+                        <div className="text-muted-foreground text-sm">
+                          {isAnyCardFilterActive(runsCardFilters)
+                            ? t("empty.noMatchingTestRuns")
+                            : t("empty.testRuns")}
+                        </div>
+                      )}
+                    </CollapsibleSection>
+                  )}
+
+                  {!isEditMode && (
+                    <CollapsibleSection
+                      data-testid="milestone-sessions-card"
+                      className={completedCardClassName}
+                      storageKey="tpi.milestone.sessions.collapsed"
+                      icon={<Compass className="h-5 w-5" />}
+                      title={tCommon("labels.sessions", {
+                        count: visibleSessions.length,
+                      })}
+                    >
+                      <CardFilterChips
+                        variant="sessions"
+                        filters={sessionsCardFilters}
+                        onChange={setSessionsCardFilters}
+                      />
+                      {visibleSessions.length > 0 ? (
+                        <VirtualizedCardList
+                          items={visibleSessions}
+                          getKey={(testSession) => testSession.id}
+                          data-testid="milestone-sessions-list"
+                          renderItem={(testSession) => (
+                            <SessionItem
+                              testSession={testSession as SessionsWithDetails}
+                              isCompleted={testSession.isCompleted}
+                              onComplete={handleCompleteSession}
+                              canComplete={canCompleteSession}
+                              showMilestone={
+                                testSession.milestoneId !== Number(milestoneId)
+                              }
+                              pendingRequest={pendingReviewsBySessionId.get(
+                                testSession.id
+                              )}
+                            />
+                          )}
+                        />
+                      ) : (
+                        <div className="text-muted-foreground text-sm">
+                          {isAnyCardFilterActive(sessionsCardFilters)
+                            ? t("empty.noMatchingSessions")
+                            : tGlobal("common.empty.sessions")}
+                        </div>
+                      )}
+                    </CollapsibleSection>
                   )}
                 </div>
               </ResizablePanel>
 
-              <ResizableHandle withHandle />
+              <div>
+                <Button
+                  type="button"
+                  onClick={toggleCollapseLeft}
+                  variant="secondary"
+                  className="p-0 rounded-e-none"
+                >
+                  {isCollapsedLeft ? <ChevronRight /> : <ChevronLeft />}
+                </Button>
+              </div>
+
+              <ResizableHandle withHandle className="w-1" />
+
+              <div>
+                <Button
+                  type="button"
+                  onClick={toggleCollapseRight}
+                  variant="secondary"
+                  className={`p-0 transform ${isCollapsedRight ? "rounded-s-none" : "rounded-e-none rotate-180"}`}
+                >
+                  <ChevronLeft />
+                </Button>
+              </div>
 
               <ResizablePanel
                 id="milestone-right"
                 order={2}
+                ref={panelRightRef}
                 defaultSize={20}
+                collapsedSize={0}
                 minSize={10}
+                collapsible
+                onCollapse={() => setIsCollapsedRight(true)}
+                onExpand={() => setIsCollapsedRight(false)}
+                className={
+                  isTransitioningRight
+                    ? "transition-all duration-300 ease-in-out"
+                    : ""
+                }
               >
-                <div className="pl-4 pr-1 pb-1 h-full">
+                <div className="ps-4 pe-1 pb-1 h-full">
                   <div className="space-y-4">
                     <MilestoneFormControls
                       isEditMode={isEditMode}
@@ -1042,6 +1465,45 @@ export default function MilestoneDetailsPage() {
           milestoneToComplete={milestone as unknown as MilestonesWithTypes}
           onCompleteSuccess={() => {
             toast.success(t("toast.updatedWithName", { name: milestone.name }));
+            router.refresh();
+          }}
+        />
+      )}
+
+      {/* Child-scoped copies of the two dialogs above, driven by the child
+          rows' action menus. Deleting a child leaves this page intact, so
+          neither of these touches the wasDeleted redirect. Both share one
+          selection, so each success closes its own flag before clearing it —
+          a flag left open would re-mount that dialog the moment the OTHER one
+          selects a child. */}
+      {selectedChildMilestone && (
+        <DeleteMilestoneModal
+          milestone={selectedChildMilestone}
+          open={isChildDeleteModalOpen}
+          onOpenChange={setIsChildDeleteModalOpen}
+          milestones={allProjectMilestones || []}
+          onDeleteSuccess={() => {
+            setIsChildDeleteModalOpen(false);
+            setSelectedChildMilestone(null);
+            void queryClient.invalidateQueries({
+              predicate: (query) =>
+                JSON.stringify(query.queryKey).includes("Milestones"),
+            });
+          }}
+        />
+      )}
+
+      {selectedChildMilestone && (
+        <CompleteMilestoneDialog
+          open={isChildCompleteDialogOpen}
+          onOpenChange={setIsChildCompleteDialogOpen}
+          milestoneToComplete={selectedChildMilestone}
+          onCompleteSuccess={() => {
+            toast.success(
+              t("toast.updatedWithName", { name: selectedChildMilestone.name })
+            );
+            setIsChildCompleteDialogOpen(false);
+            setSelectedChildMilestone(null);
             router.refresh();
           }}
         />

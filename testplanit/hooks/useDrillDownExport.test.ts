@@ -248,6 +248,35 @@ describe("useDrillDownExport", () => {
     expect(Object.keys(csvData[0])).toContain("testCases");
     expect(Object.keys(csvData[0])).toContain("testRuns");
     expect(Object.keys(csvData[0])).toContain("status");
+    // elapsed values are stored in seconds
+    expect(mockToHumanReadable).toHaveBeenCalledWith(5000, {
+      isSeconds: true,
+    });
+  });
+
+  it("should format elapsed as seconds for elapsed-time metrics", async () => {
+    const record = {
+      elapsed: 58.5,
+      testRunCase: { repositoryCase: { name: "Automated Case" } },
+      testRun: { name: "CI Run" },
+      executedBy: { name: "Bot" },
+      executedAt: "2024-01-15T10:30:00Z",
+    };
+
+    global.fetch = buildFetchMock([record]);
+
+    const contextElapsed = { ...sampleContext, metricId: "avgElapsedTime" };
+    const { result } = renderHook(() =>
+      useDrillDownExport({ context: contextElapsed, t: mockT })
+    );
+
+    await act(async () => {
+      await result.current.exportToCSV();
+    });
+
+    expect(mockToHumanReadable).toHaveBeenCalledWith(58.5, {
+      isSeconds: true,
+    });
   });
 
   it("should transform testRuns records with progress metrics", async () => {

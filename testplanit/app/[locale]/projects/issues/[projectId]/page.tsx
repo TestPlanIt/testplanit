@@ -1,11 +1,11 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useDebounce } from "@/components/Debounce";
 import { ProjectIcon } from "@/components/ProjectIcon";
-import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
-import { PaginationComponent } from "@/components/tables/Pagination";
-import { PaginationInfo } from "@/components/tables/PaginationControls";
+import { DataTable } from "@/components/tables/DataTable";
 import {
   Card,
   CardContent,
@@ -13,43 +13,37 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { SectionHeader } from "@/components/ui/typography";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { IssueListFilters } from "@/components/issues/IssueListFilters";
 import type { VisibilityState } from "@tanstack/react-table";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Loading } from "~/components/Loading";
+import { useIssueFilterOptions } from "~/hooks/useIssueFilterOptions";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 import {
-  PaginationProvider,
-  usePagination,
-} from "~/lib/contexts/PaginationContext";
-import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
-import {
-  useCountIssue,
-  useFindFirstProjects,
-  useFindManyIssue,
-  useFindManyProjectIntegration,
-  useGroupByIssue,
-} from "~/lib/hooks";
+  issueFacetConditions,
+  type IssueFacetValue,
+} from "~/lib/issues/issueFacetConditions";
 import { useRouter } from "~/lib/navigation";
 import { ExtendedIssues, useIssueColumns } from "./columns";
 
+const PAGE_SIZE = 50;
+
+// Count columns are computed via a separate join call and can't be sorted
+// across pages without the full set in hand. Sorting by one fetches everything
+// once and renders it through the same virtualized table in full-set mode;
+// every other column is a real DB column and drives a genuine infinite fetch.
+const COUNT_SORT_COLUMNS = ["cases", "testRuns", "sessions", "milestones"];
+
 export default function ProjectIssueList() {
-  return (
-    <PaginationProvider>
-      <ProjectIssues />
-    </PaginationProvider>
-  );
+  return <ProjectIssues />;
 }
 
 function ProjectIssues() {
+  const locale = useLocale();
   const t = useTranslations();
   const { session, isLoading: isAuthLoading } = useRequireAuth();
   const router = useRouter();
@@ -57,15 +51,12 @@ function ProjectIssues() {
   const searchParams = useSearchParams();
   const projectId = params.projectId ? Number(params.projectId) : null;
   const targetIssueId = searchParams.get("issueId");
-  // Live issue updates are subscribed at the IssuesDisplay component
-  // level — every issue badge on this page registers a refcounted
-  // listener via the singleton SSE manager, so every page that renders
-  // issues gets live refresh "for free."
-  const scrollAttempts = useRef(0);
-  const maxScrollAttempts = 10;
-  const scrollInterval = useRef<NodeJS.Timeout | null>(null);
+  // Live issue updates are subscribed at the IssuesDisplay component level —
+  // every issue badge on this page registers a refcounted listener via the
+  // singleton SSE manager, so every page that renders issues gets live refresh
+  // "for free."
 
-  const { data: project } = useFindFirstProjects(
+  const { data: project } = useClientQueries(schema).projects.useFindFirst(
     {
       where: {
         id: projectId ?? -1,
@@ -82,18 +73,6 @@ function ProjectIssues() {
     }
   );
 
-  const {
-    currentPage,
-    setCurrentPage,
-    pageSize,
-    setPageSize,
-    totalItems,
-    setTotalItems,
-    startIndex,
-    endIndex,
-    totalPages,
-  } = usePagination();
-
   const [sortConfig, setSortConfig] = useState<{
     column: string;
     direction: "asc" | "desc";
@@ -104,22 +83,11 @@ function ProjectIssues() {
   const [searchString, setSearchString] = useState("");
   const debouncedSearchString = useDebounce(searchString, 500);
 
-  const [statusFilter, setStatusFilter] = useState<string>("");
-  const [priorityFilter, setPriorityFilter] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<IssueFacetValue[]>([]);
+  const [priorityFilter, setPriorityFilter] = useState<IssueFacetValue[]>([]);
+  const [issueTypeFilter, setIssueTypeFilter] = useState<IssueFacetValue[]>([]);
 
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const hasInitializedRef = useRef(false);
-  const prevSearchStringRef = useRef(searchString);
-  const prevPageSizeRef = useRef(pageSize);
-  const prevStatusFilterRef = useRef(statusFilter);
-  const prevPriorityFilterRef = useRef(priorityFilter);
-  const [shouldPreventPageReset, setShouldPreventPageReset] =
-    useState(!!targetIssueId);
-  const [isTableReady, setIsTableReady] = useState(false);
-
-  const effectivePageSize =
-    typeof pageSize === "number" ? pageSize : totalItems;
-  const skip = (currentPage - 1) * effectivePageSize;
 
   // Build project filter for groupBy queries
   const projectFilterForGroupBy = useMemo(() => {
@@ -127,7 +95,9 @@ function ProjectIssues() {
     return {
       OR: [
         { projectId },
-        { repositoryCases: { some: { projectId } } },
+        // Exclude issues linked only to a soft-deleted case — they must not
+        // surface in the project list. Mirrors the global issues list filter.
+        { caseIssues: { some: { case: { projectId, isDeleted: false } } } },
         { sessions: { some: { projectId } } },
         { testRuns: { some: { projectId } } },
         { sessionResults: { some: { session: { projectId } } } },
@@ -141,64 +111,12 @@ function ProjectIssues() {
     };
   }, [projectId]);
 
-  // Fetch distinct status values for the filter dropdown (scoped to this project)
-  const { data: statusOptions } = useGroupByIssue(
-    {
-      by: ["status"],
-      where: { isDeleted: false, ...projectFilterForGroupBy },
-      orderBy: { status: "asc" },
-    },
-    {
-      enabled: !!session?.user && projectId !== null,
-    }
-  );
-
-  // Fetch distinct priority values for the filter dropdown (scoped to this project)
-  const { data: priorityOptions } = useGroupByIssue(
-    {
-      by: ["priority"],
-      where: { isDeleted: false, ...projectFilterForGroupBy },
-      orderBy: { priority: "asc" },
-    },
-    {
-      enabled: !!session?.user && projectId !== null,
-    }
-  );
-
-  // Extract unique non-null values, combining options with mismatched casing
-  const statuses = useMemo(() => {
-    if (!statusOptions) return [];
-    const seen = new Map<string, string>();
-    statusOptions
-      .map((item) => item.status)
-      .filter((s): s is string => s !== null && s.trim() !== "")
-      .forEach((s) => {
-        const lower = s.toLowerCase();
-        if (!seen.has(lower)) {
-          seen.set(lower, s);
-        }
-      });
-    return Array.from(seen.values()).sort((a, b) =>
-      a.toLowerCase().localeCompare(b.toLowerCase())
-    );
-  }, [statusOptions]);
-
-  const priorities = useMemo(() => {
-    if (!priorityOptions) return [];
-    const seen = new Map<string, string>();
-    priorityOptions
-      .map((item) => item.priority)
-      .filter((p): p is string => p !== null && p.trim() !== "")
-      .forEach((p) => {
-        const lower = p.toLowerCase();
-        if (!seen.has(lower)) {
-          seen.set(lower, p);
-        }
-      });
-    return Array.from(seen.values()).sort((a, b) =>
-      a.toLowerCase().localeCompare(b.toLowerCase())
-    );
-  }, [priorityOptions]);
+  // Distinct status/priority/issue type values for the filter dropdowns,
+  // scoped to this project.
+  const { statuses, priorities, issueTypes } = useIssueFilterOptions({
+    scopeWhere: projectFilterForGroupBy,
+    enabled: !!session?.user && projectId !== null,
+  });
 
   // Build search filter for name, title, and description
   const searchFilter = useMemo(() => {
@@ -240,7 +158,9 @@ function ProjectIssues() {
     const projectFilter = {
       OR: [
         { projectId },
-        { repositoryCases: { some: { projectId } } },
+        // Exclude issues linked only to a soft-deleted case — they must not
+        // surface in the project list. Mirrors the global issues list filter.
+        { caseIssues: { some: { case: { projectId, isDeleted: false } } } },
         { sessions: { some: { projectId } } },
         { testRuns: { some: { projectId } } },
         {
@@ -274,129 +194,97 @@ function ProjectIssues() {
       conditions.push(searchFilter);
     }
 
-    // Add status filter if selected (case-insensitive)
-    if (statusFilter) {
-      conditions.push({
-        status: { equals: statusFilter, mode: "insensitive" as const },
-      });
-    }
-
-    // Add priority filter if selected (case-insensitive)
-    if (priorityFilter) {
-      conditions.push({
-        priority: { equals: priorityFilter, mode: "insensitive" as const },
-      });
-    }
+    // Add the status / priority / issue type facet selections
+    conditions.push(
+      ...issueFacetConditions({
+        status: statusFilter,
+        priority: priorityFilter,
+        issueTypeName: issueTypeFilter,
+      })
+    );
 
     return {
       AND: conditions,
     };
-  }, [projectId, searchFilter, statusFilter, priorityFilter]);
+  }, [projectId, searchFilter, statusFilter, priorityFilter, issueTypeFilter]);
+
+  const isCountSort = COUNT_SORT_COLUMNS.includes(sortConfig.column);
+  // A deep link (?issueId=) also fetches the full set so the target row is
+  // present to scroll to and highlight — otherwise it might live beyond the
+  // pages loaded so far.
+  const isFullSet = isCountSort || !!targetIssueId;
 
   const orderBy = useMemo(() => {
-    // Only apply server-side sorting for database columns
-    // Count columns (cases, testRuns, sessions) will be sorted client-side
-    if (!sortConfig?.column) {
-      return {
-        name: "asc" as const,
-      };
+    // Only apply server-side sorting for database columns; count columns
+    // (cases, testRuns, sessions) sort client-side over the full set.
+    if (
+      ["name", "title", "status", "priority", "lastSyncedAt"].includes(
+        sortConfig.column
+      )
+    ) {
+      return { [sortConfig.column]: sortConfig.direction } as const;
     }
-
-    if (sortConfig.column === "name") {
-      return {
-        name: sortConfig.direction,
-      } as const;
-    }
-
-    if (sortConfig.column === "title") {
-      return {
-        title: sortConfig.direction,
-      } as const;
-    }
-
-    if (sortConfig.column === "status") {
-      return {
-        status: sortConfig.direction,
-      } as const;
-    }
-
-    if (sortConfig.column === "priority") {
-      return {
-        priority: sortConfig.direction,
-      } as const;
-    }
-
-    if (sortConfig.column === "lastSyncedAt") {
-      return {
-        lastSyncedAt: sortConfig.direction,
-      } as const;
-    }
-
-    // For count columns, return default sort (will sort client-side)
-    return {
-      name: "asc" as const,
-    };
+    return { name: "asc" as const };
   }, [sortConfig]);
 
-  // When sorting by count columns, we need to fetch ALL issues to sort properly
-  const needsClientSideSorting = ["cases", "testRuns", "sessions"].includes(
-    sortConfig.column
+  const include = useMemo(
+    () => ({
+      integration: {
+        select: {
+          id: true,
+          provider: true,
+          name: true,
+          settings: true,
+        },
+      },
+    }),
+    []
   );
-  const shouldPaginate =
-    !needsClientSideSorting && typeof effectivePageSize === "number";
-  const paginationArgs = {
-    skip: shouldPaginate ? skip : undefined,
-    take: shouldPaginate ? effectivePageSize : undefined,
-  };
 
-  // When we have a targetIssueId, fetch all issues to find which page it's on
-  const { data: allIssues } = useFindManyIssue(
-    targetIssueId && issuesWhere && shouldPreventPageReset
-      ? {
-          where: issuesWhere,
-          orderBy,
-          select: {
-            id: true,
-          },
-        }
-      : undefined,
+  const infiniteBaseArgs = useMemo(
+    () => ({
+      where: issuesWhere ?? undefined,
+      orderBy,
+      include,
+      take: PAGE_SIZE,
+    }),
+    [issuesWhere, orderBy, include]
+  );
+
+  const {
+    data: infinitePages,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: isLoadingInfinite,
+  } = useClientQueries(schema).issue.useInfiniteFindMany(infiniteBaseArgs, {
+    getNextPageParam: (lastPage, allPages) => {
+      if (!lastPage || lastPage.length < PAGE_SIZE) return undefined;
+      return { ...infiniteBaseArgs, skip: allPages.flat().length };
+    },
+    enabled:
+      !!issuesWhere && !!session?.user && projectId !== null && !isFullSet,
+  });
+
+  const { data: allIssues, isLoading: isLoadingAll } = useClientQueries(
+    schema
+  ).issue.useFindMany(
+    issuesWhere ? { where: issuesWhere, orderBy, include } : undefined,
     {
       enabled:
-        !!targetIssueId &&
-        !!issuesWhere &&
-        !!session?.user &&
-        projectId !== null &&
-        shouldPreventPageReset,
+        !!issuesWhere && !!session?.user && projectId !== null && isFullSet,
     }
   );
 
-  // Fetch basic issue data
-  const { data: issues, isLoading: isLoadingIssues } = useFindManyIssue(
-    issuesWhere
-      ? {
-          where: issuesWhere,
-          orderBy,
-          ...paginationArgs,
-          include: {
-            integration: {
-              select: {
-                id: true,
-                provider: true,
-                name: true,
-                settings: true,
-              },
-            },
-          },
-        }
-      : undefined,
-    {
-      enabled: !!issuesWhere && !!session?.user && projectId !== null,
-      refetchOnWindowFocus: true,
-    }
-  );
+  const issues = useMemo(() => {
+    if (isFullSet) return allIssues ?? [];
+    return infinitePages?.pages.flat() ?? [];
+  }, [isFullSet, infinitePages, allIssues]);
+
+  const isLoadingIssues = isFullSet ? isLoadingAll : isLoadingInfinite;
 
   // Get total count of issues
-  const { data: issuesCount } = useCountIssue(
+  const { data: issuesCount } = useClientQueries(schema).issue.useCount(
     issuesWhere
       ? {
           where: issuesWhere,
@@ -407,7 +295,9 @@ function ProjectIssues() {
     }
   );
 
-  // Fetch counts for project-scoped issues
+  // Counts fetched separately and cached per issue id for the life of the page
+  // (project-scoped, so once fetched they never need re-requesting as the
+  // infinite list appends new ids).
   const [issueCounts, setIssueCounts] = useState<
     Record<
       number,
@@ -415,20 +305,26 @@ function ProjectIssues() {
         repositoryCases: number;
         sessions: number;
         testRuns: number;
+        milestones: number;
       }
     >
   >({});
-
   const [isLoadingCounts, setIsLoadingCounts] = useState(false);
+  const fetchedIssueIdsRef = useRef<Set<number>>(new Set());
 
   useEffect(() => {
     if (!issues || issues.length === 0 || projectId === null) {
       setIssueCounts({});
       setIsLoadingCounts(false);
+      fetchedIssueIdsRef.current = new Set();
       return;
     }
 
-    const issueIds = issues.map((i) => i.id);
+    const newIds = issues
+      .map((i) => i.id)
+      .filter((id) => !fetchedIssueIdsRef.current.has(id));
+    if (newIds.length === 0) return;
+    newIds.forEach((id) => fetchedIssueIdsRef.current.add(id));
 
     const fetchCounts = async () => {
       setIsLoadingCounts(true);
@@ -437,12 +333,12 @@ function ProjectIssues() {
         const response = await fetch("/api/issues/counts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ issueIds, projectId }),
+          body: JSON.stringify({ issueIds: newIds, projectId }),
         });
 
         if (response.ok) {
           const data = await response.json();
-          setIssueCounts(data.counts || {});
+          setIssueCounts((prev) => ({ ...prev, ...(data.counts || {}) }));
         }
       } catch (error) {
         console.error("Failed to fetch issue counts:", error);
@@ -470,14 +366,15 @@ function ProjectIssues() {
         testRuns: [],
         aggregatedTestRunIds: [],
         projectIds: projectId ? [projectId] : [],
-        repositoryCasesCount: counts?.repositoryCases ?? 0,
-        sessionsCount: counts?.sessions ?? 0,
-        testRunsCount: counts?.testRuns ?? 0,
+        repositoryCasesCount: counts?.repositoryCases,
+        sessionsCount: counts?.sessions,
+        testRunsCount: counts?.testRuns,
+        milestonesCount: counts?.milestones,
       };
     });
 
     // Apply client-side sorting for count columns (since these aren't in the DB)
-    if (needsClientSideSorting) {
+    if (isCountSort) {
       return mapped.sort((a, b) => {
         let aValue: number;
         let bValue: number;
@@ -495,6 +392,10 @@ function ProjectIssues() {
             aValue = a.sessionsCount ?? 0;
             bValue = b.sessionsCount ?? 0;
             break;
+          case "milestones":
+            aValue = a.milestonesCount ?? 0;
+            bValue = b.milestonesCount ?? 0;
+            break;
           default:
             return 0;
         }
@@ -506,228 +407,7 @@ function ProjectIssues() {
     }
 
     return mapped;
-  }, [issues, issueCounts, projectId, sortConfig, needsClientSideSorting]);
-
-  useEffect(() => {
-    setTotalItems(issuesCount ?? 0);
-  }, [issuesCount, setTotalItems]);
-
-  // When sorting by count columns, apply pagination client-side
-  const displayedIssues = useMemo(() => {
-    if (needsClientSideSorting) {
-      return mappedIssues.slice(skip, skip + effectivePageSize);
-    }
-    return mappedIssues;
-  }, [mappedIssues, needsClientSideSorting, skip, effectivePageSize]);
-
-  const pageSizeOptions = usePageSizeOptions(totalItems);
-
-  // Calculate and set the correct page IMMEDIATELY when allIssues load and we have a target
-  useEffect(() => {
-    if (
-      targetIssueId &&
-      allIssues &&
-      allIssues.length > 0 &&
-      shouldPreventPageReset
-    ) {
-      const targetIndex = allIssues.findIndex(
-        (issue) => issue.id.toString() === targetIssueId
-      );
-
-      if (targetIndex !== -1) {
-        // Get page size from URL params first, then user preferences, then default
-        let pageSizeValue = 10; // default
-
-        const urlPageSize = searchParams.get("pageSize");
-        if (urlPageSize) {
-          if (urlPageSize === "All") {
-            pageSizeValue = allIssues.length;
-          } else {
-            const size = parseInt(urlPageSize, 10);
-            if (!isNaN(size) && size > 0) {
-              pageSizeValue = size;
-            }
-          }
-        } else if (session?.user?.preferences?.itemsPerPage) {
-          const preferredSize = parseInt(
-            session.user.preferences.itemsPerPage.replace("P", ""),
-            10
-          );
-          if (!isNaN(preferredSize) && preferredSize > 0) {
-            pageSizeValue = preferredSize;
-          }
-        }
-
-        const targetPage = Math.floor(targetIndex / pageSizeValue) + 1;
-
-        // Immediately set the page
-        if (targetPage !== currentPage) {
-          setCurrentPage(targetPage);
-        }
-
-        // Prevent further resets
-        setShouldPreventPageReset(false);
-      }
-    }
-  }, [
-    targetIssueId,
-    allIssues,
-    shouldPreventPageReset,
-    currentPage,
-    setCurrentPage,
-    searchParams,
-    session,
-  ]);
-
-  // Set table ready state after issues load
-  useEffect(() => {
-    if (issues && issues.length > 0) {
-      // Wait for DataTable to render
-      const timer = setTimeout(() => {
-        setIsTableReady(true);
-      }, 500);
-
-      return () => clearTimeout(timer);
-    }
-  }, [issues]);
-
-  // Handle scrolling and highlighting for specific issue
-  useEffect(() => {
-    if (targetIssueId && !hasInitializedRef.current && isTableReady) {
-      hasInitializedRef.current = true;
-      let scrollCancelled = false;
-
-      // Detect user scroll to cancel auto-scroll
-      const handleUserScroll = () => {
-        scrollCancelled = true;
-        if (scrollInterval.current) {
-          clearInterval(scrollInterval.current);
-          scrollInterval.current = null;
-        }
-        window.removeEventListener("wheel", handleUserScroll);
-        window.removeEventListener("touchmove", handleUserScroll);
-      };
-
-      // Add scroll listeners to detect user interaction
-      window.addEventListener("wheel", handleUserScroll, { passive: true });
-      window.addEventListener("touchmove", handleUserScroll, { passive: true });
-
-      // Start scrolling attempts after a short delay
-      const timeoutId = setTimeout(() => {
-        if (scrollCancelled) return;
-
-        scrollInterval.current = setInterval(() => {
-          if (scrollCancelled) {
-            if (scrollInterval.current) {
-              clearInterval(scrollInterval.current);
-              scrollInterval.current = null;
-            }
-            return;
-          }
-
-          const targetRow = document.querySelector(
-            `[data-row-id="${targetIssueId}"]`
-          );
-
-          if (targetRow) {
-            targetRow.scrollIntoView({ behavior: "smooth", block: "center" });
-
-            // Get all cells in the row
-            const cells = targetRow.querySelectorAll("td");
-
-            // Apply highlight to row with outline (doesn't affect layout)
-            (targetRow as HTMLElement).style.setProperty(
-              "outline",
-              "4px solid hsl(var(--primary))",
-              "important"
-            );
-            (targetRow as HTMLElement).style.setProperty(
-              "outline-offset",
-              "-2px",
-              "important"
-            );
-
-            // Apply background to each cell
-            cells.forEach((cell) => {
-              const htmlCell = cell as HTMLElement;
-              // Apply highlight background
-              htmlCell.style.setProperty(
-                "background-color",
-                "hsl(var(--primary) / 0.15)",
-                "important"
-              );
-            });
-
-            // Clear interval and remove listeners after successful scroll
-            if (scrollInterval.current) {
-              clearInterval(scrollInterval.current);
-              scrollInterval.current = null;
-            }
-            window.removeEventListener("wheel", handleUserScroll);
-            window.removeEventListener("touchmove", handleUserScroll);
-          } else {
-            scrollAttempts.current += 1;
-            if (scrollAttempts.current >= maxScrollAttempts) {
-              if (scrollInterval.current) {
-                clearInterval(scrollInterval.current);
-                scrollInterval.current = null;
-              }
-              window.removeEventListener("wheel", handleUserScroll);
-              window.removeEventListener("touchmove", handleUserScroll);
-            }
-          }
-        }, 100);
-      }, 1000);
-
-      return () => {
-        scrollCancelled = true;
-        clearTimeout(timeoutId);
-        if (scrollInterval.current) {
-          clearInterval(scrollInterval.current);
-          scrollInterval.current = null;
-        }
-        window.removeEventListener("wheel", handleUserScroll);
-        window.removeEventListener("touchmove", handleUserScroll);
-      };
-    }
-  }, [targetIssueId, isTableReady]);
-
-  useEffect(() => {
-    if (searchString === prevSearchStringRef.current) return;
-    prevSearchStringRef.current = searchString;
-    setCurrentPage(1);
-    setIsTableReady(false);
-    hasInitializedRef.current = false;
-  }, [searchString, setCurrentPage]);
-
-  useEffect(() => {
-    if (pageSize === prevPageSizeRef.current) return;
-    prevPageSizeRef.current = pageSize;
-    setCurrentPage(1);
-    setIsTableReady(false);
-    hasInitializedRef.current = false;
-  }, [pageSize, setCurrentPage]);
-
-  useEffect(() => {
-    if (
-      statusFilter === prevStatusFilterRef.current &&
-      priorityFilter === prevPriorityFilterRef.current
-    )
-      return;
-    prevStatusFilterRef.current = statusFilter;
-    prevPriorityFilterRef.current = priorityFilter;
-    setCurrentPage(1);
-    setIsTableReady(false);
-    hasInitializedRef.current = false;
-  }, [statusFilter, priorityFilter, setCurrentPage]);
-
-  // Reset table ready state when page changes
-  useEffect(() => {
-    setIsTableReady(false);
-    if (!targetIssueId) {
-      hasInitializedRef.current = false; // Only reset if no target issue
-    }
-  }, [currentPage, targetIssueId]);
+  }, [issues, issueCounts, projectId, sortConfig, isCountSort]);
 
   useEffect(() => {
     if (!isAuthLoading && !session) {
@@ -737,7 +417,9 @@ function ProjectIssues() {
 
   // Determine if the project only has SIMPLE_URL integrations so we can hide
   // columns that would always be empty (description, status, priority, lastSyncedAt).
-  const { data: projectIntegrations } = useFindManyProjectIntegration(
+  const { data: projectIntegrations } = useClientQueries(
+    schema
+  ).projectIntegration.useFindMany(
     {
       where: { projectId: projectId ?? -1, isActive: true },
       include: { integration: { select: { provider: true } } },
@@ -762,6 +444,7 @@ function ProjectIssues() {
       testCases: t("common.fields.testCases"),
       sessions: t("common.fields.sessions"),
       testRuns: t("common.fields.testRuns"),
+      milestones: t("common.fields.milestones"),
       integration: t("common.fields.integration"),
     },
     isLoadingCounts,
@@ -789,112 +472,92 @@ function ProjectIssues() {
         ? "desc"
         : "asc";
     setSortConfig({ column, direction });
-    setCurrentPage(1);
+  };
+
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig({ column: "name", direction: "asc" });
+    } else {
+      setSortConfig({ column, direction });
+    }
   };
 
   return (
     <main>
       <Card>
         <CardHeader id="issues-page-header" className="w-full">
-          <div className="flex items-center justify-between text-primary text-xl md:text-2xl pb-2 pt-1">
+          <SectionHeader className="flex items-center gap-2">
             <CardTitle>{t("common.fields.issues")}</CardTitle>
-          </div>
-          <CardDescription className="uppercase">
-            <span className="flex items-center gap-2 shrink-0">
+            <HelpPopover helpKey="projectIssues" />
+          </SectionHeader>
+          <CardDescription>
+            <span className="flex items-center gap-2">
               <ProjectIcon iconUrl={project?.iconUrl} />
               {project?.name}
             </span>
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-row items-start">
-            <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
+          <div className="flex flex-row items-start justify-between gap-4">
+            <div className="flex flex-col grow w-full min-w-[250px]">
               <div className="flex items-center gap-2 text-muted-foreground w-full flex-wrap">
                 <Filter
                   key="issue-filter"
                   placeholder={t("Pages.Issues.filterPlaceholder")}
                   initialSearchString={searchString}
                   onSearchChange={setSearchString}
+                  className="grow shrink basis-[160px] min-w-[160px] max-w-lg"
                 />
-                <Select
-                  value={statusFilter}
-                  onValueChange={(value) =>
-                    setStatusFilter(value === "all" ? "" : value)
-                  }
-                >
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue placeholder={t("common.actions.status")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">
-                      {t("common.filters.allStatuses")}
-                    </SelectItem>
-                    {statuses.map((status) => (
-                      <SelectItem key={status} value={status}>
-                        {status}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select
-                  value={priorityFilter}
-                  onValueChange={(value) =>
-                    setPriorityFilter(value === "all" ? "" : value)
-                  }
-                >
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue placeholder={t("common.fields.priority")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">
-                      {t("common.filters.allPriorities")}
-                    </SelectItem>
-                    {priorities.map((priority) => (
-                      <SelectItem key={priority} value={priority}>
-                        {priority}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <IssueListFilters
+                  statuses={statuses}
+                  priorities={priorities}
+                  issueTypes={issueTypes}
+                  statusFilter={statusFilter}
+                  priorityFilter={priorityFilter}
+                  issueTypeFilter={issueTypeFilter}
+                  onStatusChange={setStatusFilter}
+                  onPriorityChange={setPriorityFilter}
+                  onIssueTypeChange={setIssueTypeFilter}
+                />
               </div>
             </div>
 
-            <div className="flex flex-col w-full sm:w-2/3 items-end">
-              {totalItems > 0 && (
-                <>
-                  <div className="justify-end">
-                    <PaginationInfo
-                      key="issue-pagination-info"
-                      startIndex={startIndex}
-                      endIndex={endIndex}
-                      totalRows={totalItems}
-                      searchString={searchString}
-                      pageSize={typeof pageSize === "number" ? pageSize : "All"}
-                      pageSizeOptions={pageSizeOptions}
-                      handlePageSizeChange={(size) => setPageSize(size)}
-                    />
-                  </div>
-                  <div className="justify-end -mx-4">
-                    <PaginationComponent
-                      currentPage={currentPage}
-                      totalPages={totalPages}
-                      onPageChange={setCurrentPage}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
+            {mappedIssues.length > 0 && (
+              <p className="text-sm text-muted-foreground shrink-0">
+                {t("admin.auditLogs.showing", {
+                  loaded: mappedIssues.length.toLocaleString(locale),
+                  total: (issuesCount ?? mappedIssues.length).toLocaleString(
+                    locale
+                  ),
+                })}
+              </p>
+            )}
           </div>
-          <div className="mt-4 flex justify-between">
+          <div className="mt-4 w-full">
             <DataTable
-              columns={columns}
-              data={displayedIssues}
+              virtualized
+              columns={columns as any}
+              data={mappedIssues as any}
               onSortChange={handleSortChange}
+              onSortColumn={handleSortColumn}
               sortConfig={sortConfig}
-              isLoading={isLoadingIssues}
-              pageSize={effectivePageSize}
+              isLoading={isLoadingIssues || isFetchingNextPage}
               columnVisibility={columnVisibility}
               onColumnVisibilityChange={setColumnVisibility}
+              hasMore={isFullSet ? false : !!hasNextPage}
+              onLoadMore={fetchNextPage}
+              estimateSize={60}
+              fillViewport
+              scrollToRowId={targetIssueId}
+              highlightRowId={targetIssueId}
+              resetKey={`${debouncedSearchString}|${JSON.stringify(statusFilter)}|${JSON.stringify(priorityFilter)}|${JSON.stringify(issueTypeFilter)}|${sortConfig.column}|${sortConfig.direction}`}
+              testIdPrefix="issues-table"
+              rowTestIdPrefix="issue-row"
             />
           </div>
         </CardContent>

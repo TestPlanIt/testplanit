@@ -5,6 +5,7 @@ import path from "path";
 import { stubBellSSE } from "../fixtures";
 import {
   routes,
+  SMOKE_ROUTES,
   type A11yRoute,
   type A11yFixtures,
   type InteractiveState,
@@ -39,6 +40,9 @@ const AXE_TAGS = [
 ];
 
 const STRICT = process.env.A11Y_STRICT === "on" || process.env.CI === "strict";
+// Smoke mode (A11Y_SMOKE=on): scan only the curated SMOKE_ROUTES subset. Used by
+// the CI smoke gate so it stays fast while covering every major UI pattern.
+const SMOKE = process.env.A11Y_SMOKE === "on";
 // Optionally force a theme class before axe runs (e.g. A11Y_THEME=accessible),
 // so the scan measures a specific theme regardless of the seeded user preference.
 const FORCE_THEME = process.env.A11Y_THEME;
@@ -119,10 +123,19 @@ type AxeViolation = {
   nodes: AxeNode[];
 };
 
+// Selectors excluded from every scan. Avatar initials render on a per-name
+// generated background color (not a theme token) and identically in all themes;
+// their full name is always available via the tooltip / img alt, so the initials
+// are supplementary. Excluding them keeps the strict color-contrast gate honest
+// about real (theme-driven) failures rather than data-color noise.
+const AXE_EXCLUDE_SELECTORS = ["[data-avatar-initials]"];
+
 async function runAxe(
   page: Page
 ): Promise<{ wcag: Violation[]; best: Violation[] }> {
-  const results = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
+  let builder = new AxeBuilder({ page }).withTags(AXE_TAGS);
+  for (const sel of AXE_EXCLUDE_SELECTORS) builder = builder.exclude(sel);
+  const results = await builder.analyze();
   const all = results.violations as unknown as AxeViolation[];
   return {
     wcag: serialize(all.filter((v) => isWcagViolation(v.tags))),
@@ -147,7 +160,15 @@ async function settle(page: Page, route: A11yRoute): Promise<void> {
 async function applyTheme(page: Page, theme: string): Promise<void> {
   await page
     .evaluate((t) => {
-      const all = ["light", "dark", "green", "orange", "purple", "accessible"];
+      const all = [
+        "light",
+        "dark",
+        "green",
+        "orange",
+        "purple",
+        "accessible",
+        "accessibledark",
+      ];
       document.documentElement.classList.remove(...all);
       document.documentElement.classList.add(t);
     }, theme)
@@ -237,6 +258,7 @@ function writeResult(result: RouteResult): void {
 }
 
 for (const route of routes) {
+  if (SMOKE && !SMOKE_ROUTES.has(route.name)) continue;
   test(`a11y: ${route.group} › ${route.name}`, async ({ page, browser }) => {
     test.setTimeout(90_000);
 

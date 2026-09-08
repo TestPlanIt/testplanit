@@ -1,13 +1,11 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { SectionHeader } from "@/components/ui/typography";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -17,14 +15,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Save } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import {
-  useDeleteAppConfig,
-  useFindUniqueAppConfig,
-  useUpsertAppConfig,
-} from "~/lib/hooks";
 
 const KEY = "edit_results_duration";
 
@@ -38,9 +32,11 @@ type PolicyMode = "none" | "disabled" | "max";
  */
 export function ResultEditingPolicyCard() {
   const t = useTranslations("admin.statuses.editPolicy");
-  const { data: config } = useFindUniqueAppConfig({ where: { key: KEY } });
-  const upsert = useUpsertAppConfig();
-  const remove = useDeleteAppConfig();
+  const { data: config } = useClientQueries(schema).appConfig.useFindUnique({
+    where: { key: KEY },
+  });
+  const upsert = useClientQueries(schema).appConfig.useUpsert();
+  const remove = useClientQueries(schema).appConfig.useDelete();
 
   const [mode, setMode] = useState<PolicyMode>("none");
   const [maxMinutes, setMaxMinutes] = useState("");
@@ -95,18 +91,20 @@ export function ResultEditingPolicyCard() {
   return (
     <Card className="mb-6" data-testid="result-editing-policy-card">
       <CardHeader>
-        <CardTitle className="text-xl">{t("title")}</CardTitle>
-        <CardDescription>{t("description")}</CardDescription>
+        <SectionHeader className="flex items-center gap-2">
+          <CardTitle>{t("title")}</CardTitle>
+          <HelpPopover helpKey="resultEditingPolicy" />
+        </SectionHeader>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3 max-w-md">
+        <div className="flex flex-wrap items-center gap-4">
           <Select
             value={mode}
             onValueChange={(value) => setMode(value as PolicyMode)}
             disabled={isPending}
           >
             <SelectTrigger
-              className="max-w-xs"
+              className="w-full sm:w-80"
               data-testid="edit-policy-mode-select"
               aria-label={t("modeAria")}
             >
@@ -119,8 +117,13 @@ export function ResultEditingPolicyCard() {
             </SelectContent>
           </Select>
           {mode === "max" && (
-            <div className="space-y-1">
-              <Label htmlFor="edit-policy-minutes">{t("minutesLabel")}</Label>
+            <div className="flex items-center gap-2 text-sm">
+              <Label
+                htmlFor="edit-policy-minutes"
+                className="whitespace-nowrap font-normal"
+              >
+                {t("minutesBefore")}
+              </Label>
               <Input
                 id="edit-policy-minutes"
                 data-testid="edit-policy-minutes-input"
@@ -128,18 +131,26 @@ export function ResultEditingPolicyCard() {
                 min={1}
                 value={maxMinutes}
                 onChange={(event) => setMaxMinutes(event.target.value)}
-                className="max-w-xs"
+                className="w-24"
+                aria-label={t("minutesAriaLabel")}
               />
+              <span>
+                {t("minutesUnit", { minutes: Number(maxMinutes) || 0 })}
+              </span>
             </div>
           )}
           <Button
             type="button"
-            size="sm"
             onClick={handleSave}
             disabled={isPending}
+            aria-label={t("save")}
             data-testid="edit-policy-save"
+            className="group gap-0 transition-all duration-200 hover:gap-2"
           >
-            {t("save")}
+            <Save className="h-4 w-4" />
+            <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+              {t("save")}
+            </span>
           </Button>
         </div>
       </CardContent>

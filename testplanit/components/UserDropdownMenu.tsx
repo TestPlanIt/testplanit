@@ -1,4 +1,6 @@
-import { Locale, Theme } from "@prisma/client";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
+import { Locale, Theme } from "~/zenstack/models";
 import {
   Accessibility,
   Check,
@@ -14,7 +16,6 @@ import { signOut, useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { useRef, useState } from "react";
-import { useFindUniqueUser } from "~/lib/hooks";
 import { languageNames, useRouter } from "~/lib/navigation";
 import { cn } from "~/utils";
 
@@ -38,7 +39,7 @@ export function UserDropdownMenu() {
   const router = useRouter();
   const { data: session, update } = useSession();
   const { theme, setTheme } = useTheme();
-  const { refetch: refetchUser } = useFindUniqueUser(
+  const { refetch: refetchUser } = useClientQueries(schema).user.useFindUnique(
     { where: { id: session?.user?.id || "" } },
     { enabled: !!session?.user?.id }
   );
@@ -175,6 +176,7 @@ export function UserDropdownMenu() {
       orange: "rgba(251, 146, 60, 1)", // Orange primary color
       purple: "rgba(147, 51, 234, 1)", // Purple primary color
       accessible: "rgba(29, 78, 216, 1)", // Strong blue for the accessible theme
+      accessibledark: "rgba(23, 37, 84, 1)", // Deep blue for the accessible dark theme
     };
 
     wipeOverlay.style.backgroundColor =
@@ -266,16 +268,16 @@ export function UserDropdownMenu() {
     return (
       <DropdownMenuItem onClick={updateTheme} className="flex items-center">
         {isActive && (
-          <span className="mr-2">
+          <span className="me-2">
             <Check className="w-4 h-4" />
           </span>
         )}
         {!isActive && (
-          <span className="mr-2 opacity-0">
+          <span className="me-2 opacity-0">
             <Check className="w-4 h-4" />
           </span>
         )}
-        <span className={cn("mr-2", color)}>{icon}</span>
+        <span className={cn("me-2", color)}>{icon}</span>
         <span className="grow">
           {t(`themes.${themeName.toLowerCase()}` as any)}
         </span>
@@ -314,12 +316,12 @@ export function UserDropdownMenu() {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem onClick={onViewProfile}>
-            <User className="h-4 w-4 mr-2" />
+            <User className="h-4 w-4 me-2" />
             {t("viewProfile")}
           </DropdownMenuItem>
           <DropdownMenuSub>
             <DropdownMenuSubTrigger data-testid="theme-submenu-trigger">
-              <Sun className="h-4 w-4 mr-2" />
+              <Sun className="h-4 w-4 me-2" />
               {tCommon("fields.theme")}
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
@@ -359,12 +361,17 @@ export function UserDropdownMenu() {
                   <Accessibility className="h-4 w-4" />,
                   "text-blue-700"
                 )}
+                {renderThemeOption(
+                  "AccessibleDark",
+                  <Accessibility className="h-4 w-4" />,
+                  "text-blue-400"
+                )}
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
           </DropdownMenuSub>
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
-              <Globe className="h-4 w-4 mr-2" />
+              <Globe className="h-4 w-4 me-2" />
               {tCommon("fields.locale")}
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
@@ -378,7 +385,7 @@ export function UserDropdownMenu() {
                     >
                       <Check
                         className={cn(
-                          "h-4 w-4 mr-2",
+                          "h-4 w-4 me-2",
                           session?.user?.preferences?.locale === value
                             ? "opacity-100"
                             : "opacity-0"
@@ -395,7 +402,7 @@ export function UserDropdownMenu() {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem onClick={onSignout} disabled={isLoggingOut}>
-            <LogOut className="h-4 w-4 mr-2" />
+            <LogOut className="h-4 w-4 me-2" />
             {tCommon("actions.signOut")}
           </DropdownMenuItem>
         </DropdownMenuGroup>

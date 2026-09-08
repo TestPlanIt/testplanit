@@ -1,10 +1,7 @@
 "use client";
 
-import {
-  Groups as PrismaGroups,
-  ProjectAccessType,
-  Roles,
-} from "@prisma/client";
+import { ProjectAccessType } from "~/zenstack/models";
+import type { Groups as DbGroups, Roles } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
 import {
   Control,
@@ -37,7 +34,7 @@ import {
 import { Star } from "lucide-react";
 
 // Define the type for Group with included users
-type GroupWithUsers = PrismaGroups & {
+type GroupWithUsers = DbGroups & {
   users: { userId: string }[];
 };
 
@@ -128,18 +125,18 @@ export function ProjectGroupPermissions({
     <div className="space-y-4">
       <Label>{t("labels.groupProjectAccess")}</Label>
       {/* List of Groups */}
-      <div className="rounded-md border">
+      <div className="rounded-md border max-h-[55vh] overflow-y-auto">
         <table className="w-full caption-bottom text-sm">
-          <thead className="[&_tr]:border-b">
+          <thead className="[&_tr]:border-b sticky top-0 z-10 bg-background">
             <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+              <th className="h-12 px-4 text-start align-middle font-medium text-muted-foreground">
                 {tGlobal("reports.dimensions.group")}
               </th>
               {/* Add Members Header */}
-              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+              <th className="h-12 px-4 text-start align-middle font-medium text-muted-foreground">
                 {tCommon("fields.members")}
               </th>
-              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+              <th className="h-12 px-4 text-start align-middle font-medium text-muted-foreground">
                 {t("tableHeaders.projectAccess")}
               </th>
             </tr>
@@ -193,8 +190,9 @@ export function ProjectGroupPermissions({
                   </td>
                   {/* Add Members Cell */}
                   <td className="px-4 align-middle">
-                    <UserListDisplay users={group.users} />{" "}
-                    {/* Pass group users */}
+                    <UserListDisplay
+                      filter={{ groups: { some: { groupId: group.id } } }}
+                    />
                   </td>
                   <td className="px-1 align-middle">
                     {/* Wrap Select and Effective Access in a flex container */}
@@ -230,9 +228,9 @@ export function ProjectGroupPermissions({
                               {role.name}
                               {role.isDefault && (
                                 <Tooltip>
-                                  <TooltipTrigger className="ml-1" asChild>
+                                  <TooltipTrigger className="ms-1" asChild>
                                     <Badge variant="secondary">
-                                      <Star className="h-3 w-3 fill-current text-primary-background" />
+                                      <Star className="h-3 w-3 fill-current" />
                                     </Badge>
                                   </TooltipTrigger>
                                   <TooltipContent>
@@ -248,7 +246,7 @@ export function ProjectGroupPermissions({
                       <p className="text-xs text-muted-foreground flex items-center whitespace-nowrap">
                         {" "}
                         {/* Removed pt-1, added whitespace-nowrap */}
-                        <span className="mr-1">
+                        <span className="me-1">
                           {t("labels.access.effectiveAccess")}:
                         </span>
                         {/* Render RoleNameCell or text based on logic */}
@@ -260,7 +258,7 @@ export function ProjectGroupPermissions({
                           )}
                         {currentAccessType ===
                           ProjectAccessType.GLOBAL_ROLE && (
-                          <span className="italic text-muted-foreground ml-1">
+                          <span className="italic text-muted-foreground ms-1">
                             {tGlobal("common.labels.access.usersGlobalRole")}
                           </span>
                         )}
@@ -274,7 +272,7 @@ export function ProjectGroupPermissions({
                         {currentAccessType === "PROJECT_DEFAULT" &&
                           defaultProjectAccessType ===
                             ProjectAccessType.GLOBAL_ROLE && (
-                            <span className="italic text-muted-foreground ml-1">
+                            <span className="italic text-muted-foreground ms-1">
                               {tGlobal("common.labels.access.usersGlobalRole")}
                             </span>
                           )}
@@ -288,7 +286,7 @@ export function ProjectGroupPermissions({
                           (currentAccessType ===
                             ProjectAccessType.SPECIFIC_ROLE &&
                             (!currentRoleId || currentRoleId === "NONE"))) && (
-                          <span className="italic text-muted-foreground ml-1">
+                          <span className="italic text-muted-foreground ms-1">
                             {currentAccessType === ProjectAccessType.NO_ACCESS
                               ? "-"
                               : t("labels.noEffect")}

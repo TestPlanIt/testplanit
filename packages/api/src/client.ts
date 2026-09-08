@@ -23,6 +23,8 @@ import type {
   CreateStepOptions,
   CreateStepsOptions,
   RequestStepDerivationOptions,
+  GenerateQuickScriptOptions,
+  GenerateQuickScriptResult,
   Step,
   CreateTagOptions,
   CreateFolderOptions,
@@ -159,6 +161,12 @@ export class TestPlanItClient {
 
   // Cache for statuses to avoid repeated lookups
   private statusCache: Map<number, Status[]> = new Map();
+  /**
+   * Set after a create is rejected while carrying `worker` — an older server
+   * (schema without JUnitTestResult.worker) fails the whole create over this
+   * optional metadata, so stop sending it for the rest of the run.
+   */
+  private junitWorkerFieldUnsupported = false;
 
   constructor(config: TestPlanItClientConfig) {
     if (!config.baseUrl) {
@@ -191,6 +199,8 @@ export class TestPlanItClient {
       body?: unknown;
       query?: Record<string, string | number | boolean | undefined>;
       headers?: Record<string, string>;
+      /** Per-call override of the client's default request timeout (ms). */
+      timeout?: number;
     }
   ): Promise<T> {
     const url = new URL(path, this.baseUrl);
@@ -214,7 +224,7 @@ export class TestPlanItClient {
     const fetchOptions: RequestInit = {
       method,
       headers,
-      signal: AbortSignal.timeout(this.timeout),
+      signal: AbortSignal.timeout(options?.timeout ?? this.timeout),
     };
 
     if (options?.body && method !== "GET") {
@@ -436,6 +446,8 @@ export class TestPlanItClient {
     formData: FormData,
     options?: {
       query?: Record<string, string | number | boolean | undefined>;
+      /** Per-call override of the client's default request timeout (ms). */
+      timeout?: number;
     }
   ): Promise<T> {
     const url = new URL(path, this.baseUrl);
@@ -458,7 +470,7 @@ export class TestPlanItClient {
       method,
       headers,
       body: formData,
-      signal: AbortSignal.timeout(this.timeout),
+      signal: AbortSignal.timeout(options?.timeout ?? this.timeout),
     };
 
     const response = await fetch(url.toString(), fetchOptions);
@@ -1720,6 +1732,40 @@ export class TestPlanItClient {
   }
 
   // ============================================================================
+  // QuickScript (AI test-script generation)
+  // ============================================================================
+
+  /**
+   * Generate a QuickScript (AI-authored automation script) from one or more
+   * stored test cases. The server resolves the project's export template and —
+   * when a code repository is connected — pulls repo context so the script
+   * follows the repo's existing framework/fixtures/page objects. On LLM failure
+   * or when no LLM integration is configured, each file falls back to the
+   * deterministic template render (`generatedBy: "template"`).
+   */
+  async generateQuickScript(
+    options: GenerateQuickScriptOptions
+  ): Promise<GenerateQuickScriptResult> {
+    return this.request<GenerateQuickScriptResult>(
+      "POST",
+      "/api/export/quickscript",
+      {
+        body: {
+          projectId: options.projectId,
+          caseIds: options.caseIds,
+          ...(options.templateId != null
+            ? { templateId: options.templateId }
+            : {}),
+          ...(options.outputMode ? { outputMode: options.outputMode } : {}),
+        },
+        // LLM generation can take much longer than a normal API call; default
+        // to a generous timeout unless the caller overrides the client's.
+        timeout: options.timeoutMs ?? 180000,
+      }
+    );
+  }
+
+  // ============================================================================
   // Test Run Cases (linking cases to runs)
   // ============================================================================
 
@@ -2231,12 +2277,26 @@ export class TestPlanItClient {
     if (options.assertions !== undefined) data.assertions = options.assertions;
     if (options.file) data.file = options.file;
     if (options.line !== undefined) data.line = options.line;
+    if (options.worker && !this.junitWorkerFieldUnsupported) {
+      data.worker = options.worker;
+    }
     if (options.systemOut) data.systemOut = options.systemOut;
     if (options.systemErr) data.systemErr = options.systemErr;
 
-    return this.zenstack<JUnitTestResult>("jUnitTestResult", "create", {
-      data,
-    });
+    try {
+      return await this.zenstack<JUnitTestResult>("jUnitTestResult", "create", {
+        data,
+      });
+    } catch (error) {
+      if (data.worker === undefined) throw error;
+      // Retry once without the optional worker metadata rather than losing
+      // the result to a server that doesn't know the field yet.
+      this.junitWorkerFieldUnsupported = true;
+      delete data.worker;
+      return this.zenstack<JUnitTestResult>("jUnitTestResult", "create", {
+        data,
+      });
+    }
   }
 
   /**

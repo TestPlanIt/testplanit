@@ -1,9 +1,10 @@
 "use client";
 
 import * as d3 from "d3";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import React, { useEffect, useRef } from "react";
 import useResponsiveSVG from "~/hooks/useResponsiveSVG"; // Assuming this hook is available and works as in SummarySunburstChart
+import { cn } from "~/utils";
 
 // Define the structure for a sunburst chart node
 export interface SunburstNode {
@@ -29,12 +30,15 @@ interface RepositoryCaseAggregate {
 
 interface ProjectOverviewSunburstChartProps {
   data: RepositoryCaseAggregate[];
+  /** Container sizing override — pass `h-full` to fill a zoom dialog. */
+  className?: string;
 }
 
 const ProjectOverviewSunburstChart: React.FC<
   ProjectOverviewSunburstChartProps
-> = ({ data }) => {
+> = ({ data, className }) => {
   const t = useTranslations();
+  const locale = useLocale();
   const svgRef = useRef<SVGSVGElement | null>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -132,6 +136,9 @@ const ProjectOverviewSunburstChart: React.FC<
 
     const radius = Math.min(width, height) / 2 - 10;
     const holeRadius = radius * 0.3; // Define a 10% hole in the center
+    // Segment labels track the radius so they scale up with the chart when it
+    // is zoomed into a dialog; the inline chart stays at the 10px floor.
+    const labelFontSize = Math.max(10, Math.min(18, radius * 0.075));
 
     const d3ColorScale = d3.scaleOrdinal(["#1f77b4", "#ff7f0e"]); // Colors for Automated/Not Automated
 
@@ -232,7 +239,7 @@ const ProjectOverviewSunburstChart: React.FC<
       .attr("dy", "-0.3em") // Adjust dy to position the number slightly up
       .style("font-size", `${Math.max(14, holeRadius * 0.5)}px`) // Larger font for the number
       .style("font-weight", "bold")
-      .text(rootNode.value || 0);
+      .text((rootNode.value || 0).toLocaleString(locale));
 
     centerText
       .append("tspan")
@@ -249,22 +256,57 @@ const ProjectOverviewSunburstChart: React.FC<
       .ease(d3.easeQuadOut)
       .style("opacity", 1);
 
+    const labelNodes = rootNode
+      .descendants()
+      .filter((d) => d.depth && (d.y1 - d.y0) * (d.x1 - d.x0) > 0.015);
+
+    // A segment that covers nearly all of its parent puts both labels on the
+    // same ray, where the radial text overlaps. Swing them apart along the arc,
+    // each staying well inside its own slice.
+    const midAngle = (d: d3.HierarchyRectangularNode<SunburstNode>) =>
+      (d.x0 + d.x1) / 2;
+    // The inner ring is drawn from the centre hole outwards, so its label sits
+    // at the middle of that band — closer to the centre than the area midpoint
+    // the partition reports.
+    const labelRadius = (d: d3.HierarchyRectangularNode<SunburstNode>) =>
+      d.depth === 1
+        ? (holeRadius + Math.sqrt(d.y1)) / 2
+        : Math.sqrt(d.y0 + (d.y1 - d.y0) / 2);
+    const maxSwing = (d: d3.HierarchyRectangularNode<SunburstNode>) =>
+      (d.x1 - d.x0) * 0.3;
+
+    const labelAngles = new Map(labelNodes.map((d) => [d, midAngle(d)]));
+
+    labelNodes
+      .filter((d) => d.depth > 1 && d.parent && labelAngles.has(d.parent))
+      .forEach((child) => {
+        const parent = child.parent!;
+        const childAngle = labelAngles.get(child)!;
+        const parentAngle = labelAngles.get(parent)!;
+        // Angular room the two labels need before they stop sharing a ray.
+        const needed = (labelFontSize * 1.6) / labelRadius(parent);
+        const deficit = needed - Math.abs(childAngle - parentAngle);
+        if (deficit <= 0) return;
+
+        const direction = childAngle >= parentAngle ? 1 : -1;
+        const childSwing = Math.min(deficit / 2, maxSwing(child));
+        const parentSwing = Math.min(deficit - childSwing, maxSwing(parent));
+        labelAngles.set(child, childAngle + direction * childSwing);
+        labelAngles.set(parent, parentAngle - direction * parentSwing);
+      });
+
     g.selectAll("text.label")
-      .data(
-        rootNode
-          .descendants()
-          .filter((d) => d.depth && (d.y1 - d.y0) * (d.x1 - d.x0) > 0.015)
-      )
+      .data(labelNodes)
       .join("text")
       .attr("class", "label") // Added class here
       .attr("transform", (d) => {
-        const x = (((d.x0 + d.x1) / 2) * 180) / Math.PI;
-        const y = Math.sqrt(d.y0 + (d.y1 - d.y0) / 2);
+        const x = ((labelAngles.get(d) ?? midAngle(d)) * 180) / Math.PI;
+        const y = labelRadius(d);
         return `rotate(${x - 90}) translate(${y},0) rotate(${x < 180 ? 0 : 180})`;
       })
       .attr("dy", "0.35em")
       .attr("fill", "currentColor")
-      .style("font-size", "10px")
+      .style("font-size", `${labelFontSize}px`)
       .attr("text-anchor", "middle")
       .text((d) =>
         d.data.name.length > 15
@@ -272,10 +314,10 @@ const ProjectOverviewSunburstChart: React.FC<
           : d.data.name
       )
       .style("pointer-events", "none");
-  }, [data, width, height, t]); // Removed transformDataForSunburst from dependency array
+  }, [data, width, height, t, locale]); // Removed transformDataForSunburst from dependency array
 
   return (
-    <div ref={containerRef} className="w-full h-64 relative">
+    <div ref={containerRef} className={cn("w-full h-64 relative", className)}>
       {" "}
       {/* Ensure container has dimensions */}
       <svg ref={svgRef} width={width} height={height}></svg>

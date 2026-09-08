@@ -68,6 +68,7 @@ Comments are displayed in chronological order (oldest first) in the Comments sec
 - **User Name and Email** - Who created the comment
 - **Timestamp** - When the comment was posted
 - **Edit Indicator** - "(edited)" label if the comment was modified
+- **Review Badge** - Comments created by the [review workflow](reviews-inbox.md) carry a badge: **Review request** on the requester's comment, and the decision outcome (**Approved**, **Changes requested**, **Rejected**, or **Cancelled**) on the reviewer's. A matching color accent on the comment's edge makes review activity easy to spot while scrolling a thread
 - **Comment Content** - The formatted comment text with mentions highlighted
 - **Action Buttons** - Edit and Delete options (if you have permission)
 
@@ -138,6 +139,8 @@ Control how you're notified about comments:
 ## Comments in Context
 
 ### Test Case Comments
+
+![The comments panel on a test case detail page, showing a threaded discussion between four people with @mention chips rendered inline](/img/screenshots/user-guide/comments/case-comment-thread.png)
 
 Use comments on test cases for:
 

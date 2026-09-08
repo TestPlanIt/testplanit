@@ -10,8 +10,8 @@ vi.mock("~/server/auth", () => ({
   authOptions: {},
 }));
 
-vi.mock("@/lib/prisma", () => ({
-  prisma: {
+vi.mock("@/lib/db", () => ({
+  baseDb: {
     integration: {
       findUnique: vi.fn(),
       update: vi.fn(),
@@ -24,7 +24,7 @@ vi.mock("@/utils/encryption", () => ({
   isEncrypted: vi.fn(),
 }));
 
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { decrypt, isEncrypted } from "@/utils/encryption";
 import { getServerSession } from "next-auth";
 
@@ -55,7 +55,7 @@ describe("POST /api/integrations/test-connection", () => {
     // marked unencrypted would be rejected before any probe runs.
     (isEncrypted as any).mockReturnValue(true);
     (decrypt as any).mockImplementation((val: string) => Promise.resolve(val));
-    (prisma.integration.update as any).mockResolvedValue({});
+    (baseDb.integration.update as any).mockResolvedValue({});
   });
 
   describe("Authentication", () => {
@@ -311,7 +311,7 @@ describe("POST /api/integrations/test-connection", () => {
 
     it("does NOT mark a saved OAUTH2 integration ACTIVE on a passing test", async () => {
       (getServerSession as any).mockResolvedValue(mockSession);
-      (prisma.integration.findUnique as any).mockResolvedValue({
+      (baseDb.integration.findUnique as any).mockResolvedValue({
         id: 7,
         provider: "JIRA",
         authType: "OAUTH2",
@@ -327,12 +327,12 @@ describe("POST /api/integrations/test-connection", () => {
       expect(data.requiresUserAuth).toBe(true);
       // Activation for OAuth happens only in the authorization callback once
       // a real user token exists — never from the admin-side test.
-      expect(prisma.integration.update).not.toHaveBeenCalled();
+      expect(baseDb.integration.update).not.toHaveBeenCalled();
     });
 
     it("reports corrupt credentials instead of testing with an undecryptable value", async () => {
       (getServerSession as any).mockResolvedValue(mockSession);
-      (prisma.integration.findUnique as any).mockResolvedValue({
+      (baseDb.integration.findUnique as any).mockResolvedValue({
         id: 8,
         provider: "JIRA",
         authType: "API_KEY",
@@ -351,9 +351,11 @@ describe("POST /api/integrations/test-connection", () => {
       expect(mockFetch).not.toHaveBeenCalled();
     });
 
-    it("tests with a cleartext secret, which is what the admin UI writes", async () => {
+    it("tests with a cleartext secret rather than refusing it", async () => {
+      // Cleartext is badly stored, not unreadable. Refusing it made
+      // "Test connection" fail on integrations that work.
       (getServerSession as any).mockResolvedValue(mockSession);
-      (prisma.integration.findUnique as any).mockResolvedValue({
+      (baseDb.integration.findUnique as any).mockResolvedValue({
         id: 9,
         provider: "JIRA",
         authType: "API_KEY",
@@ -364,15 +366,14 @@ describe("POST /api/integrations/test-connection", () => {
       mockFetch.mockResolvedValue({
         ok: true,
         status: 200,
-        statusText: "OK",
-        json: async () => ({ accountId: "u1" }),
+        json: () => Promise.resolve({ accountId: "abc" }),
       });
 
       const response = await POST(createRequest({ integrationId: 9 }));
+      const data = await response.json();
 
-      // Refusing this shape would break every integration created through the
-      // admin form, which saves credentials unencrypted.
       expect(response.status).toBe(200);
+      expect(data.success).toBe(true);
       expect(mockFetch).toHaveBeenCalled();
     });
   });
@@ -586,7 +587,7 @@ describe("POST /api/integrations/test-connection", () => {
   describe("Testing existing integration by integrationId", () => {
     it("looks up integration from DB and decrypts credentials", async () => {
       (getServerSession as any).mockResolvedValue(mockSession);
-      (prisma.integration.findUnique as any).mockResolvedValue({
+      (baseDb.integration.findUnique as any).mockResolvedValue({
         id: 5,
         provider: "GITHUB",
         authType: "PERSONAL_ACCESS_TOKEN",
@@ -613,7 +614,7 @@ describe("POST /api/integrations/test-connection", () => {
 
     it("returns 404 when integration not found by id", async () => {
       (getServerSession as any).mockResolvedValue(mockSession);
-      (prisma.integration.findUnique as any).mockResolvedValue(null);
+      (baseDb.integration.findUnique as any).mockResolvedValue(null);
 
       const response = await POST(createRequest({ integrationId: 999 }));
       const data = await response.json();
@@ -625,7 +626,7 @@ describe("POST /api/integrations/test-connection", () => {
 
     it("updates integration status to ACTIVE on success", async () => {
       (getServerSession as any).mockResolvedValue(mockSession);
-      (prisma.integration.findUnique as any).mockResolvedValue({
+      (baseDb.integration.findUnique as any).mockResolvedValue({
         id: 5,
         provider: "SIMPLE_URL",
         authType: "NONE",
@@ -638,7 +639,7 @@ describe("POST /api/integrations/test-connection", () => {
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
-      expect(prisma.integration.update).toHaveBeenCalledWith(
+      expect(baseDb.integration.update).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: 5 },
           data: expect.objectContaining({ status: "ACTIVE" }),
@@ -652,7 +653,7 @@ describe("POST /api/integrations/test-connection — Jira Data Center", () => {
   beforeEach(() => {
     mockFetch.mockReset();
     (getServerSession as any).mockResolvedValue(mockSession);
-    (prisma.integration.update as any).mockResolvedValue({});
+    (baseDb.integration.update as any).mockResolvedValue({});
   });
 
   it("auto-detects Data Center and authenticates a PAT as Bearer on /rest/api/2", async () => {
@@ -932,7 +933,7 @@ describe("POST /api/integrations/test-connection — Jira Data Center", () => {
     });
 
     it("fills in deploymentType/authScheme on a successful test when unset", async () => {
-      (prisma.integration.findUnique as any).mockResolvedValue({
+      (baseDb.integration.findUnique as any).mockResolvedValue({
         id: 42,
         provider: "JIRA",
         authType: "API_KEY",
@@ -970,7 +971,7 @@ describe("POST /api/integrations/test-connection — Jira Data Center", () => {
       const data = await response.json();
 
       expect(data.success).toBe(true);
-      expect(prisma.integration.update).toHaveBeenCalledWith({
+      expect(baseDb.integration.update).toHaveBeenCalledWith({
         where: { id: 42 },
         data: expect.objectContaining({
           status: "ACTIVE",
@@ -986,7 +987,7 @@ describe("POST /api/integrations/test-connection — Jira Data Center", () => {
     it("never overwrites already-resolved settings keys (fill-missing-only)", async () => {
       // deploymentType=server is an explicit override, so the route skips
       // v3/serverInfo detection entirely and probes v2 directly.
-      (prisma.integration.findUnique as any).mockResolvedValue({
+      (baseDb.integration.findUnique as any).mockResolvedValue({
         id: 43,
         provider: "JIRA",
         authType: "API_KEY",
@@ -1009,7 +1010,7 @@ describe("POST /api/integrations/test-connection — Jira Data Center", () => {
       const data = await response.json();
 
       expect(data.success).toBe(true);
-      expect(prisma.integration.update).toHaveBeenCalledWith({
+      expect(baseDb.integration.update).toHaveBeenCalledWith({
         where: { id: 43 },
         data: expect.objectContaining({
           settings: expect.objectContaining({

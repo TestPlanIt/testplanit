@@ -17,10 +17,12 @@
 
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
-import { enhance } from "@zenstackhq/runtime";
+import { getAuthDb } from "~/lib/zenstack";
 import { authenticateRequest } from "~/lib/api-token-auth";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
+import { readRecordKeyConfig } from "~/lib/services/recordKeyConfig";
+import { formatRecordKey, RECORD_TYPES } from "~/lib/recordKey";
 import { ndjsonResponse, type PageSource } from "~/lib/export/ndjson";
 import {
   buildManifest,
@@ -50,6 +52,7 @@ interface CaseRow {
   currentVersion: number;
   createdAt: string;
   creatorId: string;
+  displayKey: string | null;
 }
 
 export async function GET(request: NextRequest) {
@@ -78,16 +81,16 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  let reader = prisma as unknown as typeof prisma;
+  let reader = baseDb as unknown as typeof baseDb;
   if (!isAdmin) {
-    const userRecord = await prisma.user.findUnique({
+    const userRecord = await baseDb.user.findUnique({
       where: { id: auth.user.userId },
       include: { role: { include: { rolePermissions: true } } },
     });
     if (!userRecord) {
       return NextResponse.json({ error: "User not found" }, { status: 401 });
     }
-    reader = enhance(prisma, { user: userRecord }) as unknown as typeof prisma;
+    reader = (await getAuthDb(userRecord)) as unknown as typeof baseDb;
 
     const accessible = await reader.projects.findFirst({
       where: { id: projectId!, isDeleted: false },
@@ -111,6 +114,9 @@ export async function GET(request: NextRequest) {
   if (cursor) {
     Object.assign(where, cursorWhere("createdAt", cursor));
   }
+
+  const { enabled: recordKeyEnabled, tokens: recordKeyTokens } =
+    await readRecordKeyConfig(reader);
 
   let exportedCount = 0;
   let lastRow: CaseRow | null = null;
@@ -138,6 +144,7 @@ export async function GET(request: NextRequest) {
         currentVersion: true,
         createdAt: true,
         creatorId: true,
+        project: { select: { key: true } },
       },
     });
 
@@ -159,6 +166,14 @@ export async function GET(request: NextRequest) {
       currentVersion: c.currentVersion,
       createdAt: c.createdAt.toISOString(),
       creatorId: c.creatorId,
+      displayKey: recordKeyEnabled
+        ? formatRecordKey({
+            projectKey: c.project?.key ?? null,
+            type: RECORD_TYPES.TEST_CASE,
+            id: c.id,
+            tokens: recordKeyTokens,
+          })
+        : null,
     }));
     exportedCount = page.length;
     lastRow = page[page.length - 1] ?? null;

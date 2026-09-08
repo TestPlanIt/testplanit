@@ -443,4 +443,87 @@ test.describe("Step Duplicate Detection Workflow", () => {
       await expect(rows).toHaveCount(0, { timeout: 10000 });
     });
   });
+
+  test("Conversion dialog shows the matched steps every time it is opened", async ({
+    api,
+    page,
+  }) => {
+    let projectId: number | undefined;
+
+    await test.step("Seed two cases with shared steps and a step-sequence match", async () => {
+      projectId = await api.createProject(
+        `E2E Step Dups ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+      );
+      const folderId = await api.createFolder(
+        projectId,
+        `Folder ${Date.now()}`
+      );
+
+      const caseAId = await api.createTestCase(
+        projectId,
+        folderId,
+        "Reopen test A"
+      );
+      const caseBId = await api.createTestCase(
+        projectId,
+        folderId,
+        "Reopen test B"
+      );
+
+      const steps = [
+        makeStep("Open settings page", "Settings page loads", 0),
+        makeStep("Click profile tab", "Profile tab is active", 1),
+        makeStep("Update display name", "Name field updated", 2),
+      ];
+
+      const stepIdsA = await api.addStepsToTestCase(caseAId, steps);
+      const stepIdsB = await api.addStepsToTestCase(caseBId, steps);
+
+      await api.createStepSequenceMatch(
+        projectId,
+        [
+          { caseId: caseAId, startStepId: stepIdsA[0], endStepId: stepIdsA[2] },
+          { caseId: caseBId, startStepId: stepIdsB[0], endStepId: stepIdsB[2] },
+        ],
+        3
+      );
+    });
+
+    await test.step("Open the step-duplicates page", async () => {
+      await page.goto(
+        `/en-US/projects/shared-steps/${projectId}/step-duplicates`
+      );
+      await page.waitForLoadState("networkidle");
+    });
+
+    const dialog = page.locator('[data-testid="step-conversion-dialog"]');
+    const stepEditors = dialog.locator('[data-testid^="step-editor-"]');
+
+    await test.step("First open shows the three matched steps", async () => {
+      const table = page.locator('[data-testid="step-duplicates-table"]');
+      const firstRow = table.locator("tbody tr").first();
+      await expect(firstRow).toBeVisible({ timeout: 10000 });
+      await firstRow.click();
+
+      await expect(dialog).toBeVisible({ timeout: 10000 });
+      await expect(stepEditors).toHaveCount(3, { timeout: 10000 });
+    });
+
+    await test.step("Close the dialog", async () => {
+      await page.keyboard.press("Escape");
+      await expect(dialog).toBeHidden({ timeout: 10000 });
+    });
+
+    // Reopening served the editor off the React Query cache, which used to
+    // leave it empty.
+    await test.step("Second open still shows the three matched steps", async () => {
+      const table = page.locator('[data-testid="step-duplicates-table"]');
+      const firstRow = table.locator("tbody tr").first();
+      await expect(firstRow).toBeVisible({ timeout: 10000 });
+      await firstRow.click();
+
+      await expect(dialog).toBeVisible({ timeout: 10000 });
+      await expect(stepEditors).toHaveCount(3, { timeout: 10000 });
+    });
+  });
 });

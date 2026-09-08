@@ -32,7 +32,12 @@ vi.mock("./ReportBarChart", () => ({
 }));
 
 vi.mock("./ReportLineChart", () => ({
-  ReportLineChart: () => <div data-testid="ReportLineChart" />,
+  ReportLineChart: ({ data }: { data?: Array<{ value: number }> }) => (
+    <div
+      data-testid="ReportLineChart"
+      data-values={JSON.stringify(data?.map((d) => d.value))}
+    />
+  ),
 }));
 
 vi.mock("./ReportGroupedBarChart", () => ({
@@ -313,6 +318,51 @@ describe("ReportChart", () => {
       />
     );
     expect(container.firstChild).toBeNull();
+  });
+
+  it("resolves metric values through apiLabel when the display label differs from the data key", () => {
+    // Report API rows are keyed by the registry's English label ("Test Results
+    // Count") while ReportBuilder displays the translated label ("Test
+    // Results") — the chart must read data through apiLabel.
+    const results = [
+      { date: { executedAt: "2024-01-01" }, "Test Results Count": 4 },
+      { date: { executedAt: "2024-02-01" }, "Test Results Count": 7 },
+    ];
+    render(
+      <ReportChart
+        results={results}
+        dimensions={[{ value: "date", label: "Date" }]}
+        metrics={[
+          {
+            value: "testResults",
+            label: "Test Results",
+            apiLabel: "Test Results Count",
+          },
+        ]}
+      />
+    );
+    expect(screen.getByTestId("ReportLineChart")).toHaveAttribute(
+      "data-values",
+      JSON.stringify([4, 7])
+    );
+  });
+
+  it("falls back to the display label as data key when apiLabel is absent (shared-report metrics)", () => {
+    const results = [
+      { date: { executedAt: "2024-01-01" }, "Test Results Count": 3 },
+      { date: { executedAt: "2024-02-01" }, "Test Results Count": 9 },
+    ];
+    render(
+      <ReportChart
+        results={results}
+        dimensions={[{ value: "date", label: "Execution Date" }]}
+        metrics={[{ value: "testResults", label: "Test Results Count" }]}
+      />
+    );
+    expect(screen.getByTestId("ReportLineChart")).toHaveAttribute(
+      "data-values",
+      JSON.stringify([3, 9])
+    );
   });
 
   it("renders ReportGroupedBarChart when 2 categorical dimensions with 1 metric", () => {

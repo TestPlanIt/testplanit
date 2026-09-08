@@ -1,10 +1,11 @@
 #!/usr/bin/env node
-import { PrismaClient } from "@prisma/client";
+
 import { parse } from "csv-parse/sync";
+import { createRawDbClient } from "~/lib/rawDbClient";
 import { readFileSync } from "fs";
 import { performance } from "perf_hooks";
 
-const prisma = new PrismaClient();
+const db = createRawDbClient();
 
 interface TestFolderData {
   folder_id: number;
@@ -23,18 +24,18 @@ class CSVTestDataImporter {
     console.log("🔧 Setting up test environment...");
 
     // Get default user role
-    const userRole = await prisma.roles.findFirst({
+    const userRole = await db.roles.findFirst({
       where: { name: "user" },
     });
 
     if (!userRole) {
       throw new Error(
-        "Default user role not found. Please run: pnpm prisma db seed"
+        "Default user role not found. Please run: pnpm tsx db/seed.ts"
       );
     }
 
     // Create test user
-    await prisma.user.upsert({
+    await db.user.upsert({
       where: { id: TEST_USER_ID },
       create: {
         id: TEST_USER_ID,
@@ -47,7 +48,7 @@ class CSVTestDataImporter {
     });
 
     // Create test project
-    await prisma.projects.upsert({
+    await db.projects.upsert({
       where: { id: PERFORMANCE_TEST_PROJECT_ID },
       create: {
         id: PERFORMANCE_TEST_PROJECT_ID,
@@ -58,7 +59,7 @@ class CSVTestDataImporter {
     });
 
     // Create test repository
-    await prisma.repositories.upsert({
+    await db.repositories.upsert({
       where: { id: 1 },
       create: {
         id: 1,
@@ -73,11 +74,11 @@ class CSVTestDataImporter {
   async cleanup(): Promise<void> {
     console.log("🧹 Cleaning up existing test data...");
 
-    await prisma.repositoryCases.deleteMany({
+    await db.repositoryCases.deleteMany({
       where: { projectId: PERFORMANCE_TEST_PROJECT_ID },
     });
 
-    await prisma.repositoryFolders.deleteMany({
+    await db.repositoryFolders.deleteMany({
       where: { projectId: PERFORMANCE_TEST_PROJECT_ID },
     });
 
@@ -127,7 +128,7 @@ class CSVTestDataImporter {
     const folderBatchSize = 100;
     for (let i = 0; i < folders.length; i += folderBatchSize) {
       const batch = folders.slice(i, i + folderBatchSize);
-      await prisma.repositoryFolders.createMany({
+      await db.repositoryFolders.createMany({
         data: batch,
         skipDuplicates: true,
       });
@@ -161,7 +162,7 @@ class CSVTestDataImporter {
     const caseBatchSize = 500;
     for (let i = 0; i < cases.length; i += caseBatchSize) {
       const batch = cases.slice(i, i + caseBatchSize);
-      await prisma.repositoryCases.createMany({
+      await db.repositoryCases.createMany({
         data: batch,
         skipDuplicates: true,
       });
@@ -241,7 +242,7 @@ class CSVTestDataImporter {
     const folderBatchSize = 500;
     for (let i = 0; i < additionalFolders.length; i += folderBatchSize) {
       const batch = additionalFolders.slice(i, i + folderBatchSize);
-      await prisma.repositoryFolders.createMany({
+      await db.repositoryFolders.createMany({
         data: batch,
         skipDuplicates: true,
       });
@@ -259,7 +260,7 @@ class CSVTestDataImporter {
     const caseBatchSize = 1000;
     for (let i = 0; i < additionalCases.length; i += caseBatchSize) {
       const batch = additionalCases.slice(i, i + caseBatchSize);
-      await prisma.repositoryCases.createMany({
+      await db.repositoryCases.createMany({
         data: batch,
         skipDuplicates: true,
       });
@@ -285,12 +286,12 @@ class CSVTestDataImporter {
     folders: Array<{ id: number; parentId: number | null; name: string }>;
     cases: Array<{ id: number; folderId: number; name: string }>;
   }> {
-    const folders = await prisma.repositoryFolders.findMany({
+    const folders = await db.repositoryFolders.findMany({
       where: { projectId: PERFORMANCE_TEST_PROJECT_ID },
       select: { id: true, parentId: true, name: true },
     });
 
-    const cases = await prisma.repositoryCases.findMany({
+    const cases = await db.repositoryCases.findMany({
       where: { projectId: PERFORMANCE_TEST_PROJECT_ID },
       select: { id: true, folderId: true, name: true },
     });
@@ -307,7 +308,7 @@ class CSVTestDataImporter {
     // Simulate TreeView data loading
     console.log("📊 Fetching folders...");
     const fetchStart = performance.now();
-    const folders = await prisma.repositoryFolders.findMany({
+    const folders = await db.repositoryFolders.findMany({
       where: {
         projectId: PERFORMANCE_TEST_PROJECT_ID,
         isDeleted: false,
@@ -318,7 +319,7 @@ class CSVTestDataImporter {
 
     console.log("📊 Fetching test cases...");
     const caseStart = performance.now();
-    const cases = await prisma.repositoryCases.findMany({
+    const cases = await db.repositoryCases.findMany({
       where: {
         projectId: PERFORMANCE_TEST_PROJECT_ID,
         isDeleted: false,
@@ -448,7 +449,7 @@ class CSVTestDataImporter {
     } catch (error) {
       console.error("❌ Import failed:", error);
     } finally {
-      await prisma.$disconnect();
+      await db.$disconnect();
     }
   }
 }

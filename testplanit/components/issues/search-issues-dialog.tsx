@@ -1,5 +1,8 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
+import { stripHtmlTags } from "~/utils/stripHtmlTags";
 import { useDebounce } from "@/components/Debounce";
 import { IssuePriorityDisplay } from "@/components/IssuePriorityDisplay";
 import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
@@ -16,13 +19,11 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useFindManyIssue } from "@/lib/hooks/issue";
-import { useFindManyProjectIntegration } from "@/lib/hooks/project-integration";
 import { AlertCircle, ExternalLink, Loader2, Plus, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { useFindManyIntegrationProject } from "~/lib/hooks";
+import { isIntegrationAuthCompleteMessage } from "~/lib/integrations/oauthPopup";
 import { CreateIssueDialog } from "./create-issue-dialog";
 import { CreateIssueJiraForm } from "./create-issue-jira-form";
 
@@ -91,22 +92,6 @@ interface SearchIssuesDialogProps {
   };
 }
 
-// Helper function to strip HTML tags and get plain text for search preview
-function stripHtmlTags(html: string): string {
-  if (!html) return "";
-  // Remove HTML tags and decode HTML entities
-  return html
-    .replace(/<[^>]*>/g, "") // Remove HTML tags
-    .replace(/&nbsp;/g, " ") // Replace &nbsp; with space
-    .replace(/&amp;/g, "&") // Replace &amp; with &
-    .replace(/&lt;/g, "<") // Replace &lt; with <
-    .replace(/&gt;/g, ">") // Replace &gt; with >
-    .replace(/&quot;/g, '"') // Replace &quot; with "
-    .replace(/&#39;/g, "'") // Replace &#39; with '
-    .replace(/\s+/g, " ") // Replace multiple whitespace with single space
-    .trim();
-}
-
 export function SearchIssuesDialog({
   open,
   onOpenChange,
@@ -161,7 +146,9 @@ export function SearchIssuesDialog({
   const pollingForKeyRef = useRef<string | null>(null);
 
   // Fetch project integrations
-  const { data: projectIntegrations } = useFindManyProjectIntegration({
+  const { data: projectIntegrations } = useClientQueries(
+    schema
+  ).projectIntegration.useFindMany({
     where: {
       projectId,
       isActive: true,
@@ -174,7 +161,9 @@ export function SearchIssuesDialog({
   const activeIntegration = projectIntegrations?.[0];
 
   // Fetch active IntegrationProject records for multi-project fan-out
-  const { data: activeIntegrationProjects } = useFindManyIntegrationProject(
+  const { data: activeIntegrationProjects } = useClientQueries(
+    schema
+  ).integrationProject.useFindMany(
     {
       where: {
         projectIntegrationId: activeIntegration?.id || "",
@@ -195,7 +184,9 @@ export function SearchIssuesDialog({
   }, [activeIntegration]);
 
   // Search internal issues (only when no integration or explicitly internal)
-  const { data: internalIssues, isLoading: loadingInternal } = useFindManyIssue(
+  const { data: internalIssues, isLoading: loadingInternal } = useClientQueries(
+    schema
+  ).issue.useFindMany(
     {
       where: {
         projectId,
@@ -246,6 +237,23 @@ export function SearchIssuesDialog({
       if (pollingForKeyRef.current === debouncedSearchQuery) return;
       void searchExternalIssues();
     }
+  }, [searchExternal, debouncedSearchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // The Authenticate button opens the OAuth flow in a popup that lands on
+  // /integrations/auth-complete, which posts back here. Clear the
+  // auth-required state and re-run the search the user was blocked on.
+  useEffect(() => {
+    const onMessage = (event: MessageEvent) => {
+      if (!isIntegrationAuthCompleteMessage(event) || !event.data.success) {
+        return;
+      }
+      setAuthError(null);
+      if (searchExternal && debouncedSearchQuery.length > 0) {
+        void searchExternalIssues();
+      }
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
   }, [searchExternal, debouncedSearchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const searchExternalIssues = async (
@@ -625,15 +633,19 @@ export function SearchIssuesDialog({
 
           <div className="space-y-4 max-w-[660px]">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder={t("issues.searchPlaceholder")}
                 value={searchQuery}
+                // The term travels as a GET param into the tracker's JQL
+                // URL — an accidental large paste blows past URL limits
+                // (CloudFront 414). Cap well below them.
+                maxLength={255}
                 onChange={(e) => {
                   pollingForKeyRef.current = null;
-                  setSearchQuery(e.target.value);
+                  setSearchQuery(e.target.value.slice(0, 255));
                 }}
-                className="pl-10"
+                className="ps-10"
               />
             </div>
 
@@ -695,7 +707,7 @@ export function SearchIssuesDialog({
                         searchFailures.length,
                     })}
                   </p>
-                  <ul className="mt-2 list-disc pl-5 space-y-1 text-sm">
+                  <ul className="mt-2 list-disc ps-5 space-y-1 text-sm">
                     {searchFailures.map((f) => (
                       <li key={f.projectKey}>
                         <span className="font-medium">{f.projectKey}</span>:{" "}
@@ -713,14 +725,15 @@ export function SearchIssuesDialog({
                 <AlertTitle>{t("issues.authenticationRequired")}</AlertTitle>
                 <AlertDescription className="flex items-center justify-between">
                   <span>{t("issues.authRequiredDescription")}</span>
-                  {authError.startsWith("http") && (
+                  {(authError.startsWith("http") ||
+                    authError.startsWith("/")) && (
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleAuthenticate(authError)}
                     >
                       {t("issues.authenticate")}
-                      <ExternalLink className="ml-2 h-4 w-4" />
+                      <ExternalLink className="ms-2 h-4 w-4" />
                     </Button>
                   )}
                 </AlertDescription>
@@ -815,7 +828,7 @@ export function SearchIssuesDialog({
                                       ? issue.title
                                       : issue.name}
                                   </span>
-                                  <span className="ml-auto flex items-center gap-2 shrink-0">
+                                  <span className="ms-auto flex items-center gap-2 shrink-0">
                                     {isAlreadyLinked && (
                                       <Badge
                                         variant="secondary"
@@ -847,7 +860,10 @@ export function SearchIssuesDialog({
                               </div>
                               {issue.description && (
                                 <p className="text-sm text-muted-foreground line-clamp-4 wrap-break-word">
-                                  {stripHtmlTags(issue.description)}
+                                  {stripHtmlTags(issue.description).replace(
+                                    /\s+/g,
+                                    " "
+                                  )}
                                 </p>
                               )}
                               <div className="flex items-center gap-2 text-xs flex-wrap">
@@ -940,9 +956,7 @@ export function SearchIssuesDialog({
                 ? {
                     title: iterationPrefill.title,
                     description: iterationPrefill.description as
-                      | string
-                      | Record<string, unknown>
-                      | null,
+                      string | Record<string, unknown> | null,
                   }
                 : undefined
             }

@@ -1,6 +1,8 @@
-import { Prisma } from "@prisma/client";
+import { JsonNull } from "@zenstackhq/orm";
+import type { JsonValue } from "@zenstackhq/orm";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
+import type { TestmoImportJobUpdateArgs } from "~/zenstack/input";
 import { authOptions } from "~/server/auth";
 import { db } from "~/server/db";
 import {
@@ -25,7 +27,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
   //   - POST /api/imports/testmo/jobs/[jobId]/import (IMPORT_STARTED)
   //   - testmoImportWorker.ts:7079 (IMPORT_COMPLETED / BULK_CREATE)
   // Preparation state changes are not audit-relevant; matches the
-  // lastActiveAt session-keep-alive precedent at lib/prisma.ts:693-701.
+  // lastActiveAt session-keep-alive precedent at lib/db.ts:693-701.
   try {
     const session = await getServerSession(authOptions);
 
@@ -70,9 +72,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
       normalizeMappingConfiguration(configuration);
     const serializedConfiguration = serializeMappingConfiguration(
       normalizedConfiguration
-    ) as Prisma.InputJsonValue;
+    ) as JsonValue;
 
-    const updateData: Prisma.TestmoImportJobUpdateInput = {
+    const updateData: TestmoImportJobUpdateArgs["data"] = {
       configuration: serializedConfiguration,
       statusMessage: "Mapping configuration saved",
       updatedAt: new Date(),
@@ -81,8 +83,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
     if (options !== undefined) {
       updateData.options =
         options === null
-          ? Prisma.JsonNull
-          : (JSON.parse(JSON.stringify(options)) as Prisma.InputJsonValue);
+          ? JsonNull
+          : (JSON.parse(JSON.stringify(options)) as JsonValue);
     }
 
     const currentStatus = job.status as TestmoImportStatus;
@@ -96,10 +98,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
       updateData.phase = "CONFIGURING";
     }
 
+    // db is the policy-enhanced client; its update<T> generic instantiates too
+    // deeply for tsc here (TS2589). updateData is already typed at its
+    // declaration above, so the args cast only sidesteps the depth limit.
     const updatedJob = await db.testmoImportJob.update({
       where: { id: jobId },
       data: updateData,
-    });
+    } as any);
 
     const payload = serializeImportJob(updatedJob);
 

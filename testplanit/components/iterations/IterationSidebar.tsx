@@ -123,7 +123,7 @@ export function IterationSidebar({
 
   return (
     <aside
-      className="w-full md:w-72 bg-card border-b md:border-b-0 md:border-r flex flex-col h-full md:h-auto"
+      className="w-full md:w-72 bg-card border-b md:border-b-0 md:border-e flex flex-col h-full md:h-auto"
       aria-label={t("iterationSidebarAria")}
       data-testid="iteration-sidebar"
       data-test-run-case-id={testRunCaseId}

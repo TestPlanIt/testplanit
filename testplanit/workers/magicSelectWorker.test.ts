@@ -60,9 +60,9 @@ vi.mock("../lib/queueNames", () => ({
   MAGIC_SELECT_QUEUE_NAME: "test-magic-select-queue",
 }));
 
-// ─── Mock prisma ─────────────────────────────────────────────────────────────
+// ─── Mock db ─────────────────────────────────────────────────────────────
 
-const mockPrisma: any = {
+const mockDb: any = {
   repositoryCases: {
     findMany: (...args: any[]) => mockFindManyRepositoryCases(...args),
     count: (...args: any[]) => mockCountRepositoryCases(...args),
@@ -87,8 +87,8 @@ const mockPrisma: any = {
   $disconnect: vi.fn(),
 };
 
-vi.mock("../lib/multiTenantPrisma", () => ({
-  getPrismaClientForJob: vi.fn(() => mockPrisma),
+vi.mock("../lib/multiTenantDb", () => ({
+  getDbClientForJob: vi.fn(() => mockDb),
   isMultiTenantMode: vi.fn(() => false),
   validateMultiTenantJobData: vi.fn(),
   disconnectAllTenantClients: vi.fn(),
@@ -174,7 +174,7 @@ const mockCompressedCase = {
   id: 1,
   name: "Login Test",
   folder: null,
-  tags: [],
+  caseTags: [],
   caseFieldValues: [],
   linksFrom: [],
   linksTo: [],

@@ -1,39 +1,23 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library -- This file consumes a library API (TanStack Table / TanStack Virtual / react-hook-form watch) that returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it. */
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { Prisma, ProjectAccessType, WorkflowScope } from "@prisma/client";
+import { ProjectAccessType, WorkflowScope } from "~/zenstack/models";
+import type {
+  GroupProjectPermissionUpsertArgs,
+  ProjectsCreateArgs,
+  UserProjectPermissionUpsertArgs,
+} from "~/zenstack/input";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod/v4";
-import {
-  useCreateManyProjectAssignment,
-  useCreateManyProjectConfigurationAssignment,
-  useCreateManyProjectStatusAssignment,
-  useCreateManyProjectWorkflowAssignment,
-  useCreateMilestoneTypesAssignment,
-  useCreateProjectIntegration,
-  useCreateProjectLlmIntegration,
-  useCreateProjects,
-  useCreateRepositories,
-  useCreateTemplateProjectAssignment,
-  useFindManyConfigurations,
-  useFindManyGroups,
-  useFindManyIntegration,
-  useFindManyLlmIntegration,
-  useFindManyMilestoneTypes,
-  useFindManyRoles,
-  useFindManyStatus,
-  useFindManyTemplates,
-  useFindManyUser,
-  useFindManyWorkflows,
-  useUpsertGroupProjectPermission,
-  useUpsertUserProjectPermission,
-} from "~/lib/hooks";
 import { optionalImageUrlSchema } from "~/lib/schemas/imageUrl";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 import DynamicIcon from "@/components/DynamicIcon";
 import { DatePickerField } from "@/components/forms/DatePickerField";
@@ -253,29 +237,35 @@ export function CreateProjectWizard({
   >(null);
 
   // Hooks for creating project
-  const { mutateAsync: createProject } = useCreateProjects();
-  const { mutateAsync: createRepository } = useCreateRepositories();
+  const { mutateAsync: createProject } =
+    useClientQueries(schema).projects.useCreate();
+  const { mutateAsync: createRepository } =
+    useClientQueries(schema).repositories.useCreate();
   const { mutateAsync: createTemplateProjectAssignment } =
-    useCreateTemplateProjectAssignment();
+    useClientQueries(schema).templateProjectAssignment.useCreate();
   const { mutateAsync: createMilestoneTypesAssignment } =
-    useCreateMilestoneTypesAssignment();
+    useClientQueries(schema).milestoneTypesAssignment.useCreate();
   const { mutateAsync: createManyProjectWorkflowAssignment } =
-    useCreateManyProjectWorkflowAssignment();
+    useClientQueries(schema).projectWorkflowAssignment.useCreateMany();
   const { mutateAsync: createManyProjectStatusAssignment } =
-    useCreateManyProjectStatusAssignment();
+    useClientQueries(schema).projectStatusAssignment.useCreateMany();
   const { mutateAsync: createManyProjectConfigurationAssignment } =
-    useCreateManyProjectConfigurationAssignment();
+    useClientQueries(schema).projectConfigurationAssignment.useCreateMany();
   const { mutateAsync: createManyProjectAssignment } =
-    useCreateManyProjectAssignment();
+    useClientQueries(schema).projectAssignment.useCreateMany();
   const { mutateAsync: createProjectIntegration } =
-    useCreateProjectIntegration();
+    useClientQueries(schema).projectIntegration.useCreate();
   const { mutateAsync: createProjectLlmIntegration } =
-    useCreateProjectLlmIntegration();
-  const upsertUserPermission = useUpsertUserProjectPermission();
-  const upsertGroupPermission = useUpsertGroupProjectPermission();
+    useClientQueries(schema).projectLlmIntegration.useCreate();
+  const upsertUserPermission =
+    useClientQueries(schema).userProjectPermission.useUpsert();
+  const upsertGroupPermission =
+    useClientQueries(schema).groupProjectPermission.useUpsert();
 
   // Fetch data for wizard steps
-  const { data: templates, isLoading: templatesLoading } = useFindManyTemplates(
+  const { data: templates, isLoading: templatesLoading } = useClientQueries(
+    schema
+  ).templates.useFindMany(
     {
       where: { isDeleted: false, isEnabled: true },
       include: {
@@ -296,7 +286,7 @@ export function CreateProjectWizard({
   );
 
   const { data: milestoneTypes, isLoading: milestoneTypesLoading } =
-    useFindManyMilestoneTypes(
+    useClientQueries(schema).milestoneTypes.useFindMany(
       {
         where: { isDeleted: false },
         orderBy: { name: "asc" },
@@ -307,7 +297,9 @@ export function CreateProjectWizard({
       { enabled: isOpen }
     );
 
-  const { data: workflows, isLoading: workflowsLoading } = useFindManyWorkflows(
+  const { data: workflows, isLoading: workflowsLoading } = useClientQueries(
+    schema
+  ).workflows.useFindMany(
     {
       where: { isDeleted: false, isEnabled: true },
       orderBy: { order: "asc" },
@@ -319,7 +311,9 @@ export function CreateProjectWizard({
     { enabled: isOpen }
   );
 
-  const { data: statuses, isLoading: statusesLoading } = useFindManyStatus(
+  const { data: statuses, isLoading: statusesLoading } = useClientQueries(
+    schema
+  ).status.useFindMany(
     {
       where: { isDeleted: false, isEnabled: true },
       orderBy: { order: "asc" },
@@ -330,7 +324,9 @@ export function CreateProjectWizard({
     { enabled: isOpen }
   );
 
-  const { data: configurations } = useFindManyConfigurations(
+  const { data: configurations } = useClientQueries(
+    schema
+  ).configurations.useFindMany(
     {
       where: { isDeleted: false, isEnabled: true },
       orderBy: { name: "asc" },
@@ -340,7 +336,7 @@ export function CreateProjectWizard({
   );
 
   const { data: integrations, isLoading: integrationsLoading } =
-    useFindManyIntegration(
+    useClientQueries(schema).integration.useFindMany(
       {
         where: { isDeleted: false, status: "ACTIVE" },
         orderBy: { name: "asc" },
@@ -349,7 +345,7 @@ export function CreateProjectWizard({
     );
 
   const { data: llmIntegrations, isLoading: llmIntegrationsLoading } =
-    useFindManyLlmIntegration(
+    useClientQueries(schema).llmIntegration.useFindMany(
       {
         where: { isDeleted: false },
         orderBy: { name: "asc" },
@@ -357,12 +353,16 @@ export function CreateProjectWizard({
       { enabled: isOpen }
     );
 
-  const { data: roles, isLoading: rolesLoading } = useFindManyRoles(
+  const { data: roles, isLoading: rolesLoading } = useClientQueries(
+    schema
+  ).roles.useFindMany(
     { where: { isDeleted: false }, orderBy: { name: "asc" } },
     { enabled: isOpen }
   );
 
-  const { data: allUsers, isLoading: allUsersLoading } = useFindManyUser(
+  const { data: allUsers, isLoading: allUsersLoading } = useClientQueries(
+    schema
+  ).user.useFindMany(
     {
       where: { isActive: true, isDeleted: false },
       include: { role: true },
@@ -371,7 +371,9 @@ export function CreateProjectWizard({
     { enabled: isOpen }
   );
 
-  const { data: allGroups, isLoading: groupsLoading } = useFindManyGroups(
+  const { data: allGroups, isLoading: groupsLoading } = useClientQueries(
+    schema
+  ).groups.useFindMany(
     {
       where: { isDeleted: false },
       orderBy: { name: "asc" },
@@ -494,8 +496,16 @@ export function CreateProjectWizard({
     defaultValues: defaultValues,
   });
 
-  const { watch, setValue, reset, control, handleSubmit, setError, getValues } =
-    form;
+  const {
+    watch,
+    setValue,
+    reset,
+    control,
+    handleSubmit,
+    setError,
+    getValues,
+    setFocus,
+  } = form;
 
   const isCompleted = watch("isCompleted");
   const defaultAccessType = watch("defaultAccessType");
@@ -764,7 +774,7 @@ export function CreateProjectWizard({
           ? null
           : parseInt(data.defaultRoleId, 10);
 
-      const createData: Prisma.ProjectsCreateInput = {
+      const createData: ProjectsCreateArgs["data"] = {
         name: data.name,
         note: data.note || undefined,
         isCompleted: data.isCompleted,
@@ -906,8 +916,7 @@ export function CreateProjectWizard({
       }
 
       // Setup user permissions
-      const userPermissionsToUpsert: Prisma.UserProjectPermissionUpsertArgs[] =
-        [];
+      const userPermissionsToUpsert: UserProjectPermissionUpsertArgs[] = [];
       const submittedUserPermissions = data.userPermissions || {};
 
       for (const userId in submittedUserPermissions) {
@@ -948,8 +957,7 @@ export function CreateProjectWizard({
       }
 
       // Setup group permissions
-      const groupPermissionsToUpsert: Prisma.GroupProjectPermissionUpsertArgs[] =
-        [];
+      const groupPermissionsToUpsert: GroupProjectPermissionUpsertArgs[] = [];
       const submittedGroupPermissions = data.groupPermissions || {};
 
       for (const groupIdStr in submittedGroupPermissions) {
@@ -997,7 +1005,7 @@ export function CreateProjectWizard({
       console.error("Error details:", err.info || err.message);
 
       // Check for specific error types
-      if (err.info?.prisma && err.info?.code === "P2002") {
+      if (isUniqueConstraintError(err)) {
         toast.error(tCommon("errors.projectNameExists"));
         setError("name", {
           type: "custom",
@@ -1226,9 +1234,9 @@ export function CreateProjectWizard({
                                 {role.name}
                                 {role.isDefault && (
                                   <Tooltip>
-                                    <TooltipTrigger className="ml-1" asChild>
+                                    <TooltipTrigger className="ms-1" asChild>
                                       <Badge variant="secondary">
-                                        <Star className="h-3 w-3 fill-current text-primary-background" />
+                                        <Star className="h-3 w-3 fill-current" />
                                       </Badge>
                                     </TooltipTrigger>
                                     <TooltipContent>
@@ -1968,7 +1976,13 @@ export function CreateProjectWizard({
         }
       }}
     >
-      <DialogContent className="sm:max-w-[900px] lg:max-w-[1200px] h-[90vh] flex flex-col overflow-hidden">
+      <DialogContent
+        className="sm:max-w-[900px] lg:max-w-[1200px] h-[90vh] flex flex-col overflow-hidden"
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+          setFocus("name");
+        }}
+      >
         <Form {...form}>
           <form
             onSubmit={(e) => {
@@ -2040,7 +2054,7 @@ export function CreateProjectWizard({
               {t(stepTitles[currentStep] as any)}
             </div>
 
-            <ScrollArea className="flex-1 min-h-0 pr-4 *:data-radix-scroll-area-viewport:max-h-[calc(90vh-280px)]">
+            <ScrollArea className="flex-1 min-h-0 pe-4 *:data-radix-scroll-area-viewport:max-h-[calc(90vh-280px)]">
               {renderStepContent()}
             </ScrollArea>
 

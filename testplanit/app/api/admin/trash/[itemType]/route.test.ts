@@ -17,8 +17,8 @@ vi.mock("~/lib/api-token-auth", () => ({
   authenticateApiToken: vi.fn(),
 }));
 
-vi.mock("@/lib/prisma", () => ({
-  prisma: {
+vi.mock("@/lib/db", () => ({
+  baseDb: {
     user: {
       findUnique: vi.fn(),
     },
@@ -66,7 +66,7 @@ vi.mock("~/server/db", () => ({
   },
 }));
 
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { authenticateApiToken } from "~/lib/api-token-auth";
 import { getServerAuthSession } from "~/server/auth";
 
@@ -99,7 +99,7 @@ const setupAdminSession = () => {
   (getServerAuthSession as any).mockResolvedValue({
     user: { id: "admin-user-1" },
   });
-  (prisma.user.findUnique as any).mockResolvedValue({ access: "ADMIN" });
+  (baseDb.user.findUnique as any).mockResolvedValue({ access: "ADMIN" });
 };
 
 describe("Admin Trash Route", () => {
@@ -129,7 +129,7 @@ describe("Admin Trash Route", () => {
       (getServerAuthSession as any).mockResolvedValue({
         user: { id: "user-1" },
       });
-      (prisma.user.findUnique as any).mockResolvedValue({ access: "USER" });
+      (baseDb.user.findUnique as any).mockResolvedValue({ access: "USER" });
 
       const request = createMockRequest();
       const response = await GET(request, createMockContext("Projects"));

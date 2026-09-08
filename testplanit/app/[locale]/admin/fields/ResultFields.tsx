@@ -1,14 +1,17 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { CustomColumnDef } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { SectionHeader } from "@/components/ui/typography";
 import { Button } from "@/components/ui/button";
-import { CirclePlus, SquareCheck } from "lucide-react";
+import { CirclePlus } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useFindManyResultFields, useUpdateResultFields } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { AddResultFieldModal } from "./AddResultField";
 import { DeleteResultField } from "./DeleteResultField";
@@ -32,7 +35,8 @@ export default function ResultFields() {
     direction: "asc",
   });
 
-  const { mutateAsync: updateResultField } = useUpdateResultFields();
+  const { mutateAsync: updateResultField } =
+    useClientQueries(schema).resultFields.useUpdate();
 
   // Stabilize mutation ref — ZenStack's mutateAsync changes identity every render
   const updateResultFieldRef = useRef(updateResultField);
@@ -50,6 +54,19 @@ export default function ResultFields() {
     setSortConfig({ column, direction });
   };
 
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig(undefined);
+    } else {
+      setSortConfig({ column, direction });
+    }
+  };
+
   const handleToggle = useCallback(
     async (id: number, key: keyof ExtendedResultFields, value: boolean) => {
       try {
@@ -64,7 +81,9 @@ export default function ResultFields() {
     []
   );
 
-  const { data: resultfields, isLoading } = useFindManyResultFields(
+  const { data: resultfields, isLoading } = useClientQueries(
+    schema
+  ).resultFields.useFindMany(
     {
       where: { isDeleted: false },
       orderBy: sortConfig
@@ -127,31 +146,29 @@ export default function ResultFields() {
     return (
       <Card data-testid="result-fields-section">
         <CardHeader>
-          <div className="flex items-center justify-between text-primary">
-            <div className="flex items-center justify-between text-primary text-xl md:text-2xl">
-              <CardTitle>
-                <div className="flex items-center">
-                  <SquareCheck className="mr-1" />
-                  {tGlobal("common.fields.resultFields")}
-                </div>
-              </CardTitle>{" "}
-            </div>
-            <div>
-              <Button
-                data-testid="add-result-field-button"
-                onClick={() => setAddResultFieldOpen(true)}
-              >
-                <CirclePlus className="w-4" />
-                <span className="hidden md:inline">{t("add.title")}</span>
-              </Button>
-              {addResultFieldOpen && (
-                <AddResultFieldModal
-                  open={addResultFieldOpen}
-                  onClose={() => setAddResultFieldOpen(false)}
-                />
-              )}
-            </div>
+          <div className="flex items-center justify-between gap-2">
+            <SectionHeader className="flex items-center gap-2">
+              <CardTitle>{tGlobal("common.fields.resultFields")}</CardTitle>
+              <HelpPopover helpKey="resultFields" />
+            </SectionHeader>
+            <Button
+              data-testid="add-result-field-button"
+              onClick={() => setAddResultFieldOpen(true)}
+              aria-label={t("add.title")}
+              className="group gap-0 transition-all duration-200 hover:gap-2"
+            >
+              <CirclePlus className="h-4 w-4" />
+              <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+                {t("add.title")}
+              </span>
+            </Button>
           </div>
+          {addResultFieldOpen && (
+            <AddResultFieldModal
+              open={addResultFieldOpen}
+              onClose={() => setAddResultFieldOpen(false)}
+            />
+          )}
         </CardHeader>
         <CardContent>
           <div className="flex justify-between">
@@ -163,6 +180,8 @@ export default function ResultFields() {
               columnVisibility={columnVisibility}
               onColumnVisibilityChange={setColumnVisibility}
               isLoading={isLoading}
+              storageKey="admin-result-fields"
+              onSortColumn={handleSortColumn}
             />
           </div>
         </CardContent>

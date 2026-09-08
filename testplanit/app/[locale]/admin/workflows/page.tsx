@@ -1,20 +1,14 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { DataTable } from "@/components/tables/DataTable";
-import { WorkflowScope } from "@prisma/client";
+import { WorkflowScope } from "~/zenstack/models";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { scopeDisplayData } from "~/app/constants";
-import {
-  useCreateManyProjectWorkflowAssignment,
-  useDeleteManyProjectWorkflowAssignment,
-  useFindManyProjects,
-  useFindManyWorkflows,
-  useUpdateManyWorkflows,
-  useUpdateWorkflows,
-} from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { performOptimisticReorder } from "~/utils/optimistic-updates";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
@@ -22,13 +16,9 @@ import { useColumns } from "./columns";
 
 import { WorkflowDragPreview } from "@/components/dnd/WorkflowDragPreview";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { SectionHeader } from "@/components/ui/typography";
 import { CirclePlus } from "lucide-react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
@@ -70,7 +60,8 @@ function WorkflowComponent() {
   >([]);
 
   const [isAlertDialogOpen, setIsAlertDialogOpen] = useState(false);
-  const [addWorkflowOpen, setAddWorkflowOpen] = useState(false);
+  const [addWorkflowScope, setAddWorkflowScope] =
+    useState<WorkflowScope | null>(null);
   const [editingWorkflow, setEditingWorkflow] =
     useState<ExtendedWorkflows | null>(null);
   const [deletingWorkflow, setDeletingWorkflow] =
@@ -85,33 +76,29 @@ function WorkflowComponent() {
     Record<string, boolean>
   >({});
 
-  const { mutateAsync: updateWorkflows } = useUpdateWorkflows();
-  const { mutateAsync: updateManyWorkflows } = useUpdateManyWorkflows();
+  const { mutateAsync: updateWorkflows } =
+    useClientQueries(schema).workflows.useUpdate();
   const { mutateAsync: createManyProjectWorkflowAssignment } =
-    useCreateManyProjectWorkflowAssignment();
+    useClientQueries(schema).projectWorkflowAssignment.useCreateMany();
   const { mutateAsync: deleteManyProjectWorkflowAssignment } =
-    useDeleteManyProjectWorkflowAssignment();
-  const { data: projects } = useFindManyProjects({
+    useClientQueries(schema).projectWorkflowAssignment.useDeleteMany();
+  const { data: projects } = useClientQueries(schema).projects.useFindMany({
     where: { isDeleted: false },
   });
 
-  const { data, isLoading } = useFindManyWorkflows(
+  const { data, isLoading } = useClientQueries(schema).workflows.useFindMany(
     {
       where: { isDeleted: false },
       orderBy: { order: "asc" },
       include: {
         icon: true,
         color: true,
-        projects: {
-          select: {
-            projectId: true,
-            project: {
-              select: {
-                name: true,
-              },
-            },
-          },
-        },
+        // Only the assignment COUNT here — the full per-workflow project list
+        // (hundreds per workflow on large instances) is fetched lazily by the
+        // Projects column's ProjectListDisplay when its popover opens. Eagerly
+        // including every assignment made this query fetch tens of thousands of
+        // nested rows and stalled the page.
+        _count: { select: { projects: true } },
       },
     },
     {
@@ -201,10 +188,8 @@ function WorkflowComponent() {
         selectedWorkflowId !== undefined &&
         selectedWorkflowScope !== undefined
       ) {
-        await updateManyWorkflows({
-          where: { isDefault: true, scope: selectedWorkflowScope },
-          data: { isDefault: false },
-        });
+        // The single-default DB trigger (tpl_single_default_workflows) clears
+        // the previous default for this scope atomically.
         await updateWorkflows({
           where: { id: selectedWorkflowId },
           data: { isDefault: true, isEnabled: true },
@@ -234,49 +219,43 @@ function WorkflowComponent() {
   ) => (
     <Card>
       <CardHeader>
-        <CardTitle>
-          <div className="flex items-center text-primary text-xl md:text-2xl">
-            {scope === "CASES" && (
-              <>
-                <scopeDisplayData.CASES.icon className="mr-2" />
-                {scopeDisplayData.CASES.text}
-              </>
-            )}
-            {scope === "RUNS" && (
-              <>
-                <scopeDisplayData.RUNS.icon className="mr-2" />
-                {scopeDisplayData.RUNS.text}
-              </>
-            )}
-            {scope === "SESSIONS" && (
-              <>
-                <scopeDisplayData.SESSIONS.icon className="mr-2" />
-                {scopeDisplayData.SESSIONS.text}
-              </>
-            )}
-          </div>
-        </CardTitle>
+        <div className="flex items-center justify-between gap-2">
+          <SectionHeader className="flex items-center gap-2">
+            <CardTitle>{scopeDisplayData[scope].text}</CardTitle>
+          </SectionHeader>
+          <Button
+            onClick={() => setAddWorkflowScope(scope)}
+            aria-label={t("add.button")}
+            className="group gap-0 transition-all duration-200 hover:gap-2"
+          >
+            <CirclePlus className="h-4 w-4" />
+            <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+              {t("add.button")}
+            </span>
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         {/* <ColumnSelection
           columns={columns}
           onVisibilityChange={setColumnVisibility}
         /> */}
-        <div className="w-fit">
-          <DataTable
-            columns={columns}
-            data={workflows}
-            enableReorder
-            onReorder={(dragIndex: number, hoverIndex: number) =>
-              handleReorder(dragIndex, hoverIndex, workflows, scope)
-            }
-            columnVisibility={columnVisibility}
-            onColumnVisibilityChange={setColumnVisibility}
-            isLoading={isLoading}
-            pageSize={pageSize}
-            itemType={ItemTypes.WORKFLOW}
-          />
-        </div>
+        <DataTable
+          columns={columns}
+          data={workflows}
+          enableReorder
+          onReorder={(dragIndex: number, hoverIndex: number) =>
+            handleReorder(dragIndex, hoverIndex, workflows, scope)
+          }
+          columnVisibility={columnVisibility}
+          onColumnVisibilityChange={setColumnVisibility}
+          isLoading={isLoading}
+          pageSize={pageSize}
+          itemType={ItemTypes.WORKFLOW}
+          storageKey="admin-workflows"
+          enableColumnReorder={false}
+          enableColumnMenu={false}
+        />
       </CardContent>
     </Card>
   );
@@ -342,29 +321,15 @@ function WorkflowComponent() {
           <WorkflowDragPreview />
           <Card>
             <CardHeader className="w-full">
-              <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
-                <div>
-                  <CardTitle>{tCommon("labels.workflows")}</CardTitle>
-                </div>
-                <div>
-                  <Button onClick={() => setAddWorkflowOpen(true)}>
-                    <CirclePlus className="w-4" />
-                    <span className="hidden md:inline">{t("add.button")}</span>
-                  </Button>
-                  {addWorkflowOpen && (
-                    <AddWorkflows
-                      open={addWorkflowOpen}
-                      onClose={() => setAddWorkflowOpen(false)}
-                    />
-                  )}
-                </div>
-              </div>
-              <CardDescription>{t("description")}</CardDescription>
+              <SectionHeader className="flex items-center gap-2">
+                <CardTitle>{t("reviewsTitle")}</CardTitle>
+                <HelpPopover helpKey="workflowReviews" />
+              </SectionHeader>
             </CardHeader>
+            <CardContent>
+              <SystemFeatureCard embedded />
+            </CardContent>
           </Card>
-          <div className="mt-4">
-            <SystemFeatureCard />
-          </div>
           <div className="mt-4">
             {renderWorkflowCard(casesWorkflows, WorkflowScope.CASES)}
           </div>
@@ -394,13 +359,20 @@ function WorkflowComponent() {
                 </AlertDialogCancel>
                 <AlertDialogAction
                   onClick={() => handleConfirmToggleDefault()}
-                  className="bg-destructive"
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 >
                   {tCommon("actions.confirm")}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+          {addWorkflowScope && (
+            <AddWorkflows
+              open
+              onClose={() => setAddWorkflowScope(null)}
+              defaultScope={addWorkflowScope}
+            />
+          )}
         </DndProvider>
       )}
       {editingWorkflow && (

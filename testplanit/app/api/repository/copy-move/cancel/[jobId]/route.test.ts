@@ -9,7 +9,7 @@ vi.mock("~/lib/queues", () => ({
   getCopyMoveQueue: vi.fn(),
 }));
 
-vi.mock("@/lib/multiTenantPrisma", () => ({
+vi.mock("@/lib/multiTenantDb", () => ({
   getCurrentTenantId: vi.fn(),
   isMultiTenantMode: vi.fn(),
 }));
@@ -20,7 +20,7 @@ vi.mock("~/server/auth", () => ({
 
 import { getServerSession } from "next-auth";
 import { getCopyMoveQueue } from "~/lib/queues";
-import { getCurrentTenantId, isMultiTenantMode } from "@/lib/multiTenantPrisma";
+import { getCurrentTenantId, isMultiTenantMode } from "@/lib/multiTenantDb";
 
 import { POST } from "./route";
 

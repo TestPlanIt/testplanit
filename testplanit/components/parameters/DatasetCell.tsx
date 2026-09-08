@@ -20,10 +20,7 @@ import { useEffect, useRef } from "react";
 import { cn } from "~/utils";
 
 export type DatasetCellParameterType =
-  | "STRING"
-  | "INTEGER"
-  | "BOOLEAN"
-  | "SELECT";
+  "STRING" | "INTEGER" | "BOOLEAN" | "SELECT";
 
 export interface DatasetCellParameter {
   name: string;
@@ -195,10 +192,10 @@ export function DatasetCell({
               onFocus={onEdit}
               tabIndex={0}
               className={cn(
-                "border-transparent cursor-text hover:border-input shadow-none focus-visible:ring-0",
+                "truncate border-transparent cursor-text hover:border-input shadow-none focus-visible:ring-0",
                 isEmpty && "text-muted-foreground/50 italic",
                 parameter?.type === "INTEGER" &&
-                  "font-mono tabular-nums text-right"
+                  "font-mono tabular-nums text-end"
               )}
               data-testid="dataset-cell-display"
             />
@@ -297,7 +294,7 @@ function CellError({ message }: { message: string }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span className="absolute top-0 right-0 p-0.5">
+        <span className="absolute top-0 end-0 p-0.5">
           <AlertCircle
             className="text-destructive w-3 h-3"
             data-testid="dataset-cell-error"

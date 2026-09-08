@@ -11,6 +11,13 @@ export interface ExecutionLogStepRow {
   status: { name: string; color: string };
   elapsed: number | null;
   executedAt: string | null;
+  /**
+   * True when this row is a recorded result whose step has since been removed
+   * from the test case. The result stays in the report — it is what was
+   * actually executed — but the reader needs to know it no longer maps to a
+   * live step.
+   */
+  isRemovedStep?: boolean;
 }
 
 // Sentinel used for slots in the case definition that have no
@@ -76,6 +83,18 @@ export interface StepResultRow {
   elapsed: number | null;
   executedAt: Date | string | null;
   stepStatus: { name: string; color: { value: string } | null } | null;
+  /**
+   * The step this result was recorded against, read through the result's own
+   * to-one relation so it resolves even after the step is soft-deleted. Used
+   * to render results whose step is no longer on the case.
+   */
+  step?: {
+    step: unknown;
+    expectedResult: unknown;
+    order: number;
+    testCaseId: number;
+  } | null;
+  sharedStepItem?: { step: unknown; expectedResult: unknown } | null;
 }
 
 /**
@@ -143,17 +162,28 @@ export function buildExpectedSlotsByCaseId(
 /**
  * Merges a test-run's actual step results into the case's expected slot list.
  * Slots without a matching result render with the Untested sentinel status.
+ *
+ * Results with no matching slot are appended rather than dropped: their step
+ * was soft-deleted from the case after the run was executed, but the result is
+ * still a real record of what was run. They are flagged `isRemovedStep` and
+ * numbered after the live slots.
+ *
+ * An unmatched result is only treated as a removed step when its step is known
+ * to belong to `testCaseId`. Without that proof a stray result is dropped as
+ * before, so a result belonging to another case can never leak into this one.
  */
 export function mergeResultsIntoSlots(
   expectedSlots: ExpectedSlot[],
   stepResults: StepResultRow[],
-  testRunResultId: number
+  testRunResultId: number,
+  testCaseId?: number
 ): ExecutionLogStepRow[] {
   const resultBySlotKey = new Map<string, StepResultRow>();
   for (const sr of stepResults) {
     resultBySlotKey.set(`${sr.stepId}:${sr.sharedStepItemId ?? 0}`, sr);
   }
-  return expectedSlots.map((slot) => {
+  const slotKeys = new Set(expectedSlots.map((slot) => slot.key));
+  const rows: ExecutionLogStepRow[] = expectedSlots.map((slot) => {
     const sr = resultBySlotKey.get(slot.key);
     if (sr) {
       return {
@@ -187,4 +217,45 @@ export function mergeResultsIntoSlots(
       executedAt: null,
     };
   });
+
+  const orphans = stepResults
+    .filter(
+      (sr) =>
+        !slotKeys.has(`${sr.stepId}:${sr.sharedStepItemId ?? 0}`) &&
+        testCaseId !== undefined &&
+        sr.step?.testCaseId === testCaseId
+    )
+    .sort((a, b) => (a.step?.order ?? 0) - (b.step?.order ?? 0) || a.id - b.id);
+
+  // Continue numbering from the highest live placeholder rank. Shared-step
+  // slots carry dotted `rank.item` numbers, so the row count is not the rank.
+  const maxRank = expectedSlots.reduce(
+    (max, slot) => Math.max(max, parseInt(slot.stepNumber, 10) || 0),
+    0
+  );
+
+  orphans.forEach((sr, index) => {
+    const content = sr.sharedStepItem ?? sr.step;
+    rows.push({
+      isStep: true,
+      id: `step-${sr.id}`,
+      stepNumber: `${maxRank + index + 1}`,
+      stepText: tiptapToPlainText(content?.step).trim(),
+      expectedResult: tiptapToPlainText(content?.expectedResult).trim(),
+      sharedGroupName: null,
+      status: {
+        name: sr.stepStatus?.name ?? UNTESTED_STATUS.name,
+        color: sr.stepStatus?.color?.value ?? UNTESTED_STATUS.color,
+      },
+      elapsed: sr.elapsed ?? null,
+      executedAt: sr.executedAt
+        ? sr.executedAt instanceof Date
+          ? sr.executedAt.toISOString()
+          : sr.executedAt
+        : null,
+      isRemovedStep: true,
+    });
+  });
+
+  return rows;
 }

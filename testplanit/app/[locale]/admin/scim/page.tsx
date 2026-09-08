@@ -1,30 +1,19 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  PaginationProvider,
-  usePagination,
-} from "~/lib/contexts/PaginationContext";
-import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { useRouter } from "~/lib/navigation";
 
 import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
-import {
-  useFindManyScimToken,
-  useFindUniqueAppConfig,
-  useUpdateScimToken,
-  useUpsertAppConfig,
-} from "~/lib/hooks";
 import { ExtendedScimToken, useColumns } from "./columns";
 
 import { Filter } from "@/components/tables/Filter";
 
-import { PaginationComponent } from "@/components/tables/Pagination";
-import { PaginationInfo } from "@/components/tables/PaginationControls";
 import { UserNameCell } from "@/components/tables/UserNameCell";
 import {
   AlertDialog,
@@ -37,13 +26,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { SectionHeader } from "@/components/ui/typography";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -53,7 +38,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Plus } from "lucide-react";
+import { CirclePlus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { revokeScimTokenAction } from "~/app/actions/scimTokenActions";
@@ -63,27 +48,23 @@ import {
   previewFallbackDefaultChange,
 } from "~/app/actions/scimMappingActions";
 import { SCIM_DEFAULT_MAPPED_ACCESS_KEY } from "~/lib/scim/access/fallbackDefault";
-import type { Access } from "@prisma/client";
+import type { Access } from "~/zenstack/models";
 
 import { ConflictLogTable } from "./ConflictLogTable";
 import { MintDialog } from "./MintDialog";
 
 export default function ScimTokensPage() {
-  return (
-    <PaginationProvider>
-      <ScimTokensList />
-    </PaginationProvider>
-  );
+  return <ScimTokensList />;
 }
 
 function FallbackDefaultCard() {
   const t = useTranslations("admin.scim");
   const tCommon = useTranslations("common");
   const tGroups = useTranslations("admin.groups");
-  const { data: config } = useFindUniqueAppConfig({
+  const { data: config } = useClientQueries(schema).appConfig.useFindUnique({
     where: { key: SCIM_DEFAULT_MAPPED_ACCESS_KEY },
   });
-  const upsert = useUpsertAppConfig();
+  const upsert = useClientQueries(schema).appConfig.useUpsert();
   const [selectedAccess, setSelectedAccess] = useState<string>("NONE");
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingAccess, setPendingAccess] = useState<string | null>(null);
@@ -125,8 +106,10 @@ function FallbackDefaultCard() {
   return (
     <Card className="mt-6" data-testid="scim-fallback-default-card">
       <CardHeader>
-        <CardTitle>{t("fallbackDefaultTitle")}</CardTitle>
-        <CardDescription>{t("fallbackDefaultDescription")}</CardDescription>
+        <SectionHeader className="flex items-center gap-2">
+          <CardTitle>{t("fallbackDefaultTitle")}</CardTitle>
+          <HelpPopover helpKey="scimFallbackDefault" />
+        </SectionHeader>
       </CardHeader>
       <CardContent>
         <div className="space-y-3 max-w-md">
@@ -209,23 +192,13 @@ function FallbackDefaultCard() {
 }
 
 function ScimTokensList() {
+  const locale = useLocale();
   const t = useTranslations("admin.scim");
   const tApiTokens = useTranslations("admin.apiTokens");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const { data: session, status } = useSession();
   const router = useRouter();
-  const {
-    currentPage,
-    setCurrentPage,
-    pageSize,
-    setPageSize,
-    totalItems,
-    setTotalItems,
-    startIndex,
-    endIndex,
-    totalPages,
-  } = usePagination();
   const [sortConfig, setSortConfig] = useState<{
     column: string;
     direction: "asc" | "desc";
@@ -254,14 +227,12 @@ function ScimTokensList() {
     status: "isActive",
   };
 
-  const effectivePageSize =
-    typeof pageSize === "number" ? pageSize : totalItems;
-  const skip = (currentPage - 1) * effectivePageSize;
   const sortField = sortConfig
     ? columnToFieldMap[sortConfig.column] || sortConfig.column
     : "lastUsedAt";
 
-  const { mutateAsync: updateScimToken } = useUpdateScimToken();
+  const { mutateAsync: updateScimToken } =
+    useClientQueries(schema).scimToken.useUpdate();
 
   // Stabilize mutation ref — ZenStack's mutateAsync changes identity every render
   const updateScimTokenRef = useRef(updateScimToken);
@@ -269,50 +240,11 @@ function ScimTokensList() {
     updateScimTokenRef.current = updateScimToken;
   });
 
-  const { data: totalFilteredTokens } = useFindManyScimToken(
-    {
-      orderBy: { [sortField]: sortConfig?.direction || "desc" },
-      where: {
-        AND: [
-          {
-            OR: [
-              {
-                name: {
-                  contains: debouncedSearchString,
-                  mode: "insensitive",
-                },
-              },
-              {
-                idpName: debouncedSearchString
-                  ? {
-                      equals: debouncedSearchString.toUpperCase() as any,
-                    }
-                  : undefined,
-              },
-            ],
-          },
-          showRevokedTokens ? {} : { isActive: true, revokedAt: null },
-        ],
-      },
-    },
-    {
-      enabled: !!session?.user,
-      refetchOnWindowFocus: true,
-    }
-  );
-
-  // Update total items in pagination context
-  useEffect(() => {
-    if (totalFilteredTokens) {
-      setTotalItems(totalFilteredTokens.length);
-    }
-  }, [totalFilteredTokens, setTotalItems]);
-
   const {
     data: tokens,
     isLoading,
     refetch: refetchTokens,
-  } = useFindManyScimToken(
+  } = useClientQueries(schema).scimToken.useFindMany(
     {
       orderBy: { [sortField]: sortConfig?.direction || "desc" },
       where: {
@@ -337,24 +269,12 @@ function ScimTokensList() {
           showRevokedTokens ? {} : { isActive: true, revokedAt: null },
         ],
       },
-      take: effectivePageSize,
-      skip: skip,
     },
     {
       enabled: !!session?.user,
       refetchOnWindowFocus: true,
     }
   );
-
-  const pageSizeOptions = usePageSizeOptions(totalItems);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchString, setCurrentPage]);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [pageSize, setCurrentPage]);
 
   useEffect(() => {
     if (status !== "loading" && !session) {
@@ -413,6 +333,10 @@ function ScimTokensList() {
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >({});
+  // Hide-column requests from the table's header menu are routed through the
+  // Columns control (the visibility owner) so persistence and its checkboxes
+  // stay in sync.
+  const hideColumnRef = useRef<((columnId: string) => void) | null>(null);
 
   if (status === "loading") return null;
 
@@ -428,36 +352,47 @@ function ScimTokensList() {
         ? "desc"
         : "asc";
     setSortConfig({ column, direction });
-    setCurrentPage(1);
+  };
+
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig({ column: "lastUsedAt", direction: "desc" });
+    } else {
+      setSortConfig({ column, direction });
+    }
   };
 
   return (
     <main data-testid="scim-admin-page">
       <Card>
         <CardHeader className="w-full">
-          <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
-            <div>
+          <div className="flex items-center justify-between gap-2">
+            <SectionHeader className="flex items-center gap-2">
               <CardTitle data-testid="scim-page-title">
                 {tGlobal("admin.menu.scim")}
               </CardTitle>
-              <CardDescription className="mt-2">
-                {t("description")}
-              </CardDescription>
-            </div>
-            <div>
-              <Button
-                variant="default"
-                onClick={() => setMintDialogOpen(true)}
-                data-testid="scim-mint-button"
-              >
-                <Plus className="h-4 w-4" />
+              <HelpPopover helpKey="scim" />
+            </SectionHeader>
+            <Button
+              onClick={() => setMintDialogOpen(true)}
+              data-testid="scim-mint-button"
+              aria-label={t("mintCta")}
+              className="group gap-0 transition-all duration-200 hover:gap-2"
+            >
+              <CirclePlus className="h-4 w-4" />
+              <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
                 {t("mintCta")}
-              </Button>
-            </div>
+              </span>
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-row items-start">
+          <div className="flex flex-row items-start justify-between gap-4">
             <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
               <div className="text-muted-foreground w-full text-nowrap">
                 <Filter
@@ -473,6 +408,7 @@ function ScimTokensList() {
                       storageKey="admin-scim-tokens"
                       columns={columns}
                       onVisibilityChange={setColumnVisibility}
+                      hideColumnRef={hideColumnRef}
                     />
                   </div>
                   <div>
@@ -494,58 +430,43 @@ function ScimTokensList() {
               </div>
             </div>
 
-            <div className="flex flex-col w-full sm:w-2/3 items-end">
-              {totalItems > 0 && (
-                <>
-                  <div className="justify-end">
-                    <PaginationInfo
-                      key="scim-tokens-pagination-info"
-                      startIndex={startIndex}
-                      endIndex={endIndex}
-                      totalRows={totalItems}
-                      searchString={searchString}
-                      pageSize={typeof pageSize === "number" ? pageSize : "All"}
-                      pageSizeOptions={pageSizeOptions}
-                      handlePageSizeChange={(size) => setPageSize(size)}
-                    />
-                  </div>
-                  <div className="justify-end -mx-4">
-                    <PaginationComponent
-                      currentPage={currentPage}
-                      totalPages={totalPages}
-                      onPageChange={setCurrentPage}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
+            {tokens && tokens.length > 0 && (
+              <p className="text-sm text-muted-foreground shrink-0">
+                {tGlobal("admin.auditLogs.showing", {
+                  loaded: tokens.length.toLocaleString(locale),
+                  total: tokens.length.toLocaleString(locale),
+                })}
+              </p>
+            )}
           </div>
 
-          <div className="mt-4 flex justify-between" data-testid="scim-table">
-            {tokens && tokens.length > 0 ? (
-              <DataTable<ExtendedScimToken, unknown>
-                columns={columns}
-                data={tokens as ExtendedScimToken[]}
-                onSortChange={handleSortChange}
-                sortConfig={sortConfig}
-                columnVisibility={columnVisibility}
-                onColumnVisibilityChange={setColumnVisibility}
-                pageSize={typeof pageSize === "number" ? pageSize : totalItems}
-                isLoading={isLoading}
-              />
-            ) : !isLoading ? (
-              <div className="w-full text-center py-12 text-muted-foreground">
-                {t("noTokens")}
-              </div>
-            ) : null}
+          <div className="mt-4 w-full" data-testid="scim-table">
+            <DataTable
+              virtualized
+              fillViewport
+              columns={columns as any}
+              data={(tokens ?? []) as ExtendedScimToken[]}
+              onSortChange={handleSortChange}
+              onSortColumn={handleSortColumn}
+              onHideColumn={(columnId) => hideColumnRef.current?.(columnId)}
+              sortConfig={sortConfig}
+              columnVisibility={columnVisibility}
+              onColumnVisibilityChange={setColumnVisibility}
+              isLoading={isLoading}
+              resetKey={`${debouncedSearchString}|${showRevokedTokens}|${sortConfig.column}|${sortConfig.direction}`}
+              testIdPrefix="admin-scim-table"
+              rowTestIdPrefix="admin-scim-row"
+            />
           </div>
         </CardContent>
       </Card>
 
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle>{t("conflicts.title")}</CardTitle>
-          <CardDescription>{t("conflicts.description")}</CardDescription>
+          <SectionHeader className="flex items-center gap-2">
+            <CardTitle>{t("conflicts.title")}</CardTitle>
+            <HelpPopover helpKey="scimConflicts" />
+          </SectionHeader>
         </CardHeader>
         <CardContent>
           <ConflictLogTable />

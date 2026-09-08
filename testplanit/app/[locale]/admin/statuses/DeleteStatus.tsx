@@ -1,7 +1,8 @@
 "use client";
-import { Status } from "@prisma/client";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
+import type { Status } from "~/zenstack/models";
 import { useState } from "react";
-import { useUpdateStatus } from "~/lib/hooks";
 
 import { useForm } from "react-hook-form";
 
@@ -30,7 +31,8 @@ interface DeleteStatusProps {
 
 export function DeleteStatus({ status, open, onClose }: DeleteStatusProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateStatus } = useUpdateStatus();
+  const { mutateAsync: updateStatus } =
+    useClientQueries(schema).status.useUpdate();
 
   const form = useForm();
   const {
@@ -67,7 +69,7 @@ export function DeleteStatus({ status, open, onClose }: DeleteStatusProps) {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center">
-                <TriangleAlert className="w-6 h-6 mr-2" />
+                <TriangleAlert className="w-6 h-6 me-2" />
                 {t("title")}
               </AlertDialogTitle>
               <AlertDialogDescription>
@@ -100,7 +102,7 @@ export function DeleteStatus({ status, open, onClose }: DeleteStatusProps) {
                 type="button"
                 onClick={onSubmit}
                 disabled={isSubmitting}
-                className="bg-destructive hover:bg-destructive/90"
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 {isSubmitting
                   ? tCommon("actions.deleting")

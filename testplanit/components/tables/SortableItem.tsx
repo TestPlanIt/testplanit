@@ -6,6 +6,7 @@ import { DropTargetMonitor, useDrag, useDrop, XYCoord } from "react-dnd";
 import { getEmptyImage } from "react-dnd-html5-backend";
 import { useDragTargetKind } from "~/hooks/useDragTargetKind";
 import { ItemTypes } from "~/types/dndTypes";
+import { tableStyles } from "./tableStyles";
 
 // Structure for individual items within draggedItems array
 interface DraggedCaseInfo {
@@ -22,43 +23,41 @@ interface TestCaseDragOperationItem {
   draggedItems?: DraggedCaseInfo[]; // Array of all items being dragged
 }
 
-function SortableItem<
-  TData extends { id: number | string; folderId: number | null; name: string },
->({
+function SortableItem({
   id: _id,
   row,
   index,
   visibleColumns,
-  handleExpandClick,
-  expandedRows,
-  renderExpandedRow,
   canDragTestCase,
   onReorder,
   cellPinningStyleFn,
   selectedItemsForDrag,
   itemType = ItemTypes.TEST_CASE,
+  selectedRowId,
+  scrollToSelectedRow = true,
 }: {
   id: string;
   row: any;
   index: number;
   visibleColumns: any[];
-  handleExpandClick?: (id: number | string) => void;
-  expandedRows?: Set<number | string>;
-  renderExpandedRow?: (row: TData) => React.ReactNode;
   canDragTestCase: boolean;
   onReorder: (dragIndex: number, hoverIndex: number) => void;
   cellPinningStyleFn: (column: Column<any>) => CSSProperties;
   selectedItemsForDrag?: DraggedCaseInfo[];
   itemType?: string;
+  selectedRowId?: number | string | null;
+  scrollToSelectedRow?: boolean;
 }) {
   const [hoverPosition, setHoverPosition] = useState<"top" | "bottom" | null>(
     null
   );
   const { setIsOverReorderZone } = useDragTargetKind();
   const searchParams = useSearchParams();
-  const selectedCaseId = searchParams.get("selectedCase")
-    ? parseInt(searchParams.get("selectedCase")!)
-    : null;
+  const selectedCaseId =
+    selectedRowId ??
+    (searchParams.get("selectedCase")
+      ? parseInt(searchParams.get("selectedCase")!)
+      : null);
   const isSelected = selectedCaseId === row.original.id;
 
   const rowRef = useRef<HTMLTableRowElement>(null);
@@ -229,10 +228,10 @@ function SortableItem<
   }, [dragPreview]);
 
   useEffect(() => {
-    if (isSelected && rowRef.current) {
+    if (scrollToSelectedRow && isSelected && rowRef.current) {
       rowRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
     }
-  }, [isSelected]);
+  }, [isSelected, scrollToSelectedRow]);
 
   useEffect(() => {
     drag(drop(rowRef));
@@ -254,20 +253,30 @@ function SortableItem<
     const classes = [
       "relative",
       "z-10",
-      "p-2",
-      "align-middle",
-      "border-r",
-      "border-accent",
+      tableStyles.cell,
+      "px-2",
+      "border-e",
       "whitespace-nowrap",
     ];
 
     // Apply background based on pinned status first
-    if (isPinned) {
-      classes.push("bg-background border-r-0"); // Use bg-background for pinned cells like in DataTable non-sortable rows
+    if (isPinned && isSelected) {
+      // Pinned cells are sticky and need an OPAQUE background so cells scrolling
+      // underneath don't show through. Use the opaque equivalent of the selected
+      // row's translucent primary/20 tint (the row's /20 plus the cell's /20
+      // composite to ~36% over the background) so the highlight covers the
+      // pinned column too.
+      classes.push(
+        "bg-[color-mix(in_srgb,var(--color-primary)_36%,var(--color-background))] border-e-0"
+      );
+    } else if (isPinned) {
+      // Unselected: the same opaque surface as the row, so the pinned column
+      // reads as part of the row while still hiding cells scrolling under it.
+      classes.push("table-row-surface border-e-0");
     } else if (isSelected) {
-      classes.push("bg-primary/20 border-r-0"); // Apply selection highlight if not pinned
+      classes.push("bg-primary/20 border-e-0"); // Apply selection highlight if not pinned
     }
-    // If not pinned and not selected, the background will be inherited from the TableRow (hover:bg-muted/50)
+    // If not pinned and not selected, the background is inherited from the TableRow
 
     return classes.join(" ");
   };
@@ -279,20 +288,15 @@ function SortableItem<
         style={style}
         className={`
           relative
-          border-b
+          border-b table-row-divider
           data-[state=selected]:bg-muted
           ${isDragging ? "cursor-grabbing" : ""}
-          ${isSelected ? "bg-primary/20 hover:bg-primary/20" : "hover:bg-muted/50"}
+          ${isSelected ? "bg-primary/20 hover:bg-primary/20" : "table-row-surface table-row-surface-hover"}
           transition-opacity duration-100 ease-in-out
         `}
         data-row-id={row.original.id}
         data-testid={`case-row-${row.original.id}`}
         data-handler-id={handlerId}
-        onClick={(_e) => {
-          if (!isDragging) {
-            handleExpandClick?.(row.original.id);
-          }
-        }}
       >
         {/* Iterate over the visibleColumns prop to ensure order matches header */}
         {visibleColumns.map((column: any, colIndex: number) => {
@@ -329,6 +333,7 @@ function SortableItem<
           return (
             <TableCell
               key={cell.id} // Use cell.id from the found cell
+              data-column-id={String(cell.column.id)}
               onClick={
                 cell.column.id === "actions"
                   ? (e) => e.stopPropagation()
@@ -359,17 +364,6 @@ function SortableItem<
           );
         })}
       </TableRow>
-
-      {expandedRows?.has(row.original.id) && renderExpandedRow && (
-        <TableRow className="w-fit">
-          <TableCell
-            colSpan={visibleColumns.length}
-            className="bg-muted/30 w-fit"
-          >
-            {renderExpandedRow(row.original)}
-          </TableCell>
-        </TableRow>
-      )}
     </>
   );
 }

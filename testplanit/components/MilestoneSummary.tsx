@@ -1,29 +1,39 @@
 "use client";
 
-import { IssuesListDisplay } from "@/components/tables/IssuesListDisplay";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useQuery } from "@tanstack/react-query";
+import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
+import { IssuesListDisplay } from "@/components/tables/IssuesListDisplay";
 import {
   ArrowUpDown,
+  Bug,
   CalendarClock,
   CheckCircle2,
   Clock,
   FlaskConical,
   HelpCircle,
   ListChecks,
+  Loader2,
   MessageSquare,
   SquarePlay,
+  Target,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
-import type { MilestoneSummaryData } from "~/app/api/milestones/[milestoneId]/summary/route";
-import { useFindFirstStatus } from "~/lib/hooks";
+import { useMilestoneSummary } from "~/hooks/useMilestoneSummary";
 import { Link } from "~/lib/navigation";
 import { cn, type ClassValue } from "~/utils";
 import { toHumanReadable } from "~/utils/duration";
@@ -33,33 +43,32 @@ interface MilestoneSummaryProps {
   milestoneId: number;
   projectId?: string | number;
   className?: ClassValue;
+  // Detail page only: makes the count chips clickable, scrolling to and
+  // expanding the corresponding Issues card section. Omitted on the
+  // milestones LIST page (MilestoneItemCard), where each chip instead opens
+  // a popover revealing its issue list (the pre-consolidation behavior) —
+  // clicks stopPropagation so the clickable card row underneath never
+  // navigates.
+  onScopeChipClick?: () => void;
+  onFoundInTestingChipClick?: () => void;
 }
 
 export function MilestoneSummary({
   milestoneId,
   projectId,
   className,
+  onScopeChipClick,
+  onFoundInTestingChipClick,
 }: MilestoneSummaryProps) {
   const tCommon = useTranslations("common");
+  const tMilestones = useTranslations("milestones");
   const tGlobal = useTranslations();
   const locale = useLocale();
   const { data: _session } = useSession();
 
-  // Fetch summary data from API
-  const { data: summaryData, isLoading } = useQuery<MilestoneSummaryData>({
-    queryKey: ["milestoneSummary", milestoneId],
-    queryFn: async () => {
-      const response = await fetch(`/api/milestones/${milestoneId}/summary`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch milestone summary");
-      }
-      return response.json();
-    },
-    enabled: !!milestoneId,
-    staleTime: 30000, // Cache for 30 seconds
-  });
+  const { data: summaryData, isLoading } = useMilestoneSummary(milestoneId);
 
-  const { data: firstStatus } = useFindFirstStatus({
+  const { data: firstStatus } = useClientQueries(schema).status.useFindFirst({
     where: {
       isDeleted: false,
     },
@@ -72,6 +81,20 @@ export function MilestoneSummary({
   });
 
   const [sortMode, setSortMode] = useState<"date" | "status">("date");
+
+  // List-page scope chip popover (no click handler wired): lazily fetch the
+  // member issues only when the popover actually opens — the summary payload
+  // carries just the count.
+  const [scopeListOpen, setScopeListOpen] = useState(false);
+  const { data: scopeLinks, isLoading: isLoadingScopeLinks } = useClientQueries(
+    schema
+  ).milestoneIssue.useFindMany(
+    {
+      where: { milestoneId },
+      include: { issue: { include: { integration: true } } },
+    },
+    { enabled: scopeListOpen && !onScopeChipClick }
+  );
 
   const sortedSegments = useMemo(
     () =>
@@ -178,7 +201,8 @@ export function MilestoneSummary({
     <div className={cn("flex flex-col space-y-1 w-full", className)}>
       {/* Color bar for milestone items */}
       <div
-        className="flex h-2.5 w-full rounded-full overflow-hidden bg-muted"
+        className="flex h-2.5 w-full rounded-full overflow-x-auto overflow-y-hidden bg-muted"
+        data-status-bar
         data-testid="milestone-summary-bar"
       >
         {sortedSegments.map((segment, _index) => {
@@ -280,22 +304,22 @@ export function MilestoneSummary({
       </div>
 
       {/* Container for Summary Text and Issues */}
-      <div className="flex flex-wrap justify-between items-center gap-y-1">
+      <div className="flex flex-nowrap justify-between items-center gap-2">
         {/* Summary text below the bar */}
         <div
-          className="text-muted-foreground text-xs truncate grow mr-2"
+          className="flex items-center min-w-0 grow text-muted-foreground text-xs"
           title={`${testRunCount} ${tCommon("plural.run", { count: testRunCount })}, ${sessionCount} ${tGlobal("sessions.title", { count: sessionCount })}${totalElapsedText ? ` • ${tCommon("fields.totalElapsed")}: ${totalElapsedText}` : ""}${totalEstimateText ? ` • ${tCommon("fields.totalEstimate")}: ${totalEstimateText}` : ""}`}
         >
-          {`${testRunCount} ${tCommon("plural.run", { count: testRunCount })}, ${sessionCount} ${tGlobal("sessions.title", { count: sessionCount })}`}
+          <span className="truncate shrink">{`${testRunCount} ${tCommon("plural.run", { count: testRunCount })}, ${sessionCount} ${tGlobal("sessions.title", { count: sessionCount })}`}</span>
           {totalElapsedText ? (
             <Tooltip>
               <TooltipTrigger asChild>
                 <span
-                  className="inline-flex items-center ml-1 cursor-default"
+                  className="inline-flex items-center ms-1 cursor-default shrink-[999] min-w-0 overflow-hidden whitespace-nowrap"
                   data-testid="total-elapsed-display"
                 >
                   {" • "}
-                  <Clock className="h-3 w-3 ml-1" />
+                  <Clock className="h-3 w-3 ms-1" />
                   {`${totalElapsedText}`}
                 </span>
               </TooltipTrigger>
@@ -310,11 +334,11 @@ export function MilestoneSummary({
             <Tooltip>
               <TooltipTrigger asChild>
                 <span
-                  className="inline-flex items-center ml-1 cursor-default"
+                  className="inline-flex items-center ms-1 cursor-default shrink-[9999] min-w-0 overflow-hidden whitespace-nowrap"
                   data-testid="total-estimate-display"
                 >
                   {" • "}
-                  <CalendarClock className="h-3 w-3 ml-1" />
+                  <CalendarClock className="h-3 w-3 ms-1" />
                   {`${totalEstimateText}`}
                 </span>
               </TooltipTrigger>
@@ -397,10 +421,142 @@ export function MilestoneSummary({
             </Link>
           )}
 
-          {/* Display aggregated issues list if any exist */}
-          {summaryData.issues && summaryData.issues.length > 0 && (
-            <div>
-              <IssuesListDisplay issues={summaryData.issues} size="small" />
+          {/* Paired issue-count chips: this milestone's scope (MilestoneIssue
+              links, D-15 — this milestone only) vs. what testing turned up
+              (test-run/session-linked defects, rolled up through
+              descendants). Two unrelated counts that both used to render as
+              one "issues" chip, which confused users when they diverged.
+              Icon + count only — the full label lives in the tooltip and
+              aria-label, and the same icons head the matching accordion
+              sections (Target = in scope, Bug = found in testing). */}
+          {(summaryData.scopeCount > 0 ||
+            (summaryData.issues && summaryData.issues.length > 0)) && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              {summaryData.scopeCount > 0 &&
+                (onScopeChipClick ? (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onScopeChipClick();
+                    }}
+                    className="inline-flex items-center hover:text-foreground transition-colors"
+                    title={tMilestones("summary.inScope", {
+                      count: summaryData.scopeCount,
+                    })}
+                    aria-label={tMilestones("summary.inScope", {
+                      count: summaryData.scopeCount,
+                    })}
+                    data-testid="milestone-summary-scope-chip"
+                  >
+                    <Badge className="cursor-pointer text-xs px-1.5 py-0">
+                      <Target className="w-3 h-3 me-0.5 shrink-0" />
+                      {summaryData.scopeCount}
+                    </Badge>
+                  </button>
+                ) : (
+                  <span
+                    className="inline-flex items-center"
+                    title={tMilestones("summary.inScope", {
+                      count: summaryData.scopeCount,
+                    })}
+                    aria-label={tMilestones("summary.inScope", {
+                      count: summaryData.scopeCount,
+                    })}
+                    data-testid="milestone-summary-scope-chip"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Popover
+                      modal={false}
+                      open={scopeListOpen}
+                      onOpenChange={setScopeListOpen}
+                    >
+                      <PopoverTrigger asChild>
+                        <Badge className="cursor-pointer text-xs px-1.5 py-0">
+                          <Target className="w-3 h-3 me-0.5 shrink-0" />
+                          {summaryData.scopeCount}
+                        </Badge>
+                      </PopoverTrigger>
+                      <PopoverContent
+                        className="w-auto max-w-md p-2"
+                        onOpenAutoFocus={(e) => e.preventDefault()}
+                      >
+                        {isLoadingScopeLinks ? (
+                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        ) : (
+                          <div className="flex flex-wrap gap-1 max-w-full">
+                            {(scopeLinks ?? []).map((link) => (
+                              <IssuesDisplay
+                                key={link.issue.id}
+                                id={link.issue.id}
+                                name={link.issue.name}
+                                externalId={link.issue.externalId}
+                                externalUrl={link.issue.externalUrl}
+                                title={link.issue.title}
+                                description={link.issue.description}
+                                status={link.issue.externalStatus}
+                                priority={link.issue.priority}
+                                lastSyncedAt={link.issue.lastSyncedAt}
+                                projectIds={
+                                  projectId != null ? [Number(projectId)] : []
+                                }
+                                size="small"
+                                data={link.issue.data}
+                                integrationProvider={
+                                  link.issue.integration?.provider
+                                }
+                                integrationId={link.issue.integration?.id}
+                                issueTypeName={link.issue.issueTypeName}
+                                issueTypeIconUrl={link.issue.issueTypeIconUrl}
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </PopoverContent>
+                    </Popover>
+                  </span>
+                ))}
+              {summaryData.issues &&
+                summaryData.issues.length > 0 &&
+                (onFoundInTestingChipClick ? (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onFoundInTestingChipClick();
+                    }}
+                    className="inline-flex items-center hover:text-foreground transition-colors"
+                    title={tMilestones("summary.foundInTesting", {
+                      count: summaryData.issues.length,
+                    })}
+                    aria-label={tMilestones("summary.foundInTesting", {
+                      count: summaryData.issues.length,
+                    })}
+                    data-testid="milestone-summary-found-chip"
+                  >
+                    <Badge className="cursor-pointer text-xs px-1.5 py-0">
+                      <Bug className="w-3 h-3 me-0.5 shrink-0" />
+                      {summaryData.issues.length}
+                    </Badge>
+                  </button>
+                ) : (
+                  <span
+                    className="inline-flex items-center"
+                    title={tMilestones("summary.foundInTesting", {
+                      count: summaryData.issues.length,
+                    })}
+                    aria-label={tMilestones("summary.foundInTesting", {
+                      count: summaryData.issues.length,
+                    })}
+                    data-testid="milestone-summary-found-chip"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <IssuesListDisplay
+                      issues={summaryData.issues}
+                      size="small"
+                    />
+                  </span>
+                ))}
             </div>
           )}
         </div>

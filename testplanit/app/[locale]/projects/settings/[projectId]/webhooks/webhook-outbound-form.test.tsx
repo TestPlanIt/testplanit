@@ -37,9 +37,12 @@ const {
   mockToastError: vi.fn(),
 }));
 
-vi.mock("~/lib/hooks", () => ({
-  useFindManyWebhookConfig: (...args: any[]) =>
-    mockFindManyWebhookConfig(...args),
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    webhookConfig: {
+      useFindMany: (...args: any[]) => mockFindManyWebhookConfig(...args),
+    },
+  }),
 }));
 
 vi.mock("~/app/actions/webhook-config", () => ({

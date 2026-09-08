@@ -1,4 +1,3 @@
-import { assertSsrfSafeResolved, createPinnedDispatcher } from "~/utils/ssrf";
 import {
   GitRepoAdapter,
   ListFilesResult,
@@ -58,26 +57,17 @@ export class GitLabRepoAdapter extends GitRepoAdapter {
         () => controller.abort(),
         this.requestTimeout
       );
-      let dispatcher: ReturnType<typeof createPinnedDispatcher> | undefined;
 
       let response: Response;
       try {
         const safeUrl = this.sanitizeUrl(url);
-        // Validate the resolved IP and pin the connection to it (DNS-rebinding
-        // guard). This bespoke pagination loop bypasses the base makeRequest, so
-        // the SSRF re-check has to happen here too.
-        const pinnedIp = await assertSsrfSafeResolved(safeUrl);
-        dispatcher = pinnedIp ? createPinnedDispatcher(pinnedIp) : undefined;
         await this.applyRateLimit();
-        const init: RequestInit & { dispatcher?: unknown } = {
+        response = await fetch(safeUrl, {
           headers: this.authHeaders,
           signal: controller.signal,
-        };
-        if (dispatcher) init.dispatcher = dispatcher;
-        response = await fetch(safeUrl, init);
+        });
       } finally {
         clearTimeout(timeoutId);
-        dispatcher?.close().catch(() => {});
       }
 
       if (!response.ok) {
@@ -108,6 +98,14 @@ export class GitLabRepoAdapter extends GitRepoAdapter {
   async getFileContent(path: string, branch: string): Promise<string> {
     const url = `${this.baseUrl}/api/v4/projects/${this.encodedProjectPath}/repository/files/${encodeURIComponent(path)}/raw?ref=${encodeURIComponent(branch)}`;
     return this.makeTextRequest(url, { headers: this.authHeaders });
+  }
+
+  /** Single-request zip archive of the whole tree at `ref`. */
+  protected buildArchiveRequest(ref: string) {
+    return {
+      url: `${this.baseUrl}/api/v4/projects/${this.encodedProjectPath}/repository/archive.zip?sha=${encodeURIComponent(ref)}`,
+      headers: this.authHeaders,
+    };
   }
 
   async testConnection(): Promise<TestConnectionResult> {

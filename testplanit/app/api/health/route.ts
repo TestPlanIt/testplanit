@@ -1,5 +1,6 @@
 import { ListBucketsCommand, S3Client } from "@aws-sdk/client-s3";
 import { NextResponse } from "next/server";
+import { monitorEventLoopDelay, type IntervalHistogram } from "node:perf_hooks";
 import valkeyConnection from "~/lib/valkey";
 import { getVersionInfo } from "~/lib/version";
 import { db } from "~/server/db";
@@ -11,6 +12,16 @@ interface ServiceCheck {
   status: "ok" | "error" | "disabled";
   message?: string;
   responseTime?: number;
+}
+
+/** Event-loop delay percentiles, milliseconds. */
+export interface EventLoopLag {
+  p50: number;
+  p90: number;
+  p99: number;
+  max: number;
+  /** How long the histogram has been collecting. Makes the percentiles readable. */
+  sinceMs: number;
 }
 
 export interface HealthCheckResponse {
@@ -28,7 +39,64 @@ export interface HealthCheckResponse {
     elasticsearch: ServiceCheck;
     storage: ServiceCheck;
   };
+  /**
+   * Deliberately a sibling of `checks`, not a member of it: everything under
+   * `checks` feeds the overall `status`, and this must NOT. See getEventLoopLag.
+   */
+  eventLoop: EventLoopLag;
   timestamp: string;
+}
+
+// ---------------------------------------------------------------------------
+// Event-loop delay
+// ---------------------------------------------------------------------------
+// The app is a single `next-server` process, so all JS for every request runs on
+// ONE thread and that thread is the real capacity ceiling. Container CPU% does
+// not show it: on 2026-08-11 `docker stats` read 276% on this container while
+// the actual bottleneck was one JS thread at 90%, and Postgres read 101% one
+// second and 0.22% the next. Event-loop delay measures the thing that actually
+// makes requests slow — how long work waits for the thread.
+//
+// Read it against nginx's `rt`/`urt` (see nginx.conf's `timed` log_format):
+// high urt plus high lag here means the loop is saturated; high urt with low lag
+// points at a slow query or upstream instead.
+
+let eventLoopHistogram: IntervalHistogram | null = null;
+let eventLoopStartedAt = 0;
+
+/**
+ * Lazily created so merely importing this route — in a unit test, or during
+ * Next's build-time module trace — never starts a monitor.
+ *
+ * Never reset. Two reasons: this is for capacity work, which wants the
+ * distribution over hours rather than the last few seconds; and reset-on-read
+ * would let two pollers (the container healthcheck and a human curl) silently
+ * truncate each other's window.
+ *
+ * It never affects the overall `status`. Making a blocked loop report
+ * "unhealthy" would pull an instance out of the load balancer exactly when it is
+ * busiest, shifting its traffic onto its sibling and taking that one down too.
+ * This is a gauge to alert on, not a readiness signal.
+ */
+function getEventLoopLag(): EventLoopLag {
+  if (!eventLoopHistogram) {
+    // 10ms sampling: cheap, and blocks shorter than that don't matter here.
+    eventLoopHistogram = monitorEventLoopDelay({ resolution: 10 });
+    eventLoopHistogram.enable();
+    eventLoopStartedAt = Date.now();
+  }
+
+  // perf_hooks reports nanoseconds; percentiles on an empty histogram are 0.
+  const toMs = (ns: number) =>
+    Number.isFinite(ns) ? Math.round(ns / 1e4) / 100 : 0;
+
+  return {
+    p50: toMs(eventLoopHistogram.percentile(50)),
+    p90: toMs(eventLoopHistogram.percentile(90)),
+    p99: toMs(eventLoopHistogram.percentile(99)),
+    max: toMs(eventLoopHistogram.max),
+    sinceMs: Date.now() - eventLoopStartedAt,
+  };
 }
 
 export async function GET() {
@@ -78,6 +146,7 @@ export async function GET() {
       elasticsearch: elasticsearchCheck,
       storage: storageCheck,
     },
+    eventLoop: getEventLoopLag(),
     timestamp: new Date().toISOString(),
   };
 

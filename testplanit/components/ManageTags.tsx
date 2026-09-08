@@ -1,12 +1,13 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { CirclePlus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import Select, { MultiValue } from "react-select";
 import CreatableSelect from "react-select/creatable";
-import { useCreateTags, useFindManyTags, useUpdateTags } from "~/lib/hooks";
 import { getCustomStyles } from "~/styles/multiSelectStyles";
 import {
   replaceProblematicChars,
@@ -41,7 +42,7 @@ export function ManageTags({
     refetch,
     isLoading,
     isFetching,
-  } = useFindManyTags({
+  } = useClientQueries(schema).tags.useFindMany({
     orderBy: {
       name: "asc",
     },
@@ -59,8 +60,9 @@ export function ManageTags({
     }
   }, [tags]);
 
-  const { mutateAsync: createTags, isPending: isCreating } = useCreateTags();
-  const { mutateAsync: updateTags } = useUpdateTags();
+  const { mutateAsync: createTags, isPending: isCreating } =
+    useClientQueries(schema).tags.useCreate();
+  const { mutateAsync: updateTags } = useClientQueries(schema).tags.useUpdate();
 
   const { theme } = useTheme();
   const customStyles = getCustomStyles({ theme });
@@ -127,7 +129,7 @@ export function ManageTags({
 
   const formatCreateLabel = (inputValue: string) => (
     <div className="flex items-center">
-      <CirclePlus className="mr-1 w-4 h-4 shrink-0" />
+      <CirclePlus className="me-1 w-4 h-4 shrink-0" />
       <span>{tCommon("actions.createTag", { name: inputValue })}</span>
     </div>
   );
@@ -150,6 +152,10 @@ export function ManageTags({
       {canCreateTags ? (
         <CreatableSelect
           isMulti
+          // react-select forwards this to its inner combobox input, which has
+          // no <label> of its own — without it the control is unnamed
+          // (WCAG 4.1.2). A placeholder is not an accessible name.
+          aria-label={tCommon("fields.tags")}
           options={allTagOptions}
           value={valueForSelect}
           onChange={handleTagChange}
@@ -175,6 +181,7 @@ export function ManageTags({
       ) : (
         <Select
           isMulti
+          aria-label={tCommon("fields.tags")}
           options={allTagOptions}
           value={valueForSelect}
           onChange={handleTagChange}

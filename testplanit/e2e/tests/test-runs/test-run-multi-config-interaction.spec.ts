@@ -125,8 +125,7 @@ test.describe("Multi-Config Run Interaction", () => {
     });
 
     let run2Row:
-      | ReturnType<ReturnType<typeof page.locator>["filter"]>
-      | undefined;
+      ReturnType<ReturnType<typeof page.locator>["filter"]> | undefined;
     await test.step("Open run with both configs selected and verify two rows", async () => {
       // Navigate to run1 with both runs' configs selected
       await page.goto(

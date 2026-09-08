@@ -77,9 +77,9 @@ export function PromptVariableInserter({
         <SelectGroup>
           <SelectLabel>{t("variables")}</SelectLabel>
           {variables.map((v) => (
-            <SelectItem key={v.name} value={v.name} className="pl-6">
+            <SelectItem key={v.name} value={v.name} className="ps-6">
               <span className="font-mono">{v.name}</span>
-              <span className="ml-3 text-muted-foreground text-xs">
+              <span className="ms-3 text-muted-foreground text-xs">
                 {v.description}
               </span>
             </SelectItem>

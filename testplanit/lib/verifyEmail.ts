@@ -1,25 +1,25 @@
 "use server";
 
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 
 export async function verifyEmail(email: any, token: any) {
   if (!email || !token) {
     return new Error("Missing email or token");
   }
   try {
-    await prisma.user.findFirstOrThrow({
+    const user = await baseDb.user.findFirstOrThrow({
       where: {
-        email: email,
+        email: { equals: email, mode: "insensitive" },
         emailVerifToken: token,
         emailTokenExpires: {
           gte: new Date(),
         },
       },
     });
-    return await prisma.user.update({
-      where: { emailVerifToken: token, email: email },
+    return await baseDb.user.update({
+      where: { id: user.id, emailVerifToken: token },
       data: {
-        emailVerified: new Date().toISOString(),
+        emailVerified: new Date(),
         emailVerifToken: null,
       },
     });

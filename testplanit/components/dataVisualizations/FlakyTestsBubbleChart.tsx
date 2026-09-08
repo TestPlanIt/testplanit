@@ -375,8 +375,9 @@ export const FlakyTestsBubbleChart: React.FC<FlakyTestsBubbleChartProps> = ({
     // Add hover and click interactions
     bubbles
       .on("mouseover", function (event, d) {
+        // Named transition so it doesn't cancel the entrance animation
         d3.select(this)
-          .transition()
+          .transition("hover")
           .duration(150)
           .attr("r", sizeScale(d.failureRate) * 1.2)
           .style("opacity", 1);
@@ -406,7 +407,7 @@ export const FlakyTestsBubbleChart: React.FC<FlakyTestsBubbleChartProps> = ({
       })
       .on("mouseout", function (event, d) {
         d3.select(this)
-          .transition()
+          .transition("hover")
           .duration(150)
           .attr("r", sizeScale(d.failureRate))
           .style("opacity", 0.85);
@@ -481,7 +482,7 @@ export const FlakyTestsBubbleChart: React.FC<FlakyTestsBubbleChartProps> = ({
         .style("font-size", "12px")
         .style("font-weight", "600")
         .style("opacity", 0)
-        .text(`+${notShownCount}`)
+        .text(`+${notShownCount.toLocaleString(locale)}`)
         .transition()
         .duration(400)
         .delay(bubbleData.length * 30 + 300)
@@ -492,7 +493,7 @@ export const FlakyTestsBubbleChart: React.FC<FlakyTestsBubbleChartProps> = ({
         .on("mouseover", function (_event) {
           d3.select(this)
             .select("circle")
-            .transition()
+            .transition("hover")
             .duration(150)
             .attr("r", backlogRadius * 1.15)
             .style("opacity", 0.8);
@@ -514,7 +515,7 @@ export const FlakyTestsBubbleChart: React.FC<FlakyTestsBubbleChartProps> = ({
         .on("mouseout", function () {
           d3.select(this)
             .select("circle")
-            .transition()
+            .transition("hover")
             .duration(150)
             .attr("r", backlogRadius)
             .style("opacity", 0.6);

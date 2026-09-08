@@ -1,14 +1,25 @@
+import valkeyConnection from "~/lib/valkey";
+import { parseUpstreamDate } from "~/utils/calendarDate";
 import { BaseAdapter } from "./BaseAdapter";
 import {
   AuthenticationData,
   CreateIssueData,
+  ExternalMilestone,
   IssueAdapterCapabilities,
+  IssueAttachmentMeta,
   IssueComment,
   IssueData,
   IssueSearchOptions,
   LinkedIssueRef,
   UpdateIssueData,
 } from "./IssueAdapter";
+
+/**
+ * Hard cap on attachment downloads, mirroring the app's own 10MB upload
+ * ceiling. Callers with stricter needs (the LLM context pipeline caps
+ * images at 4MB) filter on the listing's byteSize before downloading.
+ */
+const MAX_ATTACHMENT_DOWNLOAD_BYTES = 10 * 1024 * 1024;
 import {
   buildAuthHeader,
   detectJiraDeployment,
@@ -25,15 +36,69 @@ import { adfToWikiMarkup } from "./jiraWikiMarkup";
 import { IntegrationApiError, integrationErrorFromStatus } from "../errors";
 
 /**
+ * Board -> project ownership is near-static (boards rarely move between
+ * projects), so a multi-hour TTL avoids a per-event upstream call during
+ * sprint webhook bursts without risking long-lived staleness.
+ */
+const JIRA_BOARD_PROJECT_CACHE_TTL_SECONDS = 6 * 60 * 60; // 6 hours
+
+/**
+ * Whether a board supports sprints is a property of its type (Scrum vs
+ * Kanban) and effectively never changes for an existing board. Caching the
+ * negative answer stops every sync pass from re-probing each Kanban board
+ * (a guaranteed 400 + a warn log per board per pass).
+ */
+const JIRA_BOARD_NO_SPRINTS_CACHE_TTL_SECONDS = 24 * 60 * 60; // 24 hours
+
+/**
+ * Upstream error bodies surface in UI alerts (search fan-out, import
+ * picker warnings). Proxies/CDNs answer with full HTML error pages (e.g.
+ * CloudFront 414 on an oversized JQL URL) — strip markup and truncate so
+ * users see "HTTP 414: The request could not be satisfied…", not a page
+ * of raw HTML.
+ */
+const UPSTREAM_ERROR_EXCERPT_MAX = 300;
+function sanitizeUpstreamErrorBody(body: string): string {
+  const text = /<[a-z!/][^>]*>/i.test(body)
+    ? body
+        .replace(/<[^>]*>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+    : body.trim();
+  return text.length > UPSTREAM_ERROR_EXCERPT_MAX
+    ? `${text.slice(0, UPSTREAM_ERROR_EXCERPT_MAX)}…`
+    : text;
+}
+
+/**
  * Jira integration adapter implementing OAuth authentication
  */
 export class JiraAdapter extends BaseAdapter {
   public supportsOAuth = true;
 
+  /**
+   * BaseAdapter's default is 1000ms between every upstream request, which is
+   * far more conservative than Jira's own limits and turns request COUNT into
+   * the dominant cost of any fan-out. Milestone preview is the worst case: it
+   * walks versions plus every board's sprints for every mapped Jira project,
+   * so on a large site the throttle alone accounted for ~83s of a request that
+   * a front-end proxy kills at 60s.
+   *
+   * 200ms (5 req/s) still paces us well under Atlassian's cost-based limits
+   * for a single user's interactive request, while leaving real headroom.
+   * Scoped to Jira deliberately — other providers keep the 1s default.
+   */
+  protected rateLimitDelay = 200;
+
   private clientId: string;
   private clientSecret: string;
   private redirectUri: string;
   private cloudId?: string;
+  // Canonical site base (e.g. https://acme.atlassian.net) captured from the
+  // OAuth accessible-resources response. OAuth requests go through the
+  // api.atlassian.com/ex/jira/{cloudId} gateway, so a Jira issue's `self`
+  // field echoes that gateway host — unusable for user-facing "open in Jira"
+  // links. This holds the real site host for building browse/version URLs.
   private siteUrl?: string;
   private baseUrl?: string;
   private deployment: JiraDeploymentType = "cloud";
@@ -139,6 +204,7 @@ export class JiraAdapter extends BaseAdapter {
       attachments: true,
       linkedIssues: true,
       comments: true,
+      milestones: { kinds: ["RELEASE", "ITERATION"], webhooks: true },
     };
   }
 
@@ -276,6 +342,9 @@ export class JiraAdapter extends BaseAdapter {
           throw new Error("No accessible Jira resources found");
         }
         this.cloudId = resources[0].id;
+        // Keep the resource's canonical site URL so user-facing links point at
+        // https://{site}.atlassian.net rather than the api.atlassian.com
+        // gateway that all OAuth REST traffic is proxied through.
         this.siteUrl = resources[0].url;
       }
     } else {
@@ -331,13 +400,47 @@ export class JiraAdapter extends BaseAdapter {
   }
 
   /**
-   * Get OAuth authorization URL
+   * Get OAuth authorization URL.
+   *
+   * Scopes span both of Atlassian's scope systems, because the two REST APIs
+   * we call are governed separately:
+   *
+   *   - Jira platform (`/rest/api/{2,3}/...` — issues, JQL search, project
+   *     versions, comments) is covered by the CLASSIC scopes, which Atlassian
+   *     still recommends for the platform API.
+   *   - Jira Software / Agile (`/rest/agile/1.0/board`, `.../board/{id}/sprint`
+   *     — ITERATION milestone import and sprint webhook routing) does NOT
+   *     support classic scopes at all ("Jira Software doesn't support classic
+   *     scopes. Use granular scopes instead."). Without the granular trio
+   *     below, every agile call fails with
+   *     `401 {"code":401,"message":"Unauthorized; scope does not match"}`
+   *     even though `read:jira-work` is present — the versions endpoint keeps
+   *     working, so the failure looks selective. `read:project:jira` is
+   *     required alongside the board scope for board discovery.
+   *
+   * These scopes must ALSO be enabled on the app in the Atlassian developer
+   * console (Permissions → Jira Software API → Granular scopes); requesting a
+   * scope the app doesn't hold fails at the authorize step. And because
+   * Atlassian binds the granted scope set to the token at consent time and
+   * carries it through every refresh, existing connections keep their old
+   * scopes — admins must disconnect and re-authorize after this change.
    */
   getAuthorizationUrl(state: string): string {
     const params = new URLSearchParams({
       audience: "api.atlassian.com",
       client_id: this.clientId,
-      scope: "read:jira-work write:jira-work read:jira-user offline_access",
+      scope: [
+        // Jira platform (classic)
+        "read:jira-work",
+        "write:jira-work",
+        "read:jira-user",
+        // Jira Software / Agile (granular — no classic equivalent exists)
+        "read:board-scope:jira-software",
+        "read:sprint:jira-software",
+        "read:project:jira",
+        // Refresh-token grant
+        "offline_access",
+      ].join(" "),
       redirect_uri: this.redirectUri,
       state: state,
       response_type: "code",
@@ -466,6 +569,20 @@ export class JiraAdapter extends BaseAdapter {
   /**
    * Override makeRequest to handle Jira's API key authentication
    */
+  /**
+   * Jira's API-key mode keeps its own credential state (authCreds +
+   * authScheme) instead of the base authData; surface it so the base
+   * class's binary path (makeBinaryRequest) authenticates correctly.
+   */
+  protected buildAuthHeaders(): Record<string, string> {
+    if (this.apiKeyAuthActive) {
+      return {
+        Authorization: buildAuthHeader(this.authCreds, this.authScheme),
+      };
+    }
+    return super.buildAuthHeaders();
+  }
+
   protected async makeRequest<T = any>(
     url: string,
     options: RequestInit = {}
@@ -498,7 +615,9 @@ export class JiraAdapter extends BaseAdapter {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
+        throw new Error(
+          `HTTP ${response.status}: ${sanitizeUpstreamErrorBody(errorText)}`
+        );
       }
 
       // Jira returns 204 No Content for several write endpoints (issue
@@ -674,6 +793,65 @@ export class JiraAdapter extends BaseAdapter {
     return { id: String(attachment.id), url: attachment.content ?? "" };
   }
 
+  /**
+   * List an issue's attachments. A dedicated fields=attachment fetch on
+   * purpose — widening the shared getIssue/searchIssues field list would
+   * grow every sync payload for a per-generation need.
+   */
+  async listAttachments(issueId: string): Promise<IssueAttachmentMeta[]> {
+    const response = await this.makeRequest<{
+      fields?: {
+        attachment?: Array<{
+          id: string | number;
+          filename?: string;
+          mimeType?: string;
+          size?: number;
+          created?: string;
+          content?: string;
+        }>;
+      };
+    }>(
+      this.buildUrl(
+        `/rest/api/${this.apiVersion}/issue/${issueId}?fields=attachment`
+      )
+    );
+
+    return (response.fields?.attachment ?? []).map((att) => ({
+      id: String(att.id),
+      filename: att.filename ?? `attachment-${att.id}`,
+      mimeType: att.mimeType,
+      byteSize: att.size,
+      createdAt: att.created ? new Date(att.created) : undefined,
+      contentUrl: att.content,
+    }));
+  }
+
+  /**
+   * Download one attachment's bytes.
+   *
+   * Cloud: the stable content endpoint 302s to a pre-signed media URL;
+   * Node's fetch follows the redirect and drops the Authorization header
+   * cross-origin, which the signed URL neither needs nor accepts.
+   * Server/DC: the listing's `content` URL (`/secure/attachment/…`) is
+   * same-origin, so the auth header rides along.
+   */
+  async downloadAttachment(
+    meta: IssueAttachmentMeta
+  ): Promise<{ buffer: Buffer; mimeType?: string }> {
+    const url =
+      this.deployment === "server" && meta.contentUrl
+        ? meta.contentUrl
+        : this.buildUrl(
+            `/rest/api/${this.apiVersion}/attachment/content/${meta.id}`
+          );
+
+    const { buffer, contentType } = await this.makeBinaryRequest(
+      url,
+      MAX_ATTACHMENT_DOWNLOAD_BYTES
+    );
+    return { buffer, mimeType: contentType ?? meta.mimeType };
+  }
+
   async getIssue(issueId: string): Promise<IssueData> {
     // Explicitly request all fields we need, including issuetype with iconUrl
     const params = new URLSearchParams({
@@ -747,6 +925,648 @@ export class JiraAdapter extends BaseAdapter {
     }
   }
 
+  /**
+   * Fetch RELEASE (project versions) and/or ITERATION (sprints, via board
+   * auto-discovery) milestones for the given project. Routes through
+   * `this.apiVersion` for the versions endpoint (v3 Cloud / v2 Server); the
+   * Agile API (`/rest/agile/1.0/...`) is deployment-agnostic and never
+   * versioned (Assumption A3).
+   *
+   * ITERATION discovers ALL boards for the project and fetches sprints from
+   * each, deduping by sprint id (D5, locked design) — a Jira project can
+   * have multiple boards (e.g. a Kanban + a Scrum board) whose sprint lists
+   * overlap.
+   *
+   * Error semantics: a PARTIAL board failure degrades gracefully (sprints
+   * from healthy boards are still returned), and a 404 from board discovery
+   * is treated as "no agile support". But hard failures — versions endpoint
+   * errors, board-discovery auth/server errors, or every board's sprint
+   * fetch failing — PROPAGATE, so callers can distinguish a broken
+   * connection from a genuinely empty result.
+   */
+  async getExternalMilestones(options: {
+    projectKey: string;
+    kind?: "RELEASE" | "ITERATION";
+    includeClosed?: boolean;
+    pageToken?: string;
+  }): Promise<{
+    items: ExternalMilestone[];
+    hasMore: boolean;
+    nextPageToken?: string;
+  }> {
+    const { projectKey, kind, includeClosed = false } = options;
+    const items: ExternalMilestone[] = [];
+
+    if (!kind || kind === "RELEASE") {
+      items.push(...(await this.fetchJiraVersions(projectKey, includeClosed)));
+    }
+
+    if (!kind || kind === "ITERATION") {
+      items.push(...(await this.fetchJiraSprints(projectKey, includeClosed)));
+    }
+
+    // Both fetches already ask Jira to exclude closed artifacts when
+    // includeClosed is false, so this is a safety net rather than the primary
+    // filter — it still catches anything an upstream filter classifies
+    // differently than mapJiraVersion/mapJiraSprint do (and Server/DC
+    // deployments that ignore the query parameters entirely).
+    const filtered = includeClosed
+      ? items
+      : items.filter((item) => item.state !== "CLOSED");
+
+    // Both upstream fetches page internally and return their full result
+    // set (versions: numeric-scale per project; sprints: bounded by board
+    // count), so there is nothing left to paginate at this level.
+    return {
+      items: filtered,
+      hasMore: false,
+    };
+  }
+
+  /**
+   * RELEASE milestones: page through the project-versions endpoint
+   * (offset-based startAt/maxResults/total per research Open Question 3)
+   * and map each version to an ExternalMilestone.
+   *
+   * When closed artifacts aren't wanted, the filtering is pushed upstream via
+   * `status=unreleased` rather than fetching everything and discarding it
+   * locally. On a mature project that is the difference between a couple of
+   * dozen pages and one: a real project here holds 1198 versions of which 10
+   * are unreleased. Every page costs a full second of the BaseAdapter rate
+   * limiter, so page count — not row count — is what decides whether the
+   * preview beats the proxy's request timeout.
+   *
+   * `status` mirrors mapJiraVersion's CLOSED rule (archived or released), so
+   * the two agree on which versions are omitted. Server/DC deployments that
+   * don't honour the parameter simply return everything and fall back to the
+   * caller's local filter.
+   */
+  private async fetchJiraVersions(
+    projectKey: string,
+    includeClosed: boolean
+  ): Promise<ExternalMilestone[]> {
+    const versions: ExternalMilestone[] = [];
+    let startAt = 0;
+    // Verified against Jira Cloud: the versions endpoint honours 100 per page,
+    // halving the page count when the full history IS wanted.
+    const maxResults = 100;
+
+    try {
+      while (true) {
+        const params = new URLSearchParams({
+          startAt: startAt.toString(),
+          maxResults: maxResults.toString(),
+          ...(includeClosed ? {} : { status: "unreleased" }),
+        });
+        const response = await this.makeRequest<any>(
+          this.buildUrl(
+            `/rest/api/${this.apiVersion}/project/${encodeURIComponent(
+              projectKey
+            )}/version?${params.toString()}`
+          )
+        );
+
+        // Older Jira Server/DC deployments return a bare JSON array (the
+        // non-paginated versions shape) instead of the `{ values, isLast }`
+        // envelope — treat a bare array as a single, complete page.
+        const isBareArray = Array.isArray(response);
+        const pageValues: any[] = isBareArray
+          ? response
+          : Array.isArray(response?.values)
+            ? response.values
+            : [];
+        for (const raw of pageValues) {
+          const mapped = this.mapJiraVersion(raw, projectKey);
+          if (mapped) versions.push(mapped);
+        }
+
+        const isLast = isBareArray
+          ? true
+          : typeof response?.isLast === "boolean"
+            ? response.isLast
+            : pageValues.length < maxResults;
+        if (isLast || pageValues.length === 0) break;
+        startAt += pageValues.length;
+      }
+    } catch (error) {
+      const status = this.parseStatusFromError(error);
+      const level = status === null || status >= 500 ? "error" : "warn";
+      console[level](
+        `[JiraAdapter] fetchJiraVersions failed for %s:`,
+        projectKey,
+        error
+      );
+      // Propagate instead of returning [] — an auth/permission/network
+      // failure must be distinguishable from "project has no versions" so
+      // callers can surface a real error instead of an empty picker.
+      throw error;
+    }
+
+    return versions;
+  }
+
+  /**
+   * Canonical site base for building user-facing links (browse pages, version
+   * and sprint pages). Prefers the admin-entered baseUrl (API-key/Data Center);
+   * falls back to the site URL captured from OAuth accessible-resources, which
+   * is the only correct host for OAuth integrations since baseUrl is unset
+   * there. Trailing slashes are stripped for clean concatenation.
+   */
+  private userFacingBaseUrl(): string {
+    return (this.baseUrl ?? this.siteUrl ?? "").replace(/\/+$/, "");
+  }
+
+  private mapJiraVersion(
+    raw: any,
+    projectKey: string
+  ): ExternalMilestone | null {
+    if (!raw || raw.id == null) return null;
+
+    const released = raw.released === true;
+    const archived = raw.archived === true;
+    let state: ExternalMilestone["state"];
+    let rawState: string;
+    if (archived) {
+      state = "CLOSED";
+      rawState = "archived";
+    } else if (released) {
+      state = "CLOSED";
+      rawState = "released";
+    } else {
+      const startDate = raw.startDate
+        ? parseUpstreamDate(raw.startDate).date
+        : undefined;
+      const isFuture = !startDate || startDate.getTime() > Date.now();
+      state = isFuture ? "FUTURE" : "ACTIVE";
+      rawState = isFuture ? "future" : "active";
+    }
+
+    return {
+      id: String(raw.id),
+      kind: "RELEASE",
+      name: raw.name ?? String(raw.id),
+      description: raw.description,
+      // A version's dates are bare `yyyy-MM-dd` calendar dates — no time, no
+      // offset. They land in `startedAt`/`completedAt`, which are read back in
+      // UTC precisely so a release dated Aug 13 says Aug 13 to every reader
+      // instead of "Aug 12, 7:00 PM" in GMT-5. Sprints differ: see
+      // mapJiraSprint. See `~/utils/calendarDate`.
+      startDate: raw.startDate
+        ? parseUpstreamDate(raw.startDate).date
+        : undefined,
+      endDate: raw.releaseDate
+        ? parseUpstreamDate(raw.releaseDate).date
+        : undefined,
+      state,
+      rawState,
+      // raw.self is the REST resource (JSON) — link users to the project's
+      // releases page for this version instead. Same path on Cloud and DC.
+      url: `${this.userFacingBaseUrl()}/projects/${encodeURIComponent(projectKey)}/versions/${encodeURIComponent(String(raw.id))}`,
+    };
+  }
+
+  /**
+   * ITERATION milestones: discover every board for the project, fetch
+   * sprints per board, and dedupe by sprint id (D5) since a Jira project
+   * can have multiple boards whose sprint lists overlap.
+   */
+  private async fetchJiraSprints(
+    projectKey: string,
+    includeClosed: boolean
+  ): Promise<ExternalMilestone[]> {
+    const boardIds = await this.discoverJiraBoards(projectKey);
+    const bySprintId = new Map<string, ExternalMilestone>();
+    let failedBoards = 0;
+    let firstBoardError: unknown = null;
+    const integrationId = this.config?.integrationId;
+
+    for (const boardId of boardIds) {
+      // Skip boards already known to be sprint-less (Kanban) — fail-open on
+      // any cache problem so a Valkey blip never hides sprints.
+      const noSprintsKey =
+        integrationId != null
+          ? `jira-board-no-sprints:${integrationId}:${boardId}`
+          : null;
+      if (noSprintsKey && valkeyConnection) {
+        try {
+          if (await valkeyConnection.exists(noSprintsKey)) continue;
+        } catch {
+          // fall through to the live probe
+        }
+      }
+      try {
+        let startAt = 0;
+        const maxResults = 50;
+        while (true) {
+          const params = new URLSearchParams({
+            startAt: startAt.toString(),
+            maxResults: maxResults.toString(),
+            // Same upstream-filtering rationale as fetchJiraVersions, and it
+            // matters more here because the cost is per BOARD: one board on a
+            // long-running project carries 192 sprints (4 pages) of which 3
+            // are active or future (1 page).
+            ...(includeClosed ? {} : { state: "active,future" }),
+          });
+          const response = await this.makeRequest<any>(
+            this.buildUrl(
+              `/rest/agile/1.0/board/${boardId}/sprint?${params.toString()}`
+            )
+          );
+
+          // Same bare-array tolerance as fetchJiraVersions — some Server/DC
+          // responses omit the `{ values, isLast }` pagination envelope.
+          const isBareArray = Array.isArray(response);
+          const pageValues: any[] = isBareArray
+            ? response
+            : Array.isArray(response?.values)
+              ? response.values
+              : [];
+          for (const raw of pageValues) {
+            const mapped = this.mapJiraSprint(raw);
+            if (mapped && !bySprintId.has(mapped.id)) {
+              bySprintId.set(mapped.id, mapped);
+            }
+          }
+
+          const isLast = isBareArray
+            ? true
+            : typeof response?.isLast === "boolean"
+              ? response.isLast
+              : pageValues.length < maxResults;
+          if (isLast || pageValues.length === 0) break;
+          startAt += pageValues.length;
+        }
+      } catch (error) {
+        const status = this.parseStatusFromError(error);
+        // A 400 from the sprint endpoint means the board type doesn't
+        // support sprints (Kanban boards) — an expected per-board
+        // condition, not a fetch failure. Skip it WITHOUT counting toward
+        // failedBoards, so a project whose only board is Kanban still
+        // previews its versions cleanly instead of erroring out.
+        if (status === 400) {
+          console.warn(
+            `[JiraAdapter] board %s does not support sprints — skipped and cached (project %s)`,
+            boardId,
+            projectKey
+          );
+          if (noSprintsKey && valkeyConnection) {
+            try {
+              await valkeyConnection.set(
+                noSprintsKey,
+                "1",
+                "EX",
+                JIRA_BOARD_NO_SPRINTS_CACHE_TTL_SECONDS
+              );
+            } catch {
+              // cache write failure just means we probe again next pass
+            }
+          }
+          continue;
+        }
+        const level = status === null || status >= 500 ? "error" : "warn";
+        console[level](
+          `[JiraAdapter] fetchJiraSprints failed for board %s (project %s):`,
+          boardId,
+          projectKey,
+          error
+        );
+        // Continue with remaining boards — a single board failure should
+        // not drop sprints discovered on other boards.
+        failedBoards += 1;
+        if (firstBoardError === null) firstBoardError = error;
+      }
+    }
+
+    // Partial board failures degrade gracefully, but when EVERY board fetch
+    // failed the caller must see the failure — otherwise a credential or
+    // permission problem is indistinguishable from "no sprints".
+    if (boardIds.length > 0 && failedBoards === boardIds.length) {
+      throw firstBoardError;
+    }
+
+    return Array.from(bySprintId.values());
+  }
+
+  /**
+   * Board discovery for the project: `/rest/agile/1.0/board?projectKeyOrId=`,
+   * paginated. Returns board ids only — sprint-fetching is done separately
+   * per board so a single board's failure doesn't abort discovery of the
+   * rest.
+   */
+  private async discoverJiraBoards(projectKey: string): Promise<string[]> {
+    const boardIds: string[] = [];
+    let startAt = 0;
+    const maxResults = 50;
+
+    try {
+      while (true) {
+        const params = new URLSearchParams({
+          projectKeyOrId: projectKey,
+          startAt: startAt.toString(),
+          maxResults: maxResults.toString(),
+        });
+        const response = await this.makeRequest<any>(
+          this.buildUrl(`/rest/agile/1.0/board?${params.toString()}`)
+        );
+
+        const pageValues: any[] = Array.isArray(response?.values)
+          ? response.values
+          : [];
+        for (const board of pageValues) {
+          if (board?.id != null) boardIds.push(String(board.id));
+        }
+
+        const isLast =
+          typeof response?.isLast === "boolean"
+            ? response.isLast
+            : pageValues.length < maxResults;
+        if (isLast || pageValues.length === 0) break;
+        startAt += pageValues.length;
+      }
+    } catch (error) {
+      const status = this.parseStatusFromError(error);
+      if (status === 404) {
+        // Agile API unavailable (no Jira Software on this instance) — treat
+        // as "no boards" rather than a hard failure so RELEASE-only fetches
+        // and kind-less previews still work.
+        console.warn(
+          `[JiraAdapter] discoverJiraBoards: agile API unavailable for %s:`,
+          projectKey,
+          error
+        );
+        return boardIds;
+      }
+      const level = status === null || status >= 500 ? "error" : "warn";
+      console[level](
+        `[JiraAdapter] discoverJiraBoards failed for %s:`,
+        projectKey,
+        error
+      );
+      // Propagate auth/permission/server failures so an empty sprint list
+      // is never silently returned for a broken connection.
+      throw error;
+    }
+
+    return boardIds;
+  }
+
+  /**
+   * Resolve a single board's owning project — the INVERSE direction of
+   * `discoverJiraBoards` (project -> boards). Sprint webhook payloads only
+   * carry `originBoardId` (Pitfall 2), never a project reference, so
+   * `applyInboundMilestoneEvent` needs this direct board -> project lookup
+   * to resolve which TestPlanIt project a `sprint_*` event belongs to.
+   *
+   * `GET /rest/agile/1.0/board/{boardId}` returns `location.projectId` /
+   * `location.projectKey` (RESEARCH.md A1 — MEDIUM confidence, verified via
+   * multiple independent community payload examples, not a schema-verified
+   * response contract). The parse is deliberately defensive: any absent or
+   * differently-shaped `location` degrades to `null` (the D-03 unmatched/
+   * ack-and-drop path) rather than a thrown error, since a malformed/legacy
+   * response here must never surface as a 500 to the Jira webhook sender.
+   *
+   * Cached in Valkey (`jira-board-project:<integrationId>:<boardId>`, a
+   * multi-hour TTL) since board->project ownership is near-static and a
+   * cache hit avoids a per-event upstream call during sprint webhook bursts
+   * (T-19-04-03). Fail-open without a Valkey connection — fetch directly,
+   * skip caching, mirroring `MilestoneSyncService`'s lock-key idiom.
+   */
+  async resolveBoardProject(
+    boardId: string
+  ): Promise<{ projectId: string; projectKey: string } | null> {
+    // Jira board ids are integers. `boardId` originates from webhook wire
+    // input (sprint.originBoardId) and is interpolated into the REST path
+    // and the cache key below — reject anything non-numeric here too
+    // (defense in depth behind the extraction-time guard in
+    // lib/webhooks/adapters/jira.ts) so this method can never be steered
+    // into an authenticated request to an arbitrary path.
+    if (!/^\d+$/.test(boardId)) {
+      console.debug(
+        `[JiraAdapter] resolveBoardProject: rejecting non-numeric board id %s`,
+        boardId
+      );
+      return null;
+    }
+
+    const integrationId = this.config?.integrationId;
+    const cacheKey =
+      integrationId != null
+        ? `jira-board-project:${integrationId}:${boardId}`
+        : null;
+
+    if (cacheKey) {
+      try {
+        const cached = await valkeyConnection?.get(cacheKey);
+        if (cached) {
+          return JSON.parse(cached) as {
+            projectId: string;
+            projectKey: string;
+          };
+        }
+      } catch (error) {
+        // Cache read failures (connection blip, bad JSON) fall through to a
+        // direct upstream fetch — never let a cache problem block resolution.
+        console.warn(
+          `[JiraAdapter] resolveBoardProject: cache read failed for board %s:`,
+          boardId,
+          error
+        );
+      }
+    }
+
+    let response: any;
+    try {
+      response = await this.makeRequest<any>(
+        this.buildUrl(`/rest/agile/1.0/board/${boardId}`)
+      );
+    } catch (error) {
+      const status = this.parseStatusFromError(error);
+      if (status === 404 || status === 403 || status === 401) {
+        // Unmatched board / no permission — the D-03 ack-and-drop path.
+        // Never throw for this; the caller acks the webhook and drops it.
+        console.debug(
+          `[JiraAdapter] resolveBoardProject: board %s not found/unauthorized (status %s)`,
+          boardId,
+          status
+        );
+        return null;
+      }
+      const level = status === null || status >= 500 ? "error" : "warn";
+      console[level](
+        `[JiraAdapter] resolveBoardProject failed for board %s:`,
+        boardId,
+        error
+      );
+      return null;
+    }
+
+    const projectId = response?.location?.projectId;
+    const projectKey = response?.location?.projectKey;
+    if (typeof projectId !== "string" && typeof projectId !== "number") {
+      console.debug(
+        `[JiraAdapter] resolveBoardProject: board %s response missing location.projectId — treating as unmatched`,
+        boardId
+      );
+      return null;
+    }
+
+    const result = {
+      projectId: String(projectId),
+      projectKey: typeof projectKey === "string" ? projectKey : "",
+    };
+
+    if (cacheKey && valkeyConnection) {
+      try {
+        await valkeyConnection.set(
+          cacheKey,
+          JSON.stringify(result),
+          "EX",
+          JIRA_BOARD_PROJECT_CACHE_TTL_SECONDS
+        );
+      } catch (error) {
+        console.warn(
+          `[JiraAdapter] resolveBoardProject: cache write failed for board %s:`,
+          boardId,
+          error
+        );
+      }
+    }
+
+    return result;
+  }
+
+  private mapJiraSprint(raw: any): ExternalMilestone | null {
+    if (!raw || raw.id == null) return null;
+
+    const rawState =
+      typeof raw.state === "string" ? raw.state.toLowerCase() : undefined;
+    let state: ExternalMilestone["state"];
+    switch (rawState) {
+      case "closed":
+        state = "CLOSED";
+        break;
+      case "active":
+        state = "ACTIVE";
+        break;
+      case "future":
+      default:
+        state = "FUTURE";
+        break;
+    }
+
+    return {
+      id: String(raw.id),
+      kind: "ITERATION",
+      name: raw.name ?? String(raw.id),
+      description: raw.goal,
+      // Unlike a version's, a sprint's dates are full instants with a real
+      // time — typically midnight or 23:59 in the Jira instance's own zone,
+      // landing a few hours either side of UTC midnight. They are stored as
+      // sent, and `hasCalendarDates` keeps them out of the calendar-date
+      // display path: reading a sprint that ends 23:59 EST in UTC would move
+      // it onto the following day.
+      startDate: raw.startDate
+        ? parseUpstreamDate(raw.startDate).date
+        : undefined,
+      endDate: raw.endDate ? parseUpstreamDate(raw.endDate).date : undefined,
+      state,
+      rawState,
+      // Sprints have no user-facing permalink in their payload; the origin
+      // board is the closest stable target. RapidBoard.jspa is a
+      // deployment-agnostic redirect (Cloud forwards to the modern board
+      // UI; Server/DC serves it directly).
+      ...(raw.originBoardId != null
+        ? {
+            url: `${this.userFacingBaseUrl()}/secure/RapidBoard.jspa?rapidView=${encodeURIComponent(String(raw.originBoardId))}&sprint=${encodeURIComponent(String(raw.id))}`,
+          }
+        : {}),
+    };
+  }
+
+  /**
+   * Shared executor for a bounded JQL search. The Cloud/Server dialect split
+   * lives here so every JQL-backed read (searchIssues, getMilestoneIssues)
+   * paginates identically and can never drift:
+   *
+   *   - Cloud ships the enhanced `/rest/api/3/search/jql` endpoint — an opaque
+   *     `nextPageToken` cursor and `isLast`, and no `total` (Atlassian
+   *     CHANGE-2046). Passing `startAt` is silently ignored.
+   *   - Server/Data Center only ships the classic `/rest/api/2/search`
+   *     endpoint — it pages by `startAt`, returns `total`/`startAt`, and has no
+   *     cursor of its own, so a startAt-based `nextPageToken` is synthesized
+   *     (the deployment accepts an incoming pageToken back as `startAt`).
+   *
+   * The caller supplies a complete JQL string (including any ORDER BY); this
+   * only layers on pagination and the shared field set.
+   */
+  private async runJqlSearch(
+    jqlString: string,
+    options?: { pageToken?: string; limit?: number }
+  ): Promise<{
+    issues: IssueData[];
+    total: number;
+    hasMore: boolean;
+    nextPageToken?: string;
+  }> {
+    const params = new URLSearchParams({
+      jql: jqlString,
+      maxResults: (options?.limit || 50).toString(),
+      // `parent` included (D-14) so every synced-issue path captures hierarchy
+      // the same way for buildSyncedIssueData.
+      fields:
+        "summary,description,status,priority,issuetype,assignee,reporter,labels,created,updated,parent",
+    });
+    if (options?.pageToken) {
+      if (this.deployment === "server") {
+        // DC pages by startAt (see the synthesized nextPageToken below).
+        params.set("startAt", options.pageToken);
+      } else {
+        params.set("nextPageToken", options.pageToken);
+      }
+    }
+
+    const searchPath =
+      this.deployment === "server"
+        ? `/rest/api/2/search?${params.toString()}`
+        : `/rest/api/3/search/jql?${params.toString()}`;
+    const response = await this.makeRequest<any>(this.buildUrl(searchPath));
+
+    const issues = (response.issues || []).map((issue: any) =>
+      this.mapJiraIssue(issue)
+    );
+    // Prefer the cursor / isLast flag the enhanced endpoint provides; fall back
+    // to the legacy total+startAt math (Server/DC), then to "a full page
+    // implies more".
+    const cloudNextPageToken: string | undefined = response.nextPageToken;
+    const hasMore =
+      typeof response.isLast === "boolean"
+        ? !response.isLast
+        : cloudNextPageToken
+          ? true
+          : typeof response.total === "number"
+            ? (response.startAt || 0) + issues.length < response.total
+            : issues.length >= (options?.limit || 50);
+    // Server/DC's classic /search has no cursor of its own — synthesize a
+    // startAt one so callers that only advance via pageToken don't re-read
+    // page 1 forever.
+    const nextPageToken =
+      cloudNextPageToken ??
+      (this.deployment === "server" && hasMore
+        ? String((response.startAt ?? 0) + issues.length)
+        : undefined);
+
+    return {
+      issues,
+      // The enhanced endpoint omits `total`; report the page count so callers
+      // reading `total` get an honest number instead of NaN/undefined. Exact
+      // match counts come from paginating via `nextPageToken`.
+      total:
+        typeof response.total === "number" ? response.total : issues.length,
+      hasMore,
+      nextPageToken,
+    };
+  }
+
   async searchIssues(options: IssueSearchOptions): Promise<{
     issues: IssueData[];
     total: number;
@@ -806,74 +1626,42 @@ export class JiraAdapter extends BaseAdapter {
       // Automatic/incremental sync - limit to last 30 days
       jqlString = "created >= -30d ORDER BY created DESC";
     }
-    // Jira Cloud's enhanced search (`/rest/api/3/search/jql`) paginates by an
-    // opaque `nextPageToken`, NOT `startAt`, and no longer returns a `total`.
-    // (See Atlassian CHANGE-2046.) Passing `startAt` is silently ignored and
-    // reading `response.total`/`response.startAt` yields `undefined` — which is
-    // exactly why the pre-migration parsing reported 0 results / hasMore=false.
-    const params = new URLSearchParams({
-      jql: jqlString,
-      maxResults: (options.limit || 50).toString(),
-      fields:
-        "summary,description,status,priority,issuetype,assignee,reporter,labels,created,updated",
+    return this.runJqlSearch(jqlString, {
+      pageToken: options.pageToken,
+      limit: options.limit,
     });
-    if (options.pageToken) {
-      if (this.deployment === "server") {
-        // DC uses startAt for pagination
-        params.set("startAt", options.pageToken);
-      } else {
-        params.set("nextPageToken", options.pageToken);
-      }
-    }
+  }
 
-    // Cloud exposes the enhanced JQL endpoint /search/jql; Server/Data
-    // Center only ships the classic /search endpoint (same response shape).
-    const searchPath =
-      this.deployment === "server"
-        ? `/rest/api/2/search?${params.toString()}`
-        : `/rest/api/3/search/jql?${params.toString()}`;
-    const searchUrl = this.buildUrl(searchPath);
+  /**
+   * Membership fetch for a milestone (Jira Fix Version / Sprint). Builds the
+   * fixVersion=/sprint= JQL clause and delegates to the shared runJqlSearch
+   * executor, so it inherits the same Cloud/Server pagination dialect as
+   * searchIssues. It stays a distinct method rather than a searchIssues option
+   * because that clause has no equivalent hook in searchIssues' filter set
+   * (D-14 / interfaces lock, IssueAdapter.ts:271-279).
+   */
+  async getMilestoneIssues(
+    ref: { id: string; kind: "RELEASE" | "ITERATION" },
+    options?: { pageToken?: string; limit?: number }
+  ): Promise<{
+    issues: IssueData[];
+    total?: number;
+    hasMore: boolean;
+    nextPageToken?: string;
+  }> {
+    // fixVersion / sprint membership resolves identically on Cloud and
+    // Server/Data Center — same JQL fields, only the search endpoint and
+    // pagination dialect differ, both handled by runJqlSearch. `sprint` JQL
+    // requires the Jira Software (Agile) plugin, which is present on any
+    // instance that surfaces sprints at all (same assumption as the versions/
+    // sprints discovery path). The ORDER BY keeps DC's startAt paging
+    // deterministic across pages.
+    const jqlClause =
+      ref.kind === "RELEASE"
+        ? `fixVersion = ${ref.id} ORDER BY created DESC`
+        : `sprint = ${ref.id} ORDER BY created DESC`;
 
-    const response = await this.makeRequest<any>(searchUrl);
-
-    const issues = (response.issues || []).map((issue: any) =>
-      this.mapJiraIssue(issue)
-    );
-    const cloudNextPageToken: string | undefined = response.nextPageToken;
-    // Prefer the cursor / isLast flag the new endpoint provides; fall back to
-    // the legacy total+startAt math only if the response still carries them
-    // (older Server/DC instances), then to "a full page implies more".
-    const hasMore =
-      typeof response.isLast === "boolean"
-        ? !response.isLast
-        : cloudNextPageToken
-          ? true
-          : typeof response.total === "number"
-            ? (response.startAt || 0) + issues.length < response.total
-            : issues.length >= (options.limit || 50);
-
-    // Server/Data Center's classic /search endpoint has no cursor of its own
-    // (no nextPageToken, no isLast) — it pages by startAt. Synthesize one so
-    // callers that only advance via pageToken (SyncService.
-    // performProjectImport) don't re-read page 1 forever: the deployment
-    // already accepts an incoming pageToken as startAt (see options.pageToken
-    // handling above).
-    const nextPageToken =
-      cloudNextPageToken ??
-      (this.deployment === "server" && hasMore
-        ? String((response.startAt ?? 0) + issues.length)
-        : undefined);
-
-    return {
-      issues,
-      // The new endpoint omits `total`; report the page count so callers that
-      // read `total` get an honest number instead of NaN/undefined. Callers
-      // needing an exact match count paginate via `nextPageToken`.
-      total:
-        typeof response.total === "number" ? response.total : issues.length,
-      hasMore,
-      nextPageToken,
-    };
+    return this.runJqlSearch(jqlClause, options);
   }
 
   protected async addComment(issueId: string, comment: string): Promise<void> {
@@ -924,10 +1712,6 @@ export class JiraAdapter extends BaseAdapter {
         }),
       }
     );
-  }
-
-  private userFacingBaseUrl(): string {
-    return (this.baseUrl ?? this.siteUrl ?? "").replace(/\/+$/, "");
   }
 
   private mapJiraIssue(jiraIssue: any): IssueData {
@@ -996,6 +1780,13 @@ export class JiraAdapter extends BaseAdapter {
             .filter((n: string | null): n is string => n !== null)
         : [],
       customFields: this.extractCustomFields(fields),
+      // Parent ref (D-14): mirrors the mapLinkedIssues guard below — only
+      // set when the source issue actually has a parent (sub-task / epic
+      // child). Requires the request's `fields` param to include `parent`.
+      parent:
+        fields.parent && fields.parent.id
+          ? { id: String(fields.parent.id), key: fields.parent.key }
+          : undefined,
       createdAt: new Date(fields.created),
       updatedAt: new Date(fields.updated),
       // Prefer the canonical site base. Under OAuth, jiraIssue.self points at
@@ -1288,6 +2079,30 @@ export class JiraAdapter extends BaseAdapter {
         }
         const tag = node.type === "tableHeader" ? "th" : "td";
         return `<${tag}>${cellContent}</${tag}>`;
+
+      case "mediaSingle":
+      case "mediaGroup":
+        // Containers around media nodes — recurse so the placeholders below
+        // surface. Previously these fell through to default: and, having no
+        // text children, rendered as "" — every embedded screenshot silently
+        // vanished from the issue description.
+        return (node.content ?? [])
+          .map((child: any) => this.convertAdfNodeToHtml(child))
+          .join("");
+
+      case "media":
+      case "mediaInline": {
+        // The bytes live in Jira's media service (and appear in the issue's
+        // attachment list); here we only make the text acknowledge the image
+        // so descriptions read coherently and downstream consumers (LLM
+        // prompts, previews) know something visual was here.
+        const label =
+          node.attrs?.alt ||
+          node.attrs?.title ||
+          node.attrs?.id ||
+          "attachment";
+        return `<p>[image: ${this.escapeHtml(String(label))}]</p>`;
+      }
 
       default:
         // For unknown types, try to extract content from children

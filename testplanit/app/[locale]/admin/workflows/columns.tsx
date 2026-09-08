@@ -2,9 +2,9 @@ import DynamicIcon from "@/components/DynamicIcon";
 import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { WorkflowScope } from "@prisma/client";
+import { WorkflowScope } from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
-import { GripVertical, SquarePen, Trash2 } from "lucide-react";
+import { GripVertical, SquarePen, Trash } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { IconName } from "~/types/globals";
@@ -53,10 +53,10 @@ export const useColumns = (
         size: 500,
         cell: ({ row }) => (
           <div className="relative flex items-center gap-1 group/row">
-            <GripVertical className="absolute -left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground opacity-0 group-hover/row:opacity-100 transition-opacity cursor-grab" />
+            <GripVertical className="absolute -start-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground opacity-0 group-hover/row:opacity-100 transition-opacity cursor-grab" />
             <DynamicIcon
-              name={row.original.icon.name as IconName}
-              color={row.original.color.value}
+              name={(row.original.icon?.name ?? "circle") as IconName}
+              color={row.original.color?.value}
             />
             <span>{row.original.name}</span>
           </div>
@@ -165,11 +165,14 @@ export const useColumns = (
         size: 100,
         cell: ({ row }) => (
           <div className="text-center">
+            {/* Count from the query's _count; the project list itself loads
+                lazily (filtered to this workflow) only when the popover opens. */}
             <ProjectListDisplay
-              projects={row.original.projects.map((p) => ({
-                projectId: p.projectId,
-                name: p.project.name,
-              }))}
+              count={row.original._count.projects}
+              filter={{
+                isDeleted: false,
+                assignedWorkflows: { some: { workflowId: row.original.id } },
+              }}
             />
           </div>
         ),
@@ -181,13 +184,13 @@ export const useColumns = (
         enableSorting: false,
         enableHiding: false,
         meta: { isPinned: "right" },
-        size: 80,
+        size: 100,
         cell: ({ row }) => {
           const workflow = row.original;
           const canDelete =
             !isLastWorkflowOfType(workflow, workflows) && !workflow.isDefault;
           return (
-            <div className="bg-primary-foreground whitespace-nowrap flex justify-center gap-1">
+            <div className="bg-primary-foreground whitespace-nowrap flex justify-end gap-1">
               <Button
                 variant="ghost"
                 className="px-2 py-1 h-auto"
@@ -203,7 +206,7 @@ export const useColumns = (
                   onClick={() => onDeleteWorkflow?.(workflow)}
                   aria-label={tCommon("actions.delete")}
                 >
-                  <Trash2 className="h-5 w-5" />
+                  <Trash className="h-5 w-5" />
                 </Button>
               ) : (
                 <Button
@@ -212,7 +215,7 @@ export const useColumns = (
                   disabled
                   aria-label={tCommon("actions.delete")}
                 >
-                  <Trash2 className="h-5 w-5" />
+                  <Trash className="h-5 w-5" />
                 </Button>
               )}
             </div>

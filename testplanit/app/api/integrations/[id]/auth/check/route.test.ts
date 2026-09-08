@@ -73,7 +73,7 @@ describe("GET /api/integrations/[id]/auth/check", () => {
 
     expect(response.status).toBe(401);
     expect(data.authUrl).toBe(
-      "/api/integrations/oauth/gitlab/auth?integrationId=1"
+      "/api/integrations/oauth/gitlab/auth?integrationId=1&returnUrl=%2Fintegrations%2Fauth-complete"
     );
   });
 
@@ -112,7 +112,7 @@ describe("GET /api/integrations/[id]/auth/check", () => {
     expect(response.status).toBe(401);
     expect(data.error).toBe("Token expired");
     expect(data.authUrl).toBe(
-      "/api/integrations/oauth/gitea/auth?integrationId=1"
+      "/api/integrations/oauth/gitea/auth?integrationId=1&returnUrl=%2Fintegrations%2Fauth-complete"
     );
   });
 

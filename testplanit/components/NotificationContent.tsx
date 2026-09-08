@@ -94,7 +94,7 @@ export function NotificationContent({
             data.testRunGroups.map((group: any) => (
               <div
                 key={group.testRunId}
-                className="mt-2 pl-2 border-l-2 border-muted"
+                className="mt-2 ps-2 border-s-2 border-muted"
               >
                 <div className="flex items-center gap-1 flex-wrap">
                   <span className="text-xs">{t("testRun")}</span>
@@ -388,6 +388,37 @@ export function NotificationContent({
     );
   }
 
+  // Handle expired integration connections (OAuth token no longer refreshable)
+  if (notification.type === "INTEGRATION_AUTH_EXPIRED") {
+    const integrationName = data.integrationName || notification.title;
+    // The OAuth kickoff is an API route (no locale prefix), so use a plain
+    // anchor rather than the i18n Link wrapper.
+    const reconnectUrl =
+      data.provider && data.integrationId
+        ? `/api/integrations/oauth/${String(data.provider).toLowerCase()}/auth?integrationId=${data.integrationId}&returnUrl=${encodeURIComponent("/integrations/auth-complete")}`
+        : null;
+
+    return (
+      <div className="space-y-2">
+        <h4 className="font-medium text-sm">
+          {t("integrationAuthExpiredTitle")}
+        </h4>
+        <div className="text-sm text-muted-foreground space-y-1">
+          <p>{t("integrationAuthExpiredMessage", { integrationName })}</p>
+          {reconnectUrl && (
+            <a
+              href={reconnectUrl}
+              className="font-medium text-primary hover:underline inline-flex items-center gap-1"
+            >
+              {t("integrationAuthExpiredReconnect")}
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   // Handle LLM budget alerts
   if (notification.type === "LLM_BUDGET_ALERT") {
     const threshold = data.threshold;
@@ -575,6 +606,30 @@ export function NotificationContent({
             ? undefined
             : data.decisionComment;
 
+      // A bulk request collapses N requests into this one row, so neither the
+      // representative entity nor its transition is the right thing to show:
+      // the batch spans many entities and (under strict-transitive gating)
+      // potentially several different gates. Link to the review inbox and
+      // state the count instead.
+      const bulkCount =
+        notification.type === "REVIEW_REQUESTED" &&
+        typeof data.bulkCount === "number" &&
+        data.bulkCount > 1
+          ? data.bulkCount
+          : null;
+
+      const bulkSummary =
+        bulkCount === null
+          ? null
+          : t(
+              data.entityType === "CASE"
+                ? "reviewBulkSummaryCase"
+                : data.entityType === "RUN"
+                  ? "reviewBulkSummaryRun"
+                  : "reviewBulkSummarySession",
+              { count: bulkCount }
+            );
+
       return (
         <div className="space-y-2">
           <h4 className="font-medium text-sm">{title}</h4>
@@ -585,10 +640,10 @@ export function NotificationContent({
             </div>
             <div className="flex items-center gap-1">
               <Link
-                href={entityLink}
+                href={bulkCount !== null ? "/reviews" : entityLink}
                 className="font-medium text-primary hover:underline inline-flex items-center gap-1"
               >
-                {entityNameDisplay}
+                {bulkCount !== null ? bulkSummary : entityNameDisplay}
                 <ExternalLink className="h-3 w-3" />
               </Link>
             </div>
@@ -600,7 +655,7 @@ export function NotificationContent({
                 size="sm"
               />
             </div>
-            {data.fromStateName && data.toStateName && (
+            {bulkCount === null && data.fromStateName && data.toStateName && (
               <div className="text-xs">
                 {t("reviewTransition", {
                   from: data.fromStateName,
@@ -608,13 +663,23 @@ export function NotificationContent({
                 })}
               </div>
             )}
-            {notification.type === "REVIEW_REMINDER" && data.hoursPending && (
-              <div className="text-xs">
-                {t("reviewReminderHoursPending", {
-                  hoursPending: data.hoursPending,
-                })}
-              </div>
-            )}
+            {/* `hoursPending > 0` rather than a bare truthiness check: a
+                reminder sent on a request less than an hour old carries 0,
+                and `0 && <div>` evaluates to 0 — which React renders as a
+                stray "0" in the notification body. Zero also has nothing to
+                say ("Pending for 0 hours"), so the line is simply omitted.
+                Only reachable since reminders became manually sendable — the
+                scheduled scan never looks at a request younger than the
+                threshold, whose minimum is a full day. */}
+            {notification.type === "REVIEW_REMINDER" &&
+              typeof data.hoursPending === "number" &&
+              data.hoursPending > 0 && (
+                <div className="text-xs">
+                  {t("reviewReminderHoursPending", {
+                    hoursPending: data.hoursPending,
+                  })}
+                </div>
+              )}
             {typeof commentText === "string" && commentText.length > 0 && (
               <div className="text-xs italic line-clamp-2">
                 {t("reviewCommentPreview", { comment: commentText })}
@@ -747,6 +812,64 @@ export function NotificationContent({
             {data.testRunName && (
               <p className="text-xs truncate">{data.testRunName}</p>
             )}
+          </div>
+        </div>
+      );
+    }
+
+    // Fallback for notifications without complete data
+    return (
+      <div className="space-y-1">
+        <h4 className="font-medium text-sm">{notification.title}</h4>
+        <p className="text-sm text-muted-foreground">{notification.message}</p>
+      </div>
+    );
+  }
+
+  if (notification.type === "RUN_READY_TO_COMPLETE") {
+    if (data.projectId && data.testRunId) {
+      const runLink = `/projects/runs/${data.projectId}/${data.testRunId}`;
+      return (
+        <div
+          className="space-y-2"
+          data-testid="notification-run-ready-to-complete"
+        >
+          <h4 className="font-medium text-sm">
+            {t("runReadyToCompleteTitle")}
+          </h4>
+          <div className="text-sm text-muted-foreground space-y-1">
+            <p>
+              {t("runReadyToCompleteExecuted", {
+                count: data.caseCount ?? 0,
+              })}
+            </p>
+            {/* The run is named the way every other notification names one:
+                a linked TestRunNameDisplay with its icon, then "in project"
+                and the project cell. */}
+            <div className="flex items-center gap-1">
+              <Link
+                href={runLink}
+                data-testid="notification-run-ready-link"
+                className="font-medium text-primary hover:underline inline-flex items-center gap-1"
+              >
+                <TestRunNameDisplay
+                  testRun={{
+                    id: data.testRunId,
+                    name: data.testRunName || data.entityName,
+                  }}
+                  showIcon={true}
+                />
+                <ExternalLink className="h-3 w-3" />
+              </Link>
+            </div>
+            <div className="flex items-center gap-1 flex-wrap">
+              <span>{t("inProject")}</span>
+              <ProjectNameCell
+                projectId={data.projectId}
+                value={data.projectName}
+                size="sm"
+              />
+            </div>
           </div>
         </div>
       );

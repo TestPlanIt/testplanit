@@ -1,27 +1,20 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { Filter } from "@/components/tables/Filter";
-import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
-import { AsyncCombobox } from "@/components/ui/async-combobox";
-import { Button } from "@/components/ui/button";
+import { DataTable } from "@/components/tables/DataTable";
 import { Form } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { AuditAction } from "@prisma/client";
+import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
+import { AuditAction } from "~/zenstack/models";
 import type { VisibilityState } from "@tanstack/react-table";
 import { endOfDay, format, startOfDay } from "date-fns";
-import { Download, Users } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
-import { useCallback, useMemo, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DateRange } from "react-day-picker";
 import { useForm, useWatch } from "react-hook-form";
 import { AuditLogDetailModal } from "~/app/[locale]/admin/audit-logs/AuditLogDetailModal";
@@ -29,30 +22,44 @@ import {
   ExtendedAuditLog,
   useColumns,
 } from "~/app/[locale]/admin/audit-logs/columns";
-import type { AuditLogUserOption } from "~/app/actions/searchAuditLogUsers";
-import { searchProjectAuditLogUsers } from "~/app/actions/searchProjectAuditLogUsers";
+import type { AuditLogUserOption } from "~/lib/services/auditLog/searchAuditLogUsers";
 import { DateRangePickerField } from "~/components/forms/DateRangePickerField";
+import { AUDIT_ACTIONS, formatAuditAction } from "~/lib/audit/auditActions";
 import { groupAuditRows } from "~/lib/audit/groupAuditRows";
 import { SYSTEM_ACTOR_ID } from "~/lib/auditContextConstants";
-import {
-  useCountAuditLog,
-  useFindManyAuditLog,
-  useInfiniteFindManyAuditLog,
-} from "~/lib/hooks";
 import { logDataExport } from "~/lib/services/auditClient";
 
-const PAGE_SIZE = 50;
+// Rows fetched per scroll page — matches the admin audit-log surface: audit
+// rows are cheap (heavy Json columns excluded) and operationId grouping can
+// collapse a whole page into one visible row, so batch large.
+const PAGE_SIZE = 1000;
+
+// Options shown per page inside the filter pickers.
+const FILTER_PAGE_SIZE = 25;
 
 interface ProjectAuditLogProps {
   projectId: number;
+  /**
+   * Reports the CSV-export handler and its enabled/busy state up to the page so
+   * the Export button can live in the card header (matching the admin audit-log
+   * layout) while the export logic stays with the filter state here.
+   */
+  onExportStateChange?: (state: {
+    canExport: boolean;
+    isExporting: boolean;
+    exportCsv: () => void;
+  }) => void;
 }
 
-export function ProjectAuditLog({ projectId }: ProjectAuditLogProps) {
+export function ProjectAuditLog({
+  projectId,
+  onExportStateChange,
+}: ProjectAuditLogProps) {
   const { data: session } = useSession();
+  const locale = useLocale();
   const t = useTranslations("admin.auditLogs");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
-  const tUserMenu = useTranslations("userMenu");
 
   const [sortConfig, setSortConfig] = useState<{
     column: string;
@@ -60,18 +67,21 @@ export function ProjectAuditLog({ projectId }: ProjectAuditLogProps) {
   }>({ column: "timestamp", direction: "desc" });
   const [searchString, setSearchString] = useState("");
   const debouncedSearchString = useDebounce(searchString, 500);
-  const [actionFilter, setActionFilter] = useState<AuditAction | "all">("all");
-  const [entityTypeFilter, setEntityTypeFilter] = useState<string>("all");
-  const [selectedUser, setSelectedUser] = useState<AuditLogUserOption | null>(
-    null
-  );
-  const userFilter = selectedUser?.userId ?? "all";
+  // Every filter below is additive: an empty selection means "no filter", so
+  // the picker placeholder reads "All …".
+  const [actionFilter, setActionFilter] = useState<AuditAction[]>([]);
+  const [entityTypeFilter, setEntityTypeFilter] = useState<string[]>([]);
+  const [selectedUsers, setSelectedUsers] = useState<AuditLogUserOption[]>([]);
   const dateForm = useForm<{ dateRange: DateRange | undefined }>({
     defaultValues: { dateRange: undefined },
   });
   const dateRange = useWatch({ control: dateForm.control, name: "dateRange" });
   const [selectedLogId, setSelectedLogId] = useState<string | null>(null);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  // Hide-column requests from the table's header menu are routed through the
+  // Columns control (the visibility owner) so persistence and its checkboxes
+  // stay in sync.
+  const hideColumnRef = useRef<((columnId: string) => void) | null>(null);
   const [isExporting, setIsExporting] = useState(false);
 
   // Always hard-scoped to this project; the audit log denormalizes projectId
@@ -107,16 +117,18 @@ export function ProjectAuditLog({ projectId }: ProjectAuditLogProps) {
       });
     }
 
-    if (actionFilter !== "all") {
-      conditions.push({ action: actionFilter });
+    if (actionFilter.length > 0) {
+      conditions.push({ action: { in: actionFilter } });
     }
 
-    if (entityTypeFilter !== "all") {
-      conditions.push({ entityType: entityTypeFilter });
+    if (entityTypeFilter.length > 0) {
+      conditions.push({ entityType: { in: entityTypeFilter } });
     }
 
-    if (userFilter !== "all") {
-      conditions.push({ userId: userFilter });
+    if (selectedUsers.length > 0) {
+      conditions.push({
+        userId: { in: selectedUsers.map((user) => user.userId) },
+      });
     }
 
     if (dateRange?.from) {
@@ -134,11 +146,13 @@ export function ProjectAuditLog({ projectId }: ProjectAuditLogProps) {
     debouncedSearchString,
     actionFilter,
     entityTypeFilter,
-    userFilter,
+    selectedUsers,
     dateRange,
   ]);
 
-  const { data: totalCount } = useCountAuditLog({ where: whereClause });
+  const { data: totalCount } = useClientQueries(schema).auditLog.useCount({
+    where: whereClause,
+  });
 
   const baseArgs = {
     where: whereClause,
@@ -154,7 +168,7 @@ export function ProjectAuditLog({ projectId }: ProjectAuditLogProps) {
       userEmail: true,
       userName: true,
       projectId: true,
-      project: { select: { name: true } },
+      project: { select: { name: true, key: true } },
       operationId: true,
       sourceTable: true,
     },
@@ -167,7 +181,7 @@ export function ProjectAuditLog({ projectId }: ProjectAuditLogProps) {
     hasNextPage,
     isFetchingNextPage,
     isLoading,
-  } = useInfiniteFindManyAuditLog(baseArgs, {
+  } = useClientQueries(schema).auditLog.useInfiniteFindMany(baseArgs, {
     getNextPageParam: (lastPage, allPages) => {
       if (!lastPage || lastPage.length < PAGE_SIZE) return undefined;
       return {
@@ -201,17 +215,74 @@ export function ProjectAuditLog({ projectId }: ProjectAuditLogProps) {
 
   // Entity types present in this project's audit log, so the filter lists only
   // relevant types.
-  const { data: entityTypes } = useFindManyAuditLog({
+  const { data: entityTypes } = useClientQueries(schema).auditLog.useFindMany({
     where: { projectId },
     select: { entityType: true },
     distinct: ["entityType"],
     orderBy: { entityType: "asc" },
   });
 
+  // A plain request rather than a Server Action: Next runs Server Actions one
+  // at a time per client, so a slow actor search would stall every other action
+  // this page issues until a reload.
   const fetchUserOptions = useCallback(
-    (query: string, page: number, pageSize: number) =>
-      searchProjectAuditLogUsers(projectId, query, page, pageSize),
+    async (query: string, page: number, pageSize: number) => {
+      const params = new URLSearchParams({
+        q: query,
+        page: String(page),
+        pageSize: String(pageSize),
+      });
+      const response = await fetch(
+        `/api/projects/${projectId}/audit-log-users?${params}`
+      );
+      if (!response.ok) {
+        throw new Error(`Failed to load audit log users (${response.status})`);
+      }
+      return (await response.json()) as {
+        results: AuditLogUserOption[];
+        total: number;
+      };
+    },
     [projectId]
+  );
+
+  // Action / entity-type options are already in memory, so their pickers filter
+  // and page locally.
+  const fetchActionOptions = useCallback(
+    (query: string, page: number, pageSize: number) => {
+      const q = query.trim().toLowerCase();
+      const filtered = q
+        ? AUDIT_ACTIONS.filter((action) =>
+            formatAuditAction(action).toLowerCase().includes(q)
+          )
+        : AUDIT_ACTIONS;
+      return Promise.resolve({
+        results: filtered.slice(page * pageSize, page * pageSize + pageSize),
+        total: filtered.length,
+      });
+    },
+    []
+  );
+
+  const entityTypeOptions = useMemo(
+    () => (entityTypes ?? []).map((et) => et.entityType),
+    [entityTypes]
+  );
+
+  const fetchEntityTypeOptions = useCallback(
+    (query: string, page: number, pageSize: number) => {
+      const q = query.trim().toLowerCase();
+      const filtered = q
+        ? entityTypeOptions.filter((entityType) =>
+            entityType.toLowerCase().includes(q)
+          )
+        : entityTypeOptions;
+      return Promise.resolve({
+        results: filtered.slice(page * pageSize, page * pageSize + pageSize),
+        total: filtered.length,
+      });
+    },
+    [entityTypeOptions]
   );
 
   const handleViewDetails = useCallback((log: { id: string }) => {
@@ -219,7 +290,9 @@ export function ProjectAuditLog({ projectId }: ProjectAuditLogProps) {
   }, []);
 
   // Fetch all filtered logs for export (no pagination).
-  const { refetch: refetchAllLogs } = useFindManyAuditLog(
+  const { refetch: refetchAllLogs } = useClientQueries(
+    schema
+  ).auditLog.useFindMany(
     {
       orderBy: { [sortConfig.column]: sortConfig.direction },
       include: { project: { select: { name: true } } },
@@ -267,7 +340,9 @@ export function ProjectAuditLog({ projectId }: ProjectAuditLogProps) {
           log.entityType,
           log.entityId || "",
           log.entityName || "",
-          log.userName || tGlobal("userMenu.themes.system"),
+          log.userId === SYSTEM_ACTOR_ID
+            ? t("systemActor")
+            : log.userName || log.userId || "",
           log.userEmail || "",
           log.project?.name || "",
           ipAddress,
@@ -316,9 +391,13 @@ export function ProjectAuditLog({ projectId }: ProjectAuditLogProps) {
         filters: {
           projectId,
           search: debouncedSearchString || undefined,
-          action: actionFilter !== "all" ? actionFilter : undefined,
-          entityType: entityTypeFilter !== "all" ? entityTypeFilter : undefined,
-          user: userFilter !== "all" ? userFilter : undefined,
+          action: actionFilter.length > 0 ? actionFilter : undefined,
+          entityType:
+            entityTypeFilter.length > 0 ? entityTypeFilter : undefined,
+          user:
+            selectedUsers.length > 0
+              ? selectedUsers.map((user) => user.userId)
+              : undefined,
           dateFrom: dateRange?.from?.toISOString(),
           dateTo: dateRange?.to?.toISOString(),
         },
@@ -336,7 +415,7 @@ export function ProjectAuditLog({ projectId }: ProjectAuditLogProps) {
     debouncedSearchString,
     actionFilter,
     entityTypeFilter,
-    userFilter,
+    selectedUsers,
     dateRange,
   ]);
 
@@ -349,27 +428,11 @@ export function ProjectAuditLog({ projectId }: ProjectAuditLogProps) {
 
   // Reuse the admin audit-log columns, but drop the project column — every row
   // belongs to the same project here.
-  const allColumns = useColumns(
-    userPreferences,
-    handleViewDetails,
-    t,
-    tCommon,
-    tUserMenu
-  );
+  const allColumns = useColumns(userPreferences, handleViewDetails, t, tCommon);
   const columns = useMemo(
     () => allColumns.filter((c) => c.id !== "project"),
     [allColumns]
   );
-
-  const auditActions: AuditAction[] = [
-    "CREATE",
-    "UPDATE",
-    "DELETE",
-    "BULK_CREATE",
-    "BULK_UPDATE",
-    "BULK_DELETE",
-    "DATA_EXPORTED",
-  ];
 
   const handleSortChange = (column: string) => {
     const direction =
@@ -379,92 +442,95 @@ export function ProjectAuditLog({ projectId }: ProjectAuditLogProps) {
     setSortConfig({ column, direction });
   };
 
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig({ column: "timestamp", direction: "desc" });
+    } else {
+      setSortConfig({ column, direction });
+    }
+  };
+
+  // Surface the export handler + its state to the page so the Export button can
+  // render in the card header alongside the title (matching the admin layout).
+  useEffect(() => {
+    onExportStateChange?.({
+      canExport: (totalCount ?? 0) > 0,
+      isExporting,
+      exportCsv: handleExportCsv,
+    });
+  }, [onExportStateChange, totalCount, isExporting, handleExportCsv]);
+
   return (
     <div className="flex flex-col gap-4">
-      {/* Search + Export Row */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="min-w-[350px] flex-1">
-          <Filter
-            key="project-audit-logs-filter"
-            placeholder={t("filterPlaceholder")}
-            initialSearchString={searchString}
-            onSearchChange={setSearchString}
-          />
-        </div>
+      {/* Search */}
+      <Filter
+        key="project-audit-logs-filter"
+        className="max-w-none"
+        placeholder={t("filterPlaceholder")}
+        initialSearchString={searchString}
+        onSearchChange={setSearchString}
+      />
 
-        <Button
-          variant="outline"
-          onClick={handleExportCsv}
-          disabled={isExporting || !totalCount}
-        >
-          <Download className="h-4 w-4" />
-          {isExporting
-            ? tGlobal("repository.exportModal.exporting")
-            : t("exportCsv")}
-        </Button>
-      </div>
-
-      {/* Filters Row */}
-      <div className="flex flex-wrap items-center gap-4">
-        <div className="w-[260px]">
+      {/* Filters */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        <div>
           <Label className="sr-only">{t("timeRange")}</Label>
           <Form {...dateForm}>
             <DateRangePickerField control={dateForm.control} name="dateRange" />
           </Form>
         </div>
 
-        <div className="w-[180px]">
+        <div data-testid="project-audit-log-action-filter">
           <Label className="sr-only">{t("filterAction")}</Label>
-          <Select
+          <MultiAsyncCombobox<AuditAction>
             value={actionFilter}
-            onValueChange={(value) =>
-              setActionFilter(value as AuditAction | "all")
-            }
-          >
-            <SelectTrigger>
-              <SelectValue placeholder={t("allActions")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t("allActions")}</SelectItem>
-              {auditActions.map((action) => (
-                <SelectItem key={action} value={action}>
-                  {action.replace(/_/g, " ")}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            onValueChange={setActionFilter}
+            fetchOptions={fetchActionOptions}
+            getOptionValue={(action) => action}
+            getOptionLabel={formatAuditAction}
+            renderOption={(action) => (
+              <span className="truncate">{formatAuditAction(action)}</span>
+            )}
+            placeholder={t("allActions")}
+            pageSize={FILTER_PAGE_SIZE}
+          />
         </div>
 
-        <div className="w-[180px]">
+        <div>
           <Label className="sr-only">{t("filterEntityType")}</Label>
-          <Select value={entityTypeFilter} onValueChange={setEntityTypeFilter}>
-            <SelectTrigger>
-              <SelectValue placeholder={t("allEntityTypes")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t("allEntityTypes")}</SelectItem>
-              {entityTypes?.map((et) => (
-                <SelectItem key={et.entityType} value={et.entityType}>
-                  {et.entityType}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <MultiAsyncCombobox<string>
+            value={entityTypeFilter}
+            onValueChange={setEntityTypeFilter}
+            fetchOptions={fetchEntityTypeOptions}
+            getOptionValue={(entityType) => entityType}
+            getOptionLabel={(entityType) => entityType}
+            renderOption={(entityType) => (
+              <span className="truncate">{entityType}</span>
+            )}
+            placeholder={t("allEntityTypes")}
+            pageSize={FILTER_PAGE_SIZE}
+          />
         </div>
 
-        <div className="w-[260px]">
+        <div>
           <Label className="sr-only">{tCommon("access.user")}</Label>
-          <AsyncCombobox<AuditLogUserOption>
-            className="w-full"
-            value={selectedUser}
-            onValueChange={setSelectedUser}
+          <MultiAsyncCombobox<AuditLogUserOption>
+            value={selectedUsers}
+            onValueChange={setSelectedUsers}
             fetchOptions={fetchUserOptions}
             getOptionValue={(u) => u.userId}
-            placeholder={tCommon("searchUsers")}
-            showTotal
-            showUnassigned
-            unassignedLabel={t("allUsers")}
-            unassignedIcon={<Users className="mr-2 h-4 w-4" />}
+            getOptionLabel={(u) =>
+              u.userId === SYSTEM_ACTOR_ID
+                ? t("systemActor")
+                : u.userName || u.userEmail || u.userId
+            }
+            placeholder={t("allUsers")}
+            pageSize={FILTER_PAGE_SIZE}
             renderOption={(u) => {
               const isSystem = u.userId === SYSTEM_ACTOR_ID;
               const primary = isSystem
@@ -496,34 +562,41 @@ export function ProjectAuditLog({ projectId }: ProjectAuditLogProps) {
           storageKey="project-audit-logs"
           columns={columns}
           onVisibilityChange={setColumnVisibility}
+          hideColumnRef={hideColumnRef}
         />
 
         {rows.length > 0 && (
           <p className="text-sm text-muted-foreground">
             {t("showing", {
-              loaded: rows.length.toLocaleString(),
-              total: (totalCount ?? rows.length).toLocaleString(),
+              loaded: rows.length.toLocaleString(locale),
+              total: (totalCount ?? rows.length).toLocaleString(locale),
             })}
           </p>
         )}
       </div>
 
-      {/* Data Table — virtualized, infinite scroll. */}
-      <div className="mt-4 h-[calc(100vh-22rem)] min-h-[400px] w-full">
-        <VirtualizedDataTable
+      {/* Data Table — virtualized, infinite scroll. The table sits inside the
+          gap-4 column, so its own top margin is dropped to avoid doubling the
+          space above it (matches the admin audit-log toolbar→table gap). */}
+      <div className="h-[calc(100vh-22rem)] min-h-[400px] w-full">
+        <DataTable
+          virtualized
           columns={columns as any}
           data={groupedData as any}
           getSubRows={(row) => row.auditChildren}
           subRowsLabel={t("relatedChanges")}
           sortConfig={sortConfig}
           onSortChange={handleSortChange}
+          onSortColumn={handleSortColumn}
+          onHideColumn={(columnId) => hideColumnRef.current?.(columnId)}
           columnVisibility={columnVisibility}
           onColumnVisibilityChange={setColumnVisibility}
           flexColumnId="entityName"
+          columnSizingStorageKey="project-audit-log"
           hasMore={!!hasNextPage}
           isLoading={isLoading || isFetchingNextPage}
           onLoadMore={fetchNextPage}
-          resetKey={`${debouncedSearchString}|${actionFilter}|${entityTypeFilter}|${userFilter}|${dateRange?.from?.toISOString() ?? ""}|${dateRange?.to?.toISOString() ?? ""}`}
+          resetKey={`${debouncedSearchString}|${actionFilter.join(",")}|${entityTypeFilter.join(",")}|${selectedUsers.map((u) => u.userId).join(",")}|${dateRange?.from?.toISOString() ?? ""}|${dateRange?.to?.toISOString() ?? ""}`}
           testIdPrefix="project-audit-logs-table"
           rowTestIdPrefix="project-audit-log-row"
         />

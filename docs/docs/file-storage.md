@@ -206,11 +206,43 @@ This tells the app to generate presigned URLs using your public domain instead o
 
 ### File Size Limits
 
-Default limits (configurable):
+Each upload type has its own ceiling:
 
-- **Maximum file size**: 100MB per file
+| Upload type            | Maximum size         |
+| ---------------------- | -------------------- |
+| Attachments            | 10 MB (configurable) |
+| Inline document images | 10 MB (configurable) |
+| Project icons          | 4 MB                 |
+| Avatars                | 2 MB                 |
+
+A file over the limit is rejected before it is stored, with a message naming the
+maximum for that type.
+
+Attachments and inline document images share one knob, `UPLOAD_MAX_MB` (default
+`10`). Set it in the `.env` that Docker Compose reads, then rebuild:
+
+```bash
+# testplanit/.env
+UPLOAD_MAX_MB=100
+```
+
+```bash
+docker compose -f docker-compose.prod.yml build prod
+docker compose -f docker-compose.prod.yml up -d prod
+```
+
+A **rebuild** is required, not just a restart. Next.js freezes the matching
+server-action body limit into the standalone build, so a runtime-only change
+silently has no effect and uploads keep failing with an opaque error. Project
+icons and avatars are deliberately fixed — they are UI thumbnails, not
+operator-sized user payloads.
+
+The bundled nginx separately caps any request body sent to the app at 10 MB. In
+proxy mode the file travels through the app server, so that ceiling applies to
+the upload as well — raising `UPLOAD_MAX_MB` alone is not enough. See
+`nginx-local/README.md` for how to raise it per deployment.
+
 - **Total attachments**: No limit per entity
-- **Concurrent uploads**: 5 files maximum
 
 ## Attachment Management
 
@@ -226,9 +258,21 @@ Attachments appear in several locations:
 ### Download and Access
 
 - **Direct Download**: Click attachment name to download
-- **Preview**: Supported file types show inline preview
+- **Preview**: Supported file types show inline preview (see [Inline Previews](#inline-previews))
 - **Secure Access**: All downloads use signed URLs with expiration
 - **Permission Checks**: Access based on entity permissions
+
+### Inline Previews
+
+Many attachment types render inline rather than only downloading:
+
+- **Images and PDFs** render inline on an entity's details view and open in a large-preview carousel. The carousel is keyboard-navigable — the left/right arrow keys move between attachments and Escape closes it.
+- **Word (`.docx`), Excel (`.xlsx`, `.xls`), and PowerPoint (`.pptx`) documents** render in the browser: Word and Excel as formatted HTML, and PowerPoint slide-by-slide with previous/next controls.
+- **Text and Markdown files** show their contents inline, with Markdown formatted and fenced code blocks syntax-highlighted.
+
+Full Office documents render only in the large preview (details view and carousel); in the compact attachment-count list they stay icon-only, so listing many attachments stays fast.
+
+An Office document falls back to a generic file icon with a download link when it can't be previewed — files larger than 25 MB, empty spreadsheets, and legacy binary `.doc` and `.ppt` files, which have no client-side renderer.
 
 ### Deleting Attachments
 
@@ -313,6 +357,37 @@ Files are accessed directly through signed URLs generated during upload. The sys
 - Check if attachment still exists in storage
 - Ensure storage credentials are valid
 - Review bucket permissions
+
+### Broken Images (400 from `/_next/image`)
+
+**Issue**: Project icons or avatars are broken in some places (e.g. the header
+Projects dropdown) but fine in others (e.g. Admin → Projects). The browser
+console shows repeated `Failed to load resource: 400` for `image`.
+
+**Cause**: Next.js's image optimizer is on and rejecting your storage host. It
+only serves URLs whose host+path are in `next.config`'s `remotePatterns`
+allowlist, which is baked at **build time** from `BASE_DOMAIN`. If `BASE_DOMAIN`
+didn't reach the build (or doesn't match your real domain), `/_next/image`
+returns `400`. Components that render through `<ProjectIcon>` (Admin) set
+`unoptimized` and bypass the optimizer, which is why they still work — that's the
+"some places" symptom.
+
+**Solutions**:
+
+- **Recommended:** rebuild with `SELF_HOSTED=true` (the compose default) so the
+  optimizer is off and images load straight from storage on any domain. It must
+  be a **build arg** — a runtime `.env.production` value is read too late and has
+  no effect. See [Images and custom domains](./building-from-source.md#images-and-custom-domains).
+- Confirm what the running image actually baked (this is authoritative — not a
+  browser cache issue if it says `false`):
+  ```bash
+  docker exec testplanit-prod \
+    grep -o '"unoptimized":[a-z]*' /app/testplanit/.next/required-server-files.json
+  # → "unoptimized":true on a correct self-hosted build
+  ```
+- If you want the optimizer on instead, rebuild with `SELF_HOSTED=false` **and**
+  `BASE_DOMAIN=<your real domain>`.
+- After a correct rebuild, hard-refresh (Cmd/Ctrl+Shift+R) to drop cached `400`s.
 
 ### Storage Configuration
 

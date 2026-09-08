@@ -54,7 +54,7 @@ describe("TestCaseSearchResult Component", () => {
         .getByText("Deleted Test")
         .parentElement?.querySelector("svg");
       expect(icon).toBeInTheDocument();
-      expect(icon).toHaveClass("lucide-trash-2");
+      expect(icon).toHaveClass("lucide-trash");
     });
 
     it("should show bot icon for JUNIT source", () => {
@@ -127,7 +127,7 @@ describe("TestCaseSearchResult Component", () => {
         .getByText("Deleted JUNIT Test")
         .parentElement?.querySelector("svg");
       expect(icon).toBeInTheDocument();
-      expect(icon).toHaveClass("lucide-trash-2");
+      expect(icon).toHaveClass("lucide-trash");
       expect(icon).not.toHaveClass("lucide-bot");
     });
   });

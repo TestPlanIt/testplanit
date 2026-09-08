@@ -1,23 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockPrisma } = vi.hoisted(() => ({
-  mockPrisma: {
+const { mockDb } = vi.hoisted(() => ({
+  mockDb: {
     integration: { findMany: vi.fn() },
     user: { findFirst: vi.fn() },
     projects: { findFirst: vi.fn() },
   },
 }));
 
-vi.mock("@/lib/prisma", () => ({ prisma: mockPrisma }));
-
-vi.mock("@prisma/client", () => ({
-  IntegrationProvider: { JIRA: "JIRA", GITHUB: "GITHUB" },
-  ProjectAccessType: {
-    NO_ACCESS: "NO_ACCESS",
-    GLOBAL_ROLE: "GLOBAL_ROLE",
-    SPECIFIC_ROLE: "SPECIFIC_ROLE",
-  },
-}));
+vi.mock("@/lib/db", () => ({ baseDb: mockDb }));
 
 import {
   authenticateForgeIntegration,
@@ -45,11 +36,11 @@ describe("forge-jira-auth", () => {
     it("returns null for a missing key without querying", async () => {
       const result = await authenticateForgeIntegration(null);
       expect(result).toBeNull();
-      expect(mockPrisma.integration.findMany).not.toHaveBeenCalled();
+      expect(mockDb.integration.findMany).not.toHaveBeenCalled();
     });
 
     it("matches the stored forgeApiKey constant-time", async () => {
-      mockPrisma.integration.findMany.mockResolvedValue([
+      mockDb.integration.findMany.mockResolvedValue([
         { id: 7, settings: { forgeApiKey: FORGE_KEY } },
       ]);
       const result = await authenticateForgeIntegration(FORGE_KEY);
@@ -57,7 +48,7 @@ describe("forge-jira-auth", () => {
     });
 
     it("returns null when no stored key matches", async () => {
-      mockPrisma.integration.findMany.mockResolvedValue([
+      mockDb.integration.findMany.mockResolvedValue([
         { id: 7, settings: { forgeApiKey: FORGE_KEY } },
       ]);
       expect(
@@ -66,14 +57,14 @@ describe("forge-jira-auth", () => {
     });
 
     it("rejects a key of different length (no length leak)", async () => {
-      mockPrisma.integration.findMany.mockResolvedValue([
+      mockDb.integration.findMany.mockResolvedValue([
         { id: 7, settings: { forgeApiKey: FORGE_KEY } },
       ]);
       expect(await authenticateForgeIntegration("short")).toBeNull();
     });
 
     it("ignores integrations without a stored key", async () => {
-      mockPrisma.integration.findMany.mockResolvedValue([
+      mockDb.integration.findMany.mockResolvedValue([
         { id: 1, settings: null },
         { id: 2, settings: {} },
       ]);
@@ -82,8 +73,8 @@ describe("forge-jira-auth", () => {
   });
 
   describe("resolveForgeUser", () => {
-    it("matches by lowercased email", async () => {
-      mockPrisma.user.findFirst.mockResolvedValue({
+    it("matches by email case-insensitively", async () => {
+      mockDb.user.findFirst.mockResolvedValue({
         id: "u1",
         name: "Ada",
         email: "ada@example.com",
@@ -94,10 +85,10 @@ describe("forge-jira-auth", () => {
         accountId: null,
       });
       expect(user?.id).toBe("u1");
-      expect(mockPrisma.user.findFirst).toHaveBeenCalledWith(
+      expect(mockDb.user.findFirst).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
-            email: "ada@example.com",
+            email: { equals: "ada@example.com", mode: "insensitive" },
             isActive: true,
             isDeleted: false,
           }),
@@ -106,7 +97,7 @@ describe("forge-jira-auth", () => {
     });
 
     it("falls back to accountId → externalId when email is absent", async () => {
-      mockPrisma.user.findFirst.mockResolvedValue({
+      mockDb.user.findFirst.mockResolvedValue({
         id: "u2",
         name: "Grace",
         email: "grace@example.com",
@@ -117,7 +108,7 @@ describe("forge-jira-auth", () => {
         accountId: "acct-123",
       });
       expect(user?.id).toBe("u2");
-      expect(mockPrisma.user.findFirst).toHaveBeenCalledWith(
+      expect(mockDb.user.findFirst).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({ externalId: "acct-123" }),
         })
@@ -125,11 +116,11 @@ describe("forge-jira-auth", () => {
     });
 
     it("returns null when neither email nor accountId matches", async () => {
-      mockPrisma.user.findFirst.mockResolvedValue(null);
+      mockDb.user.findFirst.mockResolvedValue(null);
       expect(
         await resolveForgeUser({ email: null, accountId: null })
       ).toBeNull();
-      expect(mockPrisma.user.findFirst).not.toHaveBeenCalled();
+      expect(mockDb.user.findFirst).not.toHaveBeenCalled();
     });
   });
 
@@ -148,9 +139,9 @@ describe("forge-jira-auth", () => {
     };
 
     it("uses the simple where for admins", async () => {
-      mockPrisma.projects.findFirst.mockResolvedValue({ id: 5 });
+      mockDb.projects.findFirst.mockResolvedValue({ id: 5 });
       expect(await forgeUserHasProjectAccess(adminUser, 5)).toBe(true);
-      expect(mockPrisma.projects.findFirst).toHaveBeenCalledWith(
+      expect(mockDb.projects.findFirst).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: 5, isDeleted: false },
         })
@@ -158,16 +149,16 @@ describe("forge-jira-auth", () => {
     });
 
     it("returns false when a non-admin has no access path", async () => {
-      mockPrisma.projects.findFirst.mockResolvedValue(null);
+      mockDb.projects.findFirst.mockResolvedValue(null);
       expect(await forgeUserHasProjectAccess(memberUser, 9)).toBe(false);
-      const arg = mockPrisma.projects.findFirst.mock.calls[0][0];
+      const arg = mockDb.projects.findFirst.mock.calls[0][0];
       expect(arg.where.OR).toBeDefined();
     });
   });
 
   describe("authenticateForgeWrite", () => {
     it("401s on an invalid key", async () => {
-      mockPrisma.integration.findMany.mockResolvedValue([]);
+      mockDb.integration.findMany.mockResolvedValue([]);
       const result = await authenticateForgeWrite(
         mockHeaders({ "X-Forge-Api-Key": "nope" })
       );
@@ -175,10 +166,10 @@ describe("forge-jira-auth", () => {
     });
 
     it("403s when the key is valid but the user isn't linked", async () => {
-      mockPrisma.integration.findMany.mockResolvedValue([
+      mockDb.integration.findMany.mockResolvedValue([
         { id: 3, settings: { forgeApiKey: FORGE_KEY } },
       ]);
-      mockPrisma.user.findFirst.mockResolvedValue(null);
+      mockDb.user.findFirst.mockResolvedValue(null);
       const result = await authenticateForgeWrite(
         mockHeaders({
           "X-Forge-Api-Key": FORGE_KEY,
@@ -189,16 +180,16 @@ describe("forge-jira-auth", () => {
     });
 
     it("403s when the linked user lacks project access", async () => {
-      mockPrisma.integration.findMany.mockResolvedValue([
+      mockDb.integration.findMany.mockResolvedValue([
         { id: 3, settings: { forgeApiKey: FORGE_KEY } },
       ]);
-      mockPrisma.user.findFirst.mockResolvedValue({
+      mockDb.user.findFirst.mockResolvedValue({
         id: "u9",
         name: "NoAccess",
         email: "n@x.com",
         access: "MEMBER",
       });
-      mockPrisma.projects.findFirst.mockResolvedValue(null);
+      mockDb.projects.findFirst.mockResolvedValue(null);
       const result = await authenticateForgeWrite(
         mockHeaders({
           "X-Forge-Api-Key": FORGE_KEY,
@@ -210,16 +201,16 @@ describe("forge-jira-auth", () => {
     });
 
     it("returns ok with integration + user when everything checks out", async () => {
-      mockPrisma.integration.findMany.mockResolvedValue([
+      mockDb.integration.findMany.mockResolvedValue([
         { id: 3, settings: { forgeApiKey: FORGE_KEY } },
       ]);
-      mockPrisma.user.findFirst.mockResolvedValue({
+      mockDb.user.findFirst.mockResolvedValue({
         id: "u9",
         name: "Ok User",
         email: "ok@x.com",
         access: "MEMBER",
       });
-      mockPrisma.projects.findFirst.mockResolvedValue({ id: 42 });
+      mockDb.projects.findFirst.mockResolvedValue({ id: 42 });
       const result = await authenticateForgeWrite(
         mockHeaders({
           "X-Forge-Api-Key": FORGE_KEY,

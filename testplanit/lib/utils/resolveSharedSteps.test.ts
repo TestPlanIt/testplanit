@@ -1,18 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { resolveSharedSteps, StepWithSharedRef } from "./resolveSharedSteps";
 
-// Mock prismaBase (lazy-loaded fallback when no client is passed)
-vi.mock("../prismaBase", () => ({
-  prisma: {
+// Mock rawDb (lazy-loaded fallback when no client is passed)
+vi.mock("../rawDb", () => ({
+  rawDb: {
     sharedStepItem: {
       findMany: vi.fn(),
     },
   },
 }));
 
-import { prisma } from "../prismaBase";
+import { rawDb } from "../rawDb";
 
-const mockFindMany = vi.mocked(prisma.sharedStepItem.findMany);
+const mockFindMany = vi.mocked(rawDb.sharedStepItem.findMany);
 
 function makeStep(
   overrides: Partial<StepWithSharedRef> & { id: number; order: number }

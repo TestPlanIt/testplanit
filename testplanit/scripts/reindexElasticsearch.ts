@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 
-import { PrismaClient } from "@prisma/client";
+import { createRawDbClient } from "~/lib/rawDbClient";
 import {
   getElasticsearchClient,
   REPOSITORY_CASE_INDEX,
@@ -10,7 +10,7 @@ import {
   syncProjectCasesToElasticsearch,
 } from "../services/repositoryCaseSync";
 
-const prisma = new PrismaClient();
+const db = createRawDbClient();
 
 async function deleteExistingIndex(): Promise<void> {
   const client = getElasticsearchClient();
@@ -56,7 +56,7 @@ async function reindexAllCases() {
     await initializeElasticsearchIndexes();
 
     // Step 3: Get all projects
-    const projects = await prisma.projects.findMany({
+    const projects = await db.projects.findMany({
       where: {
         isDeleted: false,
       },
@@ -79,7 +79,7 @@ async function reindexAllCases() {
         const success = await syncProjectCasesToElasticsearch(project.id);
 
         if (success) {
-          const count = await prisma.repositoryCases.count({
+          const count = await db.repositoryCases.count({
             where: {
               projectId: project.id,
               isDeleted: false,
@@ -137,7 +137,7 @@ async function reindexAllCases() {
     console.error("Reindexing failed:", error);
     process.exit(1);
   } finally {
-    await prisma.$disconnect();
+    await db.$disconnect();
   }
 }
 

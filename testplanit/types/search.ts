@@ -109,19 +109,14 @@ export interface ProjectFilters {
 }
 
 export interface IssueFilters extends BaseEntityFilters {
+  issueIds?: number[];
   externalIds?: string[];
-  hasExternalId?: boolean;
 }
 
 export interface MilestoneFilters extends BaseEntityFilters {
   milestoneTypeIds?: number[];
   parentIds?: number[];
   isCompleted?: boolean;
-  dueDateRange?: {
-    from?: Date;
-    to?: Date;
-  };
-  hasParent?: boolean;
 }
 
 export interface UnifiedSearchFilters {
@@ -152,6 +147,12 @@ export interface SearchOptions {
   };
   highlight?: boolean;
   facets?: string[];
+  /**
+   * Ask Elasticsearch for an exact hit total instead of the default 10,000-hit
+   * saturation. Callers that page through the whole id set need it to tell "all
+   * matches fetched" from "capped at the result window".
+   */
+  trackTotalHits?: boolean;
 }
 
 export interface SearchHit {

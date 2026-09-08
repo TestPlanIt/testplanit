@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+import type { JsonValue } from "@zenstackhq/orm";
 import { z } from "zod/v4";
 
 import {
@@ -40,7 +40,10 @@ const customFieldSchema = z
     fieldName: z.string().optional(),
     fieldType: z.string().optional(),
     operator: z.string().optional(),
-    value: z.any(),
+    // `.optional()` is load-bearing on z.any(): JSON.stringify drops
+    // undefined-valued keys, and zod 4.4+ rejects a MISSING key on a bare
+    // z.any() property.
+    value: z.any().optional(),
     value2: z.any().optional(),
   })
   .loose();
@@ -112,8 +115,8 @@ const projectFilterSchema = z
 const issueFilterSchema = z
   .object({
     ...baseEntityFilterShape,
+    issueIds: z.array(z.number()).optional(),
     externalIds: z.array(z.string()).optional(),
-    hasExternalId: z.boolean().optional(),
   })
   .loose();
 
@@ -123,10 +126,6 @@ const milestoneFilterSchema = z
     milestoneTypeIds: z.array(z.number()).optional(),
     parentIds: z.array(z.number()).optional(),
     isCompleted: z.boolean().optional(),
-    dueDateRange: z
-      .object({ from: coercedDate.optional(), to: coercedDate.optional() })
-      .optional(),
-    hasParent: z.boolean().optional(),
   })
   .loose();
 
@@ -173,7 +172,7 @@ export interface SavedSearchCriteria {
  */
 export function buildSavedSearchConfig(
   criteria: SavedSearchCriteria
-): Prisma.InputJsonValue {
+): JsonValue {
   const config = {
     version: SAVED_SEARCH_CONFIG_VERSION,
     query: criteria.query,
@@ -181,7 +180,7 @@ export function buildSavedSearchConfig(
     currentProjectOnly: criteria.currentProjectOnly,
     filters: criteria.filters,
   };
-  return JSON.parse(JSON.stringify(config)) as Prisma.InputJsonValue;
+  return JSON.parse(JSON.stringify(config)) as JsonValue;
 }
 
 /**

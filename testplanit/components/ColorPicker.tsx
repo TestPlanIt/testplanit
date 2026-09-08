@@ -1,13 +1,14 @@
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
 } from "@/components/ui/select";
-import { Color } from "@prisma/client";
+import type { Color } from "~/zenstack/models";
 import { Ellipsis } from "lucide-react";
 import React, { useState } from "react";
-import { useFindManyColor } from "~/lib/hooks";
 
 interface ColorPickerProps {
   onColorSelect: (colorId: number) => void;
@@ -18,7 +19,9 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
   onColorSelect,
   initialColorId,
 }) => {
-  const { data: colors, isLoading: isColorsLoading } = useFindManyColor({
+  const { data: colors, isLoading: isColorsLoading } = useClientQueries(
+    schema
+  ).color.useFindMany({
     include: { colorFamily: true },
     orderBy: { colorFamily: { order: "asc" } },
   });
@@ -66,7 +69,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
         aria-label="color-picker"
       >
         <div
-          className="aspect-square min-w-5 min-h-5 w-full rounded-full ml-2"
+          className="aspect-square min-w-5 min-h-5 w-full rounded-full ms-2"
           style={{
             backgroundColor:
               colors.find((c) => c.id === selectedColorId)?.value || "#000000",

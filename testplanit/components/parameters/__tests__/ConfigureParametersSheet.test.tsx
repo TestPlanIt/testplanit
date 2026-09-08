@@ -32,15 +32,20 @@ vi.mock("next-intl", () => ({
 // Mock ZenStack hooks BEFORE importing the component under test
 const mockUseFindManyTestCaseParameter = vi.fn();
 const mockUseCountDataSetRow = vi.fn();
-vi.mock("~/lib/hooks", () => ({
-  useFindManyTestCaseParameter: (args: any, opts?: any) =>
-    mockUseFindManyTestCaseParameter(args, opts),
-  useCountDataSetRow: (args: any, opts?: any) =>
-    mockUseCountDataSetRow(args, opts),
-  // DatasetTab (Surface F) consumes these — stub to no-op so the Sheet
-  // shell test doesn't need to model run history.
-  useCountTestRunCases: () => ({ data: 0 }),
-  useFindManyTestRunCaseIteration: () => ({ data: [] }),
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    testCaseParameter: {
+      useFindMany: (args: any, opts?: any) =>
+        mockUseFindManyTestCaseParameter(args, opts),
+    },
+    dataSetRow: {
+      useCount: (args: any, opts?: any) => mockUseCountDataSetRow(args, opts),
+    },
+    // DatasetTab (Surface F) consumes these — stub to no-op so the Sheet
+    // shell test doesn't need to model run history.
+    testRunCases: { useCount: () => ({ data: 0 }) },
+    testRunCaseIteration: { useFindMany: () => ({ data: [] }) },
+  }),
 }));
 
 // DatasetTab imports `~/lib/navigation` which builds on next-intl's

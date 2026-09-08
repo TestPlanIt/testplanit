@@ -1,21 +1,35 @@
 "use client";
 
+import { ProjectNameDisplay } from "@/components/search/ProjectNameDisplay";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { badgeVariants } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Prisma, RepositoryCaseSource } from "@prisma/client";
+import type { RepositoryCaseSource } from "~/zenstack/models";
+import type { RepositoryCasesWhereInput } from "~/zenstack/input";
 import { ListChecks } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import React, { useCallback, useMemo } from "react";
 import { cn } from "~/utils";
 import { CaseDisplay } from "./CaseDisplay";
 
 interface CasesListProps {
   caseIds?: number[];
-  filter?: Prisma.RepositoryCasesWhereInput;
+  filter?: RepositoryCasesWhereInput;
   count?: number;
   pageSize?: number;
   isLoading?: boolean;
+  /**
+   * Show each case's project name in the dropdown rows — for lists that span
+   * projects (e.g. the milestone Issues panel's cross-project total), so a
+   * row can't be mistaken for one of the current project's cases.
+   */
+  showProject?: boolean;
+  /** Open case links in a new tab (adds the external-link hover affordance). */
+  openInNewTab?: boolean;
+  /** Rendered before the count in the trigger badge (e.g. "+"). */
+  triggerPrefix?: string;
+  /** Badge variant for the trigger; the solid default reads as this-project. */
+  triggerVariant?: "default" | "secondary" | "destructive" | "outline";
 }
 
 interface CaseOption {
@@ -24,6 +38,8 @@ interface CaseOption {
   source: RepositoryCaseSource;
   automated?: boolean;
   hasParameters?: boolean;
+  projectId: number;
+  project?: { name: string; iconUrl?: string | null } | null;
 }
 
 const DEFAULT_PAGE_SIZE = 10;
@@ -34,16 +50,19 @@ export const CasesListDisplay: React.FC<CasesListProps> = ({
   count,
   pageSize = DEFAULT_PAGE_SIZE,
   isLoading = false,
+  showProject = false,
+  openInNewTab = false,
+  triggerPrefix,
+  triggerVariant = "default",
 }) => {
+  const locale = useLocale();
   const t = useTranslations("common");
 
   const computedCount =
     count ?? (typeof caseIds !== "undefined" ? caseIds.length : undefined);
 
   const baseConditions = useMemo(() => {
-    const conditions: Prisma.RepositoryCasesWhereInput[] = [
-      { isDeleted: false },
-    ];
+    const conditions: RepositoryCasesWhereInput[] = [{ isDeleted: false }];
 
     if (filter) {
       conditions.push(filter);
@@ -102,6 +121,10 @@ export const CasesListDisplay: React.FC<CasesListProps> = ({
           source: true,
           automated: true,
           hasParameters: true,
+          projectId: true,
+          ...(showProject
+            ? { project: { select: { name: true, iconUrl: true } } }
+            : {}),
         },
       };
 
@@ -138,15 +161,14 @@ export const CasesListDisplay: React.FC<CasesListProps> = ({
 
       return { results, total };
     },
-    [buildWhere, computedCount]
+    [buildWhere, computedCount, showProject]
   );
 
   const handleValueChange = useCallback((_option: CaseOption | null) => {
     // Navigation is handled by the embedded Link inside CaseDisplay.
   }, []);
 
-  // Show skeleton while loading and count is undefined
-  if (isLoading && computedCount === undefined) {
+  if (isLoading) {
     return <Skeleton className="h-6 w-12" />;
   }
 
@@ -160,7 +182,7 @@ export const CasesListDisplay: React.FC<CasesListProps> = ({
 
   const triggerLabel =
     computedCount !== undefined && computedCount > 0
-      ? computedCount.toLocaleString()
+      ? computedCount.toLocaleString(locale)
       : "";
   const searchPlaceholder = t("searchCases", {
     count: computedCount ?? 0,
@@ -172,15 +194,35 @@ export const CasesListDisplay: React.FC<CasesListProps> = ({
       onValueChange={handleValueChange}
       fetchOptions={fetchCases}
       renderOption={(option) => (
-        <CaseDisplay
-          id={option.id}
-          name={option.name}
-          link={`/case/${option.id}`}
-          source={option.source}
-          automated={option.automated}
-          hasParameters={option.hasParameters}
-          maxLines={2}
-        />
+        <div className="flex w-full items-center justify-between gap-2">
+          <CaseDisplay
+            id={option.id}
+            name={option.name}
+            // Direct project-qualified URL — the bare /case/{id} resolver
+            // hop doesn't resolve reliably for cases in OTHER projects, and
+            // the fetch already knows each case's projectId.
+            link={`/projects/repository/${option.projectId}/${option.id}`}
+            linkTarget={openInNewTab ? "_blank" : undefined}
+            source={option.source}
+            automated={option.automated}
+            hasParameters={option.hasParameters}
+            maxLines={2}
+          />
+          {showProject && option.project?.name && (
+            // Fixed-width column so project names line up row to row —
+            // left-aligned, truncating; the full name stays reachable via
+            // the display's own tooltip.
+            <span className="flex w-[90px] shrink-0 justify-start">
+              <ProjectNameDisplay
+                projectName={option.project.name}
+                projectId={option.projectId}
+                iconUrl={option.project.iconUrl}
+                className="text-xs text-muted-foreground"
+                fitContainer
+              />
+            </span>
+          )}
+        </div>
       )}
       getOptionValue={(option) => option.id}
       placeholder={searchPlaceholder}
@@ -197,12 +239,18 @@ export const CasesListDisplay: React.FC<CasesListProps> = ({
             type="button"
             aria-label={searchPlaceholder}
             className={cn(
-              badgeVariants({ variant: "default" }),
+              badgeVariants({ variant: triggerVariant }),
               "gap-1 whitespace-nowrap text-xs"
             )}
           >
             <ListChecks className="w-4 h-4" />
-            {displayLabel && <span>{displayLabel}</span>}
+            {displayLabel && (
+              <span>
+                {triggerPrefix
+                  ? `${triggerPrefix}${displayLabel}`
+                  : displayLabel}
+              </span>
+            )}
           </button>
         );
       }}

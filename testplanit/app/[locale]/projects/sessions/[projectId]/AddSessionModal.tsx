@@ -1,3 +1,5 @@
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
@@ -43,8 +45,8 @@ import UploadAttachments, {
   type LinkAttachmentInput,
 } from "@/components/UploadAttachments";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import type { Attachments } from "@prisma/client";
-import { ApplicationArea } from "@prisma/client";
+import type { Attachments } from "~/zenstack/models";
+import { ApplicationArea } from "~/zenstack/models";
 import { AlertTriangle, Asterisk, Combine, LayoutList } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
@@ -60,20 +62,10 @@ import { searchConfigurations } from "~/app/actions/searchConfigurations";
 import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
 import { emptyEditorContent, MAX_DURATION } from "~/app/constants";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import {
-  useCreateAttachments,
-  useCreateSessions,
-  useCreateSessionVersions,
-  useFindFirstProjects,
-  useFindManyIssue,
-  useFindManyMilestones,
-  useFindManyTags,
-  useFindManyTemplates,
-  useFindManyWorkflows,
-} from "~/lib/hooks";
 import { IconName } from "~/types/globals";
 import { toHumanReadable } from "~/utils/duration";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 interface ConfigurationOption {
   id: number;
@@ -81,6 +73,9 @@ interface ConfigurationOption {
 }
 
 export interface SessionDuplicationPreset {
+  /** Source session id, persisted as duplicatedFromId so the create emits the
+   * session.duplicated webhook event. */
+  originalSessionId: number;
   originalName: string;
   originalConfigId: number | null;
   originalConfigName: string | null;
@@ -115,11 +110,14 @@ export function AddSessionModal({
   const t = useTranslations();
   const locale = useLocale();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: createSessions } = useCreateSessions();
-  const { mutateAsync: createSessionVersions } = useCreateSessionVersions();
-  const { mutateAsync: createAttachments } = useCreateAttachments();
+  const { mutateAsync: createSessions } =
+    useClientQueries(schema).sessions.useCreate();
+  const { mutateAsync: createSessionVersions } =
+    useClientQueries(schema).sessionVersions.useCreate();
+  const { mutateAsync: createAttachments } =
+    useClientQueries(schema).attachments.useCreate();
 
-  const { data: project } = useFindFirstProjects({
+  const { data: project } = useClientQueries(schema).projects.useFindFirst({
     where: {
       id: Number(projectId),
     },
@@ -132,7 +130,7 @@ export function AddSessionModal({
     },
   });
 
-  const { data: allIssues } = useFindManyIssue(
+  const { data: allIssues } = useClientQueries(schema).issue.useFindMany(
     {
       where: {
         // Filter by projectId
@@ -146,7 +144,7 @@ export function AddSessionModal({
     }
   );
 
-  const { data: templates } = useFindManyTemplates({
+  const { data: templates } = useClientQueries(schema).templates.useFindMany({
     where: {
       isDeleted: false,
       isEnabled: true,
@@ -161,7 +159,7 @@ export function AddSessionModal({
     },
   });
 
-  const { data: workflows } = useFindManyWorkflows({
+  const { data: workflows } = useClientQueries(schema).workflows.useFindMany({
     where: {
       isDeleted: false,
       isEnabled: true,
@@ -181,7 +179,7 @@ export function AddSessionModal({
     },
   });
 
-  const { data: milestones } = useFindManyMilestones({
+  const { data: milestones } = useClientQueries(schema).milestones.useFindMany({
     where: {
       projectId: Number(projectId),
       isDeleted: false,
@@ -193,7 +191,7 @@ export function AddSessionModal({
     orderBy: [{ startedAt: "asc" }, { isStarted: "asc" }],
   });
 
-  const { data: tags } = useFindManyTags({
+  const { data: tags } = useClientQueries(schema).tags.useFindMany({
     where: {
       isDeleted: false,
     },
@@ -241,11 +239,17 @@ export function AddSessionModal({
       label: template.templateName,
     })) || [];
 
-  const firstGatedSessionOrder = (workflows ?? [])
-    .filter((w) => w.requiresReview === true)
-    .reduce<
-      number | null
-    >((acc, w) => (acc === null || w.order < acc ? w.order : acc), null);
+  // `null` for system admins — they bypass the review gate on create (see
+  // `resolveCreateStateRemap`), so no state option is disabled.
+  const firstGatedSessionOrder =
+    session?.user?.access === "ADMIN"
+      ? null
+      : (workflows ?? [])
+          .filter((w) => w.requiresReview === true)
+          .reduce<number | null>(
+            (acc, w) => (acc === null || w.order < acc ? w.order : acc),
+            null
+          );
   const workflowsOptions =
     workflows?.map((workflow) => ({
       value: workflow.id.toString(),
@@ -280,6 +284,23 @@ export function AddSessionModal({
   const _handleUpdate = useCallback((newContent: object) => {
     setMissionContent(newContent);
   }, []);
+
+  // MultiAsyncCombobox refetches whenever its `fetchOptions` identity changes,
+  // so an inline arrow re-runs the effect on every render and leaves `loading`
+  // permanently flapping — which keeps the Select All button disabled.
+  const fetchConfigurationOptions = useCallback(
+    (query: string, page: number, pageSize: number) =>
+      searchConfigurations(query, page, pageSize, numericProjectId),
+    [numericProjectId]
+  );
+
+  // AsyncCombobox refetches whenever `fetchOptions` changes identity, so an
+  // inline arrow would refetch on every render of this component.
+  const fetchMemberOptions = useCallback(
+    (query: string, page: number, pageSize: number) =>
+      searchProjectMembers(numericProjectId, query, page, pageSize),
+    [numericProjectId]
+  );
 
   const FormSchema = z.object({
     name: z.string().min(2, {
@@ -398,24 +419,29 @@ export function AddSessionModal({
     if (!initialTemplateId || !initialWorkflowId) return;
     formInitRef.current = true;
 
-    reset({
-      name: duplicationPreset
-        ? `${duplicationPreset.originalName} - ${t("common.actions.duplicate")}`
-        : "",
-      templateId: initialTemplateId,
-      configIds: duplicationPreset?.originalConfigId
-        ? [duplicationPreset.originalConfigId]
-        : [],
-      stateId: initialWorkflowId,
-      assignedToId: duplicationPreset?.originalAssignedToId || "",
-      estimate: "",
-      note: null,
-      mission: null,
-      milestoneId:
-        duplicationPreset?.originalMilestoneId ?? defaultMilestoneId ?? null,
-      attachments: [],
-      issueIds: duplicationPreset?.originalIssueIds || [],
-    });
+    // keepDirtyValues: this init can land after the user has already started
+    // typing (templates/workflows arrive async) — never wipe their input.
+    reset(
+      {
+        name: duplicationPreset
+          ? `${duplicationPreset.originalName} - ${t("common.actions.duplicate")}`
+          : "",
+        templateId: initialTemplateId,
+        configIds: duplicationPreset?.originalConfigId
+          ? [duplicationPreset.originalConfigId]
+          : [],
+        stateId: initialWorkflowId,
+        assignedToId: duplicationPreset?.originalAssignedToId || "",
+        estimate: "",
+        note: null,
+        mission: null,
+        milestoneId:
+          duplicationPreset?.originalMilestoneId ?? defaultMilestoneId ?? null,
+        attachments: [],
+        issueIds: duplicationPreset?.originalIssueIds || [],
+      },
+      { keepDirtyValues: true }
+    );
     setLinkedIssueIds(duplicationPreset?.originalIssueIds || []);
     if (duplicationPreset?.originalNote) {
       try {
@@ -637,6 +663,10 @@ export function AddSessionModal({
             name: data.name,
             currentVersion: 1,
             configurationGroupId,
+            // Provenance marker so the create emits session.duplicated.
+            ...(duplicationPreset
+              ? { duplicatedFromId: duplicationPreset.originalSessionId }
+              : {}),
             ...(configId
               ? { configuration: { connect: { id: configId } } }
               : {}),
@@ -800,7 +830,7 @@ export function AddSessionModal({
         window.dispatchEvent(event);
       }
     } catch (err: any) {
-      if (err.info?.prisma && err.info?.code === "P2002") {
+      if (isUniqueConstraintError(err)) {
         form.setError("name", {
           type: "custom",
           message: t("sessions.errors.nameAlreadyExists"),
@@ -927,33 +957,18 @@ export function AddSessionModal({
                   control={control}
                   name="configIds"
                   render={({ field }) => {
-                    const clearAllConfigurations = () => {
-                      field.onChange([]);
-                      setSelectedConfigs([]);
-                    };
-
                     return (
                       <FormItem>
-                        <FormLabel className="flex justify-between items-center">
-                          <div className="flex items-center">
-                            {t("common.fields.configurations")}
-                            {selectedConfigs.length > 0 && (
-                              <span className="ml-1 text-muted-foreground">
-                                {"("}
-                                {selectedConfigs.length}
-                                {")"}
-                              </span>
-                            )}
-                            <HelpPopover helpKey="session.configuration" />
-                          </div>
+                        <FormLabel className="flex items-center">
+                          {t("common.fields.configurations")}
                           {selectedConfigs.length > 0 && (
-                            <span
-                              onClick={clearAllConfigurations}
-                              className="cursor-pointer text-sm text-muted-foreground hover:underline"
-                            >
-                              {t("common.actions.clearAll")}
+                            <span className="ms-1 text-muted-foreground">
+                              {"("}
+                              {selectedConfigs.length}
+                              {")"}
                             </span>
                           )}
+                          <HelpPopover helpKey="session.configuration" />
                         </FormLabel>
                         <FormControl>
                           <MultiAsyncCombobox<ConfigurationOption>
@@ -963,14 +978,7 @@ export function AddSessionModal({
                               setSelectedConfigs(configs);
                               field.onChange(configs.map((c) => c.id));
                             }}
-                            fetchOptions={(query, page, pageSize) =>
-                              searchConfigurations(
-                                query,
-                                page,
-                                pageSize,
-                                numericProjectId
-                              )
-                            }
+                            fetchOptions={fetchConfigurationOptions}
                             renderOption={(config) => (
                               <div className="flex items-center gap-2">
                                 <Combine className="w-4 h-4" />
@@ -1029,7 +1037,7 @@ export function AddSessionModal({
               <div className="flex items-center justify-center">
                 <Separator orientation="vertical" className="h-full" />
               </div>
-              <div className="space-y-4 mr-6 max-w-[265px]">
+              <div className="space-y-4 me-6 max-w-[265px]">
                 <FormField
                   control={control}
                   name="templateId"
@@ -1228,14 +1236,7 @@ export function AddSessionModal({
                               onValueChange={(user) => {
                                 onChange(user ? user.id : null);
                               }}
-                              fetchOptions={(query, page, pageSize) =>
-                                searchProjectMembers(
-                                  Number(projectId),
-                                  query,
-                                  page,
-                                  pageSize
-                                )
-                              }
+                              fetchOptions={fetchMemberOptions}
                               renderOption={(user) => (
                                 <UserNameCell userId={user.id} hideLink />
                               )}

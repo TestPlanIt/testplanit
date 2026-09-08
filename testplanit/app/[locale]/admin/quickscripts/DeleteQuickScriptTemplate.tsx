@@ -1,8 +1,9 @@
 "use client";
 
-import { CaseExportTemplate } from "@prisma/client";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
+import type { CaseExportTemplate } from "~/zenstack/models";
 import { useState } from "react";
-import { useUpdateCaseExportTemplate } from "~/lib/hooks";
 
 import { useForm } from "react-hook-form";
 
@@ -37,7 +38,8 @@ export function DeleteQuickScriptTemplate({
   const t = useTranslations("admin.exportTemplates.delete");
   const tCommon = useTranslations("common");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateTemplate } = useUpdateCaseExportTemplate();
+  const { mutateAsync: updateTemplate } =
+    useClientQueries(schema).caseExportTemplate.useUpdate();
 
   const form = useForm();
   const {
@@ -71,7 +73,7 @@ export function DeleteQuickScriptTemplate({
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center">
-                <TriangleAlert className="w-6 h-6 mr-2" />
+                <TriangleAlert className="w-6 h-6 me-2" />
                 {t("title")}
               </AlertDialogTitle>
               <AlertDialogDescription>

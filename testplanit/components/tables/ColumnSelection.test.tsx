@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -25,11 +25,20 @@ vi.mock("next-intl", () => ({
 import {
   ColumnSelection,
   CustomColumnDef,
+  readStoredColumnOrder,
+  readStoredColumnSort,
   readStoredColumnVisibility,
+  readStoredColumnWidths,
+  writeStoredColumnOrder,
+  writeStoredColumnSort,
   writeStoredColumnVisibility,
+  writeStoredColumnWidths,
 } from "./ColumnSelection";
 
 const STORAGE_PREFIX = "testplanit:columnVisibility:";
+const ORDER_PREFIX = "testplanit:columnOrder:";
+const WIDTH_PREFIX = "testplanit:columnWidth:";
+const SORT_PREFIX = "testplanit:columnSort:";
 
 interface Row {
   id: number;
@@ -113,6 +122,124 @@ describe("column visibility storage helpers", () => {
       fieldA: false,
       fieldB: true,
     });
+  });
+});
+
+describe("column order storage helpers", () => {
+  it("returns null when nothing is stored / no key", () => {
+    expect(readStoredColumnOrder("view-a")).toBeNull();
+    expect(readStoredColumnOrder(undefined)).toBeNull();
+  });
+
+  it("round-trips a stored order", () => {
+    writeStoredColumnOrder("view-a", ["name", "tags", "actions"]);
+    expect(readStoredColumnOrder("view-a")).toEqual([
+      "name",
+      "tags",
+      "actions",
+    ]);
+  });
+
+  it("replaces (does not merge) on write", () => {
+    writeStoredColumnOrder("view-a", ["a", "b", "c"]);
+    writeStoredColumnOrder("view-a", ["c", "a"]);
+    expect(readStoredColumnOrder("view-a")).toEqual(["c", "a"]);
+  });
+
+  it("returns null for a non-array or malformed value", () => {
+    window.localStorage.setItem(
+      `${ORDER_PREFIX}view-b`,
+      JSON.stringify({ a: 1 })
+    );
+    expect(readStoredColumnOrder("view-b")).toBeNull();
+    window.localStorage.setItem(`${ORDER_PREFIX}view-c`, "not json");
+    expect(readStoredColumnOrder("view-c")).toBeNull();
+  });
+
+  it("drops non-string entries", () => {
+    window.localStorage.setItem(
+      `${ORDER_PREFIX}view-d`,
+      JSON.stringify(["a", 2, "b"])
+    );
+    expect(readStoredColumnOrder("view-d")).toEqual(["a", "b"]);
+  });
+});
+
+describe("column width storage helpers", () => {
+  it("returns null when nothing is stored", () => {
+    expect(readStoredColumnWidths("view-a")).toBeNull();
+  });
+
+  it("round-trips numeric widths and ignores non-numbers", () => {
+    window.localStorage.setItem(
+      `${WIDTH_PREFIX}view-a`,
+      JSON.stringify({ name: 200, tags: "wide", ok: 120 })
+    );
+    expect(readStoredColumnWidths("view-a")).toEqual({ name: 200, ok: 120 });
+  });
+
+  it("returns null for malformed JSON", () => {
+    window.localStorage.setItem(`${WIDTH_PREFIX}view-b`, "not json");
+    expect(readStoredColumnWidths("view-b")).toBeNull();
+  });
+
+  it("merges on write so widths from other views survive", () => {
+    writeStoredColumnWidths("view-a", { fieldA: 100 });
+    writeStoredColumnWidths("view-a", { fieldB: 200 });
+    expect(readStoredColumnWidths("view-a")).toEqual({
+      fieldA: 100,
+      fieldB: 200,
+    });
+  });
+
+  it("clears a reset width for a present column while keeping other-view widths", () => {
+    // fieldA (present, resized) + fieldOther (from another template, absent now)
+    writeStoredColumnWidths("view-a", { fieldA: 100, fieldOther: 300 });
+    // fieldA reset -> absent from the new sizing; present columns = [fieldA]
+    writeStoredColumnWidths("view-a", {}, ["fieldA"]);
+    expect(readStoredColumnWidths("view-a")).toEqual({ fieldOther: 300 });
+  });
+});
+
+describe("column sort storage helpers", () => {
+  it("returns null when nothing is stored / no key", () => {
+    expect(readStoredColumnSort("view-a")).toBeNull();
+    expect(readStoredColumnSort(undefined)).toBeNull();
+  });
+
+  it("round-trips a stored sort", () => {
+    writeStoredColumnSort("view-a", {
+      column: "latestResults",
+      direction: "desc",
+    });
+    expect(readStoredColumnSort("view-a")).toEqual({
+      column: "latestResults",
+      direction: "desc",
+    });
+  });
+
+  it("clears the stored sort when passed null", () => {
+    writeStoredColumnSort("view-a", { column: "name", direction: "asc" });
+    writeStoredColumnSort("view-a", null);
+    expect(readStoredColumnSort("view-a")).toBeNull();
+    expect(window.localStorage.getItem(`${SORT_PREFIX}view-a`)).toBeNull();
+  });
+
+  it("returns null for a malformed or invalid stored value", () => {
+    window.localStorage.setItem(`${SORT_PREFIX}view-a`, "not json");
+    expect(readStoredColumnSort("view-a")).toBeNull();
+
+    window.localStorage.setItem(
+      `${SORT_PREFIX}view-b`,
+      JSON.stringify({ column: "name", direction: "sideways" })
+    );
+    expect(readStoredColumnSort("view-b")).toBeNull();
+
+    window.localStorage.setItem(
+      `${SORT_PREFIX}view-c`,
+      JSON.stringify({ column: "", direction: "asc" })
+    );
+    expect(readStoredColumnSort("view-c")).toBeNull();
   });
 });
 
@@ -338,6 +465,7 @@ describe("restore vs. URL", () => {
 
     expect(onVisibilityChange).toHaveBeenCalled(); // mounted + computed state
     expect(navMocks.push).not.toHaveBeenCalled(); // but no URL written
+    expect(navMocks.replace).not.toHaveBeenCalled();
   });
 
   it("updates the ?columns= URL on an explicit change when column memory is OFF", async () => {
@@ -355,8 +483,8 @@ describe("restore vs. URL", () => {
     await user.click(screen.getByTestId("column-selection-trigger"));
     await user.click(await screen.findByRole("checkbox", { name: /Col B/ }));
 
-    await waitFor(() => expect(navMocks.push).toHaveBeenCalled());
-    const url = navMocks.push.mock.calls.at(-1)?.[0] as string;
+    await waitFor(() => expect(navMocks.replace).toHaveBeenCalled());
+    const url = navMocks.replace.mock.calls.at(-1)?.[0] as string;
     expect(url).toContain("columns=");
   });
 
@@ -383,8 +511,8 @@ describe("restore vs. URL", () => {
       expect(readStoredColumnVisibility("mem-view")?.colB).toBe(false)
     );
     // ...and the shareable URL is kept in sync.
-    await waitFor(() => expect(navMocks.push).toHaveBeenCalled());
-    expect(navMocks.push.mock.calls.at(-1)?.[0] as string).toContain(
+    await waitFor(() => expect(navMocks.replace).toHaveBeenCalled());
+    expect(navMocks.replace.mock.calls.at(-1)?.[0] as string).toContain(
       "columns="
     );
   });
@@ -408,8 +536,10 @@ describe("columns that load after mount", () => {
     expect(lastVisibility(onVisibilityChange).customField).toBe(false);
   });
 
-  it("does NOT retroactively apply stored prefs to columns that appear only after mount", () => {
-    writeStoredColumnVisibility("late-view", { customField: false });
+  it("applies stored prefs to columns that appear only after mount (async custom fields)", () => {
+    // The user showed customField ("select all") and reloaded; the custom-field
+    // column loads after the initial render.
+    writeStoredColumnVisibility("late-view", { customField: true });
     const onVisibilityChange = vi.fn();
     const initialColumns = columns.filter((c) => c.id !== "customField");
 
@@ -433,12 +563,45 @@ describe("columns that load after mount", () => {
       />
     );
 
-    // Known limitation: initial visibility is computed once, so the stored
-    // `false` is not applied to the late-arriving column — it isn't added to
-    // the visibility map by this in-place update. A fresh mount restores it
-    // (covered by the test above).
-    expect(lastVisibility(onVisibilityChange)).not.toHaveProperty(
-      "customField"
+    // The late-arriving column is folded into the visibility map with its
+    // remembered choice, so a "select all" made before the reload still applies
+    // instead of the column falling back to its hidden default.
+    expect(lastVisibility(onVisibilityChange).customField).toBe(true);
+  });
+});
+
+// (5) Hiding a column through the ref out-param (used by the header "Hide
+// column" menu) drives this control's own state — the same path as the
+// checkbox — so it emits, persists, and keeps the checkbox in sync.
+describe("hideColumnRef", () => {
+  it("hides a column when the exposed function is called (emits + persists)", async () => {
+    const onVisibilityChange = vi.fn();
+    const hideColumnRef: { current: ((columnId: string) => void) | null } = {
+      current: null,
+    };
+
+    render(
+      <ColumnSelection
+        storageKey="hide-view"
+        columns={columns}
+        hideColumnRef={hideColumnRef}
+        onVisibilityChange={onVisibilityChange}
+      />
+    );
+
+    // The control exposes its hide function and nothing is persisted yet.
+    expect(hideColumnRef.current).toBeInstanceOf(Function);
+    expect(lastVisibility(onVisibilityChange).description).toBe(true);
+    expect(readStoredColumnVisibility("hide-view")).toBeNull();
+
+    // The header menu hides `description` through the ref.
+    act(() => hideColumnRef.current?.("description"));
+
+    // It is emitted (so the table hides it and the checkbox unchecks)...
+    expect(lastVisibility(onVisibilityChange).description).toBe(false);
+    // ...and persisted so it survives a reload.
+    await waitFor(() =>
+      expect(readStoredColumnVisibility("hide-view")?.description).toBe(false)
     );
   });
 });

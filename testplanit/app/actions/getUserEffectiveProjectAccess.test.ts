@@ -15,9 +15,9 @@ const {
   mockProjectAssignment: { findUnique: vi.fn(), findMany: vi.fn() },
 }));
 
-// Mock the prisma singleton
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+// Mock the baseDb singleton
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     projects: mockProjects,
     user: mockUser,
     userProjectPermission: mockUserProjectPermission,
@@ -26,18 +26,7 @@ vi.mock("~/lib/prisma", () => ({
   },
 }));
 
-// Mock ProjectAccessType enum from @prisma/client
-vi.mock("@prisma/client", () => ({
-  ProjectAccessType: {
-    NO_ACCESS: "NO_ACCESS",
-    GLOBAL_ROLE: "GLOBAL_ROLE",
-    SPECIFIC_ROLE: "SPECIFIC_ROLE",
-    DEFAULT: "DEFAULT",
-  },
-}));
-
-// Import after mocking
-import { ProjectAccessType } from "@prisma/client";
+import { ProjectAccessType } from "~/zenstack/models";
 import {
   getBatchUserEffectiveProjectAccess,
   getUserEffectiveProjectAccess,

@@ -270,8 +270,7 @@ export function OverrideValuesDialog({
                     : valueToFormString(cur) !== valueToFormString(snap);
                 const isRevealed = revealed[p.name] === true;
                 const errMsg = form.formState.errors[p.name]?.message as
-                  | string
-                  | undefined;
+                  string | undefined;
 
                 return (
                   <div key={p.name} className="flex flex-col gap-1">
@@ -282,7 +281,7 @@ export function OverrideValuesDialog({
                       >
                         {`@${p.name}`}
                         {sensitive && (
-                          <span className="text-muted-foreground ml-1 font-sans">
+                          <span className="text-muted-foreground ms-1 font-sans">
                             {`(${t("formSensitive").toLowerCase()})`}
                           </span>
                         )}

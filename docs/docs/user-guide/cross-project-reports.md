@@ -31,8 +31,9 @@ The [Report Builder](./projects/reports/report-builder.md) is available in cross
 - Repository Stats
 - User Engagement
 - Issue Tracking
+- [LLM Usage](./llm-usage-report.md) — AI token usage, cost, and reliability. Cross-project only; it has no per-project counterpart.
 
-Drill-down works the same way as in per-project mode (it just shows records from any of the selected projects).
+Drill-down works the same way as in per-project mode (it just shows records from any of the selected projects). The exception is LLM Usage, which does not support drill-down.
 
 ## Exporting Results
 

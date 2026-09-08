@@ -1,5 +1,8 @@
-import type { Prisma } from "@prisma/client";
+import type { JsonValue } from "@zenstackhq/orm";
+import type { TxClient } from "~/lib/zenstack";
 
+import { formatRecordKey, RECORD_TYPES } from "~/lib/recordKey";
+import { readRecordKeyConfig } from "~/lib/services/recordKeyConfig";
 import {
   getPerCaseIterationCounts,
   getTestRunSummary,
@@ -10,6 +13,31 @@ import {
 } from "~/lib/services/parameterRedaction";
 import { publishTestRunWakeUp } from "~/lib/live/publish";
 import { webhookEvents } from "~/lib/webhooks/events";
+
+/**
+ * Derive the cosmetic `TEST_RUN` display key (e.g. `WEB-TR-1234`) for a run
+ * whose project `key` we don't already hold. Reads the record-key config and
+ * only spends the project lookup when the feature is enabled. Returns `null`
+ * when disabled or the project has no key configured.
+ */
+async function resolveRunDisplayKey(
+  tx: TxClient,
+  projectId: number,
+  id: number
+): Promise<string | null> {
+  const { enabled, tokens } = await readRecordKeyConfig(tx);
+  if (!enabled) return null;
+  const project = await tx.projects.findUnique({
+    where: { id: projectId },
+    select: { key: true },
+  });
+  return formatRecordKey({
+    projectKey: project?.key ?? null,
+    type: RECORD_TYPES.TEST_RUN,
+    id,
+    tokens,
+  });
+}
 
 /**
  * Per-value cap for parameter values emitted into webhook payloads.
@@ -63,7 +91,7 @@ function capValueBytes(
  * ParameterSchemaEntry[] redaction shape.
  */
 function parseParameterSchema(
-  value: Prisma.JsonValue | null | undefined
+  value: JsonValue | null | undefined
 ): ParameterSchemaEntry[] {
   if (!Array.isArray(value)) return [];
   const out: ParameterSchemaEntry[] = [];
@@ -87,7 +115,7 @@ function parseParameterSchema(
 /**
  * Emit per-mutation outbound webhook events for TestRuns lifecycle.
  * Detection logic for state transitions and the "transitioned-into-
- * completed" sub-case lives here so the lib/prisma.ts `$extends`
+ * completed" sub-case lives here so the lib/db.ts `$extends`
  * middleware can stay generic.
  *
  * Every emit is bound to the caller's tx (webhookEvents.emit requires tx)
@@ -112,7 +140,7 @@ interface EmitOptions {
 
 export async function emitTestRunCreated(
   row: TestRunRow,
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   opts: EmitOptions = {}
 ): Promise<void> {
   let stateName: string | null = null;
@@ -131,12 +159,14 @@ export async function emitTestRunCreated(
     stateColor = state?.color?.value ?? null;
     stateIsCompleted = state?.workflowType === "DONE";
   }
+  const displayKey = await resolveRunDisplayKey(tx, row.projectId, row.id);
   await webhookEvents.emit(
     "test_run.created",
     {
       runId: row.id,
       runTitle: row.name,
       projectId: row.projectId,
+      displayKey,
       stateId: row.stateId,
       stateName,
       stateColor,
@@ -160,7 +190,7 @@ export async function emitTestRunCreated(
 export async function emitTestRunUpdateEvents(
   oldRow: TestRunRow | null,
   newRow: TestRunRow,
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   opts: EmitOptions = {}
 ): Promise<void> {
   if (!oldRow) return;
@@ -178,6 +208,14 @@ export async function emitTestRunUpdateEvents(
   const completedTransition =
     oldRow.isCompleted !== true && newRow.isCompleted === true;
   if (!stateChanged && !completedTransition) return;
+
+  // Resolve the cosmetic run key once; both the state_changed and completed
+  // payloads below share it.
+  const displayKey = await resolveRunDisplayKey(
+    tx,
+    newRow.projectId,
+    newRow.id
+  );
 
   if (stateChanged) {
     const [fromState, toState] = await Promise.all([
@@ -209,6 +247,7 @@ export async function emitTestRunUpdateEvents(
         runId: newRow.id,
         runTitle: newRow.name,
         projectId: newRow.projectId,
+        displayKey,
         from: {
           stateId: oldRow.stateId,
           stateName: fromState?.name ?? null,
@@ -270,6 +309,7 @@ export async function emitTestRunUpdateEvents(
         perCaseRedactedIterations,
         runId: newRow.id,
         runTitle: newRow.name,
+        displayKey,
         runUrl,
       },
       {
@@ -296,7 +336,7 @@ export async function emitTestRunUpdateEvents(
  */
 async function assemblePerCaseRedactedIterations(
   testRunId: number,
-  tx: Prisma.TransactionClient
+  tx: TxClient
 ): Promise<
   Array<{
     testRunCaseId: number;
@@ -354,7 +394,7 @@ export interface TestRunResultRow {
 
 export async function emitTestRunResultAdded(
   row: TestRunResultRow,
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   opts: EmitOptions = {}
 ): Promise<void> {
   // Fetch the producing testRun + status + linked repository case (via
@@ -363,7 +403,12 @@ export async function emitTestRunResultAdded(
   const [run, status, testRunCase] = await Promise.all([
     tx.testRuns.findUnique({
       where: { id: row.testRunId },
-      select: { id: true, name: true, projectId: true },
+      select: {
+        id: true,
+        name: true,
+        projectId: true,
+        project: { select: { key: true } },
+      },
     }),
     row.statusId != null
       ? tx.status.findUnique({
@@ -386,12 +431,22 @@ export async function emitTestRunResultAdded(
     }),
   ]);
   if (!run) return; // testRun deleted between insert and emit — skip.
+  const { enabled, tokens } = await readRecordKeyConfig(tx);
+  const displayKey = enabled
+    ? formatRecordKey({
+        projectKey: run.project?.key ?? null,
+        type: RECORD_TYPES.TEST_RUN,
+        id: run.id,
+        tokens,
+      })
+    : null;
   await webhookEvents.emit(
     "test_run.result_added",
     {
       runId: run.id,
       runTitle: run.name,
       projectId: run.projectId,
+      displayKey,
       caseId: testRunCase?.repositoryCase?.id ?? null,
       caseName: testRunCase?.repositoryCase?.name ?? null,
       resultId: row.id,
@@ -430,7 +485,7 @@ export async function emitTestRunResultAdded(
  */
 export async function emitJUnitResultAdded(
   row: { id: number; testSuiteId: number },
-  tx: Prisma.TransactionClient
+  tx: TxClient
 ): Promise<void> {
   const suite = await tx.jUnitTestSuite.findUnique({
     where: { id: row.testSuiteId },
@@ -449,7 +504,7 @@ export async function emitJUnitResultAdded(
 export async function emitTestRunDuplicated(
   newRunId: number,
   sourceRunId: number,
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   opts: EmitOptions & { projectId: number }
 ): Promise<void> {
   const newRun = await tx.testRuns.findUnique({

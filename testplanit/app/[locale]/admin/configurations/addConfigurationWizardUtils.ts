@@ -36,9 +36,7 @@ const sameCombination = (a: number[], b: number[]): boolean =>
 export const markCombinationsWithExisting = (
   combinations: number[][],
   existingConfigurations:
-    | { variants: { variantId: number }[] }[]
-    | null
-    | undefined
+    { variants: { variantId: number }[] }[] | null | undefined
 ): { combination: number[]; exists: boolean }[] => {
   return combinations.map((combination) => ({
     combination,

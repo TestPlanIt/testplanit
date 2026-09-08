@@ -28,7 +28,7 @@ import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod/v4";
@@ -133,22 +133,30 @@ export function RequestReviewSheet({
   const [selectedAssignee, setSelectedAssignee] =
     useState<AssigneeOption | null>(initialValues?.assignee ?? null);
 
-  // Re-sync defaults when initialValues change (D-08 "Request review again"
-  // hits the same Sheet with prefilled state).
+  // Apply the "Request review again" prefill on the closed → open edge
+  // only. `initialValues` is derived from a live ReviewRequest query
+  // (ReviewStatusBanner memoizes it off the fetched row), so any background
+  // refetch hands this component a value-identical but reference-new object.
+  // While the Sheet is open the requester's draft wins: prop churn must not
+  // clear the comment box or revert their assignee pick.
+  const wasOpenRef = useRef(false);
   useEffect(() => {
-    form.reset({
-      assigneeKey: initialValues?.assignee
-        ? `${initialValues.assignee.kind}:${initialValues.assignee.id}`
-        : "",
-      targetStateId:
-        initialValues?.targetStateId ?? singleReachableStateId ?? 0,
-      comment: "",
-    });
-    setSelectedAssignee(initialValues?.assignee ?? null);
+    if (open && !wasOpenRef.current) {
+      form.reset({
+        assigneeKey: initialValues?.assignee
+          ? `${initialValues.assignee.kind}:${initialValues.assignee.id}`
+          : "",
+        targetStateId:
+          initialValues?.targetStateId ?? singleReachableStateId ?? 0,
+        comment: "",
+      });
+      setSelectedAssignee(initialValues?.assignee ?? null);
+    }
+    wasOpenRef.current = open;
     // form / setSelectedAssignee identity is stable enough; depend only on
-    // the prefill input + the single-reachable shortcut.
+    // the open edge, the prefill input + the single-reachable shortcut.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialValues, singleReachableStateId]);
+  }, [open, initialValues, singleReachableStateId]);
 
   const handleAssigneeChange = (value: AssigneeOption | null) => {
     setSelectedAssignee(value);

@@ -32,7 +32,8 @@ test.describe("Admin Workflow Management", () => {
 
     await test.step("Verify the Add Workflow button is visible", async () => {
       // Add Workflow button should be visible
-      const addBtn = page.getByRole("button", { name: "Add Workflow" });
+      // One Add Workflow button per scope section; any of them opens the dialog.
+      const addBtn = page.getByRole("button", { name: "Add Workflow" }).first();
       await expect(addBtn).toBeVisible({ timeout: 5000 });
     });
   });
@@ -53,7 +54,10 @@ test.describe("Admin Workflow Management", () => {
         await page.waitForLoadState("networkidle");
 
         // Click the Add Workflow button
-        const addBtn = page.getByRole("button", { name: "Add Workflow" });
+        // One Add Workflow button per scope section; any of them opens the dialog.
+        const addBtn = page
+          .getByRole("button", { name: "Add Workflow" })
+          .first();
         await addBtn.click();
 
         // Wait for dialog to open

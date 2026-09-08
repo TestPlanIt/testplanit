@@ -2,7 +2,7 @@
 
 import { runWithAuditContext } from "~/lib/auditContext";
 import { auditedTransaction } from "~/lib/audit/auditedTransaction";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { getServerAuthSession } from "~/server/auth";
 
 /**
@@ -36,7 +36,7 @@ export async function removeIntegrationProjectMapping(
   }
 
   return runWithAuditContext({ userId: session.user.id }, async () => {
-    const mapping = await prisma.integrationProject.findFirst({
+    const mapping = await baseDb.integrationProject.findFirst({
       where: { id: integrationProjectId },
       include: {
         projectIntegration: {
@@ -60,7 +60,7 @@ export async function removeIntegrationProjectMapping(
     // GET handler in `/api/projects/[projectId]/integrations/route.ts`.
     const isAdmin = session.user.access === "ADMIN";
     if (!isAdmin) {
-      const project = await prisma.projects.findFirst({
+      const project = await baseDb.projects.findFirst({
         where: {
           id: projectId,
           isDeleted: false,
@@ -143,7 +143,7 @@ async function authorizeProjectIntegrationManagement(
   isAdmin: boolean
 ): Promise<boolean> {
   if (isAdmin) return true;
-  const project = await prisma.projects.findFirst({
+  const project = await baseDb.projects.findFirst({
     where: {
       id: projectId,
       isDeleted: false,
@@ -187,7 +187,7 @@ export async function removeProjectIntegration(
   }
 
   return runWithAuditContext({ userId: session.user.id }, async () => {
-    const target = await prisma.projectIntegration.findFirst({
+    const target = await baseDb.projectIntegration.findFirst({
       where: { id: projectIntegrationId },
       select: { projectId: true },
     });
@@ -269,7 +269,7 @@ export async function switchProjectIntegration(input: {
       };
     }
 
-    const newIntegration = await prisma.integration.findFirst({
+    const newIntegration = await baseDb.integration.findFirst({
       where: { id: integrationId, status: "ACTIVE", isDeleted: false },
       select: { id: true, provider: true },
     });

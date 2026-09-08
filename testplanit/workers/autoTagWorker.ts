@@ -5,11 +5,11 @@ import { LlmManager } from "../lib/llm/services/llm-manager.service";
 import { PromptResolver } from "../lib/llm/services/prompt-resolver.service";
 import {
   disconnectAllTenantClients,
-  getPrismaClientForJob,
+  getDbClientForJob,
   isMultiTenantMode,
   MultiTenantJobData,
   validateMultiTenantJobData,
-} from "../lib/multiTenantPrisma";
+} from "../lib/multiTenantDb";
 import { AUTO_TAG_QUEUE_NAME } from "../lib/queueNames";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
@@ -55,6 +55,9 @@ export interface AutoTagJobResult {
   errors: string[];
 }
 
+/** Max ids per `IN (...)` when loading entity display metadata. */
+const META_FETCH_CHUNK = 500;
+
 // ─── Redis cancellation key helper ──────────────────────────────────────────
 
 function cancelKey(jobId: string | undefined): string {
@@ -75,12 +78,12 @@ const processor = async (
   validateMultiTenantJobData(job.data);
 
   // 2. Get tenant-specific Prisma client
-  const prisma = getPrismaClientForJob(job.data);
+  const db = getDbClientForJob(job.data);
 
   // 3. Create per-tenant service instances (bypass singleton for worker isolation)
-  const llmManager = LlmManager.createForWorker(prisma, job.data.tenantId);
-  const promptResolver = new PromptResolver(prisma);
-  const service = new TagAnalysisService(prisma, llmManager, promptResolver);
+  const llmManager = LlmManager.createForWorker(db, job.data.tenantId);
+  const promptResolver = new PromptResolver(db);
+  const service = new TagAnalysisService(db, llmManager, promptResolver);
 
   // 4. Check for pre-start cancellation
   const redis = await worker!.client;
@@ -155,23 +158,25 @@ const processor = async (
     }
   >();
 
-  if (allRelevantIds.length > 0) {
+  // Fetch in id-chunks so a large selection doesn't become one giant `IN (...)`
+  for (let i = 0; i < allRelevantIds.length; i += META_FETCH_CHUNK) {
+    const ids = allRelevantIds.slice(i, i + META_FETCH_CHUNK);
     switch (job.data.entityType) {
       case "repositoryCase": {
-        const entities = await prisma.repositoryCases.findMany({
-          where: { id: { in: allRelevantIds } },
+        const entities = await db.repositoryCases.findMany({
+          where: { id: { in: ids } },
           select: {
             id: true,
             name: true,
             automated: true,
             source: true,
-            tags: { select: { name: true } },
+            caseTags: { select: { tag: { select: { name: true } } } },
           },
         });
         for (const e of entities) {
           entityMeta.set(e.id, {
             name: e.name,
-            currentTags: e.tags.map((t) => t.name),
+            currentTags: e.caseTags.map((ct) => ct.tag.name),
             automated: e.automated,
             source: e.source,
           });
@@ -179,8 +184,8 @@ const processor = async (
         break;
       }
       case "testRun": {
-        const entities = await prisma.testRuns.findMany({
-          where: { id: { in: allRelevantIds } },
+        const entities = await db.testRuns.findMany({
+          where: { id: { in: ids } },
           select: {
             id: true,
             name: true,
@@ -198,8 +203,8 @@ const processor = async (
         break;
       }
       case "session": {
-        const entities = await prisma.sessions.findMany({
-          where: { id: { in: allRelevantIds } },
+        const entities = await db.sessions.findMany({
+          where: { id: { in: ids } },
           select: { id: true, name: true, tags: { select: { name: true } } },
         });
         for (const e of entities) {

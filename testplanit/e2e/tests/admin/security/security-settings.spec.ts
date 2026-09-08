@@ -189,7 +189,7 @@ test.describe("User Table Password Actions", () => {
 
     await test.step("Open the three-dot menu for the test user", async () => {
       // Find the test user's row
-      const userRow = page.locator("tr").filter({ hasText: testEmail });
+      const userRow = page.getByRole("row").filter({ hasText: testEmail });
       await expect(userRow).toBeVisible({ timeout: 10000 });
 
       // Click the three-dot menu button
@@ -225,7 +225,7 @@ test.describe("User Table Password Actions", () => {
 
       // The seeded admin email is admin@example.com
       const adminRow = page
-        .locator("tr")
+        .getByRole("row")
         .filter({ hasText: "admin@example.com" });
       await expect(adminRow).toBeVisible({ timeout: 10000 });
 

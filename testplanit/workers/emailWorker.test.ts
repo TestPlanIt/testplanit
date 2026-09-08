@@ -1,8 +1,8 @@
 import { Job } from "bullmq";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// Create mock prisma instance
-const mockPrisma = {
+// Create mock db instance
+const mockDb = {
   notification: {
     findUnique: vi.fn(),
     findMany: vi.fn(),
@@ -19,9 +19,9 @@ vi.mock("../lib/valkey", () => ({
   default: null,
 }));
 
-// Mock the multiTenantPrisma module to return our mock prisma client
-vi.mock("../lib/multiTenantPrisma", () => ({
-  getPrismaClientForJob: vi.fn(() => mockPrisma),
+// Mock the multiTenantDb module to return our mock db client
+vi.mock("../lib/multiTenantDb", () => ({
+  getDbClientForJob: vi.fn(() => mockDb),
   getTenantConfig: vi.fn(() => undefined),
   isMultiTenantMode: vi.fn(() => false),
   validateMultiTenantJobData: vi.fn(),
@@ -34,6 +34,12 @@ const mockSendDigestEmail = vi.fn();
 vi.mock("../lib/email/notificationTemplates", () => ({
   sendNotificationEmail: (...args: any[]) => mockSendNotificationEmail(...args),
   sendDigestEmail: (...args: any[]) => mockSendDigestEmail(...args),
+}));
+
+// Email is configured by default in tests; individual tests flip this off.
+const mockIsEmailConfigured = vi.fn(() => true);
+vi.mock("../lib/email/emailConfig", () => ({
+  isEmailServerConfigured: () => mockIsEmailConfigured(),
 }));
 
 // Mock server translations
@@ -90,12 +96,30 @@ describe("EmailWorker", () => {
     process.env.NEXTAUTH_URL = "http://localhost:3000";
     mockSendNotificationEmail.mockResolvedValue(undefined);
     mockSendDigestEmail.mockResolvedValue(undefined);
-    mockPrisma.notification.updateMany.mockResolvedValue({ count: 1 });
+    mockDb.notification.updateMany.mockResolvedValue({ count: 1 });
+  });
+
+  describe("unconfigured email server", () => {
+    it("completes email jobs as no-ops without touching the db or sending", async () => {
+      mockIsEmailConfigured.mockReturnValueOnce(false);
+
+      const { processor } = await import("./emailWorker");
+
+      await processor({
+        id: "job-1",
+        name: "send-notification-email",
+        data: { notificationId: "notif-1", userId: "user-1", immediate: true },
+      } as Job);
+
+      expect(mockDb.notification.findUnique).not.toHaveBeenCalled();
+      expect(mockSendNotificationEmail).not.toHaveBeenCalled();
+      expect(mockSendDigestEmail).not.toHaveBeenCalled();
+    });
   });
 
   describe("send-notification-email", () => {
     it("should process WORK_ASSIGNED single assignment and build correct URL", async () => {
-      mockPrisma.notification.findUnique.mockResolvedValue({
+      mockDb.notification.findUnique.mockResolvedValue({
         ...baseNotification,
         type: "WORK_ASSIGNED",
         data: {
@@ -132,7 +156,7 @@ describe("EmailWorker", () => {
     });
 
     it("should process WORK_ASSIGNED bulk assignment with correct translation key", async () => {
-      mockPrisma.notification.findUnique.mockResolvedValue({
+      mockDb.notification.findUnique.mockResolvedValue({
         ...baseNotification,
         type: "WORK_ASSIGNED",
         data: {
@@ -163,7 +187,7 @@ describe("EmailWorker", () => {
     });
 
     it("should process SESSION_ASSIGNED and build correct URL", async () => {
-      mockPrisma.notification.findUnique.mockResolvedValue({
+      mockDb.notification.findUnique.mockResolvedValue({
         ...baseNotification,
         type: "SESSION_ASSIGNED",
         data: {
@@ -192,7 +216,7 @@ describe("EmailWorker", () => {
     });
 
     it("should process COMMENT_MENTION for RepositoryCase entity type", async () => {
-      mockPrisma.notification.findUnique.mockResolvedValue({
+      mockDb.notification.findUnique.mockResolvedValue({
         ...baseNotification,
         type: "COMMENT_MENTION",
         data: {
@@ -223,7 +247,7 @@ describe("EmailWorker", () => {
     });
 
     it("should process COMMENT_MENTION for TestRun entity type", async () => {
-      mockPrisma.notification.findUnique.mockResolvedValue({
+      mockDb.notification.findUnique.mockResolvedValue({
         ...baseNotification,
         type: "COMMENT_MENTION",
         data: {
@@ -254,7 +278,7 @@ describe("EmailWorker", () => {
     });
 
     it("should process COMMENT_MENTION for Session entity type", async () => {
-      mockPrisma.notification.findUnique.mockResolvedValue({
+      mockDb.notification.findUnique.mockResolvedValue({
         ...baseNotification,
         type: "COMMENT_MENTION",
         data: {
@@ -285,7 +309,7 @@ describe("EmailWorker", () => {
     });
 
     it("should process COMMENT_MENTION for Milestone entity type", async () => {
-      mockPrisma.notification.findUnique.mockResolvedValue({
+      mockDb.notification.findUnique.mockResolvedValue({
         ...baseNotification,
         type: "COMMENT_MENTION",
         data: {
@@ -316,7 +340,7 @@ describe("EmailWorker", () => {
     });
 
     it("should process SYSTEM_ANNOUNCEMENT with htmlContent", async () => {
-      mockPrisma.notification.findUnique.mockResolvedValue({
+      mockDb.notification.findUnique.mockResolvedValue({
         ...baseNotification,
         type: "SYSTEM_ANNOUNCEMENT",
         data: {
@@ -341,7 +365,7 @@ describe("EmailWorker", () => {
 
     it("should process SYSTEM_ANNOUNCEMENT with richContent via tiptapToHtml", async () => {
       const richContent = { type: "doc", content: [] };
-      mockPrisma.notification.findUnique.mockResolvedValue({
+      mockDb.notification.findUnique.mockResolvedValue({
         ...baseNotification,
         type: "SYSTEM_ANNOUNCEMENT",
         data: { richContent },
@@ -364,7 +388,7 @@ describe("EmailWorker", () => {
     });
 
     it("should process MILESTONE_DUE_REMINDER when not overdue", async () => {
-      mockPrisma.notification.findUnique.mockResolvedValue({
+      mockDb.notification.findUnique.mockResolvedValue({
         ...baseNotification,
         type: "MILESTONE_DUE_REMINDER",
         data: {
@@ -400,7 +424,7 @@ describe("EmailWorker", () => {
     });
 
     it("should process MILESTONE_DUE_REMINDER when overdue", async () => {
-      mockPrisma.notification.findUnique.mockResolvedValue({
+      mockDb.notification.findUnique.mockResolvedValue({
         ...baseNotification,
         type: "MILESTONE_DUE_REMINDER",
         data: {
@@ -432,7 +456,7 @@ describe("EmailWorker", () => {
     });
 
     it("should return early when notification is not found", async () => {
-      mockPrisma.notification.findUnique.mockResolvedValue(null);
+      mockDb.notification.findUnique.mockResolvedValue(null);
 
       const { processor } = await import("./emailWorker");
 
@@ -452,7 +476,7 @@ describe("EmailWorker", () => {
     });
 
     it("should return early when user email is missing", async () => {
-      mockPrisma.notification.findUnique.mockResolvedValue({
+      mockDb.notification.findUnique.mockResolvedValue({
         ...baseNotification,
         user: {
           ...baseNotification.user,
@@ -483,8 +507,8 @@ describe("EmailWorker", () => {
     };
 
     it("should process digest email and mark notifications as read", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
-      mockPrisma.notification.findMany.mockResolvedValue([
+      mockDb.user.findUnique.mockResolvedValue(mockUser);
+      mockDb.notification.findMany.mockResolvedValue([
         {
           id: "notif-1",
           type: "WORK_ASSIGNED",
@@ -549,14 +573,14 @@ describe("EmailWorker", () => {
       expect(digestArgs.notifications).toHaveLength(2);
 
       // Should mark notifications as read after sending
-      expect(mockPrisma.notification.updateMany).toHaveBeenCalledWith({
+      expect(mockDb.notification.updateMany).toHaveBeenCalledWith({
         where: { id: { in: ["notif-1", "notif-2"] } },
         data: { isRead: true },
       });
     });
 
     it("should return early when user is not found", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockDb.user.findUnique.mockResolvedValue(null);
 
       const { processor } = await import("./emailWorker");
 
@@ -574,11 +598,11 @@ describe("EmailWorker", () => {
       await processor(mockJob);
 
       expect(mockSendDigestEmail).not.toHaveBeenCalled();
-      expect(mockPrisma.notification.updateMany).not.toHaveBeenCalled();
+      expect(mockDb.notification.updateMany).not.toHaveBeenCalled();
     });
 
     it("should return early when user has no email", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({
+      mockDb.user.findUnique.mockResolvedValue({
         ...mockUser,
         email: null,
       });
@@ -599,9 +623,106 @@ describe("EmailWorker", () => {
       expect(mockSendDigestEmail).not.toHaveBeenCalled();
     });
 
+    it("should only include notifications that are still unread when the job runs", async () => {
+      mockDb.user.findUnique.mockResolvedValue(mockUser);
+      // notif-1 was read in the app after the digest was queued, so the
+      // re-fetch only returns notif-2.
+      mockDb.notification.findMany.mockResolvedValue([
+        {
+          id: "notif-2",
+          type: "SESSION_ASSIGNED",
+          title: "Session",
+          message: "You were assigned a session",
+          data: {
+            projectId: "proj-1",
+            sessionId: "session-1",
+            sessionName: "My Session",
+            projectName: "Project",
+            assignedByName: "Admin",
+          },
+          createdAt: new Date(),
+        },
+      ]);
+
+      const { processor } = await import("./emailWorker");
+
+      const mockJob = {
+        id: "job-14b",
+        name: "send-digest-email",
+        data: {
+          userId: "user-1",
+          notifications: [
+            {
+              id: "notif-1",
+              title: "t1",
+              message: "m1",
+              createdAt: new Date(),
+            },
+            {
+              id: "notif-2",
+              title: "t2",
+              message: "m2",
+              createdAt: new Date(),
+            },
+          ],
+        },
+      } as Job;
+
+      await processor(mockJob);
+
+      expect(mockDb.notification.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            id: { in: ["notif-1", "notif-2"] },
+            userId: "user-1",
+            isRead: false,
+            isDeleted: false,
+          }),
+        })
+      );
+
+      const digestArgs = mockSendDigestEmail.mock.calls[0][0];
+      expect(digestArgs.notifications).toHaveLength(1);
+      expect(digestArgs.notifications[0].id).toBe("notif-2");
+
+      // The already-read notification must not be touched again
+      expect(mockDb.notification.updateMany).toHaveBeenCalledWith({
+        where: { id: { in: ["notif-2"] } },
+        data: { isRead: true },
+      });
+    });
+
+    it("should skip the email when every queued notification was already read", async () => {
+      mockDb.user.findUnique.mockResolvedValue(mockUser);
+      mockDb.notification.findMany.mockResolvedValue([]);
+
+      const { processor } = await import("./emailWorker");
+
+      const mockJob = {
+        id: "job-14c",
+        name: "send-digest-email",
+        data: {
+          userId: "user-1",
+          notifications: [
+            {
+              id: "notif-1",
+              title: "t1",
+              message: "m1",
+              createdAt: new Date(),
+            },
+          ],
+        },
+      } as Job;
+
+      await processor(mockJob);
+
+      expect(mockSendDigestEmail).not.toHaveBeenCalled();
+      expect(mockDb.notification.updateMany).not.toHaveBeenCalled();
+    });
+
     it("should build correct URLs for each notification type in digest", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
-      mockPrisma.notification.findMany.mockResolvedValue([
+      mockDb.user.findUnique.mockResolvedValue(mockUser);
+      mockDb.notification.findMany.mockResolvedValue([
         {
           id: "notif-1",
           type: "COMMENT_MENTION",
@@ -707,9 +828,7 @@ describe("EmailWorker", () => {
     };
 
     it("immediate path: calls getServerTranslation with reviewReminderTitle + reviewReminderEmailMessage and routes actorName from requesterName", async () => {
-      mockPrisma.notification.findUnique.mockResolvedValue(
-        reminderNotification
-      );
+      mockDb.notification.findUnique.mockResolvedValue(reminderNotification);
 
       const { processor } = await import("./emailWorker");
       const { getServerTranslation } =
@@ -747,9 +866,7 @@ describe("EmailWorker", () => {
     });
 
     it("immediate path: composes the URL using projects/repository/{projectId}/{entityId} for CASE", async () => {
-      mockPrisma.notification.findUnique.mockResolvedValue(
-        reminderNotification
-      );
+      mockDb.notification.findUnique.mockResolvedValue(reminderNotification);
 
       const { processor } = await import("./emailWorker");
 
@@ -772,15 +889,13 @@ describe("EmailWorker", () => {
     });
 
     it("digest path: calls getServerTranslation with reviewReminderTitle + reviewReminderEmailMessage and routes actorName from requesterName", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({
+      mockDb.user.findUnique.mockResolvedValue({
         id: "user-1",
         email: "user@example.com",
         name: "Test User",
         userPreferences: { locale: "en_US" },
       });
-      mockPrisma.notification.findMany.mockResolvedValue([
-        reminderNotification,
-      ]);
+      mockDb.notification.findMany.mockResolvedValue([reminderNotification]);
 
       const { processor } = await import("./emailWorker");
       const { getServerTranslation } =

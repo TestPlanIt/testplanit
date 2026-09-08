@@ -1,12 +1,16 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { Prisma } from "@prisma/client";
+import type { WorkflowsFindManyArgs, WorkflowsWhereInput } from "@db/input";
 import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
 import { TestPlanItHttpError } from "../../http.js";
 import { resolveTagIds } from "../cases/shared.js";
-import { RUN_DETAIL_INCLUDE } from "./get.js";
+import { runDetailInclude } from "./get.js";
+
+type WorkflowsOrderByWithRelationInput = NonNullable<
+  WorkflowsFindManyArgs["orderBy"]
+>;
 import {
   computeStatusRollup,
   extractStatusNames,
@@ -38,8 +42,8 @@ export async function resolveRunState(
         scope: "RUNS",
         projects: { some: { projectId } },
         ...(name ? { name } : {}),
-      } satisfies Prisma.WorkflowsWhereInput,
-      orderBy: { order: "asc" } satisfies Prisma.WorkflowsOrderByWithRelationInput,
+      } satisfies WorkflowsWhereInput,
+      orderBy: { order: "asc" } satisfies WorkflowsOrderByWithRelationInput,
       take: 1,
     },
     env,
@@ -159,7 +163,7 @@ export function registerRunsCreate(
           "findUnique",
           {
             where: { id: created.id },
-            include: RUN_DETAIL_INCLUDE,
+            include: runDetailInclude(created.id),
           },
           deps.env,
         );

@@ -1,5 +1,5 @@
-import { getCurrentTenantId, isMultiTenantMode } from "@/lib/multiTenantPrisma";
-import { prisma } from "@/lib/prisma";
+import { getCurrentTenantId, isMultiTenantMode } from "@/lib/multiTenantDb";
+import { baseDb } from "@/lib/db";
 import { getElasticsearchReindexQueue } from "@/lib/queues";
 import { BULLMQ_PREFIX } from "@/lib/bullPrefix";
 import { NextRequest, NextResponse } from "next/server";
@@ -35,7 +35,7 @@ async function checkAdminAuth(
   }
 
   if (!userAccess) {
-    const user = await prisma.user.findUnique({
+    const user = await baseDb.user.findUnique({
       where: { id: userId },
       select: { access: true },
     });

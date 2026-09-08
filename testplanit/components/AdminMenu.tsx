@@ -12,12 +12,14 @@ import {
   Activity,
   Bell,
   Boxes,
+  BrainCog,
   Bug,
   ChartNoAxesCombined,
   CircleCheckBig,
   Combine,
   Drama,
   GitBranch,
+  Hash,
   ImportIcon,
   KeyRound,
   LayoutList,
@@ -34,14 +36,14 @@ import {
   ShieldUser,
   Sparkles,
   Tags,
-  Trash2,
+  Trash,
   User,
   Users,
   Webhook,
   Workflow,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, usePathname, useRouter } from "~/lib/navigation";
 import { cn } from "~/utils";
 
@@ -50,6 +52,7 @@ type MenuSection =
   | "peopleAndAccess"
   | "authentication"
   | "toolsAndIntegrations"
+  | "aiTools"
   | "system";
 
 type MenuOption = {
@@ -64,6 +67,7 @@ const sectionIcons: Record<MenuSection, React.ElementType> = {
   peopleAndAccess: Users,
   authentication: Lock,
   toolsAndIntegrations: Plug,
+  aiTools: BrainCog,
   system: Settings,
 };
 
@@ -72,6 +76,7 @@ const sectionOrder: MenuSection[] = [
   "peopleAndAccess",
   "authentication",
   "toolsAndIntegrations",
+  "aiTools",
   "system",
 ];
 
@@ -203,29 +208,31 @@ const menuOptions: MenuOption[] = [
     path: "notifications",
     section: "toolsAndIntegrations",
   },
+
+  // AI Tools
   {
     icon: Sparkles,
     translationKey: "llm",
     path: "llm",
-    section: "toolsAndIntegrations",
+    section: "aiTools",
   },
   {
     icon: MessageSquareCode,
     translationKey: "prompts",
     path: "prompts",
-    section: "toolsAndIntegrations",
+    section: "aiTools",
   },
   {
     icon: ScrollText,
     translationKey: "quickscriptTemplates",
     path: "quickscripts",
-    section: "toolsAndIntegrations",
+    section: "aiTools",
   },
   {
     icon: GitBranch,
     translationKey: "codeRepositories",
     path: "code-repositories",
-    section: "toolsAndIntegrations",
+    section: "aiTools",
   },
 
   // System
@@ -233,6 +240,12 @@ const menuOptions: MenuOption[] = [
     icon: Settings,
     translationKey: "appConfig",
     path: "app-config",
+    section: "system",
+  },
+  {
+    icon: Hash,
+    translationKey: "recordKeys",
+    path: "record-keys",
     section: "system",
   },
   {
@@ -260,7 +273,7 @@ const menuOptions: MenuOption[] = [
     section: "system",
   },
   {
-    icon: Trash2,
+    icon: Trash,
     translationKey: "trash",
     path: "trash",
     section: "system",
@@ -300,7 +313,7 @@ function MenuLink({
           : "hover:bg-primary/10 hover:text-primary"
       )}
     >
-      <IconComponent className="min-w-6 min-h-6" />
+      <IconComponent className="size-5 shrink-0" />
       <span className={`hidden md:inline ${isActive ? "font-bold" : ""}`}>
         {t(option.translationKey as any)}
       </span>
@@ -317,19 +330,28 @@ export default function AdminMenu() {
 
   const groups = getGroupedItems();
 
-  const [openSections, setOpenSections] = useState<string[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const stored = localStorage.getItem("adminMenu:openSections");
-        return stored ? (JSON.parse(stored) as string[]) : [];
-      } catch {
-        return [];
-      }
-    }
-    return [];
-  });
+  const [openSections, setOpenSections] = useState<string[]>(() => []);
+  const ssrDefaultSections = useRef(openSections);
 
   useEffect(() => {
+    // The server has no localStorage, so it always renders every section
+    // collapsed. Seeding this state from storage in the initializer would give
+    // the Accordion a different set of open items on the client and make React
+    // discard the whole server tree on hydration; adopt the stored value here,
+    // after the markup has matched.
+    try {
+      const stored = localStorage.getItem("adminMenu:openSections");
+      if (stored) setOpenSections(JSON.parse(stored) as string[]);
+    } catch {
+      // ignore storage errors
+    }
+  }, []);
+
+  useEffect(() => {
+    // Until the effect above swaps in the stored value, this still holds the
+    // collapsed default the server rendered; writing it would overwrite the
+    // very preference that effect is reading back.
+    if (openSections === ssrDefaultSections.current) return;
     try {
       localStorage.setItem(
         "adminMenu:openSections",
@@ -352,8 +374,14 @@ export default function AdminMenu() {
     const activeSection = groups.find((group) =>
       group.items.some((item) => item.path === page)
     );
-    if (activeSection && !openSections.includes(activeSection.key)) {
-      setOpenSections((prev) => [...prev, activeSection.key]);
+    // Test membership inside the updater rather than against the rendered
+    // `openSections`: on mount the restore effect has already queued the stored
+    // value, and only the updater sees it. Returning `prev` unchanged keeps
+    // React from re-rendering when the section is already open.
+    if (activeSection) {
+      setOpenSections((prev) =>
+        prev.includes(activeSection.key) ? prev : [...prev, activeSection.key]
+      );
     }
   }, [page, router]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -379,7 +407,7 @@ export default function AdminMenu() {
                 className="border-0 rounded-none overflow-visible mb-0"
                 data-testid={`admin-menu-section-${group.key}`}
               >
-                <AccordionTrigger className="ml-3 py-2 mt-2 px-0 bg-transparent hover:bg-transparent uppercase text-xs hover:no-underline flex border-b-2 border-primary/40 md:border-b-0">
+                <AccordionTrigger className="ms-3 py-2 mt-2 px-0 bg-transparent hover:bg-transparent uppercase text-xs hover:no-underline flex border-b-2 border-primary/40 md:border-b-0">
                   <span className="md:hidden">
                     {(() => {
                       const Icon = sectionIcons[group.key];

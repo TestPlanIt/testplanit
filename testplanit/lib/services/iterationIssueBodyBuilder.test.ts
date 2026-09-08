@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   buildIterationIssueBody,
-  type PrismaLike,
+  type DbLike,
 } from "./iterationIssueBodyBuilder";
 
 // ── Test helpers ──────────────────────────────────────────────────────
@@ -13,7 +13,7 @@ import {
 function makeClient(opts: {
   iteration?: any;
   totalIterations?: number;
-}): PrismaLike {
+}): DbLike {
   return {
     testRunCaseIteration: {
       // WR-03: builder switched from findUnique → findFirst so the

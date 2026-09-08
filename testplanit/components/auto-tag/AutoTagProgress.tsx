@@ -69,7 +69,7 @@ export function AutoTagProgress({
           onClick={onCancel}
           className="h-auto shrink-0 px-2 py-1 text-xs text-muted-foreground"
         >
-          <X className="mr-1 h-3 w-3" />
+          <X className="me-1 h-3 w-3" />
           {tCommon("cancel")}
         </Button>
       </div>
@@ -91,6 +91,7 @@ export function AutoTagProgress({
         </Button>
         {onDismiss && (
           <button
+            type="button"
             onClick={onDismiss}
             className="shrink-0 rounded-sm bg-destructive p-0.5 text-destructive-foreground hover:bg-destructive/80"
           >

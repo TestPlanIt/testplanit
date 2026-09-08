@@ -1,9 +1,11 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
-import { useFindManyProjects, useFindManyUser } from "~/lib/hooks";
+import { useAutomationRunCounts } from "~/hooks/useAutomationRunCounts";
 import { useRouter } from "~/lib/navigation";
 import {
   ProcessedProject,
@@ -25,12 +27,18 @@ const Projects = () => {
   >({});
   const [isLoadingIssueCounts, setIsLoadingIssueCounts] = useState(false);
 
-  const { data: allUsers } = useFindManyUser({
+  const { data: allUsers } = useClientQueries(schema).user.useFindMany({
     where: { isActive: true, isDeleted: false },
     select: { id: true, access: true },
   });
 
-  const { data: projectsRaw, isFetched } = useFindManyProjects(
+  const { counts: automationRunCounts } = useAutomationRunCounts(
+    !!session?.user
+  );
+
+  const { data: projectsRaw, isFetched } = useClientQueries(
+    schema
+  ).projects.useFindMany(
     {
       where: {
         isDeleted: false,
@@ -162,7 +170,7 @@ const Projects = () => {
           <CardHeader>
             <CardTitle data-testid="projects-page-title">
               <div className="flex items-center">
-                <Boxes className="w-5 h-5 mr-1" />
+                <Boxes className="w-5 h-5 me-1" />
                 {t("home.dashboard.projects", { count: projectCount })}
               </div>
             </CardTitle>
@@ -174,6 +182,7 @@ const Projects = () => {
                 project={project}
                 users={project.users}
                 isLoadingIssueCounts={isLoadingIssueCounts}
+                automationRunCount={automationRunCounts[project.id] ?? 0}
               />
             ))}
           </CardContent>

@@ -1,4 +1,4 @@
-import { prisma as defaultPrisma } from "../lib/prismaBase";
+import { rawDb as defaultDb } from "../lib/rawDb";
 import { extractTextFromNode } from "../utils/extractTextFromJson";
 import {
   bulkIndexRepositoryCases,
@@ -11,7 +11,7 @@ import {
 } from "./elasticsearchService";
 import { buildCustomFieldDocuments } from "./unifiedElasticsearchService";
 
-type PrismaClientType = typeof defaultPrisma;
+type DbClientType = typeof defaultDb;
 
 /**
  * Safely extract text from a step field that might be JSON string or object
@@ -38,10 +38,10 @@ function extractStepText(stepData: any): string {
  */
 export async function buildRepositoryCaseDocument(
   caseId: number,
-  prismaClient?: PrismaClientType
+  dbClient?: DbClientType
 ): Promise<RepositoryCaseDocument | null> {
-  const prisma = prismaClient || defaultPrisma;
-  const repoCase = await prisma.repositoryCases.findUnique({
+  const rawDb = dbClient || defaultDb;
+  const repoCase = await rawDb.repositoryCases.findUnique({
     where: { id: caseId },
     include: {
       project: true,
@@ -54,7 +54,7 @@ export async function buildRepositoryCaseDocument(
         },
       },
       creator: true,
-      tags: true,
+      caseTags: { include: { tag: true } },
       steps: {
         where: { isDeleted: false },
         orderBy: { order: "asc" },
@@ -93,7 +93,7 @@ export async function buildRepositoryCaseDocument(
   if (!repoCase) return null;
 
   // Build folder path
-  const folderPath = await buildFolderPath(repoCase.folderId, prisma);
+  const folderPath = await buildFolderPath(repoCase.folderId, rawDb);
 
   return {
     id: repoCase.id,
@@ -122,9 +122,9 @@ export async function buildRepositoryCaseDocument(
     creatorId: repoCase.creatorId,
     creatorName: repoCase.creator.name,
     creatorImage: repoCase.creator.image,
-    tags: repoCase.tags.map((tag) => ({
-      id: tag.id,
-      name: tag.name,
+    tags: repoCase.caseTags.map((ct) => ({
+      id: ct.tag.id,
+      name: ct.tag.name,
     })),
     customFields: buildCustomFieldDocuments(
       repoCase.caseFieldValues.map((cfv) => ({
@@ -187,9 +187,9 @@ export async function buildRepositoryCaseDocument(
  */
 async function buildFolderPath(
   folderId: number,
-  prisma: PrismaClientType = defaultPrisma
+  rawDb: DbClientType = defaultDb
 ): Promise<string> {
-  const folder = await prisma.repositoryFolders.findUnique({
+  const folder = await rawDb.repositoryFolders.findUnique({
     where: { id: folderId },
     include: { parent: true },
   });
@@ -201,7 +201,7 @@ async function buildFolderPath(
 
   while (current.parent) {
     path.unshift(current.parent.name);
-    const nextParent = await prisma.repositoryFolders.findUnique({
+    const nextParent = await rawDb.repositoryFolders.findUnique({
       where: { id: current.parent.id },
       include: { parent: true },
     });
@@ -218,9 +218,9 @@ async function buildFolderPath(
 export async function syncRepositoryCaseToElasticsearch(
   caseId: number,
   tenantId?: string,
-  prismaClient?: PrismaClientType
+  dbClient?: DbClientType
 ): Promise<boolean> {
-  const doc = await buildRepositoryCaseDocument(caseId, prismaClient);
+  const doc = await buildRepositoryCaseDocument(caseId, dbClient);
   if (!doc) {
     // Case no longer exists (hard deleted) - remove from Elasticsearch
     await deleteRepositoryCase(caseId, tenantId);
@@ -242,7 +242,7 @@ export async function syncRepositoryCaseToElasticsearch(
  * @param projectId - The project ID to sync cases for
  * @param batchSize - Number of cases to process per batch
  * @param progressCallback - Optional callback for progress updates
- * @param prismaClient - Optional Prisma client for tenant-specific queries
+ * @param dbClient - Optional Prisma client for tenant-specific queries
  * @param tenantId - Optional tenant ID for multi-tenant mode
  */
 export async function syncProjectCasesToElasticsearch(
@@ -253,15 +253,15 @@ export async function syncProjectCasesToElasticsearch(
     total: number,
     message: string
   ) => void | Promise<void>,
-  prismaClient?: PrismaClientType,
+  dbClient?: DbClientType,
   tenantId?: string
 ): Promise<boolean> {
-  const prisma = prismaClient || defaultPrisma;
+  const rawDb = dbClient || defaultDb;
   try {
     // Ensure index exists
-    await createRepositoryCaseIndex(prisma, tenantId);
+    await createRepositoryCaseIndex(rawDb, tenantId);
 
-    const totalCases = await prisma.repositoryCases.count({
+    const totalCases = await rawDb.repositoryCases.count({
       where: {
         projectId,
         isArchived: false, // Only exclude archived, include deleted items
@@ -277,7 +277,7 @@ export async function syncProjectCasesToElasticsearch(
     let processed = 0;
 
     while (true) {
-      const cases = await prisma.repositoryCases.findMany({
+      const cases = await rawDb.repositoryCases.findMany({
         where: {
           projectId,
           isArchived: false, // Only exclude archived, include deleted items
@@ -295,7 +295,7 @@ export async function syncProjectCasesToElasticsearch(
       const documents: RepositoryCaseDocument[] = [];
 
       for (const caseItem of cases) {
-        const doc = await buildRepositoryCaseDocument(caseItem.id, prisma);
+        const doc = await buildRepositoryCaseDocument(caseItem.id, rawDb);
         if (doc) {
           documents.push(doc);
         }
@@ -332,15 +332,15 @@ export async function syncProjectCasesToElasticsearch(
 
 /**
  * Initialize Elasticsearch indexes on application startup
- * @param prismaClient - Optional Prisma client for tenant-specific queries
+ * @param dbClient - Optional Prisma client for tenant-specific queries
  * @param tenantId - Optional tenant ID for multi-tenant mode
  */
 export async function initializeElasticsearchIndexes(
-  prismaClient?: PrismaClientType,
+  dbClient?: DbClientType,
   tenantId?: string
 ): Promise<void> {
   try {
-    const created = await createRepositoryCaseIndex(prismaClient, tenantId);
+    const created = await createRepositoryCaseIndex(dbClient, tenantId);
     if (created) {
       console.log(
         `Elasticsearch indexes initialized successfully${tenantId ? ` (tenant: ${tenantId})` : ""}`

@@ -14,10 +14,7 @@
  */
 
 export type IterationProgressState =
-  | "queued"
-  | "active"
-  | "completed"
-  | "failed";
+  "queued" | "active" | "completed" | "failed";
 
 export interface ProgressJob {
   jobId: string;

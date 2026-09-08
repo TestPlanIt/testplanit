@@ -32,7 +32,7 @@ test.describe.configure({ mode: "serial" });
  *
  * Skips: when seed lacks the required entity (run / testCases / results),
  * tests log a `console.warn(...)` skip-reason and continue. The seed file
- * (testplanit/prisma/seed.ts) does NOT currently create TestRuns/TestRunCases/
+ * (testplanit/db/seed.ts) does NOT currently create TestRuns/TestRunCases/
  * TestRunResults, so most of these tests will use `test.skip()` against a
  * pristine seed. The framework remains in place for when the seed grows or
  * a developer manually creates fixture data via the host UI.
@@ -407,8 +407,7 @@ test.describe("MCP test-run read tools (Phase 7 EXEC-01..05)", () => {
     }
 
     let groups:
-      | Array<{ statusId: number | null; _count: { id: number } }>
-      | undefined;
+      Array<{ statusId: number | null; _count: { id: number } }> | undefined;
 
     // 1. findUnique on the run with the same denormalized shape the tool uses.
     await test.step("Get run detail via findUnique with denormalized includes", async () => {
@@ -627,8 +626,7 @@ test.describe("MCP test-run read tools (Phase 7 EXEC-01..05)", () => {
     }
 
     let data:
-      | { id: number; stepResults: Array<Record<string, unknown>> }
-      | undefined;
+      { id: number; stepResults: Array<Record<string, unknown>> } | undefined;
 
     // Get the single testRunResult with stepResults inlined
     await test.step("Get testRunResult with stepResults inlined", async () => {

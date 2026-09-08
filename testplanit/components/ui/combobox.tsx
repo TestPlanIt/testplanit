@@ -93,13 +93,13 @@ export function Combobox({
             <UserNameCell userId={value} hideLink />
           ) : showUnassigned ? (
             <div className="flex items-center">
-              <UserX className="mr-2 h-4 w-4" />
+              <UserX className="me-2 h-4 w-4" />
               <span>{tGlobal("common.labels.unassigned")}</span>
             </div>
           ) : (
             <span className="text-muted-foreground">{placeholder}</span>
           )}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent
@@ -126,11 +126,11 @@ export function Combobox({
                   }}
                 >
                   <div className="flex items-center">
-                    <UserX className="mr-2 h-4 w-4" />
+                    <UserX className="me-2 h-4 w-4" />
                     <span>{tGlobal("common.labels.unassigned")}</span>
                   </div>
                   {!value && (
-                    <Check className="ml-auto h-4 w-4 text-muted-foreground" />
+                    <Check className="ms-auto h-4 w-4 text-muted-foreground" />
                   )}
                 </CommandItem>
               )}
@@ -146,7 +146,7 @@ export function Combobox({
                 >
                   <UserNameCell userId={user.id} hideLink />
                   {value === user.id && (
-                    <Check className="ml-auto h-4 w-4 text-muted-foreground" />
+                    <Check className="ms-auto h-4 w-4 text-muted-foreground" />
                   )}
                 </CommandItem>
               ))}

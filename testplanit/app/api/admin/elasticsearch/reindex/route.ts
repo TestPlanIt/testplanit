@@ -1,5 +1,5 @@
-import { getCurrentTenantId } from "@/lib/multiTenantPrisma";
-import { prisma } from "@/lib/prisma";
+import { getCurrentTenantId } from "@/lib/multiTenantDb";
+import { baseDb } from "@/lib/db";
 import { getElasticsearchReindexQueue } from "@/lib/queues";
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateApiToken } from "~/lib/api-token-auth";
@@ -34,7 +34,11 @@ async function checkAdminAuth(
     userAccess = apiAuth.access;
 
     if (apiAuth.userId) {
-      enrichFromApiAuth({ userId: apiAuth.userId });
+      enrichFromApiAuth({
+        userId: apiAuth.userId,
+        userName: apiAuth.userName,
+        userEmail: apiAuth.userEmail,
+      });
     }
   }
 
@@ -45,7 +49,7 @@ async function checkAdminAuth(
   }
 
   if (!userAccess) {
-    const user = await prisma.user.findUnique({
+    const user = await baseDb.user.findUnique({
       where: { id: userId },
       select: { access: true },
     });

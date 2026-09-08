@@ -1,28 +1,25 @@
 "use client";
 
-import { Prisma } from "@prisma/client";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  PaginationProvider,
-  usePagination,
-} from "~/lib/contexts/PaginationContext";
-import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { useRouter } from "~/lib/navigation";
 
+import { useAccessibleProjectsForUsers } from "~/hooks/useAccessibleProjectsForUsers";
 import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
-import { useFindManyUser } from "~/lib/hooks";
+import type { UserFindManyArgs } from "~/zenstack/input";
 import { ExtendedUser, useColumns } from "./columns";
 
 import { Filter } from "@/components/tables/Filter";
 
-import { PaginationComponent } from "@/components/tables/Pagination";
-import { PaginationInfo } from "@/components/tables/PaginationControls";
 import { Button } from "@/components/ui/button";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { SectionHeader } from "@/components/ui/typography";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
@@ -41,14 +38,13 @@ import { DeleteUser } from "./DeleteUser";
 import { EditUser } from "./EditUser";
 
 export default function UserListPage() {
-  return (
-    <PaginationProvider>
-      <UserList />
-    </PaginationProvider>
-  );
+  return <UserList />;
 }
 
+const PAGE_SIZE = 50;
+
 function UserList() {
+  const locale = useLocale();
   const t = useTranslations("admin.users");
   const tAdmin = useTranslations("admin.users");
   const tGlobal = useTranslations();
@@ -56,17 +52,6 @@ function UserList() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const {
-    currentPage,
-    setCurrentPage,
-    pageSize,
-    setPageSize,
-    totalItems,
-    setTotalItems,
-    startIndex,
-    endIndex,
-    totalPages,
-  } = usePagination();
   const [sortConfig, setSortConfig] = useState<{
     column: string;
     direction: "asc" | "desc";
@@ -84,11 +69,6 @@ function UserList() {
   const [revokingUser, setRevokingUser] = useState<ExtendedUser | null>(null);
   const [isForceLoading, setIsForceLoading] = useState(false);
   const [isRevokeLoading, setIsRevokeLoading] = useState(false);
-
-  // Calculate skip and take based on pageSize
-  const effectivePageSize =
-    typeof pageSize === "number" ? pageSize : totalItems;
-  const skip = (currentPage - 1) * effectivePageSize;
 
   const handleToggle = useCallback(
     async (id: string, key: keyof ExtendedUser, value: boolean) => {
@@ -161,108 +141,111 @@ function UserList() {
     }
   }, [revokingUser, tAdmin]);
 
-  // Sort by `scimGivenName` always puts nulls last so the SCIM-managed users
-  // (the non-null rows) appear at the top regardless of asc/desc direction —
-  // matches the "SCIM" column UX of "click to find SCIM users."
-  const orderBy: Prisma.UserOrderByWithRelationInput =
-    sortConfig?.column === "scimGivenName"
-      ? {
-          scimGivenName: {
-            sort: sortConfig.direction,
-            nulls: "last",
-          },
-        }
-      : sortConfig
-        ? { [sortConfig.column]: sortConfig.direction }
-        : { name: "asc" };
-
-  const { data: totalFilteredUsers } = useFindManyUser(
-    {
-      orderBy,
-      include: {
-        role: true,
-        groups: true,
-        projects: true,
-        createdBy: true,
-      },
-      where: {
-        AND: [
-          {
-            name: {
-              contains: debouncedSearchString,
-              mode: "insensitive",
-            },
-          },
-          showInactiveUsers ? {} : { isActive: true },
-          {
-            isDeleted: false,
-          },
-        ],
-      },
-    },
-    {
-      enabled: !!session?.user,
-      refetchOnWindowFocus: true,
-    }
+  // The SCIM column displays Yes/No, so it sorts by SCIM-ness like a boolean:
+  // ascending puts non-SCIM (No) first, descending puts SCIM-managed (Yes)
+  // first. The nulls placement is what encodes that — the given name only
+  // orders rows within the SCIM block.
+  // A trailing `id` tiebreaker keeps offset pagination stable when the primary
+  // sort key isn't unique (otherwise pages can duplicate or skip rows).
+  const orderBy: NonNullable<UserFindManyArgs["orderBy"]> = useMemo(
+    () =>
+      sortConfig?.column === "scimGivenName"
+        ? [
+            sortConfig.direction === "asc"
+              ? {
+                  scimGivenName: {
+                    sort: "asc" as const,
+                    nulls: "first" as const,
+                  },
+                }
+              : {
+                  scimGivenName: {
+                    sort: "desc" as const,
+                    nulls: "last" as const,
+                  },
+                },
+            { id: "asc" },
+          ]
+        : sortConfig
+          ? [{ [sortConfig.column]: sortConfig.direction }, { id: "asc" }]
+          : [{ name: "asc" }, { id: "asc" }],
+    [sortConfig]
   );
 
-  // Update total items in pagination context
-  useEffect(() => {
-    if (totalFilteredUsers) {
-      setTotalItems(totalFilteredUsers.length);
-    }
-  }, [totalFilteredUsers, setTotalItems]);
-
-  const { data: users, isLoading } = useFindManyUser(
-    {
-      orderBy,
-      include: {
-        role: true,
-        groups: true,
-        projects: true,
-        createdBy: true,
-      },
-      where: {
-        AND: [
-          {
-            name: {
-              contains: debouncedSearchString,
-              mode: "insensitive",
-            },
+  const usersWhere = useMemo(
+    () => ({
+      AND: [
+        {
+          name: {
+            contains: debouncedSearchString,
+            mode: "insensitive" as const,
           },
-          showInactiveUsers ? {} : { isActive: true },
-          {
-            isDeleted: false,
-          },
-        ],
-      },
-      take: effectivePageSize,
-      skip: skip,
-    },
-    {
-      enabled: !!session?.user,
-      refetchOnWindowFocus: true,
-    }
+        },
+        showInactiveUsers ? {} : { isActive: true },
+        { isDeleted: false },
+      ],
+    }),
+    [debouncedSearchString, showInactiveUsers]
   );
 
-  const pageSizeOptions = usePageSizeOptions(totalItems);
+  // `groups` and `projects` (assignments) prefill the Edit dialog; only
+  // `createdBy.id` is read by the Created By column.
+  const include = useMemo(
+    () => ({
+      groups: true,
+      projects: true,
+      createdBy: { select: { id: true } },
+    }),
+    []
+  );
 
-  const prevSearchStringRef = useRef(searchString);
-  const prevPageSizeRef = useRef(pageSize);
+  const infiniteBaseArgs = useMemo(
+    () => ({ orderBy, include, where: usersWhere, take: PAGE_SIZE }),
+    [orderBy, include, usersWhere]
+  );
 
-  // Reset to first page when search changes
-  useEffect(() => {
-    if (searchString === prevSearchStringRef.current) return;
-    prevSearchStringRef.current = searchString;
-    setCurrentPage(1);
-  }, [searchString, setCurrentPage]);
+  const { data: totalCount } = useClientQueries(schema).user.useCount(
+    { where: usersWhere },
+    { enabled: !!session?.user, refetchOnWindowFocus: true }
+  );
 
-  // Reset to first page when page size changes
-  useEffect(() => {
-    if (pageSize === prevPageSizeRef.current) return;
-    prevPageSizeRef.current = pageSize;
-    setCurrentPage(1);
-  }, [pageSize, setCurrentPage]);
+  // Fetch-on-scroll: pages of users load as the sentinel scrolls into view, so
+  // an instance with tens of thousands of users never loads the full set.
+  const {
+    data: infinitePages,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+  } = useClientQueries(schema).user.useInfiniteFindMany(infiniteBaseArgs, {
+    getNextPageParam: (lastPage, allPages) => {
+      if (!lastPage || lastPage.length < PAGE_SIZE) return undefined;
+      return { ...infiniteBaseArgs, skip: allPages.flat().length };
+    },
+    enabled: !!session?.user,
+    refetchOnWindowFocus: true,
+  });
+
+  const baseRows = useMemo(
+    () => infinitePages?.pages.flat() ?? [],
+    [infinitePages]
+  );
+
+  const resetKey = `${debouncedSearchString}|${showInactiveUsers}|${sortConfig.column}|${sortConfig.direction}`;
+
+  // Resolve each loaded page's effective accessible projects incrementally
+  // (bounded per-page batches), instead of one ~8-query action per rendered row.
+  const userIds = useMemo(() => baseRows.map((u) => u.id), [baseRows]);
+  const projectsByUser = useAccessibleProjectsForUsers(userIds, resetKey);
+
+  const userRows = useMemo(
+    () =>
+      baseRows.map((u) => ({
+        ...u,
+        accessibleProjects: projectsByUser[u.id],
+      })) as unknown as ExtendedUser[],
+    [baseRows, projectsByUser]
+  );
 
   useEffect(() => {
     if (status !== "loading" && !session) {
@@ -293,6 +276,10 @@ function UserList() {
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >({});
+  // Hide-column requests from the table's header menu are routed through the
+  // Columns control (the visibility owner) so persistence and its checkboxes
+  // stay in sync.
+  const hideColumnRef = useRef<((columnId: string) => void) | null>(null);
 
   if (status === "loading") return null;
 
@@ -308,35 +295,49 @@ function UserList() {
         ? "desc"
         : "asc";
     setSortConfig({ column, direction });
-    setCurrentPage(1); // Reset to first page when sorting changes
+  };
+
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // returns to the default name order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig({ column: "name", direction: "asc" });
+    } else {
+      setSortConfig({ column, direction });
+    }
   };
 
   return (
     <main>
       <Card>
         <CardHeader className="w-full">
-          <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
-            <div>
+          <div className="flex items-center justify-between gap-2">
+            <SectionHeader className="flex items-center gap-2">
               <CardTitle data-testid="users-page-title">
                 {tGlobal("common.fields.users")}
               </CardTitle>
-            </div>
-            <div>
-              <Button onClick={() => setAddUserOpen(true)}>
-                <CirclePlus className="w-4" />
-                <span className="hidden md:inline">{t("add.button")}</span>
-              </Button>
-              {addUserOpen && (
-                <AddUser
-                  open={addUserOpen}
-                  onClose={() => setAddUserOpen(false)}
-                />
-              )}
-            </div>
+              <HelpPopover helpKey="users" />
+            </SectionHeader>
+            <Button
+              onClick={() => setAddUserOpen(true)}
+              aria-label={t("add.button")}
+              className="group gap-0 transition-all duration-200 hover:gap-2"
+            >
+              <CirclePlus className="h-4 w-4" />
+              <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+                {t("add.button")}
+              </span>
+            </Button>
           </div>
+          {addUserOpen && (
+            <AddUser open={addUserOpen} onClose={() => setAddUserOpen(false)} />
+          )}
         </CardHeader>
         <CardContent>
-          <div className="flex flex-row items-start">
+          <div className="flex flex-row items-start justify-between gap-4">
             <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
               <div className="text-muted-foreground w-full text-nowrap">
                 <Filter
@@ -352,6 +353,7 @@ function UserList() {
                       storageKey="admin-users"
                       columns={columns}
                       onVisibilityChange={setColumnVisibility}
+                      hideColumnRef={hideColumnRef}
                     />
                   </div>
                   <div>
@@ -373,43 +375,34 @@ function UserList() {
               </div>
             </div>
 
-            <div className="flex flex-col w-full sm:w-2/3 items-end">
-              {totalItems > 0 && (
-                <>
-                  <div className="justify-end">
-                    <PaginationInfo
-                      key="users-pagination-info"
-                      startIndex={startIndex}
-                      endIndex={endIndex}
-                      totalRows={totalItems}
-                      searchString={searchString}
-                      pageSize={typeof pageSize === "number" ? pageSize : "All"}
-                      pageSizeOptions={pageSizeOptions}
-                      handlePageSizeChange={(size) => setPageSize(size)}
-                    />
-                  </div>
-                  <div className="justify-end -mx-4">
-                    <PaginationComponent
-                      currentPage={currentPage}
-                      totalPages={totalPages}
-                      onPageChange={setCurrentPage}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
+            {userRows.length > 0 && (
+              <p className="text-sm text-muted-foreground shrink-0">
+                {tGlobal("admin.auditLogs.showing", {
+                  loaded: userRows.length.toLocaleString(locale),
+                  total: (totalCount ?? userRows.length).toLocaleString(locale),
+                })}
+              </p>
+            )}
           </div>
 
-          <div className="mt-4 flex justify-between">
-            <DataTable<ExtendedUser, unknown>
-              columns={columns}
-              data={users || []}
+          <div className="mt-4 w-full">
+            <DataTable
+              virtualized
+              fillViewport
+              columns={columns as any}
+              data={userRows}
               onSortChange={handleSortChange}
+              onSortColumn={handleSortColumn}
+              onHideColumn={(columnId) => hideColumnRef.current?.(columnId)}
               sortConfig={sortConfig}
               columnVisibility={columnVisibility}
               onColumnVisibilityChange={setColumnVisibility}
-              pageSize={typeof pageSize === "number" ? pageSize : totalItems}
-              isLoading={isLoading}
+              isLoading={isLoading || isFetchingNextPage}
+              hasMore={!!hasNextPage}
+              onLoadMore={fetchNextPage}
+              resetKey={resetKey}
+              testIdPrefix="admin-users-table"
+              rowTestIdPrefix="admin-user-row"
             />
           </div>
         </CardContent>

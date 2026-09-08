@@ -1,4 +1,4 @@
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "~/server/auth";
@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const config = await prisma.promptConfig.findUnique({
+    const config = await baseDb.promptConfig.findUnique({
       where: { id },
       include: {
         prompts: {

@@ -8,11 +8,12 @@ import {
   NotificationMode,
   Theme,
   TimeFormat,
-} from "@prisma/client";
+} from "~/zenstack/models";
 import { updateAuditContext } from "~/lib/auditContext";
 import { auditedTransaction } from "~/lib/audit/auditedTransaction";
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 import { getServerAuthSession } from "~/server/auth";
 import { invalidateSessionUserCache } from "~/lib/session-cache";
 
@@ -79,7 +80,7 @@ export const PATCH = withAuditContext(
       const validatedData = updateUserSchema.parse(body);
 
       // Check if user exists
-      const existingUser = await prisma.user.findUnique({
+      const existingUser = await baseDb.user.findUnique({
         where: { id: userId },
         include: { userPreferences: true },
       });
@@ -89,7 +90,7 @@ export const PATCH = withAuditContext(
       }
 
       // SCIM-managed users have IdP-owned identity fields. Reject attempts to
-      // mutate them via this endpoint; the SCIM service writes via raw prisma
+      // mutate them via this endpoint; the SCIM service writes via raw baseDb
       // and bypasses this guard. Schema @deny rules cover the enhanced-client
       // paths; this guard covers this dedicated REST endpoint.
       const isScimManaged = existingUser.scimGivenName !== null;
@@ -194,11 +195,19 @@ export const PATCH = withAuditContext(
           }
         }
 
-        // Fetch the updated user with preferences
-        return await tx.user.findUnique({
+        // Fetch the updated user. Read userPreferences DIRECTLY rather than via
+        // a nested `include`: v3 does not translate the ItemsPerPage @map on
+        // nested relation includes, so a nested read returns the raw DB value
+        // ("25") instead of the enum member ("P25"). A direct read maps it.
+        const refreshedUser = await tx.user.findUnique({
           where: { id: userId },
-          include: { userPreferences: true },
         });
+        const refreshedPrefs = await tx.userPreferences.findUnique({
+          where: { userId },
+        });
+        return refreshedUser
+          ? { ...refreshedUser, userPreferences: refreshedPrefs }
+          : null;
       });
 
       // Invalidate session cache so header/menu reflect changes immediately
@@ -208,8 +217,8 @@ export const PATCH = withAuditContext(
     } catch (error: any) {
       console.error("[User Update API] Error updating user:", error);
 
-      // Handle Prisma unique constraint violation
-      if (error.code === "P2002") {
+      // Handle unique constraint violation
+      if (isUniqueConstraintError(error)) {
         return NextResponse.json(
           { error: "Email already exists" },
           { status: 400 }

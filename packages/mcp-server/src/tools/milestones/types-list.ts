@@ -1,5 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { Prisma } from "@prisma/client";
+import type {
+  MilestoneTypesFindManyArgs,
+} from "@db/input";
 import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
@@ -46,7 +48,7 @@ export function registerMilestoneTypesList(
             },
             select: { id: true, name: true, isDefault: true },
             orderBy: { name: "asc" },
-          } satisfies Prisma.MilestoneTypesFindManyArgs,
+          } satisfies MilestoneTypesFindManyArgs,
           deps.env,
         );
         const items = (rows ?? []).map((r) => ({

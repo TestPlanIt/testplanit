@@ -1,5 +1,7 @@
 /* eslint-disable react-hooks/incompatible-library -- This file consumes a library API (TanStack Table / TanStack Virtual / react-hook-form watch) that returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it. */
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import DynamicIcon from "@/components/DynamicIcon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -42,13 +44,6 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod/v4";
-import {
-  useFindManyMilestones,
-  useFindManyTags,
-  useFindManyTemplates,
-  useFindManyWorkflows,
-} from "~/lib/hooks";
-import { useFindManyRepositoryFolders } from "~/lib/hooks/repository-folders";
 import { IconName } from "~/types/globals";
 import { ConfigurationSelect } from "./forms/ConfigurationSelect";
 import { FolderSelect, transformFolders } from "./forms/FolderSelect";
@@ -115,19 +110,19 @@ export default function TestResultsImportDialog({
   const [importStatus, setImportStatus] = useState<string>("");
 
   // Fetch milestones, tags, workflows
-  const { data: milestones } = useFindManyMilestones({
+  const { data: milestones } = useClientQueries(schema).milestones.useFindMany({
     where: { projectId, isDeleted: false, isCompleted: false },
     orderBy: { startedAt: "asc" },
     include: {
       milestoneType: { include: { icon: true } },
     },
   });
-  useFindManyTags({
+  useClientQueries(schema).tags.useFindMany({
     where: { isDeleted: false },
     orderBy: { name: "asc" },
     select: { id: true, name: true },
   });
-  const { data: workflows } = useFindManyWorkflows({
+  const { data: workflows } = useClientQueries(schema).workflows.useFindMany({
     where: {
       isDeleted: false,
       isEnabled: true,
@@ -148,19 +143,21 @@ export default function TestResultsImportDialog({
   });
 
   // Fetch folders for the project
-  const { data: folders, isLoading: isFoldersLoading } =
-    useFindManyRepositoryFolders({
-      where: {
-        projectId,
-        isDeleted: false,
-      },
-      orderBy: { order: "asc" },
-    });
+  const { data: folders, isLoading: isFoldersLoading } = useClientQueries(
+    schema
+  ).repositoryFolders.useFindMany({
+    where: {
+      projectId,
+      isDeleted: false,
+    },
+    orderBy: { order: "asc" },
+  });
 
   // Fetch templates for the project
-  const { data: templates } = useFindManyTemplates({
+  const { data: templates } = useClientQueries(schema).templates.useFindMany({
     where: {
       isDeleted: false,
+      isEnabled: true,
       projects: {
         some: {
           projectId: projectId,
@@ -423,7 +420,7 @@ export default function TestResultsImportDialog({
                   onValueChange={(val) => setFormat(val as TestResultFormat)}
                   disabled={isImporting}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger id="format">
                     <SelectValue placeholder={tFormat("placeholder")} />
                   </SelectTrigger>
                   <SelectContent>
@@ -589,7 +586,7 @@ export default function TestResultsImportDialog({
                           value={field.value}
                           disabled={isImporting}
                         >
-                          <SelectTrigger>
+                          <SelectTrigger id="state">
                             <SelectValue
                               placeholder={tCommon("placeholders.selectState")}
                             />
@@ -645,7 +642,7 @@ export default function TestResultsImportDialog({
                           value={field.value}
                           disabled={isImporting}
                         >
-                          <SelectTrigger>
+                          <SelectTrigger id="template">
                             <SelectValue
                               placeholder={tCommon(
                                 "placeholders.selectTemplate"
@@ -662,9 +659,9 @@ export default function TestResultsImportDialog({
                                   {template.templateName}
                                   {template.isDefault && (
                                     <Tooltip>
-                                      <TooltipTrigger className="ml-1" asChild>
+                                      <TooltipTrigger className="ms-1" asChild>
                                         <Badge variant="secondary">
-                                          <Star className="h-3 w-3 fill-current text-primary-background" />
+                                          <Star className="h-3 w-3 fill-current" />
                                         </Badge>
                                       </TooltipTrigger>
                                       <TooltipContent>
@@ -736,7 +733,7 @@ export default function TestResultsImportDialog({
                         <sup>
                           <Asterisk className="w-3 h-3 text-destructive" />
                         </sup>
-                        <span className="ml-2 text-xs text-muted-foreground">
+                        <span className="ms-2 text-xs text-muted-foreground">
                           {`(${acceptedExtensions})`}
                         </span>
                       </FormLabel>

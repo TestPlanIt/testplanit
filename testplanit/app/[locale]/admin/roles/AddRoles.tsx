@@ -1,13 +1,10 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library -- This file consumes a library API (TanStack Table / TanStack Virtual / react-hook-form watch) that returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it. */
-import { ApplicationArea } from "@prisma/client";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
+import { ApplicationArea } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
-import {
-  useCreateRoles,
-  useUpdateManyRoles,
-  useUpsertRolePermission,
-} from "~/lib/hooks";
 import { RESTRICTED_FIELDS_AREAS } from "~/lib/utils/restrictedFieldsAreas";
 import { REVIEW_RELEVANT_AREAS } from "~/lib/utils/reviewAreas";
 
@@ -16,6 +13,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 
 import { Button } from "@/components/ui/button";
+import { SectionTitle } from "@/components/ui/typography";
 import { Input } from "@/components/ui/input";
 
 import { Checkbox } from "@/components/ui/checkbox";
@@ -39,7 +37,11 @@ import {
 } from "@/components/ui/dialog";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Switch } from "@/components/ui/switch";
+import { AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { WarningAlert } from "@/components/ui/warning-alert";
+import { TriangleAlert } from "lucide-react";
 import { Label } from "@radix-ui/react-label";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 // Helper to get enum values safely (copied from EditRoles)
 const applicationAreaValues = Object.values(ApplicationArea);
@@ -75,9 +77,10 @@ export function AddRole({ open, onClose }: AddRoleProps) {
   const t = useTranslations();
   const tAreas = useTranslations("enums.ApplicationArea");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: createRole } = useCreateRoles();
-  const { mutateAsync: updateManyRoles } = useUpdateManyRoles();
-  const upsertRolePermission = useUpsertRolePermission();
+  const { mutateAsync: createRole } =
+    useClientQueries(schema).roles.useCreate();
+  const upsertRolePermission =
+    useClientQueries(schema).rolePermission.useUpsert();
 
   // Initialize permissions with all false values
   const initialPermissions = useMemo(
@@ -118,11 +121,7 @@ export function AddRole({ open, onClose }: AddRoleProps) {
   } = form;
 
   type PermissionField =
-    | "canAddEdit"
-    | "canDelete"
-    | "canClose"
-    | "canApprove"
-    | "canReadSensitive";
+    "canAddEdit" | "canDelete" | "canClose" | "canApprove" | "canReadSensitive";
 
   const fieldAppliesToArea = (
     field: PermissionField,
@@ -181,15 +180,9 @@ export function AddRole({ open, onClose }: AddRoleProps) {
     setIsSubmitting(true);
     let newRole: { id: number } | undefined;
     try {
-      // 1. Handle default role status update (if applicable)
-      if (data.isDefault) {
-        await updateManyRoles({
-          where: { isDefault: true },
-          data: { isDefault: false },
-        });
-      }
-
-      // 2. Create the new Role record (without permissions)
+      // 1. Create the new Role record (without permissions). The single-default
+      // DB trigger (tpl_single_default_roles) clears the previous default
+      // atomically when this role is created as the default.
       newRole = await createRole({
         data: {
           name: data.name,
@@ -226,7 +219,7 @@ export function AddRole({ open, onClose }: AddRoleProps) {
       setIsSubmitting(false);
     } catch (err: any) {
       // Error Handling (check for unique constraint, log others)
-      if (err.info?.prisma && err.info?.code === "P2002") {
+      if (isUniqueConstraintError(err)) {
         setError("name", {
           type: "custom",
           message: t("admin.roles.add.errors.nameExists"),
@@ -276,30 +269,43 @@ export function AddRole({ open, onClose }: AddRoleProps) {
               control={control}
               name="isDefault"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                  <FormLabel className="flex items-center">
-                    {t("common.fields.default")}
-                    <HelpPopover helpKey="role.isDefault" />
-                  </FormLabel>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
+                <FormItem>
+                  <div className="flex flex-row items-center space-x-3 space-y-0">
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="flex items-center mt-0!">
+                      {t("common.fields.default")}
+                      <HelpPopover helpKey="role.isDefault" />
+                    </FormLabel>
+                  </div>
+                  {field.value && (
+                    <WarningAlert data-testid="role-set-default-warning">
+                      <TriangleAlert className="h-4 w-4" />
+                      <AlertTitle>
+                        {t("admin.roles.confirmDefaultDescription")}
+                      </AlertTitle>
+                      <AlertDescription>
+                        {t("admin.roles.defaultWarning")}
+                      </AlertDescription>
+                    </WarningAlert>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
             />
             {/* Permissions Table Section (moved here) */}
             <div className="space-y-4 pt-4 border-t">
-              <h3 className="text-lg font-medium">
+              <SectionTitle>
                 {t("admin.roles.edit.permissionsTitle")}
-              </h3>
+              </SectionTitle>
               <table className="w-full border-collapse border-2">
                 <thead className="bg-primary/10 border">
                   <tr className="border-b">
-                    <th className="p-2 text-left text-sm font-medium">
+                    <th className="p-2 text-start text-sm font-medium">
                       {t("admin.roles.edit.areaHeader")}
                     </th>
                     {/* Add/Edit Header Checkbox */}

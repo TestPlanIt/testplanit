@@ -30,12 +30,16 @@ const {
 
 // --- Mocks ---
 
-vi.mock("~/lib/hooks", () => ({
-  useFindManyIntegrationProject: (...args: any[]) => mockFindMany(...args),
-  useFindManyWebhookConfig: () => mockFindManyWebhookConfig(),
-  useUpdateIntegrationProject: () => ({ mutateAsync: mockUpdate }),
-  useUpsertIntegrationProject: () => ({ mutateAsync: mockUpsert }),
-  useUpdateProjectIntegration: () => ({ mutateAsync: mockUpdatePI }),
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    integrationProject: {
+      useFindMany: (...args: any[]) => mockFindMany(...args),
+      useUpdate: () => ({ mutateAsync: mockUpdate }),
+      useUpsert: () => ({ mutateAsync: mockUpsert }),
+    },
+    webhookConfig: { useFindMany: () => mockFindManyWebhookConfig() },
+    projectIntegration: { useUpdate: () => ({ mutateAsync: mockUpdatePI }) },
+  }),
 }));
 
 vi.mock("~/app/actions/project-integration", () => ({
@@ -343,7 +347,7 @@ describe("ProjectIntegrationSettings", () => {
   });
 
   // --- Test 5: Remove button triggers confirmation ---
-  it("clicking Trash2 remove button shows inline confirmation text", () => {
+  it("clicking Trash remove button shows inline confirmation text", () => {
     render(<ProjectIntegrationSettings {...defaultProps} />);
 
     // The remove buttons are destructive icon buttons (no accessible name — icon only)

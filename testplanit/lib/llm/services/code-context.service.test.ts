@@ -1,8 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
 
-// Mock prisma to avoid ZenStack enhance() call at module load time
-vi.mock("@/lib/prisma", () => ({
-  prisma: {},
+// Mock baseDb to avoid ZenStack enhance() call at module load time
+vi.mock("@/lib/db", () => ({
+  baseDb: {},
   db: {},
 }));
 

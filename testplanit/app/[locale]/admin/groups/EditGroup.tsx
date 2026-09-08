@@ -1,15 +1,10 @@
 "use client";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { HelpPopover } from "@/components/ui/help-popover";
-import { Groups, User } from "@prisma/client";
+import type { Groups, User } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
-import {
-  useCreateManyGroupAssignment,
-  useDeleteManyGroupAssignment,
-  useFindManyGroupAssignment,
-  useFindManyUser,
-  useUpdateGroups,
-} from "~/lib/hooks";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useForm } from "react-hook-form";
@@ -28,8 +23,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Combobox } from "@/components/ui/combobox";
 import { Input } from "@/components/ui/input";
+import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
 import {
   Select,
   SelectContent,
@@ -38,7 +33,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { Cloud, Trash2, Users } from "lucide-react";
+import { Cloud, Users } from "lucide-react";
 
 import {
   Form,
@@ -58,6 +53,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 import {
   type DowngradedUser,
@@ -100,17 +96,22 @@ export function EditGroup({ group, open, onClose }: EditGroupProps) {
     useState<EditGroupFormData | null>(null);
   const [downgradedUsers, setDowngradedUsers] = useState<DowngradedUser[]>([]);
 
-  const { mutateAsync: updateGroup } = useUpdateGroups();
-  const { data: allUsersData, isLoading: usersLoading } = useFindManyUser({
+  const { mutateAsync: updateGroup } =
+    useClientQueries(schema).groups.useUpdate();
+  const { data: allUsersData, isLoading: usersLoading } = useClientQueries(
+    schema
+  ).user.useFindMany({
     where: { isActive: true, isDeleted: false },
     orderBy: { name: "asc" },
   });
   const { data: groupAssignments, isLoading: assignmentsLoading } =
-    useFindManyGroupAssignment({ where: { groupId: group.id } });
+    useClientQueries(schema).groupAssignment.useFindMany({
+      where: { groupId: group.id },
+    });
   const { mutateAsync: createManyGroupAssignment } =
-    useCreateManyGroupAssignment();
+    useClientQueries(schema).groupAssignment.useCreateMany();
   const { mutateAsync: deleteManyGroupAssignment } =
-    useDeleteManyGroupAssignment();
+    useClientQueries(schema).groupAssignment.useDeleteMany();
 
   const allUsers: User[] | undefined = allUsersData as User[] | undefined;
 
@@ -146,17 +147,21 @@ export function EditGroup({ group, open, onClose }: EditGroupProps) {
     formState: { errors },
   } = form;
 
-  const handleAddUser = (userId: string | null) => {
-    if (!userId || !allUsers) return;
-    const userToAdd = allUsers.find((u) => u.id === userId);
-    if (userToAdd && !assignedUsers.some((u) => u.id === userId)) {
-      setAssignedUsers((prev) => [...prev, userToAdd]);
-    }
-  };
-
-  const handleRemoveUser = (userId: string) => {
-    setAssignedUsers((prev) => prev.filter((u) => u.id !== userId));
-  };
+  const fetchUserOptions = useCallback(
+    (query: string, page: number, pageSize: number) => {
+      const q = query.toLowerCase();
+      const filtered = (allUsers ?? []).filter(
+        (user) =>
+          user.name.toLowerCase().includes(q) ||
+          user.email?.toLowerCase().includes(q)
+      );
+      return Promise.resolve({
+        results: filtered.slice(page * pageSize, page * pageSize + pageSize),
+        total: filtered.length,
+      });
+    },
+    [allUsers]
+  );
 
   async function applyGroupUpdate(data: EditGroupFormData) {
     const newAccess = data.mappedAccess ?? null;
@@ -237,7 +242,7 @@ export function EditGroup({ group, open, onClose }: EditGroupProps) {
       }
       await applyGroupUpdate(data);
     } catch (err: any) {
-      if (err.info?.prisma && err.info?.code === "P2002") {
+      if (isUniqueConstraintError(err)) {
         setError("name", {
           type: "custom",
           message: t("add.errors.nameExists"),
@@ -254,9 +259,6 @@ export function EditGroup({ group, open, onClose }: EditGroupProps) {
       setIsSubmitting(false);
     }
   }
-
-  const availableUsersToAdd =
-    allUsers?.filter((u) => !assignedUsers.some((a) => a.id === u.id)) ?? [];
 
   const isLoading = usersLoading || assignmentsLoading;
   const isScimManaged = group.scimDisplayName !== null;
@@ -346,54 +348,28 @@ export function EditGroup({ group, open, onClose }: EditGroupProps) {
 
               <div className="space-y-2 pt-4 border-t">
                 <FormLabel className="flex items-center">
-                  <Users className="w-4 h-4 mr-1" />
+                  <Users className="w-4 h-4 me-1" />
                   {tCommon("labels.assignedUsersCount", {
                     count: assignedUsers.length,
                   })}
                   <HelpPopover helpKey="group.users" />
                 </FormLabel>
-                <div className="space-y-2 max-h-48 overflow-y-auto rounded-md border p-2">
-                  {isLoading && (
-                    <p className="text-sm text-muted-foreground text-center py-2">
-                      {tCommon("loading")}
-                    </p>
+                <MultiAsyncCombobox<User>
+                  value={assignedUsers}
+                  onValueChange={setAssignedUsers}
+                  fetchOptions={fetchUserOptions}
+                  renderOption={(user) => (
+                    <UserNameCell userId={user.id} hideLink />
                   )}
-                  {!isLoading && assignedUsers.length === 0 && (
-                    <p className="text-sm text-muted-foreground text-center py-2">
-                      {t("noUsersAssigned")}
-                    </p>
-                  )}
-                  {!isLoading &&
-                    assignedUsers.map((user) => (
-                      <div
-                        key={user.id}
-                        className="flex items-center justify-between px-2 bg-muted rounded"
-                      >
-                        <UserNameCell userId={user.id} hideLink={true} />
-                        {!isScimManaged && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleRemoveUser(user.id)}
-                            aria-label={tCommon("actions.delete")}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        )}
-                      </div>
-                    ))}
-                </div>
-                {!isScimManaged && (
-                  <Combobox
-                    users={availableUsersToAdd}
-                    showUnassigned={false}
-                    onValueChange={handleAddUser}
-                    placeholder={tCommon("placeholders.select")}
-                    className="w-full"
-                    disabled={isLoading}
-                  />
-                )}
+                  renderSelectedOption={(user) => <span>{user.name}</span>}
+                  getOptionValue={(user) => user.id}
+                  getOptionLabel={(user) => user.name}
+                  placeholder={tCommon("placeholders.select")}
+                  className="w-full"
+                  pageSize={20}
+                  showTotal
+                  disabled={isScimManaged || isLoading}
+                />
               </div>
 
               <DialogFooter>

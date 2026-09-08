@@ -11,14 +11,18 @@ const mockMutateAsync = vi.fn();
 let mockMutationPending = false;
 let mockThresholdConfig: { value: unknown } | undefined | null = null;
 let mockThresholdLoading = false;
-vi.mock("~/lib/hooks", () => ({
-  useUpsertAppConfig: () => ({
-    mutateAsync: mockMutateAsync,
-    isPending: mockMutationPending,
-  }),
-  useFindUniqueAppConfig: () => ({
-    data: mockThresholdConfig,
-    isLoading: mockThresholdLoading,
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    appConfig: {
+      useUpsert: () => ({
+        mutateAsync: mockMutateAsync,
+        isPending: mockMutationPending,
+      }),
+      useFindUnique: () => ({
+        data: mockThresholdConfig,
+        isLoading: mockThresholdLoading,
+      }),
+    },
   }),
 }));
 
@@ -287,7 +291,7 @@ describe("SystemFeatureCard (AppConfig-backed)", () => {
     ).toBeInTheDocument();
   });
 
-  it("(n) reminders toggle is OFF when threshold is 0 and the threshold input is hidden", () => {
+  it("(n) reminders toggle is OFF when threshold is 0 and the threshold input is shown but disabled", () => {
     mockUseReviewFeatureEnabled.mockReturnValue({
       systemEnabled: true,
       enabled: true,
@@ -299,9 +303,9 @@ describe("SystemFeatureCard (AppConfig-backed)", () => {
 
     const toggle = screen.getByTestId("reminders-enabled-toggle");
     expect(toggle).toHaveAttribute("data-state", "unchecked");
-    expect(
-      screen.queryByTestId("reminder-threshold-input")
-    ).not.toBeInTheDocument();
+    const input = screen.getByTestId("reminder-threshold-input");
+    expect(input).toBeInTheDocument();
+    expect(input).toBeDisabled();
   });
 
   it("(o) reminders toggle is ON when threshold is >= 1 and the input shows the persisted value", () => {

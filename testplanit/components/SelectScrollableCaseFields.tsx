@@ -1,3 +1,5 @@
+import { useTranslations } from "next-intl";
+
 import {
   Select,
   SelectContent,
@@ -20,7 +22,14 @@ export function SelectScrollable({
   onAddField,
   type,
 }: SelectScrollableProps) {
+  const tCommon = useTranslations("common");
   const sortedFields = fields.sort((a, b) => a.label.localeCompare(b.label));
+  const label = tCommon("placeholders.addFieldTo", {
+    section:
+      type === "result"
+        ? tCommon("fields.resultFields")
+        : tCommon("fields.caseFields"),
+  });
 
   return (
     <Select
@@ -36,11 +45,10 @@ export function SelectScrollable({
     >
       <SelectTrigger
         className="w-[280px]"
+        aria-label={label}
         data-testid={`add-${type}-field-select`}
       >
-        <SelectValue
-          placeholder={`Add a field to ${type.charAt(0).toUpperCase() + type.slice(1)} Fields`}
-        />
+        <SelectValue placeholder={label} />
       </SelectTrigger>
       <SelectContent className="max-h-[300px] overflow-auto">
         <SelectGroup>

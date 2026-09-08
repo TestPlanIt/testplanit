@@ -137,6 +137,59 @@ describe("useVirtualizedInfiniteList", () => {
     expect(onLoadMore).toHaveBeenCalledTimes(1);
   });
 
+  it("releases the load guard when a fetch is cancelled without new data (no deadlock)", () => {
+    // Reproduces the project-issues infinite-scroll stall: a live-update
+    // invalidation cancels an in-flight fetchNextPage, so `isLoading` goes
+    // true→false but the loaded count never grows. The guard must still
+    // release so the next scroll can retry — otherwise `pendingLoadRef` latches
+    // at true and pagination deadlocks forever (the list stalls a page or two
+    // in and no amount of scrolling loads more, even with `hasMore` still true).
+    const onLoadMore = vi.fn();
+    const { rerender } = render(
+      <Harness count={5} hasMore isLoading={false} onLoadMore={onLoadMore} />
+    );
+
+    // Scroll to the bottom → the first page is requested and the guard is held.
+    fireAll(true);
+    expect(onLoadMore).toHaveBeenCalledTimes(1);
+
+    // The fetch starts...
+    rerender(
+      <Harness count={5} hasMore isLoading={true} onLoadMore={onLoadMore} />
+    );
+    // ...then is cancelled mid-flight: `isLoading` falls back to false with the
+    // SAME count (no page appended, so `loadGuardKey` never moves).
+    rerender(
+      <Harness count={5} hasMore isLoading={false} onLoadMore={onLoadMore} />
+    );
+
+    // The sentinel is still in view, so the settled cycle must re-arm the load.
+    // Before the falling-edge release this stayed latched at 1 forever.
+    expect(onLoadMore).toHaveBeenCalledTimes(2);
+  });
+
+  it("holds the guard through an in-flight fetch (does not double-fire on the rising edge)", () => {
+    // Guards the falling-edge release above from regressing into a rising-edge
+    // reset, which would clear the guard while the request is still in flight
+    // and let a second trigger cancel+restart it (the abort/re-fire loop the
+    // guard exists to prevent).
+    const onLoadMore = vi.fn();
+    const { rerender } = render(
+      <Harness count={5} hasMore isLoading={false} onLoadMore={onLoadMore} />
+    );
+
+    fireAll(true);
+    expect(onLoadMore).toHaveBeenCalledTimes(1);
+
+    // Fetch is in flight (isLoading true). A second sentinel intersection must
+    // NOT kick off another load.
+    rerender(
+      <Harness count={5} hasMore isLoading={true} onLoadMore={onLoadMore} />
+    );
+    fireAll(true);
+    expect(onLoadMore).toHaveBeenCalledTimes(1);
+  });
+
   it("wires the observer when the scroll container mounts after the hook", () => {
     // Mirrors UnifiedSearch, where the scroll container only renders once
     // results arrive — long after the hook itself first ran.

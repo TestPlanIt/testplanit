@@ -59,6 +59,26 @@ When the project's integration is switched to a different provider, or removed e
 
 When an inbound event references an external issue that does not yet exist in TestPlanIt, the system imports it automatically as a new local issue. The project's creator (or its current owner of record) is recorded as the issue creator. This means issues filed directly in your external tracker can appear in TestPlanIt's Issues list without any manual import step.
 
+### Milestone sync events (version/sprint)
+
+If your project's [Milestones](./projects/milestones.md) are synced from a tracker's time-based artifacts (Jira **Fix Versions** or **Sprints**), the same inbound webhook that carries issue events can also carry **version** and **sprint** events. When these arrive, TestPlanIt refreshes the linked milestone's fields and issue membership (or converts the milestone to local if the upstream artifact was deleted or merged) without waiting for the next page load or manual sync.
+
+Per-provider capability:
+
+| Provider                                                                                                  | Version/sprint events                                                                                                                                                                                                                                                                                                                                 | Notes                                                                                                                                                                                                                                                                                                                                                              |
+| --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Jira Cloud**                                                                                            | Full support — `jira:version_created`, `jira:version_updated`, `jira:version_moved`, `jira:version_released`, `jira:version_unreleased`, `jira:version_deleted` (plus `jira:version_deleted` with a `mergedTo` field for merges) and `jira:sprint_created`, `jira:sprint_updated`, `jira:sprint_started`, `jira:sprint_closed`, `jira:sprint_deleted` | These events support **no JQL, field, or property filtering** — unlike issue events, the admin webhook fires for every project on the site once subscribed. TestPlanIt filters to the correct project/board using the event's own payload, so this is safe, but it does mean the admin webhook cannot be scoped to "only this project" for version/sprint traffic. |
+| **Jira Data Center**                                                                                      | Same admin webhook mechanism as Cloud                                                                                                                                                                                                                                                                                                                 | Event names and payload shapes are expected to match Cloud's admin webhook; verify parity against your specific Data Center version if you rely on near-real-time milestone refresh, since self-hosted instances can lag behind Cloud's webhook catalog.                                                                                                           |
+| **All other providers** (GitHub, GitLab, Gitea/Forgejo/Gogs, Azure DevOps, Redmine, MantisBT, Simple URL) | Not supported                                                                                                                                                                                                                                                                                                                                         | These trackers don't expose an equivalent time-based-artifact event. Synced milestones on these providers still refresh on page load and via the project's manual **Sync now** action — there is no near-real-time push for milestone changes.                                                                                                                     |
+
+:::warning Admin prerequisite: subscribe version/sprint events
+Version and sprint events are **not** included by default when you subscribe a Jira site webhook to issue events. Your Jira administrator must explicitly add the version and sprint event types to the site webhook's subscribed-events list (in addition to issue-created/issue-updated) before any near-real-time milestone refresh will work. Without this step, synced milestones still work — they just fall back to page-load and manual-sync freshness only, the same as a polling-only provider.
+:::
+
+:::note
+The 15-second freshness gate and per-milestone lock that already govern manual and page-load sync also apply to webhook-triggered refreshes, so a burst of version/sprint events during a busy sprint boundary can't overwhelm the sync worker.
+:::
+
 ## Outbound Webhooks
 
 ### Adding an outbound webhook
@@ -81,17 +101,20 @@ Each event name follows a `subject.verb` convention. The reserved verbs are `cre
 - `session.created`, `session.state_changed`, `session.completed`, `session.duplicated`, `session.result_added`
 - `case.created`, `case.updated`, `case.deleted`
 - `issue.created`, `issue.updated`, `issue.deleted`
+- `dataset.row.acquired`, `dataset.row.released` — emitted by the [test-data reservation](../test-data-reservation.md) (dataset row lease) API; payloads carry row identifiers only, never the row's values
+
+**Issue event scope.** An `issue.created` or `issue.updated` event fans out to every project that links the issue — through that project's repository cases, test runs, run results, run step results, sessions, or session results — in addition to the issue's home project. An issue with no home project (one that exists only through an integration) still fans out to every project that links it. `issue.deleted` is the exception: it is delivered to the issue's home project only, because the cross-project links are already gone by the time the delete fires.
 
 Toggling a checkbox saves immediately; a brief check-mark flashes next to the event name to confirm the change reached the server.
 
 ### Slack vs generic HMAC
 
-| Feature | Slack | Generic HMAC |
-| --- | --- | --- |
-| URL detection | Auto-detected from `hooks.slack.com` | Anything else |
-| Signing secret | Not used (Slack URL is the credential) | Server-minted, revealed once |
-| Payload shape | Slack-formatted message | TestPlanIt's standard event envelope, signed with HMAC-SHA256 |
-| Rotation | Replace the URL by deleting and recreating the webhook | Use the **Rotate Secret** button (see below) |
+| Feature        | Slack                                                  | Generic HMAC                                                  |
+| -------------- | ------------------------------------------------------ | ------------------------------------------------------------- |
+| URL detection  | Auto-detected from `hooks.slack.com`                   | Anything else                                                 |
+| Signing secret | Not used (Slack URL is the credential)                 | Server-minted, revealed once                                  |
+| Payload shape  | Slack-formatted message                                | TestPlanIt's standard event envelope, signed with HMAC-SHA256 |
+| Rotation       | Replace the URL by deleting and recreating the webhook | Use the **Rotate Secret** button (see below)                  |
 
 ## Health and Monitoring
 
@@ -166,7 +189,7 @@ Plaintext secrets are never read back from the database. They are returned only 
 
 ## Live updates from inbound webhooks
 
-When an inbound webhook arrives, TestPlanIt syncs the affected issue and pushes a project-scoped update event over a Server-Sent Events stream. Issue badges, lists, popovers, and detail views in any open browser tab update in near-real time without a manual refresh.
+When an inbound webhook arrives, TestPlanIt syncs the affected issue (or, for a synced milestone, the affected version/sprint — see [Milestone sync events](#milestone-sync-events-versionsprint) above) and pushes a scoped update event over a Server-Sent Events stream. Issue badges, lists, popovers, and detail views — and, for Milestones, the milestones list, milestone detail fields/badge/member table, and coverage — in any open browser tab update in near-real time without a manual refresh.
 
 :::note Redmine status timing
 
@@ -174,7 +197,7 @@ TestPlanIt re-fetches the issue from the tracker on each inbound event. The `red
 
 :::
 
-The SSE stream is project-scoped (`/api/issues/stream?projectId=<id>`) and shares the long-lived-stream ingress requirements documented for in-app notifications. Operators deploying behind a load balancer should review [SSE Notifications and Live Updates](../sse-notifications.md) to make sure both streams are configured correctly.
+The Issues SSE stream is project-scoped (`/api/issues/stream?projectId=<id>`); Milestones use a similar pair of per-milestone and per-project streams. Both share the long-lived-stream ingress requirements documented for in-app notifications. Operators deploying behind a load balancer should review [SSE Notifications and Live Updates](../sse-notifications.md) to make sure all of these streams are configured correctly.
 
 ## Reference
 

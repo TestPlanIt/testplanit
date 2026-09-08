@@ -25,7 +25,7 @@ Pre-built reports have fixed configurations and don't require dimension or metri
 
 ## Custom Reports
 
-The [Report Builder](./report-builder.md) lets you compose a report by picking a data source (Test Execution, Repository Stats, User Engagement, Project Health, Session Analysis, Issue Tracking), then choosing dimensions, metrics, and a chart type. The builder also supports interactive **drill-down** — click any metric cell to open a drawer showing the underlying records.
+The [Report Builder](./report-builder.md) lets you compose a report by picking a data source (Test Execution, Repository Stats, User Engagement, Project Health, Milestone Readiness, Session Analysis, Issue Tracking), then choosing dimensions, metrics, and a chart type. The builder also supports interactive **drill-down** — click any metric cell to open a drawer showing the underlying records.
 
 ## Exporting Results
 

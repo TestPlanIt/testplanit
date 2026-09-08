@@ -1,7 +1,7 @@
-import { ProjectAccessType } from "@prisma/client";
+import { ProjectAccessType } from "~/zenstack/models";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
 
 export async function POST(request: Request) {
@@ -82,7 +82,7 @@ export async function POST(request: Request) {
         };
 
     // Verify user has access to the project
-    const project = await prisma.projects.findFirst({
+    const project = await baseDb.projects.findFirst({
       where: projectAccessWhere,
     });
 
@@ -107,7 +107,7 @@ export async function POST(request: Request) {
     }
 
     // Fetch repository cases with all necessary data
-    const cases = await prisma.repositoryCases.findMany({
+    const cases = await baseDb.repositoryCases.findMany({
       where,
       select: {
         id: true,
@@ -212,10 +212,14 @@ export async function POST(request: Request) {
           },
           orderBy: { order: "asc" },
         },
-        tags: {
+        caseTags: {
           select: {
-            id: true,
-            name: true,
+            tag: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
         },
         testRuns: {
@@ -244,9 +248,12 @@ export async function POST(request: Request) {
         templateFieldIds.has(cfv.fieldId)
       );
 
+      const { caseTags, ...rest } = testCase;
+
       return {
-        ...testCase,
+        ...rest,
         caseFieldValues: filteredFieldValues,
+        tags: caseTags.map((ct) => ct.tag),
       };
     });
 

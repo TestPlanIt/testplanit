@@ -1,30 +1,22 @@
-import {
-  CaseFields,
-  CaseFieldTypes,
-  Prisma,
-  RepositoryCaseSource,
-  WorkflowScope,
-} from "@prisma/client";
+import { RepositoryCaseSource, WorkflowScope } from "~/zenstack/models";
+import type { CaseFields, CaseFieldTypes } from "~/zenstack/models";
+import type { JsonValue } from "@zenstackhq/orm";
 import { enhanceWithAudit } from "~/lib/audit/enhanceWithAudit";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import Papa from "papaparse";
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { auditBulkCreate } from "~/lib/services/auditLog";
 import { DuplicateScanService } from "~/lib/services/duplicateScanService";
-import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
+import { getCurrentTenantId } from "~/lib/multiTenantDb";
 import { resolveCreateStateRemap } from "~/lib/services/reviewGate";
 import { createTestCaseVersionInTransaction } from "~/lib/services/testCaseVersionService";
 import { authOptions } from "~/server/auth";
 import { syncRepositoryCaseToElasticsearch } from "~/services/repositoryCaseSync";
 import { getElasticsearchClient } from "~/services/elasticsearchService";
 import { ensureTipTapJSON } from "~/utils/tiptapConversion";
-import {
-  hasLabeledStepFormat,
-  parseLabeledSteps,
-  tryParseJsonSteps,
-} from "~/lib/utils/parseExportedSteps";
+import { parseStepsCell } from "~/lib/utils/parseExportedSteps";
 import { aggregateMultiRowSteps } from "~/lib/utils/aggregateMultiRowSteps";
 
 function parseTags(value: any): string[] {
@@ -157,6 +149,10 @@ interface ImportError {
   row: number;
   field: string;
   error: string;
+  // Case name for the offending row, when it resolved. The wizard shows it
+  // alongside the row number so multi-row imports (where a row number means
+  // "grouped case N", not "CSV line N") are still identifiable.
+  caseName?: string;
 }
 
 export const POST = withAuditContext(async (request: NextRequest) => {
@@ -189,7 +185,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
 
       try {
         // Get full user object for enhance
-        const user = await prisma.user.findUnique({
+        const user = await baseDb.user.findUnique({
           where: { id: session.user.id },
           include: {
             role: {
@@ -200,7 +196,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
           },
         });
 
-        const enhancedDb = enhanceWithAudit(user ?? undefined);
+        const enhancedDb = await enhanceWithAudit(user ?? undefined);
 
         // Validate project access
         const project = await enhancedDb.projects.findFirst({
@@ -306,9 +302,25 @@ export const POST = withAuditContext(async (request: NextRequest) => {
         const errors: ImportError[] = [];
         const casesToImport: any[] = [];
 
+        // A missing Name mapping fails every row identically, which drowns the
+        // real problem in N copies of the same message. Say it once instead.
+        const nameMapping = body.fieldMappings.find(
+          (m) => m.templateField === "name"
+        );
+        if (!nameMapping) {
+          sendError(
+            "No column is mapped to Name. Go back to the column mapping step and map the column holding the test case name."
+          );
+          return;
+        }
+
         // Process each row
         for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
           const row = rows[rowIndex];
+          // Errors raised while mapping this row's columns. Collected first so
+          // the case name — which may be mapped after the failing column — can
+          // be attached to all of them.
+          const rowErrors: ImportError[] = [];
           const caseData: any = {
             name: "",
             projectId: body.projectId,
@@ -374,9 +386,9 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                   // Store steps separately for insertion into Steps table (not CaseFieldValues)
                   caseData.steps = validatedValue;
                 } catch (error: any) {
-                  errors.push({
+                  rowErrors.push({
                     row: rowIndex + 1,
-                    field: "Steps",
+                    field: `Steps (column "${mapping.csvColumn}")`,
                     error: error.message,
                   });
                 }
@@ -404,9 +416,9 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                     caseData.fieldValues[field.caseField.id] = validatedValue;
                   }
                 } catch (error: any) {
-                  errors.push({
+                  rowErrors.push({
                     row: rowIndex + 1,
-                    field: field.caseField.displayName,
+                    field: `${field.caseField.displayName} (column "${mapping.csvColumn}")`,
                     error: error.message,
                   });
                 }
@@ -424,15 +436,18 @@ export const POST = withAuditContext(async (request: NextRequest) => {
             }));
           }
 
+          const caseName: string | undefined = caseData.name || undefined;
+          for (const rowError of rowErrors) {
+            rowError.caseName = caseName;
+          }
+          errors.push(...rowErrors);
+
           // Validate required fields
-          const nameMapping = body.fieldMappings.find(
-            (m) => m.templateField === "name"
-          );
-          if (!nameMapping || !caseData.name) {
+          if (!caseData.name) {
             errors.push({
               row: rowIndex + 1,
               field: "Name",
-              error: "Name is required",
+              error: `Name is required, but column "${nameMapping.csvColumn}" is empty for this row`,
             });
             continue;
           }
@@ -443,10 +458,20 @@ export const POST = withAuditContext(async (request: NextRequest) => {
               cf.caseField.isRequired &&
               !caseData.fieldValues[cf.caseField.id]
             ) {
+              const mappedColumn = body.fieldMappings.find(
+                (m) =>
+                  m.templateField?.toLowerCase() ===
+                    cf.caseField.systemName.toLowerCase() ||
+                  m.templateField?.toLowerCase() ===
+                    cf.caseField.displayName.toLowerCase()
+              );
               errors.push({
                 row: rowIndex + 1,
                 field: cf.caseField.displayName,
-                error: "Required field is missing",
+                caseName,
+                error: mappedColumn
+                  ? `Required field is missing — column "${mappedColumn.csvColumn}" is empty for this row`
+                  : "Required field is missing — no CSV column is mapped to it",
               });
             }
           }
@@ -475,6 +500,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
               errors.push({
                 row: rowIndex + 1,
                 field: "Folder",
+                caseName,
                 error: error.message,
               });
               continue;
@@ -544,13 +570,13 @@ export const POST = withAuditContext(async (request: NextRequest) => {
 
             const remappedStateId =
               (await resolveCreateStateRemap(
-                prisma,
+                baseDb,
                 body.projectId,
                 WorkflowScope.CASES,
                 stateId
               )) ?? stateId;
             if (remappedStateId !== stateId) {
-              const remappedWorkflow = await prisma.workflows.findUnique({
+              const remappedWorkflow = await baseDb.workflows.findUnique({
                 where: { id: remappedStateId },
                 select: { name: true },
               });
@@ -592,6 +618,15 @@ export const POST = withAuditContext(async (request: NextRequest) => {
             // Check if we should update an existing case or create a new one
             let newCase;
             let isUpdate = false;
+            // Set whenever an EXISTING RepositoryCases row is reused rather
+            // than inserted — the plain update below, and both create-or-
+            // restore branches. Its field values are replaced, never appended
+            // to: CaseFieldValues has no unique (testCaseId, fieldId), and a
+            // resurrected case still carries the rows from its previous life
+            // (unlike steps, which the case's soft-delete took down with it).
+            // Appending left cases with several rows per field, which broke
+            // every per-row count downstream.
+            let reusedCaseId: number | null = null;
 
             // Calculate the order for this test case (increment per folder)
             folderMaxOrders[caseData.folderId]++;
@@ -607,6 +642,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
 
               if (existingCase) {
                 isUpdate = true;
+                reusedCaseId = caseData.id;
                 newCase = await enhancedDb.repositoryCases.update({
                   where: { id: caseData.id },
                   data: {
@@ -618,10 +654,6 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                     estimate: caseData.estimate,
                     forecastManual: caseData.forecastManual,
                   },
-                });
-
-                await enhancedDb.caseFieldValues.deleteMany({
-                  where: { testCaseId: caseData.id },
                 });
               } else {
                 // Create-or-restore: if a prior soft-deleted case
@@ -657,6 +689,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                     },
                     select: { id: true },
                   });
+                reusedCaseId = softDeletedExisting?.id ?? null;
                 newCase = softDeletedExisting
                   ? await enhancedDb.repositoryCases.update({
                       where: { id: softDeletedExisting.id },
@@ -696,6 +729,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                   },
                   select: { id: true },
                 });
+              reusedCaseId = softDeletedExisting?.id ?? null;
               newCase = softDeletedExisting
                 ? await enhancedDb.repositoryCases.update({
                     where: { id: softDeletedExisting.id },
@@ -711,6 +745,13 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                   });
             }
 
+            // Replace, never append: see `reusedCaseId` above.
+            if (reusedCaseId !== null) {
+              await enhancedDb.caseFieldValues.deleteMany({
+                where: { testCaseId: reusedCaseId },
+              });
+            }
+
             // Create field values
             for (const [fieldId, value] of Object.entries(
               caseData.fieldValues
@@ -720,7 +761,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                   data: {
                     testCaseId: newCase.id,
                     fieldId: parseInt(fieldId),
-                    value: value as Prisma.InputJsonValue,
+                    value: value as JsonValue,
                   },
                 });
               }
@@ -728,11 +769,44 @@ export const POST = withAuditContext(async (request: NextRequest) => {
 
             // Create steps in the Steps table if present
             if (caseData.steps && Array.isArray(caseData.steps)) {
-              // Delete existing steps if updating
+              // Clear the existing steps if updating. This CANNOT be a blanket
+              // deleteMany: `TestRunStepResults.stepId` is `onDelete: Cascade`, so
+              // hard-deleting a step that has been executed destroys every step
+              // result ever recorded against it — re-importing a case would
+              // silently erase its execution history.
+              //
+              // So the two kinds are separated: a step that has step results is
+              // retired (soft-deleted) and keeps them attached — the run-result
+              // read path does not filter `step.isDeleted`, so the history still
+              // renders — while a step that was never executed is genuinely
+              // deleted, which keeps re-imports from accumulating dead rows.
               if (isUpdate) {
-                await enhancedDb.steps.deleteMany({
-                  where: { testCaseId: newCase.id },
+                const existingSteps = await enhancedDb.steps.findMany({
+                  where: { testCaseId: newCase.id, isDeleted: false },
+                  select: {
+                    id: true,
+                    _count: { select: { stepResults: true } },
+                  },
                 });
+
+                const executedStepIds = existingSteps
+                  .filter((step) => step._count.stepResults > 0)
+                  .map((step) => step.id);
+                const unexecutedStepIds = existingSteps
+                  .filter((step) => step._count.stepResults === 0)
+                  .map((step) => step.id);
+
+                if (executedStepIds.length > 0) {
+                  await enhancedDb.steps.updateMany({
+                    where: { id: { in: executedStepIds } },
+                    data: { isDeleted: true },
+                  });
+                }
+                if (unexecutedStepIds.length > 0) {
+                  await enhancedDb.steps.deleteMany({
+                    where: { id: { in: unexecutedStepIds } },
+                  });
+                }
               }
 
               for (const stepData of caseData.steps) {
@@ -757,8 +831,16 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                   where: { repositoryCaseId: newCase.id },
                   orderBy: { version: "desc" },
                 });
+              // A version from the file may only ever move the case FORWARD.
+              // Trusting it verbatim breaks the documented export-edit-reimport
+              // round trip: a TestPlanIt export carries the case's own Version,
+              // so re-importing it asks for a version snapshot that already
+              // exists and violates @@unique([repositoryCaseId, version]).
+              const highestVersion = latestVersion?.version || 0;
               versionNumber =
-                caseData.version || (latestVersion?.version || 0) + 1;
+                caseData.version && caseData.version > highestVersion
+                  ? caseData.version
+                  : highestVersion + 1;
 
               // Update the case's currentVersion
               await enhancedDb.repositoryCases.update({
@@ -800,9 +882,8 @@ export const POST = withAuditContext(async (request: NextRequest) => {
             // Handle tags if present
             if (caseData.tags && Array.isArray(caseData.tags)) {
               if (isUpdate) {
-                await enhancedDb.repositoryCases.update({
-                  where: { id: newCase.id },
-                  data: { tags: { set: [] } },
+                await enhancedDb.repositoryCaseTag.deleteMany({
+                  where: { caseId: newCase.id },
                 });
               }
 
@@ -838,9 +919,8 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                   }
                 }
 
-                await enhancedDb.repositoryCases.update({
-                  where: { id: newCase.id },
-                  data: { tags: { connect: { id: tag.id } } },
+                await enhancedDb.repositoryCaseTag.create({
+                  data: { caseId: newCase.id, tagId: tag.id },
                 });
               }
             }
@@ -850,9 +930,8 @@ export const POST = withAuditContext(async (request: NextRequest) => {
               const issueNames = parseIssues(caseData.issues);
 
               if (isUpdate) {
-                await enhancedDb.repositoryCases.update({
-                  where: { id: newCase.id },
-                  data: { issues: { set: [] } },
+                await enhancedDb.repositoryCaseIssue.deleteMany({
+                  where: { caseId: newCase.id },
                 });
               }
 
@@ -862,9 +941,8 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                 });
 
                 if (issue) {
-                  await enhancedDb.repositoryCases.update({
-                    where: { id: newCase.id },
-                    data: { issues: { connect: { id: issue.id } } },
+                  await enhancedDb.repositoryCaseIssue.create({
+                    data: { caseId: newCase.id, issueId: issue.id },
                   });
                 }
               }
@@ -951,6 +1029,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
             errors.push({
               row: casesToImport.indexOf(caseData) + 1,
               field: "General",
+              caseName: caseData.name || undefined,
               error: error.message,
             });
           }
@@ -979,7 +1058,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
         try {
           const esClient = getElasticsearchClient();
           if (esClient) {
-            const scanService = new DuplicateScanService(prisma, esClient);
+            const scanService = new DuplicateScanService(baseDb, esClient);
             const tenantId = getCurrentTenantId();
 
             // Check each imported case name (limit to first 50 for performance)
@@ -995,7 +1074,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                 const caseIds = similar
                   .slice(0, 3)
                   .map((s) => (s.caseAId === 0 ? s.caseBId : s.caseAId));
-                const cases = await prisma.repositoryCases.findMany({
+                const cases = await baseDb.repositoryCases.findMany({
                   where: { id: { in: caseIds } },
                   select: { id: true, name: true },
                 });
@@ -1164,48 +1243,16 @@ function validateFieldValue(
         throw new Error(`Invalid URL: ${value}`);
       }
 
-    case "Steps": {
-      const stepsText = value.toString();
-
-      const jsonParsed = tryParseJsonSteps(stepsText);
-      if (jsonParsed) {
-        return jsonParsed.map((s) => ({
-          step: ensureTipTapJSON(s.step),
-          expectedResult: s.expectedResult
-            ? ensureTipTapJSON(s.expectedResult)
-            : null,
-          order: s.order,
-        }));
-      }
-
-      if (hasLabeledStepFormat(stepsText)) {
-        return parseLabeledSteps(stepsText).map((s) => ({
-          step: ensureTipTapJSON(s.step),
-          expectedResult: s.expectedResult
-            ? ensureTipTapJSON(s.expectedResult)
-            : null,
-          order: s.order,
-        }));
-      }
-
-      // Legacy: one step per line, pipe-separated "1. Step | Expected"
-      const lines = stepsText.split(/\n/).filter((line: string) => line.trim());
-
-      return lines.map((line: string, index: number) => {
-        const withoutNumber = line.replace(/^\d+\.\s*/, "").trim();
-        const parts = withoutNumber.split("|").map((p: string) => p.trim());
-        const stepText = parts[0] || "";
-        const expectedResultText = parts[1] || null;
-
-        return {
-          step: ensureTipTapJSON(stepText),
-          expectedResult: expectedResultText
-            ? ensureTipTapJSON(expectedResultText)
-            : null,
-          order: index,
-        };
-      });
-    }
+    case "Steps":
+      // Same parse the wizard preview runs, so the preview and the import
+      // never disagree on the step count.
+      return parseStepsCell(value.toString()).map((s) => ({
+        step: ensureTipTapJSON(s.step),
+        expectedResult: s.expectedResult
+          ? ensureTipTapJSON(s.expectedResult)
+          : null,
+        order: s.order,
+      }));
 
     default:
       return value;

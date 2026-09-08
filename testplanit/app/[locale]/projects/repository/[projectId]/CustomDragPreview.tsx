@@ -9,7 +9,7 @@ export const CustomDragPreview = (props: any) => {
         <Folder className="w-4 h-4" />
       </div>
       <div>
-        <p className="whitespace-nowrap -ml-1 font-medium">{item.text}</p>
+        <p className="whitespace-nowrap -ms-1 font-medium">{item.text}</p>
       </div>
     </div>
   );

@@ -9,31 +9,19 @@ vi.mock("~/server/auth", () => ({
   authOptions: {},
 }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
-    repositoryCases: {
-      count: vi.fn(),
+// The route drives the counts from a single tag-side `tags.findMany` that
+// hydrates each tag's linked caseTags / sessions / testRuns (filtered by the
+// nested `where`); counts are array lengths derived in memory.
+vi.mock("~/lib/db", () => ({
+  baseDb: {
+    tags: {
+      findMany: vi.fn(),
     },
-    sessions: {
-      count: vi.fn(),
-    },
-    testRuns: {
-      count: vi.fn(),
-    },
-  },
-}));
-
-vi.mock("@prisma/client", () => ({
-  ProjectAccessType: {
-    NO_ACCESS: "NO_ACCESS",
-    VIEW: "VIEW",
-    EDIT: "EDIT",
-    GLOBAL_ROLE: "GLOBAL_ROLE",
   },
 }));
 
 import { getServerSession } from "next-auth";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 
 import { POST } from "./route";
 
@@ -59,12 +47,26 @@ const mockUserSession = {
   },
 };
 
+// Build a tag row shaped like the route's `select`, with the requested number
+// of linked rows so the in-memory length counts come out as asserted.
+const tagRow = (
+  id: number,
+  caseTags: number,
+  sessions: number,
+  testRuns: number
+) => ({
+  id,
+  caseTags: Array.from({ length: caseTags }, (_, i) => ({ caseId: i })),
+  sessions: Array.from({ length: sessions }, (_, i) => ({ id: i })),
+  testRuns: Array.from({ length: testRuns }, (_, i) => ({ id: i })),
+});
+
+const findManyArg = () => (baseDb.tags.findMany as any).mock.calls[0][0];
+
 describe("Tags Counts Route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (prisma.repositoryCases.count as any).mockResolvedValue(0);
-    (prisma.sessions.count as any).mockResolvedValue(0);
-    (prisma.testRuns.count as any).mockResolvedValue(0);
+    (baseDb.tags.findMany as any).mockResolvedValue([]);
   });
 
   describe("Authentication", () => {
@@ -129,9 +131,7 @@ describe("Tags Counts Route", () => {
   describe("POST - tag count aggregation", () => {
     it("returns counts for each tagId with repositoryCases, sessions, testRuns", async () => {
       (getServerSession as any).mockResolvedValue(mockAdminSession);
-      (prisma.repositoryCases.count as any).mockResolvedValue(5);
-      (prisma.sessions.count as any).mockResolvedValue(3);
-      (prisma.testRuns.count as any).mockResolvedValue(7);
+      (baseDb.tags.findMany as any).mockResolvedValue([tagRow(1, 5, 3, 7)]);
 
       const request = createMockRequest({ tagIds: [1] });
       const response = await POST(request);
@@ -147,15 +147,10 @@ describe("Tags Counts Route", () => {
 
     it("returns counts for multiple tagIds", async () => {
       (getServerSession as any).mockResolvedValue(mockAdminSession);
-      (prisma.repositoryCases.count as any)
-        .mockResolvedValueOnce(5)
-        .mockResolvedValueOnce(10);
-      (prisma.sessions.count as any)
-        .mockResolvedValueOnce(2)
-        .mockResolvedValueOnce(4);
-      (prisma.testRuns.count as any)
-        .mockResolvedValueOnce(1)
-        .mockResolvedValueOnce(3);
+      (baseDb.tags.findMany as any).mockResolvedValue([
+        tagRow(1, 5, 2, 1),
+        tagRow(2, 10, 4, 3),
+      ]);
 
       const request = createMockRequest({ tagIds: [1, 2] });
       const response = await POST(request);
@@ -174,45 +169,41 @@ describe("Tags Counts Route", () => {
       });
     });
 
-    it("filters by tagId when counting entities", async () => {
+    it("returns zero counts for requested tagIds with no links", async () => {
       (getServerSession as any).mockResolvedValue(mockAdminSession);
-      (prisma.repositoryCases.count as any).mockResolvedValue(3);
-      (prisma.sessions.count as any).mockResolvedValue(0);
-      (prisma.testRuns.count as any).mockResolvedValue(0);
+      // Tag 2 isn't returned by findMany (not found / no links).
+      (baseDb.tags.findMany as any).mockResolvedValue([tagRow(1, 3, 0, 0)]);
+
+      const request = createMockRequest({ tagIds: [1, 2] });
+      const response = await POST(request);
+      const data = await response.json();
+
+      expect(data.counts[2]).toEqual({
+        repositoryCases: 0,
+        sessions: 0,
+        testRuns: 0,
+      });
+    });
+
+    it("queries tags by the requested ids", async () => {
+      (getServerSession as any).mockResolvedValue(mockAdminSession);
 
       const request = createMockRequest({ tagIds: [42] });
       await POST(request);
 
-      expect(prisma.repositoryCases.count).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({
-            tags: { some: { id: 42 } },
-          }),
-        })
-      );
+      expect(findManyArg().where).toEqual({ id: { in: [42] } });
     });
 
-    it("filters out deleted items", async () => {
+    it("filters out deleted items in every linked relation", async () => {
       (getServerSession as any).mockResolvedValue(mockAdminSession);
 
       const request = createMockRequest({ tagIds: [1] });
       await POST(request);
 
-      expect(prisma.repositoryCases.count).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({ isDeleted: false }),
-        })
-      );
-      expect(prisma.sessions.count).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({ isDeleted: false }),
-        })
-      );
-      expect(prisma.testRuns.count).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({ isDeleted: false }),
-        })
-      );
+      const { select } = findManyArg();
+      expect(select.caseTags.where.case.isDeleted).toBe(false);
+      expect(select.sessions.where.isDeleted).toBe(false);
+      expect(select.testRuns.where.isDeleted).toBe(false);
     });
   });
 
@@ -223,9 +214,12 @@ describe("Tags Counts Route", () => {
       const request = createMockRequest({ tagIds: [1] });
       await POST(request);
 
-      // Admin: projectAccessWhere is empty {}. No project filter in call.
-      const callArg = (prisma.repositoryCases.count as any).mock.calls[0][0];
-      expect(callArg.where).not.toHaveProperty("project");
+      // Admin: projectAccessWhere is empty {}. No `project` key in the nested
+      // relation filters.
+      const { select } = findManyArg();
+      expect(select.caseTags.where.case).not.toHaveProperty("project");
+      expect(select.sessions.where).not.toHaveProperty("project");
+      expect(select.testRuns.where).not.toHaveProperty("project");
     });
 
     it("adds project access filter for non-admin users", async () => {
@@ -234,17 +228,17 @@ describe("Tags Counts Route", () => {
       const request = createMockRequest({ tagIds: [1] });
       await POST(request);
 
-      const callArg = (prisma.repositoryCases.count as any).mock.calls[0][0];
-      expect(callArg.where).toHaveProperty("project");
+      const { select } = findManyArg();
+      expect(select.caseTags.where.case).toHaveProperty("project");
+      expect(select.sessions.where).toHaveProperty("project");
+      expect(select.testRuns.where).toHaveProperty("project");
     });
   });
 
   describe("Error handling", () => {
     it("returns 500 when database query fails", async () => {
       (getServerSession as any).mockResolvedValue(mockAdminSession);
-      (prisma.repositoryCases.count as any).mockRejectedValue(
-        new Error("DB error")
-      );
+      (baseDb.tags.findMany as any).mockRejectedValue(new Error("DB error"));
 
       const request = createMockRequest({ tagIds: [1] });
       const response = await POST(request);

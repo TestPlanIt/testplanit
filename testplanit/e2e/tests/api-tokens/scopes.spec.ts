@@ -1,4 +1,5 @@
 import { expect, test } from "../../fixtures/index";
+import type { APIResponse } from "@playwright/test";
 
 /**
  * API Token Scopes E2E (TOK-02 + TOK-05 + TOK-06)
@@ -38,7 +39,7 @@ test.describe("API Token Scopes (mode:read + client:mcp)", () => {
   let fullAccessToken: string;
 
   test("creates token with mode:read scope", async ({ request, baseURL }) => {
-    let r: Awaited<ReturnType<typeof request.post>> | undefined;
+    let r: APIResponse | undefined;
     await test.step("Create API token with mode:read scope", async () => {
       r = await request.post(`${baseURL}/api/api-tokens`, {
         data: { name: `RO-${Date.now()}`, scopes: ["mode:read"] },
@@ -54,7 +55,7 @@ test.describe("API Token Scopes (mode:read + client:mcp)", () => {
   });
 
   test("creates token with client:mcp scope", async ({ request, baseURL }) => {
-    let r: Awaited<ReturnType<typeof request.post>> | undefined;
+    let r: APIResponse | undefined;
     await test.step("Create API token with client:mcp scope", async () => {
       r = await request.post(`${baseURL}/api/api-tokens`, {
         data: { name: `MCP-${Date.now()}`, scopes: ["client:mcp"] },
@@ -68,7 +69,7 @@ test.describe("API Token Scopes (mode:read + client:mcp)", () => {
   });
 
   test("creates token with both scopes", async ({ request, baseURL }) => {
-    let r: Awaited<ReturnType<typeof request.post>> | undefined;
+    let r: APIResponse | undefined;
     await test.step("Create API token with both mode:read and client:mcp scopes", async () => {
       r = await request.post(`${baseURL}/api/api-tokens`, {
         data: {
@@ -90,7 +91,7 @@ test.describe("API Token Scopes (mode:read + client:mcp)", () => {
     request,
     baseURL,
   }) => {
-    let r: Awaited<ReturnType<typeof request.post>> | undefined;
+    let r: APIResponse | undefined;
     await test.step("Create API token with no scopes", async () => {
       r = await request.post(`${baseURL}/api/api-tokens`, {
         data: { name: `Full-${Date.now()}` },

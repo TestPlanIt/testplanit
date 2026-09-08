@@ -1,3 +1,6 @@
+import { useDirection } from "@radix-ui/react-direction";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { AttachmentPreview } from "@/components/AttachmentPreview";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,7 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Attachments } from "@prisma/client";
+import type { Attachments } from "~/zenstack/models";
 import { filesize } from "filesize";
 import {
   ChevronLeft,
@@ -23,12 +26,11 @@ import {
   Download,
   ExternalLink,
   SquarePen,
-  Trash2,
+  Trash,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useState } from "react";
-import { useUpdateAttachments } from "~/lib/hooks";
 import { getStorageUrlClient } from "~/utils/storageUrl";
 import { DateFormatter } from "./DateFormatter";
 import { UserNameCell } from "./tables/UserNameCell";
@@ -52,18 +54,30 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
 }) => {
   const { data: session } = useSession();
   const t = useTranslations();
+  const dir = useDirection();
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(initialIndex);
-  const { mutateAsync: updateAttachments } = useUpdateAttachments();
+  const { mutateAsync: updateAttachments } =
+    useClientQueries(schema).attachments.useUpdate();
 
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState("");
   const [editedNote, setEditedNote] = useState("");
   const [attachments, setAttachments] = useState(initialAttachments);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFullScreen, setIsFullScreen] = useState(false);
   const [openPopovers, setOpenPopovers] = useState<boolean[]>(
     initialAttachments.map(() => false)
   );
+
+  const handleFullScreenChange = (fullScreen: boolean) => {
+    setIsFullScreen(fullScreen);
+    // The edit controls are hidden while expanded, so don't leave edit mode
+    // armed with a stale name/note form.
+    if (fullScreen) {
+      setIsEditing(false);
+    }
+  };
 
   useEffect(() => {
     if (api) {
@@ -83,6 +97,36 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
       };
     }
   }, [api]);
+
+  // Arrow-key navigation. The shadcn Carousel only listens for arrows while
+  // focus is within its own root, which never happens here — focus lands on the
+  // dialog chrome or an embedded viewer — so wire a window-level handler that
+  // works wherever focus sits inside the modal. If focus is inside the carousel
+  // root its own handler runs first and calls preventDefault, so bail on an
+  // already-handled event to avoid moving two slides at once.
+  useEffect(() => {
+    if (!api) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented) return;
+      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+      const target = event.target as HTMLElement | null;
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement ||
+        target?.isContentEditable
+      ) {
+        return;
+      }
+      event.preventDefault();
+      // In RTL the visual order flips, so the physical arrow keys swap.
+      const goPrev = (event.key === "ArrowLeft") !== (dir === "rtl");
+      if (goPrev) api.scrollPrev();
+      else api.scrollNext();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [api, dir]);
 
   const handlePrev = () => {
     if (api && current > 0) {
@@ -168,14 +212,28 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="w-full min-w-md max-w-6xl overflow-hidden">
-        <DialogHeader>
+      <DialogContent
+        className="w-full min-w-md max-w-6xl overflow-hidden flex flex-col"
+        fullScreen={isFullScreen}
+        onFullScreenChange={handleFullScreenChange}
+        // While expanded, Escape steps back to the normal modal instead of
+        // closing it; a second Escape then closes as usual.
+        onEscapeKeyDown={(event) => {
+          if (isFullScreen) {
+            event.preventDefault();
+            setIsFullScreen(false);
+          }
+        }}
+      >
+        {/* sr-only (not unmounted) in full screen: Radix requires a mounted
+            DialogTitle/DialogDescription for accessibility. */}
+        <DialogHeader className={isFullScreen ? "sr-only" : "shrink-0"}>
           <DialogTitle>{t("attachments.viewer.title")}</DialogTitle>
           <DialogDescription>
             {current + 1} {t("common.of")} {attachments.length}
           </DialogDescription>
         </DialogHeader>
-        <div className="relative w-full max-h-[80vh] overflow-hidden">
+        <div className="relative w-full flex-1 min-h-0 overflow-hidden">
           <Carousel
             setApi={setApi}
             className="w-full min-w-sm max-w-5xl mx-auto"
@@ -183,241 +241,288 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
             <CarouselContent className="w-full mx-4">
               {attachments.map((attachment, index) => (
                 <CarouselItem key={attachment.id} className="w-full">
-                  <div className="flex flex-col items-center p-4 w-full h-full">
-                    <div className="flex items-center w-full">
-                      {isEditing && index === current ? (
-                        <div className="flex items-start justify-between gap-4 w-full">
-                          <Input
-                            type="text"
-                            value={editedName}
-                            onChange={(e) => setEditedName(e.target.value)}
-                            className="text-2xl font-bold text-center mb-4 w-full"
-                          />
-                          <Popover
-                            open={openPopovers[index]}
-                            onOpenChange={(isOpen) =>
-                              handlePopoverOpenChange(index, isOpen)
-                            }
-                          >
-                            <PopoverTrigger asChild>
-                              <Button
-                                type="button"
-                                variant="destructive"
-                                className="ml-auto w-fit"
-                              >
-                                <Trash2 className="h-5 w-5" />
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-fit" side="bottom">
-                              {t("attachments.delete.confirmMessage")}
-                              <div className="flex items-start justify-between gap-4 mt-2">
-                                <div className="flex items-center mb-2">
-                                  <Button
-                                    type="button"
-                                    variant="secondary"
-                                    className="ml-auto"
-                                    onClick={() =>
-                                      handlePopoverOpenChange(index, false)
-                                    }
-                                  >
-                                    <CircleSlash2 className="h-4 w-4" />
-                                    {t("common.cancel")}
-                                  </Button>
-                                </div>
-                                <div className="flex items-center">
-                                  <Button
-                                    type="button"
-                                    variant="destructive"
-                                    onClick={() => handleDelete(index)}
-                                    className="ml-auto"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                    {t("common.actions.delete")}
-                                  </Button>
-                                </div>
-                              </div>
-                            </PopoverContent>
-                          </Popover>
-                        </div>
-                      ) : (
-                        <div className="text-2xl font-bold text-center mb-5 w-full">
-                          {attachment.name}
-                        </div>
-                      )}
-                    </div>
-                    <div
-                      className={`flex w-full h-full ${
-                        attachment.mimeType === "text/uri-list"
-                          ? "flex-col"
-                          : "flex-col md:flex-row"
-                      }`}
-                    >
-                      <div
-                        className={`flex flex-col items-center ${
-                          attachment.mimeType === "text/uri-list"
-                            ? "w-full py-2"
-                            : "md:w-2/3"
-                        }`}
-                      >
-                        <div className="w-full flex justify-center items-start">
+                  {isFullScreen ? (
+                    // Expanded mode: nothing but the attachment, scaled to the
+                    // modal viewport. Clicking a non-interactive preview
+                    // (images) toggles back out, same as the expand button.
+                    <div className="w-full h-[calc(100vh-6rem)] flex items-center justify-center p-2">
+                      {attachment.mimeType.startsWith("image/") ? (
+                        <button
+                          type="button"
+                          onClick={() => handleFullScreenChange(false)}
+                          aria-label={t("common.ui.dialog.toggleFullScreen")}
+                          className="block w-full h-full cursor-zoom-out"
+                          data-testid="carousel-fullscreen-preview"
+                        >
                           <AttachmentPreview
                             attachment={attachment}
-                            size="large"
+                            size="full"
                           />
-                        </div>
+                        </button>
+                      ) : (
+                        <AttachmentPreview
+                          attachment={attachment}
+                          size="full"
+                        />
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center p-4 w-full h-full">
+                      <div className="flex items-center w-full">
+                        {isEditing && index === current ? (
+                          <div className="flex items-start justify-between gap-4 w-full">
+                            <Input
+                              type="text"
+                              value={editedName}
+                              onChange={(e) => setEditedName(e.target.value)}
+                              className="text-2xl font-bold text-center mb-4 w-full"
+                            />
+                            <Popover
+                              open={openPopovers[index]}
+                              onOpenChange={(isOpen) =>
+                                handlePopoverOpenChange(index, isOpen)
+                              }
+                            >
+                              <PopoverTrigger asChild>
+                                <Button
+                                  type="button"
+                                  variant="destructive"
+                                  className="ms-auto w-fit"
+                                >
+                                  <Trash className="h-5 w-5" />
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-fit" side="bottom">
+                                {t("attachments.delete.confirmMessage")}
+                                <div className="flex items-start justify-between gap-4 mt-2">
+                                  <div className="flex items-center mb-2">
+                                    <Button
+                                      type="button"
+                                      variant="secondary"
+                                      className="ms-auto"
+                                      onClick={() =>
+                                        handlePopoverOpenChange(index, false)
+                                      }
+                                    >
+                                      <CircleSlash2 className="h-4 w-4" />
+                                      {t("common.cancel")}
+                                    </Button>
+                                  </div>
+                                  <div className="flex items-center">
+                                    <Button
+                                      type="button"
+                                      variant="destructive"
+                                      onClick={() => handleDelete(index)}
+                                      className="ms-auto"
+                                    >
+                                      <Trash className="h-4 w-4" />
+                                      {t("common.actions.delete")}
+                                    </Button>
+                                  </div>
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                          </div>
+                        ) : (
+                          <div className="text-2xl font-bold text-center mb-5 w-full">
+                            {attachment.name}
+                          </div>
+                        )}
                       </div>
                       <div
-                        className={`w-full flex flex-col justify-start items-start p-4 overflow-auto ${
+                        className={`flex w-full h-full ${
                           attachment.mimeType === "text/uri-list"
-                            ? ""
-                            : "md:w-1/3"
+                            ? "flex-col"
+                            : "flex-col md:flex-row"
                         }`}
                       >
                         <div
-                          className={`text-left w-full ${
+                          className={`flex flex-col items-center ${
                             attachment.mimeType === "text/uri-list"
-                              ? "grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-x-6 gap-y-2"
-                              : "space-y-2"
+                              ? "w-full py-2"
+                              : "md:w-2/3"
                           }`}
                         >
-                          <div>
-                            <strong>{t("common.fields.description")}</strong>
-                            <div
-                              className={`flex items-center w-full overflow-auto ${
-                                attachment.mimeType === "text/uri-list"
-                                  ? "min-h-[1.5rem]"
-                                  : "h-24 max-h-24 md:max-h-48"
-                              }`}
-                            >
-                              {isEditing && index === current ? (
-                                <Textarea
-                                  className="text-md h-24"
-                                  value={editedNote}
-                                  onChange={(e) =>
-                                    setEditedNote(e.target.value)
-                                  }
+                          <div className="w-full flex justify-center items-start">
+                            {attachment.mimeType.startsWith("image/") ? (
+                              <button
+                                type="button"
+                                onClick={() => handleFullScreenChange(true)}
+                                aria-label={t(
+                                  "common.ui.dialog.toggleFullScreen"
+                                )}
+                                className="cursor-zoom-in"
+                                data-testid="carousel-expand-preview"
+                              >
+                                <AttachmentPreview
+                                  attachment={attachment}
+                                  size="large"
                                 />
-                              ) : (
-                                <span
-                                  className={
-                                    attachment.mimeType === "text/uri-list"
-                                      ? "w-full"
-                                      : "w-full h-24"
-                                  }
-                                >
-                                  {attachment.note
-                                    ? attachment.note
-                                    : t("common.access.none")}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          {attachment.mimeType !== "text/uri-list" && (
-                            <Separator className="w-full" />
-                          )}
-                          <div className="text-sm">
-                            <strong>{t("common.fields.size")}</strong>{" "}
-                            {filesize(Number(attachment.size))}
-                          </div>
-                          <div className="text-sm">
-                            <strong>{t("common.fields.created")}</strong>
-                            <div>
-                              <DateFormatter
-                                date={attachment.createdAt}
-                                formatString={
-                                  session?.user.preferences?.dateFormat +
-                                  " " +
-                                  session?.user.preferences?.timeFormat
-                                }
-                                timezone={session?.user.preferences?.timezone}
+                              </button>
+                            ) : (
+                              <AttachmentPreview
+                                attachment={attachment}
+                                size="large"
                               />
-                            </div>
+                            )}
                           </div>
-                          <div className="text-sm">
-                            <strong>{t("common.fields.createdBy")}</strong>
-                            <UserNameCell userId={attachment.createdById} />
+                        </div>
+                        <div
+                          className={`w-full flex flex-col justify-start items-start p-4 overflow-auto ${
+                            attachment.mimeType === "text/uri-list"
+                              ? ""
+                              : "md:w-1/3"
+                          }`}
+                        >
+                          <div
+                            className={`text-start w-full ${
+                              attachment.mimeType === "text/uri-list"
+                                ? "grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-x-6 gap-y-2"
+                                : "space-y-2"
+                            }`}
+                          >
+                            <div>
+                              <strong>{t("common.fields.description")}</strong>
+                              <div
+                                className={`flex items-center w-full overflow-auto ${
+                                  attachment.mimeType === "text/uri-list"
+                                    ? "min-h-[1.5rem]"
+                                    : "h-24 max-h-24 md:max-h-48"
+                                }`}
+                              >
+                                {isEditing && index === current ? (
+                                  <Textarea
+                                    className="text-md h-24"
+                                    value={editedNote}
+                                    onChange={(e) =>
+                                      setEditedNote(e.target.value)
+                                    }
+                                  />
+                                ) : (
+                                  <span
+                                    className={
+                                      attachment.mimeType === "text/uri-list"
+                                        ? "w-full"
+                                        : "w-full h-24"
+                                    }
+                                  >
+                                    {attachment.note
+                                      ? attachment.note
+                                      : t("common.access.none")}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            {attachment.mimeType !== "text/uri-list" && (
+                              <Separator className="w-full" />
+                            )}
+                            <div className="text-sm">
+                              <strong>{t("common.fields.size")}</strong>{" "}
+                              {filesize(Number(attachment.size))}
+                            </div>
+                            <div className="text-sm">
+                              <strong>{t("common.fields.created")}</strong>
+                              <div>
+                                <DateFormatter
+                                  date={attachment.createdAt}
+                                  formatString={
+                                    session?.user.preferences?.dateFormat +
+                                    " " +
+                                    session?.user.preferences?.timeFormat
+                                  }
+                                  timezone={session?.user.preferences?.timezone}
+                                />
+                              </div>
+                            </div>
+                            <div className="text-sm">
+                              <strong>{t("common.fields.createdBy")}</strong>
+                              <UserNameCell userId={attachment.createdById} />
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
+                  )}
                 </CarouselItem>
               ))}
             </CarouselContent>
           </Carousel>
           <Button
-            className="absolute left-0 top-1/2 transform -translate-y-1/2 p-2"
+            className="absolute start-0 top-1/2 transform -translate-y-1/2 p-2"
             onClick={handlePrev}
             disabled={current === 0}
           >
             <ChevronLeft className="w-6 h-6" />
           </Button>
           <Button
-            className="absolute right-0 top-1/2 transform -translate-y-1/2 p-2"
+            className="absolute end-0 top-1/2 transform -translate-y-1/2 p-2"
             onClick={handleNext}
             disabled={current === attachments.length - 1}
           >
             <ChevronRight className="w-6 h-6" />
           </Button>
         </div>
-        <DialogFooter>
-          <div className="flex items-center gap-4">
-            {(() => {
-              const isLink = attachments[current].mimeType === "text/uri-list";
-              return (
-                <a
-                  href={
-                    getStorageUrlClient(attachments[current].url) ||
-                    attachments[current].url
-                  }
-                  {...(isLink ? {} : { download: attachments[current].name })}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <Button variant="default" disabled={isEditing}>
-                    {isLink ? (
-                      <ExternalLink className="inline w-5 h-5" />
-                    ) : (
-                      <Download className="inline w-5 h-5" />
-                    )}
-                    {isLink
-                      ? t("common.actions.openLink")
-                      : t("common.actions.download")}
-                  </Button>
-                </a>
-              );
-            })()}
-            {canEdit && (
-              <>
-                {isEditing ? (
-                  <>
+        {!isFullScreen && (
+          <DialogFooter className="shrink-0">
+            <div className="flex items-center gap-4">
+              {(() => {
+                const isLink =
+                  attachments[current].mimeType === "text/uri-list";
+                return (
+                  <a
+                    href={
+                      getStorageUrlClient(attachments[current].url) ||
+                      attachments[current].url
+                    }
+                    {...(isLink ? {} : { download: attachments[current].name })}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Button variant="default" disabled={isEditing}>
+                      {isLink ? (
+                        <ExternalLink className="inline w-5 h-5" />
+                      ) : (
+                        <Download className="inline w-5 h-5" />
+                      )}
+                      {isLink
+                        ? t("common.actions.openLink")
+                        : t("common.actions.download")}
+                    </Button>
+                  </a>
+                );
+              })()}
+              {canEdit && (
+                <>
+                  {isEditing ? (
+                    <>
+                      <Button
+                        variant="secondary"
+                        onClick={handleEditToggle}
+                        disabled={isSubmitting}
+                      >
+                        {t("common.cancel")}
+                      </Button>
+                      <Button onClick={handleSubmit} disabled={isSubmitting}>
+                        {isSubmitting
+                          ? t("common.actions.saving")
+                          : t("common.actions.submit")}
+                      </Button>
+                    </>
+                  ) : (
                     <Button
                       variant="secondary"
                       onClick={handleEditToggle}
                       disabled={isSubmitting}
                     >
-                      {t("common.cancel")}
+                      <SquarePen className="w-4 h-4" />
+                      {t("common.actions.edit")}
                     </Button>
-                    <Button onClick={handleSubmit} disabled={isSubmitting}>
-                      {isSubmitting
-                        ? t("common.actions.saving")
-                        : t("common.actions.submit")}
-                    </Button>
-                  </>
-                ) : (
-                  <Button
-                    variant="secondary"
-                    onClick={handleEditToggle}
-                    disabled={isSubmitting}
-                  >
-                    <SquarePen className="w-4 h-4" />
-                    {t("common.actions.edit")}
-                  </Button>
-                )}
-              </>
-            )}
-          </div>
-        </DialogFooter>
+                  )}
+                </>
+              )}
+            </div>
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );

@@ -1,12 +1,12 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { IntegrationModal } from "@/components/admin/integrations/IntegrationModal";
 import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
-import { PaginationComponent } from "@/components/tables/Pagination";
-import { PaginationInfo } from "@/components/tables/PaginationControls";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,57 +18,31 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  useDeleteIntegration,
-  useFindManyIntegration,
-} from "@/lib/hooks/integration";
-import { Integration } from "@prisma/client";
-import { CirclePlus, Plug, Trash2 } from "lucide-react";
+import { SectionHeader } from "@/components/ui/typography";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { Integration } from "~/zenstack/models";
+import { CirclePlus, Trash } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import {
-  PaginationProvider,
-  usePagination,
-} from "~/lib/contexts/PaginationContext";
-import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { useRouter } from "~/lib/navigation";
-import { type ExtendedIntegration, useColumns } from "./columns";
+import { useColumns } from "./columns";
 
 export default function IntegrationsPage() {
-  return (
-    <PaginationProvider>
-      <IntegrationList />
-    </PaginationProvider>
-  );
+  return <IntegrationList />;
 }
 
 function IntegrationList() {
+  const locale = useLocale();
   const t = useTranslations("admin.integrations");
   const tCommon = useTranslations("common");
   const tApiTokens = useTranslations("admin.apiTokens");
   const tAdminMenu = useTranslations("admin.menu");
+  const tGlobal = useTranslations();
   const { data: session, status } = useSession();
   const router = useRouter();
-  const {
-    currentPage,
-    setCurrentPage,
-    pageSize,
-    setPageSize,
-    totalItems,
-    setTotalItems,
-    startIndex,
-    endIndex,
-    totalPages,
-  } = usePagination();
   const [sortConfig, setSortConfig] = useState<{
     column: string;
     direction: "asc" | "desc";
@@ -85,56 +59,14 @@ function IntegrationList() {
   const [integrationToDelete, setIntegrationToDelete] =
     useState<Integration | null>(null);
 
-  // Calculate skip and take based on pageSize
-  const effectivePageSize =
-    typeof pageSize === "number" ? pageSize : totalItems;
-  const skip = (currentPage - 1) * effectivePageSize;
-
-  // Query for total filtered integrations (for pagination)
-  const { data: totalFilteredIntegrations } = useFindManyIntegration(
-    {
-      orderBy: sortConfig
-        ? { [sortConfig.column]: sortConfig.direction }
-        : { name: "asc" },
-      include: {
-        projectIntegrations: {
-          where: { isActive: true, project: { isDeleted: false } },
-          select: { projectId: true },
-        },
-      },
-      where: {
-        AND: [
-          {
-            name: {
-              contains: debouncedSearchString,
-              mode: "insensitive",
-            },
-          },
-          {
-            isDeleted: false,
-          },
-        ],
-      },
-    },
-    {
-      enabled: !!session?.user,
-      refetchOnWindowFocus: true,
-    }
-  );
-
-  // Update total items in pagination context
-  useEffect(() => {
-    if (totalFilteredIntegrations) {
-      setTotalItems(totalFilteredIntegrations.length);
-    }
-  }, [totalFilteredIntegrations, setTotalItems]);
-
-  // Query for paginated integrations
+  // Single full-set fetch feeds the virtualized table directly; the table
+  // renders only the visible window, so there's no page seam and no separate
+  // count query (the loaded array length IS the total).
   const {
     data: integrations,
     isLoading,
     refetch,
-  } = useFindManyIntegration(
+  } = useClientQueries(schema).integration.useFindMany(
     {
       orderBy: sortConfig
         ? { [sortConfig.column]: sortConfig.direction }
@@ -158,8 +90,6 @@ function IntegrationList() {
           },
         ],
       },
-      take: effectivePageSize,
-      skip: skip,
     },
     {
       enabled: !!session?.user,
@@ -167,17 +97,7 @@ function IntegrationList() {
     }
   );
 
-  const pageSizeOptions = usePageSizeOptions(totalItems);
-
-  // Reset to first page when search changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchString, setCurrentPage]);
-
-  // Reset to first page when page size changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [pageSize, setCurrentPage]);
+  const integrationRows = useMemo(() => integrations ?? [], [integrations]);
 
   useEffect(() => {
     if (status !== "loading" && !session) {
@@ -185,7 +105,8 @@ function IntegrationList() {
     }
   }, [status, session, router]);
 
-  const { mutate: deleteIntegration } = useDeleteIntegration();
+  const { mutate: deleteIntegration } =
+    useClientQueries(schema).integration.useDelete();
 
   // Stabilize mutation ref — ZenStack's mutate changes identity every render
   const deleteIntegrationRef = useRef(deleteIntegration);
@@ -289,6 +210,10 @@ function IntegrationList() {
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >({});
+  // Hide-column requests from the table's header menu are routed through the
+  // Columns control (the visibility owner) so persistence and its checkboxes
+  // stay in sync.
+  const hideColumnRef = useRef<((columnId: string) => void) | null>(null);
 
   if (status === "loading") return null;
 
@@ -304,34 +229,46 @@ function IntegrationList() {
         ? "desc"
         : "asc";
     setSortConfig({ column, direction });
-    setCurrentPage(1);
+  };
+
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig({ column: "name", direction: "asc" });
+    } else {
+      setSortConfig({ column, direction });
+    }
   };
 
   return (
     <main>
       <Card>
         <CardHeader className="w-full">
-          <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
-            <div>
-              <CardTitle
-                data-testid="integrations-admin-page-title"
-                className="items-center flex"
-              >
-                <Plug className="inline mr-2 h-8 w-8" />
+          <div className="flex items-center justify-between gap-2">
+            <SectionHeader className="flex items-center gap-2">
+              <CardTitle data-testid="integrations-admin-page-title">
                 {tAdminMenu("integrations")}
               </CardTitle>
-              <CardDescription data-testid="integrations-admin-page-description">
-                {t("description")}
-              </CardDescription>
-            </div>
-            <Button onClick={handleAddIntegration}>
+              <HelpPopover helpKey="integrations" />
+            </SectionHeader>
+            <Button
+              onClick={handleAddIntegration}
+              aria-label={tCommon("add")}
+              className="group gap-0 transition-all duration-200 hover:gap-2"
+            >
               <CirclePlus className="h-4 w-4" />
-              <span className="hidden md:inline">{tCommon("add")}</span>
+              <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+                {tCommon("add")}
+              </span>
             </Button>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-row items-start">
+          <div className="flex flex-row items-start justify-between gap-4">
             <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
               <div className="text-muted-foreground w-full text-nowrap">
                 <Filter
@@ -347,49 +284,39 @@ function IntegrationList() {
                       storageKey="admin-integrations"
                       columns={columns}
                       onVisibilityChange={setColumnVisibility}
+                      hideColumnRef={hideColumnRef}
                     />
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="flex flex-col w-full sm:w-2/3 items-end">
-              {totalItems > 0 && (
-                <>
-                  <div className="justify-end">
-                    <PaginationInfo
-                      key="integration-pagination-info"
-                      startIndex={startIndex}
-                      endIndex={endIndex}
-                      totalRows={totalItems}
-                      searchString={searchString}
-                      pageSize={typeof pageSize === "number" ? pageSize : "All"}
-                      pageSizeOptions={pageSizeOptions}
-                      handlePageSizeChange={(size) => setPageSize(size)}
-                    />
-                  </div>
-                  <div className="justify-end -mx-4">
-                    <PaginationComponent
-                      currentPage={currentPage}
-                      totalPages={totalPages}
-                      onPageChange={setCurrentPage}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
+            {integrationRows.length > 0 && (
+              <p className="text-sm text-muted-foreground shrink-0">
+                {tGlobal("admin.auditLogs.showing", {
+                  loaded: integrationRows.length.toLocaleString(locale),
+                  total: integrationRows.length.toLocaleString(locale),
+                })}
+              </p>
+            )}
           </div>
 
-          <div className="mt-4 flex justify-between">
-            <DataTable<ExtendedIntegration, unknown>
-              columns={columns}
-              data={integrations || []}
+          <div className="mt-4 w-full">
+            <DataTable
+              virtualized
+              fillViewport
+              columns={columns as any}
+              data={integrationRows}
               onSortChange={handleSortChange}
+              onSortColumn={handleSortColumn}
+              onHideColumn={(columnId) => hideColumnRef.current?.(columnId)}
               sortConfig={sortConfig}
               columnVisibility={columnVisibility}
               onColumnVisibilityChange={setColumnVisibility}
-              pageSize={typeof pageSize === "number" ? pageSize : totalItems}
               isLoading={isLoading}
+              resetKey={`${debouncedSearchString}|${sortConfig.column}|${sortConfig.direction}`}
+              testIdPrefix="admin-integrations-table"
+              rowTestIdPrefix="admin-integration-row"
             />
           </div>
         </CardContent>
@@ -415,7 +342,7 @@ function IntegrationList() {
         <AlertDialogContent className="max-w-md border-destructive">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
-              <Trash2 className="h-5 w-5 text-destructive" />
+              <Trash className="h-5 w-5 text-destructive" />
               {t("deleteIntegration")}
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-3">
@@ -428,7 +355,7 @@ function IntegrationList() {
                 <p className="font-medium text-foreground">
                   {t("delete.warningTitle")}
                 </p>
-                <ul className="list-disc pl-5 space-y-1 text-destructive">
+                <ul className="list-disc ps-5 space-y-1 text-destructive">
                   <li>{t("delete.warning1")}</li>
                   <li>{t("delete.warning2")}</li>
                   <li>{t("delete.warning3")}</li>

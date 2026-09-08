@@ -710,6 +710,26 @@ export const routes: A11yRoute[] = [
   },
 ];
 
+/**
+ * Curated smoke subset — a representative slice covering the shared components
+ * where a11y issues cluster (auth form, dashboard shell, list/DataTable, editor
+ * detail page, settings form, admin table, charts, profile). The CI smoke gate
+ * (A11Y_SMOKE=on) scans only these under the accessible theme(s) so it stays
+ * fast while still exercising every major UI pattern.
+ */
+export const SMOKE_ROUTES = new Set<string>([
+  "signin",
+  "home",
+  "projects-list",
+  "case-detail",
+  "runs-list",
+  "settings-integrations",
+  "admin-users",
+  "admin-fields",
+  "project-reports",
+  "user-profile",
+]);
+
 /** Helper for the spec/aggregator: which routes are interactive-state scanned. */
 export function hasInteractions(route: A11yRoute): boolean {
   return !!route.interactions && route.interactions.length > 0;

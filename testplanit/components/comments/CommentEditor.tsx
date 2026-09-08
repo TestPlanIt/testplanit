@@ -91,11 +91,19 @@ export function CommentEditor({
   };
 
   return (
-    <div className={cn("space-y-2", className)}>
+    <div className={cn("comment-editor space-y-2", className)}>
       <style>
         {`
-          .tiptap p.is-editor-empty:first-child::before {
+          /* Keep the (long) placeholder on one truncated line so it doesn't
+             wrap past the editor's height and overlap the buttons below in a
+             narrow container. */
+          .comment-editor .tiptap p.is-editor-empty:first-child::before {
             color: hsl(var(--muted-foreground));
+            height: auto;
+            max-width: 100%;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
           }
         `}
       </style>
@@ -119,7 +127,7 @@ export function CommentEditor({
           onClick={handleSubmit}
           disabled={isLoading || isEmpty}
         >
-          {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {isLoading && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
           {submitLabel}
         </Button>
       </div>

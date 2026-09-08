@@ -1,5 +1,5 @@
-import { getCurrentTenantId } from "@/lib/multiTenantPrisma";
-import { prisma } from "@/lib/prisma";
+import { getCurrentTenantId } from "@/lib/multiTenantDb";
+import { baseDb } from "@/lib/db";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { JOB_REFRESH_SINGLE_REPO_CACHE } from "~/lib/queueNames";
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const user = await prisma.user.findUnique({
+    const user = await baseDb.user.findUnique({
       where: { id: session.user.id },
       select: { access: true },
     });
@@ -46,7 +46,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     const configId = parseInt(projectConfigId);
 
-    const config = await (prisma as any).projectCodeRepositoryConfig.findUnique(
+    const config = await (baseDb as any).projectCodeRepositoryConfig.findUnique(
       {
         where: { id: configId },
         select: { id: true, cacheEnabled: true },
@@ -92,7 +92,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     // Mark pending immediately so the UI reflects "in progress" before the
     // worker picks the job up.
-    await (prisma as any).projectCodeRepositoryConfig.update({
+    await (baseDb as any).projectCodeRepositoryConfig.update({
       where: { id: configId },
       data: { cacheStatus: "pending", cacheError: null },
     });

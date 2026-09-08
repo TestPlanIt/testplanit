@@ -1,21 +1,16 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useDebounce } from "@/components/Debounce";
 import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
-import { PaginationComponent } from "@/components/tables/Pagination";
-import { PaginationInfo } from "@/components/tables/PaginationControls";
 import { Button } from "@/components/ui/button";
+import { SectionHeader } from "@/components/ui/typography";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CirclePlus } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
-import {
-  PaginationProvider,
-  usePagination,
-} from "~/lib/contexts/PaginationContext";
-import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
-import { useFindManyAppConfig } from "~/lib/hooks";
 import { AddAppConfig } from "./AddAppConfig";
 import { getColumns } from "./columns";
 import { DeleteAppConfig } from "./DeleteAppConfig";
@@ -23,19 +18,14 @@ import { EditAppConfig } from "./EditAppConfig";
 import { AppConfigRow } from "./types";
 
 export default function AppConfigsPage() {
-  return (
-    <PaginationProvider>
-      <AppConfigs />
-    </PaginationProvider>
-  );
+  return <AppConfigs />;
 }
 
 function AppConfigs() {
+  const locale = useLocale();
   const t = useTranslations("admin.appConfig");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
-  const { currentPage, setCurrentPage, pageSize, setPageSize, totalItems } =
-    usePagination();
   const [searchString, setSearchString] = useState("");
   const [valueSearchString, setValueSearchString] = useState("");
   const [sortConfig, setSortConfig] = useState<{
@@ -57,7 +47,12 @@ function AppConfigs() {
   const debouncedSearchString = useDebounce(searchString, 300);
   const debouncedValueSearchString = useDebounce(valueSearchString, 300);
 
-  const { data: appConfigs, isLoading } = useFindManyAppConfig({
+  // Full-set fetch: the value filter below runs client-side over every config,
+  // and the virtualized table renders only the visible window, so there's no
+  // pagination and value-search covers the whole set (not just one page).
+  const { data: appConfigs, isLoading } = useClientQueries(
+    schema
+  ).appConfig.useFindMany({
     where: {
       key: {
         contains: debouncedSearchString,
@@ -67,8 +62,6 @@ function AppConfigs() {
     orderBy: {
       [sortConfig.column]: sortConfig.direction,
     },
-    skip: (currentPage - 1) * (typeof pageSize === "number" ? pageSize : 0),
-    take: typeof pageSize === "number" ? pageSize : undefined,
   });
 
   // Transform AppConfig to AppConfigRow and filter by value
@@ -95,25 +88,25 @@ function AppConfigs() {
     }));
   }, [appConfigs, debouncedValueSearchString]);
 
-  const totalPages = Math.ceil(
-    totalItems / (typeof pageSize === "number" ? pageSize : totalItems)
-  );
-  const startIndex =
-    (currentPage - 1) * (typeof pageSize === "number" ? pageSize : 0) + 1;
-  const endIndex = Math.min(
-    startIndex + (typeof pageSize === "number" ? pageSize : totalItems) - 1,
-    totalItems
-  );
-
-  const pageSizeOptions = usePageSizeOptions(totalItems);
-
   const handleSortChange = (column: string) => {
     const direction =
       sortConfig.column === column && sortConfig.direction === "asc"
         ? "desc"
         : "asc";
     setSortConfig({ column, direction });
-    setCurrentPage(1);
+  };
+
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig({ column: "key", direction: "asc" });
+    } else {
+      setSortConfig({ column, direction });
+    }
   };
 
   const columns = useMemo(
@@ -124,81 +117,76 @@ function AppConfigs() {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
-          <CardTitle data-testid="app-config-title">
-            {tGlobal("admin.menu.appConfig")}
-          </CardTitle>
-          <Button onClick={() => setAddAppConfigOpen(true)}>
+        <div className="flex items-center justify-between gap-2">
+          <SectionHeader className="flex items-center gap-2">
+            <CardTitle data-testid="app-config-title">
+              {tGlobal("admin.menu.appConfig")}
+            </CardTitle>
+          </SectionHeader>
+          <Button
+            onClick={() => setAddAppConfigOpen(true)}
+            aria-label={t("addConfig")}
+            className="group gap-0 transition-all duration-200 hover:gap-2"
+          >
             <CirclePlus className="h-4 w-4" />
-            {t("addConfig")}
+            <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+              {t("addConfig")}
+            </span>
           </Button>
-          {addAppConfigOpen && (
-            <AddAppConfig
-              open={addAppConfigOpen}
-              onClose={() => setAddAppConfigOpen(false)}
-            />
-          )}
         </div>
+        {addAppConfigOpen && (
+          <AddAppConfig
+            open={addAppConfigOpen}
+            onClose={() => setAddAppConfigOpen(false)}
+          />
+        )}
       </CardHeader>
       <CardContent>
-        <div className="flex flex-row items-start">
-          <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px] space-y-2">
-            <div className="text-muted-foreground w-full text-nowrap">
-              <Filter
-                key="app-config-filter"
-                placeholder={t("filterPlaceholder")}
-                initialSearchString={searchString}
-                onSearchChange={setSearchString}
-                dataTestId="app-config-filter-input"
-              />
-            </div>
-            <div className="text-muted-foreground w-full text-nowrap">
-              <Filter
-                key="app-config-value-filter"
-                placeholder={tCommon("placeholders.filterByValue")}
-                initialSearchString={valueSearchString}
-                onSearchChange={setValueSearchString}
-                dataTestId="app-config-value-filter-input"
-              />
-            </div>
+        <div className="flex flex-col gap-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Filter
+              key="app-config-filter"
+              className="max-w-none"
+              placeholder={t("filterPlaceholder")}
+              initialSearchString={searchString}
+              onSearchChange={setSearchString}
+              dataTestId="app-config-filter-input"
+            />
+            <Filter
+              key="app-config-value-filter"
+              className="max-w-none"
+              placeholder={tCommon("placeholders.filterByValue")}
+              initialSearchString={valueSearchString}
+              onSearchChange={setValueSearchString}
+              dataTestId="app-config-value-filter-input"
+            />
           </div>
 
-          <div className="flex flex-col w-full sm:w-2/3 items-end">
-            {totalItems > 0 && (
-              <>
-                <div className="justify-end">
-                  <PaginationInfo
-                    key="app-config-pagination-info"
-                    startIndex={startIndex}
-                    endIndex={endIndex}
-                    totalRows={totalItems}
-                    searchString={searchString}
-                    pageSize={typeof pageSize === "number" ? pageSize : "All"}
-                    pageSizeOptions={pageSizeOptions}
-                    handlePageSizeChange={(size) => setPageSize(size)}
-                  />
-                </div>
-                <div className="justify-end -mx-4">
-                  <PaginationComponent
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={setCurrentPage}
-                  />
-                </div>
-              </>
-            )}
-          </div>
+          {tableData.length > 0 && (
+            <p className="text-end text-sm text-muted-foreground">
+              {tGlobal("admin.auditLogs.showing", {
+                loaded: tableData.length.toLocaleString(locale),
+                total: tableData.length.toLocaleString(locale),
+              })}
+            </p>
+          )}
         </div>
-        <div className="mt-4 flex justify-between">
-          <DataTable<AppConfigRow, unknown>
-            columns={columns}
+        <div className="mt-4 w-full">
+          <DataTable
+            virtualized
+            fillViewport
+            flexColumnId="value"
+            columns={columns as any}
             data={tableData}
             onSortChange={handleSortChange}
+            onSortColumn={handleSortColumn}
             sortConfig={sortConfig}
             columnVisibility={columnVisibility}
             onColumnVisibilityChange={setColumnVisibility}
-            pageSize={typeof pageSize === "number" ? pageSize : totalItems}
             isLoading={isLoading}
+            resetKey={`${debouncedSearchString}|${debouncedValueSearchString}|${sortConfig.column}|${sortConfig.direction}`}
+            testIdPrefix="admin-app-config-table"
+            rowTestIdPrefix="admin-app-config-row"
           />
         </div>
       </CardContent>

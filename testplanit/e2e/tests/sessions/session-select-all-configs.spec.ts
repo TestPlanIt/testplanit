@@ -56,8 +56,8 @@ test.describe("Session Configuration Select All", () => {
       // The "Select All" option should show the total count, not just page count
       // Since there are 12+ configs total (possibly more from other tests),
       // the count should be greater than 10 (the page size)
-      const selectAllOption = page.locator(
-        '[role="option"][data-value="__select_all__"]'
+      const selectAllOption = page.getByTestId(
+        "multi-async-combobox-select-all"
       );
       await expect(selectAllOption).toBeVisible({ timeout: 5000 });
 
@@ -70,9 +70,10 @@ test.describe("Session Configuration Select All", () => {
       // Should be at least 12 (our configs, plus possibly pre-existing ones)
       expect(count).toBeGreaterThanOrEqual(12);
 
-      // The page indicator should show "1-10 of N" confirming we're on page 1
-      const paginationText = page.locator("text=/1–10 of/");
-      await expect(paginationText).toBeVisible({ timeout: 5000 });
+      // The footer should show "loaded of total" for the accumulated list
+      const countFooter = page.getByTestId("multi-async-combobox-count-footer");
+      await expect(countFooter).toBeVisible({ timeout: 5000 });
+      await expect(countFooter).toHaveText(/\d+ of \d+/);
     });
   });
 
@@ -118,8 +119,8 @@ test.describe("Session Configuration Select All", () => {
       await page.waitForTimeout(1000);
 
       // Click Select All
-      const selectAllOption = page.locator(
-        '[role="option"][data-value="__select_all__"]'
+      const selectAllOption = page.getByTestId(
+        "multi-async-combobox-select-all"
       );
       await expect(selectAllOption).toBeVisible({ timeout: 5000 });
       await selectAllOption.click();

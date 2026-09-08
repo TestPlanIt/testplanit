@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import type { TestRunSummaryData } from "~/app/api/test-runs/[testRunId]/summary/route";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
 import { isAutomatedTestRunType } from "~/utils/testResultTypes";
 
@@ -51,13 +51,14 @@ export async function GET(req: NextRequest) {
     }
 
     // Fetch all test runs in one query
-    const testRuns = await prisma.testRuns.findMany({
+    const testRuns = await baseDb.testRuns.findMany({
       where: { id: { in: testRunIds } },
       select: {
         id: true,
         testRunType: true,
         forecastManual: true,
         projectId: true,
+        createdAt: true,
         state: {
           select: {
             workflowType: true,
@@ -107,7 +108,7 @@ export async function GET(req: NextRequest) {
     });
 
     // Fetch batch comments counts
-    const commentsCountsResult = await prisma.$queryRaw<
+    const commentsCountsResult = await baseDb.$queryRaw<
       Array<{ testRunId: number; count: bigint }>
     >`
       SELECT "testRunId", COUNT(*) as count
@@ -126,6 +127,29 @@ export async function GET(req: NextRequest) {
     // Fetch summaries for JUnit runs
     const junitSummaries = await getBatchJUnitRunSummaries(junitRunIds);
 
+    // Last imported write per automated run — the Automation Runs card stops
+    // its "importing" spinner when this goes stale (an aborted CI job never
+    // closes its run, so the workflow state alone can spin forever).
+    const junitActivity = new Map<number, Date>();
+    if (junitRunIds.length > 0) {
+      const activityRows = await baseDb.$queryRaw<
+        Array<{ testRunId: number; lastActivity: Date | null }>
+      >`
+        SELECT
+          jts."testRunId",
+          GREATEST(MAX(jts."createdAt"), MAX(jtr."createdAt")) as "lastActivity"
+        FROM "JUnitTestSuite" jts
+        LEFT JOIN "JUnitTestResult" jtr ON jtr."testSuiteId" = jts.id
+        WHERE jts."testRunId" = ANY(${junitRunIds})
+        GROUP BY jts."testRunId"
+      `;
+      activityRows.forEach((row) => {
+        if (row.lastActivity) {
+          junitActivity.set(row.testRunId, new Date(row.lastActivity));
+        }
+      });
+    }
+
     // Combine all summaries
     const summaries: Record<number, TestRunSummaryData> = {};
 
@@ -136,10 +160,18 @@ export async function GET(req: NextRequest) {
         : regularSummaries.get(tr.id);
 
       if (summary) {
+        const importActivity = junitActivity.get(tr.id);
+        const lastActivityAt = isJUnit
+          ? (importActivity && importActivity > tr.createdAt
+              ? importActivity
+              : tr.createdAt
+            ).toISOString()
+          : undefined;
         summaries[tr.id] = {
           ...summary,
           testRunType: tr.testRunType,
           workflowType: tr.state?.workflowType,
+          lastActivityAt,
           commentsCount: commentsCounts.get(tr.id) || 0,
           issues: tr.issues.map((issue) => ({
             ...issue,
@@ -172,7 +204,7 @@ async function getBatchRegularRunSummaries(
   }
 
   // Get aggregated status counts for all test runs in one query
-  const statusCounts = await prisma.$queryRaw<
+  const statusCounts = await baseDb.$queryRaw<
     Array<{
       testRunId: number;
       statusId: number | null;
@@ -199,7 +231,7 @@ async function getBatchRegularRunSummaries(
   `;
 
   // Get total elapsed time for all test runs in one query
-  const elapsedResults = await prisma.$queryRaw<
+  const elapsedResults = await baseDb.$queryRaw<
     Array<{ testRunId: number; totalElapsed: bigint | null }>
   >`
     SELECT
@@ -221,7 +253,7 @@ async function getBatchRegularRunSummaries(
   `;
 
   // Get pending case estimates for all test runs in one query
-  const estimateResults = await prisma.$queryRaw<
+  const estimateResults = await baseDb.$queryRaw<
     Array<{ testRunId: number; totalEstimate: bigint | null }>
   >`
     SELECT
@@ -251,7 +283,7 @@ async function getBatchRegularRunSummaries(
     isPending: boolean;
     statusOrder: number | null;
   };
-  const caseDetails = await prisma.$queryRaw<Array<CaseDetail>>`
+  const caseDetails = await baseDb.$queryRaw<Array<CaseDetail>>`
     SELECT
       trc."testRunId",
       trc.id,
@@ -275,8 +307,30 @@ async function getBatchRegularRunSummaries(
     ORDER BY trc."testRunId", trc."order" ASC
   `;
 
+  // Execution window per run: earliest and latest result. Results on a
+  // soft-deleted case are excluded, same as the elapsed total above.
+  const resultWindows = await baseDb.$queryRaw<
+    Array<{
+      testRunId: number;
+      firstResultAt: Date | null;
+      lastResultAt: Date | null;
+    }>
+  >`
+    SELECT
+      trc."testRunId",
+      MIN(trr."executedAt") as "firstResultAt",
+      MAX(trr."executedAt") as "lastResultAt"
+    FROM "TestRunResults" trr
+    JOIN "TestRunCases" trc ON trr."testRunCaseId" = trc.id
+    WHERE trc."testRunId" = ANY(${testRunIds})
+      AND trc."isDeleted" = false
+      AND trr."isDeleted" = false
+    GROUP BY trc."testRunId"
+  `;
+  const resultWindowMap = new Map(resultWindows.map((r) => [r.testRunId, r]));
+
   // Get forecasts for test runs
-  const testRuns = await prisma.testRuns.findMany({
+  const testRuns = await baseDb.testRuns.findMany({
     where: { id: { in: testRunIds } },
     select: { id: true, forecastManual: true },
   });
@@ -351,7 +405,11 @@ async function getBatchRegularRunSummaries(
 
     const caseDetailsForRun = caseDetailsByRun.get(testRunId) || [];
 
+    const resultWindow = resultWindowMap.get(testRunId);
+
     summaries.set(testRunId, {
+      firstResultAt: resultWindow?.firstResultAt?.toISOString() ?? null,
+      lastResultAt: resultWindow?.lastResultAt?.toISOString() ?? null,
       totalCases,
       statusCounts: statusCountsForRun,
       completionRate,
@@ -389,7 +447,7 @@ async function getBatchJUnitRunSummaries(
   }
 
   // Get aggregated result counts by status and type for all test runs
-  const resultAggregates = await prisma.$queryRaw<
+  const resultAggregates = await baseDb.$queryRaw<
     Array<{
       testRunId: number;
       statusId: number | null;
@@ -415,7 +473,7 @@ async function getBatchJUnitRunSummaries(
   `;
 
   // Get total time from actual results for all test runs
-  const timeResults = await prisma.$queryRaw<
+  const timeResults = await baseDb.$queryRaw<
     Array<{ testRunId: number; totalTime: number | null }>
   >`
     SELECT
@@ -430,6 +488,27 @@ async function getBatchJUnitRunSummaries(
   const timeMap = new Map(
     timeResults.map((r) => [r.testRunId, Number(r.totalTime || 0)])
   );
+
+  // Execution window. A reporter only sometimes sends `executedAt`, so fall
+  // back to the import time — an automated run with no timestamps at all would
+  // otherwise show no start date.
+  const resultWindows = await baseDb.$queryRaw<
+    Array<{
+      testRunId: number;
+      firstResultAt: Date | null;
+      lastResultAt: Date | null;
+    }>
+  >`
+    SELECT
+      jts."testRunId",
+      MIN(COALESCE(jtr."executedAt", jtr."createdAt")) as "firstResultAt",
+      MAX(COALESCE(jtr."executedAt", jtr."createdAt")) as "lastResultAt"
+    FROM "JUnitTestResult" jtr
+    JOIN "JUnitTestSuite" jts ON jtr."testSuiteId" = jts.id
+    WHERE jts."testRunId" = ANY(${testRunIds})
+    GROUP BY jts."testRunId"
+  `;
+  const resultWindowMap = new Map(resultWindows.map((r) => [r.testRunId, r]));
 
   // Group aggregates by test run
   const aggregatesByRun = new Map<
@@ -559,7 +638,11 @@ async function getBatchJUnitRunSummaries(
     const completionRate =
       totalTests > 0 ? Math.min((completedTests / totalTests) * 100, 100) : 0;
 
+    const resultWindow = resultWindowMap.get(testRunId);
+
     summaries.set(testRunId, {
+      firstResultAt: resultWindow?.firstResultAt?.toISOString() ?? null,
+      lastResultAt: resultWindow?.lastResultAt?.toISOString() ?? null,
       totalCases: totalTests,
       statusCounts,
       completionRate,

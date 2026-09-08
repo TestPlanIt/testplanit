@@ -19,7 +19,7 @@
  *
  * Mirrors the execution model of the other live-DB integration tests:
  * opt-in via `RUN_DB_INTEGRATION=1`; each test runs inside a rolled-back
- * `prisma.$transaction`. We re-implement the route's per-case resolution
+ * `baseDb.$transaction`. We re-implement the route's per-case resolution
  * inline (calling the same `computePreflight` helper the route does) so
  * we can drive it with a transactional `tx` — this matches the codebase
  * pattern (bulk-skip / submit-result integration tests) of exercising
@@ -44,21 +44,21 @@ describeIntegration(
   "preflight-cardinality shared-dataset resolution (live DB)",
   () => {
     const importDeps = async () => {
-      const { prisma } = await import("~/lib/prisma");
-      return { prisma };
+      const { baseDb } = await import("~/lib/db");
+      return { baseDb };
     };
 
     const ROLLBACK_SENTINEL = "__PREFLIGHT_SHARED_ROLLBACK__";
 
     async function withRollback<T>(
-      prisma: any,
+      baseDb: any,
       body: (tx: any) => Promise<T>,
       timeoutMs = 60_000
     ): Promise<T> {
       let captured: T | undefined;
       let captureErr: unknown;
       try {
-        await prisma.$transaction(
+        await baseDb.$transaction(
           async (tx: any) => {
             try {
               captured = await body(tx);
@@ -311,14 +311,14 @@ describeIntegration(
 
     afterAll(async () => {
       if (RUN_INTEGRATION && HAS_DB_URL) {
-        const { prisma } = await import("~/lib/prisma");
-        await prisma.$disconnect();
+        const { baseDb } = await import("~/lib/db");
+        await baseDb.$disconnect();
       }
     });
 
     it("non-parameterized case contributes zero iterations regardless of config count", async () => {
-      const { prisma } = await importDeps();
-      await withRollback(prisma, async (tx) => {
+      const { baseDb } = await importDeps();
+      await withRollback(baseDb, async (tx) => {
         const ctx = await seedProject(tx);
         const c = await createCase(tx, ctx, {
           hasParameters: false,
@@ -332,8 +332,8 @@ describeIntegration(
     });
 
     it("parameterized case with owner dataset multiplies rowCount × configCount", async () => {
-      const { prisma } = await importDeps();
-      await withRollback(prisma, async (tx) => {
+      const { baseDb } = await importDeps();
+      await withRollback(baseDb, async (tx) => {
         const ctx = await seedProject(tx);
         const c = await createCase(tx, ctx, {
           hasParameters: true,
@@ -353,8 +353,8 @@ describeIntegration(
       // Default thresholds are asyncCap=500, softCap=1000, hardCap=5000.
       // 700 rows × 1 config → 700 → softCap classification = "async"
       // (asyncCap < 700 ≤ softCap).
-      const { prisma } = await importDeps();
-      await withRollback(prisma, async (tx) => {
+      const { baseDb } = await importDeps();
+      await withRollback(baseDb, async (tx) => {
         const ctx = await seedProject(tx);
         const c = await createCase(tx, ctx, {
           hasParameters: true,
@@ -371,8 +371,8 @@ describeIntegration(
     });
 
     it("parameterized case with follow-latest shared assignment resolves the highest-version rowCount", async () => {
-      const { prisma } = await importDeps();
-      await withRollback(prisma, async (tx) => {
+      const { baseDb } = await importDeps();
+      await withRollback(baseDb, async (tx) => {
         const ctx = await seedProject(tx);
         const c = await createCase(tx, ctx, {
           hasParameters: true,
@@ -391,8 +391,8 @@ describeIntegration(
     });
 
     it("owner+shared on the same case: owner wins (Amendment A) — total reflects owner rowCount, not shared", async () => {
-      const { prisma } = await importDeps();
-      await withRollback(prisma, async (tx) => {
+      const { baseDb } = await importDeps();
+      await withRollback(baseDb, async (tx) => {
         const ctx = await seedProject(tx);
         const c = await createCase(tx, ctx, {
           hasParameters: true,
@@ -413,8 +413,8 @@ describeIntegration(
     });
 
     it("shared assignment whose sharedDataSet is soft-deleted contributes zero (silent skip)", async () => {
-      const { prisma } = await importDeps();
-      await withRollback(prisma, async (tx) => {
+      const { baseDb } = await importDeps();
+      await withRollback(baseDb, async (tx) => {
         const ctx = await seedProject(tx);
         const c = await createCase(tx, ctx, {
           hasParameters: true,
@@ -435,8 +435,8 @@ describeIntegration(
     });
 
     it("mixed batch: sums non-param + owner + pinned + follow-latest + owner+shared", async () => {
-      const { prisma } = await importDeps();
-      await withRollback(prisma, async (tx) => {
+      const { baseDb } = await importDeps();
+      await withRollback(baseDb, async (tx) => {
         const ctx = await seedProject(tx);
 
         // 1) Non-parameterized case × 3 configs → 0 (we'll pass 3 below;
@@ -512,8 +512,8 @@ describeIntegration(
       // `async` instead of `hardRefuse` — the exact failure mode where a
       // user creates a 50,000-iteration run that should have been
       // rejected by the cap.
-      const { prisma } = await importDeps();
-      await withRollback(prisma, async (tx) => {
+      const { baseDb } = await importDeps();
+      await withRollback(baseDb, async (tx) => {
         const ctx = await seedProject(tx);
         const caseIds: number[] = [];
         for (let i = 0; i < 6; i++) {

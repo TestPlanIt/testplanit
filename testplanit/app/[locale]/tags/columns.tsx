@@ -3,7 +3,7 @@ import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
 import { SessionsListDisplay } from "@/components/tables/SessionListDisplay";
 import { TagsDisplay } from "@/components/tables/TagDisplay";
 import { TestRunsListDisplay } from "@/components/tables/TestRunsListDisplay";
-import { Tags } from "@prisma/client";
+import type { Tags } from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
 
@@ -57,7 +57,7 @@ export const useTagColumns = (
         enableSorting: true,
         enableResizing: true,
         sortingFn: "basic",
-        size: 75,
+        size: 130,
         cell: ({ row }) => {
           const count = row.original.repositoryCasesCount;
           return (
@@ -65,9 +65,11 @@ export const useTagColumns = (
               <CasesListDisplay
                 count={count}
                 filter={{
-                  tags: {
+                  caseTags: {
                     some: {
-                      id: row.original.id,
+                      tag: {
+                        id: row.original.id,
+                      },
                     },
                   },
                 }}
@@ -85,7 +87,7 @@ export const useTagColumns = (
         enableSorting: true,
         enableResizing: true,
         sortingFn: "basic",
-        size: 75,
+        size: 130,
         cell: ({ row }) => {
           const count = row.original.testRunsCount;
           return (
@@ -113,7 +115,7 @@ export const useTagColumns = (
         enableSorting: true,
         enableResizing: true,
         sortingFn: "basic",
-        size: 75,
+        size: 130,
         cell: ({ row }) => {
           const count = row.original.sessionsCount;
           return (
@@ -141,7 +143,7 @@ export const useTagColumns = (
         enableSorting: true,
         enableResizing: true,
         sortingFn: "basic",
-        size: 75,
+        size: 130,
         cell: ({ row }) => {
           const projects = row.original.projects || [];
           return (
@@ -155,6 +157,6 @@ export const useTagColumns = (
         },
       },
     ],
-    [name, testCases, sessions, testRuns, projects]
+    [name, testCases, sessions, testRuns, projects, isLoadingCounts]
   );
 };

@@ -1,5 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { IntegrationApiError } from "../errors";
+
+const mockValkeyGet = vi.fn();
+const mockValkeySet = vi.fn();
+vi.mock("~/lib/valkey", () => ({
+  default: {
+    get: (...args: unknown[]) => mockValkeyGet(...args),
+    set: (...args: unknown[]) => mockValkeySet(...args),
+  },
+}));
 import { JiraAdapter } from "./JiraAdapter";
 
 // Mock global fetch
@@ -70,6 +79,7 @@ describe("JiraAdapter", () => {
         attachments: true,
         linkedIssues: true,
         comments: true,
+        milestones: { kinds: ["RELEASE", "ITERATION"], webhooks: true },
       });
     });
   });
@@ -180,6 +190,169 @@ describe("JiraAdapter", () => {
       await expect(
         adapter.uploadAttachment("TEST-123", Buffer.from("x"), "a.png")
       ).rejects.toThrow("Failed to upload attachment - no id returned");
+    });
+  });
+
+  describe("listAttachments / downloadAttachment", () => {
+    beforeEach(async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ accountId: "test-user" }),
+      });
+      await adapter.authenticate({
+        type: "api_key",
+        email: "test@example.com",
+        apiToken: "test-token",
+        baseUrl: "https://test.atlassian.net",
+      });
+    });
+
+    it("lists via a dedicated fields=attachment fetch and maps metadata", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () =>
+          Promise.resolve({
+            fields: {
+              attachment: [
+                {
+                  id: 10500,
+                  filename: "screenshot.png",
+                  mimeType: "image/png",
+                  size: 4096,
+                  created: "2026-01-15T10:00:00.000Z",
+                  content:
+                    "https://test.atlassian.net/rest/api/3/attachment/content/10500",
+                },
+                { id: 10501 },
+              ],
+            },
+          }),
+      });
+
+      const result = await adapter.listAttachments!("TEST-123");
+
+      const [url] = mockFetch.mock.calls.at(-1)!;
+      expect(url).toBe(
+        "https://test.atlassian.net/rest/api/3/issue/TEST-123?fields=attachment"
+      );
+      expect(result).toEqual([
+        {
+          id: "10500",
+          filename: "screenshot.png",
+          mimeType: "image/png",
+          byteSize: 4096,
+          createdAt: new Date("2026-01-15T10:00:00.000Z"),
+          contentUrl:
+            "https://test.atlassian.net/rest/api/3/attachment/content/10500",
+        },
+        {
+          id: "10501",
+          filename: "attachment-10501",
+          mimeType: undefined,
+          byteSize: undefined,
+          createdAt: undefined,
+          contentUrl: undefined,
+        },
+      ]);
+    });
+
+    it("returns [] for an issue with no attachments", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ fields: {} }),
+      });
+      expect(await adapter.listAttachments!("TEST-123")).toEqual([]);
+    });
+
+    it("downloads Cloud attachments via the stable content endpoint with auth", async () => {
+      const bytes = new Uint8Array([1, 2, 3, 4]);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({
+          "content-type": "image/png",
+          "content-length": String(bytes.byteLength),
+        }),
+        arrayBuffer: () => Promise.resolve(bytes.buffer),
+      });
+
+      const result = await adapter.downloadAttachment!({
+        id: "10500",
+        filename: "screenshot.png",
+        mimeType: "image/jpeg", // listing mime loses to the response header
+        contentUrl:
+          "https://test.atlassian.net/rest/api/3/attachment/content/10500",
+      });
+
+      const [url, options] = mockFetch.mock.calls.at(-1)!;
+      expect(url).toBe(
+        "https://test.atlassian.net/rest/api/3/attachment/content/10500"
+      );
+      expect(options.headers.Authorization).toMatch(/^Basic /);
+      expect(result.mimeType).toBe("image/png");
+      expect(result.buffer).toEqual(Buffer.from(bytes));
+    });
+
+    it("rejects oversized downloads before reading the body", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({
+          "content-type": "image/png",
+          "content-length": String(50 * 1024 * 1024),
+        }),
+        arrayBuffer: () => {
+          throw new Error("body must not be read");
+        },
+      });
+
+      await expect(
+        adapter.downloadAttachment!({ id: "10500", filename: "huge.png" })
+      ).rejects.toThrow(/too large/);
+    });
+  });
+
+  describe("ADF media placeholders", () => {
+    it("renders media/mediaSingle as [image: …] instead of dropping them", () => {
+      const adfContent = [
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "Proposed layout:" }],
+        },
+        {
+          type: "mediaSingle",
+          content: [
+            {
+              type: "media",
+              attrs: { id: "media-uuid-1", alt: "login-mockup.png" },
+            },
+          ],
+        },
+      ];
+
+      const html = (adapter as any).adfToHtml(adfContent);
+
+      expect(html).toContain("Proposed layout:");
+      expect(html).toContain("[image: login-mockup.png]");
+    });
+
+    it("falls back to the media id, escaped, when no alt exists", () => {
+      const adfContent = [
+        {
+          type: "mediaGroup",
+          content: [
+            { type: "media", attrs: { id: "<uuid&>" } },
+            { type: "media", attrs: {} },
+          ],
+        },
+      ];
+
+      const html = (adapter as any).adfToHtml(adfContent);
+
+      expect(html).toContain("[image: &lt;uuid&amp;&gt;]");
+      expect(html).toContain("[image: attachment]");
     });
   });
 
@@ -2071,6 +2244,41 @@ describe("JiraAdapter", () => {
 
       vi.unstubAllEnvs();
     });
+
+    it("requests granular Jira Software scopes alongside the classic platform scopes", () => {
+      // The Agile API (board discovery + sprints, i.e. ITERATION milestone
+      // import and sprint webhook routing) does not honour classic scopes —
+      // omitting the granular trio makes every /rest/agile/1.0 call fail with
+      // 401 "Unauthorized; scope does not match" while the platform endpoints
+      // keep working. Locked in so the scope list can't silently regress.
+      const adapter = new JiraAdapter({
+        provider: "JIRA",
+        baseUrl: "https://test.atlassian.net",
+        clientId: "test-client-id",
+        redirectUri: "https://app.com/callback",
+      });
+
+      const scope =
+        new URL(adapter.getAuthorizationUrl("test-state")).searchParams.get(
+          "scope"
+        ) ?? "";
+      const scopes = scope.split(" ");
+
+      expect(scopes).toEqual(
+        expect.arrayContaining([
+          // Jira platform (classic)
+          "read:jira-work",
+          "write:jira-work",
+          "read:jira-user",
+          // Jira Software / Agile (granular)
+          "read:board-scope:jira-software",
+          "read:sprint:jira-software",
+          "read:project:jira",
+          // Refresh tokens
+          "offline_access",
+        ])
+      );
+    });
   });
 
   describe("exchangeCodeForTokens", () => {
@@ -2210,6 +2418,119 @@ describe("JiraAdapter", () => {
       const result = await adapter.getIssue("TEST-123");
 
       expect(result.description).toBe("Plain text description");
+    });
+  });
+
+  describe("resolveBoardProject", () => {
+    let boardAdapter: JiraAdapter;
+
+    beforeEach(async () => {
+      mockValkeyGet.mockReset();
+      mockValkeySet.mockReset();
+      mockValkeyGet.mockResolvedValue(null);
+      mockValkeySet.mockResolvedValue("OK");
+
+      boardAdapter = new JiraAdapter({
+        provider: "JIRA",
+        baseUrl: "https://test.atlassian.net",
+        integrationId: 42,
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ accountId: "test-user" }),
+      });
+      await boardAdapter.authenticate({
+        type: "api_key",
+        email: "test@example.com",
+        apiToken: "test-token",
+        baseUrl: "https://test.atlassian.net",
+      });
+    });
+
+    it("fetches a SINGLE board (not a project's board list) and returns location.projectId/projectKey", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: 7,
+            location: { projectId: "10050", projectKey: "DEMO" },
+          }),
+      });
+
+      const result = await boardAdapter.resolveBoardProject("7");
+
+      expect(result).toEqual({ projectId: "10050", projectKey: "DEMO" });
+      const calledUrl = mockFetch.mock.calls[1][0] as string;
+      expect(calledUrl).toContain("/rest/agile/1.0/board/7");
+      expect(calledUrl).not.toContain("projectKeyOrId");
+    });
+
+    it("caches the result in Valkey under jira-board-project:<integrationId>:<boardId>", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: 7,
+            location: { projectId: "10050", projectKey: "DEMO" },
+          }),
+      });
+
+      await boardAdapter.resolveBoardProject("7");
+
+      expect(mockValkeySet).toHaveBeenCalledWith(
+        "jira-board-project:42:7",
+        JSON.stringify({ projectId: "10050", projectKey: "DEMO" }),
+        "EX",
+        expect.any(Number)
+      );
+    });
+
+    it("returns a cached result without calling fetch again", async () => {
+      mockValkeyGet.mockResolvedValueOnce(
+        JSON.stringify({ projectId: "999", projectKey: "CACHED" })
+      );
+
+      const result = await boardAdapter.resolveBoardProject("7");
+
+      expect(result).toEqual({ projectId: "999", projectKey: "CACHED" });
+      // Only the beforeEach's authenticate() call hit fetch — no board fetch.
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it("returns null (never throws) on a 404 board lookup", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        text: () => Promise.resolve("Board does not exist"),
+      });
+
+      const result = await boardAdapter.resolveBoardProject("999");
+
+      expect(result).toBeNull();
+    });
+
+    it("returns null when location.projectId is absent (defensive parse, MEDIUM-confidence shape)", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ id: 7, name: "Board without location" }),
+      });
+
+      const result = await boardAdapter.resolveBoardProject("7");
+
+      expect(result).toBeNull();
+    });
+
+    it("REGRESSION (WR-06): rejects a non-numeric board id WITHOUT any upstream request or cache access — the id is interpolated into the REST path and cache key", async () => {
+      const result = await boardAdapter.resolveBoardProject(
+        "1/../../api/3/anything?x="
+      );
+
+      expect(result).toBeNull();
+      // Only the beforeEach's authenticate() call hit fetch — the forged id
+      // never reached makeRequest, and the cache was never consulted.
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(mockValkeyGet).not.toHaveBeenCalled();
+      expect(mockValkeySet).not.toHaveBeenCalled();
     });
   });
 });

@@ -1,19 +1,22 @@
-import {
+import type {
   Color,
   ColorFamily,
   FieldIcon,
   Milestones,
   MilestoneTypes,
-} from "@prisma/client"; // Assuming types are available
+} from "~/zenstack/models"; // Assuming types are available
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { toCalendarDate } from "./calendarDate";
 import {
   ColorMap,
   createColorMap,
   getCondition,
   getStatus,
   getStatusStyle,
+  hasCalendarDates,
   MilestonesWithTypes,
   sortMilestones,
+  sortMilestoneTree,
   STATUS_KEYS,
 } from "./milestoneUtils";
 
@@ -263,12 +266,21 @@ const baseMockMilestone: Milestones = {
   isStarted: false,
   isCompleted: false,
   isDeleted: false,
+  deletedAt: null,
   startedAt: null,
   completedAt: null,
   createdAt: new Date("2024-01-01T00:00:00.000Z"),
   createdBy: "user1",
   automaticCompletion: false,
   notifyDaysBefore: 0,
+  externalId: null,
+  externalKind: null,
+  externalState: null,
+  externalUrl: null,
+  integrationId: null,
+  lastSyncedAt: null,
+  detachedAt: null,
+  mergedToExternalId: null,
 };
 
 // Mock Milestone Type and Icon for MilestonesWithTypes
@@ -279,6 +291,7 @@ const mockMilestoneType: MilestoneTypes & { icon: FieldIcon | null } = {
   icon: { id: 1, name: "lucide:box" },
   isDefault: false,
   isDeleted: false,
+  deletedAt: null,
 };
 
 // --- createColorMap Tests ---
@@ -464,6 +477,96 @@ describe("Date-Dependent Milestone Utils", () => {
       };
       expect(getCondition(milestone)).toBe("upcomingNoStartDate");
     });
+
+    // Milestone dates are calendar dates pinned to UTC midnight, so an instant
+    // comparison called a due date of *today* past due the moment UTC midnight
+    // passed — 7:00 PM the previous evening for a reader in GMT-5. These cases
+    // are built off MOCK_NOW rather than a literal, and read its local day the
+    // same way getCondition does, so they stay consistent in any runner zone.
+    // See `~/utils/calendarDate`.
+    const today = toCalendarDate(MOCK_NOW);
+    const yesterday = toCalendarDate(
+      new Date(MOCK_NOW.getTime() - 24 * 60 * 60 * 1000)
+    );
+
+    it("is not past due on the day it is due", () => {
+      const milestone: Milestones = {
+        ...baseMockMilestone,
+        isStarted: true,
+        startedAt: yesterday,
+        completedAt: today,
+      };
+      expect(getCondition(milestone)).toBe("started");
+    });
+
+    it("goes past due once the due day is over", () => {
+      const milestone: Milestones = {
+        ...baseMockMilestone,
+        isStarted: true,
+        startedAt: yesterday,
+        completedAt: yesterday,
+      };
+      expect(getCondition(milestone)).toBe("pastDueStarted");
+    });
+
+    it("treats a start date of today as arrived", () => {
+      const milestone: Milestones = {
+        ...baseMockMilestone,
+        isStarted: false,
+        startedAt: today,
+        completedAt: null,
+      };
+      expect(getCondition(milestone)).toBe("delayed");
+    });
+
+    it("does not count the due day against an unstarted milestone", () => {
+      const milestone: Milestones = {
+        ...baseMockMilestone,
+        isStarted: false,
+        startedAt: today,
+        completedAt: today,
+      };
+      expect(getCondition(milestone)).toBe("delayed");
+    });
+
+    it("compares a sprint's boundaries as instants, not days", () => {
+      // A sprint ending earlier today has genuinely ended — its `completedAt`
+      // is a real moment, not a day, so the whole-day rounding that protects a
+      // due date must not apply. MOCK_NOW is 12:00 UTC.
+      const endedThisMorning = new Date(MOCK_NOW.getTime() - 60 * 60 * 1000);
+      const sprint: Milestones = {
+        ...baseMockMilestone,
+        externalKind: "ITERATION",
+        isStarted: true,
+        startedAt: yesterday,
+        completedAt: endedThisMorning,
+      };
+      expect(getCondition(sprint)).toBe("pastDueStarted");
+
+      // The same instant on a release is within the current day, so it holds.
+      const release: Milestones = {
+        ...baseMockMilestone,
+        externalKind: "RELEASE",
+        isStarted: true,
+        startedAt: yesterday,
+        completedAt: endedThisMorning,
+      };
+      expect(getCondition(release)).toBe("started");
+    });
+  });
+
+  describe("hasCalendarDates", () => {
+    it("treats manual milestones and releases as calendar dates", () => {
+      expect(hasCalendarDates({ externalKind: null })).toBe(true);
+      expect(hasCalendarDates({})).toBe(true);
+      expect(hasCalendarDates({ externalKind: "RELEASE" })).toBe(true);
+    });
+
+    it("treats sprints as instants", () => {
+      // 77 sprint date values in prod sit within a few hours of UTC midnight,
+      // from Jira storing sprint boundaries in the instance's own zone.
+      expect(hasCalendarDates({ externalKind: "ITERATION" })).toBe(false);
+    });
   });
 
   // --- getStatus Tests ---
@@ -580,7 +683,7 @@ describe("Date-Dependent Milestone Utils", () => {
       expect(sorted.map((m) => m.id)).toEqual([3, 1, 2]); // m3 (not completed), m1 (completed later), m2 (completed earlier)
     });
 
-    it("should sort started milestones first by startedAt ascending", () => {
+    it("should sort started milestones without end dates by startedAt ascending", () => {
       const m1 = createMockMilestoneWithType(1, {
         isStarted: true,
         startedAt: PAST_DATE_1,
@@ -598,7 +701,45 @@ describe("Date-Dependent Milestone Utils", () => {
       expect(sorted.map((m) => m.id)).toEqual([2, 1, 3]); // m2 (started earlier), m1 (started later), m3 (upcoming)
     });
 
-    it("should sort unscheduled milestones before upcoming/delayed", () => {
+    it("should sort started milestones by earliest end date first", () => {
+      const m1 = createMockMilestoneWithType(1, {
+        isStarted: true,
+        startedAt: PAST_DATE_2,
+        completedAt: FUTURE_DATE_2,
+      }); // Started earlier, ends later
+      const m2 = createMockMilestoneWithType(2, {
+        isStarted: true,
+        startedAt: PAST_DATE_1,
+        completedAt: FUTURE_DATE_1,
+      }); // Started later, ends earlier
+      const m3 = createMockMilestoneWithType(3, {
+        isStarted: true,
+        startedAt: PAST_DATE_2,
+        completedAt: null,
+      }); // Started, no end date
+
+      const sorted = sortMilestones([m1, m2, m3]);
+      // Earliest end date first; no end date sorts after those with end dates
+      expect(sorted.map((m) => m.id)).toEqual([2, 1, 3]);
+    });
+
+    it("should fall back to startedAt for started milestones with the same end date", () => {
+      const m1 = createMockMilestoneWithType(1, {
+        isStarted: true,
+        startedAt: PAST_DATE_1,
+        completedAt: FUTURE_DATE_1,
+      }); // Started later
+      const m2 = createMockMilestoneWithType(2, {
+        isStarted: true,
+        startedAt: PAST_DATE_2,
+        completedAt: FUTURE_DATE_1,
+      }); // Started earlier
+
+      const sorted = sortMilestones([m1, m2]);
+      expect(sorted.map((m) => m.id)).toEqual([2, 1]);
+    });
+
+    it("should sort unscheduled milestones after delayed and upcoming", () => {
       const m1 = createMockMilestoneWithType(1, {
         isStarted: false,
         startedAt: null,
@@ -614,8 +755,32 @@ describe("Date-Dependent Milestone Utils", () => {
       }); // Delayed (past start)
 
       const sorted = sortMilestones([m1, m2, m3]);
-      // Expected order: Unscheduled, Delayed, Upcoming (Based on original logic)
-      expect(sorted.map((m) => m.id)).toEqual([1, 3, 2]); // Update expectation
+      // Delayed, Upcoming, Unscheduled
+      expect(sorted.map((m) => m.id)).toEqual([3, 2, 1]);
+    });
+
+    it("should sort past due milestones first, most overdue first", () => {
+      const m1 = createMockMilestoneWithType(1, {
+        isStarted: true,
+        completedAt: PAST_DATE_1,
+      }); // Started, overdue
+      const m2 = createMockMilestoneWithType(2, {
+        isStarted: true,
+        completedAt: PAST_DATE_2,
+      }); // Started, more overdue
+      const m3 = createMockMilestoneWithType(3, {
+        isStarted: true,
+        completedAt: FUTURE_DATE_1,
+      }); // Started, on track
+      const m4 = createMockMilestoneWithType(4, {
+        isStarted: false,
+        startedAt: PAST_DATE_2,
+        completedAt: PAST_DATE_1,
+      }); // Never started, both dates past
+
+      const sorted = sortMilestones([m1, m2, m3, m4]);
+      // Past due (end date asc, m1/m4 tie keeps input order), then started
+      expect(sorted.map((m) => m.id)).toEqual([2, 1, 4, 3]);
     });
 
     it("should handle milestones with only end dates", () => {
@@ -635,8 +800,8 @@ describe("Date-Dependent Milestone Utils", () => {
       }); // Upcoming (later end date only)
 
       const sorted = sortMilestones([m1, m2, m3]);
-      // Logic seems to prioritize start dates, then end dates if not started
-      expect(sorted.map((m) => m.id)).toEqual([2, 1, 3]); // Upcoming (start date), Upcoming (earlier end), Upcoming (later end)
+      // All upcoming, soonest scheduled date first (m2/m3 tie keeps input order)
+      expect(sorted.map((m) => m.id)).toEqual([1, 2, 3]);
     });
 
     // Add more complex sorting scenarios if needed, e.g., mixing various types
@@ -668,11 +833,11 @@ describe("Date-Dependent Milestone Utils", () => {
       }); // Delayed
 
       const sorted = sortMilestones([m1, m2, m3, m4, m5, m6]);
-      // Expected: Unscheduled, Started (past asc), Delayed, Upcoming, Completed (desc) (Based on original logic)
-      expect(sorted.map((m) => m.id)).toEqual([3, 2, 5, 6, 4, 1]);
+      // Expected: Started (start asc), Delayed, Upcoming, Unscheduled, Completed
+      expect(sorted.map((m) => m.id)).toEqual([2, 5, 6, 4, 3, 1]);
     });
 
-    it("should sort past-started before non-past-started", () => {
+    it("should sort delayed before upcoming", () => {
       const m1 = createMockMilestoneWithType(1, {
         isStarted: false,
         startedAt: FUTURE_DATE_1,
@@ -691,7 +856,7 @@ describe("Date-Dependent Milestone Utils", () => {
       expect(sorted.map((m) => m.id)).toEqual([2, 1, 3]);
     });
 
-    it("should sort future-started before others (when not past-started)", () => {
+    it("should sort upcoming milestones by soonest scheduled date", () => {
       const m1 = createMockMilestoneWithType(1, {
         isStarted: false,
         completedAt: FUTURE_DATE_2,
@@ -730,7 +895,6 @@ describe("Date-Dependent Milestone Utils", () => {
     });
 
     it("should sort unscheduled last among non-completed, non-started items", () => {
-      // Re-verify this based on reverted logic: Unscheduled should be first.
       const m1 = createMockMilestoneWithType(1, {
         isStarted: false,
         startedAt: null,
@@ -750,14 +914,75 @@ describe("Date-Dependent Milestone Utils", () => {
       }); // Delayed (past start)
 
       const sorted = sortMilestones([m1, m2, m3, m4]);
-      // Unscheduled, Delayed, Upcoming (start), Upcoming (end)
-      expect(sorted.map((m) => m.id)).toEqual([1, 4, 2, 3]);
+      // Delayed, Upcoming (m2/m3 tie keeps input order), Unscheduled
+      expect(sorted.map((m) => m.id)).toEqual([4, 2, 3, 1]);
     });
 
     it("should return an empty array if input is empty or null/undefined", () => {
       expect(sortMilestones([])).toEqual([]);
       expect(sortMilestones(null as any)).toBeUndefined(); // Or potentially throw, depending on how ?.sort behaves
       expect(sortMilestones(undefined as any)).toBeUndefined();
+    });
+  });
+
+  // --- sortMilestoneTree Tests ---
+
+  describe("sortMilestoneTree", () => {
+    const createMockMilestoneWithType = (
+      id: number,
+      props: Partial<Milestones>,
+      children: MilestonesWithTypes[] = []
+    ): MilestonesWithTypes => ({
+      ...(baseMockMilestone as Milestones),
+      id,
+      ...props,
+      milestoneType: mockMilestoneType,
+      children,
+    });
+
+    // Completed sorts last, delayed first — the same ranking at every level.
+    const completed = (id: number) =>
+      createMockMilestoneWithType(id, {
+        isCompleted: true,
+        completedAt: PAST_DATE_1,
+      });
+    const delayed = (id: number) =>
+      createMockMilestoneWithType(id, {
+        isStarted: false,
+        startedAt: PAST_DATE_1,
+      });
+
+    it("ranks children, not just roots", () => {
+      const root = createMockMilestoneWithType(1, { isStarted: false }, [
+        completed(2),
+        delayed(3),
+      ]);
+
+      const sorted = sortMilestoneTree([root]);
+
+      expect(sorted[0].children.map((m) => m.id)).toEqual([3, 2]);
+    });
+
+    it("ranks every nesting level, not only the first", () => {
+      const grandchildren = [completed(4), delayed(5)];
+      const root = createMockMilestoneWithType(1, { isStarted: false }, [
+        createMockMilestoneWithType(2, { isStarted: false }, grandchildren),
+      ]);
+
+      const sorted = sortMilestoneTree([root]);
+
+      expect(sorted[0].children[0].children.map((m) => m.id)).toEqual([5, 4]);
+    });
+
+    it("ranks roots the same way sortMilestones does", () => {
+      const roots = [completed(1), delayed(2)];
+
+      expect(sortMilestoneTree(roots).map((m) => m.id)).toEqual([2, 1]);
+    });
+
+    it("tolerates empty and nullish input like sortMilestones", () => {
+      expect(sortMilestoneTree([])).toEqual([]);
+      expect(sortMilestoneTree(null as any)).toBeUndefined();
     });
   });
 });

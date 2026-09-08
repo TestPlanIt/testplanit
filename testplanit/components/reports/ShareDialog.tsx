@@ -1,5 +1,7 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   auditShareLinkCreation,
   prepareShareLinkData,
@@ -27,16 +29,12 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { ShareLinkMode } from "@prisma/client";
+import { ShareLinkMode } from "~/zenstack/models";
 import { format } from "date-fns";
 import { Asterisk, Calendar as CalendarIcon, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
-import {
-  useCreateShareLink,
-  useFindFirstRegistrationSettings,
-} from "~/lib/hooks";
 import { cn } from "~/utils";
 import {
   PasswordStrengthIndicator,
@@ -62,7 +60,8 @@ export function ShareDialog({
   const tCommon = useTranslations("common");
   const tAuth = useTranslations("auth.signup.errors");
   const { data: session } = useSession();
-  const { data: registrationSettings } = useFindFirstRegistrationSettings();
+  const { data: registrationSettings } =
+    useClientQueries(schema).registrationSettings.useFindFirst();
   const policy: PasswordPolicy | null = registrationSettings
     ? {
         minPasswordLength: registrationSettings.minPasswordLength ?? 8,
@@ -90,7 +89,7 @@ export function ShareDialog({
 
   // Use ZenStack hook for creating share links
   const { mutateAsync: createShareLink, isPending: isCreating } =
-    useCreateShareLink();
+    useClientQueries(schema).shareLink.useCreate();
 
   // Generate default title with timestamp
   const defaultTitle = useMemo(() => {
@@ -173,7 +172,7 @@ export function ShareDialog({
           shareLink.projectId !== null ? shareLink.projectId : undefined,
         expiresAt: shareLink.expiresAt,
         notifyOnView: shareLink.notifyOnView,
-        passwordHash: shareLink.passwordHash,
+        hasPassword: !!passwordHash,
       });
 
       // Generate share URL (without locale - middleware will redirect based on user preference/browser language)
@@ -399,7 +398,7 @@ export function ShareDialog({
                   <Button
                     variant="outline"
                     className={cn(
-                      "w-full justify-start text-left font-normal",
+                      "w-full justify-start text-start font-normal",
                       !expiresAt && "text-muted-foreground"
                     )}
                   >

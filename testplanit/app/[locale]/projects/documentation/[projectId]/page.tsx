@@ -1,14 +1,11 @@
 "use client";
 
-import { ApplicationArea } from "@prisma/client";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
+import { ApplicationArea } from "~/zenstack/models";
 import { use, useCallback, useEffect, useRef, useState } from "react";
 
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import {
-  useFindFirstAppConfig,
-  useFindFirstProjects,
-  useUpdateProjects,
-} from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 
 import { Loading } from "@/components/Loading";
@@ -21,6 +18,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { SectionHeader } from "@/components/ui/typography";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { CircleSlash2, Save, SquarePen } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -57,7 +56,7 @@ export default function ProjectDocumentation({
     data: project,
     refetch: refetchProject,
     isLoading: isProjectLoading,
-  } = useFindFirstProjects(
+  } = useClientQueries(schema).projects.useFindFirst(
     {
       where: {
         AND: [{ isDeleted: false }, { id: parseInt(projectId) }],
@@ -74,12 +73,13 @@ export default function ProjectDocumentation({
   } = useProjectPermissions(projectId, ApplicationArea.Documentation);
 
   // Fetch default content from AppConfig
-  const { data: appConfig } = useFindFirstAppConfig({
+  const { data: appConfig } = useClientQueries(schema).appConfig.useFindFirst({
     where: {
       key: "project_docs_default",
     },
   });
-  const { mutateAsync: updateProject } = useUpdateProjects();
+  const { mutateAsync: updateProject } =
+    useClientQueries(schema).projects.useUpdate();
 
   // Use a ref to track the original docs from the database
   const originalDocsRef = useRef<object | null>(null);
@@ -193,28 +193,27 @@ export default function ProjectDocumentation({
       <Card id="documentation-content" className="flex w-full min-w-[400px]">
         <div className="flex-1 w-3/4">
           <CardHeader>
-            <CardTitle>
-              <div className="flex items-center justify-between text-primary text-xl md:text-2xl">
-                <div>
-                  <CardTitle>{t("common.fields.documentation")}</CardTitle>
-                </div>
-                {canEdit && !isEditing && (
-                  <Button onClick={() => setIsEditing(!isEditing)}>
-                    <div className="flex items-center">
-                      <div>
-                        <SquarePen className="h-5 w-5 mr-2" />
-                      </div>
-                      <div>
-                        {t("common.actions.edit")}{" "}
-                        {t("common.fields.documentation")}
-                      </div>
-                    </div>
-                  </Button>
-                )}
-              </div>
-            </CardTitle>
-            <CardDescription className="uppercase flex w-full items-top items-center gap-2">
-              <span className="flex items-center gap-2 uppercase shrink-0">
+            <div className="flex items-center justify-between gap-2">
+              <SectionHeader className="flex items-center gap-2">
+                <CardTitle>{t("common.fields.documentation")}</CardTitle>
+                <HelpPopover helpKey="documentation" />
+              </SectionHeader>
+              {canEdit && !isEditing && (
+                <Button
+                  onClick={() => setIsEditing(!isEditing)}
+                  aria-label={`${t("common.actions.edit")} ${t("common.fields.documentation")}`}
+                  className="group gap-0 transition-all duration-200 hover:gap-2"
+                >
+                  <SquarePen className="h-4 w-4" />
+                  <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+                    {t("common.actions.edit")}{" "}
+                    {t("common.fields.documentation")}
+                  </span>
+                </Button>
+              )}
+            </div>
+            <CardDescription>
+              <span className="flex items-center gap-2">
                 <ProjectIcon iconUrl={project?.iconUrl} />
                 {project?.name}
               </span>
@@ -236,13 +235,13 @@ export default function ProjectDocumentation({
           <div className="flex gap-2 p-4">
             <Button variant="default" onClick={handleSaveDocs}>
               <div className="flex items-center">
-                <Save className="w-5 h-5 mr-2" />
+                <Save className="w-5 h-5 me-2" />
                 <div>{t("common.actions.save")}</div>
               </div>
             </Button>
             <Button variant="outline" onClick={handleCancelEdit}>
               <div className="flex items-center">
-                <CircleSlash2 className="w-5 h-5 mr-2" />
+                <CircleSlash2 className="w-5 h-5 me-2" />
                 <div>{t("common.cancel")}</div>
               </div>
             </Button>

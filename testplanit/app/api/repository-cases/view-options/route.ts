@@ -1,8 +1,18 @@
-import { Prisma } from "@prisma/client";
+import type { RepositoryCasesWhereInput } from "~/zenstack/input";
+import { DbNull } from "@zenstackhq/orm";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { getUserAccessibleProjects } from "~/app/actions/getUserAccessibleProjects";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
+import {
+  attachmentsWhereClause,
+  shapeAttachmentsFacet,
+} from "~/lib/repositoryCaseAttachmentsFilter";
+import {
+  computeRepositoryCaseFacetCounts,
+  distinctCaseCount,
+} from "~/lib/repositoryCaseFacetCounts";
+import { sanitizeSearchCaseIds } from "~/lib/repositoryCaseSearchIds";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { authOptions } from "~/server/auth";
 
@@ -17,6 +27,15 @@ interface ViewOptionsRequest {
   stateIds?: number[];
   automated?: number[];
   dynamicFieldFilters?: Record<number, (string | number)[]>;
+  // Multi-dimension FilterBar contract (spec §8). When `predicates` is
+  // present the filter-aware facet engine runs and the legacy filter fields
+  // above are ignored; when absent, the legacy path below is unchanged.
+  // Parsed leniently against the server-built dimension registry.
+  predicates?: unknown;
+  // ES-search intersection (cross-cutting). Declared as number[] but arrives
+  // unvalidated from the client — it only reaches the engine through
+  // sanitizeSearchCaseIds, the same normalization POST /cases/query applies.
+  searchCaseIds?: number[];
 }
 
 export async function POST(request: Request) {
@@ -53,7 +72,7 @@ export async function POST(request: Request) {
     }
 
     // Verify user has access to the project
-    const project = await prisma.projects.findUnique({
+    const project = await baseDb.projects.findUnique({
       where: { id: projectId, isDeleted: false },
     });
 
@@ -69,8 +88,40 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
+    // HARD BRANCH (spec §8): predicates/searchCaseIds present → the
+    // filter-aware facet engine; absent → the legacy path below, unchanged
+    // (ReportBuilder and cross-project consumers keep legacy semantics).
+    if (body.predicates !== undefined || body.searchCaseIds !== undefined) {
+      // The id set is the same scope the table page is cut from, so it goes
+      // through the same sanitizer as POST /cases/query. A non-array is not
+      // sanitizable into "no search" — an unrecognized shape would silently
+      // widen the counts to the whole project — so it is rejected outright.
+      if (
+        body.searchCaseIds !== undefined &&
+        !Array.isArray(body.searchCaseIds)
+      ) {
+        return NextResponse.json(
+          { error: "Invalid searchCaseIds" },
+          { status: 400 }
+        );
+      }
+      const sanitizedSearchCaseIds =
+        body.searchCaseIds === undefined
+          ? undefined
+          : sanitizeSearchCaseIds(body.searchCaseIds);
+      const facetCounts = await computeRepositoryCaseFacetCounts(baseDb, {
+        projectId,
+        isRunMode,
+        effectiveRunIds,
+        selectedTestCases,
+        predicates: body.predicates,
+        searchCaseIds: sanitizedSearchCaseIds,
+      });
+      return NextResponse.json(facetCounts);
+    }
+
     // Build the base where clause for repository cases
-    const baseWhere: Prisma.RepositoryCasesWhereInput = {
+    const baseWhere: RepositoryCasesWhereInput = {
       isDeleted: false,
       isArchived: false,
       projectId: projectId,
@@ -84,7 +135,7 @@ export async function POST(request: Request) {
 
     if (isRunMode && effectiveRunIds.length > 0) {
       // Fetch all test case IDs from the selected runs
-      const testRunCases = await prisma.testRunCases.findMany({
+      const testRunCases = await baseDb.testRunCases.findMany({
         where: {
           testRunId: { in: effectiveRunIds },
           isDeleted: false,
@@ -146,19 +197,19 @@ export async function POST(request: Request) {
           if (isNaN(fieldId) || !values || values.length === 0) return null;
 
           // First, get all matching case IDs from the base filter
-          const matchingCases = await prisma.repositoryCases.findMany({
+          const matchingCases = await baseDb.repositoryCases.findMany({
             where: baseWhere,
             select: { id: true },
           });
           const baseCaseIds = matchingCases.map((c) => c.id);
 
           // Then fetch case field values only for those cases
-          const caseFieldValues = await prisma.caseFieldValues.findMany({
+          const caseFieldValues = await baseDb.caseFieldValues.findMany({
             where: {
               fieldId: fieldId,
               testCaseId: { in: baseCaseIds },
               value: {
-                not: Prisma.DbNull,
+                not: DbNull,
               },
             },
             select: {
@@ -234,35 +285,35 @@ export async function POST(request: Request) {
       totalCount,
     ] = await Promise.all([
       // Templates with counts
-      prisma.repositoryCases.groupBy({
+      baseDb.repositoryCases.groupBy({
         by: ["templateId"],
         where: baseWhere,
         _count: true,
       }),
 
       // States with counts
-      prisma.repositoryCases.groupBy({
+      baseDb.repositoryCases.groupBy({
         by: ["stateId"],
         where: baseWhere,
         _count: true,
       }),
 
       // Creators with counts
-      prisma.repositoryCases.groupBy({
+      baseDb.repositoryCases.groupBy({
         by: ["creatorId"],
         where: baseWhere,
         _count: true,
       }),
 
       // Automated counts
-      prisma.repositoryCases.groupBy({
+      baseDb.repositoryCases.groupBy({
         by: ["automated"],
         where: baseWhere,
         _count: true,
       }),
 
       // Parameterized counts
-      prisma.repositoryCases.groupBy({
+      baseDb.repositoryCases.groupBy({
         by: ["hasParameters"],
         where: baseWhere,
         _count: true,
@@ -279,33 +330,33 @@ export async function POST(request: Request) {
           effectiveSelectedTestCases &&
           effectiveSelectedTestCases.length > 0
         ) {
-          result = await prisma.$queryRaw<
+          result = await baseDb.$queryRaw<
             Array<{ tagId: number; count: bigint }>
           >`
-            SELECT rct."B" as "tagId", COUNT(*)::bigint as count
-            FROM "public"."_RepositoryCasesToTags" rct
-            INNER JOIN "public"."RepositoryCases" rc ON rc.id = rct."A"
+            SELECT rct."tagId" as "tagId", COUNT(*)::bigint as count
+            FROM "public"."RepositoryCaseTag" rct
+            INNER JOIN "public"."RepositoryCases" rc ON rc.id = rct."caseId"
             LEFT JOIN "public"."RepositoryFolders" rf ON rf.id = rc."folderId"
             WHERE rc."isDeleted" = false
               AND rc."isArchived" = false
               AND rc."projectId" = ${projectId}
               AND rf."isDeleted" = false
               AND rc.id = ANY(${effectiveSelectedTestCases})
-            GROUP BY rct."B"
+            GROUP BY rct."tagId"
           `;
         } else {
-          result = await prisma.$queryRaw<
+          result = await baseDb.$queryRaw<
             Array<{ tagId: number; count: bigint }>
           >`
-            SELECT rct."B" as "tagId", COUNT(*)::bigint as count
-            FROM "public"."_RepositoryCasesToTags" rct
-            INNER JOIN "public"."RepositoryCases" rc ON rc.id = rct."A"
+            SELECT rct."tagId" as "tagId", COUNT(*)::bigint as count
+            FROM "public"."RepositoryCaseTag" rct
+            INNER JOIN "public"."RepositoryCases" rc ON rc.id = rct."caseId"
             LEFT JOIN "public"."RepositoryFolders" rf ON rf.id = rc."folderId"
             WHERE rc."isDeleted" = false
               AND rc."isArchived" = false
               AND rc."projectId" = ${projectId}
               AND rf."isDeleted" = false
-            GROUP BY rct."B"
+            GROUP BY rct."tagId"
           `;
         }
 
@@ -316,7 +367,7 @@ export async function POST(request: Request) {
       })(),
 
       // Issues - use raw SQL to count issues efficiently with GROUP BY
-      // In the _IssueToRepositoryCases join table: "A" = Issue.id, "B" = RepositoryCases.id
+      // In the RepositoryCaseIssue join table: "issueId" = Issue.id, "caseId" = RepositoryCases.id
       (async () => {
         let result: Array<{ issueId: number; count: bigint }>;
 
@@ -325,13 +376,13 @@ export async function POST(request: Request) {
           effectiveSelectedTestCases &&
           effectiveSelectedTestCases.length > 0
         ) {
-          result = await prisma.$queryRaw<
+          result = await baseDb.$queryRaw<
             Array<{ issueId: number; count: bigint }>
           >`
-            SELECT rci."A" as "issueId", COUNT(*)::bigint as count
-            FROM "public"."_IssueToRepositoryCases" rci
-            INNER JOIN "public"."RepositoryCases" rc ON rc.id = rci."B"
-            INNER JOIN "public"."Issue" i ON i.id = rci."A"
+            SELECT rci."issueId" as "issueId", COUNT(*)::bigint as count
+            FROM "public"."RepositoryCaseIssue" rci
+            INNER JOIN "public"."RepositoryCases" rc ON rc.id = rci."caseId"
+            INNER JOIN "public"."Issue" i ON i.id = rci."issueId"
             LEFT JOIN "public"."RepositoryFolders" rf ON rf.id = rc."folderId"
             WHERE rc."isDeleted" = false
               AND rc."isArchived" = false
@@ -339,23 +390,23 @@ export async function POST(request: Request) {
               AND rf."isDeleted" = false
               AND i."isDeleted" = false
               AND rc.id = ANY(${effectiveSelectedTestCases})
-            GROUP BY rci."A"
+            GROUP BY rci."issueId"
           `;
         } else {
-          result = await prisma.$queryRaw<
+          result = await baseDb.$queryRaw<
             Array<{ issueId: number; count: bigint }>
           >`
-            SELECT rci."A" as "issueId", COUNT(*)::bigint as count
-            FROM "public"."_IssueToRepositoryCases" rci
-            INNER JOIN "public"."RepositoryCases" rc ON rc.id = rci."B"
-            INNER JOIN "public"."Issue" i ON i.id = rci."A"
+            SELECT rci."issueId" as "issueId", COUNT(*)::bigint as count
+            FROM "public"."RepositoryCaseIssue" rci
+            INNER JOIN "public"."RepositoryCases" rc ON rc.id = rci."caseId"
+            INNER JOIN "public"."Issue" i ON i.id = rci."issueId"
             LEFT JOIN "public"."RepositoryFolders" rf ON rf.id = rc."folderId"
             WHERE rc."isDeleted" = false
               AND rc."isArchived" = false
               AND rc."projectId" = ${projectId}
               AND rf."isDeleted" = false
               AND i."isDeleted" = false
-            GROUP BY rci."A"
+            GROUP BY rci."issueId"
           `;
         }
 
@@ -366,7 +417,7 @@ export async function POST(request: Request) {
       })(),
 
       // Get field info for dynamic fields
-      prisma.templates.findMany({
+      baseDb.templates.findMany({
         where: {
           isDeleted: false,
           projects: {
@@ -425,7 +476,7 @@ export async function POST(request: Request) {
 
       // Test run data (if in run mode)
       isRunMode && effectiveRunIds.length > 0
-        ? prisma.testRunCases.findMany({
+        ? baseDb.testRunCases.findMany({
             where: {
               testRunId: { in: effectiveRunIds },
               isDeleted: false,
@@ -457,7 +508,7 @@ export async function POST(request: Request) {
         : Promise.resolve(null),
 
       // Total count
-      prisma.repositoryCases.count({ where: baseWhere }),
+      baseDb.repositoryCases.count({ where: baseWhere }),
     ]);
 
     // Fetch template names and state details
@@ -468,7 +519,7 @@ export async function POST(request: Request) {
       tagDetails,
       issueDetails,
     ] = await Promise.all([
-      prisma.templates.findMany({
+      baseDb.templates.findMany({
         where: {
           id: { in: templates.map((t) => t.templateId) },
           isDeleted: false,
@@ -479,7 +530,7 @@ export async function POST(request: Request) {
         },
       }),
 
-      prisma.workflows.findMany({
+      baseDb.workflows.findMany({
         where: {
           id: { in: states.map((s) => s.stateId) },
           isDeleted: false,
@@ -500,7 +551,7 @@ export async function POST(request: Request) {
         },
       }),
 
-      prisma.user.findMany({
+      baseDb.user.findMany({
         where: {
           id: { in: creators.map((c) => c.creatorId) },
         },
@@ -511,7 +562,7 @@ export async function POST(request: Request) {
       }),
 
       tags.length > 0
-        ? prisma.tags.findMany({
+        ? baseDb.tags.findMany({
             where: {
               id: { in: tags.map((t) => t.tagId) },
               isDeleted: false,
@@ -524,7 +575,7 @@ export async function POST(request: Request) {
         : Promise.resolve([]),
 
       issues.length > 0
-        ? prisma.issue.findMany({
+        ? baseDb.issue.findMany({
             where: {
               id: { in: issues.map((i) => i.issueId) },
               isDeleted: false,
@@ -556,7 +607,7 @@ export async function POST(request: Request) {
       allTestRunCaseIds.length > 0 &&
       effectiveRunIds.length > 1
     ) {
-      const caseProperties = await prisma.repositoryCases.findMany({
+      const caseProperties = await baseDb.repositoryCases.findMany({
         where: { id: { in: effectiveSelectedTestCases } },
         select: {
           id: true,
@@ -713,10 +764,10 @@ export async function POST(request: Request) {
         : totalCount;
 
     // Calculate tag counts including special options
-    const casesWithTags = await prisma.repositoryCases.count({
+    const casesWithTags = await baseDb.repositoryCases.count({
       where: {
         ...baseWhere,
-        tags: {
+        caseTags: {
           some: {},
         },
       },
@@ -730,10 +781,10 @@ export async function POST(request: Request) {
       // Fetch which cases have tags
       const casesWithTagsSet = new Set(
         (
-          await prisma.repositoryCases.findMany({
+          await baseDb.repositoryCases.findMany({
             where: {
               id: { in: effectiveSelectedTestCases },
-              tags: { some: {} },
+              caseTags: { some: {} },
             },
             select: { id: true },
           })
@@ -755,16 +806,19 @@ export async function POST(request: Request) {
 
     if (casePropertiesMap && allTestRunCaseIds.length > 0) {
       // Fetch tag associations for all cases
-      const caseTagAssociations = await prisma.repositoryCases.findMany({
+      const caseTagAssociations = await baseDb.repositoryCases.findMany({
         where: { id: { in: effectiveSelectedTestCases } },
         select: {
           id: true,
-          tags: { select: { id: true } },
+          caseTags: { select: { tag: { select: { id: true } } } },
         },
       });
 
       const caseTagsMap = new Map<number, Set<number>>(
-        caseTagAssociations.map((c) => [c.id, new Set(c.tags.map((t) => t.id))])
+        caseTagAssociations.map((c) => [
+          c.id,
+          new Set(c.caseTags.map((ct) => ct.tag.id)),
+        ])
       );
 
       // Count tags based on TestRunCases
@@ -808,12 +862,14 @@ export async function POST(request: Request) {
     ];
 
     // Calculate issue counts including special options
-    const casesWithIssues = await prisma.repositoryCases.count({
+    const casesWithIssues = await baseDb.repositoryCases.count({
       where: {
         ...baseWhere,
-        issues: {
+        caseIssues: {
           some: {
-            isDeleted: false,
+            issue: {
+              isDeleted: false,
+            },
           },
         },
       },
@@ -827,10 +883,10 @@ export async function POST(request: Request) {
       // Fetch which cases have issues
       const casesWithIssuesSet = new Set(
         (
-          await prisma.repositoryCases.findMany({
+          await baseDb.repositoryCases.findMany({
             where: {
               id: { in: effectiveSelectedTestCases },
-              issues: { some: { isDeleted: false } },
+              caseIssues: { some: { issue: { isDeleted: false } } },
             },
             select: { id: true },
           })
@@ -844,6 +900,46 @@ export async function POST(request: Request) {
         allTestRunCaseIds.length - effectiveCasesWithIssues;
     }
 
+    // Calculate attachment counts. Attachments is a relation, not a scalar
+    // column, so we can't groupBy — count cases that have at least one live
+    // attachment and derive the remainder (see attachmentsWhereClause for the
+    // isDeleted:false guard rationale).
+    const casesWithAttachments = await baseDb.repositoryCases.count({
+      where: {
+        ...baseWhere,
+        ...attachmentsWhereClause(true),
+      },
+    });
+
+    // For multi-config, recalculate attachment counts based on TestRunCases
+    let effectiveCasesWithAttachments = casesWithAttachments;
+
+    if (casePropertiesMap && allTestRunCaseIds.length > 0) {
+      // Fetch which cases have live attachments
+      const casesWithAttachmentsSet = new Set(
+        (
+          await baseDb.repositoryCases.findMany({
+            where: {
+              id: { in: effectiveSelectedTestCases },
+              ...attachmentsWhereClause(true),
+            },
+            select: { id: true },
+          })
+        ).map((c) => c.id)
+      );
+
+      effectiveCasesWithAttachments = allTestRunCaseIds.filter((id) =>
+        casesWithAttachmentsSet.has(id)
+      ).length;
+    }
+
+    // Shape attachments as Array<{ value: boolean; count: number }> to match
+    // the automated/parameterized contract the ViewSelector consumes.
+    const attachmentsWithCounts = shapeAttachmentsFacet(
+      effectiveTotalCount,
+      effectiveCasesWithAttachments
+    );
+
     // For multi-config, recalculate individual issue counts
     let issueCountsForList = issues.map((i) => ({
       issueId: i.issueId,
@@ -852,18 +948,21 @@ export async function POST(request: Request) {
 
     if (casePropertiesMap && allTestRunCaseIds.length > 0) {
       // Fetch issue associations for all cases
-      const caseIssueAssociations = await prisma.repositoryCases.findMany({
+      const caseIssueAssociations = await baseDb.repositoryCases.findMany({
         where: { id: { in: effectiveSelectedTestCases } },
         select: {
           id: true,
-          issues: { select: { id: true }, where: { isDeleted: false } },
+          caseIssues: {
+            select: { issue: { select: { id: true } } },
+            where: { issue: { isDeleted: false } },
+          },
         },
       });
 
       const caseIssuesMap = new Map<number, Set<number>>(
         caseIssueAssociations.map((c) => [
           c.id,
-          new Set(c.issues.map((i) => i.id)),
+          new Set(c.caseIssues.map((ci) => ci.issue.id)),
         ])
       );
 
@@ -987,7 +1086,7 @@ export async function POST(request: Request) {
     // Get all matching case IDs once to reuse for all dynamic field queries
     // Use baseWhereWithoutDynamicFilters to get counts that respect standard filters
     // but not dynamic field filters (otherwise counts would always be 0 for non-selected options)
-    const allMatchingCases = await prisma.repositoryCases.findMany({
+    const allMatchingCases = await baseDb.repositoryCases.findMany({
       where: baseWhereWithoutDynamicFilters,
       select: { id: true },
     });
@@ -996,39 +1095,40 @@ export async function POST(request: Request) {
     for (const [fieldId, fieldInfo] of dynamicFieldsMap) {
       if (fieldInfo.options) {
         // For dropdown/multi-select, query field values using Prisma
-        const fieldValues = await prisma.caseFieldValues.findMany({
+        const fieldValues = await baseDb.caseFieldValues.findMany({
           where: {
             fieldId: fieldId,
             testCaseId: { in: allMatchingCaseIds },
             value: {
-              not: Prisma.DbNull,
+              not: DbNull,
             },
           },
           select: {
+            testCaseId: true,
             value: true,
           },
         });
 
-        // Count occurrences of each option (handling both single values and arrays)
-        const optionCountMap = new Map<number, number>();
+        // Count CASES per option (handling both single values and arrays).
+        // Duplicate rows for one (case, field) are collapsed: a case counts
+        // once per option any of its rows selects.
+        const optionCaseIds = new Map<number, Set<number>>();
+        const addOptionCase = (optionId: unknown, testCaseId: number) => {
+          if (typeof optionId !== "number") return;
+          const caseIds = optionCaseIds.get(optionId) || new Set<number>();
+          caseIds.add(testCaseId);
+          optionCaseIds.set(optionId, caseIds);
+        };
         fieldValues.forEach((fv) => {
           if (fv.value !== null && fv.value !== undefined) {
             if (Array.isArray(fv.value)) {
               // Multi-Select field - array of option IDs
               fv.value.forEach((optionId) => {
-                if (typeof optionId === "number") {
-                  optionCountMap.set(
-                    optionId,
-                    (optionCountMap.get(optionId) || 0) + 1
-                  );
-                }
+                addOptionCase(optionId, fv.testCaseId);
               });
             } else if (typeof fv.value === "number") {
               // Dropdown field - single option ID
-              optionCountMap.set(
-                fv.value,
-                (optionCountMap.get(fv.value) || 0) + 1
-              );
+              addOptionCase(fv.value, fv.testCaseId);
             }
           }
         });
@@ -1038,21 +1138,25 @@ export async function POST(request: Request) {
           fieldId: fieldInfo.fieldId,
           options: fieldInfo.options.map((opt) => ({
             ...opt,
-            count: optionCountMap.get(opt.id) || 0,
+            count: optionCaseIds.get(opt.id)?.size || 0,
           })),
         };
       } else if (fieldInfo.type === "Link") {
         // For Link fields, count cases with/without links
-        const linkCount = await prisma.caseFieldValues.count({
+        const linkRows = await baseDb.caseFieldValues.findMany({
           where: {
             fieldId: fieldId,
             testCaseId: { in: allMatchingCaseIds },
             value: {
-              not: Prisma.DbNull,
+              not: DbNull,
             },
             AND: [{ value: { not: "" } }],
           },
+          select: {
+            testCaseId: true,
+          },
         });
+        const linkCount = distinctCaseCount(linkRows);
 
         dynamicFields[fieldInfo.displayName] = {
           type: fieldInfo.type,
@@ -1065,7 +1169,7 @@ export async function POST(request: Request) {
       } else if (fieldInfo.type === "Steps") {
         // For Steps fields, count cases that have at least one step
         // Use a subquery to avoid fetching all data
-        const withStepsCount = await prisma.repositoryCases.count({
+        const withStepsCount = await baseDb.repositoryCases.count({
           where: {
             ...baseWhere,
             steps: {
@@ -1086,7 +1190,7 @@ export async function POST(request: Request) {
         } as any;
       } else if (fieldInfo.type === "Checkbox") {
         // For Checkbox fields, count checked/unchecked
-        const checkedCount = await prisma.caseFieldValues.count({
+        const checkedRows = await baseDb.caseFieldValues.findMany({
           where: {
             fieldId: fieldId,
             testCaseId: { in: allMatchingCaseIds },
@@ -1094,7 +1198,11 @@ export async function POST(request: Request) {
               equals: true,
             },
           },
+          select: {
+            testCaseId: true,
+          },
         });
+        const checkedCount = distinctCaseCount(checkedRows);
 
         dynamicFields[fieldInfo.displayName] = {
           type: fieldInfo.type,
@@ -1106,21 +1214,23 @@ export async function POST(request: Request) {
         } as any;
       } else if (fieldInfo.type === "Integer" || fieldInfo.type === "Number") {
         // For Integer/Number fields, get all distinct values and their counts
-        const fieldValues = await prisma.caseFieldValues.findMany({
+        const fieldValues = await baseDb.caseFieldValues.findMany({
           where: {
             fieldId: fieldId,
             testCaseId: { in: allMatchingCaseIds },
             value: {
-              not: Prisma.DbNull,
+              not: DbNull,
             },
           },
           select: {
+            testCaseId: true,
             value: true,
           },
         });
 
-        // Count occurrences of each value
-        const valueCounts = new Map<number, number>();
+        // Count CASES per value; duplicate rows for one case collapse.
+        const valueCaseIds = new Map<number, Set<number>>();
+        const withValueCaseIds = new Set<number>();
         fieldValues.forEach((fv) => {
           if (fv.value !== null && fv.value !== undefined) {
             const numValue =
@@ -1128,22 +1238,25 @@ export async function POST(request: Request) {
                 ? fv.value
                 : parseFloat(fv.value as string);
             if (!isNaN(numValue)) {
-              valueCounts.set(numValue, (valueCounts.get(numValue) || 0) + 1);
+              const caseIds = valueCaseIds.get(numValue) || new Set<number>();
+              caseIds.add(fv.testCaseId);
+              valueCaseIds.set(numValue, caseIds);
+              withValueCaseIds.add(fv.testCaseId);
             }
           }
         });
 
         // Sort values numerically and create options array
-        const sortedValues = Array.from(valueCounts.keys()).sort(
+        const sortedValues = Array.from(valueCaseIds.keys()).sort(
           (a, b) => a - b
         );
         const options = sortedValues.map((value) => ({
           id: value,
           name: value.toString(),
-          count: valueCounts.get(value) || 0,
+          count: valueCaseIds.get(value)?.size || 0,
         }));
 
-        const withValueCount = fieldValues.length;
+        const withValueCount = withValueCaseIds.size;
 
         dynamicFields[fieldInfo.displayName] = {
           type: fieldInfo.type,
@@ -1156,28 +1269,31 @@ export async function POST(request: Request) {
         } as any;
       } else if (fieldInfo.type === "Date") {
         // For Date fields, count cases with valid date values (not null or empty)
-        const fieldValues = await prisma.caseFieldValues.findMany({
+        const fieldValues = await baseDb.caseFieldValues.findMany({
           where: {
             fieldId: fieldId,
             testCaseId: { in: allMatchingCaseIds },
             value: {
-              not: Prisma.DbNull,
+              not: DbNull,
             },
           },
           select: {
+            testCaseId: true,
             value: true,
           },
         });
 
-        // Count non-null, non-empty date values
-        const withDateCount = fieldValues.filter((fv) => {
-          if (fv.value === null || fv.value === undefined) return false;
-          // Check if it's a non-empty string
-          if (typeof fv.value === "string") {
-            return fv.value.trim() !== "";
-          }
-          return true;
-        }).length;
+        // Count CASES carrying a non-null, non-empty date value
+        const withDateCount = distinctCaseCount(
+          fieldValues.filter((fv) => {
+            if (fv.value === null || fv.value === undefined) return false;
+            // Check if it's a non-empty string
+            if (typeof fv.value === "string") {
+              return fv.value.trim() !== "";
+            }
+            return true;
+          })
+        );
 
         dynamicFields[fieldInfo.displayName] = {
           type: fieldInfo.type,
@@ -1192,26 +1308,28 @@ export async function POST(request: Request) {
         fieldInfo.type === "Text String"
       ) {
         // For Text fields, count cases with/without text (excluding empty strings and empty TipTap docs)
-        const fieldValues = await prisma.caseFieldValues.findMany({
+        const fieldValues = await baseDb.caseFieldValues.findMany({
           where: {
             fieldId: fieldId,
             testCaseId: { in: allMatchingCaseIds },
             value: {
-              not: Prisma.DbNull,
+              not: DbNull,
             },
           },
           select: {
+            testCaseId: true,
             value: true,
           },
         });
 
-        // Count field values that carry any renderable content.
-        let withTextCount = 0;
+        // Count CASES whose field value carries any renderable content.
+        const withTextCaseIds = new Set<number>();
         fieldValues.forEach((fv) => {
           if (!isTiptapEmpty(fv.value)) {
-            withTextCount++;
+            withTextCaseIds.add(fv.testCaseId);
           }
         });
+        const withTextCount = withTextCaseIds.size;
 
         dynamicFields[fieldInfo.displayName] = {
           type: fieldInfo.type,
@@ -1353,6 +1471,7 @@ export async function POST(request: Request) {
       creators: creatorsWithCounts.sort((a, b) => a.name.localeCompare(b.name)),
       automated: automatedWithCounts,
       parameterized: parameterizedWithCounts,
+      attachments: attachmentsWithCounts,
       tags: tagsWithCounts,
       issues: issuesWithCounts,
       dynamicFields,

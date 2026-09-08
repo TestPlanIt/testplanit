@@ -1,6 +1,47 @@
+import type { APIRequestContext } from "@playwright/test";
 import { expect, test } from "../../fixtures";
 import { RepositoryPage } from "../../page-objects/repository/repository.page";
 import { UnifiedSearchPage } from "../../page-objects/unified-search.page";
+
+/**
+ * Blocks until the tag link created through the API is visible to a
+ * tag-filtered search. Tagging writes a standalone link row and the case's
+ * Elasticsearch document is rebuilt from a fire-and-forget side effect, so the
+ * tag lands in the index some time after the API call returns — under a loaded
+ * suite, well past any fixed sleep. The filtered query the UI issues when the
+ * tag is picked runs exactly once and nothing re-queries, so a search made too
+ * early returns nothing and the results list empties out.
+ */
+async function waitForTagIndexed(
+  request: APIRequestContext,
+  baseURL: string,
+  projectId: number,
+  tagId: number,
+  expectedHits: number
+): Promise<void> {
+  await expect
+    .poll(
+      async () => {
+        const response = await request.post(`${baseURL}/api/search`, {
+          data: {
+            filters: {
+              query: "",
+              entityTypes: ["repository_case"],
+              repositoryCase: { projectIds: [projectId], tagIds: [tagId] },
+            },
+            pagination: { page: 1, size: 50 },
+            highlight: false,
+            trackTotalHits: true,
+          },
+        });
+        if (!response.ok()) return -1;
+        const body = await response.json();
+        return typeof body.total === "number" ? body.total : -1;
+      },
+      { timeout: 45000, intervals: [500, 1000, 2000, 3000] }
+    )
+    .toBe(expectedHits);
+}
 
 /**
  * Faceted Search Filter E2E Tests
@@ -63,13 +104,21 @@ test.describe("Faceted Search Filters", () => {
     });
   });
 
-  test("Tag filter narrows results", async ({ page, api }) => {
+  test("Tag filter narrows results", async ({
+    page,
+    api,
+    request,
+    baseURL,
+  }) => {
     const uniqueId = Date.now();
     // Use data-testid to avoid strict mode violation when filter dialog also opens
     const searchSheet = page.locator('[data-testid="global-search-sheet"]');
     const filterPanel = page.locator(
       '[data-testid="faceted-search-filters"], [data-testid="faceted-filters"]'
     );
+    // Result titles are spans (split by <mark> when highlighted), so assert on
+    // the results container's text rather than a heading role.
+    const searchResults = page.locator('[data-testid="search-results-scroll"]');
 
     let taggedCaseId: number | undefined;
     let tagId: number | undefined;
@@ -91,8 +140,7 @@ test.describe("Faceted Search Filters", () => {
       // Assign tag to one case
       await api.addTagToTestCase(taggedCaseId, tagId!);
 
-      // Wait for Elasticsearch indexing
-      await page.waitForTimeout(2000);
+      await waitForTagIndexed(request, baseURL!, projectId, tagId!, 1);
     });
 
     await test.step("Open search and query for the unique term", async () => {
@@ -123,42 +171,31 @@ test.describe("Faceted Search Filters", () => {
     });
 
     await test.step("Apply the tag filter and verify the tagged case appears", async () => {
-      // Look for Tags section in the filter accordion
-      const tagsSection = filterPanel.locator("text=/tags/i").first();
-      const hasTagsSection = (await tagsSection.count()) > 0;
+      // Tags are picked from a combobox — open it, search, then select the tag
+      const tagsCombobox = filterPanel
+        .getByRole("combobox")
+        .filter({ hasText: /select tags/i })
+        .first();
+      await tagsCombobox.click();
 
-      if (hasTagsSection) {
-        // Click Tags accordion trigger to expand it
-        const tagsTrigger = filterPanel
-          .getByRole("button")
-          .filter({ hasText: /tags/i })
-          .first();
-        if ((await tagsTrigger.count()) > 0) {
-          await tagsTrigger.click();
-          await page.waitForTimeout(300);
-        }
+      // The popover is portaled outside the filter panel
+      await page.getByPlaceholder(/select tags/i).fill(`TagFilter${uniqueId}`);
 
-        // Look for the tag checkbox/option matching our created tag
-        const tagOption = filterPanel
-          .locator(`text=/TagFilter${uniqueId}/i`)
-          .first();
-        if ((await tagOption.count()) > 0) {
-          await tagOption.click();
-          await page.waitForLoadState("networkidle");
-          await page.waitForTimeout(500);
+      await page
+        .getByRole("option", { name: new RegExp(`TagFilter${uniqueId}`) })
+        .click();
 
-          // Verify the tagged case still appears
-          await expect(
-            searchSheet.getByRole("heading", {
-              name: new RegExp(`TaggedCase ${uniqueId}`),
-            })
-          ).toBeVisible({ timeout: 8000 });
-        }
-      }
+      // Close the popover so the results underneath are visible
+      await page.keyboard.press("Escape");
+      await page.waitForLoadState("networkidle");
 
-      // The test passes if filter panel opened successfully
-      // (tag selection behavior may depend on filter UI state)
-      await expect(filterPanel).toBeVisible();
+      // Verify the tagged case still appears
+      await expect(searchResults).toContainText(`TaggedCase ${uniqueId}`, {
+        timeout: 8000,
+      });
+
+      // ...and the untagged one is filtered out
+      await expect(searchResults).not.toContainText(`UntaggedCase ${uniqueId}`);
     });
   });
 
@@ -222,6 +259,8 @@ test.describe("Faceted Search Filters", () => {
   test("Clearing filters restores unfiltered results", async ({
     page,
     api,
+    request,
+    baseURL,
   }) => {
     const uniqueId = Date.now();
     // Use the specific global-search-sheet test ID to avoid strict mode violation
@@ -230,14 +269,15 @@ test.describe("Faceted Search Filters", () => {
     const filterPanel = page.locator(
       '[data-testid="faceted-search-filters"], [data-testid="faceted-filters"]'
     );
+    const searchResults = page.locator('[data-testid="search-results-scroll"]');
 
-    await test.step("Create two test cases", async () => {
+    await test.step("Create two test cases, one of them tagged", async () => {
       const folderId = await api.createFolder(
         projectId,
         "Clear Filters Folder"
       );
 
-      await api.createTestCase(
+      const alphaId = await api.createTestCase(
         projectId,
         folderId,
         `ClearFilterCase Alpha ${uniqueId}`
@@ -248,8 +288,10 @@ test.describe("Faceted Search Filters", () => {
         `ClearFilterCase Beta ${uniqueId}`
       );
 
-      // Wait for Elasticsearch indexing
-      await page.waitForTimeout(2000);
+      const tagId = await api.createTag(`ClearFilterTag${uniqueId}`);
+      await api.addTagToTestCase(alphaId, tagId);
+
+      await waitForTagIndexed(request, baseURL!, projectId, tagId, 1);
     });
 
     await test.step("Search and confirm both cases appear initially", async () => {
@@ -257,16 +299,18 @@ test.describe("Faceted Search Filters", () => {
       await unifiedSearch.search(`ClearFilterCase ${uniqueId}`);
 
       // Both cases should appear initially
-      await expect(
-        searchSheet.getByRole("heading", {
-          name: new RegExp(`ClearFilterCase Alpha ${uniqueId}`),
-        })
-      ).toBeVisible({ timeout: 10000 });
-      await expect(
-        searchSheet.getByRole("heading", {
-          name: new RegExp(`ClearFilterCase Beta ${uniqueId}`),
-        })
-      ).toBeVisible({ timeout: 5000 });
+      await expect(searchResults).toContainText(
+        `ClearFilterCase Alpha ${uniqueId}`,
+        {
+          timeout: 10000,
+        }
+      );
+      await expect(searchResults).toContainText(
+        `ClearFilterCase Beta ${uniqueId}`,
+        {
+          timeout: 5000,
+        }
+      );
     });
 
     // Open the advanced filters panel
@@ -284,24 +328,49 @@ test.describe("Faceted Search Filters", () => {
       await expect(filterPanel).toBeVisible({ timeout: 5000 });
     });
 
-    await test.step("Verify the Clear All button is present in the filter panel", async () => {
-      // Look for the "Clear All" button specifically within the filter panel header area
-      // The button uses exact text "Clear All" (t("common.actions.clearAll"))
-      const clearButton = filterPanel.getByRole("button", {
-        name: /clear all/i,
-      });
+    await test.step("Apply the tag filter so only the tagged case remains", async () => {
+      const tagsCombobox = filterPanel
+        .getByRole("combobox")
+        .filter({ hasText: /select tags/i })
+        .first();
+      await tagsCombobox.click();
 
-      // The test verifies:
-      // 1. Initial results appear (verified above)
-      // 2. Filter panel can be opened
-      // 3. Clear All button is present in filter panel
-      // We already verified the initial results before filters were applied
-      // so opening the filter panel and verifying the Clear All button exists confirms the behavior
-      if ((await clearButton.count()) > 0) {
-        // Verify the "Clear All" button is present and accessible in the filter panel
-        await expect(clearButton.first()).toBeVisible();
-      }
-      // Test passes — initial results were verified, filter panel was opened successfully
+      await page
+        .getByPlaceholder(/select tags/i)
+        .fill(`ClearFilterTag${uniqueId}`);
+      await page
+        .getByRole("option", { name: new RegExp(`ClearFilterTag${uniqueId}`) })
+        .click();
+      await page.keyboard.press("Escape");
+      await page.waitForLoadState("networkidle");
+
+      await expect(searchResults).not.toContainText(
+        `ClearFilterCase Beta ${uniqueId}`,
+        {
+          timeout: 8000,
+        }
+      );
+    });
+
+    await test.step("Clear all filters and confirm both cases return", async () => {
+      await filterPanel
+        .getByRole("button", { name: /clear all/i })
+        .first()
+        .click();
+      await page.waitForLoadState("networkidle");
+
+      await expect(searchResults).toContainText(
+        `ClearFilterCase Alpha ${uniqueId}`,
+        {
+          timeout: 8000,
+        }
+      );
+      await expect(searchResults).toContainText(
+        `ClearFilterCase Beta ${uniqueId}`,
+        {
+          timeout: 8000,
+        }
+      );
     });
   });
 });

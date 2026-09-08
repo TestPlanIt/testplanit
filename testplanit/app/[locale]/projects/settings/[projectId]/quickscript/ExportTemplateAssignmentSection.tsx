@@ -1,5 +1,7 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,17 +20,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
+import { Loader2, Save } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import {
-  useCreateManyCaseExportTemplateProjectAssignment,
-  useDeleteManyCaseExportTemplateProjectAssignment,
-  useFindManyCaseExportTemplate,
-  useFindManyCaseExportTemplateProjectAssignment,
-} from "~/lib/hooks";
-import { useUpdateProjects } from "~/lib/hooks";
 
 interface ExportTemplateAssignmentSectionProps {
   projectId: number;
@@ -50,29 +45,35 @@ export function ExportTemplateAssignmentSection({
     language: string;
   };
 
-  const { data: templates, isLoading: templatesLoading } =
-    useFindManyCaseExportTemplate({
-      where: { isDeleted: false, isEnabled: true },
-      select: {
-        id: true,
-        name: true,
-        category: true,
-        framework: true,
-        language: true,
-      },
-    });
+  const { data: templates, isLoading: templatesLoading } = useClientQueries(
+    schema
+  ).caseExportTemplate.useFindMany({
+    where: { isDeleted: false, isEnabled: true },
+    select: {
+      id: true,
+      name: true,
+      category: true,
+      framework: true,
+      language: true,
+    },
+  });
 
-  const { data: assignments, isLoading: assignmentsLoading } =
-    useFindManyCaseExportTemplateProjectAssignment({
-      where: { projectId },
-      select: { templateId: true },
-    });
+  const { data: assignments, isLoading: assignmentsLoading } = useClientQueries(
+    schema
+  ).caseExportTemplateProjectAssignment.useFindMany({
+    where: { projectId },
+    select: { templateId: true },
+  });
 
   const { mutateAsync: deleteManyAssignment } =
-    useDeleteManyCaseExportTemplateProjectAssignment();
+    useClientQueries(
+      schema
+    ).caseExportTemplateProjectAssignment.useDeleteMany();
   const { mutateAsync: createManyAssignment } =
-    useCreateManyCaseExportTemplateProjectAssignment();
-  const updateProject = useUpdateProjects();
+    useClientQueries(
+      schema
+    ).caseExportTemplateProjectAssignment.useCreateMany();
+  const updateProject = useClientQueries(schema).projects.useUpdate();
 
   const [selectedTemplates, setSelectedTemplates] = useState<TemplateOption[]>(
     []
@@ -207,7 +208,7 @@ export function ExportTemplateAssignmentSection({
                 renderOption={(tpl) => (
                   <span className="flex items-center w-full">
                     <span>{tpl.name}</span>
-                    <span className="flex items-center gap-1.5 ml-auto mr-2">
+                    <span className="flex items-center gap-1.5 ms-auto me-2">
                       {tpl.category && (
                         <Badge
                           variant="secondary"
@@ -262,11 +263,22 @@ export function ExportTemplateAssignmentSection({
             </div>
 
             <div className="flex justify-end">
-              <Button onClick={handleSave} disabled={!isDirty || isSaving}>
-                {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
-                {isSaving
-                  ? tCommon("actions.saving")
-                  : t("exportTemplates.save")}
+              <Button
+                onClick={handleSave}
+                disabled={!isDirty || isSaving}
+                aria-label={t("exportTemplates.save")}
+                className="group gap-0 transition-all duration-200 hover:gap-2"
+              >
+                {isSaving ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
+                <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+                  {isSaving
+                    ? tCommon("actions.saving")
+                    : t("exportTemplates.save")}
+                </span>
               </Button>
             </div>
           </>

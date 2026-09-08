@@ -15,14 +15,14 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Attachments } from "@prisma/client";
+import type { Attachments } from "~/zenstack/models";
 import { filesize } from "filesize";
 import {
   CircleSlash2,
   Download,
   Minus,
   Plus,
-  Trash2,
+  Trash,
   Undo2,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -212,7 +212,7 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
   );
 
   return (
-    <div className="h-fit w-full mr-12">
+    <div className="h-fit w-full me-12">
       {sortedAttachments.map((attachment, index) => {
         const previousAttachment = findPreviousAttachment(attachment);
         const isMarkedForDelete = isPendingDelete(attachment.id);
@@ -228,7 +228,7 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
             >
               <div className="p-2 w-full overflow-hidden">
                 <div className="flex items-center gap-2 p-2">
-                  <Trash2 className="h-5 w-5 text-destructive shrink-0" />
+                  <Trash className="h-5 w-5 text-destructive shrink-0" />
                   <span className="line-through text-muted-foreground truncate min-w-0 flex-1">
                     {attachment.name}
                   </span>
@@ -269,15 +269,20 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
             <div className="p-2 w-full">
               <div className="flex flex-col items-center p-2 w-full h-full mb-2">
                 {/* Clickable title - always shows display value (which may include pending edits) */}
-                <div
-                  onClick={() => handleSelect(sortedAttachments, index)}
-                  className="text-lg font-bold text-center mb-2 cursor-pointer line-clamp-2 hover:line-clamp-none"
-                >
-                  {renderFieldWithDifferences(
-                    displayValues.name,
-                    previousAttachment?.name
-                  )}
-                </div>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div
+                      onClick={() => handleSelect(sortedAttachments, index)}
+                      className="text-lg font-bold text-center mb-2 cursor-pointer w-full max-w-full truncate [&_div]:truncate"
+                    >
+                      {renderFieldWithDifferences(
+                        displayValues.name,
+                        previousAttachment?.name
+                      )}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>{displayValues.name}</TooltipContent>
+                </Tooltip>
                 <div
                   className={`flex w-full max-h-96 overflow-hidden ${
                     attachment.mimeType === "text/uri-list"
@@ -313,7 +318,7 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                     }`}
                   >
                     <div
-                      className={`text-left min-w-[50px] w-full ${
+                      className={`text-start min-w-[50px] w-full ${
                         attachment.mimeType === "text/uri-list"
                           ? "grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-x-6 gap-y-2"
                           : "space-y-2"
@@ -368,7 +373,7 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                             )}
                           />
                         ) : (
-                          <div className="w-full">
+                          <div className="w-full max-h-24 overflow-y-auto whitespace-pre-wrap">
                             {displayValues.note || t("common.access.none")}
                           </div>
                         )}
@@ -432,7 +437,7 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                                 variant="destructive"
                                 size="sm"
                               >
-                                <Trash2 className="h-4 w-4" />
+                                <Trash className="h-4 w-4" />
                               </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-fit" side="bottom">
@@ -455,7 +460,7 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                                   size="sm"
                                   onClick={(e) => handleDelete(index, e)}
                                 >
-                                  <Trash2 className="h-4 w-4" />
+                                  <Trash className="h-4 w-4" />
                                   {t("common.actions.delete")}
                                 </Button>
                               </div>
@@ -484,7 +489,7 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                 key={prevAttachment.id}
               >
                 <div className="relative">
-                  <div className="absolute top-2 left-2 text-red-700 dark:text-red-400 text-xl">
+                  <div className="absolute top-2 start-2 text-red-700 dark:text-red-400 text-xl">
                     <Minus className="w-4 h-4" />
                   </div>
                 </div>
@@ -493,7 +498,7 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                     <div className="text-lg font-bold text-center mb-2 cursor-pointer">
                       {prevAttachment.name}
                     </div>
-                    <div className="flex flex-col md:flex-row w-full h-80">
+                    <div className="flex flex-col md:flex-row w-full h-80 overflow-hidden">
                       <div className="md:w-2/3 flex flex-col h-full">
                         <div className="w-full h-full flex justify-center cursor-pointer">
                           <AttachmentPreview
@@ -507,7 +512,7 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                         className="h-full bg-primary/50 m-1"
                       />
                       <div className="md:w-1/3 w-full flex flex-col justify-start items-start p-4 overflow-hidden h-fit">
-                        <div className="text-left space-y-2 min-w-[50px] w-full">
+                        <div className="text-start space-y-2 min-w-[50px] w-full">
                           <div className="text-sm truncate">
                             <strong>{t("common.fields.description")}</strong>
                             <div className="w-full h-20 max-h-24 md:max-h-48 overflow-auto">

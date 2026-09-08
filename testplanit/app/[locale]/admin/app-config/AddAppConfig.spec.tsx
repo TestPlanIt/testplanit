@@ -13,8 +13,10 @@ vi.mock("next-intl", () => ({
 
 // Mock the custom data hook
 const mockMutateAsync = vi.fn();
-vi.mock("~/lib/hooks/app-config", () => ({
-  useCreateAppConfig: () => ({ mutateAsync: mockMutateAsync }),
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    appConfig: { useCreate: () => ({ mutateAsync: mockMutateAsync }) },
+  }),
 }));
 
 // Helper to wrap component in QueryClientProvider with open=true so the

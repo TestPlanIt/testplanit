@@ -1,15 +1,17 @@
-import { Prisma } from "@prisma/client";
+import { JsonNull } from "@zenstackhq/orm";
+import type { JsonArray, JsonObject, JsonValue } from "@zenstackhq/orm";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { enqueueWithAuditContext } from "~/lib/auditContextEnqueue";
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
+import { getCurrentTenantId } from "~/lib/multiTenantDb";
 import { getTestmoImportQueue, TESTMO_IMPORT_QUEUE_NAME } from "~/lib/queues";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { authOptions } from "~/server/auth";
 import { db } from "~/server/db";
 import { JOB_PROCESS_TESTMO_IMPORT } from "~/services/imports/testmo/constants";
 import { serializeImportJob } from "~/services/imports/testmo/jobPresenter";
+import type { TestmoImportJobUpdateArgs } from "~/zenstack/input";
 
 interface RouteContext {
   params: Promise<{
@@ -90,7 +92,7 @@ export const POST = withAuditContext(
         }
       );
 
-      const updateData: Prisma.TestmoImportJobUpdateInput = {
+      const updateData: TestmoImportJobUpdateArgs["data"] = {
         status: "RUNNING",
         phase: "IMPORTING",
         statusMessage: "Background import queued",
@@ -99,15 +101,15 @@ export const POST = withAuditContext(
         errorCount: 0,
         skippedCount: 0,
         totalCount: job.totalCount ?? 0,
-        activityLog: [] as Prisma.JsonArray,
-        entityProgress: {} as Prisma.JsonObject,
+        activityLog: [] as JsonArray,
+        entityProgress: {} as JsonObject,
       };
 
       if (options !== undefined) {
         updateData.options =
           options === null
-            ? Prisma.JsonNull
-            : (JSON.parse(JSON.stringify(options)) as Prisma.InputJsonValue);
+            ? JsonNull
+            : (JSON.parse(JSON.stringify(options)) as JsonValue);
       }
 
       const updatedJob = await db.testmoImportJob.update({

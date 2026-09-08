@@ -180,12 +180,15 @@ test.describe("Markdown Paste & Import", () => {
       await page.keyboard.press("End");
       await page.keyboard.type(" ");
       await page.keyboard.press("Backspace");
-      await page.waitForTimeout(1000);
 
-      // Save the changes
-      await testCasePage.saveChanges();
-      await page.waitForLoadState("networkidle");
-      await page.waitForTimeout(1000);
+      // Save and block until the Description field-value write has actually
+      // committed. The case is freshly created with no Description value, so the
+      // save fires a `caseFieldValues/create`. Waiting on that response (instead
+      // of a fixed timeout) closes the read-after-write race: the toolbar swaps
+      // the Save button back for the Edit button the instant submission starts,
+      // so plain `saveChanges()` can return before the create POST is even
+      // issued and the API read-back below would then see an empty result.
+      await testCasePage.saveChangesAndWaitForFieldValue("create");
     });
 
     await test.step("Verify the stored Description is TipTap JSON with heading and bold", async () => {
@@ -284,12 +287,11 @@ test.describe("Markdown Paste & Import", () => {
     });
 
     await test.step("Save the changes", async () => {
-      // Save
-      await testCasePage.saveChanges();
-
-      // Wait for save to complete and reload
-      await page.waitForLoadState("networkidle");
-      await page.waitForTimeout(1000);
+      // Save and block until the Description field-value write has committed.
+      // Same read-after-write race as the markdown variant: the case is fresh,
+      // so the save fires a `caseFieldValues/create`; waiting on that response
+      // guarantees the API read-back below observes the persisted value.
+      await testCasePage.saveChangesAndWaitForFieldValue("create");
     });
 
     await test.step("Verify the stored Description is a simple paragraph doc", async () => {
@@ -332,12 +334,14 @@ test.describe("Markdown Paste & Import", () => {
       .locator('[data-testid="next-button"]')
       .first();
 
+    // The wizard starts with no folder selected, so the import step has to pick
+    // this one explicitly — the first option in the list is Root Folder.
+    const folderName = `MD CSV Import Folder ${Date.now()}`;
+
     await test.step("Create project and folder, then open the repository", async () => {
       projectId = await getTestProjectId(api, "Import");
       // Ensure the template has a Description (Text Long) field for import mapping
       await ensureDescriptionFieldOnTemplate(api, projectId);
-      const uniqueId = Date.now();
-      const folderName = `MD CSV Import Folder ${uniqueId}`;
       const folderId = await api.createFolder(projectId, folderName);
 
       await repositoryPage.goto(projectId);
@@ -381,16 +385,18 @@ test.describe("Markdown Paste & Import", () => {
       await expect(templateOption).toBeVisible({ timeout: 5000 });
       await templateOption.click();
 
-      // Select folder if needed
+      // Select the folder this test created, not whatever sorts first.
       const folderSelect = importDialog
         .locator('button:has-text("Select a folder")')
         .first();
-      if (await folderSelect.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await folderSelect.click();
-        const folderOption = page.locator('[role="option"]').first();
-        await expect(folderOption).toBeVisible({ timeout: 5000 });
-        await folderOption.click();
-      }
+      await expect(folderSelect).toBeVisible({ timeout: 5000 });
+      await folderSelect.click();
+      const folderOption = page
+        .locator('[role="option"]')
+        .filter({ hasText: folderName })
+        .first();
+      await expect(folderOption).toBeVisible({ timeout: 5000 });
+      await folderOption.click();
     });
 
     await test.step("Step through the wizard pages to the preview", async () => {

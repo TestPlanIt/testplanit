@@ -1,20 +1,9 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library */
-import { Projects, Templates } from "@prisma/client";
-import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  useCreateManyTemplateCaseAssignment,
-  useCreateManyTemplateProjectAssignment,
-  useCreateManyTemplateResultAssignment,
-  useDeleteManyTemplateCaseAssignment,
-  useDeleteManyTemplateProjectAssignment,
-  useDeleteManyTemplateResultAssignment,
-  useFindManyCaseFields,
-  useFindManyProjects,
-  useFindManyResultFields,
-  useUpdateManyTemplates,
-  useUpdateTemplates,
-} from "~/lib/hooks";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
+import type { Projects, Templates } from "~/zenstack/models";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { Controller, useForm } from "react-hook-form";
@@ -26,9 +15,8 @@ import {
 } from "@/components/DraggableCaseFields";
 import { SelectScrollable } from "@/components/SelectScrollableCaseFields";
 
-import { useTheme } from "next-themes";
-import MultiSelect from "react-select";
-import { getCustomStyles } from "~/styles/multiSelectStyles";
+import { ProjectIcon } from "@/components/ProjectIcon";
+import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -73,6 +61,8 @@ type FormValues = z.infer<ReturnType<typeof buildFormSchema>>;
 interface ExtendedTemplateCaseField {
   caseFieldId: number;
   order: number;
+  generateDefaultEnabled?: boolean;
+  jiraPanelEnabled?: boolean;
 }
 
 interface ExtendedTemplateResultField {
@@ -116,50 +106,61 @@ export function EditTemplate({ template, open, onClose }: EditTemplateProps) {
   const caseFieldsInitializedRef = useRef(false);
   const resultFieldsInitializedRef = useRef(false);
 
-  const { mutateAsync: updateTemplate } = useUpdateTemplates();
-  const { mutateAsync: updateManyTemplates } = useUpdateManyTemplates();
+  const { mutateAsync: updateTemplate } =
+    useClientQueries(schema).templates.useUpdate();
   const { mutateAsync: createManyTemplateProjectAssignment } =
-    useCreateManyTemplateProjectAssignment();
+    useClientQueries(schema).templateProjectAssignment.useCreateMany();
   const { mutateAsync: deleteManyTemplateProjectAssignment } =
-    useDeleteManyTemplateProjectAssignment();
+    useClientQueries(schema).templateProjectAssignment.useDeleteMany();
   const { mutateAsync: createManyTemplateCaseAssignment } =
-    useCreateManyTemplateCaseAssignment();
+    useClientQueries(schema).templateCaseAssignment.useCreateMany();
   const { mutateAsync: deleteManyTemplateCaseAssignment } =
-    useDeleteManyTemplateCaseAssignment();
+    useClientQueries(schema).templateCaseAssignment.useDeleteMany();
   const { mutateAsync: createManyTemplateResultAssignment } =
-    useCreateManyTemplateResultAssignment();
+    useClientQueries(schema).templateResultAssignment.useCreateMany();
   const { mutateAsync: deleteManyTemplateResultAssignment } =
-    useDeleteManyTemplateResultAssignment();
+    useClientQueries(schema).templateResultAssignment.useDeleteMany();
 
-  const { theme } = useTheme();
-  const customStyles = getCustomStyles({ theme });
-
-  const { data: projects } = useFindManyProjects({
+  const { data: projects } = useClientQueries(schema).projects.useFindMany({
     orderBy: { name: "asc" },
     where: { isDeleted: false },
   });
 
-  const projectOptions =
-    projects && projects.length > 0
-      ? projects.map((project) => ({
-          value: project.id,
-          label: `${project.name}`,
-        }))
-      : [];
+  type ProjectOption = NonNullable<typeof projects>[number];
 
-  const selectAllProjects = () => {
-    const allProjectIds = projectOptions.map((option) => option.value);
-    setValue("projects", allProjectIds);
-  };
+  const fetchProjectOptions = useCallback(
+    (query: string, page: number, pageSize: number) => {
+      const q = query.toLowerCase();
+      const filtered = (projects ?? []).filter((project) =>
+        project.name.toLowerCase().includes(q)
+      );
+      return Promise.resolve({
+        results: filtered.slice(page * pageSize, page * pageSize + pageSize),
+        total: filtered.length,
+      });
+    },
+    [projects]
+  );
 
-  const { data: caseFields } = useFindManyCaseFields({
+  const { data: caseFields } = useClientQueries(schema).caseFields.useFindMany({
     where: { isDeleted: false },
     orderBy: { displayName: "asc" },
   });
 
-  const { data: resultFields } = useFindManyResultFields({
+  const { data: resultFields } = useClientQueries(
+    schema
+  ).resultFields.useFindMany({
     where: { isDeleted: false },
     orderBy: { displayName: "asc" },
+  });
+
+  // The Jira-panel toggle is only offered when the system has an active Jira
+  // integration — without one the panel can never show field data.
+  const { data: activeJiraIntegration } = useClientQueries(
+    schema
+  ).integration.useFindFirst({
+    where: { provider: "JIRA", status: "ACTIVE", isDeleted: false },
+    select: { id: true },
   });
 
   const defaultFormValues = useMemo(
@@ -213,6 +214,8 @@ export function EditTemplate({ template, open, onClose }: EditTemplateProps) {
           caseFields.find((field) => field.id === cf.caseFieldId)
             ?.displayName || "Unknown Field",
         order: cf.order,
+        generateDefaultEnabled: cf.generateDefaultEnabled ?? true,
+        jiraPanelEnabled: cf.jiraPanelEnabled ?? false,
       }))
       .sort((a, b) => a.order - b.order);
 
@@ -267,6 +270,28 @@ export function EditTemplate({ template, open, onClose }: EditTemplateProps) {
     }
   };
 
+  // Flip whether the field starts selected in the Generate Test Cases wizard.
+  const handleToggleGenerateDefault = (id: string | number) => {
+    setSelectedCaseFields((prev) =>
+      prev.map((f) =>
+        f.id === id
+          ? { ...f, generateDefaultEnabled: f.generateDefaultEnabled === false }
+          : f
+      )
+    );
+  };
+
+  // Flip whether the field's value is shown in the Jira plugin panel.
+  const handleToggleJiraPanel = (id: string | number) => {
+    setSelectedCaseFields((prev) =>
+      prev.map((f) =>
+        f.id === id
+          ? { ...f, jiraPanelEnabled: f.jiraPanelEnabled !== true }
+          : f
+      )
+    );
+  };
+
   const handleRemoveField = (id: string | number, type: string) => {
     if (type === "case") {
       const field = selectedCaseFields.find((f) => f.id === id);
@@ -282,16 +307,8 @@ export function EditTemplate({ template, open, onClose }: EditTemplateProps) {
   async function onSubmit(data: FormValues) {
     setIsSubmitting(true);
     try {
-      if (data.isDefault) {
-        await updateManyTemplates({
-          where: { isDefault: true },
-          data: {
-            isDefault: false,
-          },
-        });
-      }
-
-      // Update the template details
+      // Update the template details. The single-default DB trigger
+      // (tpl_single_default_templates) clears the previous default atomically.
       await updateTemplate({
         where: { id: template.id },
         data: {
@@ -338,6 +355,8 @@ export function EditTemplate({ template, open, onClose }: EditTemplateProps) {
               typeof field.id === "string" ? parseInt(field.id, 10) : field.id,
             templateId: template.id,
             order: index + 1,
+            generateDefaultEnabled: field.generateDefaultEnabled !== false,
+            jiraPanelEnabled: field.jiraPanelEnabled === true,
           })),
         });
       }
@@ -472,6 +491,12 @@ export function EditTemplate({ template, open, onClose }: EditTemplateProps) {
                         items={selectedCaseFields}
                         setItems={setSelectedCaseFields}
                         onRemove={(item) => handleRemoveField(item, "case")}
+                        onToggleGenerateDefault={handleToggleGenerateDefault}
+                        onToggleJiraPanel={
+                          activeJiraIntegration
+                            ? handleToggleJiraPanel
+                            : undefined
+                        }
                       />
                     </div>
                   </FormControl>
@@ -511,45 +536,52 @@ export function EditTemplate({ template, open, onClose }: EditTemplateProps) {
             <FormField
               control={form.control}
               name="projects"
-              render={({ field: _field }) => (
+              render={() => (
                 <FormItem>
-                  <FormLabel className="flex justify-between items-center">
-                    <div className="flex items-center">
-                      {tCommon("fields.projects")}
-                      <HelpPopover helpKey="template.projects" />
-                    </div>
-                    <div
-                      onClick={selectAllProjects}
-                      style={{ cursor: "pointer" }}
-                      data-testid="select-all-projects"
-                    >
-                      {tCommon("actions.selectAll")}
-                    </div>
-                  </FormLabel>{" "}
+                  <FormLabel className="flex items-center">
+                    {tCommon("fields.projects")}
+                    <HelpPopover helpKey="template.projects" />
+                  </FormLabel>
                   <FormControl>
                     <Controller
                       control={control}
                       name="projects"
-                      render={({ field }) => (
-                        <MultiSelect
-                          {...field}
-                          isMulti
-                          maxMenuHeight={300}
-                          className="w-[445px] sm:w-[550px] lg:w-[950px]"
-                          classNamePrefix="select"
-                          styles={customStyles}
-                          options={projectOptions}
-                          onChange={(selected: any) => {
-                            const value = selected
-                              ? selected.map((option: any) => option.value)
-                              : [];
-                            field.onChange(value);
-                          }}
-                          value={projectOptions.filter((option) =>
-                            field.value?.includes(option.value)
-                          )}
-                        />
-                      )}
+                      render={({ field }) => {
+                        const selectedProjects = (projects ?? []).filter(
+                          (project) => field.value?.includes(project.id)
+                        );
+                        return (
+                          <MultiAsyncCombobox<ProjectOption>
+                            value={selectedProjects}
+                            ariaLabel={tCommon("fields.projects")}
+                            onValueChange={(selected) =>
+                              field.onChange(
+                                selected.map((project) => project.id)
+                              )
+                            }
+                            fetchOptions={fetchProjectOptions}
+                            renderOption={(project) => (
+                              <div className="flex min-w-0 items-center gap-2">
+                                <ProjectIcon
+                                  iconUrl={project.iconUrl}
+                                  width={16}
+                                  height={16}
+                                />
+                                <span className="truncate">{project.name}</span>
+                              </div>
+                            )}
+                            renderSelectedOption={(project) => (
+                              <span>{project.name}</span>
+                            )}
+                            getOptionValue={(project) => project.id}
+                            getOptionLabel={(project) => project.name}
+                            placeholder={tCommon("fields.projects")}
+                            className="w-full"
+                            pageSize={20}
+                            showTotal
+                          />
+                        );
+                      }}
                     />
                   </FormControl>
                   <FormMessage />

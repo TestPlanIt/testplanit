@@ -1,4 +1,5 @@
 import { expect, test } from "../../fixtures";
+import { clickOverflowAction } from "../../utils/action-overflow";
 
 /**
  * Magic Select, QuickScript, and Writing Assistant E2E tests
@@ -267,12 +268,12 @@ test.describe("QuickScript AI Generation (AI-04)", () => {
     });
 
     await test.step("Open QuickScript modal and verify template selector", async () => {
-      // QuickScript button should be visible
-      const qsButton = page.getByTestId("quickscript-cases-button");
-      await expect(qsButton).toBeVisible({ timeout: 10000 });
-
-      // Click to open the QuickScript modal
-      await qsButton.click();
+      // Open the QuickScript modal (kebab-aware toolbar action)
+      await clickOverflowAction(
+        page,
+        "quickscript-cases-button",
+        "cases-actions-menu"
+      );
 
       const qsDialog = page.getByTestId("quickscript-dialog");
       await expect(qsDialog).toBeVisible({ timeout: 10000 });
@@ -346,9 +347,11 @@ test.describe("QuickScript AI Generation (AI-04)", () => {
     });
 
     await test.step("Open QuickScript modal", async () => {
-      const qsButton = page.getByTestId("quickscript-cases-button");
-      await expect(qsButton).toBeVisible({ timeout: 10000 });
-      await qsButton.click();
+      await clickOverflowAction(
+        page,
+        "quickscript-cases-button",
+        "cases-actions-menu"
+      );
 
       const qsDialog = page.getByTestId("quickscript-dialog");
       await expect(qsDialog).toBeVisible({ timeout: 10000 });
@@ -443,9 +446,11 @@ test.describe("QuickScript AI Generation (AI-04)", () => {
     });
 
     await test.step("Open QuickScript modal and verify template selector renders on fallback path", async () => {
-      const qsButton = page.getByTestId("quickscript-cases-button");
-      await expect(qsButton).toBeVisible({ timeout: 10000 });
-      await qsButton.click();
+      await clickOverflowAction(
+        page,
+        "quickscript-cases-button",
+        "cases-actions-menu"
+      );
 
       const qsDialog = page.getByTestId("quickscript-dialog");
       await expect(qsDialog).toBeVisible({ timeout: 10000 });

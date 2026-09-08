@@ -1,3 +1,4 @@
+import { createRawDbClient } from "~/lib/rawDbClient";
 /**
  * Backfill: assign every existing configuration to every existing project.
  *
@@ -13,28 +14,26 @@
  *   pnpm tsx scripts/backfill-config-project-assignments.ts --apply  # mutate
  */
 
-import { PrismaClient } from "@prisma/client";
-
-// Bare PrismaClient (not the lib/prisma.ts singleton) — that singleton pulls
+// Bare DbClient (not the lib/db.ts singleton) — that singleton pulls
 // in Elasticsearch sync, audit, and webhook side-effects at import time, which
 // hangs a one-off CLI script.
-const prisma = new PrismaClient();
+const db = createRawDbClient();
 
 const APPLY = process.argv.includes("--apply");
 
 async function main() {
   const [configs, projects] = await Promise.all([
-    prisma.configurations.findMany({
+    db.configurations.findMany({
       where: { isDeleted: false },
       select: { id: true },
     }),
-    prisma.projects.findMany({
+    db.projects.findMany({
       where: { isDeleted: false },
       select: { id: true },
     }),
   ]);
 
-  const existing = await prisma.projectConfigurationAssignment.findMany({
+  const existing = await db.projectConfigurationAssignment.findMany({
     select: { configurationId: true, projectId: true },
   });
   const have = new Set(
@@ -65,7 +64,7 @@ async function main() {
     return;
   }
 
-  const result = await prisma.projectConfigurationAssignment.createMany({
+  const result = await db.projectConfigurationAssignment.createMany({
     data: toCreate,
     skipDuplicates: true,
   });
@@ -77,4 +76,4 @@ main()
     console.error(error);
     process.exitCode = 1;
   })
-  .finally(() => prisma.$disconnect());
+  .finally(() => db.$disconnect());

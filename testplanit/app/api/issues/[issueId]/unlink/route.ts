@@ -27,7 +27,7 @@ export async function POST(
     const db = await getEnhancedDb(session);
 
     // Verify the issue exists and user has access
-    const issue = await (db as any).issue.findFirst({
+    const issue = await db.issue.findFirst({
       where: {
         id: issueId,
       },
@@ -42,12 +42,36 @@ export async function POST(
 
     // Disconnect the entity link
     // Relation field names must match the Issue model in schema.zmodel:
-    // repositoryCases, sessions, testRuns, testRunResults, testRunStepResults
+    // caseIssues (explicit join to RepositoryCases), sessions, testRuns,
+    // testRunResults, testRunStepResults
+    const includeArg = {
+      createdBy: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+    };
+
+    // The RepositoryCases <-> Issue relation is an explicit join model
+    // (RepositoryCaseIssue), so unlinking a test case is a deleteMany on the
+    // join rather than a disconnect on the Issue relation.
+    if (entityType === "testCase") {
+      await db.repositoryCaseIssue.deleteMany({
+        where: { issueId, caseId: parseInt(entityId) },
+      });
+
+      const updatedIssue = await db.issue.findUnique({
+        where: { id: issueId },
+        include: includeArg,
+      });
+
+      return NextResponse.json(updatedIssue);
+    }
+
     const updateData: any = {};
     switch (entityType) {
-      case "testCase":
-        updateData.repositoryCases = { disconnect: { id: parseInt(entityId) } };
-        break;
       case "session":
         updateData.sessions = { disconnect: { id: parseInt(entityId) } };
         break;
@@ -69,18 +93,10 @@ export async function POST(
         );
     }
 
-    const updatedIssue = await (db as any).issue.update({
+    const updatedIssue = await db.issue.update({
       where: { id: issueId },
       data: updateData,
-      include: {
-        createdBy: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-      },
+      include: includeArg,
     });
 
     return NextResponse.json(updatedIssue);

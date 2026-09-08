@@ -115,15 +115,18 @@ test.describe("Test Run Edit Configuration", () => {
       await openComboboxAndWait(page, configCombobox);
     });
 
-    await test.step("Verify the configuration and pagination controls appear", async () => {
+    await test.step("Verify the configuration and count footer appear", async () => {
       // Verify the configuration appears in the dropdown
       await expect(
         page.locator(`[role="option"]:has-text("${configName}")`)
       ).toBeVisible({ timeout: 10000 });
 
-      // Verify pagination controls are present
-      const prevButton = page.getByRole("button", { name: "Previous" });
-      await expect(prevButton).toBeVisible();
+      // The list infinite-scrolls now: a count footer replaces the old pager.
+      // ConfigurationSelect is a single-select AsyncCombobox, so the footer
+      // carries the single-select test id — not the MultiAsyncCombobox one.
+      await expect(
+        page.getByTestId("async-combobox-count-footer")
+      ).toBeVisible();
     });
   });
 

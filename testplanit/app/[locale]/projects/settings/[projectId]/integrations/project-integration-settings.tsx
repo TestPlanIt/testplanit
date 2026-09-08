@@ -1,6 +1,9 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { WarningAlert } from "@/components/ui/warning-alert";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,26 +21,19 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Integration, ProjectIntegration } from "@prisma/client";
+import type { Integration, ProjectIntegration } from "~/zenstack/models";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  AlertCircle,
   Download,
   Loader2,
   Save,
   Star,
-  Trash2,
+  Trash,
+  TriangleAlert,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import {
-  useFindManyIntegrationProject,
-  useFindManyWebhookConfig,
-  useUpdateIntegrationProject,
-  useUpdateProjectIntegration,
-  useUpsertIntegrationProject,
-} from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 
 import { removeIntegrationProjectMapping } from "~/app/actions/project-integration";
@@ -91,13 +87,13 @@ export function ProjectIntegrationSettings({
   } | null>(null);
 
   const { mutateAsync: updateProjectIntegration } =
-    useUpdateProjectIntegration();
+    useClientQueries(schema).projectIntegration.useUpdate();
 
   const {
     data: integrationProjects,
     isLoading: isLoadingLinkedProjects,
     refetch: refetchIntegrationProjects,
-  } = useFindManyIntegrationProject(
+  } = useClientQueries(schema).integrationProject.useFindMany(
     {
       where: {
         projectIntegrationId: projectIntegration.id,
@@ -110,23 +106,22 @@ export function ProjectIntegrationSettings({
       // poll so the badge advances to completed/error without a manual reload.
       refetchInterval: (query: any) => {
         const rows = query?.state?.data as
-          | Array<{ syncStatus?: string | null }>
-          | undefined;
+          Array<{ syncStatus?: string | null }> | undefined;
         return rows?.some((r) => r.syncStatus === "syncing") ? 3000 : false;
       },
     }
   );
 
   const { mutateAsync: upsertIntegrationProject } =
-    useUpsertIntegrationProject();
+    useClientQueries(schema).integrationProject.useUpsert();
   const { mutateAsync: updateIntegrationProject } =
-    useUpdateIntegrationProject();
+    useClientQueries(schema).integrationProject.useUpdate();
 
   // The Remove confirmation copy includes a bullet about cascade-deleting
   // the inbound webhook ONLY when one exists. Cheap query — same shape
   // the webhooks page uses, so React Query dedupes when both are mounted.
   const { data: inboundConfigs, refetch: refetchInboundConfigs } =
-    useFindManyWebhookConfig({
+    useClientQueries(schema).webhookConfig.useFindMany({
       where: {
         projectId: projectIntegration.projectId,
         direction: "INBOUND",
@@ -229,15 +224,8 @@ export function ProjectIntegrationSettings({
 
   const handleSetDefault = async (id: string) => {
     try {
-      // Unset current default first
-      const currentDefault = integrationProjects?.find((ip) => ip.isDefault);
-      if (currentDefault && currentDefault.id !== id) {
-        await updateIntegrationProject({
-          where: { id: currentDefault.id },
-          data: { isDefault: false },
-        });
-      }
-      // Set new default
+      // The single-default DB trigger (tpl_single_default_integrationproject)
+      // clears the previous default for this integration atomically.
       await updateIntegrationProject({
         where: { id },
         data: { isDefault: true },
@@ -341,6 +329,70 @@ export function ProjectIntegrationSettings({
     return externalProjects.filter((p) => !linkedIds.has(p.id));
   }, [externalProjects, integrationProjects]);
 
+  // AsyncCombobox refetches whenever `fetchOptions` changes identity, so
+  // fetchers must stay referentially stable across renders — an inline arrow
+  // resets the dropdown to page 0 on every render and it can never load
+  // more. The per-mapping issue-type fetchers live in a memoized map because
+  // hooks can't be called inside the `integrationProjects?.map()` rows.
+  const issueTypeFetchers = useMemo(() => {
+    const fetchers = new Map<
+      string,
+      (
+        query: string,
+        page: number,
+        pageSize: number
+      ) => Promise<{ results: IssueType[]; total: number }>
+    >();
+    for (const ip of integrationProjects ?? []) {
+      fetchers.set(ip.id, async (query, page, pageSize) => {
+        try {
+          const response = await fetch(
+            `/api/integrations/${integration.id}/issue-types?projectKey=${encodeURIComponent(ip.externalProjectKey)}`
+          );
+          if (response.ok) {
+            const data = await response.json();
+            const issueTypes = data.issueTypes || [];
+            const filtered = query
+              ? issueTypes.filter((type: any) =>
+                  type.name.toLowerCase().includes(query.toLowerCase())
+                )
+              : issueTypes;
+            const start = page * pageSize;
+            return {
+              results: filtered.slice(start, start + pageSize),
+              total: filtered.length,
+            };
+          }
+        } catch (error) {
+          console.error("Failed to fetch issue types:", error);
+        }
+        return { results: [], total: 0 };
+      });
+    }
+    return fetchers;
+  }, [integrationProjects, integration.id]);
+
+  const fetchAddableExternalProjects = useCallback(
+    async (query: string, page: number, pageSize: number) => {
+      // Load external projects if not already loaded
+      if (externalProjects.length === 0) {
+        await loadExternalProjects();
+      }
+      const filtered = availableToAdd.filter(
+        (p) =>
+          !query ||
+          p.name.toLowerCase().includes(query.toLowerCase()) ||
+          p.key.toLowerCase().includes(query.toLowerCase())
+      );
+      const start = page * pageSize;
+      return {
+        results: filtered.slice(start, start + pageSize),
+        total: filtered.length,
+      };
+    },
+    [externalProjects.length, loadExternalProjects, availableToAdd]
+  );
+
   if (needsAuth) {
     return (
       <Card>
@@ -351,12 +403,12 @@ export function ProjectIntegrationSettings({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
+          <WarningAlert>
+            <TriangleAlert className="h-4 w-4" />
             <AlertDescription>
               {t("integration.authorizationMessage")}
             </AlertDescription>
-          </Alert>
+          </WarningAlert>
           <Button onClick={handleAuthorize} className="mt-4">
             {t("integration.authorizeIntegration", { name: integration.name })}
           </Button>
@@ -477,6 +529,7 @@ export function ProjectIntegrationSettings({
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <button
+                                type="button"
                                 onClick={() => handleSetDefault(ip.id)}
                                 className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
                                 aria-label={t("integration.setAsDefault")}
@@ -524,7 +577,7 @@ export function ProjectIntegrationSettings({
                               className="h-7 w-7 shrink-0"
                               onClick={() => setConfirmingRemoveId(ip.id)}
                             >
-                              <Trash2 className="h-3.5 w-3.5" />
+                              <Trash className="h-3.5 w-3.5" />
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>
@@ -559,38 +612,7 @@ export function ProjectIntegrationSettings({
                                 },
                               });
                             }}
-                            fetchOptions={async (query, page, pageSize) => {
-                              try {
-                                const response = await fetch(
-                                  `/api/integrations/${integration.id}/issue-types?projectKey=${encodeURIComponent(ip.externalProjectKey)}`
-                                );
-                                if (response.ok) {
-                                  const data = await response.json();
-                                  const issueTypes = data.issueTypes || [];
-                                  const filtered = query
-                                    ? issueTypes.filter((type: any) =>
-                                        type.name
-                                          .toLowerCase()
-                                          .includes(query.toLowerCase())
-                                      )
-                                    : issueTypes;
-                                  const start = page * pageSize;
-                                  return {
-                                    results: filtered.slice(
-                                      start,
-                                      start + pageSize
-                                    ),
-                                    total: filtered.length,
-                                  };
-                                }
-                              } catch (error) {
-                                console.error(
-                                  "Failed to fetch issue types:",
-                                  error
-                                );
-                              }
-                              return { results: [], total: 0 };
-                            }}
+                            fetchOptions={issueTypeFetchers.get(ip.id)!}
                             renderOption={(type) => type.name}
                             getOptionValue={(type) => type.id}
                             placeholder={t(
@@ -607,7 +629,7 @@ export function ProjectIntegrationSettings({
                         <div className="p-3 bg-muted rounded-md text-sm space-y-2">
                           <p>{t("integration.removeProjectConfirmation")}</p>
                           {isLastActiveMapping && hasInboundWebhook && (
-                            <ul className="list-disc pl-5 text-muted-foreground">
+                            <ul className="list-disc ps-5 text-muted-foreground">
                               <li>
                                 {t(
                                   "integration.removeProjectWebhookCascadeBullet"
@@ -664,23 +686,7 @@ export function ProjectIntegrationSettings({
                   <MultiAsyncCombobox<ExternalProject>
                     value={selectedNewProjects}
                     onValueChange={setSelectedNewProjects}
-                    fetchOptions={async (query, page, pageSize) => {
-                      // Load external projects if not already loaded
-                      if (externalProjects.length === 0) {
-                        await loadExternalProjects();
-                      }
-                      const filtered = availableToAdd.filter(
-                        (p) =>
-                          !query ||
-                          p.name.toLowerCase().includes(query.toLowerCase()) ||
-                          p.key.toLowerCase().includes(query.toLowerCase())
-                      );
-                      const start = page * pageSize;
-                      return {
-                        results: filtered.slice(start, start + pageSize),
-                        total: filtered.length,
-                      };
-                    }}
+                    fetchOptions={fetchAddableExternalProjects}
                     renderOption={(project) => (
                       <span>
                         {project.name}{" "}
@@ -758,13 +764,17 @@ export function ProjectIntegrationSettings({
             <Button
               onClick={handleSaveSettings}
               disabled={isSaving || !canSave}
+              aria-label={tGlobal("admin.notifications.save")}
+              className="group gap-0 transition-all duration-200 hover:gap-2"
             >
               {isSaving ? (
-                <Loader2 className=" h-4 w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <Save className=" h-4 w-4" />
+                <Save className="h-4 w-4" />
               )}
-              {tGlobal("admin.notifications.save")}
+              <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                {tGlobal("admin.notifications.save")}
+              </span>
             </Button>
           </div>
         )}

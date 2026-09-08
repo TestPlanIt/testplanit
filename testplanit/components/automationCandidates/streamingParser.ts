@@ -115,6 +115,20 @@ export function extractCandidatesFromBuffer(
   return results;
 }
 
+/** The model occasionally ranks the same case twice. Keep only the first
+ *  occurrence of each caseId — callers pass rank-sorted lists, so the first
+ *  is the best-ranked — so consumers keyed by caseId stay unique. */
+export function dedupeCandidatesByCaseId<T extends { caseId: number }>(
+  candidates: T[]
+): T[] {
+  const seen = new Set<number>();
+  return candidates.filter((c) => {
+    if (seen.has(c.caseId)) return false;
+    seen.add(c.caseId);
+    return true;
+  });
+}
+
 /** Pull the `summary` string off a (probably complete) buffer. Returns
  *  `null` if the field isn't found or isn't a complete quoted string. */
 export function extractSummaryFromBuffer(buffer: string): string | null {

@@ -1,12 +1,13 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Session } from "next-auth";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "~/components/theme-provider";
-import { useFindUniqueUserPreferences } from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
 
 interface ShareLayoutContentProps {
@@ -23,7 +24,9 @@ export function ShareLayoutContent({
   const tBranding = useTranslations("common.branding");
 
   // Fetch user preferences if authenticated
-  const { data: userPreferences } = useFindUniqueUserPreferences(
+  const { data: userPreferences } = useClientQueries(
+    schema
+  ).userPreferences.useFindUnique(
     {
       where: { userId: session?.user?.id || "" },
     },
@@ -40,7 +43,7 @@ export function ShareLayoutContent({
   const getUserTheme = () => {
     if (!userPreferences?.theme) return "system";
 
-    // Theme enum values: Purple, Green, Orange, Light, Dark, System
+    // Theme enum values -> next-themes class name (lowercased enum).
     const themeMap: Record<string, string> = {
       Purple: "purple",
       Green: "green",
@@ -48,6 +51,8 @@ export function ShareLayoutContent({
       Light: "light",
       Dark: "dark",
       System: "system",
+      Accessible: "accessible",
+      AccessibleDark: "accessibledark",
     };
 
     return themeMap[userPreferences.theme] || "system";
@@ -62,7 +67,15 @@ export function ShareLayoutContent({
       attribute="class"
       defaultTheme={defaultTheme}
       enableSystem
-      themes={["light", "dark", "green", "orange", "purple"]}
+      themes={[
+        "light",
+        "dark",
+        "green",
+        "orange",
+        "purple",
+        "accessible",
+        "accessibledark",
+      ]}
       storageKey={session ? `theme-${session.user.id}` : "theme-public-share"}
       disableTransitionOnChange
     >
@@ -71,7 +84,7 @@ export function ShareLayoutContent({
         <Toaster richColors toastOptions={{ className: "!z-[9999]" }} />
 
         {/* Branding footer */}
-        <footer className="fixed bottom-4 right-4 z-50 flex items-center gap-2">
+        <footer className="fixed bottom-4 end-4 z-50 flex items-center gap-2">
           <span className="text-xs text-muted-foreground">
             {t("poweredBy")}
           </span>

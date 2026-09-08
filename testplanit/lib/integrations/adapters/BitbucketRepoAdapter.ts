@@ -129,6 +129,14 @@ export class BitbucketRepoAdapter extends GitRepoAdapter {
     return this.makeTextRequest(url, { headers: this.authHeaders });
   }
 
+  /** Single-request zip archive of the whole tree at `ref`. */
+  protected buildArchiveRequest(ref: string) {
+    return {
+      url: `https://bitbucket.org/${this.workspace}/${this.repoSlug}/get/${encodeURIComponent(ref)}.zip`,
+      headers: this.authHeaders,
+    };
+  }
+
   async testConnection(): Promise<TestConnectionResult> {
     try {
       const data = await this.makeRequest<any>(

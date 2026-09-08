@@ -2,6 +2,8 @@
 
 import { DateFormatter } from "@/components/DateFormatter";
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
+import { RecordId } from "@/components/RecordId";
+import { RECORD_TYPES } from "~/lib/recordKey";
 import { UserDisplay } from "@/components/search/UserDisplay";
 import { TagsListDisplay } from "@/components/tables/TagListDisplay";
 import { Badge } from "@/components/ui/badge";
@@ -18,9 +20,10 @@ import { useQuery } from "@tanstack/react-query";
 import { ExternalLink, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
 import { scoreToConfidence } from "~/lib/utils/similarity";
+import { wordDiffTokens } from "~/lib/utils/wordDiff";
 
 interface CaseDetails {
   id: number;
@@ -76,6 +79,89 @@ interface CaseDetailsResponse {
   caseB: CaseDetails;
 }
 
+/**
+ * Non-string fields that differ between the two cases. String fields (name,
+ * source, folder) get finer word-level highlighting via `WordDiff` instead.
+ * Symmetric, so both panels use the same set.
+ */
+interface CaseDiff {
+  creator: boolean;
+  tags: boolean;
+  attachments: boolean;
+  steps: boolean;
+  fieldValues: Set<number>;
+}
+
+const EMPTY_DIFF: CaseDiff = {
+  creator: false,
+  tags: false,
+  attachments: false,
+  steps: false,
+  fieldValues: new Set(),
+};
+
+function computeDiff(a: CaseDetails, b: CaseDetails): CaseDiff {
+  const tagSig = (c: CaseDetails) =>
+    c.tags
+      .map((t) => t.name)
+      .sort()
+      .join("");
+  const stepSig = (c: CaseDetails) =>
+    [...c.steps]
+      .sort((x, y) => x.order - y.order)
+      .map((s) => `${s.step}${s.expectedResult ?? ""}`)
+      .join("");
+  const valueById = (c: CaseDetails) =>
+    new Map(
+      c.caseFieldValues.map((v) => [
+        v.field.id,
+        JSON.stringify(v.value ?? null),
+      ])
+    );
+
+  const va = valueById(a);
+  const vb = valueById(b);
+  const fieldValues = new Set<number>();
+  for (const id of new Set([...va.keys(), ...vb.keys()])) {
+    if (va.get(id) !== vb.get(id)) fieldValues.add(id);
+  }
+
+  return {
+    creator: (a.creator?.id ?? "") !== (b.creator?.id ?? ""),
+    tags: tagSig(a) !== tagSig(b),
+    attachments: a._count.attachments !== b._count.attachments,
+    steps: stepSig(a) !== stepSig(b),
+    fieldValues,
+  };
+}
+
+/**
+ * Highlights differing content with the same `<mark>` treatment used for
+ * unified-search matches (styled globally in globals.css).
+ */
+function Highlight({ on, children }: { on: boolean; children: ReactNode }) {
+  return on ? <mark>{children}</mark> : <>{children}</>;
+}
+
+/**
+ * Renders `mine` with the words that differ from `theirs` wrapped in the shared
+ * search `<mark>`, so differences between two very similar strings (e.g.
+ * near-duplicate names) are obvious at a glance. Whitespace is never marked.
+ */
+function WordDiff({ mine, theirs }: { mine: string; theirs: string }) {
+  return (
+    <>
+      {wordDiffTokens(mine, theirs).map((tok, i) =>
+        tok.changed && tok.text.trim() !== "" ? (
+          <mark key={i}>{tok.text}</mark>
+        ) : (
+          <span key={i}>{tok.text}</span>
+        )
+      )}
+    </>
+  );
+}
+
 export interface DuplicateComparisonDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -94,6 +180,8 @@ export interface DuplicateComparisonDialogProps {
 
 function CasePanel({
   caseDetails,
+  other,
+  diff,
   isSelected,
   onSelect,
   projectId,
@@ -103,6 +191,9 @@ function CasePanel({
   testId,
 }: {
   caseDetails: CaseDetails;
+  /** The opposite case, used to word-diff this panel's string fields. */
+  other: CaseDetails;
+  diff: CaseDiff;
   isSelected: boolean;
   onSelect: () => void;
   projectId: number;
@@ -145,10 +236,12 @@ function CasePanel({
           if (e.key === "Enter" || e.key === " ") onSelect();
         }}
       >
-        <div className="mb-1 text-xs text-muted-foreground">
-          {tCommon("fields.id")}
-          {": "}
-          {caseDetails.id}
+        <div className="mb-1">
+          <RecordId
+            type={RECORD_TYPES.TEST_CASE}
+            id={caseDetails.id}
+            projectId={projectId}
+          />
         </div>
         <div className="mb-3 flex items-center gap-2">
           <CaseDisplay
@@ -158,6 +251,7 @@ function CasePanel({
             automated={caseDetails.automated}
             hasParameters={(caseDetails as any).hasParameters}
             size="large"
+            nameNode={<WordDiff mine={caseDetails.name} theirs={other.name} />}
           />
           <a
             href={`/projects/repository/${projectId}/${caseDetails.id}`}
@@ -179,7 +273,7 @@ function CasePanel({
                 {t("sourceLabel")}
                 {": "}
               </span>
-              <span>{caseDetails.source}</span>
+              <WordDiff mine={caseDetails.source} theirs={other.source ?? ""} />
             </div>
           )}
           <div>
@@ -187,7 +281,14 @@ function CasePanel({
               {tCommon("fields.folder")}
               {": "}
             </span>
-            <span>{caseDetails.folder?.name ?? t("noFolder")}</span>
+            {caseDetails.folder?.name ? (
+              <WordDiff
+                mine={caseDetails.folder.name}
+                theirs={other.folder?.name ?? ""}
+              />
+            ) : (
+              <span>{t("noFolder")}</span>
+            )}
           </div>
           <div>
             <span className="font-medium text-muted-foreground">
@@ -202,13 +303,15 @@ function CasePanel({
           </div>
           {caseDetails.creator && (
             <div>
-              <UserDisplay
-                userId={caseDetails.creator.id}
-                userName={caseDetails.creator.name ?? undefined}
-                userImage={caseDetails.creator.image}
-                prefix={tCommon("fields.createdBy")}
-                size="small"
-              />
+              <Highlight on={diff.creator}>
+                <UserDisplay
+                  userId={caseDetails.creator.id}
+                  userName={caseDetails.creator.name ?? undefined}
+                  userImage={caseDetails.creator.image}
+                  prefix={tCommon("fields.createdBy")}
+                  size="small"
+                />
+              </Highlight>
             </div>
           )}
         </div>
@@ -216,7 +319,7 @@ function CasePanel({
         {/* Tags */}
         <div className="mb-3">
           <p className="font-medium text-muted-foreground text-sm mb-1">
-            {tCommon("fields.tags")}
+            <Highlight on={diff.tags}>{tCommon("fields.tags")}</Highlight>
           </p>
           {caseDetails.tags.length === 0 ? (
             <p className="text-sm text-muted-foreground italic">
@@ -237,7 +340,9 @@ function CasePanel({
               return (
                 <div key={`steps-${templateField.caseFieldId}`}>
                   <p className="font-medium text-muted-foreground text-sm mb-1">
-                    {tCommon("fields.steps")}
+                    <Highlight on={diff.steps}>
+                      {tCommon("fields.steps")}
+                    </Highlight>
                   </p>
                   {caseDetails.steps.length === 0 ? (
                     <p className="text-sm text-muted-foreground italic">
@@ -248,7 +353,7 @@ function CasePanel({
                       {caseDetails.steps.map((step, i) => (
                         <div
                           key={step.id ?? i}
-                          className="text-sm border-l-2 border-muted pl-2"
+                          className="text-sm border-s-2 border-muted ps-2"
                         >
                           <div className="font-medium">
                             {`${i + 1}. `}
@@ -289,45 +394,47 @@ function CasePanel({
                   {fv.field.displayName}
                   {": "}
                 </span>
-                {fieldType === "Text Long" ? (
-                  <TextFromJson
-                    jsonString={fv.value}
-                    room={`compare-field-${caseDetails.id}-${fv.id}`}
-                  />
-                ) : fieldType === "Checkbox" ? (
-                  <span>{fv.value ? "✓" : "✗"}</span>
-                ) : fieldType === "Dropdown" ? (
-                  <span>
-                    {options.find((o) => o.id === Number(fv.value))?.name ??
-                      String(fv.value)}
-                  </span>
-                ) : fieldType === "Multi-Select" ? (
-                  <span>
-                    {(Array.isArray(fv.value) ? fv.value : [])
-                      .map(
-                        (id: number) =>
-                          options.find((o) => o.id === id)?.name ?? String(id)
-                      )
-                      .join(", ")}
-                  </span>
-                ) : fieldType === "Link" ? (
-                  <a
-                    href={String(fv.value)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary underline"
-                  >
-                    {String(fv.value)}
-                  </a>
-                ) : fieldType === "Date" ? (
-                  <DateFormatter
-                    date={String(fv.value)}
-                    formatString={dateTimeFormat}
-                    timezone={prefs?.timezone}
-                  />
-                ) : (
-                  <span>{String(fv.value)}</span>
-                )}
+                <Highlight on={diff.fieldValues.has(fv.field.id)}>
+                  {fieldType === "Text Long" ? (
+                    <TextFromJson
+                      jsonString={fv.value}
+                      room={`compare-field-${caseDetails.id}-${fv.id}`}
+                    />
+                  ) : fieldType === "Checkbox" ? (
+                    <span>{fv.value ? "✓" : "✗"}</span>
+                  ) : fieldType === "Dropdown" ? (
+                    <span>
+                      {options.find((o) => o.id === Number(fv.value))?.name ??
+                        String(fv.value)}
+                    </span>
+                  ) : fieldType === "Multi-Select" ? (
+                    <span>
+                      {(Array.isArray(fv.value) ? fv.value : [])
+                        .map(
+                          (id: number) =>
+                            options.find((o) => o.id === id)?.name ?? String(id)
+                        )
+                        .join(", ")}
+                    </span>
+                  ) : fieldType === "Link" ? (
+                    <a
+                      href={String(fv.value)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary underline"
+                    >
+                      {String(fv.value)}
+                    </a>
+                  ) : fieldType === "Date" ? (
+                    <DateFormatter
+                      date={String(fv.value)}
+                      formatString={dateTimeFormat}
+                      timezone={prefs?.timezone}
+                    />
+                  ) : (
+                    <span>{String(fv.value)}</span>
+                  )}
+                </Highlight>
               </div>
             );
           })}
@@ -339,7 +446,9 @@ function CasePanel({
             {tCommon("fields.attachments")}
             {": "}
           </span>
-          <span>{caseDetails._count.attachments}</span>
+          <Highlight on={diff.attachments}>
+            <span>{caseDetails._count.attachments}</span>
+          </Highlight>
         </div>
 
         {/* Last Run */}
@@ -350,7 +459,7 @@ function CasePanel({
           {lastRun ? (
             <div>
               <span className="font-medium">{lastRun.testRun?.name ?? ""}</span>
-              <span className="text-muted-foreground ml-2">
+              <span className="text-muted-foreground ms-2">
                 {lastRun.status?.name ?? ""}
                 {" — "}
                 <DateFormatter
@@ -397,6 +506,7 @@ export function DuplicateComparisonDialog({
   });
 
   const confidence = pair ? scoreToConfidence(pair.score) : null;
+  const diff = data ? computeDiff(data.caseA, data.caseB) : EMPTY_DIFF;
 
   const handleResolve = async (action: "merge" | "link" | "dismiss") => {
     if (!pair) return;
@@ -532,6 +642,8 @@ export function DuplicateComparisonDialog({
               <div className="grid grid-cols-2 gap-4">
                 <CasePanel
                   caseDetails={data.caseA}
+                  other={data.caseB}
+                  diff={diff}
                   isSelected={primaryId === data.caseA.id}
                   onSelect={() => setPrimaryId(data.caseA.id)}
                   projectId={pair!.projectId}
@@ -542,6 +654,8 @@ export function DuplicateComparisonDialog({
                 />
                 <CasePanel
                   caseDetails={data.caseB}
+                  other={data.caseA}
+                  diff={diff}
                   isSelected={primaryId === data.caseB.id}
                   onSelect={() => setPrimaryId(data.caseB.id)}
                   projectId={pair!.projectId}
@@ -565,7 +679,7 @@ export function DuplicateComparisonDialog({
           >
             {isSubmitting && activeAction === "dismiss" ? (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className="h-4 w-4 me-2 animate-spin" />
                 {t("dismissing")}
               </>
             ) : (
@@ -582,7 +696,7 @@ export function DuplicateComparisonDialog({
             >
               {isSubmitting && activeAction === "link" ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className="h-4 w-4 me-2 animate-spin" />
                   {t("linking")}
                 </>
               ) : (
@@ -597,7 +711,7 @@ export function DuplicateComparisonDialog({
             >
               {isSubmitting && activeAction === "merge" ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className="h-4 w-4 me-2 animate-spin" />
                   {t("merging")}
                 </>
               ) : (

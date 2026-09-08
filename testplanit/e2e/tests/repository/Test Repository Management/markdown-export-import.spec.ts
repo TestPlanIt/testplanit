@@ -1,5 +1,6 @@
 import { expect, test } from "../../../fixtures";
 import { RepositoryPage } from "../../../page-objects/repository/repository.page";
+import { clickOverflowAction } from "../../../utils/action-overflow";
 
 /**
  * Markdown Export & Import Tests
@@ -154,12 +155,11 @@ test.describe("Markdown Export & Import", () => {
     });
 
     await test.step("Open export modal", async () => {
-      const exportButton = page
-        .locator('[data-testid="export-cases-button"]')
-        .first();
-      await expect(exportButton).toBeVisible({ timeout: 10000 });
-      await expect(exportButton).toBeEnabled({ timeout: 5000 });
-      await exportButton.click();
+      await clickOverflowAction(
+        page,
+        "export-cases-button",
+        "cases-actions-menu"
+      );
 
       await expect(exportDialog.first()).toBeVisible({ timeout: 5000 });
     });
@@ -292,11 +292,11 @@ test.describe("Markdown Export & Import", () => {
     });
 
     await test.step("Open export modal", async () => {
-      const exportButton = page
-        .locator('[data-testid="export-cases-button"]')
-        .first();
-      await expect(exportButton).toBeEnabled({ timeout: 5000 });
-      await exportButton.click();
+      await clickOverflowAction(
+        page,
+        "export-cases-button",
+        "cases-actions-menu"
+      );
 
       await expect(exportDialog.first()).toBeVisible({ timeout: 5000 });
     });
@@ -392,11 +392,11 @@ test.describe("Markdown Export & Import", () => {
 
     await test.step("Open export modal and export with default JSON format", async () => {
       // Open export modal - JSON is the default Text Long format
-      const exportButton = page
-        .locator('[data-testid="export-cases-button"]')
-        .first();
-      await expect(exportButton).toBeEnabled({ timeout: 5000 });
-      await exportButton.click();
+      await clickOverflowAction(
+        page,
+        "export-cases-button",
+        "cases-actions-menu"
+      );
 
       await expect(exportDialog.first()).toBeVisible({ timeout: 5000 });
 
@@ -445,11 +445,13 @@ test.describe("Markdown Export & Import", () => {
 
     const importDialog = page.locator('[role="dialog"]');
     let descValue: any;
+    // The wizard starts with no folder selected, so the import step has to pick
+    // this one explicitly — the first option in the list is Root Folder.
+    const folderName = `MD Import Folder ${uniqueId}`;
 
     await test.step("Create project, ensure template field, and folder", async () => {
       // Ensure the template has a Description field for import mapping
       await ensureDescriptionFieldOnTemplate(api, projectId);
-      const folderName = `MD Import Folder ${uniqueId}`;
       const folderId = await api.createFolder(projectId, folderName);
 
       await repositoryPage.goto(projectId);
@@ -498,17 +500,18 @@ test.describe("Markdown Export & Import", () => {
       await expect(templateOption).toBeVisible({ timeout: 5000 });
       await templateOption.click();
 
-      // Folder should already be selected since we navigated there
-      // If folder selector appears, select it
+      // Select the folder this test created, not whatever sorts first.
       const folderSelect = importDialog
         .locator('button:has-text("Select a folder")')
         .first();
-      if (await folderSelect.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await folderSelect.click();
-        const folderOption = page.locator('[role="option"]').first();
-        await expect(folderOption).toBeVisible({ timeout: 5000 });
-        await folderOption.click();
-      }
+      await expect(folderSelect).toBeVisible({ timeout: 5000 });
+      await folderSelect.click();
+      const folderOption = page
+        .locator('[role="option"]')
+        .filter({ hasText: folderName })
+        .first();
+      await expect(folderOption).toBeVisible({ timeout: 5000 });
+      await folderOption.click();
     });
 
     await test.step("Advance through wizard and run import", async () => {
@@ -623,11 +626,13 @@ test.describe("Markdown Export & Import", () => {
 
     const importDialog = page.locator('[role="dialog"]');
     let descValue: any;
+    // The wizard starts with no folder selected, so the import step has to pick
+    // this one explicitly — the first option in the list is Root Folder.
+    const folderName = `Plain Import Folder ${uniqueId}`;
 
     await test.step("Create project, ensure template field, and folder", async () => {
       // Ensure the template has a Description field for import mapping
       await ensureDescriptionFieldOnTemplate(api, projectId);
-      const folderName = `Plain Import Folder ${uniqueId}`;
       const folderId = await api.createFolder(projectId, folderName);
 
       await repositoryPage.goto(projectId);
@@ -671,16 +676,18 @@ test.describe("Markdown Export & Import", () => {
       await expect(templateOption).toBeVisible({ timeout: 5000 });
       await templateOption.click();
 
-      // Select folder if needed
+      // Select the folder this test created, not whatever sorts first.
       const folderSelect = importDialog
         .locator('button:has-text("Select a folder")')
         .first();
-      if (await folderSelect.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await folderSelect.click();
-        const folderOption = page.locator('[role="option"]').first();
-        await expect(folderOption).toBeVisible({ timeout: 5000 });
-        await folderOption.click();
-      }
+      await expect(folderSelect).toBeVisible({ timeout: 5000 });
+      await folderSelect.click();
+      const folderOption = page
+        .locator('[role="option"]')
+        .filter({ hasText: folderName })
+        .first();
+      await expect(folderOption).toBeVisible({ timeout: 5000 });
+      await folderOption.click();
     });
 
     await test.step("Advance through wizard and run import", async () => {
@@ -796,16 +803,15 @@ test.describe("Markdown Export & Import", () => {
     const exportDialog = page.locator('[role="dialog"]');
     const importDialog = page.locator('[role="dialog"]');
     let targetFolderId: number | undefined;
+    let sourceFolderId: number | undefined;
+    let sourceCaseId: number | undefined;
     let exportedCsv: string | undefined;
     let descValue: any;
 
     await test.step("Create source case with rich content and target folder", async () => {
       // Create source folder with rich content case
       const sourceFolderName = `RT Source Folder ${uniqueId}`;
-      const sourceFolderId = await api.createFolder(
-        projectId,
-        sourceFolderName
-      );
+      sourceFolderId = await api.createFolder(projectId, sourceFolderName);
 
       // Ensure the Description field is on the project's template
       const { descriptionFieldId } = await ensureDescriptionFieldOnTemplate(
@@ -813,7 +819,7 @@ test.describe("Markdown Export & Import", () => {
         projectId
       );
 
-      await api.createTestCaseWithFieldValues(
+      sourceCaseId = await api.createTestCaseWithFieldValues(
         projectId,
         sourceFolderId,
         originalCaseName,
@@ -834,11 +840,11 @@ test.describe("Markdown Export & Import", () => {
     });
 
     await test.step("Export source folder as Markdown CSV", async () => {
-      const exportButton = page
-        .locator('[data-testid="export-cases-button"]')
-        .first();
-      await expect(exportButton).toBeEnabled({ timeout: 5000 });
-      await exportButton.click();
+      await clickOverflowAction(
+        page,
+        "export-cases-button",
+        "cases-actions-menu"
+      );
 
       await expect(exportDialog.first()).toBeVisible({ timeout: 5000 });
 
@@ -939,6 +945,25 @@ test.describe("Markdown Export & Import", () => {
       await nextButton.click();
       await page.waitForLoadState("networkidle");
 
+      // Page 2 is column mapping. A full export carries the case's own ID and
+      // Version columns, and the wizard auto-maps both. Left alone, a mapped
+      // Case ID makes this an in-place OVERWRITE of the source case (it is
+      // relocated into the target folder) rather than a round trip that
+      // produces a new case — so unmap them and import as new.
+      const unmapColumn = async (csvColumn: string) => {
+        const trigger = page.getByTestId(`import-column-mapping-${csvColumn}`);
+        await expect(trigger).toBeVisible({ timeout: 10000 });
+        await trigger.scrollIntoViewIfNeeded();
+        await trigger.click();
+        // SelectContent renders in a portal, outside the dialog.
+        const ignoreOption = page.getByTestId("import-column-mapping-ignore");
+        await expect(ignoreOption).toBeVisible({ timeout: 5000 });
+        await ignoreOption.click();
+        await expect(trigger).toContainText("Ignore Column");
+      };
+      await unmapColumn("ID");
+      await unmapColumn("Version");
+
       await page.waitForTimeout(1000);
       await expect(nextButton).toBeEnabled({ timeout: 5000 });
       await nextButton.click();
@@ -986,6 +1011,29 @@ test.describe("Markdown Export & Import", () => {
       expect(caseResponse.ok()).toBeTruthy();
       const reimportedCase = (await caseResponse.json()).data;
       expect(reimportedCase).toBeTruthy();
+
+      // A round trip must CREATE a case, not overwrite the source. Without
+      // this the test passes on an in-place overwrite: the original case is
+      // relocated into the target folder and every assertion below still
+      // holds, because it is inspecting the original's own field values.
+      expect(reimportedCase.id).not.toBe(sourceCaseId);
+
+      // ...and the source case must still be sitting in the source folder.
+      const sourceResponse = await request.get(
+        `${baseURL}/api/model/repositoryCases/findFirst`,
+        {
+          params: {
+            q: JSON.stringify({
+              where: { id: sourceCaseId },
+              select: { id: true, folderId: true, isDeleted: true },
+            }),
+          },
+        }
+      );
+      expect(sourceResponse.ok()).toBeTruthy();
+      const sourceCase = (await sourceResponse.json()).data;
+      expect(sourceCase.isDeleted).toBe(false);
+      expect(sourceCase.folderId).toBe(sourceFolderId);
 
       const fieldValuesResponse = await request.get(
         `${baseURL}/api/model/caseFieldValues/findMany`,

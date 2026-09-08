@@ -1,5 +1,7 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,20 +20,15 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
+import type {
   LlmIntegration,
   LlmProviderConfig,
   ProjectLlmIntegration,
-} from "@prisma/client";
+} from "~/zenstack/models";
 import { AlertTriangle, Check, Loader2, Zap } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
-import {
-  useCreateProjectLlmIntegration,
-  useDeleteProjectLlmIntegration,
-  useUpdateProjectLlmIntegration,
-} from "~/lib/hooks";
 import { getProviderIcon, LlmProviderBadge } from "~/lib/llm/provider-styles";
 
 type LlmIntegrationWithConfig = LlmIntegration & {
@@ -65,11 +62,11 @@ export function LlmIntegrationsList({
 
   // ZenStack hooks
   const { mutateAsync: createProjectLlmIntegration } =
-    useCreateProjectLlmIntegration();
+    useClientQueries(schema).projectLlmIntegration.useCreate();
   const { mutateAsync: updateProjectLlmIntegration } =
-    useUpdateProjectLlmIntegration();
+    useClientQueries(schema).projectLlmIntegration.useUpdate();
   const { mutateAsync: deleteProjectLlmIntegration } =
-    useDeleteProjectLlmIntegration();
+    useClientQueries(schema).projectLlmIntegration.useDelete();
 
   const handleAssignIntegrationClick = (integrationId: number) => {
     // If there's already an active LLM integration, show warning dialog
@@ -204,7 +201,7 @@ export function LlmIntegrationsList({
                         <Tooltip>
                           <TooltipTrigger type="button">
                             <Badge variant="outline" className="text-xs">
-                              <Zap className="h-3 w-3 mr-1" />
+                              <Zap className="h-3 w-3 me-1" />
                               {tGlobal("admin.llm.streaming")}
                             </Badge>
                           </TooltipTrigger>
@@ -277,7 +274,7 @@ export function LlmIntegrationsList({
               </p>
               <div className="mt-3 space-y-2 text-sm">
                 <p className="font-medium">{t("removeWarningTitle")}</p>
-                <ul className="list-disc pl-5 space-y-1">
+                <ul className="list-disc ps-5 space-y-1">
                   <li>{t("removeWarning1")}</li>
                   <li>{t("removeWarning2")}</li>
                 </ul>
@@ -314,7 +311,7 @@ export function LlmIntegrationsList({
               </p>
               <div className="mt-3 space-y-2 text-sm">
                 <p className="font-medium">{t("switchWarningTitle")}</p>
-                <ul className="list-disc pl-5 space-y-1 text-warning">
+                <ul className="list-disc ps-5 space-y-1 text-warning">
                   <li>{t("switchWarning1")}</li>
                   <li>{t("switchWarning2")}</li>
                 </ul>

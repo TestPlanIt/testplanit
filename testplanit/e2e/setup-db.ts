@@ -12,10 +12,10 @@
  * Run with: pnpm test:e2e:setup-db
  */
 
-import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
+import { createRawDbClient } from "~/lib/rawDbClient";
 
-const prisma = new PrismaClient();
+const db = createRawDbClient();
 
 // E2E Test user credentials
 const E2E_ADMIN_EMAIL = "admin@example.com";
@@ -29,11 +29,16 @@ async function ensureSchema() {
   try {
     // The E2E database is ephemeral (reset + reseeded every run), so accept
     // destructive schema changes (column drops/renames) without prompting.
-    execSync("pnpm prisma db push --skip-generate --accept-data-loss", {
-      cwd: process.cwd(),
-      stdio: "inherit",
-      env: process.env,
-    });
+    // ZenStack v3 pushes directly from schema.zmodel (the source of truth);
+    // there is no generated schema.zmodel to push from anymore.
+    execSync(
+      "pnpm exec zenstack db push --schema schema.zmodel --accept-data-loss --no-version-check",
+      {
+        cwd: process.cwd(),
+        stdio: "inherit",
+        env: process.env,
+      }
+    );
     console.log("   Schema is ready");
   } catch (error) {
     console.error("   Failed to push schema:", error);
@@ -47,7 +52,7 @@ async function ensureExtensions() {
   const { execSync } = await import("child_process");
 
   try {
-    execSync("npx tsx prisma/setup-extensions.ts", {
+    execSync("npx tsx db/setup-extensions.ts", {
       cwd: process.cwd(),
       stdio: "inherit",
       env: process.env,
@@ -60,7 +65,7 @@ async function ensureExtensions() {
 }
 
 async function ensureAuditTriggers() {
-  // prisma db push drops unmanaged triggers, so re-apply after every schema
+  // zenstack db push drops unmanaged triggers, so re-apply after every schema
   // sync or the audit specs see no rows once the app-layer hooks are removed.
   console.log("🔔 Applying audit-capture triggers...");
 
@@ -84,7 +89,7 @@ async function resetDatabase() {
 
   // Get all table names except _prisma_migrations, ordered by foreign key dependencies
   // We'll use TRUNCATE with CASCADE which handles FK constraints
-  const tables = await prisma.$queryRaw<{ tablename: string }[]>`
+  const tables = await db.$queryRaw<{ tablename: string }[]>`
     SELECT tablename FROM pg_tables
     WHERE schemaname = 'public'
     AND tablename != '_prisma_migrations'
@@ -97,16 +102,14 @@ async function resetDatabase() {
 
   if (tableNames) {
     try {
-      await prisma.$executeRawUnsafe(`TRUNCATE TABLE ${tableNames} CASCADE;`);
+      await db.$executeRawUnsafe(`TRUNCATE TABLE ${tableNames} CASCADE;`);
       console.log(`   Truncated ${tables.length} tables`);
     } catch {
       // If truncate fails, try deleting from each table individually
       console.log("   TRUNCATE failed, trying DELETE approach...");
       for (const { tablename } of tables.reverse()) {
         try {
-          await prisma.$executeRawUnsafe(
-            `DELETE FROM "public"."${tablename}";`
-          );
+          await db.$executeRawUnsafe(`DELETE FROM "public"."${tablename}";`);
         } catch {
           // Ignore errors for individual tables (FK constraints)
         }
@@ -124,13 +127,13 @@ async function seedCoreData() {
   const { execSync } = await import("child_process");
 
   try {
-    execSync("pnpm prisma db seed", {
+    execSync("pnpm tsx db/seed.ts", {
       cwd: process.cwd(),
       stdio: "inherit",
       env: { ...process.env, SEED_TEST_DATA: "true" },
     });
   } catch {
-    console.error("   Failed to run prisma db seed, continuing...");
+    console.error("   Failed to run tsx db/seed.ts, continuing...");
   }
 }
 
@@ -148,7 +151,7 @@ async function seedCoreData() {
  */
 async function enableSystemReviewFeatureForE2E() {
   console.log("🚦 Enabling system Review feature flag for E2E...");
-  await prisma.appConfig.upsert({
+  await db.appConfig.upsert({
     where: { key: "review_feature_enabled" },
     update: { value: true },
     create: { key: "review_feature_enabled", value: true },
@@ -164,14 +167,14 @@ async function enableSystemReviewFeatureForE2E() {
  * fresh install ships restrictive, but E2E specs assume any test user the
  * spec creates can act as a reviewer / read sensitive values without per-
  * spec fixture setup. This override only runs in the E2E setup path; the
- * shared `prisma/seed.ts` (also used by docker / dev installs) is unchanged.
+ * shared `db/seed.ts` (also used by docker / dev installs) is unchanged.
  */
 async function openUserRolePermissionsForE2E() {
   console.log(
     "🔓 Opening user-role permissions for E2E (canApprove + canReadSensitive)..."
   );
 
-  const userRole = await prisma.roles.findFirst({ where: { name: "user" } });
+  const userRole = await db.roles.findFirst({ where: { name: "user" } });
   if (!userRole) {
     console.warn("   No `user` role found — skipping E2E permission widening");
     return;
@@ -183,7 +186,7 @@ async function openUserRolePermissionsForE2E() {
     "Sessions" as const,
   ];
   for (const area of reviewAreas) {
-    await prisma.rolePermission.upsert({
+    await db.rolePermission.upsert({
       where: { roleId_area: { roleId: userRole.id, area } },
       update: { canApprove: true },
       create: { roleId: userRole.id, area, canApprove: true },
@@ -195,7 +198,7 @@ async function openUserRolePermissionsForE2E() {
     "TestRunResultRestrictedFields" as const,
   ];
   for (const area of restrictedAreas) {
-    await prisma.rolePermission.upsert({
+    await db.rolePermission.upsert({
       where: { roleId_area: { roleId: userRole.id, area } },
       update: { canReadSensitive: true },
       create: { roleId: userRole.id, area, canReadSensitive: true },
@@ -210,7 +213,7 @@ async function openUserRolePermissionsForE2E() {
 async function ensureAdminUser() {
   console.log("👤 Ensuring admin user exists with correct settings...");
 
-  const adminRole = await prisma.roles.findFirst({
+  const adminRole = await db.roles.findFirst({
     where: { name: "admin" },
   });
 
@@ -221,7 +224,7 @@ async function ensureAdminUser() {
   const hashedPassword = bcrypt.hashSync(E2E_ADMIN_PASSWORD, 10);
 
   // Upsert admin user
-  const admin = await prisma.user.upsert({
+  const admin = await db.user.upsert({
     where: { email: E2E_ADMIN_EMAIL },
     update: {
       password: hashedPassword,
@@ -241,7 +244,7 @@ async function ensureAdminUser() {
   });
 
   // Ensure user preferences exist with hasCompletedWelcomeTour = true
-  await prisma.userPreferences.upsert({
+  await db.userPreferences.upsert({
     where: { userId: admin.id },
     update: {
       hasCompletedWelcomeTour: true,
@@ -335,7 +338,7 @@ async function main() {
     await ensureExtensions();
 
     // Step 0.6: Re-apply the 68 tpl_audit_* capture triggers and the
-    // DataChangeLog append-only enforcement triggers. prisma db push drops
+    // DataChangeLog append-only enforcement triggers. zenstack db push drops
     // all unmanaged triggers, so they must be re-applied here. Idempotent
     // via DROP IF EXISTS + CREATE and CREATE OR REPLACE for functions.
     await ensureAuditTriggers();
@@ -343,7 +346,7 @@ async function main() {
     // Step 1: Reset database
     await resetDatabase();
 
-    // Step 2: Seed core data (this runs prisma db seed)
+    // Step 2: Seed core data (this runs tsx db/seed.ts)
     await seedCoreData();
 
     // Step 2.5: E2E-only widening of seeded user-role permissions for the two
@@ -372,7 +375,7 @@ async function main() {
     console.error("\n❌ Setup failed:", error);
     process.exit(1);
   } finally {
-    await prisma.$disconnect();
+    await db.$disconnect();
   }
 }
 

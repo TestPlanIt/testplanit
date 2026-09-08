@@ -1,5 +1,7 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -10,13 +12,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import type { PromptConfig } from "@prisma/client";
+import type { PromptConfig } from "~/zenstack/models";
 import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useUpdateManyProjects } from "~/lib/hooks";
-import { useUpdatePromptConfig } from "~/lib/hooks/prompt-config";
 
 interface DeletePromptConfigProps {
   config: PromptConfig;
@@ -33,8 +33,10 @@ export function DeletePromptConfig({
   const tCommon = useTranslations("common");
   const [loading, setLoading] = useState(false);
 
-  const { mutateAsync: updatePromptConfig } = useUpdatePromptConfig();
-  const { mutateAsync: updateManyProjects } = useUpdateManyProjects();
+  const { mutateAsync: updatePromptConfig } =
+    useClientQueries(schema).promptConfig.useUpdate();
+  const { mutateAsync: updateManyProjects } =
+    useClientQueries(schema).projects.useUpdateMany();
 
   const handleDelete = async () => {
     setLoading(true);
@@ -92,7 +94,7 @@ export function DeletePromptConfig({
             onClick={handleDelete}
             disabled={loading}
           >
-            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {loading && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
             {tCommon("actions.delete")}
           </AlertDialogAction>
         </AlertDialogFooter>

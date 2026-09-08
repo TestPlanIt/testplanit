@@ -53,7 +53,11 @@ export interface PreflightResponse {
     className: string | null;
     source: string;
   }>;
-  targetRepositoryId: number;
-  targetDefaultWorkflowStateId: number;
-  targetTemplateId: number;
+  // Resolved target context, forwarded verbatim to the submit route. Absent
+  // when preflight could not resolve one (the submit route re-resolves and
+  // returns a proper error) and for same-project moves, which use none of
+  // them.
+  targetRepositoryId?: number;
+  targetDefaultWorkflowStateId?: number;
+  targetTemplateId?: number;
 }

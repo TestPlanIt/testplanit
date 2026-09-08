@@ -1,114 +1,44 @@
+import { useQuery } from "@tanstack/react-query";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { LinkIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import React, { useCallback } from "react";
 import { BubbleChart } from "~/components/dataVisualizations/BubbleChart";
-import { useFindManyTags } from "~/lib/hooks";
-import { Link, useRouter } from "~/lib/navigation";
+import { useRouter } from "~/lib/navigation";
 
 interface TagsSectionProps {
   projectId: number;
 }
 
-type TagWithCounts = {
+type TagWithCount = {
   id: number;
   name: string;
-  _count: {
-    repositoryCases: number;
-    testRuns: number;
-    sessions: number;
-  };
+  count: number;
 };
 
 const TagsSection: React.FC<TagsSectionProps> = ({ projectId }) => {
-  const t = useTranslations();
   const router = useRouter();
   // const currentLocale = useLocale(); // Removed as per user's previous change, assuming router handles it
 
-  const { data: tags, isLoading: isLoadingTags } = useFindManyTags(
-    {
-      where: {
-        isDeleted: false,
-        OR: [
-          {
-            repositoryCases: {
-              some: {
-                isDeleted: false,
-                isArchived: false,
-                projectId,
-              },
-            },
-          },
-          {
-            testRuns: {
-              some: {
-                projectId,
-                isDeleted: false,
-              },
-            },
-          },
-          {
-            sessions: {
-              some: {
-                projectId,
-                isDeleted: false,
-              },
-            },
-          },
-        ],
-      },
-      select: {
-        id: true,
-        name: true,
-        _count: {
-          select: {
-            repositoryCases: {
-              where: {
-                isDeleted: false,
-                isArchived: false,
-                projectId,
-              },
-            },
-            testRuns: {
-              where: {
-                projectId,
-                isDeleted: false,
-              },
-            },
-            sessions: {
-              where: {
-                projectId,
-                isDeleted: false,
-              },
-            },
-          },
-        },
-      },
-      orderBy: { name: "asc" },
-      take: 100,
+  // Routed through a server endpoint (baseDb, no ZenStack policy plugin)
+  // instead of the client-side ZenStack hook this replaced -- that hook's
+  // filtered `_count`/`some` relation filters made ZenStack re-inline the
+  // Projects ACL policy as a correlated per-row subquery, 120 of them per
+  // call, 78s mean execution time in production.
+  const { data, isLoading: isLoadingTags } = useQuery({
+    queryKey: ["tagsForProject", projectId],
+    queryFn: async () => {
+      const response = await fetch(
+        `/api/tags/for-project?projectId=${projectId}`
+      );
+      if (!response.ok) {
+        throw new Error("Failed to fetch tags for project");
+      }
+      const body = await response.json();
+      return body.tags as TagWithCount[];
     },
-    {
-      // Enable tag fetching if projectId is valid, not just if repositoryCases exist
-      enabled: Number.isFinite(projectId),
-    }
-  );
+    enabled: Number.isFinite(projectId),
+  });
 
-  const typedTags = tags as TagWithCounts[] | undefined;
-
-  const filteredTags =
-    typedTags
-      ?.map((tag) => {
-        const caseCount = tag._count.repositoryCases ?? 0;
-        const runCount = tag._count.testRuns ?? 0;
-        const sessionCount = tag._count.sessions ?? 0;
-
-        return {
-          id: tag.id,
-          name: tag.name,
-          count: caseCount + runCount + sessionCount,
-        };
-      })
-      .filter((tag) => tag.count > 0) || []; // Only include tags that have a count from at least one source
+  const filteredTags = data?.filter((tag) => tag.count > 0) ?? []; // Only include tags that have a count from at least one source
 
   const handleTagClickNavigation = useCallback(
     async (tagId: number) => {
@@ -139,12 +69,6 @@ const TagsSection: React.FC<TagsSectionProps> = ({ projectId }) => {
 
   return (
     <div className="flex flex-col h-full">
-      <p className="text-sm text-muted-foreground mb-4">
-        <Link href={`/projects/tags/${projectId}`} className="group">
-          {t("projects.overview.seeAllTags")}
-          <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-        </Link>
-      </p>
       <div className="flex-1 min-h-[300px]">
         <BubbleChart
           tags={filteredTags}

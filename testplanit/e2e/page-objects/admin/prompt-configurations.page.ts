@@ -31,7 +31,7 @@ export class PromptConfigurationsPage extends BasePage {
       hasText: "Add Prompt Configuration",
     });
     this.filterInput = page.getByPlaceholder("Filter prompt configurations...");
-    this.dataTable = page.locator("table");
+    this.dataTable = page.getByRole("table");
 
     // Dialog elements
     this.dialog = page.locator('[role="dialog"]').first();
@@ -106,7 +106,7 @@ export class PromptConfigurationsPage extends BasePage {
       .waitFor({ state: "hidden", timeout: 5000 })
       .catch(() => {});
 
-    const rows = this.dataTable.locator("tbody tr");
+    const rows = this.dataTable.locator("[data-row-id]");
     const count = await rows.count();
 
     // If the single row contains "No results" or similar empty state, return 0
@@ -120,17 +120,17 @@ export class PromptConfigurationsPage extends BasePage {
   }
 
   async expectConfigInTable(name: string): Promise<void> {
-    const row = this.dataTable.locator("tbody tr", { hasText: name });
+    const row = this.dataTable.locator("[data-row-id]", { hasText: name });
     await expect(row.first()).toBeVisible({ timeout: 10000 });
   }
 
   async expectConfigNotInTable(name: string): Promise<void> {
-    const row = this.dataTable.locator("tbody tr", { hasText: name });
+    const row = this.dataTable.locator("[data-row-id]", { hasText: name });
     await expect(row).not.toBeVisible({ timeout: 5000 });
   }
 
   async clickEditOnRow(name: string): Promise<void> {
-    const row = this.dataTable.locator("tbody tr", { hasText: name });
+    const row = this.dataTable.locator("[data-row-id]", { hasText: name });
     const editButton = row
       .locator(
         'button:has(svg.lucide-square-pen), button:has(svg[class*="lucide-edit"]), button:has(svg[class*="edit"])'
@@ -141,7 +141,7 @@ export class PromptConfigurationsPage extends BasePage {
   }
 
   async clickDeleteOnRow(name: string): Promise<void> {
-    const row = this.dataTable.locator("tbody tr", { hasText: name });
+    const row = this.dataTable.locator("[data-row-id]", { hasText: name });
     const deleteButton = row.locator('button:has([class*="lucide-trash"])');
     await deleteButton.click();
     await expect(this.deleteDialog).toBeVisible();

@@ -1,5 +1,5 @@
-import { PrismaClient } from "@prisma/client";
 import { expect, test } from "../../fixtures";
+import { createRawDbClient } from "~/lib/rawDbClient";
 import { getProjectWorkflowIds } from "../reviews/helpers";
 
 /**
@@ -14,14 +14,14 @@ import { getProjectWorkflowIds } from "../reviews/helpers";
  * eligibility/gate logic (covered by the reviews specs).
  */
 test.describe("Milestone Export API", () => {
-  let prisma: PrismaClient;
+  let db: ReturnType<typeof createRawDbClient>;
 
   test.beforeAll(() => {
-    prisma = new PrismaClient();
+    db = createRawDbClient();
   });
 
   test.afterAll(async () => {
-    await prisma.$disconnect();
+    await db.$disconnect();
   });
 
   test("aggregates the full milestone tree across every section", async ({
@@ -141,7 +141,13 @@ test.describe("Milestone Export API", () => {
       expect(runWf.length).toBeGreaterThanOrEqual(2);
       expect(sessWf.length).toBeGreaterThanOrEqual(2);
 
-      await prisma.reviewRequest.create({
+      // v3 enforces ReviewRequest @@validate rules the v2 raw Prisma seed
+      // bypassed: exactly one of assigneeUserId/assigneeRoleId must be set, AND
+      // the requester cannot be the direct assignee. Assign to a role (the admin
+      // is the requester) to satisfy both.
+      const assigneeRole = await db.roles.findFirst({ select: { id: true } });
+
+      await db.reviewRequest.create({
         data: {
           projectId: projectId!,
           entityType: "RUN",
@@ -149,13 +155,14 @@ test.describe("Milestone Export API", () => {
           fromStateId: runWf[0],
           toStateId: runWf[1],
           requestedByUserId: adminId,
+          assigneeRoleId: assigneeRole!.id,
           status: "APPROVED",
           decidedByUserId: adminId,
           decidedAt: new Date(),
           decisionComment: "Ship it",
         },
       });
-      await prisma.reviewRequest.create({
+      await db.reviewRequest.create({
         data: {
           projectId: projectId!,
           entityType: "SESSION",
@@ -163,6 +170,7 @@ test.describe("Milestone Export API", () => {
           fromStateId: sessWf[0],
           toStateId: sessWf[1],
           requestedByUserId: adminId,
+          assigneeRoleId: assigneeRole!.id,
           status: "PENDING",
         },
       });

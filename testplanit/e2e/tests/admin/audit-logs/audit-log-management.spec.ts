@@ -10,7 +10,7 @@ import { expect, test } from "../../../fixtures";
  * - Viewing the detail modal for a log entry
  * - Exporting audit logs as CSV
  *
- * The page renders a VirtualizedDataTable (testIdPrefix="audit-logs-table",
+ * The page renders a virtualized DataTable (testIdPrefix="audit-logs-table",
  * rowTestIdPrefix="audit-log-row"), which is an ARIA-rolled div structure — NOT
  * a semantic <table>/<thead>/<tbody>. The container carries
  * data-testid="audit-logs-table", the scroll body "audit-logs-table-scroll",
@@ -73,74 +73,106 @@ test.describe("Audit Log Management - Filtering", () => {
     await page.goto("/en-US/admin/audit-logs");
     await page.waitForLoadState("networkidle");
 
-    // The action filter is the first SelectTrigger (role="combobox"); the
-    // DateRangePicker before it is a button, not a combobox.
-    const actionFilterTrigger = page.locator('[role="combobox"]').first();
-    await expect(actionFilterTrigger).toBeVisible({ timeout: 10000 });
+    // The action filter is the first MultiAsyncCombobox trigger; the
+    // DateRangePicker before it is a plain button. Scoped to `button` so the
+    // cmdk search input (also role="combobox") can't match once open.
+    const actionFilter = page.locator('button[role="combobox"]').first();
+    await expect(actionFilter).toBeVisible({ timeout: 10000 });
+    await actionFilter.click();
 
-    // Open the select
-    await actionFilterTrigger.click();
+    // getAuditLogActions only offers actions that have rows behind them, and
+    // which actions exist shifts as other specs write audit entries, so drive
+    // the selection from whatever the picker actually lists.
+    const options = page.locator('[role="option"]');
+    await expect(options.first()).toBeVisible({ timeout: 5000 });
+    const action = (await options.first().innerText()).trim();
 
-    // Select "LOGIN" from the dropdown
-    const loginOption = page.getByRole("option", { name: "LOGIN" });
-    if (await loginOption.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await loginOption.click();
-      await page.waitForLoadState("networkidle");
+    await options.first().click();
+    await page.keyboard.press("Escape");
 
-      // The table should still be rendered (now showing only LOGIN entries, or empty)
-      await expect(page.getByTestId("audit-logs-table")).toBeVisible({
-        timeout: 10000,
-      });
+    // The selection shows as a badge on the trigger and the table re-renders.
+    await expect(actionFilter).toContainText(action, { timeout: 5000 });
+    await page.waitForLoadState("networkidle");
+    await expect(page.getByTestId("audit-logs-table")).toBeVisible({
+      timeout: 10000,
+    });
 
-      // Reset filter back to "all"
-      await actionFilterTrigger.click();
-      const allActionsOption = page.getByRole("option", {
-        name: /all actions/i,
-      });
-      if (
-        await allActionsOption.isVisible({ timeout: 2000 }).catch(() => false)
-      ) {
-        await allActionsOption.click();
-      }
-    }
+    // Removing the badge clears the filter back to "All Actions".
+    await actionFilter
+      .locator('[role="button"]')
+      .first()
+      .click({ force: true });
+    await expect(actionFilter).toContainText(/all actions/i, { timeout: 5000 });
+  });
+
+  test("Admin can select multiple action types at once", async ({ page }) => {
+    await page.goto("/en-US/admin/audit-logs");
+    await page.waitForLoadState("networkidle");
+
+    const actionFilter = page.locator('button[role="combobox"]').first();
+    await expect(actionFilter).toBeVisible({ timeout: 10000 });
+    await actionFilter.click();
+
+    // Same data-driven selection as the single-select test: take the first two
+    // actions the picker offers rather than naming ones that may have no rows.
+    const options = page.locator('[role="option"]');
+    await expect(options.first()).toBeVisible({ timeout: 5000 });
+    const available = (await options.allInnerTexts())
+      .map((text) => text.trim())
+      .filter(Boolean);
+    expect(
+      available.length,
+      "need at least two audit actions present to multi-select"
+    ).toBeGreaterThanOrEqual(2);
+    const [firstAction, secondAction] = available;
+
+    // Options render in source order and keep their position when selected, so
+    // the popover stays open and both can be picked by index in one pass.
+    await options.nth(0).click();
+    await options.nth(1).click();
+
+    await page.keyboard.press("Escape");
+
+    await expect(actionFilter).toContainText(firstAction, {
+      timeout: 5000,
+    });
+    await expect(actionFilter).toContainText(secondAction);
+
+    await page.waitForLoadState("networkidle");
+    await expect(page.getByTestId("audit-logs-table")).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test("Admin can filter audit logs by entity type", async ({ page }) => {
     await page.goto("/en-US/admin/audit-logs");
     await page.waitForLoadState("networkidle");
 
-    // Entity type filter is the second combobox
-    const entityTypeFilterTrigger = page.locator('[role="combobox"]').nth(1);
-    await expect(entityTypeFilterTrigger).toBeVisible({ timeout: 10000 });
+    // Entity type filter is the second combobox trigger
+    const entityTypeFilter = page.locator('button[role="combobox"]').nth(1);
+    await expect(entityTypeFilter).toBeVisible({ timeout: 10000 });
+    await entityTypeFilter.click();
 
-    // Open the select
-    await entityTypeFilterTrigger.click();
-
-    // If there are entity types available, select the first non-"all" option
+    // Entity types come from the audit rows themselves, so the list is empty
+    // when the queue worker hasn't produced any.
     const options = page
-      .getByRole("option")
-      .filter({ hasNot: page.getByText(/^all entity types$/i) });
-    const optionCount = await options.count();
-    if (optionCount > 0) {
-      await options.first().click();
-      await page.waitForLoadState("networkidle");
+      .locator('[role="option"]')
+      .filter({ hasNotText: "Select All" });
 
-      // Verify table is still rendered after filter
-      await expect(page.getByTestId("audit-logs-table")).toBeVisible({
-        timeout: 10000,
-      });
-
-      // Reset to all
-      await entityTypeFilterTrigger.click();
-      const allEntityOption = page.getByRole("option", {
-        name: /all entity types/i,
-      });
-      if (
-        await allEntityOption.isVisible({ timeout: 2000 }).catch(() => false)
-      ) {
-        await allEntityOption.click();
-      }
+    if ((await options.count()) === 0) {
+      await page.keyboard.press("Escape");
+      return;
     }
+
+    const entityType = (await options.first().innerText()).trim();
+    await options.first().click();
+    await page.keyboard.press("Escape");
+
+    await expect(entityTypeFilter).toContainText(entityType, { timeout: 5000 });
+    await page.waitForLoadState("networkidle");
+    await expect(page.getByTestId("audit-logs-table")).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test("Admin can filter audit logs by search text", async ({ page }) => {

@@ -1,50 +1,35 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  PaginationProvider,
-  usePagination,
-} from "~/lib/contexts/PaginationContext";
+import { useLocale, useTranslations } from "next-intl";
+import { useMemo, useRef, useState } from "react";
 import { useRouter } from "~/lib/navigation";
 
+import { useAccessibleProjectsForUsers } from "~/hooks/useAccessibleProjectsForUsers";
 import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
-import { useFindManyUser } from "~/lib/hooks";
 import { ExtendedUser, useUserColumns } from "./columns";
 
 import { Filter } from "@/components/tables/Filter";
-import { PaginationComponent } from "@/components/tables/Pagination";
-import { PaginationInfo } from "@/components/tables/PaginationControls";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-type PageSizeOption = number | "All";
+import { SectionHeader } from "@/components/ui/typography";
+import { HelpPopover } from "@/components/ui/help-popover";
 
 export default function UserList() {
-  return (
-    <PaginationProvider>
-      <Users />
-    </PaginationProvider>
-  );
+  return <Users />;
 }
+
+const PAGE_SIZE = 50;
 
 function Users() {
   const { data: session, status } = useSession();
+  const locale = useLocale();
   const t = useTranslations("users");
   const tCommon = useTranslations("common");
-  const {
-    currentPage,
-    setCurrentPage,
-    pageSize,
-    setPageSize,
-    totalItems,
-    setTotalItems,
-    startIndex,
-    endIndex,
-    totalPages,
-  } = usePagination();
+  const tGlobal = useTranslations();
   const [sortConfig, setSortConfig] = useState<
     | {
         column: string;
@@ -61,110 +46,88 @@ function Users() {
   >({});
 
   const router = useRouter();
-  // Calculate effective page size and skip
-  const effectivePageSize =
-    typeof pageSize === "number" ? pageSize : totalItems;
-  const skip = (currentPage - 1) * effectivePageSize;
   const debouncedSearchString = useDebounce(searchString, 500);
 
-  const { data: totalFilteredUsers } = useFindManyUser(
-    {
-      orderBy: sortConfig
-        ? { [sortConfig.column]: sortConfig.direction }
-        : { name: "asc" },
-      include: {
-        projects: true,
-      },
-      where: {
-        AND: [
-          {
-            name: {
-              contains: debouncedSearchString,
-              mode: "insensitive",
-            },
+  const usersWhere = useMemo(
+    () => ({
+      AND: [
+        {
+          name: {
+            contains: debouncedSearchString,
+            mode: "insensitive" as const,
           },
-          { isActive: true },
-          { isDeleted: false },
-        ],
-      },
-    },
-    {
-      enabled:
-        (!!session?.user && debouncedSearchString.length === 0) ||
-        debouncedSearchString.length > 0,
-      refetchOnWindowFocus: true,
-    }
+        },
+        { isActive: true },
+        { isDeleted: false },
+      ],
+    }),
+    [debouncedSearchString]
   );
 
-  // Update total items in pagination context
-  useEffect(() => {
-    if (totalFilteredUsers) {
-      setTotalItems(totalFilteredUsers.length);
-    }
-  }, [totalFilteredUsers, setTotalItems]);
-
-  const { data, isLoading } = useFindManyUser(
-    {
-      orderBy: sortConfig
-        ? { [sortConfig.column]: sortConfig.direction }
-        : { name: "asc" },
-      include: {
-        role: true,
-        groups: true,
-        projects: true,
-      },
-      where: {
-        AND: [
-          {
-            name: {
-              contains: debouncedSearchString,
-              mode: "insensitive",
-            },
-          },
-          { isActive: true },
-          { isDeleted: false },
-        ],
-      },
-      take: effectivePageSize,
-      skip: skip,
-    },
-    {
-      enabled: !!session?.user,
-      refetchOnWindowFocus: false,
-    }
+  // Trailing `id` tiebreaker keeps offset pagination stable when the primary
+  // sort key isn't unique (otherwise pages can duplicate or skip rows).
+  const orderBy = useMemo(
+    () =>
+      sortConfig
+        ? [
+            { [sortConfig.column]: sortConfig.direction },
+            { id: "asc" as const },
+          ]
+        : [{ name: "asc" as const }, { id: "asc" as const }],
+    [sortConfig]
   );
 
-  const users = data as ExtendedUser[];
+  const infiniteBaseArgs = useMemo(
+    () => ({ orderBy, where: usersWhere, take: PAGE_SIZE }),
+    [orderBy, usersWhere]
+  );
 
-  const pageSizeOptions: PageSizeOption[] = useMemo(() => {
-    if (totalItems <= 10) {
-      return ["All"];
-    }
-    const options: PageSizeOption[] = [10, 25, 50, 100, 250].filter(
-      (size) => size < totalItems || totalItems === 0
-    );
-    options.push("All");
-    return options;
-  }, [totalItems]);
+  const { data: totalCount } = useClientQueries(schema).user.useCount(
+    { where: usersWhere },
+    { enabled: !!session?.user, refetchOnWindowFocus: false }
+  );
 
-  const prevSearchStringRef = useRef(searchString);
-  const prevPageSizeRef = useRef(pageSize);
+  // Fetch-on-scroll: pages of users load as the sentinel scrolls into view, so
+  // an instance with tens of thousands of users never loads the full set.
+  const {
+    data: infinitePages,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+  } = useClientQueries(schema).user.useInfiniteFindMany(infiniteBaseArgs, {
+    getNextPageParam: (lastPage, allPages) => {
+      if (!lastPage || lastPage.length < PAGE_SIZE) return undefined;
+      return { ...infiniteBaseArgs, skip: allPages.flat().length };
+    },
+    enabled: !!session?.user,
+    refetchOnWindowFocus: false,
+  });
 
-  // Reset to first page when search changes
-  useEffect(() => {
-    if (searchString === prevSearchStringRef.current) return;
-    prevSearchStringRef.current = searchString;
-    setCurrentPage(1);
-  }, [searchString, setCurrentPage]);
+  const baseRows = useMemo(
+    () => infinitePages?.pages.flat() ?? [],
+    [infinitePages]
+  );
 
-  // Reset to first page when page size changes
-  useEffect(() => {
-    if (pageSize === prevPageSizeRef.current) return;
-    prevPageSizeRef.current = pageSize;
-    setCurrentPage(1);
-  }, [pageSize, setCurrentPage]);
+  const resetKey = `${debouncedSearchString}|${sortConfig?.column}|${sortConfig?.direction}`;
+
+  // Resolve each loaded page's effective accessible projects incrementally
+  // (bounded per-page batches), instead of one ~8-query action per rendered row.
+  const userIds = useMemo(() => baseRows.map((u) => u.id), [baseRows]);
+  const projectsByUser = useAccessibleProjectsForUsers(userIds, resetKey);
+
+  const users = useMemo(
+    () =>
+      baseRows.map((u) => ({
+        ...u,
+        accessibleProjects: projectsByUser[u.id],
+      })) as ExtendedUser[],
+    [baseRows, projectsByUser]
+  );
 
   const columns = useUserColumns(tCommon);
+
+  const hideColumnRef = useRef<((columnId: string) => void) | null>(null);
 
   if (status === "loading") return null;
 
@@ -176,7 +139,19 @@ function Users() {
         ? "desc"
         : "asc";
     setSortConfig({ column, direction });
-    setCurrentPage(1); // Reset to first page when sorting changes
+  };
+
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig(undefined);
+    } else {
+      setSortConfig({ column, direction });
+    }
   };
 
   if (session && session.user.access !== "NONE") {
@@ -184,15 +159,13 @@ function Users() {
       <main>
         <Card id="usersPage">
           <CardHeader className="w-full">
-            <div>
-              <div>
-                <CardTitle>{tCommon("fields.users")}</CardTitle>
-              </div>
-              <div></div>
-            </div>
+            <SectionHeader className="flex items-center gap-2">
+              <CardTitle>{tCommon("fields.users")}</CardTitle>
+              <HelpPopover helpKey="users" />
+            </SectionHeader>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-row items-start">
+            <div className="flex flex-row items-start justify-between gap-4">
               <div className="flex flex-col grow w-full sm:w-1/3 min-w-[150px]">
                 <Filter
                   key="user-filter"
@@ -206,51 +179,38 @@ function Users() {
                     storageKey="users-directory"
                     columns={columns}
                     onVisibilityChange={setColumnVisibility}
+                    hideColumnRef={hideColumnRef}
                   />
                 </div>
               </div>
 
-              <div
-                id="pagination"
-                className="flex flex-col w-full sm:w-2/3 items-end"
-              >
-                {totalItems > 0 && (
-                  <>
-                    <div className="justify-end">
-                      <PaginationInfo
-                        key="user-pagination-info"
-                        startIndex={startIndex}
-                        endIndex={endIndex}
-                        totalRows={totalItems}
-                        searchString={searchString}
-                        pageSize={
-                          typeof pageSize === "number" ? pageSize : "All"
-                        }
-                        pageSizeOptions={pageSizeOptions}
-                        handlePageSizeChange={(size) => setPageSize(size)}
-                      />
-                    </div>
-                    <div className="justify-end -mx-4">
-                      <PaginationComponent
-                        currentPage={currentPage}
-                        totalPages={totalPages}
-                        onPageChange={setCurrentPage}
-                      />
-                    </div>
-                  </>
-                )}
-              </div>
+              {users.length > 0 && (
+                <p className="text-sm text-muted-foreground shrink-0">
+                  {tGlobal("admin.auditLogs.showing", {
+                    loaded: users.length.toLocaleString(locale),
+                    total: (totalCount ?? users.length).toLocaleString(locale),
+                  })}
+                </p>
+              )}
             </div>
-            <div id="users-list" className="mt-4 flex justify-between">
+            <div id="users-list" className="mt-4 w-full">
               <DataTable
+                virtualized
                 columns={columns as any}
                 data={users as any}
                 onSortChange={handleSortChange}
+                onSortColumn={handleSortColumn}
+                onHideColumn={(columnId) => hideColumnRef.current?.(columnId)}
                 sortConfig={sortConfig}
                 columnVisibility={columnVisibility}
                 onColumnVisibilityChange={setColumnVisibility}
-                isLoading={isLoading}
-                pageSize={effectivePageSize}
+                isLoading={isLoading || isFetchingNextPage}
+                hasMore={!!hasNextPage}
+                onLoadMore={fetchNextPage}
+                fillViewport
+                resetKey={resetKey}
+                testIdPrefix="users-directory-table"
+                rowTestIdPrefix="users-directory-row"
               />
             </div>
           </CardContent>

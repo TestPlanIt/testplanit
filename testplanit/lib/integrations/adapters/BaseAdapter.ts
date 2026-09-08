@@ -11,6 +11,32 @@ import {
 } from "./IssueAdapter";
 
 /**
+ * HTTP failure raised inside the retry loop. The message keeps the
+ * `HTTP <status>: <body>` shape — parseStatusFromError and upstream fail-soft
+ * handlers parse it — while status and any server-requested retry delay ride
+ * along as fields.
+ */
+export class HttpStatusError extends Error {
+  constructor(
+    readonly status: number,
+    body: string,
+    readonly retryAfterMs?: number
+  ) {
+    super(`HTTP ${status}: ${body}`);
+    this.name = "HttpStatusError";
+  }
+}
+
+/** Retry-After header value (delta-seconds or HTTP-date) to milliseconds. */
+const parseRetryAfterMs = (value: string | null): number | undefined => {
+  if (!value) return undefined;
+  const seconds = Number(value);
+  if (Number.isFinite(seconds)) return Math.max(0, seconds * 1000);
+  const at = Date.parse(value);
+  return Number.isNaN(at) ? undefined : Math.max(0, at - Date.now());
+};
+
+/**
  * Base abstract class implementing common functionality for all issue tracking adapters
  */
 export abstract class BaseAdapter implements IssueAdapter {
@@ -25,6 +51,10 @@ export abstract class BaseAdapter implements IssueAdapter {
   // Retry configuration
   protected maxRetries: number = 3;
   protected retryDelay: number = 1000;
+  // Longest Retry-After honored in-band. A window beyond this cannot reset
+  // before the attempts run out, so the request fails fast instead and the
+  // caller's queue-level backoff owns the wait.
+  protected maxRetryAfterMs: number = 30000;
 
   // Request timeout configuration (in milliseconds)
   protected requestTimeout: number = 30000; // 30 seconds default
@@ -168,12 +198,32 @@ export abstract class BaseAdapter implements IssueAdapter {
         lastError = error as Error;
 
         const status = this.parseStatusFromError(lastError);
-        if (status !== null && status >= 400 && status < 500) {
+        // 408/429 are the transient 4xx: the server asked for a retry.
+        // Every other 4xx is permanent.
+        const rateLimited = status === 429 || status === 408;
+        if (status !== null && status >= 400 && status < 500 && !rateLimited) {
+          throw lastError;
+        }
+
+        const retryAfterMs =
+          lastError instanceof HttpStatusError
+            ? lastError.retryAfterMs
+            : undefined;
+        // A Retry-After beyond the in-band cap cannot reset before the
+        // attempts run out — retrying into a closed window just burns them.
+        if (
+          rateLimited &&
+          retryAfterMs !== undefined &&
+          retryAfterMs > this.maxRetryAfterMs
+        ) {
           throw lastError;
         }
 
         if (i < retries) {
-          const delay = this.retryDelay * Math.pow(2, i); // Exponential backoff
+          const delay =
+            rateLimited && retryAfterMs !== undefined
+              ? retryAfterMs
+              : this.retryDelay * Math.pow(2, i); // Exponential backoff
           console.warn(`Request failed, retrying in ${delay}ms...`, error);
           await this.sleep(delay);
         }
@@ -205,28 +255,16 @@ export abstract class BaseAdapter implements IssueAdapter {
   }
 
   /**
-   * Make HTTP request with authentication headers
+   * Authentication headers for the current authData, per provider. Shared
+   * by makeRequest (JSON) and makeBinaryRequest (bytes).
    */
-  protected async makeRequest<T>(
-    url: string,
-    options: RequestInit = {}
-  ): Promise<T> {
+  protected buildAuthHeaders(): Record<string, string> {
     if (!this.authData) {
       throw new Error("Not authenticated");
     }
 
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      ...((options.headers as Record<string, string>) || {}),
-    };
+    const headers: Record<string, string> = {};
 
-    // A FormData body must let fetch set the multipart boundary itself — a
-    // preset JSON Content-Type would corrupt the upload.
-    if (options.body instanceof FormData) {
-      delete headers["Content-Type"];
-    }
-
-    // Add authentication headers based on auth type
     switch (this.authData.type) {
       case "oauth":
         headers["Authorization"] = `Bearer ${this.authData.accessToken}`;
@@ -262,15 +300,45 @@ export abstract class BaseAdapter implements IssueAdapter {
           }
         }
         break;
-      case "basic":
+      case "basic": {
         const credentials = Buffer.from(
           `${this.authData.username}:${this.authData.password}`
         ).toString("base64");
         headers["Authorization"] = `Basic ${credentials}`;
         break;
+      }
+    }
+
+    return headers;
+  }
+
+  /**
+   * Make HTTP request with authentication headers
+   */
+  protected async makeRequest<T>(
+    url: string,
+    options: RequestInit = {}
+  ): Promise<T> {
+    if (!this.authData) {
+      throw new Error("Not authenticated");
+    }
+
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      ...((options.headers as Record<string, string>) || {}),
+      ...this.buildAuthHeaders(),
+    };
+
+    // A FormData body must let fetch set the multipart boundary itself — a
+    // preset JSON Content-Type would corrupt the upload.
+    if (options.body instanceof FormData) {
+      delete headers["Content-Type"];
     }
 
     try {
+      // The status check lives inside the retried operation so retryable
+      // statuses (408/429/5xx) actually reach executeWithRetry's loop — a
+      // resolved non-2xx Response would otherwise bypass it entirely.
       const response = await this.executeWithRetry(async () => {
         const controller = new AbortController();
         const timeoutId = setTimeout(
@@ -278,20 +346,26 @@ export abstract class BaseAdapter implements IssueAdapter {
           this.requestTimeout
         );
         try {
-          return await fetch(url, {
+          const res = await fetch(url, {
             ...options,
             headers,
             signal: controller.signal,
           });
+          if (!res.ok) {
+            const errorText = await res.text();
+            // Retry-After is only consulted for the retryable-4xx pair, so
+            // permanent-failure paths never depend on the headers object.
+            const retryAfterMs =
+              res.status === 429 || res.status === 408
+                ? parseRetryAfterMs(res.headers.get("Retry-After"))
+                : undefined;
+            throw new HttpStatusError(res.status, errorText, retryAfterMs);
+          }
+          return res;
         } finally {
           clearTimeout(timeoutId);
         }
       });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
-      }
 
       // Some APIs answer successful mutations with an empty body (e.g. Redmine
       // returns 204 No Content on issue update). Calling response.json() on an
@@ -310,6 +384,68 @@ export abstract class BaseAdapter implements IssueAdapter {
       }
 
       throw error;
+    }
+  }
+
+  /**
+   * Authenticated GET returning raw bytes (attachment downloads).
+   * `makeRequest` always parses JSON so it cannot serve binary content.
+   *
+   * `maxBytes` is a hard cap enforced twice: via Content-Length before the
+   * body is read, and on the actual buffer afterwards (servers may omit or
+   * understate Content-Length). Redirects are followed by fetch; Node's
+   * fetch drops the Authorization header on cross-origin redirects, which
+   * is exactly right for the providers that 302 to pre-signed CDN URLs
+   * (Jira Cloud media).
+   */
+  protected async makeBinaryRequest(
+    url: string,
+    maxBytes: number
+  ): Promise<{ buffer: Buffer; contentType?: string }> {
+    // Auth comes from buildAuthHeaders(), which throws when unauthenticated
+    // — subclasses with their own auth state (Jira's API-key mode) override
+    // it rather than this method.
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.requestTimeout);
+    try {
+      const response = await fetch(url, {
+        headers: this.buildAuthHeaders(),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+      }
+
+      const declaredLength = Number(response.headers.get("content-length"));
+      if (Number.isFinite(declaredLength) && declaredLength > maxBytes) {
+        throw new Error(
+          `Binary response too large: ${declaredLength} bytes (max ${maxBytes})`
+        );
+      }
+
+      const buffer = Buffer.from(await response.arrayBuffer());
+      if (buffer.byteLength > maxBytes) {
+        throw new Error(
+          `Binary response too large: ${buffer.byteLength} bytes (max ${maxBytes})`
+        );
+      }
+
+      return {
+        buffer,
+        contentType:
+          response.headers.get("content-type")?.split(";")[0]?.trim() ||
+          undefined,
+      };
+    } catch (error: any) {
+      if (error.name === "AbortError") {
+        throw new Error(
+          `Request timeout after ${this.requestTimeout}ms: ${url}`
+        );
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
     }
   }
 

@@ -36,8 +36,10 @@ vi.mock("next-intl", () => ({
 }));
 
 // Mock data-set hook (used for the SELECT lookup combobox).
-vi.mock("~/lib/hooks", () => ({
-  useFindManyDataSet: () => ({ data: [] }),
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    dataSet: { useFindMany: () => ({ data: [] }) },
+  }),
 }));
 
 const toastSuccess = vi.fn();

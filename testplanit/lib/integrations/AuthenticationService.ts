@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prismaBase";
+import { rawDb } from "@/lib/rawDb";
 import { captureAuditEvent } from "@/lib/services/auditLog";
 import { EncryptionService, getMasterKey } from "@/utils/encryption";
 import crypto from "crypto";
@@ -21,18 +21,19 @@ export class AuthenticationService {
     userId: string,
     integrationId: number,
     state: string,
-    expiresIn: number = 600 // 10 minutes
+    expiresIn: number = 600, // 10 minutes
+    returnUrl?: string
   ): Promise<void> {
     const expiresAt = new Date(Date.now() + expiresIn * 1000);
 
     // Store state in a temporary storage (could be Valkey in production)
     // For now, we'll use the integration's settings field
-    await prisma.integration.update({
+    await rawDb.integration.update({
       where: { id: integrationId },
       data: {
         settings: {
           ...(((
-            await prisma.integration.findUnique({
+            await rawDb.integration.findUnique({
               where: { id: integrationId },
               select: { settings: true },
             })
@@ -41,6 +42,7 @@ export class AuthenticationService {
             [state]: {
               userId,
               expiresAt: expiresAt.toISOString(),
+              ...(returnUrl ? { returnUrl } : {}),
             },
           },
         },
@@ -54,8 +56,8 @@ export class AuthenticationService {
   static async verifyOAuthState(
     integrationId: number,
     state: string
-  ): Promise<{ valid: boolean; userId?: string }> {
-    const integration = await prisma.integration.findUnique({
+  ): Promise<{ valid: boolean; userId?: string; returnUrl?: string }> {
+    const integration = await rawDb.integration.findUnique({
       where: { id: integrationId },
       select: { settings: true },
     });
@@ -77,6 +79,10 @@ export class AuthenticationService {
     return {
       valid: true,
       userId: stateData.userId,
+      returnUrl:
+        typeof stateData.returnUrl === "string"
+          ? stateData.returnUrl
+          : undefined,
     };
   }
 
@@ -87,7 +93,7 @@ export class AuthenticationService {
     integrationId: number,
     state: string
   ): Promise<void> {
-    const integration = await prisma.integration.findUnique({
+    const integration = await rawDb.integration.findUnique({
       where: { id: integrationId },
       select: { settings: true },
     });
@@ -96,7 +102,7 @@ export class AuthenticationService {
     if (settings?.oauthState?.[state]) {
       delete settings.oauthState[state];
 
-      await prisma.integration.update({
+      await rawDb.integration.update({
         where: { id: integrationId },
         data: { settings },
       });
@@ -128,7 +134,7 @@ export class AuthenticationService {
       : null;
 
     // Whether a record already exists determines CREATE vs UPDATE for the audit.
-    const existing = await prisma.userIntegrationAuth.findUnique({
+    const existing = await rawDb.userIntegrationAuth.findUnique({
       where: { userId_integrationId: { userId, integrationId } },
       select: { id: true },
     });
@@ -137,7 +143,7 @@ export class AuthenticationService {
     // (userId, integrationId) and does not include isActive, so re-authorizing
     // or refreshing tokens must update the existing row rather than create a
     // second one (which would violate the constraint).
-    const record = await prisma.userIntegrationAuth.upsert({
+    const record = await rawDb.userIntegrationAuth.upsert({
       where: {
         userId_integrationId: { userId, integrationId },
       },
@@ -149,6 +155,7 @@ export class AuthenticationService {
         tokenExpiresAt: authData.expiresAt,
         additionalData: authData.additionalData,
         isActive: true,
+        needsReauthAt: null,
         lastUsedAt: new Date(),
       },
       update: {
@@ -157,6 +164,7 @@ export class AuthenticationService {
         tokenExpiresAt: authData.expiresAt,
         additionalData: authData.additionalData,
         isActive: true,
+        needsReauthAt: null,
         lastUsedAt: new Date(),
       },
       select: { id: true, integration: { select: { name: true } } },
@@ -215,7 +223,7 @@ export class AuthenticationService {
     expiresAt?: Date;
     additionalData?: any;
   } | null> {
-    const auth = await prisma.userIntegrationAuth.findFirst({
+    const auth = await rawDb.userIntegrationAuth.findFirst({
       where: {
         userId,
         integrationId,
@@ -276,55 +284,53 @@ export class AuthenticationService {
   }
 
   /**
-   * Store API key authentication
+   * Mark a user's auth row as needing re-authorization — the access token is
+   * expired and cannot be refreshed (no refresh token on record, or the
+   * provider terminally rejected it, e.g. OAuth `invalid_grant`). The
+   * `needsReauthAt IS NULL` guard makes the transition fire exactly once, so
+   * the owner gets a single notification per expiry event instead of one per
+   * failed sync tick. `storeUserAuth` clears the mark on successful (re)auth.
+   * Best-effort: a failure here must never break the calling sync path.
    */
-  static async storeApiKeyAuth(
-    integrationId: number,
-    apiKey: string,
-    additionalConfig?: any
+  static async markNeedsReauth(
+    userId: string,
+    integrationId: number
   ): Promise<void> {
-    const masterKey = getMasterKey();
+    try {
+      const { count } = await rawDb.userIntegrationAuth.updateMany({
+        where: { userId, integrationId, isActive: true, needsReauthAt: null },
+        data: { needsReauthAt: new Date() },
+      });
+      if (count === 0) return;
 
-    // Encrypt the API key
-    const encryptedCredentials = EncryptionService.encryptObject(
-      {
-        apiKey,
-        ...additionalConfig,
-      },
-      masterKey
-    );
+      const integration = await rawDb.integration.findUnique({
+        where: { id: integrationId },
+        select: { name: true, provider: true },
+      });
 
-    await prisma.integration.update({
-      where: { id: integrationId },
-      data: {
-        credentials: encryptedCredentials,
-        status: "ACTIVE",
-      },
-    });
-  }
-
-  /**
-   * Get API key authentication
-   */
-  static async getApiKeyAuth(integrationId: number): Promise<{
-    apiKey: string;
-    [key: string]: any;
-  } | null> {
-    const integration = await prisma.integration.findUnique({
-      where: { id: integrationId },
-      select: { credentials: true },
-    });
-
-    if (!integration?.credentials) {
-      return null;
+      const { NotificationService } =
+        await import("@/lib/services/notificationService");
+      await NotificationService.createIntegrationAuthExpiredNotification({
+        userId,
+        integrationId,
+        integrationName: integration?.name ?? `Integration #${integrationId}`,
+        provider: integration?.provider,
+      });
+    } catch (err) {
+      console.error(
+        "[AuthenticationService] Failed to mark integration auth for re-authorization:",
+        err
+      );
     }
-
-    const masterKey = getMasterKey();
-    return EncryptionService.decryptObject(
-      integration.credentials as string,
-      masterKey
-    );
   }
+
+  // storeApiKeyAuth / getApiKeyAuth used to live here. Both were unreferenced
+  // since the initial public release, and they wrote `Integration.credentials`
+  // as a bare ciphertext string — a third shape that no other reader
+  // understands. `resolveStoredCredentials` returns {} for a non-object, so a
+  // row written that way would have produced an integration that silently
+  // authenticated with nothing. The admin API routes are the only credential
+  // writers; a key stored through them is readable by every path.
 
   /**
    * Revoke user authentication
@@ -335,12 +341,12 @@ export class AuthenticationService {
   ): Promise<void> {
     // Capture the record (id + integration name) before deactivating it for the
     // audit — updateMany returns only a count.
-    const record = await prisma.userIntegrationAuth.findFirst({
+    const record = await rawDb.userIntegrationAuth.findFirst({
       where: { userId, integrationId, isActive: true },
       select: { id: true, integration: { select: { name: true } } },
     });
 
-    await prisma.userIntegrationAuth.updateMany({
+    await rawDb.userIntegrationAuth.updateMany({
       where: {
         userId,
         integrationId,
@@ -369,7 +375,7 @@ export class AuthenticationService {
     userId: string,
     integrationId: number
   ): Promise<boolean> {
-    const auth = await prisma.userIntegrationAuth.findFirst({
+    const auth = await rawDb.userIntegrationAuth.findFirst({
       where: {
         userId,
         integrationId,
@@ -388,7 +394,7 @@ export class AuthenticationService {
     userId: string,
     integrationId: number
   ): Promise<void> {
-    await prisma.userIntegrationAuth.updateMany({
+    await rawDb.userIntegrationAuth.updateMany({
       where: {
         userId,
         integrationId,

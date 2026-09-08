@@ -1,3 +1,5 @@
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { TestCaseNameDisplay } from "@/components/TestCaseNameDisplay";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
@@ -31,11 +33,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  LinkType,
-  RepositoryCaseLink,
-  RepositoryCaseSource,
-} from "@prisma/client";
+import { LinkType, RepositoryCaseSource } from "~/zenstack/models";
+import type { RepositoryCaseLink } from "~/zenstack/models";
 import {
   Bot,
   Calendar,
@@ -43,18 +42,14 @@ import {
   Link2,
   ListChecks,
   Plus,
-  Trash2,
+  Trash,
   X,
 } from "lucide-react";
 import type { Session } from "next-auth";
 import { useTranslations } from "next-intl";
 import React, { useMemo, useState } from "react";
 import { z } from "zod/v4";
-import {
-  useFindManyRepositoryCaseLink,
-  useUpdateRepositoryCaseLink,
-  useUpsertRepositoryCaseLink,
-} from "~/lib/hooks";
+import { statusSurfaceVars } from "~/utils/contrastingTextColor";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 import { DateFormatter } from "./DateFormatter";
 import { UserNameCell } from "./tables/UserNameCell";
@@ -102,7 +97,9 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
   const tGlobal = useTranslations();
 
   // Fetch all links where this case is caseA or caseB
-  const { data: links, refetch } = useFindManyRepositoryCaseLink({
+  const { data: links, refetch } = useClientQueries(
+    schema
+  ).repositoryCaseLink.useFindMany({
     where: {
       OR: [
         { caseAId: caseId, isDeleted: false },
@@ -190,8 +187,10 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
   // For Add Link Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const { mutateAsync: upsertLink } = useUpsertRepositoryCaseLink();
-  const { mutateAsync: updateLink } = useUpdateRepositoryCaseLink();
+  const { mutateAsync: upsertLink } =
+    useClientQueries(schema).repositoryCaseLink.useUpsert();
+  const { mutateAsync: updateLink } =
+    useClientQueries(schema).repositoryCaseLink.useUpdate();
 
   // Compute all linked case IDs to prevent circular/self-link
   const linkedCaseIds = useMemo(() => {
@@ -338,7 +337,7 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
 
   return (
     <Card shadow="none">
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-row items-center justify-between p-4">
         <CardTitle className="flex items-center gap-2">
           <Link2 className="w-5 h-5" />
           {tLinkedCases("title")}
@@ -366,7 +365,7 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
       </CardHeader>
       <CardContent className="p-0">
         {!links || links.length === 0 ? (
-          <div className="text-muted-foreground ml-6 -mt-8 mb-4 text-sm">
+          <div className="text-muted-foreground ms-4 -mt-6 mb-4 text-sm">
             {tLinkedCases("noLinkedCases")}
           </div>
         ) : (
@@ -388,7 +387,7 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
                 <TableHead className="w-[180px]">
                   {tLinkedCases("on")}
                 </TableHead>
-                <TableHead className="w-[60px] text-right">
+                <TableHead className="w-[60px] text-end">
                   {tGlobal("common.actions.remove")}
                 </TableHead>
               </TableRow>
@@ -564,7 +563,13 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
                             <div className="space-y-1">
                               <span
                                 className="px-2 py-0.5 rounded-lg text-xs font-semibold"
+                                data-status-surface={
+                                  status?.color?.value ? true : undefined
+                                }
                                 style={{
+                                  ...statusSurfaceVars(
+                                    status?.color?.value || ""
+                                  ),
                                   backgroundColor:
                                     status?.color?.value || undefined, // Handles null status
                                   color: status?.color?.value // Handles null status
@@ -576,7 +581,7 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
                               </span>
                               <div>
                                 {date && (
-                                  <span className="ml-1 text-xs text-muted-foreground font-normal flex items-start gap-1">
+                                  <span className="ms-1 text-xs text-muted-foreground font-normal flex items-start gap-1">
                                     <Calendar className="w-4 h-4 shrink-0" />
                                     <DateFormatter
                                       date={date}
@@ -612,7 +617,7 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
                           timezone={session?.user.preferences?.timezone}
                         />
                       </TableCell>
-                      <TableCell className="w-[60px] text-right">
+                      <TableCell className="w-[60px] text-end">
                         {canManageLinks && (
                           <Popover
                             open={openPopoverLinkId === link.id}
@@ -648,7 +653,7 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
                                   variant="destructive"
                                   onClick={() => handleUnlink(link.id)}
                                 >
-                                  <Trash2 className="w-4 h-4" />
+                                  <Trash className="w-4 h-4" />
                                   {tGlobal("common.actions.remove")}
                                 </Button>
                               </div>
@@ -740,7 +745,7 @@ function AddLinkDialog({
                 <Button
                   type="button"
                   variant="outline"
-                  className="justify-start text-left w-full"
+                  className="justify-start text-start w-full"
                 >
                   {value ? (
                     <span className="flex items-center gap-1 overflow-hidden">

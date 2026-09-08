@@ -1,3 +1,5 @@
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { DurationDisplay } from "@/components/DurationDisplay";
 import DynamicIcon from "@/components/DynamicIcon";
@@ -27,7 +29,7 @@ import {
 import { AddResultModal } from "@/projects/repository/[projectId]/AddResultModal";
 import FieldValueRenderer from "@/projects/repository/[projectId]/[caseId]/FieldValueRenderer";
 import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
-import { Attachments, Prisma, Status } from "@prisma/client";
+import type { Attachments, Status } from "~/zenstack/models";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Check,
@@ -40,25 +42,19 @@ import {
   Combine,
   LayoutTemplate,
   Plus,
+  SquarePen,
   SquareStack,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
 import { notifyTestCaseAssignment } from "~/app/actions/test-run-notifications";
 import { emptyEditorContent } from "~/app/constants";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import { useFindFirstRepositoryCasesFiltered } from "~/hooks/useRepositoryCasesWithFilteredFields";
-import {
-  useFindFirstWorkflows,
-  useFindManyStatus,
-  useFindManyTemplateResultAssignment,
-  useUpdateTestRunCases,
-} from "~/lib/hooks";
-import { useFindManyTemplates } from "~/lib/hooks/templates";
+import { useTestRunCaseDetail } from "~/hooks/useTestRunCaseDetail";
 import {
   isIssueRequiredOnFailureSubmitResultError,
   isJustificationRequiredSubmitResultError,
@@ -111,6 +107,12 @@ interface TestRunCaseDetailsProps {
    * against. Wrapper formats this from the active iteration + totalIterations.
    */
   activeIterationLabel?: string;
+  /**
+   * Switches the host Sheet to in-place test-case editing. Only provided when
+   * the viewer holds the TestCaseRepository add/edit permission (the host
+   * gates it), so presence doubles as the permission check.
+   */
+  onEditCase?: () => void;
 }
 
 export function TestRunCaseDetails({
@@ -127,11 +129,20 @@ export function TestRunCaseDetails({
   stepParameters,
   activeIterationId,
   activeIterationLabel,
+  onEditCase,
 }: TestRunCaseDetailsProps) {
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const { data: session } = useSession();
   const queryClient = useQueryClient();
+
+  // AsyncCombobox refetches whenever `fetchOptions` changes identity, so an
+  // inline arrow would refetch on every render of this component.
+  const fetchMemberOptions = useCallback(
+    (query: string, page: number, pageSize: number) =>
+      searchProjectMembers(projectId, query, page, pageSize),
+    [projectId]
+  );
   const [selectedAttachmentIndex, setSelectedAttachmentIndex] = useState<
     number | null
   >(null);
@@ -182,10 +193,13 @@ export function TestRunCaseDetails({
     setSelectedAttachments([]);
   };
 
-  const { mutateAsync: updateTestRunCase } = useUpdateTestRunCases();
+  const { mutateAsync: updateTestRunCase } =
+    useClientQueries(schema).testRunCases.useUpdate();
 
   // Find the first IN_PROGRESS workflow state for this project
-  const { data: inProgressWorkflow } = useFindFirstWorkflows({
+  const { data: inProgressWorkflow } = useClientQueries(
+    schema
+  ).workflows.useFindFirst({
     where: {
       projects: {
         some: {
@@ -202,241 +216,67 @@ export function TestRunCaseDetails({
     },
   });
 
-  // Define the select object for repositoryCaseWithDetails
-  const repositoryCaseWithDetailsSelect = {
-    id: true,
-    name: true,
-    estimate: true,
-    forecastManual: true,
-    forecastAutomated: true,
-    currentVersion: true,
-    state: {
-      select: {
-        id: true,
-        name: true,
-        icon: { select: { name: true } },
-        color: { select: { value: true } },
-      },
-    },
-    project: true,
-    folder: true,
-    creator: true,
-    template: {
-      select: {
-        id: true,
-        templateName: true,
-        caseFields: {
-          select: {
-            caseFieldId: true,
-            order: true,
-            caseField: {
-              select: {
-                id: true,
-                defaultValue: true,
-                displayName: true,
-                type: { select: { type: true } },
-                fieldOptions: {
-                  select: {
-                    fieldOption: {
-                      select: {
-                        id: true,
-                        icon: true,
-                        iconColor: true,
-                        name: true,
-                        order: true,
-                      },
-                    },
-                  },
-                  orderBy: { fieldOption: { order: "asc" } },
-                },
-              },
-            },
-          },
-          orderBy: { order: "asc" },
-        },
-      },
-    },
-    caseFieldValues: {
-      select: {
-        id: true,
-        value: true,
-        fieldId: true,
-        field: {
-          select: {
-            id: true,
-            displayName: true,
-            type: { select: { type: true } },
-          },
-        },
-      },
-      where: { field: { isEnabled: true, isDeleted: false } },
-    },
-    attachments: {
-      orderBy: { createdAt: "desc" },
-      where: { isDeleted: false },
-      select: {
-        id: true,
-        name: true,
-        url: true,
-        createdAt: true,
-        mimeType: true,
-        size: true,
-        note: true,
-        createdBy: { select: { name: true, id: true } },
-        testCaseId: true,
-        isDeleted: true,
-        createdById: true,
-        sessionId: true,
-        sessionResultsId: true,
-        testRunsId: true,
-        testRunResultsId: true,
-        testRunStepResultId: true,
-        junitTestResultId: true,
-      },
-    },
-    steps: {
-      where: { isDeleted: false },
-      orderBy: { order: "asc" },
-      select: {
-        id: true,
-        step: true,
-        testCaseId: true,
-        order: true,
-        expectedResult: true,
-        isDeleted: true,
-        sharedStepGroupId: true,
-        sharedStepGroup: {
-          select: {
-            id: true,
-            name: true,
-            projectId: true,
-            isDeleted: true,
-            deletedAt: true,
-            createdAt: true,
-            updatedAt: true,
-            createdById: true,
-          },
-        },
-      },
-    },
-    tags: {
-      where: { isDeleted: false },
-      orderBy: { name: "asc" },
-      select: {
-        id: true,
-        name: true,
-      },
-    },
-    issues: {
-      include: {
-        integration: {
-          select: {
-            id: true,
-            provider: true,
-            name: true,
-          },
-        },
-      },
-    },
-    testRuns: {
-      where: {
-        testRunId: testRunId || undefined,
-      },
-      select: {
-        id: true,
-        testRun: {
-          select: {
-            id: true,
-            name: true,
-            milestone: {
-              select: {
-                name: true,
-                completedAt: true,
-              },
-            },
-            configuration: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
-        },
-        results: {
-          select: {
-            id: true,
-            status: {
-              select: {
-                name: true,
-                color: {
-                  select: {
-                    value: true,
-                  },
-                },
-              },
-            },
-            executedBy: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-            editedBy: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-            editedAt: true,
-            executedAt: true,
-            elapsed: true,
-            attempt: true,
-          },
-        },
-        assignedTo: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-    },
-    source: true,
-    automated: true,
-    hasParameters: true,
-  } satisfies Prisma.RepositoryCasesSelect;
-
-  // Define the explicit type for the testcase based on the select
-  type RepositoryCaseWithDetails = Prisma.RepositoryCasesGetPayload<{
-    select: typeof repositoryCaseWithDetailsSelect;
-  }>;
-
-  const { data: testcase, isLoading } = useFindFirstRepositoryCasesFiltered({
-    where: { id: caseId, isDeleted: false },
-    select: repositoryCaseWithDetailsSelect,
-  }) as {
-    data: RepositoryCaseWithDetails | null | undefined;
-    isLoading: boolean;
-  };
+  // Full case detail (steps, tags, issues, template fields, per-run results,
+  // ...) now comes from a server route off baseDb instead of the
+  // policy-enforced ZenStack client hook -- that hook's ~10 nested relations
+  // (plus `project`/`folder`/`creator` full-object includes nobody read) hit
+  // the same ACL correlated-subquery pathology documented in
+  // testplanit-acl-overhead-investigation: mean 10.6s / max 65s per call in
+  // prod. See lib/services/testRunCaseDetail.ts. The run page's own
+  // transition-clearing check calls this same hook with the same
+  // (caseId, testRunId), so React Query dedupes the two into one request.
+  const { data: testcase, isLoading } = useTestRunCaseDetail(caseId, testRunId);
 
   // Does this case's template require a result field? Quick-pass / quick-status
   // can't capture one, so when it does we escalate to the full Add Result modal
   // (which captures the field) rather than letting submit-result reject it.
-  const { data: requiredResultFieldAssignments } =
-    useFindManyTemplateResultAssignment(
-      {
-        where: {
-          templateId: testcase?.template?.id,
-          resultField: { isRequired: true, isEnabled: true, isDeleted: false },
-        },
-        take: 1,
+  const { data: requiredResultFieldAssignments } = useClientQueries(
+    schema
+  ).templateResultAssignment.useFindMany(
+    {
+      where: {
+        templateId: testcase?.template?.id,
+        resultField: { isRequired: true, isEnabled: true, isDeleted: false },
       },
-      { enabled: !!testcase?.template?.id }
-    );
+      take: 1,
+    },
+    { enabled: !!testcase?.template?.id }
+  );
   const hasRequiredResultField =
     (requiredResultFieldAssignments?.length ?? 0) > 0;
 
-  const { data: _templates } = useFindManyTemplates({
+  // Automated runs (JUnit, TestNG, Mocha, etc.) record their outcome in
+  // JUnitTestResult and never denormalise it onto TestRunCases.statusId, so
+  // `currentStatus` arrives null for a case that has in fact executed. Only
+  // fetched when there is no run-case status to show — a manual case never
+  // pays for this. Scoped to this case and run rather than added to the run's
+  // own testCases select, which is deliberately thin (a run can hold thousands
+  // of unpaginated cases).
+  const { data: automatedResults } = useClientQueries(
+    schema
+  ).jUnitTestResult.useFindMany(
+    {
+      where: {
+        repositoryCaseId: caseId,
+        testSuite: { testRunId },
+      },
+      select: {
+        status: {
+          select: {
+            id: true,
+            name: true,
+            color: { select: { value: true } },
+          },
+        },
+      },
+      orderBy: [{ executedAt: "desc" }, { id: "desc" }],
+      take: 1,
+    },
+    { enabled: !currentStatus && testRunId != null }
+  );
+  const automatedStatus = automatedResults?.[0]?.status ?? null;
+
+  const { data: _templates } = useClientQueries(schema).templates.useFindMany({
     where: {
       isDeleted: false,
       isEnabled: true,
@@ -461,7 +301,7 @@ export function TestRunCaseDetails({
   });
 
   // Fetch available statuses
-  const { data: statuses } = useFindManyStatus({
+  const { data: statuses } = useClientQueries(schema).status.useFindMany({
     where: {
       AND: [
         { isEnabled: true },
@@ -501,7 +341,7 @@ export function TestRunCaseDetails({
     (status: Status) => status.isSuccess === true
   );
 
-  const displayStatus = currentStatus || defaultStatus;
+  const displayStatus = currentStatus || automatedStatus || defaultStatus;
   if (!displayStatus) return null;
 
   const handleStatusChange = (statusId: string) => {
@@ -526,7 +366,9 @@ export function TestRunCaseDetails({
   if (isLoading || !testcase) return null;
 
   const hasAttachments = testcase.attachments.length > 0;
-  const hasTags = testcase.tags.length > 0;
+  const tags = testcase.caseTags.map((ct) => ct.tag);
+  const issues = testcase.caseIssues.map((ci) => ci.issue);
+  const hasTags = tags.length > 0;
 
   // Determine if the user can manage links (reuse canAddEditResults or add a new permission if needed)
   const canManageLinks = canAddEditResults; // Adjust if you want a different permission check
@@ -732,7 +574,7 @@ export function TestRunCaseDetails({
   };
 
   return (
-    <div className="h-full overflow-y-auto space-y-2 relative -ml-1">
+    <div className="h-full overflow-y-auto space-y-2 relative -ms-1">
       {isTransitioning && (
         <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
           <div className="flex flex-col items-center gap-2">
@@ -743,7 +585,7 @@ export function TestRunCaseDetails({
           </div>
         </div>
       )}
-      <div className="flex justify-between items-center gap-2 bg-primary p-4">
+      <div className="sticky top-0 z-20 flex justify-between items-center gap-2 bg-primary p-4">
         <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
           {testRunId && canAddEditResults && (
             <>
@@ -774,7 +616,7 @@ export function TestRunCaseDetails({
                       size="sm"
                       onClick={handleQuickPass}
                       disabled={isDisabled}
-                      className="flex items-center rounded-r-none border-r-0"
+                      className="flex items-center rounded-e-none border-e-0"
                     >
                       <CheckCircle className="h-4 w-4" />
                       {tCommon("actions.passAndNext")}
@@ -786,7 +628,7 @@ export function TestRunCaseDetails({
                           variant="outline"
                           size="sm"
                           disabled={isDisabled}
-                          className="flex items-center rounded-l-none border-l-0"
+                          className="flex items-center rounded-s-none border-s-0"
                         >
                           <ChevronDown className="h-4 w-4" />
                         </Button>
@@ -904,7 +746,7 @@ export function TestRunCaseDetails({
                             className="flex items-center cursor-pointer"
                           >
                             <div
-                              className="w-3 h-3 rounded-full mr-2"
+                              className="w-3 h-3 rounded-full me-2"
                               style={{
                                 backgroundColor:
                                   status.color?.value || "#B1B2B3",
@@ -912,7 +754,7 @@ export function TestRunCaseDetails({
                             />
                             <span className="flex-1">{status.name}</span>
                             {status.isSuccess && (
-                              <CheckCircle className="h-4 w-4 ml-2 text-muted-foreground" />
+                              <CheckCircle className="h-4 w-4 ms-2 text-muted-foreground" />
                             )}
                           </DropdownMenuItem>
                         ))}
@@ -934,9 +776,7 @@ export function TestRunCaseDetails({
                       : null
                   }
                   onValueChange={handleAssignmentChange}
-                  fetchOptions={(query, page, pageSize) =>
-                    searchProjectMembers(projectId, query, page, pageSize)
-                  }
+                  fetchOptions={fetchMemberOptions}
                   renderOption={(user) => (
                     <UserNameCell userId={user.id} hideLink />
                   )}
@@ -954,7 +794,26 @@ export function TestRunCaseDetails({
         </div>
         {/* --- Previous/Next Buttons --- */}
         <TooltipProvider>
-          <div className="flex items-center gap-2 shrink-0 mr-8">
+          <div className="flex items-center gap-2 shrink-0 me-8">
+            {onEditCase && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={onEditCase}
+                    aria-label={tCommon("actions.editTestCase")}
+                    data-testid="run-case-edit-case"
+                  >
+                    <SquarePen className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {tCommon("actions.editTestCase")}
+                </TooltipContent>
+              </Tooltip>
+            )}
             {/* Prev Button */}
             <Tooltip>
               <TooltipTrigger asChild>
@@ -1083,7 +942,7 @@ export function TestRunCaseDetails({
                       }`}
                     >
                       <div
-                        className="w-3 h-3 rounded-full mr-2"
+                        className="w-3 h-3 rounded-full me-2"
                         style={{
                           backgroundColor:
                             statusOption.color?.value || "#B1B2B3",
@@ -1091,7 +950,7 @@ export function TestRunCaseDetails({
                       />
                       <span className="flex-1">{statusOption.name}</span>
                       {statusOption.id === displayStatus.id && (
-                        <Check className="h-4 w-4 ml-2 text-muted-foreground" />
+                        <Check className="h-4 w-4 ms-2 text-muted-foreground" />
                       )}
                     </DropdownMenuItem>
                   ))}
@@ -1102,7 +961,7 @@ export function TestRunCaseDetails({
         </div>
       </div>
       <Card
-        className="p-4 space-y-4 border-none rounded-none ml-1"
+        className="p-4 space-y-4 border-none rounded-none ms-1"
         shadow="none"
       >
         <div className="flex justify-between">
@@ -1181,12 +1040,10 @@ export function TestRunCaseDetails({
                   onSelect={handleSelect}
                 />
               )}
-              {hasTags && (
-                <TagsListDisplay tags={testcase.tags} projectId={projectId} />
-              )}
-              {testcase.issues && testcase.issues.length > 0 && (
+              {hasTags && <TagsListDisplay tags={tags} projectId={projectId} />}
+              {issues && issues.length > 0 && (
                 <IssuesListDisplay
-                  issues={testcase.issues.map((issue) => ({
+                  issues={issues.map((issue) => ({
                     ...issue,
                     projectIds: [projectId],
                   }))}
@@ -1289,6 +1146,7 @@ export function TestRunCaseDetails({
           caseId={caseId}
           projectId={projectId}
           session={session}
+          currentTestRunId={testRunId}
         />
       </Card>
 
