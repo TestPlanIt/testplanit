@@ -28,6 +28,15 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "bullmq"
         update-types: ["version-update:semver-major"]
+      # Pinned to 9.x on purpose (#616). The 10.x line requires
+      # conventional-changelog-writer@9, but semantic-release 25 bundles
+      # @semantic-release/release-notes-generator 14, which depends on writer
+      # ^8 — the two cannot agree, and generateNotes dies with
+      # `Missing helper: ... requires conventional-changelog-writer@9 or newer`,
+      # blocking every app release. Only unhold this alongside a
+      # semantic-release major that ships a writer-9 generator.
+      - dependency-name: "conventional-changelog-conventionalcommits"
+        update-types: ["version-update:semver-major"]
     groups:
       dev-dependencies:
         dependency-type: "development"
