@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/TestPlanIt/testplanit/compare/v1.0.0...v1.0.1) (2026-09-08)
+
+### Bug Fixes
+
+* **deps:** pin the conventionalcommits preset to the line semantic-release supports ([#616](https://github.com/TestPlanIt/testplanit/issues/616)) ([ab158e3](https://github.com/TestPlanIt/testplanit/commit/ab158e3c736e88790ef57afb612a1f4ce05c32b8))
+* **helm:** track the app release line in the chart version ([#615](https://github.com/TestPlanIt/testplanit/issues/615)) ([5d34f08](https://github.com/TestPlanIt/testplanit/commit/5d34f08f33d922b11708ceaa45e94e456f9a3ee9))
+
 ## [1.0.0](https://github.com/TestPlanIt/testplanit/compare/v0.44.3...v1.0.0) (2026-09-08)
 
 TestPlanIt 1.0 graduates the `beta` line — 21 pre-releases and 725 commits since
