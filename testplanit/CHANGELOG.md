@@ -1,3 +1,171 @@
+## [1.0.0](https://github.com/TestPlanIt/testplanit/compare/v0.44.3...v1.0.0) (2026-09-08)
+
+TestPlanIt 1.0 graduates the `beta` line — 21 pre-releases and 725 commits since
+v0.44.3 — and completes the feature set the platform set out to build. See the
+[1.0 release announcement](https://docs.testplanit.com/blog/v1.0-release) for the
+full write-up.
+
+From here on the project follows semantic versioning: breaking changes mean a
+major version, and upgrades within 1.x are routine.
+
+### Upgrading
+
+**Back up your database first.** 1.0 moves schema changes to versioned
+migrations, and a database created by a 0.x release needs a one-time baseline
+step before its first v1.0 start — see the
+[upgrade notes](https://docs.testplanit.com/docs/installation#upgrading).
+
+### Features
+
+* **jira:** milestone sync, a release-readiness cockpit with burndown and per-case traceability, AI generation from the issue panel, and self-refreshing OAuth
+* **ai:** image context for generation — screenshots from linked issues, embedded rich-text images, and crawled pages — across every connected provider
+* **automation:** per-run execution metrics, an execution timeline, retry-aware flaky detection, and automated status resolved through a single effective-status source
+* **repository:** a dockable case-details panel, a sortable latest-result column, reorderable and resizable columns, multi-dimension filters with shareable URLs, and saved views
+* **reviews:** bulk approval requests, a dedicated review inbox with decision badges, and a pending queue with reminders
+* **runs:** composition lock at execution start, even assignment distribution, in-place case editing mid-run, and ready-to-complete notifications
+* **platform:** official Docker images and a single-tenant Helm chart, opt-in read-replica routing, and configurable API rate limits and upload ceilings
+* **i18n:** 17 languages, including full right-to-left support for Arabic
+
+### Performance Improvements
+
+* **data-layer:** access control enforced at the query layer with two-phase pagination — the heaviest lists drop from ~22s to ~270ms
+* **acl:** project access resolved once per request instead of re-asked per query
+* **lists:** runs, users, and audit logs window, prefetch, and stream on scroll
+
+### Bug Fixes
+
+* **search:** indexing moved to post-commit sync so results always match the database, and deletes remove their documents
+* **audit:** correct actor attribution including API tokens, rich-text edits captured, and integration credentials encrypted on every write path
+* **live-updates:** no reconnect refetch storms; connections defer until the browser is idle
+* **webhooks:** Issue events reach every linked project, and deliveries show which record each one was about
+* **a11y:** an Accessible Dark theme meeting WCAG AA, enforced by a CI contrast gate
+
+## [0.44.3](https://github.com/TestPlanIt/testplanit/compare/v0.44.2...v0.44.3) (2026-08-12)
+
+### Bug Fixes
+
+* **integrations:** accept cleartext credentials, refuse only undecryptable ones ([#583](https://github.com/TestPlanIt/testplanit/issues/583)) ([8c38285](https://github.com/TestPlanIt/testplanit/commit/8c38285a6968987755a852d931c7ac8981f4539a))
+
+## [0.44.2](https://github.com/TestPlanIt/testplanit/compare/v0.44.1...v0.44.2) (2026-08-12)
+
+### Bug Fixes
+
+* **integrations:** stop using unreadable credentials and return actionable errors ([#580](https://github.com/TestPlanIt/testplanit/issues/580)) ([6d1080f](https://github.com/TestPlanIt/testplanit/commit/6d1080f77bc49b449ef7298c34ff97f4b8612977))
+
+## [0.44.1](https://github.com/TestPlanIt/testplanit/compare/v0.44.0...v0.44.1) (2026-08-10)
+
+### Bug Fixes
+
+* **api:** stop losing results when parallel workers race to create the same folder ([#564](https://github.com/TestPlanIt/testplanit/issues/564)) ([ba7e7a5](https://github.com/TestPlanIt/testplanit/commit/ba7e7a504e31ed723bf7fc72850173a6111f2cfa))
+* **deps:** resolve 13 of 15 open Dependabot alerts ([#578](https://github.com/TestPlanIt/testplanit/issues/578)) ([8a4e5cd](https://github.com/TestPlanIt/testplanit/commit/8a4e5cd556b10387055e080eebdc154347bc6742))
+
+## [0.44.0](https://github.com/TestPlanIt/testplanit/compare/v0.43.0...v0.44.0) (2026-08-01)
+
+### Features
+
+* **cli:** add run create and complete, resolving the duplicate testplanit bin ([#559](https://github.com/TestPlanIt/testplanit/issues/559)) ([44a46c5](https://github.com/TestPlanIt/testplanit/commit/44a46c5d0b404420ceb05c044aed37c50694dad1))
+* **reporters:** attach every Playwright execution to one externally managed run ([#557](https://github.com/TestPlanIt/testplanit/issues/557)) ([7fd2bcb](https://github.com/TestPlanIt/testplanit/commit/7fd2bcbafb2603e0b4f7fb3ce5931195827a70b8))
+* **reporters:** attach every wdio invocation to one externally managed run ([#555](https://github.com/TestPlanIt/testplanit/issues/555)) ([9f838ab](https://github.com/TestPlanIt/testplanit/commit/9f838ab3ff546166b25d96db6d944da2c9d3465d))
+
+### Bug Fixes
+
+* **deps:** resolve all 40 open Dependabot alerts ([#563](https://github.com/TestPlanIt/testplanit/issues/563)) ([194e35d](https://github.com/TestPlanIt/testplanit/commit/194e35d2c1c8c9d1e60eaaafbf10482f6f52867c))
+* **wdio-reporter:** export the service-created run id to forked workers ([#560](https://github.com/TestPlanIt/testplanit/issues/560)) ([34c8079](https://github.com/TestPlanIt/testplanit/commit/34c8079e00c325df6af7955babfbade8a5a064fb))
+
+## [0.43.0](https://github.com/TestPlanIt/testplanit/compare/v0.42.0...v0.43.0) (2026-07-28)
+
+### Features
+
+* **reporters:** add excludeSkipped option to omit skipped results from runs ([#550](https://github.com/TestPlanIt/testplanit/issues/550)) ([5145332](https://github.com/TestPlanIt/testplanit/commit/51453327f9750da7bee8eea4c7a663936f2e8474))
+* **reporters:** attach links, files, and metadata to the test run itself ([#548](https://github.com/TestPlanIt/testplanit/issues/548)) ([65a5452](https://github.com/TestPlanIt/testplanit/commit/65a545262b02a39bf31b73cfcd9439b4d5c258f7))
+
+### Bug Fixes
+
+* **integrations:** transfer description images to created issues as attachments ([#554](https://github.com/TestPlanIt/testplanit/issues/554)) ([1e0f60f](https://github.com/TestPlanIt/testplanit/commit/1e0f60f7e3ada757b9cc81448c9b6d29201df269)), closes [#553](https://github.com/TestPlanIt/testplanit/issues/553)
+
+## [0.42.0](https://github.com/TestPlanIt/testplanit/compare/v0.41.6...v0.42.0) (2026-07-25)
+
+### Features
+
+* **wdio-reporter:** mark matched cases automated ([#526](https://github.com/TestPlanIt/testplanit/issues/526)) ([9c2fc5c](https://github.com/TestPlanIt/testplanit/commit/9c2fc5c5df41393cb29996d4233b5a86d14f3128))
+* **wdio-reporter:** resolve cases by a custom field value ([#521](https://github.com/TestPlanIt/testplanit/issues/521)) ([53f406b](https://github.com/TestPlanIt/testplanit/commit/53f406b78f60766e07b6f2c4783b33aa020d32b2))
+
+### Enhancements
+
+* **workers:** cache tenant configs and back off idle multi-tenant polling ([#542](https://github.com/TestPlanIt/testplanit/issues/542)) ([843c86b](https://github.com/TestPlanIt/testplanit/commit/843c86bbab6dc85dce146c6c114d9752e6cb456d))
+
+## [0.41.6](https://github.com/TestPlanIt/testplanit/compare/v0.41.5...v0.41.6) (2026-07-10)
+
+### Bug Fixes
+
+* **jira:** Jira Server / Data Center support (REST v2, PAT/Basic auth, wiki markup) ([#510](https://github.com/TestPlanIt/testplanit/issues/510)) ([c18d812](https://github.com/TestPlanIt/testplanit/commit/c18d812cbc488a83a71b43ceb00b742a41d0edf2))
+
+## [0.41.5](https://github.com/TestPlanIt/testplanit/compare/v0.41.4...v0.41.5) (2026-07-10)
+
+### Performance Improvements
+
+* **build:** right-size Node heap caps and update memory docs ([#513](https://github.com/TestPlanIt/testplanit/issues/513)) ([05de4b6](https://github.com/TestPlanIt/testplanit/commit/05de4b6942c82a68133cae69dddca114d6652585)), closes [#511](https://github.com/TestPlanIt/testplanit/issues/511)
+
+## [0.41.4](https://github.com/TestPlanIt/testplanit/compare/v0.41.3...v0.41.4) (2026-07-10)
+
+### Performance Improvements
+
+* **zenstack:** stop generating unused CRUD input schemas — 12.6 GB -> 2.5 GB, 4.5 min -> 40 s ([#511](https://github.com/TestPlanIt/testplanit/issues/511)) ([02d48a2](https://github.com/TestPlanIt/testplanit/commit/02d48a2db030e48b19499f29e7712318cb005c60))
+
+## [0.41.3](https://github.com/TestPlanIt/testplanit/compare/v0.41.2...v0.41.3) (2026-07-08)
+
+### Bug Fixes
+
+* **audit:** stop FK-poison re-poll loop in CDC audit-log writer ([#503](https://github.com/TestPlanIt/testplanit/issues/503)) ([b87f29f](https://github.com/TestPlanIt/testplanit/commit/b87f29ff8cc502220ef32eed7191665d49119c92))
+
+## [0.41.2](https://github.com/TestPlanIt/testplanit/compare/v0.41.1...v0.41.2) (2026-07-07)
+
+### Enhancements
+
+* **auth:** enter an existing sign-in code from the Magic Link dialog ([#498](https://github.com/TestPlanIt/testplanit/issues/498)) ([ff7bce4](https://github.com/TestPlanIt/testplanit/commit/ff7bce44e0748e0cc0ce35a6bd3d7db1977786dd))
+
+## [0.41.1](https://github.com/TestPlanIt/testplanit/compare/v0.41.0...v0.41.1) (2026-07-07)
+
+### Enhancements
+
+* **auth:** device-bound magic-link sign-in with OTP fallback ([#497](https://github.com/TestPlanIt/testplanit/issues/497)) ([a8a1def](https://github.com/TestPlanIt/testplanit/commit/a8a1deffd3f532dfdf51b6beaa0e10cd2f947bef))
+
+## [0.41.0](https://github.com/TestPlanIt/testplanit/compare/v0.40.14...v0.41.0) (2026-07-05)
+
+### Features
+
+* **integrations:** bulk-import external issues into a project with a scoped filter ([#493](https://github.com/TestPlanIt/testplanit/issues/493)) ([06ecab7](https://github.com/TestPlanIt/testplanit/commit/06ecab7d21af1a727a38dda5f800a70deeb4cc40)), closes [#452](https://github.com/TestPlanIt/testplanit/issues/452)
+
+## [0.40.14](https://github.com/TestPlanIt/testplanit/compare/v0.40.13...v0.40.14) (2026-07-03)
+
+### Bug Fixes
+
+* **ssrf:** block IPv4-mapped IPv6 bypass and pin git-repo connections ([#491](https://github.com/TestPlanIt/testplanit/issues/491)) ([6c77a7d](https://github.com/TestPlanIt/testplanit/commit/6c77a7d362ca0d70c284fa2304c782ce6bb5157c))
+
+## [0.40.13](https://github.com/TestPlanIt/testplanit/compare/v0.40.12...v0.40.13) (2026-07-02)
+
+### Bug Fixes
+
+* **docker:** move Postgres to a named volume and bump to Postgres 18 ([#486](https://github.com/TestPlanIt/testplanit/issues/486)) ([a8da511](https://github.com/TestPlanIt/testplanit/commit/a8da511f68eac52eaf8beff8eb806a53b1c9056e)), closes [#485](https://github.com/TestPlanIt/testplanit/issues/485) [docker-library/postgres#1259](https://github.com/docker-library/postgres/issues/1259) [docker-library/postgres#1400](https://github.com/docker-library/postgres/issues/1400)
+
+## [0.40.12](https://github.com/TestPlanIt/testplanit/compare/v0.40.11...v0.40.12) (2026-06-30)
+
+### Bug Fixes
+
+* **copy-move:** create distinct cases instead of resurrecting tombstones on copy ([#484](https://github.com/TestPlanIt/testplanit/issues/484)) ([4e92f45](https://github.com/TestPlanIt/testplanit/commit/4e92f45968d56de307d6135eaf7a86e064b9dbd4)), closes [LinkifyIt#match](https://github.com/TestPlanIt/LinkifyIt/issues/match)
+
+## [0.40.11](https://github.com/TestPlanIt/testplanit/compare/v0.40.10...v0.40.11) (2026-06-29)
+
+### Bug Fixes
+
+* **forecast:** ignore soft-deleted test cases in forecast calculations ([#478](https://github.com/TestPlanIt/testplanit/issues/478)) ([4b6a92a](https://github.com/TestPlanIt/testplanit/commit/4b6a92a342afa2f22031d62f1440e1c615dd7da8))
+
+## [0.40.10](https://github.com/TestPlanIt/testplanit/compare/v0.40.9...v0.40.10) (2026-06-26)
+
+### Bug Fixes
+
+* **imports:** use stream-json v3 lowercase assembler.js path ([#473](https://github.com/TestPlanIt/testplanit/issues/473)) ([0cfe557](https://github.com/TestPlanIt/testplanit/commit/0cfe557f35761f9cef45ea82be23e30348a0f733))
+
 ## [0.40.9](https://github.com/TestPlanIt/testplanit/compare/v0.40.8...v0.40.9) (2026-06-24)
 
 ### Bug Fixes
