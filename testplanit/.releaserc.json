@@ -13,6 +13,7 @@
           { "scope": "packages", "release": false },
           { "scope": "cli", "release": false },
           { "scope": "forge-app", "release": false },
+          { "scope": "release", "release": false },
           { "scope": "dependencies", "release": false },
           { "scope": "deps", "release": false }
         ]
