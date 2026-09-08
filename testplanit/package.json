@@ -139,7 +139,7 @@
     "@tailwindcss/aspect-ratio": "^0.4.2",
     "@tanstack/react-form": "^1.33.5",
     "@tanstack/react-query": "^5.102.8",
-    "@tanstack/react-table": "^8.21.3",
+    "@tanstack/react-table": "^9.2.4",
     "@tanstack/react-virtual": "^3.14.10",
     "@tanstack/zod-form-adapter": "^0.42.1",
     "@testplanit/api": "workspace:*",
