@@ -168,3 +168,28 @@ jobs:
         else
           echo "Skipping 'latest' — $VERSION is not the newest release"
         fi
+
+    # The Helm chart ships from here too, after the images it references exist.
+    # Publishing it by hand is what let the chart drift to 0.1.1 while the app
+    # reached 1.0.0.
+    - name: Set up Helm
+      uses: azure/setup-helm@v4
+
+    - name: Package and publish the Helm chart
+      run: |
+        VERSION="${{ github.event.inputs.tag || github.ref_name }}"; VERSION_NUM="${VERSION#v}"
+
+        # version and appVersion are set from the release tag rather than read
+        # from Chart.yaml, so the published chart can never disagree with the
+        # release it deploys. Chart.yaml keeps its own values for local `helm
+        # template`/`lint`; only the published artifact is stamped here.
+        helm package testplanit/helm/testplanit \
+          --version "${VERSION_NUM}" \
+          --app-version "${VERSION_NUM}" \
+          -d "${RUNNER_TEMP}"
+
+        echo "${{ secrets.GITHUB_TOKEN }}" | \
+          helm registry login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+        helm push "${RUNNER_TEMP}/testplanit-${VERSION_NUM}.tgz" \
+          "oci://ghcr.io/${OWNER_LC}/charts"
