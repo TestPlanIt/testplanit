@@ -2,8 +2,6 @@
 
 import { useDebounce } from "@/components/Debounce";
 import { DataTable } from "@/components/tables/DataTable";
-import { PaginationComponent } from "@/components/tables/Pagination";
-import { PaginationInfo } from "@/components/tables/PaginationControls";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -33,11 +31,9 @@ import {
   Tags,
   XCircle,
 } from "lucide-react";
-import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import type { EntityType } from "~/lib/llm/services/auto-tag/types";
 import { cn } from "~/utils";
 import { invalidateModelQueries } from "~/utils/optimistic-updates";
@@ -207,8 +203,8 @@ export function AutoTagWizardDialog({
 }: AutoTagWizardDialogProps) {
   const t = useTranslations("autoTag");
   const tCommon = useTranslations("common");
+  const tPagination = useTranslations("common.pagination");
   const queryClient = useQueryClient();
-  const { data: session } = useSession();
 
   const [step, setStep] = useState<WizardStep>("configure");
 
@@ -529,7 +525,7 @@ export function AutoTagWizardDialog({
     handleEditRef.current = handleEdit;
   });
 
-  // ── Review filters & pagination ─────────────────────────────────
+  // ── Review filters ──────────────────────────────────────────────
 
   const [reviewSearch, setReviewSearch] = useState("");
   const [showFailed, setShowFailed] = useState(true);
@@ -543,17 +539,6 @@ export function AutoTagWizardDialog({
     column: string;
     direction: "asc" | "desc";
   }>({ column: "name", direction: "asc" });
-  const userPreferredPageSize = useMemo<number | "All">(() => {
-    const pref = session?.user?.preferences?.itemsPerPage;
-    if (!pref) return 25;
-    const parsed = parseInt(String(pref).replace("P", ""), 10);
-    return !isNaN(parsed) && parsed > 0 ? parsed : 25;
-  }, [session?.user?.preferences?.itemsPerPage]);
-
-  const [reviewPage, setReviewPage] = useState(1);
-  const [reviewPageSize, setReviewPageSize] = useState<number | "All">(
-    userPreferredPageSize
-  );
 
   // Reset filters when entering review step
   const prevStepRef = useRef(step);
@@ -564,19 +549,12 @@ export function AutoTagWizardDialog({
     if (enteringReview) {
       setReviewSearch("");
       setShowFailed(true);
-      setReviewPage(1);
-      setReviewPageSize(userPreferredPageSize);
       setReviewSortConfig({ column: "name", direction: "asc" });
       // Default to showing all entity types that have results
       const types = new Set(allSuggestions.map((s) => s.entityType));
       setReviewEntityTypes(Array.from(types) as EntityType[]);
     }
-  }, [step, allSuggestions, userPreferredPageSize]);
-
-  // Reset to page 1 when filters change
-  useEffect(() => {
-    setReviewPage(1);
-  }, [debouncedSearch, reviewEntityTypes, showFailed]);
+  }, [step, allSuggestions]);
 
   // ── Review DataTable rows & columns ────────────────────────────────
 
@@ -605,7 +583,6 @@ export function AutoTagWizardDialog({
       direction:
         prev.column === column && prev.direction === "asc" ? "desc" : "asc",
     }));
-    setReviewPage(1);
   }, []);
 
   // Explicit-direction sort from the header column menu; `null` (Remove sort)
@@ -617,7 +594,6 @@ export function AutoTagWizardDialog({
       } else {
         setReviewSortConfig({ column, direction });
       }
-      setReviewPage(1);
     },
     []
   );
@@ -653,27 +629,9 @@ export function AutoTagWizardDialog({
     showFailed,
   ]);
 
-  const effectivePageSize =
-    reviewPageSize === "All" ? filteredReviewRows.length : reviewPageSize;
-  const reviewPageSizeOptions = usePageSizeOptions(filteredReviewRows.length);
-  const totalFilteredPages =
-    effectivePageSize > 0
-      ? Math.ceil(filteredReviewRows.length / effectivePageSize)
-      : 1;
-  const paginatedReviewRows = useMemo(() => {
-    if (reviewPageSize === "All") return filteredReviewRows;
-    const start = (reviewPage - 1) * (reviewPageSize as number);
-    return filteredReviewRows.slice(start, start + (reviewPageSize as number));
-  }, [filteredReviewRows, reviewPage, reviewPageSize]);
-
-  const reviewStartIndex =
-    filteredReviewRows.length === 0
-      ? 0
-      : (reviewPage - 1) * effectivePageSize + 1;
-  const reviewEndIndex = Math.min(
-    reviewPage * effectivePageSize,
-    filteredReviewRows.length
-  );
+  // Filters change the row set without the table seeing why; folding them
+  // into the reset key returns the scroll to the top on each change.
+  const reviewResetKey = `${debouncedSearch}|${reviewEntityTypes.join(",")}|${showFailed}`;
 
   const reviewColumns = useMemo<ColumnDef<AutoTagReviewRow, unknown>[]>(
     () => [
@@ -734,6 +692,8 @@ export function AutoTagWizardDialog({
         enableSorting: false,
         minSize: 450,
         enableResizing: true,
+        // Tag chips wrap onto multiple lines; opt out of single-line truncation.
+        meta: { wrap: true },
         cell: ({ row }) => {
           const entity = row.original;
           const entitySelections = mergedSelectionsRef.current.get(
@@ -1164,43 +1124,34 @@ export function AutoTagWizardDialog({
               </div>
             )}
 
-            {paginatedReviewRows.length > 0 ? (
+            {filteredReviewRows.length > 0 ? (
               <>
-                <div className="min-h-0 flex-1 overflow-auto w-full">
+                <div className="min-h-0 w-full flex-1">
                   <DataTable
+                    virtualized
                     columns={reviewColumns}
-                    data={paginatedReviewRows}
+                    data={filteredReviewRows}
                     columnVisibility={reviewColumnVisibility}
                     onColumnVisibilityChange={setReviewColumnVisibility}
                     onSortChange={handleReviewSortChange}
                     onSortColumn={handleReviewSortColumn}
                     sortConfig={reviewSortConfig}
-                    pageSize={effectivePageSize}
+                    flexColumnId="suggestedTags"
+                    enableColumnPinning={false}
+                    enableColumnReorder={false}
+                    enableColumnMenu={false}
+                    resetKey={reviewResetKey}
+                    testIdPrefix="auto-tag-review-table"
+                    rowTestIdPrefix="auto-tag-review-row"
                   />
                 </div>
-                {filteredReviewRows.length > 0 && (
-                  <div className="flex items-center justify-between pt-1 w-full">
-                    <PaginationInfo
-                      startIndex={reviewStartIndex}
-                      endIndex={reviewEndIndex}
-                      totalRows={filteredReviewRows.length}
-                      searchString={debouncedSearch}
-                      pageSize={reviewPageSize}
-                      pageSizeOptions={reviewPageSizeOptions}
-                      handlePageSizeChange={(size) => {
-                        setReviewPageSize(size);
-                        setReviewPage(1);
-                      }}
-                    />
-                    <div className="ms-auto">
-                      <PaginationComponent
-                        currentPage={reviewPage}
-                        totalPages={totalFilteredPages}
-                        onPageChange={setReviewPage}
-                      />
-                    </div>
-                  </div>
-                )}
+                <p className="w-full pt-1 text-end text-xs text-muted-foreground">
+                  {tPagination("entries", { count: filteredReviewRows.length })}
+                  {filteredReviewRows.length !== reviewRows.length &&
+                    ` ${tPagination("filtered")} ${tPagination("total", {
+                      count: reviewRows.length,
+                    })}`}
+                </p>
               </>
             ) : reviewRows.length > 0 ? (
               <div className="flex flex-1 items-center justify-center">

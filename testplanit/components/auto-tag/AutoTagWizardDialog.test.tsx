@@ -144,12 +144,6 @@ vi.mock("next-intl", () => ({
   },
 }));
 
-vi.mock("next-auth/react", () => ({
-  useSession: () => ({
-    data: { user: { preferences: { itemsPerPage: 25 } } },
-  }),
-}));
-
 vi.mock("~/utils/optimistic-updates", () => ({
   invalidateModelQueries: mockInvalidateModelQueries,
 }));
@@ -157,10 +151,6 @@ vi.mock("~/utils/optimistic-updates", () => ({
 vi.mock("~/utils/testResultTypes", () => ({
   isAutomatedCaseSource: () => false,
   isAutomatedTestRunType: () => false,
-}));
-
-vi.mock("~/lib/contexts/PaginationContext", () => ({
-  defaultPageSizeOptions: [10, 25, 50],
 }));
 
 vi.mock("sonner", () => ({
@@ -438,38 +428,6 @@ vi.mock("@/components/tables/DataTable", () => ({
         ))}
       </tbody>
     </table>
-  ),
-}));
-
-vi.mock("@/components/tables/Pagination", () => ({
-  PaginationComponent: ({
-    currentPage,
-    totalPages,
-  }: {
-    currentPage: number;
-    totalPages: number;
-    [key: string]: unknown;
-  }) => (
-    <div data-testid="pagination">
-      {currentPage}/{totalPages}
-    </div>
-  ),
-}));
-
-vi.mock("@/components/tables/PaginationControls", () => ({
-  PaginationInfo: ({
-    startIndex,
-    endIndex,
-    totalRows,
-  }: {
-    startIndex: number;
-    endIndex: number;
-    totalRows: number;
-    [key: string]: unknown;
-  }) => (
-    <div data-testid="pagination-info">
-      {startIndex}-{endIndex} of {totalRows}
-    </div>
   ),
 }));
 
