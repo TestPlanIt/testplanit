@@ -7,6 +7,7 @@ import {
   validateMultiTenantJobData,
 } from "../lib/multiTenantDb";
 import {
+  JOB_REFRESH_EXPIRED_CACHES,
   JOB_REFRESH_SINGLE_REPO_CACHE,
   REPO_CACHE_QUEUE_NAME,
 } from "../lib/queueNames";
@@ -14,8 +15,6 @@ import { refreshRepoCache } from "../lib/services/repoCacheRefreshService";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
 import { BULLMQ_PREFIX } from "../lib/bullPrefix";
-
-export const JOB_REFRESH_EXPIRED_CACHES = "refresh-expired-repo-caches";
 
 const processor = async (job: Job) => {
   console.log(

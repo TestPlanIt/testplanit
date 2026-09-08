@@ -12,8 +12,6 @@ import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
 import { BULLMQ_PREFIX } from "../lib/bullPrefix";
 
-export const BUDGET_ALERT_JOB_CHECK = "check-budget";
-
 interface BudgetCheckJobData extends MultiTenantJobData {
   llmIntegrationId: number;
 }

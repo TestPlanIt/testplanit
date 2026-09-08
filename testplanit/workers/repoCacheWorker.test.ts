@@ -1,7 +1,9 @@
 import { Job } from "bullmq";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { JOB_REFRESH_SINGLE_REPO_CACHE } from "../lib/queueNames";
-import { JOB_REFRESH_EXPIRED_CACHES } from "./repoCacheWorker";
+import {
+  JOB_REFRESH_EXPIRED_CACHES,
+  JOB_REFRESH_SINGLE_REPO_CACHE,
+} from "../lib/queueNames";
 
 // Create mock db instance
 const mockDb = {
@@ -39,9 +41,9 @@ vi.mock("../lib/services/repoCacheRefreshService", () => ({
 }));
 
 // Mock queue names
-vi.mock("../lib/queueNames", () => ({
+vi.mock("../lib/queueNames", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../lib/queueNames")>()),
   REPO_CACHE_QUEUE_NAME: "test-repo-cache-queue",
-  JOB_REFRESH_SINGLE_REPO_CACHE: "refresh-single-repo-cache",
 }));
 
 const mockConfigs = [

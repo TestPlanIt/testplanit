@@ -78,7 +78,8 @@ vi.mock("../lib/valkey", () => ({
 }));
 
 // Mock queue names
-vi.mock("../lib/queueNames", () => ({
+vi.mock("../lib/queueNames", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../lib/queueNames")>()),
   FORECAST_QUEUE_NAME: "test-forecast-queue",
 }));
 
