@@ -304,7 +304,7 @@
     "use-debounce": "^10.1.1",
     "uuid": "^14.0.2",
     "vaul": "^1.1.2",
-    "xlsx": "^0.18.5",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
     "xml-crypto": "^6.1.2",
     "xml2js": "^0.6.2",
     "zod": "^4.5.4"
