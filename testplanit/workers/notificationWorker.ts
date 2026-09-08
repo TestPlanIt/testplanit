@@ -11,6 +11,11 @@ import {
   tenantBroadcastChannel,
   userChannel,
 } from "../lib/notifications/channels";
+import {
+  JOB_CREATE_NOTIFICATION,
+  JOB_PROCESS_USER_NOTIFICATIONS,
+  JOB_SEND_DAILY_DIGEST,
+} from "../lib/queueNames";
 import { getEmailQueue, NOTIFICATION_QUEUE_NAME } from "../lib/queues";
 import { NotificationService } from "../lib/services/notificationService";
 import { resolveRunCompletionRecipients } from "../lib/services/runCompletionRecipients";
@@ -41,11 +46,6 @@ interface ProcessUserNotificationsJobData extends MultiTenantJobData {
 interface SendDailyDigestJobData extends MultiTenantJobData {
   // No additional fields required
 }
-
-// Define job names
-export const JOB_CREATE_NOTIFICATION = "create-notification";
-export const JOB_PROCESS_USER_NOTIFICATIONS = "process-user-notifications";
-export const JOB_SEND_DAILY_DIGEST = "send-daily-digest";
 
 const processor = async (job: Job) => {
   console.log(

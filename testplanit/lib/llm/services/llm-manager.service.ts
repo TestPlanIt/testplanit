@@ -654,8 +654,7 @@ export class LlmManager {
     if (config.monthlyBudget && Number(config.monthlyBudget) > 0) {
       try {
         const { getBudgetAlertQueue } = await import("~/lib/queues");
-        const { BUDGET_ALERT_JOB_CHECK } =
-          await import("~/workers/budgetAlertWorker");
+        const { BUDGET_ALERT_JOB_CHECK } = await import("~/lib/queueNames");
         const { getCurrentTenantId } = await import("~/lib/multiTenantDb");
         getBudgetAlertQueue()
           ?.add(BUDGET_ALERT_JOB_CHECK, {
@@ -715,8 +714,7 @@ export class LlmManager {
     if (config.monthlyBudget && Number(config.monthlyBudget) > 0) {
       try {
         const { getBudgetAlertQueue } = await import("~/lib/queues");
-        const { BUDGET_ALERT_JOB_CHECK } =
-          await import("~/workers/budgetAlertWorker");
+        const { BUDGET_ALERT_JOB_CHECK } = await import("~/lib/queueNames");
         const { getCurrentTenantId } = await import("~/lib/multiTenantDb");
         getBudgetAlertQueue()
           ?.add(BUDGET_ALERT_JOB_CHECK, {

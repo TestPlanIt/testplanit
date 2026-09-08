@@ -1,7 +1,7 @@
 import { enqueueWithAuditContext } from "../lib/auditContextEnqueue";
 import { getAllTenantIds, isMultiTenantMode } from "../lib/multiTenantDb";
+import { JOB_UPDATE_ALL_CASES } from "../lib/queueNames";
 import { getForecastQueue } from "../lib/queues";
-import { JOB_UPDATE_ALL_CASES } from "../workers/forecastWorker";
 
 async function triggerForecastRecalculation() {
   const forecastQueue = getForecastQueue();

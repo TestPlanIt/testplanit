@@ -8,7 +8,16 @@ import {
   MultiTenantJobData,
   validateMultiTenantJobData,
 } from "../lib/multiTenantDb";
-import { FORECAST_QUEUE_NAME } from "../lib/queueNames";
+import {
+  FORECAST_QUEUE_NAME,
+  JOB_AUTO_COMPLETE_MILESTONES,
+  JOB_MILESTONE_DUE_NOTIFICATIONS,
+  JOB_PURGE_STALE_CASE_DRAFTS,
+  JOB_REVIEW_REMINDERS,
+  JOB_SWEEP_ABANDONED_RUNS,
+  JOB_UPDATE_ALL_CASES,
+  JOB_UPDATE_SINGLE_CASE,
+} from "../lib/queueNames";
 import {
   readSystemAbandonedRunIdleMinutes,
   resolveAbandonedRunTargetStateId,
@@ -50,14 +59,15 @@ interface ForecastJobDataBase extends MultiTenantJobData {
   actorContext?: ActorContextJobData<unknown>["actorContext"];
 }
 
-// Define job names for clarity and export them for the scheduler
-export const JOB_UPDATE_SINGLE_CASE = "update-single-case-forecast";
-export const JOB_UPDATE_ALL_CASES = "update-all-cases-forecast";
-export const JOB_AUTO_COMPLETE_MILESTONES = "auto-complete-milestones";
-export const JOB_MILESTONE_DUE_NOTIFICATIONS = "milestone-due-notifications";
-export const JOB_REVIEW_REMINDERS = "review-reminders";
-export const JOB_SWEEP_ABANDONED_RUNS = "sweep-abandoned-runs";
-export const JOB_PURGE_STALE_CASE_DRAFTS = "purge-stale-case-drafts";
+export {
+  JOB_AUTO_COMPLETE_MILESTONES,
+  JOB_MILESTONE_DUE_NOTIFICATIONS,
+  JOB_REVIEW_REMINDERS,
+  JOB_PURGE_STALE_CASE_DRAFTS,
+  JOB_SWEEP_ABANDONED_RUNS,
+  JOB_UPDATE_ALL_CASES,
+  JOB_UPDATE_SINGLE_CASE,
+};
 
 /**
  * Load the name and liveness of a review's subject row.

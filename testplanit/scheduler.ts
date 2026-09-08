@@ -13,12 +13,12 @@ import {
   JOB_AUTO_COMPLETE_MILESTONES,
   JOB_MILESTONE_DUE_NOTIFICATIONS,
   JOB_PURGE_STALE_CASE_DRAFTS,
+  JOB_REFRESH_EXPIRED_CACHES,
   JOB_REVIEW_REMINDERS,
+  JOB_SEND_DAILY_DIGEST,
   JOB_SWEEP_ABANDONED_RUNS,
   JOB_UPDATE_ALL_CASES,
-} from "./workers/forecastWorker";
-import { JOB_SEND_DAILY_DIGEST } from "./workers/notificationWorker";
-import { JOB_REFRESH_EXPIRED_CACHES } from "./workers/repoCacheWorker";
+} from "./lib/queueNames";
 
 // Define the cron schedule (e.g., every day at 3:00 AM server time)
 // Uses standard cron syntax: min hour day(month) month day(week)

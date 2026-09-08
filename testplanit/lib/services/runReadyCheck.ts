@@ -30,7 +30,7 @@ export const JOB_CHECK_RUN_READY = "check-run-ready";
  * Evaluation is deferred by this much so the worker reads committed state —
  * the plugin hook that enqueues it runs inside the writer's transaction.
  * Doubles as a debounce: a bulk submission touching hundreds of cases
- * collapses onto one job id and evaluates once.
+ * collapses onto one job and evaluates once.
  */
 const READY_CHECK_DELAY_MS = 5000;
 
@@ -39,7 +39,14 @@ export interface RunReadyCheckJobData {
   tenantId?: string;
 }
 
-export function runReadyCheckJobId(
+/**
+ * Deduplication id for a run's pending check. While a job carrying this id is
+ * queued, further enqueues for the same run are dropped; the id expires with
+ * the delay, so a check that fails never blocks the next one. The job id is
+ * left to BullMQ on purpose: a fixed job id would also collide with a failed
+ * job kept for inspection, and BullMQ never re-adds an id it already holds.
+ */
+export function runReadyDedupId(
   runId: number,
   tenantId: string | undefined
 ): string {
@@ -63,10 +70,12 @@ export async function enqueueRunReadyCheck(
       JOB_CHECK_RUN_READY,
       { runId, tenantId } satisfies RunReadyCheckJobData,
       {
-        jobId: runReadyCheckJobId(runId, tenantId),
+        deduplication: {
+          id: runReadyDedupId(runId, tenantId),
+          ttl: READY_CHECK_DELAY_MS,
+        },
         delay: READY_CHECK_DELAY_MS,
         removeOnComplete: true,
-        removeOnFail: false,
       }
     );
   } catch (error) {

@@ -10,7 +10,7 @@ import {
 } from "~/lib/auditContextWrappers";
 import { getServerAuthSession } from "~/server/auth";
 import { getElasticsearchClient } from "~/services/elasticsearchService";
-import { ReindexJobData } from "~/workers/elasticsearchReindexWorker";
+import type { ReindexJobData } from "~/workers/elasticsearchReindexWorker";
 
 // Helper to check admin authentication (session or API token)
 async function checkAdminAuth(
