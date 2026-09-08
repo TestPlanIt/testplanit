@@ -56,6 +56,9 @@ ENV NODE_OPTIONS="--max-old-space-size=8192"
 # `next build` cannot resolve `~/zenstack/models`. (Install runs with
 # --ignore-scripts, so the postinstall generate never fires here.)
 RUN pnpm zenstack generate --schema schema.zmodel -o zenstack
+# The production stage installs the same CLI globally for `migrate deploy` at
+# boot; recording the resolved version here keeps the two from drifting.
+RUN node -p "require('./node_modules/@zenstackhq/cli/package.json').version" > /app/zenstack-cli-version
 RUN apk del .gyp
 
 COPY testplanit/wait-for-postgres.sh /usr/local/bin/wait-for-postgres.sh
@@ -214,10 +217,13 @@ RUN chmod +x ./testplanit/docker-entrypoint.sh
 
 WORKDIR /app/testplanit
 RUN npm install -g tsx
-# ZenStack CLI for the db-init `zenstack db push` (the prod deploy tree is
-# --prod, so the devDep CLI isn't present; install it globally). It pulls
-# Prisma's schema engine internally to perform the push.
-RUN npm install -g @zenstackhq/cli@3.8.0
+# ZenStack CLI for `zenstack migrate deploy` in docker-entrypoint.sh (the prod
+# deploy tree is --prod, so the devDep CLI isn't present; install it globally).
+# The version is the one the workspace lockfile resolved, recorded by the base
+# stage, so the boot-time CLI always matches the project's devDependency. It
+# pulls Prisma's schema engine internally to apply the migrations.
+COPY --from=build /app/zenstack-cli-version /tmp/zenstack-cli-version
+RUN npm install -g "@zenstackhq/cli@$(cat /tmp/zenstack-cli-version)" && rm /tmp/zenstack-cli-version
 
 USER nextjs
 EXPOSE 3000
