@@ -26,7 +26,7 @@
     "build:windows": "bun build src/index.ts --compile --target=bun-windows-x64 --outfile=releases/testplanit-windows-x64.exe"
   },
   "dependencies": {
-    "chalk": "^5.6.2",
+    "chalk": "^6.0.0",
     "commander": "^15.0.0",
     "conf": "^15.1.0",
     "form-data": "^4.0.6",
