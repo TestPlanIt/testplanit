@@ -19,7 +19,7 @@
     "@forge/react": "^11.17.0",
     "@forge/resolver": "^2.0.0",
     "date-fns": "^4.4.0",
-    "lucide-react": "^1.39.0",
+    "lucide-react": "^1.41.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },
