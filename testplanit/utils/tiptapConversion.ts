@@ -7,6 +7,7 @@ import { generateJSON } from "@tiptap/html";
 import { StarterKit } from "@tiptap/starter-kit";
 import { marked } from "marked";
 import { emptyEditorContent } from "~/app/constants/backend";
+import { isJsonText } from "~/lib/utils/isJsonText";
 
 const tiptapConversionExtensions = [
   StarterKit.configure({
@@ -215,6 +216,48 @@ export const convertTextToTipTapJSON = (text: string): JSONContent => {
   return convertHtmlToTipTapJSON(html);
 };
 
+/**
+ * A serialized TipTap document, or `null` when the text is anything else —
+ * including JSON that is not a document.
+ */
+const parseTipTapDocument = (text: string): JSONContent | null => {
+  if (!text.startsWith("{")) return null;
+  try {
+    const parsed = JSON.parse(text);
+    return parsed && typeof parsed === "object" && parsed.type === "doc"
+      ? (parsed as JSONContent)
+      : null;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Text as paragraphs of hard-broken lines, kept verbatim: no markdown, list
+ * or inline-formatting interpretation, and indentation intact.
+ */
+export const convertPlainTextToTipTapJSON = (text: string): JSONContent => {
+  const trimmed = text ? text.replace(/\r\n?/g, "\n").trim() : "";
+  if (!trimmed) {
+    return emptyEditorContent as JSONContent;
+  }
+
+  const paragraphs = trimmed
+    .split(/\n{2,}/)
+    .map((block) => block.replace(/^\n+|\n+$/g, ""))
+    .filter((block) => block.length > 0)
+    .map((block) => {
+      const content: JSONContent[] = [];
+      block.split("\n").forEach((line, index) => {
+        if (index > 0) content.push({ type: "hardBreak" });
+        if (line.length > 0) content.push({ type: "text", text: line });
+      });
+      return { type: "paragraph", content };
+    });
+
+  return { type: "doc", content: paragraphs };
+};
+
 export const ensureTipTapJSON = (value: any): JSONContent => {
   if (value === null || value === undefined) {
     return emptyEditorContent as JSONContent;
@@ -226,15 +269,11 @@ export const ensureTipTapJSON = (value: any): JSONContent => {
       return emptyEditorContent as JSONContent;
     }
 
-    if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
-      try {
-        const parsed = JSON.parse(trimmed);
-        if (parsed && typeof parsed === "object" && parsed.type === "doc") {
-          return parsed as JSONContent;
-        }
-      } catch {
-        // fall through to plain-text handling
-      }
+    const document = parseTipTapDocument(trimmed);
+    if (document) return document;
+
+    if (isJsonText(trimmed)) {
+      return convertPlainTextToTipTapJSON(trimmed);
     }
 
     if (/<\/?[a-z]/i.test(trimmed) && trimmed.includes(">")) {

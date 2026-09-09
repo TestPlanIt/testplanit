@@ -461,9 +461,10 @@ export function ImportCasesWizard({
         type: "Steps",
       },
       {
-        // Multi-row mode only: pairs with the row's "steps" column so users
-        // can map a custom column header (e.g. "Outcome") to the per-step
-        // expected result instead of relying on alias-based auto-detection.
+        // Pairs with the row's "steps" column. Multi-row mode: names the
+        // per-step expected result column instead of relying on alias-based
+        // auto-detection. Single-row mode: the Steps cell becomes one step
+        // carrying this cell as its expected result.
         id: "expectedResult",
         displayName: tCommon("fields.expectedResult"),
         isRequired: false,
@@ -1405,12 +1406,13 @@ export function ImportCasesWizard({
    */
   const renderStepsPreview = (
     stepsValue: string,
-    aggregatedSteps?: AggregatedStep[]
+    aggregatedSteps?: AggregatedStep[],
+    expectedResult?: string
   ) => {
     const steps =
       aggregatedSteps && aggregatedSteps.length > 0
         ? [...aggregatedSteps].sort((a, b) => a.order - b.order)
-        : parseStepsCell(stepsValue ?? "");
+        : parseStepsCell(stepsValue ?? "", expectedResult);
 
     if (steps.length === 0) {
       return stepsValue ? (
@@ -1442,6 +1444,19 @@ export function ImportCasesWizard({
         ))}
       </div>
     );
+  };
+
+  // The mapped Expected Result cell of a single-row case, or undefined when the
+  // column isn't mapped (or multi-row aggregation owns the expected results).
+  const singleRowExpectedResult = (
+    caseData: Record<string, any>
+  ): string | undefined => {
+    if (rowMode === "multi") return undefined;
+    const mapping = fieldMappings.find(
+      (m) => m.templateField === "expectedResult"
+    );
+    if (!mapping) return undefined;
+    return caseData[mapping.csvColumn]?.toString() ?? "";
   };
 
   // Helper function to parse and render tags
@@ -1484,11 +1499,15 @@ export function ImportCasesWizard({
   const renderFieldValue = (
     field: { id: string; type: string } | undefined,
     value: string,
-    aggregatedSteps?: AggregatedStep[]
+    aggregatedSteps?: AggregatedStep[],
+    expectedResult?: string
   ) => {
     const isStepsField = field?.id === "steps" || field?.type === "Steps";
 
-    if (!value && !(isStepsField && aggregatedSteps?.length)) {
+    if (
+      !value &&
+      !(isStepsField && (aggregatedSteps?.length || expectedResult))
+    ) {
       return (
         <span className="text-muted-foreground">
           {tGlobal("sharedSteps.importWizard.page3.noValue")}
@@ -1508,7 +1527,7 @@ export function ImportCasesWizard({
     }
 
     if (isStepsField) {
-      return renderStepsPreview(value, aggregatedSteps);
+      return renderStepsPreview(value, aggregatedSteps, expectedResult);
     }
 
     if (field?.id === "tags" || field?.type === "Tags") {
@@ -1680,7 +1699,10 @@ export function ImportCasesWizard({
                             {renderFieldValue(
                               field,
                               value,
-                              caseData._aggregatedSteps
+                              caseData._aggregatedSteps,
+                              field?.id === "steps"
+                                ? singleRowExpectedResult(caseData)
+                                : undefined
                             )}
                           </div>
                         </div>

@@ -37,6 +37,7 @@ import { Markdown } from "@tiptap/markdown";
 import { Slice } from "@tiptap/pm/model";
 import { ImageWithResize } from "./ImageWithResize";
 // Import browser-compatible generateJSON from core
+import { isJsonText } from "~/lib/utils/isJsonText";
 import {
   convertMarkdownToTipTapJSON,
   isLikelyMarkdown,
@@ -363,7 +364,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
         },
         handlePaste: (view, event) => {
           const text = event.clipboardData?.getData("text/plain");
-          if (!text || !isLikelyMarkdown(text)) {
+          if (!text || isJsonText(text) || !isLikelyMarkdown(text)) {
             return false;
           }
           try {

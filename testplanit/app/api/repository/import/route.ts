@@ -333,11 +333,26 @@ export const POST = withAuditContext(async (request: NextRequest) => {
             fieldValues: {},
           };
 
+          const cellOf = (csvColumn: string) =>
+            body.hasHeaders
+              ? row[csvColumn]
+              : row[parseInt(csvColumn.replace(/\D/g, "")) - 1];
+          const expectedResultMapping =
+            body.rowMode === "multi"
+              ? undefined
+              : body.fieldMappings.find(
+                  (m) => m.templateField === "expectedResult"
+                );
+          const stepOptions = expectedResultMapping
+            ? {
+                expectedResult:
+                  cellOf(expectedResultMapping.csvColumn)?.toString() ?? "",
+              }
+            : undefined;
+
           // Map fields
           for (const mapping of body.fieldMappings) {
-            const csvValue = body.hasHeaders
-              ? row[mapping.csvColumn]
-              : row[parseInt(mapping.csvColumn.replace(/\D/g, "")) - 1];
+            const csvValue = cellOf(mapping.csvColumn);
 
             if (mapping.templateField === "folder") {
               caseData.folderPath = csvValue;
@@ -381,7 +396,8 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                   const validatedValue = validateFieldValue(
                     csvValue,
                     field.caseField,
-                    rowIndex + 1
+                    rowIndex + 1,
+                    stepOptions
                   );
                   // Store steps separately for insertion into Steps table (not CaseFieldValues)
                   caseData.steps = validatedValue;
@@ -407,7 +423,8 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                   const validatedValue = validateFieldValue(
                     csvValue,
                     field.caseField,
-                    rowIndex + 1
+                    rowIndex + 1,
+                    stepOptions
                   );
                   // Steps type fields go to the Steps table, not CaseFieldValues
                   if (field.caseField.type.type === "Steps") {
@@ -1150,7 +1167,8 @@ export const POST = withAuditContext(async (request: NextRequest) => {
 function validateFieldValue(
   value: any,
   field: CaseFields & { type: CaseFieldTypes; fieldOptions?: any[] },
-  _rowNumber: number
+  _rowNumber: number,
+  stepOptions?: { expectedResult: string }
 ): any {
   if (!value && field.isRequired) {
     throw new Error(`Required field cannot be empty`);
@@ -1266,13 +1284,15 @@ function validateFieldValue(
     case "Steps":
       // Same parse the wizard preview runs, so the preview and the import
       // never disagree on the step count.
-      return parseStepsCell(value.toString()).map((s) => ({
-        step: ensureTipTapJSON(s.step),
-        expectedResult: s.expectedResult
-          ? ensureTipTapJSON(s.expectedResult)
-          : null,
-        order: s.order,
-      }));
+      return parseStepsCell(value.toString(), stepOptions?.expectedResult).map(
+        (s) => ({
+          step: ensureTipTapJSON(s.step),
+          expectedResult: s.expectedResult
+            ? ensureTipTapJSON(s.expectedResult)
+            : null,
+          order: s.order,
+        })
+      );
 
     default:
       return value;

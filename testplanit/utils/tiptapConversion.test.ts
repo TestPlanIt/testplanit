@@ -7,6 +7,7 @@ import {
   isLikelyMarkdown,
   serializeTipTapJSON,
 } from "./tiptapConversion";
+import { isJsonText } from "~/lib/utils/isJsonText";
 
 describe("convertTextToTipTapJSON", () => {
   it("should convert simple text to TipTap JSON doc", () => {
@@ -273,6 +274,62 @@ describe("convertMarkdownToTipTapJSON", () => {
     const result = convertMarkdownToTipTapJSON(md);
     expect(result.type).toBe("doc");
     expect(result.content!.length).toBeGreaterThan(1);
+  });
+});
+
+describe("isJsonText", () => {
+  it("recognizes a JSON object or array that is not a document", () => {
+    expect(isJsonText('{\n  "task_id": "abc"\n}')).toBe(true);
+    expect(isJsonText('  [1, 2, {"a": null}]  ')).toBe(true);
+  });
+
+  it("rejects documents, prose and broken JSON", () => {
+    expect(isJsonText('{"type":"doc","content":[]}')).toBe(false);
+    expect(isJsonText("Click **Save** and check [x](y)")).toBe(false);
+    expect(isJsonText('{"task_id": ')).toBe(false);
+    expect(isJsonText("42")).toBe(false);
+  });
+});
+
+describe("ensureTipTapJSON with JSON text", () => {
+  const collectText = (node: any): string[] =>
+    node.type === "text"
+      ? [node.text]
+      : (node.content ?? []).flatMap(collectText);
+  const collectMarks = (node: any): string[] => [
+    ...(node.marks ?? []).map((m: any) => m.type),
+    ...(node.content ?? []).flatMap(collectMarks),
+  ];
+
+  it("keeps JSON verbatim instead of reading it as markdown", () => {
+    const text = [
+      "{",
+      '  "glob": "*.png or *.jpg",',
+      '  "note": "**not bold** and [not a link](https://x.y)",',
+      '  "steps": "- not a list"',
+      "}",
+    ].join("\n");
+
+    const doc = ensureTipTapJSON(text);
+
+    expect(doc.type).toBe("doc");
+    expect(doc.content?.every((n) => n.type === "paragraph")).toBe(true);
+    expect(collectMarks(doc)).toEqual([]);
+    // One text node per line, indentation included, joined by hard breaks.
+    expect(collectText(doc)).toEqual(text.split("\n"));
+  });
+
+  it("normalizes CRLF line endings from spreadsheet cells", () => {
+    const doc = ensureTipTapJSON('{\r\n  "a": 1\r\n}');
+    expect(collectText(doc)).toEqual(["{", '  "a": 1', "}"]);
+  });
+
+  it("still returns a serialized document as the document itself", () => {
+    const serialized = JSON.stringify({
+      type: "doc",
+      content: [{ type: "paragraph", content: [{ type: "text", text: "x" }] }],
+    });
+    expect(ensureTipTapJSON(serialized)).toEqual(JSON.parse(serialized));
   });
 });
 
