@@ -927,6 +927,46 @@ describe("CSV Import API Route", () => {
       });
     });
 
+    it("imports a multi-line Steps cell as one step with the mapped Expected Result column (regression)", async () => {
+      const stepsCell =
+        '{\n  "task_id": "abc-123",\n  "document": "pan card"\n}';
+      const file =
+        `Name,Description,Steps,Expected Result\n` +
+        `Test with valid pan card image,Verify PAN extraction,"${stepsCell.replace(/"/g, '""')}","{ ""status"": ""completed"" }"`;
+
+      const request = createRequest({
+        projectId: 1,
+        file,
+        delimiter: ",",
+        hasHeaders: true,
+        encoding: "UTF-8",
+        templateId: 1,
+        importLocation: "single_folder",
+        folderId: 1,
+        fieldMappings: [
+          { csvColumn: "Name", templateField: "name" },
+          { csvColumn: "Description", templateField: "description" },
+          { csvColumn: "Steps", templateField: "steps" },
+          { csvColumn: "Expected Result", templateField: "expectedResult" },
+        ],
+      });
+
+      const response = await POST(request);
+      const result = await parseSSEResponse(response);
+
+      expect(result.error).toBeUndefined();
+      expect(result.complete?.errors ?? []).toEqual([]);
+      expect(mockEnhancedDb.steps.create).toHaveBeenCalledTimes(1);
+      const { data } = mockEnhancedDb.steps.create.mock.calls[0][0];
+      expect(data.order).toBe(0);
+      expect(JSON.stringify(data.step)).toContain(
+        '\\"task_id\\": \\"abc-123\\"'
+      );
+      expect(JSON.stringify(data.expectedResult)).toContain(
+        '\\"status\\": \\"completed\\"'
+      );
+    });
+
     it("imports multi-row CSV by collapsing continuation rows into one case (regression)", async () => {
       const file = [
         "ID,Name,Description,Step #,Step Content,Expected Result",

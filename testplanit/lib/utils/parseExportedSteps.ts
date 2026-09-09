@@ -1,4 +1,5 @@
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
+import { isJsonText } from "./isJsonText";
 
 export interface ParsedExportedStep {
   step: string;
@@ -69,18 +70,35 @@ export function parseLabeledSteps(text: string): ParsedExportedStep[] {
  * `---`), and the legacy one-step-per-line form where a `|` splits the action
  * from its expected result.
  *
+ * `expectedResult` is the row's mapped Expected Result cell. When that column
+ * is mapped the cell is one step carrying it, however many lines it spans;
+ * the JSON and labeled forms keep the expected results they already hold.
+ * Any other JSON value in the cell (a payload, not steps) is one step too.
+ *
  * The import wizard's preview and the import route both call this — a preview
  * that parses the cell its own way shows a different step count than the one
  * the import creates.
  */
-export function parseStepsCell(text: string): ParsedExportedStep[] {
+export function parseStepsCell(
+  text: string,
+  expectedResult?: string
+): ParsedExportedStep[] {
   const stepsText = text?.toString() ?? "";
-  if (!stepsText.trim()) return [];
 
   const jsonParsed = tryParseJsonSteps(stepsText);
   if (jsonParsed) return jsonParsed;
 
   if (hasLabeledStepFormat(stepsText)) return parseLabeledSteps(stepsText);
+
+  if (expectedResult !== undefined || isJsonText(stepsText)) {
+    const step = stepsText.trim();
+    const expected = expectedResult?.toString().trim() ?? "";
+    return step || expected
+      ? [{ step, expectedResult: expected, order: 0 }]
+      : [];
+  }
+
+  if (!stepsText.trim()) return [];
 
   return stepsText
     .split(/\n/)
@@ -104,6 +122,12 @@ export function tryParseJsonSteps(text: string): ParsedExportedStep[] | null {
     return null;
   }
   if (!Array.isArray(parsed)) return null;
+  // Only the export shape is a list of steps; any other array is a payload.
+  const isStepShaped = (item: unknown) =>
+    typeof item === "object" &&
+    item !== null &&
+    ("step" in item || "expectedResult" in item);
+  if (parsed.length === 0 || !parsed.every(isStepShaped)) return null;
 
   return parsed.map((item: any, index) => {
     const stepValue = item?.step;

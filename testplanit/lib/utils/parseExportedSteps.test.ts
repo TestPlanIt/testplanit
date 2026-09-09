@@ -169,6 +169,14 @@ describe("tryParseJsonSteps", () => {
   it("returns null for JSON that isn't an array", () => {
     expect(tryParseJsonSteps('{"step":"x"}')).toBeNull();
   });
+
+  it("returns null for an array that isn't a list of steps", () => {
+    expect(tryParseJsonSteps('["open", "click"]')).toBeNull();
+    expect(
+      tryParseJsonSteps('[{"task_id": "abc"}, {"task_id": "def"}]')
+    ).toBeNull();
+    expect(tryParseJsonSteps("[]")).toBeNull();
+  });
 });
 
 describe("parseStepsCell", () => {
@@ -223,5 +231,50 @@ describe("parseStepsCell", () => {
   it("returns nothing for an empty cell", () => {
     expect(parseStepsCell("")).toEqual([]);
     expect(parseStepsCell("   ")).toEqual([]);
+  });
+
+  it("keeps a JSON payload as one verbatim step even with no Expected Result column mapped", () => {
+    const object = '{\n  "task_id": "abc",\n  "document": "pan card"\n}';
+    expect(parseStepsCell(object)).toEqual([
+      { step: object, expectedResult: "", order: 0 },
+    ]);
+
+    const records = '[\n  {"task_id": "abc"},\n  {"task_id": "def"}\n]';
+    expect(parseStepsCell(records)).toEqual([
+      { step: records, expectedResult: "", order: 0 },
+    ]);
+  });
+
+  it("keeps a multi-line cell as one step when an Expected Result column is mapped", () => {
+    const cell = '{\n  "task_id": "abc",\n  "document": "pan card"\n}';
+
+    expect(parseStepsCell(cell, "status: success")).toEqual([
+      { step: cell, expectedResult: "status: success", order: 0 },
+    ]);
+  });
+
+  it("lets JSON and labeled cells keep their own expected results when a column is mapped", () => {
+    const json = JSON.stringify([
+      { step: "Open page", expectedResult: "Page loads" },
+      { step: "Click save", expectedResult: "Saved" },
+    ]);
+    expect(
+      parseStepsCell(json, "ignored").map((s) => s.expectedResult)
+    ).toEqual(["Page loads", "Saved"]);
+
+    const labeled = "Step 1:\nOpen the page\nExpected Result 1:\nIt loads";
+    expect(parseStepsCell(labeled, "ignored")).toEqual([
+      { step: "Open the page", expectedResult: "It loads", order: 0 },
+    ]);
+  });
+
+  it("attaches an empty mapped expected result and drops a row with neither", () => {
+    expect(parseStepsCell("Do the thing", "")).toEqual([
+      { step: "Do the thing", expectedResult: "", order: 0 },
+    ]);
+    expect(parseStepsCell("", "Only a result")).toEqual([
+      { step: "", expectedResult: "Only a result", order: 0 },
+    ]);
+    expect(parseStepsCell("", "")).toEqual([]);
   });
 });

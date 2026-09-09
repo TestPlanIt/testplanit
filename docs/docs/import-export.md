@@ -136,6 +136,10 @@ Steps can also contain markdown formatting:
 [{"step":{"type":"doc","content":[...]},"expectedResult":{"type":"doc","content":[...]}}]
 ```
 
+**Separate Expected Result column** — if your file keeps the expected result in its own column, map that column to **Expected Result** on the mapping page. The Steps cell is then imported as a single step, however many lines it spans, with that column as its expected result. Cells in the JSON or labeled export formats keep the expected results they already contain.
+
+**JSON payloads** — a Steps or Expected Result cell that holds a JSON value (a request body, an API response) is imported as a single step, verbatim, with its indentation kept. It is not split into one step per line and not read as Markdown.
+
 ##### Multiple Rows per Case (Multi-Row Mode)
 
 Choose **"Test cases can span multiple rows"** on the first wizard page to import CSVs where one test case spans several rows — one row per step. This is the shape TestPlanIt's own multi-row export emits, and it matches the format used by many third-party tools.
