@@ -16,12 +16,24 @@ name: A11y Smoke (Accessible themes)
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main, 'release/**']
+    paths:
+      - "testplanit/app/**"
+      - "testplanit/components/**"
+      - "testplanit/styles/globals.css"
+      - "testplanit/e2e/a11y/**"
+      - ".github/workflows/a11y-smoke.yml"
   pull_request:
     paths:
       - "testplanit/app/**"
       - "testplanit/components/**"
       - "testplanit/styles/globals.css"
       - "testplanit/e2e/a11y/**"
+      - ".github/workflows/a11y-smoke.yml"
+
+permissions:
+  contents: read
 
 defaults:
   run:

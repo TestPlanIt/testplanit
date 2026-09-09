@@ -12,6 +12,17 @@ import styles from "./OfficeDocumentPreview.module.css";
  * in the browser, so a very large document can't freeze the tab. */
 const MAX_PREVIEW_BYTES = 25 * 1024 * 1024;
 
+/** Link schemes a rendered document may keep; anything else loses its href. */
+const SAFE_LINK_PROTOCOLS = new Set(["http:", "https:", "mailto:", "tel:"]);
+
+function isSafeLinkHref(href: string): boolean {
+  try {
+    return SAFE_LINK_PROTOCOLS.has(new URL(href, document.baseURI).protocol);
+  } catch {
+    return false;
+  }
+}
+
 type PreviewStatus = "loading" | "ready" | "error" | "tooLarge" | "empty";
 
 interface OfficeDocumentPreviewProps {
@@ -104,15 +115,16 @@ export const OfficeDocumentPreview: React.FC<OfficeDocumentPreviewProps> = ({
             ignoreLastRenderedPageBreak: true,
           });
           if (!active) return;
-          // Neutralize javascript: links and force external links to open safely.
+          // Drop script-capable links and force the rest to open safely.
           container.querySelectorAll("a").forEach((anchor) => {
             const href = anchor.getAttribute("href")?.trim() ?? "";
-            if (href.toLowerCase().startsWith("javascript:")) {
+            if (!href) return;
+            if (!isSafeLinkHref(href)) {
               anchor.removeAttribute("href");
-            } else if (href) {
-              anchor.setAttribute("target", "_blank");
-              anchor.setAttribute("rel", "noopener noreferrer");
+              return;
             }
+            anchor.setAttribute("target", "_blank");
+            anchor.setAttribute("rel", "noopener noreferrer");
           });
           setStatus("ready");
         } else if (kind === "excel") {

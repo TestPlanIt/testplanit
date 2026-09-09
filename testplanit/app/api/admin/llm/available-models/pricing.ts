@@ -8,6 +8,7 @@
 // LlmProviderConfig cost fields use ("Cost Per 1M Input Tokens").
 
 import { isCloudMetadataHostname } from "~/lib/utils/ssrf";
+import { stripTrailingSlashes } from "~/lib/utils/url";
 
 export interface ModelPricing {
   input: number;
@@ -41,10 +42,10 @@ export function assertAllowedUrl(url: string): URL {
  * as their endpoint. Strip that suffix to recover the API base URL.
  */
 export function stripChatCompletionsSuffix(endpoint: string): string {
-  return endpoint
-    .trim()
-    .replace(/\/+$/, "")
-    .replace(/\/chat\/completions$/, "");
+  return stripTrailingSlashes(endpoint.trim()).replace(
+    /\/chat\/completions$/,
+    ""
+  );
 }
 
 function roundToDbScale(value: number): number {
@@ -160,7 +161,7 @@ export async function fetchLiteLlmPricing(
   apiKey?: string
 ): Promise<ModelPricingMap> {
   try {
-    const base = endpoint.trim().replace(/\/+$/, "");
+    const base = stripTrailingSlashes(endpoint.trim());
     const url = assertAllowedUrl(`${base}/model/info`);
     const headers: Record<string, string> = {};
     if (apiKey) {
