@@ -14,6 +14,9 @@ data:
   NODE_ENV: "production"
   NEXTAUTH_URL: {{ required "appUrl is required (the public https URL of this instance)" .Values.appUrl | quote }}
   NODE_OPTIONS: {{ .Values.config.nodeOptions | quote }}
+  # Per-file upload ceiling. The entrypoint re-syncs Next's frozen server-action
+  # body limit from this, so it applies on a pod restart without a rebuild.
+  UPLOAD_MAX_MB: {{ .Values.config.uploadMaxMb | quote }}
   # Authentication surface
   ENABLE_SIGNUP: {{ .Values.config.auth.enableSignup | quote }}
   ENABLE_PASSWORD_AUTH: {{ .Values.config.auth.enablePasswordAuth | quote }}

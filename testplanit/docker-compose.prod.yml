@@ -22,9 +22,11 @@ services:
         # (shell / default .env / --env-file), NOT the .env.production env_file.
         SELF_HOSTED: ${SELF_HOSTED:-true}
         # Per-file upload ceiling in MB (attachments and inline document
-        # images). Baked into next.config's serverActions.bodySizeLimit at build
-        # time, so changing it needs a rebuild, not just a restart. Raise the
-        # bundled nginx to match via nginx-local/ -- see nginx-local/README.md.
+        # images). Baked into next.config's serverActions.bodySizeLimit as the
+        # image default; the entrypoint re-syncs it from the `environment:` value
+        # below on every start, so changing it needs a restart, not a rebuild.
+        # Raise the bundled nginx to match via nginx-local/ -- see
+        # nginx-local/README.md.
         # Substitution reads the build environment (shell / default .env /
         # --env-file), NOT the .env.production env_file.
         UPLOAD_MAX_MB: ${UPLOAD_MAX_MB:-10}
@@ -45,9 +47,9 @@ services:
       # burst absorption, not parallelism: it exists so a handful of slow
       # queries can't occupy every slot and stall unrelated routes.
       DATABASE_POOL_MAX: ${PROD_DATABASE_POOL_MAX:-100}
-      # Same value as the build arg above -- uploadFile.ts reads it at runtime
-      # while next.config bakes it at build time. Both resolve from one
-      # UPLOAD_MAX_MB in .env, so they cannot drift.
+      # Same value as the build arg above -- uploadFile.ts reads it at runtime,
+      # and the entrypoint re-syncs Next's frozen body limit from it at boot.
+      # Both resolve from one UPLOAD_MAX_MB in .env, so they cannot drift.
       UPLOAD_MAX_MB: ${UPLOAD_MAX_MB:-10}
     ports:
       - "${DOCKER_PROD_APP_PORT:-30000}:3000"

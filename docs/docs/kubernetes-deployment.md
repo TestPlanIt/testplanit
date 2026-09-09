@@ -88,6 +88,14 @@ secrets:
 #   tag: "1.0.0"                  # pin instead of latest
 ```
 
+:::note Upload ceiling
+Attachments and inline images are capped at 10 MB per file by default. Raise
+`config.uploadMaxMb` and keep `ingress.annotations`'
+`nginx.ingress.kubernetes.io/proxy-body-size` (default `100m`) at or above it —
+whichever is lower rejects the upload. It applies on a pod restart; the image
+needs no rebuild.
+:::
+
 :::tip Live updates (SSE)
 The notification bell and live milestone / test-run updates use long-lived SSE
 streams. The chart's default ingress annotations do not disable proxy buffering, so
