@@ -2559,7 +2559,13 @@ const App = () => {
     );
   }
 
-  const hasTestCases = testData?.testCases?.length > 0;
+  // A deleted case is worth keeping only while it still carries result
+  // history; with no results attached the row is just noise on the issue.
+  const visibleTestCases = (testData?.testCases || []).filter(
+    (testCase) => !testCase.isDeleted || testCase.resultHistory?.length > 0
+  );
+
+  const hasTestCases = visibleTestCases.length > 0;
   const hasSessions = testData?.sessions?.length > 0;
   const hasTestRuns = testData?.testRuns?.length > 0;
 
@@ -2604,11 +2610,11 @@ const App = () => {
               name={sectionsExpanded.testCases ? "ChevronDown" : "ChevronRight"}
               className="h-4 w-4"
             />
-            Test Cases ({testData.testCases.length})
+            Test Cases ({visibleTestCases.length})
           </button>
           {sectionsExpanded.testCases && (
             <div>
-              {testData.testCases.map((testCase, index) => (
+              {visibleTestCases.map((testCase, index) => (
                 <TestCaseRow
                   key={testCase.id || index}
                   testCase={testCase}
