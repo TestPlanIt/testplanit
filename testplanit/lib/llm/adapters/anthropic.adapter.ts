@@ -9,6 +9,7 @@ import type {
 } from "../types";
 import { contentImages, flattenToText } from "../content";
 import { BaseLlmAdapter } from "./base.adapter";
+import { stripTrailingSlashes } from "~/lib/utils/url";
 
 type AnthropicContentBlock =
   | { type: "text"; text: string }
@@ -107,9 +108,8 @@ export class AnthropicAdapter extends BaseLlmAdapter {
     // Strip trailing slashes so appending `/messages` can't produce a double
     // slash (e.g. a user-supplied `.../v1/` becoming `.../v1//messages`).
     // Mirrors the normalization the available-models route already does.
-    this.baseUrl = (config.baseUrl || "https://api.anthropic.com/v1").replace(
-      /\/+$/,
-      ""
+    this.baseUrl = stripTrailingSlashes(
+      config.baseUrl || "https://api.anthropic.com/v1"
     );
 
     if (!this.apiKey) {

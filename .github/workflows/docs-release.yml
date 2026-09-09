@@ -20,6 +20,9 @@ on:
         default: 'docs'
         type: string
 
+permissions:
+  contents: read
+
 jobs:
   build-amd64:
     runs-on: [self-hosted, linux, x64]

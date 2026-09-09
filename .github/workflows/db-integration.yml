@@ -31,6 +31,9 @@ on:
       - "testplanit/db/**"
       - ".github/workflows/db-integration.yml"
 
+permissions:
+  contents: read
+
 defaults:
   run:
     working-directory: testplanit

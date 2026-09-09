@@ -73,7 +73,8 @@ export async function updateTestRunForecast(testRunId: number): Promise<void> {
     // Best-effort: search drift must not fail the forecast update.
     await syncTestRunToElasticsearch(testRunId).catch((error: unknown) => {
       console.error(
-        `Failed to sync run ${testRunId} forecast to Elasticsearch:`,
+        "Failed to sync run %s forecast to Elasticsearch:",
+        testRunId,
         error
       );
     });
@@ -82,7 +83,7 @@ export async function updateTestRunForecast(testRunId: number): Promise<void> {
       `Updated forecast for TestRun ${testRunId} to forecastManual=${totalForecastManual}, forecastAutomated=${totalForecastAutomated}`
     );
   } catch (error) {
-    console.error(`Error updating forecast for TestRun ${testRunId}:`, error);
+    console.error("Error updating forecast for TestRun %s:", testRunId, error);
     // Depending on requirements, you might want to re-throw the error
     // or implement more specific error handling.
   }

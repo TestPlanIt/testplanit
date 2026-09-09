@@ -35,6 +35,9 @@ on:
       - "testplanit/schema.zmodel"
       - ".github/workflows/e2e-smoke.yml"
 
+permissions:
+  contents: read
+
 defaults:
   run:
     working-directory: testplanit

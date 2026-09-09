@@ -6,7 +6,9 @@ import { OfficeDocumentPreview } from "./OfficeDocumentPreview";
 // Hoisted mock fns so the vi.mock factories (which are hoisted above imports)
 // can reference them safely.
 const mocks = vi.hoisted(() => ({
-  renderAsync: vi.fn(async () => {}),
+  renderAsync: vi.fn(
+    async (_buffer: ArrayBuffer, _container: HTMLElement) => {}
+  ),
   xlsxRead: vi.fn(
     (): {
       SheetNames: string[];
@@ -89,6 +91,35 @@ describe("OfficeDocumentPreview", () => {
       "/api/storage/a.docx",
       expect.objectContaining({ signal: expect.anything() })
     );
+  });
+
+  it("strips script-capable link schemes from a rendered Word document", async () => {
+    mocks.renderAsync.mockImplementationOnce(async (_buffer, container) => {
+      container.innerHTML = [
+        '<a href="javascript:alert(1)">js</a>',
+        '<a href="data:text/html,hi">data</a>',
+        '<a href="vbscript:MsgBox(1)">vbs</a>',
+        '<a href="https://example.com/spec">external</a>',
+      ].join("");
+    });
+    render(
+      <OfficeDocumentPreview
+        fileURL="/api/storage/links.docx"
+        name="links.docx"
+        kind="word"
+        size="large"
+      />
+    );
+    await waitFor(() =>
+      expect(screen.getByText("external")).toHaveAttribute("target", "_blank")
+    );
+    expect(screen.getByText("external")).toHaveAttribute(
+      "rel",
+      "noopener noreferrer"
+    );
+    for (const label of ["js", "data", "vbs"]) {
+      expect(screen.getByText(label)).not.toHaveAttribute("href");
+    }
   });
 
   it("parses and sanitizes an Excel document at large size", async () => {

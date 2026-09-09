@@ -77,6 +77,31 @@ describe("AnthropicAdapter", () => {
       const adapter = new AnthropicAdapter(config);
       expect(adapter.getProviderName()).toBe("Anthropic");
     });
+
+    it("strips trailing slashes from the base URL", async () => {
+      const adapter = new AnthropicAdapter(
+        createTestConfig({ baseUrl: "https://proxy.example.com/v1///" })
+      );
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          content: [{ type: "text", text: "Response" }],
+          model: "claude-3-5-sonnet-20241022",
+          stop_reason: "end_turn",
+          usage: { input_tokens: 10, output_tokens: 10 },
+        }),
+      });
+
+      await adapter.chat({
+        messages: [{ role: "user", content: "Hello" }],
+        userId: "user-123",
+        feature: "test",
+      });
+
+      expect(mockFetch.mock.calls[0][0]).toBe(
+        "https://proxy.example.com/v1/messages"
+      );
+    });
   });
 
   describe("chat", () => {

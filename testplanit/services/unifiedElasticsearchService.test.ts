@@ -58,6 +58,12 @@ describe("unifiedElasticsearchService", () => {
         type: "text",
         analyzer: "standard",
       });
+
+      // creatorName carries the keyword subfield the creators facet aggregates on
+      expect(mapping.properties.creatorName).toEqual({
+        type: "text",
+        fields: { keyword: { type: "keyword" } },
+      });
     });
 
     it("should have mappings for all entity types", () => {

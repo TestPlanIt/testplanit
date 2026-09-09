@@ -229,7 +229,8 @@ describe("testRunService", () => {
       await updateTestRunForecast(1);
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        "Error updating forecast for TestRun 1:",
+        "Error updating forecast for TestRun %s:",
+        1,
         expect.any(Error)
       );
       expect(mockUpdate).not.toHaveBeenCalled();
@@ -247,7 +248,8 @@ describe("testRunService", () => {
       await updateTestRunForecast(1);
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        "Error updating forecast for TestRun 1:",
+        "Error updating forecast for TestRun %s:",
+        1,
         expect.any(Error)
       );
 

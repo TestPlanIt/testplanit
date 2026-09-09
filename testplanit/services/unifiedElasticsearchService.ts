@@ -155,6 +155,12 @@ export const ENTITY_MAPPINGS = {
       automated: { type: "boolean" as const },
       isArchived: { type: "boolean" as const },
       isDeleted: { type: "boolean" as const },
+      creatorName: {
+        type: "text" as const,
+        fields: {
+          keyword: { type: "keyword" as const },
+        },
+      },
       tags: {
         type: "nested" as const,
         properties: {

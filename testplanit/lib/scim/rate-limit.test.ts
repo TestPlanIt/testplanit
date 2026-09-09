@@ -75,6 +75,9 @@ describe("checkScimTokenRateLimit", () => {
     });
 
     it("A2: 50th call still allowed (remaining=0); 51st blocked", async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-06-06T00:00:00.500Z").getTime());
+
       const tokenId = "tk_a2";
       for (let i = 1; i < SCIM_RPS_LIMIT; i++) {
         const r = await checkScimTokenRateLimit(tokenId);
@@ -168,6 +171,9 @@ describe("checkScimTokenRateLimit", () => {
 
   describe("Group C — in-memory fallback", () => {
     it("C1: when valkeyConnection is null, uses internal Map (counter increments per call)", async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-06-06T00:00:00.500Z").getTime());
+
       const tokenId = "tk_c1";
       const r1 = await checkScimTokenRateLimit(tokenId);
       const r2 = await checkScimTokenRateLimit(tokenId);
