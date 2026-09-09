@@ -1,3 +1,9 @@
+## [1.0.5](https://github.com/TestPlanIt/testplanit/compare/v1.0.4...v1.0.5) (2026-09-09)
+
+### Bug Fixes
+
+* **jira:** hide deleted test cases with no results from the issue panel ([#629](https://github.com/TestPlanIt/testplanit/issues/629)) ([1bc41ee](https://github.com/TestPlanIt/testplanit/commit/1bc41ee2aca485ed1a5ac5ef06be7203940f4daa))
+
 ## [1.0.4](https://github.com/TestPlanIt/testplanit/compare/v1.0.3...v1.0.4) (2026-09-09)
 
 ### Bug Fixes
