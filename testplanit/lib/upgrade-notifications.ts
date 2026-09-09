@@ -425,6 +425,20 @@ export const upgradeNotifications: Record<string, UpgradeNotification> = {
       <p>Read the <a href="https://docs.testplanit.com/blog/v1.0-release" target="_blank">1.0 release announcement</a> for the complete list of what's new.</p>
     `,
   },
+  "1.1.0": {
+    title: "What's New in TestPlanIt 1.1",
+    message: `
+      <p>TestPlanIt <strong>1.1</strong> delivers requirements management — our most-requested feature — alongside test impact analysis, auto-save, and a hardened SCIM.</p>
+      <h4>Highlights</h4>
+      <ul>
+        <li><strong>Requirements</strong> — build a requirements tree per project or sync requirements from your issue tracker, link test cases from either side, and watch coverage roll up through the hierarchy. Suspect flags, content history, traceability reports, and point-in-time snapshots make release sign-off auditable. Opt in under <strong>Project Settings → Advanced</strong>.</li>
+        <li><strong>Impact Analysis</strong> — connect the repository of the application under test, compare two commits or a pull request, and select the Affected Tests when composing a run. Code Pins tie test cases to files, lines, symbols, or glob patterns. Enable it under <strong>Project Settings → Impact Analysis</strong>.</li>
+        <li><strong>Auto-save</strong> — test case edits are kept as you type and offered back after a crash, an expired session, or an accidental close.</li>
+        <li><strong>DeepSeek</strong> — DeepSeek V4 joins the supported LLM providers.</li>
+      </ul>
+      <p>Read the <a href="https://docs.testplanit.com/blog/v1.1-release" target="_blank">1.1 release announcement</a> for the complete list of what's new.</p>
+    `,
+  },
 };
 
 /**
