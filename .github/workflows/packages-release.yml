@@ -91,10 +91,13 @@ jobs:
       - name: Ensure npm supports trusted publishing
         run: npm install -g npm@latest
 
+      # v2 of the action pairs with @changesets/cli v3: the CLI reports published
+      # packages through the CHANGESETS_OUTPUT file the action provides, not via
+      # "New tag:" stdout lines (v1 parsed those and would see nothing published).
       - name: Create Release Pull Request or Publish
         id: changesets
         if: github.ref_name == 'main'
-        uses: changesets/action@v1
+        uses: changesets/action@v2
         with:
           # Wrapper for `pnpm changeset publish` that hides @testplanit/cli from
           # the publish (cli is released by its own cli-semantic-release.yml
@@ -103,13 +106,11 @@ jobs:
           # Must stay a single command: the changesets action tokenizes this
           # input rather than running it through a shell, so a multi-line block
           # or shell operators do NOT work here.
-          publish: node .github/scripts/packages-publish.mjs
-          version: pnpm changeset version
-          title: 'chore(packages): version packages'
-          commit: 'chore(packages): version packages'
-          createGithubReleases: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          publish-script: node .github/scripts/packages-publish.mjs
+          version-script: pnpm changeset version
+          pr-title: 'chore(packages): version packages'
+          commit-message: 'chore(packages): version packages'
+          create-github-releases: true
           # No NPM_TOKEN — publishing authenticates via OIDC trusted publishing
           # (id-token: write above + the trusted publisher configured on npm).
 
@@ -120,4 +121,4 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "The following packages were published:" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo '${{ steps.changesets.outputs.publishedPackages }}' | jq -r '.[] | "- \(.name)@\(.version)"' >> $GITHUB_STEP_SUMMARY
+          echo '${{ steps.changesets.outputs.published-packages }}' | jq -r '.[] | "- \(.name)@\(.version)"' >> $GITHUB_STEP_SUMMARY

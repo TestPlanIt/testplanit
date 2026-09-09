@@ -1,6 +1,6 @@
 import { ListBucketsCommand, S3Client } from "@aws-sdk/client-s3";
 import { NextResponse } from "next/server";
-import { monitorEventLoopDelay, type IntervalHistogram } from "node:perf_hooks";
+import { monitorEventLoopDelay } from "node:perf_hooks";
 import valkeyConnection from "~/lib/valkey";
 import { getVersionInfo } from "~/lib/version";
 import { db } from "~/server/db";
@@ -61,7 +61,9 @@ export interface HealthCheckResponse {
 // high urt plus high lag here means the loop is saturated; high urt with low lag
 // points at a slow query or upstream instead.
 
-let eventLoopHistogram: IntervalHistogram | null = null;
+type EventLoopHistogram = ReturnType<typeof monitorEventLoopDelay>;
+
+let eventLoopHistogram: EventLoopHistogram | null = null;
 let eventLoopStartedAt = 0;
 
 /**
