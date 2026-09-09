@@ -286,7 +286,10 @@ export async function persistGeneratedTestCases(
   input: ImportInput,
   author: ImportAuthor
 ): Promise<ImportResult> {
-  const parseResult = ImportInputSchema.safeParse(input);
+  // Server actions restore NaN / Infinity from the wire; the JSON columns take neither.
+  const parseResult = ImportInputSchema.safeParse(
+    JSON.parse(JSON.stringify(input))
+  );
   if (!parseResult.success) {
     return {
       status: "error",

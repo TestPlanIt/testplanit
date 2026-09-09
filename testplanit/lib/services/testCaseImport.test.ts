@@ -1,8 +1,21 @@
-import { describe, expect, it } from "vitest";
+import { createQuerySchemaFactory } from "@zenstackhq/orm";
+import { describe, expect, it, vi } from "vitest";
+
+const auditedTransactionMock = vi.hoisted(() => vi.fn());
+
+vi.mock("~/lib/audit/auditedTransaction", () => ({
+  auditedTransaction: auditedTransactionMock,
+}));
+
+vi.mock("~/lib/services/reviewGate", () => ({
+  resolveCreateStateRemap: vi.fn(async () => null),
+}));
+
 import {
   ImportInputSchema,
   persistGeneratedTestCases,
 } from "~/lib/services/testCaseImport";
+import { schema as zenstackSchema } from "~/zenstack/schema";
 
 /**
  * Server actions and JSON bodies do NOT deliver `undefined` values: React's
@@ -93,5 +106,156 @@ describe("persistGeneratedTestCases input validation", () => {
     expect(result.status).toBe("error");
     expect(result.message).toBe("Invalid input data");
     expect(result.errors[0]).toMatch(/^folderId: /);
+  });
+});
+
+describe("persistGeneratedTestCases JSON columns", () => {
+  function stubTx(captured: { version?: any; steps?: any }) {
+    return {
+      issue: { findFirst: vi.fn(async () => null) },
+      tags: { upsert: vi.fn() },
+      repositoryFolders: {
+        findUnique: vi.fn(),
+        findFirst: vi.fn(async () => null),
+        update: vi.fn(),
+        create: vi.fn(),
+      },
+      workflows: { findUnique: vi.fn(async () => null) },
+      repositoryCases: {
+        findFirst: vi.fn(async () => null),
+        create: vi.fn(async () => ({ id: 500 })),
+        update: vi.fn(async () => ({ id: 500 })),
+      },
+      repositoryCaseIssue: { createMany: vi.fn(async () => ({ count: 0 })) },
+      repositoryCaseTag: { createMany: vi.fn(async () => ({ count: 0 })) },
+      attachments: { create: vi.fn() },
+      repositoryCaseVersions: {
+        create: vi.fn(async ({ data }: any) => {
+          captured.version = data;
+          return { id: 900 };
+        }),
+      },
+      caseFieldValues: { createMany: vi.fn() },
+      caseFieldVersionValues: { createMany: vi.fn() },
+      steps: {
+        createMany: vi.fn(async ({ data }: any) => {
+          captured.steps = data;
+        }),
+      },
+      testCaseParameter: { createMany: vi.fn() },
+      dataSet: { create: vi.fn() },
+      dataSetVersion: { create: vi.fn() },
+      dataSetRow: { createMany: vi.fn() },
+    };
+  }
+
+  /**
+   * A JSON body cannot carry NaN or Infinity, but React server actions do
+   * (Flight tags them and the server restores them). TipTap leaves both in a
+   * document when pasted HTML has a non-numeric `<ol start>` or table
+   * `colwidth`, and ZenStack's JsonValue validator then rejects the whole
+   * RepositoryCaseVersions.steps column ("expected string, received array at
+   * data.steps"). The importer has to hand the columns what a JSON body would
+   * have delivered.
+   */
+  it("stores NaN and Infinity from the server-action wire as null so the JSON columns validate", async () => {
+    const pastedList = {
+      type: "doc",
+      content: [
+        {
+          type: "orderedList",
+          attrs: { start: NaN },
+          content: [
+            {
+              type: "listItem",
+              content: [
+                { type: "paragraph", content: [{ type: "text", text: "one" }] },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    const pastedTable = {
+      type: "doc",
+      content: [
+        {
+          type: "table",
+          content: [
+            {
+              type: "tableRow",
+              content: [
+                {
+                  type: "tableHeader",
+                  attrs: {
+                    colspan: 1,
+                    rowspan: Infinity,
+                    colwidth: [NaN],
+                    style: null,
+                  },
+                  content: [
+                    {
+                      type: "paragraph",
+                      content: [{ type: "text", text: "key" }],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    const captured: { version?: any; steps?: any } = {};
+    auditedTransactionMock.mockImplementationOnce(async (fn: any) =>
+      fn(stubTx(captured))
+    );
+    const result = await persistGeneratedTestCases(
+      {
+        ...buildInput(),
+        testCases: [
+          {
+            id: "case-1",
+            name: "Pasted case",
+            fieldValues: {},
+            tagIds: [],
+            issueIds: [],
+            steps: [{ step: pastedList, expectedResult: pastedTable }],
+          },
+        ],
+      } as any,
+      { userId: "u1", userName: "User" }
+    );
+
+    expect(result.status).toBe("success");
+    expect(result.errors).toEqual([]);
+
+    const versionStep = captured.version.steps[0];
+    expect(versionStep.step.content[0].attrs.start).toBeNull();
+    const header = versionStep.expectedResult.content[0].content[0].content[0];
+    expect(header.attrs).toEqual({
+      colspan: 1,
+      rowspan: null,
+      colwidth: [null],
+      style: null,
+    });
+    expect(captured.steps[0].step.content[0].attrs.start).toBeNull();
+
+    const createSchema = createQuerySchemaFactory(
+      zenstackSchema as any
+    ).makeCreateSchema("RepositoryCaseVersions");
+    expect(createSchema.safeParse({ data: captured.version }).success).toBe(
+      true
+    );
+    // Negative control: the raw wire payload is what the validator rejects.
+    expect(
+      createSchema.safeParse({
+        data: {
+          ...captured.version,
+          steps: [{ step: pastedList, expectedResult: pastedTable }],
+        },
+      }).success
+    ).toBe(false);
   });
 });
