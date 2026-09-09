@@ -105,7 +105,12 @@ export const repositoryCaseMapping = {
     isDeleted: { type: "boolean" as const },
     createdAt: { type: "date" as const },
     creatorId: { type: "keyword" as const },
-    creatorName: { type: "text" as const },
+    creatorName: {
+      type: "text" as const,
+      fields: {
+        keyword: { type: "keyword" as const },
+      },
+    },
     tags: {
       type: "nested" as const,
       properties: {

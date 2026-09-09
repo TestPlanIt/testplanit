@@ -70,6 +70,12 @@ describe("elasticsearchService", () => {
       expect(repositoryCaseMapping.properties.folderPath).toEqual({
         type: "keyword",
       });
+
+      // creatorName carries the keyword subfield the creators facet aggregates on
+      expect(repositoryCaseMapping.properties.creatorName).toEqual({
+        type: "text",
+        fields: { keyword: { type: "keyword" } },
+      });
     });
   });
 
