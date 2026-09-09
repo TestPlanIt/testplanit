@@ -497,5 +497,91 @@ describeIntegration(
         expect(rootFolders.length).toBe(1);
       }
     );
+
+    // A JSON body cannot carry NaN, but a server action restores it from the
+    // wire, and TipTap leaves one in a document pasted from HTML with a
+    // non-numeric `<ol start>` or table `colwidth`. Before the importer
+    // normalized its input, ZenStack rejected the whole version row:
+    // "Invalid create args for model RepositoryCaseVersions … expected
+    // string, received array at data.steps".
+    it(
+      "persists a step document that arrived with NaN instead of rejecting the version",
+      { timeout: 60_000 },
+      async () => {
+        const baseDb = await importDb();
+        const { importGeneratedTestCases } =
+          await import("./importGeneratedTestCases");
+        const { tag, project, template, workflow, repo, folder } =
+          await seedFixture(baseDb);
+
+        const pastedList = {
+          type: "doc",
+          content: [
+            {
+              type: "orderedList",
+              attrs: { start: NaN },
+              content: [
+                {
+                  type: "listItem",
+                  content: [
+                    {
+                      type: "paragraph",
+                      content: [{ type: "text", text: "one" }],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        };
+
+        const result = await importGeneratedTestCases({
+          projectId: project.id,
+          projectName: project.name,
+          repositoryId: repo.id,
+          folderId: folder.id,
+          folderName: folder.name,
+          templateId: template.id,
+          templateName: template.templateName,
+          stateId: workflow.id,
+          stateName: workflow.name,
+          maxOrder: 0,
+          autoGenerateTags: false,
+          source: "MANUAL",
+          testCases: [
+            {
+              id: `${tag}-nan`,
+              name: `${tag}-pasted-case`,
+              fieldValues: {},
+              steps: [{ step: pastedList, expectedResult: pastedList }],
+            },
+          ],
+          fieldMappings: [],
+        } as any);
+
+        expect(result.errors).toEqual([]);
+        expect(result.status).toBe("success");
+        const caseId = result.importedIds[0];
+        cleanup.repositoryCaseIds.push(caseId);
+
+        const version = await baseDb.repositoryCaseVersions.findFirst({
+          where: { repositoryCaseId: caseId, version: 1 },
+          select: { steps: true },
+        });
+        const versionSteps = (version?.steps as any[]) ?? [];
+        expect(versionSteps).toHaveLength(1);
+        expect(versionSteps[0].step.content[0].attrs.start).toBeNull();
+        expect(
+          versionSteps[0].expectedResult.content[0].attrs.start
+        ).toBeNull();
+
+        const stepRows = await baseDb.steps.findMany({
+          where: { testCaseId: caseId },
+          select: { step: true },
+        });
+        expect(stepRows).toHaveLength(1);
+        expect((stepRows[0].step as any).content[0].attrs.start).toBeNull();
+      }
+    );
   }
 );

@@ -10,10 +10,12 @@ vi.mock("~/lib/services/reviewGate", () => ({
   resolveCreateStateRemap: vi.fn(async () => null),
 }));
 
+import { createQuerySchemaFactory } from "@zenstackhq/orm";
 import {
   ImportInputSchema,
   persistGeneratedTestCases,
 } from "~/lib/services/testCaseImport";
+import { schema as zenstackSchema } from "~/zenstack/schema";
 
 /**
  * Server actions and JSON bodies do NOT deliver `undefined` values: React's
@@ -253,5 +255,127 @@ describe("persistGeneratedTestCases version 1 snapshot", () => {
     expect(captured.version.issues).toEqual([
       { id: 77, name: "BUG-1", externalId: "EXT-77" },
     ]);
+  });
+
+  /**
+   * A JSON body cannot carry NaN or Infinity, but React server actions do
+   * (Flight tags them and the server restores them). TipTap leaves both in a
+   * document when pasted HTML has a non-numeric `<ol start>` or table
+   * `colwidth`, and ZenStack's JsonValue validator then rejects the whole
+   * RepositoryCaseVersions.steps column ("expected string, received array at
+   * data.steps"). The importer has to hand the columns what a JSON body would
+   * have delivered.
+   */
+  it("stores NaN and Infinity from the server-action wire as null so the JSON columns validate", async () => {
+    const pastedList = {
+      type: "doc",
+      content: [
+        {
+          type: "orderedList",
+          attrs: { start: NaN },
+          content: [
+            {
+              type: "listItem",
+              content: [
+                { type: "paragraph", content: [{ type: "text", text: "one" }] },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    const pastedTable = {
+      type: "doc",
+      content: [
+        {
+          type: "table",
+          content: [
+            {
+              type: "tableRow",
+              content: [
+                {
+                  type: "tableHeader",
+                  attrs: {
+                    colspan: 1,
+                    rowspan: Infinity,
+                    colwidth: [NaN],
+                    style: null,
+                  },
+                  content: [
+                    {
+                      type: "paragraph",
+                      content: [{ type: "text", text: "key" }],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    const captured: { version?: any; steps?: any } = {};
+    auditedTransactionMock.mockImplementationOnce(async (fn: any) =>
+      fn(stubTx(captured))
+    );
+    const result = await persistGeneratedTestCases(
+      {
+        projectId: 1,
+        projectName: "Project",
+        repositoryId: 1,
+        folderId: 1,
+        folderName: "Folder",
+        templateId: 1,
+        templateName: "Template",
+        stateId: 1,
+        stateName: "Draft",
+        maxOrder: 0,
+        autoGenerateTags: false,
+        source: "MANUAL",
+        testCases: [
+          {
+            id: "case-1",
+            name: "Pasted case",
+            fieldValues: {},
+            tagIds: [],
+            issueIds: [],
+            steps: [{ step: pastedList, expectedResult: pastedTable }],
+          },
+        ],
+        fieldMappings: [],
+      } as any,
+      { userId: "u1", userName: "User" }
+    );
+
+    expect(result.status).toBe("success");
+    expect(result.errors).toEqual([]);
+
+    const versionStep = captured.version.steps[0];
+    expect(versionStep.step.content[0].attrs.start).toBeNull();
+    const header = versionStep.expectedResult.content[0].content[0].content[0];
+    expect(header.attrs).toEqual({
+      colspan: 1,
+      rowspan: null,
+      colwidth: [null],
+      style: null,
+    });
+    expect(captured.steps[0].step.content[0].attrs.start).toBeNull();
+
+    const createSchema = createQuerySchemaFactory(
+      zenstackSchema as any
+    ).makeCreateSchema("RepositoryCaseVersions");
+    expect(createSchema.safeParse({ data: captured.version }).success).toBe(
+      true
+    );
+    // Negative control: the raw wire payload is what the validator rejects.
+    expect(
+      createSchema.safeParse({
+        data: {
+          ...captured.version,
+          steps: [{ step: pastedList, expectedResult: pastedTable }],
+        },
+      }).success
+    ).toBe(false);
   });
 });
