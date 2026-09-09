@@ -1,24 +1,17 @@
 # Releases @testplanit/cli via semantic-release.
 #
-# `main` cuts normal releases to the `latest` npm tag. `beta` is configured in
-# cli/.releaserc.json as a prerelease branch, so pushes there cut `1.x.y-beta.N`
-# under the `beta` npm tag instead — matching the beta channel the packages/*
-# workspace publishes through packages-release.yml. Testers opt in with
-# `npm i @testplanit/cli@beta`; `@latest` is untouched.
+# `main` cuts releases to the `latest` npm tag. Versions are computed by
+# semantic-release from conventional commits, NOT set by hand; a push with no
+# releasable commits publishes nothing.
 #
-# Versions are computed by semantic-release from conventional commits, NOT set
-# by hand: a `feat` on beta over the 1.3.0 baseline yields 1.4.0-beta.1 (its
-# prerelease counter starts at 1). A push with no releasable commits publishes
-# nothing.
-#
-# Both branches release from THIS workflow file on purpose — npm trusted
-# publishing (OIDC) authorizes a single workflow filename per package.
+# npm trusted publishing (OIDC) authorizes a single workflow filename per
+# package — every CLI release must come from THIS workflow file.
 name: CLI Semantic Release
 
 on:
   workflow_dispatch:
   push:
-    branches: [main, beta]
+    branches: [main]
     paths:
       - 'cli/**'
       - '.github/workflows/cli-semantic-release.yml'

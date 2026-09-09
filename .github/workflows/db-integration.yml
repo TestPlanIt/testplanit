@@ -16,7 +16,7 @@ on:
     # beta it had never once run against them — six suites had been failing
     # since the day they landed, invisible until an unrelated PR happened to
     # touch a matching path.
-    branches: [main, beta, "release/**"]
+    branches: [main, "release/**"]
     paths:
       - "testplanit/__tests__/integration/**"
       - "testplanit/lib/**"

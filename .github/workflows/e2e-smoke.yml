@@ -16,7 +16,7 @@ name: E2E Smoke
 on:
   workflow_dispatch:
   push:
-    branches: [main, beta]
+    branches: [main, 'release/**']
     paths:
       - "testplanit/app/**"
       - "testplanit/components/**"

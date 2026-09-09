@@ -2585,15 +2585,19 @@ const App = () => {
     );
   }
 
-  const hasTestCases = testData?.testCases?.length > 0;
-  const hasSessions = testData?.sessions?.length > 0;
-  const hasTestRuns = testData?.testRuns?.length > 0;
-
-  // Deleted cases (kept only for their result history) are listed after the
-  // live ones and counted separately so they are easy to skip.
+  // Deleted cases are listed after the live ones and counted separately so
+  // they are easy to skip. A deleted case is worth keeping only while it still
+  // carries result history; with no results attached the row is just noise on
+  // the issue.
   const allTestCases = testData?.testCases || [];
   const liveTestCases = allTestCases.filter((testCase) => !testCase.isDeleted);
-  const deletedTestCases = allTestCases.filter((testCase) => testCase.isDeleted);
+  const deletedTestCases = allTestCases.filter(
+    (testCase) => testCase.isDeleted && testCase.resultHistory?.length > 0
+  );
+
+  const hasTestCases = liveTestCases.length > 0 || deletedTestCases.length > 0;
+  const hasSessions = testData?.sessions?.length > 0;
+  const hasTestRuns = testData?.testRuns?.length > 0;
 
   if (!hasTestCases && !hasSessions && !hasTestRuns) {
     return (

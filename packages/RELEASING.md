@@ -74,50 +74,16 @@ When you're ready to release, merge the "Version Packages" PR. This will:
 2. Publish packages to npm
 3. Create GitHub releases with release notes
 
-## Beta Pre-releases (the `beta` branch)
-
-Package changes that depend on the unreleased 1.0 app cannot ship to `latest` — a
-user on the released app would install them and hit endpoints that do not exist
-yet. They publish from the `beta` branch under the `beta` npm dist-tag instead,
-so the default install is unaffected and testers opt in explicitly:
-
-```bash
-npm install @testplanit/mcp-server@beta
-```
-
-Beta versions track the app's 1.0 line: `1.0.0-beta.N`.
-
-This path is **not** Changesets-managed — Changesets versions from `main` only,
-which is why `packages/*` versions on `beta` trail npm. Cutting a beta is a
-deliberate manual step:
-
-1. On the `beta` branch, set the package's `version` to the next pre-release
-   (e.g. `1.0.0-beta.1`) in its `package.json`.
-2. Commit and push to `beta`.
-
-`packages-release.yml` then publishes it via
-`.github/scripts/packages-publish-beta.mjs`. Two rules govern what goes out:
-
-- **Only pre-release versions publish.** A package whose version has no `-`
-  suffix is skipped, so the packages you did not bump can never be republished.
-- **Already-published versions are skipped**, so pushing to `beta` without a
-  version bump is a no-op.
-
 Packages publish dependencies-first, so `@testplanit/api` reaches the registry
 before the reporters that declare it as `workspace:^`.
 
-Keep writing changesets for beta work as normal. They are consumed on `main` when
-the change lands there, and produce the real changelog entry then; the beta
-version number is deliberately outside that flow.
-
 `@testplanit/cli` is separate: it lives outside `packages/` and is released by
-`cli-semantic-release.yml`, where `beta` is configured as a semantic-release
-prerelease branch. Its version is computed from conventional commits rather than
-set by hand, and a push with no releasable commits publishes nothing.
+`cli-semantic-release.yml`. Its version is computed from conventional commits
+rather than set by hand, and a push with no releasable commits publishes nothing.
 
-> Both branches release from their existing workflow file on purpose. npm trusted
-> publishing (OIDC) authorizes a single workflow filename per package, so adding a
-> separate beta workflow would fall back to anonymous auth and fail with E404.
+> Each package releases from its existing workflow file on purpose. npm trusted
+> publishing (OIDC) authorizes a single workflow filename per package, so a
+> publish from any other workflow falls back to anonymous auth and fails with E404.
 
 ## Version Bump Guidelines
 
@@ -153,9 +119,8 @@ pnpm --filter "@testplanit/*" test
 
 The release process is automated via GitHub Actions:
 
-- **Trigger**: Push to `main` (Changesets release) or `beta` (pre-release) with
-  changes in `packages/` or `.changeset/`
-- **Workflow**: `.github/workflows/packages-release.yml` for both branches
+- **Trigger**: Push to `main` with changes in `packages/` or `.changeset/`
+- **Workflow**: `.github/workflows/packages-release.yml`
 - **Authentication**: npm trusted publishing (OIDC) — the job's `id-token: write`
   permission plus the trusted publisher configured on npm. There is no
   `NPM_TOKEN` secret, and the trusted publisher is bound to this one workflow
