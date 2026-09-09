@@ -1,3 +1,9 @@
+## [1.0.4](https://github.com/TestPlanIt/testplanit/compare/v1.0.3...v1.0.4) (2026-09-09)
+
+### Bug Fixes
+
+* **import:** keep JSON test steps intact on manual create and CSV import ([#630](https://github.com/TestPlanIt/testplanit/issues/630)) ([748114f](https://github.com/TestPlanIt/testplanit/commit/748114f49044b89152a283a967a10adff09b2166))
+
 ## [1.0.3](https://github.com/TestPlanIt/testplanit/compare/v1.0.2...v1.0.3) (2026-09-08)
 
 ### Bug Fixes
