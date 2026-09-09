@@ -177,5 +177,29 @@ describe("repositoryCaseSearch", () => {
       expect(filters).toContainEqual({ term: { isArchived: false } });
       expect(filters).toContainEqual({ term: { isDeleted: false } });
     });
+
+    it("should aggregate facets on the fields as they are mapped", async () => {
+      mockClient.search.mockResolvedValue({
+        hits: {
+          hits: [],
+          total: { value: 0 },
+        },
+        took: 10,
+      });
+
+      await searchRepositoryCases({
+        facets: ["projects", "templates", "states", "creators", "folders"],
+      });
+
+      const searchCall = mockClient.search.mock.calls[0][0];
+
+      expect(searchCall.aggs).toEqual({
+        projects: { terms: { field: "projectName", size: 50 } },
+        templates: { terms: { field: "templateName", size: 20 } },
+        states: { terms: { field: "stateName", size: 20 } },
+        creators: { terms: { field: "creatorName.keyword", size: 50 } },
+        folders: { terms: { field: "folderPath", size: 100 } },
+      });
+    });
   });
 });

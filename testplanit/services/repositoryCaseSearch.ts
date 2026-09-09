@@ -200,17 +200,17 @@ function buildAggregations(facets?: string[]) {
     switch (facet) {
       case "projects":
         aggs.projects = {
-          terms: { field: "projectName.keyword", size: 50 },
+          terms: { field: "projectName", size: 50 },
         };
         break;
       case "templates":
         aggs.templates = {
-          terms: { field: "templateName.keyword", size: 20 },
+          terms: { field: "templateName", size: 20 },
         };
         break;
       case "states":
         aggs.states = {
-          terms: { field: "stateName.keyword", size: 20 },
+          terms: { field: "stateName", size: 20 },
         };
         break;
       case "creators":
@@ -235,7 +235,7 @@ function buildAggregations(facets?: string[]) {
         break;
       case "folders":
         aggs.folders = {
-          terms: { field: "folderPath.keyword", size: 100 },
+          terms: { field: "folderPath", size: 100 },
         };
         break;
     }
