@@ -11,7 +11,7 @@ name: DB Integration Tests
 on:
   workflow_dispatch:
   push:
-    branches: [main, beta]
+    branches: [main, 'release/**']
     paths:
       - "testplanit/__tests__/integration/**"
       - "testplanit/lib/**"
