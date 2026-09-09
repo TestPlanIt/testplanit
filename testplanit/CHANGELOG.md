@@ -1,3 +1,9 @@
+## [1.0.6](https://github.com/TestPlanIt/testplanit/compare/v1.0.5...v1.0.6) (2026-09-09)
+
+### Bug Fixes
+
+* **search:** aggregate repository case facets on their keyword fields ([#633](https://github.com/TestPlanIt/testplanit/issues/633)) ([450be83](https://github.com/TestPlanIt/testplanit/commit/450be83c1ee7632401ccabfd21cbee834f2a6372))
+
 ## [1.0.5](https://github.com/TestPlanIt/testplanit/compare/v1.0.4...v1.0.5) (2026-09-09)
 
 ### Bug Fixes
