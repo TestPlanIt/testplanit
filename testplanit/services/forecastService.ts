@@ -191,7 +191,8 @@ export async function updateRepositoryCaseForecast(
         await syncRepositoryCaseToElasticsearch(current.id).catch(
           (error: unknown) => {
             console.error(
-              `Failed to sync case ${current.id} forecast to Elasticsearch:`,
+              "Failed to sync case %s forecast to Elasticsearch:",
+              current.id,
               error
             );
           }
@@ -237,7 +238,8 @@ export async function updateRepositoryCaseForecast(
     };
   } catch (error) {
     console.error(
-      `Error updating group forecast for RepositoryCase ID ${repositoryCaseId}:`,
+      "Error updating group forecast for RepositoryCase ID %s:",
+      repositoryCaseId,
       error
     );
     throw error;
@@ -348,7 +350,8 @@ export async function updateTestRunForecast(
         // document carries both forecast fields too (`testRunSearch`).
         await syncTestRunToElasticsearch(testRunId).catch((error: unknown) => {
           console.error(
-            `Failed to sync run ${testRunId} cleared forecast to Elasticsearch:`,
+            "Failed to sync run %s cleared forecast to Elasticsearch:",
+            testRunId,
             error
           );
         });
@@ -412,7 +415,8 @@ export async function updateTestRunForecast(
       // See the cleared-forecast write above — same plugin bypass.
       await syncTestRunToElasticsearch(testRunId).catch((error: unknown) => {
         console.error(
-          `Failed to sync run ${testRunId} forecast to Elasticsearch:`,
+          "Failed to sync run %s forecast to Elasticsearch:",
+          testRunId,
           error
         );
       });
@@ -425,7 +429,8 @@ export async function updateTestRunForecast(
     }
   } catch (error) {
     console.error(
-      `Error updating forecast for TestRun ID ${testRunId}:`,
+      "Error updating forecast for TestRun ID %s:",
+      testRunId,
       error
     );
     throw error;

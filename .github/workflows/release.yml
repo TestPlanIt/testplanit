@@ -40,6 +40,9 @@ on:
         required: true
         type: string
 
+permissions:
+  contents: read
+
 jobs:
   # Build + publish ARM64 images natively on a macOS arm64 runner (Colima).
   build-arm64:
