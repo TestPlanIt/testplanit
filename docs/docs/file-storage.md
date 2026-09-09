@@ -219,7 +219,7 @@ A file over the limit is rejected before it is stored, with a message naming the
 maximum for that type.
 
 Attachments and inline document images share one knob, `UPLOAD_MAX_MB` (default
-`10`). Set it in the `.env` that Docker Compose reads, then rebuild:
+`10`). Set it in the `.env` that Docker Compose reads, then restart:
 
 ```bash
 # testplanit/.env
@@ -227,15 +227,16 @@ UPLOAD_MAX_MB=100
 ```
 
 ```bash
-docker compose -f docker-compose.prod.yml build prod
 docker compose -f docker-compose.prod.yml up -d prod
 ```
 
-A **rebuild** is required, not just a restart. Next.js freezes the matching
-server-action body limit into the standalone build, so a runtime-only change
-silently has no effect and uploads keep failing with an opaque error. Project
-icons and avatars are deliberately fixed — they are UI thumbnails, not
-operator-sized user payloads.
+No rebuild is needed, on an image you built or one you pulled. Next.js freezes
+the matching server-action body limit into the standalone build, so the
+container entrypoint rewrites that frozen value from `UPLOAD_MAX_MB` on every
+start — one variable drives both the transport limit and the per-file check. On
+Kubernetes, set `config.uploadMaxMb` in your Helm values instead. Project icons
+and avatars are deliberately fixed — they are UI thumbnails, not operator-sized
+user payloads.
 
 The bundled nginx separately caps any request body sent to the app at 10 MB. In
 proxy mode the file travels through the app server, so that ceiling applies to

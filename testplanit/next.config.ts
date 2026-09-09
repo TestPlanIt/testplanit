@@ -170,11 +170,13 @@ const nextConfig: NextConfig = {
     // to maxSize turns the friendly "File is too large" into an opaque
     // server-action error. The 10mb of headroom covers that overhead.
     //
-    // Like SELF_HOSTED, this MUST be set from a build ARG: Next freezes
-    // experimental config into the standalone build
+    // Next freezes experimental config into the standalone build
     // (.next/required-server-files.json) and the running server reads that
-    // frozen copy, so a runtime-only env var is too late and silently has no
-    // effect (uploads fail at the proxy layer with no useful message).
+    // frozen copy, so the build ARG sets the image's DEFAULT ceiling. It is not
+    // the last word: docker-entrypoint.sh rewrites the frozen value from the
+    // runtime UPLOAD_MAX_MB at boot (scripts/set-upload-body-limit.ts), which is
+    // what keeps a prebuilt image configurable. Keep the 10mb of headroom in
+    // step with BODY_LIMIT_HEADROOM_MB there.
     serverActions: {
       bodySizeLimit: `${uploadMaxMb + 10}mb`,
     },

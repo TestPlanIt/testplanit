@@ -217,6 +217,13 @@ ingress:
 # -----------------------------------------------------------------------------
 config:
   nodeOptions: "--max-old-space-size=4096"
+  # Per-file ceiling in MB for attachments and inline document images (project
+  # icons and avatars are fixed UI thumbnails and ignore this). Drives the app's
+  # own check and, via the container entrypoint, Next's server-action body
+  # limit — so it takes effect on a restart, with no image rebuild.
+  # Keep ingress.annotations' nginx.ingress.kubernetes.io/proxy-body-size at or
+  # above this value, or the proxy rejects a large upload before the app sees it.
+  uploadMaxMb: 10
   # Authentication surface. Defaults suit an internal enterprise install
   # (password auth on, open signup off). Magic Link needs SMTP configured.
   auth:
