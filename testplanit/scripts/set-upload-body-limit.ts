@@ -126,20 +126,71 @@ export function syncBodySizeLimit(
   );
 }
 
+export type LogLine = { level: "log" | "warn"; message: string };
+
+/**
+ * Turn the per-file results into boot output. The case worth shouting about is
+ * "no-match": the operator asked for a ceiling and there was nothing to rewrite,
+ * which is what a future Next release changing where it freezes the config would
+ * look like. Without a warning that reverts the limit to the baked default
+ * silently, and the next person to hit it sees only an opaque upload failure.
+ */
+export function describeSync(
+  results: FileResult[],
+  rawUploadMaxMb: string
+): LogLine[] {
+  const lines: LogLine[] = [];
+  const matched = results.filter(
+    (r) => r.status === "updated" || r.status === "unchanged"
+  );
+  for (const result of results) {
+    switch (result.status) {
+      case "updated":
+        lines.push({
+          level: "log",
+          message: `Server-action body limit in ${result.file}: ${result.from} -> ${result.to} (UPLOAD_MAX_MB=${rawUploadMaxMb})`,
+        });
+        break;
+      case "failed":
+        lines.push({
+          level: "warn",
+          message: `WARNING: could not write ${result.file} (${result.error}). UPLOAD_MAX_MB=${rawUploadMaxMb} will NOT apply to uploads; the limit built into the image stays in effect.`,
+        });
+        break;
+      case "no-match":
+        lines.push({
+          level: "warn",
+          message: `WARNING: no serverActions.bodySizeLimit found in ${result.file}, so UPLOAD_MAX_MB=${rawUploadMaxMb} will NOT apply to uploads. Next may have changed where it freezes this config -- see testplanit/scripts/set-upload-body-limit.ts.`,
+        });
+        break;
+      case "missing":
+        // All copies missing is the normal non-production case (dev, the
+        // workers image). Some present and some not is not: say so.
+        if (matched.length > 0) {
+          lines.push({
+            level: "warn",
+            message: `WARNING: ${result.file} is missing from an otherwise complete standalone build; UPLOAD_MAX_MB=${rawUploadMaxMb} was applied to the copies that are present.`,
+          });
+        }
+        break;
+      case "unchanged":
+        break;
+    }
+  }
+  return lines;
+}
+
 export function main(): void {
-  const results = syncBodySizeLimit(process.cwd(), process.env.UPLOAD_MAX_MB);
+  const raw = process.env.UPLOAD_MAX_MB;
+  const results = syncBodySizeLimit(process.cwd(), raw);
   if (results === null) {
     return;
   }
-  for (const result of results) {
-    if (result.status === "updated") {
-      console.log(
-        `Server-action body limit in ${result.file}: ${result.from} -> ${result.to} (UPLOAD_MAX_MB=${process.env.UPLOAD_MAX_MB})`
-      );
-    } else if (result.status === "failed") {
-      console.warn(
-        `Server-action body limit in ${result.file}: left as built (${result.error}).`
-      );
+  for (const { level, message } of describeSync(results, raw as string)) {
+    if (level === "warn") {
+      console.warn(message);
+    } else {
+      console.log(message);
     }
   }
 }

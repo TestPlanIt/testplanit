@@ -6,9 +6,11 @@ import {
   BODY_LIMIT_HEADROOM_MB,
   FROZEN_CONFIG_FILES,
   bodySizeLimitFor,
+  describeSync,
   parseUploadMaxMb,
   replaceBodySizeLimit,
   syncBodySizeLimit,
+  type FileResult,
 } from "./set-upload-body-limit";
 
 // Shaped like the real standalone output: server.js carries the config inlined
@@ -130,6 +132,67 @@ describe("set-upload-body-limit", () => {
       "missing",
       "missing",
     ]);
+  });
+
+  describe("boot output", () => {
+    const warnings = (results: FileResult[]) =>
+      describeSync(results, "100")
+        .filter((line) => line.level === "warn")
+        .map((line) => line.message);
+
+    // The silent-revert case this exists to catch: a Next release that moves
+    // the frozen config would otherwise drop the ceiling back to the baked
+    // default with nothing in the logs.
+    it("warns when there is no limit to rewrite", () => {
+      expect(warnings([{ file: "server.js", status: "no-match" }])).toEqual([
+        expect.stringContaining(
+          "no serverActions.bodySizeLimit found in server.js"
+        ),
+      ]);
+    });
+
+    it("warns when a copy could not be written", () => {
+      expect(
+        warnings([{ file: "server.js", status: "failed", error: "EROFS" }])
+      ).toEqual([expect.stringContaining("could not write server.js")]);
+    });
+
+    // Dev and the workers image have no standalone tree at all.
+    it("stays quiet when every copy is absent", () => {
+      expect(
+        warnings([
+          { file: "server.js", status: "missing" },
+          { file: ".next/required-server-files.json", status: "missing" },
+        ])
+      ).toEqual([]);
+    });
+
+    it("warns when only some copies are absent", () => {
+      expect(
+        warnings([
+          { file: "server.js", status: "updated", from: "20mb", to: "110mb" },
+          { file: ".next/required-server-files.json", status: "missing" },
+        ])
+      ).toEqual([
+        expect.stringContaining("missing from an otherwise complete"),
+      ]);
+    });
+
+    it("reports each rewrite and stays quiet about no-ops", () => {
+      const lines = describeSync(
+        [
+          { file: "server.js", status: "updated", from: "20mb", to: "110mb" },
+          { file: ".next/required-server-files.json", status: "unchanged" },
+        ],
+        "100"
+      );
+      expect(lines).toEqual([
+        {
+          level: "log",
+          message: expect.stringContaining("server.js: 20mb -> 110mb"),
+        },
+      ]);
+    });
   });
 
   it("leaves a build that never set the key alone", () => {
