@@ -20,6 +20,15 @@ import {
   registerRunsCasesRemove,
   type RunsCasesRemoveDeps,
 } from "./cases-remove.js";
+import { registerRunsExecute, type RunsExecuteDeps } from "./execute.js";
+import {
+  registerRunsAutomationPlan,
+  type RunsAutomationPlanDeps,
+} from "./automation-plan.js";
+import {
+  registerAutomationTargetsList,
+  type AutomationTargetsListDeps,
+} from "./targets-list.js";
 
 export type RunsDeps =
   & RunsListDeps
@@ -30,7 +39,10 @@ export type RunsDeps =
   & RunsUpdateDeps
   & RunsCasesAddDeps
   & RunsCasesUpdateDeps
-  & RunsCasesRemoveDeps;
+  & RunsCasesRemoveDeps
+  & RunsExecuteDeps
+  & RunsAutomationPlanDeps
+  & AutomationTargetsListDeps;
 
 export function registerRuns(server: McpServer, deps: RunsDeps): void {
   registerRunsList(server, deps);
@@ -42,6 +54,9 @@ export function registerRuns(server: McpServer, deps: RunsDeps): void {
   registerRunsCasesAdd(server, deps);
   registerRunsCasesUpdate(server, deps);
   registerRunsCasesRemove(server, deps);
+  registerRunsExecute(server, deps);
+  registerRunsAutomationPlan(server, deps);
+  registerAutomationTargetsList(server, deps);
 }
 
 export {
@@ -54,6 +69,9 @@ export {
   registerRunsCasesAdd,
   registerRunsCasesUpdate,
   registerRunsCasesRemove,
+  registerRunsExecute,
+  registerRunsAutomationPlan,
+  registerAutomationTargetsList,
 };
 export type {
   RunsListDeps,
@@ -65,4 +83,7 @@ export type {
   RunsCasesAddDeps,
   RunsCasesUpdateDeps,
   RunsCasesRemoveDeps,
+  RunsExecuteDeps,
+  RunsAutomationPlanDeps,
+  AutomationTargetsListDeps,
 };

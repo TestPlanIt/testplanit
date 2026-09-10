@@ -28,6 +28,7 @@ The header displays:
     - **Duplicate**: Opens the duplication dialog to create a copy of the test run.
     - **Export PDF**: Exports the test run to a PDF document including all metadata, description, documentation, test cases (ordered by run order) with their execution status, results, step results, custom field values, and attachments. Available for both regular and JUnit/automated test runs.
     - **Assign**: Opens the [Distribute assignments](#distributing-assignments) dialog to spread the run's test cases across several team members at once (requires add/edit permission on Test Runs).
+    - **Execute automated cases** (in the case list header, left of **Start manual testing**): Dispatches the run's automated cases to one of the project's execution targets. Shown when the project has an enabled target and the user can add/edit runs; disabled while the run has no automated cases or an execution is already in flight. See [Automated execution](#automated-execution).
     - **Lock composition**: A toggle that freezes the run's case set. See [Composition lock](#composition-lock).
     - **Complete**: Opens a confirmation dialog to mark the run as finished. Here you select the final "Done" state from the workflow and set the completion date. This action is irreversible (if user has permission).
   - **View Mode (Completed Run)**:
@@ -192,6 +193,24 @@ This table lists all the test cases included in the current test run:
     - **View Execution(s)**: Shows the history of attempts for this case in this run.
     - **Assign**: Allows changing the assigned tester.
     - **Remove**: Removes the test case from this run (not available once the run's [composition is locked](#composition-lock) or completed).
+
+## Automated execution
+
+When the project has an [execution target](settings/automation.md), the case list header offers **Execute automated cases** next to **Start manual testing**. The dialog picks the target, optionally a branch or ref, and states how many automated cases will be requested. TestPlanIt then starts the job with the run id; the job reads the plan of cases, runs them, and reports results into this run — see [Automated Execution](../automated-execution.md) for the job's side.
+
+Once a run has been executed, an execution chip appears under the header actions with the latest execution's status, a link to the job on the provider, who requested it and when, and the provider's own status when it can be read. While an execution is in flight the chip offers **Cancel**; after a failure it offers **Retry**. The history icon opens a sheet listing every execution of the run, newest first.
+
+Executing a manual run makes it a [hybrid run](#hybrid-test-runs). A run has at most one execution in flight; results that arrive after a cancel are still kept.
+
+## Hybrid Test Runs
+
+A manual run becomes a **hybrid** run the first time automated results are reported into it — by a reporter or the CLI pinned to the run with `TESTPLANIT_RUN_ID`, or by importing a results file into it. The run keeps the manual layout: the included-cases table, the execution sheet, assignment, review and the composition lock all work as before. An **Automated Results** section appears beneath the included cases with the reported attempts, and the automation charts join the right-hand panel.
+
+Each automated result updates the status of its case in the run, so the progress bar, the results distribution and the ready-to-complete check reflect both kinds of execution. Any case can still be executed by hand; the newest result wins, whether it came from CI or from a tester, and the full history of both stays visible in the case's execution history.
+
+When results arrive for a case that is not in the run, the case is added to the run, exactly as an import into an automated run would. If the run's [composition is locked](#composition-lock), the result is still recorded but the case is not added; the import reports those cases so the run's composition stays as the team left it.
+
+Hybrid runs match both the **Manual** and **Automated** chips on the runs list.
 
 ## Automated Test Runs
 

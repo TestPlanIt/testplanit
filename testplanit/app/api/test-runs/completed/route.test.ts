@@ -28,6 +28,7 @@ vi.mock("~/utils/testResultTypes", () => ({
     "MOCHA",
     "CUCUMBER",
   ],
+  MANUAL_TEST_RUN_TYPES: ["REGULAR", "HYBRID"],
 }));
 
 import { getServerSession } from "next-auth";
@@ -172,7 +173,9 @@ describe("Completed Test Runs API Route", () => {
       await GET(request);
 
       const countCall = (baseDb.testRuns.count as any).mock.calls[0][0];
-      expect(countCall.where).toHaveProperty("testRunType", "REGULAR");
+      expect(countCall.where.testRunType).toEqual({
+        in: ["REGULAR", "HYBRID"],
+      });
     });
 
     it("filters by automated run types when runType=automated", async () => {
@@ -246,7 +249,9 @@ describe("Completed Test Runs API Route", () => {
       await GET(request);
 
       const countCall = (baseDb.testRuns.count as any).mock.calls[0][0];
-      expect(countCall.where).toHaveProperty("testRunType", "REGULAR");
+      expect(countCall.where.testRunType).toEqual({
+        in: ["REGULAR", "HYBRID"],
+      });
       expect(countCall.where.OR).toHaveLength(3);
     });
 

@@ -67,12 +67,27 @@ You can also use environment variables (they take precedence over stored config)
 
 - `TESTPLANIT_URL` - TestPlanIt instance URL
 - `TESTPLANIT_TOKEN` - API token
+- `TESTPLANIT_RUN_ID` - Set by TestPlanIt when it dispatches a job; `run plan`, `run complete`, `run finish` and `import -r` default to it
+- `TESTPLANIT_EXECUTION_ID` - Set by TestPlanIt when it dispatches a job; `run plan` and `run finish` default to it
 
 ```bash
 TESTPLANIT_URL=https://testplanit.example.com TESTPLANIT_TOKEN=tpi_xxx testplanit import ...
 ```
 
 ## Commands
+
+### Run (dispatched jobs)
+
+For a job TestPlanIt dispatched, or any job reporting into a run created up front:
+
+```bash
+testplanit run plan                                   # the run's automated cases, as JSON
+testplanit run plan --format lines --selector-field fullName > plan.txt
+testplanit run complete                               # mark the run done after every job reported
+testplanit run finish --conclusion success            # report the outcome (generic-webhook targets)
+```
+
+All three default the run to `$TESTPLANIT_RUN_ID` (`-r, --run <id>` overrides) and the execution to `$TESTPLANIT_EXECUTION_ID` (`--execution <id>`). `run plan` also takes `-o, --output <file>`; `run finish` takes `--message <text>`.
 
 ### Import Test Results
 

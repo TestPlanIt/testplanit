@@ -36,6 +36,7 @@ import {
 } from "~/lib/utils/errors";
 import { authOptions } from "~/server/auth";
 import { syncRepositoryCaseToElasticsearch } from "~/services/repositoryCaseSync";
+import { isAutomatedTestRunType } from "~/utils/testResultTypes";
 
 const submitResultSchema = z.object({
   testRunId: z.number().int().positive(),
@@ -470,7 +471,9 @@ export const POST = withAuditContext(async (req: NextRequest) => {
       ? await resolveCanReadSensitive(authenticatedUserId)
       : false;
 
-    const isAutomatedRun = runCase.testRun.testRunType !== "REGULAR";
+    // HYBRID counts as manual here: a tester recording a result on a manual
+    // case in a hybrid run must not flip that case to automated.
+    const isAutomatedRun = isAutomatedTestRunType(runCase.testRun.testRunType);
     const needsAutomatedFlip =
       isAutomatedRun && !runCase.repositoryCase.automated;
 

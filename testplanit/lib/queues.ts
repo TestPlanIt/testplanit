@@ -19,6 +19,7 @@ import {
   SYNC_QUEUE_NAME,
   TESTMO_IMPORT_QUEUE_NAME,
   WEBHOOK_DISPATCH_QUEUE_NAME,
+  EXECUTION_DISPATCH_QUEUE_NAME,
   SCIM_ACCESS_RECOMPUTE_QUEUE_NAME,
 } from "./queueNames";
 import valkeyConnection from "./valkey";
@@ -45,6 +46,7 @@ export {
   GENERATE_FROM_URL_QUEUE_NAME,
   ITERATION_GENERATION_QUEUE_NAME,
   WEBHOOK_DISPATCH_QUEUE_NAME,
+  EXECUTION_DISPATCH_QUEUE_NAME,
   SCIM_ACCESS_RECOMPUTE_QUEUE_NAME,
 };
 
@@ -688,6 +690,34 @@ export function getScimAccessRecomputeQueue(): Queue | null {
  * Get all queues (initializes all of them)
  * Use this only when you need access to all queues (e.g., admin dashboard)
  */
+let _executionDispatchQueue: Queue | null = null;
+
+/**
+ * Get the execution-dispatch queue instance (lazy initialization).
+ * Starts CI jobs for automated executions. A dispatch is not idempotent
+ * (each attempt starts a job), so jobs never retry; failures are recorded
+ * on the TestRunExecution row instead.
+ */
+export function getExecutionDispatchQueue(): Queue | null {
+  if (_executionDispatchQueue) return _executionDispatchQueue;
+  if (!valkeyConnection) {
+    console.warn(
+      `Valkey connection not available, Queue "${EXECUTION_DISPATCH_QUEUE_NAME}" not initialized.`
+    );
+    return null;
+  }
+  _executionDispatchQueue = new Queue(EXECUTION_DISPATCH_QUEUE_NAME, {
+    connection: valkeyConnection as any,
+    prefix: BULLMQ_PREFIX,
+    defaultJobOptions: { ...NO_RETRY_MEDIUM_RETENTION },
+  });
+  console.log(`Queue "${EXECUTION_DISPATCH_QUEUE_NAME}" initialized.`);
+  _executionDispatchQueue.on("error", (error) => {
+    console.error(`Queue ${EXECUTION_DISPATCH_QUEUE_NAME} error:`, error);
+  });
+  return _executionDispatchQueue;
+}
+
 export function getAllQueues() {
   return {
     forecastQueue: getForecastQueue(),
@@ -709,6 +739,7 @@ export function getAllQueues() {
     "generate-from-url": getGenerateFromUrlQueue(),
     iterationGenerationQueue: getIterationGenerationQueue(),
     webhookDispatchQueue: getWebhookDispatchQueue(),
+    executionDispatchQueue: getExecutionDispatchQueue(),
     scimAccessRecomputeQueue: getScimAccessRecomputeQueue(),
   };
 }

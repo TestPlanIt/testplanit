@@ -71,7 +71,8 @@ The data flow spans the admin page and project settings:
 1. **Admin** registers the repository here (credentials + a successful connection test).
 2. A **project admin** connects the repository to a project, choosing a branch and one or more path patterns (base path + glob):
    - under **Project Settings → QuickScript** for test automation code;
-   - under **Project Settings → Impact Analysis** for the application under test.
+   - under **Project Settings → Impact Analysis** for the application under test;
+   - under **Project Settings → Automated Execution** as the repository whose GitHub Actions workflow or GitLab CI pipeline runs the project's automated cases (starting a job needs the `workflow` scope on GitHub or the `api` scope on GitLab).
 3. The project's features read from that connection:
    - **QuickScript**: AI test export reads the cached file context so generated scripts match the repository's real code. Repository file context is capped at **500 KB** per export; when a project's matched files exceed that budget, files are ranked by relevance and the lowest-ranked are skipped.
    - **Impact Analysis**: **Analyze impact** lists the repository's branches and commits, compares two commits, and selects the Affected Tests; the Code Pins panel on test case pages picks from the repository's files; and repository markers are scanned into Code Pins on each cache refresh.

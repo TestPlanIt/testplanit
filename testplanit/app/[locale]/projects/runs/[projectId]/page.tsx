@@ -66,7 +66,10 @@ import {
 import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { usePathname, useRouter } from "~/lib/navigation";
 import { toHumanReadable } from "~/utils/duration";
-import { isAutomatedTestRunType } from "~/utils/testResultTypes";
+import {
+  hasAutomatedResultsView,
+  isAutomatedTestRunType,
+} from "~/utils/testResultTypes";
 import AddTestRunModal from "./AddTestRunModal";
 import DuplicateTestRunDialog, {
   AddTestRunModalInitProps,
@@ -501,7 +504,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
     if (runTypeFilter === "manual") {
       runs = runs.filter((run) => !isAutomatedTestRunType(run.testRunType));
     } else if (runTypeFilter === "automated") {
-      runs = runs.filter((run) => isAutomatedTestRunType(run.testRunType));
+      runs = runs.filter((run) => hasAutomatedResultsView(run.testRunType));
     }
 
     if (participantFilterActive) {

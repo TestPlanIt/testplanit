@@ -191,6 +191,8 @@ model User {
     createdCaseLinks                         RepositoryCaseLink[]              @relation("UserCreatedCaseLinks")
     createdCodePins                          RepositoryCaseCodePin[]           @relation("UserCreatedCodePins")
     createdImpactAnalyses                    ImpactAnalysis[]                  @relation("ImpactAnalysisCreatedBy")
+    createdExecutionTargets                  ExecutionTarget[]                 @relation("ExecutionTargetCreatedBy")
+    requestedTestRunExecutions               TestRunExecution[]                @relation("TestRunExecutionRequestedBy")
     reviewedImpactAnalysisCases              ImpactAnalysisCase[]              @relation("ImpactAnalysisCaseReviewedBy")
     createdSharedStepGroups                  SharedStepGroup[]
     notifications                            Notification[]
@@ -661,6 +663,8 @@ model Projects {
     projectLlmIntegrations           ProjectLlmIntegration[]
     codeRepositoryConfigs            ProjectCodeRepositoryConfig[]
     impactAnalyses                   ImpactAnalysis[]
+    executionTargets                 ExecutionTarget[]
+    testRunExecutions                TestRunExecution[]
     promptConfigId                   String?
     promptConfig                     PromptConfig?                         @relation(fields: [promptConfigId], references: [id])
     issues                           Issue[]
@@ -3010,28 +3014,28 @@ model SessionFieldValues {
 }
 
 model TestRuns {
-    id                        Int              @id @default(autoincrement())
+    id                        Int                @id @default(autoincrement())
     projectId                 Int
-    project                   Projects         @relation(fields: [projectId], references: [id], onDelete: Cascade)
-    name                      String           @length(1)
+    project                   Projects           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    name                      String             @length(1)
     note                      Json?
     docs                      Json?
     configId                  Int?
-    configuration             Configurations?  @relation(fields: [configId], references: [id], onDelete: SetNull)
+    configuration             Configurations?    @relation(fields: [configId], references: [id], onDelete: SetNull)
     milestoneId               Int?
-    milestone                 Milestones?      @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
+    milestone                 Milestones?        @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
     stateId                   Int
-    state                     Workflows        @relation(fields: [stateId], references: [id])
+    state                     Workflows          @relation(fields: [stateId], references: [id])
     forecastManual            Int?
     forecastAutomated         Float?
     elapsed                   Int?
-    isCompleted               Boolean          @default(false)
-    isDeleted                 Boolean          @default(false)
-    deletedAt                 DateTime?        @db.Timestamptz(6)
+    isCompleted               Boolean            @default(false)
+    isDeleted                 Boolean            @default(false)
+    deletedAt                 DateTime?          @db.Timestamptz(6)
     completedAt               DateTime?
-    createdAt                 DateTime         @default(now()) @db.Timestamptz(6)
+    createdAt                 DateTime           @default(now()) @db.Timestamptz(6)
     createdById               String
-    createdBy                 User             @relation("TestRunCreatedBy", fields: [createdById], references: [id])
+    createdBy                 User               @relation("TestRunCreatedBy", fields: [createdById], references: [id])
     // Execution-start composition lock: freezes which cases are in the run
     // (add / remove / reorder) while execution continues. Distinct from the
     // completion lock (testRun.isCompleted), which freezes everything. null =
@@ -3042,16 +3046,17 @@ model TestRuns {
     // enhanced-client/RPC write so an editor can't clear the lock by bypassing
     // the creator/admin unlock gate. A Postgres trigger (scripts/apply-triggers)
     // is the authoritative backstop on TestRunCases.
-    compositionLockedAt       DateTime?        @db.Timestamptz(6) @deny('update', true)
-    compositionLockedById     String?          @deny('update', true)
-    compositionLockedBy       User?            @relation("TestRunCompositionLockedBy", fields: [compositionLockedById], references: [id])
+    compositionLockedAt       DateTime?          @db.Timestamptz(6) @deny('update', true)
+    compositionLockedById     String?            @deny('update', true)
+    compositionLockedBy       User?              @relation("TestRunCompositionLockedBy", fields: [compositionLockedById], references: [id])
     attachments               Attachments[]
     testCases                 TestRunCases[]
     results                   TestRunResults[]
     tags                      Tags[]
     issues                    Issue[]
-    testRunType               TestRunType      @default(REGULAR)
+    testRunType               TestRunType        @default(REGULAR)
     junitTestSuites           JUnitTestSuite[]
+    executions                TestRunExecution[]
     comments                  Comment[]
     impactAnalyses            ImpactAnalysis[]
     configurationGroupId      String?
@@ -3064,7 +3069,7 @@ model TestRuns {
     // being so, which is what re-arms the notification. Written only by the
     // ready-check worker on the raw client; @deny('update', true) keeps
     // enhanced-client and RPC writers out (cf. compositionLockedAt above).
-    readyToCompleteNotifiedAt DateTime?        @db.Timestamptz(6) @deny('update', true)
+    readyToCompleteNotifiedAt DateTime?          @db.Timestamptz(6) @deny('update', true)
 
     @@index([projectId, isDeleted])
     @@index([createdById])
@@ -3161,6 +3166,7 @@ enum TestRunType {
     MSTEST
     MOCHA
     CUCUMBER
+    HYBRID // REGULAR run that has also received automated results; promoted, never created directly
 
     @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')
@@ -3862,18 +3868,19 @@ model Integration {
 // ============================================
 
 model CodeRepository {
-    id             Int                           @id @default(autoincrement())
-    name           String                        @unique @length(1)
-    provider       CodeRepositoryProvider
-    credentials    Json                         // Provider credentials (PAT, username/password, etc.)
-    settings       Json?                        // Non-sensitive: baseUrl, orgUrl, repoIdentifier
-    status         IntegrationStatus             @default(ACTIVE)
-    lastTestedAt   DateTime?
-    isDeleted      Boolean                       @default(false)
-    deletedAt      DateTime?                     @db.Timestamptz(6)
-    createdAt      DateTime                      @default(now())
-    updatedAt      DateTime                      @updatedAt
-    projectConfigs ProjectCodeRepositoryConfig[]
+    id               Int                           @id @default(autoincrement())
+    name             String                        @unique @length(1)
+    provider         CodeRepositoryProvider
+    credentials      Json                         // Provider credentials (PAT, username/password, etc.)
+    settings         Json?                        // Non-sensitive: baseUrl, orgUrl, repoIdentifier
+    status           IntegrationStatus             @default(ACTIVE)
+    lastTestedAt     DateTime?
+    isDeleted        Boolean                       @default(false)
+    deletedAt        DateTime?                     @db.Timestamptz(6)
+    createdAt        DateTime                      @default(now())
+    updatedAt        DateTime                      @updatedAt
+    projectConfigs   ProjectCodeRepositoryConfig[]
+    executionTargets ExecutionTarget[]
 
     @@index([provider, status])
     @@deny('all', auth() == null)
@@ -3959,6 +3966,107 @@ enum CodePinSource {
 // A Code Pin ties a test case to a block of the application under test so a
 // change inside that block pulls the case into an Impact analysis. Staleness
 // is computed at match time from the anchor, never stored.
+enum ExecutionProvider {
+    GITHUB_ACTIONS
+    GITLAB_CI
+    GENERIC_WEBHOOK
+
+    @@deny('all', auth() == null)
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+enum TestRunExecutionStatus {
+    PENDING
+    DISPATCHED
+    RUNNING
+    SUCCEEDED
+    FAILED
+    DISPATCH_FAILED
+    TIMED_OUT
+    CANCELLED
+
+    @@deny('all', auth() == null)
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+// Where a project's automated cases can be told to run: a CI workflow or a signed webhook.
+model ExecutionTarget {
+    id               Int                @id @default(autoincrement())
+    projectId        Int
+    project          Projects           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    name             String             @length(1, 100)
+    provider         ExecutionProvider
+    codeRepositoryId Int?
+    codeRepository   CodeRepository?    @relation(fields: [codeRepositoryId], references: [id])
+    workflowRef      String?            // GitHub workflow file name or id
+    defaultRef       String?            // null = repository default branch
+    url              String?            // GENERIC_WEBHOOK only
+    staticInputs     Json               @default("{}")
+    credentials      Json?              // optional override, {encrypted}; null = reuse codeRepository.credentials
+    timeoutMinutes   Int                @default(120)
+    isEnabled        Boolean            @default(true)
+    lastVerifiedAt   DateTime?          @db.Timestamptz(6)
+    lastVerifyError  String?
+    isDeleted        Boolean            @default(false)
+    deletedAt        DateTime?          @db.Timestamptz(6)
+    createdById      String
+    createdBy        User               @relation("ExecutionTargetCreatedBy", fields: [createdById], references: [id])
+    createdAt        DateTime           @default(now()) @db.Timestamptz(6)
+    updatedAt        DateTime           @updatedAt
+    executions       TestRunExecution[]
+
+    @@index([projectId, isDeleted])
+    @@index([codeRepositoryId])
+    @@deny('all', auth() == null)
+    // Carries an encrypted credential: admins only through the RPC; members see
+    // a sanitized list via app/actions/execution-targets.ts, which also owns writes.
+    @@allow('read', auth().access == 'ADMIN')
+    @@deny('create, update, delete', true)
+}
+
+// One dispatch of a run's automated cases to a target. Immutable history; cascades with the run.
+model TestRunExecution {
+    id                Int                    @id @default(autoincrement())
+    testRunId         Int
+    testRun           TestRuns               @relation(fields: [testRunId], references: [id], onDelete: Cascade)
+    projectId         Int
+    project           Projects               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    targetId          Int
+    target            ExecutionTarget        @relation(fields: [targetId], references: [id])
+    provider          ExecutionProvider
+    status            TestRunExecutionStatus @default(PENDING)
+    requestedById     String
+    requestedBy       User                   @relation("TestRunExecutionRequestedBy", fields: [requestedById], references: [id])
+    ref               String?
+    inputs            Json                   @default("{}")
+    selectionCount    Int                    @default(0)
+    requestedCaseIds  Json                   @default("[]") // case ids; empty = every automated case in the run
+    adHoc             Boolean                @default(false) // one-case run from "Run automated test"; completes itself
+    externalRunId     String?
+    externalUrl       String?
+    externalStatus    String?
+    error             String?
+    pollCount         Int                    @default(0)
+    dispatchedAt      DateTime?              @db.Timestamptz(6)
+    lastPolledAt      DateTime?              @db.Timestamptz(6)
+    resultsReceivedAt DateTime?              @db.Timestamptz(6)
+    completedAt       DateTime?              @db.Timestamptz(6)
+    createdAt         DateTime               @default(now()) @db.Timestamptz(6)
+    updatedAt         DateTime               @updatedAt
+
+    @@index([testRunId, status])
+    @@index([status, lastPolledAt])
+    @@index([projectId, createdAt])
+    @@deny('all', auth() == null)
+    @@deny('all', auth().access == 'NONE')
+    @@allow('read', projectId in auth().accessibleProjectIds)
+    @@allow('read', auth().access == 'ADMIN')
+    // Written by the execute routes and the dispatch worker on the raw client.
+    @@deny('create, update, delete', true)
+}
+
 model RepositoryCaseCodePin {
     id               Int                         @id @default(autoincrement())
     caseId           Int
@@ -6532,6 +6640,11 @@ enum AuditAction {
     REVIEW_REJECTED
     REVIEW_CANCELLED
     REVIEW_REMINDED
+    // Automated execution dispatch
+    EXECUTION_REQUESTED
+    EXECUTION_DISPATCHED
+    EXECUTION_COMPLETED
+    EXECUTION_CANCELLED
 }
 
 model AuditLog {

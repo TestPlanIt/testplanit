@@ -62,6 +62,7 @@ const WORKERS = [
   "webhookRetentionWorker",
   "dataChangeLogRetentionWorker",
   "datasetLeaseSweepWorker",
+  "executionDispatchWorker",
 ];
 
 const entryPoints = [

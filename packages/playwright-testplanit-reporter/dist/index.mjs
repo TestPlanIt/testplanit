@@ -634,9 +634,14 @@ ${error.stack}` : "";
     promise = this.client.findOrAddTestCaseToRun({ testRunId: this.state.testRunId, repositoryCaseId }).then((testRunCase) => {
       this.log("Added case to run:", testRunCase.id);
       return testRunCase.id;
+    }).catch((err) => {
+      this.log(
+        "Could not add case to run (composition locked?); reporting the result anyway:",
+        err instanceof Error ? err.message : String(err)
+      );
+      return 0;
     });
     this.state.testRunCaseMap.set(runCaseKey, promise);
-    promise.catch(() => this.state.testRunCaseMap.delete(runCaseKey));
     return promise;
   }
   async uploadAttachments(result, attachments) {

@@ -134,6 +134,13 @@ The application uses the following background processes:
 - Default concurrency: 5 (overridable via `WEBHOOK_DISPATCH_CONCURRENCY`)
 - Location: `workers/webhookDispatchWorker.ts`
 
+### Execution Dispatch Worker
+
+- Consumes the `execution-dispatch` BullMQ queue: starts the CI job for a requested automated execution (GitHub Actions `workflow_dispatch`, GitLab pipeline, or a signed generic webhook) and records the outcome on the `TestRunExecution` row
+- Never retries a dispatch (starting a job twice is worse than a recorded failure a person can retry); the scheduler's `poll-active-executions` job on the same queue asks each provider for job status every minute with a per-execution backoff, times out executions past their target's limit, and fails requests still `PENDING` after ten minutes so a stalled dispatch never blocks the run
+- Default concurrency: 3 (overridable via `EXECUTION_DISPATCH_CONCURRENCY`)
+- Location: `workers/executionDispatchWorker.ts`
+
 ### Webhook Outbox Worker
 
 - Polls `WebhookOutboxEvent` every 2s using `FOR UPDATE SKIP LOCKED` and fans matched events into the dispatch queue

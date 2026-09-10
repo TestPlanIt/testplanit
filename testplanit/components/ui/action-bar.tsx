@@ -123,7 +123,7 @@ export function ActionButtonContent({
   return (
     <>
       <Icon className={iconClassName} />
-      <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+      <span className="max-w-0 overflow-hidden text-ellipsis whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
         {label}
       </span>
     </>
@@ -190,7 +190,7 @@ export function ActionOverflow({
             )}
           >
             <a.icon className="h-4 w-4 shrink-0" />
-            <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+            <span className="max-w-0 overflow-hidden text-ellipsis whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
               {a.label}
             </span>
           </Button>

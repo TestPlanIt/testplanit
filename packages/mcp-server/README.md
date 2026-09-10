@@ -136,6 +136,9 @@ Your MCP client discovers each tool's full parameters automatically, so the list
 | `testplanit_test_run_results_list` | List execution results — manual and automated (JUnit-family) rows, discriminated by `source`. |
 | `testplanit_test_run_results_get` | Get a single result with detail (step-level for manual results; stack trace / stdout / stderr for automated). |
 | `testplanit_test_run_results_create` | Record a result for a case in a run. |
+| `testplanit_automation_targets_list` | List a project's execution targets (where automated cases can be dispatched). |
+| `testplanit_runs_execute` | Ask TestPlanIt to execute a run's automated cases on a target (CI dispatch). |
+| `testplanit_runs_automation_plan` | Read the plan a dispatched job executes: automated cases with selectors and id tokens. |
 
 ### Sessions
 

@@ -3,7 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 import type { TestRunSummaryData } from "~/app/api/test-runs/[testRunId]/summary/route";
 import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
-import { isAutomatedTestRunType } from "~/utils/testResultTypes";
+import {
+  isAutomatedTestRunType,
+  isHybridTestRunType,
+} from "~/utils/testResultTypes";
 
 export type BatchTestRunSummaryResponse = {
   summaries: Record<number, TestRunSummaryData>;
@@ -99,13 +102,19 @@ export async function GET(req: NextRequest) {
     const regularRunIds: number[] = [];
     const _testRunMap = new Map(testRuns.map((tr) => [tr.id, tr]));
 
+    // Hybrid runs summarise as manual runs (their automated results are
+    // projected onto TestRunCases) but also carry the automation block and
+    // the last-import activity, so they join both batches.
+    const hybridRunIds: number[] = [];
     testRuns.forEach((tr) => {
       if (isAutomatedTestRunType(tr.testRunType)) {
         junitRunIds.push(tr.id);
       } else {
         regularRunIds.push(tr.id);
+        if (isHybridTestRunType(tr.testRunType)) hybridRunIds.push(tr.id);
       }
     });
+    const automatedResultRunIds = [...junitRunIds, ...hybridRunIds];
 
     // Fetch batch comments counts
     const commentsCountsResult = await baseDb.$queryRaw<
@@ -125,13 +134,15 @@ export async function GET(req: NextRequest) {
     const regularSummaries = await getBatchRegularRunSummaries(regularRunIds);
 
     // Fetch summaries for JUnit runs
-    const junitSummaries = await getBatchJUnitRunSummaries(junitRunIds);
+    const junitSummaries = await getBatchJUnitRunSummaries(
+      automatedResultRunIds
+    );
 
     // Last imported write per automated run — the Automation Runs card stops
     // its "importing" spinner when this goes stale (an aborted CI job never
     // closes its run, so the workflow state alone can spin forever).
     const junitActivity = new Map<number, Date>();
-    if (junitRunIds.length > 0) {
+    if (automatedResultRunIds.length > 0) {
       const activityRows = await baseDb.$queryRaw<
         Array<{ testRunId: number; lastActivity: Date | null }>
       >`
@@ -140,7 +151,7 @@ export async function GET(req: NextRequest) {
           GREATEST(MAX(jts."createdAt"), MAX(jtr."createdAt")) as "lastActivity"
         FROM "JUnitTestSuite" jts
         LEFT JOIN "JUnitTestResult" jtr ON jtr."testSuiteId" = jts.id
-        WHERE jts."testRunId" = ANY(${junitRunIds})
+        WHERE jts."testRunId" = ANY(${automatedResultRunIds})
         GROUP BY jts."testRunId"
       `;
       activityRows.forEach((row) => {
@@ -155,20 +166,28 @@ export async function GET(req: NextRequest) {
 
     testRuns.forEach((tr) => {
       const isJUnit = isAutomatedTestRunType(tr.testRunType);
+      const isHybrid = isHybridTestRunType(tr.testRunType);
       const summary = isJUnit
         ? junitSummaries.get(tr.id)
         : regularSummaries.get(tr.id);
 
       if (summary) {
         const importActivity = junitActivity.get(tr.id);
-        const lastActivityAt = isJUnit
-          ? (importActivity && importActivity > tr.createdAt
-              ? importActivity
-              : tr.createdAt
-            ).toISOString()
+        const lastActivityAt =
+          isJUnit || isHybrid
+            ? (importActivity && importActivity > tr.createdAt
+                ? importActivity
+                : tr.createdAt
+              ).toISOString()
+            : undefined;
+        const hybridAutomation = isHybrid
+          ? junitSummaries.get(tr.id)?.junitSummary
           : undefined;
         summaries[tr.id] = {
           ...summary,
+          ...(hybridAutomation && hybridAutomation.totalTests > 0
+            ? { junitSummary: hybridAutomation }
+            : {}),
           testRunType: tr.testRunType,
           workflowType: tr.state?.workflowType,
           lastActivityAt,

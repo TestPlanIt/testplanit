@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // src/index.ts
-import { Command as Command3 } from "commander";
+import { Command as Command4 } from "commander";
 import { createRequire } from "module";
 
 // src/commands/config.ts
@@ -177,7 +177,7 @@ over stored configuration.
   });
   cmd.command("show").description("Show current configuration").action(() => {
     const storedConfig = getStoredConfig();
-    const effectiveConfig = getConfig();
+    const _effectiveConfig = getConfig();
     console.log();
     console.log("Configuration file:", getConfigPath());
     console.log();
@@ -309,6 +309,12 @@ async function importTestResults(files, options, onProgress) {
       form.append("tagIds", tagId.toString());
     }
   }
+  if (options.caseMatcher) {
+    form.append("caseMatcher", options.caseMatcher);
+  }
+  if (options.caseIdFormat) {
+    form.append("caseIdFormat", options.caseIdFormat);
+  }
   for (const filePath of files) {
     const absolutePath = path.resolve(filePath);
     const fileName = path.basename(absolutePath);
@@ -371,7 +377,8 @@ async function importTestResults(files, options, onProgress) {
           if (data.complete && data.testRunId !== void 0) {
             result = {
               testRunId: data.testRunId,
-              attachmentMappings: data.attachmentMappings
+              attachmentMappings: data.attachmentMappings,
+              caseIdWarnings: data.caseIdWarnings
             };
           }
         } catch (e) {
@@ -772,6 +779,17 @@ var TEST_RESULT_FORMATS = {
   mocha: { label: "Mocha JSON", extensions: [".json"] },
   cucumber: { label: "Cucumber JSON", extensions: [".json"] }
 };
+var CASE_MATCHERS = [
+  "off",
+  "name",
+  "property",
+  "auto"
+];
+var CASE_ID_FORMATS = [
+  "brackets",
+  "c",
+  "tc"
+];
 
 // src/commands/import.ts
 var VALID_FORMATS = ["auto", ...Object.keys(TEST_RESULT_FORMATS)];
@@ -780,7 +798,15 @@ function createImportCommand() {
     "-F, --format <format>",
     `File format: ${VALID_FORMATS.join(", ")} (default: auto-detect)`,
     "auto"
-  ).option("-s, --state <value>", "Workflow state (ID or exact name)").option("-c, --config <value>", "Configuration (ID or exact name)").option("-m, --milestone <value>", "Milestone (ID or exact name)").option("-f, --folder <value>", "Parent folder for test cases (ID or exact name)").option("-t, --tags <values>", "Tags (comma-separated IDs or names, use quotes for names with commas)").option("-r, --test-run <value>", "Existing test run to append results (ID or exact name)").option("-d, --attachments-dir <path>", "Base directory for resolving attachment paths (default: directory of test result file)").option("--no-attachments", "Skip uploading attachments").option("-a, --run-attachments <files...>", "Files to attach to the test run (e.g., test plans, reports)").addHelpText("after", `
+  ).option("-s, --state <value>", "Workflow state (ID or exact name)").option("-c, --config <value>", "Configuration (ID or exact name)").option("-m, --milestone <value>", "Milestone (ID or exact name)").option("-f, --folder <value>", "Parent folder for test cases (ID or exact name)").option("-t, --tags <values>", "Tags (comma-separated IDs or names, use quotes for names with commas)").option("-r, --test-run <value>", "Existing test run to append results (ID or exact name; default: $TESTPLANIT_RUN_ID)").option("-d, --attachments-dir <path>", "Base directory for resolving attachment paths (default: directory of test result file)").option("--no-attachments", "Skip uploading attachments").option("-a, --run-attachments <files...>", "Files to attach to the test run (e.g., test plans, reports)").option(
+    "--case-matcher <mode>",
+    `Link results to existing cases by ID: ${CASE_MATCHERS.join(", ")} (default: off)`,
+    "off"
+  ).option(
+    "--case-id-format <preset>",
+    `Case-ID pattern in the test name when matching by name: ${CASE_ID_FORMATS.join(", ")} (default: brackets, e.g. [123])`,
+    "brackets"
+  ).addHelpText("after", `
 Examples:
 
   Minimal example (required options only):
@@ -820,6 +846,15 @@ Examples:
   Import without uploading attachments:
     $ testplanit import ./results.xml -p "My Project" -n "Build" --no-attachments
 
+  Link results to existing cases by an ID in the test name (e.g. "[123] login"):
+    $ testplanit import ./results.xml -p "My Project" -n "Build" --case-matcher name
+
+  Link by a test_id property in the XML, falling back to the name pattern:
+    $ testplanit import ./results.xml -p "My Project" -n "Build" --case-matcher auto
+
+  Use the TestRail-style C-prefix pattern (e.g. "C123 login"):
+    $ testplanit import ./results.xml -p "My Project" -n "Build" --case-matcher name --case-id-format c
+
   Attach files to the test run (test plans, reports, etc.):
     $ testplanit import ./results.xml -p "My Project" -n "Build" -a ./test-plan.pdf ./coverage-report.html
 `).action(async (filePatterns, options) => {
@@ -827,6 +862,9 @@ Examples:
     if (validationError) {
       error(validationError);
       process.exit(1);
+    }
+    if (!options.testRun && process.env.TESTPLANIT_RUN_ID) {
+      options.testRun = process.env.TESTPLANIT_RUN_ID;
     }
     if (!options.name && !options.testRun) {
       error("Option -n, --name is required when not appending to an existing test run");
@@ -837,6 +875,18 @@ Examples:
     if (!VALID_FORMATS.includes(format)) {
       error(`Invalid format: ${options.format}`);
       info(`Valid formats: ${VALID_FORMATS.join(", ")}`);
+      process.exit(1);
+    }
+    const caseMatcher = options.caseMatcher.toLowerCase();
+    if (!CASE_MATCHERS.includes(caseMatcher)) {
+      error(`Invalid case matcher: ${options.caseMatcher}`);
+      info(`Valid matchers: ${CASE_MATCHERS.join(", ")}`);
+      process.exit(1);
+    }
+    const caseIdFormat = options.caseIdFormat.toLowerCase();
+    if (!CASE_ID_FORMATS.includes(caseIdFormat)) {
+      error(`Invalid case ID format: ${options.caseIdFormat}`);
+      info(`Valid formats: ${CASE_ID_FORMATS.join(", ")}`);
       process.exit(1);
     }
     const files = [];
@@ -887,6 +937,10 @@ Examples:
         name: options.name,
         format
       };
+      if (caseMatcher !== "off") {
+        importOptions.caseMatcher = caseMatcher;
+        importOptions.caseIdFormat = caseIdFormat;
+      }
       if (options.state) {
         updateSpinner("Resolving workflow state...");
         importOptions.stateId = await resolveToId(projectId, "state", options.state);
@@ -925,6 +979,18 @@ Examples:
       const url = getUrl();
       console.log();
       success(`Test run created with ID: ${formatNumber(result.testRunId)}`);
+      if (result.caseIdWarnings && result.caseIdWarnings.length > 0) {
+        console.log();
+        warn(
+          `Skipped ${formatNumber(result.caseIdWarnings.length)} result(s) referencing a case ID not found in this project:`
+        );
+        for (const warning of result.caseIdWarnings.slice(0, 10)) {
+          dim(`    - C${warning.requestedCaseId} (${warning.testName})`);
+        }
+        if (result.caseIdWarnings.length > 10) {
+          dim(`    ... and ${result.caseIdWarnings.length - 10} more`);
+        }
+      }
       if (options.attachments !== false && result.attachmentMappings && result.attachmentMappings.length > 0) {
         console.log();
         info("Processing attachments...");
@@ -1051,10 +1117,274 @@ Examples:
   return cmd;
 }
 
+// src/commands/run.ts
+import { Command as Command3 } from "commander";
+import * as fs4 from "fs";
+
+// src/lib/execution.ts
+var PLAN_FORMATS = ["json", "lines"];
+var SELECTOR_FIELDS = [
+  "selector",
+  "fullName",
+  "title",
+  "className",
+  "id"
+];
+var EXECUTION_CONCLUSIONS = [
+  "success",
+  "failure",
+  "cancelled"
+];
+function requireConfig() {
+  const url = getUrl();
+  const token = getToken();
+  if (!url) throw new Error("TestPlanIt URL is not configured");
+  if (!token) throw new Error("API token is not configured");
+  return { url, token };
+}
+async function readError(response) {
+  let message = `HTTP ${response.status}: ${response.statusText}`;
+  try {
+    const body = await response.json();
+    if (body.error) message = body.error;
+  } catch {
+  }
+  return message;
+}
+async function hostJson(path4, init = {}) {
+  const { url, token } = requireConfig();
+  const target = new URL(path4, url);
+  for (const [key, value] of Object.entries(init.query ?? {})) {
+    if (value !== void 0) target.searchParams.set(key, value);
+  }
+  const response = await fetch(target.toString(), {
+    method: init.method ?? "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json"
+    },
+    ...init.body ? { body: init.body } : {}
+  });
+  if (!response.ok) throw new Error(await readError(response));
+  return await response.json();
+}
+async function getAutomationPlan(runId, executionId) {
+  return hostJson(`/api/test-runs/${runId}/automation-plan`, {
+    query: executionId ? { executionId: String(executionId) } : {}
+  });
+}
+async function finishExecution(runId, executionId, conclusion, message) {
+  return hostJson(`/api/test-runs/${runId}/executions/${executionId}/finish`, {
+    method: "POST",
+    body: JSON.stringify({ conclusion, ...message ? { message } : {} })
+  });
+}
+async function completeTestRun(runId, projectId) {
+  let resolvedProjectId = projectId;
+  if (!resolvedProjectId) {
+    const run = await hostJson(
+      `/api/model/testRuns/findUnique?q=${encodeURIComponent(
+        JSON.stringify({ where: { id: runId }, select: { projectId: true } })
+      )}`
+    );
+    if (!run.data) throw new Error(`Test run ${runId} not found`);
+    resolvedProjectId = run.data.projectId;
+  }
+  const states = await hostJson(
+    `/api/model/workflows/findMany?q=${encodeURIComponent(
+      JSON.stringify({
+        where: {
+          isEnabled: true,
+          isDeleted: false,
+          scope: "RUNS",
+          workflowType: "DONE",
+          projects: { some: { projectId: resolvedProjectId } }
+        },
+        orderBy: { order: "asc" },
+        take: 1
+      })
+    )}`
+  );
+  const doneStateId = states.data?.[0]?.id;
+  const updated = await hostJson(`/api/model/testRuns/update`, {
+    method: "PATCH",
+    body: JSON.stringify({
+      where: { id: runId },
+      data: {
+        isCompleted: true,
+        completedAt: (/* @__PURE__ */ new Date()).toISOString(),
+        ...doneStateId ? { stateId: doneStateId } : {}
+      }
+    })
+  });
+  if (!updated.data) throw new Error(`Test run ${runId} could not be completed`);
+  return updated.data;
+}
+function selectorValue(testCase, field) {
+  switch (field) {
+    case "id":
+      return String(testCase.id);
+    case "title":
+      return testCase.title;
+    case "className":
+      return testCase.className ?? "";
+    case "fullName":
+      return testCase.selector.fullName;
+    case "selector":
+    default:
+      return testCase.selector.fullName || testCase.title;
+  }
+}
+function formatPlan(plan, format, field = "selector") {
+  if (format === "json") return JSON.stringify(plan, null, 2);
+  return plan.cases.map((c) => selectorValue(c, field)).filter((v) => v.length > 0).join("\n");
+}
+function parseEnvId(value) {
+  if (!value) return void 0;
+  const n = Number.parseInt(value, 10);
+  return Number.isInteger(n) && n > 0 ? n : void 0;
+}
+
+// src/commands/run.ts
+function requireConfig2() {
+  const validationError = validateConfig();
+  if (validationError) {
+    error(validationError);
+    process.exit(1);
+  }
+}
+function resolveRunId(option) {
+  const raw = option ?? process.env.TESTPLANIT_RUN_ID;
+  const id = parseEnvId(raw);
+  if (!id) {
+    error(
+      "No test run. Pass --run <id> or set TESTPLANIT_RUN_ID (TestPlanIt sets it when it dispatches a job)."
+    );
+    process.exit(1);
+  }
+  return id;
+}
+function resolveExecutionId(option, required) {
+  const raw = option ?? process.env.TESTPLANIT_EXECUTION_ID;
+  const id = parseEnvId(raw);
+  if (!id && required) {
+    error(
+      "No execution. Pass --execution <id> or set TESTPLANIT_EXECUTION_ID."
+    );
+    process.exit(1);
+  }
+  return id;
+}
+function createRunCommand() {
+  const cmd = new Command3("run").description("Work with a test run TestPlanIt dispatched to CI").addHelpText("after", `
+Examples:
+
+  Print the plan of automated cases as JSON (run id from TESTPLANIT_RUN_ID):
+    $ testplanit run plan
+
+  One selector per line, for a shell shim:
+    $ testplanit run plan --format lines --selector-field fullName > plan.txt
+    $ npx playwright test --grep "$(paste -sd'|' plan.txt)"
+
+  Mark the run complete once every job has reported:
+    $ testplanit run complete
+
+  Tell TestPlanIt the execution finished (generic-webhook targets cannot be polled):
+    $ testplanit run finish --conclusion success
+
+Environment:
+  TESTPLANIT_RUN_ID         Set by TestPlanIt when it dispatches a job
+  TESTPLANIT_EXECUTION_ID   Set by TestPlanIt when it dispatches a job
+  TESTPLANIT_PLAN_URL       Direct URL of the plan (same data as 'run plan')
+`);
+  cmd.command("plan").description("Print the run's automated cases (the plan a CI job executes)").option("-r, --run <id>", "Test run ID (default: $TESTPLANIT_RUN_ID)").option(
+    "--execution <id>",
+    "Execution ID; applies its case subset and ref (default: $TESTPLANIT_EXECUTION_ID)"
+  ).option(
+    "-F, --format <format>",
+    `Output format: ${PLAN_FORMATS.join(", ")} (default: json)`,
+    "json"
+  ).option(
+    "--selector-field <field>",
+    `Value printed per case with --format lines: ${SELECTOR_FIELDS.join(", ")} (default: selector)`,
+    "selector"
+  ).option("-o, --output <file>", "Write to a file instead of stdout").action(async (options) => {
+    requireConfig2();
+    const runId = resolveRunId(options.run);
+    const executionId = resolveExecutionId(options.execution, false);
+    const format = String(options.format).toLowerCase();
+    if (!PLAN_FORMATS.includes(format)) {
+      error(`Invalid format: ${options.format}`);
+      info(`Valid formats: ${PLAN_FORMATS.join(", ")}`);
+      process.exit(1);
+    }
+    const field = String(options.selectorField);
+    if (!SELECTOR_FIELDS.includes(field)) {
+      error(`Invalid selector field: ${options.selectorField}`);
+      info(`Valid fields: ${SELECTOR_FIELDS.join(", ")}`);
+      process.exit(1);
+    }
+    try {
+      const plan = await getAutomationPlan(runId, executionId);
+      const text = formatPlan(plan, format, field);
+      if (options.output) {
+        fs4.writeFileSync(options.output, text + (text ? "\n" : ""));
+        info(
+          `Wrote ${plan.totals.cases} case(s) for run ${runId} to ${options.output}`
+        );
+      } else {
+        process.stdout.write(text + (text ? "\n" : ""));
+      }
+    } catch (error2) {
+      error(error2 instanceof Error ? error2.message : String(error2));
+      process.exit(1);
+    }
+  });
+  cmd.command("complete").description("Mark the run complete (do this once, after every job has reported)").option("-r, --run <id>", "Test run ID (default: $TESTPLANIT_RUN_ID)").option("-p, --project <id>", "Project ID (read from the run when omitted)").action(async (options) => {
+    requireConfig2();
+    const runId = resolveRunId(options.run);
+    const projectId = parseEnvId(options.project);
+    try {
+      const run = await completeTestRun(runId, projectId);
+      success(`Test run ${run.id} completed`);
+    } catch (error2) {
+      error(error2 instanceof Error ? error2.message : String(error2));
+      process.exit(1);
+    }
+  });
+  cmd.command("finish").description("Report the execution's outcome to TestPlanIt").option("-r, --run <id>", "Test run ID (default: $TESTPLANIT_RUN_ID)").option("--execution <id>", "Execution ID (default: $TESTPLANIT_EXECUTION_ID)").requiredOption(
+    "--conclusion <conclusion>",
+    `Outcome: ${EXECUTION_CONCLUSIONS.join(", ")}`
+  ).option("--message <text>", "Short note stored with the execution").action(async (options) => {
+    requireConfig2();
+    const runId = resolveRunId(options.run);
+    const executionId = resolveExecutionId(options.execution, true);
+    const conclusion = String(options.conclusion).toLowerCase();
+    if (!EXECUTION_CONCLUSIONS.includes(conclusion)) {
+      error(`Invalid conclusion: ${options.conclusion}`);
+      info(`Valid conclusions: ${EXECUTION_CONCLUSIONS.join(", ")}`);
+      process.exit(1);
+    }
+    try {
+      const result = await finishExecution(
+        runId,
+        executionId,
+        conclusion,
+        options.message
+      );
+      success(`Execution ${result.id} marked ${result.status}`);
+    } catch (error2) {
+      error(error2 instanceof Error ? error2.message : String(error2));
+      process.exit(1);
+    }
+  });
+  return cmd;
+}
+
 // src/index.ts
 var require2 = createRequire(import.meta.url);
 var packageJson = require2("../package.json");
-var program = new Command3();
+var program = new Command4();
 program.name("testplanit").description("CLI tool for TestPlanIt - import test results and manage test data").version(packageJson.version).addHelpText("after", `
 Examples:
 
@@ -1068,8 +1398,14 @@ Examples:
     $ testplanit import ./results/*.xml -p "My Project" -n "Release Test" \\
         -s "In Progress" -c "Chrome" -m "Sprint 1" -t "regression,ci"
 
+  In a job TestPlanIt dispatched (TESTPLANIT_RUN_ID is set):
+    $ testplanit run plan --format lines > plan.txt
+    $ testplanit import ./results.xml -p 1
+    $ testplanit run complete
+
 Run 'testplanit <command> --help' for more information on a command.
 `);
 program.addCommand(createConfigCommand());
 program.addCommand(createImportCommand());
+program.addCommand(createRunCommand());
 program.parse();

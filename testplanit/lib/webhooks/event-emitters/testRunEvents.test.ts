@@ -36,6 +36,12 @@ vi.mock("~/lib/live/publish", () => ({
   publishTestRunWakeUp: vi.fn(),
 }));
 
+// Completing a run also closes any dispatched automated execution; the
+// helper writes through the same tx, which the fixtures below do not model.
+vi.mock("~/lib/execution/service", () => ({
+  completeExecutionsForRun: vi.fn(async () => 0),
+}));
+
 vi.mock("~/lib/services/testRunSummary", () => ({
   getTestRunSummary: vi.fn(async () => ({
     testRunType: "REGULAR",
@@ -66,6 +72,7 @@ vi.mock("~/lib/services/testRunSummary", () => ({
 }));
 
 import { webhookEvents } from "~/lib/webhooks/events";
+import { completeExecutionsForRun } from "~/lib/execution/service";
 import { publishTestRunWakeUp } from "~/lib/live/publish";
 import {
   getPerCaseIterationCounts,
@@ -199,6 +206,32 @@ describe("emitTestRunUpdateEvents — lifecycle policy", () => {
     expect(emitMock).toHaveBeenCalledTimes(1);
     expect(emitMock.mock.calls[0][0]).toBe("test_run.completed");
     expect(summaryMock).toHaveBeenCalledWith(1, { client: tx });
+    // Completion closes any in-flight automated execution, in the same tx.
+    expect(completeExecutionsForRun).toHaveBeenCalledWith(tx, 1);
+  });
+
+  it("does not touch executions when only the state changed", async () => {
+    const tx = makeTx({
+      workflows: {
+        findUnique: vi
+          .fn()
+          .mockResolvedValueOnce({ name: "Open", workflowType: "NOT_STARTED" })
+          .mockResolvedValueOnce({
+            name: "Active",
+            workflowType: "IN_PROGRESS",
+          }),
+      },
+    });
+    const callsBefore = (completeExecutionsForRun as ReturnType<typeof vi.fn>)
+      .mock.calls.length;
+    await emitTestRunUpdateEvents(
+      { id: 1, projectId: 7, name: "Run 1", stateId: 100, isCompleted: false },
+      { id: 1, projectId: 7, name: "Run 1", stateId: 101, isCompleted: false },
+      tx as never
+    );
+    expect(
+      (completeExecutionsForRun as ReturnType<typeof vi.fn>).mock.calls.length
+    ).toBe(callsBefore);
   });
 
   it("emits ONLY test_run.state_changed when stateId changed but isCompleted stayed true (DONE→DONE2)", async () => {

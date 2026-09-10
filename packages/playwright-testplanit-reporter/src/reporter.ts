@@ -703,10 +703,20 @@ export default class TestPlanItReporter implements Reporter {
       .then((testRunCase) => {
         this.log('Added case to run:', testRunCase.id);
         return testRunCase.id;
+      })
+      .catch((err: unknown) => {
+        // A pinned run may have its composition locked (the team froze the
+        // case list before dispatching to CI). The result still belongs to
+        // the run — TestPlanIt shows it as "not in this run" — so report it
+        // rather than dropping it.
+        this.log(
+          'Could not add case to run (composition locked?); reporting the result anyway:',
+          err instanceof Error ? err.message : String(err)
+        );
+        return 0;
       });
 
     this.state.testRunCaseMap.set(runCaseKey, promise);
-    promise.catch(() => this.state.testRunCaseMap.delete(runCaseKey));
     return promise;
   }
 

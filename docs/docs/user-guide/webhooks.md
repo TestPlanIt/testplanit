@@ -97,7 +97,7 @@ Slack endpoints do not use a separate signing secret because Slack incoming webh
 
 Each event name follows a `subject.verb` convention. The reserved verbs are `created`, `updated`, `deleted`, `state_changed`, `completed`, `duplicated`, and `result_added`. Common examples include:
 
-- `test_run.created`, `test_run.state_changed`, `test_run.completed`, `test_run.duplicated`, `test_run.result_added`
+- `test_run.created`, `test_run.state_changed`, `test_run.completed`, `test_run.duplicated`, `test_run.result_added`, `test_run.execution_requested`, `test_run.execution_completed`
 - `session.created`, `session.state_changed`, `session.completed`, `session.duplicated`, `session.result_added`
 - `case.created`, `case.updated`, `case.deleted`
 - `issue.created`, `issue.updated`, `issue.deleted`

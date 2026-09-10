@@ -77,7 +77,19 @@ const testRunFilterSchema = z
     configurationIds: z.array(z.number()).optional(),
     milestoneIds: z.array(z.number()).optional(),
     isCompleted: z.boolean().optional(),
-    testRunType: z.enum(["REGULAR", "JUNIT"]).optional(),
+    testRunType: z
+      .enum([
+        "REGULAR",
+        "HYBRID",
+        "JUNIT",
+        "TESTNG",
+        "XUNIT",
+        "NUNIT",
+        "MSTEST",
+        "MOCHA",
+        "CUCUMBER",
+      ])
+      .optional(),
     customFields: z.array(customFieldSchema).optional(),
     elapsedRange: rangeSchema.optional(),
   })

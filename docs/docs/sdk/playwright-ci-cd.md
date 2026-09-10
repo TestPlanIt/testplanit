@@ -233,3 +233,16 @@ Requires `@playwright/test` 1.44 or later (the reporter uses the `Suite.type` AP
 - [API Client](./api-client.md) - Direct API access for custom integrations
 - [SDK Overview](./index.md) - Architecture and package overview
 - [API Tokens](../api-tokens.md) - Creating and managing API tokens
+
+## Triggered from TestPlanIt
+
+When TestPlanIt [dispatches the job](../user-guide/automated-execution.md), the run to report into arrives as the `TESTPLANIT_RUN_ID` workflow input or pipeline variable. Map it into the environment and the reporter attaches to that run without creating or completing one of its own:
+
+```yaml
+env:
+  TESTPLANIT_URL: ${{ inputs.TESTPLANIT_URL }}
+  TESTPLANIT_RUN_ID: ${{ inputs.TESTPLANIT_RUN_ID }}
+  TESTPLANIT_API_TOKEN: ${{ secrets.TESTPLANIT_API_TOKEN }}
+```
+
+Read the plan of cases with `npx @testplanit/cli run plan --format lines` and narrow the test command to them; complete the run afterwards with `npx @testplanit/cli run complete`.
