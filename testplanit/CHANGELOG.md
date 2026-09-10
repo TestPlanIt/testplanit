@@ -1,3 +1,9 @@
+## [1.0.7](https://github.com/TestPlanIt/testplanit/compare/v1.0.6...v1.0.7) (2026-09-10)
+
+### Bug Fixes
+
+* **editor:** skip the read-only content sync on a destroyed editor ([#637](https://github.com/TestPlanIt/testplanit/issues/637)) ([41ebc02](https://github.com/TestPlanIt/testplanit/commit/41ebc028827a028bed23da9d8cfadcbcb46fdb1e))
+
 ## [1.0.6](https://github.com/TestPlanIt/testplanit/compare/v1.0.5...v1.0.6) (2026-09-09)
 
 ### Bug Fixes
