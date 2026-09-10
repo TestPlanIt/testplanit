@@ -81,13 +81,14 @@ TESTPLANIT_URL=https://testplanit.example.com TESTPLANIT_TOKEN=tpi_xxx testplani
 For a job TestPlanIt dispatched, or any job reporting into a run created up front:
 
 ```bash
+export TESTPLANIT_RUN_ID=$(testplanit run create -p 9 -n "Nightly #12")   # one run up front; every job attaches to it
 testplanit run plan                                   # the run's automated cases, as JSON
 testplanit run plan --format lines --selector-field fullName > plan.txt
 testplanit run complete                               # mark the run done after every job reported
 testplanit run finish --conclusion success            # report the outcome (generic-webhook targets)
 ```
 
-All three default the run to `$TESTPLANIT_RUN_ID` (`-r, --run <id>` overrides) and the execution to `$TESTPLANIT_EXECUTION_ID` (`--execution <id>`). `run plan` also takes `-o, --output <file>`; `run finish` takes `--message <text>`.
+`run create` prints only the new run's id to stdout (diagnostics go to stderr) and takes `-p, --project <id|name>` (default `$TESTPLANIT_PROJECT_ID`), `-n, --name <name>`, `--type REGULAR|JUNIT|TESTNG|XUNIT|NUNIT|MSTEST|MOCHA|CUCUMBER`, `--config <id|name>`, `--milestone <id|name>` and `--tags <a,b>`. The other three default the run to `$TESTPLANIT_RUN_ID` (`-r, --run <id>` overrides) and the execution to `$TESTPLANIT_EXECUTION_ID` (`--execution <id>`). `run plan` also takes `-o, --output <file>`; `run finish` takes `--message <text>`.
 
 ### Import Test Results
 

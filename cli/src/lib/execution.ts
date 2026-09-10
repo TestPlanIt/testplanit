@@ -128,6 +128,77 @@ export async function finishExecution(
   });
 }
 
+export const TEST_RUN_TYPES = [
+  "REGULAR",
+  "JUNIT",
+  "TESTNG",
+  "XUNIT",
+  "NUNIT",
+  "MSTEST",
+  "MOCHA",
+  "CUCUMBER",
+] as const;
+export type CreatableTestRunType = (typeof TEST_RUN_TYPES)[number];
+
+export interface CreateTestRunInput {
+  projectId: number;
+  name: string;
+  testRunType?: CreatableTestRunType;
+  configId?: number;
+  milestoneId?: number;
+  tagIds?: number[];
+}
+
+/**
+ * Create a run in the project's first IN_PROGRESS run state (any run state
+ * when none is marked in progress). Mirrors `create-run` in @testplanit/api,
+ * for pipelines that create one run up front and let every shard, machine and
+ * retry attach to it through TESTPLANIT_RUN_ID.
+ */
+export async function createTestRun(
+  input: CreateTestRunInput
+): Promise<{ id: number; name: string }> {
+  const findState = (workflowType?: string) =>
+    hostJson<{ data?: Array<{ id: number }> }>(
+      `/api/model/workflows/findMany?q=${encodeURIComponent(
+        JSON.stringify({
+          where: {
+            isEnabled: true,
+            isDeleted: false,
+            scope: "RUNS",
+            ...(workflowType ? { workflowType } : {}),
+            projects: { some: { projectId: input.projectId } },
+          },
+          orderBy: { order: "asc" },
+          take: 1,
+        })
+      )}`
+    );
+  const stateId =
+    (await findState("IN_PROGRESS")).data?.[0]?.id ??
+    (await findState()).data?.[0]?.id;
+  if (!stateId) {
+    throw new Error("No workflow state found for test runs in this project");
+  }
+  const data: Record<string, unknown> = {
+    name: input.name,
+    testRunType: input.testRunType ?? "REGULAR",
+    project: { connect: { id: input.projectId } },
+    state: { connect: { id: stateId } },
+  };
+  if (input.configId) data.configuration = { connect: { id: input.configId } };
+  if (input.milestoneId) data.milestone = { connect: { id: input.milestoneId } };
+  if (input.tagIds?.length) {
+    data.tags = { connect: input.tagIds.map((id) => ({ id })) };
+  }
+  const created = await hostJson<{ data?: { id: number; name: string } }>(
+    `/api/model/testRuns/create`,
+    { method: "POST", body: JSON.stringify({ data }) }
+  );
+  if (!created.data) throw new Error("The test run could not be created");
+  return created.data;
+}
+
 /**
  * Mark a run complete: isCompleted = true, moved to the project's first DONE
  * run state when one exists. Mirrors `complete-run` in @testplanit/api.

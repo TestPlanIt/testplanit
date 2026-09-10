@@ -10,8 +10,10 @@ import { Command } from "commander";
 import * as fs from "fs";
 import * as config from "../lib/config.js";
 import * as logger from "../lib/logger.js";
+import * as api from "../lib/api.js";
 import {
   completeTestRun,
+  createTestRun,
   EXECUTION_CONCLUSIONS,
   finishExecution,
   formatPlan,
@@ -19,6 +21,8 @@ import {
   parseEnvId,
   PLAN_FORMATS,
   SELECTOR_FIELDS,
+  TEST_RUN_TYPES,
+  type CreatableTestRunType,
   type ExecutionConclusion,
   type PlanFormat,
   type SelectorField,
@@ -130,6 +134,72 @@ Environment:
         } else {
           process.stdout.write(text + (text ? "\n" : ""));
         }
+      } catch (error) {
+        logger.error(error instanceof Error ? error.message : String(error));
+        process.exit(1);
+      }
+    });
+
+  cmd
+    .command("create")
+    .description(
+      "Create a test run and print its id to stdout (export it as TESTPLANIT_RUN_ID so every job attaches to it)"
+    )
+    .requiredOption("-n, --name <name>", "Run name")
+    .option(
+      "-p, --project <id|name>",
+      "Project ID or name (default: $TESTPLANIT_PROJECT_ID)"
+    )
+    .option(
+      "--type <type>",
+      `Run type: ${TEST_RUN_TYPES.join(", ")} (default: REGULAR)`
+    )
+    .option("--config <id|name>", "Configuration to attach")
+    .option("--milestone <id|name>", "Milestone to attach")
+    .option(
+      "--tags <tags>",
+      "Comma-separated tag names or IDs to attach (missing tags are created)"
+    )
+    .action(async (options) => {
+      requireConfig();
+      const projectRaw = options.project ?? process.env.TESTPLANIT_PROJECT_ID;
+      if (!projectRaw) {
+        logger.error("No project. Pass --project or set TESTPLANIT_PROJECT_ID.");
+        process.exit(1);
+      }
+      let testRunType: CreatableTestRunType | undefined;
+      if (options.type) {
+        const upper = String(options.type).toUpperCase();
+        if (!(TEST_RUN_TYPES as readonly string[]).includes(upper)) {
+          logger.error(
+            `Unknown run type "${options.type}". Expected one of: ${TEST_RUN_TYPES.join(", ")}`
+          );
+          process.exit(1);
+        }
+        testRunType = upper as CreatableTestRunType;
+      }
+      try {
+        const projectId = await api.resolveProjectId(String(projectRaw));
+        const configId = options.config
+          ? await api.resolveToId(projectId, "config", options.config)
+          : undefined;
+        const milestoneId = options.milestone
+          ? await api.resolveToId(projectId, "milestone", options.milestone)
+          : undefined;
+        const tagIds = options.tags
+          ? await api.resolveTags(projectId, options.tags)
+          : undefined;
+        const run = await createTestRun({
+          projectId,
+          name: options.name,
+          testRunType,
+          configId,
+          milestoneId,
+          tagIds,
+        });
+        // Only the id goes to stdout so `RUN_ID=$(testplanit run create …)` works.
+        process.stderr.write(`Created test run ${run.id}: ${run.name}\n`);
+        console.log(run.id);
       } catch (error) {
         logger.error(error instanceof Error ? error.message : String(error));
         process.exit(1);

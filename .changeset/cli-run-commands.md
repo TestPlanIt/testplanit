@@ -2,12 +2,15 @@
 "@testplanit/cli": minor
 ---
 
-Add `testplanit run plan`, `run complete` and `run finish` for jobs TestPlanIt dispatches
+Add `testplanit run create`, `run plan`, `run complete` and `run finish` for CI jobs
 
 TestPlanIt can now start a CI job for a run's automated cases. The job it
 starts carries `TESTPLANIT_RUN_ID` and `TESTPLANIT_EXECUTION_ID`, and this
 release gives it the three things it needs from the CLI:
 
+- `run create` creates a run up front and prints only its id, so a pipeline
+  can export it as `TESTPLANIT_RUN_ID` and let every shard, machine and retry
+  attach to the same run (what `@testplanit/api`'s `create-run` did).
 - `run plan` prints the run's automated cases — as JSON, or one selector per
   line (`--format lines`, `--selector-field fullName|title|className|id`) for a
   shell shim to turn into whatever filter its runner takes.

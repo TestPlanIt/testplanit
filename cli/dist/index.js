@@ -1179,6 +1179,54 @@ async function finishExecution(runId, executionId, conclusion, message) {
     body: JSON.stringify({ conclusion, ...message ? { message } : {} })
   });
 }
+var TEST_RUN_TYPES = [
+  "REGULAR",
+  "JUNIT",
+  "TESTNG",
+  "XUNIT",
+  "NUNIT",
+  "MSTEST",
+  "MOCHA",
+  "CUCUMBER"
+];
+async function createTestRun(input) {
+  const findState = (workflowType) => hostJson(
+    `/api/model/workflows/findMany?q=${encodeURIComponent(
+      JSON.stringify({
+        where: {
+          isEnabled: true,
+          isDeleted: false,
+          scope: "RUNS",
+          ...workflowType ? { workflowType } : {},
+          projects: { some: { projectId: input.projectId } }
+        },
+        orderBy: { order: "asc" },
+        take: 1
+      })
+    )}`
+  );
+  const stateId = (await findState("IN_PROGRESS")).data?.[0]?.id ?? (await findState()).data?.[0]?.id;
+  if (!stateId) {
+    throw new Error("No workflow state found for test runs in this project");
+  }
+  const data = {
+    name: input.name,
+    testRunType: input.testRunType ?? "REGULAR",
+    project: { connect: { id: input.projectId } },
+    state: { connect: { id: stateId } }
+  };
+  if (input.configId) data.configuration = { connect: { id: input.configId } };
+  if (input.milestoneId) data.milestone = { connect: { id: input.milestoneId } };
+  if (input.tagIds?.length) {
+    data.tags = { connect: input.tagIds.map((id) => ({ id })) };
+  }
+  const created = await hostJson(
+    `/api/model/testRuns/create`,
+    { method: "POST", body: JSON.stringify({ data }) }
+  );
+  if (!created.data) throw new Error("The test run could not be created");
+  return created.data;
+}
 async function completeTestRun(runId, projectId) {
   let resolvedProjectId = projectId;
   if (!resolvedProjectId) {
@@ -1335,6 +1383,56 @@ Environment:
       } else {
         process.stdout.write(text + (text ? "\n" : ""));
       }
+    } catch (error2) {
+      error(error2 instanceof Error ? error2.message : String(error2));
+      process.exit(1);
+    }
+  });
+  cmd.command("create").description(
+    "Create a test run and print its id to stdout (export it as TESTPLANIT_RUN_ID so every job attaches to it)"
+  ).requiredOption("-n, --name <name>", "Run name").option(
+    "-p, --project <id|name>",
+    "Project ID or name (default: $TESTPLANIT_PROJECT_ID)"
+  ).option(
+    "--type <type>",
+    `Run type: ${TEST_RUN_TYPES.join(", ")} (default: REGULAR)`
+  ).option("--config <id|name>", "Configuration to attach").option("--milestone <id|name>", "Milestone to attach").option(
+    "--tags <tags>",
+    "Comma-separated tag names or IDs to attach (missing tags are created)"
+  ).action(async (options) => {
+    requireConfig2();
+    const projectRaw = options.project ?? process.env.TESTPLANIT_PROJECT_ID;
+    if (!projectRaw) {
+      error("No project. Pass --project or set TESTPLANIT_PROJECT_ID.");
+      process.exit(1);
+    }
+    let testRunType;
+    if (options.type) {
+      const upper = String(options.type).toUpperCase();
+      if (!TEST_RUN_TYPES.includes(upper)) {
+        error(
+          `Unknown run type "${options.type}". Expected one of: ${TEST_RUN_TYPES.join(", ")}`
+        );
+        process.exit(1);
+      }
+      testRunType = upper;
+    }
+    try {
+      const projectId = await resolveProjectId(String(projectRaw));
+      const configId = options.config ? await resolveToId(projectId, "config", options.config) : void 0;
+      const milestoneId = options.milestone ? await resolveToId(projectId, "milestone", options.milestone) : void 0;
+      const tagIds = options.tags ? await resolveTags(projectId, options.tags) : void 0;
+      const run = await createTestRun({
+        projectId,
+        name: options.name,
+        testRunType,
+        configId,
+        milestoneId,
+        tagIds
+      });
+      process.stderr.write(`Created test run ${run.id}: ${run.name}
+`);
+      console.log(run.id);
     } catch (error2) {
       error(error2 instanceof Error ? error2.message : String(error2));
       process.exit(1);

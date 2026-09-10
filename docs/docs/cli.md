@@ -293,6 +293,9 @@ testplanit import results.xml -p 1 -n "Build" \
 For a job that TestPlanIt dispatched (see [Automated Execution](./user-guide/automated-execution.md)), or any job reporting into a run created up front:
 
 ```bash
+# Create one run up front and let every shard, machine and retry attach to it
+export TESTPLANIT_RUN_ID=$(testplanit run create -p 9 -n "Nightly #12")
+
 # The run's automated cases, as JSON
 testplanit run plan
 
@@ -308,6 +311,7 @@ testplanit run finish --conclusion success
 
 | Command | Options |
 | --- | --- |
+| `run create` | `-n, --name <name>` (required), `-p, --project <id\|name>` (default `$TESTPLANIT_PROJECT_ID`), `--type REGULAR\|JUNIT\|TESTNG\|XUNIT\|NUNIT\|MSTEST\|MOCHA\|CUCUMBER` (default `REGULAR`), `--config <id\|name>`, `--milestone <id\|name>`, `--tags <a,b>` (missing tags are created). Prints only the new run id to stdout |
 | `run plan` | `-r, --run <id>` (default `$TESTPLANIT_RUN_ID`), `--execution <id>` (default `$TESTPLANIT_EXECUTION_ID`; applies that execution's case subset and ref), `-F, --format json\|lines`, `--selector-field selector\|fullName\|title\|className\|id`, `-o, --output <file>` |
 | `run complete` | `-r, --run <id>`, `-p, --project <id>` (read from the run when omitted) |
 | `run finish` | `-r, --run <id>`, `--execution <id>`, `--conclusion success\|failure\|cancelled` (required), `--message <text>` |

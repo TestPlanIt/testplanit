@@ -7,6 +7,7 @@ vi.mock("./config.js", () => ({
 
 import {
   completeTestRun,
+  createTestRun,
   finishExecution,
   formatPlan,
   getAutomationPlan,
@@ -144,6 +145,56 @@ describe("host calls", () => {
     const body = JSON.parse(updateInit.body);
     expect(body.where).toEqual({ id: 42 });
     expect(body.data).toMatchObject({ isCompleted: true, stateId: 55 });
+  });
+
+  it("creates a run in the IN_PROGRESS state with relation connects", async () => {
+    fetchMock
+      .mockResolvedValueOnce(jsonResponse(200, { data: [{ id: 21 }] }))
+      .mockResolvedValueOnce(
+        jsonResponse(201, { data: { id: 99, name: "Nightly #12" } })
+      );
+    await expect(
+      createTestRun({
+        projectId: 3,
+        name: "Nightly #12",
+        configId: 5,
+        milestoneId: 8,
+        tagIds: [1, 2],
+      })
+    ).resolves.toEqual({ id: 99, name: "Nightly #12" });
+    const [stateUrl] = fetchMock.mock.calls[0];
+    expect(String(stateUrl)).toContain("/api/model/workflows/findMany");
+    expect(decodeURIComponent(String(stateUrl))).toContain('"workflowType":"IN_PROGRESS"');
+    const [createUrl, createInit] = fetchMock.mock.calls[1];
+    expect(createUrl).toBe("https://testplanit.example.com/api/model/testRuns/create");
+    expect(createInit.method).toBe("POST");
+    expect(JSON.parse(createInit.body).data).toEqual({
+      name: "Nightly #12",
+      testRunType: "REGULAR",
+      project: { connect: { id: 3 } },
+      state: { connect: { id: 21 } },
+      configuration: { connect: { id: 5 } },
+      milestone: { connect: { id: 8 } },
+      tags: { connect: [{ id: 1 }, { id: 2 }] },
+    });
+  });
+
+  it("falls back to any run state and fails clearly when there is none", async () => {
+    fetchMock
+      .mockResolvedValueOnce(jsonResponse(200, { data: [] }))
+      .mockResolvedValueOnce(jsonResponse(200, { data: [{ id: 30 }] }))
+      .mockResolvedValueOnce(jsonResponse(201, { data: { id: 100, name: "x" } }));
+    await createTestRun({ projectId: 3, name: "x", testRunType: "JUNIT" });
+    expect(JSON.parse(fetchMock.mock.calls[2][1].body).data).toMatchObject({
+      testRunType: "JUNIT",
+      state: { connect: { id: 30 } },
+    });
+    fetchMock
+      .mockResolvedValueOnce(jsonResponse(200, { data: [] }))
+      .mockResolvedValueOnce(jsonResponse(200, { data: [] }));
+    await expect(createTestRun({ projectId: 3, name: "x" })).rejects.toThrow(
+      /No workflow state/
+    );
   });
 
   it("skips the project lookup when a project id is given", async () => {
