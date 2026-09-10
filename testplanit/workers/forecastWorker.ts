@@ -840,6 +840,11 @@ export const processor = async (job: Job<ForecastJobDataBase>) =>
               isDeleted: false,
               testRunType: { in: AUTOMATED_TEST_RUN_TYPES },
               project: { isDeleted: false },
+              // A run whose execution is still dispatched or running is not
+              // abandoned — the CI job may simply not have reported yet.
+              executions: {
+                none: { status: { in: ["PENDING", "DISPATCHED", "RUNNING"] } },
+              },
             },
             select: {
               id: true,

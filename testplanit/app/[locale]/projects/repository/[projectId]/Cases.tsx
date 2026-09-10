@@ -110,6 +110,8 @@ import { ExtendedCases, getColumns } from "./columns";
 import { DeleteCaseModal } from "./DeleteCase";
 import { ExportModal, ExportOptions } from "./ExportModal";
 import { QuickScriptModal } from "./QuickScriptModal";
+import { RunAutomatedCaseDialog } from "@/components/cases/RunAutomatedCaseButton";
+import { useExecutionTargetChoices } from "@/components/runs/ExecuteAutomationButton";
 
 type PageSizeOption = number | "All";
 
@@ -924,6 +926,21 @@ export default function Cases({
   // Add state for the export modal
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isQuickScriptModalOpen, setIsQuickScriptModalOpen] = useState(false);
+  // Ad-hoc "Run automated test" from a row menu; the dialog lives here so the
+  // row stays a plain trigger.
+  const [runAutomatedCase, setRunAutomatedCase] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
+  const { data: automationTargets } = useExecutionTargetChoices(
+    projectId,
+    isValidProjectId && !isRunMode && canAddEditRun
+  );
+  const enabledAutomationTargets = useMemo(
+    () => (automationTargets ?? []).filter((x) => x.isEnabled),
+    [automationTargets]
+  );
+  const automationAvailable = enabledAutomationTargets.length > 0;
   const [quickScriptCaseIds, setQuickScriptCaseIds] = useState<number[] | null>(
     null
   );
@@ -2511,9 +2528,13 @@ export default function Cases({
       // Callback to open AssignTestCaseModal from TestRunStatusCell
       (modalData) => {
         setAssignModalState({ isOpen: true, ...modalData });
-      }
+      },
+      automationAvailable,
+      (testcase) =>
+        setRunAutomatedCase({ id: testcase.id, name: testcase.name })
     );
   }, [
+    automationAvailable,
     userPreferencesForColumns,
     uniqueCaseFieldList,
     handleSelect,
@@ -3379,6 +3400,19 @@ export default function Cases({
           }}
           selectedCaseIds={quickScriptCaseIds ?? selectedCaseIdsForBulkEdit}
           projectId={projectId}
+        />
+      )}
+
+      {isValidProjectId && runAutomatedCase && (
+        <RunAutomatedCaseDialog
+          projectId={projectId}
+          caseId={runAutomatedCase.id}
+          caseTitle={runAutomatedCase.name}
+          targets={enabledAutomationTargets}
+          open
+          onOpenChange={(open) => {
+            if (!open) setRunAutomatedCase(null);
+          }}
         />
       )}
 

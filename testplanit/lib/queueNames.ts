@@ -22,6 +22,9 @@ export const IMPACT_ANALYSIS_QUEUE_NAME = "impact-analysis";
 export const GENERATE_FROM_URL_QUEUE_NAME = "generate-from-url";
 export const ITERATION_GENERATION_QUEUE_NAME = "iteration-generation";
 export const WEBHOOK_DISPATCH_QUEUE_NAME = "webhook-dispatch";
+export const EXECUTION_DISPATCH_QUEUE_NAME = "execution-dispatch";
+export const JOB_DISPATCH_EXECUTION = "dispatch-execution";
+export const JOB_POLL_ACTIVE_EXECUTIONS = "poll-active-executions";
 export const SCIM_ACCESS_RECOMPUTE_QUEUE_NAME = "scim-access-recompute";
 
 // Job names shared between enqueue sites and the workers that process them.

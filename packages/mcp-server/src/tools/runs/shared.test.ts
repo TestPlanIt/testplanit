@@ -140,8 +140,11 @@ describe("extractStatusNames", () => {
 // ── isAutomatedRunType ─────────────────────────────────────────────────────
 
 describe("isAutomatedRunType", () => {
-  it("REGULAR is not automated; every JUnit-family type is", () => {
+  it("REGULAR and HYBRID are not automated; every JUnit-family type is", () => {
     expect(isAutomatedRunType("REGULAR")).toBe(false);
+    // A hybrid run's automated results are projected onto TestRunCases, so
+    // it rolls up by case like a manual run.
+    expect(isAutomatedRunType("HYBRID")).toBe(false);
     for (const t of [
       "JUNIT",
       "TESTNG",

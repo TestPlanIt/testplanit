@@ -84,6 +84,7 @@ import {
   MoreVertical,
   PlayCircle,
   Plus,
+  FilePlay,
   PlusSquare,
   ScrollText,
   SquarePen,
@@ -1058,6 +1059,8 @@ const ActionsCell = React.memo(function ActionsCell({
   onCopyMove,
   onDeleteCase,
   excludeNotStartedFromRuns,
+  automationAvailable,
+  onRunAutomated,
 }: {
   row: any;
   isRunMode: boolean;
@@ -1071,6 +1074,8 @@ const ActionsCell = React.memo(function ActionsCell({
   onCopyMove?: (caseId: number) => void;
   onDeleteCase?: (testcase: ExtendedCases) => void;
   excludeNotStartedFromRuns?: boolean;
+  automationAvailable?: boolean;
+  onRunAutomated?: (testcase: ExtendedCases) => void;
 }) {
   const isDraftCase =
     !!excludeNotStartedFromRuns &&
@@ -1114,6 +1119,20 @@ const ActionsCell = React.memo(function ActionsCell({
               >
                 <ScrollText className="me-2 h-4 w-4" />
                 <span>{t("repository.cases.quickScript")}</span>
+              </DropdownMenuItem>
+            )}
+          {!isRunMode &&
+            !isSelectionMode &&
+            automationAvailable &&
+            canAddEditRun &&
+            row.original.automated &&
+            onRunAutomated && (
+              <DropdownMenuItem
+                onClick={() => onRunAutomated(row.original)}
+                data-testid={`run-automated-case-${row.original.id}`}
+              >
+                <FilePlay className="me-2 h-4 w-4" />
+                <span>{t("automation.adhoc.button")}</span>
               </DropdownMenuItem>
             )}
           {!isRunMode &&
@@ -1482,7 +1501,9 @@ export const getColumns = (
     currentAssigneeId?: string | null;
     isBulkAssign: boolean;
     selectedCases?: ExtendedCases[];
-  }) => void
+  }) => void,
+  automationAvailable?: boolean,
+  onRunAutomated?: (testcase: ExtendedCases) => void
 ): ColumnDef<ExtendedCases>[] => {
   const isStepsFieldPresent = uniqueCaseFieldList.some(
     (field) => field.displayName === "Steps"
@@ -2427,6 +2448,8 @@ export const getColumns = (
             onCopyMove={onCopyMove}
             onDeleteCase={onDeleteCase}
             excludeNotStartedFromRuns={excludeNotStartedFromRuns}
+            automationAvailable={automationAvailable}
+            onRunAutomated={onRunAutomated}
           />
         ),
       });

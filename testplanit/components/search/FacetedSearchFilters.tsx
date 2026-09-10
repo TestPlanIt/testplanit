@@ -1470,7 +1470,7 @@ export function FacetedSearchFilters({
                           testRunType:
                             value === "ALL"
                               ? undefined
-                              : (value as "REGULAR" | "JUNIT"),
+                              : (value as TestRunFilters["testRunType"]),
                         });
                       }}
                     >
@@ -1483,6 +1483,9 @@ export function FacetedSearchFilters({
                         </SelectItem>
                         <SelectItem value="REGULAR">
                           {t("search.filters.regular")}
+                        </SelectItem>
+                        <SelectItem value="HYBRID">
+                          {t("search.filters.hybrid")}
                         </SelectItem>
                         <SelectItem value="JUNIT">
                           {t("search.filters.junit")}

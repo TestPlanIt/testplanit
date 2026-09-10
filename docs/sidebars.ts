@@ -131,6 +131,23 @@ const sidebars: SidebarsConfig = {
               label: 'Tools & Integrations',
               items: [
                 'user-guide/integrations', // Issue integrations administration page
+                'user-guide/code-repositories', // Git repository connections for QuickScript, Impact Analysis and automated execution
+                {
+                  type: 'category',
+                  label: 'Automated Execution',
+                  link: {
+                    type: 'doc',
+                    id: 'user-guide/automated-execution', // Overview: dispatch a run's automated cases to CI and collect results
+                  },
+                  items: [
+                    'user-guide/automated-execution/github-actions', // Step-by-step: workflow_dispatch target
+                    'user-guide/automated-execution/gitlab-ci', // Step-by-step: pipeline target
+                    'user-guide/automated-execution/jenkins', // Step-by-step: Generic Webhook Trigger plugin
+                    'user-guide/automated-execution/generic-webhook', // Contract, signature verification, private addresses
+                    'user-guide/automated-execution/reporting-results', // The job's side: plan, filters, reporters, finish
+                    'user-guide/automated-execution/troubleshooting', // Symptom → cause → fix
+                  ],
+                },
                 'user-guide/share-links', // Share Links documentation
                 // Convert Notifications to a category with children
                 {
@@ -173,7 +190,6 @@ const sidebars: SidebarsConfig = {
                 },
                 'user-guide/prompt-configurations', // AI prompt configuration management
                 'user-guide/quickscript-templates', // QuickScript templates for test case export
-                'user-guide/code-repositories', // Git repository connections for QuickScript context and Impact Analysis
               ],
             },
             // System
@@ -350,6 +366,7 @@ const sidebars: SidebarsConfig = {
                 'user-guide/projects/settings/ai-models', // Project AI model default + per-feature overrides
                 'user-guide/projects/settings/quickscript', // Project QuickScript context + export templates
                 'user-guide/projects/settings/impact', // Project Impact Analysis: application repository, cache, repository markers
+                'user-guide/projects/settings/automation', // Project execution targets: GitHub Actions, GitLab CI, generic webhook
                 'user-guide/projects/settings/parameters', // Test Case Parameters settings (CI mapping + shared datasets)
                 'user-guide/projects/settings/advanced', // Per-project feature toggles
                 'user-guide/projects/settings/shares', // Project-scoped share link management

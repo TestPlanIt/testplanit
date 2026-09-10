@@ -5,6 +5,8 @@ import {
   getNotificationQueue,
   getRepoCacheQueue,
   getWebhookDispatchQueue,
+  getExecutionDispatchQueue,
+  EXECUTION_DISPATCH_QUEUE_NAME,
   NOTIFICATION_QUEUE_NAME,
   REPO_CACHE_QUEUE_NAME,
   WEBHOOK_DISPATCH_QUEUE_NAME,
@@ -12,6 +14,7 @@ import {
 import {
   JOB_AUTO_COMPLETE_MILESTONES,
   JOB_MILESTONE_DUE_NOTIFICATIONS,
+  JOB_POLL_ACTIVE_EXECUTIONS,
   JOB_PURGE_STALE_CASE_DRAFTS,
   JOB_REFRESH_EXPIRED_CACHES,
   JOB_REVIEW_REMINDERS,
@@ -29,6 +32,7 @@ const CRON_SCHEDULE_DAILY_4AM = "0 4 * * *"; // For code repository cache refres
 const CRON_SCHEDULE_DAILY_2AM = "0 2 * * *"; // Plan 02-06 / D-04 — auto-retire expired WebhookConfigSecret rows
 const CRON_SCHEDULE_HOURLY = "0 * * * *"; // Top of every hour — review-reminder scan
 const CRON_SCHEDULE_EVERY_15_MIN = "*/15 * * * *"; // Abandoned automated-run sweep
+const CRON_SCHEDULE_EVERY_MINUTE = "* * * * *"; // In-flight execution status poll (per-row backoff inside)
 const JOB_RETIRE_EXPIRED_SECRETS = "retire-expired-secrets";
 
 /**
@@ -333,6 +337,33 @@ async function scheduleJobs() {
       );
     }
 
+    // In-flight automated executions: ask each CI provider for job status
+    // and time out the ones that never report. Runs every minute; the worker
+    // applies an exponential per-row backoff so provider calls stay sparse.
+    const executionDispatchQueue = getExecutionDispatchQueue();
+    if (executionDispatchQueue) {
+      for (const tenantId of tenantIds) {
+        const jobId = tenantId
+          ? `${JOB_POLL_ACTIVE_EXECUTIONS}-${tenantId}`
+          : JOB_POLL_ACTIVE_EXECUTIONS;
+        await executionDispatchQueue.upsertJobScheduler(
+          jobId,
+          { pattern: CRON_SCHEDULE_EVERY_MINUTE },
+          {
+            name: JOB_POLL_ACTIVE_EXECUTIONS,
+            data: { tenantId },
+          }
+        );
+        console.log(
+          `Upserted job scheduler "${JOB_POLL_ACTIVE_EXECUTIONS}"${tenantId ? ` for tenant ${tenantId}` : ""} with pattern "${CRON_SCHEDULE_EVERY_MINUTE}" on queue "${EXECUTION_DISPATCH_QUEUE_NAME}".`
+        );
+      }
+    } else {
+      console.warn(
+        `[scheduler] executionDispatchQueue unavailable — execution status poll NOT registered`
+      );
+    }
+
     // Reconcile away schedulers for tenants no longer in this worker group's
     // config (migrated to another group, or deprovisioned). Multi-tenant only:
     // single-tenant deployments use suffix-less scheduler ids and have no
@@ -359,6 +390,14 @@ async function scheduleJobs() {
               queue: webhookDispatchQueue,
               jobNames: [JOB_RETIRE_EXPIRED_SECRETS],
             },
+            ...(executionDispatchQueue
+              ? [
+                  {
+                    queue: executionDispatchQueue,
+                    jobNames: [JOB_POLL_ACTIVE_EXECUTIONS],
+                  },
+                ]
+              : []),
           ],
           new Set(tenantIds.filter((t): t is string => Boolean(t)))
         );
@@ -385,11 +424,13 @@ if (require.main === module) {
       const notificationQueue = getNotificationQueue();
       const repoCacheQueue = getRepoCacheQueue();
       const webhookDispatchQueue = getWebhookDispatchQueue();
+      const executionDispatchQueue = getExecutionDispatchQueue();
       await Promise.all([
         forecastQueue?.close(),
         notificationQueue?.close(),
         repoCacheQueue?.close(),
         webhookDispatchQueue?.close(),
+        executionDispatchQueue?.close(),
       ]);
       console.log("All queues closed.");
       process.exit(0);

@@ -33,7 +33,7 @@ The overview table refreshes automatically and lists every queue with these colu
 | **Delayed** | Jobs scheduled to run later. |
 | **Actions** | Pause/resume and clean (see below). |
 
-Queues monitored include forecast updates, notifications, emails, issue sync, Testmo imports, Elasticsearch reindex, audit logs, budget alerts, AI auto-tag, repository cache, copy & move, duplicate scan, smart selection, and step-sequence scan.
+Queues monitored include forecast updates, notifications, emails, issue sync, Testmo imports, Elasticsearch reindex, audit logs, budget alerts, AI auto-tag, repository cache, copy & move, duplicate scan, smart selection, step-sequence scan, and automated execution dispatch.
 
 :::info
 **Concurrency is read-only here.** To change how many jobs a worker processes in parallel, set the relevant `*_CONCURRENCY` environment variable and restart the workers.

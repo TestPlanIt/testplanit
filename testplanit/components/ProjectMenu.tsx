@@ -21,6 +21,7 @@ import {
   ChartNoAxesCombined,
   Compass as SessionsIcon,
   FolderKanban,
+  FilePlay,
   Radio,
   Home,
   Layers,
@@ -353,6 +354,13 @@ export default function ProjectsMenu({
             label: t("admin.menu.impact"),
             path: "settings/impact",
             id: "settings-impact-link",
+            section: "settings" as MenuSection,
+          },
+          {
+            icon: FilePlay,
+            label: t("admin.menu.automation"),
+            path: "settings/automation",
+            id: "settings-automation-link",
             section: "settings" as MenuSection,
           },
           {

@@ -22,6 +22,15 @@ export const AUTOMATED_TEST_RUN_TYPES: TestRunType[] = [
 ];
 
 /**
+ * Run types whose execution is driven from the manual (TestRunCases →
+ * TestRunResults) tree. HYBRID belongs here: it is a REGULAR run that has
+ * also received automated results, and every automated result is projected
+ * onto TestRunCases.statusId, so the manual summary/progress code describes
+ * it correctly.
+ */
+export const MANUAL_TEST_RUN_TYPES: TestRunType[] = ["REGULAR", "HYBRID"];
+
+/**
  * All repository case sources that represent imported/automated test cases
  */
 export const AUTOMATED_CASE_SOURCES: RepositoryCaseSource[] = [
@@ -43,6 +52,29 @@ export function isAutomatedTestRunType(
 ): boolean {
   if (!type) return false;
   return AUTOMATED_TEST_RUN_TYPES.includes(type as TestRunType);
+}
+
+/**
+ * A REGULAR run that has also received automated results. Falls on the manual
+ * side of `isAutomatedTestRunType` on purpose: composition lock, review,
+ * assignment, the execution sheet and the ready-to-complete check all still
+ * apply. Use `hasAutomatedResultsView` to decide whether to render the
+ * automated results panel.
+ */
+export function isHybridTestRunType(
+  type: TestRunType | string | null | undefined
+): boolean {
+  return type === "HYBRID";
+}
+
+/**
+ * Whether a run's page should show the automated (JUnit-family) results
+ * view: pure automated runs and hybrid runs.
+ */
+export function hasAutomatedResultsView(
+  type: TestRunType | string | null | undefined
+): boolean {
+  return isAutomatedTestRunType(type) || isHybridTestRunType(type);
 }
 
 /**
@@ -69,6 +101,7 @@ export function getTestRunTypeLabel(type: TestRunType | string): string {
     MSTEST: "MSTest",
     MOCHA: "Mocha",
     CUCUMBER: "Cucumber",
+    HYBRID: "Hybrid",
   };
   return labels[type] || type;
 }

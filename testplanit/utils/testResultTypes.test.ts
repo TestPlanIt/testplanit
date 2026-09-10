@@ -4,8 +4,11 @@ import {
   AUTOMATED_TEST_RUN_TYPES,
   getCaseSourceLabel,
   getTestRunTypeLabel,
+  hasAutomatedResultsView,
   isAutomatedCaseSource,
   isAutomatedTestRunType,
+  isHybridTestRunType,
+  MANUAL_TEST_RUN_TYPES,
 } from "./testResultTypes";
 
 describe("testResultTypes", () => {
@@ -26,6 +29,41 @@ describe("testResultTypes", () => {
 
     it("should not contain REGULAR type", () => {
       expect(AUTOMATED_TEST_RUN_TYPES).not.toContain("REGULAR");
+    });
+
+    // A hybrid run keeps every manual-run behaviour (composition lock,
+    // review, assignment, ready-to-complete), so it must never be treated as
+    // an automated run.
+    it("should not contain HYBRID", () => {
+      expect(AUTOMATED_TEST_RUN_TYPES).not.toContain("HYBRID");
+      expect(isAutomatedTestRunType("HYBRID")).toBe(false);
+    });
+  });
+
+  describe("MANUAL_TEST_RUN_TYPES / hybrid helpers", () => {
+    it("manual run types are REGULAR and HYBRID", () => {
+      expect(MANUAL_TEST_RUN_TYPES).toEqual(["REGULAR", "HYBRID"]);
+    });
+
+    it("isHybridTestRunType matches only HYBRID", () => {
+      expect(isHybridTestRunType("HYBRID")).toBe(true);
+      expect(isHybridTestRunType("REGULAR")).toBe(false);
+      expect(isHybridTestRunType("JUNIT")).toBe(false);
+      expect(isHybridTestRunType(null)).toBe(false);
+      expect(isHybridTestRunType(undefined)).toBe(false);
+    });
+
+    it("hasAutomatedResultsView is true for automated and hybrid runs only", () => {
+      expect(hasAutomatedResultsView("HYBRID")).toBe(true);
+      for (const type of AUTOMATED_TEST_RUN_TYPES) {
+        expect(hasAutomatedResultsView(type)).toBe(true);
+      }
+      expect(hasAutomatedResultsView("REGULAR")).toBe(false);
+      expect(hasAutomatedResultsView(null)).toBe(false);
+    });
+
+    it("labels HYBRID", () => {
+      expect(getTestRunTypeLabel("HYBRID")).toBe("Hybrid");
     });
   });
 

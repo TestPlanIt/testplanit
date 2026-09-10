@@ -3,6 +3,12 @@ import { schema } from "~/zenstack/schema";
 import { SelectedTestCasesDrawer } from "@/components/SelectedTestCasesDrawer";
 import { ApplicationArea } from "~/zenstack/models";
 import { CirclePlay, Combine, Lock } from "lucide-react";
+import {
+  ActionBar,
+  ActionButtonContent,
+  collapsibleActionClass,
+  useContainerCompact,
+} from "@/components/ui/action-bar";
 import { useTranslations } from "next-intl";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -102,6 +108,8 @@ interface TestCasesSectionProps {
   onSelectedConfigurationsChange?: (
     configs: SelectedConfigurationInfo[]
   ) => void;
+  /** Rendered left of "Start manual testing" (e.g. Execute automated cases). */
+  headerActions?: React.ReactNode;
 }
 
 export function TestCasesSection({
@@ -113,8 +121,12 @@ export function TestCasesSection({
   refetchTestRun: _refetchTestRun,
   onMultiConfigSelected,
   onSelectedConfigurationsChange,
+  headerActions,
 }: TestCasesSectionProps) {
   const t = useTranslations();
+  // Below this width the header's action buttons fall back to icons that
+  // reveal their label on hover, like the run header's action bar.
+  const { ref: headerRef, compact: headerCompact } = useContainerCompact(560);
   const router = useRouter();
   const params = useParams<{ projectId: string; runId: string }>();
   const pathname = usePathname();
@@ -491,7 +503,7 @@ export function TestCasesSection({
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
+      <div ref={headerRef} className="flex justify-between items-center">
         <div className="flex items-center justify-between w-full gap-2">
           <span className="text-md font-semibold">
             {isMultiConfigRun && selectedConfigurations.length > 1
@@ -517,21 +529,36 @@ export function TestCasesSection({
               />
             )}
         </div>
-        {!isEditMode &&
-          !testRunData.isCompleted &&
-          testRunData.testCases.length > 0 &&
-          !isLoadingPermissions &&
-          canAddEditResults && (
-            <Button
-              variant="default"
-              size="sm"
-              onClick={handleStartTesting}
-              disabled={isLoadingPermissions}
-            >
-              <CirclePlay className="h-4 w-4" />
-              {t("common.actions.startTesting")}
-            </Button>
-          )}
+        <ActionBar compact={headerCompact} className="gap-2 shrink-0">
+          {!isEditMode && headerActions}
+          {!isEditMode &&
+            !testRunData.isCompleted &&
+            testRunData.testCases.length > 0 &&
+            !isLoadingPermissions &&
+            canAddEditResults && (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={handleStartTesting}
+                disabled={isLoadingPermissions}
+                className={headerCompact ? collapsibleActionClass(true) : ""}
+                aria-label={t("common.actions.startTesting")}
+                data-testid="start-manual-testing-button"
+              >
+                {headerCompact ? (
+                  <ActionButtonContent
+                    icon={CirclePlay}
+                    label={t("common.actions.startTesting")}
+                  />
+                ) : (
+                  <>
+                    <CirclePlay className="h-4 w-4" />
+                    {t("common.actions.startTesting")}
+                  </>
+                )}
+              </Button>
+            )}
+        </ActionBar>
       </div>
 
       {/* Configuration selector for multi-config test runs */}

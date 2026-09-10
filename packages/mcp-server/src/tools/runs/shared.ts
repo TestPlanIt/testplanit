@@ -251,7 +251,9 @@ export const RUN_RESULT_DETAIL_INCLUDE = {
  * CUCUMBER) stores results in the JUnit suite tables.
  */
 export function isAutomatedRunType(testRunType: string): boolean {
-  return testRunType !== "REGULAR";
+  // HYBRID is a manual run that also holds automated results; its automated
+  // results are projected onto TestRunCases, so it rolls up like REGULAR.
+  return testRunType !== "REGULAR" && testRunType !== "HYBRID";
 }
 
 export interface StatusGroup {

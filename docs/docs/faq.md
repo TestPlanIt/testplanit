@@ -57,11 +57,12 @@ Yes, TestPlanIt supports importing test cases from CSV files. For specific tools
 
 ### Does TestPlanIt support automated testing?
 
-TestPlanIt doesn't run automated tests directly, but it integrates with your existing automation frameworks. You can push automated test results to TestPlanIt using:
+Yes, in both directions. TestPlanIt does not contain a test runner; it works with the automation you already have.
 
-- The [TestPlanIt SDK](/docs/sdk/) for programmatic access
-- The [WebdriverIO reporter](/docs/sdk/wdio-overview) for WebdriverIO integration
-- The REST API for custom integrations
+- **Results in**: push automated results with the [Playwright reporter](/docs/sdk/playwright-overview), the [WebdriverIO reporter](/docs/sdk/wdio-overview), the [CLI](/docs/cli) (JUnit, TestNG, xUnit, NUnit, MSTest, Mocha and Cucumber reports), or the [SDK](/docs/sdk/) and REST API.
+- **Execution out**: a test run can dispatch its automated cases to a GitHub Actions workflow, a GitLab CI pipeline, or any system behind a signed webhook, and the results come back into the same run. See [Automated Execution](/docs/user-guide/automated-execution).
+
+A run can hold manual and automated cases together; see [Hybrid Test Runs](/docs/user-guide/projects/run-details#hybrid-test-runs).
 
 ### Can I integrate with Jira/GitHub/Azure DevOps?
 

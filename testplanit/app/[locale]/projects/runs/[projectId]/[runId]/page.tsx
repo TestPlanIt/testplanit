@@ -17,6 +17,14 @@ import { Loading } from "@/components/Loading";
 import LoadingSpinnerAlert from "@/components/LoadingSpinnerAlert";
 import { RequestReviewButton } from "@/components/reviews/RequestReviewButton";
 import { RunAuditLogSheet } from "@/components/runs/RunAuditLogSheet";
+import { AutomationExecutionChip } from "@/components/runs/AutomationExecutionChip";
+import { AutomationExecutionsSheet } from "@/components/runs/AutomationExecutionsSheet";
+import { ExecuteAutomationButton } from "@/components/runs/ExecuteAutomationButton";
+import {
+  testRunExecutionsQueryKey,
+  useTestRunExecutions,
+  type TestRunExecutionRow,
+} from "~/hooks/useTestRunExecutions";
 import { RecordId } from "@/components/RecordId";
 import { ReviewStatusBanner } from "@/components/reviews/ReviewStatusBanner";
 import { TestRunCaseDetails } from "@/components/TestRunCaseDetails";
@@ -93,6 +101,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { JSONContent } from "@tiptap/react";
 import {
   ArrowLeft,
+  Bot,
   ChevronLeft,
   CircleCheckBig,
   CircleSlash2,
@@ -137,7 +146,10 @@ import { IconName } from "~/types/globals";
 import { computeRetryMetrics } from "~/utils/automatedRunMetrics";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
 import { useExportTestRunPdf } from "~/hooks/pdf/useExportTestRunPdf";
-import { isAutomatedTestRunType } from "~/utils/testResultTypes";
+import {
+  isAutomatedTestRunType,
+  isHybridTestRunType,
+} from "~/utils/testResultTypes";
 import AddTestRunModal from "../AddTestRunModal";
 import DuplicateTestRunDialog, {
   AddTestRunModalInitProps,
@@ -346,6 +358,8 @@ export default function TestRunPage() {
   // repository case details bar).
   const { ref: headerRef, compact: headerCompact } = useContainerCompact();
   const [auditOpen, setAuditOpen] = useState(false);
+  // Execution history for COMPLETED runs, whose header has no chip.
+  const [executionsSheetOpen, setExecutionsSheetOpen] = useState(false);
   const t = useTranslations();
   const tCommon = useTranslations("common");
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -599,6 +613,13 @@ export default function TestRunPage() {
     void queryClient.invalidateQueries({
       queryKey: ["zenstack", "JUnitTestResult"],
     });
+    // Dispatch status (chip) and the automated-case count for the button.
+    void queryClient.invalidateQueries({
+      queryKey: testRunExecutionsQueryKey(Number(runId)),
+    });
+    void queryClient.invalidateQueries({
+      queryKey: ["zenstack", "TestRunCases"],
+    });
   }, [refetchTestRun, queryClient, runId]);
   const onLiveWakeUp = useCoalescedWakeUp(onWakeUpFlush);
   useTestRunLiveStream({
@@ -614,12 +635,41 @@ export default function TestRunPage() {
       projectId: Number(projectId),
     });
 
-  // Fetch JUnit test suites if this is a JUNIT run
+  // Pure automated runs render the results view instead of the manual
+  // layout. Hybrid runs (a manual run that has also received automated
+  // results) keep the manual layout and add the automated results beneath it,
+  // so `isJUnitRun` stays false for them on purpose.
   const isJUnitRun = isAutomatedTestRunType(testRunData?.testRunType);
+  const isHybridRun = isHybridTestRunType(testRunData?.testRunType);
+  const showAutomatedResults = isJUnitRun || isHybridRun;
+
+  // Automated execution: dispatch history for the chip/button, and how many
+  // of the run's cases a dispatch would cover.
+  const {
+    executions: runExecutions,
+    active: activeExecution,
+    refetch: refetchExecutions,
+  } = useTestRunExecutions(!isNaN(Number(runId)) ? Number(runId) : null, {
+    enabled: !!testRunData && !isJUnitRun,
+  });
+  const { data: automatedCaseCount } = useClientQueries(
+    schema
+  ).testRunCases.useCount(
+    {
+      where: {
+        testRunId: Number(runId),
+        isDeleted: false,
+        repositoryCase: { automated: true, isDeleted: false },
+      },
+    },
+    { enabled: !!testRunData && !isJUnitRun }
+  );
+  const [executeDialogOpen, setExecuteDialogOpen] = useState(false);
+  const [retryOf, setRetryOf] = useState<TestRunExecutionRow | null>(null);
   const { data: jUnitSuites, isLoading: isJUnitLoading } = useClientQueries(
     schema
   ).jUnitTestSuite.useFindMany(
-    isJUnitRun
+    showAutomatedResults
       ? {
           where: { testRunId: Number(runId) },
           include: {
@@ -662,7 +712,7 @@ export default function TestRunPage() {
           orderBy: { createdAt: "asc" },
         }
       : undefined,
-    { enabled: isJUnitRun }
+    { enabled: showAutomatedResults }
   );
 
   const _canEdit =
@@ -1844,6 +1894,13 @@ export default function TestRunPage() {
                             onOpenChange={setAuditOpen}
                           />
                         )}
+                        {runExecutions.length > 0 && (
+                          <AutomationExecutionsSheet
+                            open={executionsSheetOpen}
+                            onOpenChange={setExecutionsSheetOpen}
+                            executions={runExecutions}
+                          />
+                        )}
                         <ActionOverflow
                           compact={headerCompact}
                           menuLabel={t("common.actions.actionsLabel")}
@@ -1853,6 +1910,14 @@ export default function TestRunPage() {
                               icon: History,
                               label: t("common.fields.activityLog"),
                               onClick: () => setAuditOpen(true),
+                            },
+                            {
+                              key: "executions",
+                              icon: Bot,
+                              label: t("automation.execute.historyTitle"),
+                              onClick: () => setExecutionsSheetOpen(true),
+                              hidden: runExecutions.length === 0,
+                              testId: "run-execution-history",
                             },
                             {
                               key: "duplicate",
@@ -1987,6 +2052,22 @@ export default function TestRunPage() {
                           </div>
                           {/* Row 2: composition lock/unlock */}
                           <div className="flex items-center gap-1">
+                            {!isJUnitRun && runExecutions.length > 0 && (
+                              <AutomationExecutionChip
+                                runId={Number(runId)}
+                                executions={runExecutions}
+                                canAddEdit={canAddEditRun}
+                                isCompleted={Boolean(testRunData.isCompleted)}
+                                onChanged={() => {
+                                  refetchExecutions();
+                                  refetchTestRun();
+                                }}
+                                onRetry={(execution) => {
+                                  setRetryOf(execution);
+                                  setExecuteDialogOpen(true);
+                                }}
+                              />
+                            )}
                             {/* Execution-start composition lock (BOR-1) —
                                 single toggle. Locking needs run-edit rights;
                                 unlocking is gated to creator/admin, so the
@@ -2239,7 +2320,64 @@ export default function TestRunPage() {
                           onSelectedConfigurationsChange={
                             setSelectedConfigurations
                           }
+                          headerActions={
+                            !isJUnitRun ? (
+                              <ExecuteAutomationButton
+                                runId={Number(runId)}
+                                projectId={Number(projectId)}
+                                canAddEdit={canAddEditRun}
+                                isCompleted={Boolean(testRunData.isCompleted)}
+                                automatedCaseCount={automatedCaseCount ?? 0}
+                                activeExecution={activeExecution}
+                                onDispatched={() => {
+                                  setRetryOf(null);
+                                  refetchExecutions();
+                                  refetchTestRun();
+                                }}
+                                open={executeDialogOpen}
+                                onOpenChange={(open) => {
+                                  setExecuteDialogOpen(open);
+                                  if (!open) setRetryOf(null);
+                                }}
+                                retryOf={retryOf}
+                                variant="labelled"
+                              />
+                            ) : undefined
+                          }
                         />
+
+                        {isHybridRun && (
+                          <div
+                            className="space-y-2"
+                            data-testid="hybrid-automated-results"
+                          >
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-2 text-base font-bold">
+                                <Bot className="h-4 w-4" aria-hidden />
+                                <span>{t("common.ui.automatedResults")}</span>
+                              </div>
+                              <p className="text-sm text-muted-foreground">
+                                {t("common.ui.hybridRunHint")}
+                              </p>
+                            </div>
+                            <PaginationProvider>
+                              <JunitResultsPanel
+                                t={t}
+                                projectId={projectId ? String(projectId) : ""}
+                                runId={runId ? String(runId) : ""}
+                                jUnitSuites={jUnitSuites}
+                                sortedJunitTestCases={sortedJunitTestCases}
+                                junitSortConfig={junitSortConfig}
+                                handleJunitSortChange={handleJunitSortChange}
+                                onSortColumn={handleJunitSortColumn}
+                                isJUnitLoading={isJUnitLoading}
+                                selectedTestCaseId={null}
+                                facets={junitFacets}
+                                onFacetsChange={setJunitFacets}
+                              />
+                            </PaginationProvider>
+                          </div>
+                        )}
                       </>
                     )}
                   </div>
@@ -2365,6 +2503,16 @@ export default function TestRunPage() {
                           </div>
                         </DialogContent>
                       </Dialog>
+                      {isHybridRun && (
+                        <JunitChartsPanel
+                          t={t}
+                          runId={Number(runId)}
+                          statusScope={statusScope}
+                          forecastSeconds={undefined}
+                          onFlakyTileClick={handleFlakyTileClick}
+                          onRetriesTileClick={handleRetriesTileClick}
+                        />
+                      )}
                     </>
                   )}
                   <TestRunFormControls

@@ -192,6 +192,44 @@ export async function postHostJson<T>(
   return JSON.parse(text) as T;
 }
 
+/** GET JSON from a non-RPC host route; same error handling as `postHostJson`. */
+export async function getHostJson<T>(
+  path: string,
+  env: EnvConfig,
+  timeoutMs = TIMEOUT_MS,
+): Promise<T> {
+  const response = await fetch(`${env.apiUrl}${path}`, {
+    method: "GET",
+    headers: bearerHeaders(env),
+    signal: AbortSignal.timeout(timeoutMs),
+  });
+  const text = await response.text();
+  if (!response.ok) {
+    let code: string | undefined;
+    let parsedMessage: string | undefined;
+    try {
+      const parsed = JSON.parse(text) as Record<string, unknown>;
+      if (typeof parsed?.["code"] === "string") code = parsed["code"] as string;
+      const errField = parsed?.["error"];
+      if (typeof errField === "string") {
+        parsedMessage = errField;
+      } else if (errField && typeof errField === "object") {
+        const errObj = errField as Record<string, unknown>;
+        if (typeof errObj["code"] === "string") code = errObj["code"] as string;
+        if (typeof errObj["message"] === "string")
+          parsedMessage = errObj["message"] as string;
+      }
+    } catch {
+      // non-JSON body
+    }
+    throw new TestPlanItHttpError(
+      `HTTP ${response.status} from ${path}${parsedMessage ? `: ${parsedMessage}` : ""}`,
+      { statusCode: response.status, code },
+    );
+  }
+  return JSON.parse(text) as T;
+}
+
 /** One entry of `/api/projects/{id}/issues/resolve`'s per-key report. */
 export interface IssueKeyResolution {
   key: string;

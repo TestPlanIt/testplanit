@@ -119,6 +119,7 @@ import {
   type CaseDraftExtras,
 } from "~/lib/services/caseDraft";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import { RunAutomatedCaseButton } from "@/components/cases/RunAutomatedCaseButton";
 import { useFindFirstRepositoryCasesFiltered } from "~/hooks/useRepositoryCasesWithFilteredFields";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 import { Link, useRouter } from "~/lib/navigation";
@@ -396,6 +397,13 @@ export function TestCaseDetailsView({
   const canAddEdit = projectPermissions?.canAddEdit ?? false;
 
   // Fetch Tags permissions (ADDED)
+  // Ad-hoc automated execution needs run add/edit rights, not case rights.
+  const { permissions: testRunsPermissions } = useProjectPermissions(
+    Number(projectId),
+    ApplicationArea.TestRuns
+  );
+  const canAddEditRuns = testRunsPermissions?.canAddEdit ?? false;
+
   const { permissions: tagsPermissions } = useProjectPermissions(
     isValidProjectId ? numericProjectId : -1,
     ApplicationArea.Tags
@@ -2488,6 +2496,14 @@ export function TestCaseDetailsView({
                               <span>{t("repository.cases.quickScript")}</span>
                             </DropdownMenuItem>
                           )}
+                          <RunAutomatedCaseButton
+                            projectId={Number(projectId)}
+                            caseId={testcase.id}
+                            caseTitle={testcase.name}
+                            automated={Boolean(testcase.automated)}
+                            canAddEditRuns={canAddEditRuns}
+                            variant="menu-item"
+                          />
                           <DropdownMenuItem
                             className="flex items-center cursor-pointer"
                             onClick={() => setIsCaseAuditOpen(true)}
@@ -2562,6 +2578,14 @@ export function TestCaseDetailsView({
                         projectId={Number(projectId)}
                         currentStateId={testcase.state.id}
                         reachableGatedStates={reachableGatedStates}
+                      />
+                      <RunAutomatedCaseButton
+                        projectId={Number(projectId)}
+                        caseId={testcase.id}
+                        caseTitle={testcase.name}
+                        automated={Boolean(testcase.automated)}
+                        canAddEditRuns={canAddEditRuns}
+                        variant="button"
                       />
                       {quickScriptEnabled && canAddEdit && (
                         <Button

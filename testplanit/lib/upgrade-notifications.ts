@@ -435,6 +435,7 @@ export const upgradeNotifications: Record<string, UpgradeNotification> = {
         <li><strong>Impact Analysis</strong> — connect the repository of the application under test, compare two commits or a pull request, and select the Affected Tests when composing a run. Code Pins tie test cases to files, lines, symbols, or glob patterns. Enable it under <strong>Project Settings → Impact Analysis</strong>.</li>
         <li><strong>Auto-save</strong> — test case edits are kept as you type and offered back after a crash, an expired session, or an accidental close.</li>
         <li><strong>DeepSeek</strong> — DeepSeek V4 joins the supported LLM providers.</li>
+        <li><strong>Automated execution</strong> — dispatch a run's automated cases to GitHub Actions, GitLab CI or a signed webhook and collect the results back into the same run; manual and automated cases now live in one hybrid run. Configure targets under <strong>Project Settings → Automated Execution</strong>.</li>
       </ul>
       <p>Read the <a href="https://docs.testplanit.com/blog/v1.1-release" target="_blank">1.1 release announcement</a> for the complete list of what's new.</p>
     `,

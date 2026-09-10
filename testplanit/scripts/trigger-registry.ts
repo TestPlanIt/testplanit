@@ -282,6 +282,23 @@ export const TRIGGER_REGISTRY: TriggerConfig[] = [
     denylist: ["createdAt", "updatedAt"],
     projectCol: "projectId",
   },
+  // Automated-execution targets. credentials is encrypted PAT/HMAC material and
+  // is DENYLISTED like CodeRepository.credentials; lastVerifiedAt/lastVerifyError
+  // are bumped by every "Verify" click. TestRunExecution is deliberately absent:
+  // its rows are machine-written poll state (pollCount, lastPolledAt, externalStatus)
+  // and the lifecycle is covered by the EXECUTION_* semantic audit events.
+  {
+    table: "ExecutionTarget",
+    denylist: [
+      "createdAt",
+      "updatedAt",
+      "credentials",
+      "lastVerifiedAt",
+      "lastVerifyError",
+    ],
+    nameCol: "name",
+    projectCol: "projectId",
+  },
   // External-project mapping under a ProjectIntegration (projectId is two hops
   // away via projectIntegration, so no direct projectCol — self-attributes).
   {
@@ -468,6 +485,7 @@ export const SOFT_DELETE_REGISTRY: SoftDeleteConfig[] = [
   { table: "Issue" },
   { table: "Integration" },
   { table: "CodeRepository" },
+  { table: "ExecutionTarget" },
   { table: "ImpactAnalysis" },
   { table: "LlmIntegration" },
   { table: "SharedStepGroup" },

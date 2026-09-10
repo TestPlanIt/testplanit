@@ -42,6 +42,7 @@ const entryPoints = [
   "workers/webhookRetentionWorker.ts",
   "workers/dataChangeLogRetentionWorker.ts",
   "workers/datasetLeaseSweepWorker.ts",
+  "workers/executionDispatchWorker.ts",
   "scheduler.ts",
 ];
 

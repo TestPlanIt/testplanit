@@ -58,6 +58,11 @@ import {
   cancelReviewsForDeletedEntities,
 } from "~/lib/services/reviewCancellation";
 import { WorkflowType } from "~/zenstack/models";
+import { markExecutionResultsReceived } from "~/lib/execution/service";
+import {
+  projectJUnitResultOntoRunCase,
+  promoteRunToHybrid,
+} from "~/lib/services/hybridRunProjection";
 
 import {
   emitTestRunCreated,
@@ -534,11 +539,37 @@ export const sideEffectsPlugin = definePlugin(schema, {
           break;
         }
 
+        case "JUnitTestSuite": {
+          // First automated write into a manual run promotes it to HYBRID so
+          // the run page and summaries show both result trees.
+          if (action !== "create") break;
+          for (const row of after) {
+            if (row?.id && row.testRunId != null) {
+              await promoteRunToHybrid(tx as never, row.testRunId);
+              // Reporters write suites through the RPC, never the import
+              // route, so this is where a dispatched execution learns that
+              // its results have started arriving.
+              await markExecutionResultsReceived(tx as never, row.testRunId);
+            }
+          }
+          break;
+        }
+
         case "JUnitTestResult": {
           if (action !== "create") break;
           for (const row of after) {
-            if (row?.id && row.testSuiteId != null)
+            if (row?.id && row.testSuiteId != null) {
+              // Reporter-SDK results never touch TestRunCases.statusId; on a
+              // manual (REGULAR/HYBRID) run the manual UI, progress bar and
+              // ready-to-complete check all read that column, so mirror the
+              // result onto it here (same write the import route makes).
+              await projectJUnitResultOntoRunCase(tx as never, {
+                testSuiteId: row.testSuiteId,
+                repositoryCaseId: row.repositoryCaseId ?? null,
+                statusId: row.statusId ?? null,
+              });
               await emitJUnitResultAdded(row, tx);
+            }
           }
           break;
         }

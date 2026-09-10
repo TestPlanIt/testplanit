@@ -1,7 +1,10 @@
 import type { TxClient } from "~/lib/zenstack";
 
 import { baseDb } from "~/lib/db";
-import { isAutomatedTestRunType } from "~/utils/testResultTypes";
+import {
+  isAutomatedTestRunType,
+  isHybridTestRunType,
+} from "~/utils/testResultTypes";
 
 // Type + pure aggregation helper live in a client-safe sibling so the
 // in-app summary component (a client component) can import them without
@@ -105,6 +108,25 @@ export async function getTestRunSummary(
         client
       );
 
+  // A hybrid run is summarised as a manual run (its automated results are
+  // projected onto TestRunCases, so the case counts are right) and carries
+  // the automation figures as a separate block. Attempts are never added to
+  // case counts — the two are different units.
+  if (isHybridTestRunType(testRun.testRunType)) {
+    const automated = await getJUnitRunSummary(testRunId, client);
+    if (automated.junitSummary && automated.junitSummary.totalTests > 0) {
+      baseSummary.junitSummary = automated.junitSummary;
+      baseSummary.firstResultAt = earliestIso(
+        baseSummary.firstResultAt,
+        automated.firstResultAt
+      );
+      baseSummary.lastResultAt = latestIso(
+        baseSummary.lastResultAt,
+        automated.lastResultAt
+      );
+    }
+  }
+
   return {
     ...baseSummary,
     testRunType: testRun.testRunType,
@@ -115,6 +137,24 @@ export async function getTestRunSummary(
       projectIds: [testRun.projectId],
     })),
   };
+}
+
+function earliestIso(
+  a: string | null | undefined,
+  b: string | null | undefined
+): string | null {
+  if (!a) return b ?? null;
+  if (!b) return a;
+  return a < b ? a : b;
+}
+
+function latestIso(
+  a: string | null | undefined,
+  b: string | null | undefined
+): string | null {
+  if (!a) return b ?? null;
+  if (!b) return a;
+  return a > b ? a : b;
 }
 
 /**

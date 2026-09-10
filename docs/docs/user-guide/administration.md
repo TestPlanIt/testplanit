@@ -90,6 +90,14 @@ For detailed search configuration, see the [Search Configuration Documentation](
 - Define field types and validation rules
 - Configure result fields for test execution
 
+### Tools & Integrations
+
+**Code Repositories** (`/admin/code-repositories`)
+
+- Connect source repositories (GitHub, GitLab, Azure DevOps, Bitbucket, Gitea) once, then use them across projects: QuickScript grounds generated scripts in your real page objects and fixtures, Impact Analysis reads commits, and execution targets dispatch automated runs to the repository's CI
+
+For details, see the [Code Repositories Documentation](./code-repositories.md).
+
 ### AI Tools
 
 **AI Models** (`/admin/llm`)
@@ -110,12 +118,6 @@ For details, see the [Prompt Configurations Documentation](./prompt-configuratio
 **QuickScript Templates** (`/admin/quickscripts`)
 
 - Manage the templates [QuickScript](./projects/quickscript.md) uses to turn manual test cases into automation scripts
-
-**Code Repositories** (`/admin/code-repositories`)
-
-- Connect source repositories so QuickScript can ground generated scripts in your real page objects and fixtures
-
-For details, see the [Code Repositories Documentation](./code-repositories.md).
 
 ### Audit & Compliance
 

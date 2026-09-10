@@ -43,6 +43,8 @@ import type {
   CreateJUnitTestSuiteOptions,
   CreateJUnitTestResultOptions,
   UpdateJUnitTestSuiteOptions,
+  AutomationPlan,
+  ExecutionConclusion,
 } from "./types.js";
 import { tipTapDoc } from "./tipTapDoc.js";
 import {
@@ -710,6 +712,39 @@ export class TestPlanItClient {
     return this.zenstack<TestRun>("testRuns", "findUnique", {
       where: { id: testRunId },
     });
+  }
+
+  /**
+   * The plan a CI job executes for a run: its automated cases with the
+   * identifiers a runner filter can match on. `executionId` applies an
+   * execution's ad-hoc subset and ref. Read-only tokens are accepted.
+   */
+  async getAutomationPlan(
+    testRunId: number,
+    executionId?: number
+  ): Promise<AutomationPlan> {
+    return this.request<AutomationPlan>(
+      "GET",
+      `/api/test-runs/${testRunId}/automation-plan`,
+      { query: { executionId } }
+    );
+  }
+
+  /**
+   * Report an execution's outcome to TestPlanIt. Needed for generic-webhook
+   * targets, which TestPlanIt cannot poll; harmless for the others.
+   */
+  async finishExecution(
+    testRunId: number,
+    executionId: number,
+    conclusion: ExecutionConclusion,
+    message?: string
+  ): Promise<{ id: number; status: string }> {
+    return this.request(
+      "POST",
+      `/api/test-runs/${testRunId}/executions/${executionId}/finish`,
+      { body: { conclusion, ...(message ? { message } : {}) } }
+    );
   }
 
   /**

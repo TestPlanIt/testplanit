@@ -15,6 +15,9 @@ import { auditedTransaction } from "@/lib/audit/auditedTransaction";
 import { baseDb } from "@/lib/db";
 import { JUnitResultType, RepositoryCaseSource, TestRunType, WorkflowScope } from "~/zenstack/models";
 import { NextRequest } from "next/server";
+import { MANUAL_TEST_RUN_TYPES } from "~/utils/testResultTypes";
+import { promoteRunToHybrid } from "~/lib/services/hybridRunProjection";
+import { markExecutionResultsReceived } from "~/lib/execution/service";
 import { authenticateApiToken } from "~/lib/api-token-auth";
 import {
   enrichFromApiAuth,
@@ -451,6 +454,11 @@ export const POST = withAuditContext(async (request: NextRequest) => {
 
         sendProgress(15, progressMessages.creatingRun);
 
+        // Set when appending to a composition-locked run: results for cases
+        // that are not in the run are still recorded, but the case is not
+        // added (the DB trigger would refuse) and the caller is told.
+        let targetCompositionLocked = false;
+
         // Map primary format to run type; caseSource is determined per-suite
         const testRunType = FORMAT_TO_RUN_TYPE[primaryFormat] as TestRunType;
 
@@ -483,7 +491,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
         } else {
           const existingTestRun = await baseDb.testRuns.findUnique({
             where: { id: testRunId },
-            select: { testRunType: true },
+            select: { testRunType: true, compositionLockedAt: true },
           });
 
           if (!existingTestRun) {
@@ -496,7 +504,13 @@ export const POST = withAuditContext(async (request: NextRequest) => {
             return;
           }
 
-          if (existingTestRun.testRunType !== testRunType) {
+          // A manual run (REGULAR/HYBRID) accepts any automated format: the
+          // results attach to its cases and the run becomes HYBRID. Pure
+          // automated runs still refuse a different format.
+          const targetIsManualRun = MANUAL_TEST_RUN_TYPES.includes(
+            existingTestRun.testRunType
+          );
+          if (existingTestRun.testRunType !== testRunType && !targetIsManualRun) {
             controller.enqueue(
               encoder.encode(
                 `data: ${JSON.stringify({ error: `Test run is not of type ${testRunType}` })}\n\n`
@@ -505,6 +519,12 @@ export const POST = withAuditContext(async (request: NextRequest) => {
             controller.close();
             return;
           }
+          if (existingTestRun.testRunType === "REGULAR") {
+            await promoteRunToHybrid(baseDb, testRunId);
+          }
+          targetCompositionLocked = existingTestRun.compositionLockedAt != null;
+          // A dispatched execution is alive once its results start landing.
+          await markExecutionResultsReceived(baseDb, testRunId);
         }
 
         sendProgress(20, progressMessages.fetchingTemplate);
@@ -620,6 +640,11 @@ export const POST = withAuditContext(async (request: NextRequest) => {
 
         // Track case-ID references that could not be linked (unknown id, or
         // not in this project). Surfaced as advisory warnings; never blocks.
+        const notInRun: Array<{
+          testName: string;
+          className: string;
+          repositoryCaseId: number;
+        }> = [];
         const caseIdWarnings: Array<{
           testName: string;
           className: string | null;
@@ -981,21 +1006,42 @@ export const POST = withAuditContext(async (request: NextRequest) => {
               }
 
               for (const repositoryCase of casesToProcess) {
-                // Upsert TestRunCases
-                await baseDb.testRunCases.upsert({
-                  where: {
-                    testRunId_repositoryCaseId: {
+                // Upsert TestRunCases. On a composition-locked run the
+                // tpl_composition_lock_guard trigger refuses the INSERT, which
+                // used to abort the whole suite silently; check membership
+                // first, keep the result, and report the case instead.
+                const alreadyInRun = targetCompositionLocked
+                  ? await baseDb.testRunCases.findFirst({
+                      where: {
+                        testRunId: testRunId,
+                        repositoryCaseId: repositoryCase.id,
+                        isDeleted: false,
+                      },
+                      select: { id: true },
+                    })
+                  : null;
+                if (targetCompositionLocked && !alreadyInRun) {
+                  notInRun.push({
+                    testName: testCase.name,
+                    className: className,
+                    repositoryCaseId: repositoryCase.id,
+                  });
+                } else {
+                  await baseDb.testRunCases.upsert({
+                    where: {
+                      testRunId_repositoryCaseId: {
+                        testRunId: testRunId,
+                        repositoryCaseId: repositoryCase.id,
+                      },
+                    },
+                    update: {},
+                    create: {
                       testRunId: testRunId,
                       repositoryCaseId: repositoryCase.id,
+                      order: caseOrder,
                     },
-                  },
-                  update: {},
-                  create: {
-                    testRunId: testRunId,
-                    repositoryCaseId: repositoryCase.id,
-                    order: caseOrder,
-                  },
-                });
+                  });
+                }
 
                 try {
                 // Map status to result type and find matching project status
@@ -1454,6 +1500,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
           duplicateWarnings?: typeof duplicateWarnings;
           caseIdWarnings?: typeof caseIdWarnings;
           stepDerivationWarnings?: typeof stepDerivationWarnings;
+          notInRun?: typeof notInRun;
         } = { complete: true, testRunId };
 
         // Only include mappings if there are attachments to upload
@@ -1468,6 +1515,9 @@ export const POST = withAuditContext(async (request: NextRequest) => {
         }
         if (stepDerivationWarnings.length > 0) {
           responseData.stepDerivationWarnings = stepDerivationWarnings;
+        }
+        if (notInRun.length > 0) {
+          responseData.notInRun = notInRun;
         }
 
         controller.enqueue(

@@ -47,7 +47,7 @@ export function createImportCommand(): Command {
     .option("-m, --milestone <value>", "Milestone (ID or exact name)")
     .option("-f, --folder <value>", "Parent folder for test cases (ID or exact name)")
     .option("-t, --tags <values>", "Tags (comma-separated IDs or names, use quotes for names with commas)")
-    .option("-r, --test-run <value>", "Existing test run to append results (ID or exact name)")
+    .option("-r, --test-run <value>", "Existing test run to append results (ID or exact name; default: $TESTPLANIT_RUN_ID)")
     .option("-d, --attachments-dir <path>", "Base directory for resolving attachment paths (default: directory of test result file)")
     .option("--no-attachments", "Skip uploading attachments")
     .option("-a, --run-attachments <files...>", "Files to attach to the test run (e.g., test plans, reports)")
@@ -119,6 +119,11 @@ Examples:
       if (validationError) {
         logger.error(validationError);
         process.exit(1);
+      }
+
+      // A job TestPlanIt dispatched carries the run it must report into.
+      if (!options.testRun && process.env.TESTPLANIT_RUN_ID) {
+        options.testRun = process.env.TESTPLANIT_RUN_ID;
       }
 
       // Validate that name is provided when not appending to existing test run

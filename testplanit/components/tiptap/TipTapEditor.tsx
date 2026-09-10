@@ -406,7 +406,9 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
   // reset the caret. Mirrors the read-only editor in
   // components/comments/CommentItem.tsx.
   useEffect(() => {
-    if (!editor || !readOnly) return;
+    // A destroyed editor (route change, StrictMode re-mount) still satisfies
+    // the null check but has no command manager any more.
+    if (!editor || editor.isDestroyed || !readOnly) return;
     const next = validateContent(content);
     if (JSON.stringify(editor.getJSON()) === JSON.stringify(next)) return;
     editor.commands.setContent(next, { emitUpdate: false });
