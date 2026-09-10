@@ -344,9 +344,9 @@ jobs:
       - run: ./scripts/run-testplanit-plan.sh plan.txt
       - if: always()
         run: npx @testplanit/cli import ./test-results/*.xml -p ${{ inputs.TESTPLANIT_PROJECT_ID }}
-      - if: always()
-        run: npx @testplanit/cli run complete
 ```
+
+TestPlanIt polls a GitHub Actions or GitLab CI job for its outcome, so nothing else is needed. A job started through a generic webhook (Jenkins, for example) ends with `testplanit run finish --conclusion success|failure`. Reserve `run complete` for runs that hold nothing but automated cases; it completes the whole run, manual cases included. The step-by-step guides are under [Automated Execution](./user-guide/automated-execution.md).
 
 ### GitHub Actions
 

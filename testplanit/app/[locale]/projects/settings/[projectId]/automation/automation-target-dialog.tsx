@@ -562,9 +562,11 @@ export function AutomationTargetDialog({
 
           <div className="space-y-1.5">
             <Label>
-              {isGeneric || provider === "GITLAB_CI"
-                ? t("variables")
-                : t("staticInputs")}
+              {isGeneric
+                ? t("webhookVariables")
+                : provider === "GITLAB_CI"
+                  ? t("variables")
+                  : t("staticInputs")}
             </Label>
             <StaticInputsEditor rows={rows} onChange={setRows} />
             <p className="text-xs text-muted-foreground">

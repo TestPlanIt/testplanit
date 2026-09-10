@@ -1,7 +1,7 @@
 ---
 sidebar_label: 'Code Repositories'
 title: 'Code Repositories'
-description: Connect Git repositories that projects use for QuickScript (test automation context) and Impact Analysis (the application under test)
+description: Connect Git repositories that projects use for QuickScript (test automation context), Impact Analysis (the application under test) and Automated Execution (CI dispatch)
 ---
 
 # Code Repositories
@@ -10,15 +10,16 @@ The **Administration → Code Repositories** page registers connections to Git r
 
 - **QuickScript** — the repository of your _test automation_ code. It supplies source-file context to AI-powered test export, so generated automation scripts follow the framework, fixtures, and page objects your team already uses instead of generic boilerplate. See [Project QuickScript settings](projects/settings/quickscript.md).
 - **Impact Analysis** — the repository of the _application under test_. It compares two of that repository's commits and lists the test cases the changes affect, and test cases can be pinned to its files. See [Project Impact Analysis settings](projects/settings/impact.md) and [Test Impact Analysis](impact.md).
+- **Automated Execution** — the repository whose CI runs your automated cases. An execution target reuses the connection's credentials to start a GitHub Actions workflow or a GitLab pipeline from a test run. See [Project Automated Execution settings](projects/settings/automation.md) and [Automated Execution](automated-execution.md).
 
 :::note
-Administrators register and manage repository connections here. The connection is then **selected and configured per project** under **Project Settings → QuickScript** or **Project Settings → Impact Analysis**.
+Administrators register and manage repository connections here. The connection is then **selected and configured per project** under **Project Settings → QuickScript**, **Project Settings → Impact Analysis** or **Project Settings → Automated Execution**.
 :::
 
 ## How to access
 
 1. Open the **Admin** area from the top navigation.
-2. Select **Code Repositories** under **AI Tools** in the admin menu.
+2. Select **Code Repositories** under **Tools & Integrations** in the admin menu.
 
 ## Supported providers
 

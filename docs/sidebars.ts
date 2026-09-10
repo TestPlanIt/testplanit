@@ -131,6 +131,23 @@ const sidebars: SidebarsConfig = {
               label: 'Tools & Integrations',
               items: [
                 'user-guide/integrations', // Issue integrations administration page
+                'user-guide/code-repositories', // Git repository connections for QuickScript, Impact Analysis and automated execution
+                {
+                  type: 'category',
+                  label: 'Automated Execution',
+                  link: {
+                    type: 'doc',
+                    id: 'user-guide/automated-execution', // Overview: dispatch a run's automated cases to CI and collect results
+                  },
+                  items: [
+                    'user-guide/automated-execution/github-actions', // Step-by-step: workflow_dispatch target
+                    'user-guide/automated-execution/gitlab-ci', // Step-by-step: pipeline target
+                    'user-guide/automated-execution/jenkins', // Step-by-step: Generic Webhook Trigger plugin
+                    'user-guide/automated-execution/generic-webhook', // Contract, signature verification, private addresses
+                    'user-guide/automated-execution/reporting-results', // The job's side: plan, filters, reporters, finish
+                    'user-guide/automated-execution/troubleshooting', // Symptom → cause → fix
+                  ],
+                },
                 'user-guide/share-links', // Share Links documentation
                 // Convert Notifications to a category with children
                 {
@@ -164,7 +181,6 @@ const sidebars: SidebarsConfig = {
                     'user-guide/llm-test-generation', // AI test case generation
                     'user-guide/llm-magic-select', // AI-powered test case selection
                     'user-guide/impact', // Test impact analysis: Analyze impact, Affected Tests, Code Pins
-                    'user-guide/automated-execution', // Dispatch a run's automated cases to CI and collect results
                     'user-guide/llm-quickscript', // AI-powered QuickScript generation
                     'user-guide/llm-writing-assistant', // In-editor AI writing assistant
                     'user-guide/llm-markdown-import', // AI-assisted markdown import
@@ -174,7 +190,6 @@ const sidebars: SidebarsConfig = {
                 },
                 'user-guide/prompt-configurations', // AI prompt configuration management
                 'user-guide/quickscript-templates', // QuickScript templates for test case export
-                'user-guide/code-repositories', // Git repository connections for QuickScript context and Impact Analysis
               ],
             },
             // System

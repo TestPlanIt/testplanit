@@ -191,6 +191,12 @@ const menuOptions: MenuOption[] = [
     section: "toolsAndIntegrations",
   },
   {
+    icon: GitBranch,
+    translationKey: "codeRepositories",
+    path: "code-repositories",
+    section: "toolsAndIntegrations",
+  },
+  {
     icon: Webhook,
     translationKey: "systemWebhooks",
     path: "webhooks",
@@ -226,12 +232,6 @@ const menuOptions: MenuOption[] = [
     icon: ScrollText,
     translationKey: "quickscriptTemplates",
     path: "quickscripts",
-    section: "aiTools",
-  },
-  {
-    icon: GitBranch,
-    translationKey: "codeRepositories",
-    path: "code-repositories",
     section: "aiTools",
   },
 

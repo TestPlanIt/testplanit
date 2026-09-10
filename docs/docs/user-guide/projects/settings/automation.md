@@ -6,7 +6,7 @@ description: Configure where a project's automated cases can be dispatched — G
 
 # Automated Execution
 
-The project-level **Settings → Automated Execution** page holds the project's **execution targets**: the CI workflows, pipelines or webhooks a test run's automated cases can be sent to. See [Automated Execution](../../automated-execution.md) for how a dispatched job reads its plan and reports back.
+The project-level **Settings → Automated Execution** page holds the project's **execution targets**: the CI workflows, pipelines or webhooks a test run's automated cases can be sent to. See [Automated Execution](../../automated-execution.md) for the step-by-step setup guides per CI system and for how a dispatched job reads its plan and reports back.
 
 :::note
 Only system administrators and project administrators can open this page. Repositories are registered globally by a system administrator under **Administration → Code Repositories**; a target picks one of them.
@@ -28,7 +28,7 @@ Click **Add target** and choose a **Provider**:
 Every provider takes:
 
 - **Name** — how the target appears on the run page.
-- **Workflow inputs** / **Pipeline variables** — static values sent with every dispatch in addition to the `TESTPLANIT_*` parameters. They are not secret.
+- **Workflow inputs** (GitHub), **Pipeline variables** (GitLab) or **Variables** (generic webhook) — static values sent with every dispatch in addition to the `TESTPLANIT_*` parameters. They are not secret. On GitHub each one must also be declared under `workflow_dispatch.inputs`.
 - **Timeout** — minutes after which an unfinished execution is marked timed out (default 120).
 - **Credentials** — GitHub and GitLab targets use the repository's stored credential unless a different token is entered for dispatch. Starting a job needs the `workflow` scope on GitHub or the `api` scope (or a pipeline trigger token) on GitLab, which a repository registered for reading files may not have.
 

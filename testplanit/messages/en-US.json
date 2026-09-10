@@ -7356,6 +7356,7 @@
       "defaultRefPlaceholder": "e.g. main",
       "staticInputs": "Workflow inputs",
       "variables": "Pipeline variables",
+      "webhookVariables": "Variables",
       "staticInputsHelp": "Sent with every dispatch, in addition to the TESTPLANIT_* values. Not secret: anyone who can read the repository can see them.",
       "inputKey": "Name",
       "inputValue": "Value",
