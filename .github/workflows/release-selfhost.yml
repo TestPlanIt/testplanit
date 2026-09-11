@@ -14,6 +14,7 @@
 #   ghcr.io/testplanit/testplanit-selfhost:<version>            (server)
 #   ghcr.io/testplanit/testplanit-selfhost:<version>-workers    (workers)
 #   :latest / :latest-workers  (only when the tag is the newest semver)
+#   :X.Y-beta / :X.Y-beta-workers  (only for a vX.Y.Z-beta.N prerelease)
 name: Release Self-Host Images
 
 on:
@@ -170,6 +171,23 @@ jobs:
           docker buildx imagetools create -t "${REG}:latest-workers" "${REG}:${VERSION_NUM}-workers"
         else
           echo "Skipping 'latest' — $VERSION is not the newest release"
+        fi
+
+    # A prerelease also moves a floating channel tag for its release line
+    # (v1.1.0-beta.3 → :1.1-beta / :1.1-beta-workers), so a self-hoster
+    # tracking the beta line pulls the newest beta without editing a version.
+    # The final release of the line never touches it.
+    - name: Move the beta channel tag if this is a prerelease
+      run: |
+        VERSION="${{ github.event.inputs.tag || github.ref_name }}"; VERSION_NUM="${VERSION#v}"
+        REG="ghcr.io/${OWNER_LC}/testplanit-selfhost"
+        if [[ "$VERSION" =~ ^v([0-9]+\.[0-9]+)\.[0-9]+-beta\.[0-9]+$ ]]; then
+          CHANNEL="${BASH_REMATCH[1]}-beta"
+          echo "Moving channel tag ${CHANNEL} to ${VERSION_NUM}"
+          docker buildx imagetools create -t "${REG}:${CHANNEL}"         "${REG}:${VERSION_NUM}"
+          docker buildx imagetools create -t "${REG}:${CHANNEL}-workers" "${REG}:${VERSION_NUM}-workers"
+        else
+          echo "Not a beta prerelease — no channel tag to move"
         fi
 
     # The Helm chart ships from here too, after the images it references exist.

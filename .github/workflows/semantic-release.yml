@@ -2,15 +2,19 @@ name: Semantic Release
 
 on:
   push:
-    branches: [main]
+    # `main` cuts stable releases. `release/v1.1` is a semantic-release
+    # prerelease branch (see testplanit/.releaserc.json): every push of
+    # application code cuts the next `v1.1.0-beta.N`, so nobody hand-tags or
+    # bumps package.json for a beta.
+    branches: [main, release/v1.1]
     # Only run when the main application code changes — not for docs, packages, or CLI
     paths:
       - 'testplanit/**'
       - '!testplanit/CHANGELOG.md'
       - '.github/workflows/semantic-release.yml'
-  # Manual trigger: runs against the current main HEAD, so a release can be cut
-  # when a push-triggered run was skipped (e.g. raced "behind remote" by a
-  # concurrent [skip ci] commit).
+  # Manual trigger: runs against the HEAD of the selected branch, so a release
+  # can be cut when a push-triggered run was skipped (e.g. raced "behind
+  # remote" by a concurrent [skip ci] commit).
   workflow_dispatch:
 
 permissions:
@@ -59,22 +63,25 @@ jobs:
           GIT_COMMITTER_EMAIL: github-actions[bot]@users.noreply.github.com
         run: |
           cd testplanit
-          # Detect a genuinely new release by comparing the latest release tag
-          # before and after the run. Keying off a new tag — not parsing
-          # semantic-release's log — means a skipped publish ("no relevant
-          # changes", or "behind the remote one") leaves the tag unchanged and
-          # does NOT trigger a Docker build of an already-released version.
-          PREV_TAG=$(git tag -l 'v*.*.*' --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
+          # Detect a genuinely new release as the tag this run created: the
+          # set difference of `v*` tags before and after. Keying off a new tag
+          # — not parsing semantic-release's log — means a skipped publish ("no
+          # relevant changes", or "behind the remote one") leaves the tag set
+          # unchanged and does NOT trigger an image build of an
+          # already-released version. A set difference (rather than "newest
+          # three-part tag") also sees a prerelease cut on release/v1.1.
+          git tag -l 'v*' | sort > /tmp/tags-before
 
           npx semantic-release
 
-          NEW_TAG=$(git tag -l 'v*.*.*' --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
-          if [ -n "$NEW_TAG" ] && [ "$NEW_TAG" != "$PREV_TAG" ]; then
+          git tag -l 'v*' | sort > /tmp/tags-after
+          NEW_TAG=$(comm -13 /tmp/tags-before /tmp/tags-after | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$' | tail -1)
+          if [ -n "$NEW_TAG" ]; then
             echo "Released new version: $NEW_TAG"
             echo "version=$NEW_TAG" >> $GITHUB_OUTPUT
             echo "released=true" >> $GITHUB_OUTPUT
           else
-            echo "No new release (latest tag unchanged: ${PREV_TAG:-none}); skipping Docker build"
+            echo "No new release (tag set unchanged); skipping image builds"
             echo "released=false" >> $GITHUB_OUTPUT
           fi
 
@@ -88,13 +95,19 @@ jobs:
           GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
         run: |
           VERSION="${{ steps.release.outputs.version }}"
-          if [[ ! "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          if [[ ! "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]]; then
             echo "Error: Invalid version format: $VERSION"
             exit 1
           fi
-          # SaaS images (ghcr.io/testplanit/testplanit) — arm64, hosted fleet.
-          echo "Triggering Docker build for version: $VERSION"
-          gh workflow run release.yml -f tag=$VERSION
+          if [[ "$VERSION" == *-* ]]; then
+            # Prerelease (release/v1.1 beta): only the public self-host images
+            # and chart — the SaaS image has no beta consumer.
+            echo "Prerelease $VERSION: skipping the SaaS image build"
+          else
+            # SaaS images (ghcr.io/testplanit/testplanit) — arm64, hosted fleet.
+            echo "Triggering Docker build for version: $VERSION"
+            gh workflow run release.yml -f tag=$VERSION
+          fi
           # Public self-host images (ghcr.io/testplanit/testplanit-selfhost) —
           # multi-arch, what the Helm chart and compose self-hosters pull.
           echo "Triggering self-host image build for version: $VERSION"
