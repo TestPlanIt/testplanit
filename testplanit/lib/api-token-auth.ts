@@ -266,7 +266,8 @@ export interface AuthenticatedUser {
  * Use this in custom API routes that need to support both browser sessions
  * and programmatic API token access (CI/CD, load testing, external tools).
  * A `mode:read` token is rejected on write methods (POST/PUT/PATCH/DELETE)
- * with `errorCode: "READ_ONLY_TOKEN"` and `status: 403`.
+ * with `errorCode: "READ_ONLY_TOKEN"` and `status: 403`, unless the caller
+ * passes `{ readOperation: true }` for a POST that only reads.
  *
  * @param request - The Next.js request object (needed for API token extraction)
  * @param session - The result of getServerSession(authOptions) or getServerAuthSession()
@@ -276,7 +277,15 @@ export async function authenticateRequest(
   request: NextRequest,
   session: {
     user?: { id?: string; access?: string | null; [key: string]: unknown };
-  } | null
+  } | null,
+  opts: {
+    /**
+     * The route reads data even though it is reached with a write HTTP
+     * method (report-builder POSTs carry their filters in the body). A
+     * `mode:read` token is then accepted regardless of the method.
+     */
+    readOperation?: boolean;
+  } = {}
 ): Promise<
   | { authenticated: true; user: AuthenticatedUser }
   | { authenticated: false; error: string; errorCode?: string; status: number }
@@ -299,7 +308,9 @@ export async function authenticateRequest(
     };
   }
 
-  const apiAuth = await authenticateApiTokenForMethod(request);
+  const apiAuth = opts.readOperation
+    ? await authenticateApiToken(request)
+    : await authenticateApiTokenForMethod(request);
   if (!apiAuth.authenticated) {
     // READ_ONLY_TOKEN is a permissions failure (the token is valid; the
     // write is forbidden), not an authentication failure — map to 403.

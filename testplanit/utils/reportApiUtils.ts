@@ -114,7 +114,11 @@ export async function authorizeReportRequest(
   }
 
   const session = await getServerSession(authOptions);
-  const auth = await authenticateRequest(req, session);
+  // Report POSTs carry filters in the body but only read; a read-only token
+  // must be able to run them.
+  const auth = await authenticateRequest(req, session, {
+    readOperation: true,
+  });
   if (!auth.authenticated) {
     return {
       ok: false,

@@ -453,7 +453,11 @@ async function resolveReportAccessibleProjectIds(
   // capability) has no NextAuth session, so `session!.user.id` alone
   // throws and turns an authorized request into a 500.
   const session = await getServerSession(authOptions);
-  const auth = await authenticateRequest(req, session);
+  // Report POSTs carry filters in the body but only read; a read-only token
+  // must be able to run them.
+  const auth = await authenticateRequest(req, session, {
+    readOperation: true,
+  });
   if (!auth.authenticated) {
     // authorizeReportRequest already authenticated this request via the
     // same helper, so this should be unreachable in practice; fail

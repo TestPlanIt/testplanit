@@ -485,6 +485,13 @@ describe("requirementCoverageReportUtils", () => {
     expect(mockedLoad).toHaveBeenCalledWith(5, {
       accessibleProjectIds: [5],
     });
+    // The report POST only reads, so a mode:read token must be accepted
+    // despite the write method.
+    expect(mockedAuthenticateRequest).toHaveBeenCalledWith(
+      expect.anything(),
+      null,
+      { readOperation: true }
+    );
   });
 });
 

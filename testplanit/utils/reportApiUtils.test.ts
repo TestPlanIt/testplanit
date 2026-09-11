@@ -18,6 +18,13 @@ vi.mock("~/lib/auth/utils", () => ({
   getEnhancedDb: vi.fn(),
 }));
 
+// Wrap (not replace) the authenticator so the real 401/403 behaviour stays
+// under test while the call shape is observable.
+vi.mock("~/lib/api-token-auth", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("~/lib/api-token-auth")>();
+  return { ...actual, authenticateRequest: vi.fn(actual.authenticateRequest) };
+});
+
 vi.mock("~/lib/schemas/reportRequestSchema", () => ({
   reportRequestSchema: {
     safeParse: vi.fn(),
@@ -25,6 +32,7 @@ vi.mock("~/lib/schemas/reportRequestSchema", () => ({
 }));
 
 import { getServerSession } from "next-auth";
+import { authenticateRequest } from "~/lib/api-token-auth";
 import { getEnhancedDb } from "~/lib/auth/utils";
 import { internalReportBypassToken } from "~/lib/internalReportBypass";
 import {
@@ -225,6 +233,19 @@ describe("reportApiUtils", () => {
       });
       expect(result.ok).toBe(false);
       if (!result.ok) expect(result.response.status).toBe(401);
+    });
+
+    it("authenticates as a read operation so a mode:read token can run a report POST", async () => {
+      vi.mocked(getServerSession).mockResolvedValue(null as any);
+      await authorizeReportRequest(makeReq(), {
+        requiresAdmin: false,
+        projectId: 1,
+      });
+      expect(authenticateRequest).toHaveBeenCalledWith(
+        expect.anything(),
+        null,
+        { readOperation: true }
+      );
     });
 
     it("requires ADMIN for admin-only surfaces", async () => {

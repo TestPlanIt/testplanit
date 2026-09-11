@@ -748,6 +748,30 @@ describe("API Token Authentication", () => {
       expect(result.authenticated).toBe(true);
     });
 
+    it("accepts a mode:read token on POST when the route declares a read operation", async () => {
+      const plaintext = mockUserToken(["mode:read"]);
+      const request = createMockRequest(`Bearer ${plaintext}`, "POST");
+
+      const result = await authenticateRequest(request, null, {
+        readOperation: true,
+      });
+
+      expect(result.authenticated).toBe(true);
+    });
+
+    it("still rejects an invalid token when the route declares a read operation", async () => {
+      (baseDb.apiToken.findUnique as any).mockResolvedValue(null);
+      const { plaintext } = generateApiToken();
+      const request = createMockRequest(`Bearer ${plaintext}`, "POST");
+
+      const result = await authenticateRequest(request, null, {
+        readOperation: true,
+      });
+
+      expect(result.authenticated).toBe(false);
+      if (!result.authenticated) expect(result.status).toBe(401);
+    });
+
     it("prefers the session and never consults the token", async () => {
       const findUnique = baseDb.apiToken.findUnique as any;
       findUnique.mockClear();
