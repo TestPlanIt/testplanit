@@ -238,6 +238,12 @@
       "allIssueTypes": "Todos os tipos de problema",
       "noIssueType": "Nenhum tipo de problema"
     },
+    "defaults": {
+      "firstTitle": "Este será o padrão",
+      "firstDescription": "Ainda não existe um padrão, então este se torna o padrão. Para alterá-lo depois, defina um item diferente como padrão.",
+      "lockedTitle": "Padrão atual",
+      "lockedDescription": "O padrão atual não pode ser desmarcado diretamente. Defina um item diferente como padrão."
+    },
     "fields": {
       "groupName": "Nome do grupo",
       "users": "Usuários",
@@ -2242,6 +2248,10 @@
       "documentation": "Inserir documentação de marcos...",
       "selectType": "Selecione o tipo de marco...",
       "selectParent": "Selecione o marco parental..."
+    },
+    "noTypes": {
+      "title": "Nenhum Tipo de Marco Disponível",
+      "description": "Este projeto não tem tipos de marcos atribuídos. Peça a um administrador para atribuir um tipo de marco ao projeto ou para definir um tipo de marco padrão."
     },
     "empty": {
       "active": "Nenhum marco ativo",

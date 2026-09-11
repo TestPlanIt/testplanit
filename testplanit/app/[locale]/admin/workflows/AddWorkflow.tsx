@@ -1,6 +1,7 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library */
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { FirstDefaultNotice } from "@/components/admin/FirstDefaultNotice";
 import { schema } from "~/zenstack/schema";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -123,6 +124,14 @@ export function AddWorkflows({
 
   const { mutateAsync: createWorkflows } =
     useClientQueries(schema).workflows.useCreate();
+
+  // The first workflow of a scope with no default becomes it (the DB also
+  // refuses to let a scope lose its default once it has one).
+  const { data: defaultWorkflows, isLoading: defaultsLoading } =
+    useClientQueries(schema).workflows.useFindMany({
+      where: { isDefault: true, isDeleted: false },
+      select: { scope: true },
+    });
   const { mutateAsync: createManyProjectWorkflowAssignment } =
     useClientQueries(schema).projectWorkflowAssignment.useCreateMany();
 
@@ -180,6 +189,19 @@ export function AddWorkflows({
     }
   }, [defaultIconData, defaultColorData]);
 
+  const watchedScope = form.watch("scope");
+  const mustBeDefault =
+    !defaultsLoading &&
+    !!watchedScope &&
+    !(defaultWorkflows ?? []).some((w) => w.scope === watchedScope);
+
+  useEffect(() => {
+    if (mustBeDefault) {
+      form.setValue("isDefault", true);
+      form.setValue("isEnabled", true);
+    }
+  }, [mustBeDefault, form]);
+
   async function onSubmit(data: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     try {
@@ -191,14 +213,14 @@ export function AddWorkflows({
           iconId: selectedIconId || defaultIconData?.id!,
           colorId: selectedColorId || defaultColorData?.id!,
           isEnabled: data.isEnabled || true,
-          isDefault: data.isDefault || false,
+          isDefault: data.isDefault || mustBeDefault,
           requiresReview: data.requiresReview || false,
           scope: data.scope || "",
           workflowType: data.workflowType,
         },
       });
 
-      if (data.isDefault) {
+      if (data.isDefault || mustBeDefault) {
         if (Array.isArray(projects)) {
           await createManyProjectWorkflowAssignment({
             data: projects.map((project: Projects) => ({
@@ -372,6 +394,7 @@ export function AddWorkflows({
                             form.setValue("isEnabled", true);
                           }
                         }}
+                        disabled={mustBeDefault}
                       />
                     </FormControl>
                     <FormLabel className="flex items-center">
@@ -380,6 +403,7 @@ export function AddWorkflows({
                     </FormLabel>
                     <FormMessage />
                   </div>
+                  {mustBeDefault && <FirstDefaultNotice />}
                   {form.watch("isDefault") && (
                     <FormMessage>{t("add.defaultHelp")}</FormMessage>
                   )}

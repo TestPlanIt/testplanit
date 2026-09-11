@@ -290,12 +290,8 @@ test.describe("Role Management", () => {
           const userRoleData = await userRoleResp.json();
           const userRoleId = userRoleData?.data?.id;
           if (userRoleId) {
-            await page.request.post(`/api/model/roles/updateMany`, {
-              data: {
-                where: { isDefault: true },
-                data: { isDefault: false },
-              },
-            });
+            // Promote only: the single-default trigger clears the test role's
+            // flag, and clearing it first would trip the keep-default guard.
             await page.request.post(`/api/model/roles/update`, {
               data: {
                 where: { id: userRoleId },

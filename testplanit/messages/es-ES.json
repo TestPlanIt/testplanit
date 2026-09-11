@@ -238,6 +238,12 @@
       "allIssueTypes": "Todos los tipos de problema",
       "noIssueType": "Sin tipo de problema"
     },
+    "defaults": {
+      "firstTitle": "Este será el predeterminado",
+      "firstDescription": "Aún no existe un valor predeterminado, así que este se convierte en el predeterminado. Para cambiarlo más tarde, establece un elemento diferente como predeterminado.",
+      "lockedTitle": "Predeterminado actual",
+      "lockedDescription": "El predeterminado actual no se puede desactivar directamente. En su lugar, establece un elemento diferente como predeterminado."
+    },
     "fields": {
       "groupName": "Nombre del grupo",
       "users": "Usuarios",
@@ -2242,6 +2248,10 @@
       "documentation": "Introduzca la documentación de hitos...",
       "selectType": "Seleccionar tipo de hito...",
       "selectParent": "Seleccionar hito padre..."
+    },
+    "noTypes": {
+      "title": "No hay tipos de hitos disponibles",
+      "description": "Este proyecto no tiene tipos de hitos asignados. Pide a un administrador que asigne un tipo de hito al proyecto o que establezca un tipo de hito predeterminado."
     },
     "empty": {
       "active": "No hay hitos activos",
@@ -6913,9 +6923,9 @@
       "name": "## Nombre de la integración\nUna etiqueta descriptiva para esta integración LLM.\n\n- Se utiliza para identificarla en listas y configuraciones\n- Ejemplo: \"OpenAI GPT-4o\" o \"Internal Ollama\"",
       "provider": "## Proveedor\nEl servicio LLM que potencia esta integración.\n\n- Determina el protocolo API y los modelos disponibles.\n- No se puede cambiar después de la creación.",
       "apiKey": "## Clave API\nSu clave de autenticación para la API del proveedor de LLM.\n\n- Obtenga esta clave desde la consola de desarrollador de su proveedor.\n- Se mantiene cifrada y nunca se muestra después de guardar.\n- No se requiere para Ollama (implementación local).",
-      "endpoint": "## Punto final de la API\nLa URL base para la API del proveedor de LLM.\n\n- Dejar en blanco para OpenAI, Anthropic y Gemini: se utilizan automáticamente las URL oficiales.\n- Obligatorio para Ollama (por ejemplo, `http://localhost:11434`), Azure OpenAI y LLM personalizado.\n- Opcional para cualquier proveedor: apunta a un proxy compatible con OpenAI (por ejemplo, LiteLLM) introduciendo su URL.\n- Las **direcciones privadas/internas** (localhost, 127.0.0.1, IP privadas, metadatos en la nube) están bloqueadas a menos que se permitan explícitamente mediante la variable de entorno `ALLOWED_PRIVATE_HOSTS`.",
+      "endpoint": "## Punto final de la API\nLa URL base para la API del proveedor de LLM.\n\n- Dejar en blanco para OpenAI, Anthropic y Gemini — se utilizan automáticamente las URL oficiales\n- Obligatorio para Ollama (por ejemplo, `http://localhost:11434`), Azure OpenAI y LLM personalizado\n- Opcional para cualquier proveedor — apunta a un proxy compatible con OpenAI (por ejemplo, LiteLLM) introduciendo su URL\n- Las **direcciones privadas/internas** (localhost, 127.0.0.1, IP privadas, metadatos en la nube) están bloqueadas a menos que se permitan explícitamente mediante la variable de entorno `ALLOWED_PRIVATE_HOSTS`",
       "deploymentName": "## Nombre de implementación de Azure\nEl nombre de la implementación del modelo de Azure OpenAI.\n\n- Se encuentra en Azure OpenAI Studio en Implementaciones\n- Diferente del nombre del modelo, por ejemplo, `my-gpt4-deploy` se asigna a `gpt-4`\n- Solo se requiere para Azure OpenAI",
-      "defaultModel": "## Modelo predeterminado\nEl modelo utilizado para las solicitudes de IA con esta integración.\n\n- Para OpenAI, Anthropic, Gemini, Ollama y endpoints personalizados compatibles con OpenAI (por ejemplo, LiteLLM), los modelos disponibles se obtienen automáticamente\n- Cuando el proveedor también informa los precios del modelo, los campos de costo se completan automáticamente al seleccionar\n- Asegúrese de que el modelo esté habilitado en su cuenta de proveedor\n- Ejemplo: `gpt-4o`, `claude-3-5-sonnet-20241022`, `gemini-1.5-pro`",
+      "defaultModel": "## Modelo predeterminado\nEl modelo utilizado para las solicitudes de IA con esta integración.\n\n- Para OpenAI, Anthropic, Gemini, Ollama y endpoints personalizados compatibles con OpenAI (por ejemplo, LiteLLM) — los modelos disponibles se obtienen automáticamente\n- Cuando el proveedor también informa los precios del modelo, los campos de costo se completan automáticamente al seleccionar\n- Asegúrese de que el modelo esté habilitado en su cuenta de proveedor\n- Ejemplo: `gpt-4o`, `claude-3-5-sonnet-20241022`, `gemini-1.5-pro`",
       "maxTokensPerRequest": "## Máximo de Tokens por Solicitud\nEl **límite máximo de tokens de _salida_** que el modelo puede generar en una sola respuesta.\n\n- Limita la longitud de la **respuesta** del modelo — no cuánto contexto le envía\n- Las solicitudes que pidan más que esto son **rechazadas antes de llegar al modelo**\n- Configúrelo al máximo de salida real de su modelo — p. ej. `128000` para Claude Opus/Sonnet, `64000` para Claude Haiku, `65536` para Gemini, `16384` para GPT-4o\n- Demasiado bajo → las funciones de IA fallan o producen salidas truncadas",
       "defaultMaxTokens": "## Máximo de Tokens Predeterminado\nLa **longitud de _salida_** que solicita este modelo de IA, limitada por _Máximo de Tokens por Solicitud_.\n\n- **Generación de Casos de Prueba** (todas las fuentes, incluido el panel de incidencias de Jira), **Análisis de Casos de Prueba en Markdown**, **Asistente de Redacción del Editor** y **Selección Inteligente de Casos de Prueba** siempre usan este valor — su _Máximo de Tokens de Salida_ de Configuración de Prompts no se aplica\n- **Generación de Código de Exportación**, **Sugerencias de Etiquetas de IA**, **Derivación de Pasos de IA** y el **Informe de Candidatos a Automatización** usan su propio _Máximo de Tokens de Salida_ desde **Administración → Configuración de Prompts**\n- Los modelos que piensan antes de responder (p. ej. Claude Opus 5) gastan parte de este presupuesto en razonamiento — deje margen para la respuesta\n- **No** controla cuánto código del repositorio envía QuickScript al modelo — ese presupuesto se deriva automáticamente de la ventana de contexto del modelo\n- Manténgalo ≤ _Máximo de Tokens por Solicitud_",
       "repoContextBudget": "## Presupuesto de Contexto del Repositorio\nCuánto código de su repositorio conectado envía QuickScript al modelo al generar un script.\n\n- **Se establece automáticamente** a partir de la ventana de contexto de entrada del modelo seleccionado — no hay nada que configurar aquí\n- Los modelos con contexto más grande (Claude, Gemini) obtienen más; los modelos locales pequeños obtienen una cantidad segura que no desbordará\n- Más contexto fundamenta el script en sus objetos de página y fixtures reales — no cambia cuán largo es el script generado",

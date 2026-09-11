@@ -238,6 +238,12 @@
       "allIssueTypes": "All Issue Types",
       "noIssueType": "No Issue Type"
     },
+    "defaults": {
+      "firstTitle": "This will be the default",
+      "firstDescription": "No default exists yet, so this one becomes the default. To change it later, set a different item as the default.",
+      "lockedTitle": "Current default",
+      "lockedDescription": "The current default cannot be unset directly. Set a different item as the default instead."
+    },
     "fields": {
       "groupName": "Group Name",
       "users": "Users",
@@ -2242,6 +2248,10 @@
       "documentation": "Enter milestone documentation...",
       "selectType": "Select milestone type...",
       "selectParent": "Select parent milestone..."
+    },
+    "noTypes": {
+      "title": "No Milestone Types Available",
+      "description": "This project has no milestone types assigned. Ask an administrator to assign a milestone type to the project or to set a default milestone type."
     },
     "empty": {
       "active": "No active milestones",

@@ -2,13 +2,14 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 
 import { FieldIconPicker } from "@/components/FieldIconPicker";
+import { FirstDefaultNotice } from "@/components/admin/FirstDefaultNotice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -54,6 +55,22 @@ export function AddMilestoneType({ open, onClose }: AddMilestoneTypeProps) {
 
   const { mutateAsync: createMilestoneType } =
     useClientQueries(schema).milestoneTypes.useCreate();
+  const { mutateAsync: createManyMilestoneTypesAssignment } =
+    useClientQueries(schema).milestoneTypesAssignment.useCreateMany();
+  const { data: projects } = useClientQueries(schema).projects.useFindMany({
+    where: { isDeleted: false },
+    select: { id: true },
+  });
+
+  // Without a default type, milestones can't be pre-typed and deleted types
+  // have nowhere to reassign to, so the first type created while none is
+  // marked default becomes it.
+  const { data: currentDefault, isLoading: defaultLoading } = useClientQueries(
+    schema
+  ).milestoneTypes.useFindFirst({
+    where: { isDefault: true, isDeleted: false },
+  });
+  const mustBeDefault = !defaultLoading && !currentDefault;
 
   const handleIconSelect = (iconId: number) => {
     setSelectedIconId(iconId);
@@ -69,20 +86,38 @@ export function AddMilestoneType({ open, onClose }: AddMilestoneTypeProps) {
 
   const {
     formState: { errors },
+    setValue,
   } = form;
+
+  useEffect(() => {
+    if (mustBeDefault) {
+      setValue("isDefault", true);
+    }
+  }, [mustBeDefault, setValue]);
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     setIsSubmitting(true);
     try {
       // A new default clears the previous one atomically via the
       // tpl_single_default_milestonetypes DB trigger — no app-side clear needed.
-      await createMilestoneType({
+      const isDefault = data.isDefault || mustBeDefault;
+      const created = await createMilestoneType({
         data: {
           name: data.name,
           iconId: selectedIconId,
-          isDefault: data.isDefault,
+          isDefault,
         },
       });
+      // The default type belongs to every project (mirrors the toggle and
+      // edit paths on this page).
+      if (isDefault && created && projects?.length) {
+        await createManyMilestoneTypesAssignment({
+          data: projects.map((project) => ({
+            projectId: project.id,
+            milestoneTypeId: created.id,
+          })),
+        });
+      }
       onClose();
       setIsSubmitting(false);
     } catch (err: any) {
@@ -144,17 +179,23 @@ export function AddMilestoneType({ open, onClose }: AddMilestoneTypeProps) {
               control={form.control}
               name="isDefault"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormLabel className="flex items-center mt-0!">
-                    {tCommon("fields.default")}
-                    <HelpPopover helpKey="milestoneType.isDefault" />
-                  </FormLabel>
+                <FormItem>
+                  <div className="flex flex-row items-center space-x-3 space-y-0">
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={mustBeDefault}
+                      />
+                    </FormControl>
+                    <FormLabel className="flex items-center mt-0!">
+                      {tCommon("fields.default")}
+                      <HelpPopover helpKey="milestoneType.isDefault" />
+                    </FormLabel>
+                  </div>
+                  {mustBeDefault && (
+                    <FirstDefaultNotice data-testid="milestone-type-first-default-warning" />
+                  )}
                   <FormMessage />
                 </FormItem>
               )}

@@ -238,8 +238,8 @@ export function ProjectIntegrationSettings({
 
   const handleRemoveProject = async (id: string) => {
     try {
-      const removedProject = integrationProjects?.find((ip) => ip.id === id);
-      // Server action wraps the mapping deactivation in a transaction
+      // Server action wraps the mapping deactivation in a transaction,
+      // hands the default to another active mapping when this one held it,
       // and cascades to the parent ProjectIntegration + inbound webhook
       // when this is the last active mapping (the only path that can
       // strand an inbound webhook with a now-unassigned provider).
@@ -255,19 +255,6 @@ export function ProjectIntegrationSettings({
       await queryClient.invalidateQueries({ queryKey: ["zenstack"] });
       if (result.inboundWebhookDeletedCount > 0) {
         await refetchInboundConfigs();
-      }
-
-      // If removed project was default and others remain, set first remaining as default
-      if (removedProject?.isDefault) {
-        const remaining = integrationProjects?.filter(
-          (ip) => ip.id !== id && ip.isActive
-        );
-        if (remaining && remaining.length > 0) {
-          await updateIntegrationProject({
-            where: { id: remaining[0].id },
-            data: { isDefault: true },
-          });
-        }
       }
     } catch (error) {
       console.error("Failed to remove project:", error);

@@ -7,6 +7,7 @@ import {
   transformMilestones,
 } from "@/components/forms/MilestoneSelect";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -36,6 +37,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
+import { AlertCircle } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
@@ -88,28 +90,37 @@ export function AddMilestone({ open, onClose }: AddMilestoneProps) {
   const { mutateAsync: createMilestones } =
     useClientQueries(schema).milestones.useCreate();
 
-  const { data: milestoneTypes } = useClientQueries(
-    schema
-  ).milestoneTypes.useFindMany({
-    where: {
-      AND: [
-        {
-          projects: {
-            some: {
-              projectId: Number(projectId),
-            },
+  const { data: milestoneTypes, isLoading: milestoneTypesLoading } =
+    useClientQueries(schema).milestoneTypes.useFindMany({
+      where: {
+        AND: [
+          {
+            OR: [
+              // The default type is available to every project, whether or
+              // not an assignment row exists for it.
+              { isDefault: true },
+              {
+                projects: {
+                  some: {
+                    projectId: Number(projectId),
+                  },
+                },
+              },
+            ],
           },
-        },
-        {
-          isDeleted: false,
-        },
-      ],
-    },
-    orderBy: {
-      name: "asc",
-    },
-    include: { icon: true },
-  });
+          {
+            isDeleted: false,
+          },
+        ],
+      },
+      orderBy: {
+        name: "asc",
+      },
+      include: { icon: true },
+    });
+
+  const hasNoMilestoneTypes =
+    !milestoneTypesLoading && (milestoneTypes?.length ?? 0) === 0;
 
   const { data: milestones, isLoading: milestonesLoading } = useClientQueries(
     schema
@@ -145,9 +156,12 @@ export function AddMilestone({ open, onClose }: AddMilestoneProps) {
 
   const milestonesOptions = transformMilestones(milestones || []);
 
-  const defaultMilestoneTypeId = milestoneTypes?.find(
-    (type) => type.isDefault
-  )?.id;
+  // Pre-select the default type; with no default and a single type
+  // available, that type. Otherwise the user picks one and the schema
+  // enforces it on submit.
+  const defaultMilestoneTypeId =
+    milestoneTypes?.find((type) => type.isDefault)?.id ??
+    (milestoneTypes?.length === 1 ? milestoneTypes[0].id : undefined);
 
   const [noteContent, setNoteContent] = useState<object>({});
   const [docsContent, setDocsContent] = useState<object>({});
@@ -302,6 +316,18 @@ export function AddMilestone({ open, onClose }: AddMilestoneProps) {
                 {t("milestones.actions.add")}
               </DialogDescription>
             </DialogHeader>
+            {hasNoMilestoneTypes && (
+              <Alert
+                variant="destructive"
+                data-testid="add-milestone-no-types-alert"
+              >
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>{t("milestones.noTypes.title")}</AlertTitle>
+                <AlertDescription>
+                  {t("milestones.noTypes.description")}
+                </AlertDescription>
+              </Alert>
+            )}
             <FormField
               control={control}
               name="name"
@@ -605,7 +631,7 @@ export function AddMilestone({ open, onClose }: AddMilestoneProps) {
               </Button>
               <Button
                 type="submit"
-                disabled={isSubmitting || !defaultMilestoneTypeId}
+                disabled={isSubmitting || hasNoMilestoneTypes}
               >
                 {isSubmitting
                   ? t("common.actions.saving")

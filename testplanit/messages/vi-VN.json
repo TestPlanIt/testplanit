@@ -238,6 +238,12 @@
       "allIssueTypes": "Tất cả loại sự cố",
       "noIssueType": "Không có loại sự cố"
     },
+    "defaults": {
+      "firstTitle": "Đây sẽ là mặc định",
+      "firstDescription": "Chưa có mặc định nào, vì vậy mục này sẽ trở thành mặc định. Để thay đổi sau, hãy đặt một mục khác làm mặc định.",
+      "lockedTitle": "Mặc định hiện tại",
+      "lockedDescription": "Không thể bỏ đặt mặc định hiện tại trực tiếp. Thay vào đó, hãy đặt một mục khác làm mặc định."
+    },
     "fields": {
       "groupName": "Tên nhóm",
       "users": "Người dùng",
@@ -2242,6 +2248,10 @@
       "documentation": "Nhập tài liệu về các mốc quan trọng...",
       "selectType": "Chọn loại mốc thời gian...",
       "selectParent": "Chọn mốc phát triển của cha mẹ..."
+    },
+    "noTypes": {
+      "title": "Không có loại mốc thời gian nào khả dụng",
+      "description": "Dự án này chưa được gán loại mốc thời gian nào. Hãy yêu cầu quản trị viên gán một loại mốc thời gian cho dự án hoặc đặt một loại mốc thời gian mặc định."
     },
     "empty": {
       "active": "Không có mốc tiến độ nào đang hoạt động.",

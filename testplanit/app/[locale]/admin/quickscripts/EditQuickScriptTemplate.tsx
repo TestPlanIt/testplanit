@@ -2,6 +2,7 @@
 /* eslint-disable react-hooks/incompatible-library -- This file consumes a library API (TanStack Table / TanStack Virtual / react-hook-form watch) that returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it. */
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { DefaultLockedNotice } from "@/components/admin/FirstDefaultNotice";
 import { schema } from "~/zenstack/schema";
 import type { CaseExportTemplate } from "~/zenstack/models";
 import { useMemo, useRef, useState } from "react";
@@ -391,6 +392,9 @@ export function EditQuickScriptTemplate({
                         <Switch
                           checked={field.value}
                           onCheckedChange={field.onChange}
+                          // The current default can't be unset directly —
+                          // it moves when another template is set as default.
+                          disabled={template.isDefault}
                           data-testid="edit-export-template-default-switch"
                         />
                       </FormControl>
@@ -399,6 +403,7 @@ export function EditQuickScriptTemplate({
                 />
               </div>
             </div>
+            {template.isDefault && <DefaultLockedNotice />}
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div className="space-y-4">

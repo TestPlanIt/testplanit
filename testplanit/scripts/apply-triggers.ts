@@ -143,6 +143,136 @@ END;
 $$ LANGUAGE plpgsql;
 `;
 
+/** tpl_keep_default_<lowercased table>. Distinct prefix keeps these out of the other drift checks. */
+export function keepDefaultTriggerNameFor(table: string): string {
+  return "tpl_keep_default_" + table.toLowerCase().replace(/[^a-z0-9]/g, "_");
+}
+
+/**
+ * Liveness columns tpl_keep_default() honours when the table has them. A row
+ * only counts (as a default or as a sibling) while it is not soft-deleted,
+ * is active and is enabled.
+ */
+export const KEEP_DEFAULT_LIVENESS_COLS = [
+  "isDeleted",
+  "isActive",
+  "isEnabled",
+] as const;
+
+/**
+ * Business-rule trigger (NOT audit), the counterpart of tpl_enforce_single_default:
+ * a table (or scope) that has live rows must keep a live default. It is attached
+ * as a DEFERRABLE INITIALLY DEFERRED constraint trigger on UPDATE (of isDefault
+ * and the liveness columns) and DELETE of a row that WAS the default, and checks
+ * at COMMIT whether the row's scope still has a live default while other live
+ * rows remain — if not, the transaction is rejected. Checking at commit means
+ * "set a new default, then drop the old one" and "clear-all then set-one" both
+ * pass inside one transaction, the sibling clear performed by
+ * tpl_enforce_single_default is invisible to it, and FK cascades that remove a
+ * whole scope pass because no live rows remain. INSERT is deliberately not
+ * covered: seeds create catalogs row by row, and the first row of a catalog is
+ * made default by the app (the admin Add dialogs force it when no default
+ * exists). Liveness columns are detected per table from the row itself, so one
+ * function serves every registry entry.
+ */
+export const KEEP_DEFAULT_FN_SQL = `
+CREATE OR REPLACE FUNCTION tpl_keep_default() RETURNS TRIGGER AS $$
+DECLARE
+  scope_col text := NULLIF(TG_ARGV[0], '');
+  row_json jsonb := to_jsonb(OLD);
+  live_sql text := 'true';
+  scope_sql text := 'true';
+  scope_val text;
+  live_count bigint;
+  default_count bigint;
+BEGIN
+  IF row_json ? 'isDeleted' THEN live_sql := live_sql || ' AND "isDeleted" IS NOT TRUE'; END IF;
+  IF row_json ? 'isActive'  THEN live_sql := live_sql || ' AND "isActive" IS TRUE'; END IF;
+  IF row_json ? 'isEnabled' THEN live_sql := live_sql || ' AND "isEnabled" IS TRUE'; END IF;
+  IF scope_col IS NOT NULL THEN
+    scope_val := row_json ->> scope_col;
+    scope_sql := format('(%I)::text IS NOT DISTINCT FROM %L', scope_col, scope_val);
+  END IF;
+  EXECUTE format(
+    'SELECT count(*), count(*) FILTER (WHERE "isDefault" IS TRUE) FROM %I WHERE %s AND %s',
+    TG_TABLE_NAME, live_sql, scope_sql
+  ) INTO live_count, default_count;
+  IF live_count > 0 AND default_count = 0 THEN
+    RAISE EXCEPTION 'tpl_keep_default: "%" would be left with no default row%',
+      TG_TABLE_NAME,
+      CASE WHEN scope_col IS NULL THEN '' ELSE format(' (%s = %s)', scope_col, scope_val) END
+      USING ERRCODE = 'check_violation',
+            HINT = 'Set another row as the default before clearing, disabling or removing the current one.';
+  END IF;
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+`;
+
+/**
+ * Attach one tpl_keep_default_<table> constraint trigger per single-default
+ * registry entry (idempotent) and drop orphans. Exported so the live-DB test
+ * can apply exactly what production boots with.
+ */
+export async function applyKeepDefaultTriggers(
+  client: {
+    query: (text: string, values?: unknown[]) => Promise<{ rows: any[] }>;
+  },
+  log: (msg: string) => void = () => {}
+): Promise<void> {
+  await client.query(KEEP_DEFAULT_FN_SQL);
+  for (const entry of SINGLE_DEFAULT_REGISTRY) {
+    const triggerName = keepDefaultTriggerNameFor(entry.table);
+    const scopeArg = entry.scopeCol ?? "";
+    const { rows: columns } = await client.query(
+      `SELECT column_name FROM information_schema.columns
+        WHERE table_schema = current_schema() AND table_name = $1`,
+      [entry.table]
+    );
+    if (columns.length === 0) {
+      log(
+        `[apply-triggers] table "${entry.table}" missing — skipping ${triggerName} (cross-version boot)`
+      );
+      continue;
+    }
+    const present = new Set(columns.map((c) => c.column_name as string));
+    const watched = [
+      "isDefault",
+      ...KEEP_DEFAULT_LIVENESS_COLS.filter((c) => present.has(c)),
+    ]
+      .map((c) => `"${c}"`)
+      .join(", ");
+    await client.query(
+      `DROP TRIGGER IF EXISTS ${triggerName} ON "${entry.table}";`
+    );
+    await client.query(
+      `CREATE CONSTRAINT TRIGGER ${triggerName}
+         AFTER UPDATE OF ${watched} OR DELETE ON "${entry.table}"
+         DEFERRABLE INITIALLY DEFERRED
+         FOR EACH ROW WHEN (OLD."isDefault" IS TRUE)
+         EXECUTE FUNCTION tpl_keep_default('${scopeArg}');`
+    );
+  }
+  const expected = new Set(
+    SINGLE_DEFAULT_REGISTRY.map((e) => keepDefaultTriggerNameFor(e.table))
+  );
+  const { rows: live } = await client.query(
+    `SELECT DISTINCT trigger_name, event_object_table
+       FROM information_schema.triggers
+      WHERE trigger_name LIKE 'tpl_keep_default_%'`
+  );
+  for (const t of live) {
+    if (!expected.has(t.trigger_name)) {
+      await client.query(
+        `DROP TRIGGER IF EXISTS ${t.trigger_name} ON "${t.event_object_table}";`
+      );
+      log(
+        `[apply-triggers] dropped orphaned keep-default trigger ${t.trigger_name} on "${t.event_object_table}"`
+      );
+    }
+  }
+}
+
 /**
  * Live step-count maintenance (a business rule, NOT audit). Keeps
  * `RepositoryCases."liveStepCount"` equal to the number of that case's `Steps` rows
@@ -522,6 +652,10 @@ export async function applyAuditTriggers(
       }
     }
 
+    // 2c'. Keep-default enforcement (business rule): the deferred counterpart of
+    //      2c — a scope with live rows must not lose its live default.
+    await applyKeepDefaultTriggers(client, log);
+
     // 2d. Soft-delete deletedAt stamping (business rule). CREATE OR REPLACE the shared function, then
     //     attach one tpl_stamp_deleted_at_<table> BEFORE UPDATE OF "isDeleted" trigger per entry and
     //     drop orphans. The WHEN gate fires the function only on a real isDeleted flip. Distinct prefix
@@ -681,6 +815,7 @@ export async function applyAuditTriggers(
           ? ` (${skippedMissingTables.length} skipped — tables missing in this database) `
           : " ") +
         `+ tpl_enforce_single_default() + ${SINGLE_DEFAULT_REGISTRY.length} tpl_single_default_* triggers ` +
+        `+ tpl_keep_default() + ${SINGLE_DEFAULT_REGISTRY.length} tpl_keep_default_* triggers ` +
         `+ tpl_stamp_deleted_at() + ${SOFT_DELETE_REGISTRY.length} tpl_stamp_deleted_at_* triggers ` +
         `+ tpl_refresh_case_step_count() + ${CASE_STEP_COUNT_TRIGGER} ` +
         `+ DataChangeLog append-only enforcement (tpl_dcl_no_delete/tpl_dcl_no_update) + GRANT/REVOKE defense-in-depth ` +

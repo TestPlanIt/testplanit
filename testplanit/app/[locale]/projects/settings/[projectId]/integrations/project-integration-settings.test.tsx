@@ -404,12 +404,12 @@ describe("ProjectIntegrationSettings", () => {
     fireEvent.click(confirmButton);
 
     await waitFor(() => {
-      // The server action wraps mapping deactivation + cascade in a
-      // transaction; client-side updateIntegrationProject is no longer
-      // the deactivation path (it is still used for default-promotion
-      // when other mappings remain).
+      // The server action wraps mapping deactivation, default hand-over
+      // and cascade in one transaction; the client no longer issues any
+      // updateIntegrationProject call for a removal.
       expect(mockRemoveIntegrationProjectMapping).toHaveBeenCalledWith("ip-1");
     });
+    expect(mockUpdate).not.toHaveBeenCalled();
   });
 
   // --- Test 8: Add Projects shows MultiAsyncCombobox ---

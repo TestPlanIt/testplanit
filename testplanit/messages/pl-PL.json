@@ -238,6 +238,12 @@
       "allIssueTypes": "Wszystkie typy problemów",
       "noIssueType": "Brak typu problemu"
     },
+    "defaults": {
+      "firstTitle": "To będzie wartość domyślna",
+      "firstDescription": "Nie ustawiono jeszcze żadnej wartości domyślnej, więc ta stanie się domyślną. Aby to zmienić później, ustaw inny element jako domyślny.",
+      "lockedTitle": "Bieżąca wartość domyślna",
+      "lockedDescription": "Bieżącej wartości domyślnej nie można bezpośrednio odznaczyć. Zamiast tego ustaw inny element jako domyślny."
+    },
     "fields": {
       "groupName": "Nazwa grupy",
       "users": "Użytkownicy",
@@ -2242,6 +2248,10 @@
       "documentation": "Wprowadź dokumentację dotyczącą kamienia milowego...",
       "selectType": "Wybierz typ kamienia milowego...",
       "selectParent": "Wybierz nadrzędny kamień milowy..."
+    },
+    "noTypes": {
+      "title": "Brak dostępnych typów kamieni milowych",
+      "description": "Ten projekt nie ma przypisanych żadnych typów kamieni milowych. Poproś administratora o przypisanie typu kamienia milowego do projektu lub ustawienie domyślnego typu kamienia milowego."
     },
     "empty": {
       "active": "Brak aktywnych kamieni milowych",
@@ -6913,9 +6923,9 @@
       "name": "## Nazwa integracji\nOpisowa etykieta tej integracji LLM.\n\n— używana do identyfikacji na listach i w ustawieniach\n— przykład: „OpenAI GPT-4o” lub „Internal Ollama”",
       "provider": "## Dostawca\nUsługa LLM, która obsługuje tę integrację.\n\n— Określa protokół API i dostępne modele\n— Nie można zmienić po utworzeniu",
       "apiKey": "## Klucz API\nTwój klucz uwierzytelniający dla API dostawcy LLM.\n\n— Uzyskaj go z konsoli programistycznej swojego dostawcy.\n— Przechowywany w postaci zaszyfrowanej i nigdy nie wyświetlany po zapisaniu.\n— Nie jest wymagany w przypadku Ollama (wdrożenie lokalne).",
-      "endpoint": "## Punkt końcowy interfejsu API\nPodstawowy adres URL interfejsu API dostawcy LLM.\n\n— Pozostaw puste dla OpenAI, Anthropic i Gemini — oficjalne adresy URL są używane automatycznie\n— Wymagane dla Ollama (np. `http://localhost:11434`), Azure OpenAI i Custom LLM\n— Opcjonalne dla dowolnego dostawcy — wskaż serwer proxy zgodny z OpenAI (np. LiteLLM), wprowadzając jego adres URL\n— **Prywatne/wewnętrzne adresy** (localhost, 127.0.0.1, prywatne adresy IP, metadane w chmurze) są blokowane, chyba że wyraźnie zezwolą na to za pomocą zmiennej środowiskowej `ALLOWED_PRIVATE_HOSTS`",
+      "endpoint": "## Punkt końcowy interfejsu API\nPodstawowy adres URL interfejsu API dostawcy LLM.\n\n- Pozostaw puste dla OpenAI, Anthropic i Gemini — oficjalne adresy URL są używane automatycznie\n- Wymagane dla Ollama (np. `http://localhost:11434`), Azure OpenAI i Custom LLM\n- Opcjonalne dla dowolnego dostawcy — wskaż serwer proxy zgodny z OpenAI (np. LiteLLM), wprowadzając jego adres URL\n- **Prywatne/wewnętrzne adresy** (localhost, 127.0.0.1, prywatne adresy IP, metadane w chmurze) są blokowane, chyba że wyraźnie zezwolono na to za pomocą zmiennej środowiskowej `ALLOWED_PRIVATE_HOSTS`",
       "deploymentName": "## Nazwa wdrożenia platformy Azure\nNazwa wdrożenia modelu Azure OpenAI.\n\n— znajduje się w obszarze Wdrożenia w usłudze Azure OpenAI Studio\n— różni się od nazwy modelu — np. „my-gpt4-deploy” jest mapowane na „gpt-4”\n— wymagane tylko w przypadku usługi Azure OpenAI",
-      "defaultModel": "## Model domyślny\nModel używany do żądań AI z tą integracją.\n\n- W przypadku OpenAI, Anthropic, Gemini, Ollama i niestandardowych punktów końcowych zgodnych z OpenAI (np. LiteLLM) — dostępne modele są pobierane automatycznie\n- Gdy dostawca podaje również cennik modelu, pola kosztów są uzupełniane automatycznie po wyborze\n- Upewnij się, że model jest włączony na koncie dostawcy\n- Przykład: `gpt-4o`, `claude-3-5-sonnet-20241022`, `gemini-1.5-pro`",
+      "defaultModel": "## Model domyślny\nModel używany do żądań AI w ramach tej integracji.\n\n- W przypadku OpenAI, Anthropic, Gemini, Ollama i niestandardowych punktów końcowych zgodnych z OpenAI (np. LiteLLM) — dostępne modele są pobierane automatycznie\n- Gdy dostawca podaje również cennik modelu, pola kosztów są uzupełniane automatycznie po wyborze\n- Upewnij się, że model jest włączony na koncie dostawcy\n- Przykład: `gpt-4o`, `claude-3-5-sonnet-20241022`, `gemini-1.5-pro`",
       "maxTokensPerRequest": "## Maksymalna liczba tokenów na żądanie\nTwardy limit tokenów **_wyjściowych_**, które model może wygenerować w jednej odpowiedzi.\n\n- Ogranicza długość **odpowiedzi** modelu — nie to, jak dużo kontekstu wysyłasz\n- Żądania proszące o więcej niż ten limit są **odrzucane, zanim dotrą do modelu**\n- Ustaw tę wartość na rzeczywisty maksymalny limit wyjścia Twojego modelu — np. `128000` dla Claude Opus/Sonnet, `64000` dla Claude Haiku, `65536` dla Gemini, `16384` dla GPT-4o\n- Zbyt niska wartość → funkcje AI zawodzą lub generują obcięte dane wyjściowe",
       "defaultMaxTokens": "## Domyślna maksymalna liczba tokenów\n**Długość _wyjścia_**, o jaką proszą żądania do tego modelu AI, ograniczona przez _Maksymalną liczbę tokenów na żądanie_.\n\n- **Generowanie przypadków testowych** (z każdego źródła, w tym panelu zgłoszeń Jira), **Analiza przypadków testowych w formacie Markdown**, **Asystent pisania w edytorze** oraz **Inteligentny wybór przypadków testowych** zawsze używają tej wartości — ich ustawienie _Maksymalna liczba tokenów wyjściowych_ w Konfiguracji promptów nie jest stosowane\n- **Generowanie kodu eksportu**, **Sugestie tagów AI**, **Wyprowadzanie kroków AI** oraz **Raport kandydatów do automatyzacji** używają zamiast tego własnej wartości _Maksymalna liczba tokenów wyjściowych_ z **Administracja → Konfiguracja promptów**\n- Modele, które „myślą” przed udzieleniem odpowiedzi (np. Claude Opus 5), zużywają część tego budżetu na rozumowanie — pozostaw miejsce na odpowiedź\n- **Nie** kontroluje, ile kodu repozytorium QuickScript wysyła do modelu — ten budżet jest wyliczany automatycznie na podstawie okna kontekstu modelu\n- Zachowaj wartość ≤ _Maksymalna liczba tokenów na żądanie_",
       "repoContextBudget": "## Budżet kontekstu repozytorium\nOkreśla, jak dużo kodu z połączonego repozytorium QuickScript przekazuje modelowi podczas generowania skryptu.\n\n- **Ustawiany automatycznie** na podstawie okna kontekstu wejściowego wybranego modelu — nie ma tu nic do konfigurowania\n- Modele z większym oknem kontekstu (Claude, Gemini) otrzymują więcej; małe lokalne modele otrzymują bezpieczną ilość, która nie spowoduje przepełnienia\n- Więcej kontekstu osadza skrypt w Twoich rzeczywistych obiektach strony i fixture'ach — nie zmienia to długości wygenerowanego skryptu",

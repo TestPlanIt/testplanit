@@ -238,6 +238,12 @@
       "allIssueTypes": "Tüm Sorun Türleri",
       "noIssueType": "Sorun Türü Yok"
     },
+    "defaults": {
+      "firstTitle": "Bu, varsayılan olacaktır",
+      "firstDescription": "Henüz bir varsayılan bulunmadığından bu öğe varsayılan olur. Daha sonra değiştirmek için başka bir öğeyi varsayılan olarak ayarlayın.",
+      "lockedTitle": "Mevcut varsayılan",
+      "lockedDescription": "Mevcut varsayılan doğrudan kaldırılamaz. Bunun yerine başka bir öğeyi varsayılan olarak ayarlayın."
+    },
     "fields": {
       "groupName": "Grup Adı",
       "users": "Kullanıcılar",
@@ -2242,6 +2248,10 @@
       "documentation": "Dönüm noktası belgelerini girin...",
       "selectType": "Dönüm noktası türünü seçin...",
       "selectParent": "Üst dönüm noktasını seçin..."
+    },
+    "noTypes": {
+      "title": "Kullanılabilir Dönüm Noktası Türü Yok",
+      "description": "Bu projeye atanmış hiçbir dönüm noktası türü yok. Projeye bir dönüm noktası türü atamak veya varsayılan bir dönüm noktası türü belirlemek için bir yöneticiden yardım isteyin."
     },
     "empty": {
       "active": "Aktif kilometre taşı yok.",

@@ -26,7 +26,10 @@ import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
+import { FirstDefaultNotice } from "@/components/admin/FirstDefaultNotice";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod/v4";
@@ -94,6 +97,15 @@ export function AddPromptConfig({
   const [loading, setLoading] = useState(false);
   const queryClient = useQueryClient();
 
+  // The first row of a catalog with no default becomes it (the DB also
+  // refuses to let a catalog lose its default once it has one).
+  const { data: currentDefault, isLoading: defaultLoading } = useClientQueries(
+    schema
+  ).promptConfig.useFindFirst({
+    where: { isDefault: true, isDeleted: false },
+  });
+  const mustBeDefault = !defaultLoading && !currentDefault;
+
   const formSchema = createFormSchema(t);
 
   const form = useForm<FormData>({
@@ -107,6 +119,13 @@ export function AddPromptConfig({
     },
   });
 
+  useEffect(() => {
+    if (mustBeDefault) {
+      form.setValue("isDefault", true);
+      form.setValue("isActive", true);
+    }
+  }, [mustBeDefault, form]);
+
   const onSubmit = async (values: FormData) => {
     setLoading(true);
 
@@ -114,7 +133,7 @@ export function AddPromptConfig({
       const result = await createPromptConfig({
         name: values.name,
         description: values.description || null,
-        isDefault: values.isDefault,
+        isDefault: values.isDefault || mustBeDefault,
         isActive: values.isActive,
         prompts: values.prompts as Record<
           string,
@@ -239,11 +258,13 @@ export function AddPromptConfig({
                           form.setValue("isActive", true);
                         }
                       }}
+                      disabled={mustBeDefault}
                     />
                   </FormControl>
                 </FormItem>
               )}
             />
+            {mustBeDefault && <FirstDefaultNotice />}
 
             <div className="border rounded-lg p-4">
               <h3 className="text-sm font-medium mb-3">{t("features")}</h3>

@@ -30,6 +30,8 @@ When a milestone has related issues, its summary bar carries the same paired cou
 
 Click the **Add Milestone** button located in the top-right corner of the page.
 
+The **Type** field is pre-selected with the default Milestone Type, which is available to every project. If no type is marked as the default, pick one from the types assigned to the project. A project with no Milestone Types available shows a notice in the dialog instead of the form, and an administrator has to assign a type to the project (or set a default type) before milestones can be added.
+
 :::info Permissions Required
 Adding milestones requires the `Add/Edit` permission for the `Milestones` application area for the specific project. Users without this permission will not see the "Add Milestone" button.
 :::
@@ -71,25 +73,27 @@ TestPlanIt supports hierarchical milestone structures, allowing you to organize 
 
 Hierarchical milestones enable you to:
 
-- **Break down large milestones** into smaller, manageable sub-milestones
-- **Track progress hierarchically** with child milestone completion affecting parent progress
-- **Organize by phases** such as Sprint → Epic → Story
-- **Visualize dependencies** between different levels of work
-- **Roll up metrics** from child milestones to parents
+* **Break down large milestones** into smaller, manageable sub-milestones
+* **Track progress hierarchically** with child milestone completion affecting parent progress
+* **Organize by phases** such as Sprint → Epic → Story
+* **Visualize dependencies** between different levels of work
+* **Roll up metrics** from child milestones to parents
 
 ### Milestone Structure
 
 **Parent-Child Relationships:**
-- A milestone can have **one parent** milestone
-- A milestone can have **multiple child** milestones
-- **Root milestones** have no parent (top-level)
-- **Leaf milestones** have no children (bottom-level)
+
+* A milestone can have **one parent** milestone
+* A milestone can have **multiple child** milestones
+* **Root milestones** have no parent (top-level)
+* **Leaf milestones** have no children (bottom-level)
 
 **Hierarchy Tracking:**
-- **Root**: The top-most ancestor in a milestone tree
-- **Parent**: The immediate parent of a milestone
-- **Children**: Direct descendants of a milestone
-- **Descendants**: All milestones below in the hierarchy tree
+
+* **Root**: The top-most ancestor in a milestone tree
+* **Parent**: The immediate parent of a milestone
+* **Children**: Direct descendants of a milestone
+* **Descendants**: All milestones below in the hierarchy tree
 
 ### Creating Hierarchical Milestones
 
@@ -98,52 +102,57 @@ Hierarchical milestones enable you to:
 1. Navigate to **Projects** → **[Your Project]** → **Milestones**
 2. Click **Add Milestone**
 3. Fill in milestone details:
-   - **Name**: e.g., "Q1 2024 Release"
-   - **Type**: Select appropriate milestone type
-   - **Due Date**: Set target completion date
-   - **Parent Milestone**: Leave blank (or select "None")
+   * **Name**: e.g., "Q1 2024 Release"
+   * **Type**: Select appropriate milestone type
+   * **Due Date**: Set target completion date
+   * **Parent Milestone**: Leave blank (or select "None")
 4. Save the milestone
 
 #### Creating a Child Milestone
 
 1. From the Milestones page, click **Add Milestone**
 2. Fill in milestone details:
-   - **Name**: e.g., "Feature Development Phase"
-   - **Type**: Select appropriate type
-   - **Due Date**: Should typically be before or equal to parent's due date
-   - **Parent Milestone**: Select the parent from the dropdown
+   * **Name**: e.g., "Feature Development Phase"
+   * **Type**: Select appropriate type
+   * **Due Date**: Should typically be before or equal to parent's due date
+   * **Parent Milestone**: Select the parent from the dropdown
 3. Save the milestone
 
 **Alternative Method:**
-- Open a parent milestone's details page
-- Look for **Add Child Milestone** button
-- Fill in child milestone details
-- Parent is automatically set
+
+* Open a parent milestone's details page
+* Look for **Add Child Milestone** button
+* Fill in child milestone details
+* Parent is automatically set
 
 ### Viewing Hierarchical Milestones
 
 **List View:**
-- Milestones can be displayed with indentation showing hierarchy levels
-- Expand/collapse controls for parent milestones
-- Visual indicators (icons) showing parent/child status
+
+* Milestones can be displayed with indentation showing hierarchy levels
+* Expand/collapse controls for parent milestones
+* Visual indicators (icons) showing parent/child status
 
 **Tree View:**
-- Visual tree representation of milestone hierarchy
-- Shows entire milestone structure at a glance
-- Click to expand/collapse branches
-- Navigate directly to any milestone in the tree
+
+* Visual tree representation of milestone hierarchy
+* Shows entire milestone structure at a glance
+* Click to expand/collapse branches
+* Navigate directly to any milestone in the tree
 
 **Milestone Details Page:**
-- **Parent Section**: Shows the parent milestone (if any) with link
-- **Children Section**: Lists all direct child milestones
-- **Breadcrumb**: Shows path from root to current milestone
+
+* **Parent Section**: Shows the parent milestone (if any) with link
+* **Children Section**: Lists all direct child milestones
+* **Breadcrumb**: Shows path from root to current milestone
 
 ### Hierarchy Best Practices
 
 #### Organizational Patterns
 
 **Release Planning:**
-```
+
+```text
 Release 2.0 (Root)
 ├── Planning Phase
 ├── Development Phase
@@ -158,7 +167,8 @@ Release 2.0 (Root)
 ```
 
 **Agile Sprint Structure:**
-```
+
+```text
 Quarter 1 2024 (Root)
 ├── Sprint 1
 │   ├── Epic: User Authentication
@@ -173,7 +183,8 @@ Quarter 1 2024 (Root)
 ```
 
 **Feature-Based Organization:**
-```
+
+```text
 Product Launch (Root)
 ├── Core Features
 │   ├── Feature A
@@ -190,108 +201,124 @@ Product Launch (Root)
 #### Hierarchy Guidelines
 
 **Depth Recommendations:**
-- **Optimal depth**: 2-4 levels
-- **Maximum depth**: Avoid more than 5 levels for clarity
-- **Balance**: Keep sibling counts manageable (5-10 per level)
+
+* **Optimal depth**: 2-4 levels
+* **Maximum depth**: Avoid more than 5 levels for clarity
+* **Balance**: Keep sibling counts manageable (5-10 per level)
 
 **Naming Conventions:**
-- Use clear, descriptive names at each level
-- Include level indicators if helpful (e.g., "Phase 1:", "Sprint 3:")
-- Be consistent with naming patterns across levels
+
+* Use clear, descriptive names at each level
+* Include level indicators if helpful (e.g., "Phase 1:", "Sprint 3:")
+* Be consistent with naming patterns across levels
 
 **Date Management:**
-- Child due dates should be ≤ parent due dates
-- Leave buffer time between child completion and parent due date
-- Consider dependencies when setting child milestone dates
+
+* Child due dates should be ≤ parent due dates
+* Leave buffer time between child completion and parent due date
+* Consider dependencies when setting child milestone dates
 
 ### Progress Tracking
 
 **Completion Behavior:**
-- Marking a parent as complete doesn't auto-complete children
-- System can calculate parent progress based on child completion
-- Completion percentages can roll up hierarchically
+
+* Marking a parent as complete doesn't auto-complete children
+* System can calculate parent progress based on child completion
+* Completion percentages can roll up hierarchically
 
 **Status Indicators:**
-- **All children complete**: Parent can be marked complete
-- **Some children incomplete**: Parent shows in-progress status
-- **Overdue children**: Parent may show at-risk status
+
+* **All children complete**: Parent can be marked complete
+* **Some children incomplete**: Parent shows in-progress status
+* **Overdue children**: Parent may show at-risk status
 
 **Metrics Roll-up:**
-- Test case counts aggregate from children to parents
-- Test run assignments can be filtered by milestone hierarchy
-- Reports can group by hierarchy levels
+
+* Test case counts aggregate from children to parents
+* Test run assignments can be filtered by milestone hierarchy
+* Reports can group by hierarchy levels
 
 ### Managing Hierarchy
 
 #### Moving Milestones
 
 **Changing Parent:**
+
 1. Open milestone details
 2. Edit milestone
 3. Select new parent from dropdown (or "None" for root)
 4. Save changes
 
 **Restrictions:**
-- Cannot set a child milestone as parent of its own ancestor (prevents circular reference)
-- Cannot set self as parent
-- Moving a milestone moves all its descendants
+
+* Cannot set a child milestone as parent of its own ancestor (prevents circular reference)
+* Cannot set self as parent
+* Moving a milestone moves all its descendants
 
 #### Deleting Hierarchical Milestones
 
 **Deleting a Leaf Milestone:**
-- Simply deletes the milestone
-- No effect on siblings or parents
+
+* Simply deletes the milestone
+* No effect on siblings or parents
 
 **Deleting a Parent Milestone:**
-- **Cascade delete**: All child milestones are also deleted
-- Confirmation required before deletion — the dialog states how many child and descendant milestones will be deleted along with the parent
-- Consider orphaning children by moving them first
+
+* **Cascade delete**: All child milestones are also deleted
+* Confirmation required before deletion — the dialog states how many child and descendant milestones will be deleted along with the parent
+* Consider orphaning children by moving them first
 
 **Best Practice:**
 Before deleting a parent, review child milestones and either:
-- Move children to a different parent
-- Delete children individually if no longer needed
-- Keep a backup if data is important
+
+* Move children to a different parent
+* Delete children individually if no longer needed
+* Keep a backup if data is important
 
 ### Common Use Cases
 
 #### Product Roadmap Planning
 
 Use hierarchical milestones to represent:
-- **Root**: Annual goals or product versions
-- **Level 1**: Quarterly objectives
-- **Level 2**: Monthly deliverables
-- **Level 3**: Weekly sprints or tasks
+
+* **Root**: Annual goals or product versions
+* **Level 1**: Quarterly objectives
+* **Level 2**: Monthly deliverables
+* **Level 3**: Weekly sprints or tasks
 
 #### Project Phase Management
 
 Structure complex projects:
-- **Root**: Overall project
-- **Level 1**: Major phases (Initiation, Planning, Execution, Closure)
-- **Level 2**: Phase deliverables
-- **Level 3**: Specific tasks or work packages
+
+* **Root**: Overall project
+* **Level 1**: Major phases (Initiation, Planning, Execution, Closure)
+* **Level 2**: Phase deliverables
+* **Level 3**: Specific tasks or work packages
 
 #### Agile Development
 
 Organize agile workflows:
-- **Root**: Program Increment (PI)
-- **Level 1**: Sprints
-- **Level 2**: Epics
-- **Level 3**: User Stories
+
+* **Root**: Program Increment (PI)
+* **Level 1**: Sprints
+* **Level 2**: Epics
+* **Level 3**: User Stories
 
 ### Filtering and Reporting
 
 **Filter by Hierarchy:**
-- Show only root milestones
-- Filter by specific parent
-- Show milestones at specific depth
-- Filter by entire hierarchy branch
+
+* Show only root milestones
+* Filter by specific parent
+* Show milestones at specific depth
+* Filter by entire hierarchy branch
 
 **Reports:**
-- Hierarchy-aware progress reports
-- Burndown charts by hierarchy level
-- Completion forecasting with child milestone data
-- Resource allocation across hierarchy
+
+* Hierarchy-aware progress reports
+* Burndown charts by hierarchy level
+* Completion forecasting with child milestone data
+* Resource allocation across hierarchy
 
 ### Tips and Tricks
 
@@ -307,23 +334,27 @@ Organize agile workflows:
 ### Troubleshooting
 
 **Issue: Cannot set parent milestone**
-- Check if creating circular reference (milestone can't be ancestor of itself)
-- Verify permissions to edit both milestones
-- Ensure parent milestone is in the same project
+
+* Check if creating circular reference (milestone can't be ancestor of itself)
+* Verify permissions to edit both milestones
+* Ensure parent milestone is in the same project
 
 **Issue: Deleted milestone still appears**
-- Soft-deleted milestones may still show in some views
-- Check deletion filters/settings
-- Verify cascade delete completed for all children
+
+* Soft-deleted milestones may still show in some views
+* Check deletion filters/settings
+* Verify cascade delete completed for all children
 
 **Issue: Progress not updating**
-- Refresh the page to see latest completion data
-- Verify child milestones are properly linked
-- Check if completion percentages need manual recalculation
+
+* Refresh the page to see latest completion data
+* Verify child milestones are properly linked
+* Check if completion percentages need manual recalculation
 
 ### API Reference
 
 **Get Milestone with Hierarchy:**
+
 ```http
 GET /api/model/Milestones/findFirst?q={
   "where": {"id": 123},
@@ -336,6 +367,7 @@ GET /api/model/Milestones/findFirst?q={
 ```
 
 **Create Child Milestone:**
+
 ```http
 POST /api/model/Milestones/create
 Content-Type: application/json
@@ -352,6 +384,7 @@ Content-Type: application/json
 ```
 
 **Get All Descendants:**
+
 ```http
 GET /api/model/Milestones/findMany?q={
   "where": {"rootId": 123},
