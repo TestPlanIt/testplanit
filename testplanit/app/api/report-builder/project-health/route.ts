@@ -546,7 +546,17 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { projectId, dimensions, metrics } = await req.json();
+    let body: {
+      projectId?: unknown;
+      dimensions?: unknown;
+      metrics?: unknown;
+    };
+    try {
+      body = await req.json();
+    } catch {
+      return Response.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
+    const { projectId, dimensions, metrics } = body;
 
     const authz = await authorizeReportRequest(req, {
       requiresAdmin: false,
@@ -554,7 +564,7 @@ export async function POST(req: NextRequest) {
     });
     if (!authz.ok) return authz.response;
 
-    if (!projectId || !dimensions || !metrics) {
+    if (!projectId || !Array.isArray(dimensions) || !Array.isArray(metrics)) {
       return Response.json(
         { error: "Project ID, dimensions, and metrics are required" },
         { status: 400 }

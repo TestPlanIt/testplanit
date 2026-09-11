@@ -12,6 +12,7 @@ import {
   setCachedTokenInfo,
 } from "./api-token-cache";
 import { hashToken, isValidTokenFormat } from "./api-tokens";
+import { enrichFromApiAuth } from "./auditContextWrappers";
 import { baseDb } from "./db";
 
 // Re-export so callers that previously imported from api-token-auth keep working.
@@ -264,6 +265,8 @@ export interface AuthenticatedUser {
  *
  * Use this in custom API routes that need to support both browser sessions
  * and programmatic API token access (CI/CD, load testing, external tools).
+ * A `mode:read` token is rejected on write methods (POST/PUT/PATCH/DELETE)
+ * with `errorCode: "READ_ONLY_TOKEN"` and `status: 403`.
  *
  * @param request - The Next.js request object (needed for API token extraction)
  * @param session - The result of getServerSession(authOptions) or getServerAuthSession()
@@ -296,15 +299,26 @@ export async function authenticateRequest(
     };
   }
 
-  const apiAuth = await authenticateApiToken(request);
+  const apiAuth = await authenticateApiTokenForMethod(request);
   if (!apiAuth.authenticated) {
+    // READ_ONLY_TOKEN is a permissions failure (the token is valid; the
+    // write is forbidden), not an authentication failure — map to 403.
     return {
       authenticated: false,
       error: apiAuth.error ?? "Unauthorized",
       errorCode: apiAuth.errorCode,
-      status: 401,
+      status: apiAuth.errorCode === "READ_ONLY_TOKEN" ? 403 : 401,
     };
   }
+
+  // Attribute downstream audit hooks to the token's user (no-op outside an
+  // audit frame).
+  enrichFromApiAuth({
+    userId: apiAuth.userId!,
+    userEmail: apiAuth.userEmail,
+    userName: apiAuth.userName,
+    scopes: apiAuth.scopes,
+  });
 
   return {
     authenticated: true,

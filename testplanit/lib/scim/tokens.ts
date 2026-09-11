@@ -95,6 +95,10 @@ export async function mintScimToken(
  * bearer. That is the safe direction — an operator who rotates twice in a
  * hurry is reacting to a leak.
  *
+ * A revoked or expired token is dead and cannot be rotated back to life:
+ * rotation would mint a working bearer for a credential an admin has
+ * already retired. Both cases throw before anything is written.
+ *
  * Returns the new plaintext exactly ONCE, like {@link mintScimToken}.
  */
 export async function rotateScimToken(
@@ -108,6 +112,12 @@ export async function rotateScimToken(
   });
   if (!current) {
     throw new Error(`ScimToken ${id} not found`);
+  }
+  if (current.revokedAt || !current.isActive) {
+    throw new Error(`ScimToken ${id} is revoked and cannot be rotated`);
+  }
+  if (current.expiresAt && current.expiresAt < new Date()) {
+    throw new Error(`ScimToken ${id} is expired and cannot be rotated`);
   }
 
   const randomPart = crypto.randomBytes(SCIM_TOKEN_BYTES).toString("base64url");

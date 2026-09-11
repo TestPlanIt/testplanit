@@ -28,6 +28,17 @@ const RATE_LIMIT_KEY_PREFIX = "ratelimit:api:global:";
 /** TTL for each window key — 2 hours for safety margin */
 const WINDOW_TTL_SECONDS = 7200;
 
+// INCR and the first-hit EXPIRE run as one server-side script, so a failure
+// between the two cannot leave the window key counted but never expiring, and
+// a request is never counted both here and in the in-memory fallback.
+const INCR_WITH_TTL_SCRIPT = `
+local count = redis.call("INCR", KEYS[1])
+if count == 1 then
+  redis.call("EXPIRE", KEYS[1], tonumber(ARGV[1]))
+end
+return count
+`;
+
 export interface RateLimitResult {
   allowed: boolean;
   /** Maximum requests per hour for the current tier */
@@ -124,12 +135,14 @@ export async function checkApiRateLimit(): Promise<RateLimitResult> {
   }
 
   try {
-    const count = await valkeyConnection.incr(key);
-
-    // Set TTL on first increment so the key auto-expires
-    if (count === 1) {
-      await valkeyConnection.expire(key, WINDOW_TTL_SECONDS);
-    }
+    const count = Number(
+      await valkeyConnection.eval(
+        INCR_WITH_TTL_SCRIPT,
+        1,
+        key,
+        WINDOW_TTL_SECONDS
+      )
+    );
 
     return {
       allowed: count <= limit,

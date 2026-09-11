@@ -700,12 +700,21 @@ export const POST = withAuditContext(async (req: NextRequest) => {
         // ─── Legacy branch (no iterationId) — unchanged behavior ──────
         // Preserves PARAM-07: non-parameterized cases see byte-identical
         // semantics. Direct status write, no rollup, no iteration counters.
+        //
+        // On a HYBRID run the automated projection stamps completion when a
+        // result lands (hybridRunProjection); a manual result must do the
+        // same, or a later manual result leaves isCompleted/completedAt
+        // describing the earlier automated one.
+        const isHybridRun = runCase.testRun.testRunType === "HYBRID";
         await tx.testRunCases.update({
           where: {
             id: input.testRunCaseId,
           },
           data: {
             statusId: input.statusId,
+            ...(isHybridRun
+              ? { isCompleted: true, completedAt: new Date() }
+              : {}),
           },
         });
       }

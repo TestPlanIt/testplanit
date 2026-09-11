@@ -200,7 +200,11 @@ async function validateShape(
     };
   }
   const repo = await baseDb.codeRepository.findFirst({
-    where: { id: input.codeRepositoryId, isDeleted: false },
+    where: {
+      id: input.codeRepositoryId,
+      isDeleted: false,
+      projectConfigs: { some: { projectId } },
+    },
     select: { id: true, provider: true },
   });
   if (!repo) {
@@ -221,7 +225,6 @@ async function validateShape(
       error: "A workflow file is required",
     };
   }
-  void projectId;
   return null;
 }
 
@@ -693,7 +696,11 @@ export async function getRepositoryDispatchOptions(
   const gate = await requireManager(projectId);
   if (gate.error) return { success: false, error: gate.error };
   const repo = await baseDb.codeRepository.findFirst({
-    where: { id: codeRepositoryId, isDeleted: false },
+    where: {
+      id: codeRepositoryId,
+      isDeleted: false,
+      projectConfigs: { some: { projectId } },
+    },
     select: { id: true, provider: true, credentials: true, settings: true },
   });
   if (!repo) return { success: false, error: "Code repository not found" };

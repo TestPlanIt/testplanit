@@ -94,7 +94,10 @@ export async function runHistoryLayer(
   const byRun = new Map<number, PriorAnalysis>();
   for (const p of prior) {
     analysisDates.set(p.id, new Date(p.createdAt));
-    byRun.set(p.testRunId, p);
+    // A run composed from several analyses is one execution signal. `prior`
+    // is newest-first, so the freshest analysis represents the run: it is the
+    // one whose hand-added cases and file-level overlap are current.
+    if (!byRun.has(p.testRunId)) byRun.set(p.testRunId, p);
   }
 
   const hitsByCase = new Map<number, HistoryReason[]>();

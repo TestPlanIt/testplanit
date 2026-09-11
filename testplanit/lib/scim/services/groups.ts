@@ -178,17 +178,26 @@ function isPlainObject(v: unknown): v is Record<string, unknown> {
 
 /**
  * Split a list of requested member user IDs into the subset that exists as
- * live (non-tombstoned) User rows and the subset that does not. The audit
+ * live (non-tombstoned) User rows this IdP may see — its own or unowned —
+ * and the subset that does not. A user provisioned by another IdP is
+ * skipped like an unknown id, so one directory cannot graft another
+ * directory's user into its groups. The audit
  * row carries the skipped set; the webhook payload carries the applied set.
  */
 async function partitionMembers(
   tx: TxClient,
-  requestedIds: string[]
+  requestedIds: string[],
+  ctx: ScimAuthContext
 ): Promise<{ applied: string[]; skipped: string[] }> {
   if (requestedIds.length === 0) return { applied: [], skipped: [] };
   const uniqueRequested = Array.from(new Set(requestedIds));
   const rows = await tx.user.findMany({
-    where: { id: { in: uniqueRequested }, isDeleted: false },
+    where: {
+      AND: [
+        { id: { in: uniqueRequested }, isDeleted: false },
+        scimOwnershipReadFilter(ctx),
+      ],
+    },
     select: { id: true },
   });
   const validSet = new Set(rows.map((r) => r.id));
@@ -355,7 +364,11 @@ async function insertNewScimGroup(
   requestedMemberIds: string[],
   ctx: ScimAuthContext
 ): Promise<CreateScimGroupResult> {
-  const { applied, skipped } = await partitionMembers(tx, requestedMemberIds);
+  const { applied, skipped } = await partitionMembers(
+    tx,
+    requestedMemberIds,
+    ctx
+  );
   const fallbackDefault = await readScimFallbackDefault(tx);
 
   const created = (await tx.groups.create({
@@ -414,7 +427,11 @@ async function resurrectTombstonedGroup(
   requestedMemberIds: string[],
   ctx: ScimAuthContext
 ): Promise<CreateScimGroupResult> {
-  const { applied, skipped } = await partitionMembers(tx, requestedMemberIds);
+  const { applied, skipped } = await partitionMembers(
+    tx,
+    requestedMemberIds,
+    ctx
+  );
   const fallbackDefault = await readScimFallbackDefault(tx);
 
   const mergedExtensions = mergeUrnBuckets(
@@ -488,7 +505,11 @@ async function jitBindExistingGroup(
   requestedMemberIds: string[],
   ctx: ScimAuthContext
 ): Promise<CreateScimGroupResult> {
-  const { applied, skipped } = await partitionMembers(tx, requestedMemberIds);
+  const { applied, skipped } = await partitionMembers(
+    tx,
+    requestedMemberIds,
+    ctx
+  );
   const fallbackDefault = await readScimFallbackDefault(tx);
 
   const mergedExtensions = mergeUrnBuckets(
@@ -668,7 +689,7 @@ export async function putScimGroup(
     let skipped: string[] = [];
 
     if (requestedMemberIds !== null) {
-      const partitioned = await partitionMembers(tx, requestedMemberIds);
+      const partitioned = await partitionMembers(tx, requestedMemberIds, ctx);
       skipped = partitioned.skipped;
       const applied = partitioned.applied;
       const currentMemberIds = (current.assignedUsers ?? []).map(
@@ -863,7 +884,7 @@ export async function patchScimGroup(
     );
     const removed = currentMemberIds.filter((u) => !draftMemberIds.includes(u));
 
-    const partitioned = await partitionMembers(tx, requestedToAdd);
+    const partitioned = await partitionMembers(tx, requestedToAdd, ctx);
     const added = partitioned.applied;
     const skipped = partitioned.skipped;
 
