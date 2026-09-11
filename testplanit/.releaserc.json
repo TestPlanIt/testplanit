@@ -60,6 +60,11 @@
         "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
       }
     ],
-    "@semantic-release/github"
+    [
+      "@semantic-release/github",
+      {
+        "releaseBodyTemplate": "<%= nextRelease.notes.length > 120000 ? nextRelease.notes.slice(0, 120000) + '\\n\\n---\\n\\n_Release notes truncated to fit the GitHub release size limit. The complete notes for this version are in `testplanit/CHANGELOG.md` at this tag._' : nextRelease.notes %>"
+      }
+    ]
   ]
 }
