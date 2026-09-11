@@ -20,10 +20,22 @@ vi.mock("~/lib/api-token-auth", () => ({
 // The cross-project variants resolve their anchor set from the projects
 // table (every project with requirements enabled); the project-scoped
 // variants never touch it.
+// The options handler additionally reads the requirement rows it derives
+// the priority/status menus from, plus the two execution-scope pickers.
 const mockedProjectsFindMany = vi.fn();
+const mockedIssueFindMany = vi.fn();
+const mockedMilestonesFindMany = vi.fn();
+const mockedConfigurationsFindMany = vi.fn();
 vi.mock("~/lib/db", () => ({
   baseDb: {
     projects: { findMany: (...args: any[]) => mockedProjectsFindMany(...args) },
+    issue: { findMany: (...args: any[]) => mockedIssueFindMany(...args) },
+    milestones: {
+      findMany: (...args: any[]) => mockedMilestonesFindMany(...args),
+    },
+    configurations: {
+      findMany: (...args: any[]) => mockedConfigurationsFindMany(...args),
+    },
   },
 }));
 
@@ -66,6 +78,7 @@ import type { RequirementTraceabilityRow } from "~/lib/services/requirementTrace
 import {
   handleRequirementCoverageChangesPOST,
   handleRequirementCoverageReportPOST,
+  handleRequirementReportOptionsGET,
 } from "./requirementCoverageReportUtils";
 
 const mockedLoadSnapshot =
@@ -997,5 +1010,320 @@ describe("requirement coverage reports — cross-project variants", () => {
     expect(badPriority.status).toBe(400);
     expect(badStatus.status).toBe(400);
     expect(mockedLoad).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Options GET: the filter menus both requirement report families render.
+// One handler serves the project-scoped and cross-project variants, and the
+// difference between them is the whole point of these tests.
+// ---------------------------------------------------------------------------
+
+function makeOptionsRequest(query = ""): NextRequest {
+  return new NextRequest(
+    `http://localhost/api/report-builder/requirement-coverage-gaps/options${query}`
+  );
+}
+
+/** A requirement row exactly as the handler selects it. */
+function requirementRow(
+  overrides: Partial<{
+    priority: string | null;
+    externalPriority: string | null;
+    status: string | null;
+    externalStatus: string | null;
+    isRequirement: boolean;
+    integrationId: number | null;
+    requirementDetachedAt: Date | null;
+  }> = {}
+) {
+  return {
+    priority: null,
+    externalPriority: null,
+    status: null,
+    externalStatus: null,
+    isRequirement: true,
+    integrationId: null,
+    requirementDetachedAt: null,
+    ...overrides,
+  };
+}
+
+describe("handleRequirementReportOptionsGET", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockedAuthorize.mockResolvedValue({ ok: true, bypass: false });
+    mockedProjectsFindMany.mockResolvedValue([
+      { id: 5, name: "Project Five", _count: { issues: 12 } },
+    ]);
+    mockedIssueFindMany.mockResolvedValue([]);
+    mockedMilestonesFindMany.mockResolvedValue([]);
+    mockedConfigurationsFindMany.mockResolvedValue([]);
+  });
+
+  describe("priority/status menus", () => {
+    it("groups spellings case-insensitively, labels the group with the most common one, and ids it lowercased", async () => {
+      mockedIssueFindMany.mockResolvedValue([
+        requirementRow({ priority: "HIGH", status: "Open" }),
+        requirementRow({ priority: "HIGH", status: "open" }),
+        requirementRow({ priority: "High", status: "Open" }),
+        requirementRow({ priority: "low", status: null }),
+        requirementRow({ priority: "Low", status: "Closed" }),
+        requirementRow({ priority: "Low", status: "Closed" }),
+      ]);
+
+      const res = await handleRequirementReportOptionsGET(
+        makeOptionsRequest("?projectId=5"),
+        false
+      );
+      const body = await res.json();
+
+      // One option per case-folded value, counting every spelling; the label
+      // is the majority spelling ("HIGH" 2 beats "High" 1), the id is the
+      // lowercased key the filter matches on. Sorted by label.
+      expect(body.priorities).toEqual([
+        { id: "high", name: "HIGH", count: 3 },
+        { id: "low", name: "Low", count: 3 },
+      ]);
+      expect(body.statuses).toEqual([
+        { id: "closed", name: "Closed", count: 2 },
+        { id: "open", name: "Open", count: 3 },
+      ]);
+    });
+
+    it("omits null/blank values instead of offering an empty option", async () => {
+      mockedIssueFindMany.mockResolvedValue([
+        requirementRow({ priority: null, status: "" }),
+        requirementRow({ priority: "High", status: "Open" }),
+      ]);
+
+      const res = await handleRequirementReportOptionsGET(
+        makeOptionsRequest("?projectId=5"),
+        false
+      );
+      const body = await res.json();
+
+      expect(body.priorities).toEqual([{ id: "high", name: "High", count: 1 }]);
+      expect(body.statuses).toEqual([{ id: "open", name: "Open", count: 1 }]);
+    });
+
+    it("offers the tracker's values for a LOCKED requirement and the local ones once DETACHED", async () => {
+      // Same two columns populated on both rows; only the lock state differs,
+      // so this fails loudly if the handler ever reads a column directly
+      // instead of going through the shared display resolvers.
+      mockedIssueFindMany.mockResolvedValue([
+        requirementRow({
+          priority: "Local P",
+          externalPriority: "Blocker",
+          status: "Local S",
+          externalStatus: "In Progress",
+          integrationId: 7,
+          requirementDetachedAt: null,
+        }),
+        requirementRow({
+          priority: "Local P",
+          externalPriority: "Blocker",
+          status: "Local S",
+          externalStatus: "In Progress",
+          integrationId: 7,
+          requirementDetachedAt: new Date("2026-07-01T00:00:00.000Z"),
+        }),
+      ]);
+
+      const res = await handleRequirementReportOptionsGET(
+        makeOptionsRequest("?projectId=5"),
+        false
+      );
+      const body = await res.json();
+
+      expect(body.priorities).toEqual([
+        { id: "blocker", name: "Blocker", count: 1 },
+        { id: "local p", name: "Local P", count: 1 },
+      ]);
+      expect(body.statuses).toEqual([
+        { id: "in progress", name: "In Progress", count: 1 },
+        { id: "local s", name: "Local S", count: 1 },
+      ]);
+    });
+
+    it("derives the menus from requirement rows in the resolved projects only", async () => {
+      mockedProjectsFindMany.mockResolvedValue([
+        { id: 5, name: "Project Five", _count: { issues: 1 } },
+        { id: 9, name: "Project Nine", _count: { issues: 2 } },
+      ]);
+
+      await handleRequirementReportOptionsGET(makeOptionsRequest(), true);
+
+      expect(mockedIssueFindMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            isDeleted: false,
+            isRequirement: true,
+            projectId: { in: [5, 9] },
+          }),
+        })
+      );
+    });
+  });
+
+  describe("project-scoped variant (isCrossProject = false)", () => {
+    it("returns no project options and the two execution-scope pickers", async () => {
+      mockedMilestonesFindMany.mockResolvedValue([
+        { id: 3, name: "Release 2.4", parentId: null, integrationId: null },
+      ]);
+      mockedConfigurationsFindMany.mockResolvedValue([
+        { id: 8, name: "Chrome" },
+      ]);
+
+      const res = await handleRequirementReportOptionsGET(
+        makeOptionsRequest("?projectId=5"),
+        false
+      );
+      const body = await res.json();
+
+      // Already one project — nothing to pick.
+      expect(body.projects).toEqual([]);
+      expect(body.milestones).toEqual([
+        { id: 3, name: "Release 2.4", parentId: null, integrationId: null },
+      ]);
+      expect(body.configurations).toEqual([{ id: 8, name: "Chrome" }]);
+      expect(body.dimensions).toEqual([]);
+      expect(body.metrics).toEqual([]);
+    });
+
+    it("anchors every read on the requested project", async () => {
+      await handleRequirementReportOptionsGET(
+        makeOptionsRequest("?projectId=5"),
+        false
+      );
+
+      expect(mockedProjectsFindMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ isDeleted: false, id: 5 }),
+        })
+      );
+      expect(mockedProjectsFindMany.mock.calls[0][0].where).not.toHaveProperty(
+        "requirementsEnabled"
+      );
+      expect(mockedMilestonesFindMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { projectId: 5, isDeleted: false },
+        })
+      );
+      // Configurations follow the run-creation picker's enabled+assigned rule.
+      expect(mockedConfigurationsFindMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            isDeleted: false,
+            isEnabled: true,
+            projects: { some: { projectId: 5 } },
+          },
+        })
+      );
+    });
+
+    it("gates on the project, not on ADMIN", async () => {
+      await handleRequirementReportOptionsGET(
+        makeOptionsRequest("?projectId=5"),
+        false
+      );
+
+      expect(mockedAuthorize).toHaveBeenCalledWith(expect.anything(), {
+        requiresAdmin: false,
+        projectId: 5,
+      });
+    });
+
+    it("resolves no project at all when projectId is missing or non-numeric", async () => {
+      await handleRequirementReportOptionsGET(
+        makeOptionsRequest("?projectId=abc"),
+        false
+      );
+
+      // -1 can never match a row: a missing id must not fall through to
+      // "every project".
+      expect(mockedProjectsFindMany.mock.calls[0][0].where.id).toBe(-1);
+      expect(mockedAuthorize).toHaveBeenCalledWith(expect.anything(), {
+        requiresAdmin: false,
+        projectId: undefined,
+      });
+    });
+  });
+
+  describe("cross-project variant (isCrossProject = true)", () => {
+    beforeEach(() => {
+      mockedProjectsFindMany.mockResolvedValue([
+        { id: 5, name: "Project Five", _count: { issues: 12 } },
+        { id: 9, name: "Project Nine", _count: { issues: 0 } },
+      ]);
+    });
+
+    it("lists only requirements-enabled projects, each with its requirement count", async () => {
+      const res = await handleRequirementReportOptionsGET(
+        makeOptionsRequest(),
+        true
+      );
+      const body = await res.json();
+
+      expect(mockedProjectsFindMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { isDeleted: false, requirementsEnabled: true },
+        })
+      );
+      expect(body.projects).toEqual([
+        { id: 5, name: "Project Five", count: 12 },
+        { id: 9, name: "Project Nine", count: 0 },
+      ]);
+    });
+
+    it("offers NO execution-scope options — a milestone belongs to one project", async () => {
+      const res = await handleRequirementReportOptionsGET(
+        makeOptionsRequest(),
+        true
+      );
+      const body = await res.json();
+
+      expect(body.milestones).toEqual([]);
+      expect(body.configurations).toEqual([]);
+      expect(mockedMilestonesFindMany).not.toHaveBeenCalled();
+      expect(mockedConfigurationsFindMany).not.toHaveBeenCalled();
+    });
+
+    it("ignores a projectId smuggled onto the cross-project URL", async () => {
+      await handleRequirementReportOptionsGET(
+        makeOptionsRequest("?projectId=5"),
+        true
+      );
+
+      expect(mockedAuthorize).toHaveBeenCalledWith(expect.anything(), {
+        requiresAdmin: true,
+        projectId: undefined,
+      });
+      expect(mockedProjectsFindMany.mock.calls[0][0].where).toEqual({
+        isDeleted: false,
+        requirementsEnabled: true,
+      });
+      expect(mockedMilestonesFindMany).not.toHaveBeenCalled();
+    });
+
+    it("requires ADMIN, and returns the authorizer's refusal before reading anything", async () => {
+      mockedAuthorize.mockResolvedValue({
+        ok: false,
+        response: Response.json({ error: "Unauthorized" }, { status: 401 }),
+      });
+
+      const res = await handleRequirementReportOptionsGET(
+        makeOptionsRequest(),
+        true
+      );
+
+      expect(res.status).toBe(401);
+      expect(mockedAuthorize).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ requiresAdmin: true })
+      );
+      expect(mockedProjectsFindMany).not.toHaveBeenCalled();
+      expect(mockedIssueFindMany).not.toHaveBeenCalled();
+    });
   });
 });

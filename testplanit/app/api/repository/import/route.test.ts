@@ -3,6 +3,8 @@ import { enhanceWithAudit } from "~/lib/audit/enhanceWithAudit";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { replaceImportedCaseIssueLinks } from "~/lib/services/importCaseIssueLinks";
+import { resolveImportIssueKeys } from "~/lib/services/importIssueKeyResolution";
 import { POST } from "./route";
 
 // Mock dependencies
@@ -48,10 +50,31 @@ vi.mock("~/lib/services/auditLog", () => ({
   auditBulkCreate: vi.fn().mockResolvedValue(undefined),
 }));
 
+// The file's `issues` column is resolved against the tracker in one batch pass
+// before any row is written. Mocked here so the import's own behaviour — which
+// rows still land, and where an unplaceable cell is reported — is testable
+// without an integration.
+vi.mock("~/lib/services/importIssueKeyResolution", () => ({
+  resolveImportIssueKeys: vi.fn(),
+}));
+
+// Spy that still runs the real link writer, so the resolved-id handoff can be
+// asserted on the call AND through the rows it writes.
+vi.mock("~/lib/services/importCaseIssueLinks", async (importOriginal) => {
+  const actual =
+    await importOriginal<
+      typeof import("~/lib/services/importCaseIssueLinks")
+    >();
+  return {
+    ...actual,
+    replaceImportedCaseIssueLinks: vi.fn(actual.replaceImportedCaseIssueLinks),
+  };
+});
+
 // Helper function to parse SSE stream response
 async function parseSSEResponse(response: Response): Promise<{
   progress: Array<{ imported: number; total: number }>;
-  complete?: { importedCount: number; errors: any[] };
+  complete?: { importedCount: number; errors: any[]; warnings: any[] };
   error?: { error: string; errors?: any[] };
 }> {
   const reader = response.body?.getReader();
@@ -59,7 +82,8 @@ async function parseSSEResponse(response: Response): Promise<{
 
   const decoder = new TextDecoder();
   const progress: Array<{ imported: number; total: number }> = [];
-  let complete: { importedCount: number; errors: any[] } | undefined;
+  let complete:
+    { importedCount: number; errors: any[]; warnings: any[] } | undefined;
   let error: { error: string; errors?: any[] } | undefined;
 
   while (true) {
@@ -74,7 +98,14 @@ async function parseSSEResponse(response: Response): Promise<{
       try {
         const data = JSON.parse(jsonStr);
         if (data.complete) {
-          complete = { importedCount: data.importedCount, errors: data.errors };
+          complete = {
+            importedCount: data.importedCount,
+            errors: data.errors,
+            // Advisory notes about rows that DID import — kept apart from
+            // `errors`, which is what the "N rows could not be imported"
+            // count is built from.
+            warnings: data.warnings ?? [],
+          };
         } else if (data.error) {
           error = { error: data.error, errors: data.errors };
         } else if (data.imported !== undefined) {
@@ -328,6 +359,11 @@ describe("CSV Import API Route", () => {
       count: 0,
     });
     mockEnhancedDb.steps.create.mockResolvedValue({ id: 1 });
+    // Default: nothing in the file needs the tracker.
+    (resolveImportIssueKeys as any).mockResolvedValue({
+      idsByName: new Map(),
+      errorsByName: new Map(),
+    });
   });
 
   const createRequest = (body: any): NextRequest => {
@@ -1811,6 +1847,220 @@ describe("CSV Import API Route", () => {
       expect(mockEnhancedDb.repositoryCaseVersions.create).toHaveBeenCalledWith(
         { data: expect.objectContaining({ version: 2 }) }
       );
+    });
+  });
+
+  /**
+   * #597: a cell may name a tracker key no local row answers to. The import
+   * resolves those upstream once for the whole file. Everything about it is
+   * advisory — a cell it cannot place reports itself under `warnings` and its
+   * case still imports, so the "N rows could not be imported" count (built
+   * from `errors`) stays truthful.
+   */
+  describe("Issue keys resolved against the tracker", () => {
+    const issuesRequest = (file: string) => ({
+      projectId: 1,
+      file,
+      delimiter: ",",
+      hasHeaders: true,
+      encoding: "UTF-8",
+      templateId: 1,
+      importLocation: "single_folder",
+      folderId: 1,
+      fieldMappings: [
+        { csvColumn: "Name", templateField: "name" },
+        { csvColumn: "Description", templateField: "description" },
+        { csvColumn: "Issues", templateField: "issues" },
+      ],
+    });
+
+    beforeEach(() => {
+      // No local Issue row answers to these names, so the resolver's answer is
+      // the only thing that can place them.
+      mockEnhancedDb.issue.findFirst.mockResolvedValue(null);
+    });
+
+    it("imports the case and reports an unknown key as a warning, not an error", async () => {
+      (resolveImportIssueKeys as any).mockResolvedValue({
+        idsByName: new Map(),
+        errorsByName: new Map([
+          [
+            "GHOST-1",
+            'No issue named "GHOST-1" in this project, and it could not be resolved as a tracker key — Issue does not exist.',
+          ],
+        ]),
+      });
+
+      const request = createRequest(
+        issuesRequest("Name,Description,Issues\nCase A,Desc,GHOST-1")
+      );
+
+      const response = await POST(request);
+      const result = await parseSSEResponse(response);
+
+      // The row imported.
+      expect(result.complete?.importedCount).toBe(1);
+      // And nothing in `errors`, which is what the failure count is built from.
+      expect(result.complete?.errors).toEqual([]);
+      // The cell that could not be placed says why instead of disappearing.
+      expect(result.complete?.warnings).toHaveLength(1);
+      expect(result.complete?.warnings[0]).toMatchObject({
+        row: 1,
+        field: "Issues",
+        caseName: "Case A",
+      });
+      expect(result.complete?.warnings[0].error).toContain("GHOST-1");
+      expect(result.complete?.warnings[0].error).toContain(
+        "Issue does not exist"
+      );
+      // No link was invented for it.
+      expect(mockEnhancedDb.repositoryCaseIssue.create).not.toHaveBeenCalled();
+    });
+
+    it("passes the resolved key ids through to the link writer", async () => {
+      mockEnhancedDb.repositoryCases.create.mockImplementation(
+        ({ data }: any) => ({ id: 777, ...data })
+      );
+      (resolveImportIssueKeys as any).mockResolvedValue({
+        idsByName: new Map([["PROJ-7", 4242]]),
+        errorsByName: new Map(),
+      });
+
+      const request = createRequest(
+        issuesRequest("Name,Description,Issues\nCase A,Desc,PROJ-7")
+      );
+
+      const response = await POST(request);
+      const result = await parseSSEResponse(response);
+
+      expect(result.complete?.importedCount).toBe(1);
+      expect(result.complete?.errors).toEqual([]);
+      expect(result.complete?.warnings).toEqual([]);
+
+      // The batch's answer reaches the per-case link writer...
+      expect(replaceImportedCaseIssueLinks).toHaveBeenCalledTimes(1);
+      const linkArgs = (replaceImportedCaseIssueLinks as any).mock.calls[0][1];
+      expect(linkArgs).toMatchObject({
+        caseId: 777,
+        projectId: 1,
+        issueNames: ["PROJ-7"],
+      });
+      expect(linkArgs.resolvedKeyIds.get("PROJ-7")).toBe(4242);
+
+      // ...and becomes the actual link row.
+      expect(mockEnhancedDb.repositoryCaseIssue.create).toHaveBeenCalledWith({
+        data: { caseId: 777, issueId: 4242 },
+      });
+    });
+
+    it("places what it can and warns about the rest within one cell", async () => {
+      (resolveImportIssueKeys as any).mockResolvedValue({
+        idsByName: new Map([["PROJ-7", 4242]]),
+        errorsByName: new Map([["GHOST-1", "No such key upstream."]]),
+      });
+
+      const request = createRequest(
+        issuesRequest('Name,Description,Issues\nCase A,Desc,"PROJ-7,GHOST-1"')
+      );
+
+      const response = await POST(request);
+      const result = await parseSSEResponse(response);
+
+      expect(result.complete?.importedCount).toBe(1);
+      expect(result.complete?.errors).toEqual([]);
+      expect(mockEnhancedDb.repositoryCaseIssue.create).toHaveBeenCalledTimes(
+        1
+      );
+      expect(
+        mockEnhancedDb.repositoryCaseIssue.create.mock.calls[0][0].data.issueId
+      ).toBe(4242);
+      expect(result.complete?.warnings).toHaveLength(1);
+      expect(result.complete?.warnings[0].error).toContain("No such key");
+    });
+
+    it("keeps the failure count truthful when every cell is unplaceable", async () => {
+      // The batch could not reach a tracker at all — every name gets the same
+      // explanation, and every row still imports.
+      (resolveImportIssueKeys as any).mockResolvedValue({
+        idsByName: new Map(),
+        errorsByName: new Map([
+          ["GHOST-1", "No issue tracker integration configured."],
+          ["GHOST-2", "No issue tracker integration configured."],
+        ]),
+      });
+
+      const request = createRequest(
+        issuesRequest(
+          "Name,Description,Issues\nCase A,Desc,GHOST-1\nCase B,Desc,GHOST-2"
+        )
+      );
+
+      const response = await POST(request);
+      const result = await parseSSEResponse(response);
+
+      expect(result.complete?.importedCount).toBe(2);
+      expect(result.complete?.errors).toEqual([]);
+      expect(result.complete?.warnings).toHaveLength(2);
+      expect(result.complete?.warnings.map((w: any) => w.caseName)).toEqual([
+        "Case A",
+        "Case B",
+      ]);
+      expect(result.complete?.warnings.map((w: any) => w.row)).toEqual([1, 2]);
+    });
+
+    it("resolves the whole file's issue names in a single pass", async () => {
+      (resolveImportIssueKeys as any).mockResolvedValue({
+        idsByName: new Map([["PROJ-7", 4242]]),
+        errorsByName: new Map(),
+      });
+
+      const request = createRequest(
+        issuesRequest(
+          "Name,Description,Issues\nCase A,Desc,PROJ-7\nCase B,Desc,PROJ-7"
+        )
+      );
+
+      const response = await POST(request);
+      const result = await parseSSEResponse(response);
+
+      expect(result.complete?.importedCount).toBe(2);
+      // One call for the file, not one per row — a thousand-case file citing
+      // forty tickets makes forty tracker calls, not a thousand.
+      expect(resolveImportIssueKeys).toHaveBeenCalledTimes(1);
+      expect((resolveImportIssueKeys as any).mock.calls[0][1]).toMatchObject({
+        projectId: 1,
+        names: ["PROJ-7", "PROJ-7"],
+      });
+      // Both rows still got their link.
+      expect(mockEnhancedDb.repositoryCaseIssue.create).toHaveBeenCalledTimes(
+        2
+      );
+    });
+
+    it("does not reach for the tracker when no row cites an issue", async () => {
+      const request = createRequest({
+        projectId: 1,
+        file: "Name,Description\nCase A,Desc",
+        delimiter: ",",
+        hasHeaders: true,
+        encoding: "UTF-8",
+        templateId: 1,
+        importLocation: "single_folder",
+        folderId: 1,
+        fieldMappings: [
+          { csvColumn: "Name", templateField: "name" },
+          { csvColumn: "Description", templateField: "description" },
+        ],
+      });
+
+      const response = await POST(request);
+      const result = await parseSSEResponse(response);
+
+      expect(result.complete?.importedCount).toBe(1);
+      expect((resolveImportIssueKeys as any).mock.calls[0][1].names).toEqual(
+        []
+      );
+      expect(replaceImportedCaseIssueLinks).not.toHaveBeenCalled();
     });
   });
 });

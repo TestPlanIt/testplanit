@@ -1425,4 +1425,92 @@ describe("K — cross-IdP provenance and ownership (V2-MULTI-IDP-01)", () => {
       OR: [{ scimTokenId: null }, { scimToken: { idpName: "OKTA" } }],
     });
   });
+
+  it("K9: the create-time member lookup is scoped to unowned users plus the caller's own IdP", async () => {
+    tx.groups.findUnique.mockResolvedValue(null);
+    tx.groups.findFirst.mockResolvedValue(null);
+    tx.user.findMany.mockResolvedValue([{ id: "u1" }]);
+    tx.groups.create.mockResolvedValue(makeGroup({ id: 308 }));
+    tx.groupAssignment.createMany.mockResolvedValue({ count: 1 });
+
+    await createScimGroup(makeBody({ members: [{ value: "u1" }] }), CTX);
+
+    const args = tx.user.findMany.mock.calls[0][0] as {
+      where: { AND: Array<Record<string, unknown>> };
+    };
+    expect(args.where.AND).toContainEqual({
+      id: { in: ["u1"] },
+      isDeleted: false,
+    });
+    expect(args.where.AND).toContainEqual({
+      OR: [{ scimTokenId: null }, { scimToken: { idpName: "OKTA" } }],
+    });
+  });
+
+  it("K10: PUT treats another IdP's user exactly like an unknown id — not grafted in, stamped as skipped", async () => {
+    tx.groups.findUnique.mockResolvedValue(
+      makeGroup({ id: 309, assignedUsers: [] })
+    );
+    tx.groups.update.mockResolvedValue(makeGroup({ id: 309 }));
+    // The ownership-filtered lookup never returns the foreign-IdP user.
+    tx.user.findMany.mockResolvedValue([{ id: "u_own" }]);
+    tx.groupAssignment.createMany.mockResolvedValue({ count: 1 });
+
+    await putScimGroup(
+      "309",
+      makeBody({ members: [{ value: "u_own" }, { value: "u_foreign" }] }),
+      CTX
+    );
+
+    const cmArgs = tx.groupAssignment.createMany.mock.calls[0][0] as {
+      data: Array<{ userId: string }>;
+    };
+    expect(cmArgs.data.map((d) => d.userId)).toEqual(["u_own"]);
+
+    const skipAudit = (
+      captureAuditEvent as ReturnType<typeof vi.fn>
+    ).mock.calls.find(([e]) => Array.isArray(e.metadata?.scimSkippedMemberIds));
+    expect(skipAudit?.[0].metadata?.scimSkippedMemberIds).toEqual([
+      "u_foreign",
+    ]);
+  });
+
+  it("K11: PATCH add treats another IdP's user exactly like an unknown id — not grafted in, stamped as skipped", async () => {
+    tx.groups.findUnique.mockResolvedValue(
+      makeGroup({ id: 310, assignedUsers: [] })
+    );
+    // The ownership-filtered lookup never returns the foreign-IdP user.
+    tx.user.findMany.mockResolvedValue([{ id: "u_own" }]);
+    tx.groupAssignment.createMany.mockResolvedValue({ count: 1 });
+
+    const body = {
+      schemas: ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
+      Operations: [
+        {
+          op: "add",
+          path: "members",
+          value: [{ value: "u_own" }, { value: "u_foreign" }],
+        },
+      ],
+    };
+
+    await patchScimGroup("310", body as never, CTX);
+
+    const cmArgs = tx.groupAssignment.createMany.mock.calls[0][0] as {
+      data: Array<{ userId: string }>;
+    };
+    expect(cmArgs.data.map((d) => d.userId)).toEqual(["u_own"]);
+
+    const skipAudit = (
+      captureAuditEvent as ReturnType<typeof vi.fn>
+    ).mock.calls.find(([e]) => Array.isArray(e.metadata?.scimSkippedMemberIds));
+    expect(skipAudit?.[0].metadata?.scimSkippedMemberIds).toEqual([
+      "u_foreign",
+    ]);
+
+    expect(emitScimGroupMemberAdded).toHaveBeenCalledTimes(1);
+    const emitCall = (emitScimGroupMemberAdded as ReturnType<typeof vi.fn>).mock
+      .calls[0];
+    expect(emitCall[1]).toEqual(["u_own"]);
+  });
 });

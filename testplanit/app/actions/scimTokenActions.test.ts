@@ -382,6 +382,25 @@ describe("rotateScimTokenAction", () => {
     );
   });
 
+  it("surfaces a failed ActionResult when the service refuses a dead token, and skips the audit row", async () => {
+    mockAdminSession();
+    vi.mocked(rotateScimToken).mockRejectedValue(
+      new Error("ScimToken tk_1 is revoked and cannot be rotated")
+    );
+
+    const result = await rotateScimTokenAction({
+      tokenId: "tk_1",
+      overlapMs: 3_600_000,
+    });
+
+    expect(result).toEqual({
+      success: false,
+      error: "Failed to rotate SCIM token",
+    });
+    expect(result.plaintext).toBeUndefined();
+    expect(captureAuditEvent).not.toHaveBeenCalled();
+  });
+
   it("never leaks a raw error message when the service throws", async () => {
     mockAdminSession();
     vi.mocked(rotateScimToken).mockRejectedValue(

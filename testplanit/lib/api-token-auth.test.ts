@@ -11,6 +11,7 @@ import {
 import {
   authenticateApiToken,
   authenticateApiTokenForMethod,
+  authenticateRequest,
   extractBearerToken,
   hasBearerToken,
   isMcpClient,
@@ -670,6 +671,94 @@ describe("API Token Authentication", () => {
 
       expect(result.authenticated).toBe(false);
       expect(result.error).not.toMatch(/tpi_/);
+    });
+  });
+  describe("authenticateRequest (session-or-token) read-only gate", () => {
+    function mockUserToken(scopes: string[]) {
+      const { plaintext, hash } = generateApiToken();
+      (baseDb.apiToken.findUnique as any).mockResolvedValue({
+        id: "token-id",
+        token: hash,
+        isActive: true,
+        expiresAt: null,
+        userId: "user-123",
+        scopes,
+        user: {
+          id: "user-123",
+          name: "Token User",
+          email: "token@example.com",
+          access: "USER",
+          isActive: true,
+          isDeleted: false,
+          isApi: true,
+        },
+      });
+      return plaintext;
+    }
+
+    it("lets a mode:read token through on GET", async () => {
+      const plaintext = mockUserToken(["mode:read"]);
+      const request = createMockRequest(`Bearer ${plaintext}`, "GET");
+
+      const result = await authenticateRequest(request, null);
+
+      expect(result.authenticated).toBe(true);
+      if (result.authenticated) {
+        expect(result.user.userId).toBe("user-123");
+      }
+    });
+
+    it.each(["POST", "PUT", "PATCH", "DELETE"])(
+      "rejects a mode:read token on %s with 403 READ_ONLY_TOKEN",
+      async (method) => {
+        const plaintext = mockUserToken(["mode:read"]);
+        const request = createMockRequest(`Bearer ${plaintext}`, method);
+
+        const result = await authenticateRequest(request, null);
+
+        expect(result.authenticated).toBe(false);
+        if (!result.authenticated) {
+          expect(result.status).toBe(403);
+          expect(result.errorCode).toBe("READ_ONLY_TOKEN");
+          expect(result.error).not.toMatch(/tpi_/);
+        }
+      }
+    );
+
+    it("keeps 401 for an invalid token on a write method (never masked as READ_ONLY_TOKEN)", async () => {
+      (baseDb.apiToken.findUnique as any).mockResolvedValue(null);
+      const { plaintext } = generateApiToken();
+      const request = createMockRequest(`Bearer ${plaintext}`, "POST");
+
+      const result = await authenticateRequest(request, null);
+
+      expect(result.authenticated).toBe(false);
+      if (!result.authenticated) {
+        expect(result.status).toBe(401);
+        expect(result.errorCode).not.toBe("READ_ONLY_TOKEN");
+      }
+    });
+
+    it("lets a full-scope token write", async () => {
+      const plaintext = mockUserToken([]);
+      const request = createMockRequest(`Bearer ${plaintext}`, "POST");
+
+      const result = await authenticateRequest(request, null);
+
+      expect(result.authenticated).toBe(true);
+    });
+
+    it("prefers the session and never consults the token", async () => {
+      const findUnique = baseDb.apiToken.findUnique as any;
+      findUnique.mockClear();
+      const request = createMockRequest("Bearer tpi_ignored", "POST");
+
+      const result = await authenticateRequest(request, {
+        user: { id: "session-user", access: "ADMIN" },
+      });
+
+      expect(result.authenticated).toBe(true);
+      expect(findUnique).not.toHaveBeenCalled();
     });
   });
 });

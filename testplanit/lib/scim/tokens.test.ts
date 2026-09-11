@@ -281,12 +281,16 @@ describe("rotateScimToken — overlap-window rotation", () => {
     token: "old-hash",
     tokenPrefix: "tps_oldpref",
     secret: "enc(tps_old_plaintext)",
+    isActive: true,
+    revokedAt: null,
+    expiresAt: null,
   };
 
-  function mockCurrent() {
-    vi.mocked(baseDb.scimToken.findUnique).mockResolvedValue(
-      currentRow as never
-    );
+  function mockCurrent(overrides: Record<string, unknown> = {}) {
+    vi.mocked(baseDb.scimToken.findUnique).mockResolvedValue({
+      ...currentRow,
+      ...overrides,
+    } as never);
     vi.mocked(baseDb.scimToken.update).mockImplementation((async (args: {
       data: Record<string, unknown>;
     }) => ({
@@ -408,5 +412,44 @@ describe("rotateScimToken — overlap-window rotation", () => {
     ).data;
     expect(data.previousToken).toBeNull();
     expect(data.previousTokenExpiresAt).toBeNull();
+  });
+
+  it("T9: refuses to rotate a revoked token — a retired credential never comes back to life", async () => {
+    mockCurrent({
+      isActive: false,
+      revokedAt: new Date("2026-09-01T00:00:00Z"),
+    });
+
+    await expect(rotateScimToken("tk_1", 3_600_000, "admin_1")).rejects.toThrow(
+      /revoked/i
+    );
+    expect(baseDb.scimToken.update).not.toHaveBeenCalled();
+  });
+
+  it("T10: refuses to rotate an expired token without writing", async () => {
+    mockCurrent({ expiresAt: new Date("2020-01-01T00:00:00Z") });
+
+    await expect(rotateScimToken("tk_1", 3_600_000, "admin_1")).rejects.toThrow(
+      /expired/i
+    );
+    expect(baseDb.scimToken.update).not.toHaveBeenCalled();
+  });
+
+  it("T11: refuses to rotate a deactivated token even with no revokedAt stamp", async () => {
+    mockCurrent({ isActive: false });
+
+    await expect(rotateScimToken("tk_1", 3_600_000, "admin_1")).rejects.toThrow(
+      /revoked/i
+    );
+    expect(baseDb.scimToken.update).not.toHaveBeenCalled();
+  });
+
+  it("T12: a live token with a future expiry still rotates", async () => {
+    mockCurrent({ expiresAt: new Date(Date.now() + 86_400_000) });
+
+    await expect(
+      rotateScimToken("tk_1", 3_600_000, "admin_1")
+    ).resolves.toBeDefined();
+    expect(baseDb.scimToken.update).toHaveBeenCalledTimes(1);
   });
 });

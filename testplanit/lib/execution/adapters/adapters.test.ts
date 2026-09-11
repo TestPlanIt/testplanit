@@ -1,3 +1,4 @@
+import { createHmac } from "node:crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../http", async (orig) => {
@@ -408,9 +409,20 @@ describe("GenericWebhookDispatchAdapter", () => {
     const [url, init] = mockedRequest.mock.calls[0];
     expect(url).toBe("https://ci.example.com/hooks/tpi");
     expect(init.headers["X-TestPlanIt-Event"]).toBe("test_run.execute");
-    expect(init.headers["X-TestPlanIt-Signature"]).toMatch(
-      /^t=1700000000,v1=[0-9a-f]{64}$/
-    );
+    // Recompute the HMAC over the exact bytes that went on the wire: the
+    // receiver verifies `<t>.<body>`, so anything that re-serialises the
+    // payload before signing would pass a shape check but fail in production.
+    const signature = init.headers["X-TestPlanIt-Signature"];
+    expect(signature).toMatch(/^t=1700000000,v1=[0-9a-f]{64}$/);
+    const [tPart, ...v1Parts] = signature.split(",");
+    expect(tPart).toBe("t=1700000000");
+    // One v1 only — the dispatch adapter signs with a single secret, so there
+    // is no rotation-overlap entry to fall back on.
+    expect(v1Parts).toHaveLength(1);
+    const expected = createHmac("sha256", "s3cret")
+      .update(`${tPart.slice(2)}.${init.body}`)
+      .digest("hex");
+    expect(v1Parts[0]).toBe(`v1=${expected}`);
     const payload = JSON.parse(init.body);
     expect(payload).toMatchObject({
       event: "test_run.execute",

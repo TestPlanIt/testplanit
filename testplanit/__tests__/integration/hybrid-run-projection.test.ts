@@ -154,8 +154,34 @@ describeIntegration("Hybrid-run projection (live DB)", () => {
         },
       });
 
+    // A tester recording a result in the UI. Mirrors the legacy
+    // (non-iteration) branch of app/api/test-runs/submit-result/route.ts:
+    // the TestRunResults row plus the direct status write onto the run-case.
+    // The route's surrounding work (auth, required fields, review gates) is
+    // irrelevant to which result ends up owning the run-case row.
+    const recordManualResult = async (
+      runCaseId: number,
+      statusId: number,
+      executedAt: Date
+    ) => {
+      await tx.testRunResults.create({
+        data: {
+          testRunId: run.id,
+          testRunCaseId: runCaseId,
+          statusId,
+          executedById: creator.id,
+          executedAt,
+        },
+      });
+      await tx.testRunCases.update({
+        where: { id: runCaseId },
+        data: { statusId },
+      });
+    };
+
     return {
       runId: run.id,
+      creatorId: creator.id,
       inRunCaseId,
       inRunRunCaseId: inRunRunCase.id,
       manualRunCaseId: manualRunCase.id,
@@ -163,6 +189,7 @@ describeIntegration("Hybrid-run projection (live DB)", () => {
       passedStatus,
       failedStatus,
       createResult,
+      recordManualResult,
     };
   }
 
@@ -220,7 +247,7 @@ describeIntegration("Hybrid-run projection (live DB)", () => {
         new Date("2026-01-03T00:00:00Z")
       );
       const membership = await tx.testRunCases.count({
-        where: { testRunId: f.runId, isDeleted: false },
+        where: { testRunId: f.runId },
       });
       expect(membership).toBe(2);
     });
@@ -266,6 +293,90 @@ describeIntegration("Hybrid-run projection (live DB)", () => {
         select: { statusId: true },
       });
       expect(runCase?.statusId).toBe(f.passedStatus.id);
+    });
+  });
+
+  it("newest result wins in BOTH directions on a hybrid run-case, and neither history is discarded", async () => {
+    await withRollback(async (tx) => {
+      const { getCaseLatestExecutedAt } =
+        await import("~/lib/services/latestCaseResults");
+      const f = await seedFixture(tx, "HYBRID");
+      const t1 = new Date("2026-03-01T00:00:00Z"); // CI
+      const t2 = new Date("2026-03-02T00:00:00Z"); // tester
+      const t3 = new Date("2026-03-03T00:00:00Z"); // CI again
+
+      const runCaseNow = () =>
+        tx.testRunCases.findUnique({
+          where: { id: f.inRunRunCaseId },
+          select: { statusId: true, isCompleted: true, completedAt: true },
+        });
+      const latestExecutedAt = async () =>
+        (await getCaseLatestExecutedAt([f.inRunCaseId], tx))
+          .get(f.inRunCaseId)
+          ?.toISOString();
+
+      // ── t1: CI reports a pass ────────────────────────────────────────
+      await f.createResult(f.inRunCaseId, "PASSED", f.passedStatus.id, t1);
+      expect((await runCaseNow())?.statusId).toBe(f.passedStatus.id);
+      expect(await latestExecutedAt()).toBe(t1.toISOString());
+
+      // ── t2: a tester records a manual failure on the same case ───────
+      // The manual write is the newest, so it owns the run-case row —
+      // the automated projection must not claw it back.
+      await f.recordManualResult(f.inRunRunCaseId, f.failedStatus.id, t2);
+      const afterManual = await runCaseNow();
+      expect(afterManual?.statusId).toBe(f.failedStatus.id);
+      expect(await latestExecutedAt()).toBe(t2.toISOString());
+      // `isCompleted` / `completedAt` are deliberately NOT asserted here:
+      // the manual legacy branch writes only `statusId`, so on a run-case
+      // that an automated result already touched those two columns still
+      // describe the automated write. Completion is derived from
+      // `Status.isCompleted` via `statusId` everywhere it matters
+      // (lib/services/runReadyCheck.ts), so pinning the stale values here
+      // would freeze an inconsistency rather than document a contract.
+      // The automated history is evidence, not a cache: the JUnit suite and
+      // its result survive the manual submission untouched.
+      expect(
+        await tx.jUnitTestResult.count({
+          where: { repositoryCaseId: f.inRunCaseId },
+        })
+      ).toBe(1);
+      expect(
+        await tx.jUnitTestSuite.count({
+          where: { testRunId: f.runId },
+        })
+      ).toBe(1);
+      // A manual result on a hybrid run never demotes it back to REGULAR.
+      expect(
+        (
+          await tx.testRuns.findUnique({
+            where: { id: f.runId },
+            select: { testRunType: true },
+          })
+        )?.testRunType
+      ).toBe("HYBRID");
+
+      // ── t3: a newer CI run lands ─────────────────────────────────────
+      // Symmetry: the projection overwrites a tester's status exactly as the
+      // tester overwrote CI's, because it is now the newest result.
+      await f.createResult(f.inRunCaseId, "PASSED", f.passedStatus.id, t3);
+      const afterAutomated = await runCaseNow();
+      expect(afterAutomated?.statusId).toBe(f.passedStatus.id);
+      expect(afterAutomated?.isCompleted).toBe(true);
+      expect(afterAutomated?.completedAt).not.toBeNull();
+      expect(await latestExecutedAt()).toBe(t3.toISOString());
+      // Both histories are still whole — two automated results and the one
+      // manual result the tester recorded.
+      expect(
+        await tx.jUnitTestResult.count({
+          where: { repositoryCaseId: f.inRunCaseId },
+        })
+      ).toBe(2);
+      expect(
+        await tx.testRunResults.count({
+          where: { testRunCaseId: f.inRunRunCaseId, isDeleted: false },
+        })
+      ).toBe(1);
     });
   });
 });

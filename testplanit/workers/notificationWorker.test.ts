@@ -47,6 +47,30 @@ vi.mock("../lib/multiTenantDb", () => ({
   disconnectAllTenantClients: vi.fn(),
 }));
 
+// Run-readiness hand-off: the claim, the recipient resolution, and the
+// notification fan-out are each other modules' business — stub them and assert
+// the worker's wiring between them.
+const mockClaimRunReadyTransition = vi.fn();
+vi.mock("../lib/services/runReadyCheck", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../lib/services/runReadyCheck")>()),
+  claimRunReadyTransition: (...args: any[]) =>
+    mockClaimRunReadyTransition(...args),
+}));
+
+const mockResolveRunCompletionRecipients = vi.fn();
+vi.mock("../lib/services/runCompletionRecipients", () => ({
+  resolveRunCompletionRecipients: (...args: any[]) =>
+    mockResolveRunCompletionRecipients(...args),
+}));
+
+const mockCreateRunReadyToCompleteNotification = vi.fn();
+vi.mock("../lib/services/notificationService", () => ({
+  NotificationService: {
+    createRunReadyToCompleteNotification: (...args: any[]) =>
+      mockCreateRunReadyToCompleteNotification(...args),
+  } as any,
+}));
+
 describe("NotificationWorker", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -346,6 +370,169 @@ describe("NotificationWorker", () => {
       await processor(mockJob);
 
       expect(mockEmailQueue.add).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("JOB_CHECK_RUN_READY", () => {
+    const readyOutcome = {
+      reason: "notified" as const,
+      notify: {
+        runId: 42,
+        runName: "Regression sweep",
+        projectId: 7,
+        projectName: "Project Alpha",
+        caseCount: 12,
+      },
+    };
+
+    const readyJob = (data: Record<string, unknown> = { runId: 42 }) =>
+      ({ id: "job-ready", name: "check-run-ready", data }) as Job;
+
+    it("claims the transition, resolves recipients, and hands both to the notification service", async () => {
+      mockClaimRunReadyTransition.mockResolvedValue(readyOutcome);
+      mockResolveRunCompletionRecipients.mockResolvedValue([
+        "user-a",
+        "user-b",
+      ]);
+
+      const { processor } = await import("./notificationWorker");
+
+      await processor(readyJob({ runId: 42, tenantId: "acme" }));
+
+      expect(mockClaimRunReadyTransition).toHaveBeenCalledTimes(1);
+      expect(mockResolveRunCompletionRecipients).toHaveBeenCalledWith(7);
+      expect(mockCreateRunReadyToCompleteNotification).toHaveBeenCalledWith({
+        targetUserIds: ["user-a", "user-b"],
+        testRunId: 42,
+        testRunName: "Regression sweep",
+        projectId: 7,
+        projectName: "Project Alpha",
+        caseCount: 12,
+        tenantId: "acme",
+      });
+    });
+
+    it("passes the recipient list through unchanged — no filtering, no reordering, duplicates intact", async () => {
+      mockClaimRunReadyTransition.mockResolvedValue(readyOutcome);
+      const resolved = ["user-z", "user-a", "user-z", "user-m"];
+      mockResolveRunCompletionRecipients.mockResolvedValue(resolved);
+
+      const { processor } = await import("./notificationWorker");
+
+      await processor(readyJob());
+
+      const params = mockCreateRunReadyToCompleteNotification.mock.calls[0][0];
+      expect(params.targetUserIds).toEqual(resolved);
+    });
+
+    it("sends an empty recipient list straight through rather than inventing recipients", async () => {
+      mockClaimRunReadyTransition.mockResolvedValue(readyOutcome);
+      mockResolveRunCompletionRecipients.mockResolvedValue([]);
+
+      const { processor } = await import("./notificationWorker");
+
+      await processor(readyJob());
+
+      expect(mockCreateRunReadyToCompleteNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ targetUserIds: [] })
+      );
+    });
+
+    it("writes the marker through the raw job client, not an enhanced/plugin client", async () => {
+      mockClaimRunReadyTransition.mockResolvedValue(readyOutcome);
+      mockResolveRunCompletionRecipients.mockResolvedValue(["user-a"]);
+
+      const { processor } = await import("./notificationWorker");
+      const { getDbClientForJob } = await import("../lib/multiTenantDb");
+
+      const job = readyJob({ runId: 42, tenantId: "acme" });
+      await processor(job);
+
+      // getDbClientForJob is the raw (rawDb / per-tenant) client; the claim must
+      // receive exactly that instance so the marker write skips the ES-sync and
+      // webhook plugins.
+      expect(getDbClientForJob).toHaveBeenCalledWith(job.data);
+      const [client, runId] = mockClaimRunReadyTransition.mock.calls[0];
+      expect(client).toBe(mockDb);
+      expect(runId).toBe(42);
+    });
+
+    it.each([
+      "not-found",
+      "not-regular",
+      "already-completed",
+      "not-ready",
+      "already-notified",
+    ])("sends nothing when the claim comes back %s", async (reason) => {
+      mockClaimRunReadyTransition.mockResolvedValue({ notify: null, reason });
+      mockResolveRunCompletionRecipients.mockResolvedValue(["user-a"]);
+
+      const consoleLogSpy = vi
+        .spyOn(console, "log")
+        .mockImplementation(() => {});
+
+      const { processor } = await import("./notificationWorker");
+
+      await processor(readyJob());
+
+      expect(mockResolveRunCompletionRecipients).not.toHaveBeenCalled();
+      expect(mockCreateRunReadyToCompleteNotification).not.toHaveBeenCalled();
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        `Run 42 readiness check: ${reason}`
+      );
+
+      consoleLogSpy.mockRestore();
+    });
+
+    it("omits tenantId when the job carries none", async () => {
+      mockClaimRunReadyTransition.mockResolvedValue(readyOutcome);
+      mockResolveRunCompletionRecipients.mockResolvedValue(["user-a"]);
+
+      const { processor } = await import("./notificationWorker");
+
+      await processor(readyJob({ runId: 42 }));
+
+      const params = mockCreateRunReadyToCompleteNotification.mock.calls[0][0];
+      expect(params.tenantId).toBeUndefined();
+    });
+
+    it("rethrows so the job retries when the claim fails", async () => {
+      const error = new Error("db down");
+      mockClaimRunReadyTransition.mockRejectedValue(error);
+
+      const consoleErrorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+
+      const { processor } = await import("./notificationWorker");
+
+      await expect(processor(readyJob())).rejects.toThrow("db down");
+
+      expect(mockCreateRunReadyToCompleteNotification).not.toHaveBeenCalled();
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "Failed readiness check for run 42:",
+        error
+      );
+
+      consoleErrorSpy.mockRestore();
+    });
+
+    it("rethrows when the notification fan-out fails", async () => {
+      mockClaimRunReadyTransition.mockResolvedValue(readyOutcome);
+      mockResolveRunCompletionRecipients.mockResolvedValue(["user-a"]);
+      mockCreateRunReadyToCompleteNotification.mockRejectedValue(
+        new Error("fanout failed")
+      );
+
+      const consoleErrorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+
+      const { processor } = await import("./notificationWorker");
+
+      await expect(processor(readyJob())).rejects.toThrow("fanout failed");
+
+      consoleErrorSpy.mockRestore();
     });
   });
 

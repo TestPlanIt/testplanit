@@ -335,6 +335,27 @@ describe("Submit Result API Route", () => {
     });
   });
 
+  it("stamps completion on a HYBRID run case so a manual result agrees with the automated projection", async () => {
+    (baseDb.testRunCases.findFirst as any).mockResolvedValue({
+      ...baseRunCase,
+      testRun: { ...baseRunCase.testRun, testRunType: "HYBRID" },
+    });
+
+    const response = await POST(createRequest(validBody));
+
+    expect(response.status).toBe(200);
+    expect(txMocks.testRunCases.update).toHaveBeenCalledWith({
+      where: { id: 10 },
+      data: {
+        statusId: 2,
+        isCompleted: true,
+        completedAt: expect.any(Date),
+      },
+    });
+    // HYBRID counts as manual here: the case must not flip to automated.
+    expect(txMocks.repositoryCases.update).not.toHaveBeenCalled();
+  });
+
   it("returns 500 if transaction fails", async () => {
     txMocks.testRunCases.update.mockRejectedValue(new Error("update failed"));
 

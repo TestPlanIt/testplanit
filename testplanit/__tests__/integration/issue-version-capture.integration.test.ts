@@ -10,6 +10,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { Client } from "pg";
 
 import { createRawDbClient } from "~/lib/rawDbClient";
+import { getAuthDb } from "~/lib/zenstack";
 import { ISSUE_VERSION_CAPTURE_TRIGGER_SQL } from "~/scripts/apply-triggers";
 
 const RUN_INTEGRATION = process.env.RUN_DB_INTEGRATION === "1";
@@ -20,8 +21,43 @@ const describeIntegration =
 const db = createRawDbClient();
 const STAMP = `ivc-${Date.now()}`;
 
+/** The disposable databases this suite is allowed to write to. */
+const SCRATCH_DATABASES = ["tpi_req20", "tpi_rc_test", "tpi_test"];
+
+/**
+ * Resolve the policy-plugin auth() context exactly the way a request does
+ * (role + rolePermissions preloaded), mirroring issue-requirement-lock.test.ts.
+ */
+async function authDbFor(userId: string) {
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    include: { role: { include: { rolePermissions: true } } },
+  });
+  if (!user) throw new Error(`Test setup: user ${userId} not found`);
+  return getAuthDb(user as never);
+}
+
+/** True if the operation was blocked by policy (threw, or changed nothing). */
+async function isDenied(fn: () => Promise<unknown>): Promise<boolean> {
+  try {
+    const result = await fn();
+    if (Array.isArray(result) && result.length === 0) return true;
+    if (
+      result &&
+      typeof result === "object" &&
+      "count" in result &&
+      (result as { count: number }).count === 0
+    )
+      return true;
+    return false;
+  } catch {
+    return true;
+  }
+}
+
 describeIntegration("issue version capture trigger (live DB)", () => {
   let adminUserId: string;
+  let memberUserId: string;
   let projectId: number;
   let requirementId: number;
   let defectId: number;
@@ -30,9 +66,11 @@ describeIntegration("issue version capture trigger (live DB)", () => {
     const [{ current_database: dbName }] = await db.$queryRaw<
       Array<{ current_database: string }>
     >`SELECT current_database()`;
-    if (dbName !== "tpi_req20" && dbName !== "tpi_test") {
+    if (!SCRATCH_DATABASES.includes(dbName)) {
       throw new Error(
-        `refusing to run against database "${dbName}" — this suite only runs against the tpi_req20 scratch DB (or tpi_test in CI)`
+        `refusing to run against database "${dbName}" — this suite only runs against a scratch DB (${SCRATCH_DATABASES.join(
+          ", "
+        )})`
       );
     }
 
@@ -67,11 +105,43 @@ describeIntegration("issue version capture trigger (live DB)", () => {
     });
     adminUserId = admin.id;
 
+    // A plain USER with an explicit grant on the project — the ordinary
+    // reader of a requirement's history.
+    const member = await db.user.create({
+      data: {
+        email: `${STAMP}-member@example.com`,
+        name: `Version Capture Member ${STAMP}`,
+        authMethod: "INTERNAL",
+        access: "USER",
+        accessSource: "MANUAL",
+        roleId: role.id,
+        password: "$2a$10$placeholderplaceholderplaceholderplaceholder",
+      },
+      select: { id: true },
+    });
+    memberUserId = member.id;
+
+    // NO_ACCESS default, so the member's access comes from the explicit grant
+    // below and never from a permissive project default.
     const project = await db.projects.create({
-      data: { name: `${STAMP}-project`, createdBy: adminUserId },
+      data: {
+        name: `${STAMP}-project`,
+        createdBy: adminUserId,
+        defaultAccessType: "NO_ACCESS",
+        defaultRoleId: null,
+      },
       select: { id: true },
     });
     projectId = project.id;
+
+    await db.userProjectPermission.create({
+      data: {
+        userId: memberUserId,
+        projectId,
+        accessType: "SPECIFIC_ROLE",
+        roleId: role.id,
+      },
+    });
 
     const requirement = await db.issue.create({
       data: {
@@ -106,8 +176,11 @@ describeIntegration("issue version capture trigger (live DB)", () => {
     await db.issue.deleteMany({
       where: { id: { in: [requirementId, defectId] } },
     });
+    await db.userProjectPermission.deleteMany({ where: { projectId } });
     await db.projects.delete({ where: { id: projectId } });
-    await db.user.delete({ where: { id: adminUserId } });
+    await db.user.deleteMany({
+      where: { id: { in: [adminUserId, memberUserId] } },
+    });
     await db.$disconnect();
   });
 
@@ -199,5 +272,131 @@ describeIntegration("issue version capture trigger (live DB)", () => {
     });
     expect(latest?.version).toBe(4);
     expect(latest?.changedById).toBe(adminUserId);
+  });
+
+  // The rows above are trigger-written history. The model backs that with
+  // `@@deny('create, update, delete', true)` (schema.zmodel, IssueVersions):
+  // no app writer may forge, rewrite or erase a version — ADMIN included —
+  // while reading stays open to any authenticated caller.
+
+  it("REJECTS an IssueVersions create through an ADMIN policy client", async () => {
+    const edb = await authDbFor(adminUserId);
+    const before = await db.issueVersions.count({
+      where: { issueId: requirementId },
+    });
+
+    expect(
+      await isDenied(() =>
+        edb.issueVersions.create({
+          data: {
+            issueId: requirementId,
+            version: 99,
+            title: `${STAMP}-forged`,
+          },
+        })
+      )
+    ).toBe(true);
+
+    expect(
+      await db.issueVersions.count({ where: { issueId: requirementId } })
+    ).toBe(before);
+    expect(
+      await db.issueVersions.findFirst({ where: { title: `${STAMP}-forged` } })
+    ).toBeNull();
+  });
+
+  it("REJECTS an IssueVersions update through an ADMIN policy client", async () => {
+    const edb = await authDbFor(adminUserId);
+    const target = await db.issueVersions.findFirstOrThrow({
+      where: { issueId: requirementId },
+      orderBy: { version: "asc" },
+    });
+
+    expect(
+      await isDenied(() =>
+        edb.issueVersions.update({
+          where: { id: target.id },
+          data: { title: `${STAMP}-rewritten` },
+        })
+      )
+    ).toBe(true);
+
+    const row = await db.issueVersions.findUnique({
+      where: { id: target.id },
+      select: { title: true },
+    });
+    expect(row?.title).toBe(target.title);
+  });
+
+  it("REJECTS an IssueVersions delete through an ADMIN policy client", async () => {
+    const edb = await authDbFor(adminUserId);
+    const target = await db.issueVersions.findFirstOrThrow({
+      where: { issueId: requirementId },
+      orderBy: { version: "asc" },
+    });
+
+    expect(
+      await isDenied(() =>
+        edb.issueVersions.delete({ where: { id: target.id } })
+      )
+    ).toBe(true);
+
+    expect(
+      await db.issueVersions.findUnique({ where: { id: target.id } })
+    ).not.toBeNull();
+  });
+
+  it("lets a non-ADMIN project member READ the versions of a requirement they can see", async () => {
+    const edb = await authDbFor(memberUserId);
+
+    // The member reaches the requirement itself …
+    const issue = await edb.issue.findUnique({ where: { id: requirementId } });
+    expect(issue).not.toBeNull();
+
+    // … and its history, ordered, with the captured text intact.
+    const versions = await edb.issueVersions.findMany({
+      where: { issueId: requirementId },
+      orderBy: { version: "asc" },
+    });
+    expect(versions.map((v) => v.version)).toEqual([1, 2, 3, 4]);
+    expect(versions[0].title).toBe(`${STAMP}-title-v1`);
+    expect(versions[3].title).toBe(`${STAMP}-title-v4`);
+  });
+
+  it("denies that same member every write to the history", async () => {
+    const edb = await authDbFor(memberUserId);
+    const target = await db.issueVersions.findFirstOrThrow({
+      where: { issueId: requirementId },
+      orderBy: { version: "asc" },
+    });
+
+    expect(
+      await isDenied(() =>
+        edb.issueVersions.create({
+          data: {
+            issueId: requirementId,
+            version: 98,
+            title: `${STAMP}-member-forged`,
+          },
+        })
+      )
+    ).toBe(true);
+    expect(
+      await isDenied(() =>
+        edb.issueVersions.update({
+          where: { id: target.id },
+          data: { title: `${STAMP}-member-rewritten` },
+        })
+      )
+    ).toBe(true);
+    expect(
+      await isDenied(() =>
+        edb.issueVersions.delete({ where: { id: target.id } })
+      )
+    ).toBe(true);
+
+    expect(
+      await db.issueVersions.count({ where: { issueId: requirementId } })
+    ).toBe(4);
   });
 });

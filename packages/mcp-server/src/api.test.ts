@@ -3,6 +3,7 @@ import {
   zenstack,
   createCaseVersion,
   lookup,
+  postHostJson,
   resolveActiveRepository,
   resolveDefaultTemplate,
   resolveCaseWorkflowState,
@@ -479,6 +480,119 @@ describe("resolveCaseWorkflowState()", () => {
 });
 
 // ---------------------------------------------------------------------------
+// postHostJson() — bespoke host routes (bulk-create, issues/resolve)
+// ---------------------------------------------------------------------------
+
+describe("postHostJson()", () => {
+  it("TC-22: POSTs the path with bearer headers and returns the parsed body", async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(200, { success: true, resolvedCount: 1, results: [{ key: "PROJ-1", issueId: 9 }] }),
+    );
+
+    const result = await postHostJson("/api/projects/7/issues/resolve", { keys: ["PROJ-1"] }, ENV);
+
+    expect(result).toEqual({
+      success: true,
+      resolvedCount: 1,
+      results: [{ key: "PROJ-1", issueId: 9 }],
+    });
+    const call = fetchMock.mock.calls[0];
+    const url = call[0] as string;
+    const opts = call[1] as RequestInit;
+    expect(url).toBe("https://app.testplanit.com/api/projects/7/issues/resolve");
+    expect(opts.method).toBe("POST");
+    expect((opts.headers as Record<string, string>)["Authorization"]).toBe(HEADERS.Authorization);
+    expect(opts.body).toBe(JSON.stringify({ keys: ["PROJ-1"] }));
+  });
+
+  it("TC-23: non-JSON error body → statusCode kept, code undefined, bare status message", async () => {
+    // Reverse proxies and Next's own error pages answer with HTML, not JSON.
+    fetchMock.mockResolvedValueOnce(
+      new Response("<html>502 Bad Gateway</html>", { status: 502 }),
+    );
+    await expect(
+      postHostJson("/api/projects/7/cases/bulk-create", {}, ENV),
+    ).rejects.toSatisfy((err: unknown) => {
+      expect(err).toBeInstanceOf(TestPlanItHttpError);
+      const e = err as TestPlanItHttpError;
+      expect(e.statusCode).toBe(502);
+      expect(e.code).toBeUndefined();
+      expect(e.message).toBe("HTTP 502 from /api/projects/7/cases/bulk-create");
+      // The raw body never reaches the agent — only the path and the status.
+      expect(e.message).not.toContain("Bad Gateway");
+      return true;
+    });
+  });
+
+  it("TC-24: nested { error: { code, message } } is parsed into code + message", async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(422, { error: { message: "denied by policy", code: "POLICY_DENIAL" } }),
+    );
+    await expect(
+      postHostJson("/api/projects/7/cases/bulk-create", {}, ENV),
+    ).rejects.toSatisfy((err: unknown) => {
+      const e = err as TestPlanItHttpError;
+      expect(e.statusCode).toBe(422);
+      expect(e.code).toBe("POLICY_DENIAL");
+      expect(e.message).toContain("denied by policy");
+      expect(e.message).toContain("/api/projects/7/cases/bulk-create");
+      return true;
+    });
+  });
+
+  it("TC-25: flat { error: string } form is parsed into the message", async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(400, { error: "Template 99 is not an enabled template assigned to project 7." }),
+    );
+    await expect(
+      postHostJson("/api/projects/7/cases/bulk-create", {}, ENV),
+    ).rejects.toSatisfy((err: unknown) => {
+      const e = err as TestPlanItHttpError;
+      expect(e.statusCode).toBe(400);
+      expect(e.code).toBeUndefined();
+      expect(e.message).toContain("Template 99");
+      return true;
+    });
+  });
+
+  it("TC-26: READ_ONLY_TOKEN code survives to the thrown error (errors.ts maps it)", async () => {
+    // Top-level `code`, the shape authorizeProjectApiRequest actually emits.
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(403, {
+        error: "Token is read-only; write operations are not permitted.",
+        code: "READ_ONLY_TOKEN",
+      }),
+    );
+    await expect(
+      postHostJson("/api/projects/7/issues/resolve", { keys: ["PROJ-1"] }, ENV),
+    ).rejects.toSatisfy((err: unknown) => {
+      const e = err as TestPlanItHttpError;
+      expect(e).toBeInstanceOf(TestPlanItHttpError);
+      expect(e.statusCode).toBe(403);
+      expect(e.code).toBe("READ_ONLY_TOKEN");
+      return true;
+    });
+  });
+
+  it("TC-27: nested READ_ONLY_TOKEN code is preserved too", async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(403, {
+        error: { message: "Token is read-only.", code: "READ_ONLY_TOKEN" },
+      }),
+    );
+    const err = await postHostJson("/api/projects/7/issues/resolve", {}, ENV).catch((e) => e);
+    expect((err as TestPlanItHttpError).code).toBe("READ_ONLY_TOKEN");
+  });
+
+  it("TC-28: fetch abort → error propagated", async () => {
+    fetchMock.mockRejectedValueOnce(new DOMException("Aborted", "AbortError"));
+    await expect(
+      postHostJson("/api/projects/7/issues/resolve", {}, ENV),
+    ).rejects.toBeInstanceOf(Error);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // TC-21: Defense-in-depth — no raw token in any error message
 // ---------------------------------------------------------------------------
 
@@ -524,6 +638,20 @@ describe("TC-21: no raw token in any error message", () => {
   it("resolveDefaultTemplate empty → error does not contain tpi_test", async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse(200, { data: [] }));
     const err = await resolveDefaultTemplate(7, ENV).catch((e) => e);
+    expect((err as TestPlanItHttpError).message).not.toContain("tpi_test");
+  });
+
+  it("postHostJson 403 does not contain tpi_test", async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(403, { error: "denied", code: "READ_ONLY_TOKEN" }),
+    );
+    const err = await postHostJson("/api/projects/7/cases/bulk-create", {}, ENV).catch((e) => e);
+    expect((err as TestPlanItHttpError).message).not.toContain("tpi_test");
+  });
+
+  it("postHostJson non-JSON 500 does not contain tpi_test", async () => {
+    fetchMock.mockResolvedValueOnce(new Response("Internal Server Error", { status: 500 }));
+    const err = await postHostJson("/api/projects/7/issues/resolve", {}, ENV).catch((e) => e);
     expect((err as TestPlanItHttpError).message).not.toContain("tpi_test");
   });
 });
