@@ -1,5 +1,11 @@
 # @testplanit/mcp-server
 
+## 1.0.1
+
+### Patch Changes
+
+- [#642](https://github.com/TestPlanIt/testplanit/pull/642) [`1b4bf39`](https://github.com/TestPlanIt/testplanit/commit/1b4bf39af86bce705de7cec6623745a8e9e6bbc2) Thanks [@therealbrad](https://github.com/therealbrad)! - Result `elapsed` is documented as seconds everywhere (the unit the database, UI, exports and `/api/test-runs/submit-result` use — the MCP tool described it as milliseconds and stored the value unchanged, so 95000 showed as "1 day 2 h"), and plain-text result `notes` are stored as a rich-text document (one paragraph per line) so they render in the Test Result History panel instead of an empty editor. `@testplanit/api`'s `createTestResult` now accepts a plain string for `notes` and wraps it the same way.
+
 ## 1.0.0
 
 ### Minor Changes
