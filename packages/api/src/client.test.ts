@@ -305,6 +305,41 @@ describe('TestPlanItClient', () => {
         })
       );
     });
+
+    it('wraps plain-text notes into a rich-text document, one paragraph per line', async () => {
+      mockFetch.mockResolvedValueOnce(zenStackResponse({ id: 457 }));
+
+      await client.createTestResult({
+        testRunId: 123,
+        testRunCaseId: 789,
+        statusId: 1,
+        notes: 'Badge shown.\nRetried once.',
+      });
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body as string);
+      expect(body.data.notes).toEqual({
+        type: 'doc',
+        content: [
+          { type: 'paragraph', content: [{ type: 'text', text: 'Badge shown.' }] },
+          { type: 'paragraph', content: [{ type: 'text', text: 'Retried once.' }] },
+        ],
+      });
+    });
+
+    it('sends document-shaped notes unchanged', async () => {
+      mockFetch.mockResolvedValueOnce(zenStackResponse({ id: 458 }));
+      const doc = { type: 'doc', content: [{ type: 'paragraph' }] };
+
+      await client.createTestResult({
+        testRunId: 123,
+        testRunCaseId: 789,
+        statusId: 1,
+        notes: doc,
+      });
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body as string);
+      expect(body.data.notes).toEqual(doc);
+    });
   });
 
   describe('createJUnitTestResult worker field', () => {

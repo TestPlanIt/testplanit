@@ -47,7 +47,7 @@ Each row carries:
   "isFail": false,
   "executedAt": "2026-05-30T10:00:00.000Z",
   "executedById": "cltg18noo0001i7lh4ia312j5",
-  "elapsedMs": 250,
+  "elapsedMs": 95000,
   "attempt": 1,
   "iterationId": null,
   "editedAt": null,
@@ -126,7 +126,7 @@ Each row carries the actor, the entity touched, the action, the before/after dif
 
 Every response is NDJSON: a sequence of JSON objects separated by `\n`. The shape:
 
-```
+```json
 {"type":"manifest", ...}                ← first line: per-page metadata
 {"id": ..., ...}                        ← row 1
 {"id": ..., ...}                        ← row 2

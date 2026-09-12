@@ -11,6 +11,7 @@ import { zenstack } from "../../../api.js";
 import type { EnvConfig } from "../../../env.js";
 import { mapHttpErrorToToolResult } from "../../../errors.js";
 import { TestPlanItHttpError } from "../../../http.js";
+import { plainTextToProseMirrorDoc } from "../../cases/shared.js";
 import {
   RUN_RESULT_DETAIL_INCLUDE,
   mapRunResultDetail,
@@ -35,7 +36,7 @@ async function submitResult(
     testRunId: number;
     testRunCaseId: number;
     statusId: number;
-    notes: string | undefined;
+    notes: unknown;
     elapsed: number | null;
     attempt: number;
     testRunCaseVersion: number;
@@ -96,14 +97,18 @@ export function registerRunResultsCreate(
         notes: z
           .string()
           .optional()
-          .describe("Plain-text notes for the result."),
+          .describe(
+            "Plain-text notes for the result. Stored as a rich-text document (each line becomes a paragraph) so they show in the Test Result History panel."
+          ),
         elapsed: z
           .number()
           .int()
           .nonnegative()
           .nullable()
           .optional()
-          .describe("Elapsed time in milliseconds, or null."),
+          .describe(
+            "Elapsed execution time in SECONDS (e.g. 95 for 1 min 35 s), or null. Stored as-is; the UI, forecasts and time tracking all read seconds."
+          ),
         fieldValues: z
           .array(
             z.object({
@@ -301,7 +306,7 @@ export function registerRunResultsCreate(
             testRunId: runCase.testRunId,
             testRunCaseId: input.testRunCaseId,
             statusId: statuses[0].id,
-            notes: input.notes,
+            notes: plainTextToProseMirrorDoc(input.notes),
             elapsed: input.elapsed ?? null,
             attempt,
             testRunCaseVersion: 1,

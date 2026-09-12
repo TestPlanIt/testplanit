@@ -1847,7 +1847,8 @@ export class TestPlanItClient {
   // ============================================================================
 
   /**
-   * Create a test result
+   * Create a test result. `elapsed` is in seconds; plain-text `notes` are
+   * wrapped into the rich-text document shape the UI renders.
    */
   async createTestResult(
     options: CreateTestResultOptions
@@ -1863,7 +1864,10 @@ export class TestPlanItClient {
       data.elapsed = options.elapsed;
     }
     if (options.notes) {
-      data.notes = options.notes;
+      data.notes =
+        typeof options.notes === "string"
+          ? plainTextToRichTextDoc(options.notes)
+          : options.notes;
     }
     if (options.evidence) {
       data.evidence = options.evidence;
@@ -2366,4 +2370,21 @@ export class TestPlanItClient {
   getBaseUrl(): string {
     return this.baseUrl;
   }
+}
+
+
+/**
+ * Wrap plain text in the minimal Tiptap/ProseMirror document the TestPlanIt
+ * UI renders for rich-text columns, one paragraph per line. A bare string in
+ * `TestRunResults.notes` shows as an empty editor.
+ */
+function plainTextToRichTextDoc(text: string): Record<string, unknown> {
+  return {
+    type: "doc",
+    content: text.split(/\r?\n/).map((line) =>
+      line === ""
+        ? { type: "paragraph" }
+        : { type: "paragraph", content: [{ type: "text", text: line }] }
+    ),
+  };
 }
