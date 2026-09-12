@@ -238,6 +238,12 @@
       "allIssueTypes": "Alle Vorgangstypen",
       "noIssueType": "Kein Vorgangstyp"
     },
+    "defaults": {
+      "firstTitle": "Dies wird der Standard sein",
+      "firstDescription": "Es existiert noch kein Standard, daher wird dieser zum Standard. Um ihn später zu ändern, legen Sie ein anderes Element als Standard fest.",
+      "lockedTitle": "Aktueller Standard",
+      "lockedDescription": "Der aktuelle Standard kann nicht direkt aufgehoben werden. Legen Sie stattdessen ein anderes Element als Standard fest."
+    },
     "fields": {
       "groupName": "Gruppenname",
       "users": "Benutzer",
@@ -738,7 +744,7 @@
       "adminSamlConfig": "Admin - SAML-Konfiguration",
       "apiDocumentation": "API-Dokumentation",
       "sharedContent": "Gemeinsame Inhalte",
-      "impact": "Auswirkungsanalyse"
+      "impact": "Impact-Analyse"
     },
     "aria": {
       "userMenu": "Benutzermenü",
@@ -1118,8 +1124,8 @@
       "enterDocumentation": "Dokumente eingeben...",
       "noAutomatedTestResults": "Für diesen Durchlauf wurden keine automatisierten Testergebnisse gefunden.",
       "automatedResults": "Automatisierte Ergebnisse",
-      "latestAutomatedResult": "Letztes automatisiertes Ergebnis",
-      "hybridRunHint": "Dieser Durchlauf enthält manuelle und automatisierte Fälle. Automatisierte Ergebnisse, die in den Durchlauf gemeldet werden, aktualisieren den Status jedes Falls; jeder Fall kann dennoch manuell ausgeführt werden."
+      "latestAutomatedResult": "Neuestes automatisiertes Ergebnis",
+      "hybridRunHint": "Dieser Testlauf enthält manuelle und automatisierte Fälle. Automatisierte Ergebnisse, die in den Testlauf gemeldet werden, aktualisieren den Status jedes Falls; jeder Fall kann weiterhin manuell ausgeführt werden."
     },
     "time": {
       "minutes": "{count, plural, =1 {Minute} other {Minuten}}",
@@ -1176,12 +1182,6 @@
       "in": "Ist eines von",
       "hasValue": "Hat Wert",
       "isEmpty": "Ist leer"
-    },
-    "defaults": {
-      "firstTitle": "Dies wird der Standard sein",
-      "firstDescription": "Es existiert noch kein Standard, daher wird dieser zum Standard. Um ihn später zu ändern, legen Sie ein anderes Element als Standard fest.",
-      "lockedTitle": "Aktueller Standard",
-      "lockedDescription": "Der aktuelle Standard kann nicht direkt aufgehoben werden. Legen Sie stattdessen ein anderes Element als Standard fest."
     }
   },
   "api": {
@@ -1541,7 +1541,7 @@
             "labelsLabel": "Bezeichnungen",
             "labelsPlaceholder": "Labels auswählen",
             "labelsAriaLabel": "Anforderungslabels",
-            "labelPreviewNote": "Issues mit einem ausgewählten Label werden beim Speichern zu Anforderungen; Issues ohne ausgewähltes Label sind danach keine Anforderungen mehr.",
+            "labelPreviewNote": "Issues, die eines der ausgewählten Labels tragen, werden beim Speichern zu Anforderungen; Issues ohne ausgewähltes Label sind danach keine Anforderungen mehr.",
             "previewHeading": "Auswirkung dieser Änderung",
             "becomingRequirements": "{count, plural, one {{count} Issue wird zu einer Anforderung} other {{count} Issues werden zu Anforderungen}}",
             "stoppingRequirements": "{count, plural, one {{count} Issue ist keine Anforderung mehr} other {{count} Issues sind keine Anforderungen mehr}}",
@@ -1563,8 +1563,8 @@
             "importStopRequested": "Stopp angefordert — der Import wird nach der aktuellen Seite gestoppt.",
             "importStopNotRunning": "Dieser Import wurde bereits beendet oder bereits gestoppt.",
             "importCancelled": "Import abgebrochen",
-            "settingsSaved": "Einstellungen für Anforderungstypen gespeichert",
-            "saveError": "Einstellungen für Anforderungstypen konnten nicht gespeichert werden"
+            "settingsSaved": "Anforderungstyp-Einstellungen gespeichert",
+            "saveError": "Anforderungstyp-Einstellungen konnten nicht gespeichert werden"
           }
         },
         "integrationAssigned": "Integration erfolgreich zugewiesen",
@@ -2237,15 +2237,15 @@
         }
       },
       "impact": {
-        "title": "Auswirkungsanalyse",
-        "description": "Aktivieren Sie die Auswirkungsanalyse für Tests und verbinden Sie das Repository der zu testenden Anwendung.",
-        "enableLabel": "Auswirkungsanalyse aktivieren",
+        "title": "Impact-Analyse",
+        "description": "Aktivieren Sie die Test-Impact-Analyse und verbinden Sie das Repository der zu testenden Anwendung.",
+        "enableLabel": "Impact-Analyse aktivieren",
         "enableDescription": "Ermöglichen Sie Teammitgliedern, beim Erstellen eines Testlaufs betroffene Tests anhand von Codeänderungen auszuwählen.",
-        "enabledToast": "Auswirkungsanalyse aktiviert",
-        "disabledToast": "Auswirkungsanalyse deaktiviert",
+        "enabledToast": "Impact-Analyse aktiviert",
+        "disabledToast": "Impact-Analyse deaktiviert",
         "noRepos": {
-          "title": "Keine Code-Repositories konfiguriert",
-          "adminDescription": "Richten Sie eine Repository-Verbindung ein, bevor Sie die Auswirkungsanalyse für dieses Projekt konfigurieren.",
+          "title": "Es sind keine Code-Repositories konfiguriert",
+          "adminDescription": "Richten Sie eine Repository-Verbindung ein, bevor Sie Impact für dieses Projekt konfigurieren.",
           "adminLink": "Gehe zu den Code-Repositories",
           "userDescription": "Wenden Sie sich an Ihren Systemadministrator, um eine Verbindung zum Code-Repository einzurichten."
         },
@@ -2258,7 +2258,7 @@
           "branchInputPlaceholder": "Leer lassen, um den Standardzweig des Repositorys zu verwenden",
           "defaultBranch": "Standardzweig des Repositorys",
           "branchesUnavailable": "Zweige konnten nicht aufgelistet werden: {error}",
-          "branchesFallbackHint": "Geben Sie stattdessen den Namen des Zweigs ein."
+          "branchesFallbackHint": "Geben Sie stattdessen den Zweignamen ein."
         },
         "pathPatterns": {
           "title": "Pfadmuster",
@@ -2281,16 +2281,16 @@
         },
         "cache": {
           "title": "Cache-Einstellungen",
-          "description": "Dateien werden in Valkey zwischengespeichert, damit die Code-Pin-Dateiauswahl und die Repository-Markierungen schnell bleiben.",
+          "description": "Dateien werden in Valkey zwischengespeichert, damit die Code-Pin-Dateiauswahl und die Repository-Marker schnell bleiben.",
           "enableLabel": "Dateizwischenspeicherung aktivieren",
-          "disabledWarning": "Die Dateizwischenspeicherung ist deaktiviert. Repository-Markierungen werden nicht gescannt, und die Code-Pin-Dateiauswahl listet Dateien bei jedem Öffnen live von Ihrem Anbieter auf.",
+          "disabledWarning": "Die Dateizwischenspeicherung ist deaktiviert. Repository-Marker werden nicht gescannt, und die Code-Pin-Dateiauswahl listet bei jedem Öffnen Dateien live von Ihrem Anbieter auf.",
           "ttlBefore": "Cache für",
           "ttlDays": "{count, plural, one {Tag} other {Tage}}",
           "ttlAriaLabel": "Cache-Dauer in Tagen",
           "statusTitle": "Cache-Status",
           "refreshButton": "Cache aktualisieren",
           "listingFiles": "Dateien auflisten…",
-          "cachingFiles": "{count} Dateien werden zwischengespeichert…",
+          "cachingFiles": "Zwischenspeicherung {count} Dateien…",
           "statusNeverFetched": "Nie abgeholt",
           "statusPending": "Wird aktualisiert...",
           "lastFetched": "Zuletzt abgerufen",
@@ -2300,18 +2300,18 @@
           "totalSize": "Gesamtgröße"
         },
         "markers": {
-          "title": "Repository-Markierungen",
-          "description": "Kommentar-Annotationen wie @testplanit case:123 und Einträge in .testplanit/testmap.yml werden bei jeder Cache-Aktualisierung zu Code-Pins.",
+          "title": "Repository-Marker",
+          "description": "Kommentarannotationen wie @testplanit case:123 und Einträge in .testplanit/testmap.yml werden bei jeder Cache-Aktualisierung zu Code-Pins.",
           "lastScan": "Letzter Scan: {date}",
           "never": "Noch nicht gescannt",
-          "skippedPrivacy": "Übersprungen: Die Dateizwischenspeicherung ist deaktiviert.",
+          "skippedPrivacy": "Übersprungen: Dateizwischenspeicherung ist deaktiviert.",
           "skippedPartial": "Übersprungen: Dateiinhalte wurden nur teilweise zwischengespeichert.",
-          "summary": "{annotations, plural, one {# Annotation} other {# Annotationen}} · {mapEntries, plural, one {# Zuordnungseintrag} other {# Zuordnungseinträge}} · {created} erstellt · {updated} aktualisiert · {removed} entfernt",
+          "summary": "{annotations, plural, one {# Annotation} other {# Annotationen}} · {mapEntries, plural, one {# Map-Eintrag} other {# Map-Einträge}} · {created} erstellt · {updated} aktualisiert · {removed} entfernt",
           "problems": "{count, plural, one {# Problem} other {# Probleme}}",
           "error": "Scan fehlgeschlagen: {error}"
         },
         "save": "Konfiguration speichern",
-        "saved": "Konfiguration der Auswirkungsanalyse gespeichert",
+        "saved": "Impact-Analyse-Konfiguration gespeichert",
         "saveError": "Konfiguration konnte nicht gespeichert werden",
         "listError": "Fehler beim Auflisten der Repository-Dateien",
         "contentsError": "Dateiinhalt konnte nicht zwischengespeichert werden",
@@ -2323,17 +2323,17 @@
         "validation": {
           "pathRequired": "Pfad erforderlich",
           "patternRequired": "Muster ist erforderlich",
-          "repositoryRequired": "Repository ist erforderlich",
+          "repositoryRequired": "Ein Repository ist erforderlich",
           "pathPatternRequired": "Mindestens ein Pfadmuster ist erforderlich"
         },
         "disconnect": "Repository trennen",
         "confirmDisconnect": "Möchten Sie \"{name}\" wirklich von diesem Projekt trennen?",
         "disconnectWarningTitle": "Durch das Trennen dieses Repositorys wird Folgendes bewirkt:",
         "disconnectWarning1": "{count, plural, one {# Code-Pin} other {# Code-Pins}} und den Analyseverlauf für dieses Repository entfernen",
-        "disconnectWarning2": "Alle zwischengespeicherten Repository-Dateien entfernen",
+        "disconnectWarning2": "Entfernen Sie alle zwischengespeicherten Repository-Dateien",
         "disconnectWarning3": "Pfadmuster und Zweigkonfigurationen entfernen",
         "disconnectSuccess": "Anwendungs-Repository getrennt",
-        "disconnectError": "Fehler beim Trennen des Anwendungs-Repositorys"
+        "disconnectError": "Das Anwendungs-Repository konnte nicht getrennt werden"
       }
     },
     "matrix": {
@@ -2400,6 +2400,10 @@
       "documentation": "Meilensteindokumentation eingeben...",
       "selectType": "Meilensteintyp auswählen...",
       "selectParent": "Wählen Sie den übergeordneten Meilenstein aus..."
+    },
+    "noTypes": {
+      "title": "Keine Meilensteintypen verfügbar",
+      "description": "Diesem Projekt sind keine Meilensteintypen zugewiesen. Bitten Sie einen Administrator, dem Projekt einen Meilensteintyp zuzuweisen oder einen Standard-Meilensteintyp festzulegen."
     },
     "empty": {
       "active": "Keine aktiven Meilensteine",
@@ -2601,10 +2605,6 @@
       "skippedForPermission": "Der Meilenstein wurde abgeschlossen. Die zugehörigen Testläufe und Sitzungen wurden offen gelassen, da Sie nicht die Berechtigung haben, diese abzuschließen.",
       "skippedTestRunsForPermission": "Der Meilenstein wurde abgeschlossen. Die zugehörigen Testläufe wurden offen gelassen, da Sie nicht die Berechtigung haben, diese abzuschließen.",
       "skippedSessionsForPermission": "Der Meilenstein wurde abgeschlossen. Die zugehörigen Sitzungen wurden offen gelassen, da Sie nicht die Berechtigung haben, diese abzuschließen."
-    },
-    "noTypes": {
-      "title": "Keine Meilensteintypen verfügbar",
-      "description": "Diesem Projekt sind keine Meilensteintypen zugewiesen. Bitten Sie einen Administrator, dem Projekt einen Meilensteintyp zuzuweisen oder einen Standard-Meilensteintyp festzulegen."
     }
   },
   "sessions": {
@@ -3008,12 +3008,12 @@
     "version": {
       "notFound": "Testfallversion nicht gefunden.",
       "caseNotFoundTitle": "Dieser Testfall wurde nicht gefunden",
-      "caseNotFoundDescription": "Der Testfall, zu dem diese Version gehört, existiert in diesem Projekt nicht oder wurde gelöscht. Überprüfen Sie den Link, dem Sie gefolgt sind.",
+      "caseNotFoundDescription": "Der Testfall, zu dem diese Version gehört, existiert nicht in diesem Projekt oder wurde gelöscht. Überprüfen Sie den Link, dem Sie gefolgt sind.",
       "backToRepository": "Zurück zum Repository",
-      "invalidVersionTitle": "\"{version}\" ist keine Versionsnummer",
-      "invalidVersionDescription": "Versionen sind ganze Zahlen, die ab 1 aufwärts gezählt werden. Überprüfen Sie den Link, dem Sie gefolgt sind, oder öffnen Sie den Testfall und wählen Sie eine Version aus dem Verlauf aus.",
+      "invalidVersionTitle": "„{version}“ ist keine Versionsnummer",
+      "invalidVersionDescription": "Versionen sind ganze Zahlen, die ab 1 aufwärts zählen. Überprüfen Sie den Link, dem Sie gefolgt sind, oder öffnen Sie den Testfall und wählen Sie eine Version aus dessen Verlauf.",
       "notRecordedTitle": "Version {version} dieses Testfalls wurde nicht aufgezeichnet",
-      "notRecordedDescription": "Es gibt keinen gespeicherten Snapshot für diese Version, daher kann der Testfall nicht so angezeigt werden, wie er zu diesem Zeitpunkt war. Versionen werden aufgezeichnet, wenn ein Fall gespeichert wird; Fälle, die vor der Aufzeichnung von Snapshots erstellt oder geändert wurden, haben keinen anzuzeigenden Verlauf.",
+      "notRecordedDescription": "Für diese Version gibt es keinen gespeicherten Snapshot, daher kann der Testfall nicht so angezeigt werden, wie er zu diesem Zeitpunkt war. Versionen werden aufgezeichnet, wenn ein Fall gespeichert wird; Fälle, die erstellt oder geändert wurden, bevor Snapshots aufgezeichnet wurden, haben keinen anzuzeigenden Verlauf.",
       "viewCurrentCase": "Aktuellen Testfall anzeigen",
       "snapshotUnavailable": "Version {version} wurde nicht aufgezeichnet, daher kann dieses Ergebnis nicht so angezeigt werden, wie der Fall zum Zeitpunkt der Ausführung stand.",
       "detailsRegion": "Details zum Testfall",
@@ -3209,7 +3209,7 @@
           "partialSummary": "{failed, plural, one {# Zeile konnte} other {# Zeilen konnten}} nicht importiert werden. {imported, plural, one {# Testfall wurde} other {# Testfälle wurden}} erfolgreich importiert."
         },
         "warnings": {
-          "partialTitle": "Einige Ticket-Verknüpfungen konnten nicht erstellt werden",
+          "partialTitle": "Einige Ticket-Verknüpfungen wurden nicht erstellt",
           "summary": "{count, plural, one {# Ticket-Zelle} other {# Ticket-Zellen}} konnten nicht verknüpft werden. Die Testfälle wurden importiert."
         },
         "page1": {
@@ -3286,13 +3286,13 @@
     },
     "draft": {
       "saving": "Speichern…",
-      "saved": "Alle Änderungen gespeichert um {time}",
+      "saved": "Alle Änderungen gespeichert {time}",
       "unsaved": "Nicht gespeicherte Änderungen",
       "saveFailed": "Speichern nicht möglich — wird erneut versucht",
       "restoreTitle": "Nicht gespeicherte Änderungen wiederherstellen?",
       "restoreDescription": "Sie haben nicht gespeicherte Änderungen an diesem Testfall von {age}. Stellen Sie sie wieder her oder verwerfen Sie sie und laden Sie die gespeicherte Version.",
       "restoreTitleNew": "Nicht gespeicherten Testfall wiederherstellen?",
-      "restoreDescriptionNew": "Sie haben einen Testfall {age} begonnen und nie gespeichert. Stellen Sie wieder her, was Sie geschrieben haben, oder verwerfen Sie es und beginnen Sie von vorn.",
+      "restoreDescriptionNew": "Sie haben {age} einen Testfall begonnen und ihn nie gespeichert. Stellen Sie wieder her, was Sie geschrieben haben, oder verwerfen Sie es und beginnen Sie neu.",
       "restoreStaleWarning": "Dieser Testfall wurde von jemand anderem gespeichert, seit Ihr Entwurf geschrieben wurde. Das Wiederherstellen ersetzt dessen Inhalt, wenn Sie speichern.",
       "restoreDiscard": "Verwerfen",
       "restoreRestore": "Wiederherstellen",
@@ -3830,8 +3830,8 @@
     },
     "codePins": {
       "add": "Pin hinzufügen",
-      "addDialogDescription": "Pins werden an der aktuellen Branch-Spitze verankert.",
-      "addDialogTitle": "Diesen Fall am Code anpinnen",
+      "addDialogDescription": "Pins werden an der Spitze des aktuellen Branches verankert.",
+      "addDialogTitle": "Diesen Fall an Code anpinnen",
       "addFailed": "Der Pin konnte nicht hinzugefügt werden",
       "addSuccess": "Pin hinzugefügt",
       "anchoredAt": "Verankert bei {sha}",
@@ -3839,12 +3839,12 @@
       "caseLabel": "Testfall",
       "casePlaceholder": "Testfälle suchen...",
       "contentUnavailable": "Dateiinhalt ist nicht verfügbar.",
-      "description": "Code, den dieser Fall abdeckt. Eine Änderung innerhalb eines angepinnten Blocks zieht den Fall in Impact-Analysen ein.",
+      "description": "Code, den dieser Fall abdeckt. Eine Änderung innerhalb eines angepinnten Blocks zieht den Fall in Impact-Analysen hinein.",
       "dismissStale": "Verwerfen",
       "duplicate": "Dieser Pin existiert bereits.",
       "empty": "Noch keine Code-Pins.",
       "endLine": "Endzeile",
-      "errorFileNotFound": "Datei an der Branch-Spitze nicht gefunden.",
+      "errorFileNotFound": "Datei an der Spitze des Branches nicht gefunden.",
       "errorLineOutOfRange": "Der Zeilenbereich liegt außerhalb der Datei.",
       "errorSnippetTooLarge": "Der angepinnte Block ist zu groß.",
       "errorSymbolNotFound": "Symbol in der Datei nicht gefunden.",
@@ -3853,7 +3853,7 @@
       "filesCached": "{count, plural, one {# Datei} other {# Dateien}} zwischengespeichert · {date}",
       "filesLive": "Dateien werden live aus dem Repository aufgelistet",
       "globLabel": "Muster",
-      "globMatches": "{count, plural, =0 {Keine zwischengespeicherten Dateien passen} one {# zwischengespeicherte Datei passt} other {# zwischengespeicherte Dateien passen}}",
+      "globMatches": "{count, plural, =0 {Keine zwischengespeicherten Dateien stimmen überein} one {# zwischengespeicherte Datei stimmt überein} other {# zwischengespeicherte Dateien stimmen überein}}",
       "globPlaceholder": "src/payments/**",
       "kind": "Art",
       "kindFile": "Ganze Datei",
@@ -3861,9 +3861,9 @@
       "kindLabel": "Anpinnen an",
       "kindRange": "Zeilen",
       "kindSymbol": "Symbol",
-      "linesHint": "Klicken Sie auf eine Zeilennummer, um zu beginnen, Umschalt-Klick zum Beenden.",
-      "location": "Ort",
-      "managedTooltip": "Verwaltet vom Repository. Bearbeiten Sie die Markierung im Code.",
+      "linesHint": "Klicken Sie auf eine Zeilennummer, um zu beginnen, und Umschalt-Klick, um zu beenden.",
+      "location": "Standort",
+      "managedTooltip": "Wird vom Repository verwaltet. Bearbeiten Sie die Markierung im Code.",
       "noFilesCached": "Keine zwischengespeicherte Dateiliste. Bitten Sie einen Projektadministrator, den Repository-Cache zu aktualisieren.",
       "noteLabel": "Notiz",
       "notePlaceholder": "Warum dieser Fall diesen Code abdeckt (optional)",
@@ -3876,17 +3876,17 @@
       "removeSuccess": "Pin entfernt",
       "source": "Quelle",
       "sourceAi": "KI",
-      "sourceAnnotation": "Annotation",
+      "sourceAnnotation": "Anmerkung",
       "sourceManual": "Manuell",
       "sourceMapfile": "Map-Datei",
       "staleBadge": "Veraltet",
       "staleFileDeleted": "Datei gelöscht",
       "staleSnippetNotFound": "Zeilen nicht gefunden",
       "staleSymbolNotFound": "Symbol nicht gefunden",
-      "staleTooltip": "Der angepinnte Block konnte an der Branch-Spitze nicht gefunden werden: {reason}.",
+      "staleTooltip": "Der angepinnte Block konnte an der Spitze des Branches nicht gefunden werden: {reason}.",
       "startLine": "Startzeile",
       "submit": "Pin hinzufügen",
-      "symbolHint": "Die Deklaration wird anhand des Namens in der Datei lokalisiert.",
+      "symbolHint": "Die Deklaration wird anhand des Namens in der Datei gefunden.",
       "symbolLabel": "Symbol",
       "symbolNoneDetected": "Keine Symbole erkannt, geben Sie einen Namen ein.",
       "symbolPlaceholder": "funktionsName",
@@ -3894,7 +3894,7 @@
       "updateSuccess": "Pin aktualisiert",
       "updateFailed": "Der Pin konnte nicht aktualisiert werden",
       "editDialogTitle": "Diesen Pin bearbeiten",
-      "editDialogDescription": "Die Datei und der Pin-Typ bleiben unverändert. Um eines von beiden zu ändern, entfernen Sie diesen Pin und fügen Sie einen neuen hinzu.",
+      "editDialogDescription": "Die Datei und der Pin-Typ bleiben unverändert. Um eines von beidem zu ändern, entfernen Sie diesen Pin und fügen Sie einen neuen hinzu.",
       "editAction": "Pin bearbeiten",
       "saveChanges": "Änderungen speichern",
       "symbolSearchPlaceholder": "Symbole suchen...",
@@ -4337,7 +4337,7 @@
     "impact": {
       "title": "Auswirkung",
       "analyzeImpact": "Impact analysieren",
-      "description": "Wählen Sie zwei Commits der getesteten Anwendung aus und legen Sie fest, welche Testfälle von den Änderungen betroffen sind.",
+      "description": "Wählen Sie zwei Commits der zu testenden Anwendung aus und wählen Sie die Testfälle, die von den Änderungen betroffen sind.",
       "noRepository": "Verbinden Sie das Anwendungs-Repository in den Projekteinstellungen, um Impact zu nutzen.",
       "aiUnavailable": "Keine aktive LLM-Integration: Ergebnisse stammen nur aus Code-Pins, Stichwortabgleich und Testlauf-Verlauf.",
       "steps": {
@@ -4360,19 +4360,19 @@
         "modeLabel": "Änderungen auswählen nach",
         "modeCommits": "Commits",
         "modePull": "Pull-Request",
-        "modeCommitsHint": "Was sich zwischen zwei Builds geändert hat, damit Sie alles erneut testen können, was seit der zuletzt geprüften Version dazugekommen ist.",
-        "modePullHint": "Was dieser Pull-Request ändert, gemessen ab dem Punkt, an dem sich sein Branch abgespalten hat, sodass Arbeit, die inzwischen auf dem Ziel-Branch gelandet ist, ausgeschlossen bleibt.",
+        "modeCommitsHint": "Was sich zwischen zwei Builds geändert hat, damit Sie alles erneut testen können, was seit dem zuletzt verifizierten Build eingeflossen ist.",
+        "modePullHint": "Was dieser Pull-Request ändert, gemessen ab der Stelle, an der sein Branch abgezweigt ist, sodass Arbeit, die inzwischen im Ziel-Branch gelandet ist, ausgeschlossen bleibt.",
         "branchLabel": "Zweig",
         "baseLabel": "Basis-Commit",
         "headLabel": "Head-Commit",
         "commitPlaceholder": "Commits suchen...",
-        "searchHint": "Geben Sie einen Commit-Hash ein oder filtern Sie die geladenen Commits nach Nachricht oder Autor.",
-        "refLabel": "Oder eine Referenz einfügen",
-        "refPlaceholder": "Branch, Tag oder Hash",
+        "searchHint": "Geben Sie einen Commit-SHA ein oder filtern Sie die geladenen Commits nach Nachricht oder Autor.",
+        "refLabel": "Oder fügen Sie eine Referenz ein",
+        "refPlaceholder": "Branch, Tag oder SHA",
         "refNotFound": "Referenz nicht gefunden",
-        "latestOnBranch": "Neuester Stand auf {branch}",
-        "previousAnalysisLabel": "Von einer früheren Analyse starten",
-        "previousAnalysisPlaceholder": "Analyse auswählen...",
+        "latestOnBranch": "Neueste auf {branch}",
+        "previousAnalysisLabel": "Von einer vorherigen Analyse ausgehen",
+        "previousAnalysisPlaceholder": "Eine Analyse auswählen...",
         "previousAnalysisOption": "{sha} · {date} · {count, plural, one {# betroffener Test} other {# betroffene Tests}}",
         "sameCommit": "Basis und Head sind derselbe Commit.",
         "swapped": "Basis und Head wurden vertauscht, damit die Änderungen vorwärts gelesen werden.",
@@ -4381,7 +4381,7 @@
       },
       "diff": {
         "summary": "{files, plural, one {# Datei} other {# Dateien}} geändert · +{additions, number} −{deletions, number}",
-        "truncated": "Der Anbieter hat einen partiellen Diff zurückgegeben. Einige geänderte Dateien werden nicht angezeigt oder haben keinen Patch.",
+        "truncated": "Der Anbieter hat einen unvollständigen Diff zurückgegeben. Einige geänderte Dateien werden nicht angezeigt oder haben keinen Patch.",
         "noChanges": "Keine Änderungen zwischen diesen Commits.",
         "statusAdded": "Hinzugefügt",
         "statusModified": "Geändert",
@@ -4407,12 +4407,12 @@
         "waiting_for_ai": "Warten auf KI…",
         "merging": "Ergebnisse werden zusammengeführt…",
         "ranking": "{current} von {total} Kandidaten-Testfällen bewertet",
-        "reused": "Es wird eine aktuelle Analyse derselben Commits wiederverwendet."
+        "reused": "Eine kürzliche Analyse derselben Commits wird wiederverwendet."
       },
       "affected": {
         "title": "{count, plural, =0 {Keine betroffenen Tests} one {# betroffener Test} other {# betroffene Tests}}",
         "description": "Sortiert nach Punktzahl. Jeder Test zeigt, warum er ausgewählt wurde.",
-        "relatedCount": "{count, plural, one {# verwandter Test} other {# verwandte Tests}} wurden niedriger bewertet und sind nicht ausgewählt.",
+        "relatedCount": "{count, plural, one {# verwandter Test} other {# verwandte Tests}} erzielten eine niedrigere Punktzahl und sind nicht ausgewählt.",
         "summary": "Zusammenfassung",
         "score": "Punktzahl",
         "case": "Testfall",
@@ -4428,7 +4428,7 @@
       },
       "noAffected": {
         "title": "Keine betroffenen Tests gefunden",
-        "description": "Kein Testfall passte zu den Änderungen. Pinnen Sie Fälle an die geänderten Dateien an, damit die nächste Analyse sie findet."
+        "description": "Kein Testfall entsprach den Änderungen. Pinnen Sie Fälle an die geänderten Dateien an, damit die nächste Analyse sie findet."
       },
       "reasons": {
         "pin": "Pin",
@@ -4438,7 +4438,7 @@
         "linked": "Verwandt",
         "pinRange": "{path}:{start}–{end}",
         "pinFile": "{path}",
-        "pinGlob": "Passt zu {pattern}",
+        "pinGlob": "Entspricht {pattern}",
         "pinSymbol": "{path} · {symbol}",
         "pathDetail": "„{term}“ in {field} gefunden",
         "fieldName": "Fallname",
@@ -4451,9 +4451,9 @@
       },
       "stale": {
         "badge": "Veraltet",
-        "tooltipAnalysis": "Der angepinnte Block konnte im Basis-Commit nicht gefunden werden; nur anhand des Dateipfads abgeglichen. Erneut von der Testfallseite anpinnen.",
+        "tooltipAnalysis": "Der angepinnte Block konnte im Basis-Commit nicht gefunden werden; Übereinstimmung nur anhand des Dateipfads. Erneut anpinnen von der Testfallseite aus.",
         "title": "{count, plural, one {# veralteter Pin} other {# veraltete Pins}}",
-        "description": "Diese Pins stimmen nicht mehr mit dem Code überein. Verankern Sie sie erneut über die Testfallseite."
+        "description": "Diese Pins stimmen nicht mehr mit dem Code überein. Verankern Sie sie erneut von der Testfallseite aus."
       },
       "uncovered": {
         "title": "{count, plural, one {# geänderte Datei hat keinen Test} other {# geänderte Dateien haben keine Tests}}",
@@ -4462,15 +4462,15 @@
         "pinned": "Angepinnt"
       },
       "warnings": {
-        "diff_truncated_by_provider": "Der Anbieter hat einen partiellen Diff zurückgegeben.",
-        "diff_truncated_by_budget": "Nur ein Teil des Diffs passte in den KI-Kontext; {count, plural, one {# Datei wurde} other {# Dateien wurden}} nur nach Pfad zusammengefasst.",
+        "diff_truncated_by_provider": "Der Anbieter hat einen unvollständigen Diff zurückgegeben.",
+        "diff_truncated_by_budget": "Nur ein Teil des Diffs passte in den KI-Kontext; {count, plural, one {# Datei wurde} other {# Dateien wurden}} nur anhand des Pfads zusammengefasst.",
         "llm_not_configured": "Keine aktive LLM-Integration: KI-Bewertung wurde übersprungen.",
         "search_fallback_db": "Suchindex nicht verfügbar: Stichwortabgleich verwendete die Datenbank.",
-        "search_index_empty": "Dieses Projekt hat keine Fälle im Suchindex, daher verwendete der Stichwortabgleich die Datenbank. Bitten Sie einen Administrator, für bessere Treffer neu zu indexieren.",
+        "search_index_empty": "Dieses Projekt hat keine Fälle im Suchindex, daher verwendete der Stichwortabgleich die Datenbank. Bitten Sie einen Administrator, für bessere Übereinstimmungen neu zu indizieren.",
         "ai_partial": "Einige KI-Stapel sind fehlgeschlagen; die Ergebnisse können unvollständig sein.",
         "ai_truncated": "{count, plural, one {# KI-Stapel wurde} other {# KI-Stapel wurden}} vom Modell abgeschnitten.",
-        "no_candidates": "Kein Testfall passte.",
-        "anchor_fetch_capped": "Einige angepinnte Dateien wurden nur anhand des Pfads abgeglichen (Abrufgrenze erreicht)."
+        "no_candidates": "Kein Testfall stimmte überein.",
+        "anchor_fetch_capped": "Einige angepinnte Dateien wurden nur anhand des Pfads abgeglichen (Abruflimit erreicht)."
       },
       "actions": {
         "compare": "Vergleichen",
@@ -5559,7 +5559,7 @@
         "typeDisplayNameOverwrote": "Anzeigename überschrieben",
         "typeReEmitted": "Wiedereingesandt",
         "typeConflict": "Konflikt",
-        "typeTokenConflict": "Cross-IdP-Konflikt",
+        "typeTokenConflict": "IdP-übergreifender Konflikt",
         "typeUnknown": "Unbekannt",
         "viewPayload": "Nutzlast anzeigen",
         "reEmit": "erneut senden Mitgliedsereignis",
@@ -5636,26 +5636,26 @@
       "fallbackDefaultLabel": "Standard-Zugriffsebene",
       "fallbackDefaultSaved": "Standard-Fallback gespeichert",
       "rotate": {
-        "confirm": "Token erneuern",
-        "title": "SCIM-Token erneuern",
+        "confirm": "Token rotieren",
+        "title": "SCIM-Token rotieren",
         "description": "Generieren Sie einen neuen Bearer für „{name}“. Der Token behält seinen Namen, IdP und alles, was er bereitgestellt hat — nur das Geheimnis ändert sich.",
-        "overlapLabel": "Alten Token weiter funktionsfähig halten für",
+        "overlapLabel": "Den alten Token weiterhin funktionieren lassen für",
         "overlapHint": "Ihr IdP stellt weiterhin mit dem alten Token bereit, bis dieses Zeitfenster endet, sodass Sie den neuen Token ohne Ausfall einfügen können.",
         "overlapNone": "Sofort umschalten",
         "overlap1h": "1 Stunde",
         "overlap24h": "24 Stunden",
         "overlap7d": "7 Tage",
         "overlap30d": "30 Tage",
-        "submit": "Token erneuern",
-        "submitting": "Wird erneuert…",
+        "submit": "Token rotieren",
+        "submitting": "Wird rotiert…",
         "revealTitle": "Neuer SCIM-Token",
-        "revealDescriptionOverlap": "Fügen Sie dies vor Ablauf des Überschneidungsfensters in Ihren IdP ein. Der vorherige Token funktioniert bis dahin weiter.",
+        "revealDescriptionOverlap": "Fügen Sie dies in Ihren IdP ein, bevor das Überlappungsfenster endet. Der vorherige Token funktioniert bis dahin weiterhin.",
         "revealDescriptionImmediate": "Der vorherige Token hat sofort aufgehört zu funktionieren. Fügen Sie dies jetzt in Ihren IdP ein, um die Bereitstellung fortzusetzen."
       },
       "roleMappings": {
         "title": "Rollenzuordnungen",
-        "description": "Ordnen Sie eine von Ihrem Identitätsanbieter für einen Benutzer bestätigte Rolle einer Zugriffsstufe zu. Rollenzuordnungen haben Vorrang vor Gruppenzuordnungen und können den Zugriff daher erhöhen oder verringern.",
-        "empty": "Noch keine Rollenzuordnungen. Benutzer werden durch Gruppenzuordnungen und die Standard-Zugriffsstufe verwaltet.",
+        "description": "Ordnen Sie eine Rolle, die Ihr Identitätsanbieter einem Benutzer zuweist, einer Zugriffsstufe zu. Rollenzuordnungen haben Vorrang vor Gruppenzuordnungen und können den Zugriff daher erhöhen oder verringern.",
+        "empty": "Noch keine Rollenzuordnungen. Benutzer werden durch Gruppenzuordnungen und die Standardzugriffsstufe geregelt.",
         "roleLabel": "Rollenwert",
         "rolePlaceholder": "Rollenwert von Ihrem IdP, z. B. qa-lead",
         "accessLabel": "Zugriffsstufe",
@@ -5985,11 +5985,11 @@
       "mappedAccessNone": "Keine Zuordnung",
       "mappedAccessSelect": "Zugriffsebene auswählen...",
       "projectMappings": {
-        "label": "Projektspezifischer Zugriff",
-        "description": "Gewähren Sie dieser Gruppe eine Zugriffsstufe für bestimmte Projekte, anstelle von — oder zusätzlich zu — der organisationsweiten Stufe oben.",
-        "empty": "Kein projektspezifischer Zugriff. Mitglieder erhalten nur die organisationsweite Stufe oben und den jeweiligen Standard des Projekts.",
+        "label": "Projektbezogener Zugriff",
+        "description": "Gewähren Sie dieser Gruppe eine Zugriffsstufe für bestimmte Projekte, anstelle der — oder zusätzlich zur — organisationsweiten Stufe oben.",
+        "empty": "Kein projektbezogener Zugriff. Mitglieder erhalten nur die organisationsweite Stufe oben und den jeweiligen Standard des einzelnen Projekts.",
         "projectLabel": "Projekt",
-        "projectPlaceholder": "Projekt auswählen…",
+        "projectPlaceholder": "Wählen Sie ein Projekt aus…",
         "accessLabel": "Zugriffsstufe",
         "add": "Projekt hinzufügen",
         "remove": "Projektzugriff entfernen",
@@ -6110,7 +6110,7 @@
         "sharedStepGroups": "Gemeinsame Schrittgruppen",
         "dataSets": "Datensätze",
         "codePins": "Code-Pins",
-        "impactAnalyses": "Impact-Analysen"
+        "impactAnalyses": "Auswirkungsanalysen"
       },
       "table": {
         "title": "Gelöscht {itemType}",
@@ -6602,7 +6602,7 @@
         "generate_from_url_app": "Testfälle aus URL generieren (Anwendungstests)",
         "automation_candidates": "Bericht über Automatisierungskandidaten",
         "derive_case_steps": "KI-Schrittableitung",
-        "impact_analysis": "Auswirkung: Auswahl betroffener Tests"
+        "impact_analysis": "Auswirkung: Betroffene Testauswahl"
       }
     },
     "elasticsearch": {
@@ -7140,7 +7140,7 @@
       "dragDisabled": "Diese Anforderung kann derzeit nicht verschoben werden."
     },
     "list": {
-      "columnName": "Namen",
+      "columnName": "Name",
       "columnStatus": "Status",
       "columnSource": "Quelle",
       "expandRow": "{name} erweitern",
@@ -7193,7 +7193,7 @@
     "create": {
       "dialogTitle": "Anforderung erstellen",
       "dialogDescription": "Fügen Sie dem Anforderungsbaum dieses Projekts eine neue Anforderung hinzu.",
-      "nameLabel": "Namen",
+      "nameLabel": "Name",
       "namePlaceholder": "Geben Sie einen Anforderungsnamen ein...",
       "parentLabel": "Übergeordnet",
       "parentNone": "Kein übergeordnetes Element (oberste Ebene)",
@@ -7345,7 +7345,7 @@
       "title": "Automatisierte Ausführung",
       "description": "Ziele, an die dieses Projekt seine automatisierten Fälle senden kann.",
       "emptyTitle": "Noch keine Ausführungsziele",
-      "emptyDescription": "Fügen Sie ein Ziel hinzu, um die automatisierten Fälle dieses Projekts aus einem Testlauf auszuführen: einen GitHub Actions-Workflow, eine GitLab-CI-Pipeline oder einen signierten Webhook.",
+      "emptyDescription": "Fügen Sie ein Ziel hinzu, um die automatisierten Fälle dieses Projekts aus einem Testlauf auszuführen: einen GitHub-Actions-Workflow, eine GitLab-CI-Pipeline oder einen signierten Webhook.",
       "createButton": "Ziel hinzufügen",
       "createTitle": "Neues Ausführungsziel",
       "editTitle": "Ausführungsziel bearbeiten",
@@ -7355,14 +7355,14 @@
       "repository": "Code-Repository",
       "repositoryPlaceholder": "Repository auswählen",
       "noRepositories": "Es ist kein {provider}-Repository registriert. Bitten Sie einen Administrator, eines unter Admin → Code-Repositories hinzuzufügen.",
-      "workflow": "Arbeitsablauf",
+      "workflow": "Workflow",
       "workflowPlaceholder": "Workflow-Datei auswählen",
       "workflowHelp": "Der Workflow muss einen workflow_dispatch-Trigger mit den TESTPLANIT_*-Eingaben deklarieren; GitHub lehnt nicht deklarierte Eingaben ab.",
       "workflowsUnavailable": "Workflows konnten nicht aufgelistet werden ({error}). Geben Sie stattdessen den Namen der Workflow-Datei ein.",
       "workflowInputPlaceholder": "z. B. e2e.yml",
       "defaultRef": "Zweig",
-      "defaultRefHelp": "Läufe starten auf diesem Zweig, sofern zum Ausführungszeitpunkt keine andere Referenz angegeben wird.",
-      "defaultRefDefault": "Standard-Zweig des Repositorys",
+      "defaultRefHelp": "Testläufe starten auf diesem Zweig, sofern zur Ausführungszeit keine andere Referenz angegeben wird.",
+      "defaultRefDefault": "Standardzweig des Repositorys",
       "defaultRefPlaceholder": "z. B. main",
       "staticInputs": "Workflow-Eingaben",
       "variables": "Pipeline-Variablen",
@@ -7373,26 +7373,26 @@
       "addInput": "Eingabe hinzufügen",
       "removeInput": "Eingabe entfernen",
       "credentials": "Anmeldedaten",
-      "credentialsHelp": "Lassen Sie dieses Feld leer, um die gespeicherten Anmeldedaten des Repositorys zu verwenden.",
+      "credentialsHelp": "Leer lassen, um die gespeicherten Anmeldedaten des Repositorys zu verwenden.",
       "credentialsOverride": "Andere Anmeldedaten für den Dispatch verwenden",
       "personalAccessToken": "Zugriffstoken",
-      "personalAccessTokenHelp": "GitHub: ein Token mit dem Workflow-Bereich (klassisch) oder Actions Lese-/Schreibzugriff (fein abgestuft). GitLab: ein Token mit dem api-Bereich.",
+      "personalAccessTokenHelp": "GitHub: ein Token mit dem Workflow-Bereich (klassisch) oder Actions Lesen/Schreiben (fein abgestuft). GitLab: ein Token mit dem api-Bereich.",
       "triggerToken": "Pipeline-Trigger-Token",
-      "triggerTokenHelp": "Optional. Startet Pipelines ohne Zugriffstoken, aber ihr Status kann nicht gelesen werden.",
-      "clearCredentials": "Überschreibung entfernen und die Repository-Anmeldedaten verwenden",
+      "triggerTokenHelp": "Optional. Startet Pipelines ohne Zugriffstoken, aber deren Status kann nicht gelesen werden.",
+      "clearCredentials": "Die Überschreibung entfernen und die Anmeldedaten des Repositorys verwenden",
       "webhookUrl": "Webhook-URL",
       "webhookUrlPlaceholder": "https://ci.example.com/hooks/testplanit",
       "webhookUrlHelp": "TestPlanIt sendet hier eine signierte POST-Anfrage. Der Empfänger überprüft X-TestPlanIt-Signature, startet den Job und meldet die Ergebnisse mit dem Reporter oder der CLI zurück.",
-      "secret": "Signaturschlüssel",
-      "secretHelp": "Wird beim Speichern des Ziels generiert und einmalig angezeigt.",
-      "secretCustom": "Eigenen Schlüssel bereitstellen",
-      "rotateSecret": "Neuen Signaturschlüssel generieren",
+      "secret": "Signierungsgeheimnis",
+      "secretHelp": "Wird generiert, wenn das Ziel gespeichert wird, und einmalig angezeigt.",
+      "secretCustom": "Eigenes Geheimnis angeben",
+      "rotateSecret": "Neues Signierungsgeheimnis generieren",
       "payloadPreview": "Payload",
       "timeout": "Timeout (Minuten)",
-      "timeoutHelp": "Eine Ausführung, die bis dahin nicht abgeschlossen ist, wird als zeitüberschritten markiert.",
+      "timeoutHelp": "Eine Ausführung, die bis dahin nicht abgeschlossen ist, wird als abgelaufen markiert.",
       "enabled": "Aktiviert",
       "hasOwnCredentials": "Eigene Anmeldedaten",
-      "usesRepositoryCredentials": "Repository-Anmeldedaten",
+      "usesRepositoryCredentials": "Anmeldedaten des Repositorys",
       "verify": "Überprüfen",
       "verifying": "Wird überprüft…",
       "verifyOk": "Ziel überprüft",
@@ -7402,15 +7402,15 @@
       "lastVerified": "Zuletzt überprüft",
       "neverVerified": "Noch nicht überprüft",
       "deleteConfirmTitle": "Dieses Ausführungsziel löschen?",
-      "deleteConfirm": "Vergangene Ausführungen behalten ihren Verlauf. Läufe können nicht mehr an dieses Ziel gesendet werden.",
+      "deleteConfirm": "Vergangene Ausführungen behalten ihren Verlauf. An dieses Ziel können keine Testläufe mehr gesendet werden.",
       "saved": "Ausführungsziel gespeichert",
       "deleted": "Ausführungsziel gelöscht",
       "enabledToast": "Ziel aktiviert",
       "disabledToast": "Ziel deaktiviert",
-      "revealedSecretTitle": "Signaturschlüssel jetzt kopieren",
-      "revealedSecretWarning": "Dieser Schlüssel wird einmalig angezeigt. Ihr Empfänger verwendet ihn, um den X-TestPlanIt-Signature-Header bei jedem Dispatch zu überprüfen; Systeme, die sich auf andere Weise authentifizieren (z. B. ein Jenkins-Trigger-Token), können ihn ignorieren. Speichern Sie ihn im Secret-Store Ihres CI-Systems; TestPlanIt kann ihn nicht erneut anzeigen.",
+      "revealedSecretTitle": "Kopieren Sie jetzt das Signierungsgeheimnis",
+      "revealedSecretWarning": "Dieses Geheimnis wird nur einmal angezeigt. Ihr Empfänger verwendet es, um den X-TestPlanIt-Signature-Header bei jedem Dispatch zu überprüfen; Systeme, die sich anders authentifizieren (zum Beispiel ein Jenkins-Trigger-Token), können es ignorieren. Speichern Sie es im Geheimnisspeicher Ihres CI-Systems; TestPlanIt kann es nicht erneut anzeigen.",
       "copySecret": "Kopieren",
-      "secretCopied": "Schlüssel kopiert",
+      "secretCopied": "Geheimnis kopiert",
       "done": "Fertig",
       "errors": {
         "invalid": "Das Ziel konnte nicht gespeichert werden. Überprüfen Sie das Formular und versuchen Sie es erneut.",
@@ -7427,24 +7427,24 @@
     "execute": {
       "button": "Automatisierte Fälle ausführen",
       "title": "Automatisierte Fälle ausführen",
-      "description": "TestPlanIt startet den Job des Ziels mit der ID dieses Laufs. Der Job liest den Plan der automatisierten Testfälle, führt sie aus und meldet die Ergebnisse zurück in diesen Lauf.",
+      "description": "TestPlanIt startet den Job des Ziels mit der ID dieses Testlaufs. Der Job liest den Plan der automatisierten Fälle, führt sie aus und meldet die Ergebnisse zurück in diesen Testlauf.",
       "noTargets": "Für dieses Projekt ist kein Ausführungsziel konfiguriert.",
-      "noAutomatedCases": "Dieser Lauf hat keine automatisierten Fälle zum Ausführen.",
-      "activeExecution": "Für diesen Lauf läuft bereits eine Ausführung.",
+      "noAutomatedCases": "Dieser Testlauf hat keine automatisierten Fälle zum Ausführen.",
+      "activeExecution": "Für diesen Testlauf läuft bereits eine Ausführung.",
       "target": "Ziel",
       "targetPlaceholder": "Ziel auswählen",
       "ref": "Zweig oder Referenz",
-      "refHelp": "Lassen Sie dieses Feld leer, um den Standard-Zweig des Ziels zu verwenden.",
+      "refHelp": "Leer lassen, um den Standardzweig des Ziels zu verwenden.",
       "caseCountSummary": "{count, plural, one {# automatisierter Fall wird angefordert} other {# automatisierte Fälle werden angefordert}}",
-      "resultsNote": "Ergebnisse werden diesem Lauf zugeordnet, wenn der Job mit TESTPLANIT_RUN_ID={runId} meldet.",
+      "resultsNote": "Ergebnisse werden diesem Testlauf angehängt, wenn der Job mit TESTPLANIT_RUN_ID={runId} meldet.",
       "submit": "Ausführen",
       "submitting": "Wird angefordert…",
       "dispatched": "Ausführung angefordert",
       "dispatchFailed": "Die Ausführung konnte nicht angefordert werden",
       "status": "Ausführung",
       "requestedBy": "Angefordert von {name}",
-      "timesOutAt": "Abbruch um",
-      "openInProvider": "In {provider} öffnen",
+      "timesOutAt": "Läuft ab um",
+      "openInProvider": "Öffnen in {provider}",
       "cancel": "Ausführung abbrechen",
       "cancelConfirmTitle": "Diese Ausführung abbrechen?",
       "cancelConfirm": "TestPlanIt markiert sie als abgebrochen und bittet den Anbieter, den Job zu stoppen, sobald dies möglich ist. Ergebnisse, die dennoch eintreffen, werden beibehalten.",
@@ -7452,7 +7452,7 @@
       "retry": "Wiederholen",
       "history": "Ausführungsverlauf",
       "historyTitle": "Ausführungsverlauf",
-      "historyDescription": "Jeder Dispatch der automatisierten Fälle dieses Laufs, neueste zuerst.",
+      "historyDescription": "Jeder Dispatch der automatisierten Fälle dieses Testlaufs, neueste zuerst.",
       "historyEmpty": "Noch keine Ausführungen.",
       "columnStatus": "Status",
       "columnTarget": "Ziel",
@@ -7469,10 +7469,10 @@
     "adhoc": {
       "button": "Automatisierten Test ausführen",
       "title": "Diesen automatisierten Fall ausführen",
-      "description": "TestPlanIt erstellt einen Lauf mit diesem Fall, bittet das Ziel, ihn auszuführen, und schließt den Lauf ab, wenn der Job beendet ist.",
+      "description": "TestPlanIt erstellt einen Testlauf, der diesen Fall enthält, bittet das Ziel, ihn auszuführen, und schließt den Testlauf ab, sobald der Job beendet ist.",
       "runName": "Automatisiert: {title}",
       "runCreated": "Ausführung angefordert",
-      "openRun": "Lauf öffnen",
+      "openRun": "Testlauf öffnen",
       "notAutomated": "Dieser Fall ist nicht als automatisiert markiert."
     }
   },
@@ -7480,11 +7480,11 @@
     "ExecutionProvider": {
       "GITHUB_ACTIONS": "GitHub Actions",
       "GITLAB_CI": "GitLab CI",
-      "GENERIC_WEBHOOK": "Generischer Webhook"
+      "GENERIC_WEBHOOK": "Allgemeiner Webhook"
     },
     "TestRunExecutionStatus": {
       "PENDING": "Ausstehend",
-      "DISPATCHED": "Gesendet",
+      "DISPATCHED": "Versendet",
       "RUNNING": "Läuft",
       "SUCCEEDED": "Job erfolgreich",
       "FAILED": "Job fehlgeschlagen",
@@ -7617,7 +7617,7 @@
     "scim": "## SCIM-Bereitstellung\nBenutzer Ihres Identitätsanbieters werden über SCIM 2.0 in TestPlanIt bereitgestellt.",
     "scimConflicts": "## Konfliktprotokoll für externe IDs\nSCIM-Identitätsereignisse, die einen Systemeingriff erforderten (Verknüpfung, Wiederherstellung, Überschreiben des Anzeigenamens, übersprungene Mitglieder).",
     "scimFallbackDefault": "## Standardmäßig zugeordneter Zugriff\nZugriffsebene, die Benutzern zugewiesen wird, die von keiner Gruppenzuordnung erfasst werden.",
-    "scimRoleMappings": "## Rollenzuordnungen\nOrdnet einen von Ihrem Identitätsanbieter bestätigten `roles`-Wert einer Zugriffsstufe zu. Eine Rollenzuordnung hat Vorrang vor Gruppenzuordnungen: Ein Benutzer, dem der IdP eine zugeordnete Rolle gibt, erhält diese Stufe, selbst wenn eine Gruppe ihm mehr gewähren würde. Nicht zugeordnete Rollenwerte werden ignoriert.",
+    "scimRoleMappings": "## Rollenzuordnungen\nOrdnet einen von Ihrem Identitätsanbieter bestätigten `roles`-Wert einer Zugriffsstufe zu. Eine Rollenzuordnung hat Vorrang vor Gruppenzuordnungen: Ein Benutzer, dem der IdP eine zugeordnete Rolle zuweist, erhält diese Stufe, auch wenn eine Gruppe ihm mehr gewähren würde. Nicht zugeordnete Rollenwerte werden ignoriert.",
     "integrations": "## Issue-Integrationen\nVerwaltung von Drittanbieterintegrationen für die Problemverfolgung.",
     "notifications": "## Benachrichtigungsverwaltung\nLegen Sie die Standardeinstellungen für Benachrichtigungen fest (Benutzer können diese überschreiben) und versenden Sie Systembenachrichtigungen.",
     "notificationsSystem": "## Systembenachrichtigungen\nWichtige Ankündigungen an alle Benutzer senden.",
@@ -7754,7 +7754,7 @@
     "group": {
       "name": "## Gruppenname\nEin klarer, prägnanter und beschreibender Name oder ein oder mehrere Schlüsselwörter, die in allen Projekten verwendet werden.\n\n– Hilft Teammitgliedern, schnell verwandte Testfälle, Testläufe und Sitzungen zu finden.",
       "users": "## Benutzer\nZeigt die Benutzer an, die dieser Gruppe zugeordnet sind.",
-      "projectMappedAccess": "## Zugriff pro Projekt\nGewährt Mitgliedern dieser Gruppe eine Zugriffsstufe für ein bestimmtes Projekt, die anhand der normalen Berechtigungsregeln des Projekts aufgelöst wird.\n\n- **Benutzer** gibt Mitgliedern ihre eigene globale Rolle für dieses Projekt\n- **Projektadmin** und **Admin** gewähren beide die Rolle Projektadmin für dieses Projekt — innerhalb eines einzelnen Projekts ist Projektadmin die stärkste Berechtigung, die es gibt\n- Der Zugriff pro Projekt **gewährt** nur. Er kann den Zugriff, den die Standardeinstellung eines Projekts bereits gewährt, nicht entziehen, weshalb es hier keine Option „Keine“ gibt\n- Das Entfernen einer Zuordnung widerruft die Berechtigung; Mitglieder fallen auf den Projektstandard zurück",
+      "projectMappedAccess": "## Projektbezogener Zugriff\nGewährt Mitgliedern dieser Gruppe eine Zugriffsstufe für ein bestimmtes Projekt, aufgelöst über die normalen Berechtigungsregeln des Projekts.\n\n- **Benutzer** gibt Mitgliedern ihre eigene globale Rolle für dieses Projekt\n- **Projektadministrator** und **Administrator** gewähren beide die Rolle Projektadministrator für dieses Projekt — innerhalb eines einzelnen Projekts ist Projektadministrator die stärkste dort verfügbare Berechtigung\n- Projektbezogener Zugriff **gewährt** nur. Er kann keinen Zugriff entziehen, den die Standardeinstellung des Projekts bereits gewährt, weshalb es hier keine Option \"Keine\" gibt\n- Das Entfernen einer Zuordnung widerruft die Gewährung; Mitglieder fallen auf die Projektstandardeinstellung zurück",
       "mappedAccess": "## Zugeordnete Zugriffsebene\nMitglieder dieser Gruppe erhalten bei der nächsten Synchronisierung mindestens diese Zugriffsebene.\n\n- Die höchste Ebene aller Gruppen eines Benutzers setzt sich durch\n- „Keine Zuordnung“ bedeutet, dass diese Gruppe den Zugriff nicht beeinflusst — Mitglieder greifen auf den auf der SCIM-Seite festgelegten Standard zurück\n- Eine manuelle Zugriffsänderung bei einem Benutzer übernimmt Vorrang vor der Zuordnung (und wird auf dem Bearbeitungsbildschirm dieses Benutzers markiert)"
     },
     "template": {
@@ -7769,11 +7769,11 @@
       "name": "## Integrationsname\nEine beschreibende Bezeichnung für diese LLM-Integration.\n\n- Wird verwendet, um sie in Listen und Einstellungen zu identifizieren.\n- Beispiel: \"OpenAI GPT-4o\" oder \"Internes Ollama\"",
       "provider": "## Provider\nDer LLM-Dienst, der diese Integration ermöglicht.\n\n- Bestimmt das API-Protokoll und die verfügbaren Modelle.\n- Kann nach der Erstellung nicht mehr geändert werden.",
       "apiKey": "## API-Schlüssel\nIhr Authentifizierungsschlüssel für die API des LLM-Anbieters.\n\n- Diesen erhalten Sie in der Entwicklerkonsole Ihres Anbieters.\n- Wird verschlüsselt gespeichert und nach dem Speichern nicht mehr angezeigt.\n- Für Ollama (lokale Bereitstellung) nicht erforderlich.",
-      "endpoint": "## API-Endpunkt\nDie Basis-URL für die API des LLM-Anbieters.\n\n- Für OpenAI, Anthropic, Gemini und DeepSeek leer lassen – offizielle URLs werden automatisch verwendet\n- Erforderlich für Ollama (z. B. `http://localhost:11434`), Azure OpenAI und benutzerdefiniertes LLM\n- Optional für jeden Anbieter – geben Sie einen OpenAI-kompatiblen Proxy (z. B. LiteLLM) an, indem Sie dessen URL eingeben\n- **Private/interne Adressen** (localhost, 127.0.0.1, private IPs, Cloud-Metadaten) sind blockiert, sofern sie nicht explizit über die Umgebungsvariable `ALLOWED_PRIVATE_HOSTS` zugelassen werden",
+      "endpoint": "## API-Endpunkt\nDie Basis-URL für die API des LLM-Anbieters.\n\n- Für OpenAI, Anthropic, Gemini und DeepSeek leer lassen — offizielle URLs werden automatisch verwendet\n- Erforderlich für Ollama (z. B. `http://localhost:11434`), Azure OpenAI und benutzerdefiniertes LLM\n- Optional für jeden Anbieter — geben Sie die URL eines OpenAI-kompatiblen Proxys (z. B. LiteLLM) an\n- **Private/interne Adressen** (localhost, 127.0.0.1, private IPs, Cloud-Metadaten) sind blockiert, sofern sie nicht explizit über die Umgebungsvariable `ALLOWED_PRIVATE_HOSTS` zugelassen werden",
       "deploymentName": "## Azure-Bereitstellungsname\nDer Name Ihrer Azure OpenAI-Modellbereitstellung.\n\n- Zu finden in Azure OpenAI Studio unter Bereitstellungen.\n- Unterscheidet sich vom Modellnamen – z. B. wird `my-gpt4-deploy` auf `gpt-4` abgebildet.\n- Nur für Azure OpenAI erforderlich.",
-      "defaultModel": "## Standardmodell\nDas für KI-Anfragen mit dieser Integration verwendete Modell.\n\n- Für OpenAI, Anthropic, Gemini, DeepSeek, Ollama und OpenAI-kompatible benutzerdefinierte Endpunkte (z. B. LiteLLM) werden verfügbare Modelle automatisch abgerufen.\n- Wenn der Anbieter auch die Modellpreise meldet, werden die Kostenfelder bei der Auswahl automatisch ausgefüllt.\n- Stellen Sie sicher, dass das Modell in Ihrem Anbieterkonto aktiviert ist.\n- Beispiel: `gpt-4o`, `claude-3-5-sonnet-20241022`, `gemini-1.5-pro`, `deepseek-v4-flash`",
+      "defaultModel": "## Standardmodell\nDas für KI-Anfragen mit dieser Integration verwendete Modell.\n\n- Für OpenAI, Anthropic, Gemini, DeepSeek, Ollama und OpenAI-kompatible benutzerdefinierte Endpunkte (z. B. LiteLLM) — verfügbare Modelle werden automatisch abgerufen\n- Wenn der Anbieter auch Modellpreise meldet, werden die Kostenfelder bei der Auswahl automatisch ausgefüllt\n- Stellen Sie sicher, dass das Modell in Ihrem Anbieterkonto aktiviert ist\n- Beispiel: `gpt-4o`, `claude-3-5-sonnet-20241022`, `gemini-1.5-pro`, `deepseek-v4-flash`",
       "maxTokensPerRequest": "## Max Tokens Per Request\nDie **feste Obergrenze für _Ausgabe_-Tokens**, die das Modell in einer einzelnen Antwort erzeugen darf.\n\n- Begrenzt die Länge der **Antwort** des Modells — nicht, wie viel Kontext du ihm sendest\n- Anfragen, die mehr als dieses Limit verlangen, werden **abgelehnt, bevor sie das Modell erreichen**\n- Setze es auf das tatsächliche maximale Ausgabelimit deines Modells — z. B. `128000` für Claude Opus/Sonnet, `64000` für Claude Haiku, `65536` für Gemini, `16384` für GPT-4o\n- Zu niedrig → KI-Funktionen schlagen fehl oder erzeugen abgeschnittene Ausgaben",
-      "defaultMaxTokens": "## Standard-Max-Tokens\nDie **_Ausgabe_-Länge**, die dieses KI-Modell bei Anfragen verlangt, begrenzt durch _Max Tokens Per Request_.\n\n- **Testfallgenerierung** (jede Quelle, einschließlich des Jira-Issue-Panels), **Markdown-Testfall-Parsing**, **Editor-Schreibassistent** und **Intelligente Testfallauswahl** verwenden immer diesen Wert — ihre Prompt-Config _Max Output Tokens_ wird nicht angewendet\n- **Export-Codegenerierung**, **KI-Tag-Vorschläge**, **KI-Schrittableitung** und der **Bericht zu Automatisierungskandidaten** verwenden stattdessen ihre eigenen _Max Output Tokens_ aus **Admin → Prompt Config**\n- Modelle, die vor der Antwort nachdenken (z. B. Claude Opus 5), verbrauchen einen Teil dieses Budgets für das Reasoning — lassen Sie Raum für die Antwort\n- Es steuert **nicht**, wie viel Repository-Code QuickScript an das Modell sendet — dieses Budget wird automatisch aus dem Kontextfenster des Modells abgeleitet\n- Halten Sie ihn ≤ _Max Tokens Per Request_",
+      "defaultMaxTokens": "## Standard-Max-Tokens\nDie **_Ausgabe_-Länge**, die dieses KI-Modell anfordert, begrenzt durch _Max Tokens Per Request_.\n\n- **Testfallgenerierung** (jede Quelle, einschließlich des Jira-Issue-Panels), **Markdown-Testfall-Parsing**, **Editor-Schreibassistent** und **Intelligente Testfallauswahl** verwenden immer diesen Wert — ihre Prompt-Config-_Max Output Tokens_ werden nicht angewendet\n- **Export-Codegenerierung**, **KI-Tag-Vorschläge**, **KI-Schritt-Ableitung** und der **Bericht zu Automatisierungskandidaten** verwenden stattdessen ihre eigenen _Max Output Tokens_ aus **Admin → Prompt Config**\n- Modelle, die vor der Antwort nachdenken (z. B. Claude Opus 5), verbrauchen einen Teil dieses Budgets für das Reasoning — lassen Sie Raum für die Antwort\n- Es steuert **nicht**, wie viel Repository-Code QuickScript an das Modell sendet — dieses Budget wird automatisch aus dem Kontextfenster des Modells abgeleitet\n- Halten Sie es ≤ _Max Tokens Per Request_",
       "repoContextBudget": "## Repository-Kontextbudget\nWie viel Code deines verbundenen Repositorys QuickScript dem Modell bei der Skriptgenerierung zuführt.\n\n- **Wird automatisch festgelegt** anhand des Eingabekontextfensters des ausgewählten Modells — hier gibt es nichts zu konfigurieren\n- Modelle mit größerem Kontext (Claude, Gemini, DeepSeek) erhalten mehr; kleine lokale Modelle erhalten eine sichere Menge, die nicht überläuft\n- Mehr Kontext verankert das Skript in deinen echten Page Objects und Fixtures – es ändert nicht, wie lang das generierte Skript ist",
       "maxRequestsPerMinute": "## Maximale Anfragen pro Minute\nBegrenzt die Anzahl der API-Aufrufe, die pro Minute an diesen Anbieter gesendet werden können.\n\n- Entsprechend dem Ratenlimit Ihres Anbietertarifs einstellen.\n- Überschüssige Anfragen werden in eine Warteschlange gestellt, nicht abgelehnt.\n- Informationen zum Limit Ihres Tarifs finden Sie in der Dokumentation Ihres Anbieters.",
       "costPerInputToken": "## Kosten pro 1 Million Input-Token (USD)\nDie Kosten in USD pro **Million** gesendeter Input- (Prompt-) Token an das Modell.\n\n- Wird zur Kostenverfolgung und für Budgetwarnungen verwendet\n- Wird automatisch ausgefüllt, wenn Ihr Anbieter die Modellpreise meldet (LiteLLM, OpenRouter, Together AI) — angewendet, wenn Sie ein Modell auswählen oder eine Testverbindung durchführen\n- Andernfalls finden Sie diese Angabe auf der Preisseite Ihres Anbieters\n- Beispiel: `0.15` = 0,15 $ pro Million Input-Token",
@@ -8038,7 +8038,7 @@
       "systemPrompt": "## Systemaufforderung\nAnweisungen, die vor jeder Benutzereingabe an das KI-Modell gesendet werden. Definiert die Rolle, das Ausgabeformat und die Einschränkungen des Modells.\n\n- Unterstützt Platzhalter in doppelten geschweiften Klammern (z. B. FRAMEWORK, LANGUAGE, CASE_NAME), die zur Laufzeit ersetzt werden.\n- Änderungen hier wirken sich auf alle Projekte aus, die diese Konfiguration verwenden.",
       "userPrompt": "## Benutzereingabe\nDie Nachricht, die im Namen des Benutzers an die KI gesendet wird. Lassen Sie dieses Feld leer, wenn die Funktion die Benutzernachricht vollständig im Code erstellt.\n\n- Unterstützt Platzhalter in doppelten geschweiften Klammern (z. B. ISSUE_TITLE, CASE_NAME, CODE_CONTEXT), die zur Laufzeit ersetzt werden.\n- Die verfügbaren Platzhalter für jede Funktion sind im Abschnitt „Variablen“ unten aufgeführt.",
       "temperature": "## Temperatur\nSteuert die Zufälligkeit der KI-Ausgabe. Bereich: 0–2.\n\n- **0,0–0,3** — Sehr deterministisch, am besten geeignet für strukturierte Ausgaben (JSON, Code).\n- **0,4–0,7** — Ausgewogen, gut für die Generierung von Testfällen.\n- **0,8–2,0** — Kreativer und abwechslungsreicher, geeignet für offene Texte.",
-      "maxOutputTokens": "## Maximale Ausgabetoken\nDie maximale Anzahl an Token, die das Modell in einer einzelnen Antwort generiert.\n\n- Höhere Werte ermöglichen längere Antworten, erhöhen aber Kosten und Latenz.\n- Typische Bereiche: 2048 für kurze Texte, 4096 für Codegenerierung, 6000+ für Ausgaben mit mehreren Testfällen.\n- Gilt für Export-Codegenerierung, KI-Tag-Vorschläge, KI-Schrittableitung und den Bericht zu Automatisierungskandidaten.\n- Testfallgenerierung, Markdown-Testfall-Parsing, Editor-Schreibassistent und Intelligente Testfallauswahl verwenden stattdessen die _Standard-Max-Tokens_ des KI-Modells."
+      "maxOutputTokens": "## Maximale Ausgabetoken\nDie maximale Anzahl an Token, die das Modell in einer einzelnen Antwort generiert.\n\n- Höhere Werte ermöglichen längere Antworten, erhöhen jedoch Kosten und Latenz.\n- Typische Bereiche: 2048 für kurze Texte, 4096 für Codegenerierung, 6000+ für Ausgaben mit mehreren Testfällen.\n- Gilt für Export-Codegenerierung, KI-Tag-Vorschläge, KI-Schritt-Ableitung und den Bericht zu Automatisierungskandidaten.\n- Testfallgenerierung, Markdown-Testfall-Parsing, Editor-Schreibassistent und Intelligente Testfallauswahl verwenden stattdessen die _Standard-Max-Tokens_ des KI-Modells."
     },
     "menu": {
       "startTour": "Geführte Willkommenstour",
@@ -8297,7 +8297,7 @@
     "projectRunsFilters": "## Testläufe filtern\n\nAktivieren Sie ein Chip, um die Liste einzugrenzen. Chips gelten sowohl für die Tabs „Aktiv“ als auch „Abgeschlossen“ und werden auf diesem Gerät für dieses Projekt gespeichert.\n\n- **Manuell** / **Automatisiert** — beschränkt die Liste auf diese Art von Testlauf. Wenn beide aktiviert (oder beide deaktiviert) sind, werden alle Testläufe angezeigt.\n- **Meine Testläufe** — nur Testläufe, an denen Sie beteiligt sind: Sie haben den Testlauf erstellt, Ihnen ist ein Testfall darin zugewiesen, oder Sie haben ein Testergebnis darin erfasst.",
     "projectSessionsFilters": "## Sitzungen filtern\n\nAktivieren Sie einen Chip, um die Liste einzugrenzen. Chips gelten sowohl für die Registerkarten \"Aktiv\" als auch \"Abgeschlossen\" und werden auf diesem Gerät für dieses Projekt gespeichert.\n\n- **Meine Sitzungen** — nur Sitzungen, an denen Sie beteiligt sind: Sie haben die Sitzung erstellt oder sie wurde Ihnen zugewiesen.",
     "projectImpact": "## Auswirkung\nVerbinden Sie das Repository der zu testenden Anwendung, damit dieses Projekt eine Testauswirkungsanalyse durchführen kann: Wählen Sie zwei Commits aus, um zu sehen, welche Testfälle von den Änderungen betroffen sind, und verknüpfen Sie Testfälle mit dem Code, den sie abdecken.",
-    "projectAutomation": "## Automatisierte Ausführung\nAusführungsziele teilen TestPlanIt mit, wo die automatisierten Fälle dieses Projekts ausgeführt werden sollen: ein GitHub-Actions-Workflow, eine GitLab-CI-Pipeline oder ein signierter Webhook für jedes andere System. Wenn ein Testlauf ausgeführt wird, startet TestPlanIt den Job mit der Testlauf-ID und einer Plan-URL; der Job liest den Plan, führt die passenden Tests aus und meldet die Ergebnisse mit einem Reporter oder der CLI zurück, der bzw. die an diesen Testlauf gebunden ist. Ziele können deaktiviert werden, ohne gelöscht zu werden."
+    "projectAutomation": "## Automatisierte Ausführung\nAusführungsziele teilen TestPlanIt mit, wo die automatisierten Fälle dieses Projekts ausgeführt werden sollen: ein GitHub-Actions-Workflow, eine GitLab-CI-Pipeline oder ein signierter Webhook für jedes andere System. Wenn ein Testlauf ausgeführt wird, startet TestPlanIt den Job mit der Lauf-ID und einer Plan-URL; der Job liest den Plan, führt die passenden Tests aus und meldet die Ergebnisse mit einem Reporter oder der CLI zurück, die diesem Lauf zugeordnet ist. Ziele können deaktiviert werden, ohne gelöscht zu werden."
   },
   "reports": {
     "ui": {
@@ -8768,7 +8768,7 @@
         "noLongerFailing": "Nicht mehr fehlgeschlagen",
         "byChangeKind": "Anforderungen nach Änderung",
         "noChanges": "Keine Abdeckungsänderungen zwischen den beiden Seiten.",
-        "snapshotsMenu": "Snapshot-Menü",
+        "snapshotsMenu": "Snapshots",
         "openSnapshotInReport": "Im Bericht zur Anforderungsverfolgung öffnen"
       },
       "crossProjectReportTypes": {
