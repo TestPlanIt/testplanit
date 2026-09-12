@@ -17,6 +17,15 @@ vi.mock("~/lib/services/impact/compareService", () => ({
   resolveRefToSha: vi.fn(),
 }));
 
+vi.mock("~/lib/services/impact/issueScan", () => ({
+  listRecentCommits: vi.fn(),
+  syncIssuePins: vi.fn(),
+}));
+
+vi.mock("~/lib/services/impact/commitFiles", () => ({
+  getCommitFilePaths: vi.fn(),
+}));
+
 vi.mock("~/lib/services/impact/markerScan", async (importOriginal) => ({
   ...(await importOriginal<
     typeof import("~/lib/services/impact/markerScan")
@@ -27,6 +36,10 @@ vi.mock("~/lib/services/impact/markerScan", async (importOriginal) => ({
 import { createGitRepoAdapter } from "~/lib/integrations/adapters/GitRepoAdapter";
 import { repoFileCache } from "~/lib/integrations/cache/RepoFileCache";
 import { resolveRefToSha } from "~/lib/services/impact/compareService";
+import {
+  listRecentCommits,
+  syncIssuePins,
+} from "~/lib/services/impact/issueScan";
 import { syncMarkerPins } from "~/lib/services/impact/markerScan";
 import { refreshRepoCache } from "./repoCacheRefreshService";
 
@@ -40,6 +53,7 @@ function makeConfig(overrides: Record<string, unknown> = {}) {
     branch: "main",
     cacheEnabled: true,
     cacheTtlDays: 7,
+    issueScanEnabled: true,
     pathPatterns: [],
     repository: { credentials: {}, settings: null, provider: "github" },
     project: { createdBy: OWNER },
@@ -114,6 +128,11 @@ describe("refreshRepoCache", () => {
     (repoFileCache.setError as any).mockResolvedValue(undefined);
     (resolveRefToSha as any).mockResolvedValue("abc123");
     (syncMarkerPins as any).mockResolvedValue({ pinsCreated: 2 });
+    (listRecentCommits as any).mockResolvedValue({
+      commits: [],
+      truncated: false,
+    });
+    (syncIssuePins as any).mockResolvedValue({ created: 1 });
     (createGitRepoAdapter as any).mockReturnValue(
       makeArchiveAdapter({ "lib/auth.ts": "// @testplanit case: 1" })
     );
@@ -125,6 +144,79 @@ describe("refreshRepoCache", () => {
     await expect(refreshRepoCache(5, db)).rejects.toThrow(
       "ProjectCodeRepositoryConfig 5 not found"
     );
+  });
+
+  describe("issue scan", () => {
+    function storedIssueReport(): any {
+      const call = update.mock.calls.find(
+        ([args]: any[]) => "issueScanReport" in args.data
+      );
+      return call?.[0].data.issueScanReport;
+    }
+
+    it("walks recent commits, syncs ISSUE pins as the project owner, and stores the report", async () => {
+      const commits = [{ sha: "c1", message: "PROJ-1", parents: ["c0"] }];
+      (listRecentCommits as any).mockResolvedValue({
+        commits,
+        truncated: true,
+      });
+
+      await refreshRepoCache(5, db);
+
+      expect(listRecentCommits).toHaveBeenCalledWith(
+        expect.anything(),
+        "main",
+        expect.objectContaining({ lookbackDays: 90, maxCommits: 300 })
+      );
+      const [, scanConfig, opts] = (syncIssuePins as any).mock.calls[0];
+      expect(scanConfig).toEqual({ id: 5, projectId: 1 });
+      expect(opts).toMatchObject({
+        commits,
+        truncated: true,
+        actorId: OWNER,
+        maxCommitFetches: 100,
+        maxFilesPerCommit: 50,
+      });
+      expect(typeof opts.getCommitFiles).toBe("function");
+      expect(storedIssueReport()).toEqual({ created: 1 });
+    });
+
+    it("runs after the marker scan so its pins never collide with fresh markers", async () => {
+      await refreshRepoCache(5, db);
+      const markerOrder = (syncMarkerPins as any).mock.invocationCallOrder[0];
+      const issueOrder = (syncIssuePins as any).mock.invocationCallOrder[0];
+      expect(markerOrder).toBeLessThan(issueOrder);
+    });
+
+    it("skips the scan when the config has it switched off", async () => {
+      db = makeDb(makeConfig({ issueScanEnabled: false }));
+
+      await refreshRepoCache(5, db);
+
+      expect(listRecentCommits).not.toHaveBeenCalled();
+      expect(syncIssuePins).not.toHaveBeenCalled();
+      expect(storedIssueReport()).toBeUndefined();
+    });
+
+    it("skips the scan for a QUICKSCRIPT config", async () => {
+      db = makeDb(makeConfig({ purpose: "QUICKSCRIPT" }));
+
+      await refreshRepoCache(5, db);
+
+      expect(syncIssuePins).not.toHaveBeenCalled();
+    });
+
+    it("records a failed scan in the report without failing the refresh", async () => {
+      (listRecentCommits as any).mockRejectedValue(new Error("no commits api"));
+
+      const result = await refreshRepoCache(5, db);
+
+      expect(result.success).toBe(true);
+      expect(storedIssueReport()).toEqual({
+        error: "no commits api",
+        scannedAt: expect.any(String),
+      });
+    });
   });
 
   describe("marker scan", () => {

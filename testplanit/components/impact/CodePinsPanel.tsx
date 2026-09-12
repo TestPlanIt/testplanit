@@ -56,6 +56,7 @@ const SOURCE_LABEL_KEY: Record<CodePinSource, string> = {
   AI: "sourceAi",
   ANNOTATION: "sourceAnnotation",
   MAPFILE: "sourceMapfile",
+  ISSUE: "sourceIssue",
 };
 
 const STALE_REASON_KEY: Record<PinStaleReason, string> = {

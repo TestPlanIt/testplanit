@@ -34,6 +34,8 @@ const {
   mockFindManyAnalyses,
   mockFindManyRunCases,
   mockFindManyCaseLinks,
+  mockFindManyIssues,
+  mockFindManyCaseIssues,
 } = vi.hoisted(() => ({
   mockUpdateProgress: vi.fn(),
   mockRedisGet: vi.fn(),
@@ -60,6 +62,8 @@ const {
   mockFindManyAnalyses: vi.fn(),
   mockFindManyRunCases: vi.fn(),
   mockFindManyCaseLinks: vi.fn(),
+  mockFindManyIssues: vi.fn(),
+  mockFindManyCaseIssues: vi.fn(),
 }));
 
 // ─── Mock bullmq Worker ───────────────────────────────────────────────────────
@@ -121,6 +125,12 @@ const mockDb: any = {
   },
   repositoryCaseLink: {
     findMany: (...args: any[]) => mockFindManyCaseLinks(...args),
+  },
+  issue: {
+    findMany: (...args: any[]) => mockFindManyIssues(...args),
+  },
+  repositoryCaseIssue: {
+    findMany: (...args: any[]) => mockFindManyCaseIssues(...args),
   },
 };
 
@@ -452,6 +462,8 @@ describe("impactAnalysisWorker", () => {
     mockFindManyAnalyses.mockResolvedValue([]);
     mockFindManyRunCases.mockResolvedValue([]);
     mockFindManyCaseLinks.mockResolvedValue([]);
+    mockFindManyIssues.mockResolvedValue([]);
+    mockFindManyCaseIssues.mockResolvedValue([]);
   });
 
   it("runs pins, path and history only when no LLM is configured and reports the phases in order", async () => {
@@ -506,6 +518,7 @@ describe("impactAnalysisWorker", () => {
       "resolving_config",
       "fetching_diff",
       "matching_pins",
+      "matching_issues",
       "searching_cases",
       "scoring_history",
       "merging",
@@ -556,11 +569,95 @@ describe("impactAnalysisWorker", () => {
     expect(result.uncoveredFiles).toEqual([CHARGE_PATH]);
     expect(result.stats.layerCounts).toEqual({
       PIN: 1,
+      ISSUE: 0,
       PATH: 0,
       HISTORY: 0,
       AI: 0,
       LINKED: 0,
     });
+  });
+
+  it("selects cases linked to a ticket named in a range commit, covering that commit's files", async () => {
+    const TICKET_SHA = "4".repeat(40);
+    const OTHER_SHA = "5".repeat(40);
+    mockGetOrComputeCompare.mockResolvedValue({
+      result: {
+        ...compareFixture(),
+        commits: [
+          {
+            sha: OTHER_SHA,
+            shortSha: "5555555",
+            message: "chore: bump deps",
+            authorName: "a",
+            authoredAt: "2026-09-01T00:00:00Z",
+            parents: [BASE_SHA],
+          },
+          {
+            sha: TICKET_SHA,
+            shortSha: "4444444",
+            message: "PROJ-9 harden login",
+            authorName: "a",
+            authoredAt: "2026-09-02T00:00:00Z",
+            parents: [OTHER_SHA],
+          },
+        ],
+      },
+      cached: false,
+    });
+    mockFindManyIssues.mockResolvedValue([{ id: 30, externalKey: "PROJ-9" }]);
+    mockFindManyCaseIssues.mockResolvedValue([{ caseId: 22, issueId: 30 }]);
+    adapter.compareCommits.mockResolvedValue({
+      baseSha: OTHER_SHA,
+      headSha: TICKET_SHA,
+      files: [
+        {
+          path: LOGIN_PATH,
+          status: "modified",
+          additions: 1,
+          deletions: 1,
+          isBinary: false,
+        },
+      ],
+      commits: [],
+      truncated: false,
+    });
+    const { processor } = await loadWorker();
+
+    const out = await processor(makeJob());
+
+    expect(out).toMatchObject({ caseCount: 1, pinnedCount: 0 });
+    expect(adapter.compareCommits).toHaveBeenCalledWith(
+      OTHER_SHA,
+      TICKET_SHA,
+      expect.objectContaining({ maxFilesWithPatch: 0 })
+    );
+    expect(mockFindManyCaseIssues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          case: expect.objectContaining({ projectId: 1, isArchived: false }),
+        }),
+      })
+    );
+    const result = savedResult();
+    expect(result.cases[0]).toMatchObject({
+      caseId: 22,
+      score: 90,
+      tier: "affected",
+      layers: ["ISSUE"],
+      coveredFiles: [LOGIN_PATH],
+    });
+    expect(result.cases[0].reasons).toEqual([
+      {
+        kind: "ISSUE",
+        issueId: 30,
+        issueKey: "PROJ-9",
+        commits: [{ sha: TICKET_SHA, shortSha: "4444444" }],
+        files: [LOGIN_PATH],
+      },
+    ]);
+    expect(result.uncoveredFiles).toEqual([CHARGE_PATH]);
+    expect(result.stats.layerCounts.ISSUE).toBe(1);
+    expect(progressPhases()).toContain("matching_issues");
   });
 
   it("relocates a RANGE pin anchored at an older sha by fetching the file at the base sha", async () => {

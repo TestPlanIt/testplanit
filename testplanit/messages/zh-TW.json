@@ -2299,6 +2299,18 @@
           "contentsIncomplete": "僅快取了 {total} 個檔案內容中的 {cached} 個。請再次重新整理以完成。",
           "totalSize": "總尺寸"
         },
+        "tickets": {
+          "title": "已連結工單",
+          "description": "提交訊息中提及工單（PROJ-123、#42、AB#42）時，會在每個已連結的測試案例上建立整檔案的程式碼釘選，以便日後這些檔案有變更時能再次找到相關案例。",
+          "enableLabel": "從提交訊息衍生程式碼釘選",
+          "enableDescription": "每次快取重新整理時掃描分支上的最近提交。關閉此選項可讓分析僅從已分析的提交中讀取工單金鑰。",
+          "lastScan": "上次掃描：{date}",
+          "never": "尚未掃描",
+          "summary": "已掃描 {commits, plural, other {# 次提交}} · {matched} 個提及已連結工單 · 已建立 {created} 個 · 已更新 {updated} 個 · 已移除 {removed} 個",
+          "skippedLarge": "{count, plural, other {# 個提交}}因過大而略過釘選。",
+          "fetchCapped": "並非所有符合條件的提交都已讀取；其餘的將於下次重新整理時處理。",
+          "error": "掃描失敗：{error}"
+        },
         "markers": {
           "title": "儲存庫標記",
           "description": "類似 @testplanit case:123 的註解標記，以及 .testplanit/testmap.yml 中的項目，會在每次快取重新整理時成為 Code Pins。",
@@ -3877,6 +3889,7 @@
       "source": "來源",
       "sourceAi": "AI",
       "sourceAnnotation": "註解",
+      "sourceIssue": "工單",
       "sourceManual": "手動",
       "sourceMapfile": "對應檔案",
       "staleBadge": "過時",
@@ -4402,6 +4415,7 @@
         "resolving_config": "正在解析儲存庫設定…",
         "fetching_diff": "正在取得差異…",
         "matching_pins": "正在比對程式碼釘選…",
+        "matching_issues": "正在比對提交中提及的工單…",
         "searching_cases": "正在依關鍵字搜尋測試用例…",
         "scoring_history": "正在評估執行歷史記錄…",
         "waiting_for_ai": "正在等待 AI…",
@@ -4432,6 +4446,7 @@
       },
       "reasons": {
         "pin": "釘選",
+        "issue": "工單",
         "path": "關鍵字",
         "history": "歷史記錄",
         "ai": "AI",
@@ -4447,7 +4462,8 @@
         "fieldFolder": "資料夾",
         "historyDetail": "對相同檔案的變更後，{count, plural, other {# 次先前的執行}}",
         "historyFailed": "在類似的變更後於先前的執行中失敗",
-        "linkedDetail": "已連結至用例 {caseId}"
+        "linkedDetail": "已連結至用例 {caseId}",
+        "issueDetail": "已連結至 {key}，在 {count, plural, other {# 個提交}} 中提及"
       },
       "stale": {
         "badge": "過時",
@@ -4470,7 +4486,8 @@
         "ai_partial": "部分 AI 批次失敗；結果可能不完整。",
         "ai_truncated": "{count, plural, other {# 個 AI 批次}}被模型截斷。",
         "no_candidates": "沒有測試用例符合。",
-        "anchor_fetch_capped": "部分釘選的檔案僅以路徑比對（已達到擷取上限）。"
+        "anchor_fetch_capped": "部分釘選的檔案僅以路徑比對（已達到擷取上限）。",
+        "issue_commit_fetch_capped": "部分提及工單的提交未逐檔讀取（已達擷取上限）；其案例未涵蓋任何特定檔案。"
       },
       "actions": {
         "compare": "比較",

@@ -80,6 +80,7 @@ import { Link } from "~/lib/navigation";
 import { getDateFnsLocale } from "~/utils/locales";
 import { mapDateTimeFormatString } from "~/utils/mapDateTimeFormat";
 import { ApplicationArea } from "~/zenstack/models";
+import { readIssueScanReport } from "./issueScanReport";
 import { readMarkerScanReport } from "./markerScanReport";
 
 interface CodeRepository {
@@ -127,6 +128,7 @@ export default function ImpactSettingsPage() {
       .min(1, t("validation.pathPatternRequired")),
     cacheEnabled: z.boolean().default(true),
     cacheTtlDays: z.number().int().min(1).max(30).default(7),
+    issueScanEnabled: z.boolean().default(true),
   });
 
   type FormData = z.infer<typeof formSchema>;
@@ -137,6 +139,7 @@ export default function ImpactSettingsPage() {
     pathPatterns: DEFAULT_PATH_PATTERNS,
     cacheEnabled: true,
     cacheTtlDays: 7,
+    issueScanEnabled: true,
   };
 
   const [showDisconnectDialog, setShowDisconnectDialog] = useState(false);
@@ -258,6 +261,7 @@ export default function ImpactSettingsPage() {
         }[]) ?? [{ path: "", pattern: "**/*" }],
         cacheEnabled: existingConfig.cacheEnabled ?? true,
         cacheTtlDays: existingConfig.cacheTtlDays ?? 7,
+        issueScanEnabled: existingConfig.issueScanEnabled ?? true,
       });
     }
   }, [existingConfig]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -388,6 +392,7 @@ export default function ImpactSettingsPage() {
         pathPatterns: values.pathPatterns,
         cacheEnabled: values.cacheEnabled,
         cacheTtlDays: values.cacheTtlDays,
+        issueScanEnabled: values.issueScanEnabled,
         ...cacheResetFields,
       };
 
@@ -448,6 +453,7 @@ export default function ImpactSettingsPage() {
   const isSaving = createConfig.isPending || updateConfig.isPending;
   const configData = existingConfig;
   const markerView = readMarkerScanReport(existingConfig?.markerScanReport);
+  const issueView = readIssueScanReport(existingConfig?.issueScanReport);
 
   if (isAuthLoading) {
     return <Loading />;
@@ -1069,6 +1075,91 @@ export default function ImpactSettingsPage() {
                         </div>
                       </div>
                     </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>{t("tickets.title")}</CardTitle>
+                    <CardDescription>
+                      {t("tickets.description")}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent
+                    className="space-y-3 text-sm"
+                    data-testid="impact-tickets"
+                  >
+                    <FormField
+                      control={form.control as any}
+                      name="issueScanEnabled"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              data-testid="impact-issue-scan-enabled"
+                            />
+                          </FormControl>
+                          <div className="space-y-0.5">
+                            <FormLabel className="font-medium">
+                              {t("tickets.enableLabel")}
+                            </FormLabel>
+                            <p className="text-muted-foreground">
+                              {t("tickets.enableDescription")}
+                            </p>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {issueView.kind === "never" && (
+                      <Badge variant="secondary">{t("tickets.never")}</Badge>
+                    )}
+
+                    {issueView.kind === "error" && (
+                      <Alert variant="destructive">
+                        <XCircle className="h-4 w-4" />
+                        <AlertDescription>
+                          {t("tickets.error", { error: issueView.error })}
+                        </AlertDescription>
+                      </Alert>
+                    )}
+
+                    {issueView.kind === "scanned" && (
+                      <>
+                        <p className="text-muted-foreground">
+                          {t("tickets.lastScan", {
+                            date: formatScanDate(issueView.report.scannedAt),
+                          })}
+                        </p>
+                        <p>
+                          {t("tickets.summary", {
+                            commits: issueView.report.scannedCommits,
+                            matched: issueView.report.matchedCommits,
+                            created: issueView.report.created,
+                            updated: issueView.report.updated,
+                            removed: issueView.report.removed,
+                          })}
+                        </p>
+                        {issueView.report.skippedLargeCommits > 0 && (
+                          <p className="flex items-center gap-2">
+                            <AlertTriangle className="h-4 w-4 text-warning" />
+                            {t("tickets.skippedLarge", {
+                              count: issueView.report.skippedLargeCommits,
+                            })}
+                          </p>
+                        )}
+                        {(issueView.report.fetchCapped ||
+                          issueView.report.truncated) && (
+                          <p className="flex items-center gap-2">
+                            <AlertTriangle className="h-4 w-4 text-warning" />
+                            {t("tickets.fetchCapped")}
+                          </p>
+                        )}
+                      </>
+                    )}
                   </CardContent>
                 </Card>
 

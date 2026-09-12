@@ -2299,6 +2299,18 @@
           "contentsIncomplete": "{total}개 파일 중 {cached}개의 콘텐츠만 캐시되었습니다. 완료하려면 다시 새로 고침하세요.",
           "totalSize": "전체 크기"
         },
+        "tickets": {
+          "title": "연결된 티켓",
+          "description": "티켓을 명시하는 커밋(PROJ-123, #42, AB#42)은 연결된 모든 테스트 케이스에 대해 전체 파일 코드 핀이 되므로, 이후 해당 파일이 변경되면 다시 해당 케이스를 찾을 수 있습니다.",
+          "enableLabel": "커밋 메시지에서 코드 핀 도출",
+          "enableDescription": "캐시를 새로 고칠 때마다 브랜치의 최근 커밋을 검사합니다. 분석된 커밋에서만 티켓 키를 읽도록 하려면 이 기능을 끄세요.",
+          "lastScan": "마지막 스캔: {date}",
+          "never": "아직 스캔되지 않음",
+          "summary": "{commits, plural, other {# 커밋}} 스캔됨 · {matched}개가 연결된 티켓을 명시함 · {created}개 생성됨 · {updated}개 업데이트됨 · {removed}개 제거됨",
+          "skippedLarge": "너무 커서 고정할 수 없어 {count, plural, other {#개의 커밋이}} 건너뛰어졌습니다.",
+          "fetchCapped": "일치하는 모든 커밋을 읽지는 않았습니다. 나머지는 다음 새로 고침에서 처리됩니다.",
+          "error": "스캔 실패: {error}"
+        },
         "markers": {
           "title": "저장소 마커",
           "description": "@testplanit case:123과 같은 주석 어노테이션과 .testplanit/testmap.yml의 항목은 캐시를 새로 고칠 때마다 코드 핀이 됩니다.",
@@ -3877,6 +3889,7 @@
       "source": "소스",
       "sourceAi": "AI",
       "sourceAnnotation": "주석",
+      "sourceIssue": "티켓",
       "sourceManual": "수동",
       "sourceMapfile": "맵 파일",
       "staleBadge": "오래됨",
@@ -4402,6 +4415,7 @@
         "resolving_config": "저장소 설정 확인 중…",
         "fetching_diff": "diff 가져오는 중…",
         "matching_pins": "코드 핀 일치 확인 중…",
+        "matching_issues": "커밋에 언급된 티켓 매칭 중…",
         "searching_cases": "키워드로 테스트 케이스 검색 중…",
         "scoring_history": "실행 기록 점수 계산 중…",
         "waiting_for_ai": "AI 대기 중…",
@@ -4432,6 +4446,7 @@
       },
       "reasons": {
         "pin": "핀",
+        "issue": "티켓",
         "path": "키워드",
         "history": "기록",
         "ai": "AI",
@@ -4447,7 +4462,8 @@
         "fieldFolder": "폴더",
         "historyDetail": "동일한 파일 변경 후 {count, plural, other {이전 실행 #회}}",
         "historyFailed": "유사한 변경 후 이전 실행에서 실패함",
-        "linkedDetail": "케이스 {caseId}에 연결됨"
+        "linkedDetail": "케이스 {caseId}에 연결됨",
+        "issueDetail": "{key}에 연결됨, {count, plural, other {#개 커밋}}에 언급됨"
       },
       "stale": {
         "badge": "오래됨",
@@ -4470,7 +4486,8 @@
         "ai_partial": "일부 AI 배치가 실패했습니다. 결과가 불완전할 수 있습니다.",
         "ai_truncated": "{count, plural, other {AI 배치 #개가}} 모델에 의해 잘렸습니다.",
         "no_candidates": "일치하는 테스트 케이스가 없습니다.",
-        "anchor_fetch_capped": "일부 고정된 파일이 경로로만 일치했습니다 (가져오기 한도 도달)."
+        "anchor_fetch_capped": "일부 고정된 파일이 경로로만 일치했습니다 (가져오기 한도 도달).",
+        "issue_commit_fetch_capped": "티켓이 언급된 일부 커밋은 파일 단위로 읽히지 않았습니다(가져오기 한도 도달). 해당 케이스는 특정 파일을 다루지 않습니다."
       },
       "actions": {
         "compare": "비교",

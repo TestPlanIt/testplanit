@@ -13,7 +13,14 @@ import {
   extractBasePathScopes,
   type PathPattern,
 } from "~/lib/integrations/repoPathPatterns";
+import { getCommitFilePaths } from "./impact/commitFiles";
 import { resolveRefToSha } from "./impact/compareService";
+import { impactConfig } from "./impact/config";
+import {
+  listRecentCommits,
+  syncIssuePins,
+  type IssueScanDb,
+} from "./impact/issueScan";
 import {
   shouldScanMarkers,
   syncMarkerPins,
@@ -163,6 +170,88 @@ async function runMarkerScan(
     }
   }
   await storeMarkerScanReport(dbClient, config.id, report);
+}
+
+async function storeIssueScanReport(
+  dbClient: DbClient,
+  configId: number,
+  report: unknown
+): Promise<void> {
+  try {
+    await (dbClient as any).projectCodeRepositoryConfig.update({
+      where: { id: configId },
+      data: { issueScanReport: report },
+    });
+  } catch (err) {
+    console.warn(
+      `[repoCacheRefresh] Failed to store issue scan report for config ${configId}:`,
+      err
+    );
+  }
+}
+
+/**
+ * Derive ISSUE code pins from ticket keys in recent commit messages of an
+ * IMPACT config. Never throws: a failed scan is recorded in the report.
+ */
+async function runIssueScan(
+  dbClient: DbClient,
+  config: {
+    id: number;
+    projectId: number;
+    cacheEnabled: boolean;
+    project: { createdBy: string };
+  },
+  adapter: GitRepoAdapter,
+  branch: string
+): Promise<void> {
+  const scannedAt = new Date().toISOString();
+  let report: unknown;
+  try {
+    const cfg = impactConfig;
+    const recent = await listRecentCommits(adapter, branch, {
+      lookbackDays: cfg.issueScanLookbackDays,
+      maxCommits: cfg.issueScanMaxCommits,
+    });
+    report = await syncIssuePins(
+      dbClient as unknown as IssueScanDb,
+      { id: config.id, projectId: config.projectId },
+      {
+        commits: recent.commits,
+        truncated: recent.truncated,
+        getCommitFiles: (commit) =>
+          getCommitFilePaths({
+            configId: config.id,
+            cacheEnabled: config.cacheEnabled,
+            adapter,
+            commit,
+            maxFiles: cfg.maxDiffFiles,
+          }),
+        maxCommitFetches: cfg.issueScanMaxCommitFetches,
+        maxFilesPerCommit: cfg.issueScanMaxFilesPerCommit,
+        actorId: config.project.createdBy,
+      }
+    );
+  } catch (err) {
+    console.warn(
+      `[repoCacheRefresh] Issue scan failed for config ${config.id}:`,
+      err
+    );
+    report = {
+      error:
+        err instanceof Error ? err.message : "Unknown error during issue scan",
+      scannedAt,
+    };
+  }
+  await storeIssueScanReport(dbClient, config.id, report);
+}
+
+/** Only IMPACT configs with the ticket scan switched on are scanned. */
+export function shouldScanIssues(config: {
+  purpose: string | null | undefined;
+  issueScanEnabled: boolean | null | undefined;
+}): boolean {
+  return config.purpose === "IMPACT" && config.issueScanEnabled !== false;
 }
 
 export interface RefreshResult {
@@ -344,6 +433,9 @@ export async function refreshRepoCache(
         contentMap,
         contentRateLimited
       );
+    }
+    if (shouldScanIssues(config)) {
+      await runIssueScan(dbClient, config, adapter, branch);
     }
 
     return {

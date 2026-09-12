@@ -2299,6 +2299,18 @@
           "contentsIncomplete": "Yalnızca {total} dosya içeriğinden {cached} tanesi önbelleğe alındı. Tamamlamak için yeniden yenileyin.",
           "totalSize": "Toplam Boyut"
         },
+        "tickets": {
+          "title": "Bağlantılı Biletler",
+          "description": "Bir bileti adlandıran commit'ler (PROJ-123, #42, AB#42), bağlantılı her test durumunda tüm dosya için Kod Sabitlemeleri haline gelir, böylece bu dosyalarda daha sonra yapılan değişiklikler ilgili durumları yeniden bulur.",
+          "enableLabel": "Kod Sabitlemelerini commit mesajlarından türet",
+          "enableDescription": "Her önbellek yenilemesinde dalın en son commit'lerini tarar. Analizlerin yalnızca analiz edilen commit'lerden bilet anahtarlarını okumasını sağlamak için kapatın.",
+          "lastScan": "Son tarama: {date}",
+          "never": "Henüz taranmadı",
+          "summary": "{commits, plural, one {# commit} other {# commit}} tarandı · {matched} bağlantılı bir bileti adlandırdı · {created} oluşturuldu · {updated} güncellendi · {removed} kaldırıldı",
+          "skippedLarge": "{count, plural, one {# commit} other {# commit}} sabitlemek için çok büyük olduğundan atlandı.",
+          "fetchCapped": "Eşleşen tüm commit'ler okunmadı; kalanlar bir sonraki yenilemede işlenecek.",
+          "error": "Tarama başarısız oldu: {error}"
+        },
         "markers": {
           "title": "Depo İşaretleri",
           "description": "@testplanit case:123 gibi yorum açıklamaları ve .testplanit/testmap.yml dosyasındaki girişler her önbellek yenilemesinde Kod Pinleri haline gelir.",
@@ -3877,6 +3889,7 @@
       "source": "Kaynak",
       "sourceAi": "AI",
       "sourceAnnotation": "Açıklama",
+      "sourceIssue": "Bilet",
       "sourceManual": "Manuel",
       "sourceMapfile": "Harita dosyası",
       "staleBadge": "Bayat",
@@ -4402,6 +4415,7 @@
         "resolving_config": "Depo yapılandırması çözümleniyor…",
         "fetching_diff": "Fark alınıyor…",
         "matching_pins": "Kod Sabitleri eşleştiriliyor…",
+        "matching_issues": "Commit'lerde adı geçen eşleşen biletler yükleniyor…",
         "searching_cases": "Test senaryoları anahtar kelimeye göre aranıyor…",
         "scoring_history": "Çalıştırma geçmişi puanlanıyor…",
         "waiting_for_ai": "AI bekleniyor…",
@@ -4432,6 +4446,7 @@
       },
       "reasons": {
         "pin": "Sabit",
+        "issue": "Bilet",
         "path": "Anahtar kelime",
         "history": "Geçmiş",
         "ai": "AI",
@@ -4447,7 +4462,8 @@
         "fieldFolder": "klasör",
         "historyDetail": "aynı dosyalarda yapılan değişikliklerden sonra {count, plural, one {# önceki çalıştırma} other {# önceki çalıştırma}}",
         "historyFailed": "Benzer değişikliklerden sonra önceki bir çalıştırmada başarısız oldu",
-        "linkedDetail": "{caseId} senaryosuna bağlı"
+        "linkedDetail": "{caseId} senaryosuna bağlı",
+        "issueDetail": "{key} ile bağlantılı, {count, plural, one {{sha} commit'inde} other {# commit'te}} adı geçiyor"
       },
       "stale": {
         "badge": "Bayat",
@@ -4470,7 +4486,8 @@
         "ai_partial": "Bazı AI grupları başarısız oldu; sonuçlar eksik olabilir.",
         "ai_truncated": "{count, plural, one {# AI grubu} other {# AI grubu}} model tarafından kesildi.",
         "no_candidates": "Eşleşen test senaryosu yok.",
-        "anchor_fetch_capped": "Bazı sabitlenmiş dosyalar yalnızca yoluna göre eşleştirildi (getirme sınırına ulaşıldı)."
+        "anchor_fetch_capped": "Bazı sabitlenmiş dosyalar yalnızca yoluna göre eşleştirildi (getirme sınırına ulaşıldı).",
+        "issue_commit_fetch_capped": "Bazı commit'lerde adı geçen biletler dosya dosya okunmadı (getirme sınırına ulaşıldı); bu durumlardaki test durumları belirli dosyaları kapsamaz."
       },
       "actions": {
         "compare": "Karşılaştır",

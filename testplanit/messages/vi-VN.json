@@ -2299,6 +2299,18 @@
           "contentsIncomplete": "Chỉ có {cached} trên {total} nội dung tệp được lưu vào bộ nhớ đệm. Hãy làm mới lại để hoàn tất.",
           "totalSize": "Tổng kích thước"
         },
+        "tickets": {
+          "title": "Vé liên kết",
+          "description": "Các commit đề cập đến một vé (PROJ-123, #42, AB#42) sẽ trở thành Code Pin cho toàn bộ tệp trên mọi trường hợp kiểm thử được liên kết, để những thay đổi sau này đối với các tệp đó có thể tìm lại các trường hợp kiểm thử.",
+          "enableLabel": "Suy ra Code Pin từ nội dung commit",
+          "enableDescription": "Quét các commit gần đây trên nhánh mỗi khi làm mới bộ nhớ đệm. Tắt để chỉ phân tích các khóa vé từ các commit đã được phân tích.",
+          "lastScan": "Lần quét cuối: {date}",
+          "never": "Chưa được quét",
+          "summary": "{commits, plural, other {# commit}} đã được quét · {matched} có đề cập đến vé liên kết · {created} đã tạo · {updated} đã cập nhật · {removed} đã xóa",
+          "skippedLarge": "{count, plural, other {# commit}} đã bị bỏ qua vì quá lớn để gắn pin.",
+          "fetchCapped": "Không phải tất cả các commit khớp đều được đọc; phần còn lại sẽ được xử lý trong lần làm mới tiếp theo.",
+          "error": "Quét thất bại: {error}"
+        },
         "markers": {
           "title": "Điểm đánh dấu kho lưu trữ",
           "description": "Các chú thích bình luận như @testplanit case:123 và các mục trong .testplanit/testmap.yml sẽ trở thành Code Pin mỗi khi bộ nhớ đệm được làm mới.",
@@ -3877,6 +3889,7 @@
       "source": "Nguồn",
       "sourceAi": "AI",
       "sourceAnnotation": "Chú thích",
+      "sourceIssue": "Vé",
       "sourceManual": "Thủ công",
       "sourceMapfile": "Tập tin ánh xạ",
       "staleBadge": "Cũ",
@@ -4402,6 +4415,7 @@
         "resolving_config": "Đang phân giải cấu hình kho lưu trữ…",
         "fetching_diff": "Đang tìm nạp diff…",
         "matching_pins": "Đang khớp Ghim mã…",
+        "matching_issues": "Đang khớp các ticket được nêu tên trong commit…",
         "searching_cases": "Đang tìm kiếm trường hợp kiểm thử theo từ khóa…",
         "scoring_history": "Đang chấm điểm lịch sử chạy…",
         "waiting_for_ai": "Đang chờ AI…",
@@ -4432,6 +4446,7 @@
       },
       "reasons": {
         "pin": "Ghim",
+        "issue": "Vé",
         "path": "Từ khóa",
         "history": "Lịch sử",
         "ai": "AI",
@@ -4447,7 +4462,8 @@
         "fieldFolder": "thư mục",
         "historyDetail": "{count, plural, other {# lần chạy trước}} sau các thay đổi đến cùng các tập tin",
         "historyFailed": "Đã thất bại trong một lần chạy trước sau các thay đổi tương tự",
-        "linkedDetail": "Liên kết với trường hợp {caseId}"
+        "linkedDetail": "Liên kết với trường hợp {caseId}",
+        "issueDetail": "Được liên kết với {key}, được nêu tên trong {count, plural, other {# lần commit}}"
       },
       "stale": {
         "badge": "Cũ",
@@ -4470,7 +4486,8 @@
         "ai_partial": "Một số lô AI đã thất bại; kết quả có thể không đầy đủ.",
         "ai_truncated": "{count, plural, other {# lô AI}} đã bị cắt bớt bởi mô hình.",
         "no_candidates": "Không có trường hợp kiểm thử nào khớp.",
-        "anchor_fetch_capped": "Một số tập tin đã ghim chỉ được khớp theo đường dẫn (đã đạt giới hạn tìm nạp)."
+        "anchor_fetch_capped": "Một số tập tin đã ghim chỉ được khớp theo đường dẫn (đã đạt giới hạn tìm nạp).",
+        "issue_commit_fetch_capped": "Một số commit có nêu tên ticket chưa được đọc từng tệp một (đã đạt giới hạn tìm nạp); các trường hợp của chúng không bao phủ tệp cụ thể nào."
       },
       "actions": {
         "compare": "So sánh",

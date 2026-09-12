@@ -396,6 +396,53 @@ describe("AzureDevOpsRepoAdapter", () => {
       );
     });
 
+    it("lists changed paths without fetching either side when no patches are wanted", async () => {
+      routeFetch([
+        [
+          "/diffs/commits?",
+          {
+            allChangesIncluded: true,
+            changes: [
+              {
+                item: { path: "/src/a.ts", gitObjectType: "blob" },
+                changeType: "edit",
+              },
+              {
+                item: { path: "/img/logo.png", gitObjectType: "blob" },
+                changeType: "add",
+              },
+            ],
+          },
+        ],
+        ["compareVersion.version", commitsBetween],
+      ]);
+
+      const result = await adapter.compareCommits(BASE, HEAD, {
+        maxFilesWithPatch: 0,
+      });
+
+      const urls = fetchedUrls();
+      expect(urls).toHaveLength(2);
+      expect(urls.some((url) => url.includes("/items?"))).toBe(false);
+      expect(result.files).toEqual([
+        {
+          path: "src/a.ts",
+          status: "modified",
+          additions: 0,
+          deletions: 0,
+          isBinary: false,
+        },
+        {
+          path: "img/logo.png",
+          status: "added",
+          additions: 0,
+          deletions: 0,
+          isBinary: true,
+        },
+      ]);
+      expect(result.truncated).toBe(false);
+    });
+
     it("fetches the change list, then both sides at each commit, then the commits between", async () => {
       routeFetch([
         [

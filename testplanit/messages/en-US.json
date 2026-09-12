@@ -2299,6 +2299,18 @@
           "contentsIncomplete": "Only {cached} of {total} file contents are cached. Refresh again to complete.",
           "totalSize": "Total Size"
         },
+        "tickets": {
+          "title": "Linked Tickets",
+          "description": "Commits that name a ticket (PROJ-123, #42, AB#42) become whole-file Code Pins on every linked test case, so later changes to those files find the cases again.",
+          "enableLabel": "Derive Code Pins from commit messages",
+          "enableDescription": "Scans recent commits on the branch on every cache refresh. Turn off to keep analyses reading ticket keys from the analyzed commits only.",
+          "lastScan": "Last scan: {date}",
+          "never": "Not scanned yet",
+          "summary": "{commits, plural, one {# commit} other {# commits}} scanned · {matched} named a linked ticket · {created} created · {updated} updated · {removed} removed",
+          "skippedLarge": "{count, plural, one {# commit was} other {# commits were}} skipped as too large to pin.",
+          "fetchCapped": "Not every matching commit was read; the rest are picked up on the next refresh.",
+          "error": "Scan failed: {error}"
+        },
         "markers": {
           "title": "Repository Markers",
           "description": "Comment annotations like @testplanit case:123 and entries in .testplanit/testmap.yml become Code Pins on every cache refresh.",
@@ -3877,6 +3889,7 @@
       "source": "Source",
       "sourceAi": "AI",
       "sourceAnnotation": "Annotation",
+      "sourceIssue": "Ticket",
       "sourceManual": "Manual",
       "sourceMapfile": "Map file",
       "staleBadge": "Stale",
@@ -4402,6 +4415,7 @@
         "resolving_config": "Resolving repository configuration…",
         "fetching_diff": "Fetching the diff…",
         "matching_pins": "Matching Code Pins…",
+        "matching_issues": "Matching tickets named in commits…",
         "searching_cases": "Searching test cases by keyword…",
         "scoring_history": "Scoring run history…",
         "waiting_for_ai": "Waiting for AI…",
@@ -4432,6 +4446,7 @@
       },
       "reasons": {
         "pin": "Pin",
+        "issue": "Ticket",
         "path": "Keyword",
         "history": "History",
         "ai": "AI",
@@ -4447,7 +4462,8 @@
         "fieldFolder": "folder",
         "historyDetail": "{count, plural, one {# earlier run} other {# earlier runs}} after changes to the same files",
         "historyFailed": "Failed in an earlier run after similar changes",
-        "linkedDetail": "Linked to case {caseId}"
+        "linkedDetail": "Linked to case {caseId}",
+        "issueDetail": "Linked to {key}, named in {count, plural, one {commit {sha}} other {# commits}}"
       },
       "stale": {
         "badge": "Stale",
@@ -4470,7 +4486,8 @@
         "ai_partial": "Some AI batches failed; results may be incomplete.",
         "ai_truncated": "{count, plural, one {# AI batch was} other {# AI batches were}} cut off by the model.",
         "no_candidates": "No test case matched.",
-        "anchor_fetch_capped": "Some pinned files were matched by path only (fetch limit reached)."
+        "anchor_fetch_capped": "Some pinned files were matched by path only (fetch limit reached).",
+        "issue_commit_fetch_capped": "Some commits naming tickets were not read file by file (fetch limit reached); their cases cover no specific files."
       },
       "actions": {
         "compare": "Compare",

@@ -19,7 +19,8 @@ export type { CodePinKind, PinStaleness, PinStaleReason };
 /** The literal first element of every query key this hook issues. */
 export const CODE_PINS_QUERY_KEY_ROOT = "codePins";
 
-export type CodePinSource = "MANUAL" | "AI" | "ANNOTATION" | "MAPFILE";
+export type CodePinSource =
+  "MANUAL" | "AI" | "ANNOTATION" | "MAPFILE" | "ISSUE";
 
 export interface CodePin {
   id: number;

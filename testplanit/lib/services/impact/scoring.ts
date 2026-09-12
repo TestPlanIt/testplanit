@@ -11,6 +11,8 @@ export const HISTORY_SCORE_CAP = 70;
 export const HISTORY_SCORE_FLOOR = 25;
 export const AI_SCORE_CAP = 95;
 export const LINKED_SCORE_CAP = 40;
+/** A commit in the range named a ticket the case is linked to. */
+export const ISSUE_SCORE = 90;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 

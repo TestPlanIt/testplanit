@@ -2299,6 +2299,18 @@
           "contentsIncomplete": "Slechts {cached} van {total} bestandsinhoud is in cache opgeslagen. Vernieuw opnieuw om te voltooien.",
           "totalSize": "Totale grootte"
         },
+        "tickets": {
+          "title": "Gekoppelde tickets",
+          "description": "Commits die een ticket noemen (PROJ-123, #42, AB#42) worden hele-bestand Code Pins op elk gekoppeld testgeval, zodat latere wijzigingen aan die bestanden de gevallen weer terugvinden.",
+          "enableLabel": "Code Pins afleiden uit commitberichten",
+          "enableDescription": "Scant recente commits op de branch bij elke cache-vernieuwing. Schakel uit om analyses alleen ticketsleutels uit de geanalyseerde commits te laten lezen.",
+          "lastScan": "Laatste scan: {date}",
+          "never": "Nog niet gescand",
+          "summary": "{commits, plural, one {# commit} other {# commits}} gescand · {matched} noemde een gekoppeld ticket · {created} aangemaakt · {updated} bijgewerkt · {removed} verwijderd",
+          "skippedLarge": "{count, plural, one {# commit werd} other {# commits werden}} overgeslagen omdat ze te groot waren om vast te pinnen.",
+          "fetchCapped": "Niet elke overeenkomende commit werd gelezen; de rest wordt opgepikt bij de volgende vernieuwing.",
+          "error": "Scan mislukt: {error}"
+        },
         "markers": {
           "title": "Repositorymarkeringen",
           "description": "Opmerkingannotaties zoals @testplanit case:123 en vermeldingen in .testplanit/testmap.yml worden bij elke cachevernieuwing Code Pins.",
@@ -3877,6 +3889,7 @@
       "source": "Bron",
       "sourceAi": "AI",
       "sourceAnnotation": "Annotatie",
+      "sourceIssue": "Melding",
       "sourceManual": "Handmatig",
       "sourceMapfile": "Bestand koppelen",
       "staleBadge": "Verouderd",
@@ -4402,6 +4415,7 @@
         "resolving_config": "Repositoryconfiguratie oplossen…",
         "fetching_diff": "Diff ophalen…",
         "matching_pins": "Code Pins koppelen…",
+        "matching_issues": "Overeenkomende tickets genoemd in commits…",
         "searching_cases": "Testcases zoeken op trefwoord…",
         "scoring_history": "Runsgeschiedenis scoren…",
         "waiting_for_ai": "Wachten op AI…",
@@ -4432,6 +4446,7 @@
       },
       "reasons": {
         "pin": "Pin",
+        "issue": "Melding",
         "path": "Trefwoord",
         "history": "Geschiedenis",
         "ai": "AI",
@@ -4447,7 +4462,8 @@
         "fieldFolder": "map",
         "historyDetail": "{count, plural, one {# eerdere run} other {# eerdere runs}} na wijzigingen in dezelfde bestanden",
         "historyFailed": "Mislukt in een eerdere run na vergelijkbare wijzigingen",
-        "linkedDetail": "Gekoppeld aan case {caseId}"
+        "linkedDetail": "Gekoppeld aan case {caseId}",
+        "issueDetail": "Gekoppeld aan {key}, genoemd in {count, plural, one {commit {sha}} other {# commits}}"
       },
       "stale": {
         "badge": "Verouderd",
@@ -4470,7 +4486,8 @@
         "ai_partial": "Sommige AI-batches zijn mislukt; resultaten kunnen onvolledig zijn.",
         "ai_truncated": "{count, plural, one {# AI-batch is} other {# AI-batches zijn}} afgekapt door het model.",
         "no_candidates": "Geen testcase kwam overeen.",
-        "anchor_fetch_capped": "Sommige vastgepinde bestanden zijn alleen op pad gekoppeld (ophaallimiet bereikt)."
+        "anchor_fetch_capped": "Sommige vastgepinde bestanden zijn alleen op pad gekoppeld (ophaallimiet bereikt).",
+        "issue_commit_fetch_capped": "Sommige commits die tickets noemen, zijn niet bestand voor bestand gelezen (ophaallimiet bereikt); hun testgevallen dekken geen specifieke bestanden."
       },
       "actions": {
         "compare": "Vergelijken",

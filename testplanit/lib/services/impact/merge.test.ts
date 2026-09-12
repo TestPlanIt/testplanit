@@ -4,6 +4,7 @@ import { mergeLayers, type CaseLink } from "./merge";
 import type {
   AiReason,
   HistoryReason,
+  IssueReason,
   LayerCandidate,
   LayerResult,
   PathReason,
@@ -59,9 +60,20 @@ function ai(score: number, files?: string[]): AiReason {
   return { kind: "AI", rationale: "r", score, files, batchIndex: 0 };
 }
 
+function issue(key: string, files?: string[]): IssueReason {
+  return {
+    kind: "ISSUE",
+    issueId: 1,
+    issueKey: key,
+    commits: [{ sha: "a".repeat(40), shortSha: "aaaaaaa" }],
+    ...(files ? { files } : {}),
+  };
+}
+
 function merge(
   layers: Partial<{
     pin: LayerResult;
+    issue: LayerResult;
     path: LayerResult;
     history: LayerResult;
     ai: LayerResult;
@@ -74,6 +86,7 @@ function merge(
 ) {
   return mergeLayers({
     pin: layers.pin ?? new Map(),
+    issue: layers.issue ?? new Map(),
     path: layers.path ?? new Map(),
     history: layers.history ?? new Map(),
     ai: layers.ai ?? new Map(),
@@ -84,6 +97,40 @@ function merge(
 }
 
 describe("mergeLayers", () => {
+  it("puts an ISSUE-selected case in the affected tier covering its commits' files", () => {
+    const { cases, uncoveredFiles } = merge(
+      { issue: layer(cand(5, 90, issue("PROJ-1", ["src/a.ts"]))) },
+      { changedPaths: ["src/a.ts", "src/b.ts"] }
+    );
+    expect(cases).toEqual([
+      expect.objectContaining({
+        caseId: 5,
+        score: 90,
+        tier: "affected",
+        layers: ["ISSUE"],
+        coveredFiles: ["src/a.ts"],
+      }),
+    ]);
+    expect(uncoveredFiles).toEqual(["src/b.ts"]);
+  });
+
+  it("keeps an ISSUE reason without files from covering anything, and lets a pin outrank it", () => {
+    const { cases } = merge(
+      {
+        pin: layer(cand(5, 100, pin("src/a.ts"))),
+        issue: layer(cand(5, 90, issue("PROJ-1"))),
+      },
+      { changedPaths: ["src/a.ts"] }
+    );
+    expect(cases[0]).toMatchObject({
+      caseId: 5,
+      score: 100,
+      tier: "pinned",
+      layers: ["PIN", "ISSUE"],
+      coveredFiles: ["src/a.ts"],
+    });
+  });
+
   it("max-merges a pinned case that AI also selected, keeping both reasons", () => {
     const { cases } = merge({
       pin: layer(cand(1, 100, pin("src/a.ts"))),

@@ -10,8 +10,8 @@ import { mockImpactApi } from "../../utils/impact-mocks";
  * - Connecting a repository writes a ProjectCodeRepositoryConfig with
  *   purpose IMPACT — and leaves the QuickScript binding (purpose
  *   QUICKSCRIPT) untouched — then the branch combobox (fed by the mocked
- *   branches route) replaces the free-text input, and Disconnect removes
- *   the row.
+ *   branches route) replaces the free-text input, the Linked Tickets switch
+ *   persists `issueScanEnabled`, and Disconnect removes the row.
  */
 
 const uid = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -43,6 +43,7 @@ async function fetchRepoConfig(
   repositoryId: number;
   branch: string | null;
   purpose: string;
+  issueScanEnabled: boolean;
 } | null> {
   const res = await request.get(
     `${baseURL}/api/model/projectCodeRepositoryConfig/findFirst`,
@@ -55,6 +56,7 @@ async function fetchRepoConfig(
             repositoryId: true,
             branch: true,
             purpose: true,
+            issueScanEnabled: true,
           },
         }),
       },
@@ -206,6 +208,28 @@ test.describe("Impact project settings", () => {
           { timeout: 15000 }
         )
         .toBe("develop");
+    });
+
+    await test.step("The Linked Tickets switch is on by default and persists off", async () => {
+      const ticketSwitch = page.getByTestId("impact-issue-scan-enabled");
+      await expect(ticketSwitch).toBeVisible({ timeout: 15000 });
+      await expect(ticketSwitch).toHaveAttribute("aria-checked", "true");
+      expect(
+        (await fetchRepoConfig(request, base, projectId, "IMPACT"))
+          ?.issueScanEnabled
+      ).toBe(true);
+
+      await ticketSwitch.click();
+      await expect(ticketSwitch).toHaveAttribute("aria-checked", "false");
+      await page.getByTestId("impact-save").click();
+      await expect
+        .poll(
+          async () =>
+            (await fetchRepoConfig(request, base, projectId, "IMPACT"))
+              ?.issueScanEnabled,
+          { timeout: 15000 }
+        )
+        .toBe(false);
     });
 
     await test.step("Regression: the QuickScript page shows no connected repository", async () => {

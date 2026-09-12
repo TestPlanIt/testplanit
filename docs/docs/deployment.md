@@ -82,6 +82,8 @@ Available profiles:
 
 ### 3. Configure Environment
 
+Every variable the application reads, with its default, is listed on the [Environment Variables](environment-variables.md) reference page.
+
 Create and customize `.env.production` based on your deployment choice:
 
 **For All-in-One Deployment:**

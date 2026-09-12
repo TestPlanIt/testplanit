@@ -2299,6 +2299,18 @@
           "contentsIncomplete": "Apenas {cached} de {total} conteúdos de arquivo estão em cache. Atualize novamente para concluir.",
           "totalSize": "Tamanho total"
         },
+        "tickets": {
+          "title": "Tickets Vinculados",
+          "description": "Commits que nomeiam um ticket (PROJ-123, #42, AB#42) se tornam Fixações de Código de arquivo inteiro em cada caso de teste vinculado, para que alterações posteriores nesses arquivos encontrem os casos novamente.",
+          "enableLabel": "Derivar Fixações de Código das mensagens de commit",
+          "enableDescription": "Verifica os commits recentes no branch a cada atualização de cache. Desative para manter as análises lendo as chaves de tickets apenas dos commits analisados.",
+          "lastScan": "Última verificação: {date}",
+          "never": "Ainda não verificado",
+          "summary": "{commits, plural, one {# commit} other {# commits}} verificados · {matched} vinculados a um ticket · {created} criados · {updated} atualizados · {removed} removidos",
+          "skippedLarge": "{count, plural, one {# commit foi ignorado} other {# commits foram ignorados}} por serem grandes demais para fixar.",
+          "fetchCapped": "Nem todos os commits correspondentes foram lidos; os demais serão processados na próxima atualização.",
+          "error": "Falha na verificação: {error}"
+        },
         "markers": {
           "title": "Marcadores de Repositório",
           "description": "Anotações de comentário como @testplanit case:123 e entradas em .testplanit/testmap.yml se tornam Code Pins a cada atualização de cache.",
@@ -3877,6 +3889,7 @@
       "source": "Origem",
       "sourceAi": "IA",
       "sourceAnnotation": "Anotação",
+      "sourceIssue": "Chamado",
       "sourceManual": "Manual",
       "sourceMapfile": "Arquivo de mapa",
       "staleBadge": "Desatualizado",
@@ -4402,6 +4415,7 @@
         "resolving_config": "Resolvendo configuração do repositório…",
         "fetching_diff": "Buscando o diff…",
         "matching_pins": "Combinando Code Pins…",
+        "matching_issues": "Correspondendo tickets citados nos commits…",
         "searching_cases": "Pesquisando casos de teste por palavra-chave…",
         "scoring_history": "Pontuando histórico de execuções…",
         "waiting_for_ai": "Aguardando a IA…",
@@ -4432,6 +4446,7 @@
       },
       "reasons": {
         "pin": "Pin",
+        "issue": "Chamado",
         "path": "Palavra-chave",
         "history": "Histórico",
         "ai": "IA",
@@ -4447,7 +4462,8 @@
         "fieldFolder": "pasta",
         "historyDetail": "{count, plural, one {# execução anterior} other {# execuções anteriores}} após alterações nos mesmos arquivos",
         "historyFailed": "Falhou em uma execução anterior após alterações semelhantes",
-        "linkedDetail": "Vinculado ao caso {caseId}"
+        "linkedDetail": "Vinculado ao caso {caseId}",
+        "issueDetail": "Vinculado a {key}, citado em {count, plural, one {commit {sha}} other {# commits}}"
       },
       "stale": {
         "badge": "Desatualizado",
@@ -4470,7 +4486,8 @@
         "ai_partial": "Alguns lotes de IA falharam; os resultados podem estar incompletos.",
         "ai_truncated": "{count, plural, one {# lote de IA foi} other {# lotes de IA foram}} cortados pelo modelo.",
         "no_candidates": "Nenhum caso de teste correspondeu.",
-        "anchor_fetch_capped": "Alguns arquivos fixados foram correspondidos apenas pelo caminho (limite de busca atingido)."
+        "anchor_fetch_capped": "Alguns arquivos fixados foram correspondidos apenas pelo caminho (limite de busca atingido).",
+        "issue_commit_fetch_capped": "Alguns commits que citam tickets não foram lidos arquivo por arquivo (limite de busca atingido); seus casos não cobrem arquivos específicos."
       },
       "actions": {
         "compare": "Comparar",

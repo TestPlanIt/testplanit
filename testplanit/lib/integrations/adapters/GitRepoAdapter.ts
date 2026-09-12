@@ -8,6 +8,7 @@ import { assertSsrfSafeResolved, isSsrfSafe } from "~/utils/ssrf";
 import { getAllowedPrivateHosts } from "~/lib/utils/ssrf";
 import {
   computeLocalCompare,
+  looksBinaryPath,
   type LocalCompareChange,
   type LocalCompareResult,
 } from "../diff/localDiff";
@@ -290,6 +291,21 @@ export abstract class GitRepoAdapter {
     changes: LocalCompareChange[],
     opts: CompareOptions = {}
   ): Promise<LocalCompareResult> {
+    // A caller that wants no patches wants only the changed paths, which the
+    // provider already listed; skip the per-file content fetches entirely.
+    if (opts.maxFilesWithPatch === 0) {
+      return {
+        files: changes.map((change) => ({
+          path: change.path,
+          ...(change.previousPath ? { previousPath: change.previousPath } : {}),
+          status: change.status,
+          additions: 0,
+          deletions: 0,
+          isBinary: looksBinaryPath(change.path),
+        })),
+        truncated: false,
+      };
+    }
     return computeLocalCompare(
       {
         getFileContentAtCommit: (path, sha) =>
