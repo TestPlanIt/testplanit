@@ -825,6 +825,23 @@
 * **runs:** move case-detail fetch off ACL-policy path for Pass & Next ([120fc67](https://github.com/TestPlanIt/testplanit/commit/120fc6759c0baf8912a92057fc9dacbc80568b49))
 * **users:** load the user lists on scroll and resolve accessible projects in batches ([2e93685](https://github.com/TestPlanIt/testplanit/commit/2e936857eaf8533bf3d16da5c682d18e6d542718))
 * **workflows:** stop eager-fetching every project assignment in admin table ([6262e30](https://github.com/TestPlanIt/testplanit/commit/6262e30bb42c96a3e953736aa70360a8c5d92764))
+## [1.0.9](https://github.com/TestPlanIt/testplanit/compare/v1.0.8...v1.0.9) (2026-09-12)
+
+### Bug Fixes
+
+* **mcp:** store result notes as rich text and document elapsed in seconds ([#642](https://github.com/TestPlanIt/testplanit/issues/642)) ([1b4bf39](https://github.com/TestPlanIt/testplanit/commit/1b4bf39af86bce705de7cec6623745a8e9e6bbc2)), closes [#639](https://github.com/TestPlanIt/testplanit/issues/639) [#640](https://github.com/TestPlanIt/testplanit/issues/640)
+
+## [1.0.8](https://github.com/TestPlanIt/testplanit/compare/v1.0.7...v1.0.8) (2026-09-12)
+
+### Bug Fixes
+
+* **milestones:** save without a default type and keep every catalog's default ([#641](https://github.com/TestPlanIt/testplanit/issues/641)) ([8b44ecc](https://github.com/TestPlanIt/testplanit/commit/8b44ecc92436ee5e8ec05a3c4a1611b00e07156d)), closes [#638](https://github.com/TestPlanIt/testplanit/issues/638)
+
+## [1.0.7](https://github.com/TestPlanIt/testplanit/compare/v1.0.6...v1.0.7) (2026-09-10)
+
+### Bug Fixes
+
+* **editor:** skip the read-only content sync on a destroyed editor ([#637](https://github.com/TestPlanIt/testplanit/issues/637)) ([41ebc02](https://github.com/TestPlanIt/testplanit/commit/41ebc028827a028bed23da9d8cfadcbcb46fdb1e))
 
 ## [1.0.6](https://github.com/TestPlanIt/testplanit/compare/v1.0.5...v1.0.6) (2026-09-09)
 

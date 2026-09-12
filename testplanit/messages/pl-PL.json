@@ -1176,6 +1176,12 @@
       "in": "Jest jednym z",
       "hasValue": "Ma wartość",
       "isEmpty": "Jest pusty"
+    },
+    "defaults": {
+      "firstTitle": "To będzie wartość domyślna",
+      "firstDescription": "Nie ustawiono jeszcze żadnej wartości domyślnej, więc ta stanie się domyślną. Aby to zmienić później, ustaw inny element jako domyślny.",
+      "lockedTitle": "Bieżąca wartość domyślna",
+      "lockedDescription": "Bieżącej wartości domyślnej nie można bezpośrednio odznaczyć. Zamiast tego ustaw inny element jako domyślny."
     }
   },
   "api": {
@@ -2595,6 +2601,10 @@
       "skippedForPermission": "Kamień milowy został zakończony. Jego przebiegi testów i sesje pozostały otwarte, ponieważ nie masz uprawnień do ich zakończenia.",
       "skippedTestRunsForPermission": "Kamień milowy został zakończony. Jego przebiegi testów pozostały otwarte, ponieważ nie masz uprawnień do ich zakończenia.",
       "skippedSessionsForPermission": "Kamień milowy został zakończony. Jego sesje pozostały otwarte, ponieważ nie masz uprawnień do ich zakończenia."
+    },
+    "noTypes": {
+      "title": "Brak dostępnych typów kamieni milowych",
+      "description": "Ten projekt nie ma przypisanych żadnych typów kamieni milowych. Poproś administratora o przypisanie typu kamienia milowego do projektu lub ustawienie domyślnego typu kamienia milowego."
     }
   },
   "sessions": {

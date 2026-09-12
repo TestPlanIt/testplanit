@@ -238,6 +238,12 @@
       "allIssueTypes": "Všechny typy problémů",
       "noIssueType": "Bez typu problému"
     },
+    "defaults": {
+      "firstTitle": "Toto bude výchozí",
+      "firstDescription": "Zatím neexistuje žádná výchozí položka, takže se tato stane výchozí. Chcete-li to později změnit, nastavte jako výchozí jinou položku.",
+      "lockedTitle": "Aktuální výchozí",
+      "lockedDescription": "Aktuální výchozí položku nelze zrušit přímo. Místo toho nastavte jako výchozí jinou položku."
+    },
     "fields": {
       "groupName": "Název skupiny",
       "users": "Uživatelé",
@@ -2394,6 +2400,10 @@
       "documentation": "Zadejte dokumentaci milníku...",
       "selectType": "Vyberte typ milníku...",
       "selectParent": "Vyberte nadřazený milník..."
+    },
+    "noTypes": {
+      "title": "Nejsou k dispozici žádné typy milníků",
+      "description": "Tento projekt nemá přiřazeny žádné typy milníků. Požádejte administrátora, aby projektu přiřadil typ milníku nebo nastavil výchozí typ milníku."
     },
     "empty": {
       "active": "Žádné aktivní milníky",

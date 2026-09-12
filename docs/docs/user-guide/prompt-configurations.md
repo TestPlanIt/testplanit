@@ -40,7 +40,7 @@ Navigate to **Administration** → **Prompt Configurations** in the admin menu (
 2. Fill in the configuration details:
    - **Name** — A unique name for this configuration (required)
    - **Description** — Optional description of the configuration's purpose
-   - **Is Default** — Whether this should be the system-wide default configuration
+   - **Is Default** — Whether this should be the system-wide default configuration. When no configuration is currently the default, the switch is locked on and the new configuration becomes the default
    - **Is Active** — Whether this configuration is available for use
 3. Configure prompts for each feature using the accordion sections:
    - **LLM Integration** — Optionally assign a specific LLM integration to this prompt (see [Per-Prompt LLM Assignment](#per-prompt-llm-assignment) below)

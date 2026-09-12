@@ -789,8 +789,14 @@ export interface CreateTestResultOptions {
   testRunId: number;
   testRunCaseId: number;
   statusId: number;
+  /** Execution time in seconds (the unit the UI, forecasts and exports use). */
   elapsed?: number;
-  notes?: Record<string, unknown>;
+  /**
+   * Result notes. Plain text is stored as a rich-text document (one paragraph
+   * per line); a Tiptap/ProseMirror document object is stored as-is. Other
+   * object shapes are not rendered by the Test Result History panel.
+   */
+  notes?: string | Record<string, unknown>;
   evidence?: Record<string, unknown>;
   attempt?: number;
 }

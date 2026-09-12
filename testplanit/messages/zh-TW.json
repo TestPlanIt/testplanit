@@ -1176,6 +1176,12 @@
       "in": "為任一",
       "hasValue": "有值",
       "isEmpty": "為空"
+    },
+    "defaults": {
+      "firstTitle": "這將成為預設值",
+      "firstDescription": "目前尚無預設項目，因此此項目將成為預設值。若要日後變更，請將其他項目設為預設值。",
+      "lockedTitle": "目前的預設值",
+      "lockedDescription": "無法直接取消目前的預設值。請改為將其他項目設為預設值。"
     }
   },
   "api": {
@@ -2595,6 +2601,10 @@
       "skippedForPermission": "里程碑已完成。由於您沒有權限完成其測試執行和會話,因此它們保持開啟狀態。",
       "skippedTestRunsForPermission": "里程碑已完成。由於您沒有權限完成其測試執行,因此它們保持開啟狀態。",
       "skippedSessionsForPermission": "里程碑已完成。由於您沒有權限完成其會話,因此它們保持開啟狀態。"
+    },
+    "noTypes": {
+      "title": "沒有可用的里程碑類型",
+      "description": "此專案未指派任何里程碑類型。請聯絡管理員為此專案指派里程碑類型，或設定預設里程碑類型。"
     }
   },
   "sessions": {

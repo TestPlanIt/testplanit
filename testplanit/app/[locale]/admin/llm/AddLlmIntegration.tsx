@@ -2,6 +2,7 @@
 /* eslint-disable react-hooks/incompatible-library -- This file consumes a library API (TanStack Table / TanStack Virtual / react-hook-form watch) that returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it. */
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { FirstDefaultNotice } from "@/components/admin/FirstDefaultNotice";
 import { schema } from "~/zenstack/schema";
 import {
   Accordion,
@@ -253,6 +254,15 @@ export function AddLlmIntegration({
     useClientQueries(schema).llmIntegration.useUpsert();
   const { mutateAsync: createLlmProviderConfig } =
     useClientQueries(schema).llmProviderConfig.useCreate();
+
+  // The first row of a catalog with no default becomes it (the DB also
+  // refuses to let a catalog lose its default once it has one).
+  const { data: currentDefault, isLoading: defaultLoading } = useClientQueries(
+    schema
+  ).llmProviderConfig.useFindFirst({
+    where: { isDefault: true, llmIntegration: { isDeleted: false } },
+  });
+  const mustBeDefault = !defaultLoading && !currentDefault;
   const { data: existingIntegrations } = useClientQueries(
     schema
   ).llmIntegration.useFindMany({
@@ -515,6 +525,12 @@ export function AddLlmIntegration({
     }
   };
 
+  useEffect(() => {
+    if (mustBeDefault) {
+      form.setValue("isDefault", true);
+    }
+  }, [mustBeDefault, form]);
+
   const onSubmit = async (values: FormData) => {
     setLoading(true);
 
@@ -609,7 +625,7 @@ export function AddLlmIntegration({
             timeout: values.timeout,
             retryAttempts: 3,
             streamingEnabled: values.streamingEnabled,
-            isDefault: values.isDefault,
+            isDefault: values.isDefault || mustBeDefault,
             // Persist model capabilities discovered during the pre-save probe
             // (or earlier Test Connection) so the first real chat request
             // skips unsupported params.
@@ -697,12 +713,14 @@ export function AddLlmIntegration({
                       <Switch
                         checked={field.value}
                         onCheckedChange={field.onChange}
+                        disabled={mustBeDefault}
                       />
                     </FormControl>
                   </FormItem>
                 )}
               />
             </div>
+            {mustBeDefault && <FirstDefaultNotice />}
 
             <Accordion
               type="multiple"

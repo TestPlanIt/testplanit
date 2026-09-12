@@ -10,6 +10,7 @@ import { auditedTransaction } from "~/lib/audit/auditedTransaction";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { baseDb } from "~/lib/db";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
+import { normalizeTiptapInput } from "~/lib/tiptap/normalizeTiptapInput";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import {
   failsIssueOnFailureGate,
@@ -449,12 +450,16 @@ export const POST = withAuditContext(async (req: NextRequest) => {
       }
     }
 
+    // `notes` is a Tiptap document column. API clients (the MCP server among
+    // them) may send plain text or a stringified document; store the object
+    // shape the history panel reads, never a bare string.
     const notesInput: JsonValue | typeof JsonNull | undefined =
       input.notes === undefined
         ? undefined
         : input.notes === null
           ? JsonNull
-          : (input.notes as JsonValue);
+          : ((normalizeTiptapInput(input.notes) ?? JsonNull) as
+              JsonValue | typeof JsonNull);
 
     const evidenceInput: JsonValue =
       input.evidence === undefined || input.evidence === null

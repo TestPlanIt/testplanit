@@ -1,6 +1,7 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library */
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { FirstDefaultNotice } from "@/components/admin/FirstDefaultNotice";
 import { schema } from "~/zenstack/schema";
 import type { Projects } from "~/zenstack/models";
 import { useCallback, useEffect, useState } from "react";
@@ -78,6 +79,15 @@ export function AddTemplate({ open, onClose }: AddTemplateProps) {
 
   const { mutateAsync: createTemplate } =
     useClientQueries(schema).templates.useCreate();
+
+  // The first row of a catalog with no default becomes it (the DB also
+  // refuses to let a catalog lose its default once it has one).
+  const { data: currentDefault, isLoading: defaultLoading } = useClientQueries(
+    schema
+  ).templates.useFindFirst({
+    where: { isDefault: true, isDeleted: false },
+  });
+  const mustBeDefault = !defaultLoading && !currentDefault;
   const { mutateAsync: createTemplateProjectAssignment } =
     useClientQueries(schema).templateProjectAssignment.useCreateMany();
   const { mutateAsync: createTemplateCaseAssignment } =
@@ -151,6 +161,12 @@ export function AddTemplate({ open, onClose }: AddTemplateProps) {
       setValue("isEnabled", true);
     }
   }, [isDefault, setValue]);
+
+  useEffect(() => {
+    if (mustBeDefault) {
+      setValue("isDefault", true);
+    }
+  }, [mustBeDefault, setValue]);
 
   useEffect(() => {
     setAvailableCaseFields(
@@ -246,7 +262,7 @@ export function AddTemplate({ open, onClose }: AddTemplateProps) {
       const newTemplate = await createTemplate({
         data: {
           templateName: data.name,
-          isDefault: data.isDefault,
+          isDefault: data.isDefault || mustBeDefault,
           isEnabled: data.isEnabled,
         },
       });
@@ -273,7 +289,7 @@ export function AddTemplate({ open, onClose }: AddTemplateProps) {
         });
       }
 
-      if (data.isDefault) {
+      if (data.isDefault || mustBeDefault) {
         if (Array.isArray(projects)) {
           await createTemplateProjectAssignment({
             data: projects.map((project: Projects) => ({
@@ -386,6 +402,7 @@ export function AddTemplate({ open, onClose }: AddTemplateProps) {
                       <Switch
                         checked={field.value}
                         onCheckedChange={field.onChange}
+                        disabled={mustBeDefault}
                         data-testid="template-default-switch"
                       />
                     </FormControl>
@@ -399,6 +416,7 @@ export function AddTemplate({ open, onClose }: AddTemplateProps) {
                 )}
               />
             </div>
+            {mustBeDefault && <FirstDefaultNotice />}
 
             <FormField
               control={form.control}

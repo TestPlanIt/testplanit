@@ -80,6 +80,7 @@ import React, { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { emptyEditorContent } from "~/app/constants";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
+import { ensureTipTapJSON } from "~/utils/tiptapConversion";
 import { EditResultModal } from "~/app/[locale]/projects/repository/[projectId]/EditResultModal";
 import FieldValueRenderer from "~/app/[locale]/projects/repository/[projectId]/[caseId]/FieldValueRenderer";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
@@ -565,7 +566,7 @@ const StepResultsDisplay = ({
                         {tCommon("actions.resultDetails")}
                       </div>
                       <TipTapEditor
-                        content={stepResult.notes as object}
+                        content={ensureTipTapJSON(stepResult.notes)}
                         readOnly={true}
                         projectId={projectId ? String(projectId) : undefined}
                         className="prose-sm"
@@ -705,7 +706,7 @@ const RenderSharedGroupInHistoryList: React.FC<{
                   {tCommon("actions.resultDetails")}
                 </div>
                 <TipTapEditor
-                  content={itemResult.notes as object}
+                  content={ensureTipTapJSON(itemResult.notes)}
                   readOnly={true}
                   projectId={projectId ? String(projectId) : undefined}
                   className="prose-sm"
@@ -924,7 +925,7 @@ const ManualResultExpandedDetails = ({
           </div>
           <div className="px-4">
             <TipTapEditor
-              content={details.notes as object}
+              content={ensureTipTapJSON(details.notes)}
               readOnly={true}
               projectId={projectId ? String(projectId) : undefined}
               className="h-auto"

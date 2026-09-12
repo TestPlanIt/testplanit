@@ -1176,6 +1176,12 @@
       "in": "是任一",
       "hasValue": "有值",
       "isEmpty": "为空"
+    },
+    "defaults": {
+      "firstTitle": "这将成为默认值",
+      "firstDescription": "目前还没有默认项,因此这一项将成为默认项。如需更改,请将其他项设置为默认项。",
+      "lockedTitle": "当前默认值",
+      "lockedDescription": "当前默认项无法直接取消设置。请改为将其他项设置为默认项。"
     }
   },
   "api": {
@@ -2595,6 +2601,10 @@
       "skippedForPermission": "里程碑已完成。由于您没有权限完成其测试运行和会话,它们仍保持打开状态。",
       "skippedTestRunsForPermission": "里程碑已完成。由于您没有权限完成其测试运行,它们仍保持打开状态。",
       "skippedSessionsForPermission": "里程碑已完成。由于您没有权限完成其会话,它们仍保持打开状态。"
+    },
+    "noTypes": {
+      "title": "暂无可用的里程碑类型",
+      "description": "此项目未分配任何里程碑类型。请联系管理员为该项目分配里程碑类型,或设置默认里程碑类型。"
     }
   },
   "sessions": {

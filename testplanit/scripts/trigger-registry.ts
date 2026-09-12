@@ -397,6 +397,12 @@ export function assertRegistrySafe(): void {
  * The `tpl_single_default_` prefix keeps these out of the `tpl_audit_%` drift
  * self-check in scripts/apply-triggers.ts. Attaching the trigger is idempotent
  * and applied on the same startup / db-push paths as the audit triggers.
+ *
+ * Each entry also gets the deferred `tpl_keep_default_<table>` constraint
+ * trigger: a table (or scope) that still has live rows must not lose its live
+ * default — clearing, disabling, soft-deleting or deleting the default while
+ * siblings remain is rejected at commit. Together the two triggers hold
+ * "exactly one live default while any live row exists".
  */
 export interface SingleDefaultConfig {
   table: string;

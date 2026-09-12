@@ -22,7 +22,7 @@
  *   testRunId: testRun.id,
  *   testRunCaseId: 123,
  *   statusId: statusId!,
- *   elapsed: 1500,
+ *   elapsed: 15, // seconds
  * });
  * ```
  *

@@ -41,7 +41,7 @@ await client.createTestResult({
   testRunId: testRun.id,
   testRunCaseId: 123,
   statusId: passedStatusId,
-  elapsed: 1500, // milliseconds
+  elapsed: 15, // seconds
 });
 
 // Complete the test run
@@ -251,10 +251,8 @@ const result = await client.createTestResult({
   testRunId: 123,
   testRunCaseId: 456,
   statusId: 1,                // Use getStatusId() to get the correct ID
-  elapsed: 1500,              // Optional: duration in milliseconds
-  notes: {                    // Optional: additional notes
-    comment: 'Test passed successfully'
-  },
+  elapsed: 15,                // Optional: duration in seconds
+  notes: 'Test passed successfully', // Optional: plain text, or a Tiptap document object
   evidence: {                 // Optional: test evidence/logs
     logs: ['Step 1 completed', 'Step 2 completed']
   },
@@ -284,6 +282,7 @@ client.clearStatusCache();
 ```
 
 The `getStatusId` method automatically matches:
+
 - System names (e.g., `passed`, `failed`)
 - Display names (e.g., `Passed`, `Failed`)
 - Aliases configured in TestPlanIt
@@ -498,8 +497,8 @@ async function reportTestResults() {
         testRunId: testRun.id,
         testRunCaseId: testRunCase.id,
         statusId: result.status === 'passed' ? passedStatus : failedStatus,
-        elapsed: result.duration,
-        notes: result.error ? { error: result.error } : undefined,
+        elapsed: Math.round(result.duration / 1000), // Playwright reports ms; TestPlanIt stores seconds
+        notes: result.error ? String(result.error) : undefined,
       });
     }
 

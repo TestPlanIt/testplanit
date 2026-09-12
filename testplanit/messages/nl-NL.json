@@ -238,6 +238,12 @@
       "allIssueTypes": "Alle probleemtypen",
       "noIssueType": "Geen probleemtype"
     },
+    "defaults": {
+      "firstTitle": "Dit wordt de standaard",
+      "firstDescription": "Er bestaat nog geen standaard, dus dit wordt de standaard. Om dit later te wijzigen, stelt u een ander item in als standaard.",
+      "lockedTitle": "Huidige standaard",
+      "lockedDescription": "De huidige standaard kan niet direct worden uitgeschakeld. Stel in plaats daarvan een ander item in als standaard."
+    },
     "fields": {
       "groupName": "Groepsnaam",
       "users": "Gebruikers",
@@ -2394,6 +2400,10 @@
       "documentation": "Voer mijlpaaldocumentatie in...",
       "selectType": "Selecteer mijlpaaltype...",
       "selectParent": "Selecteer bovenliggende mijlpaal..."
+    },
+    "noTypes": {
+      "title": "Geen mijlpaaltypen beschikbaar",
+      "description": "Dit project heeft geen mijlpaaltypen toegewezen. Vraag een beheerder om een mijlpaaltype aan het project toe te wijzen of om een standaard mijlpaaltype in te stellen."
     },
     "empty": {
       "active": "Geen actieve mijlpalen",

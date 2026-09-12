@@ -155,6 +155,7 @@ describe("GET /api/export/test-run-results", () => {
         projectId: null,
       });
       expect(lines[1]).toMatchObject({
+        elapsedMs: 250000, // stored seconds × 1000
         id: 1,
         testCaseId: 201,
         projectId: 100,

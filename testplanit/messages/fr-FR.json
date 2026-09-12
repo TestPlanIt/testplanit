@@ -1176,6 +1176,12 @@
       "in": "Est l'un de",
       "hasValue": "A une valeur",
       "isEmpty": "Est vide"
+    },
+    "defaults": {
+      "firstTitle": "Ceci sera la valeur par défaut",
+      "firstDescription": "Aucune valeur par défaut n'existe encore, celle-ci devient donc la valeur par défaut. Pour la modifier ultérieurement, définissez un autre élément comme valeur par défaut.",
+      "lockedTitle": "Valeur par défaut actuelle",
+      "lockedDescription": "La valeur par défaut actuelle ne peut pas être désactivée directement. Définissez plutôt un autre élément comme valeur par défaut."
     }
   },
   "api": {
@@ -2595,6 +2601,10 @@
       "skippedForPermission": "Le jalon a été terminé. Ses cycles de test et sessions ont été laissés ouverts car vous n'avez pas la permission de les terminer.",
       "skippedTestRunsForPermission": "Le jalon a été terminé. Ses cycles de test ont été laissés ouverts car vous n'avez pas la permission de les terminer.",
       "skippedSessionsForPermission": "Le jalon a été terminé. Ses sessions ont été laissées ouvertes car vous n'avez pas la permission de les terminer."
+    },
+    "noTypes": {
+      "title": "Aucun type d'étape disponible",
+      "description": "Ce projet n'a aucun type d'étape assigné. Demandez à un administrateur d'assigner un type d'étape au projet ou de définir un type d'étape par défaut."
     }
   },
   "sessions": {

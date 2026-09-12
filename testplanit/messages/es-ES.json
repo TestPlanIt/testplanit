@@ -1176,6 +1176,12 @@
       "in": "Es cualquiera de",
       "hasValue": "Tiene valor",
       "isEmpty": "Está vacío"
+    },
+    "defaults": {
+      "firstTitle": "Este será el predeterminado",
+      "firstDescription": "Aún no existe un valor predeterminado, así que este se convierte en el predeterminado. Para cambiarlo más tarde, establece un elemento diferente como predeterminado.",
+      "lockedTitle": "Predeterminado actual",
+      "lockedDescription": "El predeterminado actual no se puede desactivar directamente. En su lugar, establece un elemento diferente como predeterminado."
     }
   },
   "api": {
@@ -2595,6 +2601,10 @@
       "skippedForPermission": "El hito se completó. Sus ejecuciones de prueba y sesiones quedaron abiertas porque no tienes permiso para completarlas.",
       "skippedTestRunsForPermission": "El hito se completó. Sus ejecuciones de prueba quedaron abiertas porque no tienes permiso para completarlas.",
       "skippedSessionsForPermission": "El hito se completó. Sus sesiones quedaron abiertas porque no tienes permiso para completarlas."
+    },
+    "noTypes": {
+      "title": "No hay tipos de hitos disponibles",
+      "description": "Este proyecto no tiene tipos de hitos asignados. Pide a un administrador que asigne un tipo de hito al proyecto o que establezca un tipo de hito predeterminado."
     }
   },
   "sessions": {

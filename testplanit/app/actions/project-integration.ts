@@ -92,9 +92,31 @@ export async function removeIntegrationProjectMapping(
     }
 
     return await auditedTransaction(async (tx) => {
+      // A scope with active mappings must keep a default (tpl_keep_default
+      // rejects the commit otherwise), so hand it to another active mapping
+      // before deactivating this one. The single-default trigger clears the
+      // flag on this row when the successor becomes default.
+      if (mapping.isDefault) {
+        const successor = await tx.integrationProject.findFirst({
+          where: {
+            projectIntegrationId,
+            isActive: true,
+            id: { not: integrationProjectId },
+          },
+          orderBy: { id: "asc" },
+          select: { id: true },
+        });
+        if (successor) {
+          await tx.integrationProject.update({
+            where: { id: successor.id },
+            data: { isDefault: true },
+          });
+        }
+      }
+
       await tx.integrationProject.update({
         where: { id: integrationProjectId },
-        data: { isActive: false },
+        data: { isActive: false, isDefault: false },
       });
 
       const remainingActive = await tx.integrationProject.count({

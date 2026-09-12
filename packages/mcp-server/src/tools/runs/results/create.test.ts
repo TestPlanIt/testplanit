@@ -116,6 +116,59 @@ describe("registerRunResultsCreate", () => {
     expect(body.fieldValues).toBeUndefined();
   });
 
+  it("wraps plain-text notes in a ProseMirror doc (one paragraph per line) and passes elapsed seconds through unchanged", async () => {
+    mockZenstack.mockResolvedValueOnce(RUN_CASE);
+    mockZenstack.mockResolvedValueOnce([{ id: 5 }]);
+    mockZenstack.mockResolvedValueOnce(0);
+    mockFetch.mockResolvedValueOnce(okSubmitResponse(999));
+    mockZenstack.mockResolvedValueOnce(makeRawDetail({ elapsed: 95 }));
+
+    const { client } = await setupClient();
+    const result = await client.callTool({
+      name: "testplanit_test_run_results_create",
+      arguments: {
+        testRunCaseId: 50,
+        statusName: "Passed",
+        notes: "Badge shown.\nRetried once.",
+        elapsed: 95,
+      },
+    });
+
+    expect(result.isError).toBeFalsy();
+    const body = JSON.parse(mockFetch.mock.calls[0]?.[1].body as string);
+    expect(body.elapsed).toBe(95);
+    expect(body.notes).toEqual({
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "Badge shown." }],
+        },
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "Retried once." }],
+        },
+      ],
+    });
+  });
+
+  it("omits notes from the submit payload when none are given", async () => {
+    mockZenstack.mockResolvedValueOnce(RUN_CASE);
+    mockZenstack.mockResolvedValueOnce([{ id: 5 }]);
+    mockZenstack.mockResolvedValueOnce(0);
+    mockFetch.mockResolvedValueOnce(okSubmitResponse(999));
+    mockZenstack.mockResolvedValueOnce(makeRawDetail());
+
+    const { client } = await setupClient();
+    await client.callTool({
+      name: "testplanit_test_run_results_create",
+      arguments: { testRunCaseId: 50, statusName: "Passed" },
+    });
+
+    const body = JSON.parse(mockFetch.mock.calls[0]?.[1].body as string);
+    expect("notes" in body).toBe(false);
+  });
+
   it("resolves fieldValues by displayName (case-insensitive) → fieldId; sends them in the submit payload", async () => {
     mockZenstack.mockResolvedValueOnce(RUN_CASE);
     mockZenstack.mockResolvedValueOnce([{ id: 5 }]);

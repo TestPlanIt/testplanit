@@ -43,7 +43,7 @@ The **Available Issue Integrations** card shows a card per integration. The acti
 Once an integration is active, a settings card appears with a **Linked External Projects** section:
 
 - **Add Projects** — link one or more external projects (for example Jira projects or GitHub repositories) so their issues can be referenced in TestPlanIt.
-- **Set as Default** — mark one linked project as the default, pre-selected when creating new issues from TestPlanIt.
+- **Set as Default** — mark one linked project as the default, pre-selected when creating new issues from TestPlanIt. The first linked project is the default automatically, and removing the default hands the role to another linked project, so there is always a default while any project is linked.
 - **Remove Project** — stop syncing issues from a linked project. Previously synced issues are not deleted.
 - **Import Issues** — import a linked project's issues into TestPlanIt: a recent, capped sample, or every issue of the project's configured requirement types with no window and no cap (see [Importing issues in bulk](#importing-issues-in-bulk)).
 - **Default Issue Type** *(Jira only)* — choose the issue type used by default for each linked project.

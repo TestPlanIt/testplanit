@@ -590,6 +590,47 @@ describe("TestResultHistory", () => {
     ).toBe(true);
   });
 
+  it("renders result notes stored as a bare string (older API clients)", async () => {
+    const user = userEvent.setup();
+    mockUseFindUniqueTestRunResults.mockReturnValue({
+      data: {
+        notes: "Task completed from the UI, badge shown.",
+        iteration: null,
+        stepResults: [],
+      },
+      isLoading: false,
+    });
+    mockUseFindFirstRepositoryCases.mockReturnValue({
+      data: {
+        ...mockTestCase,
+        testRuns: [
+          {
+            ...mockTestCase.testRuns[0],
+            results: [{ ...mockManualResult, id: 3 }],
+          },
+        ],
+        junitResults: [],
+      },
+      isLoading: false,
+    });
+
+    renderWithQueryClient(<TestResultHistory {...defaultProps} />);
+
+    await user.click(screen.getByTestId("expand-result-manual-3"));
+
+    const editorContents = screen
+      .getAllByTestId("tiptap-editor")
+      .map((el) => el.textContent ?? "");
+    // The editor receives a document, not the raw string.
+    expect(
+      editorContents.some(
+        (text) =>
+          text.includes('"type":"doc"') &&
+          text.includes("Task completed from the UI, badge shown.")
+      )
+    ).toBe(true);
+  });
+
   it("lazy-loads JUnit log output into the expanded panel", async () => {
     const user = userEvent.setup();
     mockUseFindUniqueJUnitTestResult.mockReturnValue({

@@ -1176,6 +1176,12 @@
       "in": "Ist eines von",
       "hasValue": "Hat Wert",
       "isEmpty": "Ist leer"
+    },
+    "defaults": {
+      "firstTitle": "Dies wird der Standard sein",
+      "firstDescription": "Es existiert noch kein Standard, daher wird dieser zum Standard. Um ihn später zu ändern, legen Sie ein anderes Element als Standard fest.",
+      "lockedTitle": "Aktueller Standard",
+      "lockedDescription": "Der aktuelle Standard kann nicht direkt aufgehoben werden. Legen Sie stattdessen ein anderes Element als Standard fest."
     }
   },
   "api": {
@@ -2595,6 +2601,10 @@
       "skippedForPermission": "Der Meilenstein wurde abgeschlossen. Die zugehörigen Testläufe und Sitzungen wurden offen gelassen, da Sie nicht die Berechtigung haben, diese abzuschließen.",
       "skippedTestRunsForPermission": "Der Meilenstein wurde abgeschlossen. Die zugehörigen Testläufe wurden offen gelassen, da Sie nicht die Berechtigung haben, diese abzuschließen.",
       "skippedSessionsForPermission": "Der Meilenstein wurde abgeschlossen. Die zugehörigen Sitzungen wurden offen gelassen, da Sie nicht die Berechtigung haben, diese abzuschließen."
+    },
+    "noTypes": {
+      "title": "Keine Meilensteintypen verfügbar",
+      "description": "Diesem Projekt sind keine Meilensteintypen zugewiesen. Bitten Sie einen Administrator, dem Projekt einen Meilensteintyp zuzuweisen oder einen Standard-Meilensteintyp festzulegen."
     }
   },
   "sessions": {
