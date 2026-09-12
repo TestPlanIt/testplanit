@@ -105,7 +105,7 @@ The application uses the following background processes:
 
 ### Repo Cache Worker
 
-- Automatically refreshes expired code repository caches used by QuickScript AI generation
+- Automatically refreshes expired code repository caches used by QuickScript AI generation and Impact Analysis; for Impact Analysis repositories, each refresh also scans repository markers and recent commit messages for ticket keys into Code Pins
 - Runs a daily sweep (4 AM) to find configs with expired or missing caches and re-fetches from git
 - Only refreshes caches that have actually expired — configs with valid caches are skipped
 - Default concurrency: 1 (serial processing to avoid hammering git provider APIs)
@@ -121,7 +121,7 @@ The application uses the following background processes:
 
 ### Impact Analysis Worker
 
-- Processes Impact Analysis jobs: fetches the commit diff, matches Code Pins, searches the case library by keyword, scores run history, and asks the LLM to rank the remaining candidates
+- Processes Impact Analysis jobs: fetches the commit diff, matches Code Pins, resolves tickets named in the commits to their linked cases, searches the case library by keyword, scores run history, and asks the LLM to rank the remaining candidates
 - Reports a phase per step and persists the affected-test list to the analysis record
 - Default concurrency: 1 (each job can involve provider API calls and multiple LLM batches)
 - Location: `workers/impactAnalysisWorker.ts`

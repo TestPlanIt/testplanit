@@ -38,6 +38,7 @@ const sidebars: SidebarsConfig = {
         'background-processes', // Add background-processes.md
         'multi-tenant-workers', // Add multi-tenant-workers.md
         'sse-notifications', // SSE notifications deployment & ingress configuration
+        'environment-variables', // Reference for every environment variable
       ],
     },
     'getting-started', // Corresponds to getting-started.md

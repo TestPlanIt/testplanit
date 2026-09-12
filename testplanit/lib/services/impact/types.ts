@@ -80,7 +80,7 @@ export type PinReason = {
   pinId: number;
   filePath: string;
   pinKind: CodePinKind;
-  source: "MANUAL" | "AI" | "ANNOTATION" | "MAPFILE";
+  source: "MANUAL" | "AI" | "ANNOTATION" | "MAPFILE" | "ISSUE";
   lines?: [number, number];
   symbol?: string;
   touchedRanges?: Array<[number, number]>;
@@ -122,8 +122,24 @@ export type LinkedReason = {
   linkType: string;
 };
 
+/** A commit in the analyzed range named a ticket the case is linked to. */
+export type IssueReason = {
+  kind: "ISSUE";
+  issueId: number;
+  /** The tracker key as stored on the issue (e.g. PROJ-123, #42). */
+  issueKey: string;
+  commits: Array<{ sha: string; shortSha: string }>;
+  /** Changed paths those commits touched; absent when they were not fetched. */
+  files?: string[];
+};
+
 export type SelectionReason =
-  PinReason | PathReason | HistoryReason | AiReason | LinkedReason;
+  | PinReason
+  | PathReason
+  | HistoryReason
+  | AiReason
+  | LinkedReason
+  | IssueReason;
 
 export type ReasonKind = SelectionReason["kind"];
 
@@ -166,7 +182,8 @@ export type AnalysisWarningCode =
   | "ai_partial"
   | "ai_truncated"
   | "no_candidates"
-  | "anchor_fetch_capped";
+  | "anchor_fetch_capped"
+  | "issue_commit_fetch_capped";
 
 export interface AnalysisWarning {
   code: AnalysisWarningCode;
@@ -214,6 +231,7 @@ export type ImpactPhase =
   | "resolving_config"
   | "fetching_diff"
   | "matching_pins"
+  | "matching_issues"
   | "searching_cases"
   | "scoring_history"
   | "waiting_for_ai"
@@ -223,6 +241,7 @@ export const IMPACT_PHASES: ImpactPhase[] = [
   "resolving_config",
   "fetching_diff",
   "matching_pins",
+  "matching_issues",
   "searching_cases",
   "scoring_history",
   "waiting_for_ai",
@@ -249,6 +268,7 @@ export interface ImpactProgress {
   filesIncluded?: number;
   pinsMatched?: number;
   pinsStale?: number;
+  issuesMatched?: number;
   candidates?: number;
   casesRanked?: number;
   casesToRank?: number;

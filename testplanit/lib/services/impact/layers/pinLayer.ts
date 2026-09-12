@@ -22,7 +22,7 @@ export interface PinRow {
   anchorSha: string | null;
   anchorSnippet: string | null;
   staleDismissedAt: Date | string | null;
-  source: "MANUAL" | "AI" | "ANNOTATION" | "MAPFILE";
+  source: "MANUAL" | "AI" | "ANNOTATION" | "MAPFILE" | "ISSUE";
 }
 
 export interface PinLayerOutput {

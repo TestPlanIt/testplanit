@@ -394,6 +394,17 @@ const EXEMPT_EXTERNAL_KEY_LOOKUP_FILES = [
   // cross-project probe that turns a silent miss into a named owner, which
   // must see every row for the same reason.
   "lib/services/resolveIssueKeys.ts",
+  // Impact Analysis's ticket lookup: resolves keys found in commit messages
+  // to the rows that already hold them, matched on `externalKey` exactly or
+  // by the trailing `#<number>` that number-keyed trackers store, and only
+  // among rows that already have a linked case in the project — a commit
+  // names a specific ticket, never a row kind. Deliberately kind-agnostic:
+  // a case linked to a requirement that a commit implements is exactly the
+  // case the analysis exists to surface, so narrowing to defects would drop
+  // the stronger half of the signal. Never creates rows (unlike
+  // resolveIssueKeys.ts above), and its second read is the case-link join,
+  // not an Issue read.
+  "lib/services/impact/issueKeys.ts",
 ];
 
 // EXEMPT — ingestion and import must see every row kind, or importing (or

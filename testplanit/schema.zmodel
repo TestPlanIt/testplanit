@@ -3918,6 +3918,8 @@ model ProjectCodeRepositoryConfig {
     cacheTotalSize        BigInt?                     // bytes
     cacheError            String?
     markerScanReport      Json?                       // IMPACT only: summary of the last repo-marker scan
+    issueScanEnabled      Boolean                     @default(true)   // IMPACT only: derive Code Pins from ticket keys in commit messages
+    issueScanReport       Json?                       // IMPACT only: summary of the last ticket-key scan
     createdAt             DateTime                    @default(now())
     updatedAt             DateTime                    @updatedAt
     codePins              RepositoryCaseCodePin[]
@@ -3957,6 +3959,7 @@ enum CodePinSource {
     AI
     ANNOTATION
     MAPFILE
+    ISSUE
 
     @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')

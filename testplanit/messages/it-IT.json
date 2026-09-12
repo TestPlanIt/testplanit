@@ -2299,6 +2299,18 @@
           "contentsIncomplete": "Solo {cached} di {total} contenuti di file sono memorizzati nella cache. Aggiorna di nuovo per completare.",
           "totalSize": "Dimensione totale"
         },
+        "tickets": {
+          "title": "Ticket collegati",
+          "description": "I commit che nominano un ticket (PROJ-123, #42, AB#42) diventano Code Pin per l'intero file su ogni test case collegato, in modo che le modifiche successive a quei file ritrovino nuovamente i casi.",
+          "enableLabel": "Deriva i Code Pin dai messaggi di commit",
+          "enableDescription": "Analizza i commit recenti sul branch a ogni aggiornamento della cache. Disattiva per mantenere le analisi che leggono le chiavi dei ticket solo dai commit analizzati.",
+          "lastScan": "Ultima scansione: {date}",
+          "never": "Non ancora analizzato",
+          "summary": "{commits, plural, one {# commit analizzato} other {# commit analizzati}} · {matched} hanno nominato un ticket collegato · {created} creati · {updated} aggiornati · {removed} rimossi",
+          "skippedLarge": "{count, plural, one {# commit è stato ignorato perché troppo grande per essere bloccato.} other {# commit sono stati ignorati perché troppo grandi per essere bloccati.}}",
+          "fetchCapped": "Non tutti i commit corrispondenti sono stati letti; i restanti verranno elaborati al prossimo aggiornamento.",
+          "error": "Scansione non riuscita: {error}"
+        },
         "markers": {
           "title": "Marcatori del repository",
           "description": "Le annotazioni nei commenti come @testplanit case:123 e le voci in .testplanit/testmap.yml diventano Code Pin ad ogni aggiornamento della cache.",
@@ -3877,6 +3889,7 @@
       "source": "Origine",
       "sourceAi": "IA",
       "sourceAnnotation": "Annotazione",
+      "sourceIssue": "Problema",
       "sourceManual": "Manuale",
       "sourceMapfile": "File di mappatura",
       "staleBadge": "Obsoleta",
@@ -4402,6 +4415,7 @@
         "resolving_config": "Risoluzione della configurazione del repository…",
         "fetching_diff": "Recupero del diff…",
         "matching_pins": "Corrispondenza delle Spille di codice…",
+        "matching_issues": "Corrispondenza dei ticket nominati nei commit…",
         "searching_cases": "Ricerca dei casi di test per parola chiave…",
         "scoring_history": "Valutazione della cronologia delle esecuzioni…",
         "waiting_for_ai": "In attesa dell'IA…",
@@ -4432,6 +4446,7 @@
       },
       "reasons": {
         "pin": "Spilla",
+        "issue": "Problema",
         "path": "Parola chiave",
         "history": "Cronologia",
         "ai": "IA",
@@ -4447,7 +4462,8 @@
         "fieldFolder": "cartella",
         "historyDetail": "{count, plural, one {# esecuzione precedente} other {# esecuzioni precedenti}} dopo modifiche agli stessi file",
         "historyFailed": "Non riuscito in un'esecuzione precedente dopo modifiche simili",
-        "linkedDetail": "Collegato al caso {caseId}"
+        "linkedDetail": "Collegato al caso {caseId}",
+        "issueDetail": "Collegato a {key}, nominato in {count, plural, one {commit {sha}} other {# commit}}"
       },
       "stale": {
         "badge": "Obsoleta",
@@ -4470,7 +4486,8 @@
         "ai_partial": "Alcuni batch dell'IA non sono riusciti; i risultati potrebbero essere incompleti.",
         "ai_truncated": "{count, plural, one {# batch IA è stato} other {# batch IA sono stati}} troncati dal modello.",
         "no_candidates": "Nessun caso di test corrisponde.",
-        "anchor_fetch_capped": "Alcuni file agganciati sono stati corrisposti solo per percorso (limite di recupero raggiunto)."
+        "anchor_fetch_capped": "Alcuni file agganciati sono stati corrisposti solo per percorso (limite di recupero raggiunto).",
+        "issue_commit_fetch_capped": "Alcuni commit che nominano ticket non sono stati letti file per file (limite di recupero raggiunto); i relativi casi non coprono file specifici."
       },
       "actions": {
         "compare": "Confronta",

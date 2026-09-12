@@ -1,5 +1,5 @@
 /**
- * Merges the four selection layers into ranked, tiered ScoredCases and
+ * Merges the five selection layers into ranked, tiered ScoredCases and
  * reports which changed paths no selected case covers.
  */
 
@@ -20,6 +20,7 @@ export interface CaseLink {
 
 export interface MergeLayersInput {
   pin: LayerResult;
+  issue: LayerResult;
   path: LayerResult;
   history: LayerResult;
   ai: LayerResult;
@@ -51,6 +52,8 @@ function coveredPathsOf(reason: SelectionReason): string[] {
         ? reason.overlappingPaths
         : [];
     case "AI":
+      return Array.isArray(reason.files) ? reason.files : [];
+    case "ISSUE":
       return Array.isArray(reason.files) ? reason.files : [];
     default:
       return [];
@@ -84,7 +87,13 @@ export function mergeLayers(input: MergeLayersInput): MergeLayersOutput {
   const { cfg } = input;
   const acc = new Map<number, Accumulated>();
 
-  for (const layer of [input.pin, input.path, input.history, input.ai]) {
+  for (const layer of [
+    input.pin,
+    input.issue,
+    input.path,
+    input.history,
+    input.ai,
+  ]) {
     for (const candidate of layer.values()) {
       let entry = acc.get(candidate.caseId);
       if (!entry) {

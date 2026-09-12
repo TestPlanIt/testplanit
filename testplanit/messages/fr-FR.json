@@ -2299,6 +2299,18 @@
           "contentsIncomplete": "Seuls {cached} des {total} contenus de fichiers sont mis en cache. Actualisez à nouveau pour terminer.",
           "totalSize": "Taille totale"
         },
+        "tickets": {
+          "title": "Tickets liés",
+          "description": "Les commits qui mentionnent un ticket (PROJ-123, #42, AB#42) deviennent des Code Pins pour le fichier entier sur chaque cas de test lié, afin que les modifications ultérieures de ces fichiers retrouvent ces cas.",
+          "enableLabel": "Déduire les Code Pins à partir des messages de commit",
+          "enableDescription": "Analyse les commits récents sur la branche à chaque actualisation du cache. Désactivez pour que les analyses lisent uniquement les clés de ticket des commits analysés.",
+          "lastScan": "Dernière analyse : {date}",
+          "never": "Pas encore analysé",
+          "summary": "{commits, plural, one {# commit analysé} other {# commits analysés}} · {matched} mentionnaient un ticket lié · {created} créés · {updated} mis à jour · {removed} supprimés",
+          "skippedLarge": "{count, plural, one {# commit a été ignoré} other {# commits ont été ignorés}} car trop volumineux pour être épinglé.",
+          "fetchCapped": "Tous les commits correspondants n'ont pas été lus ; les autres seront traités lors de la prochaine actualisation.",
+          "error": "Échec de l'analyse : {error}"
+        },
         "markers": {
           "title": "Marqueurs de dépôt",
           "description": "Les annotations de commentaire comme @testplanit case:123 et les entrées dans .testplanit/testmap.yml deviennent des Code Pins à chaque actualisation du cache.",
@@ -3877,6 +3889,7 @@
       "source": "Source",
       "sourceAi": "IA",
       "sourceAnnotation": "Annotation",
+      "sourceIssue": "Billet",
       "sourceManual": "Manuel",
       "sourceMapfile": "Fichier de mappage",
       "staleBadge": "Obsolète",
@@ -4402,6 +4415,7 @@
         "resolving_config": "Résolution de la configuration du dépôt…",
         "fetching_diff": "Récupération du diff…",
         "matching_pins": "Correspondance des épingles de code…",
+        "matching_issues": "Correspondance des tickets mentionnés dans les commits…",
         "searching_cases": "Recherche de cas de test par mot-clé…",
         "scoring_history": "Évaluation de l'historique des exécutions…",
         "waiting_for_ai": "En attente de l'IA…",
@@ -4432,6 +4446,7 @@
       },
       "reasons": {
         "pin": "Épingle",
+        "issue": "Billet",
         "path": "Mot-clé",
         "history": "Historique",
         "ai": "IA",
@@ -4447,7 +4462,8 @@
         "fieldFolder": "dossier",
         "historyDetail": "{count, plural, one {# exécution antérieure} other {# exécutions antérieures}} après des modifications des mêmes fichiers",
         "historyFailed": "Échoué lors d'une exécution antérieure après des modifications similaires",
-        "linkedDetail": "Lié au cas {caseId}"
+        "linkedDetail": "Lié au cas {caseId}",
+        "issueDetail": "Lié à {key}, mentionné dans {count, plural, one {commit {sha}} other {# commits}}"
       },
       "stale": {
         "badge": "Obsolète",
@@ -4470,7 +4486,8 @@
         "ai_partial": "Certains lots d'IA ont échoué ; les résultats peuvent être incomplets.",
         "ai_truncated": "{count, plural, one {# lot d'IA a été} other {# lots d'IA ont été}} tronqués par le modèle.",
         "no_candidates": "Aucun cas de test ne correspond.",
-        "anchor_fetch_capped": "Certains fichiers épinglés ont été mis en correspondance uniquement par chemin (limite de récupération atteinte)."
+        "anchor_fetch_capped": "Certains fichiers épinglés ont été mis en correspondance uniquement par chemin (limite de récupération atteinte).",
+        "issue_commit_fetch_capped": "Certains commits mentionnant des tickets n'ont pas été lus fichier par fichier (limite de récupération atteinte) ; leurs cas ne couvrent aucun fichier spécifique."
       },
       "actions": {
         "compare": "Comparer",

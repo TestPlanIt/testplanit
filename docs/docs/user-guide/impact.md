@@ -11,6 +11,7 @@ description: Compare two commits of the application under test and select the Af
 Every affected test shows why it was selected. The signals, in the order they are applied:
 
 - **Code Pins** — links from a test case to a file, line range, symbol, or glob pattern, added on the test case page or declared in the repository itself.
+- **Linked tickets** — a commit in the range names a ticket (`PROJ-123`, `#42`, `AB#42`) that test cases are linked to. See [Linked tickets](#linked-tickets).
 - **Keyword matching** — terms taken from the changed paths and symbols, searched against test case names, content, tags, and folders.
 - **Run history** — earlier runs composed from an analysis of overlapping changes.
 - **AI** — an LLM ranks the remaining candidates against a summary of the diff, when the project has an active LLM integration.
@@ -86,7 +87,7 @@ The header counts the result ("12 affected tests"), and the list is sorted by sc
   - **Pinned** — a Code Pin on the case intersects the change. Pins always rank first.
   - **Affected** — the other signals put the case at or above the affected threshold.
   - **Related** — a case linked to a strongly affected case, or one whose signals are weaker.
-- **Why** — one reason badge per signal that selected the case: **Pin**, **Keyword**, **History**, **AI**, or **Related**. Hover a badge for its detail; **Show reasons** expands the row with the full list, including the AI's rationale.
+- **Why** — one reason badge per signal that selected the case: **Pin**, **Ticket**, **Keyword**, **History**, **AI**, or **Related**. Hover a badge for its detail; **Show reasons** expands the row with the full list, including the AI's rationale.
 
 Cases that are already in the run — or already selected while creating one — are left out, and a note says how many were skipped. The description says how many related tests scored lower and were left unchecked. When AI ran, a short **Summary** of the change appears above the list.
 
@@ -97,6 +98,7 @@ When nothing matches, the step says **No affected tests found** and suggests pin
 ## What the reasons mean
 
 - **Pin** — a Code Pin on the case intersects the change. The detail names the pinned location: `path:12–40` for a line range, the file path for a whole-file pin, the symbol name, or the glob pattern that matched.
+- **Ticket** — a commit between the two commits names a ticket the case is linked to. The detail names the ticket and the commit (or how many commits) that mentioned it. The case covers the files those commits changed.
 - **Keyword** — a term taken from the changed paths and symbols was found in the case's name, content, tags, or folder. The detail shows the matched term and the field it was found in (for example, Matched "checkout" in case name).
 - **History** — the case ran, or failed, in an earlier run that was composed from an analysis with overlapping changes. A failure after similar changes scores higher than a plain run, and so does a case that was added by hand to such a run.
 - **AI** — the LLM judged the case relevant to the diff. The detail is the model's rationale for that case.
@@ -121,6 +123,7 @@ A case can carry several badges; its score is the strongest of its signals, and 
 | N AI batches were cut off by the model. | The model's reply was truncated. Cases in the cut-off part may be missing from the AI signal. |
 | Some AI batches failed; results may be incomplete. | One or more AI requests failed after retries; the results of the other batches are kept. |
 | Some pinned files were matched by path only (fetch limit reached). | Too many pinned files needed their base-commit content to locate lines or symbols; those past the limit were matched at file level. |
+| Some commits naming tickets were not read file by file (fetch limit reached); their cases cover no specific files. | More commits in the range named tickets than the analysis reads individually. Cases linked to the tickets past the limit are still selected, but do not count as covering any changed file. |
 | No test case matched. | No signal selected any case. |
 | Reusing a recent analysis of the same commits. | The same base and head were analyzed within the last 24 hours, so that result is shown instead of running again. |
 
@@ -157,6 +160,7 @@ The panel's header names the connected repository. Each pin is a row with its **
 - **AI** — suggested by an analysis rather than entered by hand.
 - **Annotation** — a comment marker in the repository (see [Repository markers](#repository-markers)).
 - **Map file** — an entry in the repository's `.testplanit/testmap.yml`.
+- **Ticket** — derived from a commit that named a ticket the case is linked to (see [Linked tickets](#linked-tickets)). The note names the ticket, and the pin is anchored at that commit.
 
 **Edit pin** reopens the dialog for a pin added in TestPlanIt. Its kind and file are fixed — a pin to different code is a different pin — so what can change is the line range, symbol, glob pattern, or note. **Remove** (with confirmation) deletes it.
 
@@ -207,10 +211,24 @@ Each entry becomes one glob pin per case. Tags are resolved when the file is sca
 
 The scan reports these problems on the settings page: a test case id that does not exist, an id that belongs to another project, a tag with no cases in the project, a YAML syntax error, and an entry without a glob or without any cases or tags. Valid entries are still applied when others have problems.
 
+## Linked tickets
+
+Test cases are linked to tickets — Jira issues, GitHub issues, Azure DevOps work items, and so on — from the test case page and through requirements. Developers name those same tickets in their commit messages (`PROJ-123`, `Fixes #42`, `AB#42`, `group/project#42`), which is also how the tracker's own development panel is populated. Impact Analysis reads the keys from the repository directly, so it works with every tracker TestPlanIt integrates with and every git provider, and needs nothing beyond the repository access it already has.
+
+A key is only ever matched against tickets that are already linked to a test case in the project, so a stray word that looks like a key selects nothing.
+
+The connection is used in two directions:
+
+- **In an analysis.** Every commit between the base and head is read for ticket keys. Cases linked to a named ticket are selected with the **Ticket** reason at a score just below a Code Pin, and they count as covering the files those particular commits changed. This is the strongest signal short of a pin: the change itself says which ticket it is for.
+- **On every cache refresh.** Recent commits on the configured branch (the last 90 days, up to 300 commits by default) are read the same way, and each ticket commit becomes a whole-file Code Pin with the **Ticket** source on every case linked to its ticket, for every source or configuration file the commit touched. From then on, any change to those files finds the cases through the **Pin** reason, even when later commits never mention the ticket again. Test files, documentation, lock files, generated and vendored code, and binaries are never pinned this way, and a commit that touches more than 50 files is skipped as noise.
+
+Ticket pins are ordinary pins: they show in the Code Pins panel with the **Ticket** source and the ticket key as their note, and they can be removed. A removed ticket pin is not recreated for the same commit. A ticket pin whose commit falls out of the scan window is removed on the next refresh, and a ticket pin is never created where the case already has a pin of another source on the same file. The **Linked Tickets** card on the [Impact Analysis settings](projects/settings/impact.md#linked-tickets) page turns the refresh-time scan on or off and shows the last scan's counts; the in-analysis reading of ticket keys is always on.
+
 ## Tips
 
 - Pin the specific block rather than the whole file when you can. A line range or symbol pin only fires when its own code changes, which keeps the Affected Tests list precise.
 - Use glob pins for modules: one `src/payments/**` pin on a checkout case catches every file in the module without listing them.
+- Ask developers to name the ticket in every commit message or pull request title. Each such commit both selects the linked cases in analyses and leaves Code Pins behind for the next change to the same files.
 - Keep an LLM integration active so the AI signal covers unpinned code. Pins and keyword matching find what is declared or named; the AI reads the diff and catches the rest.
 - Check the uncovered-files callout after each analysis. Pinning from it is the quickest way to grow coverage.
 

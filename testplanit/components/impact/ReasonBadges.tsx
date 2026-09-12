@@ -6,10 +6,18 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { History, Link2, Pin, SearchCode, Sparkles } from "lucide-react";
+import {
+  History,
+  Link2,
+  Pin,
+  SearchCode,
+  Sparkles,
+  Ticket,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { ComponentType } from "react";
 import type {
+  IssueReason,
   PathReason,
   PinReason,
   ReasonKind,
@@ -24,6 +32,7 @@ type Translator = (
 
 export const REASON_KIND_ORDER: ReasonKind[] = [
   "PIN",
+  "ISSUE",
   "PATH",
   "HISTORY",
   "AI",
@@ -32,6 +41,7 @@ export const REASON_KIND_ORDER: ReasonKind[] = [
 
 const REASON_LABEL_KEY: Record<ReasonKind, string> = {
   PIN: "reasons.pin",
+  ISSUE: "reasons.issue",
   PATH: "reasons.path",
   HISTORY: "reasons.history",
   AI: "reasons.ai",
@@ -40,6 +50,7 @@ const REASON_LABEL_KEY: Record<ReasonKind, string> = {
 
 const REASON_ICON: Record<ReasonKind, ComponentType<{ className?: string }>> = {
   PIN: Pin,
+  ISSUE: Ticket,
   PATH: SearchCode,
   HISTORY: History,
   AI: Sparkles,
@@ -49,6 +60,7 @@ const REASON_ICON: Record<ReasonKind, ComponentType<{ className?: string }>> = {
 const REASON_VARIANT: Record<ReasonKind, "default" | "secondary" | "outline"> =
   {
     PIN: "default",
+    ISSUE: "secondary",
     PATH: "secondary",
     HISTORY: "outline",
     AI: "outline",
@@ -118,6 +130,16 @@ export function reasonDetailLines(
         .map((reason) => ({
           text: pinDetail(t, reason),
           stale: reason.stale === true,
+        }));
+    case "ISSUE":
+      return reasons
+        .filter((reason): reason is IssueReason => reason.kind === "ISSUE")
+        .map((reason) => ({
+          text: t("reasons.issueDetail", {
+            key: reason.issueKey,
+            count: reason.commits.length,
+            sha: reason.commits[0]?.shortSha ?? "",
+          }),
         }));
     case "PATH":
       return reasons

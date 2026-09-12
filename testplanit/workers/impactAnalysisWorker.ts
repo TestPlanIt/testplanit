@@ -20,10 +20,12 @@ import {
   buildDiffSummary,
   renderDiffSummaryForPrompt,
 } from "../lib/services/impact/diffSummary";
+import { getCommitFilePaths } from "../lib/services/impact/commitFiles";
 import { getFileAtCommit } from "../lib/services/impact/fileAtCommit";
 import { impactCancelKey } from "../lib/services/impact/jobKeys";
 import { runAiLayer } from "../lib/services/impact/layers/aiLayer";
 import { runHistoryLayer } from "../lib/services/impact/layers/historyLayer";
+import { runIssueLayer } from "../lib/services/impact/layers/issueLayer";
 import { runPathLayer } from "../lib/services/impact/layers/pathLayer";
 import {
   runPinLayer,
@@ -94,7 +96,7 @@ function isCancelledError(error: unknown): boolean {
 }
 
 function emptyLayerCounts(): Record<ReasonKind, number> {
-  return { PIN: 0, PATH: 0, HISTORY: 0, AI: 0, LINKED: 0 };
+  return { PIN: 0, ISSUE: 0, PATH: 0, HISTORY: 0, AI: 0, LINKED: 0 };
 }
 
 export const processor = async (
@@ -312,10 +314,51 @@ export const processor = async (
     });
     const pinnedCaseIds = [...pinLayer.layer.keys()];
 
+    // ── matching_issues ──────────────────────────────────────────────────
+    await enterPhase("matching_issues", {
+      pinsMatched: pinLayer.matchedPinCount,
+      pinsStale: pinLayer.stalePins.length,
+    });
+    const issueLayer = await runIssueLayer(db, {
+      projectId,
+      commits: compare.commits,
+      changedPaths,
+      caseFilter: { isArchived: false, ...caseFilter },
+      maxCommitFetches: cfg.issueMaxCommitFetches,
+      getCommitFiles: async (commit) => {
+        try {
+          const files = await getCommitFilePaths({
+            configId: config.id,
+            cacheEnabled: config.cacheEnabled,
+            adapter,
+            commit,
+            maxFiles: cfg.maxDiffFiles,
+          });
+          return files?.paths ?? null;
+        } catch (error) {
+          console.warn(
+            `[impact] could not read files of commit ${commit.shortSha}:`,
+            error instanceof Error ? error.message : error
+          );
+          return null;
+        }
+      },
+    });
+    if (issueLayer.fetchCapped) {
+      warnings.push({
+        code: "issue_commit_fetch_capped",
+        detail: {
+          matchedCommits: issueLayer.matchedCommitCount,
+          cap: cfg.issueMaxCommitFetches,
+        },
+      });
+    }
+
     // ── searching_cases ──────────────────────────────────────────────────
     await enterPhase("searching_cases", {
       pinsMatched: pinLayer.matchedPinCount,
       pinsStale: pinLayer.stalePins.length,
+      issuesMatched: issueLayer.issueCount,
     });
     const terms = derivePathTerms(diffSummary);
     const pathLayer = await runPathLayer(db, getElasticsearchClient(), {
@@ -370,6 +413,7 @@ export const processor = async (
         candidateWhere = { ...baseWhere, id: { notIn: [...pinnedSet] } };
       } else {
         const seed = new Set<number>([
+          ...issueLayer.layer.keys(),
           ...pathLayer.layer.keys(),
           ...history.layer.keys(),
         ]);
@@ -471,6 +515,7 @@ export const processor = async (
     await enterPhase("merging");
     const involved = new Set<number>([
       ...pinLayer.layer.keys(),
+      ...issueLayer.layer.keys(),
       ...pathLayer.layer.keys(),
       ...history.layer.keys(),
       ...aiLayer.keys(),
@@ -500,6 +545,7 @@ export const processor = async (
     }
     const merged = mergeLayers({
       pin: pinLayer.layer,
+      issue: issueLayer.layer,
       path: pathLayer.layer,
       history: history.layer,
       ai: aiLayer,

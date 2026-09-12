@@ -2299,6 +2299,18 @@
           "contentsIncomplete": "Tylko {cached} z {total} zawartości plików jest w pamięci podręcznej. Odśwież ponownie, aby zakończyć.",
           "totalSize": "Całkowity rozmiar"
         },
+        "tickets": {
+          "title": "Powiązane zgłoszenia",
+          "description": "Commity, które wskazują zgłoszenie (PROJ-123, #42, AB#42), stają się przypięciami kodu całego pliku dla każdego powiązanego przypadku testowego, dzięki czemu późniejsze zmiany w tych plikach ponownie odnajdują te przypadki.",
+          "enableLabel": "Wyznaczaj przypięcia kodu na podstawie wiadomości commitów",
+          "enableDescription": "Skanuje najnowsze commity w gałęzi przy każdym odświeżeniu pamięci podręcznej. Wyłącz, aby analizy odczytywały klucze zgłoszeń tylko z analizowanych commitów.",
+          "lastScan": "Ostatnie skanowanie: {date}",
+          "never": "Jeszcze nie skanowano",
+          "summary": "Przeskanowano: {commits, plural, one {# commit} few {# commity} many {# commitów} other {# commity}} · {matched} wskazało powiązane zgłoszenie · utworzono: {created} · zaktualizowano: {updated} · usunięto: {removed}",
+          "skippedLarge": "Pominięto {count, plural, one {# commit} few {# commity} many {# commitów} other {# commity}} jako zbyt duże do przypięcia.",
+          "fetchCapped": "Nie wszystkie pasujące commity zostały odczytane; pozostałe zostaną uwzględnione przy następnym odświeżeniu.",
+          "error": "Skanowanie nie powiodło się: {error}"
+        },
         "markers": {
           "title": "Znaczniki repozytorium",
           "description": "Adnotacje w komentarzach, takie jak @testplanit case:123, oraz wpisy w .testplanit/testmap.yml stają się elementami Code Pin przy każdym odświeżeniu pamięci podręcznej.",
@@ -3877,6 +3889,7 @@
       "source": "Źródło",
       "sourceAi": "AI",
       "sourceAnnotation": "Adnotacja",
+      "sourceIssue": "Zgłoszenie",
       "sourceManual": "Ręczne",
       "sourceMapfile": "Plik mapowania",
       "staleBadge": "Nieaktualne",
@@ -4402,6 +4415,7 @@
         "resolving_config": "Rozpoznawanie konfiguracji repozytorium…",
         "fetching_diff": "Pobieranie różnic…",
         "matching_pins": "Dopasowywanie przypięć kodu…",
+        "matching_issues": "Dopasowywanie zgłoszeń wymienionych w commitach…",
         "searching_cases": "Wyszukiwanie przypadków testowych według słów kluczowych…",
         "scoring_history": "Ocenianie historii przebiegów…",
         "waiting_for_ai": "Oczekiwanie na AI…",
@@ -4432,6 +4446,7 @@
       },
       "reasons": {
         "pin": "Przypięcie",
+        "issue": "Zgłoszenie",
         "path": "Słowo kluczowe",
         "history": "Historia",
         "ai": "AI",
@@ -4447,7 +4462,8 @@
         "fieldFolder": "folder",
         "historyDetail": "{count, plural, one {# wcześniejszy przebieg} few {# wcześniejsze przebiegi} many {# wcześniejszych przebiegów} other {# wcześniejszego przebiegu}} po zmianach w tych samych plikach",
         "historyFailed": "Niepowodzenie we wcześniejszym przebiegu po podobnych zmianach",
-        "linkedDetail": "Powiązany z przypadkiem {caseId}"
+        "linkedDetail": "Powiązany z przypadkiem {caseId}",
+        "issueDetail": "Powiązane z {key}, wymienione w {count, plural, one {commicie {sha}} few {# commitach} many {# commitach} other {# commitach}}"
       },
       "stale": {
         "badge": "Nieaktualne",
@@ -4470,7 +4486,8 @@
         "ai_partial": "Niektóre partie AI zakończyły się niepowodzeniem; wyniki mogą być niekompletne.",
         "ai_truncated": "{count, plural, one {# partia AI została obcięta przez model} few {# partie AI zostały obcięte przez model} many {# partii AI zostało obciętych przez model} other {# partii AI zostało obciętych przez model}}.",
         "no_candidates": "Żaden przypadek testowy nie pasuje.",
-        "anchor_fetch_capped": "Niektóre przypięte pliki dopasowano tylko na podstawie ścieżki (osiągnięto limit pobierania)."
+        "anchor_fetch_capped": "Niektóre przypięte pliki dopasowano tylko na podstawie ścieżki (osiągnięto limit pobierania).",
+        "issue_commit_fetch_capped": "Niektóre commity wymieniające zgłoszenia nie zostały odczytane plik po pliku (osiągnięto limit pobierania); ich przypadki testowe nie obejmują konkretnych plików."
       },
       "actions": {
         "compare": "Porównaj",

@@ -25,6 +25,15 @@ export interface ImpactConfig {
   thinkingBudget: number;
   linkedExpansion: boolean;
   reuseHours: number;
+  /** Per analysis: commits whose own file list is fetched for the ISSUE layer. */
+  issueMaxCommitFetches: number;
+  /** Ticket-key scan on cache refresh: how far back along the branch to look. */
+  issueScanLookbackDays: number;
+  issueScanMaxCommits: number;
+  /** Commits whose file lists the scan fetches; the rest are skipped. */
+  issueScanMaxCommitFetches: number;
+  /** A commit touching more files than this is treated as noise and skipped. */
+  issueScanMaxFilesPerCommit: number;
 }
 
 export const IMPACT_CONFIG_DEFAULTS: Readonly<ImpactConfig> = Object.freeze({
@@ -49,6 +58,11 @@ export const IMPACT_CONFIG_DEFAULTS: Readonly<ImpactConfig> = Object.freeze({
   thinkingBudget: 1024,
   linkedExpansion: true,
   reuseHours: 24,
+  issueMaxCommitFetches: 25,
+  issueScanLookbackDays: 90,
+  issueScanMaxCommits: 300,
+  issueScanMaxCommitFetches: 100,
+  issueScanMaxFilesPerCommit: 50,
 });
 
 type EnvLike = Record<string, string | undefined>;
@@ -116,6 +130,26 @@ export function readImpactConfig(env: EnvLike = process.env): ImpactConfig {
     thinkingBudget: envInt(env.IMPACT_THINKING_BUDGET, d.thinkingBudget),
     linkedExpansion: envBool(env.IMPACT_LINKED_EXPANSION, d.linkedExpansion),
     reuseHours: envNumber(env.IMPACT_REUSE_HOURS, d.reuseHours),
+    issueMaxCommitFetches: envInt(
+      env.IMPACT_ISSUE_MAX_COMMIT_FETCHES,
+      d.issueMaxCommitFetches
+    ),
+    issueScanLookbackDays: envInt(
+      env.IMPACT_ISSUE_SCAN_LOOKBACK_DAYS,
+      d.issueScanLookbackDays
+    ),
+    issueScanMaxCommits: envInt(
+      env.IMPACT_ISSUE_SCAN_MAX_COMMITS,
+      d.issueScanMaxCommits
+    ),
+    issueScanMaxCommitFetches: envInt(
+      env.IMPACT_ISSUE_SCAN_MAX_COMMIT_FETCHES,
+      d.issueScanMaxCommitFetches
+    ),
+    issueScanMaxFilesPerCommit: envInt(
+      env.IMPACT_ISSUE_SCAN_MAX_FILES_PER_COMMIT,
+      d.issueScanMaxFilesPerCommit
+    ),
   };
 }
 

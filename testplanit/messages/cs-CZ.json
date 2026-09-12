@@ -2299,6 +2299,18 @@
           "contentsIncomplete": "V mezipaměti je pouze {cached} z {total} obsahů souborů. Pro dokončení obnovte znovu.",
           "totalSize": "Celková velikost"
         },
+        "tickets": {
+          "title": "Propojené tikety",
+          "description": "Committy, které obsahují název tiketu (PROJ-123, #42, AB#42), se stanou kódovými připnutími celého souboru u každého propojeného testovacího případu, takže pozdější změny těchto souborů opět najdou příslušné případy.",
+          "enableLabel": "Odvozovat kódová připnutí ze zpráv commitů",
+          "enableDescription": "Při každém obnovení mezipaměti prohledává nedávné committy na větvi. Vypněte, pokud chcete, aby analýzy četly klíče tiketů pouze z analyzovaných commitů.",
+          "lastScan": "Poslední kontrola: {date}",
+          "never": "Zatím nekontrolováno",
+          "summary": "Zkontrolováno {commits, plural, one {# commit} few {# commity} many {# commitu} other {# commitů}} · {matched} obsahovalo propojený tiket · {created} vytvořeno · {updated} aktualizováno · {removed} odstraněno",
+          "skippedLarge": "{count, plural, one {# commit byl přeskočen, protože je příliš velký na připnutí.} few {# commity byly přeskočeny, protože jsou příliš velké na připnutí.} many {# commitu bylo přeskočeno, protože je příliš velký na připnutí.} other {# commitů bylo přeskočeno, protože jsou příliš velké na připnutí.}}",
+          "fetchCapped": "Nebyly přečteny všechny odpovídající committy; zbytek bude zpracován při příštím obnovení.",
+          "error": "Kontrola selhala: {error}"
+        },
         "markers": {
           "title": "Značky repozitáře",
           "description": "Komentářové anotace jako @testplanit case:123 a záznamy v .testplanit/testmap.yml se při každém obnovení mezipaměti stávají značkami Code Pin.",
@@ -3877,6 +3889,7 @@
       "source": "Zdroj",
       "sourceAi": "AI",
       "sourceAnnotation": "Anotace",
+      "sourceIssue": "Tiket",
       "sourceManual": "Manuální",
       "sourceMapfile": "Soubor mapování",
       "staleBadge": "Neplatný",
@@ -4402,6 +4415,7 @@
         "resolving_config": "Zjišťování konfigurace repozitáře…",
         "fetching_diff": "Načítání diffu…",
         "matching_pins": "Porovnávání Code Pinů…",
+        "matching_issues": "Hledání odpovídajících tiketů uvedených v commitech…",
         "searching_cases": "Vyhledávání testovacích případů podle klíčových slov…",
         "scoring_history": "Vyhodnocování historie běhů…",
         "waiting_for_ai": "Čekání na AI…",
@@ -4432,6 +4446,7 @@
       },
       "reasons": {
         "pin": "Připnutí",
+        "issue": "Tiket",
         "path": "Klíčové slovo",
         "history": "Historie",
         "ai": "AI",
@@ -4447,7 +4462,8 @@
         "fieldFolder": "složka",
         "historyDetail": "{count, plural, one {# dřívější běh} few {# dřívější běhy} many {# dřívějšího běhu} other {# dřívějších běhů}} po změnách stejných souborů",
         "historyFailed": "Selhalo v dřívějším běhu po podobných změnách",
-        "linkedDetail": "Propojeno s případem {caseId}"
+        "linkedDetail": "Propojeno s případem {caseId}",
+        "issueDetail": "Propojeno s {key}, uvedeno v {count, plural, one {commitu {sha}} few {# commitech} many {# commitech} other {# commitech}}"
       },
       "stale": {
         "badge": "Neplatný",
@@ -4470,7 +4486,8 @@
         "ai_partial": "Některé dávky AI selhaly; výsledky mohou být neúplné.",
         "ai_truncated": "{count, plural, one {# dávka AI byla oříznuta modelem.} few {# dávky AI byly oříznuty modelem.} many {# dávky AI bylo oříznuto modelem.} other {# dávek AI bylo oříznuto modelem.}}",
         "no_candidates": "Žádný testovací případ neodpovídal.",
-        "anchor_fetch_capped": "Některé připnuté soubory byly nalezeny pouze podle cesty (dosažen limit načítání)."
+        "anchor_fetch_capped": "Některé připnuté soubory byly nalezeny pouze podle cesty (dosažen limit načítání).",
+        "issue_commit_fetch_capped": "Některé commity uvádějící tikety nebyly načteny soubor po souboru (byl dosažen limit stahování); jejich případy nepokrývají žádné konkrétní soubory."
       },
       "actions": {
         "compare": "Porovnat",

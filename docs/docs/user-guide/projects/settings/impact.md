@@ -40,12 +40,22 @@ One or more rows combining a base **Path** with a glob **Pattern** decide which 
 
 Repository file listings and contents are cached (in Valkey) so the Code Pin file picker and repository marker scans stay fast:
 
-- **Enable file caching** — on by default. When off, repository markers are **not scanned**, and the Code Pin file picker lists files live from the provider each time it opens.
+- **Enable file caching** — on by default. When off, repository markers and linked tickets are **not scanned**, and the Code Pin file picker lists files live from the provider each time it opens.
 - **Cache for N days** — how long the cache is kept before it is refreshed (1–30 days, default 7).
 - **Cache Status** — **Never fetched**, **Refreshing...**, or the **Last Fetched** time with **Files Cached**, **Contents Cached**, and **Total Size**. If only some contents were cached — for example after a provider rate limit — a warning asks you to refresh again to complete.
-- **Refresh Cache** — re-fetches the file list and contents now, and re-scans repository markers when it finishes. The refresh runs in the background, and the page updates when it completes.
+- **Refresh Cache** — re-fetches the file list and contents now, and re-scans repository markers and linked tickets when it finishes. The refresh runs in the background, and the page updates when it completes.
 
 Click **Save Configuration** to persist the connection. Changing the repository, branch, or path patterns invalidates the cache; changing only the duration or the cache toggle does not.
+
+## Linked Tickets
+
+Commits on the configured branch that name a ticket (`PROJ-123`, `#42`, `AB#42`) become whole-file Code Pins with the **Ticket** source on every test case linked to that ticket, so later changes to the same files find the cases again. See [Linked tickets](../../impact.md#linked-tickets) for how keys are read and which files are pinned. The card holds:
+
+- **Derive Code Pins from commit messages** — on by default. The scan runs on every cache refresh, after repository markers. Turning it off stops new ticket pins from being created; analyses still read ticket keys from the commits they compare. Saved with **Save Configuration**.
+- **Last scan** — when commits were last scanned, or **Not scanned yet**.
+- A summary — how many commits were scanned, how many named a linked ticket, and how many pins the scan created, updated, and removed. A commit that touched too many files to pin is counted as skipped, and a note appears when not every matching commit could be read in one pass; the rest are picked up on the next refresh. A scan that failed outright shows its error.
+
+The scan needs file caching to be on, because it runs as part of the cache refresh.
 
 ## Repository Markers
 

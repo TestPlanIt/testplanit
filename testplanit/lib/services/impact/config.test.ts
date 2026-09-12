@@ -83,4 +83,21 @@ describe("readImpactConfig", () => {
   it("exports a config read from process.env at import time", () => {
     expect(impactConfig).toEqual(readImpactConfig(process.env));
   });
+
+  it("reads the ticket-scan knobs from IMPACT_ISSUE_* variables", () => {
+    const cfg = readImpactConfig({
+      IMPACT_ISSUE_MAX_COMMIT_FETCHES: "5",
+      IMPACT_ISSUE_SCAN_LOOKBACK_DAYS: "30",
+      IMPACT_ISSUE_SCAN_MAX_COMMITS: "50",
+      IMPACT_ISSUE_SCAN_MAX_COMMIT_FETCHES: "7",
+      IMPACT_ISSUE_SCAN_MAX_FILES_PER_COMMIT: "12",
+    });
+    expect(cfg).toMatchObject({
+      issueMaxCommitFetches: 5,
+      issueScanLookbackDays: 30,
+      issueScanMaxCommits: 50,
+      issueScanMaxCommitFetches: 7,
+      issueScanMaxFilesPerCommit: 12,
+    });
+  });
 });

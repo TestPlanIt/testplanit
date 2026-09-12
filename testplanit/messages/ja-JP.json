@@ -2299,6 +2299,18 @@
           "contentsIncomplete": "{total}件中{cached}件のファイルコンテンツのみキャッシュされています。完了するには再度更新してください。",
           "totalSize": "総サイズ"
         },
+        "tickets": {
+          "title": "関連チケット",
+          "description": "チケットの名前(PROJ-123、#42、AB#42)が含まれるコミットは、リンクされているすべてのテストケースでファイル全体のコードピンになるため、後でこれらのファイルが変更された際に該当するケースが再び見つかります。",
+          "enableLabel": "コミットメッセージからコードピンを導出する",
+          "enableDescription": "キャッシュを更新するたびに、ブランチ上の最近のコミットをスキャンします。オフにすると、分析対象のコミットからのみチケットキーを読み取るようになります。",
+          "lastScan": "最終スキャン: {date}",
+          "never": "まだスキャンされていません",
+          "summary": "{commits, plural, other {#件のコミット}}をスキャン・{matched}件がリンクされたチケットを含む・{created}件作成・{updated}件更新・{removed}件削除",
+          "skippedLarge": "{count, plural, other {#件のコミット}}は大きすぎるためピン留めがスキップされました。",
+          "fetchCapped": "一致するコミットがすべて読み込まれたわけではありません。残りは次回の更新時に取得されます。",
+          "error": "スキャンに失敗しました: {error}"
+        },
         "markers": {
           "title": "リポジトリマーカー",
           "description": "@testplanit case:123のようなコメントアノテーションや、.testplanit/testmap.yml内のエントリは、キャッシュを更新するたびにコードピンになります。",
@@ -3877,6 +3889,7 @@
       "source": "ソース",
       "sourceAi": "AI",
       "sourceAnnotation": "注釈",
+      "sourceIssue": "チケット",
       "sourceManual": "手動",
       "sourceMapfile": "マップファイル",
       "staleBadge": "古くなった",
@@ -4402,6 +4415,7 @@
         "resolving_config": "リポジトリ設定を解決中…",
         "fetching_diff": "差分を取得中…",
         "matching_pins": "コードピンを照合中…",
+        "matching_issues": "コミットに記載されたチケットを照合しています…",
         "searching_cases": "キーワードでテストケースを検索中…",
         "scoring_history": "実行履歴をスコアリング中…",
         "waiting_for_ai": "AIを待っています…",
@@ -4432,6 +4446,7 @@
       },
       "reasons": {
         "pin": "ピン",
+        "issue": "チケット",
         "path": "キーワード",
         "history": "履歴",
         "ai": "AI",
@@ -4447,7 +4462,8 @@
         "fieldFolder": "フォルダ",
         "historyDetail": "同じファイルへの変更後の{count, plural, other {#件の過去の実行}}",
         "historyFailed": "類似の変更後、過去の実行で失敗しました",
-        "linkedDetail": "ケース {caseId} にリンク済み"
+        "linkedDetail": "ケース {caseId} にリンク済み",
+        "issueDetail": "{key} にリンクされ、{count, plural, other {# 件のコミット}} に記載されています"
       },
       "stale": {
         "badge": "古くなった",
@@ -4470,7 +4486,8 @@
         "ai_partial": "一部のAIバッチが失敗しました。結果が不完全な場合があります。",
         "ai_truncated": "{count, plural, other {#件のAIバッチ}}がモデルによって打ち切られました。",
         "no_candidates": "一致するテストケースがありませんでした。",
-        "anchor_fetch_capped": "一部のピン留めされたファイルはパスのみで一致しました（取得上限に達しました）。"
+        "anchor_fetch_capped": "一部のピン留めされたファイルはパスのみで一致しました（取得上限に達しました）。",
+        "issue_commit_fetch_capped": "チケットが記載されている一部のコミットは、ファイル単位で読み込まれませんでした(取得上限に達したため)。これらのケースは特定のファイルをカバーしていません。"
       },
       "actions": {
         "compare": "比較",

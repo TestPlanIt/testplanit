@@ -2299,6 +2299,18 @@
           "contentsIncomplete": "Nur {cached} von {total} Dateiinhalten sind zwischengespeichert. Aktualisieren Sie erneut, um den Vorgang abzuschließen.",
           "totalSize": "Gesamtgröße"
         },
+        "tickets": {
+          "title": "Verknüpfte Tickets",
+          "description": "Commits, die ein Ticket benennen (PROJ-123, #42, AB#42), werden zu dateiweiten Code-Pins bei jedem verknüpften Testfall, sodass spätere Änderungen an diesen Dateien die Testfälle wiederfinden.",
+          "enableLabel": "Code-Pins aus Commit-Nachrichten ableiten",
+          "enableDescription": "Scannt bei jeder Cache-Aktualisierung die letzten Commits im Branch. Deaktivieren, damit Analysen Ticket-Schlüssel nur aus den analysierten Commits lesen.",
+          "lastScan": "Letzter Scan: {date}",
+          "never": "Noch nicht gescannt",
+          "summary": "{commits, plural, one {# Commit} other {# Commits}} gescannt · {matched} nannten ein verknüpftes Ticket · {created} erstellt · {updated} aktualisiert · {removed} entfernt",
+          "skippedLarge": "{count, plural, one {# Commit wurde} other {# Commits wurden}} übersprungen, da zu groß zum Pinnen.",
+          "fetchCapped": "Nicht jeder passende Commit wurde gelesen; die restlichen werden bei der nächsten Aktualisierung erfasst.",
+          "error": "Scan fehlgeschlagen: {error}"
+        },
         "markers": {
           "title": "Repository-Marker",
           "description": "Kommentarannotationen wie @testplanit case:123 und Einträge in .testplanit/testmap.yml werden bei jeder Cache-Aktualisierung zu Code-Pins.",
@@ -3877,6 +3889,7 @@
       "source": "Quelle",
       "sourceAi": "KI",
       "sourceAnnotation": "Anmerkung",
+      "sourceIssue": "Vorgang",
       "sourceManual": "Manuell",
       "sourceMapfile": "Map-Datei",
       "staleBadge": "Veraltet",
@@ -4402,6 +4415,7 @@
         "resolving_config": "Repository-Konfiguration wird aufgelöst…",
         "fetching_diff": "Diff wird abgerufen…",
         "matching_pins": "Code-Pins werden abgeglichen…",
+        "matching_issues": "Passende Tickets, die in Commits genannt werden…",
         "searching_cases": "Testfälle werden nach Stichwort durchsucht…",
         "scoring_history": "Testlauf-Verlauf wird bewertet…",
         "waiting_for_ai": "Warten auf KI…",
@@ -4432,6 +4446,7 @@
       },
       "reasons": {
         "pin": "Pin",
+        "issue": "Vorgang",
         "path": "Stichwort",
         "history": "Verlauf",
         "ai": "KI",
@@ -4447,7 +4462,8 @@
         "fieldFolder": "Ordner",
         "historyDetail": "{count, plural, one {# früherer Testlauf} other {# frühere Testläufe}} nach Änderungen an denselben Dateien",
         "historyFailed": "In einem früheren Testlauf nach ähnlichen Änderungen fehlgeschlagen",
-        "linkedDetail": "Verknüpft mit Fall {caseId}"
+        "linkedDetail": "Verknüpft mit Fall {caseId}",
+        "issueDetail": "Verknüpft mit {key}, genannt in {count, plural, one {Commit {sha}} other {# Commits}}"
       },
       "stale": {
         "badge": "Veraltet",
@@ -4470,7 +4486,8 @@
         "ai_partial": "Einige KI-Stapel sind fehlgeschlagen; die Ergebnisse können unvollständig sein.",
         "ai_truncated": "{count, plural, one {# KI-Stapel wurde} other {# KI-Stapel wurden}} vom Modell abgeschnitten.",
         "no_candidates": "Kein Testfall stimmte überein.",
-        "anchor_fetch_capped": "Einige angepinnte Dateien wurden nur anhand des Pfads abgeglichen (Abruflimit erreicht)."
+        "anchor_fetch_capped": "Einige angepinnte Dateien wurden nur anhand des Pfads abgeglichen (Abruflimit erreicht).",
+        "issue_commit_fetch_capped": "Einige Commits, die Tickets nennen, wurden nicht Datei für Datei gelesen (Abruflimit erreicht); ihre Testfälle decken keine bestimmten Dateien ab."
       },
       "actions": {
         "compare": "Vergleichen",
