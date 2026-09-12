@@ -25,7 +25,7 @@ The Roles page displays a table listing all defined roles (excluding those marke
 1. Click the **Add Role** button located above the table.
 2. A modal dialog will appear.
 3. Enter a unique **Name** for the new Role (e.g., "Tester", "Test Lead", "Read Only").
-4. Use the **Default** switch to designate this role as the default for new users. If another role is currently the default, setting this will automatically unset the default status for the other role.
+4. Use the **Default** switch to designate this role as the default for new users. If another role is currently the default, setting this will automatically unset the default status for the other role. When no role is currently the default, the switch is locked on and the new role becomes the default.
 5. Click **Submit** to create the role.
 6. Edit the new role to set per-area permissions — see [Editing an Existing Role](#editing-an-existing-role) below. Newly-created roles start with every permission off; assign them deliberately.
 

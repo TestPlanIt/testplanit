@@ -238,6 +238,12 @@
       "allIssueTypes": "Tutti i tipi di problema",
       "noIssueType": "Nessun tipo di problema"
     },
+    "defaults": {
+      "firstTitle": "Questo diventerà il predefinito",
+      "firstDescription": "Non esiste ancora un valore predefinito, quindi questo diventerà quello predefinito. Per modificarlo in seguito, imposta un altro elemento come predefinito.",
+      "lockedTitle": "Predefinito attuale",
+      "lockedDescription": "Il valore predefinito attuale non può essere rimosso direttamente. Imposta invece un altro elemento come predefinito."
+    },
     "fields": {
       "groupName": "Nome del gruppo",
       "users": "Utenti",
@@ -2242,6 +2248,10 @@
       "documentation": "Inserisci la documentazione relativa alle milestone...",
       "selectType": "Seleziona il tipo di traguardo...",
       "selectParent": "Seleziona la pietra miliare principale..."
+    },
+    "noTypes": {
+      "title": "Nessun tipo di traguardo disponibile",
+      "description": "Questo progetto non ha tipi di traguardo assegnati. Chiedi a un amministratore di assegnare un tipo di traguardo al progetto o di impostare un tipo di traguardo predefinito."
     },
     "empty": {
       "active": "Nessuna pietra miliare attiva",

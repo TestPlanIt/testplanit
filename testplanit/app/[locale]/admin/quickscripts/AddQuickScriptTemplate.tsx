@@ -2,9 +2,10 @@
 /* eslint-disable react-hooks/incompatible-library -- This file consumes a library API (TanStack Table / TanStack Virtual / react-hook-form watch) that returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it. */
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { FirstDefaultNotice } from "@/components/admin/FirstDefaultNotice";
 import { schema } from "~/zenstack/schema";
 import type { CaseExportTemplate } from "~/zenstack/models";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useForm } from "react-hook-form";
@@ -83,6 +84,15 @@ export function AddQuickScriptTemplate({
 
   const { mutateAsync: createTemplate } =
     useClientQueries(schema).caseExportTemplate.useCreate();
+
+  // The first row of a catalog with no default becomes it (the DB also
+  // refuses to let a catalog lose its default once it has one).
+  const { data: currentDefault, isLoading: defaultLoading } = useClientQueries(
+    schema
+  ).caseExportTemplate.useFindFirst({
+    where: { isDefault: true, isDeleted: false },
+  });
+  const mustBeDefault = !defaultLoading && !currentDefault;
 
   const { data: existingTemplates } = useClientQueries(
     schema
@@ -187,6 +197,13 @@ export function AddQuickScriptTemplate({
     [preview, prismLanguage]
   );
 
+  useEffect(() => {
+    if (mustBeDefault) {
+      form.setValue("isDefault", true);
+      form.setValue("isEnabled", true);
+    }
+  }, [mustBeDefault, form]);
+
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     setIsSubmitting(true);
     try {
@@ -203,7 +220,7 @@ export function AddQuickScriptTemplate({
           footerBody: data.footerBody || null,
           fileExtension: data.fileExtension,
           language: data.language,
-          isDefault: data.isDefault,
+          isDefault: data.isDefault || mustBeDefault,
           isEnabled: data.isEnabled,
         },
       });
@@ -390,6 +407,7 @@ export function AddQuickScriptTemplate({
                         <Switch
                           checked={field.value}
                           onCheckedChange={field.onChange}
+                          disabled={mustBeDefault}
                           data-testid="export-template-default-switch"
                         />
                       </FormControl>
@@ -398,6 +416,7 @@ export function AddQuickScriptTemplate({
                 />
               </div>
             </div>
+            {mustBeDefault && <FirstDefaultNotice />}
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div className="space-y-4">

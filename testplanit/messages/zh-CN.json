@@ -238,6 +238,12 @@
       "allIssueTypes": "所有问题类型",
       "noIssueType": "无问题类型"
     },
+    "defaults": {
+      "firstTitle": "这将成为默认值",
+      "firstDescription": "目前还没有默认项,因此这一项将成为默认项。如需更改,请将其他项设置为默认项。",
+      "lockedTitle": "当前默认值",
+      "lockedDescription": "当前默认项无法直接取消设置。请改为将其他项设置为默认项。"
+    },
     "fields": {
       "groupName": "组名",
       "users": "用户",
@@ -2242,6 +2248,10 @@
       "documentation": "提交里程碑文档……",
       "selectType": "选择里程碑类型...",
       "selectParent": "选择家长里程碑..."
+    },
+    "noTypes": {
+      "title": "暂无可用的里程碑类型",
+      "description": "此项目未分配任何里程碑类型。请联系管理员为该项目分配里程碑类型,或设置默认里程碑类型。"
     },
     "empty": {
       "active": "暂无活动里程碑",
@@ -6913,7 +6923,7 @@
       "name": "## 集成名称\n此 LLM 集成的描述性标签。\n\n- 用于在列表和设置中标识它。\n- 例如：“OpenAI GPT-4o”或“内部 Ollama”。",
       "provider": "## 提供商\n为该集成提供支持的 LLM 服务。\n\n- 确定 API 协议和可用模型。\n- 创建后无法更改。",
       "apiKey": "## API 密钥\n您的 LLM 提供商 API 的身份验证密钥。\n\n- 从提供商的开发者控制台获取。\n- 保存后将保持加密状态，不会显示。\n- Ollama（本地部署）不需要此密钥。",
-      "endpoint": "## API 端点\nLLM 提供商 API 的基本 URL。\n\n- OpenAI、Anthropic 和 Gemini 留空 — 系统会自动使用官方 URL。\n- Ollama（例如 `http://localhost:11434`）、Azure OpenAI 和自定义 LLM 为必填项。\n- 所有提供商均为可选 — 通过输入 URL 指向 OpenAI 兼容的代理（例如 LiteLLM）。\n- **私有/内部地址**（localhost、127.0.0.1、私有 IP、云元数据）将被阻止，除非通过 `ALLOWED_PRIVATE_HOSTS` 环境变量显式允许。",
+      "endpoint": "## API 端点\nLLM 提供商 API 的基本 URL。\n\n- OpenAI、Anthropic 和 Gemini 留空 — 系统会自动使用官方 URL\n- Ollama（例如 `http://localhost:11434`）、Azure OpenAI 和自定义 LLM 为必填项\n- 所有提供商均为可选 — 通过输入 URL 指向 OpenAI 兼容的代理（例如 LiteLLM）\n- **私有/内部地址**（localhost、127.0.0.1、私有 IP、云元数据）将被阻止，除非通过 `ALLOWED_PRIVATE_HOSTS` 环境变量显式允许",
       "deploymentName": "## Azure 部署名称\n您的 Azure OpenAI 模型部署的名称。\n\n- 在 Azure OpenAI Studio 的“部署”下找到。\n- 与模型名称不同，例如 `my-gpt4-deploy` 映射到 `gpt-4`。\n- 仅 Azure OpenAI 需要。",
       "defaultModel": "## 默认模型\n此集成用于 AI 请求的模型。\n\n- 对于 OpenAI、Anthropic、Gemini、Ollama 以及兼容 OpenAI 的自定义端点（例如 LiteLLM）— 可用模型将自动获取\n- 当提供商同时提供模型定价信息时，选择后成本字段将自动填充\n- 请确保已在您的提供商帐户中启用该模型\n- 例如：`gpt-4o`、`claude-3-5-sonnet-20241022`、`gemini-1.5-pro`",
       "maxTokensPerRequest": "## 每次请求的最大令牌数\n模型在单次响应中可生成的**输出**令牌数的**硬性上限**。\n\n- 限制模型**回复**的长度 — 而不是您发送给它的上下文量\n- 超过此限制的请求会在**到达模型之前被拒绝**\n- 请将其设置为您模型的实际最大输出量 — 例如，Claude Opus/Sonnet 为 `128000`，Claude Haiku 为 `64000`，Gemini 为 `65536`，GPT-4o 为 `16384`\n- 设置过低 → AI 功能将失败或生成被截断的输出",

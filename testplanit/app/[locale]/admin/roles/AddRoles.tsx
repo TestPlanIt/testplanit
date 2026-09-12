@@ -1,10 +1,11 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library -- This file consumes a library API (TanStack Table / TanStack Virtual / react-hook-form watch) that returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it. */
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { FirstDefaultNotice } from "@/components/admin/FirstDefaultNotice";
 import { schema } from "~/zenstack/schema";
 import { ApplicationArea } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { RESTRICTED_FIELDS_AREAS } from "~/lib/utils/restrictedFieldsAreas";
 import { REVIEW_RELEVANT_AREAS } from "~/lib/utils/reviewAreas";
 
@@ -79,6 +80,15 @@ export function AddRole({ open, onClose }: AddRoleProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { mutateAsync: createRole } =
     useClientQueries(schema).roles.useCreate();
+
+  // The first row of a catalog with no default becomes it (the DB also
+  // refuses to let a catalog lose its default once it has one).
+  const { data: currentDefault, isLoading: defaultLoading } = useClientQueries(
+    schema
+  ).roles.useFindFirst({
+    where: { isDefault: true, isDeleted: false },
+  });
+  const mustBeDefault = !defaultLoading && !currentDefault;
   const upsertRolePermission =
     useClientQueries(schema).rolePermission.useUpsert();
 
@@ -176,6 +186,12 @@ export function AddRole({ open, onClose }: AddRoleProps) {
   };
   // --- End Re-added Handlers and Watcher ---
 
+  useEffect(() => {
+    if (mustBeDefault) {
+      setValue("isDefault", true);
+    }
+  }, [mustBeDefault, setValue]);
+
   async function onSubmit(data: AddRoleFormData) {
     setIsSubmitting(true);
     let newRole: { id: number } | undefined;
@@ -186,7 +202,7 @@ export function AddRole({ open, onClose }: AddRoleProps) {
       newRole = await createRole({
         data: {
           name: data.name,
-          isDefault: data.isDefault,
+          isDefault: data.isDefault || mustBeDefault,
           // Permissions are NOT included here
         },
       });
@@ -275,6 +291,7 @@ export function AddRole({ open, onClose }: AddRoleProps) {
                       <Switch
                         checked={field.value}
                         onCheckedChange={field.onChange}
+                        disabled={mustBeDefault}
                       />
                     </FormControl>
                     <FormLabel className="flex items-center mt-0!">
@@ -282,7 +299,8 @@ export function AddRole({ open, onClose }: AddRoleProps) {
                       <HelpPopover helpKey="role.isDefault" />
                     </FormLabel>
                   </div>
-                  {field.value && (
+                  {mustBeDefault && <FirstDefaultNotice />}
+                  {field.value && !mustBeDefault && (
                     <WarningAlert data-testid="role-set-default-warning">
                       <TriangleAlert className="h-4 w-4" />
                       <AlertTitle>

@@ -3678,20 +3678,14 @@ export class ApiHelper {
     }
     this.tracked.projectIds = [];
 
-    // Delete templates (created test data)
-    const deletedTemplates = this.tracked.templateIds.length > 0;
-    for (const templateId of this.tracked.templateIds) {
-      await this.deleteTemplate(templateId);
-    }
-    this.tracked.templateIds = [];
-
-    // A test may have flipped the catalog's single isDefault flag onto its
-    // own template (the tpl_single_default trigger clears the seeded
-    // default's flag when that happens). Deleting that template above then
-    // leaves the catalog with NO live default — and the app (JUnit import,
-    // the project wizard) assumes one exists. Restore the seeded Default
-    // Template whenever a flush leaves the catalog defaultless.
-    if (deletedTemplates) {
+    // Delete templates (created test data). A test may have flipped the
+    // catalog's single isDefault flag onto its own template (the
+    // tpl_single_default trigger clears the seeded default's flag when that
+    // happens). The keep-default guard (tpl_keep_default) refuses to
+    // soft-delete a live default while other live templates remain, and the
+    // app (JUnit import, the project wizard) assumes a default exists — so
+    // hand the flag back to the seeded Default Template BEFORE deleting.
+    if (this.tracked.templateIds.length > 0) {
       try {
         const liveDefault = await this.request.get(
           `${this.baseURL}/api/model/templates/findFirst`,
@@ -3704,9 +3698,13 @@ export class ApiHelper {
             },
           }
         );
-        const hasDefault =
-          liveDefault.ok() && !!(await liveDefault.json())?.data;
-        if (!hasDefault) {
+        const liveDefaultId: number | undefined = liveDefault.ok()
+          ? (await liveDefault.json())?.data?.id
+          : undefined;
+        const defaultIsTracked =
+          liveDefaultId === undefined ||
+          this.tracked.templateIds.includes(liveDefaultId);
+        if (defaultIsTracked) {
           const seeded = await this.request.get(
             `${this.baseURL}/api/model/templates/findFirst`,
             {
@@ -3737,6 +3735,10 @@ export class ApiHelper {
         // Non-fatal: worst case the next setup-db reseed restores it.
       }
     }
+    for (const templateId of this.tracked.templateIds) {
+      await this.deleteTemplate(templateId);
+    }
+    this.tracked.templateIds = [];
 
     // Delete field options
     for (const optionId of this.tracked.fieldOptionIds) {

@@ -238,6 +238,12 @@
       "allIssueTypes": "모든 문제 유형",
       "noIssueType": "문제 유형 없음"
     },
+    "defaults": {
+      "firstTitle": "이것이 기본값이 됩니다",
+      "firstDescription": "아직 기본값이 없으므로 이 항목이 기본값이 됩니다. 나중에 변경하려면 다른 항목을 기본값으로 설정하세요.",
+      "lockedTitle": "현재 기본값",
+      "lockedDescription": "현재 기본값은 직접 해제할 수 없습니다. 대신 다른 항목을 기본값으로 설정하세요."
+    },
     "fields": {
       "groupName": "그룹 이름",
       "users": "사용자",
@@ -2242,6 +2248,10 @@
       "documentation": "주요 단계별 문서를 입력하세요...",
       "selectType": "마일스톤 유형을 선택하세요...",
       "selectParent": "상위 단계 선택..."
+    },
+    "noTypes": {
+      "title": "사용 가능한 마일스톤 유형이 없습니다",
+      "description": "이 프로젝트에 할당된 마일스톤 유형이 없습니다. 관리자에게 프로젝트에 마일스톤 유형을 할당하거나 기본 마일스톤 유형을 설정하도록 요청하세요."
     },
     "empty": {
       "active": "진행 중인 마일스톤이 없습니다.",
@@ -6913,7 +6923,7 @@
       "name": "## 통합 이름\n이 LLM 통합에 대한 설명 레이블입니다.\n\n- 목록 및 설정에서 식별하는 데 사용됩니다.\n- 예: \"OpenAI GPT-4o\" 또는 \"Internal Ollama\"",
       "provider": "## 공급자\n이 통합을 지원하는 LLM 서비스입니다.\n\n- API 프로토콜 및 사용 가능한 모델을 결정합니다.\n- 생성 후에는 변경할 수 없습니다.",
       "apiKey": "## API 키\nLLM 제공업체 API에 대한 인증 키입니다.\n\n- 제공업체 개발자 콘솔에서 얻을 수 있습니다.\n- 저장 후에는 암호화되어 표시되지 않습니다.\n- Ollama(로컬 배포)에는 필요하지 않습니다.",
-      "endpoint": "## API 엔드포인트\nLLM 공급자 API의 기본 URL입니다.\n\n- OpenAI, Anthropic, Gemini의 경우 비워 두세요. 공식 URL이 자동으로 사용됩니다.\n- Ollama(예: `http://localhost:11434`), Azure OpenAI, Custom LLM의 경우 필수입니다.\n- 모든 공급자의 경우 선택 사항입니다. OpenAI 호환 프록시(예: LiteLLM)의 URL을 입력하여 해당 프록시를 가리키도록 설정할 수 있습니다.\n- **개인/내부 주소**(localhost, 127.0.0.1, 개인 IP, 클라우드 메타데이터)는 `ALLOWED_PRIVATE_HOSTS` 환경 변수를 통해 명시적으로 허용하지 않는 한 차단됩니다.",
+      "endpoint": "## API 엔드포인트\nLLM 공급자 API의 기본 URL입니다.\n\n- OpenAI, Anthropic, Gemini의 경우 비워 두세요. 공식 URL이 자동으로 사용됩니다.\n- Ollama(예: `http://localhost:11434`), Azure OpenAI, Custom LLM의 경우 필수입니다.\n- 모든 공급자의 경우 선택 사항입니다. OpenAI 호환 프록시(예: LiteLLM)의 URL을 입력하여 해당 프록시를 가리키도록 설정할 수 있습니다.\n- **개인/내부 주소**(localhost, 127.0.0.1, 개인 IP, 클라우드 메타데이터)는 `ALLOWED_PRIVATE_HOSTS` 환경 변수를 통해 명시적으로 허용하지 않는 한 차단됩니다",
       "deploymentName": "## Azure 배포 이름\nAzure OpenAI 모델 배포의 이름입니다.\n\n- Azure OpenAI Studio의 배포에서 찾을 수 있습니다.\n- 모델 이름과 다릅니다. 예: `my-gpt4-deploy`는 `gpt-4`에 해당합니다.\n- Azure OpenAI에만 필요합니다.",
       "defaultModel": "## 기본 모델\n이 통합을 통해 AI 요청에 사용되는 모델입니다.\n\n- OpenAI, Anthropic, Gemini, Ollama 및 OpenAI 호환 커스텀 엔드포인트(예: LiteLLM)의 경우 사용 가능한 모델이 자동으로 가져와집니다\n- 제공업체가 모델 가격도 제공하는 경우, 선택 시 비용 필드가 자동으로 채워집니다\n- 제공업체 계정에서 해당 모델이 활성화되어 있는지 확인하세요\n- 예시: `gpt-4o`, `claude-3-5-sonnet-20241022`, `gemini-1.5-pro`",
       "maxTokensPerRequest": "## 요청당 최대 토큰 수\n모델이 단일 응답에서 생성할 수 있는 **출력 토큰의 상한선**입니다.\n\n- 모델의 **응답** 길이를 제한합니다 — 보내는 컨텍스트의 양이 아닙니다\n- 이 한도를 초과하는 요청은 **모델에 도달하기 전에 거부됩니다**\n- 모델의 실제 최대 출력값으로 설정하세요 — 예: Claude Opus/Sonnet은 `128000`, Claude Haiku는 `64000`, Gemini는 `65536`, GPT-4o는 `16384`\n- 너무 낮게 설정하면 → AI 기능이 실패하거나 잘린 출력이 생성됩니다",

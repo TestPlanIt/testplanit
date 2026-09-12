@@ -18,18 +18,24 @@ vi.mock("@/components/ui/help-popover", () => ({
   HelpPopover: () => null,
 }));
 
-const { mockCreateRole, mockUpdateManyRoles, mockUpsertRolePermission } =
-  vi.hoisted(() => ({
-    mockCreateRole: vi.fn().mockResolvedValue({ id: 7 }),
-    mockUpdateManyRoles: vi.fn().mockResolvedValue({}),
-    mockUpsertRolePermission: vi.fn().mockResolvedValue({}),
-  }));
+const {
+  mockCreateRole,
+  mockUpdateManyRoles,
+  mockUpsertRolePermission,
+  mockFindFirstDefaultRole,
+} = vi.hoisted(() => ({
+  mockCreateRole: vi.fn().mockResolvedValue({ id: 7 }),
+  mockUpdateManyRoles: vi.fn().mockResolvedValue({}),
+  mockUpsertRolePermission: vi.fn().mockResolvedValue({}),
+  mockFindFirstDefaultRole: vi.fn(),
+}));
 
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
     roles: {
       useCreate: () => ({ mutateAsync: mockCreateRole }),
       useUpdateMany: () => ({ mutateAsync: mockUpdateManyRoles }),
+      useFindFirst: () => mockFindFirstDefaultRole(),
     },
     rolePermission: {
       useUpsert: () => ({ mutateAsync: mockUpsertRolePermission }),
@@ -62,6 +68,45 @@ beforeEach(() => {
   mockCreateRole.mockResolvedValue({ id: 7 });
   mockUpdateManyRoles.mockResolvedValue({});
   mockUpsertRolePermission.mockResolvedValue({});
+  // A default role exists unless a test says otherwise.
+  mockFindFirstDefaultRole.mockReturnValue({
+    data: { id: 1, isDefault: true },
+    isLoading: false,
+  });
+});
+
+describe("AddRole — first default guard", () => {
+  const defaultSwitch = () =>
+    screen.getAllByRole("switch")[0] as HTMLButtonElement;
+
+  test("locks the Default switch on and shows the notice when no default role exists", async () => {
+    mockFindFirstDefaultRole.mockReturnValue({ data: null, isLoading: false });
+    renderWithProvider();
+    await waitFor(() => {
+      expect(defaultSwitch().getAttribute("aria-checked")).toBe("true");
+    });
+    expect(defaultSwitch().disabled).toBe(true);
+    expect(screen.getByTestId("first-default-notice")).toBeInTheDocument();
+    expect(screen.queryByTestId("role-set-default-warning")).toBeNull();
+  });
+
+  test("submits the role as the default when none exists", async () => {
+    mockFindFirstDefaultRole.mockReturnValue({ data: null, isLoading: false });
+    const { user } = renderWithProvider();
+    await user.type(screen.getByPlaceholderText("common.name"), "Reviewer");
+    await user.click(
+      screen.getByRole("button", { name: "common.actions.submit" })
+    );
+    await waitFor(() => expect(mockCreateRole).toHaveBeenCalledTimes(1));
+    expect(mockCreateRole.mock.calls[0][0].data.isDefault).toBe(true);
+  });
+
+  test("leaves the Default switch free when a default role exists", () => {
+    renderWithProvider();
+    expect(defaultSwitch().getAttribute("aria-checked")).toBe("false");
+    expect(defaultSwitch().disabled).toBe(false);
+    expect(screen.queryByTestId("first-default-notice")).toBeNull();
+  });
 });
 
 describe("AddRole", () => {

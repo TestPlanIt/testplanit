@@ -238,6 +238,12 @@
       "allIssueTypes": "Tous les types de problème",
       "noIssueType": "Aucun type de problème"
     },
+    "defaults": {
+      "firstTitle": "Ceci sera la valeur par défaut",
+      "firstDescription": "Aucune valeur par défaut n'existe encore, celle-ci devient donc la valeur par défaut. Pour la modifier ultérieurement, définissez un autre élément comme valeur par défaut.",
+      "lockedTitle": "Valeur par défaut actuelle",
+      "lockedDescription": "La valeur par défaut actuelle ne peut pas être désactivée directement. Définissez plutôt un autre élément comme valeur par défaut."
+    },
     "fields": {
       "groupName": "Nom du groupe",
       "users": "Utilisateurs",
@@ -2242,6 +2248,10 @@
       "documentation": "Saisir la documentation relative aux étapes clés...",
       "selectType": "Sélectionnez le type d'étape...",
       "selectParent": "Sélectionnez l'étape parente..."
+    },
+    "noTypes": {
+      "title": "Aucun type d'étape disponible",
+      "description": "Ce projet n'a aucun type d'étape assigné. Demandez à un administrateur d'assigner un type d'étape au projet ou de définir un type d'étape par défaut."
     },
     "empty": {
       "active": "Aucun jalon actif",
@@ -6913,7 +6923,7 @@
       "name": "## Nom de l'intégration\nÉtiquette descriptive pour cette intégration LLM.\n\n- Utilisée pour l'identifier dans les listes et les paramètres.\n- Exemple : « OpenAI GPT-4o » ou « Ollama interne ».",
       "provider": "## Fournisseur\nLe service LLM qui gère cette intégration.\n\n- Détermine le protocole API et les modèles disponibles.\n- Ne peut pas être modifié après sa création.",
       "apiKey": "## Clé API\nVotre clé d'authentification pour l'API du fournisseur LLM.\n\n- À obtenir depuis la console développeur de votre fournisseur.\n- Conservée chiffrée et jamais affichée après enregistrement.\n- Non requise pour Ollama (déploiement local).",
-      "endpoint": "## Point de terminaison API\nURL de base de l'API du fournisseur LLM.\n\n- Laisser vide pour OpenAI, Anthropic et Gemini — les URL officielles sont utilisées automatiquement.\n- Obligatoire pour Ollama (par exemple, `http://localhost:11434`), Azure OpenAI et LLM personnalisé.\n- Facultatif pour tout fournisseur — indiquez un proxy compatible OpenAI (par exemple, LiteLLM) en saisissant son URL.\n- **Les adresses privées/internes** (localhost, 127.0.0.1, adresses IP privées, métadonnées cloud) sont bloquées, sauf autorisation explicite via la variable d'environnement `ALLOWED_PRIVATE_HOSTS`.",
+      "endpoint": "## Point de terminaison API\nURL de base de l'API du fournisseur LLM.\n\n- Laisser vide pour OpenAI, Anthropic et Gemini — les URL officielles sont utilisées automatiquement\n- Obligatoire pour Ollama (par exemple `http://localhost:11434`), Azure OpenAI et LLM personnalisé\n- Facultatif pour tout fournisseur — indiquez un proxy compatible OpenAI (par exemple, LiteLLM) en saisissant son URL\n- **Les adresses privées/internes** (localhost, 127.0.0.1, adresses IP privées, métadonnées cloud) sont bloquées, sauf autorisation explicite via la variable d'environnement `ALLOWED_PRIVATE_HOSTS`",
       "deploymentName": "## Nom du déploiement Azure\nLe nom de votre déploiement de modèle Azure OpenAI.\n\n- Disponible dans Azure OpenAI Studio, sous Déploiements.\n- Différent du nom du modèle ; par exemple, `my-gpt4-deploy` correspond à `gpt-4`.\n- Requis uniquement pour Azure OpenAI.",
       "defaultModel": "## Modèle par défaut\nLe modèle utilisé pour les requêtes d'IA avec cette intégration.\n\n- Pour OpenAI, Anthropic, Gemini, Ollama, et les points de terminaison personnalisés compatibles OpenAI (par exemple LiteLLM) — les modèles disponibles sont récupérés automatiquement\n- Lorsque le fournisseur communique également la tarification des modèles, les champs de coût sont remplis automatiquement lors de la sélection\n- Assurez-vous que le modèle est activé dans votre compte fournisseur\n- Exemple : `gpt-4o`, `claude-3-5-sonnet-20241022`, `gemini-1.5-pro`",
       "maxTokensPerRequest": "## Nombre maximal de jetons par requête\nLe **plafond strict sur les jetons de _sortie_** que le modèle peut générer en une seule réponse.\n\n- Limite la longueur de la **réponse** du modèle — pas la quantité de contexte que vous lui envoyez\n- Les requêtes demandant plus que cette limite sont **rejetées avant d'atteindre le modèle**\n- Réglez-la sur la sortie maximale réelle de votre modèle — par exemple `128000` pour Claude Opus/Sonnet, `64000` pour Claude Haiku, `65536` pour Gemini, `16384` pour GPT-4o\n- Trop bas → les fonctionnalités d'IA échouent ou produisent une sortie tronquée",

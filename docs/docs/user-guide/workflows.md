@@ -45,7 +45,7 @@ The states within each table can be reordered using **drag-and-drop** to define 
     - **Icon & Color:** Select an icon and color representation for the state using the pickers.
     - **Name:** Enter a unique name for the state within its scope (e.g., "Ready for Review").
     - **Type:** Select the fundamental type (Not Started, In Progress, Done) from the dropdown.
-    - **Default:** Toggle if this should be the default state for this scope. Setting a new default automatically applies it to all projects and unsets the previous default for this scope.
+    - **Default:** Toggle if this should be the default state for this scope. Setting a new default automatically applies it to all projects and unsets the previous default for this scope. When the selected scope has no default state yet, the switch is locked on and the new state becomes the default.
     - **Enabled:** Toggle whether this state is active. (Default states must be enabled).
     - **Projects:** (Only relevant if _not_ setting as Default) Use the multi-select dropdown to assign this state to specific projects. You can use the "Select All" link for convenience.
 4. Click "Submit".
@@ -89,6 +89,7 @@ Once workflow states are configured by administrators, team members use them to 
 ### Changing Workflow States
 
 **For Test Cases:**
+
 1. Open a test case from the repository
 2. Locate the **State** field (typically near the top of the case details)
 3. Click the current state dropdown
@@ -96,12 +97,14 @@ Once workflow states are configured by administrators, team members use them to 
 5. The state change is saved automatically
 
 **For Test Runs:**
+
 1. Navigate to a test run
 2. Locate the **State** field in the test run header or details panel
 3. Click to select a new state from the dropdown
 4. The change applies immediately
 
 **For Sessions:**
+
 1. Open an exploratory session
 2. Find the **State** field in the session details
 3. Select a new state from the available options
@@ -116,17 +119,20 @@ Once workflow states are configured by administrators, team members use them to 
 ### Common Workflow Patterns
 
 **Test Case Lifecycle:**
-```
+
+```text
 Draft → Under Review → Active → (Testing) → Archived
 ```
 
 **Test Run Lifecycle:**
-```
+
+```text
 Not Started → In Progress → Completed
 ```
 
 **Session Lifecycle:**
-```
+
+```text
 Planned → Active → In Review → Closed
 ```
 

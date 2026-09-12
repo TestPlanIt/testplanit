@@ -48,7 +48,7 @@ You can filter templates by searching across name, category, framework, language
    - **File Extension**: Output file extension (e.g., `.spec.ts`, `.feature`). Supports new or existing values.
    - **Language**: Programming language (e.g., "typescript", "python"). Supports new or existing values.
    - **Enabled**: Toggle to make the template available in QuickScript.
-   - **Default**: Toggle to pre-select this template in the QuickScript dialog. Only one template can be default.
+   - **Default**: Toggle to pre-select this template in the QuickScript dialog. Only one template can be default. When no template is currently the default, the switch is locked on and the new template becomes the default. The current default cannot be unset while editing it; set a different template as the default instead.
 
 3. Write the template content:
 
@@ -147,7 +147,7 @@ Template output uses code-safe escaping by default: backslashes are escaped as `
 
 When exporting multiple test cases into a single file, the Template Body repeats for each case. Without headers, content like import statements would duplicate:
 
-```
+```typescript
 import { test, expect } from "@playwright/test";  // case 1
 test.describe("Login", () => { ... });
 
@@ -157,7 +157,7 @@ test.describe("Signup", () => { ... });
 
 The **Header Template** and **Footer Template** fields solve this. They render once per file, wrapping the repeated case bodies:
 
-```
+```text
 [Header — rendered once]
 
 [Case 1 — from Template Body]
@@ -196,11 +196,11 @@ import "testing"
 // Test{{{name}}} verifies: {{{name}}}
 func Test{{{name}}}(t *testing.T) {
 {{#steps}}
-	// Step {{order}}: {{{step}}}
-	// Expected: {{{expectedResult}}}
-	t.Run("{{{step}}}", func(t *testing.T) {
-		t.Skip("Not implemented")
-	})
+ // Step {{order}}: {{{step}}}
+ // Expected: {{{expectedResult}}}
+ t.Run("{{{step}}}", func(t *testing.T) {
+  t.Skip("Not implemented")
+ })
 {{/steps}}
 }
 ```
@@ -216,25 +216,25 @@ import "testing"
 
 // TestUserLogin verifies: User Login
 func TestUserLogin(t *testing.T) {
-	// Step 1: Navigate to login page
-	// Expected: Login page is displayed
-	t.Run("Navigate to login page", func(t *testing.T) {
-		t.Skip("Not implemented")
-	})
-	// Step 2: Enter credentials
-	// Expected: Fields accept input
-	t.Run("Enter credentials", func(t *testing.T) {
-		t.Skip("Not implemented")
-	})
+ // Step 1: Navigate to login page
+ // Expected: Login page is displayed
+ t.Run("Navigate to login page", func(t *testing.T) {
+  t.Skip("Not implemented")
+ })
+ // Step 2: Enter credentials
+ // Expected: Fields accept input
+ t.Run("Enter credentials", func(t *testing.T) {
+  t.Skip("Not implemented")
+ })
 }
 
 // TestUserLogout verifies: User Logout
 func TestUserLogout(t *testing.T) {
-	// Step 1: Click logout button
-	// Expected: User is redirected to login page
-	t.Run("Click logout button", func(t *testing.T) {
-		t.Skip("Not implemented")
-	})
+ // Step 1: Click logout button
+ // Expected: User is redirected to login page
+ t.Run("Click logout button", func(t *testing.T) {
+  t.Skip("Not implemented")
+ })
 }
 ```
 
