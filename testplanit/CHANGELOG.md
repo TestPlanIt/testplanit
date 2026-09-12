@@ -1,3 +1,13 @@
+## [1.1.0-beta.2](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.1...v1.1.0-beta.2) (2026-09-12)
+
+### Bug Fixes
+
+* **auth:** let read-only API tokens run report POSTs again ([896b842](https://github.com/TestPlanIt/testplanit/commit/896b84220b070c3235786f50742aa187c8d632db))
+* **editor:** skip the read-only content sync on a destroyed editor ([#637](https://github.com/TestPlanIt/testplanit/issues/637)) ([41ebc02](https://github.com/TestPlanIt/testplanit/commit/41ebc028827a028bed23da9d8cfadcbcb46fdb1e))
+* **mcp:** store result notes as rich text and document elapsed in seconds ([#642](https://github.com/TestPlanIt/testplanit/issues/642)) ([1b4bf39](https://github.com/TestPlanIt/testplanit/commit/1b4bf39af86bce705de7cec6623745a8e9e6bbc2)), closes [#639](https://github.com/TestPlanIt/testplanit/issues/639) [#640](https://github.com/TestPlanIt/testplanit/issues/640)
+* **milestones:** save without a default type and keep every catalog's default ([#641](https://github.com/TestPlanIt/testplanit/issues/641)) ([8b44ecc](https://github.com/TestPlanIt/testplanit/commit/8b44ecc92436ee5e8ec05a3c4a1611b00e07156d)), closes [#638](https://github.com/TestPlanIt/testplanit/issues/638)
+* **release:** update GitHub release body template to handle large notes ([a39fb5f](https://github.com/TestPlanIt/testplanit/commit/a39fb5f8be371709cf7a0ce8bfa717f43adb260a))
+
 ## [1.1.0-beta.1](https://github.com/TestPlanIt/testplanit/compare/v1.0.6...v1.1.0-beta.1) (2026-09-11)
 
 ### Features
