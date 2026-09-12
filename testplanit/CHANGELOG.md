@@ -1,3 +1,9 @@
+## [1.0.9](https://github.com/TestPlanIt/testplanit/compare/v1.0.8...v1.0.9) (2026-09-12)
+
+### Bug Fixes
+
+* **mcp:** store result notes as rich text and document elapsed in seconds ([#642](https://github.com/TestPlanIt/testplanit/issues/642)) ([1b4bf39](https://github.com/TestPlanIt/testplanit/commit/1b4bf39af86bce705de7cec6623745a8e9e6bbc2)), closes [#639](https://github.com/TestPlanIt/testplanit/issues/639) [#640](https://github.com/TestPlanIt/testplanit/issues/640)
+
 ## [1.0.8](https://github.com/TestPlanIt/testplanit/compare/v1.0.7...v1.0.8) (2026-09-12)
 
 ### Bug Fixes
