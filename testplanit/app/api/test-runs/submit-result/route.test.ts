@@ -335,6 +335,41 @@ describe("Submit Result API Route", () => {
     });
   });
 
+  it("stores plain-string notes as a Tiptap document, one paragraph per line", async () => {
+    const response = await POST(
+      createRequest({ ...validBody, notes: "Badge shown.\nRetried once." })
+    );
+
+    expect(response.status).toBe(200);
+    const createArgs = txMocks.testRunResults.create.mock.calls[0][0];
+    expect(createArgs.data.notes).toEqual({
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "Badge shown." }],
+        },
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "Retried once." }],
+        },
+      ],
+    });
+  });
+
+  it("stores document-shaped notes unchanged", async () => {
+    const doc = {
+      type: "doc",
+      content: [{ type: "paragraph", content: [{ type: "text", text: "ok" }] }],
+    };
+    const response = await POST(createRequest({ ...validBody, notes: doc }));
+
+    expect(response.status).toBe(200);
+    expect(txMocks.testRunResults.create.mock.calls[0][0].data.notes).toEqual(
+      doc
+    );
+  });
+
   it("returns 500 if transaction fails", async () => {
     txMocks.testRunCases.update.mockRejectedValue(new Error("update failed"));
 

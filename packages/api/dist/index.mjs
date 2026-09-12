@@ -1478,7 +1478,8 @@ var TestPlanItClient = class {
   // Test Results
   // ============================================================================
   /**
-   * Create a test result
+   * Create a test result. `elapsed` is in seconds; plain-text `notes` are
+   * wrapped into the rich-text document shape the UI renders.
    */
   async createTestResult(options) {
     const data = {
@@ -1491,7 +1492,7 @@ var TestPlanItClient = class {
       data.elapsed = options.elapsed;
     }
     if (options.notes) {
-      data.notes = options.notes;
+      data.notes = typeof options.notes === "string" ? plainTextToRichTextDoc(options.notes) : options.notes;
     }
     if (options.evidence) {
       data.evidence = options.evidence;
@@ -1882,6 +1883,14 @@ var TestPlanItClient = class {
     return this.baseUrl;
   }
 };
+function plainTextToRichTextDoc(text) {
+  return {
+    type: "doc",
+    content: text.split(/\r?\n/).map(
+      (line) => line === "" ? { type: "paragraph" } : { type: "paragraph", content: [{ type: "text", text: line }] }
+    )
+  };
+}
 
 // src/mapper.ts
 function automationStepsToCaseSteps(steps) {

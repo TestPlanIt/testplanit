@@ -65,6 +65,25 @@ const BLOCK_TYPES = new Set([
  * Defensive: returns `""` on null/undefined, or the string itself if
  * input is already a primitive string.
  */
+/**
+ * Wrap agent-supplied plain text in a ProseMirror doc, one paragraph per
+ * line, so the TestPlanIt UI (which renders these Json columns with Tiptap)
+ * shows it. A bare string stored in a Tiptap column renders as an empty
+ * editor. Blank/undefined input yields undefined so the caller can omit the
+ * field.
+ */
+export function plainTextToProseMirrorDoc(
+  text: string | null | undefined,
+): { type: "doc"; content: unknown[] } | undefined {
+  if (text == null || text.trim() === "") return undefined;
+  const paragraphs = text.split(/\r?\n/).map((line) =>
+    line === ""
+      ? { type: "paragraph" }
+      : { type: "paragraph", content: [{ type: "text", text: line }] },
+  );
+  return { type: "doc", content: paragraphs };
+}
+
 export function extractProseMirrorText(doc: unknown): string {
   if (doc == null) return "";
   if (typeof doc === "string") return doc;

@@ -27,7 +27,7 @@ The `@testplanit/forge-app` package is the **TestPlanIt for Jira** Forge app. In
 
 The TestPlanIt SDK packages are designed with a layered architecture:
 
-```
+```flowchart
 ┌─────────────────────────────────────────────────────────────┐
 │                      Test Frameworks                        │
 │    (WebdriverIO, Playwright, Jest, Mocha, Cypress, etc.)    │
@@ -84,7 +84,7 @@ await client.createTestResult({
   testRunId: testRun.id,
   testRunCaseId: 456,
   statusId,
-  elapsed: 1500,
+  elapsed: 15, // seconds
 });
 ```
 

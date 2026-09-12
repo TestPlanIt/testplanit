@@ -166,7 +166,8 @@ export async function GET(request: NextRequest) {
       isFail: r.status.isFailure,
       executedAt: r.executedAt.toISOString(),
       executedById: r.executedById,
-      elapsedMs: r.elapsed,
+      // TestRunResults.elapsed is stored in seconds; the export contract is ms.
+      elapsedMs: r.elapsed === null ? null : r.elapsed * 1000,
       attempt: r.attempt,
       iterationId: r.iterationId,
       editedAt: r.editedAt ? r.editedAt.toISOString() : null,
