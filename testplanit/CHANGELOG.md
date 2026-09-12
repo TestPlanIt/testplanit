@@ -1,3 +1,9 @@
+## [1.1.0-beta.3](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.2...v1.1.0-beta.3) (2026-09-12)
+
+### Enhancements
+
+* **impact:** select linked cases from ticket keys in commit messages ([#644](https://github.com/TestPlanIt/testplanit/issues/644)) ([8602144](https://github.com/TestPlanIt/testplanit/commit/86021443e24376154a676102b23bc4c9f89318e8)), closes [#42](https://github.com/TestPlanIt/testplanit/issues/42) [AB#42](https://github.com/TestPlanIt/AB/issues/42) [owner/repo#42](https://github.com/owner/repo/issues/42)
+
 ## [1.1.0-beta.2](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.1...v1.1.0-beta.2) (2026-09-12)
 
 ### Bug Fixes
