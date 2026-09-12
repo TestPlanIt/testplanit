@@ -25,12 +25,16 @@ on:
   push:
     branches:
       - main
+      # release/v1.1 publishes pre-releases under the `beta` dist-tag; see the
+      # "Publish beta pre-releases" step and packages-publish-prerelease.mjs.
+      - release/v1.1
     paths:
       - 'packages/**'
       - '.changeset/**'
       - '.github/workflows/packages-release.yml'
       # The publish command lives here; a fix to it must be able to trigger a run.
       - '.github/scripts/packages-publish.mjs'
+      - '.github/scripts/packages-publish-prerelease.mjs'
   workflow_dispatch:
 
 permissions:
@@ -94,6 +98,16 @@ jobs:
       # v2 of the action pairs with @changesets/cli v3: the CLI reports published
       # packages through the CHANGESETS_OUTPUT file the action provides, not via
       # "New tag:" stdout lines (v1 parsed those and would see nothing published).
+
+      # Pre-releases from a release branch: only packages/* whose version
+      # carries a pre-release identifier (e.g. 1.1.0-beta.0) are published,
+      # under the `beta` dist-tag, and only if that exact version is not on
+      # npm yet. Same workflow file as the main path on purpose — npm trusted
+      # publishing authorizes one workflow filename per package.
+      - name: Publish beta pre-releases
+        if: github.ref_name != 'main'
+        run: node .github/scripts/packages-publish-prerelease.mjs
+
       - name: Create Release Pull Request or Publish
         id: changesets
         if: github.ref_name == 'main'
