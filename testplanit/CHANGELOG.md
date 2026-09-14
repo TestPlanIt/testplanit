@@ -1,3 +1,9 @@
+## [1.1.0-beta.7](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.6...v1.1.0-beta.7) (2026-09-14)
+
+### Bug Fixes
+
+* **jira-panel:** show automated cases and their automated results ([b3f12b4](https://github.com/TestPlanIt/testplanit/commit/b3f12b496cac8bfa634a9b21097f0fcf2da19ecd))
+
 ## [1.1.0-beta.6](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.5...v1.1.0-beta.6) (2026-09-14)
 
 ### Bug Fixes
