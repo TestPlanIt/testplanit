@@ -124,6 +124,7 @@ import {
 } from "~/utils/reportUtils";
 import {
   dimensionLabelKey,
+  hasMessage,
   metricLabelKey,
 } from "~/lib/constants/reportLabelKeys";
 import { sortPreBuiltReportRows } from "~/utils/preBuiltReportSort";
@@ -337,6 +338,7 @@ function ReportBuilderContent({
     reportBuilderProject?.requirementsEnabled === true;
 
   const appLocale = useLocale();
+  const tGlobal = useTranslations();
   // Get report types based on mode - done inside client component to avoid passing functions across server/client boundary
   const reportTypes = useMemo(() => {
     // Alphabetical by localized label in every mode — the picker's order,
@@ -346,7 +348,6 @@ function ReportBuilderContent({
       return sortReportTypesByLabel(
         getCrossProjectReportTypes(tReports),
         appLocale
-  const tGlobal = useTranslations();
       );
     // The requirements flag is a PROJECT setting, so it only ever filters
     // the project list. The cross-project requirement reports need no such
@@ -1681,7 +1682,7 @@ function ReportBuilderContent({
             value: d.id,
             // Labels live on shared keys (see DIMENSION_LABEL_KEYS); an id
             // with no message keeps the server's English label.
-            label: tGlobal.has(dimensionLabelKey(d.id))
+            label: hasMessage(tGlobal, dimensionLabelKey(d.id))
               ? tGlobal(dimensionLabelKey(d.id) as any)
               : d.label,
             apiLabel: d.label, // Keep English label for API data access
@@ -1690,7 +1691,7 @@ function ReportBuilderContent({
         const metOpts = data.metrics
           .map((m: any) => ({
             value: m.id,
-            label: tGlobal.has(metricLabelKey(m.id))
+            label: hasMessage(tGlobal, metricLabelKey(m.id))
               ? tGlobal(metricLabelKey(m.id) as any)
               : m.label,
             apiLabel: m.label, // Keep English label for API data access

@@ -7,7 +7,7 @@ import {
   getDimensionHelpKey,
   getMetricHelpKey,
 } from "~/lib/constants/reportConstants";
-import { metricLabelKey } from "~/lib/constants/reportLabelKeys";
+import { hasMessage, metricLabelKey } from "~/lib/constants/reportLabelKeys";
 import { toHumanReadable } from "~/utils/duration";
 import { getDateFnsLocale } from "~/utils/locales";
 import { metricUnit } from "~/utils/metricUnits";
@@ -795,7 +795,7 @@ export function useReportColumns(
     metrics.forEach((metricId) => {
       // Get translated metric label
       // Some metric labels live on shared keys (see METRIC_LABEL_KEYS).
-      const metricLabel = t.has(metricLabelKey(metricId))
+      const metricLabel = hasMessage(t, metricLabelKey(metricId))
         ? t(metricLabelKey(metricId) as any)
         : tReportsMetrics(metricId as any) || metricId;
 
