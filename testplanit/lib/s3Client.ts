@@ -82,7 +82,8 @@ export function getPresignClient(): S3Client {
   return new S3Client({
     region: resolveRegion(),
     ...resolveCredentials(),
-    endpoint: process.env.AWS_PUBLIC_ENDPOINT_URL || process.env.AWS_ENDPOINT_URL,
+    endpoint:
+      process.env.AWS_PUBLIC_ENDPOINT_URL || process.env.AWS_ENDPOINT_URL,
     forcePathStyle: resolveForcePathStyle(),
   });
 }
