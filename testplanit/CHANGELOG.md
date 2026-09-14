@@ -1,3 +1,10 @@
+## [1.1.0-beta.4](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.3...v1.1.0-beta.4) (2026-09-14)
+
+### Features
+
+* **impact:** connect several repositories per project and scan ticket commits on demand ([abc62d7](https://github.com/TestPlanIt/testplanit/commit/abc62d702725d8329ec9157aae8bdd69c9af2296))
+* **impact:** start analyses and test runs from repository webhooks ([aa79f63](https://github.com/TestPlanIt/testplanit/commit/aa79f631c2f5d96baa389d2c5092f31245ae9a7a))
+
 ## [1.1.0-beta.3](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.2...v1.1.0-beta.3) (2026-09-12)
 
 ### Enhancements
