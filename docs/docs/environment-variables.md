@@ -68,7 +68,7 @@ See [File Storage](file-storage.md).
 | `AWS_PUBLIC_ENDPOINT_URL` | unset | Browser-reachable storage URL for presigned links when MinIO sits behind a proxy. When unset on a hosted instance, files are served through the application instead. |
 | `MINIO_INTERNAL_ENDPOINT` | unset | **Build-time.** An extra internal storage host to allow in the image optimizer. |
 | `UPLOAD_MAX_MB` | `10` | **Build-time.** Per-file upload ceiling for attachments and inline images. Raise the bundled nginx limit to match. |
-| `IS_HOSTED` | `false` | Marks a hosted instance. With no `AWS_PUBLIC_ENDPOINT_URL`, files are proxied through the application. |
+| `IS_HOSTED` | `false` | Read it as "storage is not publicly readable". With no `AWS_PUBLIC_ENDPOINT_URL` this switches uploads to proxy mode and serves files through `/api/storage`. **Required for a private S3 bucket**, despite the name — see [File Storage](file-storage.md#proxy-mode). |
 | `SELF_HOSTED` | unset | **Build-time.** Set to `true` for self-hosted images to turn off the Next.js image optimizer, so one image runs on any host without a baked-in domain allowlist. |
 | `BASE_DOMAIN` | unset | **Build-time.** Multi-tenant base domain; `*.BASE_DOMAIN` storage URLs are allowed in the image optimizer. |
 | `NEXT_PUBLIC_APP_URL`, `APP_URL` | unset | **Build-time.** Fallback public URL for the image optimizer allowlist when `AWS_PUBLIC_ENDPOINT_URL` is unset. |
