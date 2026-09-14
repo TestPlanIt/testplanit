@@ -1,3 +1,9 @@
+## [1.1.0-beta.8](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.7...v1.1.0-beta.8) (2026-09-14)
+
+### Bug Fixes
+
+* **types:** require executionSource only where it is read ([e7d7467](https://github.com/TestPlanIt/testplanit/commit/e7d7467087c479f985634fdb92deb446ae1ec1dc))
+
 ## [1.1.0-beta.7](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.6...v1.1.0-beta.7) (2026-09-14)
 
 ### Bug Fixes
