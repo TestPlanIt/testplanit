@@ -25,6 +25,7 @@ import { getFileAtCommit } from "../lib/services/impact/fileAtCommit";
 import { impactCancelKey } from "../lib/services/impact/jobKeys";
 import { runAiLayer } from "../lib/services/impact/layers/aiLayer";
 import { runHistoryLayer } from "../lib/services/impact/layers/historyLayer";
+import { createRunFromAnalysis } from "../lib/services/impact/autoRun";
 import { runIssueLayer } from "../lib/services/impact/layers/issueLayer";
 import { runPathLayer } from "../lib/services/impact/layers/pathLayer";
 import {
@@ -588,6 +589,19 @@ export const processor = async (
       },
     };
     await saveResult(db, analysisId, result);
+    if (job.data.autoRun) {
+      // A webhook started this analysis: compose the run it asked for. A
+      // failure here is logged on the delivery, never on the analysis, which
+      // is complete and reviewable either way.
+      try {
+        await createRunFromAnalysis(db, analysisId, job.data.autoRun);
+      } catch (error) {
+        console.error(
+          `[impact] auto-run for analysis ${analysisId} failed:`,
+          error
+        );
+      }
+    }
 
     return {
       analysisId,

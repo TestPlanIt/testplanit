@@ -9,6 +9,7 @@ import { getAdapter } from "~/lib/webhooks/adapters";
 import { isMilestoneEventType } from "~/lib/webhooks/adapters/types";
 import type { VerifyResult } from "~/lib/webhooks/adapters/types";
 import { redactToken } from "~/lib/webhooks/redaction";
+import { applyInboundCodeChange } from "~/lib/webhooks/services/applyInboundCodeChange";
 import { applyInboundIssueUpdate } from "~/lib/webhooks/services/applyInboundIssueUpdate";
 import { applyInboundMilestoneEvent } from "~/lib/webhooks/services/applyInboundMilestoneEvent";
 import { decrypt } from "~/utils/encryption";
@@ -88,6 +89,9 @@ async function handleWebhookReceive(
     adapterType: AdapterType;
     secret: string;
     isActive: boolean;
+    codeRepositoryConfigId: number | null;
+    subscribedEvents: string[];
+    baseBranch: string | null;
   } | null = null;
   try {
     webhookConfig = await baseDb.webhookConfig.findUnique({
@@ -98,6 +102,9 @@ async function handleWebhookReceive(
         adapterType: true,
         secret: true,
         isActive: true,
+        codeRepositoryConfigId: true,
+        subscribedEvents: true,
+        baseBranch: true,
       },
     });
   } catch (err) {
@@ -206,28 +213,46 @@ async function handleWebhookReceive(
   //    other eventType continues to applyInboundIssueUpdate UNCHANGED. Both
   //    services return a DeliveryOutcome-shaped result the tail below maps
   //    to 200/500 identically.
-  const result = isMilestoneEventType(verify.payload.eventType)
-    ? await applyInboundMilestoneEvent({
-        webhookConfigId: webhookConfig.id,
-        adapterType: webhookConfig.adapterType,
-        eventType: verify.payload.eventType,
-        payload: verify.payload,
-        payloadDigest,
-        receivedAt,
-        latencyMs,
-        statusCode: 200,
-      })
-    : await applyInboundIssueUpdate({
-        webhookConfigId: webhookConfig.id,
-        projectId: webhookConfig.projectId,
-        adapterType: webhookConfig.adapterType,
-        eventType: verify.payload.eventType,
-        payload: verify.payload,
-        payloadDigest,
-        receivedAt,
-        latencyMs,
-        statusCode: 200,
-      });
+  // A webhook bound to a repository connection carries pull request and push
+  // events for Impact Analysis, never issue or milestone updates.
+  const result =
+    typeof webhookConfig.codeRepositoryConfigId === "number"
+      ? await applyInboundCodeChange({
+          webhookConfigId: webhookConfig.id,
+          projectId: webhookConfig.projectId,
+          codeRepositoryConfigId: webhookConfig.codeRepositoryConfigId,
+          subscribedEvents: webhookConfig.subscribedEvents,
+          baseBranch: webhookConfig.baseBranch,
+          adapterType: webhookConfig.adapterType,
+          eventType: verify.payload.eventType,
+          payload: verify.payload,
+          payloadDigest,
+          receivedAt,
+          latencyMs,
+          statusCode: 200,
+        })
+      : isMilestoneEventType(verify.payload.eventType)
+        ? await applyInboundMilestoneEvent({
+            webhookConfigId: webhookConfig.id,
+            adapterType: webhookConfig.adapterType,
+            eventType: verify.payload.eventType,
+            payload: verify.payload,
+            payloadDigest,
+            receivedAt,
+            latencyMs,
+            statusCode: 200,
+          })
+        : await applyInboundIssueUpdate({
+            webhookConfigId: webhookConfig.id,
+            projectId: webhookConfig.projectId,
+            adapterType: webhookConfig.adapterType,
+            eventType: verify.payload.eventType,
+            payload: verify.payload,
+            payloadDigest,
+            receivedAt,
+            latencyMs,
+            statusCode: 200,
+          });
 
   if (result.outcome === "error") {
     console.error(

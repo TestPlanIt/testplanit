@@ -55,17 +55,21 @@ test.describe("Jira inbound webhook — admin form + send-test self-loop", () =>
     });
 
     await test.step("Add the inbound webhook and verify URL + secret are revealed once", async () => {
-      // 1:1 inbound model: the Add button skips the chooser entirely
-      // and creates inline against the project's active integration
-      // adapter (JIRA, set up in beforeAll).
+      // The wizard's issue-tracker source maps to the project's active
+      // integration adapter (JIRA, set up in beforeAll).
       await page.getByTestId("webhook-inbound-add-button").click();
-
-      // Scope to the JIRA card after creation. URL + secret revealed once.
-      await expect(jiraCard).toBeVisible();
-      await expect(jiraCard.getByTestId("webhook-url")).toBeVisible();
-      await expect(jiraCard.getByTestId("webhook-secret")).toBeVisible();
-      const url = await jiraCard.getByTestId("webhook-url").textContent();
+      const wizard = page.getByTestId("webhook-inbound-wizard");
+      await wizard.getByTestId("webhook-wizard-source-issues").click();
+      await wizard.getByTestId("webhook-wizard-next").click();
+      await wizard.getByTestId("webhook-create-button").click();
+      const revealed = wizard.getByTestId("webhook-inbound-revealed-box");
+      await expect(revealed).toBeVisible();
+      await expect(revealed.getByTestId("webhook-url")).toBeVisible();
+      await expect(revealed.getByTestId("webhook-secret")).toBeVisible();
+      const url = await revealed.getByTestId("webhook-url").textContent();
       expect(url).toMatch(/whk_[0-9a-f]{64}/);
+      await wizard.getByTestId("webhook-reveal-done-button").click();
+      await expect(jiraCard).toBeVisible();
     });
 
     await test.step("Reload and verify the URL is redacted and the token is hidden", async () => {

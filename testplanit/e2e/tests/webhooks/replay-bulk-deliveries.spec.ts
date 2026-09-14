@@ -119,18 +119,22 @@ test.describe("Webhook delivery bulk replay — outbound-only count", () => {
       await page.waitForLoadState("networkidle");
       const form = page.getByTestId("webhook-config-form");
       await expect(form).toBeVisible();
-      // 1:1 inbound model: Add skips the chooser and creates inline.
       await page.getByTestId("webhook-inbound-add-button").click();
-
-      const githubCard = page.getByTestId("webhook-inbound-card-github");
-      await expect(githubCard).toBeVisible();
-      const urlText = await githubCard.getByTestId("webhook-url").innerText();
+      const wizard = page.getByTestId("webhook-inbound-wizard");
+      await wizard.getByTestId("webhook-wizard-source-issues").click();
+      await wizard.getByTestId("webhook-wizard-next").click();
+      await wizard.getByTestId("webhook-create-button").click();
+      const revealed = wizard.getByTestId("webhook-inbound-revealed-box");
+      await expect(revealed).toBeVisible();
+      const urlText = await revealed.getByTestId("webhook-url").innerText();
       const tokenMatch = urlText.match(/\/api\/webhooks\/(whk_[0-9a-f]+)/);
       expect(tokenMatch).not.toBeNull();
       inboundToken = tokenMatch![1];
-      inboundSecret = await githubCard
-        .getByTestId("webhook-secret")
-        .innerText();
+      inboundSecret = await revealed.getByTestId("webhook-secret").innerText();
+      await wizard.getByTestId("webhook-reveal-done-button").click();
+      await expect(
+        page.getByTestId("webhook-inbound-card-github")
+      ).toBeVisible();
 
       const inboundConfig = await db.webhookConfig.findFirst({
         where: { projectId, direction: "INBOUND" },

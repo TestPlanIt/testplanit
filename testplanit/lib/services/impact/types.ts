@@ -248,6 +248,20 @@ export const IMPACT_PHASES: ImpactPhase[] = [
   "merging",
 ];
 
+/**
+ * Set when a repository webhook started the analysis: once the analysis
+ * completes, the worker composes a test run from its affected tests.
+ */
+export interface ImpactAutoRun {
+  /** "pull_request" | "push" */
+  trigger: string;
+  /** Run name and analysis label, e.g. "PR #12: Fix checkout". */
+  label: string;
+  url?: string | null;
+  /** The inbound delivery row to annotate with the run outcome. */
+  deliveryId?: string;
+}
+
 export interface ImpactAnalysisJobData {
   analysisId: number;
   projectId: number;
@@ -258,6 +272,7 @@ export interface ImpactAnalysisJobData {
   notes?: string;
   excludeCaseIds?: number[];
   tenantId?: string;
+  autoRun?: ImpactAutoRun;
 }
 
 export interface ImpactProgress {

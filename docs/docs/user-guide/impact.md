@@ -97,6 +97,10 @@ Click **Add N cases** to add the checked cases to the current selection. They me
 
 When nothing matches, the step says **No affected tests found** and suggests pinning cases to the changed files so the next analysis finds them.
 
+## Analyses started by the repository
+
+With a [repository webhook](webhooks.md#repository-webhooks) configured, the repository starts analyses itself: opening a pull request analyzes it against its target branch, a push to the webhook's base branch analyzes the pushed commits, and, when switched on, a push to any other branch is analyzed against the base branch. Each completed analysis becomes a test run holding the pinned and affected tests, named after the pull request or the commit range, with the event's link in the run's note. The analysis records what started it and appears in the run's history like one started by hand.
+
 ## What the reasons mean
 
 - **Pin** — a Code Pin on the case intersects the change. The detail names the pinned location: `path:12–40` for a line range, the file path for a whole-file pin, the symbol name, or the glob pattern that matched.
@@ -116,18 +120,18 @@ A case can carry several badges; its score is the strongest of its signals, and 
 
 ## Notices you may see
 
-| Notice | Meaning |
-| --- | --- |
-| The provider returned a partial diff. | The repository provider capped the comparison. Files past the cap are not listed, or are listed without a patch, and the analysis covers only what was returned. |
-| Only part of the diff fit the AI context; N files were summarized by path only. | The diff was larger than the AI's context budget. The AI saw full changes for the first files and only paths for the rest; the other signals are unaffected. |
-| No active LLM integration: AI ranking was skipped. | The project has no active LLM integration. Results come from Code Pins, keyword matching, and run history only. |
-| Search index unavailable: keyword matching used the database. | Elasticsearch was not reachable, so keyword matching fell back to test case names in the database. Matches on case content may be missed. |
-| N AI batches were cut off by the model. | The model's reply was truncated. Cases in the cut-off part may be missing from the AI signal. |
-| Some AI batches failed; results may be incomplete. | One or more AI requests failed after retries; the results of the other batches are kept. |
-| Some pinned files were matched by path only (fetch limit reached). | Too many pinned files needed their base-commit content to locate lines or symbols; those past the limit were matched at file level. |
+| Notice                                                                                                             | Meaning                                                                                                                                                                                     |
+| ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The provider returned a partial diff.                                                                              | The repository provider capped the comparison. Files past the cap are not listed, or are listed without a patch, and the analysis covers only what was returned.                            |
+| Only part of the diff fit the AI context; N files were summarized by path only.                                    | The diff was larger than the AI's context budget. The AI saw full changes for the first files and only paths for the rest; the other signals are unaffected.                                |
+| No active LLM integration: AI ranking was skipped.                                                                 | The project has no active LLM integration. Results come from Code Pins, keyword matching, and run history only.                                                                             |
+| Search index unavailable: keyword matching used the database.                                                      | Elasticsearch was not reachable, so keyword matching fell back to test case names in the database. Matches on case content may be missed.                                                   |
+| N AI batches were cut off by the model.                                                                            | The model's reply was truncated. Cases in the cut-off part may be missing from the AI signal.                                                                                               |
+| Some AI batches failed; results may be incomplete.                                                                 | One or more AI requests failed after retries; the results of the other batches are kept.                                                                                                    |
+| Some pinned files were matched by path only (fetch limit reached).                                                 | Too many pinned files needed their base-commit content to locate lines or symbols; those past the limit were matched at file level.                                                         |
 | Some commits naming tickets were not read file by file (fetch limit reached); their cases cover no specific files. | More commits in the range named tickets than the analysis reads individually. Cases linked to the tickets past the limit are still selected, but do not count as covering any changed file. |
-| No test case matched. | No signal selected any case. |
-| Reusing a recent analysis of the same commits. | The same base and head were analyzed within the last 24 hours, so that result is shown instead of running again. |
+| No test case matched.                                                                                              | No signal selected any case.                                                                                                                                                                |
+| Reusing a recent analysis of the same commits.                                                                     | The same base and head were analyzed within the last 24 hours, so that result is shown instead of running again.                                                                            |
 
 ## Code Pins
 
@@ -135,12 +139,12 @@ A **Code Pin** links a test case to the code it covers. Any change inside a pinn
 
 ### Kinds of pin
 
-| Kind | Pins the case to |
-| --- | --- |
-| **Whole file** | A single file. Any change to the file matches. |
-| **Lines** | A range of lines in a file. A change that overlaps the range matches. The lines are located again on every analysis, so the pin follows the code as it moves. |
-| **Symbol** | A function, class, or other declaration, located by name in the file. A change inside the declaration's block matches. |
-| **Glob pattern** | Every file matching a pattern such as `src/payments/**`. Useful for a module or a directory. |
+| Kind             | Pins the case to                                                                                                                                              |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Whole file**   | A single file. Any change to the file matches.                                                                                                                |
+| **Lines**        | A range of lines in a file. A change that overlaps the range matches. The lines are located again on every analysis, so the pin follows the code as it moves. |
+| **Symbol**       | A function, class, or other declaration, located by name in the file. A change inside the declaration's block matches.                                        |
+| **Glob pattern** | Every file matching a pattern such as `src/payments/**`. Useful for a module or a directory.                                                                  |
 
 ### Adding a pin
 

@@ -1,6 +1,11 @@
 "use server";
 
 import { createHmac, randomBytes } from "node:crypto";
+import {
+  CODE_EVENT_DEFAULTS,
+  CODE_REPOSITORY_WEBHOOK_EVENTS,
+  inboundAdapterForCodeRepository,
+} from "~/lib/webhooks/codeChangeEvents";
 
 import type { AdapterType } from "~/zenstack/models";
 
@@ -111,6 +116,144 @@ const SYNTHETIC_MANTISBT_PAYLOAD = JSON.stringify({
   issue: { id: 0, status: { name: "new" } },
 });
 
+// Repository webhooks are tested with a pull request instead of an issue:
+// number 0 (real pull requests start at 1) is the sentinel the code-change
+// handler recognises, and the signature proves the secret matches.
+const SYNTHETIC_GITHUB_PULL_REQUEST_PAYLOAD = JSON.stringify({
+  action: "opened",
+  number: 0,
+  pull_request: { number: 0, title: "Synthetic test" },
+  repository: { full_name: "__synthetic__/__synthetic__" },
+});
+
+const SYNTHETIC_GITLAB_MERGE_REQUEST_PAYLOAD = JSON.stringify({
+  object_kind: "merge_request",
+  object_attributes: { iid: 0, action: "open", title: "Synthetic test" },
+  project: { path_with_namespace: "__synthetic__/__synthetic__" },
+});
+
+const SYNTHETIC_ADO_PULL_REQUEST_PAYLOAD = JSON.stringify({
+  eventType: "git.pullrequest.created",
+  resource: { pullRequestId: 0, title: "Synthetic test" },
+});
+
+const SYNTHETIC_BITBUCKET_PULL_REQUEST_PAYLOAD = JSON.stringify({
+  pullrequest: { id: 0, title: "Synthetic test" },
+});
+
+interface SyntheticRequest {
+  body: string;
+  /** Provider event header value, for adapters that read one. */
+  event?: string;
+}
+
+/** What the Send test action posts to an issue-tracker webhook. */
+const ISSUE_SYNTHETIC_REQUESTS: Partial<Record<AdapterType, SyntheticRequest>> =
+  {
+    JIRA: { body: SYNTHETIC_PAYLOAD },
+    GITHUB: { body: SYNTHETIC_GITHUB_PAYLOAD, event: "issues" },
+    GITLAB: { body: SYNTHETIC_GITLAB_PAYLOAD, event: "Issue Hook" },
+    GITEA: { body: SYNTHETIC_GITEA_PAYLOAD, event: "issues" },
+    AZURE_DEVOPS: { body: SYNTHETIC_ADO_PAYLOAD },
+    REDMINE: { body: SYNTHETIC_REDMINE_PAYLOAD },
+    MANTISBT: { body: SYNTHETIC_MANTISBT_PAYLOAD },
+  };
+
+/** What the Send test action posts to a repository webhook. */
+const REPOSITORY_SYNTHETIC_REQUESTS: Partial<
+  Record<AdapterType, SyntheticRequest>
+> = {
+  GITHUB: {
+    body: SYNTHETIC_GITHUB_PULL_REQUEST_PAYLOAD,
+    event: "pull_request",
+  },
+  GITEA: { body: SYNTHETIC_GITHUB_PULL_REQUEST_PAYLOAD, event: "pull_request" },
+  GITLAB: {
+    body: SYNTHETIC_GITLAB_MERGE_REQUEST_PAYLOAD,
+    event: "Merge Request Hook",
+  },
+  AZURE_DEVOPS: { body: SYNTHETIC_ADO_PULL_REQUEST_PAYLOAD },
+  BITBUCKET: {
+    body: SYNTHETIC_BITBUCKET_PULL_REQUEST_PAYLOAD,
+    event: "pullrequest:created",
+  },
+};
+
+function hmacSha256(secret: string, body: string): string {
+  return "sha256=" + createHmac("sha256", secret).update(body).digest("hex");
+}
+
+/**
+ * Sign a synthetic request the way the adapter verifies it. Azure DevOps
+ * needs the stored `{username, password}`; malformed credentials yield null.
+ */
+function signSyntheticRequest(
+  adapterType: AdapterType,
+  plainSecret: string,
+  request: SyntheticRequest
+): RequestInit | null {
+  const headers: Record<string, string> = {
+    "content-type": "application/json",
+  };
+  switch (adapterType) {
+    case "JIRA":
+      headers["x-hub-signature-256"] = hmacSha256(plainSecret, request.body);
+      break;
+    case "GITHUB":
+      headers["x-hub-signature-256"] = hmacSha256(plainSecret, request.body);
+      headers["x-github-event"] = request.event ?? "";
+      break;
+    case "GITLAB":
+      // GitLab compares the raw token, not an HMAC.
+      headers["x-gitlab-token"] = plainSecret;
+      headers["x-gitlab-event"] = request.event ?? "";
+      break;
+    case "GITEA":
+      headers["x-gitea-signature"] = hmacSha256(plainSecret, request.body);
+      headers["x-gitea-event"] = request.event ?? "";
+      break;
+    case "BITBUCKET":
+      headers["x-hub-signature"] = hmacSha256(plainSecret, request.body);
+      headers["x-event-key"] = request.event ?? "";
+      break;
+    case "AZURE_DEVOPS": {
+      let creds: { username: string; password: string };
+      try {
+        const parsed = JSON.parse(plainSecret) as unknown;
+        if (
+          typeof parsed !== "object" ||
+          parsed === null ||
+          typeof (parsed as { username?: unknown }).username !== "string" ||
+          typeof (parsed as { password?: unknown }).password !== "string"
+        ) {
+          throw new Error("ADO credential JSON missing username/password");
+        }
+        creds = parsed as { username: string; password: string };
+      } catch (err) {
+        console.error(
+          "[webhook-config] ADO credentials parse failed (sendTest)",
+          err
+        );
+        return null;
+      }
+      headers.authorization =
+        "Basic " +
+        Buffer.from(`${creds.username}:${creds.password}`, "utf8").toString(
+          "base64"
+        );
+      break;
+    }
+    case "REDMINE":
+    case "MANTISBT":
+      // Their webhook plugins send no signature; the URL token is the
+      // credential, so the synthetic request is posted unsigned.
+      break;
+    default:
+      return null;
+  }
+  return { method: "POST", headers, body: request.body };
+}
+
 function generateToken(): string {
   // 32 random bytes → 64 hex chars with "whk_" prefix.
   return `whk_${randomBytes(32).toString("hex")}`;
@@ -143,7 +286,64 @@ export type AdapterSecretInput =
   | { kind: "GITHUB" }
   | { kind: "AZURE_DEVOPS"; username: string; password: string }
   | { kind: "GITLAB" }
-  | { kind: "GITEA" };
+  | { kind: "GITEA" }
+  | { kind: "BITBUCKET" };
+
+/**
+ * The plaintext an inbound adapter stores as its `secret`, and whether the
+ * admin gets to see it once. HMAC providers get a minted secret they must
+ * paste into the tracker; unsigned providers get an unused one (the URL is
+ * the credential); Azure DevOps stores the Basic-auth pair the admin typed.
+ * Null means the input was unusable and the caller answers with a failure.
+ */
+function mintInboundSecret(
+  adapterType: AdapterType,
+  secretInput: AdapterSecretInput | undefined,
+  scopeForLog: string
+): { plaintext: string; reveal: boolean } | null {
+  if (
+    adapterType === "JIRA" ||
+    adapterType === "GITHUB" ||
+    adapterType === "GITLAB" ||
+    adapterType === "GITEA" ||
+    adapterType === "BITBUCKET"
+  ) {
+    return { plaintext: generateSecret(), reveal: true };
+  }
+  if (adapterType === "REDMINE" || adapterType === "MANTISBT") {
+    // These webhook plugins cannot sign payloads or send a secret; the
+    // unguessable URL token is the credential. Mint and store an (unused)
+    // secret to satisfy the schema, and reveal only the URL.
+    return { plaintext: generateSecret(), reveal: false };
+  }
+  if (adapterType === "AZURE_DEVOPS") {
+    if (
+      !secretInput ||
+      secretInput.kind !== "AZURE_DEVOPS" ||
+      typeof secretInput.username !== "string" ||
+      typeof secretInput.password !== "string" ||
+      secretInput.username.length === 0 ||
+      secretInput.password.length === 0
+    ) {
+      console.error(
+        "[webhook-config] missing or invalid ADO credentials",
+        redactToken(scopeForLog)
+      );
+      return null;
+    }
+    // JSON-encode the {username, password} pair; the ADO adapter JSON.parses
+    // on the receiver side (the Slack-URL-as-credential precedent).
+    return {
+      plaintext: JSON.stringify({
+        username: secretInput.username,
+        password: secretInput.password,
+      }),
+      reveal: false,
+    };
+  }
+  // SLACK / GENERIC_HMAC are OUTBOUND-only.
+  return null;
+}
 
 /**
  * Create or rotate an inbound `WebhookConfig` for the (project, adapterType)
@@ -196,68 +396,19 @@ export async function createOrRotateInboundWebhook(input: {
         return { success: false, error: "Forbidden" };
       }
 
-      // Branch on adapter type to derive the plaintext-to-encrypt and the
-      // success-response shape (only HMAC adapters return the freshly minted
-      // secret to the admin; ADO admin already has the credentials they typed).
-      let plaintextToEncrypt: string;
-      let returnSecretToAdmin: boolean;
-
-      if (
-        adapterType === "JIRA" ||
-        adapterType === "GITHUB" ||
-        adapterType === "GITLAB" ||
-        adapterType === "GITEA"
-      ) {
-        plaintextToEncrypt = generateSecret();
-        returnSecretToAdmin = true;
-      } else if (adapterType === "REDMINE") {
-        // The redmine_webhook plugin cannot sign payloads or send a secret; the
-        // unguessable URL token is the credential. Mint and store an (unused)
-        // secret to satisfy the schema, and reveal only the URL — there is
-        // nothing for the admin to copy into Redmine.
-        plaintextToEncrypt = generateSecret();
-        returnSecretToAdmin = false;
-      } else if (adapterType === "MANTISBT") {
-        // A MantisBT webhook plugin cannot sign payloads or send a secret; the
-        // unguessable URL token is the credential. Mint and store an (unused)
-        // secret to satisfy the schema, and reveal only the URL — there is
-        // nothing for the admin to copy into MantisBT.
-        plaintextToEncrypt = generateSecret();
-        returnSecretToAdmin = false;
-      } else if (adapterType === "AZURE_DEVOPS") {
-        if (
-          !secretInput ||
-          secretInput.kind !== "AZURE_DEVOPS" ||
-          typeof secretInput.username !== "string" ||
-          typeof secretInput.password !== "string" ||
-          secretInput.username.length === 0 ||
-          secretInput.password.length === 0
-        ) {
-          console.error(
-            "[webhook-config] missing or invalid ADO credentials",
-            redactToken(`projectId:${projectId}`)
-          );
-          return {
-            success: false,
-            error: "Failed to save webhook configuration",
-          };
-        }
-        // JSON-encode the {username, password} pair; the ADO adapter
-        // JSON.parses on the receiver side. The Slack-URL-as-credential pattern
-        // sets the precedent for overloading `WebhookConfig.secret`.
-        plaintextToEncrypt = JSON.stringify({
-          username: secretInput.username,
-          password: secretInput.password,
-        });
-        returnSecretToAdmin = false;
-      } else {
-        // SLACK / GENERIC_HMAC are OUTBOUND-only; should never reach here for
-        // INBOUND configs. Defensive guard mirrors getAdapter's error branch.
+      const minted = mintInboundSecret(
+        adapterType,
+        secretInput,
+        `projectId:${projectId}`
+      );
+      if (!minted) {
         return {
           success: false,
           error: "Failed to save webhook configuration",
         };
       }
+      const plaintextToEncrypt = minted.plaintext;
+      const returnSecretToAdmin = minted.reveal;
 
       const token = generateToken();
 
@@ -284,7 +435,12 @@ export async function createOrRotateInboundWebhook(input: {
 
       try {
         const existing = await baseDb.webhookConfig.findFirst({
-          where: { projectId, adapterType, direction: "INBOUND" },
+          where: {
+            projectId,
+            adapterType,
+            direction: "INBOUND",
+            codeRepositoryConfigId: null,
+          },
           select: { id: true },
         });
 
@@ -322,7 +478,12 @@ export async function createOrRotateInboundWebhook(input: {
           );
           try {
             const existing = await baseDb.webhookConfig.findFirst({
-              where: { projectId, adapterType, direction: "INBOUND" },
+              where: {
+                projectId,
+                adapterType,
+                direction: "INBOUND",
+                codeRepositoryConfigId: null,
+              },
               select: { id: true },
             });
             if (existing) {
@@ -575,7 +736,15 @@ export async function setWebhookActive(
 export interface SendTestWebhookResult {
   ok: boolean;
   statusCode: number;
-  outcome?: "synthetic" | "duplicate" | "no-link" | "updated" | "error";
+  outcome?:
+    | "synthetic"
+    | "duplicate"
+    | "no-link"
+    | "updated"
+    | "no_handler"
+    | "ignored"
+    | "queued"
+    | "error";
   error?: string;
 }
 
@@ -591,6 +760,10 @@ export interface SendTestWebhookResult {
  * `/api/webhooks/{token}`, and returns ONLY `{ ok, statusCode, outcome }` to
  * the caller.
  *
+ * An issue-tracker webhook gets a synthetic issue event; a repository webhook
+ * gets a synthetic pull request (number 0) that the code-change handler
+ * records without starting an analysis.
+ *
  * Branches by `config.adapterType`:
  *   - JIRA: HMAC-SHA256 over SYNTHETIC_PAYLOAD; `x-hub-signature-256` header.
  *   - GITHUB: HMAC-SHA256 over SYNTHETIC_GITHUB_PAYLOAD; `x-hub-signature-256`
@@ -604,6 +777,8 @@ export interface SendTestWebhookResult {
  *     is the credential. SYNTHETIC_REDMINE_PAYLOAD body.
  *   - MANTISBT: unsigned (a Mantis webhook plugin cannot sign); the URL token
  *     is the credential. SYNTHETIC_MANTISBT_PAYLOAD body.
+ *   - BITBUCKET (repository only): HMAC-SHA256; `x-hub-signature` +
+ *     `x-event-key: pullrequest:created` headers.
  *
  * Determinism invariant: each adapter's synthetic payload is a module-level
  * `const` (declared once, JSON.stringify'd once). Two consecutive calls
@@ -627,6 +802,7 @@ export async function sendTestWebhook(
     secret: string;
     projectId: number;
     adapterType: AdapterType;
+    codeRepositoryConfigId: number | null;
   } | null;
   try {
     config = await baseDb.webhookConfig.findUnique({
@@ -636,6 +812,7 @@ export async function sendTestWebhook(
         secret: true,
         projectId: true,
         adapterType: true,
+        codeRepositoryConfigId: true,
       },
     });
   } catch (err) {
@@ -679,125 +856,31 @@ export async function sendTestWebhook(
   const origin = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
   const target = `${origin}/api/webhooks/${config.token}`;
 
-  // Build adapter-specific request init (headers + body) before the
-  // network fetch. Each adapter's synthetic payload is a module-level const,
-  // so two clicks produce byte-identical bytes (determinism invariant).
-  let requestInit: RequestInit;
-  if (config.adapterType === "JIRA") {
-    const sig =
-      "sha256=" +
-      createHmac("sha256", plainSecret).update(SYNTHETIC_PAYLOAD).digest("hex");
-    requestInit = {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-hub-signature-256": sig,
-      },
-      body: SYNTHETIC_PAYLOAD,
-    };
-  } else if (config.adapterType === "GITHUB") {
-    const sig =
-      "sha256=" +
-      createHmac("sha256", plainSecret)
-        .update(SYNTHETIC_GITHUB_PAYLOAD)
-        .digest("hex");
-    requestInit = {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-hub-signature-256": sig,
-        "x-github-event": "issues",
-      },
-      body: SYNTHETIC_GITHUB_PAYLOAD,
-    };
-  } else if (config.adapterType === "GITLAB") {
-    // GitLab verifies X-Gitlab-Token as a raw token comparison (not HMAC).
-    requestInit = {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-gitlab-token": plainSecret,
-        "x-gitlab-event": "Issue Hook",
-      },
-      body: SYNTHETIC_GITLAB_PAYLOAD,
-    };
-  } else if (config.adapterType === "GITEA") {
-    const sig =
-      "sha256=" +
-      createHmac("sha256", plainSecret)
-        .update(SYNTHETIC_GITEA_PAYLOAD)
-        .digest("hex");
-    requestInit = {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-gitea-signature": sig,
-        "x-gitea-event": "issues",
-      },
-      body: SYNTHETIC_GITEA_PAYLOAD,
-    };
-  } else if (config.adapterType === "AZURE_DEVOPS") {
-    // Secret is JSON-encoded {username, password} for ADO. Decoded
-    // creds drive the Basic-Auth header on the synthetic request.
-    let creds: { username: string; password: string };
-    try {
-      const parsed = JSON.parse(plainSecret) as unknown;
-      if (
-        typeof parsed !== "object" ||
-        parsed === null ||
-        typeof (parsed as { username?: unknown }).username !== "string" ||
-        typeof (parsed as { password?: unknown }).password !== "string"
-      ) {
-        throw new Error("ADO credential JSON missing username/password");
-      }
-      creds = parsed as { username: string; password: string };
-    } catch (err) {
-      console.error(
-        "[webhook-config] ADO credentials parse failed (sendTest)",
-        err
-      );
-      return {
-        ok: false,
-        statusCode: 0,
-        error: "Send-test failed: stored credentials are malformed",
-      };
-    }
-    const auth =
-      "Basic " +
-      Buffer.from(`${creds.username}:${creds.password}`, "utf8").toString(
-        "base64"
-      );
-    requestInit = {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        authorization: auth,
-      },
-      body: SYNTHETIC_ADO_PAYLOAD,
-    };
-  } else if (config.adapterType === "REDMINE") {
-    // redmine_webhook sends no signature; the URL token is the credential, so
-    // the synthetic request is posted unsigned.
-    requestInit = {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: SYNTHETIC_REDMINE_PAYLOAD,
-    };
-  } else if (config.adapterType === "MANTISBT") {
-    // A Mantis webhook plugin sends no signature; the URL token is the
-    // credential, so the synthetic request is posted unsigned.
-    requestInit = {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: SYNTHETIC_MANTISBT_PAYLOAD,
-    };
-  } else {
+  // Each synthetic body is a module-level const, so two clicks produce
+  // byte-identical bytes and the second one lands on the receiver's dedup.
+  const synthetic =
+    config.codeRepositoryConfigId != null
+      ? REPOSITORY_SYNTHETIC_REQUESTS[config.adapterType]
+      : ISSUE_SYNTHETIC_REQUESTS[config.adapterType];
+  if (!synthetic) {
     // SLACK / GENERIC_HMAC are OUTBOUND-only adapters; reaching this code
     // path indicates a corrupted INBOUND row. Defensive guard.
     return {
       ok: false,
       statusCode: 0,
       error: "Send-test not supported for this adapter type",
+    };
+  }
+  const requestInit = signSyntheticRequest(
+    config.adapterType,
+    plainSecret,
+    synthetic
+  );
+  if (!requestInit) {
+    return {
+      ok: false,
+      statusCode: 0,
+      error: "Send-test failed: stored credentials are malformed",
     };
   }
 
@@ -1820,4 +1903,219 @@ export async function getReplayBatchStatus(
     console.error("[webhook-config] getReplayBatchStatus failed", err);
     return { ok: false, error: "Failed to fetch batch status" };
   }
+}
+
+/**
+ * Create or rotate the inbound webhook bound to one Impact repository
+ * connection. Unlike the issue-tracker webhook (one per project and
+ * adapter), there is one per connection, so a project with several
+ * repositories gets several. The adapter follows the repository's provider;
+ * Azure DevOps needs the Basic-auth pair the Service Hook will send.
+ */
+export async function createOrRotateCodeRepositoryWebhook(input: {
+  projectId: number;
+  codeRepositoryConfigId: number;
+  secretInput?: AdapterSecretInput;
+  /** Events to handle on create; a rotation keeps the existing ones. */
+  subscribedEvents?: string[];
+  /** Branch pushes compare against on create; empty = connection branch. */
+  baseBranch?: string | null;
+}): Promise<CreateOrRotateResult> {
+  const { projectId, codeRepositoryConfigId, secretInput } = input;
+  const subscribedEvents = filterCodeEvents(
+    input.subscribedEvents ?? [...CODE_EVENT_DEFAULTS]
+  );
+  const baseBranch = normalizeBranch(input.baseBranch);
+  const session = await getServerAuthSession();
+  if (!session?.user) {
+    return { success: false, error: "Unauthorized" };
+  }
+  return runWithAuditContext(
+    {
+      userId: session.user.id,
+      userName: session.user.name ?? undefined,
+      userEmail: session.user.email ?? undefined,
+    },
+    async () => {
+      let authorized: boolean;
+      try {
+        authorized = await canManageWebhookConfig(session, projectId);
+      } catch (err) {
+        console.error("[webhook-config] auth check failed", err);
+        return {
+          success: false,
+          error: "Failed to save webhook configuration",
+        };
+      }
+      if (!authorized) {
+        return { success: false, error: "Forbidden" };
+      }
+
+      // The connection must be this project's Impact connection; its
+      // provider decides which adapter verifies the deliveries.
+      const connection = await baseDb.projectCodeRepositoryConfig.findFirst({
+        where: { id: codeRepositoryConfigId, projectId, purpose: "IMPACT" },
+        select: { id: true, repository: { select: { provider: true } } },
+      });
+      const adapterType = inboundAdapterForCodeRepository(
+        connection?.repository.provider
+      );
+      if (!connection || !adapterType) {
+        return {
+          success: false,
+          error: "Failed to save webhook configuration",
+        };
+      }
+
+      const minted = mintInboundSecret(
+        adapterType,
+        secretInput,
+        `projectId:${projectId}`
+      );
+      if (!minted) {
+        return {
+          success: false,
+          error: "Failed to save webhook configuration",
+        };
+      }
+      const token = generateToken();
+      let encryptedSecret: string;
+      try {
+        encryptedSecret = await encrypt(minted.plaintext);
+      } catch (err) {
+        console.error("[webhook-config] encrypt failed", err);
+        return {
+          success: false,
+          error: "Failed to save webhook configuration",
+        };
+      }
+      const origin = process.env.NEXTAUTH_URL ?? "";
+      const url = `${origin}/api/webhooks/${token}`;
+
+      try {
+        const existing = await baseDb.webhookConfig.findFirst({
+          where: { codeRepositoryConfigId, direction: "INBOUND" },
+          select: { id: true },
+        });
+        let configId: string;
+        if (existing) {
+          // Rotation overwrites — the old token is invalid at once.
+          const updated = await baseDb.webhookConfig.update({
+            where: { id: existing.id },
+            data: {
+              token,
+              secret: encryptedSecret,
+              adapterType,
+              isActive: true,
+            },
+            select: { id: true },
+          });
+          configId = updated.id;
+        } else {
+          const created = await baseDb.webhookConfig.create({
+            data: {
+              projectId,
+              adapterType,
+              direction: "INBOUND",
+              token,
+              secret: encryptedSecret,
+              isActive: true,
+              codeRepositoryConfigId,
+              subscribedEvents,
+              baseBranch,
+            },
+            select: { id: true },
+          });
+          configId = created.id;
+        }
+        return {
+          success: true,
+          configId,
+          url,
+          ...(minted.reveal ? { secret: minted.plaintext } : {}),
+        };
+      } catch (err) {
+        console.error(
+          "[webhook-config] code repository webhook save failed",
+          err
+        );
+        return {
+          success: false,
+          error: "Failed to save webhook configuration",
+        };
+      }
+    }
+  );
+}
+
+function filterCodeEvents(events: string[]): string[] {
+  return events.filter((event) =>
+    (CODE_REPOSITORY_WEBHOOK_EVENTS as readonly string[]).includes(event)
+  );
+}
+
+function normalizeBranch(branch: string | null | undefined): string | null {
+  const trimmed = branch?.trim() ?? "";
+  return trimmed.length > 0 ? trimmed.slice(0, 255) : null;
+}
+
+/**
+ * Change which events a repository webhook handles and which branch its
+ * pushes compare against. A field left out stays as it is.
+ */
+export async function updateCodeRepositoryWebhookEvents(input: {
+  projectId: number;
+  webhookConfigId: string;
+  subscribedEvents?: string[];
+  baseBranch?: string | null;
+}): Promise<{ success: boolean; error?: string }> {
+  const { projectId, webhookConfigId } = input;
+  const data: { subscribedEvents?: string[]; baseBranch?: string | null } = {};
+  if (input.subscribedEvents) {
+    data.subscribedEvents = filterCodeEvents(input.subscribedEvents);
+  }
+  if ("baseBranch" in input) {
+    data.baseBranch = normalizeBranch(input.baseBranch);
+  }
+  const session = await getServerAuthSession();
+  if (!session?.user) {
+    return { success: false, error: "Unauthorized" };
+  }
+  return runWithAuditContext(
+    {
+      userId: session.user.id,
+      userName: session.user.name ?? undefined,
+      userEmail: session.user.email ?? undefined,
+    },
+    async () => {
+      let authorized: boolean;
+      try {
+        authorized = await canManageWebhookConfig(session, projectId);
+      } catch (err) {
+        console.error("[webhook-config] auth check failed", err);
+        return { success: false, error: "Failed to update webhook" };
+      }
+      if (!authorized) {
+        return { success: false, error: "Forbidden" };
+      }
+      try {
+        const updated = await baseDb.webhookConfig.updateMany({
+          where: {
+            id: webhookConfigId,
+            projectId,
+            direction: "INBOUND",
+            codeRepositoryConfigId: { not: null },
+          },
+          data,
+        });
+        if (updated.count === 0) {
+          return { success: false, error: "Webhook not found" };
+        }
+        return { success: true };
+      } catch (err) {
+        console.error("[webhook-config] event update failed", err);
+        return { success: false, error: "Failed to update webhook" };
+      }
+    }
+  );
 }

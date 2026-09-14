@@ -22,24 +22,26 @@ Both kinds share the same activity panel, health badge, and **Send Test** button
 
 ## Inbound Webhooks
 
-### Prerequisite: an active Issue Integration
+An inbound webhook lets an external system push events into TestPlanIt. Two kinds of system can send them:
 
-Inbound webhooks are 1:1 with the project's active issue integration. The **Add** button is disabled when the project has no integration assigned, or when its provider does not support inbound webhooks (for example, the **Simple URL** integration is link-only and has no webhook surface).
+- **Issue tracker** — the project's active [Issue Integration](./integrations.md) sends issue updates that keep linked issues in sync.
+- **Code repository** — a repository connected under **Project Settings → Impact Analysis** sends pull request and push events that start an [Impact Analysis](impact.md) and compose a test run. See [Repository Webhooks](#repository-webhooks).
 
-When no integration is configured, the empty state reads "An Issue Integration is required..." and links to the project's **Issue Integrations** settings. Once an integration is assigned, the empty state changes to "Add one to receive issue updates from your assigned Issue Integration."
+Both kinds are added with the same **Add inbound webhook** button on the **Inbound** tab and listed together beneath it, one card per webhook.
 
 ### Adding an inbound webhook
 
 1. Navigate to **Project Settings** → **Webhooks**.
-2. Click **Add Webhook** in the Inbound section.
-3. For Jira, GitHub, GitLab, and Gitea/Forgejo/Gogs, the webhook is created immediately — TestPlanIt mints a random HMAC secret on the server.
-4. For Azure DevOps, a credentials form appears. Type the username and password (typically a Personal Access Token used as the password) that the ADO Service Hook will send via Basic authentication.
-5. For Redmine and MantisBT, the webhook is created immediately with **no secret** — their webhook plugins cannot sign requests, so the unguessable webhook URL itself is the credential. Treat the URL as a secret and rotate it (delete + recreate) if it leaks.
-6. After creation, the webhook URL (and, for the HMAC providers, the secret) is revealed once. Copy it before dismissing the panel — it is not shown again.
+2. Click **Add inbound webhook**. A three-step wizard opens.
+3. **Source** — choose **Issue tracker** or **Code repository**. An option that cannot be used yet says why: the project has no issue integration (or its provider has no webhook surface, such as **Simple URL**), the issue-tracker webhook already exists, no repository is connected for Impact Analysis, or every connected repository already has a webhook.
+4. **Configure** — for an issue tracker, the wizard names the provider the webhook will verify. For a repository, choose the repository (when several are connected), optionally set the base branch pushes compare against, and switch the **Pull requests**, **Pushes** and **Pushes to other branches** events on or off. Azure DevOps, for either source, asks for the username and password (typically a Personal Access Token as the password) that the Service Hook will send via Basic authentication. Click **Create webhook**.
+5. **Connect** — the webhook URL and, for providers that sign requests, the secret are shown once, together with setup steps for the provider. Copy them before clicking **Done**; they are not shown again.
+
+For Jira, GitHub, GitLab, Gitea/Forgejo/Gogs and Bitbucket, TestPlanIt mints a random HMAC secret on the server. Redmine and MantisBT webhooks have **no secret** — their webhook plugins cannot sign requests, so the unguessable webhook URL itself is the credential. Treat the URL as a secret and rotate it (delete + recreate) if it leaks.
 
 ### Configuring the external tracker
 
-The reveal panel includes per-provider setup steps. The general flow is:
+The Connect step includes per-provider setup steps. The general flow is:
 
 - **Jira** — In your Jira project's webhook settings, paste the URL, paste the secret as the HMAC signing secret, and subscribe the webhook to issue-created and issue-updated events.
 - **GitHub** — In your repository's **Settings** → **Webhooks** page, paste the URL, paste the secret, set Content type to `application/json`, and subscribe to **Issues** events.
@@ -49,9 +51,9 @@ The reveal panel includes per-provider setup steps. The general flow is:
 - **Redmine** — Redmine has no built-in webhooks, so install the [`redmine_webhook`](https://github.com/suer/redmine_webhook) plugin and enable the **Webhooks** module on the project. Then under **Project → Settings → WebHook**, paste the URL. Requests are unsigned, so the URL is the credential — no secret is configured on either side.
 - **MantisBT** — MantisBT has no built-in webhooks, so install and enable a MantisBT webhook plugin on the server. Configure it to fire on issue-created and issue-updated events and paste the URL as the target. Requests are unsigned, so the URL is the credential — no secret is configured on either side.
 
-### One webhook per project
+### One issue-tracker webhook per project
 
-A project can have at most one inbound webhook, and that webhook is locked to the same provider as the project's active integration. This guarantees the receiver and the integration's adapter agree on payload shape and authentication.
+A project can have at most one issue-tracker webhook, and that webhook is locked to the same provider as the project's active integration. This guarantees the receiver and the integration's adapter agree on payload shape and authentication.
 
 When the project's integration is switched to a different provider, or removed entirely, the inbound webhook is removed automatically. The confirmation dialog on the **Issue Integrations** page surfaces an extra bullet warning of this whenever an inbound webhook exists, so administrators see the consequence before confirming. After the change, configure a fresh inbound webhook for the new provider if you still want event-driven sync.
 
@@ -78,6 +80,38 @@ Version and sprint events are **not** included by default when you subscribe a J
 :::note
 The 15-second freshness gate and per-milestone lock that already govern manual and page-load sync also apply to webhook-triggered refreshes, so a burst of version/sprint events during a busy sprint boundary can't overwhelm the sync worker.
 :::
+
+## Repository Webhooks
+
+A second kind of inbound webhook comes from the application's **code repositories** rather than from an issue tracker. When a project has [Impact Analysis](impact.md) enabled, each repository connected under **Project Settings → Impact Analysis** can send pull request and push events to TestPlanIt, and each event starts an analysis whose affected tests become a new test run.
+
+### Adding a repository webhook
+
+1. Navigate to **Project Settings** → **Webhooks**, **Inbound** tab, and click **Add inbound webhook**.
+2. Choose **Code repository** as the source. A project with several repositories gets one webhook per connection; the wizard lists the connections that do not have one yet.
+3. Pick the repository, optionally set the **base branch**, switch the **Pull requests**, **Pushes** and **Pushes to other branches** events on or off, and click **Create webhook**. GitHub, GitLab, Gitea and Bitbucket webhooks get a server-minted secret; Azure DevOps asks for the username and password the Service Hook will send.
+4. Copy the URL (and secret) from the Connect step; they are shown once. The step names the events to enable on the provider side.
+
+### What each event does
+
+- **Pull requests** — when a pull request is **opened** (or reopened), TestPlanIt compares the merge base of its target branch with the pull request head, runs the analysis, and composes a test run named after the pull request (`PR #12: Fix checkout`) holding every case in the pinned and affected tiers. Later pushes to the pull request do not start another analysis; open the run's analysis and refine it, or reopen the pull request.
+- **Pushes** — a push to the **base branch** compares the push's `before` and `after` commits, runs the analysis, and composes a run named after the range (`main abc1234…def5678`). Branch creations and deletions are ignored.
+- **Pushes to other branches** (off by default) — a push to any other branch is compared against the base branch the way a pull request is: from the merge base with the base branch to the pushed head. Every push then produces an analysis and a run, so leave this off unless you want a run per push; with it off, a pull request's feature branch does not produce a second run alongside the pull request's own.
+
+The **base branch** is set on the webhook and defaults to the connection's branch under Impact Analysis (or the repository default when none is configured). Set it when the branch you integrate on differs from the one the connection tracks. Each event, and the base branch, can be changed later on the webhook's card. A run is only created when the analysis finds at least one affected test; otherwise the delivery says so. The run is created by the project's creator, in the project's default run state, with the event's link in its note, and the analysis is linked to the run as if a reviewer had accepted every affected test.
+
+### Deliveries
+
+Repository deliveries appear on the **Deliveries** tab like any other. The subject moves from the event (`pull_request:12`, `push:main`) to the analysis (`analysis:77`) and then to the run (`run:300`); a delivery that was received but not acted on carries the reason (`ignored:push_other_branch`, `ignored:event_disabled`, `run:no_affected_cases`, `duplicate`).
+
+### Provider setup
+
+- **GitHub / Gitea** — repository **Settings → Webhooks**: paste the URL and secret, content type `application/json`, events **Pull requests** and **Pushes**.
+- **GitLab** — project **Settings → Webhooks**: paste the URL, paste the secret as the secret token, triggers **Merge request events** and **Push events**.
+- **Bitbucket Cloud** — repository **Settings → Webhooks**: paste the URL and secret, triggers **Pull request created** and **Repository push**.
+- **Azure DevOps** — Service Hooks of type **Web Hooks** for **Pull request created** and **Code pushed**, with the username and password typed into TestPlanIt as Basic authentication.
+
+Repository webhooks are independent of the issue-tracker webhook above: changing or removing the project's issue integration leaves them in place, and disconnecting the repository under Impact Analysis removes its webhook.
 
 ## Outbound Webhooks
 
@@ -147,7 +181,7 @@ The values render as human-friendly distances ("3 minutes ago"). "Never" indicat
 
 The **Send Test** button on each webhook card fires a synthetic event so you can verify the wiring end-to-end. The synthetic payload is byte-identical across clicks, so the second click of a working test reliably hits the receiver's deduplication path. Use this immediately after creating or rotating a webhook to confirm the URL and secret are configured correctly.
 
-For inbound webhooks, the synthetic event uses sentinel identifiers an external tracker cannot legitimately produce, so the receiver short-circuits without affecting any real issue.
+For inbound webhooks, the synthetic event uses sentinel identifiers an external tracker cannot legitimately produce, so the receiver short-circuits without affecting any real issue. An issue-tracker webhook receives a synthetic issue update; a repository webhook receives a synthetic pull request (number 0), which is verified and recorded as `synthetic` on the Deliveries tab without starting an analysis.
 
 ## Deliveries
 

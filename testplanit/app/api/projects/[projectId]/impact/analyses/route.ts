@@ -7,16 +7,10 @@ import { updateAuditContext } from "~/lib/auditContext";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { getImpactAnalysisQueue } from "~/lib/queues";
 import {
-  RefNotFoundError,
-  resolveRefToSha,
-} from "~/lib/services/impact/compareService";
-import { impactConfig } from "~/lib/services/impact/config";
-import { impactJobId } from "~/lib/services/impact/jobKeys";
-import {
   loadRepoConfigForUser,
   resolveImpactConfigId,
 } from "~/lib/services/impact/repoAccess";
-import type { ImpactAnalysisJobData } from "~/lib/services/impact/types";
+import { startImpactAnalysis } from "~/lib/services/impact/startAnalysis";
 import { isAccessPolicyError } from "~/lib/utils/errors";
 import { authOptions } from "~/server/auth";
 
@@ -156,26 +150,6 @@ export const POST = withAuditContext(
         );
       }
 
-      let baseSha: string;
-      let headSha: string;
-      try {
-        [baseSha, headSha] = await Promise.all([
-          resolveRefToSha(loaded.adapter, base),
-          resolveRefToSha(loaded.adapter, head),
-        ]);
-      } catch (error) {
-        if (error instanceof RefNotFoundError) {
-          return NextResponse.json({ error: error.message }, { status: 404 });
-        }
-        throw error;
-      }
-      if (baseSha === headSha) {
-        return NextResponse.json(
-          { error: "Base and head resolve to the same commit" },
-          { status: 400 }
-        );
-      }
-
       const aiAvailable = Boolean(
         await db.projectLlmIntegration.findFirst({
           where: {
@@ -187,97 +161,48 @@ export const POST = withAuditContext(
         })
       );
 
-      if (!force) {
-        const reusable = await db.impactAnalysis.findFirst({
-          where: {
-            configId,
-            baseSha,
-            headSha,
-            status: "COMPLETED",
-            isDeleted: false,
-            createdAt: {
-              gte: new Date(Date.now() - impactConfig.reuseHours * 3600_000),
-            },
-          },
-          orderBy: { createdAt: "desc" },
-          select: { id: true, jobId: true },
-        });
-        if (reusable) {
-          return NextResponse.json(
-            {
-              analysisId: reusable.id,
-              jobId: reusable.jobId,
-              reused: true,
-              aiAvailable,
-            },
-            { status: 200 }
-          );
-        }
-      }
-
-      const created = await db.impactAnalysis.create({
-        data: {
+      const started = await startImpactAnalysis(
+        db,
+        loaded,
+        getImpactAnalysisQueue(),
+        {
           projectId,
-          configId,
-          baseSha,
-          headSha,
-          baseRef: base === baseSha ? null : base,
-          headRef: head === headSha ? null : head,
-          notes: notes ?? null,
+          base,
+          head,
           createdById: session.user.id,
-        },
-        select: { id: true },
-      });
-
-      const queue = getImpactAnalysisQueue();
-      if (!queue) {
-        await db.impactAnalysis.update({
-          where: { id: created.id },
-          data: {
-            status: "FAILED",
-            error: "Background job queue is not available",
-          },
-        });
+          notes,
+          excludeCaseIds,
+          force,
+          tenantId: getCurrentTenantId(),
+        }
+      );
+      if (!started.ok) {
+        const status =
+          started.code === "ref_not_found"
+            ? 404
+            : started.code === "same_commit"
+              ? 400
+              : 503;
+        return NextResponse.json({ error: started.message }, { status });
+      }
+      if (started.reused) {
         return NextResponse.json(
-          { error: "Background job queue is not available" },
-          { status: 503 }
+          {
+            analysisId: started.analysisId,
+            jobId: started.jobId,
+            reused: true,
+            aiAvailable,
+          },
+          { status: 200 }
         );
       }
-
-      const jobId = impactJobId(created.id);
-      const jobData: ImpactAnalysisJobData = {
-        analysisId: created.id,
-        projectId,
-        configId,
-        baseSha,
-        headSha,
-        userId: session.user.id,
-        notes,
-        excludeCaseIds,
-        tenantId: getCurrentTenantId(),
-      };
-      try {
-        await queue.add("analyze", jobData, { jobId });
-      } catch (error) {
-        await db.impactAnalysis.update({
-          where: { id: created.id },
-          data: {
-            status: "FAILED",
-            error: error instanceof Error ? error.message : "Enqueue failed",
-          },
-        });
-        return NextResponse.json(
-          { error: "Failed to enqueue analysis" },
-          { status: 503 }
-        );
-      }
-      await db.impactAnalysis.update({
-        where: { id: created.id },
-        data: { jobId },
-      });
-
       return NextResponse.json(
-        { analysisId: created.id, jobId, reused: false, aiAvailable },
+        {
+          analysisId: started.analysisId,
+          jobId: started.jobId,
+          reused: false,
+          aiAvailable,
+        },
         { status: 202 }
       );
     } catch (error) {

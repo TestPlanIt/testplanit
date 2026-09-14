@@ -12,6 +12,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const {
   mockFindManyWebhookConfig,
   mockFindFirstProjectIntegration,
+  mockFindManyConnections,
+  mockWizard,
   mockSetWebhookActive,
   mockCreateOrRotateInbound,
   mockDeleteInbound,
@@ -22,6 +24,8 @@ const {
 } = vi.hoisted(() => ({
   mockFindManyWebhookConfig: vi.fn(),
   mockFindFirstProjectIntegration: vi.fn(),
+  mockFindManyConnections: vi.fn(),
+  mockWizard: vi.fn(),
   mockSetWebhookActive: vi.fn(),
   mockCreateOrRotateInbound: vi.fn(),
   mockDeleteInbound: vi.fn(),
@@ -40,7 +44,27 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
       useFindFirst: (...args: any[]) =>
         mockFindFirstProjectIntegration(...args),
     },
+    projectCodeRepositoryConfig: {
+      useFindMany: (...args: any[]) => mockFindManyConnections(...args),
+    },
   }),
+}));
+
+// The wizard has its own suite; here it is a probe that records its props
+// and lets a test fire `onCreated`.
+vi.mock("./inbound-webhook-wizard", () => ({
+  InboundWebhookWizard: (props: any) => {
+    mockWizard(props);
+    return props.open ? (
+      <div data-testid="webhook-inbound-wizard">
+        <button
+          type="button"
+          data-testid="wizard-probe-created"
+          onClick={() => props.onCreated()}
+        />
+      </div>
+    ) : null;
+  },
 }));
 
 // `~/lib/navigation` wraps `next-intl`'s `createNavigation` which probes
@@ -260,6 +284,13 @@ vi.mock("@/components/ui/tooltip", () => ({
   ),
 }));
 
+vi.mock("@/components/CodeRepositoryName", () => ({
+  CodeRepositoryName: ({ name }: any) => <span>{name}</span>,
+}));
+vi.mock("@/components/DateFormatter", () => ({
+  DateFormatter: ({ date }: any) => <span>{String(date)}</span>,
+}));
+
 import { WebhookConfigForm } from "./webhook-config-form";
 
 // ─── Fixtures ───────────────────────────────────────────────────────────
@@ -357,7 +388,21 @@ const adoConfig: ConfigFixture = {
   updatedAt: new Date("2026-04-26T00:00:00Z"),
 };
 
-function setConfigs(configs: ConfigFixture[]) {
+const repositoryConfig = {
+  ...githubConfig,
+  id: "cfg-repo",
+  token: "whk_" + "d".repeat(64),
+  subscribedEvents: ["code:pull_request", "code:push"],
+  baseBranch: null,
+  codeRepositoryConfigId: 9,
+  codeRepositoryConfig: {
+    id: 9,
+    branch: "main",
+    repository: { id: 3, name: "acme/app", provider: "GITHUB" },
+  },
+};
+
+function setConfigs(configs: Array<ConfigFixture | typeof repositoryConfig>) {
   mockFindManyWebhookConfig.mockReturnValue({
     data: configs,
     isLoading: false,
@@ -390,45 +435,112 @@ describe("WebhookConfigForm (multi-adapter)", () => {
     });
     setConfigs([]);
     setActiveIntegrationProvider("JIRA");
+    mockFindManyConnections.mockReturnValue({ data: [], isLoading: false });
   });
 
   // ─── Empty state + add-button visibility ─────────────────────────────
 
-  it("Test 1: renders empty state with inboundAddButton when no configs exist", () => {
+  it("Test 1: renders the empty state with one Add button and an inline add link", () => {
     setConfigs([]);
     render(<WebhookConfigForm projectId={42} />);
     expect(
       screen.getByTestId("webhook-inbound-add-button")
     ).toBeInTheDocument();
-    // beforeEach sets the active integration to JIRA, so the
-    // "with integration" empty-state variant renders.
-    expect(screen.getByText("inboundEmptyWithIntegration")).toBeInTheDocument();
-    // The "Add one" inline link in the empty state must be present
-    // and trigger the same flow as the Add button.
+    expect(screen.getByText("inboundEmptyState")).toBeInTheDocument();
     expect(
       screen.getByTestId("webhook-inbound-empty-add-link")
     ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("webhook-inbound-wizard")
+    ).not.toBeInTheDocument();
   });
 
-  it("Test 2: add-button enabled when integration's adapter has no config", () => {
-    // 1:1 gating: button is enabled iff the project's active integration
-    // adapter is not yet configured. JIRA integration + zero configs =
-    // enabled.
-    setConfigs([]);
+  it("Test 2: the Add button opens the wizard with the integration adapter and the repository connections", () => {
+    setConfigs([jiraConfig]);
     setActiveIntegrationProvider("JIRA");
+    mockFindManyConnections.mockReturnValue({
+      data: [
+        {
+          id: 9,
+          branch: "main",
+          repository: { id: 3, name: "acme/app", provider: "GITHUB" },
+        },
+        {
+          id: 10,
+          branch: null,
+          repository: { id: 4, name: "acme/svn", provider: "SVN" },
+        },
+      ],
+      isLoading: false,
+    });
+    render(<WebhookConfigForm projectId={42} />);
+    fireEvent.click(screen.getByTestId("webhook-inbound-add-button"));
+    expect(screen.getByTestId("webhook-inbound-wizard")).toBeInTheDocument();
+    const props = mockWizard.mock.calls.at(-1)![0];
+    expect(props).toMatchObject({
+      projectId: 42,
+      open: true,
+      issueAdapter: "JIRA",
+      issueConfigured: true,
+      repositories: [
+        {
+          id: 9,
+          name: "acme/app",
+          provider: "GITHUB",
+          branch: "main",
+          adapterType: "GITHUB",
+          configured: false,
+        },
+        {
+          id: 10,
+          name: "acme/svn",
+          adapterType: null,
+          configured: false,
+        },
+      ],
+    });
+  });
+
+  it("Test 3: the Add button stays enabled without an integration; the wizard explains what is missing", () => {
+    setConfigs([]);
+    setActiveIntegrationProvider(null);
     render(<WebhookConfigForm projectId={42} />);
     const addBtn = screen.getByTestId("webhook-inbound-add-button");
     expect(addBtn).not.toBeDisabled();
+    fireEvent.click(addBtn);
+    expect(mockWizard.mock.calls.at(-1)![0]).toMatchObject({
+      issueAdapter: null,
+      issueConfigured: false,
+    });
   });
 
-  it("Test 3: add-button is disabled when integration's adapter is already configured", () => {
-    // 1:1 gating: project has JIRA integration AND a Jira inbound config —
-    // there's nothing more to add.
-    setConfigs([jiraConfig]);
-    setActiveIntegrationProvider("JIRA");
+  it("Test 3a: a repository-bound webhook renders as a repository card with its event switches", () => {
+    setConfigs([jiraConfig, repositoryConfig]);
+    mockFindManyConnections.mockReturnValue({
+      data: [
+        {
+          id: 9,
+          branch: "main",
+          repository: { id: 3, name: "acme/app", provider: "GITHUB" },
+        },
+      ],
+      isLoading: false,
+    });
     render(<WebhookConfigForm projectId={42} />);
-    const addBtn = screen.getByTestId("webhook-inbound-add-button");
-    expect(addBtn).toBeDisabled();
+    expect(screen.getByTestId("webhook-inbound-card-jira")).toBeInTheDocument();
+    const repoCard = screen.getByTestId("webhook-inbound-card-repository-9");
+    expect(repoCard).toHaveTextContent("acme/app");
+    expect(
+      within(repoCard).getByTestId("webhook-repository-event-pull-request")
+    ).toBeChecked();
+    expect(
+      screen.queryByTestId("webhook-inbound-card-github")
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("webhook-inbound-add-button"));
+    expect(mockWizard.mock.calls.at(-1)![0].repositories[0]).toMatchObject({
+      id: 9,
+      configured: true,
+    });
   });
 
   // ─── Per-card render + per-card root testid scheme ───────────────────
@@ -474,167 +586,12 @@ describe("WebhookConfigForm (multi-adapter)", () => {
     expect(screen.getByTestId("webhook-inbound-card-ado")).toBeInTheDocument();
   });
 
-  // ─── Adapter chooser (dormant) ───────────────────────────────────────
-  // The chooser surface (`webhook-inbound-chooser-*` testids) is preserved
-  // in source for future non-issue-tracker inbound adapters. Today the
-  // Add button skips the chooser entirely and routes to whichever adapter
-  // matches the project's active issue integration. Tests 7 and 8
-  // (chooser visibility + per-adapter disable state) are retired since
-  // those interactions are no longer reachable from the product UI.
-
-  it("Test 9: ADO project lands directly on the credentials form (chooser skipped)", () => {
-    setConfigs([]);
-    setActiveIntegrationProvider("AZURE_DEVOPS");
-    render(<WebhookConfigForm projectId={42} />);
-    fireEvent.click(screen.getByTestId("webhook-inbound-add-button"));
-    expect(
-      screen.getByTestId("webhook-inbound-ado-username-input")
-    ).toBeInTheDocument();
-    expect(
-      screen.getByTestId("webhook-inbound-ado-password-input")
-    ).toBeInTheDocument();
-  });
-
-  it("Test 10: ADO scope hint is visible on the ADO create form", () => {
-    setConfigs([]);
-    setActiveIntegrationProvider("AZURE_DEVOPS");
-    render(<WebhookConfigForm projectId={42} />);
-    fireEvent.click(screen.getByTestId("webhook-inbound-add-button"));
-    expect(screen.getByText("inboundAdoScopeHint")).toBeInTheDocument();
-  });
-
   it("Test 11: GitHub scope hint is visible on the configured GitHub card", () => {
     // Scope hint moved from the (now inline) create flow to the configured
     // card so admins see the scoping rules after the webhook exists.
     setConfigs([githubConfig]);
     render(<WebhookConfigForm projectId={42} />);
     expect(screen.getByText("inboundGithubScopeHint")).toBeInTheDocument();
-  });
-
-  // ─── Create flow per adapter ─────────────────────────────────────────
-
-  it("Test 12: Jira-integrated project — Add button creates inline (chooser skipped)", async () => {
-    setConfigs([]);
-    setActiveIntegrationProvider("JIRA");
-    mockCreateOrRotateInbound.mockResolvedValue({
-      success: true,
-      configId: "cfg-jira-new",
-      url: "https://app.example.test/api/webhooks/whk_new",
-      secret: "minted-secret",
-    });
-    render(<WebhookConfigForm projectId={42} />);
-    fireEvent.click(screen.getByTestId("webhook-inbound-add-button"));
-    await waitFor(() => {
-      expect(mockCreateOrRotateInbound).toHaveBeenCalledWith({
-        projectId: 42,
-        adapterType: "JIRA",
-      });
-    });
-  });
-
-  it("Test 13: GitHub-integrated project — Add button creates inline (chooser skipped)", async () => {
-    setConfigs([]);
-    setActiveIntegrationProvider("GITHUB");
-    mockCreateOrRotateInbound.mockResolvedValue({
-      success: true,
-      configId: "cfg-github-new",
-      url: "https://app.example.test/api/webhooks/whk_gh_new",
-      secret: "minted-github-secret",
-    });
-    render(<WebhookConfigForm projectId={42} />);
-    fireEvent.click(screen.getByTestId("webhook-inbound-add-button"));
-    await waitFor(() => {
-      expect(mockCreateOrRotateInbound).toHaveBeenCalledWith({
-        projectId: 42,
-        adapterType: "GITHUB",
-      });
-    });
-  });
-
-  it("Test 14a: ADO create flow reveals URL with no secret field when server returns {url, configId} without secret", async () => {
-    setConfigs([]);
-    setActiveIntegrationProvider("AZURE_DEVOPS");
-    // ADO server action returns NO `secret` field — admin already typed
-    // the credentials, so there's nothing to reveal. The reveal box must
-    // still render so the admin can copy the FULL URL once before reload.
-    mockCreateOrRotateInbound.mockResolvedValue({
-      success: true,
-      // Match adoConfig.id so the post-create refetch surfaces a card
-      // whose id matches `revealed.configId` — the reveal box mounts
-      // inside the matching card, not as a free-floating element.
-      configId: "cfg-ado",
-      url: "https://app.example.test/api/webhooks/whk_ado_full_token_123",
-    });
-    render(<WebhookConfigForm projectId={42} />);
-    fireEvent.click(screen.getByTestId("webhook-inbound-add-button"));
-
-    fireEvent.change(screen.getByTestId("webhook-inbound-ado-username-input"), {
-      target: { value: "tpi" },
-    });
-    fireEvent.change(screen.getByTestId("webhook-inbound-ado-password-input"), {
-      target: { value: "s3cret" },
-    });
-
-    // Refetch the configs list AS IF the create succeeded — the UI keys
-    // its revealed-box rendering off the configured card matching by
-    // configId, so the card must exist post-create for the box to show.
-    setConfigs([adoConfig]);
-    fireEvent.click(screen.getByTestId("webhook-create-button"));
-
-    await waitFor(() => {
-      // Reveal box must be present
-      expect(
-        screen.getByTestId("webhook-inbound-revealed-box")
-      ).toBeInTheDocument();
-    });
-
-    // The full URL is shown in webhook-url
-    const url = screen.getByTestId("webhook-url");
-    expect(url.textContent).toContain(
-      "https://app.example.test/api/webhooks/whk_ado_full_token_123"
-    );
-
-    // The webhook-secret field MUST NOT render — server returned no secret.
-    expect(screen.queryByTestId("webhook-secret")).not.toBeInTheDocument();
-
-    // Done button still renders so admin can dismiss the reveal box.
-    expect(
-      screen.getByTestId("webhook-reveal-done-button")
-    ).toBeInTheDocument();
-  });
-
-  it("Test 14: ADO create flow JSON-encodes credentials via createOrRotateInboundWebhook", async () => {
-    setConfigs([]);
-    setActiveIntegrationProvider("AZURE_DEVOPS");
-    mockCreateOrRotateInbound.mockResolvedValue({
-      success: true,
-      configId: "cfg-ado-new",
-      url: "https://app.example.test/api/webhooks/whk_ado_new",
-    });
-    render(<WebhookConfigForm projectId={42} />);
-    fireEvent.click(screen.getByTestId("webhook-inbound-add-button"));
-
-    const userInput = screen.getByTestId(
-      "webhook-inbound-ado-username-input"
-    ) as HTMLInputElement;
-    const passInput = screen.getByTestId(
-      "webhook-inbound-ado-password-input"
-    ) as HTMLInputElement;
-    fireEvent.change(userInput, { target: { value: "tpi" } });
-    fireEvent.change(passInput, { target: { value: "s3cret" } });
-    fireEvent.click(screen.getByTestId("webhook-create-button"));
-
-    await waitFor(() => {
-      expect(mockCreateOrRotateInbound).toHaveBeenCalledWith({
-        projectId: 42,
-        adapterType: "AZURE_DEVOPS",
-        secretInput: {
-          kind: "AZURE_DEVOPS",
-          username: "tpi",
-          password: "s3cret",
-        },
-      });
-    });
   });
 
   // ─── Send-test ───────────────────────────────────────────────────────

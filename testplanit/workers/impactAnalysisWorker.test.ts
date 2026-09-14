@@ -194,6 +194,11 @@ vi.mock("../lib/services/impact/fileAtCommit", () => ({
   getFileAtCommit: (...args: any[]) => mockGetFileAtCommit(...args),
 }));
 
+const mockCreateRunFromAnalysis = vi.fn();
+vi.mock("../lib/services/impact/autoRun", () => ({
+  createRunFromAnalysis: (...args: any[]) => mockCreateRunFromAnalysis(...args),
+}));
+
 vi.mock("../lib/services/impact/persistence", () => ({
   markRunning: (...args: any[]) => mockMarkRunning(...args),
   saveDiff: (...args: any[]) => mockSaveDiff(...args),
@@ -523,6 +528,37 @@ describe("impactAnalysisWorker", () => {
       "scoring_history",
       "merging",
     ]);
+  });
+
+  it("composes the requested run after saving a webhook-started analysis and survives a run failure", async () => {
+    const { processor } = await loadWorker();
+    const autoRun = {
+      trigger: "pull_request",
+      label: "PR #12: Fix login",
+      url: "https://github.com/acme/app/pull/12",
+      deliveryId: "del-1",
+    };
+
+    await processor(makeJob({ data: { ...jobData, autoRun } }));
+    expect(mockCreateRunFromAnalysis).toHaveBeenCalledWith(
+      mockDb,
+      ANALYSIS_ID,
+      autoRun
+    );
+    expect(mockSaveResult.mock.invocationCallOrder[0]).toBeLessThan(
+      mockCreateRunFromAnalysis.mock.invocationCallOrder[0]
+    );
+
+    mockCreateRunFromAnalysis.mockRejectedValueOnce(new Error("no workflow"));
+    const out = await processor(makeJob({ data: { ...jobData, autoRun } }));
+    expect(out.status).toBe("complete");
+    expect(mockMarkFailed).not.toHaveBeenCalled();
+  });
+
+  it("does not compose a run for an analysis a user started", async () => {
+    const { processor } = await loadWorker();
+    await processor(makeJob());
+    expect(mockCreateRunFromAnalysis).not.toHaveBeenCalled();
   });
 
   it("selects a case whose FILE pin the diff touches at score 100 in the pinned tier", async () => {

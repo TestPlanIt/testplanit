@@ -37,6 +37,7 @@ import { toast } from "sonner";
 import { bulkReplayFailedDeliveries } from "~/app/actions/webhook-config";
 import { usePathname, useRouter } from "~/lib/navigation";
 
+import { adapterLabelKey } from "./inbound-adapters";
 import { WebhookDeliveryDrawer } from "./webhook-delivery-drawer";
 
 type DeliveryListItem = {
@@ -66,43 +67,6 @@ interface WebhookDeliveriesTabProps {
 }
 
 type StatusFilter = "all" | "failed" | "success";
-
-function adapterLabelKey(
-  adapterType: string
-):
-  | "inboundChooserJira"
-  | "inboundChooserGithub"
-  | "inboundChooserAdo"
-  | "inboundChooserGitlab"
-  | "inboundChooserGitea"
-  | "inboundChooserRedmine"
-  | "inboundChooserMantisbt"
-  | "adapterLabelSlack"
-  | "adapterLabelGenericHmac"
-  | null {
-  switch (adapterType) {
-    case "JIRA":
-      return "inboundChooserJira";
-    case "GITHUB":
-      return "inboundChooserGithub";
-    case "AZURE_DEVOPS":
-      return "inboundChooserAdo";
-    case "GITLAB":
-      return "inboundChooserGitlab";
-    case "GITEA":
-      return "inboundChooserGitea";
-    case "REDMINE":
-      return "inboundChooserRedmine";
-    case "MANTISBT":
-      return "inboundChooserMantisbt";
-    case "SLACK":
-      return "adapterLabelSlack";
-    case "GENERIC_HMAC":
-      return "adapterLabelGenericHmac";
-    default:
-      return null;
-  }
-}
 
 const EVENT_LABEL_KEYS: Record<string, string> = {
   // Outbound events

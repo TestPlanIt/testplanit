@@ -42,16 +42,19 @@ test.describe("Inbound webhook body cap (5 MB)", () => {
       // Provision a Jira config via the admin form. The body cap is route-
       // level so the choice of adapter is immaterial.
       await page.goto(`${baseURL}/projects/settings/${projectId}/webhooks`);
-      // 1:1 inbound model: Add skips the chooser and creates inline.
       await page.getByTestId("webhook-inbound-add-button").click();
-
-      // Scope to the JIRA card after creation.
-      const jiraCard = page.getByTestId("webhook-inbound-card-jira");
-      await expect(jiraCard).toBeVisible();
-      const urlText = await jiraCard.getByTestId("webhook-url").innerText();
+      const wizard = page.getByTestId("webhook-inbound-wizard");
+      await wizard.getByTestId("webhook-wizard-source-issues").click();
+      await wizard.getByTestId("webhook-wizard-next").click();
+      await wizard.getByTestId("webhook-create-button").click();
+      const revealed = wizard.getByTestId("webhook-inbound-revealed-box");
+      await expect(revealed).toBeVisible();
+      const urlText = await revealed.getByTestId("webhook-url").innerText();
       const tokenMatch = urlText.match(/\/api\/webhooks\/(whk_[0-9a-f]+)/);
       expect(tokenMatch).not.toBeNull();
       configToken = tokenMatch![1];
+      await wizard.getByTestId("webhook-reveal-done-button").click();
+      await expect(page.getByTestId("webhook-inbound-card-jira")).toBeVisible();
     });
 
     await test.step("Resolve the webhook config id from the database", async () => {

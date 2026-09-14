@@ -213,10 +213,8 @@ test.describe("Webhook admin surface — Spanish (es-ES) i18n key coverage (F-01
       // Inbound Add button label.
       const addInbound = page.getByTestId("webhook-inbound-add-button");
       await expect(addInbound).toContainText(es.inboundAddButton);
-      // The 1:1 inbound model gates Add on the project's active issue
-      // integration. With no integration assigned (i18n test scope is
-      // string coverage, not flow coverage) the button is disabled and
-      // clicking it has no effect; we don't drive a creation flow here.
+      // Add opens the inbound wizard; the i18n test scope is string
+      // coverage, not flow coverage, so we don't drive a creation here.
 
       // The DOM that just rendered must not carry missing-key markers.
       await assertNoMissingKeyMarkers(page);

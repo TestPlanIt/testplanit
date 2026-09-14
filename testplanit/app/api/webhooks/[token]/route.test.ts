@@ -31,6 +31,7 @@ const mocks = vi.hoisted(() => {
     adapter,
     applyInboundIssueUpdate: vi.fn(),
     applyInboundMilestoneEvent: vi.fn(),
+    applyInboundCodeChange: vi.fn(),
     decrypt: vi.fn(async (input: string) => input.replace(/^enc:/, "")),
   };
 });
@@ -49,6 +50,10 @@ vi.mock("~/lib/webhooks/services/applyInboundIssueUpdate", () => ({
 
 vi.mock("~/lib/webhooks/services/applyInboundMilestoneEvent", () => ({
   applyInboundMilestoneEvent: mocks.applyInboundMilestoneEvent,
+}));
+
+vi.mock("~/lib/webhooks/services/applyInboundCodeChange", () => ({
+  applyInboundCodeChange: mocks.applyInboundCodeChange,
 }));
 
 vi.mock("~/utils/encryption", () => ({
@@ -249,6 +254,52 @@ describe("POST /api/webhooks/[token]", () => {
       createHash("sha256").update(Buffer.from(body)).digest("hex")
     );
     expect(call.receivedAt).toBeInstanceOf(Date);
+  });
+
+  it("routes a repository-bound webhook to the code change service, never the issue services", async () => {
+    mocks.baseDb.webhookConfig.findUnique.mockResolvedValueOnce({
+      ...VALID_CONFIG,
+      adapterType: "GITHUB",
+      codeRepositoryConfigId: 9,
+      subscribedEvents: ["code:pull_request"],
+      baseBranch: "develop",
+    });
+    const payload = {
+      eventType: "pull_request",
+      action: "opened",
+      issueKey: "",
+      externalStatus: "",
+      synthetic: false,
+    };
+    mocks.adapter.verify.mockReturnValueOnce({
+      valid: true,
+      payload,
+    } satisfies VerifyResult);
+    mocks.applyInboundCodeChange.mockResolvedValueOnce({
+      outcome: "queued",
+      deliveryId: "del-code",
+      analysisId: 12,
+    });
+    const { req, params } = makeRequest('{"action":"opened"}', FULL_TOKEN);
+
+    const res = await POST(req, { params });
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true, outcome: "queued" });
+    expect(mocks.applyInboundCodeChange).toHaveBeenCalledTimes(1);
+    expect(mocks.applyInboundCodeChange.mock.calls[0]?.[0]).toMatchObject({
+      webhookConfigId: "cfg-id-1",
+      projectId: 42,
+      codeRepositoryConfigId: 9,
+      subscribedEvents: ["code:pull_request"],
+      baseBranch: "develop",
+      adapterType: "GITHUB",
+      eventType: "pull_request",
+      payload,
+      statusCode: 200,
+    });
+    expect(mocks.applyInboundIssueUpdate).not.toHaveBeenCalled();
+    expect(mocks.applyInboundMilestoneEvent).not.toHaveBeenCalled();
   });
 
   it("Test 7 — no-link outcome still returns 200", async () => {

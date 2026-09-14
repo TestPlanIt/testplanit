@@ -3766,6 +3766,7 @@ enum AdapterType {
     GITEA
     REDMINE
     MANTISBT
+    BITBUCKET
 
     @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')
@@ -3925,6 +3926,7 @@ model ProjectCodeRepositoryConfig {
     updatedAt             DateTime                    @updatedAt
     codePins              RepositoryCaseCodePin[]
     impactAnalyses        ImpactAnalysis[]
+    webhooks              WebhookConfig[]
 
     @@unique([projectId, purpose, repositoryId])
     @@index([repositoryId])
@@ -4168,6 +4170,11 @@ model ImpactAnalysis {
     pinnedCaseCount   Int                         @default(0)
     affectedCaseCount Int                         @default(0)
     result            Json?
+    // Set when a repository webhook started the analysis: what arrived and
+    // where it came from, for the run and the deliveries ledger.
+    trigger           String?                     // "pull_request" | "push"; null when started by hand
+    triggerLabel      String?                     // "PR #12: Fix checkout" / "main abc1234…def5678"
+    triggerUrl        String?
     testRunId         Int?
     testRun           TestRuns?                   @relation(fields: [testRunId], references: [id], onDelete: SetNull)
     cases             ImpactAnalysisCase[]
@@ -5592,25 +5599,32 @@ model IntegrationProject {
 }
 
 model WebhookConfig {
-    id                      String                @id @default(cuid())
+    id                      String                       @id @default(cuid())
     projectId               Int
-    project                 Projects              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    project                 Projects                     @relation(fields: [projectId], references: [id], onDelete: Cascade)
     adapterType             AdapterType
     direction               WebhookDirection
-    token                   String                @unique
+    token                   String                       @unique
     secret                  String
-    isActive                Boolean               @default(true)
-    subscribedEvents        String[]              @default([])
-    endpointHealth          EndpointHealth        @default(HEALTHY)
+    isActive                Boolean                      @default(true)
+    subscribedEvents        String[]                     @default([])
+    // Set on an inbound webhook that a code repository sends to: its pull
+    // request and push events start Impact analyses for that connection.
+    codeRepositoryConfigId  Int?
+    codeRepositoryConfig    ProjectCodeRepositoryConfig? @relation(fields: [codeRepositoryConfigId], references: [id], onDelete: Cascade)
+    // Branch a repository webhook compares pushes against; empty = the
+    // connection's branch.
+    baseBranch              String?
+    endpointHealth          EndpointHealth               @default(HEALTHY)
     url                     String?
     name                    String?
-    lastReceivedAt          DateTime?             @db.Timestamptz(6)
-    lastDispatchedAt        DateTime?             @db.Timestamptz(6)
-    lastSuccessAt           DateTime?             @db.Timestamptz(6)
-    lastFailureAt           DateTime?             @db.Timestamptz(6)
-    consecutiveFailureCount Int                   @default(0)
-    createdAt               DateTime              @default(now()) @db.Timestamptz(6)
-    updatedAt               DateTime              @updatedAt
+    lastReceivedAt          DateTime?                    @db.Timestamptz(6)
+    lastDispatchedAt        DateTime?                    @db.Timestamptz(6)
+    lastSuccessAt           DateTime?                    @db.Timestamptz(6)
+    lastFailureAt           DateTime?                    @db.Timestamptz(6)
+    consecutiveFailureCount Int                          @default(0)
+    createdAt               DateTime                     @default(now()) @db.Timestamptz(6)
+    updatedAt               DateTime                     @updatedAt
     deliveries              WebhookDelivery[]
     eventDedups             WebhookEventDedup[]
     secrets                 WebhookConfigSecret[]
@@ -5618,6 +5632,7 @@ model WebhookConfig {
     @@index([projectId, adapterType, direction])
     @@index([projectId])
     @@index([token])
+    @@index([codeRepositoryConfigId])
 
     @@deny('all', auth() == null)
 

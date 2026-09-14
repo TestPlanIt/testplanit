@@ -56,28 +56,34 @@ test.describe("GitHub inbound webhook — admin form + raw-POST coverage", () =>
       const form = page.getByTestId("webhook-config-form");
       await expect(form).toBeVisible();
 
-      // 1:1 inbound model: Add skips the chooser and creates inline
-      // against the project's active integration adapter (GITHUB).
+      // The wizard's issue-tracker source maps to the project's active
+      // integration adapter (GITHUB).
       await page.getByTestId("webhook-inbound-add-button").click();
-
-      // From here on, scope to the GitHub card.
-      await expect(githubCard).toBeVisible();
-      await expect(githubCard.getByTestId("webhook-url")).toBeVisible();
-      await expect(githubCard.getByTestId("webhook-secret")).toBeVisible();
+      const wizard = page.getByTestId("webhook-inbound-wizard");
+      await wizard.getByTestId("webhook-wizard-source-issues").click();
+      await wizard.getByTestId("webhook-wizard-next").click();
+      await wizard.getByTestId("webhook-create-button").click();
+      const revealed = wizard.getByTestId("webhook-inbound-revealed-box");
+      await expect(revealed).toBeVisible();
+      await expect(revealed.getByTestId("webhook-url")).toBeVisible();
+      await expect(revealed.getByTestId("webhook-secret")).toBeVisible();
     });
 
     await test.step("Capture the generated webhook URL token and plaintext secret", async () => {
-      // The just-created config briefly renders a revealed box inside the card
-      // showing the full URL + plaintext secret. Capture both for the raw-POST
-      // specs that follow in the same describe block.
-      const urlText = await githubCard.getByTestId("webhook-url").innerText();
+      // The wizard's last step shows the full URL + plaintext secret once.
+      // Capture both for the raw-POST specs that follow in the same
+      // describe block, then dismiss it to reach the configured card.
+      const revealed = page.getByTestId("webhook-inbound-revealed-box");
+      const urlText = await revealed.getByTestId("webhook-url").innerText();
       const tokenMatch = urlText.match(/\/api\/webhooks\/(whk_[0-9a-f]+)/);
       expect(tokenMatch).not.toBeNull();
       configToken = tokenMatch![1];
-      plainSecret = await githubCard.getByTestId("webhook-secret").innerText();
+      plainSecret = await revealed.getByTestId("webhook-secret").innerText();
       // generateSecret() returns randomBytes(48).toString("base64url") — 64
       // base64url chars (alphabet [A-Za-z0-9_-]).
       expect(plainSecret).toMatch(/^[A-Za-z0-9_-]{60,80}$/);
+      await page.getByTestId("webhook-reveal-done-button").click();
+      await expect(githubCard).toBeVisible();
     });
 
     await test.step("Send the self-test once and confirm a synthetic outcome", async () => {

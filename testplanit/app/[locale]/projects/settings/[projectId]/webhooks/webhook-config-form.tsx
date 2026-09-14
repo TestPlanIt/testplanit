@@ -21,9 +21,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import {
   Tooltip,
@@ -35,7 +32,6 @@ import { WebhookAdapterIcon } from "@/components/webhooks/webhook-adapter-icon";
 import { formatDistanceToNow } from "date-fns";
 import {
   AlertTriangle,
-  Asterisk,
   Check,
   CirclePlus,
   Copy,
@@ -47,11 +43,8 @@ import {
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
-
-import { dateFnsLocaleFor } from "~/lib/utils/dateFnsLocale";
 import { useState } from "react";
 import { toast } from "sonner";
-
 import {
   type SendTestWebhookResult,
   createOrRotateInboundWebhook,
@@ -60,46 +53,37 @@ import {
   sendTestWebhook,
   setWebhookActive,
 } from "~/app/actions/webhook-config";
-import { Link } from "~/lib/navigation";
+import { dateFnsLocaleFor } from "~/lib/utils/dateFnsLocale";
+import { inboundAdapterForCodeRepository } from "~/lib/webhooks/codeChangeEvents";
 import { redactWebhookUrl } from "~/lib/webhooks/redaction";
+import {
+  ISSUE_SCOPE_HINT,
+  ISSUE_SETUP_STEP_KEYS,
+  adapterSlug,
+  adapterTitleKey,
+  hasRotatableSecret,
+  healthBadgeVariant,
+  inboundAdapterForProvider,
+  type EndpointHealth,
+  type IssueInboundAdapterType,
+} from "./inbound-adapters";
+import {
+  InboundWebhookWizard,
+  type WizardRepository,
+} from "./inbound-webhook-wizard";
+import {
+  RepositoryWebhookCard,
+  type RepositoryWebhookRow,
+} from "./repository-webhook-card";
 
 interface WebhookConfigFormProps {
   projectId: number;
 }
 
-type InboundAdapterType =
-  | "JIRA"
-  | "GITHUB"
-  | "AZURE_DEVOPS"
-  | "GITLAB"
-  | "GITEA"
-  | "REDMINE"
-  | "MANTISBT";
-
-// Inbound webhooks today are 1:1 with the project's active issue integration:
-// the only inbound consumer is `applyInboundIssueUpdate`, and a project has
-// at most one active issue integration. Map the integration provider to the
-// matching inbound adapter; returns null when no supported inbound adapter
-// exists for the provider (e.g. SIMPLE_URL — link-only, no webhook surface).
-function inboundAdapterForProvider(
-  provider: string | null | undefined
-): InboundAdapterType | null {
-  if (provider === "JIRA") return "JIRA";
-  if (provider === "GITHUB") return "GITHUB";
-  if (provider === "AZURE_DEVOPS") return "AZURE_DEVOPS";
-  if (provider === "GITLAB") return "GITLAB";
-  if (provider === "GITEA") return "GITEA";
-  if (provider === "REDMINE") return "REDMINE";
-  if (provider === "MANTISBT") return "MANTISBT";
-  return null;
-}
-
-type EndpointHealth = "HEALTHY" | "DEGRADED" | "DISABLED";
-
 interface InboundConfig {
   id: string;
   projectId: number;
-  adapterType: InboundAdapterType;
+  adapterType: string;
   direction: string;
   token: string;
   isActive: boolean;
@@ -111,16 +95,20 @@ interface InboundConfig {
   lastFailureAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
+  subscribedEvents: string[];
+  baseBranch: string | null;
+  codeRepositoryConfigId: number | null;
+  codeRepositoryConfig: RepositoryWebhookRow["codeRepositoryConfig"] | null;
+}
+
+interface IssueConfig extends InboundConfig {
+  adapterType: IssueInboundAdapterType;
 }
 
 interface RevealedSecret {
   configId: string;
   url: string;
-  // ADO's create flow does NOT return a server-minted secret (admin typed
-  // the username + password themselves — D-09). The reveal box still
-  // renders so the admin can copy the FULL URL once before reload, but
-  // the secret field is suppressed when null. JIRA / GITHUB always carry
-  // a freshly minted plaintext secret here.
+  /** ADO rotations return no secret: the admin typed the credentials. */
   secret: string | null;
 }
 
@@ -131,113 +119,14 @@ interface TestResultDisplay {
   error?: string;
 }
 
-const ADAPTER_OPTIONS: ReadonlyArray<{
-  value: InboundAdapterType;
-  labelKey:
-    | "inboundChooserJira"
-    | "inboundChooserGithub"
-    | "inboundChooserAdo"
-    | "inboundChooserGitlab"
-    | "inboundChooserGitea"
-    | "inboundChooserRedmine"
-    | "inboundChooserMantisbt";
-  testid: string;
-}> = [
-  {
-    value: "JIRA",
-    labelKey: "inboundChooserJira",
-    testid: "webhook-inbound-chooser-jira",
-  },
-  {
-    value: "GITHUB",
-    labelKey: "inboundChooserGithub",
-    testid: "webhook-inbound-chooser-github",
-  },
-  {
-    value: "AZURE_DEVOPS",
-    labelKey: "inboundChooserAdo",
-    testid: "webhook-inbound-chooser-ado",
-  },
-  {
-    value: "GITLAB",
-    labelKey: "inboundChooserGitlab",
-    testid: "webhook-inbound-chooser-gitlab",
-  },
-  {
-    value: "GITEA",
-    labelKey: "inboundChooserGitea",
-    testid: "webhook-inbound-chooser-gitea",
-  },
-  {
-    value: "REDMINE",
-    labelKey: "inboundChooserRedmine",
-    testid: "webhook-inbound-chooser-redmine",
-  },
-  {
-    value: "MANTISBT",
-    labelKey: "inboundChooserMantisbt",
-    testid: "webhook-inbound-chooser-mantisbt",
-  },
-];
-
-function adapterSlug(
-  adapterType: InboundAdapterType
-): "jira" | "github" | "ado" | "gitlab" | "gitea" | "redmine" | "mantisbt" {
-  if (adapterType === "JIRA") return "jira";
-  if (adapterType === "GITHUB") return "github";
-  if (adapterType === "GITLAB") return "gitlab";
-  if (adapterType === "GITEA") return "gitea";
-  if (adapterType === "REDMINE") return "redmine";
-  if (adapterType === "MANTISBT") return "mantisbt";
-  return "ado";
-}
-
-function adapterTitleKey(
-  adapterType: InboundAdapterType
-):
-  | "inboundJiraTitle"
-  | "inboundGithubTitle"
-  | "inboundAdoTitle"
-  | "inboundGitlabTitle"
-  | "inboundGiteaTitle"
-  | "inboundRedmineTitle"
-  | "inboundMantisbtTitle" {
-  if (adapterType === "JIRA") return "inboundJiraTitle";
-  if (adapterType === "GITHUB") return "inboundGithubTitle";
-  if (adapterType === "GITLAB") return "inboundGitlabTitle";
-  if (adapterType === "GITEA") return "inboundGiteaTitle";
-  if (adapterType === "REDMINE") return "inboundRedmineTitle";
-  if (adapterType === "MANTISBT") return "inboundMantisbtTitle";
-  return "inboundAdoTitle";
-}
-
-// D-13: shadcn Badge variant per endpoint health.
-function healthBadgeVariant(
-  health: EndpointHealth
-): "default" | "secondary" | "destructive" {
-  if (health === "DEGRADED") return "secondary";
-  if (health === "DISABLED") return "destructive";
-  return "default";
-}
-
 /**
- * Project admin form for INBOUND webhook configs
+ * The Inbound tab: one Add button that opens the wizard, then one card per
+ * inbound webhook — the issue-tracker webhook (at most one, matching the
+ * project's active integration) and one per Impact repository connection.
  *
- * Multi-card layout: one Card per `WebhookConfig` row where direction is
- * INBOUND. Add-button opens an adapter chooser (Jira / GitHub / Azure DevOps);
- * the schema's `@@unique([projectId, adapterType, direction])` constraint
- * enforces one config per adapter per project, surfaced in the UI as
- * "Already configured" disabled radio options.
- *
- * HI-01: the read `select` clause excludes the encrypted `secret` column —
- * post-create / post-rotate plaintext only ever reaches the browser via the
- * server-action return value, held in `revealed` state until dismissed.
- *
- * Per-card scoping uses `data-testid="webhook-inbound-card-{slug}"` on the
- * Card root; inner action testids are stable across all cards
- * (webhook-url, webhook-secret, webhook-send-test-button, webhook-test-result,
- * webhook-rotate-button, webhook-delete-button) so E2E spec keeps
- * passing without modification.
+ * The read `select` never includes the encrypted `secret` column; a
+ * plaintext secret only reaches the browser in a create or rotate result
+ * and is held in `revealed` until dismissed.
  */
 export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
   const t = useTranslations("projects.settings.webhooks");
@@ -269,18 +158,29 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
       lastFailureAt: true,
       createdAt: true,
       updatedAt: true,
+      subscribedEvents: true,
+      baseBranch: true,
+      codeRepositoryConfigId: true,
+      codeRepositoryConfig: {
+        select: {
+          id: true,
+          branch: true,
+          repository: { select: { id: true, name: true, provider: true } },
+        },
+      },
     },
   });
 
   const configs = (data ?? []) as InboundConfig[];
-  const usedAdapters = new Set<InboundAdapterType>(
-    configs.map((c) => c.adapterType)
+  const issueConfigs = configs.filter(
+    (c): c is IssueConfig =>
+      c.codeRepositoryConfigId == null &&
+      inboundAdapterForProvider(c.adapterType) !== null
   );
 
-  // The project's active issue integration drives which inbound adapter
-  // can be added. `null` here means either no active integration exists
-  // OR the active integration's provider isn't a supported inbound
-  // adapter (e.g. SIMPLE_URL — link-only, no webhook surface).
+  // The project's active issue integration decides which issue-tracker
+  // adapter the wizard can add; null covers "no integration" and providers
+  // without a webhook surface (Simple URL).
   const { data: activeIntegration } = useClientQueries(
     schema
   ).projectIntegration.useFindFirst({
@@ -293,23 +193,41 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
       integration: { select: { id: true, provider: true } },
     },
   });
-  const activeProvider = activeIntegration?.integration?.provider ?? null;
-  const adapterFromIntegration = inboundAdapterForProvider(activeProvider);
-  const inboundExistsForActiveAdapter =
-    adapterFromIntegration !== null && usedAdapters.has(adapterFromIntegration);
-  const integrationsAdminHref = `/projects/settings/${projectId}/integrations`;
-
-  // ─── Chooser + create form state ─────────────────────────────────────
-  const [chooserOpen, setChooserOpen] = useState(false);
-  const [chosenAdapter, setChosenAdapter] = useState<InboundAdapterType | null>(
-    null
+  const issueAdapter = inboundAdapterForProvider(
+    activeIntegration?.integration?.provider ?? null
   );
-  const [adoUsername, setAdoUsername] = useState("");
-  const [adoPassword, setAdoPassword] = useState("");
-  const [isCreating, setIsCreating] = useState(false);
-  const [revealed, setRevealed] = useState<RevealedSecret | null>(null);
+  const issueConfigured =
+    issueAdapter !== null &&
+    issueConfigs.some((c) => c.adapterType === issueAdapter);
 
-  // ─── Per-card local state ────────────────────────────────────────────
+  const { data: connectionsData } = useClientQueries(
+    schema
+  ).projectCodeRepositoryConfig.useFindMany({
+    where: { projectId, purpose: "IMPACT" },
+    orderBy: { id: "asc" },
+    select: {
+      id: true,
+      branch: true,
+      repository: { select: { id: true, name: true, provider: true } },
+    },
+  });
+  const repositories: WizardRepository[] = (connectionsData ?? []).map(
+    (connection) => ({
+      id: connection.id,
+      name: connection.repository.name,
+      provider: connection.repository.provider,
+      branch: connection.branch,
+      adapterType: inboundAdapterForCodeRepository(
+        connection.repository.provider
+      ),
+      configured: configs.some(
+        (c) => c.codeRepositoryConfigId === connection.id
+      ),
+    })
+  );
+
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [revealed, setRevealed] = useState<RevealedSecret | null>(null);
   const [rotateDialogConfigId, setRotateDialogConfigId] = useState<
     string | null
   >(null);
@@ -332,76 +250,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
 
   // ─── Handlers ────────────────────────────────────────────────────────
 
-  function resetCreateState() {
-    setChooserOpen(false);
-    setChosenAdapter(null);
-    setAdoUsername("");
-    setAdoPassword("");
-  }
-
-  // Skip the chooser step — inbound adapters are 1:1 with the project's
-  // active issue integration. The chooser surface is preserved for
-  // future non-issue-tracker inbound adapters.
-  function startAddInboundFlow() {
-    if (!adapterFromIntegration) return;
-    if (adapterFromIntegration === "AZURE_DEVOPS") {
-      // ADO needs the admin to type credentials before we can call the
-      // server action — render the inline credentials form.
-      setChooserOpen(false);
-      setChosenAdapter("AZURE_DEVOPS");
-      return;
-    }
-    // Jira/GitHub: no further input needed. Don't set chosenAdapter
-    // (which would briefly render the create form before resetCreateState
-    // clears it post-success — visible flash). Pass the adapter
-    // explicitly since React batches state updates.
-    void handleCreate(adapterFromIntegration);
-  }
-
-  async function handleCreate(adapterOverride?: InboundAdapterType) {
-    const adapter = adapterOverride ?? chosenAdapter;
-    if (!adapter) return;
-    setIsCreating(true);
-    try {
-      const input: Parameters<typeof createOrRotateInboundWebhook>[0] =
-        adapter === "AZURE_DEVOPS"
-          ? {
-              projectId,
-              adapterType: "AZURE_DEVOPS",
-              secretInput: {
-                kind: "AZURE_DEVOPS",
-                username: adoUsername,
-                password: adoPassword,
-              },
-            }
-          : { projectId, adapterType: adapter };
-      const result = await createOrRotateInboundWebhook(input);
-      if (!result.success) {
-        toast.error(result.error ?? t("saveError"));
-        return;
-      }
-      // M-05: the reveal box must render whenever the server returns a
-      // fresh URL + configId. JIRA + GITHUB additionally return a
-      // server-minted plaintext secret (HMAC); ADO returns no secret
-      // because the admin already typed the credentials, but the URL
-      // (with the full whk_<64-hex> token) MUST still be shown ONCE so
-      // the admin can paste it into the ADO Service Hook config before
-      // reload swaps in the redacted view.
-      if (result.url && result.configId) {
-        setRevealed({
-          configId: result.configId,
-          url: result.url,
-          secret: result.secret ?? null,
-        });
-      }
-      resetCreateState();
-      await refetch();
-    } finally {
-      setIsCreating(false);
-    }
-  }
-
-  async function performRotate(config: InboundConfig) {
+  async function performRotate(config: IssueConfig) {
     setRotateDialogConfigId(null);
     try {
       const result = await createOrRotateInboundWebhook({
@@ -425,7 +274,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
     }
   }
 
-  async function performDelete(config: InboundConfig) {
+  async function performDelete(config: IssueConfig) {
     setDeleteDialogConfigId(null);
     try {
       const result = await deleteInboundWebhook({
@@ -436,7 +285,6 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
         toast.error(result.error ?? t("saveError"));
         return;
       }
-      // Clear any revealed secret tied to this config
       setRevealed((prev) => (prev?.configId === config.id ? null : prev));
       setTestResults((prev) => {
         const { [config.id]: _drop, ...rest } = prev;
@@ -448,7 +296,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
     }
   }
 
-  async function performReEnable(config: InboundConfig) {
+  async function performReEnable(config: IssueConfig) {
     setReenableDialogConfigId(null);
     try {
       const result = await reEnableWebhookConfig(config.id);
@@ -467,7 +315,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
     }
   }
 
-  async function handleToggleActive(config: InboundConfig, next: boolean) {
+  async function handleToggleActive(config: IssueConfig, next: boolean) {
     try {
       const result = await setWebhookActive(config.id, next);
       if (!result.success) {
@@ -480,7 +328,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
     }
   }
 
-  async function handleSendTest(config: InboundConfig) {
+  async function handleSendTest(config: IssueConfig) {
     setPendingTestConfigId(config.id);
     try {
       const result = await sendTestWebhook(config.id);
@@ -509,223 +357,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
 
   // ─── Renderers ───────────────────────────────────────────────────────
 
-  function renderChooser() {
-    return (
-      <Card data-testid="webhook-inbound-chooser">
-        <CardHeader>
-          <CardTitle>{t("inboundChooserTitle")}</CardTitle>
-          <CardDescription>{t("inboundChooserDescription")}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <RadioGroup
-            value={chosenAdapter ?? undefined}
-            onValueChange={(v: string) =>
-              setChosenAdapter(v as InboundAdapterType)
-            }
-          >
-            {ADAPTER_OPTIONS.map((opt) => {
-              const used = usedAdapters.has(opt.value);
-              return (
-                <label
-                  key={opt.value}
-                  className="flex items-center gap-2 text-sm"
-                >
-                  <RadioGroupItem
-                    value={opt.value}
-                    disabled={used}
-                    data-testid={opt.testid}
-                  />
-                  <span>{t(opt.labelKey)}</span>
-                  {used && (
-                    <span className="text-xs text-muted-foreground">
-                      {t("inboundChooserAlreadyConfigured")}
-                    </span>
-                  )}
-                </label>
-              );
-            })}
-          </RadioGroup>
-
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              data-testid="webhook-inbound-chooser-submit"
-              onClick={() => {
-                if (!chosenAdapter) return;
-                if (chosenAdapter === "AZURE_DEVOPS") {
-                  setChooserOpen(false);
-                } else {
-                  void handleCreate();
-                }
-              }}
-              disabled={!chosenAdapter || isCreating}
-            >
-              {chosenAdapter === "AZURE_DEVOPS"
-                ? t("inboundChooserSubmit")
-                : t("createButton")}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              data-testid="webhook-inbound-chooser-cancel"
-              onClick={resetCreateState}
-            >
-              {t("inboundChooserCancel")}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  function renderCreateForm() {
-    if (!chosenAdapter) return null;
-    const titleKey = adapterTitleKey(chosenAdapter);
-    return (
-      <Card
-        data-testid={`webhook-inbound-create-form-${adapterSlug(chosenAdapter)}`}
-      >
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <WebhookAdapterIcon adapterType={chosenAdapter} />
-            <div className="min-w-0 flex-1">
-              <CardTitle>{t(titleKey)}</CardTitle>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {chosenAdapter === "AZURE_DEVOPS" && (
-            <>
-              <p className="text-xs text-muted-foreground">
-                {t.rich("inboundAdoScopeHint", {
-                  code: (chunks) => (
-                    <code className="rounded bg-muted px-1 font-mono text-[0.95em]">
-                      {chunks}
-                    </code>
-                  ),
-                })}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {t("inboundAdoResourceDetailsHint")}
-              </p>
-              <div className="space-y-1">
-                <Label htmlFor="webhook-inbound-ado-username-input">
-                  {t("inboundAdoUsername")}
-                  <sup>
-                    <Asterisk className="inline h-3 w-3 text-destructive" />
-                  </sup>
-                </Label>
-                <Input
-                  id="webhook-inbound-ado-username-input"
-                  data-testid="webhook-inbound-ado-username-input"
-                  value={adoUsername}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setAdoUsername(e.target.value)
-                  }
-                  placeholder={t("inboundAdoUsernamePlaceholder")}
-                />
-                <p className="text-xs text-muted-foreground">
-                  {t("inboundAdoUsernameHelp")}
-                </p>
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="webhook-inbound-ado-password-input">
-                  {t("inboundAdoPassword")}
-                  <sup>
-                    <Asterisk className="inline h-3 w-3 text-destructive" />
-                  </sup>
-                </Label>
-                <Input
-                  id="webhook-inbound-ado-password-input"
-                  data-testid="webhook-inbound-ado-password-input"
-                  type="password"
-                  value={adoPassword}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setAdoPassword(e.target.value)
-                  }
-                />
-                <p className="text-xs text-muted-foreground">
-                  {t("inboundAdoPasswordHelp")}
-                </p>
-              </div>
-            </>
-          )}
-
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              data-testid="webhook-create-button"
-              onClick={() => handleCreate()}
-              disabled={
-                isCreating ||
-                (chosenAdapter === "AZURE_DEVOPS" &&
-                  (adoUsername.length === 0 || adoPassword.length === 0))
-              }
-            >
-              {t("createButton")}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              data-testid="webhook-inbound-create-cancel"
-              onClick={resetCreateState}
-            >
-              {t("inboundChooserCancel")}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  function renderSetupSteps(adapterType: InboundAdapterType) {
-    const stepKeys: Record<InboundAdapterType, string[]> = {
-      JIRA: [
-        "setupStepsJiraStep1",
-        "setupStepsJiraStep2",
-        "setupStepsJiraStep3",
-        "setupStepsJiraStep4",
-      ],
-      GITHUB: [
-        "setupStepsGithubStep1",
-        "setupStepsGithubStep2",
-        "setupStepsGithubStep3",
-        "setupStepsGithubStep4",
-        "setupStepsGithubStep5",
-      ],
-      AZURE_DEVOPS: [
-        "setupStepsAdoStep1",
-        "setupStepsAdoStep2",
-        "setupStepsAdoStep3",
-        "setupStepsAdoStep4",
-        "setupStepsAdoStep5",
-      ],
-      GITLAB: [
-        "setupStepsGitlabStep1",
-        "setupStepsGitlabStep2",
-        "setupStepsGitlabStep3",
-        "setupStepsGitlabStep4",
-      ],
-      GITEA: [
-        "setupStepsGiteaStep1",
-        "setupStepsGiteaStep2",
-        "setupStepsGiteaStep3",
-        "setupStepsGiteaStep4",
-        "setupStepsGiteaStep5",
-      ],
-      REDMINE: [
-        "setupStepsRedmineStep1",
-        "setupStepsRedmineStep2",
-        "setupStepsRedmineStep3",
-        "setupStepsRedmineStep4",
-      ],
-      MANTISBT: [
-        "setupStepsMantisbtStep1",
-        "setupStepsMantisbtStep2",
-        "setupStepsMantisbtStep3",
-        "setupStepsMantisbtStep4",
-      ],
-    };
+  function renderSetupSteps(adapterType: IssueInboundAdapterType) {
     return (
       <div
         className="space-y-1"
@@ -733,7 +365,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
       >
         <div className="text-xs font-medium">{t("setupStepsTitle")}</div>
         <ol className="list-decimal space-y-1 ps-5 text-xs text-muted-foreground">
-          {stepKeys[adapterType].map((k) => (
+          {ISSUE_SETUP_STEP_KEYS[adapterType].map((k) => (
             <li key={k}>{t(k as any)}</li>
           ))}
         </ol>
@@ -743,7 +375,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
 
   function renderRevealedBox(
     rev: RevealedSecret,
-    adapterType: InboundAdapterType
+    adapterType: IssueInboundAdapterType
   ) {
     return (
       <div
@@ -859,7 +491,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
     );
   }
 
-  function renderHealthTooltip(config: InboundConfig): string {
+  function renderHealthTooltip(config: IssueConfig): string {
     if (config.endpointHealth === "DEGRADED") {
       return t("healthTooltipDegraded", {
         count: config.consecutiveFailureCount,
@@ -882,14 +514,10 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
     });
   }
 
-  function renderConfigCard(config: InboundConfig) {
+  function renderIssueCard(config: IssueConfig) {
     const slug = adapterSlug(config.adapterType);
-    const isHmacAdapter =
-      config.adapterType === "JIRA" ||
-      config.adapterType === "GITHUB" ||
-      config.adapterType === "GITLAB" ||
-      config.adapterType === "GITEA";
     const titleKey = adapterTitleKey(config.adapterType);
+    const hint = ISSUE_SCOPE_HINT[config.adapterType];
     const isRevealedHere = revealed?.configId === config.id;
     const url = `${
       typeof window !== "undefined" ? window.location.origin : ""
@@ -907,7 +535,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
           <div className="flex items-center gap-3">
             <WebhookAdapterIcon adapterType={config.adapterType} />
             <div className="min-w-0 flex-1">
-              <CardTitle>{t(titleKey)}</CardTitle>
+              <CardTitle>{t(titleKey as any)}</CardTitle>
               <CardDescription className="mt-1 flex items-center gap-2">
                 <span className="inline-flex items-center gap-1 text-xs">
                   <Inbox className="h-3.5 w-3.5" aria-hidden="true" />
@@ -944,58 +572,17 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {config.adapterType === "GITHUB" && (
+          {hint && (
             <p className="text-xs text-muted-foreground">
-              {t.rich("inboundGithubScopeHint", {
-                code: (chunks) => (
-                  <code className="rounded bg-muted px-1 font-mono text-[0.95em]">
-                    {chunks}
-                  </code>
-                ),
-              })}
-            </p>
-          )}
-          {config.adapterType === "AZURE_DEVOPS" && (
-            <p className="text-xs text-muted-foreground">
-              {t.rich("inboundAdoScopeHint", {
-                code: (chunks) => (
-                  <code className="rounded bg-muted px-1 font-mono text-[0.95em]">
-                    {chunks}
-                  </code>
-                ),
-              })}
-            </p>
-          )}
-          {config.adapterType === "GITLAB" && (
-            <p className="text-xs text-muted-foreground">
-              {t.rich("inboundGitlabScopeHint", {
-                code: (chunks) => (
-                  <code className="rounded bg-muted px-1 font-mono text-[0.95em]">
-                    {chunks}
-                  </code>
-                ),
-              })}
-            </p>
-          )}
-          {config.adapterType === "GITEA" && (
-            <p className="text-xs text-muted-foreground">
-              {t.rich("inboundGiteaScopeHint", {
-                code: (chunks) => (
-                  <code className="rounded bg-muted px-1 font-mono text-[0.95em]">
-                    {chunks}
-                  </code>
-                ),
-              })}
-            </p>
-          )}
-          {config.adapterType === "REDMINE" && (
-            <p className="text-xs text-muted-foreground">
-              {t("inboundRedmineScopeHint")}
-            </p>
-          )}
-          {config.adapterType === "MANTISBT" && (
-            <p className="text-xs text-muted-foreground">
-              {t("inboundMantisbtScopeHint")}
+              {hint.rich
+                ? t.rich(hint.key as any, {
+                    code: (chunks) => (
+                      <code className="rounded bg-muted px-1 font-mono text-[0.95em]">
+                        {chunks}
+                      </code>
+                    ),
+                  })
+                : t(hint.key as any)}
             </p>
           )}
 
@@ -1071,7 +658,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
               <Send className="h-4 w-4" />
               <span>{t("sendTest")}</span>
             </Button>
-            {isHmacAdapter && (
+            {hasRotatableSecret(config.adapterType) && (
               <Button
                 type="button"
                 variant="outline"
@@ -1121,98 +708,87 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
     );
   }
 
+  function renderCard(config: InboundConfig) {
+    if (config.codeRepositoryConfigId != null && config.codeRepositoryConfig) {
+      return (
+        <RepositoryWebhookCard
+          key={config.id}
+          projectId={projectId}
+          hook={{
+            id: config.id,
+            token: config.token,
+            adapterType:
+              config.adapterType as RepositoryWebhookRow["adapterType"],
+            isActive: config.isActive,
+            subscribedEvents: config.subscribedEvents,
+            baseBranch: config.baseBranch ?? null,
+            endpointHealth: config.endpointHealth,
+            lastReceivedAt: config.lastReceivedAt,
+            codeRepositoryConfig: config.codeRepositoryConfig,
+          }}
+          onChanged={refetch}
+        />
+      );
+    }
+    const issue = issueConfigs.find((c) => c.id === config.id);
+    return issue ? renderIssueCard(issue) : null;
+  }
+
   // ─── Top-level layout ────────────────────────────────────────────────
 
-  const inCreateFlow = chooserOpen || chosenAdapter !== null;
-  const rotateConfig = configs.find((c) => c.id === rotateDialogConfigId);
-  const deleteConfig = configs.find((c) => c.id === deleteDialogConfigId);
-  const reenableConfig = configs.find((c) => c.id === reenableDialogConfigId);
-
-  // Add-button gating: disabled when the project has no supported issue
-  // integration to map an inbound adapter to, or when the integration's
-  // adapter is already configured (1:1 model — only one inbound adapter
-  // per project's active integration).
-  const addButtonDisabledReason: "no-integration" | "all-configured" | null =
-    !adapterFromIntegration
-      ? "no-integration"
-      : inboundExistsForActiveAdapter
-        ? "all-configured"
-        : null;
+  const rotateConfig = issueConfigs.find((c) => c.id === rotateDialogConfigId);
+  const deleteConfig = issueConfigs.find((c) => c.id === deleteDialogConfigId);
+  const reenableConfig = issueConfigs.find(
+    (c) => c.id === reenableDialogConfigId
+  );
 
   return (
     <div className="space-y-4" data-testid="webhook-config-form">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4">
         <p className="text-sm text-muted-foreground">
           {t("inboundDescription")}
         </p>
-        {!inCreateFlow &&
-          (addButtonDisabledReason !== null ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span>
-                  <Button
-                    type="button"
-                    data-testid="webhook-inbound-add-button"
-                    disabled
-                  >
-                    <CirclePlus className="h-4 w-4" />
-                    <span>{t("inboundAddButton")}</span>
-                  </Button>
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>
-                {addButtonDisabledReason === "no-integration"
-                  ? t("inboundAddButtonNoIntegration")
-                  : t("inboundAddButtonAllConfigured")}
-              </TooltipContent>
-            </Tooltip>
-          ) : (
-            <Button
-              type="button"
-              data-testid="webhook-inbound-add-button"
-              onClick={startAddInboundFlow}
-            >
-              <CirclePlus className="h-4 w-4" />
-              <span>{t("inboundAddButton")}</span>
-            </Button>
-          ))}
+        <Button
+          type="button"
+          data-testid="webhook-inbound-add-button"
+          onClick={() => setWizardOpen(true)}
+        >
+          <CirclePlus className="h-4 w-4" />
+          <span>{t("inboundAddButton")}</span>
+        </Button>
       </div>
 
-      {chooserOpen && renderChooser()}
-      {!chooserOpen && chosenAdapter !== null && renderCreateForm()}
-
-      {configs.length === 0 && !inCreateFlow ? (
+      {configs.length === 0 ? (
         <div
           data-testid="webhook-inbound-empty"
           className="rounded-md border p-6 text-center text-sm text-muted-foreground"
         >
-          {adapterFromIntegration
-            ? t.rich("inboundEmptyWithIntegration", {
-                link: (chunks) => (
-                  <button
-                    type="button"
-                    data-testid="webhook-inbound-empty-add-link"
-                    onClick={startAddInboundFlow}
-                    className="underline underline-offset-2 hover:text-foreground"
-                  >
-                    {chunks}
-                  </button>
-                ),
-              })
-            : t.rich("inboundEmptyNoIntegration", {
-                link: (chunks) => (
-                  <Link
-                    href={integrationsAdminHref}
-                    className="underline underline-offset-2 hover:text-foreground"
-                  >
-                    {chunks}
-                  </Link>
-                ),
-              })}
+          {t.rich("inboundEmptyState", {
+            link: (chunks) => (
+              <button
+                type="button"
+                data-testid="webhook-inbound-empty-add-link"
+                onClick={() => setWizardOpen(true)}
+                className="underline underline-offset-2 hover:text-foreground"
+              >
+                {chunks}
+              </button>
+            ),
+          })}
         </div>
       ) : (
-        <div className="space-y-4">{configs.map(renderConfigCard)}</div>
+        <div className="space-y-4">{configs.map(renderCard)}</div>
       )}
+
+      <InboundWebhookWizard
+        projectId={projectId}
+        open={wizardOpen}
+        onOpenChange={setWizardOpen}
+        issueAdapter={issueAdapter}
+        issueConfigured={issueConfigured}
+        repositories={repositories}
+        onCreated={refetch}
+      />
 
       <AlertDialog
         open={rotateDialogConfigId !== null}

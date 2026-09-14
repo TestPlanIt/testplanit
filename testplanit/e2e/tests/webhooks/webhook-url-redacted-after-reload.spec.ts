@@ -39,8 +39,8 @@ test.describe.configure({ mode: "serial" });
 interface AdapterCase {
   /** Display name for the test title. */
   label: string;
-  /** Provider id for the project's issue integration. The 1:1 inbound
-   *  model derives the inbound adapter from this. */
+  /** Provider id for the project's issue integration. The wizard's
+   *  issue-tracker source derives the inbound adapter from this. */
   provider: "JIRA" | "GITHUB" | "AZURE_DEVOPS";
   /** Card testid suffix (e.g. "jira", "github", "ado"). */
   cardSlug: "jira" | "github" | "ado";
@@ -90,25 +90,28 @@ async function configureAdapter(
   const form = page.getByTestId("webhook-config-form");
   await expect(form).toBeVisible();
 
-  // 1:1 inbound model: Add skips the chooser and either creates inline
-  // (Jira/GitHub) or opens the credentials form (ADO).
+  // The wizard's issue-tracker source maps to the integration's adapter;
+  // ADO's Configure step also asks for credentials.
   await page.getByTestId("webhook-inbound-add-button").click();
+  const wizard = page.getByTestId("webhook-inbound-wizard");
+  await wizard.getByTestId("webhook-wizard-source-issues").click();
+  await wizard.getByTestId("webhook-wizard-next").click();
   if (adapter.fillCreateForm) {
     await adapter.fillCreateForm(page);
-    await page.getByTestId("webhook-create-button").click();
   }
+  await wizard.getByTestId("webhook-create-button").click();
 
-  // Capture the full token from the just-revealed URL. The card is now
-  // mounted; its inner `webhook-url` testid is shared between the
-  // revealed box (full URL) and the configured view (redacted) — at
-  // this point in the flow it's still the revealed box.
-  const card = page.getByTestId(`webhook-inbound-card-${adapter.cardSlug}`);
-  await expect(card).toBeVisible();
-  await expect(card.getByTestId("webhook-url")).toBeVisible();
-  const revealedUrl = await card.getByTestId("webhook-url").innerText();
+  // Capture the full token from the wizard's Connect step, the only place
+  // the un-redacted URL is ever rendered, then dismiss it.
+  const revealed = wizard.getByTestId("webhook-inbound-revealed-box");
+  await expect(revealed.getByTestId("webhook-url")).toBeVisible();
+  const revealedUrl = await revealed.getByTestId("webhook-url").innerText();
   const tokenMatch = revealedUrl.match(FULL_TOKEN_RE);
   expect(tokenMatch).not.toBeNull();
   const fullToken = tokenMatch![0];
+  await wizard.getByTestId("webhook-reveal-done-button").click();
+  const card = page.getByTestId(`webhook-inbound-card-${adapter.cardSlug}`);
+  await expect(card).toBeVisible();
 
   return { projectId, fullToken };
 }

@@ -64,20 +64,23 @@ test.describe("Azure DevOps inbound webhook — admin form + raw-POST coverage",
       const form = page.getByTestId("webhook-config-form");
       await expect(form).toBeVisible();
 
-      // 1:1 inbound model: Add skips the chooser and lands directly on
-      // the ADO credentials form (since ADO needs admin-typed creds).
+      // The wizard's issue-tracker source maps to ADO, whose Configure
+      // step asks for the Basic Auth credentials.
       await page.getByTestId("webhook-inbound-add-button").click();
-
-      // ADO create-form inputs (unscoped — only one create-form is alive at a
-      // time). Submit is the same `webhook-create-button` testid all adapters
-      // share.
-      await page
+      const wizard = page.getByTestId("webhook-inbound-wizard");
+      await wizard.getByTestId("webhook-wizard-source-issues").click();
+      await wizard.getByTestId("webhook-wizard-next").click();
+      await wizard
         .getByTestId("webhook-inbound-ado-username-input")
         .fill(ADO_USER);
-      await page
+      await wizard
         .getByTestId("webhook-inbound-ado-password-input")
         .fill(ADO_PASS);
-      await page.getByTestId("webhook-create-button").click();
+      await wizard.getByTestId("webhook-create-button").click();
+      await expect(
+        wizard.getByTestId("webhook-inbound-revealed-box")
+      ).toBeVisible();
+      await wizard.getByTestId("webhook-reveal-done-button").click();
     });
 
     await test.step("Verify the configured ADO card and webhook URL", async () => {

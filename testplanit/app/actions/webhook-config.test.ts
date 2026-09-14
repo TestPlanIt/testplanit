@@ -10,6 +10,8 @@ vi.mock("~/server/auth", () => ({
 }));
 
 const mockWebhookConfigFindFirst = vi.fn();
+const mockWebhookConfigUpdateMany = vi.fn();
+const mockProjectCodeRepositoryConfigFindFirst = vi.fn();
 const mockWebhookConfigFindUnique = vi.fn();
 const mockWebhookConfigCreate = vi.fn();
 const mockWebhookConfigUpdate = vi.fn();
@@ -29,7 +31,12 @@ vi.mock("~/lib/db", () => ({
       findUnique: (...args: unknown[]) => mockWebhookConfigFindUnique(...args),
       create: (...args: unknown[]) => mockWebhookConfigCreate(...args),
       update: (...args: unknown[]) => mockWebhookConfigUpdate(...args),
+      updateMany: (...args: unknown[]) => mockWebhookConfigUpdateMany(...args),
       delete: (...args: unknown[]) => mockWebhookConfigDelete(...args),
+    },
+    projectCodeRepositoryConfig: {
+      findFirst: (...args: unknown[]) =>
+        mockProjectCodeRepositoryConfigFindFirst(...args),
     },
     webhookConfigSecret: {
       create: (...args: unknown[]) => mockWebhookConfigSecretCreate(...args),
@@ -101,11 +108,13 @@ const originalFetch = globalThis.fetch;
 let fetchSpy: ReturnType<typeof vi.fn>;
 
 import {
+  createOrRotateCodeRepositoryWebhook,
   createOrRotateInboundWebhook,
   createOrRotateJiraWebhook,
   deleteInboundWebhook,
   deleteJiraWebhook,
   sendTestWebhook,
+  updateCodeRepositoryWebhookEvents,
 } from "./webhook-config";
 
 // The byte-identical synthetic payload literal — copy of the constant in the
@@ -332,7 +341,12 @@ describe("webhook-config server actions", () => {
       expect(result.secret!.startsWith("enc:")).toBe(false);
       // Lookup filters by GITHUB (not hardcoded JIRA).
       expect(mockWebhookConfigFindFirst).toHaveBeenCalledWith({
-        where: { projectId: 42, adapterType: "GITHUB", direction: "INBOUND" },
+        where: {
+          projectId: 42,
+          adapterType: "GITHUB",
+          direction: "INBOUND",
+          codeRepositoryConfigId: null,
+        },
         select: { id: true },
       });
       expect(mockWebhookConfigCreate).toHaveBeenCalledWith({
@@ -445,7 +459,12 @@ describe("webhook-config server actions", () => {
       expect(result.configId).toBe("cfg-jira-via-alias");
       // The lookup filtered by JIRA, not GITHUB or ADO.
       expect(mockWebhookConfigFindFirst).toHaveBeenCalledWith({
-        where: { projectId: 42, adapterType: "JIRA", direction: "INBOUND" },
+        where: {
+          projectId: 42,
+          adapterType: "JIRA",
+          direction: "INBOUND",
+          codeRepositoryConfigId: null,
+        },
         select: { id: true },
       });
       expect(mockWebhookConfigCreate).toHaveBeenCalledWith({
@@ -700,6 +719,74 @@ describe("webhook-config server actions", () => {
       });
       // Body bytes EQUAL the literal synthetic payload.
       expect(init.body).toBe(EXPECTED_SYNTHETIC_PAYLOAD);
+    });
+
+    it("posts a signed synthetic pull request to a repository webhook", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({
+        token: FIXTURE_TOKEN,
+        secret: FIXTURE_SECRET_ENC,
+        projectId: 42,
+        adapterType: "GITHUB",
+        codeRepositoryConfigId: 9,
+      });
+      fetchSpy.mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({ outcome: "synthetic" }),
+      });
+
+      const result = await sendTestWebhook("cfg-repo");
+
+      expect(result).toEqual({
+        ok: true,
+        statusCode: 200,
+        outcome: "synthetic",
+      });
+      const [, init] = fetchSpy.mock.calls[0];
+      const body = JSON.parse(init.body as string);
+      expect(body).toMatchObject({
+        action: "opened",
+        number: 0,
+        pull_request: { number: 0 },
+      });
+      expect(init.headers).toMatchObject({
+        "x-github-event": "pull_request",
+        "x-hub-signature-256":
+          "sha256=" +
+          createHmac("sha256", FIXTURE_SECRET_PLAIN)
+            .update(init.body as string)
+            .digest("hex"),
+      });
+    });
+
+    it("signs a Bitbucket repository webhook test with x-hub-signature and the event key", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({
+        token: FIXTURE_TOKEN,
+        secret: FIXTURE_SECRET_ENC,
+        projectId: 42,
+        adapterType: "BITBUCKET",
+        codeRepositoryConfigId: 9,
+      });
+      fetchSpy.mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({ outcome: "synthetic" }),
+      });
+
+      await sendTestWebhook("cfg-bb");
+
+      const [, init] = fetchSpy.mock.calls[0];
+      expect(JSON.parse(init.body as string)).toMatchObject({
+        pullrequest: { id: 0 },
+      });
+      expect(init.headers).toMatchObject({
+        "x-event-key": "pullrequest:created",
+        "x-hub-signature":
+          "sha256=" +
+          createHmac("sha256", FIXTURE_SECRET_PLAIN)
+            .update(init.body as string)
+            .digest("hex"),
+      });
     });
 
     // ─── Test 8: demo lock — second call body byte-identical ─────────
@@ -2252,6 +2339,247 @@ describe("webhook-config server actions", () => {
 
       expect(result).toEqual({ ok: false, error: "Forbidden" });
       expect(mockWebhookDeliveryFindMany).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("createOrRotateCodeRepositoryWebhook", () => {
+    beforeEach(() => {
+      mockProjectCodeRepositoryConfigFindFirst.mockReset();
+      mockWebhookConfigUpdateMany.mockReset();
+    });
+
+    it("creates a GitHub-verified webhook bound to the Impact connection and reveals the secret", async () => {
+      mockProjectCodeRepositoryConfigFindFirst.mockResolvedValueOnce({
+        id: 9,
+        repository: { provider: "GITHUB" },
+      });
+      mockWebhookConfigFindFirst.mockResolvedValueOnce(null);
+      mockWebhookConfigCreate.mockResolvedValueOnce({ id: "whc-1" });
+
+      const result = await createOrRotateCodeRepositoryWebhook({
+        projectId: 42,
+        codeRepositoryConfigId: 9,
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.configId).toBe("whc-1");
+      expect(result.url).toMatch(
+        /^https:\/\/app\.example\.test\/api\/webhooks\//
+      );
+      expect(typeof result.secret).toBe("string");
+      expect(mockProjectCodeRepositoryConfigFindFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 9, projectId: 42, purpose: "IMPACT" },
+        })
+      );
+      expect(mockWebhookConfigFindFirst).toHaveBeenCalledWith({
+        where: { codeRepositoryConfigId: 9, direction: "INBOUND" },
+        select: { id: true },
+      });
+      expect(mockWebhookConfigCreate).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          projectId: 42,
+          adapterType: "GITHUB",
+          direction: "INBOUND",
+          isActive: true,
+          codeRepositoryConfigId: 9,
+          subscribedEvents: ["code:pull_request", "code:push"],
+          secret: `enc:${result.secret}`,
+        }),
+        select: { id: true },
+      });
+    });
+
+    it("stores the chosen events and a trimmed base branch on create", async () => {
+      mockProjectCodeRepositoryConfigFindFirst.mockResolvedValueOnce({
+        id: 9,
+        repository: { provider: "GITHUB" },
+      });
+      mockWebhookConfigFindFirst.mockResolvedValueOnce(null);
+      mockWebhookConfigCreate.mockResolvedValueOnce({ id: "whc-2" });
+
+      await createOrRotateCodeRepositoryWebhook({
+        projectId: 42,
+        codeRepositoryConfigId: 9,
+        subscribedEvents: ["code:branch_push", "jira:issue_updated"],
+        baseBranch: "  develop ",
+      });
+
+      expect(mockWebhookConfigCreate).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          subscribedEvents: ["code:branch_push"],
+          baseBranch: "develop",
+        }),
+        select: { id: true },
+      });
+    });
+
+    it("rotates the existing webhook in place instead of creating a second one", async () => {
+      mockProjectCodeRepositoryConfigFindFirst.mockResolvedValueOnce({
+        id: 9,
+        repository: { provider: "GITLAB" },
+      });
+      mockWebhookConfigFindFirst.mockResolvedValueOnce({ id: "whc-old" });
+      mockWebhookConfigUpdate.mockResolvedValueOnce({ id: "whc-old" });
+
+      const result = await createOrRotateCodeRepositoryWebhook({
+        projectId: 42,
+        codeRepositoryConfigId: 9,
+      });
+
+      expect(result).toMatchObject({ success: true, configId: "whc-old" });
+      expect(mockWebhookConfigCreate).not.toHaveBeenCalled();
+      expect(mockWebhookConfigUpdate).toHaveBeenCalledWith({
+        where: { id: "whc-old" },
+        data: expect.objectContaining({
+          adapterType: "GITLAB",
+          isActive: true,
+        }),
+        select: { id: true },
+      });
+    });
+
+    it("refuses when the connection is not this project's Impact connection", async () => {
+      mockProjectCodeRepositoryConfigFindFirst.mockResolvedValueOnce(null);
+
+      const result = await createOrRotateCodeRepositoryWebhook({
+        projectId: 42,
+        codeRepositoryConfigId: 9,
+      });
+
+      expect(result).toEqual({
+        success: false,
+        error: "Failed to save webhook configuration",
+      });
+      expect(mockWebhookConfigCreate).not.toHaveBeenCalled();
+    });
+
+    it("refuses a provider without an inbound adapter", async () => {
+      mockProjectCodeRepositoryConfigFindFirst.mockResolvedValueOnce({
+        id: 9,
+        repository: { provider: "SVN" },
+      });
+
+      const result = await createOrRotateCodeRepositoryWebhook({
+        projectId: 42,
+        codeRepositoryConfigId: 9,
+      });
+
+      expect(result.success).toBe(false);
+      expect(mockWebhookConfigFindFirst).not.toHaveBeenCalled();
+    });
+
+    it("needs Azure DevOps credentials and does not reveal them back", async () => {
+      mockProjectCodeRepositoryConfigFindFirst.mockResolvedValue({
+        id: 9,
+        repository: { provider: "AZURE_DEVOPS" },
+      });
+
+      const missing = await createOrRotateCodeRepositoryWebhook({
+        projectId: 42,
+        codeRepositoryConfigId: 9,
+      });
+      expect(missing.success).toBe(false);
+
+      mockWebhookConfigFindFirst.mockResolvedValueOnce(null);
+      mockWebhookConfigCreate.mockResolvedValueOnce({ id: "whc-ado" });
+      const result = await createOrRotateCodeRepositoryWebhook({
+        projectId: 42,
+        codeRepositoryConfigId: 9,
+        secretInput: { kind: "AZURE_DEVOPS", username: "svc", password: "pat" },
+      });
+
+      expect(result).toMatchObject({ success: true, configId: "whc-ado" });
+      expect(result.secret).toBeUndefined();
+      expect(mockEncrypt).toHaveBeenCalledWith(
+        JSON.stringify({ username: "svc", password: "pat" })
+      );
+    });
+
+    it("returns Forbidden when the caller cannot manage the project's webhooks", async () => {
+      mockCanManageWebhookConfig.mockResolvedValueOnce(false);
+
+      const result = await createOrRotateCodeRepositoryWebhook({
+        projectId: 42,
+        codeRepositoryConfigId: 9,
+      });
+
+      expect(result).toEqual({ success: false, error: "Forbidden" });
+      expect(mockProjectCodeRepositoryConfigFindFirst).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("updateCodeRepositoryWebhookEvents", () => {
+    beforeEach(() => {
+      mockWebhookConfigUpdateMany.mockReset();
+    });
+
+    it("stores only known code events on a repository-bound inbound webhook", async () => {
+      mockWebhookConfigUpdateMany.mockResolvedValueOnce({ count: 1 });
+
+      const result = await updateCodeRepositoryWebhookEvents({
+        projectId: 42,
+        webhookConfigId: "whc-1",
+        subscribedEvents: ["code:push", "jira:issue_updated"],
+      });
+
+      expect(result).toEqual({ success: true });
+      expect(mockWebhookConfigUpdateMany).toHaveBeenCalledWith({
+        where: {
+          id: "whc-1",
+          projectId: 42,
+          direction: "INBOUND",
+          codeRepositoryConfigId: { not: null },
+        },
+        data: { subscribedEvents: ["code:push"] },
+      });
+    });
+
+    it("updates only the base branch when the events are left out, clearing it when blank", async () => {
+      mockWebhookConfigUpdateMany.mockResolvedValue({ count: 1 });
+
+      await updateCodeRepositoryWebhookEvents({
+        projectId: 42,
+        webhookConfigId: "whc-1",
+        baseBranch: " release/1.1 ",
+      });
+      expect(mockWebhookConfigUpdateMany.mock.calls[0][0].data).toEqual({
+        baseBranch: "release/1.1",
+      });
+
+      await updateCodeRepositoryWebhookEvents({
+        projectId: 42,
+        webhookConfigId: "whc-1",
+        baseBranch: "",
+      });
+      expect(mockWebhookConfigUpdateMany.mock.calls[1][0].data).toEqual({
+        baseBranch: null,
+      });
+    });
+
+    it("reports a webhook that is not one of the project's repository webhooks", async () => {
+      mockWebhookConfigUpdateMany.mockResolvedValueOnce({ count: 0 });
+
+      const result = await updateCodeRepositoryWebhookEvents({
+        projectId: 42,
+        webhookConfigId: "whc-other",
+        subscribedEvents: [],
+      });
+
+      expect(result).toEqual({ success: false, error: "Webhook not found" });
+    });
+
+    it("returns Forbidden without touching the database when not authorized", async () => {
+      mockCanManageWebhookConfig.mockResolvedValueOnce(false);
+
+      const result = await updateCodeRepositoryWebhookEvents({
+        projectId: 42,
+        webhookConfigId: "whc-1",
+        subscribedEvents: ["code:push"],
+      });
+
+      expect(result).toEqual({ success: false, error: "Forbidden" });
+      expect(mockWebhookConfigUpdateMany).not.toHaveBeenCalled();
     });
   });
 });
