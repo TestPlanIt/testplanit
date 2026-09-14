@@ -456,7 +456,9 @@
         "urlRequired": "必须提供网址",
         "invalidUrl": "无效的 URL 格式"
       },
-      "worker": "工作进程"
+      "worker": "工作进程",
+      "hasCodePins": "具有代码图钉",
+      "noCodePins": "无代码图钉"
     },
     "filter": {
       "placeholder": "筛选 {item}..."
@@ -561,7 +563,6 @@
       "selectTemplate": "选择模板",
       "duration": "例如 1 小时 30 分钟或 90 分钟",
       "docs": "添加文档……",
-      "select": "选择",
       "selectState": "选择州",
       "selectConfiguration": "选择配置",
       "selectConfigurations": "选择配置",
@@ -582,14 +583,12 @@
       "selectAModel": "选择型号",
       "selectWorkflowType": "选择工作流程类型",
       "addAnOption": "添加一个选项",
-      "addADescription": "添加描述……",
       "optionalDescription": "可选描述……",
       "projectNotes": "项目笔记……",
       "filterByName": "按名称筛选...",
       "filterByValue": "按值筛选...",
       "selectOperator": "选择运算符",
       "searchIcons": "搜索图标……",
-      "value": "价值",
       "stepCount": "步数",
       "enterText": "请输入文字...",
       "enterUrl": "输入网址",
@@ -710,16 +709,10 @@
       "twoFactorVerification": "双因素验证",
       "changePassword": "更改密码",
       "twoFactorSetup": "双因素设置",
-      "signUp": "报名",
-      "signIn": "登入",
       "verifyEmail": "验证电子邮件",
       "trialExpired": "试用期已结束",
       "linkSsoAccount": "关联 SSO 帐户",
       "userProfile": "用户个人资料",
-      "users": "用户",
-      "issues": "问题",
-      "requirements": "需求",
-      "tags": "标签",
       "tagDetails": "标签详情",
       "aiModels": "人工智能模型",
       "integrations": "集成",
@@ -733,13 +726,8 @@
       "repository": "存储库",
       "testCaseVersion": "测试用例版本",
       "duplicateTestCases": "重复的测试用例",
-      "documentation": "文档",
-      "sharedSteps": "共同步骤",
       "stepDuplicates": "步骤重复",
-      "sessions": "会议",
       "sessionVersion": "会话版本",
-      "milestones": "里程碑",
-      "testRuns": "测试运行",
       "reports": "报告",
       "adminSamlConfig": "管理员 - SAML 配置",
       "apiDocumentation": "API 文档",
@@ -750,7 +738,6 @@
       "userMenu": "用户菜单",
       "selectProject": "选择项目",
       "togglePanel": "切换面板",
-      "folder": "文件夹",
       "toggleActive": "切换激活状态",
       "toggleDetails": "切换详情",
       "requiresReview": "需要审核",
@@ -877,7 +864,6 @@
     "for": "为了",
     "and": "和",
     "branding": {
-      "name": "TestPlanIt",
       "logoAlt": "TestPlanIt 标志",
       "tagline": "尝试一切"
     },
@@ -1096,7 +1082,6 @@
         "viewIn": "查看",
         "fieldType": "字段类型： ",
         "richTextContent": "富文本内容",
-        "invalidContent": "无效内容",
         "fieldInformation": "现场信息"
       },
       "onboarding": {
@@ -1109,8 +1094,7 @@
         "zoomDonutChart": "缩放甜甜圈图",
         "zoomExecutionTimeline": "缩放执行时间线",
         "zoomHistogramChart": "缩放直方图",
-        "duration": "持续时间： {seconds} 秒",
-        "durationLabel": "期间"
+        "duration": "持续时间： {seconds} 秒"
       },
       "import": {
         "encoding": {
@@ -1267,7 +1251,6 @@
       }
     },
     "verifyEmail": {
-      "title": "验证电子邮件",
       "loading": "正在验证电子邮件...",
       "success": "邮箱已成功验证",
       "error": "电子邮件验证失败",
@@ -1319,10 +1302,8 @@
       "expiredDescription": "您的密码已过期。请设置新密码以继续。",
       "newPasswordLabel": "新密码",
       "confirmPasswordLabel": "确认新密码",
-      "submitButton": "更改密码",
       "signOut": "退出登录",
       "passwordsMustMatch": "密码不匹配。",
-      "passwordRequired": "需要输入密码。",
       "genericError": "发生错误，请重试。",
       "policyTitle": "密码要求：",
       "policyMinLength": "至少 {count, number} 个字符",
@@ -1334,7 +1315,6 @@
   },
   "account": {
     "linkSso": {
-      "title": "关联 SSO 帐户",
       "description": "将您的帐户与单点登录提供商关联",
       "availableProviders": "可用的单点登录提供商",
       "linkWithGoogle": "与谷歌链接",
@@ -1394,8 +1374,7 @@
       "latestTestRuns": "最新测试运行",
       "testCaseBreakdown": "测试用例分解",
       "noTestCases": "项目仓库为空。请使用仓库添加测试用例。",
-      "noTestCasesPrefix": "项目仓库为空。请使用以下命令添加测试用例：",
-      "noTestCasesLink": "存储库"
+      "noTestCasesPrefix": "项目仓库为空。请使用以下命令添加测试用例："
     },
     "icon": {
       "upload": {
@@ -1415,10 +1394,8 @@
         "title": "迭代属性映射",
         "description": "导入时，每个测试用例的迭代索引将从名称与以下条目之一匹配的属性、特性或 trait 中读取（JUnit 属性、TestNG 特性、xUnit 特性、NUnit 属性）。请添加您的测试用例生成器使用的名称；查找不区分大小写。",
         "addLabel": "添加属性名称",
-        "addButton": "添加",
         "placeholder": "例如 iterationIndex",
         "defaultHint": "默认值：迭代次数（不区分大小写）。添加自定义名称即可启用。",
-        "saveButton": "节省",
         "saveSuccess": "迭代属性名称已保存。",
         "saveError": "无法保存迭代属性名称。",
         "removeAria": "移除 {name}",
@@ -1484,7 +1461,6 @@
           "removeProjectConfirmation": "移除此项目将停止同步其中的问题。之前同步的问题不会被删除。是否继续？",
           "removeProjectWebhookCascadeBullet": "该项目的入站 webhook 也将被移除。",
           "keepProject": "保持项目",
-          "defaultIndicator": "默认",
           "syncStatusSyncing": "同步",
           "syncStatusCompleted": "已同步",
           "syncStatusError": "同步错误",
@@ -1515,7 +1491,6 @@
           "importPreview": "预览",
           "importPreviewResult": "约有 {count, plural, other {# 个问题}}符合此筛选条件。最多将导入 {cap} 个。",
           "importOverCap": "这超过了 {cap} 个的上限；将仅导入最近更新的 {cap} 个。",
-          "importStart": "导入",
           "importStarted": "导入已开始。问题将很快出现。",
           "importFailed": "导入失败",
           "importPreviewFailed": "无法估算匹配数量",
@@ -1600,13 +1575,11 @@
       },
       "webhooks": {
         "description": "配置入站 Webhook 以保持关联问题同步。",
-        "inboundDescription": "配置入站 Webhook 以保持关联问题同步。",
+        "inboundDescription": "从您的问题跟踪器接收问题更新，并从已连接的存储库接收拉取请求和推送。",
         "outboundDescription": "配置出站 webhook，将 TestPlanIt 事件发送到 Slack 或任何 HMAC 签名的 URL。",
         "directionInbound": "入境",
         "directionOutbound": "出站",
         "inboundAddButtonAllConfigured": "入站适配器已配置完成。",
-        "inboundAddButtonNoIntegration": "在添加入站 webhook 之前，请先为该项目分配一个问题集成。",
-        "inboundEmptyWithIntegration": "未配置任何入站 Webhook。 <link>添加一个</link> 以接收来自您分配的问题集成的更新。",
         "inboundEmptyNoIntegration": "接收入站问题更新需要<link>问题集成</link>。请为您的项目分配一个以开始使用。",
         "deliveriesEmptyNoConfigs": "目前还没有 webhook 发送——请在其他标签页上创建入站或出站 webhook 以开始接收它们。",
         "noConfig": "未配置 webhook",
@@ -1620,7 +1593,6 @@
         "rotateSecret": "旋转秘密",
         "rotateConfirmTitle": "轮换 webhook 密钥？",
         "rotateConfirm": "轮换密钥将使问题跟踪器端的当前配置失效，直到您在那里更新配置为止。是否继续？",
-        "isActive": "已启用",
         "deleteConfirmTitle": "删除 webhook 配置？",
         "deleteConfirm": "删除此 webhook 配置？入站邮件将被拒绝。",
         "sendTest": "发送测试 webhook",
@@ -1635,23 +1607,19 @@
         "urlCopied": "Webhook URL 已复制到剪贴板",
         "secretCopied": "Webook 密钥已复制到剪贴板",
         "nextSteps": "接下来：将这些信息粘贴到问题跟踪器的 webhook 配置中，然后点击下方的“发送测试 webhook”来验证流程。保存密钥后，点击“完成”——密钥将无法再次显示。",
-        "revealDone": "完毕",
         "pageTitle": "网络钩子",
         "inboundTab": "入境",
         "outboundTab": "出站",
         "outboundEmpty": "未配置任何出站 Webhook。请添加一个 Webhook，以便将 TestPlanIt 事件发送到 Slack 或任何经过 HMAC 签名的 URL。",
         "outboundAddButton": "添加出站 webhook",
         "outboundCreateTitle": "新增出站 webhook",
-        "outboundCreateName": "姓名",
         "outboundCreateNameHelp": "为该目标位置添加一个标签，例如“工程 Slack”。",
         "outboundCreateNamePlaceholder": "工程 Slack",
         "outboundCreateNameRequired": "姓名为必填项。",
         "outboundCreateUrlRequired": "必须提供网址。",
         "outboundCreateUrlInvalid": "请输入有效的网址（https://example.com/...）。",
         "outboundCreateUrlMustUseHttps": "URL必须使用HTTPS",
-        "outboundNameLabel": "姓名",
         "outboundUnnamedConfig": "（未命名的 webhook）",
-        "outboundCreateUrl": "URL",
         "outboundCreateUrlHelp": "目标 URL。Slack 传入 webhook URL 会自动检测。",
         "outboundCreateUrlPlaceholder": "https://hooks.slack.com/services/...",
         "outboundDetectedSlack": "检测到：Slack",
@@ -1719,14 +1687,11 @@
         "outboundSubsCases": "案例",
         "outboundSubsSelectAll": "请选中此部分中的所有内容",
         "outboundCreateSubmit": "创建 webhook",
-        "outboundCreateCancel": "取消",
         "outboundCreateSuccess": "已创建出站 webhook。",
         "outboundCreateError": "创建出站 webhook 失败。",
         "outboundUrlLabel": "目标网址",
-        "outboundActiveToggle": "积极的",
         "outboundSlackHint": "这个网址很敏感——任何拥有它的人都可以向你的频道发布内容。",
         "outboundHmacSecretsTitle": "签署秘密",
-        "outboundHmacActiveSecret": "积极的",
         "outboundHmacInactiveSecret": "非活跃状态",
         "outboundHmacRetiringSecret": "退休",
         "outboundHmacAutoRetireIn": "将在 {days, number} 天后自动退休",
@@ -1753,19 +1718,12 @@
         "outboundDeleteError": "删除 webhook 失败。",
         "outboundSecretCopy": "复制秘密",
         "outboundSecretShownOnce": "现在就把这个秘密记下来——它不能再被人知道了。",
-        "outboundSecretDone": "完毕",
         "inboundAddButton": "添加入站 webhook",
-        "inboundChooserTitle": "选择适配器",
-        "inboundChooserDescription": "选择将向 TestPlanIt 发送 Webhook 的问题跟踪系统。每个项目可以有一个 Jira、一个 GitHub 和一个 Azure DevOps 入站 Webhook。",
         "inboundChooserJira": "吉拉",
         "inboundChooserGithub": "GitHub",
         "inboundChooserAdo": "Azure DevOps",
         "inboundChooserGitlab": "GitLab",
         "inboundChooserGitea": "吉特亚",
-        "inboundChooserAlreadyConfigured": "已配置",
-        "inboundChooserSubmit": "继续",
-        "inboundChooserCancel": "取消",
-        "inboundEmpty": "未配置入站 Webhook。请添加一个以接收来自 Jira、GitHub、GitLab、Gitea 或 Azure DevOps 的问题更新。",
         "inboundJiraTitle": "Jira 入站 webhook",
         "inboundGithubTitle": "GitHub 入站 webhook",
         "inboundGithubScopeHint": "GitHub <code>issues</code> events 会更新关联的 TestPlanIt 问题。Pull request 和 issue comment 事件已接受，但目前不会更新问题。",
@@ -1776,7 +1734,6 @@
         "inboundAdoTitle": "Azure DevOps 入站 Webhook",
         "inboundAdoScopeHint": "Azure DevOps <code>工作项已更新</code> 事件会更新关联的 TestPlanIt 问题。其他事件也会被接受，但不会更新问题。",
         "inboundAdoUsername": "用户名",
-        "inboundAdoPassword": "密码",
         "inboundAdoUsernamePlaceholder": "服务帐户",
         "inboundAdoUsernameHelp": "已在 Azure DevOps 服务钩子端进行配置。TestPlanIt 通过 HTTP 基本身份验证对其进行验证。",
         "inboundAdoPasswordHelp": "静态存储时采用加密方式。同时，也请在 Azure DevOps 服务钩子端保存此值。",
@@ -1808,9 +1765,7 @@
         "deliveriesTab": "送货",
         "filterConfigPlaceholder": "所有 webhook",
         "filterEventPlaceholder": "所有事件",
-        "filterStatusAll": "全部",
         "filterStatusFailed": "失败的",
-        "filterStatusSuccess": "成功",
         "filterSinceDefault": "自…",
         "filterUntilDefault": "直到…",
         "filterReset": "重置筛选器",
@@ -1822,8 +1777,6 @@
         "tableHeaderConfig": "Webhook",
         "tableHeaderEvent": "事件",
         "tableHeaderSubjectRef": "引用",
-        "tableHeaderStatus": "地位",
-        "tableHeaderError": "错误",
         "tableHeaderReceivedAt": "已收到",
         "tableHeaderAttempt": "试图",
         "tableHeaderDirection": "方向",
@@ -1836,7 +1789,6 @@
         "drawerLabelLatency": "延迟",
         "drawerLatencyValue": "{ms, number} 毫秒",
         "drawerLatencyUnknown": "—",
-        "drawerLabelError": "错误",
         "drawerLabelPayloadDigest": "有效载荷摘要",
         "drawerLabelEventId": "事件 ID",
         "drawerLabelSubjectRef": "引用",
@@ -1865,7 +1817,6 @@
         "activityLastDispatched": "最后发货",
         "activityLastSuccess": "最后成功",
         "activityLastFailure": "最后一次失败",
-        "activityNever": "绝不",
         "reEnable": "重新启用",
         "reEnableConfirmTitle": "重新启用此 webhook？",
         "reEnableConfirm": "请确认上游问题已修复后再重新启用。webhook 将立即恢复发送。",
@@ -1889,11 +1840,42 @@
         "setupStepsMantisbtStep1": "在您的 MantisBT 服务器上安装并启用一个 MantisBT webhook 插件（MantisBT 没有内置的 webhook）。",
         "setupStepsMantisbtStep2": "在插件配置中，选择问题创建和问题更新事件。",
         "setupStepsMantisbtStep3": "将上方的 URL 粘贴为 webhook 目标并保存。",
-        "setupStepsMantisbtStep4": "在 MantisBT 中创建或更新一个问题；关联问题的状态将在此处同步。"
+        "setupStepsMantisbtStep4": "在 MantisBT 中创建或更新一个问题；关联问题的状态将在此处同步。",
+        "codeRepos": {
+          "empty": "尚未连接用于影响分析的存储库。请先<link>连接一个</link>。",
+          "unsupported": "{provider} 存储库无法向 TestPlanIt 发送 Webhook。",
+          "eventPullRequest": "拉取请求",
+          "eventPullRequestHelp": "当拉取请求被打开时，将其更改与目标分支进行分析，并生成一次测试运行。",
+          "eventPush": "推送到 {branch}",
+          "eventPushDefault": "推送到默认分支",
+          "eventPushHelp": "对基础分支的每次推送，分析推送的提交并生成一次测试运行。",
+          "setupGithub": "在 GitHub 中，打开存储库的“设置”→“Webhooks”，粘贴 URL 和密钥，将内容类型设置为 application/json，并选择“Pull requests”和“Pushes”事件。",
+          "setupGitlab": "在 GitLab 中，打开项目的“设置”→“Webhooks”，粘贴 URL，将密钥粘贴为密钥令牌，并启用“Merge request events”和“Push events”触发器。",
+          "setupGitea": "在 Gitea 中，打开存储库的“设置”→“Webhooks”，粘贴 URL 和密钥，将内容类型设置为 application/json，并选择“Pull Request”和“Push”事件。",
+          "setupAdo": "在 Azure DevOps 中，为“Pull request created”和“Code pushed”事件创建类型为 Web Hooks 的服务挂钩，粘贴 URL，并将您在此处输入的用户名和密码作为基本身份验证输入。",
+          "setupBitbucket": "在 Bitbucket 中，打开存储库的“设置”→“Webhooks”，粘贴 URL 和密钥，并选择“Pull request created”和“Repository push”触发器。",
+          "rotateConfirm": "轮换密钥将使当前 URL 和密钥失效；请在之后更新存储库的 Webhook 设置。",
+          "deleteConfirm": "删除此存储库 Webhook？拉取请求和推送将不再触发分析。",
+          "eventBranchPush": "推送到其他分支",
+          "eventBranchPushHelp": "针对基础分支分析推送到任何其他分支的每次推送，类似于拉取请求，并为每次推送生成一次测试运行。",
+          "baseBranch": "基础分支",
+          "baseBranchHelp": "对此分支的推送将单独进行分析；拉取请求和其他分支将与其进行比较。留空则使用连接的分支。"
+        },
+        "inboundEmptyState": "尚无入站 Webhook。<link>添加一个</link>以从您的问题跟踪器接收问题更新，或从已连接的存储库接收拉取请求和推送。",
+        "inboundChooserBitbucket": "Bitbucket",
+        "wizard": {
+          "description": "选择将向 TestPlanIt 发送 Webhook 的对象，然后将 URL 和密钥复制到该系统中。",
+          "stepConnect": "连接",
+          "sourceIssues": "问题跟踪器",
+          "sourceIssuesHelp": "使关联的问题与来自 {tracker} 的更新保持同步。",
+          "sourceIssuesHelpGeneric": "使关联的问题与项目问题集成的更新保持同步。",
+          "sourceRepositoryHelp": "当拉取请求被打开或提交被推送时，启动影响分析并生成测试运行。",
+          "noRepositoryAvailable": "所有已连接的存储库都已设置 Webhook，或无法发送 Webhook。",
+          "repositoryPlaceholder": "选择存储库"
+        }
       },
       "aiModels": {
         "description": "配置人工智能模型以实现智能测试用例生成和分析",
-        "availableModels": "项目默认值",
         "availableModelsDescription": "从系统管理员配置的模型中选择一个默认的 AI 模型用于此项目。",
         "currentModelSettings": "当前模型设置",
         "currentModelDescription": "当前激活的 AI 模型配置详情： {name}",
@@ -1953,28 +1935,20 @@
       },
       "parameters": {
         "title": "测试用例参数",
-        "tabDatasets": "共享数据集",
         "tabJunit": "迭代属性映射"
       },
       "datasets": {
-        "metaTitle": "共享数据集",
-        "title": "共享数据集",
         "description": "管理项目范围内的数据集，该项目中的任何测试用例都可以引用这些数据集。每次保存都会创建一个新的不可变版本。",
-        "navLabel": "共享数据集",
         "newButton": "新数据集",
         "emptyHeading": "暂无共享数据集",
         "emptyBody": "创建一个项目范围的数据集，供多个测试用例引用并绑定到特定版本。",
         "loadError": "无法加载数据集。",
         "retry": "再试一次",
         "columns": {
-          "name": "姓名",
-          "columns": "列",
           "rows": "行",
-          "version": "版本",
           "lastEdited": "最后编辑于",
           "owner": "所有者",
-          "assignments": "正在使用",
-          "actions": "行动"
+          "assignments": "正在使用"
         },
         "versionLabel": "v{version, number}",
         "assignmentsCount": "{count, plural, =0 {0 个案例} =1 {# 个案例} other {# 个案例}}",
@@ -1982,17 +1956,13 @@
         "columnsCount": "{count, plural, =0 {0 列} =1 {# 列} other {# 列}}",
         "actionsMenuLabel": "打开数据集操作",
         "actionOpen": "打开编辑器",
-        "actionDelete": "删除",
         "openLink": "打开",
         "create": {
           "title": "新的共享数据集",
           "description": "数据集是项目范围限定的，可供该项目中的每个测试用例使用。",
-          "nameLabel": "姓名",
           "namePlaceholder": "例如：客户账户",
-          "descriptionLabel": "描述",
           "descriptionPlaceholder": "关于此数据集包含内容的可选说明。",
           "submit": "创建数据集",
-          "cancel": "取消",
           "validationNameRequired": "姓名为必填项。",
           "validationNameTooLong": "名称长度不得超过120个字符。",
           "validationDescriptionTooLong": "描述字数必须少于2000个字符。",
@@ -2005,7 +1975,6 @@
           "descriptionStage2": "此数据集被 {count, plural, =1 {# 案例、} other {# 案例和}}案例使用。删除此数据集将从这些案例中移除共享数据集的分配。它们现有的测试运行不受影响（快照是不可变的）。",
           "confirm": "删除数据集",
           "confirmAnyway": "无论如何都要删除（{count, plural, =1 {# 情况} other {# 情况}}）",
-          "cancel": "取消",
           "error": "无法删除数据集"
         },
         "deleteSuccess": "已删除“{name}”",
@@ -2015,7 +1984,6 @@
           "loadError": "无法加载此数据集",
           "notFound": "未找到数据集",
           "notFoundDescription": "该数据集已被删除或您无权访问。",
-          "saveAction": "节省",
           "saving": "保存",
           "savedHint": "所有更改已保存至版本 {version, number}",
           "unsavedHint": "未保存的更改",
@@ -2030,7 +1998,6 @@
         "saveSuccess": "已保存版本 {version, number}",
         "saveSuccessBranched": "已保存版本 {newVersion, number} （分支自 v{fromVersion, number}）",
         "versionPicker": {
-          "label": "版本",
           "loadError": "无法加载版本",
           "currentItemLabel": "v{version, number} （当前）",
           "currentItemInitialLabel": "当前 — 暂无已保存版本",
@@ -2042,81 +2009,30 @@
         "datasetTabSharedEditorHint": "完成后点击“保存”。每次保存都会创建一个新版本。"
       },
       "quickScript": {
-        "title": "QuickScript",
         "description": "启用 QuickScript 并连接代码库，以进行 AI 辅助测试生成。",
         "enableLabel": "启用 QuickScript",
         "enableDescription": " 允许团队成员使用 QuickScript 将测试用例转换为自动化脚本。",
         "enabledToast": "已启用 QuickScript",
         "disabledToast": "QuickScript 已禁用",
         "noRepos": {
-          "title": "未配置任何代码仓库",
-          "adminDescription": "在为此项目配置代码上下文之前，请先建立存储库连接。",
-          "adminLink": "前往代码仓库",
-          "userDescription": "请联系系统管理员设置代码库连接。"
+          "adminDescription": "在为此项目配置代码上下文之前，请先建立存储库连接。"
         },
         "repository": {
           "title": "代码库",
           "description": "选择用于 AI 环境的代码存储库",
-          "placeholder": "选择一个代码仓库……",
-          "branchLabel": "分支",
           "branchPlaceholder": "留空则使用仓库默认分支"
         },
         "pathPatterns": {
-          "title": "路径模式",
           "description": "指定要包含的文件。每一行都包含一个基本路径和一个 glob 模式。例如：`path=tests/e2e/pages + pattern=*` 直接包含该文件夹中的所有文件；`path=src + pattern=**/*.test.ts` 递归包含所有测试文件。",
-          "pathLabel": "小路",
           "pathPlaceholder": "测试/端到端/页面",
-          "patternLabel": "图案",
-          "addPath": "添加路径",
-          "previewFiles": "预览文件",
-          "scanningRepo": "正在扫描存储库文件… ({seconds}s)",
-          "files": "{count, plural, one {# 文件} other {# 文件集}}",
-          "truncatedBadge": "结果可能不完整（受提供商限制）",
           "exceedsLimit": "总大小超出 AI 上下文限制 {overflow}。导出过程中，文件会根据与待导出测试用例的相关性进行排序——相关性最高的文件优先导出，当达到预算上限时，相关性较低的文件将被跳过。如果您希望更精确地控制要导出的文件，请缩小路径模式。"
         },
-        "preview": {
-          "resolvingBranch": "正在解析分支…",
-          "scanningFiles": "正在扫描 {scope}… 中的文件",
-          "scanningFilesCount": "正在扫描 {scope}… 中的文件（已找到{count, number}）",
-          "filtering": "对 {count, number} 个文件应用过滤器…",
-          "rateLimited": "已被提供程序限速 — 将在 {seconds, number} 秒后重试…"
-        },
         "cache": {
-          "title": "缓存设置",
           "description": "Valkey 会缓存文件，以便在 AI 生成过程中快速访问。",
-          "enableLabel": "启用文件缓存",
           "disabledWarning": "文件缓存已禁用。导出时，代码库文件将直接从您的代码提供商处获取，不会存储在 TestPlanIt 中。AI 驱动的 QuickScript 仍将包含代码上下文，但每次导出都会向您的代码库发出实时请求。",
-          "ttlBefore": "缓存",
-          "ttlDays": "{count, plural, other {天}}",
-          "ttlAriaLabel": "缓存持续天数",
-          "statusTitle": "缓存状态",
-          "refreshButton": "刷新缓存",
-          "listingFiles": "文件列表…",
-          "cachingFiles": "缓存 {count} 个文件…",
-          "statusNeverFetched": "从未获取",
-          "statusPending": "令人耳目一新……",
-          "lastFetched": "最后获取时间",
-          "filesCached": "文件已缓存",
-          "contentsCached": "内容已缓存",
-          "contentsIncomplete": "仅缓存了 {total} 个文件内容中的 {cached} 个 — 生成的脚本将不会使用缺失的文件。请再次刷新以完成。",
-          "totalSize": "总尺寸"
+          "contentsIncomplete": "仅缓存了 {total} 个文件内容中的 {cached} 个 — 生成的脚本将不会使用缺失的文件。请再次刷新以完成。"
         },
-        "save": "保存配置",
         "saved": "代码上下文配置已保存",
-        "saveError": "配置保存失败",
-        "listError": "无法列出存储库文件",
-        "contentsError": "文件内容缓存失败",
-        "networkError": "缓存刷新期间出现网络错误",
-        "refreshSuccess": "缓存已刷新： {fileCount} 个文件（已缓存{contentCached} 个内容）",
-        "refreshRateLimited": "缓存已刷新：列出了 {fileCount} 个文件，缓存了 {contentCached}/{fileCount} 个内容（速率受限——请再次刷新以完成）",
-        "refreshComplete": "缓存已刷新：{fileCount} 个文件",
-        "refreshInProgress": "缓存刷新仍在后台运行。完成后将在此处更新。",
-        "validation": {
-          "pathRequired": "路径是必需的",
-          "patternRequired": "需要图案",
-          "repositoryRequired": "需要存储库",
-          "pathPatternRequired": "至少需要一种路径模式"
-        },
         "exportTemplates": {
           "title": "导出模板",
           "description": "为该项目分配导出模板。只有分配的模板才会显示在导出对话框中。",
@@ -2130,17 +2046,76 @@
           "saved": "模板分配已保存",
           "saveError": "模板分配保存失败"
         },
-        "disconnect": "断开存储库",
-        "confirmDisconnect": "您确定要断开“{name}”与此项目的连接吗？",
-        "disconnectWarningTitle": "断开此存储库的连接将导致：",
-        "disconnectWarning1": "删除所有缓存的存储库文件",
-        "disconnectWarning2": "移除路径模式和分支配置",
         "disconnectWarning3": "停止在 AI 生成的导出文件中包含代码上下文",
         "disconnectSuccess": "代码库已断开连接",
         "disconnectError": "断开代码库连接失败"
       },
+      "codeRepository": {
+        "cache": {
+          "cachingFiles": "正在缓存 {count} 个文件……",
+          "contentsCached": "内容已缓存",
+          "enableLabel": "启用文件缓存",
+          "filesCached": "文件已缓存",
+          "lastFetched": "最后获取时间",
+          "listingFiles": "正在列出文件……",
+          "refreshButton": "刷新缓存",
+          "statusNeverFetched": "从未获取",
+          "statusPending": "正在刷新……",
+          "statusTitle": "缓存状态",
+          "title": "缓存设置",
+          "totalSize": "总大小",
+          "ttlAriaLabel": "缓存持续天数",
+          "ttlBefore": "缓存",
+          "ttlDays": "{count, plural, other {天}}"
+        },
+        "confirmDisconnect": "您确定要断开“{name}”与此项目的连接吗？",
+        "contentsError": "文件内容缓存失败",
+        "disconnect": "断开存储库",
+        "disconnectWarningTitle": "断开此存储库的连接将导致：",
+        "listError": "无法列出存储库文件",
+        "networkError": "缓存刷新期间出现网络错误",
+        "noRepos": {
+          "adminLink": "前往代码存储库",
+          "title": "未配置任何代码存储库",
+          "userDescription": "请联系系统管理员设置代码存储库连接。"
+        },
+        "pathPatterns": {
+          "addPath": "添加路径",
+          "files": "{count, plural, other {# 个文件}}",
+          "pathLabel": "路径",
+          "patternLabel": "模式",
+          "previewFiles": "预览文件",
+          "scanningRepo": "正在扫描存储库文件…（{seconds}秒）",
+          "title": "路径模式",
+          "truncatedBadge": "结果可能不完整（受提供商限制）"
+        },
+        "preview": {
+          "filtering": "正在对 {count, number} 个文件应用过滤器……",
+          "rateLimited": "已被提供程序限速 — 将在 {seconds, number} 秒后重试……",
+          "resolvingBranch": "正在解析分支……",
+          "scanningFiles": "正在扫描 {scope} 中的文件……",
+          "scanningFilesCount": "正在扫描 {scope} 中的文件…（已找到 {count, number} 个）"
+        },
+        "refreshComplete": "缓存已刷新：{fileCount} 个文件",
+        "refreshInProgress": "缓存刷新仍在后台运行。完成后将在此处更新。",
+        "refreshRateLimited": "缓存已刷新：列出了 {fileCount} 个文件，缓存了 {contentCached}/{fileCount} 个内容（速率受限——请再次刷新以完成）",
+        "refreshSuccess": "缓存已刷新：{fileCount} 个文件（已缓存 {contentCached} 个内容）",
+        "repository": {
+          "branchLabel": "分支",
+          "placeholder": "选择一个代码仓库……"
+        },
+        "save": "保存配置",
+        "saveError": "配置保存失败",
+        "validation": {
+          "pathPatternRequired": "至少需要一种路径模式",
+          "pathRequired": "路径是必需的",
+          "patternRequired": "需要模式",
+          "repositoryRequired": "需要存储库"
+        },
+        "disconnectWarningCache": "删除所有缓存的存储库文件",
+        "disconnectWarningPatterns": "移除路径模式和分支配置"
+      },
       "advanced": {
-        "title": "先进的",
         "description": "每个项目都设有针对特定功能的开关。新增的开关将在此处显示。",
         "recordKey": {
           "label": "项目代码",
@@ -2237,115 +2212,103 @@
         }
       },
       "impact": {
-        "title": "影响分析",
-        "description": "启用测试影响分析并连接被测应用程序的代码仓库。",
+        "description": "启用测试影响分析并连接被测应用程序的存储库。",
         "enableLabel": "启用影响分析",
         "enableDescription": "允许团队成员在创建测试运行时从代码更改中选择受影响的测试。",
         "enabledToast": "影响分析已启用",
         "disabledToast": "影响分析已禁用",
         "noRepos": {
-          "title": "未配置任何代码仓库",
-          "adminDescription": "在为此项目配置影响分析之前，请先建立仓库连接。",
-          "adminLink": "前往代码仓库",
-          "userDescription": "请联系系统管理员设置代码库连接。"
+          "adminDescription": "在为此项目配置影响分析之前，请先建立仓库连接。"
         },
         "repository": {
           "title": "应用程序仓库",
-          "description": "选择存放被测应用程序的仓库。",
-          "placeholder": "选择一个代码仓库……",
-          "branchLabel": "分支",
+          "description": "选择一个包含被测应用程序部分内容的存储库。跨多个服务测试的项目可以为每个服务连接一个存储库。",
           "branchPlaceholder": "选择一个分支……",
           "branchInputPlaceholder": "留空则使用仓库默认分支",
-          "defaultBranch": "仓库默认分支",
           "branchesUnavailable": "无法列出分支：{error}",
           "branchesFallbackHint": "请改为输入分支名称。"
         },
         "pathPatterns": {
-          "title": "路径模式",
           "description": "要包含哪些应用程序文件。每行结合了一个基础路径和一个 glob 模式。例如：path=src + pattern=**/* 将包含 src 下的所有内容。",
-          "pathLabel": "路径",
-          "pathPlaceholder": "src",
-          "patternLabel": "模式",
-          "addPath": "添加路径",
-          "previewFiles": "预览文件",
-          "scanningRepo": "正在扫描存储库文件… ({seconds}s)",
-          "files": "{count, plural, other {# 个文件}}",
-          "truncatedBadge": "结果可能不完整（受提供商限制）"
-        },
-        "preview": {
-          "resolvingBranch": "正在解析分支…",
-          "scanningFiles": "正在扫描 {scope} 中的文件…",
-          "scanningFilesCount": "正在扫描 {scope}… 中的文件（已找到{count, number}）",
-          "filtering": "对 {count, number} 个文件应用过滤器…",
-          "rateLimited": "已被提供程序限速 — 将在 {seconds, number} 秒后重试…"
+          "pathPlaceholder": "src"
         },
         "cache": {
-          "title": "缓存设置",
           "description": "文件缓存在 Valkey 中，以保持代码图钉文件选择器和仓库标记的快速响应。",
-          "enableLabel": "启用文件缓存",
           "disabledWarning": "文件缓存已禁用。仓库标记不会被扫描，代码图钉文件选择器会在每次打开时从您的提供商实时列出文件。",
-          "ttlBefore": "缓存",
-          "ttlDays": "{count, plural, other {天}}",
-          "ttlAriaLabel": "缓存持续天数",
-          "statusTitle": "缓存状态",
-          "refreshButton": "刷新缓存",
-          "listingFiles": "正在列出文件…",
-          "cachingFiles": "缓存 {count} 个文件…",
-          "statusNeverFetched": "从未获取",
-          "statusPending": "正在刷新……",
-          "lastFetched": "最后获取时间",
-          "filesCached": "文件已缓存",
-          "contentsCached": "内容已缓存",
-          "contentsIncomplete": "仅缓存了 {total} 个文件内容中的 {cached} 个。请再次刷新以完成。",
-          "totalSize": "总尺寸"
+          "contentsIncomplete": "仅缓存了 {total} 个文件内容中的 {cached} 个。请再次刷新以完成。"
         },
         "tickets": {
           "title": "关联工单",
-          "description": "提交信息中提及工单编号（如 PROJ-123、#42、AB#42）时，将在所有关联的测试用例上生成整文件代码定位标记，以便日后这些文件的更改能够再次找到相应用例。",
+          "description": "提及工单编号（如 PROJ-123、#42、AB#42）的提交会在关联该工单的每个测试用例上生成代码图钉——如果差异中显示了提交更改的函数或类，则图钉指向这些函数或类，否则指向整个文件——这样该代码日后的更改就能再次找到这些用例。TestPlanIt 尚未持有的已命名工单会从项目的问题跟踪器中导入，以便进行关联。",
           "enableLabel": "从提交信息推导代码定位标记",
-          "enableDescription": "每次刷新缓存时扫描分支上的最近提交。关闭此选项后，分析将仅从已分析的提交中读取工单编号。",
-          "lastScan": "上次扫描：{date}",
-          "never": "尚未扫描",
-          "summary": "已扫描 {commits, plural, other {# 次提交}} · {matched} 次提及关联工单 · 已创建 {created} 个 · 已更新 {updated} 个 · 已移除 {removed} 个",
+          "enableDescription": "每次刷新缓存时扫描该分支上的最近提交。关闭此选项后，分析将仅从被分析的提交中读取工单键；手动扫描仍会运行。",
           "skippedLarge": "{count, plural, other {有 # 次提交}}因过大而被跳过，未生成定位标记。",
-          "fetchCapped": "并非所有匹配的提交都已读取；其余的将在下次刷新时处理。",
-          "error": "扫描失败：{error}"
+          "fetchCapped": "并非本次扫描已读取了所有提及关联工单的提交的文件；其余的将在下次扫描时处理。",
+          "scanRecent": "重新扫描最近提交",
+          "scanFull": "扫描完整历史",
+          "scanFullHint": "完整历史会遍历该分支上的每次提交，并为现有工单回填图钉。已读取的提交将从缓存中获取，若遍历因达到上限而停止，下次将从该处继续。",
+          "scanStarted": "工单扫描已排队。此卡片将随扫描运行而更新。",
+          "scanStillRunning": "工单扫描仍在后台运行。完成后将在此处更新。",
+          "scanFailedToStart": "无法启动工单扫描",
+          "runningRecent": "正在扫描最近提交……",
+          "runningFull": "正在扫描完整历史……",
+          "runningProgress": "已读取 {commits, number} 个提交 · {matched, number} 个提及关联工单 · 其中已检查 {fetched, number} 个",
+          "fullBadge": "完整历史",
+          "imported": "{imported, plural, =0 {未从跟踪器中导入新工单。} other {已从跟踪器中导入 # 个工单。}}",
+          "fullCapped": "遍历在到达分支起点之前于 {count, number} 个提交处停止。请再次运行“扫描完整历史”以从停止处继续。",
+          "stale": "于 {date} 启动的扫描从未返回结果——工作进程可能已重启。请再次将其加入队列以继续。",
+          "summaryCommits": "已读取 {commits, plural, other {# 个提交}}{cached, plural, =0 {} other { （其中 {cached, number} 个来自提交缓存）}} · {naming, number} 个提及了工单 · {tickets, plural, other {# 个不同工单}}",
+          "summaryPins": "图钉：已创建 {created, number} 个 · 已更新 {updated, number} 个 · 已移除 {removed, number} 个",
+          "noLinkedHint": "只有当测试用例与工单关联后，工单才会为其生成图钉。请将用例关联到已导入的工单，然后重新扫描。",
+          "importFailuresTitle": "跟踪器中未找到的键（{shown} / {total}）：",
+          "windowCapped": "仅读取了最新的 {count, number} 个提交（受近期窗口上限限制）。请使用“扫描完整历史”以读取更早的提交。",
+          "runningWalk": "目前已读取 {commits, number} 个提交{cached, plural, =0 {} other { （其中 {cached, number} 个来自提交缓存）}} — 遍历完成后将查找工单",
+          "runningImport": "已读取 {commits, number} 个提交 · 正在导入工单：已在跟踪器中查找 {lookups, number} 个 · 已导入 {imported, number} 个",
+          "summaryCommitsOnly": "{commits, plural, other {已读取 # 个提交}}",
+          "importSkipped": "{skipped, plural, other {# 个键}}尚未查找，因为每次扫描对跟踪器的查找次数有限。请再次运行扫描以继续。",
+          "cancelRequested": "已请求取消。扫描将在下一步停止；已读取的提交仍保留在缓存中。",
+          "cancelled": "扫描已于 {date} 取消。取消前已读取的提交保留在提交缓存中；图钉未更新。",
+          "importMoved": "{moved, plural, other {# 个键是}}已导入工单的旧名称；它们在跟踪器中被移动或重命名。",
+          "importFailed": "{failed, plural, other {# 个键}}在跟踪器中未找到，列于下方。",
+          "summaryMatched": "{matched, plural, other {# 个提交}}提及了与测试用例关联的工单",
+          "summarySymbolPins": "（在创建的图钉中，有 {count, number} 个指向函数或类，而非整个文件。）"
         },
         "markers": {
           "title": "仓库标记",
           "description": "每次缓存刷新时，像 @testplanit case:123 这样的注释标注以及 .testplanit/testmap.yml 中的条目都会成为代码图钉。",
-          "lastScan": "上次扫描：{date}",
-          "never": "尚未扫描",
           "skippedPrivacy": "已跳过：文件缓存已禁用。",
           "skippedPartial": "已跳过：文件内容仅部分缓存。",
           "summary": "{annotations, plural, other {# 个注释}} · {mapEntries, plural, other {# 个映射条目}} · 已创建 {created} 个 · 已更新 {updated} 个 · 已移除 {removed} 个",
-          "problems": "{count, plural, other {# 个问题}}",
-          "error": "扫描失败：{error}"
+          "problems": "{count, plural, other {# 个问题}}"
         },
-        "save": "保存配置",
         "saved": "影响分析配置已保存",
-        "saveError": "配置保存失败",
-        "listError": "无法列出存储库文件",
-        "contentsError": "文件内容缓存失败",
-        "networkError": "缓存刷新期间出现网络错误",
-        "refreshSuccess": "缓存已刷新： {fileCount} 个文件（已缓存{contentCached} 个内容）",
-        "refreshRateLimited": "缓存已刷新：列出了 {fileCount} 个文件，缓存了 {contentCached}/{fileCount} 个内容（速率受限——请再次刷新以完成）",
-        "refreshComplete": "缓存已刷新：{fileCount} 个文件",
-        "refreshInProgress": "缓存刷新仍在后台运行。完成后将在此处更新。",
-        "validation": {
-          "pathRequired": "路径是必需的",
-          "patternRequired": "需要模式",
-          "repositoryRequired": "需要存储库",
-          "pathPatternRequired": "至少需要一种路径模式"
-        },
-        "disconnect": "断开存储库",
-        "confirmDisconnect": "您确定要断开“{name}”与此项目的连接吗？",
-        "disconnectWarningTitle": "断开此存储库的连接将导致：",
         "disconnectWarning1": "移除 {count, plural, other {# 个代码图钉}} 以及此仓库的分析历史记录",
-        "disconnectWarning2": "删除所有缓存的存储库文件",
-        "disconnectWarning3": "移除路径模式和分支配置",
         "disconnectSuccess": "应用程序仓库已断开连接",
-        "disconnectError": "断开应用程序仓库连接失败"
+        "disconnectError": "断开应用程序仓库连接失败",
+        "repositories": {
+          "title": "已连接的存储库",
+          "description": "该项目分析的所有存储库。每个存储库都有各自的分支、路径模式、缓存和代码图钉。",
+          "connect": "连接存储库",
+          "allConnected": "所有已注册的存储库均已连接。",
+          "columnCache": "缓存",
+          "cacheDisabled": "缓存已关闭",
+          "edit": "编辑连接",
+          "connectTitle": "连接存储库",
+          "editTitle": "编辑 {name}",
+          "view": "查看连接",
+          "connectDescription": "选择一个已注册的被测应用程序存储库，并指定要读取的分支和路径。",
+          "editDescription": "更改此连接的分支、路径模式、缓存和工单扫描设置。",
+          "viewDescription": "此存储库的连接方式。可在此处刷新缓存或运行工单扫描；使用“编辑”更改设置。",
+          "empty": "尚未连接任何存储库",
+          "emptyDescription": "连接被测应用程序的存储库以开始分析更改。",
+          "lastScan": "{created, plural, other {上次扫描创建了 # 个图钉}}",
+          "scanFailed": "上次扫描失败",
+          "scanCancelled": "上次扫描已取消"
+        },
+        "initialScanStarted": "正在获取存储库文件并扫描存储库标记和关联工单……",
+        "scanError": "扫描失败：{error}",
+        "scanLastScan": "上次扫描：{date}",
+        "scanNever": "尚未扫描"
       }
     },
     "matrix": {
@@ -2355,7 +2318,6 @@
       "loadError": "无法加载矩阵视图。请重试或缩小筛选范围。",
       "cellCapShort": "此矩阵将生成 {cells, number} 个单元格，超出 {threshold, number} 个单元格的限制。请缩小筛选范围以继续。",
       "caseColumnHeader": "案例/参数行",
-      "cellNotRun": "未经测试",
       "cellSummary": "{pass, number} 通过， {fail, number} 失败， {notRun, number} 未运行",
       "popoverTitle": "{count, plural, =1 {# 迭代次数} other {# 迭代次数}}",
       "iterationUnlabeled": "迭代 #{index, number}",
@@ -2364,8 +2326,6 @@
       "filterStatus": "{count, plural, =0 {状态} one {状态 (#)} other {状态 (#)}}",
       "filterConfig": "{count, plural, =0 {配置} one {配置 (#)} other {配置 (#)}}",
       "filterDataset": "{count, plural, =0 {数据集} one {数据集 (#)} other {数据集 (#)}}",
-      "filterStatusLabel": "地位",
-      "filterConfigLabel": "配置",
       "filterDatasetLabel": "数据集",
       "filterStatusPlaceholder": "任何状态",
       "filterConfigPlaceholder": "任何配置",
@@ -2374,12 +2334,10 @@
       "filterDateTo": "到",
       "configNone": "（无配置）",
       "clearFilter": "清除",
-      "filterEmpty": "暂无选项",
       "resetFilters": "重置筛选器",
       "exportCsv": "导出 CSV 文件",
       "legendPassedName": "通过",
       "legendFailedName": "失败的",
-      "legendUntestedName": "未经测试",
       "legendClickHint": "点击任意单元格即可查看迭代详情",
       "cellCapTitle": "矩阵将渲染 {cellCount, number} 个单元格（限制 {threshold, number}）",
       "cellCapSuggestionFilterCases": "尝试筛选出更少的测试用例——这是影响最大的因素。",
@@ -2524,7 +2482,6 @@
       "importStarted": "导入已开始",
       "kindRelease": "版本",
       "kindSprint": "迭代",
-      "selectAll": "全选",
       "searchPlaceholder": "搜索版本和迭代……",
       "emptyFiltered": "没有符合筛选条件的里程碑。",
       "partialWarning": "无法获取部分 Jira 项目：",
@@ -2535,14 +2492,12 @@
     "sync": {
       "managedByJira": "由 Jira 管理",
       "lastSynced": "上次同步：{time}",
-      "openInJira": "在 Jira 中打开",
       "providerJira": "Jira",
       "sourceBadge": "{provider} · {kind} · {state}",
       "syncNow": "立即同步",
       "unlinkMenuItem": "取消与 {provider} 的链接",
       "unlinkConfirmTitle": "取消链接里程碑？",
       "unlinkConfirmDescription": "这将停止与跟踪器的同步：字段将再次变为可编辑状态，已同步的问题链接将变为手动链接（您可以保留或移除），之后可以通过重新导入该工件来重新建立链接。",
-      "unlinkConfirmAction": "取消链接",
       "unlinkSuccess": "里程碑已与跟踪器取消链接。",
       "unlinkError": "取消里程碑链接失败。",
       "sourceRemoved": "在 {provider} 中已移除源",
@@ -2566,19 +2521,15 @@
       "tooltipAhead": "领先理想值 {count, number} 个"
     },
     "members": {
-      "cardTitle": "问题",
       "casesOtherProjects": "{count, plural, other {# 个其他项目中的测试用例}}",
       "inScope": "范围内",
       "foundInTesting": "测试中发现",
       "foundInTestingEmpty": "测试中未发现问题。",
       "inScopeCrossBadge": "范围内",
       "refresh": "刷新",
-      "columnKey": "名称",
-      "columnStatus": "状态",
       "columnCoverage": "覆盖率",
       "columnSource": "来源",
       "sourceSynced": "已同步",
-      "sourceManual": "手动",
       "coveragePassed": "通过",
       "coverageFailed": "失败",
       "coverageInProgress": "进行中",
@@ -2589,7 +2540,6 @@
       "filterAllTypes": "所有类型",
       "empty": "尚无问题链接到此里程碑。",
       "emptyFiltered": "没有符合当前筛选条件的问题。",
-      "unlink": "取消链接",
       "managedByJira": "由 Jira 管理 — 请在 Jira 中的版本/迭代中移除它",
       "linkSuccess": "问题已链接到此里程碑。",
       "linkError": "将问题链接到此里程碑失败。",
@@ -2603,7 +2553,6 @@
       "overflowImportSuccess": "导入已开始 — 问题将在同步后显示。",
       "overflowImportError": "从 Jira 导入成员问题失败。",
       "emptyCta": "链接一个问题以开始使用。",
-      "columnDescription": "描述",
       "unlinkConfirmTitle": "取消链接问题？",
       "unlinkConfirmDescription": "这将从此里程碑中移除该问题。问题本身会被保留，之后可以再次链接。",
       "totalsUncovered": "{count, plural, other {# 个未覆盖问题}}",
@@ -2627,7 +2576,6 @@
       "deleteDescription": "您确定要删除{count, plural, other {这些会话}}吗？"
     },
     "auditLog": {
-      "trigger": "活动",
       "description": "此会话记录的所有更改。"
     },
     "title": "{count, plural, =1 {会话} other {会话}}",
@@ -2656,9 +2604,6 @@
       "viewSessionDetails": "查看会话"
     },
     "noMilestone": "没有里程碑",
-    "milestoneGroup": {
-      "sessionCount": "{count, plural, other {# 个会话}}"
-    },
     "completeDialog": {
       "noWorkflowsConfigured": "此项目未配置任何完成工作流程。请在管理设置中配置工作流程以启用会话完成功能。"
     },
@@ -2729,7 +2674,6 @@
     "version": {
       "title": "会话历史记录视图",
       "notFound": "未找到会话版本。",
-      "selectVersion": "选择版本",
       "backToSession": "返回会话",
       "backToLatest": "返回最新版本",
       "versionInfo": {
@@ -2846,9 +2790,6 @@
       "preferences": {
         "title": "偏好"
       },
-      "access": {
-        "title": "使用权"
-      },
       "assignments": {
         "title": "作业",
         "empty": "没有待处理的作业。",
@@ -2863,7 +2804,6 @@
         "userName": "目录用户名",
         "givenName": "名",
         "familyName": "姓",
-        "jobTitle": "标题",
         "userType": "用户类型",
         "employeeNumber": "员工编号",
         "department": "部门",
@@ -2897,7 +2837,6 @@
         }
       },
       "changePasswordModal": {
-        "buttonText": "更改密码",
         "setPasswordButtonText": "设置密码",
         "description": "请输入您当前的密码和新密码以更改您的帐户密码。此操作只会更改您内部管理的密码。如果您通过单点登录 (SSO) 登录，则该密码不会更改。",
         "setPasswordDescription": "您已通过单点登录 (SSO) 登录，但尚未设置本地密码。请输入新密码以启用帐户的邮箱/密码登录功能。",
@@ -2919,8 +2858,6 @@
         "loadMore": "加载中",
         "viewDetails": "查看详情",
         "columnAction": "操作",
-        "columnEntityType": "类型",
-        "columnEntityName": "名称",
         "columnTimestamp": "时间戳",
         "allActions": "所有操作",
         "allTypes": "所有类型",
@@ -2999,8 +2936,7 @@
       "remove": "移除头像",
       "changeProfilePicture": "更改个人资料图片",
       "notAuthenticated": "您必须登录才能上传头像。"
-    },
-    "deletedUser": "已删除用户"
+    }
   },
   "userMenu": {
     "viewProfile": "查看个人资料",
@@ -3035,7 +2971,6 @@
       "historyView": "测试用例历史记录视图"
     },
     "auditLog": {
-      "trigger": "活动",
       "description": "此测试用例记录的所有更改。"
     },
     "fields": {
@@ -3123,7 +3058,6 @@
     },
     "dragDrop": {
       "move": "移动",
-      "copy": "复制",
       "promptTitle": "你想做什么？",
       "copying": "正在复制…",
       "copyComplete": "{count, plural, =1 {已复制 1 个案例至 {folder}} other {已复制 # 个案例至 {folder}}}{dest, select, samename {} crossProject { 位于 {projectName}} other {}}",
@@ -3179,7 +3113,6 @@
       "addToRunDraftBlocked": "如果此项目的“从测试运行中排除草稿案例”选项已启用，则无法将草稿案例添加到运行中。",
       "copyMoveToProject": "复制/移动",
       "export": "出口",
-      "quickScript": "QuickScript",
       "parameterizedStatusReadOnly": "状态由迭代结果计算得出——点击打开",
       "cannotReorderAcrossPages": "无法跨多个页面重新排列测试用例。要重新排序，请从页面大小菜单中选择“全部”以在一个页面上查看所有用例，或取消选择其他页面上的用例。您仍然可以将选定的用例拖到文件夹中。",
       "exportModal": {
@@ -3307,7 +3240,6 @@
       "restoreDescriptionNew": "您在 {age} 开始创建一个测试用例，但从未保存。恢复您所写的内容，或放弃它并重新开始。",
       "restoreStaleWarning": "自您编写草稿以来，此测试用例已被其他人保存。恢复将在您保存时替换他们的内容。",
       "restoreDiscard": "放弃",
-      "restoreRestore": "恢复",
       "bannerText": "您在 {age} 对此测试用例进行了未保存的更改。",
       "bannerAction": "继续编辑",
       "bannerDiscard": "放弃它们"
@@ -3346,7 +3278,6 @@
     "views": {
       "byAutomation": "自动化",
       "byParameterized": "参数化",
-      "byAttachments": "附件",
       "byReview": "审查",
       "allTemplates": "所有模板",
       "allStates": "所有州",
@@ -3430,7 +3361,6 @@
         "markdown": "Markdown"
       },
       "columns": {
-        "all": "全部",
         "visible": "可见的"
       },
       "delimiter": {
@@ -3460,13 +3390,10 @@
         "multi": "每步多行"
       },
       "comingSoon": "即将推出",
-      "exporting": "出口...",
       "exportError": "导出失败，请重试。"
     },
     "quickScript": {
-      "title": "QuickScript",
       "description": "使用模板或人工智能将选定的测试用例转换为自动化脚本。",
-      "templatePlaceholder": "选择一个模板……",
       "searchPlaceholder": "搜索模板...",
       "noTemplatesFound": "未找到模板。",
       "outputModeLabel": "输出模式",
@@ -3519,7 +3446,6 @@
       "compareButton": "比较",
       "viewCaseDetails": "查看案件详情",
       "selectAll": "全选",
-      "selectRow": "选择行",
       "selected": "{count, plural, one {# 已选择} other {# 已选择}}",
       "bulkDismiss": "非重复项 ({count, number})",
       "bulkLink": "链接为相关（{count, number}）",
@@ -3602,7 +3528,6 @@
         "urlInput": "页面网址",
         "urlInputPlaceholder": "https://example.com/docs",
         "urlMode": "这个网址包含什么内容？",
-        "urlModeRequirements": "要求",
         "urlModeRequirementsHint": "页面描述了要构建的内容",
         "urlModeApplication": "应用",
         "urlModeApplicationHint": "Page 是要测试的应用程序",
@@ -3624,7 +3549,6 @@
       "selectTemplate": {
         "title": "选择测试用例模板",
         "description": "选择用于生成测试用例的模板。人工智能将根据此模板填充字段。",
-        "placeholder": "选择一个模板……",
         "fieldsDescription": "选择人工智能应自动填充的字段。必填字段始终包含在内。",
         "requiredOnly": "仅需"
       },
@@ -3667,7 +3591,6 @@
       "expandProgress": "{done, number} 的 {total, number} 生成",
       "import": "{count, plural, =0 {导入测试用例} =1 {导入 1 个测试用例} other {导入 # 个测试用例}}",
       "importing": "{count, plural, =0 {正在导入测试用例...} =1 {正在导入 1 个测试用例...} other {正在导入 # 个测试用例...}}",
-      "openInExternalSystem": "打开方式 {provider}",
       "externalSystem": "外部系统",
       "autoGenerateTags": "自动为测试用例生成标签",
       "includeParametersLabel": "生成参数和初始数据集",
@@ -3834,7 +3757,6 @@
       "renameTitle": "重命名已保存的视图",
       "renamed": "已保存的视图已更新",
       "renameFailed": "无法更新视图，请重试。",
-      "delete": "删除",
       "deleteTitle": "删除已保存的视图？",
       "deleteConfirm": "“{name}”将从您已保存的视图中移除。此操作无法撤销。",
       "deleted": "已保存的视图已删除",
@@ -3847,12 +3769,9 @@
       "addFailed": "无法添加标记",
       "addSuccess": "标记已添加",
       "anchoredAt": "锚定于 {sha}",
-      "cancel": "取消",
       "caseLabel": "测试用例",
-      "casePlaceholder": "搜索测试用例……",
       "contentUnavailable": "文件内容不可用。",
       "description": "此用例所涵盖的代码。标记块内的更改会将该用例纳入影响分析。",
-      "dismissStale": "关闭",
       "duplicate": "此标记已存在。",
       "empty": "尚无代码标记。",
       "endLine": "结束行",
@@ -3860,11 +3779,9 @@
       "errorLineOutOfRange": "行范围超出了文件范围。",
       "errorSnippetTooLarge": "标记的代码块过大。",
       "errorSymbolNotFound": "文件中未找到该符号。",
-      "fileLabel": "文件",
       "filePlaceholder": "搜索文件……",
       "filesCached": "{count, plural, other {已缓存 # 个文件}} · {date}",
       "filesLive": "实时列出存储库中的文件",
-      "globLabel": "模式",
       "globMatches": "{count, plural, =0 {没有匹配的缓存文件} other {# 个缓存文件匹配}}",
       "globPlaceholder": "src/payments/**",
       "kind": "类型",
@@ -3877,30 +3794,21 @@
       "location": "位置",
       "managedTooltip": "由存储库管理。请在代码中编辑标记。",
       "noFilesCached": "没有缓存的文件列表。请让项目管理员刷新存储库缓存。",
-      "noteLabel": "备注",
       "notePlaceholder": "此用例为何涵盖此代码（可选）",
       "reanchor": "重新锚定",
       "reanchorFailed": "无法重新锚定标记",
       "reanchorSuccess": "标记已重新锚定",
-      "remove": "移除",
       "removeConfirm": "移除此标记？",
       "removeFailed": "无法移除标记",
       "removeSuccess": "标记已移除",
-      "source": "来源",
-      "sourceAi": "AI",
       "sourceAnnotation": "注释",
-      "sourceIssue": "工单",
-      "sourceManual": "手动",
       "sourceMapfile": "映射文件",
-      "staleBadge": "过时",
       "staleFileDeleted": "文件已删除",
       "staleSnippetNotFound": "未找到行",
       "staleSymbolNotFound": "未找到符号",
       "staleTooltip": "在分支顶端未能找到标记的代码块：{reason}。",
       "startLine": "起始行",
-      "submit": "添加标记",
       "symbolHint": "声明通过名称在文件中定位。",
-      "symbolLabel": "符号",
       "symbolNoneDetected": "未检测到符号，请输入名称。",
       "symbolPlaceholder": "functionName",
       "symbolSelectPlaceholder": "选择或输入符号……",
@@ -3909,14 +3817,13 @@
       "editDialogTitle": "编辑此标记",
       "editDialogDescription": "文件和标记类型保持不变。如需更改，请移除此标记并添加一个新的。",
       "editAction": "编辑标记",
-      "saveChanges": "保存更改",
       "symbolSearchPlaceholder": "搜索符号……",
       "symbolUseTyped": "使用“{symbol}”",
       "title": "代码标记",
       "viewerFailed": "无法加载文件。",
       "viewerLoading": "正在加载文件…",
       "viewerTooLarge": "此文件过大，无法显示。请改为输入行号。",
-      "wholeFile": "整个文件"
+      "repositoriesCount": "{count, plural, other {# 个代码仓库}}"
     },
     "diffView": {
       "added": "新增行",
@@ -3947,15 +3854,13 @@
     "noProject": "无项目",
     "description": "使用标签管理和组织您的测试用例和会话",
     "detail": {
-      "title": "标签详情",
       "filterPlaceholder": "筛选项目...",
       "noResults": "未找到任何物品",
       "noFilterResults": "没有符合当前筛选条件的商品。",
       "filters": {
         "hideCompletedSessions": "隐藏已完成的会话",
         "hideCompletedTestRuns": "隐藏已完成的测试运行",
-        "caseTypeLabel": "案件类型",
-        "allCases": "全部"
+        "caseTypeLabel": "案件类型"
       }
     },
     "manageTags": {
@@ -3977,9 +3882,7 @@
       "tooLarge": "此文件过大，无法预览。",
       "empty": "此文档似乎为空。",
       "download": "下载以查看",
-      "slideCounter": "第 {current} 张幻灯片，共 {total} 张",
-      "previousSlide": "上一张幻灯片",
-      "nextSlide": "下一张幻灯片"
+      "slideCounter": "第 {current} 张幻灯片，共 {total} 张"
     }
   },
   "reviews": {
@@ -4009,7 +3912,6 @@
     },
     "transitionGate": {
       "blockedByGate": "此转换需要获得“{gateName}”的批准。请使用“请求审核”功能发起审核。",
-      "gatedOptionBadge": "需要审核",
       "gatedStatesNotSelectable": "创建时无法选择位于或超出限制状态的状态。请选择第一个限制状态之前的状态，然后使用“请求审核”功能跨越该限制。",
       "saveBlockedByFormErrors": "保存前请解决高亮显示的表单错误。",
       "bulkBlockedHeading": "{count, plural, other {# 个用例}}被网关“{gateName}”阻止：",
@@ -4021,44 +3923,33 @@
     },
     "inbox": {
       "iconAria": "{count, plural, =0 {待审阅收件箱} one {待审阅收件箱，# 待审阅收件箱} other {待审阅收件箱，# 待审阅收件箱}}",
-      "pageTitle": "评论",
-      "tabPending": "待办的",
       "tabDecided": "已决定",
       "emptyDecided": "暂无已决定的审核。您决定的审核，以及您请求的审核的决定，将显示在此处。",
       "empty": "没有待处理的审阅。没有任何事项在等待您处理，您请求的所有审阅也都已决定。",
       "featureDisabled": "审核工作流程功能目前已禁用。待审核的审核内容将被保留，并在该功能重新启用后重新显示。",
       "columnEntity": "实体",
-      "columnProject": "项目",
       "columnRequester": "请求者",
-      "columnAssignee": "受让人",
       "columnTransition": "过渡",
       "columnRequestedAt": "已请求",
       "columnDecidedBy": "决定人",
       "columnDecidedAt": "决定于",
-      "columnStatus": "地位",
-      "columnActions": "行动",
-      "actionApprove": "批准",
       "actionRequestChanges": "请求更改",
       "actionReject": "拒绝",
       "actionNudge": "发送提醒",
       "filterEntityType": "实体类型",
-      "filterProject": "项目",
       "filterRequester": "请求者",
       "filterAllRequesters": "所有请求者",
       "filterDecidedBy": "决定人",
       "filterAllDeciders": "所有决定人",
-      "filterStatus": "状态",
       "filterAllStatuses": "所有状态",
       "filterAllEntityTypes": "所有实体类型",
       "filterEntityTypeCase": "测试用例",
       "filterEntityTypeRun": "测试运行",
-      "filterEntityTypeSession": "会议",
       "filterAllProjects": "所有项目"
     },
     "requester": {
       "openButton": "请求审核",
       "sheetDescription": "在过渡到目标状态之前，请将此实体发送给我们进行审核。",
-      "assigneeLabel": "受让人",
       "assigneePlaceholder": "选择用户或角色",
       "usersNotified": "{count, plural, =0 {没有人会收到通知} other {# 位用户将收到通知}}",
       "targetStateLabel": "目标状态",
@@ -4095,7 +3986,6 @@
       "unnamedUser": "（匿名用户）"
     },
     "reviewer": {
-      "approve": "批准",
       "requestChanges": "请求更改",
       "reject": "拒绝",
       "approveConfirmTitle": "批准此审核请求？",
@@ -4172,7 +4062,6 @@
       "errorNoAssignable": "此运行中没有可分配的用例"
     },
     "auditLog": {
-      "trigger": "活动",
       "description": "此测试运行记录的所有更改。"
     },
     "notFound": "未找到测试运行。",
@@ -4311,7 +4200,6 @@
           "unassign": "重复测试运行中的所有测试用例都将被取消分配。"
         },
         "configurationGroup": {
-          "label": "配置组",
           "separate": "副本仅相互分组。被复制的测试运行不会加入该分组",
           "join": "被复制的测试运行及所有副本将加入同一个配置组"
         }
@@ -4332,7 +4220,6 @@
       "noMatchingActive": "没有符合您筛选条件的活动测试运行。"
     },
     "milestoneGroup": {
-      "runCount": "{count, plural, other {# 个运行}}",
       "altHintMac": "按住 ⌥ 键展开或折叠所有分组",
       "altHintWin": "按住 Alt 键展开或折叠所有分组"
     },
@@ -4354,16 +4241,12 @@
       "noRepository": "请在项目设置中连接应用程序存储库以使用影响分析。",
       "aiUnavailable": "无有效的 LLM 集成：结果仅来自代码标记、关键词匹配和运行历史记录。",
       "steps": {
-        "pick": "提交",
-        "diff": "更改",
-        "analyze": "分析",
         "review": "受影响的测试"
       },
       "pull": {
         "label": "拉取请求",
         "selectPlaceholder": "选择一个拉取请求……",
         "searchPlaceholder": "按编号、标题、作者或分支搜索……",
-        "stateAll": "全部",
         "stateOpen": "打开",
         "stateMerged": "已合并",
         "stateClosed": "已关闭",
@@ -4372,10 +4255,8 @@
       "pick": {
         "modeLabel": "选择更改方式",
         "modeCommits": "提交",
-        "modePull": "拉取请求",
         "modeCommitsHint": "两次构建之间发生的更改，以便您可以重新测试自上次验证以来的所有更新内容。",
         "modePullHint": "此拉取请求的更改内容，从其分支分出的位置开始计算，因此同时提交到目标分支的工作不包含在内。",
-        "branchLabel": "分支",
         "baseLabel": "基础提交",
         "headLabel": "头部提交",
         "commitPlaceholder": "搜索提交……",
@@ -4396,9 +4277,7 @@
         "summary": "{files, plural, other {# 个文件}}已更改 · +{additions, number} −{deletions, number}",
         "truncated": "提供程序返回了部分差异。部分更改的文件未显示或没有补丁。",
         "noChanges": "这些提交之间没有更改。",
-        "statusAdded": "新增",
         "statusModified": "已修改",
-        "statusRemoved": "已移除",
         "statusRenamed": "已重命名",
         "showPatch": "显示更改",
         "hidePatch": "隐藏更改",
@@ -4407,8 +4286,7 @@
         "binary": "二进制文件",
         "noPatch": "补丁不可用",
         "pinnedFiles": "{count, plural, other {# 个标记}}",
-        "loading": "正在比较提交…",
-        "failed": "无法比较提交。"
+        "loading": "正在比较提交…"
       },
       "loading": {
         "analyzing": "正在分析…",
@@ -4427,14 +4305,10 @@
         "title": "{count, plural, =0 {无受影响的测试} other {# 个受影响的测试}}",
         "description": "按得分排序。每个测试都会显示其被选中的原因。",
         "relatedCount": "{count, plural, other {# 个相关测试}}得分较低，未被勾选。",
-        "summary": "摘要",
-        "score": "得分",
-        "case": "测试用例",
         "reasons": "原因",
         "tierPinned": "已标记",
         "tierAffected": "受影响",
         "tierRelated": "相关",
-        "selectAll": "全选",
         "selectNone": "全不选",
         "showDetails": "显示原因",
         "hideDetails": "隐藏原因",
@@ -4450,7 +4324,6 @@
         "path": "关键词",
         "history": "历史记录",
         "ai": "AI",
-        "linked": "相关",
         "pinRange": "{path}:{start}–{end}",
         "pinFile": "{path}",
         "pinGlob": "匹配 {pattern}",
@@ -4474,8 +4347,7 @@
       "uncovered": {
         "title": "{count, plural, other {# 个已更改的文件没有测试}}",
         "description": "没有测试用例关联到这些文件。请标记一个用例以填补此空缺。",
-        "pinAction": "标记一个用例……",
-        "pinned": "已标记"
+        "pinAction": "标记一个用例……"
       },
       "warnings": {
         "diff_truncated_by_provider": "提供程序返回了部分差异。",
@@ -4490,17 +4362,13 @@
         "issue_commit_fetch_capped": "部分在提交信息中提及工单的提交未逐个文件读取（已达到获取限制）；这些用例未覆盖任何特定文件。"
       },
       "actions": {
-        "compare": "比较",
         "analyze": "分析",
         "reanalyze": "重新分析",
         "refine": "返回更改",
         "accept": "{count, plural, other {添加 # 个用例}}",
-        "cancelAnalysis": "取消分析",
-        "back": "返回",
-        "next": "下一步"
+        "cancelAnalysis": "取消分析"
       },
       "errors": {
-        "title": "分析失败",
         "generic": "分析更改时出现问题。请重试。",
         "pullFailed": "无法读取该拉取请求的提交。请选择另一个，或自行指定提交。",
         "compareFailed": "无法比较提交。",
@@ -4510,44 +4378,30 @@
         "branchesFailed": "无法列出分支。",
         "commitsFailed": "无法加载提交。",
         "disabled": "此项目未启用影响分析。",
-        "noConfig": "请先在项目设置中连接应用程序存储库。"
-      }
+        "noConfig": "请先在项目设置中连接应用程序存储库。",
+        "configRequired": "选择一个要分析的代码仓库。"
+      },
+      "repositoryPlaceholder": "选择代码仓库……",
+      "chooseRepository": "选择项目已连接的代码仓库中包含待分析更改的那一个。"
     }
   },
   "admin": {
     "menu": {
       "header": "主要的",
-      "projects": "项目",
-      "templatesAndFields": "模板和字段",
       "fields": "田野",
-      "workflows": "工作流程",
-      "statuses": "状态",
-      "milestoneTypes": "里程碑类型",
-      "configurations": "配置",
-      "users": "用户",
-      "groups": "团体",
-      "roles": "角色",
-      "tags": "标签",
-      "issues": "问题",
       "appConfig": "应用程序配置",
       "recordKeys": "记录键",
-      "notifications": "通知",
       "imports": "数据导入",
       "integrations": "问题整合",
-      "webhooks": "网络钩子",
       "junit": "JUnit",
       "datasets": "共享数据集",
       "testCaseParameters": "测试用例参数",
-      "llm": "人工智能模型",
       "prompts": "提示配置",
       "exportTemplates": "导出模板",
       "codeRepositories": "代码库",
-      "quickScript": "QuickScript",
-      "advanced": "先进的",
       "sso": "验证",
       "security": "安全",
       "trash": "垃圾",
-      "reports": "报告",
       "shares": "管理股份",
       "elasticsearch": "搜索引擎",
       "queues": "作业队列",
@@ -4561,9 +4415,7 @@
       "authentication": "验证",
       "toolsAndIntegrations": "工具与集成",
       "aiTools": "AI 工具",
-      "system": "系统",
-      "impact": "影响分析",
-      "automation": "自动化执行"
+      "system": "系统"
     },
     "imports": {
       "description": "将外部测试管理工具中的数据导入TestPlanIt。",
@@ -5131,7 +4983,6 @@
         },
         "allowedDomains": {
           "title": "允许的电子邮件域名",
-          "placeholder": "example.com",
           "add": "添加域名",
           "empty": "未配置任何允许的域名。启用限制后，所有域名都将被阻止。"
         },
@@ -5180,7 +5031,6 @@
         "steps": {
           "details": "项目详情",
           "workflows": "工作流程、状态和里程碑类型",
-          "integrations": "集成",
           "permissions": "用户与权限"
         },
         "labels": {
@@ -5450,7 +5300,6 @@
       "forcePasswordChangeDialogDescription": "这将要求 {name} 在下次登录时更改密码。",
       "revokePasswordDialogTitle": "撤销密码",
       "revokePasswordDialogDescription": "这将立即使 {name}的密码失效。他们需要使用其他登录方式。",
-      "confirmAction": "确认",
       "forcePasswordChangeSuccess": "{name} 需要更改密码",
       "forcePasswordChangeFailed": "强制更改密码失败",
       "revokePasswordSuccess": "密码已撤销 {name}",
@@ -5506,7 +5355,6 @@
       "lockoutThresholdDescription": "账户被锁定前的失败尝试次数（最少 1 次）",
       "lockoutDurationMinutesLabel": "锁定持续时间（分钟）",
       "lockoutDurationMinutesDescription": "账户锁定时长（最少 1 小时）",
-      "saveChanges": "保存更改",
       "forceAllUsers": "强制所有用户更改密码",
       "forceAllUsersDialogTitle": "强制所有用户更改密码",
       "forceAllUsersDialogDescription": "这将要求 {count, number} 基于凭证的用户在下次登录时更改密码。",
@@ -5567,7 +5415,6 @@
         "loading": "加载冲突…",
         "errorLoad": "冲突日志加载失败，请重试。",
         "colTimestamp": "什么时候",
-        "colType": "类型",
         "colEntity": "实体",
         "colAction": "系统操作",
         "typeLinked": "链接",
@@ -5584,11 +5431,8 @@
         "reEmitConfirmTitle": "重新发送会员活动？",
         "reEmitSuccess": "Webhook 已重新发送；审计行已写入。",
         "reEmitError": "无法重新发送。 {reason}",
-        "next": "下一个",
-        "previous": "以前的",
         "viewDialogTitle": "冲突载荷",
-        "viewDialogDescription": "审核 {entityType}#{entityId} 的行元数据。",
-        "close": "关闭"
+        "viewDialogDescription": "审核 {entityType}#{entityId} 的行元数据。"
       },
       "errorLoad": "令牌加载失败，请重试。",
       "columns": {
@@ -5627,10 +5471,8 @@
         "title": "令牌已创建",
         "warning": "立即复制此令牌。TestPlanIt 将不会再次显示它。",
         "tokenLabel": "SCIM 持有者代币",
-        "copy": "复制",
         "copied": "已复制",
         "baseUrlHint": "将此内容粘贴到您的身份提供商 (IdP) 的 SCIM Bearer-token 字段中。基本 URL 为 {baseUrl}。",
-        "close": "关闭",
         "toast": "令牌已创建。",
         "a11yAnnounce": "令牌已创建。立即复制。"
       },
@@ -5715,7 +5557,6 @@
         "remindersToggleAriaLabel": "切换评论提醒通知",
         "thresholdLabel": "提醒审稿人",
         "thresholdUnit": "{count, plural, other {天}}",
-        "thresholdSaveButton": "节省",
         "thresholdHelp": "审核请求最多可以保留多少天才会向审核员发送提醒通知？新请求从提交之日起开始计时。",
         "thresholdUpdateSuccess": "查看提醒设置是否已更新。",
         "thresholdUpdateError": "更新提醒设置失败，请稍后再试。"
@@ -5730,7 +5571,6 @@
         "emptyState": "没有项目符合您的筛选条件。"
       },
       "editWorkflow": {
-        "requiresReviewLabel": "需要审核",
         "requiresReviewFeatureDisabled": "系统级已禁用审阅工作流程功能。请切换项目的“高级设置”或设置 TESTPLANIT_REVIEW_FEATURE_ENABLED 以重新启用该功能。",
         "requiresReviewDefaultDisabled": "默认工作流状态不需要审核——新实体进入此状态，并且没有先前的状态需要控制。"
       },
@@ -5765,7 +5605,6 @@
       "description": "通过切换每个应用程序区域的权限，定义用户可以执行的操作。",
       "confirmDefaultDescription": "您确定要将此角色设置为默认角色吗？",
       "defaultWarning": "新用户将默认分配此角色。",
-      "defaultLockedTitle": "默认角色",
       "defaultLockedDescription": "要更改默认设置，请编辑其他角色并将其设置为默认。",
       "filterPlaceholder": "筛选角色...",
       "add": {
@@ -6005,7 +5844,6 @@
         "label": "按项目访问权限",
         "description": "为此分组授予特定项目上的访问层级，以代替或叠加于上方的组织级层级。",
         "empty": "未设置按项目访问权限。成员仅获得上方的组织级层级和各项目自身的默认设置。",
-        "projectLabel": "项目",
         "projectPlaceholder": "选择一个项目…",
         "accessLabel": "访问层级",
         "add": "添加项目",
@@ -6045,7 +5883,6 @@
         "title": "编辑里程碑类型"
       },
       "delete": {
-        "title": "删除 {item}",
         "confirmMessage": "您确定要删除 {name} 里程碑类型吗？"
       }
     },
@@ -6126,7 +5963,6 @@
         "issueConfigs": "问题配置",
         "sharedStepGroups": "共同步骤小组",
         "dataSets": "数据集",
-        "codePins": "代码固定",
         "impactAnalyses": "影响分析"
       },
       "table": {
@@ -6359,7 +6195,6 @@
         "repoHelp": "Gitea 仓库的名称",
         "encrypted": "加密",
         "encryptedHelp": "该字段已加密并安全存储。",
-        "changeCredential": "改变",
         "leaveBlankToKeep": "留空以保留现有值",
         "apiKeyWarningTitle": "API密钥认证通知",
         "apiKeyWarningDescription": "使用 API 密钥身份验证时，即使电子邮件地址匹配，创建问题的报告者也可能与创建该问题的 TestPlanIt 用户不符：",
@@ -6371,13 +6206,11 @@
         "tokenCreatorNoticeDescription": "通过此集成创建的问题始终记录为拥有此访问令牌的帐户，而不是创建问题的 TestPlanIt 用户。此提供商的 API 不允许代表其他用户设置创建者。",
         "callbackUrlLabel": "回调 URL（重定向 URI）",
         "callbackUrlDescription": "请在您的提供程序 OAuth 应用中将此确切 URL 注册为回调 / 重定向 URI。必须完全匹配，否则授权将失败。",
-        "callbackUrlCopy": "复制",
         "callbackUrlCopied": "已复制",
         "forgeApiKeyLabel": "Forge API 密钥",
         "forgeApiKeyDescription": "Atlassian Forge 应用使用此密钥来验证来自 Jira 问题面板的请求。请在此处生成密钥并将其粘贴到 Forge 应用设置中。",
         "forgeApiKeyPlaceholder": "点击“生成”按钮创建 API 密钥",
         "forgeApiKeyGenerate": "产生",
-        "forgeApiKeyCopy": "复制",
         "forgeApiKeyCopied": "已复制",
         "platform": "平台",
         "platformPlaceholder": "选择平台...",
@@ -6492,7 +6325,6 @@
         "setAsDefaultDescription": "将此模型用作组织的默认人工智能模型。",
         "fetchingModels": "正在获取模型...",
         "failedToFetchModels": "获取可用模型失败",
-        "selectModel": "选择型号",
         "modelsFound": "{count, plural, other {找到 {count} 个可用模型}}",
         "modelsFoundDescription": "已选择“{model}”作为默认模型",
         "noModelsFoundDescription": "该提供商未返回任何可用模型",
@@ -6525,9 +6357,7 @@
         }
       },
       "sections": {
-        "provider": "提供者",
-        "costAndBudget": "成本与预算",
-        "advanced": "先进的"
+        "costAndBudget": "成本与预算"
       },
       "delete": {
         "title": "删除 AI 模型集成",
@@ -6578,7 +6408,6 @@
       "featureCount": "{count, plural, one {# 功能} other {# 功能}}",
       "llmIntegration": "LLM整合",
       "modelOverride": "模型覆盖",
-      "llmIntegrationPlaceholder": "项目默认值",
       "modelOverridePlaceholder": "集成默认值",
       "projectDefault": "项目默认值（清除）",
       "integrationDefault": "集成默认值（清除）",
@@ -6814,7 +6643,6 @@
       "changes": "变化",
       "metadata": "元数据",
       "oldValue": "老的",
-      "newValue": "新的",
       "columns": {
         "timestamp": "时间戳",
         "entityId": "实体 ID",
@@ -7008,7 +6836,6 @@
       "targetFolder": "目标文件夹",
       "newFolderPlaceholder": "新文件夹名称...",
       "operation": "手术",
-      "operationCopy": "复制",
       "operationCopyDesc": "在目标项目中创建所选案例的副本。原始案例保持不变。",
       "operationMove": "移动",
       "operationMoveDesc": "将选定的案例移动到目标项目。原始案例将从源项目中删除。",
@@ -7094,7 +6921,6 @@
     "useIntegration": "使用 {provider}",
     "useIntegrationDescription": "在外部系统中创建问题",
     "externalProject": "外部项目",
-    "selectProject": "选择项目",
     "issueType": "问题类型",
     "selectIssueType": "选择问题类型",
     "noIssueTypes": "暂无问题类型",
@@ -7122,9 +6948,7 @@
     "searchForIssue": "查找要链接的问题",
     "searchUsers": "搜索用户",
     "noTeamsAvailable": "暂无球队",
-    "filterAll": "全部",
     "fanOutPartialFailure": "无法访问 {count, number} 个项目。显示来自 {successCount, number} 个项目的结果。",
-    "projectSelectorLabel": "项目",
     "searchFailedTitle": "搜索失败",
     "useAsRequirement": "用作需求",
     "useAsRequirementSuccess": "现已用作需求。可在项目的需求页面中找到它。",
@@ -7147,7 +6971,6 @@
       "addRoot": "添加需求",
       "addChild": "添加子需求",
       "rename": "重命名",
-      "delete": "删除",
       "expandAll": "全部展开",
       "collapseAll": "全部收起",
       "dropToRootHint": "拖放到此处以移动到顶层",
@@ -7157,8 +6980,6 @@
       "dragDisabled": "此需求目前无法移动。"
     },
     "list": {
-      "columnName": "名称",
-      "columnStatus": "状态",
       "columnSource": "来源",
       "expandRow": "展开 {name}",
       "collapseRow": "收起 {name}",
@@ -7171,7 +6992,6 @@
       "nextRequirement": "下一个需求",
       "breadcrumbLabel": "需求层次结构",
       "notFound": "未找到需求",
-      "documentation": "文档",
       "documentationEmpty": "未提供文档",
       "documentationPlaceholder": "输入需求文档……",
       "lockedHint": "此字段由连接的跟踪器管理，无法在此处编辑。",
@@ -7179,13 +6999,11 @@
       "saveFailed": "保存需求失败。"
     },
     "provenance": {
-      "nativeLabel": "手动",
       "syncedLabel": "已同步",
       "detachedLabel": "已分离",
       "nativeTooltip": "直接在 TestPlanIt 中创建。",
       "syncedTooltip": "从连接的跟踪器同步而来。锁定的字段无法在此处编辑。",
       "detachedTooltip": "已从连接的跟踪器分离。现在可完全编辑，如同手动创建的需求。",
-      "openInTracker": "在 {provider} 中打开",
       "detach": "分离",
       "detachDialogTitle": "分离此需求？",
       "detachDialogDescription": "分离操作会使此需求在 TestPlanIt 中完全可编辑，并断开与连接跟踪器的链接。此操作无法撤销 — 目前尚不支持重新连接到跟踪器。",
@@ -7210,9 +7028,7 @@
     "create": {
       "dialogTitle": "创建需求",
       "dialogDescription": "向此项目的需求树中添加新需求。",
-      "nameLabel": "名称",
       "namePlaceholder": "输入需求名称……",
-      "parentLabel": "父级",
       "parentNone": "无父级（顶层）",
       "submit": "创建需求",
       "submitHint": "按 Enter 键创建",
@@ -7224,7 +7040,6 @@
       "promoteParentNote": "遵循跟踪器的层级结构",
       "promoteIssueLabel": "问题",
       "promoteChooseIssue": "选择问题",
-      "promoteChangeIssue": "变更",
       "promoteNoneSelected": "未选择问题",
       "promoteSubmit": "用作需求",
       "promoteSuccess": "问题现已成为需求。",
@@ -7241,7 +7056,6 @@
       "dialogTitle": "删除需求",
       "confirmNoChildren": "您确定要删除此需求吗？此操作可以撤销。",
       "confirmWithChildren": "{count, plural, other {此需求有 {count} 个子项也将被删除。此操作可以撤销。}}",
-      "submit": "删除",
       "success": "需求已删除。",
       "failed": "删除需求失败。",
       "undo": "撤销",
@@ -7249,7 +7063,6 @@
       "undoFailed": "恢复需求失败。"
     },
     "attachments": {
-      "title": "附件",
       "empty": "无附件",
       "uploadSuccess": "附件已上传。",
       "uploadFailed": "上传附件失败。",
@@ -7260,7 +7073,6 @@
       "title": "关联测试用例",
       "titleWithCount": "{count, plural, =0 {关联测试用例} =1 {# 个关联测试用例} other {# 个关联测试用例}}",
       "empty": "没有关联的测试用例。",
-      "addLink": "添加链接",
       "addLinkDialogTitle": "关联测试用例",
       "searchPlaceholder": "搜索测试用例……",
       "linkSuccess": "测试用例已关联。",
@@ -7268,13 +7080,11 @@
       "unlinkConfirm": "您确定要取消关联此测试用例吗？",
       "unlinkSuccess": "测试用例已取消关联。",
       "unlinkFailed": "取消关联测试用例失败。",
-      "columnCase": "测试用例",
-      "columnProject": "项目"
+      "columnCase": "测试用例"
     },
     "linkedRequirements": {
       "title": "关联需求",
       "empty": "没有关联的需求。",
-      "addLink": "添加链接",
       "addLinkDialogTitle": "关联需求",
       "searchPlaceholder": "搜索需求……",
       "linkSuccess": "需求已关联。",
@@ -7303,8 +7113,7 @@
       "removeConfirm": "您确定要移除此引用吗？",
       "removeSuccess": "引用已移除。",
       "removeFailed": "移除引用失败。",
-      "columnReference": "引用",
-      "columnStatus": "状态"
+      "columnReference": "引用"
     },
     "coverage": {
       "title": "覆盖率",
@@ -7327,8 +7136,6 @@
       "columnResult": "最新结果",
       "columnResultTooltip": "该用例最近一次的执行结果，即使其状态既非通过也非失败。其他界面，例如仓库中的最新结果，显示的是最近一次通过或失败的结果，因此同一用例在这些地方显示的结果可能不同。",
       "resultRunLink": "查看此结果来自的测试运行",
-      "columnExecutedAt": "执行时间",
-      "columnProject": "项目",
       "inherited": "继承",
       "inheritedTooltip": "关联到此需求的后代，而非直接关联到此需求。",
       "notRunCell": "未运行"
@@ -7366,9 +7173,7 @@
       "createButton": "添加目标",
       "createTitle": "新建执行目标",
       "editTitle": "编辑执行目标",
-      "name": "名称",
       "namePlaceholder": "例如 Nightly E2E",
-      "provider": "提供者",
       "repository": "代码仓库",
       "repositoryPlaceholder": "选择一个仓库",
       "noRepositories": "未注册任何 {provider} 仓库。请让管理员在“管理 → 代码仓库”下添加一个。",
@@ -7385,8 +7190,6 @@
       "variables": "流水线变量",
       "webhookVariables": "变量",
       "staticInputsHelp": "除 TESTPLANIT_* 值外，随每次调度一起发送。非机密：任何能读取该仓库的人都能看到它们。",
-      "inputKey": "名称",
-      "inputValue": "值",
       "addInput": "添加输入",
       "removeInput": "移除输入",
       "credentials": "凭据",
@@ -7407,10 +7210,8 @@
       "payloadPreview": "负载",
       "timeout": "超时时间（分钟）",
       "timeoutHelp": "在此时间前未完成的执行将被标记为超时。",
-      "enabled": "已启用",
       "hasOwnCredentials": "专属凭据",
       "usesRepositoryCredentials": "仓库凭据",
-      "verify": "验证",
       "verifying": "正在验证…",
       "verifyOk": "目标验证通过",
       "verifyOkWithWarnings": "目标验证通过，但有警告",
@@ -7426,9 +7227,7 @@
       "disabledToast": "目标已禁用",
       "revealedSecretTitle": "立即复制签名密钥",
       "revealedSecretWarning": "此密钥仅显示一次。您的接收方使用它来验证每次调度上的 X-TestPlanIt-Signature 标头；通过其他方式进行身份验证的系统（例如 Jenkins 触发令牌）可以忽略它。请将其存储在您的 CI 系统的密钥存储中；TestPlanIt 无法再次显示它。",
-      "copySecret": "复制",
       "secretCopied": "密钥已复制",
-      "done": "完毕",
       "errors": {
         "invalid": "无法保存该目标。请检查表单并重试。",
         "invalidInputs": "其中一项输入无效。",
@@ -7461,7 +7260,6 @@
       "status": "执行",
       "requestedBy": "由 {name} 请求",
       "timesOutAt": "放弃时间",
-      "openInProvider": "在 {provider} 中打开",
       "cancel": "取消执行",
       "cancelConfirmTitle": "取消此执行？",
       "cancelConfirm": "TestPlanIt 会将其标记为已取消，并在可能的情况下要求提供者停止该作业。仍然到达的结果会被保留。",
@@ -7471,14 +7269,11 @@
       "historyTitle": "执行历史",
       "historyDescription": "此运行的自动化用例的每一次调度，按最新排序。",
       "historyEmpty": "尚无执行记录。",
-      "columnStatus": "状态",
       "columnTarget": "目标",
       "columnRef": "引用",
       "columnRequested": "已请求",
-      "columnCompleted": "已完成",
       "columnCases": "用例",
       "columnLink": "作业",
-      "error": "错误",
       "externalStatus": "提供者状态：{status}",
       "awaitingResults": "等待结果",
       "resultsReceived": "已收到结果"
@@ -7552,7 +7347,6 @@
   },
   "linkedCases": {
     "title": "关联测试用例",
-    "addLink": "添加链接",
     "addLinkedTestCase": "添加关联测试用例",
     "testCase": "测试用例",
     "linkType": "链接类型",
@@ -8349,7 +8143,6 @@
       "metricOrder": "公制顺序",
       "filtersDescription": "按特定条件筛选报告数据",
       "activeFilters": "启用筛选器：",
-      "priorityFilterPlaceholder": "选择优先级值（或留空表示全部不选）",
       "dateRange": {
         "selectDateRange": "选择日期范围",
         "chooseStartDate": "选择开始日期",
@@ -8363,8 +8156,6 @@
         },
         "today": "今天",
         "yesterday": "昨天",
-        "last7Days": "过去7天",
-        "last30Days": "过去30天",
         "thisWeek": "本星期",
         "lastWeek": "上星期",
         "last2Weeks": "过去两周",
@@ -8373,7 +8164,6 @@
         "last3Months": "过去三个月",
         "thisQuarter": "本季度",
         "lastQuarter": "上个季度",
-        "thisYear": "今年",
         "lastYear": "去年",
         "last12Months": "过去12个月",
         "allTime": "所有时间",
@@ -8517,10 +8307,8 @@
         "healthScore": "分数",
         "lastExecuted": "最后执行",
         "executions": "执行",
-        "passRate": "通过率",
         "passCount": "通行证",
         "failCount": "失败",
-        "never": "绝不",
         "daysSince": "执行完毕至今已过去数天",
         "count": "数数",
         "totalTests": "测试用例",
@@ -8584,8 +8372,7 @@
           "forecast": "{value} 预测",
           "forecastUnset": "没有预测",
           "flakiness": "翻转 {value}%",
-          "flakinessUnset": "无翻转数据",
-          "createdLabel": "创建"
+          "flakinessUnset": "无翻转数据"
         },
         "heuristic": {
           "intro": "此项目未配置 LLM 集成，因此排名直接基于选择策略指标构建。请配置 LLM 集成（管理 → AI 模型），以启用更丰富的推理，将自定义字段、关联问题上下文和案例内容与指标一起纳入考量。",
@@ -8633,8 +8420,6 @@
         "invalidProject": "项目无效。",
         "historyPlaceholder": "选择一张照片",
         "generatedAt": "生成",
-        "by": "经过",
-        "summaryHeading": "概括",
         "actions": {
           "generate": "生成报告",
           "regenerate": "再生"
@@ -8664,11 +8449,8 @@
           "score": "得分 {score}"
         },
         "delete": {
-          "button": "删除",
           "title": "删除此快照？",
-          "description": "该快照将从历史记录中删除，此操作无法撤销。",
-          "cancel": "取消",
-          "confirm": "删除"
+          "description": "该快照将从历史记录中删除，此操作无法撤销。"
         }
       },
       "issueTestCoverage": {
@@ -8678,11 +8460,8 @@
         "issue": "问题",
         "testCase": "测试用例",
         "testCases": "{count, plural, =1 {测试用例} other {测试用例}}",
-        "issueStatus": "地位",
-        "priority": "优先事项",
         "linkedTests": "关联测试",
         "testResults": "结果（合格/不合格/待定）",
-        "passRate": "通过率",
         "passed": "通过",
         "failed": "失败的",
         "lastStatus": "最新状态",
@@ -8697,7 +8476,6 @@
           "issuesWithUntested": "未经测试",
           "issuesWithUntestedTooltip": "至少有一个尚未执行的测试用例存在问题。",
           "issuesAllPassing": "全部通过",
-          "overallPassRate": "通过率",
           "numberOfIssues": "问题数量"
         },
         "charts": {
@@ -8711,9 +8489,6 @@
         "requirement": "需求",
         "path": "父路径",
         "testCase": "测试用例",
-        "result": "结果",
-        "executedAt": "执行时间",
-        "project": "项目",
         "linkedCases": "关联用例",
         "uncovered": "未覆盖",
         "notRun": "未运行",
@@ -8748,9 +8523,7 @@
         "saveSnapshotTitle": "保存可追溯性快照",
         "saveSnapshotDescription": "将当前的可追溯性矩阵——每个需求、其覆盖的测试用例及其最新结果——记录为一个不可变的、具名的时点快照，您可以稍后查看、导出、共享和比较它。",
         "saveSnapshotScoped": "仅当前范围内的需求将被捕获。",
-        "snapshotName": "名称",
         "snapshotNamePlaceholder": "2.4 版本签核",
-        "snapshotNote": "备注",
         "snapshotNotePlaceholder": "可选——此快照用于证明什么",
         "snapshotSaved": "快照“{name}”已保存。",
         "snapshotSaveFailed": "保存快照失败。",
@@ -8764,7 +8537,6 @@
         "compareLabel": "与之比较",
         "baselineRequired": "选择一个基准快照以运行此报告。",
         "includeUnchanged": "包含未变更的需求",
-        "change": "变更",
         "coverageBefore": "变更前覆盖率",
         "coverageAfter": "变更后覆盖率",
         "linkedCasesBefore": "变更前关联数",
@@ -8860,30 +8632,16 @@
       "unexpectedError": "发生意外错误。"
     },
     "dimensions": {
-      "project": "项目",
-      "status": "地位",
-      "user": "用户",
       "executor": "执行人",
       "assignedTo": "分配给",
-      "configuration": "配置",
-      "date": "日期",
       "executionDate": "执行日期",
       "creationDate": "创建日期",
       "activityDate": "活动日期",
-      "testRun": "测试运行",
       "testCase": "测试用例",
-      "milestone": "里程碑",
-      "template": "模板",
       "creator": "创作者",
-      "state": "状态",
       "source": "来源",
-      "folder": "文件夹",
-      "group": "团体",
-      "role": "角色",
-      "session": "会议",
       "weekEnding": "一周结束",
       "period": "时期",
-      "priority": "优先事项",
       "automationStatus": "自动化状态",
       "issueType": "问题类型",
       "issueTracker": "问题跟踪器",
@@ -8891,7 +8649,6 @@
       "tag": "标签",
       "feature": "功能",
       "model": "模型",
-      "integration": "集成",
       "outcome": "结果"
     },
     "metrics": {
@@ -8907,7 +8664,6 @@
       "passRate": "通过率（%）",
       "avgElapsed": "平均经过时间",
       "avgElapsedTime": "平均经过时间",
-      "totalElapsedTime": "总经过时间",
       "testRunCount": "测试运行次数",
       "testCaseCount": "测试用例数量",
       "automationRate": "自动化率（%）",
@@ -9039,7 +8795,6 @@
           "expired": "已到期"
         },
         "notifications": {
-          "enabled": "在",
           "disabled": "离开"
         },
         "empty": {
@@ -9088,7 +8843,6 @@
         "title": "分享链接已创建！",
         "description": "您的分享链接已准备就绪。复制并分享给其他人即可。",
         "shareLink": "分享链接",
-        "copy": "复制",
         "openInNewTab": "在新标签页中打开",
         "metadata": {
           "mode": "模式",
@@ -9268,25 +9022,20 @@
         "viewSharedStep": "查看共享步骤组",
         "skippedWarning": "{count, plural, one {# 跳过案例} other {# 跳过案例}} （已过时或已转换）。",
         "noCasesSelected": "至少选择一个案例进行转换。",
-        "stepsUnavailable": "匹配的步骤已不再存在于此测试用例中。请忽略此匹配项并运行新的扫描。",
-        "selectAll": "全选"
+        "stepsUnavailable": "匹配的步骤已不再存在于此测试用例中。请忽略此匹配项并运行新的扫描。"
       }
     },
     "findStepDuplicates": "查找重复项"
   },
   "search": {
-    "title": "搜索",
     "savedSearches": {
       "title": "已保存的搜索",
       "save": "保存搜索",
       "saveTitle": "保存搜索",
       "saveDescription": "为此搜索命名，以便日后重新查看。",
-      "saveAction": "保存",
-      "nameLabel": "名称",
       "namePlaceholder": "例如：本次冲刺中失败的运行",
       "nameRequired": "请输入此搜索的名称。",
       "loginRequired": "您必须登录后才能保存搜索。",
-      "descriptionLabel": "描述（可选）",
       "descriptionPlaceholder": "此搜索的用途",
       "saved": "搜索已保存",
       "savedDescription": "“{name}”现已加入您已保存的搜索。",
@@ -9295,11 +9044,9 @@
       "emptyHint": "保存一个搜索以便日后重新查看。",
       "loaded": "已加载“{name}”",
       "loadFailed": "此已保存的搜索已失效。",
-      "edit": "编辑",
       "editTitle": "编辑已保存的搜索",
       "edited": "已保存的搜索已更新",
       "editFailed": "无法更新搜索，请重试。",
-      "delete": "删除",
       "deleteTitle": "删除已保存的搜索？",
       "deleteConfirm": "“{name}”将从您已保存的搜索中移除。此操作无法撤销。",
       "deleted": "已保存的搜索已删除",
@@ -9603,11 +9350,7 @@
     "tabDataset": "数据集",
     "tabDatasetDisabledTooltip": "编辑数据集行之前，请至少添加一个参数。",
     "sheetAutoSaveHint": "更改会自动保存。",
-    "formName": "姓名",
-    "formType": "类型",
-    "formDefault": "默认",
     "formOrder": "命令",
-    "formRequired": "必需的",
     "formRequiredHelp": "缺少此值的迭代将验证失败。",
     "formSensitive": "敏感的",
     "formSensitiveHelp": "在审计日志中隐藏该值，并对没有读取敏感信息权限的用户隐藏该值。",
@@ -9625,7 +9368,6 @@
     "editDialogTitle": "编辑参数“{name}”",
     "editDialogDescription": "更新类型、默认值、标志或允许值。要重命名，请单击列表中的参数名称。",
     "editDialogRenameHint": "要重命名，请关闭此对话框并单击参数名称。",
-    "editDialogCancel": "取消",
     "editDialogSave": "保存更改",
     "editError": "参数更新失败",
     "editSuccess": "更新参数“{name}”",
@@ -9643,11 +9385,9 @@
     "selectSourceWarningTitle": "更改“@{name}”的 SELECT 源？",
     "selectSourceWarningDescription": "此参数的现有数据集值可能不存在于新列表中。 {invalidCount, plural, =1 {# 此行将在更改后需要关注} other {# 行}} 。继续？",
     "selectSourceConfirm": "更改源",
-    "datasetRowSelectAria": "选择行",
     "datasetSelectAllPageTooltip": "单击以选中此页面上的每一行。按住 Shift 键并单击以选中所有页面上的每一行。",
     "datasetSelectAllAcrossPagesTooltip": "在所有页面中选择{count, plural, =1 {# 行} =2 {两行} other {全部 # 行}}",
     "datasetDeselectAllAcrossPagesTooltip": "取消选择所有页面上的所有行",
-    "datasetLabelColumn": "标签",
     "datasetAddRow": "添加行",
     "datasetAddColumn": "添加列",
     "datasetAddColumnTitle": "添加列",
@@ -9656,14 +9396,12 @@
     "datasetAddColumnSubmit": "添加列",
     "datasetAddColumnDuplicate": "已存在同名列。",
     "datasetColumnMenuLabel": "列 {name} 操作",
-    "datasetColumnDelete": "删除列",
     "datasetColumnDeleteTitle": "删除列“{name}”？",
     "datasetColumnDeleteChecking": "检查引用此列的案例…",
     "datasetColumnDeleteDescription": "该列及其在每一行中的值都将被删除。已对这些值进行快照的现有测试运行不受影响。",
     "datasetColumnDeleteBlocked": "{count, plural, =1 {# case 将一个参数映射到此列} other {# case 将一个参数映射到此列}}。请先更新这些映射，然后再删除该列。",
     "datasetColumnDeleteAndMore": "和 {count, plural, =1 {# 更多情况} other {# 更多情况}}",
     "datasetColumnDeleteCheckError": "无法查找引用此列的案例。请重试。",
-    "datasetColumnDeleteConfirm": "删除列",
     "datasetRowDefaultLabel": "行 {number}",
     "datasetPasteCsv": "粘贴 CSV 文件",
     "datasetImportCsv": "导入 CSV 文件",
@@ -9710,13 +9448,11 @@
     "importStep4Append": "追加到现有行",
     "importStep4AppendDescription": "新行将添加到行 #{existingCount} 之后。",
     "importStep4ErrorBlock": "导入前，请先解决上一步中的 {errorCount} 错误。",
-    "importStep4Label": "确认",
     "confirmSummaryValid": "有效行： {count}",
     "confirmSummaryErrors": "错误： {count}",
     "confirmSummaryMode": "模式： {mode}",
     "cancelUploadTitle": "放弃上传？",
     "cancelUploadDescription": "您上传的CSV数据将会丢失。",
-    "importCommit": "进口",
     "importSuccess": "导入 {count, plural, =1 {# 行} other {# 行数}}",
     "addSuccess": "已添加参数“{name}”。",
     "addError": "无法添加参数",
@@ -9764,8 +9500,6 @@
     "hardRefuseColumnCase": "案件",
     "hardRefuseColumnRows": "数据集行",
     "hardRefuseColumnConfigs": "配置",
-    "hardRefuseColumnIterations": "迭代",
-    "hardRefuseTotalRow": "全部的",
     "hardRefuseSuggestionsHeading": "建议的行动",
     "hardRefuseSuggestion1": "减少影响最大的个案的数据集行数。",
     "hardRefuseSuggestion2": "取消选择一个或多个配置。",
@@ -9780,15 +9514,11 @@
     "runProgressNavAway": "把剩下的部分展示给我",
     "runGeneratingHeading": "生成迭代…",
     "runGeneratingHelper": "这可能需要几分钟时间。",
-    "iterationsHeading": "迭代",
     "iterationsHeaderCount": "{complete}/{total}",
     "iterationsHeaderCountPending": "0/{total} （生成中）",
-    "iterationSidebarAria": "迭代",
     "iterationStatusLegendAria": "状态图例",
     "iterationActionSkipped": "跳过",
     "iterationBulkPickStatusPrompt": "选择要应用于所选迭代的状态。",
-    "iterationBulkStatusLabel": "地位",
-    "iterationBulkStatusPlaceholder": "选择状态",
     "iterationBulkApplyStatus": "标记为状态…",
     "iterationSelectAria": "选择迭代 {n}",
     "iterationRowMenuAria": "迭代 {n} 操作",
@@ -9797,13 +9527,11 @@
     "iterationReset": "重置迭代结果",
     "iterationSelectedCount": "{count} 已选择",
     "iterationBulkSkip": "标记 {count, plural, =1 {# 迭代次数} other {# 迭代次数}} 状态…",
-    "iterationBulkCancel": "取消",
     "iterationIssueTitleSnapshot": "迭代 {n} 的 {total} 问题： {caseName}",
     "iterationIssueTitleCiExtended": "迭代 {n} （CI 扩展）问题： {caseName}",
     "iterationIssueProseSnapshot": "对 {label} 进行 {total} 的 {n} 迭代。",
     "iterationIssueProseCiExtended": "在 {label} 上进行迭代 {n} （CI 扩展）。",
     "iterationIssueTableHeaderParameter": "范围",
-    "iterationIssueTableHeaderValue": "价值",
     "iterationIssueDeepLinkLabel": "在 TestPlanIt 中查看迭代",
     "iterationHeaderTitle": "迭代 {n} 的 {total}",
     "iterationPrevAria": "前一次迭代",
@@ -9885,7 +9613,6 @@
     "mappingHint": "自动匹配的列已折叠。点击“更改”重新映射。",
     "mappingShowAll": "显示所有列",
     "mappingNoColumns": "所选版本中没有可用的列。",
-    "mappingChange": "改变",
     "mappingSkipColumn": "跳过列",
     "mappingRequiredAlert": "必需参数未映射： {names}。",
     "mappingRequiredUnmapped": "必需参数“@{name}”没有映射列。"

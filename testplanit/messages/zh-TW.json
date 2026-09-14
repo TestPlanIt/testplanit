@@ -456,7 +456,9 @@
         "urlRequired": "必須提供網址",
         "invalidUrl": "無效的 URL 格式"
       },
-      "worker": "工作者"
+      "worker": "工作者",
+      "hasCodePins": "具有程式碼釘選",
+      "noCodePins": "沒有程式碼釘選"
     },
     "filter": {
       "placeholder": "篩檢 {item}..."
@@ -561,7 +563,6 @@
       "selectTemplate": "選擇模板",
       "duration": "例如 1 小時 30 分鐘或 90 分鐘",
       "docs": "新增文件…",
-      "select": "選擇",
       "selectState": "選擇州",
       "selectConfiguration": "選擇配置",
       "selectConfigurations": "選擇配置",
@@ -582,14 +583,12 @@
       "selectAModel": "選擇型號",
       "selectWorkflowType": "選擇工作流程類型",
       "addAnOption": "新增一個選項",
-      "addADescription": "添加描述…",
       "optionalDescription": "可選描述…",
       "projectNotes": "項目筆記…",
       "filterByName": "按名稱篩選...",
       "filterByValue": "按值篩選...",
       "selectOperator": "選擇運算符",
       "searchIcons": "搜尋圖示…",
-      "value": "價值",
       "stepCount": "步數",
       "enterText": "請輸入文字...",
       "enterUrl": "輸入網址",
@@ -710,16 +709,10 @@
       "twoFactorVerification": "雙重驗證",
       "changePassword": "更改密碼",
       "twoFactorSetup": "雙因素設定",
-      "signUp": "報名",
-      "signIn": "登入",
       "verifyEmail": "驗證電子郵件",
       "trialExpired": "試用期已結束",
       "linkSsoAccount": "關聯 SSO 帳戶",
       "userProfile": "用戶個人資料",
-      "users": "使用者",
-      "issues": "問題",
-      "requirements": "需求",
-      "tags": "標籤",
       "tagDetails": "標籤詳情",
       "aiModels": "人工智慧模型",
       "integrations": "整合",
@@ -733,13 +726,8 @@
       "repository": "儲存庫",
       "testCaseVersion": "測試用例版本",
       "duplicateTestCases": "重複的測試案例",
-      "documentation": "文件",
-      "sharedSteps": "共同步驟",
       "stepDuplicates": "步驟重複",
-      "sessions": "會議",
       "sessionVersion": "會話版本",
-      "milestones": "里程碑",
-      "testRuns": "測試運行",
       "reports": "報告",
       "adminSamlConfig": "管理員 - SAML 配置",
       "apiDocumentation": "API 文件",
@@ -750,7 +738,6 @@
       "userMenu": "使用者選單",
       "selectProject": "選擇項目",
       "togglePanel": "切換面板",
-      "folder": "資料夾",
       "toggleActive": "切換啟動狀態",
       "toggleDetails": "切換詳情",
       "requiresReview": "需要審核",
@@ -877,7 +864,6 @@
     "for": "為了",
     "and": "和",
     "branding": {
-      "name": "TestPlanIt",
       "logoAlt": "TestPlanIt 標誌",
       "tagline": "嘗試一切事物"
     },
@@ -1096,7 +1082,6 @@
         "viewIn": "查看",
         "fieldType": "字段類型： ",
         "richTextContent": "富文本內容",
-        "invalidContent": "無效內容",
         "fieldInformation": "現場資訊"
       },
       "onboarding": {
@@ -1109,8 +1094,7 @@
         "zoomDonutChart": "縮放甜甜圈圖",
         "zoomExecutionTimeline": "縮放執行時間軸",
         "zoomHistogramChart": "縮放直方圖",
-        "duration": "持續時間： {seconds} 秒",
-        "durationLabel": "期間"
+        "duration": "持續時間： {seconds} 秒"
       },
       "import": {
         "encoding": {
@@ -1267,7 +1251,6 @@
       }
     },
     "verifyEmail": {
-      "title": "驗證電子郵件",
       "loading": "正在驗證電子郵件...",
       "success": "郵箱已成功驗證",
       "error": "電子郵件驗證失敗",
@@ -1319,10 +1302,8 @@
       "expiredDescription": "您的密碼已過期。請設定新密碼以繼續。",
       "newPasswordLabel": "新密碼",
       "confirmPasswordLabel": "確認新密碼",
-      "submitButton": "更改密碼",
       "signOut": "登出登入",
       "passwordsMustMatch": "密碼不符。",
-      "passwordRequired": "需要輸入密碼。",
       "genericError": "發生錯誤，請重試。",
       "policyTitle": "密碼要求：",
       "policyMinLength": "至少 {count, number} 字符",
@@ -1334,7 +1315,6 @@
   },
   "account": {
     "linkSso": {
-      "title": "關聯 SSO 帳戶",
       "description": "將您的帳戶與單一登入提供者關聯",
       "availableProviders": "可用的單一登入提供者",
       "linkWithGoogle": "與谷歌連結",
@@ -1394,8 +1374,7 @@
       "latestTestRuns": "最新測試運行",
       "testCaseBreakdown": "測試用例分解",
       "noTestCases": "專案倉庫為空。請使用倉庫新增測試案例。",
-      "noTestCasesPrefix": "專案倉庫為空。請使用以下命令新增測試案例：",
-      "noTestCasesLink": "儲存庫"
+      "noTestCasesPrefix": "專案倉庫為空。請使用以下命令新增測試案例："
     },
     "icon": {
       "upload": {
@@ -1415,10 +1394,8 @@
         "title": "迭代屬性映射",
         "description": "導入時，每個測試案例的迭代索引將從名稱與下列條目之一相符的屬性、特性或 trait 中讀取（JUnit 屬性、TestNG 特性、xUnit 特性、NUnit 屬性）。請新增您的測試案例產生器所使用的名稱；尋找不區分大小寫。",
         "addLabel": "新增屬性名稱",
-        "addButton": "添加",
         "placeholder": "例如 iterationIndex",
         "defaultHint": "預設值：迭代次數（不區分大小寫）。新增自訂名稱即可啟用。",
-        "saveButton": "節省",
         "saveSuccess": "迭代屬性名稱已儲存。",
         "saveError": "無法保存迭代屬性名稱。",
         "removeAria": "移除 {name}",
@@ -1484,7 +1461,6 @@
           "removeProjectConfirmation": "移除此項目將停止同步其中的問題。之前同步的問題不會刪除。是否繼續？",
           "removeProjectWebhookCascadeBullet": "該項目的入站 webhook 也將被移除。",
           "keepProject": "保持項目",
-          "defaultIndicator": "預設",
           "syncStatusSyncing": "同步",
           "syncStatusCompleted": "已同步",
           "syncStatusError": "同步錯誤",
@@ -1515,7 +1491,6 @@
           "importPreview": "預覽",
           "importPreviewResult": "~{count, plural, other {# 個問題}} 符合此篩選條件。最多將匯入 {cap} 個。",
           "importOverCap": "已超過 {cap} 的上限；僅會匯入最近更新的 {cap} 個。",
-          "importStart": "匯入",
           "importStarted": "匯入已開始。問題將很快顯示。",
           "importFailed": "匯入失敗",
           "importPreviewFailed": "無法估算符合項目",
@@ -1600,13 +1575,11 @@
       },
       "webhooks": {
         "description": "配置入站 Webhook 以保持關聯問題同步。",
-        "inboundDescription": "配置入站 Webhook 以保持關聯問題同步。",
+        "inboundDescription": "從您的問題追蹤器接收問題更新，並從已連接的儲存庫接收提取請求和推送。",
         "outboundDescription": "設定出站 webhook，將 TestPlanIt 事件傳送至 Slack 或任何 HMAC 簽章的 URL。",
         "directionInbound": "入境",
         "directionOutbound": "出站",
         "inboundAddButtonAllConfigured": "入站適配器已配置完成。",
-        "inboundAddButtonNoIntegration": "在新增入站 webhook 之前，請先為該專案指派一個問題整合。",
-        "inboundEmptyWithIntegration": "未配置任何入站 Webhook。 <link>新增一個</link> 以接收來自您指派的問題整合的更新。",
         "inboundEmptyNoIntegration": "需要 <link>問題整合</link> 才能接收傳入的問題更新。請將其指派給您的專案以開始使用。",
         "deliveriesEmptyNoConfigs": "目前還沒有 webhook 發送——請在其他標籤頁上建立入站或出站 webhook 以開始接收它們。",
         "noConfig": "未配置 webhook",
@@ -1620,7 +1593,6 @@
         "rotateSecret": "旋轉秘密",
         "rotateConfirmTitle": "輪換 webhook 密鑰？",
         "rotateConfirm": "輪換密鑰將使問題追蹤器端的當前配置失效，直到您在那裡更新配置為止。是否繼續？",
-        "isActive": "已啟用",
         "deleteConfirmTitle": "刪除 webhook 配置？",
         "deleteConfirm": "刪除此 webhook 配置？入站郵件將被拒絕。",
         "sendTest": "發送測試 webhook",
@@ -1635,23 +1607,19 @@
         "urlCopied": "Webhook URL 已複製到剪貼簿",
         "secretCopied": "Webook 金鑰已複製到剪貼簿",
         "nextSteps": "接下來：將這些資訊貼到問題追蹤器的 webhook 設定中，然後點擊下方的「傳送測試 webhook」來驗證流程。儲存密鑰後，點擊「完成」－密鑰將無法再次顯示。",
-        "revealDone": "完畢",
         "pageTitle": "網路鉤子",
         "inboundTab": "入境",
         "outboundTab": "出站",
         "outboundEmpty": "未配置任何出站 Webhook。請新增一個 Webhook，以便將 TestPlanIt 事件傳送到 Slack 或任何經過 HMAC 簽署的 URL。",
         "outboundAddButton": "新增出站 webhook",
         "outboundCreateTitle": "新增出站 webhook",
-        "outboundCreateName": "姓名",
         "outboundCreateNameHelp": "此目標位置的標籤，例如「工程 Slack」。",
         "outboundCreateNamePlaceholder": "工程 Slack",
         "outboundCreateNameRequired": "姓名為必填項。",
         "outboundCreateUrlRequired": "必須提供網址。",
         "outboundCreateUrlInvalid": "請輸入有效的網址（https://example.com/...）。",
         "outboundCreateUrlMustUseHttps": "URL必須使用HTTPS",
-        "outboundNameLabel": "姓名",
         "outboundUnnamedConfig": "（未命名的 webhook）",
-        "outboundCreateUrl": "URL",
         "outboundCreateUrlHelp": "目標 URL。 Slack 傳入 webhook URL 會自動偵測。",
         "outboundCreateUrlPlaceholder": "https://hooks.slack.com/services/...",
         "outboundDetectedSlack": "偵測到：Slack",
@@ -1719,14 +1687,11 @@
         "outboundSubsCases": "案例",
         "outboundSubsSelectAll": "請選取此部分中的所有內容",
         "outboundCreateSubmit": "創建 webhook",
-        "outboundCreateCancel": "取消",
         "outboundCreateSuccess": "已建立出站 webhook。",
         "outboundCreateError": "建立出站 webhook 失敗。",
         "outboundUrlLabel": "目標網址",
-        "outboundActiveToggle": "積極的",
         "outboundSlackHint": "這個網址很敏感——任何擁有它的人都可以向你的頻道發佈內容。",
         "outboundHmacSecretsTitle": "簽署秘密",
-        "outboundHmacActiveSecret": "積極的",
         "outboundHmacInactiveSecret": "非活躍狀態",
         "outboundHmacRetiringSecret": "退休",
         "outboundHmacAutoRetireIn": "將在 {days, number} 天後自動退休",
@@ -1753,19 +1718,12 @@
         "outboundDeleteError": "刪除 webhook 失敗。",
         "outboundSecretCopy": "複製秘密",
         "outboundSecretShownOnce": "現在就把這個秘密記下來──它不能再被人知道了。",
-        "outboundSecretDone": "完畢",
         "inboundAddButton": "新增入站 webhook",
-        "inboundChooserTitle": "選擇適配器",
-        "inboundChooserDescription": "選擇將向 TestPlanIt 發送 Webhook 的問題追蹤系統。每個專案可以有一個 Jira、一個 GitHub 和一個 Azure DevOps 入站 Webhook。",
         "inboundChooserJira": "吉拉",
         "inboundChooserGithub": "GitHub",
         "inboundChooserAdo": "Azure DevOps",
         "inboundChooserGitlab": "GitLab",
         "inboundChooserGitea": "吉特亞",
-        "inboundChooserAlreadyConfigured": "已配置",
-        "inboundChooserSubmit": "繼續",
-        "inboundChooserCancel": "取消",
-        "inboundEmpty": "未配置入站 Webhook。請新增一個以接收來自 Jira、GitHub、GitLab、Gitea 或 Azure DevOps 的問題更新。",
         "inboundJiraTitle": "Jira 入站 webhook",
         "inboundGithubTitle": "GitHub 入站 webhook",
         "inboundGithubScopeHint": "GitHub <code>issues</code> events 會更新相關的 TestPlanIt 問題。 Pull request 和 issue comment 事件已被接受，但目前不會更新問題。",
@@ -1776,7 +1734,6 @@
         "inboundAdoTitle": "Azure DevOps 入站 Webhook",
         "inboundAdoScopeHint": "Azure DevOps <code>工作項目已更新</code> 事件會更新相關的 TestPlanIt 問題。其他事件也會被接受，但不會更新問題。",
         "inboundAdoUsername": "使用者名稱",
-        "inboundAdoPassword": "密碼",
         "inboundAdoUsernamePlaceholder": "服務帳戶",
         "inboundAdoUsernameHelp": "已在 Azure DevOps 服務鉤子端進行設定。 TestPlanIt 透過 HTTP 基本驗證對其進行驗證。",
         "inboundAdoPasswordHelp": "靜態儲存時採用加密方式。同時，也請在 Azure DevOps 服務鉤子端中儲存此值。",
@@ -1808,9 +1765,7 @@
         "deliveriesTab": "送貨",
         "filterConfigPlaceholder": "所有 webhook",
         "filterEventPlaceholder": "所有事件",
-        "filterStatusAll": "全部",
         "filterStatusFailed": "失敗的",
-        "filterStatusSuccess": "成功",
         "filterSinceDefault": "自…",
         "filterUntilDefault": "直到…",
         "filterReset": "重置篩選器",
@@ -1822,8 +1777,6 @@
         "tableHeaderConfig": "Webhook",
         "tableHeaderEvent": "事件",
         "tableHeaderSubjectRef": "參考",
-        "tableHeaderStatus": "地位",
-        "tableHeaderError": "錯誤",
         "tableHeaderReceivedAt": "已收到",
         "tableHeaderAttempt": "試圖",
         "tableHeaderDirection": "方向",
@@ -1836,7 +1789,6 @@
         "drawerLabelLatency": "延遲",
         "drawerLatencyValue": "{ms, number} 毫秒",
         "drawerLatencyUnknown": "—",
-        "drawerLabelError": "錯誤",
         "drawerLabelPayloadDigest": "有效載荷摘要",
         "drawerLabelEventId": "事件 ID",
         "drawerLabelSubjectRef": "參考",
@@ -1865,7 +1817,6 @@
         "activityLastDispatched": "最後出貨",
         "activityLastSuccess": "最後成功",
         "activityLastFailure": "最後一次失敗",
-        "activityNever": "絕不",
         "reEnable": "重新啟用",
         "reEnableConfirmTitle": "重新啟用此 webhook？",
         "reEnableConfirm": "請確認上游問題已修復後再重新啟用。 webhook 將立即恢復發送。",
@@ -1889,11 +1840,42 @@
         "setupStepsMantisbtStep1": "在您的 MantisBT 伺服器上安裝並啟用 MantisBT webhook 外掛程式（MantisBT 沒有內建的 webhook）。",
         "setupStepsMantisbtStep2": "在外掛程式設定中，選擇「問題建立」和「問題更新」事件。",
         "setupStepsMantisbtStep3": "將上方的 URL 貼上作為 webhook 目標並儲存。",
-        "setupStepsMantisbtStep4": "在 MantisBT 中建立或更新問題；已連結問題的狀態將同步至此處。"
+        "setupStepsMantisbtStep4": "在 MantisBT 中建立或更新問題；已連結問題的狀態將同步至此處。",
+        "codeRepos": {
+          "empty": "尚未連接任何儲存庫以進行影響分析。請先<link>連接一個</link>。",
+          "unsupported": "{provider} 儲存庫無法將 Webhook 傳送至 TestPlanIt。",
+          "eventPullRequest": "提取請求",
+          "eventPullRequestHelp": "當提取請求被開啟時，分析其相對於目標分支的變更並建立一個執行。",
+          "eventPush": "推送至 {branch}",
+          "eventPushDefault": "推送至預設分支",
+          "eventPushHelp": "對於推送到基礎分支的每次推送，分析推送的提交並建立一個執行。",
+          "setupGithub": "在 GitHub 中，開啟儲存庫的「設定」→「Webhooks」，貼上 URL 和密鑰，將內容類型設定為 application/json，並選擇「Pull requests」和「Pushes」事件。",
+          "setupGitlab": "在 GitLab 中，開啟專案的「設定」→「Webhooks」，貼上 URL，將密鑰貼為密鑰令牌，並啟用「Merge request events」和「Push events」觸發器。",
+          "setupGitea": "在 Gitea 中，開啟儲存庫的「設定」→「Webhooks」，貼上 URL 和密鑰，將內容類型設定為 application/json，並選擇「Pull Request」和「Push」事件。",
+          "setupAdo": "在 Azure DevOps 中，為「Pull request created」和「Code pushed」事件建立類型為「Web Hooks」的服務掛勾，貼上 URL，並輸入您在此處輸入的使用者名稱和密碼作為基本驗證。",
+          "setupBitbucket": "在 Bitbucket 中，開啟儲存庫的「設定」→「Webhooks」，貼上 URL 和密鑰，並選擇「Pull request created」和「Repository push」觸發器。",
+          "rotateConfirm": "輪換密鑰會使目前的 URL 和密鑰失效；請在之後更新儲存庫的 Webhook 設定。",
+          "deleteConfirm": "刪除此儲存庫 Webhook？提取請求和推送將不再觸發分析。",
+          "eventBranchPush": "推送至其他分支",
+          "eventBranchPushHelp": "分析推送至任何其他分支相對於基礎分支的變更，如同提取請求一樣，並為每個推送建立一個執行。",
+          "baseBranch": "基礎分支",
+          "baseBranchHelp": "推送到此分支會單獨進行分析；提取請求和其他分支則會與其進行比較。留空以使用連接的分支。"
+        },
+        "inboundEmptyState": "尚無傳入 Webhook。<link>新增一個</link>以從您的問題追蹤器接收問題更新，或從已連接的儲存庫接收提取請求和推送。",
+        "inboundChooserBitbucket": "Bitbucket",
+        "wizard": {
+          "description": "選擇要將 Webhook 傳送至 TestPlanIt 的來源，然後將 URL 和密鑰複製到該系統中。",
+          "stepConnect": "連接",
+          "sourceIssues": "問題追蹤器",
+          "sourceIssuesHelp": "使連結的問題與來自 {tracker} 的更新保持同步。",
+          "sourceIssuesHelpGeneric": "使連結的問題與專案問題整合的更新保持同步。",
+          "sourceRepositoryHelp": "當提取請求被開啟或提交被推送時，啟動影響分析並建立測試執行。",
+          "noRepositoryAvailable": "每個已連接的儲存庫都已經有 Webhook，或無法傳送 Webhook。",
+          "repositoryPlaceholder": "選擇一個儲存庫"
+        }
       },
       "aiModels": {
         "description": "配置人工智慧模型以實現智慧測試用例生成和分析",
-        "availableModels": "項目預設值",
         "availableModelsDescription": "從系統管理員配置的模型中選擇一個預設的 AI 模型用於此專案。",
         "currentModelSettings": "目前模型設定",
         "currentModelDescription": "目前啟動的 AI 模型配置詳情： {name}",
@@ -1953,28 +1935,20 @@
       },
       "parameters": {
         "title": "測試用例參數",
-        "tabDatasets": "共享資料集",
         "tabJunit": "迭代屬性映射"
       },
       "datasets": {
-        "metaTitle": "共享資料集",
-        "title": "共享資料集",
         "description": "管理專案範圍內的資料集，該專案中的任何測試案例都可以引用這些資料集。每次儲存都會建立一個新的不可變版本。",
-        "navLabel": "共享資料集",
         "newButton": "新數據集",
         "emptyHeading": "暫無共享資料集",
         "emptyBody": "建立一個專案範圍的資料集，供多個測試案例引用並綁定到特定版本。",
         "loadError": "無法載入資料集。",
         "retry": "再試一次",
         "columns": {
-          "name": "姓名",
-          "columns": "列",
           "rows": "列",
-          "version": "版本",
           "lastEdited": "最後編輯於",
           "owner": "擁有者",
-          "assignments": "正在使用",
-          "actions": "行動"
+          "assignments": "正在使用"
         },
         "versionLabel": "v{version, number}",
         "assignmentsCount": "{count, plural, =0 {0 個案例} =1 {# 個案例} other {# 個案例}}",
@@ -1982,17 +1956,13 @@
         "columnsCount": "{count, plural, =0 {0 個欄} =1 {# 個欄} other {# 個欄}}",
         "actionsMenuLabel": "開啟資料集操作",
         "actionOpen": "開啟編輯器",
-        "actionDelete": "刪除",
         "openLink": "打開",
         "create": {
           "title": "新的共享資料集",
           "description": "資料集是專案範圍限定的，可供該專案中的每個測試案例使用。",
-          "nameLabel": "姓名",
           "namePlaceholder": "例如：客戶帳戶",
-          "descriptionLabel": "描述",
           "descriptionPlaceholder": "關於此資料集包含內容的可選說明。",
           "submit": "建立資料集",
-          "cancel": "取消",
           "validationNameRequired": "姓名為必填項。",
           "validationNameTooLong": "名稱長度不得超過120個字元。",
           "validationDescriptionTooLong": "描述字數必須少於2000個字元。",
@@ -2005,7 +1975,6 @@
           "descriptionStage2": "此資料集被 {count, plural, =1 {# 案例、} other {# 案例和}}案例使用。刪除此資料集將從這些案例中移除共享資料集的分配。它們現有的測試運行不受影響（快照是不可變的）。",
           "confirm": "刪除資料集",
           "confirmAnyway": "無論如何都要刪除（{count, plural, =1 {# 情況} other {# 情況}}）",
-          "cancel": "取消",
           "error": "無法刪除資料集"
         },
         "deleteSuccess": "已刪除“{name}”",
@@ -2015,7 +1984,6 @@
           "loadError": "無法載入此資料集",
           "notFound": "未找到資料集",
           "notFoundDescription": "該資料集已被刪除或您無權存取。",
-          "saveAction": "節省",
           "saving": "儲存",
           "savedHint": "所有變更已儲存至版本 {version, number}",
           "unsavedHint": "未儲存的更改",
@@ -2030,7 +1998,6 @@
         "saveSuccess": "已儲存版本 {version, number}",
         "saveSuccessBranched": "已儲存版本 {newVersion, number} （分支自 v{fromVersion, number}）",
         "versionPicker": {
-          "label": "版本",
           "loadError": "無法載入版本",
           "currentItemLabel": "v{version, number} （目前）",
           "currentItemInitialLabel": "目前 — 暫無已儲存版本",
@@ -2042,81 +2009,30 @@
         "datasetTabSharedEditorHint": "完成後點選「儲存」。每次儲存都會建立一個新版本。"
       },
       "quickScript": {
-        "title": "QuickScript",
         "description": "啟用 QuickScript 並連接程式碼庫，以進行 AI 輔助測試產生。",
         "enableLabel": "啟用 QuickScript",
         "enableDescription": " 允許團隊成員使用 QuickScript 將測試案例轉換為自動化腳本。",
         "enabledToast": "已啟用 QuickScript",
         "disabledToast": "QuickScript 已停用",
         "noRepos": {
-          "title": "未配置任何代碼倉庫",
-          "adminDescription": "在為此項目配置程式碼上下文之前，請先建立儲存庫連線。",
-          "adminLink": "前往代碼倉庫",
-          "userDescription": "請聯絡系統管理員設定程式碼庫連線。"
+          "adminDescription": "在為此項目配置程式碼上下文之前，請先建立儲存庫連線。"
         },
         "repository": {
           "title": "程式碼庫",
           "description": "選擇用於 AI 環境的程式碼儲存庫",
-          "placeholder": "選擇一個代碼倉庫…",
-          "branchLabel": "分支",
           "branchPlaceholder": "留空則使用倉庫預設分支"
         },
         "pathPatterns": {
-          "title": "路徑模式",
           "description": "指定要包含的檔案。每一行都包含一個基本路徑和一個 glob 模式。例如：`path=tests/e2e/pages + pattern=*` 直接包含該資料夾中的所有檔案；`path=src + pattern=**/*.test.ts` 遞歸包含所有測試檔案。",
-          "pathLabel": "小路",
           "pathPlaceholder": "測試/端到端/頁面",
-          "patternLabel": "圖案",
-          "addPath": "新增路徑",
-          "previewFiles": "預覽文件",
-          "scanningRepo": "正在掃描儲存庫檔案… ({seconds}s)",
-          "files": "{count, plural, one {# 文件} other {# 文件集}}",
-          "truncatedBadge": "結果可能不完整（受提供者限制）",
           "exceedsLimit": "總大小超出 AI 情境限制 {overflow}。在匯出過程中，文件會根據與待匯出測試案例的相關性進行排序——相關性最高的文件優先導出，當達到預算上限時，相關性較低的文件將被跳過。如果您希望更精確地控制要匯出的文件，請縮小路徑模式。"
         },
-        "preview": {
-          "resolvingBranch": "正在解析分支…",
-          "scanningFiles": "正在掃描 {scope}… 中的文件",
-          "scanningFilesCount": "正在掃描 {scope}… 中的檔案（已找到{count, number}）",
-          "filtering": "對 {count, number} 個檔案套用篩選器…",
-          "rateLimited": "被提供者限制速率 — 將在 {seconds, number} 秒後重試…"
-        },
         "cache": {
-          "title": "快取設定",
           "description": "Valkey 會快取文件，以便在 AI 生成過程中快速存取。",
-          "enableLabel": "啟用檔案快取",
           "disabledWarning": "文件緩存已禁用。匯出時，程式碼庫檔案將直接從您的程式碼提供者取得，不會儲存在 TestPlanIt 中。 AI 驅動的 QuickScript 仍將包含程式碼上下文，但每次匯出都會向您的程式碼庫發出即時請求。",
-          "ttlBefore": "快取",
-          "ttlDays": "{count, plural, other {天}}",
-          "ttlAriaLabel": "以天為單位的快取持續時間",
-          "statusTitle": "快取狀態",
-          "refreshButton": "刷新快取",
-          "listingFiles": "文件列表…",
-          "cachingFiles": "快取 {count} 個檔案…",
-          "statusNeverFetched": "從未獲取",
-          "statusPending": "令人耳目一新…",
-          "lastFetched": "最後獲取時間",
-          "filesCached": "文件已快取",
-          "contentsCached": "內容已快取",
-          "contentsIncomplete": "僅快取了 {total} 個檔案內容中的 {cached} 個 — 產生的腳本將不會使用缺失的檔案。請再次重新整理以完成。",
-          "totalSize": "總尺寸"
+          "contentsIncomplete": "僅快取了 {total} 個檔案內容中的 {cached} 個 — 產生的腳本將不會使用缺失的檔案。請再次重新整理以完成。"
         },
-        "save": "儲存配置",
         "saved": "程式碼上下文配置已儲存",
-        "saveError": "配置保存失敗",
-        "listError": "無法列出儲存庫文件",
-        "contentsError": "文件內容快取失敗",
-        "networkError": "快取刷新期間出現網路錯誤",
-        "refreshSuccess": "快取已刷新： {fileCount} 個檔案（已快取{contentCached} 個內容）",
-        "refreshRateLimited": "快取已刷新：列出了 {fileCount} 個文件，快取了 {contentCached}/{fileCount} 個內容（速率受限——請再次刷新以完成）",
-        "refreshComplete": "快取已重新整理：{fileCount} 個檔案",
-        "refreshInProgress": "快取重新整理仍在背景執行中。完成後將在此處更新。",
-        "validation": {
-          "pathRequired": "路徑是必需的",
-          "patternRequired": "需要圖案",
-          "repositoryRequired": "需要儲存庫",
-          "pathPatternRequired": "至少需要一種路徑模式"
-        },
         "exportTemplates": {
           "title": "匯出模板",
           "description": "為該項目分配導出模板。只有指派的範本才會顯示在匯出對話方塊中。",
@@ -2130,17 +2046,76 @@
           "saved": "模板分配已儲存",
           "saveError": "模板分配保存失敗"
         },
-        "disconnect": "斷開儲存庫",
-        "confirmDisconnect": "您確定要中斷「{name}」與此項目的連線嗎？",
-        "disconnectWarningTitle": "斷開此存儲庫的連接將導致：",
-        "disconnectWarning1": "刪除所有快取的儲存庫文件",
-        "disconnectWarning2": "移除路徑模式和分支配置",
         "disconnectWarning3": "停止在 AI 產生的匯出檔案中包含程式碼上下文",
         "disconnectSuccess": "程式碼庫已斷開連接",
         "disconnectError": "斷開程式碼庫連線失敗"
       },
+      "codeRepository": {
+        "cache": {
+          "cachingFiles": "快取 {count} 個檔案……",
+          "contentsCached": "內容已快取",
+          "enableLabel": "啟用檔案快取",
+          "filesCached": "文件已快取",
+          "lastFetched": "最後獲取時間",
+          "listingFiles": "文件列表……",
+          "refreshButton": "刷新快取",
+          "statusNeverFetched": "從未獲取",
+          "statusPending": "正在刷新……",
+          "statusTitle": "快取狀態",
+          "title": "快取設定",
+          "totalSize": "總大小",
+          "ttlAriaLabel": "以天為單位的快取持續時間",
+          "ttlBefore": "快取",
+          "ttlDays": "{count, plural, other {天}}"
+        },
+        "confirmDisconnect": "您確定要中斷「{name}」與此項目的連線嗎？",
+        "contentsError": "文件內容快取失敗",
+        "disconnect": "斷開儲存庫",
+        "disconnectWarningTitle": "斷開此存儲庫的連接將導致：",
+        "listError": "無法列出儲存庫文件",
+        "networkError": "快取刷新期間出現網路錯誤",
+        "noRepos": {
+          "adminLink": "前往代碼倉庫",
+          "title": "未配置任何代碼倉庫",
+          "userDescription": "請聯絡系統管理員設定程式碼庫連線。"
+        },
+        "pathPatterns": {
+          "addPath": "新增路徑",
+          "files": "{count, plural, other {# 個檔案}}",
+          "pathLabel": "路徑",
+          "patternLabel": "模式",
+          "previewFiles": "預覽檔案",
+          "scanningRepo": "正在掃描儲存庫檔案… ({seconds}s)",
+          "title": "路徑模式",
+          "truncatedBadge": "結果可能不完整（受提供者限制）"
+        },
+        "preview": {
+          "filtering": "對 {count, number} 個檔案套用篩選器……",
+          "rateLimited": "被提供者限制速率 — 將在 {seconds, number} 秒後重試……",
+          "resolvingBranch": "正在解析分支……",
+          "scanningFiles": "正在掃描 {scope} 中的文件……",
+          "scanningFilesCount": "正在掃描 {scope}… 中的檔案（已找到{count, number}）"
+        },
+        "refreshComplete": "快取已重新整理：{fileCount} 個檔案",
+        "refreshInProgress": "快取重新整理仍在背景執行中。完成後將在此處更新。",
+        "refreshRateLimited": "快取已刷新：列出了 {fileCount} 個文件，快取了 {contentCached}/{fileCount} 個內容（速率受限——請再次刷新以完成）",
+        "refreshSuccess": "快取已刷新： {fileCount} 個檔案（已快取{contentCached} 個內容）",
+        "repository": {
+          "branchLabel": "分支",
+          "placeholder": "選擇一個代碼倉庫……"
+        },
+        "save": "儲存配置",
+        "saveError": "配置保存失敗",
+        "validation": {
+          "pathPatternRequired": "至少需要一種路徑模式",
+          "pathRequired": "路徑是必需的",
+          "patternRequired": "需要模式",
+          "repositoryRequired": "需要儲存庫"
+        },
+        "disconnectWarningCache": "刪除所有快取的儲存庫文件",
+        "disconnectWarningPatterns": "移除路徑模式和分支配置"
+      },
       "advanced": {
-        "title": "先進的",
         "description": "每個項目都設有針對特定功能的開關。新增的開關將在此處顯示。",
         "recordKey": {
           "label": "專案代碼",
@@ -2237,115 +2212,103 @@
         }
       },
       "impact": {
-        "title": "影響分析",
         "description": "啟用測試影響分析，並連接受測應用程式的儲存庫。",
         "enableLabel": "啟用影響分析",
         "enableDescription": "允許團隊成員在建立測試執行時，根據程式碼變更選擇受影響的測試。",
         "enabledToast": "影響分析已啟用",
         "disabledToast": "影響分析已停用",
         "noRepos": {
-          "title": "未設定任何程式碼儲存庫",
-          "adminDescription": "在為此專案配置影響分析之前，請先建立儲存庫連線。",
-          "adminLink": "前往程式碼儲存庫",
-          "userDescription": "請聯絡系統管理員設定程式碼儲存庫連線。"
+          "adminDescription": "在為此專案配置影響分析之前，請先建立儲存庫連線。"
         },
         "repository": {
           "title": "應用程式儲存庫",
-          "description": "選擇存放受測應用程式的儲存庫。",
-          "placeholder": "選擇一個程式碼儲存庫……",
-          "branchLabel": "分支",
+          "description": "選擇一個包含受測應用程式部分內容的儲存庫。跨多個服務進行測試的專案可以為每個服務連接一個儲存庫。",
           "branchPlaceholder": "選擇一個分支……",
           "branchInputPlaceholder": "留空則使用儲存庫預設分支",
-          "defaultBranch": "儲存庫預設分支",
           "branchesUnavailable": "無法列出分支：{error}",
           "branchesFallbackHint": "請改為輸入分支名稱。"
         },
         "pathPatterns": {
-          "title": "路徑模式",
           "description": "要包含哪些應用程式檔案。每一列結合一個基礎路徑與一個 glob 模式。範例：path=src + pattern=**/* 會包含 src 底下的所有內容。",
-          "pathLabel": "路徑",
-          "pathPlaceholder": "src",
-          "patternLabel": "模式",
-          "addPath": "新增路徑",
-          "previewFiles": "預覽檔案",
-          "scanningRepo": "正在掃描儲存庫檔案… ({seconds}s)",
-          "files": "{count, plural, other {# 個檔案}}",
-          "truncatedBadge": "結果可能不完整（受提供者限制）"
-        },
-        "preview": {
-          "resolvingBranch": "正在解析分支…",
-          "scanningFiles": "正在掃描 {scope} 中的檔案…",
-          "scanningFilesCount": "正在掃描 {scope}… 中的檔案（已找到 {count, number}）",
-          "filtering": "對 {count, number} 個檔案套用篩選器…",
-          "rateLimited": "被提供者限制速率 — 將在 {seconds, number} 秒後重試…"
+          "pathPlaceholder": "src"
         },
         "cache": {
-          "title": "快取設定",
           "description": "檔案會快取在 Valkey 中，讓 Code Pin 檔案選擇器與儲存庫標記保持快速。",
-          "enableLabel": "啟用檔案快取",
           "disabledWarning": "檔案快取已停用。系統不會掃描儲存庫標記，且 Code Pin 檔案選擇器每次開啟時都會即時從您的提供者列出檔案。",
-          "ttlBefore": "快取",
-          "ttlDays": "{count, plural, other {天}}",
-          "ttlAriaLabel": "以天為單位的快取持續時間",
-          "statusTitle": "快取狀態",
-          "refreshButton": "刷新快取",
-          "listingFiles": "正在列出檔案…",
-          "cachingFiles": "快取 {count} 個檔案…",
-          "statusNeverFetched": "從未獲取",
-          "statusPending": "正在重新整理……",
-          "lastFetched": "最後獲取時間",
-          "filesCached": "檔案已快取",
-          "contentsCached": "內容已快取",
-          "contentsIncomplete": "僅快取了 {total} 個檔案內容中的 {cached} 個。請再次重新整理以完成。",
-          "totalSize": "總尺寸"
+          "contentsIncomplete": "僅快取了 {total} 個檔案內容中的 {cached} 個。請再次重新整理以完成。"
         },
         "tickets": {
           "title": "已連結工單",
-          "description": "提交訊息中提及工單（PROJ-123、#42、AB#42）時，會在每個已連結的測試案例上建立整檔案的程式碼釘選，以便日後這些檔案有變更時能再次找到相關案例。",
+          "description": "指名工單（PROJ-123、#42、AB#42）的提交會在連結至該工單的每個測試案例上建立程式碼釘選——如果差異顯示了提交變更的函式或類別，則釘選在該函式或類別上，否則釘選在整個檔案上——以便日後對該程式碼的變更能再次找到這些案例。TestPlanIt 尚未擁有的指名工單，將從專案的問題追蹤器匯入，以便進行連結。",
           "enableLabel": "從提交訊息衍生程式碼釘選",
-          "enableDescription": "每次快取重新整理時掃描分支上的最近提交。關閉此選項可讓分析僅從已分析的提交中讀取工單金鑰。",
-          "lastScan": "上次掃描：{date}",
-          "never": "尚未掃描",
-          "summary": "已掃描 {commits, plural, other {# 次提交}} · {matched} 個提及已連結工單 · 已建立 {created} 個 · 已更新 {updated} 個 · 已移除 {removed} 個",
+          "enableDescription": "每次快取刷新時掃描分支上的最近提交。關閉此選項後，分析將僅從被分析的提交中讀取工單金鑰；手動掃描仍會執行。",
           "skippedLarge": "{count, plural, other {# 個提交}}因過大而略過釘選。",
-          "fetchCapped": "並非所有符合條件的提交都已讀取；其餘的將於下次重新整理時處理。",
-          "error": "掃描失敗：{error}"
+          "fetchCapped": "並非每個指名已連結工單的提交在本次掃描中都讀取了其檔案；其餘的將在下次掃描中處理。",
+          "scanRecent": "重新掃描最近的提交",
+          "scanFull": "掃描完整歷史記錄",
+          "scanFullHint": "完整歷史記錄會遍歷分支上的每個提交，並為現有工單回填釘選。已讀取的提交會從快取中提供，而在達到上限時停止的遍歷，下次將從中斷處繼續。",
+          "scanStarted": "工單掃描已排入佇列。此卡片將在執行過程中更新。",
+          "scanStillRunning": "工單掃描仍在背景執行中。完成後將在此處更新。",
+          "scanFailedToStart": "無法啟動工單掃描",
+          "runningRecent": "正在掃描最近的提交……",
+          "runningFull": "正在掃描完整歷史記錄……",
+          "runningProgress": "已讀取 {commits, number} 個提交 · {matched, number} 個指名已連結的工單 · 其中已檢查 {fetched, number} 個",
+          "fullBadge": "完整歷史記錄",
+          "imported": "{imported, plural, =0 {未從追蹤器匯入任何新工單。} other {已從追蹤器匯入 # 個工單。}}",
+          "fullCapped": "遍歷在到達分支起點之前的 {count, number} 個提交處停止。請再次執行「掃描完整歷史記錄」以從中斷處繼續。",
+          "stale": "於 {date} 啟動的掃描從未回報結果——工作程序可能已重新啟動。請重新排入佇列以繼續。",
+          "summaryCommits": "{commits, plural, other {已讀取 # 個提交}}{cached, plural, =0 {} other { （其中 {cached, number} 個來自提交快取）}} · {naming, number} 個指名了工單 · {tickets, plural, other {# 個不同的工單}}",
+          "summaryPins": "釘選：已建立 {created, number} 個 · 已更新 {updated, number} 個 · 已移除 {removed, number} 個",
+          "noLinkedHint": "工單只有在測試案例與其連結後才會釘選該測試案例。請將案例連結至已匯入的工單，然後重新掃描。",
+          "importFailuresTitle": "追蹤器中找不到的金鑰（{total} 中的 {shown} 個）：",
+          "windowCapped": "僅讀取了最新的 {count, number} 個提交（最近時間窗口上限）。使用「掃描完整歷史記錄」來讀取較舊的提交。",
+          "runningWalk": "目前已讀取 {commits, number} 個提交{cached, plural, =0 {} other { （其中 {cached, number} 個來自提交快取）}}——遍歷完成後才會查詢工單",
+          "runningImport": "已讀取 {commits, number} 個提交 · 正在匯入工單：已在追蹤器中查詢 {lookups, number} 個 · 已匯入 {imported, number} 個",
+          "summaryCommitsOnly": "{commits, plural, other {已讀取 # 個提交}}",
+          "importSkipped": "{skipped, plural, other {# 個金鑰}}尚未被查詢，因為一次掃描僅能執行有限次數的追蹤器查詢。請再次執行掃描以繼續。",
+          "cancelRequested": "已請求取消。掃描將在下一步驟停止；已讀取的提交將保留在快取中。",
+          "cancelled": "掃描已於 {date} 取消。取消前已讀取的提交會保留在提交快取中；釘選未更新。",
+          "importMoved": "{moved, plural, other {# 個金鑰}}是已匯入工單的舊名稱；它們已在追蹤器中被移動或重新命名。",
+          "importFailed": "{failed, plural, other {# 個金鑰}}在追蹤器中找不到，列於下方。",
+          "summaryMatched": "{matched, plural, other {# 個提交}}指名了連結至測試案例的工單",
+          "summarySymbolPins": "（已建立的釘選中有 {count, number} 個是針對函式或類別，而非整個檔案。）"
         },
         "markers": {
           "title": "儲存庫標記",
           "description": "類似 @testplanit case:123 的註解標記，以及 .testplanit/testmap.yml 中的項目，會在每次快取重新整理時成為 Code Pins。",
-          "lastScan": "上次掃描：{date}",
-          "never": "尚未掃描",
           "skippedPrivacy": "已略過：檔案快取已停用。",
           "skippedPartial": "已略過：檔案內容僅部分快取。",
           "summary": "{annotations, plural, other {# 個註解}} · {mapEntries, plural, other {# 個對應項目}} · 已建立 {created} 個 · 已更新 {updated} 個 · 已移除 {removed} 個",
-          "problems": "{count, plural, other {# 個問題}}",
-          "error": "掃描失敗：{error}"
+          "problems": "{count, plural, other {# 個問題}}"
         },
-        "save": "儲存配置",
         "saved": "影響分析配置已儲存",
-        "saveError": "配置儲存失敗",
-        "listError": "無法列出儲存庫檔案",
-        "contentsError": "檔案內容快取失敗",
-        "networkError": "快取重新整理期間發生網路錯誤",
-        "refreshSuccess": "快取已重新整理：{fileCount} 個檔案（已快取 {contentCached} 個內容）",
-        "refreshRateLimited": "快取已重新整理：列出了 {fileCount} 個檔案，已快取 {contentCached}/{fileCount} 個內容（速率受限——請再次重新整理以完成）",
-        "refreshComplete": "快取已重新整理：{fileCount} 個檔案",
-        "refreshInProgress": "快取重新整理仍在背景執行中。完成後將在此處更新。",
-        "validation": {
-          "pathRequired": "需要路徑",
-          "patternRequired": "需要模式",
-          "repositoryRequired": "需要儲存庫",
-          "pathPatternRequired": "至少需要一種路徑模式"
-        },
-        "disconnect": "斷開儲存庫",
-        "confirmDisconnect": "您確定要中斷「{name}」與此專案的連線嗎？",
-        "disconnectWarningTitle": "中斷此儲存庫的連線將會：",
         "disconnectWarning1": "移除 {count, plural, other {# 個 Code Pin}} 以及此儲存庫的分析歷史記錄",
-        "disconnectWarning2": "刪除所有快取的儲存庫檔案",
-        "disconnectWarning3": "移除路徑模式和分支設定",
         "disconnectSuccess": "應用程式儲存庫已中斷連線",
-        "disconnectError": "無法中斷應用程式儲存庫連線"
+        "disconnectError": "無法中斷應用程式儲存庫連線",
+        "repositories": {
+          "title": "已連接的儲存庫",
+          "description": "此專案分析的每個儲存庫。每個儲存庫都有自己的分支、路徑模式、快取和程式碼釘選。",
+          "connect": "連接儲存庫",
+          "allConnected": "每個已註冊的儲存庫都已連接。",
+          "columnCache": "快取",
+          "cacheDisabled": "快取已關閉",
+          "edit": "編輯連線",
+          "connectTitle": "連接一個儲存庫",
+          "editTitle": "編輯 {name}",
+          "view": "檢視連線",
+          "connectDescription": "選擇受測應用程式的一個已註冊儲存庫，並指定要讀取的分支和路徑。",
+          "editDescription": "變更此連接的分支、路徑模式、快取和工單掃描設定。",
+          "viewDescription": "此儲存庫的連接方式。可以在此處刷新快取或執行工單掃描；使用「編輯」以變更設定。",
+          "empty": "尚未連接任何儲存庫",
+          "emptyDescription": "連接受測應用程式的儲存庫以開始分析變更。",
+          "lastScan": "{created, plural, other {上次掃描建立了 # 個釘選}}",
+          "scanFailed": "上次掃描失敗",
+          "scanCancelled": "上次掃描已取消"
+        },
+        "initialScanStarted": "正在擷取儲存庫檔案並掃描儲存庫標記和已連結的工單……",
+        "scanError": "掃描失敗：{error}",
+        "scanLastScan": "上次掃描：{date}",
+        "scanNever": "尚未掃描"
       }
     },
     "matrix": {
@@ -2355,7 +2318,6 @@
       "loadError": "無法載入矩陣視圖。請重試或縮小篩選範圍。",
       "cellCapShort": "此矩陣將產生 {cells, number} 個單元格，超出 {threshold, number} 個單元格的限制。請縮小篩選範圍以繼續。",
       "caseColumnHeader": "案例/參數行",
-      "cellNotRun": "未經測試",
       "cellSummary": "{pass, number} 通過， {fail, number} 失敗， {notRun, number} 未運行",
       "popoverTitle": "{count, plural, =1 {# 迭代次數} other {# 迭代次數}}",
       "iterationUnlabeled": "迭代 #{index, number}",
@@ -2364,8 +2326,6 @@
       "filterStatus": "{count, plural, =0 {狀態} one {狀態 (#)} other {狀態 (#)}}",
       "filterConfig": "{count, plural, =0 {配置} one {配置 (#)} other {配置 (#)}}",
       "filterDataset": "{count, plural, =0 {資料集} other {資料集 (#)}}",
-      "filterStatusLabel": "地位",
-      "filterConfigLabel": "配置",
       "filterDatasetLabel": "數據集",
       "filterStatusPlaceholder": "任何狀態",
       "filterConfigPlaceholder": "任何配置",
@@ -2374,12 +2334,10 @@
       "filterDateTo": "到",
       "configNone": "（無配置）",
       "clearFilter": "清除",
-      "filterEmpty": "暫無選項",
       "resetFilters": "重置篩選器",
       "exportCsv": "匯出 CSV 文件",
       "legendPassedName": "透過",
       "legendFailedName": "失敗的",
-      "legendUntestedName": "未經測試",
       "legendClickHint": "點擊任何儲存格即可查看迭代詳情",
       "cellCapTitle": "矩陣將渲染 {cellCount, number} 個單元格（限制 {threshold, number}）",
       "cellCapSuggestionFilterCases": "試著篩選出較少的測試案例－這是影響最大的因素。",
@@ -2524,7 +2482,6 @@
       "importStarted": "匯入已開始",
       "kindRelease": "發行版本",
       "kindSprint": "衝刺",
-      "selectAll": "全選",
       "searchPlaceholder": "搜尋發行版本和衝刺……",
       "emptyFiltered": "沒有符合您篩選條件的里程碑。",
       "partialWarning": "部分 Jira 專案無法取得：",
@@ -2535,14 +2492,12 @@
     "sync": {
       "managedByJira": "由 Jira 管理",
       "lastSynced": "上次同步時間 {time}",
-      "openInJira": "在 Jira 中開啟",
       "providerJira": "吉拉",
       "sourceBadge": "{provider} · {kind} · {state}",
       "syncNow": "立即同步",
       "unlinkMenuItem": "取消與 {provider} 的連結",
       "unlinkConfirmTitle": "取消連結里程碑？",
       "unlinkConfirmDescription": "這將停止與追蹤器的同步：欄位將重新變為可編輯，已同步的問題連結將變為手動（由您保留或移除），日後可透過重新匯入此產物來重新連結。",
-      "unlinkConfirmAction": "取消連結",
       "unlinkSuccess": "里程碑已與追蹤器取消連結。",
       "unlinkError": "取消連結里程碑失敗。",
       "sourceRemoved": "來源已在 {provider} 中移除",
@@ -2566,19 +2521,15 @@
       "tooltipAhead": "超前理想進度 {count, number} 個"
     },
     "members": {
-      "cardTitle": "問題",
       "casesOtherProjects": "{count, plural, other {# 個測試案例在其他專案中}}",
       "inScope": "範圍內",
       "foundInTesting": "在測試中發現",
       "foundInTestingEmpty": "測試中未發現任何問題。",
       "inScopeCrossBadge": "範圍內",
       "refresh": "重新整理",
-      "columnKey": "名稱",
-      "columnStatus": "狀態",
       "columnCoverage": "涵蓋範圍",
       "columnSource": "來源",
       "sourceSynced": "已同步",
-      "sourceManual": "手動",
       "coveragePassed": "通過",
       "coverageFailed": "失敗",
       "coverageInProgress": "進行中",
@@ -2589,7 +2540,6 @@
       "filterAllTypes": "所有類型",
       "empty": "尚無問題連結至此里程碑。",
       "emptyFiltered": "沒有符合目前篩選條件的問題。",
-      "unlink": "取消連結",
       "managedByJira": "由 Jira 管理 — 請在 Jira 中的版本/衝刺中移除它",
       "linkSuccess": "問題已連結至此里程碑。",
       "linkError": "將問題連結至此里程碑失敗。",
@@ -2603,7 +2553,6 @@
       "overflowImportSuccess": "匯入已開始 — 問題將在同步時出現。",
       "overflowImportError": "從 Jira 匯入成員問題失敗。",
       "emptyCta": "連結問題以開始使用。",
-      "columnDescription": "描述",
       "unlinkConfirmTitle": "取消連結問題？",
       "unlinkConfirmDescription": "這將從此里程碑移除問題。問題本身將被保留，可日後重新連結。",
       "totalsUncovered": "{count, plural, other {# 個未涵蓋問題}}",
@@ -2627,7 +2576,6 @@
       "deleteDescription": "您確定要刪除 {count, plural, other {這些工作階段}} 嗎？"
     },
     "auditLog": {
-      "trigger": "活動",
       "description": "此工作階段的所有變更記錄。"
     },
     "title": "{count, plural, =1 {會話} other {會話}}",
@@ -2656,9 +2604,6 @@
       "viewSessionDetails": "查看會話"
     },
     "noMilestone": "沒有里程碑",
-    "milestoneGroup": {
-      "sessionCount": "{count, plural, other {# 個會話}}"
-    },
     "completeDialog": {
       "noWorkflowsConfigured": "此項目未配置任何完成工作流程。請在管理設定中配置工作流程以啟用會話完成功能。"
     },
@@ -2729,7 +2674,6 @@
     "version": {
       "title": "會話歷史記錄視圖",
       "notFound": "未找到會話版本。",
-      "selectVersion": "選擇版本",
       "backToSession": "返回會話",
       "backToLatest": "返回最新版本",
       "versionInfo": {
@@ -2846,9 +2790,6 @@
       "preferences": {
         "title": "偏好"
       },
-      "access": {
-        "title": "使用權"
-      },
       "assignments": {
         "title": "作業",
         "empty": "沒有未完成的作業。",
@@ -2863,7 +2804,6 @@
         "userName": "目錄使用者名稱",
         "givenName": "名",
         "familyName": "姓",
-        "jobTitle": "標題",
         "userType": "使用者類型",
         "employeeNumber": "員工編號",
         "department": "部門",
@@ -2897,7 +2837,6 @@
         }
       },
       "changePasswordModal": {
-        "buttonText": "更改密碼",
         "setPasswordButtonText": "設定密碼",
         "description": "請輸入您目前的密碼和新密碼以變更您的帳戶密碼。此操作只會更改您內部管理的密碼。如果您透過單一登入 (SSO) 登入，則該密碼不會變更。",
         "setPasswordDescription": "您已透過單一登入 (SSO) 登錄，但尚未設定本機密碼。請輸入新密碼以啟用帳戶的郵件信箱/密碼登入功能。",
@@ -2919,8 +2858,6 @@
         "loadMore": "載入中",
         "viewDetails": "查看詳情",
         "columnAction": "操作",
-        "columnEntityType": "類型",
-        "columnEntityName": "名稱",
         "columnTimestamp": "時間戳",
         "allActions": "所有操作",
         "allTypes": "所有類型",
@@ -2999,8 +2936,7 @@
       "remove": "移除頭像",
       "changeProfilePicture": "更換頭像",
       "notAuthenticated": "您必須登入才能上傳頭像。"
-    },
-    "deletedUser": "已刪除用戶"
+    }
   },
   "userMenu": {
     "viewProfile": "查看個人資料",
@@ -3035,7 +2971,6 @@
       "historyView": "測試用例歷史記錄視圖"
     },
     "auditLog": {
-      "trigger": "活動",
       "description": "此測試案例的所有變更記錄。"
     },
     "fields": {
@@ -3123,7 +3058,6 @@
     },
     "dragDrop": {
       "move": "移動",
-      "copy": "複製",
       "promptTitle": "你想做什麼？",
       "copying": "正在複製…",
       "copyComplete": "{count, plural, =1 {已複製 1 個案例至 {folder}} other {已複製 # 個案例至 {folder}}}{dest, select, samename {} crossProject { ，位於 {projectName}} other {}}",
@@ -3179,7 +3113,6 @@
       "addToRunDraftBlocked": "如果此專案的「從測試執行中排除草稿案例」選項已啟用，則無法將草稿案例新增至執行階段。",
       "copyMoveToProject": "複製/移動",
       "export": "出口",
-      "quickScript": "QuickScript",
       "parameterizedStatusReadOnly": "狀態由迭代結果計算得出——點擊打開",
       "cannotReorderAcrossPages": "無法跨多個頁面重新排列測試案例。若要重新排序，請從頁面大小選單中選擇「全部」以在一個頁面上查看所有用例，或取消選擇其他頁面上的用例。您仍然可以將選定的用例拖曳到資料夾中。",
       "exportModal": {
@@ -3307,7 +3240,6 @@
       "restoreDescriptionNew": "您在 {age} 開始建立一個測試用例但從未儲存。請還原您所寫的內容，或放棄它並重新開始。",
       "restoreStaleWarning": "自您的草稿寫入後，此測試用例已被其他人儲存。還原將在您儲存時取代他們的內容。",
       "restoreDiscard": "放棄",
-      "restoreRestore": "還原",
       "bannerText": "您在 {age} 對此測試用例做了未儲存的變更。",
       "bannerAction": "繼續編輯",
       "bannerDiscard": "放棄它們"
@@ -3346,7 +3278,6 @@
     "views": {
       "byAutomation": "自動化",
       "byParameterized": "參數化",
-      "byAttachments": "附件",
       "byReview": "審查",
       "allTemplates": "所有模板",
       "allStates": "所有州",
@@ -3430,7 +3361,6 @@
         "markdown": "Markdown"
       },
       "columns": {
-        "all": "全部",
         "visible": "可見的"
       },
       "delimiter": {
@@ -3460,13 +3390,10 @@
         "multi": "每步多行"
       },
       "comingSoon": "即將推出",
-      "exporting": "出口...",
       "exportError": "匯出失敗，請重試。"
     },
     "quickScript": {
-      "title": "QuickScript",
       "description": "使用範本或人工智慧將選定的測試案例轉換為自動化腳本。",
-      "templatePlaceholder": "選擇一個模板…",
       "searchPlaceholder": "搜尋模板...",
       "noTemplatesFound": "未找到模板。",
       "outputModeLabel": "輸出模式",
@@ -3519,7 +3446,6 @@
       "compareButton": "比較",
       "viewCaseDetails": "查看案件詳情",
       "selectAll": "全選",
-      "selectRow": "選擇行",
       "selected": "{count, plural, one {# 已選擇} other {# 已選擇}}",
       "bulkDismiss": "非重複項 ({count, number})",
       "bulkLink": "連結為相關（{count, number}）",
@@ -3602,7 +3528,6 @@
         "urlInput": "頁面網址",
         "urlInputPlaceholder": "https://example.com/docs",
         "urlMode": "這個網址包含什麼內容？",
-        "urlModeRequirements": "要求",
         "urlModeRequirementsHint": "頁面描述了要建立的內容",
         "urlModeApplication": "應用",
         "urlModeApplicationHint": "Page 是要測試的應用程式",
@@ -3624,7 +3549,6 @@
       "selectTemplate": {
         "title": "選擇測試用例模板",
         "description": "選擇用於產生測試案例的範本。人工智慧將根據此模板填充欄位。",
-        "placeholder": "選擇一個模板…",
         "fieldsDescription": "選擇人工智慧應自動填入的欄位。必填欄位始終包含在內。",
         "requiredOnly": "僅需"
       },
@@ -3667,7 +3591,6 @@
       "expandProgress": "{done, number} 的 {total, number} 生成",
       "import": "{count, plural, =0 {匯入測試案例} =1 {匯入 1 個測試案例} other {匯入 # 個測試案例}}",
       "importing": "{count, plural, =0 {正在匯入測試案例……} =1 {正在匯入 1 個測試案例……} other {正在匯入 # 個測試案例……}}",
-      "openInExternalSystem": "開啟方式 {provider}",
       "externalSystem": "外部系統",
       "autoGenerateTags": "自動為測試用例產生標籤",
       "includeParametersLabel": "生成參數和初始資料集",
@@ -3834,7 +3757,6 @@
       "renameTitle": "重新命名已儲存的檢視",
       "renamed": "已儲存的檢視已更新",
       "renameFailed": "無法更新檢視，請再試一次。",
-      "delete": "刪除",
       "deleteTitle": "刪除已儲存的檢視？",
       "deleteConfirm": "「{name}」將從您已儲存的檢視中移除。此操作無法復原。",
       "deleted": "已儲存的檢視已刪除",
@@ -3847,12 +3769,9 @@
       "addFailed": "無法新增釘選",
       "addSuccess": "已新增釘選",
       "anchoredAt": "固定於 {sha}",
-      "cancel": "取消",
       "caseLabel": "測試用例",
-      "casePlaceholder": "搜尋測試用例……",
       "contentUnavailable": "檔案內容不可用。",
       "description": "此用例所涵蓋的程式碼。釘選區塊內的變更會將該用例納入影響分析中。",
-      "dismissStale": "關閉",
       "duplicate": "此釘選已存在。",
       "empty": "尚無程式碼釘選。",
       "endLine": "結束行",
@@ -3860,11 +3779,9 @@
       "errorLineOutOfRange": "行範圍超出檔案範圍。",
       "errorSnippetTooLarge": "釘選的區塊過大。",
       "errorSymbolNotFound": "在檔案中找不到符號。",
-      "fileLabel": "檔案",
       "filePlaceholder": "搜尋檔案……",
       "filesCached": "已快取 {count, plural, other {# 個檔案}}·{date}",
       "filesLive": "從儲存庫即時列出檔案",
-      "globLabel": "模式",
       "globMatches": "{count, plural, =0 {沒有快取檔案符合} other {# 個快取檔案符合}}",
       "globPlaceholder": "src/payments/**",
       "kind": "種類",
@@ -3877,30 +3794,21 @@
       "location": "位置",
       "managedTooltip": "由儲存庫管理。請在程式碼中編輯標記。",
       "noFilesCached": "無快取檔案清單。請請求專案管理員重新整理儲存庫快取。",
-      "noteLabel": "備註",
       "notePlaceholder": "此用例涵蓋此程式碼的原因（選填）",
       "reanchor": "重新固定",
       "reanchorFailed": "無法重新固定釘選",
       "reanchorSuccess": "釘選已重新固定",
-      "remove": "移除",
       "removeConfirm": "移除此釘選？",
       "removeFailed": "無法移除釘選",
       "removeSuccess": "釘選已移除",
-      "source": "來源",
-      "sourceAi": "AI",
       "sourceAnnotation": "註解",
-      "sourceIssue": "工單",
-      "sourceManual": "手動",
       "sourceMapfile": "對應檔案",
-      "staleBadge": "過時",
       "staleFileDeleted": "檔案已刪除",
       "staleSnippetNotFound": "找不到行",
       "staleSymbolNotFound": "找不到符號",
       "staleTooltip": "在分支尖端找不到釘選的區塊：{reason}。",
       "startLine": "起始行",
-      "submit": "新增釘選",
       "symbolHint": "宣告是依名稱在檔案中定位的。",
-      "symbolLabel": "符號",
       "symbolNoneDetected": "未偵測到符號，請輸入名稱。",
       "symbolPlaceholder": "functionName",
       "symbolSelectPlaceholder": "選擇或輸入符號……",
@@ -3909,14 +3817,13 @@
       "editDialogTitle": "編輯此釘選",
       "editDialogDescription": "檔案與釘選類型保持不變。若要變更任一項，請移除此釘選並新增一個。",
       "editAction": "編輯釘選",
-      "saveChanges": "儲存變更",
       "symbolSearchPlaceholder": "搜尋符號……",
       "symbolUseTyped": "使用「{symbol}」",
       "title": "程式碼釘選",
       "viewerFailed": "無法載入檔案。",
       "viewerLoading": "正在載入檔案…",
       "viewerTooLarge": "此檔案過大，無法顯示。請改為輸入行號。",
-      "wholeFile": "整個檔案"
+      "repositoriesCount": "{count, plural, other {# 個儲存庫}}"
     },
     "diffView": {
       "added": "新增行",
@@ -3947,15 +3854,13 @@
     "noProject": "無專案",
     "description": "使用標籤管理和組織您的測試案例和會話",
     "detail": {
-      "title": "標籤詳情",
       "filterPlaceholder": "篩選項目...",
       "noResults": "未找到任何物品",
       "noFilterResults": "沒有符合目前篩選條件的商品。",
       "filters": {
         "hideCompletedSessions": "隱藏已完成的會話",
         "hideCompletedTestRuns": "隱藏已完成的測試運行",
-        "caseTypeLabel": "案件類型",
-        "allCases": "全部"
+        "caseTypeLabel": "案件類型"
       }
     },
     "manageTags": {
@@ -3977,9 +3882,7 @@
       "tooLarge": "此檔案太大，無法預覽。",
       "empty": "此文件似乎是空的。",
       "download": "下載以檢視",
-      "slideCounter": "第 {current} 張投影片，共 {total} 張",
-      "previousSlide": "上一張投影片",
-      "nextSlide": "下一張投影片"
+      "slideCounter": "第 {current} 張投影片，共 {total} 張"
     }
   },
   "reviews": {
@@ -4009,7 +3912,6 @@
     },
     "transitionGate": {
       "blockedByGate": "此轉換需要獲得「{gateName}」的批准。請使用「請求審核」功能發起審核。",
-      "gatedOptionBadge": "需要審核",
       "gatedStatesNotSelectable": "建立時無法選擇位於或超出限制狀態的狀態。請選擇第一個限制狀態之前的狀態，然後使用「請求審核」功能跨越該限制。",
       "saveBlockedByFormErrors": "儲存前請解決高亮顯示的表單錯誤。",
       "bulkBlockedHeading": "{count, plural, other {# 個測試案例}}被閘門「{gateName}」封鎖：",
@@ -4021,44 +3923,33 @@
     },
     "inbox": {
       "iconAria": "{count, plural, =0 {審核收件箱} other {審核收件箱，# 個待處理}}",
-      "pageTitle": "評論",
-      "tabPending": "待辦的",
       "tabDecided": "已決定",
       "emptyDecided": "尚無已決定的審核。您所決定的審核，以及您所請求審核的決定，將會顯示在這裡。",
       "empty": "沒有待處理的審核。目前沒有任何項目在等待您處理，且您所提出的所有審核請求皆已做出決定。",
       "featureDisabled": "審核工作流程功能目前已停用。待審核的審核內容將會保留，並在該功能重新啟用後重新顯示。",
       "columnEntity": "實體",
-      "columnProject": "專案",
       "columnRequester": "請求者",
-      "columnAssignee": "受指派人",
       "columnTransition": "過渡",
       "columnRequestedAt": "已請求",
       "columnDecidedBy": "決定者",
       "columnDecidedAt": "決定於",
-      "columnStatus": "地位",
-      "columnActions": "行動",
-      "actionApprove": "核准",
       "actionRequestChanges": "請求更改",
       "actionReject": "拒絕",
       "actionNudge": "傳送提醒",
       "filterEntityType": "實體類型",
-      "filterProject": "專案",
       "filterRequester": "請求者",
       "filterAllRequesters": "所有請求者",
       "filterDecidedBy": "決定者",
       "filterAllDeciders": "所有決定者",
-      "filterStatus": "狀態",
       "filterAllStatuses": "所有狀態",
       "filterAllEntityTypes": "所有實體類型",
       "filterEntityTypeCase": "測試用例",
       "filterEntityTypeRun": "測試運行",
-      "filterEntityTypeSession": "會議",
       "filterAllProjects": "所有項目"
     },
     "requester": {
       "openButton": "請求審核",
       "sheetDescription": "在過渡到目標狀態之前，請將此實體傳送給我們進行審核。",
-      "assigneeLabel": "受讓人",
       "assigneePlaceholder": "選擇使用者或角色",
       "usersNotified": "{count, plural, =0 {沒有人會收到通知} other {將通知 # 位使用者}}",
       "targetStateLabel": "目標狀態",
@@ -4095,7 +3986,6 @@
       "unnamedUser": "（匿名用戶）"
     },
     "reviewer": {
-      "approve": "核准",
       "requestChanges": "請求更改",
       "reject": "拒絕",
       "approveConfirmTitle": "批准此審核請求？",
@@ -4172,7 +4062,6 @@
       "errorNoAssignable": "此執行中沒有可分配的案例"
     },
     "auditLog": {
-      "trigger": "活動",
       "description": "此測試執行的所有變更記錄。"
     },
     "notFound": "未找到測試運行。",
@@ -4311,7 +4200,6 @@
           "unassign": "重複測試運行中的所有測試案例都將被取消分配。"
         },
         "configurationGroup": {
-          "label": "配置群組",
           "separate": "複本僅彼此分組。正在複製的測試運行不在該群組內",
           "join": "正在複製的測試運行與每個複本會加入相同的配置群組"
         }
@@ -4332,7 +4220,6 @@
       "noMatchingActive": "沒有符合您篩選條件的進行中測試運行。"
     },
     "milestoneGroup": {
-      "runCount": "{count, plural, other {# 次運行}}",
       "altHintMac": "按住 ⌥ 鍵以展開或折疊所有群組",
       "altHintWin": "按住 Alt 鍵以展開或折疊所有群組"
     },
@@ -4354,16 +4241,12 @@
       "noRepository": "請在專案設定中連接應用程式儲存庫以使用影響分析。",
       "aiUnavailable": "沒有啟用中的 LLM 整合：結果僅來自程式碼釘選、關鍵字比對和執行歷史記錄。",
       "steps": {
-        "pick": "提交",
-        "diff": "變更",
-        "analyze": "分析",
         "review": "受影響的測試"
       },
       "pull": {
         "label": "合併請求",
         "selectPlaceholder": "選擇一個拉取請求……",
         "searchPlaceholder": "依編號、標題、作者或分支搜尋……",
-        "stateAll": "全部",
         "stateOpen": "開啟",
         "stateMerged": "已合併",
         "stateClosed": "已關閉",
@@ -4372,10 +4255,8 @@
       "pick": {
         "modeLabel": "選擇變更方式",
         "modeCommits": "提交",
-        "modePull": "合併請求",
         "modeCommitsHint": "兩個組建之間發生了什麼變更，讓您可以重新測試自上次驗證以來所有新增的內容。",
         "modePullHint": "此合併請求所變更的內容，從其分支分岔的地方開始計算，因此在此期間登陸目標分支的工作不包括在內。",
-        "branchLabel": "分支",
         "baseLabel": "基礎提交",
         "headLabel": "標頭提交",
         "commitPlaceholder": "搜尋提交……",
@@ -4396,9 +4277,7 @@
         "summary": "變更了 {files, plural, other {# 個檔案}}·+{additions, number} −{deletions, number}",
         "truncated": "提供者返回了部分差異。部分變更的檔案未顯示或沒有修補程式。",
         "noChanges": "這些提交之間沒有變更。",
-        "statusAdded": "已新增",
         "statusModified": "已修改",
-        "statusRemoved": "已移除",
         "statusRenamed": "已重新命名",
         "showPatch": "顯示變更",
         "hidePatch": "隱藏變更",
@@ -4407,8 +4286,7 @@
         "binary": "二進位檔案",
         "noPatch": "修補程式不可用",
         "pinnedFiles": "{count, plural, other {# 個釘選}}",
-        "loading": "正在比較提交…",
-        "failed": "無法比較提交。"
+        "loading": "正在比較提交…"
       },
       "loading": {
         "analyzing": "正在分析…",
@@ -4427,14 +4305,10 @@
         "title": "{count, plural, =0 {沒有受影響的測試} other {# 個受影響的測試}}",
         "description": "依分數排序。每個測試都會顯示其被選取的原因。",
         "relatedCount": "{count, plural, other {# 個相關測試}}分數較低且未勾選。",
-        "summary": "摘要",
-        "score": "分數",
-        "case": "測試用例",
         "reasons": "原因",
         "tierPinned": "已釘選",
         "tierAffected": "受影響",
         "tierRelated": "相關",
-        "selectAll": "全選",
         "selectNone": "取消全選",
         "showDetails": "顯示原因",
         "hideDetails": "隱藏原因",
@@ -4450,7 +4324,6 @@
         "path": "關鍵字",
         "history": "歷史記錄",
         "ai": "AI",
-        "linked": "相關",
         "pinRange": "{path}:{start}–{end}",
         "pinFile": "{path}",
         "pinGlob": "符合 {pattern}",
@@ -4474,8 +4347,7 @@
       "uncovered": {
         "title": "{count, plural, other {# 個變更的檔案沒有測試}}",
         "description": "沒有測試用例連結至這些檔案。釘選一個用例以填補此缺口。",
-        "pinAction": "釘選一個用例……",
-        "pinned": "已釘選"
+        "pinAction": "釘選一個用例……"
       },
       "warnings": {
         "diff_truncated_by_provider": "提供者返回了部分差異。",
@@ -4490,17 +4362,13 @@
         "issue_commit_fetch_capped": "部分提及工單的提交未逐檔讀取（已達擷取上限）；其案例未涵蓋任何特定檔案。"
       },
       "actions": {
-        "compare": "比較",
         "analyze": "分析",
         "reanalyze": "重新分析",
         "refine": "返回變更",
         "accept": "{count, plural, other {新增 # 個用例}}",
-        "cancelAnalysis": "取消分析",
-        "back": "上一步",
-        "next": "下一步"
+        "cancelAnalysis": "取消分析"
       },
       "errors": {
-        "title": "分析失敗",
         "generic": "分析變更時發生錯誤。請再試一次。",
         "pullFailed": "無法讀取該合併請求的提交。請選擇其他項目，或自行命名提交。",
         "compareFailed": "無法比較提交。",
@@ -4510,44 +4378,30 @@
         "branchesFailed": "無法列出分支。",
         "commitsFailed": "無法載入提交。",
         "disabled": "此專案未啟用影響分析。",
-        "noConfig": "請先在專案設定中連接應用程式儲存庫。"
-      }
+        "noConfig": "請先在專案設定中連接應用程式儲存庫。",
+        "configRequired": "選擇要分析的倉庫。"
+      },
+      "repositoryPlaceholder": "選擇一個倉庫……",
+      "chooseRepository": "選擇專案已連接的倉庫中，包含要分析變更的那一個。"
     }
   },
   "admin": {
     "menu": {
       "header": "主要的",
-      "projects": "專案",
-      "templatesAndFields": "模板和字段",
       "fields": "田野",
-      "workflows": "工作流程",
-      "statuses": "狀態",
-      "milestoneTypes": "里程碑類型",
-      "configurations": "配置",
-      "users": "使用者",
-      "groups": "團體",
-      "roles": "角色",
-      "tags": "標籤",
-      "issues": "問題",
       "appConfig": "應用程式配置",
       "recordKeys": "記錄鍵",
-      "notifications": "通知",
       "imports": "數據導入",
       "integrations": "問題整合",
-      "webhooks": "網路鉤子",
       "junit": "JUnit",
       "datasets": "共享資料集",
       "testCaseParameters": "測試用例參數",
-      "llm": "人工智慧模型",
       "prompts": "提示配置",
       "exportTemplates": "匯出模板",
       "codeRepositories": "程式碼庫",
-      "quickScript": "QuickScript",
-      "advanced": "先進的",
       "sso": "驗證",
       "security": "安全",
       "trash": "垃圾",
-      "reports": "報告",
       "shares": "管理股份",
       "elasticsearch": "搜尋引擎",
       "queues": "作業佇列",
@@ -4561,9 +4415,7 @@
       "authentication": "驗證",
       "toolsAndIntegrations": "工具與集成",
       "aiTools": "AI 工具",
-      "system": "系統",
-      "impact": "影響分析",
-      "automation": "自動化執行"
+      "system": "系統"
     },
     "imports": {
       "description": "將外部測試管理工具中的資料匯入TestPlanIt。",
@@ -5131,7 +4983,6 @@
         },
         "allowedDomains": {
           "title": "允許的電子郵件域名",
-          "placeholder": "example.com",
           "add": "新增域名",
           "empty": "未配置任何允許的網域名稱。啟用限制後，所有網域都將被封鎖。"
         },
@@ -5180,7 +5031,6 @@
         "steps": {
           "details": "項目詳情",
           "workflows": "工作流程、狀態和里程碑類型",
-          "integrations": "整合",
           "permissions": "使用者與權限"
         },
         "labels": {
@@ -5450,7 +5300,6 @@
       "forcePasswordChangeDialogDescription": "這將要求 {name} 在下次登入時變更密碼。",
       "revokePasswordDialogTitle": "撤銷密碼",
       "revokePasswordDialogDescription": "這將立即使 {name}的密碼失效。他們需要使用其他登入方式。",
-      "confirmAction": "確認",
       "forcePasswordChangeSuccess": "{name} 需要更改密碼",
       "forcePasswordChangeFailed": "強制更改密碼失敗",
       "revokePasswordSuccess": "密碼已撤銷 {name}",
@@ -5506,7 +5355,6 @@
       "lockoutThresholdDescription": "帳戶被鎖定前的失敗嘗試次數（最少 1 次）",
       "lockoutDurationMinutesLabel": "鎖定持續時間（分鐘）",
       "lockoutDurationMinutesDescription": "帳戶鎖定時長（最少 1 小時）",
-      "saveChanges": "儲存變更",
       "forceAllUsers": "強制所有使用者更改密碼",
       "forceAllUsersDialogTitle": "強制所有使用者更改密碼",
       "forceAllUsersDialogDescription": "這將要求 {count, number} 基於憑證的使用者在下次登入時變更密碼。",
@@ -5567,7 +5415,6 @@
         "loading": "加載衝突…",
         "errorLoad": "衝突日誌載入失敗，請重試。",
         "colTimestamp": "什麼時候",
-        "colType": "類型",
         "colEntity": "實體",
         "colAction": "系統操作",
         "typeLinked": "連結",
@@ -5584,11 +5431,8 @@
         "reEmitConfirmTitle": "重新發送會員活動？",
         "reEmitSuccess": "Webhook 已重新發送；審計行已寫入。",
         "reEmitError": "無法重新發送。 {reason}",
-        "next": "下一個",
-        "previous": "以前的",
         "viewDialogTitle": "衝突載重",
-        "viewDialogDescription": "審核 {entityType}#{entityId} 的行元資料。",
-        "close": "關閉"
+        "viewDialogDescription": "審核 {entityType}#{entityId} 的行元資料。"
       },
       "errorLoad": "令牌載入失敗，請重試。",
       "columns": {
@@ -5627,10 +5471,8 @@
         "title": "令牌已建立",
         "warning": "立即複製此令牌。 TestPlanIt 將不會再次顯示它。",
         "tokenLabel": "SCIM 持有者代幣",
-        "copy": "複製",
         "copied": "已複製",
         "baseUrlHint": "將此內容貼到您的身分提供者 (IdP) 的 SCIM Bearer-token 欄位中。基本 URL 為 {baseUrl}。",
-        "close": "關閉",
         "toast": "令牌已建立。",
         "a11yAnnounce": "令牌已建立。立即複製。"
       },
@@ -5715,7 +5557,6 @@
         "remindersToggleAriaLabel": "切換評論提醒通知",
         "thresholdLabel": "提醒審稿人",
         "thresholdUnit": "{count, plural, other {天}}",
-        "thresholdSaveButton": "節省",
         "thresholdHelp": "審核請求最多可以保留多少天才會向審核員發送提醒通知？新請求從提交之日起開始計時。",
         "thresholdUpdateSuccess": "查看提醒設定是否已更新。",
         "thresholdUpdateError": "更新提醒設定失敗，請稍後再試。"
@@ -5730,7 +5571,6 @@
         "emptyState": "沒有項目符合您的篩選條件。"
       },
       "editWorkflow": {
-        "requiresReviewLabel": "需要審核",
         "requiresReviewFeatureDisabled": "系統級已停用審閱工作流程功能。請切換專案的「進階設定」或設定 TESTPLANIT_REVIEW_FEATURE_ENABLED 以重新啟用此功能。",
         "requiresReviewDefaultDisabled": "預設工作流程狀態不需要審核－新實體進入此狀態，且沒有先前的狀態需要控制。"
       },
@@ -5765,7 +5605,6 @@
       "description": "透過切換每個應用程式區域的權限，定義使用者可以執行哪些操作。",
       "confirmDefaultDescription": "您確定要將此角色設定為預設角色嗎？",
       "defaultWarning": "新使用者將預設被指派此角色。",
-      "defaultLockedTitle": "預設角色",
       "defaultLockedDescription": "若要變更預設值，請編輯其他角色並將其設為預設值。",
       "filterPlaceholder": "篩選角色...",
       "add": {
@@ -6005,7 +5844,6 @@
         "label": "個別專案存取權",
         "description": "授予此群組在特定專案上的存取層級，可取代或疊加於上方的組織層級存取權之上。",
         "empty": "尚無個別專案存取權。成員僅會獲得上方的組織層級存取權，以及各專案本身的預設值。",
-        "projectLabel": "專案",
         "projectPlaceholder": "選擇一個專案…",
         "accessLabel": "存取層級",
         "add": "新增專案",
@@ -6045,7 +5883,6 @@
         "title": "編輯里程碑類型"
       },
       "delete": {
-        "title": "刪除 {item}",
         "confirmMessage": "您確定要刪除 {name} 里程碑類型嗎？"
       }
     },
@@ -6126,7 +5963,6 @@
         "issueConfigs": "問題配置",
         "sharedStepGroups": "共同步驟小組",
         "dataSets": "數據集",
-        "codePins": "程式碼釘選",
         "impactAnalyses": "影響分析"
       },
       "table": {
@@ -6359,7 +6195,6 @@
         "repoHelp": "Gitea 倉庫的名稱",
         "encrypted": "加密",
         "encryptedHelp": "該欄位已加密並安全儲存。",
-        "changeCredential": "改變",
         "leaveBlankToKeep": "留空以保留現有值",
         "apiKeyWarningTitle": "API金鑰認證通知",
         "apiKeyWarningDescription": "使用 API 金鑰驗證時，即使電子郵件地址相符，建立問題的報告者也可能與建立該問題的 TestPlanIt 使用者不符：",
@@ -6371,13 +6206,11 @@
         "tokenCreatorNoticeDescription": "透過此整合建立的問題始終記錄為擁有此存取權杖的帳戶，而不是建立問題的 TestPlanIt 使用者。此提供者的 API 不允許代表其他使用者設定創建者。",
         "callbackUrlLabel": "回呼 URL（重新導向 URI）",
         "callbackUrlDescription": "請在您提供者的 OAuth 應用程式中，將此確切的 URL 註冊為回呼／重新導向 URI。必須完全相符，否則授權將失敗。",
-        "callbackUrlCopy": "複製",
         "callbackUrlCopied": "已複製",
         "forgeApiKeyLabel": "Forge API 金鑰",
         "forgeApiKeyDescription": "Atlassian Forge 應用程式使用此金鑰來驗證來自 Jira 問題面板的請求。請在此處產生金鑰並將其貼到 Forge 應用程式設定中。",
         "forgeApiKeyPlaceholder": "點選「產生」按鈕建立 API 金鑰",
         "forgeApiKeyGenerate": "產生",
-        "forgeApiKeyCopy": "複製",
         "forgeApiKeyCopied": "已複製",
         "platform": "平台",
         "platformPlaceholder": "選擇平台...",
@@ -6492,7 +6325,6 @@
         "setAsDefaultDescription": "將此模型用作組織的預設人工智慧模型。",
         "fetchingModels": "正在取得模型...",
         "failedToFetchModels": "取得可用模型失敗",
-        "selectModel": "選擇型號",
         "modelsFound": "{count, plural, other {找到 {count} 個可用模型}}",
         "modelsFoundDescription": "已選擇「{model}」作為預設模型",
         "noModelsFoundDescription": "供應商未回傳任何可用模型",
@@ -6525,9 +6357,7 @@
         }
       },
       "sections": {
-        "provider": "提供者",
-        "costAndBudget": "成本與預算",
-        "advanced": "先進的"
+        "costAndBudget": "成本與預算"
       },
       "delete": {
         "title": "刪除 AI 模型集成",
@@ -6578,7 +6408,6 @@
       "featureCount": "{count, plural, one {# 功能} other {# 功能}}",
       "llmIntegration": "LLM整合",
       "modelOverride": "模型覆蓋",
-      "llmIntegrationPlaceholder": "項目預設值",
       "modelOverridePlaceholder": "整合預設值",
       "projectDefault": "項目預設值（清除）",
       "integrationDefault": "整合預設值（清除）",
@@ -6814,7 +6643,6 @@
       "changes": "變化",
       "metadata": "元數據",
       "oldValue": "老的",
-      "newValue": "新的",
       "columns": {
         "timestamp": "時間戳",
         "entityId": "實體 ID",
@@ -7008,7 +6836,6 @@
       "targetFolder": "目標資料夾",
       "newFolderPlaceholder": "新資料夾名稱...",
       "operation": "手術",
-      "operationCopy": "複製",
       "operationCopyDesc": "在目標專案中建立所選案例的副本。原始案例保持不變。",
       "operationMove": "移動",
       "operationMoveDesc": "將選定的案例移至目標項目。原始案例將從來源項目中刪除。",
@@ -7094,7 +6921,6 @@
     "useIntegration": "使用 {provider}",
     "useIntegrationDescription": "在外部系統中建立問題",
     "externalProject": "外部專案",
-    "selectProject": "選擇項目",
     "issueType": "問題類型",
     "selectIssueType": "選擇問題類型",
     "noIssueTypes": "暫無問題類型",
@@ -7122,9 +6948,7 @@
     "searchForIssue": "尋找要連結的問題",
     "searchUsers": "搜尋用戶",
     "noTeamsAvailable": "暫無球隊",
-    "filterAll": "全部",
     "fanOutPartialFailure": "無法存取 {count, number} 個項目。顯示來自 {successCount, number} 個項目的結果。",
-    "projectSelectorLabel": "專案",
     "searchFailedTitle": "搜尋失敗",
     "useAsRequirement": "作為需求使用",
     "useAsRequirementSuccess": "現在已作為需求使用。可在專案的需求頁面中找到。",
@@ -7147,7 +6971,6 @@
       "addRoot": "新增需求",
       "addChild": "新增子需求",
       "rename": "重新命名",
-      "delete": "刪除",
       "expandAll": "全部展開",
       "collapseAll": "全部收起",
       "dropToRootHint": "拖放至此以移動到最上層",
@@ -7157,8 +6980,6 @@
       "dragDisabled": "此需求目前無法移動。"
     },
     "list": {
-      "columnName": "名稱",
-      "columnStatus": "狀態",
       "columnSource": "來源",
       "expandRow": "展開 {name}",
       "collapseRow": "收起 {name}",
@@ -7171,7 +6992,6 @@
       "nextRequirement": "下一個需求",
       "breadcrumbLabel": "需求層級結構",
       "notFound": "找不到需求",
-      "documentation": "文件",
       "documentationEmpty": "未提供任何文件",
       "documentationPlaceholder": "輸入需求文件……",
       "lockedHint": "此欄位由已連結的追蹤器管理，無法在此編輯。",
@@ -7179,13 +6999,11 @@
       "saveFailed": "需求儲存失敗。"
     },
     "provenance": {
-      "nativeLabel": "手動",
       "syncedLabel": "已同步",
       "detachedLabel": "已解除連結",
       "nativeTooltip": "直接在 TestPlanIt 中建立。",
       "syncedTooltip": "從已連結的追蹤器同步而來。鎖定的欄位無法在此編輯。",
       "detachedTooltip": "已從已連結的追蹤器解除連結。現在可以完全編輯，如同手動建立的需求。",
-      "openInTracker": "開啟方式 {provider}",
       "detach": "解除連結",
       "detachDialogTitle": "要解除連結此需求嗎？",
       "detachDialogDescription": "解除連結會使此需求在 TestPlanIt 中完全可編輯，並中斷其與已連結追蹤器的連結。此操作無法復原 — 目前尚不支援重新連結至追蹤器。",
@@ -7210,9 +7028,7 @@
     "create": {
       "dialogTitle": "建立需求",
       "dialogDescription": "將新需求新增到此專案的需求樹中。",
-      "nameLabel": "名稱",
       "namePlaceholder": "輸入需求名稱……",
-      "parentLabel": "父項",
       "parentNone": "無父項（最上層）",
       "submit": "建立需求",
       "submitHint": "按 Enter 鍵建立",
@@ -7224,7 +7040,6 @@
       "promoteParentNote": "遵循追蹤器的階層結構",
       "promoteIssueLabel": "問題",
       "promoteChooseIssue": "選擇問題",
-      "promoteChangeIssue": "變更",
       "promoteNoneSelected": "未選擇問題",
       "promoteSubmit": "作為需求使用",
       "promoteSuccess": "問題現已成為需求。",
@@ -7241,7 +7056,6 @@
       "dialogTitle": "刪除需求",
       "confirmNoChildren": "您確定要刪除此需求嗎？此操作可以復原。",
       "confirmWithChildren": "{count, plural, other {此需求有 {count} 個子項也將一併刪除，此操作可以復原}}",
-      "submit": "刪除",
       "success": "需求已刪除。",
       "failed": "需求刪除失敗。",
       "undo": "撤銷",
@@ -7249,7 +7063,6 @@
       "undoFailed": "需求還原失敗。"
     },
     "attachments": {
-      "title": "附件",
       "empty": "無附件",
       "uploadSuccess": "附件已上傳。",
       "uploadFailed": "附件上傳失敗。",
@@ -7260,7 +7073,6 @@
       "title": "關聯測試用例",
       "titleWithCount": "{count, plural, =0 {關聯測試用例} =1 {# 個關聯測試用例} other {# 個關聯測試用例}}",
       "empty": "沒有關聯的測試用例。",
-      "addLink": "新增連結",
       "addLinkDialogTitle": "連結測試用例",
       "searchPlaceholder": "搜尋測試用例……",
       "linkSuccess": "測試用例已連結。",
@@ -7268,13 +7080,11 @@
       "unlinkConfirm": "您確定要取消連結此測試用例嗎？",
       "unlinkSuccess": "測試用例已取消連結。",
       "unlinkFailed": "取消連結測試用例失敗。",
-      "columnCase": "測試用例",
-      "columnProject": "專案"
+      "columnCase": "測試用例"
     },
     "linkedRequirements": {
       "title": "關聯需求",
       "empty": "沒有關聯的需求。",
-      "addLink": "新增連結",
       "addLinkDialogTitle": "連結需求",
       "searchPlaceholder": "搜尋需求……",
       "linkSuccess": "需求已連結。",
@@ -7303,8 +7113,7 @@
       "removeConfirm": "您確定要移除此參照嗎？",
       "removeSuccess": "參照已移除。",
       "removeFailed": "移除參照失敗。",
-      "columnReference": "參照",
-      "columnStatus": "狀態"
+      "columnReference": "參照"
     },
     "coverage": {
       "title": "涵蓋範圍",
@@ -7327,8 +7136,6 @@
       "columnResult": "最新結果",
       "columnResultTooltip": "該測試案例最近一次的執行結果，即使其狀態既非通過也非失敗。其他畫面，例如儲存庫中的「最新結果」，顯示的是最近一次通過或失敗的結果，因此同一個測試案例在那裡顯示的內容可能會有所不同。",
       "resultRunLink": "檢視此結果來自的測試執行",
-      "columnExecutedAt": "執行於",
-      "columnProject": "專案",
       "inherited": "繼承",
       "inheritedTooltip": "連結至此需求的子項，而非直接連結至此需求。",
       "notRunCell": "未執行"
@@ -7366,9 +7173,7 @@
       "createButton": "新增目標",
       "createTitle": "新增執行目標",
       "editTitle": "編輯執行目標",
-      "name": "名稱",
       "namePlaceholder": "例如 Nightly E2E",
-      "provider": "提供者",
       "repository": "程式碼儲存庫",
       "repositoryPlaceholder": "選擇一個儲存庫",
       "noRepositories": "尚未註冊任何 {provider} 儲存庫。請聯絡管理員在「管理 → 程式碼儲存庫」下新增一個。",
@@ -7385,8 +7190,6 @@
       "variables": "流水線變數",
       "webhookVariables": "變數",
       "staticInputsHelp": "每次派發時都會連同 TESTPLANIT_* 值一起傳送。並非機密：任何能讀取此儲存庫的人都能看到它們。",
-      "inputKey": "名稱",
-      "inputValue": "值",
       "addInput": "新增輸入",
       "removeInput": "移除輸入",
       "credentials": "憑證",
@@ -7407,10 +7210,8 @@
       "payloadPreview": "酬載",
       "timeout": "逾時（分鐘）",
       "timeoutHelp": "屆時尚未完成的執行將被標記為逾時。",
-      "enabled": "已啟用",
       "hasOwnCredentials": "自有憑證",
       "usesRepositoryCredentials": "儲存庫憑證",
-      "verify": "驗證",
       "verifying": "正在驗證…",
       "verifyOk": "目標已驗證",
       "verifyOkWithWarnings": "目標已驗證，但有警告",
@@ -7426,9 +7227,7 @@
       "disabledToast": "目標已停用",
       "revealedSecretTitle": "立即複製簽署密鑰",
       "revealedSecretWarning": "此密鑰僅顯示一次。您的接收端會使用它來驗證每次派發時的 X-TestPlanIt-Signature 標頭；以其他方式進行驗證的系統（例如 Jenkins 觸發權杖）可以忽略它。請將其儲存於您 CI 系統的密鑰儲存庫中；TestPlanIt 無法再次顯示它。",
-      "copySecret": "複製",
       "secretCopied": "密鑰已複製",
-      "done": "完成",
       "errors": {
         "invalid": "無法儲存目標。請檢查表單後再試一次。",
         "invalidInputs": "其中一個輸入無效。",
@@ -7461,7 +7260,6 @@
       "status": "執行",
       "requestedBy": "由 {name} 請求",
       "timesOutAt": "放棄時間",
-      "openInProvider": "開啟方式 {provider}",
       "cancel": "取消執行",
       "cancelConfirmTitle": "要取消此執行嗎？",
       "cancelConfirm": "TestPlanIt 會將其標記為已取消，並要求提供者在可能的情況下停止該作業。仍然送達的結果將會保留。",
@@ -7471,14 +7269,11 @@
       "historyTitle": "執行歷史記錄",
       "historyDescription": "此測試執行之自動化測試案例的每次派發記錄，最新的排在最前面。",
       "historyEmpty": "尚無執行記錄。",
-      "columnStatus": "狀態",
       "columnTarget": "目標",
       "columnRef": "參照",
       "columnRequested": "已請求",
-      "columnCompleted": "已完成",
       "columnCases": "案例",
       "columnLink": "作業",
-      "error": "錯誤",
       "externalStatus": "提供者狀態：{status}",
       "awaitingResults": "等待結果中",
       "resultsReceived": "已收到結果"
@@ -7552,7 +7347,6 @@
   },
   "linkedCases": {
     "title": "關聯測試用例",
-    "addLink": "添加連結",
     "addLinkedTestCase": "新增關聯測試用例",
     "testCase": "測試用例",
     "linkType": "連結類型",
@@ -8349,7 +8143,6 @@
       "metricOrder": "公制順序",
       "filtersDescription": "依特定條件篩選報告數據",
       "activeFilters": "啟用篩選器：",
-      "priorityFilterPlaceholder": "選擇優先值（或留空表示全部不選）",
       "dateRange": {
         "selectDateRange": "選擇日期範圍",
         "chooseStartDate": "選擇開始日期",
@@ -8363,8 +8156,6 @@
         },
         "today": "今天",
         "yesterday": "昨天",
-        "last7Days": "過去7天",
-        "last30Days": "過去30天",
         "thisWeek": "本星期",
         "lastWeek": "上個星期",
         "last2Weeks": "過去兩週",
@@ -8373,7 +8164,6 @@
         "last3Months": "過去三個月",
         "thisQuarter": "本季",
         "lastQuarter": "上季",
-        "thisYear": "今年",
         "lastYear": "去年",
         "last12Months": "過去12個月",
         "allTime": "所有時間",
@@ -8517,10 +8307,8 @@
         "healthScore": "分數",
         "lastExecuted": "最後執行",
         "executions": "執行",
-        "passRate": "通過率",
         "passCount": "通行證",
         "failCount": "失敗",
-        "never": "絕不",
         "daysSince": "執行完畢至今已過數天",
         "count": "數數",
         "totalTests": "測試用例",
@@ -8584,8 +8372,7 @@
           "forecast": "{value} 預測",
           "forecastUnset": "沒有預測",
           "flakiness": "翻轉 {value}%",
-          "flakinessUnset": "無翻轉數據",
-          "createdLabel": "創建"
+          "flakinessUnset": "無翻轉數據"
         },
         "heuristic": {
           "intro": "此項目未配置 LLM 集成，因此排名直接基於選擇策略指標建構。請配置 LLM 整合（管理 → AI 模型），以啟用更豐富的推理，將自訂欄位、關聯問題上下文和案例內容與指標一起納入考慮。",
@@ -8633,8 +8420,6 @@
         "invalidProject": "項目無效。",
         "historyPlaceholder": "選擇一張照片",
         "generatedAt": "產生",
-        "by": "經過",
-        "summaryHeading": "概括",
         "actions": {
           "generate": "產生報告",
           "regenerate": "再生"
@@ -8664,11 +8449,8 @@
           "score": "得分 {score}"
         },
         "delete": {
-          "button": "刪除",
           "title": "刪除此快照？",
-          "description": "該快照將從歷史記錄中刪除，此操作無法撤銷。",
-          "cancel": "取消",
-          "confirm": "刪除"
+          "description": "該快照將從歷史記錄中刪除，此操作無法撤銷。"
         }
       },
       "issueTestCoverage": {
@@ -8678,11 +8460,8 @@
         "issue": "問題",
         "testCase": "測試用例",
         "testCases": "{count, plural, =1 {測試案例} other {測試案例}}",
-        "issueStatus": "地位",
-        "priority": "優先事項",
         "linkedTests": "關聯測試",
         "testResults": "結果（合格/不合格/待定）",
-        "passRate": "通過率",
         "passed": "透過",
         "failed": "失敗的",
         "lastStatus": "最新狀態",
@@ -8697,7 +8476,6 @@
           "issuesWithUntested": "未經測試",
           "issuesWithUntestedTooltip": "至少有一個尚未執行的測試案例有問題。",
           "issuesAllPassing": "全部透過",
-          "overallPassRate": "通過率",
           "numberOfIssues": "問題數量"
         },
         "charts": {
@@ -8711,9 +8489,6 @@
         "requirement": "需求",
         "path": "父層路徑",
         "testCase": "測試用例",
-        "result": "結果",
-        "executedAt": "執行於",
-        "project": "專案",
         "linkedCases": "關聯用例",
         "uncovered": "未涵蓋",
         "notRun": "未執行",
@@ -8748,9 +8523,7 @@
         "saveSnapshotTitle": "儲存追溯性快照",
         "saveSnapshotDescription": "記錄目前的追溯性矩陣——每項需求、其涵蓋的測試案例以及其最新結果——作為一個不可變、具名的時間點快照，您可以稍後檢視、匯出、分享及比較。",
         "saveSnapshotScoped": "僅會擷取目前範圍內的需求。",
-        "snapshotName": "名稱",
         "snapshotNamePlaceholder": "版本 2.4 簽核",
-        "snapshotNote": "備註",
         "snapshotNotePlaceholder": "選填 — 此快照用作何種證據",
         "snapshotSaved": "快照「{name}」已儲存。",
         "snapshotSaveFailed": "儲存快照失敗。",
@@ -8764,7 +8537,6 @@
         "compareLabel": "比較對象",
         "baselineRequired": "選擇一個基準快照以執行此報表。",
         "includeUnchanged": "包含未變更的需求",
-        "change": "變更",
         "coverageBefore": "變更前覆蓋率",
         "coverageAfter": "變更後覆蓋率",
         "linkedCasesBefore": "變更前連結",
@@ -8860,30 +8632,16 @@
       "unexpectedError": "發生意外錯誤。"
     },
     "dimensions": {
-      "project": "專案",
-      "status": "地位",
-      "user": "使用者",
       "executor": "執行人",
       "assignedTo": "分配給",
-      "configuration": "配置",
-      "date": "日期",
       "executionDate": "執行日期",
       "creationDate": "建立日期",
       "activityDate": "活動日期",
-      "testRun": "測試運行",
       "testCase": "測試用例",
-      "milestone": "里程碑",
-      "template": "範本",
       "creator": "創作者",
-      "state": "狀態",
       "source": "來源",
-      "folder": "資料夾",
-      "group": "團體",
-      "role": "角色",
-      "session": "會議",
       "weekEnding": "一週結束",
       "period": "時期",
-      "priority": "優先事項",
       "automationStatus": "自動化狀態",
       "issueType": "問題類型",
       "issueTracker": "問題追蹤器",
@@ -8891,7 +8649,6 @@
       "tag": "標籤",
       "feature": "功能",
       "model": "模型",
-      "integration": "整合",
       "outcome": "結果"
     },
     "metrics": {
@@ -8907,7 +8664,6 @@
       "passRate": "通過率（%）",
       "avgElapsed": "平均經過時間",
       "avgElapsedTime": "平均經過時間",
-      "totalElapsedTime": "總經過時間",
       "testRunCount": "測試運行次數",
       "testCaseCount": "測試用例數量",
       "automationRate": "自動化率（%）",
@@ -9039,7 +8795,6 @@
           "expired": "已到期"
         },
         "notifications": {
-          "enabled": "在",
           "disabled": "離開"
         },
         "empty": {
@@ -9088,7 +8843,6 @@
         "title": "分享連結已建立！",
         "description": "您的分享連結已準備就緒。複製並分享給其他人即可。",
         "shareLink": "分享連結",
-        "copy": "複製",
         "openInNewTab": "在新分頁中開啟",
         "metadata": {
           "mode": "模式",
@@ -9268,25 +9022,20 @@
         "viewSharedStep": "查看共享步驟組",
         "skippedWarning": "{count, plural, one {# 跳過案例} other {# 跳過案例}} （已過時或已轉換）。",
         "noCasesSelected": "至少選擇一個案例進行轉換。",
-        "stepsUnavailable": "符合的步驟已不在此測試案例中。請忽略此符合項目並重新執行掃描。",
-        "selectAll": "全選"
+        "stepsUnavailable": "符合的步驟已不在此測試案例中。請忽略此符合項目並重新執行掃描。"
       }
     },
     "findStepDuplicates": "尋找重複項"
   },
   "search": {
-    "title": "搜尋",
     "savedSearches": {
       "title": "已儲存的搜尋",
       "save": "儲存搜尋",
       "saveTitle": "儲存搜尋",
       "saveDescription": "為此搜尋命名，以便日後重新查看。",
-      "saveAction": "儲存",
-      "nameLabel": "名稱",
       "namePlaceholder": "例如：本次衝刺中失敗的測試執行",
       "nameRequired": "請輸入此搜尋的名稱。",
       "loginRequired": "您必須登入才能儲存搜尋。",
-      "descriptionLabel": "描述（可選）",
       "descriptionPlaceholder": "此搜尋的用途",
       "saved": "搜尋已儲存",
       "savedDescription": "「{name}」已加入您已儲存的搜尋。",
@@ -9295,11 +9044,9 @@
       "emptyHint": "儲存搜尋以便日後重新查看。",
       "loaded": "已載入「{name}」",
       "loadFailed": "此已儲存的搜尋已失效。",
-      "edit": "編輯",
       "editTitle": "編輯已儲存的搜尋",
       "edited": "已儲存的搜尋已更新",
       "editFailed": "無法更新搜尋，請再試一次。",
-      "delete": "刪除",
       "deleteTitle": "刪除已儲存的搜尋？",
       "deleteConfirm": "「{name}」將從您已儲存的搜尋中移除。此操作無法復原。",
       "deleted": "已儲存的搜尋已刪除",
@@ -9603,11 +9350,7 @@
     "tabDataset": "數據集",
     "tabDatasetDisabledTooltip": "編輯資料集行之前，請至少新增一個參數。",
     "sheetAutoSaveHint": "變更會自動儲存。",
-    "formName": "姓名",
-    "formType": "類型",
-    "formDefault": "預設",
     "formOrder": "命令",
-    "formRequired": "必需的",
     "formRequiredHelp": "缺少此值的迭代將驗證失敗。",
     "formSensitive": "敏感的",
     "formSensitiveHelp": "在稽核日誌中隱藏該值，並對沒有讀取敏感資訊權限的使用者隱藏該值。",
@@ -9625,7 +9368,6 @@
     "editDialogTitle": "編輯參數“{name}”",
     "editDialogDescription": "更新類型、預設值、標誌或允許值。若要重新命名，請按一下清單中的參數名稱。",
     "editDialogRenameHint": "若要重新命名，請關閉此對話方塊並按一下參數名稱。",
-    "editDialogCancel": "取消",
     "editDialogSave": "儲存變更",
     "editError": "參數更新失敗",
     "editSuccess": "更新參數“{name}”",
@@ -9643,11 +9385,9 @@
     "selectSourceWarningTitle": "更改「@{name}」的 SELECT 來源？",
     "selectSourceWarningDescription": "此參數的現有資料集值可能不存在於新清單中。 {invalidCount, plural, =1 {# 此行將在更改後需要關注} other {# 行}} 。繼續？",
     "selectSourceConfirm": "更改來源",
-    "datasetRowSelectAria": "選擇行",
     "datasetSelectAllPageTooltip": "按一下以選取此頁面上的每一行。按住 Shift 鍵並點擊以選取所有頁面上的每一行。",
     "datasetSelectAllAcrossPagesTooltip": "選取所有頁面中的 {count, plural, =1 {# 行} =2 {兩行} other {全部 # 行}}",
     "datasetDeselectAllAcrossPagesTooltip": "取消選擇所有頁面上的所有行",
-    "datasetLabelColumn": "標籤",
     "datasetAddRow": "新增行",
     "datasetAddColumn": "新增列",
     "datasetAddColumnTitle": "新增列",
@@ -9656,14 +9396,12 @@
     "datasetAddColumnSubmit": "新增列",
     "datasetAddColumnDuplicate": "已存在同名欄位。",
     "datasetColumnMenuLabel": "列 {name} 操作",
-    "datasetColumnDelete": "刪除列",
     "datasetColumnDeleteTitle": "刪除欄位「{name}」？",
     "datasetColumnDeleteChecking": "檢查引用此列的案例…",
     "datasetColumnDeleteDescription": "該列及其在每一行中的值都將被刪除。已對這些值進行快照的現有測試運行不受影響。",
     "datasetColumnDeleteBlocked": "{count, plural, =1 {# case 將一個參數對應到此列} other {# case 將一個參數對應到此列}}。請先更新這些映射，然後再刪除該列。",
     "datasetColumnDeleteAndMore": "和 {count, plural, =1 {# 更多情況} other {# 更多情況}}",
     "datasetColumnDeleteCheckError": "無法找到引用此列的案例。請重試。",
-    "datasetColumnDeleteConfirm": "刪除列",
     "datasetRowDefaultLabel": "行 {number}",
     "datasetPasteCsv": "貼上 CSV 文件",
     "datasetImportCsv": "導入 CSV 文件",
@@ -9710,13 +9448,11 @@
     "importStep4Append": "追加到現有行",
     "importStep4AppendDescription": "新行將會加入行 #{existingCount} 之後。",
     "importStep4ErrorBlock": "導入前，請先解決上一個步驟中的 {errorCount} 錯誤。",
-    "importStep4Label": "確認",
     "confirmSummaryValid": "有效行： {count}",
     "confirmSummaryErrors": "錯誤： {count}",
     "confirmSummaryMode": "模式： {mode}",
     "cancelUploadTitle": "放棄上傳？",
     "cancelUploadDescription": "您上傳的CSV資料將會遺失。",
-    "importCommit": "進口",
     "importSuccess": "導入 {count, plural, =1 {# 行} other {# 行數}}",
     "addSuccess": "已新增參數「{name}」。",
     "addError": "無法新增參數",
@@ -9764,8 +9500,6 @@
     "hardRefuseColumnCase": "案件",
     "hardRefuseColumnRows": "資料集行",
     "hardRefuseColumnConfigs": "配置",
-    "hardRefuseColumnIterations": "迭代",
-    "hardRefuseTotalRow": "全部的",
     "hardRefuseSuggestionsHeading": "建議的行動",
     "hardRefuseSuggestion1": "減少影響最大的個案的資料集行數。",
     "hardRefuseSuggestion2": "取消選擇一個或多個配置。",
@@ -9780,15 +9514,11 @@
     "runProgressNavAway": "把剩下的部分展示給我",
     "runGeneratingHeading": "生成迭代…",
     "runGeneratingHelper": "這可能需要幾分鐘。",
-    "iterationsHeading": "迭代",
     "iterationsHeaderCount": "{complete}/{total}",
     "iterationsHeaderCountPending": "0/{total} （生成中）",
-    "iterationSidebarAria": "迭代",
     "iterationStatusLegendAria": "狀態圖例",
     "iterationActionSkipped": "跳過",
     "iterationBulkPickStatusPrompt": "選擇要應用於所選迭代的狀態。",
-    "iterationBulkStatusLabel": "地位",
-    "iterationBulkStatusPlaceholder": "選擇狀態",
     "iterationBulkApplyStatus": "標記為狀態…",
     "iterationSelectAria": "選擇迭代 {n}",
     "iterationRowMenuAria": "迭代 {n} 操作",
@@ -9797,13 +9527,11 @@
     "iterationReset": "重置迭代結果",
     "iterationSelectedCount": "{count} 已選擇",
     "iterationBulkSkip": "標記 {count, plural, =1 {# 迭代次數} other {# 迭代次數}} 狀態 <[⌇⌇3⌇⌇2⌇⌇]>~ 狀態…",
-    "iterationBulkCancel": "取消",
     "iterationIssueTitleSnapshot": "迭代 {n} 的 {total} 問題： {caseName}",
     "iterationIssueTitleCiExtended": "迭代 {n} （CI 擴展）問題： {caseName}",
     "iterationIssueProseSnapshot": "對 {label} 進行 {total} 的 {n} 迭代。",
     "iterationIssueProseCiExtended": "在 {label} 上進行迭代 {n} （CI 擴充）。",
     "iterationIssueTableHeaderParameter": "範圍",
-    "iterationIssueTableHeaderValue": "價值",
     "iterationIssueDeepLinkLabel": "在 TestPlanIt 中查看迭代",
     "iterationHeaderTitle": "迭代 {n} 的 {total}",
     "iterationPrevAria": "前一次迭代",
@@ -9885,7 +9613,6 @@
     "mappingHint": "自動匹配的列已折疊。點選“更改”重新映射。",
     "mappingShowAll": "顯示所有列",
     "mappingNoColumns": "所選版本中沒有可用的列。",
-    "mappingChange": "改變",
     "mappingSkipColumn": "跳過列",
     "mappingRequiredAlert": "必需參數未對映： {names}。",
     "mappingRequiredUnmapped": "必需參數“@{name}”沒有對應列。"

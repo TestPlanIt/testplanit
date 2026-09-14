@@ -456,7 +456,9 @@
         "urlRequired": "URL là bắt buộc",
         "invalidUrl": "Định dạng URL không hợp lệ"
       },
-      "worker": "Trình xử lý"
+      "worker": "Trình xử lý",
+      "hasCodePins": "Có Ghim Mã",
+      "noCodePins": "Không Có Ghim Mã"
     },
     "filter": {
       "placeholder": "Bộ lọc {item}..."
@@ -561,7 +563,6 @@
       "selectTemplate": "Chọn mẫu",
       "duration": "ví dụ: 1 giờ 30 phút hoặc 90 phút",
       "docs": "Thêm tài liệu...",
-      "select": "Lựa chọn",
       "selectState": "Chọn tiểu bang",
       "selectConfiguration": "Chọn cấu hình",
       "selectConfigurations": "Chọn cấu hình",
@@ -582,14 +583,12 @@
       "selectAModel": "Chọn một mẫu",
       "selectWorkflowType": "Chọn loại quy trình làm việc",
       "addAnOption": "Thêm một tùy chọn",
-      "addADescription": "Thêm mô tả...",
       "optionalDescription": "Mô tả tùy chọn...",
       "projectNotes": "Ghi chú dự án...",
       "filterByName": "Lọc theo tên...",
       "filterByValue": "Lọc theo giá trị...",
       "selectOperator": "Chọn toán tử",
       "searchIcons": "Biểu tượng tìm kiếm...",
-      "value": "Giá trị",
       "stepCount": "Số bước",
       "enterText": "Nhập văn bản...",
       "enterUrl": "Nhập URL",
@@ -710,16 +709,10 @@
       "twoFactorVerification": "Xác thực hai yếu tố",
       "changePassword": "Thay đổi mật khẩu",
       "twoFactorSetup": "Thiết lập xác thực hai yếu tố",
-      "signUp": "Đăng ký",
-      "signIn": "Đăng nhập",
       "verifyEmail": "Xác minh email",
       "trialExpired": "Thời gian dùng thử đã hết hạn",
       "linkSsoAccount": "Liên kết tài khoản SSO",
       "userProfile": "Hồ sơ người dùng",
-      "users": "Người dùng",
-      "issues": "Vấn đề",
-      "requirements": "Yêu cầu",
-      "tags": "Thẻ",
       "tagDetails": "Chi tiết thẻ",
       "aiModels": "Mô hình AI",
       "integrations": "Tích hợp",
@@ -733,13 +726,8 @@
       "repository": "Kho lưu trữ",
       "testCaseVersion": "Phiên bản trường hợp thử nghiệm",
       "duplicateTestCases": "Các trường hợp kiểm thử trùng lặp",
-      "documentation": "Tài liệu",
-      "sharedSteps": "Các bước chung",
       "stepDuplicates": "Các bước trùng lặp",
-      "sessions": "Phiên họp",
       "sessionVersion": "Phiên bản phiên",
-      "milestones": "Các cột mốc",
-      "testRuns": "Chạy thử nghiệm",
       "reports": "Báo cáo",
       "adminSamlConfig": "Quản trị viên - Cấu hình SAML",
       "apiDocumentation": "Tài liệu API",
@@ -750,7 +738,6 @@
       "userMenu": "Menu người dùng",
       "selectProject": "Chọn dự án",
       "togglePanel": "Bảng chuyển đổi",
-      "folder": "Thư mục",
       "toggleActive": "Bật/tắt trạng thái hoạt động",
       "toggleDetails": "Ẩn/Hiện chi tiết",
       "requiresReview": "Cần xem xét lại",
@@ -877,7 +864,6 @@
     "for": "vì",
     "and": "Và",
     "branding": {
-      "name": "TestPlanIt",
       "logoAlt": "Logo TestPlanIt",
       "tagline": "Hãy thử mọi thứ có thể."
     },
@@ -1096,7 +1082,6 @@
         "viewIn": "Xem trong",
         "fieldType": "Loại trường: ",
         "richTextContent": "Nội dung văn bản phong phú",
-        "invalidContent": "Nội dung không hợp lệ",
         "fieldInformation": "Thông tin thực địa"
       },
       "onboarding": {
@@ -1109,8 +1094,7 @@
         "zoomDonutChart": "Biểu đồ hình bánh donut phóng to",
         "zoomExecutionTimeline": "Phóng to dòng thời gian thực thi",
         "zoomHistogramChart": "Biểu đồ tần số phóng to",
-        "duration": "Thời lượng: {seconds} giây",
-        "durationLabel": "Khoảng thời gian"
+        "duration": "Thời lượng: {seconds} giây"
       },
       "import": {
         "encoding": {
@@ -1267,7 +1251,6 @@
       }
     },
     "verifyEmail": {
-      "title": "Xác minh email",
       "loading": "Đang xác minh email...",
       "success": "Email đã được xác minh thành công.",
       "error": "Xác minh email không thành công",
@@ -1319,10 +1302,8 @@
       "expiredDescription": "Mật khẩu của bạn đã hết hạn. Vui lòng đặt mật khẩu mới để tiếp tục.",
       "newPasswordLabel": "Mật khẩu mới",
       "confirmPasswordLabel": "Xác nhận mật khẩu mới",
-      "submitButton": "Thay đổi mật khẩu",
       "signOut": "Thay vào đó, hãy đăng xuất.",
       "passwordsMustMatch": "Mật khẩu không khớp.",
-      "passwordRequired": "Cần nhập mật khẩu.",
       "genericError": "Đã xảy ra lỗi. Vui lòng thử lại.",
       "policyTitle": "Yêu cầu về mật khẩu:",
       "policyMinLength": "Ít nhất {count, number} ký tự",
@@ -1334,7 +1315,6 @@
   },
   "account": {
     "linkSso": {
-      "title": "Liên kết tài khoản SSO",
       "description": "Liên kết tài khoản của bạn với nhà cung cấp Đăng nhập một lần (Single Sign-On).",
       "availableProviders": "Các nhà cung cấp SSO hiện có",
       "linkWithGoogle": "Liên kết với Google",
@@ -1394,8 +1374,7 @@
       "latestTestRuns": "Các lần chạy thử nghiệm mới nhất",
       "testCaseBreakdown": "Phân tích trường hợp kiểm thử",
       "noTestCases": "Kho lưu trữ dự án hiện trống. Hãy thêm các trường hợp kiểm thử bằng cách sử dụng Kho lưu trữ.",
-      "noTestCasesPrefix": "Kho lưu trữ dự án trống. Thêm các trường hợp kiểm thử bằng cách sử dụng...",
-      "noTestCasesLink": "Kho lưu trữ"
+      "noTestCasesPrefix": "Kho lưu trữ dự án trống. Thêm các trường hợp kiểm thử bằng cách sử dụng..."
     },
     "icon": {
       "upload": {
@@ -1415,10 +1394,8 @@
         "title": "Ánh xạ thuộc tính lặp",
         "description": "Khi nhập dữ liệu, chỉ số lặp cho mỗi trường hợp kiểm thử được đọc từ một thuộc tính, đặc tính hoặc đặc điểm có tên khớp với một trong các mục sau (thuộc tính JUnit, đặc tính TestNG, đặc điểm xUnit, thuộc tính NUnit). Thêm tên mà trình phát của bạn sử dụng; việc tìm kiếm không phân biệt chữ hoa chữ thường.",
         "addLabel": "Thêm tên thuộc tính",
-        "addButton": "Thêm vào",
         "placeholder": "ví dụ iterationIndex",
         "defaultHint": "Mặc định: lặp lại (không phân biệt chữ hoa chữ thường). Thêm tên tùy chỉnh để tham gia.",
-        "saveButton": "Cứu",
         "saveSuccess": "Tên thuộc tính của vòng lặp đã được lưu.",
         "saveError": "Không thể lưu tên thuộc tính của vòng lặp.",
         "removeAria": "Xóa {name}",
@@ -1484,7 +1461,6 @@
           "removeProjectConfirmation": "Việc xóa dự án này sẽ ngừng đồng bộ hóa các vấn đề từ dự án này. Các vấn đề đã được đồng bộ trước đó sẽ không bị xóa. Bạn có muốn tiếp tục không?",
           "removeProjectWebhookCascadeBullet": "Webhook đến cho dự án này cũng sẽ bị xóa.",
           "keepProject": "Dự án Keep",
-          "defaultIndicator": "Mặc định",
           "syncStatusSyncing": "Đồng bộ hóa",
           "syncStatusCompleted": "Đã đồng bộ",
           "syncStatusError": "Lỗi đồng bộ",
@@ -1515,7 +1491,6 @@
           "importPreview": "Xem trước",
           "importPreviewResult": "~{count, plural, other {# sự cố}} khớp với bộ lọc này. Tối đa {cap} sẽ được nhập.",
           "importOverCap": "Vượt quá giới hạn {cap}; chỉ {cap} sự cố được cập nhật gần đây nhất sẽ được nhập.",
-          "importStart": "Nhập",
           "importStarted": "Đã bắt đầu nhập. Các sự cố sẽ sớm xuất hiện.",
           "importFailed": "Nhập thất bại",
           "importPreviewFailed": "Không thể ước tính số lượng khớp",
@@ -1600,13 +1575,11 @@
       },
       "webhooks": {
         "description": "Cấu hình webhook đến để giữ cho các vấn đề được liên kết luôn đồng bộ.",
-        "inboundDescription": "Cấu hình webhook đến để giữ cho các vấn đề được liên kết luôn đồng bộ.",
+        "inboundDescription": "Nhận cập nhật sự cố từ trình theo dõi sự cố của bạn, cùng các pull request và push từ các kho lưu trữ đã kết nối.",
         "outboundDescription": "Cấu hình webhook gửi đi để chuyển các sự kiện TestPlanIt đến Slack hoặc bất kỳ URL nào được ký bằng HMAC.",
         "directionInbound": "Đầu vào",
         "directionOutbound": "Đầu ra",
         "inboundAddButtonAllConfigured": "Bộ chuyển đổi đầu vào đã được cấu hình.",
-        "inboundAddButtonNoIntegration": "Hãy gán một tích hợp sự cố cho dự án này trước khi thêm webhook đến.",
-        "inboundEmptyWithIntegration": "Chưa cấu hình webhook đến. <link>Thêm một</link> để nhận cập nhật sự cố từ Tích hợp Sự cố được chỉ định của bạn.",
         "inboundEmptyNoIntegration": "Cần có một <link>Tích hợp sự cố</link> để nhận các bản cập nhật sự cố đến. Hãy chỉ định một tích hợp cho dự án của bạn để bắt đầu.",
         "deliveriesEmptyNoConfigs": "Hiện chưa có webhook nào được gửi đến — hãy tạo webhook đến hoặc đi trên các tab khác để bắt đầu nhận chúng.",
         "noConfig": "Chưa cấu hình webhook.",
@@ -1620,7 +1593,6 @@
         "rotateSecret": "Xoay bí mật",
         "rotateConfirmTitle": "Xoay vòng mã bí mật webhook?",
         "rotateConfirm": "Việc xoay vòng khóa bí mật sẽ làm vô hiệu hóa cấu hình hiện tại trên hệ thống theo dõi sự cố cho đến khi bạn cập nhật nó ở đó. Tiếp tục chứ?",
-        "isActive": "Đã bật",
         "deleteConfirmTitle": "Xóa cấu hình webhook?",
         "deleteConfirm": "Xóa cấu hình webhook này? Các đơn hàng đến sẽ bị từ chối.",
         "sendTest": "Gửi webhook thử nghiệm",
@@ -1635,23 +1607,19 @@
         "urlCopied": "URL Webhook đã được sao chép vào clipboard",
         "secretCopied": "Mã bí mật Webhook đã được sao chép vào clipboard",
         "nextSteps": "Tiếp theo: dán các thông tin này vào cấu hình webhook của trình theo dõi sự cố, sau đó nhấp vào \"Gửi webhook thử nghiệm\" bên dưới để xác minh quy trình. Nhấp vào \"Xong\" sau khi bạn đã lưu mã bí mật — mã này sẽ không hiển thị lại nữa.",
-        "revealDone": "Xong",
         "pageTitle": "Webhooks",
         "inboundTab": "Đầu vào",
         "outboundTab": "Đầu ra",
         "outboundEmpty": "Chưa cấu hình webhook gửi đi nào. Hãy thêm một webhook để gửi các sự kiện TestPlanIt đến Slack hoặc bất kỳ URL nào được ký bằng HMAC.",
         "outboundAddButton": "Thêm webhook gửi đi",
         "outboundCreateTitle": "Webhook gửi đi mới",
-        "outboundCreateName": "Tên",
         "outboundCreateNameHelp": "Một nhãn cho điểm đến này, ví dụ: \"Engineering Slack\".",
         "outboundCreateNamePlaceholder": "Kỹ thuật Slack",
         "outboundCreateNameRequired": "Tên là bắt buộc.",
         "outboundCreateUrlRequired": "URL là bắt buộc.",
         "outboundCreateUrlInvalid": "Nhập URL hợp lệ (https://example.com/...).",
         "outboundCreateUrlMustUseHttps": "URL phải sử dụng HTTPS",
-        "outboundNameLabel": "Tên",
         "outboundUnnamedConfig": "(webhook không tên)",
-        "outboundCreateUrl": "URL",
         "outboundCreateUrlHelp": "URL đích. URL webhook đến của Slack được tự động phát hiện.",
         "outboundCreateUrlPlaceholder": "https://hooks.slack.com/services/...",
         "outboundDetectedSlack": "Đã phát hiện: Slack",
@@ -1719,14 +1687,11 @@
         "outboundSubsCases": "Các trường hợp",
         "outboundSubsSelectAll": "Chọn tất cả trong phần này",
         "outboundCreateSubmit": "Tạo webhook",
-        "outboundCreateCancel": "Hủy bỏ",
         "outboundCreateSuccess": "Webhook gửi đi đã được tạo.",
         "outboundCreateError": "Không thể tạo webhook gửi đi.",
         "outboundUrlLabel": "URL đích",
-        "outboundActiveToggle": "Tích cực",
         "outboundSlackHint": "URL này rất nhạy cảm — bất kỳ ai có nó đều có thể đăng bài lên kênh của bạn.",
         "outboundHmacSecretsTitle": "Bí mật ký kết",
-        "outboundHmacActiveSecret": "Tích cực",
         "outboundHmacInactiveSecret": "Không hoạt động",
         "outboundHmacRetiringSecret": "Nghỉ hưu",
         "outboundHmacAutoRetireIn": "Tự động nghỉ hưu sau {days, number} ngày",
@@ -1753,19 +1718,12 @@
         "outboundDeleteError": "Không thể xóa webhook.",
         "outboundSecretCopy": "Sao chép bí mật",
         "outboundSecretShownOnce": "Hãy giữ bí mật này ngay bây giờ — nó sẽ không bao giờ được tiết lộ nữa.",
-        "outboundSecretDone": "Xong",
         "inboundAddButton": "Thêm webhook đến",
-        "inboundChooserTitle": "Chọn bộ chuyển đổi",
-        "inboundChooserDescription": "Hãy chọn hệ thống theo dõi sự cố sẽ gửi webhook đến TestPlanIt. Mỗi dự án có thể có một webhook đến từ Jira, một từ GitHub và một từ Azure DevOps.",
         "inboundChooserJira": "Jira",
         "inboundChooserGithub": "GitHub",
         "inboundChooserAdo": "Azure DevOps",
         "inboundChooserGitlab": "GitLab",
         "inboundChooserGitea": "Gitea",
-        "inboundChooserAlreadyConfigured": "Đã được cấu hình",
-        "inboundChooserSubmit": "Tiếp tục",
-        "inboundChooserCancel": "Hủy bỏ",
-        "inboundEmpty": "Hiện chưa có webhook đến nào được cấu hình. Hãy thêm một webhook để nhận thông báo cập nhật sự cố từ Jira, GitHub, GitLab, Gitea hoặc Azure DevOps.",
         "inboundJiraTitle": "Webhook đến của Jira",
         "inboundGithubTitle": "Webhook đến từ GitHub",
         "inboundGithubScopeHint": "Sự kiện <code>trên GitHub cập nhật các sự kiện</code> trên TestPlanIt. Yêu cầu kéo (pull request) và sự kiện bình luận sự kiện được chấp nhận nhưng chưa cập nhật các sự kiện.",
@@ -1776,7 +1734,6 @@
         "inboundAdoTitle": "Webhook đến từ Azure DevOps",
         "inboundAdoScopeHint": "Sự kiện Azure DevOps <code>workitem.updated</code> cập nhật các vấn đề TestPlanIt được liên kết. Các sự kiện khác được chấp nhận nhưng không cập nhật vấn đề.",
         "inboundAdoUsername": "Tên người dùng",
-        "inboundAdoPassword": "Mật khẩu",
         "inboundAdoUsernamePlaceholder": "tài khoản dịch vụ",
         "inboundAdoUsernameHelp": "Được cấu hình ở phía Hook của Azure DevOps Service. TestPlanIt xác minh điều này thông qua xác thực HTTP Basic Auth.",
         "inboundAdoPasswordHelp": "Giá trị này được lưu trữ dưới dạng mã hóa khi ở trạng thái nghỉ. Hãy lưu giá trị này ở phía Hook của Azure DevOps Service nữa.",
@@ -1808,9 +1765,7 @@
         "deliveriesTab": "Giao hàng",
         "filterConfigPlaceholder": "Tất cả webhook",
         "filterEventPlaceholder": "Tất cả sự kiện",
-        "filterStatusAll": "Tất cả",
         "filterStatusFailed": "Thất bại",
-        "filterStatusSuccess": "Thành công",
         "filterSinceDefault": "Kể từ…",
         "filterUntilDefault": "Cho đến khi…",
         "filterReset": "Đặt lại bộ lọc",
@@ -1822,8 +1777,6 @@
         "tableHeaderConfig": "Webhook",
         "tableHeaderEvent": "Sự kiện",
         "tableHeaderSubjectRef": "Tham chiếu",
-        "tableHeaderStatus": "Trạng thái",
-        "tableHeaderError": "Lỗi",
         "tableHeaderReceivedAt": "Đã nhận",
         "tableHeaderAttempt": "Nỗ lực",
         "tableHeaderDirection": "Phương hướng",
@@ -1836,7 +1789,6 @@
         "drawerLabelLatency": "Độ trễ",
         "drawerLatencyValue": "{ms, number} ms",
         "drawerLatencyUnknown": "—",
-        "drawerLabelError": "Lỗi",
         "drawerLabelPayloadDigest": "Tóm tắt tải trọng",
         "drawerLabelEventId": "Mã sự kiện",
         "drawerLabelSubjectRef": "Tham chiếu",
@@ -1865,7 +1817,6 @@
         "activityLastDispatched": "Lần gửi cuối cùng",
         "activityLastSuccess": "Thành công cuối cùng",
         "activityLastFailure": "Thất bại cuối cùng",
-        "activityNever": "Không bao giờ",
         "reEnable": "Kích hoạt lại",
         "reEnableConfirmTitle": "Kích hoạt lại webhook này?",
         "reEnableConfirm": "Hãy xác nhận sự cố ở phía máy chủ đã được khắc phục trước khi kích hoạt lại. Webhook sẽ tiếp tục gửi dữ liệu ngay lập tức.",
@@ -1889,11 +1840,42 @@
         "setupStepsMantisbtStep1": "Cài đặt và bật một plugin webhook MantisBT trên máy chủ MantisBT của bạn (MantisBT không có webhook tích hợp sẵn).",
         "setupStepsMantisbtStep2": "Trong cấu hình plugin, chọn các sự kiện tạo và cập nhật sự cố.",
         "setupStepsMantisbtStep3": "Dán URL ở trên làm đích webhook và lưu lại.",
-        "setupStepsMantisbtStep4": "Tạo hoặc cập nhật một sự cố trong MantisBT; trạng thái của sự cố được liên kết sẽ đồng bộ tại đây."
+        "setupStepsMantisbtStep4": "Tạo hoặc cập nhật một sự cố trong MantisBT; trạng thái của sự cố được liên kết sẽ đồng bộ tại đây.",
+        "codeRepos": {
+          "empty": "Chưa có kho lưu trữ nào được kết nối cho Phân tích Tác động. <link>Kết nối một kho</link> trước đã.",
+          "unsupported": "Kho lưu trữ {provider} không thể gửi webhook đến TestPlanIt.",
+          "eventPullRequest": "Pull request",
+          "eventPullRequestHelp": "Khi một pull request được mở, phân tích các thay đổi của nó so với nhánh đích và tạo một lượt chạy.",
+          "eventPush": "Push đến {branch}",
+          "eventPushDefault": "Push đến nhánh mặc định",
+          "eventPushHelp": "Đối với mỗi lần push đến nhánh cơ sở, phân tích các commit đã push và tạo một lượt chạy.",
+          "setupGithub": "Trong GitHub, mở Settings → Webhooks của kho lưu trữ, dán URL và secret, đặt content type thành application/json, và chọn các sự kiện Pull requests và Pushes.",
+          "setupGitlab": "Trong GitLab, mở Settings → Webhooks của dự án, dán URL, dán secret vào ô secret token, và bật các trigger Merge request events và Push events.",
+          "setupGitea": "Trong Gitea, mở Settings → Webhooks của kho lưu trữ, dán URL và secret, đặt content type thành application/json, và chọn các sự kiện Pull Request và Push.",
+          "setupAdo": "Trong Azure DevOps, tạo Service Hooks loại Web Hooks cho các sự kiện Pull request created và Code pushed, dán URL, và nhập tên người dùng và mật khẩu bạn đã nhập ở đây làm Basic authentication.",
+          "setupBitbucket": "Trong Bitbucket, mở Settings → Webhooks của kho lưu trữ, dán URL và secret, và chọn các trigger Pull request created và Repository push.",
+          "rotateConfirm": "Việc xoay vòng secret sẽ làm mất hiệu lực URL và secret hiện tại; hãy cập nhật cài đặt webhook của kho lưu trữ sau đó.",
+          "deleteConfirm": "Xóa webhook kho lưu trữ này? Các pull request và push sẽ không còn bắt đầu phân tích nữa.",
+          "eventBranchPush": "Push đến các nhánh khác",
+          "eventBranchPushHelp": "Phân tích mọi push đến bất kỳ nhánh nào khác so với nhánh cơ sở, giống như một pull request, và tạo một lượt chạy cho mỗi lần.",
+          "baseBranch": "Nhánh cơ sở",
+          "baseBranchHelp": "Các push đến nhánh này được phân tích riêng; các pull request và nhánh khác được so sánh với nhánh này. Để trống để sử dụng nhánh của kết nối."
+        },
+        "inboundEmptyState": "Chưa có webhook đến nào. <link>Thêm một webhook</link> để nhận cập nhật sự cố từ trình theo dõi sự cố của bạn, hoặc các pull request và push từ một kho lưu trữ đã kết nối.",
+        "inboundChooserBitbucket": "Bitbucket",
+        "wizard": {
+          "description": "Chọn thứ sẽ gửi webhook đến TestPlanIt, sau đó sao chép URL và secret vào hệ thống đó.",
+          "stepConnect": "Kết nối",
+          "sourceIssues": "Trình theo dõi sự cố",
+          "sourceIssuesHelp": "Giữ các sự cố đã liên kết đồng bộ với các cập nhật từ {tracker}.",
+          "sourceIssuesHelpGeneric": "Giữ các sự cố đã liên kết đồng bộ với các cập nhật từ tích hợp sự cố của dự án.",
+          "sourceRepositoryHelp": "Bắt đầu một Phân tích Tác động và tạo một lượt chạy kiểm thử khi một pull request được mở hoặc các commit được push.",
+          "noRepositoryAvailable": "Mọi kho lưu trữ đã kết nối đều đã có webhook hoặc không thể gửi webhook.",
+          "repositoryPlaceholder": "Chọn một kho lưu trữ"
+        }
       },
       "aiModels": {
         "description": "Cấu hình các mô hình AI để tạo và phân tích trường hợp kiểm thử thông minh.",
-        "availableModels": "Dự án mặc định",
         "availableModelsDescription": "Hãy chọn một mô hình AI mặc định cho dự án này từ những mô hình đã được quản trị viên hệ thống cấu hình.",
         "currentModelSettings": "Cài đặt mô hình hiện tại",
         "currentModelDescription": "Chi tiết cấu hình cho mô hình AI hiện đang hoạt động: {name}",
@@ -1953,28 +1935,20 @@
       },
       "parameters": {
         "title": "Tham số trường hợp kiểm thử",
-        "tabDatasets": "Bộ dữ liệu được chia sẻ",
         "tabJunit": "Ánh xạ thuộc tính lặp"
       },
       "datasets": {
-        "metaTitle": "Bộ dữ liệu được chia sẻ",
-        "title": "Bộ dữ liệu được chia sẻ",
         "description": "Quản lý các tập dữ liệu trên toàn dự án mà bất kỳ trường hợp kiểm thử nào trong dự án này đều có thể tham chiếu. Mỗi lần lưu sẽ tạo ra một phiên bản mới không thể thay đổi.",
-        "navLabel": "Bộ dữ liệu được chia sẻ",
         "newButton": "Bộ dữ liệu mới",
         "emptyHeading": "Chưa có bộ dữ liệu được chia sẻ nào.",
         "emptyBody": "Tạo một bộ dữ liệu chung cho toàn bộ dự án mà nhiều trường hợp kiểm thử có thể tham chiếu và gán cho các phiên bản cụ thể.",
         "loadError": "Không thể tải tập dữ liệu",
         "retry": "Hãy thử lại",
         "columns": {
-          "name": "Tên",
-          "columns": "Cột",
           "rows": "Hàng",
-          "version": "Phiên bản",
           "lastEdited": "Lần chỉnh sửa cuối cùng",
           "owner": "Người sở hữu",
-          "assignments": "Đang được sử dụng bởi",
-          "actions": "Hành động"
+          "assignments": "Đang được sử dụng bởi"
         },
         "versionLabel": "v{version, number}",
         "assignmentsCount": "{count, plural, =0 {0 trường hợp} =1 {# trường hợp} other {# trường hợp}}",
@@ -1982,17 +1956,13 @@
         "columnsCount": "{count, plural, =0 {0 cột} =1 {# cột} other {# cột}}",
         "actionsMenuLabel": "Hành động mở tập dữ liệu",
         "actionOpen": "Mở trình chỉnh sửa",
-        "actionDelete": "Xóa bỏ",
         "openLink": "Mở",
         "create": {
           "title": "Bộ dữ liệu chia sẻ mới",
           "description": "Các tập dữ liệu có phạm vi dự án và sẽ được cung cấp cho mọi trường hợp kiểm thử trong dự án này.",
-          "nameLabel": "Tên",
           "namePlaceholder": "ví dụ: Tài khoản khách hàng",
-          "descriptionLabel": "Sự miêu tả",
           "descriptionPlaceholder": "Ghi chú tùy chọn về nội dung của tập dữ liệu này.",
           "submit": "Tạo tập dữ liệu",
-          "cancel": "Hủy bỏ",
           "validationNameRequired": "Tên là bắt buộc.",
           "validationNameTooLong": "Tên phải có độ dài tối đa 120 ký tự.",
           "validationDescriptionTooLong": "Phần mô tả phải có độ dài tối đa 2000 ký tự.",
@@ -2005,7 +1975,6 @@
           "descriptionStage2": "Tập dữ liệu này được sử dụng bởi {count, plural, =1 {# trường hợp} other {# trường hợp}}. Việc xóa nó sẽ loại bỏ việc gán tập dữ liệu dùng chung khỏi các trường hợp đó. Các lần chạy thử nghiệm hiện có của chúng không bị ảnh hưởng (ảnh chụp nhanh là bất biến).",
           "confirm": "Xóa tập dữ liệu",
           "confirmAnyway": "Dù sao thì cũng xóa ({count, plural, =1 {# trường hợp} other {# trường hợp}})",
-          "cancel": "Hủy bỏ",
           "error": "Không thể xóa tập dữ liệu"
         },
         "deleteSuccess": "Đã xóa \"{name}\"",
@@ -2015,7 +1984,6 @@
           "loadError": "Không thể tải tập dữ liệu này",
           "notFound": "Không tìm thấy tập dữ liệu",
           "notFoundDescription": "Bộ dữ liệu này đã bị xóa hoặc bạn không có quyền truy cập vào nó.",
-          "saveAction": "Cứu",
           "saving": "Tiết kiệm",
           "savedHint": "Tất cả các thay đổi đã được lưu ở phiên bản {version, number}",
           "unsavedHint": "Thay đổi chưa được lưu",
@@ -2030,7 +1998,6 @@
         "saveSuccess": "Phiên bản đã lưu {version, number}",
         "saveSuccessBranched": "Phiên bản đã lưu {newVersion, number} (phân nhánh từ v{fromVersion, number})",
         "versionPicker": {
-          "label": "Phiên bản",
           "loadError": "Không thể tải phiên bản",
           "currentItemLabel": "v{version, number} (hiện tại)",
           "currentItemInitialLabel": "Hiện tại — chưa có phiên bản nào được lưu",
@@ -2042,81 +2009,30 @@
         "datasetTabSharedEditorHint": "Nhấp vào Lưu khi bạn hoàn tất. Mỗi lần Lưu sẽ tạo ra một phiên bản mới."
       },
       "quickScript": {
-        "title": "QuickScript",
         "description": "Kích hoạt QuickScript và kết nối kho mã nguồn để tạo kiểm thử hỗ trợ bởi trí tuệ nhân tạo.",
         "enableLabel": "Kích hoạt QuickScript",
         "enableDescription": " Cho phép các thành viên nhóm sử dụng QuickScript để chuyển đổi các trường hợp kiểm thử thành các kịch bản tự động hóa trong dự án này.",
         "enabledToast": "Đã bật QuickScript",
         "disabledToast": "QuickScript đã bị vô hiệu hóa",
         "noRepos": {
-          "title": "Chưa có kho lưu trữ mã nào được cấu hình.",
-          "adminDescription": "Hãy thiết lập kết nối kho lưu trữ trước khi cấu hình ngữ cảnh mã cho dự án này.",
-          "adminLink": "Truy cập Kho lưu trữ mã nguồn",
-          "userDescription": "Hãy liên hệ với quản trị viên hệ thống của bạn để thiết lập kết nối kho lưu trữ mã nguồn."
+          "adminDescription": "Hãy thiết lập kết nối kho lưu trữ trước khi cấu hình ngữ cảnh mã cho dự án này."
         },
         "repository": {
           "title": "Kho lưu trữ mã nguồn",
           "description": "Chọn kho mã nguồn để sử dụng cho ngữ cảnh AI.",
-          "placeholder": "Chọn một kho lưu trữ mã nguồn...",
-          "branchLabel": "Chi nhánh",
           "branchPlaceholder": "Để trống nếu muốn sử dụng nhánh mặc định của kho lưu trữ."
         },
         "pathPatterns": {
-          "title": "Các kiểu đường đi",
           "description": "Hãy chỉ định các tệp cần bao gồm. Mỗi hàng kết hợp đường dẫn cơ sở và mẫu glob. Ví dụ: path=tests/e2e/pages + pattern=* bao gồm tất cả các tệp trực tiếp trong thư mục đó; path=src + pattern=**/*.test.ts bao gồm tất cả các tệp kiểm thử một cách đệ quy.",
-          "pathLabel": "Con đường",
           "pathPlaceholder": "bài kiểm tra/e2e/trang",
-          "patternLabel": "Mẫu",
-          "addPath": "Thêm đường dẫn",
-          "previewFiles": "Xem trước tệp",
-          "scanningRepo": "Đang quét các tệp kho lưu trữ… ({seconds}s)",
-          "files": "{count, plural, one {# tập tin} other {# tập tin}}",
-          "truncatedBadge": "Kết quả có thể không đầy đủ (giới hạn của nhà cung cấp)",
           "exceedsLimit": "Tổng kích thước vượt quá giới hạn ngữ cảnh AI là {overflow}. Trong quá trình xuất, các tệp được xếp hạng theo mức độ liên quan đến trường hợp thử nghiệm đang được xuất — các tệp liên quan nhất được đưa vào trước và các tệp được xếp hạng thấp hơn sẽ bị bỏ qua khi đạt đến giới hạn ngân sách. Thu hẹp các mẫu đường dẫn của bạn nếu bạn muốn kiểm soát nhiều hơn các tệp được bao gồm."
         },
-        "preview": {
-          "resolvingBranch": "Đang giải quyết nhánh…",
-          "scanningFiles": "Đang quét các tập tin trong {scope}…",
-          "scanningFilesCount": "Đang quét các tập tin trong {scope}… ({count, number} đã tìm thấy)",
-          "filtering": "Áp dụng bộ lọc cho các tệp {count, number}…",
-          "rateLimited": "Bị giới hạn tốc độ bởi nhà cung cấp — đang thử lại sau {seconds, number} giây…"
-        },
         "cache": {
-          "title": "Cài đặt bộ nhớ đệm",
           "description": "Các tệp được lưu vào bộ nhớ đệm trong Valkey để truy cập nhanh trong quá trình tạo AI.",
-          "enableLabel": "Bật tính năng lưu trữ tệp tạm thời",
           "disabledWarning": "Tính năng lưu trữ tập tin tạm thời đã bị vô hiệu hóa. Các tập tin trong kho lưu trữ sẽ được tải trực tiếp từ nhà cung cấp của bạn tại thời điểm xuất và sẽ không được lưu trữ trong TestPlanIt. QuickScript được hỗ trợ bởi AI vẫn sẽ bao gồm ngữ cảnh mã, nhưng mỗi lần xuất sẽ thực hiện yêu cầu trực tiếp đến kho lưu trữ của bạn.",
-          "ttlBefore": "Lưu vào bộ nhớ đệm trong",
-          "ttlDays": "{count, plural, other {ngày}}",
-          "ttlAriaLabel": "Thời gian lưu vào bộ nhớ đệm tính bằng ngày",
-          "statusTitle": "Trạng thái bộ nhớ đệm",
-          "refreshButton": "Làm mới bộ nhớ cache",
-          "listingFiles": "Liệt kê các tập tin…",
-          "cachingFiles": "Đang lưu trữ {count} tập tin…",
-          "statusNeverFetched": "Chưa bao giờ lấy được",
-          "statusPending": "Thật sảng khoái...",
-          "lastFetched": "Lần tải cuối cùng",
-          "filesCached": "Tệp tin được lưu vào bộ nhớ cache",
-          "contentsCached": "Nội dung đã được lưu vào bộ nhớ đệm",
-          "contentsIncomplete": "Chỉ có {cached} trên {total} nội dung tệp được lưu vào bộ nhớ đệm — các script được tạo sẽ không sử dụng các tệp còn thiếu. Hãy làm mới lại để hoàn tất.",
-          "totalSize": "Tổng kích thước"
+          "contentsIncomplete": "Chỉ có {cached} trên {total} nội dung tệp được lưu vào bộ nhớ đệm — các script được tạo sẽ không sử dụng các tệp còn thiếu. Hãy làm mới lại để hoàn tất."
         },
-        "save": "Lưu cấu hình",
         "saved": "Cấu hình ngữ cảnh mã đã được lưu",
-        "saveError": "Không thể lưu cấu hình",
-        "listError": "Không thể liệt kê các tệp trong kho lưu trữ.",
-        "contentsError": "Không thể lưu nội dung tệp vào bộ nhớ cache.",
-        "networkError": "Lỗi mạng trong quá trình làm mới bộ nhớ cache",
-        "refreshSuccess": "Bộ nhớ cache đã được làm mới: {fileCount} tập tin ({contentCached} nội dung đã được lưu vào bộ nhớ cache)",
-        "refreshRateLimited": "Bộ nhớ cache đã được làm mới: {fileCount} tập tin đã được liệt kê, {contentCached}/{fileCount} nội dung đã được lưu vào bộ nhớ cache (tốc độ truy cập bị giới hạn — hãy làm mới lại để hoàn tất)",
-        "refreshComplete": "Đã làm mới bộ nhớ đệm: {fileCount} tệp",
-        "refreshInProgress": "Quá trình làm mới bộ nhớ đệm vẫn đang chạy trong nền. Nó sẽ cập nhật tại đây khi hoàn tất.",
-        "validation": {
-          "pathRequired": "Cần có đường dẫn.",
-          "patternRequired": "Cần có mẫu.",
-          "repositoryRequired": "Cần có kho lưu trữ.",
-          "pathPatternRequired": "Cần ít nhất một kiểu đường đi."
-        },
         "exportTemplates": {
           "title": "Mẫu xuất khẩu",
           "description": "Chỉ định mẫu xuất cho dự án này. Chỉ những mẫu đã được chỉ định mới xuất hiện trong hộp thoại xuất.",
@@ -2130,17 +2046,76 @@
           "saved": "Bài tập mẫu đã được lưu",
           "saveError": "Không thể lưu các bài tập mẫu"
         },
-        "disconnect": "Ngắt kết nối kho lưu trữ",
-        "confirmDisconnect": "Bạn có chắc chắn muốn ngắt kết nối \"{name}\" khỏi dự án này không?",
-        "disconnectWarningTitle": "Việc ngắt kết nối kho lưu trữ này sẽ:",
-        "disconnectWarning1": "Xóa tất cả các tệp kho lưu trữ đã được lưu vào bộ nhớ cache.",
-        "disconnectWarning2": "Xóa cấu hình đường dẫn và nhánh.",
         "disconnectWarning3": "Ngừng việc đưa ngữ cảnh mã vào các bản xuất do AI tạo ra.",
         "disconnectSuccess": "Kho lưu trữ mã nguồn đã bị ngắt kết nối",
         "disconnectError": "Không thể ngắt kết nối kho lưu trữ mã."
       },
+      "codeRepository": {
+        "cache": {
+          "cachingFiles": "Đang lưu trữ {count} tập tin…",
+          "contentsCached": "Nội dung đã được lưu vào bộ nhớ đệm",
+          "enableLabel": "Bật tính năng lưu trữ tệp tạm thời",
+          "filesCached": "Tệp tin được lưu vào bộ nhớ cache",
+          "lastFetched": "Lần tải cuối cùng",
+          "listingFiles": "Liệt kê các tập tin…",
+          "refreshButton": "Làm mới bộ nhớ cache",
+          "statusNeverFetched": "Chưa bao giờ lấy được",
+          "statusPending": "Đang làm mới...",
+          "statusTitle": "Trạng thái bộ nhớ đệm",
+          "title": "Cài đặt bộ nhớ đệm",
+          "totalSize": "Tổng kích thước",
+          "ttlAriaLabel": "Thời gian lưu vào bộ nhớ đệm tính bằng ngày",
+          "ttlBefore": "Lưu vào bộ nhớ đệm trong",
+          "ttlDays": "{count, plural, other {ngày}}"
+        },
+        "confirmDisconnect": "Bạn có chắc chắn muốn ngắt kết nối \"{name}\" khỏi dự án này không?",
+        "contentsError": "Không thể lưu nội dung tệp vào bộ nhớ cache",
+        "disconnect": "Ngắt kết nối kho lưu trữ",
+        "disconnectWarningTitle": "Việc ngắt kết nối kho lưu trữ này sẽ:",
+        "listError": "Không thể liệt kê các tệp trong kho lưu trữ",
+        "networkError": "Lỗi mạng trong quá trình làm mới bộ nhớ cache",
+        "noRepos": {
+          "adminLink": "Truy cập Kho lưu trữ mã nguồn",
+          "title": "Chưa có kho lưu trữ mã nào được cấu hình",
+          "userDescription": "Hãy liên hệ với quản trị viên hệ thống của bạn để thiết lập kết nối kho lưu trữ mã nguồn."
+        },
+        "pathPatterns": {
+          "addPath": "Thêm đường dẫn",
+          "files": "{count, plural, other {# tập tin}}",
+          "pathLabel": "Đường dẫn",
+          "patternLabel": "Mẫu",
+          "previewFiles": "Xem trước tệp",
+          "scanningRepo": "Đang quét các tệp kho lưu trữ… ({seconds}s)",
+          "title": "Mẫu đường dẫn",
+          "truncatedBadge": "Kết quả có thể không đầy đủ (giới hạn của nhà cung cấp)"
+        },
+        "preview": {
+          "filtering": "Áp dụng bộ lọc cho các tệp {count, number}…",
+          "rateLimited": "Bị giới hạn tốc độ bởi nhà cung cấp — đang thử lại sau {seconds, number} giây…",
+          "resolvingBranch": "Đang giải quyết nhánh…",
+          "scanningFiles": "Đang quét các tập tin trong {scope}…",
+          "scanningFilesCount": "Đang quét các tập tin trong {scope}… ({count, number} đã tìm thấy)"
+        },
+        "refreshComplete": "Đã làm mới bộ nhớ đệm: {fileCount} tệp",
+        "refreshInProgress": "Quá trình làm mới bộ nhớ đệm vẫn đang chạy trong nền. Nó sẽ cập nhật tại đây khi hoàn tất.",
+        "refreshRateLimited": "Bộ nhớ cache đã được làm mới: {fileCount} tập tin đã được liệt kê, {contentCached}/{fileCount} nội dung đã được lưu vào bộ nhớ cache (tốc độ truy cập bị giới hạn — hãy làm mới lại để hoàn tất)",
+        "refreshSuccess": "Bộ nhớ cache đã được làm mới: {fileCount} tập tin ({contentCached} nội dung đã được lưu vào bộ nhớ cache)",
+        "repository": {
+          "branchLabel": "Nhánh",
+          "placeholder": "Chọn một kho lưu trữ mã nguồn..."
+        },
+        "save": "Lưu cấu hình",
+        "saveError": "Không thể lưu cấu hình",
+        "validation": {
+          "pathPatternRequired": "Cần ít nhất một mẫu đường dẫn",
+          "pathRequired": "Cần có đường dẫn",
+          "patternRequired": "Cần có mẫu",
+          "repositoryRequired": "Cần có kho lưu trữ"
+        },
+        "disconnectWarningCache": "Xóa tất cả các tệp kho lưu trữ đã được lưu vào bộ nhớ cache",
+        "disconnectWarningPatterns": "Xóa cấu hình mẫu đường dẫn và nhánh"
+      },
       "advanced": {
-        "title": "Trình độ cao",
         "description": "Các tùy chọn bật/tắt riêng cho từng dự án đối với các tính năng mang tính chủ quan. Các tùy chọn mới sẽ xuất hiện ở đây khi chúng được giới thiệu.",
         "recordKey": {
           "label": "Mã dự án",
@@ -2237,115 +2212,103 @@
         }
       },
       "impact": {
-        "title": "Phân tích tác động",
-        "description": "Bật phân tích tác động kiểm thử và kết nối kho lưu trữ của ứng dụng đang được kiểm thử.",
+        "description": "Bật tính năng phân tích tác động kiểm thử và kết nối các kho lưu trữ của ứng dụng đang được kiểm thử.",
         "enableLabel": "Bật Phân tích tác động",
         "enableDescription": "Cho phép thành viên nhóm chọn các bài kiểm thử bị ảnh hưởng từ các thay đổi mã khi soạn lượt chạy kiểm thử.",
         "enabledToast": "Đã bật Phân tích tác động",
         "disabledToast": "Đã tắt Phân tích tác động",
         "noRepos": {
-          "title": "Chưa có kho lưu trữ mã nào được cấu hình",
-          "adminDescription": "Thiết lập kết nối kho lưu trữ trước khi cấu hình Phân tích tác động cho dự án này.",
-          "adminLink": "Truy cập Kho lưu trữ mã nguồn",
-          "userDescription": "Hãy liên hệ với quản trị viên hệ thống của bạn để thiết lập kết nối kho lưu trữ mã nguồn."
+          "adminDescription": "Thiết lập kết nối kho lưu trữ trước khi cấu hình Phân tích tác động cho dự án này."
         },
         "repository": {
           "title": "Kho lưu trữ ứng dụng",
-          "description": "Chọn kho lưu trữ chứa ứng dụng đang được kiểm thử.",
-          "placeholder": "Chọn một kho lưu trữ mã nguồn...",
-          "branchLabel": "Nhánh",
+          "description": "Chọn một kho lưu trữ chứa một phần của ứng dụng đang được kiểm thử. Một dự án được kiểm thử qua nhiều dịch vụ có thể kết nối một kho lưu trữ cho mỗi dịch vụ.",
           "branchPlaceholder": "Chọn một nhánh...",
           "branchInputPlaceholder": "Để trống nếu muốn sử dụng nhánh mặc định của kho lưu trữ",
-          "defaultBranch": "Nhánh mặc định của kho lưu trữ",
           "branchesUnavailable": "Không thể liệt kê các nhánh: {error}",
           "branchesFallbackHint": "Hãy nhập tên nhánh thay vào đó."
         },
         "pathPatterns": {
-          "title": "Các kiểu đường đi",
           "description": "Những tệp ứng dụng nào sẽ được bao gồm. Mỗi hàng kết hợp một đường dẫn cơ sở và một mẫu glob. Ví dụ: path=src + pattern=**/* bao gồm mọi thứ trong src.",
-          "pathLabel": "Con đường",
-          "pathPlaceholder": "src",
-          "patternLabel": "Mẫu",
-          "addPath": "Thêm đường dẫn",
-          "previewFiles": "Xem trước tệp",
-          "scanningRepo": "Đang quét các tệp kho lưu trữ… ({seconds}s)",
-          "files": "{count, plural, other {# tập tin}}",
-          "truncatedBadge": "Kết quả có thể không đầy đủ (giới hạn của nhà cung cấp)"
-        },
-        "preview": {
-          "resolvingBranch": "Đang giải quyết nhánh…",
-          "scanningFiles": "Đang quét các tập tin trong {scope}…",
-          "scanningFilesCount": "Đang quét các tập tin trong {scope}… ({count, number} đã tìm thấy)",
-          "filtering": "Áp dụng bộ lọc cho các tệp {count, number}…",
-          "rateLimited": "Bị giới hạn tốc độ bởi nhà cung cấp — đang thử lại sau {seconds, number} giây…"
+          "pathPlaceholder": "src"
         },
         "cache": {
-          "title": "Cài đặt bộ nhớ đệm",
           "description": "Các tệp được lưu vào bộ nhớ đệm trong Valkey để trình chọn tệp Code Pin và các điểm đánh dấu kho lưu trữ luôn hoạt động nhanh.",
-          "enableLabel": "Bật tính năng lưu trữ tệp tạm thời",
           "disabledWarning": "Tính năng lưu trữ tệp tạm thời đã bị tắt. Các điểm đánh dấu kho lưu trữ sẽ không được quét, và trình chọn tệp Code Pin sẽ liệt kê tệp trực tiếp từ nhà cung cấp của bạn mỗi khi mở.",
-          "ttlBefore": "Lưu vào bộ nhớ đệm trong",
-          "ttlDays": "{count, plural, other {ngày}}",
-          "ttlAriaLabel": "Thời gian lưu vào bộ nhớ đệm tính bằng ngày",
-          "statusTitle": "Trạng thái bộ nhớ đệm",
-          "refreshButton": "Làm mới bộ nhớ cache",
-          "listingFiles": "Liệt kê các tập tin…",
-          "cachingFiles": "Đang lưu trữ {count} tập tin…",
-          "statusNeverFetched": "Chưa bao giờ lấy được",
-          "statusPending": "Đang làm mới...",
-          "lastFetched": "Lần tải cuối cùng",
-          "filesCached": "Tệp tin được lưu vào bộ nhớ cache",
-          "contentsCached": "Nội dung đã được lưu vào bộ nhớ đệm",
-          "contentsIncomplete": "Chỉ có {cached} trên {total} nội dung tệp được lưu vào bộ nhớ đệm. Hãy làm mới lại để hoàn tất.",
-          "totalSize": "Tổng kích thước"
+          "contentsIncomplete": "Chỉ có {cached} trên {total} nội dung tệp được lưu vào bộ nhớ đệm. Hãy làm mới lại để hoàn tất."
         },
         "tickets": {
           "title": "Vé liên kết",
-          "description": "Các commit đề cập đến một vé (PROJ-123, #42, AB#42) sẽ trở thành Code Pin cho toàn bộ tệp trên mọi trường hợp kiểm thử được liên kết, để những thay đổi sau này đối với các tệp đó có thể tìm lại các trường hợp kiểm thử.",
+          "description": "Các commit có nêu tên một ticket (PROJ-123, #42, AB#42) sẽ trở thành Ghim Mã trên mọi test case được liên kết với ticket đó — trên các hàm hoặc lớp mà commit đã thay đổi nếu diff hiển thị chúng, nếu không thì trên toàn bộ tệp — để các thay đổi sau này đối với đoạn mã đó có thể tìm lại các test case. Một ticket được nêu tên mà TestPlanIt chưa có sẽ được nhập từ trình theo dõi sự cố của dự án để có thể được liên kết.",
           "enableLabel": "Suy ra Code Pin từ nội dung commit",
-          "enableDescription": "Quét các commit gần đây trên nhánh mỗi khi làm mới bộ nhớ đệm. Tắt để chỉ phân tích các khóa vé từ các commit đã được phân tích.",
-          "lastScan": "Lần quét cuối: {date}",
-          "never": "Chưa được quét",
-          "summary": "{commits, plural, other {# commit}} đã được quét · {matched} có đề cập đến vé liên kết · {created} đã tạo · {updated} đã cập nhật · {removed} đã xóa",
+          "enableDescription": "Quét các commit gần đây trên nhánh mỗi khi làm mới bộ nhớ đệm. Tắt để giữ cho các phân tích chỉ đọc khóa ticket từ các commit đã phân tích; các lần quét thủ công vẫn chạy.",
           "skippedLarge": "{count, plural, other {# commit}} đã bị bỏ qua vì quá lớn để gắn pin.",
-          "fetchCapped": "Không phải tất cả các commit khớp đều được đọc; phần còn lại sẽ được xử lý trong lần làm mới tiếp theo.",
-          "error": "Quét thất bại: {error}"
+          "fetchCapped": "Không phải mọi commit có nêu tên một ticket đã liên kết đều được đọc tệp trong lượt này; phần còn lại sẽ được xử lý trong lần quét tiếp theo.",
+          "scanRecent": "Quét lại các Commit Gần đây",
+          "scanFull": "Quét Toàn bộ Lịch sử",
+          "scanFullHint": "Quét toàn bộ lịch sử sẽ duyệt qua mọi commit trên nhánh và bổ sung ghim cho các ticket hiện có. Các commit đã đọc được lấy từ bộ nhớ đệm, và một lượt duyệt bị dừng do đạt giới hạn sẽ tiếp tục từ đó vào lần sau.",
+          "scanStarted": "Đã xếp hàng quét ticket. Thẻ này sẽ cập nhật khi quá trình chạy.",
+          "scanStillRunning": "Quá trình quét ticket vẫn đang chạy trong nền. Nó sẽ cập nhật tại đây khi hoàn tất.",
+          "scanFailedToStart": "Không thể bắt đầu quét ticket",
+          "runningRecent": "Đang quét các commit gần đây…",
+          "runningFull": "Đang quét toàn bộ lịch sử…",
+          "runningProgress": "{commits, number} commit đã đọc · {matched, number} có nêu tên một ticket đã liên kết · {fetched, number} trong số đó đã được kiểm tra",
+          "fullBadge": "Toàn bộ lịch sử",
+          "imported": "{imported, plural, =0 {Không có ticket mới nào được nhập từ trình theo dõi.} other {# ticket đã được nhập từ trình theo dõi.}}",
+          "fullCapped": "Lượt duyệt đã dừng ở {count, number} commit trước khi đến điểm bắt đầu của nhánh. Chạy lại Quét Toàn bộ Lịch sử để tiếp tục từ nơi đã dừng.",
+          "stale": "Một lượt quét bắt đầu vào {date} không bao giờ báo cáo lại — worker có thể đã được khởi động lại. Hãy xếp hàng lại để tiếp tục.",
+          "summaryCommits": "{commits, plural, other {# commit}} đã đọc{cached, plural, =0 {} other { ({cached, number} từ bộ nhớ đệm commit)}} · {naming, number} có nêu tên một ticket · {tickets, plural, other {# ticket riêng biệt}}",
+          "summaryPins": "Ghim: {created, number} đã tạo · {updated, number} đã cập nhật · {removed, number} đã xóa",
+          "noLinkedHint": "Ticket chỉ ghim test case khi có một test case được liên kết với chúng. Hãy liên kết các case với các ticket đã nhập, sau đó quét lại.",
+          "importFailuresTitle": "Các khóa không tìm thấy trong trình theo dõi ({shown} trong tổng số {total}):",
+          "windowCapped": "Chỉ {count, number} commit mới nhất được đọc (giới hạn cửa sổ gần đây). Sử dụng Quét Toàn bộ Lịch sử để đọc các commit cũ hơn.",
+          "runningWalk": "{commits, number} commit đã đọc cho đến nay{cached, plural, =0 {} other { ({cached, number} từ bộ nhớ đệm commit)}} — các ticket sẽ được tra cứu khi lượt duyệt hoàn tất",
+          "runningImport": "{commits, number} commit đã đọc · đang nhập ticket: {lookups, number} đã tra cứu trong trình theo dõi · {imported, number} đã nhập",
+          "summaryCommitsOnly": "{commits, plural, other {# commit}} đã đọc",
+          "importSkipped": "{skipped, plural, other {# khóa}} chưa được tra cứu vì mỗi lượt quét chỉ thực hiện một số lượng tra cứu giới hạn trong trình theo dõi. Chạy lại lượt quét để tiếp tục.",
+          "cancelRequested": "Đã yêu cầu hủy. Lượt quét sẽ dừng ở bước tiếp theo; các commit đã đọc vẫn được giữ trong bộ nhớ đệm.",
+          "cancelled": "Đã hủy lượt quét vào {date}. Các commit đã đọc trước khi hủy vẫn được giữ trong bộ nhớ đệm commit; các ghim chưa được cập nhật.",
+          "importMoved": "{moved, plural, other {# khóa là tên cũ}} của các ticket đã được nhập; chúng đã được di chuyển hoặc đổi tên trong trình theo dõi.",
+          "importFailed": "{failed, plural, other {# khóa}} không được tìm thấy trong trình theo dõi, được liệt kê bên dưới.",
+          "summaryMatched": "{matched, plural, other {# commit}} có nêu tên một ticket được liên kết với một test case",
+          "summarySymbolPins": "({count, number} trong số các ghim đã tạo nhắm vào một hàm hoặc lớp thay vì toàn bộ tệp.)"
         },
         "markers": {
           "title": "Điểm đánh dấu kho lưu trữ",
           "description": "Các chú thích bình luận như @testplanit case:123 và các mục trong .testplanit/testmap.yml sẽ trở thành Code Pin mỗi khi bộ nhớ đệm được làm mới.",
-          "lastScan": "Lần quét cuối: {date}",
-          "never": "Chưa được quét",
           "skippedPrivacy": "Đã bỏ qua: tính năng lưu trữ tệp tạm thời đã bị tắt.",
           "skippedPartial": "Đã bỏ qua: nội dung tệp chỉ được lưu vào bộ nhớ đệm một phần.",
           "summary": "{annotations, plural, other {# chú thích}} · {mapEntries, plural, other {# mục ánh xạ}} · {created} đã tạo · {updated} đã cập nhật · {removed} đã xóa",
-          "problems": "{count, plural, other {# vấn đề}}",
-          "error": "Quét thất bại: {error}"
+          "problems": "{count, plural, other {# vấn đề}}"
         },
-        "save": "Lưu cấu hình",
         "saved": "Đã lưu cấu hình Phân tích tác động",
-        "saveError": "Không thể lưu cấu hình",
-        "listError": "Không thể liệt kê các tệp trong kho lưu trữ",
-        "contentsError": "Không thể lưu nội dung tệp vào bộ nhớ cache",
-        "networkError": "Lỗi mạng trong quá trình làm mới bộ nhớ cache",
-        "refreshSuccess": "Bộ nhớ cache đã được làm mới: {fileCount} tập tin ({contentCached} nội dung đã được lưu vào bộ nhớ cache)",
-        "refreshRateLimited": "Bộ nhớ cache đã được làm mới: {fileCount} tập tin đã được liệt kê, {contentCached}/{fileCount} nội dung đã được lưu vào bộ nhớ cache (tốc độ truy cập bị giới hạn — hãy làm mới lại để hoàn tất)",
-        "refreshComplete": "Đã làm mới bộ nhớ đệm: {fileCount} tệp",
-        "refreshInProgress": "Quá trình làm mới bộ nhớ đệm vẫn đang chạy trong nền. Nó sẽ cập nhật tại đây khi hoàn tất.",
-        "validation": {
-          "pathRequired": "Cần có đường dẫn",
-          "patternRequired": "Cần có mẫu",
-          "repositoryRequired": "Cần có kho lưu trữ",
-          "pathPatternRequired": "Cần ít nhất một kiểu đường dẫn"
-        },
-        "disconnect": "Ngắt kết nối kho lưu trữ",
-        "confirmDisconnect": "Bạn có chắc chắn muốn ngắt kết nối \"{name}\" khỏi dự án này không?",
-        "disconnectWarningTitle": "Việc ngắt kết nối kho lưu trữ này sẽ:",
         "disconnectWarning1": "Xóa {count, plural, other {# Code Pin}} và lịch sử phân tích của kho lưu trữ này",
-        "disconnectWarning2": "Xóa tất cả các tệp kho lưu trữ đã được lưu vào bộ nhớ cache",
-        "disconnectWarning3": "Xóa cấu hình đường dẫn và nhánh",
         "disconnectSuccess": "Đã ngắt kết nối kho lưu trữ ứng dụng",
-        "disconnectError": "Không thể ngắt kết nối kho lưu trữ ứng dụng"
+        "disconnectError": "Không thể ngắt kết nối kho lưu trữ ứng dụng",
+        "repositories": {
+          "title": "Kho lưu trữ đã kết nối",
+          "description": "Mọi kho lưu trữ mà dự án này phân tích. Mỗi kho lưu trữ có nhánh, mẫu đường dẫn, bộ nhớ đệm và Ghim Mã riêng.",
+          "connect": "Kết nối Kho lưu trữ",
+          "allConnected": "Mọi kho lưu trữ đã đăng ký đều đã được kết nối.",
+          "columnCache": "Bộ nhớ đệm",
+          "cacheDisabled": "Đã tắt lưu vào bộ nhớ đệm",
+          "edit": "Chỉnh sửa kết nối",
+          "connectTitle": "Kết nối một kho lưu trữ",
+          "editTitle": "Chỉnh sửa {name}",
+          "view": "Xem kết nối",
+          "connectDescription": "Chọn một kho lưu trữ đã đăng ký của ứng dụng đang được kiểm thử và chỉ định nhánh cùng đường dẫn cần đọc.",
+          "editDescription": "Thay đổi nhánh, mẫu đường dẫn, bộ nhớ đệm và quét ticket cho kết nối này.",
+          "viewDescription": "Cách kho lưu trữ này được kết nối. Làm mới bộ nhớ đệm hoặc chạy quét ticket từ đây; sử dụng Chỉnh sửa để thay đổi cài đặt.",
+          "empty": "Chưa có kho lưu trữ nào được kết nối",
+          "emptyDescription": "Kết nối kho lưu trữ của ứng dụng đang được kiểm thử để bắt đầu phân tích các thay đổi.",
+          "lastScan": "{created, plural, other {# ghim}} được tạo bởi lượt quét gần nhất",
+          "scanFailed": "Lượt quét gần nhất thất bại",
+          "scanCancelled": "Lượt quét gần nhất đã bị hủy"
+        },
+        "initialScanStarted": "Đang tải các tệp kho lưu trữ và quét tìm dấu hiệu kho lưu trữ và các ticket đã liên kết…",
+        "scanError": "Quét thất bại: {error}",
+        "scanLastScan": "Lượt quét gần nhất: {date}",
+        "scanNever": "Chưa quét"
       }
     },
     "matrix": {
@@ -2355,7 +2318,6 @@
       "loadError": "Không thể tải chế độ xem ma trận. Hãy thử lại hoặc thu hẹp bộ lọc của bạn.",
       "cellCapShort": "Ma trận này sẽ tạo ra {cells, number} ô, vượt quá giới hạn {threshold, number} ô. Thu hẹp bộ lọc để tiếp tục.",
       "caseColumnHeader": "Dòng trường hợp / tham số",
-      "cellNotRun": "Chưa được kiểm thử",
       "cellSummary": "{pass, number} đã vượt qua, {fail, number} thất bại, {notRun, number} chưa chạy",
       "popoverTitle": "{count, plural, =1 {# lần lặp} other {# lần lặp}}",
       "iterationUnlabeled": "Lần lặp #{index, number}",
@@ -2364,8 +2326,6 @@
       "filterStatus": "{count, plural, =0 {Trạng thái} one {Trạng thái (#)} other {Trạng thái (#)}}",
       "filterConfig": "{count, plural, =0 {Cấu hình} one {Cấu hình (#)} other {Cấu hình (#)}}",
       "filterDataset": "{count, plural, =0 {Tập dữ liệu} one {Tập dữ liệu (#)} other {Tập dữ liệu (#)}}",
-      "filterStatusLabel": "Trạng thái",
-      "filterConfigLabel": "Cấu hình",
       "filterDatasetLabel": "Tập dữ liệu",
       "filterStatusPlaceholder": "Bất kỳ trạng thái nào",
       "filterConfigPlaceholder": "Bất kỳ cấu hình nào",
@@ -2374,12 +2334,10 @@
       "filterDateTo": "ĐẾN",
       "configNone": "(không cần cấu hình)",
       "clearFilter": "Thông thoáng",
-      "filterEmpty": "Không có tùy chọn nào.",
       "resetFilters": "Đặt lại bộ lọc",
       "exportCsv": "Xuất CSV",
       "legendPassedName": "Đi qua",
       "legendFailedName": "Thất bại",
-      "legendUntestedName": "Chưa được kiểm thử",
       "legendClickHint": "Nhấp vào bất kỳ ô nào để xem chi tiết lần lặp.",
       "cellCapTitle": "Ma trận sẽ hiển thị {cellCount, number} ô (giới hạn {threshold, number})",
       "cellCapSuggestionFilterCases": "Hãy thử lọc xuống ít trường hợp thử nghiệm hơn — trục đó là yếu tố đóng góp lớn nhất.",
@@ -2524,7 +2482,6 @@
       "importStarted": "Đã bắt đầu nhập",
       "kindRelease": "Bản phát hành",
       "kindSprint": "Đợt Sprint",
-      "selectAll": "Chọn tất cả",
       "searchPlaceholder": "Tìm kiếm bản phát hành và sprint...",
       "emptyFiltered": "Không có cột mốc nào khớp với bộ lọc của bạn.",
       "partialWarning": "Một số dự án Jira không thể được tải:",
@@ -2535,14 +2492,12 @@
     "sync": {
       "managedByJira": "Được quản lý bởi Jira",
       "lastSynced": "Đồng bộ lần cuối {time}",
-      "openInJira": "Mở trong Jira",
       "providerJira": "Jira",
       "sourceBadge": "{provider} · {kind} · {state}",
       "syncNow": "Đồng bộ ngay",
       "unlinkMenuItem": "Hủy liên kết từ {provider}",
       "unlinkConfirmTitle": "Hủy liên kết cột mốc?",
       "unlinkConfirmDescription": "Việc này sẽ ngừng đồng bộ với công cụ theo dõi: các trường sẽ có thể chỉnh sửa lại, các liên kết vấn đề đã đồng bộ trở thành liên kết thủ công (bạn có thể giữ lại hoặc xóa), và bạn có thể liên kết lại sau bằng cách nhập đối tượng này một lần nữa.",
-      "unlinkConfirmAction": "Hủy liên kết",
       "unlinkSuccess": "Đã hủy liên kết cột mốc khỏi công cụ theo dõi.",
       "unlinkError": "Không thể hủy liên kết cột mốc.",
       "sourceRemoved": "nguồn đã bị xóa trong {provider}",
@@ -2566,19 +2521,15 @@
       "tooltipAhead": "{count, number} vượt trước lý tưởng"
     },
     "members": {
-      "cardTitle": "Vấn đề",
       "casesOtherProjects": "{count, plural, other {# trường hợp thử nghiệm trong các dự án khác}}",
       "inScope": "Trong phạm vi",
       "foundInTesting": "Được phát hiện trong quá trình kiểm thử",
       "foundInTestingEmpty": "Không có vấn đề nào được phát hiện trong quá trình kiểm thử.",
       "inScopeCrossBadge": "Trong phạm vi",
       "refresh": "Làm mới",
-      "columnKey": "Tên",
-      "columnStatus": "Trạng thái",
       "columnCoverage": "Độ phủ",
       "columnSource": "Nguồn",
       "sourceSynced": "Đã đồng bộ",
-      "sourceManual": "Thủ công",
       "coveragePassed": "Đạt",
       "coverageFailed": "Không đạt",
       "coverageInProgress": "Đang tiến hành",
@@ -2589,7 +2540,6 @@
       "filterAllTypes": "Tất cả loại",
       "empty": "Chưa có vấn đề nào được liên kết với cột mốc này.",
       "emptyFiltered": "Không có vấn đề nào khớp với bộ lọc hiện tại.",
-      "unlink": "Hủy liên kết",
       "managedByJira": "Được quản lý bởi Jira — hãy xóa nó khỏi version/sprint trong Jira",
       "linkSuccess": "Vấn đề đã được liên kết với cột mốc này.",
       "linkError": "Không thể liên kết vấn đề với cột mốc này.",
@@ -2603,7 +2553,6 @@
       "overflowImportSuccess": "Đã bắt đầu nhập — các vấn đề sẽ xuất hiện khi được đồng bộ.",
       "overflowImportError": "Không thể nhập các vấn đề thành viên từ Jira.",
       "emptyCta": "Liên kết một vấn đề để bắt đầu.",
-      "columnDescription": "Mô tả",
       "unlinkConfirmTitle": "Hủy liên kết vấn đề?",
       "unlinkConfirmDescription": "Việc này sẽ xóa vấn đề khỏi cột mốc này. Vấn đề vẫn được giữ lại và có thể liên kết lại sau.",
       "totalsUncovered": "{count, plural, other {# vấn đề chưa được phủ}}",
@@ -2627,7 +2576,6 @@
       "deleteDescription": "Bạn có chắc chắn muốn xóa {count, plural, other {các Phiên này}} không?"
     },
     "auditLog": {
-      "trigger": "Hoạt động",
       "description": "Tất cả các thay đổi được ghi lại cho phiên này."
     },
     "title": "{count, plural, =1 {Phiên} other {Các phiên}}",
@@ -2656,9 +2604,6 @@
       "viewSessionDetails": "Xem phiên"
     },
     "noMilestone": "Không có cột mốc nào",
-    "milestoneGroup": {
-      "sessionCount": "{count, plural, other {# phiên}}"
-    },
     "completeDialog": {
       "noWorkflowsConfigured": "Hiện chưa có quy trình hoàn thành nào được cấu hình cho dự án này. Vui lòng cấu hình quy trình trong cài đặt quản trị để kích hoạt tính năng hoàn thành phiên."
     },
@@ -2729,7 +2674,6 @@
     "version": {
       "title": "Xem lịch sử phiên",
       "notFound": "Không tìm thấy phiên bản phiên.",
-      "selectVersion": "Chọn phiên bản",
       "backToSession": "Trở lại phiên",
       "backToLatest": "Trở lại phiên bản mới nhất",
       "versionInfo": {
@@ -2846,9 +2790,6 @@
       "preferences": {
         "title": "Tùy chọn"
       },
-      "access": {
-        "title": "Truy cập"
-      },
       "assignments": {
         "title": "Nhiệm vụ được giao",
         "empty": "Không có nhiệm vụ nào đang mở.",
@@ -2863,7 +2804,6 @@
         "userName": "Tên người dùng thư mục",
         "givenName": "Tên",
         "familyName": "Họ",
-        "jobTitle": "Tiêu đề",
         "userType": "Loại người dùng",
         "employeeNumber": "Mã số nhân viên",
         "department": "Phòng",
@@ -2897,7 +2837,6 @@
         }
       },
       "changePasswordModal": {
-        "buttonText": "Thay đổi mật khẩu",
         "setPasswordButtonText": "Đặt mật khẩu",
         "description": "Nhập mật khẩu hiện tại và mật khẩu mới để thay đổi mật khẩu tài khoản của bạn. Thao tác này chỉ thay đổi mật khẩu do hệ thống quản lý nội bộ của bạn. Nếu bạn đăng nhập thông qua SSO, mật khẩu đó sẽ không thay đổi.",
         "setPasswordDescription": "Bạn đã đăng nhập bằng SSO và chưa thiết lập mật khẩu cục bộ. Vui lòng nhập mật khẩu mới để kích hoạt tính năng đăng nhập bằng email/mật khẩu cho tài khoản của bạn.",
@@ -2919,8 +2858,6 @@
         "loadMore": "Đang tải",
         "viewDetails": "Xem chi tiết",
         "columnAction": "Hành động",
-        "columnEntityType": "Loại",
-        "columnEntityName": "Tên",
         "columnTimestamp": "Dấu thời gian",
         "allActions": "Tất cả hành động",
         "allTypes": "Tất cả các loại",
@@ -2999,8 +2936,7 @@
       "remove": "Xóa ảnh đại diện",
       "changeProfilePicture": "Thay đổi ảnh đại diện",
       "notAuthenticated": "Bạn phải đăng nhập để tải ảnh đại diện lên."
-    },
-    "deletedUser": "Người dùng đã bị xóa"
+    }
   },
   "userMenu": {
     "viewProfile": "Xem hồ sơ",
@@ -3035,7 +2971,6 @@
       "historyView": "Chế độ xem lịch sử trường hợp kiểm thử"
     },
     "auditLog": {
-      "trigger": "Hoạt động",
       "description": "Tất cả các thay đổi được ghi lại cho trường hợp thử nghiệm này."
     },
     "fields": {
@@ -3123,7 +3058,6 @@
     },
     "dragDrop": {
       "move": "Di chuyển",
-      "copy": "Sao chép",
       "promptTitle": "Bạn muốn làm gì?",
       "copying": "Đang sao chép…",
       "copyComplete": "{count, plural, =1 {Đã sao chép 1 trường hợp vào {folder}} other {Đã sao chép # trường hợp vào {folder}}}{dest, select, samename {} crossProject { trong {projectName}} other {}}",
@@ -3179,7 +3113,6 @@
       "addToRunDraftBlocked": "Không thể thêm các trường hợp nháp vào các lần chạy khi tùy chọn \"Loại trừ các trường hợp nháp khỏi các lần chạy thử nghiệm\" được bật cho dự án này.",
       "copyMoveToProject": "Sao chép / Di chuyển",
       "export": "Xuất khẩu",
-      "quickScript": "QuickScript",
       "parameterizedStatusReadOnly": "Trạng thái được tính toán từ kết quả lặp — nhấp để mở",
       "cannotReorderAcrossPages": "Không thể sắp xếp lại các trường hợp kiểm thử trên nhiều trang. Để sắp xếp lại, hãy xem tất cả các trường hợp trên một trang bằng cách chọn 'Tất cả' từ menu kích thước trang hoặc bỏ chọn các trường hợp từ các trang khác. Bạn vẫn có thể kéo các trường hợp đã chọn vào thư mục.",
       "exportModal": {
@@ -3307,7 +3240,6 @@
       "restoreDescriptionNew": "Bạn đã bắt đầu một trường hợp kiểm thử {age} và chưa bao giờ lưu nó. Khôi phục những gì bạn đã viết, hoặc hủy bỏ nó và bắt đầu lại.",
       "restoreStaleWarning": "Trường hợp kiểm thử này đã được người khác lưu kể từ khi bản nháp của bạn được viết. Khôi phục sẽ thay thế nội dung của họ khi bạn lưu.",
       "restoreDiscard": "Hủy bỏ",
-      "restoreRestore": "Khôi phục",
       "bannerText": "Bạn có các thay đổi chưa được lưu cho trường hợp kiểm thử này từ {age}.",
       "bannerAction": "Tiếp tục chỉnh sửa",
       "bannerDiscard": "Hủy bỏ chúng"
@@ -3346,7 +3278,6 @@
     "views": {
       "byAutomation": "Tự động hóa",
       "byParameterized": "Tham số hóa",
-      "byAttachments": "Tệp đính kèm",
       "byReview": "Đánh giá",
       "allTemplates": "Tất cả các mẫu",
       "allStates": "Tất cả các tiểu bang",
@@ -3430,7 +3361,6 @@
         "markdown": "Giảm giá"
       },
       "columns": {
-        "all": "Tất cả",
         "visible": "Dễ thấy"
       },
       "delimiter": {
@@ -3460,13 +3390,10 @@
         "multi": "Nhiều hàng trên mỗi bước"
       },
       "comingSoon": "Sắp ra mắt",
-      "exporting": "Đang xuất khẩu...",
       "exportError": "Quá trình xuất dữ liệu thất bại. Vui lòng thử lại."
     },
     "quickScript": {
-      "title": "QuickScript",
       "description": "Chuyển đổi các trường hợp kiểm thử đã chọn thành các kịch bản tự động hóa bằng cách sử dụng mẫu hoặc trí tuệ nhân tạo.",
-      "templatePlaceholder": "Chọn một mẫu...",
       "searchPlaceholder": "Tìm kiếm mẫu...",
       "noTemplatesFound": "Không tìm thấy mẫu nào.",
       "outputModeLabel": "Chế độ đầu ra",
@@ -3519,7 +3446,6 @@
       "compareButton": "So sánh",
       "viewCaseDetails": "Xem chi tiết vụ việc",
       "selectAll": "Chọn tất cả",
-      "selectRow": "Chọn hàng",
       "selected": "{count, plural, one {# đã chọn} other {# đã chọn}}",
       "bulkDismiss": "Không trùng lặp ({count, number})",
       "bulkLink": "Liên kết dưới dạng liên quan ({count, number})",
@@ -3602,7 +3528,6 @@
         "urlInput": "URL trang",
         "urlInputPlaceholder": "https://example.com/docs",
         "urlMode": "URL này chứa nội dung gì?",
-        "urlModeRequirements": "Yêu cầu",
         "urlModeRequirementsHint": "Trang này mô tả những gì cần xây dựng.",
         "urlModeApplication": "Ứng dụng",
         "urlModeApplicationHint": "Page là ứng dụng cần kiểm tra.",
@@ -3624,7 +3549,6 @@
       "selectTemplate": {
         "title": "Chọn mẫu trường hợp kiểm thử",
         "description": "Chọn mẫu sẽ được sử dụng để tạo các trường hợp kiểm thử. Trí tuệ nhân tạo sẽ điền các trường thông tin theo mẫu này.",
-        "placeholder": "Chọn một mẫu...",
         "fieldsDescription": "Chọn những trường thông tin mà AI nên tự động điền. Các trường bắt buộc luôn được bao gồm.",
         "requiredOnly": "Chỉ cần thiết"
       },
@@ -3667,7 +3591,6 @@
       "expandProgress": "{done, number} của {total, number} được tạo ra",
       "import": "{count, plural, =0 {Nhập các trường hợp kiểm thử} =1 {Nhập 1 trường hợp kiểm thử} other {Nhập # trường hợp kiểm thử}}",
       "importing": "{count, plural, =0 {Đang nhập các trường hợp kiểm thử...} =1 {Đang nhập 1 trường hợp kiểm thử...} other {Đang nhập # trường hợp kiểm thử...}}",
-      "openInExternalSystem": "Mở trong {provider}",
       "externalSystem": "Hệ thống bên ngoài",
       "autoGenerateTags": "Tự động tạo thẻ cho các trường hợp kiểm thử",
       "includeParametersLabel": "Tạo các tham số và tập dữ liệu khởi đầu",
@@ -3834,7 +3757,6 @@
       "renameTitle": "Đổi tên chế độ xem đã lưu",
       "renamed": "Đã cập nhật chế độ xem đã lưu",
       "renameFailed": "Không thể cập nhật chế độ xem. Vui lòng thử lại.",
-      "delete": "Xóa",
       "deleteTitle": "Xóa chế độ xem đã lưu?",
       "deleteConfirm": "“{name}” sẽ bị xóa khỏi các chế độ xem đã lưu của bạn. Hành động này không thể hoàn tác.",
       "deleted": "Đã xóa chế độ xem đã lưu",
@@ -3847,12 +3769,9 @@
       "addFailed": "Không thể thêm ghim",
       "addSuccess": "Đã thêm ghim",
       "anchoredAt": "Được neo tại {sha}",
-      "cancel": "Hủy bỏ",
       "caseLabel": "Trường hợp kiểm thử",
-      "casePlaceholder": "Tìm kiếm trường hợp kiểm thử...",
       "contentUnavailable": "Nội dung tập tin không khả dụng.",
       "description": "Mã nguồn mà trường hợp này bao phủ. Một thay đổi bên trong khối được ghim sẽ đưa trường hợp vào các phân tích Tác động.",
-      "dismissStale": "Bỏ qua",
       "duplicate": "Ghim này đã tồn tại.",
       "empty": "Chưa có Ghim mã nào.",
       "endLine": "Dòng kết thúc",
@@ -3860,11 +3779,9 @@
       "errorLineOutOfRange": "Phạm vi dòng nằm ngoài tập tin.",
       "errorSnippetTooLarge": "Khối được ghim quá lớn.",
       "errorSymbolNotFound": "Không tìm thấy ký hiệu trong tập tin.",
-      "fileLabel": "Tập tin",
       "filePlaceholder": "Tìm kiếm tập tin...",
       "filesCached": "{count, plural, other {# tập tin}} đã lưu bộ nhớ đệm · {date}",
       "filesLive": "Đang liệt kê các tập tin trực tiếp từ kho lưu trữ",
-      "globLabel": "Mẫu",
       "globMatches": "{count, plural, =0 {Không có tập tin nào trong bộ nhớ đệm khớp} other {# tập tin trong bộ nhớ đệm khớp}}",
       "globPlaceholder": "src/payments/**",
       "kind": "Loại",
@@ -3877,30 +3794,21 @@
       "location": "Vị trí",
       "managedTooltip": "Được quản lý bởi kho lưu trữ. Chỉnh sửa điểm đánh dấu trong mã nguồn.",
       "noFilesCached": "Không có danh sách tập tin được lưu bộ nhớ đệm. Yêu cầu quản trị viên dự án làm mới bộ nhớ đệm kho lưu trữ.",
-      "noteLabel": "Ghi chú",
       "notePlaceholder": "Tại sao trường hợp này bao phủ mã nguồn này (tùy chọn)",
       "reanchor": "Neo lại",
       "reanchorFailed": "Không thể neo lại ghim",
       "reanchorSuccess": "Đã neo lại ghim",
-      "remove": "Xóa",
       "removeConfirm": "Xóa ghim này?",
       "removeFailed": "Không thể xóa ghim",
       "removeSuccess": "Đã xóa ghim",
-      "source": "Nguồn",
-      "sourceAi": "AI",
       "sourceAnnotation": "Chú thích",
-      "sourceIssue": "Vé",
-      "sourceManual": "Thủ công",
       "sourceMapfile": "Tập tin ánh xạ",
-      "staleBadge": "Cũ",
       "staleFileDeleted": "tập tin đã bị xóa",
       "staleSnippetNotFound": "không tìm thấy dòng",
       "staleSymbolNotFound": "không tìm thấy ký hiệu",
       "staleTooltip": "Không thể tìm thấy khối được ghim tại đầu nhánh: {reason}.",
       "startLine": "Dòng bắt đầu",
-      "submit": "Thêm ghim",
       "symbolHint": "Khai báo được xác định theo tên trong tập tin.",
-      "symbolLabel": "Ký hiệu",
       "symbolNoneDetected": "Không phát hiện ký hiệu nào, hãy nhập một tên.",
       "symbolPlaceholder": "tênHàm",
       "symbolSelectPlaceholder": "Chọn hoặc nhập một ký hiệu...",
@@ -3909,14 +3817,13 @@
       "editDialogTitle": "Chỉnh sửa ghim này",
       "editDialogDescription": "Tập tin và loại ghim vẫn giữ nguyên. Để thay đổi một trong hai, hãy xóa ghim này và thêm một ghim mới.",
       "editAction": "Chỉnh sửa ghim",
-      "saveChanges": "Lưu thay đổi",
       "symbolSearchPlaceholder": "Tìm kiếm ký hiệu...",
       "symbolUseTyped": "Sử dụng \"{symbol}\"",
       "title": "Ghim mã",
       "viewerFailed": "Không thể tải tập tin.",
       "viewerLoading": "Đang tải tập tin…",
       "viewerTooLarge": "Tập tin này quá lớn để hiển thị. Hãy nhập số dòng thay thế.",
-      "wholeFile": "Toàn bộ tập tin"
+      "repositoriesCount": "{count, plural, other {# kho lưu trữ}}"
     },
     "diffView": {
       "added": "Dòng đã thêm",
@@ -3947,15 +3854,13 @@
     "noProject": "Không có dự án",
     "description": "Quản lý và sắp xếp các trường hợp kiểm thử và phiên kiểm thử của bạn bằng thẻ.",
     "detail": {
-      "title": "Chi tiết thẻ",
       "filterPlaceholder": "Lọc các mục...",
       "noResults": "Không tìm thấy mục nào",
       "noFilterResults": "Không có mục nào phù hợp với bộ lọc hiện tại.",
       "filters": {
         "hideCompletedSessions": "Ẩn các phiên đã hoàn thành",
         "hideCompletedTestRuns": "Ẩn các lần chạy thử nghiệm đã hoàn tất",
-        "caseTypeLabel": "Loại trường hợp",
-        "allCases": "Tất cả"
+        "caseTypeLabel": "Loại trường hợp"
       }
     },
     "manageTags": {
@@ -3977,9 +3882,7 @@
       "tooLarge": "Tệp này quá lớn để xem trước.",
       "empty": "Tài liệu này có vẻ như trống.",
       "download": "Tải xuống để xem",
-      "slideCounter": "Slide {current} trên {total}",
-      "previousSlide": "Slide trước",
-      "nextSlide": "Slide tiếp theo"
+      "slideCounter": "Slide {current} trên {total}"
     }
   },
   "reviews": {
@@ -4009,7 +3912,6 @@
     },
     "transitionGate": {
       "blockedByGate": "Cần có sự chấp thuận cho \"{gateName}\" trước khi chuyển đổi này. Sử dụng \"Yêu cầu xem xét\" để bắt đầu.",
-      "gatedOptionBadge": "Cần xem xét lại",
       "gatedStatesNotSelectable": "Không thể chọn các tiểu bang nằm ở hoặc vượt qua một tiểu bang bị chặn khi tạo. Hãy chọn một tiểu bang trước cửa kiểm soát đầu tiên, sau đó sử dụng Yêu cầu xem xét để vượt qua nó.",
       "saveBlockedByFormErrors": "Hãy khắc phục các lỗi được đánh dấu trong biểu mẫu trước khi lưu.",
       "bulkBlockedHeading": "{count, plural, other {# trường hợp}} bị chặn bởi cổng \"{gateName}\":",
@@ -4021,44 +3923,33 @@
     },
     "inbox": {
       "iconAria": "{count, plural, =0 {Hộp thư đến đánh giá} one {Hộp thư đến đánh giá, # đang chờ xử lý} other {Hộp thư đến đánh giá, # đang chờ xử lý}}",
-      "pageTitle": "Đánh giá",
-      "tabPending": "Chưa giải quyết",
       "tabDecided": "Quyết định",
       "emptyDecided": "Chưa có đánh giá nào được quyết định. Các đánh giá bạn quyết định và các quyết định về đánh giá bạn yêu cầu sẽ xuất hiện ở đây.",
       "empty": "Không có đánh giá nào đang chờ xử lý. Không có gì đang chờ bạn, và mọi đánh giá bạn đã yêu cầu đều đã được quyết định.",
       "featureDisabled": "Tính năng quy trình đánh giá hiện đang bị vô hiệu hóa. Các đánh giá đang chờ xử lý vẫn được lưu giữ và sẽ xuất hiện trở lại khi tính năng này được kích hoạt lại.",
       "columnEntity": "Thực thể",
-      "columnProject": "Dự án",
       "columnRequester": "Người yêu cầu",
-      "columnAssignee": "Người được chỉ định",
       "columnTransition": "Chuyển đổi",
       "columnRequestedAt": "Yêu cầu tại",
       "columnDecidedBy": "Được quyết định bởi",
       "columnDecidedAt": "Quyết định tại",
-      "columnStatus": "Trạng thái",
-      "columnActions": "Hành động",
-      "actionApprove": "Chấp thuận",
       "actionRequestChanges": "Yêu cầu thay đổi",
       "actionReject": "Từ chối",
       "actionNudge": "Gửi lời nhắc",
       "filterEntityType": "Loại thực thể",
-      "filterProject": "Dự án",
       "filterRequester": "Người yêu cầu",
       "filterAllRequesters": "Tất cả người yêu cầu",
       "filterDecidedBy": "Được quyết định bởi",
       "filterAllDeciders": "Tất cả người quyết định",
-      "filterStatus": "Trạng thái",
       "filterAllStatuses": "Tất cả trạng thái",
       "filterAllEntityTypes": "Tất cả các loại thực thể",
       "filterEntityTypeCase": "Các trường hợp thử nghiệm",
       "filterEntityTypeRun": "Chạy thử nghiệm",
-      "filterEntityTypeSession": "Phiên họp",
       "filterAllProjects": "Tất cả các dự án"
     },
     "requester": {
       "openButton": "Yêu cầu xem xét",
       "sheetDescription": "Hãy gửi thực thể này để xem xét trước khi chuyển sang trạng thái mục tiêu.",
-      "assigneeLabel": "Người được chỉ định",
       "assigneePlaceholder": "Chọn người dùng hoặc vai trò",
       "usersNotified": "{count, plural, =0 {Sẽ không có ai được thông báo} other {# người dùng sẽ được thông báo}}",
       "targetStateLabel": "Trạng thái mục tiêu",
@@ -4095,7 +3986,6 @@
       "unnamedUser": "(Người dùng ẩn danh)"
     },
     "reviewer": {
-      "approve": "Chấp thuận",
       "requestChanges": "Yêu cầu thay đổi",
       "reject": "Từ chối",
       "approveConfirmTitle": "Bạn có đồng ý yêu cầu xem xét này không?",
@@ -4172,7 +4062,6 @@
       "errorNoAssignable": "Không có trường hợp nào để phân bổ trong lần chạy này"
     },
     "auditLog": {
-      "trigger": "Hoạt động",
       "description": "Tất cả các thay đổi được ghi lại cho lần chạy thử nghiệm này."
     },
     "notFound": "Không tìm thấy kết quả chạy thử nghiệm.",
@@ -4311,7 +4200,6 @@
           "unassign": "Tất cả các trường hợp thử nghiệm trong lần chạy thử nghiệm trùng lặp sẽ được hủy gán."
         },
         "configurationGroup": {
-          "label": "Nhóm cấu hình",
           "separate": "Các bản sao chỉ được nhóm với nhau. Lần chạy thử nghiệm đang được sao chép vẫn nằm ngoài nhóm đó",
           "join": "Lần chạy thử nghiệm đang được sao chép và mọi bản sao đều tham gia vào cùng một nhóm cấu hình"
         }
@@ -4332,7 +4220,6 @@
       "noMatchingActive": "Không có lần chạy thử nghiệm hoạt động nào phù hợp với bộ lọc của bạn."
     },
     "milestoneGroup": {
-      "runCount": "{count, plural, other {# lần chạy}}",
       "altHintMac": "Giữ ⌥ để mở rộng hoặc thu gọn tất cả các nhóm",
       "altHintWin": "Giữ phím Alt để mở rộng hoặc thu gọn tất cả các nhóm"
     },
@@ -4354,16 +4241,12 @@
       "noRepository": "Kết nối kho lưu trữ ứng dụng trong cài đặt dự án để sử dụng Tác động.",
       "aiUnavailable": "Không có tích hợp LLM đang hoạt động: kết quả chỉ đến từ Ghim mã, khớp từ khóa và lịch sử chạy.",
       "steps": {
-        "pick": "Commit",
-        "diff": "Thay đổi",
-        "analyze": "Phân tích",
         "review": "Các bài kiểm thử bị ảnh hưởng"
       },
       "pull": {
         "label": "Yêu cầu kéo",
         "selectPlaceholder": "Chọn một yêu cầu kéo...",
         "searchPlaceholder": "Tìm kiếm theo số, tiêu đề, tác giả hoặc nhánh...",
-        "stateAll": "Tất cả",
         "stateOpen": "Mở",
         "stateMerged": "Đã hợp nhất",
         "stateClosed": "Đã đóng",
@@ -4372,10 +4255,8 @@
       "pick": {
         "modeLabel": "Chọn thay đổi theo",
         "modeCommits": "Commit",
-        "modePull": "Yêu cầu kéo",
         "modeCommitsHint": "Những gì đã thay đổi giữa hai bản dựng, để bạn có thể kiểm thử lại mọi thứ đã có kể từ lần bạn kiểm chứng cuối cùng.",
         "modePullHint": "Những gì yêu cầu kéo này thay đổi, được đo từ nơi nhánh của nó tách ra, vì vậy công việc đã có trên nhánh đích trong lúc đó bị loại trừ.",
-        "branchLabel": "Nhánh",
         "baseLabel": "Commit gốc",
         "headLabel": "Commit đích",
         "commitPlaceholder": "Tìm kiếm commit...",
@@ -4396,9 +4277,7 @@
         "summary": "{files, plural, other {# tập tin}} đã thay đổi · +{additions, number} −{deletions, number}",
         "truncated": "Nhà cung cấp trả về một diff không đầy đủ. Một số tập tin đã thay đổi không được hiển thị hoặc không có bản vá.",
         "noChanges": "Không có thay đổi nào giữa các commit này.",
-        "statusAdded": "Đã thêm",
         "statusModified": "Đã sửa đổi",
-        "statusRemoved": "Đã xóa",
         "statusRenamed": "Đã đổi tên",
         "showPatch": "Hiển thị thay đổi",
         "hidePatch": "Ẩn thay đổi",
@@ -4407,8 +4286,7 @@
         "binary": "Tập tin nhị phân",
         "noPatch": "Bản vá không khả dụng",
         "pinnedFiles": "{count, plural, other {# ghim}}",
-        "loading": "Đang so sánh commit…",
-        "failed": "Không thể so sánh các commit."
+        "loading": "Đang so sánh commit…"
       },
       "loading": {
         "analyzing": "Đang phân tích…",
@@ -4427,14 +4305,10 @@
         "title": "{count, plural, =0 {Không có bài kiểm thử bị ảnh hưởng} other {# bài kiểm thử bị ảnh hưởng}}",
         "description": "Được sắp xếp theo điểm số. Mỗi bài kiểm thử đều cho biết lý do nó được chọn.",
         "relatedCount": "{count, plural, other {# bài kiểm thử liên quan}} có điểm thấp hơn và chưa được chọn.",
-        "summary": "Tóm tắt",
-        "score": "Điểm",
-        "case": "Trường hợp kiểm thử",
         "reasons": "Lý do",
         "tierPinned": "Đã ghim",
         "tierAffected": "Bị ảnh hưởng",
         "tierRelated": "Liên quan",
-        "selectAll": "Chọn tất cả",
         "selectNone": "Không chọn",
         "showDetails": "Hiển thị lý do",
         "hideDetails": "Ẩn lý do",
@@ -4450,7 +4324,6 @@
         "path": "Từ khóa",
         "history": "Lịch sử",
         "ai": "AI",
-        "linked": "Liên quan",
         "pinRange": "{path}:{start}–{end}",
         "pinFile": "{path}",
         "pinGlob": "Khớp {pattern}",
@@ -4474,8 +4347,7 @@
       "uncovered": {
         "title": "{count, plural, other {# tập tin đã thay đổi không có bài kiểm thử}}",
         "description": "Không có trường hợp kiểm thử nào được liên kết với các tập tin này. Ghim một trường hợp để lấp đầy khoảng trống.",
-        "pinAction": "Ghim một trường hợp...",
-        "pinned": "Đã ghim"
+        "pinAction": "Ghim một trường hợp..."
       },
       "warnings": {
         "diff_truncated_by_provider": "Nhà cung cấp trả về một diff không đầy đủ.",
@@ -4490,17 +4362,13 @@
         "issue_commit_fetch_capped": "Một số commit có nêu tên ticket chưa được đọc từng tệp một (đã đạt giới hạn tìm nạp); các trường hợp của chúng không bao phủ tệp cụ thể nào."
       },
       "actions": {
-        "compare": "So sánh",
         "analyze": "Phân tích",
         "reanalyze": "Phân tích lại",
         "refine": "Quay lại thay đổi",
         "accept": "{count, plural, other {Thêm # trường hợp}}",
-        "cancelAnalysis": "Hủy phân tích",
-        "back": "Quay lại",
-        "next": "Tiếp theo"
+        "cancelAnalysis": "Hủy phân tích"
       },
       "errors": {
-        "title": "Phân tích thất bại",
         "generic": "Đã xảy ra lỗi khi phân tích các thay đổi. Vui lòng thử lại.",
         "pullFailed": "Không thể đọc các commit của yêu cầu kéo đó. Chọn một cái khác, hoặc tự đặt tên các commit.",
         "compareFailed": "Không thể so sánh các commit.",
@@ -4510,44 +4378,30 @@
         "branchesFailed": "Không thể liệt kê các nhánh.",
         "commitsFailed": "Không thể tải commit.",
         "disabled": "Tác động không được bật cho dự án này.",
-        "noConfig": "Trước tiên hãy kết nối kho lưu trữ ứng dụng trong cài đặt dự án."
-      }
+        "noConfig": "Trước tiên hãy kết nối kho lưu trữ ứng dụng trong cài đặt dự án.",
+        "configRequired": "Chọn một kho lưu trữ để phân tích."
+      },
+      "repositoryPlaceholder": "Chọn một kho lưu trữ...",
+      "chooseRepository": "Chọn kho lưu trữ nào đã kết nối với dự án chứa các thay đổi cần phân tích."
     }
   },
   "admin": {
     "menu": {
       "header": "Chủ yếu",
-      "projects": "Dự án",
-      "templatesAndFields": "Mẫu & Trường",
       "fields": "Các cánh đồng",
-      "workflows": "Quy trình làm việc",
-      "statuses": "Trạng thái",
-      "milestoneTypes": "Các loại cột mốc",
-      "configurations": "Cấu hình",
-      "users": "Người dùng",
-      "groups": "Nhóm",
-      "roles": "Vai trò",
-      "tags": "Thẻ",
-      "issues": "Vấn đề",
       "appConfig": "Cấu hình ứng dụng",
       "recordKeys": "Khóa bản ghi",
-      "notifications": "Thông báo",
       "imports": "Nhập dữ liệu",
       "integrations": "Tích hợp vấn đề",
-      "webhooks": "Webhooks",
       "junit": "JUnit",
       "datasets": "Bộ dữ liệu được chia sẻ",
       "testCaseParameters": "Tham số trường hợp kiểm thử",
-      "llm": "Mô hình AI",
       "prompts": "Cấu hình nhắc nhở",
       "exportTemplates": "Mẫu xuất khẩu",
       "codeRepositories": "Kho lưu trữ mã nguồn",
-      "quickScript": "QuickScript",
-      "advanced": "Trình độ cao",
       "sso": "Xác thực",
       "security": "Bảo vệ",
       "trash": "Rác",
-      "reports": "Báo cáo",
       "shares": "Quản lý cổ phần",
       "elasticsearch": "Công cụ tìm kiếm",
       "queues": "Hàng đợi công việc",
@@ -4561,9 +4415,7 @@
       "authentication": "Xác thực",
       "toolsAndIntegrations": "Công cụ & Tích hợp",
       "aiTools": "Công cụ AI",
-      "system": "Hệ thống",
-      "impact": "Phân tích tác động",
-      "automation": "Thực thi tự động"
+      "system": "Hệ thống"
     },
     "imports": {
       "description": "Tích hợp dữ liệu từ các công cụ quản lý kiểm thử bên ngoài vào TestPlanIt.",
@@ -5131,7 +4983,6 @@
         },
         "allowedDomains": {
           "title": "Các tên miền email được cho phép",
-          "placeholder": "ví dụ.com",
           "add": "Thêm tên miền",
           "empty": "Chưa có tên miền nào được cấu hình cho phép. Tất cả các tên miền sẽ bị chặn khi tính năng hạn chế được bật."
         },
@@ -5180,7 +5031,6 @@
         "steps": {
           "details": "Chi tiết dự án",
           "workflows": "Quy trình làm việc, trạng thái và các loại mốc quan trọng",
-          "integrations": "Tích hợp",
           "permissions": "Người dùng & Quyền hạn"
         },
         "labels": {
@@ -5450,7 +5300,6 @@
       "forcePasswordChangeDialogDescription": "Điều này sẽ yêu cầu {name} phải thay đổi mật khẩu của họ trong lần đăng nhập tiếp theo.",
       "revokePasswordDialogTitle": "Thu hồi mật khẩu",
       "revokePasswordDialogDescription": "Thao tác này sẽ ngay lập tức vô hiệu hóa mật khẩu của {name}. Họ sẽ cần sử dụng phương thức đăng nhập khác.",
-      "confirmAction": "Xác nhận",
       "forcePasswordChangeSuccess": "Cần thay đổi mật khẩu cho {name}",
       "forcePasswordChangeFailed": "Không thể buộc thay đổi mật khẩu.",
       "revokePasswordSuccess": "Mật khẩu đã bị thu hồi cho {name}",
@@ -5506,7 +5355,6 @@
       "lockoutThresholdDescription": "Số lần đăng nhập thất bại trước khi tài khoản bị khóa (tối thiểu 1)",
       "lockoutDurationMinutesLabel": "Thời gian khóa (phút)",
       "lockoutDurationMinutesDescription": "Thời gian tài khoản bị khóa (tối thiểu 1 ngày)",
-      "saveChanges": "Lưu thay đổi",
       "forceAllUsers": "Buộc tất cả người dùng phải thay đổi mật khẩu.",
       "forceAllUsersDialogTitle": "Buộc thay đổi mật khẩu cho tất cả người dùng",
       "forceAllUsersDialogDescription": "Điều này sẽ yêu cầu {count, number} người dùng có thông tin đăng nhập phải thay đổi mật khẩu của họ trong lần đăng nhập tiếp theo.",
@@ -5567,7 +5415,6 @@
         "loading": "Đang tải xung đột…",
         "errorLoad": "Không thể tải nhật ký xung đột. Vui lòng thử lại.",
         "colTimestamp": "Khi",
-        "colType": "Kiểu",
         "colEntity": "Thực thể",
         "colAction": "Hành động của hệ thống",
         "typeLinked": "Liên kết",
@@ -5584,11 +5431,8 @@
         "reEmitConfirmTitle": "Sự kiện dành cho thành viên phát lại?",
         "reEmitSuccess": "Webhook được phát lại; dòng kiểm toán đã được ghi.",
         "reEmitError": "Không thể phát lại. {reason}",
-        "next": "Kế tiếp",
-        "previous": "Trước",
         "viewDialogTitle": "Tải trọng xung đột",
-        "viewDialogDescription": "Siêu dữ liệu hàng kiểm tra cho {entityType}#{entityId}.",
-        "close": "Đóng"
+        "viewDialogDescription": "Siêu dữ liệu hàng kiểm tra cho {entityType}#{entityId}."
       },
       "errorLoad": "Không thể tải mã thông báo. Vui lòng thử lại.",
       "columns": {
@@ -5627,10 +5471,8 @@
         "title": "Mã thông báo đã được tạo",
         "warning": "Sao chép mã thông báo này ngay bây giờ. TestPlanIt sẽ không hiển thị lại mã này nữa.",
         "tokenLabel": "mã thông báo người mang SCIM",
-        "copy": "Sao chép",
         "copied": "Đã sao chép",
         "baseUrlHint": "Dán đoạn mã này vào trường SCIM Bearer-token của IdP. URL cơ sở là {baseUrl}.",
-        "close": "Đóng",
         "toast": "Mã thông báo đã được tạo.",
         "a11yAnnounce": "Mã thông báo đã được tạo. Sao chép ngay."
       },
@@ -5715,7 +5557,6 @@
         "remindersToggleAriaLabel": "Bật/tắt thông báo nhắc nhở đánh giá",
         "thresholdLabel": "Nhắc nhở người đánh giá sau",
         "thresholdUnit": "{count, plural, other {ngày}}",
-        "thresholdSaveButton": "Cứu",
         "thresholdHelp": "Yêu cầu xem xét có thể chờ xử lý bao nhiêu ngày trước khi người đánh giá nhận được thông báo nhắc nhở? Yêu cầu mới bắt đầu tính thời gian từ khi gửi.",
         "thresholdUpdateSuccess": "Cài đặt nhắc nhở xem lại đã được cập nhật.",
         "thresholdUpdateError": "Không thể cập nhật cài đặt nhắc nhở. Vui lòng thử lại sau."
@@ -5730,7 +5571,6 @@
         "emptyState": "Không có dự án nào phù hợp với bộ lọc của bạn."
       },
       "editWorkflow": {
-        "requiresReviewLabel": "Cần xem xét lại",
         "requiresReviewFeatureDisabled": "Tính năng quy trình xem xét đã bị vô hiệu hóa ở cấp độ hệ thống. Hãy bật/tắt cài đặt Nâng cao của dự án hoặc đặt TESTPLANIT_REVIEW_FEATURE_ENABLED để kích hoạt lại.",
         "requiresReviewDefaultDisabled": "Trạng thái quy trình làm việc mặc định không thể yêu cầu xem xét — các thực thể mới được đưa vào đây và không có trạng thái trước đó để được kiểm soát."
       },
@@ -5765,7 +5605,6 @@
       "description": "Xác định các hành động mà người dùng có thể thực hiện bằng cách bật/tắt quyền truy cập cho từng khu vực ứng dụng.",
       "confirmDefaultDescription": "Bạn có chắc chắn muốn đặt Vai trò này làm Mặc định không?",
       "defaultWarning": "Người dùng mới sẽ được gán Vai trò này theo mặc định.",
-      "defaultLockedTitle": "Vai trò mặc định",
       "defaultLockedDescription": "Để thay đổi mặc định, hãy chỉnh sửa một Vai trò khác và đặt vai trò đó làm mặc định.",
       "filterPlaceholder": "Lọc theo vai trò...",
       "add": {
@@ -6005,7 +5844,6 @@
         "label": "Quyền truy cập theo từng dự án",
         "description": "Cấp cho nhóm này một cấp truy cập trên các dự án cụ thể, thay vì — hoặc bổ sung cho — cấp truy cập toàn tổ chức ở trên.",
         "empty": "Không có quyền truy cập theo từng dự án. Thành viên chỉ nhận được cấp truy cập toàn tổ chức ở trên và mặc định riêng của mỗi dự án.",
-        "projectLabel": "Dự án",
         "projectPlaceholder": "Chọn một dự án…",
         "accessLabel": "Cấp truy cập",
         "add": "Thêm dự án",
@@ -6045,7 +5883,6 @@
         "title": "Chỉnh sửa loại mốc"
       },
       "delete": {
-        "title": "Xóa {item}",
         "confirmMessage": "Bạn có chắc chắn muốn xóa Loại cột mốc {name} không?"
       }
     },
@@ -6126,7 +5963,6 @@
         "issueConfigs": "Cấu hình sự cố",
         "sharedStepGroups": "Nhóm bước chung",
         "dataSets": "Bộ dữ liệu",
-        "codePins": "Ghim mã",
         "impactAnalyses": "Phân tích tác động"
       },
       "table": {
@@ -6359,7 +6195,6 @@
         "repoHelp": "Tên của kho lưu trữ Gitea",
         "encrypted": "Đã mã hóa",
         "encryptedHelp": "Trường này được mã hóa và lưu trữ an toàn.",
-        "changeCredential": "Thay đổi",
         "leaveBlankToKeep": "Để trống nếu muốn giữ giá trị hiện tại",
         "apiKeyWarningTitle": "Thông báo xác thực khóa API",
         "apiKeyWarningDescription": "Với xác thực bằng khóa API, người báo cáo sự cố được tạo có thể không trùng khớp với người dùng TestPlanIt đã tạo ra chúng — ngay cả khi địa chỉ email trùng khớp:",
@@ -6371,13 +6206,11 @@
         "tokenCreatorNoticeDescription": "Các sự cố được tạo ra thông qua quá trình tích hợp này luôn được ghi nhận là do tài khoản sở hữu mã thông báo truy cập đó gây ra, chứ không phải do người dùng TestPlanIt đã tạo ra chúng. API của nhà cung cấp này không cho phép thiết lập người tạo thay mặt người dùng khác.",
         "callbackUrlLabel": "URL gọi lại (redirect URI)",
         "callbackUrlDescription": "Đăng ký URL chính xác này làm callback / redirect URI trong ứng dụng OAuth của nhà cung cấp của bạn. URL này phải khớp chính xác nếu không quá trình ủy quyền sẽ thất bại.",
-        "callbackUrlCopy": "Sao chép",
         "callbackUrlCopied": "Đã sao chép",
         "forgeApiKeyLabel": "Khóa API Forge",
         "forgeApiKeyDescription": "Được ứng dụng Atlassian Forge sử dụng để xác thực các yêu cầu từ bảng quản lý sự cố Jira. Tạo khóa tại đây và dán vào cài đặt ứng dụng Forge của bạn.",
         "forgeApiKeyPlaceholder": "Nhấp vào Tạo để tạo khóa API.",
         "forgeApiKeyGenerate": "Phát ra",
-        "forgeApiKeyCopy": "Sao chép",
         "forgeApiKeyCopied": "Đã sao chép",
         "platform": "Nền tảng",
         "platformPlaceholder": "Chọn nền tảng...",
@@ -6492,7 +6325,6 @@
         "setAsDefaultDescription": "Hãy sử dụng mô hình này làm mô hình AI mặc định cho tổ chức.",
         "fetchingModels": "Đang tải mô hình...",
         "failedToFetchModels": "Không thể tải các mô hình khả dụng",
-        "selectModel": "Chọn một mẫu",
         "modelsFound": "{count, plural, other {Đã tìm thấy {count} mô hình khả dụng}}",
         "modelsFoundDescription": "Đã chọn \"{model}\" làm mô hình mặc định",
         "noModelsFoundDescription": "Nhà cung cấp không trả về mô hình khả dụng nào",
@@ -6525,9 +6357,7 @@
         }
       },
       "sections": {
-        "provider": "Nhà cung cấp",
-        "costAndBudget": "Chi phí & Ngân sách",
-        "advanced": "Trình độ cao"
+        "costAndBudget": "Chi phí & Ngân sách"
       },
       "delete": {
         "title": "Xóa tích hợp mô hình AI",
@@ -6578,7 +6408,6 @@
       "featureCount": "{count, plural, one {# tính năng} other {# tính năng}}",
       "llmIntegration": "Tích hợp LLM",
       "modelOverride": "Ghi đè mô hình",
-      "llmIntegrationPlaceholder": "Dự án mặc định",
       "modelOverridePlaceholder": "Tích hợp mặc định",
       "projectDefault": "Dự án mặc định (xóa)",
       "integrationDefault": "Tích hợp mặc định (xóa)",
@@ -6814,7 +6643,6 @@
       "changes": "Thay đổi",
       "metadata": "Siêu dữ liệu",
       "oldValue": "Cũ",
-      "newValue": "Mới",
       "columns": {
         "timestamp": "Dấu thời gian",
         "entityId": "ID thực thể",
@@ -7008,7 +6836,6 @@
       "targetFolder": "Thư mục đích",
       "newFolderPlaceholder": "Tên thư mục mới...",
       "operation": "Hoạt động",
-      "operationCopy": "Sao chép",
       "operationCopyDesc": "Tạo bản sao của (các) trường hợp đã chọn trong dự án đích. Bản gốc vẫn không thay đổi.",
       "operationMove": "Di chuyển",
       "operationMoveDesc": "Di chuyển (các) trường hợp đã chọn đến dự án đích. Các trường hợp gốc sẽ bị xóa khỏi nguồn.",
@@ -7094,7 +6921,6 @@
     "useIntegration": "Sử dụng {provider}",
     "useIntegrationDescription": "Tạo sự cố trên hệ thống bên ngoài",
     "externalProject": "Dự án bên ngoài",
-    "selectProject": "Chọn dự án",
     "issueType": "Loại sự cố",
     "selectIssueType": "Chọn loại sự cố",
     "noIssueTypes": "Không có loại sự cố nào.",
@@ -7122,9 +6948,7 @@
     "searchForIssue": "Tìm kiếm vấn đề cần liên kết",
     "searchUsers": "Tìm kiếm người dùng",
     "noTeamsAvailable": "Hiện không có đội nào.",
-    "filterAll": "Tất cả",
     "fanOutPartialFailure": "Không thể truy cập {count, number} dự án. Hiển thị kết quả từ {successCount, number} dự án.",
-    "projectSelectorLabel": "Dự án",
     "searchFailedTitle": "Tìm kiếm thất bại",
     "useAsRequirement": "Sử dụng làm yêu cầu",
     "useAsRequirementSuccess": "Hiện đã được sử dụng làm yêu cầu. Tìm thấy trên trang Yêu cầu của dự án.",
@@ -7147,7 +6971,6 @@
       "addRoot": "Thêm yêu cầu",
       "addChild": "Thêm yêu cầu con",
       "rename": "Đổi tên",
-      "delete": "Xóa",
       "expandAll": "Mở rộng tất cả",
       "collapseAll": "Thu gọn tất cả",
       "dropToRootHint": "Thả vào đây để di chuyển lên cấp cao nhất",
@@ -7157,8 +6980,6 @@
       "dragDisabled": "Yêu cầu này hiện không thể di chuyển được."
     },
     "list": {
-      "columnName": "Tên",
-      "columnStatus": "Trạng thái",
       "columnSource": "Nguồn",
       "expandRow": "Mở rộng {name}",
       "collapseRow": "Thu gọn {name}",
@@ -7171,7 +6992,6 @@
       "nextRequirement": "Yêu cầu tiếp theo",
       "breadcrumbLabel": "Cấu trúc phân cấp yêu cầu",
       "notFound": "Không tìm thấy yêu cầu nào",
-      "documentation": "Tài liệu",
       "documentationEmpty": "Không có tài liệu nào được cung cấp",
       "documentationPlaceholder": "Nhập tài liệu yêu cầu...",
       "lockedHint": "Trường này được quản lý bởi trình theo dõi đã kết nối và không thể chỉnh sửa tại đây.",
@@ -7179,13 +6999,11 @@
       "saveFailed": "Không thể lưu yêu cầu."
     },
     "provenance": {
-      "nativeLabel": "Thủ công",
       "syncedLabel": "Đã đồng bộ",
       "detachedLabel": "Đã tách rời",
       "nativeTooltip": "Được tạo trực tiếp trong TestPlanIt.",
       "syncedTooltip": "Được đồng bộ từ trình theo dõi đã kết nối. Các trường bị khóa không thể chỉnh sửa tại đây.",
       "detachedTooltip": "Đã tách khỏi trình theo dõi đã kết nối. Giờ đây có thể chỉnh sửa hoàn toàn, giống như một yêu cầu được tạo thủ công.",
-      "openInTracker": "Mở trong {provider}",
       "detach": "Tách rời",
       "detachDialogTitle": "Tách rời yêu cầu này?",
       "detachDialogDescription": "Tách rời sẽ khiến yêu cầu này có thể chỉnh sửa hoàn toàn trong TestPlanIt và phá vỡ liên kết với trình theo dõi đã kết nối. Thao tác này không thể hoàn tác — việc đính kèm lại với trình theo dõi hiện chưa được hỗ trợ.",
@@ -7210,9 +7028,7 @@
     "create": {
       "dialogTitle": "Tạo yêu cầu",
       "dialogDescription": "Thêm một yêu cầu mới vào cây yêu cầu của dự án này.",
-      "nameLabel": "Tên",
       "namePlaceholder": "Nhập tên yêu cầu...",
-      "parentLabel": "Mục cha",
       "parentNone": "Không có mục cha (cấp cao nhất)",
       "submit": "Tạo yêu cầu",
       "submitHint": "Nhấn Enter để tạo",
@@ -7224,7 +7040,6 @@
       "promoteParentNote": "Tuân theo cấu trúc phân cấp của trình theo dõi",
       "promoteIssueLabel": "Vấn đề",
       "promoteChooseIssue": "Chọn vấn đề",
-      "promoteChangeIssue": "Thay đổi",
       "promoteNoneSelected": "Chưa chọn vấn đề nào",
       "promoteSubmit": "Sử dụng làm yêu cầu",
       "promoteSuccess": "Vấn đề hiện đã là yêu cầu.",
@@ -7241,7 +7056,6 @@
       "dialogTitle": "Xóa yêu cầu",
       "confirmNoChildren": "Bạn có chắc chắn muốn xóa yêu cầu này không? Thao tác này có thể hoàn tác.",
       "confirmWithChildren": "Yêu cầu này có {count, plural, other {{count} mục con}} cũng sẽ bị xóa. Hành động này có thể được hoàn tác.",
-      "submit": "Xóa",
       "success": "Đã xóa yêu cầu.",
       "failed": "Không thể xóa yêu cầu.",
       "undo": "Hoàn tác",
@@ -7249,7 +7063,6 @@
       "undoFailed": "Không thể khôi phục yêu cầu."
     },
     "attachments": {
-      "title": "Tệp đính kèm",
       "empty": "Không có tệp đính kèm",
       "uploadSuccess": "Đã tải lên tệp đính kèm.",
       "uploadFailed": "Không thể tải lên tệp đính kèm.",
@@ -7260,7 +7073,6 @@
       "title": "Các trường hợp kiểm thử được liên kết",
       "titleWithCount": "{count, plural, =0 {Trường hợp kiểm thử được liên kết} =1 {# Trường hợp kiểm thử được liên kết} other {# Trường hợp kiểm thử được liên kết}}",
       "empty": "Không có trường hợp kiểm thử nào được liên kết.",
-      "addLink": "Thêm liên kết",
       "addLinkDialogTitle": "Liên kết trường hợp kiểm thử",
       "searchPlaceholder": "Tìm kiếm trường hợp kiểm thử...",
       "linkSuccess": "Đã liên kết trường hợp kiểm thử.",
@@ -7268,13 +7080,11 @@
       "unlinkConfirm": "Bạn có chắc chắn muốn hủy liên kết trường hợp kiểm thử này không?",
       "unlinkSuccess": "Đã hủy liên kết trường hợp kiểm thử.",
       "unlinkFailed": "Không thể hủy liên kết trường hợp kiểm thử.",
-      "columnCase": "Trường hợp kiểm thử",
-      "columnProject": "Dự án"
+      "columnCase": "Trường hợp kiểm thử"
     },
     "linkedRequirements": {
       "title": "Các yêu cầu được liên kết",
       "empty": "Không có yêu cầu nào được liên kết.",
-      "addLink": "Thêm liên kết",
       "addLinkDialogTitle": "Liên kết yêu cầu",
       "searchPlaceholder": "Tìm kiếm yêu cầu...",
       "linkSuccess": "Đã liên kết yêu cầu.",
@@ -7303,8 +7113,7 @@
       "removeConfirm": "Bạn có chắc chắn muốn xóa tham chiếu này không?",
       "removeSuccess": "Đã xóa tham chiếu.",
       "removeFailed": "Không thể xóa tham chiếu.",
-      "columnReference": "Tham chiếu",
-      "columnStatus": "Trạng thái"
+      "columnReference": "Tham chiếu"
     },
     "coverage": {
       "title": "Độ phủ",
@@ -7327,8 +7136,6 @@
       "columnResult": "Kết quả gần nhất",
       "columnResultTooltip": "Lần thực thi gần nhất của trường hợp kiểm thử này, kể cả khi trạng thái không phải là đạt hay không đạt. Các màn hình khác, như Kết quả mới nhất trong bộ lưu trữ, hiển thị kết quả mới nhất là đạt hoặc không đạt, vì vậy cùng một trường hợp kiểm thử có thể hiển thị khác nhau ở đó.",
       "resultRunLink": "Xem lượt chạy thử nghiệm mà kết quả này bắt nguồn",
-      "columnExecutedAt": "Thời gian thi hành",
-      "columnProject": "Dự án",
       "inherited": "Được kế thừa",
       "inheritedTooltip": "Được liên kết với một mục con của yêu cầu này, không phải trực tiếp với nó.",
       "notRunCell": "Chưa chạy"
@@ -7366,9 +7173,7 @@
       "createButton": "Thêm đích",
       "createTitle": "Đích thực thi mới",
       "editTitle": "Chỉnh sửa đích thực thi",
-      "name": "Tên",
       "namePlaceholder": "ví dụ: Nightly E2E",
-      "provider": "Nhà cung cấp",
       "repository": "Kho mã nguồn",
       "repositoryPlaceholder": "Chọn một kho lưu trữ",
       "noRepositories": "Không có kho lưu trữ {provider} nào được đăng ký. Hãy nhờ quản trị viên thêm một kho trong Quản trị → Kho mã nguồn.",
@@ -7385,8 +7190,6 @@
       "variables": "Biến pipeline",
       "webhookVariables": "Biến số",
       "staticInputsHelp": "Được gửi kèm mỗi lần điều phối, ngoài các giá trị TESTPLANIT_*. Không bí mật: bất kỳ ai có thể đọc kho lưu trữ đều có thể thấy chúng.",
-      "inputKey": "Tên",
-      "inputValue": "Giá trị",
       "addInput": "Thêm đầu vào",
       "removeInput": "Xóa đầu vào",
       "credentials": "Thông tin xác thực",
@@ -7407,10 +7210,8 @@
       "payloadPreview": "Tải trọng",
       "timeout": "Thời gian chờ (phút)",
       "timeoutHelp": "Một lần thực thi chưa hoàn thành trước thời điểm này sẽ được đánh dấu là hết thời gian chờ.",
-      "enabled": "Đã bật",
       "hasOwnCredentials": "Thông tin xác thực riêng",
       "usesRepositoryCredentials": "Thông tin xác thực kho lưu trữ",
-      "verify": "Xác minh",
       "verifying": "Đang xác minh…",
       "verifyOk": "Đích đã được xác minh",
       "verifyOkWithWarnings": "Đích đã được xác minh với cảnh báo",
@@ -7426,9 +7227,7 @@
       "disabledToast": "Đã tắt đích",
       "revealedSecretTitle": "Sao chép secret ký ngay bây giờ",
       "revealedSecretWarning": "Secret này chỉ được hiển thị một lần. Bên nhận của bạn sử dụng nó để xác minh tiêu đề X-TestPlanIt-Signature trên mỗi lần điều phối; các hệ thống xác thực theo cách khác (ví dụ: mã kích hoạt Jenkins) có thể bỏ qua nó. Hãy lưu trữ nó trong kho lưu trữ bí mật của hệ thống CI của bạn; TestPlanIt không thể hiển thị lại nó.",
-      "copySecret": "Sao chép",
       "secretCopied": "Đã sao chép secret",
-      "done": "Xong",
       "errors": {
         "invalid": "Không thể lưu đích. Hãy kiểm tra biểu mẫu và thử lại.",
         "invalidInputs": "Một trong các đầu vào không hợp lệ.",
@@ -7461,7 +7260,6 @@
       "status": "Thực thi",
       "requestedBy": "Được yêu cầu bởi {name}",
       "timesOutAt": "Từ bỏ lúc",
-      "openInProvider": "Mở trong {provider}",
       "cancel": "Hủy thực thi",
       "cancelConfirmTitle": "Hủy lần thực thi này?",
       "cancelConfirm": "TestPlanIt đánh dấu là đã hủy và yêu cầu nhà cung cấp dừng công việc khi có thể. Các kết quả vẫn đến sẽ được giữ lại.",
@@ -7471,14 +7269,11 @@
       "historyTitle": "Lịch sử thực thi",
       "historyDescription": "Mọi lần điều phối các trường hợp tự động của lượt chạy này, mới nhất trước.",
       "historyEmpty": "Chưa có lần thực thi nào.",
-      "columnStatus": "Trạng thái",
       "columnTarget": "Đích",
       "columnRef": "Ref",
       "columnRequested": "Đã yêu cầu",
-      "columnCompleted": "Đã hoàn thành",
       "columnCases": "Trường hợp",
       "columnLink": "Công việc",
-      "error": "Lỗi",
       "externalStatus": "Trạng thái nhà cung cấp: {status}",
       "awaitingResults": "Đang chờ kết quả",
       "resultsReceived": "Đã nhận kết quả"
@@ -7552,7 +7347,6 @@
   },
   "linkedCases": {
     "title": "Các trường hợp kiểm thử được liên kết",
-    "addLink": "Thêm liên kết",
     "addLinkedTestCase": "Thêm trường hợp kiểm thử được liên kết",
     "testCase": "Trường hợp thử nghiệm",
     "linkType": "Loại liên kết",
@@ -8349,7 +8143,6 @@
       "metricOrder": "Thứ tự theo hệ mét",
       "filtersDescription": "Lọc dữ liệu báo cáo theo các tiêu chí cụ thể.",
       "activeFilters": "Bộ lọc đang hoạt động:",
-      "priorityFilterPlaceholder": "Chọn các giá trị ưu tiên (hoặc để trống nếu muốn chọn tất cả)",
       "dateRange": {
         "selectDateRange": "Chọn phạm vi ngày",
         "chooseStartDate": "Chọn ngày bắt đầu",
@@ -8363,8 +8156,6 @@
         },
         "today": "Hôm nay",
         "yesterday": "Hôm qua",
-        "last7Days": "7 ngày qua",
-        "last30Days": "30 ngày qua",
         "thisWeek": "Tuần này",
         "lastWeek": "Tuần trước",
         "last2Weeks": "Hai tuần qua",
@@ -8373,7 +8164,6 @@
         "last3Months": "3 tháng qua",
         "thisQuarter": "Quý này",
         "lastQuarter": "Quý cuối cùng",
-        "thisYear": "Năm nay",
         "lastYear": "Năm ngoái",
         "last12Months": "12 tháng qua",
         "allTime": "Mọi thời đại",
@@ -8517,10 +8307,8 @@
         "healthScore": "Điểm",
         "lastExecuted": "Lần thực thi cuối cùng",
         "executions": "Thực thi",
-        "passRate": "Tỷ lệ đậu",
         "passCount": "Vượt qua",
         "failCount": "Thất bại",
-        "never": "Không bao giờ",
         "daysSince": "Số ngày kể từ khi hành quyết",
         "count": "Đếm",
         "totalTests": "các trường hợp thử nghiệm",
@@ -8584,8 +8372,7 @@
           "forecast": "{value} dự báo",
           "forecastUnset": "Không có dự báo",
           "flakiness": "Lật {value}%",
-          "flakinessUnset": "Không có dữ liệu lật",
-          "createdLabel": "Tạo"
+          "flakinessUnset": "Không có dữ liệu lật"
         },
         "heuristic": {
           "intro": "Dự án này chưa cấu hình tích hợp LLM, do đó thứ hạng được xây dựng trực tiếp từ chỉ số chiến lược lựa chọn. Hãy cấu hình tích hợp LLM (Quản trị → Mô hình AI) để cho phép suy luận chi tiết hơn, cân nhắc các trường tùy chỉnh, ngữ cảnh vấn đề liên kết và nội dung trường hợp cùng với chỉ số.",
@@ -8633,8 +8420,6 @@
         "invalidProject": "Dự án không hợp lệ.",
         "historyPlaceholder": "Chọn một ảnh chụp nhanh",
         "generatedAt": "Được tạo ra",
-        "by": "qua",
-        "summaryHeading": "Bản tóm tắt",
         "actions": {
           "generate": "Tạo báo cáo",
           "regenerate": "Tái tạo"
@@ -8664,11 +8449,8 @@
           "score": "Điểm {score}"
         },
         "delete": {
-          "button": "Xóa bỏ",
           "title": "Xóa ảnh chụp màn hình này?",
-          "description": "Ảnh chụp màn hình sẽ bị xóa khỏi lịch sử. Thao tác này không thể hoàn tác.",
-          "cancel": "Hủy bỏ",
-          "confirm": "Xóa bỏ"
+          "description": "Ảnh chụp màn hình sẽ bị xóa khỏi lịch sử. Thao tác này không thể hoàn tác."
         }
       },
       "issueTestCoverage": {
@@ -8678,11 +8460,8 @@
         "issue": "Vấn đề",
         "testCase": "Trường hợp thử nghiệm",
         "testCases": "{count, plural, =1 {Trường hợp thử nghiệm} other {Các trường hợp thử nghiệm}}",
-        "issueStatus": "Trạng thái",
-        "priority": "Sự ưu tiên",
         "linkedTests": "Các bài kiểm tra liên kết",
         "testResults": "Kết quả (Đạt/Theo dõi/Không xác định)",
-        "passRate": "Tỷ lệ đậu",
         "passed": "Đi qua",
         "failed": "Thất bại",
         "lastStatus": "Trạng thái cuối cùng",
@@ -8697,7 +8476,6 @@
           "issuesWithUntested": "Chưa được kiểm thử",
           "issuesWithUntestedTooltip": "Có vấn đề với ít nhất một trường hợp kiểm thử chưa được thực thi.",
           "issuesAllPassing": "Tất cả đều trôi qua",
-          "overallPassRate": "Tỷ lệ đậu",
           "numberOfIssues": "Số lượng vấn đề"
         },
         "charts": {
@@ -8711,9 +8489,6 @@
         "requirement": "Yêu cầu",
         "path": "Đường dẫn cha",
         "testCase": "Trường hợp kiểm thử",
-        "result": "Kết quả",
-        "executedAt": "Thời gian thi hành",
-        "project": "Dự án",
         "linkedCases": "Trường hợp liên kết",
         "uncovered": "Chưa được phủ",
         "notRun": "Chưa chạy",
@@ -8748,9 +8523,7 @@
         "saveSnapshotTitle": "Lưu ảnh chụp nhanh khả năng truy xuất",
         "saveSnapshotDescription": "Ghi lại ma trận khả năng truy xuất hiện tại — mọi yêu cầu, các trường hợp kiểm thử liên quan và kết quả gần nhất của chúng — dưới dạng một ảnh chụp nhanh tại một thời điểm, bất biến và có tên, mà bạn có thể xem, xuất, chia sẻ và so sánh sau này.",
         "saveSnapshotScoped": "Chỉ những yêu cầu hiện đang trong phạm vi mới được ghi lại.",
-        "snapshotName": "Tên",
         "snapshotNamePlaceholder": "Ký duyệt phiên bản 2.4",
-        "snapshotNote": "Ghi chú",
         "snapshotNotePlaceholder": "Không bắt buộc — ảnh chụp nhanh này là bằng chứng cho điều gì",
         "snapshotSaved": "Đã lưu ảnh chụp nhanh \"{name}\".",
         "snapshotSaveFailed": "Không thể lưu ảnh chụp nhanh.",
@@ -8764,7 +8537,6 @@
         "compareLabel": "So sánh với",
         "baselineRequired": "Chọn một ảnh chụp nhanh cơ sở để chạy báo cáo này.",
         "includeUnchanged": "Bao gồm các yêu cầu không thay đổi",
-        "change": "Thay đổi",
         "coverageBefore": "Phạm vi kiểm thử trước",
         "coverageAfter": "Phạm vi kiểm thử sau",
         "linkedCasesBefore": "Liên kết trước",
@@ -8860,30 +8632,16 @@
       "unexpectedError": "Đã xảy ra lỗi không mong muốn."
     },
     "dimensions": {
-      "project": "Dự án",
-      "status": "Trạng thái",
-      "user": "Người dùng",
       "executor": "Người thi hành án",
       "assignedTo": "Được giao cho",
-      "configuration": "Cấu hình",
-      "date": "Ngày",
       "executionDate": "Ngày thực hiện",
       "creationDate": "Ngày tạo",
       "activityDate": "Ngày hoạt động",
-      "testRun": "Chạy thử nghiệm",
       "testCase": "Trường hợp thử nghiệm",
-      "milestone": "Cột mốc",
-      "template": "Bản mẫu",
       "creator": "Người sáng tạo",
-      "state": "Tình trạng",
       "source": "Nguồn",
-      "folder": "Thư mục",
-      "group": "Nhóm",
-      "role": "Vai trò",
-      "session": "Phiên họp",
       "weekEnding": "Tuần kết thúc",
       "period": "Giai đoạn",
-      "priority": "Sự ưu tiên",
       "automationStatus": "Trạng thái tự động hóa",
       "issueType": "Loại sự cố",
       "issueTracker": "Trình theo dõi sự cố",
@@ -8891,7 +8649,6 @@
       "tag": "Nhãn",
       "feature": "Tính năng",
       "model": "Mô hình",
-      "integration": "Tích hợp",
       "outcome": "Kết quả"
     },
     "metrics": {
@@ -8907,7 +8664,6 @@
       "passRate": "Tỷ lệ đậu (%)",
       "avgElapsed": "Thời gian trung bình đã trôi qua",
       "avgElapsedTime": "Thời gian trung bình đã trôi qua",
-      "totalElapsedTime": "Tổng thời gian đã trôi qua",
       "testRunCount": "Số lần chạy thử nghiệm",
       "testCaseCount": "Số lượng trường hợp kiểm thử",
       "automationRate": "Tỷ lệ tự động hóa (%)",
@@ -9039,7 +8795,6 @@
           "expired": "Hết hạn"
         },
         "notifications": {
-          "enabled": "TRÊN",
           "disabled": "Tắt"
         },
         "empty": {
@@ -9088,7 +8843,6 @@
         "title": "Đã tạo liên kết chia sẻ!",
         "description": "Liên kết chia sẻ của bạn đã sẵn sàng. Sao chép và chia sẻ với người khác.",
         "shareLink": "Chia sẻ liên kết",
-        "copy": "Sao chép",
         "openInNewTab": "Mở trong tab mới",
         "metadata": {
           "mode": "Cách thức",
@@ -9268,25 +9022,20 @@
         "viewSharedStep": "Xem Nhóm Bước Chung",
         "skippedWarning": "{count, plural, one {# trường hợp đã bị bỏ qua} other {# trường hợp đã bị bỏ qua}} (cũ hoặc đã được chuyển đổi).",
         "noCasesSelected": "Chọn ít nhất một trường hợp để chuyển đổi.",
-        "stepsUnavailable": "Các bước trùng khớp không còn tồn tại trong test case này. Hãy bỏ qua kết quả trùng khớp này và chạy quét lại.",
-        "selectAll": "Chọn tất cả"
+        "stepsUnavailable": "Các bước trùng khớp không còn tồn tại trong test case này. Hãy bỏ qua kết quả trùng khớp này và chạy quét lại."
       }
     },
     "findStepDuplicates": "Tìm các mục trùng lặp"
   },
   "search": {
-    "title": "Tìm kiếm",
     "savedSearches": {
       "title": "Tìm kiếm đã lưu",
       "save": "Lưu tìm kiếm",
       "saveTitle": "Lưu tìm kiếm",
       "saveDescription": "Đặt tên cho tìm kiếm này để bạn có thể xem lại sau.",
-      "saveAction": "Lưu",
-      "nameLabel": "Tên",
       "namePlaceholder": "ví dụ: Các lần chạy thất bại trong sprint này",
       "nameRequired": "Nhập tên cho tìm kiếm này.",
       "loginRequired": "Bạn phải đăng nhập để lưu tìm kiếm.",
-      "descriptionLabel": "Mô tả (tùy chọn)",
       "descriptionPlaceholder": "Mục đích của tìm kiếm này",
       "saved": "Đã lưu tìm kiếm",
       "savedDescription": "“{name}” hiện đã có trong các tìm kiếm đã lưu của bạn.",
@@ -9295,11 +9044,9 @@
       "emptyHint": "Lưu một tìm kiếm để xem lại sau.",
       "loaded": "Đã tải “{name}”",
       "loadFailed": "Tìm kiếm đã lưu này không còn hợp lệ.",
-      "edit": "Chỉnh sửa",
       "editTitle": "Chỉnh sửa tìm kiếm đã lưu",
       "edited": "Đã cập nhật tìm kiếm đã lưu",
       "editFailed": "Không thể cập nhật tìm kiếm. Vui lòng thử lại.",
-      "delete": "Xóa",
       "deleteTitle": "Xóa tìm kiếm đã lưu?",
       "deleteConfirm": "“{name}” sẽ bị xóa khỏi các tìm kiếm đã lưu của bạn. Hành động này không thể hoàn tác.",
       "deleted": "Đã xóa tìm kiếm đã lưu",
@@ -9603,11 +9350,7 @@
     "tabDataset": "Tập dữ liệu",
     "tabDatasetDisabledTooltip": "Thêm ít nhất một tham số trước khi chỉnh sửa các hàng trong tập dữ liệu.",
     "sheetAutoSaveHint": "Các thay đổi sẽ được lưu tự động.",
-    "formName": "Tên",
-    "formType": "Kiểu",
-    "formDefault": "Mặc định",
     "formOrder": "Đặt hàng",
-    "formRequired": "Yêu cầu",
     "formRequiredHelp": "Các lần lặp thiếu giá trị này sẽ không vượt qua được quá trình xác thực.",
     "formSensitive": "Nhạy cảm",
     "formSensitiveHelp": "Ẩn giá trị trong nhật ký kiểm toán và khỏi những người dùng không có quyền đọc.",
@@ -9625,7 +9368,6 @@
     "editDialogTitle": "Chỉnh sửa tham số \"{name}\"",
     "editDialogDescription": "Cập nhật kiểu dữ liệu, giá trị mặc định, cờ hoặc các giá trị cho phép. Để đổi tên, hãy nhấp vào tên tham số trong danh sách.",
     "editDialogRenameHint": "Để đổi tên, hãy đóng hộp thoại này và nhấp vào tên tham số.",
-    "editDialogCancel": "Hủy bỏ",
     "editDialogSave": "Lưu thay đổi",
     "editError": "Không thể cập nhật tham số",
     "editSuccess": "Tham số đã được cập nhật \"{name}\"",
@@ -9643,11 +9385,9 @@
     "selectSourceWarningTitle": "Thay đổi nguồn SELECT cho \"@{name}\"?",
     "selectSourceWarningDescription": "Các giá trị trong tập dữ liệu hiện có cho tham số này có thể không tồn tại trong danh sách mới. {invalidCount, plural, =1 {# hàng sẽ} other {# hàng sẽ}} cần được chú ý sau thay đổi này. Tiếp tục?",
     "selectSourceConfirm": "Thay đổi nguồn",
-    "datasetRowSelectAria": "Chọn hàng",
     "datasetSelectAllPageTooltip": "Nhấp chuột để chọn tất cả các hàng trên trang này. Giữ phím Shift và nhấp chuột để chọn tất cả các hàng trên tất cả các trang.",
     "datasetSelectAllAcrossPagesTooltip": "Chọn {count, plural, =1 {# hàng} =2 {cả hai hàng} other {tất cả # hàng}} trên tất cả các trang",
     "datasetDeselectAllAcrossPagesTooltip": "Bỏ chọn tất cả các hàng trên tất cả các trang.",
-    "datasetLabelColumn": "Nhãn",
     "datasetAddRow": "Thêm hàng",
     "datasetAddColumn": "Thêm cột",
     "datasetAddColumnTitle": "Thêm cột",
@@ -9656,14 +9396,12 @@
     "datasetAddColumnSubmit": "Thêm cột",
     "datasetAddColumnDuplicate": "Cột có tên đó đã tồn tại.",
     "datasetColumnMenuLabel": "Hành động cột {name}",
-    "datasetColumnDelete": "Xóa cột",
     "datasetColumnDeleteTitle": "Xóa cột \"{name}\"?",
     "datasetColumnDeleteChecking": "Kiểm tra các trường hợp tham chiếu đến cột này…",
     "datasetColumnDeleteDescription": "Cột và các giá trị trong mỗi hàng sẽ bị xóa. Các lần chạy thử nghiệm hiện có đã chụp lại các giá trị này sẽ không bị ảnh hưởng.",
     "datasetColumnDeleteBlocked": "{count, plural, =1 {# trường hợp ánh xạ một tham số đến cột này} other {# trường hợp ánh xạ một tham số đến cột này}}. Trước tiên hãy cập nhật các ánh xạ đó, sau đó xóa cột.",
     "datasetColumnDeleteAndMore": "và {count, plural, =1 {# thêm trường hợp} other {# thêm trường hợp}}",
     "datasetColumnDeleteCheckError": "Không thể kiểm tra các trường hợp tham chiếu đến cột này. Vui lòng thử lại.",
-    "datasetColumnDeleteConfirm": "Xóa cột",
     "datasetRowDefaultLabel": "Hàng {number}",
     "datasetPasteCsv": "Dán CSV",
     "datasetImportCsv": "Nhập CSV",
@@ -9710,13 +9448,11 @@
     "importStep4Append": "Thêm vào các hàng hiện có",
     "importStep4AppendDescription": "Các hàng mới sẽ được thêm vào sau hàng #{existingCount}.",
     "importStep4ErrorBlock": "Khắc phục lỗi {errorCount} ở bước trước khi nhập.",
-    "importStep4Label": "Xác nhận",
     "confirmSummaryValid": "Các hàng hợp lệ: {count}",
     "confirmSummaryErrors": "Lỗi: {count}",
     "confirmSummaryMode": "Chế độ: {mode}",
     "cancelUploadTitle": "Hủy tải lên?",
     "cancelUploadDescription": "Dữ liệu CSV bạn đã tải lên sẽ bị mất.",
-    "importCommit": "Nhập khẩu",
     "importSuccess": "Đã nhập {count, plural, =1 {# hàng} other {# hàng}}",
     "addSuccess": "Tham số \"{name}\" đã được thêm",
     "addError": "Không thể thêm tham số",
@@ -9764,8 +9500,6 @@
     "hardRefuseColumnCase": "Trường hợp",
     "hardRefuseColumnRows": "Hàng dữ liệu",
     "hardRefuseColumnConfigs": "Cấu hình",
-    "hardRefuseColumnIterations": "Các lần lặp",
-    "hardRefuseTotalRow": "Tổng cộng",
     "hardRefuseSuggestionsHeading": "Các hành động được đề xuất",
     "hardRefuseSuggestion1": "Giảm số hàng trong tập dữ liệu dựa trên trường hợp đóng góp lớn nhất.",
     "hardRefuseSuggestion2": "Bỏ chọn một hoặc nhiều cấu hình.",
@@ -9780,15 +9514,11 @@
     "runProgressNavAway": "Cho tôi xem phần còn lại của cuộc chạy",
     "runGeneratingHeading": "Tạo các lần lặp…",
     "runGeneratingHelper": "Quá trình này có thể mất vài phút.",
-    "iterationsHeading": "Các lần lặp",
     "iterationsHeaderCount": "{complete}/{total}",
     "iterationsHeaderCountPending": "0/{total} (đang tạo)",
-    "iterationSidebarAria": "Các lần lặp",
     "iterationStatusLegendAria": "Chú thích trạng thái",
     "iterationActionSkipped": "Bỏ qua",
     "iterationBulkPickStatusPrompt": "Chọn trạng thái để áp dụng cho các lần lặp đã chọn.",
-    "iterationBulkStatusLabel": "Trạng thái",
-    "iterationBulkStatusPlaceholder": "Chọn trạng thái",
     "iterationBulkApplyStatus": "Đánh dấu với trạng thái…",
     "iterationSelectAria": "Chọn lần lặp {n}",
     "iterationRowMenuAria": "Hành động lặp lại {n}",
@@ -9797,13 +9527,11 @@
     "iterationReset": "Đặt lại kết quả lặp",
     "iterationSelectedCount": "{count} đã chọn",
     "iterationBulkSkip": "Đánh dấu {count, plural, =1 {# lần lặp} other {# lần lặp}} với trạng thái…",
-    "iterationBulkCancel": "Hủy bỏ",
     "iterationIssueTitleSnapshot": "Lần lặp {n} của vấn đề {total} : {caseName}",
     "iterationIssueTitleCiExtended": "Vấn đề lặp lại {n} (CI-mở rộng): {caseName}",
     "iterationIssueProseSnapshot": "Lần lặp {n} của {total} trên {label}.",
     "iterationIssueProseCiExtended": "Lặp lại {n} (CI-mở rộng) trên {label}.",
     "iterationIssueTableHeaderParameter": "Tham số",
-    "iterationIssueTableHeaderValue": "Giá trị",
     "iterationIssueDeepLinkLabel": "Xem quá trình lặp lại trong TestPlanIt",
     "iterationHeaderTitle": "Lần lặp {n} của {total}",
     "iterationPrevAria": "Phiên bản trước",
@@ -9885,7 +9613,6 @@
     "mappingHint": "Các cột được tự động khớp đã được thu gọn. Nhấp vào Thay đổi để sắp xếp lại.",
     "mappingShowAll": "Hiển thị tất cả các cột",
     "mappingNoColumns": "Phiên bản đã chọn không hiển thị bất kỳ cột nào.",
-    "mappingChange": "Thay đổi",
     "mappingSkipColumn": "Bỏ qua cột",
     "mappingRequiredAlert": "Các tham số bắt buộc không được ánh xạ: {names}.",
     "mappingRequiredUnmapped": "Tham số bắt buộc \"@{name}\" không có cột được ánh xạ."
