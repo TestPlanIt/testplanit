@@ -298,6 +298,7 @@ function MenuLink({
   menuButtonClass: string;
   t: ReturnType<typeof useTranslations>;
 }) {
+  const tGlobal = useTranslations();
   const IconComponent = option.icon;
   return (
     <Link
@@ -315,11 +316,39 @@ function MenuLink({
     >
       <IconComponent className="size-5 shrink-0" />
       <span className={`hidden md:inline ${isActive ? "font-bold" : ""}`}>
-        {t(option.translationKey as any)}
+        {SHARED_MENU_LABEL_KEYS[option.translationKey]
+          ? tGlobal(SHARED_MENU_LABEL_KEYS[option.translationKey] as any)
+          : t(option.translationKey as any)}
       </span>
     </Link>
   );
 }
+
+/**
+ * Menu labels that live on shared keys rather than under admin.menu. Every
+ * other item still resolves as admin.menu.<translationKey>.
+ */
+const SHARED_MENU_LABEL_KEYS: Record<string, string> = {
+  projects: "common.fields.projects",
+  templatesAndFields: "common.labels.templates",
+  workflows: "common.labels.workflows",
+  statuses: "common.labels.statuses",
+  milestoneTypes: "common.fields.milestoneTypes",
+  configurations: "common.fields.configurations",
+  users: "common.fields.users",
+  groups: "common.fields.groups",
+  roles: "common.labels.roles",
+  tags: "common.fields.tags",
+  issues: "common.fields.issues",
+  notifications: "common.fields.notificationMode",
+  webhooks: "common.pageTitles.webhooks",
+  llm: "common.pageTitles.aiModels",
+  quickScript: "common.pageTitles.quickscript",
+  advanced: "common.pageTitles.advanced",
+  reports: "common.pageTitles.reports",
+  impact: "common.pageTitles.impact",
+  automation: "common.pageTitles.automation",
+};
 
 export default function AdminMenu() {
   const router = useRouter();
