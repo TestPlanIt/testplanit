@@ -20,3 +20,12 @@ export function dimensionLabelKey(dimensionId: string): string {
 export function metricLabelKey(metricId: string): string {
   return METRIC_LABEL_KEYS[metricId] ?? `reports.metrics.${metricId}`;
 }
+
+/**
+ * Whether a translator knows `key`. Falls back to true for translators
+ * without `has` (test doubles), so the caller still asks for the key.
+ */
+export function hasMessage(t: unknown, key: string): boolean {
+  const has = (t as { has?: (k: string) => boolean }).has;
+  return typeof has === "function" ? has.call(t, key) : true;
+}

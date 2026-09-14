@@ -124,6 +124,11 @@ import {
 } from "~/utils/reportUtils";
 import {
   dimensionLabelKey,
+  hasMessage,
+  metricLabelKey,
+} from "~/lib/constants/reportLabelKeys";
+import {
+  dimensionLabelKey,
   metricLabelKey,
 } from "~/lib/constants/reportLabelKeys";
 import { sortPreBuiltReportRows } from "~/utils/preBuiltReportSort";
@@ -1681,7 +1686,7 @@ function ReportBuilderContent({
             value: d.id,
             // Labels live on shared keys (see DIMENSION_LABEL_KEYS); an id
             // with no message keeps the server's English label.
-            label: tGlobal.has(dimensionLabelKey(d.id))
+            label: hasMessage(tGlobal, dimensionLabelKey(d.id))
               ? tGlobal(dimensionLabelKey(d.id) as any)
               : d.label,
             apiLabel: d.label, // Keep English label for API data access
@@ -1690,7 +1695,7 @@ function ReportBuilderContent({
         const metOpts = data.metrics
           .map((m: any) => ({
             value: m.id,
-            label: tGlobal.has(metricLabelKey(m.id))
+            label: hasMessage(tGlobal, metricLabelKey(m.id))
               ? tGlobal(metricLabelKey(m.id) as any)
               : m.label,
             apiLabel: m.label, // Keep English label for API data access
