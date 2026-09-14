@@ -26,3 +26,13 @@ export interface TestResultExecution {
   isFailure: boolean;
   executedAt: string;
 }
+
+/**
+ * The part of an execution the Latest Results column actually renders.
+ *
+ * It does not care which table the row came from, so it must not demand
+ * `executionSource`: callers that assemble executions themselves (the flaky
+ * tests report builds its own rows) would otherwise have to invent a value for
+ * a field nothing reads.
+ */
+export type RenderableExecution = Omit<TestResultExecution, "executionSource">;
