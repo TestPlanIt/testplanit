@@ -113,6 +113,8 @@ export interface ExtendedCases extends RepositoryCases {
     color: Pick<Color, "value">;
   };
   attachments: Attachments[];
+  /** Filtered relation counts the list selects carry (live rows only). */
+  _count?: { comments?: number; codePins?: number };
   tags?: Tags[];
   // Explicit join-model relations (RepositoryCases.caseTags/caseIssues). The
   // repository case query selects these; consumers derive tags/issues via

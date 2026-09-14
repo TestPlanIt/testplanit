@@ -310,6 +310,63 @@ test.describe("Impact dialog", () => {
     });
   });
 
+  test("starts by choosing the repository when the project connects two", async ({
+    page,
+    api,
+  }) => {
+    const ts = uid();
+    const projectId = await api.createProject(`E2E Impact Two Repos ${ts}`);
+    await api.enableImpact(projectId);
+    const firstRepositoryId = await api.createCodeRepository(
+      `E2E Impact Repo A ${ts}`
+    );
+    const secondName = `E2E Impact Repo B ${ts}`;
+    const secondRepositoryId = await api.createCodeRepository(secondName);
+    await api.createImpactConfig(projectId, firstRepositoryId, {
+      branch: "main",
+    });
+    await api.createImpactConfig(projectId, secondRepositoryId, {
+      branch: "main",
+    });
+    await mockImpactApi(page, { configuredBranch: "main" });
+
+    const dialog = await openCaseSelectionStep(
+      page,
+      projectId,
+      `Two Repos Run ${ts}`
+    );
+    const impactButton = dialog.getByTestId("impact-button");
+    await expect(impactButton).toBeVisible({ timeout: 15000 });
+    await expect(impactButton).toBeEnabled();
+    await impactButton.dispatchEvent("click");
+    const impactDialog = page.getByTestId("impact-dialog");
+    await expect(impactDialog).toBeVisible({ timeout: 10000 });
+
+    await test.step("No branch or commits are offered until a repository is chosen", async () => {
+      await expect(impactDialog.getByTestId("impact-repository")).toBeVisible();
+      await expect(
+        impactDialog.getByTestId("impact-repository-hint")
+      ).toBeVisible();
+      await expect(impactDialog.getByTestId("impact-branch")).toHaveCount(0);
+      await expect(impactDialog.getByTestId("impact-compare")).toBeDisabled();
+    });
+
+    await test.step("Choosing a repository loads its branch into the commit picker", async () => {
+      await impactDialog.getByTestId("impact-repository").click();
+      await page.getByRole("option", { name: new RegExp(secondName) }).click();
+      await expect(impactDialog.getByTestId("impact-repository")).toContainText(
+        secondName
+      );
+      await expect(
+        impactDialog.getByTestId("impact-repository-hint")
+      ).toHaveCount(0);
+      await expect(impactDialog.getByTestId("impact-branch")).toContainText(
+        "main",
+        { timeout: 10000 }
+      );
+    });
+  });
+
   test("is hidden while Impact is off for the project", async ({
     page,
     api,

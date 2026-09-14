@@ -13,8 +13,8 @@ import {
 import { impactConfig } from "~/lib/services/impact/config";
 import { impactJobId } from "~/lib/services/impact/jobKeys";
 import {
-  findImpactConfigId,
   loadRepoConfigForUser,
+  resolveImpactConfigId,
 } from "~/lib/services/impact/repoAccess";
 import type { ImpactAnalysisJobData } from "~/lib/services/impact/types";
 import { isAccessPolicyError } from "~/lib/utils/errors";
@@ -23,6 +23,8 @@ import { authOptions } from "~/server/auth";
 const refSchema = z.string().trim().min(1).max(255).regex(/^\S+$/);
 
 const createSchema = z.object({
+  /** Which connected repository to compare in; optional when only one is. */
+  configId: z.number().int().positive().optional(),
   base: refSchema,
   head: refSchema,
   notes: z.string().max(2000).optional(),
@@ -62,8 +64,9 @@ function parseProjectId(raw: string): number | null {
  * Create an Impact analysis for base..head and enqueue the worker job.
  * Refs are resolved to full shas here so a completed analysis for the same
  * pair can be reused within `impactConfig.reuseHours` unless `force`.
- * Gate order: 401 -> 400 -> 404 (project/config) -> 409 (feature off) ->
- * 404 (ref) -> 400 (same commit) -> 403 (policy) -> 503 (queue) -> 202.
+ * Gate order: 401 -> 400 -> 404 (project) -> 409 (feature off) ->
+ * 400 (several repos, no configId) -> 404 (config) -> 404 (ref) ->
+ * 400 (same commit) -> 403 (policy) -> 503 (queue) -> 202.
  */
 export const POST = withAuditContext(
   async (
@@ -101,6 +104,7 @@ export const POST = withAuditContext(
       );
     }
     const { base, head, notes, excludeCaseIds, force } = parsed.data;
+    const requestedConfigId = parsed.data.configId ?? null;
 
     try {
       const db = await getEnhancedDb(session);
@@ -123,7 +127,22 @@ export const POST = withAuditContext(
           { status: 409 }
         );
       }
-      const configId = await findImpactConfigId(db, projectId);
+      const resolution = await resolveImpactConfigId(
+        db,
+        projectId,
+        requestedConfigId
+      );
+      if ("error" in resolution && resolution.error === "ambiguous") {
+        return NextResponse.json(
+          {
+            error:
+              "Several repositories are connected for Impact; pass configId",
+            code: "config_required",
+          },
+          { status: 400 }
+        );
+      }
+      const configId = "configId" in resolution ? resolution.configId : null;
       const loaded = configId
         ? await loadRepoConfigForUser(session, configId, { purpose: "IMPACT" })
         : null;
@@ -275,8 +294,9 @@ export const POST = withAuditContext(
 );
 
 /**
- * GET /api/projects/[projectId]/impact/analyses?take=&cursor=
- * Newest analyses first. Policy on the enhanced client scopes rows.
+ * GET /api/projects/[projectId]/impact/analyses?take=&cursor=&configId=
+ * Newest analyses first, optionally for one connected repository. Policy on
+ * the enhanced client scopes rows.
  */
 export async function GET(
   req: NextRequest,
@@ -296,11 +316,20 @@ export async function GET(
     : 20;
   const cursorRaw = req.nextUrl.searchParams.get("cursor");
   const cursor = cursorRaw ? Number(cursorRaw) : null;
+  const configIdRaw = req.nextUrl.searchParams.get("configId");
+  const configId = configIdRaw ? Number(configIdRaw) : null;
+  if (configIdRaw && (!Number.isInteger(configId) || configId! <= 0)) {
+    return NextResponse.json({ error: "Invalid config id" }, { status: 400 });
+  }
 
   try {
     const db = await getEnhancedDb(session);
     const rows = await db.impactAnalysis.findMany({
-      where: { projectId, isDeleted: false },
+      where: {
+        projectId,
+        isDeleted: false,
+        ...(configId ? { configId } : {}),
+      },
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       take: take + 1,
       ...(cursor && Number.isInteger(cursor)

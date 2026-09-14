@@ -23,6 +23,8 @@ import {
   LucideIcon,
   MessageSquareWarning,
   Paperclip,
+  Pin,
+  PinOff,
   Square,
   SquareStack,
   User,
@@ -117,6 +119,8 @@ interface ViewSelectorProps {
     attachments: Array<{ value: boolean; count: number }>;
     /** Only present while the project runs the review workflow. */
     inReview?: Array<{ value: boolean; count: number }>;
+    /** Only present while the project has Impact Analysis enabled. */
+    codePins?: Array<{ value: boolean; count: number }>;
     dynamicFields: Record<string, any>;
     tags?: Array<{
       id: number | string;
@@ -656,6 +660,39 @@ export function ViewSelector({
                     {item.value
                       ? tCommon("fields.hasAttachments")
                       : tCommon("fields.noAttachments")}
+                  </span>
+                </FilterRow>
+              )
+            )}
+          </>
+        )}
+
+        {selectedItem === "codePins" && (
+          <>
+            <FilterRow
+              selected={isValueSelected(null)}
+              onClick={() => handleFilterClick(null)}
+              count={renderCount(dimensionTotal("codePins", totalCount))}
+            >
+              <span className="truncate">{t("views.allCases")}</span>
+            </FilterRow>
+            {viewOptions?.codePins?.map(
+              (item: { value: boolean; count: number }) => (
+                <FilterRow
+                  key={item.value.toString()}
+                  selected={isValueSelected(item.value ? 1 : 0)}
+                  onClick={() => handleFilterClick(item.value ? 1 : 0)}
+                  count={renderCount(item.count)}
+                >
+                  {item.value ? (
+                    <Pin className="w-4 h-4 shrink-0 text-primary" />
+                  ) : (
+                    <PinOff className="w-4 h-4 shrink-0 opacity-60" />
+                  )}
+                  <span className="truncate">
+                    {item.value
+                      ? tCommon("fields.hasCodePins")
+                      : tCommon("fields.noCodePins")}
                   </span>
                 </FilterRow>
               )

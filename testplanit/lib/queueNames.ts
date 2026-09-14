@@ -14,6 +14,8 @@ export const REPO_CACHE_QUEUE_NAME = "repo-cache";
 // button). Runs the full list+content fetch off-request in the worker so a
 // rate-limited provider can't time out the HTTP request.
 export const JOB_REFRESH_SINGLE_REPO_CACHE = "refresh-single-repo-cache";
+/** Ticket scan for one Impact config; `full: true` walks the whole branch. */
+export const JOB_SCAN_REPO_ISSUES = "scan-repo-issues";
 export const COPY_MOVE_QUEUE_NAME = "copy-move";
 export const DUPLICATE_SCAN_QUEUE_NAME = "duplicate-scan";
 export const STEP_SCAN_QUEUE_NAME = "step-scan";

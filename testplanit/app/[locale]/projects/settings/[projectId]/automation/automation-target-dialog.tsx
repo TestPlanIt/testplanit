@@ -1,5 +1,6 @@
 "use client";
 
+import { CodeRepositoryName } from "@/components/CodeRepositoryName";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { Button } from "@/components/ui/button";
@@ -326,7 +327,7 @@ export function AutomationTargetDialog({
                     <SelectContent>
                       {(repositories ?? []).map((repo) => (
                         <SelectItem key={repo.id} value={String(repo.id)}>
-                          {repo.name}
+                          <CodeRepositoryName name={repo.name} />
                         </SelectItem>
                       ))}
                     </SelectContent>

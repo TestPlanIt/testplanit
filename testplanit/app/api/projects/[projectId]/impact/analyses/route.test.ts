@@ -30,7 +30,7 @@ vi.mock("@/lib/multiTenantDb", () => ({
 }));
 
 vi.mock("~/lib/services/impact/repoAccess", () => ({
-  findImpactConfigId: vi.fn(),
+  resolveImpactConfigId: vi.fn(),
   loadRepoConfigForUser: vi.fn(),
 }));
 
@@ -61,7 +61,7 @@ import {
 } from "~/lib/services/impact/compareService";
 import { impactConfig } from "~/lib/services/impact/config";
 import {
-  findImpactConfigId,
+  resolveImpactConfigId,
   loadRepoConfigForUser,
 } from "~/lib/services/impact/repoAccess";
 import { isAccessPolicyError } from "~/lib/utils/errors";
@@ -135,7 +135,7 @@ describe("POST /api/projects/[projectId]/impact/analyses", () => {
     queue = makeQueue();
     (getServerSession as any).mockResolvedValue(session);
     (getEnhancedDb as any).mockResolvedValue(db);
-    (findImpactConfigId as any).mockResolvedValue(5);
+    (resolveImpactConfigId as any).mockResolvedValue({ configId: 5 });
     (loadRepoConfigForUser as any).mockResolvedValue(loaded);
     (resolveRefToSha as any).mockImplementation(
       async (_a: unknown, ref: string) =>
@@ -208,7 +208,7 @@ describe("POST /api/projects/[projectId]/impact/analyses", () => {
       where: { id: 3, isDeleted: false },
       select: { impactEnabled: true },
     });
-    expect(findImpactConfigId).not.toHaveBeenCalled();
+    expect(resolveImpactConfigId).not.toHaveBeenCalled();
   });
 
   it("returns 409 impact_disabled when the feature is off for the project", async () => {
@@ -218,18 +218,65 @@ describe("POST /api/projects/[projectId]/impact/analyses", () => {
 
     expect(res.status).toBe(409);
     expect(await res.json()).toMatchObject({ code: "impact_disabled" });
-    expect(findImpactConfigId).not.toHaveBeenCalled();
+    expect(resolveImpactConfigId).not.toHaveBeenCalled();
   });
 
   it("returns 404 no_impact_config when the project has no Impact config", async () => {
-    (findImpactConfigId as any).mockResolvedValue(null);
+    (resolveImpactConfigId as any).mockResolvedValue({ error: "none" });
 
     const res = await POST(postRequest(validBody), makeParams());
 
     expect(res.status).toBe(404);
     expect(await res.json()).toMatchObject({ code: "no_impact_config" });
-    expect(findImpactConfigId).toHaveBeenCalledWith(db, 3);
+    expect(resolveImpactConfigId).toHaveBeenCalledWith(db, 3, null);
     expect(loadRepoConfigForUser).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 config_required when several repositories are connected and none is named", async () => {
+    (resolveImpactConfigId as any).mockResolvedValue({ error: "ambiguous" });
+
+    const res = await POST(postRequest(validBody), makeParams());
+
+    expect(res.status).toBe(400);
+    expect(await res.json()).toMatchObject({ code: "config_required" });
+    expect(loadRepoConfigForUser).not.toHaveBeenCalled();
+  });
+
+  it("returns 404 no_impact_config when the named config is not one of the project's", async () => {
+    (resolveImpactConfigId as any).mockResolvedValue({ error: "unknown" });
+
+    const res = await POST(
+      postRequest({ ...validBody, configId: 77 }),
+      makeParams()
+    );
+
+    expect(res.status).toBe(404);
+    expect(await res.json()).toMatchObject({ code: "no_impact_config" });
+    expect(resolveImpactConfigId).toHaveBeenCalledWith(db, 3, 77);
+  });
+
+  it("runs against the named config when several are connected", async () => {
+    (resolveImpactConfigId as any).mockResolvedValue({ configId: 8 });
+    (loadRepoConfigForUser as any).mockResolvedValue({
+      ...loaded,
+      config: { ...loaded.config, id: 8 },
+    });
+
+    const res = await POST(
+      postRequest({ ...validBody, configId: 8 }),
+      makeParams()
+    );
+
+    expect(res.status).toBe(202);
+    expect(resolveImpactConfigId).toHaveBeenCalledWith(db, 3, 8);
+    expect(loadRepoConfigForUser).toHaveBeenCalledWith(session, 8, {
+      purpose: "IMPACT",
+    });
+    expect(db.impactAnalysis.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ configId: 8 }),
+      })
+    );
   });
 
   it("returns 404 no_impact_config when the config cannot be loaded for the caller", async () => {
@@ -486,6 +533,26 @@ describe("GET /api/projects/[projectId]/impact/analyses", () => {
     });
     expect(args).not.toHaveProperty("cursor");
     expect(args).not.toHaveProperty("skip");
+  });
+
+  it("narrows the list to one repository with ?configId=", async () => {
+    db.impactAnalysis.findMany.mockResolvedValue([]);
+
+    const res = await GET(getRequest({ configId: "8" }), makeParams());
+
+    expect(res.status).toBe(200);
+    expect(db.impactAnalysis.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { projectId: 3, isDeleted: false, configId: 8 },
+      })
+    );
+  });
+
+  it("rejects a malformed configId", async () => {
+    const res = await GET(getRequest({ configId: "abc" }), makeParams());
+
+    expect(res.status).toBe(400);
+    expect(db.impactAnalysis.findMany).not.toHaveBeenCalled();
   });
 
   it("returns nextCursor when more rows exist than the page size", async () => {

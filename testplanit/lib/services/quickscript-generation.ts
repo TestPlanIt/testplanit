@@ -309,8 +309,8 @@ async function prepareQuickScript(
   );
 
   // Assemble code context when the project has a connected repository.
-  const repoConfig = await baseDb.projectCodeRepositoryConfig.findUnique({
-    where: { projectId_purpose: { projectId, purpose: "QUICKSCRIPT" } },
+  const repoConfig = await baseDb.projectCodeRepositoryConfig.findFirst({
+    where: { projectId, purpose: "QUICKSCRIPT" },
     select: { id: true },
   });
 

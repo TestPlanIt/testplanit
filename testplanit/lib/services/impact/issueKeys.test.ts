@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   extractIssueTokens,
+  importableIssueKeys,
   MAX_TOKENS_PER_MESSAGE,
   resolveLinkedIssues,
   tokenMatchesKey,
@@ -151,5 +152,39 @@ describe("resolveLinkedIssues", () => {
     });
     expect(resolved.issues.size).toBe(0);
     expect(db.issue.findMany).not.toHaveBeenCalled();
+  });
+});
+
+describe("importableIssueKeys", () => {
+  const tokens = extractIssueTokens(
+    "PROJ-12 fixes #7 and acme/app#9, see AB#4"
+  );
+
+  it("asks Jira only for project-style keys", () => {
+    expect(importableIssueKeys("JIRA", tokens)).toEqual(["PROJ-12"]);
+  });
+
+  it("asks number-keyed trackers for #n and drops project keys", () => {
+    // Scoped tokens are extracted before bare ones.
+    expect(importableIssueKeys("GITHUB", tokens)).toEqual(["#9", "#7", "#4"]);
+    expect(importableIssueKeys("REDMINE", tokens)).toEqual(["#9", "#7", "#4"]);
+  });
+
+  it("asks GitLab and Gitea only for scoped keys", () => {
+    expect(importableIssueKeys("GITLAB", tokens)).toEqual(["acme/app#9"]);
+    expect(importableIssueKeys("GITEA", tokens)).toEqual(["acme/app#9"]);
+  });
+
+  it("asks Azure DevOps for bare numbers", () => {
+    expect(importableIssueKeys("AZURE_DEVOPS", tokens)).toEqual([
+      "9",
+      "7",
+      "4",
+    ]);
+  });
+
+  it("asks an unknown provider for nothing", () => {
+    expect(importableIssueKeys("YOUTRACK", tokens)).toEqual([]);
+    expect(importableIssueKeys(null, tokens)).toEqual([]);
   });
 });

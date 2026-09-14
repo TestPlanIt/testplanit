@@ -119,4 +119,74 @@ describe("getCommitFilePaths", () => {
     expect(cached?.paths).toEqual(["cached.ts"]);
     expect(adapter.compareCommits).toHaveBeenCalledTimes(1);
   });
+
+  it("reads patches and records the declarations each file touched when asked", async () => {
+    const adapter = {
+      compareCommits: vi.fn().mockResolvedValue({
+        baseSha: PARENT,
+        headSha: SHA,
+        files: [
+          {
+            path: "src/auth.ts",
+            status: "modified",
+            additions: 2,
+            deletions: 0,
+            isBinary: false,
+            patch:
+              "@@ -10,3 +10,4 @@ export function login(user) {\n" +
+              "   const a = 1;\n" +
+              "+  const b = 2;\n" +
+              "+export class LoginForm {}\n",
+          },
+          {
+            path: "src/plain.ts",
+            status: "modified",
+            additions: 1,
+            deletions: 0,
+            isBinary: false,
+            patch: "@@ -1,1 +1,2 @@\n+// a comment\n",
+          },
+          {
+            path: "img/logo.png",
+            status: "modified",
+            additions: 0,
+            deletions: 0,
+            isBinary: true,
+          },
+        ],
+        commits: [],
+        truncated: false,
+      }),
+    };
+
+    const result = await getCommitFilePaths({
+      configId: 7,
+      cacheEnabled: true,
+      adapter,
+      commit: { sha: SHA, parents: [PARENT] },
+      maxFiles: 500,
+      withSymbols: true,
+    });
+
+    expect(adapter.compareCommits).toHaveBeenCalledWith(PARENT, SHA, {
+      maxFilesWithPatch: 500,
+      maxCommits: 1,
+      maxFiles: 500,
+    });
+    expect(result?.symbolsByPath).toEqual({
+      "src/auth.ts": ["login", "LoginForm"],
+    });
+    expect(result?.paths).toEqual([
+      "src/auth.ts",
+      "src/plain.ts",
+      "img/logo.png",
+    ]);
+    expect(mockSetRefList).toHaveBeenCalledWith(
+      7,
+      "commit-files-symbols",
+      SHA,
+      expect.objectContaining({ symbolsByPath: expect.any(Object) }),
+      7 * 24 * 60 * 60
+    );
+  });
 });

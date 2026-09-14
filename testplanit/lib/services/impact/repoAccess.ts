@@ -137,7 +137,10 @@ export async function loadRepoConfigForUser(
  * with a raw (un-policed) client and have authorized the job elsewhere.
  */
 type ConfigReader = {
-  projectCodeRepositoryConfig: { findFirst: (args: any) => Promise<any> };
+  projectCodeRepositoryConfig: {
+    findFirst: (args: any) => Promise<any>;
+    findMany: (args: any) => Promise<any[]>;
+  };
 };
 
 export async function loadRepoConfigForWorker(
@@ -155,14 +158,39 @@ export async function loadRepoConfigForWorker(
   return toLoadedRepo(row);
 }
 
-/** The Impact config for a project, or null when none is connected. */
-export async function findImpactConfigId(
+/** Ids of every Impact config connected to a project, oldest first. */
+export async function listImpactConfigIds(
   db: ConfigReader,
   projectId: number
-): Promise<number | null> {
-  const row = (await db.projectCodeRepositoryConfig.findFirst({
+): Promise<number[]> {
+  const rows = (await db.projectCodeRepositoryConfig.findMany({
     where: { projectId, purpose: "IMPACT" },
     select: { id: true },
-  })) as { id: number } | null;
-  return row?.id ?? null;
+    orderBy: { id: "asc" },
+  })) as Array<{ id: number }>;
+  return rows.map((row) => row.id);
+}
+
+export type ImpactConfigResolution =
+  { configId: number } | { error: "none" | "ambiguous" | "unknown" };
+
+/**
+ * Pick the Impact config an analysis should run against. A project with one
+ * connected repository needs no `configId`; with several, the caller must
+ * name one, and it has to be one of the project's own.
+ */
+export async function resolveImpactConfigId(
+  db: ConfigReader,
+  projectId: number,
+  requestedConfigId?: number | null
+): Promise<ImpactConfigResolution> {
+  const ids = await listImpactConfigIds(db, projectId);
+  if (ids.length === 0) return { error: "none" };
+  if (requestedConfigId != null) {
+    return ids.includes(requestedConfigId)
+      ? { configId: requestedConfigId }
+      : { error: "unknown" };
+  }
+  if (ids.length > 1) return { error: "ambiguous" };
+  return { configId: ids[0] };
 }

@@ -7,11 +7,16 @@ import { mockImpactApi } from "../../utils/impact-mocks";
  *
  * - The Settings section of the project menu links to the page.
  * - The enable switch persists `projects.impactEnabled`.
- * - Connecting a repository writes a ProjectCodeRepositoryConfig with
- *   purpose IMPACT — and leaves the QuickScript binding (purpose
- *   QUICKSCRIPT) untouched — then the branch combobox (fed by the mocked
- *   branches route) replaces the free-text input, the Linked Tickets switch
- *   persists `issueScanEnabled`, and Disconnect removes the row.
+ * - Connecting a repository (Connect Repository → dialog → save) writes a
+ *   ProjectCodeRepositoryConfig with purpose IMPACT — and leaves the
+ *   QuickScript binding (purpose QUICKSCRIPT) untouched — then the
+ *   connection's card lists it; Edit opens the dialog where the branch
+ *   combobox (fed by the mocked branches route) replaces the free-text
+ *   input and the Linked Tickets switch persists `issueScanEnabled`; View
+ *   opens it read-only; Disconnect on the card removes the connection.
+ * - A second repository can be connected alongside the first: the page lists
+ *   both cards, the Connect dialog offers only repositories not yet
+ *   connected, and a card's Disconnect removes only that connection.
  */
 
 const uid = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -63,6 +68,26 @@ async function fetchRepoConfig(
     }
   );
   return (await res.json()).data ?? null;
+}
+
+async function fetchImpactConfigs(
+  request: APIRequestContext,
+  baseURL: string,
+  projectId: number
+): Promise<Array<{ id: number; repositoryId: number; branch: string | null }>> {
+  const res = await request.get(
+    `${baseURL}/api/model/projectCodeRepositoryConfig/findMany`,
+    {
+      params: {
+        q: JSON.stringify({
+          where: { projectId, purpose: "IMPACT" },
+          orderBy: { id: "asc" },
+          select: { id: true, repositoryId: true, branch: true },
+        }),
+      },
+    }
+  );
+  return (await res.json()).data ?? [];
 }
 
 async function fetchImpactEnabled(
@@ -143,7 +168,7 @@ test.describe("Impact project settings", () => {
     });
   });
 
-  test("connects a repository for Impact only, picks a branch, and disconnects", async ({
+  test("connects a repository for Impact only, edits its branch, and disconnects", async ({
     page,
     api,
     request,
@@ -159,10 +184,20 @@ test.describe("Impact project settings", () => {
     // (once a config exists); everything else is model-API CRUD.
     await mockImpactApi(page, { configuredBranch: "main" });
 
-    await test.step("Pick the repository and type a branch (no config yet, so a plain input)", async () => {
+    await test.step("The page starts empty and Connect Repository opens the dialog", async () => {
       await page.goto(`/en-US/projects/settings/${projectId}/impact`);
+      await expect(page.getByTestId("impact-repos-empty")).toBeVisible({
+        timeout: 15000,
+      });
+      await page.getByTestId("impact-connect-repository").click();
+      const dialog = page.getByTestId("impact-repository-dialog");
+      await expect(dialog).toBeVisible({ timeout: 10000 });
+      await expect(dialog).toHaveAttribute("data-mode", "add");
+    });
+
+    await test.step("Pick the repository and type a branch (no config yet, so a plain input)", async () => {
       const repositorySelect = page.getByTestId("impact-repository-select");
-      await expect(repositorySelect).toBeVisible({ timeout: 15000 });
+      await expect(repositorySelect).toBeVisible();
       await repositorySelect.click();
       await page
         .getByRole("option", { name: new RegExp(escapeRegExp(repoName)) })
@@ -174,22 +209,53 @@ test.describe("Impact project settings", () => {
       await branchInput.fill("main");
     });
 
-    await test.step("Save creates a purpose=IMPACT config", async () => {
-      await page.getByTestId("impact-save").click();
-      await expect
-        .poll(
-          async () =>
-            (await fetchRepoConfig(request, base, projectId, "IMPACT"))?.branch,
-          { timeout: 15000 }
-        )
-        .toBe("main");
-      const config = await fetchRepoConfig(request, base, projectId, "IMPACT");
-      expect(config?.repositoryId).toBe(repositoryId);
-      expect(config?.purpose).toBe("IMPACT");
-      api.trackCodeRepositoryConfig(config!.id);
+    const configId =
+      await test.step("Save creates a purpose=IMPACT config, closes the dialog, and lists the card", async () => {
+        await page.getByTestId("impact-save").click();
+        await expect
+          .poll(
+            async () =>
+              (await fetchRepoConfig(request, base, projectId, "IMPACT"))
+                ?.branch,
+            { timeout: 15000 }
+          )
+          .toBe("main");
+        const config = await fetchRepoConfig(
+          request,
+          base,
+          projectId,
+          "IMPACT"
+        );
+        expect(config?.repositoryId).toBe(repositoryId);
+        expect(config?.purpose).toBe("IMPACT");
+        api.trackCodeRepositoryConfig(config!.id);
+
+        await expect(page.getByTestId("impact-repository-dialog")).toHaveCount(
+          0,
+          { timeout: 10000 }
+        );
+        const card = page.getByTestId(`impact-repo-card-${config!.id}`);
+        await expect(card).toBeVisible({ timeout: 15000 });
+        await expect(card).toContainText(repoName);
+        await expect(card).toContainText("main");
+        return config!.id;
+      });
+
+    await test.step("View opens the connection read-only and Edit switches it", async () => {
+      await page.getByTestId(`impact-repo-view-${configId}`).click();
+      const dialog = page.getByTestId("impact-repository-dialog");
+      await expect(dialog).toBeVisible({ timeout: 10000 });
+      await expect(dialog).toHaveAttribute("data-mode", "view");
+      await expect(page.getByTestId("impact-save")).toHaveCount(0);
+      await expect(
+        page.getByTestId("impact-issue-scan-enabled")
+      ).toBeDisabled();
+      await page.getByTestId("impact-dialog-edit").click();
+      await expect(dialog).toHaveAttribute("data-mode", "edit");
+      await expect(page.getByTestId("impact-save")).toBeVisible();
     });
 
-    await test.step("The branch combobox replaces the input and lists the mocked branches", async () => {
+    await test.step("In edit mode the branch combobox replaces the input and lists the mocked branches", async () => {
       const combobox = page.getByTestId("impact-branch-combobox");
       await expect(combobox).toBeVisible({ timeout: 15000 });
       await expect(page.getByTestId("impact-branch-input")).toHaveCount(0);
@@ -208,9 +274,17 @@ test.describe("Impact project settings", () => {
           { timeout: 15000 }
         )
         .toBe("develop");
+      await expect(page.getByTestId("impact-repository-dialog")).toHaveCount(
+        0,
+        { timeout: 10000 }
+      );
+      await expect(
+        page.getByTestId(`impact-repo-card-${configId}`)
+      ).toContainText("develop");
     });
 
     await test.step("The Linked Tickets switch is on by default and persists off", async () => {
+      await page.getByTestId(`impact-repo-edit-${configId}`).click();
       const ticketSwitch = page.getByTestId("impact-issue-scan-enabled");
       await expect(ticketSwitch).toBeVisible({ timeout: 15000 });
       await expect(ticketSwitch).toHaveAttribute("aria-checked", "true");
@@ -250,9 +324,11 @@ test.describe("Impact project settings", () => {
       ).toBeNull();
     });
 
-    await test.step("Disconnect removes the Impact config", async () => {
+    await test.step("Disconnect on the card removes the Impact config", async () => {
       await page.goto(`/en-US/projects/settings/${projectId}/impact`);
-      const disconnectButton = page.getByTestId("impact-disconnect-button");
+      const disconnectButton = page.getByTestId(
+        `impact-repo-disconnect-${configId}`
+      );
       await expect(disconnectButton).toBeVisible({ timeout: 15000 });
       await disconnectButton.click();
       await page.getByTestId("impact-disconnect-confirm").click();
@@ -261,7 +337,108 @@ test.describe("Impact project settings", () => {
           timeout: 15000,
         })
         .toBeNull();
-      await expect(page.getByTestId("impact-disconnect-button")).toHaveCount(0);
+      await expect(page.getByTestId("impact-repos-empty")).toBeVisible({
+        timeout: 15000,
+      });
+    });
+  });
+
+  test("connects a second repository and lists both connections", async ({
+    page,
+    api,
+    request,
+    baseURL,
+  }) => {
+    const ts = uid();
+    const base = baseURL || "http://localhost:3000";
+    const projectId = await api.createProject(`E2E Impact Multi ${ts}`);
+    const firstName = `E2E Impact Repo A ${ts}`;
+    const secondName = `E2E Impact Repo B ${ts}`;
+    const firstRepositoryId = await api.createCodeRepository(firstName);
+    const secondRepositoryId = await api.createCodeRepository(secondName);
+    const first = await api.createImpactConfig(projectId, firstRepositoryId, {
+      branch: "main",
+    });
+
+    await mockImpactApi(page, { configuredBranch: "main" });
+
+    await test.step("The page lists the existing connection as a card with no dialog open", async () => {
+      await page.goto(`/en-US/projects/settings/${projectId}/impact`);
+      const list = page.getByTestId("impact-connected-repositories");
+      await expect(list).toBeVisible({ timeout: 15000 });
+      await expect(
+        page.getByTestId(`impact-repo-card-${first.id}`)
+      ).toContainText(firstName);
+      await expect(page.getByTestId("impact-repository-dialog")).toHaveCount(0);
+    });
+
+    await test.step("Connect Repository opens a blank dialog that offers only the unconnected repository", async () => {
+      await page.getByTestId("impact-connect-repository").click();
+      await expect(
+        page.getByTestId("impact-repository-dialog")
+      ).toHaveAttribute("data-mode", "add");
+      const repositorySelect = page.getByTestId("impact-repository-select");
+      await expect(repositorySelect).toBeVisible({ timeout: 10000 });
+      await repositorySelect.click();
+      await expect(
+        page.getByRole("option", { name: new RegExp(escapeRegExp(firstName)) })
+      ).toHaveCount(0);
+      await page
+        .getByRole("option", { name: new RegExp(escapeRegExp(secondName)) })
+        .click();
+      await expect(repositorySelect).toContainText(secondName);
+      await page.getByTestId("impact-branch-input").fill("develop");
+      await page.getByTestId("impact-save").click();
+    });
+
+    const second =
+      await test.step("Save adds a second IMPACT config and both cards are listed", async () => {
+        await expect
+          .poll(
+            async () =>
+              (await fetchImpactConfigs(request, base, projectId)).length,
+            { timeout: 15000 }
+          )
+          .toBe(2);
+        const configs = await fetchImpactConfigs(request, base, projectId);
+        const created = configs.find(
+          (row) => row.repositoryId === secondRepositoryId
+        )!;
+        expect(created.branch).toBe("develop");
+        api.trackCodeRepositoryConfig(created.id);
+
+        await expect(page.getByTestId("impact-repository-dialog")).toHaveCount(
+          0,
+          { timeout: 10000 }
+        );
+        const card = page.getByTestId(`impact-repo-card-${created.id}`);
+        await expect(card).toBeVisible({ timeout: 15000 });
+        await expect(card).toContainText(secondName);
+        await expect(card).toContainText("develop");
+        await expect(
+          page.getByTestId(`impact-repo-card-${first.id}`)
+        ).toBeVisible();
+        return created;
+      });
+
+    await test.step("Disconnecting from the first card leaves the second connection alone", async () => {
+      await page.getByTestId(`impact-repo-disconnect-${first.id}`).click();
+      await page.getByTestId("impact-disconnect-confirm").click();
+      await expect
+        .poll(
+          async () =>
+            (await fetchImpactConfigs(request, base, projectId)).map(
+              (row) => row.id
+            ),
+          { timeout: 15000 }
+        )
+        .toEqual([second.id]);
+      await expect(
+        page.getByTestId(`impact-repo-card-${first.id}`)
+      ).toHaveCount(0);
+      await expect(
+        page.getByTestId(`impact-repo-card-${second.id}`)
+      ).toBeVisible();
     });
   });
 });

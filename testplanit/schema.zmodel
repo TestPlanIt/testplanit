@@ -3888,9 +3888,10 @@ model CodeRepository {
     @@allow('all', auth().access == 'ADMIN')
 }
 
-// One row per (project, purpose): QUICKSCRIPT reads the test-automation repo
-// for AI export context; IMPACT reads the application under test for
-// test impact analysis.
+// QUICKSCRIPT reads the test-automation repo for AI export context (one per
+// project, kept single by the settings page); IMPACT reads an application
+// under test for test impact analysis (one row per connected repository, so a
+// project tested across several services can connect each of them).
 enum CodeRepositoryConfigPurpose {
     QUICKSCRIPT
     IMPACT
@@ -3919,13 +3920,13 @@ model ProjectCodeRepositoryConfig {
     cacheError            String?
     markerScanReport      Json?                       // IMPACT only: summary of the last repo-marker scan
     issueScanEnabled      Boolean                     @default(true)   // IMPACT only: derive Code Pins from ticket keys in commit messages
-    issueScanReport       Json?                       // IMPACT only: summary of the last ticket-key scan
+    issueScanReport       Json?                       // IMPACT only: summary (or running state) of the last ticket-key scan
     createdAt             DateTime                    @default(now())
     updatedAt             DateTime                    @updatedAt
     codePins              RepositoryCaseCodePin[]
     impactAnalyses        ImpactAnalysis[]
 
-    @@unique([projectId, purpose])
+    @@unique([projectId, purpose, repositoryId])
     @@index([repositoryId])
 
     @@deny('all', auth() == null)

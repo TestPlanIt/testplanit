@@ -345,8 +345,8 @@ export class CodeContextService {
    *   export time, no way to pre-verify without a network round-trip)
    */
   static async checkProjectHasCodeContext(projectId: number): Promise<boolean> {
-    const config = await baseDb.projectCodeRepositoryConfig.findUnique({
-      where: { projectId_purpose: { projectId, purpose: "QUICKSCRIPT" } },
+    const config = await baseDb.projectCodeRepositoryConfig.findFirst({
+      where: { projectId, purpose: "QUICKSCRIPT" },
       select: { id: true, cacheEnabled: true } as any,
     });
 

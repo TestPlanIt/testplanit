@@ -175,7 +175,11 @@ describe("resolveIssueKeys", () => {
   it("reports a blank key rather than dropping it", async () => {
     const out = await resolveIssueKeys({ projectId: 1, keys: ["  "] });
 
-    expect(out.get("  ")).toEqual({ key: "  ", error: "Issue key is empty." });
+    expect(out.get("  ")).toEqual({
+      key: "  ",
+      error: "Issue key is empty.",
+      code: "empty",
+    });
     expect(projectIntegrationFindMany).not.toHaveBeenCalled();
   });
 

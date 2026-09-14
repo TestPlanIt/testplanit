@@ -105,7 +105,8 @@ The application uses the following background processes:
 
 ### Repo Cache Worker
 
-- Automatically refreshes expired code repository caches used by QuickScript AI generation and Impact Analysis; for Impact Analysis repositories, each refresh also scans repository markers and recent commit messages for ticket keys into Code Pins
+- Automatically refreshes expired code repository caches used by QuickScript AI generation and Impact Analysis; for Impact Analysis repositories, each refresh also scans repository markers and recent commit messages for ticket keys into Code Pins, importing named tickets the project does not hold yet
+- Runs the manual ticket scans queued from the Impact Analysis settings page (**Rescan Recent Commits** and **Scan Full History**), writing progress into the config so the page can follow a long walk; walked commits are cached per branch so later scans read only what is new and a capped full walk resumes where it stopped
 - Runs a daily sweep (4 AM) to find configs with expired or missing caches and re-fetches from git
 - Only refreshes caches that have actually expired — configs with valid caches are skipped
 - Default concurrency: 1 (serial processing to avoid hammering git provider APIs)

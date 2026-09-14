@@ -14,13 +14,27 @@ import {
   type PathPattern,
 } from "~/lib/integrations/repoPathPatterns";
 import { getCommitFilePaths } from "./impact/commitFiles";
+import { commitWalkStore, walkCommits } from "./impact/commitWalk";
+import { issueScanCancelKey } from "./impact/jobKeys";
+import { importableIssueKeys, type IssueToken } from "./impact/issueKeys";
+import { integrationManager } from "~/lib/integrations/IntegrationManager";
+import valkeyConnection from "~/lib/valkey";
+import {
+  IssueKeyResolutionError,
+  resolveIssueKeys,
+  resolveIssueTrackerIntegration,
+} from "./resolveIssueKeys";
 import { resolveRefToSha } from "./impact/compareService";
 import { impactConfig } from "./impact/config";
 import {
-  listRecentCommits,
-  syncIssuePins,
+  type IssueImportProgress,
+  type IssueImportResult,
   type IssueScanDb,
+  type IssueScanProgress,
+  type IssueScanReport,
+  syncIssuePins,
 } from "./impact/issueScan";
+import { IssueScanCancelledError } from "./impact/issueScanCancel";
 import {
   shouldScanMarkers,
   syncMarkerPins,
@@ -190,35 +204,263 @@ async function storeIssueScanReport(
   }
 }
 
+interface IssueScanConfigRow {
+  id: number;
+  projectId: number;
+  cacheEnabled: boolean;
+  project: { createdBy: string };
+}
+
+export interface IssueScanRunOptions {
+  /** Walk the whole branch instead of the recent window. */
+  full?: boolean;
+  /** Polled between pages, import rounds and commits; true stops the scan. */
+  isCancelled?: () => Promise<boolean>;
+}
+
+export interface IssueScanCancelledReport {
+  cancelled: true;
+  full: boolean;
+  scannedAt: string;
+}
+
+/** Was a cancel requested for this config's running scan? */
+async function cancelRequested(configId: number): Promise<boolean> {
+  if (!valkeyConnection) return false;
+  try {
+    return Boolean(await valkeyConnection.get(issueScanCancelKey(configId)));
+  } catch {
+    return false;
+  }
+}
+
+async function clearCancelRequest(configId: number): Promise<void> {
+  if (!valkeyConnection) return;
+  await valkeyConnection.del(issueScanCancelKey(configId)).catch(() => {});
+}
+
 /**
- * Derive ISSUE code pins from ticket keys in recent commit messages of an
- * IMPACT config. Never throws: a failed scan is recorded in the report.
+ * Import the tickets a set of commit tokens name that TestPlanIt does not
+ * hold yet, through the project's issue tracker. A project without a tracker,
+ * or with several, imports nothing. A ticket another project already pulled
+ * in is already here — one row per ticket per integration — and is left for
+ * linking, not counted as a failure.
+ */
+/** Keys resolved per tracker round, so progress is reported between rounds. */
+const IMPORT_CHUNK = 20;
+
+/**
+ * The project prefixes (`PROJ` in `PROJ-123`) a Jira-style tracker can answer
+ * for. Commit messages are full of look-alikes — `PHASE-33`, `ID-24`,
+ * `ROUND-2` — that would each cost a 404 lookup. The tracker's own project
+ * list is the authority; when it cannot be listed, the prefixes of tickets
+ * already imported on the integration stand in. Null means unknown: try
+ * every key.
+ */
+async function knownIssueKeyPrefixes(
+  dbClient: DbClient,
+  integrationId: number
+): Promise<Set<string> | null> {
+  try {
+    const adapter = await integrationManager.getAdapter(
+      String(integrationId),
+      dbClient as any
+    );
+    if (adapter && typeof adapter.getProjects === "function") {
+      const projects = await adapter.getProjects();
+      const keys = projects
+        .map((project) => project.key?.toUpperCase())
+        .filter((key): key is string => !!key);
+      if (keys.length > 0) return new Set(keys);
+    }
+  } catch (err) {
+    console.warn(
+      `[repoCacheRefresh] Could not list tracker projects for integration ${integrationId}; falling back to known prefixes:`,
+      err
+    );
+  }
+  const rows = (await (dbClient as any).issue.findMany({
+    where: { integrationId, isDeleted: false, externalKey: { contains: "-" } },
+    select: { externalKey: true },
+    distinct: ["externalKey"],
+    take: 5000,
+  })) as Array<{ externalKey: string | null }>;
+  const seen = new Set<string>();
+  for (const row of rows) {
+    const prefix = row.externalKey?.split("-")[0]?.toUpperCase();
+    if (prefix) seen.add(prefix);
+  }
+  return seen.size > 0 ? seen : null;
+}
+
+function keyPrefix(key: string): string | null {
+  const dash = key.indexOf("-");
+  return dash > 0 ? key.slice(0, dash).toUpperCase() : null;
+}
+
+async function importNamedIssues(
+  dbClient: DbClient,
+  config: { id: number; projectId: number },
+  tokens: IssueToken[],
+  maxLookups: number,
+  onProgress?: (progress: IssueImportProgress) => Promise<void>
+): Promise<IssueImportResult> {
+  let integration: { integrationId: number; provider: string };
+  try {
+    integration = await resolveIssueTrackerIntegration(config.projectId);
+  } catch (err) {
+    if (err instanceof IssueKeyResolutionError) {
+      return { imported: 0, failed: 0, skipped: 0, moved: 0 };
+    }
+    throw err;
+  }
+  let keys = importableIssueKeys(integration.provider, tokens);
+  if (keys.length === 0)
+    return { imported: 0, failed: 0, skipped: 0, moved: 0 };
+  if (integration.provider.toUpperCase() === "JIRA") {
+    const prefixes = await knownIssueKeyPrefixes(
+      dbClient,
+      integration.integrationId
+    );
+    if (prefixes) {
+      keys = keys.filter((key) => {
+        const prefix = keyPrefix(key);
+        return prefix !== null && prefixes.has(prefix);
+      });
+      if (keys.length === 0)
+        return { imported: 0, failed: 0, skipped: 0, moved: 0 };
+    }
+  }
+
+  // One local row per tracker ticket per integration, whichever project
+  // first pulled it in; a case in this project links to that row. So a
+  // ticket held anywhere on the integration is already here.
+  const known = (await (dbClient as any).issue.findMany({
+    where: {
+      integrationId: integration.integrationId,
+      isDeleted: false,
+      OR: [{ externalKey: { in: keys } }, { externalId: { in: keys } }],
+    },
+    select: { externalKey: true, externalId: true },
+  })) as Array<{ externalKey: string | null; externalId: string | null }>;
+  const held = new Set(
+    known.flatMap((row) => [row.externalKey, row.externalId]).filter(Boolean)
+  );
+  const missing = keys.filter((key) => !held.has(key));
+  if (missing.length === 0)
+    return { imported: 0, failed: 0, skipped: 0, moved: 0 };
+
+  let imported = 0;
+  let failed = 0;
+  let skipped = 0;
+  let moved = 0;
+  let lookups = 0;
+  const failures: Array<{ key: string; error: string }> = [];
+  let index = 0;
+  while (index < missing.length) {
+    const budget = maxLookups - lookups;
+    if (budget <= 0) {
+      // Left for the next scan: imported keys are skipped then, so each run
+      // continues where the cap stopped this one.
+      skipped = missing.length - index;
+      break;
+    }
+    const chunk = missing.slice(index, index + Math.min(IMPORT_CHUNK, budget));
+    index += chunk.length;
+    const results = await resolveIssueKeys({
+      projectId: config.projectId,
+      keys: chunk,
+      integrationId: integration.integrationId,
+      maxLookups: chunk.length,
+    });
+    // Every key here was missing locally, so each one cost a lookup.
+    lookups += chunk.length;
+    for (const result of results.values()) {
+      if (result.created) imported++;
+      else if (result.code === "moved") moved++;
+      else if (result.error) {
+        failed++;
+        failures.push({ key: result.key, error: result.error });
+      }
+    }
+    if (onProgress) await onProgress({ lookups, imported });
+  }
+  return { imported, failed, skipped, moved, failures };
+}
+
+/**
+ * Derive ISSUE code pins from ticket keys in commit messages of an IMPACT
+ * config: the recent window on a cache refresh, or the whole branch for a
+ * manual full scan. Tickets the commits name that are unknown here are
+ * imported from the tracker first. Progress is written into
+ * `issueScanReport` as `{ running: true, ... }` so the settings page can
+ * follow a long walk. Never throws: a failed scan is recorded in the report.
  */
 async function runIssueScan(
   dbClient: DbClient,
-  config: {
-    id: number;
-    projectId: number;
-    cacheEnabled: boolean;
-    project: { createdBy: string };
-  },
+  config: IssueScanConfigRow,
   adapter: GitRepoAdapter,
-  branch: string
-): Promise<void> {
-  const scannedAt = new Date().toISOString();
-  let report: unknown;
+  branch: string,
+  opts: IssueScanRunOptions = {}
+): Promise<
+  | IssueScanReport
+  | IssueScanCancelledReport
+  | { error: string; scannedAt: string }
+> {
+  const full = opts.full === true;
+  const startedAt = new Date().toISOString();
+  const isCancelled = opts.isCancelled ?? (async () => false);
+  const assertNotCancelled = async () => {
+    if (await isCancelled()) throw new IssueScanCancelledError();
+  };
+  const writeProgress = (progress: IssueScanProgress) =>
+    storeIssueScanReport(dbClient, config.id, {
+      running: true,
+      full,
+      startedAt,
+      progressAt: new Date().toISOString(),
+      ...progress,
+    });
+  const walkProgress = (
+    scannedCommits: number,
+    cachedCommits = 0
+  ): IssueScanProgress => ({
+    stage: "walk",
+    scannedCommits,
+    cachedCommits,
+    matchedCommits: 0,
+    fetchedCommits: 0,
+    importLookups: 0,
+    importedIssues: 0,
+  });
+  let report:
+    | IssueScanReport
+    | IssueScanCancelledReport
+    | { error: string; scannedAt: string };
   try {
     const cfg = impactConfig;
-    const recent = await listRecentCommits(adapter, branch, {
-      lookbackDays: cfg.issueScanLookbackDays,
-      maxCommits: cfg.issueScanMaxCommits,
+    await writeProgress(walkProgress(0));
+    const recent = await walkCommits(adapter, branch, {
+      lookbackDays: full ? Number.POSITIVE_INFINITY : cfg.issueScanLookbackDays,
+      maxCommits: full ? cfg.issueScanFullMaxCommits : cfg.issueScanMaxCommits,
+      // Only a full walk needs commits older than the cache already holds.
+      continueFromCache: full,
+      store: commitWalkStore(config.id, branch),
+      onProgress: (scannedCommits, fromCache) =>
+        writeProgress(walkProgress(scannedCommits, fromCache)),
+      shouldStop: isCancelled,
     });
+    // The walk kept what it read; the rest of the scan is not worth a
+    // partial result.
+    if (recent.cancelled) throw new IssueScanCancelledError();
     report = await syncIssuePins(
       dbClient as unknown as IssueScanDb,
       { id: config.id, projectId: config.projectId },
       {
         commits: recent.commits,
         truncated: recent.truncated,
+        cachedCommits: recent.fromCache,
+        full,
         getCommitFiles: (commit) =>
           getCommitFilePaths({
             configId: config.id,
@@ -226,24 +468,109 @@ async function runIssueScan(
             adapter,
             commit,
             maxFiles: cfg.maxDiffFiles,
+            withSymbols: cfg.issueScanSymbolPins,
           }),
-        maxCommitFetches: cfg.issueScanMaxCommitFetches,
+        symbolPins: cfg.issueScanSymbolPins,
+        maxCommitFetches: full
+          ? cfg.issueScanFullMaxCommitFetches
+          : cfg.issueScanMaxCommitFetches,
         maxFilesPerCommit: cfg.issueScanMaxFilesPerCommit,
         actorId: config.project.createdBy,
+        importIssues: (tokens, onProgress) =>
+          importNamedIssues(
+            dbClient,
+            config,
+            tokens,
+            full ? cfg.issueImportFullMaxLookups : cfg.issueImportMaxLookups,
+            async (progress) => {
+              await assertNotCancelled();
+              await onProgress(progress);
+            }
+          ),
+        onProgress: async (progress) => {
+          await assertNotCancelled();
+          await writeProgress(progress);
+        },
       }
     );
   } catch (err) {
-    console.warn(
-      `[repoCacheRefresh] Issue scan failed for config ${config.id}:`,
-      err
-    );
-    report = {
-      error:
-        err instanceof Error ? err.message : "Unknown error during issue scan",
-      scannedAt,
-    };
+    if (err instanceof IssueScanCancelledError) {
+      report = { cancelled: true, full, scannedAt: new Date().toISOString() };
+    } else {
+      console.warn(
+        `[repoCacheRefresh] Issue scan failed for config ${config.id}:`,
+        err
+      );
+      report = {
+        error:
+          err instanceof Error
+            ? err.message
+            : "Unknown error during issue scan",
+        scannedAt: new Date().toISOString(),
+      };
+    }
   }
   await storeIssueScanReport(dbClient, config.id, report);
+  return report;
+}
+
+/**
+ * Run the ticket scan on its own for one IMPACT config — the manual
+ * "Rescan" and "Scan full history" actions on the settings page. Reads the
+ * repository directly; the file cache is not touched.
+ */
+export async function scanRepoIssues(
+  configId: number,
+  dbClient: DbClient,
+  opts: IssueScanRunOptions = {}
+): Promise<
+  | IssueScanReport
+  | IssueScanCancelledReport
+  | { error: string; scannedAt: string }
+> {
+  const config = await (dbClient as any).projectCodeRepositoryConfig.findUnique(
+    {
+      where: { id: configId },
+      include: {
+        repository: {
+          select: { credentials: true, settings: true, provider: true },
+        },
+        project: { select: { createdBy: true } },
+      },
+    }
+  );
+  if (!config) {
+    throw new Error(`ProjectCodeRepositoryConfig ${configId} not found`);
+  }
+  if (config.purpose !== "IMPACT") {
+    throw new Error(`Config ${configId} is not an Impact repository`);
+  }
+  try {
+    const credentials = config.repository.credentials as Record<string, string>;
+    const adapter = createGitRepoAdapter(
+      config.repository.provider,
+      credentials,
+      config.repository.settings as Record<string, string> | null
+    );
+    const branch = config.branch || (await adapter.getDefaultBranch());
+    // A stale cancel from an earlier run must not stop this one.
+    await clearCancelRequest(config.id);
+    return await runIssueScan(dbClient, config, adapter, branch, {
+      ...opts,
+      isCancelled: opts.isCancelled ?? (() => cancelRequested(config.id)),
+    });
+  } catch (err) {
+    // The route marked the config running; leave a report, not a flag.
+    const report = {
+      error:
+        err instanceof Error ? err.message : "Unknown error during issue scan",
+      scannedAt: new Date().toISOString(),
+    };
+    await storeIssueScanReport(dbClient, config.id, report);
+    return report;
+  } finally {
+    await clearCancelRequest(config.id);
+  }
 }
 
 /** Only IMPACT configs with the ticket scan switched on are scanned. */

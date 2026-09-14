@@ -190,3 +190,41 @@ export async function resolveLinkedIssues(
         .map((entry) => entry.issue),
   };
 }
+
+/**
+ * The tracker keys worth asking a provider for, from tokens found in commit
+ * messages: the spelling each tracker stores as `externalKey`, so a lookup is
+ * only made where the provider can answer it. A bare `#12` cannot name a
+ * GitLab or Gitea issue without its project path, so it is not tried there.
+ */
+export function importableIssueKeys(
+  provider: string | null | undefined,
+  tokens: IssueToken[]
+): string[] {
+  const out = new Set<string>();
+  const kind = (provider ?? "").toUpperCase();
+  for (const token of tokens) {
+    if (token.number === undefined) {
+      if (kind === "JIRA") out.add(token.exact[0]);
+      continue;
+    }
+    const scoped = token.exact.find((form) => /\/.*#\d+$/.test(form));
+    switch (kind) {
+      case "GITHUB":
+      case "REDMINE":
+      case "MANTISBT":
+        out.add(`#${token.number}`);
+        break;
+      case "GITLAB":
+      case "GITEA":
+        if (scoped) out.add(scoped);
+        break;
+      case "AZURE_DEVOPS":
+        out.add(token.number);
+        break;
+      default:
+        break;
+    }
+  }
+  return [...out];
+}

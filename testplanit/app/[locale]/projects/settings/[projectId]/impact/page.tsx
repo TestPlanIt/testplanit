@@ -1,11 +1,11 @@
 "use client";
 
+import { CodeRepositoryName } from "@/components/CodeRepositoryName";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { DateFormatter } from "@/components/DateFormatter";
 import { Loading } from "@/components/Loading";
 import { ProjectIcon } from "@/components/ProjectIcon";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,7 +16,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,85 +25,49 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { HelpPopover } from "@/components/ui/help-popover";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { PageTitle, SectionHeader } from "@/components/ui/typography";
-import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { format } from "date-fns";
-import { formatInTimeZone } from "date-fns-tz";
 import {
   AlertTriangle,
   CheckCircle,
   Eye,
   GitBranch,
   Loader2,
+  SquarePen,
   Plus,
-  RefreshCw,
-  Save,
-  Trash,
   Unlink,
   XCircle,
 } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { notFound, useParams } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useFieldArray, useForm } from "react-hook-form";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import * as z from "zod/v4";
-import type { AsyncOptionsFetcher } from "~/hooks/useAsyncComboboxOptions";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import { useRepoCacheRefresh } from "~/hooks/useRepoCacheRefresh";
-import { useRepoPreviewFiles } from "~/hooks/useRepoPreviewFiles";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
-import type { RepoBranch } from "~/lib/integrations/adapters/GitRepoAdapter";
 import { Link } from "~/lib/navigation";
-import { getDateFnsLocale } from "~/utils/locales";
-import { mapDateTimeFormatString } from "~/utils/mapDateTimeFormat";
 import { ApplicationArea } from "~/zenstack/models";
+import { ImpactRepositoryDialog } from "./ImpactRepositoryDialog";
+import {
+  type CodeRepositoryOption,
+  type ImpactConfigRow,
+  type ImpactRepositoryFormMode,
+} from "./ImpactRepositoryForm";
 import { readIssueScanReport } from "./issueScanReport";
-import { readMarkerScanReport } from "./markerScanReport";
 
-interface CodeRepository {
-  id: number;
-  name: string;
-  provider: string;
+interface DialogState {
+  open: boolean;
+  mode: ImpactRepositoryFormMode;
+  configId: number | null;
 }
 
-/** `name === ""` selects the repository's default branch. */
-interface BranchOption {
-  name: string;
-}
-
-const DEFAULT_BRANCH_OPTION: BranchOption = { name: "" };
-const DEFAULT_BRANCH_VALUE = "*";
-const DEFAULT_PATH_PATTERNS = [{ path: "src", pattern: "**/*" }];
-const DEFAULT_DATE_FORMAT = "MM-dd-yyyy";
-
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return "0 B";
-  const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
+/** A refresh or scan is in flight for this connection. */
+function isBusy(config: ImpactConfigRow): boolean {
+  return (
+    config.cacheStatus === "pending" ||
+    readIssueScanReport(config.issueScanReport).kind === "running"
+  );
 }
 
 export default function ImpactSettingsPage() {
@@ -113,60 +76,42 @@ export default function ImpactSettingsPage() {
   const { session, status, isLoading: isAuthLoading } = useRequireAuth();
   const t = useTranslations("projects.settings.impact");
   const tCommon = useTranslations("common");
-  const locale = useLocale();
 
-  const pathPatternSchema = z.object({
-    path: z.string().min(1, t("validation.pathRequired")),
-    pattern: z.string().min(1, t("validation.patternRequired")),
+  const [dialog, setDialog] = useState<DialogState>({
+    open: false,
+    mode: "add",
+    configId: null,
   });
+  const [disconnectTarget, setDisconnectTarget] =
+    useState<ImpactConfigRow | null>(null);
 
-  const formSchema = z.object({
-    repositoryId: z.string().min(1, t("validation.repositoryRequired")),
-    branch: z.string().optional().default(""),
-    pathPatterns: z
-      .array(pathPatternSchema)
-      .min(1, t("validation.pathPatternRequired")),
-    cacheEnabled: z.boolean().default(true),
-    cacheTtlDays: z.number().int().min(1).max(30).default(7),
-    issueScanEnabled: z.boolean().default(true),
-  });
-
-  type FormData = z.infer<typeof formSchema>;
-
-  const defaultFormValues: FormData = {
-    repositoryId: "",
-    branch: "",
-    pathPatterns: DEFAULT_PATH_PATTERNS,
-    cacheEnabled: true,
-    cacheTtlDays: 7,
-    issueScanEnabled: true,
-  };
-
-  const [showDisconnectDialog, setShowDisconnectDialog] = useState(false);
-  const [branchesError, setBranchesError] = useState<string | null>(null);
-  const [defaultBranchName, setDefaultBranchName] = useState<string | null>(
-    null
-  );
-  const branchListRef = useRef<{ key: string; branches: RepoBranch[] } | null>(
-    null
-  );
-
-  const { data: existingConfig, refetch: refetchConfig } = useClientQueries(
+  const { data: existingConfigs, refetch: refetchConfigs } = useClientQueries(
     schema
-  ).projectCodeRepositoryConfig.useFindFirst({
-    where: { projectId, purpose: "IMPACT" },
-    include: {
-      repository: {
-        select: { id: true, name: true, provider: true },
+  ).projectCodeRepositoryConfig.useFindMany(
+    {
+      where: { projectId, purpose: "IMPACT" },
+      orderBy: { id: "asc" },
+      include: {
+        repository: {
+          select: { id: true, name: true, provider: true },
+        },
       },
     },
-  });
+    {
+      // Keep the cards live while a refresh or scan runs in the worker.
+      refetchInterval: (query) => {
+        const rows = (query.state.data ?? []) as unknown as ImpactConfigRow[];
+        return rows.some(isBusy) ? 5000 : false;
+      },
+    }
+  );
+  const configs = (existingConfigs ?? []) as unknown as ImpactConfigRow[];
 
   const { data: pinCount } = useClientQueries(
     schema
   ).repositoryCaseCodePin.useCount(
-    { where: { configId: existingConfig?.id ?? 0, isDeleted: false } },
-    { enabled: !!existingConfig }
+    { where: { configId: disconnectTarget?.id ?? 0, isDeleted: false } },
+    { enabled: !!disconnectTarget }
   );
 
   const { data: repositories, isLoading: repositoriesLoading } =
@@ -174,11 +119,8 @@ export default function ImpactSettingsPage() {
       where: { isDeleted: false, status: "ACTIVE" },
       select: { id: true, name: true, provider: true },
     });
+  const repositoryOptions = (repositories ?? []) as CodeRepositoryOption[];
 
-  const createConfig =
-    useClientQueries(schema).projectCodeRepositoryConfig.useCreate();
-  const updateConfig =
-    useClientQueries(schema).projectCodeRepositoryConfig.useUpdate();
   const deleteConfig =
     useClientQueries(schema).projectCodeRepositoryConfig.useDelete();
 
@@ -213,25 +155,6 @@ export default function ImpactSettingsPage() {
     }
   }, [project, projectLoading, permissionsLoading, isProjectAdmin, session]);
 
-  const { isPreviewing, preview, previewProgress, runPreview, clearPreview } =
-    useRepoPreviewFiles({ networkErrorMessage: t("networkError") });
-
-  const { isRefreshing, refreshStep, refreshError, refreshCache } =
-    useRepoCacheRefresh({
-      refetchConfig,
-      messages: {
-        pending: t("cache.statusPending"),
-        listingFiles: t("cache.listingFiles"),
-        cachingFiles: (count) =>
-          t("cache.cachingFiles", { count: String(count) }),
-        contentsError: t("contentsError"),
-        networkError: t("networkError"),
-        refreshComplete: (fileCount) =>
-          t("refreshComplete", { fileCount: String(fileCount) }),
-        refreshInProgress: t("refreshInProgress"),
-      },
-    });
-
   const handleToggleImpact = async (enabled: boolean) => {
     await updateProject.mutateAsync({
       where: { id: projectId },
@@ -240,188 +163,38 @@ export default function ImpactSettingsPage() {
     toast.success(enabled ? t("enabledToast") : t("disabledToast"));
   };
 
-  const form = useForm<FormData>({
-    resolver: standardSchemaResolver(formSchema) as any,
-    defaultValues: defaultFormValues,
-  });
-
-  const { fields, append, remove } = useFieldArray({
-    control: form.control as any,
-    name: "pathPatterns",
-  });
-
-  useEffect(() => {
-    if (existingConfig) {
-      form.reset({
-        repositoryId: String(existingConfig.repositoryId),
-        branch: existingConfig.branch ?? "",
-        pathPatterns: (existingConfig.pathPatterns as {
-          path: string;
-          pattern: string;
-        }[]) ?? [{ path: "", pattern: "**/*" }],
-        cacheEnabled: existingConfig.cacheEnabled ?? true,
-        cacheTtlDays: existingConfig.cacheTtlDays ?? 7,
-        issueScanEnabled: existingConfig.issueScanEnabled ?? true,
-      });
-    }
-  }, [existingConfig]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const selectedRepositoryId = form.watch("repositoryId");
-  const cacheEnabled = form.watch("cacheEnabled");
-
-  const handleDisconnect = async () => {
-    if (!existingConfig) return;
-    try {
-      await deleteConfig.mutateAsync({
-        where: { id: existingConfig.id },
-      });
-      form.reset(defaultFormValues);
-      clearPreview();
-      branchListRef.current = null;
-      setBranchesError(null);
-      setDefaultBranchName(null);
-      toast.success(t("disconnectSuccess"));
-      void refetchConfig();
-    } catch {
-      toast.error(t("disconnectError"));
-    }
-  };
-
-  const branchesConfigId =
-    existingConfig &&
-    String(existingConfig.repositoryId) === selectedRepositoryId
-      ? existingConfig.id
-      : null;
-  const branchesFetchFailed = tCommon("errors.fetchFailed");
-
-  const fetchBranchOptions = useCallback<AsyncOptionsFetcher<BranchOption>>(
-    async (query) => {
-      if (branchesConfigId == null) return { results: [], total: 0 };
-      const key = `${selectedRepositoryId}:${branchesConfigId}`;
-      let branches =
-        branchListRef.current?.key === key
-          ? branchListRef.current.branches
-          : null;
-
-      if (!branches) {
-        try {
-          const res = await fetch(
-            `/api/code-repositories/${selectedRepositoryId}/branches?configId=${branchesConfigId}`
-          );
-          const data = await res.json().catch(() => ({}));
-          if (!res.ok || data.error) {
-            setBranchesError(data.error ?? branchesFetchFailed);
-            return { results: [], total: 0 };
-          }
-          branches = (data.branches as RepoBranch[] | undefined) ?? [];
-          branchListRef.current = { key, branches };
-          setDefaultBranchName(data.defaultBranch ?? null);
-        } catch (err) {
-          setBranchesError(
-            err instanceof Error ? err.message : branchesFetchFailed
-          );
-          return { results: [], total: 0 };
-        }
-      }
-
-      const needle = query.trim().toLowerCase();
-      const matches = branches
-        .filter((b) => !needle || b.name.toLowerCase().includes(needle))
-        .map((b) => ({ name: b.name }));
-      const results = needle ? matches : [DEFAULT_BRANCH_OPTION, ...matches];
-      return { results, total: results.length };
-    },
-    [branchesConfigId, selectedRepositoryId, branchesFetchFailed]
+  const connectedRepositoryIds = configs.map((config) => config.repositoryId);
+  const canConnectMore = repositoryOptions.some(
+    (repo) => !connectedRepositoryIds.includes(repo.id)
   );
 
-  const renderBranchOption = (option: BranchOption) =>
-    option.name === "" ? (
-      <span className="flex items-center gap-2">
-        <span>{t("repository.defaultBranch")}</span>
-        {defaultBranchName && (
-          <span className="font-mono text-xs text-muted-foreground">
-            {defaultBranchName}
-          </span>
-        )}
-      </span>
-    ) : (
-      <span className="font-mono text-sm">{option.name}</span>
-    );
+  const openDialog = (
+    mode: ImpactRepositoryFormMode,
+    configId: number | null
+  ) => setDialog({ open: true, mode, configId });
+  const dialogConfig =
+    dialog.configId === null
+      ? null
+      : (configs.find((config) => config.id === dialog.configId) ?? null);
 
-  const handlePreview = () => {
-    const values = form.getValues();
-    if (!values.repositoryId) return;
-    void runPreview(values.repositoryId, {
-      branch: values.branch || undefined,
-      pathPatterns: values.pathPatterns,
-      cacheEnabled: values.cacheEnabled,
-    });
+  const handleSaved = () => {
+    setDialog((prev) => ({ ...prev, open: false }));
+    void refetchConfigs();
   };
 
-  const handleRefreshCache = () => {
-    if (!existingConfig) return;
-    void refreshCache({
-      repositoryId: existingConfig.repositoryId,
-      configId: existingConfig.id,
-    });
-  };
-
-  const onSubmit = async (values: FormData) => {
+  const handleDisconnect = async () => {
+    if (!disconnectTarget) return;
+    const target = disconnectTarget;
     try {
-      const repositoryId = parseInt(values.repositoryId);
-
-      const cacheContentChanged =
-        !existingConfig ||
-        existingConfig.repositoryId !== repositoryId ||
-        existingConfig.branch !== (values.branch || null) ||
-        JSON.stringify(existingConfig.pathPatterns) !==
-          JSON.stringify(values.pathPatterns);
-
-      const cacheResetFields = cacheContentChanged
-        ? {
-            cacheStatus: null,
-            cacheLastFetchedAt: null,
-            cacheFileCount: null,
-            cacheTotalSize: null,
-            cacheError: null,
-          }
-        : {};
-
-      const sharedData = {
-        branch: values.branch || null,
-        pathPatterns: values.pathPatterns,
-        cacheEnabled: values.cacheEnabled,
-        cacheTtlDays: values.cacheTtlDays,
-        issueScanEnabled: values.issueScanEnabled,
-        ...cacheResetFields,
-      };
-
-      if (existingConfig) {
-        await updateConfig.mutateAsync({
-          where: { id: existingConfig.id },
-          data: {
-            ...sharedData,
-            repository: { connect: { id: repositoryId } },
-          },
-        });
-      } else {
-        await createConfig.mutateAsync({
-          data: {
-            ...sharedData,
-            purpose: "IMPACT",
-            repository: { connect: { id: repositoryId } },
-            project: { connect: { id: projectId } },
-          },
-        });
+      await deleteConfig.mutateAsync({ where: { id: target.id } });
+      setDisconnectTarget(null);
+      if (dialog.configId === target.id) {
+        setDialog((prev) => ({ ...prev, open: false }));
       }
-
-      branchListRef.current = null;
-      setBranchesError(null);
-      toast.success(t("saved"));
-      void refetchConfig();
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : t("saveError");
-      toast.error(message);
+      toast.success(t("disconnectSuccess"));
+      void refetchConfigs();
+    } catch {
+      toast.error(t("disconnectError"));
     }
   };
 
@@ -429,31 +202,7 @@ export default function ImpactSettingsPage() {
   const preferredDateTimeFormat =
     preferences?.dateFormat && preferences?.timeFormat
       ? `${preferences.dateFormat} ${preferences.timeFormat}`
-      : preferences?.dateFormat;
-
-  const formatScanDate = (iso: string): string => {
-    const date = new Date(iso);
-    if (Number.isNaN(date.getTime())) return iso;
-    const formatString = mapDateTimeFormatString(
-      preferredDateTimeFormat ?? DEFAULT_DATE_FORMAT
-    );
-    const dateLocale = getDateFnsLocale(locale);
-    const timezone = preferences?.timezone;
-    try {
-      return timezone
-        ? formatInTimeZone(date, timezone.replace(/_/g, "/"), formatString, {
-            locale: dateLocale,
-          })
-        : format(date, formatString, { locale: dateLocale });
-    } catch {
-      return format(date, formatString, { locale: dateLocale });
-    }
-  };
-
-  const isSaving = createConfig.isPending || updateConfig.isPending;
-  const configData = existingConfig;
-  const markerView = readMarkerScanReport(existingConfig?.markerScanReport);
-  const issueView = readIssueScanReport(existingConfig?.issueScanReport);
+      : (preferences?.dateFormat ?? undefined);
 
   if (isAuthLoading) {
     return <Loading />;
@@ -477,6 +226,110 @@ export default function ImpactSettingsPage() {
       </Card>
     );
   }
+
+  const renderCacheStatus = (config: ImpactConfigRow) => {
+    if (!config.cacheEnabled) {
+      return (
+        <Badge variant="secondary">{t("repositories.cacheDisabled")}</Badge>
+      );
+    }
+    if (config.cacheStatus === "success") {
+      return (
+        <span className="flex items-center gap-2">
+          <CheckCircle className="h-4 w-4 text-success" />
+          <span>
+            {config.cacheFileCount != null
+              ? t("pathPatterns.files", { count: config.cacheFileCount })
+              : tCommon("fields.success")}
+          </span>
+          {config.cacheLastFetchedAt && (
+            <span className="text-muted-foreground">
+              <DateFormatter
+                date={new Date(config.cacheLastFetchedAt)}
+                formatString={preferredDateTimeFormat}
+                timezone={preferences?.timezone}
+              />
+            </span>
+          )}
+        </span>
+      );
+    }
+    if (config.cacheStatus === "error") {
+      return (
+        <span className="flex items-center gap-2">
+          <XCircle className="h-4 w-4 text-destructive" />
+          <span>{tCommon("errors.error")}</span>
+        </span>
+      );
+    }
+    if (config.cacheStatus === "pending") {
+      return (
+        <span className="flex items-center gap-2">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span>{t("cache.statusPending")}</span>
+        </span>
+      );
+    }
+    return <Badge variant="secondary">{t("cache.statusNeverFetched")}</Badge>;
+  };
+
+  const renderTicketStatus = (config: ImpactConfigRow) => {
+    const view = readIssueScanReport(config.issueScanReport);
+    switch (view.kind) {
+      case "running":
+        return (
+          <span className="flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>
+              {t(
+                view.progress.full
+                  ? "tickets.runningFull"
+                  : "tickets.runningRecent"
+              )}
+            </span>
+          </span>
+        );
+      case "scanned":
+        return (
+          <span>
+            {t("repositories.lastScan", {
+              created: view.report.created,
+            })}{" "}
+            <span className="text-muted-foreground">
+              <DateFormatter
+                date={new Date(view.report.scannedAt)}
+                formatString={preferredDateTimeFormat}
+                timezone={preferences?.timezone}
+              />
+            </span>
+          </span>
+        );
+      case "error":
+        return (
+          <span className="flex items-center gap-2">
+            <XCircle className="h-4 w-4 text-destructive" />
+            <span>{t("repositories.scanFailed")}</span>
+          </span>
+        );
+      case "cancelled":
+        return <span>{t("repositories.scanCancelled")}</span>;
+      default:
+        return <Badge variant="secondary">{t("tickets.never")}</Badge>;
+    }
+  };
+
+  const connectButton = (
+    <Button
+      type="button"
+      onClick={() => openDialog("add", null)}
+      disabled={!canConnectMore}
+      title={canConnectMore ? undefined : t("repositories.allConnected")}
+      data-testid="impact-connect-repository"
+    >
+      <Plus className="h-4 w-4" />
+      {t("repositories.connect")}
+    </Button>
+  );
 
   return (
     <main>
@@ -516,7 +369,7 @@ export default function ImpactSettingsPage() {
             </CardContent>
           </Card>
 
-          {repositories?.length === 0 ? (
+          {repositoryOptions.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center gap-4 py-12 text-center">
                 <GitBranch className="h-10 w-10 text-muted-foreground/40" />
@@ -545,726 +398,152 @@ export default function ImpactSettingsPage() {
               </CardContent>
             </Card>
           ) : (
-            <Form {...(form as any)}>
-              <form
-                onSubmit={(form as any).handleSubmit(onSubmit)}
-                className="space-y-6"
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <CardTitle>{t("repositories.title")}</CardTitle>
+                    <CardDescription>
+                      {t("repositories.description")}
+                    </CardDescription>
+                  </div>
+                  {connectButton}
+                </div>
+              </CardHeader>
+              <CardContent
+                className="space-y-3"
+                data-testid="impact-connected-repositories"
               >
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle>{t("repository.title")}</CardTitle>
-                      {existingConfig && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="text-destructive"
-                          onClick={() => setShowDisconnectDialog(true)}
-                          data-testid="impact-disconnect-button"
-                        >
-                          <Unlink className="h-4 w-4" />
-                          {t("disconnect")}
-                        </Button>
-                      )}
+                {configs.length === 0 && (
+                  <div
+                    className="flex flex-col items-center gap-3 py-10 text-center"
+                    data-testid="impact-repos-empty"
+                  >
+                    <GitBranch className="h-10 w-10 text-muted-foreground/40" />
+                    <div>
+                      <p className="font-medium">{t("repositories.empty")}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {t("repositories.emptyDescription")}
+                      </p>
                     </div>
-                    <CardDescription>
-                      {t("repository.description")}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <FormField
-                      control={form.control as any}
-                      name="repositoryId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t("repository.title")}</FormLabel>
-                          <Select
-                            value={field.value}
-                            onValueChange={field.onChange}
-                          >
-                            <FormControl>
-                              <SelectTrigger data-testid="impact-repository-select">
-                                <SelectValue
-                                  placeholder={t("repository.placeholder")}
-                                />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {(
-                                (repositories as
-                                  CodeRepository[] | undefined) ?? []
-                              ).map((repo) => (
-                                <SelectItem
-                                  key={repo.id}
-                                  value={String(repo.id)}
-                                >
-                                  {repo.name} {"("}
-                                  {repo.provider}
-                                  {")"}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                  </div>
+                )}
 
-                    <FormField
-                      control={form.control as any}
-                      name="branch"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t("repository.branchLabel")}</FormLabel>
-                          {branchesConfigId != null && !branchesError ? (
-                            <div data-testid="impact-branch-combobox">
-                              <AsyncCombobox<BranchOption>
-                                value={{ name: field.value ?? "" }}
-                                onValueChange={(option) =>
-                                  field.onChange(option?.name ?? "")
-                                }
-                                fetchOptions={fetchBranchOptions}
-                                renderOption={renderBranchOption}
-                                getOptionValue={(option) =>
-                                  option.name || DEFAULT_BRANCH_VALUE
-                                }
-                                placeholder={t("repository.branchPlaceholder")}
-                                ariaLabel={t("repository.branchLabel")}
-                                className="w-full"
-                                showPagination={false}
-                              />
-                            </div>
-                          ) : (
-                            <>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  placeholder={t(
-                                    "repository.branchInputPlaceholder"
-                                  )}
-                                  data-testid="impact-branch-input"
-                                />
-                              </FormControl>
-                              {branchesError && (
-                                <p className="text-xs text-muted-foreground">
-                                  {t("repository.branchesUnavailable", {
-                                    error: branchesError,
-                                  })}{" "}
-                                  {t("repository.branchesFallbackHint")}
-                                </p>
-                              )}
-                            </>
+                {configs.map((config) => (
+                  <Card
+                    key={config.id}
+                    shadow="none"
+                    data-testid={`impact-repo-card-${config.id}`}
+                  >
+                    <CardContent className="flex flex-wrap items-start justify-between gap-4 p-4">
+                      <div className="min-w-0 space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <CodeRepositoryName
+                            name={config.repository.name}
+                            provider={config.repository.provider}
+                            branch={config.branch}
+                            nameClassName="font-medium"
+                            data-testid={`impact-repo-name-${config.id}`}
+                          />
+                          {!config.branch && (
+                            <span className="text-xs text-muted-foreground">
+                              {t("repository.defaultBranch")}
+                            </span>
                           )}
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>{t("pathPatterns.title")}</CardTitle>
-                    <CardDescription>
-                      {t("pathPatterns.description")}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {fields.map((field, index) => (
-                      <div key={field.id} className="flex items-start gap-2">
-                        <FormField
-                          control={form.control as any}
-                          name={`pathPatterns.${index}.path`}
-                          render={({ field }) => (
-                            <FormItem className="flex-1">
-                              {index === 0 && (
-                                <FormLabel>
-                                  {t("pathPatterns.pathLabel")}
-                                </FormLabel>
-                              )}
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  placeholder={t(
-                                    "pathPatterns.pathPlaceholder"
-                                  )}
-                                  data-testid={`impact-path-${index}`}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
+                        </div>
+                        <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
+                          <dt className="text-muted-foreground">
+                            {t("repositories.columnCache")}
+                          </dt>
+                          <dd data-testid={`impact-repo-cache-${config.id}`}>
+                            {renderCacheStatus(config)}
+                          </dd>
+                          <dt className="text-muted-foreground">
+                            {t("tickets.title")}
+                          </dt>
+                          <dd data-testid={`impact-repo-tickets-${config.id}`}>
+                            {renderTicketStatus(config)}
+                          </dd>
+                        </dl>
+                        {config.cacheStatus === "error" &&
+                          config.cacheError && (
+                            <p className="flex items-center gap-2 text-xs text-destructive">
+                              <AlertTriangle className="h-3 w-3" />
+                              <span className="truncate">
+                                {config.cacheError}
+                              </span>
+                            </p>
                           )}
-                        />
-                        <FormField
-                          control={form.control as any}
-                          name={`pathPatterns.${index}.pattern`}
-                          render={({ field }) => (
-                            <FormItem className="flex-1">
-                              {index === 0 && (
-                                <FormLabel>
-                                  {t("pathPatterns.patternLabel")}
-                                </FormLabel>
-                              )}
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  placeholder="**/*"
-                                  data-testid={`impact-pattern-${index}`}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                      </div>
+                      <div className="flex shrink-0 items-center gap-1">
                         <Button
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className={index === 0 ? "mt-8" : ""}
-                          onClick={() => remove(index)}
-                          disabled={fields.length === 1}
-                          aria-label={tCommon("actions.delete")}
+                          aria-label={t("repositories.view")}
+                          onClick={() => openDialog("view", config.id)}
+                          data-testid={`impact-repo-view-${config.id}`}
                         >
-                          <Trash className="h-4 w-4" />
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          aria-label={t("repositories.edit")}
+                          onClick={() => openDialog("edit", config.id)}
+                          data-testid={`impact-repo-edit-${config.id}`}
+                        >
+                          <SquarePen className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive"
+                          aria-label={t("disconnect")}
+                          onClick={() => setDisconnectTarget(config)}
+                          data-testid={`impact-repo-disconnect-${config.id}`}
+                        >
+                          <Unlink className="h-4 w-4" />
                         </Button>
                       </div>
-                    ))}
-
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => append({ path: "", pattern: "**/*" })}
-                      data-testid="impact-add-path"
-                    >
-                      <Plus className="h-4 w-4" />
-                      {t("pathPatterns.addPath")}
-                    </Button>
-
-                    <div className="flex items-center gap-3 pt-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handlePreview}
-                        disabled={isPreviewing || !selectedRepositoryId}
-                        data-testid="impact-preview-button"
-                      >
-                        {isPreviewing ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                        {t("pathPatterns.previewFiles")}
-                      </Button>
-                      {isPreviewing && previewProgress && (
-                        <span className="text-sm text-muted-foreground">
-                          {previewProgress.step === "branch" &&
-                            t("preview.resolvingBranch")}
-                          {previewProgress.step === "listing" &&
-                            (previewProgress.filesFound != null
-                              ? t("preview.scanningFilesCount", {
-                                  count: previewProgress.filesFound,
-                                  scope: previewProgress.scope ?? "",
-                                })
-                              : t("preview.scanningFiles", {
-                                  scope: previewProgress.scope ?? "",
-                                }))}
-                          {previewProgress.step === "filtering" &&
-                            t("preview.filtering", {
-                              count: previewProgress.totalFiles ?? 0,
-                            })}
-                          {previewProgress.step === "rate-limited" &&
-                            t("preview.rateLimited", {
-                              seconds: previewProgress.waitSeconds ?? 0,
-                            })}
-                        </span>
-                      )}
-                    </div>
-
-                    {preview && !preview.error && (
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <span>
-                            {t("pathPatterns.files", {
-                              count: preview.fileCount,
-                            })}
-                          </span>
-                          <span>{preview.totalSizeFormatted}</span>
-                          {preview.truncated && (
-                            <Badge variant="secondary">
-                              {t("pathPatterns.truncatedBadge")}
-                            </Badge>
-                          )}
-                        </div>
-
-                        <ScrollArea className="h-48 rounded-md border p-3">
-                          <div className="space-y-1">
-                            {preview.files.map((f) => (
-                              <div
-                                key={f.path}
-                                className="font-mono text-xs text-muted-foreground"
-                              >
-                                {f.path}
-                              </div>
-                            ))}
-                          </div>
-                        </ScrollArea>
-                      </div>
-                    )}
-
-                    {preview?.error && (
-                      <Alert variant="destructive">
-                        <XCircle className="h-4 w-4" />
-                        <AlertDescription>{preview.error}</AlertDescription>
-                      </Alert>
-                    )}
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>{t("cache.title")}</CardTitle>
-                    <CardDescription>{t("cache.description")}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <FormField
-                      control={form.control as any}
-                      name="cacheEnabled"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                              data-testid="impact-cache-enabled"
-                            />
-                          </FormControl>
-                          <FormLabel className="font-medium">
-                            {t("cache.enableLabel")}
-                          </FormLabel>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <div>
-                      <div
-                        aria-hidden={cacheEnabled}
-                        className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${
-                          !cacheEnabled ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
-                        }`}
-                      >
-                        <div className="overflow-hidden">
-                          <Alert>
-                            <AlertDescription>
-                              {t("cache.disabledWarning")}
-                            </AlertDescription>
-                          </Alert>
-                        </div>
-                      </div>
-
-                      <div
-                        aria-hidden={!cacheEnabled}
-                        className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${
-                          cacheEnabled ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
-                        }`}
-                      >
-                        <div className="overflow-hidden">
-                          <div className="space-y-4">
-                            <FormField
-                              control={form.control as any}
-                              name="cacheTtlDays"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <div className="flex items-center gap-2 text-sm">
-                                    <FormLabel className="font-normal">
-                                      {t("cache.ttlBefore")}
-                                    </FormLabel>
-                                    <FormControl>
-                                      <Input
-                                        {...field}
-                                        type="number"
-                                        min={1}
-                                        max={30}
-                                        className="w-16"
-                                        aria-label={t("cache.ttlAriaLabel")}
-                                        onChange={(e) =>
-                                          field.onChange(
-                                            parseInt(e.target.value) || 7
-                                          )
-                                        }
-                                      />
-                                    </FormControl>
-                                    <span>
-                                      {t("cache.ttlDays", {
-                                        count: field.value,
-                                      })}
-                                    </span>
-                                  </div>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-
-                            {configData && (
-                              <>
-                                <Separator />
-                                <div className="space-y-3">
-                                  <div className="flex items-center justify-between">
-                                    <h4 className="text-sm font-medium">
-                                      {t("cache.statusTitle")}
-                                    </h4>
-                                    <Button
-                                      type="button"
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={handleRefreshCache}
-                                      disabled={isRefreshing}
-                                      data-testid="impact-refresh-cache"
-                                    >
-                                      {isRefreshing ? (
-                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                      ) : (
-                                        <RefreshCw className="h-4 w-4" />
-                                      )}
-                                      {isRefreshing && refreshStep
-                                        ? refreshStep
-                                        : t("cache.refreshButton")}
-                                    </Button>
-                                  </div>
-
-                                  <div className="grid grid-cols-2 gap-3 text-sm">
-                                    <div>
-                                      <span className="text-muted-foreground">
-                                        {tCommon("actions.status")}
-                                      </span>
-                                      <div className="mt-1 flex items-center gap-2">
-                                        {!configData.cacheStatus && (
-                                          <Badge variant="secondary">
-                                            {t("cache.statusNeverFetched")}
-                                          </Badge>
-                                        )}
-                                        {configData.cacheStatus ===
-                                          "success" && (
-                                          <>
-                                            <CheckCircle className="h-4 w-4 text-success" />
-                                            <Badge variant="default">
-                                              {tCommon("fields.success")}
-                                            </Badge>
-                                          </>
-                                        )}
-                                        {configData.cacheStatus === "error" && (
-                                          <>
-                                            <XCircle className="h-4 w-4 text-destructive" />
-                                            <Badge variant="destructive">
-                                              {tCommon("errors.error")}
-                                            </Badge>
-                                          </>
-                                        )}
-                                        {configData.cacheStatus ===
-                                          "pending" && (
-                                          <>
-                                            <Loader2 className="h-4 w-4 animate-spin" />
-                                            <Badge variant="secondary">
-                                              {t("cache.statusPending")}
-                                            </Badge>
-                                          </>
-                                        )}
-                                      </div>
-                                    </div>
-
-                                    <div>
-                                      <span className="text-muted-foreground">
-                                        {t("cache.lastFetched")}
-                                      </span>
-                                      <div className="mt-1">
-                                        {configData.cacheLastFetchedAt ? (
-                                          <DateFormatter
-                                            date={
-                                              new Date(
-                                                configData.cacheLastFetchedAt
-                                              )
-                                            }
-                                            formatString={
-                                              preferredDateTimeFormat
-                                            }
-                                            timezone={preferences?.timezone}
-                                          />
-                                        ) : (
-                                          "—"
-                                        )}
-                                      </div>
-                                    </div>
-
-                                    <div>
-                                      <span className="text-muted-foreground">
-                                        {t("cache.filesCached")}
-                                      </span>
-                                      <div className="mt-1">
-                                        {configData.cacheFileCount ?? "—"}
-                                      </div>
-                                    </div>
-
-                                    <div>
-                                      <span className="text-muted-foreground">
-                                        {t("cache.contentsCached")}
-                                      </span>
-                                      <div className="mt-1">
-                                        {configData.cacheContentFileCount ??
-                                          "—"}
-                                      </div>
-                                    </div>
-
-                                    <div>
-                                      <span className="text-muted-foreground">
-                                        {t("cache.totalSize")}
-                                      </span>
-                                      <div className="mt-1">
-                                        {configData.cacheTotalSize != null
-                                          ? formatBytes(
-                                              Number(configData.cacheTotalSize)
-                                            )
-                                          : "—"}
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  {configData.cacheStatus === "error" &&
-                                    configData.cacheError && (
-                                      <Alert variant="destructive">
-                                        <XCircle className="h-4 w-4" />
-                                        <AlertDescription>
-                                          {configData.cacheError}
-                                        </AlertDescription>
-                                      </Alert>
-                                    )}
-
-                                  {configData.cacheStatus === "success" &&
-                                    configData.cacheContentFileCount != null &&
-                                    configData.cacheFileCount != null &&
-                                    configData.cacheContentFileCount <
-                                      configData.cacheFileCount && (
-                                      <Alert>
-                                        <AlertTriangle className="h-4 w-4" />
-                                        <AlertDescription>
-                                          {t("cache.contentsIncomplete", {
-                                            cached: String(
-                                              configData.cacheContentFileCount
-                                            ),
-                                            total: String(
-                                              configData.cacheFileCount
-                                            ),
-                                          })}
-                                        </AlertDescription>
-                                      </Alert>
-                                    )}
-
-                                  {refreshError && (
-                                    <Alert variant="destructive">
-                                      <AlertDescription className="flex items-center gap-2 font-mono text-xs break-all select-all">
-                                        <XCircle className="h-4 w-4 shrink-0" />
-                                        {refreshError}
-                                      </AlertDescription>
-                                    </Alert>
-                                  )}
-                                </div>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>{t("tickets.title")}</CardTitle>
-                    <CardDescription>
-                      {t("tickets.description")}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent
-                    className="space-y-3 text-sm"
-                    data-testid="impact-tickets"
-                  >
-                    <FormField
-                      control={form.control as any}
-                      name="issueScanEnabled"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                              data-testid="impact-issue-scan-enabled"
-                            />
-                          </FormControl>
-                          <div className="space-y-0.5">
-                            <FormLabel className="font-medium">
-                              {t("tickets.enableLabel")}
-                            </FormLabel>
-                            <p className="text-muted-foreground">
-                              {t("tickets.enableDescription")}
-                            </p>
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    {issueView.kind === "never" && (
-                      <Badge variant="secondary">{t("tickets.never")}</Badge>
-                    )}
-
-                    {issueView.kind === "error" && (
-                      <Alert variant="destructive">
-                        <XCircle className="h-4 w-4" />
-                        <AlertDescription>
-                          {t("tickets.error", { error: issueView.error })}
-                        </AlertDescription>
-                      </Alert>
-                    )}
-
-                    {issueView.kind === "scanned" && (
-                      <>
-                        <p className="text-muted-foreground">
-                          {t("tickets.lastScan", {
-                            date: formatScanDate(issueView.report.scannedAt),
-                          })}
-                        </p>
-                        <p>
-                          {t("tickets.summary", {
-                            commits: issueView.report.scannedCommits,
-                            matched: issueView.report.matchedCommits,
-                            created: issueView.report.created,
-                            updated: issueView.report.updated,
-                            removed: issueView.report.removed,
-                          })}
-                        </p>
-                        {issueView.report.skippedLargeCommits > 0 && (
-                          <p className="flex items-center gap-2">
-                            <AlertTriangle className="h-4 w-4 text-warning" />
-                            {t("tickets.skippedLarge", {
-                              count: issueView.report.skippedLargeCommits,
-                            })}
-                          </p>
-                        )}
-                        {(issueView.report.fetchCapped ||
-                          issueView.report.truncated) && (
-                          <p className="flex items-center gap-2">
-                            <AlertTriangle className="h-4 w-4 text-warning" />
-                            {t("tickets.fetchCapped")}
-                          </p>
-                        )}
-                      </>
-                    )}
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>{t("markers.title")}</CardTitle>
-                    <CardDescription>
-                      {t("markers.description")}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent
-                    className="space-y-3 text-sm"
-                    data-testid="impact-markers"
-                  >
-                    {markerView.kind === "never" && (
-                      <Badge variant="secondary">{t("markers.never")}</Badge>
-                    )}
-
-                    {markerView.kind === "skipped" && (
-                      <Alert>
-                        <AlertTriangle className="h-4 w-4" />
-                        <AlertDescription>
-                          {t(
-                            markerView.reason === "privacy_mode"
-                              ? "markers.skippedPrivacy"
-                              : "markers.skippedPartial"
-                          )}
-                        </AlertDescription>
-                      </Alert>
-                    )}
-
-                    {markerView.kind === "error" && (
-                      <Alert variant="destructive">
-                        <XCircle className="h-4 w-4" />
-                        <AlertDescription>
-                          {t("markers.error", { error: markerView.error })}
-                        </AlertDescription>
-                      </Alert>
-                    )}
-
-                    {markerView.kind === "scanned" && (
-                      <>
-                        <p className="text-muted-foreground">
-                          {t("markers.lastScan", {
-                            date: formatScanDate(markerView.report.scannedAt),
-                          })}
-                        </p>
-                        <p>
-                          {t("markers.summary", {
-                            annotations: markerView.report.annotationMarkers,
-                            mapEntries: markerView.report.mapEntries,
-                            created: markerView.report.created,
-                            updated: markerView.report.updated,
-                            removed: markerView.report.removed,
-                          })}
-                        </p>
-                        {markerView.report.problemCount > 0 && (
-                          <div className="space-y-1">
-                            <p className="flex items-center gap-2">
-                              <AlertTriangle className="h-4 w-4 text-warning" />
-                              {t("markers.problems", {
-                                count: markerView.report.problemCount,
-                              })}
-                            </p>
-                            <ul className="list-disc ps-5 font-mono text-xs text-muted-foreground">
-                              {markerView.problemDetails.map(
-                                (detail, index) => (
-                                  <li key={`${index}-${detail}`}>{detail}</li>
-                                )
-                              )}
-                            </ul>
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </CardContent>
-                </Card>
-
-                <div className="flex justify-end">
-                  <Button
-                    type="submit"
-                    disabled={isSaving}
-                    aria-label={t("save")}
-                    className="group gap-0 transition-all duration-200 hover:gap-2"
-                    data-testid="impact-save"
-                  >
-                    {isSaving ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Save className="h-4 w-4" />
-                    )}
-                    <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                      {t("save")}
-                    </span>
-                  </Button>
-                </div>
-              </form>
-            </Form>
+                    </CardContent>
+                  </Card>
+                ))}
+              </CardContent>
+            </Card>
           )}
         </CardContent>
       </Card>
 
+      {dialog.open && (
+        <ImpactRepositoryDialog
+          open={dialog.open}
+          onOpenChange={(open) => setDialog((prev) => ({ ...prev, open }))}
+          mode={dialog.mode}
+          onModeChange={(mode) => setDialog((prev) => ({ ...prev, mode }))}
+          projectId={projectId}
+          config={dialogConfig}
+          repositories={repositoryOptions}
+          connectedRepositoryIds={connectedRepositoryIds}
+          preferences={preferences}
+          refetchConfigs={async () => {
+            const result = await refetchConfigs();
+            return {
+              data: (result.data ?? null) as unknown as
+                ImpactConfigRow[] | null,
+            };
+          }}
+          onSaved={handleSaved}
+        />
+      )}
+
       <AlertDialog
-        open={showDisconnectDialog}
-        onOpenChange={setShowDisconnectDialog}
+        open={disconnectTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDisconnectTarget(null);
+        }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -1276,7 +555,7 @@ export default function ImpactSettingsPage() {
               <div>
                 <p>
                   {t("confirmDisconnect", {
-                    name: existingConfig?.repository?.name ?? "",
+                    name: disconnectTarget?.repository?.name ?? "",
                   })}
                 </p>
                 <div>

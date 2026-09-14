@@ -235,6 +235,11 @@ See [Test Impact Analysis](user-guide/impact.md).
 | `IMPACT_ISSUE_SCAN_MAX_COMMITS` | `300` | Most commits the ticket scan reads. |
 | `IMPACT_ISSUE_SCAN_MAX_COMMIT_FETCHES` | `100` | Ticket commits whose file list the scan reads per refresh. |
 | `IMPACT_ISSUE_SCAN_MAX_FILES_PER_COMMIT` | `50` | A ticket commit touching more files than this is skipped. |
+| `IMPACT_ISSUE_SCAN_FULL_MAX_COMMITS` | `20000` | Commits a manual full-history ticket scan walks before stopping. |
+| `IMPACT_ISSUE_SCAN_FULL_MAX_COMMIT_FETCHES` | `2000` | Matched commits whose file lists a full-history scan reads. |
+| `IMPACT_ISSUE_IMPORT_MAX_LOOKUPS` | `100` | Tracker lookups a refresh-time ticket scan may make to import unknown tickets. |
+| `IMPACT_ISSUE_IMPORT_FULL_MAX_LOOKUPS` | `5000` | Tracker lookups a full-history ticket scan may make to import unknown tickets. |
+| `IMPACT_ISSUE_SCAN_SYMBOL_PINS` | `true` | Ticket scans read each commit's diff and pin the changed functions or classes; `false` pins whole files only (cheaper on providers without a server-side diff). |
 
 ## Multi-Tenant Deployments
 

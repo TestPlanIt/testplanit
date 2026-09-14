@@ -397,6 +397,7 @@ function matchesWhere(item: FakeCase, where: any): boolean {
       case "caseTags":
       case "caseIssues":
       case "attachments":
+      case "codePins":
         return matchesRelation([], value, () => true);
       default:
         throw new Error(`fake db: unsupported where key ${key}`);
@@ -414,7 +415,8 @@ interface FakeReview {
 function createFakeDb(
   cases: FakeCase[],
   fields: FakeField[],
-  review?: FakeReview
+  review?: FakeReview,
+  impactEnabled = false
 ) {
   const idSelectWheres: unknown[] = [];
   const matching = (where: unknown) =>
@@ -511,6 +513,7 @@ function createFakeDb(
     projects: {
       findUnique: async () => ({
         reviewWorkflowEnabled: review?.enabled === true,
+        impactEnabled,
       }),
     },
     reviewRequest: {
@@ -826,5 +829,46 @@ describe("computeRepositoryCaseFacetCounts — inReview", () => {
     });
 
     expect(result.totalCount).toBe(3);
+  });
+});
+
+describe("computeRepositoryCaseFacetCounts — codePins", () => {
+  it("omits the facet entirely when Impact Analysis is off", async () => {
+    const { db } = createFakeDb(FIXTURE_CASES, [SEVERITY]);
+
+    const result = await computeRepositoryCaseFacetCounts(db, {
+      projectId: PROJECT_ID,
+      predicates: [],
+    });
+
+    expect(result.codePins).toBeUndefined();
+    expect(result.dimensionTotals.codePins).toBeUndefined();
+  });
+
+  it("splits the base into with / without pins when it is on", async () => {
+    const { db } = createFakeDb(FIXTURE_CASES, [SEVERITY], undefined, true);
+
+    const result = await computeRepositoryCaseFacetCounts(db, {
+      projectId: PROJECT_ID,
+      predicates: [],
+    });
+
+    // The fake rows carry no pins, so every case lands in the second bucket.
+    expect(result.codePins).toEqual([
+      { value: true, count: 0 },
+      { value: false, count: FIXTURE_CASES.length },
+    ]);
+    expect(result.dimensionTotals.codePins).toBe(FIXTURE_CASES.length);
+  });
+
+  it("drops a codePins predicate while Impact Analysis is off", async () => {
+    const { db } = createFakeDb(FIXTURE_CASES, [SEVERITY]);
+
+    const result = await computeRepositoryCaseFacetCounts(db, {
+      projectId: PROJECT_ID,
+      predicates: [{ dimension: "codePins", operator: "is", values: [1] }],
+    });
+
+    expect(result.totalCount).toBe(FIXTURE_CASES.length);
   });
 });

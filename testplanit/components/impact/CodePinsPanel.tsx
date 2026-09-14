@@ -1,5 +1,6 @@
 "use client";
 
+import { CodeRepositoryName } from "@/components/CodeRepositoryName";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import {
   AlertTriangle,
@@ -10,7 +11,7 @@ import {
   X,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -100,6 +101,7 @@ export function CodePinsPanel({
       impactEnabled: true,
       codeRepositoryConfigs: {
         where: { purpose: "IMPACT" },
+        orderBy: { id: "asc" },
         select: {
           id: true,
           branch: true,
@@ -111,8 +113,24 @@ export function CodePinsPanel({
     },
   });
 
-  const impactConfig = project?.codeRepositoryConfigs?.[0] ?? null;
+  const impactConfigs = useMemo(
+    () => project?.codeRepositoryConfigs ?? [],
+    [project?.codeRepositoryConfigs]
+  );
+  const impactConfig = impactConfigs[0] ?? null;
+  const multiRepository = impactConfigs.length > 1;
   const enabled = project?.impactEnabled === true && impactConfig !== null;
+  const repositoryOptions = useMemo(
+    () =>
+      impactConfigs.map((config) => ({
+        configId: config.id,
+        repositoryId: config.repositoryId,
+        name: config.repository.name,
+      })),
+    [impactConfigs]
+  );
+  const configFor = (configId: number) =>
+    impactConfigs.find((config) => config.id === configId) ?? null;
 
   const {
     pins,
@@ -183,25 +201,52 @@ export function CodePinsPanel({
           <Pin className="w-5 h-5 shrink-0" />
           <span className="shrink-0">{t("title")}</span>
           {/* Badged so the repository reads as the connected source, not as
-              a subtitle of the card. */}
-          <Badge
-            variant="outline"
-            className="flex items-center gap-1 min-w-0 font-normal"
-            data-testid="case-code-pins-repository"
-          >
-            <GitBranch className="h-3 w-3 shrink-0" />
-            <span className="truncate">{impactConfig.repository.name}</span>
-            {impactConfig.branch && (
-              <>
-                <span aria-hidden="true" className="text-muted-foreground">
-                  {"·"}
-                </span>
-                <span className="font-mono truncate">
-                  {impactConfig.branch}
-                </span>
-              </>
-            )}
-          </Badge>
+              a subtitle of the card. With several repositories each row
+              names its own, so the badge only counts them. */}
+          {multiRepository ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge
+                  variant="outline"
+                  className="flex items-center gap-1 min-w-0 font-normal"
+                  data-testid="case-code-pins-repository"
+                >
+                  <GitBranch className="h-3 w-3 shrink-0" />
+                  <span className="truncate">
+                    {t("repositoriesCount", { count: impactConfigs.length })}
+                  </span>
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent>
+                <ul
+                  className="space-y-0.5"
+                  data-testid="case-code-pins-repository-list"
+                >
+                  {impactConfigs.map((config) => (
+                    <li key={config.id}>
+                      <CodeRepositoryName
+                        name={config.repository.name}
+                        branch={config.branch}
+                        iconClassName="text-current opacity-80"
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <Badge
+              variant="outline"
+              className="flex items-center gap-1 min-w-0 font-normal"
+              data-testid="case-code-pins-repository"
+            >
+              <CodeRepositoryName
+                name={impactConfig.repository.name}
+                branch={impactConfig.branch}
+                iconClassName="h-3 w-3 text-current"
+              />
+            </Badge>
+          )}
         </CardTitle>
         {!readOnly && (
           <Button
@@ -225,6 +270,11 @@ export function CodePinsPanel({
           <Table className="table-fixed w-full min-w-[660px]">
             <TableHeader>
               <TableRow>
+                {multiRepository && (
+                  <TableHead className="w-[160px] truncate">
+                    {tCommon("pageTitles.repository")}
+                  </TableHead>
+                )}
                 <TableHead className="truncate">{t("fileLabel")}</TableHead>
                 <TableHead className="w-[150px] truncate">
                   {t("location")}
@@ -267,6 +317,15 @@ export function CodePinsPanel({
                     key={pin.id}
                     data-testid={`case-code-pin-${pin.id}`}
                   >
+                    {multiRepository && (
+                      <TableCell>
+                        <CodeRepositoryName
+                          name={configFor(pin.configId)?.repository.name ?? "—"}
+                          className="max-w-full text-sm"
+                          data-testid={`case-code-pin-repository-${pin.id}`}
+                        />
+                      </TableCell>
+                    )}
                     <TableCell>
                       <div className="flex items-center gap-2 min-w-0">
                         <span
@@ -433,6 +492,7 @@ export function CodePinsPanel({
           projectId={projectId}
           configId={impactConfig.id}
           repositoryId={impactConfig.repositoryId}
+          repositories={repositoryOptions}
           caseId={caseId}
           onCreated={handleCreated}
         />
@@ -447,8 +507,10 @@ export function CodePinsPanel({
             if (!next) setEditingPin(null);
           }}
           projectId={projectId}
-          configId={impactConfig.id}
-          repositoryId={impactConfig.repositoryId}
+          configId={(configFor(editingPin.configId) ?? impactConfig).id}
+          repositoryId={
+            (configFor(editingPin.configId) ?? impactConfig).repositoryId
+          }
           caseId={caseId}
           pin={editingPin}
           onUpdated={handleUpdated}

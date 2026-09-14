@@ -91,6 +91,10 @@ describe("readImpactConfig", () => {
       IMPACT_ISSUE_SCAN_MAX_COMMITS: "50",
       IMPACT_ISSUE_SCAN_MAX_COMMIT_FETCHES: "7",
       IMPACT_ISSUE_SCAN_MAX_FILES_PER_COMMIT: "12",
+      IMPACT_ISSUE_SCAN_FULL_MAX_COMMITS: "500",
+      IMPACT_ISSUE_SCAN_FULL_MAX_COMMIT_FETCHES: "40",
+      IMPACT_ISSUE_IMPORT_MAX_LOOKUPS: "3",
+      IMPACT_ISSUE_IMPORT_FULL_MAX_LOOKUPS: "9",
     });
     expect(cfg).toMatchObject({
       issueMaxCommitFetches: 5,
@@ -98,6 +102,27 @@ describe("readImpactConfig", () => {
       issueScanMaxCommits: 50,
       issueScanMaxCommitFetches: 7,
       issueScanMaxFilesPerCommit: 12,
+      issueScanFullMaxCommits: 500,
+      issueScanFullMaxCommitFetches: 40,
+      issueImportMaxLookups: 3,
+      issueImportFullMaxLookups: 9,
     });
+  });
+
+  it("defaults the full-scan and import knobs", () => {
+    expect(readImpactConfig({})).toMatchObject({
+      issueScanFullMaxCommits: 20000,
+      issueScanFullMaxCommitFetches: 2000,
+      issueImportMaxLookups: 100,
+      issueImportFullMaxLookups: 5000,
+      issueScanSymbolPins: true,
+    });
+  });
+
+  it("lets the symbol-pin derivation be switched off", () => {
+    expect(
+      readImpactConfig({ IMPACT_ISSUE_SCAN_SYMBOL_PINS: "false" })
+        .issueScanSymbolPins
+    ).toBe(false);
   });
 });

@@ -11,6 +11,7 @@ const cfg = { historyLookbackDays: 365, historyMaxAnalyses: 25 };
 function input(overrides: Partial<HistoryLayerInput> = {}): HistoryLayerInput {
   return {
     projectId: 374,
+    configId: 41,
     analysisId: 900,
     changedPaths: ["lib/auth.ts", "lib/session.ts"],
     changedDirs: ["lib"],
@@ -95,6 +96,8 @@ describe("runHistoryLayer", () => {
       new Date(now.getTime() - 30 * DAY)
     );
     expect(args.where.id).toEqual({ not: 900 });
+    expect(args.where.projectId).toBe(374);
+    expect(args.where.configId).toBe(41);
     expect(args.where.testRunId).toEqual({ not: null });
     expect(args.where.isDeleted).toBe(false);
   });

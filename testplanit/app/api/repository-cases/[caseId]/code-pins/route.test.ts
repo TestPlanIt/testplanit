@@ -202,6 +202,51 @@ describe("GET /api/repository-cases/[caseId]/code-pins", () => {
     );
   });
 
+  it("checks each repository's pins against its own config", async () => {
+    const pins = [
+      pinRow({ id: 1, configId: 5 }),
+      pinRow({ id: 2, configId: 9, filePath: "services/api/a.ts" }),
+    ];
+    db.repositoryCaseCodePin.findMany.mockResolvedValue(pins);
+    const loadedOther = {
+      config: { ...loaded.config, id: 9, repositoryId: 33 },
+      adapter: { kind: "other-adapter" },
+    };
+    (loadRepoConfigForUser as any).mockImplementation(
+      async (_s: unknown, configId: number) =>
+        configId === 9 ? loadedOther : loaded
+    );
+    const staleOther = {
+      stale: true,
+      staleReason: "FILE_DELETED",
+      staleDismissed: false,
+      checkedSha: SHA,
+    };
+    (computePinStaleness as any).mockImplementation(
+      async (config: { id: number }) =>
+        config.id === 9 ? new Map([[2, staleOther]]) : new Map()
+    );
+
+    const res = await GET(getRequest(), makeParams());
+
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.stalenessError).toBeNull();
+    expect(json.pins[0]).toMatchObject({ id: 1, staleness: null });
+    expect(json.pins[1]).toMatchObject({ id: 2, staleness: staleOther });
+    expect(loadRepoConfigForUser).toHaveBeenCalledTimes(2);
+    expect(computePinStaleness).toHaveBeenCalledWith(
+      loaded.config,
+      loaded.adapter,
+      [pins[0]]
+    );
+    expect(computePinStaleness).toHaveBeenCalledWith(
+      loadedOther.config,
+      loadedOther.adapter,
+      [pins[1]]
+    );
+  });
+
   it("reports stalenessError and still returns the pins when the check throws", async () => {
     db.repositoryCaseCodePin.findMany.mockResolvedValue([pinRow()]);
     (computePinStaleness as any).mockRejectedValue(

@@ -235,6 +235,19 @@ export const IN_REVIEW_DIMENSION_DEF: FilterDimension = {
   operators: BOOLEAN_OPERATORS,
 };
 
+/**
+ * Impact-only repo dimension: cases with at least one live Code Pin. Exists
+ * only where the project has Impact Analysis enabled, so a shared link with
+ * a `codePins` predicate degrades to "no such filter" elsewhere.
+ */
+export const CODE_PINS_DIMENSION = "codePins";
+export const CODE_PINS_DIMENSION_DEF: FilterDimension = {
+  key: CODE_PINS_DIMENSION,
+  scope: "repo",
+  valueType: "boolean",
+  operators: BOOLEAN_OPERATORS,
+};
+
 export const RUN_DIMENSIONS: readonly FilterDimension[] = [
   {
     key: "status",
@@ -318,6 +331,8 @@ export interface BuildFilterDimensionsOptions {
    * silently filtering by a feature the project does not run.
    */
   includeInReview?: boolean;
+  /** Include the `codePins` dimension: only where Impact Analysis is enabled. */
+  includeCodePins?: boolean;
 }
 
 export function buildFilterDimensions(
@@ -327,6 +342,7 @@ export function buildFilterDimensions(
     dynamicFields,
     includeRunDimensions = false,
     includeInReview = false,
+    includeCodePins = false,
   } = options;
   const registry = new Map<string, FilterDimension>();
 
@@ -335,6 +351,9 @@ export function buildFilterDimensions(
   }
   if (includeInReview) {
     registry.set(IN_REVIEW_DIMENSION_DEF.key, IN_REVIEW_DIMENSION_DEF);
+  }
+  if (includeCodePins) {
+    registry.set(CODE_PINS_DIMENSION_DEF.key, CODE_PINS_DIMENSION_DEF);
   }
   if (includeRunDimensions) {
     for (const dimension of RUN_DIMENSIONS) {

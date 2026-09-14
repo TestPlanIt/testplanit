@@ -456,7 +456,9 @@
         "urlRequired": "URL is required",
         "invalidUrl": "Invalid URL format"
       },
-      "worker": "Worker"
+      "worker": "Worker",
+      "hasCodePins": "Has Code Pins",
+      "noCodePins": "No Code Pins"
     },
     "filter": {
       "placeholder": "Filter {item}..."
@@ -2238,7 +2240,7 @@
       },
       "impact": {
         "title": "Impact Analysis",
-        "description": "Enable test impact analysis and connect the repository of the application under test.",
+        "description": "Enable test impact analysis and connect the repositories of the application under test.",
         "enableLabel": "Enable Impact Analysis",
         "enableDescription": "Allow team members to select affected tests from code changes when composing a test run.",
         "enabledToast": "Impact Analysis enabled",
@@ -2251,7 +2253,7 @@
         },
         "repository": {
           "title": "Application Repository",
-          "description": "Select the repository that holds the application under test.",
+          "description": "Select a repository that holds part of the application under test. A project tested across several services can connect one repository per service.",
           "placeholder": "Select a code repository...",
           "branchLabel": "Branch",
           "branchPlaceholder": "Select a branch...",
@@ -2301,15 +2303,42 @@
         },
         "tickets": {
           "title": "Linked Tickets",
-          "description": "Commits that name a ticket (PROJ-123, #42, AB#42) become whole-file Code Pins on every linked test case, so later changes to those files find the cases again.",
+          "description": "Commits that name a ticket (PROJ-123, #42, AB#42) become Code Pins on every test case linked to that ticket — on the functions or classes the commit changed where the diff shows them, otherwise on the whole file — so later changes to that code find the cases again. A named ticket TestPlanIt does not hold yet is imported from the project's issue tracker so it can be linked.",
           "enableLabel": "Derive Code Pins from commit messages",
-          "enableDescription": "Scans recent commits on the branch on every cache refresh. Turn off to keep analyses reading ticket keys from the analyzed commits only.",
+          "enableDescription": "Scans recent commits on the branch on every cache refresh. Turn off to keep analyses reading ticket keys from the analyzed commits only; manual scans still run.",
           "lastScan": "Last scan: {date}",
           "never": "Not scanned yet",
-          "summary": "{commits, plural, one {# commit} other {# commits}} scanned · {matched} named a linked ticket · {created} created · {updated} updated · {removed} removed",
           "skippedLarge": "{count, plural, one {# commit was} other {# commits were}} skipped as too large to pin.",
-          "fetchCapped": "Not every matching commit was read; the rest are picked up on the next refresh.",
-          "error": "Scan failed: {error}"
+          "fetchCapped": "Not every commit that named a linked ticket had its files read this pass; the rest are picked up on the next scan.",
+          "error": "Scan failed: {error}",
+          "scanRecent": "Rescan Recent Commits",
+          "scanFull": "Scan Full History",
+          "scanFullHint": "Full history walks every commit on the branch and backfills pins for existing tickets. Commits already read are served from a cache, and a walk that stopped at the cap continues from there next time.",
+          "scanStarted": "Ticket scan queued. This card updates as it runs.",
+          "scanStillRunning": "The ticket scan is still running in the background. It'll update here when it finishes.",
+          "scanFailedToStart": "Could not start the ticket scan",
+          "runningRecent": "Scanning recent commits…",
+          "runningFull": "Scanning full history…",
+          "runningProgress": "{commits, number} commits read · {matched, number} named a linked ticket · {fetched, number} of those inspected",
+          "fullBadge": "Full history",
+          "imported": "{imported, plural, =0 {No new tickets were imported from the tracker.} one {# ticket was imported from the tracker.} other {# tickets were imported from the tracker.}}",
+          "fullCapped": "The walk stopped at {count, number} commits before reaching the start of the branch. Run Scan Full History again to continue from where it stopped.",
+          "stale": "A scan started {date} never reported back — the worker may have been restarted. Queue it again to continue.",
+          "summaryCommits": "{commits, plural, one {# commit} other {# commits}} read{cached, plural, =0 {} other { ({cached, number} from the commit cache)}} · {naming, number} named a ticket · {tickets, plural, one {# distinct ticket} other {# distinct tickets}}",
+          "summaryPins": "Pins: {created, number} created · {updated, number} updated · {removed, number} removed",
+          "noLinkedHint": "Tickets only pin test cases once a test case is linked to them. Link cases to the imported tickets, then rescan.",
+          "importFailuresTitle": "Keys not found in the tracker ({shown} of {total}):",
+          "windowCapped": "Only the newest {count, number} commits were read (the recent-window cap). Use Scan Full History to read older ones.",
+          "runningWalk": "{commits, number} commits read so far{cached, plural, =0 {} other { ({cached, number} from the commit cache)}} — tickets are looked up once the walk finishes",
+          "runningImport": "{commits, number} commits read · importing tickets: {lookups, number} looked up in the tracker · {imported, number} imported",
+          "summaryCommitsOnly": "{commits, plural, one {# commit} other {# commits}} read",
+          "importSkipped": "{skipped, plural, one {# key was} other {# keys were}} not looked up yet because one scan makes a limited number of tracker lookups. Run the scan again to continue.",
+          "cancelRequested": "Cancel requested. The scan stops at its next step; commits already read stay cached.",
+          "cancelled": "Scan cancelled {date}. Commits read before the cancel are kept in the commit cache; pins were not updated.",
+          "importMoved": "{moved, plural, one {# key is an old name} other {# keys are old names}} of tickets already imported; they were moved or renamed in the tracker.",
+          "importFailed": "{failed, plural, one {# key was} other {# keys were}} not found in the tracker, listed below.",
+          "summaryMatched": "{matched, plural, one {# commit} other {# commits}} named a ticket linked to a test case",
+          "summarySymbolPins": "({count, number} of the created pins target a function or class rather than a whole file.)"
         },
         "markers": {
           "title": "Repository Markers",
@@ -2345,7 +2374,28 @@
         "disconnectWarning2": "Remove all cached repository files",
         "disconnectWarning3": "Remove path pattern and branch configurations",
         "disconnectSuccess": "Application repository disconnected",
-        "disconnectError": "Failed to disconnect the application repository"
+        "disconnectError": "Failed to disconnect the application repository",
+        "repositories": {
+          "title": "Connected Repositories",
+          "description": "Every repository this project analyzes. Each keeps its own branch, path patterns, cache, and Code Pins.",
+          "connect": "Connect Repository",
+          "allConnected": "Every registered repository is already connected.",
+          "columnCache": "Cache",
+          "cacheDisabled": "Caching off",
+          "edit": "Edit connection",
+          "connectTitle": "Connect a repository",
+          "editTitle": "Edit {name}",
+          "view": "View connection",
+          "connectDescription": "Choose a registered repository of the application under test and say which branch and paths to read.",
+          "editDescription": "Change the branch, path patterns, cache, and ticket scanning for this connection.",
+          "viewDescription": "How this repository is connected. Refresh the cache or run a ticket scan from here; use Edit to change settings.",
+          "empty": "No repositories connected yet",
+          "emptyDescription": "Connect the repository of the application under test to start analyzing changes.",
+          "lastScan": "{created, plural, one {# pin} other {# pins}} created by the last scan",
+          "scanFailed": "Last scan failed",
+          "scanCancelled": "Last scan cancelled"
+        },
+        "initialScanStarted": "Fetching repository files and scanning for repository markers and linked tickets…"
       }
     },
     "matrix": {
@@ -3916,7 +3966,8 @@
       "viewerFailed": "Could not load the file.",
       "viewerLoading": "Loading file…",
       "viewerTooLarge": "This file is too large to display. Enter the line numbers instead.",
-      "wholeFile": "Whole file"
+      "wholeFile": "Whole file",
+      "repositoriesCount": "{count, plural, one {# repository} other {# repositories}}"
     },
     "diffView": {
       "added": "Added line",
@@ -4510,8 +4561,11 @@
         "branchesFailed": "Could not list branches.",
         "commitsFailed": "Could not load commits.",
         "disabled": "Impact is not enabled for this project.",
-        "noConfig": "Connect the application repository in project settings first."
-      }
+        "noConfig": "Connect the application repository in project settings first.",
+        "configRequired": "Choose a repository to analyze."
+      },
+      "repositoryPlaceholder": "Select a repository...",
+      "chooseRepository": "Choose which of the project's connected repositories holds the changes to analyze."
     }
   },
   "admin": {

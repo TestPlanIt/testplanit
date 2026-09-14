@@ -47,6 +47,13 @@ export interface IssueKeyResolution {
   created?: boolean;
   /** Set instead of `issueId` when this key could not be resolved. */
   error?: string;
+  /**
+   * Why, when `error` is set. `moved` means the tracker answered for the key
+   * but under a different current key that TestPlanIt already holds — the
+   * ticket was moved or renamed — so nothing needed writing.
+   */
+  code?:
+    "empty" | "lookup_cap" | "upstream" | "locked" | "other_project" | "moved";
 }
 
 export interface ResolveIssueKeysOptions {
@@ -164,7 +171,7 @@ export async function resolveIssueKeys({
   for (const key of keys) {
     const trimmed = typeof key === "string" ? key.trim() : "";
     if (!trimmed) {
-      results.set(key, { key, error: "Issue key is empty." });
+      results.set(key, { key, error: "Issue key is empty.", code: "empty" });
       continue;
     }
     const aliases = byTrimmed.get(trimmed) ?? [];
@@ -199,6 +206,7 @@ export async function resolveIssueKeys({
     if (lookups >= maxLookups) {
       record({
         error: `Not resolved: this request already made ${maxLookups} tracker lookups. Split the batch or link this issue separately.`,
+        code: "lookup_cap",
       });
       continue;
     }
@@ -218,6 +226,7 @@ export async function resolveIssueKeys({
         error:
           refresh.error ??
           `Could not resolve '${trimmed}' from the ${resolved.provider} integration.`,
+        code: "upstream",
       });
       continue;
     }
@@ -239,6 +248,7 @@ export async function resolveIssueKeys({
     if (refresh.locked) {
       record({
         error: `'${trimmed}' is being synced by another request; retry shortly.`,
+        code: "locked",
       });
       continue;
     }
@@ -255,12 +265,19 @@ export async function resolveIssueKeys({
       },
       select: { projectId: true },
     });
-    record({
-      error:
-        elsewhere && elsewhere.projectId !== projectId
-          ? `'${trimmed}' is already tracked by project ${elsewhere.projectId} on this integration and cannot be linked from project ${projectId}.`
-          : `'${trimmed}' resolved upstream but no local issue was written for project ${projectId}.`,
-    });
+    // The sync matched the tracker's answer to a row under another key: the
+    // ticket was moved or renamed, and its current key is already here.
+    record(
+      elsewhere && elsewhere.projectId !== projectId
+        ? {
+            error: `'${trimmed}' is already tracked by project ${elsewhere.projectId} on this integration and cannot be linked from project ${projectId}.`,
+            code: "other_project",
+          }
+        : {
+            error: `'${trimmed}' now has a different key in the tracker (it was moved or renamed); the ticket is already in TestPlanIt under its current key.`,
+            code: "moved",
+          }
+    );
   }
 
   return results;

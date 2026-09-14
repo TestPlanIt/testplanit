@@ -380,6 +380,7 @@ export const processor = async (
     await enterPhase("scoring_history", { candidates: pathLayer.layer.size });
     const history = await runHistoryLayer(db, {
       projectId,
+      configId,
       analysisId,
       changedPaths,
       changedDirs,

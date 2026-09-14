@@ -234,7 +234,11 @@ export function CommitPickerStep({
 
   useEffect(() => {
     let ignore = false;
-    fetch(`/api/projects/${projectId}/impact/analyses?take=10`)
+    const search = new URLSearchParams({
+      take: "10",
+      configId: String(config.id),
+    });
+    fetch(`/api/projects/${projectId}/impact/analyses?${search}`)
       .then(async (response) => {
         if (!response.ok) return { analyses: [] as PreviousAnalysis[] };
         return (await response.json()) as { analyses: PreviousAnalysis[] };
@@ -249,7 +253,7 @@ export function CommitPickerStep({
     return () => {
       ignore = true;
     };
-  }, [projectId]);
+  }, [projectId, config.id]);
 
   const fetchBranchOptions = useCallback(
     async (query: string) => {

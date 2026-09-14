@@ -405,6 +405,16 @@ const EXEMPT_EXTERNAL_KEY_LOOKUP_FILES = [
   // resolveIssueKeys.ts above), and its second read is the case-link join,
   // not an Issue read.
   "lib/services/impact/issueKeys.ts",
+  // Impact Analysis's ticket-scan importer. Its two reads answer "does the
+  // integration already hold this key?" before asking the tracker: one
+  // matches the keys named in commits on `externalKey`/`externalId` for the
+  // integration (any project — one local row per tracker ticket, and a case
+  // in any project links to it), the other lists the key prefixes the
+  // integration already holds as the fallback for a tracker whose project
+  // list cannot be read. Both are identity checks on externally-synced keys
+  // that select nothing for display; narrowing to defects would re-fetch a
+  // requirement row the integration already has and then refuse it.
+  "lib/services/repoCacheRefreshService.ts",
 ];
 
 // EXEMPT — ingestion and import must see every row kind, or importing (or

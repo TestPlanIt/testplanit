@@ -62,24 +62,28 @@ export async function GET(
       select: pinSelect,
     });
 
-    let staleness = new Map<number, unknown>();
+    const staleness = new Map<number, unknown>();
     let stalenessError: string | null = null;
-    const configId = pins[0]?.configId;
-    if (withStaleness && configId !== undefined) {
-      try {
-        const loaded = await loadRepoConfigForUser(session, configId, {
-          purpose: "IMPACT",
-        });
-        if (loaded) {
-          staleness = await computePinStaleness(
+    if (withStaleness) {
+      // Pins may span several connected repositories; each is checked
+      // against its own repository.
+      const configIds = [...new Set(pins.map((pin) => pin.configId))];
+      for (const configId of configIds) {
+        try {
+          const loaded = await loadRepoConfigForUser(session, configId, {
+            purpose: "IMPACT",
+          });
+          if (!loaded) continue;
+          const perConfig = await computePinStaleness(
             loaded.config,
             loaded.adapter,
-            pins
+            pins.filter((pin) => pin.configId === configId)
           );
+          for (const [pinId, value] of perConfig) staleness.set(pinId, value);
+        } catch (error) {
+          stalenessError =
+            error instanceof Error ? error.message : "Staleness check failed";
         }
-      } catch (error) {
-        stalenessError =
-          error instanceof Error ? error.message : "Staleness check failed";
       }
     }
 

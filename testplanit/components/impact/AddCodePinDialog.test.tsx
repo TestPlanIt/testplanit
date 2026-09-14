@@ -50,6 +50,43 @@ vi.mock("@/components/ui/async-combobox", () => ({
   },
 }));
 
+vi.mock("@/components/ui/select", () => ({
+  Select: ({ value, onValueChange, children }: any) => (
+    <div data-testid="select" data-value={value}>
+      {children}
+      <select
+        data-testid="select-native"
+        value={value}
+        onChange={(event) => onValueChange(event.target.value)}
+      >
+        {collectOptions(children)}
+      </select>
+    </div>
+  ),
+  SelectTrigger: ({ children, ...props }: any) => (
+    <div data-testid={props["data-testid"]}>{children}</div>
+  ),
+  SelectValue: () => null,
+  SelectContent: ({ children }: any) => <>{children}</>,
+  SelectItem: ({ value, children }: any) => (
+    <option value={value}>{children}</option>
+  ),
+}));
+
+/** Flatten SelectContent/SelectItem children into native <option>s. */
+function collectOptions(node: any): any {
+  if (Array.isArray(node)) return node.map(collectOptions);
+  if (!node || typeof node !== "object") return null;
+  if (node.props?.value !== undefined && node.type?.name !== "Select") {
+    return (
+      <option key={node.props.value} value={node.props.value}>
+        {node.props.children}
+      </option>
+    );
+  }
+  return collectOptions(node.props?.children);
+}
+
 vi.mock("@/components/code/CodeViewer", () => ({
   CodeViewer: ({ code, language, selection, onSelectionChange }: any) => (
     <div
@@ -698,6 +735,94 @@ describe("AddCodePinDialog", () => {
         name: { contains: "check", mode: "insensitive" },
       });
       expect(params.select).toEqual({ id: true, name: true });
+    });
+  });
+
+  describe("several connected repositories", () => {
+    const repositories = [
+      { configId: 5, repositoryId: 3, name: "acme/shop" },
+      { configId: 9, repositoryId: 4, name: "acme/payments" },
+    ];
+
+    it("shows no repository choice with a single connection", () => {
+      renderDialog({ repositories: [repositories[0]] });
+
+      expect(
+        screen.queryByTestId("code-pin-repository")
+      ).not.toBeInTheDocument();
+    });
+
+    it("starts on the given connection and lists the rest", () => {
+      renderDialog({ repositories });
+
+      expect(screen.getByTestId("code-pin-repository")).toBeInTheDocument();
+      expect(screen.getByTestId("select")).toHaveAttribute("data-value", "5");
+      expect(
+        screen.getByTestId("select-native").querySelectorAll("option")
+      ).toHaveLength(2);
+    });
+
+    it("lists files from the chosen repository and pins into it", async () => {
+      const { onCreated } = renderDialog({ repositories });
+      pickFile();
+
+      fireEvent.change(screen.getByTestId("select-native"), {
+        target: { value: "9" },
+      });
+
+      // The file belonged to the other repository.
+      expect(screen.getByTestId("code-pin-submit")).toBeDisabled();
+      await waitFor(() => {
+        expect(
+          (global.fetch as any).mock.calls.some(
+            ([url]: [string]) =>
+              url.includes("/api/code-repositories/4/files?") &&
+              url.includes("configId=9")
+          )
+        ).toBe(true);
+      });
+
+      pickFile("src/app.ts");
+      fireEvent.click(screen.getByTestId("code-pin-submit"));
+
+      await waitFor(() => expect(onCreated).toHaveBeenCalled());
+      const createCall = (global.fetch as any).mock.calls.find(
+        ([url, init]: [string, RequestInit]) =>
+          url === "/api/repository-cases/99/code-pins" &&
+          init?.method === "POST"
+      );
+      expect(JSON.parse(createCall[1].body)).toMatchObject({
+        configId: 9,
+        kind: "FILE",
+        filePath: "src/app.ts",
+      });
+    });
+
+    it("locks the repository while editing", () => {
+      renderDialog({
+        repositories,
+        pin: {
+          id: 1,
+          caseId: 99,
+          configId: 9,
+          kind: "FILE",
+          filePath: "src/app.ts",
+          startLine: null,
+          endLine: null,
+          symbol: null,
+          anchorSha: null,
+          source: "MANUAL",
+          note: null,
+          staleDismissedAt: null,
+          createdAt: "2026-09-01T00:00:00.000Z",
+          createdBy: { id: "u1", name: "Tester" },
+          staleness: null,
+        } as any,
+      });
+
+      expect(
+        screen.queryByTestId("code-pin-repository")
+      ).not.toBeInTheDocument();
     });
   });
 

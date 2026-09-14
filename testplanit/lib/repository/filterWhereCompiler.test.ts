@@ -91,6 +91,22 @@ describe("compileRepoPredicates — boolean dimensions", () => {
     ]);
   });
 
+  it("codePins is [1]/[0] → codePinsWhereClause with isDeleted guard", () => {
+    const registry = buildFilterDimensions({ includeCodePins: true });
+    const compile = (values: number[]) =>
+      compileRepoPredicates([predicate("codePins", "is", values)], registry);
+    expect(compile([1])).toEqual([
+      { codePins: { some: { isDeleted: false } } },
+    ]);
+    expect(compile([0])).toEqual([
+      { codePins: { none: { isDeleted: false } } },
+    ]);
+  });
+
+  it("drops a codePins predicate when the registry lacks the dimension", () => {
+    expect(compileOne(predicate("codePins", "is", [1]))).toEqual([]);
+  });
+
   it("skips a boolean predicate whose value is not 0/1", () => {
     expect(compileOne(predicate("automated", "is", [2]))).toEqual([]);
   });

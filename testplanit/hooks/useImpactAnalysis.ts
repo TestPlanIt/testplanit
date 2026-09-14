@@ -19,6 +19,7 @@ export type ImpactAnalysisStatus =
 export type ImpactAnalysisErrorCode =
   | "disabled"
   | "noConfig"
+  | "configRequired"
   | "queue"
   | "timeout"
   | "cancelled"
@@ -79,6 +80,8 @@ export interface ImpactAnalysisPayload {
 }
 
 export interface StartImpactAnalysisInput {
+  /** The connected repository to compare in; required when several are. */
+  configId?: number;
   base: string;
   head: string;
   notes?: string;
@@ -109,6 +112,7 @@ function toStartErrorCode(
 ): ImpactAnalysisErrorCode {
   if (code === "impact_disabled") return "disabled";
   if (code === "no_impact_config") return "noConfig";
+  if (code === "config_required") return "configRequired";
   if (httpStatus === 503) return "queue";
   return "generic";
 }
@@ -234,6 +238,7 @@ export function useImpactAnalysis(projectId: number) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            configId: input.configId,
             base: input.base,
             head: input.head,
             notes: input.notes,

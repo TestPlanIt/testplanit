@@ -9,7 +9,7 @@ description: Connect Git repositories that projects use for QuickScript (test au
 The **Administration → Code Repositories** page registers connections to Git repositories. A project connects a registered repository for either or both of two purposes:
 
 - **QuickScript** — the repository of your _test automation_ code. It supplies source-file context to AI-powered test export, so generated automation scripts follow the framework, fixtures, and page objects your team already uses instead of generic boilerplate. See [Project QuickScript settings](projects/settings/quickscript.md).
-- **Impact Analysis** — the repository of the _application under test_. It compares two of that repository's commits and lists the test cases the changes affect, and test cases can be pinned to its files. See [Project Impact Analysis settings](projects/settings/impact.md) and [Test Impact Analysis](impact.md).
+- **Impact Analysis** — the repositories of the _application under test_ (a project can connect several, one per service). It compares two commits of one of them and lists the test cases the changes affect, and test cases can be pinned to their files. See [Project Impact Analysis settings](projects/settings/impact.md) and [Test Impact Analysis](impact.md).
 - **Automated Execution** — the repository whose CI runs your automated cases. An execution target reuses the connection's credentials to start a GitHub Actions workflow or a GitLab pipeline from a test run. See [Project Automated Execution settings](projects/settings/automation.md) and [Automated Execution](automated-execution.md).
 
 :::note
@@ -87,6 +87,6 @@ For security, TestPlanIt blocks repository URLs that resolve to private or loopb
 ## Related pages
 
 - [Project QuickScript settings](projects/settings/quickscript.md) — connect a repository of test automation code to a project.
-- [Project Impact Analysis settings](projects/settings/impact.md) — connect the repository of the application under test to a project.
+- [Project Impact Analysis settings](projects/settings/impact.md) — connect the repositories of the application under test to a project.
 - [Test Impact Analysis](impact.md) — compare commits, select Affected Tests, and pin test cases to code.
 - [QuickScript Templates](quickscript-templates.md) — define the export templates AI generation follows.

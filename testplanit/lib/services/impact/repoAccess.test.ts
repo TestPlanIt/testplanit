@@ -26,9 +26,10 @@ import { getEnhancedDb } from "~/lib/auth/utils";
 import { createGitRepoAdapter } from "~/lib/integrations/adapters/GitRepoAdapter";
 import { resolveStoredCredentials } from "~/lib/integrations/credentials";
 import {
-  findImpactConfigId,
+  listImpactConfigIds,
   loadRepoConfigForUser,
   loadRepoConfigForWorker,
+  resolveImpactConfigId,
 } from "./repoAccess";
 
 const session = { user: { id: "user-1" } } as unknown as Session;
@@ -51,10 +52,11 @@ const configRow = {
 
 const fakeAdapter = { kind: "fake-adapter" };
 
-function makeEnhancedDb(row: unknown) {
+function makeEnhancedDb(row: unknown, rows: unknown[] = []) {
   return {
     projectCodeRepositoryConfig: {
       findFirst: vi.fn().mockResolvedValue(row),
+      findMany: vi.fn().mockResolvedValue(rows),
     },
   };
 }
@@ -238,24 +240,71 @@ describe("loadRepoConfigForWorker", () => {
   });
 });
 
-describe("findImpactConfigId", () => {
+describe("listImpactConfigIds", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("filters on purpose IMPACT for the project and returns the id", async () => {
-    const db = makeEnhancedDb({ id: 99 });
+  it("lists the project's IMPACT configs oldest first", async () => {
+    const db = makeEnhancedDb(null, [{ id: 99 }, { id: 120 }]);
 
-    await expect(findImpactConfigId(db, 4)).resolves.toBe(99);
-    expect(db.projectCodeRepositoryConfig.findFirst).toHaveBeenCalledWith({
+    await expect(listImpactConfigIds(db, 4)).resolves.toEqual([99, 120]);
+    expect(db.projectCodeRepositoryConfig.findMany).toHaveBeenCalledWith({
       where: { projectId: 4, purpose: "IMPACT" },
       select: { id: true },
+      orderBy: { id: "asc" },
     });
   });
 
-  it("returns null when the project has no Impact config", async () => {
-    const db = makeEnhancedDb(null);
+  it("returns an empty list when the project has no Impact config", async () => {
+    const db = makeEnhancedDb(null, []);
 
-    await expect(findImpactConfigId(db, 4)).resolves.toBeNull();
+    await expect(listImpactConfigIds(db, 4)).resolves.toEqual([]);
+  });
+});
+
+describe("resolveImpactConfigId", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("reports none when nothing is connected", async () => {
+    const db = makeEnhancedDb(null, []);
+
+    await expect(resolveImpactConfigId(db, 4)).resolves.toEqual({
+      error: "none",
+    });
+  });
+
+  it("uses the only config when none is requested", async () => {
+    const db = makeEnhancedDb(null, [{ id: 99 }]);
+
+    await expect(resolveImpactConfigId(db, 4)).resolves.toEqual({
+      configId: 99,
+    });
+  });
+
+  it("reports ambiguous when several are connected and none is requested", async () => {
+    const db = makeEnhancedDb(null, [{ id: 99 }, { id: 120 }]);
+
+    await expect(resolveImpactConfigId(db, 4, null)).resolves.toEqual({
+      error: "ambiguous",
+    });
+  });
+
+  it("accepts a requested config that belongs to the project", async () => {
+    const db = makeEnhancedDb(null, [{ id: 99 }, { id: 120 }]);
+
+    await expect(resolveImpactConfigId(db, 4, 120)).resolves.toEqual({
+      configId: 120,
+    });
+  });
+
+  it("rejects a requested config from another project or purpose", async () => {
+    const db = makeEnhancedDb(null, [{ id: 99 }]);
+
+    await expect(resolveImpactConfigId(db, 4, 7)).resolves.toEqual({
+      error: "unknown",
+    });
   });
 });

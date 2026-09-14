@@ -22,6 +22,15 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
   }),
 }));
 
+vi.mock("@/components/ui/tooltip", () => ({
+  Tooltip: ({ children }: any) => <>{children}</>,
+  TooltipTrigger: ({ children }: any) => <>{children}</>,
+  TooltipContent: ({ children }: any) => (
+    <div data-testid="tooltip-content">{children}</div>
+  ),
+  TooltipProvider: ({ children }: any) => <>{children}</>,
+}));
+
 vi.mock("@/components/ui/popover", () => ({
   Popover: ({ children }: any) => <div data-testid="popover">{children}</div>,
   PopoverTrigger: ({ children }: any) => (
@@ -39,6 +48,8 @@ vi.mock("./AddCodePinDialog", () => ({
     onUpdated,
     caseId,
     configId,
+    repositoryId,
+    repositories,
     pin,
   }: any) =>
     open ? (
@@ -46,6 +57,8 @@ vi.mock("./AddCodePinDialog", () => ({
         data-testid={pin ? "edit-code-pin-dialog" : "add-code-pin-dialog"}
         data-case-id={caseId}
         data-config-id={configId}
+        data-repository-id={repositoryId}
+        data-repositories={JSON.stringify(repositories ?? null)}
         data-pin-id={pin?.id}
       >
         <button
@@ -71,6 +84,13 @@ const IMPACT_CONFIG = {
   repositoryId: 3,
   cacheEnabled: true,
   repository: { name: "acme/shop" },
+};
+const SECOND_CONFIG = {
+  id: 6,
+  branch: null,
+  repositoryId: 4,
+  cacheEnabled: true,
+  repository: { name: "acme/payments" },
 };
 
 function setProject(
@@ -575,6 +595,82 @@ describe("CodePinsPanel", () => {
       renderWithClient(<CodePinsPanel caseId={99} projectId={7} />);
 
       expect(await screen.findByTestId("case-code-pin-edit-1")).toBeDisabled();
+    });
+  });
+
+  describe("several connected repositories", () => {
+    beforeEach(() => {
+      setProject({ configs: [IMPACT_CONFIG, SECOND_CONFIG] });
+    });
+
+    it("counts the repositories in the header and names each pin's own", async () => {
+      setPins([
+        makePin({ id: 1, configId: 5 }),
+        makePin({
+          id: 2,
+          configId: 6,
+          filePath: "services/payments/charge.ts",
+        }),
+      ]);
+
+      renderWithClient(<CodePinsPanel caseId={99} projectId={7} />);
+
+      expect(
+        await screen.findByTestId("case-code-pins-repository")
+      ).toHaveTextContent("repository.codePins.repositoriesCount");
+      // The badge's tooltip names every connected repository.
+      const list = screen.getByTestId("case-code-pins-repository-list");
+      expect(list).toHaveTextContent("acme/shop");
+      expect(list).toHaveTextContent("main");
+      expect(list).toHaveTextContent("acme/payments");
+      expect(
+        await screen.findByTestId("case-code-pin-repository-1")
+      ).toHaveTextContent("acme/shop");
+      expect(
+        screen.getByTestId("case-code-pin-repository-2")
+      ).toHaveTextContent("acme/payments");
+    });
+
+    it("shows no repository column with a single connection", async () => {
+      setProject({ configs: [IMPACT_CONFIG] });
+      setPins([makePin({ id: 1, configId: 5 })]);
+
+      renderWithClient(<CodePinsPanel caseId={99} projectId={7} />);
+
+      await screen.findByTestId("case-code-pin-1");
+      expect(
+        screen.queryByTestId("case-code-pin-repository-1")
+      ).not.toBeInTheDocument();
+      expect(screen.getByTestId("case-code-pins-repository")).toHaveTextContent(
+        "acme/shop"
+      );
+    });
+
+    it("offers every repository when adding and starts on the first", async () => {
+      renderWithClient(<CodePinsPanel caseId={99} projectId={7} />);
+      await waitFor(() =>
+        expect(screen.getByTestId("case-code-pins-add")).toBeInTheDocument()
+      );
+
+      fireEvent.click(screen.getByTestId("case-code-pins-add"));
+      const dialog = screen.getByTestId("add-code-pin-dialog");
+      expect(dialog).toHaveAttribute("data-config-id", "5");
+      expect(dialog).toHaveAttribute("data-repository-id", "3");
+      expect(JSON.parse(dialog.getAttribute("data-repositories")!)).toEqual([
+        { configId: 5, repositoryId: 3, name: "acme/shop" },
+        { configId: 6, repositoryId: 4, name: "acme/payments" },
+      ]);
+    });
+
+    it("edits a pin against the repository it belongs to", async () => {
+      setPins([makePin({ id: 2, configId: 6 })]);
+
+      renderWithClient(<CodePinsPanel caseId={99} projectId={7} />);
+      fireEvent.click(await screen.findByTestId("case-code-pin-edit-2"));
+
+      const dialog = screen.getByTestId("edit-code-pin-dialog");
+      expect(dialog).toHaveAttribute("data-config-id", "6");
+      expect(dialog).toHaveAttribute("data-repository-id", "4");
     });
   });
 });

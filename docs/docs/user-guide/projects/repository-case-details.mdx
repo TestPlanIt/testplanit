@@ -61,13 +61,14 @@ When the header is too narrow for labeled buttons (for example in the docked sid
 
 ## Code Pins
 
-When the project has [Impact Analysis](../impact.md) enabled and an application repository connected, a **Code Pins** panel follows the result history. It lists the code this case covers — a change inside a pinned block pulls the case into an analysis with the **Pin** reason. The panel header names the connected repository, and its branch when one is configured, and offers **Add pin**.
+When the project has [Impact Analysis](../impact.md) enabled and an application repository connected, a **Code Pins** panel follows the result history. It lists the code this case covers — a change inside a pinned block pulls the case into an analysis with the **Pin** reason. The panel header names the connected repository, and its branch when one is configured, and offers **Add pin**. When the project connects several repositories the header counts them instead, and each pin's row names its **Repository**.
 
 Each pin is a row with its **File** and note, its **Location** (a line range such as `L12–L40`, a symbol name, a glob pattern, or **Whole file**), its **Kind**, and its **Source** — **Manual**, **AI**, **Annotation**, **Map file**, or **Ticket** (derived from a commit that named a ticket the case is linked to). Hovering the location names the commit the pin is anchored at. A pin whose file, lines, or symbol can no longer be found at the branch tip carries a **Stale** badge with **Re-anchor** and **Dismiss** actions. Pins added here can be edited, or removed after a confirmation; pins that come from the repository (**Annotation** and **Map file**) have both actions disabled and are edited in the repository itself.
 
 **Add pin** opens the **Pin this case to code** dialog:
 
 *   **Pin to:** choose **Whole file**, **Lines**, **Symbol**, or **Glob pattern**.
+*   **Repository:** shown only when the project connects more than one repository — pick the one the file lives in.
 *   **File:** for the first three kinds, pick the file from the repository's cached file list (type to filter). If no list is cached yet, a project admin needs to refresh the repository cache; with caching turned off, files are listed live from the provider.
 *   **Lines:** the file opens with numbered lines — click a line number to start the range and shift-click another to end it, or type the **Start line** and **End line**. Files too large to display accept line numbers only.
 *   **Symbol:** pick from the declarations found in the file, or type a name the list does not offer.

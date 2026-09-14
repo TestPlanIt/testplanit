@@ -1,5 +1,6 @@
 "use client";
 
+import { CodeRepositoryName } from "@/components/CodeRepositoryName";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -9,10 +10,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { WizardStepIndicator } from "@/components/ui/WizardStepIndicator";
 import { GitCompareArrows, Radar, Radio, XCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useReducer } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useState } from "react";
 import {
   useImpactAnalysis,
   type ImpactAnalysisCaseRow,
@@ -27,6 +36,8 @@ export interface ImpactRepoConfig {
   id: number;
   repositoryId: number;
   branch: string | null;
+  /** Repository name, shown when the project connects several. */
+  name: string;
 }
 
 export type CompareFileStatus = "added" | "modified" | "deleted" | "renamed";
@@ -274,7 +285,8 @@ interface ImpactDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   projectId: number;
-  config: ImpactRepoConfig;
+  /** The project's connected Impact repositories; one is chosen per analysis. */
+  configs: ImpactRepoConfig[];
   currentSelection: number[];
   onAccept: (caseIds: number[], info: { analysisId: number }) => void;
 }
@@ -283,7 +295,7 @@ export function ImpactDialog({
   open,
   onOpenChange,
   projectId,
-  config,
+  configs,
   currentSelection,
   onAccept,
 }: ImpactDialogProps) {
@@ -293,8 +305,23 @@ export function ImpactDialog({
     impactDialogReducer,
     initialImpactDialogState
   );
+  // With one connected repository there is nothing to choose; with several
+  // the pick step starts on the repository.
+  const [configId, setConfigId] = useState<number | null>(
+    configs.length === 1 ? configs[0].id : null
+  );
+  const config = useMemo(
+    () => configs.find((item) => item.id === configId) ?? null,
+    [configs, configId]
+  );
   const analysis = useImpactAnalysis(projectId);
   const { start, cancel, reset } = analysis;
+
+  const handleConfigChange = useCallback((value: string) => {
+    setConfigId(Number(value));
+    // Branch and commits belong to the previous repository.
+    dispatch({ type: "RESET" });
+  }, []);
 
   const baseSha = state.base?.sha ?? null;
   const headSha = state.head?.sha ?? null;
@@ -302,6 +329,7 @@ export function ImpactDialog({
   useEffect(() => {
     if (
       !open ||
+      config === null ||
       state.step !== "diff" ||
       state.compare !== null ||
       state.compareError !== null ||
@@ -347,8 +375,7 @@ export function ImpactDialog({
     state.compareError,
     baseSha,
     headSha,
-    config.repositoryId,
-    config.id,
+    config,
   ]);
 
   useEffect(() => {
@@ -369,17 +396,19 @@ export function ImpactDialog({
         }
         reset();
         dispatch({ type: "RESET" });
+        setConfigId(configs.length === 1 ? configs[0].id : null);
       }
       onOpenChange(nextOpen);
     },
-    [state.step, isAnalysisActive, cancel, reset, onOpenChange]
+    [state.step, isAnalysisActive, cancel, reset, onOpenChange, configs]
   );
 
   const handleAnalyze = useCallback(() => {
-    if (!state.compare) return;
+    if (!state.compare || config === null) return;
     const { baseSha: base, headSha: head } = state.compare;
     dispatch({ type: "ANALYSIS_STARTED" });
     start({
+      configId: config.id,
       base,
       head,
       excludeCaseIds: currentSelection,
@@ -393,7 +422,7 @@ export function ImpactDialog({
         });
       })
       .catch(() => {});
-  }, [state.compare, start, currentSelection, analysis.analysisId]);
+  }, [state.compare, config, start, currentSelection, analysis.analysisId]);
 
   const handleCancelAnalysis = useCallback(() => {
     cancel();
@@ -444,8 +473,45 @@ export function ImpactDialog({
         />
 
         <div className="min-h-0 flex-1 overflow-y-auto px-1">
-          {state.step === "pick" && (
+          {state.step === "pick" && configs.length > 1 && (
+            <div className="mb-4 space-y-1">
+              <Label htmlFor="impact-repository">
+                {tCommon("pageTitles.repository")}
+              </Label>
+              <Select
+                value={configId === null ? "" : String(configId)}
+                onValueChange={handleConfigChange}
+              >
+                <SelectTrigger
+                  id="impact-repository"
+                  data-testid="impact-repository"
+                >
+                  <SelectValue placeholder={t("repositoryPlaceholder")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {configs.map((item) => (
+                    <SelectItem key={item.id} value={String(item.id)}>
+                      <CodeRepositoryName
+                        name={item.name}
+                        branch={item.branch}
+                      />
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {config === null && (
+                <p
+                  className="text-sm text-muted-foreground"
+                  data-testid="impact-repository-hint"
+                >
+                  {t("chooseRepository")}
+                </p>
+              )}
+            </div>
+          )}
+          {state.step === "pick" && config !== null && (
             <CommitPickerStep
+              key={config.id}
               projectId={projectId}
               config={config}
               branch={state.branch}
@@ -480,7 +546,7 @@ export function ImpactDialog({
               error={analysis.error}
             />
           )}
-          {state.step === "review" && (
+          {state.step === "review" && config !== null && (
             <AffectedTestsStep
               projectId={projectId}
               config={config}

@@ -19,7 +19,7 @@ Every affected test shows why it was selected. The signals, in the order they ar
 ## Prerequisites
 
 - A code repository registered by a system administrator under [Administration → Code Repositories](code-repositories.md).
-- The project's [Impact Analysis settings](projects/settings/impact.md) page with **Enable Impact Analysis** turned on and an **Application Repository** connected.
+- The project's [Impact Analysis settings](projects/settings/impact.md) page with **Enable Impact Analysis** turned on and at least one **Application Repository** connected. A project whose application spans several repositories — one per service, say — can connect each of them.
 - Optionally, an active [LLM integration](llm-integrations.md) for the project. Without one, the analysis runs on Code Pins, keyword matching, and run history only.
 
 ## Running an analysis
@@ -29,6 +29,8 @@ Every affected test shows why it was selected. The signals, in the order they ar
 Clicking it opens the **Impact** dialog, which walks through four steps.
 
 ### 1. Commits
+
+When the project connects more than one repository, the step starts with a **Repository** choice: pick the repository whose changes you want to analyze, and the branch and commit pickers below are that repository's. An analysis always compares two commits of one repository; to cover changes in several services, run **Analyze impact** once per repository — each accepted result is added to the run's selection.
 
 **Choose changes by** offers two ways to say what changed. Both end at the same place — a base commit and a head commit — so the rest of the wizard is identical.
 
@@ -144,17 +146,18 @@ A **Code Pin** links a test case to the code it covers. Any change inside a pinn
 
 1. On the test case page, click **Add pin** in the Code Pins panel.
 2. Choose the kind under **Pin to**.
-3. For file, line, and symbol pins, pick the **File** from the cached file list (type to filter). The picker shows how many files are cached and when. If no list is cached yet, ask a project admin to refresh the repository cache; with file caching turned off, files are listed live from the provider instead.
-4. For **Lines**, the file opens in a viewer with numbered lines: click a line number to start the range and shift-click another to extend it, or type the **Start line** and **End line**. Files too large to display take line numbers only.
-5. For **Symbol**, pick from the declarations found in the file — functions, classes, types, and the like — or type a name the list does not offer. Choosing from the list avoids a typo that would leave the pin unable to find its block.
-6. For **Glob pattern**, type the pattern. A live count shows how many cached files match.
-7. Optionally add a **Note** explaining why the case covers this code, then click **Add pin**.
+3. When the project connects more than one repository, choose the **Repository** the file lives in first.
+4. For file, line, and symbol pins, pick the **File** from the cached file list (type to filter). The picker shows how many files are cached and when. If no list is cached yet, ask a project admin to refresh the repository cache; with file caching turned off, files are listed live from the provider instead.
+5. For **Lines**, the file opens in a viewer with numbered lines: click a line number to start the range and shift-click another to extend it, or type the **Start line** and **End line**. Files too large to display take line numbers only.
+6. For **Symbol**, pick from the declarations found in the file — functions, classes, types, and the like — or type a name the list does not offer. Choosing from the list avoids a typo that would leave the pin unable to find its block.
+7. For **Glob pattern**, type the pattern. A live count shows how many cached files match.
+8. Optionally add a **Note** explaining why the case covers this code, then click **Add pin**.
 
 A pin is anchored at the current tip of the configured branch. A pin that already exists for the case is refused as a duplicate. The dialog also reports a file that does not exist at the branch tip, a line range outside the file, a symbol it cannot find, and a pinned block that is too large.
 
 ### The panel
 
-The panel's header names the connected repository. Each pin is a row with its **File** (and note beneath it), **Location** (`L12–L40`, the symbol, the glob pattern, or **Whole file**), **Kind**, and **Source**; hovering the location names the commit the pin is anchored at. The **Source** badge shows where the pin came from:
+The panel's header names the connected repository — or counts them, when the project connects several, in which case each row also names its **Repository**. Each pin is a row with its **File** (and note beneath it), **Location** (`L12–L40`, the symbol, the glob pattern, or **Whole file**), **Kind**, and **Source**; hovering the location names the commit the pin is anchored at. The **Source** badge shows where the pin came from:
 
 - **Manual** — added from the test case page.
 - **AI** — suggested by an analysis rather than entered by hand.
@@ -222,7 +225,11 @@ The connection is used in two directions:
 - **In an analysis.** Every commit between the base and head is read for ticket keys. Cases linked to a named ticket are selected with the **Ticket** reason at a score just below a Code Pin, and they count as covering the files those particular commits changed. This is the strongest signal short of a pin: the change itself says which ticket it is for.
 - **On every cache refresh.** Recent commits on the configured branch (the last 90 days, up to 300 commits by default) are read the same way, and each ticket commit becomes a whole-file Code Pin with the **Ticket** source on every case linked to its ticket, for every source or configuration file the commit touched. From then on, any change to those files finds the cases through the **Pin** reason, even when later commits never mention the ticket again. Test files, documentation, lock files, generated and vendored code, and binaries are never pinned this way, and a commit that touches more than 50 files is skipped as noise.
 
-Ticket pins are ordinary pins: they show in the Code Pins panel with the **Ticket** source and the ticket key as their note, and they can be removed. A removed ticket pin is not recreated for the same commit. A ticket pin whose commit falls out of the scan window is removed on the next refresh, and a ticket pin is never created where the case already has a pin of another source on the same file. The **Linked Tickets** card on the [Impact Analysis settings](projects/settings/impact.md#linked-tickets) page turns the refresh-time scan on or off and shows the last scan's counts; the in-analysis reading of ticket keys is always on.
+Ticket pins are ordinary pins: they show in the Code Pins panel with the **Ticket** source and the ticket key as their note, and they can be removed. Where a commit's diff shows which functions or classes it changed, the pin is a **Symbol** pin on each of them, so a change elsewhere in a large file does not select the case; where the diff names no declaration, the pin covers the **Whole file**. The newest commit that touched a file decides how that file is pinned. A removed ticket pin is not recreated for the same commit. A ticket pin is never created where the case already has a pin of another source on the same file. A pin is removed when a scan reaches its commit again and the commit no longer selects the case (the ticket was unlinked, or the case archived); pins from commits older than the recent window are left alone, so a full-history scan's backfill persists.
+
+The **Linked Tickets** card on the [Impact Analysis settings](projects/settings/impact.md#linked-tickets) page turns the refresh-time scan on or off, offers **Rescan Recent Commits** and **Scan Full History** (which walks the whole branch and backfills pins for tickets linked later), and shows the last scan's counts; the in-analysis reading of ticket keys is always on.
+
+A ticket named in a commit that TestPlanIt does not hold yet is imported from the project's issue tracker by every scan, so it appears among the project's issues ready to be linked to cases. Imported tickets carry no links, so they select nothing until someone links them.
 
 ## Tips
 
@@ -234,7 +241,7 @@ Ticket pins are ordinary pins: they show in the Code Pins panel with the **Ticke
 
 ## Related pages
 
-- [Impact Analysis (Project Settings)](projects/settings/impact.md) — enable Impact Analysis and connect the application repository.
+- [Impact Analysis (Project Settings)](projects/settings/impact.md) — enable Impact Analysis and connect the application repositories.
 - [Code Repositories](code-repositories.md) — register the repositories a project can connect.
 - [Test Case Details](projects/repository-case-details.mdx#code-pins) — the Code Pins panel.
 - [Add Test Run](projects/add-test-run-modal.md) and [Test Run Details](projects/run-details.md) — where **Analyze impact** appears.

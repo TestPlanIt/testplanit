@@ -34,6 +34,19 @@ export interface ImpactConfig {
   issueScanMaxCommitFetches: number;
   /** A commit touching more files than this is treated as noise and skipped. */
   issueScanMaxFilesPerCommit: number;
+  /** Manual full-history scan: how many commits to walk before stopping. */
+  issueScanFullMaxCommits: number;
+  /** Manual full-history scan: commits whose file lists are read. */
+  issueScanFullMaxCommitFetches: number;
+  /** Tracker lookups a refresh-time scan may make to import unknown tickets. */
+  issueImportMaxLookups: number;
+  /** Tracker lookups a full-history scan may make to import unknown tickets. */
+  issueImportFullMaxLookups: number;
+  /**
+   * Pin the declarations a ticket commit touched instead of whole files.
+   * Reads each commit's patch; off, the scan only lists changed paths.
+   */
+  issueScanSymbolPins: boolean;
 }
 
 export const IMPACT_CONFIG_DEFAULTS: Readonly<ImpactConfig> = Object.freeze({
@@ -63,6 +76,11 @@ export const IMPACT_CONFIG_DEFAULTS: Readonly<ImpactConfig> = Object.freeze({
   issueScanMaxCommits: 300,
   issueScanMaxCommitFetches: 100,
   issueScanMaxFilesPerCommit: 50,
+  issueScanFullMaxCommits: 20000,
+  issueScanFullMaxCommitFetches: 2000,
+  issueImportMaxLookups: 100,
+  issueImportFullMaxLookups: 5000,
+  issueScanSymbolPins: true,
 });
 
 type EnvLike = Record<string, string | undefined>;
@@ -149,6 +167,26 @@ export function readImpactConfig(env: EnvLike = process.env): ImpactConfig {
     issueScanMaxFilesPerCommit: envInt(
       env.IMPACT_ISSUE_SCAN_MAX_FILES_PER_COMMIT,
       d.issueScanMaxFilesPerCommit
+    ),
+    issueScanFullMaxCommits: envInt(
+      env.IMPACT_ISSUE_SCAN_FULL_MAX_COMMITS,
+      d.issueScanFullMaxCommits
+    ),
+    issueScanFullMaxCommitFetches: envInt(
+      env.IMPACT_ISSUE_SCAN_FULL_MAX_COMMIT_FETCHES,
+      d.issueScanFullMaxCommitFetches
+    ),
+    issueImportMaxLookups: envInt(
+      env.IMPACT_ISSUE_IMPORT_MAX_LOOKUPS,
+      d.issueImportMaxLookups
+    ),
+    issueImportFullMaxLookups: envInt(
+      env.IMPACT_ISSUE_IMPORT_FULL_MAX_LOOKUPS,
+      d.issueImportFullMaxLookups
+    ),
+    issueScanSymbolPins: envBool(
+      env.IMPACT_ISSUE_SCAN_SYMBOL_PINS,
+      d.issueScanSymbolPins
     ),
   };
 }

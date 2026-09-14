@@ -29,6 +29,8 @@ export function impactErrorMessage(
       return t("errors.disabled");
     case "noConfig":
       return t("errors.noConfig");
+    case "configRequired":
+      return t("errors.configRequired");
     case "timeout":
       return t("errors.timeout");
     case "cancelled":

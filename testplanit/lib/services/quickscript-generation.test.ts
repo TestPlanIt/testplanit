@@ -19,7 +19,7 @@ const {
     projectLlmIntegration: { count: vi.fn() },
     llmIntegration: { count: vi.fn() },
     llmProviderConfig: { findFirst: vi.fn() },
-    projectCodeRepositoryConfig: { findUnique: vi.fn() },
+    projectCodeRepositoryConfig: { findFirst: vi.fn() },
   },
   mockResolve: vi.fn(),
   mockResolveIntegration: vi.fn(),
@@ -112,7 +112,7 @@ beforeEach(() => {
     defaultMaxTokens: 8000,
     maxTokensPerRequest: 4096,
   });
-  mockDb.projectCodeRepositoryConfig.findUnique.mockResolvedValue(null);
+  mockDb.projectCodeRepositoryConfig.findFirst.mockResolvedValue(null);
 });
 
 describe("resolveQuickScriptTemplate", () => {
@@ -320,7 +320,7 @@ describe("generateQuickScript", () => {
   it("degrades to no-context generation when repo context assembly fails", async () => {
     // A connected repo whose context assembly throws (e.g. the git host
     // rate-limiting a live content fetch) must NOT fail the generation.
-    mockDb.projectCodeRepositoryConfig.findUnique.mockResolvedValue({ id: 5 });
+    mockDb.projectCodeRepositoryConfig.findFirst.mockResolvedValue({ id: 5 });
     mockAssembleContext.mockRejectedValue(
       new Error("Rate limit exceeded. Try again in a few minutes.")
     );

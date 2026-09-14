@@ -66,6 +66,7 @@ import type { FilterPredicate } from "~/lib/schemas/repositoryFilterPredicates";
 import {
   ArrowRightLeft,
   PenSquare,
+  Pin,
   PlayCircle,
   ScrollText,
   Tags,
@@ -333,6 +334,11 @@ const REPOSITORY_CASE_LIST_SELECT = {
           isDeleted: false,
         },
       },
+      codePins: {
+        where: {
+          isDeleted: false,
+        },
+      },
     },
   },
 } as const satisfies RepositoryCasesSelect;
@@ -448,6 +454,11 @@ const TEST_RUN_CASE_LIST_SELECT = {
               isDeleted: false,
             },
           },
+          codePins: {
+            where: {
+              isDeleted: false,
+            },
+          },
         },
       },
     },
@@ -489,6 +500,8 @@ interface CasesProps {
    * `undefined` = unresolved: the list holds rather than answering an
    * `inReview` filter from the empty set. */
   inReviewCaseIds?: number[];
+  /** Impact Analysis is on for the project: show the Code Pins column. */
+  codePinsEnabled?: boolean;
   isSelectionMode?: boolean;
   selectedTestCases?: number[];
   selectedRunIds?: number[];
@@ -555,6 +568,7 @@ export default function Cases({
   predicatesKey,
   onClearFilters,
   inReviewCaseIds,
+  codePinsEnabled = false,
   isSelectionMode = false,
   selectedTestCases = [],
   selectedRunIds,
@@ -1270,6 +1284,8 @@ export default function Cases({
         return { repositoryCase: { comments: { _count: direction } } };
       } else if (column === "attachments") {
         return { repositoryCase: { attachments: { _count: direction } } };
+      } else if (column === "codePins") {
+        return { repositoryCase: { codePins: { _count: direction } } };
       } else if (column === "steps") {
         // Not `steps: { _count }`: a relation count orderBy takes no `where`, so it
         // counts retired (soft-deleted) steps the column does not display. The
@@ -1331,6 +1347,9 @@ export default function Cases({
       }
       if (column === "attachments") {
         return { attachments: { _count: direction } };
+      }
+      if (column === "codePins") {
+        return { codePins: { _count: direction } };
       }
       if (column === "steps") {
         // See the run-mode builder above: a relation count orderBy cannot exclude
@@ -2432,7 +2451,7 @@ export default function Cases({
   }, [copyMoveFolderId, copyMoveFolderName]);
 
   const columns: CustomColumnDef<any>[] = useMemo(() => {
-    return getColumns(
+    const built = getColumns(
       userPreferencesForColumns,
       uniqueCaseFieldList,
       handleSelect,
@@ -2533,7 +2552,55 @@ export default function Cases({
       (testcase) =>
         setRunAutomatedCase({ id: testcase.id, name: testcase.name })
     );
+    if (codePinsEnabled) {
+      // Sits beside Attachments: both count a soft-deleted relation and sort
+      // by that relation's count.
+      const attachmentsIndex = built.findIndex(
+        (column) => column.id === "attachments"
+      );
+      const codePinsColumn: (typeof built)[number] = {
+        id: "codePins",
+        accessorFn: (row) =>
+          row._count?.codePins ??
+          (row as any).repositoryCase?._count?.codePins ??
+          0,
+        header: t("repository.codePins.title"),
+        enableSorting: !isCompleted,
+        enableResizing: true,
+        enableHiding: true,
+        meta: { isVisible: true },
+        size: 90,
+        cell: ({ row }) => {
+          const count = ((row.original as any)._count?.codePins ??
+            (row.original as any).repositoryCase?._count?.codePins ??
+            0) as number;
+          return (
+            <div
+              className="flex w-full items-center justify-center gap-1"
+              data-testid={`case-code-pins-count-${row.original.id}`}
+            >
+              {count > 0 ? (
+                <>
+                  <Pin className="h-3.5 w-3.5 text-primary" />
+                  <span>{count}</span>
+                </>
+              ) : (
+                <span className="text-muted-foreground">{"0"}</span>
+              )}
+            </div>
+          );
+        },
+      };
+      built.splice(
+        attachmentsIndex >= 0 ? attachmentsIndex + 1 : built.length,
+        0,
+        codePinsColumn
+      );
+    }
+    return built;
   }, [
+    codePinsEnabled,
+
     automationAvailable,
     userPreferencesForColumns,
     uniqueCaseFieldList,

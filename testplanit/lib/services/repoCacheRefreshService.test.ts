@@ -17,9 +17,40 @@ vi.mock("~/lib/services/impact/compareService", () => ({
   resolveRefToSha: vi.fn(),
 }));
 
+vi.mock("~/lib/valkey", () => ({ default: null }));
+
+vi.mock("~/lib/services/impact/commitWalk", () => ({
+  walkCommits: vi.fn(),
+  commitWalkStore: vi.fn((configId: number, branch: string) => ({
+    configId,
+    branch,
+  })),
+}));
+
 vi.mock("~/lib/services/impact/issueScan", () => ({
-  listRecentCommits: vi.fn(),
   syncIssuePins: vi.fn(),
+}));
+
+vi.mock("./resolveIssueKeys", () => {
+  class IssueKeyResolutionError extends Error {
+    status: number;
+    constructor(message: string, status: number) {
+      super(message);
+      this.status = status;
+    }
+  }
+  return {
+    IssueKeyResolutionError,
+    resolveIssueKeys: vi.fn(),
+    resolveIssueTrackerIntegration: vi.fn(),
+  };
+});
+
+const mockGetAdapter = vi.fn();
+vi.mock("~/lib/integrations/IntegrationManager", () => ({
+  integrationManager: {
+    getAdapter: (...args: unknown[]) => mockGetAdapter(...args),
+  },
 }));
 
 vi.mock("~/lib/services/impact/commitFiles", () => ({
@@ -36,12 +67,15 @@ vi.mock("~/lib/services/impact/markerScan", async (importOriginal) => ({
 import { createGitRepoAdapter } from "~/lib/integrations/adapters/GitRepoAdapter";
 import { repoFileCache } from "~/lib/integrations/cache/RepoFileCache";
 import { resolveRefToSha } from "~/lib/services/impact/compareService";
-import {
-  listRecentCommits,
-  syncIssuePins,
-} from "~/lib/services/impact/issueScan";
+import { walkCommits } from "~/lib/services/impact/commitWalk";
+import { syncIssuePins } from "~/lib/services/impact/issueScan";
 import { syncMarkerPins } from "~/lib/services/impact/markerScan";
-import { refreshRepoCache } from "./repoCacheRefreshService";
+import { refreshRepoCache, scanRepoIssues } from "./repoCacheRefreshService";
+import {
+  IssueKeyResolutionError,
+  resolveIssueKeys,
+  resolveIssueTrackerIntegration,
+} from "./resolveIssueKeys";
 
 const OWNER = "user-42";
 
@@ -106,6 +140,7 @@ function makeDb(config: Record<string, unknown> | null) {
       findUnique: vi.fn().mockResolvedValue(config),
       update,
     },
+    issue: { findMany: vi.fn().mockResolvedValue([]) },
   };
 }
 
@@ -128,9 +163,11 @@ describe("refreshRepoCache", () => {
     (repoFileCache.setError as any).mockResolvedValue(undefined);
     (resolveRefToSha as any).mockResolvedValue("abc123");
     (syncMarkerPins as any).mockResolvedValue({ pinsCreated: 2 });
-    (listRecentCommits as any).mockResolvedValue({
+    (walkCommits as any).mockResolvedValue({
       commits: [],
       truncated: false,
+      complete: true,
+      fromCache: 0,
     });
     (syncIssuePins as any).mockResolvedValue({ created: 1 });
     (createGitRepoAdapter as any).mockReturnValue(
@@ -147,38 +184,372 @@ describe("refreshRepoCache", () => {
   });
 
   describe("issue scan", () => {
+    /** The final report: progress writes precede it under the same name. */
     function storedIssueReport(): any {
-      const call = update.mock.calls.find(
+      const calls = update.mock.calls.filter(
         ([args]: any[]) => "issueScanReport" in args.data
       );
-      return call?.[0].data.issueScanReport;
+      return calls.at(-1)?.[0].data.issueScanReport;
+    }
+
+    function storedIssueReports(): any[] {
+      return update.mock.calls
+        .filter(([args]: any[]) => "issueScanReport" in args.data)
+        .map(([args]: any[]) => args.data.issueScanReport);
     }
 
     it("walks recent commits, syncs ISSUE pins as the project owner, and stores the report", async () => {
       const commits = [{ sha: "c1", message: "PROJ-1", parents: ["c0"] }];
-      (listRecentCommits as any).mockResolvedValue({
+      (walkCommits as any).mockResolvedValue({
         commits,
         truncated: true,
+        complete: false,
+        fromCache: 1,
       });
 
       await refreshRepoCache(5, db);
 
-      expect(listRecentCommits).toHaveBeenCalledWith(
+      expect(walkCommits).toHaveBeenCalledWith(
         expect.anything(),
         "main",
-        expect.objectContaining({ lookbackDays: 90, maxCommits: 300 })
+        expect.objectContaining({
+          lookbackDays: 90,
+          maxCommits: 300,
+          continueFromCache: false,
+          store: { configId: 5, branch: "main" },
+        })
       );
       const [, scanConfig, opts] = (syncIssuePins as any).mock.calls[0];
       expect(scanConfig).toEqual({ id: 5, projectId: 1 });
       expect(opts).toMatchObject({
         commits,
         truncated: true,
+        cachedCommits: 1,
+        full: false,
         actorId: OWNER,
         maxCommitFetches: 100,
         maxFilesPerCommit: 50,
       });
       expect(typeof opts.getCommitFiles).toBe("function");
+      expect(typeof opts.importIssues).toBe("function");
+      expect(typeof opts.onProgress).toBe("function");
       expect(storedIssueReport()).toEqual({ created: 1 });
+    });
+
+    it("marks the scan running while it walks, then stores the report", async () => {
+      await refreshRepoCache(5, db);
+
+      const reports = storedIssueReports();
+      expect(reports[0]).toMatchObject({
+        running: true,
+        full: false,
+        scannedCommits: 0,
+      });
+      expect(reports.at(-1)).toEqual({ created: 1 });
+    });
+
+    describe("importing named tickets", () => {
+      const tokens = [
+        { raw: "PROJ-1", exact: ["PROJ-1"] },
+        { raw: "PROJ-2", exact: ["PROJ-2"] },
+        { raw: "#7", exact: ["#7", "7"], number: "7" },
+      ];
+
+      const onProgress = vi.fn().mockResolvedValue(undefined);
+
+      beforeEach(() => {
+        // The tracker knows the PROJ project; look-alikes are filtered out.
+        mockGetAdapter.mockResolvedValue({
+          getProjects: vi
+            .fn()
+            .mockResolvedValue([{ id: "1", key: "PROJ", name: "Project" }]),
+        });
+      });
+
+      async function runImport() {
+        await refreshRepoCache(5, db);
+        const [, , opts] = (syncIssuePins as any).mock.calls[0];
+        return opts.importIssues(tokens, onProgress);
+      }
+
+      it("asks the tracker only for keys the project does not hold, in its own key style", async () => {
+        (resolveIssueTrackerIntegration as any).mockResolvedValue({
+          integrationId: 3,
+          provider: "JIRA",
+        });
+        db.issue.findMany.mockResolvedValue([
+          { externalKey: "PROJ-1", externalId: "10001" },
+        ]);
+        (resolveIssueKeys as any).mockResolvedValue(
+          new Map([["PROJ-2", { key: "PROJ-2", issueId: 9, created: true }]])
+        );
+
+        const result = await runImport();
+
+        expect(db.issue.findMany).toHaveBeenCalledWith(
+          expect.objectContaining({
+            where: expect.objectContaining({
+              integrationId: 3,
+              isDeleted: false,
+            }),
+          })
+        );
+        expect(db.issue.findMany.mock.calls[0][0].where).not.toHaveProperty(
+          "projectId"
+        );
+        expect(resolveIssueKeys).toHaveBeenCalledWith({
+          projectId: 1,
+          keys: ["PROJ-2"],
+          integrationId: 3,
+          maxLookups: 1,
+        });
+        expect(result).toEqual({
+          imported: 1,
+          failed: 0,
+          skipped: 0,
+          moved: 0,
+          failures: [],
+        });
+        expect(onProgress).toHaveBeenCalledWith({ lookups: 1, imported: 1 });
+      });
+
+      it("resolves in rounds, reporting after each, and stops at the lookup cap", async () => {
+        (resolveIssueTrackerIntegration as any).mockResolvedValue({
+          integrationId: 3,
+          provider: "JIRA",
+        });
+        db.issue.findMany.mockResolvedValue([]);
+        const many = Array.from({ length: 45 }, (_, i) => ({
+          raw: `PROJ-${i}`,
+          exact: [`PROJ-${i}`],
+        }));
+        (resolveIssueKeys as any).mockImplementation(
+          async ({ keys }: { keys: string[] }) =>
+            new Map(
+              keys.map((key) => [key, { key, issueId: 1, created: true }])
+            )
+        );
+        // The refresh-time cap is 100; make this call's budget smaller.
+        await refreshRepoCache(5, db);
+        const [, , opts] = (syncIssuePins as any).mock.calls[0];
+
+        const result = await opts.importIssues(many, onProgress);
+
+        expect(resolveIssueKeys).toHaveBeenCalledTimes(3);
+        expect((resolveIssueKeys as any).mock.calls[0][0].keys).toHaveLength(
+          20
+        );
+        expect(onProgress).toHaveBeenLastCalledWith({
+          lookups: 45,
+          imported: 45,
+        });
+        expect(result).toMatchObject({ imported: 45, failed: 0, skipped: 0 });
+      });
+
+      it("leaves keys past the lookup cap for the next scan instead of failing them", async () => {
+        (resolveIssueTrackerIntegration as any).mockResolvedValue({
+          integrationId: 3,
+          provider: "JIRA",
+        });
+        db.issue.findMany.mockResolvedValue([]);
+        // The refresh-time cap is 100 lookups; name 130 unknown tickets.
+        const many = Array.from({ length: 130 }, (_, i) => ({
+          raw: `PROJ-${i}`,
+          exact: [`PROJ-${i}`],
+        }));
+        (resolveIssueKeys as any).mockImplementation(
+          async ({ keys }: { keys: string[] }) =>
+            new Map(
+              keys.map((key) => [key, { key, issueId: 1, created: true }])
+            )
+        );
+        await refreshRepoCache(5, db);
+        const [, , opts] = (syncIssuePins as any).mock.calls[0];
+
+        const result = await opts.importIssues(many, onProgress);
+
+        expect(resolveIssueKeys).toHaveBeenCalledTimes(5);
+        expect(onProgress).toHaveBeenLastCalledWith({
+          lookups: 100,
+          imported: 100,
+        });
+        expect(result).toMatchObject({
+          imported: 100,
+          failed: 0,
+          skipped: 30,
+          failures: [],
+        });
+      });
+
+      it("counts a key the tracker now knows under another name as moved, not failed", async () => {
+        (resolveIssueTrackerIntegration as any).mockResolvedValue({
+          integrationId: 3,
+          provider: "JIRA",
+        });
+        db.issue.findMany.mockResolvedValue([]);
+        (resolveIssueKeys as any).mockResolvedValue(
+          new Map([
+            ["PROJ-1", { key: "PROJ-1", error: "renamed", code: "moved" }],
+            ["PROJ-2", { key: "PROJ-2", error: "HTTP 404", code: "upstream" }],
+          ])
+        );
+
+        expect(await runImport()).toEqual({
+          imported: 0,
+          failed: 1,
+          skipped: 0,
+          moved: 1,
+          failures: [{ key: "PROJ-2", error: "HTTP 404" }],
+        });
+      });
+
+      it("does not ask Jira for prefixes that are not one of its projects", async () => {
+        (resolveIssueTrackerIntegration as any).mockResolvedValue({
+          integrationId: 3,
+          provider: "JIRA",
+        });
+        db.issue.findMany.mockResolvedValue([]);
+        (resolveIssueKeys as any).mockResolvedValue(new Map());
+        await refreshRepoCache(5, db);
+        const [, , opts] = (syncIssuePins as any).mock.calls[0];
+
+        await opts.importIssues(
+          [
+            { raw: "PROJ-5", exact: ["PROJ-5"] },
+            { raw: "PHASE-33", exact: ["PHASE-33"] },
+            { raw: "ID-24", exact: ["ID-24"] },
+          ],
+          onProgress
+        );
+
+        expect(resolveIssueKeys).toHaveBeenCalledWith(
+          expect.objectContaining({ keys: ["PROJ-5"] })
+        );
+      });
+
+      it("falls back to prefixes already imported when the tracker cannot list projects", async () => {
+        (resolveIssueTrackerIntegration as any).mockResolvedValue({
+          integrationId: 3,
+          provider: "JIRA",
+        });
+        mockGetAdapter.mockRejectedValue(new Error("no credentials"));
+        db.issue.findMany
+          // prefix lookup: tickets already on the integration
+          .mockResolvedValueOnce([{ externalKey: "ABT-1" }])
+          // held-key prefilter
+          .mockResolvedValueOnce([]);
+        (resolveIssueKeys as any).mockResolvedValue(new Map());
+        await refreshRepoCache(5, db);
+        const [, , opts] = (syncIssuePins as any).mock.calls[0];
+
+        await opts.importIssues(
+          [
+            { raw: "ABT-9", exact: ["ABT-9"] },
+            { raw: "ROUND-2", exact: ["ROUND-2"] },
+          ],
+          onProgress
+        );
+
+        expect(resolveIssueKeys).toHaveBeenCalledWith(
+          expect.objectContaining({ keys: ["ABT-9"] })
+        );
+      });
+
+      it("tries every key when neither the tracker nor local rows name a prefix", async () => {
+        (resolveIssueTrackerIntegration as any).mockResolvedValue({
+          integrationId: 3,
+          provider: "JIRA",
+        });
+        mockGetAdapter.mockResolvedValue(null);
+        db.issue.findMany.mockResolvedValue([]);
+        (resolveIssueKeys as any).mockResolvedValue(new Map());
+        await refreshRepoCache(5, db);
+        const [, , opts] = (syncIssuePins as any).mock.calls[0];
+
+        await opts.importIssues(
+          [{ raw: "NEW-1", exact: ["NEW-1"] }],
+          onProgress
+        );
+
+        expect(resolveIssueKeys).toHaveBeenCalledWith(
+          expect.objectContaining({ keys: ["NEW-1"] })
+        );
+      });
+
+      it("counts keys the tracker could not answer as failures", async () => {
+        (resolveIssueTrackerIntegration as any).mockResolvedValue({
+          integrationId: 3,
+          provider: "JIRA",
+        });
+        db.issue.findMany.mockResolvedValue([]);
+        (resolveIssueKeys as any).mockResolvedValue(
+          new Map([
+            ["PROJ-1", { key: "PROJ-1", issueId: 8, created: true }],
+            ["PROJ-2", { key: "PROJ-2", error: "not found" }],
+          ])
+        );
+
+        expect(await runImport()).toEqual({
+          imported: 1,
+          failed: 1,
+          skipped: 0,
+          moved: 0,
+          failures: [{ key: "PROJ-2", error: "not found" }],
+        });
+      });
+
+      it("imports nothing when the project has no usable issue tracker", async () => {
+        (resolveIssueTrackerIntegration as any).mockRejectedValue(
+          new IssueKeyResolutionError("no tracker", 400)
+        );
+
+        expect(await runImport()).toEqual({
+          imported: 0,
+          failed: 0,
+          skipped: 0,
+          moved: 0,
+        });
+        expect(resolveIssueKeys).not.toHaveBeenCalled();
+      });
+
+      it("treats a ticket another project pulled in as already here, not a failure", async () => {
+        (resolveIssueTrackerIntegration as any).mockResolvedValue({
+          integrationId: 3,
+          provider: "JIRA",
+        });
+        // Held on the integration by some other project.
+        db.issue.findMany.mockResolvedValue([
+          { externalKey: "PROJ-1", externalId: "10001" },
+          { externalKey: "PROJ-2", externalId: "10002" },
+        ]);
+
+        expect(await runImport()).toEqual({
+          imported: 0,
+          failed: 0,
+          skipped: 0,
+          moved: 0,
+        });
+        expect(resolveIssueKeys).not.toHaveBeenCalled();
+      });
+
+      it("skips the tracker when every named key is already held", async () => {
+        (resolveIssueTrackerIntegration as any).mockResolvedValue({
+          integrationId: 3,
+          provider: "JIRA",
+        });
+        db.issue.findMany.mockResolvedValue([
+          { externalKey: "PROJ-1", externalId: null },
+          { externalKey: "PROJ-2", externalId: null },
+        ]);
+
+        expect(await runImport()).toEqual({
+          imported: 0,
+          failed: 0,
+          skipped: 0,
+          moved: 0,
+        });
+        expect(resolveIssueKeys).not.toHaveBeenCalled();
+      });
     });
 
     it("runs after the marker scan so its pins never collide with fresh markers", async () => {
@@ -193,7 +564,7 @@ describe("refreshRepoCache", () => {
 
       await refreshRepoCache(5, db);
 
-      expect(listRecentCommits).not.toHaveBeenCalled();
+      expect(walkCommits).not.toHaveBeenCalled();
       expect(syncIssuePins).not.toHaveBeenCalled();
       expect(storedIssueReport()).toBeUndefined();
     });
@@ -207,7 +578,7 @@ describe("refreshRepoCache", () => {
     });
 
     it("records a failed scan in the report without failing the refresh", async () => {
-      (listRecentCommits as any).mockRejectedValue(new Error("no commits api"));
+      (walkCommits as any).mockRejectedValue(new Error("no commits api"));
 
       const result = await refreshRepoCache(5, db);
 
@@ -355,5 +726,139 @@ describe("refreshRepoCache", () => {
       );
       expect(syncMarkerPins).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe("scanRepoIssues", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    db = makeDb(makeConfig());
+    (walkCommits as any).mockResolvedValue({
+      commits: [],
+      truncated: false,
+      complete: true,
+      fromCache: 0,
+    });
+    (syncIssuePins as any).mockResolvedValue({ created: 0, full: true });
+    (createGitRepoAdapter as any).mockReturnValue(makeArchiveAdapter({}));
+  });
+
+  function issueReports(): any[] {
+    return update.mock.calls
+      .filter(([args]: any[]) => "issueScanReport" in args.data)
+      .map(([args]: any[]) => args.data.issueScanReport);
+  }
+
+  it("walks the whole branch for a full scan with the full-scan caps", async () => {
+    const report = await scanRepoIssues(5, db, { full: true });
+
+    expect(walkCommits).toHaveBeenCalledWith(
+      expect.anything(),
+      "main",
+      expect.objectContaining({
+        lookbackDays: Number.POSITIVE_INFINITY,
+        maxCommits: 20000,
+        continueFromCache: true,
+      })
+    );
+    const [, , opts] = (syncIssuePins as any).mock.calls[0];
+    expect(opts).toMatchObject({ full: true, maxCommitFetches: 2000 });
+    expect(issueReports()[0]).toMatchObject({ running: true, full: true });
+    expect(report).toEqual({ created: 0, full: true });
+    expect(issueReports().at(-1)).toEqual({ created: 0, full: true });
+  });
+
+  it("uses the recent window when not asked for a full scan", async () => {
+    await scanRepoIssues(5, db);
+
+    expect(walkCommits).toHaveBeenCalledWith(
+      expect.anything(),
+      "main",
+      expect.objectContaining({ lookbackDays: 90, maxCommits: 300 })
+    );
+  });
+
+  it("does not touch the file cache", async () => {
+    await scanRepoIssues(5, db, { full: true });
+
+    expect(repoFileCache.invalidate).not.toHaveBeenCalled();
+    expect(repoFileCache.setFiles).not.toHaveBeenCalled();
+  });
+
+  it("refuses a config that is not for impact analysis", async () => {
+    db = makeDb(makeConfig({ purpose: "QUICKSCRIPT" }));
+
+    await expect(scanRepoIssues(5, db)).rejects.toThrow(
+      "not an Impact repository"
+    );
+  });
+
+  it("records a cancelled scan when the walk was stopped, without importing or syncing", async () => {
+    (walkCommits as any).mockResolvedValue({
+      commits: [{ sha: "c1", message: "PROJ-1", parents: ["c0"] }],
+      truncated: true,
+      complete: false,
+      fromCache: 0,
+      cancelled: true,
+    });
+
+    const report = await scanRepoIssues(5, db, {
+      full: true,
+      isCancelled: async () => true,
+    });
+
+    expect(report).toEqual({
+      cancelled: true,
+      full: true,
+      scannedAt: expect.any(String),
+    });
+    expect(syncIssuePins).not.toHaveBeenCalled();
+    expect(issueReports().at(-1)).toEqual(report);
+    const [, , walkOpts] = (walkCommits as any).mock.calls[0];
+    expect(typeof walkOpts.shouldStop).toBe("function");
+  });
+
+  it("records a cancelled scan when a cancel arrives during the pin sync", async () => {
+    let cancelled = false;
+    (syncIssuePins as any).mockImplementation(
+      async (_db: unknown, _config: unknown, opts: any) => {
+        cancelled = true;
+        await opts.onProgress({ stage: "inspect", scannedCommits: 1 });
+        return { created: 0 };
+      }
+    );
+
+    const report = await scanRepoIssues(5, db, {
+      isCancelled: async () => cancelled,
+    });
+
+    expect(report).toMatchObject({ cancelled: true, full: false });
+  });
+
+  it("records a failure before the walk, so the running flag is not left behind", async () => {
+    (createGitRepoAdapter as any).mockImplementation(() => {
+      throw new Error("bad credentials");
+    });
+
+    const report = await scanRepoIssues(5, db, { full: true });
+
+    expect(report).toEqual({
+      error: "bad credentials",
+      scannedAt: expect.any(String),
+    });
+    expect(issueReports().at(-1)).toEqual(report);
+  });
+
+  it("records a failed walk as the report instead of throwing", async () => {
+    (walkCommits as any).mockRejectedValue(new Error("rate limited"));
+
+    const report = await scanRepoIssues(5, db, { full: true });
+
+    expect(report).toEqual({
+      error: "rate limited",
+      scannedAt: expect.any(String),
+    });
+    expect(issueReports().at(-1)).toEqual(report);
   });
 });

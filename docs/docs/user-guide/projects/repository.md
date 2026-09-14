@@ -50,7 +50,7 @@ The page features a resizable two-panel layout:
 
 * **Left Panel (Navigation/View Selection)**:
 
-    * **View by Selector**: A dropdown at the top of the panel that chooses how the case list is grouped — Folders, Template, State, Creator, Automation, Parameterization, Attachments, Tag, Issue, and one entry per custom field. See [Views & Filtering](#views--filtering).
+    * **View by Selector**: A dropdown at the top of the panel that chooses how the case list is grouped — Folders, Template, State, Creator, Automation, Parameterization, Attachments, Code Pins (when Impact Analysis is enabled), Tag, Issue, and one entry per custom field. See [Views & Filtering](#views--filtering).
     * **Folder Tree (Folders View)**: Displays a hierarchical structure of folders. You can:
         * Expand/Collapse folders using the chevron icons. Hold ⌥ (Alt on Windows and Linux) while clicking a chevron to expand or collapse all of that folder's subfolders at once; on a top-level folder the same click applies to every folder in the tree.
         * Filter the tree by name. Projects with more than 15 folders show a filter box above the tree; matching folders stay in place under their parents so you can still see where each one sits, and clearing the filter restores whatever you had expanded.
@@ -96,6 +96,7 @@ The available axes are:
 * **Automation**: Automated / Not Automated.
 * **Parameterization**: Parameterized / Not Parameterized. See [Parameterized Test Cases](./parameterized-test-cases.md) for what makes a case parameterized.
 * **Attachments**: Has Attachments / No Attachments. Only files currently attached count — a case whose attachments were all removed appears under **No Attachments**.
+* **Code Pins**: Has Code Pins / No Code Pins. Only appears when the project has [Impact Analysis](../impact.md) enabled. A **Code Pins** column in the table shows how many live pins each case carries and can be sorted; pins that were removed do not count.
 * **Tag**: **Any Tag** and **No Tags** stay pinned above the list of individual tags.
 * **Issue**: **Any Issue** and **No Issues** above the list of linked issues. This axis only appears when at least one case in the project has an issue linked.
 * **One axis per custom field**: Dropdown, Multi-Select, Link, Steps, Checkbox, Integer, Number, Date, Text Long, and Text String fields each get an axis, named after the field. Dropdown and Multi-Select list their options (plus **None** when the field is optional), Checkbox shows **Checked** / **Unchecked**, and the remaining types show a has-value / no-value pair such as **Has Date** / **No Date**.
@@ -107,7 +108,7 @@ Opening the repository as part of a **test run** (Run Mode) adds two more axes a
 
 ### Filtering
 
-**Add Filter** on the bar opens a searchable, alphabetical list of everything you can filter on: templates, states, creators, automation, parameterization, attachments, tags, issues, every filterable custom field, and — in Run Mode — status and assignee. Pick one and its chip opens ready to edit.
+**Add Filter** on the bar opens a searchable, alphabetical list of everything you can filter on: templates, states, creators, automation, parameterization, attachments, code pins (when Impact Analysis is enabled), tags, issues, every filterable custom field, and — in Run Mode — status and assignee. Pick one and its chip opens ready to edit.
 
 Each chip reads *Field: operator values*. Click the chip body to reopen its editor and change the operator or tick more values, or click the **x** to remove it. **Clear All** appears once two or more filters are active. When a filter set leaves no matching cases, the table says so and offers the same **Clear All**.
 

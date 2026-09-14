@@ -1,5 +1,6 @@
 "use client";
 
+import { CodeRepositoryName } from "@/components/CodeRepositoryName";
 import { DateFormatter } from "@/components/DateFormatter";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -61,7 +62,10 @@ export function getColumns({
       size: 250,
       cell: ({ row }) => (
         <div className="bg-primary-foreground flex items-center gap-2">
-          <span className="font-medium">{row.original.name}</span>
+          <CodeRepositoryName
+            name={row.original.name}
+            nameClassName="font-medium"
+          />
         </div>
       ),
     },

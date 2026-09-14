@@ -44,11 +44,13 @@ export function ImpactButton({
       impactEnabled: true,
       codeRepositoryConfigs: {
         where: { purpose: "IMPACT" },
+        orderBy: { id: "asc" },
         select: {
           id: true,
           repositoryId: true,
           branch: true,
           cacheEnabled: true,
+          repository: { select: { name: true } },
         },
       },
     },
@@ -70,16 +72,16 @@ export function ImpactButton({
     return null;
   }
 
-  const rawConfig = project.codeRepositoryConfigs?.[0];
-  const config: ImpactRepoConfig | null = rawConfig
-    ? {
-        id: rawConfig.id,
-        repositoryId: rawConfig.repositoryId,
-        branch: rawConfig.branch ?? null,
-      }
-    : null;
+  const configs: ImpactRepoConfig[] = (project.codeRepositoryConfigs ?? []).map(
+    (row) => ({
+      id: row.id,
+      repositoryId: row.repositoryId,
+      branch: row.branch ?? null,
+      name: row.repository?.name ?? "",
+    })
+  );
 
-  if (!config) {
+  if (configs.length === 0) {
     return (
       <Tooltip>
         <TooltipTrigger asChild>
@@ -119,7 +121,7 @@ export function ImpactButton({
           open={dialogOpen}
           onOpenChange={setDialogOpen}
           projectId={projectId}
-          config={config}
+          configs={configs}
           currentSelection={selectedTestCases}
           onAccept={handleAccept}
         />

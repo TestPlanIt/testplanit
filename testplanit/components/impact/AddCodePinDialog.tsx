@@ -1,5 +1,6 @@
 "use client";
 
+import { CodeRepositoryName } from "@/components/CodeRepositoryName";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { formatInTimeZone } from "date-fns-tz";
@@ -20,6 +21,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
@@ -37,12 +45,24 @@ import { cn } from "~/utils";
 import { getDateFnsLocale } from "~/utils/locales";
 import { mapDateTimeFormatString } from "~/utils/mapDateTimeFormat";
 
+export interface PinRepositoryOption {
+  configId: number;
+  repositoryId: number;
+  name: string;
+}
+
 export interface AddCodePinDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   projectId: number;
+  /** The connection to pin into; the initial choice when `repositories` is given. */
   configId: number;
   repositoryId: number;
+  /**
+   * Every connected Impact repository. With more than one, a new pin starts
+   * by choosing which repository the file lives in.
+   */
+  repositories?: PinRepositoryOption[];
   caseId?: number;
   initialFilePath?: string;
   initialKind?: CodePinKind;
@@ -124,8 +144,9 @@ export function AddCodePinDialog({
   open,
   onOpenChange,
   projectId,
-  configId,
-  repositoryId,
+  configId: initialConfigId,
+  repositoryId: initialRepositoryId,
+  repositories,
   caseId,
   initialFilePath,
   initialKind = "FILE",
@@ -134,10 +155,21 @@ export function AddCodePinDialog({
   onUpdated,
 }: AddCodePinDialogProps) {
   const t = useTranslations("repository.codePins");
+  const tCommon = useTranslations("common");
+  // The Impact dialog already names this picker; share its strings.
+  const tImpact = useTranslations("runs.impact");
   const locale = useLocale();
   const { data: session } = useSession();
 
   const [selectedCase, setSelectedCase] = useState<CaseOption | null>(null);
+  const [selectedConfigId, setSelectedConfigId] = useState(initialConfigId);
+  const repositoryChoice =
+    repositories?.find((option) => option.configId === selectedConfigId) ??
+    null;
+  const configId = repositoryChoice?.configId ?? initialConfigId;
+  const repositoryId = repositoryChoice?.repositoryId ?? initialRepositoryId;
+  const canChooseRepository =
+    editing === undefined && (repositories?.length ?? 0) > 1;
   const [kind, setKind] = useState<CodePinKind>(editing?.kind ?? initialKind);
   const [file, setFile] = useState<ImpactFileEntry | null>(() =>
     seedFile(
@@ -157,6 +189,7 @@ export function AddCodePinDialog({
 
   const reset = useCallback(() => {
     setSelectedCase(null);
+    setSelectedConfigId(initialConfigId);
     setKind(editing?.kind ?? initialKind);
     setFile(
       seedFile(
@@ -170,11 +203,22 @@ export function AddCodePinDialog({
     setNote(editing?.note ?? "");
     setSubmitting(false);
     setErrorMessage(null);
-  }, [initialKind, initialFilePath, editing]);
+  }, [initialKind, initialFilePath, editing, initialConfigId]);
 
   useEffect(() => {
     if (open) reset();
   }, [open, reset]);
+
+  const handleRepositoryChange = (value: string) => {
+    setSelectedConfigId(Number(value));
+    // The file, lines, symbol and glob all belonged to the other repository.
+    setFile(null);
+    setStartLine(null);
+    setEndLine(null);
+    setSymbol("");
+    setGlob("");
+    setErrorMessage(null);
+  };
 
   const effectiveCaseId = caseId ?? selectedCase?.id;
 
@@ -507,6 +551,35 @@ export function AddCodePinDialog({
                   </Button>
                 )}
               />
+            </div>
+          )}
+
+          {canChooseRepository && (
+            <div className="space-y-1">
+              <Label htmlFor="code-pin-repository">
+                {tCommon("pageTitles.repository")}
+              </Label>
+              <Select
+                value={String(selectedConfigId)}
+                onValueChange={handleRepositoryChange}
+              >
+                <SelectTrigger
+                  id="code-pin-repository"
+                  data-testid="code-pin-repository"
+                >
+                  <SelectValue placeholder={tImpact("repositoryPlaceholder")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {repositories?.map((option) => (
+                    <SelectItem
+                      key={option.configId}
+                      value={String(option.configId)}
+                    >
+                      <CodeRepositoryName name={option.name} />
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
 

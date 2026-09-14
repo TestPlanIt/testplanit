@@ -1,5 +1,6 @@
 "use client";
 
+import { CodeRepositoryName } from "@/components/CodeRepositoryName";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { DateFormatter } from "@/components/DateFormatter";
@@ -521,9 +522,10 @@ export default function QuickScriptPage() {
                                   key={repo.id}
                                   value={String(repo.id)}
                                 >
-                                  {repo.name} {"("}
-                                  {repo.provider}
-                                  {")"}
+                                  <CodeRepositoryName
+                                    name={repo.name}
+                                    provider={repo.provider}
+                                  />
                                 </SelectItem>
                               ))}
                             </SelectContent>

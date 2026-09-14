@@ -9,9 +9,13 @@ import {
 import {
   JOB_REFRESH_EXPIRED_CACHES,
   JOB_REFRESH_SINGLE_REPO_CACHE,
+  JOB_SCAN_REPO_ISSUES,
   REPO_CACHE_QUEUE_NAME,
 } from "../lib/queueNames";
-import { refreshRepoCache } from "../lib/services/repoCacheRefreshService";
+import {
+  refreshRepoCache,
+  scanRepoIssues,
+} from "../lib/services/repoCacheRefreshService";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
 import { BULLMQ_PREFIX } from "../lib/bullPrefix";
@@ -126,6 +130,57 @@ const processor = async (job: Job) => {
           failCount++;
           console.warn(
             `Job ${job.id}: Manual refresh failed for config ${configId}: ${result.error}`
+          );
+        }
+        break;
+      }
+
+      case JOB_SCAN_REPO_ISSUES: {
+        // Manual ticket scan for one Impact config ("Rescan" / "Scan full
+        // history"). The scan writes its progress and final report into the
+        // config's issueScanReport, which the settings page polls.
+        const configId = Number(job.data.configId);
+        if (!Number.isFinite(configId)) {
+          throw new Error(
+            `${JOB_SCAN_REPO_ISSUES} job requires a numeric configId`
+          );
+        }
+        const full = job.data.full === true;
+        console.log(
+          `Job ${job.id}: ${full ? "Full-history" : "Recent"} ticket scan for config ${configId}`
+        );
+        let report: Awaited<ReturnType<typeof scanRepoIssues>>;
+        try {
+          report = await scanRepoIssues(configId, db, { full });
+        } catch (error) {
+          // Nothing else clears the running flag the route wrote.
+          await (db as any).projectCodeRepositoryConfig
+            .update({
+              where: { id: configId },
+              data: {
+                issueScanReport: {
+                  error: error instanceof Error ? error.message : String(error),
+                  scannedAt: new Date().toISOString(),
+                },
+              },
+            })
+            .catch(() => {});
+          throw error;
+        }
+        if ("error" in report) {
+          failCount++;
+          console.warn(
+            `Job ${job.id}: Ticket scan failed for config ${configId}: ${report.error}`
+          );
+        } else if ("cancelled" in report) {
+          skippedCount++;
+          console.log(
+            `Job ${job.id}: Ticket scan for config ${configId} cancelled by the user`
+          );
+        } else {
+          successCount++;
+          console.log(
+            `Job ${job.id}: Ticket scan for config ${configId} — ${report.scannedCommits} commits, ${report.matchedCommits} matched, ${report.created} pins created, ${report.importedIssues} tickets imported`
           );
         }
         break;

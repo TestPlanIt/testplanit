@@ -39,6 +39,7 @@ import {
   IN_REVIEW_DIMENSION,
   type DynamicFieldDescriptor,
   type FilterDimension,
+  CODE_PINS_DIMENSION,
 } from "~/lib/repository/filterDimensions";
 import {
   applyReadabilityPass,
@@ -76,6 +77,7 @@ import {
   ListOrdered,
   MessageSquareWarning,
   Paperclip,
+  Pin,
   Search,
   Sparkles,
   SquareCheckBig,
@@ -306,6 +308,8 @@ interface ViewOptions {
     value: boolean;
     count: number;
   }>;
+  /** Only present while the project has Impact Analysis enabled. */
+  codePins?: Array<{ value: boolean; count: number }>;
   dynamicFields: Record<string, DynamicField>;
   tags: Array<{
     id: number | string;
@@ -790,14 +794,25 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
     signature: string;
     fields?: Record<string, DynamicFieldDescriptor>;
   }>({ signature: "" });
+  // Code Pins exist only where Impact Analysis is on. `undefined` while the
+  // project row loads keeps a shared `?view=codePins` link from being thrown
+  // away before the flag is known.
+  const impactEnabled = project?.impactEnabled;
+  const codePinsActive = impactEnabled === true;
   const filterRegistry = useMemo(
     () =>
       buildFilterDimensions({
         dynamicFields: mirroredDynamicFields.fields,
         includeRunDimensions,
         includeInReview: reviewWorkflowActive,
+        includeCodePins: codePinsActive,
       }),
-    [mirroredDynamicFields.fields, includeRunDimensions, reviewWorkflowActive]
+    [
+      mirroredDynamicFields.fields,
+      includeRunDimensions,
+      reviewWorkflowActive,
+      codePinsActive,
+    ]
   );
 
   const {
@@ -1194,6 +1209,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       parameterized: viewOptionsData.parameterized || [],
       attachments: viewOptionsData.attachments || [],
       inReview: viewOptionsData.inReview,
+      codePins: viewOptionsData.codePins,
       dynamicFields,
       tags: tagOptions,
       issues: issueOptions,
@@ -1249,6 +1265,17 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
               id: IN_REVIEW_DIMENSION,
               name: t("repository.views.byReview"),
               icon: MessageSquareWarning,
+            },
+          ]
+        : []),
+      // Code Pins axis only where Impact Analysis is on — same gating as
+      // the filter dimension, so axis and chip agree.
+      ...(codePinsActive
+        ? [
+            {
+              id: CODE_PINS_DIMENSION,
+              name: t("repository.codePins.title"),
+              icon: Pin,
             },
           ]
         : []),
@@ -1393,6 +1420,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       "parameterized",
       "attachments",
       "inReview",
+      "codePins",
       "status",
       "assignedTo",
       "tags",
@@ -1448,6 +1476,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
         "parameterized",
         "attachments",
         "inReview",
+        "codePins",
         "status",
         "assignedTo",
         "tags",
@@ -1485,6 +1514,18 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
         : current
     );
   }, [reviewFeatureEnabled, isRunMode]);
+
+  // Same for `?view=codePins` once the project row says Impact is off.
+  useEffect(() => {
+    if (impactEnabled !== false) return;
+    setSelectedItem((current) =>
+      current === CODE_PINS_DIMENSION
+        ? isRunMode
+          ? "assignedTo"
+          : "folders"
+        : current
+    );
+  }, [impactEnabled, isRunMode]);
 
   const deferredFolderId = useDeferredValue(selectedFolderId);
 
@@ -2547,6 +2588,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                             predicatesKey={canonicalKey}
                             onClearFilters={clearPredicates}
                             inReviewCaseIds={inReviewCaseIds}
+                            codePinsEnabled={codePinsActive}
                             isSelectionMode={isSelectionMode}
                             selectedTestCases={selectedTestCases}
                             selectedRunIds={selectedRunIds}

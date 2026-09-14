@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   JOB_REFRESH_EXPIRED_CACHES,
   JOB_REFRESH_SINGLE_REPO_CACHE,
+  JOB_SCAN_REPO_ISSUES,
 } from "../lib/queueNames";
 
 // Create mock db instance
@@ -34,10 +35,12 @@ vi.mock("../lib/integrations/cache/RepoFileCache", () => ({
   },
 }));
 
-// Mock refreshRepoCache
+// Mock refreshRepoCache and the standalone ticket scan
 const mockRefreshRepoCache = vi.fn();
+const mockScanRepoIssues = vi.fn();
 vi.mock("../lib/services/repoCacheRefreshService", () => ({
   refreshRepoCache: (...args: any[]) => mockRefreshRepoCache(...args),
+  scanRepoIssues: (...args: any[]) => mockScanRepoIssues(...args),
 }));
 
 // Mock queue names
@@ -305,6 +308,111 @@ describe("RepoCacheWorker", () => {
 
       // INSTANCE_TENANT_ID should be restored even after error
       expect(process.env.INSTANCE_TENANT_ID).toBe("original-tenant");
+    });
+  });
+
+  describe(`${JOB_SCAN_REPO_ISSUES} job`, () => {
+    it("runs a full-history ticket scan for the config without touching the cache", async () => {
+      mockScanRepoIssues.mockResolvedValue({
+        scannedCommits: 5000,
+        matchedCommits: 40,
+        created: 12,
+        importedIssues: 3,
+      });
+
+      const { processor } = await import("./repoCacheWorker");
+
+      const result = await processor({
+        id: "job-scan-1",
+        name: JOB_SCAN_REPO_ISSUES,
+        data: { configId: 101, full: true, tenantId: "tenant-a" },
+      } as Job);
+
+      expect(mockScanRepoIssues).toHaveBeenCalledWith(101, mockDb, {
+        full: true,
+      });
+      expect(mockRefreshRepoCache).not.toHaveBeenCalled();
+      expect(result).toMatchObject({ successCount: 1, failCount: 0 });
+    });
+
+    it("defaults to the recent window and counts a failed scan", async () => {
+      mockScanRepoIssues.mockResolvedValue({
+        error: "rate limited",
+        scannedAt: "2026-09-13T00:00:00Z",
+      });
+
+      const { processor } = await import("./repoCacheWorker");
+
+      const result = await processor({
+        id: "job-scan-2",
+        name: JOB_SCAN_REPO_ISSUES,
+        data: { configId: 101 },
+      } as Job);
+
+      expect(mockScanRepoIssues).toHaveBeenCalledWith(101, mockDb, {
+        full: false,
+      });
+      expect(result).toMatchObject({ successCount: 0, failCount: 1 });
+    });
+
+    it("counts a cancelled scan as skipped, not failed", async () => {
+      mockScanRepoIssues.mockResolvedValue({
+        cancelled: true,
+        full: true,
+        scannedAt: "2026-09-13T00:00:00Z",
+      });
+
+      const { processor } = await import("./repoCacheWorker");
+
+      const result = await processor({
+        id: "job-scan-5",
+        name: JOB_SCAN_REPO_ISSUES,
+        data: { configId: 101, full: true },
+      } as Job);
+
+      expect(result).toMatchObject({
+        successCount: 0,
+        failCount: 0,
+        skippedCount: 1,
+      });
+    });
+
+    it("clears the running flag with the error when the scan throws", async () => {
+      mockScanRepoIssues.mockRejectedValue(new Error("column does not exist"));
+      const update = vi.fn().mockResolvedValue({});
+      (mockDb as any).projectCodeRepositoryConfig.update = update;
+
+      const { processor } = await import("./repoCacheWorker");
+
+      await expect(
+        processor({
+          id: "job-scan-4",
+          name: JOB_SCAN_REPO_ISSUES,
+          data: { configId: 101 },
+        } as Job)
+      ).rejects.toThrow("column does not exist");
+      expect(update).toHaveBeenCalledWith({
+        where: { id: 101 },
+        data: {
+          issueScanReport: {
+            error: "column does not exist",
+            scannedAt: expect.any(String),
+          },
+        },
+      });
+    });
+
+    it("rejects a job without a numeric configId", async () => {
+      const { processor } = await import("./repoCacheWorker");
+
+      await expect(
+        processor({
+          id: "job-scan-3",
+          name: JOB_SCAN_REPO_ISSUES,
+          data: { configId: "nope" },
+        } as Job)
+      ).rejects.toThrow("requires a numeric configId");
+      expect(mockScanRepoIssues).not.toHaveBeenCalled();
     });
   });
 

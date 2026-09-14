@@ -49,7 +49,20 @@ function renderWithQueryClient(ui: React.ReactElement) {
   );
 }
 
-const config = { id: 7, repositoryId: 3, branch: "main", cacheEnabled: true };
+const config = {
+  id: 7,
+  repositoryId: 3,
+  branch: "main",
+  cacheEnabled: true,
+  repository: { name: "acme/web" },
+};
+const secondConfig = {
+  id: 8,
+  repositoryId: 4,
+  branch: null,
+  cacheEnabled: true,
+  repository: { name: "acme/api" },
+};
 
 describe("ImpactButton", () => {
   beforeEach(() => {
@@ -133,7 +146,7 @@ describe("ImpactButton", () => {
       expect.objectContaining({
         projectId: 1,
         currentSelection: [1, 3],
-        config: { id: 7, repositoryId: 3, branch: "main" },
+        configs: [{ id: 7, repositoryId: 3, branch: "main", name: "acme/web" }],
       }),
       undefined
     );
@@ -144,5 +157,39 @@ describe("ImpactButton", () => {
       analysisId: 9,
       acceptedCaseIds: [3, 4],
     });
+  });
+
+  it("hands every connected repository to the dialog, oldest first", async () => {
+    mockUseFindFirstProjects.mockReturnValue({
+      data: {
+        impactEnabled: true,
+        codeRepositoryConfigs: [config, secondConfig],
+      },
+      isLoading: false,
+    });
+    renderWithQueryClient(
+      <ImpactButton
+        projectId={1}
+        selectedTestCases={[]}
+        onSuggestionsAccepted={vi.fn()}
+      />
+    );
+
+    const args = mockUseFindFirstProjects.mock.calls[0][0];
+    expect(args.select.codeRepositoryConfigs).toMatchObject({
+      where: { purpose: "IMPACT" },
+      orderBy: { id: "asc" },
+    });
+
+    await userEvent.click(screen.getByTestId("impact-button"));
+    expect(mockImpactDialog).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        configs: [
+          { id: 7, repositoryId: 3, branch: "main", name: "acme/web" },
+          { id: 8, repositoryId: 4, branch: null, name: "acme/api" },
+        ],
+      }),
+      undefined
+    );
   });
 });

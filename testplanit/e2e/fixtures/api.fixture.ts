@@ -3744,8 +3744,9 @@ export class ApiHelper {
 
   /**
    * Bind a code repository to a project for Impact (purpose IMPACT — distinct
-   * from the QuickScript binding, one of each per project). Returns the row.
-   * Hard-deleted on cleanup, the way the settings page's Disconnect does it.
+   * from the QuickScript binding; a project can hold one IMPACT binding per
+   * repository). Returns the row. Hard-deleted on cleanup, the way the
+   * settings page's Disconnect does it.
    */
   async createImpactConfig(
     projectId: number,

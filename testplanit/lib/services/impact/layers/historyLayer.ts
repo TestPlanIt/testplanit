@@ -9,6 +9,8 @@ export interface HistoryDbClient {
 
 export interface HistoryLayerInput {
   projectId: number;
+  /** Only analyses of the same repository count: paths are repo-relative. */
+  configId: number;
   analysisId: number;
   changedPaths: string[];
   changedDirs: string[];
@@ -52,6 +54,7 @@ export async function runHistoryLayer(
   const prior = (await db.impactAnalysis.findMany({
     where: {
       projectId: input.projectId,
+      configId: input.configId,
       id: { not: input.analysisId },
       status: "COMPLETED",
       isDeleted: false,
