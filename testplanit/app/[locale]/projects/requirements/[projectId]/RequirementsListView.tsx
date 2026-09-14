@@ -516,7 +516,7 @@ const RequirementsListView = forwardRef<
   );
   const sourceFilterOptions = useMemo<RequirementFilterOption[]>(
     () => [
-      { value: "MANUAL", label: t("requirements.provenance.nativeLabel") },
+      { value: "MANUAL", label: t("common.fields.manual") },
       { value: "SYNCED", label: t("requirements.provenance.syncedLabel") },
       { value: "DETACHED", label: t("requirements.provenance.detachedLabel") },
     ],
@@ -1117,8 +1117,8 @@ const RequirementsListView = forwardRef<
 
   const columns = useRequirementsListColumns({
     translations: {
-      columnName: t("requirements.list.columnName"),
-      columnStatus: t("requirements.list.columnStatus"),
+      columnName: t("common.name"),
+      columnStatus: t("common.actions.status"),
       columnCoverage: t("requirements.coverage.title"),
       columnLinkedCases: t("requirements.linkedCases.title"),
       columnCoveringCases: t("requirements.coverage.panelTitle"),

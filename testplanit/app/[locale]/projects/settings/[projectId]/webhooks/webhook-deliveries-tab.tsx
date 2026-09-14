@@ -525,13 +525,13 @@ function WebhookDeliveriesTabContent({ projectId }: WebhookDeliveriesTabProps) {
               data-testid="webhook-deliveries-filter-status"
               className="w-full"
             >
-              <SelectValue placeholder={t("filterStatusAll")} />
+              <SelectValue placeholder={tCommon("filters.all")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">{t("filterStatusAll")}</SelectItem>
+              <SelectItem value="all">{tCommon("filters.all")}</SelectItem>
               <SelectItem value="failed">{t("filterStatusFailed")}</SelectItem>
               <SelectItem value="success">
-                {t("filterStatusSuccess")}
+                {tCommon("fields.success")}
               </SelectItem>
             </SelectContent>
           </Select>
@@ -670,7 +670,7 @@ function WebhookDeliveriesTabContent({ projectId }: WebhookDeliveriesTabProps) {
       {
         id: "status",
         accessorKey: "statusCode",
-        header: t("tableHeaderStatus"),
+        header: tCommon("actions.status"),
         enableSorting: true,
         enableResizing: true,
         size: 100,
@@ -686,7 +686,7 @@ function WebhookDeliveriesTabContent({ projectId }: WebhookDeliveriesTabProps) {
       {
         id: "error",
         accessorKey: "error",
-        header: t("tableHeaderError"),
+        header: tCommon("errors.error"),
         enableSorting: true,
         enableResizing: true,
         size: 100,

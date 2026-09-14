@@ -43,6 +43,7 @@ export function RestoreCaseDraftDialog({
   // Flat keys: next-intl does not resolve a fourth nesting level, so this is
   // `repository.draft.restoreTitle`, not `repository.draft.restore.title`.
   const t = useTranslations("repository.draft");
+  const tCommon = useTranslations("common");
   const locale = useLocale();
   const isNewCase = scopeKind === "folder";
 
@@ -86,7 +87,7 @@ export function RestoreCaseDraftDialog({
             data-testid="restore-case-draft-restore"
             onClick={onRestore}
           >
-            {t("restoreRestore")}
+            {tCommon("actions.restore")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

@@ -262,7 +262,7 @@ export function ApproveDialog({
             onClick={handleConfirm}
             disabled={submitting}
           >
-            {t("approve")}
+            {tCommon("permissions.approve")}
           </Button>
         </DialogFooter>
       </DialogContent>

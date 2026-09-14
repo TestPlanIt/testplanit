@@ -2243,7 +2243,7 @@ export default function SessionPage() {
                                     readOnly={!isEditMode}
                                     className="h-auto"
                                     placeholder={tCommon(
-                                      "placeholders.addADescription"
+                                      "fields.description_placeholder"
                                     )}
                                     projectId={safeProjectId}
                                   />
@@ -2292,7 +2292,7 @@ export default function SessionPage() {
                                     readOnly={!isEditMode}
                                     className="h-auto"
                                     placeholder={tCommon(
-                                      "placeholders.addADescription"
+                                      "fields.description_placeholder"
                                     )}
                                     projectId={safeProjectId}
                                   />

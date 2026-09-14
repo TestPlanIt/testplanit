@@ -28,6 +28,7 @@ export function StaticInputsEditor({
   testIdPrefix = "automation-target-input",
 }: StaticInputsEditorProps) {
   const t = useTranslations("automation.settings");
+  const tCommon = useTranslations("common");
 
   const update = (index: number, patch: Partial<StaticInputRow>) =>
     onChange(rows.map((r, i) => (i === index ? { ...r, ...patch } : r)));
@@ -39,8 +40,8 @@ export function StaticInputsEditor({
           <Input
             value={row.key}
             onChange={(e) => update(index, { key: e.target.value })}
-            placeholder={t("inputKey")}
-            aria-label={t("inputKey")}
+            placeholder={tCommon("name")}
+            aria-label={tCommon("name")}
             disabled={disabled}
             className="font-mono text-sm"
             data-testid={`${testIdPrefix}-key-${index}`}
@@ -48,8 +49,8 @@ export function StaticInputsEditor({
           <Input
             value={row.value}
             onChange={(e) => update(index, { value: e.target.value })}
-            placeholder={t("inputValue")}
-            aria-label={t("inputValue")}
+            placeholder={tCommon("fields.value")}
+            aria-label={tCommon("fields.value")}
             disabled={disabled}
             className="font-mono text-sm"
             data-testid={`${testIdPrefix}-value-${index}`}

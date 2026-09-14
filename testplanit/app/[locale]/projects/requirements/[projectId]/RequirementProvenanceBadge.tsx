@@ -269,7 +269,7 @@ export function RequirementProvenanceBadge({
         variant="outline"
         className={`text-xs gap-1 whitespace-nowrap text-muted-foreground cursor-default ${className ?? ""}`}
       >
-        {t("nativeLabel")}
+        {tCommon("fields.manual")}
       </Badge>,
       t("nativeTooltip")
     );
@@ -403,7 +403,9 @@ export function RequirementProvenanceBadge({
             data-testid="requirement-provenance-menu-open"
           >
             <ExternalLink className="h-4 w-4" />
-            {t("openInTracker", { provider: tCommon("fields.issueTracker") })}
+            {tCommon("ui.issues.openInExternalSystem", {
+              provider: tCommon("fields.issueTracker"),
+            })}
           </DropdownMenuItem>
           {/* FORCE_OFF classification override, behind the shared
               conversion confirmation. */}

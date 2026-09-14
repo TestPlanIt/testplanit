@@ -171,7 +171,7 @@ export function IterationBulkConfirmDialog({
             htmlFor="iteration-bulk-status"
             className="text-xs font-medium"
           >
-            {t("iterationBulkStatusLabel")}
+            {tCommon("actions.status")}
           </label>
           <Select
             value={selectedStatusId}
@@ -184,7 +184,7 @@ export function IterationBulkConfirmDialog({
               id="iteration-bulk-status"
               data-testid="iteration-bulk-status-trigger"
             >
-              <SelectValue placeholder={t("iterationBulkStatusPlaceholder")} />
+              <SelectValue placeholder={tCommon("placeholders.selectStatus")} />
             </SelectTrigger>
             <SelectContent>
               {(statuses ?? []).map((s) => (

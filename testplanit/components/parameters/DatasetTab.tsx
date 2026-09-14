@@ -1155,7 +1155,7 @@ export function DatasetTab({
                   /* handled in onClick to capture shiftKey */
                 }}
                 onClick={handleClick}
-                aria-label={t("datasetRowSelectAria")}
+                aria-label={tCommon("aria.selectRow")}
                 data-testid={`dataset-row-select-${row.original.id}`}
               />
             </div>
@@ -1165,7 +1165,7 @@ export function DatasetTab({
       {
         id: LABEL_COLUMN_ID,
         minSize: 100,
-        header: () => t("datasetLabelColumn"),
+        header: () => tCommon("fields.options.label"),
         accessorKey: "label",
         cell: ({ row }) => {
           const isEditing =
@@ -1227,7 +1227,7 @@ export function DatasetTab({
                       data-testid={`dataset-column-delete-${p.name}`}
                     >
                       <Trash className="h-4 w-4" />
-                      {t("datasetColumnDelete")}
+                      {tCommon("editor.table.deleteColumn")}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -2002,7 +2002,7 @@ export function DatasetTab({
                   className="text-xs font-medium"
                   htmlFor="dataset-add-column-input"
                 >
-                  {t("formName")}
+                  {tCommon("name")}
                 </label>
                 <Input
                   id="dataset-add-column-input"
@@ -2021,7 +2021,7 @@ export function DatasetTab({
                   className="text-xs font-medium"
                   htmlFor="dataset-add-column-type"
                 >
-                  {t("formType")}
+                  {tCommon("fields.type")}
                 </label>
                 <Select
                   value={newColumnType}
@@ -2055,7 +2055,7 @@ export function DatasetTab({
                   htmlFor="dataset-add-column-required"
                   className="text-xs font-medium"
                 >
-                  {t("formRequired")}
+                  {tCommon("fields.required")}
                 </label>
               </div>
               <div className="flex items-center gap-2">
@@ -2182,7 +2182,7 @@ export function DatasetTab({
                   data-testid="dataset-column-delete-confirm"
                 >
                   <Trash className="h-4 w-4" />
-                  {t("datasetColumnDeleteConfirm")}
+                  {tCommon("editor.table.deleteColumn")}
                 </Button>
               )}
             </AlertDialogFooter>

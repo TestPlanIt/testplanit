@@ -48,7 +48,7 @@ export const DIMENSION_PRESENTATION: Readonly<
     icon: SquareStack,
     labelKey: "repository.views.byParameterized",
   },
-  attachments: { icon: Paperclip, labelKey: "repository.views.byAttachments" },
+  attachments: { icon: Paperclip, labelKey: "common.fields.attachments" },
   codePins: { icon: Pin, labelKey: "repository.codePins.title" },
   inReview: {
     icon: MessageSquareWarning,

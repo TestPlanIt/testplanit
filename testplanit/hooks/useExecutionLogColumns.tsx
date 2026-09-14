@@ -45,7 +45,7 @@ export function useExecutionLogColumns(
           (row) => (isStepRow(row) ? "" : (row.project?.name ?? "")),
           {
             id: "project",
-            header: () => <span>{t("reports.dimensions.project")}</span>,
+            header: () => <span>{tCommon("fields.project")}</span>,
             cell: (info) => {
               const row = info.row.original;
               if (isStepRow(row)) return null;
@@ -178,7 +178,9 @@ export function useExecutionLogColumns(
     columns.push(
       columnHelper.accessor((row) => (isStepRow(row) ? "" : row.testRunName), {
         id: "testRunName",
-        header: () => <span>{t("reports.dimensions.testRun")}</span>,
+        header: () => (
+          <span>{t("common.actions.junit.import.testRun.label")}</span>
+        ),
         cell: (info) => {
           const row = info.row.original;
           if (isStepRow(row)) return null;

@@ -311,7 +311,7 @@ export const Header = () => {
                     priority={true}
                   />
                   <div className="flex flex-col">
-                    <span className="">{t("common.branding.name")}</span>
+                    <span className="">{tCommon("pageTitles.appName")}</span>
                     <div className="-mt-1 text-xs text-muted-foreground/60">
                       {versionString}
                     </div>

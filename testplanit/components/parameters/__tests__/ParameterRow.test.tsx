@@ -8,7 +8,7 @@ vi.mock("next-intl", () => ({
     const dict: Record<string, string> = {
       editAria: "Edit parameter",
       deleteAria: "Delete parameter",
-      formRequired: "Required",
+      "fields.required": "Required",
       formSensitive: "Sensitive",
     };
     return dict[key] ?? key;

@@ -56,12 +56,12 @@ export function AutomationExecutionsSheet({
             <Table data-testid="automation-executions-table">
               <TableHeader>
                 <TableRow>
-                  <TableHead>{t("columnStatus")}</TableHead>
+                  <TableHead>{tGlobal("common.actions.status")}</TableHead>
                   <TableHead>{t("columnTarget")}</TableHead>
                   <TableHead>{t("columnRef")}</TableHead>
                   <TableHead>{t("columnCases")}</TableHead>
                   <TableHead>{t("columnRequested")}</TableHead>
-                  <TableHead>{t("columnCompleted")}</TableHead>
+                  <TableHead>{tGlobal("common.fields.completed")}</TableHead>
                   <TableHead>{t("columnLink")}</TableHead>
                 </TableRow>
               </TableHeader>

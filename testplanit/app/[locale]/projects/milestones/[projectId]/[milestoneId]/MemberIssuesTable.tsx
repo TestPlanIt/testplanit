@@ -614,14 +614,14 @@ export function MemberIssuesTable({
   const columns = useMemberIssueColumns({
     translations: {
       selectRow: tCommon("aria.selectRow"),
-      key: t("columnKey"),
-      description: t("columnDescription"),
-      status: t("columnStatus"),
+      key: tCommon("name"),
+      description: tCommon("fields.description"),
+      status: tCommon("actions.status"),
       cases: tCommon("fields.testCases"),
       coverage: t("columnCoverage"),
       source: t("columnSource"),
       sourceSynced: t("sourceSynced"),
-      sourceManual: t("sourceManual"),
+      sourceManual: tCommon("fields.manual"),
       actions: tCommon("actions.actionsLabel"),
     },
     projectId,
@@ -905,7 +905,9 @@ export function MemberIssuesTable({
                   <SelectContent>
                     <SelectItem value="all">{t("filterAllSources")}</SelectItem>
                     <SelectItem value="SYNCED">{t("sourceSynced")}</SelectItem>
-                    <SelectItem value="MANUAL">{t("sourceManual")}</SelectItem>
+                    <SelectItem value="MANUAL">
+                      {tCommon("fields.manual")}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>

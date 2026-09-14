@@ -124,7 +124,7 @@ export function ChangePasswordModal({
   };
 
   const titleKey = hasPassword
-    ? "users.profile.changePasswordModal.buttonText"
+    ? "common.pageTitles.changePassword"
     : "users.profile.changePasswordModal.setPasswordButtonText";
 
   return (

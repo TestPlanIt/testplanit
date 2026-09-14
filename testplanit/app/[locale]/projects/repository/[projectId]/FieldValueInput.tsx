@@ -183,7 +183,7 @@ export function FieldValueInput({
         disabled={isDisabled}
       >
         <SelectTrigger className="w-full">
-          <SelectValue placeholder={tCommon("placeholders.select")} />
+          <SelectValue placeholder={tCommon("actions.select")} />
         </SelectTrigger>
         <SelectContent>
           <SelectGroup>
@@ -274,7 +274,7 @@ export function FieldValueInput({
           disabled={isDisabled}
         >
           <SelectTrigger className="w-full">
-            <SelectValue placeholder={tCommon("placeholders.select")} />
+            <SelectValue placeholder={tCommon("actions.select")} />
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
@@ -326,7 +326,7 @@ export function FieldValueInput({
           options={multiSelectOptions}
           isMulti
           styles={customStyles}
-          placeholder={tCommon("placeholders.select")}
+          placeholder={tCommon("actions.select")}
           isDisabled={isDisabled}
         />
       );

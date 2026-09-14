@@ -161,7 +161,7 @@ export function GroupProjectMappings({ groupId }: GroupProjectMappingsProps) {
           <SelectTrigger
             className="flex-1"
             data-testid="group-project-mapping-project-select"
-            aria-label={t("projectLabel")}
+            aria-label={tCommon("fields.project")}
           >
             <SelectValue placeholder={t("projectPlaceholder")} />
           </SelectTrigger>

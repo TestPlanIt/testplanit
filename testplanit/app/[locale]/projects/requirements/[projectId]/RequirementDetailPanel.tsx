@@ -809,7 +809,7 @@ export default function RequirementDetailPanel({
             name="note"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t("documentation")}</FormLabel>
+                <FormLabel>{tCommon("fields.documentation")}</FormLabel>
                 {isEditMode || !isTiptapEmpty(requirement.note) ? (
                   <FormControl>
                     <TipTapEditor

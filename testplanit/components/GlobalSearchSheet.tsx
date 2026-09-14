@@ -73,7 +73,7 @@ export function GlobalSearchSheet({ isOpen, onClose }: GlobalSearchSheetProps) {
       >
         <SheetHeader>
           <SheetTitle className="flex items-center">
-            {t("search.title")}
+            {t("common.aria.search")}
             <Popover>
               <PopoverTrigger asChild>
                 <button
@@ -94,7 +94,7 @@ export function GlobalSearchSheet({ isOpen, onClose }: GlobalSearchSheetProps) {
             </Popover>
           </SheetTitle>
           <SheetDescription className="sr-only">
-            {t("search.title")}
+            {t("common.aria.search")}
           </SheetDescription>
         </SheetHeader>
 

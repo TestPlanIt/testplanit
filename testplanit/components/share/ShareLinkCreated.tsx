@@ -87,7 +87,7 @@ export function ShareLinkCreated({
               ) : (
                 <>
                   <Copy className="h-4 w-4" />
-                  {t("copy")}
+                  {tCommon("actions.copy")}
                 </>
               )}
             </Button>

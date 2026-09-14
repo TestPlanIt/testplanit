@@ -877,7 +877,7 @@ const ManualResultExpandedDetails = ({
                     {tParams("iterationIssueTableHeaderParameter")}
                   </th>
                   <th className="font-medium py-1">
-                    {tParams("iterationIssueTableHeaderValue")}
+                    {tCommon("fields.value")}
                   </th>
                 </tr>
               </thead>

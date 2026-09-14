@@ -665,7 +665,7 @@ export function useRequirementTraceabilityColumns(
         id: "result",
         enableHiding: false,
         enableGrouping: false,
-        header: () => <span>{t("result")}</span>,
+        header: () => <span>{tCommon("fields.resultStatus")}</span>,
         cell: (info) => <RequirementResultCell row={info.row.original} />,
         enableSorting: true,
         size: 160,
@@ -679,7 +679,7 @@ export function useRequirementTraceabilityColumns(
         id: "executedAt",
         enableHiding: false,
         enableGrouping: false,
-        header: () => <span>{t("executedAt")}</span>,
+        header: () => <span>{tCommon("fields.executedAt")}</span>,
         cell: (info) => {
           const value = info.getValue();
           if (!value) return null;
@@ -706,7 +706,7 @@ export function useRequirementTraceabilityColumns(
         id: "project",
         enableHiding: false,
         enableGrouping: false,
-        header: () => <span>{t("project")}</span>,
+        header: () => <span>{tCommon("fields.project")}</span>,
         cell: (info) => {
           const row = info.row.original;
           if (row.caseProjectId == null) return null;
@@ -825,6 +825,7 @@ export function useRequirementCoverageChangeColumns(): ColumnDef<
   any
 >[] {
   const t = useTranslations("reports.ui.requirementCoverage");
+  const tCommon = useTranslations("common");
 
   return useMemo(() => {
     const columnHelper =
@@ -884,7 +885,7 @@ export function useRequirementCoverageChangeColumns(): ColumnDef<
         id: "change",
         enableHiding: false,
         enableGrouping: false,
-        header: () => <span>{t("change")}</span>,
+        header: () => <span>{tCommon("actions.change")}</span>,
         cell: (info) => (
           <RequirementChangeKindCell kind={info.row.original.changeKind} />
         ),

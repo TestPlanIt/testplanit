@@ -51,6 +51,7 @@ export function PromptFeatureSection({ feature }: PromptFeatureSectionProps) {
     formState: { errors },
   } = useFormContext();
   const t = useTranslations("admin.prompts");
+  const tCommon = useTranslations("common");
 
   const systemPromptRef = useRef<HTMLTextAreaElement | null>(null);
   const userPromptRef = useRef<HTMLTextAreaElement | null>(null);
@@ -97,7 +98,7 @@ export function PromptFeatureSection({ feature }: PromptFeatureSectionProps) {
             {"("}
             {selectedIntegration
               ? `${selectedIntegration.name}${watch(`prompts.${feature}.modelOverride`) ? ` · ${watch(`prompts.${feature}.modelOverride`)}` : ""}`
-              : t("llmIntegrationPlaceholder")}
+              : tCommon("labels.access.projectDefault")}
             {")"}
           </span>
         </span>
@@ -132,7 +133,7 @@ export function PromptFeatureSection({ feature }: PromptFeatureSectionProps) {
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue
-                        placeholder={t("llmIntegrationPlaceholder")}
+                        placeholder={tCommon("labels.access.projectDefault")}
                       />
                     </SelectTrigger>
                   </FormControl>

@@ -25,7 +25,6 @@ export default function ProjectReportsPage() {
   const params = useParams();
   const projectId = parseInt(params.projectId as string);
   const { session, status, isLoading: isAuthLoading } = useRequireAuth();
-  const t = useTranslations("admin.menu");
   const tCommon = useTranslations("common");
 
   // Fetch project data (allow global admin access or project assignment)
@@ -114,7 +113,7 @@ export default function ProjectReportsPage() {
       <Card>
         <CardHeader className="w-full">
           <SectionHeader className="flex items-center gap-2">
-            <CardTitle>{t("reports")}</CardTitle>
+            <CardTitle>{tCommon("pageTitles.reports")}</CardTitle>
             <HelpPopover helpKey="projectReports" />
           </SectionHeader>
           <CardDescription>

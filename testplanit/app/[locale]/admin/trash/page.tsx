@@ -23,7 +23,7 @@ const softDeletedItemTypes: Array<{
 }> = [
   {
     name: "Projects",
-    translationKey: "admin.menu.projects",
+    translationKey: "common.fields.projects",
     iconName: "boxes",
   },
   {
@@ -48,12 +48,12 @@ const softDeletedItemTypes: Array<{
   },
   {
     name: "Workflows",
-    translationKey: "admin.menu.workflows",
+    translationKey: "common.labels.workflows",
     iconName: "workflow",
   },
   {
     name: "Status",
-    translationKey: "admin.menu.statuses",
+    translationKey: "common.labels.statuses",
     iconName: "circle-check-big",
   },
   {
@@ -63,12 +63,12 @@ const softDeletedItemTypes: Array<{
   },
   {
     name: "MilestoneTypes",
-    translationKey: "admin.menu.milestoneTypes",
+    translationKey: "common.fields.milestoneTypes",
     iconName: "milestone",
   },
   {
     name: "Configurations",
-    translationKey: "admin.menu.configurations",
+    translationKey: "common.fields.configurations",
     iconName: "combine",
   },
   {
@@ -81,10 +81,10 @@ const softDeletedItemTypes: Array<{
     translationKey: "admin.trash.itemTypes.configVariants",
     iconName: "component",
   },
-  { name: "User", translationKey: "admin.menu.users", iconName: "user" },
-  { name: "Groups", translationKey: "admin.menu.groups", iconName: "users" },
-  { name: "Roles", translationKey: "admin.menu.roles", iconName: "drama" },
-  { name: "Tags", translationKey: "admin.menu.tags", iconName: "tags" },
+  { name: "User", translationKey: "common.fields.users", iconName: "user" },
+  { name: "Groups", translationKey: "common.fields.groups", iconName: "users" },
+  { name: "Roles", translationKey: "common.labels.roles", iconName: "drama" },
+  { name: "Tags", translationKey: "common.fields.tags", iconName: "tags" },
   { name: "Issues", translationKey: "common.fields.issues", iconName: "bug" },
   {
     name: "TestRuns",
@@ -163,7 +163,7 @@ const softDeletedItemTypes: Array<{
   },
   {
     name: "LlmIntegration",
-    translationKey: "admin.menu.llm",
+    translationKey: "common.pageTitles.aiModels",
     iconName: "sparkles",
   },
   {

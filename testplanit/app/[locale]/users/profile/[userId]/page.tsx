@@ -721,9 +721,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                   onClick={() => setChangePasswordOpen(true)}
                                 >
                                   <UserLock className="w-4 h-4" />
-                                  {tGlobal(
-                                    "users.profile.changePasswordModal.buttonText"
-                                  )}
+                                  {tCommon("pageTitles.changePassword")}
                                 </Button>
                                 {changePasswordOpen && (
                                   <ChangePasswordModal
@@ -936,7 +934,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                     user.scimExternalId
                                   );
                                   pushString(
-                                    tDirectory("jobTitle"),
+                                    tCommon("fields.title"),
                                     scimCore?.title
                                   );
                                   pushString(
@@ -1002,7 +1000,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                         {/* Access — Projects + Groups */}
                         <AccordionItem value="access">
                           <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
-                            {t("access.title")}
+                            {tCommon("fields.access")}
                           </AccordionTrigger>
                           <AccordionContent>
                             <div className="px-4 space-y-6">

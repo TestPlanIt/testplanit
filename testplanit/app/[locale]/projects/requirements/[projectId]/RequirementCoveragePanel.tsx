@@ -207,10 +207,10 @@ export function RequirementCoveragePanel({
                     paired with `whitespace-nowrap` on the cell below, which
                     keeps the value on one line instead of wrapping. */}
                   <TableHead className="w-[180px] truncate">
-                    {t("columnExecutedAt")}
+                    {tCommon("fields.executedAt")}
                   </TableHead>
                   <TableHead className="w-[140px] truncate">
-                    {t("columnProject")}
+                    {tCommon("fields.project")}
                   </TableHead>
                 </TableRow>
               </TableHeader>

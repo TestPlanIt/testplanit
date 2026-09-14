@@ -851,13 +851,15 @@ export function CreateIssueDialog({
               integrationProjects &&
               integrationProjects.length >= 2 && (
                 <div className="space-y-2">
-                  <Label>{t("issues.projectSelectorLabel")}</Label>
+                  <Label>{t("common.fields.project")}</Label>
                   <Select
                     value={selectedProjectId || ""}
                     onValueChange={(value) => setSelectedProjectId(value)}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder={t("issues.selectProject")} />
+                      <SelectValue
+                        placeholder={t("common.aria.selectProject")}
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       {integrationProjects.map((ip) => (

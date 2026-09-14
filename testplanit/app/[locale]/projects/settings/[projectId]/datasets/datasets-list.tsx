@@ -47,6 +47,7 @@ function getColumnsCount(parametersJson: unknown): number | null {
 
 export function DatasetsList({ projectId }: DatasetsListProps) {
   const t = useTranslations("projects.settings.datasets");
+  const tCommon = useTranslations("common");
   const { data: session } = useSession();
   const dateTimeFormat = session?.user?.preferences?.dateFormat
     ? `${session.user.preferences.dateFormat} ${session.user.preferences.timeFormat || "HH:mm"}`
@@ -93,7 +94,7 @@ export function DatasetsList({ projectId }: DatasetsListProps) {
   const columns: ColumnDef<DatasetRow>[] = [
     {
       id: "name",
-      header: () => t("columns.name"),
+      header: () => tCommon("name"),
       cell: ({ row }) => (
         <span
           className="flex items-center gap-2 font-medium"
@@ -109,7 +110,7 @@ export function DatasetsList({ projectId }: DatasetsListProps) {
     },
     {
       id: "columns",
-      header: () => t("columns.columns"),
+      header: () => tCommon("table.columns.columns"),
       cell: ({ row }) => {
         const latest = row.original.versions[0];
         const count = latest ? getColumnsCount(latest.parametersJson) : null;
@@ -134,7 +135,7 @@ export function DatasetsList({ projectId }: DatasetsListProps) {
     },
     {
       id: "version",
-      header: () => t("columns.version"),
+      header: () => tCommon("fields.version"),
       cell: ({ row }) => (
         <span className="text-sm">
           {t("versionLabel", { version: row.original.version })}
@@ -191,7 +192,7 @@ export function DatasetsList({ projectId }: DatasetsListProps) {
     },
     {
       id: "actions",
-      header: () => t("columns.actions"),
+      header: () => tCommon("actions.actionsLabel"),
       cell: ({ row }) => (
         <div className="bg-primary-foreground whitespace-nowrap flex justify-end gap-1">
           <Button variant="ghost" className="px-2 py-1 h-auto" asChild>
@@ -212,7 +213,7 @@ export function DatasetsList({ projectId }: DatasetsListProps) {
                 name: row.original.name,
               })
             }
-            aria-label={t("actionDelete")}
+            aria-label={tCommon("actions.delete")}
             data-testid={`dataset-list-delete-${row.original.id}`}
           >
             <Trash className="h-5 w-5" />

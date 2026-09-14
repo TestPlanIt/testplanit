@@ -92,6 +92,7 @@ export function ParameterAddForm({
   existingCount = 0,
 }: ParameterAddFormProps) {
   const t = useTranslations("parameters");
+  const tCommon = useTranslations("common");
   const queryClient = useQueryClient();
   const [submitting, setSubmitting] = useState(false);
 
@@ -176,7 +177,7 @@ export function ParameterAddForm({
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
           <label className="text-xs font-medium" htmlFor="parameter-form-name">
-            {t("formName")}
+            {tCommon("name")}
           </label>
           <Input
             id="parameter-form-name"
@@ -188,7 +189,7 @@ export function ParameterAddForm({
 
         <div>
           <label className="text-xs font-medium" htmlFor="parameter-form-type">
-            {t("formType")}
+            {tCommon("fields.type")}
           </label>
           <Controller
             control={form.control}
@@ -220,7 +221,7 @@ export function ParameterAddForm({
             className="text-xs font-medium"
             htmlFor="parameter-form-default"
           >
-            {t("formDefault")}
+            {tCommon("fields.default")}
           </label>
           <Input
             id="parameter-form-default"
@@ -249,7 +250,7 @@ export function ParameterAddForm({
               className="text-xs font-medium"
               title={t("formRequiredHelp")}
             >
-              {t("formRequired")}
+              {tCommon("fields.required")}
             </label>
           </div>
 

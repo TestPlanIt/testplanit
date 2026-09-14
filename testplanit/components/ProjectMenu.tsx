@@ -300,7 +300,7 @@ export default function ProjectsMenu({
       ? [
           {
             icon: ChartNoAxesCombined,
-            label: t("admin.menu.reports"),
+            label: tCommon("pageTitles.reports"),
             path: "reports",
             id: "reports-link",
             section: "management" as MenuSection,
@@ -330,35 +330,35 @@ export default function ProjectsMenu({
           },
           {
             icon: Webhook,
-            label: t("admin.menu.webhooks"),
+            label: tCommon("pageTitles.webhooks"),
             path: "settings/webhooks",
             id: "settings-webhooks-link",
             section: "settings" as MenuSection,
           },
           {
             icon: Sparkles,
-            label: t("admin.menu.llm"),
+            label: tCommon("pageTitles.aiModels"),
             path: "settings/ai-models",
             id: "settings-ai-models-link",
             section: "settings" as MenuSection,
           },
           {
             icon: ScrollText,
-            label: t("admin.menu.quickScript"),
+            label: tCommon("pageTitles.quickscript"),
             path: "settings/quickscript",
             id: "settings-quickscript-link",
             section: "settings" as MenuSection,
           },
           {
             icon: Radio,
-            label: t("admin.menu.impact"),
+            label: tCommon("pageTitles.impact"),
             path: "settings/impact",
             id: "settings-impact-link",
             section: "settings" as MenuSection,
           },
           {
             icon: FilePlay,
-            label: t("admin.menu.automation"),
+            label: tCommon("pageTitles.automation"),
             path: "settings/automation",
             id: "settings-automation-link",
             section: "settings" as MenuSection,
@@ -372,7 +372,7 @@ export default function ProjectsMenu({
           },
           {
             icon: Settings2,
-            label: t("admin.menu.advanced"),
+            label: tCommon("pageTitles.advanced"),
             path: "settings/advanced",
             id: "settings-advanced-link",
             section: "settings" as MenuSection,

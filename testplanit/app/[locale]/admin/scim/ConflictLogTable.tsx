@@ -79,6 +79,7 @@ interface CursorState {
 
 export function ConflictLogTable() {
   const t = useTranslations("admin.scim.conflicts");
+  const tCommon = useTranslations("common");
 
   const [rows, setRows] = useState<ConflictLogRow[]>([]);
   const [hasMore, setHasMore] = useState(false);
@@ -201,7 +202,7 @@ export function ConflictLogTable() {
         <TableHeader>
           <TableRow>
             <TableHead>{t("colTimestamp")}</TableHead>
-            <TableHead>{t("colType")}</TableHead>
+            <TableHead>{tCommon("fields.type")}</TableHead>
             <TableHead>{t("colEntity")}</TableHead>
             <TableHead>{t("colAction")}</TableHead>
             <TableHead />
@@ -269,7 +270,7 @@ export function ConflictLogTable() {
           disabled={cursorStack.length <= 1 || isLoading}
           data-testid="scim-conflict-prev"
         >
-          {t("previous")}
+          {tCommon("actions.previous")}
         </Button>
         <Button
           type="button"
@@ -279,7 +280,7 @@ export function ConflictLogTable() {
           disabled={!hasMore || isLoading}
           data-testid="scim-conflict-next"
         >
-          {t("next")}
+          {tCommon("actions.next")}
         </Button>
       </div>
 
@@ -306,7 +307,7 @@ export function ConflictLogTable() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isReEmitting}>
-              {t("close")}
+              {tCommon("actions.close")}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmReEmit}

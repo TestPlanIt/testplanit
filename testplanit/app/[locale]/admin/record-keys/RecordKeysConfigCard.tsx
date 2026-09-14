@@ -39,9 +39,9 @@ const PREVIEW_ID = 1234;
  */
 const TYPE_LABEL_KEY: Record<RecordType, string> = {
   TEST_CASE: "reports.dimensions.testCase",
-  TEST_RUN: "reports.dimensions.testRun",
-  SESSION: "reports.dimensions.session",
-  MILESTONE: "reports.dimensions.milestone",
+  TEST_RUN: "common.actions.junit.import.testRun.label",
+  SESSION: "common.fields.session",
+  MILESTONE: "common.fields.milestone",
   RESULT: "common.fields.resultStatus",
   DATASET: "parameters.tabDataset",
   TAG: "reports.dimensions.tag",

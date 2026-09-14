@@ -55,6 +55,7 @@ export function IterationSidebar({
   initialGeneratingJob,
 }: IterationSidebarProps) {
   const t = useTranslations("parameters");
+  const tCommon = useTranslations("common");
   const containerRef = useRef<HTMLDivElement>(null);
 
   const { activeRowIndex, setActiveRowIndex } = useActiveIterationFromUrl();
@@ -124,7 +125,7 @@ export function IterationSidebar({
   return (
     <aside
       className="w-full md:w-72 bg-card border-b md:border-b-0 md:border-e flex flex-col h-full md:h-auto"
-      aria-label={t("iterationSidebarAria")}
+      aria-label={tCommon("fields.iterations")}
       data-testid="iteration-sidebar"
       data-test-run-case-id={testRunCaseId}
     >
@@ -135,7 +136,9 @@ export function IterationSidebar({
       >
         <header className="sticky top-0 z-10 bg-card border-b px-4 pt-4 pb-2 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <h2 className="text-sm font-semibold">{t("iterationsHeading")}</h2>
+            <h2 className="text-sm font-semibold">
+              {tCommon("fields.iterations")}
+            </h2>
             <IterationStatusLegendPopover projectId={projectId} />
           </div>
           <span className="text-xs font-medium text-muted-foreground tabular-nums">

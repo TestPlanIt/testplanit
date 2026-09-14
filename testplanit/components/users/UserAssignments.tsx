@@ -340,7 +340,7 @@ export function UserAssignments({ userId }: UserAssignmentsProps) {
         id: "project",
         enableSorting: true,
         accessorKey: "projectId",
-        header: tReviewInbox("columnProject"),
+        header: tGlobal("common.fields.project"),
         size: 250,
         cell: ({ row }) =>
           row.original.project ? (

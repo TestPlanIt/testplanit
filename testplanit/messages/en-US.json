@@ -563,7 +563,6 @@
       "selectTemplate": "Select template",
       "duration": "e.g. 1h 30m or 90m",
       "docs": "Add documentation...",
-      "select": "Select",
       "selectState": "Select state",
       "selectConfiguration": "Select configuration",
       "selectConfigurations": "Select configurations",
@@ -584,14 +583,12 @@
       "selectAModel": "Select a model",
       "selectWorkflowType": "Select workflow type",
       "addAnOption": "Add an option",
-      "addADescription": "Add a description...",
       "optionalDescription": "Optional description...",
       "projectNotes": "Project notes...",
       "filterByName": "Filter by name...",
       "filterByValue": "Filter by value...",
       "selectOperator": "Select operator",
       "searchIcons": "Search icons...",
-      "value": "Value",
       "stepCount": "Step count",
       "enterText": "Enter text...",
       "enterUrl": "Enter URL",
@@ -712,16 +709,10 @@
       "twoFactorVerification": "Two-Factor Verification",
       "changePassword": "Change Password",
       "twoFactorSetup": "Two-Factor Setup",
-      "signUp": "Sign Up",
-      "signIn": "Sign In",
       "verifyEmail": "Verify Email",
       "trialExpired": "Trial Expired",
       "linkSsoAccount": "Link SSO Account",
       "userProfile": "User Profile",
-      "users": "Users",
-      "issues": "Issues",
-      "requirements": "Requirements",
-      "tags": "Tags",
       "tagDetails": "Tag Details",
       "aiModels": "AI Models",
       "integrations": "Integrations",
@@ -735,13 +726,8 @@
       "repository": "Repository",
       "testCaseVersion": "Test Case Version",
       "duplicateTestCases": "Duplicate Test Cases",
-      "documentation": "Documentation",
-      "sharedSteps": "Shared Steps",
       "stepDuplicates": "Step Duplicates",
-      "sessions": "Sessions",
       "sessionVersion": "Session Version",
-      "milestones": "Milestones",
-      "testRuns": "Test Runs",
       "reports": "Reports",
       "adminSamlConfig": "Admin - SAML Configuration",
       "apiDocumentation": "API Documentation",
@@ -752,7 +738,6 @@
       "userMenu": "User menu",
       "selectProject": "Select project",
       "togglePanel": "Toggle panel",
-      "folder": "Folder",
       "toggleActive": "Toggle active status",
       "toggleDetails": "Toggle details",
       "requiresReview": "Requires review",
@@ -879,7 +864,6 @@
     "for": "for",
     "and": "and",
     "branding": {
-      "name": "TestPlanIt",
       "logoAlt": "TestPlanIt Logo",
       "tagline": "Test everything under the sun"
     },
@@ -1098,7 +1082,6 @@
         "viewIn": "View in",
         "fieldType": "Field type: ",
         "richTextContent": "Rich text content",
-        "invalidContent": "Invalid content",
         "fieldInformation": "Field Information"
       },
       "onboarding": {
@@ -1111,8 +1094,7 @@
         "zoomDonutChart": "Zoom Donut Chart",
         "zoomExecutionTimeline": "Zoom Execution Timeline",
         "zoomHistogramChart": "Zoom Histogram Chart",
-        "duration": "Duration: {seconds} seconds",
-        "durationLabel": "Duration"
+        "duration": "Duration: {seconds} seconds"
       },
       "import": {
         "encoding": {
@@ -1269,7 +1251,6 @@
       }
     },
     "verifyEmail": {
-      "title": "Verify Email",
       "loading": "Verifying email...",
       "success": "Email verified successfully",
       "error": "Failed to verify email",
@@ -1321,10 +1302,8 @@
       "expiredDescription": "Your password has expired. Please set a new password to continue.",
       "newPasswordLabel": "New Password",
       "confirmPasswordLabel": "Confirm New Password",
-      "submitButton": "Change Password",
       "signOut": "Sign out instead",
       "passwordsMustMatch": "Passwords do not match.",
-      "passwordRequired": "Password is required.",
       "genericError": "An error occurred. Please try again.",
       "policyTitle": "Password Requirements:",
       "policyMinLength": "At least {count, number} characters",
@@ -1336,7 +1315,6 @@
   },
   "account": {
     "linkSso": {
-      "title": "Link SSO Account",
       "description": "Link your account with a Single Sign-On provider",
       "availableProviders": "Available SSO Providers",
       "linkWithGoogle": "Link with Google",
@@ -1396,8 +1374,7 @@
       "latestTestRuns": "Latest Test Runs",
       "testCaseBreakdown": "Test Case Breakdown",
       "noTestCases": "The project repository is empty. Add test cases using the Repository.",
-      "noTestCasesPrefix": "The project repository is empty. Add test cases using the",
-      "noTestCasesLink": "Repository"
+      "noTestCasesPrefix": "The project repository is empty. Add test cases using the"
     },
     "icon": {
       "upload": {
@@ -1417,10 +1394,8 @@
         "title": "Iteration Property Mapping",
         "description": "On import, the iteration index for each test case is read from a property, attribute, or trait whose name matches one of these entries (JUnit property, TestNG attribute, xUnit trait, NUnit property). Add the names your emitter uses; lookup is case-insensitive.",
         "addLabel": "Add a property name",
-        "addButton": "Add",
         "placeholder": "e.g. iterationIndex",
         "defaultHint": "Default: iteration (case-insensitive). Add custom names to opt in.",
-        "saveButton": "Save",
         "saveSuccess": "Iteration property names saved.",
         "saveError": "Could not save iteration property names.",
         "removeAria": "Remove {name}",
@@ -1486,7 +1461,6 @@
           "removeProjectConfirmation": "Removing this project will stop syncing issues from it. Previously synced issues are not deleted. Continue?",
           "removeProjectWebhookCascadeBullet": "The inbound webhook for this project will also be removed.",
           "keepProject": "Keep Project",
-          "defaultIndicator": "Default",
           "syncStatusSyncing": "Syncing",
           "syncStatusCompleted": "Synced",
           "syncStatusError": "Sync Error",
@@ -1517,7 +1491,6 @@
           "importPreview": "Preview",
           "importPreviewResult": "~{count, plural, one {# issue} other {# issues}} match this filter. Up to {cap} will be imported.",
           "importOverCap": "That exceeds the cap of {cap}; only the {cap} most recently updated will be imported.",
-          "importStart": "Import",
           "importStarted": "Import started. Issues will appear shortly.",
           "importFailed": "Import failed",
           "importPreviewFailed": "Couldn't estimate matches",
@@ -1620,7 +1593,6 @@
         "rotateSecret": "Rotate secret",
         "rotateConfirmTitle": "Rotate webhook secret?",
         "rotateConfirm": "Rotating the secret will invalidate the current configuration on the issue tracker side until you update it there. Continue?",
-        "isActive": "Enabled",
         "deleteConfirmTitle": "Delete webhook configuration?",
         "deleteConfirm": "Delete this webhook configuration? Inbound deliveries will be rejected.",
         "sendTest": "Send test webhook",
@@ -1635,23 +1607,19 @@
         "urlCopied": "Webhook URL copied to clipboard",
         "secretCopied": "Webhook secret copied to clipboard",
         "nextSteps": "Next: paste these into the issue tracker's webhook configuration, then click \"Send test webhook\" below to verify the pipeline. Click \"Done\" once you've saved the secret — it cannot be shown again.",
-        "revealDone": "Done",
         "pageTitle": "Webhooks",
         "inboundTab": "Inbound",
         "outboundTab": "Outbound",
         "outboundEmpty": "No outbound webhooks configured. Add one to send TestPlanIt events to Slack or any HMAC-signed URL.",
         "outboundAddButton": "Add outbound webhook",
         "outboundCreateTitle": "New outbound webhook",
-        "outboundCreateName": "Name",
         "outboundCreateNameHelp": "A label for this destination, e.g. \"Engineering Slack\".",
         "outboundCreateNamePlaceholder": "Engineering Slack",
         "outboundCreateNameRequired": "Name is required.",
         "outboundCreateUrlRequired": "URL is required.",
         "outboundCreateUrlInvalid": "Enter a valid URL (https://example.com/...).",
         "outboundCreateUrlMustUseHttps": "URL must use HTTPS",
-        "outboundNameLabel": "Name",
         "outboundUnnamedConfig": "(unnamed webhook)",
-        "outboundCreateUrl": "URL",
         "outboundCreateUrlHelp": "The destination URL. Slack incoming-webhook URLs are detected automatically.",
         "outboundCreateUrlPlaceholder": "https://hooks.slack.com/services/...",
         "outboundDetectedSlack": "Detected: Slack",
@@ -1719,14 +1687,11 @@
         "outboundSubsCases": "Cases",
         "outboundSubsSelectAll": "Select all in this section",
         "outboundCreateSubmit": "Create webhook",
-        "outboundCreateCancel": "Cancel",
         "outboundCreateSuccess": "Outbound webhook created.",
         "outboundCreateError": "Failed to create outbound webhook.",
         "outboundUrlLabel": "Destination URL",
-        "outboundActiveToggle": "Active",
         "outboundSlackHint": "This URL is sensitive — anyone with it can post to your channel.",
         "outboundHmacSecretsTitle": "Signing secrets",
-        "outboundHmacActiveSecret": "Active",
         "outboundHmacInactiveSecret": "Inactive",
         "outboundHmacRetiringSecret": "Retiring",
         "outboundHmacAutoRetireIn": "Auto-retires in {days, number} days",
@@ -1753,7 +1718,6 @@
         "outboundDeleteError": "Failed to delete webhook.",
         "outboundSecretCopy": "Copy secret",
         "outboundSecretShownOnce": "Save this secret now — it cannot be shown again.",
-        "outboundSecretDone": "Done",
         "inboundAddButton": "Add inbound webhook",
         "inboundChooserJira": "Jira",
         "inboundChooserGithub": "GitHub",
@@ -1770,7 +1734,6 @@
         "inboundAdoTitle": "Azure DevOps inbound webhook",
         "inboundAdoScopeHint": "Azure DevOps <code>workitem.updated</code> events update linked TestPlanIt issues. Other events are accepted but do not update issues.",
         "inboundAdoUsername": "Username",
-        "inboundAdoPassword": "Password",
         "inboundAdoUsernamePlaceholder": "service-account",
         "inboundAdoUsernameHelp": "Configured on the Azure DevOps Service Hook side. TestPlanIt verifies it via HTTP Basic Auth.",
         "inboundAdoPasswordHelp": "Stored encrypted at rest. Save this value on the Azure DevOps Service Hook side as well.",
@@ -1802,9 +1765,7 @@
         "deliveriesTab": "Deliveries",
         "filterConfigPlaceholder": "All webhooks",
         "filterEventPlaceholder": "All events",
-        "filterStatusAll": "All",
         "filterStatusFailed": "Failed",
-        "filterStatusSuccess": "Success",
         "filterSinceDefault": "Since…",
         "filterUntilDefault": "Until…",
         "filterReset": "Reset filters",
@@ -1816,8 +1777,6 @@
         "tableHeaderConfig": "Webhook",
         "tableHeaderEvent": "Event",
         "tableHeaderSubjectRef": "Reference",
-        "tableHeaderStatus": "Status",
-        "tableHeaderError": "Error",
         "tableHeaderReceivedAt": "Received",
         "tableHeaderAttempt": "Attempt",
         "tableHeaderDirection": "Direction",
@@ -1830,7 +1789,6 @@
         "drawerLabelLatency": "Latency",
         "drawerLatencyValue": "{ms, number} ms",
         "drawerLatencyUnknown": "—",
-        "drawerLabelError": "Error",
         "drawerLabelPayloadDigest": "Payload digest",
         "drawerLabelEventId": "Event ID",
         "drawerLabelSubjectRef": "Reference",
@@ -1859,7 +1817,6 @@
         "activityLastDispatched": "Last dispatched",
         "activityLastSuccess": "Last success",
         "activityLastFailure": "Last failure",
-        "activityNever": "Never",
         "reEnable": "Re-enable",
         "reEnableConfirmTitle": "Re-enable this webhook?",
         "reEnableConfirm": "Confirm the upstream issue is fixed before re-enabling. The webhook will resume dispatching immediately.",
@@ -1919,7 +1876,6 @@
       },
       "aiModels": {
         "description": "Configure AI models for intelligent test case generation and analysis",
-        "availableModels": "Project Default",
         "availableModelsDescription": "Choose a default AI model for this project from those configured by your system administrator.",
         "currentModelSettings": "Current Model Settings",
         "currentModelDescription": "Configuration details for the currently active AI model: {name}",
@@ -1979,28 +1935,20 @@
       },
       "parameters": {
         "title": "Test Case Parameters",
-        "tabDatasets": "Shared Datasets",
         "tabJunit": "Iteration Property Mapping"
       },
       "datasets": {
-        "metaTitle": "Shared Datasets",
-        "title": "Shared Datasets",
         "description": "Manage project-wide datasets that any test case in this project can reference. Each save creates a new immutable version.",
-        "navLabel": "Shared Datasets",
         "newButton": "New dataset",
         "emptyHeading": "No shared datasets yet",
         "emptyBody": "Create a project-wide dataset that multiple test cases can reference and pin to specific versions.",
         "loadError": "Could not load datasets",
         "retry": "Try again",
         "columns": {
-          "name": "Name",
-          "columns": "Columns",
           "rows": "Rows",
-          "version": "Version",
           "lastEdited": "Last edited",
           "owner": "Owner",
-          "assignments": "In use by",
-          "actions": "Actions"
+          "assignments": "In use by"
         },
         "versionLabel": "v{version, number}",
         "assignmentsCount": "{count, plural, =0 {0 cases} =1 {# case} other {# cases}}",
@@ -2008,17 +1956,13 @@
         "columnsCount": "{count, plural, =0 {0 columns} =1 {# column} other {# columns}}",
         "actionsMenuLabel": "Open dataset actions",
         "actionOpen": "Open editor",
-        "actionDelete": "Delete",
         "openLink": "Open",
         "create": {
           "title": "New shared dataset",
           "description": "Datasets are project-scoped and become available to every test case in this project.",
-          "nameLabel": "Name",
           "namePlaceholder": "e.g. Customer accounts",
-          "descriptionLabel": "Description",
           "descriptionPlaceholder": "Optional notes about what this dataset contains.",
           "submit": "Create dataset",
-          "cancel": "Cancel",
           "validationNameRequired": "Name is required.",
           "validationNameTooLong": "Name must be 120 characters or fewer.",
           "validationDescriptionTooLong": "Description must be 2000 characters or fewer.",
@@ -2031,7 +1975,6 @@
           "descriptionStage2": "This dataset is used by {count, plural, =1 {# case} other {# cases}}. Deleting it will remove the shared-dataset assignment from those cases. Their existing test runs are unaffected (snapshots are immutable).",
           "confirm": "Delete dataset",
           "confirmAnyway": "Delete anyway ({count, plural, =1 {# case} other {# cases}})",
-          "cancel": "Cancel",
           "error": "Could not delete dataset"
         },
         "deleteSuccess": "Deleted \"{name}\"",
@@ -2041,7 +1984,6 @@
           "loadError": "Could not load this dataset",
           "notFound": "Dataset not found",
           "notFoundDescription": "This dataset was deleted or you do not have access to it.",
-          "saveAction": "Save",
           "saving": "Saving",
           "savedHint": "All changes saved at version {version, number}",
           "unsavedHint": "Unsaved changes",
@@ -2056,7 +1998,6 @@
         "saveSuccess": "Saved version {version, number}",
         "saveSuccessBranched": "Saved version {newVersion, number} (branched from v{fromVersion, number})",
         "versionPicker": {
-          "label": "Version",
           "loadError": "Could not load versions",
           "currentItemLabel": "v{version, number} (current)",
           "currentItemInitialLabel": "Current — no saved versions yet",
@@ -2175,7 +2116,6 @@
         "disconnectWarningPatterns": "Remove path pattern and branch configurations"
       },
       "advanced": {
-        "title": "Advanced",
         "description": "Per-project toggles for opinionated features. New toggles will appear here as they are introduced.",
         "recordKey": {
           "label": "Project code",
@@ -2378,7 +2318,6 @@
       "loadError": "Could not load the matrix view. Try again or narrow your filters.",
       "cellCapShort": "This matrix would render {cells, number} cells, which exceeds the {threshold, number} cell limit. Narrow the filters to continue.",
       "caseColumnHeader": "Case / parameter row",
-      "cellNotRun": "Untested",
       "cellSummary": "{pass, number} passed, {fail, number} failed, {notRun, number} not run",
       "popoverTitle": "{count, plural, =1 {# iteration} other {# iterations}}",
       "iterationUnlabeled": "Iteration #{index, number}",
@@ -2387,8 +2326,6 @@
       "filterStatus": "{count, plural, =0 {Status} one {Status (#)} other {Status (#)}}",
       "filterConfig": "{count, plural, =0 {Configuration} one {Configuration (#)} other {Configuration (#)}}",
       "filterDataset": "{count, plural, =0 {Dataset} one {Dataset (#)} other {Dataset (#)}}",
-      "filterStatusLabel": "Status",
-      "filterConfigLabel": "Configuration",
       "filterDatasetLabel": "Dataset",
       "filterStatusPlaceholder": "Any status",
       "filterConfigPlaceholder": "Any configuration",
@@ -2397,12 +2334,10 @@
       "filterDateTo": "To",
       "configNone": "(no configuration)",
       "clearFilter": "Clear",
-      "filterEmpty": "No options available",
       "resetFilters": "Reset filters",
       "exportCsv": "Export CSV",
       "legendPassedName": "Passed",
       "legendFailedName": "Failed",
-      "legendUntestedName": "Untested",
       "legendClickHint": "Click any cell to see iteration details",
       "cellCapTitle": "Matrix would render {cellCount, number} cells (limit {threshold, number})",
       "cellCapSuggestionFilterCases": "Try filtering to fewer test cases — that axis is the largest contributor.",
@@ -2547,7 +2482,6 @@
       "importStarted": "Import started",
       "kindRelease": "Release",
       "kindSprint": "Sprint",
-      "selectAll": "Select all",
       "searchPlaceholder": "Search releases and sprints...",
       "emptyFiltered": "No milestones match your filters.",
       "partialWarning": "Some Jira projects could not be fetched:",
@@ -2558,14 +2492,12 @@
     "sync": {
       "managedByJira": "Managed by Jira",
       "lastSynced": "Last synced {time}",
-      "openInJira": "Open in Jira",
       "providerJira": "Jira",
       "sourceBadge": "{provider} · {kind} · {state}",
       "syncNow": "Sync now",
       "unlinkMenuItem": "Unlink from {provider}",
       "unlinkConfirmTitle": "Unlink milestone?",
       "unlinkConfirmDescription": "This stops syncing with the tracker: fields become editable again, synced issue links become manual (yours to keep or remove), and re-linking is possible later by importing this artifact again.",
-      "unlinkConfirmAction": "Unlink",
       "unlinkSuccess": "Milestone unlinked from the tracker.",
       "unlinkError": "Failed to unlink the milestone.",
       "sourceRemoved": "source removed in {provider}",
@@ -2589,19 +2521,15 @@
       "tooltipAhead": "{count, number} ahead of ideal"
     },
     "members": {
-      "cardTitle": "Issues",
       "casesOtherProjects": "{count, plural, one {# test case in another project} other {# test cases in other projects}}",
       "inScope": "In scope",
       "foundInTesting": "Found in testing",
       "foundInTestingEmpty": "No issues found in testing.",
       "inScopeCrossBadge": "In scope",
       "refresh": "Refresh",
-      "columnKey": "Name",
-      "columnStatus": "Status",
       "columnCoverage": "Coverage",
       "columnSource": "Source",
       "sourceSynced": "Synced",
-      "sourceManual": "Manual",
       "coveragePassed": "Passed",
       "coverageFailed": "Failed",
       "coverageInProgress": "In Progress",
@@ -2612,7 +2540,6 @@
       "filterAllTypes": "All types",
       "empty": "No issues linked to this milestone yet.",
       "emptyFiltered": "No issues match the current filters.",
-      "unlink": "Unlink",
       "managedByJira": "Managed by Jira — remove it from the version/sprint in Jira",
       "linkSuccess": "Issue linked to this milestone.",
       "linkError": "Failed to link the issue to this milestone.",
@@ -2626,7 +2553,6 @@
       "overflowImportSuccess": "Import started — issues will appear as they sync.",
       "overflowImportError": "Failed to import member issues from Jira.",
       "emptyCta": "Link an issue to get started.",
-      "columnDescription": "Description",
       "unlinkConfirmTitle": "Unlink issue?",
       "unlinkConfirmDescription": "This removes the issue from this milestone. The issue itself is kept and can be linked again later.",
       "totalsUncovered": "{count, plural, one {# uncovered issue} other {# uncovered issues}}",
@@ -2650,7 +2576,6 @@
       "deleteDescription": "Are you sure you want to delete {count, plural, one {this Session} other {these Sessions}}?"
     },
     "auditLog": {
-      "trigger": "Activity",
       "description": "All changes recorded for this session."
     },
     "title": "{count, plural, =1 {Session} other {Sessions}}",
@@ -2679,9 +2604,6 @@
       "viewSessionDetails": "View Session"
     },
     "noMilestone": "No Milestone",
-    "milestoneGroup": {
-      "sessionCount": "{count, plural, one {# session} other {# sessions}}"
-    },
     "completeDialog": {
       "noWorkflowsConfigured": "No completion workflows are configured for this project. Please configure workflows in the admin settings to enable session completion."
     },
@@ -2752,7 +2674,6 @@
     "version": {
       "title": "Session History View",
       "notFound": "Session version not found.",
-      "selectVersion": "Select Version",
       "backToSession": "Back to Session",
       "backToLatest": "Back to Latest Version",
       "versionInfo": {
@@ -2869,9 +2790,6 @@
       "preferences": {
         "title": "Preferences"
       },
-      "access": {
-        "title": "Access"
-      },
       "assignments": {
         "title": "Assignments",
         "empty": "No open assignments.",
@@ -2886,7 +2804,6 @@
         "userName": "Directory username",
         "givenName": "First name",
         "familyName": "Last name",
-        "jobTitle": "Title",
         "userType": "User type",
         "employeeNumber": "Employee number",
         "department": "Department",
@@ -2920,7 +2837,6 @@
         }
       },
       "changePasswordModal": {
-        "buttonText": "Change Password",
         "setPasswordButtonText": "Set Password",
         "description": "Enter your current password and a new password to change your account password. This will only change your internally managed password. If you login through SSO, that password will not change.",
         "setPasswordDescription": "You signed in via SSO and have not set a local password yet. Enter a new password to enable email/password login for your account.",
@@ -2942,8 +2858,6 @@
         "loadMore": "Loading",
         "viewDetails": "View details",
         "columnAction": "Action",
-        "columnEntityType": "Type",
-        "columnEntityName": "Name",
         "columnTimestamp": "Timestamp",
         "allActions": "All Actions",
         "allTypes": "All Types",
@@ -3022,8 +2936,7 @@
       "remove": "Remove avatar",
       "changeProfilePicture": "Change Profile Picture",
       "notAuthenticated": "You must be logged in to upload an avatar."
-    },
-    "deletedUser": "Deleted User"
+    }
   },
   "userMenu": {
     "viewProfile": "View Profile",
@@ -3058,7 +2971,6 @@
       "historyView": "Test Case History View"
     },
     "auditLog": {
-      "trigger": "Activity",
       "description": "All changes recorded for this test case."
     },
     "fields": {
@@ -3146,7 +3058,6 @@
     },
     "dragDrop": {
       "move": "Move",
-      "copy": "Copy",
       "promptTitle": "What would you like to do?",
       "copying": "Copying…",
       "copyComplete": "{count, plural, =1 {Copied 1 case to {folder}} other {Copied # cases to {folder}}}{dest, select, samename {} crossProject { in {projectName}} other {}}",
@@ -3202,7 +3113,6 @@
       "addToRunDraftBlocked": "Draft cases cannot be added to runs while \"Exclude draft cases from test runs\" is on for this project.",
       "copyMoveToProject": "Copy / Move",
       "export": "Export",
-      "quickScript": "QuickScript",
       "parameterizedStatusReadOnly": "Status is computed from iteration results — click to open",
       "cannotReorderAcrossPages": "Cannot reorder test cases across multiple pages. To reorder, view all cases on one page by selecting 'All' from the page size menu, or deselect cases from other pages. You can still drag selected cases to folders.",
       "exportModal": {
@@ -3330,7 +3240,6 @@
       "restoreDescriptionNew": "You started a test case {age} and never saved it. Restore what you wrote, or discard it and start fresh.",
       "restoreStaleWarning": "This test case has been saved by someone else since your draft was written. Restoring replaces their content when you save.",
       "restoreDiscard": "Discard",
-      "restoreRestore": "Restore",
       "bannerText": "You have unsaved changes to this test case from {age}.",
       "bannerAction": "Resume editing",
       "bannerDiscard": "Discard them"
@@ -3369,7 +3278,6 @@
     "views": {
       "byAutomation": "Automation",
       "byParameterized": "Parameterization",
-      "byAttachments": "Attachments",
       "byReview": "Review",
       "allTemplates": "All Templates",
       "allStates": "All States",
@@ -3453,7 +3361,6 @@
         "markdown": "Markdown"
       },
       "columns": {
-        "all": "All",
         "visible": "Visible"
       },
       "delimiter": {
@@ -3483,13 +3390,10 @@
         "multi": "Multiple Rows per Step"
       },
       "comingSoon": "Coming Soon",
-      "exporting": "Exporting...",
       "exportError": "Export failed. Please try again."
     },
     "quickScript": {
-      "title": "QuickScript",
       "description": "Convert selected test cases into automation scripts using a template or AI.",
-      "templatePlaceholder": "Select a template...",
       "searchPlaceholder": "Search templates...",
       "noTemplatesFound": "No templates found.",
       "outputModeLabel": "Output Mode",
@@ -3542,7 +3446,6 @@
       "compareButton": "Compare",
       "viewCaseDetails": "View case details",
       "selectAll": "Select all",
-      "selectRow": "Select row",
       "selected": "{count, plural, one {# selected} other {# selected}}",
       "bulkDismiss": "Not Duplicates ({count, number})",
       "bulkLink": "Link as Related ({count, number})",
@@ -3625,7 +3528,6 @@
         "urlInput": "Page URL",
         "urlInputPlaceholder": "https://example.com/docs",
         "urlMode": "What does this URL contain?",
-        "urlModeRequirements": "Requirements",
         "urlModeRequirementsHint": "Page describes what to build",
         "urlModeApplication": "Application",
         "urlModeApplicationHint": "Page is the app to test",
@@ -3647,7 +3549,6 @@
       "selectTemplate": {
         "title": "Choose Test Case Template",
         "description": "Select the template that will be used for generating test cases. The AI will populate fields according to this template.",
-        "placeholder": "Select a template...",
         "fieldsDescription": "Select which fields AI should populate. Required fields are always included.",
         "requiredOnly": "Required Only"
       },
@@ -3690,7 +3591,6 @@
       "expandProgress": "{done, number} of {total, number} generated",
       "import": "{count, plural, =0 {Import Test Cases} =1 {Import 1 Test Case} other {Import # Test Cases}}",
       "importing": "{count, plural, =0 {Importing Test Cases...} =1 {Importing 1 Test Case...} other {Importing # Test Cases...}}",
-      "openInExternalSystem": "Open in {provider}",
       "externalSystem": "External System",
       "autoGenerateTags": "Automatically generate tags for test cases",
       "includeParametersLabel": "Generate parameters and starter dataset",
@@ -3857,7 +3757,6 @@
       "renameTitle": "Rename saved view",
       "renamed": "Saved view updated",
       "renameFailed": "Couldn't update the view. Please try again.",
-      "delete": "Delete",
       "deleteTitle": "Delete saved view?",
       "deleteConfirm": "“{name}” will be removed from your saved views. This can't be undone.",
       "deleted": "Saved view deleted",
@@ -3955,15 +3854,13 @@
     "noProject": "No Project",
     "description": "Manage and organize your test cases and Sessions with tags",
     "detail": {
-      "title": "Tag Details",
       "filterPlaceholder": "Filter items...",
       "noResults": "No items found",
       "noFilterResults": "No items match the current filters",
       "filters": {
         "hideCompletedSessions": "Hide completed Sessions",
         "hideCompletedTestRuns": "Hide completed Test Runs",
-        "caseTypeLabel": "Case type",
-        "allCases": "All"
+        "caseTypeLabel": "Case type"
       }
     },
     "manageTags": {
@@ -3985,9 +3882,7 @@
       "tooLarge": "This file is too large to preview.",
       "empty": "This document appears to be empty.",
       "download": "Download to view",
-      "slideCounter": "Slide {current} of {total}",
-      "previousSlide": "Previous slide",
-      "nextSlide": "Next slide"
+      "slideCounter": "Slide {current} of {total}"
     }
   },
   "reviews": {
@@ -4017,7 +3912,6 @@
     },
     "transitionGate": {
       "blockedByGate": "Approval required for \"{gateName}\" before this transition. Use \"Request review\" to start one.",
-      "gatedOptionBadge": "Requires review",
       "gatedStatesNotSelectable": "States at or beyond a gated state can't be selected when creating. Pick a state before the first gate, then use Request review to cross it.",
       "saveBlockedByFormErrors": "Resolve the highlighted form errors before saving.",
       "bulkBlockedHeading": "{count, plural, one {# case} other {# cases}} blocked by gate \"{gateName}\":",
@@ -4029,44 +3923,33 @@
     },
     "inbox": {
       "iconAria": "{count, plural, =0 {Review inbox} one {Review inbox, # pending} other {Review inbox, # pending}}",
-      "pageTitle": "Reviews",
-      "tabPending": "Pending",
       "tabDecided": "Decided",
       "emptyDecided": "No decided reviews yet. Reviews you decide, and decisions on reviews you request, will appear here.",
       "empty": "No pending reviews. Nothing is waiting on you, and every review you've requested has been decided.",
       "featureDisabled": "The review workflow feature is currently disabled. Pending reviews are preserved and will reappear when the feature is re-enabled.",
       "columnEntity": "Entity",
-      "columnProject": "Project",
       "columnRequester": "Requester",
-      "columnAssignee": "Assignee",
       "columnTransition": "Transition",
       "columnRequestedAt": "Requested at",
       "columnDecidedBy": "Decided by",
       "columnDecidedAt": "Decided at",
-      "columnStatus": "Status",
-      "columnActions": "Actions",
-      "actionApprove": "Approve",
       "actionRequestChanges": "Request changes",
       "actionReject": "Reject",
       "actionNudge": "Send reminder",
       "filterEntityType": "Entity type",
-      "filterProject": "Project",
       "filterRequester": "Requester",
       "filterAllRequesters": "All requesters",
       "filterDecidedBy": "Decided by",
       "filterAllDeciders": "All deciders",
-      "filterStatus": "Status",
       "filterAllStatuses": "All statuses",
       "filterAllEntityTypes": "All entity types",
       "filterEntityTypeCase": "Test cases",
       "filterEntityTypeRun": "Test runs",
-      "filterEntityTypeSession": "Sessions",
       "filterAllProjects": "All projects"
     },
     "requester": {
       "openButton": "Request review",
       "sheetDescription": "Send this entity for review before transitioning to the target state.",
-      "assigneeLabel": "Assignee",
       "assigneePlaceholder": "Select a user or role",
       "usersNotified": "{count, plural, =0 {No one will be notified} one {# user will be notified} other {# users will be notified}}",
       "targetStateLabel": "Target state",
@@ -4103,7 +3986,6 @@
       "unnamedUser": "(unnamed user)"
     },
     "reviewer": {
-      "approve": "Approve",
       "requestChanges": "Request changes",
       "reject": "Reject",
       "approveConfirmTitle": "Approve this review request?",
@@ -4180,7 +4062,6 @@
       "errorNoAssignable": "There are no cases to distribute in this run"
     },
     "auditLog": {
-      "trigger": "Activity",
       "description": "All changes recorded for this test run."
     },
     "notFound": "Test run not found.",
@@ -4319,7 +4200,6 @@
           "unassign": "All test cases in the duplicated test run will be unassigned"
         },
         "configurationGroup": {
-          "label": "Configuration Group",
           "separate": "The copies are grouped with each other only. The test run being duplicated stays outside that group",
           "join": "The test run being duplicated and every copy join the same configuration group"
         }
@@ -4340,7 +4220,6 @@
       "noMatchingActive": "No active test runs match your filters."
     },
     "milestoneGroup": {
-      "runCount": "{count, plural, one {# run} other {# runs}}",
       "altHintMac": "Hold ⌥ to expand or collapse all groups",
       "altHintWin": "Hold Alt to expand or collapse all groups"
     },
@@ -4509,37 +4388,20 @@
   "admin": {
     "menu": {
       "header": "Main",
-      "projects": "Projects",
-      "templatesAndFields": "Templates & Fields",
       "fields": "Fields",
-      "workflows": "Workflows",
-      "statuses": "Statuses",
-      "milestoneTypes": "Milestone Types",
-      "configurations": "Configurations",
-      "users": "Users",
-      "groups": "Groups",
-      "roles": "Roles",
-      "tags": "Tags",
-      "issues": "Issues",
       "appConfig": "Application Configuration",
       "recordKeys": "Record Keys",
-      "notifications": "Notifications",
       "imports": "Data Imports",
       "integrations": "Issue Integrations",
-      "webhooks": "Webhooks",
       "junit": "JUnit",
       "datasets": "Shared Datasets",
       "testCaseParameters": "Test Case Parameters",
-      "llm": "AI Models",
       "prompts": "Prompt Configs",
       "exportTemplates": "Export Templates",
       "codeRepositories": "Code Repositories",
-      "quickScript": "QuickScript",
-      "advanced": "Advanced",
       "sso": "Authentication",
       "security": "Security",
       "trash": "Trash",
-      "reports": "Reports",
       "shares": "Manage Shares",
       "elasticsearch": "Search Engine",
       "queues": "Job Queues",
@@ -4553,9 +4415,7 @@
       "authentication": "Authentication",
       "toolsAndIntegrations": "Tools & Integrations",
       "aiTools": "AI Tools",
-      "system": "System",
-      "impact": "Impact Analysis",
-      "automation": "Automated Execution"
+      "system": "System"
     },
     "imports": {
       "description": "Bring data from external test management tools into TestPlanIt.",
@@ -5123,7 +4983,6 @@
         },
         "allowedDomains": {
           "title": "Allowed Email Domains",
-          "placeholder": "example.com",
           "add": "Add Domain",
           "empty": "No allowed domains configured. All domains will be blocked when restriction is enabled."
         },
@@ -5172,7 +5031,6 @@
         "steps": {
           "details": "Project Details",
           "workflows": "Workflows, Statuses & Milestone Types",
-          "integrations": "Integrations",
           "permissions": "Users & Permissions"
         },
         "labels": {
@@ -5442,7 +5300,6 @@
       "forcePasswordChangeDialogDescription": "This will require {name} to change their password on next login.",
       "revokePasswordDialogTitle": "Revoke Password",
       "revokePasswordDialogDescription": "This will immediately invalidate {name}'s password. They will need to use another login method.",
-      "confirmAction": "Confirm",
       "forcePasswordChangeSuccess": "Password change required for {name}",
       "forcePasswordChangeFailed": "Failed to force password change",
       "revokePasswordSuccess": "Password revoked for {name}",
@@ -5498,7 +5355,6 @@
       "lockoutThresholdDescription": "Number of failed attempts before account lockout (minimum 1)",
       "lockoutDurationMinutesLabel": "Lockout Duration (minutes)",
       "lockoutDurationMinutesDescription": "How long the account stays locked (minimum 1)",
-      "saveChanges": "Save Changes",
       "forceAllUsers": "Force All Users to Change Password",
       "forceAllUsersDialogTitle": "Force Password Change for All Users",
       "forceAllUsersDialogDescription": "This will require {count, number} credential-based users to change their password on next login.",
@@ -5559,7 +5415,6 @@
         "loading": "Loading conflicts…",
         "errorLoad": "Couldn't load conflict log. Retry.",
         "colTimestamp": "When",
-        "colType": "Type",
         "colEntity": "Entity",
         "colAction": "System action",
         "typeLinked": "Linked",
@@ -5576,11 +5431,8 @@
         "reEmitConfirmTitle": "Re-emit member event?",
         "reEmitSuccess": "Webhook re-emitted; audit row written.",
         "reEmitError": "Couldn't re-emit. {reason}",
-        "next": "Next",
-        "previous": "Previous",
         "viewDialogTitle": "Conflict payload",
-        "viewDialogDescription": "Audit row metadata for {entityType}#{entityId}.",
-        "close": "Close"
+        "viewDialogDescription": "Audit row metadata for {entityType}#{entityId}."
       },
       "errorLoad": "Couldn't load tokens. Retry.",
       "columns": {
@@ -5619,10 +5471,8 @@
         "title": "Token created",
         "warning": "Copy this token now. TestPlanIt won't show it again.",
         "tokenLabel": "SCIM bearer token",
-        "copy": "Copy",
         "copied": "Copied",
         "baseUrlHint": "Paste this into your IdP's SCIM Bearer-token field. The base URL is {baseUrl}.",
-        "close": "Close",
         "toast": "Token created.",
         "a11yAnnounce": "Token created. Copy now."
       },
@@ -5707,7 +5557,6 @@
         "remindersToggleAriaLabel": "Toggle review reminder notifications",
         "thresholdLabel": "Remind reviewers after",
         "thresholdUnit": "{count, plural, one {day} other {days}}",
-        "thresholdSaveButton": "Save",
         "thresholdHelp": "How many days a review request can sit pending before reviewers get a reminder notification. New requests start the clock at submission.",
         "thresholdUpdateSuccess": "Review reminder settings updated.",
         "thresholdUpdateError": "Failed to update reminder settings. Try again in a moment."
@@ -5722,7 +5571,6 @@
         "emptyState": "No projects match your filter."
       },
       "editWorkflow": {
-        "requiresReviewLabel": "Requires review",
         "requiresReviewFeatureDisabled": "The review workflow feature is disabled at the system level. Toggle a project's Advanced settings or set TESTPLANIT_REVIEW_FEATURE_ENABLED to re-enable.",
         "requiresReviewDefaultDisabled": "The default workflow state cannot require review — new entities land here and have no prior state to gate."
       },
@@ -5757,7 +5605,6 @@
       "description": "Define what actions users can perform by toggling permissions for each application area.",
       "confirmDefaultDescription": "Are you sure you want to set this Role as the Default?",
       "defaultWarning": "New users will be assigned this Role by default.",
-      "defaultLockedTitle": "Default Role",
       "defaultLockedDescription": "To change the default, edit a different Role and set it as the default.",
       "filterPlaceholder": "Filter roles...",
       "add": {
@@ -5997,7 +5844,6 @@
         "label": "Per-project access",
         "description": "Grant this group an access tier on specific projects, instead of — or on top of — the org-wide tier above.",
         "empty": "No per-project access. Members get only the org-wide tier above and each project's own default.",
-        "projectLabel": "Project",
         "projectPlaceholder": "Select a project…",
         "accessLabel": "Access tier",
         "add": "Add project",
@@ -6037,7 +5883,6 @@
         "title": "Edit Milestone Type"
       },
       "delete": {
-        "title": "Delete {item}",
         "confirmMessage": "Are you sure you want to delete the {name} Milestone Type?"
       }
     },
@@ -6350,7 +6195,6 @@
         "repoHelp": "The name of the Gitea repository",
         "encrypted": "Encrypted",
         "encryptedHelp": "This field is encrypted and stored securely",
-        "changeCredential": "Change",
         "leaveBlankToKeep": "Leave blank to keep existing value",
         "apiKeyWarningTitle": "API Key Authentication Notice",
         "apiKeyWarningDescription": "With API key authentication, the reporter on created issues may not match the TestPlanIt user who created them — even when emails match:",
@@ -6362,13 +6206,11 @@
         "tokenCreatorNoticeDescription": "Issues created through this integration are always recorded as the account that owns this access token, not the TestPlanIt user who created them. This provider's API does not allow setting the creator on another user's behalf.",
         "callbackUrlLabel": "Callback URL (redirect URI)",
         "callbackUrlDescription": "Register this exact URL as the callback / redirect URI in your provider's OAuth app. It must match precisely or authorization will fail.",
-        "callbackUrlCopy": "Copy",
         "callbackUrlCopied": "Copied",
         "forgeApiKeyLabel": "Forge API Key",
         "forgeApiKeyDescription": "Used by the Atlassian Forge app to authenticate requests from Jira issue panels. Generate a key here and paste it in your Forge app settings.",
         "forgeApiKeyPlaceholder": "Click Generate to create an API key",
         "forgeApiKeyGenerate": "Generate",
-        "forgeApiKeyCopy": "Copy",
         "forgeApiKeyCopied": "Copied",
         "platform": "Platform",
         "platformPlaceholder": "Select platform...",
@@ -6483,7 +6325,6 @@
         "setAsDefaultDescription": "Use this as the default AI model for the organization",
         "fetchingModels": "Fetching models...",
         "failedToFetchModels": "Failed to fetch available models",
-        "selectModel": "Select a model",
         "modelsFound": "{count, plural, one {Found {count} available model} other {Found {count} available models}}",
         "modelsFoundDescription": "Selected \"{model}\" as default model",
         "noModelsFoundDescription": "The provider returned no available models",
@@ -6516,9 +6357,7 @@
         }
       },
       "sections": {
-        "provider": "Provider",
-        "costAndBudget": "Cost & Budget",
-        "advanced": "Advanced"
+        "costAndBudget": "Cost & Budget"
       },
       "delete": {
         "title": "Delete AI Model Integration",
@@ -6569,7 +6408,6 @@
       "featureCount": "{count, plural, one {# feature} other {# features}}",
       "llmIntegration": "LLM Integration",
       "modelOverride": "Model Override",
-      "llmIntegrationPlaceholder": "Project Default",
       "modelOverridePlaceholder": "Integration Default",
       "projectDefault": "Project Default (clear)",
       "integrationDefault": "Integration Default (clear)",
@@ -6805,7 +6643,6 @@
       "changes": "Changes",
       "metadata": "Metadata",
       "oldValue": "Old",
-      "newValue": "New",
       "columns": {
         "timestamp": "Timestamp",
         "entityId": "Entity ID",
@@ -6999,7 +6836,6 @@
       "targetFolder": "Target Folder",
       "newFolderPlaceholder": "New folder name...",
       "operation": "Operation",
-      "operationCopy": "Copy",
       "operationCopyDesc": "Creates a copy of the selected case(s) in the target project. Originals remain unchanged.",
       "operationMove": "Move",
       "operationMoveDesc": "Moves the selected case(s) to the target project. Originals will be removed from the source.",
@@ -7085,7 +6921,6 @@
     "useIntegration": "Use {provider}",
     "useIntegrationDescription": "Create issue in external system",
     "externalProject": "External Project",
-    "selectProject": "Select project",
     "issueType": "Issue Type",
     "selectIssueType": "Select issue type",
     "noIssueTypes": "No issue types available",
@@ -7113,9 +6948,7 @@
     "searchForIssue": "Search for an issue to link",
     "searchUsers": "Search for users",
     "noTeamsAvailable": "No teams available",
-    "filterAll": "All",
     "fanOutPartialFailure": "{count, number} project(s) could not be reached. Showing results from {successCount, number} project(s).",
-    "projectSelectorLabel": "Project",
     "searchFailedTitle": "Search failed",
     "useAsRequirement": "Use as requirement",
     "useAsRequirementSuccess": "Now used as a requirement. Find it on the project's Requirements page.",
@@ -7138,7 +6971,6 @@
       "addRoot": "Add Requirement",
       "addChild": "Add Child Requirement",
       "rename": "Rename",
-      "delete": "Delete",
       "expandAll": "Expand All",
       "collapseAll": "Collapse All",
       "dropToRootHint": "Drop here to move to the top level",
@@ -7148,8 +6980,6 @@
       "dragDisabled": "This requirement can't be moved right now."
     },
     "list": {
-      "columnName": "Name",
-      "columnStatus": "Status",
       "columnSource": "Source",
       "expandRow": "Expand {name}",
       "collapseRow": "Collapse {name}",
@@ -7162,7 +6992,6 @@
       "nextRequirement": "Next requirement",
       "breadcrumbLabel": "Requirement hierarchy",
       "notFound": "No requirement found",
-      "documentation": "Documentation",
       "documentationEmpty": "No documentation provided",
       "documentationPlaceholder": "Enter requirement documentation...",
       "lockedHint": "This field is managed by the connected tracker and can't be edited here.",
@@ -7170,13 +6999,11 @@
       "saveFailed": "Failed to save requirement."
     },
     "provenance": {
-      "nativeLabel": "Manual",
       "syncedLabel": "Synced",
       "detachedLabel": "Detached",
       "nativeTooltip": "Created directly in TestPlanIt.",
       "syncedTooltip": "Synced from the connected tracker. Locked fields can't be edited here.",
       "detachedTooltip": "Detached from the connected tracker. Now fully editable, like a manually created requirement.",
-      "openInTracker": "Open in {provider}",
       "detach": "Detach",
       "detachDialogTitle": "Detach this requirement?",
       "detachDialogDescription": "Detaching makes this requirement fully editable in TestPlanIt and breaks its link to the connected tracker. This can't be undone — re-attaching to the tracker isn't supported yet.",
@@ -7201,9 +7028,7 @@
     "create": {
       "dialogTitle": "Create Requirement",
       "dialogDescription": "Add a new requirement to this project's requirements tree.",
-      "nameLabel": "Name",
       "namePlaceholder": "Enter a requirement name...",
-      "parentLabel": "Parent",
       "parentNone": "No parent (top level)",
       "submit": "Create Requirement",
       "submitHint": "Press Enter to create",
@@ -7215,7 +7040,6 @@
       "promoteParentNote": "Follows the tracker's hierarchy",
       "promoteIssueLabel": "Issue",
       "promoteChooseIssue": "Choose issue",
-      "promoteChangeIssue": "Change",
       "promoteNoneSelected": "No issue selected",
       "promoteSubmit": "Use as requirement",
       "promoteSuccess": "Issue is now a requirement.",
@@ -7232,7 +7056,6 @@
       "dialogTitle": "Delete Requirement",
       "confirmNoChildren": "Are you sure you want to delete this requirement? This action can be undone.",
       "confirmWithChildren": "This requirement has {count, plural, one {{count} descendant} other {{count} descendants}} that will also be deleted. This action can be undone.",
-      "submit": "Delete",
       "success": "Requirement deleted.",
       "failed": "Failed to delete requirement.",
       "undo": "Undo",
@@ -7240,7 +7063,6 @@
       "undoFailed": "Failed to restore requirement."
     },
     "attachments": {
-      "title": "Attachments",
       "empty": "No attachments",
       "uploadSuccess": "Attachment uploaded.",
       "uploadFailed": "Failed to upload attachment.",
@@ -7251,7 +7073,6 @@
       "title": "Linked Test Cases",
       "titleWithCount": "{count, plural, =0 {Linked Test Cases} =1 {# Linked Test Case} other {# Linked Test Cases}}",
       "empty": "No linked test cases.",
-      "addLink": "Add Link",
       "addLinkDialogTitle": "Link Test Cases",
       "searchPlaceholder": "Search test cases...",
       "linkSuccess": "Test case linked.",
@@ -7259,13 +7080,11 @@
       "unlinkConfirm": "Are you sure you want to unlink this test case?",
       "unlinkSuccess": "Test case unlinked.",
       "unlinkFailed": "Failed to unlink test case.",
-      "columnCase": "Test Case",
-      "columnProject": "Project"
+      "columnCase": "Test Case"
     },
     "linkedRequirements": {
       "title": "Linked Requirements",
       "empty": "No linked requirements.",
-      "addLink": "Add Link",
       "addLinkDialogTitle": "Link Requirements",
       "searchPlaceholder": "Search requirements...",
       "linkSuccess": "Requirement linked.",
@@ -7294,8 +7113,7 @@
       "removeConfirm": "Are you sure you want to remove this reference?",
       "removeSuccess": "Reference removed.",
       "removeFailed": "Failed to remove reference.",
-      "columnReference": "Reference",
-      "columnStatus": "Status"
+      "columnReference": "Reference"
     },
     "coverage": {
       "title": "Coverage",
@@ -7318,8 +7136,6 @@
       "columnResult": "Latest Result",
       "columnResultTooltip": "The case's most recent execution, even one whose status is neither a pass nor a fail. Other screens, such as the repository's Latest Results, show the newest result that did pass or fail, so the same case can read differently there.",
       "resultRunLink": "View the test run this result came from",
-      "columnExecutedAt": "Executed At",
-      "columnProject": "Project",
       "inherited": "Inherited",
       "inheritedTooltip": "Linked to a descendant of this requirement, not directly to it.",
       "notRunCell": "Not run"
@@ -7357,9 +7173,7 @@
       "createButton": "Add target",
       "createTitle": "New execution target",
       "editTitle": "Edit execution target",
-      "name": "Name",
       "namePlaceholder": "e.g. Nightly E2E",
-      "provider": "Provider",
       "repository": "Code repository",
       "repositoryPlaceholder": "Choose a repository",
       "noRepositories": "No {provider} repository is registered. Ask an administrator to add one under Admin → Code Repositories.",
@@ -7376,8 +7190,6 @@
       "variables": "Pipeline variables",
       "webhookVariables": "Variables",
       "staticInputsHelp": "Sent with every dispatch, in addition to the TESTPLANIT_* values. Not secret: anyone who can read the repository can see them.",
-      "inputKey": "Name",
-      "inputValue": "Value",
       "addInput": "Add input",
       "removeInput": "Remove input",
       "credentials": "Credentials",
@@ -7398,10 +7210,8 @@
       "payloadPreview": "Payload",
       "timeout": "Timeout (minutes)",
       "timeoutHelp": "An execution that has not finished by then is marked timed out.",
-      "enabled": "Enabled",
       "hasOwnCredentials": "Own credential",
       "usesRepositoryCredentials": "Repository credential",
-      "verify": "Verify",
       "verifying": "Verifying…",
       "verifyOk": "Target verified",
       "verifyOkWithWarnings": "Target verified with warnings",
@@ -7417,9 +7227,7 @@
       "disabledToast": "Target disabled",
       "revealedSecretTitle": "Copy the signing secret now",
       "revealedSecretWarning": "This secret is shown once. Your receiver uses it to verify the X-TestPlanIt-Signature header on each dispatch; systems that authenticate another way (a Jenkins trigger token, for example) can ignore it. Store it in your CI system's secret store; TestPlanIt cannot display it again.",
-      "copySecret": "Copy",
       "secretCopied": "Secret copied",
-      "done": "Done",
       "errors": {
         "invalid": "The target could not be saved. Check the form and try again.",
         "invalidInputs": "One of the inputs is not valid.",
@@ -7452,7 +7260,6 @@
       "status": "Execution",
       "requestedBy": "Requested by {name}",
       "timesOutAt": "Gives up at",
-      "openInProvider": "Open in {provider}",
       "cancel": "Cancel execution",
       "cancelConfirmTitle": "Cancel this execution?",
       "cancelConfirm": "TestPlanIt marks it cancelled and asks the provider to stop the job when it can. Results that still arrive are kept.",
@@ -7462,14 +7269,11 @@
       "historyTitle": "Execution history",
       "historyDescription": "Every dispatch of this run's automated cases, newest first.",
       "historyEmpty": "No executions yet.",
-      "columnStatus": "Status",
       "columnTarget": "Target",
       "columnRef": "Ref",
       "columnRequested": "Requested",
-      "columnCompleted": "Completed",
       "columnCases": "Cases",
       "columnLink": "Job",
-      "error": "Error",
       "externalStatus": "Provider status: {status}",
       "awaitingResults": "Awaiting results",
       "resultsReceived": "Results received"
@@ -7543,7 +7347,6 @@
   },
   "linkedCases": {
     "title": "Linked Test Cases",
-    "addLink": "Add Link",
     "addLinkedTestCase": "Add Linked Test Case",
     "testCase": "Test Case",
     "linkType": "Link Type",
@@ -8340,7 +8143,6 @@
       "metricOrder": "Metric Order",
       "filtersDescription": "Filter the report data by specific criteria",
       "activeFilters": "Active filters:",
-      "priorityFilterPlaceholder": "Select priority values (or leave empty for all)",
       "dateRange": {
         "selectDateRange": "Select date range",
         "chooseStartDate": "Choose start date",
@@ -8354,8 +8156,6 @@
         },
         "today": "Today",
         "yesterday": "Yesterday",
-        "last7Days": "Last 7 days",
-        "last30Days": "Last 30 days",
         "thisWeek": "This week",
         "lastWeek": "Last week",
         "last2Weeks": "Last 2 weeks",
@@ -8364,7 +8164,6 @@
         "last3Months": "Last 3 months",
         "thisQuarter": "This quarter",
         "lastQuarter": "Last quarter",
-        "thisYear": "This year",
         "lastYear": "Last year",
         "last12Months": "Last 12 months",
         "allTime": "All Time",
@@ -8508,10 +8307,8 @@
         "healthScore": "Score",
         "lastExecuted": "Last Executed",
         "executions": "Executions",
-        "passRate": "Pass Rate",
         "passCount": "Passes",
         "failCount": "Failures",
-        "never": "Never",
         "daysSince": "Days since execution",
         "count": "Count",
         "totalTests": "test cases",
@@ -8575,8 +8372,7 @@
           "forecast": "{value} forecast",
           "forecastUnset": "No forecast",
           "flakiness": "Flips {value}%",
-          "flakinessUnset": "No flip data",
-          "createdLabel": "Created"
+          "flakinessUnset": "No flip data"
         },
         "heuristic": {
           "intro": "No LLM integration is configured for this project, so the ranking is built from the selection-strategy metric directly. Configure an LLM integration (Admin → AI Models) to enable richer reasoning that weighs custom fields, linked-issue context, and case content alongside the metric.",
@@ -8624,8 +8420,6 @@
         "invalidProject": "Invalid project.",
         "historyPlaceholder": "Pick a snapshot",
         "generatedAt": "Generated",
-        "by": "by",
-        "summaryHeading": "Summary",
         "actions": {
           "generate": "Generate Report",
           "regenerate": "Regenerate"
@@ -8655,11 +8449,8 @@
           "score": "Score {score}"
         },
         "delete": {
-          "button": "Delete",
           "title": "Delete this snapshot?",
-          "description": "The snapshot will be deleted from history. This cannot be undone.",
-          "cancel": "Cancel",
-          "confirm": "Delete"
+          "description": "The snapshot will be deleted from history. This cannot be undone."
         }
       },
       "issueTestCoverage": {
@@ -8669,11 +8460,8 @@
         "issue": "Issue",
         "testCase": "Test Case",
         "testCases": "{count, plural, =1 {Test Case} other {Test Cases}}",
-        "issueStatus": "Status",
-        "priority": "Priority",
         "linkedTests": "Linked Tests",
         "testResults": "Results (P/F/U)",
-        "passRate": "Pass Rate",
         "passed": "Passed",
         "failed": "Failed",
         "lastStatus": "Last Status",
@@ -8688,7 +8476,6 @@
           "issuesWithUntested": "With Untested",
           "issuesWithUntestedTooltip": "Issues with at least one test case that has not been executed",
           "issuesAllPassing": "All Passing",
-          "overallPassRate": "Pass Rate",
           "numberOfIssues": "Number of Issues"
         },
         "charts": {
@@ -8702,9 +8489,6 @@
         "requirement": "Requirement",
         "path": "Parent Path",
         "testCase": "Test Case",
-        "result": "Result",
-        "executedAt": "Executed At",
-        "project": "Project",
         "linkedCases": "Linked Cases",
         "uncovered": "Uncovered",
         "notRun": "Not run",
@@ -8739,9 +8523,7 @@
         "saveSnapshotTitle": "Save traceability snapshot",
         "saveSnapshotDescription": "Records the current traceability matrix — every requirement, its covering test cases, and their latest results — as an immutable, named point-in-time snapshot you can view, export, share, and compare later.",
         "saveSnapshotScoped": "Only the requirements currently in scope will be captured.",
-        "snapshotName": "Name",
         "snapshotNamePlaceholder": "Release 2.4 sign-off",
-        "snapshotNote": "Note",
         "snapshotNotePlaceholder": "Optional — what this snapshot is evidence for",
         "snapshotSaved": "Snapshot \"{name}\" saved.",
         "snapshotSaveFailed": "Failed to save the snapshot.",
@@ -8755,7 +8537,6 @@
         "compareLabel": "Compare to",
         "baselineRequired": "Choose a baseline snapshot to run this report.",
         "includeUnchanged": "Include unchanged requirements",
-        "change": "Change",
         "coverageBefore": "Coverage Before",
         "coverageAfter": "Coverage After",
         "linkedCasesBefore": "Linked Before",
@@ -8851,30 +8632,16 @@
       "unexpectedError": "An unexpected error occurred."
     },
     "dimensions": {
-      "project": "Project",
-      "status": "Status",
-      "user": "User",
       "executor": "Executor",
       "assignedTo": "Assigned To",
-      "configuration": "Configuration",
-      "date": "Date",
       "executionDate": "Execution Date",
       "creationDate": "Creation Date",
       "activityDate": "Activity Date",
-      "testRun": "Test Run",
       "testCase": "Test Case",
-      "milestone": "Milestone",
-      "template": "Template",
       "creator": "Creator",
-      "state": "State",
       "source": "Source",
-      "folder": "Folder",
-      "group": "Group",
-      "role": "Role",
-      "session": "Session",
       "weekEnding": "Week Ending",
       "period": "Period",
-      "priority": "Priority",
       "automationStatus": "Automation Status",
       "issueType": "Issue Type",
       "issueTracker": "Issue Tracker",
@@ -8882,7 +8649,6 @@
       "tag": "Tag",
       "feature": "Feature",
       "model": "Model",
-      "integration": "Integration",
       "outcome": "Outcome"
     },
     "metrics": {
@@ -8898,7 +8664,6 @@
       "passRate": "Pass Rate (%)",
       "avgElapsed": "Avg. Elapsed Time",
       "avgElapsedTime": "Avg. Elapsed Time",
-      "totalElapsedTime": "Total Elapsed Time",
       "testRunCount": "Test Runs Count",
       "testCaseCount": "Test Cases Count",
       "automationRate": "Automation Rate (%)",
@@ -9030,7 +8795,6 @@
           "expired": "Expired"
         },
         "notifications": {
-          "enabled": "On",
           "disabled": "Off"
         },
         "empty": {
@@ -9079,7 +8843,6 @@
         "title": "Share Link Created!",
         "description": "Your share link is ready to use. Copy and share it with others.",
         "shareLink": "Share Link",
-        "copy": "Copy",
         "openInNewTab": "Open in new tab",
         "metadata": {
           "mode": "Mode",
@@ -9259,25 +9022,20 @@
         "viewSharedStep": "View Shared Step Group",
         "skippedWarning": "{count, plural, one {# case was skipped} other {# cases were skipped}} (stale or already converted).",
         "noCasesSelected": "Select at least one case to convert.",
-        "stepsUnavailable": "The matched steps are no longer on this test case. Dismiss this match and run a new scan.",
-        "selectAll": "Select all"
+        "stepsUnavailable": "The matched steps are no longer on this test case. Dismiss this match and run a new scan."
       }
     },
     "findStepDuplicates": "Find Duplicates"
   },
   "search": {
-    "title": "Search",
     "savedSearches": {
       "title": "Saved searches",
       "save": "Save search",
       "saveTitle": "Save search",
       "saveDescription": "Name this search so you can revisit it later.",
-      "saveAction": "Save",
-      "nameLabel": "Name",
       "namePlaceholder": "e.g. Failed runs this sprint",
       "nameRequired": "Enter a name for this search.",
       "loginRequired": "You must be signed in to save searches.",
-      "descriptionLabel": "Description (optional)",
       "descriptionPlaceholder": "What this search is for",
       "saved": "Search saved",
       "savedDescription": "“{name}” is now in your saved searches.",
@@ -9286,11 +9044,9 @@
       "emptyHint": "Save a search to revisit it later.",
       "loaded": "Loaded “{name}”",
       "loadFailed": "This saved search is no longer valid.",
-      "edit": "Edit",
       "editTitle": "Edit saved search",
       "edited": "Saved search updated",
       "editFailed": "Couldn't update the search. Please try again.",
-      "delete": "Delete",
       "deleteTitle": "Delete saved search?",
       "deleteConfirm": "“{name}” will be removed from your saved searches. This can't be undone.",
       "deleted": "Saved search deleted",
@@ -9594,11 +9350,7 @@
     "tabDataset": "Dataset",
     "tabDatasetDisabledTooltip": "Add at least one parameter before editing dataset rows.",
     "sheetAutoSaveHint": "Changes save automatically.",
-    "formName": "Name",
-    "formType": "Type",
-    "formDefault": "Default",
     "formOrder": "Order",
-    "formRequired": "Required",
     "formRequiredHelp": "Iterations missing this value will fail validation.",
     "formSensitive": "Sensitive",
     "formSensitiveHelp": "Hide value in audit logs and from users without read-sensitive permission.",
@@ -9616,7 +9368,6 @@
     "editDialogTitle": "Edit parameter \"{name}\"",
     "editDialogDescription": "Update the type, default value, flags, or allowed values. To rename, click the parameter name in the list.",
     "editDialogRenameHint": "To rename, close this dialog and click the parameter name.",
-    "editDialogCancel": "Cancel",
     "editDialogSave": "Save changes",
     "editError": "Failed to update parameter",
     "editSuccess": "Updated parameter \"{name}\"",
@@ -9634,11 +9385,9 @@
     "selectSourceWarningTitle": "Change SELECT source for \"@{name}\"?",
     "selectSourceWarningDescription": "Existing dataset values for this parameter may not exist in the new list. {invalidCount, plural, =1 {# row will} other {# rows will}} need attention after this change. Continue?",
     "selectSourceConfirm": "Change source",
-    "datasetRowSelectAria": "Select row",
     "datasetSelectAllPageTooltip": "Click to select every row on this page. Shift-click to select every row across all pages.",
     "datasetSelectAllAcrossPagesTooltip": "Select {count, plural, =1 {# row} =2 {both rows} other {all # rows}} across all pages",
     "datasetDeselectAllAcrossPagesTooltip": "Deselect all rows across all pages",
-    "datasetLabelColumn": "Label",
     "datasetAddRow": "Add row",
     "datasetAddColumn": "Add column",
     "datasetAddColumnTitle": "Add column",
@@ -9647,14 +9396,12 @@
     "datasetAddColumnSubmit": "Add column",
     "datasetAddColumnDuplicate": "A column with that name already exists.",
     "datasetColumnMenuLabel": "Column {name} actions",
-    "datasetColumnDelete": "Delete column",
     "datasetColumnDeleteTitle": "Delete column \"{name}\"?",
     "datasetColumnDeleteChecking": "Checking for cases that reference this column…",
     "datasetColumnDeleteDescription": "The column and its values in every row will be removed. Existing test runs that already snapshotted these values are unaffected.",
     "datasetColumnDeleteBlocked": "{count, plural, =1 {# case maps a parameter to this column} other {# cases map a parameter to this column}}. Update those mappings first, then delete the column.",
     "datasetColumnDeleteAndMore": "and {count, plural, =1 {# more case} other {# more cases}}",
     "datasetColumnDeleteCheckError": "Could not check for cases that reference this column. Try again.",
-    "datasetColumnDeleteConfirm": "Delete column",
     "datasetRowDefaultLabel": "Row {number}",
     "datasetPasteCsv": "Paste CSV",
     "datasetImportCsv": "Import CSV",
@@ -9701,13 +9448,11 @@
     "importStep4Append": "Append to existing rows",
     "importStep4AppendDescription": "New rows will be added after row #{existingCount}.",
     "importStep4ErrorBlock": "Resolve {errorCount} error(s) on the previous step before importing.",
-    "importStep4Label": "Confirm",
     "confirmSummaryValid": "Valid rows: {count}",
     "confirmSummaryErrors": "Errors: {count}",
     "confirmSummaryMode": "Mode: {mode}",
     "cancelUploadTitle": "Discard upload?",
     "cancelUploadDescription": "The CSV data you uploaded will be lost.",
-    "importCommit": "Import",
     "importSuccess": "Imported {count, plural, =1 {# row} other {# rows}}",
     "addSuccess": "Parameter \"{name}\" added",
     "addError": "Could not add parameter",
@@ -9755,8 +9500,6 @@
     "hardRefuseColumnCase": "Case",
     "hardRefuseColumnRows": "Dataset rows",
     "hardRefuseColumnConfigs": "Configs",
-    "hardRefuseColumnIterations": "Iterations",
-    "hardRefuseTotalRow": "Total",
     "hardRefuseSuggestionsHeading": "Suggested actions",
     "hardRefuseSuggestion1": "Reduce dataset rows on the largest contributing case.",
     "hardRefuseSuggestion2": "Deselect one or more configurations.",
@@ -9771,15 +9514,11 @@
     "runProgressNavAway": "Show me the rest of the run",
     "runGeneratingHeading": "Generating iterations…",
     "runGeneratingHelper": "This may take a few minutes.",
-    "iterationsHeading": "Iterations",
     "iterationsHeaderCount": "{complete}/{total}",
     "iterationsHeaderCountPending": "0/{total} (generating)",
-    "iterationSidebarAria": "Iterations",
     "iterationStatusLegendAria": "Status legend",
     "iterationActionSkipped": "Skipped",
     "iterationBulkPickStatusPrompt": "Pick a status to apply to the selected iterations.",
-    "iterationBulkStatusLabel": "Status",
-    "iterationBulkStatusPlaceholder": "Select a status",
     "iterationBulkApplyStatus": "Mark with status…",
     "iterationSelectAria": "Select iteration {n}",
     "iterationRowMenuAria": "Iteration {n} actions",
@@ -9788,13 +9527,11 @@
     "iterationReset": "Reset iteration result",
     "iterationSelectedCount": "{count} selected",
     "iterationBulkSkip": "Mark {count, plural, =1 {# iteration} other {# iterations}} with status…",
-    "iterationBulkCancel": "Cancel",
     "iterationIssueTitleSnapshot": "Iteration {n} of {total} issue: {caseName}",
     "iterationIssueTitleCiExtended": "Iteration {n} (CI-extended) issue: {caseName}",
     "iterationIssueProseSnapshot": "Iteration {n} of {total} on {label}.",
     "iterationIssueProseCiExtended": "Iteration {n} (CI-extended) on {label}.",
     "iterationIssueTableHeaderParameter": "Parameter",
-    "iterationIssueTableHeaderValue": "Value",
     "iterationIssueDeepLinkLabel": "View iteration in TestPlanIt",
     "iterationHeaderTitle": "Iteration {n} of {total}",
     "iterationPrevAria": "Previous iteration",
@@ -9876,7 +9613,6 @@
     "mappingHint": "Auto-matched columns are collapsed. Click Change to remap.",
     "mappingShowAll": "Show all columns",
     "mappingNoColumns": "No columns are available on the selected version.",
-    "mappingChange": "Change",
     "mappingSkipColumn": "Skip column",
     "mappingRequiredAlert": "Required parameters are not mapped: {names}.",
     "mappingRequiredUnmapped": "Required parameter \"@{name}\" has no mapped column."

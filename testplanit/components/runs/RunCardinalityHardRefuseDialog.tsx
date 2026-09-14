@@ -76,7 +76,7 @@ export function RunCardinalityHardRefuseDialog({
                   {t("hardRefuseColumnConfigs")}
                 </TableHead>
                 <TableHead className="text-end">
-                  {t("hardRefuseColumnIterations")}
+                  {tCommon("fields.iterations")}
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -102,7 +102,7 @@ export function RunCardinalityHardRefuseDialog({
             <TableFooter>
               <TableRow>
                 <TableCell colSpan={3} className="font-semibold">
-                  {t("hardRefuseTotalRow")}
+                  {tCommon("labels.total")}
                 </TableCell>
                 <TableCell className="text-end font-semibold tabular-nums">
                   {result.total}

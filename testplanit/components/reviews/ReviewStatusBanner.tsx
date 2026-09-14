@@ -287,7 +287,7 @@ export function ReviewStatusBanner({
                     type="button"
                     onClick={() => setApproveOpen(true)}
                     data-testid="review-approve-button"
-                    aria-label={tReviewer("approve")}
+                    aria-label={t("common.permissions.approve")}
                     className={collapsibleActionClass(
                       undefined,
                       "bg-success text-success-foreground hover:bg-success/90"
@@ -295,7 +295,7 @@ export function ReviewStatusBanner({
                   >
                     <ActionButtonContent
                       icon={CheckCircle2}
-                      label={tReviewer("approve")}
+                      label={t("common.permissions.approve")}
                     />
                   </Button>
                   <Button

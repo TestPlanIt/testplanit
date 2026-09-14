@@ -253,7 +253,7 @@ export function RequirementReferencesPanel({
                     {t("columnReference")}
                   </TableHead>
                   <TableHead className="w-[150px] truncate">
-                    {t("columnStatus")}
+                    {tGlobal("common.actions.status")}
                   </TableHead>
                   <TableHead className="w-[90px] truncate text-end">
                     {tGlobal("common.actions.remove")}

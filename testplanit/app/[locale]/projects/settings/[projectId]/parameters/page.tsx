@@ -126,7 +126,7 @@ export default function ProjectParametersSettingsPage() {
           <Card id="datasets">
             <CardHeader>
               <div className="flex items-center justify-between gap-2">
-                <CardTitle>{tDatasets("title")}</CardTitle>
+                <CardTitle>{tCommon("pageTitles.datasets")}</CardTitle>
                 <Button
                   onClick={() => setCreateOpen(true)}
                   data-testid="dataset-create-button"

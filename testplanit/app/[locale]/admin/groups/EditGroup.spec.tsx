@@ -250,9 +250,7 @@ describe("EditGroup", () => {
     const emptyGroup = { ...testGroup, assignedUsers: [] };
     renderWithProvider(emptyGroup as any);
     await waitFor(() => {
-      expect(
-        screen.getByText("common.placeholders.select")
-      ).toBeInTheDocument();
+      expect(screen.getByText("common.actions.select")).toBeInTheDocument();
     });
   });
 

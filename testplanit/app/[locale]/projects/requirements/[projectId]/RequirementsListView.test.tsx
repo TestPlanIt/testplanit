@@ -1192,8 +1192,8 @@ describe("RequirementsListView", () => {
       // ordering, not just presence (a column inserted in the wrong place
       // is invisible to an id-only check).
       const labels = headerCells.map((cell) => cell.textContent);
-      expect(labels[0]).toBe("requirements.list.columnName");
-      expect(labels[1]).toBe("requirements.list.columnStatus");
+      expect(labels[0]).toBe("common.name");
+      expect(labels[1]).toBe("common.actions.status");
       // D-17: Priority ships visible-by-default, immediately after Status
       // (operator direction 2026-08-25).
       expect(labels[2]).toBe("common.fields.priority");
@@ -2634,7 +2634,7 @@ describe("RequirementsListView", () => {
 
       await selectFilterOption(
         "requirements-source-filter",
-        "requirements.provenance.nativeLabel"
+        "common.fields.manual"
       );
       await waitFor(() => {
         expect(lastFilterRequestBody()?.source).toEqual(["MANUAL"]);

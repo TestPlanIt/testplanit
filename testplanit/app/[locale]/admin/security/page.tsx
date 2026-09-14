@@ -473,7 +473,7 @@ export default function SecurityAdminPage() {
           {/* Save Button */}
           <div className="flex justify-end">
             <Button onClick={handleSave} disabled={isSaving}>
-              {t("saveChanges")}
+              {tCommon("actions.saveChanges")}
             </Button>
           </div>
         </CardContent>

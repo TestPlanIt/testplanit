@@ -384,8 +384,8 @@ describe("QuickScriptModal", () => {
     // Dialog renders (mocked as conditional on open prop)
     expect(screen.getByTestId("dialog")).toBeInTheDocument();
 
-    // Title renders (from t("title"))
-    expect(screen.getByText("title")).toBeInTheDocument();
+    // Title renders (from tCommon("pageTitles.quickscript"))
+    expect(screen.getByText("pageTitles.quickscript")).toBeInTheDocument();
 
     // Template selector button renders
     expect(

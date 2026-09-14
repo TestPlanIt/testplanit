@@ -288,7 +288,7 @@ function SourceBadgeWithUnlinkMenu({
             data-testid="milestone-source-menu-open"
           >
             <ExternalLink className="h-4 w-4" />
-            {t("sync.openInJira")}
+            {tCommon("ui.issues.openInJira")}
           </DropdownMenuItem>
           <DropdownMenuItem
             className="gap-1 text-destructive focus:text-destructive"
@@ -318,7 +318,7 @@ function SourceBadgeWithUnlinkMenu({
               onClick={() => void handleUnlink()}
               data-testid="milestone-source-unlink-confirm"
             >
-              {t("sync.unlinkConfirmAction")}
+              {tCommon("configurationGroup.unlink")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -373,6 +373,7 @@ export function MilestoneSourceBadge({
   interactive = true,
 }: MilestoneSourceBadgeProps) {
   const t = useTranslations("milestones");
+  const tCommon = useTranslations("common");
   const wrapRef = useRef<HTMLSpanElement>(null);
   const measureRef = useRef<HTMLSpanElement>(null);
   const projectSpace = resolveMilestoneProjectSpace(
@@ -528,7 +529,7 @@ export function MilestoneSourceBadge({
       data-testid="milestone-source-badge"
       variant="outline"
       role={trackerUrl ? "link" : undefined}
-      title={trackerUrl ? t("sync.openInJira") : badgeLabel}
+      title={trackerUrl ? tCommon("ui.issues.openInJira") : badgeLabel}
       aria-label={badgeLabel}
       className={`text-xs max-w-full gap-1 whitespace-nowrap group ${
         asMenuTrigger || trackerUrl

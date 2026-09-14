@@ -364,7 +364,7 @@ export function ShareLinkList({
               {share.notifyOnView ? (
                 <>
                   <Bell className="h-4 w-4 text-primary" />
-                  <span className="text-xs">{t("notifications.enabled")}</span>
+                  <span className="text-xs">{tCommon("operators.on")}</span>
                 </>
               ) : (
                 <>

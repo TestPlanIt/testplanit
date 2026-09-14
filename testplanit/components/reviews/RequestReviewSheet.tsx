@@ -299,7 +299,7 @@ export function RequestReviewSheet({
               name="assigneeKey"
               render={() => (
                 <FormItem>
-                  <FormLabel>{t("reviews.requester.assigneeLabel")}</FormLabel>
+                  <FormLabel>{t("common.ui.issues.assignee")}</FormLabel>
                   <FormControl>
                     <AssigneeCombobox
                       projectId={projectId}

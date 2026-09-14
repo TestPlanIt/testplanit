@@ -241,7 +241,7 @@ export function CreateRequirementDialog({
           </TabsList>
           <TabsContent value="create" className="space-y-3">
             <div className="space-y-1">
-              <Label>{t("requirements.create.parentLabel")}</Label>
+              <Label>{t("common.ui.search.parent")}</Label>
               <div
                 className="text-sm text-muted-foreground"
                 data-testid="create-requirement-parent"
@@ -253,7 +253,7 @@ export function CreateRequirementDialog({
             </div>
             <div className="space-y-1">
               <Label htmlFor="create-requirement-name">
-                {t("requirements.create.nameLabel")}
+                {t("common.name")}
               </Label>
               <Input
                 id="create-requirement-name"
@@ -289,7 +289,7 @@ export function CreateRequirementDialog({
               {t("requirements.create.promoteDescription")}
             </p>
             <div className="space-y-1">
-              <Label>{t("requirements.create.parentLabel")}</Label>
+              <Label>{t("common.ui.search.parent")}</Label>
               <div
                 className="text-sm text-muted-foreground"
                 data-testid="create-requirement-promote-parent"
@@ -325,7 +325,7 @@ export function CreateRequirementDialog({
                   data-testid="create-requirement-promote-pick"
                 >
                   {promoteTarget
-                    ? t("requirements.create.promoteChangeIssue")
+                    ? t("common.actions.change")
                     : t("requirements.create.promoteChooseIssue")}
                 </Button>
               </div>

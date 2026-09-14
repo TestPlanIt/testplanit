@@ -1145,7 +1145,7 @@ function RequirementRowActionsMenu({
         >
           <div className="flex items-center gap-2">
             <TrashIcon className="h-4 w-4" />
-            {t("requirements.tree.delete")}
+            {t("common.actions.delete")}
           </div>
         </DropdownMenuItem>
       </DropdownMenuContent>

@@ -267,7 +267,7 @@ export function ExportModal({
                       data-testid="export-columns-all"
                     />
                     <Label htmlFor="columns-all" className="cursor-pointer">
-                      {tGlobal("repository.exportModal.columns.all")}
+                      {tGlobal("common.filters.all")}
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -562,7 +562,7 @@ export function ExportModal({
                       data-testid="export-columns-pdf-all"
                     />
                     <Label htmlFor="columns-pdf-all" className="cursor-pointer">
-                      {tGlobal("repository.exportModal.columns.all")}
+                      {tGlobal("common.filters.all")}
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -644,7 +644,7 @@ export function ExportModal({
             data-testid="export-modal-export-button"
           >
             {isExporting
-              ? tGlobal("repository.exportModal.exporting")
+              ? tGlobal("common.actions.exportingPdf")
               : tGlobal("repository.cases.export")}
           </Button>
         </DialogFooter>

@@ -394,7 +394,7 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
     () => ({
       CASE: t("reviews.inbox.filterEntityTypeCase"),
       RUN: t("reviews.inbox.filterEntityTypeRun"),
-      SESSION: t("reviews.inbox.filterEntityTypeSession"),
+      SESSION: t("common.fields.sessions"),
     }),
     [t]
   );
@@ -933,7 +933,7 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
           className="w-full"
           title={
             <span data-testid="reviews-inbox-page-title">
-              {t("reviews.inbox.pageTitle")}
+              {t("common.pageTitles.reviews")}
             </span>
           }
           helpKey="reviews"
@@ -954,7 +954,7 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
                   className="min-w-[8rem] gap-2"
                 >
                   <Inbox className="h-4 w-4" aria-hidden="true" />
-                  {t("reviews.inbox.tabPending")}
+                  {t("common.status.pending")}
                 </TabsTrigger>
                 <TabsTrigger
                   value="decided"
@@ -1007,7 +1007,7 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
                 data-testid="reviews-inbox-project-filter"
               >
                 <Label className="text-xs text-muted-foreground">
-                  {t("reviews.inbox.filterProject")}
+                  {t("common.fields.project")}
                 </Label>
                 <MultiAsyncCombobox<ProjectOption>
                   value={projectFilter}
@@ -1024,7 +1024,7 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
                   getOptionValue={(p) => p.id}
                   getOptionLabel={(p) => p.name}
                   placeholder={t("reviews.inbox.filterAllProjects")}
-                  ariaLabel={t("reviews.inbox.filterProject")}
+                  ariaLabel={t("common.fields.project")}
                   className="mt-1"
                   pageSize={FILTER_PAGE_SIZE}
                 />
@@ -1087,7 +1087,7 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
                     data-testid="reviews-inbox-status-filter"
                   >
                     <Label className="text-xs text-muted-foreground">
-                      {t("reviews.inbox.filterStatus")}
+                      {t("common.actions.status")}
                     </Label>
                     <MultiAsyncCombobox<StatusOption>
                       value={decidedStatusFilter}
@@ -1107,7 +1107,7 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
                       getOptionValue={(o) => o.value}
                       getOptionLabel={(o) => o.label}
                       placeholder={t("reviews.inbox.filterAllStatuses")}
-                      ariaLabel={t("reviews.inbox.filterStatus")}
+                      ariaLabel={t("common.actions.status")}
                       className="mt-1"
                       pageSize={FILTER_PAGE_SIZE}
                     />

@@ -134,7 +134,7 @@ describe("AuditLogDetailModal", () => {
     expect(screen.getByText("admin.auditLogs.changes")).toBeInTheDocument();
     expect(screen.getByText("name")).toBeInTheDocument();
     expect(screen.getByText(/admin\.auditLogs\.oldValue/)).toBeInTheDocument();
-    expect(screen.getByText(/admin\.auditLogs\.newValue/)).toBeInTheDocument();
+    expect(screen.getByText(/common\.labels\.new/)).toBeInTheDocument();
     expect(screen.getByText("Old Name")).toBeInTheDocument();
     expect(screen.getByText("New Name")).toBeInTheDocument();
   });

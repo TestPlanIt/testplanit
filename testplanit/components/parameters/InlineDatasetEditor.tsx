@@ -82,6 +82,7 @@ export function InlineDatasetEditor({
   testIdPrefix = "inline-dataset",
 }: InlineDatasetEditorProps) {
   const t = useTranslations("parameters");
+  const tCommon = useTranslations("common");
 
   const duplicateNames = useMemo(() => {
     const counts = new Map<string, number>();
@@ -219,10 +220,12 @@ export function InlineDatasetEditor({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[28%]">{t("formName")}</TableHead>
-                <TableHead className="w-[18%]">{t("formType")}</TableHead>
+                <TableHead className="w-[28%]">{tCommon("name")}</TableHead>
+                <TableHead className="w-[18%]">
+                  {tCommon("fields.type")}
+                </TableHead>
                 <TableHead className="w-[15%] text-center">
-                  {t("formRequired")}
+                  {tCommon("fields.required")}
                 </TableHead>
                 <TableHead className="w-[15%] text-center">
                   {t("formSensitive")}
@@ -281,7 +284,7 @@ export function InlineDatasetEditor({
                         onCheckedChange={(checked) =>
                           updateParameter(i, { required: checked })
                         }
-                        aria-label={t("formRequired")}
+                        aria-label={tCommon("fields.required")}
                       />
                     </TableCell>
                     <TableCell className="text-center">
@@ -341,7 +344,7 @@ export function InlineDatasetEditor({
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[20%]">
-                  {t("datasetLabelColumn")}
+                  {tCommon("fields.options.label")}
                 </TableHead>
                 {parameters.map((p, i) => (
                   <TableHead key={`${p.name}-${i}`}>{p.name || "—"}</TableHead>

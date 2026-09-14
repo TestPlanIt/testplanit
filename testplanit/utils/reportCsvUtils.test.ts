@@ -73,7 +73,7 @@ describe("buildReportCsvRows", () => {
       reportType: "cross-project-flaky-tests",
       rows: [{ testCaseName: "X", flipCount: 1, project: { name: "Proj A" } }],
     });
-    expect(row["reports.dimensions.project"]).toBe("Proj A");
+    expect(row["common.fields.project"]).toBe("Proj A");
   });
 
   it("test-case-health: translates status, formats stale/pass-rate", () => {
@@ -98,11 +98,9 @@ describe("buildReportCsvRows", () => {
     expect(row["reports.ui.testCaseHealth.healthStatus.stale"]).toBe(
       "common.no"
     );
-    expect(row["reports.ui.testCaseHealth.lastExecuted"]).toBe(
-      "reports.ui.testCaseHealth.never"
-    );
+    expect(row["reports.ui.testCaseHealth.lastExecuted"]).toBe("common.never");
     // No executions → pass rate blank.
-    expect(row["reports.ui.testCaseHealth.passRate"]).toBe("");
+    expect(row["common.fields.passRate"]).toBe("");
   });
 
   it("test-case-health: pass rate shown as % when executed", () => {
@@ -121,7 +119,7 @@ describe("buildReportCsvRows", () => {
         },
       ],
     });
-    expect(row["reports.ui.testCaseHealth.passRate"]).toBe("50%");
+    expect(row["common.fields.passRate"]).toBe("50%");
     expect(row["reports.ui.testCaseHealth.healthStatus.stale"]).toBe(
       "common.yes"
     );
@@ -166,7 +164,7 @@ describe("buildReportCsvRows", () => {
         },
       ],
     });
-    expect(row["reports.dimensions.testRun"]).toBe("Run 1");
+    expect(row["common.actions.junit.import.testRun.label"]).toBe("Run 1");
     expect(row["common.actions.status"]).toBe("Passed");
     expect(row["common.fields.executedBy"]).toBe("Alice");
     expect(row["common.fields.duration"]).toBe(""); // 0 → blank
@@ -361,14 +359,14 @@ describe("buildReportCsvRows (Phase 26 requirement report additions)", () => {
     expect(row["reports.ui.requirementCoverage.testCase"]).toBe(
       "Enrol via portal"
     );
-    expect(row["reports.ui.requirementCoverage.result"]).toBe("Passed");
+    expect(row["common.fields.resultStatus"]).toBe("Passed");
     // fmtDateTime formats in the test runner's local timezone (same as
     // execution-log's equivalent field, above) -- assert non-empty and
     // date-prefixed rather than hardcoding a timezone-dependent string.
-    expect(row["reports.ui.requirementCoverage.executedAt"]).toMatch(
+    expect(row["common.fields.executedAt"]).toMatch(
       /^2026-08-20 \d{2}:\d{2}:\d{2}$/
     );
-    expect(row["reports.ui.requirementCoverage.project"]).toBe("Enrolments");
+    expect(row["common.fields.project"]).toBe("Enrolments");
   });
 
   it("writes Uncovered rather than an empty cell for a null-case traceability row", () => {
@@ -410,18 +408,18 @@ describe("buildReportCsvRows (Phase 26 requirement report additions)", () => {
     // The gap row (null testCaseId) writes the localized "Uncovered" label,
     // never an empty string -- a blank cell here would silently hide a
     // coverage gap in the exported spreadsheet (T-26-12-05).
-    expect(gapRow["reports.ui.requirementCoverage.result"]).toBe(
+    expect(gapRow["common.fields.resultStatus"]).toBe(
       "reports.ui.requirementCoverage.uncovered"
     );
-    expect(gapRow["reports.ui.requirementCoverage.result"]).not.toBe("");
+    expect(gapRow["common.fields.resultStatus"]).not.toBe("");
 
     // Distinct from the gap row: a linked case with no status writes
     // "Not run", not "Uncovered" and not an empty string either.
-    expect(notRunRow["reports.ui.requirementCoverage.result"]).toBe(
+    expect(notRunRow["common.fields.resultStatus"]).toBe(
       "reports.ui.requirementCoverage.notRun"
     );
-    expect(notRunRow["reports.ui.requirementCoverage.result"]).not.toBe(
-      gapRow["reports.ui.requirementCoverage.result"]
+    expect(notRunRow["common.fields.resultStatus"]).not.toBe(
+      gapRow["common.fields.resultStatus"]
     );
   });
 });
@@ -552,7 +550,7 @@ describe("requirement-coverage-changes CSV", () => {
       isCrossProject: false,
     } as any);
 
-    expect(rows[0]["reports.ui.requirementCoverage.change"]).toBe(
+    expect(rows[0]["common.actions.change"]).toBe(
       "reports.ui.requirementCoverage.changeCoverage"
     );
     expect(rows[0]["reports.ui.requirementCoverage.coverageBefore"]).toBe(
@@ -564,7 +562,7 @@ describe("requirement-coverage-changes CSV", () => {
     expect(rows[0]["reports.ui.requirementCoverage.linkedCasesAfter"]).toBe(2);
     expect(rows[0]["reports.ui.requirementCoverage.casesAdded"]).toBe(2);
     // The removed requirement has no "after" side: blank, never a state.
-    expect(rows[1]["reports.ui.requirementCoverage.change"]).toBe(
+    expect(rows[1]["common.actions.change"]).toBe(
       "reports.ui.requirementCoverage.changeRemoved"
     );
     expect(rows[1]["reports.ui.requirementCoverage.coverageAfter"]).toBe("");

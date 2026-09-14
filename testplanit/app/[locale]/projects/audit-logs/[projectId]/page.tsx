@@ -27,7 +27,6 @@ export default function ProjectAuditLogsPage() {
   const { session, status, isLoading: isAuthLoading } = useRequireAuth();
   const t = useTranslations("admin.menu");
   const tAudit = useTranslations("admin.auditLogs");
-  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
 
   // Export lives in ProjectAuditLog (owns the filter state); it reports its
@@ -128,7 +127,7 @@ export default function ProjectAuditLogsPage() {
               <Download className="h-4 w-4" />
               <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
                 {exportState?.isExporting
-                  ? tGlobal("repository.exportModal.exporting")
+                  ? tCommon("actions.exportingPdf")
                   : tAudit("exportCsv")}
               </span>
             </Button>

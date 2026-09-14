@@ -58,7 +58,7 @@ export function useTestCaseHealthColumns(
       columns.push(
         columnHelper.accessor(projectAccessor, {
           id: "project",
-          header: () => <span>{t("reports.dimensions.project")}</span>,
+          header: () => <span>{tCommon("fields.project")}</span>,
           cell: (info) => {
             const projectData = info.row.original.project;
             return (
@@ -257,7 +257,7 @@ export function useTestCaseHealthColumns(
           if (!lastExecuted) {
             return (
               <span className="text-muted-foreground italic">
-                {t("reports.ui.testCaseHealth.never")}
+                {tCommon("never")}
               </span>
             );
           }
@@ -307,7 +307,7 @@ export function useTestCaseHealthColumns(
     columns.push(
       columnHelper.accessor("passRate", {
         id: "passRate",
-        header: () => <span>{t("reports.ui.testCaseHealth.passRate")}</span>,
+        header: () => <span>{tCommon("fields.passRate")}</span>,
         cell: (info) => {
           const rate = info.getValue();
           const total = info.row.original.totalExecutions;

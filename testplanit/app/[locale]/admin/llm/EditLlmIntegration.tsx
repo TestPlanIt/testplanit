@@ -743,7 +743,7 @@ export function EditLlmIntegration({
                           {sectionsWithErrors.has("provider") && (
                             <AlertCircle className="h-4 w-4 text-destructive shrink-0" />
                           )}
-                          {tLlm("sections.provider")}
+                          {tCommon("fields.provider")}
                         </span>
                         {providerLabel && (
                           <span className="text-xs text-muted-foreground font-normal truncate ms-auto">
@@ -1272,7 +1272,7 @@ export function EditLlmIntegration({
                         {sectionsWithErrors.has("advanced") && (
                           <AlertCircle className="h-4 w-4 text-destructive shrink-0" />
                         )}
-                        {tLlm("sections.advanced")}
+                        {tCommon("pageTitles.advanced")}
                       </span>
                     </AccordionTrigger>
                     <AccordionContent className="space-y-4 px-4">

@@ -22,6 +22,7 @@ export function ShareLayoutContent({
   const [, setMounted] = useState(false);
   const t = useTranslations("reports.shareDialog.footer");
   const tBranding = useTranslations("common.branding");
+  const tCommon = useTranslations("common");
 
   // Fetch user preferences if authenticated
   const { data: userPreferences } = useClientQueries(
@@ -101,7 +102,7 @@ export function ShareLayoutContent({
                 width={16}
                 height={16}
               />
-              {tBranding("name")}
+              {tCommon("pageTitles.appName")}
             </span>
           </Link>
         </footer>

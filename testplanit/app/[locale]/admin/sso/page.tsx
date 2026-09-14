@@ -1178,9 +1178,7 @@ export default function SSOAdminPage() {
                 {/* Add new domain */}
                 <div className="flex gap-2 mb-4">
                   <Input
-                    placeholder={t(
-                      "admin.sso.registration.allowedDomains.placeholder"
-                    )}
+                    placeholder={t("common.placeholders.domainExample")}
                     value={newDomain}
                     onChange={(e) => setNewDomain(e.target.value)}
                     onKeyDown={(e) => {

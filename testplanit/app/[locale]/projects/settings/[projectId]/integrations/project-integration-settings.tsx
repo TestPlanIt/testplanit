@@ -663,7 +663,7 @@ export function ProjectIntegrationSettings({
                               <Star className="h-4 w-4 fill-primary text-primary shrink-0" />
                             </TooltipTrigger>
                             <TooltipContent>
-                              {t("integration.defaultIndicator")}
+                              {tGlobal("common.fields.default")}
                             </TooltipContent>
                           </Tooltip>
                         ) : (

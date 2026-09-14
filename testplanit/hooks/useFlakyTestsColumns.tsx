@@ -57,7 +57,7 @@ export function useFlakyTestsColumns(
       columns.push(
         columnHelper.accessor(projectAccessor, {
           id: "project",
-          header: () => <span>{t("reports.dimensions.project")}</span>,
+          header: () => <span>{tCommon("fields.project")}</span>,
           cell: (info) => {
             // Get the actual project object from the row, not the accessor value
             const projectData = info.row.original.project;

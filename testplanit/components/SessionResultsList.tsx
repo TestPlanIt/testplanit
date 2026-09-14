@@ -1315,7 +1315,7 @@ export function SessionResultsList({
       // If any error occurs during parsing/rendering
       return (
         <span className="italic text-muted-foreground">
-          {tCommon("ui.issues.invalidContent")}
+          {tCommon("errors.invalidContent")}
         </span>
       );
     }

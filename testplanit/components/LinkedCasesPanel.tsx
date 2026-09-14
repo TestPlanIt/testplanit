@@ -322,7 +322,8 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
               size="sm"
               onClick={() => setIsModalOpen(true)}
             >
-              <Plus className="w-4 h-4" /> {tLinkedCases("addLink")}
+              <Plus className="w-4 h-4" />{" "}
+              {tGlobal("common.upload.attachments.link.addButton")}
             </Button>
             {isModalOpen && (
               <AddLinkDialog
@@ -524,6 +525,7 @@ function AddLinkDialog({
   onSubmit,
 }: AddLinkDialogProps) {
   const tLinkedCases = useTranslations("linkedCases");
+  const tUpload = useTranslations("common.upload");
   const [selectedCase, setSelectedCase] = useState<CaseOption | null>(null);
   const [selectedType, setSelectedType] = useState<LinkType | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -621,7 +623,9 @@ function AddLinkDialog({
           {error && <div className="text-destructive text-sm">{error}</div>}
         </div>
         <DialogFooter>
-          <Button onClick={handleSubmit}>{tLinkedCases("addLink")}</Button>
+          <Button onClick={handleSubmit}>
+            {tUpload("attachments.link.addButton")}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -209,7 +209,7 @@ describe("RepositoryWebhookCard", () => {
     render(
       <RepositoryWebhookCard projectId={42} hook={hook} onChanged={onChanged} />
     );
-    fireEvent.click(screen.getByLabelText("isActive"));
+    fireEvent.click(screen.getByLabelText("fields.enabled"));
     await waitFor(() =>
       expect(mockSetActive).toHaveBeenCalledWith("whc-1", false)
     );

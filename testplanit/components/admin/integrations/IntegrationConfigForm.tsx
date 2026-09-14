@@ -520,7 +520,7 @@ export function IntegrationConfigForm({
                   )}
                   {callbackCopied
                     ? t("config.callbackUrlCopied")
-                    : t("config.callbackUrlCopy")}
+                    : tCommon("common.actions.copy")}
                 </Button>
               </div>
             </FormControl>
@@ -577,7 +577,7 @@ export function IntegrationConfigForm({
                     )}
                     {copied
                       ? t("config.forgeApiKeyCopied")
-                      : t("config.forgeApiKeyCopy")}
+                      : tCommon("common.actions.copy")}
                   </Button>
                 )}
               </div>

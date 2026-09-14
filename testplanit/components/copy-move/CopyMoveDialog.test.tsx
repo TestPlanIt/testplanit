@@ -326,7 +326,7 @@ describe("CopyMoveDialog", () => {
 
     // Radio buttons for copy and move
     expect(
-      screen.getByRole("radio", { name: /operationCopy/i })
+      screen.getByRole("radio", { name: /actions\.copy/i })
     ).toBeInTheDocument();
     expect(
       screen.getByRole("radio", { name: /operationMove/i })

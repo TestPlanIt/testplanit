@@ -87,7 +87,7 @@ export function useIssueTestCoverageSummaryColumns(
           {
             id: "project",
             enableGrouping: false,
-            header: () => <span>{t("reports.dimensions.project")}</span>,
+            header: () => <span>{tCommon("fields.project")}</span>,
             cell: (info) => {
               const projectData = info.row.original.project;
               return (
@@ -252,9 +252,7 @@ export function useIssueTestCoverageSummaryColumns(
         id: "issueStatus",
         enableHiding: false,
         enableGrouping: false,
-        header: () => (
-          <span>{t("reports.ui.issueTestCoverage.issueStatus")}</span>
-        ),
+        header: () => <span>{tCommon("actions.status")}</span>,
         cell: (info) => {
           return <IssueStatusDisplay status={info.row.original.issueStatus} />;
         },
@@ -274,7 +272,7 @@ export function useIssueTestCoverageSummaryColumns(
         id: "issuePriority",
         enableHiding: false,
         enableGrouping: false,
-        header: () => <span>{t("reports.ui.issueTestCoverage.priority")}</span>,
+        header: () => <span>{tCommon("fields.priority")}</span>,
         cell: (info) => {
           return (
             <IssuePriorityDisplay priority={info.row.original.issuePriority} />
@@ -344,7 +342,7 @@ export function useIssueTestCoverageSummaryColumns(
           if (!lastExecuted) {
             return (
               <span className="text-muted-foreground italic text-sm">
-                {t("reports.ui.testCaseHealth.never")}
+                {tCommon("never")}
               </span>
             );
           }
@@ -442,7 +440,7 @@ export function useIssueTestCoverageSummaryColumns(
         id: "passRate",
         enableHiding: false,
         enableGrouping: false,
-        header: () => <span>{t("reports.ui.issueTestCoverage.passRate")}</span>,
+        header: () => <span>{tCommon("fields.passRate")}</span>,
         cell: () => null, // Only show for grouped rows
         aggregatedCell: (info) => {
           const firstRow = info.row.subRows[0]?.original;

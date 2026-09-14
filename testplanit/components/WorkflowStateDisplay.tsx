@@ -27,7 +27,7 @@ export const WorkflowStateDisplay: React.FC<WorkflowStateProps> = ({
   state,
   size = "lg",
 }) => {
-  const t = useTranslations("reviews.transitionGate");
+  const tCommon = useTranslations("common");
 
   if (!state) {
     return null;
@@ -46,7 +46,7 @@ export const WorkflowStateDisplay: React.FC<WorkflowStateProps> = ({
       {state.requiresReview && (
         <MessageSquareWarning
           className={`shrink-0 text-warning ${size === "sm" ? "h-3.5 w-3.5" : "h-4 w-4"}`}
-          aria-label={t("gatedOptionBadge")}
+          aria-label={tCommon("aria.requiresReview")}
         />
       )}
     </span>

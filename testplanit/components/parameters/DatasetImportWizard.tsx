@@ -91,7 +91,7 @@ export function DatasetImportWizard({
       t("importStep1Label"),
       t("importStep2Label"),
       t("importStep3Label"),
-      t("importStep4Label"),
+      tCommon("actions.confirm"),
     ],
     [t]
   );
@@ -301,7 +301,7 @@ export function DatasetImportWizard({
                 disabled={errorRowCount > 0 || submitting}
                 data-testid="dataset-import-wizard-commit"
               >
-                {t("importCommit")}
+                {tActions("junit.import.import")}
               </Button>
             )}
           </DialogFooter>

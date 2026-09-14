@@ -43,7 +43,6 @@ export default function ProjectAiModelsPage() {
   const { session, status, isLoading: isAuthLoading } = useRequireAuth();
   const t = useTranslations("projects.settings.aiModels");
   const tCommon = useTranslations("common");
-  const tGlobal = useTranslations();
 
   // Fetch project data (allow global admin access or project assignment)
   const { data: project, isLoading: projectLoading } = useClientQueries(
@@ -202,7 +201,7 @@ export default function ProjectAiModelsPage() {
       <Card>
         <CardHeader className="w-full">
           <SectionHeader className="flex items-center gap-2">
-            <CardTitle>{tGlobal("admin.menu.llm")}</CardTitle>
+            <CardTitle>{tCommon("pageTitles.aiModels")}</CardTitle>
             <HelpPopover helpKey="projectAiModels" />
           </SectionHeader>
           <CardDescription>
@@ -215,7 +214,7 @@ export default function ProjectAiModelsPage() {
         <CardContent className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>{t("availableModels")}</CardTitle>
+              <CardTitle>{tCommon("labels.access.projectDefault")}</CardTitle>
               <CardDescription>
                 {t("availableModelsDescription")}
               </CardDescription>

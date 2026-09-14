@@ -208,7 +208,7 @@ export function AddGroup({ open, onClose }: AddGroupProps) {
                 renderSelectedOption={(user) => <span>{user.name}</span>}
                 getOptionValue={(user) => user.id}
                 getOptionLabel={(user) => user.name}
-                placeholder={tCommon("placeholders.select")}
+                placeholder={tCommon("actions.select")}
                 className="w-full"
                 pageSize={20}
                 showTotal

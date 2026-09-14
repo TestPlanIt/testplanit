@@ -35,7 +35,6 @@ export default function ProjectAutomationPage() {
     isAuthenticated,
   } = useRequireAuth();
   const t = useTranslations("automation.settings");
-  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
 
   const { data: project, isLoading: projectLoading } = useClientQueries(
@@ -80,7 +79,7 @@ export default function ProjectAutomationPage() {
       <Card>
         <CardHeader className="w-full">
           <SectionHeader className="flex items-center gap-2">
-            <CardTitle>{tGlobal("admin.menu.automation")}</CardTitle>
+            <CardTitle>{tCommon("pageTitles.automation")}</CardTitle>
             <HelpPopover helpKey="projectAutomation" />
           </SectionHeader>
           <CardDescription>

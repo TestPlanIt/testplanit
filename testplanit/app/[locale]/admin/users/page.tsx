@@ -445,7 +445,7 @@ function UserList() {
               onClick={handleForceChangePassword}
               disabled={isForceLoading}
             >
-              {tAdmin("confirmAction")}
+              {tCommon("actions.confirm")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -472,7 +472,7 @@ function UserList() {
               onClick={handleRevokePassword}
               disabled={isRevokeLoading}
             >
-              {tAdmin("confirmAction")}
+              {tCommon("actions.confirm")}
             </Button>
           </DialogFooter>
         </DialogContent>

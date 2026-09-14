@@ -323,7 +323,7 @@ function WizardBody({
         </div>
         <div className="space-y-1">
           <Label htmlFor="webhook-inbound-ado-password-input">
-            {t("inboundAdoPassword")}
+            {tCommon("fields.password")}
             <sup>
               <Asterisk className="inline h-3 w-3 text-destructive" />
             </sup>
@@ -657,7 +657,7 @@ function WizardBody({
             data-testid="webhook-reveal-done-button"
           >
             <Check className="h-4 w-4" />
-            <span>{t("revealDone")}</span>
+            <span>{tCommon("actions.done")}</span>
           </Button>
         )}
       </DialogFooter>

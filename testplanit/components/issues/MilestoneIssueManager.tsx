@@ -317,7 +317,7 @@ export function MemberIssueRowActions({
                 data-testid="member-issue-unlink"
               >
                 <X className="h-4 w-4 me-2" />
-                {t("unlink")}
+                {tCommon("configurationGroup.unlink")}
               </DropdownMenuItem>
             )}
           </DropdownMenuContent>
@@ -340,7 +340,7 @@ export function MemberIssueRowActions({
               onClick={() => void handleUnlink()}
               data-testid="member-issue-unlink-confirm"
             >
-              {t("unlink")}
+              {tCommon("configurationGroup.unlink")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

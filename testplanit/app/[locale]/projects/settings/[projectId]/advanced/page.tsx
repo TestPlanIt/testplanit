@@ -528,7 +528,7 @@ export default function AdvancedPage() {
       <Card>
         <PageCardHeader
           className="w-full"
-          title={t("title")}
+          title={tCommon("pageTitles.advanced")}
           helpKey="projectAdvanced"
           description={<ProjectHeaderInfo project={project} />}
         />

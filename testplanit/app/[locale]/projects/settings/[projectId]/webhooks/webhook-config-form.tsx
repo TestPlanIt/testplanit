@@ -485,7 +485,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
                 addSuffix: true,
                 locale: dateLocale,
               })
-            : t("activityNever")}
+            : tCommon("never")}
         </span>
       </div>
     );
@@ -497,20 +497,20 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
         count: config.consecutiveFailureCount,
         lastFailureAt: config.lastFailureAt
           ? new Date(config.lastFailureAt).toISOString()
-          : t("activityNever"),
+          : tCommon("never"),
       });
     }
     if (config.endpointHealth === "DISABLED") {
       return t("healthTooltipDisabled", {
         lastFailureAt: config.lastFailureAt
           ? new Date(config.lastFailureAt).toISOString()
-          : t("activityNever"),
+          : tCommon("never"),
       });
     }
     return t("healthTooltipHealthy", {
       lastSuccessAt: config.lastSuccessAt
         ? new Date(config.lastSuccessAt).toISOString()
-        : t("activityNever"),
+        : tCommon("never"),
     });
   }
 
@@ -550,10 +550,10 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
                   onCheckedChange={(next: boolean) =>
                     void handleToggleActive(config, next)
                   }
-                  aria-label={t("isActive")}
+                  aria-label={tCommon("fields.enabled")}
                 />
                 <span className="text-sm text-muted-foreground">
-                  {t("isActive")}
+                  {tCommon("fields.enabled")}
                 </span>
               </div>
               <Tooltip>
@@ -696,7 +696,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
                   onClick={() => setRevealed(null)}
                 >
                   <Check className="h-4 w-4" />
-                  <span>{t("revealDone")}</span>
+                  <span>{tCommon("actions.done")}</span>
                 </Button>
               )}
             </div>

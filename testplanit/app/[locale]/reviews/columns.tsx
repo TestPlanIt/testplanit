@@ -326,7 +326,7 @@ export const useColumns = ({
       {
         id: "project",
         accessorKey: "projectId",
-        header: t("reviews.inbox.columnProject"),
+        header: t("common.fields.project"),
         enableSorting: true,
         minSize: 110,
         size: 220,
@@ -455,7 +455,7 @@ export const useColumns = ({
     const assigneeColumn: ColumnDef<InboxTableRow> = {
       id: "assignee",
       accessorKey: "assigneeUserId",
-      header: t("reviews.inbox.columnAssignee"),
+      header: t("common.ui.issues.assignee"),
       enableSorting: true,
       minSize: 125,
       size: 220,
@@ -498,7 +498,7 @@ export const useColumns = ({
       view === "pending"
         ? {
             id: "actions",
-            header: t("reviews.inbox.columnActions"),
+            header: t("common.actions.actionsLabel"),
             enableSorting: false,
             enableHiding: false,
             size: 122,
@@ -530,7 +530,7 @@ export const useColumns = ({
                     data-testid="reviews-inbox-row-actions"
                   >
                     <ActionIconButton
-                      label={t("reviews.inbox.actionApprove")}
+                      label={t("common.permissions.approve")}
                       testId={`reviews-inbox-approve-${id}`}
                       icon={CheckCircle2}
                       onClick={() => actions?.onApprove(row.original)}
@@ -585,7 +585,7 @@ export const useColumns = ({
         : {
             id: "status",
             accessorKey: "status",
-            header: t("reviews.inbox.columnStatus"),
+            header: t("common.actions.status"),
             enableSorting: true,
             size: 180,
             meta: { isPinned: "right" } satisfies CustomColumnMeta,

@@ -269,7 +269,7 @@ export function AutomationTargetDialog({
 
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="automation-target-name">{t("name")}</Label>
+            <Label htmlFor="automation-target-name">{tCommon("name")}</Label>
             <Input
               id="automation-target-name"
               value={name}
@@ -280,7 +280,7 @@ export function AutomationTargetDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label>{t("provider")}</Label>
+            <Label>{tCommon("fields.provider")}</Label>
             <Select
               value={provider}
               onValueChange={(v) => {

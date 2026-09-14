@@ -54,6 +54,7 @@ export function RequirementAttachments({
   onPendingChangesChange,
 }: RequirementAttachmentsProps) {
   const t = useTranslations("requirements.attachments");
+  const tCommon = useTranslations("common");
 
   const [selectedAttachmentIndex, setSelectedAttachmentIndex] = useState<
     number | null
@@ -80,7 +81,7 @@ export function RequirementAttachments({
 
   return (
     <div data-testid="requirement-attachments" className="flex flex-col gap-2">
-      <h3 className="font-bold">{t("title")}</h3>
+      <h3 className="font-bold">{tCommon("fields.attachments")}</h3>
       {isEditMode ? (
         <>
           <UploadAttachments

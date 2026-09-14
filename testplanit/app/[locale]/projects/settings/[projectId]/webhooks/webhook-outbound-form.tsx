@@ -613,7 +613,7 @@ export function WebhookOutboundForm({
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1">
             <Label htmlFor="webhook-outbound-name-input">
-              {t("outboundCreateName")}
+              {tCommon("name")}
               <sup>
                 <Asterisk className="inline h-3 w-3 text-destructive" />
               </sup>
@@ -661,7 +661,7 @@ export function WebhookOutboundForm({
 
           <div className="space-y-1">
             <Label htmlFor="webhook-outbound-url-input">
-              {t("outboundCreateUrl")}
+              {tGlobal("common.upload.attachments.link.urlLabel")}
               <sup>
                 <Asterisk className="inline h-3 w-3 text-destructive" />
               </sup>
@@ -796,7 +796,7 @@ export function WebhookOutboundForm({
               setCreateErrors({});
             }}
           >
-            {t("outboundCreateCancel")}
+            {tCommon("cancel")}
           </Button>
         </div>
       </CardContent>
@@ -846,7 +846,7 @@ export function WebhookOutboundForm({
           onClick={onDismiss}
         >
           <Check className="h-4 w-4" />
-          <span>{t("outboundSecretDone")}</span>
+          <span>{tCommon("actions.done")}</span>
         </Button>
       </div>
     </div>
@@ -866,7 +866,7 @@ export function WebhookOutboundForm({
           className="inline"
         />
       ) : (
-        <span>{t("activityNever")}</span>
+        <span>{tCommon("never")}</span>
       )}
     </div>
   );
@@ -877,20 +877,20 @@ export function WebhookOutboundForm({
         count: config.consecutiveFailureCount,
         lastFailureAt: config.lastFailureAt
           ? new Date(config.lastFailureAt).toISOString()
-          : t("activityNever"),
+          : tCommon("never"),
       });
     }
     if (config.endpointHealth === "DISABLED") {
       return t("healthTooltipDisabled", {
         lastFailureAt: config.lastFailureAt
           ? new Date(config.lastFailureAt).toISOString()
-          : t("activityNever"),
+          : tCommon("never"),
       });
     }
     return t("healthTooltipHealthy", {
       lastSuccessAt: config.lastSuccessAt
         ? new Date(config.lastSuccessAt).toISOString()
-        : t("activityNever"),
+        : tCommon("never"),
     });
   };
 
@@ -945,11 +945,11 @@ export function WebhookOutboundForm({
                   onCheckedChange={(next: boolean) =>
                     void handleToggleActive(config.id, next)
                   }
-                  aria-label={t("outboundActiveToggle")}
+                  aria-label={tCommon("fields.isActive")}
                   data-testid={`webhook-outbound-active-toggle-${config.id}`}
                 />
                 <span className="text-sm text-muted-foreground">
-                  {t("outboundActiveToggle")}
+                  {tCommon("fields.isActive")}
                 </span>
               </div>
               <Tooltip>

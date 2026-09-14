@@ -4411,8 +4411,8 @@ export function GenerateTestCasesWizard({
                                             }}
                                           >
                                             <ExternalLink className="w-3 h-3" />
-                                            {t(
-                                              "generateTestCases.openInExternalSystem",
+                                            {tCommon(
+                                              "ui.issues.openInExternalSystem",
                                               {
                                                 provider:
                                                   getProviderDisplayName(
@@ -4708,9 +4708,7 @@ export function GenerateTestCasesWizard({
                                     }`}
                                   >
                                     <div className="font-medium">
-                                      {t(
-                                        "generateTestCases.selectSource.urlModeRequirements"
-                                      )}
+                                      {tCommon("fields.requirements")}
                                     </div>
                                     <div className="text-xs mt-0.5 opacity-80">
                                       {t(
@@ -5018,8 +5016,8 @@ export function GenerateTestCasesWizard({
                         >
                           <SelectTrigger>
                             <SelectValue
-                              placeholder={t(
-                                "generateTestCases.selectTemplate.placeholder"
+                              placeholder={tCommon(
+                                "placeholders.selectATemplate"
                               )}
                             />
                           </SelectTrigger>

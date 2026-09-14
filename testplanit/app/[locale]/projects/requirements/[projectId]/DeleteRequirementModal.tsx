@@ -157,7 +157,7 @@ export function DeleteRequirementModal({
             >
               {isSubmitting
                 ? t("common.actions.deleting")
-                : t("requirements.delete.submit")}
+                : t("common.actions.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </div>

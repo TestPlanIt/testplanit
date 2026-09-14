@@ -120,7 +120,7 @@ const stepTitles = [
   "admin.projects.wizard.steps.details",
   "common.fields.templates",
   "admin.projects.wizard.steps.workflows",
-  "admin.projects.wizard.steps.integrations",
+  "common.pageTitles.integrations",
   "admin.projects.wizard.steps.permissions",
 ];
 
@@ -1812,7 +1812,7 @@ export function CreateProjectWizard({
                     <CardHeader>
                       <CardTitle className="text-base flex items-center gap-2">
                         <Bot className="h-4 w-4" />
-                        {t("admin.menu.llm")}
+                        {tCommon("pageTitles.aiModels")}
                       </CardTitle>
                       <CardDescription>
                         {t("admin.projects.wizard.descriptions.aiModels")}

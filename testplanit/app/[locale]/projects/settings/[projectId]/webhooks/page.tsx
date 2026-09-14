@@ -46,7 +46,6 @@ export default function ProjectWebhooksPage() {
     isAuthenticated,
   } = useRequireAuth();
   const t = useTranslations("projects.settings.webhooks");
-  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
 
   const searchParams = useSearchParams();
@@ -124,7 +123,7 @@ export default function ProjectWebhooksPage() {
       <Card>
         <CardHeader className="w-full">
           <SectionHeader className="flex items-center gap-2">
-            <CardTitle>{tGlobal("admin.menu.webhooks")}</CardTitle>
+            <CardTitle>{tCommon("pageTitles.webhooks")}</CardTitle>
             <HelpPopover helpKey="projectWebhooks" />
           </SectionHeader>
           <CardDescription>

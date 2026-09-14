@@ -19,7 +19,7 @@ export async function generateMetadata({
   const title = preview("signInTitle");
   const description = preview("signInDescription");
   return {
-    title: t("common.pageTitles.signIn"),
+    title: t("common.actions.signIn"),
     description,
     openGraph: {
       title,

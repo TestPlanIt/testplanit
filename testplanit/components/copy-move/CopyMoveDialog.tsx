@@ -672,7 +672,7 @@ export function CopyMoveDialog({
                         htmlFor="op-copy"
                         className="font-medium cursor-pointer"
                       >
-                        {t("operationCopy")}
+                        {tCommon("actions.copy")}
                       </Label>
                       <p className="text-xs text-muted-foreground">
                         {t("operationCopyDesc")}

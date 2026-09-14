@@ -62,6 +62,7 @@ export function PasteCsvDialog({
 }: PasteCsvDialogProps) {
   const tCommon = useTranslations("common");
   const t = useTranslations("parameters");
+  const tActions = useTranslations("common.actions");
   const queryClient = useQueryClient();
   const [csvText, setCsvText] = useState("");
   const [mode, setMode] = useState<"replace" | "append">("replace");
@@ -252,7 +253,7 @@ export function PasteCsvDialog({
             }
             data-testid="paste-csv-submit"
           >
-            {t("importCommit")}
+            {tActions("junit.import.import")}
           </Button>
         </DialogFooter>
       </DialogContent>

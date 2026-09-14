@@ -312,9 +312,7 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
                   {role.isDefault ? (
                     <WarningAlert data-testid="role-default-locked-warning">
                       <TriangleAlert className="h-4 w-4" />
-                      <AlertTitle>
-                        {t("admin.roles.defaultLockedTitle")}
-                      </AlertTitle>
+                      <AlertTitle>{t("common.fields.defaultRole")}</AlertTitle>
                       <AlertDescription>
                         {t("admin.roles.defaultLockedDescription")}
                       </AlertDescription>

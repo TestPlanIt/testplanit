@@ -314,7 +314,8 @@ export function LinkedRequirementsPanel({
             data-testid="case-linked-requirements-add"
             onClick={() => setIsAddOpen(true)}
           >
-            <Plus className="w-4 h-4" /> {t("addLink")}
+            <Plus className="w-4 h-4" />{" "}
+            {tGlobal("common.upload.attachments.link.addButton")}
           </Button>
         )}
       </CardHeader>
@@ -542,6 +543,7 @@ function AddLinkedRequirementDialog({
   isMutating,
 }: AddLinkedRequirementDialogProps) {
   const t = useTranslations("requirements.linkedRequirements");
+  const tUpload = useTranslations("common.upload");
   const [selectedRequirement, setSelectedRequirement] = useState<Issue | null>(
     null
   );
@@ -618,7 +620,7 @@ function AddLinkedRequirementDialog({
             disabled={!selectedRequirement || isMutating}
             data-testid="case-linked-requirements-submit"
           >
-            {t("addLink")}
+            {tUpload("attachments.link.addButton")}
           </Button>
         </DialogFooter>
       </DialogContent>

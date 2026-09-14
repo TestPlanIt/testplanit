@@ -60,6 +60,7 @@ export function SharedDatasetVersionPicker({
   mode = "editor",
 }: SharedDatasetVersionPickerProps) {
   const t = useTranslations("projects.settings.datasets.versionPicker");
+  const tCommon = useTranslations("common");
 
   const { data: versions, isLoading } = useClientQueries(
     schema
@@ -115,9 +116,9 @@ export function SharedDatasetVersionPicker({
         data-testid="shared-dataset-version-picker"
         data-mode={mode}
         className="w-[260px]"
-        aria-label={t("label")}
+        aria-label={tCommon("fields.version")}
       >
-        <SelectValue placeholder={t("label")}>
+        <SelectValue placeholder={tCommon("fields.version")}>
           {renderTriggerLabel()}
         </SelectValue>
       </SelectTrigger>

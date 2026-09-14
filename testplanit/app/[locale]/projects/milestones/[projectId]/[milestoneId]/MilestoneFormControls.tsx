@@ -191,7 +191,7 @@ export default function MilestoneFormControls({
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 hover:underline"
-                  title={t("sync.openInJira")}
+                  title={tCommon("ui.issues.openInJira")}
                 >
                   {t("sync.managedByJira")}
                   <ExternalLink className="h-3.5 w-3.5" />

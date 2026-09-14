@@ -79,7 +79,6 @@ export function ImportMilestonesDialog({
 }: ImportMilestonesDialogProps) {
   const t = useTranslations("milestones.import");
   const tCommon = useTranslations("common");
-  const tIssues = useTranslations("issues");
 
   // Turn a failed response into something a user can act on. A JSON `error`
   // from our own route is always the best message; without one we're looking
@@ -328,7 +327,7 @@ export function ImportMilestonesDialog({
             data-testid="import-milestones-kind-all"
             onClick={() => handleKindFilterChange(null)}
           >
-            {tIssues("filterAll")}
+            {tCommon("filters.all")}
           </Badge>
           <Badge
             variant={kindFilter === "RELEASE" ? "default" : "outline"}
@@ -356,7 +355,7 @@ export function ImportMilestonesDialog({
               data-testid="import-milestones-project-all"
               onClick={() => setProjectFilter(null)}
             >
-              {tIssues("filterAll")}
+              {tCommon("filters.all")}
             </Badge>
             {sourceProjectOptions.map((sp) => (
               <Badge
@@ -400,7 +399,7 @@ export function ImportMilestonesDialog({
               onCheckedChange={toggleSelectAll}
             />
             <Label htmlFor="milestone-import-select-all">
-              {t("selectAll")}
+              {tCommon("aria.selectAll")}
             </Label>
           </div>
         </div>

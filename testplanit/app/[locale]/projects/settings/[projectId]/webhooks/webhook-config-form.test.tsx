@@ -697,7 +697,9 @@ describe("WebhookConfigForm (multi-adapter)", () => {
     mockSetWebhookActive.mockResolvedValue({ success: true });
     render(<WebhookConfigForm projectId={42} />);
     const card = screen.getByTestId("webhook-inbound-card-jira");
-    const toggle = within(card).getByLabelText("isActive") as HTMLInputElement;
+    const toggle = within(card).getByLabelText(
+      "fields.enabled"
+    ) as HTMLInputElement;
     // Currently checked (jiraConfig.isActive=true) — uncheck it
     fireEvent.click(toggle);
     await waitFor(() => {
@@ -813,7 +815,7 @@ describe("WebhookConfigForm (multi-adapter)", () => {
     const card = screen.getByTestId("webhook-inbound-card-jira");
     const group = within(card).getByTestId("webhook-delivery-activity-jira");
     // Three "Never" rows (one per null timestamp)
-    const neverMatches = group.textContent?.match(/activityNever/g) ?? [];
+    const neverMatches = group.textContent?.match(/never/g) ?? [];
     expect(neverMatches.length).toBe(3);
   });
 

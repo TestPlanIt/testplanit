@@ -1934,7 +1934,7 @@ const TreeView: React.FC<{
             }}
           >
             <CopyPlus className="h-4 w-4" />
-            {t("repository.dragDrop.copy")}
+            {t("common.actions.copy")}
           </Button>
           <p className="text-xs text-muted-foreground pt-1 border-t">
             {t(

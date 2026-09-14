@@ -450,7 +450,7 @@ export function AddWorkflows({
                           />
                         </FormControl>
                         <FormLabel className="flex items-center">
-                          {t("editWorkflow.requiresReviewLabel")}
+                          {tCommon("aria.requiresReview")}
                           <HelpPopover helpKey="workflow.requiresReview" />
                         </FormLabel>
                         <FormMessage />

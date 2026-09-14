@@ -37,6 +37,7 @@ export function JunitIterationPropertyForm({
   initialNames,
 }: JunitIterationPropertyFormProps) {
   const t = useTranslations("projects.settings.junitIterationProperties");
+  const tCommon = useTranslations("common");
   const [names, setNames] = useState<string[]>([...initialNames]);
   const [input, setInput] = useState("");
   const [saving, setSaving] = useState(false);
@@ -142,7 +143,7 @@ export function JunitIterationPropertyForm({
             data-testid="junit-iteration-property-add"
           >
             <Plus className="h-4 w-4" />
-            {t("addButton")}
+            {tCommon("add")}
           </Button>
         </div>
 
@@ -216,7 +217,7 @@ export function JunitIterationPropertyForm({
           onClick={handleSave}
           disabled={!isDirty || saving}
           data-testid="junit-iteration-property-save"
-          aria-label={t("saveButton")}
+          aria-label={tCommon("actions.save")}
           className="group gap-0 transition-all duration-200 hover:gap-2"
         >
           {saving ? (
@@ -225,7 +226,7 @@ export function JunitIterationPropertyForm({
             <Save className="h-4 w-4" />
           )}
           <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-            {t("saveButton")}
+            {tCommon("actions.save")}
           </span>
         </Button>
       </div>

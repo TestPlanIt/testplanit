@@ -71,6 +71,7 @@ export function DateRangePicker({
   const locale = useLocale();
   const t = useTranslations("common.actions");
   const tReports = useTranslations("reports.ui");
+  const tCommon = useTranslations("common");
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [selectedPreset, setSelectedPreset] = useState<string>("custom");
 
@@ -96,14 +97,14 @@ export function DateRangePicker({
           }),
         },
         last7Days: {
-          label: tReports("dateRange.last7Days"),
+          label: tCommon("operators.last7"),
           getValue: () => ({
             from: subDays(today, 6),
             to: today,
           }),
         },
         last30Days: {
-          label: tReports("dateRange.last30Days"),
+          label: tCommon("operators.last30"),
           getValue: () => ({
             from: subDays(today, 29),
             to: today,
@@ -195,7 +196,7 @@ export function DateRangePicker({
       label: tReports("dateRange.categories.year"),
       ranges: {
         thisYear: {
-          label: tReports("dateRange.thisYear"),
+          label: tCommon("operators.thisYear"),
           getValue: () => ({
             from: startOfYear(today),
             to: endOfYear(today),

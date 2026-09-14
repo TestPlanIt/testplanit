@@ -315,10 +315,10 @@ export function RepositoryWebhookCard({
               <Switch
                 checked={hook.isActive}
                 onCheckedChange={(next: boolean) => void toggleActive(next)}
-                aria-label={t("isActive")}
+                aria-label={tCommon("fields.enabled")}
               />
               <span className="text-sm text-muted-foreground">
-                {t("isActive")}
+                {tCommon("fields.enabled")}
               </span>
             </div>
             <Badge
@@ -502,7 +502,7 @@ export function RepositoryWebhookCard({
                 data-testid="webhook-reveal-done-button"
               >
                 <Check className="h-4 w-4" />
-                <span>{t("revealDone")}</span>
+                <span>{tCommon("actions.done")}</span>
               </Button>
             )}
           </div>

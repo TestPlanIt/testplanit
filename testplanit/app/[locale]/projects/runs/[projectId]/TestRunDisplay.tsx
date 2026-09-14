@@ -814,7 +814,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
               className="shrink-0 hidden @lg:inline-flex text-xs font-normal text-muted-foreground"
               data-testid="milestone-group-count-unscheduled"
             >
-              {t("milestoneGroup.runCount", {
+              {tCommon("configurationGroup.candidateInGroupRun", {
                 count: groupedTestRunData.unscheduled.length,
               })}
             </Badge>
@@ -893,7 +893,9 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
             className="shrink-0 hidden @lg:inline-flex text-xs font-normal text-muted-foreground"
             data-testid={`milestone-group-count-${milestone.id}`}
           >
-            {t("milestoneGroup.runCount", { count: subtreeItemCount })}
+            {tCommon("configurationGroup.candidateInGroupRun", {
+              count: subtreeItemCount,
+            })}
           </Badge>
         </div>
 

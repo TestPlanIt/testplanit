@@ -1255,7 +1255,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       },
       {
         id: "attachments",
-        name: t("repository.views.byAttachments"),
+        name: t("common.fields.attachments"),
         icon: Paperclip,
       },
       // Review axis only where the review workflow runs — see filterRegistry.

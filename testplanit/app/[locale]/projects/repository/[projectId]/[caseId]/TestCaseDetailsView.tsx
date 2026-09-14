@@ -2493,7 +2493,7 @@ export function TestCaseDetailsView({
                               data-testid="quickscript-case-button"
                             >
                               <ScrollText className="me-2 h-4 w-4" />
-                              <span>{t("repository.cases.quickScript")}</span>
+                              <span>{t("common.pageTitles.quickscript")}</span>
                             </DropdownMenuItem>
                           )}
                           <RunAutomatedCaseButton
@@ -2597,7 +2597,7 @@ export function TestCaseDetailsView({
                         >
                           <ScrollText className="h-4 w-4 shrink-0" />
                           <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                            {t("repository.cases.quickScript")}
+                            {t("common.pageTitles.quickscript")}
                           </span>
                         </Button>
                       )}

@@ -513,7 +513,7 @@ function TagDetail() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">
-                      {t("tags.detail.filters.allCases")}
+                      {t("common.filters.all")}
                     </SelectItem>
                     <SelectItem value="manual">
                       {t("common.fields.manual")}

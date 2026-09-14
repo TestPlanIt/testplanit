@@ -72,7 +72,7 @@ test.describe("Project Settings Pages", () => {
     });
 
     await test.step("Verify main content and the Project Default models card render", async () => {
-      // Page renders with t("admin.menu.llm") title
+      // Page renders with t("common.pageTitles.aiModels") title
       // The page has "Available Models" and "Prompt Configuration" cards
       const mainContent = page.locator("main");
       await expect(mainContent).toBeVisible({ timeout: 15000 });

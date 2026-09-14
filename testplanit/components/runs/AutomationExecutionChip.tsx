@@ -149,7 +149,7 @@ export function AutomationExecutionChip({
       )}
       {latest.error && (
         <div className="text-destructive">
-          {t("error")}: {latest.error}
+          {tCommon("errors.error")}: {latest.error}
         </div>
       )}
     </div>
@@ -186,14 +186,18 @@ export function AutomationExecutionChip({
               target="_blank"
               rel="noreferrer noopener"
               className="inline-flex h-7 w-7 items-center justify-center rounded-md hover:bg-muted"
-              aria-label={t("openInProvider", { provider: providerLabel })}
+              aria-label={tCommon("ui.issues.openInExternalSystem", {
+                provider: providerLabel,
+              })}
               data-testid="automation-execution-external-link"
             >
               <ExternalLink className="h-4 w-4" />
             </a>
           </TooltipTrigger>
           <TooltipContent>
-            {t("openInProvider", { provider: providerLabel })}
+            {tCommon("ui.issues.openInExternalSystem", {
+              provider: providerLabel,
+            })}
           </TooltipContent>
         </Tooltip>
       )}

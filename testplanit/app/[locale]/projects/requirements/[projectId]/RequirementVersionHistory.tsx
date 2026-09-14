@@ -102,7 +102,6 @@ export function RequirementVersionHistory({
 }) {
   const t = useTranslations("requirements.history");
   const tCommon = useTranslations("common");
-  const tDetail = useTranslations("requirements.detail");
   const { data: session } = useSession();
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
 
@@ -218,7 +217,7 @@ export function RequirementVersionHistory({
                             after={row.title}
                           />
                           <FieldDiff
-                            label={tDetail("documentation")}
+                            label={tCommon("fields.documentation")}
                             before={previous.description ?? ""}
                             after={row.description ?? ""}
                           />
@@ -243,7 +242,7 @@ export function RequirementVersionHistory({
                           {row.description ? (
                             <div className="space-y-1">
                               <div className="text-xs font-medium text-muted-foreground">
-                                {tDetail("documentation")}
+                                {tCommon("fields.documentation")}
                               </div>
                               <div className="whitespace-pre-wrap break-words rounded-md bg-muted/30 p-2 text-sm">
                                 {row.description}

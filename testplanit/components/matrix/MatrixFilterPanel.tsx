@@ -57,6 +57,7 @@ interface DatasetOptionRow {
  */
 export function MatrixFilterPanel({ projectId }: { projectId: number }) {
   const t = useTranslations("projects.matrix");
+  const tCommon = useTranslations("common");
 
   // MultiAsyncCombobox refetches whenever `fetchOptions` changes identity, so an
   // inline arrow would refetch on every render of this component.
@@ -208,7 +209,9 @@ export function MatrixFilterPanel({ projectId }: { projectId: number }) {
   return (
     <div className="grid gap-4" data-testid="matrix-filter-panel">
       <div className="grid gap-1.5">
-        <label className="text-sm font-medium">{t("filterStatusLabel")}</label>
+        <label className="text-sm font-medium">
+          {tCommon("actions.status")}
+        </label>
         <MultiAsyncCombobox<StatusOptionRow>
           value={selectedStatuses}
           onValueChange={(opts) =>
@@ -229,7 +232,9 @@ export function MatrixFilterPanel({ projectId }: { projectId: number }) {
       </div>
 
       <div className="grid gap-1.5">
-        <label className="text-sm font-medium">{t("filterConfigLabel")}</label>
+        <label className="text-sm font-medium">
+          {tCommon("fields.configuration")}
+        </label>
         <MultiAsyncCombobox<OptionRow>
           value={selectedConfigs}
           onValueChange={(opts) =>

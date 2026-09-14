@@ -363,7 +363,7 @@ describe("ImportIssuesDialog (#501/28-20 merged dialog)", () => {
       ).toBe(true)
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "importStart" }));
+    fireEvent.click(screen.getByRole("button", { name: "import" }));
 
     await waitFor(() => {
       const triggerCall = (global.fetch as any).mock.calls.find(

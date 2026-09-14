@@ -59,6 +59,7 @@ export function SharedDatasetMappingFields({
   onValidityChange,
 }: SharedDatasetMappingFieldsProps) {
   const t = useTranslations("parameters");
+  const tCommon = useTranslations("common");
   const autoMappedRef = useRef(false);
   const [showAll, setShowAll] = useState(false);
   // Per-row "expanded" override — once a user clicks "Change" on an
@@ -170,7 +171,7 @@ export function SharedDatasetMappingFields({
                     }
                     data-testid={`shared-mapping-change-${column}`}
                   >
-                    {t("mappingChange")}
+                    {tCommon("actions.change")}
                   </Button>
                 </div>
               ) : (

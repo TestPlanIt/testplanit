@@ -673,7 +673,7 @@ describe("WebhookOutboundForm", () => {
       `webhook-delivery-activity-${baseHmacConfig.id}`
     );
     // Three "Never" rows (one per null timestamp)
-    const neverMatches = group.textContent?.match(/activityNever/g) ?? [];
+    const neverMatches = group.textContent?.match(/never/g) ?? [];
     expect(neverMatches.length).toBe(3);
   });
 

@@ -678,7 +678,7 @@ export function RequirementReferenceSearchDialog({
                     className="cursor-pointer"
                     onClick={() => setSelectedProjectFilter(null)}
                   >
-                    {t("issues.filterAll")}
+                    {t("common.filters.all")}
                   </Badge>
                   {activeIntegrationProjects.map((ip) => (
                     <Badge

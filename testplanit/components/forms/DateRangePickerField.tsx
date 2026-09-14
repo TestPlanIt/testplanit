@@ -89,6 +89,7 @@ export function DateRangePickerField<T extends FieldValues = FieldValues>({
   const locale = useLocale();
   const t = useTranslations("common.actions");
   const tReports = useTranslations("reports.ui");
+  const tCommon = useTranslations("common");
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [selectedPreset, setSelectedPreset] = useState<string>(defaultPreset);
 
@@ -114,14 +115,14 @@ export function DateRangePickerField<T extends FieldValues = FieldValues>({
           }),
         },
         last7Days: {
-          label: tReports("dateRange.last7Days"),
+          label: tCommon("operators.last7"),
           getValue: () => ({
             from: subDays(today, 6),
             to: today,
           }),
         },
         last30Days: {
-          label: tReports("dateRange.last30Days"),
+          label: tCommon("operators.last30"),
           getValue: () => ({
             from: subDays(today, 29),
             to: today,
@@ -213,7 +214,7 @@ export function DateRangePickerField<T extends FieldValues = FieldValues>({
       label: tReports("dateRange.categories.year"),
       ranges: {
         thisYear: {
-          label: tReports("dateRange.thisYear"),
+          label: tCommon("operators.thisYear"),
           getValue: () => ({
             from: startOfYear(today),
             to: endOfYear(today),

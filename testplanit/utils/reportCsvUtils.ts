@@ -90,7 +90,7 @@ const HEALTH_STATUS_KEY: Record<string, string> = {
 
 function buildFlakyTests(p: BuildReportCsvParams): CsvRow[] {
   const { rows, t, isCrossProject, consecutiveRuns = 5 } = p;
-  const hProject = t("reports.dimensions.project");
+  const hProject = t("common.fields.project");
   const hCase = t("reports.dimensions.testCase");
   const hFlips = t("reports.ui.flakyTests.flips");
   const hResults = t("reports.ui.flakyTests.lastNResults", {
@@ -113,16 +113,16 @@ function buildFlakyTests(p: BuildReportCsvParams): CsvRow[] {
 function buildTestCaseHealth(p: BuildReportCsvParams): CsvRow[] {
   const { rows, t, isCrossProject } = p;
   const h = {
-    project: t("reports.dimensions.project"),
+    project: t("common.fields.project"),
     testCase: t("reports.dimensions.testCase"),
     status: t("reports.ui.testCaseHealth.status"),
     stale: t("reports.ui.testCaseHealth.healthStatus.stale"),
     score: t("reports.ui.testCaseHealth.healthScore"),
     lastExecuted: t("reports.ui.testCaseHealth.lastExecuted"),
     executions: t("reports.ui.testCaseHealth.executions"),
-    passRate: t("reports.ui.testCaseHealth.passRate"),
+    passRate: t("common.fields.passRate"),
   };
-  const never = t("reports.ui.testCaseHealth.never");
+  const never = t("common.never");
   return rows.map((r: any) => {
     const row: CsvRow = {};
     if (isCrossProject) row[h.project] = r.project?.name ?? "";
@@ -144,11 +144,11 @@ function buildTestCaseHealth(p: BuildReportCsvParams): CsvRow[] {
 function buildIssueTestCoverage(p: BuildReportCsvParams): CsvRow[] {
   const { rows, t, isCrossProject } = p;
   const h = {
-    project: t("reports.dimensions.project"),
+    project: t("common.fields.project"),
     issue: t("reports.ui.issueTestCoverage.issue"),
     testCase: t("reports.ui.issueTestCoverage.testCase"),
-    status: t("reports.ui.issueTestCoverage.issueStatus"),
-    priority: t("reports.ui.issueTestCoverage.priority"),
+    status: t("common.actions.status"),
+    priority: t("common.fields.priority"),
     lastStatus: t("reports.ui.issueTestCoverage.lastStatus"),
     lastExecuted: t("reports.ui.issueTestCoverage.lastExecuted"),
   };
@@ -213,9 +213,9 @@ function buildRequirementTraceability(p: BuildReportCsvParams): CsvRow[] {
     status: t("common.actions.status"),
     coverage: t("requirements.coverage.title"),
     testCase: t("reports.ui.requirementCoverage.testCase"),
-    result: t("reports.ui.requirementCoverage.result"),
-    executedAt: t("reports.ui.requirementCoverage.executedAt"),
-    project: t("reports.ui.requirementCoverage.project"),
+    result: t("common.fields.resultStatus"),
+    executedAt: t("common.fields.executedAt"),
+    project: t("common.fields.project"),
   };
   const uncovered = t("reports.ui.requirementCoverage.uncovered");
   const notRun = t("reports.ui.requirementCoverage.notRun");
@@ -260,7 +260,7 @@ function buildRequirementCoverageChanges(p: BuildReportCsvParams): CsvRow[] {
   const h = {
     requirement: t("reports.ui.requirementCoverage.requirement"),
     path: t("reports.ui.requirementCoverage.path"),
-    change: t("reports.ui.requirementCoverage.change"),
+    change: t("common.actions.change"),
     before: t("reports.ui.requirementCoverage.coverageBefore"),
     after: t("reports.ui.requirementCoverage.coverageAfter"),
     linkedBefore: t("reports.ui.requirementCoverage.linkedCasesBefore"),
@@ -304,9 +304,9 @@ function buildRequirementCoverageChanges(p: BuildReportCsvParams): CsvRow[] {
 function buildExecutionLog(p: BuildReportCsvParams): CsvRow[] {
   const { rows, t, isCrossProject, locale } = p;
   const h = {
-    project: t("reports.dimensions.project"),
+    project: t("common.fields.project"),
     testCase: t("reports.dimensions.testCase"),
-    testRun: t("reports.dimensions.testRun"),
+    testRun: t("common.actions.junit.import.testRun.label"),
     status: t("common.actions.status"),
     executedBy: t("common.fields.executedBy"),
     executedAt: t("common.fields.executedAt"),

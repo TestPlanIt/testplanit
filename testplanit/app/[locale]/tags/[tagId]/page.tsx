@@ -496,7 +496,7 @@ function TagDetail() {
           <CardTitle>
             <SectionHeader className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span>{t("tags.detail.title")}</span>
+                <span>{t("common.pageTitles.tagDetails")}</span>
                 <TagsDisplay id={Number(tagId)} name={tagName} size="large" />
               </div>
             </SectionHeader>
@@ -564,7 +564,7 @@ function TagDetail() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">
-                      {t("tags.detail.filters.allCases")}
+                      {t("common.filters.all")}
                     </SelectItem>
                     <SelectItem value="manual">
                       {t("common.fields.manual")}

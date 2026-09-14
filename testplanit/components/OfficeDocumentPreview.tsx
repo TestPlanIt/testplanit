@@ -50,6 +50,7 @@ export const OfficeDocumentPreview: React.FC<OfficeDocumentPreviewProps> = ({
   sizeBytes,
 }) => {
   const t = useTranslations("attachments.preview");
+  const tCommon = useTranslations("common");
   const [status, setStatus] = useState<PreviewStatus>("loading");
   const [slideCount, setSlideCount] = useState(0);
   const [slideIndex, setSlideIndex] = useState(0);
@@ -245,7 +246,7 @@ export const OfficeDocumentPreview: React.FC<OfficeDocumentPreviewProps> = ({
                 type="button"
                 onClick={() => goToSlide(slideIndex - 1)}
                 disabled={slideIndex <= 0}
-                aria-label={t("previousSlide")}
+                aria-label={tCommon("ui.carousel.previousSlide")}
                 className="rounded-md p-1 hover:bg-background disabled:opacity-40 disabled:pointer-events-none"
               >
                 <ChevronLeft className="w-5 h-5" />
@@ -260,7 +261,7 @@ export const OfficeDocumentPreview: React.FC<OfficeDocumentPreviewProps> = ({
                 type="button"
                 onClick={() => goToSlide(slideIndex + 1)}
                 disabled={slideIndex >= slideCount - 1}
-                aria-label={t("nextSlide")}
+                aria-label={tCommon("ui.carousel.nextSlide")}
                 className="rounded-md p-1 hover:bg-background disabled:opacity-40 disabled:pointer-events-none"
               >
                 <ChevronRight className="w-5 h-5" />

@@ -9,7 +9,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale });
-  return { title: t("common.pageTitles.users") };
+  return { title: t("common.fields.users") };
 }
 
 export default function Layout({ children }: { children: React.ReactNode }) {

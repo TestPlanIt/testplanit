@@ -111,7 +111,7 @@ export default function LinkSSOPage() {
     <div className="container max-w-2xl mx-auto py-8">
       <Card>
         <CardHeader>
-          <CardTitle>{t("account.linkSso.title")}</CardTitle>
+          <CardTitle>{t("common.pageTitles.linkSsoAccount")}</CardTitle>
           <CardDescription>{t("account.linkSso.description")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

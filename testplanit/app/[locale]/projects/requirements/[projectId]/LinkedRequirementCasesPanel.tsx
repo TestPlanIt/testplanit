@@ -318,7 +318,8 @@ export function LinkedRequirementCasesPanel({
           data-testid="requirement-linked-cases-add"
           onClick={() => setIsAddOpen(true)}
         >
-          <Plus className="w-4 h-4" /> {t("addLink")}
+          <Plus className="w-4 h-4" />{" "}
+          {tGlobal("common.upload.attachments.link.addButton")}
         </Button>
       </CardHeader>
       <CardContent className="p-0">
@@ -333,7 +334,7 @@ export function LinkedRequirementCasesPanel({
                 <TableRow>
                   <TableHead className="truncate">{t("columnCase")}</TableHead>
                   <TableHead className="w-[150px] truncate">
-                    {t("columnProject")}
+                    {tGlobal("common.fields.project")}
                   </TableHead>
                   <TableHead className="w-[90px] truncate text-end">
                     {tGlobal("common.actions.remove")}
@@ -543,6 +544,7 @@ function AddLinkedCaseDialog({
   isMutating,
 }: AddLinkedCaseDialogProps) {
   const t = useTranslations("requirements.linkedCases");
+  const tUpload = useTranslations("common.upload");
   const [selectedCase, setSelectedCase] = useState<LinkedCaseRow | null>(null);
 
   const handleSubmit = async () => {
@@ -615,7 +617,7 @@ function AddLinkedCaseDialog({
             disabled={!selectedCase || isMutating}
             data-testid="requirement-linked-cases-submit"
           >
-            {t("addLink")}
+            {tUpload("attachments.link.addButton")}
           </Button>
         </DialogFooter>
       </DialogContent>

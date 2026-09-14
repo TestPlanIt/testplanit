@@ -42,6 +42,7 @@ export function MatrixCellPopover({
   caseId: number;
 }) {
   const t = useTranslations("projects.matrix");
+  const tCommon = useTranslations("common");
 
   return (
     <div className="p-3" data-testid="matrix-cell-popover">
@@ -66,7 +67,7 @@ export function MatrixCellPopover({
           // the dataset row label would just repeat across every row.
           // Show the iteration's status name instead — that's the actual
           // differentiator across runs (e.g. Passed / Failed / Not run).
-          const displayLabel = status?.name ?? t("cellNotRun");
+          const displayLabel = status?.name ?? tCommon("labels.untested");
           return (
             <li
               key={iter.id}

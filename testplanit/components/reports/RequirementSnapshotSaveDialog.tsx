@@ -127,9 +127,7 @@ export function RequirementSnapshotSaveDialog({
         </DialogHeader>
         <div className="grid gap-4">
           <div className="grid gap-2">
-            <Label htmlFor="requirement-snapshot-name">
-              {t("snapshotName")}
-            </Label>
+            <Label htmlFor="requirement-snapshot-name">{tCommon("name")}</Label>
             <Input
               id="requirement-snapshot-name"
               value={name}
@@ -148,7 +146,7 @@ export function RequirementSnapshotSaveDialog({
           </div>
           <div className="grid gap-2">
             <Label htmlFor="requirement-snapshot-note">
-              {t("snapshotNote")}
+              {tCommon("fields.note")}
             </Label>
             <Textarea
               id="requirement-snapshot-note"

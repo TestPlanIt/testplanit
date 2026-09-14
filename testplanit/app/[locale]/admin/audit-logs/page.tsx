@@ -628,9 +628,7 @@ function AuditLogsContent({ session }: { session: Session }) {
             >
               <Download className="h-4 w-4" />
               <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                {isExporting
-                  ? tGlobal("repository.exportModal.exporting")
-                  : t("exportCsv")}
+                {isExporting ? tCommon("actions.exportingPdf") : t("exportCsv")}
               </span>
             </Button>
           </div>

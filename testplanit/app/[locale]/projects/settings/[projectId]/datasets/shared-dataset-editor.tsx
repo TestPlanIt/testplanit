@@ -81,6 +81,7 @@ export function SharedDatasetEditor({
 }: SharedDatasetEditorProps) {
   const t = useTranslations("projects.settings.datasets");
   const tEditor = useTranslations("projects.settings.datasets.editor");
+  const tCommon = useTranslations("common");
   const queryClient = useQueryClient();
 
   const [selectedVersion, setSelectedVersion] =
@@ -424,7 +425,7 @@ export function SharedDatasetEditor({
                 ) : (
                   <SaveIcon className="h-4 w-4" />
                 )}
-                {tEditor("saveAction")}
+                {tCommon("actions.save")}
               </Button>
             </div>
           </div>

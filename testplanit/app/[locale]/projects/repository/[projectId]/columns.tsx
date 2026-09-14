@@ -1120,7 +1120,7 @@ const ActionsCell = React.memo(function ActionsCell({
                 data-testid={`quickscript-case-${row.original.id}`}
               >
                 <ScrollText className="me-2 h-4 w-4" />
-                <span>{t("repository.cases.quickScript")}</span>
+                <span>{t("common.pageTitles.quickscript")}</span>
               </DropdownMenuItem>
             )}
           {!isRunMode &&

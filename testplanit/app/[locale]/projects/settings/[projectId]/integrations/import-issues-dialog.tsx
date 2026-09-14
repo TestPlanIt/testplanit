@@ -93,6 +93,7 @@ export function ImportIssuesDialog({
 }: ImportIssuesDialogProps) {
   const t = useTranslations("projects.settings.integrations.integration");
   const tCommon = useTranslations("common");
+  const tActions = useTranslations("common.actions");
   const [days, setDays] = useState<number | null>(DEFAULT_DAYS);
   const [cap, setCap] = useState<number | null>(DEFAULT_CAP);
   const [selectedTypes, setSelectedTypes] = useState<IssueType[]>([]);
@@ -464,7 +465,7 @@ export function ImportIssuesDialog({
                 disabled={isImporting || isPreviewing}
               >
                 {isImporting && <Loader2 className="h-4 w-4 animate-spin" />}
-                {t("importStart")}
+                {tActions("junit.import.import")}
               </Button>
             </>
           )}

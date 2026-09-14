@@ -60,7 +60,7 @@ export default function ForceChangePasswordPage() {
     }
 
     if (!newPassword) {
-      setErrors([t("auth.forceChangePassword.passwordRequired")]);
+      setErrors([t("common.errors.passwordRequired")]);
       return;
     }
 
@@ -186,7 +186,7 @@ export default function ForceChangePasswordPage() {
               disabled={isLoading || !newPassword || !confirmPassword}
             >
               {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-              {t("auth.forceChangePassword.submitButton")}
+              {t("common.pageTitles.changePassword")}
             </Button>
 
             <div className="text-center">

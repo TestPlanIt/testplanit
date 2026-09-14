@@ -229,7 +229,7 @@ export function AutomationTargetsList({ projectId }: Props) {
                 data-testid="automation-target-secret-copy"
               >
                 <Copy className="h-4 w-4" />
-                <span>{t("copySecret")}</span>
+                <span>{tCommon("actions.copy")}</span>
               </Button>
             </div>
           </div>
@@ -241,7 +241,7 @@ export function AutomationTargetsList({ projectId }: Props) {
               data-testid="automation-target-secret-done"
             >
               <Check className="h-4 w-4" />
-              <span>{t("done")}</span>
+              <span>{tCommon("actions.done")}</span>
             </Button>
           </div>
         </div>
@@ -313,11 +313,11 @@ export function AutomationTargetsList({ projectId }: Props) {
                     onCheckedChange={(next: boolean) =>
                       void handleToggle(target, next)
                     }
-                    aria-label={t("enabled")}
+                    aria-label={tCommon("fields.enabled")}
                     data-testid={`automation-target-enabled-toggle-${target.id}`}
                   />
                   <span className="text-sm text-muted-foreground">
-                    {t("enabled")}
+                    {tCommon("fields.enabled")}
                   </span>
                 </div>
               </div>
@@ -372,7 +372,9 @@ export function AutomationTargetsList({ projectId }: Props) {
                       <ShieldCheck className="h-4 w-4" />
                     )}
                     <span>
-                      {verifying === target.id ? t("verifying") : t("verify")}
+                      {verifying === target.id
+                        ? t("verifying")
+                        : tCommon("actions.verify")}
                     </span>
                   </Button>
                   <Button

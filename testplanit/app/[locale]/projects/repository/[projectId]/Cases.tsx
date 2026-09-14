@@ -3213,7 +3213,7 @@ export default function Cases({
                   {
                     key: "quickScript",
                     icon: ScrollText,
-                    label: t("repository.cases.quickScript"),
+                    label: t("common.pageTitles.quickscript"),
                     onClick: () => {
                       setQuickScriptCaseIds(null);
                       setIsQuickScriptModalOpen(true);

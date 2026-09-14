@@ -27,6 +27,7 @@ const RepositoryCasesSection: React.FC<RepositoryCasesSectionProps> = ({
 }) => {
   const t = useTranslations("projects.overview");
   const tCommon = useTranslations("common.actions");
+  const tCommonShared = useTranslations("common");
   const [isChartZoomed, setIsChartZoomed] = React.useState(false);
 
   const { data: repositoryCasesBreakdown } = useClientQueries(
@@ -247,7 +248,7 @@ const RepositoryCasesSection: React.FC<RepositoryCasesSectionProps> = ({
             href={`/projects/repository/${projectId}`}
             className="text-primary hover:underline"
           >
-            {t("noTestCasesLink")}
+            {tCommonShared("pageTitles.repository")}
           </Link>
           .
         </div>

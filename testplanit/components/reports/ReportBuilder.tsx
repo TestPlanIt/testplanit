@@ -305,11 +305,9 @@ function ReportBuilderContent({
   const tReports = useTranslations("reports.ui");
   const tCommon = useTranslations("common");
   const tCoverage = useTranslations("requirements.coverage");
-  const tAdminMenu = useTranslations("admin.menu");
   const tDimensions = useTranslations("reports.dimensions");
   const tMetrics = useTranslations("reports.metrics");
   const tRuns = useTranslations("runs");
-  const tIssues = useTranslations("issues");
   const customStyles = getCustomStyles({ theme });
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -2792,7 +2790,7 @@ function ReportBuilderContent({
                     data-testid="reports-tab"
                     className="min-w-0 truncate"
                   >
-                    {tAdminMenu("reports")}
+                    {tCommon("pageTitles.reports")}
                   </TabsTrigger>
                   <TabsTrigger
                     value="builder"
@@ -2809,7 +2807,7 @@ function ReportBuilderContent({
                 >
                   <div className="mb-4">
                     <h2 className="text-lg font-semibold">
-                      {tAdminMenu("reports")}
+                      {tCommon("pageTitles.reports")}
                     </h2>
                     <p className="text-sm text-muted-foreground">
                       {tReports("reportsTabDescription")}
@@ -3308,7 +3306,7 @@ function ReportBuilderContent({
                                   {lookbackDays === 0
                                     ? tReports("dateRange.allTime")
                                     : lookbackDays === 30
-                                      ? tReports("dateRange.last30Days")
+                                      ? tCommon("operators.last30")
                                       : lookbackDays === 90
                                         ? tReports("dateRange.last3Months")
                                         : tReports("dateRange.last12Months")}
@@ -3319,7 +3317,7 @@ function ReportBuilderContent({
                                 <DropdownMenuItem
                                   onClick={() => setLookbackDays(30)}
                                 >
-                                  {tReports("dateRange.last30Days")}
+                                  {tCommon("operators.last30")}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                   onClick={() => setLookbackDays(90)}
@@ -3406,7 +3404,7 @@ function ReportBuilderContent({
                                   className="w-full justify-between"
                                 >
                                   {healthStatusFilter === "all"
-                                    ? tIssues("filterAll")
+                                    ? tCommon("filters.all")
                                     : healthStatusFilter === "healthy"
                                       ? tReports(
                                           "testCaseHealth.healthStatus.healthy"
@@ -3434,7 +3432,7 @@ function ReportBuilderContent({
                                   <DropdownMenuItem
                                     onClick={() => setHealthStatusFilter("all")}
                                   >
-                                    {tIssues("filterAll")}
+                                    {tCommon("filters.all")}
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
                                     onClick={() =>
@@ -3491,7 +3489,7 @@ function ReportBuilderContent({
                                   className="w-full justify-between"
                                 >
                                   {healthStaleFilter === "all"
-                                    ? tIssues("filterAll")
+                                    ? tCommon("filters.all")
                                     : healthStaleFilter === "stale"
                                       ? tReports("testCaseHealth.stale")
                                       : tReports("testCaseHealth.notStale")}
@@ -3506,7 +3504,7 @@ function ReportBuilderContent({
                                   <DropdownMenuItem
                                     onClick={() => setHealthStaleFilter("all")}
                                   >
-                                    {tIssues("filterAll")}
+                                    {tCommon("filters.all")}
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
                                     onClick={() =>
