@@ -34,6 +34,7 @@ export interface RawExecutionResult {
   test_case_source: string;
   test_case_has_parameters: boolean;
   result_id: number;
+  execution_source: "manual" | "automated";
   test_run_id: number | null;
   status_name: string;
   status_color: string;
@@ -137,7 +138,8 @@ export async function queryLatestTestResults({
           s."isSuccess" as is_success,
           s."isFailure" as is_failure,
           s."order" as status_order,
-          trr."executedAt" as executed_at
+          trr."executedAt" as executed_at,
+          'manual' as execution_source
           ${projectSelectFields}
         FROM "RepositoryCases" rc
         ${projectJoin}
@@ -174,7 +176,8 @@ export async function queryLatestTestResults({
           COALESCE(s."isSuccess", jr.type = 'PASSED') as is_success,
           COALESCE(s."isFailure", jr.type IN ('FAILURE', 'ERROR')) as is_failure,
           s."order" as status_order,
-          jr."executedAt" as executed_at
+          jr."executedAt" as executed_at,
+          'automated' as execution_source
           ${projectSelectFields}
         FROM "RepositoryCases" rc
         ${projectJoin}
@@ -208,7 +211,8 @@ export async function queryLatestTestResults({
           is_success,
           is_failure,
           status_order,
-          executed_at
+          executed_at,
+          execution_source
           ${includeProject ? sql`, project_id, project_name` : sql``},
           ROW_NUMBER() OVER (${partitionBy} ORDER BY executed_at DESC) as row_num
         FROM combined_results
@@ -233,6 +237,7 @@ export async function getLatestTestResultsByCase(
   for (const row of rows) {
     const executions = byCase.get(row.test_case_id) ?? [];
     executions.push({
+      executionSource: row.execution_source,
       resultId: row.result_id,
       testRunId: row.test_run_id,
       statusName: row.status_name,

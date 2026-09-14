@@ -12,6 +12,12 @@ export const LATEST_RESULTS_COUNT = 5;
 
 /** One execution of a test case, manual or automated. */
 export interface TestResultExecution {
+  /**
+   * Which table this execution came from. `resultId` is only unique WITHIN a
+   * source -- TestRunResults and JUnitTestResult are separate id spaces -- so a
+   * caller that hydrates further detail must read this first.
+   */
+  executionSource: "manual" | "automated";
   resultId: number;
   testRunId: number | null;
   statusName: string;

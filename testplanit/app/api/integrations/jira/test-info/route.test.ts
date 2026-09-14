@@ -7,10 +7,20 @@ vi.mock("@/lib/db", () => ({
     integration: { findMany: vi.fn() },
     status: { findFirst: vi.fn() },
     issue: { findMany: vi.fn() },
+    testRunResults: { findMany: vi.fn() },
+    jUnitTestResult: { findMany: vi.fn() },
   },
 }));
 
+// The latest-result ranking is a raw SQL query spanning TestRunResults and
+// JUnitTestResult; it cannot run against the mocked client, and its own
+// behaviour is covered by the service's tests.
+vi.mock("~/lib/services/latestTestResults", () => ({
+  getLatestTestResultsByCase: vi.fn(),
+}));
+
 import { baseDb } from "@/lib/db";
+import { getLatestTestResultsByCase } from "~/lib/services/latestTestResults";
 
 import { GET } from "./route";
 
@@ -87,6 +97,10 @@ const buildResult = (overrides: Record<string, unknown> = {}) => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // Default: no recorded executions. Tests that care set their own.
+  vi.mocked(getLatestTestResultsByCase).mockResolvedValue(new Map());
+  vi.mocked(baseDb.testRunResults.findMany).mockResolvedValue([] as never);
+  vi.mocked(baseDb.jUnitTestResult.findMany).mockResolvedValue([] as never);
   vi.mocked(baseDb.integration.findMany).mockResolvedValue([
     { id: 1, settings: { forgeApiKey: FORGE_API_KEY } },
   ] as any);
@@ -131,6 +145,43 @@ describe("jira test-info deleted cases", () => {
         })
       ),
     ] as any);
+    // The ranking service decides what the history holds; the route hydrates
+    // the detail columns from the source table the ranking points at.
+    vi.mocked(getLatestTestResultsByCase).mockResolvedValue(
+      new Map([
+        [
+          11,
+          [
+            {
+              executionSource: "manual" as const,
+              resultId: 900,
+              testRunId: 7,
+              statusName: "Passed",
+              statusColor: "#16a34a",
+              isSuccess: true,
+              isFailure: false,
+              executedAt: "2026-09-01T10:00:00.000Z",
+            },
+          ],
+        ],
+      ])
+    );
+    vi.mocked(baseDb.testRunResults.findMany).mockResolvedValue([
+      {
+        id: 900,
+        executedAt: "2026-09-01T10:00:00.000Z",
+        editedAt: null,
+        elapsed: 42,
+        testRunCaseVersion: 2,
+        attempt: 1,
+        executedBy: { id: "u1", name: "Ann" },
+        editedBy: null,
+        testRunCase: {
+          id: 55,
+          testRun: { id: 7, name: "Regression", isCompleted: true },
+        },
+      },
+    ] as never);
 
     const response = await GET(buildRequest());
     const body = await response.json();
@@ -153,6 +204,99 @@ describe("jira test-info deleted cases", () => {
         statusColor: "#16a34a",
         executedBy: { id: "u1", name: "Ann" },
         testRunCaseVersion: 2,
+      }),
+    ]);
+  });
+
+  it("reports the automated flag so the panel can draw the right icon", async () => {
+    // `source` stays MANUAL on an imported case that later gained automation,
+    // so the boolean is the only thing that can distinguish the two.
+    vi.mocked(baseDb.issue.findMany).mockResolvedValue([
+      buildIssue(
+        buildCase({ id: 12, name: "Automated", automated: true, testRuns: [] })
+      ),
+    ] as any);
+
+    const response = await GET(buildRequest());
+    const body = await response.json();
+
+    expect(body.testCases[0].automated).toBe(true);
+  });
+
+  it("defaults the automated flag to false when the column is null", async () => {
+    vi.mocked(baseDb.issue.findMany).mockResolvedValue([
+      buildIssue(
+        buildCase({ id: 13, name: "Legacy", automated: null, testRuns: [] })
+      ),
+    ] as any);
+
+    const response = await GET(buildRequest());
+    const body = await response.json();
+
+    expect(body.testCases[0].automated).toBe(false);
+  });
+
+  it("reports an automated execution as the latest result", async () => {
+    // The regression this guards: the panel used to read only the loaded
+    // `testRuns` relation, which holds manual TestRunResults, so an automated
+    // case showed a stale manual result instead of its most recent CI run.
+    vi.mocked(baseDb.issue.findMany).mockResolvedValue([
+      buildIssue(
+        buildCase({
+          id: 14,
+          name: "CI case",
+          automated: true,
+          testRuns: [buildRunCase([buildResult({ id: 901 })])],
+        })
+      ),
+    ] as any);
+    vi.mocked(getLatestTestResultsByCase).mockResolvedValue(
+      new Map([
+        [
+          14,
+          [
+            {
+              executionSource: "automated" as const,
+              resultId: 5000,
+              testRunId: 70,
+              statusName: "Failed",
+              statusColor: "#ef4444",
+              isSuccess: false,
+              isFailure: true,
+              executedAt: "2026-09-13T04:30:35.337Z",
+            },
+          ],
+        ],
+      ])
+    );
+    vi.mocked(baseDb.jUnitTestResult.findMany).mockResolvedValue([
+      {
+        id: 5000,
+        executedAt: "2026-09-13T04:30:35.337Z",
+        time: 12.5,
+        testSuite: {
+          testRun: { id: 70, name: "Web Regression", isCompleted: false },
+        },
+      },
+    ] as never);
+
+    const response = await GET(buildRequest());
+    const body = await response.json();
+
+    expect(body.testCases[0].lastResult).toBe("Failed");
+    expect(body.testCases[0].lastResultColor).toBe("#ef4444");
+    expect(body.testCases[0].resultHistory).toEqual([
+      expect.objectContaining({
+        resultId: 5000,
+        testRunId: 70,
+        testRunName: "Web Regression",
+        status: "Failed",
+        // CI wrote it: no user, no edit trail, no per-case version.
+        executedBy: { id: null, name: "Automation" },
+        editedBy: null,
+        testRunCaseVersion: null,
+        // JUnit stores seconds; the panel renders milliseconds.
+        elapsed: 12500,
       }),
     ]);
   });
