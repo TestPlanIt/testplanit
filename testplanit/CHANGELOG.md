@@ -1,3 +1,9 @@
+## [1.1.0-beta.6](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.5...v1.1.0-beta.6) (2026-09-14)
+
+### Bug Fixes
+
+* **health:** check storage by bucket, not by the presence of static keys ([65d7bbf](https://github.com/TestPlanIt/testplanit/commit/65d7bbfe3f5e05e7b907335ba4d8f4d4b9664e59))
+
 ## [1.1.0-beta.5](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.4...v1.1.0-beta.5) (2026-09-14)
 
 ### Features
