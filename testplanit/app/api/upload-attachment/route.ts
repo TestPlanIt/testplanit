@@ -1,4 +1,5 @@
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { getS3Client } from "~/lib/s3Client";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -14,15 +15,7 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(req: NextRequest) {
   try {
     // Create S3 client inside the request handler to ensure env vars are available
-    const s3Client = new S3Client({
-      region: process.env.AWS_REGION || process.env.AWS_BUCKET_REGION,
-      credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-      },
-      endpoint: process.env.AWS_ENDPOINT_URL, // Always use internal endpoint for server-side access
-      forcePathStyle: process.env.AWS_ENDPOINT_URL ? true : false,
-    });
+    const s3Client = getS3Client();
     const formData = await req.formData();
     const file = formData.get("file") as File;
     const prependString = (formData.get("prependString") as string) || "";

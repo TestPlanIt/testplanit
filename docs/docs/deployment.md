@@ -125,6 +125,8 @@ VALKEY_URL="valkey://your-redis.cache.amazonaws.com:6379"
 ELASTICSEARCH_NODE="https://your-es.es.amazonaws.com:9200"
 
 # AWS S3
+# On AWS, omit BOTH key lines to use an instance role / IRSA instead:
+# https://docs.testplanit.com/docs/file-storage#running-without-static-keys
 AWS_ACCESS_KEY_ID="your-aws-key"
 AWS_SECRET_ACCESS_KEY="your-aws-secret"
 AWS_BUCKET_NAME="your-bucket"

@@ -60,8 +60,8 @@ See [File Storage](file-storage.md).
 
 | Variable | Default | Description |
 | --- | --- | --- |
-| `AWS_ACCESS_KEY_ID` | **required** | Access key for S3 or MinIO. |
-| `AWS_SECRET_ACCESS_KEY` | **required** | Secret key for S3 or MinIO. |
+| `AWS_ACCESS_KEY_ID` | see note | Access key for S3 or MinIO. Required for MinIO; optional on AWS. |
+| `AWS_SECRET_ACCESS_KEY` | see note | Secret key for S3 or MinIO. Required for MinIO; optional on AWS. |
 | `AWS_REGION` | **required** | Bucket region. `AWS_BUCKET_REGION` is accepted as a legacy alias. |
 | `AWS_BUCKET_NAME` | **required** | Bucket name. |
 | `AWS_ENDPOINT_URL` | unset | Storage endpoint the server talks to. Leave unset for AWS S3; set to the MinIO service URL for MinIO. |
@@ -72,6 +72,18 @@ See [File Storage](file-storage.md).
 | `SELF_HOSTED` | unset | **Build-time.** Set to `true` for self-hosted images to turn off the Next.js image optimizer, so one image runs on any host without a baked-in domain allowlist. |
 | `BASE_DOMAIN` | unset | **Build-time.** Multi-tenant base domain; `*.BASE_DOMAIN` storage URLs are allowed in the image optimizer. |
 | `NEXT_PUBLIC_APP_URL`, `APP_URL` | unset | **Build-time.** Fallback public URL for the image optimizer allowlist when `AWS_PUBLIC_ENDPOINT_URL` is unset. |
+
+:::note Credentials are optional on AWS
+
+Leave **both** `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` unset and the AWS
+SDK falls back to its default provider chain — an EC2 instance role, EKS IRSA,
+an ECS task role, SSO, or the shared config file — so no long-lived keys sit on
+disk. Set **both** to use static credentials.
+
+Setting only one is treated as setting neither. MinIO accepts static keys only,
+so a MinIO deployment must always set both.
+
+:::
 
 ## Authentication
 

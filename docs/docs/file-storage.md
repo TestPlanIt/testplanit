@@ -46,9 +46,31 @@ AWS_S3_BUCKET_NAME=your-bucket-name
 # AWS_S3_ENDPOINT=https://your-s3-endpoint.com
 ```
 
+#### Running without static keys
+
+When TestPlanIt runs on AWS, you can skip the two credential lines entirely:
+
+```env
+# No AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY at all
+AWS_REGION=us-east-1
+AWS_BUCKET_NAME=your-bucket-name
+```
+
+With both omitted, the AWS SDK uses its default provider chain and picks up
+whichever role the workload already has — an EC2 instance role, EKS IRSA, an
+ECS task role, SSO, or the shared config file. Nothing long-lived is stored in
+`.env`, and credentials rotate on their own.
+
+Grant the permissions below to that **role** instead of to an IAM user. Omit
+both variables or set both: supplying only one is treated as supplying neither,
+and the container will fail to reach storage.
+
+This applies to AWS only. MinIO authenticates with static keys, so a MinIO
+deployment always sets both.
+
 #### Required AWS Permissions
 
-Your AWS user needs the following S3 permissions:
+Your AWS user — or the role, if you are using the provider chain above — needs the following S3 permissions:
 
 ```json
 {

@@ -1,4 +1,5 @@
-import { ListBucketsCommand, S3Client } from "@aws-sdk/client-s3";
+import { ListBucketsCommand } from "@aws-sdk/client-s3";
+import { getS3Client } from "~/lib/s3Client";
 import { NextResponse } from "next/server";
 import { monitorEventLoopDelay } from "node:perf_hooks";
 import valkeyConnection from "~/lib/valkey";
@@ -261,15 +262,7 @@ async function checkStorage(): Promise<ServiceCheck> {
   try {
     const startTime = Date.now();
 
-    const s3Client = new S3Client({
-      region: process.env.AWS_REGION || process.env.AWS_BUCKET_REGION,
-      credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-      },
-      endpoint: process.env.AWS_ENDPOINT_URL,
-      forcePathStyle: process.env.AWS_ENDPOINT_URL ? true : false,
-    });
+    const s3Client = getS3Client();
 
     // Simple check - list buckets to verify connectivity
     await s3Client.send(new ListBucketsCommand({}));

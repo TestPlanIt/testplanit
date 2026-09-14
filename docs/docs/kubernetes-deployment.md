@@ -229,6 +229,12 @@ datastore is enabled, also `POSTGRES_PASSWORD`, `MINIO_ROOT_USER`,
 `MINIO_ROOT_PASSWORD`; and as needed `DIRECT_DATABASE_URL`, `AWS_ACCESS_KEY_ID`,
 `AWS_SECRET_ACCESS_KEY`, `EMAIL_SERVER_PASSWORD`.
 
+When the bucket is real S3, prefer **IRSA** over the two `AWS_*` secrets: annotate
+the service account with a role ARN and leave both variables unset. The SDK then
+resolves credentials from the projected service-account token, so no static keys
+are stored in the cluster. See
+[File Storage](file-storage.md#running-without-static-keys).
+
 ## Email (SMTP)
 
 ```yaml

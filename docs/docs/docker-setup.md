@@ -308,6 +308,8 @@ To use AWS S3 instead of MinIO:
 AWS_ENDPOINT_URL=""  # Empty = use AWS S3
 AWS_PUBLIC_ENDPOINT_URL=""  # Empty = use AWS S3
 AWS_BUCKET_NAME=your-s3-bucket-name
+# Omit BOTH key lines to authenticate with the EC2 instance role instead:
+# https://docs.testplanit.com/docs/file-storage#running-without-static-keys
 AWS_ACCESS_KEY_ID=your-aws-access-key
 AWS_SECRET_ACCESS_KEY=your-aws-secret-key
 ```
