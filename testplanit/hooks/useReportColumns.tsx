@@ -7,6 +7,7 @@ import {
   getDimensionHelpKey,
   getMetricHelpKey,
 } from "~/lib/constants/reportConstants";
+import { metricLabelKey } from "~/lib/constants/reportLabelKeys";
 import { toHumanReadable } from "~/utils/duration";
 import { getDateFnsLocale } from "~/utils/locales";
 import { metricUnit } from "~/utils/metricUnits";
@@ -793,7 +794,10 @@ export function useReportColumns(
     // Add metric columns
     metrics.forEach((metricId) => {
       // Get translated metric label
-      const metricLabel = tReportsMetrics(metricId as any) || metricId;
+      // Some metric labels live on shared keys (see METRIC_LABEL_KEYS).
+      const metricLabel = t.has(metricLabelKey(metricId))
+        ? t(metricLabelKey(metricId) as any)
+        : tReportsMetrics(metricId as any) || metricId;
 
       // Unit metadata wins; the id/label heuristics only classify metrics
       // that aren't in the units map (custom presets), so renaming a metric
