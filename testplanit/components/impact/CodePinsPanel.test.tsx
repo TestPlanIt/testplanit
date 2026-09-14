@@ -265,7 +265,7 @@ describe("CodePinsPanel", () => {
       "src/payments/**"
     );
     expect(screen.getByTestId("case-code-pin-location-4")).toHaveTextContent(
-      "repository.codePins.wholeFile"
+      "repository.codePins.kindFile"
     );
     expect(screen.getByText("Covers the retry path")).toBeInTheDocument();
 
@@ -279,10 +279,10 @@ describe("CodePinsPanel", () => {
     expect(screen.getByTestId("code-pin-kind-badge-FILE")).toBeInTheDocument();
 
     expect(screen.getByTestId("case-code-pin-source-1")).toHaveTextContent(
-      "repository.codePins.sourceManual"
+      "common.fields.manual"
     );
     expect(screen.getByTestId("case-code-pin-source-2")).toHaveTextContent(
-      "repository.codePins.sourceAi"
+      "runs.impact.reasons.ai"
     );
     expect(screen.getByTestId("case-code-pin-source-3")).toHaveTextContent(
       "repository.codePins.sourceMapfile"
@@ -308,7 +308,7 @@ describe("CodePinsPanel", () => {
 
     expect(
       await screen.findByTestId("case-code-pin-stale-1")
-    ).toHaveTextContent("repository.codePins.staleBadge");
+    ).toHaveTextContent("runs.impact.stale.badge");
     expect(screen.getByTestId("case-code-pin-reanchor-1")).toBeInTheDocument();
     expect(screen.getByTestId("case-code-pin-dismiss-1")).toBeInTheDocument();
   });

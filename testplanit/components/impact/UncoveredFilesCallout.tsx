@@ -51,7 +51,7 @@ export function UncoveredFilesCallout({
                   {pinnedCaseId !== undefined ? (
                     <Badge variant="secondary" className="shrink-0">
                       <Pin className="me-1 h-3 w-3" />
-                      {t("uncovered.pinned")}
+                      {t("affected.tierPinned")}
                     </Badge>
                   ) : (
                     <Button

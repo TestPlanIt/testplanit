@@ -53,11 +53,11 @@ interface CodePinsPanelProps {
 }
 
 const SOURCE_LABEL_KEY: Record<CodePinSource, string> = {
-  MANUAL: "sourceManual",
-  AI: "sourceAi",
-  ANNOTATION: "sourceAnnotation",
-  MAPFILE: "sourceMapfile",
-  ISSUE: "sourceIssue",
+  MANUAL: "common.fields.manual",
+  AI: "runs.impact.reasons.ai",
+  ANNOTATION: "repository.codePins.sourceAnnotation",
+  MAPFILE: "repository.codePins.sourceMapfile",
+  ISSUE: "runs.impact.reasons.issue",
 };
 
 const STALE_REASON_KEY: Record<PinStaleReason, string> = {
@@ -72,7 +72,7 @@ function formatLocation(
 ): string {
   switch (pin.kind) {
     case "RANGE": {
-      if (pin.startLine === null) return t("wholeFile");
+      if (pin.startLine === null) return t("kindFile");
       const end = pin.endLine ?? pin.startLine;
       return end === pin.startLine
         ? `L${pin.startLine}`
@@ -83,7 +83,7 @@ function formatLocation(
     case "GLOB":
       return pin.filePath;
     default:
-      return t("wholeFile");
+      return t("kindFile");
   }
 }
 
@@ -94,6 +94,9 @@ export function CodePinsPanel({
 }: CodePinsPanelProps) {
   const t = useTranslations("repository.codePins");
   const tCommon = useTranslations("common");
+  const tGlobal = useTranslations();
+  const tDuplicates = useTranslations("repository.duplicates");
+  const tImpact = useTranslations("runs.impact");
 
   const { data: project } = useClientQueries(schema).projects.useFindFirst({
     where: { id: projectId },
@@ -275,7 +278,7 @@ export function CodePinsPanel({
                     {tCommon("pageTitles.repository")}
                   </TableHead>
                 )}
-                <TableHead className="truncate">{t("fileLabel")}</TableHead>
+                <TableHead className="truncate">{tCommon("file")}</TableHead>
                 <TableHead className="w-[150px] truncate">
                   {t("location")}
                 </TableHead>
@@ -283,7 +286,7 @@ export function CodePinsPanel({
                   {t("kind")}
                 </TableHead>
                 <TableHead className="w-[110px] truncate">
-                  {t("source")}
+                  {tDuplicates("sourceLabel")}
                 </TableHead>
                 {!readOnly && (
                   <TableHead className="w-[92px] truncate text-end">
@@ -307,7 +310,7 @@ export function CodePinsPanel({
                     className="shrink-0 whitespace-nowrap"
                     data-testid={`case-code-pin-source-${pin.id}`}
                   >
-                    {t(SOURCE_LABEL_KEY[pin.source])}
+                    {tGlobal(SOURCE_LABEL_KEY[pin.source])}
                   </Badge>
                 );
                 const location = formatLocation(pin, t);
@@ -343,7 +346,7 @@ export function CodePinsPanel({
                                 className="gap-2 shrink-0 border-dashed border-warning bg-warning/15 text-foreground"
                               >
                                 <AlertTriangle className="h-3 w-3 text-warning" />
-                                {t("staleBadge")}
+                                {tImpact("stale.badge")}
                               </Badge>
                             </TooltipTrigger>
                             <TooltipContent>
@@ -371,7 +374,7 @@ export function CodePinsPanel({
                               data-testid={`case-code-pin-dismiss-${pin.id}`}
                               onClick={() => handleDismissStale(pin.id)}
                             >
-                              {t("dismissStale")}
+                              {tCommon("dismiss")}
                             </Button>
                           </>
                         )}
@@ -437,7 +440,7 @@ export function CodePinsPanel({
                               type="button"
                               variant="ghost"
                               size="icon"
-                              aria-label={t("remove")}
+                              aria-label={tCommon("actions.remove")}
                               disabled={managed}
                               data-testid={`case-code-pin-remove-${pin.id}`}
                               onClick={() => setOpenRemoveId(pin.id)}
@@ -453,7 +456,7 @@ export function CodePinsPanel({
                                 variant="secondary"
                                 onClick={() => setOpenRemoveId(null)}
                               >
-                                {t("cancel")}
+                                {tCommon("cancel")}
                               </Button>
                               <Button
                                 type="button"
@@ -462,7 +465,7 @@ export function CodePinsPanel({
                                 data-testid={`case-code-pin-remove-confirm-${pin.id}`}
                                 onClick={() => handleRemove(pin.id)}
                               >
-                                {t("remove")}
+                                {tCommon("actions.remove")}
                               </Button>
                             </div>
                           </PopoverContent>

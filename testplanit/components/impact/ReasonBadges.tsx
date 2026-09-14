@@ -45,7 +45,7 @@ const REASON_LABEL_KEY: Record<ReasonKind, string> = {
   PATH: "reasons.path",
   HISTORY: "reasons.history",
   AI: "reasons.ai",
-  LINKED: "reasons.linked",
+  LINKED: "affected.tierRelated",
 };
 
 const REASON_ICON: Record<ReasonKind, ComponentType<{ className?: string }>> = {

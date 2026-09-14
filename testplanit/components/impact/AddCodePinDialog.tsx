@@ -156,6 +156,9 @@ export function AddCodePinDialog({
 }: AddCodePinDialogProps) {
   const t = useTranslations("repository.codePins");
   const tCommon = useTranslations("common");
+  const tParameters = useTranslations("parameters");
+  const tRequirements = useTranslations("requirements.linkedCases");
+  const tRepo = useTranslations("projects.settings.codeRepository");
   // The Impact dialog already names this picker; share its strings.
   const tImpact = useTranslations("runs.impact");
   const locale = useLocale();
@@ -531,7 +534,7 @@ export function AddCodePinDialog({
                   <span className="truncate">{option.name}</span>
                 )}
                 getOptionValue={(option) => option.id}
-                placeholder={t("casePlaceholder")}
+                placeholder={tRequirements("searchPlaceholder")}
                 ariaLabel={t("caseLabel")}
                 dropdownClassName="p-0 min-w-[400px] max-w-[800px]"
                 pageSize={10}
@@ -611,7 +614,7 @@ export function AddCodePinDialog({
 
           {kind !== "GLOB" && (
             <div className="space-y-1">
-              <Label>{t("fileLabel")}</Label>
+              <Label>{tCommon("file")}</Label>
               <AsyncCombobox<ImpactFileEntry>
                 value={file}
                 onValueChange={(option) => {
@@ -627,7 +630,7 @@ export function AddCodePinDialog({
                 )}
                 getOptionValue={(option) => option.path}
                 placeholder={t("filePlaceholder")}
-                ariaLabel={t("fileLabel")}
+                ariaLabel={tCommon("file")}
                 disabled={editing !== undefined}
                 dropdownClassName="p-0 min-w-[400px] max-w-[800px]"
                 pageSize={30}
@@ -717,7 +720,7 @@ export function AddCodePinDialog({
 
           {kind === "SYMBOL" && (
             <div className="space-y-1">
-              <Label>{t("symbolLabel")}</Label>
+              <Label>{t("kindSymbol")}</Label>
               <AsyncCombobox<SymbolOption>
                 value={symbol ? { name: symbol } : null}
                 onValueChange={(option) => setSymbol(option?.name ?? "")}
@@ -734,7 +737,7 @@ export function AddCodePinDialog({
                 // dropdown's search box, where "search" is what it does.
                 triggerLabel={t("symbolSelectPlaceholder")}
                 placeholder={t("symbolSearchPlaceholder")}
-                ariaLabel={t("symbolLabel")}
+                ariaLabel={t("kindSymbol")}
                 dropdownClassName="p-0 min-w-[400px] max-w-[800px]"
                 pageSize={30}
                 showTotal
@@ -766,7 +769,9 @@ export function AddCodePinDialog({
 
           {kind === "GLOB" && (
             <div className="space-y-1">
-              <Label htmlFor="code-pin-glob">{t("globLabel")}</Label>
+              <Label htmlFor="code-pin-glob">
+                {tRepo("pathPatterns.patternLabel")}
+              </Label>
               <Input
                 id="code-pin-glob"
                 value={glob}
@@ -793,7 +798,7 @@ export function AddCodePinDialog({
           )}
 
           <div className="space-y-1">
-            <Label htmlFor="code-pin-note">{t("noteLabel")}</Label>
+            <Label htmlFor="code-pin-note">{tCommon("fields.note")}</Label>
             <Textarea
               id="code-pin-note"
               value={note}
@@ -822,7 +827,7 @@ export function AddCodePinDialog({
             disabled={!isValid || submitting}
             data-testid="code-pin-submit"
           >
-            {t(editing ? "saveChanges" : "submit")}
+            {editing ? tParameters("editDialogSave") : t("add")}
           </Button>
         </DialogFooter>
       </DialogContent>

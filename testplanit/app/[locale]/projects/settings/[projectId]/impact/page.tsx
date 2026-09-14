@@ -76,6 +76,8 @@ export default function ImpactSettingsPage() {
   const { session, status, isLoading: isAuthLoading } = useRequireAuth();
   const t = useTranslations("projects.settings.impact");
   const tCommon = useTranslations("common");
+  const tAutomation = useTranslations("automation.settings");
+  const tRepo = useTranslations("projects.settings.codeRepository");
 
   const [dialog, setDialog] = useState<DialogState>({
     open: false,
@@ -239,7 +241,7 @@ export default function ImpactSettingsPage() {
           <CheckCircle className="h-4 w-4 text-success" />
           <span>
             {config.cacheFileCount != null
-              ? t("pathPatterns.files", { count: config.cacheFileCount })
+              ? tRepo("pathPatterns.files", { count: config.cacheFileCount })
               : tCommon("fields.success")}
           </span>
           {config.cacheLastFetchedAt && (
@@ -266,11 +268,13 @@ export default function ImpactSettingsPage() {
       return (
         <span className="flex items-center gap-2">
           <Loader2 className="h-4 w-4 animate-spin" />
-          <span>{t("cache.statusPending")}</span>
+          <span>{tRepo("cache.statusPending")}</span>
         </span>
       );
     }
-    return <Badge variant="secondary">{t("cache.statusNeverFetched")}</Badge>;
+    return (
+      <Badge variant="secondary">{tRepo("cache.statusNeverFetched")}</Badge>
+    );
   };
 
   const renderTicketStatus = (config: ImpactConfigRow) => {
@@ -314,7 +318,7 @@ export default function ImpactSettingsPage() {
       case "cancelled":
         return <span>{t("repositories.scanCancelled")}</span>;
       default:
-        return <Badge variant="secondary">{t("tickets.never")}</Badge>;
+        return <Badge variant="secondary">{t("scanNever")}</Badge>;
     }
   };
 
@@ -336,7 +340,7 @@ export default function ImpactSettingsPage() {
       <Card>
         <CardHeader className="w-full">
           <SectionHeader className="flex items-center gap-2">
-            <CardTitle>{t("title")}</CardTitle>
+            <CardTitle>{tCommon("pageTitles.impact")}</CardTitle>
             <HelpPopover helpKey="projectImpact" />
           </SectionHeader>
           <CardDescription>
@@ -376,22 +380,22 @@ export default function ImpactSettingsPage() {
                 {session?.user?.access === "ADMIN" ? (
                   <>
                     <div>
-                      <p className="font-medium">{t("noRepos.title")}</p>
+                      <p className="font-medium">{tRepo("noRepos.title")}</p>
                       <p className="mt-1 text-sm text-muted-foreground">
                         {t("noRepos.adminDescription")}
                       </p>
                     </div>
                     <Button asChild>
                       <Link href="/admin/code-repositories">
-                        {t("noRepos.adminLink")}
+                        {tRepo("noRepos.adminLink")}
                       </Link>
                     </Button>
                   </>
                 ) : (
                   <div>
-                    <p className="font-medium">{t("noRepos.title")}</p>
+                    <p className="font-medium">{tRepo("noRepos.title")}</p>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      {t("noRepos.userDescription")}
+                      {tRepo("noRepos.userDescription")}
                     </p>
                   </div>
                 )}
@@ -447,7 +451,7 @@ export default function ImpactSettingsPage() {
                           />
                           {!config.branch && (
                             <span className="text-xs text-muted-foreground">
-                              {t("repository.defaultBranch")}
+                              {tAutomation("defaultRefDefault")}
                             </span>
                           )}
                         </div>
@@ -501,7 +505,7 @@ export default function ImpactSettingsPage() {
                           variant="ghost"
                           size="icon"
                           className="text-destructive"
-                          aria-label={t("disconnect")}
+                          aria-label={tRepo("disconnect")}
                           onClick={() => setDisconnectTarget(config)}
                           data-testid={`impact-repo-disconnect-${config.id}`}
                         >
@@ -549,21 +553,23 @@ export default function ImpactSettingsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-destructive" />
-              {t("disconnect")}
+              {tRepo("disconnect")}
             </AlertDialogTitle>
             <AlertDialogDescription asChild className="space-y-2">
               <div>
                 <p>
-                  {t("confirmDisconnect", {
+                  {tRepo("confirmDisconnect", {
                     name: disconnectTarget?.repository?.name ?? "",
                   })}
                 </p>
                 <div>
-                  <p className="font-medium">{t("disconnectWarningTitle")}</p>
+                  <p className="font-medium">
+                    {tRepo("disconnectWarningTitle")}
+                  </p>
                   <ul className="list-disc ps-5 mt-1">
                     <li>{t("disconnectWarning1", { count: pinCount ?? 0 })}</li>
-                    <li>{t("disconnectWarning2")}</li>
-                    <li>{t("disconnectWarning3")}</li>
+                    <li>{tRepo("disconnectWarningCache")}</li>
+                    <li>{tRepo("disconnectWarningPatterns")}</li>
                   </ul>
                 </div>
               </div>
@@ -576,7 +582,7 @@ export default function ImpactSettingsPage() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               data-testid="impact-disconnect-confirm"
             >
-              {t("disconnect")}
+              {tRepo("disconnect")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

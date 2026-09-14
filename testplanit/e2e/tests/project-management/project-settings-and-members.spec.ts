@@ -142,7 +142,7 @@ test.describe("Project Settings Pages", () => {
     });
 
     await test.step("Verify the quickscript page main content renders", async () => {
-      // Page renders with t("projects.settings.quickScript.title") heading
+      // Page renders with the common.pageTitles.quickscript heading
       const mainContent = page.locator("main");
       await expect(mainContent).toBeVisible({ timeout: 15000 });
     });

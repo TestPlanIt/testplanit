@@ -61,6 +61,7 @@ export function ImpactRepositoryDialog({
 }: ImpactRepositoryDialogProps) {
   const t = useTranslations("projects.settings.impact");
   const tCommon = useTranslations("common");
+  const tRepo = useTranslations("projects.settings.codeRepository");
   // "Read-only" already exists as the API-token badge; one string, one key.
   const tApiTokens = useTranslations("users.profile.apiTokens");
   const [fullScreen, setFullScreen] = useState(false);
@@ -150,7 +151,7 @@ export function ImpactRepositoryDialog({
           {mode !== "view" && (
             <Button type="submit" form={FORM_ID} data-testid="impact-save">
               <Save className="h-4 w-4" />
-              {mode === "add" ? t("repositories.connect") : t("save")}
+              {mode === "add" ? t("repositories.connect") : tRepo("save")}
             </Button>
           )}
         </DialogFooter>

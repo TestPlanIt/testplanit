@@ -96,18 +96,19 @@ export default function QuickScriptPage() {
   const { session, status, isLoading: isAuthLoading } = useRequireAuth();
   const t = useTranslations("projects.settings.quickScript");
   const tCommon = useTranslations("common");
+  const tRepo = useTranslations("projects.settings.codeRepository");
 
   const pathPatternSchema = z.object({
-    path: z.string().min(1, t("validation.pathRequired")),
-    pattern: z.string().min(1, t("validation.patternRequired")),
+    path: z.string().min(1, tRepo("validation.pathRequired")),
+    pattern: z.string().min(1, tRepo("validation.patternRequired")),
   });
 
   const formSchema = z.object({
-    repositoryId: z.string().min(1, t("validation.repositoryRequired")),
+    repositoryId: z.string().min(1, tRepo("validation.repositoryRequired")),
     branch: z.string().optional().default(""),
     pathPatterns: z
       .array(pathPatternSchema)
-      .min(1, t("validation.pathPatternRequired")),
+      .min(1, tRepo("validation.pathPatternRequired")),
     cacheEnabled: z.boolean().default(true),
     cacheTtlDays: z.number().int().min(1).max(30).default(7),
   });
@@ -187,21 +188,21 @@ export default function QuickScriptPage() {
     useProjectPermissions(projectId, ApplicationArea.Settings);
 
   const { isPreviewing, preview, previewProgress, runPreview, clearPreview } =
-    useRepoPreviewFiles({ networkErrorMessage: t("networkError") });
+    useRepoPreviewFiles({ networkErrorMessage: tRepo("networkError") });
 
   const { isRefreshing, refreshStep, refreshError, refreshCache } =
     useRepoCacheRefresh({
       refetchConfig,
       messages: {
-        pending: t("cache.statusPending"),
-        listingFiles: t("cache.listingFiles"),
+        pending: tRepo("cache.statusPending"),
+        listingFiles: tRepo("cache.listingFiles"),
         cachingFiles: (count) =>
-          t("cache.cachingFiles", { count: String(count) }),
-        contentsError: t("contentsError"),
-        networkError: t("networkError"),
+          tRepo("cache.cachingFiles", { count: String(count) }),
+        contentsError: tRepo("contentsError"),
+        networkError: tRepo("networkError"),
         refreshComplete: (fileCount) =>
-          t("refreshComplete", { fileCount: String(fileCount) }),
-        refreshInProgress: t("refreshInProgress"),
+          tRepo("refreshComplete", { fileCount: String(fileCount) }),
+        refreshInProgress: tRepo("refreshInProgress"),
       },
     });
 
@@ -349,7 +350,7 @@ export default function QuickScriptPage() {
       toast.success(t("saved"));
       void refetchConfig();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : t("saveError");
+      const message = err instanceof Error ? err.message : tRepo("saveError");
       toast.error(message);
     }
   };
@@ -399,7 +400,7 @@ export default function QuickScriptPage() {
       <Card>
         <CardHeader className="w-full">
           <SectionHeader className="flex items-center gap-2">
-            <CardTitle>{t("title")}</CardTitle>
+            <CardTitle>{tCommon("pageTitles.quickscript")}</CardTitle>
             <HelpPopover helpKey="projectQuickScript" />
           </SectionHeader>
           <CardDescription>
@@ -446,22 +447,22 @@ export default function QuickScriptPage() {
                 {session?.user?.access === "ADMIN" ? (
                   <>
                     <div>
-                      <p className="font-medium">{t("noRepos.title")}</p>
+                      <p className="font-medium">{tRepo("noRepos.title")}</p>
                       <p className="mt-1 text-sm text-muted-foreground">
                         {t("noRepos.adminDescription")}
                       </p>
                     </div>
                     <Button asChild>
                       <Link href="/admin/code-repositories">
-                        {t("noRepos.adminLink")}
+                        {tRepo("noRepos.adminLink")}
                       </Link>
                     </Button>
                   </>
                 ) : (
                   <div>
-                    <p className="font-medium">{t("noRepos.title")}</p>
+                    <p className="font-medium">{tRepo("noRepos.title")}</p>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      {t("noRepos.userDescription")}
+                      {tRepo("noRepos.userDescription")}
                     </p>
                   </div>
                 )}
@@ -487,7 +488,7 @@ export default function QuickScriptPage() {
                           onClick={() => setShowDisconnectDialog(true)}
                         >
                           <Unlink className="h-4 w-4" />
-                          {t("disconnect")}
+                          {tRepo("disconnect")}
                         </Button>
                       )}
                     </div>
@@ -509,7 +510,7 @@ export default function QuickScriptPage() {
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue
-                                  placeholder={t("repository.placeholder")}
+                                  placeholder={tRepo("repository.placeholder")}
                                 />
                               </SelectTrigger>
                             </FormControl>
@@ -540,7 +541,9 @@ export default function QuickScriptPage() {
                       name="branch"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t("repository.branchLabel")}</FormLabel>
+                          <FormLabel>
+                            {tRepo("repository.branchLabel")}
+                          </FormLabel>
                           <FormControl>
                             <Input
                               {...field}
@@ -557,7 +560,7 @@ export default function QuickScriptPage() {
                 {/* Path Patterns */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>{t("pathPatterns.title")}</CardTitle>
+                    <CardTitle>{tRepo("pathPatterns.title")}</CardTitle>
                     <CardDescription>
                       {t("pathPatterns.description")}
                     </CardDescription>
@@ -572,7 +575,7 @@ export default function QuickScriptPage() {
                             <FormItem className="flex-1">
                               {index === 0 && (
                                 <FormLabel>
-                                  {t("pathPatterns.pathLabel")}
+                                  {tRepo("pathPatterns.pathLabel")}
                                 </FormLabel>
                               )}
                               <FormControl>
@@ -594,7 +597,7 @@ export default function QuickScriptPage() {
                             <FormItem className="flex-1">
                               {index === 0 && (
                                 <FormLabel>
-                                  {t("pathPatterns.patternLabel")}
+                                  {tRepo("pathPatterns.patternLabel")}
                                 </FormLabel>
                               )}
                               <FormControl>
@@ -624,7 +627,7 @@ export default function QuickScriptPage() {
                       onClick={() => append({ path: "", pattern: "*" })}
                     >
                       <Plus className="h-4 w-4" />
-                      {t("pathPatterns.addPath")}
+                      {tRepo("pathPatterns.addPath")}
                     </Button>
 
                     {/* Preview */}
@@ -640,27 +643,27 @@ export default function QuickScriptPage() {
                         ) : (
                           <Eye className="h-4 w-4" />
                         )}
-                        {t("pathPatterns.previewFiles")}
+                        {tRepo("pathPatterns.previewFiles")}
                       </Button>
                       {isPreviewing && previewProgress && (
                         <span className="text-sm text-muted-foreground">
                           {previewProgress.step === "branch" &&
-                            t("preview.resolvingBranch")}
+                            tRepo("preview.resolvingBranch")}
                           {previewProgress.step === "listing" &&
                             (previewProgress.filesFound != null
-                              ? t("preview.scanningFilesCount", {
+                              ? tRepo("preview.scanningFilesCount", {
                                   count: previewProgress.filesFound,
                                   scope: previewProgress.scope ?? "",
                                 })
-                              : t("preview.scanningFiles", {
+                              : tRepo("preview.scanningFiles", {
                                   scope: previewProgress.scope ?? "",
                                 }))}
                           {previewProgress.step === "filtering" &&
-                            t("preview.filtering", {
+                            tRepo("preview.filtering", {
                               count: previewProgress.totalFiles ?? 0,
                             })}
                           {previewProgress.step === "rate-limited" &&
-                            t("preview.rateLimited", {
+                            tRepo("preview.rateLimited", {
                               seconds: previewProgress.waitSeconds ?? 0,
                             })}
                         </span>
@@ -671,14 +674,14 @@ export default function QuickScriptPage() {
                       <div className="space-y-3">
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                           <span>
-                            {t("pathPatterns.files", {
+                            {tRepo("pathPatterns.files", {
                               count: preview.fileCount,
                             })}
                           </span>
                           <span>{preview.totalSizeFormatted}</span>
                           {preview.truncated && (
                             <Badge variant="secondary">
-                              {t("pathPatterns.truncatedBadge")}
+                              {tRepo("pathPatterns.truncatedBadge")}
                             </Badge>
                           )}
                         </div>
@@ -721,7 +724,7 @@ export default function QuickScriptPage() {
                 {/* Cache Settings + Status */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>{t("cache.title")}</CardTitle>
+                    <CardTitle>{tRepo("cache.title")}</CardTitle>
                     <CardDescription>{t("cache.description")}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -738,7 +741,7 @@ export default function QuickScriptPage() {
                             />
                           </FormControl>
                           <FormLabel className="font-medium">
-                            {t("cache.enableLabel")}
+                            {tRepo("cache.enableLabel")}
                           </FormLabel>
                           <FormMessage />
                         </FormItem>
@@ -778,7 +781,7 @@ export default function QuickScriptPage() {
                                 <FormItem>
                                   <div className="flex items-center gap-2 text-sm">
                                     <FormLabel className="font-normal">
-                                      {t("cache.ttlBefore")}
+                                      {tRepo("cache.ttlBefore")}
                                     </FormLabel>
                                     <FormControl>
                                       <Input
@@ -787,7 +790,7 @@ export default function QuickScriptPage() {
                                         min={1}
                                         max={30}
                                         className="w-16"
-                                        aria-label={t("cache.ttlAriaLabel")}
+                                        aria-label={tRepo("cache.ttlAriaLabel")}
                                         onChange={(e) =>
                                           field.onChange(
                                             parseInt(e.target.value) || 7
@@ -796,7 +799,7 @@ export default function QuickScriptPage() {
                                       />
                                     </FormControl>
                                     <span>
-                                      {t("cache.ttlDays", {
+                                      {tRepo("cache.ttlDays", {
                                         count: field.value,
                                       })}
                                     </span>
@@ -813,7 +816,7 @@ export default function QuickScriptPage() {
                                 <div className="space-y-3">
                                   <div className="flex items-center justify-between">
                                     <h4 className="text-sm font-medium">
-                                      {t("cache.statusTitle")}
+                                      {tRepo("cache.statusTitle")}
                                     </h4>
                                     <Button
                                       type="button"
@@ -829,7 +832,7 @@ export default function QuickScriptPage() {
                                       )}
                                       {isRefreshing && refreshStep
                                         ? refreshStep
-                                        : t("cache.refreshButton")}
+                                        : tRepo("cache.refreshButton")}
                                     </Button>
                                   </div>
 
@@ -841,7 +844,7 @@ export default function QuickScriptPage() {
                                       <div className="mt-1 flex items-center gap-2">
                                         {!configData.cacheStatus && (
                                           <Badge variant="secondary">
-                                            {t("cache.statusNeverFetched")}
+                                            {tRepo("cache.statusNeverFetched")}
                                           </Badge>
                                         )}
                                         {configData.cacheStatus ===
@@ -866,7 +869,7 @@ export default function QuickScriptPage() {
                                           <>
                                             <Loader2 className="h-4 w-4 animate-spin" />
                                             <Badge variant="secondary">
-                                              {t("cache.statusPending")}
+                                              {tRepo("cache.statusPending")}
                                             </Badge>
                                           </>
                                         )}
@@ -875,7 +878,7 @@ export default function QuickScriptPage() {
 
                                     <div>
                                       <span className="text-muted-foreground">
-                                        {t("cache.lastFetched")}
+                                        {tRepo("cache.lastFetched")}
                                       </span>
                                       <div className="mt-1">
                                         {configData.cacheLastFetchedAt ? (
@@ -907,7 +910,7 @@ export default function QuickScriptPage() {
 
                                     <div>
                                       <span className="text-muted-foreground">
-                                        {t("cache.filesCached")}
+                                        {tRepo("cache.filesCached")}
                                       </span>
                                       <div className="mt-1">
                                         {configData.cacheFileCount ?? "\u2014"}
@@ -916,7 +919,7 @@ export default function QuickScriptPage() {
 
                                     <div>
                                       <span className="text-muted-foreground">
-                                        {t("cache.contentsCached")}
+                                        {tRepo("cache.contentsCached")}
                                       </span>
                                       <div className="mt-1">
                                         {configData.cacheContentFileCount ??
@@ -926,7 +929,7 @@ export default function QuickScriptPage() {
 
                                     <div>
                                       <span className="text-muted-foreground">
-                                        {t("cache.totalSize")}
+                                        {tRepo("cache.totalSize")}
                                       </span>
                                       <div className="mt-1">
                                         {configData.cacheTotalSize != null
@@ -990,7 +993,7 @@ export default function QuickScriptPage() {
                   <Button
                     type="submit"
                     disabled={isSaving}
-                    aria-label={t("save")}
+                    aria-label={tRepo("save")}
                     className="group gap-0 transition-all duration-200 hover:gap-2"
                   >
                     {isSaving ? (
@@ -999,7 +1002,7 @@ export default function QuickScriptPage() {
                       <Save className="h-4 w-4" />
                     )}
                     <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                      {t("save")}
+                      {tRepo("save")}
                     </span>
                   </Button>
                 </div>
@@ -1017,19 +1020,19 @@ export default function QuickScriptPage() {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-destructive" />
-              {t("disconnect")}
+              {tRepo("disconnect")}
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
               <p>
-                {t("confirmDisconnect", {
+                {tRepo("confirmDisconnect", {
                   name: (existingConfig as any)?.repository?.name ?? "",
                 })}
               </p>
               <div>
-                <p className="font-medium">{t("disconnectWarningTitle")}</p>
+                <p className="font-medium">{tRepo("disconnectWarningTitle")}</p>
                 <ul className="list-disc ps-5 mt-1">
-                  <li>{t("disconnectWarning1")}</li>
-                  <li>{t("disconnectWarning2")}</li>
+                  <li>{tRepo("disconnectWarningCache")}</li>
+                  <li>{tRepo("disconnectWarningPatterns")}</li>
                   <li>{t("disconnectWarning3")}</li>
                 </ul>
               </div>
@@ -1041,7 +1044,7 @@ export default function QuickScriptPage() {
               onClick={handleDisconnect}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {t("disconnect")}
+              {tRepo("disconnect")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

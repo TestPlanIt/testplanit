@@ -156,6 +156,8 @@ export function ImpactRepositoryForm({
 }: ImpactRepositoryFormProps) {
   const t = useTranslations("projects.settings.impact");
   const tCommon = useTranslations("common");
+  const tAutomation = useTranslations("automation.settings");
+  const tRepo = useTranslations("projects.settings.codeRepository");
   // "Cancel Scan" is the duplicate-scan button's string; reused, not copied.
   const tDuplicates = useTranslations("repository.duplicates");
   const locale = useLocale();
@@ -163,16 +165,16 @@ export function ImpactRepositoryForm({
   const readOnly = mode === "view";
 
   const pathPatternSchema = z.object({
-    path: z.string().min(1, t("validation.pathRequired")),
-    pattern: z.string().min(1, t("validation.patternRequired")),
+    path: z.string().min(1, tRepo("validation.pathRequired")),
+    pattern: z.string().min(1, tRepo("validation.patternRequired")),
   });
 
   const formSchema = z.object({
-    repositoryId: z.string().min(1, t("validation.repositoryRequired")),
+    repositoryId: z.string().min(1, tRepo("validation.repositoryRequired")),
     branch: z.string().optional().default(""),
     pathPatterns: z
       .array(pathPatternSchema)
-      .min(1, t("validation.pathPatternRequired")),
+      .min(1, tRepo("validation.pathPatternRequired")),
     cacheEnabled: z.boolean().default(true),
     cacheTtlDays: z.number().int().min(1).max(30).default(7),
     issueScanEnabled: z.boolean().default(true),
@@ -225,21 +227,21 @@ export function ImpactRepositoryForm({
   }, [refetchConfigs]);
 
   const { isPreviewing, preview, previewProgress, runPreview } =
-    useRepoPreviewFiles({ networkErrorMessage: t("networkError") });
+    useRepoPreviewFiles({ networkErrorMessage: tRepo("networkError") });
 
   const { isRefreshing, refreshStep, refreshError, refreshCache } =
     useRepoCacheRefresh({
       refetchConfig,
       messages: {
-        pending: t("cache.statusPending"),
-        listingFiles: t("cache.listingFiles"),
+        pending: tRepo("cache.statusPending"),
+        listingFiles: tRepo("cache.listingFiles"),
         cachingFiles: (count) =>
-          t("cache.cachingFiles", { count: String(count) }),
-        contentsError: t("contentsError"),
-        networkError: t("networkError"),
+          tRepo("cache.cachingFiles", { count: String(count) }),
+        contentsError: tRepo("contentsError"),
+        networkError: tRepo("networkError"),
         refreshComplete: (fileCount) =>
-          t("refreshComplete", { fileCount: String(fileCount) }),
-        refreshInProgress: t("refreshInProgress"),
+          tRepo("refreshComplete", { fileCount: String(fileCount) }),
+        refreshInProgress: tRepo("refreshInProgress"),
       },
     });
 
@@ -257,7 +259,7 @@ export function ImpactRepositoryForm({
       cancelRequested: t("tickets.cancelRequested"),
       stillRunning: t("tickets.scanStillRunning"),
       failedToStart: t("tickets.scanFailedToStart"),
-      networkError: t("networkError"),
+      networkError: tRepo("networkError"),
     },
   });
 
@@ -365,7 +367,7 @@ export function ImpactRepositoryForm({
   const renderBranchOption = (option: BranchOption) =>
     option.name === "" ? (
       <span className="flex items-center gap-2">
-        <span>{t("repository.defaultBranch")}</span>
+        <span>{tAutomation("defaultRefDefault")}</span>
         {defaultBranchName && (
           <span className="font-mono text-xs text-muted-foreground">
             {defaultBranchName}
@@ -468,7 +470,7 @@ export function ImpactRepositoryForm({
         void refreshCache({ repositoryId, configId: savedId });
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : t("saveError");
+      const message = err instanceof Error ? err.message : tRepo("saveError");
       toast.error(message);
     }
   };
@@ -557,7 +559,7 @@ export function ImpactRepositoryForm({
                     <FormControl>
                       <SelectTrigger data-testid="impact-repository-select">
                         <SelectValue
-                          placeholder={t("repository.placeholder")}
+                          placeholder={tRepo("repository.placeholder")}
                         />
                       </SelectTrigger>
                     </FormControl>
@@ -582,7 +584,7 @@ export function ImpactRepositoryForm({
               name="branch"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("repository.branchLabel")}</FormLabel>
+                  <FormLabel>{tRepo("repository.branchLabel")}</FormLabel>
                   {branchesConfigId != null && !branchesError ? (
                     <div data-testid="impact-branch-combobox">
                       <AsyncCombobox<BranchOption>
@@ -596,7 +598,7 @@ export function ImpactRepositoryForm({
                           option.name || DEFAULT_BRANCH_VALUE
                         }
                         placeholder={t("repository.branchPlaceholder")}
-                        ariaLabel={t("repository.branchLabel")}
+                        ariaLabel={tRepo("repository.branchLabel")}
                         className="w-full"
                         showPagination={false}
                         disabled={readOnly}
@@ -631,7 +633,7 @@ export function ImpactRepositoryForm({
 
         <Card>
           <CardHeader>
-            <CardTitle>{t("pathPatterns.title")}</CardTitle>
+            <CardTitle>{tRepo("pathPatterns.title")}</CardTitle>
             <CardDescription>{t("pathPatterns.description")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -643,7 +645,7 @@ export function ImpactRepositoryForm({
                   render={({ field }) => (
                     <FormItem className="flex-1">
                       {index === 0 && (
-                        <FormLabel>{t("pathPatterns.pathLabel")}</FormLabel>
+                        <FormLabel>{tRepo("pathPatterns.pathLabel")}</FormLabel>
                       )}
                       <FormControl>
                         <Input
@@ -663,7 +665,9 @@ export function ImpactRepositoryForm({
                   render={({ field }) => (
                     <FormItem className="flex-1">
                       {index === 0 && (
-                        <FormLabel>{t("pathPatterns.patternLabel")}</FormLabel>
+                        <FormLabel>
+                          {tRepo("pathPatterns.patternLabel")}
+                        </FormLabel>
                       )}
                       <FormControl>
                         <Input
@@ -700,7 +704,7 @@ export function ImpactRepositoryForm({
                 data-testid="impact-add-path"
               >
                 <Plus className="h-4 w-4" />
-                {t("pathPatterns.addPath")}
+                {tRepo("pathPatterns.addPath")}
               </Button>
             )}
 
@@ -717,27 +721,27 @@ export function ImpactRepositoryForm({
                 ) : (
                   <Eye className="h-4 w-4" />
                 )}
-                {t("pathPatterns.previewFiles")}
+                {tRepo("pathPatterns.previewFiles")}
               </Button>
               {isPreviewing && previewProgress && (
                 <span className="text-sm text-muted-foreground">
                   {previewProgress.step === "branch" &&
-                    t("preview.resolvingBranch")}
+                    tRepo("preview.resolvingBranch")}
                   {previewProgress.step === "listing" &&
                     (previewProgress.filesFound != null
-                      ? t("preview.scanningFilesCount", {
+                      ? tRepo("preview.scanningFilesCount", {
                           count: previewProgress.filesFound,
                           scope: previewProgress.scope ?? "",
                         })
-                      : t("preview.scanningFiles", {
+                      : tRepo("preview.scanningFiles", {
                           scope: previewProgress.scope ?? "",
                         }))}
                   {previewProgress.step === "filtering" &&
-                    t("preview.filtering", {
+                    tRepo("preview.filtering", {
                       count: previewProgress.totalFiles ?? 0,
                     })}
                   {previewProgress.step === "rate-limited" &&
-                    t("preview.rateLimited", {
+                    tRepo("preview.rateLimited", {
                       seconds: previewProgress.waitSeconds ?? 0,
                     })}
                 </span>
@@ -748,14 +752,14 @@ export function ImpactRepositoryForm({
               <div className="space-y-3">
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                   <span>
-                    {t("pathPatterns.files", {
+                    {tRepo("pathPatterns.files", {
                       count: preview.fileCount,
                     })}
                   </span>
                   <span>{preview.totalSizeFormatted}</span>
                   {preview.truncated && (
                     <Badge variant="secondary">
-                      {t("pathPatterns.truncatedBadge")}
+                      {tRepo("pathPatterns.truncatedBadge")}
                     </Badge>
                   )}
                 </div>
@@ -786,7 +790,7 @@ export function ImpactRepositoryForm({
 
         <Card>
           <CardHeader>
-            <CardTitle>{t("cache.title")}</CardTitle>
+            <CardTitle>{tRepo("cache.title")}</CardTitle>
             <CardDescription>{t("cache.description")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -804,7 +808,7 @@ export function ImpactRepositoryForm({
                     />
                   </FormControl>
                   <FormLabel className="font-medium">
-                    {t("cache.enableLabel")}
+                    {tRepo("cache.enableLabel")}
                   </FormLabel>
                   <FormMessage />
                 </FormItem>
@@ -842,7 +846,7 @@ export function ImpactRepositoryForm({
                         <FormItem>
                           <div className="flex items-center gap-2 text-sm">
                             <FormLabel className="font-normal">
-                              {t("cache.ttlBefore")}
+                              {tRepo("cache.ttlBefore")}
                             </FormLabel>
                             <FormControl>
                               <Input
@@ -852,14 +856,14 @@ export function ImpactRepositoryForm({
                                 max={30}
                                 disabled={readOnly}
                                 className="w-16"
-                                aria-label={t("cache.ttlAriaLabel")}
+                                aria-label={tRepo("cache.ttlAriaLabel")}
                                 onChange={(e) =>
                                   field.onChange(parseInt(e.target.value) || 7)
                                 }
                               />
                             </FormControl>
                             <span>
-                              {t("cache.ttlDays", {
+                              {tRepo("cache.ttlDays", {
                                 count: field.value,
                               })}
                             </span>
@@ -875,7 +879,7 @@ export function ImpactRepositoryForm({
                         <div className="space-y-3">
                           <div className="flex items-center justify-between">
                             <h4 className="text-sm font-medium">
-                              {t("cache.statusTitle")}
+                              {tRepo("cache.statusTitle")}
                             </h4>
                             <Button
                               type="button"
@@ -892,7 +896,7 @@ export function ImpactRepositoryForm({
                               )}
                               {isRefreshing && refreshStep
                                 ? refreshStep
-                                : t("cache.refreshButton")}
+                                : tRepo("cache.refreshButton")}
                             </Button>
                           </div>
 
@@ -904,7 +908,7 @@ export function ImpactRepositoryForm({
                               <div className="mt-1 flex items-center gap-2">
                                 {!configData.cacheStatus && (
                                   <Badge variant="secondary">
-                                    {t("cache.statusNeverFetched")}
+                                    {tRepo("cache.statusNeverFetched")}
                                   </Badge>
                                 )}
                                 {configData.cacheStatus === "success" && (
@@ -927,7 +931,7 @@ export function ImpactRepositoryForm({
                                   <>
                                     <Loader2 className="h-4 w-4 animate-spin" />
                                     <Badge variant="secondary">
-                                      {t("cache.statusPending")}
+                                      {tRepo("cache.statusPending")}
                                     </Badge>
                                   </>
                                 )}
@@ -936,7 +940,7 @@ export function ImpactRepositoryForm({
 
                             <div>
                               <span className="text-muted-foreground">
-                                {t("cache.lastFetched")}
+                                {tRepo("cache.lastFetched")}
                               </span>
                               <div className="mt-1">
                                 {configData.cacheLastFetchedAt ? (
@@ -955,7 +959,7 @@ export function ImpactRepositoryForm({
 
                             <div>
                               <span className="text-muted-foreground">
-                                {t("cache.filesCached")}
+                                {tRepo("cache.filesCached")}
                               </span>
                               <div className="mt-1">
                                 {configData.cacheFileCount ?? "—"}
@@ -964,7 +968,7 @@ export function ImpactRepositoryForm({
 
                             <div>
                               <span className="text-muted-foreground">
-                                {t("cache.contentsCached")}
+                                {tRepo("cache.contentsCached")}
                               </span>
                               <div className="mt-1">
                                 {configData.cacheContentFileCount ?? "—"}
@@ -973,7 +977,7 @@ export function ImpactRepositoryForm({
 
                             <div>
                               <span className="text-muted-foreground">
-                                {t("cache.totalSize")}
+                                {tRepo("cache.totalSize")}
                               </span>
                               <div className="mt-1">
                                 {configData.cacheTotalSize != null
@@ -1133,7 +1137,7 @@ export function ImpactRepositoryForm({
             )}
 
             {issueView.kind === "never" && (
-              <Badge variant="secondary">{t("tickets.never")}</Badge>
+              <Badge variant="secondary">{t("scanNever")}</Badge>
             )}
 
             {issueView.kind === "running" && scanStale && (
@@ -1188,7 +1192,7 @@ export function ImpactRepositoryForm({
               <Alert variant="destructive">
                 <XCircle className="h-4 w-4" />
                 <AlertDescription>
-                  {t("tickets.error", { error: issueView.error })}
+                  {t("scanError", { error: issueView.error })}
                 </AlertDescription>
               </Alert>
             )}
@@ -1210,7 +1214,7 @@ export function ImpactRepositoryForm({
             {issueView.kind === "scanned" && (
               <>
                 <p className="flex items-center gap-2 text-muted-foreground">
-                  {t("tickets.lastScan", {
+                  {t("scanLastScan", {
                     date: formatScanDate(issueView.report.scannedAt),
                   })}
                   {issueView.report.full && (
@@ -1367,7 +1371,7 @@ export function ImpactRepositoryForm({
             data-testid="impact-markers"
           >
             {markerView.kind === "never" && (
-              <Badge variant="secondary">{t("markers.never")}</Badge>
+              <Badge variant="secondary">{t("scanNever")}</Badge>
             )}
 
             {markerView.kind === "skipped" && (
@@ -1387,7 +1391,7 @@ export function ImpactRepositoryForm({
               <Alert variant="destructive">
                 <XCircle className="h-4 w-4" />
                 <AlertDescription>
-                  {t("markers.error", { error: markerView.error })}
+                  {t("scanError", { error: markerView.error })}
                 </AlertDescription>
               </Alert>
             )}
@@ -1395,7 +1399,7 @@ export function ImpactRepositoryForm({
             {markerView.kind === "scanned" && (
               <>
                 <p className="text-muted-foreground">
-                  {t("markers.lastScan", {
+                  {t("scanLastScan", {
                     date: formatScanDate(markerView.report.scannedAt),
                   })}
                 </p>

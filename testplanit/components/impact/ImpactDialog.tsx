@@ -301,6 +301,8 @@ export function ImpactDialog({
 }: ImpactDialogProps) {
   const t = useTranslations("runs.impact");
   const tCommon = useTranslations("common");
+  const tDuplicates = useTranslations("repository.duplicates");
+  const tAuditLogs = useTranslations("admin.auditLogs");
   const [state, dispatch] = useReducer(
     impactDialogReducer,
     initialImpactDialogState
@@ -465,9 +467,9 @@ export function ImpactDialog({
           currentStep={stepIndex + 1}
           totalSteps={IMPACT_STEPS.length}
           labels={[
-            t("steps.pick"),
-            t("steps.diff"),
-            t("steps.analyze"),
+            t("pick.modeCommits"),
+            tAuditLogs("changes"),
+            t("actions.analyze"),
             t("steps.review"),
           ]}
         />
@@ -579,13 +581,13 @@ export function ImpactDialog({
                 data-testid="impact-compare"
               >
                 <GitCompareArrows className="h-4 w-4" />
-                {t("actions.compare")}
+                {tDuplicates("compareButton")}
               </Button>
             )}
             {state.step === "diff" && (
               <>
                 <Button variant="outline" onClick={handleBack}>
-                  {t("actions.back")}
+                  {tCommon("actions.back")}
                 </Button>
                 <Button
                   onClick={handleAnalyze}
@@ -611,7 +613,7 @@ export function ImpactDialog({
                 </Button>
               ) : (
                 <Button variant="outline" onClick={handleBack}>
-                  {t("actions.back")}
+                  {tCommon("actions.back")}
                 </Button>
               ))}
             {state.step === "review" && (

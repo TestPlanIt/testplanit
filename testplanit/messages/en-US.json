@@ -1902,7 +1902,6 @@
           "eventBranchPush": "Pushes to other branches",
           "eventBranchPushHelp": "Analyze every push to any other branch against the base branch, like a pull request, and compose a run for each.",
           "baseBranch": "Base branch",
-          "baseBranchPlaceholder": "Repository default branch",
           "baseBranchHelp": "Pushes to this branch are analyzed on their own; pull requests and other branches are compared against it. Leave empty to use the connection's branch."
         },
         "inboundEmptyState": "No inbound webhooks yet. <link>Add one</link> to receive issue updates from your issue tracker, or pull requests and pushes from a connected repository.",
@@ -2069,81 +2068,30 @@
         "datasetTabSharedEditorHint": "Click Save when you are done. Each Save creates a new version."
       },
       "quickScript": {
-        "title": "QuickScript",
         "description": "Enable QuickScript and connect a code repository for AI-assisted test generation.",
         "enableLabel": "Enable QuickScript",
         "enableDescription": " Allow team members to use QuickScript to convert test cases into automation scripts in this project.",
         "enabledToast": "QuickScript enabled",
         "disabledToast": "QuickScript disabled",
         "noRepos": {
-          "title": "No code repositories configured",
-          "adminDescription": "Set up a repository connection before configuring code context for this project.",
-          "adminLink": "Go to Code Repositories",
-          "userDescription": "Contact your system administrator to set up a code repository connection."
+          "adminDescription": "Set up a repository connection before configuring code context for this project."
         },
         "repository": {
           "title": "Code Repository",
           "description": "Select the code repository to use for AI context",
-          "placeholder": "Select a code repository...",
-          "branchLabel": "Branch",
           "branchPlaceholder": "Leave blank to use repository default branch"
         },
         "pathPatterns": {
-          "title": "Path Patterns",
           "description": "Specify which files to include. Each row combines a base path and a glob pattern. Examples: path=tests/e2e/pages + pattern=* includes all files directly in that folder; path=src + pattern=**/*.test.ts includes all test files recursively.",
-          "pathLabel": "Path",
           "pathPlaceholder": "tests/e2e/pages",
-          "patternLabel": "Pattern",
-          "addPath": "Add Path",
-          "previewFiles": "Preview Files",
-          "scanningRepo": "Scanning repository files… ({seconds}s)",
-          "files": "{count, plural, one {# file} other {# files}}",
-          "truncatedBadge": "Results may be incomplete (provider limit)",
           "exceedsLimit": "Total size exceeds the AI context limit by {overflow}. During export, files are ranked by relevance to the test case being exported — the most relevant files are included first and lower-ranked files are skipped when the budget is reached. Narrow your path patterns if you want more control over which files are included."
         },
-        "preview": {
-          "resolvingBranch": "Resolving branch…",
-          "scanningFiles": "Scanning files in {scope}…",
-          "scanningFilesCount": "Scanning files in {scope}… ({count, number} found)",
-          "filtering": "Applying filters to {count, number} files…",
-          "rateLimited": "Rate limited by the provider — retrying in {seconds, number}s…"
-        },
         "cache": {
-          "title": "Cache Settings",
           "description": "Files are cached in Valkey for fast access during AI generation.",
-          "enableLabel": "Enable file caching",
           "disabledWarning": "File caching is disabled. Repository files will be fetched directly from your provider at export time and will not be stored in TestPlanIt. AI-powered QuickScript will still include code context, but each export will make a live request to your repository.",
-          "ttlBefore": "Cache for",
-          "ttlDays": "{count, plural, one {day} other {days}}",
-          "ttlAriaLabel": "Cache duration in days",
-          "statusTitle": "Cache Status",
-          "refreshButton": "Refresh Cache",
-          "listingFiles": "Listing files…",
-          "cachingFiles": "Caching {count} files…",
-          "statusNeverFetched": "Never fetched",
-          "statusPending": "Refreshing...",
-          "lastFetched": "Last Fetched",
-          "filesCached": "Files Cached",
-          "contentsCached": "Contents Cached",
-          "contentsIncomplete": "Only {cached} of {total} file contents are cached — generated scripts won't use the missing files. Refresh again to complete.",
-          "totalSize": "Total Size"
+          "contentsIncomplete": "Only {cached} of {total} file contents are cached — generated scripts won't use the missing files. Refresh again to complete."
         },
-        "save": "Save Configuration",
         "saved": "Code context configuration saved",
-        "saveError": "Failed to save configuration",
-        "listError": "Failed to list repository files",
-        "contentsError": "Failed to cache file contents",
-        "networkError": "Network error during cache refresh",
-        "refreshSuccess": "Cache refreshed: {fileCount} files ({contentCached} contents cached)",
-        "refreshRateLimited": "Cache refreshed: {fileCount} files listed, {contentCached}/{fileCount} contents cached (rate limited — refresh again to complete)",
-        "refreshComplete": "Cache refreshed: {fileCount} files",
-        "refreshInProgress": "Cache refresh is still running in the background. It'll update here when it finishes.",
-        "validation": {
-          "pathRequired": "Path is required",
-          "patternRequired": "Pattern is required",
-          "repositoryRequired": "Repository is required",
-          "pathPatternRequired": "At least one path pattern is required"
-        },
         "exportTemplates": {
           "title": "Export Templates",
           "description": "Assign export templates to this project. Only assigned templates will appear in the export dialog.",
@@ -2157,14 +2105,74 @@
           "saved": "Template assignments saved",
           "saveError": "Failed to save template assignments"
         },
-        "disconnect": "Disconnect Repository",
-        "confirmDisconnect": "Are you sure you want to disconnect \"{name}\" from this project?",
-        "disconnectWarningTitle": "Disconnecting this repository will:",
-        "disconnectWarning1": "Remove all cached repository files",
-        "disconnectWarning2": "Remove path pattern and branch configurations",
         "disconnectWarning3": "Stop including code context in AI-generated exports",
         "disconnectSuccess": "Code repository disconnected",
         "disconnectError": "Failed to disconnect code repository"
+      },
+      "codeRepository": {
+        "cache": {
+          "cachingFiles": "Caching {count} files…",
+          "contentsCached": "Contents Cached",
+          "enableLabel": "Enable file caching",
+          "filesCached": "Files Cached",
+          "lastFetched": "Last Fetched",
+          "listingFiles": "Listing files…",
+          "refreshButton": "Refresh Cache",
+          "statusNeverFetched": "Never fetched",
+          "statusPending": "Refreshing...",
+          "statusTitle": "Cache Status",
+          "title": "Cache Settings",
+          "totalSize": "Total Size",
+          "ttlAriaLabel": "Cache duration in days",
+          "ttlBefore": "Cache for",
+          "ttlDays": "{count, plural, one {day} other {days}}"
+        },
+        "confirmDisconnect": "Are you sure you want to disconnect \"{name}\" from this project?",
+        "contentsError": "Failed to cache file contents",
+        "disconnect": "Disconnect Repository",
+        "disconnectWarningTitle": "Disconnecting this repository will:",
+        "listError": "Failed to list repository files",
+        "networkError": "Network error during cache refresh",
+        "noRepos": {
+          "adminLink": "Go to Code Repositories",
+          "title": "No code repositories configured",
+          "userDescription": "Contact your system administrator to set up a code repository connection."
+        },
+        "pathPatterns": {
+          "addPath": "Add Path",
+          "files": "{count, plural, one {# file} other {# files}}",
+          "pathLabel": "Path",
+          "patternLabel": "Pattern",
+          "previewFiles": "Preview Files",
+          "scanningRepo": "Scanning repository files… ({seconds}s)",
+          "title": "Path Patterns",
+          "truncatedBadge": "Results may be incomplete (provider limit)"
+        },
+        "preview": {
+          "filtering": "Applying filters to {count, number} files…",
+          "rateLimited": "Rate limited by the provider — retrying in {seconds, number}s…",
+          "resolvingBranch": "Resolving branch…",
+          "scanningFiles": "Scanning files in {scope}…",
+          "scanningFilesCount": "Scanning files in {scope}… ({count, number} found)"
+        },
+        "refreshComplete": "Cache refreshed: {fileCount} files",
+        "refreshInProgress": "Cache refresh is still running in the background. It'll update here when it finishes.",
+        "refreshRateLimited": "Cache refreshed: {fileCount} files listed, {contentCached}/{fileCount} contents cached (rate limited — refresh again to complete)",
+        "refreshSuccess": "Cache refreshed: {fileCount} files ({contentCached} contents cached)",
+        "repository": {
+          "branchLabel": "Branch",
+          "placeholder": "Select a code repository..."
+        },
+        "save": "Save Configuration",
+        "saveError": "Failed to save configuration",
+        "validation": {
+          "pathPatternRequired": "At least one path pattern is required",
+          "pathRequired": "Path is required",
+          "patternRequired": "Pattern is required",
+          "repositoryRequired": "Repository is required"
+        },
+        "disconnectWarningCache": "Remove all cached repository files",
+        "disconnectWarningPatterns": "Remove path pattern and branch configurations"
       },
       "advanced": {
         "title": "Advanced",
@@ -2264,78 +2272,38 @@
         }
       },
       "impact": {
-        "title": "Impact Analysis",
         "description": "Enable test impact analysis and connect the repositories of the application under test.",
         "enableLabel": "Enable Impact Analysis",
         "enableDescription": "Allow team members to select affected tests from code changes when composing a test run.",
         "enabledToast": "Impact Analysis enabled",
         "disabledToast": "Impact Analysis disabled",
         "noRepos": {
-          "title": "No code repositories configured",
-          "adminDescription": "Set up a repository connection before configuring Impact for this project.",
-          "adminLink": "Go to Code Repositories",
-          "userDescription": "Contact your system administrator to set up a code repository connection."
+          "adminDescription": "Set up a repository connection before configuring Impact for this project."
         },
         "repository": {
           "title": "Application Repository",
           "description": "Select a repository that holds part of the application under test. A project tested across several services can connect one repository per service.",
-          "placeholder": "Select a code repository...",
-          "branchLabel": "Branch",
           "branchPlaceholder": "Select a branch...",
           "branchInputPlaceholder": "Leave blank to use the repository default branch",
-          "defaultBranch": "Repository default branch",
           "branchesUnavailable": "Branches could not be listed: {error}",
           "branchesFallbackHint": "Type the branch name instead."
         },
         "pathPatterns": {
-          "title": "Path Patterns",
           "description": "Which application files to include. Each row combines a base path and a glob pattern. Example: path=src + pattern=**/* includes everything under src.",
-          "pathLabel": "Path",
-          "pathPlaceholder": "src",
-          "patternLabel": "Pattern",
-          "addPath": "Add Path",
-          "previewFiles": "Preview Files",
-          "scanningRepo": "Scanning repository files… ({seconds}s)",
-          "files": "{count, plural, one {# file} other {# files}}",
-          "truncatedBadge": "Results may be incomplete (provider limit)"
-        },
-        "preview": {
-          "resolvingBranch": "Resolving branch…",
-          "scanningFiles": "Scanning files in {scope}…",
-          "scanningFilesCount": "Scanning files in {scope}… ({count, number} found)",
-          "filtering": "Applying filters to {count, number} files…",
-          "rateLimited": "Rate limited by the provider — retrying in {seconds, number}s…"
+          "pathPlaceholder": "src"
         },
         "cache": {
-          "title": "Cache Settings",
           "description": "Files are cached in Valkey so the Code Pin file picker and repository markers stay fast.",
-          "enableLabel": "Enable file caching",
           "disabledWarning": "File caching is disabled. Repository markers are not scanned, and the Code Pin file picker lists files live from your provider on every open.",
-          "ttlBefore": "Cache for",
-          "ttlDays": "{count, plural, one {day} other {days}}",
-          "ttlAriaLabel": "Cache duration in days",
-          "statusTitle": "Cache Status",
-          "refreshButton": "Refresh Cache",
-          "listingFiles": "Listing files…",
-          "cachingFiles": "Caching {count} files…",
-          "statusNeverFetched": "Never fetched",
-          "statusPending": "Refreshing...",
-          "lastFetched": "Last Fetched",
-          "filesCached": "Files Cached",
-          "contentsCached": "Contents Cached",
-          "contentsIncomplete": "Only {cached} of {total} file contents are cached. Refresh again to complete.",
-          "totalSize": "Total Size"
+          "contentsIncomplete": "Only {cached} of {total} file contents are cached. Refresh again to complete."
         },
         "tickets": {
           "title": "Linked Tickets",
           "description": "Commits that name a ticket (PROJ-123, #42, AB#42) become Code Pins on every test case linked to that ticket — on the functions or classes the commit changed where the diff shows them, otherwise on the whole file — so later changes to that code find the cases again. A named ticket TestPlanIt does not hold yet is imported from the project's issue tracker so it can be linked.",
           "enableLabel": "Derive Code Pins from commit messages",
           "enableDescription": "Scans recent commits on the branch on every cache refresh. Turn off to keep analyses reading ticket keys from the analyzed commits only; manual scans still run.",
-          "lastScan": "Last scan: {date}",
-          "never": "Not scanned yet",
           "skippedLarge": "{count, plural, one {# commit was} other {# commits were}} skipped as too large to pin.",
           "fetchCapped": "Not every commit that named a linked ticket had its files read this pass; the rest are picked up on the next scan.",
-          "error": "Scan failed: {error}",
           "scanRecent": "Rescan Recent Commits",
           "scanFull": "Scan Full History",
           "scanFullHint": "Full history walks every commit on the branch and backfills pins for existing tickets. Commits already read are served from a cache, and a walk that stopped at the cap continues from there next time.",
@@ -2368,36 +2336,13 @@
         "markers": {
           "title": "Repository Markers",
           "description": "Comment annotations like @testplanit case:123 and entries in .testplanit/testmap.yml become Code Pins on every cache refresh.",
-          "lastScan": "Last scan: {date}",
-          "never": "Not scanned yet",
           "skippedPrivacy": "Skipped: file caching is disabled.",
           "skippedPartial": "Skipped: file contents were only partially cached.",
           "summary": "{annotations, plural, one {# annotation} other {# annotations}} · {mapEntries, plural, one {# map entry} other {# map entries}} · {created} created · {updated} updated · {removed} removed",
-          "problems": "{count, plural, one {# problem} other {# problems}}",
-          "error": "Scan failed: {error}"
+          "problems": "{count, plural, one {# problem} other {# problems}}"
         },
-        "save": "Save Configuration",
         "saved": "Impact Analysis configuration saved",
-        "saveError": "Failed to save configuration",
-        "listError": "Failed to list repository files",
-        "contentsError": "Failed to cache file contents",
-        "networkError": "Network error during cache refresh",
-        "refreshSuccess": "Cache refreshed: {fileCount} files ({contentCached} contents cached)",
-        "refreshRateLimited": "Cache refreshed: {fileCount} files listed, {contentCached}/{fileCount} contents cached (rate limited — refresh again to complete)",
-        "refreshComplete": "Cache refreshed: {fileCount} files",
-        "refreshInProgress": "Cache refresh is still running in the background. It'll update here when it finishes.",
-        "validation": {
-          "pathRequired": "Path is required",
-          "patternRequired": "Pattern is required",
-          "repositoryRequired": "Repository is required",
-          "pathPatternRequired": "At least one path pattern is required"
-        },
-        "disconnect": "Disconnect Repository",
-        "confirmDisconnect": "Are you sure you want to disconnect \"{name}\" from this project?",
-        "disconnectWarningTitle": "Disconnecting this repository will:",
         "disconnectWarning1": "Remove {count, plural, one {# Code Pin} other {# Code Pins}} and the analysis history for this repository",
-        "disconnectWarning2": "Remove all cached repository files",
-        "disconnectWarning3": "Remove path pattern and branch configurations",
         "disconnectSuccess": "Application repository disconnected",
         "disconnectError": "Failed to disconnect the application repository",
         "repositories": {
@@ -2420,7 +2365,10 @@
           "scanFailed": "Last scan failed",
           "scanCancelled": "Last scan cancelled"
         },
-        "initialScanStarted": "Fetching repository files and scanning for repository markers and linked tickets…"
+        "initialScanStarted": "Fetching repository files and scanning for repository markers and linked tickets…",
+        "scanError": "Scan failed: {error}",
+        "scanLastScan": "Last scan: {date}",
+        "scanNever": "Not scanned yet"
       }
     },
     "matrix": {
@@ -3922,12 +3870,9 @@
       "addFailed": "Could not add the pin",
       "addSuccess": "Pin added",
       "anchoredAt": "Anchored at {sha}",
-      "cancel": "Cancel",
       "caseLabel": "Test case",
-      "casePlaceholder": "Search test cases...",
       "contentUnavailable": "File content is not available.",
       "description": "Code this case covers. A change inside a pinned block pulls the case into Impact analyses.",
-      "dismissStale": "Dismiss",
       "duplicate": "This pin already exists.",
       "empty": "No Code Pins yet.",
       "endLine": "End line",
@@ -3935,11 +3880,9 @@
       "errorLineOutOfRange": "The line range is outside the file.",
       "errorSnippetTooLarge": "The pinned block is too large.",
       "errorSymbolNotFound": "Symbol not found in the file.",
-      "fileLabel": "File",
       "filePlaceholder": "Search files...",
       "filesCached": "{count, plural, one {# file} other {# files}} cached · {date}",
       "filesLive": "Listing files live from the repository",
-      "globLabel": "Pattern",
       "globMatches": "{count, plural, =0 {No cached files match} one {# cached file matches} other {# cached files match}}",
       "globPlaceholder": "src/payments/**",
       "kind": "Kind",
@@ -3952,30 +3895,21 @@
       "location": "Location",
       "managedTooltip": "Managed by the repository. Edit the marker in the code.",
       "noFilesCached": "No cached file list. Ask a project admin to refresh the repository cache.",
-      "noteLabel": "Note",
       "notePlaceholder": "Why this case covers this code (optional)",
       "reanchor": "Re-anchor",
       "reanchorFailed": "Could not re-anchor the pin",
       "reanchorSuccess": "Pin re-anchored",
-      "remove": "Remove",
       "removeConfirm": "Remove this pin?",
       "removeFailed": "Could not remove the pin",
       "removeSuccess": "Pin removed",
-      "source": "Source",
-      "sourceAi": "AI",
       "sourceAnnotation": "Annotation",
-      "sourceIssue": "Ticket",
-      "sourceManual": "Manual",
       "sourceMapfile": "Map file",
-      "staleBadge": "Stale",
       "staleFileDeleted": "file deleted",
       "staleSnippetNotFound": "lines not found",
       "staleSymbolNotFound": "symbol not found",
       "staleTooltip": "The pinned block could not be found at the branch tip: {reason}.",
       "startLine": "Start line",
-      "submit": "Add pin",
       "symbolHint": "The declaration is located by name in the file.",
-      "symbolLabel": "Symbol",
       "symbolNoneDetected": "No symbols detected, type a name.",
       "symbolPlaceholder": "functionName",
       "symbolSelectPlaceholder": "Select or type a symbol...",
@@ -3984,14 +3918,12 @@
       "editDialogTitle": "Edit this pin",
       "editDialogDescription": "The file and the pin type stay as they are. To change either, remove this pin and add a new one.",
       "editAction": "Edit pin",
-      "saveChanges": "Save changes",
       "symbolSearchPlaceholder": "Search symbols...",
       "symbolUseTyped": "Use \"{symbol}\"",
       "title": "Code Pins",
       "viewerFailed": "Could not load the file.",
       "viewerLoading": "Loading file…",
       "viewerTooLarge": "This file is too large to display. Enter the line numbers instead.",
-      "wholeFile": "Whole file",
       "repositoriesCount": "{count, plural, one {# repository} other {# repositories}}"
     },
     "diffView": {
@@ -4430,16 +4362,12 @@
       "noRepository": "Connect the application repository in project settings to use Impact.",
       "aiUnavailable": "No active LLM integration: results come from Code Pins, keyword matching and run history only.",
       "steps": {
-        "pick": "Commits",
-        "diff": "Changes",
-        "analyze": "Analyze",
         "review": "Affected Tests"
       },
       "pull": {
         "label": "Pull request",
         "selectPlaceholder": "Select a pull request...",
         "searchPlaceholder": "Search by number, title, author or branch...",
-        "stateAll": "All",
         "stateOpen": "Open",
         "stateMerged": "Merged",
         "stateClosed": "Closed",
@@ -4448,10 +4376,8 @@
       "pick": {
         "modeLabel": "Choose changes by",
         "modeCommits": "Commits",
-        "modePull": "Pull request",
         "modeCommitsHint": "What changed between two builds, so you can retest everything that landed since the one you last verified.",
         "modePullHint": "What this pull request changes, measured from where its branch split off, so work that landed on the target branch meanwhile is left out.",
-        "branchLabel": "Branch",
         "baseLabel": "Base commit",
         "headLabel": "Head commit",
         "commitPlaceholder": "Search commits...",
@@ -4472,9 +4398,7 @@
         "summary": "{files, plural, one {# file} other {# files}} changed · +{additions, number} −{deletions, number}",
         "truncated": "The provider returned a partial diff. Some changed files are not shown or have no patch.",
         "noChanges": "No changes between these commits.",
-        "statusAdded": "Added",
         "statusModified": "Modified",
-        "statusRemoved": "Removed",
         "statusRenamed": "Renamed",
         "showPatch": "Show changes",
         "hidePatch": "Hide changes",
@@ -4483,8 +4407,7 @@
         "binary": "Binary file",
         "noPatch": "Patch not available",
         "pinnedFiles": "{count, plural, one {# pin} other {# pins}}",
-        "loading": "Comparing commits…",
-        "failed": "Could not compare the commits."
+        "loading": "Comparing commits…"
       },
       "loading": {
         "analyzing": "Analyzing…",
@@ -4503,14 +4426,10 @@
         "title": "{count, plural, =0 {No affected tests} one {# affected test} other {# affected tests}}",
         "description": "Sorted by score. Every test shows why it was selected.",
         "relatedCount": "{count, plural, one {# related test} other {# related tests}} scored lower and are unchecked.",
-        "summary": "Summary",
-        "score": "Score",
-        "case": "Test case",
         "reasons": "Why",
         "tierPinned": "Pinned",
         "tierAffected": "Affected",
         "tierRelated": "Related",
-        "selectAll": "Select all",
         "selectNone": "Select none",
         "showDetails": "Show reasons",
         "hideDetails": "Hide reasons",
@@ -4526,7 +4445,6 @@
         "path": "Keyword",
         "history": "History",
         "ai": "AI",
-        "linked": "Related",
         "pinRange": "{path}:{start}–{end}",
         "pinFile": "{path}",
         "pinGlob": "Matches {pattern}",
@@ -4550,8 +4468,7 @@
       "uncovered": {
         "title": "{count, plural, one {# changed file has no test} other {# changed files have no tests}}",
         "description": "No test case is linked to these files. Pin a case to close the gap.",
-        "pinAction": "Pin a case...",
-        "pinned": "Pinned"
+        "pinAction": "Pin a case..."
       },
       "warnings": {
         "diff_truncated_by_provider": "The provider returned a partial diff.",
@@ -4566,17 +4483,13 @@
         "issue_commit_fetch_capped": "Some commits naming tickets were not read file by file (fetch limit reached); their cases cover no specific files."
       },
       "actions": {
-        "compare": "Compare",
         "analyze": "Analyze",
         "reanalyze": "Analyze again",
         "refine": "Back to changes",
         "accept": "{count, plural, one {Add # case} other {Add # cases}}",
-        "cancelAnalysis": "Cancel analysis",
-        "back": "Back",
-        "next": "Next"
+        "cancelAnalysis": "Cancel analysis"
       },
       "errors": {
-        "title": "Analysis failed",
         "generic": "Something went wrong while analyzing the changes. Please try again.",
         "pullFailed": "Could not read that pull request's commits. Pick another, or name the commits yourself.",
         "compareFailed": "Could not compare the commits.",
@@ -6205,7 +6118,6 @@
         "issueConfigs": "Issue Configs",
         "sharedStepGroups": "Shared Step Groups",
         "dataSets": "Datasets",
-        "codePins": "Code Pins",
         "impactAnalyses": "Impact Analyses"
       },
       "table": {

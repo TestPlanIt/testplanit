@@ -47,10 +47,10 @@ const STATE_FILTERS: PullRequestStateFilter[] = [
 ];
 
 const STATE_LABEL_KEY: Record<PullRequestStateFilter, string> = {
-  all: "pull.stateAll",
-  open: "pull.stateOpen",
-  merged: "pull.stateMerged",
-  closed: "pull.stateClosed",
+  all: "common.filters.all",
+  open: "runs.impact.pull.stateOpen",
+  merged: "runs.impact.pull.stateMerged",
+  closed: "runs.impact.pull.stateClosed",
 };
 
 const STATE_VARIANT: Record<
@@ -101,6 +101,7 @@ export function PullRequestPicker({
   disabled = false,
 }: PullRequestPickerProps) {
   const t = useTranslations("runs.impact");
+  const tGlobal = useTranslations();
   const [state, setState] = useState<PullRequestStateFilter>("all");
 
   const fetchOptions = useCallback(
@@ -147,7 +148,7 @@ export function PullRequestPicker({
           <SelectContent>
             {STATE_FILTERS.map((option) => (
               <SelectItem key={option} value={option}>
-                {t(STATE_LABEL_KEY[option])}
+                {tGlobal(STATE_LABEL_KEY[option])}
               </SelectItem>
             ))}
           </SelectContent>
@@ -163,7 +164,7 @@ export function PullRequestPicker({
         renderOption={(pr) => (
           <div className="flex min-w-0 items-center gap-2 text-sm">
             <Badge variant={STATE_VARIANT[pr.state]} className="shrink-0">
-              {t(STATE_LABEL_KEY[pr.state])}
+              {tGlobal(STATE_LABEL_KEY[pr.state])}
             </Badge>
             <span className="shrink-0 font-mono text-xs text-muted-foreground">
               {"#"}

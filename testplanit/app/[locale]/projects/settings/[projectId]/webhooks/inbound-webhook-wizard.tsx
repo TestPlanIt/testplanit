@@ -106,6 +106,7 @@ function WizardBody({
   const tGlobal = useTranslations();
   const tActions = useTranslations("common.actions");
   const tCommon = useTranslations("common");
+  const tAutomation = useTranslations("automation.settings");
 
   const issuesAvailable = issueAdapter !== null && !issueConfigured;
   const availableRepositories = repositories.filter(
@@ -417,9 +418,7 @@ function WizardBody({
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setBaseBranch(e.target.value)
             }
-            placeholder={
-              repository?.branch ?? t("codeRepos.baseBranchPlaceholder")
-            }
+            placeholder={repository?.branch ?? tAutomation("defaultRefDefault")}
           />
           <p className="text-xs text-muted-foreground">
             {t("codeRepos.baseBranchHelp")}
@@ -587,7 +586,7 @@ function WizardBody({
         currentStep={step}
         totalSteps={3}
         labels={[
-          tGlobal("repository.codePins.source"),
+          tGlobal("repository.duplicates.sourceLabel"),
           tGlobal("admin.integrations.table.configure"),
           t("wizard.stepConnect"),
         ]}

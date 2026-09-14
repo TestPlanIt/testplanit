@@ -128,7 +128,7 @@ const softDeletedItemTypes: Array<{
   },
   {
     name: "RepositoryCaseCodePin",
-    translationKey: "admin.trash.itemTypes.codePins",
+    translationKey: "repository.codePins.title",
     iconName: "pin",
   },
   {

@@ -116,9 +116,9 @@ vi.mock("~/lib/utils/codeLanguageFromPath", () => ({
 
 import { AddCodePinDialog } from "./AddCodePinDialog";
 
-const FILE_COMBOBOX = "repository.codePins.fileLabel";
+const FILE_COMBOBOX = "common.file";
 const CASE_COMBOBOX = "repository.codePins.caseLabel";
-const SYMBOL_COMBOBOX = "repository.codePins.symbolLabel";
+const SYMBOL_COMBOBOX = "repository.codePins.kindSymbol";
 
 const FILES = [
   { path: "src/payments/checkout.ts", size: 10 },

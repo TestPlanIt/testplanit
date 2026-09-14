@@ -93,6 +93,9 @@ export function AffectedTestsStep({
   onPinCreated,
 }: AffectedTestsStepProps) {
   const t = useTranslations("runs.impact");
+  const tCommon = useTranslations("common");
+  const tCodePins = useTranslations("repository.codePins");
+  const tDuplicates = useTranslations("repository.duplicates");
   const locale = useLocale();
   const [expanded, setExpanded] = useState<Set<number>>(() => new Set());
 
@@ -144,7 +147,7 @@ export function AffectedTestsStep({
         >
           <Label className="flex items-center gap-1 text-xs font-medium">
             <Sparkles className="h-3.5 w-3.5" />
-            {t("affected.summary")}
+            {tCommon("fields.summary")}
           </Label>
           <p className="mt-1 whitespace-pre-wrap text-muted-foreground">
             {result.summary}
@@ -231,13 +234,15 @@ export function AffectedTestsStep({
                     aria-label={
                       allSelected
                         ? t("affected.selectNone")
-                        : t("affected.selectAll")
+                        : tCommon("aria.selectAll")
                     }
                     data-testid="impact-select-all"
                   />
                 </TableHead>
-                <TableHead>{t("affected.case")}</TableHead>
-                <TableHead className="w-20">{t("affected.score")}</TableHead>
+                <TableHead>{tCodePins("caseLabel")}</TableHead>
+                <TableHead className="w-20">
+                  {tDuplicates("columnScore")}
+                </TableHead>
                 <TableHead className="w-28">
                   {t("affected.tierAffected")}
                 </TableHead>

@@ -74,12 +74,13 @@ export function AnalysisProgressStep({
   error,
 }: AnalysisProgressStepProps) {
   const t = useTranslations("runs.impact");
+  const tAutoTag = useTranslations("autoTag");
 
   if (error && status !== "PENDING" && status !== "RUNNING") {
     return (
       <Alert variant="destructive" className="my-2" data-testid="impact-error">
         <AlertCircle className="h-4 w-4" />
-        <AlertTitle>{t("errors.title")}</AlertTitle>
+        <AlertTitle>{tAutoTag("progress.failed")}</AlertTitle>
         <AlertDescription>{impactErrorMessage(t, error)}</AlertDescription>
       </Alert>
     );

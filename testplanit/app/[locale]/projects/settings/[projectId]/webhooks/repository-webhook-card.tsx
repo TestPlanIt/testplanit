@@ -102,6 +102,7 @@ export function RepositoryWebhookCard({
   const t = useTranslations("projects.settings.webhooks");
   const tActions = useTranslations("common.actions");
   const tCommon = useTranslations("common");
+  const tAutomation = useTranslations("automation.settings");
   const { data: session } = useSession();
   const preferences = session?.user?.preferences;
   const dateTimeFormat = preferences?.dateFormat
@@ -386,7 +387,7 @@ export function RepositoryWebhookCard({
                       setBaseBranchDraft(e.target.value)
                     }
                     placeholder={
-                      connection.branch ?? t("codeRepos.baseBranchPlaceholder")
+                      connection.branch ?? tAutomation("defaultRefDefault")
                     }
                   />
                   {baseBranchDirty && (

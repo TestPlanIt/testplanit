@@ -32,10 +32,10 @@ import type {
 } from "../ImpactDialog";
 
 const STATUS_KEY: Record<CompareFileStatus, string> = {
-  added: "diff.statusAdded",
-  modified: "diff.statusModified",
-  deleted: "diff.statusRemoved",
-  renamed: "diff.statusRenamed",
+  added: "sessions.version.diff.added",
+  modified: "runs.impact.diff.statusModified",
+  deleted: "sessions.version.diff.removed",
+  renamed: "runs.impact.diff.statusRenamed",
 };
 
 const STATUS_CLASS: Record<CompareFileStatus, string> = {
@@ -108,14 +108,16 @@ export function DiffReviewStep({
   expandedIndex,
   onToggleFile,
 }: DiffReviewStepProps) {
+  const tGlobal = useTranslations();
   const t = useTranslations("runs.impact");
+  const tAutoTag = useTranslations("autoTag");
   const locale = useLocale();
 
   if (error) {
     return (
       <Alert variant="destructive" className="my-2">
         <AlertCircle className="h-4 w-4" />
-        <AlertTitle>{t("errors.title")}</AlertTitle>
+        <AlertTitle>{tAutoTag("progress.failed")}</AlertTitle>
         <AlertDescription>{t(ERROR_KEY[error])}</AlertDescription>
       </Alert>
     );
@@ -205,7 +207,7 @@ export function DiffReviewStep({
                             STATUS_CLASS[file.status]
                           )}
                         >
-                          {t(STATUS_KEY[file.status])}
+                          {tGlobal(STATUS_KEY[file.status])}
                         </Badge>
                       </TableCell>
                       <TableCell className="py-2">

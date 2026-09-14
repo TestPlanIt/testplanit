@@ -193,6 +193,7 @@ export function CommitPickerStep({
   onBaseChange,
   onHeadChange,
 }: CommitPickerStepProps) {
+  const tRepo = useTranslations("projects.settings.codeRepository");
   const t = useTranslations("runs.impact");
   const formatDate = useCommitDateFormatter();
   const [branches, setBranches] = useState<RepoBranch[]>([]);
@@ -388,7 +389,7 @@ export function CommitPickerStep({
             {t("pick.modeCommits")}
           </ToggleGroupItem>
           <ToggleGroupItem value="pull" data-testid="impact-mode-pull">
-            {t("pick.modePull")}
+            {t("pull.label")}
           </ToggleGroupItem>
         </ToggleGroup>
       )}
@@ -411,7 +412,7 @@ export function CommitPickerStep({
       )}
 
       <div className="space-y-1">
-        <Label>{t("pick.branchLabel")}</Label>
+        <Label>{tRepo("repository.branchLabel")}</Label>
         <AsyncCombobox<RepoBranch>
           value={branchValue}
           onValueChange={(item) => onBranchChange(item?.name ?? null)}
@@ -423,7 +424,7 @@ export function CommitPickerStep({
             </div>
           )}
           getOptionValue={(item) => item.name}
-          ariaLabel={t("pick.branchLabel")}
+          ariaLabel={tRepo("repository.branchLabel")}
           disabled={!branchesLoaded}
           showPagination={false}
           minDropdownWidth={280}
