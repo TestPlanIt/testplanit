@@ -1,3 +1,9 @@
+## [1.1.0-beta.5](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.4...v1.1.0-beta.5) (2026-09-14)
+
+### Features
+
+* **storage:** authenticate to S3 with the AWS credential provider chain ([2345e4e](https://github.com/TestPlanIt/testplanit/commit/2345e4ea28abbb04c0f5d0e2b017a1f1aa23c9bf))
+
 ## [1.1.0-beta.4](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.3...v1.1.0-beta.4) (2026-09-14)
 
 ### Features
