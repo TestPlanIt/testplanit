@@ -122,6 +122,10 @@ import {
   draggableFieldToDimension,
   getReportSummary,
 } from "~/utils/reportUtils";
+import {
+  dimensionLabelKey,
+  metricLabelKey,
+} from "~/lib/constants/reportLabelKeys";
 import { sortPreBuiltReportRows } from "~/utils/preBuiltReportSort";
 import {
   mergeSeenProjectOptions,
@@ -342,6 +346,7 @@ function ReportBuilderContent({
       return sortReportTypesByLabel(
         getCrossProjectReportTypes(tReports),
         appLocale
+  const tGlobal = useTranslations();
       );
     // The requirements flag is a PROJECT setting, so it only ever filters
     // the project list. The cross-project requirement reports need no such
@@ -1674,14 +1679,20 @@ function ReportBuilderContent({
         const dimOpts = data.dimensions
           .map((d: any) => ({
             value: d.id,
-            label: tDimensions(d.id) || d.label, // Translated label for display
+            // Labels live on shared keys (see DIMENSION_LABEL_KEYS); an id
+            // with no message keeps the server's English label.
+            label: tGlobal.has(dimensionLabelKey(d.id))
+              ? tGlobal(dimensionLabelKey(d.id) as any)
+              : d.label,
             apiLabel: d.label, // Keep English label for API data access
           }))
           .sort((a: any, b: any) => a.label.localeCompare(b.label));
         const metOpts = data.metrics
           .map((m: any) => ({
             value: m.id,
-            label: tMetrics(m.id) || m.label, // Translated label for display
+            label: tGlobal.has(metricLabelKey(m.id))
+              ? tGlobal(metricLabelKey(m.id) as any)
+              : m.label,
             apiLabel: m.label, // Keep English label for API data access
           }))
           .sort((a: any, b: any) => a.label.localeCompare(b.label));
