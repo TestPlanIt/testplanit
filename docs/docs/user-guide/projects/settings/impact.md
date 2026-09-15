@@ -12,7 +12,7 @@ The project-level **Settings → Impact Analysis** page enables [test impact ana
 Only system administrators and project administrators can open this page. Repositories are registered globally by a system administrator; this page selects and configures them for the project.
 :::
 
-A project can connect **more than one** repository. When the application is spread across several services in separate repositories but tested under one project, connect each repository: every connection keeps its own branch, path patterns, cache, and Code Pins, and each analysis compares two commits of one of them.
+The **Connected Repositories** card counts the project's Code Pins in its title, and each connection lists how many of them it holds. A project can connect **more than one** repository. When the application is spread across several services in separate repositories but tested under one project, connect each repository: every connection keeps its own branch, path patterns, cache, and Code Pins, and each analysis compares two commits of one of them.
 
 These are separate connections from the one on the [QuickScript](quickscript.md) page: QuickScript points at test automation code, Impact Analysis points at the application under test. A project can use the same repository for both, or different ones.
 

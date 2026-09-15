@@ -40,7 +40,7 @@ import {
   Unlink,
   XCircle,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { notFound, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -78,6 +78,8 @@ export default function ImpactSettingsPage() {
   const tCommon = useTranslations("common");
   const tAutomation = useTranslations("automation.settings");
   const tRepo = useTranslations("projects.settings.codeRepository");
+  const tCodePins = useTranslations("repository.codePins");
+  const locale = useLocale();
 
   const [dialog, setDialog] = useState<DialogState>({
     open: false,
@@ -97,6 +99,7 @@ export default function ImpactSettingsPage() {
         repository: {
           select: { id: true, name: true, provider: true },
         },
+        _count: { select: { codePins: { where: { isDeleted: false } } } },
       },
     },
     {
@@ -108,6 +111,10 @@ export default function ImpactSettingsPage() {
     }
   );
   const configs = (existingConfigs ?? []) as unknown as ImpactConfigRow[];
+  const totalPins = configs.reduce(
+    (sum, config) => sum + (config._count?.codePins ?? 0),
+    0
+  );
 
   const { data: pinCount } = useClientQueries(
     schema
@@ -406,7 +413,18 @@ export default function ImpactSettingsPage() {
               <CardHeader>
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <CardTitle>{t("repositories.title")}</CardTitle>
+                    <CardTitle className="flex items-center gap-2">
+                      {t("repositories.title")}
+                      {configs.length > 0 && (
+                        <Badge
+                          variant="secondary"
+                          className="font-normal"
+                          data-testid="impact-pins-total"
+                        >
+                          {t("repositories.pinTotal", { count: totalPins })}
+                        </Badge>
+                      )}
+                    </CardTitle>
                     <CardDescription>
                       {t("repositories.description")}
                     </CardDescription>
@@ -467,6 +485,14 @@ export default function ImpactSettingsPage() {
                           </dt>
                           <dd data-testid={`impact-repo-tickets-${config.id}`}>
                             {renderTicketStatus(config)}
+                          </dd>
+                          <dt className="text-muted-foreground">
+                            {tCodePins("title")}
+                          </dt>
+                          <dd data-testid={`impact-repo-pins-${config.id}`}>
+                            {(config._count?.codePins ?? 0).toLocaleString(
+                              locale
+                            )}
                           </dd>
                         </dl>
                         {config.cacheStatus === "error" &&

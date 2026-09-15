@@ -94,6 +94,8 @@ export interface ImpactConfigRow {
   issueScanEnabled: boolean;
   issueScanReport: unknown;
   repository: CodeRepositoryOption;
+  /** Live Code Pins on this connection, when the list query counted them. */
+  _count?: { codePins: number };
 }
 
 export interface DatePreferences {
