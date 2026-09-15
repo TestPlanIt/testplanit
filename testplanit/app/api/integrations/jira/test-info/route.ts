@@ -1,8 +1,12 @@
 import { baseDb as db } from "@/lib/db";
+import { getLatestTestResultsByCase } from "~/lib/services/latestTestResults";
 import { IntegrationProvider } from "~/zenstack/models";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import { timingSafeEqual } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
+
+// How many executions the panel's result-history table shows per case.
+const JIRA_PANEL_HISTORY_LIMIT = 5;
 
 // Resolve a case's Jira-panel-enabled template fields into display-ready
 // values, mirroring how the repository case table renders each field type:
@@ -696,24 +700,87 @@ export async function GET(request: NextRequest) {
       (testCase: any) => !testCase.isDeleted || hasLiveResults(testCase)
     );
 
+    // Latest executions per case, across BOTH sources. The panel used to derive
+    // these from the loaded `testRuns` relation alone, which only ever holds
+    // TestRunResults -- manual executions. Automated runs write to
+    // JUnitTestResult, so an automated case reported whatever manual result it
+    // last had, often years stale, and never showed a CI failure at all.
+    // getLatestTestResultsByCase ranks both tables together; it is the same
+    // service the repository table's Latest Results column uses, so the panel
+    // and the app now agree by construction.
+    const visibleCaseIds = visibleCases.map((testCase: any) => testCase.id);
+    const latestByCase = await getLatestTestResultsByCase(
+      visibleCaseIds,
+      JIRA_PANEL_HISTORY_LIMIT
+    );
+
+    // `resultId` is unique only WITHIN a source, so the two id sets are
+    // hydrated separately and never merged into one lookup.
+    const executions = [...latestByCase.values()].flat();
+    const manualIds = executions
+      .filter((e) => e.executionSource === "manual")
+      .map((e) => e.resultId);
+    const automatedIds = executions
+      .filter((e) => e.executionSource === "automated")
+      .map((e) => e.resultId);
+
+    const [manualRows, automatedRows] = await Promise.all([
+      manualIds.length
+        ? db.testRunResults.findMany({
+            where: { id: { in: manualIds } },
+            select: {
+              id: true,
+              executedAt: true,
+              editedAt: true,
+              elapsed: true,
+              testRunCaseVersion: true,
+              attempt: true,
+              executedBy: { select: { id: true, name: true } },
+              editedBy: { select: { id: true, name: true } },
+              testRunCase: {
+                select: {
+                  id: true,
+                  testRun: {
+                    select: { id: true, name: true, isCompleted: true },
+                  },
+                },
+              },
+            },
+          })
+        : [],
+      automatedIds.length
+        ? db.jUnitTestResult.findMany({
+            where: { id: { in: automatedIds } },
+            select: {
+              id: true,
+              executedAt: true,
+              time: true,
+              testSuite: {
+                select: {
+                  testRun: {
+                    select: { id: true, name: true, isCompleted: true },
+                  },
+                },
+              },
+            },
+          })
+        : [],
+    ]);
+    const manualById = new Map(manualRows.map((r: any) => [r.id, r]));
+    const automatedById = new Map(automatedRows.map((r: any) => [r.id, r]));
+
     const formattedTestCases = visibleCases.map((testCase: any) => {
-      // Collect all results from all test runs for this case
-      const allResults =
-        testCase.testRuns?.flatMap(
-          (testRunCase: any) => testRunCase.results || []
-        ) || [];
-
-      // Sort by executedAt descending to get the latest result
-      allResults.sort(
-        (a: any, b: any) =>
-          new Date(b.executedAt).getTime() - new Date(a.executedAt).getTime()
-      );
-
-      const latestResult = allResults.length > 0 ? allResults[0] : null;
+      // Already ranked newest-first across manual and automated sources.
+      const caseExecutions = latestByCase.get(testCase.id) ?? [];
+      const latestResult = caseExecutions[0] ?? null;
 
       return {
         id: testCase.id,
         name: testCase.name,
+        // The panel draws the manual/automated icon from this. It is a real
+        // column, not inferable from `source`: an imported case stays
+        // source=MANUAL after automation is attached to it.
+        automated: testCase.automated ?? false,
         status: testCase.state.name,
         statusIcon: testCase.state.icon?.name,
         statusColor: testCase.state.color?.value,
@@ -726,43 +793,66 @@ export async function GET(request: NextRequest) {
         forecastAutomated: testCase.forecastAutomated,
         // Use latest result if available, otherwise use the first status from database
         lastResult: latestResult
-          ? latestResult.status.name
+          ? latestResult.statusName
           : firstStatus?.name || null,
         lastResultColor: latestResult
-          ? latestResult.status.color?.value
+          ? latestResult.statusColor
           : firstStatus?.color?.value || null,
         // Case fields opted into the Jira panel via the template's per-field
         // toggle, resolved server-side so the panel just renders them.
         fields: resolveJiraPanelFields(testCase),
-        resultHistory: allResults.slice(0, 5).map((result: any) => {
-          // Find the test run case that this result belongs to
-          const testRunCase = testCase.testRuns?.find((trc: any) =>
-            trc.results?.some((r: any) => r.id === result.id)
-          );
+        // Same merged ranking as `lastResult`, so the headline and the table
+        // below it can never disagree. Automated rows carry no executing user,
+        // no edit trail and no per-case version -- CI wrote them -- so those
+        // columns stay empty rather than borrowing a manual result's values.
+        resultHistory: caseExecutions.map((execution) => {
+          if (execution.executionSource === "automated") {
+            const detail = automatedById.get(execution.resultId);
+            const testRun = detail?.testSuite?.testRun;
+
+            return {
+              resultId: execution.resultId,
+              testRunId: testRun?.id ?? execution.testRunId,
+              testRunName: testRun?.name || "Automated Run",
+              testRunIsCompleted: testRun?.isCompleted || false,
+              testRunCaseId: null,
+              status: execution.statusName,
+              statusColor: execution.statusColor,
+              executedAt: execution.executedAt,
+              executedBy: { id: null, name: "Automation" },
+              editedAt: null,
+              editedBy: null,
+              // JUnit records seconds; the panel renders milliseconds.
+              elapsed:
+                detail?.time != null ? Math.round(detail.time * 1000) : null,
+              testRunCaseVersion: null,
+              attempt: null,
+            };
+          }
+
+          const detail = manualById.get(execution.resultId);
+          const testRun = detail?.testRunCase?.testRun;
 
           return {
-            resultId: result.id,
-            testRunId: testRunCase?.testRun?.id,
-            testRunName: testRunCase?.testRun?.name || "Unknown Test Run",
-            testRunIsCompleted: testRunCase?.testRun?.isCompleted || false,
-            testRunCaseId: testRunCase?.id,
-            status: result.status.name,
-            statusColor: result.status.color?.value,
-            executedAt: result.executedAt,
+            resultId: execution.resultId,
+            testRunId: testRun?.id ?? execution.testRunId,
+            testRunName: testRun?.name || "Unknown Test Run",
+            testRunIsCompleted: testRun?.isCompleted || false,
+            testRunCaseId: detail?.testRunCase?.id ?? null,
+            status: execution.statusName,
+            statusColor: execution.statusColor,
+            executedAt: execution.executedAt,
             executedBy: {
-              id: result.executedBy?.id,
-              name: result.executedBy?.name || "Unknown",
+              id: detail?.executedBy?.id,
+              name: detail?.executedBy?.name || "Unknown",
             },
-            editedAt: result.editedAt,
-            editedBy: result.editedBy
-              ? {
-                  id: result.editedBy.id,
-                  name: result.editedBy.name,
-                }
+            editedAt: detail?.editedAt ?? null,
+            editedBy: detail?.editedBy
+              ? { id: detail.editedBy.id, name: detail.editedBy.name }
               : null,
-            elapsed: result.elapsed,
-            testRunCaseVersion: result.testRunCaseVersion || 1,
-            attempt: result.attempt || 1,
+            elapsed: detail?.elapsed ?? null,
+            testRunCaseVersion: detail?.testRunCaseVersion || 1,
+            attempt: detail?.attempt || 1,
           };
         }),
       };

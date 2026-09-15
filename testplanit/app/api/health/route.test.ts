@@ -40,8 +40,8 @@ vi.mock("@aws-sdk/client-s3", () => {
   const S3Client = vi.fn(function (this: any) {
     this.send = mockS3Send;
   });
-  const ListBucketsCommand = vi.fn(function (this: any) {});
-  return { S3Client, ListBucketsCommand };
+  const HeadBucketCommand = vi.fn(function (this: any) {});
+  return { S3Client, HeadBucketCommand };
 });
 
 import { GET, OPTIONS } from "./route";
@@ -67,6 +67,9 @@ describe("GET /api/health", () => {
     mockS3Send.mockResolvedValue({});
     process.env.AWS_ACCESS_KEY_ID = "test-key";
     process.env.AWS_SECRET_ACCESS_KEY = "test-secret";
+    // A configured BUCKET is what makes storage checkable; credentials are
+    // optional (they may come from the SDK's provider chain instead).
+    process.env.AWS_BUCKET_NAME = "test-bucket";
   });
 
   describe("Healthy state", () => {
@@ -231,15 +234,29 @@ describe("GET /api/health", () => {
       expect(data.checks.elasticsearch.message).toContain("not configured");
     });
 
-    it("reports storage as disabled when AWS credentials not configured", async () => {
-      delete process.env.AWS_ACCESS_KEY_ID;
-      delete process.env.AWS_SECRET_ACCESS_KEY;
+    it("reports storage as disabled when no bucket is configured", async () => {
+      delete process.env.AWS_BUCKET_NAME;
 
       const response = await GET();
       const data = await response.json();
 
       expect(data.checks.storage.status).toBe("disabled");
       expect(data.checks.storage.message).toContain("not configured");
+    });
+
+    it("still checks storage when credentials come from the provider chain", async () => {
+      // No static keys: on AWS the SDK resolves an instance role / IRSA. The
+      // check must still run -- treating this as "disabled" silently skipped
+      // storage monitoring on every role-based deployment, and a skipped check
+      // reads as a pass.
+      delete process.env.AWS_ACCESS_KEY_ID;
+      delete process.env.AWS_SECRET_ACCESS_KEY;
+
+      const response = await GET();
+      const data = await response.json();
+
+      expect(data.checks.storage.status).toBe("ok");
+      expect(data.checks.storage.responseTime).toBeTypeOf("number");
     });
   });
 

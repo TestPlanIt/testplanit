@@ -1,6 +1,7 @@
 "use server";
 
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { getS3Client } from "~/lib/s3Client";
 
 // Attachment and inline-image ceilings are per-deployment. The bundled nginx
 // caps request bodies at 10 MB and operators raise that from nginx-local/, so
@@ -83,15 +84,7 @@ export async function uploadFile(
     }
 
     // Create S3 client
-    const s3Client = new S3Client({
-      region: process.env.AWS_REGION || process.env.AWS_BUCKET_REGION,
-      credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-      },
-      endpoint: process.env.AWS_ENDPOINT_URL,
-      forcePathStyle: process.env.AWS_ENDPOINT_URL ? true : false,
-    });
+    const s3Client = getS3Client();
 
     const objectKey = `${config.folder}/${prependString}${prependString ? "_" : ""}${Date.now()}_${file.name}`;
     const buffer = Buffer.from(await file.arrayBuffer());

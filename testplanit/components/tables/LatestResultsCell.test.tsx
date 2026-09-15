@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { LatestResultsCell } from "./LatestResultsCell";
-import type { TestResultExecution } from "~/lib/types/latestTestResults";
+import type { RenderableExecution } from "~/lib/types/latestTestResults";
 
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
@@ -20,8 +20,8 @@ vi.mock("@/components/StatusDisplay", () => ({
 }));
 
 const execution = (
-  overrides: Partial<TestResultExecution> = {}
-): TestResultExecution => ({
+  overrides: Partial<RenderableExecution> = {}
+): RenderableExecution => ({
   resultId: 1,
   testRunId: 10,
   statusName: "Passed",

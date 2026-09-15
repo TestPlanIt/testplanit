@@ -46,9 +46,42 @@ AWS_S3_BUCKET_NAME=your-bucket-name
 # AWS_S3_ENDPOINT=https://your-s3-endpoint.com
 ```
 
+:::caution Avoid dots in the bucket name
+A name like `com.example.testplanit` cannot be addressed as
+`com.example.testplanit.s3.<region>.amazonaws.com`, because a TLS wildcard
+matches only one label — the certificate check fails outright.
+
+The AWS SDK detects this and falls back to path-style URLs
+(`https://s3.<region>.amazonaws.com/<bucket>/<key>`), so TestPlanIt works with
+such a bucket. But anything that builds an S3 URL by hand, or any tool assuming
+virtual-hosted addressing, will break against it. Prefer a name with no dots.
+:::
+
+#### Running without static keys
+
+When TestPlanIt runs on AWS, you can skip the two credential lines entirely:
+
+```env
+# No AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY at all
+AWS_REGION=us-east-1
+AWS_BUCKET_NAME=your-bucket-name
+```
+
+With both omitted, the AWS SDK uses its default provider chain and picks up
+whichever role the workload already has — an EC2 instance role, EKS IRSA, an
+ECS task role, SSO, or the shared config file. Nothing long-lived is stored in
+`.env`, and credentials rotate on their own.
+
+Grant the permissions below to that **role** instead of to an IAM user. Omit
+both variables or set both: supplying only one is treated as supplying neither,
+and the container will fail to reach storage.
+
+This applies to AWS only. MinIO authenticates with static keys, so a MinIO
+deployment always sets both.
+
 #### Required AWS Permissions
 
-Your AWS user needs the following S3 permissions:
+Your AWS user — or the role, if you are using the provider chain above — needs the following S3 permissions:
 
 ```json
 {
@@ -153,7 +186,7 @@ TestPlanIt supports two upload modes depending on your deployment:
 
 #### Direct Mode (Default)
 
-Used when S3/MinIO is publicly accessible from the browser:
+Used when storage is publicly accessible from the browser:
 
 1. Frontend requests a presigned URL from the API
 2. Browser uploads directly to S3/MinIO using the presigned URL
@@ -161,9 +194,33 @@ Used when S3/MinIO is publicly accessible from the browser:
 
 This is the most efficient mode as files upload directly to storage.
 
+:::danger Direct mode needs storage to be anonymously **readable**, not just reachable
+
+After uploading, the app keeps the presigned URL **with its query signature
+stripped** and stores that bare URL as the file's location. Every later read of
+that file is therefore an unauthenticated request straight to your bucket.
+
+So direct mode works only if objects can be fetched with no credentials. On AWS
+S3 that means a bucket open to the world — the opposite of the Block Public
+Access settings recommended above. **A private S3 bucket must use proxy mode.**
+
+Get this wrong and uploads appear to succeed (the `PUT` really does store the
+object) while the file is unreadable afterwards, returning:
+
+```xml
+<Error><Code>AccessDenied</Code><Message>Access Denied</Message></Error>
+```
+
+:::
+
 #### Proxy Mode
 
-Used when MinIO/S3 is not publicly accessible from the browser (e.g., MinIO is running inside a Docker network):
+Used when storage is not publicly accessible from the browser. That covers two
+common setups:
+
+- MinIO running inside a Docker network, reachable only as `http://minio:9000`
+- **A private S3 bucket** — any bucket with Block Public Access enabled, which
+  is the recommended configuration
 
 1. Browser sends file to a Next.js server action
 2. Server action uploads the file to S3/MinIO internally
@@ -176,7 +233,19 @@ IS_HOSTED=true
 ```
 
 :::tip When to use Proxy Mode
-If your MinIO instance is only accessible within your Docker network (e.g., `http://minio:9000`) and not directly reachable from users' browsers, you **must** enable proxy mode. Without it, the app will generate presigned URLs pointing to the internal MinIO hostname, causing **mixed content errors** and **upload failures** in the browser.
+Enable proxy mode if **either** is true:
+
+- Your MinIO instance is reachable only inside the Docker network
+  (`http://minio:9000`). Without proxy mode the app hands the browser presigned
+  URLs pointing at an internal hostname, causing **mixed content errors** and
+  **upload failures**.
+- Your bucket blocks public access. Uploads will succeed and then every read
+  fails with `AccessDenied`, because the stored URL is unsigned — see the
+  warning under Direct Mode.
+
+The variable is named `IS_HOSTED` for historical reasons; it is read in exactly
+two places, both about storage, and setting it does not turn on multi-tenancy
+or anything else. Read it as "storage is not publicly readable".
 :::
 
 :::info Technical Note
@@ -192,6 +261,32 @@ AWS_PUBLIC_ENDPOINT_URL=https://yourdomain.com
 ```
 
 This tells the app to generate presigned URLs using your public domain instead of the internal MinIO hostname. The Nginx reverse proxy included in the Docker setup routes `/testplanit/` requests to MinIO automatically. This approach avoids the need for `IS_HOSTED=true` but requires MinIO to be reachable through your reverse proxy.
+
+#### Direct mode against AWS S3 requires a CORS policy
+
+In direct mode the browser sends the file to `s3.amazonaws.com`, a different
+origin from your instance, and the `Content-Type` header makes it a
+[preflighted request](https://developer.mozilla.org/docs/Web/HTTP/CORS). S3
+rejects the preflight unless the bucket allows your origin:
+
+```bash
+aws s3api put-bucket-cors --bucket your-bucket-name --cors-configuration '{
+  "CORSRules": [{
+    "AllowedOrigins": ["https://testplanit.example.com"],
+    "AllowedMethods": ["PUT", "POST", "GET", "HEAD"],
+    "AllowedHeaders": ["*"],
+    "ExposeHeaders": ["ETag"],
+    "MaxAgeSeconds": 3000
+  }]
+}'
+```
+
+This failure leaves **nothing in the application logs** — the browser blocks the
+request before it reaches your server — so check the browser console rather than
+the server when an upload fails silently.
+
+Proxy mode needs no CORS rule at all: the browser only ever talks to your own
+origin.
 
 ### Upload Flow
 

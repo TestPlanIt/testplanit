@@ -1,3 +1,27 @@
+## [1.1.0-beta.8](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.7...v1.1.0-beta.8) (2026-09-14)
+
+### Bug Fixes
+
+* **types:** require executionSource only where it is read ([e7d7467](https://github.com/TestPlanIt/testplanit/commit/e7d7467087c479f985634fdb92deb446ae1ec1dc))
+
+## [1.1.0-beta.7](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.6...v1.1.0-beta.7) (2026-09-14)
+
+### Bug Fixes
+
+* **jira-panel:** show automated cases and their automated results ([b3f12b4](https://github.com/TestPlanIt/testplanit/commit/b3f12b496cac8bfa634a9b21097f0fcf2da19ecd))
+
+## [1.1.0-beta.6](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.5...v1.1.0-beta.6) (2026-09-14)
+
+### Bug Fixes
+
+* **health:** check storage by bucket, not by the presence of static keys ([65d7bbf](https://github.com/TestPlanIt/testplanit/commit/65d7bbfe3f5e05e7b907335ba4d8f4d4b9664e59))
+
+## [1.1.0-beta.5](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.4...v1.1.0-beta.5) (2026-09-14)
+
+### Features
+
+* **storage:** authenticate to S3 with the AWS credential provider chain ([2345e4e](https://github.com/TestPlanIt/testplanit/commit/2345e4ea28abbb04c0f5d0e2b017a1f1aa23c9bf))
+
 ## [1.1.0-beta.4](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.3...v1.1.0-beta.4) (2026-09-14)
 
 ### Features

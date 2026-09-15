@@ -1,4 +1,5 @@
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { getPresignClient } from "~/lib/s3Client";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { randomUUID } from "crypto";
 import { getServerSession } from "next-auth/next";
@@ -7,15 +8,7 @@ import { authOptions } from "~/server/auth";
 
 const bucketName = process.env.AWS_BUCKET_NAME;
 
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION || process.env.AWS_BUCKET_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
-  endpoint: process.env.AWS_PUBLIC_ENDPOINT_URL || process.env.AWS_ENDPOINT_URL,
-  forcePathStyle: Boolean(process.env.AWS_ENDPOINT_URL),
-});
+const s3Client = getPresignClient();
 
 export async function POST(request: NextRequest) {
   try {

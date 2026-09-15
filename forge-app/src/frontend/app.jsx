@@ -2,6 +2,11 @@ import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from
 import { createRoot } from 'react-dom/client';
 import { invoke, router, view } from '@forge/bridge';
 import * as LucideIcons from 'lucide-react';
+
+// Keep in step with AUTOMATED_CASE_SOURCES in the app's utils/testResultTypes.ts.
+const AUTOMATED_CASE_SOURCES = [
+  'JUNIT', 'TESTNG', 'XUNIT', 'NUNIT', 'MSTEST', 'MOCHA', 'CUCUMBER',
+];
 import { formatDistanceToNow } from 'date-fns';
 import './app.css';
 
@@ -435,9 +440,17 @@ const TestCaseRow = ({ testCase, onOpen }) => {
     ? []
     : (testCase.fields || []).filter(fieldHasValue);
 
-  const getIcon = (source, isDeleted) => {
+  // Mirrors CaseDisplay in the main app: Bot for automated, ListChecks for
+  // manual. Two things decide it, and BOTH are needed. The `automated` column
+  // is set independently of `source` -- a case imported as MANUAL that later
+  // had automation attached keeps source=MANUAL -- so reading source alone
+  // showed a manual icon on automated cases. And the source list is seven
+  // frameworks, not just JUnit.
+  const getIcon = (source, isDeleted, automated) => {
     if (isDeleted) return <DynamicIcon name="Trash" className="h-4 w-4 shrink-0" />;
-    if (source === 'JUNIT') return <DynamicIcon name="Bot" className="h-4 w-4 shrink-0" />;
+    if (automated || AUTOMATED_CASE_SOURCES.includes(source)) {
+      return <DynamicIcon name="Bot" className="h-4 w-4 shrink-0" />;
+    }
     return <DynamicIcon name="ListChecks" className="h-4 w-4 shrink-0" />;
   };
 
@@ -486,7 +499,7 @@ const TestCaseRow = ({ testCase, onOpen }) => {
     <div className={`testplanit-card border rounded-md transition-colors ${isDeleted ? 'border-dashed opacity-75' : ''}`}>
       <div className="flex items-center justify-between p-2 testplanit-hover">
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          {getIcon(testCase.source, isDeleted)}
+          {getIcon(testCase.source, isDeleted, testCase.automated)}
           {isDeleted ? (
             <span
               className="text-sm font-medium testplanit-text-muted flex-1 truncate text-left line-through"

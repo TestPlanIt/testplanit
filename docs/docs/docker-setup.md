@@ -308,6 +308,8 @@ To use AWS S3 instead of MinIO:
 AWS_ENDPOINT_URL=""  # Empty = use AWS S3
 AWS_PUBLIC_ENDPOINT_URL=""  # Empty = use AWS S3
 AWS_BUCKET_NAME=your-s3-bucket-name
+# Omit BOTH key lines to authenticate with the EC2 instance role instead:
+# https://docs.testplanit.com/docs/file-storage#running-without-static-keys
 AWS_ACCESS_KEY_ID=your-aws-access-key
 AWS_SECRET_ACCESS_KEY=your-aws-secret-key
 ```
@@ -541,6 +543,26 @@ curl http://localhost:9200/_cluster/health
   ```env
   IS_HOSTED=true
   ```
+
+*Uploads appear to work, but the file then fails with `AccessDenied` (private S3 bucket):*
+
+- **Cause**: In direct mode the app stores the presigned URL with its signature
+  stripped, so every later read is an unauthenticated request to the bucket. A
+  bucket with Block Public Access enabled refuses those.
+- **Symptoms**: The upload itself returns `200` and the object really is in the
+  bucket, but displaying or downloading it returns
+  `<Error><Code>AccessDenied</Code><Message>Access Denied</Message></Error>`.
+  Existing attachments stored as `/api/storage/...` keep working, which makes it
+  look like only new uploads are broken.
+- **Fix**: Same flag — proxy mode serves files through the application, which
+  holds the credentials:
+
+  ```env
+  IS_HOSTED=true
+  ```
+
+  Keep the bucket private. The alternative, making it publicly readable, exposes
+  every attachment to the internet.
 
   Then recreate the container: `docker compose up -d --force-recreate prod`
 - **Alternative**: Set `AWS_PUBLIC_ENDPOINT_URL=https://yourdomain.com` if MinIO is accessible through your reverse proxy. See [File Storage docs](/docs/file-storage#storage-modes) for details.

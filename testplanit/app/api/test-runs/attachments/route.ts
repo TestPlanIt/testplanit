@@ -9,7 +9,8 @@
  * - testRunId: string - The test run ID to attach files to
  */
 
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { getS3Client } from "~/lib/s3Client";
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateApiToken, extractBearerToken } from "~/lib/api-token-auth";
 import { updateAuditContext } from "~/lib/auditContext";
@@ -97,15 +98,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
       );
     }
 
-    const s3Client = new S3Client({
-      region: process.env.AWS_REGION || process.env.AWS_BUCKET_REGION,
-      credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-      },
-      endpoint: process.env.AWS_ENDPOINT_URL,
-      forcePathStyle: process.env.AWS_ENDPOINT_URL ? true : false,
-    });
+    const s3Client = getS3Client();
 
     // Process each file
     const results: UploadResult[] = [];

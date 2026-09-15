@@ -1,4 +1,5 @@
-import { ListBucketsCommand, S3Client } from "@aws-sdk/client-s3";
+import { HeadBucketCommand } from "@aws-sdk/client-s3";
+import { getS3Client } from "~/lib/s3Client";
 import { NextResponse } from "next/server";
 import { monitorEventLoopDelay } from "node:perf_hooks";
 import valkeyConnection from "~/lib/valkey";
@@ -250,8 +251,12 @@ async function checkElasticsearch(): Promise<ServiceCheck> {
 }
 
 async function checkStorage(): Promise<ServiceCheck> {
-  // Check if S3/MinIO is configured
-  if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
+  // Configured means a BUCKET is set, not that static keys are set. Credentials
+  // are optional on AWS (lib/s3Client.ts falls back to the SDK's provider
+  // chain), so keying this off AWS_ACCESS_KEY_ID silently reported "disabled"
+  // on a working role-based deployment -- and a skipped check reads as a pass.
+  const bucketName = process.env.AWS_BUCKET_NAME;
+  if (!bucketName) {
     return {
       status: "disabled",
       message: "S3/MinIO not configured",
@@ -261,18 +266,13 @@ async function checkStorage(): Promise<ServiceCheck> {
   try {
     const startTime = Date.now();
 
-    const s3Client = new S3Client({
-      region: process.env.AWS_REGION || process.env.AWS_BUCKET_REGION,
-      credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-      },
-      endpoint: process.env.AWS_ENDPOINT_URL,
-      forcePathStyle: process.env.AWS_ENDPOINT_URL ? true : false,
-    });
+    const s3Client = getS3Client();
 
-    // Simple check - list buckets to verify connectivity
-    await s3Client.send(new ListBucketsCommand({}));
+    // HeadBucket on the configured bucket, NOT ListBuckets: listing every
+    // bucket needs account-wide s3:ListAllMyBuckets, which a policy scoped to
+    // this one bucket -- the one the install docs recommend -- does not grant.
+    // HeadBucket needs only s3:ListBucket on the bucket we actually use.
+    await s3Client.send(new HeadBucketCommand({ Bucket: bucketName }));
 
     return {
       status: "ok",

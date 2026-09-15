@@ -1,5 +1,6 @@
 import { baseDb } from "@/lib/db";
-import { DeleteObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { getS3Client } from "~/lib/s3Client";
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateApiToken } from "~/lib/api-token-auth";
 import {
@@ -68,14 +69,11 @@ async function checkAdminAuth(
   return { userId };
 }
 
-// S3 Client Initialization (ensure environment variables are set)
-const s3Client = new S3Client({
-  region: process.env.AWS_BUCKET_REGION!,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
-});
+// This used to build its own client with no `endpoint`, so purge deletes always
+// went to real AWS S3 and silently missed the object on any S3-compatible
+// backend (MinIO). It also read only AWS_BUCKET_REGION, which .env.example does
+// not define. Going through the shared factory fixes both.
+const s3Client = getS3Client();
 
 // Helper function to delete an object from S3
 async function deleteS3Object(bucketName: string, key: string) {
