@@ -32,7 +32,7 @@ import { Switch } from "@/components/ui/switch";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { CheckCircle, Loader2, XCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod/v4";
@@ -46,15 +46,39 @@ const PROVIDERS = [
   { value: "GITEA", label: "Gitea / Forgejo / Gogs" },
 ] as const;
 
-const formSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  provider: z.enum(["GITHUB", "GITLAB", "BITBUCKET", "AZURE_DEVOPS", "GITEA"]),
-  credentials: z.record(z.string(), z.string().optional()).optional(),
-  settings: z.record(z.string(), z.string().optional()).optional(),
-  isActive: z.boolean().optional(),
-});
+/**
+ * The repository form. `takenNames` are the live repositories this one may
+ * not be named after; the save is an upsert on the unique name so that a
+ * soft-deleted repository can be recreated, and without this check the
+ * same upsert would silently overwrite a live one.
+ */
+export function createFormSchema(
+  t: (key: string) => string,
+  takenNames: string[]
+) {
+  const taken = new Set(takenNames.map((name) => name.trim().toLowerCase()));
+  return z.object({
+    name: z
+      .string()
+      .trim()
+      .min(1, t("validation.nameRequired"))
+      .refine((name) => !taken.has(name.toLowerCase()), {
+        message: t("validation.nameUnique"),
+      }),
+    provider: z.enum([
+      "GITHUB",
+      "GITLAB",
+      "BITBUCKET",
+      "AZURE_DEVOPS",
+      "GITEA",
+    ]),
+    credentials: z.record(z.string(), z.string().optional()).optional(),
+    settings: z.record(z.string(), z.string().optional()).optional(),
+    isActive: z.boolean().optional(),
+  });
+}
 
-type FormData = z.infer<typeof formSchema>;
+type FormData = z.infer<ReturnType<typeof createFormSchema>>;
 
 /** Optional provider fields left blank must not be stored as empty strings. */
 function compactRecord(
@@ -98,6 +122,24 @@ export function CodeRepositoryModal({
     useClientQueries(schema).codeRepository.useUpsert();
   const { mutateAsync: updateRepository } =
     useClientQueries(schema).codeRepository.useUpdate();
+
+  const { data: liveRepositories } = useClientQueries(
+    schema
+  ).codeRepository.useFindMany({
+    where: { isDeleted: false },
+    select: { id: true, name: true },
+  });
+  const takenNames = useMemo(
+    () =>
+      (liveRepositories ?? [])
+        .filter((row) => row.id !== repository?.id)
+        .map((row) => row.name),
+    [liveRepositories, repository?.id]
+  );
+  const formSchema = useMemo(
+    () => createFormSchema(t, takenNames),
+    [t, takenNames]
+  );
 
   const form = useForm<FormData>({
     resolver: standardSchemaResolver(formSchema),
