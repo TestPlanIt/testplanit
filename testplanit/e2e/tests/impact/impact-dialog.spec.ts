@@ -243,7 +243,7 @@ test.describe("Impact dialog", () => {
     await test.step("Review: both suggestions are pre-selected with their reasons; the uncovered file is called out", async () => {
       await expect(
         impactDialog.getByTestId("impact-affected-title")
-      ).toContainText("2 affected tests");
+      ).toContainText("Selected 2 of 2 test cases");
       await expect(impactDialog.getByTestId("impact-summary")).toBeVisible();
 
       const pinnedRow = impactDialog.getByTestId(
@@ -253,13 +253,13 @@ test.describe("Impact dialog", () => {
         `impact-recommendation-${affectedCaseId}`
       );
       await expect(pinnedRow).toBeVisible();
-      await expect(pinnedRow).toHaveAttribute("data-selected", "true");
+      await expect(pinnedRow).toHaveAttribute("data-state", "selected");
       await expect(pinnedRow).toContainText(pinnedName);
       await expect(
         pinnedRow.getByTestId(`impact-recommendation-checkbox-${pinnedCaseId}`)
       ).toBeChecked();
       await expect(affectedRow).toBeVisible();
-      await expect(affectedRow).toHaveAttribute("data-selected", "true");
+      await expect(affectedRow).toHaveAttribute("data-state", "selected");
       await expect(affectedRow).toContainText(affectedName);
 
       // Expanding a row reveals the reason detail for its layer.

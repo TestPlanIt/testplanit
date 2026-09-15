@@ -38,6 +38,7 @@ export interface ImpactAnalysisResultPayload {
   warnings: AnalysisWarning[];
   stats?: {
     ai?: { tokens?: { total: number } };
+    thresholds?: { affected: number; min: number };
     [key: string]: unknown;
   };
 }

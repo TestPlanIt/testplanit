@@ -586,6 +586,7 @@ export const processor = async (
         searchMode: pathLayer.searchMode,
         ...(aiStats ? { ai: aiStats } : {}),
         durationsMs,
+        thresholds: { affected: cfg.affectedThreshold, min: cfg.minScore },
       },
     };
     await saveResult(db, analysisId, result);

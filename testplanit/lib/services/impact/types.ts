@@ -206,6 +206,8 @@ export interface AnalysisStats {
     truncatedBatches: number[];
   };
   durationsMs: Partial<Record<ImpactPhase, number>>;
+  /** The score cut-offs this analysis tiered cases with. */
+  thresholds?: { affected: number; min: number };
 }
 
 /** The engine's output, persisted on ImpactAnalysis.result (minus cases). */

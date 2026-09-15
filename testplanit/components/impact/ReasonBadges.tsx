@@ -39,7 +39,7 @@ export const REASON_KIND_ORDER: ReasonKind[] = [
   "LINKED",
 ];
 
-const REASON_LABEL_KEY: Record<ReasonKind, string> = {
+export const REASON_LABEL_KEY: Record<ReasonKind, string> = {
   PIN: "reasons.pin",
   ISSUE: "reasons.issue",
   PATH: "reasons.path",
@@ -48,7 +48,10 @@ const REASON_LABEL_KEY: Record<ReasonKind, string> = {
   LINKED: "affected.tierRelated",
 };
 
-const REASON_ICON: Record<ReasonKind, ComponentType<{ className?: string }>> = {
+export const REASON_ICON: Record<
+  ReasonKind,
+  ComponentType<{ className?: string }>
+> = {
   PIN: Pin,
   ISSUE: Ticket,
   PATH: SearchCode,
