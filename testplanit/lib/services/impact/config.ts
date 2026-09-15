@@ -34,7 +34,7 @@ export interface ImpactConfig {
   issueScanMaxCommitFetches: number;
   /** A commit touching more files than this is treated as noise and skipped. */
   issueScanMaxFilesPerCommit: number;
-  /** Manual full-history scan: how many commits to walk before stopping. */
+  /** Manual full-history scan: commits read per run; a rerun continues where the last stopped. */
   issueScanFullMaxCommits: number;
   /** Manual full-history scan: commits whose file lists are read. */
   issueScanFullMaxCommitFetches: number;

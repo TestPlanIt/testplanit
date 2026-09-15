@@ -15,7 +15,10 @@ import { repoFileCache } from "~/lib/integrations/cache/RepoFileCache";
  * The cache is one JSON list per (config, branch) in Valkey, newest first and
  * contiguous from the tip. It is trusted only where the fresh walk from the
  * current tip meets it; if the tip has moved somewhere the cache does not
- * know (a force-push, a rebase), the fresh walk replaces it.
+ * know (a force-push, a rebase), the fresh walk replaces it. The cap bounds
+ * what one run reads from the provider, so each full-history run extends the
+ * cache by up to that many commits until it reaches the start of the branch
+ * or the cache ceiling.
  */
 
 export interface CommitWalkSource {
@@ -43,7 +46,10 @@ export interface CommitWalkStore {
 export interface WalkCommitsOptions {
   /** Commits older than this many days are left out; Infinity walks everything. */
   lookbackDays: number;
-  /** Most commits returned by this run, fresh and cached together. */
+  /**
+   * Most commits this run reads from the provider, fresh and continuation
+   * together. Commits the cache already holds do not count.
+   */
   maxCommits: number;
   /**
    * When the cached list does not reach the start of the branch, keep walking
@@ -68,7 +74,10 @@ export interface WalkCommitsOptions {
 export interface WalkCommitsResult {
   /** Newest first. */
   commits: RepoCommit[];
-  /** The cap stopped the walk before the window or the branch start. */
+  /**
+   * The walk ended (cap, cache ceiling, or a stop request) before the window
+   * or the branch start; the returned list does not cover the requested range.
+   */
   truncated: boolean;
   /** The returned list reaches the first commit of the branch. */
   complete: boolean;
@@ -147,8 +156,8 @@ export async function walkCommits(
   let capHit = false;
   let exhausted = false;
   let cancelled = false;
-  const report = (fromCache: number) =>
-    opts.onProgress?.(fresh.length + fromCache, fromCache);
+  const report = (scanned: number, fromCache: number) =>
+    opts.onProgress?.(scanned, fromCache);
   const stopRequested = async () => {
     if (!opts.shouldStop || !(await opts.shouldStop())) return false;
     cancelled = true;
@@ -164,7 +173,7 @@ export async function walkCommits(
       page,
       perPage: COMMITS_PER_PAGE,
     });
-    await report(0);
+    await report(fresh.length, 0);
     for (const commit of result.commits) {
       const hit = cachedIndex.get(commit.sha);
       if (hit !== undefined) {
@@ -200,39 +209,38 @@ export async function walkCommits(
     complete = exhausted;
   }
   const fromCacheTotal = cacheUsable ? known.length - fresh.length : 0;
-  if (cacheUsable) await report(fromCacheTotal);
+  if (cacheUsable) await report(known.length, fromCacheTotal);
 
-  // Phase 2: a full walk resumes from the oldest known commit.
-  let truncated = capHit;
+  // Phase 2: a full walk resumes from the oldest known commit, spending what
+  // is left of this run's read budget. A cache at its ceiling cannot grow,
+  // so there is nothing to gain from reading past it.
   if (
     opts.continueFromCache &&
     !complete &&
     !reachedCutoff &&
     !capHit &&
-    known.length < opts.maxCommits &&
-    known.length > 0
+    known.length > 0 &&
+    known.length < COMMIT_CACHE_MAX
   ) {
     const seen = new Set(known.map((commit) => commit.sha));
     const oldest = known[known.length - 1];
+    let read = fresh.length;
     continuation: for (let page = 1; ; page++) {
-      if (await stopRequested()) {
-        truncated = true;
-        break;
-      }
+      if (await stopRequested()) break;
       const result = await source.listCommits(oldest.sha, {
         page,
         perPage: COMMITS_PER_PAGE,
       });
-      await report(fromCacheTotal);
       for (const commit of result.commits) {
         if (seen.has(commit.sha)) continue;
-        if (known.length >= opts.maxCommits) {
-          truncated = true;
+        if (read >= opts.maxCommits || known.length >= COMMIT_CACHE_MAX) {
           break continuation;
         }
         seen.add(commit.sha);
         known.push(commit);
+        read++;
       }
+      await report(known.length, fromCacheTotal);
       if (!result.hasMore || result.commits.length === 0) {
         complete = true;
         break;
@@ -254,16 +262,19 @@ export async function walkCommits(
     });
   }
 
-  // The view this run wanted: inside the window, under the cap.
+  // The view this run wanted: everything known inside the window. The known
+  // list covers the window once it holds a commit older than the cutoff or
+  // reaches the start of the branch; otherwise the walk ended short.
   let commits = known;
+  let coversWindow = complete || reachedCutoff;
   if (Number.isFinite(cutoff)) {
     const firstOld = commits.findIndex((commit) => authoredMs(commit) < cutoff);
-    if (firstOld >= 0) commits = commits.slice(0, firstOld);
+    if (firstOld >= 0) {
+      commits = commits.slice(0, firstOld);
+      coversWindow = true;
+    }
   }
-  if (commits.length > opts.maxCommits) {
-    commits = commits.slice(0, opts.maxCommits);
-    truncated = true;
-  }
+  const truncated = !coversWindow;
   const returnedComplete = complete && commits.length === known.length;
   // Fresh commits lead, cached ones follow, continuation comes last.
   const fromCache = Math.min(

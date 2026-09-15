@@ -28,10 +28,9 @@ function commit(n: number, daysAgo = n): RepoCommit {
 /** A branch whose history is commit(1) (newest) … commit(total). */
 function branch(total: number, perPage = 100) {
   const all = Array.from({ length: total }, (_, i) => commit(i + 1));
-  const bySha = new Map(all.map((c, i) => [c.sha, i]));
   const listCommits = vi.fn(
     async (ref: string, opts: { page?: number; perPage?: number } = {}) => {
-      const start = ref === "main" ? 0 : (bySha.get(ref) ?? -1);
+      const start = ref === "main" ? 0 : all.findIndex((c) => c.sha === ref);
       if (start < 0) return { commits: [], hasMore: false };
       const size = opts.perPage ?? perPage;
       const from = start + ((opts.page ?? 1) - 1) * size;
@@ -138,12 +137,14 @@ describe("walkCommits", () => {
       commits: repo.all.slice(0, 100),
     });
 
+    const onProgress = vi.fn();
     const result = await walkCommits(repo, "main", {
       lookbackDays: Number.POSITIVE_INFINITY,
       maxCommits: 1000,
       continueFromCache: true,
       store,
       now,
+      onProgress,
     });
 
     expect(result.commits).toHaveLength(250);
@@ -159,9 +160,11 @@ describe("walkCommits", () => {
     expect(refs.slice(1).every((ref) => ref === repo.all[99].sha)).toBe(true);
     expect(store.value()).toMatchObject({ complete: true });
     expect(store.value()?.commits).toHaveLength(250);
+    // Progress keeps counting through the continuation.
+    expect(onProgress).toHaveBeenLastCalledWith(250, 100);
   });
 
-  it("a resumed walk still honours the cap and keeps the cache growing", async () => {
+  it("a resumed walk spends the cap on new reads only and keeps the cache growing", async () => {
     const repo = branch(250);
     const store = memoryStore({
       branch: "main",
@@ -173,16 +176,82 @@ describe("walkCommits", () => {
 
     const result = await walkCommits(repo, "main", {
       lookbackDays: Number.POSITIVE_INFINITY,
-      maxCommits: 180,
+      maxCommits: 100,
       continueFromCache: true,
       store,
       now,
     });
 
-    expect(result.commits).toHaveLength(180);
-    expect(result).toMatchObject({ truncated: true, complete: false });
-    expect(store.value()?.commits).toHaveLength(180);
+    expect(result.commits).toHaveLength(200);
+    expect(result).toMatchObject({
+      truncated: true,
+      complete: false,
+      fromCache: 100,
+    });
+    expect(store.value()?.commits).toHaveLength(200);
     expect(store.value()).toMatchObject({ complete: false });
+  });
+
+  it("a rerun after a capped full walk continues from where it stopped", async () => {
+    const repo = branch(250);
+    const store = memoryStore();
+    const opts = {
+      lookbackDays: Number.POSITIVE_INFINITY,
+      maxCommits: 100,
+      continueFromCache: true,
+      store,
+      now,
+    };
+
+    const first = await walkCommits(repo, "main", opts);
+    expect(first.commits).toHaveLength(100);
+    expect(first).toMatchObject({ truncated: true, complete: false });
+
+    const second = await walkCommits(repo, "main", opts);
+    expect(second.commits).toHaveLength(200);
+    expect(second).toMatchObject({
+      truncated: true,
+      complete: false,
+      fromCache: 100,
+    });
+
+    const third = await walkCommits(repo, "main", opts);
+    expect(third.commits).toHaveLength(250);
+    expect(third).toMatchObject({
+      truncated: false,
+      complete: true,
+      fromCache: 200,
+    });
+    expect(store.value()).toMatchObject({ complete: true });
+  });
+
+  it("a rerun continues even when new commits landed on the tip", async () => {
+    const old = branch(250);
+    const store = memoryStore();
+    const opts = {
+      lookbackDays: Number.POSITIVE_INFINITY,
+      maxCommits: 100,
+      continueFromCache: true,
+      store,
+      now,
+    };
+    await walkCommits(old, "main", opts);
+
+    // Five commits newer than everything cached, then the old history.
+    const newer = Array.from({ length: 5 }, (_, i) => commit(-i, 0));
+    const grown = branch(0);
+    grown.all.push(...newer.reverse(), ...old.all);
+    const result = await walkCommits(grown, "main", opts);
+
+    // 5 fresh + 100 cached + 95 more from the continuation.
+    expect(result.commits).toHaveLength(200);
+    expect(result).toMatchObject({
+      truncated: true,
+      complete: false,
+      fromCache: 100,
+    });
+    expect(result.commits[0].sha).toBe(newer[0].sha);
+    expect(store.value()?.commits).toHaveLength(200);
   });
 
   it("does not resume past the window for a recent-window walk", async () => {
@@ -258,7 +327,7 @@ describe("walkCommits", () => {
     expect(store.value()?.commits).toHaveLength(50);
   });
 
-  it("caps the returned list from a longer cache and reports it truncated", async () => {
+  it("returns a longer complete cache in full without reading it again", async () => {
     const repo = branch(250);
     const store = memoryStore({
       branch: "main",
@@ -275,12 +344,35 @@ describe("walkCommits", () => {
       now,
     });
 
-    expect(result.commits).toHaveLength(60);
+    expect(result.commits).toHaveLength(250);
     expect(result).toMatchObject({
-      truncated: true,
-      complete: false,
-      fromCache: 60,
+      truncated: false,
+      complete: true,
+      fromCache: 250,
     });
+    expect(repo.listCommits).toHaveBeenCalledTimes(1);
+  });
+
+  it("reports a recent-window walk truncated when the cache ends inside the window", async () => {
+    const repo = branch(250);
+    const store = memoryStore({
+      branch: "main",
+      tipSha: repo.all[0].sha,
+      complete: false,
+      walkedAt: now.toISOString(),
+      commits: repo.all.slice(0, 20),
+    });
+
+    const result = await walkCommits(repo, "main", {
+      lookbackDays: 30,
+      maxCommits: 1000,
+      store,
+      now,
+    });
+
+    expect(result.commits).toHaveLength(20);
+    expect(result).toMatchObject({ truncated: true, complete: false });
+    expect(repo.listCommits).toHaveBeenCalledTimes(1);
   });
 
   it("reports progress per page with the cached share", async () => {
