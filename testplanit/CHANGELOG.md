@@ -1,3 +1,13 @@
+## [1.1.0-beta.10](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.9...v1.1.0-beta.10) (2026-09-15)
+
+### Bug Fixes
+
+* **impact:** full-history ticket scan continues past the commit cap on rerun ([c473c64](https://github.com/TestPlanIt/testplanit/commit/c473c64980a8f9bc5e12147f1bce4cfa16887e75))
+
+### Enhancements
+
+* **settings:** share the path patterns card and accept a blank path as repository root ([3b0ad01](https://github.com/TestPlanIt/testplanit/commit/3b0ad01c71425d0331b413af9daf44732153e1de))
+
 ## [1.1.0-beta.9](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.8...v1.1.0-beta.9) (2026-09-15)
 
 ### Features
