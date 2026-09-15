@@ -199,7 +199,10 @@ const ProjectOverviewSunburstChart: React.FC<
       .on("mouseover", (event, d) => {
         path.interrupt(); // Interrupt ongoing transitions
         path.attr("fill-opacity", 0.5);
-        d3.select(event.currentTarget).attr("fill-opacity", 1);
+        d3.select(event.currentTarget as SVGPathElement).attr(
+          "fill-opacity",
+          1
+        );
         if (tooltipRef.current) {
           tooltipRef.current.style.display = "block";
           const count = d.value || 0;

@@ -55,12 +55,12 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
-    "zod": "^4.6.0"
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@types/node": "^26.5.1",
     "@vitest/coverage-v8": "^4.1.11",
-    "@zenstackhq/orm": "^3.9.3",
+    "@zenstackhq/orm": "^3.9.4",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
     "vitest": "^4.1.11"
