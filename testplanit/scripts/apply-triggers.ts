@@ -74,6 +74,20 @@ function resolveAuditFnSqlPath(): string {
  */
 const APPLY_TRIGGERS_LOCK_KEY = 798_113_001;
 
+/**
+ * Bounds how long any single lock wait inside one apply attempt (the advisory lock above, and
+ * every DROP/CREATE TRIGGER below) can queue behind live traffic. Without this, a DROP TRIGGER
+ * queued for an ACCESS EXCLUSIVE lock sits in Postgres's FIFO lock queue and blocks every NEW
+ * query against that table too — not just this connection (2026-09-15 incident: froze 58/60
+ * active backends for 5+ minutes during a blue/green deploy, twice). Set per-connection so it
+ * covers the whole apply uniformly. A 55P03 (lock_timeout) is safe to retry from scratch — see
+ * applyAuditTriggers() — because every statement here is idempotent (DROP IF EXISTS / CREATE OR
+ * REPLACE).
+ */
+const LOCK_TIMEOUT_MS = 5_000;
+const MAX_LOCK_TIMEOUT_RETRIES = 3;
+const LOCK_TIMEOUT_RETRY_DELAY_MS = 3_000;
+
 export interface ApplyAuditTriggersOptions {
   /** Connection string override. Defaults to DIRECT_DATABASE_URL ?? DATABASE_URL. */
   connectionString?: string;
@@ -733,6 +747,34 @@ export async function applyAuditTriggers(
   opts: ApplyAuditTriggersOptions = {}
 ): Promise<void> {
   const log = opts.log ?? ((m: string) => console.log(m));
+  for (let attempt = 1; attempt <= MAX_LOCK_TIMEOUT_RETRIES; attempt++) {
+    try {
+      await applyAuditTriggersOnce(opts, log);
+      return;
+    } catch (err) {
+      const isLockTimeout = (err as { code?: string }).code === "55P03";
+      if (!isLockTimeout || attempt === MAX_LOCK_TIMEOUT_RETRIES) {
+        throw err;
+      }
+      log(
+        `[apply-triggers] lock_timeout — a table is busy with live traffic (attempt ${attempt}/${MAX_LOCK_TIMEOUT_RETRIES}), retrying in ${LOCK_TIMEOUT_RETRY_DELAY_MS}ms`
+      );
+      await new Promise((resolve) =>
+        setTimeout(resolve, LOCK_TIMEOUT_RETRY_DELAY_MS)
+      );
+    }
+  }
+}
+
+/**
+ * One apply attempt. Split out so applyAuditTriggers() can retry it wholesale on a lock_timeout
+ * — every statement below is DROP IF EXISTS / CREATE OR REPLACE, so restarting from scratch mid-
+ * apply is safe.
+ */
+async function applyAuditTriggersOnce(
+  opts: ApplyAuditTriggersOptions,
+  log: (message: string) => void
+): Promise<void> {
   const useLock = opts.lock ?? true;
   const connectionString =
     opts.connectionString ??
@@ -754,6 +796,9 @@ export async function applyAuditTriggers(
 
   const client = new Client({ connectionString });
   await client.connect();
+  // Bounds every lock wait below (the advisory lock and every DROP/CREATE TRIGGER) — see
+  // LOCK_TIMEOUT_MS.
+  await client.query(`SET lock_timeout = '${LOCK_TIMEOUT_MS}ms'`);
   let locked = false;
   try {
     // 0. Serialize concurrent appliers (multiple booting replicas) so their DROP/CREATE TRIGGER
