@@ -1,3 +1,16 @@
+## [1.1.0-beta.11](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.10...v1.1.0-beta.11) (2026-09-15)
+
+### Bug Fixes
+
+* **admin:** refuse a code repository name another live repository already uses ([4f462c8](https://github.com/TestPlanIt/testplanit/commit/4f462c88f18c1d958bf64b592e78bf5b33e10170))
+* **audit:** bound trigger apply lock waits and retry on lock_timeout ([b4f1d85](https://github.com/TestPlanIt/testplanit/commit/b4f1d8536b1b9a3f96222c143f8536ebf6307334))
+* **impact:** change paragraph to div for issue scan display ([706aa8f](https://github.com/TestPlanIt/testplanit/commit/706aa8f7e7cda74259029ae68770e9087339275e))
+
+### Enhancements
+
+* **impact:** code pins table with resizable columns, issue chips, and optimistic removal ([9dfc961](https://github.com/TestPlanIt/testplanit/commit/9dfc961a0cface8b9fffd4313ded8374224c5780))
+* **impact:** search branches at the provider past the 500-branch listing ([deecd39](https://github.com/TestPlanIt/testplanit/commit/deecd391f021d5b3e54de43c5aa7e50a6f48f536))
+
 ## [1.1.0-beta.10](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.9...v1.1.0-beta.10) (2026-09-15)
 
 ### Bug Fixes
