@@ -1,6 +1,10 @@
 "use client";
 
 import { CodeRepositoryName } from "@/components/CodeRepositoryName";
+import {
+  PathPatternsCard,
+  pathPatternsSchema,
+} from "@/components/code-repositories/PathPatternsCard";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { DateFormatter } from "@/components/DateFormatter";
@@ -24,7 +28,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -45,18 +48,15 @@ import { formatInTimeZone } from "date-fns-tz";
 import {
   AlertTriangle,
   CheckCircle,
-  Eye,
   History,
   Loader2,
-  Plus,
   RefreshCw,
   ScanSearch,
-  Trash,
   XCircle,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useFieldArray, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod/v4";
 import type { AsyncOptionsFetcher } from "~/hooks/useAsyncComboboxOptions";
@@ -164,17 +164,10 @@ export function ImpactRepositoryForm({
   const existingConfig = config;
   const readOnly = mode === "view";
 
-  const pathPatternSchema = z.object({
-    path: z.string().min(1, tRepo("validation.pathRequired")),
-    pattern: z.string().min(1, tRepo("validation.patternRequired")),
-  });
-
   const formSchema = z.object({
     repositoryId: z.string().min(1, tRepo("validation.repositoryRequired")),
     branch: z.string().optional().default(""),
-    pathPatterns: z
-      .array(pathPatternSchema)
-      .min(1, tRepo("validation.pathPatternRequired")),
+    pathPatterns: pathPatternsSchema(tRepo),
     cacheEnabled: z.boolean().default(true),
     cacheTtlDays: z.number().int().min(1).max(30).default(7),
     issueScanEnabled: z.boolean().default(true),
@@ -291,11 +284,6 @@ export function ImpactRepositoryForm({
   const form = useForm<FormData>({
     resolver: standardSchemaResolver(formSchema) as any,
     defaultValues: defaultFormValues,
-  });
-
-  const { fields, append, remove } = useFieldArray({
-    control: form.control as any,
-    name: "pathPatterns",
   });
 
   useEffect(() => {
@@ -631,162 +619,19 @@ export function ImpactRepositoryForm({
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>{tRepo("pathPatterns.title")}</CardTitle>
-            <CardDescription>{t("pathPatterns.description")}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {fields.map((field, index) => (
-              <div key={field.id} className="flex items-start gap-2">
-                <FormField
-                  control={form.control as any}
-                  name={`pathPatterns.${index}.path`}
-                  render={({ field }) => (
-                    <FormItem className="flex-1">
-                      {index === 0 && (
-                        <FormLabel>{tRepo("pathPatterns.pathLabel")}</FormLabel>
-                      )}
-                      <FormControl>
-                        <Input
-                          {...field}
-                          placeholder={t("pathPatterns.pathPlaceholder")}
-                          data-testid={`impact-path-${index}`}
-                          disabled={readOnly}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control as any}
-                  name={`pathPatterns.${index}.pattern`}
-                  render={({ field }) => (
-                    <FormItem className="flex-1">
-                      {index === 0 && (
-                        <FormLabel>
-                          {tRepo("pathPatterns.patternLabel")}
-                        </FormLabel>
-                      )}
-                      <FormControl>
-                        <Input
-                          {...field}
-                          placeholder="**/*"
-                          data-testid={`impact-pattern-${index}`}
-                          disabled={readOnly}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className={index === 0 ? "mt-8" : ""}
-                  onClick={() => remove(index)}
-                  disabled={readOnly || fields.length === 1}
-                  aria-label={tCommon("actions.delete")}
-                >
-                  <Trash className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
-
-            {!readOnly && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => append({ path: "", pattern: "**/*" })}
-                data-testid="impact-add-path"
-              >
-                <Plus className="h-4 w-4" />
-                {tRepo("pathPatterns.addPath")}
-              </Button>
-            )}
-
-            <div className="flex items-center gap-3 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handlePreview}
-                disabled={isPreviewing || !selectedRepositoryId}
-                data-testid="impact-preview-button"
-              >
-                {isPreviewing ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
-                {tRepo("pathPatterns.previewFiles")}
-              </Button>
-              {isPreviewing && previewProgress && (
-                <span className="text-sm text-muted-foreground">
-                  {previewProgress.step === "branch" &&
-                    tRepo("preview.resolvingBranch")}
-                  {previewProgress.step === "listing" &&
-                    (previewProgress.filesFound != null
-                      ? tRepo("preview.scanningFilesCount", {
-                          count: previewProgress.filesFound,
-                          scope: previewProgress.scope ?? "",
-                        })
-                      : tRepo("preview.scanningFiles", {
-                          scope: previewProgress.scope ?? "",
-                        }))}
-                  {previewProgress.step === "filtering" &&
-                    tRepo("preview.filtering", {
-                      count: previewProgress.totalFiles ?? 0,
-                    })}
-                  {previewProgress.step === "rate-limited" &&
-                    tRepo("preview.rateLimited", {
-                      seconds: previewProgress.waitSeconds ?? 0,
-                    })}
-                </span>
-              )}
-            </div>
-
-            {preview && !preview.error && (
-              <div className="space-y-3">
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <span>
-                    {tRepo("pathPatterns.files", {
-                      count: preview.fileCount,
-                    })}
-                  </span>
-                  <span>{preview.totalSizeFormatted}</span>
-                  {preview.truncated && (
-                    <Badge variant="secondary">
-                      {tRepo("pathPatterns.truncatedBadge")}
-                    </Badge>
-                  )}
-                </div>
-
-                <ScrollArea className="h-48 rounded-md border p-3">
-                  <div className="space-y-1">
-                    {preview.files.map((f) => (
-                      <div
-                        key={f.path}
-                        className="font-mono text-xs text-muted-foreground"
-                      >
-                        {f.path}
-                      </div>
-                    ))}
-                  </div>
-                </ScrollArea>
-              </div>
-            )}
-
-            {preview?.error && (
-              <Alert variant="destructive">
-                <XCircle className="h-4 w-4" />
-                <AlertDescription>{preview.error}</AlertDescription>
-              </Alert>
-            )}
-          </CardContent>
-        </Card>
+        <PathPatternsCard
+          control={form.control as any}
+          description={t("pathPatterns.description")}
+          pathPlaceholder={t("pathPatterns.pathPlaceholder")}
+          defaultPattern="**/*"
+          readOnly={readOnly}
+          testIdPrefix="impact"
+          isPreviewing={isPreviewing}
+          preview={preview}
+          previewProgress={previewProgress}
+          previewDisabled={!selectedRepositoryId}
+          onPreview={handlePreview}
+        />
 
         <Card>
           <CardHeader>

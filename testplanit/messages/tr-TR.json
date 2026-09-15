@@ -2084,6 +2084,7 @@
           "pathLabel": "Yol",
           "patternLabel": "Desen",
           "previewFiles": "Dosyaları Önizle",
+          "rootHint": "Depoyu kök dizininden başlatmak için yolu boş bırakın veya . girin; **/* deseniyle birlikte . yolu her dosyayı kapsar.",
           "scanningRepo": "Depo dosyaları taranıyor… ({seconds}sn)",
           "title": "Yol Desenleri",
           "truncatedBadge": "Sonuçlar eksik olabilir (sağlayıcı sınırlaması)"
@@ -2107,7 +2108,6 @@
         "saveError": "Yapılandırma kaydedilemedi",
         "validation": {
           "pathPatternRequired": "En az bir yol deseni gereklidir",
-          "pathRequired": "Yol gereklidir",
           "patternRequired": "Desen gereklidir",
           "repositoryRequired": "Depo gereklidir"
         },

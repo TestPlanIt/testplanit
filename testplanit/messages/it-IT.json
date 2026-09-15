@@ -2084,6 +2084,7 @@
           "pathLabel": "Percorso",
           "patternLabel": "Modello",
           "previewFiles": "Anteprima dei file",
+          "rootHint": "Lascia il percorso vuoto, oppure inserisci ., per iniziare dalla radice del repository; il percorso . con il pattern **/* include ogni file.",
           "scanningRepo": "Scansione dei file del repository… ({seconds}s)",
           "title": "Modelli di percorso",
           "truncatedBadge": "I risultati potrebbero essere incompleti (limite del fornitore)"
@@ -2107,7 +2108,6 @@
         "saveError": "Impossibile salvare la configurazione",
         "validation": {
           "pathPatternRequired": "È richiesto almeno un modello di percorso",
-          "pathRequired": "Il percorso è richiesto",
           "patternRequired": "È richiesto un modello",
           "repositoryRequired": "È richiesto un repository"
         },

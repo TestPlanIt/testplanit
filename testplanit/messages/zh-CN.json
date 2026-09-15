@@ -2084,6 +2084,7 @@
           "pathLabel": "路径",
           "patternLabel": "模式",
           "previewFiles": "预览文件",
+          "rootHint": "路径留空，或输入 . 以从代码仓库根目录开始；路径 . 配合模式 **/* 可包含所有文件。",
           "scanningRepo": "正在扫描存储库文件…（{seconds}秒）",
           "title": "路径模式",
           "truncatedBadge": "结果可能不完整（受提供商限制）"
@@ -2107,7 +2108,6 @@
         "saveError": "配置保存失败",
         "validation": {
           "pathPatternRequired": "至少需要一种路径模式",
-          "pathRequired": "路径是必需的",
           "patternRequired": "需要模式",
           "repositoryRequired": "需要存储库"
         },

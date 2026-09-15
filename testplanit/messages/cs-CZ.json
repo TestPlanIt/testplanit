@@ -9,14 +9,14 @@
       "completeAction": "Dokončit ({count})",
       "deleteAction": "Odstranit ({count})",
       "editTitle": "Hromadná úprava ({count})",
-      "applyToCount": "Změny se použijí na {count, plural, one {# položku} few {# položky} many {# položky} other {# položek}}.",
+      "applyToCount": "Změny se použijí na {count, plural, one {# položku} few {# položky} many {# položek} other {# položky}}.",
       "tagsAdditiveHint": "Vybrané štítky se přidají ke každé položce; existující štítky zůstanou zachovány.",
       "completeSuccess": "{count, plural, one {# položka dokončena} few {# položky dokončeny} many {# položky dokončeno} other {# položek dokončeno}}",
       "deleteSuccess": "{count, plural, one {# položka odstraněna} few {# položky odstraněny} many {# položky odstraněno} other {# položek odstraněno}}",
       "partialFailure": "{failedCount} z {totalCount} položek se nepodařilo aktualizovat"
     },
     "of": "z",
-    "on": "dne",
+    "on": "na",
     "at": "v",
     "in": "v",
     "add": "Přidat",
@@ -29,7 +29,7 @@
     "searchCases": "{count, plural, =0 {Hledat případy} one {Hledat # případ} few {Hledat # případy} many {Hledat # případu} other {Hledat # případů}}",
     "searchProjects": "{count, plural, =0 {Hledat projekty} one {Hledat # projekt} few {Hledat # projekty} many {Hledat # projektu} other {Hledat # projektů}}",
     "searchTags": "Hledat štítky...",
-    "searchRuns": "{count, plural, =0 {Hledat Test Runy} one {Hledat # Test Run} few {Hledat # Test Runy} many {Hledat # Test Runu} other {Hledat # Test Runů}}",
+    "searchRuns": "{count, plural, =0 {Hledat testovací běh} one {Hledat # testovací běh} few {Hledat # testovací běhy} many {Hledat # testovací běhy} other {Hledat # testovací běhy}}",
     "searchSessions": "{count, plural, =0 {Hledat relace} one {Hledat # relaci} few {Hledat # relace} many {Hledat # relace} other {Hledat # relací}}",
     "searchMilestones": "{count, plural, =0 {Hledat milníky} one {Hledat # milník} few {Hledat # milníky} many {Hledat # milníků} other {Hledat # milníky}}",
     "search": "Hledat...",
@@ -78,7 +78,7 @@
       "collapse": "Sbalit",
       "addResult": "Přidat výsledek",
       "passAndNext": "Projít & Další",
-      "viewInRepository": "Zobrazit v repozitáři",
+      "viewInRepository": "Zobrazit v úložišti",
       "resultAdded": "Výsledek testu přidán",
       "resultAddedDescription": "Výsledek testu byl úspěšně přidán.",
       "resultUpdated": "Výsledek testu aktualizován",
@@ -90,19 +90,19 @@
       "actionsLabel": "Akce",
       "actionsWithAlerts": "Akce ({count, number} nepřečteno)",
       "assign": "Přiřadit",
-      "assignSelected": "Přiřadit {count, plural, one {# případ} few {# případy} many {# případu} other {# případů}}",
+      "assignSelected": "Přiřadit {count, plural, one {# případ} few {# případy} many {# případů} other {# případy}}",
       "refresh": "Obnovit",
       "addResultSelected": "Přidat výsledek k {count, plural, one {# případu} few {# případům} many {# případu} other {# případům}}",
       "resultsAdded": "Přidáno {count, plural, one {# výsledek} few {# výsledky} many {# výsledku} other {# výsledků}}",
-      "resultsAddedDescription": "{count, plural, one {Výsledek byl přidán k # testovacímu případu} few {Výsledky byly přidány k # testovacím případům} many {Výsledky byly přidány k # testovacího případu} other {Výsledky byly přidány k # testovacím případům}} úspěšně",
+      "resultsAddedDescription": "{count, plural, one {Výsledek byl přidán k # testovacímu případu} few {Výsledky byly přidány k # testovacím případům} many {Výsledky byly přidány k # testovacím případům} other {Výsledky byly přidány k # testovacím případům}} úspěšně",
       "addingResultsToMultiple": "Přidávání výsledků k {count, plural, one {# testovacímu případu} few {# testovacím případům} many {# testovacího případu} other {# testovacím případům}}",
-      "addedToTestRun": "Přidáno do Test Run",
-      "addedToTestRunDescription": "Testovací případ byl přidán do Test Run.",
-      "noAvailableTestRuns": "Všechny aktivní Test Runy již obsahují tento testovací případ.",
+      "addedToTestRun": "Přidáno do testovacího běhu",
+      "addedToTestRunDescription": "Testovací případ byl přidán do testovacího běhu.",
+      "noAvailableTestRuns": "Všechny aktivní testovací běhy již obsahují tento testovací případ.",
       "resultUpdateError": "Nepodařilo se aktualizovat výsledek testu",
       "resultDeleteError": "Nepodařilo se smazat výsledek testu",
       "selectStatus": "Vybrat stav",
-      "addToTestRun": "Přidat do Test Run",
+      "addToTestRun": "Přidat do testovacího běhu",
       "status": "Stav",
       "resultDetailsPlaceholder": "Zadejte podrobnosti výsledku...",
       "select": "Vybrat",
@@ -138,10 +138,10 @@
         "details": "Podrobnosti automatizovaného výsledku testu",
         "import": {
           "title": "Importovat výsledky testů",
-          "description": "Nahrajte soubory s výsledky testů pro import do nového Test Runu. Podporuje formáty JUnit, TestNG, xUnit, NUnit, MSTest, Mocha a Cucumber.",
+          "description": "Nahrajte soubory s výsledky testů pro import do nového testovacího běhu. Podporuje formáty JUnit, TestNG, xUnit, NUnit, MSTest, Mocha a Cucumber.",
           "testRun": {
-            "label": "Test Run",
-            "placeholder": "Vyberte Test Run"
+            "label": "Testovací běh",
+            "placeholder": "Vyberte testovací běh"
           },
           "file": {
             "label": "Soubory s výsledky testů"
@@ -155,7 +155,7 @@
             "help": "Přiřaďte každý výsledek k případu podle ID v názvu testu nebo vlastnosti test_id, aby přejmenování testu nevytvořilo duplicitní případ.",
             "off": "Vypnuto — shoda podle názvu a třídy",
             "name": "Podle ID v názvu testu",
-            "property": "Podle vlastnosti test_id",
+            "property": "Podle aributu test_id",
             "auto": "Automaticky — atribut, poté název testu"
           },
           "caseIdFormat": {
@@ -167,9 +167,9 @@
           "progress": {
             "initializing": "Inicializace importu...",
             "validating": "Validace vstupních dat...",
-            "creatingRun": "Vytváření Test Run...",
+            "creatingRun": "Vytváření testovacího běhu...",
             "fetchingTemplate": "Načítání dat šablony...",
-            "countingTests": "Zpracování {count} testovacích případů z {files} souboru(ů)...",
+            "countingTests": "Zpracování {count} testovacích případů z {files} souborů...",
             "parsingFile": "Zpracování souboru {current} z {total}...",
             "processingSuite": "Zpracování sady: {name}",
             "processingCase": "Zpracování testovacího případu {current} z {total}...",
@@ -210,7 +210,7 @@
     "auth": {
       "internal": "E-mail/Heslo",
       "sso": "Pouze SSO",
-      "both": "E-mail a SSO",
+      "both": "Email a SSO",
       "scim": "Zřízeno pomocí SCIM"
     },
     "status": {
@@ -253,7 +253,7 @@
       "enabled": "Povoleno",
       "projects": "Projekty",
       "iconColor": "Ikona/Barva",
-      "selectWorkflow": "Vybrat Workflow",
+      "selectWorkflow": "Vybrat postup",
       "icon": "Ikona",
       "systemName": "Systémový název",
       "aliases": "Aliasy",
@@ -285,7 +285,7 @@
       "testCases": "Testovací případy",
       "sessions": "Relace",
       "sharedSteps": "Sdílené kroky",
-      "email": "E-mail",
+      "email": "Email",
       "password": "Heslo",
       "confirmPassword": "Potvrdit heslo",
       "token": "Token",
@@ -313,16 +313,16 @@
       "dateCreated": "Datum vytvoření",
       "apiUser": "API uživatel",
       "unverified": "Neověřeno",
-      "selfRegistered": "Samoregistrace",
+      "selfRegistered": "Vlastní registrace",
       "role_placeholder": "Vyberte roli",
       "usersCreated": "Vytvoření uživatelé",
       "groups": "Skupiny",
       "apiAccess": "API přístup",
-      "requiredForAdmin": "vyžadováno pro Administrátora",
+      "requiredForAdmin": "vyžadováno pro administrátora",
       "account": "Účet",
       "accountHistory": "Historie účtu",
       "activity": "Aktivita",
-      "activityLog": "Protokol aktivit",
+      "activityLog": "Záznam aktivit",
       "lastActive": "Naposledy aktivní",
       "theme": "Motiv",
       "locale": "Jazyk",
@@ -339,8 +339,8 @@
       "createdAt": "Vytvořeno",
       "completedOn": "Dokončeno",
       "variants": "Varianty",
-      "emailVerified": "E-mail ověřen",
-      "issueTracker": "Issue Tracker",
+      "emailVerified": "Email ověřen",
+      "issueTracker": "Úkolník",
       "caseFields": "Pole případu",
       "resultFields": "Pole výsledku",
       "displayName": "Zobrazovaný název",
@@ -361,7 +361,7 @@
       "noAttachments": "Bez příloh",
       "inReview": "V kontrole",
       "notInReview": "Není v kontrole",
-      "testRuns": "Test Runy",
+      "testRuns": "Testovací běhy",
       "title": "Název",
       "project": "Projekt",
       "priority": "Priorita",
@@ -384,14 +384,14 @@
       "note": "Poznámka",
       "externalId": "Externí ID",
       "forecast": "Předpověď",
-      "forecastManual": "Předpověď manuál",
-      "forecastAutomated": "Předpověď automatizace",
+      "forecastManual": "Předpověď manuální",
+      "forecastAutomated": "Předpověď automatizovaná",
       "executedAt": "Provedeno v",
       "className": "Třída",
       "suiteName": "Sada",
       "duration": "Doba trvání",
       "session": "Relace",
-      "charter": "Charta",
+      "charter": "Stanovy",
       "summary": "Shrnutí",
       "progress": "Průběh",
       "assertions": "Ověření",
@@ -409,7 +409,7 @@
       "provider": "Poskytovatel",
       "updatedAt": "Aktualizováno",
       "tools": "Nástroje",
-      "codeRepository": "Kódový repozitář",
+      "codeRepository": "Úložiště kódu",
       "aiModels": "Výchozí LLM",
       "configKeys": {
         "edit_results_duration": "Doba úprav výsledků",
@@ -417,7 +417,7 @@
         "notificationSettings": "Globální nastavení notifikací",
         "elasticsearch_replicas": "Počet replik Elasticsearch",
         "review_feature_enabled": "Revize a schvalování povoleno",
-        "review_reminder_threshold_days": "Dny prahu pro připomenutí recenzentů",
+        "review_reminder_threshold_days": "Práh pro upomenutí recenzentů (dnů)",
         "record_key_enabled": "Klíče záznamů povoleny"
       },
       "options": {
@@ -427,7 +427,7 @@
           "invalidChars": "Možnost obsahuje neplatný znak: „{char}“",
           "duplicate": "Možnost musí být jedinečná",
           "systemNameError": "Systémový název je neplatný",
-          "initialHeightMax": "Počáteční výška nesmí přesáhnout 600 px.",
+          "initialHeightMax": "Počáteční výška nesmí přesáhnout 600 pixelů.",
           "displayNameRequiredResult": "Zadejte zobrazovaný název pro pole výsledku.",
           "displayNameRequiredCase": "Zadejte zobrazovaný název pro pole případu.",
           "minValueMaxValue": "Minimální hodnota musí být menší než maximální hodnota a pokud je nastavena jedna, musí být nastavena i druhá.",
@@ -474,7 +474,7 @@
       "invalidDuration": "Zadejte platnou dobu trvání",
       "maxDuration": "Doba trvání nesmí přesáhnout {max} minut",
       "minLength": "{field} musí mít alespoň {min} znaků",
-      "emailFormat": "Neplatný formát e-mailu",
+      "emailFormat": "Neplatný formát emailu",
       "passwordMatch": "Hesla se musí shodovat",
       "unique": "{field} musí být jedinečné",
       "roleRequired": "Role je povinná",
@@ -499,9 +499,9 @@
         "description": "Přiřadit {count, plural, one {# vybraný testovací případ} few {# vybrané testovací případy} many {# vybraného testovacího případu} other {# vybraných testovacích případů}} uživateli"
       },
       "complete": {
-        "title": "Dokončit Test Run",
-        "description": "Opravdu chcete tento Test Run dokončit?",
-        "warning": "Po dokončení nebude možné Test Run upravovat.",
+        "title": "Dokončit testovací běh",
+        "description": "Opravdu chcete tento testovací běh dokončit?",
+        "warning": "Po dokončení nebude možné testovací běh upravovat.",
         "completing": "Dokončování...",
         "apple": {
           "title": "Nakonfigurovat přihlášení přes Apple",
@@ -509,9 +509,9 @@
           "clientId": "ID služby",
           "clientIdPlaceholder": "com.example.service",
           "teamId": "ID týmu",
-          "teamIdPlaceholder": "Vaše 10znakové ID týmu",
+          "teamIdPlaceholder": "Vaše 10-znakové ID týmu",
           "keyId": "ID klíče",
-          "keyIdPlaceholder": "Vaše 10znakové ID klíče",
+          "keyIdPlaceholder": "Vaše 10-znakové ID klíče",
           "privateKey": "Soukromý klíč",
           "privateKeyPlaceholder": "Vložte sem obsah svého soukromého klíče .p8",
           "instructions": {
@@ -546,16 +546,16 @@
       "copyFailed": "Nepodařilo se zkopírovat odkaz do schránky",
       "created": "Úspěšně vytvořeno",
       "createdItem": "{item} úspěšně vytvořeno",
-      "createdDescription": "Test Run byl vytvořen a nyní je viditelný v seznamu Test Runů.",
+      "createdDescription": "Testovací běh byl vytvořen a nyní je viditelný v seznamu testovacích běhů.",
       "createError": "Došlo k neznámé chybě. Zkuste to prosím znovu.",
-      "emptyActive": "Žádné aktivní Test Runy",
-      "emptyCompleted": "Žádné dokončené Test Runy",
+      "emptyActive": "Žádné aktivní testovací běhy",
+      "emptyCompleted": "Žádné dokončené testovací běhy",
       "projectUpdated": "Projekt byl úspěšně aktualizován",
       "projectUpdateError": "Při aktualizaci projektu došlo k chybě",
       "noProjects": "Nebyly nalezeny žádné projekty"
     },
     "placeholders": {
-      "email": "E-mailová adresa",
+      "email": "Emailová adresa",
       "name": "Zadejte název",
       "mission": "Popište svou misi...",
       "selectMilestone": "Vybrat milník",
@@ -594,15 +594,15 @@
       "enterUrl": "Zadejte URL",
       "enterUrlPattern": "Zadejte vzor URL...",
       "domainExample": "example.com",
-      "issueIdExample": "ISSUE-123",
+      "issueIdExample": "PROBLEM-123",
       "selectPriorityValuesOrEmpty": "Vyberte hodnoty priority (nebo ponechte prázdné pro všechny)"
     },
     "errors": {
       "error": "Chyba",
       "somethingWentWrong": "Došlo k neočekávané chybě. Zkuste to prosím později znovu.",
       "completeNotPermitted": "Nemáte oprávnění dokončit tuto položku.",
-      "emailRequired": "Zadejte svou e-mailovou adresu.",
-      "emailInvalid": "Toto není platná e-mailová adresa.",
+      "emailRequired": "Zadejte svou emailovou adresu.",
+      "emailInvalid": "Toto není platná emailová adresa.",
       "passwordRequired": "Heslo je povinné.",
       "confirmPasswordRequired": "Potvrďte své heslo.",
       "passwordDoesNotMeetPolicy": "Heslo nesplňuje bezpečnostní požadavky.",
@@ -614,13 +614,13 @@
       "invalidCredentials": "Neplatné uživatelské jméno nebo heslo",
       "projectNotFound": "Projekt nenalezen",
       "projectNotFoundDescription": "Projekt, který hledáte, neexistuje nebo k němu nemáte přístup.",
-      "tokenRequired": "Zadejte ověřovací token z e-mailu nebo klikněte na odkaz v e-mailu.",
+      "tokenRequired": "Zadejte ověřovací token z emailu nebo klikněte na odkaz v emailu.",
       "noSuccessStatus": "Nebyl vybrán žádný úspěšný stav",
-      "missingTestRunCase": "Chybí ID případu v Test Run",
+      "missingTestRunCase": "Chybí ID případu v testovacím běhu",
       "fieldRequired": "Toto pole je povinné",
       "projectNameExists": "Projekt s tímto názvem již existuje",
       "defaultNotFound": "Výchozí hodnota nebyla nalezena",
-      "emailExists": "Uživatel s tímto e-mailem již existuje",
+      "emailExists": "Uživatel s tímto emailem již existuje",
       "nameExists": "Uživatel s tímto názvem již existuje",
       "duplicateValue": "Tato hodnota je již použita",
       "unauthorized": "Nemáte oprávnění k provedení této akce.",
@@ -668,10 +668,10 @@
       "configurationNameExists": "Název konfigurace již existuje. Zvolte prosím jiný název.",
       "variantNameExists": "Název varianty již existuje. Zvolte prosím jiný název.",
       "categoryNameExists": "Název kategorie již existuje. Zvolte prosím jiný název.",
-      "workflowStateNameExists": "Název stavu workflow již existuje. Zvolte prosím jiný název.",
+      "workflowStateNameExists": "Název stavu postupu již existuje. Zvolte prosím jiný název.",
       "folderNameRequired": "Zadejte prosím název pro složku",
       "folderNameRequiredEnter": "Zadejte název pro složku.",
-      "workflowStateNameRequired": "Zadejte prosím název pro stav workflow",
+      "workflowStateNameRequired": "Zadejte prosím název pro stav postupu",
       "roleNameEmpty": "Název role nesmí být prázdný",
       "groupNameRequired": "Název skupiny je povinný",
       "templateNameRequired": "Zadejte prosím název pro šablonu",
@@ -684,11 +684,11 @@
       "stateRequiredDot": "Stav je povinný.",
       "milestoneTypeNameMinLength": "Název typu milníku musí mít alespoň 2 znaky.",
       "projectNameRequired": "Název projektu je povinný",
-      "workflowScopeRequired": "Zvolte prosím workflow pro stav",
-      "workflowTypeRequired": "Vyberte prosím typ workflow",
+      "workflowScopeRequired": "Zvolte prosím postup pro stav",
+      "workflowTypeRequired": "Vyberte prosím typ postupu",
       "newTestCaseAdded": "Nový testovací případ přidán",
-      "repositoryDeleted": "Repozitář smazán",
-      "failedToDeleteRepository": "Nepodařilo se smazat repozitář",
+      "repositoryDeleted": "Úložiště smazáno",
+      "failedToDeleteRepository": "Nepodařilo se smazat úložiště",
       "permissionDenied": "Nemáte oprávnění pro přístup k této stránce.",
       "resultSubmitPermissionDenied": "Nemůžete odesílat výsledky pro tento případ. Požádejte administrátora projektu, aby vám jej přiřadil.",
       "justificationRequired": "Zdůvodnění je povinné",
@@ -701,7 +701,7 @@
       "failedToFetchModels": "Nepodařilo se načíst modely",
       "failedToCopyToClipboard": "Nepodařilo se zkopírovat do schránky",
       "failedToLoadJobResults": "Nepodařilo se načíst výsledky úlohy",
-      "failedToUpdateRepositoryStatus": "Nepodařilo se aktualizovat stav repozitáře"
+      "failedToUpdateRepositoryStatus": "Nepodařilo se aktualizovat stav úložiště"
     },
     "pageTitles": {
       "appName": "TestPlanIt",
@@ -709,7 +709,7 @@
       "twoFactorVerification": "Dvoufaktorové ověření",
       "changePassword": "Změnit heslo",
       "twoFactorSetup": "Nastavení dvoufaktorového ověření",
-      "verifyEmail": "Ověřit e-mail",
+      "verifyEmail": "Ověřit email",
       "trialExpired": "Zkušební doba vypršela",
       "linkSsoAccount": "Propojit SSO účet",
       "userProfile": "Uživatelský profil",
@@ -723,13 +723,13 @@
       "automation": "Automatizované spouštění",
       "shares": "Sdílení",
       "datasets": "Sdílené datové sady",
-      "repository": "Repozitář",
+      "repository": "Úložiště",
       "testCaseVersion": "Verze testovacího případu",
       "duplicateTestCases": "Duplikovat testovací případy",
       "stepDuplicates": "Duplicity kroků",
       "sessionVersion": "Verze relace",
       "reports": "Reporty",
-      "adminSamlConfig": "Admin - Konfigurace SAML",
+      "adminSamlConfig": "Administrace - konfigurace SAML",
       "apiDocumentation": "API dokumentace",
       "sharedContent": "Sdílený obsah",
       "impact": "Analýza dopadu"
@@ -783,7 +783,7 @@
     "labels": {
       "projects": "{count, plural, =1 {# projekt} few {# projekty} many {# projektu} other {# projektů}}",
       "templates": "Šablony a pole",
-      "workflows": "Workflow",
+      "workflows": "Postupy",
       "statuses": "Stavy",
       "roles": "Role",
       "unknownRole": "Neznámá role",
@@ -791,7 +791,7 @@
       "file": "soubor",
       "files": "soubory",
       "existingAttachments": "Stávající přílohy",
-      "new": "Nové",
+      "new": "Nový",
       "noElapsedTime": "Žádný zaznamenaný čas",
       "runDurationHint": "Doba od prvního do posledního výsledku",
       "totalElapsedHint": "Součet jednotlivých dob testů",
@@ -812,15 +812,15 @@
       "selectedTestCases": "Vybrané testovací případy",
       "selectedTestCasesCount": "{count, plural, one {# vybraný testovací případ} few {# vybrané testovací případy} many {# vybraného testovacího případu} other {# vybraných testovacích případů}}",
       "editToModifyCasesTitle": "Tento seznam nelze upravovat.",
-      "editToModifyCases": "Upravte Test Run a klikněte na Vybrané testovací případy pro úpravu seznamu.",
+      "editToModifyCases": "Upravte testovací běh a klikněte na Vybrané testovací případy pro úpravu seznamu.",
       "noTestCasesSelected": "Nejsou vybrány žádné testovací případy",
-      "editToSelectTestCases": "Upravte Test Run pro výběr testovacích případů.",
-      "casesInRun": "{count, plural, =0 {Žádné testovací případy v Test Run} =1 {1 testovací případ v Test Run} few {# testovací případy v Test Run} many {# testovacích případů v Test Run} other {# testovacích případů v Test Run}}",
+      "editToSelectTestCases": "Upravte testovací běh pro výběr testovacích případů.",
+      "casesInRun": "{count, plural, =0 {Žádné testovací případy v testovacím běhu} =1 {1 testovací případ v testovacím běhu} few {# testovací případy v testovacím běhu} many {# testovacích případů v testovacím běhu} other {# testovacích případů v testovacím běhu}}",
       "casesInRunMultiConfig": "{uniqueCount, plural, =1 {1 jedinečný případ} few {# jedinečné případy} many {# jedinečného případu} other {# jedinečných případů}} napříč {configCount, plural, =1 {1 konfigurací} few {# konfiguracemi} many {# konfigurace} other {# konfiguracemi}} ({totalCount, number} celkem případů)",
-      "viewTestRunDetails": "Zobrazit podrobnosti Test Runu",
+      "viewTestRunDetails": "Zobrazit podrobnosti testovacího běhu",
       "sortByStatus": "Seskupit podle stavu",
       "sortByDate": "Seřadit podle data",
-      "testRuns": "{count, plural, =0 {Žádné Test Runy} =1 {1 Test Run} few {# Test Runy} many {# Test Runu} other {# Test Runů}}",
+      "testRuns": "{count, plural, =0 {Žádné testovací běhy} =1 {1 testovací běh} few {# testovacích běhů} many {# testovacích běhů} other {# testovacích běhů}}",
       "sessions": "{count, plural, =0 {Žádné relace} =1 {1 relace} few {# relace} many {# relace} other {# relací}}",
       "issues": "{count, plural, =0 {Žádné problémy} =1 {1 problém} few {# problémy} many {# problému} other {# problémů}}",
       "noOptions": "Žádné dostupné možnosti",
@@ -835,7 +835,7 @@
       "assignedUsersCount": "{count, plural, =0 {Žádní přiřazení uživatelé} =1 {# přiřazený uživatel} few {# přiřazení uživatelé} many {# přiřazeného uživatele} other {# přiřazených uživatelů}}",
       "successRate": "Míra úspěšnosti",
       "unassigned": "Nepřiřazeno",
-      "testRunName": "Název Test Runu",
+      "testRunName": "Název testovacího běhu",
       "estimatesEllipsis": "Odhady...",
       "access": {
         "noAccess": "Bez přístupu",
@@ -858,7 +858,7 @@
       "completedSessions": "Žádné dokončené relace",
       "testCase": "Testovací případ nenalezen",
       "noTestCasesOrSessions": "Nebyly nalezeny žádné testovací případy ani relace",
-      "noTestCasesSessionsOrRuns": "Nebyly nalezeny žádné testovací případy, relace ani Test Runy"
+      "noTestCasesSessionsOrRuns": "Nebyly nalezeny žádné testovací případy, relace ani testovací běhy"
     },
     "or": "nebo",
     "for": "pro",
@@ -1106,7 +1106,7 @@
       },
       "loadingIssueTracker": "Načítání informací o Issue Trackeru...",
       "enterDocumentation": "Zadejte dokumentaci...",
-      "noAutomatedTestResults": "Pro tento Test Run nebyly nalezeny žádné automatizované výsledky testů.",
+      "noAutomatedTestResults": "Pro tento testovací běh nebyly nalezeny žádné automatizované výsledky testů.",
       "automatedResults": "Automatizované výsledky",
       "latestAutomatedResult": "Poslední automatizovaný výsledek",
       "hybridRunHint": "Tento běh obsahuje manuální i automatizované případy. Automatizované výsledky nahlášené do běhu aktualizují stav každého případu; každý případ lze i nadále spustit ručně."
@@ -1121,7 +1121,7 @@
     "plural": {
       "case": "{count, plural, =1 {případ} few {případy} many {případu} other {případů}}",
       "result": "{count, plural, =1 {výsledek} few {výsledky} many {výsledku} other {výsledků}}",
-      "run": "{count, plural, =1 {run} few {runy} many {runu} other {runů}}",
+      "run": "{count, plural, =1 {běh} few {běhů} many {běhů} other {běhů}}",
       "comment": "{count, plural, =1 {# komentář} few {# komentáře} many {# komentáře} other {# komentářů}}"
     },
     "success": {
@@ -1171,8 +1171,8 @@
   "api": {
     "testResults": {
       "import": {
-        "iterationCapExceeded": "Index iterace {index} přesahuje maximální podporovanou hodnotu {cap}. Snižte počet iterací nebo rozdělte Test Run.",
-        "iterationCapExceededMulti": "{count} testovacích případů vyžaduje indexy iterací nad maximální podporovanou hodnotou {cap}. Snižte počet iterací nebo rozdělte Test Run."
+        "iterationCapExceeded": "Index iterace {index} přesahuje maximální podporovanou hodnotu {cap}. Snižte počet iterací nebo rozdělte testovací běh.",
+        "iterationCapExceededMulti": "{count} testovacích případů vyžaduje indexy iterací nad maximální podporovanou hodnotou {cap}. Snižte počet iterací nebo rozdělte testovací běh."
       }
     }
   },
@@ -1344,8 +1344,8 @@
         "management": "Správa"
       },
       "menu": {
-        "repository": "Repozitář",
-        "runs": "Test Runy a výsledky"
+        "repository": "Úložiště",
+        "runs": "Testovací běhy a výsledky"
       },
       "dropdown": {
         "selectProject": "Vyberte projekt",
@@ -1369,12 +1369,12 @@
       "seeAllTagsCount": "{count, plural, =1 {Zobrazit # štítek} =2 {Zobrazit oba štítky} other {Zobrazit všech # štítků}}",
       "seeAllActiveSessions": "{count, plural, =1 {Zobrazit # aktivní relaci} =2 {Zobrazit obě aktivní relace} other {Zobrazit všech # aktivních relací}}",
       "latestSessions": "Nejnovější relace",
-      "activeTestRuns": "Aktivní Test Runy",
+      "activeTestRuns": "Aktivní testovací běhy",
       "seeAllActiveTestRuns": "{count, plural, =1 {Zobrazit # aktivní testovací běh} =2 {Zobrazit oba aktivní testovací běhy} other {Zobrazit všech # aktivních testovacích běhů}}",
-      "latestTestRuns": "Nejnovější Test Runy",
+      "latestTestRuns": "Nejnovější testovací běhy",
       "testCaseBreakdown": "Rozdělení testovacích případů",
-      "noTestCases": "Repozitář projektu je prázdný. Přidejte testovací případy pomocí Repozitáře.",
-      "noTestCasesPrefix": "Repozitář projektu je prázdný. Přidejte testovací případy pomocí"
+      "noTestCases": "Úložiště projektu je prázdné. Přidejte testovací případy pomocí Úložiště.",
+      "noTestCasesPrefix": "Úložiště projektu je prázdné. Přidejte testovací případy pomocí"
     },
     "icon": {
       "upload": {
@@ -1554,7 +1554,7 @@
             "description": "Připojte se ke třetí straně pro sledování problémů."
           },
           "github": {
-            "description": "Připojte se ke GitHubu pro sledování problémů a správu repozitářů."
+            "description": "Připojte se ke GitHub pro sledování problémů a správu úložišť."
           },
           "gitlab": {
             "description": "Připojte se ke GitLabu pro sledování problémů a merge requestů."
@@ -1575,7 +1575,7 @@
       },
       "webhooks": {
         "description": "Nakonfigurujte příchozí webhooky pro udržení propojených problémů v synchronizaci.",
-        "inboundDescription": "Přijímejte aktualizace položek z vašeho nástroje pro sledování položek a pull requesty a pushe z připojených repozitářů.",
+        "inboundDescription": "Přijímejte aktualizace položek z vašeho nástroje pro sledování položek a pull requesty a pushe z připojených úložišť.",
         "outboundDescription": "Nakonfigurujte odchozí webhooky pro odesílání událostí TestPlanIt do Slacku nebo na jakoukoli HMAC-podepsanou URL.",
         "directionInbound": "Příchozí",
         "directionOutbound": "Odchozí",
@@ -1628,7 +1628,7 @@
         "adapterLabelGenericHmac": "Obecný HMAC webhook",
         "outboundCreateSubscriptionsTitle": "Odběry",
         "outboundCreateSubscriptionsHelp": "Vyberte, které události pro tento cíl budou spouštěny. Toto lze později změnit.",
-        "outboundSubsTestRunsAndSessions": "Test Runy a relace",
+        "outboundSubsTestRunsAndSessions": "Testovací běhy a relace",
         "outboundSubsTestRuns": "Testovací běhy",
         "outboundSubsSessions": "Relace",
         "outboundSubsScimUsers": "Uživatelé SCIM",
@@ -1655,11 +1655,11 @@
         },
         "iterationResultHelp": "Spustí se při každém zaznamenání výsledku iterace — úspěch, neúspěch, přeskočení nebo jiný stav. Používejte střídmě u dlouhých automatizačních běhů (jedna událost na iteraci).",
         "events": {
-          "testRunCreated": "Test Run vytvořen",
-          "testRunStateChanged": "Stav Test Runu změněn",
-          "testRunCompleted": "Test Run dokončen",
-          "testRunDuplicated": "Test Run duplikován",
-          "testRunResultAdded": "Výsledek Test Runu přidán",
+          "testRunCreated": "Testovací běh vytvořen",
+          "testRunStateChanged": "Stav testovacího běhu změněn",
+          "testRunCompleted": "Testovací běh dokončen",
+          "testRunDuplicated": "Testovací běh duplikován",
+          "testRunResultAdded": "Výsledek testovacího běhu přidán",
           "sessionCreated": "Relace vytvořena",
           "sessionStateChanged": "Stav relace změněn",
           "sessionCompleted": "Relace dokončena",
@@ -1743,7 +1743,7 @@
         "setupStepsJiraStep2": "Klikněte na „Create a WebHook“. Vložte níže uvedenou URL do pole URL a tajný klíč do pole Secret.",
         "setupStepsJiraStep3": "V sekci „Issue related events“ zaškrtněte „updated“, aby byly odesílány změny stavu problémů.",
         "setupStepsJiraStep4": "Uložte webhook. Pomocí „Odeslat testovací webhook“ níže ověřte pipeline.",
-        "setupStepsGithubStep1": "Ve svém GitHub repozitáři přejděte do Settings → Webhooks → Add webhook.",
+        "setupStepsGithubStep1": "Ve svém GitHub úložišti přejděte do Settings → Webhooks → Add webhook.",
         "setupStepsGithubStep2": "Vložte níže uvedenou URL do pole Payload URL. Nastavte Content type na application/json.",
         "setupStepsGithubStep3": "Vložte níže uvedený tajný klíč do pole Secret.",
         "setupStepsGithubStep4": "Zvolte „Let me select individual events“ a zaškrtněte „Issues“.",
@@ -1757,7 +1757,7 @@
         "setupStepsGitlabStep2": "Vložte níže uvedenou URL do pole URL. Vložte níže uvedený tajný klíč do pole Secret token.",
         "setupStepsGitlabStep3": "V sekci Trigger zaškrtněte „Issues events“.",
         "setupStepsGitlabStep4": "Klikněte na „Add webhook“. Pomocí „Odeslat testovací webhook“ níže ověřte pipeline.",
-        "setupStepsGiteaStep1": "V Gitea přejděte do svého repozitáře → Settings → Webhooks.",
+        "setupStepsGiteaStep1": "V Gitea přejděte do svého úložiště → Settings → Webhooks.",
         "setupStepsGiteaStep2": "Klikněte na „Add Webhook“ a zvolte „Gitea“.",
         "setupStepsGiteaStep3": "Vložte níže uvedenou URL do pole Target URL. Vložte níže uvedený tajný klíč do pole Secret.",
         "setupStepsGiteaStep4": "V sekci „Trigger On“ vyberte „Issues“.",
@@ -1803,7 +1803,7 @@
         "replayAction": "Přehrát",
         "bulkReplayConfirmTitle": "Přehrát odchozí selhání?",
         "bulkReplayConfirm": "Přehrát {count, number} odchozích selhání do {configName}? Tímto se spustí {count, number} skutečných HTTP požadavků.",
-        "bulkReplayCapExceeded": "Hromadné přehrání je omezeno na 100 odchozích najednou. Zúžte filtr nebo spusťte postupně. Aktuálně by bylo přehráno {count, number}.",
+        "bulkReplayCapExceeded": "Hromadné přehrání je omezeno na 100 odchozích najednou. Upravte filtr nebo spusťte postupně. Aktuálně by bylo přehráno {count, number}.",
         "bulkReplayAction": "Přehrát {count, number}",
         "healthBadge": {
           "HEALTHY": "Zdravý",
@@ -1842,26 +1842,26 @@
         "setupStepsMantisbtStep3": "Vložte výše uvedenou URL adresu jako cíl webhooku a uložte.",
         "setupStepsMantisbtStep4": "Vytvořte nebo aktualizujte problém v MantisBT; stav propojeného problému se sem synchronizuje.",
         "codeRepos": {
-          "empty": "Pro analýzu dopadu není připojen žádný repozitář. Nejprve <link>připojte nějaký</link>.",
-          "unsupported": "Repozitáře {provider} nemohou odesílat webhooky do TestPlanIt.",
+          "empty": "Pro analýzu dopadu není připojeno žádné úložiště. Nejprve <link>připojte nějaký</link>.",
+          "unsupported": "Úložiště {provider} nemohou odesílat webhooky do TestPlanIt.",
           "eventPullRequest": "Pull requesty",
-          "eventPullRequestHelp": "Když je otevřen pull request, analyzujte jeho změny oproti cílové větvi a sestavte test run.",
+          "eventPullRequestHelp": "Když je otevřen pull request, analyzujte jeho změny oproti cílové větvi a sestavte testovací běh.",
           "eventPush": "Pushe do {branch}",
           "eventPushDefault": "Pushe do výchozí větve",
-          "eventPushHelp": "U každého pushe do základní větve analyzujte odeslané commity a sestavte test run.",
-          "setupGithub": "V GitHubu otevřete Nastavení → Webhooky repozitáře, vložte URL a tajný klíč, nastavte typ obsahu na application/json a vyberte události Pull requests a Pushes.",
+          "eventPushHelp": "U každého pushe do základní větve analyzujte odeslané commity a sestavte testovací běh.",
+          "setupGithub": "V GitHubu otevřete Nastavení → Webhooky úložiště, vložte URL a tajný klíč, nastavte typ obsahu na application/json a vyberte události Pull requests a Pushes.",
           "setupGitlab": "V GitLabu otevřete Nastavení → Webhooky projektu, vložte URL, vložte tajný klíč jako tajný token a povolte spouštěče Merge request events a Push events.",
-          "setupGitea": "V Gitea otevřete Nastavení → Webhooky repozitáře, vložte URL a tajný klíč, nastavte typ obsahu na application/json a vyberte události Pull Request a Push.",
+          "setupGitea": "V Gitea otevřete Nastavení → Webhooky úložiště, vložte URL a tajný klíč, nastavte typ obsahu na application/json a vyberte události Pull Request a Push.",
           "setupAdo": "V Azure DevOps vytvořte Service Hooks typu Web Hooks pro události Pull request created a Code pushed, vložte URL a zadejte uživatelské jméno a heslo, které jste zde zadali, jako Basic authentication.",
-          "setupBitbucket": "V Bitbucketu otevřete Nastavení → Webhooky repozitáře, vložte URL a tajný klíč a vyberte spouštěče Pull request created a Repository push.",
-          "rotateConfirm": "Otočením tajného klíče se zneplatní aktuální URL a tajný klíč; poté aktualizujte nastavení webhooku v repozitáři.",
-          "deleteConfirm": "Odstranit tento webhook repozitáře? Pull requesty a pushe už nebudou spouštět analýzy.",
+          "setupBitbucket": "V Bitbucketu otevřete Nastavení → Webhooky úložiště, vložte URL a tajný klíč a vyberte spouštěče Pull request created a Repository push.",
+          "rotateConfirm": "Otočením tajného klíče se zneplatní aktuální URL a tajný klíč; poté aktualizujte nastavení webhooku v úložišti.",
+          "deleteConfirm": "Odstranit tento webhook úložiště? Pull requesty a pushe už nebudou spouštět analýzy.",
           "eventBranchPush": "Pushe do jiných větví",
-          "eventBranchPushHelp": "Analyzujte každý push do jakékoli jiné větve oproti základní větvi, podobně jako pull request, a sestavte test run pro každý z nich.",
+          "eventBranchPushHelp": "Analyzujte každý push do jakékoli jiné větve oproti základní větvi, podobně jako pull request, a sestavte testovací běh pro každý z nich.",
           "baseBranch": "Základní větev",
           "baseBranchHelp": "Pushe do této větve jsou analyzovány samostatně; pull requesty a ostatní větve se porovnávají oproti ní. Ponechte prázdné, chcete-li použít větev připojení."
         },
-        "inboundEmptyState": "Zatím žádné příchozí webhooky. <link>Přidejte jeden</link>, chcete-li přijímat aktualizace položek z vašeho nástroje pro sledování položek nebo pull requesty a pushe z připojeného repozitáře.",
+        "inboundEmptyState": "Zatím žádné příchozí webhooky. <link>Přidejte jeden</link>, chcete-li přijímat aktualizace položek z vašeho nástroje pro sledování položek nebo pull requesty a pushe z připojeného úložiště.",
         "inboundChooserBitbucket": "Bitbucket",
         "wizard": {
           "description": "Vyberte, co bude odesílat webhooky do TestPlanIt, poté zkopírujte URL a tajný klíč do daného systému.",
@@ -1869,9 +1869,9 @@
           "sourceIssues": "Nástroj pro sledování položek",
           "sourceIssuesHelp": "Udržujte propojené položky synchronizované s aktualizacemi z {tracker}.",
           "sourceIssuesHelpGeneric": "Udržujte propojené položky synchronizované s aktualizacemi z integrace položek projektu.",
-          "sourceRepositoryHelp": "Spusťte analýzu dopadu a sestavte test run, když je otevřen pull request nebo odeslány commity.",
-          "noRepositoryAvailable": "Každý připojený repozitář již má webhook nebo nemůže webhooky odesílat.",
-          "repositoryPlaceholder": "Vyberte repozitář"
+          "sourceRepositoryHelp": "Spusťte analýzu dopadu a sestavte testovací běh, když je otevřen pull request nebo odeslány commity.",
+          "noRepositoryAvailable": "Každé připojené úložiště již má webhook nebo nemůže webhooky odesílat.",
+          "repositoryPlaceholder": "Vyberte úložiště"
         }
       },
       "aiModels": {
@@ -1971,8 +1971,8 @@
         "createSuccess": "Vytvořeno „{name}“",
         "delete": {
           "title": "Smazat „{name}“?",
-          "descriptionStage1": "Tato datová sada bude odebrána z projektu. Existující Test Runy, které již zaznamenaly její hodnoty, nebudou dotčeny.",
-          "descriptionStage2": "Tuto datovou sadu používá {count, plural, =1 {# případ} few {# případy} many {# případu} other {# případů}}. Jejím smazáním se z těchto případů odebere přiřazení sdílené datové sady. Jejich existující Test Runy nebudou dotčeny (snímky jsou neměnné).",
+          "descriptionStage1": "Tato datová sada bude odebrána z projektu. Existující testovací běhy, které již zaznamenaly její hodnoty, nebudou dotčeny.",
+          "descriptionStage2": "Tuto datovou sadu používá {count, plural, =1 {# případ} few {# případy} many {# případu} other {# případů}}. Jejím smazáním se z těchto případů odebere přiřazení sdílené datové sady. Jejich existující testovací běhy nebudou dotčeny (snímky jsou neměnné).",
           "confirm": "Smazat datovou sadu",
           "confirmAnyway": "Přesto smazat ({count, plural, =1 {# případ} few {# případy} many {# případu} other {# případů}})",
           "error": "Nepodařilo se smazat datovou sadu"
@@ -2009,17 +2009,17 @@
         "datasetTabSharedEditorHint": "Klikněte na Uložit, jakmile budete hotovi. Každé uložení vytvoří novou verzi."
       },
       "quickScript": {
-        "description": "Povolte QuickScript a připojte kódový repozitář pro generování testů asistované AI.",
+        "description": "Povolte QuickScript a připojte úložiště kódu pro generování testů asistované AI.",
         "enableLabel": "Povolit QuickScript",
         "enableDescription": " Umožnit členům týmu používat QuickScript pro převod testovacích případů na automatizační skripty v tomto projektu.",
         "enabledToast": "QuickScript povolen",
         "disabledToast": "QuickScript zakázán",
         "noRepos": {
-          "adminDescription": "Před konfigurací kontextu kódu pro tento projekt nastavte připojení k repozitáři."
+          "adminDescription": "Před konfigurací kontextu kódu pro tento projekt nastavte připojení k úložišti."
         },
         "repository": {
-          "description": "Vyberte kódový repozitář pro použití jako AI kontext",
-          "branchPlaceholder": "Ponechte prázdné pro použití výchozí větve repozitáře"
+          "description": "Vyberte úložiště kódu pro použití jako AI kontext",
+          "branchPlaceholder": "Ponechte prázdné pro použití výchozí větve úložiště"
         },
         "pathPatterns": {
           "description": "Určete, které soubory zahrnout. Každý řádek kombinuje základní cestu a glob vzor. Příklady: path=tests/e2e/pages + pattern=* zahrne všechny soubory přímo v této složce; path=src + pattern=**/*.test.ts zahrne všechny testovací soubory rekurzivně.",
@@ -2028,7 +2028,7 @@
         },
         "cache": {
           "description": "Soubory jsou ukládány do mezipaměti ve Valkey pro rychlý přístup během generování AI.",
-          "disabledWarning": "Ukládání souborů do mezipaměti je zakázáno. Soubory repozitáře budou při exportu načítány přímo od vašeho poskytovatele a nebudou uloženy v TestPlanIt. AI-powered QuickScript bude i nadále zahrnovat kontext kódu, ale každý export provede živý požadavek na váš repozitář.",
+          "disabledWarning": "Ukládání souborů do mezipaměti je zakázáno. Soubory úložiště budou při exportu načítány přímo od vašeho poskytovatele a nebudou uloženy v TestPlanIt. AI-powered QuickScript bude i nadále zahrnovat kontext kódu, ale každý export provede živý požadavek na vaše úložiště.",
           "contentsIncomplete": "V mezipaměti je pouze {cached} z {total} obsahů souborů — vygenerované skripty nebudou používat chybějící soubory. Obnovte znovu pro dokončení."
         },
         "saved": "Konfigurace kontextu kódu uložena",
@@ -2046,8 +2046,8 @@
           "saveError": "Nepodařilo se uložit přiřazení šablon"
         },
         "disconnectWarning3": "Zastavení zahrnování kontextu kódu do AI generovaných exportů",
-        "disconnectSuccess": "Kódový repozitář odpojen",
-        "disconnectError": "Nepodařilo se odpojit kódový repozitář"
+        "disconnectSuccess": "Úložiště kódu odpojeno",
+        "disconnectError": "Nepodařilo se odpojit úložiště kódu"
       },
       "codeRepository": {
         "cache": {
@@ -2069,14 +2069,14 @@
         },
         "confirmDisconnect": "Opravdu chcete odpojit „{name}“ od tohoto projektu?",
         "contentsError": "Nepodařilo se uložit obsah souborů do mezipaměti",
-        "disconnect": "Odpojit repozitář",
-        "disconnectWarningTitle": "Odpojením tohoto repozitáře dojde k:",
-        "listError": "Nepodařilo se vypsat soubory repozitáře",
+        "disconnect": "Odpojit úložiště",
+        "disconnectWarningTitle": "Odpojením tohoto úložiště dojde k:",
+        "listError": "Nepodařilo se vypsat soubory úložiště",
         "networkError": "Chyba sítě při obnově mezipaměti",
         "noRepos": {
-          "adminLink": "Přejít na kódové repozitáře",
-          "title": "Nejsou nakonfigurovány žádné kódové repozitáře",
-          "userDescription": "Pro nastavení připojení kódového repozitáře kontaktujte svého správce systému."
+          "adminLink": "Přejít na úložiště kódu",
+          "title": "Nejsou nakonfigurována žádná úložiště kódu",
+          "userDescription": "Pro nastavení připojení úložiště kódu kontaktujte svého správce systému."
         },
         "pathPatterns": {
           "addPath": "Přidat cestu",
@@ -2084,7 +2084,8 @@
           "pathLabel": "Cesta",
           "patternLabel": "Vzor",
           "previewFiles": "Náhled souborů",
-          "scanningRepo": "Prohledávání souborů repozitáře… ({seconds} s)",
+          "rootHint": "Ponechte cestu prázdnou, nebo zadejte ., pro začátek v kořenovém adresáři repozitáře; cesta . se vzorem **/* zahrnuje všechny soubory.",
+          "scanningRepo": "Prohledávání souborů úložiště… ({seconds} s)",
           "title": "Vzory cest",
           "truncatedBadge": "Výsledky mohou být neúplné (limit poskytovatele)"
         },
@@ -2101,17 +2102,16 @@
         "refreshSuccess": "Mezipaměť obnovena: {fileCount} souborů (obsah uložen u {contentCached})",
         "repository": {
           "branchLabel": "Větev",
-          "placeholder": "Vyberte kódový repozitář..."
+          "placeholder": "Vyberte úložiště kódu..."
         },
         "save": "Uložit konfiguraci",
         "saveError": "Nepodařilo se uložit konfiguraci",
         "validation": {
           "pathPatternRequired": "Je vyžadován alespoň jeden vzor cesty",
-          "pathRequired": "Cesta je povinná",
           "patternRequired": "Vzor je povinný",
-          "repositoryRequired": "Repozitář je povinný"
+          "repositoryRequired": "Úložiště je povinné"
         },
-        "disconnectWarningCache": "Odstranit všechny soubory repozitáře uložené v mezipaměti",
+        "disconnectWarningCache": "Odstranit všechny soubory úložiště uložené v mezipaměti",
         "disconnectWarningPatterns": "Odstranit konfigurace vzorů cest a větví"
       },
       "advanced": {
@@ -2211,19 +2211,19 @@
         }
       },
       "impact": {
-        "description": "Povolte analýzu dopadu testů a připojte repozitáře testované aplikace.",
+        "description": "Povolte analýzu dopadu testů a připojte úložiště testované aplikace.",
         "enableLabel": "Povolit analýzu dopadu",
         "enableDescription": "Umožněte členům týmu vybrat ovlivněné testy na základě změn kódu při sestavování testovacího běhu.",
         "enabledToast": "Analýza dopadu povolena",
         "disabledToast": "Analýza dopadu zakázána",
         "noRepos": {
-          "adminDescription": "Před konfigurací analýzy dopadu pro tento projekt nastavte připojení k repozitáři."
+          "adminDescription": "Před konfigurací analýzy dopadu pro tento projekt nastavte připojení k úložišti."
         },
         "repository": {
-          "title": "Repozitář aplikace",
-          "description": "Vyberte repozitář, který obsahuje část testované aplikace. Projekt testovaný napříč několika službami může připojit jeden repozitář pro každou službu.",
+          "title": "Úložiště aplikace",
+          "description": "Vyberte úložiště, které obsahuje část testované aplikace. Projekt testovaný napříč několika službami může připojit jedno úložiště pro každou službu.",
           "branchPlaceholder": "Vyberte větev...",
-          "branchInputPlaceholder": "Nechte prázdné pro použití výchozí větve repozitáře",
+          "branchInputPlaceholder": "Nechte prázdné pro použití výchozí větve úložiště",
           "branchesUnavailable": "Větve se nepodařilo vypsat: {error}",
           "branchesFallbackHint": "Zadejte místo toho název větve."
         },
@@ -2232,8 +2232,8 @@
           "pathPlaceholder": "src"
         },
         "cache": {
-          "description": "Soubory jsou ukládány do mezipaměti ve Valkey, aby výběr souborů Code Pin a značky repozitáře zůstaly rychlé.",
-          "disabledWarning": "Ukládání souborů do mezipaměti je zakázáno. Značky repozitáře nejsou skenovány a výběr souborů Code Pin zobrazuje soubory přímo od vašeho poskytovatele při každém otevření.",
+          "description": "Soubory jsou ukládány do mezipaměti ve Valkey, aby výběr souborů Code Pin a značky úložiště zůstaly rychlé.",
+          "disabledWarning": "Ukládání souborů do mezipaměti je zakázáno. Značky úložiště nejsou skenovány a výběr souborů Code Pin zobrazuje soubory přímo od vašeho poskytovatele při každém otevření.",
           "contentsIncomplete": "V mezipaměti je pouze {cached} z {total} obsahů souborů. Pro dokončení obnovte znovu."
         },
         "tickets": {
@@ -2273,7 +2273,7 @@
           "summarySymbolPins": "({count, number} vytvořených pinů cílí na funkci nebo třídu místo na celý soubor.)"
         },
         "markers": {
-          "title": "Značky repozitáře",
+          "title": "Značky úložiště",
           "description": "Komentářové anotace jako @testplanit case:123 a záznamy v .testplanit/testmap.yml se při každém obnovení mezipaměti stávají značkami Code Pin.",
           "skippedPrivacy": "Přeskočeno: ukládání souborů do mezipaměti je zakázáno.",
           "skippedPartial": "Přeskočeno: obsah souborů byl uložen do mezipaměti pouze částečně.",
@@ -2281,30 +2281,30 @@
           "problems": "{count, plural, one {# problém} few {# problémy} many {# problému} other {# problémů}}"
         },
         "saved": "Konfigurace analýzy dopadu byla uložena",
-        "disconnectWarning1": "Odstraní {count, plural, one {# značku Code Pin} few {# značky Code Pin} many {# značky Code Pin} other {# značek Code Pin}} a historii analýzy pro tento repozitář",
-        "disconnectSuccess": "Repozitář aplikace byl odpojen",
-        "disconnectError": "Odpojení repozitáře aplikace se nezdařilo",
+        "disconnectWarning1": "Odstraní {count, plural, one {# značku Code Pin} few {# značky Code Pin} many {# značky Code Pin} other {# značek Code Pin}} a historii analýzy pro toto úložiště",
+        "disconnectSuccess": "Úložiště aplikace bylo odpojeno",
+        "disconnectError": "Odpojení úložiště aplikace se nezdařilo",
         "repositories": {
-          "title": "Připojené repozitáře",
-          "description": "Každý repozitář, který tento projekt analyzuje. Každý má vlastní větev, vzory cest, mezipaměť a kódové piny.",
-          "connect": "Připojit repozitář",
-          "allConnected": "Každý registrovaný repozitář je již připojen.",
+          "title": "Připojená úložiště ",
+          "description": "Každé úložiště, které tento projekt analyzuje. Každý má vlastní větev, vzory cest, mezipaměť a kódové piny.",
+          "connect": "Připojit úložiště",
+          "allConnected": "Každé registrované úložiště je již připojeno.",
           "columnCache": "Mezipaměť",
           "cacheDisabled": "Ukládání do mezipaměti vypnuto",
           "edit": "Upravit připojení",
-          "connectTitle": "Připojit repozitář",
+          "connectTitle": "Připojit úložiště",
           "editTitle": "Upravit {name}",
           "view": "Zobrazit připojení",
-          "connectDescription": "Vyberte registrovaný repozitář testované aplikace a určete, kterou větev a cesty číst.",
+          "connectDescription": "Vyberte registrované úložiště testované aplikace a určete, kterou větev a cesty číst.",
           "editDescription": "Změňte větev, vzory cest, mezipaměť a prohledávání tiketů pro toto připojení.",
-          "viewDescription": "Jak je tento repozitář připojen. Odtud můžete obnovit mezipaměť nebo spustit prohledávání tiketů; pro změnu nastavení použijte Upravit.",
-          "empty": "Zatím nejsou připojeny žádné repozitáře",
-          "emptyDescription": "Připojte repozitář testované aplikace, abyste mohli začít analyzovat změny.",
+          "viewDescription": "Jak je toto úložiště připojeno. Odtud můžete obnovit mezipaměť nebo spustit prohledávání tiketů; pro změnu nastavení použijte tlačítko Upravit.",
+          "empty": "Zatím nejsou připojena žádná úložiště",
+          "emptyDescription": "Připojte úložiště testované aplikace, abyste mohli začít analyzovat změny.",
           "lastScan": "{created, plural, one {# pin vytvořen posledním prohledáváním} few {# piny vytvořeny posledním prohledáváním} many {# pinu vytvořeno posledním prohledáváním} other {# pinů vytvořeno posledním prohledáváním}}",
           "scanFailed": "Poslední prohledávání selhalo",
           "scanCancelled": "Poslední prohledávání zrušeno"
         },
-        "initialScanStarted": "Načítání souborů repozitáře a prohledávání značek repozitáře a propojených tiketů…",
+        "initialScanStarted": "Načítání souborů úložiště a prohledávání značek repozitáře a propojených tiketů…",
         "scanError": "Prohledávání selhalo: {error}",
         "scanLastScan": "Poslední prohledávání: {date}",
         "scanNever": "Zatím neprohledáno"
@@ -2379,7 +2379,7 @@
       "completed": "Žádné dokončené milníky",
       "description": "Žádný popis",
       "documentation": "Žádná dokumentace",
-      "testRuns": "Žádné Test Runy",
+      "testRuns": "Žádné testovací běhy",
       "noMatchingTestRuns": "Žádné testovací běhy neodpovídají vašim filtrům.",
       "noMatchingSessions": "Žádné relace neodpovídají vašim filtrům.",
       "forecasts": "Nejsou k dispozici žádná data předpovědi"
@@ -2449,12 +2449,12 @@
     "completeDialog": {
       "confirmTitle": "Potvrdit dokončení milníku",
       "confirmDescription": "Dokončením tohoto milníku se dokončí také následující související položky:",
-      "impactActiveTestRuns": "{count, plural, one {# aktivní Test Run} few {# aktivní Test Runy} many {# aktivního Test Runu} other {# aktivních Test Runů}}",
+      "impactActiveTestRuns": "{count, plural, one {# aktivní testovací běh} few {# aktivní testovací běhy} many {# testovacích běhů} other {# aktivních testovacích běhů}}",
       "impactActiveSessions": "{count, plural, one {# aktivní relace} few {# aktivní relace} many {# aktivní relace} other {# aktivních relací}}",
       "impactDescendantMilestones": "{count, plural, one {# podřízený milník} few {# podřízené milníky} many {# podřízeného milníku} other {# podřízených milníků}}",
-      "completeTestRunsLabel": "Dokončit přidružené Test Runy ({count, plural, one {# aktivní} few {# aktivní} many {# aktivního} other {# aktivních}})",
+      "completeTestRunsLabel": "Dokončit přidružené testovací běhy ({count, plural, one {# aktivní} few {# aktivní} many {# aktivního} other {# aktivních}})",
       "completeSessionsLabel": "Dokončit přidružené relace ({count, plural, one {# aktivní} few {# aktivní} many {# aktivní} other {# aktivních}})",
-      "testRunStateLabel": "Stav dokončení Test Runu",
+      "testRunStateLabel": "Stav dokončení testovacího běhu",
       "sessionStateLabel": "Stav dokončení relace",
       "itemsRemaining": "Následující položky zůstanou aktivní:",
       "processing": "Zpracování...",
@@ -2902,7 +2902,7 @@
       },
       "apiTokens": {
         "description": "API tokeny umožňují externím aplikacím a skriptům přistupovat k TestPlanIt vaším jménem. Tokeny mají stejná oprávnění jako váš účet.",
-        "create": "Vytvořit token",
+        "create": "Create Token",
         "createTitle": "Vytvořit API token",
         "createDescription": "Vytvořte nový API token pro ověřování externích nástrojů a skriptů.",
         "nameLabel": "Název tokenu",
@@ -2956,7 +2956,7 @@
       "notFound": "Verze testovacího případu nebyla nalezena.",
       "caseNotFoundTitle": "Tento testovací případ nebyl nalezen",
       "caseNotFoundDescription": "Testovací případ, ke kterému tato verze patří, v tomto projektu neexistuje nebo byl smazán. Zkontrolujte odkaz, na který jste klikli.",
-      "backToRepository": "Zpět do repozitáře",
+      "backToRepository": "Zpět do úložiště",
       "invalidVersionTitle": "„{version}“ není číslo verze",
       "invalidVersionDescription": "Verze jsou celá čísla počítaná od 1. Zkontrolujte odkaz, na který jste klikli, nebo otevřete testovací případ a vyberte verzi z jeho historie.",
       "notRecordedTitle": "Verze {version} tohoto testovacího případu nebyla zaznamenána",
@@ -3414,7 +3414,7 @@
       "retryButton": "Zopakovat generování AI",
       "aiGenerated": "Vygenerováno pomocí AI",
       "templateGenerated": "Vygenerováno pomocí šablony",
-      "truncatedWarning": "Výstup byl zkrácen — model dosáhl limitu tokenů. Zkuste snížit velikost dávky nebo zvýšit hodnotu Max Output Tokens v konfiguraci promptu.",
+      "truncatedWarning": "Výstup byl zkrácen — model dosáhl limitu pešků. Zkuste snížit velikost dávky nebo zvýšit hodnotu Max Output Tokens v konfiguraci promptu.",
       "contextFiles": "{count, plural, one {(# kontextový soubor)} few {(# kontextové soubory)} other {(# kontextových souborů)}}",
       "noCodeContextHint": "Není nakonfigurováno žádné úložiště kódu. AI použije standardní vzory frameworku.",
       "generatingParallelProgress": "Vygenerováno {done, number} z {total, number} souborů...",
@@ -3780,7 +3780,7 @@
       "errorSymbolNotFound": "Symbol nebyl v souboru nalezen.",
       "filePlaceholder": "Hledat soubory...",
       "filesCached": "{count, plural, one {# soubor} few {# soubory} many {# souboru} other {# souborů}} v mezipaměti · {date}",
-      "filesLive": "Soubory se načítají přímo z repozitáře",
+      "filesLive": "Soubory se načítají přímo z úložiště",
       "globMatches": "{count, plural, =0 {Žádné soubory v mezipaměti neodpovídají} one {# soubor v mezipaměti odpovídá} few {# soubory v mezipaměti odpovídají} many {# souboru v mezipaměti odpovídá} other {# souborů v mezipaměti odpovídá}}",
       "globPlaceholder": "src/payments/**",
       "kind": "Typ",
@@ -3791,8 +3791,8 @@
       "kindSymbol": "Symbol",
       "linesHint": "Kliknutím na číslo řádku začnete, shift-kliknutím ukončíte.",
       "location": "Umístění",
-      "managedTooltip": "Spravováno repozitářem. Upravte značku v kódu.",
-      "noFilesCached": "Žádný seznam souborů v mezipaměti. Požádejte administrátora projektu o obnovení mezipaměti repozitáře.",
+      "managedTooltip": "Spravováno úložištěm. Upravte značku v kódu.",
+      "noFilesCached": "Žádný seznam souborů v mezipaměti. Požádejte administrátora projektu o obnovení mezipaměti úložiště.",
       "notePlaceholder": "Proč tento případ pokrývá tento kód (volitelné)",
       "reanchor": "Znovu ukotvit",
       "reanchorFailed": "Pin se nepodařilo znovu ukotvit",
@@ -3822,7 +3822,7 @@
       "viewerFailed": "Soubor se nepodařilo načíst.",
       "viewerLoading": "Načítání souboru…",
       "viewerTooLarge": "Tento soubor je příliš velký na zobrazení. Zadejte místo toho čísla řádků.",
-      "repositoriesCount": "{count, plural, one {# repozitář} few {# repozitáře} many {# repozitáře} other {# repozitářů}}"
+      "repositoriesCount": "{count, plural, one {# úložiště} few {# úložiště} many {# úložišť} other {# úložišť}}"
     },
     "diffView": {
       "added": "Přidaný řádek",
@@ -4209,7 +4209,7 @@
     "removeCasesDialog": {
       "title": "Odebrat testovací případy",
       "description": "Opravdu chcete odebrat tyto testovací případy z tohoto testovacího běhu?",
-      "warning": "Tuto akci nelze vrátit zpět. Veškeré výsledky zaznamenané pro tyto testovací případy v tomto běhu budou ztraceny. Samotné testovací případy zůstanou v repozitáři."
+      "warning": "Tuto akci nelze vrátit zpět. Veškeré výsledky zaznamenané pro tyto testovací případy v tomto běhu budou ztraceny. Samotné testovací případy zůstanou v úložišti."
     },
     "filter": {
       "placeholder": "Filtrovat testovací běhy..."
@@ -4237,7 +4237,7 @@
       "title": "Dopad",
       "analyzeImpact": "Analyzovat dopad",
       "description": "Vyberte dva commity testované aplikace a zvolte testovací případy, které tyto změny ovlivňují.",
-      "noRepository": "Pro použití funkce Dopad připojte repozitář aplikace v nastavení projektu.",
+      "noRepository": "Pro použití funkce Dopad připojte úložiště aplikace v nastavení projektu.",
       "aiUnavailable": "Není aktivní žádná integrace LLM: výsledky pocházejí pouze z Code Pinů, shody klíčových slov a historie běhů.",
       "steps": {
         "review": "Ovlivněné testy"
@@ -4289,7 +4289,7 @@
       },
       "loading": {
         "analyzing": "Analyzování…",
-        "resolving_config": "Zjišťování konfigurace repozitáře…",
+        "resolving_config": "Zjišťování konfigurace úložiště…",
         "fetching_diff": "Načítání diffu…",
         "matching_pins": "Porovnávání Code Pinů…",
         "matching_issues": "Hledání odpovídajících tiketů uvedených v commitech…",
@@ -4377,11 +4377,11 @@
         "branchesFailed": "Větve se nepodařilo vypsat.",
         "commitsFailed": "Commity se nepodařilo načíst.",
         "disabled": "Funkce Dopad není pro tento projekt povolena.",
-        "noConfig": "Nejprve připojte repozitář aplikace v nastavení projektu.",
-        "configRequired": "Vyberte repozitář k analýze."
+        "noConfig": "Nejprve připojte úložiště aplikace v nastavení projektu.",
+        "configRequired": "Vyberte úložiště k analýze."
       },
-      "repositoryPlaceholder": "Vyberte repozitář...",
-      "chooseRepository": "Vyberte, který z připojených repozitářů projektu obsahuje změny k analýze."
+      "repositoryPlaceholder": "Vyberte úložiště...",
+      "chooseRepository": "Vyberte, které z připojených úložišť projektu obsahuje změny k analýze."
     }
   },
   "admin": {
@@ -5954,10 +5954,10 @@
         "fieldOptions": "Možnosti pole",
         "configCategories": "Kategorie konfigurace",
         "configVariants": "Varianty konfigurace",
-        "repositories": "Repozitáře",
-        "repositoryFolders": "Složky repozitáře",
-        "repositoryCaseLinks": "Odkazy případů repozitáře",
-        "repositoryCaseVersions": "Verze případů repozitáře",
+        "repositories": "Úložiště",
+        "repositoryFolders": "Složky úložiště",
+        "repositoryCaseLinks": "Odkazy případů úložiště",
+        "repositoryCaseVersions": "Verze případů úložiště",
         "testRunStepResults": "Výsledky kroků testovacího běhu",
         "issueConfigs": "Konfigurace problémů",
         "sharedStepGroups": "Skupiny sdílených kroků",
@@ -6188,10 +6188,10 @@
         "giteaInstanceUrlPlaceholder": "https://gitea.example.com",
         "owner": "Vlastník",
         "ownerPlaceholder": "uživatelské jméno nebo organizace",
-        "ownerHelp": "Uživatel nebo organizace Gitea, které patří repozitář",
-        "repo": "Repozitář",
-        "repoPlaceholder": "název-repozitáře",
-        "repoHelp": "Název repozitáře Gitea",
+        "ownerHelp": "Uživatel nebo organizace Gitea, jíž patří úložiště",
+        "repo": "Úložiště ",
+        "repoPlaceholder": "název-úložiště",
+        "repoHelp": "Název úložiště Gitea",
         "encrypted": "Šifrováno",
         "encryptedHelp": "Toto pole je šifrováno a bezpečně uloženo",
         "leaveBlankToKeep": "Ponechte prázdné pro zachování stávající hodnoty",
@@ -6314,8 +6314,8 @@
         "billingPeriodStartDayDescription": "Den v měsíci (1–31), kdy začíná vaše fakturační období. Hodnoty 29–31 použijí poslední den kratších měsíců.",
         "defaultTemperature": "Výchozí teplota",
         "defaultMaxTokens": "Výchozí maximální počet tokenů",
-        "repoContextBudgetLabel": "Rozpočet kontextu repozitáře (QuickScript)",
-        "repoContextBudgetAuto": "Automaticky odvozeno z kontextového okna modelu o velikosti ~{window} — přibližně {budget} tokenů kódu repozitáře na jednu generaci.",
+        "repoContextBudgetLabel": "Rozpočet kontextu úložiště (QuickScript)",
+        "repoContextBudgetAuto": "Automaticky odvozeno z kontextového okna modelu o velikosti ~{window} — přibližně {budget} tokenů úložiště kódu na jednu generaci.",
         "timeout": "Časový limit požadavku (ms)",
         "timeoutDescription": "Maximální doba čekání na odpověď AI modelu (5000–600000 ms). Neplatí pro streamované požadavky.",
         "streamingEnabled": "Povolit streamování",
@@ -6524,7 +6524,7 @@
         "audit-logs": "Auditní záznamy",
         "budget-alerts": "Upozornění na rozpočet",
         "auto-tag": "Automatické štítkování AI",
-        "repo-cache": "Mezipaměť repozitáře",
+        "repo-cache": "Mezipaměť úložiště",
         "copy-move": "Kopírovat a přesunout",
         "duplicate-scan": "Kontrola duplicit",
         "magic-select": "Chytrý výběr",
@@ -7133,7 +7133,7 @@
       "panelEmpty": "Tento požadavek zatím nepokrývá žádný testovací případ.",
       "columnCase": "Testovací případ",
       "columnResult": "Poslední výsledek",
-      "columnResultTooltip": "Nejnovější spuštění případu, a to i takové, jehož stav není ani úspěch, ani neúspěch. Jiné obrazovky, například Nejnovější výsledky v repozitáři, zobrazují nejnovější výsledek, který byl úspěšný nebo neúspěšný, takže stejný případ se tam může zobrazovat jinak.",
+      "columnResultTooltip": "Nejnovější spuštění případu, a to i takové, jehož stav není ani úspěch, ani neúspěch. Jiné obrazovky, například Nejnovější výsledky v úložišti, zobrazují nejnovější výsledek, zda byl úspěšný, nebo neúspěšný, takže stejný případ se tam může zobrazovat jinak.",
       "resultRunLink": "Zobrazit testovací běh, ze kterého tento výsledek pochází",
       "inherited": "Zděděné",
       "inheritedTooltip": "Propojeno s podřízeným požadavkem, nikoli přímo s tímto požadavkem.",
@@ -7173,9 +7173,9 @@
       "createTitle": "Nový cíl spuštění",
       "editTitle": "Upravit cíl spuštění",
       "namePlaceholder": "např. Noční E2E",
-      "repository": "Kódový repozitář",
-      "repositoryPlaceholder": "Vyberte repozitář",
-      "noRepositories": "Není registrován žádný repozitář {provider}. Požádejte administrátora, aby jej přidal v sekci Administrace → Kódové repozitáře.",
+      "repository": "Úložiště kódu",
+      "repositoryPlaceholder": "Vyberte úložiště",
+      "noRepositories": "Není registrován žádné {provider} úložiště. Požádejte administrátora, aby jej přidal v sekci Administrace → Úložiště kódu.",
       "workflow": "Pracovní postup",
       "workflowPlaceholder": "Vyberte soubor workflow",
       "workflowHelp": "Workflow musí deklarovat spouštěč workflow_dispatch se vstupy TESTPLANIT_*; GitHub odmítá nedeklarované vstupy.",
@@ -7183,22 +7183,22 @@
       "workflowInputPlaceholder": "např. e2e.yml",
       "defaultRef": "Větev",
       "defaultRefHelp": "Běhy se spouští na této větvi, pokud není při provádění zadán jiný ref.",
-      "defaultRefDefault": "Výchozí větev repozitáře",
+      "defaultRefDefault": "Výchozí větev úložiště",
       "defaultRefPlaceholder": "např. main",
       "staticInputs": "Vstupy workflow",
       "variables": "Proměnné pipeline",
       "webhookVariables": "Proměnné",
-      "staticInputsHelp": "Odesíláno při každém spuštění, navíc k hodnotám TESTPLANIT_*. Není tajné: kdokoli, kdo může číst repozitář, je uvidí.",
+      "staticInputsHelp": "Odesíláno při každém spuštění, navíc k hodnotám TESTPLANIT_*. Není tajné: kdokoli, kdo může číst úložiště, je uvidí.",
       "addInput": "Přidat vstup",
       "removeInput": "Odstranit vstup",
       "credentials": "Přihlašovací údaje",
-      "credentialsHelp": "Ponechte prázdné pro použití uložených přihlašovacích údajů repozitáře.",
+      "credentialsHelp": "Ponechte prázdné pro použití uložených přihlašovacích údajů úložiště.",
       "credentialsOverride": "Použít jiné přihlašovací údaje pro spuštění",
       "personalAccessToken": "Přístupový token",
       "personalAccessTokenHelp": "GitHub: token s oprávněním workflow (klasický) nebo Actions read/write (jemně odstupňovaný). GitLab: token s oprávněním api.",
       "triggerToken": "Spouštěcí token pipeline",
       "triggerTokenHelp": "Volitelné. Spouští pipeline bez přístupového tokenu, ale jejich stav nelze zjistit.",
-      "clearCredentials": "Odstranit přepis a použít přihlašovací údaje repozitáře",
+      "clearCredentials": "Odstranit přepis a použít přihlašovací údaje úložiště",
       "webhookUrl": "URL webhooku",
       "webhookUrlPlaceholder": "https://ci.example.com/hooks/testplanit",
       "webhookUrlHelp": "TestPlanIt sem odesílá podepsaný POST požadavek. Příjemce ověří X-TestPlanIt-Signature, spustí úlohu a nahlásí výsledky zpět pomocí reportéru nebo CLI.",
@@ -7210,7 +7210,7 @@
       "timeout": "Časový limit (minuty)",
       "timeoutHelp": "Spuštění, které do té doby neskončí, je označeno jako vypršelé.",
       "hasOwnCredentials": "Vlastní přihlašovací údaje",
-      "usesRepositoryCredentials": "Přihlašovací údaje repozitáře",
+      "usesRepositoryCredentials": "Přihlašovací údaje úložiště",
       "verifying": "Ověřování…",
       "verifyOk": "Cíl ověřen",
       "verifyOkWithWarnings": "Cíl ověřen s upozorněními",
@@ -7232,9 +7232,9 @@
         "invalidInputs": "Jeden ze vstupů není platný.",
         "urlRequired": "Je vyžadována URL webhooku.",
         "urlBlocked": "URL webhooku odkazuje na soukromou nebo interní adresu.",
-        "repositoryRequired": "Vyberte kódový repozitář.",
-        "repositoryNotFound": "Kódový repozitář již neexistuje.",
-        "repositoryProviderMismatch": "Poskytovatel repozitáře neodpovídá poskytovateli cíle.",
+        "repositoryRequired": "Vyberte úložiště kódu.",
+        "repositoryNotFound": "Úložiště kódu již neexistuje.",
+        "repositoryProviderMismatch": "Poskytovatel úložiště kódu neodpovídá poskytovateli cíle.",
         "workflowRequired": "Vyberte soubor workflow.",
         "nameTaken": "Cíl s tímto názvem již existuje."
       }
@@ -7306,7 +7306,7 @@
     "ApplicationArea": {
       "Documentation": "Dokumentace",
       "Milestones": "Milníky",
-      "TestCaseRepository": "Repozitář testovacích případů",
+      "TestCaseRepository": "Úložiště testovacích případů",
       "TestCaseRestrictedFields": "Omezená pole testovacího případu",
       "TestRuns": "Testovací běhy",
       "ClosedTestRuns": "Uzavřené testovací běhy",
@@ -7389,8 +7389,8 @@
     "users": "## Uživatelé\nAdresář lidí, se kterými spolupracujete — uživatelů, kteří s vámi sdílejí alespoň jeden projekt — a projektů, které s každým z nich sdílíte. Administrátoři vidí všechny uživatele a jejich úplný seznam projektů.",
     "documentation": "## Dokumentace\nVolná dokumentace pro tento projekt — poznámky, reference a podrobnosti pro zaškolení.",
     "projectMilestones": "## Milníky\nMilníky seskupují a sledují práci tohoto projektu podle cíle — vydání, sprinty nebo vlastní typy — napříč aktivními a dokončenými stavy.",
-    "projectRepository": "## Repozitář testovacích případů\nKnihovna testovacích případů tohoto projektu, organizovaná do složek.",
-    "repositoryDuplicates": "## Kandidáti na duplicity\nPotenciálně duplicitní testovací případy nalezené během posledního skenování repozitáře tohoto projektu. Nové skenování znovu analyzuje repozitář a aktualizuje seznam nejnovějšími kandidáty.",
+    "projectRepository": "## Úložiště testovacích případů\nKnihovna testovacích případů tohoto projektu, organizovaná do složek.",
+    "repositoryDuplicates": "## Kandidáti na duplicity\nPotenciálně duplicitní testovací případy nalezené během posledního skenování úložiště tohoto projektu. Nové skenování znovu analyzuje úložiště a aktualizuje seznam nejnovějšími kandidáty.",
     "projectSharedSteps": "## Sdílené kroky\nZnovupoužitelné skupiny testovacích kroků, které může sdílet více testovacích případů — aktualizace skupiny aktualizuje každý případ, který na ni odkazuje.",
     "projectRuns": "## Testovací běhy\nTestovací běhy provádějí vybranou sadu testovacích případů a zaznamenávají jejich výsledky, přičemž sledují průběh od začátku do dokončení.",
     "projectSessions": "## Relace\nRelace průzkumného testování — časově omezené, neskriptované testování zachycené jako poznámky a výsledky napříč aktivními a dokončenými stavy.",
@@ -7402,7 +7402,7 @@
     "projectIntegrations": "## Integrace úkolů\nPropojte tento projekt s nástrojem pro sledování úkolů, aby se jeho testovací případy, běhy a relace mohly propojovat a synchronizovat s externími úkoly a milníky.",
     "projectWebhooks": "## Webhooky\nOdesílejte a přijímejte oznámení o událostech pro tento projekt — příchozí háčky přinášejí externí změny dovnitř, odchozí háčky odesílají testovací události ven a doručení zaznamenávají, co bylo odesláno.",
     "projectAiModels": "## AI modely\nZvolte AI model a konfiguraci promptu, které tento projekt používá pro své funkce podporované AI, jako je generování testovacích případů a automatické štítkování.",
-    "projectQuickScript": "## QuickScript\nPropojte repozitář kódu, aby tento projekt mohl generovat testovací případy z vašich automatizovaných testovacích souborů, s výběrem, kterou větev a cesty zahrnout.",
+    "projectQuickScript": "## QuickScript\nPropojte úložiště kódu, aby tento projekt mohl generovat testovací případy z vašich automatizovaných testovacích souborů, s výběrem, kterou větev a cesty zahrnout.",
     "projectParameters": "## Parametry testovacích případů\nNakonfigurujte datově řízené testování tohoto projektu — názvy vlastností iterace JUnit pro importované výsledky a znovupoužitelné datové sady pro parametrizované případy.",
     "projectAdvanced": "## Pokročilé\nPokročilá nastavení pro tento projekt — prefix ID záznamu, pracovní postup revize výsledků, automatické vytváření úkolů při selhání a okno pro úpravu výsledků.",
     "projectShares": "## Spravovat sdílení\nSdílitelné odkazy na reporty tohoto projektu, každý s vlastní úrovní přístupu — veřejný, vyžadující přihlášení nebo chráněný heslem. Odvolání odkazu ukončí jeho přístup.",
@@ -7435,7 +7435,7 @@
     "aiModels": "## AI modely\nSpravujte poskytovatele AI modelů a připojení používaná pro funkce podporované AI, včetně limitů využití a rozpočtů.",
     "prompts": "## Konfigurace promptů\nSpravujte konfigurace promptů, které funkce AI používají ke generování obsahu, a přiřazujte je projektům.",
     "quickscripts": "## Šablony QuickScript\nSpravujte šablony, které QuickScript používá k převodu testovacích případů na automatizační skripty.",
-    "codeRepositories": "## Repozitáře kódu\nSpravujte připojení repozitářů kódu pro kontext QuickScript.",
+    "codeRepositories": "## Úložiště kódu\nSpravujte připojení úložiště kódu pro kontext QuickScript.",
     "recordKeys": "## Klíče záznamů\nNakonfigurujte kosmetické identifikátory s prefixem projektu, jako je PROJECT-TC-1234, které usnadňují poznat, kterému projektu záznam patří a o jaký typ záznamu jde. Podkladové číselné ID zůstává beze změny a nadále funguje všude.",
     "recordKeysEnabled": "## Klíče záznamů s prefixem projektu\nPokud je tato funkce povolena, záznamy zobrazují volitelný klíč kombinující kód projektu, typový token a číselné ID záznamu. Kód každého projektu nastavte v části Nastavení projektu → Pokročilé.",
     "imports": "## Import dat\nPřeneste data z externích nástrojů pro správu testů do TestPlanIt.",
@@ -7464,7 +7464,7 @@
       "overview": "## Projekty\nProjekty jsou nejvyšší kontejnery pro vaše testovací případy, běhy, relace a milníky. Odsud vytvářejte a spravujte všechny projekty.",
       "settings": {
         "integrations": {
-          "externalProjectHelp": "## Externí projekt\nVyberte projekt nebo repozitář v externím systému, který chcete propojit s tímto projektem TestPlanIt.\n\n- Problémy vytvořené z TestPlanIt budou vytvořeny v tomto projektu\n- Umožňuje integraci sledování problémů mezi systémy\n- V externím systému musíte mít odpovídající oprávnění",
+          "externalProjectHelp": "## Externí projekt\nVyberte projekt nebo úložiště v externím systému, který chcete propojit s tímto projektem TestPlanIt.\n\n- Problémy vytvořené z TestPlanIt budou vytvořeny v tomto projektu\n- Umožňuje integraci sledování problémů mezi systémy\n- V externím systému musíte mít odpovídající oprávnění",
           "defaultIssueTypeHelp": "## Výchozí typ problému\nTyp problému, který bude předvybraný při vytváření nových problémů z aplikace TestPlanIt.\n\n- Šetří čas díky výchozímu nastavení nejběžnějšího typu problému\n- Lze přepsat při vytváření jednotlivých problémů\n- Musí být platným typem problému pro vybraný externí projekt\n- Aktualizujte, pokud se změní váš pracovní postup",
           "automaticSyncHelp": "## Automatická synchronizace\nUmožňuje automatickou synchronizaci stavu problémů mezi aplikací TestPlanIt a externím systémem.\n\n- Problémy propojené s testovacími případy budou automaticky aktualizovat svůj stav\n- Pomáhá udržovat konzistentní sledování problémů napříč systémy\n- Může zvýšit využití API u externí služby\n- Lze zakázat, pokud dáváte přednost ruční kontrole"
         }
@@ -7557,7 +7557,7 @@
         "canAddEdit": "## Přidat/Upravit\nUdává, zda může tato role přidávat a upravovat související oblast aplikace.",
         "canDelete": "## Smazat\nUdává, zda může tato role mazat související oblast aplikace.",
         "canClose": "## Uzavřít\nUdává, zda může tato role uzavírat související oblast aplikace.",
-        "canApprove": "## Schválit\nUrčuje, zda tato role může schvalovat žádosti o revizi pro související oblast aplikace. Vztahuje se pouze na Repozitář testovacích případů, Testovací běhy a Relace.",
+        "canApprove": "## Schválit\nUrčuje, zda tato role může schvalovat žádosti o revizi pro související oblast aplikace. Vztahuje se pouze na Úložiště testovacích případů, testovací běhy a relace.",
         "canReadSensitive": "## Číst citlivé\nUrčuje, zda tato role může zobrazovat citlivé hodnoty parametrů při čtení dat omezených polí. Bez tohoto oprávnění se citlivé hodnoty zobrazují jako ●●●●●● v řádcích datových sad a buňkách iterací a jako [REDACTED] v předvyplněných tělech úkolů a exportech CSV. Vztahuje se pouze na Omezená pole testovacích případů a Omezená pole výsledků testovacích běhů."
       }
     },
@@ -7608,8 +7608,8 @@
       "organizationUrl": "## URL organizace\nURL vaší organizace Azure DevOps.\n\n- Formát: https://dev.azure.com/your-org\n- Musí být dostupná z tohoto serveru\n- Používá se pro přístup k rozhraním API Azure DevOps",
       "apiKey": "## Klíč API\nKlíč API pro ověření u externí služby.\n\n- Vygenerován v nastavení API služby\n- Poskytuje programový přístup ke službě\n- Uchovávejte v bezpečí a pravidelně obměňujte",
       "forgeApiKey": "## API klíč Forge\nPoužívá se k ověření aplikace Atlassian Forge při načítání testovacích dat z vašich problémů v Jiře.\n\n- Kliknutím na Generovat vytvoříte nový klíč\n- Zkopírujte klíč a vložte jej do nastavení aplikace Forge v Jiře (Spravovat aplikace → Nastavení TestPlanIt)\n- Opětovným vygenerováním se předchozí klíč znehodnotí",
-      "owner": "## Vlastník / Jmenný prostor\nUživatel nebo organizace, které patří repozitář.\n\n- Pro GitHub/GitLab: uživatelské jméno nebo název organizace\n- Pro Gitea/Forgejo/Gogs: jméno uživatele nebo skupiny\n- Příklad: my-org nebo my-username",
-      "repo": "## Název repozitáře\nNázev repozitáře, ze kterého se mají propojovat úkoly.\n\n- Přesný název repozitáře (nikoli celá URL adresa)\n- Příklad: my-project\n- Musí být přístupný pomocí zadaných přihlašovacích údajů",
+      "owner": "## Vlastník / Jmenný prostor\nUživatel nebo organizace, které patří úložiště.\n\n- Pro GitHub/GitLab: uživatelské jméno nebo název organizace\n- Pro Gitea/Forgejo/Gogs: jméno uživatele nebo skupiny\n- Příklad: my-org nebo my-username",
+      "repo": "## Název repozitáře\nNázev úložiště, ze kterého se mají propojovat úkoly.\n\n- Přesný název repozitáře (nikoli celá URL adresa)\n- Příklad: my-project\n- Musí být přístupný pomocí zadaných přihlašovacích údajů",
       "instanceUrl": "## URL instance\nZákladní URL adresa vaší vlastní instance.\n\n- Formát: https://git.example.com\n- Nezahrnujte koncová lomítka ani cesty\n- Musí být přístupná z tohoto serveru",
       "projectPath": "## Cesta k projektu\nÚplná cesta k vašemu projektu GitLab.\n\n- Formát: jmenný_prostor/projekt nebo skupina/podskupina/projekt\n- Příklad: my-org/my-project\n- Naleznete ji v URL adrese projektu: gitlab.com/jmenny_prostor/projekt",
       "platform": "## Platforma\nVlastní Git platforma, ke které se připojujete.\n\n- **Gitea**: instance založené na gitea.io\n- **Forgejo**: instance založené na forgejo.org (fork Gitea)\n- **Gogs**: instance založené na gogs.io\n\nToto ovlivňuje, jaká ikona se zobrazí, a může mít vliv na kompatibilitu API.",
@@ -7800,7 +7800,7 @@
       "state": "## Dimenze stavu\nSeskupuje výsledky podle stavu pracovního postupu (např. Koncept, Aktivní, Dokončeno).",
       "role": "## Dimenze role\nSeskupuje výsledky podle rolí uživatelů pro analýzu přístupu a odpovědnosti.",
       "group": "## Dimenze skupiny\nSeskupuje výsledky podle uživatelských skupin. Uživatelé mohou patřit do více skupin, takže aktivity budou započítány pro každou skupinu, do které uživatel patří.",
-      "folder": "## Dimenze složky\nSeskupuje výsledky podle struktury složek repozitáře pro organizační analýzu.",
+      "folder": "## Dimenze složky\nSeskupuje výsledky podle struktury složek úložiště pro organizační analýzu.",
       "session": "## Dimenze relace\nSeskupuje výsledky podle testovacích relací pro analýzu založenou na relacích.",
       "assignedTo": "## Dimenze přiřazení\nSeskupuje výsledky podle uživatele přiřazeného k provedení nebo správě položek.",
       "issueType": "## Dimenze typu problému\nSeskupuje výsledky podle typu sledovaných problémů (např. chyba, úkol, příběh, vylepšení).",
@@ -7823,11 +7823,11 @@
       "dimensionFilters": "## Filtry\nZúžte report na konkrétní hodnoty každé vybrané dimenze. Ponechte filtr prázdný, chcete-li zahrnout všechny hodnoty dané dimenze. Datumové dimenze se místo toho filtrují pomocí výběru rozsahu dat."
     },
     "codeRepository": {
-      "name": "## Název repozitáře\nPřívětivý zobrazovaný název pro toto připojení repozitáře.\n\n- Používá se k identifikaci v nastavení kódového kontextu projektu.\n- Nemusí odpovídat názvu repozitáře u poskytovatele.",
-      "provider": "## Poskytovatel Git\nPlatforma hostující tento repozitář.\n\n- **GitHub** — github.com (cloud nebo Enterprise)\n- **GitLab** — gitlab.com nebo vlastní instalace\n- **Bitbucket Cloud** — bitbucket.org (pouze cloud)\n- **Azure DevOps** — dev.azure.com\n- **Gitea / Forgejo / Gogs** — vlastní Git servery s kompatibilním API",
+      "name": "## Název úložiště\nPřívětivý zobrazovaný název pro toto připojení úložiště.\n\n- Používá se k identifikaci v nastavení kódového kontextu projektu.\n- Nemusí odpovídat názvu úložiště u poskytovatele.",
+      "provider": "## Poskytovatel Git\nPlatforma hostující toto úložiště.\n\n- **GitHub** — github.com (cloud nebo Enterprise)\n- **GitLab** — gitlab.com nebo vlastní instalace\n- **Bitbucket Cloud** — bitbucket.org (pouze cloud)\n- **Azure DevOps** — dev.azure.com\n- **Gitea / Forgejo / Gogs** — vlastní Git servery s kompatibilním API",
       "githubToken": "## Osobní přístupový token\nToken GitHub s oprávněním **Contents: Read**.\n\nVygenerujte jej v: GitHub → Nastavení profilu → Nastavení pro vývojáře → Osobní přístupové tokeny → Jemně odstupňované tokeny.",
-      "owner": "## Vlastník\nOrganizace nebo uživatelský účet GitHub, kterému repozitář patří.\n\n- Příklad: `myorg` nebo `myusername`\n- Jedná se o první segment cesty v URL repozitáře na github.com",
-      "repo": "## Repozitář\nNázev repozitáře bez prefixu vlastníka.\n\n- Příklad: `my-repo` (nikoli `myorg/my-repo`)\n- Jedná se o druhý segment cesty v URL repozitáře na github.com",
+      "owner": "## Vlastník\nOrganizace nebo uživatelský účet GitHub, kterému úložiště patří.\n\n- Příklad: `myorg` nebo `myusername`\n- Jedná se o první segment cesty v URL repozitáře na github.com",
+      "repo": "## Úložiště \nNázev úložiště bez prefixu vlastníka.\n\n- Příklad: `my-repo` (nikoli `myorg/my-repo`)\n- Jedná se o druhý segment cesty v URL repozitáře na github.com",
       "githubBaseUrl": "## Základní URL adresa API\nPonechte prázdné pro github.com. Pro GitHub Enterprise Server zadejte úplný kořen API.\n\n- Příklad: `https://github.example.com/api/v3`\n- Obvykle končí na `/api/v3`\n- Musí být dostupný z tohoto serveru",
       "gitlabToken": "## Osobní přístupový token\nToken GitLab s rozsahy **read_api** a **read_repository**.\n\nVygenerujte jej v: GitLab → Nastavení uživatele → Přístupové tokeny.",
       "projectPath": "## ID nebo cesta k projektu\nČíselné ID projektu nebo úplná cesta jmenného prostoru.\n\n- Příklad cesty: `myorg/my-project`\n- Příklad ID: `12345678`\n- Naleznete v GitLab v části Nastavení → Obecné.",
@@ -7835,15 +7835,15 @@
       "bitbucketEmail": "## E-mail účtu Atlassian\nE-mailová adresa spojená s vaším účtem Atlassian.\n\n- Jedná se o e-mail, který používáte k přihlášení do Bitbucket Cloud.",
       "bitbucketApiToken": "## API token\nToken API Bitbucket s rozsahem **Repositories: Read**.\n\nVytvořte jej v: Bitbucket → Osobní nastavení → API tokeny.\n\n> Aplikační hesla byla společností Atlassian nahrazena API tokeny.",
       "workspace": "## Pracovní prostor\nIdentifikátor pracovního prostoru z vaší URL Bitbucket.\n\n- Příklad: `myworkspace` z `bitbucket.org/myworkspace`",
-      "repoSlug": "## Identifikátor repozitáře\nIdentifikátor repozitáře z jeho URL.\n\n- Příklad: `my-repo` z `bitbucket.org/myworkspace/my-repo`",
+      "repoSlug": "## Identifikátor úložiště\nIdentifikátor úložiště z jeho URL.\n\n- Příklad: `my-repo` z `bitbucket.org/myworkspace/my-repo`",
       "azureToken": "## Osobní přístupový token\nToken PAT Azure DevOps s oprávněním **Code (Read)**.\n\nVytvořte jej v: Azure DevOps → Nastavení uživatele → Osobní přístupové tokeny.",
       "organizationUrl": "## URL organizace\nURL vaší organizace Azure DevOps.\n\n- Příklad: `https://dev.azure.com/myorg`",
-      "project": "## Název projektu\nNázev projektu Azure DevOps obsahujícího repozitář.\n\n- Nachází se jako třetí segment cesty v URL Azure DevOps za názvem organizace",
-      "azureRepoId": "## Název nebo ID repozitáře\nNázev repozitáře nebo GUID v rámci projektu Azure DevOps.\n\n- Příklad: `my-repo`",
+      "project": "## Název projektu\nNázev projektu Azure DevOps obsahujícího úložiště.\n\n- Nachází se jako třetí segment cesty v URL Azure DevOps za názvem organizace",
+      "azureRepoId": "## Název nebo ID úložiště\nNázev repozitáře nebo GUID v rámci projektu Azure DevOps.\n\n- Příklad: `my-repo`",
       "giteaToken": "## Osobní přístupový token\nToken s oprávněním ke čtení repozitáře.\n\nVygenerujte jej v: Správa webu → Aplikace, nebo Nastavení uživatele → Aplikace.\n\n- Funguje s Gitea, Forgejo, Gogs a jakýmkoli serverem nabízejícím kompatibilní API.",
       "giteaBaseUrl": "## URL serveru\nZákladní URL vašeho vlastního Git serveru.\n\n- Příklad: `https://gitea.example.com`\n- Musí obsahovat protokol (doporučeno https://)\n- Funguje s Gitea, Forgejo, Gogs a dalšími servery s REST API `/api/v1/` kompatibilním s Gitea",
-      "giteaOwner": "## Vlastník\nOrganizace nebo uživatelský účet, kterému repozitář patří.\n\n- Příklad: `myorg` nebo `myusername`\n- Jedná se o první segment cesty v URL vašeho repozitáře",
-      "giteaRepo": "## Repozitář\nNázev repozitáře bez prefixu vlastníka.\n\n- Příklad: `my-repo` (nikoli `myorg/my-repo`)"
+      "giteaOwner": "## Vlastník\nOrganizace nebo uživatelský účet, kterému úložiště patří.\n\n- Příklad: `myorg` nebo `myusername`\n- Jedná se o první segment cesty v URL vašeho úložiště",
+      "giteaRepo": "## Repozitář\nNázev úložiště bez prefixu vlastníka.\n\n- Příklad: `my-repo` (nikoli `myorg/my-repo`)"
     },
     "promptConfig": {
       "name": "## Název konfigurace\nJedinečný, popisný název této konfigurace promptu.\n\n- Používá se k identifikaci konfigurace při jejím přiřazování k projektu (např. „GPT-4o Prompty“, „Konzervativní prompty“).",
@@ -7909,11 +7909,11 @@
           "content": "Spravujte své testovací případy, organizujte je do složek a vytvářejte nové testovací scénáře pro důkladné pokrytí testováním."
         },
         "repositoryPanels": {
-          "title": "Levý panel repozitáře",
+          "title": "Levý panel úložiště",
           "content": "Levý panel zobrazuje strukturu vašich složek a strom testovacích případů. Pomocí přepínače zobrazení můžete přepínat mezi různými organizačními pohledy."
         },
         "repositoryRightPanel": {
-          "title": "Pravý panel repozitáře",
+          "title": "Pravý panel úložiště",
           "content": "Pravý panel zobrazuje podrobnosti testovacího případu, výsledky provedení a nabízí akce pro vytváření nových testovacích případů nebo import stávajících."
         },
         "sharedSteps": {
@@ -8048,7 +8048,7 @@
           "content": "Zobrazte všechny milníky tohoto projektu. Každý milník zobrazuje svůj stav a postup směrem k dokončení."
         },
         "repository": {
-          "title": "Repozitář testovacích případů",
+          "title": "Úložiště testovacích případů",
           "content": "Organizujte testovací případy do složek s vlastními poli, kroky a prioritami. Projděte si ukázkové složky a zjistěte, jak jsou případy strukturovány."
         },
         "repositoryPanels": {
@@ -8111,7 +8111,7 @@
     },
     "projectRunsFilters": "## Filtrování testovacích běhů\n\nPřepnutím štítku zúžíte seznam. Štítky se vztahují na obě karty, Aktivní i Dokončené, a jsou na tomto zařízení zapamatovány pro tento projekt.\n\n- **Manuální** / **Automatizované** — omezí seznam na daný typ běhu. Zapnutí obou (nebo vypnutí obou) zobrazí všechny běhy.\n- **Moje testovací běhy** — pouze běhy, kterých se účastníte: vytvořili jste běh, je vám v něm přiřazen testovací případ, nebo jste v něm zaznamenali výsledek testu.",
     "projectSessionsFilters": "## Filtrování relací\n\nPřepnutím štítku zúžíte seznam. Štítky se vztahují na obě karty, Aktivní i Dokončené, a jsou na tomto zařízení zapamatovány pro tento projekt.\n\n- **Moje relace** — pouze relace, kterých se účastníte: vytvořili jste relaci nebo je vám přiřazena.",
-    "projectImpact": "## Dopad\nPřipojte repozitář testované aplikace, aby tento projekt mohl spouštět analýzu dopadu testů: vyberte dva commity a zjistěte, které testovací případy jsou změnami ovlivněny, a připněte testovací případy ke kódu, který pokrývají.",
+    "projectImpact": "## Dopad\nPřipojte úložiště testované aplikace, aby tento projekt mohl spouštět analýzu dopadu testů: vyberte dva commity a zjistěte, které testovací případy jsou změnami ovlivněny, a připněte testovací případy ke kódu, který pokrývají.",
     "projectAutomation": "## Automatizované spouštění\nCíle spouštění říkají aplikaci TestPlanIt, kde má spouštět automatizované případy tohoto projektu: workflow GitHub Actions, pipeline GitLab CI nebo podepsaný webhook pro jakýkoli jiný systém. Při spuštění testovacího běhu spustí TestPlanIt úlohu s ID běhu a URL adresou plánu; úloha přečte plán, spustí odpovídající testy a odešle zpět výsledky pomocí reportéru nebo CLI přiřazeného k danému běhu. Cíle lze zakázat, aniž by byly odstraněny."
   },
   "reports": {
@@ -8207,8 +8207,8 @@
           "description": "Analyzujte výsledky testů, míry úspěšnosti a metriky provádění"
         },
         "repositoryStats": {
-          "label": "Statistiky repozitáře",
-          "description": "Statistiky testovacích případů, pokrytí a stav repozitáře"
+          "label": "Statistiky úložiště",
+          "description": "Statistiky testovacích případů, pokrytí a stav úložiště"
         },
         "userEngagement": {
           "label": "Zapojení uživatelů",
@@ -8272,7 +8272,7 @@
         },
         "impactAnalysis": {
           "label": "Historie analýz dopadu",
-          "description": "Každá analýza dopadu: co ji spustilo, co změnila, jaké případy vybrala a jak dopadl test run, který vytvořila"
+          "description": "Každá analýza dopadu: co ji spustilo, co změnila, jaké případy vybrala a jak dopadl testovací běh, který vytvořila"
         },
         "codePinCoverage": {
           "label": "Pokrytí kódu piny",
@@ -8578,8 +8578,8 @@
           "description": "Analyzujte výsledky testů, úspěšnost a metriky provádění napříč všemi projekty"
         },
         "repositoryStats": {
-          "label": "Statistiky repozitáře napříč projekty",
-          "description": "Statistiky testovacích případů, pokrytí a stav repozitáře napříč projekty"
+          "label": "Statistiky úložiště napříč projekty",
+          "description": "Statistiky testovacích případů, pokrytí a stav úložiště napříč projekty"
         },
         "userEngagement": {
           "label": "Zapojení uživatelů napříč projekty",
@@ -8655,7 +8655,7 @@
         "stats": {
           "analyses": "Analýzy",
           "runsComposed": "Vytvořené testovací běhy",
-          "runsComposedTooltip": "Analýzy, které vytvořily test run, ať už ručně, nebo na základě události v úložišti.",
+          "runsComposedTooltip": "Analýzy, které vytvořilytestovací běh, ať už ručně, nebo na základě události v úložišti.",
           "runsWithFailures": "Testovací běhy se selháními",
           "runsWithFailuresTooltip": "Vytvořené testovací běhy, ve kterých selhal alespoň jeden vybraný případ, jako podíl z provedených vytvořených testovacích běhů.",
           "medianAffected": "Medián ovlivněných případů",
@@ -9138,7 +9138,7 @@
     "currentProjectOnly": "Pouze aktuální projekt",
     "allTypes": "Všechny typy",
     "entityTypes": {
-      "repositoryCase": "Případy repozitáře"
+      "repositoryCase": "Případy úložiště "
     },
     "results": {
       "tryAdjusting": "Zkuste upravit hledané výrazy nebo filtry",

@@ -2084,6 +2084,7 @@
           "pathLabel": "Path",
           "patternLabel": "Pattern",
           "previewFiles": "Preview Files",
+          "rootHint": "Leave the path blank, or enter ., to start at the repository root; path . with pattern **/* includes every file.",
           "scanningRepo": "Scanning repository files… ({seconds}s)",
           "title": "Path Patterns",
           "truncatedBadge": "Results may be incomplete (provider limit)"
@@ -2107,7 +2108,6 @@
         "saveError": "Failed to save configuration",
         "validation": {
           "pathPatternRequired": "At least one path pattern is required",
-          "pathRequired": "Path is required",
           "patternRequired": "Pattern is required",
           "repositoryRequired": "Repository is required"
         },

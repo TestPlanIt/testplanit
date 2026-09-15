@@ -2084,6 +2084,7 @@
           "pathLabel": "パス",
           "patternLabel": "パターン",
           "previewFiles": "プレビューファイル",
+          "rootHint": "パスを空白のままにするか、. を入力するとリポジトリのルートから開始します。パターン **/* を指定したパス . はすべてのファイルを含みます。",
           "scanningRepo": "リポジトリファイルをスキャンしています… ({seconds}秒)",
           "title": "パスパターン",
           "truncatedBadge": "結果は不完全な場合があります（プロバイダーの制限による）"
@@ -2107,7 +2108,6 @@
         "saveError": "設定を保存できませんでした",
         "validation": {
           "pathPatternRequired": "少なくとも1つのパスパターンが必要です",
-          "pathRequired": "パスが必要です",
           "patternRequired": "パターンが必要です",
           "repositoryRequired": "リポジトリが必要です"
         },

@@ -2084,6 +2084,7 @@
           "pathLabel": "경로",
           "patternLabel": "패턴",
           "previewFiles": "미리보기 파일",
+          "rootHint": "경로를 비워두거나 저장소 루트에서 시작하려면 . 을 입력하세요. 패턴 **/*와 함께 경로 . 을 사용하면 모든 파일이 포함됩니다.",
           "scanningRepo": "저장소 파일 스캔 중… ({seconds}s)",
           "title": "경로 패턴",
           "truncatedBadge": "결과가 불완전할 수 있습니다(제공업체 제한)"
@@ -2107,7 +2108,6 @@
         "saveError": "설정을 저장하는 데 실패했습니다",
         "validation": {
           "pathPatternRequired": "최소 하나의 경로 패턴이 필요합니다",
-          "pathRequired": "경로가 필요합니다",
           "patternRequired": "패턴이 필요합니다",
           "repositoryRequired": "저장소가 필요합니다"
         },

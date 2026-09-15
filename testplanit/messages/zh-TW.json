@@ -2084,6 +2084,7 @@
           "pathLabel": "路徑",
           "patternLabel": "模式",
           "previewFiles": "預覽檔案",
+          "rootHint": "路徑欄位留空，或輸入 . 以從儲存庫根目錄開始；路徑 . 搭配模式 **/* 可包含所有檔案。",
           "scanningRepo": "正在掃描儲存庫檔案… ({seconds}s)",
           "title": "路徑模式",
           "truncatedBadge": "結果可能不完整（受提供者限制）"
@@ -2107,7 +2108,6 @@
         "saveError": "配置保存失敗",
         "validation": {
           "pathPatternRequired": "至少需要一種路徑模式",
-          "pathRequired": "路徑是必需的",
           "patternRequired": "需要模式",
           "repositoryRequired": "需要儲存庫"
         },

@@ -2084,6 +2084,7 @@
           "pathLabel": "Chemin",
           "patternLabel": "Modèle",
           "previewFiles": "Aperçu des fichiers",
+          "rootHint": "Laissez le chemin vide, ou saisissez ., pour commencer à la racine du dépôt ; le chemin . avec le motif **/* inclut tous les fichiers.",
           "scanningRepo": "Analyse des fichiers du dépôt… ({seconds}s)",
           "title": "Modèles de chemin",
           "truncatedBadge": "Les résultats peuvent être incomplets (limite du fournisseur)"
@@ -2107,7 +2108,6 @@
         "saveError": "Échec de l'enregistrement de la configuration",
         "validation": {
           "pathPatternRequired": "Au moins un modèle de chemin est requis",
-          "pathRequired": "Le chemin d'accès est requis",
           "patternRequired": "Un modèle est requis",
           "repositoryRequired": "Un dépôt est requis"
         },

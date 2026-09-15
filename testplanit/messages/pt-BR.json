@@ -2084,6 +2084,7 @@
           "pathLabel": "Caminho",
           "patternLabel": "Padrão",
           "previewFiles": "Pré-visualização de arquivos",
+          "rootHint": "Deixe o caminho em branco ou digite ., para começar na raiz do repositório; o caminho . com o padrão **/* inclui todos os arquivos.",
           "scanningRepo": "Analisando arquivos do repositório… ({seconds}s)",
           "title": "Padrões de Caminho",
           "truncatedBadge": "Os resultados podem estar incompletos (limitação do provedor)"
@@ -2107,7 +2108,6 @@
         "saveError": "Falha ao salvar a configuração",
         "validation": {
           "pathPatternRequired": "É necessário pelo menos um padrão de caminho",
-          "pathRequired": "O caminho é obrigatório",
           "patternRequired": "É necessário um padrão",
           "repositoryRequired": "É necessário um repositório"
         },

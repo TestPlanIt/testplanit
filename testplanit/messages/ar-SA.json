@@ -2084,6 +2084,7 @@
           "pathLabel": "المسار",
           "patternLabel": "النمط",
           "previewFiles": "معاينة الملفات",
+          "rootHint": "اترك المسار فارغًا، أو أدخل .، للبدء من جذر المستودع؛ المسار . مع النمط **/* يشمل كل ملف.",
           "scanningRepo": "جارٍ فحص ملفات المستودع… ({seconds} ثانية)",
           "title": "أنماط المسار",
           "truncatedBadge": "قد تكون النتائج غير مكتملة (حد المزود)"
@@ -2107,7 +2108,6 @@
         "saveError": "فشل حفظ التكوين",
         "validation": {
           "pathPatternRequired": "مطلوب نمط مسار واحد على الأقل",
-          "pathRequired": "المسار مطلوب",
           "patternRequired": "النمط مطلوب",
           "repositoryRequired": "المستودع مطلوب"
         },

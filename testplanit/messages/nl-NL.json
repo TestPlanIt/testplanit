@@ -2084,6 +2084,7 @@
           "pathLabel": "Pad",
           "patternLabel": "Patroon",
           "previewFiles": "Voorbeeldbestanden",
+          "rootHint": "Laat het pad leeg, of voer . in, om te beginnen bij de root van de repository; pad . met patroon **/* omvat elk bestand.",
           "scanningRepo": "Bestanden in de repository scannen… ({seconds}s)",
           "title": "Padpatronen",
           "truncatedBadge": "De resultaten kunnen onvolledig zijn (beperkingen van de aanbieder)"
@@ -2107,7 +2108,6 @@
         "saveError": "Configuratie kon niet worden opgeslagen",
         "validation": {
           "pathPatternRequired": "Er is ten minste één padpatroon vereist",
-          "pathRequired": "Pad is vereist",
           "patternRequired": "Een patroon is vereist",
           "repositoryRequired": "Een repository is vereist"
         },

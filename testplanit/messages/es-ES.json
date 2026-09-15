@@ -2084,6 +2084,7 @@
           "pathLabel": "Ruta",
           "patternLabel": "Patrón",
           "previewFiles": "Vista previa de archivos",
+          "rootHint": "Deje la ruta en blanco, o ingrese ., para comenzar en la raíz del repositorio; la ruta . con el patrón **/* incluye todos los archivos.",
           "scanningRepo": "Escaneando archivos del repositorio… ({seconds}s)",
           "title": "Patrones de ruta",
           "truncatedBadge": "Los resultados pueden estar incompletos (límite del proveedor)"
@@ -2107,7 +2108,6 @@
         "saveError": "No se pudo guardar la configuración",
         "validation": {
           "pathPatternRequired": "Se requiere al menos un patrón de ruta",
-          "pathRequired": "La ruta es obligatoria",
           "patternRequired": "Se requiere patrón",
           "repositoryRequired": "Se requiere repositorio"
         },

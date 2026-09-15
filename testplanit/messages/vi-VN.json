@@ -2084,6 +2084,7 @@
           "pathLabel": "Đường dẫn",
           "patternLabel": "Mẫu",
           "previewFiles": "Xem trước tệp",
+          "rootHint": "Để trống đường dẫn hoặc nhập ., để bắt đầu từ thư mục gốc của kho lưu trữ; đường dẫn . với mẫu **/* sẽ bao gồm mọi tệp.",
           "scanningRepo": "Đang quét các tệp kho lưu trữ… ({seconds}s)",
           "title": "Mẫu đường dẫn",
           "truncatedBadge": "Kết quả có thể không đầy đủ (giới hạn của nhà cung cấp)"
@@ -2107,7 +2108,6 @@
         "saveError": "Không thể lưu cấu hình",
         "validation": {
           "pathPatternRequired": "Cần ít nhất một mẫu đường dẫn",
-          "pathRequired": "Cần có đường dẫn",
           "patternRequired": "Cần có mẫu",
           "repositoryRequired": "Cần có kho lưu trữ"
         },

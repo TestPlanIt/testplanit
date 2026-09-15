@@ -2084,6 +2084,7 @@
           "pathLabel": "Ścieżka",
           "patternLabel": "Wzór",
           "previewFiles": "Podgląd plików",
+          "rootHint": "Pozostaw ścieżkę pustą lub wpisz ., aby rozpocząć od głównego katalogu repozytorium; ścieżka . ze wzorcem **/* obejmuje każdy plik.",
           "scanningRepo": "Skanowanie plików repozytorium… ({seconds}s)",
           "title": "Wzory ścieżek",
           "truncatedBadge": "Wyniki mogą być niekompletne (limit dostawcy)"
@@ -2107,7 +2108,6 @@
         "saveError": "Nie udało się zapisać konfiguracji",
         "validation": {
           "pathPatternRequired": "Wymagany jest co najmniej jeden wzorzec ścieżki",
-          "pathRequired": "Ścieżka jest wymagana",
           "patternRequired": "Wzór jest wymagany",
           "repositoryRequired": "Repozytorium jest wymagane"
         },
