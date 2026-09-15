@@ -1,3 +1,18 @@
+## [1.1.0-beta.9](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.8...v1.1.0-beta.9) (2026-09-15)
+
+### Features
+
+* **reports:** Impact Analysis History and Code Pin Coverage reports, Impact dimensions and metrics ([e87c432](https://github.com/TestPlanIt/testplanit/commit/e87c43251c845cf37b42e17a147da69781e3614e))
+
+### Bug Fixes
+
+* **admin:** resolve admin menu labels and metric column headers through shared keys ([59f7069](https://github.com/TestPlanIt/testplanit/commit/59f70696aa763f09bc4cc36cd1c900dff2943179))
+* **admin:** resolve admin menu labels and metric column headers through shared keys ([a48fbcc](https://github.com/TestPlanIt/testplanit/commit/a48fbcc41efba00dc2a0f7f1af8c7f90d1179466))
+* **reports:** resolve builder picker labels through the shared label keys ([f8cb0de](https://github.com/TestPlanIt/testplanit/commit/f8cb0de2e005c67fea881980dd34fe33f633fe88))
+* **reports:** resolve builder picker labels through the shared label keys ([35c19ed](https://github.com/TestPlanIt/testplanit/commit/35c19ed1b8ec7e4fe046cf87093c781ba5b4afe6))
+* **reports:** tolerate translators without has() when resolving labels ([6ffd466](https://github.com/TestPlanIt/testplanit/commit/6ffd4662499bae7195a419be5a6770592cc971dd))
+* **reports:** tolerate translators without has() when resolving labels ([c742dfe](https://github.com/TestPlanIt/testplanit/commit/c742dfe57829191299b4f24e5615dee8c04b7be9))
+
 ## [1.1.0-beta.8](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.7...v1.1.0-beta.8) (2026-09-14)
 
 ### Bug Fixes
