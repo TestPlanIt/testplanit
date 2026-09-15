@@ -1097,7 +1097,7 @@ export function ImpactRepositoryForm({
 
             {issueView.kind === "scanned" && (
               <>
-                <p className="flex items-center gap-2 text-muted-foreground">
+                <div className="flex items-center gap-2 text-muted-foreground">
                   {t("scanLastScan", {
                     date: formatScanDate(issueView.report.scannedAt),
                   })}
@@ -1109,7 +1109,7 @@ export function ImpactRepositoryForm({
                       {t("tickets.fullBadge")}
                     </Badge>
                   )}
-                </p>
+                </div>
                 <p data-testid="impact-issue-scan-summary">
                   {issueView.namingCountsKnown
                     ? t("tickets.summaryCommits", {
