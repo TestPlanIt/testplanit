@@ -4,6 +4,9 @@ import {
   CompareOptions,
   CompareResult,
   GitRepoAdapter,
+  BRANCH_SEARCH_LIMIT,
+  MAX_BRANCHES,
+  encodeBranchPath,
   ListCommitsOptions,
   ListCommitsResult,
   ListFilesResult,
@@ -24,7 +27,6 @@ import {
   MAX_TOTAL_PATCH_BYTES,
 } from "../diff/limits";
 
-const MAX_BRANCHES = 500;
 const BRANCH_PAGE_SIZE = 100;
 const COMPARE_PAGE_SIZE = 100;
 const DEFAULT_COMMITS_PER_PAGE = 30;
@@ -164,6 +166,52 @@ export class GitHubRepoAdapter extends GitRepoAdapter {
       if (items.length < BRANCH_PAGE_SIZE) break;
     }
     return branches;
+  }
+
+  /**
+   * GitHub has no substring filter for branches, so this reads the exact
+   * branch the query names (if any) and every branch the query is a prefix
+   * of, via the matching-refs endpoint.
+   */
+  async searchBranches(
+    query: string,
+    limit: number = BRANCH_SEARCH_LIMIT
+  ): Promise<RepoBranch[]> {
+    const needle = query.trim();
+    if (!needle) return [];
+    const defaultBranch = await this.getDefaultBranch();
+    const found = new Map<string, RepoBranch>();
+    const add = (name: string, sha: string, isProtected?: boolean) => {
+      if (!name || found.has(name)) return;
+      const branch: RepoBranch = {
+        name,
+        sha,
+        isDefault: name === defaultBranch,
+      };
+      if (isProtected !== undefined) branch.protected = isProtected;
+      found.set(name, branch);
+    };
+
+    try {
+      const exact = await this.makeRequest<any>(
+        `${this.repoUrl}/branches/${encodeBranchPath(needle)}`,
+        { headers: this.authHeaders }
+      );
+      add(exact?.name, exact?.commit?.sha ?? "", exact?.protected === true);
+    } catch (err) {
+      if (!this.isNotFoundError(err)) throw err;
+    }
+
+    const refs = await this.makeRequest<any>(
+      `${this.repoUrl}/git/matching-refs/heads/${encodeBranchPath(needle)}`,
+      { headers: this.authHeaders }
+    );
+    for (const ref of Array.isArray(refs) ? refs : []) {
+      if (found.size >= limit) break;
+      const name = String(ref?.ref ?? "").replace(/^refs\/heads\//, "");
+      add(name, ref?.object?.sha ?? "");
+    }
+    return [...found.values()].slice(0, limit);
   }
 
   async listCommits(

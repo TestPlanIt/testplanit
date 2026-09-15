@@ -37,6 +37,8 @@ interface BranchesResponse {
   branches: RepoBranch[];
   defaultBranch: string | null;
   configuredBranch: string | null;
+  /** The repository has more branches than the list holds. */
+  truncated?: boolean;
 }
 
 interface PreviousAnalysis {
@@ -197,6 +199,7 @@ export function CommitPickerStep({
   const t = useTranslations("runs.impact");
   const formatDate = useCommitDateFormatter();
   const [branches, setBranches] = useState<RepoBranch[]>([]);
+  const [branchesTruncated, setBranchesTruncated] = useState(false);
   const [branchesError, setBranchesError] = useState(false);
   const [branchesLoaded, setBranchesLoaded] = useState(false);
   const [previous, setPrevious] = useState<PreviousAnalysis[]>([]);
@@ -214,6 +217,7 @@ export function CommitPickerStep({
       .then((data) => {
         if (ignore) return;
         setBranches(data.branches ?? []);
+        setBranchesTruncated(data.truncated === true);
         setBranchesLoaded(true);
         if (branch === null) {
           onBranchChange(
@@ -258,14 +262,29 @@ export function CommitPickerStep({
 
   const fetchBranchOptions = useCallback(
     async (query: string) => {
-      const needle = query.trim().toLowerCase();
+      const needle = query.trim();
+      if (needle && branchesTruncated) {
+        // The list is capped, so the provider is asked; the route merges the
+        // loaded matches with what it finds.
+        const search = new URLSearchParams({
+          configId: String(config.id),
+          q: needle,
+        });
+        const response = await fetch(
+          `/api/code-repositories/${config.repositoryId}/branches?${search}`
+        );
+        if (!response.ok) throw new Error("Failed to search branches");
+        const data = (await response.json()) as BranchesResponse;
+        const results = data.branches ?? [];
+        return { results, total: results.length };
+      }
+      const lower = needle.toLowerCase();
       const results = branches.filter(
-        (item) =>
-          needle.length === 0 || item.name.toLowerCase().includes(needle)
+        (item) => lower.length === 0 || item.name.toLowerCase().includes(lower)
       );
       return { results, total: results.length };
     },
-    [branches]
+    [branches, branchesTruncated, config.id, config.repositoryId]
   );
 
   const branchValue: RepoBranch | null =
@@ -440,6 +459,16 @@ export function CommitPickerStep({
             </button>
           )}
         />
+        {branchesTruncated && (
+          <p
+            className="text-xs text-muted-foreground"
+            data-testid="impact-branches-truncated"
+          >
+            {tRepo("repository.branchesTruncatedHint", {
+              count: branches.length,
+            })}
+          </p>
+        )}
       </div>
 
       {mode === "pull" && (

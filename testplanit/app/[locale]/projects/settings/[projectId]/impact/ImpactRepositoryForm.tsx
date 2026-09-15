@@ -3,6 +3,7 @@
 import { CodeRepositoryName } from "@/components/CodeRepositoryName";
 import {
   PathPatternsCard,
+  type PathPatternValue,
   pathPatternsSchema,
 } from "@/components/code-repositories/PathPatternsCard";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
@@ -183,14 +184,28 @@ export function ImpactRepositoryForm({
     cacheTtlDays: 7,
     issueScanEnabled: true,
   };
+  const valuesFromConfig = (row: ImpactConfigRow): FormData => ({
+    repositoryId: String(row.repositoryId),
+    branch: row.branch ?? "",
+    pathPatterns: (row.pathPatterns as PathPatternValue[] | null) ?? [
+      { path: "", pattern: "**/*" },
+    ],
+    cacheEnabled: row.cacheEnabled ?? true,
+    cacheTtlDays: row.cacheTtlDays ?? 7,
+    issueScanEnabled: row.issueScanEnabled ?? true,
+  });
 
   const [branchesError, setBranchesError] = useState<string | null>(null);
   const [defaultBranchName, setDefaultBranchName] = useState<string | null>(
     null
   );
-  const branchListRef = useRef<{ key: string; branches: RepoBranch[] } | null>(
-    null
-  );
+  const branchListRef = useRef<{
+    key: string;
+    branches: RepoBranch[];
+    truncated: boolean;
+  } | null>(null);
+  /** How many branches the list holds when the repository has more. */
+  const [branchesShown, setBranchesShown] = useState<number | null>(null);
   // The row a running refresh polls; set before the refresh starts so a
   // just-created connection is found in the list.
   const activeConfigIdRef = useRef<number | null>(existingConfig?.id ?? null);
@@ -281,25 +296,18 @@ export function ImpactRepositoryForm({
     });
   };
 
+  // The dialog remounts this form whenever the connection or mode changes,
+  // so the saved values seed the form directly; the reset below only follows
+  // a connection the page refetched while the form is open.
   const form = useForm<FormData>({
     resolver: standardSchemaResolver(formSchema) as any,
-    defaultValues: defaultFormValues,
+    defaultValues: existingConfig
+      ? valuesFromConfig(existingConfig)
+      : defaultFormValues,
   });
 
   useEffect(() => {
-    if (existingConfig) {
-      form.reset({
-        repositoryId: String(existingConfig.repositoryId),
-        branch: existingConfig.branch ?? "",
-        pathPatterns: (existingConfig.pathPatterns as {
-          path: string;
-          pattern: string;
-        }[]) ?? [{ path: "", pattern: "**/*" }],
-        cacheEnabled: existingConfig.cacheEnabled ?? true,
-        cacheTtlDays: existingConfig.cacheTtlDays ?? 7,
-        issueScanEnabled: existingConfig.issueScanEnabled ?? true,
-      });
-    }
+    if (existingConfig) form.reset(valuesFromConfig(existingConfig));
   }, [existingConfig]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const selectedRepositoryId = form.watch("repositoryId");
@@ -316,38 +324,59 @@ export function ImpactRepositoryForm({
     async (query) => {
       if (branchesConfigId == null) return { results: [], total: 0 };
       const key = `${selectedRepositoryId}:${branchesConfigId}`;
-      let branches =
-        branchListRef.current?.key === key
-          ? branchListRef.current.branches
-          : null;
-
-      if (!branches) {
-        try {
-          const res = await fetch(
-            `/api/code-repositories/${selectedRepositoryId}/branches?configId=${branchesConfigId}`
-          );
-          const data = await res.json().catch(() => ({}));
-          if (!res.ok || data.error) {
-            setBranchesError(data.error ?? branchesFetchFailed);
-            return { results: [], total: 0 };
-          }
-          branches = (data.branches as RepoBranch[] | undefined) ?? [];
-          branchListRef.current = { key, branches };
-          setDefaultBranchName(data.defaultBranch ?? null);
-        } catch (err) {
-          setBranchesError(
-            err instanceof Error ? err.message : branchesFetchFailed
-          );
-          return { results: [], total: 0 };
+      const base = `/api/code-repositories/${selectedRepositoryId}/branches?configId=${branchesConfigId}`;
+      const load = async (url: string) => {
+        const res = await fetch(url);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || data.error) {
+          throw new Error(data.error ?? branchesFetchFailed);
         }
-      }
+        return data as {
+          branches?: RepoBranch[];
+          defaultBranch?: string | null;
+          truncated?: boolean;
+        };
+      };
 
-      const needle = query.trim().toLowerCase();
-      const matches = branches
-        .filter((b) => !needle || b.name.toLowerCase().includes(needle))
-        .map((b) => ({ name: b.name }));
-      const results = needle ? matches : [DEFAULT_BRANCH_OPTION, ...matches];
-      return { results, total: results.length };
+      try {
+        let list =
+          branchListRef.current?.key === key ? branchListRef.current : null;
+        if (!list) {
+          const data = await load(base);
+          list = {
+            key,
+            branches: data.branches ?? [],
+            truncated: data.truncated === true,
+          };
+          branchListRef.current = list;
+          setDefaultBranchName(data.defaultBranch ?? null);
+          setBranchesShown(list.truncated ? list.branches.length : null);
+        }
+
+        const needle = query.trim();
+        if (!needle) {
+          const all = list.branches.map((b) => ({ name: b.name }));
+          return {
+            results: [DEFAULT_BRANCH_OPTION, ...all],
+            total: all.length + 1,
+          };
+        }
+        // A capped list is searched at the provider; the route merges the
+        // loaded matches with what it finds.
+        const branches = list.truncated
+          ? ((await load(`${base}&q=${encodeURIComponent(needle)}`)).branches ??
+            [])
+          : list.branches.filter((b) =>
+              b.name.toLowerCase().includes(needle.toLowerCase())
+            );
+        const results = branches.map((b) => ({ name: b.name }));
+        return { results, total: results.length };
+      } catch (err) {
+        setBranchesError(
+          err instanceof Error ? err.message : branchesFetchFailed
+        );
+        return { results: [], total: 0 };
+      }
     },
     [branchesConfigId, selectedRepositoryId, branchesFetchFailed]
   );
@@ -591,6 +620,16 @@ export function ImpactRepositoryForm({
                         showPagination={false}
                         disabled={readOnly}
                       />
+                      {branchesShown != null && (
+                        <p
+                          className="mt-1 text-xs text-muted-foreground"
+                          data-testid="impact-branches-truncated"
+                        >
+                          {tRepo("repository.branchesTruncatedHint", {
+                            count: branchesShown,
+                          })}
+                        </p>
+                      )}
                     </div>
                   ) : (
                     <>

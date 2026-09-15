@@ -937,4 +937,88 @@ describe("GitHubRepoAdapter", () => {
       );
     });
   });
+
+  describe("searchBranches", () => {
+    const repoUrl = "https://api.github.com/repos/myorg/myrepo";
+
+    it("returns the exact branch first, then every branch the query prefixes", async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse({ default_branch: "main" }));
+      mockFetch.mockResolvedValueOnce(
+        makeResponse(makeRawBranch("release", { protected: true }))
+      );
+      mockFetch.mockResolvedValueOnce(
+        makeResponse([
+          { ref: "refs/heads/release", object: { sha: "sha-release" } },
+          { ref: "refs/heads/release/1.0", object: { sha: "sha-1" } },
+          { ref: "refs/heads/release/2.0", object: { sha: "sha-2" } },
+        ])
+      );
+
+      const branches = await adapter.searchBranches("release");
+
+      expect(mockFetch.mock.calls[1][0]).toBe(`${repoUrl}/branches/release`);
+      expect(mockFetch.mock.calls[2][0]).toBe(
+        `${repoUrl}/git/matching-refs/heads/release`
+      );
+      expect(branches).toEqual([
+        {
+          name: "release",
+          sha: "sha-release",
+          isDefault: false,
+          protected: true,
+        },
+        { name: "release/1.0", sha: "sha-1", isDefault: false },
+        { name: "release/2.0", sha: "sha-2", isDefault: false },
+      ]);
+    });
+
+    it("tolerates a missing exact branch and encodes slashes per segment", async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse({ default_branch: "main" }));
+      mockFetch.mockResolvedValueOnce(
+        makeResponse({ message: "Branch not found" }, 404)
+      );
+      mockFetch.mockResolvedValueOnce(
+        makeResponse([
+          { ref: "refs/heads/feature/a b/x", object: { sha: "sha-x" } },
+        ])
+      );
+
+      const branches = await adapter.searchBranches("feature/a b");
+
+      expect(mockFetch.mock.calls[1][0]).toBe(
+        `${repoUrl}/branches/feature/a%20b`
+      );
+      expect(mockFetch.mock.calls[2][0]).toBe(
+        `${repoUrl}/git/matching-refs/heads/feature/a%20b`
+      );
+      expect(branches.map((b) => b.name)).toEqual(["feature/a b/x"]);
+    });
+
+    it("rethrows provider errors other than a missing branch", async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse({ default_branch: "main" }));
+      mockFetch.mockResolvedValueOnce(makeResponse({ message: "boom" }, 422));
+
+      await expect(adapter.searchBranches("x")).rejects.toThrow("HTTP 422");
+    });
+
+    it("returns nothing for a blank query without calling the provider", async () => {
+      expect(await adapter.searchBranches("   ")).toEqual([]);
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("honours the limit", async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse({ default_branch: "main" }));
+      mockFetch.mockResolvedValueOnce(makeResponse({ message: "nope" }, 404));
+      mockFetch.mockResolvedValueOnce(
+        makeResponse(
+          Array.from({ length: 5 }, (_, i) => ({
+            ref: `refs/heads/b${i}`,
+            object: { sha: `s${i}` },
+          }))
+        )
+      );
+
+      expect(await adapter.searchBranches("b", 2)).toHaveLength(2);
+    });
+  });
 });

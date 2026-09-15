@@ -1067,4 +1067,32 @@ describe("BitbucketRepoAdapter", () => {
       await expect(adapter.getMergeBase("main", "feature")).resolves.toBeNull();
     });
   });
+
+  describe("searchBranches", () => {
+    it("asks Bitbucket for names containing the query, quoting it", async () => {
+      mockFetch
+        .mockResolvedValueOnce(makeResponse({ mainbranch: { name: "main" } }))
+        .mockResolvedValueOnce(
+          makeResponse({
+            values: [{ name: 'rel "x"/1', target: { hash: "aaa" } }],
+          })
+        );
+
+      const branches = await adapter.searchBranches('rel "x"');
+
+      expect(mockFetch.mock.calls[1][0]).toBe(
+        "https://api.bitbucket.org/2.0/repositories/myworkspace/myrepo/refs/branches?q=" +
+          encodeURIComponent('name ~ "rel \\"x\\""') +
+          "&pagelen=100"
+      );
+      expect(branches).toEqual([
+        { name: 'rel "x"/1', sha: "aaa", isDefault: false },
+      ]);
+    });
+
+    it("returns nothing for a blank query without calling the provider", async () => {
+      expect(await adapter.searchBranches(" ")).toEqual([]);
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+  });
 });

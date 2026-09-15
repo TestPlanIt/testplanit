@@ -36,7 +36,7 @@ When the project connects more than one repository, the step starts with a **Rep
 
 #### Commits
 
-Compares two builds, so you can retest everything that landed since the one you last verified. Choose the branch, then the two commits:
+Compares two builds, so you can retest everything that landed since the one you last verified. Choose the branch, then the two commits. The branch list holds the first 500 branches; when the repository has more, a note under it says so and typing searches the whole repository.
 
 - **Base commit** and **Head commit** — searchable pickers over the branch's commits. Type part of a commit sha, or filter the loaded commits by message or author.
 - **Or paste a ref** — enter any branch, tag, or sha under either picker. It resolves as you type and fills the picker above it; a ref the repository does not know is reported as **Ref not found** once you leave the box or press Enter.

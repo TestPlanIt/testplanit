@@ -751,4 +751,36 @@ describe("AzureDevOpsRepoAdapter", () => {
       await expect(adapter.getMergeBase("main", "feature")).resolves.toBeNull();
     });
   });
+
+  describe("searchBranches", () => {
+    it("asks Azure DevOps for refs containing the query", async () => {
+      mockFetch
+        .mockResolvedValueOnce(
+          makeResponse({ defaultBranch: "refs/heads/main" })
+        )
+        .mockResolvedValueOnce(
+          makeResponse({
+            value: [
+              { name: "refs/heads/release/1.0", objectId: "aaa" },
+              { name: "refs/heads/main", objectId: "bbb" },
+            ],
+          })
+        );
+
+      const branches = await adapter.searchBranches("rel ease", 50);
+
+      expect(fetchedUrls()[1]).toContain(
+        "/refs?filter=heads/&filterContains=rel%20ease&$top=50&api-version=7.0"
+      );
+      expect(branches).toEqual([
+        { name: "release/1.0", sha: "aaa", isDefault: false },
+        { name: "main", sha: "bbb", isDefault: true },
+      ]);
+    });
+
+    it("returns nothing for a blank query without calling the provider", async () => {
+      expect(await adapter.searchBranches("")).toEqual([]);
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+  });
 });

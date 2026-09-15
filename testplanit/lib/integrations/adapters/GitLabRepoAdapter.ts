@@ -4,6 +4,8 @@ import {
   CompareOptions,
   CompareResult,
   GitRepoAdapter,
+  BRANCH_SEARCH_LIMIT,
+  MAX_BRANCHES,
   ListCommitsOptions,
   ListCommitsResult,
   ListFilesResult,
@@ -26,7 +28,6 @@ import {
 import { parseUnifiedDiff, stripDiffHeaders } from "../diff/parseUnifiedDiff";
 
 const MAX_FILES = 10000; // Cap to prevent runaway pagination
-const MAX_BRANCHES = 500;
 const BRANCH_PAGE_SIZE = 100;
 
 function diffStatus(diff: any): ChangedFileStatus {
@@ -151,6 +152,26 @@ export class GitLabRepoAdapter extends GitRepoAdapter {
     }
 
     return branches.slice(0, MAX_BRANCHES);
+  }
+
+  /** GitLab filters branches server-side with `search` (a substring). */
+  async searchBranches(
+    query: string,
+    limit: number = BRANCH_SEARCH_LIMIT
+  ): Promise<RepoBranch[]> {
+    const needle = query.trim();
+    if (!needle) return [];
+    const perPage = Math.min(BRANCH_PAGE_SIZE, Math.max(1, limit));
+    const items = await this.makeRequest<any[]>(
+      `${this.baseUrl}/api/v4/projects/${this.encodedProjectPath}/repository/branches?search=${encodeURIComponent(needle)}&per_page=${perPage}&page=1`,
+      { headers: this.authHeaders }
+    );
+    return (items ?? []).slice(0, limit).map((item) => ({
+      name: item.name,
+      sha: item.commit?.id,
+      isDefault: item.default === true,
+      protected: item.protected === true,
+    }));
   }
 
   async listCommits(

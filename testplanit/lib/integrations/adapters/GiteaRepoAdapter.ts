@@ -9,6 +9,9 @@ import {
   CompareOptions,
   CompareResult,
   GitRepoAdapter,
+  BRANCH_SEARCH_LIMIT,
+  MAX_BRANCHES,
+  encodeBranchPath,
   ListCommitsOptions,
   ListCommitsResult,
   ListFilesResult,
@@ -23,8 +26,9 @@ import {
 } from "./GitRepoAdapter";
 
 const MAX_FILES = 10000;
-const MAX_BRANCHES = 500;
 const BRANCH_PAGE_SIZE = 50;
+/** Pages past the listing cap a branch search reads; Gitea has no name filter. */
+const BRANCH_SEARCH_PAGES = 10;
 const DEFAULT_COMMITS_PER_PAGE = 30;
 const MAX_COMMITS_PER_PAGE = 100;
 
@@ -167,6 +171,66 @@ export class GiteaRepoAdapter extends GitRepoAdapter {
     }
 
     return branches.slice(0, MAX_BRANCHES);
+  }
+
+  /**
+   * The Gitea API lists branches without a name filter. This reads the exact
+   * branch the query names (if any), then scans the pages past the listing
+   * cap for names containing the query, up to BRANCH_SEARCH_PAGES pages.
+   */
+  async searchBranches(
+    query: string,
+    limit: number = BRANCH_SEARCH_LIMIT
+  ): Promise<RepoBranch[]> {
+    const needle = query.trim();
+    if (!needle) return [];
+    const lower = needle.toLowerCase();
+    const defaultBranch = await this.getDefaultBranch();
+    const found = new Map<string, RepoBranch>();
+    const add = (b: any) => {
+      if (!b?.name || found.has(b.name)) return;
+      found.set(b.name, {
+        name: b.name,
+        sha: b.commit?.id ?? "",
+        isDefault: b.name === defaultBranch,
+        protected: b.protected === true,
+      });
+    };
+
+    try {
+      add(
+        await this.makeRequest<any>(
+          `${this.repoUrl}/branches/${encodeBranchPath(needle)}`,
+          { headers: this.authHeaders }
+        )
+      );
+    } catch (err) {
+      if (!this.isNotFoundError(err)) throw err;
+    }
+
+    const firstPage = Math.floor(MAX_BRANCHES / BRANCH_PAGE_SIZE) + 1;
+    for (
+      let page = firstPage;
+      page < firstPage + BRANCH_SEARCH_PAGES && found.size < limit;
+      page++
+    ) {
+      const entries =
+        (await this.makeRequest<any[]>(
+          `${this.repoUrl}/branches?page=${page}&limit=${BRANCH_PAGE_SIZE}`,
+          { headers: this.authHeaders }
+        )) ?? [];
+      for (const b of entries) {
+        if (found.size >= limit) break;
+        if (
+          String(b?.name ?? "")
+            .toLowerCase()
+            .includes(lower)
+        )
+          add(b);
+      }
+      if (entries.length < BRANCH_PAGE_SIZE) break;
+    }
+    return [...found.values()].slice(0, limit);
   }
 
   async listCommits(

@@ -792,4 +792,69 @@ describe("GiteaRepoAdapter", () => {
       await expect(adapter.getMergeBase("main", "feature")).resolves.toBeNull();
     });
   });
+
+  describe("searchBranches", () => {
+    it("reads the exact branch, then scans the pages past the listing cap", async () => {
+      const page11 = Array.from({ length: 50 }, (_, i) => ({
+        name: i === 7 ? "release/2.0" : `feature/${500 + i}`,
+        commit: { id: `sha-${500 + i}` },
+        protected: false,
+      }));
+      const page12 = [
+        { name: "release/3.0", commit: { id: "sha-r3" }, protected: true },
+      ];
+      mockRoutes([
+        [REPO, { default_branch: "main" }],
+        [
+          `${REPO}/branches/release`,
+          { name: "release", commit: { id: "sha-r" }, protected: true },
+        ],
+        [`${REPO}/branches?page=11&limit=50`, page11],
+        [`${REPO}/branches?page=12&limit=50`, page12],
+      ]);
+
+      const branches = await adapter.searchBranches("release");
+
+      expect(branches).toEqual([
+        { name: "release", sha: "sha-r", isDefault: false, protected: true },
+        {
+          name: "release/2.0",
+          sha: "sha-507",
+          isDefault: false,
+          protected: false,
+        },
+        {
+          name: "release/3.0",
+          sha: "sha-r3",
+          isDefault: false,
+          protected: true,
+        },
+      ]);
+      expect(fetchedUrls()).toEqual([
+        REPO,
+        `${REPO}/branches/release`,
+        `${REPO}/branches?page=11&limit=50`,
+        `${REPO}/branches?page=12&limit=50`,
+      ]);
+    });
+
+    it("stops scanning after ten pages and skips a missing exact branch", async () => {
+      const fullPage = Array.from({ length: 50 }, (_, i) => ({
+        name: `feature/${i}`,
+        commit: { id: `sha-${i}` },
+      }));
+      mockRoutes([
+        [REPO, { default_branch: "main" }],
+        [/\/branches\?page=\d+&limit=50$/, fullPage],
+      ]);
+
+      const branches = await adapter.searchBranches("zzz");
+
+      expect(branches).toEqual([]);
+      const pages = fetchedUrls().filter((u) => u.includes("branches?page="));
+      expect(pages).toHaveLength(10);
+      expect(pages[0]).toContain("page=11&");
+      expect(pages[9]).toContain("page=20&");
+    });
+  });
 });

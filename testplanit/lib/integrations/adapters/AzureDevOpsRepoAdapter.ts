@@ -4,6 +4,8 @@ import {
   CompareOptions,
   CompareResult,
   GitRepoAdapter,
+  BRANCH_SEARCH_LIMIT,
+  MAX_BRANCHES,
   ListCommitsOptions,
   ListCommitsResult,
   ListFilesResult,
@@ -87,11 +89,29 @@ export class AzureDevOpsRepoAdapter extends GitRepoAdapter {
   async listBranches(): Promise<RepoBranch[]> {
     const defaultBranch = await this.getDefaultBranch();
     const data = await this.makeRequest<any>(
-      `${this.repoApiUrl}/refs?filter=heads/&$top=500&api-version=7.0`,
+      `${this.repoApiUrl}/refs?filter=heads/&$top=${MAX_BRANCHES}&api-version=7.0`,
       { headers: this.authHeaders }
     );
+    return this.mapRefs(data, defaultBranch);
+  }
 
-    return (data.value ?? []).map((ref: any) => {
+  /** Azure DevOps filters refs server-side with `filterContains`. */
+  async searchBranches(
+    query: string,
+    limit: number = BRANCH_SEARCH_LIMIT
+  ): Promise<RepoBranch[]> {
+    const needle = query.trim();
+    if (!needle) return [];
+    const defaultBranch = await this.getDefaultBranch();
+    const data = await this.makeRequest<any>(
+      `${this.repoApiUrl}/refs?filter=heads/&filterContains=${encodeURIComponent(needle)}&$top=${Math.max(1, limit)}&api-version=7.0`,
+      { headers: this.authHeaders }
+    );
+    return this.mapRefs(data, defaultBranch).slice(0, limit);
+  }
+
+  private mapRefs(data: any, defaultBranch: string): RepoBranch[] {
+    return (data?.value ?? []).map((ref: any) => {
       const name = (ref.name as string).replace(/^refs\/heads\//, "");
       return {
         name,

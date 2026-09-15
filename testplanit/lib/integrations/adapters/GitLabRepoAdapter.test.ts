@@ -808,4 +808,38 @@ describe("GitLabRepoAdapter", () => {
       await expect(adapter.getMergeBase("main", "feature")).resolves.toBeNull();
     });
   });
+
+  describe("searchBranches", () => {
+    it("asks GitLab to filter by name and maps the result", async () => {
+      mockFetch.mockResolvedValueOnce(
+        makeResponse([
+          {
+            name: "release/1.0",
+            commit: { id: "abc" },
+            default: false,
+            protected: true,
+          },
+        ])
+      );
+
+      const branches = await adapter.searchBranches("release/1");
+
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(mockFetch.mock.calls[0][0]).toBe(
+        `${PROJECT_URL}/repository/branches?search=release%2F1&per_page=100&page=1`
+      );
+      expect(branches).toEqual([
+        { name: "release/1.0", sha: "abc", isDefault: false, protected: true },
+      ]);
+    });
+
+    it("caps the page size at the limit and returns nothing for a blank query", async () => {
+      expect(await adapter.searchBranches("")).toEqual([]);
+      expect(mockFetch).not.toHaveBeenCalled();
+
+      mockFetch.mockResolvedValueOnce(makeResponse([]));
+      await adapter.searchBranches("x", 10);
+      expect(mockFetch.mock.calls[0][0]).toContain("per_page=10");
+    });
+  });
 });

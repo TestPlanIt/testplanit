@@ -45,6 +45,16 @@ export interface RepoBranch {
   protected?: boolean;
 }
 
+/** Most branches `listBranches` returns; longer lists are searched instead. */
+export const MAX_BRANCHES = 500;
+/** Most branches one `searchBranches` call returns. */
+export const BRANCH_SEARCH_LIMIT = 100;
+
+/** A branch name as a URL path, one encoded segment per slash. */
+export function encodeBranchPath(name: string): string {
+  return name.split("/").map(encodeURIComponent).join("/");
+}
+
 export interface RepoCommit {
   sha: string;
   shortSha: string;
@@ -220,8 +230,31 @@ export abstract class GitRepoAdapter {
    */
   abstract getFileContent(path: string, branch: string): Promise<string>;
 
-  /** Branches of the repository (capped by the adapter, typically 500). */
+  /** Branches of the repository, at most MAX_BRANCHES of them. */
   abstract listBranches(): Promise<RepoBranch[]>;
+
+  /**
+   * Branches whose name matches `query`, asked of the provider so that a
+   * repository with more branches than `listBranches` returns can still be
+   * searched. Providers without a name filter fall back to an exact lookup
+   * and a bounded scan. Never more than `limit` results.
+   */
+  async searchBranches(
+    query: string,
+    limit: number = BRANCH_SEARCH_LIMIT
+  ): Promise<RepoBranch[]> {
+    const needle = query.trim().toLowerCase();
+    if (!needle) return [];
+    const branches = await this.listBranches();
+    return branches
+      .filter((branch) => branch.name.toLowerCase().includes(needle))
+      .slice(0, limit);
+  }
+
+  /** True for the error `makeRequest` throws on an HTTP 404. */
+  protected isNotFoundError(err: unknown): boolean {
+    return err instanceof Error && /^HTTP 404\b/.test(err.message);
+  }
 
   /**
    * Commits reachable from `ref` (branch, tag, or sha), newest first.

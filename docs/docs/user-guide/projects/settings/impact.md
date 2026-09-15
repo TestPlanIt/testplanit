@@ -40,7 +40,7 @@ The sections below describe the dialog.
 ## Application Repository
 
 - **Code Repository** — select an active repository a system administrator registered under [Administration → Code Repositories](../../code-repositories.md). If none exist, an empty state links administrators to set one up. Repositories already connected to this project are not offered again.
-- **Branch** — a searchable list of the repository's branches, with **Repository default branch** as the first option. When the branches cannot be listed, a notice shows the provider's error and the field becomes a text box: type the branch name, or leave it blank to use the repository's default branch.
+- **Branch** — a searchable list of the repository's branches, with **Repository default branch** as the first option. The list holds the first 500 branches; when the repository has more, a note under the field says so and typing searches the whole repository through the provider. When the branches cannot be listed, a notice shows the provider's error and the field becomes a text box: type the branch name, or leave it blank to use the repository's default branch.
 
 Commits are picked from this branch in the Impact dialog, and Code Pins are anchored at its tip.
 

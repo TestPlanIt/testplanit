@@ -4,6 +4,8 @@ import {
   CompareOptions,
   CompareResult,
   GitRepoAdapter,
+  BRANCH_SEARCH_LIMIT,
+  MAX_BRANCHES,
   ListCommitsOptions,
   ListCommitsResult,
   ListFilesResult,
@@ -31,7 +33,6 @@ import {
 } from "../diff/parseUnifiedDiff";
 
 const MAX_FILES = 10000;
-const MAX_BRANCHES = 500;
 
 const DIFFSTAT_STATUS: Record<string, ChangedFileStatus> = {
   added: "added",
@@ -124,6 +125,27 @@ export class BitbucketRepoAdapter extends GitRepoAdapter {
     const { values } = await this.fetchPages<any>(
       `${this.repoUrl}/refs/branches?pagelen=100`,
       MAX_BRANCHES
+    );
+    return values.map((b) => ({
+      name: b.name as string,
+      sha: b.target?.hash as string,
+      isDefault: b.name === defaultBranch,
+    }));
+  }
+
+  /** Bitbucket filters branches server-side with a `q=name ~ "..."` query. */
+  async searchBranches(
+    query: string,
+    limit: number = BRANCH_SEARCH_LIMIT
+  ): Promise<RepoBranch[]> {
+    const needle = query.trim();
+    if (!needle) return [];
+    const defaultBranch = await this.getDefaultBranch();
+    const escaped = needle.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+    const q = encodeURIComponent(`name ~ "${escaped}"`);
+    const { values } = await this.fetchPages<any>(
+      `${this.repoUrl}/refs/branches?q=${q}&pagelen=${Math.min(100, Math.max(1, limit))}`,
+      limit
     );
     return values.map((b) => ({
       name: b.name as string,
