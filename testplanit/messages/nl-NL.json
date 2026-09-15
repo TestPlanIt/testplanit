@@ -2018,7 +2018,6 @@
           "adminDescription": "Stel een repositoryverbinding in voordat u de codecontext voor dit project configureert."
         },
         "repository": {
-          "title": "Codeopslagplaats",
           "description": "Selecteer de codeopslagplaats die u wilt gebruiken voor de AI-context.",
           "branchPlaceholder": "Laat dit veld leeg om de standaardbranch van de repository te gebruiken."
         },
@@ -7783,7 +7782,10 @@
       "totalCost": "## Totale kosten\nGeschatte providerkosten in USD voor de aanroepen in deze groep. Lokaal gehoste modellen registreren geen kosten.",
       "avgLatency": "## Gem. latentie\nGemiddelde tijd die de provider nodig had om een aanroep in deze groep te beantwoorden.",
       "successRate": "## Succespercentage\nPercentage aanroepen in deze groep dat zonder fout is voltooid.",
-      "errorCount": "## Mislukte aanroepen\nAantal aanroepen in deze groep dat is geëindigd in een fout."
+      "errorCount": "## Mislukte aanroepen\nAantal aanroepen in deze groep dat is geëindigd in een fout.",
+      "impactAnalysisCount": "## Aantal Impactanalyses\nAantal Impactanalyses gestart in deze groep, ongeacht of ze een testrun hebben samengesteld.",
+      "affectedCasesSelected": "## Geselecteerde Betrokken Testgevallen\nVastgezette en betrokken testgevallen die de analyses in deze groep hebben geselecteerd, opgeteld.",
+      "selectionPrecision": "## Selectieprecisie (%)\nVan de testgevallen die Impactanalyses hebben geselecteerd en die vervolgens zijn uitgevoerd, het aandeel dat is mislukt. Leeg wanneer niets geselecteerd is uitgevoerd."
     },
     "reportDimensions": {
       "user": "## Gebruikersdimensie\nGroepeert resultaten op basis van de gebruiker die de tests heeft uitgevoerd of aan de items is toegewezen.",
@@ -7810,7 +7812,9 @@
       "feature": "## Functiedimensie\nGroepeert LLM-gebruik op basis van de applicatiefunctie die de aanroep heeft gedaan (bijv. Testgevalgeneratie).",
       "model": "## Modeldimensie\nGroepeert LLM-gebruik op basis van het model dat de aanroep heeft verwerkt.",
       "integration": "## Integratiedimensie\nGroepeert LLM-gebruik op basis van de geconfigureerde LLM-integratie die de aanroep heeft afgehandeld.",
-      "outcome": "## Uitkomstdimensie\nSplitst LLM-gebruik in succesvolle en mislukte aanroepen."
+      "outcome": "## Uitkomstdimensie\nSplitst LLM-gebruik in succesvolle en mislukte aanroepen.",
+      "trigger": "## Trigger-dimensie\nGroepeert op basis van hoe de Impactanalyse die de testrun heeft samengesteld werd gestart: handmatig, vanuit een pull request, of vanuit een push. Testruns die door geen enkele analyse zijn samengesteld vallen onder Geen.",
+      "codeRepository": "## Codeopslagplaats-dimensie\nGroepeert op basis van de gekoppelde opslagplaats waarvan de Impactanalyse de testrun heeft samengesteld. Testruns zonder analyse vallen onder Geen."
     },
     "reportBuilder": {
       "dimensions": "## Dimensies\nSelecteer de dimensies die u in uw rapport wilt analyseren. Dimensies zijn kenmerken die uw gegevens categoriseren, zoals Datum, Gebruiker, Status, enz. U kunt ze slepen om de volgorde te wijzigen.",
@@ -8265,6 +8269,14 @@
         "requirementCoverageChanges": {
           "label": "Wijzigingen in vereistendekking",
           "description": "Vergelijk een opgeslagen traceerbaarheidsmomentopname met een latere momentopname of de live matrix om te zien welke dekking van vereisten is gewijzigd"
+        },
+        "impactAnalysis": {
+          "label": "Impactanalysegeschiedenis",
+          "description": "Elke Impactanalyse: wat deze startte, wat er is gewijzigd, de testgevallen die zijn geselecteerd, en hoe de samengestelde testrun is verlopen"
+        },
+        "codePinCoverage": {
+          "label": "Code Pin-dekking",
+          "description": "Waar Code Pins zich bevinden, per opslagplaats en map, en waar recente wijzigingen niet zijn gedekt"
         }
       },
       "flakyTests": {
@@ -8608,6 +8620,14 @@
         "executionLog": {
           "label": "Uitvoeringslogboek voor meerdere projecten",
           "description": "Platte lijst met individuele testresultaten, inclusief status, uitvoerder en tijdstempel, per project."
+        },
+        "impactAnalysis": {
+          "label": "Impactanalysegeschiedenis over meerdere projecten",
+          "description": "Impactanalyses van alle projecten waarvoor Impactanalyse is ingeschakeld"
+        },
+        "codePinCoverage": {
+          "label": "Code Pin-dekking over meerdere projecten",
+          "description": "Code Pin-dekking van alle projecten waarvoor Impactanalyse is ingeschakeld"
         }
       },
       "folderDescendants": {
@@ -8616,6 +8636,56 @@
       },
       "dimensionFilters": {
         "allValues": "Alle waarden"
+      },
+      "impactAnalysis": {
+        "lookbackDaysHelp": "Analyses gestart binnen dit aantal dagen. Altijd leest elke analyse die het project bewaart.",
+        "triggerPush": "Push",
+        "outcomeNotExecuted": "Niet uitgevoerd",
+        "outcomeNoRun": "Geen testrun",
+        "allRepositories": "Alle opslagplaatsen",
+        "analysis": "Analyse",
+        "changedFiles": "Gewijzigde bestanden",
+        "changedFilesDetail": "{files, number} bestanden · +{additions, number} −{deletions, number}",
+        "accepted": "Geaccepteerd",
+        "runResults": "{executed, number} uitgevoerd · {passed, number} geslaagd · {failed, number} mislukt",
+        "chart": {
+          "perWeek": "Analyses per week",
+          "week": "Week van {date}"
+        },
+        "stats": {
+          "analyses": "Analyses",
+          "runsComposed": "Samengestelde testruns",
+          "runsComposedTooltip": "Analyses die een testrun hebben aangemaakt, handmatig of vanuit een gebeurtenis in de opslagplaats.",
+          "runsWithFailures": "Testruns met mislukkingen",
+          "runsWithFailuresTooltip": "Samengestelde testruns waarin ten minste één geselecteerd testgeval is mislukt, als aandeel van de samengestelde testruns die zijn uitgevoerd.",
+          "medianAffected": "Mediaan betrokken testgevallen",
+          "medianAffectedTooltip": "Het mediane aantal vastgezette en betrokken testgevallen dat een analyse heeft geselecteerd.",
+          "acceptedShare": "Geaccepteerd aandeel",
+          "acceptedShareTooltip": "Testgevallen die een reviewer heeft geaccepteerd, als aandeel van alle vastgezette en betrokken testgevallen die de analyses hebben voorgesteld."
+        }
+      },
+      "codePinCoverage": {
+        "lookbackDaysHelp": "Niet-gedekte bestanden zijn afkomstig van de analyses die zijn gestart binnen dit aantal dagen. Altijd leest elke voltooide analyse.",
+        "directory": "Map",
+        "rootDirectory": "(hoofdmap van opslagplaats)",
+        "casesWithPins": "Testgevallen met pins",
+        "stalePins": "Verouderde pins",
+        "stalePinsHelp": "Pins die de nieuwste analyse van de verbinding niet kon vinden bij de head-commit.",
+        "uncoveredFiles": "Niet-gedekte gewijzigde bestanden",
+        "uncoveredFilesHelp": "Gewijzigde bestanden die door geen enkele pin zijn gedekt, één keer per bestand geteld over de analyses in de periode.",
+        "coverageFilter": "Weergeven",
+        "coverageGaps": "Gewijzigd zonder pins",
+        "coveragePinned": "Met pins",
+        "kindBreakdown": "{file, number} volledig bestand · {range, number} regels · {symbol, number} symbool · {glob, number} glob",
+        "sourceBreakdown": "{manual, number} handmatig · {ai, number} AI · {annotation, number} annotatie · {mapfile, number} mapbestand · {issue, number} ticket",
+        "stats": {
+          "casesWithPinsTooltip": "Testgevallen met ten minste één Code Pin, als aandeel van de testgevallen van het project.",
+          "gapDirectories": "Mappen gewijzigd zonder pins",
+          "gapDirectoriesTooltip": "Mappen waarin een analyse in de periode gewijzigde bestanden heeft gevonden, maar geen enkele pin iets dekt."
+        },
+        "chart": {
+          "byDirectory": "Pins en niet-gedekte bestanden per map"
+        }
       }
     },
     "errors": {
@@ -8649,7 +8719,9 @@
       "tag": "Tag",
       "feature": "Functie",
       "model": "Model",
-      "outcome": "Uitkomst"
+      "outcome": "Uitkomst",
+      "trigger": "Trigger",
+      "codeRepository": "Codeopslagplaats"
     },
     "metrics": {
       "percentReady": "Gereed (%)",
@@ -8700,7 +8772,10 @@
       "totalCost": "Totale kosten",
       "avgLatency": "Gem. latentie",
       "successRate": "Succespercentage (%)",
-      "errorCount": "Mislukte aanroepen"
+      "errorCount": "Mislukte aanroepen",
+      "impactAnalysisCount": "Aantal Impactanalyses",
+      "affectedCasesSelected": "Geselecteerde Betrokken Testgevallen",
+      "selectionPrecision": "Selectieprecisie (%)"
     },
     "drillDown": {
       "title": "Gedetailleerde gegevens",

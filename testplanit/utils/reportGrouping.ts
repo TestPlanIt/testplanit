@@ -92,6 +92,19 @@ function fieldValues(
       return single(result.testRun?.configId);
     case "milestoneId":
       return single(result.testRun?.milestoneId);
+    case "impactTrigger": {
+      // The analysis that composed the run decides: a webhook event keeps
+      // its kind, one started by hand is "manual", and a run no analysis
+      // composed has no trigger at all.
+      const analysis = result.testRun?.impactAnalyses?.[0];
+      if (!analysis) return single(undefined);
+      const trigger = analysis.trigger;
+      const key =
+        trigger === "pull_request" || trigger === "push" ? trigger : "manual";
+      return [{ key, value: key }];
+    }
+    case "impactConfigId":
+      return single(result.testRun?.impactAnalyses?.[0]?.configId);
     case "folderId": {
       // Test-execution rows carry the case under testRunCase.repositoryCase;
       // repository-stats rows are the case itself, with folderId at the top.

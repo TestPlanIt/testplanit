@@ -339,6 +339,8 @@ const sidebars: SidebarsConfig = {
                     'user-guide/projects/reports/issue-test-coverage',
                     'user-guide/projects/reports/iteration-matrix',
                     'user-guide/projects/reports/test-case-health',
+                    'user-guide/projects/reports/impact-analysis-history',
+                    'user-guide/projects/reports/code-pin-coverage',
                     'user-guide/projects/reports/report-builder',
                   ],
                 },

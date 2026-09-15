@@ -11,7 +11,7 @@ The Report Builder lets you compose a custom report by picking a data source, th
 
 | Source | What it covers |
 | --- | --- |
-| **Test Execution** | Test results across runs (status counts, pass rates, elapsed times) |
+| **Test Execution** | Test results across runs (status counts, pass rates, elapsed times), plus Impact Analysis counts, selected cases, and selection precision, grouped by trigger or code repository when the project uses [Impact Analysis](../../impact.md) |
 | **Repository Stats** | Cases in the project's test repository (counts, automation status, custom fields) |
 | **User Engagement** | Per-user activity across the project (executions, sessions, results) |
 | **Project Health** | Project-level health metrics (pass rates, churn, recent activity) |
@@ -58,6 +58,9 @@ The Report Builder supports interactive drill-down on every metric cell. Click a
 - Pass Rate — see pass / fail breakdown with status distribution
 - Average Elapsed Time — view test executions with their durations
 - Total Elapsed Time — see all executions contributing to the total
+- Impact Analysis Count — view the analyses in the group, with their trigger and the run each composed
+- Affected Cases Selected — the same analyses, whose pinned and affected counts make up the total
+- Selection Precision — the analyses whose composed runs were executed
 
 **Test Case Metrics:**
 
@@ -82,6 +85,10 @@ The Report Builder supports interactive drill-down on every metric cell. Click a
 - User activity metrics
 - Milestone progress details
 - Issue counts and details
+
+### Impact Dimensions
+
+With [Impact Analysis](../../impact.md) enabled, the Test Execution source offers two more dimensions. **Trigger** groups by how the analysis that composed a test run was started: **Manual**, or **Pull request** / **Push** when a [repository webhook](../../webhooks.md#repository-webhooks) started it. **Code Repository** groups by the connected repository whose analysis composed the run. In both dimensions, runs no analysis composed fall into **None**. Three Impact metrics accompany them: **Impact Analysis Count**, **Affected Cases Selected** (pinned plus affected cases, summed), and **Selection Precision (%)** — of the selected cases that were executed, the share that failed. Precision stays empty until something selected has run.
 
 ### Folder Drill-Down
 

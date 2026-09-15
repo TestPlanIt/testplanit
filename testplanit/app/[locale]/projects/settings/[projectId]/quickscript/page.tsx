@@ -96,6 +96,7 @@ export default function QuickScriptPage() {
   const { session, status, isLoading: isAuthLoading } = useRequireAuth();
   const t = useTranslations("projects.settings.quickScript");
   const tCommon = useTranslations("common");
+  const tDimensions = useTranslations("reports.dimensions");
   const tRepo = useTranslations("projects.settings.codeRepository");
 
   const pathPatternSchema = z.object({
@@ -478,7 +479,7 @@ export default function QuickScriptPage() {
                 <Card>
                   <CardHeader>
                     <div className="flex items-center justify-between">
-                      <CardTitle>{t("repository.title")}</CardTitle>
+                      <CardTitle>{tDimensions("codeRepository")}</CardTitle>
                       {existingConfig && (
                         <Button
                           type="button"
@@ -502,7 +503,7 @@ export default function QuickScriptPage() {
                       name="repositoryId"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t("repository.title")}</FormLabel>
+                          <FormLabel>{tDimensions("codeRepository")}</FormLabel>
                           <Select
                             value={field.value}
                             onValueChange={field.onChange}

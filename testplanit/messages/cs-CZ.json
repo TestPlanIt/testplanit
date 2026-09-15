@@ -2018,7 +2018,6 @@
           "adminDescription": "Před konfigurací kontextu kódu pro tento projekt nastavte připojení k repozitáři."
         },
         "repository": {
-          "title": "Kódový repozitář",
           "description": "Vyberte kódový repozitář pro použití jako AI kontext",
           "branchPlaceholder": "Ponechte prázdné pro použití výchozí větve repozitáře"
         },
@@ -7783,7 +7782,10 @@
       "totalCost": "## Celkové náklady\nOdhadované náklady poskytovatele v USD za volání v této skupině. Lokálně hostované modely zaznamenávají nulové náklady.",
       "avgLatency": "## Průměrná odezva\nPrůměrná doba, kterou poskytovatel potřeboval k zodpovězení volání v této skupině.",
       "successRate": "## Míra úspěšnosti\nProcento volání v této skupině, která byla dokončena bez chyby.",
-      "errorCount": "## Neúspěšná volání\nPočet volání v této skupině, která skončila chybou."
+      "errorCount": "## Neúspěšná volání\nPočet volání v této skupině, která skončila chybou.",
+      "impactAnalysisCount": "## Počet analýz dopadu\nPočet analýz dopadu spuštěných v této skupině, bez ohledu na to, zda vytvořily test run.",
+      "affectedCasesSelected": "## Vybrané ovlivněné případy\nSoučet připnutých a ovlivněných případů, které analýzy v této skupině vybraly.",
+      "selectionPrecision": "## Přesnost výběru (%)\nZ případů, které analýza dopadu vybrala a které byly následně provedeny, podíl těch, které selhaly. Prázdné, pokud nebylo nic z vybraného spuštěno."
     },
     "reportDimensions": {
       "user": "## Dimenze uživatele\nSeskupuje výsledky podle uživatele, který provedl testy nebo je přiřazen k položkám.",
@@ -7810,7 +7812,9 @@
       "feature": "## Dimenze funkce\nSeskupuje využití LLM podle funkce aplikace, která volání provedla (např. Generování testovacích případů).",
       "model": "## Dimenze modelu\nSeskupuje využití LLM podle modelu, který volání obsloužil.",
       "integration": "## Dimenze integrace\nSeskupuje využití LLM podle nakonfigurované integrace LLM, která volání zpracovala.",
-      "outcome": "## Dimenze výsledku\nRozděluje využití LLM na úspěšná a neúspěšná volání."
+      "outcome": "## Dimenze výsledku\nRozděluje využití LLM na úspěšná a neúspěšná volání.",
+      "trigger": "## Dimenze spouštěče\nSeskupuje podle toho, jak byla spuštěna analýza dopadu, která vytvořila test run: ručně, z pull requestu nebo z pushe. Testovací běhy bez vytvořené analýzy spadají do kategorie Žádný.",
+      "codeRepository": "## Dimenze úložiště kódu\nSeskupuje podle propojeného úložiště, jehož analýza dopadu vytvořila test run. Testovací běhy bez analýzy spadají do kategorie Žádné."
     },
     "reportBuilder": {
       "dimensions": "## Dimenze\nVyberte dimenze, které chcete analyzovat ve své sestavě. Dimenze jsou atributy kategorizující vaše data, jako je datum, uživatel, stav atd. Pořadí můžete změnit přetažením.",
@@ -8265,6 +8269,14 @@
         "requirementCoverageChanges": {
           "label": "Změny pokrytí požadavků",
           "description": "Porovnejte uložený snímek sledovatelnosti s pozdějším snímkem nebo aktuální maticí a zjistěte, u kterých požadavků se pokrytí změnilo"
+        },
+        "impactAnalysis": {
+          "label": "Historie analýz dopadu",
+          "description": "Každá analýza dopadu: co ji spustilo, co změnila, jaké případy vybrala a jak dopadl test run, který vytvořila"
+        },
+        "codePinCoverage": {
+          "label": "Pokrytí kódu piny",
+          "description": "Kde se nacházejí Code Piny podle úložiště a adresáře a kde nedávné změny zůstaly nepokryté"
         }
       },
       "flakyTests": {
@@ -8608,6 +8620,14 @@
         "executionLog": {
           "label": "Protokol provádění napříč projekty",
           "description": "Plochý seznam jednotlivých záznamů výsledků testů se stavem, vykonavatelem a časovým razítkem napříč projekty"
+        },
+        "impactAnalysis": {
+          "label": "Historie analýz dopadu napříč projekty",
+          "description": "Analýzy dopadu napříč všemi projekty s povolenou analýzou dopadu"
+        },
+        "codePinCoverage": {
+          "label": "Pokrytí kódu piny napříč projekty",
+          "description": "Pokrytí Code Piny napříč všemi projekty s povolenou analýzou dopadu"
         }
       },
       "folderDescendants": {
@@ -8616,6 +8636,56 @@
       },
       "dimensionFilters": {
         "allValues": "Všechny hodnoty"
+      },
+      "impactAnalysis": {
+        "lookbackDaysHelp": "Analýzy spuštěné během tohoto počtu dnů. Volba \"Celá doba\" načte všechny analýzy, které projekt uchovává.",
+        "triggerPush": "Odeslání (push)",
+        "outcomeNotExecuted": "Neprovedeno",
+        "outcomeNoRun": "Bez testovacího běhu",
+        "allRepositories": "Všechna úložiště",
+        "analysis": "Analýza",
+        "changedFiles": "Změněné soubory",
+        "changedFilesDetail": "{files, number} souborů · +{additions, number} −{deletions, number}",
+        "accepted": "Přijato",
+        "runResults": "{executed, number} provedeno · {passed, number} úspěšných · {failed, number} neúspěšných",
+        "chart": {
+          "perWeek": "Analýzy za týden",
+          "week": "Týden od {date}"
+        },
+        "stats": {
+          "analyses": "Analýzy",
+          "runsComposed": "Vytvořené testovací běhy",
+          "runsComposedTooltip": "Analýzy, které vytvořily test run, ať už ručně, nebo na základě události v úložišti.",
+          "runsWithFailures": "Testovací běhy se selháními",
+          "runsWithFailuresTooltip": "Vytvořené testovací běhy, ve kterých selhal alespoň jeden vybraný případ, jako podíl z provedených vytvořených testovacích běhů.",
+          "medianAffected": "Medián ovlivněných případů",
+          "medianAffectedTooltip": "Medián počtu připnutých a ovlivněných případů, které analýza vybrala.",
+          "acceptedShare": "Podíl přijatých",
+          "acceptedShareTooltip": "Případy, které recenzent přijal, jako podíl ze všech připnutých a ovlivněných případů navržených analýzami."
+        }
+      },
+      "codePinCoverage": {
+        "lookbackDaysHelp": "Nepokryté soubory pocházejí z analýz spuštěných během tohoto počtu dnů. Volba \"Celá doba\" načte všechny dokončené analýzy.",
+        "directory": "Adresář",
+        "rootDirectory": "(kořen úložiště)",
+        "casesWithPins": "Případy s piny",
+        "stalePins": "Zastaralé piny",
+        "stalePinsHelp": "Piny, které poslední analýza připojení nenašla v posledním commitu.",
+        "uncoveredFiles": "Nepokryté změněné soubory",
+        "uncoveredFilesHelp": "Změněné soubory, které nepokryl žádný pin, počítané jednou za soubor napříč analýzami v daném období.",
+        "coverageFilter": "Zobrazit",
+        "coverageGaps": "Změněno bez pinů",
+        "coveragePinned": "S piny",
+        "kindBreakdown": "{file, number} celý soubor · {range, number} řádky · {symbol, number} symbol · {glob, number} glob",
+        "sourceBreakdown": "{manual, number} ručně · {ai, number} AI · {annotation, number} anotace · {mapfile, number} mapový soubor · {issue, number} tiket",
+        "stats": {
+          "casesWithPinsTooltip": "Testovací případy s alespoň jedním Code Pinem, jako podíl z případů v projektu.",
+          "gapDirectories": "Adresáře změněné bez pinů",
+          "gapDirectoriesTooltip": "Adresáře, ve kterých analýza v daném období našla změněné soubory, ale žádný pin je nepokrývá."
+        },
+        "chart": {
+          "byDirectory": "Piny a nepokryté soubory podle adresáře"
+        }
       }
     },
     "errors": {
@@ -8649,7 +8719,9 @@
       "tag": "Štítek",
       "feature": "Funkce",
       "model": "Model",
-      "outcome": "Výsledek"
+      "outcome": "Výsledek",
+      "trigger": "Spouštěč",
+      "codeRepository": "Úložiště kódu"
     },
     "metrics": {
       "percentReady": "Připraveno (%)",
@@ -8700,7 +8772,10 @@
       "totalCost": "Celkové náklady",
       "avgLatency": "Prům. latence",
       "successRate": "Míra úspěšnosti (%)",
-      "errorCount": "Neúspěšná volání"
+      "errorCount": "Neúspěšná volání",
+      "impactAnalysisCount": "Počet analýz dopadu",
+      "affectedCasesSelected": "Vybrané ovlivněné případy",
+      "selectionPrecision": "Přesnost výběru (%)"
     },
     "drillDown": {
       "title": "Podrobné záznamy",

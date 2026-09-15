@@ -139,6 +139,27 @@ describe("parsePerTypeReportParams", () => {
     expect(state.flakyAutomatedFilter).toBe("all");
   });
 
+  it("hydrates impact history params and drops a junk repository id", () => {
+    const state = parsePerTypeReportParams(
+      new URLSearchParams(
+        "lookbackDays=30&triggerFilter=push&outcomeFilter=failed&configId=9"
+      ),
+      "impact-analysis"
+    );
+    expect(state.lookbackDays).toBe(30);
+    expect(state.impactTriggerFilter).toBe("push");
+    expect(state.impactOutcomeFilter).toBe("failed");
+    expect(state.impactConfigId).toBe(9);
+
+    const junk = parsePerTypeReportParams(
+      new URLSearchParams("triggerFilter=cron&outcomeFilter=maybe&configId=x"),
+      "cross-project-impact-analysis"
+    );
+    expect(junk.impactTriggerFilter).toBe("all");
+    expect(junk.impactOutcomeFilter).toBe("all");
+    expect(junk.impactConfigId).toBeNull();
+  });
+
   it("ignores params a report type does not own", () => {
     const state = parsePerTypeReportParams(
       new URLSearchParams("consecutiveRuns=6&requirementIds=4451"),

@@ -41,6 +41,14 @@ const HEALTH_STATUS_RANK: Record<string, number> = {
   always_passing: 3,
 };
 
+// Worst-first for the impact history's run outcome.
+const IMPACT_OUTCOME_RANK: Record<string, number> = {
+  failed: 0,
+  not_executed: 1,
+  no_run: 2,
+  passed: 3,
+};
+
 /** Strips the "cross-project-" prefix so both variants of a report type
  *  share one set of overrides (same normalization ReportBuilder and
  *  ReportRenderer apply via their own `matchesReportType`). */
@@ -56,6 +64,15 @@ function sortValue(reportType: string, row: any, column: string): unknown {
   }
   if (base === "test-case-health" && column === "healthStatus") {
     return HEALTH_STATUS_RANK[row.healthStatus] ?? 99;
+  }
+  if (base === "code-pin-coverage" && column === "repository") {
+    return row.repository?.name ?? "";
+  }
+  if (base === "impact-analysis") {
+    if (column === "repository") return row.repository?.name ?? "";
+    if (column === "testRun") return row.testRun?.name ?? "";
+    if (column === "createdBy") return row.createdBy?.name ?? "";
+    if (column === "outcome") return IMPACT_OUTCOME_RANK[row.outcome] ?? 99;
   }
   if (column === "project") {
     return row.project?.name || "";

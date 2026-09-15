@@ -476,6 +476,32 @@ export function useReportColumns(
                   issueStatusData?.name || issueStatusData;
                 return <IssueStatusDisplay status={issueStatusName} />;
               }
+              case "trigger": {
+                // Group keys are the trigger ids; show the localized label.
+                const triggerId = info.row.original[dimensionId]?.id;
+                const triggerKey =
+                  triggerId === "pull_request"
+                    ? "runs.impact.pull.label"
+                    : triggerId === "push"
+                      ? "reports.ui.impactAnalysis.triggerPush"
+                      : triggerId === "manual"
+                        ? "common.fields.manual"
+                        : null;
+                return (
+                  <span>
+                    {triggerKey
+                      ? t(triggerKey as any)
+                      : info.row.original[dimensionId]?.name ||
+                        tCommon("labels.unknown")}
+                  </span>
+                );
+              }
+              case "codeRepository": {
+                const repoData = info.row.original[dimensionId];
+                return (
+                  <span>{repoData?.name || tCommon("labels.unknown")}</span>
+                );
+              }
               default:
                 // Generic display for other dimension types
                 return (
@@ -892,9 +918,23 @@ export function useReportColumns(
               return sum + (typeof value === "number" ? value : 0);
             }, 0);
 
-            // For percentages, calculate the average
+            // For percentages, average the sub-rows that have a rate; a
+            // null rate means "no population", so it neither counts as 0%
+            // nor dilutes the average, and an all-null group shows "—".
             if (isPercentMetric) {
-              const avg = total / subRows.length;
+              const rates = subRows
+                .map((subRow: any) => subRow.getValue(metricId))
+                .filter((v: unknown): v is number => typeof v === "number");
+              if (rates.length === 0) {
+                return (
+                  <span className="inline-flex items-center px-2 py-1 text-xs font-bold rounded-full">
+                    {"\u2014"}
+                  </span>
+                );
+              }
+              const avg =
+                rates.reduce((sum: number, v: number) => sum + v, 0) /
+                rates.length;
               return (
                 <span className="inline-flex items-center px-2 py-1 text-xs font-bold rounded-full">
                   {avg.toFixed(1)}

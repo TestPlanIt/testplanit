@@ -103,6 +103,11 @@ export function HelpPopover({
           className="ms-2 inline-flex"
           tabIndex={tabIndex}
           aria-label={tCommon("aria.help")}
+          // The icon often sits inside another trigger (a sortable table
+          // header, a menu button); opening help must not also fire that.
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
         >
           <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground" />
         </button>

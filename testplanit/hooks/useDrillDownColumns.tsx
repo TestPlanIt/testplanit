@@ -19,6 +19,7 @@ import { SessionNameDisplay } from "~/components/SessionNameDisplay";
 import StatusDisplay from "~/components/StatusDisplay";
 import { UserNameCell } from "~/components/tables/UserNameCell";
 import { CaseDisplay } from "~/components/tables/CaseDisplay";
+import { CodeRepositoryName } from "~/components/CodeRepositoryName";
 import { TestRunNameDisplay } from "~/components/TestRunNameDisplay";
 import { WorkflowStateDisplay } from "~/components/WorkflowStateDisplay";
 import { Link } from "~/lib/navigation";
@@ -52,6 +53,7 @@ export function useDrillDownColumns({
   reportType,
 }: UseDrillDownColumnsProps): ColumnDef<DrillDownRecord, any>[] {
   const tCommon = useTranslations("common");
+  const tGlobal = useTranslations();
   const tLinkedCases = useTranslations("linkedCases");
   const tMilestones = useTranslations("milestones");
   const locale = useLocale();
@@ -685,6 +687,134 @@ export function useDrillDownColumns({
           size: 180,
           minSize: 150,
           maxSize: 250,
+        }),
+      ];
+    }
+
+    // Impact analyses: what started each one, what it selected, and the run
+    // it composed (linked when there is one).
+    if (
+      metricId === "impactAnalysisCount" ||
+      metricId === "affectedCasesSelected" ||
+      metricId === "selectionPrecision"
+    ) {
+      return [
+        columnHelper.accessor((row: any) => row.triggerLabel ?? row.id, {
+          id: "name",
+          header: () => tGlobal("reports.ui.impactAnalysis.analysis"),
+          cell: (info) => {
+            const row = info.row.original as any;
+            const label =
+              row.triggerLabel ||
+              `${tGlobal("reports.ui.impactAnalysis.analysis")} #${row.id}`;
+            return row.triggerUrl ? (
+              <a
+                href={row.triggerUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="truncate hover:underline"
+              >
+                {label}
+              </a>
+            ) : (
+              <span className="truncate">{label}</span>
+            );
+          },
+          enableSorting: false,
+          size: 260,
+          minSize: 150,
+          maxSize: 500,
+        }),
+        columnHelper.accessor((row: any) => row.config?.repository?.name, {
+          id: "repository",
+          header: () => tCommon("pageTitles.repository"),
+          cell: (info) => {
+            const row = info.row.original as any;
+            return row.config?.repository ? (
+              <CodeRepositoryName
+                name={row.config.repository.name}
+                provider={row.config.repository.provider}
+                branch={row.config.branch}
+              />
+            ) : (
+              <span>-</span>
+            );
+          },
+          enableSorting: false,
+          size: 240,
+          minSize: 150,
+          maxSize: 400,
+        }),
+        columnHelper.accessor((row: any) => row.trigger, {
+          id: "trigger",
+          header: () => tGlobal("reports.dimensions.trigger"),
+          cell: (info) => {
+            const trigger = info.getValue() as string | null;
+            return (
+              <span>
+                {trigger === "pull_request"
+                  ? tGlobal("runs.impact.pull.label")
+                  : trigger === "push"
+                    ? tGlobal("reports.ui.impactAnalysis.triggerPush")
+                    : tCommon("fields.manual")}
+              </span>
+            );
+          },
+          enableSorting: false,
+          size: 130,
+          minSize: 100,
+          maxSize: 200,
+        }),
+        columnHelper.accessor(
+          (row: any) =>
+            (row.pinnedCaseCount ?? 0) + (row.affectedCaseCount ?? 0),
+          {
+            id: "selected",
+            header: () => tGlobal("reports.metrics.affectedCasesSelected"),
+            cell: (info) => <span>{String(info.getValue())}</span>,
+            enableSorting: false,
+            size: 170,
+            minSize: 120,
+            maxSize: 240,
+          }
+        ),
+        columnHelper.accessor((row: any) => row.testRun?.name, {
+          id: "testRun",
+          header: () => tCommon("actions.junit.import.testRun.label"),
+          cell: (info) => {
+            const row = info.row.original as any;
+            const projectId = row.project?.id;
+            return row.testRun ? (
+              <TestRunNameDisplay
+                testRun={row.testRun}
+                projectId={projectId}
+                className="truncate"
+              />
+            ) : (
+              <span>-</span>
+            );
+          },
+          enableSorting: false,
+          size: 240,
+          minSize: 150,
+          maxSize: 500,
+        }),
+        columnHelper.accessor((row: any) => row.createdAt, {
+          id: "createdAt",
+          header: () => tCommon("fields.started"),
+          cell: (info) => {
+            const value = info.getValue();
+            if (!value) return <span>-</span>;
+            return (
+              <span>
+                {format(new Date(value), "PPp", { locale: dateFnsLocale })}
+              </span>
+            );
+          },
+          enableSorting: false,
+          size: 180,
+          minSize: 140,
+          maxSize: 260,
         }),
       ];
     }
@@ -1591,5 +1721,13 @@ export function useDrillDownColumns({
         maxSize: 150,
       }),
     ];
-  }, [metricId, reportType, translations, dateFnsLocale, columnHelper]);
+  }, [
+    metricId,
+    reportType,
+    translations,
+    dateFnsLocale,
+    columnHelper,
+    tCommon,
+    tGlobal,
+  ]);
 }

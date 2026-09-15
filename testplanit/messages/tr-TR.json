@@ -2018,7 +2018,6 @@
           "adminDescription": "Bu proje için kod bağlamını yapılandırmadan önce bir depo bağlantısı kurun."
         },
         "repository": {
-          "title": "Kod Deposu",
           "description": "Yapay zeka bağlamı için kullanılacak kod deposunu seçin.",
           "branchPlaceholder": "Deponun varsayılan dalını kullanmak için boş bırakın."
         },
@@ -7783,7 +7782,10 @@
       "totalCost": "## Toplam Maliyet\nBu gruptaki çağrılar için USD cinsinden tahmini sağlayıcı maliyeti. Yerel olarak barındırılan modeller sıfır maliyet kaydeder.",
       "avgLatency": "## Ort. Gecikme\nSağlayıcının bu gruptaki bir çağrıya yanıt vermek için harcadığı ortalama süre.",
       "successRate": "## Başarı Oranı\nBu gruptaki hatasız tamamlanan çağrıların yüzdesi.",
-      "errorCount": "## Başarısız Çağrılar\nBu gruptaki hatayla sonuçlanan çağrı sayısı."
+      "errorCount": "## Başarısız Çağrılar\nBu gruptaki hatayla sonuçlanan çağrı sayısı.",
+      "impactAnalysisCount": "## Etki Analizi Sayısı\nBu grupta başlatılan Etki analizlerinin sayısı, bir test çalıştırması oluştursun ya da oluşturmasın.",
+      "affectedCasesSelected": "## Seçilen Etkilenen Vakalar\nBu gruptaki analizlerin seçtiği sabitlenmiş ve etkilenen vakaların toplamı.",
+      "selectionPrecision": "## Seçim Kesinliği (%)\nEtki analizlerinin seçtiği ve ardından çalıştırılan vakalar arasında başarısız olanların payı. Seçilen hiçbir şey çalıştırılmadıysa boş kalır."
     },
     "reportDimensions": {
       "user": "## Kullanıcı Boyutu\nSonuçları, testleri yürüten veya öğelere atanmış kullanıcıya göre gruplandırır.",
@@ -7810,7 +7812,9 @@
       "feature": "## Özellik Boyutu\nLLM kullanımını çağrıyı yapan uygulama özelliğine göre gruplar (örn. Test Senaryosu Oluşturma).",
       "model": "## Model Boyutu\nLLM kullanımını çağrıyı işleyen modele göre gruplar.",
       "integration": "## Entegrasyon Boyutu\nLLM kullanımını çağrıyı yöneten yapılandırılmış LLM entegrasyonuna göre gruplar.",
-      "outcome": "## Sonuç Boyutu\nLLM kullanımını başarılı ve başarısız çağrılar olarak ayırır."
+      "outcome": "## Sonuç Boyutu\nLLM kullanımını başarılı ve başarısız çağrılar olarak ayırır.",
+      "trigger": "## Tetikleyici Boyutu\nTest çalıştırmasını oluşturan Etki analizinin nasıl başlatıldığına göre gruplar: elle, bir çekme isteğinden veya bir push işleminden. Analiz oluşturmayan çalıştırmalar Yok kategorisine girer.",
+      "codeRepository": "## Kod Deposu Boyutu\nTest çalıştırmasını oluşturan Etki analizinin bağlı olduğu depoya göre gruplar. Analizi olmayan çalıştırmalar Yok kategorisine girer."
     },
     "reportBuilder": {
       "dimensions": "## Boyutlar\nRaporunuzda analiz etmek istediğiniz boyutları seçin. Boyutlar, verilerinizi kategorize eden özelliklerdir; örneğin Tarih, Kullanıcı, Durum vb. Bunları sürükleyerek yeniden sıralayabilirsiniz.",
@@ -8265,6 +8269,14 @@
         "requirementCoverageChanges": {
           "label": "Gereksinim Kapsamı Değişiklikleri",
           "description": "Hangi gereksinimlerin kapsamının değiştiğini görmek için kaydedilmiş bir izlenebilirlik anlık görüntüsünü daha sonraki bir anlık görüntü veya canlı matrisle karşılaştırın"
+        },
+        "impactAnalysis": {
+          "label": "Etki Analizi Geçmişi",
+          "description": "Her Etki analizi: neyin başlattığı, neyi değiştirdiği, seçtiği vakalar ve oluşturduğu çalıştırmanın nasıl sonuçlandığı"
+        },
+        "codePinCoverage": {
+          "label": "Kod Pini Kapsamı",
+          "description": "Kod Pinlerinin depo ve dizine göre nerede olduğu ve son değişikliklerin nerede kapsanmadığı"
         }
       },
       "flakyTests": {
@@ -8608,6 +8620,14 @@
         "executionLog": {
           "label": "Projeler Arası Yürütme Günlüğü",
           "description": "Projeler genelinde durum, yürütücü ve zaman damgası bilgilerini içeren bireysel test sonucu kayıtlarının düz listesi."
+        },
+        "impactAnalysis": {
+          "label": "Projeler Arası Etki Analizi Geçmişi",
+          "description": "Etki Analizi etkinleştirilmiş her projedeki etki analizleri"
+        },
+        "codePinCoverage": {
+          "label": "Projeler Arası Kod Pini Kapsamı",
+          "description": "Etki Analizi etkinleştirilmiş her projedeki Kod Pini kapsamı"
         }
       },
       "folderDescendants": {
@@ -8616,6 +8636,56 @@
       },
       "dimensionFilters": {
         "allValues": "Tüm değerler"
+      },
+      "impactAnalysis": {
+        "lookbackDaysHelp": "Bu kadar gün içinde başlatılan analizler. Tüm zamanlar, projenin sakladığı her analizi okur.",
+        "triggerPush": "Gönderim",
+        "outcomeNotExecuted": "Çalıştırılmadı",
+        "outcomeNoRun": "Çalıştırma yok",
+        "allRepositories": "Tüm depolar",
+        "analysis": "Analiz",
+        "changedFiles": "Değiştirilen dosyalar",
+        "changedFilesDetail": "{files, number} dosya · +{additions, number} −{deletions, number}",
+        "accepted": "Kabul edildi",
+        "runResults": "{executed, number} çalıştırıldı · {passed, number} başarılı · {failed, number} başarısız",
+        "chart": {
+          "perWeek": "Haftalık analizler",
+          "week": "{date} haftası"
+        },
+        "stats": {
+          "analyses": "Analizler",
+          "runsComposed": "Oluşturulan çalıştırmalar",
+          "runsComposedTooltip": "Elle veya bir depo olayından bir test çalıştırması oluşturan analizler.",
+          "runsWithFailures": "Başarısızlık içeren çalıştırmalar",
+          "runsWithFailuresTooltip": "En az bir seçilen vakanın başarısız olduğu oluşturulan çalıştırmaların, çalıştırılan oluşturulan çalıştırmalara oranı.",
+          "medianAffected": "Ortanca etkilenen vaka sayısı",
+          "medianAffectedTooltip": "Bir analizin seçtiği sabitlenmiş ve etkilenen vakaların ortanca sayısı.",
+          "acceptedShare": "Kabul edilen pay",
+          "acceptedShareTooltip": "Bir gözden geçirenin kabul ettiği vakaların, analizlerin önerdiği tüm sabitlenmiş ve etkilenen vakalara oranı."
+        }
+      },
+      "codePinCoverage": {
+        "lookbackDaysHelp": "Kapsanmayan dosyalar, bu kadar gün içinde başlatılan analizlerden gelir. Tüm zamanlar, tamamlanan her analizi okur.",
+        "directory": "Dizin",
+        "rootDirectory": "(depo kökü)",
+        "casesWithPins": "Pinli vakalar",
+        "stalePins": "Eskimiş pinler",
+        "stalePinsHelp": "Bağlantının en son analizinin baş işlemede bulamadığı pinler.",
+        "uncoveredFiles": "Kapsanmayan değiştirilmiş dosyalar",
+        "uncoveredFilesHelp": "Hiçbir pinin kapsamadığı, pencere içindeki analizler genelinde dosya başına bir kez sayılan değiştirilmiş dosyalar.",
+        "coverageFilter": "Göster",
+        "coverageGaps": "Pinsiz değiştirilenler",
+        "coveragePinned": "Pinli olanlar",
+        "kindBreakdown": "{file, number} tüm dosya · {range, number} satır · {symbol, number} sembol · {glob, number} glob",
+        "sourceBreakdown": "{manual, number} elle · {ai, number} yapay zeka · {annotation, number} açıklama · {mapfile, number} eşleme dosyası · {issue, number} talep",
+        "stats": {
+          "casesWithPinsTooltip": "En az bir Kod Pini olan test vakalarının, projenin vakalarına oranı.",
+          "gapDirectories": "Pinsiz değiştirilen dizinler",
+          "gapDirectoriesTooltip": "Pencere içindeki bir analizin değiştirilmiş dosyalar bulduğu ancak hiçbir pinin hiçbir şeyi kapsamadığı dizinler."
+        },
+        "chart": {
+          "byDirectory": "Dizine göre pinler ve kapsanmayan dosyalar"
+        }
       }
     },
     "errors": {
@@ -8649,7 +8719,9 @@
       "tag": "Etiket",
       "feature": "Özellik",
       "model": "Model",
-      "outcome": "Sonuç"
+      "outcome": "Sonuç",
+      "trigger": "Tetikleyici",
+      "codeRepository": "Kod Deposu"
     },
     "metrics": {
       "percentReady": "Hazır (%)",
@@ -8700,7 +8772,10 @@
       "totalCost": "Toplam Maliyet",
       "avgLatency": "Ort. Gecikme",
       "successRate": "Başarı Oranı (%)",
-      "errorCount": "Başarısız Çağrılar"
+      "errorCount": "Başarısız Çağrılar",
+      "impactAnalysisCount": "Etki Analizi Sayısı",
+      "affectedCasesSelected": "Seçilen Etkilenen Vakalar",
+      "selectionPrecision": "Seçim Kesinliği (%)"
     },
     "drillDown": {
       "title": "Ayrıntılı Kayıtlar",

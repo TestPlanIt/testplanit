@@ -2018,7 +2018,6 @@
           "adminDescription": "在为此项目配置代码上下文之前，请先建立存储库连接。"
         },
         "repository": {
-          "title": "代码库",
           "description": "选择用于 AI 环境的代码存储库",
           "branchPlaceholder": "留空则使用仓库默认分支"
         },
@@ -7783,7 +7782,10 @@
       "totalCost": "## 总费用\n此组中调用的预估服务商美元费用。本地托管的模型费用记录为零。",
       "avgLatency": "## 平均延迟\n此组中提供商响应调用所需的平均时间。",
       "successRate": "## 成功率\n此组中未出现错误而成功完成的调用百分比。",
-      "errorCount": "## 失败调用数\n此组中以错误结束的调用数。"
+      "errorCount": "## 失败调用数\n此组中以错误结束的调用数。",
+      "impactAnalysisCount": "## 影响分析次数\n此分组中发起的影响分析数量，无论其是否组成了测试运行。",
+      "affectedCasesSelected": "## 已选受影响用例\n此分组中的分析所选中的固定用例和受影响用例总和。",
+      "selectionPrecision": "## 选择精确度 (%)\n影响分析所选中且随后执行的用例中，失败的比例。当没有执行任何选中项时为空。"
     },
     "reportDimensions": {
       "user": "## 用户维度\n按执行测试或分配给项目的用户对结果进行分组。",
@@ -7810,7 +7812,9 @@
       "feature": "## 功能维度\n按发出调用的应用功能对 LLM 使用情况进行分组(例如,测试用例生成)。",
       "model": "## 模型维度\n按处理调用的模型对 LLM 使用情况进行分组。",
       "integration": "## 集成维度\n按处理调用的已配置 LLM 集成对 LLM 使用情况进行分组。",
-      "outcome": "## 结果维度\n将 LLM 使用情况拆分为成功和失败的调用。"
+      "outcome": "## 结果维度\n将 LLM 使用情况拆分为成功和失败的调用。",
+      "trigger": "## 触发方式维度\n按组成测试运行的影响分析的启动方式进行分组：手动、来自拉取请求或来自推送。未由任何分析组成的运行归入“无”。",
+      "codeRepository": "## 代码仓库维度\n按其影响分析组成测试运行的已连接仓库进行分组。没有分析的运行归入“无”。"
     },
     "reportBuilder": {
       "dimensions": "## 维度\n选择要在报告中分析的维度。维度是用于对数据进行分类的属性，例如日期、用户、状态等。您可以拖动来重新排序。",
@@ -8265,6 +8269,14 @@
         "requirementCoverageChanges": {
           "label": "需求覆盖变更",
           "description": "将已保存的可追溯性快照与后续快照或实时矩阵进行比较，以查看哪些需求的覆盖情况发生了变化"
+        },
+        "impactAnalysis": {
+          "label": "影响分析历史",
+          "description": "每一次影响分析：其触发方式、所更改的内容、所选中的用例，以及其所组成的运行结果"
+        },
+        "codePinCoverage": {
+          "label": "代码固定覆盖率",
+          "description": "代码固定所在的仓库和目录，以及近期更改未被覆盖的位置"
         }
       },
       "flakyTests": {
@@ -8608,6 +8620,14 @@
         "executionLog": {
           "label": "跨项目执行日志",
           "description": "包含项目状态、执行者和时间戳的各个测试结果记录的扁平化列表"
+        },
+        "impactAnalysis": {
+          "label": "跨项目影响分析历史",
+          "description": "启用了影响分析的所有项目中的影响分析"
+        },
+        "codePinCoverage": {
+          "label": "跨项目代码固定覆盖率",
+          "description": "启用了影响分析的所有项目中的代码固定覆盖率"
         }
       },
       "folderDescendants": {
@@ -8616,6 +8636,56 @@
       },
       "dimensionFilters": {
         "allValues": "所有值"
+      },
+      "impactAnalysis": {
+        "lookbackDaysHelp": "在此天数内启动的分析。“全部时间”会读取项目保留的每一次分析。",
+        "triggerPush": "推送",
+        "outcomeNotExecuted": "未执行",
+        "outcomeNoRun": "无运行",
+        "allRepositories": "所有仓库",
+        "analysis": "分析",
+        "changedFiles": "已更改文件",
+        "changedFilesDetail": "{files, number} 个文件 · +{additions, number} −{deletions, number}",
+        "accepted": "已接受",
+        "runResults": "已执行 {executed, number} · 已通过 {passed, number} · 已失败 {failed, number}",
+        "chart": {
+          "perWeek": "每周分析数",
+          "week": "{date} 所在周"
+        },
+        "stats": {
+          "analyses": "分析",
+          "runsComposed": "已组成运行数",
+          "runsComposedTooltip": "通过手动或仓库事件创建了测试运行的分析。",
+          "runsWithFailures": "含失败的运行数",
+          "runsWithFailuresTooltip": "在已执行的组成运行中，至少有一个所选用例失败的运行所占比例。",
+          "medianAffected": "受影响用例中位数",
+          "medianAffectedTooltip": "一次分析所选中的固定用例和受影响用例的中位数。",
+          "acceptedShare": "已接受比例",
+          "acceptedShareTooltip": "审核者接受的用例，占分析建议的所有固定用例和受影响用例的比例。"
+        }
+      },
+      "codePinCoverage": {
+        "lookbackDaysHelp": "未覆盖的文件来自在此天数内启动的分析。“全部时间”会读取每一次已完成的分析。",
+        "directory": "目录",
+        "rootDirectory": "（仓库根目录）",
+        "casesWithPins": "含固定的用例",
+        "stalePins": "过期的固定",
+        "stalePinsHelp": "连接的最新分析在头部提交处未能找到的固定项。",
+        "uncoveredFiles": "未覆盖的已更改文件",
+        "uncoveredFilesHelp": "在窗口期内的分析中，没有任何固定覆盖的已更改文件，按文件在每个分析中只计算一次。",
+        "coverageFilter": "展示",
+        "coverageGaps": "已更改但无固定",
+        "coveragePinned": "有固定",
+        "kindBreakdown": "{file, number} 个整文件 · {range, number} 行范围 · {symbol, number} 个符号 · {glob, number} 个通配符",
+        "sourceBreakdown": "{manual, number} 个手动 · {ai, number} 个 AI · {annotation, number} 个注释 · {mapfile, number} 个映射文件 · {issue, number} 个工单",
+        "stats": {
+          "casesWithPinsTooltip": "至少含一个代码固定的测试用例，占项目用例的比例。",
+          "gapDirectories": "已更改但无固定的目录",
+          "gapDirectoriesTooltip": "窗口期内的分析发现有更改文件但没有任何固定覆盖的目录。"
+        },
+        "chart": {
+          "byDirectory": "按目录划分的固定与未覆盖文件"
+        }
       }
     },
     "errors": {
@@ -8649,7 +8719,9 @@
       "tag": "标签",
       "feature": "功能",
       "model": "模型",
-      "outcome": "结果"
+      "outcome": "结果",
+      "trigger": "触发方式",
+      "codeRepository": "代码仓库"
     },
     "metrics": {
       "percentReady": "就绪（%）",
@@ -8700,7 +8772,10 @@
       "totalCost": "总费用",
       "avgLatency": "平均延迟",
       "successRate": "成功率 (%)",
-      "errorCount": "失败调用数"
+      "errorCount": "失败调用数",
+      "impactAnalysisCount": "影响分析次数",
+      "affectedCasesSelected": "已选受影响用例",
+      "selectionPrecision": "选择精确度 (%)"
     },
     "drillDown": {
       "title": "详细记录",

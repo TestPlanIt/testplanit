@@ -12,6 +12,7 @@
  */
 
 import { format } from "date-fns";
+import { ROOT_DIRECTORY } from "~/utils/codePinCoverageShared";
 import { formatRequirementCellText } from "~/utils/issueDisplayText";
 import { toHumanReadable } from "~/utils/duration";
 import { metricUnit } from "~/utils/metricUnits";
@@ -137,6 +138,115 @@ function buildTestCaseHealth(p: BuildReportCsvParams): CsvRow[] {
       : never;
     row[h.executions] = r.totalExecutions ?? 0;
     row[h.passRate] = r.totalExecutions > 0 ? fmtPercent(r.passRate) : "";
+    return row;
+  });
+}
+
+const IMPACT_TRIGGER_KEY: Record<string, string> = {
+  manual: "common.fields.manual",
+  pull_request: "runs.impact.pull.label",
+  push: "reports.ui.impactAnalysis.triggerPush",
+};
+const IMPACT_OUTCOME_KEY: Record<string, string> = {
+  failed: "reports.metrics.failed",
+  passed: "reports.metrics.passed",
+  not_executed: "reports.ui.impactAnalysis.outcomeNotExecuted",
+  no_run: "reports.ui.impactAnalysis.outcomeNoRun",
+};
+
+// Same "8s" / "1m 5s" shape the history table's Duration cell shows.
+function fmtSecondsLikeTable(ms: number | null | undefined): string {
+  if (ms === null || ms === undefined) return "";
+  const seconds = Math.round(ms / 1000);
+  return seconds >= 60
+    ? `${Math.floor(seconds / 60)}m ${seconds % 60}s`
+    : `${seconds}s`;
+}
+
+function buildImpactAnalysis(p: BuildReportCsvParams): CsvRow[] {
+  const { rows, t, isCrossProject } = p;
+  const h = {
+    project: t("common.fields.project"),
+    started: t("common.fields.started"),
+    repository: t("common.pageTitles.repository"),
+    trigger: t("reports.dimensions.trigger"),
+    commits: t("runs.impact.pick.modeCommits"),
+    files: t("reports.ui.impactAnalysis.changedFiles"),
+    pinned: t("runs.impact.affected.tierPinned"),
+    affected: t("runs.impact.affected.tierAffected"),
+    related: t("runs.impact.affected.tierRelated"),
+    accepted: t("reports.ui.impactAnalysis.accepted"),
+    testRun: t("common.actions.junit.import.testRun.label"),
+    outcome: t("reports.dimensions.outcome"),
+    passed: t("reports.metrics.passed"),
+    failed: t("reports.metrics.failed"),
+    duration: t("common.fields.duration"),
+    creator: t("reports.dimensions.creator"),
+  };
+  // Columns follow the table (hidden-by-default ones included); the trigger
+  // cell's sub-label (PR title, push summary) rides along in the same column.
+  return rows.map((r: any) => {
+    const row: CsvRow = {};
+    if (isCrossProject) row[h.project] = r.project?.name ?? "";
+    row[h.started] = r.createdAt ? fmtDateTime(r.createdAt) : "";
+    row[h.repository] = r.repository?.name ?? "";
+    const triggerKind = IMPACT_TRIGGER_KEY[r.trigger]
+      ? t(IMPACT_TRIGGER_KEY[r.trigger])
+      : (r.trigger ?? "");
+    row[h.trigger] = r.triggerLabel
+      ? `${triggerKind}: ${r.triggerLabel}`
+      : triggerKind;
+    row[h.commits] = `${r.baseRef ?? ""}..${r.headRef ?? ""}`;
+    row[h.files] = r.fileCount ?? 0;
+    row[h.pinned] = r.pinnedCaseCount ?? 0;
+    row[h.affected] = r.affectedCaseCount ?? 0;
+    row[h.related] = r.relatedCaseCount ?? 0;
+    row[h.accepted] = r.acceptedCaseCount ?? 0;
+    row[h.testRun] = r.testRun?.name ?? "";
+    row[h.outcome] = IMPACT_OUTCOME_KEY[r.outcome]
+      ? t(IMPACT_OUTCOME_KEY[r.outcome])
+      : (r.outcome ?? "");
+    row[h.passed] = r.runPassedCount ?? 0;
+    row[h.failed] = r.runFailedCount ?? 0;
+    row[h.duration] = fmtSecondsLikeTable(r.durationMs);
+    row[h.creator] = r.createdBy?.name ?? "";
+    return row;
+  });
+}
+
+function buildCodePinCoverage(p: BuildReportCsvParams): CsvRow[] {
+  const { rows, t, isCrossProject } = p;
+  const h = {
+    project: t("common.fields.project"),
+    repository: t("common.pageTitles.repository"),
+    directory: t("reports.ui.codePinCoverage.directory"),
+    pins: t("repository.codePins.title"),
+    file: t("repository.codePins.kindFile"),
+    range: t("repository.codePins.kindRange"),
+    symbol: t("repository.codePins.kindSymbol"),
+    glob: t("repository.codePins.kindGlob"),
+    cases: t("reports.ui.codePinCoverage.casesWithPins"),
+    stale: t("reports.ui.codePinCoverage.stalePins"),
+    uncovered: t("reports.ui.codePinCoverage.uncoveredFiles"),
+    analyses: t("reports.ui.impactAnalysis.stats.analyses"),
+  };
+  return rows.map((r: any) => {
+    const row: CsvRow = {};
+    if (isCrossProject) row[h.project] = r.project?.name ?? "";
+    row[h.repository] = r.repository?.name ?? "";
+    row[h.directory] =
+      r.directory === ROOT_DIRECTORY
+        ? t("reports.ui.codePinCoverage.rootDirectory")
+        : (r.directory ?? "");
+    row[h.pins] = r.pinCount ?? 0;
+    row[h.file] = r.kindCounts?.FILE ?? 0;
+    row[h.range] = r.kindCounts?.RANGE ?? 0;
+    row[h.symbol] = r.kindCounts?.SYMBOL ?? 0;
+    row[h.glob] = r.kindCounts?.GLOB ?? 0;
+    row[h.cases] = r.caseCount ?? 0;
+    row[h.stale] = r.stalePinCount ?? 0;
+    row[h.uncovered] = r.uncoveredFileCount ?? 0;
+    row[h.analyses] = r.uncoveredAnalysisCount ?? 0;
     return row;
   });
 }
@@ -469,6 +579,10 @@ export function buildReportCsvRows(p: BuildReportCsvParams): CsvRow[] {
       return buildTestCaseHealth(p);
     case "issue-test-coverage":
       return buildIssueTestCoverage(p);
+    case "impact-analysis":
+      return buildImpactAnalysis(p);
+    case "code-pin-coverage":
+      return buildCodePinCoverage(p);
     case "requirement-coverage-gaps":
       return buildRequirementCoverageGaps(p);
     case "requirement-traceability":

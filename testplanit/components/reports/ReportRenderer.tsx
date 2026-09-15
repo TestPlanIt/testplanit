@@ -38,6 +38,8 @@ import {
   useRequirementCoverageGapColumns,
   useRequirementTraceabilityColumns,
 } from "~/hooks/useRequirementCoverageReportColumns";
+import { useCodePinCoverageColumns } from "~/hooks/useCodePinCoverageColumns";
+import { useImpactAnalysisColumns } from "~/hooks/useImpactAnalysisColumns";
 import { useTestCaseHealthColumns } from "~/hooks/useTestCaseHealthColumns";
 import { sortRequirementReportRows } from "~/utils/requirementReportSort";
 import { RequirementCoverageChangesOverview } from "@/components/reports/RequirementCoverageChangesOverview";
@@ -250,6 +252,18 @@ export function ReportRenderer({
     mode === "cross-project"
   );
 
+  const impactAnalysisColumns = useImpactAnalysisColumns(
+    projectId,
+    dimensionIds,
+    mode === "cross-project"
+  );
+
+  const codePinCoverageColumns = useCodePinCoverageColumns(
+    projectId,
+    dimensionIds,
+    mode === "cross-project"
+  );
+
   const issueTestCoverageColumns = useIssueTestCoverageSummaryColumns(
     projectId,
     dimensionIds,
@@ -286,17 +300,24 @@ export function ReportRenderer({
       ? flakyTestsColumns
       : matchesReportType(reportType, "test-case-health")
         ? testCaseHealthColumns
-        : matchesReportType(reportType, "issue-test-coverage")
-          ? issueTestCoverageColumns
-          : matchesReportType(reportType, "execution-log")
-            ? executionLogColumns
-            : matchesReportType(reportType, "requirement-coverage-gaps")
-              ? requirementCoverageGapColumns
-              : matchesReportType(reportType, "requirement-traceability")
-                ? requirementTraceabilityColumns
-                : matchesReportType(reportType, "requirement-coverage-changes")
-                  ? requirementCoverageChangeColumns
-                  : standardColumns;
+        : matchesReportType(reportType, "impact-analysis")
+          ? impactAnalysisColumns
+          : matchesReportType(reportType, "code-pin-coverage")
+            ? codePinCoverageColumns
+            : matchesReportType(reportType, "issue-test-coverage")
+              ? issueTestCoverageColumns
+              : matchesReportType(reportType, "execution-log")
+                ? executionLogColumns
+                : matchesReportType(reportType, "requirement-coverage-gaps")
+                  ? requirementCoverageGapColumns
+                  : matchesReportType(reportType, "requirement-traceability")
+                    ? requirementTraceabilityColumns
+                    : matchesReportType(
+                          reportType,
+                          "requirement-coverage-changes"
+                        )
+                      ? requirementCoverageChangeColumns
+                      : standardColumns;
 
   const columns = preGeneratedColumns || generatedColumns;
 
@@ -304,6 +325,8 @@ export function ReportRenderer({
   const isAutomationTrends = matchesReportType(reportType, "automation-trends");
   const isFlakyTests = matchesReportType(reportType, "flaky-tests");
   const isTestCaseHealth = matchesReportType(reportType, "test-case-health");
+  const isImpactAnalysis = matchesReportType(reportType, "impact-analysis");
+  const isCodePinCoverage = matchesReportType(reportType, "code-pin-coverage");
   const isIssueTestCoverage = matchesReportType(
     reportType,
     "issue-test-coverage"
@@ -374,6 +397,8 @@ export function ReportRenderer({
       (!isAutomationTrends &&
         !isFlakyTests &&
         !isTestCaseHealth &&
+        !isImpactAnalysis &&
+        !isCodePinCoverage &&
         !isIssueTestCoverage &&
         !isExecutionLog &&
         (dimensionIds.length === 0 || metricIds.length === 0))
@@ -420,7 +445,11 @@ export function ReportRenderer({
 
     // For Test Case Health, Issue Test Coverage, and Execution Log, pass all data for accurate summaries
     const chartResults =
-      isTestCaseHealth || isIssueTestCoverage || isExecutionLog
+      isTestCaseHealth ||
+      isImpactAnalysis ||
+      isCodePinCoverage ||
+      isIssueTestCoverage ||
+      isExecutionLog
         ? dataForChart
         : limitedChartData;
 
@@ -438,7 +467,12 @@ export function ReportRenderer({
         />
       ),
       isTruncated:
-        isTestCaseHealth || isIssueTestCoverage ? false : isTruncated,
+        isTestCaseHealth ||
+        isImpactAnalysis ||
+        isCodePinCoverage ||
+        isIssueTestCoverage
+          ? false
+          : isTruncated,
       totalDataPoints: dataForChart.length,
     };
   }, [
@@ -542,6 +576,8 @@ export function ReportRenderer({
                       : isAutomationTrends ||
                           isFlakyTests ||
                           isTestCaseHealth ||
+                          isImpactAnalysis ||
+                          isCodePinCoverage ||
                           isIssueTestCoverage ||
                           isExecutionLog
                         ? tReports("noDataAvailable")

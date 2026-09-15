@@ -18,6 +18,8 @@ import {
   SmallMultipleData,
 } from "./ReportSmallMultiplesGroupedBar";
 import { ReportSunburstChart } from "./ReportSunburstChart";
+import { CodePinCoverageChart } from "./CodePinCoverageChart";
+import { ImpactAnalysisChart } from "./ImpactAnalysisChart";
 import { TestCaseHealthChart } from "./TestCaseHealthChart";
 
 // Helper functions for report type matching
@@ -143,6 +145,8 @@ const getChartType = (
     "issueTracker",
     "priority",
     "configuration",
+    "trigger",
+    "codeRepository",
   ];
 
   if (dimCount === 0 || metricCount === 0) {
@@ -342,6 +346,8 @@ const getColor = (
       "session",
       "issueType",
       "configuration",
+      "trigger",
+      "codeRepository",
     ].includes(dimValueKey)
   ) {
     const itemName = getDimensionValue(row, dimension);
@@ -501,6 +507,16 @@ export const ReportChart: React.FC<ReportChartProps> = ({
   // Shows health status distribution and health score vs days since execution
   if (reportType && matchesReportType(reportType, "test-case-health")) {
     return <TestCaseHealthChart data={results} projectId={projectId} />;
+  }
+
+  // Impact analysis history: summary tiles + analyses per week by trigger.
+  if (reportType && matchesReportType(reportType, "impact-analysis")) {
+    return <ImpactAnalysisChart data={results} />;
+  }
+
+  // Code pin coverage: summary tiles + pins vs uncovered files by directory.
+  if (reportType && matchesReportType(reportType, "code-pin-coverage")) {
+    return <CodePinCoverageChart data={results} />;
   }
 
   // Special handling for issue test coverage report - use stacked bar chart

@@ -149,7 +149,10 @@ describe("ReportBuilder Empty State", () => {
 // module pulls in its full dependency graph at evaluation time, but nothing
 // in that graph throws at import time in this test environment, so no
 // additional mocking was needed to make the import itself work.
-import { filterReportTypesForRequirementsFlag } from "./ReportBuilder";
+import {
+  filterReportTypesForImpactFlag,
+  filterReportTypesForRequirementsFlag,
+} from "./ReportBuilder";
 import type { ReportType } from "~/lib/config/reportTypes";
 
 describe("ReportBuilder (Phase 26 requirement report type gating)", () => {
@@ -234,5 +237,45 @@ describe("ReportBuilder (Phase 26 requirement report type gating)", () => {
       (rt) => rt.id
     );
     expect(on).toContain("cross-project-requirement-traceability");
+  });
+
+  describe("impact report type gating", () => {
+    const withImpact: ReportType[] = [
+      ...reportTypesFixture,
+      {
+        id: "impact-analysis",
+        label: "Impact Analysis History",
+        description: "",
+        icon: (() => null) as any,
+        endpoint: "/api/report-builder/impact-analysis",
+        isPreBuilt: true,
+      },
+      {
+        id: "cross-project-impact-analysis",
+        label: "Cross-Project Impact Analysis History",
+        description: "",
+        icon: (() => null) as any,
+        endpoint: "/api/report-builder/cross-project-impact-analysis",
+        isPreBuilt: true,
+      },
+    ];
+
+    it("hides both impact history variants when the project has Impact Analysis off", () => {
+      const ids = filterReportTypesForImpactFlag(withImpact, false).map(
+        (rt) => rt.id
+      );
+      expect(ids).not.toContain("impact-analysis");
+      expect(ids).not.toContain("cross-project-impact-analysis");
+      expect(ids).toContain("test-execution");
+      expect(ids).toContain("requirement-coverage-gaps");
+    });
+
+    it("offers them when Impact Analysis is on", () => {
+      const ids = filterReportTypesForImpactFlag(withImpact, true).map(
+        (rt) => rt.id
+      );
+      expect(ids).toContain("impact-analysis");
+      expect(ids).toContain("cross-project-impact-analysis");
+    });
   });
 });

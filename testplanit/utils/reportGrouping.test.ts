@@ -152,4 +152,58 @@ describe("reportGrouping", () => {
       expect(map.get(2)).toEqual([2, 1]);
     });
   });
+
+  describe("impact dimensions", () => {
+    it("buckets runs by the trigger of the analysis that composed them; runs without one are unknown", () => {
+      const rows = [
+        {
+          testRun: {
+            impactAnalyses: [{ trigger: "pull_request", configId: 9 }],
+          },
+        },
+        { testRun: { impactAnalyses: [{ trigger: "push", configId: 9 }] } },
+        { testRun: { impactAnalyses: [{ trigger: null, configId: 9 }] } },
+        { testRun: { impactAnalyses: [] } },
+        { testRun: null },
+      ];
+      const grouped = groupResults(rows as any, ["impactTrigger"], {
+        create: () => ({ n: 0 }),
+        add: (acc: { n: number }) => {
+          acc.n++;
+        },
+        finalize: (acc: { n: number }) => ({ n: acc.n }),
+      });
+      expect(grouped.map((g: any) => [g.impactTrigger, g.n])).toEqual(
+        expect.arrayContaining([
+          ["pull_request", 1],
+          ["push", 1],
+          ["manual", 1],
+          [null, 2],
+        ])
+      );
+      expect(grouped).toHaveLength(4);
+    });
+
+    it("buckets runs by the analysis's repository connection, with none as unknown", () => {
+      const rows = [
+        { testRun: { impactAnalyses: [{ trigger: "push", configId: 9 }] } },
+        { testRun: { impactAnalyses: [{ trigger: "push", configId: 10 }] } },
+        { testRun: { impactAnalyses: [] } },
+      ];
+      const grouped = groupResults(rows as any, ["impactConfigId"], {
+        create: () => ({ n: 0 }),
+        add: (acc: { n: number }) => {
+          acc.n++;
+        },
+        finalize: (acc: { n: number }) => ({ n: acc.n }),
+      });
+      expect(grouped.map((g: any) => [g.impactConfigId, g.n])).toEqual(
+        expect.arrayContaining([
+          [9, 1],
+          [10, 1],
+          [null, 1],
+        ])
+      );
+    });
+  });
 });

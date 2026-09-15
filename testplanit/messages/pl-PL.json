@@ -2018,7 +2018,6 @@
           "adminDescription": "Przed skonfigurowaniem kontekstu kodu dla tego projektu skonfiguruj połączenie z repozytorium."
         },
         "repository": {
-          "title": "Repozytorium kodu",
           "description": "Wybierz repozytorium kodu, którego chcesz użyć w kontekście sztucznej inteligencji",
           "branchPlaceholder": "Pozostaw puste, aby użyć domyślnej gałęzi repozytorium"
         },
@@ -7783,7 +7782,10 @@
       "totalCost": "## Łączny koszt\nSzacowany koszt dostawcy w USD za wywołania w tej grupie. Modele hostowane lokalnie odnotowują zerowy koszt.",
       "avgLatency": "## Śr. opóźnienie\nŚredni czas, jaki dostawca potrzebował na odpowiedź na wywołanie w tej grupie.",
       "successRate": "## Wskaźnik sukcesu\nProcent wywołań w tej grupie, które zakończyły się bez błędu.",
-      "errorCount": "## Nieudane wywołania\nLiczba wywołań w tej grupie, które zakończyły się błędem."
+      "errorCount": "## Nieudane wywołania\nLiczba wywołań w tej grupie, które zakończyły się błędem.",
+      "impactAnalysisCount": "## Liczba analiz wpływu\nLiczba analiz wpływu rozpoczętych w tej grupie, niezależnie od tego, czy złożyły się na przebieg testu.",
+      "affectedCasesSelected": "## Wybrane przypadki dotknięte zmianą\nPrzypinane i dotknięte zmianą przypadki wybrane przez analizy w tej grupie, zsumowane.",
+      "selectionPrecision": "## Precyzja wyboru (%)\nSpośród przypadków wybranych przez analizy wpływu, które następnie zostały wykonane, odsetek tych, które zakończyły się niepowodzeniem. Puste, gdy nic z wybranych nie zostało uruchomione."
     },
     "reportDimensions": {
       "user": "## Wymiar użytkownika\nGrupuje wyniki według użytkownika, który wykonał testy lub jest przypisany do elementów.",
@@ -7810,7 +7812,9 @@
       "feature": "## Wymiar funkcji\nGrupuje użycie LLM według funkcji aplikacji, która wykonała wywołanie (np. Generowanie przypadków testowych).",
       "model": "## Wymiar modelu\nGrupuje użycie LLM według modelu, który obsłużył wywołanie.",
       "integration": "## Wymiar integracji\nGrupuje użycie LLM według skonfigurowanej integracji LLM, która obsłużyła wywołanie.",
-      "outcome": "## Wymiar wyniku\nDzieli użycie LLM na wywołania zakończone sukcesem i niepowodzeniem."
+      "outcome": "## Wymiar wyniku\nDzieli użycie LLM na wywołania zakończone sukcesem i niepowodzeniem.",
+      "trigger": "## Wymiar wyzwalacza\nGrupuje według sposobu uruchomienia analizy wpływu, która złożyła się na przebieg testu: ręcznie, z żądania ściągnięcia lub z wypchnięcia. Przebiegi, na które nie złożyła się żadna analiza, trafiają do kategorii Brak.",
+      "codeRepository": "## Wymiar repozytorium kodu\nGrupuje według połączonego repozytorium, którego analiza wpływu złożyła się na przebieg testu. Przebiegi bez analizy trafiają do kategorii Brak."
     },
     "reportBuilder": {
       "dimensions": "## Wymiary\nWybierz wymiary, które chcesz analizować w raporcie. Wymiary to atrybuty, które kategoryzują dane, takie jak Data, Użytkownik, Status itp. Możesz je przeciągać, aby zmienić ich kolejność.",
@@ -8265,6 +8269,14 @@
         "requirementCoverageChanges": {
           "label": "Zmiany pokrycia wymagań",
           "description": "Porównaj zapisaną migawkę śledzenia z późniejszą migawką lub aktywną macierzą, aby sprawdzić, których wymagań pokrycie się zmieniło"
+        },
+        "impactAnalysis": {
+          "label": "Historia analiz wpływu",
+          "description": "Każda analiza wpływu: co ją uruchomiło, co zmieniła, które przypadki wybrała i jak zakończył się przebieg, na który się złożyła"
+        },
+        "codePinCoverage": {
+          "label": "Pokrycie przypinaniami kodu",
+          "description": "Gdzie znajdują się przypinania kodu, według repozytorium i katalogu, oraz gdzie ostatnie zmiany pozostały nieobjęte"
         }
       },
       "flakyTests": {
@@ -8608,6 +8620,14 @@
         "executionLog": {
           "label": "Dziennik realizacji międzyprojektowej",
           "description": "Płaska lista indywidualnych rekordów wyników testów ze statusem, wykonawcą i znacznikiem czasu dla wszystkich projektów"
+        },
+        "impactAnalysis": {
+          "label": "Historia analiz wpływu w wielu projektach",
+          "description": "Analizy wpływu we wszystkich projektach z włączoną analizą wpływu"
+        },
+        "codePinCoverage": {
+          "label": "Pokrycie przypinaniami kodu w wielu projektach",
+          "description": "Pokrycie przypinaniami kodu we wszystkich projektach z włączoną analizą wpływu"
         }
       },
       "folderDescendants": {
@@ -8616,6 +8636,56 @@
       },
       "dimensionFilters": {
         "allValues": "Wszystkie wartości"
+      },
+      "impactAnalysis": {
+        "lookbackDaysHelp": "Analizy rozpoczęte w ciągu tylu dni. Opcja Cały czas odczytuje każdą analizę przechowywaną przez projekt.",
+        "triggerPush": "Wypchnięcie",
+        "outcomeNotExecuted": "Nie wykonano",
+        "outcomeNoRun": "Brak przebiegu",
+        "allRepositories": "Wszystkie repozytoria",
+        "analysis": "Analiza",
+        "changedFiles": "Zmienione pliki",
+        "changedFilesDetail": "{files, number} plików · +{additions, number} −{deletions, number}",
+        "accepted": "Zaakceptowano",
+        "runResults": "{executed, number} wykonano · {passed, number} zaliczono · {failed, number} niezaliczono",
+        "chart": {
+          "perWeek": "Analizy tygodniowo",
+          "week": "Tydzień od {date}"
+        },
+        "stats": {
+          "analyses": "Analizy",
+          "runsComposed": "Złożone przebiegi",
+          "runsComposedTooltip": "Analizy, które utworzyły przebieg testu, ręcznie lub w wyniku zdarzenia w repozytorium.",
+          "runsWithFailures": "Przebiegi z niepowodzeniami",
+          "runsWithFailuresTooltip": "Złożone przebiegi, w których co najmniej jeden wybrany przypadek zakończył się niepowodzeniem, jako odsetek wykonanych złożonych przebiegów.",
+          "medianAffected": "Mediana dotkniętych przypadków",
+          "medianAffectedTooltip": "Mediana liczby przypinanych i dotkniętych zmianą przypadków wybranych przez analizę.",
+          "acceptedShare": "Odsetek zaakceptowanych",
+          "acceptedShareTooltip": "Przypadki zaakceptowane przez recenzenta, jako odsetek wszystkich przypinanych i dotkniętych zmianą przypadków zasugerowanych przez analizy."
+        }
+      },
+      "codePinCoverage": {
+        "lookbackDaysHelp": "Nieobjęte pliki pochodzą z analiz rozpoczętych w ciągu tylu dni. Opcja Cały czas odczytuje każdą ukończoną analizę.",
+        "directory": "Katalog",
+        "rootDirectory": "(katalog główny repozytorium)",
+        "casesWithPins": "Przypadki z przypinaniami",
+        "stalePins": "Nieaktualne przypinania",
+        "stalePinsHelp": "Przypinania, których najnowsza analiza połączenia nie mogła znaleźć w najnowszym commicie.",
+        "uncoveredFiles": "Nieobjęte zmienione pliki",
+        "uncoveredFilesHelp": "Zmienione pliki nieobjęte żadnym przypinaniem, liczone raz na plik w ramach analiz w danym okresie.",
+        "coverageFilter": "Pokaż",
+        "coverageGaps": "Zmienione bez przypinań",
+        "coveragePinned": "Z przypinaniami",
+        "kindBreakdown": "{file, number} cały plik · {range, number} linie · {symbol, number} symbol · {glob, number} wzorzec glob",
+        "sourceBreakdown": "{manual, number} ręcznie · {ai, number} AI · {annotation, number} adnotacja · {mapfile, number} plik mapy · {issue, number} zgłoszenie",
+        "stats": {
+          "casesWithPinsTooltip": "Przypadki testowe z co najmniej jednym przypinaniem kodu, jako odsetek przypadków w projekcie.",
+          "gapDirectories": "Katalogi zmienione bez przypinań",
+          "gapDirectoriesTooltip": "Katalogi, w których analiza w danym okresie znalazła zmienione pliki, ale żadne przypinanie niczego nie obejmuje."
+        },
+        "chart": {
+          "byDirectory": "Przypinania i nieobjęte pliki według katalogu"
+        }
       }
     },
     "errors": {
@@ -8649,7 +8719,9 @@
       "tag": "Etykietka",
       "feature": "Funkcja",
       "model": "Model",
-      "outcome": "Wynik"
+      "outcome": "Wynik",
+      "trigger": "Wyzwalacz",
+      "codeRepository": "Repozytorium kodu"
     },
     "metrics": {
       "percentReady": "Gotowe (%)",
@@ -8700,7 +8772,10 @@
       "totalCost": "Łączny koszt",
       "avgLatency": "Śr. opóźnienie",
       "successRate": "Wskaźnik sukcesu (%)",
-      "errorCount": "Nieudane wywołania"
+      "errorCount": "Nieudane wywołania",
+      "impactAnalysisCount": "Liczba analiz wpływu",
+      "affectedCasesSelected": "Wybrane przypadki dotknięte zmianą",
+      "selectionPrecision": "Precyzja wyboru (%)"
     },
     "drillDown": {
       "title": "Szczegółowe zapisy",

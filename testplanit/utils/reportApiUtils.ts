@@ -105,6 +105,9 @@ interface ReportConfig {
  *    the project (checked through the policy-enhanced client, so it follows
  *    the same access rules as the rest of the app).
  */
+/** Metrics that are rates: an absent value is null ("—"), never 0. */
+const RATE_METRIC_IDS = new Set(["passRate", "selectionPrecision"]);
+
 export async function authorizeReportRequest(
   req: NextRequest,
   opts: { requiresAdmin: boolean; projectId?: number }
@@ -696,7 +699,7 @@ async function handleCrossProjectAggregation({
         // every metric even when a metric has no data for it. Rates
         // initialize to null ("—" on screen): an absent rate is not 0%.
         metricConfigs.forEach((mc: MetricConfig) => {
-          row[mc.label] = mc.id === "passRate" ? null : 0;
+          row[mc.label] = RATE_METRIC_IDS.has(mc.id) ? null : 0;
         });
 
         resultMap.set(resultKey, row);
@@ -1048,7 +1051,7 @@ async function handleProjectSpecificAggregation({
         // every metric even when a metric has no data for it. Rates
         // initialize to null ("—" on screen): an absent rate is not 0%.
         metricConfigs.forEach((mc: MetricConfig) => {
-          row[mc.label] = mc.id === "passRate" ? null : 0;
+          row[mc.label] = RATE_METRIC_IDS.has(mc.id) ? null : 0;
         });
 
         resultMap.set(resultKey, row);

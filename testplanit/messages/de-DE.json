@@ -2018,7 +2018,6 @@
           "adminDescription": "Richten Sie eine Repository-Verbindung ein, bevor Sie den Codekontext für dieses Projekt konfigurieren."
         },
         "repository": {
-          "title": "Code-Repository",
           "description": "Wählen Sie das Code-Repository aus, das für den KI-Kontext verwendet werden soll.",
           "branchPlaceholder": "Lassen Sie dieses Feld leer, um den Standardzweig des Repositorys zu verwenden."
         },
@@ -7783,7 +7782,10 @@
       "totalCost": "## Gesamtkosten\nGeschätzte Anbieterkosten in USD für die Aufrufe in dieser Gruppe. Lokal gehostete Modelle verursachen keine Kosten.",
       "avgLatency": "## Durchschn. Latenz\nDurchschnittliche Zeit, die der Anbieter für die Beantwortung eines Aufrufs in dieser Gruppe benötigte.",
       "successRate": "## Erfolgsquote\nProzentsatz der Aufrufe in dieser Gruppe, die ohne Fehler abgeschlossen wurden.",
-      "errorCount": "## Fehlgeschlagene Aufrufe\nAnzahl der Aufrufe in dieser Gruppe, die mit einem Fehler endeten."
+      "errorCount": "## Fehlgeschlagene Aufrufe\nAnzahl der Aufrufe in dieser Gruppe, die mit einem Fehler endeten.",
+      "impactAnalysisCount": "## Anzahl der Impact-Analysen\nAnzahl der in dieser Gruppe gestarteten Impact-Analysen, unabhängig davon, ob sie einen Testlauf zusammengestellt haben.",
+      "affectedCasesSelected": "## Ausgewählte betroffene Testfälle\nAngeheftete und betroffene Testfälle, die von den Analysen in dieser Gruppe ausgewählt wurden, summiert.",
+      "selectionPrecision": "## Auswahlpräzision (%)\nAnteil der von Impact-Analysen ausgewählten und anschließend ausgeführten Testfälle, die fehlgeschlagen sind. Leer, wenn nichts Ausgewähltes ausgeführt wurde."
     },
     "reportDimensions": {
       "user": "## Benutzerdimension\nGruppiert die Ergebnisse nach dem Benutzer, der die Tests ausgeführt hat oder den Elementen zugeordnet ist.",
@@ -7810,7 +7812,9 @@
       "feature": "## Feature-Dimension\nGruppiert die LLM-Nutzung nach der Anwendungsfunktion, die den Aufruf getätigt hat (z. B. Testfallgenerierung).",
       "model": "## Modell-Dimension\nGruppiert die LLM-Nutzung nach dem Modell, das den Aufruf bearbeitet hat.",
       "integration": "## Integrations-Dimension\nGruppiert die LLM-Nutzung nach der konfigurierten LLM-Integration, die den Aufruf verarbeitet hat.",
-      "outcome": "## Ergebnis-Dimension\nTeilt die LLM-Nutzung in erfolgreiche und fehlgeschlagene Aufrufe auf."
+      "outcome": "## Ergebnis-Dimension\nTeilt die LLM-Nutzung in erfolgreiche und fehlgeschlagene Aufrufe auf.",
+      "trigger": "## Auslöser-Dimension\nGruppiert danach, wie die Impact-Analyse gestartet wurde, die den Testlauf zusammengestellt hat: manuell, über einen Pull Request oder über einen Push. Testläufe, die von keiner Analyse zusammengestellt wurden, fallen unter „Keine“.",
+      "codeRepository": "## Code-Repository-Dimension\nGruppiert nach dem verbundenen Repository, dessen Impact-Analyse den Testlauf zusammengestellt hat. Testläufe ohne Analyse fallen unter „Keine“."
     },
     "reportBuilder": {
       "dimensions": "## Dimensionen\nWählen Sie die Dimensionen aus, die Sie in Ihrem Bericht analysieren möchten. Dimensionen sind Attribute, die Ihre Daten kategorisieren, z. B. Datum, Benutzer, Status usw. Sie können sie per Drag & Drop neu anordnen.",
@@ -8265,6 +8269,14 @@
         "requirementCoverageChanges": {
           "label": "Änderungen der Anforderungsabdeckung",
           "description": "Vergleichen Sie eine gespeicherte Rückverfolgbarkeits-Momentaufnahme mit einer späteren Momentaufnahme oder der Live-Matrix, um zu sehen, welche Anforderungen sich in ihrer Abdeckung geändert haben"
+        },
+        "impactAnalysis": {
+          "label": "Impact-Analyse-Verlauf",
+          "description": "Jede Impact-Analyse: was sie ausgelöst hat, was sie geändert hat, die ausgewählten Testfälle und wie der zusammengestellte Testlauf ausgefallen ist"
+        },
+        "codePinCoverage": {
+          "label": "Code-Pin-Abdeckung",
+          "description": "Wo sich Code-Pins befinden, nach Repository und Verzeichnis, und wo aktuelle Änderungen nicht abgedeckt wurden"
         }
       },
       "flakyTests": {
@@ -8608,6 +8620,14 @@
         "executionLog": {
           "label": "Projektübergreifendes Ausführungsprotokoll",
           "description": "Flache Liste einzelner Testergebnisdatensätze mit Status, Ausführer und Zeitstempel über alle Projekte hinweg"
+        },
+        "impactAnalysis": {
+          "label": "Projektübergreifender Impact-Analyse-Verlauf",
+          "description": "Impact-Analysen aus allen Projekten mit aktivierter Impact-Analyse"
+        },
+        "codePinCoverage": {
+          "label": "Projektübergreifende Code-Pin-Abdeckung",
+          "description": "Code-Pin-Abdeckung aus allen Projekten mit aktivierter Impact-Analyse"
         }
       },
       "folderDescendants": {
@@ -8616,6 +8636,56 @@
       },
       "dimensionFilters": {
         "allValues": "Alle Werte"
+      },
+      "impactAnalysis": {
+        "lookbackDaysHelp": "Analysen, die innerhalb dieser Anzahl von Tagen gestartet wurden. „Gesamter Zeitraum“ berücksichtigt jede vom Projekt gespeicherte Analyse.",
+        "triggerPush": "Push-Ereignis",
+        "outcomeNotExecuted": "Nicht ausgeführt",
+        "outcomeNoRun": "Kein Testlauf",
+        "allRepositories": "Alle Repositories",
+        "analysis": "Analyse",
+        "changedFiles": "Geänderte Dateien",
+        "changedFilesDetail": "{files, number} Dateien · +{additions, number} −{deletions, number}",
+        "accepted": "Akzeptiert",
+        "runResults": "{executed, number} ausgeführt · {passed, number} bestanden · {failed, number} fehlgeschlagen",
+        "chart": {
+          "perWeek": "Analysen pro Woche",
+          "week": "Woche vom {date}"
+        },
+        "stats": {
+          "analyses": "Analysen",
+          "runsComposed": "Zusammengestellte Testläufe",
+          "runsComposedTooltip": "Analysen, die einen Testlauf erstellt haben, manuell oder durch ein Repository-Ereignis.",
+          "runsWithFailures": "Testläufe mit Fehlern",
+          "runsWithFailuresTooltip": "Zusammengestellte Testläufe, bei denen mindestens ein ausgewählter Testfall fehlgeschlagen ist, als Anteil der ausgeführten zusammengestellten Testläufe.",
+          "medianAffected": "Median betroffener Testfälle",
+          "medianAffectedTooltip": "Die mediane Anzahl der von einer Analyse ausgewählten angehefteten und betroffenen Testfälle.",
+          "acceptedShare": "Akzeptierter Anteil",
+          "acceptedShareTooltip": "Testfälle, die ein Prüfer akzeptiert hat, als Anteil aller von den Analysen vorgeschlagenen angehefteten und betroffenen Testfälle."
+        }
+      },
+      "codePinCoverage": {
+        "lookbackDaysHelp": "Nicht abgedeckte Dateien stammen aus Analysen, die innerhalb dieser Anzahl von Tagen gestartet wurden. „Gesamter Zeitraum“ berücksichtigt jede abgeschlossene Analyse.",
+        "directory": "Verzeichnis",
+        "rootDirectory": "(Repository-Stammverzeichnis)",
+        "casesWithPins": "Testfälle mit Pins",
+        "stalePins": "Veraltete Pins",
+        "stalePinsHelp": "Pins, die die letzte Analyse der Verbindung beim Head-Commit nicht finden konnte.",
+        "uncoveredFiles": "Nicht abgedeckte geänderte Dateien",
+        "uncoveredFilesHelp": "Geänderte Dateien, die von keinem Pin abgedeckt wurden, einmal pro Datei über alle Analysen im Zeitraum gezählt.",
+        "coverageFilter": "Anzeigen",
+        "coverageGaps": "Geändert ohne Pins",
+        "coveragePinned": "Mit Pins",
+        "kindBreakdown": "{file, number} ganze Datei · {range, number} Zeilen · {symbol, number} Symbol · {glob, number} Glob",
+        "sourceBreakdown": "{manual, number} manuell · {ai, number} KI · {annotation, number} Annotation · {mapfile, number} Map-Datei · {issue, number} Ticket",
+        "stats": {
+          "casesWithPinsTooltip": "Testfälle mit mindestens einem Code-Pin, als Anteil der Testfälle des Projekts.",
+          "gapDirectories": "Verzeichnisse geändert ohne Pins",
+          "gapDirectoriesTooltip": "Verzeichnisse, in denen eine Analyse im Zeitraum geänderte Dateien gefunden hat, die von keinem Pin abgedeckt werden."
+        },
+        "chart": {
+          "byDirectory": "Pins und nicht abgedeckte Dateien nach Verzeichnis"
+        }
       }
     },
     "errors": {
@@ -8649,7 +8719,9 @@
       "tag": "Etikett",
       "feature": "Funktion",
       "model": "Modell",
-      "outcome": "Ergebnis"
+      "outcome": "Ergebnis",
+      "trigger": "Auslöser",
+      "codeRepository": "Code-Repository"
     },
     "metrics": {
       "percentReady": "Bereit (%)",
@@ -8700,7 +8772,10 @@
       "totalCost": "Gesamtkosten",
       "avgLatency": "Durchschn. Latenz",
       "successRate": "Erfolgsquote (%)",
-      "errorCount": "Fehlgeschlagene Aufrufe"
+      "errorCount": "Fehlgeschlagene Aufrufe",
+      "impactAnalysisCount": "Anzahl der Impact-Analysen",
+      "affectedCasesSelected": "Ausgewählte betroffene Testfälle",
+      "selectionPrecision": "Auswahlpräzision (%)"
     },
     "drillDown": {
       "title": "Detaillierte Aufzeichnungen",

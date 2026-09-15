@@ -960,8 +960,12 @@ export function VirtualizedTableEngine({
                         return (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <button
-                                type="button"
+                              {/* Not a <button>: header labels may carry
+                                  their own button (a help popover), and
+                                  buttons cannot nest. */}
+                              <div
+                                role="button"
+                                tabIndex={0}
                                 className="flex min-w-0 cursor-pointer items-center gap-1 outline-none"
                                 aria-label={t("columnOptions")}
                               >
@@ -976,7 +980,7 @@ export function VirtualizedTableEngine({
                                   className="h-3 w-3 shrink-0 opacity-50"
                                   aria-hidden="true"
                                 />
-                              </button>
+                              </div>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="start">
                               <ColumnMenuItems
