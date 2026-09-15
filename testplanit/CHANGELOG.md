@@ -1,3 +1,15 @@
+## [1.1.0-beta.12](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.11...v1.1.0-beta.12) (2026-09-15)
+
+### Bug Fixes
+
+* **impact:** name the search engine page in the empty-index notice and show why pull requests failed ([7465d2a](https://github.com/TestPlanIt/testplanit/commit/7465d2ab667bddf6daf280fc1c3030c3f2611572))
+* **security:** encrypt code repository credentials at rest and hide them from non-admin reads ([099edf3](https://github.com/TestPlanIt/testplanit/commit/099edf3d9a79d2d2b53ed50151d4a42ec4a47d0a))
+
+### Enhancements
+
+* **impact:** count Code Pins per connection and per project in settings ([479bcb8](https://github.com/TestPlanIt/testplanit/commit/479bcb881a13871b7d61154ae150b489db338bfb))
+* **impact:** filter, sort, and select the Affected Tests by tier, reason, and score ([676dad9](https://github.com/TestPlanIt/testplanit/commit/676dad9de0020c051f5609bb69736c13859828c4))
+
 ## [1.1.0-beta.11](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.10...v1.1.0-beta.11) (2026-09-15)
 
 ### Bug Fixes
