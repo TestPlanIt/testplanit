@@ -34,7 +34,22 @@ export async function POST(
 
   const execution = await baseDb.testRunExecution.findFirst({
     where: { id: execId, testRunId: runId },
-    include: { target: { include: { codeRepository: true } } },
+    // Credentials are @omit on the repository; the cancel call needs them.
+    include: {
+      target: {
+        include: {
+          codeRepository: {
+            select: {
+              id: true,
+              name: true,
+              provider: true,
+              settings: true,
+              credentials: true,
+            },
+          },
+        },
+      },
+    },
   });
   if (!execution) {
     return NextResponse.json({ error: "Execution not found" }, { status: 404 });

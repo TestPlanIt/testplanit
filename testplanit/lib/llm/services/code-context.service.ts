@@ -1,4 +1,5 @@
 import { baseDb } from "@/lib/db";
+import { resolveStoredCredentials } from "~/lib/integrations/credentials";
 import {
   createGitRepoAdapter,
   type GitRepoAdapter,
@@ -271,7 +272,10 @@ export class CodeContextService {
       throw new Error("Project code repository config not found");
     }
 
-    const credentials = config.repository.credentials as Record<string, string>;
+    const credentials = await resolveStoredCredentials(
+      config.repository.credentials,
+      config.repository.provider
+    );
     const adapter = createGitRepoAdapter(
       config.repository.provider,
       credentials,

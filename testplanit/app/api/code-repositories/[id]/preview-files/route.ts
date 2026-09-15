@@ -1,4 +1,5 @@
 import { baseDb } from "@/lib/db";
+import { resolveStoredCredentials } from "~/lib/integrations/credentials";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import {
@@ -75,7 +76,10 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       };
 
       try {
-        const credentials = repo.credentials as Record<string, string>;
+        const credentials = await resolveStoredCredentials(
+          repo.credentials,
+          repo.provider
+        );
         const adapter = createGitRepoAdapter(
           repo.provider,
           credentials,

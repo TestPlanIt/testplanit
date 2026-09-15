@@ -637,7 +637,18 @@ export async function verifyExecutionTarget(
 ): Promise<ActionResult<{ capability: DispatchCapability }>> {
   const target = await baseDb.executionTarget.findFirst({
     where: { id: targetId, isDeleted: false },
-    include: { codeRepository: true },
+    // Credentials are @omit on the repository; the dispatch needs them.
+    include: {
+      codeRepository: {
+        select: {
+          id: true,
+          name: true,
+          provider: true,
+          settings: true,
+          credentials: true,
+        },
+      },
+    },
   });
   if (!target) return { success: false, error: "Target not found" };
   const gate = await requireManager(target.projectId);

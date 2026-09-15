@@ -1,4 +1,5 @@
 import type { DbClient } from "~/lib/zenstack";
+import { resolveStoredCredentials } from "~/lib/integrations/credentials";
 import {
   createGitRepoAdapter,
   type ArchiveTree,
@@ -546,7 +547,10 @@ export async function scanRepoIssues(
     throw new Error(`Config ${configId} is not an Impact repository`);
   }
   try {
-    const credentials = config.repository.credentials as Record<string, string>;
+    const credentials = await resolveStoredCredentials(
+      config.repository.credentials,
+      config.repository.provider
+    );
     const adapter = createGitRepoAdapter(
       config.repository.provider,
       credentials,
@@ -638,7 +642,10 @@ export async function refreshRepoCache(
     };
   }
 
-  const credentials = config.repository.credentials as Record<string, string>;
+  const credentials = await resolveStoredCredentials(
+    config.repository.credentials,
+    config.repository.provider
+  );
   const adapter = createGitRepoAdapter(
     config.repository.provider,
     credentials,

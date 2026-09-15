@@ -97,7 +97,6 @@ interface CodeRepositoryModalProps {
     id: number;
     name: string;
     provider: string;
-    credentials: Record<string, string> | null;
     settings: Record<string, string> | null;
     status: string;
   };
@@ -146,7 +145,9 @@ export function CodeRepositoryModal({
     defaultValues: {
       name: repository?.name ?? "",
       provider: (repository?.provider as FormData["provider"]) ?? "GITHUB",
-      credentials: (repository?.credentials as Record<string, string>) ?? {},
+      // Secrets never come back to the browser; on edit the fields start
+      // blank and a blank field keeps the stored value.
+      credentials: {},
       settings: (repository?.settings as Record<string, string>) ?? {},
       isActive: repository ? repository.status !== "INACTIVE" : true,
     },
@@ -198,12 +199,15 @@ export function CodeRepositoryModal({
       if (repository) {
         // Map isActive → status, preserving ERROR state if admin sets active
         const newStatus = values.isActive ? "ACTIVE" : "INACTIVE";
+        const typed = compactRecord(values.credentials);
         await updateRepository({
           where: { id: repository.id },
           data: {
             name: values.name,
             settings: compactRecord(values.settings),
-            credentials: compactRecord(values.credentials),
+            // Only what was retyped; the server merges it over the stored
+            // secrets and encrypts the result.
+            ...(Object.keys(typed).length > 0 ? { credentials: typed } : {}),
             status: newStatus as any,
           },
         });
@@ -296,7 +300,11 @@ export function CodeRepositoryModal({
               />
             )}
 
-            <CodeRepositoryConfigForm provider={selectedProvider} form={form} />
+            <CodeRepositoryConfigForm
+              editing={!!repository}
+              provider={selectedProvider}
+              form={form}
+            />
 
             {repository && (
               <FormField

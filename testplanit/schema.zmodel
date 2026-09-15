@@ -3872,7 +3872,9 @@ model CodeRepository {
     id               Int                           @id @default(autoincrement())
     name             String                        @unique @length(1)
     provider         CodeRepositoryProvider
-    credentials      Json                         // Provider credentials (PAT, username/password, etc.)
+    // Encrypted at rest by sideEffectsPlugin on every write ({ encrypted }),
+    // left out of reads unless selected, and then only for administrators.
+    credentials      Json                          @omit @deny('read', auth().access != 'ADMIN')
     settings         Json?                        // Non-sensitive: baseUrl, orgUrl, repoIdentifier
     status           IntegrationStatus             @default(ACTIVE)
     lastTestedAt     DateTime?

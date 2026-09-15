@@ -184,14 +184,18 @@ const providerFields: Record<string, FieldConfig[]> = {
 interface CodeRepositoryConfigFormProps {
   provider: string;
   form: UseFormReturn<any>;
+  /** Editing a saved repository: secrets start blank and blank keeps them. */
+  editing?: boolean;
 }
 
 export function CodeRepositoryConfigForm({
   provider,
   form,
+  editing = false,
 }: CodeRepositoryConfigFormProps) {
   const fields = providerFields[provider] ?? [];
   const t = useTranslations("admin.codeRepositories");
+  const tIntegrations = useTranslations("admin.integrations");
 
   return (
     <div className="space-y-4">
@@ -222,7 +226,11 @@ export function CodeRepositoryConfigForm({
                       {...formField}
                       value={formField.value ?? ""}
                       type={field.type ?? "text"}
-                      placeholder={field.placeholder}
+                      placeholder={
+                        editing && field.type === "password"
+                          ? tIntegrations("config.leaveBlankToKeep")
+                          : field.placeholder
+                      }
                       autoComplete={
                         field.type === "password" ? "new-password" : undefined
                       }

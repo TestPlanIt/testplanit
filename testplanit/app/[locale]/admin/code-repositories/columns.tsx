@@ -13,7 +13,6 @@ export interface CodeRepositoryRow {
   id: number;
   name: string;
   provider: string;
-  credentials: Record<string, string> | null;
   settings: Record<string, string> | null;
   status: string;
   lastTestedAt: Date | string | null;

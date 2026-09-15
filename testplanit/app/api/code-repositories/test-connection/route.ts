@@ -1,4 +1,5 @@
 import { baseDb } from "@/lib/db";
+import { resolveStoredCredentials } from "~/lib/integrations/credentials";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { createGitRepoAdapter } from "~/lib/integrations/adapters/GitRepoAdapter";
@@ -28,8 +29,9 @@ export async function POST(req: NextRequest) {
     let resolvedSettings = settings;
     let resolvedProvider = provider;
 
-    // If repositoryId provided, load from DB
-    if (repositoryId && !credentials) {
+    // With a repositoryId, start from what is stored: an edit form sends only
+    // the secrets the admin retyped, so blanks mean "keep the stored value".
+    if (repositoryId) {
       const repo = await baseDb.codeRepository.findUnique({
         where: { id: parseInt(repositoryId) },
         select: { credentials: true, settings: true, provider: true },
@@ -40,9 +42,18 @@ export async function POST(req: NextRequest) {
           { status: 404 }
         );
       }
-      resolvedCredentials = repo.credentials as Record<string, string>;
-      resolvedSettings = repo.settings;
-      resolvedProvider = repo.provider;
+      const stored = await resolveStoredCredentials(
+        repo.credentials,
+        repo.provider
+      );
+      const typed = Object.fromEntries(
+        Object.entries((credentials ?? {}) as Record<string, unknown>).filter(
+          ([, v]) => typeof v === "string" && v.trim() !== ""
+        )
+      );
+      resolvedCredentials = { ...stored, ...typed };
+      resolvedSettings = settings ?? repo.settings;
+      resolvedProvider = provider ?? repo.provider;
     }
 
     if (!resolvedProvider) {

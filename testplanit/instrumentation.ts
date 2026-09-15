@@ -34,4 +34,12 @@ export async function register() {
   const { ensureAuditTriggers } =
     await import("~/lib/audit/ensureAuditTriggers");
   await ensureAuditTriggers();
+
+  // Encrypt code repository credentials saved before the app encrypted them
+  // at rest, so an upgraded instance converts itself on its first start
+  // instead of waiting for an admin to re-save each repository. Idempotent
+  // and fail-open (see ensureCodeRepositoryCredentialsEncrypted).
+  const { ensureCodeRepositoryCredentialsEncrypted } =
+    await import("~/lib/integrations/ensureCodeRepositoryCredentialsEncrypted");
+  await ensureCodeRepositoryCredentialsEncrypted();
 }

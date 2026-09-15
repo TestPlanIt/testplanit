@@ -38,6 +38,8 @@ import { definePlugin } from "@zenstackhq/orm";
 import { schema } from "~/zenstack/schema";
 
 import { normalizeRichTextWrite } from "~/lib/richTextColumns";
+import { encrypt } from "@/utils/encryption";
+import { resolveStoredCredentials } from "~/lib/integrations/credentials";
 
 /** Write operations whose args can carry a rich-text column value. */
 const RICH_TEXT_WRITE_OPERATIONS = new Set([
@@ -288,11 +290,118 @@ async function cancelReviewsForHardDeleted(
   await cancelAndAnnounceReviews(tx, model, names, "hard-delete");
 }
 
+const CREDENTIAL_WRITE_OPERATIONS = new Set([
+  "create",
+  "update",
+  "upsert",
+  "createMany",
+  "updateMany",
+]);
+
+type CredentialReader = {
+  codeRepository: {
+    findUnique(args: {
+      where: Record<string, unknown>;
+      select: { credentials: true; provider: true };
+    }): Promise<{ credentials: unknown; provider: string } | null>;
+  };
+};
+
+const isEncryptedBlob = (value: unknown): boolean =>
+  typeof value === "object" &&
+  value !== null &&
+  typeof (value as { encrypted?: unknown }).encrypted === "string";
+
+/**
+ * Encrypt `credentials` on every CodeRepository write, whatever path it came
+ * in on: the admin modal through the model API, a fixture, an import. The
+ * stored shape is Integration's `{ encrypted }` blob, which
+ * resolveStoredCredentials already reads. An update carrying only some
+ * fields (an admin retyped one token) merges over what is stored, so a blank
+ * input keeps the current value instead of wiping the rest.
+ */
+export async function encryptCodeRepositoryCredentials(
+  operation: string,
+  args: Record<string, unknown> | undefined,
+  client: CredentialReader
+): Promise<void> {
+  if (!args || !CREDENTIAL_WRITE_OPERATIONS.has(operation)) return;
+
+  const encryptPlain = async (
+    plain: Record<string, unknown>,
+    existing?: Record<string, string>
+  ) => ({
+    encrypted: await encrypt(JSON.stringify({ ...(existing ?? {}), ...plain })),
+  });
+
+  const seal = async (
+    data: Record<string, unknown> | undefined,
+    where?: Record<string, unknown>
+  ) => {
+    if (!data || !("credentials" in data)) return;
+    const value = data.credentials;
+    if (value === null || value === undefined || isEncryptedBlob(value)) return;
+    if (typeof value !== "object" || Array.isArray(value)) return;
+    const plain = value as Record<string, unknown>;
+    let existing: Record<string, string> | undefined;
+    if (where) {
+      const row = await client.codeRepository.findUnique({
+        where,
+        select: { credentials: true, provider: true },
+      });
+      if (row) {
+        try {
+          existing = await resolveStoredCredentials(
+            row.credentials,
+            row.provider
+          );
+        } catch {
+          // Unreadable stored credentials are what this write replaces.
+          existing = undefined;
+        }
+      }
+    }
+    data.credentials = await encryptPlain(plain, existing);
+  };
+
+  const where = args.where as Record<string, unknown> | undefined;
+  switch (operation) {
+    case "create":
+      await seal(args.data as Record<string, unknown> | undefined);
+      break;
+    case "update":
+      await seal(args.data as Record<string, unknown> | undefined, where);
+      break;
+    case "updateMany":
+      await seal(args.data as Record<string, unknown> | undefined);
+      break;
+    case "upsert":
+      await seal(args.create as Record<string, unknown> | undefined);
+      await seal(args.update as Record<string, unknown> | undefined, where);
+      break;
+    case "createMany": {
+      const rows = args.data;
+      for (const row of Array.isArray(rows) ? rows : [rows]) {
+        await seal(row as Record<string, unknown> | undefined);
+      }
+      break;
+    }
+  }
+}
+
 export const sideEffectsPlugin = definePlugin(schema, {
   id: "testplanit-side-effects",
 
   // Arg-rewriting business logic that must run before the write SQL.
-  onQuery: async ({ model, operation, args, proceed }) => {
+  onQuery: async ({ model, operation, args, proceed, client }) => {
+    if (model === "CodeRepository") {
+      await encryptCodeRepositoryCredentials(
+        operation,
+        args,
+        client as unknown as CredentialReader
+      );
+    }
+
     // One storage shape for rich text. The web UI serializes Tiptap documents
     // before writing, so the same Json column held either a document object or
     // a JSON string of one depending on the client. Normalizing here covers

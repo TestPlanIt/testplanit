@@ -23,15 +23,15 @@ Administrators register and manage repository connections here. The connection i
 
 ## Supported providers
 
-| Provider | Connection fields |
-| --- | --- |
-| **GitHub** | Personal Access Token, Owner, Repository, optional API Base URL (GitHub Enterprise Server only) |
-| **GitLab** | Personal Access Token, Project ID or Path, optional GitLab URL (self-hosted) |
-| **Bitbucket** (Cloud) | Atlassian account email, API Token, Workspace, Repository Slug |
-| **Azure DevOps** | Personal Access Token, Organization URL, Project Name, Repository Name or ID |
-| **Gitea / Forgejo / Gogs** | Personal Access Token, Server URL, Owner, Repository |
+| Provider                   | Connection fields                                                                               |
+| -------------------------- | ----------------------------------------------------------------------------------------------- |
+| **GitHub**                 | Personal Access Token, Owner, Repository, optional API Base URL (GitHub Enterprise Server only) |
+| **GitLab**                 | Personal Access Token, Project ID or Path, optional GitLab URL (self-hosted)                    |
+| **Bitbucket** (Cloud)      | Atlassian account email, API Token, Workspace, Repository Slug                                  |
+| **Azure DevOps**           | Personal Access Token, Organization URL, Project Name, Repository Name or ID                    |
+| **Gitea / Forgejo / Gogs** | Personal Access Token, Server URL, Owner, Repository                                            |
 
-Authentication is per-repository (token-based, or email + API token for Bitbucket). Credentials are entered by an administrator when the repository is registered.
+Authentication is per-repository (token-based, or email + API token for Bitbucket). Credentials are entered by an administrator when the repository is registered, stored encrypted, and never shown again: when you edit a repository the secret fields start blank, and leaving one blank keeps the stored value. Repositories registered before TestPlanIt encrypted these credentials are encrypted automatically the first time the upgraded server starts; `scripts/encrypt-code-repository-credentials.ts` runs the same pass by hand.
 
 ## Registering a repository
 
@@ -49,13 +49,13 @@ Always use `https://` URLs for self-hosted servers. If you enter an `http://` UR
 
 The table lists each repository with these columns:
 
-| Column | Description |
-| --- | --- |
-| **Name** | The repository's display name. |
-| **Provider** | GitHub, GitLab, Bitbucket, Azure DevOps, or Gitea / Forgejo / Gogs. |
-| **Active** | A toggle that enables or disables the connection. |
-| **Last Tested** | When the connection was last verified, or **Never**. |
-| **Actions** | Edit and delete. |
+| Column          | Description                                                         |
+| --------------- | ------------------------------------------------------------------- |
+| **Name**        | The repository's display name.                                      |
+| **Provider**    | GitHub, GitLab, Bitbucket, Azure DevOps, or Gitea / Forgejo / Gogs. |
+| **Active**      | A toggle that enables or disables the connection.                   |
+| **Last Tested** | When the connection was last verified, or **Never**.                |
+| **Actions**     | Edit and delete.                                                    |
 
 - **Edit** reopens the connection form. The **provider cannot be changed** after creation — to switch providers, delete the repository and add a new one.
 - **Delete** soft-deletes the repository (it can be restored from [Trash](trash.md)).
