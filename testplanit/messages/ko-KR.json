@@ -2018,7 +2018,6 @@
           "adminDescription": "이 프로젝트의 코드 컨텍스트를 구성하기 전에 저장소 연결을 설정하십시오."
         },
         "repository": {
-          "title": "코드 저장소",
           "description": "AI 컨텍스트에 사용할 코드 저장소를 선택하세요.",
           "branchPlaceholder": "기본 저장소 분기를 사용하려면 비워 두십시오."
         },
@@ -7783,7 +7782,10 @@
       "totalCost": "## 총 비용\n이 그룹의 호출에 대해 USD로 추정된 제공업체 비용입니다. 로컬에서 호스팅되는 모델은 비용이 기록되지 않습니다.",
       "avgLatency": "## 평균 지연 시간\n이 그룹의 호출에 대해 제공업체가 응답하는 데 걸린 평균 시간입니다.",
       "successRate": "## 성공률\n이 그룹에서 오류 없이 완료된 호출의 비율입니다.",
-      "errorCount": "## 실패한 호출\n이 그룹에서 오류로 종료된 호출 수입니다."
+      "errorCount": "## 실패한 호출\n이 그룹에서 오류로 종료된 호출 수입니다.",
+      "impactAnalysisCount": "## 영향 분석 수\n실행 구성 여부와 관계없이 이 그룹에서 시작된 영향 분석의 수입니다.",
+      "affectedCasesSelected": "## 선택된 영향받은 케이스\n이 그룹의 분석이 선택한 고정 및 영향받은 케이스의 합계입니다.",
+      "selectionPrecision": "## 선택 정밀도 (%)\n영향 분석이 선택하여 이후 실행된 케이스 중 실패한 비율입니다. 선택된 항목이 실행되지 않은 경우 비어 있습니다."
     },
     "reportDimensions": {
       "user": "## 사용자 차원\n테스트를 실행한 사용자 또는 항목에 할당된 사용자를 기준으로 결과를 그룹화합니다.",
@@ -7810,7 +7812,9 @@
       "feature": "## 기능 차원\n호출을 수행한 애플리케이션 기능별로 LLM 사용량을 그룹화합니다(예: 테스트 케이스 생성).",
       "model": "## 모델 차원\n호출을 처리한 모델별로 LLM 사용량을 그룹화합니다.",
       "integration": "## 통합 차원\n호출을 처리한 구성된 LLM 통합별로 LLM 사용량을 그룹화합니다.",
-      "outcome": "## 결과 차원\nLLM 사용량을 성공한 호출과 실패한 호출로 나눕니다."
+      "outcome": "## 결과 차원\nLLM 사용량을 성공한 호출과 실패한 호출로 나눕니다.",
+      "trigger": "## 트리거 차원\n테스트 실행을 구성한 영향 분석이 시작된 방식별로 그룹화합니다: 수동, 풀 리퀘스트, 또는 푸시. 구성된 분석이 없는 실행은 '없음'으로 분류됩니다.",
+      "codeRepository": "## 코드 저장소 차원\n테스트 실행을 구성한 영향 분석이 속한 연결된 저장소별로 그룹화합니다. 분석이 없는 실행은 '없음'으로 분류됩니다."
     },
     "reportBuilder": {
       "dimensions": "## 차원\n보고서에서 분석할 차원을 선택하세요. 차원은 날짜, 사용자, 상태 등과 같이 데이터를 분류하는 속성입니다. 드래그하여 순서를 변경할 수 있습니다.",
@@ -8265,6 +8269,14 @@
         "requirementCoverageChanges": {
           "label": "요구사항 커버리지 변경",
           "description": "저장된 추적성 스냅샷을 이후 스냅샷 또는 실시간 매트릭스와 비교하여 어떤 요구사항의 커버리지가 변경되었는지 확인합니다"
+        },
+        "impactAnalysis": {
+          "label": "영향 분석 이력",
+          "description": "모든 영향 분석: 시작 방식, 변경 사항, 선택된 케이스, 구성된 실행 결과"
+        },
+        "codePinCoverage": {
+          "label": "코드 핀 적용 범위",
+          "description": "저장소 및 디렉터리별 코드 핀 위치와 최근 변경 사항이 적용되지 않은 부분"
         }
       },
       "flakyTests": {
@@ -8608,6 +8620,14 @@
         "executionLog": {
           "label": "프로젝트 간 실행 로그",
           "description": "프로젝트 전반에 걸쳐 상태, 실행자 및 타임스탬프가 포함된 개별 테스트 결과 기록의 평면 목록"
+        },
+        "impactAnalysis": {
+          "label": "프로젝트 간 영향 분석 이력",
+          "description": "영향 분석이 활성화된 모든 프로젝트의 영향 분석"
+        },
+        "codePinCoverage": {
+          "label": "프로젝트 간 코드 핀 적용 범위",
+          "description": "영향 분석이 활성화된 모든 프로젝트의 코드 핀 적용 범위"
         }
       },
       "folderDescendants": {
@@ -8616,6 +8636,56 @@
       },
       "dimensionFilters": {
         "allValues": "모든 값"
+      },
+      "impactAnalysis": {
+        "lookbackDaysHelp": "지정된 일수 내에 시작된 분석입니다. '전체 기간'을 선택하면 프로젝트가 보관하는 모든 분석을 읽습니다.",
+        "triggerPush": "푸시",
+        "outcomeNotExecuted": "실행되지 않음",
+        "outcomeNoRun": "실행 없음",
+        "allRepositories": "모든 저장소",
+        "analysis": "분석",
+        "changedFiles": "변경된 파일",
+        "changedFilesDetail": "파일 {files, number}개 · +{additions, number} −{deletions, number}",
+        "accepted": "승인됨",
+        "runResults": "{executed, number}개 실행 · {passed, number}개 통과 · {failed, number}개 실패",
+        "chart": {
+          "perWeek": "주별 분석 수",
+          "week": "{date} 주"
+        },
+        "stats": {
+          "analyses": "분석",
+          "runsComposed": "구성된 실행",
+          "runsComposedTooltip": "수동 또는 저장소 이벤트로 테스트 실행을 생성한 분석입니다.",
+          "runsWithFailures": "실패가 있는 실행",
+          "runsWithFailuresTooltip": "실행된 구성 실행 중 선택된 케이스가 하나 이상 실패한 실행의 비율입니다.",
+          "medianAffected": "영향받은 케이스 중앙값",
+          "medianAffectedTooltip": "분석이 선택한 고정 및 영향받은 케이스 수의 중앙값입니다.",
+          "acceptedShare": "승인 비율",
+          "acceptedShareTooltip": "분석이 제안한 전체 고정 및 영향받은 케이스 중 검토자가 승인한 케이스의 비율입니다."
+        }
+      },
+      "codePinCoverage": {
+        "lookbackDaysHelp": "적용되지 않은 파일은 지정된 일수 내에 시작된 분석에서 가져옵니다. '전체 기간'을 선택하면 완료된 모든 분석을 읽습니다.",
+        "directory": "디렉터리",
+        "rootDirectory": "(저장소 루트)",
+        "casesWithPins": "핀이 있는 케이스",
+        "stalePins": "오래된 핀",
+        "stalePinsHelp": "연결의 최신 분석이 헤드 커밋에서 찾을 수 없었던 핀입니다.",
+        "uncoveredFiles": "적용되지 않은 변경 파일",
+        "uncoveredFilesHelp": "기간 내 분석에서 어떤 핀도 적용하지 않은 변경 파일로, 파일당 한 번씩 계산됩니다.",
+        "coverageFilter": "표시",
+        "coverageGaps": "핀 없이 변경됨",
+        "coveragePinned": "핀 있음",
+        "kindBreakdown": "전체 파일 {file, number}개 · 라인 {range, number}개 · 심볼 {symbol, number}개 · 글롭 {glob, number}개",
+        "sourceBreakdown": "수동 {manual, number}개 · AI {ai, number}개 · 주석 {annotation, number}개 · 맵 파일 {mapfile, number}개 · 티켓 {issue, number}개",
+        "stats": {
+          "casesWithPinsTooltip": "프로젝트의 케이스 중 코드 핀이 하나 이상 있는 테스트 케이스의 비율입니다.",
+          "gapDirectories": "핀 없이 변경된 디렉터리",
+          "gapDirectoriesTooltip": "기간 내 분석에서 변경된 파일이 발견되었지만 어떤 핀도 적용되지 않은 디렉터리입니다."
+        },
+        "chart": {
+          "byDirectory": "디렉터리별 핀 및 적용되지 않은 파일"
+        }
       }
     },
     "errors": {
@@ -8649,7 +8719,9 @@
       "tag": "꼬리표",
       "feature": "기능",
       "model": "모델",
-      "outcome": "결과"
+      "outcome": "결과",
+      "trigger": "트리거",
+      "codeRepository": "코드 저장소"
     },
     "metrics": {
       "percentReady": "준비됨 (%)",
@@ -8700,7 +8772,10 @@
       "totalCost": "총 비용",
       "avgLatency": "평균 지연 시간",
       "successRate": "성공률 (%)",
-      "errorCount": "실패한 호출"
+      "errorCount": "실패한 호출",
+      "impactAnalysisCount": "영향 분석 수",
+      "affectedCasesSelected": "선택된 영향받은 케이스",
+      "selectionPrecision": "선택 정밀도 (%)"
     },
     "drillDown": {
       "title": "상세 기록",

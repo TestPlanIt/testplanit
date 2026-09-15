@@ -2018,7 +2018,6 @@
           "adminDescription": "在為此項目配置程式碼上下文之前，請先建立儲存庫連線。"
         },
         "repository": {
-          "title": "程式碼庫",
           "description": "選擇用於 AI 環境的程式碼儲存庫",
           "branchPlaceholder": "留空則使用倉庫預設分支"
         },
@@ -7783,7 +7782,10 @@
       "totalCost": "## 總成本\n此群組中呼叫的預估提供商成本為美元。本地託管的模型成本記錄為零。",
       "avgLatency": "## 平均延遲\n此群組中提供商回應呼叫所花費的平均時間。",
       "successRate": "## 成功率\n此群組中未發生錯誤而完成的呼叫百分比。",
-      "errorCount": "## 失敗呼叫\n此群組中以錯誤結束的呼叫數量。"
+      "errorCount": "## 失敗呼叫\n此群組中以錯誤結束的呼叫數量。",
+      "impactAnalysisCount": "## 影響分析次數\n此群組中已啟動的影響分析數量，無論是否組成執行。",
+      "affectedCasesSelected": "## 已選定的受影響案例\n此群組中的分析所選定的釘選與受影響案例總和。",
+      "selectionPrecision": "## 選擇精確度 (%)\n在影響分析選定並隨後執行的案例中，失敗的比例。若未執行任何已選定項目則為空白。"
     },
     "reportDimensions": {
       "user": "## 使用者維度\n依執行測試或指派給專案的使用者將結果分組。",
@@ -7810,7 +7812,9 @@
       "feature": "## 功能維度\n依發出呼叫的應用程式功能（例如測試案例產生）對 LLM 使用情況進行分組。",
       "model": "## 模型維度\n依處理呼叫的模型對 LLM 使用情況進行分組。",
       "integration": "## 整合維度\n依處理呼叫的已設定 LLM 整合對 LLM 使用情況進行分組。",
-      "outcome": "## 結果維度\n將 LLM 使用情況分為成功與失敗的呼叫。"
+      "outcome": "## 結果維度\n將 LLM 使用情況分為成功與失敗的呼叫。",
+      "trigger": "## 觸發維度\n依據組成測試執行的影響分析啟動方式分組：手動、來自提取請求，或來自推送。未組成任何分析的執行歸類為「無」。",
+      "codeRepository": "## 程式碼庫維度\n依據其影響分析組成測試執行的已連結儲存庫分組。沒有分析的執行歸類為「無」。"
     },
     "reportBuilder": {
       "dimensions": "## 維度\n選擇要在報告中分析的維度。維度是用於對資料進行分類的屬性，例如日期、使用者、狀態等。您可以拖曳來重新排序。",
@@ -8265,6 +8269,14 @@
         "requirementCoverageChanges": {
           "label": "需求覆蓋率變更",
           "description": "將已儲存的追溯性快照與較新的快照或即時矩陣進行比較，以查看哪些需求的覆蓋率發生了變化"
+        },
+        "impactAnalysis": {
+          "label": "影響分析歷史記錄",
+          "description": "每次影響分析：啟動原因、變更內容、選定的案例，以及所組成執行的結果"
+        },
+        "codePinCoverage": {
+          "label": "程式碼釘選覆蓋率",
+          "description": "依儲存庫與目錄顯示程式碼釘選的位置，以及近期變更未涵蓋的部分"
         }
       },
       "flakyTests": {
@@ -8608,6 +8620,14 @@
         "executionLog": {
           "label": "跨專案執行日誌",
           "description": "包含專案狀態、執行者和時間戳記的各個測試結果記錄的扁平化列表"
+        },
+        "impactAnalysis": {
+          "label": "跨專案影響分析歷史記錄",
+          "description": "所有已啟用影響分析的專案中的影響分析"
+        },
+        "codePinCoverage": {
+          "label": "跨專案程式碼釘選覆蓋率",
+          "description": "所有已啟用影響分析的專案中的程式碼釘選覆蓋率"
         }
       },
       "folderDescendants": {
@@ -8616,6 +8636,56 @@
       },
       "dimensionFilters": {
         "allValues": "所有值"
+      },
+      "impactAnalysis": {
+        "lookbackDaysHelp": "在此天數內啟動的分析。「所有時間」會讀取專案保留的每一次分析。",
+        "triggerPush": "推送",
+        "outcomeNotExecuted": "未執行",
+        "outcomeNoRun": "無執行",
+        "allRepositories": "所有儲存庫",
+        "analysis": "分析",
+        "changedFiles": "已變更檔案",
+        "changedFilesDetail": "{files, number} 個檔案 · +{additions, number} −{deletions, number}",
+        "accepted": "已接受",
+        "runResults": "已執行 {executed, number} 次 · 已通過 {passed, number} 次 · 已失敗 {failed, number} 次",
+        "chart": {
+          "perWeek": "每週分析數",
+          "week": "{date} 當週"
+        },
+        "stats": {
+          "analyses": "分析",
+          "runsComposed": "已組成執行",
+          "runsComposedTooltip": "手動或由儲存庫事件建立測試執行的分析。",
+          "runsWithFailures": "有失敗的執行",
+          "runsWithFailuresTooltip": "已執行的組成執行中，至少有一個選定案例失敗，佔已執行組成執行的比例。",
+          "medianAffected": "受影響案例中位數",
+          "medianAffectedTooltip": "分析所選定的釘選與受影響案例數量中位數。",
+          "acceptedShare": "已接受比例",
+          "acceptedShareTooltip": "審查者接受的案例，佔分析建議的所有釘選與受影響案例的比例。"
+        }
+      },
+      "codePinCoverage": {
+        "lookbackDaysHelp": "未涵蓋的檔案來自此天數內啟動的分析。「所有時間」會讀取每一次已完成的分析。",
+        "directory": "目錄",
+        "rootDirectory": "（儲存庫根目錄）",
+        "casesWithPins": "有釘選的案例",
+        "stalePins": "過時釘選",
+        "stalePinsHelp": "連線最新分析在最新提交中找不到的釘選。",
+        "uncoveredFiles": "未涵蓋的已變更檔案",
+        "uncoveredFilesHelp": "未有任何釘選涵蓋的已變更檔案，於區間內的分析中每個檔案僅計一次。",
+        "coverageFilter": "顯示",
+        "coverageGaps": "已變更但無釘選",
+        "coveragePinned": "有釘選",
+        "kindBreakdown": "{file, number} 個完整檔案 · {range, number} 行 · {symbol, number} 個符號 · {glob, number} 個萬用字元",
+        "sourceBreakdown": "{manual, number} 個手動 · {ai, number} 個 AI · {annotation, number} 個註解 · {mapfile, number} 個對應檔 · {issue, number} 個票證",
+        "stats": {
+          "casesWithPinsTooltip": "至少有一個程式碼釘選的測試案例，佔專案案例的比例。",
+          "gapDirectories": "已變更但無釘選的目錄",
+          "gapDirectoriesTooltip": "區間內分析發現已變更檔案，但沒有任何釘選涵蓋任何內容的目錄。"
+        },
+        "chart": {
+          "byDirectory": "依目錄顯示的釘選與未涵蓋檔案"
+        }
       }
     },
     "errors": {
@@ -8649,7 +8719,9 @@
       "tag": "標籤",
       "feature": "功能",
       "model": "模型",
-      "outcome": "結果"
+      "outcome": "結果",
+      "trigger": "觸發",
+      "codeRepository": "程式碼庫"
     },
     "metrics": {
       "percentReady": "就緒（%）",
@@ -8700,7 +8772,10 @@
       "totalCost": "總成本",
       "avgLatency": "平均延遲",
       "successRate": "成功率 (%)",
-      "errorCount": "失敗呼叫"
+      "errorCount": "失敗呼叫",
+      "impactAnalysisCount": "影響分析次數",
+      "affectedCasesSelected": "已選定的受影響案例",
+      "selectionPrecision": "選擇精確度 (%)"
     },
     "drillDown": {
       "title": "詳細記錄",

@@ -45,6 +45,11 @@ export const METRIC_ID_MAP: Record<string, string> = {
   milestoneCompletionRate: "milestoneCompletionRate",
   averageMilestoneDuration: "averageMilestoneDuration",
 
+  // Impact metrics - canonical IDs
+  impactAnalysisCount: "impactAnalysisCount",
+  affectedCasesSelected: "affectedCasesSelected",
+  selectionPrecision: "selectionPrecision",
+
   // LLM usage metrics - canonical IDs
   llmCallCount: "llmCallCount",
   promptTokens: "promptTokens",
@@ -96,6 +101,12 @@ export const METRIC_HELP_KEYS: Record<string, string> = {
     "reportMetrics.milestoneCompletionRate",
   "reports.metrics.averageMilestoneDuration":
     "reportMetrics.averageMilestoneDuration",
+
+  // Impact metrics
+  "reports.metrics.impactAnalysisCount": "reportMetrics.impactAnalysisCount",
+  "reports.metrics.affectedCasesSelected":
+    "reportMetrics.affectedCasesSelected",
+  "reports.metrics.selectionPrecision": "reportMetrics.selectionPrecision",
 
   // LLM usage metrics
   "reports.metrics.llmCallCount": "reportMetrics.llmCallCount",
@@ -156,6 +167,8 @@ export const DIMENSION_ID_KEYS: Record<string, string> = {
   model: "model",
   integration: "llmIntegrationId",
   outcome: "success",
+  trigger: "impactTrigger",
+  codeRepository: "impactConfigId",
 };
 
 export const DIMENSION_LABEL_KEYS: Record<string, string> = {
@@ -185,6 +198,8 @@ export const DIMENSION_LABEL_KEYS: Record<string, string> = {
   model: "reports.dimensions.model",
   integration: "common.fields.integration",
   outcome: "reports.dimensions.outcome",
+  trigger: "reports.dimensions.trigger",
+  codeRepository: "reports.dimensions.codeRepository",
 };
 
 // Map dimension IDs to help keys for help tooltips
@@ -214,6 +229,8 @@ export const DIMENSION_HELP_KEYS: Record<string, string> = {
   model: "reportDimensions.model",
   integration: "reportDimensions.integration",
   outcome: "reportDimensions.outcome",
+  trigger: "reportDimensions.trigger",
+  codeRepository: "reportDimensions.codeRepository",
 };
 
 // Helper function to normalize metric ID to canonical form

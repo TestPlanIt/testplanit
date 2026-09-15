@@ -2018,7 +2018,6 @@
           "adminDescription": "Configurare una connessione al repository prima di configurare il contesto del codice per questo progetto."
         },
         "repository": {
-          "title": "Repository del codice",
           "description": "Seleziona il repository di codice da utilizzare per il contesto di IA",
           "branchPlaceholder": "Lascia vuoto per utilizzare il ramo predefinito del repository"
         },
@@ -7783,7 +7782,10 @@
       "totalCost": "## Costo totale\nCosto stimato del provider in USD per le chiamate di questo gruppo. I modelli ospitati localmente registrano un costo pari a zero.",
       "avgLatency": "## Latenza media\nTempo medio impiegato dal provider per rispondere a una chiamata in questo gruppo.",
       "successRate": "## Tasso di successo\nPercentuale di chiamate in questo gruppo completate senza errori.",
-      "errorCount": "## Chiamate non riuscite\nNumero di chiamate in questo gruppo terminate con un errore."
+      "errorCount": "## Chiamate non riuscite\nNumero di chiamate in questo gruppo terminate con un errore.",
+      "impactAnalysisCount": "## Numero di Analisi dell'Impatto\nNumero di analisi dell'impatto avviate in questo gruppo, indipendentemente dal fatto che abbiano composto un'esecuzione o meno.",
+      "affectedCasesSelected": "## Casi Interessati Selezionati\nCasi fissati e interessati selezionati dalle analisi in questo gruppo, sommati.",
+      "selectionPrecision": "## Precisione di Selezione (%)\nDei casi selezionati dalle analisi dell'impatto e successivamente eseguiti, la percentuale che è fallita. Vuoto quando nulla di selezionato è stato eseguito."
     },
     "reportDimensions": {
       "user": "## Dimensione utente\nRaggruppa i risultati in base all'utente che ha eseguito i test o a cui sono assegnati gli elementi.",
@@ -7810,7 +7812,9 @@
       "feature": "## Dimensione Funzionalità\nRaggruppa l'utilizzo LLM in base alla funzionalità dell'applicazione che ha effettuato la chiamata (ad es. Generazione di casi di test).",
       "model": "## Dimensione Modello\nRaggruppa l'utilizzo LLM in base al modello che ha gestito la chiamata.",
       "integration": "## Dimensione Integrazione\nRaggruppa l'utilizzo LLM in base all'integrazione LLM configurata che ha gestito la chiamata.",
-      "outcome": "## Dimensione Risultato\nDivide l'utilizzo LLM in chiamate riuscite e non riuscite."
+      "outcome": "## Dimensione Risultato\nDivide l'utilizzo LLM in chiamate riuscite e non riuscite.",
+      "trigger": "## Dimensione Trigger\nRaggruppa in base a come è stata avviata l'analisi dell'impatto che ha composto l'esecuzione del test: manualmente, da una pull request o da un push. Le esecuzioni non composte da nessuna analisi rientrano in Nessuno.",
+      "codeRepository": "## Dimensione Repository di Codice\nRaggruppa in base al repository connesso la cui analisi dell'impatto ha composto l'esecuzione del test. Le esecuzioni senza un'analisi rientrano in Nessuno."
     },
     "reportBuilder": {
       "dimensions": "## Dimensioni\nSeleziona le dimensioni che desideri analizzare nel tuo report. Le dimensioni sono attributi che categorizzano i dati, come Data, Utente, Stato, ecc. Puoi trascinarle per riordinarle.",
@@ -8265,6 +8269,14 @@
         "requirementCoverageChanges": {
           "label": "Modifiche di copertura dei requisiti",
           "description": "Confronta un'istantanea di tracciabilità salvata con un'istantanea successiva o con la matrice live per vedere la copertura di quali requisiti è cambiata"
+        },
+        "impactAnalysis": {
+          "label": "Cronologia delle Analisi dell'Impatto",
+          "description": "Ogni analisi dell'impatto: cosa l'ha avviata, cosa ha modificato, i casi che ha selezionato e come è andata l'esecuzione che ha composto"
+        },
+        "codePinCoverage": {
+          "label": "Copertura dei Code Pin",
+          "description": "Dove si trovano i Code Pin, per repository e directory, e dove le modifiche recenti non sono state coperte"
         }
       },
       "flakyTests": {
@@ -8608,6 +8620,14 @@
         "executionLog": {
           "label": "Registro di esecuzione tra progetti",
           "description": "Elenco semplice dei singoli record dei risultati dei test con stato, esecutore e data/ora per progetto"
+        },
+        "impactAnalysis": {
+          "label": "Cronologia delle Analisi dell'Impatto tra Progetti",
+          "description": "Analisi dell'impatto in tutti i progetti con l'Analisi dell'Impatto abilitata"
+        },
+        "codePinCoverage": {
+          "label": "Copertura dei Code Pin tra Progetti",
+          "description": "Copertura dei Code Pin in tutti i progetti con l'Analisi dell'Impatto abilitata"
         }
       },
       "folderDescendants": {
@@ -8616,6 +8636,56 @@
       },
       "dimensionFilters": {
         "allValues": "Tutti i valori"
+      },
+      "impactAnalysis": {
+        "lookbackDaysHelp": "Analisi avviate entro questo numero di giorni. \"Sempre\" legge ogni analisi conservata dal progetto.",
+        "triggerPush": "Invio",
+        "outcomeNotExecuted": "Non eseguito",
+        "outcomeNoRun": "Nessuna esecuzione",
+        "allRepositories": "Tutti i repository",
+        "analysis": "Analisi",
+        "changedFiles": "File modificati",
+        "changedFilesDetail": "{files, number} file · +{additions, number} −{deletions, number}",
+        "accepted": "Accettato",
+        "runResults": "{executed, number} eseguiti · {passed, number} superati · {failed, number} falliti",
+        "chart": {
+          "perWeek": "Analisi per settimana",
+          "week": "Settimana del {date}"
+        },
+        "stats": {
+          "analyses": "Analisi",
+          "runsComposed": "Esecuzioni composte",
+          "runsComposedTooltip": "Analisi che hanno creato un'esecuzione del test, manualmente o da un evento del repository.",
+          "runsWithFailures": "Esecuzioni con fallimenti",
+          "runsWithFailuresTooltip": "Esecuzioni composte in cui almeno un caso selezionato è fallito, come percentuale delle esecuzioni composte che sono state eseguite.",
+          "medianAffected": "Mediana dei casi interessati",
+          "medianAffectedTooltip": "Il numero mediano di casi fissati e interessati selezionati da un'analisi.",
+          "acceptedShare": "Percentuale accettata",
+          "acceptedShareTooltip": "Casi accettati da un revisore, come percentuale di tutti i casi fissati e interessati suggeriti dalle analisi."
+        }
+      },
+      "codePinCoverage": {
+        "lookbackDaysHelp": "I file non coperti provengono dalle analisi avviate entro questo numero di giorni. \"Sempre\" legge ogni analisi completata.",
+        "directory": "Cartella",
+        "rootDirectory": "(radice del repository)",
+        "casesWithPins": "Casi con pin",
+        "stalePins": "Pin obsoleti",
+        "stalePinsHelp": "Pin che l'ultima analisi della connessione non è riuscita a trovare nel commit head.",
+        "uncoveredFiles": "File modificati non coperti",
+        "uncoveredFilesHelp": "File modificati non coperti da alcun pin, conteggiati una volta per file nelle analisi dell'intervallo.",
+        "coverageFilter": "Mostra",
+        "coverageGaps": "Modificati senza pin",
+        "coveragePinned": "Con pin",
+        "kindBreakdown": "{file, number} file intero · {range, number} righe · {symbol, number} simbolo · {glob, number} glob",
+        "sourceBreakdown": "{manual, number} manuale · {ai, number} IA · {annotation, number} annotazione · {mapfile, number} file di mappa · {issue, number} ticket",
+        "stats": {
+          "casesWithPinsTooltip": "Casi di test con almeno un Code Pin, come percentuale dei casi del progetto.",
+          "gapDirectories": "Directory modificate senza pin",
+          "gapDirectoriesTooltip": "Directory in cui un'analisi nell'intervallo ha trovato file modificati ma nessun pin copre nulla."
+        },
+        "chart": {
+          "byDirectory": "Pin e file non coperti per directory"
+        }
       }
     },
     "errors": {
@@ -8649,7 +8719,9 @@
       "tag": "Etichetta",
       "feature": "Funzionalità",
       "model": "Modello",
-      "outcome": "Risultato"
+      "outcome": "Risultato",
+      "trigger": "Attivatore",
+      "codeRepository": "Repository di Codice"
     },
     "metrics": {
       "percentReady": "Pronto (%)",
@@ -8700,7 +8772,10 @@
       "totalCost": "Costo totale",
       "avgLatency": "Latenza media",
       "successRate": "Tasso di successo (%)",
-      "errorCount": "Chiamate non riuscite"
+      "errorCount": "Chiamate non riuscite",
+      "impactAnalysisCount": "Numero di Analisi dell'Impatto",
+      "affectedCasesSelected": "Casi Interessati Selezionati",
+      "selectionPrecision": "Precisione di Selezione (%)"
     },
     "drillDown": {
       "title": "Registri dettagliati",

@@ -153,7 +153,12 @@ export async function fetchJunitResultRows(
         select: {
           testRunId: true,
           testRun: {
-            select: { projectId: true, configId: true, milestoneId: true },
+            select: {
+              projectId: true,
+              configId: true,
+              milestoneId: true,
+              ...runImpactSelectFor(groupBy),
+            },
           },
         },
       },
@@ -173,6 +178,28 @@ export async function fetchJunitResultRows(
       ...(r.repositoryCase ? { repositoryCase: r.repositoryCase } : {}),
     },
   }));
+}
+
+/**
+ * The latest Impact analysis behind a run, only when a grouping needs it.
+ * Trigger and repository come from the analysis that composed the run; a
+ * run with none is "manual" and belongs to no repository.
+ */
+export function runImpactSelectFor(groupBy: string[]) {
+  if (
+    !groupBy.includes("impactTrigger") &&
+    !groupBy.includes("impactConfigId")
+  ) {
+    return {};
+  }
+  return {
+    impactAnalyses: {
+      where: { isDeleted: false },
+      orderBy: { createdAt: "desc" },
+      take: 1,
+      select: { trigger: true, configId: true },
+    },
+  };
 }
 
 export function buildDateFilter(

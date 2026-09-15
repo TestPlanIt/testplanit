@@ -25,6 +25,8 @@ Pre-built reports have fixed configurations and don't require dimension or metri
 | [Requirement Coverage Gaps](../requirements-traceability.md#reports) | Every requirement with zero linked test cases — and, by default, those whose linked tests have never run — with priority, status, and age, so coverage debt is visible without opening the requirements tree. Appears only when the project has [requirements enabled](../requirements.md#enabling-requirements). |
 | [Requirement Traceability](../requirements-traceability.md#reports) | Every requirement paired with its linked test cases and their latest execution result. Appears only when the project has [requirements enabled](../requirements.md#enabling-requirements). |
 | [Test Case Health](./test-case-health.md) | Per-case health score combining staleness, execution frequency, and pass-rate pattern. |
+| [Impact Analysis History](./impact-analysis-history.md) | Every Impact analysis with its trigger, selected cases, and the outcome of the run it composed. |
+| [Code Pin Coverage](./code-pin-coverage.md) | Code Pins by repository and directory, with the changed files no pin covered. |
 
 ## Custom Reports
 

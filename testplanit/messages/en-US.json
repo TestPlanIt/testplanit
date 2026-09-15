@@ -2018,7 +2018,6 @@
           "adminDescription": "Set up a repository connection before configuring code context for this project."
         },
         "repository": {
-          "title": "Code Repository",
           "description": "Select the code repository to use for AI context",
           "branchPlaceholder": "Leave blank to use repository default branch"
         },
@@ -7783,7 +7782,10 @@
       "totalCost": "## Total Cost\nEstimated provider cost in USD for the calls in this group. Locally hosted models record zero cost.",
       "avgLatency": "## Avg. Latency\nAverage time the provider took to answer a call in this group.",
       "successRate": "## Success Rate\nPercentage of calls in this group that completed without an error.",
-      "errorCount": "## Failed Calls\nNumber of calls in this group that ended in an error."
+      "errorCount": "## Failed Calls\nNumber of calls in this group that ended in an error.",
+      "impactAnalysisCount": "## Impact Analysis Count\nNumber of Impact analyses started in this group, whether or not they composed a run.",
+      "affectedCasesSelected": "## Affected Cases Selected\nPinned and affected cases the analyses in this group selected, summed.",
+      "selectionPrecision": "## Selection Precision (%)\nOf the cases that Impact analyses selected and that were then executed, the share that failed. Empty when nothing selected has run."
     },
     "reportDimensions": {
       "user": "## User Dimension\nGroups results by the user who executed the tests or is assigned to the items.",
@@ -7810,7 +7812,9 @@
       "feature": "## Feature Dimension\nGroups LLM usage by the application feature that made the call (e.g., Test Case Generation).",
       "model": "## Model Dimension\nGroups LLM usage by the model that served the call.",
       "integration": "## Integration Dimension\nGroups LLM usage by the configured LLM integration that handled the call.",
-      "outcome": "## Outcome Dimension\nSplits LLM usage into successful and failed calls."
+      "outcome": "## Outcome Dimension\nSplits LLM usage into successful and failed calls.",
+      "trigger": "## Trigger Dimension\nGroups by how the Impact analysis that composed the test run was started: by hand, from a pull request, or from a push. Runs no analysis composed fall into None.",
+      "codeRepository": "## Code Repository Dimension\nGroups by the connected repository whose Impact analysis composed the test run. Runs without an analysis fall into None."
     },
     "reportBuilder": {
       "dimensions": "## Dimensions\nSelect the dimensions you want to analyze in your report. Dimensions are attributes that categorize your data, such as Date, User, Status, etc. You can drag to reorder them.",
@@ -8265,6 +8269,14 @@
         "requirementCoverageChanges": {
           "label": "Requirement Coverage Changes",
           "description": "Compare a saved traceability snapshot against a later snapshot or the live matrix to see which requirements' coverage changed"
+        },
+        "impactAnalysis": {
+          "label": "Impact Analysis History",
+          "description": "Every Impact analysis: what started it, what it changed, the cases it selected, and how the run it composed turned out"
+        },
+        "codePinCoverage": {
+          "label": "Code Pin Coverage",
+          "description": "Where Code Pins are, by repository and directory, and where recent changes went uncovered"
         }
       },
       "flakyTests": {
@@ -8608,6 +8620,14 @@
         "executionLog": {
           "label": "Cross-Project Execution Log",
           "description": "Flat list of individual test result records with status, executor, and timestamp across projects"
+        },
+        "impactAnalysis": {
+          "label": "Cross-Project Impact Analysis History",
+          "description": "Impact analyses across every project with Impact Analysis enabled"
+        },
+        "codePinCoverage": {
+          "label": "Cross-Project Code Pin Coverage",
+          "description": "Code Pin coverage across every project with Impact Analysis enabled"
         }
       },
       "folderDescendants": {
@@ -8616,6 +8636,56 @@
       },
       "dimensionFilters": {
         "allValues": "All values"
+      },
+      "impactAnalysis": {
+        "lookbackDaysHelp": "Analyses started within this many days. All time reads every analysis the project keeps.",
+        "triggerPush": "Push",
+        "outcomeNotExecuted": "Not executed",
+        "outcomeNoRun": "No run",
+        "allRepositories": "All repositories",
+        "analysis": "Analysis",
+        "changedFiles": "Changed files",
+        "changedFilesDetail": "{files, number} files · +{additions, number} −{deletions, number}",
+        "accepted": "Accepted",
+        "runResults": "{executed, number} executed · {passed, number} passed · {failed, number} failed",
+        "chart": {
+          "perWeek": "Analyses per week",
+          "week": "Week of {date}"
+        },
+        "stats": {
+          "analyses": "Analyses",
+          "runsComposed": "Runs composed",
+          "runsComposedTooltip": "Analyses that created a test run, by hand or from a repository event.",
+          "runsWithFailures": "Runs with failures",
+          "runsWithFailuresTooltip": "Composed runs in which at least one selected case failed, as a share of the composed runs that were executed.",
+          "medianAffected": "Median affected cases",
+          "medianAffectedTooltip": "The median number of pinned and affected cases an analysis selected.",
+          "acceptedShare": "Accepted share",
+          "acceptedShareTooltip": "Cases a reviewer accepted, as a share of every pinned and affected case the analyses suggested."
+        }
+      },
+      "codePinCoverage": {
+        "lookbackDaysHelp": "Uncovered files come from the analyses started within this many days. All time reads every completed analysis.",
+        "directory": "Directory",
+        "rootDirectory": "(repository root)",
+        "casesWithPins": "Cases with pins",
+        "stalePins": "Stale pins",
+        "stalePinsHelp": "Pins the connection's latest analysis could not find at the head commit.",
+        "uncoveredFiles": "Uncovered changed files",
+        "uncoveredFilesHelp": "Changed files no pin covered, counted once per file across the analyses in the window.",
+        "coverageFilter": "Show",
+        "coverageGaps": "Changed without pins",
+        "coveragePinned": "With pins",
+        "kindBreakdown": "{file, number} whole file · {range, number} lines · {symbol, number} symbol · {glob, number} glob",
+        "sourceBreakdown": "{manual, number} manual · {ai, number} AI · {annotation, number} annotation · {mapfile, number} map file · {issue, number} ticket",
+        "stats": {
+          "casesWithPinsTooltip": "Test cases with at least one Code Pin, as a share of the project's cases.",
+          "gapDirectories": "Directories changed without pins",
+          "gapDirectoriesTooltip": "Directories where an analysis in the window found changed files but no pin covers anything."
+        },
+        "chart": {
+          "byDirectory": "Pins and uncovered files by directory"
+        }
       }
     },
     "errors": {
@@ -8649,7 +8719,9 @@
       "tag": "Tag",
       "feature": "Feature",
       "model": "Model",
-      "outcome": "Outcome"
+      "outcome": "Outcome",
+      "trigger": "Trigger",
+      "codeRepository": "Code Repository"
     },
     "metrics": {
       "percentReady": "Ready (%)",
@@ -8700,7 +8772,10 @@
       "totalCost": "Total Cost",
       "avgLatency": "Avg. Latency",
       "successRate": "Success Rate (%)",
-      "errorCount": "Failed Calls"
+      "errorCount": "Failed Calls",
+      "impactAnalysisCount": "Impact Analysis Count",
+      "affectedCasesSelected": "Affected Cases Selected",
+      "selectionPrecision": "Selection Precision (%)"
     },
     "drillDown": {
       "title": "Detailed Records",

@@ -36,6 +36,7 @@ export const DRILL_DOWN_DIMENSIONS_BY_REPORT: Record<
   ReadonlySet<string>
 > = {
   "test-execution": new Set([
+    "codeRepository",
     "configuration",
     "date",
     "folder",
@@ -45,6 +46,7 @@ export const DRILL_DOWN_DIMENSIONS_BY_REPORT: Record<
     "tag",
     "testCase",
     "testRun",
+    "trigger",
     "user",
   ]),
   "user-engagement": new Set(["date", "group", "project", "role", "user"]),
@@ -143,6 +145,120 @@ function buildDateFilter(
 /**
  * Build query for test execution (testRunResults) drill-down
  */
+/**
+ * Run-level narrowing for the Impact dimensions: a run's trigger and
+ * repository come from the analysis that composed it. "Manual" means no
+ * webhook-started analysis composed the run.
+ */
+export function impactRunFilter(
+  context: DrillDownContext
+): Record<string, any> {
+  const filter: Record<string, any> = {};
+  const trigger = context.dimensions.trigger?.id;
+  if (trigger === "pull_request" || trigger === "push") {
+    filter.impactAnalyses = { some: { isDeleted: false, trigger } };
+  } else if (trigger === "manual") {
+    // Hand-started analyses store no trigger kind.
+    filter.impactAnalyses = {
+      some: {
+        isDeleted: false,
+        OR: [
+          { trigger: null },
+          { trigger: { notIn: ["pull_request", "push"] } },
+        ],
+      },
+    };
+  }
+  const repo = context.dimensions.codeRepository;
+  if (repo) {
+    filter.impactAnalyses =
+      repo.id === null || repo.id === ""
+        ? { none: { isDeleted: false } }
+        : {
+            some: {
+              isDeleted: false,
+              configId: Number(repo.id),
+              ...(filter.impactAnalyses?.some ?? {}),
+            },
+          };
+  }
+  return filter;
+}
+
+/** Drill-down rows for the Impact metrics: the analyses themselves. */
+export function buildImpactAnalysesQuery(
+  context: DrillDownContext,
+  offset: number,
+  limit: number
+): Record<string, any> {
+  const where: Record<string, any> = { isDeleted: false };
+  if (context.projectId) {
+    where.projectId = context.projectId;
+  } else if (context.dimensions.project) {
+    where.projectId = Number(context.dimensions.project.id);
+  }
+  if (context.dimensions.user) {
+    where.createdById = String(context.dimensions.user.id);
+  }
+  if (context.dimensions.testRun) {
+    where.testRunId =
+      context.dimensions.testRun.id === null
+        ? null
+        : Number(context.dimensions.testRun.id);
+  }
+  const trigger = context.dimensions.trigger?.id;
+  if (trigger === "pull_request" || trigger === "push") where.trigger = trigger;
+  else if (trigger === "manual") where.trigger = null;
+  const repo = context.dimensions.codeRepository;
+  if (repo && repo.id !== null && repo.id !== "") {
+    where.configId = Number(repo.id);
+  }
+  if (context.dimensions.date?.executedAt) {
+    const date = new Date(context.dimensions.date.executedAt);
+    where.createdAt = { gte: startOfDayUTC(date), lt: endOfDayUTC(date) };
+  } else if (context.startDate || context.endDate) {
+    where.createdAt = {
+      ...(context.startDate ? { gte: new Date(context.startDate) } : {}),
+      ...(context.endDate ? { lte: new Date(context.endDate) } : {}),
+    };
+  }
+  return {
+    where,
+    select: {
+      id: true,
+      createdAt: true,
+      trigger: true,
+      triggerLabel: true,
+      triggerUrl: true,
+      status: true,
+      pinnedCaseCount: true,
+      affectedCaseCount: true,
+      config: {
+        select: {
+          id: true,
+          branch: true,
+          repository: { select: { name: true, provider: true } },
+        },
+      },
+      testRun: {
+        select: {
+          id: true,
+          name: true,
+          isDeleted: true,
+          configurationGroupId: true,
+          configuration: { select: { id: true, name: true } },
+          compositionLockedAt: true,
+        },
+      },
+      createdBy: { select: { id: true, name: true } },
+      project: { select: { id: true, name: true } },
+    },
+    orderBy: { createdAt: "desc" },
+    skip: offset,
+    take: limit,
+  };
+}
+
 export function buildTestExecutionQuery(
   context: DrillDownContext,
   offset: number,
@@ -187,6 +303,8 @@ export function buildTestExecutionQuery(
       testRunFilter.id = Number(context.dimensions.testRun.id);
     }
   }
+
+  Object.assign(testRunFilter, impactRunFilter(context));
 
   // Apply testRun filter if we have any conditions
   if (Object.keys(testRunFilter).length > 0) {
@@ -391,6 +509,7 @@ export function buildJunitResultQuery(
     where.repositoryCaseId = Number(testCaseId);
   }
 
+  Object.assign(testRunFilter, impactRunFilter(context));
   if (Object.keys(testRunFilter).length > 0) {
     where.testSuite = { testRun: testRunFilter };
   }
@@ -547,6 +666,8 @@ export function buildTestRunsQuery(
       },
     ];
   }
+
+  Object.assign(where, impactRunFilter(context));
 
   // Date dimension and report-level range apply to the run's creation day
   if (context.dimensions.date?.executedAt) {
@@ -1539,6 +1660,11 @@ export function getQueryBuilderForMetric(
     return buildMilestoneCompletionQuery;
   }
 
+  // Impact metrics drill into the analyses themselves
+  if (IMPACT_METRIC_IDS.has(metricId)) {
+    return buildImpactAnalysesQuery;
+  }
+
   // Test execution metrics
   if (
     metricId === "testResults" ||
@@ -1621,7 +1747,15 @@ export function getQueryBuilderForMetric(
 /**
  * Get the Prisma model name for a metric ID
  */
+const IMPACT_METRIC_IDS = new Set([
+  "impactAnalysisCount",
+  "affectedCasesSelected",
+  "selectionPrecision",
+]);
+
 export function getModelForMetric(metricId: string): string {
+  if (IMPACT_METRIC_IDS.has(metricId)) return "impactAnalysis";
+
   // Milestone metrics
   if (metricId === "totalMilestones" || metricId === "activeMilestones") {
     return "milestones";

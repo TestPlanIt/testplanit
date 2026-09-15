@@ -20,6 +20,8 @@ describe("report label keys", () => {
       "folder",
       "tag",
       "project",
+      "trigger",
+      "codeRepository",
     ]) {
       expect(has(dimensionLabelKey(id)), id).toBe(true);
     }
@@ -33,6 +35,9 @@ describe("report label keys", () => {
       "totalElapsedTime",
       "testRunCount",
       "testCaseCount",
+      "impactAnalysisCount",
+      "affectedCasesSelected",
+      "selectionPrecision",
     ]) {
       expect(has(metricLabelKey(id)), id).toBe(true);
     }

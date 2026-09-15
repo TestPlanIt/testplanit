@@ -127,6 +127,11 @@ export type HealthStatusFilterValue =
 export type HealthStaleFilterValue = "all" | "stale" | "notStale";
 export type DateGroupingValue =
   "daily" | "weekly" | "monthly" | "quarterly" | "annually";
+export type ImpactTriggerFilterValue =
+  "all" | "manual" | "pull_request" | "push";
+export type ImpactOutcomeFilterValue =
+  "all" | "failed" | "passed" | "not_executed" | "no_run";
+export type CoverageFilterValue = "all" | "gaps" | "pinned";
 export type RequirementCoverageStateValue =
   "PASSED" | "FAILED" | "NOT_RUN" | "UNCOVERED";
 
@@ -145,6 +150,13 @@ export interface PerTypeReportUrlState {
   healthAutomatedFilter: AutomatedFilterValue;
   healthStatusFilter: HealthStatusFilterValue;
   healthStaleFilter: HealthStaleFilterValue;
+  /** Impact analysis history: which trigger, which run outcome, which
+   * repository connection (null = every connection). */
+  impactTriggerFilter: ImpactTriggerFilterValue;
+  impactOutcomeFilter: ImpactOutcomeFilterValue;
+  impactConfigId: number | null;
+  /** Code pin coverage: which rows to show. */
+  coverageFilter: CoverageFilterValue;
   requirementIds: number[];
   requirementCoverageStates: RequirementCoverageStateValue[];
   /** Gaps/traceability execution scope (milestone/configuration) — the
@@ -173,6 +185,10 @@ export const PER_TYPE_REPORT_PARAM_DEFAULTS: PerTypeReportUrlState = {
   healthAutomatedFilter: "all",
   healthStatusFilter: "all",
   healthStaleFilter: "all",
+  impactTriggerFilter: "all",
+  impactOutcomeFilter: "all",
+  impactConfigId: null,
+  coverageFilter: "all",
   requirementIds: [],
   requirementCoverageStates: [],
   requirementMilestoneIds: [],
@@ -201,6 +217,24 @@ const HEALTH_STATUS_FILTER_VALUES: readonly HealthStatusFilterValue[] = [
   "never_executed",
   "always_passing",
   "always_failing",
+];
+const IMPACT_TRIGGER_FILTER_VALUES: readonly ImpactTriggerFilterValue[] = [
+  "all",
+  "manual",
+  "pull_request",
+  "push",
+];
+const IMPACT_OUTCOME_FILTER_VALUES: readonly ImpactOutcomeFilterValue[] = [
+  "all",
+  "failed",
+  "passed",
+  "not_executed",
+  "no_run",
+];
+const COVERAGE_FILTER_VALUES: readonly CoverageFilterValue[] = [
+  "all",
+  "gaps",
+  "pinned",
 ];
 const HEALTH_STALE_FILTER_VALUES: readonly HealthStaleFilterValue[] = [
   "all",
@@ -406,6 +440,46 @@ export function parsePerTypeReportParams(
       HEALTH_STALE_FILTER_VALUES,
       state.healthStaleFilter
     );
+  }
+
+  if (base === "impact-analysis") {
+    state.lookbackDays = positiveIntParam(
+      params,
+      "lookbackDays",
+      state.lookbackDays
+    );
+    state.impactTriggerFilter = enumParam(
+      params,
+      "triggerFilter",
+      IMPACT_TRIGGER_FILTER_VALUES,
+      state.impactTriggerFilter
+    );
+    state.impactOutcomeFilter = enumParam(
+      params,
+      "outcomeFilter",
+      IMPACT_OUTCOME_FILTER_VALUES,
+      state.impactOutcomeFilter
+    );
+    const configId = params.get("configId");
+    state.impactConfigId =
+      configId !== null && /^\d+$/.test(configId) ? Number(configId) : null;
+  }
+
+  if (base === "code-pin-coverage") {
+    state.lookbackDays = positiveIntParam(
+      params,
+      "lookbackDays",
+      state.lookbackDays
+    );
+    state.coverageFilter = enumParam(
+      params,
+      "coverageFilter",
+      COVERAGE_FILTER_VALUES,
+      state.coverageFilter
+    );
+    const configId = params.get("configId");
+    state.impactConfigId =
+      configId !== null && /^\d+$/.test(configId) ? Number(configId) : null;
   }
 
   if (

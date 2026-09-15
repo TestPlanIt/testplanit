@@ -22,6 +22,10 @@ const PRE_BUILT_REPORT_TYPES = [
   "requirement-traceability",
   "cross-project-requirement-traceability",
   "requirement-coverage-changes",
+  "impact-analysis",
+  "cross-project-impact-analysis",
+  "code-pin-coverage",
+  "cross-project-code-pin-coverage",
 ] as const;
 
 /**

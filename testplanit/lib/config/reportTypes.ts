@@ -16,6 +16,8 @@ import {
   ClipboardX,
   ClipboardList,
   GitCompareArrows,
+  MapPin,
+  Radar,
 } from "lucide-react";
 
 export interface ReportType {
@@ -163,6 +165,22 @@ export const getProjectReportTypes = (tReports: any): ReportType[] => [
     endpoint: "/api/report-builder/test-case-health",
     isPreBuilt: true,
   },
+  {
+    id: "impact-analysis",
+    label: tReports("reportTypes.impactAnalysis.label"),
+    description: tReports("reportTypes.impactAnalysis.description"),
+    icon: Radar,
+    endpoint: "/api/report-builder/impact-analysis",
+    isPreBuilt: true,
+  },
+  {
+    id: "code-pin-coverage",
+    label: tReports("reportTypes.codePinCoverage.label"),
+    description: tReports("reportTypes.codePinCoverage.description"),
+    icon: MapPin,
+    endpoint: "/api/report-builder/code-pin-coverage",
+    isPreBuilt: true,
+  },
 ];
 
 // Cross-project report types for admin - using function to access translations
@@ -228,6 +246,24 @@ export const getCrossProjectReportTypes = (tReports: any): ReportType[] => [
     description: tReports("crossProjectReportTypes.testCaseHealth.description"),
     icon: HeartPulse,
     endpoint: "/api/report-builder/cross-project-test-case-health",
+    isPreBuilt: true,
+  },
+  {
+    id: "cross-project-impact-analysis",
+    label: tReports("crossProjectReportTypes.impactAnalysis.label"),
+    description: tReports("crossProjectReportTypes.impactAnalysis.description"),
+    icon: Radar,
+    endpoint: "/api/report-builder/cross-project-impact-analysis",
+    isPreBuilt: true,
+  },
+  {
+    id: "cross-project-code-pin-coverage",
+    label: tReports("crossProjectReportTypes.codePinCoverage.label"),
+    description: tReports(
+      "crossProjectReportTypes.codePinCoverage.description"
+    ),
+    icon: MapPin,
+    endpoint: "/api/report-builder/cross-project-code-pin-coverage",
     isPreBuilt: true,
   },
   {

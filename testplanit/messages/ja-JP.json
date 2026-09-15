@@ -2018,7 +2018,6 @@
           "adminDescription": "このプロジェクトのコードコンテキストを設定する前に、リポジトリへの接続を確立してください。"
         },
         "repository": {
-          "title": "コードリポジトリ",
           "description": "AIコンテキストで使用するコードリポジトリを選択してください。",
           "branchPlaceholder": "リポジトリのデフォルトブランチを使用する場合は、空白のままにしてください。"
         },
@@ -7783,7 +7782,10 @@
       "totalCost": "## 合計コスト\nこのグループの呼び出しに対する米ドルでの推定プロバイダーコストです。ローカルでホストされたモデルのコストはゼロとして記録されます。",
       "avgLatency": "## 平均レイテンシ\nこのグループ内の呼び出しに対してプロバイダーが応答するまでの平均時間。",
       "successRate": "## 成功率\nこのグループ内でエラーなく完了した呼び出しの割合。",
-      "errorCount": "## 失敗した呼び出し\nこのグループ内でエラーで終了した呼び出しの数。"
+      "errorCount": "## 失敗した呼び出し\nこのグループ内でエラーで終了した呼び出しの数。",
+      "impactAnalysisCount": "## 影響分析件数\nこのグループで開始された影響分析の数。テスト実行を構成したかどうかは問いません。",
+      "affectedCasesSelected": "## 選択された影響ケース\nこのグループの分析が選択したピン留めケースおよび影響ケースの合計数。",
+      "selectionPrecision": "## 選択精度 (%)\n影響分析によって選択され、実行されたケースのうち、失敗した割合。選択されたものが実行されていない場合は空になります。"
     },
     "reportDimensions": {
       "user": "## ユーザー ディメンション\nテストを実行したユーザーまたはアイテムに割り当てられているユーザーごとに結果をグループ化します。",
@@ -7810,7 +7812,9 @@
       "feature": "## 機能ディメンション\nLLMの使用状況を、呼び出しを行ったアプリケーション機能（例：テストケース生成）別にグループ化します。",
       "model": "## モデルディメンション\nLLMの使用状況を、呼び出しを処理したモデル別にグループ化します。",
       "integration": "## 統合ディメンション\nLLMの使用状況を、呼び出しを処理した設定済みのLLM統合別にグループ化します。",
-      "outcome": "## 結果ディメンション\nLLMの使用状況を成功した呼び出しと失敗した呼び出しに分割します。"
+      "outcome": "## 結果ディメンション\nLLMの使用状況を成功した呼び出しと失敗した呼び出しに分割します。",
+      "trigger": "## トリガーディメンション\nテスト実行を構成した影響分析がどのように開始されたかでグループ化します：手動、プルリクエストから、またはプッシュから。分析が構成されなかった実行は「なし」に分類されます。",
+      "codeRepository": "## コードリポジトリディメンション\nテスト実行を構成した影響分析が関連付けられた接続済みリポジトリでグループ化します。分析がない実行は「なし」に分類されます。"
     },
     "reportBuilder": {
       "dimensions": "## ディメンション\nレポートで分析したいディメンションを選択します。ディメンションとは、日付、ユーザー、ステータスなど、データを分類する属性です。ドラッグして順序を変更できます。",
@@ -8265,6 +8269,14 @@
         "requirementCoverageChanges": {
           "label": "要件カバレッジの変更",
           "description": "保存したトレーサビリティスナップショットを、後のスナップショットまたはライブマトリックスと比較して、どの要件のカバレッジが変化したかを確認します"
+        },
+        "impactAnalysis": {
+          "label": "影響分析履歴",
+          "description": "すべての影響分析：開始要因、変更内容、選択されたケース、および構成された実行の結果"
+        },
+        "codePinCoverage": {
+          "label": "コードピンカバレッジ",
+          "description": "リポジトリおよびディレクトリ別のコードピンの所在、および最近の変更でカバーされていない箇所"
         }
       },
       "flakyTests": {
@@ -8608,6 +8620,14 @@
         "executionLog": {
           "label": "プロジェクト横断実行ログ",
           "description": "プロジェクト全体にわたる、ステータス、実行者、タイムスタンプを含む個々のテスト結果レコードのフラットリスト"
+        },
+        "impactAnalysis": {
+          "label": "プロジェクト横断的な影響分析履歴",
+          "description": "影響分析が有効なすべてのプロジェクトにわたる影響分析"
+        },
+        "codePinCoverage": {
+          "label": "プロジェクト横断的なコードピンカバレッジ",
+          "description": "影響分析が有効なすべてのプロジェクトにわたるコードピンカバレッジ"
         }
       },
       "folderDescendants": {
@@ -8616,6 +8636,56 @@
       },
       "dimensionFilters": {
         "allValues": "すべての値"
+      },
+      "impactAnalysis": {
+        "lookbackDaysHelp": "この日数以内に開始された分析。「すべての期間」はプロジェクトが保持しているすべての分析を対象とします。",
+        "triggerPush": "プッシュ",
+        "outcomeNotExecuted": "未実行",
+        "outcomeNoRun": "実行なし",
+        "allRepositories": "すべてのリポジトリ",
+        "analysis": "分析",
+        "changedFiles": "変更されたファイル",
+        "changedFilesDetail": "{files, number} ファイル · +{additions, number} −{deletions, number}",
+        "accepted": "承認済み",
+        "runResults": "{executed, number} 件実行 · {passed, number} 件合格 · {failed, number} 件失敗",
+        "chart": {
+          "perWeek": "週ごとの分析数",
+          "week": "{date} の週"
+        },
+        "stats": {
+          "analyses": "分析",
+          "runsComposed": "構成された実行",
+          "runsComposedTooltip": "手動またはリポジトリイベントによってテスト実行を作成した分析。",
+          "runsWithFailures": "失敗を含む実行",
+          "runsWithFailuresTooltip": "選択されたケースのいずれかが失敗した構成済み実行の、実行された構成済み実行に対する割合。",
+          "medianAffected": "影響ケースの中央値",
+          "medianAffectedTooltip": "分析が選択したピン留めケースおよび影響ケースの数の中央値。",
+          "acceptedShare": "承認済みの割合",
+          "acceptedShareTooltip": "分析が提案したピン留めケースおよび影響ケース全体のうち、レビュアーが承認したケースの割合。"
+        }
+      },
+      "codePinCoverage": {
+        "lookbackDaysHelp": "カバーされていないファイルは、この日数以内に開始された分析から取得されます。「すべての期間」は完了したすべての分析を対象とします。",
+        "directory": "ディレクトリ",
+        "rootDirectory": "（リポジトリのルート）",
+        "casesWithPins": "ピンのあるケース",
+        "stalePins": "古くなったピン",
+        "stalePinsHelp": "接続の最新の分析でヘッドコミットに見つからなかったピン。",
+        "uncoveredFiles": "カバーされていない変更ファイル",
+        "uncoveredFilesHelp": "分析期間内で、どのピンにもカバーされていない変更ファイルをファイルごとに一度カウントしたもの。",
+        "coverageFilter": "表示",
+        "coverageGaps": "ピンなしで変更",
+        "coveragePinned": "ピンあり",
+        "kindBreakdown": "{file, number} ファイル全体 · {range, number} 行範囲 · {symbol, number} シンボル · {glob, number} グロブ",
+        "sourceBreakdown": "{manual, number} 手動 · {ai, number} AI · {annotation, number} アノテーション · {mapfile, number} マップファイル · {issue, number} チケット",
+        "stats": {
+          "casesWithPinsTooltip": "いずれかのコードピンを持つテストケースの、プロジェクトの全ケースに対する割合。",
+          "gapDirectories": "ピンなしで変更されたディレクトリ",
+          "gapDirectoriesTooltip": "期間内の分析でファイルの変更が見つかったものの、どのピンもカバーしていないディレクトリ。"
+        },
+        "chart": {
+          "byDirectory": "ディレクトリ別のピンとカバーされていないファイル"
+        }
       }
     },
     "errors": {
@@ -8649,7 +8719,9 @@
       "tag": "タグ",
       "feature": "機能",
       "model": "モデル",
-      "outcome": "結果"
+      "outcome": "結果",
+      "trigger": "トリガー",
+      "codeRepository": "コードリポジトリ"
     },
     "metrics": {
       "percentReady": "準備完了（%）",
@@ -8700,7 +8772,10 @@
       "totalCost": "合計コスト",
       "avgLatency": "平均レイテンシ",
       "successRate": "成功率 (%)",
-      "errorCount": "失敗した呼び出し"
+      "errorCount": "失敗した呼び出し",
+      "impactAnalysisCount": "影響分析件数",
+      "affectedCasesSelected": "選択された影響ケース",
+      "selectionPrecision": "選択精度 (%)"
     },
     "drillDown": {
       "title": "詳細な記録",

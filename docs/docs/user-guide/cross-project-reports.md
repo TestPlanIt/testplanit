@@ -24,6 +24,8 @@ The following pre-built reports have cross-project variants. The underlying sema
 - [Requirement Coverage Gaps](./projects/requirements-traceability.md#reports) — coverage debt across every project that has [requirements enabled](./projects/requirements.md#enabling-requirements).
 - [Requirement Traceability](./projects/requirements-traceability.md#reports) — the traceability matrix across every project that has requirements enabled.
 - [Test Case Health](./projects/reports/test-case-health.md) — health scores aggregated across the portfolio.
+- [Impact Analysis History](./projects/reports/impact-analysis-history.md) — every Impact analysis across the projects that have [Impact Analysis enabled](./impact.md), with a **Project** column.
+- [Code Pin Coverage](./projects/reports/code-pin-coverage.md) — pins and uncovered changes across every project with Impact Analysis enabled, with a **Project** column.
 
 The two requirement reports add a **Requirement Project** column naming the project each requirement belongs to. On the traceability report that sits alongside the existing **Project** column, which names the *covering case's* project — a requirement in one project can be covered by a case in another, so the two answer different questions. Requirement [snapshots](./projects/requirements-traceability.md#snapshots) are captured from a single project and stay project-scoped, so there is no cross-project variant of the Requirement Coverage Changes report.
 

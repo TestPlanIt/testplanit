@@ -3,6 +3,7 @@ import {
   buildDateFilter,
   createIssueTrackingDimensionRegistry,
   createIssueTrackingMetricRegistry,
+  createTestExecutionDimensionRegistry,
   createTestExecutionMetricRegistry,
   createUserEngagementMetricRegistry,
   dimensionToDraggableField,
@@ -1119,6 +1120,187 @@ describe("reportUtils", () => {
           }),
         })
       );
+    });
+  });
+
+  describe("impact dimensions and metrics", () => {
+    const DAY1 = new Date("2026-09-01T10:00:00.000Z");
+    const DAY2 = new Date("2026-09-02T10:00:00.000Z");
+    const status = (isFailure: boolean, isCompleted = true) => ({
+      status: { isFailure, isCompleted },
+    });
+    const analyses = [
+      {
+        id: 1,
+        createdAt: DAY1,
+        createdById: "u1",
+        projectId: 370,
+        configId: 9,
+        trigger: "pull_request",
+        testRunId: 100,
+        pinnedCaseCount: 2,
+        affectedCaseCount: 3,
+        testRun: {
+          configId: null,
+          milestoneId: null,
+          testCases: [status(true), status(false), { status: null }],
+        },
+      },
+      {
+        id: 2,
+        createdAt: DAY1,
+        createdById: "u1",
+        projectId: 370,
+        configId: 9,
+        trigger: null,
+        testRunId: null,
+        pinnedCaseCount: 1,
+        affectedCaseCount: 0,
+        testRun: null,
+      },
+      {
+        id: 3,
+        createdAt: DAY2,
+        createdById: "u2",
+        projectId: 370,
+        configId: 10,
+        trigger: "push",
+        testRunId: 101,
+        pinnedCaseCount: 0,
+        affectedCaseCount: 4,
+        testRun: {
+          configId: null,
+          milestoneId: null,
+          testCases: [status(false), status(false)],
+        },
+      },
+    ];
+    const db = {
+      impactAnalysis: { findMany: vi.fn().mockResolvedValue(analyses) },
+      projectCodeRepositoryConfig: {
+        findMany: vi.fn().mockResolvedValue([
+          {
+            id: 9,
+            branch: "main",
+            repository: { name: "acme/app", isDeleted: false },
+          },
+          {
+            id: 10,
+            branch: null,
+            repository: { name: "acme/svc", isDeleted: false },
+          },
+          {
+            id: 11,
+            branch: null,
+            repository: { name: "gone", isDeleted: true },
+          },
+        ]),
+      },
+    };
+    const dims = createTestExecutionDimensionRegistry(true) as any;
+    const metrics = createTestExecutionMetricRegistry(true) as any;
+
+    it("offers the three triggers and the live repository connections as dimension values", async () => {
+      const triggers = await dims.trigger.getValues(db, 370);
+      expect(triggers.map((v: any) => v.id)).toEqual([
+        "manual",
+        "pull_request",
+        "push",
+      ]);
+      expect(triggers[1].impactTrigger).toBe("pull_request");
+      const repos = await dims.codeRepository.getValues(db, 370);
+      expect(repos).toEqual([
+        { id: 9, name: "acme/app (main)" },
+        { id: 10, name: "acme/svc" },
+      ]);
+      expect(
+        db.projectCodeRepositoryConfig.findMany.mock.calls[0][0].where
+      ).toMatchObject({
+        projectId: 370,
+        purpose: "IMPACT",
+      });
+    });
+
+    it("counts analyses and selected cases by trigger, date, and repository", async () => {
+      const totals = await metrics.impactAnalysisCount.aggregate(
+        db,
+        370,
+        [],
+        {}
+      );
+      expect(totals).toEqual([{ impactAnalysisCount: 3 }]);
+      const where = db.impactAnalysis.findMany.mock.calls[0][0].where;
+      expect(where).toMatchObject({ isDeleted: false, projectId: 370 });
+
+      const byTrigger: any[] = await metrics.impactAnalysisCount.aggregate(
+        db,
+        370,
+        ["impactTrigger"],
+        {}
+      );
+      expect(
+        Object.fromEntries(
+          byTrigger.map((r) => [r.impactTrigger, r.impactAnalysisCount])
+        )
+      ).toEqual({
+        pull_request: 1,
+        manual: 1,
+        push: 1,
+      });
+
+      const byDay: any[] = await metrics.affectedCasesSelected.aggregate(
+        db,
+        370,
+        ["executedAt"],
+        {}
+      );
+      expect(byDay.map((r) => r.affectedCasesSelected)).toEqual([6, 4]);
+
+      const byRepo: any[] = await metrics.affectedCasesSelected.aggregate(
+        db,
+        370,
+        ["impactConfigId"],
+        {}
+      );
+      expect(
+        Object.fromEntries(
+          byRepo.map((r) => [r.impactConfigId, r.affectedCasesSelected])
+        )
+      ).toEqual({
+        9: 6,
+        10: 4,
+      });
+    });
+
+    it("measures selection precision from executed selected cases and stays null with nothing executed", async () => {
+      const totals = await metrics.selectionPrecision.aggregate(
+        db,
+        370,
+        [],
+        {}
+      );
+      // 4 executed selected cases across the two runs, 1 failed.
+      expect(totals).toEqual([{ selectionPrecision: 25 }]);
+
+      const byTrigger: any[] = await metrics.selectionPrecision.aggregate(
+        db,
+        370,
+        ["impactTrigger"],
+        {}
+      );
+      expect(
+        Object.fromEntries(
+          byTrigger.map((r) => [r.impactTrigger, r.selectionPrecision])
+        )
+      ).toEqual({
+        pull_request: 50,
+        push: 0,
+        manual: null,
+      });
+      expect(
+        db.impactAnalysis.findMany.mock.calls.at(-1)![0].select.testRun.select
+          .testCases
+      ).toBeDefined();
     });
   });
 });

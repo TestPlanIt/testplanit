@@ -102,6 +102,12 @@ import {
   useRequirementCoverageGapColumns,
   useRequirementTraceabilityColumns,
 } from "~/hooks/useRequirementCoverageReportColumns";
+import { useCodePinCoverageColumns } from "~/hooks/useCodePinCoverageColumns";
+import {
+  IMPACT_OUTCOME_LABEL_KEY,
+  IMPACT_TRIGGER_LABEL_KEY,
+  useImpactAnalysisColumns,
+} from "~/hooks/useImpactAnalysisColumns";
 import { useTestCaseHealthColumns } from "~/hooks/useTestCaseHealthColumns";
 import {
   getCrossProjectReportTypes,
@@ -116,17 +122,18 @@ import type {
   DrillDownContext,
 } from "~/lib/types/reportDrillDown";
 import { getCustomStyles } from "~/styles/multiSelectStyles";
+import { CodeRepositoryName } from "@/components/CodeRepositoryName";
+import {
+  dimensionLabelKey,
+  hasMessage,
+  metricLabelKey,
+} from "~/lib/constants/reportLabelKeys";
 import { schema } from "~/zenstack/schema";
 import {
   dimensionToDraggableField,
   draggableFieldToDimension,
   getReportSummary,
 } from "~/utils/reportUtils";
-import {
-  dimensionLabelKey,
-  hasMessage,
-  metricLabelKey,
-} from "~/lib/constants/reportLabelKeys";
 import { sortPreBuiltReportRows } from "~/utils/preBuiltReportSort";
 import {
   mergeSeenProjectOptions,
@@ -140,7 +147,12 @@ import {
   resolveSyncedReportType,
   resolveTabChange,
 } from "./reportUrlUtils";
-import { parsePerTypeReportParams } from "./reportShareParams";
+import {
+  parsePerTypeReportParams,
+  type CoverageFilterValue,
+  type ImpactOutcomeFilterValue,
+  type ImpactTriggerFilterValue,
+} from "./reportShareParams";
 
 interface ReportBuilderProps {
   mode: "project" | "cross-project";
@@ -189,6 +201,13 @@ const REQUIREMENT_REPORT_TYPE_IDS = [
   "requirement-coverage-gaps",
   "requirement-traceability",
   "requirement-coverage-changes",
+] as const;
+
+// Impact Analysis is opt-in per project the same way; the id covers its
+// cross-project twin because the list is consulted by base id.
+const IMPACT_REPORT_TYPE_IDS = [
+  "impact-analysis",
+  "code-pin-coverage",
 ] as const;
 
 /** Coverage-state labels, the same mapping RequirementCoverageStateFilter
@@ -245,6 +264,7 @@ function isPreBuiltReport(reportType: string): boolean {
     "issue-test-coverage",
     "execution-log",
     ...REQUIREMENT_REPORT_TYPE_IDS,
+    ...IMPACT_REPORT_TYPE_IDS,
   ].includes(baseType as (typeof REQUIREMENT_REPORT_TYPE_IDS)[number]);
 }
 
@@ -283,6 +303,20 @@ export function filterReportTypesForRequirementsFlag(
   );
 }
 
+/** Hides the Impact Analysis history from a project without the feature. */
+export function filterReportTypesForImpactFlag(
+  reportTypes: ReportType[],
+  impactEnabled: boolean
+): ReportType[] {
+  if (impactEnabled) return reportTypes;
+  return reportTypes.filter(
+    (reportType) =>
+      !(IMPACT_REPORT_TYPE_IDS as readonly string[]).includes(
+        getBaseReportType(reportType.id)
+      )
+  );
+}
+
 // Form schema for date range
 const dateRangeSchema = z.object({
   dateRange: z
@@ -313,6 +347,7 @@ function ReportBuilderContent({
   const tDimensions = useTranslations("reports.dimensions");
   const tMetrics = useTranslations("reports.metrics");
   const tRuns = useTranslations("runs");
+  const tGlobal = useTranslations();
   const customStyles = getCustomStyles({ theme });
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -327,7 +362,7 @@ function ReportBuilderContent({
   ).projects.useFindUnique(
     {
       where: { id: Number(projectId) },
-      select: { requirementsEnabled: true },
+      select: { requirementsEnabled: true, impactEnabled: true },
     },
     {
       enabled:
@@ -336,9 +371,9 @@ function ReportBuilderContent({
   );
   const requirementsEnabled =
     reportBuilderProject?.requirementsEnabled === true;
+  const impactEnabled = reportBuilderProject?.impactEnabled === true;
 
   const appLocale = useLocale();
-  const tGlobal = useTranslations();
   // Get report types based on mode - done inside client component to avoid passing functions across server/client boundary
   const reportTypes = useMemo(() => {
     // Alphabetical by localized label in every mode — the picker's order,
@@ -355,13 +390,16 @@ function ReportBuilderContent({
     // resolved server-side, so they stay offered and simply return nothing
     // when no project has opted in.
     return sortReportTypesByLabel(
-      filterReportTypesForRequirementsFlag(
-        getProjectReportTypes(tReports),
-        requirementsEnabled
+      filterReportTypesForImpactFlag(
+        filterReportTypesForRequirementsFlag(
+          getProjectReportTypes(tReports),
+          requirementsEnabled
+        ),
+        impactEnabled
       ),
       appLocale
     );
-  }, [mode, tReports, requirementsEnabled, appLocale]);
+  }, [mode, tReports, requirementsEnabled, impactEnabled, appLocale]);
 
   // Results count for the "Showing X of Y" summary. The table is virtualized
   // and infinite-scrolling now, so there is no page/pageSize state — full-set
@@ -636,6 +674,44 @@ function ReportBuilderContent({
   const [healthStaleFilter, setHealthStaleFilter] = useState<
     "all" | "stale" | "notStale"
   >(initialPerTypeParams.healthStaleFilter);
+
+  // Impact analysis history state (shares lookbackDays with test case health)
+  const [impactTriggerFilter, setImpactTriggerFilter] =
+    useState<ImpactTriggerFilterValue>(
+      initialPerTypeParams.impactTriggerFilter
+    );
+  const [impactOutcomeFilter, setImpactOutcomeFilter] =
+    useState<ImpactOutcomeFilterValue>(
+      initialPerTypeParams.impactOutcomeFilter
+    );
+  const [impactConfigId, setImpactConfigId] = useState<number | null>(
+    initialPerTypeParams.impactConfigId
+  );
+  const [coverageFilter, setCoverageFilter] = useState<CoverageFilterValue>(
+    initialPerTypeParams.coverageFilter
+  );
+  const isImpactHistory = matchesReportType(reportType, "impact-analysis");
+  const isCodePinCoverage = matchesReportType(reportType, "code-pin-coverage");
+  const { data: impactConnections } = useClientQueries(
+    schema
+  ).projectCodeRepositoryConfig.useFindMany(
+    {
+      where: { projectId: Number(projectId), purpose: "IMPACT" },
+      orderBy: { id: "asc" },
+      select: {
+        id: true,
+        branch: true,
+        repository: { select: { name: true, provider: true } },
+      },
+    },
+    {
+      enabled:
+        (isImpactHistory || isCodePinCoverage) &&
+        mode === "project" &&
+        Boolean(projectId) &&
+        !isNaN(Number(projectId)),
+    }
+  );
 
   // Resolve display labels for scope options restored from the URL as
   // placeholders. Display-only: the report request already carried the
@@ -1147,6 +1223,18 @@ function ReportBuilderContent({
     mode === "cross-project"
   );
 
+  const impactAnalysisColumns = useImpactAnalysisColumns(
+    projectId,
+    lastUsedDimensions.map((d) => d.value),
+    mode === "cross-project"
+  );
+
+  const codePinCoverageColumns = useCodePinCoverageColumns(
+    projectId,
+    lastUsedDimensions.map((d) => d.value),
+    mode === "cross-project"
+  );
+
   // Use issue test coverage columns for issue-test-coverage report
   const issueTestCoverageSummaryColumns = useIssueTestCoverageSummaryColumns(
     projectId,
@@ -1238,17 +1326,24 @@ function ReportBuilderContent({
       ? flakyTestsColumns
       : matchesReportType(reportType, "test-case-health")
         ? testCaseHealthColumns
-        : matchesReportType(reportType, "issue-test-coverage")
-          ? issueTestCoverageSummaryColumns
-          : matchesReportType(reportType, "execution-log")
-            ? executionLogColumns
-            : matchesReportType(reportType, "requirement-coverage-gaps")
-              ? requirementCoverageGapColumns
-              : matchesReportType(reportType, "requirement-traceability")
-                ? requirementTraceabilityColumns
-                : matchesReportType(reportType, "requirement-coverage-changes")
-                  ? requirementCoverageChangeColumns
-                  : standardColumns;
+        : matchesReportType(reportType, "impact-analysis")
+          ? impactAnalysisColumns
+          : matchesReportType(reportType, "code-pin-coverage")
+            ? codePinCoverageColumns
+            : matchesReportType(reportType, "issue-test-coverage")
+              ? issueTestCoverageSummaryColumns
+              : matchesReportType(reportType, "execution-log")
+                ? executionLogColumns
+                : matchesReportType(reportType, "requirement-coverage-gaps")
+                  ? requirementCoverageGapColumns
+                  : matchesReportType(reportType, "requirement-traceability")
+                    ? requirementTraceabilityColumns
+                    : matchesReportType(
+                          reportType,
+                          "requirement-coverage-changes"
+                        )
+                      ? requirementCoverageChangeColumns
+                      : standardColumns;
 
   // Single source of truth for row grouping. issue-test-coverage is ALWAYS
   // grouped by issue (issues with expandable test cases) — its last two columns
@@ -1313,6 +1408,42 @@ function ReportBuilderContent({
         passRate: true,
       };
       setColumnVisibility(visibility);
+    }
+  }, [reportType]);
+
+  React.useEffect(() => {
+    if (matchesReportType(reportType, "code-pin-coverage")) {
+      setColumnVisibility({
+        project: true,
+        repository: true,
+        directory: true,
+        pinCount: true,
+        caseCount: true,
+        stalePinCount: true,
+        uncoveredFileCount: true,
+        uncoveredAnalysisCount: false,
+      });
+    }
+  }, [reportType]);
+
+  React.useEffect(() => {
+    if (matchesReportType(reportType, "impact-analysis")) {
+      setColumnVisibility({
+        project: true,
+        createdAt: true,
+        repository: true,
+        trigger: true,
+        commits: false,
+        fileCount: true,
+        pinnedCaseCount: true,
+        affectedCaseCount: true,
+        relatedCaseCount: false,
+        acceptedCaseCount: true,
+        testRun: true,
+        outcome: true,
+        durationMs: false,
+        createdBy: false,
+      });
     }
   }, [reportType]);
 
@@ -2041,6 +2172,29 @@ function ReportBuilderContent({
             if (!dimValues.includes("project")) {
               dimValues.unshift("project");
             }
+            body.dimensions = dimValues;
+          }
+        }
+
+        if (matchesReportType(reportType, "code-pin-coverage")) {
+          body.lookbackDays = lookbackDays;
+          body.coverageFilter = coverageFilter;
+          if (impactConfigId !== null) body.configId = impactConfigId;
+          if (isCrossProjectReport(reportType)) {
+            const dimValues = selectedDimensions.map((d) => d.value);
+            if (!dimValues.includes("project")) dimValues.unshift("project");
+            body.dimensions = dimValues;
+          }
+        }
+
+        if (matchesReportType(reportType, "impact-analysis")) {
+          body.lookbackDays = lookbackDays;
+          body.triggerFilter = impactTriggerFilter;
+          body.outcomeFilter = impactOutcomeFilter;
+          if (impactConfigId !== null) body.configId = impactConfigId;
+          if (isCrossProjectReport(reportType)) {
+            const dimValues = selectedDimensions.map((d) => d.value);
+            if (!dimValues.includes("project")) dimValues.unshift("project");
             body.dimensions = dimValues;
           }
         }
@@ -3536,6 +3690,329 @@ function ReportBuilderContent({
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </div>
+                        </div>
+                      )}
+
+                      {/* Impact Analysis History / Code Pin Coverage parameters */}
+                      {(isImpactHistory || isCodePinCoverage) && (
+                        <div className="grid gap-4">
+                          <div className="grid gap-2">
+                            <div className="flex items-center gap-2">
+                              <label className="text-sm font-medium">
+                                {tReports("testCaseHealth.lookbackDays")}
+                              </label>
+                              <HelpPopover
+                                helpKey={`## ${tReports("testCaseHealth.lookbackDays")}\n${tReports(
+                                  isCodePinCoverage
+                                    ? "codePinCoverage.lookbackDaysHelp"
+                                    : "impactAnalysis.lookbackDaysHelp"
+                                )}`}
+                              />
+                            </div>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="w-full justify-between"
+                                  data-testid="impact-history-lookback"
+                                >
+                                  {lookbackDays === 0
+                                    ? tReports("dateRange.allTime")
+                                    : lookbackDays === 7
+                                      ? tCommon("operators.last7")
+                                      : lookbackDays === 30
+                                        ? tCommon("operators.last30")
+                                        : lookbackDays === 90
+                                          ? tReports("dateRange.last3Months")
+                                          : tReports("dateRange.last12Months")}
+                                  <ChevronDown className="ms-2 h-4 w-4 opacity-50" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent
+                                align="start"
+                                className="w-full"
+                              >
+                                <DropdownMenuGroup>
+                                  <DropdownMenuItem
+                                    onClick={() => setLookbackDays(7)}
+                                  >
+                                    {tCommon("operators.last7")}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => setLookbackDays(30)}
+                                  >
+                                    {tCommon("operators.last30")}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => setLookbackDays(90)}
+                                  >
+                                    {tReports("dateRange.last3Months")}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => setLookbackDays(365)}
+                                  >
+                                    {tReports("dateRange.last12Months")}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => setLookbackDays(0)}
+                                  >
+                                    {tReports("dateRange.allTime")}
+                                  </DropdownMenuItem>
+                                </DropdownMenuGroup>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+
+                          {isCodePinCoverage && (
+                            <div className="grid gap-2">
+                              <label className="text-sm font-medium">
+                                {tReports("codePinCoverage.coverageFilter")}
+                              </label>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full justify-between"
+                                    data-testid="code-pin-coverage-filter"
+                                  >
+                                    {coverageFilter === "all"
+                                      ? tCommon("filters.all")
+                                      : coverageFilter === "gaps"
+                                        ? tReports(
+                                            "codePinCoverage.coverageGaps"
+                                          )
+                                        : tReports(
+                                            "codePinCoverage.coveragePinned"
+                                          )}
+                                    <ChevronDown className="ms-2 h-4 w-4 opacity-50" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent
+                                  align="start"
+                                  className="w-full"
+                                >
+                                  <DropdownMenuGroup>
+                                    <DropdownMenuItem
+                                      onClick={() => setCoverageFilter("all")}
+                                    >
+                                      {tCommon("filters.all")}
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() => setCoverageFilter("gaps")}
+                                    >
+                                      {tReports("codePinCoverage.coverageGaps")}
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() =>
+                                        setCoverageFilter("pinned")
+                                      }
+                                    >
+                                      {tReports(
+                                        "codePinCoverage.coveragePinned"
+                                      )}
+                                    </DropdownMenuItem>
+                                  </DropdownMenuGroup>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          )}
+
+                          {isImpactHistory && (
+                            <>
+                              <div className="grid gap-2">
+                                <label className="text-sm font-medium">
+                                  {tDimensions("trigger")}
+                                </label>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      className="w-full justify-between"
+                                      data-testid="impact-history-trigger"
+                                    >
+                                      {impactTriggerFilter === "all"
+                                        ? tCommon("filters.all")
+                                        : tGlobal(
+                                            IMPACT_TRIGGER_LABEL_KEY[
+                                              impactTriggerFilter
+                                            ] as any
+                                          )}
+                                      <ChevronDown className="ms-2 h-4 w-4 opacity-50" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent
+                                    align="start"
+                                    className="w-full"
+                                  >
+                                    <DropdownMenuGroup>
+                                      <DropdownMenuItem
+                                        onClick={() =>
+                                          setImpactTriggerFilter("all")
+                                        }
+                                      >
+                                        {tCommon("filters.all")}
+                                      </DropdownMenuItem>
+                                      {(
+                                        [
+                                          "manual",
+                                          "pull_request",
+                                          "push",
+                                        ] as const
+                                      ).map((trigger) => (
+                                        <DropdownMenuItem
+                                          key={trigger}
+                                          onClick={() =>
+                                            setImpactTriggerFilter(trigger)
+                                          }
+                                        >
+                                          {tGlobal(
+                                            IMPACT_TRIGGER_LABEL_KEY[
+                                              trigger
+                                            ] as any
+                                          )}
+                                        </DropdownMenuItem>
+                                      ))}
+                                    </DropdownMenuGroup>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
+
+                              <div className="grid gap-2">
+                                <label className="text-sm font-medium">
+                                  {tGlobal("reports.dimensions.outcome")}
+                                </label>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      className="w-full justify-between"
+                                      data-testid="impact-history-outcome"
+                                    >
+                                      {impactOutcomeFilter === "all"
+                                        ? tCommon("filters.all")
+                                        : tGlobal(
+                                            IMPACT_OUTCOME_LABEL_KEY[
+                                              impactOutcomeFilter
+                                            ] as any
+                                          )}
+                                      <ChevronDown className="ms-2 h-4 w-4 opacity-50" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent
+                                    align="start"
+                                    className="w-full"
+                                  >
+                                    <DropdownMenuGroup>
+                                      <DropdownMenuItem
+                                        onClick={() =>
+                                          setImpactOutcomeFilter("all")
+                                        }
+                                      >
+                                        {tCommon("filters.all")}
+                                      </DropdownMenuItem>
+                                      {(
+                                        [
+                                          "failed",
+                                          "passed",
+                                          "not_executed",
+                                          "no_run",
+                                        ] as const
+                                      ).map((outcome) => (
+                                        <DropdownMenuItem
+                                          key={outcome}
+                                          onClick={() =>
+                                            setImpactOutcomeFilter(outcome)
+                                          }
+                                        >
+                                          {tGlobal(
+                                            IMPACT_OUTCOME_LABEL_KEY[
+                                              outcome
+                                            ] as any
+                                          )}
+                                        </DropdownMenuItem>
+                                      ))}
+                                    </DropdownMenuGroup>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
+                            </>
+                          )}
+
+                          {mode === "project" &&
+                            (impactConnections?.length ?? 0) > 1 && (
+                              <div className="grid gap-2">
+                                <label className="text-sm font-medium">
+                                  {tCommon("pageTitles.repository")}
+                                </label>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      className="w-full justify-between"
+                                      data-testid="impact-history-repository"
+                                    >
+                                      {(() => {
+                                        const selected =
+                                          impactConnections?.find(
+                                            (c) => c.id === impactConfigId
+                                          );
+                                        return selected ? (
+                                          <CodeRepositoryName
+                                            name={selected.repository.name}
+                                            branch={selected.branch}
+                                          />
+                                        ) : (
+                                          tReports(
+                                            "impactAnalysis.allRepositories"
+                                          )
+                                        );
+                                      })()}
+                                      <ChevronDown className="ms-2 h-4 w-4 opacity-50" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent
+                                    align="start"
+                                    className="w-full"
+                                  >
+                                    <DropdownMenuGroup>
+                                      <DropdownMenuItem
+                                        onClick={() => setImpactConfigId(null)}
+                                      >
+                                        {tReports(
+                                          "impactAnalysis.allRepositories"
+                                        )}
+                                      </DropdownMenuItem>
+                                      {impactConnections?.map((connection) => (
+                                        <DropdownMenuItem
+                                          key={connection.id}
+                                          onClick={() =>
+                                            setImpactConfigId(connection.id)
+                                          }
+                                        >
+                                          <CodeRepositoryName
+                                            name={connection.repository.name}
+                                            provider={
+                                              connection.repository.provider
+                                            }
+                                            branch={connection.branch}
+                                          />
+                                        </DropdownMenuItem>
+                                      ))}
+                                    </DropdownMenuGroup>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
+                            )}
                         </div>
                       )}
 

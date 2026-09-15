@@ -2018,7 +2018,6 @@
           "adminDescription": "Hãy thiết lập kết nối kho lưu trữ trước khi cấu hình ngữ cảnh mã cho dự án này."
         },
         "repository": {
-          "title": "Kho lưu trữ mã nguồn",
           "description": "Chọn kho mã nguồn để sử dụng cho ngữ cảnh AI.",
           "branchPlaceholder": "Để trống nếu muốn sử dụng nhánh mặc định của kho lưu trữ."
         },
@@ -7783,7 +7782,10 @@
       "totalCost": "## Tổng chi phí\nChi phí ước tính của nhà cung cấp tính bằng USD cho các lượt gọi trong nhóm này. Các mô hình được lưu trữ cục bộ ghi nhận chi phí là 0.",
       "avgLatency": "## Độ trễ trung bình\nThời gian trung bình mà nhà cung cấp phản hồi một lượt gọi trong nhóm này.",
       "successRate": "## Tỷ lệ thành công\nTỷ lệ phần trăm các lượt gọi trong nhóm này hoàn thành mà không gặp lỗi.",
-      "errorCount": "## Lượt gọi thất bại\nSố lượt gọi trong nhóm này kết thúc bằng lỗi."
+      "errorCount": "## Lượt gọi thất bại\nSố lượt gọi trong nhóm này kết thúc bằng lỗi.",
+      "impactAnalysisCount": "## Số lượng phân tích tác động\nSố lượng phân tích tác động đã được bắt đầu trong nhóm này, dù có tạo thành một lượt chạy hay không.",
+      "affectedCasesSelected": "## Trường hợp bị ảnh hưởng được chọn\nTổng số trường hợp đã ghim và bị ảnh hưởng mà các phân tích trong nhóm này đã chọn.",
+      "selectionPrecision": "## Độ chính xác lựa chọn (%)\nTrong số các trường hợp mà phân tích tác động đã chọn và sau đó được thực thi, tỷ lệ phần trăm bị thất bại. Để trống khi không có trường hợp nào được chọn đã chạy."
     },
     "reportDimensions": {
       "user": "## Kích thước người dùng\nNhóm kết quả theo người dùng đã thực hiện các bài kiểm tra hoặc được chỉ định cho các mục.",
@@ -7810,7 +7812,9 @@
       "feature": "## Chiều Tính năng\nNhóm việc sử dụng LLM theo tính năng ứng dụng đã thực hiện lượt gọi (ví dụ: Tạo Ca Kiểm Thử).",
       "model": "## Chiều Mô hình\nNhóm việc sử dụng LLM theo mô hình đã xử lý lượt gọi.",
       "integration": "## Chiều Tích hợp\nNhóm việc sử dụng LLM theo tích hợp LLM đã được cấu hình để xử lý lượt gọi.",
-      "outcome": "## Chiều Kết quả\nPhân chia việc sử dụng LLM thành các lượt gọi thành công và thất bại."
+      "outcome": "## Chiều Kết quả\nPhân chia việc sử dụng LLM thành các lượt gọi thành công và thất bại.",
+      "trigger": "## Chiều kích hoạt\nNhóm theo cách phân tích tác động đã tạo thành lượt chạy thử nghiệm được bắt đầu: thủ công, từ một pull request, hoặc từ một push. Các lượt chạy không có phân tích tạo thành sẽ thuộc nhóm Không có.",
+      "codeRepository": "## Chiều kho mã nguồn\nNhóm theo kho lưu trữ được kết nối mà phân tích tác động của nó đã tạo thành lượt chạy thử nghiệm. Các lượt chạy không có phân tích sẽ thuộc nhóm Không có."
     },
     "reportBuilder": {
       "dimensions": "## Kích thước\nChọn các kích thước bạn muốn phân tích trong báo cáo. Kích thước là các thuộc tính phân loại dữ liệu của bạn, chẳng hạn như Ngày, Người dùng, Trạng thái, v.v. Bạn có thể kéo để sắp xếp lại thứ tự chúng.",
@@ -8265,6 +8269,14 @@
         "requirementCoverageChanges": {
           "label": "Thay đổi phạm vi kiểm thử yêu cầu",
           "description": "So sánh một ảnh chụp nhanh khả năng truy xuất đã lưu với một ảnh chụp nhanh sau đó hoặc với ma trận trực tiếp để xem phạm vi kiểm thử của yêu cầu nào đã thay đổi"
+        },
+        "impactAnalysis": {
+          "label": "Lịch sử phân tích tác động",
+          "description": "Mọi phân tích tác động: điều gì đã kích hoạt nó, những gì nó đã thay đổi, các trường hợp nó đã chọn, và kết quả của lượt chạy mà nó tạo thành"
+        },
+        "codePinCoverage": {
+          "label": "Độ phủ Code Pin",
+          "description": "Vị trí của các Code Pin, theo kho lưu trữ và thư mục, và những nơi các thay đổi gần đây chưa được bao phủ"
         }
       },
       "flakyTests": {
@@ -8608,6 +8620,14 @@
         "executionLog": {
           "label": "Nhật ký thực thi liên dự án",
           "description": "Danh sách dạng phẳng các bản ghi kết quả kiểm thử riêng lẻ, bao gồm trạng thái, người thực hiện và dấu thời gian, trên nhiều dự án."
+        },
+        "impactAnalysis": {
+          "label": "Lịch sử phân tích tác động xuyên dự án",
+          "description": "Các phân tích tác động trên mọi dự án đã bật Phân tích tác động"
+        },
+        "codePinCoverage": {
+          "label": "Độ phủ Code Pin xuyên dự án",
+          "description": "Độ phủ Code Pin trên mọi dự án đã bật Phân tích tác động"
         }
       },
       "folderDescendants": {
@@ -8616,6 +8636,56 @@
       },
       "dimensionFilters": {
         "allValues": "Tất cả giá trị"
+      },
+      "impactAnalysis": {
+        "lookbackDaysHelp": "Các phân tích được bắt đầu trong khoảng thời gian này tính theo ngày. Toàn bộ thời gian sẽ đọc mọi phân tích mà dự án lưu giữ.",
+        "triggerPush": "Đẩy",
+        "outcomeNotExecuted": "Chưa thực thi",
+        "outcomeNoRun": "Không có lượt chạy",
+        "allRepositories": "Tất cả kho lưu trữ",
+        "analysis": "Phân tích",
+        "changedFiles": "Tệp đã thay đổi",
+        "changedFilesDetail": "{files, number} tệp · +{additions, number} −{deletions, number}",
+        "accepted": "Đã chấp nhận",
+        "runResults": "{executed, number} đã thực thi · {passed, number} đạt · {failed, number} thất bại",
+        "chart": {
+          "perWeek": "Phân tích mỗi tuần",
+          "week": "Tuần của {date}"
+        },
+        "stats": {
+          "analyses": "Phân tích",
+          "runsComposed": "Lượt chạy đã tạo",
+          "runsComposedTooltip": "Các phân tích đã tạo lượt chạy thử nghiệm, theo cách thủ công hoặc từ một sự kiện kho lưu trữ.",
+          "runsWithFailures": "Lượt chạy có thất bại",
+          "runsWithFailuresTooltip": "Các lượt chạy đã tạo trong đó có ít nhất một trường hợp được chọn thất bại, tính theo tỷ lệ phần trăm trên các lượt chạy đã tạo được thực thi.",
+          "medianAffected": "Trung vị trường hợp bị ảnh hưởng",
+          "medianAffectedTooltip": "Số trung vị các trường hợp đã ghim và bị ảnh hưởng mà một phân tích đã chọn.",
+          "acceptedShare": "Tỷ lệ chấp nhận",
+          "acceptedShareTooltip": "Các trường hợp mà người đánh giá đã chấp nhận, tính theo tỷ lệ phần trăm trên mọi trường hợp đã ghim và bị ảnh hưởng mà các phân tích đề xuất."
+        }
+      },
+      "codePinCoverage": {
+        "lookbackDaysHelp": "Các tệp chưa được bao phủ đến từ các phân tích được bắt đầu trong khoảng thời gian này tính theo ngày. Toàn bộ thời gian sẽ đọc mọi phân tích đã hoàn thành.",
+        "directory": "Thư mục",
+        "rootDirectory": "(gốc kho lưu trữ)",
+        "casesWithPins": "Trường hợp có pin",
+        "stalePins": "Pin lỗi thời",
+        "stalePinsHelp": "Các pin mà phân tích mới nhất của kết nối không thể tìm thấy tại commit đầu.",
+        "uncoveredFiles": "Tệp đã thay đổi chưa được bao phủ",
+        "uncoveredFilesHelp": "Các tệp đã thay đổi không có pin nào bao phủ, được đếm một lần cho mỗi tệp trên các phân tích trong khoảng thời gian.",
+        "coverageFilter": "Hiển thị",
+        "coverageGaps": "Đã thay đổi không có pin",
+        "coveragePinned": "Có pin",
+        "kindBreakdown": "{file, number} toàn bộ tệp · {range, number} dòng · {symbol, number} ký hiệu · {glob, number} glob",
+        "sourceBreakdown": "{manual, number} thủ công · {ai, number} AI · {annotation, number} chú thích · {mapfile, number} tệp ánh xạ · {issue, number} vé",
+        "stats": {
+          "casesWithPinsTooltip": "Các trường hợp thử nghiệm có ít nhất một Code Pin, tính theo tỷ lệ phần trăm trên các trường hợp của dự án.",
+          "gapDirectories": "Thư mục đã thay đổi không có pin",
+          "gapDirectoriesTooltip": "Các thư mục mà một phân tích trong khoảng thời gian tìm thấy tệp đã thay đổi nhưng không có pin nào bao phủ."
+        },
+        "chart": {
+          "byDirectory": "Pin và tệp chưa được bao phủ theo thư mục"
+        }
       }
     },
     "errors": {
@@ -8649,7 +8719,9 @@
       "tag": "Nhãn",
       "feature": "Tính năng",
       "model": "Mô hình",
-      "outcome": "Kết quả"
+      "outcome": "Kết quả",
+      "trigger": "Kích hoạt",
+      "codeRepository": "Kho lưu trữ mã nguồn"
     },
     "metrics": {
       "percentReady": "Sẵn sàng (%)",
@@ -8700,7 +8772,10 @@
       "totalCost": "Tổng chi phí",
       "avgLatency": "Độ trễ trung bình",
       "successRate": "Tỷ lệ thành công (%)",
-      "errorCount": "Lượt gọi thất bại"
+      "errorCount": "Lượt gọi thất bại",
+      "impactAnalysisCount": "Số lượng phân tích tác động",
+      "affectedCasesSelected": "Trường hợp bị ảnh hưởng được chọn",
+      "selectionPrecision": "Độ chính xác lựa chọn (%)"
     },
     "drillDown": {
       "title": "Hồ sơ chi tiết",
