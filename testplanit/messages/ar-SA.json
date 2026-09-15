@@ -2102,6 +2102,7 @@
         "refreshSuccess": "تم تحديث التخزين المؤقت: {fileCount} ملف ({contentCached} محتوى مخزن مؤقتاً)",
         "repository": {
           "branchLabel": "الفرع",
+          "branchesTruncatedHint": "يتم عرض أول {count, number} فرع. اكتب للبحث في المستودع بأكمله.",
           "placeholder": "حدد مستودع كود..."
         },
         "save": "حفظ التكوين",
@@ -4319,7 +4320,7 @@
       },
       "reasons": {
         "pin": "تثبيت",
-        "issue": "تذكرة",
+        "issue": "مشكلة",
         "path": "كلمة مفتاحية",
         "history": "السجل",
         "ai": "الذكاء الاصطناعي",
@@ -5203,7 +5204,11 @@
       "saveFailed": "فشل حفظ المستودع",
       "namePlaceholder": "مستودعي",
       "selectProvider": "حدد المزود",
-      "httpWarning": "يستخدم هذا العنوان بروتوكول HTTP. سيتم إرسال بيانات الاعتماد كنص عادي. استخدم HTTPS للاتصالات الآمنة."
+      "httpWarning": "يستخدم هذا العنوان بروتوكول HTTP. سيتم إرسال بيانات الاعتماد كنص عادي. استخدم HTTPS للاتصالات الآمنة.",
+      "validation": {
+        "nameRequired": "الاسم مطلوب",
+        "nameUnique": "يوجد مستودع رمز بهذا الاسم بالفعل"
+      }
     },
     "exportTemplates": {
       "title": "قوالب QuickScript",

@@ -2102,6 +2102,7 @@
         "refreshSuccess": "Bộ nhớ cache đã được làm mới: {fileCount} tập tin ({contentCached} nội dung đã được lưu vào bộ nhớ cache)",
         "repository": {
           "branchLabel": "Nhánh",
+          "branchesTruncatedHint": "Đang hiển thị {count, number} nhánh đầu tiên. Nhập để tìm kiếm trong toàn bộ kho lưu trữ.",
           "placeholder": "Chọn một kho lưu trữ mã nguồn..."
         },
         "save": "Lưu cấu hình",
@@ -4319,7 +4320,7 @@
       },
       "reasons": {
         "pin": "Ghim",
-        "issue": "Vé",
+        "issue": "Vấn đề",
         "path": "Từ khóa",
         "history": "Lịch sử",
         "ai": "AI",
@@ -5203,7 +5204,11 @@
       "saveFailed": "Không thể lưu kho lưu trữ",
       "namePlaceholder": "Kho lưu trữ của tôi",
       "selectProvider": "Chọn nhà cung cấp",
-      "httpWarning": "URL này sử dụng giao thức HTTP. Thông tin đăng nhập sẽ được gửi dưới dạng văn bản thuần. Hãy sử dụng HTTPS để có kết nối an toàn."
+      "httpWarning": "URL này sử dụng giao thức HTTP. Thông tin đăng nhập sẽ được gửi dưới dạng văn bản thuần. Hãy sử dụng HTTPS để có kết nối an toàn.",
+      "validation": {
+        "nameRequired": "Tên là bắt buộc",
+        "nameUnique": "Đã có một kho mã nguồn mang tên này"
+      }
     },
     "exportTemplates": {
       "title": "Mẫu QuickScript",

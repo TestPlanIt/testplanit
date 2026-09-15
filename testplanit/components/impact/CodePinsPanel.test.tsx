@@ -11,6 +11,13 @@ vi.mock("sonner", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 
+// The shared DataTable reads the locale-aware router and pathname.
+vi.mock("~/lib/navigation", () => ({
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
+  usePathname: () => "/en-US/projects/repository/7/99",
+  Link: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
 vi.mock("~/zenstack/schema", () => ({ schema: {} }));
 
 const mockProjectFindFirst = vi.fn();
@@ -38,6 +45,20 @@ vi.mock("@/components/ui/popover", () => ({
   ),
   PopoverContent: ({ children }: any) => (
     <div data-testid="popover-content">{children}</div>
+  ),
+}));
+
+vi.mock("@/components/tables/IssuesDisplay", () => ({
+  IssuesDisplay: ({
+    name,
+    externalUrl,
+  }: {
+    name: string;
+    externalUrl?: string | null;
+  }) => (
+    <a data-testid="issue-chip" href={externalUrl ?? undefined}>
+      {name}
+    </a>
   ),
 }));
 
@@ -208,7 +229,7 @@ describe("CodePinsPanel", () => {
     });
   });
 
-  it("shows the empty state with the repository and branch when editable", () => {
+  it("shows the empty state with the repository and branch when editable", async () => {
     renderWithClient(<CodePinsPanel caseId={99} projectId={7} />);
 
     expect(screen.getByTestId("case-code-pins")).toBeInTheDocument();
@@ -218,8 +239,89 @@ describe("CodePinsPanel", () => {
     expect(screen.getByTestId("case-code-pins-repository")).toHaveTextContent(
       "main"
     );
-    expect(screen.getByText("repository.codePins.empty")).toBeInTheDocument();
+    expect(
+      await screen.findByText("repository.codePins.empty")
+    ).toBeInTheDocument();
     expect(screen.getByTestId("case-code-pins-add")).toBeInTheDocument();
+  });
+
+  it("renders issue chips for a ticket pin instead of its note", async () => {
+    setPins([
+      makePin({
+        id: 7,
+        source: "ISSUE",
+        note: "ABT-1, ABT-2",
+        issues: [
+          {
+            id: 11,
+            name: "ABT-1",
+            externalKey: "ABT-1",
+            externalUrl: "https://tracker.example/ABT-1",
+          },
+          {
+            id: 12,
+            name: "ABT-2",
+            externalKey: "ABT-2",
+            externalUrl: "https://tracker.example/ABT-2",
+          },
+        ],
+      }),
+      makePin({ id: 8, source: "ISSUE", note: "UNLINKED-3", issues: [] }),
+    ]);
+
+    renderWithClient(<CodePinsPanel caseId={99} projectId={7} />);
+
+    const chips = await screen.findByTestId("case-code-pin-issues-7");
+    const links = chips.querySelectorAll('[data-testid="issue-chip"]');
+    expect(Array.from(links).map((a) => a.textContent)).toEqual([
+      "ABT-1",
+      "ABT-2",
+    ]);
+    expect(links[0]).toHaveAttribute("href", "https://tracker.example/ABT-1");
+    expect(screen.queryByText("ABT-1, ABT-2")).not.toBeInTheDocument();
+    // A key with no linked issue keeps the plain note.
+    expect(screen.getByText("UNLINKED-3")).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("case-code-pin-issues-8")
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows a loading indicator, not the empty state, until the pins arrive", async () => {
+    let resolvePins: (response: Response) => void = () => {};
+    const pending = new Promise<Response>((resolve) => {
+      resolvePins = resolve;
+    });
+    global.fetch = vi.fn(async (url: string) =>
+      url.includes("/code-pins") ? pending : jsonResponse(404, {})
+    ) as any;
+
+    renderWithClient(<CodePinsPanel caseId={99} projectId={7} />);
+
+    expect(screen.getByTestId("case-code-pins")).toBeInTheDocument();
+    expect(screen.getByTestId("case-code-pins-loading")).toBeInTheDocument();
+    expect(
+      screen.queryByText("repository.codePins.empty")
+    ).not.toBeInTheDocument();
+
+    resolvePins(jsonResponse(200, { pins: [makePin()], stalenessError: null }));
+
+    await waitFor(() =>
+      expect(
+        screen.queryByTestId("case-code-pins-loading")
+      ).not.toBeInTheDocument()
+    );
+    expect(
+      screen.queryByText("repository.codePins.empty")
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId("case-code-pins")).toBeInTheDocument();
+  });
+
+  it("stays hidden in read-only mode while the pins load", () => {
+    global.fetch = vi.fn(() => new Promise<Response>(() => {})) as any;
+
+    renderWithClient(<CodePinsPanel caseId={99} projectId={7} readOnly />);
+
+    expect(screen.queryByTestId("case-code-pins")).not.toBeInTheDocument();
   });
 
   it("lists pins with their location, kind, and source badges", async () => {
@@ -364,13 +466,33 @@ describe("CodePinsPanel", () => {
   });
 
   it("removes a pin through DELETE after the popover confirm", async () => {
-    setPins([makePin({ id: 55 })]);
+    setPins([makePin({ id: 55 }), makePin({ id: 57, filePath: "src/z.ts" })]);
+    let resolveDelete: (response: Response) => void = () => {};
+    (global.fetch as any).mockImplementation(
+      async (url: string, init?: RequestInit) => {
+        if (init?.method === "DELETE") {
+          return new Promise<Response>((resolve) => {
+            resolveDelete = resolve;
+          });
+        }
+        if (url.includes("/code-pins")) return jsonResponse(200, pinsResponse);
+        return jsonResponse(404, {});
+      }
+    );
 
     renderWithClient(<CodePinsPanel caseId={99} projectId={7} />);
 
     fireEvent.click(await screen.findByTestId("case-code-pin-remove-55"));
     fireEvent.click(screen.getByTestId("case-code-pin-remove-confirm-55"));
 
+    // The row leaves before the server answers; the other row stays.
+    await waitFor(() =>
+      expect(screen.queryByTestId("case-code-pin-55")).not.toBeInTheDocument()
+    );
+    expect(screen.getByTestId("case-code-pin-57")).toBeInTheDocument();
+    expect(toast.success).not.toHaveBeenCalled();
+
+    resolveDelete(jsonResponse(200, { ok: true }));
     await waitFor(() => {
       const deleteCall = (global.fetch as any).mock.calls.find(
         ([, init]: [string, RequestInit]) => init?.method === "DELETE"
@@ -409,6 +531,8 @@ describe("CodePinsPanel", () => {
         "repository.codePins.managedTooltip"
       );
     });
+    // The optimistic removal is rolled back.
+    expect(await screen.findByTestId("case-code-pin-56")).toBeInTheDocument();
   });
 
   it("re-anchors a stale pin through the reanchor route", async () => {

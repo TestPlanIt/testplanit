@@ -75,6 +75,29 @@ function makeDb() {
     repositoryCases: {
       findFirst: vi.fn().mockResolvedValue({ id: 100 }),
     },
+    repositoryCaseIssue: {
+      findMany: vi.fn().mockResolvedValue([]),
+    },
+  };
+}
+
+function issueRow(externalKey: string, over: Record<string, unknown> = {}) {
+  return {
+    id: externalKey.length,
+    name: externalKey,
+    externalId: `ext-${externalKey}`,
+    externalKey,
+    externalUrl: `https://tracker.example/${externalKey}`,
+    title: `Title ${externalKey}`,
+    description: null,
+    externalStatus: "Open",
+    priority: "high",
+    lastSyncedAt: null,
+    integrationId: 4,
+    integration: { provider: "JIRA" },
+    issueTypeName: null,
+    issueTypeIconUrl: null,
+    ...over,
   };
 }
 
@@ -200,6 +223,58 @@ describe("GET /api/repository-cases/[caseId]/code-pins", () => {
       loaded.adapter,
       pins
     );
+  });
+
+  it("attaches the linked issues a ticket pin's note names, in note order", async () => {
+    db.repositoryCaseCodePin.findMany.mockResolvedValue([
+      pinRow({ id: 1 }),
+      pinRow({ id: 2, source: "ISSUE", note: "ABT-2, ABT-1, GONE-9" }),
+      pinRow({ id: 3, source: "ISSUE", note: "ABT-1" }),
+    ]);
+    db.repositoryCaseIssue.findMany.mockResolvedValue([
+      { issue: issueRow("ABT-1") },
+      { issue: issueRow("ABT-2") },
+    ]);
+
+    const res = await GET(getRequest({ staleness: "0" }), makeParams());
+    const json = await res.json();
+
+    expect(db.repositoryCaseIssue.findMany).toHaveBeenCalledTimes(1);
+    expect(db.repositoryCaseIssue.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          caseId: 100,
+          issue: {
+            isDeleted: false,
+            externalKey: { in: ["ABT-2", "ABT-1", "GONE-9"] },
+          },
+        },
+      })
+    );
+    expect(json.pins[0].issues).toEqual([]);
+    expect(json.pins[1].issues.map((i: { name: string }) => i.name)).toEqual([
+      "ABT-2",
+      "ABT-1",
+    ]);
+    expect(json.pins[1].issues[0]).toMatchObject({
+      externalUrl: "https://tracker.example/ABT-2",
+      integration: { provider: "JIRA" },
+    });
+    expect(json.pins[2].issues.map((i: { name: string }) => i.name)).toEqual([
+      "ABT-1",
+    ]);
+  });
+
+  it("does not look up issues when no pin came from a ticket", async () => {
+    db.repositoryCaseCodePin.findMany.mockResolvedValue([
+      pinRow({ id: 1, note: "ABT-1" }),
+    ]);
+
+    const res = await GET(getRequest({ staleness: "0" }), makeParams());
+
+    expect(res.status).toBe(200);
+    expect(db.repositoryCaseIssue.findMany).not.toHaveBeenCalled();
+    expect((await res.json()).pins[0].issues).toEqual([]);
   });
 
   it("checks each repository's pins against its own config", async () => {

@@ -2102,6 +2102,7 @@
         "refreshSuccess": "Cache atualizado: {fileCount} arquivos ({contentCached} conteúdo em cache)",
         "repository": {
           "branchLabel": "Ramificação",
+          "branchesTruncatedHint": "Mostrando os primeiros {count, number} branches. Digite para pesquisar em todo o repositório.",
           "placeholder": "Selecione um repositório de código..."
         },
         "save": "Salvar configuração",
@@ -4319,7 +4320,7 @@
       },
       "reasons": {
         "pin": "Pin",
-        "issue": "Chamado",
+        "issue": "Problema",
         "path": "Palavra-chave",
         "history": "Histórico",
         "ai": "IA",
@@ -5203,7 +5204,11 @@
       "saveFailed": "Falha ao salvar o repositório",
       "namePlaceholder": "Meu Repositório",
       "selectProvider": "Selecione o fornecedor",
-      "httpWarning": "Este URL utiliza HTTP. As credenciais serão enviadas em texto simples. Utilize HTTPS para conexões seguras."
+      "httpWarning": "Este URL utiliza HTTP. As credenciais serão enviadas em texto simples. Utilize HTTPS para conexões seguras.",
+      "validation": {
+        "nameRequired": "O nome é obrigatório",
+        "nameUnique": "Já existe um repositório de código com esse nome"
+      }
     },
     "exportTemplates": {
       "title": "Modelos QuickScript",

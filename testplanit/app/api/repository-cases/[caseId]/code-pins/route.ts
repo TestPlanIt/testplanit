@@ -30,6 +30,70 @@ const pinSelect = {
   createdBy: { select: { id: true, name: true } },
 } as const;
 
+/** What the Code Pins table needs to show an issue chip for a ticket pin. */
+const pinIssueSelect = {
+  id: true,
+  name: true,
+  externalId: true,
+  externalKey: true,
+  externalUrl: true,
+  title: true,
+  description: true,
+  externalStatus: true,
+  priority: true,
+  lastSyncedAt: true,
+  integrationId: true,
+  integration: { select: { provider: true } },
+  issueTypeName: true,
+  issueTypeIconUrl: true,
+} as const;
+
+/** The issue keys a ticket-scan pin's note lists. */
+function noteKeys(note: string | null): string[] {
+  return (note ?? "")
+    .split(",")
+    .map((key) => key.trim())
+    .filter((key) => key.length > 0);
+}
+
+/**
+ * The issues each ISSUE pin names, among those linked to the case. A pin's
+ * note holds the keys of the commits' tickets; the link rows are what the
+ * scan matched them against, so a key that was unlinked since is left out.
+ */
+async function issuesForPins(
+  db: Awaited<ReturnType<typeof getEnhancedDb>>,
+  caseId: number,
+  pins: Array<{ id: number; source: string; note: string | null }>
+): Promise<Map<number, unknown[]>> {
+  const byPin = new Map<number, unknown[]>();
+  const keys = new Set<string>();
+  for (const pin of pins) {
+    if (pin.source !== "ISSUE") continue;
+    for (const key of noteKeys(pin.note)) keys.add(key);
+  }
+  if (keys.size === 0) return byPin;
+  const links = await db.repositoryCaseIssue.findMany({
+    where: {
+      caseId,
+      issue: { isDeleted: false, externalKey: { in: [...keys] } },
+    },
+    select: { issue: { select: pinIssueSelect } },
+  });
+  const byKey = new Map<string, unknown>();
+  for (const link of links) {
+    if (link.issue.externalKey) byKey.set(link.issue.externalKey, link.issue);
+  }
+  for (const pin of pins) {
+    if (pin.source !== "ISSUE") continue;
+    const issues = noteKeys(pin.note)
+      .map((key) => byKey.get(key))
+      .filter((issue) => issue !== undefined);
+    if (issues.length > 0) byPin.set(pin.id, issues);
+  }
+  return byPin;
+}
+
 function parseCaseId(raw: string): number | null {
   const caseId = Number(raw);
   return Number.isInteger(caseId) && caseId > 0 ? caseId : null;
@@ -62,6 +126,8 @@ export async function GET(
       select: pinSelect,
     });
 
+    const issues = await issuesForPins(db, caseId, pins);
+
     const staleness = new Map<number, unknown>();
     let stalenessError: string | null = null;
     if (withStaleness) {
@@ -90,6 +156,7 @@ export async function GET(
     return NextResponse.json({
       pins: pins.map((pin) => ({
         ...pin,
+        issues: issues.get(pin.id) ?? [],
         staleness: staleness.get(pin.id) ?? null,
       })),
       stalenessError,

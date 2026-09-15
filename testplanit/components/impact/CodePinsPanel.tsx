@@ -11,24 +11,20 @@ import {
   X,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/tables/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
 import {
   Tooltip,
   TooltipContent,
@@ -59,6 +55,9 @@ const SOURCE_LABEL_KEY: Record<CodePinSource, string> = {
   MAPFILE: "repository.codePins.sourceMapfile",
   ISSUE: "runs.impact.reasons.issue",
 };
+
+/** Column visibility is fixed here; the table only needs a setter to exist. */
+const noopVisibilityChange = () => {};
 
 const STALE_REASON_KEY: Record<PinStaleReason, string> = {
   FILE_DELETED: "staleFileDeleted",
@@ -143,6 +142,7 @@ export function CodePinsPanel({
     reanchor,
     dismissStale,
     isMutating,
+    isLoading,
   } = useCodePins(caseId, { enabled });
 
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -160,40 +160,344 @@ export function CodePinsPanel({
     void refetch();
   };
 
-  const handleRemove = async (pinId: number) => {
-    try {
-      await remove(pinId);
-      toast.success(t("removeSuccess"));
+  const handleRemove = useCallback(
+    async (pinId: number) => {
+      // The hook drops the row optimistically, so the confirm closes at once.
       setOpenRemoveId(null);
-    } catch (error) {
-      const key = codePinErrorKey(error);
-      toast.error(key ? t(key) : t("removeFailed"));
-    }
-  };
+      try {
+        await remove(pinId);
+        toast.success(t("removeSuccess"));
+      } catch (error) {
+        const key = codePinErrorKey(error);
+        toast.error(key ? t(key) : t("removeFailed"));
+      }
+    },
+    [remove, t]
+  );
 
-  const handleReanchor = async (pinId: number) => {
-    try {
-      await reanchor(pinId);
-      toast.success(t("reanchorSuccess"));
-    } catch (error) {
-      const key = codePinErrorKey(error);
-      toast.error(key ? t(key) : t("reanchorFailed"));
-    }
-  };
+  const handleReanchor = useCallback(
+    async (pinId: number) => {
+      try {
+        await reanchor(pinId);
+        toast.success(t("reanchorSuccess"));
+      } catch (error) {
+        const key = codePinErrorKey(error);
+        toast.error(key ? t(key) : t("reanchorFailed"));
+      }
+    },
+    [reanchor, t]
+  );
 
-  const handleDismissStale = async (pinId: number) => {
-    try {
-      await dismissStale(pinId);
-    } catch (error) {
-      if (error instanceof Error) toast.error(error.message);
+  const handleDismissStale = useCallback(
+    async (pinId: number) => {
+      try {
+        await dismissStale(pinId);
+      } catch (error) {
+        if (error instanceof Error) toast.error(error.message);
+      }
+    },
+    [dismissStale]
+  );
+
+  const renderSource = useCallback(
+    (pin: CodePin) => {
+      const badge = (
+        <Badge
+          variant={pin.source === "MANUAL" ? "secondary" : "outline"}
+          className="shrink-0 whitespace-nowrap"
+          data-testid={`case-code-pin-source-${pin.id}`}
+        >
+          {tGlobal(SOURCE_LABEL_KEY[pin.source])}
+        </Badge>
+      );
+      return isManagedCodePin(pin) ? (
+        <Tooltip>
+          <TooltipTrigger asChild>{badge}</TooltipTrigger>
+          <TooltipContent>{t("managedTooltip")}</TooltipContent>
+        </Tooltip>
+      ) : (
+        badge
+      );
+    },
+    [t, tGlobal]
+  );
+
+  const renderFile = useCallback(
+    (pin: CodePin) => {
+      const managed = isManagedCodePin(pin);
+      const staleness = pin.staleness;
+      const isStale = staleness?.stale === true && !staleness.staleDismissed;
+      const staleReason = staleness?.staleReason
+        ? t(STALE_REASON_KEY[staleness.staleReason])
+        : "";
+      return (
+        <div className="min-w-0">
+          <div className="font-mono text-sm truncate" title={pin.filePath}>
+            {pin.filePath}
+          </div>
+          {/* A ticket pin's note is the issue keys; when they resolve to
+              linked issues, the chips replace it. */}
+          {pin.issues && pin.issues.length > 0 ? (
+            <div
+              className="mt-1 flex flex-wrap gap-1"
+              data-testid={`case-code-pin-issues-${pin.id}`}
+            >
+              {pin.issues.map((issue) => (
+                <IssuesDisplay
+                  key={issue.id}
+                  id={issue.id}
+                  name={issue.name}
+                  externalId={issue.externalId}
+                  externalUrl={issue.externalUrl}
+                  title={issue.title}
+                  description={issue.description}
+                  status={issue.externalStatus}
+                  priority={issue.priority}
+                  lastSyncedAt={issue.lastSyncedAt}
+                  projectIds={[projectId]}
+                  integrationProvider={issue.integration?.provider ?? undefined}
+                  integrationId={issue.integrationId ?? undefined}
+                  issueTypeName={issue.issueTypeName}
+                  issueTypeIconUrl={issue.issueTypeIconUrl}
+                />
+              ))}
+            </div>
+          ) : (
+            pin.note && (
+              <div
+                className="text-xs text-muted-foreground truncate"
+                title={pin.note}
+              >
+                {pin.note}
+              </div>
+            )
+          )}
+          {/* The stale badge and its actions sit under the path so a long
+              file name keeps the whole column. */}
+          {isStale && (
+            <div className="mt-1 flex flex-wrap items-center gap-1">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge
+                    variant="outline"
+                    data-testid={`case-code-pin-stale-${pin.id}`}
+                    className="gap-2 shrink-0 border-dashed border-warning bg-warning/15 text-foreground"
+                  >
+                    <AlertTriangle className="h-3 w-3 text-warning" />
+                    {tImpact("stale.badge")}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {t("staleTooltip", { reason: staleReason })}
+                </TooltipContent>
+              </Tooltip>
+              {!readOnly && !managed && (
+                <>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-xs"
+                    disabled={isMutating}
+                    data-testid={`case-code-pin-reanchor-${pin.id}`}
+                    onClick={() => handleReanchor(pin.id)}
+                  >
+                    {t("reanchor")}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-xs"
+                    disabled={isMutating}
+                    data-testid={`case-code-pin-dismiss-${pin.id}`}
+                    onClick={() => handleDismissStale(pin.id)}
+                  >
+                    {tCommon("dismiss")}
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      );
+    },
+    [
+      t,
+      tCommon,
+      tImpact,
+      projectId,
+      readOnly,
+      isMutating,
+      handleReanchor,
+      handleDismissStale,
+    ]
+  );
+
+  const renderActions = useCallback(
+    (pin: CodePin) => {
+      const managed = isManagedCodePin(pin);
+      return (
+        <div className="flex justify-end whitespace-nowrap">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label={t("editAction")}
+            disabled={managed}
+            data-testid={`case-code-pin-edit-${pin.id}`}
+            onClick={() => setEditingPin(pin)}
+          >
+            <SquarePen className="w-4 h-4" />
+          </Button>
+          <Popover
+            open={openRemoveId === pin.id}
+            onOpenChange={(open) => setOpenRemoveId(open ? pin.id : null)}
+          >
+            <PopoverTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label={tCommon("actions.remove")}
+                disabled={managed}
+                data-testid={`case-code-pin-remove-${pin.id}`}
+                onClick={() => setOpenRemoveId(pin.id)}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-fit" side="bottom">
+              <div className="mb-2">{t("removeConfirm")}</div>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => setOpenRemoveId(null)}
+                >
+                  {tCommon("cancel")}
+                </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  disabled={isMutating}
+                  data-testid={`case-code-pin-remove-confirm-${pin.id}`}
+                  onClick={() => handleRemove(pin.id)}
+                >
+                  {tCommon("actions.remove")}
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+      );
+    },
+    [t, tCommon, openRemoveId, isMutating, handleRemove]
+  );
+
+  // The shared DataTable gives the columns drag-to-resize handles and, with
+  // the storage key, remembers each user's widths.
+  const columns = useMemo<ColumnDef<CodePin>[]>(() => {
+    const defs: ColumnDef<CodePin>[] = [];
+    if (multiRepository) {
+      defs.push({
+        id: "repository",
+        header: tCommon("pageTitles.repository"),
+        size: 160,
+        enableSorting: false,
+        cell: ({ row }) => (
+          <CodeRepositoryName
+            name={
+              impactConfigs.find((c) => c.id === row.original.configId)
+                ?.repository.name ?? "—"
+            }
+            className="max-w-full text-sm"
+            data-testid={`case-code-pin-repository-${row.original.id}`}
+          />
+        ),
+      });
     }
-  };
+    defs.push(
+      {
+        id: "file",
+        header: tCommon("file"),
+        size: 340,
+        enableSorting: false,
+        meta: { wrap: true },
+        cell: ({ row }) => renderFile(row.original),
+      },
+      {
+        id: "location",
+        header: t("location"),
+        size: 150,
+        enableSorting: false,
+        cell: ({ row }) => {
+          const pin = row.original;
+          const location = formatLocation(pin, t);
+          return (
+            <span
+              className="font-mono text-sm"
+              title={
+                pin.anchorSha
+                  ? t("anchoredAt", { sha: pin.anchorSha.slice(0, 7) })
+                  : location
+              }
+              data-testid={`case-code-pin-location-${pin.id}`}
+            >
+              {location}
+            </span>
+          );
+        },
+      },
+      {
+        id: "kind",
+        header: t("kind"),
+        size: 110,
+        enableSorting: false,
+        cell: ({ row }) => <CodePinKindBadge kind={row.original.kind} />,
+      },
+      {
+        id: "source",
+        header: tDuplicates("sourceLabel"),
+        size: 110,
+        enableSorting: false,
+        cell: ({ row }) => renderSource(row.original),
+      }
+    );
+    if (!readOnly) {
+      defs.push({
+        id: "actions",
+        header: tCommon("actions.actionsLabel"),
+        size: 92,
+        enableSorting: false,
+        enableResizing: false,
+        meta: { wrap: true },
+        cell: ({ row }) => renderActions(row.original),
+      });
+    }
+    return defs;
+  }, [
+    multiRepository,
+    impactConfigs,
+    readOnly,
+    t,
+    tCommon,
+    tDuplicates,
+    renderFile,
+    renderSource,
+    renderActions,
+  ]);
+  const columnVisibility = useMemo(
+    () => Object.fromEntries(columns.map((column) => [column.id, true])),
+    [columns]
+  );
 
   if (!enabled || !impactConfig) {
     return null;
   }
 
-  if (readOnly && pins.length === 0) {
+  // Read-only callers only get the card once there are pins to show.
+  if (readOnly && (isLoading || pins.length === 0)) {
     return null;
   }
 
@@ -264,219 +568,33 @@ export function CodePinsPanel({
         )}
       </CardHeader>
       <CardContent className="p-0">
-        {pins.length === 0 ? (
+        {isLoading ? (
+          <div
+            className="mx-4 mb-4 space-y-3"
+            data-testid="case-code-pins-loading"
+            aria-busy="true"
+          >
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-4 w-1/2" />
+            <span className="sr-only">{tCommon("loading")}</span>
+          </div>
+        ) : pins.length === 0 ? (
           <div className="text-muted-foreground ms-4 -mt-6 mb-4 text-sm space-y-1">
             <div>{t("empty")}</div>
             <div className="text-xs">{t("description")}</div>
           </div>
         ) : (
-          <Table className="table-fixed w-full min-w-[660px]">
-            <TableHeader>
-              <TableRow>
-                {multiRepository && (
-                  <TableHead className="w-[160px] truncate">
-                    {tCommon("pageTitles.repository")}
-                  </TableHead>
-                )}
-                <TableHead className="truncate">{tCommon("file")}</TableHead>
-                <TableHead className="w-[150px] truncate">
-                  {t("location")}
-                </TableHead>
-                <TableHead className="w-[110px] truncate">
-                  {t("kind")}
-                </TableHead>
-                <TableHead className="w-[110px] truncate">
-                  {tDuplicates("sourceLabel")}
-                </TableHead>
-                {!readOnly && (
-                  <TableHead className="w-[92px] truncate text-end">
-                    {tCommon("actions.actionsLabel")}
-                  </TableHead>
-                )}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {pins.map((pin) => {
-                const managed = isManagedCodePin(pin);
-                const staleness = pin.staleness;
-                const isStale =
-                  staleness?.stale === true && !staleness.staleDismissed;
-                const staleReason = staleness?.staleReason
-                  ? t(STALE_REASON_KEY[staleness.staleReason])
-                  : "";
-                const sourceBadge = (
-                  <Badge
-                    variant={pin.source === "MANUAL" ? "secondary" : "outline"}
-                    className="shrink-0 whitespace-nowrap"
-                    data-testid={`case-code-pin-source-${pin.id}`}
-                  >
-                    {tGlobal(SOURCE_LABEL_KEY[pin.source])}
-                  </Badge>
-                );
-                const location = formatLocation(pin, t);
-
-                return (
-                  <TableRow
-                    key={pin.id}
-                    data-testid={`case-code-pin-${pin.id}`}
-                  >
-                    {multiRepository && (
-                      <TableCell>
-                        <CodeRepositoryName
-                          name={configFor(pin.configId)?.repository.name ?? "—"}
-                          className="max-w-full text-sm"
-                          data-testid={`case-code-pin-repository-${pin.id}`}
-                        />
-                      </TableCell>
-                    )}
-                    <TableCell>
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span
-                          className="font-mono text-sm truncate"
-                          title={pin.filePath}
-                        >
-                          {pin.filePath}
-                        </span>
-                        {isStale && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Badge
-                                variant="outline"
-                                data-testid={`case-code-pin-stale-${pin.id}`}
-                                className="gap-2 shrink-0 border-dashed border-warning bg-warning/15 text-foreground"
-                              >
-                                <AlertTriangle className="h-3 w-3 text-warning" />
-                                {tImpact("stale.badge")}
-                              </Badge>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              {t("staleTooltip", { reason: staleReason })}
-                            </TooltipContent>
-                          </Tooltip>
-                        )}
-                        {isStale && !readOnly && !managed && (
-                          <>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              disabled={isMutating}
-                              data-testid={`case-code-pin-reanchor-${pin.id}`}
-                              onClick={() => handleReanchor(pin.id)}
-                            >
-                              {t("reanchor")}
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              disabled={isMutating}
-                              data-testid={`case-code-pin-dismiss-${pin.id}`}
-                              onClick={() => handleDismissStale(pin.id)}
-                            >
-                              {tCommon("dismiss")}
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                      {pin.note && (
-                        <div
-                          className="text-xs text-muted-foreground truncate"
-                          title={pin.note}
-                        >
-                          {pin.note}
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <span
-                        className="block font-mono text-sm truncate"
-                        title={
-                          pin.anchorSha
-                            ? t("anchoredAt", {
-                                sha: pin.anchorSha.slice(0, 7),
-                              })
-                            : location
-                        }
-                        data-testid={`case-code-pin-location-${pin.id}`}
-                      >
-                        {location}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <CodePinKindBadge kind={pin.kind} />
-                    </TableCell>
-                    <TableCell>
-                      {managed ? (
-                        <Tooltip>
-                          <TooltipTrigger asChild>{sourceBadge}</TooltipTrigger>
-                          <TooltipContent>{t("managedTooltip")}</TooltipContent>
-                        </Tooltip>
-                      ) : (
-                        sourceBadge
-                      )}
-                    </TableCell>
-                    {!readOnly && (
-                      <TableCell className="w-[92px] text-end whitespace-nowrap">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          aria-label={t("editAction")}
-                          disabled={managed}
-                          data-testid={`case-code-pin-edit-${pin.id}`}
-                          onClick={() => setEditingPin(pin)}
-                        >
-                          <SquarePen className="w-4 h-4" />
-                        </Button>
-                        <Popover
-                          open={openRemoveId === pin.id}
-                          onOpenChange={(open) =>
-                            setOpenRemoveId(open ? pin.id : null)
-                          }
-                        >
-                          <PopoverTrigger asChild>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              aria-label={tCommon("actions.remove")}
-                              disabled={managed}
-                              data-testid={`case-code-pin-remove-${pin.id}`}
-                              onClick={() => setOpenRemoveId(pin.id)}
-                            >
-                              <X className="w-4 h-4" />
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-fit" side="bottom">
-                            <div className="mb-2">{t("removeConfirm")}</div>
-                            <div className="flex items-center gap-2">
-                              <Button
-                                type="button"
-                                variant="secondary"
-                                onClick={() => setOpenRemoveId(null)}
-                              >
-                                {tCommon("cancel")}
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="destructive"
-                                disabled={isMutating}
-                                data-testid={`case-code-pin-remove-confirm-${pin.id}`}
-                                onClick={() => handleRemove(pin.id)}
-                              >
-                                {tCommon("actions.remove")}
-                              </Button>
-                            </div>
-                          </PopoverContent>
-                        </Popover>
-                      </TableCell>
-                    )}
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+          <DataTable<CodePin>
+            columns={columns}
+            data={pins}
+            getRowId={(pin) => String(pin.id)}
+            rowTestIdPrefix="case-code-pin"
+            columnVisibility={columnVisibility}
+            onColumnVisibilityChange={noopVisibilityChange}
+            storageKey="case-code-pins"
+            enableColumnReorder={false}
+            enableColumnMenu={false}
+          />
         )}
         {stalenessError && (
           <div

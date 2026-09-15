@@ -2102,6 +2102,7 @@
         "refreshSuccess": "Önbellek yenilendi: {fileCount} dosya ({contentCached} içerik önbelleğe alındı)",
         "repository": {
           "branchLabel": "Dal",
+          "branchesTruncatedHint": "İlk {count, number} dal gösteriliyor. Tüm depoda aramak için yazın.",
           "placeholder": "Bir kod deposu seçin..."
         },
         "save": "Yapılandırmayı Kaydet",
@@ -4319,7 +4320,7 @@
       },
       "reasons": {
         "pin": "Sabit",
-        "issue": "Bilet",
+        "issue": "Sorun",
         "path": "Anahtar kelime",
         "history": "Geçmiş",
         "ai": "AI",
@@ -5203,7 +5204,11 @@
       "saveFailed": "Depoyu kaydetme başarısız oldu.",
       "namePlaceholder": "Depom",
       "selectProvider": "Sağlayıcı seçin",
-      "httpWarning": "Bu URL HTTP kullanıyor. Kimlik bilgileri düz metin olarak gönderilecektir. Güvenli bağlantılar için HTTPS kullanın."
+      "httpWarning": "Bu URL HTTP kullanıyor. Kimlik bilgileri düz metin olarak gönderilecektir. Güvenli bağlantılar için HTTPS kullanın.",
+      "validation": {
+        "nameRequired": "İsim zorunludur",
+        "nameUnique": "Bu isimde bir kod deposu zaten mevcut"
+      }
     },
     "exportTemplates": {
       "title": "QuickScript Şablonları",

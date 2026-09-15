@@ -7,7 +7,7 @@ import {
   type QueryClient,
   type QueryKey,
 } from "@tanstack/react-query";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import type {
   CodePinKind,
   PinStaleness,
@@ -22,6 +22,24 @@ export const CODE_PINS_QUERY_KEY_ROOT = "codePins";
 export type CodePinSource =
   "MANUAL" | "AI" | "ANNOTATION" | "MAPFILE" | "ISSUE";
 
+/** An issue a ticket-scan pin names, as the issue chip renders it. */
+export interface CodePinIssue {
+  id: number;
+  name: string;
+  externalId: string | null;
+  externalKey: string | null;
+  externalUrl: string | null;
+  title: string | null;
+  description: string | null;
+  externalStatus: string | null;
+  priority: string | null;
+  lastSyncedAt: string | null;
+  integrationId: number | null;
+  integration: { provider: string } | null;
+  issueTypeName: string | null;
+  issueTypeIconUrl: string | null;
+}
+
 export interface CodePin {
   id: number;
   caseId: number;
@@ -34,6 +52,8 @@ export interface CodePin {
   anchorSha: string | null;
   source: CodePinSource;
   note: string | null;
+  /** For ISSUE pins: the linked issues the note's keys resolve to. */
+  issues?: CodePinIssue[];
   staleDismissedAt: string | null;
   createdAt: string;
   createdBy: { id: string; name: string | null };
@@ -322,9 +342,33 @@ export function useCodePins(
     onSuccess: onMutationSuccess,
   });
 
+  // Removal is optimistic: the row leaves the table at once and comes back
+  // only if the server refuses. Every cached variant of this case's pins
+  // (with and without staleness) is updated so no view lags behind.
+  const casePinQueries = useMemo(
+    () => ({
+      predicate: (query: { queryKey: readonly unknown[] }) =>
+        isCodePinsQueryKey(query.queryKey, caseId),
+    }),
+    [caseId]
+  );
   const removeMutation = useMutation({
     mutationFn: (pinId: number) => deleteCodePin(caseId as number, pinId),
-    onSuccess: onMutationSuccess,
+    onMutate: async (pinId: number) => {
+      await queryClient.cancelQueries(casePinQueries);
+      const previous =
+        queryClient.getQueriesData<CodePinsResponse>(casePinQueries);
+      queryClient.setQueriesData<CodePinsResponse>(casePinQueries, (old) =>
+        old ? { ...old, pins: old.pins.filter((pin) => pin.id !== pinId) } : old
+      );
+      return { previous };
+    },
+    onError: (_error, _pinId, context) => {
+      for (const [key, data] of context?.previous ?? []) {
+        queryClient.setQueryData(key, data);
+      }
+    },
+    onSettled: onMutationSuccess,
   });
 
   const reanchorMutation = useMutation({

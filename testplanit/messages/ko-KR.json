@@ -2102,6 +2102,7 @@
         "refreshSuccess": "캐시 새로 고침됨: {fileCount} 개 파일 ({contentCached} 개 콘텐츠 캐시됨)",
         "repository": {
           "branchLabel": "브랜치",
+          "branchesTruncatedHint": "처음 {count, number}개 브랜치를 표시하고 있습니다. 전체 저장소를 검색하려면 입력하세요.",
           "placeholder": "코드 저장소를 선택하세요..."
         },
         "save": "설정 저장",
@@ -4319,7 +4320,7 @@
       },
       "reasons": {
         "pin": "핀",
-        "issue": "티켓",
+        "issue": "이슈",
         "path": "키워드",
         "history": "기록",
         "ai": "AI",
@@ -5203,7 +5204,11 @@
       "saveFailed": "저장소를 저장하는 데 실패했습니다.",
       "namePlaceholder": "내 저장소",
       "selectProvider": "제공업체를 선택하세요",
-      "httpWarning": "이 URL은 HTTP를 사용합니다. 자격 증명은 평문으로 전송됩니다. 안전한 연결을 위해서는 HTTPS를 사용하십시오."
+      "httpWarning": "이 URL은 HTTP를 사용합니다. 자격 증명은 평문으로 전송됩니다. 안전한 연결을 위해서는 HTTPS를 사용하십시오.",
+      "validation": {
+        "nameRequired": "이름은 필수 입력 사항입니다",
+        "nameUnique": "이미 같은 이름을 가진 코드 저장소가 존재합니다"
+      }
     },
     "exportTemplates": {
       "title": "QuickScript 템플릿",

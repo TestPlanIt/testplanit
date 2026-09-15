@@ -2102,6 +2102,7 @@
         "refreshSuccess": "Cache actualisé : {fileCount} fichiers ({contentCached} contenus mis en cache)",
         "repository": {
           "branchLabel": "Branche",
+          "branchesTruncatedHint": "Affichage des {count, number} premières branches. Tapez pour rechercher dans tout le dépôt.",
           "placeholder": "Sélectionnez un dépôt de code..."
         },
         "save": "Enregistrer la configuration",
@@ -4319,7 +4320,7 @@
       },
       "reasons": {
         "pin": "Épingle",
-        "issue": "Billet",
+        "issue": "Problème",
         "path": "Mot-clé",
         "history": "Historique",
         "ai": "IA",
@@ -5203,7 +5204,11 @@
       "saveFailed": "Échec de l'enregistrement du dépôt",
       "namePlaceholder": "Mon dépôt",
       "selectProvider": "Sélectionner le fournisseur",
-      "httpWarning": "Cette URL utilise le protocole HTTP. Vos identifiants seront envoyés en clair. Utilisez HTTPS pour une connexion sécurisée."
+      "httpWarning": "Cette URL utilise le protocole HTTP. Vos identifiants seront envoyés en clair. Utilisez HTTPS pour une connexion sécurisée.",
+      "validation": {
+        "nameRequired": "Le nom est requis",
+        "nameUnique": "Un dépôt de code portant ce nom existe déjà"
+      }
     },
     "exportTemplates": {
       "title": "Modèles QuickScript",

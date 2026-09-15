@@ -2102,6 +2102,7 @@
         "refreshSuccess": "Cache vernieuwd: {fileCount} bestanden ({contentCached} inhoud in cache opgeslagen)",
         "repository": {
           "branchLabel": "Tak",
+          "branchesTruncatedHint": "De eerste {count, number} branches worden weergegeven. Typ om de hele repository te doorzoeken.",
           "placeholder": "Selecteer een codeopslagplaats..."
         },
         "save": "Configuratie opslaan",
@@ -4319,7 +4320,7 @@
       },
       "reasons": {
         "pin": "Pin",
-        "issue": "Melding",
+        "issue": "Probleem",
         "path": "Trefwoord",
         "history": "Geschiedenis",
         "ai": "AI",
@@ -5203,7 +5204,11 @@
       "saveFailed": "Het opslaan van de repository is mislukt.",
       "namePlaceholder": "Mijn repository",
       "selectProvider": "Selecteer provider",
-      "httpWarning": "Deze URL gebruikt HTTP. Inloggegevens worden in platte tekst verzonden. Gebruik HTTPS voor beveiligde verbindingen."
+      "httpWarning": "Deze URL gebruikt HTTP. Inloggegevens worden in platte tekst verzonden. Gebruik HTTPS voor beveiligde verbindingen.",
+      "validation": {
+        "nameRequired": "Naam is vereist",
+        "nameUnique": "Er bestaat al een coderepository met deze naam"
+      }
     },
     "exportTemplates": {
       "title": "QuickScript-sjablonen",

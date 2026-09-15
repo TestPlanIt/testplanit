@@ -2102,6 +2102,7 @@
         "refreshSuccess": "快取已刷新： {fileCount} 個檔案（已快取{contentCached} 個內容）",
         "repository": {
           "branchLabel": "分支",
+          "branchesTruncatedHint": "僅顯示前 {count, number} 個分支。輸入以搜尋整個儲存庫。",
           "placeholder": "選擇一個代碼倉庫……"
         },
         "save": "儲存配置",
@@ -4319,7 +4320,7 @@
       },
       "reasons": {
         "pin": "釘選",
-        "issue": "工單",
+        "issue": "問題",
         "path": "關鍵字",
         "history": "歷史記錄",
         "ai": "AI",
@@ -5203,7 +5204,11 @@
       "saveFailed": "保存儲存庫失敗",
       "namePlaceholder": "我的倉庫",
       "selectProvider": "選擇提供者",
-      "httpWarning": "此網址使用 HTTP 協定。憑證將以明文形式發送。請使用 HTTPS 協定以確保連線安全。"
+      "httpWarning": "此網址使用 HTTP 協定。憑證將以明文形式發送。請使用 HTTPS 協定以確保連線安全。",
+      "validation": {
+        "nameRequired": "名稱為必填項目",
+        "nameUnique": "已存在一個以此名稱命名的程式碼儲存庫"
+      }
     },
     "exportTemplates": {
       "title": "QuickScript模板",

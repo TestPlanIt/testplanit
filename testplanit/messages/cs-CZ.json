@@ -2102,6 +2102,7 @@
         "refreshSuccess": "Mezipaměť obnovena: {fileCount} souborů (obsah uložen u {contentCached})",
         "repository": {
           "branchLabel": "Větev",
+          "branchesTruncatedHint": "Zobrazeno prvních {count, number} větví. Zadejte hledaný výraz pro prohledání celého repozitáře.",
           "placeholder": "Vyberte úložiště kódu..."
         },
         "save": "Uložit konfiguraci",
@@ -4319,7 +4320,7 @@
       },
       "reasons": {
         "pin": "Připnutí",
-        "issue": "Tiket",
+        "issue": "Požadavek",
         "path": "Klíčové slovo",
         "history": "Historie",
         "ai": "AI",
@@ -5203,7 +5204,11 @@
       "saveFailed": "Uložení úložiště se nezdařilo",
       "namePlaceholder": "Moje úložiště",
       "selectProvider": "Vyberte poskytovatele",
-      "httpWarning": "Tato URL adresa používá HTTP. Přihlašovací údaje budou odeslány jako prostý text. Pro zabezpečené připojení použijte HTTPS."
+      "httpWarning": "Tato URL adresa používá HTTP. Přihlašovací údaje budou odeslány jako prostý text. Pro zabezpečené připojení použijte HTTPS.",
+      "validation": {
+        "nameRequired": "Název je povinný",
+        "nameUnique": "Repozitář kódu s tímto názvem již existuje"
+      }
     },
     "exportTemplates": {
       "title": "Šablony QuickScript",

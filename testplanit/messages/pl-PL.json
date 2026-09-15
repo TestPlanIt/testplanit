@@ -2102,6 +2102,7 @@
         "refreshSuccess": "Odświeżono pamięć podręczną: {fileCount} plików (zawartość w pamięci podręcznej: {contentCached})",
         "repository": {
           "branchLabel": "Gałąź",
+          "branchesTruncatedHint": "Wyświetlono pierwsze {count, number} gałęzi. Wpisz tekst, aby przeszukać całe repozytorium.",
           "placeholder": "Wybierz repozytorium kodu..."
         },
         "save": "Zapisz konfigurację",
@@ -5203,7 +5204,11 @@
       "saveFailed": "Nie udało się zapisać repozytorium",
       "namePlaceholder": "Moje repozytorium",
       "selectProvider": "Wybierz dostawcę",
-      "httpWarning": "Ten adres URL używa protokołu HTTP. Dane uwierzytelniające zostaną wysłane w postaci zwykłego tekstu. Użyj protokołu HTTPS do bezpiecznych połączeń."
+      "httpWarning": "Ten adres URL używa protokołu HTTP. Dane uwierzytelniające zostaną wysłane w postaci zwykłego tekstu. Użyj protokołu HTTPS do bezpiecznych połączeń.",
+      "validation": {
+        "nameRequired": "Nazwa jest wymagana",
+        "nameUnique": "Repozytorium kodu o tej nazwie już istnieje"
+      }
     },
     "exportTemplates": {
       "title": "Szablony QuickScript",

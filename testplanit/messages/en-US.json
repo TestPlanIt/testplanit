@@ -2102,6 +2102,7 @@
         "refreshSuccess": "Cache refreshed: {fileCount} files ({contentCached} contents cached)",
         "repository": {
           "branchLabel": "Branch",
+          "branchesTruncatedHint": "Showing the first {count, number} branches. Type to search the whole repository.",
           "placeholder": "Select a code repository..."
         },
         "save": "Save Configuration",
@@ -4319,7 +4320,7 @@
       },
       "reasons": {
         "pin": "Pin",
-        "issue": "Ticket",
+        "issue": "Issue",
         "path": "Keyword",
         "history": "History",
         "ai": "AI",
@@ -5203,7 +5204,11 @@
       "saveFailed": "Failed to save repository",
       "namePlaceholder": "My Repository",
       "selectProvider": "Select provider",
-      "httpWarning": "This URL uses HTTP. Credentials will be sent in plaintext. Use HTTPS for secure connections."
+      "httpWarning": "This URL uses HTTP. Credentials will be sent in plaintext. Use HTTPS for secure connections.",
+      "validation": {
+        "nameRequired": "Name is required",
+        "nameUnique": "A code repository with this name already exists"
+      }
     },
     "exportTemplates": {
       "title": "QuickScript Templates",

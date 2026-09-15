@@ -2102,6 +2102,7 @@
         "refreshSuccess": "Cache aggiornata: {fileCount} file ({contentCached} contenuti memorizzati nella cache)",
         "repository": {
           "branchLabel": "Ramo",
+          "branchesTruncatedHint": "Vengono mostrati i primi {count, number} branch. Digita per cercare in tutto il repository.",
           "placeholder": "Seleziona un repository di codice..."
         },
         "save": "Salva configurazione",
@@ -5203,7 +5204,11 @@
       "saveFailed": "Impossibile salvare il repository",
       "namePlaceholder": "Il mio repository",
       "selectProvider": "Seleziona i fornitori",
-      "httpWarning": "Questo URL utilizza HTTP. Le credenziali verranno inviate in chiaro. Per connessioni sicure, utilizzare HTTPS."
+      "httpWarning": "Questo URL utilizza HTTP. Le credenziali verranno inviate in chiaro. Per connessioni sicure, utilizzare HTTPS.",
+      "validation": {
+        "nameRequired": "Il nome è obbligatorio",
+        "nameUnique": "Esiste già un repository di codice con questo nome"
+      }
     },
     "exportTemplates": {
       "title": "Modelli QuickScript",

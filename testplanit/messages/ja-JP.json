@@ -2102,6 +2102,7 @@
         "refreshSuccess": "キャッシュが更新されました: {fileCount} 個のファイル（{contentCached} 個のコンテンツがキャッシュされました）",
         "repository": {
           "branchLabel": "ブランチ",
+          "branchesTruncatedHint": "最初の{count, number}件のブランチを表示しています。リポジトリ全体を検索するには入力してください。",
           "placeholder": "コードリポジトリを選択してください…"
         },
         "save": "設定を保存",
@@ -4319,7 +4320,7 @@
       },
       "reasons": {
         "pin": "ピン",
-        "issue": "チケット",
+        "issue": "問題",
         "path": "キーワード",
         "history": "履歴",
         "ai": "AI",
@@ -5203,7 +5204,11 @@
       "saveFailed": "リポジトリの保存に失敗しました",
       "namePlaceholder": "私のリポジトリ",
       "selectProvider": "プロバイダーを選択してください",
-      "httpWarning": "このURLはHTTPを使用しています。認証情報は平文で送信されます。安全な接続にはHTTPSを使用してください。"
+      "httpWarning": "このURLはHTTPを使用しています。認証情報は平文で送信されます。安全な接続にはHTTPSを使用してください。",
+      "validation": {
+        "nameRequired": "名前は必須です",
+        "nameUnique": "この名前のコードリポジトリは既に存在します"
+      }
     },
     "exportTemplates": {
       "title": "QuickScriptテンプレート",

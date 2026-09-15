@@ -2102,6 +2102,7 @@
         "refreshSuccess": "Cache aktualisiert: {fileCount} Dateien ({contentCached} Inhalt zwischengespeichert)",
         "repository": {
           "branchLabel": "Zweig",
+          "branchesTruncatedHint": "Es werden die ersten {count, number} Branches angezeigt. Tippen Sie, um das gesamte Repository zu durchsuchen.",
           "placeholder": "Wählen Sie ein Code-Repository aus..."
         },
         "save": "Konfiguration speichern",
@@ -4319,7 +4320,7 @@
       },
       "reasons": {
         "pin": "Pin",
-        "issue": "Vorgang",
+        "issue": "Problem",
         "path": "Stichwort",
         "history": "Verlauf",
         "ai": "KI",
@@ -5203,7 +5204,11 @@
       "saveFailed": "Repository konnte nicht gespeichert werden",
       "namePlaceholder": "Mein Repository",
       "selectProvider": "Anbieter auswählen",
-      "httpWarning": "Diese URL verwendet HTTP. Anmeldeinformationen werden unverschlüsselt übertragen. Verwenden Sie HTTPS für sichere Verbindungen."
+      "httpWarning": "Diese URL verwendet HTTP. Anmeldeinformationen werden unverschlüsselt übertragen. Verwenden Sie HTTPS für sichere Verbindungen.",
+      "validation": {
+        "nameRequired": "Name ist erforderlich",
+        "nameUnique": "Ein Code-Repository mit diesem Namen existiert bereits"
+      }
     },
     "exportTemplates": {
       "title": "QuickScript-Vorlagen",

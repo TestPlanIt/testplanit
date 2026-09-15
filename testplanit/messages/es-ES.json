@@ -2102,6 +2102,7 @@
         "refreshSuccess": "Caché actualizada: {fileCount} archivos ({contentCached} contenidos almacenados en caché)",
         "repository": {
           "branchLabel": "Rama",
+          "branchesTruncatedHint": "Mostrando las primeras {count, number} ramas. Escriba para buscar en todo el repositorio.",
           "placeholder": "Seleccione un repositorio de código..."
         },
         "save": "Guardar configuración",
@@ -5203,7 +5204,11 @@
       "saveFailed": "No se pudo guardar el repositorio",
       "namePlaceholder": "Mi repositorio",
       "selectProvider": "Seleccionar proveedor",
-      "httpWarning": "Esta URL utiliza HTTP. Las credenciales se enviarán en texto plano. Utilice HTTPS para conexiones seguras."
+      "httpWarning": "Esta URL utiliza HTTP. Las credenciales se enviarán en texto plano. Utilice HTTPS para conexiones seguras.",
+      "validation": {
+        "nameRequired": "Se requiere nombre",
+        "nameUnique": "Ya existe un repositorio de código con este nombre"
+      }
     },
     "exportTemplates": {
       "title": "Plantillas de QuickScript",

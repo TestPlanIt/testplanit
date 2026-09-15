@@ -381,3 +381,96 @@ describe("useCodePins", () => {
     expect(codePinErrorKey(error)).toBe("managedTooltip");
   });
 });
+
+describe("useCodePins remove (optimistic)", () => {
+  const key = [CODE_PINS_QUERY_KEY_ROOT, 99, { staleness: true }];
+  const otherKey = [CODE_PINS_QUERY_KEY_ROOT, 99, { staleness: false }];
+  const second = { ...pin, id: 2, filePath: "src/b.ts" };
+
+  /** Unobserved cache entries must survive the test, so no gcTime: 0 here. */
+  function createRetainingClient() {
+    return new QueryClient({
+      defaultOptions: {
+        queries: { retry: false, gcTime: Infinity, staleTime: 0 },
+        mutations: { retry: false },
+      },
+    });
+  }
+
+  function seed(queryClient: QueryClient) {
+    queryClient.setQueryData(key, {
+      pins: [pin, second],
+      stalenessError: null,
+    });
+    queryClient.setQueryData(otherKey, {
+      pins: [pin, second],
+      stalenessError: null,
+    });
+  }
+
+  it("drops the pin from every cached variant before the DELETE resolves", async () => {
+    const queryClient = createRetainingClient();
+    seed(queryClient);
+    let resolveDelete: (response: Response) => void = () => {};
+    global.fetch = vi.fn((_url: string, init?: RequestInit) =>
+      init?.method === "DELETE"
+        ? new Promise<Response>((resolve) => {
+            resolveDelete = resolve;
+          })
+        : Promise.resolve(
+            jsonResponse(200, { pins: [pin, second], stalenessError: null })
+          )
+    ) as any;
+    const { result } = renderHook(() => useCodePins(99), {
+      wrapper: createWrapper(queryClient),
+    });
+    await waitFor(() => expect(result.current.pins).toHaveLength(2));
+
+    let removal: Promise<unknown> = Promise.resolve();
+    act(() => {
+      removal = result.current.remove(1);
+    });
+
+    await waitFor(() =>
+      expect(result.current.pins.map((p) => p.id)).toEqual([2])
+    );
+    expect(
+      (queryClient.getQueryData(otherKey) as any).pins.map((p: any) => p.id)
+    ).toEqual([2]);
+
+    resolveDelete(jsonResponse(200, { ok: true }));
+    await act(async () => {
+      await removal;
+    });
+    expect(result.current.pins.map((p) => p.id)).toEqual([2]);
+  });
+
+  it("puts the pin back when the server refuses", async () => {
+    const queryClient = createRetainingClient();
+    seed(queryClient);
+    global.fetch = vi.fn((_url: string, init?: RequestInit) =>
+      Promise.resolve(
+        init?.method === "DELETE"
+          ? jsonResponse(409, { error: "managed", code: "managed" })
+          : jsonResponse(200, { pins: [pin, second], stalenessError: null })
+      )
+    ) as any;
+    const { result } = renderHook(() => useCodePins(99), {
+      wrapper: createWrapper(queryClient),
+    });
+    await waitFor(() => expect(result.current.pins).toHaveLength(2));
+
+    await act(async () => {
+      await expect(result.current.remove(1)).rejects.toBeInstanceOf(
+        CodePinRequestError
+      );
+    });
+
+    await waitFor(() =>
+      expect(result.current.pins.map((p) => p.id)).toEqual([1, 2])
+    );
+    expect(
+      (queryClient.getQueryData(otherKey) as any).pins.map((p: any) => p.id)
+    ).toEqual([1, 2]);
+  });
+});

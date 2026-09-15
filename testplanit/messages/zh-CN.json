@@ -2102,6 +2102,7 @@
         "refreshSuccess": "缓存已刷新：{fileCount} 个文件（已缓存 {contentCached} 个内容）",
         "repository": {
           "branchLabel": "分支",
+          "branchesTruncatedHint": "仅显示前 {count, number} 个分支。输入以搜索整个代码仓库。",
           "placeholder": "选择一个代码仓库……"
         },
         "save": "保存配置",
@@ -4319,7 +4320,7 @@
       },
       "reasons": {
         "pin": "标记",
-        "issue": "工单",
+        "issue": "问题",
         "path": "关键词",
         "history": "历史记录",
         "ai": "AI",
@@ -5203,7 +5204,11 @@
       "saveFailed": "保存存储库失败",
       "namePlaceholder": "我的仓库",
       "selectProvider": "选择提供商",
-      "httpWarning": "此网址使用 HTTP 协议。凭据将以明文形式发送。请使用 HTTPS 协议以确保连接安全。"
+      "httpWarning": "此网址使用 HTTP 协议。凭据将以明文形式发送。请使用 HTTPS 协议以确保连接安全。",
+      "validation": {
+        "nameRequired": "姓名为必填项",
+        "nameUnique": "已存在一个同名的代码仓库"
+      }
     },
     "exportTemplates": {
       "title": "QuickScript模板",
