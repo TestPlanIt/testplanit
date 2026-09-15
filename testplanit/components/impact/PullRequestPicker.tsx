@@ -103,6 +103,8 @@ export function PullRequestPicker({
   const t = useTranslations("runs.impact");
   const tGlobal = useTranslations();
   const [state, setState] = useState<PullRequestStateFilter>("all");
+  /** What the provider said when the last listing failed, shown under the picker. */
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
 
   const fetchOptions = useCallback(
     async (search: string, page: number, pageSize: number) => {
@@ -117,7 +119,24 @@ export function PullRequestPicker({
         onUnsupported?.();
         return { results: [], total: 0 };
       }
-      if (!response.ok) throw new Error("Failed to load pull requests");
+      if (!response.ok) {
+        // The route forwards the provider's own message (a missing token
+        // scope, for one); a bare "failed" would hide the fix.
+        const body = (await response.json().catch(() => ({}))) as {
+          error?: unknown;
+        };
+        const detail =
+          typeof body.error === "string" && body.error.trim()
+            ? body.error.trim()
+            : null;
+        setErrorDetail(detail);
+        throw new Error(
+          detail
+            ? `Failed to load pull requests: ${detail}`
+            : "Failed to load pull requests"
+        );
+      }
+      setErrorDetail(null);
       const data = (await response.json()) as PullRequestsResponse;
       const results = data.pullRequests.slice(0, pageSize);
       return {
@@ -204,6 +223,14 @@ export function PullRequestPicker({
           </button>
         )}
       />
+      {errorDetail && (
+        <p
+          className="break-words text-xs text-destructive"
+          data-testid="impact-pull-request-error"
+        >
+          {errorDetail}
+        </p>
+      )}
     </div>
   );
 }

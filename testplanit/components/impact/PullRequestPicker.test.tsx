@@ -193,13 +193,44 @@ describe("PullRequestPicker", () => {
     expect(result).toEqual({ results: [], total: 0 });
   });
 
-  it("throws on any other failure, so the combobox can show its error state", async () => {
-    mockFetch.mockResolvedValue(jsonResponse({ error: "boom" }, 502));
+  it("throws on any other failure and shows the provider's reason under the picker", async () => {
+    mockFetch.mockResolvedValue(
+      jsonResponse(
+        { error: "HTTP 403 Forbidden: credentials lack read:pullrequest" },
+        502
+      )
+    );
     renderPicker();
 
     await expect(comboboxProps.fetchOptions("", 0, 50)).rejects.toThrow(
-      /pull requests/i
+      /pull requests: HTTP 403 Forbidden/
     );
+    await waitFor(() =>
+      expect(screen.getByTestId("impact-pull-request-error")).toHaveTextContent(
+        "credentials lack read:pullrequest"
+      )
+    );
+
+    // A later success clears it.
+    mockFetch.mockResolvedValue(
+      jsonResponse({ pullRequests: [makePr(1)], hasMore: false })
+    );
+    await comboboxProps.fetchOptions("", 0, 50);
+    await waitFor(() =>
+      expect(
+        screen.queryByTestId("impact-pull-request-error")
+      ).not.toBeInTheDocument()
+    );
+  });
+
+  it("still throws a generic message when the failure carries no reason", async () => {
+    mockFetch.mockResolvedValue(jsonResponse({}, 500));
+    renderPicker();
+
+    await expect(comboboxProps.fetchOptions("", 0, 50)).rejects.toThrow(
+      /^Failed to load pull requests$/
+    );
+    expect(screen.queryByTestId("impact-pull-request-error")).toBeNull();
   });
 
   it("fetches with the new state after the filter changes", async () => {
