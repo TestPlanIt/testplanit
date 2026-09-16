@@ -14,20 +14,23 @@ Selecting a test case in the [repository](./repository.md) opens these details i
 
 The main section displays key details about the test case:
 
-<img src="/img/screenshots/user-guide/projects/repository/case-details-view.png" alt="Test Case Details View" />
+<img
+  src="/img/screenshots/user-guide/projects/repository/case-details-view.png"
+  alt="Test Case Details View"
+/>
 
-*   **Title:** The name of the test case.
-*   **Description:** Detailed steps or information about the test case. This field supports Markdown for rich text formatting.
-*   **Repository:** The repository this case belongs to.
-*   **Folder:** The specific folder within the repository where the case resides (if applicable). While editing, this becomes a searchable picker in place of the breadcrumb — type to narrow a large folder tree, or browse it with the hierarchy indented as it appears in the repository.
-*   **Template:** The template used for this test case, defining its custom fields.
-*   **Estimate:** The manually set estimated time (in seconds) required to execute the test case. See [Duration Display](./#duration-display) below for formatting.
-*   **Forecast:** An automatically calculated prediction (in seconds) of how long the test case will take to execute. See [Forecast Calculation](./#forecast-calculation) below for details.
-*   **Priority:** The priority level assigned to the test case.
-*   **Tags:** Any tags associated with the test case for organization and filtering.
-*   **Created:** Timestamp indicating when the test case was created.
-*   **Updated:** Timestamp indicating the last time the test case was modified.
-*   **Custom Fields:** Any additional fields defined by the selected template will be displayed here.
+- **Title:** The name of the test case.
+- **Description:** Detailed steps or information about the test case. This field supports Markdown for rich text formatting.
+- **Repository:** The repository this case belongs to.
+- **Folder:** The specific folder within the repository where the case resides (if applicable). While editing, this becomes a searchable picker in place of the breadcrumb — type to narrow a large folder tree, or browse it with the hierarchy indented as it appears in the repository.
+- **Template:** The template used for this test case, defining its custom fields.
+- **Estimate:** The manually set estimated time (in seconds) required to execute the test case. See [Duration Display](./#duration-display) below for formatting.
+- **Forecast:** An automatically calculated prediction (in seconds) of how long the test case will take to execute. See [Forecast Calculation](./#forecast-calculation) below for details.
+- **Priority:** The priority level assigned to the test case.
+- **Tags:** Any tags associated with the test case for organization and filtering.
+- **Created:** Timestamp indicating when the test case was created.
+- **Updated:** Timestamp indicating the last time the test case was modified.
+- **Custom Fields:** Any additional fields defined by the selected template will be displayed here.
 
 ## Editing and Auto-Save
 
@@ -43,10 +46,10 @@ Both the `Estimate` and `Forecast` fields store time in seconds but are displaye
 
 The `Forecast` value provides an automated prediction of the test case's execution time. It is distinct from the manually entered `Estimate`.
 
-*   **Calculation:** The forecast is calculated by averaging the `elapsed` time recorded in all associated **Test Run Results** for this specific test case. Results with `null` or `0` elapsed time are excluded from the average.
-*   **Updates:** This calculation is performed automatically by a background job that runs once daily (typically overnight).
-*   **Read-Only:** The forecast value is system-generated and cannot be edited directly by users. It serves as a data-driven insight into expected execution duration based on historical performance.
-*   **Display:** It is shown on the Test Case Details page and can be added as a column in the main [Repository View](./repository.md).
+- **Calculation:** The forecast is calculated by averaging the `elapsed` time recorded in all associated **Test Run Results** for this specific test case. Results with `null` or `0` elapsed time are excluded from the average.
+- **Updates:** This calculation is performed automatically by a background job that runs once daily (typically overnight).
+- **Read-Only:** The forecast value is system-generated and cannot be edited directly by users. It serves as a data-driven insight into expected execution duration based on historical performance.
+- **Display:** It is shown on the Test Case Details page and can be added as a column in the main [Repository View](./repository.md).
 
 ## Test Result History
 
@@ -54,8 +57,8 @@ Below the case information, the **Test Result History** panel lists every result
 
 The panel header offers two actions:
 
-*   **Elapsed time report** (line-graph icon): opens the [Report Builder](./reports/report-builder.md) pre-loaded with a **Test Execution** report for this case — **Date** and **Test Case** dimensions, the **Avg. Elapsed Time** metric, and the Test Case filter set to the current case — charting how the case's execution time trends over time. Shown only to users whose role grants **Reporting** permissions.
-*   **Add to Test Run**: adds the case to an existing open test run in the project. The picker lists open runs that don't already contain the case; composition-locked runs reject the add. Requires **Test Runs** Add/Edit permission and is unavailable for automated-source cases.
+- **Elapsed time report** (line-graph icon): opens the [Report Builder](./reports/report-builder.md) pre-loaded with a **Test Execution** report for this case — **Date** and **Test Case** dimensions, the **Avg. Elapsed Time** metric, and the Test Case filter set to the current case — charting how the case's execution time trends over time. Shown only to users whose role grants **Reporting** permissions.
+- **Add to Test Run**: adds the case to an existing open test run in the project. The picker lists open runs that don't already contain the case; composition-locked runs reject the add. Requires **Test Runs** Add/Edit permission and is unavailable for automated-source cases.
 
 When the header is too narrow for labeled buttons (for example in the docked side panel), the actions collapse into a single **⋮** actions menu, with **Add to Test Run** as a submenu inside it.
 
@@ -63,17 +66,17 @@ When the header is too narrow for labeled buttons (for example in the docked sid
 
 When the project has [Impact Analysis](../impact.md) enabled and an application repository connected, a **Code Pins** panel follows the result history. It lists the code this case covers — a change inside a pinned block pulls the case into an analysis with the **Pin** reason. The panel header names the connected repository, and its branch when one is configured, and offers **Add pin**. When the project connects several repositories the header counts them instead, and each pin's row names its **Repository**.
 
-Each pin is a row with its **File** and note, its **Location** (a line range such as `L12–L40`, a symbol name, a glob pattern, or **Whole file**), its **Kind**, and its **Source** — **Manual**, **AI**, **Annotation**, **Map file**, or **Ticket** (derived from a commit that named a ticket the case is linked to). Hovering the location names the commit the pin is anchored at. A pin whose file, lines, or symbol can no longer be found at the branch tip carries a **Stale** badge with **Re-anchor** and **Dismiss** actions. Pins added here can be edited, or removed after a confirmation; pins that come from the repository (**Annotation** and **Map file**) have both actions disabled and are edited in the repository itself.
+Each pin is a row with its **File** and note, its **Location** (a line range such as `L12–L40`, a symbol name, a glob pattern, or **Whole file**), its **Kind**, and its **Source** — **Manual**, **AI**, **Annotation**, **Map file**, or **Issue** (derived from a commit that named an issue the case is linked to; the issues appear as chips under the file path). Hovering the location names the commit the pin is anchored at, and the columns can be resized by dragging their edges. A pin whose file, lines, or symbol can no longer be found at the branch tip carries a **Stale** badge with **Re-anchor** and **Dismiss** actions under its path. Pins added here can be edited, or removed after a confirmation, which takes effect at once; pins that come from the repository (**Annotation** and **Map file**) have both actions disabled and are edited in the repository itself.
 
 **Add pin** opens the **Pin this case to code** dialog:
 
-*   **Pin to:** choose **Whole file**, **Lines**, **Symbol**, or **Glob pattern**.
-*   **Repository:** shown only when the project connects more than one repository — pick the one the file lives in.
-*   **File:** for the first three kinds, pick the file from the repository's cached file list (type to filter). If no list is cached yet, a project admin needs to refresh the repository cache; with caching turned off, files are listed live from the provider.
-*   **Lines:** the file opens with numbered lines — click a line number to start the range and shift-click another to end it, or type the **Start line** and **End line**. Files too large to display accept line numbers only.
-*   **Symbol:** pick from the declarations found in the file, or type a name the list does not offer.
-*   **Glob pattern:** type a pattern such as `src/payments/**`; a live count shows how many cached files match.
-*   **Note:** optional text explaining why this case covers the code.
+- **Pin to:** choose **Whole file**, **Lines**, **Symbol**, or **Glob pattern**.
+- **Repository:** shown only when the project connects more than one repository — pick the one the file lives in.
+- **File:** for the first three kinds, pick the file from the repository's cached file list (type to filter). If no list is cached yet, a project admin needs to refresh the repository cache; with caching turned off, files are listed live from the provider.
+- **Lines:** the file opens with numbered lines — click a line number to start the range and shift-click another to end it, or type the **Start line** and **End line**. Files too large to display accept line numbers only.
+- **Symbol:** pick from the declarations found in the file, or type a name the list does not offer.
+- **Glob pattern:** type a pattern such as `src/payments/**`; a live count shows how many cached files match.
+- **Note:** optional text explaining why this case covers the code.
 
 Pins are anchored at the current tip of the configured branch. **Edit pin** reopens the dialog with the kind and file fixed, so a pin's range, symbol, pattern, or note can change but its target file cannot. The same panel appears read-only when the case is opened from within a test run. See [Code Pins](../impact.md#code-pins) for the kinds, staleness, and repository markers in detail.
 
@@ -81,11 +84,14 @@ Pins are anchored at the current tip of the configured branch. **Edit pin** reop
 
 Choose a version from the Versions menu. The **Versions** view shows the history of changes made to this test case. Each entry represents a saved version, allowing you to track modifications over time.
 
-<img src="/img/screenshots/user-guide/projects/repository/case-details-versions.png" alt="Test Case Versions View" />
+<img
+  src="/img/screenshots/user-guide/projects/repository/case-details-versions.png"
+  alt="Test Case Versions View"
+/>
 
-*   **Timestamp:** When the version was saved.
-*   **Author:** The user who made the change.
-*   **Changes:** A summary or link to view the specific differences between versions (details depend on implementation).
+- **Timestamp:** When the version was saved.
+- **Author:** The user who made the change.
+- **Changes:** A summary or link to view the specific differences between versions (details depend on implementation).
 
 ## Activity
 

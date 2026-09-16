@@ -1,4 +1,5 @@
 import type { Job } from "bullmq";
+import { impactConfig } from "~/lib/services/impact/config";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { PinRow } from "../lib/services/impact/layers/pinLayer";
 import type {
@@ -514,6 +515,11 @@ describe("impactAnalysisWorker", () => {
     expect(result.stats.ai).toBeUndefined();
     expect(result.stats.searchMode).toBe("db");
     expect(result.stats.repositoryTotalCount).toBe(2);
+    // The tier cut-offs travel with the result so the UI can quote them.
+    expect(result.stats.thresholds).toEqual({
+      affected: impactConfig.affectedThreshold,
+      min: impactConfig.minScore,
+    });
     expect(result.diff.files.map((f) => f.path)).toEqual([
       LOGIN_PATH,
       CHARGE_PATH,

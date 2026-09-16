@@ -36,7 +36,7 @@ Authentication is per-repository (token-based, or email + API token for Bitbucke
 ## Registering a repository
 
 1. Click **Add** (or **Add Repository** from the empty state).
-2. Enter a unique **Name** and choose a **Provider**.
+2. Enter a unique **Name** and choose a **Provider**. A name another repository already uses is refused, so a second registration can never overwrite the first.
 3. Fill in the provider-specific connection fields.
 4. Click **Test Connection** to verify the credentials and target. A green **Connection successful** confirms the repo is reachable.
 5. Save the repository.

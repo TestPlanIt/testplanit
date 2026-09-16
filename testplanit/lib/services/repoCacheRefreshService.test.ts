@@ -175,6 +175,32 @@ describe("refreshRepoCache", () => {
     );
   });
 
+  it("decrypts stored repository credentials before building the adapter", async () => {
+    process.env.ENCRYPTION_KEY = "test-encryption-key-for-testing-purposes";
+    const { encrypt } = await import("@/utils/encryption");
+    db = makeDb(
+      makeConfig({
+        repository: {
+          provider: "github",
+          settings: { owner: "o", repo: "r" },
+          credentials: {
+            encrypted: await encrypt(
+              JSON.stringify({ personalAccessToken: "ghp_secret" })
+            ),
+          },
+        },
+      })
+    );
+
+    await refreshRepoCache(5, db);
+
+    expect(createGitRepoAdapter).toHaveBeenCalledWith(
+      "github",
+      { personalAccessToken: "ghp_secret" },
+      { owner: "o", repo: "r" }
+    );
+  });
+
   it("throws when the config does not exist", async () => {
     db = makeDb(null);
 
