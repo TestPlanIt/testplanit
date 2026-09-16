@@ -2360,7 +2360,12 @@ export default function TestRunPage() {
                                 {t("common.ui.hybridRunHint")}
                               </p>
                             </div>
-                            <PaginationProvider>
+                            {/* The manual case table above owns `page` and
+                                `pageSize`; this table pages independently. */}
+                            <PaginationProvider
+                              pageParam="resultsPage"
+                              pageSizeParam="resultsPageSize"
+                            >
                               <JunitResultsPanel
                                 t={t}
                                 projectId={projectId ? String(projectId) : ""}
