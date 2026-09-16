@@ -369,8 +369,8 @@ When SAML is enabled, administrators can configure SAML settings by clicking the
 
 The SAML specification allows the IdP to sign the assertion, the outer response, or both. TestPlanIt's defaults match what most IdPs send out of the box:
 
-| Toggle                       | Default | What it means                                                                                                          |
-| ---------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Toggle                        | Default | What it means                                                                                                          |
+| ----------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------- |
 | **Require signed assertions** | **On**  | The SAML assertion (the inner element carrying the authenticated identity) must be signed. Turning this off is unsafe. |
 | **Require signed response**   | **Off** | The outer SAML response must also be signed. Optional — TestPlanIt still validates the signature when present.         |
 
@@ -392,7 +392,7 @@ Authentication via the IdP satisfies email verification — auto-provisioned use
 Configure how SAML attributes map to TestPlanIt user fields:
 
 - **Email Attribute**: SAML attribute containing the user's email. Defaults to `email`. When the IdP sends no email attribute, TestPlanIt also accepts the email carried in the NameID (Name ID format `EmailAddress`) — this is Okta's default and works out of the box.
-- **Name Attribute**: SAML attribute containing the user's display name
+- **Name Attribute**: SAML attribute containing the user's display name. It names a user when they are provisioned, or fills in a name a user does not have yet; a name the user already has is never overwritten by a later login, so profile edits stick.
 - **Groups Attribute**: SAML attribute containing user groups (optional)
 
 ### SAML Authentication Flow
@@ -635,11 +635,13 @@ TestPlanIt supports TOTP-based two-factor authentication that can work alongside
 ### 2FA Enforcement Options
 
 #### Require 2FA for Password Logins
+
 - Requires 2FA for users signing in with email/password
 - SSO logins (Google, Apple, Microsoft, SAML, Magic Link) are not affected
 - Useful when SSO providers handle their own MFA
 
 #### Require 2FA for All Logins
+
 - Requires 2FA for all users, including SSO users
 - SSO users must set up and verify 2FA after identity provider authentication
 - Provides consistent security across all authentication methods
@@ -648,12 +650,14 @@ TestPlanIt supports TOTP-based two-factor authentication that can work alongside
 ### SSO and Personal 2FA
 
 When **Force 2FA for All Logins** is disabled:
+
 - Users can optionally enable personal 2FA on their accounts
 - Personal 2FA only applies to password-based logins
 - SSO logins bypass personal 2FA settings
 - A notice is displayed on user profiles to inform users of this behavior
 
 When **Force 2FA for All Logins** is enabled:
+
 - All users must complete 2FA regardless of login method
 - Personal 2FA settings are enforced for SSO logins
 
