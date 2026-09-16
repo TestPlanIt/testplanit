@@ -428,7 +428,7 @@ const FieldChipsRow = ({ fields, expanded, onToggle }) => {
 };
 
 // Test case row component
-const TestCaseRow = ({ testCase, onOpen }) => {
+const TestCaseRow = ({ testCase, onOpen, onOpenRun }) => {
   const [expanded, setExpanded] = useState(false);
   // A deleted case is only listed because it still has results; the row
   // exists to keep that history with the issue, so it is rendered muted, its
@@ -607,23 +607,11 @@ const TestCaseRow = ({ testCase, onOpen }) => {
                             <button
                               className="truncate font-medium text-primary hover:text-primary/80 hover:underline text-left min-w-0"
                               title={result.testRunName}
-                              onClick={async () => {
-                                if (!instanceUrl) return;
-                                const url = `${instanceUrl}/projects/runs/${testCase.projectId}/${result.testRunId}?selectedCase=${testCase.id}&view=status`;
-                                console.log('Opening test run URL:', url);
-                                try {
-                                  await router.open(url);
-                                  console.log('Successfully opened test run via Forge router.open()');
-                                } catch (routerError) {
-                                  console.log('Forge router.open() failed, trying router.navigate():', routerError);
-                                  try {
-                                    await router.navigate(url);
-                                    console.log('Successfully navigated via Forge router.navigate()');
-                                  } catch (navigateError) {
-                                    console.log('Forge router.navigate() failed:', navigateError);
-                                    window.location.href = url;
-                                  }
-                                }
+                              onClick={(e) => {
+                                // The instance URL lives in the panel, not this
+                                // row, so the panel builds and opens the link.
+                                e.stopPropagation();
+                                onOpenRun?.(result.testRunId, testCase.projectId, testCase.id);
                               }}
                             >
                               {result.testRunName}
@@ -2241,17 +2229,21 @@ const App = () => {
     }
   };
 
-  const openTestRunUrl = async (testRunId, projectId) => {
+  const openTestRunUrl = async (testRunId, projectId, testCaseId) => {
     try {
       if (!instanceUrl) {
         console.error('Instance URL not configured');
         return;
       }
 
-      // Use locale-neutral URLs - let TestPlanit middleware handle locale detection
-      const url = projectId
+      // Use locale-neutral URLs - let TestPlanit middleware handle locale detection.
+      // With a case id, the run opens on that case's status view.
+      const runUrl = projectId
         ? `${instanceUrl}/projects/runs/${projectId}/${testRunId}`
         : `${instanceUrl}/test-runs/${testRunId}`;
+      const url = testCaseId
+        ? `${runUrl}?selectedCase=${testCaseId}&view=status`
+        : runUrl;
 
       console.log('Opening test run URL:', url);
 
@@ -2667,6 +2659,7 @@ const App = () => {
                   key={testCase.id || index}
                   testCase={testCase}
                   onOpen={openTestCaseUrl}
+                  onOpenRun={openTestRunUrl}
                 />
               ))}
             </div>
