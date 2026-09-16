@@ -122,9 +122,19 @@ export const NO_FILTERS: AffectedFilters = {
   minScore: 0,
 };
 
-export function hasActiveFilters(filters: AffectedFilters): boolean {
+/** The filters the step opens with: only the minimum score, at the threshold. */
+export function defaultFilters(threshold: number): AffectedFilters {
+  return { ...NO_FILTERS, minScore: threshold };
+}
+
+export function hasActiveFilters(
+  filters: AffectedFilters,
+  defaults: AffectedFilters = NO_FILTERS
+): boolean {
   return (
-    filters.tiers.size > 0 || filters.reasons.size > 0 || filters.minScore > 0
+    filters.tiers.size > 0 ||
+    filters.reasons.size > 0 ||
+    filters.minScore !== defaults.minScore
   );
 }
 
@@ -255,10 +265,13 @@ export function AffectedTestsStep({
   const tDuplicates = useTranslations("repository.duplicates");
   const locale = useLocale();
   const [expanded, setExpanded] = useState<Set<number>>(() => new Set());
-  const [filters, setFilters] = useState<AffectedFilters>(NO_FILTERS);
+  const threshold = affectedThresholdOf(result, cases);
+  // The list opens showing what starts selected: the cases at or above the
+  // affected threshold. Lowering the score reveals the rest.
+  const initialFilters = useMemo(() => defaultFilters(threshold), [threshold]);
+  const [filters, setFilters] = useState<AffectedFilters>(initialFilters);
   const [sort, setSort] = useState<SortConfig>(DEFAULT_SORT);
 
-  const threshold = affectedThresholdOf(result, cases);
   const selected = useMemo(() => new Set(selectedCaseIds), [selectedCaseIds]);
   const warnings = result?.warnings ?? [];
   const stalePins = result?.stalePins ?? [];
@@ -801,12 +814,12 @@ export function AffectedTestsStep({
             >
               {t("affected.deselectShown", { count: shownSelectedCount })}
             </Button>
-            {hasActiveFilters(filters) && (
+            {hasActiveFilters(filters, initialFilters) && (
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                onClick={() => setFilters(NO_FILTERS)}
+                onClick={() => setFilters(initialFilters)}
                 data-testid="impact-clear-filters"
               >
                 {tRuns("junitFilters.clear")}

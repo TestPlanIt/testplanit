@@ -4303,8 +4303,8 @@
         "reused": "重複使用最近對相同提交的分析。"
       },
       "affected": {
-        "selectedOf": "已選擇 {total, number} 個測試案例中的 {selected, number} 個",
-        "thresholdHint": "得分達 {threshold, number} 或更高的測試預設會被選取。每個測試都會顯示其被選取的原因。",
+        "selectedOf": "已選取 {total, number} 個受影響測試案例中的 {selected, number} 個",
+        "thresholdHint": "分數達到 {threshold, number} 或以上的測試會預設選取並顯示；降低最低分數即可查看其餘測試。每個測試都會顯示其被選取的原因。",
         "shownCount": "顯示 {total, number} 個中的 {shown, number} 個",
         "minScore": "最低分數",
         "selectShown": "選擇已顯示項目（{count, number}）",

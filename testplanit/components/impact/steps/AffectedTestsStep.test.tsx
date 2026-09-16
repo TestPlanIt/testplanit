@@ -83,6 +83,17 @@ const cases = [
 
 const config = { id: 5, repositoryId: 9, branch: "main" } as any;
 
+/** A result whose recorded affected threshold is `affected`. */
+function resultWithThreshold(affected: number) {
+  return {
+    summary: "",
+    stalePins: [],
+    uncoveredFiles: [],
+    warnings: [],
+    stats: { thresholds: { affected, min: 0 } },
+  };
+}
+
 function renderStep(
   over: Partial<React.ComponentProps<typeof AffectedTestsStep>> = {}
 ) {
@@ -92,7 +103,7 @@ function renderStep(
       projectId={7}
       config={config}
       cases={cases}
-      result={null}
+      result={resultWithThreshold(0)}
       selectedCaseIds={[1, 2]}
       onToggleCase={vi.fn()}
       onSetSelection={onSetSelection}
@@ -203,7 +214,7 @@ describe("affectedThresholdOf", () => {
 
 describe("AffectedTestsStep", () => {
   it("counts the selection in the header and names the threshold", () => {
-    renderStep();
+    renderStep({ result: null });
 
     expect(screen.getByTestId("impact-affected-title")).toHaveTextContent(
       'runs.impact.affected.selectedOf:{"selected":2,"total":3}'
@@ -211,6 +222,22 @@ describe("AffectedTestsStep", () => {
     expect(
       screen.getByText(/affected\.thresholdHint:\{"threshold":60\}/)
     ).toBeInTheDocument();
+  });
+
+  it("opens with the minimum score at the threshold, showing what starts selected", () => {
+    renderStep({ result: null });
+
+    expect(
+      screen.getByTestId("impact-filter-min-score-value")
+    ).toHaveTextContent("60");
+    expect(screen.getByTestId("impact-recommendation-1")).toBeInTheDocument();
+    expect(screen.getByTestId("impact-recommendation-2")).toBeInTheDocument();
+    expect(screen.queryByTestId("impact-recommendation-3")).toBeNull();
+    expect(screen.getByTestId("impact-shown-count")).toHaveTextContent(
+      '{"shown":2,"total":3}'
+    );
+    // The starting view is not an active filter.
+    expect(screen.queryByTestId("impact-clear-filters")).toBeNull();
   });
 
   it("lists every case sorted by score with tier tooltips", () => {

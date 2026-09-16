@@ -4303,8 +4303,8 @@
         "reused": "Znovu použita nedávná analýza stejných commitů."
       },
       "affected": {
-        "selectedOf": "Vybráno {selected, number} z {total, number} testovacích případů",
-        "thresholdHint": "Testy, které dosáhly skóre {threshold, number} nebo vyšší, jsou na začátku vybrané. U každého testu je uvedeno, proč byl vybrán.",
+        "selectedOf": "Vybráno {selected, number} z {total, number} ovlivněných testovacích případů",
+        "thresholdHint": "Testy, které dosáhly skóre {threshold, number} nebo vyšší, jsou vybrány a zobrazeny; snižte minimální skóre pro zobrazení zbývajících. U každého testu je uvedeno, proč byl vybrán.",
         "shownCount": "Zobrazeno {shown, number} z {total, number}",
         "minScore": "Minimální skóre",
         "selectShown": "Vybrat zobrazené ({count, number})",

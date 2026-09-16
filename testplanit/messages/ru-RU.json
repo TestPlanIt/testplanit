@@ -4303,8 +4303,8 @@
         "reused": "Используется недавний анализ тех же коммитов."
       },
       "affected": {
-        "selectedOf": "Выбрано {selected, number} из {total, number} тестовых случаев",
-        "thresholdHint": "Тесты с оценкой {threshold, number} или выше изначально выбраны. Для каждого теста показано, почему он был выбран.",
+        "selectedOf": "Выбрано {selected, number} из {total, number} затронутых тестовых случаев",
+        "thresholdHint": "Тесты с оценкой {threshold, number} и выше показаны выбранными; уменьшите минимальный порог, чтобы увидеть остальные. Для каждого теста указана причина, по которой он был выбран.",
         "shownCount": "Показано {shown, number} из {total, number}",
         "minScore": "Минимальный балл",
         "selectShown": "Выбрать показанные ({count, number})",

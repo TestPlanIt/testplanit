@@ -4303,8 +4303,8 @@
         "reused": "동일한 커밋에 대한 최근 분석을 재사용합니다."
       },
       "affected": {
-        "selectedOf": "{total, number}개 중 {selected, number}개의 테스트 케이스 선택됨",
-        "thresholdHint": "{threshold, number}점 이상을 받은 테스트는 기본적으로 선택됩니다. 각 테스트마다 선택된 이유가 표시됩니다.",
+        "selectedOf": "영향을 받은 테스트 케이스 {total, number}개 중 {selected, number}개 선택됨",
+        "thresholdHint": "{threshold, number}점 이상을 받은 테스트가 선택되어 표시됩니다. 나머지를 보려면 최소 점수를 낮추세요. 모든 테스트는 선택된 이유를 보여줍니다.",
         "shownCount": "{total, number}개 중 {shown, number}개 표시 중",
         "minScore": "최소 점수",
         "selectShown": "표시된 항목 선택 ({count, number})",

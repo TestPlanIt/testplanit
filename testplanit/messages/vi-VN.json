@@ -4303,8 +4303,8 @@
         "reused": "Đang sử dụng lại một phân tích gần đây của cùng các commit."
       },
       "affected": {
-        "selectedOf": "Đã chọn {selected, number} trong số {total, number} trường hợp thử nghiệm",
-        "thresholdHint": "Các bài kiểm tra đạt điểm {threshold, number} trở lên bắt đầu được chọn. Mỗi bài kiểm tra đều hiển thị lý do được chọn.",
+        "selectedOf": "Đã chọn {selected, number} trong số {total, number} trường hợp thử nghiệm bị ảnh hưởng",
+        "thresholdHint": "Các trường hợp thử nghiệm đạt điểm {threshold, number} trở lên sẽ được chọn và hiển thị sẵn; hãy giảm điểm tối thiểu để xem phần còn lại. Mỗi trường hợp thử nghiệm đều hiển thị lý do vì sao nó được chọn.",
         "shownCount": "Hiển thị {shown, number} trong số {total, number}",
         "minScore": "Điểm tối thiểu",
         "selectShown": "Chọn mục đang hiển thị ({count, number})",

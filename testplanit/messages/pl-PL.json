@@ -4303,8 +4303,8 @@
         "reused": "Ponowne wykorzystanie niedawnej analizy tych samych commitów."
       },
       "affected": {
-        "selectedOf": "Wybrano {selected, number} z {total, number} przypadków testowych",
-        "thresholdHint": "Testy, które uzyskały wynik {threshold, number} lub wyższy, są domyślnie zaznaczone. Przy każdym teście widać, dlaczego został wybrany.",
+        "selectedOf": "Wybrano {selected, number} z {total, number} przypadków testowych, na które wpływ",
+        "thresholdHint": "Testy, które uzyskały wynik {threshold, number} lub wyższy, są domyślnie zaznaczone i wyświetlone; obniż minimalny wynik, aby zobaczyć pozostałe. Każdy test pokazuje, dlaczego został wybrany.",
         "shownCount": "Wyświetlono {shown, number} z {total, number}",
         "minScore": "Minimalny wynik",
         "selectShown": "Zaznacz widoczne ({count, number})",

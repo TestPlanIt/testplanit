@@ -4303,8 +4303,8 @@
         "reused": "Een recente analyse van dezelfde commits wordt hergebruikt."
       },
       "affected": {
-        "selectedOf": "Geselecteerd {selected, number} van {total, number} testgevallen",
-        "thresholdHint": "Tests die {threshold, number} of hoger scoorden, worden standaard geselecteerd. Elke test toont waarom deze is geselecteerd.",
+        "selectedOf": "{selected, number} van {total, number} getroffen testgevallen geselecteerd",
+        "thresholdHint": "Tests die {threshold, number} of hoger scoorden, worden standaard geselecteerd en weergegeven; verlaag de minimale score om de rest te zien. Elke test toont waarom deze werd geselecteerd.",
         "shownCount": "{shown, number} van {total, number} weergegeven",
         "minScore": "Minimumscore",
         "selectShown": "Weergegeven selecteren ({count, number})",

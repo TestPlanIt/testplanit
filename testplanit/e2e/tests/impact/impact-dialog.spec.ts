@@ -243,7 +243,7 @@ test.describe("Impact dialog", () => {
     await test.step("Review: both suggestions are pre-selected with their reasons; the uncovered file is called out", async () => {
       await expect(
         impactDialog.getByTestId("impact-affected-title")
-      ).toContainText("Selected 2 of 2 test cases");
+      ).toContainText("Selected 2 of 2 affected test cases");
       await expect(impactDialog.getByTestId("impact-summary")).toBeVisible();
 
       const pinnedRow = impactDialog.getByTestId(

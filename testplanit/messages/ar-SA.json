@@ -4303,8 +4303,8 @@
         "reused": "إعادة استخدام تحليل حديث لنفس الالتزامات."
       },
       "affected": {
-        "selectedOf": "تم تحديد {selected, number} من {total, number} حالة اختبار",
-        "thresholdHint": "تبدأ الاختبارات التي حصلت على {threshold, number} أو أعلى محددة مسبقًا. يوضح كل اختبار سبب اختياره.",
+        "selectedOf": "تم تحديد {selected, number} من {total, number} حالة اختبار متأثرة",
+        "thresholdHint": "الاختبارات التي حصلت على {threshold, number} أو أعلى تكون محددة وتظهر مسبقًا؛ قلل الحد الأدنى للنتيجة لرؤية الباقي. يوضح كل اختبار سبب اختياره.",
         "shownCount": "عرض {shown, number} من {total, number}",
         "minScore": "الحد الأدنى للنتيجة",
         "selectShown": "تحديد المعروض ({count, number})",

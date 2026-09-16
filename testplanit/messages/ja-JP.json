@@ -4303,8 +4303,8 @@
         "reused": "同じコミットの最近の分析を再利用しています。"
       },
       "affected": {
-        "selectedOf": "{total, number} 件中 {selected, number} 件のテストケースを選択しました",
-        "thresholdHint": "スコアが {threshold, number} 以上のテストは選択された状態で開始します。各テストには選択された理由が表示されます。",
+        "selectedOf": "影響を受けたテストケース {total, number} 件中 {selected, number} 件を選択済み",
+        "thresholdHint": "{threshold, number} 以上のスコアを獲得したテストは、最初から選択された状態で表示されます。残りを表示するには、最小スコアを下げてください。各テストには、選択された理由が表示されます。",
         "shownCount": "{total, number} 件中 {shown, number} 件を表示中",
         "minScore": "最小スコア",
         "selectShown": "表示中を選択 ({count, number})",

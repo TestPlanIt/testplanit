@@ -81,7 +81,7 @@ If the same two commits were analyzed within the last 24 hours, the completed an
 
 ### 4. Affected Tests
 
-The header counts the selection ("Selected 12 of 40 test cases"), and a line under it names the score at which tests start selected. The list is sorted by score, highest first; click the **Test case**, **Score**, or **Affected** header to sort by it, and drag a column edge to resize it. Each row shows:
+The header counts the selection ("Selected 12 of 40 affected test cases"), and a line under it names the score at which tests start selected. The list is sorted by score, highest first; click the **Test case**, **Score**, or **Affected** header to sort by it, and drag a column edge to resize it. Each row shows:
 
 - a checkbox — pinned and affected rows are checked to start with, related rows are not; the header checkbox checks or clears every row the filters currently show;
 - the test case name, linked to the case;
@@ -93,7 +93,7 @@ The header counts the selection ("Selected 12 of 40 test cases"), and a line und
 
 Hover a tier badge, in a row or in the filter bar, for what it means.
 
-A filter bar above the list narrows what is shown without changing what is selected: toggle one or more tiers, toggle one or more reasons (a case stays when any chosen reason selected it), and drag **Minimum score** to hide lower-scoring cases. The bar reports how many cases are showing, and **Select shown** and **Deselect shown** check or clear exactly those, leaving hidden cases as they were. **Clear filters** shows everything again.
+A filter bar above the list narrows what is shown without changing what is selected: toggle one or more tiers, toggle one or more reasons (a case stays when any chosen reason selected it), and drag **Minimum score** to change which scores are shown. It starts at the selection threshold, so the list opens showing the cases that start selected; lower it to see the rest. The bar reports how many cases are showing, and **Select shown** and **Deselect shown** check or clear exactly those, leaving hidden cases as they were. **Clear filters** returns to that starting view.
 
 Cases that are already in the run — or already selected while creating one — are left out, and a note says how many were skipped. When AI ran, a short **Summary** of the change appears above the list.
 
@@ -166,15 +166,15 @@ A pin is anchored at the current tip of the configured branch. A pin that alread
 
 ### The panel
 
-The panel's header names the connected repository — or counts them, when the project connects several, in which case each row also names its **Repository**. Each pin is a row with its **File** (and note beneath it), **Location** (`L12–L40`, the symbol, the glob pattern, or **Whole file**), **Kind**, and **Source**; hovering the location names the commit the pin is anchored at. The **Source** badge shows where the pin came from:
+The panel's header names the connected repository — or counts them, when the project connects several, in which case each row also names its **Repository**. While the pins load, the panel shows placeholder rows rather than an empty state. Each pin is a row with its **File** (and note beneath it), **Location** (`L12–L40`, the symbol, the glob pattern, or **Whole file**), **Kind**, and **Source**; hovering the location names the commit the pin is anchored at. Drag a column edge to resize it; the widths are remembered in your browser. The **Source** badge shows where the pin came from:
 
 - **Manual** — added from the test case page.
 - **AI** — suggested by an analysis rather than entered by hand.
 - **Annotation** — a comment marker in the repository (see [Repository markers](#repository-markers)).
 - **Map file** — an entry in the repository's `.testplanit/testmap.yml`.
-- **Ticket** — derived from a commit that named a ticket the case is linked to (see [Linked tickets](#linked-tickets)). The note names the ticket, and the pin is anchored at that commit.
+- **Issue** — derived from a commit that named an issue the case is linked to (see [Linked tickets](#linked-tickets)). The issues appear as chips under the file path, each opening the issue's details and tracker link, and the pin is anchored at that commit. A key whose issue is no longer linked to the case is shown as plain text instead.
 
-**Edit pin** reopens the dialog for a pin added in TestPlanIt. Its kind and file are fixed — a pin to different code is a different pin — so what can change is the line range, symbol, glob pattern, or note. **Remove** (with confirmation) deletes it.
+**Edit pin** reopens the dialog for a pin added in TestPlanIt. Its kind and file are fixed — a pin to different code is a different pin — so what can change is the line range, symbol, glob pattern, or note. **Remove** (with confirmation) deletes it; the row leaves the table at once and returns only if the server refuses.
 
 Repository-managed pins (**Annotation** and **Map file**) are edited in the repository, not in TestPlanIt: the panel shows them with both actions disabled, and they are updated or removed on the next cache refresh when the marker changes or disappears.
 

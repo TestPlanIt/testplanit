@@ -4303,8 +4303,8 @@
         "reused": "Reusing a recent analysis of the same commits."
       },
       "affected": {
-        "selectedOf": "Selected {selected, number} of {total, number} test cases",
-        "thresholdHint": "Tests that scored {threshold, number} or higher start selected. Every test shows why it was selected.",
+        "selectedOf": "Selected {selected, number} of {total, number} affected test cases",
+        "thresholdHint": "Tests that scored {threshold, number} or higher start selected and shown; lower the minimum score to see the rest. Every test shows why it was selected.",
         "shownCount": "Showing {shown, number} of {total, number}",
         "minScore": "Minimum score",
         "selectShown": "Select shown ({count, number})",

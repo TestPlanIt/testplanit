@@ -4303,8 +4303,8 @@
         "reused": "正在重复使用相同提交的最新分析。"
       },
       "affected": {
-        "selectedOf": "已选择 {total, number} 个测试用例中的 {selected, number} 个",
-        "thresholdHint": "得分为 {threshold, number} 或更高的测试默认被选中。每个测试都会显示被选中的原因。",
+        "selectedOf": "已选择 {total, number} 个受影响测试用例中的 {selected, number} 个",
+        "thresholdHint": "得分达到 {threshold, number} 或更高的测试默认被选中并显示；降低最低分数可查看其余测试。每个测试都会显示其被选中的原因。",
         "shownCount": "显示 {total, number} 中的 {shown, number}",
         "minScore": "最低分数",
         "selectShown": "选择已显示的（{count, number}）",

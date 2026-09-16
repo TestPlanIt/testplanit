@@ -4303,8 +4303,8 @@
         "reused": "Aynı commit'lerin yakın zamanda yapılmış bir analizi yeniden kullanılıyor."
       },
       "affected": {
-        "selectedOf": "{total, number} test durumundan {selected, number} tanesi seçildi",
-        "thresholdHint": "{threshold, number} veya üzeri puan alan testler seçili olarak başlar. Her test neden seçildiğini gösterir.",
+        "selectedOf": "{total, number} etkilenen test durumundan {selected, number} 'i seçildi",
+        "thresholdHint": "{threshold, number} veya üzeri puan alan testler seçili olarak başlar ve gösterilir; geri kalanını görmek için minimum puanı düşürün. Her test neden seçildiğini gösterir.",
         "shownCount": "{total, number} öğeden {shown, number} tanesi gösteriliyor",
         "minScore": "Minimum puan",
         "selectShown": "Gösterileni seç ({count, number})",
