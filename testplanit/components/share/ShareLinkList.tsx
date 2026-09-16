@@ -6,6 +6,7 @@ import { revokeShareLink } from "@/actions/share-links";
 import { DateFormatter } from "@/components/DateFormatter";
 import { EditShareLinkDialog } from "@/components/share/EditShareLinkDialog";
 import { DataTable } from "@/components/tables/DataTable";
+import { UserNameCell } from "@/components/tables/UserNameCell";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,6 +50,11 @@ interface ShareLinkListProps {
   projectId?: number; // Optional for cross-project reports
   entityType?: ShareLinkEntityType;
   showProjectColumn?: boolean;
+  /**
+   * Show who created each link. On when the list can hold several people's
+   * links (the Manage Shares pages); off for a user's own shares.
+   */
+  showCreatorColumn?: boolean;
 }
 
 type ShareRow = {
@@ -69,6 +75,7 @@ export function ShareLinkList({
   projectId,
   entityType,
   showProjectColumn = false,
+  showCreatorColumn = true,
 }: ShareLinkListProps) {
   const t = useTranslations("reports.shareDialog.shareList");
   const tCommon = useTranslations("common");
@@ -91,6 +98,11 @@ export function ShareLinkList({
   >({});
 
   const sortField = COLUMN_TO_FIELD[sortConfig.column] ?? "createdAt";
+  // The creator is a relation, so it orders by the user's name.
+  const orderBy =
+    sortConfig.column === "creator"
+      ? { createdBy: { name: sortConfig.direction } }
+      : { [sortField]: sortConfig.direction };
 
   // Fetch shares (exclude deleted)
   const {
@@ -110,9 +122,7 @@ export function ShareLinkList({
         },
       },
     },
-    orderBy: {
-      [sortField]: sortConfig.direction,
-    },
+    orderBy,
   });
 
   const { mutateAsync: updateShareLink, isPending: isRevoking } =
@@ -312,6 +322,20 @@ export function ShareLinkList({
           );
         },
       },
+      ...(showCreatorColumn
+        ? [
+            {
+              id: "creator",
+              accessorKey: "createdById",
+              header: tCommon("fields.createdBy"),
+              enableSorting: true,
+              size: 180,
+              cell: ({ row }) => (
+                <UserNameCell userId={row.original.createdById} />
+              ),
+            } satisfies ColumnDef<ShareRow>,
+          ]
+        : []),
       {
         id: "mode",
         accessorKey: "mode",
@@ -552,6 +576,7 @@ export function ShareLinkList({
     t,
     tCommon,
     showProjectColumn,
+    showCreatorColumn,
     copiedId,
     dateFormat,
     timezone,

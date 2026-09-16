@@ -21,23 +21,24 @@ Only system administrators and project administrators can open this page. Share 
 
 Each share link is listed with these columns:
 
-| Column | Description |
-| --- | --- |
-| **Title** | The share's name, linking to the shared view. Falls back to the entity type when untitled. |
-| **Mode** | Authenticated, Password Protected, or Public. |
-| **Views** | How many times the link has been opened. |
-| **Notifications** | An inline On/Off toggle for view notifications. |
-| **Created** | When the link was created. |
-| **Expires** | The expiration date, or **Never**. Expired dates are highlighted. |
-| **Status** | Active, Expired, or Revoked. |
+| Column            | Description                                                                                |
+| ----------------- | ------------------------------------------------------------------------------------------ |
+| **Title**         | The share's name, linking to the shared view. Falls back to the entity type when untitled. |
+| **Created By**    | The user who created the link, linking to their profile.                                   |
+| **Mode**          | Authenticated, Password Protected, or Public.                                              |
+| **Views**         | How many times the link has been opened.                                                   |
+| **Notifications** | An inline On/Off toggle for view notifications.                                            |
+| **Created**       | When the link was created.                                                                 |
+| **Expires**       | The expiration date, or **Never**. Expired dates are highlighted.                          |
+| **Status**        | Active, Expired, or Revoked.                                                               |
 
 ## Actions
 
 The three-dot menu on each row offers:
 
 - **Copy Link** — copy the share URL to the clipboard.
-- **Edit** *(active links)* — change the title, description, share mode, password, expiration, and view notifications.
-- **Revoke** *(active links)* — immediately disable the link. Anyone who opens it sees an error. This cannot be undone.
+- **Edit** _(active links)_ — change the title, description, share mode, password, expiration, and view notifications.
+- **Revoke** _(active links)_ — immediately disable the link. Anyone who opens it sees an error. This cannot be undone.
 - **Delete** — remove the link from the list. If it's active, it's expired immediately.
 
 You can also toggle **view notifications** directly from the Notifications column for active links.

@@ -506,7 +506,12 @@ export function ShareDialog({
           </TabsContent>
 
           <TabsContent value="list" className="mt-4">
-            <ShareLinkList projectId={projectId} entityType="REPORT" />
+            {/* A user's own shares: everyone here is the same creator. */}
+            <ShareLinkList
+              projectId={projectId}
+              entityType="REPORT"
+              showCreatorColumn={false}
+            />
           </TabsContent>
         </Tabs>
       </DialogContent>
