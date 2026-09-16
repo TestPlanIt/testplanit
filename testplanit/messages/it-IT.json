@@ -7343,6 +7343,7 @@
     }
   },
   "charts": {
+    "openInRepository": "Apri questi casi nel repository",
     "average": "Media",
     "count": "Conteggio: {count, number}",
     "percent": "Percentuale: {percent}%",

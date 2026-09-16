@@ -7343,6 +7343,7 @@
     }
   },
   "charts": {
+    "openInRepository": "在儲存庫中開啟這些案例",
     "average": "平均的",
     "count": "數： {count, number}",
     "percent": "百分比： {percent}%",

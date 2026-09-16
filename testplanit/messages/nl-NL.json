@@ -7343,6 +7343,7 @@
     }
   },
   "charts": {
+    "openInRepository": "Open deze testgevallen in de repository",
     "average": "Gemiddeld",
     "count": "Aantal: {count, number}",
     "percent": "Percentage: {percent}%",

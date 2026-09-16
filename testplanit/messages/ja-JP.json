@@ -7343,6 +7343,7 @@
     }
   },
   "charts": {
+    "openInRepository": "リポジトリでこれらのケースを開く",
     "average": "平均",
     "count": "カウント: {count, number}",
     "percent": "パーセント: {percent}%",

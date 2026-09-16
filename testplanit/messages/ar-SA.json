@@ -7343,6 +7343,7 @@
     }
   },
   "charts": {
+    "openInRepository": "افتح هذه الحالات في المستودع",
     "average": "المتوسط",
     "count": "العدد: {count, number}",
     "percent": "النسبة: {percent}%",

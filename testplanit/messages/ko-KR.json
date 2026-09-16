@@ -7343,6 +7343,7 @@
     }
   },
   "charts": {
+    "openInRepository": "저장소에서 이 케이스 열기",
     "average": "평균",
     "count": "개수: {count, number}",
     "percent": "백분율: {percent}%",

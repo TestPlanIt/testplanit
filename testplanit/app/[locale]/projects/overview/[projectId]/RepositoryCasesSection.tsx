@@ -16,7 +16,8 @@ import { LinkIcon, Maximize2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React from "react";
 import LoadingSpinner from "~/components/LoadingSpinner";
-import { Link } from "~/lib/navigation";
+import { Link, useRouter } from "~/lib/navigation";
+import { repositoryBreakdownHref } from "~/lib/repository/breakdownLinks";
 
 interface RepositoryCasesSectionProps {
   projectId: number;
@@ -29,6 +30,23 @@ const RepositoryCasesSection: React.FC<RepositoryCasesSectionProps> = ({
   const tCommon = useTranslations("common.actions");
   const tCommonShared = useTranslations("common");
   const [isChartZoomed, setIsChartZoomed] = React.useState(false);
+  const router = useRouter();
+  // Each chart segment opens the repository filtered to the cases it counts.
+  // Cases with no workflow state cannot be filtered to, so that arc is inert.
+  const getSegmentHref = React.useCallback(
+    (segment: { automated: boolean; stateId?: number | null }) =>
+      segment.stateId === null
+        ? null
+        : repositoryBreakdownHref(projectId, segment),
+    [projectId]
+  );
+  const navigateToRepository = React.useCallback(
+    (href: string) => {
+      setIsChartZoomed(false);
+      router.push(href);
+    },
+    [router]
+  );
 
   const { data: repositoryCasesBreakdown } = useClientQueries(
     schema
@@ -111,6 +129,7 @@ const RepositoryCasesSection: React.FC<RepositoryCasesSectionProps> = ({
     automated: boolean;
     count: number;
     state?: {
+      id: number;
       name: string;
       color?: { value: string } | null;
     } | null;
@@ -137,12 +156,14 @@ const RepositoryCasesSection: React.FC<RepositoryCasesSectionProps> = ({
             ? workflowStatesById.get(group.stateId)
             : undefined;
 
-        const state = stateInfo
-          ? {
-              name: stateInfo.name,
-              color: stateInfo.color ?? null,
-            }
-          : null;
+        const state =
+          stateInfo && group.stateId != null
+            ? {
+                id: group.stateId,
+                name: stateInfo.name,
+                color: stateInfo.color ?? null,
+              }
+            : null;
 
         acc.push({
           automated: Boolean(group.automated),
@@ -274,7 +295,11 @@ const RepositoryCasesSection: React.FC<RepositoryCasesSectionProps> = ({
               <span className="sr-only">{tCommon("expand")}</span>
             </Button>
           </div>
-          <ProjectOverviewSunburstChart data={repositoryCasesBreakdownData} />
+          <ProjectOverviewSunburstChart
+            data={repositoryCasesBreakdownData}
+            getSegmentHref={getSegmentHref}
+            onNavigate={navigateToRepository}
+          />
         </div>
         <Separator className="my-4 @2xl:hidden" orientation="horizontal" />
         <Separator
@@ -340,6 +365,8 @@ const RepositoryCasesSection: React.FC<RepositoryCasesSectionProps> = ({
             <ProjectOverviewSunburstChart
               data={repositoryCasesBreakdownData}
               className="h-full"
+              getSegmentHref={getSegmentHref}
+              onNavigate={navigateToRepository}
             />
           </div>
         </DialogContent>

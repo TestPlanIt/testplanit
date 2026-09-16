@@ -7343,6 +7343,7 @@
     }
   },
   "charts": {
+    "openInRepository": "Otevřít tyto případy v repozitáři",
     "average": "Průměr",
     "count": "Počet: {count, number}",
     "percent": "Procento: {percent}%",

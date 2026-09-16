@@ -7343,6 +7343,7 @@
     }
   },
   "charts": {
+    "openInRepository": "Открыть эти случаи в репозитории",
     "average": "Средний",
     "count": "Количество: {count, number}",
     "percent": "Проценты: {percent}%",

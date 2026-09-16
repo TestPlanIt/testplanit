@@ -7343,6 +7343,7 @@
     }
   },
   "charts": {
+    "openInRepository": "在测试库中打开这些用例",
     "average": "平均的",
     "count": "计数： {count, number}",
     "percent": "百分比： {percent}%",

@@ -7343,6 +7343,7 @@
     }
   },
   "charts": {
+    "openInRepository": "Diese Fälle im Repository öffnen",
     "average": "Durchschnitt",
     "count": "Anzahl: {count, number}",
     "percent": "Prozent: {percent}%",

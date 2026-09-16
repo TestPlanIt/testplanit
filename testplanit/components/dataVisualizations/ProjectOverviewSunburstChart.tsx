@@ -14,6 +14,17 @@ export interface SunburstNode {
   id?: number | string; // Optional: useful for interactions
   color?: string; // To store the color for the node
   data?: SunburstNode; // D3 often wraps original data in a 'data' property
+  /** What this arc counts, so a click can lead to those cases. */
+  segment?: SunburstSegment;
+}
+
+export interface SunburstSegment {
+  automated: boolean;
+  /**
+   * Absent on the automation ring (no state filter); null for cases with no
+   * workflow state, which no filter can single out; otherwise the state.
+   */
+  stateId?: number | null;
 }
 
 // Define the expected structure for a repository case aggregate
@@ -21,6 +32,7 @@ interface RepositoryCaseAggregate {
   automated: boolean;
   count: number;
   state?: {
+    id?: number;
     name: string;
     color?: {
       value: string;
@@ -32,11 +44,18 @@ interface ProjectOverviewSunburstChartProps {
   data: RepositoryCaseAggregate[];
   /** Container sizing override — pass `h-full` to fill a zoom dialog. */
   className?: string;
+  /**
+   * Where an arc leads; return null for an arc that has nowhere to go. With
+   * this set, arcs act as links: click or Enter navigates, a modifier click
+   * opens a new tab.
+   */
+  getSegmentHref?: (segment: SunburstSegment) => string | null;
+  onNavigate?: (href: string) => void;
 }
 
 const ProjectOverviewSunburstChart: React.FC<
   ProjectOverviewSunburstChartProps
-> = ({ data, className }) => {
+> = ({ data, className, getSegmentHref, onNavigate }) => {
   const t = useTranslations();
   const locale = useLocale();
   const svgRef = useRef<SVGSVGElement | null>(null);
@@ -89,7 +108,11 @@ const ProjectOverviewSunburstChart: React.FC<
 
         let automationNode = automationGroupMap.get(automationStatusName);
         if (!automationNode) {
-          automationNode = { name: automationStatusName, children: [] };
+          automationNode = {
+            name: automationStatusName,
+            children: [],
+            segment: { automated: caseItem.automated },
+          };
           automationGroupMap.set(automationStatusName, automationNode);
           root.children?.push(automationNode);
         }
@@ -101,7 +124,15 @@ const ProjectOverviewSunburstChart: React.FC<
         );
 
         if (!stateNode) {
-          stateNode = { name: stateName, value: 0, color: stateColor };
+          stateNode = {
+            name: stateName,
+            value: 0,
+            color: stateColor,
+            segment: {
+              automated: caseItem.automated,
+              stateId: caseItem.state?.id ?? null,
+            },
+          };
           automationNode.children?.push(stateNode);
         }
         stateNode.value = (stateNode.value || 0) + count;
@@ -191,8 +222,48 @@ const ProjectOverviewSunburstChart: React.FC<
       })
       .attr("fill-opacity", 0.8)
       .attr("d", arc)
-      .style("cursor", "pointer")
       .style("opacity", 0); // Start invisible
+
+    // An arc with somewhere to go behaves as a link: pointer, focusable,
+    // click or Enter to navigate, modifier click for a new tab. A null href
+    // (a state with no id) leaves the arc as a plain shape.
+    const hrefOf = (d: d3.HierarchyRectangularNode<SunburstNode>) =>
+      d.data.segment && getSegmentHref ? getSegmentHref(d.data.segment) : null;
+    const navigate = (
+      event: MouseEvent | KeyboardEvent,
+      d: d3.HierarchyRectangularNode<SunburstNode>
+    ) => {
+      const href = hrefOf(d);
+      if (!href) return;
+      const mouse = event as MouseEvent;
+      if (
+        mouse.metaKey ||
+        mouse.ctrlKey ||
+        mouse.shiftKey ||
+        mouse.button === 1
+      ) {
+        window.open(href, "_blank", "noopener");
+        return;
+      }
+      onNavigate?.(href);
+    };
+    path
+      .filter((d) => hrefOf(d) !== null)
+      .style("cursor", "pointer")
+      .attr("role", "link")
+      .attr("tabindex", 0)
+      .attr(
+        "aria-label",
+        (d) =>
+          `${d.data.name}, ${t("charts.count", { count: d.value || 0 })}. ${t("charts.openInRepository")}`
+      )
+      .on("click", (event, d) => navigate(event, d))
+      .on("keydown", (event: KeyboardEvent, d) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          navigate(event, d);
+        }
+      });
 
     // Add event handlers before animation
     path
@@ -206,7 +277,8 @@ const ProjectOverviewSunburstChart: React.FC<
         if (tooltipRef.current) {
           tooltipRef.current.style.display = "block";
           const count = d.value || 0;
-          tooltipRef.current.innerHTML = `${d.data.name}<br/>${t("charts.count", { count })}`;
+          const hint = hrefOf(d) ? `<br/>${t("charts.openInRepository")}` : "";
+          tooltipRef.current.innerHTML = `${d.data.name}<br/>${t("charts.count", { count })}${hint}`;
         }
       })
       .on("mousemove", (event) => {
@@ -317,7 +389,7 @@ const ProjectOverviewSunburstChart: React.FC<
           : d.data.name
       )
       .style("pointer-events", "none");
-  }, [data, width, height, t, locale]); // Removed transformDataForSunburst from dependency array
+  }, [data, width, height, t, locale, getSegmentHref, onNavigate]); // transformDataForSunburst is defined inside the effect
 
   return (
     <div ref={containerRef} className={cn("w-full h-64 relative", className)}>

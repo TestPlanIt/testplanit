@@ -7343,6 +7343,7 @@
     }
   },
   "charts": {
+    "openInRepository": "Mở các trường hợp này trong kho lưu trữ",
     "average": "Trung bình",
     "count": "Số lượng: {count, number}",
     "percent": "Phần trăm: {percent}%",

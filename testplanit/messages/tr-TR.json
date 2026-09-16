@@ -7343,6 +7343,7 @@
     }
   },
   "charts": {
+    "openInRepository": "Bu vakaları depoda aç",
     "average": "Ortalama",
     "count": "Sayı: {count, number}",
     "percent": "Yüzde: {percent}%",

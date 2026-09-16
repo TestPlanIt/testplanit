@@ -7343,6 +7343,7 @@
     }
   },
   "charts": {
+    "openInRepository": "Ouvrir ces cas dans le référentiel",
     "average": "Moyenne",
     "count": "Compte : {count, number}",
     "percent": "Pourcentage : {percent}%",

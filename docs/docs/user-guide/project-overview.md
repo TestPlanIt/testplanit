@@ -27,7 +27,7 @@ _(Icon: Milestone)_
 
 _(Icon: ListTree)_
 
-- Displays a **Test Case Breakdown** chart splitting the project's active cases by automation status and then by workflow state. Hovering a segment shows its name and case count, and the expand button beside the heading opens the chart in a larger dialog.
+- Displays a **Test Case Breakdown** chart splitting the project's active cases by automation status and then by workflow state. Hovering a segment shows its name and case count, and the expand button beside the heading opens the chart in a larger dialog. Click a segment to open the Test Case Repository filtered to exactly those cases: an automation segment filters by automation status and switches **View By** to automation, and a workflow state segment adds that state and switches **View By** to workflow state. Cases with no workflow state have no filter to match them, so their segment does not link.
 - Alongside the chart, **Latest Test Cases** lists the **latest 5 active** (not deleted or archived) Test Cases added to this project's repository.
 - Each case name links to its details page within the repository (`/projects/repository/[projectId]/[caseId]`), and any issues linked to the case appear in their own column to the right of the name.
 - Includes a link "See all [count] Test Cases" which navigates to the main Test Case Repository page for this project (`/projects/repository/[projectId]`).
