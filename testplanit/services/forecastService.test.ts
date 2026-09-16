@@ -61,6 +61,7 @@ describe("forecastService — soft-deleted cases are ignored", () => {
       });
 
       trcFindMany.mockResolvedValue([]); // no manual results, no affected runs
+      junitFindMany.mockResolvedValue([]); // no automated results either
       repoUpdate.mockResolvedValue({});
 
       await updateRepositoryCaseForecast(1, { skipTestRunUpdate: true });
@@ -83,6 +84,43 @@ describe("forecastService — soft-deleted cases are ignored", () => {
       // The soft-deleted case 2 must never be updated.
       const updatedIds = repoUpdate.mock.calls.map((c) => c[0]?.where?.id);
       expect(updatedIds).not.toContain(2);
+    });
+  });
+
+  describe("updateRepositoryCaseForecast — HYBRID cases (MANUAL source, automated results attached)", () => {
+    it("averages JUnitTestResult durations even when the case's source is MANUAL", async () => {
+      repoFindUnique.mockResolvedValue({
+        id: 1,
+        source: "MANUAL",
+        linksFrom: [],
+        linksTo: [],
+      });
+
+      repoFindMany.mockImplementation((arg: any) => {
+        if (arg?.select?.source) {
+          return Promise.resolve([{ id: 1, source: "MANUAL" }]);
+        }
+        return Promise.resolve([
+          { id: 1, forecastManual: null, forecastAutomated: null },
+        ]);
+      });
+
+      trcFindMany.mockResolvedValue([]); // no manual TestRunResults
+      junitFindMany.mockResolvedValue([{ time: 50 }, { time: 60 }]);
+      repoUpdate.mockResolvedValue({});
+
+      await updateRepositoryCaseForecast(1, { skipTestRunUpdate: true });
+
+      // JUnitTestResult must be queried for the MANUAL-source case, not skipped.
+      expect(junitFindMany).toHaveBeenCalledWith({
+        where: { repositoryCaseId: { in: [1] }, time: { gt: 0 } },
+        select: { time: true },
+      });
+
+      expect(repoUpdate).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { forecastManual: null, forecastAutomated: 55 },
+      });
     });
   });
 
