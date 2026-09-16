@@ -1,3 +1,18 @@
+## [1.1.0-beta.13](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.12...v1.1.0-beta.13) (2026-09-16)
+
+### Bug Fixes
+
+* **auth:** keep a user's display name when a SAML assertion carries a different one ([238f8ac](https://github.com/TestPlanIt/testplanit/commit/238f8acd01e13dc7542f842eb0bd35f5eb1bd415))
+* **forecast:** include automated durations for HYBRID (MANUAL-source) cases ([127b045](https://github.com/TestPlanIt/testplanit/commit/127b0457ae4dba3b999b72eab9e6863f77f58089))
+* **jira-panel:** open the test run from the expanded results ([774f264](https://github.com/TestPlanIt/testplanit/commit/774f264b2f5dadd567a3e38bac2c3ebc151073ee))
+* **runs:** stop the page size flipping between two values on hybrid run details ([a9a2c1d](https://github.com/TestPlanIt/testplanit/commit/a9a2c1d80d4c26b79b33e315bfb6f028af2f46dd))
+
+### Enhancements
+
+* **impact:** open the Affected Tests at the selection threshold and count affected cases in the header ([4a1fbd9](https://github.com/TestPlanIt/testplanit/commit/4a1fbd913948b81561295a329e1b4d94f0411940))
+* **overview:** link the Test Case Breakdown segments to the filtered repository ([273d1c9](https://github.com/TestPlanIt/testplanit/commit/273d1c9d4fc926bc7693abbd454c43fb515dd411))
+* **shares:** show who created each share link on the Manage Shares pages ([6eb778b](https://github.com/TestPlanIt/testplanit/commit/6eb778b114fa7bb0d31ddae2af13ff4db89db57e))
+
 ## [1.1.0-beta.12](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.11...v1.1.0-beta.12) (2026-09-15)
 
 ### Bug Fixes
