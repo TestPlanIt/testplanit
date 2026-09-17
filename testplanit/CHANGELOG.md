@@ -1,3 +1,9 @@
+## [1.1.0-beta.14](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.13...v1.1.0-beta.14) (2026-09-17)
+
+### Features
+
+* **roles:** add an Automated Execution permission and gate automation on results rights ([5ee88c4](https://github.com/TestPlanIt/testplanit/commit/5ee88c4ff50eeb4186c7dff0def147ab03e9f133))
+
 ## [1.1.0-beta.13](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.12...v1.1.0-beta.13) (2026-09-16)
 
 ### Bug Fixes
