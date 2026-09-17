@@ -42,13 +42,14 @@ import {
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { notFound, useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 import { Link } from "~/lib/navigation";
 import { ApplicationArea } from "~/zenstack/models";
 import { ImpactRepositoryDialog } from "./ImpactRepositoryDialog";
+import { ImpactScanButtons } from "./ImpactScanButtons";
 import {
   type CodeRepositoryOption,
   type ImpactConfigRow,
@@ -190,6 +191,13 @@ export default function ImpactSettingsPage() {
     setDialog((prev) => ({ ...prev, open: false }));
     void refetchConfigs();
   };
+
+  const refetchConfigRows = useCallback(async () => {
+    const result = await refetchConfigs();
+    return {
+      data: (result.data ?? null) as unknown as ImpactConfigRow[] | null,
+    };
+  }, [refetchConfigs]);
 
   const handleDisconnect = async () => {
     if (!disconnectTarget) return;
@@ -505,7 +513,11 @@ export default function ImpactSettingsPage() {
                             </p>
                           )}
                       </div>
-                      <div className="flex shrink-0 items-center gap-1">
+                      <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
+                        <ImpactScanButtons
+                          config={config}
+                          refetchConfigs={refetchConfigRows}
+                        />
                         <Button
                           type="button"
                           variant="ghost"
