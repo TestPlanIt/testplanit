@@ -9,7 +9,7 @@ import {
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { Radio } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { schema } from "~/zenstack/schema";
 import { ImpactDialog, type ImpactRepoConfig } from "./ImpactDialog";
 
@@ -56,6 +56,19 @@ export function ImpactButton({
     },
   });
 
+  // A stable list: the dialog keys its compare fetch on the chosen config,
+  // so a fresh array on every render would abort and restart that fetch.
+  const configs = useMemo<ImpactRepoConfig[]>(
+    () =>
+      (project?.codeRepositoryConfigs ?? []).map((row) => ({
+        id: row.id,
+        repositoryId: row.repositoryId,
+        branch: row.branch ?? null,
+        name: row.repository?.name ?? "",
+      })),
+    [project?.codeRepositoryConfigs]
+  );
+
   const handleAccept = useCallback(
     (ids: number[], info: { analysisId: number }) => {
       const merged = [...new Set([...selectedTestCases, ...ids])];
@@ -71,15 +84,6 @@ export function ImpactButton({
   if (isLoading || !project || !project.impactEnabled) {
     return null;
   }
-
-  const configs: ImpactRepoConfig[] = (project.codeRepositoryConfigs ?? []).map(
-    (row) => ({
-      id: row.id,
-      repositoryId: row.repositoryId,
-      branch: row.branch ?? null,
-      name: row.repository?.name ?? "",
-    })
-  );
 
   if (configs.length === 0) {
     return (
