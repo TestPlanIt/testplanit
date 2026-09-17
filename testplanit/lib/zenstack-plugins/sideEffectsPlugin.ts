@@ -395,10 +395,14 @@ export const sideEffectsPlugin = definePlugin(schema, {
   // Arg-rewriting business logic that must run before the write SQL.
   onQuery: async ({ model, operation, args, proceed, client }) => {
     if (model === "CodeRepository") {
+      // The client an onQuery hook receives is ZenStack's un-proxied instance:
+      // `$`-members work but model accessors (`client.codeRepository`) do not.
+      // A derived client is proxied again and shares the connection; without
+      // plugins the read also skips the policy layer and this hook itself.
       await encryptCodeRepositoryCredentials(
         operation,
         args,
-        client as unknown as CredentialReader
+        client.$unuseAll() as unknown as CredentialReader
       );
     }
 
