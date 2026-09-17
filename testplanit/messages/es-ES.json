@@ -7324,6 +7324,7 @@
       "ClosedTestRuns": "Ejecutar pruebas cerradas",
       "TestRunResults": "Resultados de la prueba",
       "TestRunResultRestrictedFields": "Prueba de Resultados Restringidos Campos",
+      "AutomatedExecution": "Ejecución Automatizada",
       "Sessions": "Sesiones",
       "SessionsRestrictedFields": "Campos restringidos de sesiones",
       "ClosedSessions": "Sesiones cerradas",
@@ -7567,7 +7568,7 @@
       "name": "## Nombre del rol\nUn nombre claro, conciso, descriptivo o palabras clave que se utilizan en todos los proyectos.\n\n- Ayuda a los miembros del equipo a encontrar rápidamente casos de prueba, ejecuciones de pruebas y sesiones.",
       "isDefault": "## Rol predeterminado\nIndica si este rol es el predeterminado para tu proyecto.\n\n- El rol predeterminado está preseleccionado para los nuevos usuarios\n- Se puede cambiar en cualquier momento",
       "permissions": {
-        "canAddEdit": "## Añadir/Editar\nIndica si este rol puede agregar y editar el área de la aplicación relacionada.",
+        "canAddEdit": "## Añadir/Editar\nIndica si este rol puede añadir y editar el área de aplicación relacionada.\n\n- **Ejecución Automatizada** otorga el derecho a iniciar, reintentar y cancelar ejecuciones automatizadas en un proveedor de CI. Registrar los resultados aún requiere **Resultados de Ejecución de Pruebas** Añadir/Editar, y iniciar una desde el repositorio también requiere **Ejecuciones de Prueba** Añadir/Editar porque crea o extiende una ejecución.",
         "canDelete": "## Cerrar\\nIndica si este rol puede cerrar el área de aplicación relacionada.",
         "canClose": "## Cerrar\nIndica si este rol puede cerrar el área de aplicación relacionada.",
         "canApprove": "## Aprobar\nIndica si este rol puede aprobar las solicitudes de revisión para el área de aplicación correspondiente. Se aplica únicamente al Repositorio de casos de prueba, Ejecuciones de prueba y Sesiones.",

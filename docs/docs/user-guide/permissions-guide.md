@@ -227,6 +227,7 @@ Permissions are granted per application area. The complete list of areas is:
 - **ClosedTestRuns** - Deleting completed or archived test runs
 - **TestRunResults** - Recording and managing results for test cases within a run (works even when the run's composition is locked)
 - **TestRunResultRestrictedFields** - Recording restricted field values on test run results, and viewing sensitive parameter values on iteration results, matrix cells, matrix exports, and the issue-prefill body when linking an external issue from a failed iteration (see [Parameterized Test Cases](./projects/parameterized-test-cases.md))
+- **AutomatedExecution** - Starting, retrying, and cancelling automated executions on a CI provider. Recording the results still requires `TestRunResults` Add/Edit; starting one from the repository also requires `TestRuns` Add/Edit because it creates or extends a run
 - **Sessions** - Creating and managing active test sessions
 - **SessionsRestrictedFields** - Recording restricted field values on test sessions
 - **ClosedSessions** - Deleting completed or archived test sessions

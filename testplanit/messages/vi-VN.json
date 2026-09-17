@@ -7324,6 +7324,7 @@
       "ClosedTestRuns": "Các lần chạy thử nghiệm đã đóng",
       "TestRunResults": "Kết quả chạy thử nghiệm",
       "TestRunResultRestrictedFields": "Kết quả chạy thử nghiệm - Các trường bị hạn chế",
+      "AutomatedExecution": "Thực thi tự động",
       "Sessions": "Phiên họp",
       "SessionsRestrictedFields": "Các trường bị hạn chế của phiên",
       "ClosedSessions": "Phiên họp kín",
@@ -7567,7 +7568,7 @@
       "name": "## Tên vai trò\nMột tên hoặc từ khóa rõ ràng, ngắn gọn, mô tả được sử dụng trong tất cả các dự án.\n\n- Giúp các thành viên nhóm nhanh chóng tìm thấy các trường hợp kiểm thử, các lần chạy thử nghiệm và các phiên liên quan.",
       "isDefault": "## Vai trò mặc định\nCho biết liệu vai trò này có phải là vai trò mặc định cho dự án của bạn hay không.\n\n- Vai trò mặc định được chọn sẵn cho người dùng mới\n- Có thể thay đổi bất cứ lúc nào",
       "permissions": {
-        "canAddEdit": "## Thêm/Chỉnh sửa\nCho biết liệu vai trò này có thể thêm và chỉnh sửa khu vực ứng dụng liên quan hay không.",
+        "canAddEdit": "## Thêm/Chỉnh sửa\nCho biết vai trò này có thể thêm và chỉnh sửa khu vực ứng dụng liên quan hay không.\n\n- **Thực thi tự động** cấp quyền bắt đầu, thử lại và hủy các lần thực thi tự động trên nhà cung cấp CI. Việc ghi lại kết quả vẫn cần quyền Thêm/Chỉnh sửa **Kết quả Test Run**, và việc bắt đầu một lần thực thi từ kho lưu trữ cũng cần quyền Thêm/Chỉnh sửa **Test Run** vì nó tạo ra hoặc mở rộng một test run.",
         "canDelete": "## Xóa\nCho biết liệu vai trò này có thể xóa khu vực ứng dụng liên quan hay không.",
         "canClose": "## Đóng\nCho biết liệu vai trò này có thể đóng khu vực ứng dụng liên quan hay không.",
         "canApprove": "## Phê duyệt\nCho biết liệu vai trò này có thể phê duyệt các yêu cầu xem xét cho khu vực ứng dụng liên quan hay không. Chỉ áp dụng cho Kho lưu trữ trường hợp thử nghiệm, Chạy thử nghiệm và Phiên.",

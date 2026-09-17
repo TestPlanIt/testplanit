@@ -38,6 +38,7 @@ const {
     "ClosedTestRuns",
     "TestRunResults",
     "TestRunResultRestrictedFields",
+    "AutomatedExecution",
     "Sessions",
     "SessionsRestrictedFields",
     "ClosedSessions",

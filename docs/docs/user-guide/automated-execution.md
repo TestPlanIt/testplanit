@@ -25,7 +25,7 @@ Then, for every CI, [Reporting results back](automated-execution/reporting-resul
 - **A way to match results to cases.** The reporters and the CLI match a result to a case by an id token in the test name (`[123]`, `C123`, `TC123`), by a `test_id` property, or by class name and name. Naming tests with the case id is the most reliable choice, and the plan tells the job the exact token to use.
 - **A TestPlanIt API token for the job**, created from the [User Profile](../api-tokens.md#creating-api-tokens) of the user the job should act as. It needs write access to the project's test runs. The token lives in your CI system's secret store; TestPlanIt never sends it.
 - **For GitHub and GitLab, a registered code repository** under **Administration → Code Repositories** with a token that can start jobs (see the provider guide for the scopes).
-- **Project administrator rights** to add targets under **Project Settings → Automated Execution**, and add/edit rights on test runs to execute one.
+- **Project administrator rights** to add targets under **Project Settings → Automated Execution**. Executing one needs the **Automated Execution** and **Test Run Results** Add/Edit permissions; executing from the repository also needs **Test Runs** Add/Edit because it creates or extends a run. See the [permissions guide](./permissions-guide.md#application-areas).
 
 ## How it works
 

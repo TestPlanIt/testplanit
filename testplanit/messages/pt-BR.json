@@ -7324,6 +7324,7 @@
       "ClosedTestRuns": "Testes fechados",
       "TestRunResults": "Resultados do teste",
       "TestRunResultRestrictedFields": "Campos restritos do resultado da execução do teste",
+      "AutomatedExecution": "Execução Automatizada",
       "Sessions": "Sessões",
       "SessionsRestrictedFields": "Campos restritos de sessão",
       "ClosedSessions": "Sessões fechadas",
@@ -7567,7 +7568,7 @@
       "name": "## Nome da função\nUm nome ou palavra(s)-chave clara(s), concisa(s) e descritiva(s) que seja(m) usada(s) em todos os projetos.\n\n- Ajuda os membros da equipe a encontrar rapidamente casos de teste, execuções de teste e sessões relacionadas.",
       "isDefault": "## Função Padrão\nIndica se esta função é a padrão para o seu projeto.\n\n- A função padrão é pré-selecionada para novos usuários.\n- Pode ser alterada a qualquer momento.",
       "permissions": {
-        "canAddEdit": "## Adicionar/Editar\nIndica se esta função pode adicionar e editar a área de aplicação relacionada.",
+        "canAddEdit": "## Adicionar/Editar\nIndica se este papel pode adicionar e editar a área de aplicação relacionada.\n\n- **Execução Automatizada** concede o direito de iniciar, repetir e cancelar execuções automatizadas em um provedor de CI. Registrar os resultados ainda requer permissão de Adicionar/Editar em **Resultados de Testes**, e iniciar uma execução a partir do repositório também requer permissão de Adicionar/Editar em **Execuções de Teste**, pois isso cria ou estende uma execução.",
         "canDelete": "## Excluir\nIndica se esta função pode excluir a área de aplicação relacionada.",
         "canClose": "## Fechar\nIndica se esta função pode fechar a área de aplicação relacionada.",
         "canApprove": "## Aprovar\nIndica se esta função pode aprovar solicitações de revisão para a área de aplicação relacionada. Aplica-se somente ao Repositório de Casos de Teste, Execuções de Teste e Sessões.",

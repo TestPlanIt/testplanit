@@ -7324,6 +7324,7 @@
       "ClosedTestRuns": "Uzavřené testovací běhy",
       "TestRunResults": "Výsledky testovacího běhu",
       "TestRunResultRestrictedFields": "Omezená pole výsledku testovacího běhu",
+      "AutomatedExecution": "Automatizované spouštění",
       "Sessions": "Relace",
       "SessionsRestrictedFields": "Omezená pole relací",
       "ClosedSessions": "Uzavřené relace",
@@ -7567,7 +7568,7 @@
       "name": "## Název role\nJasný, stručný a výstižný název nebo klíčové slovo (slova), které se používají napříč všemi projekty.\n\n- Pomáhá členům týmu rychle najít související testovací případy, testovací běhy a relace.",
       "isDefault": "## Výchozí role\nUdává, zda je tato role výchozí pro váš projekt.\n\n- Výchozí role je předvybraná pro nové uživatele\n- Lze kdykoli změnit",
       "permissions": {
-        "canAddEdit": "## Přidat/Upravit\nUdává, zda může tato role přidávat a upravovat související oblast aplikace.",
+        "canAddEdit": "## Přidat/Upravit\nUrčuje, zda tato role může přidávat a upravovat související oblast aplikace.\n\n- **Automatizované spouštění** uděluje právo spouštět, opakovat a rušit automatizovaná spuštění u CI poskytovatele. Zaznamenávání výsledků stále vyžaduje oprávnění Přidat/Upravit pro **Výsledky testovacích běhů** a spuštění z repozitáře také vyžaduje oprávnění Přidat/Upravit pro **Testovací běhy**, protože se tím vytváří nebo prodlužuje běh.",
         "canDelete": "## Smazat\nUdává, zda může tato role mazat související oblast aplikace.",
         "canClose": "## Uzavřít\nUdává, zda může tato role uzavírat související oblast aplikace.",
         "canApprove": "## Schválit\nUrčuje, zda tato role může schvalovat žádosti o revizi pro související oblast aplikace. Vztahuje se pouze na Úložiště testovacích případů, testovací běhy a relace.",

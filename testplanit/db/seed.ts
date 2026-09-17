@@ -39,6 +39,7 @@ const userPermissions: {
   [ApplicationArea.ClosedTestRuns]: { canDelete: false }, // View only closed
   [ApplicationArea.TestRunResults]: { canAddEdit: true, canDelete: true }, // Add/edit/delete results
   [ApplicationArea.TestRunResultRestrictedFields]: { canAddEdit: true }, // Add restricted results
+  [ApplicationArea.AutomatedExecution]: { canAddEdit: true }, // Trigger automated executions
   [ApplicationArea.Sessions]: {
     canAddEdit: true,
     canDelete: true,

@@ -397,12 +397,24 @@ export function TestCaseDetailsView({
   const canAddEdit = projectPermissions?.canAddEdit ?? false;
 
   // Fetch Tags permissions (ADDED)
-  // Ad-hoc automated execution needs run add/edit rights, not case rights.
+  // Ad-hoc automated execution creates or extends a run, records results on
+  // it, and spends CI on it: all three grants are required, case rights are not.
   const { permissions: testRunsPermissions } = useProjectPermissions(
     Number(projectId),
     ApplicationArea.TestRuns
   );
-  const canAddEditRuns = testRunsPermissions?.canAddEdit ?? false;
+  const { permissions: testRunResultsPermissions } = useProjectPermissions(
+    Number(projectId),
+    ApplicationArea.TestRunResults
+  );
+  const { permissions: automationPermissions } = useProjectPermissions(
+    Number(projectId),
+    ApplicationArea.AutomatedExecution
+  );
+  const canExecuteAutomation =
+    (testRunsPermissions?.canAddEdit ?? false) &&
+    (testRunResultsPermissions?.canAddEdit ?? false) &&
+    (automationPermissions?.canAddEdit ?? false);
 
   const { permissions: tagsPermissions } = useProjectPermissions(
     isValidProjectId ? numericProjectId : -1,
@@ -2501,7 +2513,7 @@ export function TestCaseDetailsView({
                             caseId={testcase.id}
                             caseTitle={testcase.name}
                             automated={Boolean(testcase.automated)}
-                            canAddEditRuns={canAddEditRuns}
+                            canExecute={canExecuteAutomation}
                             variant="menu-item"
                           />
                           <DropdownMenuItem
@@ -2584,7 +2596,7 @@ export function TestCaseDetailsView({
                         caseId={testcase.id}
                         caseTitle={testcase.name}
                         automated={Boolean(testcase.automated)}
-                        canAddEditRuns={canAddEditRuns}
+                        canExecute={canExecuteAutomation}
                         variant="button"
                       />
                       {quickScriptEnabled && canAddEdit && (

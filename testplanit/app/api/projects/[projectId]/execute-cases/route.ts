@@ -7,7 +7,7 @@ import { auditedTransaction } from "~/lib/audit/auditedTransaction";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { baseDb } from "~/lib/db";
 import { requestExecution } from "~/lib/execution/requestExecution";
-import { userCanAddEditArea } from "~/lib/services/projectPermissions";
+import { userCanAddEditAreas } from "~/lib/services/projectPermissions";
 import { getServerAuthSession } from "~/server/auth";
 
 const bodySchema = z.object({
@@ -70,10 +70,15 @@ export const POST = withAuditContext(
       );
     }
 
-    const canEdit = await userCanAddEditArea(
+    // Creates or extends a run, records results on it, and spends CI on it.
+    const canEdit = await userCanAddEditAreas(
       auth.user.userId,
       projectId,
-      ApplicationArea.TestRuns,
+      [
+        ApplicationArea.TestRuns,
+        ApplicationArea.TestRunResults,
+        ApplicationArea.AutomatedExecution,
+      ],
       auth.user.access
     );
     if (!canEdit) {

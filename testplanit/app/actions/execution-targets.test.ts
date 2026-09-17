@@ -451,7 +451,7 @@ describe("execution-targets actions", () => {
       expect(mockedCanManage).not.toHaveBeenCalled();
     });
 
-    it("refuses a caller who cannot add/edit runs in the project", async () => {
+    it("refuses a caller without the AutomatedExecution permission in the project", async () => {
       mockedSession.mockResolvedValue({
         user: { id: "viewer-1", access: "USER" },
       } as any);

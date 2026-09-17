@@ -19,7 +19,7 @@ interface Props {
   caseId: number;
   caseTitle: string;
   automated: boolean;
-  canAddEditRuns: boolean;
+  canExecute: boolean;
   variant: "menu-item" | "button";
 }
 
@@ -88,25 +88,26 @@ export function RunAutomatedCaseDialog({
 /**
  * Ad-hoc execution of one automated case: creates a run holding just this
  * case and dispatches it. Renders nothing unless the case is automated, the
- * viewer can add runs, and the project has an enabled target.
+ * viewer may create runs, record results and trigger automation, and the
+ * project has an enabled target.
  */
 export function RunAutomatedCaseButton({
   projectId,
   caseId,
   caseTitle,
   automated,
-  canAddEditRuns,
+  canExecute,
   variant,
 }: Props) {
   const t = useTranslations("automation.adhoc");
   const [open, setOpen] = useState(false);
   const { data: targets } = useExecutionTargetChoices(
     projectId,
-    automated && canAddEditRuns
+    automated && canExecute
   );
   const enabledTargets = (targets ?? []).filter((x) => x.isEnabled);
 
-  if (!automated || !canAddEditRuns || enabledTargets.length === 0) return null;
+  if (!automated || !canExecute || enabledTargets.length === 0) return null;
 
   const trigger =
     variant === "menu-item" ? (

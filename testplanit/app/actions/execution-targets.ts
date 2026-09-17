@@ -260,9 +260,9 @@ export interface ExecutionTargetChoice {
 }
 
 /**
- * The sanitized list the run page and the case dialog need: anyone who can
- * add/edit runs in the project may see which targets exist. No credentials,
- * URLs or inputs leave the server.
+ * The sanitized list the run page and the case dialog need: anyone who may
+ * trigger automated executions in the project may see which targets exist.
+ * No credentials, URLs or inputs leave the server.
  */
 export async function listExecutionTargetChoices(
   projectId: number
@@ -272,7 +272,7 @@ export async function listExecutionTargetChoices(
   const allowed = await userCanAddEditArea(
     session.user.id,
     projectId,
-    ApplicationArea.TestRuns,
+    ApplicationArea.AutomatedExecution,
     session.user.access
   );
   if (!allowed) return { success: false, error: "Forbidden" };

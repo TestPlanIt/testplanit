@@ -946,15 +946,26 @@ export default function Cases({
     id: number;
     name: string;
   } | null>(null);
+  // Ad-hoc execution creates a run, records results on it, and spends CI on
+  // it: all three grants are required before the targets are even fetched.
+  const { permissions: automationPermissions } = useProjectPermissions(
+    projectId,
+    "AutomatedExecution"
+  );
+  const canExecuteAutomation =
+    canAddEditRun &&
+    canAddEditResults &&
+    (automationPermissions?.canAddEdit ?? false);
   const { data: automationTargets } = useExecutionTargetChoices(
     projectId,
-    isValidProjectId && !isRunMode && canAddEditRun
+    isValidProjectId && !isRunMode && canExecuteAutomation
   );
   const enabledAutomationTargets = useMemo(
     () => (automationTargets ?? []).filter((x) => x.isEnabled),
     [automationTargets]
   );
-  const automationAvailable = enabledAutomationTargets.length > 0;
+  const automationAvailable =
+    canExecuteAutomation && enabledAutomationTargets.length > 0;
   const [quickScriptCaseIds, setQuickScriptCaseIds] = useState<number[] | null>(
     null
   );

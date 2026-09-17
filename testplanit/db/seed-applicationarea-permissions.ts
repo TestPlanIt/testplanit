@@ -48,6 +48,11 @@ export const getComprehensiveRolePermissions = () => {
         canDelete: true,
         canClose: true,
       },
+      [ApplicationArea.AutomatedExecution]: {
+        canAddEdit: true,
+        canDelete: false,
+        canClose: false,
+      },
       [ApplicationArea.TestRunResultRestrictedFields]: {
         canAddEdit: true,
         canDelete: true,
@@ -146,6 +151,11 @@ export const getComprehensiveRolePermissions = () => {
         canAddEdit: true,
         canDelete: true,
         canClose: true,
+      },
+      [ApplicationArea.AutomatedExecution]: {
+        canAddEdit: true,
+        canDelete: false,
+        canClose: false,
       },
       [ApplicationArea.TestRunResultRestrictedFields]: {
         canAddEdit: false,
@@ -246,6 +256,11 @@ export const getComprehensiveRolePermissions = () => {
         canDelete: false,
         canClose: false,
       }, // Can add results
+      [ApplicationArea.AutomatedExecution]: {
+        canAddEdit: true,
+        canDelete: false,
+        canClose: false,
+      },
       [ApplicationArea.TestRunResultRestrictedFields]: {
         canAddEdit: false,
         canDelete: false,
@@ -345,6 +360,11 @@ export const getComprehensiveRolePermissions = () => {
         canDelete: false,
         canClose: false,
       }, // Can add results only
+      [ApplicationArea.AutomatedExecution]: {
+        canAddEdit: true,
+        canDelete: false,
+        canClose: false,
+      },
       [ApplicationArea.TestRunResultRestrictedFields]: {
         canAddEdit: false,
         canDelete: false,
@@ -441,6 +461,11 @@ export const getComprehensiveRolePermissions = () => {
         canClose: false,
       },
       [ApplicationArea.TestRunResults]: {
+        canAddEdit: false,
+        canDelete: false,
+        canClose: false,
+      },
+      [ApplicationArea.AutomatedExecution]: {
         canAddEdit: false,
         canDelete: false,
         canClose: false,

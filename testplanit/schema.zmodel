@@ -4376,6 +4376,7 @@ enum ApplicationArea {
     ClosedTestRuns
     TestRunResults
     TestRunResultRestrictedFields
+    AutomatedExecution
     Sessions
     SessionsRestrictedFields
     ClosedSessions

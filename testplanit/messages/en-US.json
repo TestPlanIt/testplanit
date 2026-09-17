@@ -7324,6 +7324,7 @@
       "ClosedTestRuns": "Closed Test Runs",
       "TestRunResults": "Test Run Results",
       "TestRunResultRestrictedFields": "Test Run Result Restricted Fields",
+      "AutomatedExecution": "Automated Execution",
       "Sessions": "Sessions",
       "SessionsRestrictedFields": "Sessions Restricted Fields",
       "ClosedSessions": "Closed Sessions",
@@ -7567,7 +7568,7 @@
       "name": "## Role Name\nA clear, concise, descriptive name or keyword(s) that is used across all projects.\n\n- Helps team members quickly find related test cases, test runs and sessions.",
       "isDefault": "## Default Role\nIndicates whether this role is the default for your project.\n\n- Default role is pre-selected for new users\n- Can be changed at any time",
       "permissions": {
-        "canAddEdit": "## Add/Edit\nIndicates whether this role can add and edit the related application area.",
+        "canAddEdit": "## Add/Edit\nIndicates whether this role can add and edit the related application area.\n\n- **Automated Execution** grants the right to start, retry, and cancel automated executions on a CI provider. Recording the results still needs **Test Run Results** Add/Edit, and starting one from the repository also needs **Test Runs** Add/Edit because it creates or extends a run.",
         "canDelete": "## Delete\nIndicates whether this role can delete the related application area.",
         "canClose": "## Close\nIndicates whether this role can close the related application area.",
         "canApprove": "## Approve\nIndicates whether this role can approve review requests for the related application area. Applies only to Test Case Repository, Test Runs, and Sessions.",

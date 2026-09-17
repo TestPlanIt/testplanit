@@ -50,14 +50,14 @@ vi.mock("~/lib/execution/requestExecution", () => ({
 }));
 
 vi.mock("~/lib/services/projectPermissions", () => ({
-  userCanAddEditArea: vi.fn(),
+  userCanAddEditAreas: vi.fn(),
 }));
 
 import { authenticateRequest, hasBearerToken } from "~/lib/api-token-auth";
 import { checkApiRateLimit } from "~/lib/api-rate-limit";
 import { baseDb } from "~/lib/db";
 import { requestExecution } from "~/lib/execution/requestExecution";
-import { userCanAddEditArea } from "~/lib/services/projectPermissions";
+import { userCanAddEditAreas } from "~/lib/services/projectPermissions";
 import { getServerAuthSession } from "~/server/auth";
 import { POST } from "./route";
 
@@ -65,7 +65,7 @@ const mockedSession = vi.mocked(getServerAuthSession);
 const mockedAuth = vi.mocked(authenticateRequest);
 const mockedHasBearer = vi.mocked(hasBearerToken);
 const mockedRateLimit = vi.mocked(checkApiRateLimit);
-const mockedCanEdit = vi.mocked(userCanAddEditArea);
+const mockedCanEdit = vi.mocked(userCanAddEditAreas);
 const mockedRequestExecution = vi.mocked(requestExecution);
 const mockedFindCases = vi.mocked(baseDb.repositoryCases.findMany) as any;
 const mockedFindRun = vi.mocked(baseDb.testRuns.findFirst) as any;
@@ -161,7 +161,7 @@ describe("POST /api/projects/[projectId]/execute-cases", () => {
     expect(mockedCanEdit).not.toHaveBeenCalled();
   });
 
-  it("403 when the caller cannot add/edit test runs in the project", async () => {
+  it("403 unless the caller can add/edit test runs, results, and automated executions", async () => {
     mockedCanEdit.mockResolvedValue(false);
 
     const { res, json } = await post({ caseIds: [10], targetId: 1 });
@@ -171,7 +171,7 @@ describe("POST /api/projects/[projectId]/execute-cases", () => {
     expect(mockedCanEdit).toHaveBeenCalledWith(
       USER_ID,
       PROJECT_ID,
-      expect.anything(),
+      ["TestRuns", "TestRunResults", "AutomatedExecution"],
       "USER"
     );
     expect(mockedFindCases).not.toHaveBeenCalled();

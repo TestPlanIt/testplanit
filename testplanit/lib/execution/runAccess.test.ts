@@ -52,13 +52,13 @@ vi.mock("~/lib/db", () => ({
 vi.mock("~/lib/zenstack", () => ({ getAuthDb: vi.fn() }));
 
 vi.mock("~/lib/services/projectPermissions", () => ({
-  userCanAddEditArea: vi.fn(async () => true),
+  userCanAddEditAreas: vi.fn(async () => true),
 }));
 
 import { checkApiRateLimit } from "~/lib/api-rate-limit";
 import { authenticateRequest, hasBearerToken } from "~/lib/api-token-auth";
 import { baseDb } from "~/lib/db";
-import { userCanAddEditArea } from "~/lib/services/projectPermissions";
+import { userCanAddEditAreas } from "~/lib/services/projectPermissions";
 import { getAuthDb } from "~/lib/zenstack";
 import { authenticateRunRequest, isRouteResponse, parseId } from "./runAccess";
 
@@ -71,7 +71,7 @@ const mockAuthenticate = authenticateRequest as unknown as ReturnType<
 const mockHasBearer = hasBearerToken as unknown as ReturnType<typeof vi.fn>;
 const mockRateLimit = checkApiRateLimit as unknown as ReturnType<typeof vi.fn>;
 const mockGetAuthDb = getAuthDb as unknown as ReturnType<typeof vi.fn>;
-const mockCanEdit = userCanAddEditArea as unknown as ReturnType<typeof vi.fn>;
+const mockCanEdit = userCanAddEditAreas as unknown as ReturnType<typeof vi.fn>;
 const db = baseDb as unknown as {
   user: { findUnique: ReturnType<typeof vi.fn> };
   testRuns: { findFirst: ReturnType<typeof vi.fn> };
@@ -271,14 +271,19 @@ describe("authenticateRunRequest — run visibility", () => {
 });
 
 describe("authenticateRunRequest — write permission", () => {
-  it("403s when the caller cannot add/edit TestRuns in the project", async () => {
+  it("403s when the caller lacks TestRunResults or AutomatedExecution add/edit in the project", async () => {
     mockCanEdit.mockResolvedValue(false);
     const res = (await authenticateRunRequest(request("POST"), 42, {
       write: true,
     })) as NextResponse;
     expect(res.status).toBe(403);
     expect(await json(res)).toEqual({ error: "Forbidden" });
-    expect(mockCanEdit).toHaveBeenCalledWith("user-1", 3, "TestRuns", "USER");
+    expect(mockCanEdit).toHaveBeenCalledWith(
+      "user-1",
+      3,
+      ["TestRunResults", "AutomatedExecution"],
+      "USER"
+    );
   });
 
   it("returns the context when the caller can write", async () => {

@@ -7324,6 +7324,7 @@
       "ClosedTestRuns": "Essais à huis clos",
       "TestRunResults": "Résultats des essais",
       "TestRunResultRestrictedFields": "Champs restreints du résultat de l'exécution de test",
+      "AutomatedExecution": "Exécution automatisée",
       "Sessions": "Séances",
       "SessionsRestrictedFields": "Champs restreints des sessions",
       "ClosedSessions": "Séances à huis clos",
@@ -7567,7 +7568,7 @@
       "name": "## Nom du rôle\nUn nom ou des mots-clés clairs, concis et descriptifs, utilisés dans tous les projets.\n\n- Permet aux membres de l'équipe de trouver rapidement les cas de test, les exécutions de test et les sessions associés.",
       "isDefault": "## Rôle par défaut\nIndique si ce rôle est le rôle par défaut pour votre projet.\n\n- Le rôle par défaut est présélectionné pour les nouveaux utilisateurs.\n- Peut être modifié à tout moment.",
       "permissions": {
-        "canAddEdit": "## Ajouter/Modifier\nIndique si ce rôle peut ajouter et modifier la zone d'application associée.",
+        "canAddEdit": "## Ajouter/Modifier\nIndique si ce rôle peut ajouter et modifier la zone d'application associée.\n\n- **Exécution automatisée** accorde le droit de démarrer, relancer et annuler les exécutions automatisées sur un fournisseur CI. L'enregistrement des résultats nécessite toujours les droits Ajouter/Modifier sur **Résultats d'exécution de test**, et démarrer une exécution depuis le référentiel nécessite également les droits Ajouter/Modifier sur **Exécutions de tests** car cela crée ou prolonge une exécution.",
         "canDelete": "## Supprimer\nIndique si ce rôle peut supprimer la zone d'application associée.",
         "canClose": "## Fermer\nIndique si ce rôle peut fermer la zone d'application associée.",
         "canApprove": "## Approuver\nIndique si ce rôle peut approuver les demandes de révision pour le domaine d'application concerné. S'applique uniquement au référentiel de cas de test, aux exécutions de tests et aux sessions.",

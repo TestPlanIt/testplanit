@@ -7324,6 +7324,7 @@
       "ClosedTestRuns": "Geschlossene Testläufe",
       "TestRunResults": "Ergebnisse des Testlaufs",
       "TestRunResultRestrictedFields": "Testlauf-Ergebnis – Eingeschränkte Felder",
+      "AutomatedExecution": "Automatisierte Ausführung",
       "Sessions": "Sitzungen",
       "SessionsRestrictedFields": "Sitzungen – Eingeschränkte Felder",
       "ClosedSessions": "Geschlossene Sitzungen",
@@ -7567,7 +7568,7 @@
       "name": "## Rollenname\nEin klarer, prägnanter und beschreibender Name oder ein oder mehrere Schlüsselwörter, die in allen Projekten verwendet werden.\n\n– Hilft Teammitgliedern, schnell zugehörige Testfälle, Testläufe und Sitzungen zu finden.",
       "isDefault": "## Standardrolle\nGibt an, ob diese Rolle die Standardrolle für Ihr Projekt ist.\n\n- Die Standardrolle ist für neue Benutzer vorausgewählt.\n- Kann jederzeit geändert werden.",
       "permissions": {
-        "canAddEdit": "## Hinzufügen/Bearbeiten\nGibt an, ob diese Rolle den zugehörigen Anwendungsbereich hinzufügen und bearbeiten kann.",
+        "canAddEdit": "## Hinzufügen/Bearbeiten\nGibt an, ob diese Rolle den zugehörigen Anwendungsbereich hinzufügen und bearbeiten kann.\n\n- **Automatisierte Ausführung** gewährt das Recht, automatisierte Ausführungen bei einem CI-Anbieter zu starten, erneut auszuführen und abzubrechen. Um die Ergebnisse zu erfassen, wird weiterhin die Berechtigung **Testlaufergebnisse** Hinzufügen/Bearbeiten benötigt, und um eine Ausführung aus dem Repository zu starten, wird zusätzlich die Berechtigung **Testläufe** Hinzufügen/Bearbeiten benötigt, da dadurch ein Testlauf erstellt oder erweitert wird.",
         "canDelete": "## Löschen\nGibt an, ob diese Rolle den zugehörigen Anwendungsbereich löschen kann.",
         "canClose": "## Schließen\nGibt an, ob diese Rolle den zugehörigen Anwendungsbereich schließen kann.",
         "canApprove": "## Genehmigen\nGibt an, ob diese Rolle Überprüfungsanfragen für den zugehörigen Anwendungsbereich genehmigen kann. Gilt nur für Testfall-Repository, Testläufe und Sitzungen.",

@@ -7324,6 +7324,7 @@
       "ClosedTestRuns": "Kapalı Test Çalıştırmaları",
       "TestRunResults": "Test Çalıştırma Sonuçları",
       "TestRunResultRestrictedFields": "Test Çalıştırma Sonucu Kısıtlı Alanlar",
+      "AutomatedExecution": "Otomatik Yürütme",
       "Sessions": "Oturumlar",
       "SessionsRestrictedFields": "Oturum Kısıtlı Alanları",
       "ClosedSessions": "Kapalı Oturumlar",
@@ -7567,7 +7568,7 @@
       "name": "## Rol Adı\nTüm projelerde kullanılan açık, özlü ve açıklayıcı bir ad veya anahtar kelime(ler).\n\n- Ekip üyelerinin ilgili test senaryolarını, test çalıştırmalarını ve oturumlarını hızlı bir şekilde bulmasına yardımcı olur.",
       "isDefault": "## Varsayılan Rol\nBu rolün projeniz için varsayılan rol olup olmadığını gösterir.\n\n- Varsayılan rol yeni kullanıcılar için önceden seçilmiştir.\n- İstediğiniz zaman değiştirilebilir.",
       "permissions": {
-        "canAddEdit": "## Ekle/Düzenle\nBu rolün ilgili uygulama alanını ekleyip düzenleyebileceğini gösterir.",
+        "canAddEdit": "## Ekle/Düzenle\nBu rolün ilgili uygulama alanını ekleyip düzenleyebileceğini belirtir.\n\n- **Otomatik Çalıştırma**, bir CI sağlayıcısında otomatik çalıştırmaları başlatma, yeniden deneme ve iptal etme hakkı verir. Sonuçları kaydetmek için yine **Test Çalıştırması Sonuçları** Ekle/Düzenle iznine ihtiyaç vardır ve depodan bir çalıştırma başlatmak da bir çalıştırma oluşturduğu veya genişlettiği için **Test Çalıştırmaları** Ekle/Düzenle iznine ihtiyaç duyar.",
         "canDelete": "## Sil\nBu rolün ilgili uygulama alanını silip silemeyeceğini gösterir.",
         "canClose": "## Kapat\nBu rolün ilgili uygulama alanını kapatıp kapatamayacağını gösterir.",
         "canApprove": "## Onayla\nBu rolün ilgili uygulama alanı için inceleme isteklerini onaylayıp onaylayamayacağını gösterir. Yalnızca Test Durumu Deposu, Test Çalıştırmaları ve Oturumlar için geçerlidir.",

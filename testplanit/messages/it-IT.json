@@ -7324,6 +7324,7 @@
       "ClosedTestRuns": "Esecuzioni di test chiuse",
       "TestRunResults": "Risultati del test",
       "TestRunResultRestrictedFields": "Campi riservati del risultato dell'esecuzione del test",
+      "AutomatedExecution": "Esecuzione automatizzata",
       "Sessions": "Sessioni",
       "SessionsRestrictedFields": "Campi riservati alle sessioni",
       "ClosedSessions": "Sessioni chiuse",
@@ -7567,7 +7568,7 @@
       "name": "## Nome ruolo\nUn nome o una o più parole chiave chiare, concise e descrittive, utilizzate in tutti i progetti.\n\n- Aiuta i membri del team a trovare rapidamente casi di test, esecuzioni di test e sessioni correlate.",
       "isDefault": "## Ruolo predefinito\nIndica se questo ruolo è quello predefinito per il tuo progetto.\n\n- Il ruolo predefinito è preselezionato per i nuovi utenti\n- Può essere modificato in qualsiasi momento",
       "permissions": {
-        "canAddEdit": "## Aggiungi/Modifica\nIndica se questo ruolo può aggiungere e modificare l'area di applicazione correlata.",
+        "canAddEdit": "## Aggiungi/Modifica\nIndica se questo ruolo può aggiungere e modificare l'area applicativa correlata.\n\n- **Esecuzione automatizzata** concede il diritto di avviare, ripetere e annullare esecuzioni automatizzate su un provider CI. Registrare i risultati richiede comunque il permesso Aggiungi/Modifica su **Risultati Test Run**, e avviarne una dal repository richiede anche il permesso Aggiungi/Modifica su **Test Run** perché crea o estende un'esecuzione.",
         "canDelete": "## Elimina\nIndica se questo ruolo può eliminare l'area di applicazione correlata.",
         "canClose": "## Chiudi\nIndica se questo ruolo può chiudere l'area dell'applicazione correlata.",
         "canApprove": "## Approva\nIndica se questo ruolo può approvare le richieste di revisione per l'area applicativa correlata. Si applica solo a Repository dei casi di test, Esecuzioni di test e Sessioni.",

@@ -3,7 +3,7 @@ import { ApplicationArea } from "~/zenstack/models";
 import { checkApiRateLimit } from "~/lib/api-rate-limit";
 import { authenticateRequest, hasBearerToken } from "~/lib/api-token-auth";
 import { baseDb } from "~/lib/db";
-import { userCanAddEditArea } from "~/lib/services/projectPermissions";
+import { userCanAddEditAreas } from "~/lib/services/projectPermissions";
 import { getAuthDb } from "~/lib/zenstack";
 import { getServerAuthSession } from "~/server/auth";
 
@@ -12,7 +12,16 @@ import { getServerAuthSession } from "~/server/auth";
  * token (the same `tpi_` token the reporters and CLI use), applies the API
  * rate limit to token callers, and resolves the run through the policy
  * client so a caller who cannot read the run is told it does not exist.
+ *
+ * `write` gates the automation controls on a run (start, retry, cancel,
+ * finish): the caller must be able to record results in the project AND
+ * hold the Automated Execution permission.
  */
+
+export const EXECUTION_WRITE_AREAS = [
+  ApplicationArea.TestRunResults,
+  ApplicationArea.AutomatedExecution,
+] as const;
 
 export interface RunRequestContext {
   userId: string;
@@ -90,10 +99,10 @@ export async function authenticateRunRequest(
   }
 
   if (opts.write) {
-    const canEdit = await userCanAddEditArea(
+    const canEdit = await userCanAddEditAreas(
       auth.user.userId,
       run.projectId,
-      ApplicationArea.TestRuns,
+      EXECUTION_WRITE_AREAS,
       auth.user.access
     );
     if (!canEdit) {

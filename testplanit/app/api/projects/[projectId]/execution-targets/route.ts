@@ -38,7 +38,7 @@ export async function GET(
   const allowed = await userCanAddEditArea(
     auth.user.userId,
     projectId,
-    ApplicationArea.TestRuns,
+    ApplicationArea.AutomatedExecution,
     auth.user.access
   );
   if (!allowed) {

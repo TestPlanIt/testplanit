@@ -7324,6 +7324,7 @@
       "ClosedTestRuns": "Gesloten testruns",
       "TestRunResults": "Testresultaten",
       "TestRunResultRestrictedFields": "Beperkte velden voor testresultaten",
+      "AutomatedExecution": "Geautomatiseerde Uitvoering",
       "Sessions": "Sessies",
       "SessionsRestrictedFields": "Sessie beperkte velden",
       "ClosedSessions": "Gesloten sessies",
@@ -7567,7 +7568,7 @@
       "name": "## Rolnaam\nEen duidelijke, beknopte, beschrijvende naam of trefwoord(en) die in alle projecten wordt gebruikt.\n\n- Helpt teamleden snel gerelateerde testcases, testruns en sessies te vinden.",
       "isDefault": "## Standaardrol\nGeeft aan of deze rol de standaard is voor uw project.\n\n- Standaardrol is vooraf geselecteerd voor nieuwe gebruikers.\n- Kan op elk moment worden gewijzigd.",
       "permissions": {
-        "canAddEdit": "## Toevoegen/bewerken\nGeeft aan of deze rol het gerelateerde toepassingsgebied kan toevoegen en bewerken.",
+        "canAddEdit": "## Toevoegen/Bewerken\nGeeft aan of deze rol het gerelateerde toepassingsgebied kan toevoegen en bewerken.\n\n- **Geautomatiseerde uitvoering** geeft het recht om geautomatiseerde uitvoeringen op een CI-provider te starten, opnieuw te proberen en te annuleren. Voor het vastleggen van de resultaten is nog steeds Toevoegen/Bewerken voor **Testresultaten** vereist, en het starten van een uitvoering vanuit de repository vereist ook Toevoegen/Bewerken voor **Testruns**, omdat hierdoor een run wordt aangemaakt of uitgebreid.",
         "canDelete": "## Verwijderen\nGeeft aan of deze rol het gerelateerde toepassingsgebied kan verwijderen.",
         "canClose": "## Close\nGeeft aan of deze rol het gerelateerde toepassingsgebied kan sluiten.",
         "canApprove": "## Goedkeuren\nGeeft aan of deze rol beoordelingsverzoeken voor het betreffende toepassingsgebied mag goedkeuren. Is alleen van toepassing op Test Case Repository, Test Runs en Sessions.",

@@ -7324,6 +7324,7 @@
       "ClosedTestRuns": "Zamknięte testy",
       "TestRunResults": "Wyniki testu",
       "TestRunResultRestrictedFields": "Pola ograniczone wyniku testu",
+      "AutomatedExecution": "Automatyczne wykonanie",
       "Sessions": "Sesje",
       "SessionsRestrictedFields": "Pola ograniczone dla sesji",
       "ClosedSessions": "Sesje zamknięte",
@@ -7567,7 +7568,7 @@
       "name": "## Nazwa roli\nJasna, zwięzła, opisowa nazwa lub słowo(a) kluczowe używane we wszystkich projektach.\n\n— Pomaga członkom zespołu szybko znaleźć powiązane przypadki testowe, przebiegi testów i sesje.",
       "isDefault": "## Rola domyślna\nWskazuje, czy ta rola jest domyślna dla Twojego projektu.\n\n— Rola domyślna jest wstępnie wybrana dla nowych użytkowników.\n— Można ją zmienić w dowolnym momencie.",
       "permissions": {
-        "canAddEdit": "## Dodaj/Edytuj\nWskazuje, czy ta rola może dodawać i edytować powiązany obszar aplikacji.",
+        "canAddEdit": "## Dodaj/Edytuj\nWskazuje, czy ta rola może dodawać i edytować powiązany obszar aplikacji.\n\n- **Automatyczne wykonanie** przyznaje prawo do uruchamiania, ponawiania i anulowania automatycznych wykonań u dostawcy CI. Rejestrowanie wyników nadal wymaga uprawnienia Dodaj/Edytuj dla **Wyników przebiegu testowego**, a uruchomienie go z repozytorium wymaga również uprawnienia Dodaj/Edytuj dla **Przebiegów testowych**, ponieważ tworzy lub rozszerza przebieg.",
         "canDelete": "## Usuń\nWskazuje, czy ta rola może usunąć powiązany obszar aplikacji.",
         "canClose": "## Zamknij\nWskazuje, czy ta rola może zamknąć powiązany obszar aplikacji.",
         "canApprove": "## Zatwierdź\nWskazuje, czy ta rola może zatwierdzać prośby o recenzję dla powiązanego obszaru aplikacji. Dotyczy tylko repozytorium przypadków testowych, przebiegów testów i sesji.",

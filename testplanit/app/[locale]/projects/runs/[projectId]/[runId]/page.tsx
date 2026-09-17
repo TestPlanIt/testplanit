@@ -415,6 +415,20 @@ export default function TestRunPage() {
   );
   const canAddEditCases = caseRepoPermissions?.canAddEdit ?? false;
 
+  // Automation controls (start, retry, cancel) need results rights plus the
+  // Automated Execution permission; run add/edit alone is not enough.
+  const { permissions: resultsPermissions } = useProjectPermissions(
+    numericProjectId,
+    ApplicationArea.TestRunResults
+  );
+  const { permissions: automationPermissions } = useProjectPermissions(
+    numericProjectId,
+    ApplicationArea.AutomatedExecution
+  );
+  const canExecuteAutomation =
+    (resultsPermissions?.canAddEdit ?? false) &&
+    (automationPermissions?.canAddEdit ?? false);
+
   // Extract permissions
   const canAddEditRun = testRunPermissions?.canAddEdit ?? false;
   const canDeleteRun = testRunPermissions?.canDelete ?? false;
@@ -2056,7 +2070,7 @@ export default function TestRunPage() {
                               <AutomationExecutionChip
                                 runId={Number(runId)}
                                 executions={runExecutions}
-                                canAddEdit={canAddEditRun}
+                                canAddEdit={canExecuteAutomation}
                                 isCompleted={Boolean(testRunData.isCompleted)}
                                 onChanged={() => {
                                   refetchExecutions();
@@ -2325,7 +2339,7 @@ export default function TestRunPage() {
                               <ExecuteAutomationButton
                                 runId={Number(runId)}
                                 projectId={Number(projectId)}
-                                canAddEdit={canAddEditRun}
+                                canAddEdit={canExecuteAutomation}
                                 isCompleted={Boolean(testRunData.isCompleted)}
                                 automatedCaseCount={automatedCaseCount ?? 0}
                                 activeExecution={activeExecution}
