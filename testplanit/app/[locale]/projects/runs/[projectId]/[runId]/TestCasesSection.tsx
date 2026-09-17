@@ -25,6 +25,7 @@ import {
   resolveSelectionFromUrl,
 } from "~/lib/configurationGroupSwitcher";
 import { usePathname, useRouter } from "~/lib/navigation";
+import type { RunCaseSelection } from "~/lib/execution/selection";
 import ProjectRepository from "../../../repository/[projectId]/ProjectRepository";
 
 // Import the TestRunWithRelations type and required related types
@@ -110,6 +111,8 @@ interface TestCasesSectionProps {
   ) => void;
   /** Rendered left of "Start manual testing" (e.g. Execute automated cases). */
   headerActions?: React.ReactNode;
+  /** The case table's bulk selection in view mode, for `headerActions`. */
+  onRunSelectionChange?: (selection: RunCaseSelection) => void;
 }
 
 export function TestCasesSection({
@@ -122,6 +125,7 @@ export function TestCasesSection({
   onMultiConfigSelected,
   onSelectedConfigurationsChange,
   headerActions,
+  onRunSelectionChange,
 }: TestCasesSectionProps) {
   const t = useTranslations();
   // Below this width the header's action buttons fall back to icons that
@@ -626,6 +630,7 @@ export function TestCasesSection({
             // view — which also hides the repository management buttons that the
             // non-run, non-selection mode would otherwise show.
             isRunMode={!isEditMode || compositionLocked}
+            onRunSelectionChange={onRunSelectionChange}
             isCompleted={testRunData.isCompleted}
             compositionLocked={compositionLocked}
             projectId={params.projectId}

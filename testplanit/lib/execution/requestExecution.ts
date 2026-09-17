@@ -13,7 +13,7 @@ import {
   normalizeInputs,
   validateCustomInputs,
 } from "./inputs";
-import { countAutomatedCasesInRun } from "./plan";
+import { buildAutomationPlan } from "./plan";
 import { checkDispatchRateLimit } from "./rateLimit";
 import {
   emitExecutionEvent,
@@ -171,12 +171,14 @@ export async function requestExecution(params: {
           active.id
         );
       }
-      const count = await countAutomatedCasesInRun(
-        tx as never,
-        params.runId,
-        caseIds
-      );
-      if (count === 0) {
+      // The plan decides what an execution covers: live automated cases of
+      // this run, intersected with the requested subset. Only those ids are
+      // stored, so a request naming manual cases (or cases outside the run)
+      // can never make the job attempt them.
+      const plan = await buildAutomationPlan(tx as never, params.runId, {
+        requestedCaseIds: caseIds,
+      });
+      if (!plan || plan.totals.cases === 0) {
         throw new RequestExecutionError(
           409,
           "NO_AUTOMATED_CASES",
@@ -195,8 +197,9 @@ export async function requestExecution(params: {
           requestedById: params.requestedById,
           ref: params.ref ?? target.defaultRef ?? null,
           inputs,
-          selectionCount: count,
-          requestedCaseIds: caseIds,
+          selectionCount: plan.totals.cases,
+          requestedCaseIds:
+            caseIds.length > 0 ? plan.cases.map((c) => c.id) : [],
           adHoc: params.adHoc ?? false,
         },
       });

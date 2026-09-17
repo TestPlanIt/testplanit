@@ -35,6 +35,10 @@ interface Props {
   targets: ExecutionTargetChoice[];
   /** Automated cases the request will cover (count-first summary). */
   caseCount: number;
+  /** The request names a chosen subset rather than every automated case in the run. */
+  subset?: boolean;
+  /** Selected rows the subset leaves out: not automated cases of this run. */
+  skippedCount?: number;
   /** Run the results will attach to; shown in the note. Null for ad-hoc (a run is created). */
   runId: number | null;
   title?: string;
@@ -52,6 +56,8 @@ export function ExecuteAutomationDialog({
   onOpenChange,
   targets,
   caseCount,
+  subset = false,
+  skippedCount = 0,
   runId,
   title,
   description,
@@ -160,8 +166,18 @@ export function ExecuteAutomationDialog({
             className="text-sm font-medium"
             data-testid="execute-automation-summary"
           >
-            {t("caseCountSummary", { count: caseCount })}
+            {t(subset ? "selectedCaseCountSummary" : "caseCountSummary", {
+              count: caseCount,
+            })}
           </p>
+          {skippedCount > 0 && (
+            <p
+              className="text-xs text-muted-foreground"
+              data-testid="execute-automation-skipped"
+            >
+              {t("skippedSelection", { count: skippedCount })}
+            </p>
+          )}
           {runId != null && (
             <p className="text-xs text-muted-foreground">
               {t("resultsNote", { runId })}

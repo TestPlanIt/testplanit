@@ -193,6 +193,54 @@ test.describe("Execute automated cases from a run", () => {
         timeout: 15000,
       });
     });
+
+    await test.step("Selecting rows narrows the request to the automated ones", async () => {
+      const button = page.getByTestId("execute-automation-button");
+      // Only the manual case selected: nothing to execute.
+      await page.getByTestId(`case-checkbox-${manualCaseId}`).click();
+      await expect(button).toHaveText(/0 selected automated cases/);
+      await expect(button).toBeDisabled();
+      // Both selected: one automated case, one skipped.
+      await page.getByTestId(`case-checkbox-${automatedCaseId}`).click();
+      await expect(button).toHaveText(/1 selected automated case/);
+      await expect(button).toBeEnabled();
+      await button.click();
+      const dialog = page.getByTestId("execute-automation-dialog");
+      await expect(dialog).toBeVisible();
+      await expect(
+        page.getByTestId("execute-automation-summary")
+      ).toContainText("1 selected automated case");
+      await expect(
+        page.getByTestId("execute-automation-skipped")
+      ).toContainText("1 selected case is not an automated case");
+      await page.getByTestId("execute-automation-submit").click();
+      await expect(dialog).toBeHidden({ timeout: 15000 });
+
+      const res = await request.get(
+        `${base}/api/test-runs/${runId}/executions?limit=1`,
+        { headers: sameOrigin }
+      );
+      expect(res.status(), await res.text()).toBe(200);
+      const { executions } = (await res.json()) as {
+        executions: Array<{
+          id: number;
+          selectionCount: number;
+          requestedCaseIds: number[];
+        }>;
+      };
+      expect(executions[0].selectionCount).toBe(1);
+      expect(executions[0].requestedCaseIds).toEqual([automatedCaseId]);
+
+      const planRes = await request.get(
+        `${base}/api/test-runs/${runId}/automation-plan?executionId=${executions[0].id}`,
+        { headers: sameOrigin }
+      );
+      expect(planRes.status(), await planRes.text()).toBe(200);
+      const plan = await planRes.json();
+      expect(plan.cases.map((c: { id: number }) => c.id)).toEqual([
+        automatedCaseId,
+      ]);
+    });
   });
 
   test("the plan endpoint refuses runs the caller cannot read", async ({

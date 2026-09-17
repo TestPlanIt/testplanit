@@ -171,13 +171,3 @@ export async function buildAutomationPlan(
     totals: { cases: cases.length },
   };
 }
-
-/** Count only — used by the execute route to refuse an empty dispatch. */
-export async function countAutomatedCasesInRun(
-  db: PlanDb,
-  runId: number,
-  requestedCaseIds?: number[]
-): Promise<number> {
-  const plan = await buildAutomationPlan(db, runId, { requestedCaseIds });
-  return plan?.totals.cases ?? 0;
-}

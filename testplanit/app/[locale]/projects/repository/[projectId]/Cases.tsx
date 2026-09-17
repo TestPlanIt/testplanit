@@ -105,6 +105,10 @@ import { LATEST_RESULTS_COUNT } from "~/lib/types/latestTestResults";
 import { AddCaseRow } from "./AddCaseRow";
 import { AddResultModal } from "./AddResultModal";
 import { AssignTestCaseModal } from "./AssignTestCase";
+import {
+  EMPTY_RUN_CASE_SELECTION,
+  type RunCaseSelection,
+} from "~/lib/execution/selection";
 import { BulkEditModal } from "./BulkEditModal";
 import { CopyMoveDialog } from "@/components/copy-move/CopyMoveDialog";
 import { ExtendedCases, getColumns } from "./columns";
@@ -509,6 +513,11 @@ interface CasesProps {
   onConfirm?: (selectedIds: number[]) => void;
   hideHeader?: boolean;
   isRunMode?: boolean;
+  /** Run mode only: the table's bulk selection, for the run page's
+   * "Execute automated cases" button. Keyed by TestRunCases id in a
+   * multi-configuration view (sibling runs share repository cases) and by
+   * repository case id otherwise. Emitted empty when there is no selection. */
+  onRunSelectionChange?: (selection: RunCaseSelection) => void;
   onTestCaseClick?: (caseId: number) => void;
   /** Lifts prev/next context for the selected `?case` up to ProjectRepository,
    * which renders the docked details panel. Null when no case is selected. */
@@ -576,6 +585,7 @@ export default function Cases({
   onConfirm: _onConfirm,
   hideHeader = false,
   isRunMode = false,
+  onRunSelectionChange,
   onTestCaseClick,
   onCaseNavChange,
   isCompleted = false,
@@ -2103,6 +2113,34 @@ export default function Cases({
     selectedTestCases,
     isMultiConfigMode,
   ]);
+
+  // Lift the run-mode bulk selection to the run page. The callback is read
+  // through a ref so an inline prop cannot re-fire the effect on every render.
+  const onRunSelectionChangeRef = useRef(onRunSelectionChange);
+  useEffect(() => {
+    onRunSelectionChangeRef.current = onRunSelectionChange;
+  }, [onRunSelectionChange]);
+  useEffect(() => {
+    onRunSelectionChangeRef.current?.(
+      isRunMode && !isSelectionMode
+        ? {
+            ids: selectedCaseIdsForBulkEdit,
+            keyedBy: isMultiConfigMode ? "testRunCaseId" : "repositoryCaseId",
+          }
+        : EMPTY_RUN_CASE_SELECTION
+    );
+  }, [
+    isRunMode,
+    isSelectionMode,
+    isMultiConfigMode,
+    selectedCaseIdsForBulkEdit,
+  ]);
+  useEffect(
+    () => () => {
+      onRunSelectionChangeRef.current?.(EMPTY_RUN_CASE_SELECTION);
+    },
+    []
+  );
 
   // Handle bulk edit selection changes
   const _handleBulkEditSelectionChange = useCallback((ids: number[]) => {

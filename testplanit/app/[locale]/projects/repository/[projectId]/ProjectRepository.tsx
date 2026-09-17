@@ -119,6 +119,7 @@ import { useFolderStats } from "~/lib/useFolderStats";
 import { AddCase } from "./AddCase";
 import { AddFolder } from "./AddFolder";
 import Cases, { type CaseNav } from "./Cases";
+import type { RunCaseSelection } from "~/lib/execution/selection";
 import { CaseDetailsPanel } from "@/components/repositories/CaseDetailsPanel";
 import { cn } from "~/utils";
 import { GenerateTestCasesWizard } from "./GenerateTestCasesWizard";
@@ -212,6 +213,8 @@ export interface ProjectRepositoryProps {
   onConfirm?: (selectedIds: number[]) => void;
   hideHeader?: boolean;
   isRunMode?: boolean;
+  /** Run mode: the case table's bulk selection (see Cases). */
+  onRunSelectionChange?: (selection: RunCaseSelection) => void;
   onTestCaseClick?: (caseId: number) => void;
   isCompleted?: boolean;
   /** When the run's composition is locked, reordering is frozen — hides the
@@ -429,6 +432,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   onConfirm,
   hideHeader = false,
   isRunMode = false,
+  onRunSelectionChange,
   onTestCaseClick,
   isCompleted = false,
   compositionLocked = false,
@@ -2596,6 +2600,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                             onConfirm={onConfirm}
                             hideHeader={hideHeader}
                             isRunMode={isRunMode}
+                            onRunSelectionChange={onRunSelectionChange}
                             onTestCaseClick={onTestCaseClick}
                             isCompleted={isCompleted}
                             compositionLocked={compositionLocked}

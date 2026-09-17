@@ -21,6 +21,11 @@ import { AutomationExecutionChip } from "@/components/runs/AutomationExecutionCh
 import { AutomationExecutionsSheet } from "@/components/runs/AutomationExecutionsSheet";
 import { ExecuteAutomationButton } from "@/components/runs/ExecuteAutomationButton";
 import {
+  EMPTY_RUN_CASE_SELECTION,
+  selectedAutomatedCaseIds,
+  type RunCaseSelection,
+} from "~/lib/execution/selection";
+import {
   testRunExecutionsQueryKey,
   useTestRunExecutions,
   type TestRunExecutionRow,
@@ -666,17 +671,32 @@ export default function TestRunPage() {
   } = useTestRunExecutions(!isNaN(Number(runId)) ? Number(runId) : null, {
     enabled: !!testRunData && !isJUnitRun,
   });
-  const { data: automatedCaseCount } = useClientQueries(
+  const { data: automatedRunCases } = useClientQueries(
     schema
-  ).testRunCases.useCount(
+  ).testRunCases.useFindMany(
     {
       where: {
         testRunId: Number(runId),
         isDeleted: false,
         repositoryCase: { automated: true, isDeleted: false },
       },
+      select: { id: true, repositoryCaseId: true },
+      orderBy: [{ order: "asc" }, { id: "asc" }],
     },
     { enabled: !!testRunData && !isJUnitRun }
+  );
+  const automatedCaseIds = useMemo(
+    () => (automatedRunCases ?? []).map((c) => c.repositoryCaseId),
+    [automatedRunCases]
+  );
+  // The case table's bulk selection; the execute button offers only the
+  // automated cases of this run among the selected rows.
+  const [runSelection, setRunSelection] = useState<RunCaseSelection>(
+    EMPTY_RUN_CASE_SELECTION
+  );
+  const selectedAutomatedIds = useMemo(
+    () => selectedAutomatedCaseIds(runSelection, automatedRunCases ?? []),
+    [runSelection, automatedRunCases]
   );
   const [executeDialogOpen, setExecuteDialogOpen] = useState(false);
   const [retryOf, setRetryOf] = useState<TestRunExecutionRow | null>(null);
@@ -2334,6 +2354,7 @@ export default function TestRunPage() {
                           onSelectedConfigurationsChange={
                             setSelectedConfigurations
                           }
+                          onRunSelectionChange={setRunSelection}
                           headerActions={
                             !isJUnitRun ? (
                               <ExecuteAutomationButton
@@ -2341,7 +2362,9 @@ export default function TestRunPage() {
                                 projectId={Number(projectId)}
                                 canAddEdit={canExecuteAutomation}
                                 isCompleted={Boolean(testRunData.isCompleted)}
-                                automatedCaseCount={automatedCaseCount ?? 0}
+                                automatedCaseIds={automatedCaseIds}
+                                selectedCaseCount={runSelection.ids.length}
+                                selectedAutomatedCaseIds={selectedAutomatedIds}
                                 activeExecution={activeExecution}
                                 onDispatched={() => {
                                   setRetryOf(null);
