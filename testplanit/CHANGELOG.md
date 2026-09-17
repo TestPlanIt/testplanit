@@ -1,3 +1,13 @@
+## [1.1.0-beta.15](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.14...v1.1.0-beta.15) (2026-09-17)
+
+### Bug Fixes
+
+* **impact:** keep the repository list stable so the compare fetch is not restarted on every render ([e08583f](https://github.com/TestPlanIt/testplanit/commit/e08583fba2c3aee35c5c286f3e008c534258d6eb))
+
+### Enhancements
+
+* **impact:** rank the AI candidates by signal and keep the run's selection out of the analysis ([b12b363](https://github.com/TestPlanIt/testplanit/commit/b12b3636d6044b4f9aede8e52d1096d724912802))
+
 ## [1.1.0-beta.14](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.13...v1.1.0-beta.14) (2026-09-17)
 
 ### Features
