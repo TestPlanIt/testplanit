@@ -931,26 +931,82 @@ describe("impactAnalysisWorker", () => {
     expect(result.cases.map((c) => c.caseId)).toEqual([22]);
   });
 
-  it("drops excluded case ids from the final list", async () => {
+  it("withholds pinned cases from the model and names them in the prompt", async () => {
     enableLlm();
     mockFindManyPins.mockResolvedValue([
       pinRow({ id: 1, caseId: 11, kind: "FILE" }),
     ]);
     const { processor } = await loadWorker();
 
-    const out = await processor(
-      makeJob({ data: { ...jobData, excludeCaseIds: [22] } })
-    );
+    const out = await processor(makeJob());
 
-    // Pinned cases are left out of the AI candidate set and named in the prompt.
     expect(aiCandidateQuery().where.id).toEqual({ notIn: [11] });
     expect(mockChat.mock.calls[0][1].messages[1].content).toContain(
-      "Already selected by Code Pins (do not re-select): [11]"
+      "Already selected by Code Pins or other signals (do not re-select): [11]"
     );
 
     const result = savedResult();
-    expect(result.cases.map((c) => c.caseId)).toEqual([11]);
-    expect(out).toMatchObject({ caseCount: 1, pinnedCount: 1 });
+    expect(result.cases.map((c) => c.caseId)).toEqual([11, 22]);
+    expect(out).toMatchObject({ caseCount: 2, pinnedCount: 1 });
+  });
+
+  it("ranks a large repository's undecided cases by signal and fills the cap from their folders", async () => {
+    mockCountCases.mockResolvedValue(1000);
+    mockFindManyPins.mockResolvedValue([
+      pinRow({ id: 1, caseId: 11, kind: "FILE" }),
+    ]);
+    mockResolveIntegration.mockResolvedValue({
+      integrationId: 100,
+      model: "gpt-4",
+    });
+    // Keyword hits: 31 outscores 32, both under the affected threshold.
+    mockGetEsClient.mockReturnValue({ search: mockEsSearch });
+    mockEsSearch.mockResolvedValue({
+      hits: {
+        hits: [
+          { _id: "32", _score: 3, matched_queries: ["path_name"] },
+          { _id: "31", _score: 9, matched_queries: ["path_name"] },
+        ],
+      },
+    });
+    mockFindManyCases.mockImplementation(async (args: any) => {
+      if (args?.include) {
+        return (args.where.id.in as number[]).map((id) =>
+          rawCase(id, `Case ${id}`)
+        );
+      }
+      if (args?.select?.folderId) return [{ folderId: 5 }];
+      if (args?.where?.folderId) return [{ id: 40 }];
+      return [];
+    });
+    const { processor } = await loadWorker();
+
+    await processor(makeJob());
+
+    // The folders of the pinned and ranked cases seed the neighbour sample,
+    // which skips those cases and takes only the slots left under the cap.
+    const anchorQuery = mockFindManyCases.mock.calls.find(
+      ([args]) => args?.select?.folderId
+    )?.[0];
+    expect(anchorQuery.where.id).toEqual({ in: [11, 31, 32] });
+    const neighbourQuery = mockFindManyCases.mock.calls.find(
+      ([args]) => args?.where?.folderId
+    )?.[0];
+    expect(neighbourQuery).toMatchObject({
+      where: { folderId: { in: [5] }, id: { notIn: [11, 31, 32] } },
+      take: impactConfig.aiSampleSize,
+    });
+
+    expect(aiCandidateQuery().where.id).toEqual({ in: [31, 32, 40] });
+    const userPrompt: string = mockChat.mock.calls[0][1].messages[1].content;
+    expect(userPrompt).toContain("(do not re-select): [11]");
+    expect(userPrompt.indexOf('[31,"Case 31"]')).toBeLessThan(
+      userPrompt.indexOf('[32,"Case 32"]')
+    );
+    expect(userPrompt.indexOf('[32,"Case 32"]')).toBeLessThan(
+      userPrompt.indexOf('[40,"Case 40"]')
+    );
+    expect(savedResult().stats.aiCandidateCount).toBe(3);
   });
 
   it("marks the analysis CANCELLED and throws when the cancel flag is set before it starts", async () => {

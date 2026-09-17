@@ -191,7 +191,7 @@ export const PROMPT_FEATURE_VARIABLES: Record<LlmFeature, PromptVariable[]> = {
     {
       name: "PINNED_CASES_NOTE",
       description:
-        "Case ids already selected by Code Pins so the model does not re-select them — empty when none",
+        "Case ids already selected by Code Pins or other signals so the model does not re-select them — empty when none",
     },
     {
       name: "CANDIDATE_COUNT",

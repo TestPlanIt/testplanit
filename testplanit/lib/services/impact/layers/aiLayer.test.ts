@@ -78,7 +78,7 @@ function makeInput(overrides: Partial<AiLayerInput> = {}): AiLayerInput {
     changedFileCount: 1,
     excludedCount: 0,
     changedPaths: ["lib/auth.ts"],
-    pinnedCaseIds: [],
+    preselectedCaseIds: [],
     candidates: candidates(4),
     cfg: { thinkingBudget: 0 },
     ...overrides,
@@ -103,7 +103,7 @@ describe("runAiLayer", () => {
 
   describe("batch sizing", () => {
     it("floors the batch at 20 cases when the output budget is tiny", async () => {
-      // (1000 - 500 reserve) / 60 per case = 8, below the floor.
+      // (1000 - 500 reserve) / 50 per case = 10, below the floor.
       await runAiLayer(
         makeDeps(),
         makeInput({ maxOutputTokens: 1000, candidates: candidates(45) })
@@ -122,10 +122,10 @@ describe("runAiLayer", () => {
     });
 
     it("sizes the batch from the output budget in between", async () => {
-      // (3500 - 500) / 60 = 50 cases.
+      // (3000 - 500) / 50 = 50 cases.
       await runAiLayer(
         makeDeps(),
-        makeInput({ maxOutputTokens: 3500, candidates: candidates(60) })
+        makeInput({ maxOutputTokens: 3000, candidates: candidates(60) })
       );
 
       expect(batchSizes()).toEqual([50, 10]);

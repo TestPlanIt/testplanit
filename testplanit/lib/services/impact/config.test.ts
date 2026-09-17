@@ -20,9 +20,10 @@ describe("readImpactConfig", () => {
     expect(cfg.truncateTextLong).toBe(100);
     expect(cfg.truncateOtherField).toBe(100);
     expect(cfg.aiFullRepoThreshold).toBe(250);
-    expect(cfg.maxAiCandidates).toBe(400);
-    expect(cfg.aiSampleSize).toBe(150);
+    expect(cfg.maxAiCandidates).toBe(150);
+    expect(cfg.aiSampleSize).toBe(50);
     expect(cfg.minSearchScore).toBe(5);
+    expect(cfg.searchRelativeCutoff).toBe(0.1);
     expect(cfg.maxSearchResults).toBe(500);
     expect(cfg.bm25Saturation).toBe(20);
     expect(cfg.minScore).toBe(20);
@@ -40,12 +41,14 @@ describe("readImpactConfig", () => {
       IMPACT_DIFF_TOKEN_BUDGET: "5000",
       IMPACT_MAX_PATCH_FILES: " 12 ",
       IMPACT_MIN_SEARCH_SCORE: "2.5",
+      IMPACT_SEARCH_RELATIVE_CUTOFF: "0.25",
       IMPACT_LINKED_EXPANSION: "false",
       IMPACT_REUSE_HOURS: "0",
     });
     expect(cfg.diffTokenBudget).toBe(5000);
     expect(cfg.maxPatchFiles).toBe(12);
     expect(cfg.minSearchScore).toBe(2.5);
+    expect(cfg.searchRelativeCutoff).toBe(0.25);
     expect(cfg.linkedExpansion).toBe(false);
     expect(cfg.reuseHours).toBe(0);
   });
@@ -56,6 +59,7 @@ describe("readImpactConfig", () => {
       IMPACT_MAX_PATCH_FILES: "-3",
       IMPACT_MAX_DIFF_FILES: "1.5",
       IMPACT_MIN_SEARCH_SCORE: "NaN",
+      IMPACT_SEARCH_RELATIVE_CUTOFF: "1.5",
       IMPACT_BM25_SATURATION: "",
       IMPACT_LINKED_EXPANSION: "maybe",
     });
@@ -63,6 +67,7 @@ describe("readImpactConfig", () => {
     expect(cfg.maxPatchFiles).toBe(40);
     expect(cfg.maxDiffFiles).toBe(500);
     expect(cfg.minSearchScore).toBe(5);
+    expect(cfg.searchRelativeCutoff).toBe(0.1);
     expect(cfg.bm25Saturation).toBe(20);
     expect(cfg.linkedExpansion).toBe(true);
   });

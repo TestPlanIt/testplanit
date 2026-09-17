@@ -272,7 +272,6 @@ export interface ImpactAnalysisJobData {
   headSha: string;
   userId: string;
   notes?: string;
-  excludeCaseIds?: number[];
   tenantId?: string;
   autoRun?: ImpactAutoRun;
 }

@@ -236,8 +236,10 @@ test.describe("Impact dialog", () => {
       expect(calls.analysisPosts[0]).toMatchObject({
         base: MOCK_BASE_SHA,
         head: MOCK_HEAD_SHA,
-        excludeCaseIds: [manualCaseId],
       });
+      // The run's own selection stays on the client; the analysis is
+      // reusable whatever the run holds.
+      expect(calls.analysisPosts[0]).not.toHaveProperty("excludeCaseIds");
     });
 
     await test.step("Review: both suggestions are pre-selected with their reasons; the uncovered file is called out", async () => {

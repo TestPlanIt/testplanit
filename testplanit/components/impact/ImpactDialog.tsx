@@ -84,8 +84,12 @@ export interface ImpactDialogState {
   aiAvailable: boolean;
   reused: boolean;
   cases: ImpactAnalysisCaseRow[];
+  /** Cases the analysis found that are already in the run, hidden from the list. */
+  excludedCount: number;
   selectedCaseIds: number[];
   pinnedUncovered: Record<string, number>;
+  /** A pin was created during review, so the next analysis must run fresh. */
+  forceNext: boolean;
 }
 
 export type ImpactDialogAction =
@@ -99,7 +103,12 @@ export type ImpactDialogAction =
   | { type: "BACK" }
   | { type: "ANALYSIS_STARTED" }
   | { type: "ANALYSIS_META"; aiAvailable: boolean; reused: boolean }
-  | { type: "ANALYSIS_COMPLETED"; cases: ImpactAnalysisCaseRow[] }
+  | {
+      type: "ANALYSIS_COMPLETED";
+      cases: ImpactAnalysisCaseRow[];
+      /** Cases already in the run; left out of the list. */
+      excludeCaseIds: number[];
+    }
   | { type: "TOGGLE_CASE"; caseId: number }
   | { type: "SET_SELECTION"; caseIds: number[] }
   | { type: "PIN_CREATED"; path: string; caseId: number }
@@ -117,8 +126,10 @@ export const initialImpactDialogState: ImpactDialogState = {
   aiAvailable: true,
   reused: false,
   cases: [],
+  excludedCount: 0,
   selectedCaseIds: [],
   pinnedUncovered: {},
+  forceNext: false,
 };
 
 export function isSameCommit(state: ImpactDialogState): boolean {
@@ -210,6 +221,7 @@ export function impactDialogReducer(
           ...state,
           step: "diff",
           cases: [],
+          excludedCount: 0,
           selectedCaseIds: [],
           pinnedUncovered: {},
           reused: false,
@@ -223,8 +235,10 @@ export function impactDialogReducer(
         aiAvailable: true,
         reused: false,
         cases: [],
+        excludedCount: 0,
         selectedCaseIds: [],
         pinnedUncovered: {},
+        forceNext: false,
       };
     case "ANALYSIS_META":
       return {
@@ -232,14 +246,18 @@ export function impactDialogReducer(
         aiAvailable: action.aiAvailable,
         reused: action.reused,
       };
-    case "ANALYSIS_COMPLETED":
+    case "ANALYSIS_COMPLETED": {
+      const exclude = new Set(action.excludeCaseIds);
+      const cases = action.cases.filter((row) => !exclude.has(row.caseId));
       return {
         ...state,
         step: "review",
-        cases: action.cases,
-        selectedCaseIds: defaultSelection(action.cases),
+        cases,
+        excludedCount: action.cases.length - cases.length,
+        selectedCaseIds: defaultSelection(cases),
         pinnedUncovered: {},
       };
+    }
     case "TOGGLE_CASE":
       return {
         ...state,
@@ -259,6 +277,7 @@ export function impactDialogReducer(
         selectedCaseIds: state.selectedCaseIds.includes(action.caseId)
           ? state.selectedCaseIds
           : [...state.selectedCaseIds, action.caseId],
+        forceNext: true,
       };
     case "RESET":
       return initialImpactDialogState;
@@ -383,9 +402,13 @@ export function ImpactDialog({
   useEffect(() => {
     if (state.step !== "running") return;
     if (analysis.status === "COMPLETED" && analysis.result) {
-      dispatch({ type: "ANALYSIS_COMPLETED", cases: analysis.result.cases });
+      dispatch({
+        type: "ANALYSIS_COMPLETED",
+        cases: analysis.result.cases,
+        excludeCaseIds: currentSelection,
+      });
     }
-  }, [state.step, analysis.status, analysis.result]);
+  }, [state.step, analysis.status, analysis.result, currentSelection]);
 
   const isAnalysisActive =
     analysis.status === "PENDING" || analysis.status === "RUNNING";
@@ -413,8 +436,7 @@ export function ImpactDialog({
       configId: config.id,
       base,
       head,
-      excludeCaseIds: currentSelection,
-      force: analysis.analysisId !== null,
+      force: state.forceNext,
     })
       .then((meta) => {
         dispatch({
@@ -424,7 +446,7 @@ export function ImpactDialog({
         });
       })
       .catch(() => {});
-  }, [state.compare, config, start, currentSelection, analysis.analysisId]);
+  }, [state.compare, config, state.forceNext, start]);
 
   const handleCancelAnalysis = useCallback(() => {
     cancel();
@@ -553,6 +575,7 @@ export function ImpactDialog({
               projectId={projectId}
               config={config}
               cases={state.cases}
+              excludedCount={state.excludedCount}
               result={analysis.result?.analysis.result ?? null}
               selectedCaseIds={state.selectedCaseIds}
               onToggleCase={(caseId) =>

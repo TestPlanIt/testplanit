@@ -22,7 +22,6 @@ const createSchema = z.object({
   base: refSchema,
   head: refSchema,
   notes: z.string().max(2000).optional(),
-  excludeCaseIds: z.array(z.number().int().positive()).max(5000).optional(),
   force: z.boolean().optional(),
 });
 
@@ -97,7 +96,7 @@ export const POST = withAuditContext(
         { status: 400 }
       );
     }
-    const { base, head, notes, excludeCaseIds, force } = parsed.data;
+    const { base, head, notes, force } = parsed.data;
     const requestedConfigId = parsed.data.configId ?? null;
 
     try {
@@ -171,7 +170,6 @@ export const POST = withAuditContext(
           head,
           createdById: session.user.id,
           notes,
-          excludeCaseIds,
           force,
           tenantId: getCurrentTenantId(),
         }

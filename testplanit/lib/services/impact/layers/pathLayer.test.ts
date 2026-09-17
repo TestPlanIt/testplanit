@@ -4,6 +4,7 @@ import { runPathLayer, type PathLayerInput } from "./pathLayer";
 
 const cfg = {
   minSearchScore: 0.1,
+  searchRelativeCutoff: 0,
   maxSearchResults: 50,
   bm25Saturation: 12,
 };
@@ -55,6 +56,24 @@ describe("runPathLayer", () => {
     expect([...out.layer.keys()]).toEqual([12]);
     expect(db.repositoryCases.findMany).not.toHaveBeenCalled();
     expect(es.count).not.toHaveBeenCalled();
+  });
+
+  it("drops hits scoring under the relative cutoff of the top hit", async () => {
+    const es = makeEs([
+      { _id: "12", _score: 40 },
+      { _id: "13", _score: 20 },
+      { _id: "14", _score: 3 },
+    ]);
+
+    const out = await runPathLayer(db as any, es, {
+      ...input,
+      cfg: { ...cfg, searchRelativeCutoff: 0.25 },
+    });
+
+    expect([...out.layer.keys()]).toEqual([12, 13]);
+    expect(out.layer.get(12)?.score).toBeGreaterThan(
+      out.layer.get(13)?.score ?? 0
+    );
   });
 
   it("asks the database when the index answers with nothing", async () => {

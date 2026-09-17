@@ -23,6 +23,7 @@ import {
 import { getCommitFilePaths } from "../lib/services/impact/commitFiles";
 import { getFileAtCommit } from "../lib/services/impact/fileAtCommit";
 import { impactCancelKey } from "../lib/services/impact/jobKeys";
+import { planAiCandidates } from "../lib/services/impact/aiCandidates";
 import { runAiLayer } from "../lib/services/impact/layers/aiLayer";
 import { runHistoryLayer } from "../lib/services/impact/layers/historyLayer";
 import { createRunFromAnalysis } from "../lib/services/impact/autoRun";
@@ -389,7 +390,6 @@ export const processor = async (
     });
 
     // ── waiting_for_ai ───────────────────────────────────────────────────
-    const excluded = new Set(job.data.excludeCaseIds ?? []);
     const repositoryTotalCount: number = await db.repositoryCases.count({
       where: { projectId, isDeleted: false, isArchived: false, ...caseFilter },
     });
@@ -403,55 +403,66 @@ export const processor = async (
       warnings.push({ code: "llm_not_configured" });
     } else {
       await enterPhase("waiting_for_ai");
-      const pinnedSet = new Set(pinnedCaseIds);
+      const plan = planAiCandidates({
+        repositoryTotalCount,
+        pinnedCaseIds,
+        layers: [issueLayer.layer, pathLayer.layer, history.layer],
+        cfg,
+      });
       const baseWhere = {
         projectId,
         isDeleted: false,
         isArchived: false,
         ...caseFilter,
       };
-      let candidateWhere: Record<string, unknown>;
-      if (repositoryTotalCount <= cfg.aiFullRepoThreshold) {
-        candidateWhere = { ...baseWhere, id: { notIn: [...pinnedSet] } };
+      let rawCases: RawCaseForPrompt[] = [];
+      if (plan.full) {
+        rawCases = (await db.repositoryCases.findMany({
+          where: { ...baseWhere, id: { notIn: plan.settledIds } },
+          include: CASE_INCLUDE,
+          orderBy: { name: "asc" },
+          take: cfg.aiFullRepoThreshold,
+        })) as RawCaseForPrompt[];
       } else {
-        const seed = new Set<number>([
-          ...issueLayer.layer.keys(),
-          ...pathLayer.layer.keys(),
-          ...history.layer.keys(),
-        ]);
-        for (const id of pinnedSet) seed.delete(id);
-        const seedRows = (await db.repositoryCases.findMany({
-          where: { id: { in: [...seed] } },
-          select: { folderId: true },
-        })) as Array<{ folderId: number | null }>;
-        const folderIds = [
-          ...new Set(seedRows.map((r) => r.folderId).filter((x) => x !== null)),
-        ] as number[];
-        const neighbours =
-          folderIds.length > 0
-            ? ((await db.repositoryCases.findMany({
-                where: {
-                  ...baseWhere,
-                  folderId: { in: folderIds },
-                  id: { notIn: [...seed, ...pinnedSet] },
-                },
-                select: { id: true },
-                orderBy: { id: "desc" },
-                take: cfg.aiSampleSize,
-              })) as Array<{ id: number }>)
-            : [];
-        const ids = [...seed, ...neighbours.map((n) => n.id)].slice(
-          0,
-          cfg.maxAiCandidates
-        );
-        candidateWhere = { ...baseWhere, id: { in: ids } };
+        let neighbourIds: number[] = [];
+        if (plan.neighbourSlots > 0 && plan.anchorIds.length > 0) {
+          const anchorRows = (await db.repositoryCases.findMany({
+            where: { id: { in: plan.anchorIds } },
+            select: { folderId: true },
+          })) as Array<{ folderId: number | null }>;
+          const folderIds = [
+            ...new Set(
+              anchorRows.map((r) => r.folderId).filter((x) => x !== null)
+            ),
+          ] as number[];
+          if (folderIds.length > 0) {
+            const neighbours = (await db.repositoryCases.findMany({
+              where: {
+                ...baseWhere,
+                folderId: { in: folderIds },
+                id: { notIn: [...plan.settledIds, ...plan.rankedIds] },
+              },
+              select: { id: true },
+              orderBy: { id: "desc" },
+              take: plan.neighbourSlots,
+            })) as Array<{ id: number }>;
+            neighbourIds = neighbours.map((n) => n.id);
+          }
+        }
+        const ids = [...plan.rankedIds, ...neighbourIds];
+        if (ids.length > 0) {
+          const rows = (await db.repositoryCases.findMany({
+            where: { ...baseWhere, id: { in: ids } },
+            include: CASE_INCLUDE,
+            take: cfg.maxAiCandidates,
+          })) as RawCaseForPrompt[];
+          // Signal order, so a batch the model cuts off loses the weakest.
+          const position = new Map(ids.map((id, index) => [id, index]));
+          rawCases = rows.sort(
+            (a, b) => (position.get(a.id) ?? 0) - (position.get(b.id) ?? 0)
+          );
+        }
       }
-      const rawCases = (await db.repositoryCases.findMany({
-        where: candidateWhere,
-        include: CASE_INCLUDE,
-        orderBy: { name: "asc" },
-        take: cfg.maxAiCandidates,
-      })) as RawCaseForPrompt[];
       const candidates: CompressedCase[] = rawCases.map((raw) =>
         compressCase(raw, {
           truncateCaseName: cfg.truncateCaseName,
@@ -496,7 +507,7 @@ export const processor = async (
             changedFileCount: diffSummary.files.length,
             excludedCount: diffSummary.excludedFiles.length,
             changedPaths: includedPaths,
-            pinnedCaseIds,
+            preselectedCaseIds: plan.settledIds,
             candidates,
             cfg,
           }
@@ -555,7 +566,7 @@ export const processor = async (
       changedPaths: includedPaths,
       cfg,
     });
-    const cases = merged.cases.filter((c) => !excluded.has(c.caseId));
+    const cases = merged.cases;
     const uncoveredFiles = Array.from(
       new Set([
         ...merged.uncoveredFiles,

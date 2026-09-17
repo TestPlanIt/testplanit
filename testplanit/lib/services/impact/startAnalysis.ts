@@ -28,7 +28,6 @@ export interface StartAnalysisInput {
   /** Recorded as the analysis creator; the webhook path uses the project creator. */
   createdById: string;
   notes?: string | null;
-  excludeCaseIds?: number[];
   /** Skip the recent-analysis reuse and run fresh. */
   force?: boolean;
   tenantId?: string;
@@ -153,7 +152,6 @@ export async function startImpactAnalysis(
     headSha,
     userId: input.createdById,
     notes: input.notes ?? undefined,
-    excludeCaseIds: input.excludeCaseIds,
     tenantId: input.tenantId,
     autoRun: input.autoRun,
   };

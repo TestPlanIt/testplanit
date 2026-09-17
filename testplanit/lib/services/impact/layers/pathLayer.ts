@@ -24,7 +24,10 @@ export interface PathLayerInput {
   terms: PathTermsInput;
   cfg: Pick<
     ImpactConfig,
-    "minSearchScore" | "maxSearchResults" | "bm25Saturation"
+    | "minSearchScore"
+    | "searchRelativeCutoff"
+    | "maxSearchResults"
+    | "bm25Saturation"
   >;
   /** Extra where-clause for the DB paths (e.g. the draft-state filter). */
   caseFilter?: Record<string, unknown>;
@@ -160,6 +163,11 @@ async function searchElasticsearch(
         rawScore: raw,
       },
     ]);
+  }
+  // Anything far below the top hit is a stray shared word, not a match.
+  const floor = maxRaw * cfg.searchRelativeCutoff;
+  for (const [caseId, reasons] of out) {
+    if ((reasons[0]?.rawScore ?? 0) < floor) out.delete(caseId);
   }
   out.maxRaw = maxRaw;
   return out;

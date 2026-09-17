@@ -224,6 +224,20 @@ describe("AffectedTestsStep", () => {
     ).toBeInTheDocument();
   });
 
+  it("says how many cases already in the run were left out", () => {
+    renderStep({ excludedCount: 3 });
+
+    expect(screen.getByTestId("impact-excluded-note")).toHaveTextContent(
+      'runs.impact.affected.excluded:{"count":3}'
+    );
+  });
+
+  it("says nothing about left-out cases when there are none", () => {
+    renderStep();
+
+    expect(screen.queryByTestId("impact-excluded-note")).toBeNull();
+  });
+
   it("opens with the minimum score at the threshold, showing what starts selected", () => {
     renderStep({ result: null });
 

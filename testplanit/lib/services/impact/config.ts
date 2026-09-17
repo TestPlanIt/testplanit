@@ -15,6 +15,8 @@ export interface ImpactConfig {
   maxAiCandidates: number;
   aiSampleSize: number;
   minSearchScore: number;
+  /** Keyword hits scoring under this fraction of the top hit are dropped. */
+  searchRelativeCutoff: number;
   maxSearchResults: number;
   bm25Saturation: number;
   minScore: number;
@@ -58,9 +60,10 @@ export const IMPACT_CONFIG_DEFAULTS: Readonly<ImpactConfig> = Object.freeze({
   truncateTextLong: 100,
   truncateOtherField: 100,
   aiFullRepoThreshold: 250,
-  maxAiCandidates: 400,
-  aiSampleSize: 150,
+  maxAiCandidates: 150,
+  aiSampleSize: 50,
   minSearchScore: 5,
+  searchRelativeCutoff: 0.1,
   maxSearchResults: 500,
   bm25Saturation: 20,
   minScore: 20,
@@ -97,6 +100,12 @@ function envNumber(value: string | undefined, fallback: number): number {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
 }
 
+/** A number in [0, 1]; anything else falls back. */
+function envFraction(value: string | undefined, fallback: number): number {
+  const parsed = envNumber(value, fallback);
+  return parsed <= 1 ? parsed : fallback;
+}
+
 function envBool(value: string | undefined, fallback: boolean): boolean {
   if (value === undefined) return fallback;
   const normalized = value.trim().toLowerCase();
@@ -129,6 +138,10 @@ export function readImpactConfig(env: EnvLike = process.env): ImpactConfig {
     maxAiCandidates: envInt(env.IMPACT_MAX_AI_CANDIDATES, d.maxAiCandidates),
     aiSampleSize: envInt(env.IMPACT_AI_SAMPLE_SIZE, d.aiSampleSize),
     minSearchScore: envNumber(env.IMPACT_MIN_SEARCH_SCORE, d.minSearchScore),
+    searchRelativeCutoff: envFraction(
+      env.IMPACT_SEARCH_RELATIVE_CUTOFF,
+      d.searchRelativeCutoff
+    ),
     maxSearchResults: envInt(env.IMPACT_MAX_SEARCH_RESULTS, d.maxSearchResults),
     bm25Saturation: envNumber(env.IMPACT_BM25_SATURATION, d.bm25Saturation),
     minScore: envInt(env.IMPACT_MIN_SCORE, d.minScore),

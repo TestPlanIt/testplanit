@@ -115,9 +115,14 @@ describe("impactDialogReducer", () => {
       caseRow(2, "affected"),
       caseRow(3, "related"),
     ];
-    state = impactDialogReducer(state, { type: "ANALYSIS_COMPLETED", cases });
+    state = impactDialogReducer(state, {
+      type: "ANALYSIS_COMPLETED",
+      cases,
+      excludeCaseIds: [],
+    });
     expect(state.step).toBe("review");
     expect(state.selectedCaseIds).toEqual([1, 2]);
+    expect(state.excludedCount).toBe(0);
     expect(defaultSelection(cases)).toEqual([1, 2]);
 
     state = impactDialogReducer(state, { type: "BACK" });
@@ -127,6 +132,47 @@ describe("impactDialogReducer", () => {
 
     state = impactDialogReducer(state, { type: "BACK" });
     expect(state.step).toBe("pick");
+  });
+
+  it("leaves out the cases already in the run and counts them", () => {
+    const state = impactDialogReducer(
+      { ...picked, step: "running" },
+      {
+        type: "ANALYSIS_COMPLETED",
+        cases: [
+          caseRow(1, "pinned"),
+          caseRow(2, "affected"),
+          caseRow(3, "affected"),
+          caseRow(4, "related"),
+        ],
+        excludeCaseIds: [2, 4, 99],
+      }
+    );
+
+    expect(state.cases.map((row) => row.caseId)).toEqual([1, 3]);
+    expect(state.excludedCount).toBe(2);
+    expect(state.selectedCaseIds).toEqual([1, 3]);
+  });
+
+  it("asks for a fresh analysis only after a pin was created during review", () => {
+    const review: ImpactDialogState = { ...picked, step: "review" };
+    expect(review.forceNext).toBe(false);
+
+    const pinned = impactDialogReducer(review, {
+      type: "PIN_CREATED",
+      path: "src/a.ts",
+      caseId: 9,
+    });
+    expect(pinned.forceNext).toBe(true);
+
+    // The flag survives going back to the changes...
+    const back = impactDialogReducer(pinned, { type: "BACK" });
+    expect(back.step).toBe("diff");
+    expect(back.forceNext).toBe(true);
+
+    // ...and is spent by the next analysis.
+    const started = impactDialogReducer(back, { type: "ANALYSIS_STARTED" });
+    expect(started.forceNext).toBe(false);
   });
 
   it("toggles, replaces, and extends the selection", () => {

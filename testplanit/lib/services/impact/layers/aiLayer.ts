@@ -53,7 +53,7 @@ export interface AiLayerInput {
   changedFileCount: number;
   excludedCount: number;
   changedPaths: string[];
-  pinnedCaseIds: number[];
+  preselectedCaseIds: number[];
   candidates: CompressedCase[];
   cfg: Pick<ImpactConfig, "thinkingBudget">;
 }
@@ -75,7 +75,7 @@ export interface AiLayerOutput {
 
 type CaseItem = CompressedCase & BatchableItem;
 
-const OUTPUT_TOKENS_PER_CASE = 60;
+const OUTPUT_TOKENS_PER_CASE = 50;
 const OUTPUT_TOKENS_RESERVE = 500;
 const LLM_TIMEOUT_MS = 240_000;
 
@@ -130,7 +130,7 @@ export async function runAiLayer(
       diffText: input.diffText,
       changedFileCount: input.changedFileCount,
       excludedCount: input.excludedCount,
-      pinnedCaseIds: input.pinnedCaseIds,
+      preselectedCaseIds: input.preselectedCaseIds,
       candidates: batch,
       batchIndex,
       batchCount,

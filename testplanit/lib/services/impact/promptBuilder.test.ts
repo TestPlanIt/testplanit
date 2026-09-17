@@ -29,7 +29,7 @@ function baseContext(
     diffText: "M lib/auth.ts\n  +login()",
     changedFileCount: 1,
     excludedCount: 0,
-    pinnedCaseIds: [],
+    preselectedCaseIds: [],
     candidates: [
       { id: 1, name: "Login works", folderPath: "/Auth" },
       { id: 2, name: "Logout" },
@@ -109,7 +109,7 @@ describe("buildUserPrompt", () => {
       baseContext({
         notes: "  Focus on login  ",
         excludedCount: 2,
-        pinnedCaseIds: [12, 87],
+        preselectedCaseIds: [12, 87],
         batchIndex: 1,
         batchCount: 3,
       })
@@ -124,7 +124,7 @@ describe("buildUserPrompt", () => {
       M lib/auth.ts
         +login()
 
-      Already selected by Code Pins (do not re-select): [12, 87]
+      Already selected by Code Pins or other signals (do not re-select): [12, 87]
       CANDIDATE TEST CASES (2 cases, batch 2 of 3):
       Format: [id, name, folder?, tags[]?, fields?]
       [1,"Login works","/Auth"]

@@ -205,7 +205,8 @@ export interface ImpactPromptContext {
   diffText: string;
   changedFileCount: number;
   excludedCount: number;
-  pinnedCaseIds: number[];
+  /** Cases withheld from the model because another signal already selected them. */
+  preselectedCaseIds: number[];
   candidates: CompressedCase[];
   /** Zero-based; rendered as `batch {batchIndex + 1} of {batchCount}`. */
   batchIndex: number;
@@ -231,8 +232,8 @@ export function buildImpactVariables(
         : "",
     DIFF_SUMMARY: ctx.diffText,
     PINNED_CASES_NOTE:
-      ctx.pinnedCaseIds.length > 0
-        ? `Already selected by Code Pins (do not re-select): [${ctx.pinnedCaseIds.join(", ")}]`
+      ctx.preselectedCaseIds.length > 0
+        ? `Already selected by Code Pins or other signals (do not re-select): [${ctx.preselectedCaseIds.join(", ")}]`
         : "",
     CANDIDATE_COUNT: String(ctx.candidates.length),
     BATCH_NOTE:
@@ -262,7 +263,7 @@ export function estimateFixedPromptTokens(
     diffText,
     changedFileCount: 0,
     excludedCount: 0,
-    pinnedCaseIds: [],
+    preselectedCaseIds: [],
     candidates: [],
     batchIndex: 0,
     batchCount: 1,

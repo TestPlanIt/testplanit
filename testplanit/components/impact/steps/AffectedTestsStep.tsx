@@ -237,6 +237,8 @@ interface AffectedTestsStepProps {
   projectId: number;
   config: ImpactRepoConfig;
   cases: ImpactAnalysisCaseRow[];
+  /** Cases the analysis found that are already in the run and so not listed. */
+  excludedCount?: number;
   result: ImpactAnalysisResultPayload | null;
   selectedCaseIds: number[];
   onToggleCase: (caseId: number) => void;
@@ -252,6 +254,7 @@ export function AffectedTestsStep({
   projectId,
   config,
   cases,
+  excludedCount = 0,
   result,
   selectedCaseIds,
   onSetSelection,
@@ -614,6 +617,14 @@ export function AffectedTestsStep({
         <p className="text-xs text-muted-foreground">
           {t("affected.thresholdHint", { threshold })}
         </p>
+        {excludedCount > 0 && (
+          <p
+            className="text-xs text-muted-foreground"
+            data-testid="impact-excluded-note"
+          >
+            {t("affected.excluded", { count: excludedCount })}
+          </p>
+        )}
       </div>
 
       {result?.summary && (

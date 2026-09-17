@@ -86,7 +86,6 @@ export interface StartImpactAnalysisInput {
   base: string;
   head: string;
   notes?: string;
-  excludeCaseIds?: number[];
   /** Skip the recent-analysis reuse and run fresh. */
   force?: boolean;
 }
@@ -243,10 +242,6 @@ export function useImpactAnalysis(projectId: number) {
             base: input.base,
             head: input.head,
             notes: input.notes,
-            excludeCaseIds:
-              input.excludeCaseIds && input.excludeCaseIds.length > 0
-                ? input.excludeCaseIds
-                : undefined,
             force: input.force ? true : undefined,
           }),
           signal: controller.signal,

@@ -77,7 +77,9 @@ Click **Analyze** to start the analysis, or **Back** to change the commits.
 
 The analysis runs in the background and reports its phases as it goes: resolving the repository configuration, fetching the diff, matching Code Pins, searching test cases by keyword, scoring run history, waiting for AI (which counts the candidate cases as it ranks them), and combining the results. **Cancel analysis** stops it and returns to the changes.
 
-If the same two commits were analyzed within the last 24 hours, the completed analysis is shown again — a notice says so — instead of running a new one.
+The AI ranks only what the other signals leave undecided. A case a Code Pin selects, or one a ticket, keyword, or run-history match already places at or above the affected threshold, is named to the model as already selected rather than sent for ranking. The remaining matches go to the model strongest signal first, up to a cap (150 by default), and any room left under the cap is filled with cases from the same folders so the model can catch what no signal named. In a repository of up to 250 cases every case is sent instead.
+
+If the same two commits were analyzed within the last 24 hours, the completed analysis is shown again — a notice says so — instead of running a new one. The analysis does not depend on which cases the run already holds, so changing the run's selection and analyzing again reuses it too. Pinning a case from the Affected Tests and analyzing again runs a fresh analysis, so the new pin counts.
 
 ### 4. Affected Tests
 
@@ -95,9 +97,9 @@ Hover a tier badge, in a row or in the filter bar, for what it means.
 
 A filter bar above the list narrows what is shown without changing what is selected: toggle one or more tiers, toggle one or more reasons (a case stays when any chosen reason selected it), and drag **Minimum score** to change which scores are shown. It starts at the selection threshold, so the list opens showing the cases that start selected; lower it to see the rest. The bar reports how many cases are showing, and **Select shown** and **Deselect shown** check or clear exactly those, leaving hidden cases as they were. **Clear filters** returns to that starting view.
 
-Cases that are already in the run — or already selected while creating one — are left out, and a note says how many were skipped. When AI ran, a short **Summary** of the change appears above the list.
+Cases that are already in the run — or already selected while creating one — are left out, and a note under the header says how many were skipped. When AI ran, a short **Summary** of the change appears above the list.
 
-Click **Add N cases** to add the checked cases to the current selection. They merge with whatever was already selected, so nothing you picked by hand is lost. **Analyze again** runs a fresh analysis; **Back to changes** returns to the file list.
+Click **Add N cases** to add exactly the checked cases to the current selection. They join whatever was already selected, so nothing you picked by hand is lost. **Back to changes** returns to the file list.
 
 When nothing matches, the step says **No affected tests found** and suggests pinning cases to the changed files so the next analysis finds them.
 

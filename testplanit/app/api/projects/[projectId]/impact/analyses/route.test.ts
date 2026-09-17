@@ -188,12 +188,6 @@ describe("POST /api/projects/[projectId]/impact/analyses", () => {
       makeParams()
     );
     expect(spacey.status).toBe(400);
-
-    const badExclude = await POST(
-      postRequest({ ...validBody, excludeCaseIds: [0] }),
-      makeParams()
-    );
-    expect(badExclude.status).toBe(400);
     expect(getEnhancedDb).not.toHaveBeenCalled();
   });
 
@@ -411,7 +405,6 @@ describe("POST /api/projects/[projectId]/impact/analyses", () => {
       postRequest({
         ...validBody,
         notes: "release smoke",
-        excludeCaseIds: [4, 8],
       }),
       makeParams()
     );
@@ -450,7 +443,6 @@ describe("POST /api/projects/[projectId]/impact/analyses", () => {
         headSha: SHA_B,
         userId: "user-1",
         notes: "release smoke",
-        excludeCaseIds: [4, 8],
         tenantId: "tenant-x",
       },
       { jobId: "impact-77" }
