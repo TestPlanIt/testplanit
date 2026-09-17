@@ -207,6 +207,15 @@ test.describe("Drag & Drop", () => {
         const childAfterDrag = repositoryPage
           .getFolderByName(childName!)
           .first();
+        // The tree refetches after the drop; once the parent has children
+        // it renders collapsed, so open it before looking for the child.
+        const chevron = page.getByTestId(`folder-chevron-${parentId}`);
+        if (
+          !(await childAfterDrag.isVisible()) &&
+          (await chevron.getAttribute("aria-label")) === "Expand folder"
+        ) {
+          await chevron.click();
+        }
         await expect(childAfterDrag).toBeVisible({ timeout: 3000 });
         await childAfterDrag.evaluate((el) =>
           el.scrollIntoView({ block: "center" })

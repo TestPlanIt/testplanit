@@ -418,11 +418,8 @@ test.describe("Version History", () => {
     });
 
     await test.step("Confirm the history view footer message", async () => {
-      // Footer should show history view message (in CardFooter)
-      // Based on the error context, it shows "Test Case History View"
-      const footer = page
-        .locator("text=/History.*View|Test.*Case.*History/i")
-        .first();
+      // The CardFooter carries the exact history-view label.
+      const footer = page.getByText("Test Case History View", { exact: true });
       await expect(footer).toBeVisible({ timeout: 5000 });
     });
   });
@@ -459,8 +456,10 @@ test.describe("Version History", () => {
       });
       // Neither the version page nor the current case is rendered in its
       // place — the version page always ends with the history-view footer.
+      // Match the footer label exactly: the not-recorded copy itself talks
+      // about the test case and its history.
       await expect(
-        page.locator("text=/History.*View|Test.*Case.*History/i")
+        page.getByText("Test Case History View", { exact: true })
       ).toHaveCount(0);
       // And the URL still names the version that was asked for.
       expect(page.url()).toContain(`/${testCaseId}/99`);

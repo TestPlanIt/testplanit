@@ -168,8 +168,8 @@ test.describe("Sign Up with Email Verification", () => {
           await signinPage.fillCredentials(testEmail, testPassword);
           await signinPage.submit();
 
-          // The Header component redirects unverified users to /verify-email
-          await page.waitForURL(/\/en-US\/verify-email|\/signin/, {
+          // Unverified users are sent to /verify-email
+          await page.waitForURL(/\/en-US\/verify-email/, {
             timeout: 30000,
           });
         });
@@ -177,18 +177,10 @@ test.describe("Sign Up with Email Verification", () => {
         await test.step("Confirm the user lands on the verify-email page", async () => {
           const currentUrl = page.url();
 
-          // Unverified users should be redirected to verify-email
-          // (or remain on signin if the account is somehow blocked)
-          expect(
-            currentUrl.includes("/verify-email") ||
-              currentUrl.includes("/signin")
-          ).toBe(true);
+          expect(currentUrl).toContain("/verify-email");
 
-          // If on verify-email page, confirm the page title is shown
-          if (currentUrl.includes("/verify-email")) {
-            const pageTitle = page.getByTestId("verify-email-page-title");
-            await expect(pageTitle).toBeVisible({ timeout: 5000 });
-          }
+          const pageTitle = page.getByTestId("verify-email-page-title");
+          await expect(pageTitle).toBeVisible({ timeout: 5000 });
         });
       } finally {
         await api.deleteUser(userId!);

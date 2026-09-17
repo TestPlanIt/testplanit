@@ -57,6 +57,8 @@ function loadMessages(locale: "en-US" | "es-ES" | "fr-FR"): WebhookMessages {
     "utf-8"
   );
   const parsed = JSON.parse(raw) as Record<string, unknown>;
+  const common = parsed.common as Record<string, unknown>;
+  const commonFilters = common.filters as Record<string, string>;
   const projects = parsed.projects as Record<string, unknown>;
   const settings = projects.settings as Record<string, unknown>;
   const webhooks = settings.webhooks as Record<string, unknown>;
@@ -71,10 +73,12 @@ function loadMessages(locale: "en-US" | "es-ES" | "fr-FR"): WebhookMessages {
     outboundCreateSubscriptionsTitle:
       webhooks.outboundCreateSubscriptionsTitle as string,
     outboundCreateSubmit: webhooks.outboundCreateSubmit as string,
-    outboundCreateCancel: webhooks.outboundCreateCancel as string,
+    // The cancel button and the "All" status filter use the shared common
+    // strings rather than webhook-specific keys.
+    outboundCreateCancel: common.cancel as string,
     outboundDeleteConfirmTitle: webhooks.outboundDeleteConfirmTitle as string,
     outboundDeleteConfirm: webhooks.outboundDeleteConfirm as string,
-    filterStatusAll: webhooks.filterStatusAll as string,
+    filterStatusAll: commonFilters.all,
     filterStatusFailed: webhooks.filterStatusFailed as string,
     filterReset: webhooks.filterReset as string,
     reEnable: webhooks.reEnable as string,

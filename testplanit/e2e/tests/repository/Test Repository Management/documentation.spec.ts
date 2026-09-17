@@ -414,6 +414,10 @@ test.describe("Documentation", () => {
       const listButton = page.getByTestId("tiptap-bullet-list");
       await expect(listButton).toBeVisible({ timeout: 3000 });
       await listButton.click();
+      // The toolbar button takes focus on click and the editor reclaims it a
+      // beat later; keys sent in between land on the button, and Enter would
+      // toggle the list straight back off.
+      await expect(editor).toBeFocused({ timeout: 2000 });
 
       // Type list items
       await page.keyboard.type("Item 1");

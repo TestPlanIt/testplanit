@@ -139,9 +139,11 @@ test.describe("Execute automated cases from a run", () => {
     });
 
     await test.step("The worker dispatches to the stub with a signed payload", async () => {
+      // Shorter than the test timeout, so a dispatch that never arrives
+      // fails with the stub's own message rather than a bare timeout.
       const captures = await stub.waitForCapture(
         (all) => all.some((c) => c.url.includes("/hooks/testplanit")),
-        60_000
+        30_000
       );
       const hit = captures.find((c) => c.url.includes("/hooks/testplanit"))!;
       expect(hit.headers["x-testplanit-event"]).toBe("test_run.execute");

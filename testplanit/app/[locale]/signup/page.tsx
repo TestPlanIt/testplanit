@@ -199,12 +199,12 @@ const Signup: NextPage = () => {
       return;
     }
 
+    // Check if email verification is required
+    const requireEmailVerification =
+      registrationSettings?.requireEmailVerification ?? true;
+
     let newUser;
     try {
-      // Check if email verification is required
-      const requireEmailVerification =
-        registrationSettings?.requireEmailVerification ?? true;
-
       // Use dedicated signup API endpoint instead of ZenStack
       // (ZenStack 2.21+ has issues with unauthenticated nested creates)
       const response = await fetch("/api/auth/signup", {
@@ -281,6 +281,12 @@ const Signup: NextPage = () => {
       return;
     }
 
+    // A new account that still has to verify its address goes straight to
+    // the verification page; pushing home would race the header's redirect.
+    if (requireEmailVerification) {
+      router.push("/verify-email?email=" + encodeURIComponent(data.email));
+      return;
+    }
     router.push("/");
   }
 

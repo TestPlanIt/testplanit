@@ -286,6 +286,18 @@ const Signin: NextPage = () => {
       }
 
       // Redirect to callback URL if present, otherwise home
+      // An unverified account goes to the verification page first; pushing
+      // the callback URL here would race the header's own redirect and win.
+      const isSSO =
+        session?.user?.authMethod === "SSO" ||
+        session?.user?.authMethod === "BOTH";
+      if (!session?.user?.emailVerified && session?.user?.email && !isSSO) {
+        router.push(
+          "/verify-email?email=" + encodeURIComponent(session.user.email)
+        );
+        return;
+      }
+
       const callbackUrl = searchParams.get("callbackUrl") || "/";
       router.push(callbackUrl);
     } else if (result?.error?.startsWith("2FA_REQUIRED:")) {
