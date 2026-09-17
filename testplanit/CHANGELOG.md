@@ -1,3 +1,13 @@
+## [1.1.0-beta.16](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.15...v1.1.0-beta.16) (2026-09-17)
+
+### Bug Fixes
+
+* **auth:** send an unverified account to the verification page instead of racing the header for it ([f8c3dde](https://github.com/TestPlanIt/testplanit/commit/f8c3ddee49281eb619e557acdac19d306c799376))
+
+### Enhancements
+
+* **runs:** execute only the selected automated cases from the run page ([b9381a0](https://github.com/TestPlanIt/testplanit/commit/b9381a049257be5aeeb935b8523f2e9ee1c86330))
+
 ## [1.1.0-beta.15](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.14...v1.1.0-beta.15) (2026-09-17)
 
 ### Bug Fixes
