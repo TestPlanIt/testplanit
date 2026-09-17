@@ -1,4 +1,3 @@
-import { ProjectIcon } from "@/components/ProjectIcon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -8,6 +7,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
 import { Switch } from "@/components/ui/switch";
 import {
   Tooltip,
@@ -18,7 +18,6 @@ import {
 import type { Configurations } from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
 import {
-  Boxes,
   CircleCheckBig,
   CircleSlash2,
   Component,
@@ -277,42 +276,11 @@ export const useColumns = (
         enableResizing: true,
         size: 100,
         cell: ({ row }) => {
-          const projects = row.original.projects ?? [];
-          return (
-            <div className="text-center">
-              {projects.length > 0 && (
-                <Popover>
-                  <PopoverTrigger
-                    className="cursor-default"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                    }}
-                  >
-                    <Badge>
-                      <Boxes className="w-4 h-4 me-1" />
-                      {projects.length}
-                    </Badge>
-                  </PopoverTrigger>
-                  <PopoverContent className="flex flex-wrap gap-1">
-                    {projects.map((p) => (
-                      <Badge
-                        key={p.projectId}
-                        variant="secondary"
-                        className="gap-1"
-                      >
-                        <ProjectIcon
-                          iconUrl={p.project.iconUrl}
-                          width={14}
-                          height={14}
-                        />
-                        {p.project.name}
-                      </Badge>
-                    ))}
-                  </PopoverContent>
-                </Popover>
-              )}
-            </div>
-          );
+          const projects = (row.original.projects ?? []).map((p) => p.project);
+          if (projects.length === 0) {
+            return null;
+          }
+          return <ProjectListDisplay projects={projects} usePopover={true} />;
         },
       },
       {

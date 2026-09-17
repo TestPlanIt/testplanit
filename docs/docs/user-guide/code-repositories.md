@@ -49,13 +49,14 @@ Always use `https://` URLs for self-hosted servers. If you enter an `http://` UR
 
 The table lists each repository with these columns:
 
-| Column          | Description                                                         |
-| --------------- | ------------------------------------------------------------------- |
-| **Name**        | The repository's display name.                                      |
-| **Provider**    | GitHub, GitLab, Bitbucket, Azure DevOps, or Gitea / Forgejo / Gogs. |
-| **Active**      | A toggle that enables or disables the connection.                   |
-| **Last Tested** | When the connection was last verified, or **Never**.                |
-| **Actions**     | Edit and delete.                                                    |
+| Column          | Description                                                                                                                                       |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Name**        | The repository's display name.                                                                                                                    |
+| **Provider**    | GitHub, GitLab, Bitbucket, Azure DevOps, or Gitea / Forgejo / Gogs.                                                                               |
+| **Active**      | A toggle that enables or disables the connection.                                                                                                 |
+| **Projects**    | How many projects use the repository (through a QuickScript or Impact Analysis connection, or an execution target). Click the badge to list them. |
+| **Last Tested** | When the connection was last verified, or **Never**.                                                                                              |
+| **Actions**     | Edit and delete.                                                                                                                                  |
 
 - **Edit** reopens the connection form. The **provider cannot be changed** after creation — to switch providers, delete the repository and add a new one.
 - **Delete** soft-deletes the repository (it can be restored from [Trash](trash.md)).
