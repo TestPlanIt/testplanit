@@ -25,6 +25,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { ActionBar } from "@/components/ui/action-bar";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -626,47 +627,55 @@ export default function ImpactSettingsPage() {
                             </p>
                           )}
                       </div>
-                      <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
-                        <ImpactScanButtons
-                          config={config}
-                          refetchConfigs={refetchConfigRows}
-                        />
-                        <ImpactStalePinButtons
-                          config={config}
-                          staleCount={staleByConfig.get(config.id) ?? 0}
-                          onChanged={refetchPinState}
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          aria-label={t("repositories.view")}
-                          onClick={() => openDialog("view", config.id)}
-                          data-testid={`impact-repo-view-${config.id}`}
+                      <div className="flex shrink-0 flex-col items-end gap-2">
+                        <div className="flex items-center gap-1">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            aria-label={t("repositories.view")}
+                            onClick={() => openDialog("view", config.id)}
+                            data-testid={`impact-repo-view-${config.id}`}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            aria-label={t("repositories.edit")}
+                            onClick={() => openDialog("edit", config.id)}
+                            data-testid={`impact-repo-edit-${config.id}`}
+                          >
+                            <SquarePen className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="text-destructive"
+                            aria-label={tRepo("disconnect")}
+                            onClick={() => setDisconnectTarget(config)}
+                            data-testid={`impact-repo-disconnect-${config.id}`}
+                          >
+                            <Unlink className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <ActionBar
+                          compact
+                          className="flex-wrap justify-end"
+                          data-testid={`impact-repo-actions-${config.id}`}
                         >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          aria-label={t("repositories.edit")}
-                          onClick={() => openDialog("edit", config.id)}
-                          data-testid={`impact-repo-edit-${config.id}`}
-                        >
-                          <SquarePen className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="text-destructive"
-                          aria-label={tRepo("disconnect")}
-                          onClick={() => setDisconnectTarget(config)}
-                          data-testid={`impact-repo-disconnect-${config.id}`}
-                        >
-                          <Unlink className="h-4 w-4" />
-                        </Button>
+                          <ImpactScanButtons
+                            config={config}
+                            refetchConfigs={refetchConfigRows}
+                          />
+                          <ImpactStalePinButtons
+                            config={config}
+                            staleCount={staleByConfig.get(config.id) ?? 0}
+                            onChanged={refetchPinState}
+                          />
+                        </ActionBar>
                       </div>
                     </CardContent>
                   </Card>

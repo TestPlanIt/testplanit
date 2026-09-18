@@ -1,5 +1,9 @@
 "use client";
 
+import {
+  ActionButtonContent,
+  collapsibleActionClass,
+} from "@/components/ui/action-bar";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -119,38 +123,51 @@ export function ImpactScanButtons({
 
   return (
     <div className="flex flex-col items-end gap-1">
-      <div className="flex flex-wrap items-center gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => handleScan(false)}
-          disabled={isScanning}
-          data-testid={`impact-repo-scan-recent-${config.id}`}
-        >
-          {activeScanFull === false ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <ScanSearch className="h-4 w-4" />
-          )}
-          {t("tickets.scanRecent")}
-        </Button>
+      <div className="flex flex-wrap items-center gap-1">
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
               type="button"
               variant="outline"
-              size="sm"
+              onClick={() => handleScan(false)}
+              disabled={isScanning}
+              aria-label={t("tickets.scanRecent")}
+              className={collapsibleActionClass()}
+              data-testid={`impact-repo-scan-recent-${config.id}`}
+            >
+              <ActionButtonContent
+                icon={activeScanFull === false ? Loader2 : ScanSearch}
+                iconClassName={
+                  activeScanFull === false
+                    ? "h-4 w-4 shrink-0 animate-spin"
+                    : "h-4 w-4 shrink-0"
+                }
+                label={t("tickets.scanRecent")}
+              />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{t("tickets.scanRecent")}</TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
               onClick={() => handleScan(true)}
               disabled={isScanning}
+              aria-label={t("tickets.scanFull")}
+              className={collapsibleActionClass()}
               data-testid={`impact-repo-scan-full-${config.id}`}
             >
-              {activeScanFull === true ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <History className="h-4 w-4" />
-              )}
-              {t("tickets.scanFull")}
+              <ActionButtonContent
+                icon={activeScanFull === true ? Loader2 : History}
+                iconClassName={
+                  activeScanFull === true
+                    ? "h-4 w-4 shrink-0 animate-spin"
+                    : "h-4 w-4 shrink-0"
+                }
+                label={t("tickets.scanFull")}
+              />
             </Button>
           </TooltipTrigger>
           <TooltipContent>{t("tickets.scanFullHint")}</TooltipContent>
@@ -159,18 +176,21 @@ export function ImpactScanButtons({
           <Button
             type="button"
             variant="outline"
-            size="sm"
-            className="text-destructive"
             onClick={handleCancel}
             disabled={cancelling}
+            aria-label={tDuplicates("cancelScan")}
+            className={collapsibleActionClass(undefined, "text-destructive")}
             data-testid={`impact-repo-scan-cancel-${config.id}`}
           >
-            {cancelling ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <XCircle className="h-4 w-4" />
-            )}
-            {tDuplicates("cancelScan")}
+            <ActionButtonContent
+              icon={cancelling ? Loader2 : XCircle}
+              iconClassName={
+                cancelling
+                  ? "h-4 w-4 shrink-0 animate-spin"
+                  : "h-4 w-4 shrink-0"
+              }
+              label={tDuplicates("cancelScan")}
+            />
           </Button>
         )}
       </div>

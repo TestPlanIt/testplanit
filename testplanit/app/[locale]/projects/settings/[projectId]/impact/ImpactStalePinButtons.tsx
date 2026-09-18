@@ -10,6 +10,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  ActionButtonContent,
+  collapsibleActionClass,
+} from "@/components/ui/action-bar";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -116,44 +120,59 @@ export function ImpactStalePinButtons({
 
   return (
     <div className="flex flex-col items-end gap-1">
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-1">
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
               type="button"
               variant="outline"
-              size="sm"
               onClick={handleCheck}
               disabled={checkRequested || running}
+              aria-label={t("check")}
+              className={collapsibleActionClass()}
               data-testid={`impact-repo-stale-check-${config.id}`}
             >
-              {checkRequested || running ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <SearchCheck className="h-4 w-4" />
-              )}
-              {t("check")}
+              <ActionButtonContent
+                icon={checkRequested || running ? Loader2 : SearchCheck}
+                iconClassName={
+                  checkRequested || running
+                    ? "h-4 w-4 shrink-0 animate-spin"
+                    : "h-4 w-4 shrink-0"
+                }
+                label={t("check")}
+              />
             </Button>
           </TooltipTrigger>
           <TooltipContent>{t("checkHint")}</TooltipContent>
         </Tooltip>
         {staleCount > 0 && !running && (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="text-destructive"
-            onClick={() => setConfirmOpen(true)}
-            disabled={removing}
-            data-testid={`impact-repo-stale-remove-${config.id}`}
-          >
-            {removing ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <PinOff className="h-4 w-4" />
-            )}
-            {t("remove")}
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setConfirmOpen(true)}
+                disabled={removing}
+                aria-label={t("remove")}
+                className={collapsibleActionClass(
+                  undefined,
+                  "text-destructive"
+                )}
+                data-testid={`impact-repo-stale-remove-${config.id}`}
+              >
+                <ActionButtonContent
+                  icon={removing ? Loader2 : PinOff}
+                  iconClassName={
+                    removing
+                      ? "h-4 w-4 shrink-0 animate-spin"
+                      : "h-4 w-4 shrink-0"
+                  }
+                  label={t("remove")}
+                />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t("remove")}</TooltipContent>
+          </Tooltip>
         )}
       </div>
       {error && (
