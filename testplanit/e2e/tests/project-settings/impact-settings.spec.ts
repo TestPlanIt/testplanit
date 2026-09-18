@@ -238,6 +238,17 @@ test.describe("Impact project settings", () => {
         await expect(card).toBeVisible({ timeout: 15000 });
         await expect(card).toContainText(repoName);
         await expect(card).toContainText("main");
+        // A fresh connection has never had its pins checked for staleness
+        // and has none to remove, so only the check button is offered.
+        await expect(
+          page.getByTestId(`impact-repo-stale-${config!.id}`)
+        ).toContainText("Not checked yet");
+        await expect(
+          page.getByTestId(`impact-repo-stale-check-${config!.id}`)
+        ).toBeVisible();
+        await expect(
+          page.getByTestId(`impact-repo-stale-remove-${config!.id}`)
+        ).toHaveCount(0);
         return config!.id;
       });
 

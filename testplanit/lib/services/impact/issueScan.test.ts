@@ -243,7 +243,12 @@ describe("syncIssuePins", () => {
     expect(db.repositoryCaseCodePin.createMany).not.toHaveBeenCalled();
     expect(db.repositoryCaseCodePin.update).toHaveBeenCalledWith({
       where: { id: 2 },
-      data: { anchorSha: SHA_NEW, note: "PROJ-9" },
+      data: {
+        anchorSha: SHA_NEW,
+        note: "PROJ-9",
+        staleCheckedAt: null,
+        staleReason: null,
+      },
     });
     // SHA_OLD was never walked: a recent-window scan cannot judge that pin.
     expect(db.repositoryCaseCodePin.updateMany).not.toHaveBeenCalled();

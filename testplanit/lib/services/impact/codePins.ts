@@ -169,7 +169,7 @@ export function hashSnippet(snippet: string): string {
   return createHash("sha1").update(normalizeSnippet(snippet)).digest("hex");
 }
 
-async function readFileForAnchor(
+export async function readFileForAnchor(
   config: LoadedRepoConfig,
   adapter: GitRepoAdapter,
   path: string,
@@ -344,50 +344,53 @@ export async function computePinStaleness(
     } catch {
       continue;
     }
-    if (lines === null) {
-      out.set(pin.id, {
-        stale: true,
-        staleReason: "FILE_DELETED",
-        staleDismissed: dismissed,
-        checkedSha: tipSha,
-      });
-      continue;
-    }
-    if (pin.kind === "FILE") {
-      out.set(pin.id, fresh);
-      continue;
-    }
-    if (pin.kind === "RANGE") {
-      const loc = locateSnippet(
-        lines,
-        (pin.anchorSnippet ?? "").split("\n"),
-        pin.startLine ?? undefined
-      );
-      out.set(
-        pin.id,
-        loc
-          ? { ...fresh, currentRange: [loc.start, loc.end] }
-          : {
-              stale: true,
-              staleReason: "SNIPPET_NOT_FOUND",
-              staleDismissed: dismissed,
-              checkedSha: tipSha,
-            }
-      );
-      continue;
-    }
-    const block = locateSymbolBlock(lines, pin.symbol ?? "");
+    const verdict = classifyPinAtTip(pin, lines);
     out.set(
       pin.id,
-      block
-        ? { ...fresh, currentRange: block }
-        : {
+      verdict.stale
+        ? {
             stale: true,
-            staleReason: "SYMBOL_NOT_FOUND",
+            staleReason: verdict.staleReason,
             staleDismissed: dismissed,
             checkedSha: tipSha,
           }
+        : verdict.currentRange
+          ? { ...fresh, currentRange: verdict.currentRange }
+          : fresh
     );
   }
   return out;
+}
+
+export type PinTipVerdict =
+  | { stale: false; currentRange?: [number, number] }
+  | { stale: true; staleReason: PinStaleReason };
+
+/**
+ * Whether a pin can still be found in its file as read at the branch tip;
+ * `lines === null` means the file is gone. GLOB pins never reach here.
+ */
+export function classifyPinAtTip(
+  pin: Pick<
+    StalenessPinInput,
+    "kind" | "startLine" | "symbol" | "anchorSnippet"
+  >,
+  lines: string[] | null
+): PinTipVerdict {
+  if (lines === null) return { stale: true, staleReason: "FILE_DELETED" };
+  if (pin.kind === "FILE" || pin.kind === "GLOB") return { stale: false };
+  if (pin.kind === "RANGE") {
+    const loc = locateSnippet(
+      lines,
+      (pin.anchorSnippet ?? "").split("\n"),
+      pin.startLine ?? undefined
+    );
+    return loc
+      ? { stale: false, currentRange: [loc.start, loc.end] }
+      : { stale: true, staleReason: "SNIPPET_NOT_FOUND" };
+  }
+  const block = locateSymbolBlock(lines, pin.symbol ?? "");
+  return block
+    ? { stale: false, currentRange: block }
+    : { stale: true, staleReason: "SYMBOL_NOT_FOUND" };
 }

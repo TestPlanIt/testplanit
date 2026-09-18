@@ -653,7 +653,11 @@ export async function syncMarkerPins(
   for (const batch of chunk(reanchor, BATCH_SIZE)) {
     await db.repositoryCaseCodePin.updateMany({
       where: { id: { in: batch } },
-      data: { anchorSha: opts.anchorSha },
+      data: {
+        anchorSha: opts.anchorSha,
+        staleCheckedAt: null,
+        staleReason: null,
+      },
     });
   }
   const deletedAt = new Date();

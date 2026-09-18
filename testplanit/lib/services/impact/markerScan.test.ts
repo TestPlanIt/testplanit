@@ -452,7 +452,7 @@ describe("syncMarkerPins", () => {
     expect(db.repositoryCaseCodePin.updateMany).toHaveBeenCalledTimes(1);
     expect(db.repositoryCaseCodePin.updateMany).toHaveBeenCalledWith({
       where: { id: { in: [1] } },
-      data: { anchorSha: SHA },
+      data: { anchorSha: SHA, staleCheckedAt: null, staleReason: null },
     });
     expect(report).toMatchObject({ updated: 0, unchanged: 1 });
   });

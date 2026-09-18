@@ -2247,7 +2247,7 @@
           "scanRecent": "Rescan Recent Commits",
           "scanFull": "Scan Full History",
           "scanFullHint": "Full history walks every commit on the branch and backfills pins for existing tickets. Commits already read are served from a cache, and a walk that stopped at the cap continues from there next time.",
-          "scanStarted": "Ticket scan queued. This card updates as it runs.",
+          "scanStarted": "Ticket scan queued.",
           "scanStillRunning": "The ticket scan is still running in the background. It'll update here when it finishes.",
           "scanFailedToStart": "Could not start the ticket scan",
           "runningRecent": "Scanning recent commits…",
@@ -2309,7 +2309,24 @@
         "initialScanStarted": "Fetching repository files and scanning for repository markers and linked tickets…",
         "scanError": "Scan failed: {error}",
         "scanLastScan": "Last scan: {date}",
-        "scanNever": "Not scanned yet"
+        "scanNever": "Not scanned yet",
+        "stalePins": {
+          "title": "Stale Code Pins",
+          "check": "Check for Stale Pins",
+          "checkHint": "Reads each pinned file at the branch tip and flags the pins whose file, lines, or symbol can no longer be found.",
+          "remove": "Remove Stale Pins",
+          "checkStarted": "Stale pin check queued.",
+          "checkFailedToStart": "Could not start the stale pin check",
+          "running": "Checking {checked, number} of {total, plural, one {# file} other {# files}}…",
+          "neverChecked": "Not checked yet",
+          "checkFailed": "Last check failed",
+          "summary": "{count, plural, =0 {No stale pins} one {# stale pin} other {# stale pins}} · {checked, plural, one {# pin} other {# pins}} checked",
+          "unreadable": "{count, plural, one {# file} other {# files}} could not be read, so those pins were not checked.",
+          "removed": "{count, plural, =0 {No stale pins were removed} one {# stale pin removed} other {# stale pins removed}}",
+          "removeFailed": "Could not remove the stale pins",
+          "removeConfirm": "Remove {count, plural, one {# Code Pin} other {# Code Pins}} that the last check could not find at the tip of {name}?",
+          "removeConfirmNote": "Pins whose Stale badge was dismissed and pins maintained by repository markers are kept. Removed pins can be restored from the Trash."
+        }
       }
     },
     "matrix": {
@@ -7692,7 +7709,7 @@
       "isDefault": "## Default\nIndicates whether this workflow is the default for your project.\n\n- Default workflow is pre-selected for new test runs, sessions and automation.",
       "isEnabled": "## Enabled\nIndicates whether this workflow is enabled.",
       "isActive": "## Active\nIndicates whether this workflow state is active and available for use.\n\n- Active workflows can be selected when updating test runs, sessions, or automation\n- Inactive workflows are hidden from selection but preserved in existing items",
-      "requiresReview": "## Requires review\nWhen ON, transitioning a case, test run, or session INTO this state is gated by an approved review request. Without an approved request, the transition is blocked.\n\n- Approving a request performs the transition. The reviewer's approval moves the case, run, or session into the requested state; the requester does not repeat the state change by hand.\n- Existing pending reviews are preserved silently when the system-level feature is OFF and reappear when re-enabled.\n- Reviewer is picked when a tester clicks Request Review from the entity detail page.\n\nIf the system-level feature is disabled, this switch is locked. Re-enable it from the Review Workflow card above to toggle this on.",
+      "requiresReview": "## Requires review\nWhen ON, transitioning a case, test run, or session INTO this state is gated by an approved review request. Without an approved request, the transition is blocked.\n\n- Approving a request performs the transition. The reviewer's approval moves the case, run, or session into the requested state; the requester does not repeat the state change by hand.\n- Existing pending reviews are preserved silently when the system-level feature is OFF and reappear when re-enabled.\n- Reviewer is picked when a tester clicks Request Review from the entity detail page.\n\nIf the system-level feature is disabled, this switch is locked. Re-enable it from the Review Workflow section above to toggle this on.",
       "projects": "## Projects\nIndicates the projects that can use this workflow."
     },
     "testResult": {

@@ -1,6 +1,7 @@
 import { Job } from "bullmq";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  JOB_CHECK_STALE_PINS,
   JOB_REFRESH_EXPIRED_CACHES,
   JOB_REFRESH_SINGLE_REPO_CACHE,
   JOB_SCAN_REPO_ISSUES,
@@ -41,6 +42,11 @@ const mockScanRepoIssues = vi.fn();
 vi.mock("../lib/services/repoCacheRefreshService", () => ({
   refreshRepoCache: (...args: any[]) => mockRefreshRepoCache(...args),
   scanRepoIssues: (...args: any[]) => mockScanRepoIssues(...args),
+}));
+
+const mockCheckStalePins = vi.fn();
+vi.mock("../lib/services/impact/stalePinCheck", () => ({
+  checkStalePins: (...args: any[]) => mockCheckStalePins(...args),
 }));
 
 // Mock queue names
@@ -308,6 +314,58 @@ describe("RepoCacheWorker", () => {
 
       // INSTANCE_TENANT_ID should be restored even after error
       expect(process.env.INSTANCE_TENANT_ID).toBe("original-tenant");
+    });
+  });
+
+  describe(`${JOB_CHECK_STALE_PINS} job`, () => {
+    it("runs the stale pin check for the config and counts a success", async () => {
+      mockCheckStalePins.mockResolvedValue({
+        pins: 40,
+        checked: 40,
+        stale: 3,
+      });
+
+      const { processor } = await import("./repoCacheWorker");
+
+      const result = await processor({
+        id: "job-stale-1",
+        name: JOB_CHECK_STALE_PINS,
+        data: { configId: 101, tenantId: "tenant-a" },
+      } as Job);
+
+      expect(mockCheckStalePins).toHaveBeenCalledWith(101, mockDb);
+      expect(mockRefreshRepoCache).not.toHaveBeenCalled();
+      expect(result).toMatchObject({ successCount: 1, failCount: 0 });
+    });
+
+    it("counts a failed check", async () => {
+      mockCheckStalePins.mockResolvedValue({
+        error: "branch missing",
+        checkedAt: "2026-09-18T00:00:00Z",
+      });
+
+      const { processor } = await import("./repoCacheWorker");
+
+      const result = await processor({
+        id: "job-stale-2",
+        name: JOB_CHECK_STALE_PINS,
+        data: { configId: 101 },
+      } as Job);
+
+      expect(result).toMatchObject({ successCount: 0, failCount: 1 });
+    });
+
+    it("rejects a job without a numeric configId", async () => {
+      const { processor } = await import("./repoCacheWorker");
+
+      await expect(
+        processor({
+          id: "job-stale-3",
+          name: JOB_CHECK_STALE_PINS,
+          data: {},
+        } as Job)
+      ).rejects.toThrow(/numeric configId/);
+      expect(mockCheckStalePins).not.toHaveBeenCalled();
     });
   });
 

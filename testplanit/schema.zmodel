@@ -3924,6 +3924,7 @@ model ProjectCodeRepositoryConfig {
     markerScanReport      Json?                       // IMPACT only: summary of the last repo-marker scan
     issueScanEnabled      Boolean                     @default(true)   // IMPACT only: derive Code Pins from ticket keys in commit messages
     issueScanReport       Json?                       // IMPACT only: summary (or running state) of the last ticket-key scan
+    stalePinReport        Json?                       // IMPACT only: summary (or running state) of the last stale Code Pin check
     createdAt             DateTime                    @default(now())
     updatedAt             DateTime                    @updatedAt
     codePins              RepositoryCaseCodePin[]
@@ -4092,6 +4093,8 @@ model RepositoryCaseCodePin {
     source           CodePinSource               @default(MANUAL)
     note             String?
     staleDismissedAt DateTime?                   @db.Timestamptz(6)
+    staleCheckedAt   DateTime?                   @db.Timestamptz(6) // last project-wide stale check that evaluated this pin
+    staleReason      String?                     // set by that check when the pin could not be found at the branch tip
     isDeleted        Boolean                     @default(false)
     deletedAt        DateTime?                   @db.Timestamptz(6)
     createdAt        DateTime                    @default(now()) @db.Timestamptz(6)

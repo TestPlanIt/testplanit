@@ -189,7 +189,7 @@ Pins are checked against the branch tip whenever the panel loads. A pin whose fi
 - **Re-anchor** — locates the block again at the current branch tip and records the new position. Use it after code has moved.
 - **Dismiss** — hides the badge for this pin until it is re-anchored.
 
-A stale pin still matches at file level in analyses, so its case is not lost; re-anchoring restores line-level precision.
+A stale pin still matches at file level in analyses, so its case is not lost; re-anchoring restores line-level precision. To find and clear stale pins across a whole repository connection rather than one case at a time, use **Check for Stale Pins** and **Remove Stale Pins** on the [Impact Analysis settings page](projects/settings/impact.md#stale-code-pins).
 
 ## Repository markers
 

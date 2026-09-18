@@ -93,6 +93,7 @@ export interface ImpactConfigRow {
   markerScanReport: unknown;
   issueScanEnabled: boolean;
   issueScanReport: unknown;
+  stalePinReport?: unknown;
   repository: CodeRepositoryOption;
   /** Live Code Pins on this connection, when the list query counted them. */
   _count?: { codePins: number };

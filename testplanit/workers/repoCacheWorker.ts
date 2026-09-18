@@ -7,11 +7,13 @@ import {
   validateMultiTenantJobData,
 } from "../lib/multiTenantDb";
 import {
+  JOB_CHECK_STALE_PINS,
   JOB_REFRESH_EXPIRED_CACHES,
   JOB_REFRESH_SINGLE_REPO_CACHE,
   JOB_SCAN_REPO_ISSUES,
   REPO_CACHE_QUEUE_NAME,
 } from "../lib/queueNames";
+import { checkStalePins } from "../lib/services/impact/stalePinCheck";
 import {
   refreshRepoCache,
   scanRepoIssues,
@@ -181,6 +183,31 @@ const processor = async (job: Job) => {
           successCount++;
           console.log(
             `Job ${job.id}: Ticket scan for config ${configId} — ${report.scannedCommits} commits, ${report.matchedCommits} matched, ${report.created} pins created, ${report.importedIssues} tickets imported`
+          );
+        }
+        break;
+      }
+
+      case JOB_CHECK_STALE_PINS: {
+        // "Check for Stale Pins" on the Impact settings page. The check
+        // writes its progress and summary into the config's stalePinReport.
+        const configId = Number(job.data.configId);
+        if (!Number.isFinite(configId)) {
+          throw new Error(
+            `${JOB_CHECK_STALE_PINS} job requires a numeric configId`
+          );
+        }
+        console.log(`Job ${job.id}: Stale pin check for config ${configId}`);
+        const report = await checkStalePins(configId, db);
+        if ("error" in report) {
+          failCount++;
+          console.warn(
+            `Job ${job.id}: Stale pin check failed for config ${configId}: ${report.error}`
+          );
+        } else {
+          successCount++;
+          console.log(
+            `Job ${job.id}: Stale pin check for config ${configId} — ${report.checked} of ${report.pins} pins checked, ${report.stale} stale`
           );
         }
         break;

@@ -12,7 +12,7 @@ The project-level **Settings → Impact Analysis** page enables [test impact ana
 Only system administrators and project administrators can open this page. Repositories are registered globally by a system administrator; this page selects and configures them for the project.
 :::
 
-The **Connected Repositories** card counts the project's Code Pins in its title, and each connection lists how many of them it holds. A project can connect **more than one** repository. When the application is spread across several services in separate repositories but tested under one project, connect each repository: every connection keeps its own branch, path patterns, cache, and Code Pins, and each analysis compares two commits of one of them.
+The **Connected Repositories** card counts the project's Code Pins in its title, with a second count of stale pins when a check has found any, and each connection lists how many of them it holds. A project can connect **more than one** repository. When the application is spread across several services in separate repositories but tested under one project, connect each repository: every connection keeps its own branch, path patterns, cache, and Code Pins, and each analysis compares two commits of one of them.
 
 These are separate connections from the one on the [QuickScript](quickscript.md) page: QuickScript points at test automation code, Impact Analysis points at the application under test. A project can use the same repository for both, or different ones.
 
@@ -27,7 +27,7 @@ The **Enable Impact Analysis** toggle controls whether team members see **Analyz
 
 ## Connected Repositories
 
-The page lists every connection as a card: the **Repository** (with its provider and branch, or **Repository default branch**), its **Cache** state — **Never fetched**, **Refreshing...**, the file count and time of the last fetch, **Error**, or **Caching off** — and its **Linked tickets** state — the last scan's pin count and time, a running scan, or **Not scanned yet**. The cards keep updating while a refresh or scan runs. Each card carries the ticket scan buttons — **Rescan Recent Commits**, **Scan Full History**, and **Cancel Scan** while a scan runs (see [Linked Tickets](#linked-tickets)) — and three actions:
+The page lists every connection as a card: the **Repository** (with its provider and branch, or **Repository default branch**), its **Cache** state — **Never fetched**, **Refreshing...**, the file count and time of the last fetch, **Error**, or **Caching off** — its **Linked tickets** state — the last scan's pin count and time, a running scan, or **Not scanned yet** — its **Code Pins** count, and its **Stale Code Pins** state — **Not checked yet**, a running check, or the stale count with the time of the last check (see [Stale Code Pins](#stale-code-pins)). The cards keep updating while a refresh, scan, or check runs. Each card carries the ticket scan buttons — **Rescan Recent Commits**, **Scan Full History**, and **Cancel Scan** while a scan runs (see [Linked Tickets](#linked-tickets)) — the stale pin buttons — **Check for Stale Pins** and, once a check has found some, **Remove Stale Pins** — and three actions:
 
 - **View connection** opens the connection read-only. Every setting is shown, and the operational buttons — **Refresh Cache**, **Rescan Recent Commits**, **Scan Full History**, **Cancel Scan** — still work from here. **Edit** in the dialog's footer switches it to edit mode.
 - **Edit connection** opens the same dialog with the settings editable; **Save Configuration** writes the changes and closes it.
@@ -90,6 +90,15 @@ Markers declared in the repository — `@testplanit case:123` comment annotation
 - **Last scan** — when markers were last scanned, or **Not scanned yet**. When a scan was skipped, the card says why: file caching is disabled, or file contents were only partially cached.
 - A summary — how many annotations and map entries were found, and how many pins the scan created, updated, and removed.
 - **Problems** — the count, with each problem listed: test case ids that do not exist or belong to another project, tags with no cases in the project, YAML errors, and invalid map entries. A scan that failed outright shows its error.
+
+## Stale Code Pins
+
+A Code Pin goes stale when the code it points at can no longer be found at the tip of the connection's branch: the file was deleted, the pinned lines were rewritten, or the pinned function or class was renamed or removed. The test case page checks the pins of one case whenever its **Code Pins** panel opens (see [Stale pins](../../impact.md#stale-pins)); this page checks a whole connection at once.
+
+- **Check for Stale Pins** reads each pinned file once at the branch tip — from the file cache when the connection has one — and records a verdict on every pin. A pin anchored at the current tip, and a glob pin, is fresh without a read. The check runs in the background; the card shows how many files have been read and, when it finishes, how many pins were checked and how many are stale, with the time of the check. Pins in files the provider would not serve (too large, or a rate limit that outlasted the retries) are left as they were, and the card says how many files that affected.
+- **Remove Stale Pins** appears once a check has found stale pins. After a confirmation that names the count, it removes every pin the last check flagged, except pins whose **Stale** badge was dismissed on the test case page (they were kept on purpose) and pins that come from repository markers (**Annotation** and **Map file**; the marker scan on the next cache refresh maintains those). Removed pins go to the Trash, from where they can be restored.
+
+The stale count on the card is live: a pin removed or re-anchored from its test case page, or re-pinned by a ticket or marker scan, drops out of it without another check. A pin created or moved after the last check has no verdict until the next one.
 
 ## Disconnecting
 

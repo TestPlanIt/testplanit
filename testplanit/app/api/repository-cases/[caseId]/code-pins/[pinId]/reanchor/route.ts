@@ -113,6 +113,8 @@ export async function POST(
         anchorSnippet: anchor.anchorSnippet,
         anchorHash: anchor.anchorHash,
         staleDismissedAt: null,
+        staleCheckedAt: null,
+        staleReason: null,
       },
     });
     return NextResponse.json({ pin: updated });

@@ -204,8 +204,11 @@ export async function PATCH(
               anchorSha: anchor.anchorSha,
               anchorSnippet: anchor.anchorSnippet,
               anchorHash: anchor.anchorHash,
-              // The dismissal belonged to the old target.
+              // The dismissal and the last stale verdict belonged to the
+              // old target.
               staleDismissedAt: null,
+              staleCheckedAt: null,
+              staleReason: null,
             }
           : {}),
       },

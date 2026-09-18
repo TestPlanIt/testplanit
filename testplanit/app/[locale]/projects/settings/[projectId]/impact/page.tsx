@@ -50,12 +50,15 @@ import { Link } from "~/lib/navigation";
 import { ApplicationArea } from "~/zenstack/models";
 import { ImpactRepositoryDialog } from "./ImpactRepositoryDialog";
 import { ImpactScanButtons } from "./ImpactScanButtons";
+import { ImpactStalePinButtons } from "./ImpactStalePinButtons";
 import {
   type CodeRepositoryOption,
   type ImpactConfigRow,
   type ImpactRepositoryFormMode,
 } from "./ImpactRepositoryForm";
 import { readIssueScanReport } from "./issueScanReport";
+import { isStalePinCheckAbandoned, readStalePinReport } from "./stalePinReport";
+import { MANAGED_PIN_SOURCES } from "~/lib/services/impact/stalePinCheck";
 
 interface DialogState {
   open: boolean;
@@ -63,12 +66,16 @@ interface DialogState {
   configId: number | null;
 }
 
-/** A refresh or scan is in flight for this connection. */
+/** A refresh, scan, or stale pin check is in flight for this connection. */
 function isBusy(config: ImpactConfigRow): boolean {
-  return (
+  if (
     config.cacheStatus === "pending" ||
     readIssueScanReport(config.issueScanReport).kind === "running"
-  );
+  ) {
+    return true;
+  }
+  const stale = readStalePinReport(config.stalePinReport);
+  return stale.kind === "running" && !isStalePinCheckAbandoned(stale.progress);
 }
 
 export default function ImpactSettingsPage() {
@@ -80,6 +87,7 @@ export default function ImpactSettingsPage() {
   const tAutomation = useTranslations("automation.settings");
   const tRepo = useTranslations("projects.settings.codeRepository");
   const tCodePins = useTranslations("repository.codePins");
+  const tImpact = useTranslations("runs.impact");
   const locale = useLocale();
 
   const [dialog, setDialog] = useState<DialogState>({
@@ -114,6 +122,34 @@ export default function ImpactSettingsPage() {
   const configs = (existingConfigs ?? []) as unknown as ImpactConfigRow[];
   const totalPins = configs.reduce(
     (sum, config) => sum + (config._count?.codePins ?? 0),
+    0
+  );
+  const anyBusy = configs.some(isBusy);
+
+  // Pins the last stale check flagged and a cleanup would remove, per
+  // connection. Read live so removals from a case page show here too.
+  const { data: staleGroups, refetch: refetchStaleCounts } = useClientQueries(
+    schema
+  ).repositoryCaseCodePin.useGroupBy(
+    {
+      by: ["configId"],
+      where: {
+        config: { projectId, purpose: "IMPACT" },
+        isDeleted: false,
+        staleReason: { not: null },
+        staleDismissedAt: null,
+        source: { notIn: [...MANAGED_PIN_SOURCES] },
+      },
+      _count: { _all: true },
+    },
+    { refetchInterval: anyBusy ? 5000 : false }
+  );
+  const staleByConfig = new Map<number, number>();
+  for (const group of staleGroups ?? []) {
+    staleByConfig.set(group.configId, group._count?._all ?? 0);
+  }
+  const totalStale = [...staleByConfig.values()].reduce(
+    (sum, count) => sum + count,
     0
   );
 
@@ -198,6 +234,10 @@ export default function ImpactSettingsPage() {
       data: (result.data ?? null) as unknown as ImpactConfigRow[] | null,
     };
   }, [refetchConfigs]);
+
+  const refetchPinState = useCallback(async () => {
+    await Promise.all([refetchConfigs(), refetchStaleCounts()]);
+  }, [refetchConfigs, refetchStaleCounts]);
 
   const handleDisconnect = async () => {
     if (!disconnectTarget) return;
@@ -337,6 +377,64 @@ export default function ImpactSettingsPage() {
     }
   };
 
+  const renderStaleStatus = (config: ImpactConfigRow) => {
+    const view = readStalePinReport(config.stalePinReport);
+    const staleCount = staleByConfig.get(config.id) ?? 0;
+    switch (view.kind) {
+      case "running":
+        if (isStalePinCheckAbandoned(view.progress)) break;
+        return (
+          <span className="flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>
+              {t("stalePins.running", {
+                checked: view.progress.checkedFiles,
+                total: view.progress.totalFiles,
+              })}
+            </span>
+          </span>
+        );
+      case "checked":
+        return (
+          <span className="flex flex-wrap items-center gap-2">
+            {staleCount > 0 && (
+              <AlertTriangle className="h-4 w-4 text-warning" />
+            )}
+            <span>
+              {t("stalePins.summary", {
+                count: staleCount,
+                checked: view.report.checked,
+              })}
+            </span>
+            <span className="text-muted-foreground">
+              <DateFormatter
+                date={new Date(view.report.checkedAt)}
+                formatString={preferredDateTimeFormat}
+                timezone={preferences?.timezone}
+              />
+            </span>
+            {view.report.unreadableFiles > 0 && (
+              <span className="text-xs text-muted-foreground">
+                {t("stalePins.unreadable", {
+                  count: view.report.unreadableFiles,
+                })}
+              </span>
+            )}
+          </span>
+        );
+      case "error":
+        return (
+          <span className="flex items-center gap-2">
+            <XCircle className="h-4 w-4 text-destructive" />
+            <span>{t("stalePins.checkFailed")}</span>
+          </span>
+        );
+      default:
+        break;
+    }
+    return <Badge variant="secondary">{t("stalePins.neverChecked")}</Badge>;
+  };
+
   const connectButton = (
     <Button
       type="button"
@@ -432,6 +530,15 @@ export default function ImpactSettingsPage() {
                           {t("repositories.pinTotal", { count: totalPins })}
                         </Badge>
                       )}
+                      {totalStale > 0 && (
+                        <Badge
+                          variant="outline"
+                          className="font-normal text-warning"
+                          data-testid="impact-pins-stale-total"
+                        >
+                          {tImpact("stale.title", { count: totalStale })}
+                        </Badge>
+                      )}
                     </CardTitle>
                     <CardDescription>
                       {t("repositories.description")}
@@ -502,6 +609,12 @@ export default function ImpactSettingsPage() {
                               locale
                             )}
                           </dd>
+                          <dt className="text-muted-foreground">
+                            {t("stalePins.title")}
+                          </dt>
+                          <dd data-testid={`impact-repo-stale-${config.id}`}>
+                            {renderStaleStatus(config)}
+                          </dd>
                         </dl>
                         {config.cacheStatus === "error" &&
                           config.cacheError && (
@@ -517,6 +630,11 @@ export default function ImpactSettingsPage() {
                         <ImpactScanButtons
                           config={config}
                           refetchConfigs={refetchConfigRows}
+                        />
+                        <ImpactStalePinButtons
+                          config={config}
+                          staleCount={staleByConfig.get(config.id) ?? 0}
+                          onChanged={refetchPinState}
                         />
                         <Button
                           type="button"

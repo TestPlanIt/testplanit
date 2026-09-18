@@ -440,7 +440,12 @@ export async function syncIssuePins(
       if (row.anchorSha !== pin.anchorSha || row.note !== pin.note) {
         await db.repositoryCaseCodePin.update({
           where: { id: row.id },
-          data: { anchorSha: pin.anchorSha, note: pin.note },
+          data: {
+            anchorSha: pin.anchorSha,
+            note: pin.note,
+            staleCheckedAt: null,
+            staleReason: null,
+          },
         });
         report.updated++;
       } else {
