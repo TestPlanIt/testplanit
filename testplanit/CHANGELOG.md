@@ -1,3 +1,11 @@
+## [1.1.0-beta.17](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.16...v1.1.0-beta.17) (2026-09-18)
+
+### Enhancements
+
+* **code-repositories:** add project usage display and related tests ([b4f7240](https://github.com/TestPlanIt/testplanit/commit/b4f7240c830b66cb89cec7828b988e45d2883abe))
+* **impact:** add ImpactScanButtons component and related tests for scan functionality ([bab26ae](https://github.com/TestPlanIt/testplanit/commit/bab26aebe7318a53f77505296e715c8ac469a1b2))
+* **impact:** check for stale Code Pins per connection and remove them ([dbb1a5a](https://github.com/TestPlanIt/testplanit/commit/dbb1a5ab554bb46997e436df470badab56c6ac82))
+
 ## [1.1.0-beta.16](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.15...v1.1.0-beta.16) (2026-09-17)
 
 ### Bug Fixes
