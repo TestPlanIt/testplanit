@@ -8,9 +8,9 @@ import {
 } from "./codePins";
 import { resolveRefToSha } from "./compareService";
 import { loadRepoConfigForWorker, type LoadedRepoConfig } from "./repoAccess";
+import { MANAGED_PIN_SOURCES } from "./stalePinRules";
 
-/** Pin sources the repository itself maintains; a stale check never removes them. */
-export const MANAGED_PIN_SOURCES = ["ANNOTATION", "MAPFILE"] as const;
+export { MANAGED_PIN_SOURCES, removableStalePinsWhere } from "./stalePinRules";
 
 export const STALE_PIN_REASONS: readonly PinStaleReason[] = [
   "FILE_DELETED",
@@ -301,15 +301,4 @@ export async function checkStalePins(
     await storeReport(db, configId, report);
     return report;
   }
-}
-
-/** The filter the cleanup removes and the settings page counts. */
-export function removableStalePinsWhere(configId: number) {
-  return {
-    configId,
-    isDeleted: false,
-    staleReason: { not: null },
-    staleDismissedAt: null,
-    source: { notIn: [...MANAGED_PIN_SOURCES] },
-  };
 }

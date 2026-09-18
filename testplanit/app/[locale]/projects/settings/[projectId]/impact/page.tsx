@@ -58,7 +58,7 @@ import {
 } from "./ImpactRepositoryForm";
 import { readIssueScanReport } from "./issueScanReport";
 import { isStalePinCheckAbandoned, readStalePinReport } from "./stalePinReport";
-import { MANAGED_PIN_SOURCES } from "~/lib/services/impact/stalePinCheck";
+import { MANAGED_PIN_SOURCES } from "~/lib/services/impact/stalePinRules";
 
 interface DialogState {
   open: boolean;

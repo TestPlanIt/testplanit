@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { getEnhancedDb } from "~/lib/auth/utils";
-import { removableStalePinsWhere } from "~/lib/services/impact/stalePinCheck";
+import { removableStalePinsWhere } from "~/lib/services/impact/stalePinRules";
 import { isAccessPolicyError } from "~/lib/utils/errors";
 import { authOptions } from "~/server/auth";
 
