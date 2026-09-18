@@ -2247,7 +2247,7 @@
           "scanRecent": "Skanuj ponownie ostatnie commity",
           "scanFull": "Skanuj pełną historię",
           "scanFullHint": "Pełna historia przechodzi przez każdy commit w gałęzi i uzupełnia piny dla istniejących zgłoszeń. Już odczytane commity są pobierane z pamięci podręcznej, a przejście zatrzymane na limicie następnym razem kontynuuje od tego miejsca.",
-          "scanStarted": "Skanowanie zgłoszeń zostało zakolejkowane. Ta karta będzie aktualizowana w trakcie działania.",
+          "scanStarted": "Skanowanie zgłoszeń zostało zakolejkowane.",
           "scanStillRunning": "Skanowanie zgłoszeń wciąż działa w tle. Ten widok zostanie zaktualizowany po zakończeniu.",
           "scanFailedToStart": "Nie udało się rozpocząć skanowania zgłoszeń",
           "runningRecent": "Skanowanie ostatnich commitów…",
@@ -2309,7 +2309,24 @@
         "initialScanStarted": "Pobieranie plików repozytorium i skanowanie w poszukiwaniu znaczników repozytorium i powiązanych zgłoszeń…",
         "scanError": "Skanowanie nie powiodło się: {error}",
         "scanLastScan": "Ostatnie skanowanie: {date}",
-        "scanNever": "Jeszcze nie zeskanowano"
+        "scanNever": "Jeszcze nie zeskanowano",
+        "stalePins": {
+          "title": "Nieaktualne przypięcia kodu",
+          "check": "Sprawdź nieaktualne przypięcia",
+          "checkHint": "Odczytuje każdy przypięty plik w najnowszej wersji gałęzi i oznacza przypięcia, których pliku, linii lub symbolu nie można już znaleźć.",
+          "remove": "Usuń nieaktualne przypięcia",
+          "checkStarted": "Sprawdzanie nieaktualnych przypięć zostało zakolejkowane.",
+          "checkFailedToStart": "Nie można rozpocząć sprawdzania nieaktualnych przypięć",
+          "running": "Sprawdzanie {checked, number} z {total, plural, one {# pliku} few {# plików} many {# plików} other {# plików}}…",
+          "neverChecked": "Jeszcze nie sprawdzono",
+          "checkFailed": "Ostatnie sprawdzenie nie powiodło się",
+          "summary": "{count, plural, =0 {Brak nieaktualnych przypięć} one {# nieaktualne przypięcie} few {# nieaktualne przypięcia} many {# nieaktualnych przypięć} other {# nieaktualnych przypięć}} · sprawdzono {checked, plural, one {# przypięcie} few {# przypięcia} many {# przypięć} other {# przypięć}}",
+          "unreadable": "Nie można było odczytać {count, plural, one {# pliku} few {# plików} many {# plików} other {# plików}}, więc te przypięcia nie zostały sprawdzone.",
+          "removed": "{count, plural, =0 {Nie usunięto żadnych nieaktualnych przypięć} one {Usunięto # nieaktualne przypięcie} few {Usunięto # nieaktualne przypięcia} many {Usunięto # nieaktualnych przypięć} other {Usunięto # nieaktualnych przypięć}}",
+          "removeFailed": "Nie można usunąć nieaktualnych przypięć",
+          "removeConfirm": "Usunąć {count, plural, one {# przypięcie kodu} few {# przypięcia kodu} many {# przypięć kodu} other {# przypięć kodu}}, których ostatnie sprawdzenie nie znalazło w najnowszej wersji {name}?",
+          "removeConfirmNote": "Przypięcia, których odznaka „Nieaktualne” została odrzucona, oraz przypięcia utrzymywane przez znaczniki repozytorium są zachowywane. Usunięte przypięcia można przywrócić z Kosza."
+        }
       }
     },
     "matrix": {
@@ -7692,7 +7709,7 @@
       "isDefault": "## Domyślny\nWskazuje, czy ten przepływ pracy jest domyślny dla Twojego projektu.\n\n— Domyślny przepływ pracy jest wstępnie wybierany dla nowych przebiegów testów, sesji i automatyzacji.",
       "isEnabled": "## Włączone\nWskazuje, czy ten przepływ pracy jest włączony.",
       "isActive": "## Aktywny\nWskazuje, czy ten stan przepływu pracy jest aktywny i dostępny do użycia.\n\n— Aktywne przepływy pracy można wybierać podczas aktualizowania przebiegów testów, sesji lub automatyzacji.\n— Nieaktywne przepływy pracy są ukryte przed wyborem, ale zachowywane w istniejących elementach.",
-      "requiresReview": "## Wymaga przeglądu\nPo włączeniu tej opcji, przejście przypadku testowego, przebiegu testowego lub sesji DO tego stanu jest zablokowane przez zatwierdzoną prośbę o przegląd. Bez zatwierdzonej prośby przejście jest zablokowane.\n\n– Zatwierdzenie prośby powoduje wykonanie przejścia. Zatwierdzenie przez recenzenta przenosi przypadek, przebieg lub sesję do żądanego stanu; osoba składająca prośbę nie musi ponownie wykonywać zmiany stanu ręcznie.\n– Istniejące oczekujące recenzje są zachowywane w trybie cichym, gdy funkcja na poziomie systemu jest WYŁĄCZONA, i pojawiają się ponownie po ponownym włączeniu.\n– Recenzent jest wybierany, gdy tester kliknie opcję „Poproś o przegląd” na stronie szczegółów jednostki.\n\nJeśli funkcja na poziomie systemu jest wyłączona, ten przełącznik jest zablokowany. Aby włączyć tę opcję, należy go ponownie włączyć na karcie „Przepływ pracy przeglądu” powyżej.",
+      "requiresReview": "## Wymaga przeglądu\nPo włączeniu tej opcji przejście przypadku testowego, przebiegu testowego lub sesji DO tego stanu jest uzależnione od zatwierdzonej prośby o przegląd. Bez zatwierdzonej prośby przejście jest zablokowane.\n\n- Zatwierdzenie prośby powoduje wykonanie przejścia. Zatwierdzenie przez recenzenta przenosi przypadek, przebieg lub sesję do żądanego stanu; osoba składająca prośbę nie musi ponownie wykonywać zmiany stanu ręcznie.\n- Istniejące oczekujące recenzje są zachowywane w trybie cichym, gdy funkcja na poziomie systemu jest WYŁĄCZONA, i pojawiają się ponownie po ponownym włączeniu.\n- Recenzent jest wybierany, gdy tester kliknie „Poproś o przegląd” na stronie szczegółów jednostki.\n\nJeśli funkcja na poziomie systemu jest wyłączona, ten przełącznik jest zablokowany. Aby go włączyć, ponownie aktywuj funkcję w sekcji „Przepływ pracy przeglądu” powyżej.",
       "projects": "## Projekty\nWskazuje projekty, które mogą korzystać z tego przepływu pracy."
     },
     "testResult": {

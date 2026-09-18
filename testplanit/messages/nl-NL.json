@@ -2247,7 +2247,7 @@
           "scanRecent": "Recente commits opnieuw scannen",
           "scanFull": "Volledige geschiedenis scannen",
           "scanFullHint": "Volledige geschiedenis doorloopt elke commit op de tak en vult met terugwerkende kracht pins in voor bestaande tickets. Commits die al zijn gelezen, worden uit een cache geleverd, en een doorloop die bij de limiet stopte, gaat de volgende keer daar verder.",
-          "scanStarted": "Ticketscan in wachtrij geplaatst. Deze kaart wordt bijgewerkt terwijl deze wordt uitgevoerd.",
+          "scanStarted": "Ticketscan in wachtrij geplaatst.",
           "scanStillRunning": "De ticketscan wordt nog op de achtergrond uitgevoerd. Dit wordt hier bijgewerkt zodra het is voltooid.",
           "scanFailedToStart": "Kan de ticketscan niet starten",
           "runningRecent": "Recente commits scannen…",
@@ -2309,7 +2309,24 @@
         "initialScanStarted": "Repositorybestanden ophalen en scannen op repositorymarkeringen en gekoppelde tickets…",
         "scanError": "Scan mislukt: {error}",
         "scanLastScan": "Laatste scan: {date}",
-        "scanNever": "Nog niet gescand"
+        "scanNever": "Nog niet gescand",
+        "stalePins": {
+          "title": "Verouderde codepins",
+          "check": "Controleren op verouderde pins",
+          "checkHint": "Leest elk gepind bestand aan de top van de branch in en markeert de pins waarvan het bestand, de regels of het symbool niet meer te vinden zijn.",
+          "remove": "Verouderde pins verwijderen",
+          "checkStarted": "Controle op verouderde pins in wachtrij geplaatst.",
+          "checkFailedToStart": "Kon de controle op verouderde pins niet starten",
+          "running": "Bezig met controleren van {checked, number} van {total, plural, one {# bestand} other {# bestanden}}…",
+          "neverChecked": "Nog niet gecontroleerd",
+          "checkFailed": "Laatste controle mislukt",
+          "summary": "{count, plural, =0 {Geen verouderde pins} one {# verouderde pin} other {# verouderde pins}} · {checked, plural, one {# pin} other {# pins}} gecontroleerd",
+          "unreadable": "{count, plural, one {# bestand kon niet worden gelezen, dus die pin is niet gecontroleerd.} other {# bestanden konden niet worden gelezen, dus die pins zijn niet gecontroleerd.}}",
+          "removed": "{count, plural, =0 {Er zijn geen verouderde pins verwijderd} one {# verouderde pin verwijderd} other {# verouderde pins verwijderd}}",
+          "removeFailed": "Kon de verouderde pins niet verwijderen",
+          "removeConfirm": "Wilt u {count, plural, one {# codepin} other {# codepins}} verwijderen die de laatste controle niet kon vinden aan de top van {name}?",
+          "removeConfirmNote": "Pins waarvan de badge 'Verouderd' is genegeerd en pins die worden onderhouden door repositorymarkeringen blijven behouden. Verwijderde pins kunnen worden hersteld vanuit de prullenbak."
+        }
       }
     },
     "matrix": {
@@ -7692,7 +7709,7 @@
       "isDefault": "## Standaard\nGeeft aan of deze workflow de standaard is voor uw project.\n\n- De standaardworkflow is vooraf geselecteerd voor nieuwe testruns, sessies en automatisering.",
       "isEnabled": "## Ingeschakeld\nGeeft aan of deze workflow is ingeschakeld.",
       "isActive": "## Actief\nGeeft aan of deze workflowstatus actief en beschikbaar is voor gebruik.\n\n- Actieve workflows kunnen worden geselecteerd bij het bijwerken van testruns, sessies of automatisering.\n- Inactieve workflows zijn niet selecteerbaar, maar blijven behouden in bestaande items.",
-      "requiresReview": "## Vereist beoordeling\nWanneer AAN, is de overgang van een testgeval, testrun of sessie NAAR deze status afhankelijk van een goedgekeurd beoordelingsverzoek. Zonder een goedgekeurd verzoek wordt de overgang geblokkeerd.\n\n- Het goedkeuren van een verzoek voert de overgang uit. De goedkeuring van de beoordelaar verplaatst het testgeval, de run of de sessie naar de gevraagde status; de aanvrager hoeft de statuswijziging niet handmatig te herhalen.\n- Bestaande, nog niet uitgevoerde beoordelingen worden stilzwijgend bewaard wanneer de systeemfunctie UIT staat en verschijnen opnieuw wanneer deze weer wordt ingeschakeld.\n- De beoordelaar wordt geselecteerd wanneer een tester op 'Beoordeling aanvragen' klikt op de detailpagina van de entiteit.\n\nAls de systeemfunctie is uitgeschakeld, is deze schakelaar vergrendeld. Schakel deze opnieuw in via de kaart 'Beoordelingsworkflow' hierboven om deze in te schakelen.",
+      "requiresReview": "## Vereist beoordeling\nWanneer AAN, is de overgang van een testgeval, testrun of sessie NAAR deze status afhankelijk van een goedgekeurd beoordelingsverzoek. Zonder een goedgekeurd verzoek wordt de overgang geblokkeerd.\n\n- Het goedkeuren van een verzoek voert de overgang uit. De goedkeuring van de beoordelaar verplaatst het testgeval, de run of de sessie naar de gevraagde status; de aanvrager hoeft de statuswijziging niet handmatig te herhalen.\n- Bestaande, nog niet uitgevoerde beoordelingen worden stilzwijgend bewaard wanneer de systeemfunctie UIT staat en verschijnen opnieuw wanneer deze weer wordt ingeschakeld.\n- De beoordelaar wordt geselecteerd wanneer een tester op 'Beoordeling aanvragen' klikt op de detailpagina van de entiteit.\n\nAls de systeemfunctie is uitgeschakeld, is deze schakelaar vergrendeld. Schakel deze opnieuw in via de sectie 'Beoordelingsworkflow' hierboven om deze in te schakelen.",
       "projects": "## Projecten\nGeeft de projecten aan die deze workflow kunnen gebruiken."
     },
     "testResult": {

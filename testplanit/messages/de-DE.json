@@ -2247,7 +2247,7 @@
           "scanRecent": "Letzte Commits erneut scannen",
           "scanFull": "Gesamten Verlauf scannen",
           "scanFullHint": "Der vollständige Verlauf durchläuft jeden Commit des Zweigs und ergänzt rückwirkend Pins für vorhandene Tickets. Bereits gelesene Commits werden aus einem Cache bereitgestellt, und ein Durchlauf, der an der Obergrenze angehalten hat, wird beim nächsten Mal an dieser Stelle fortgesetzt.",
-          "scanStarted": "Ticket-Scan eingereiht. Diese Karte wird während der Ausführung aktualisiert.",
+          "scanStarted": "Ticket-Scan eingeplant.",
           "scanStillRunning": "Der Ticket-Scan läuft noch im Hintergrund. Diese Seite wird aktualisiert, sobald er abgeschlossen ist.",
           "scanFailedToStart": "Der Ticket-Scan konnte nicht gestartet werden",
           "runningRecent": "Letzte Commits werden gescannt…",
@@ -2309,7 +2309,24 @@
         "initialScanStarted": "Repository-Dateien werden abgerufen und auf Repository-Marker und verknüpfte Tickets gescannt…",
         "scanError": "Scan fehlgeschlagen: {error}",
         "scanLastScan": "Letzter Scan: {date}",
-        "scanNever": "Noch nicht gescannt"
+        "scanNever": "Noch nicht gescannt",
+        "stalePins": {
+          "title": "Veraltete Code-Pins",
+          "check": "Auf veraltete Pins prüfen",
+          "checkHint": "Liest jede angepinnte Datei an der Branch-Spitze und markiert die Pins, deren Datei, Zeilen oder Symbol nicht mehr gefunden werden können.",
+          "remove": "Veraltete Pins entfernen",
+          "checkStarted": "Prüfung auf veraltete Pins eingeplant.",
+          "checkFailedToStart": "Die Prüfung auf veraltete Pins konnte nicht gestartet werden",
+          "running": "{checked, number} von {total, plural, one {# Datei} other {# Dateien}} werden geprüft…",
+          "neverChecked": "Noch nicht geprüft",
+          "checkFailed": "Letzte Prüfung fehlgeschlagen",
+          "summary": "{count, plural, =0 {Keine veralteten Pins} one {# veralteter Pin} other {# veraltete Pins}} · {checked, plural, one {# Pin} other {# Pins}} geprüft",
+          "unreadable": "{count, plural, one {# Datei konnte nicht gelesen werden, daher wurden diese Pins nicht geprüft.} other {# Dateien konnten nicht gelesen werden, daher wurden diese Pins nicht geprüft.}}",
+          "removed": "{count, plural, =0 {Es wurden keine veralteten Pins entfernt} one {# veralteter Pin entfernt} other {# veraltete Pins entfernt}}",
+          "removeFailed": "Die veralteten Pins konnten nicht entfernt werden",
+          "removeConfirm": "{count, plural, one {# Code-Pin} other {# Code-Pins}} entfernen, die die letzte Prüfung an der Spitze von {name} nicht finden konnte?",
+          "removeConfirmNote": "Pins, deren Badge „Veraltet“ ausgeblendet wurde, sowie Pins, die durch Repository-Markierungen verwaltet werden, bleiben erhalten. Entfernte Pins können aus dem Papierkorb wiederhergestellt werden."
+        }
       }
     },
     "matrix": {
@@ -7692,7 +7709,7 @@
       "isDefault": "## Standard\nGibt an, ob dieser Workflow der Standard-Workflow für Ihr Projekt ist.\n\n– Der Standard-Workflow ist für neue Testläufe, Sitzungen und Automatisierungen vorausgewählt.",
       "isEnabled": "## Aktiviert\nGibt an, ob dieser Workflow aktiviert ist.",
       "isActive": "## Aktiv\nZeigt an, ob dieser Workflow-Status aktiv und verfügbar ist.\n\n– Aktive Workflows können beim Aktualisieren von Testläufen, Sitzungen oder Automatisierungen ausgewählt werden.\n– Inaktive Workflows sind nicht auswählbar, bleiben aber in bestehenden Elementen erhalten.",
-      "requiresReview": "## Überprüfung erforderlich\nWenn diese Option aktiviert ist, wird der Übergang eines Falls, Testlaufs oder einer Sitzung in diesen Status durch eine genehmigte Überprüfungsanfrage blockiert. Ohne eine genehmigte Anfrage ist der Übergang nicht möglich.\n\n- Die Genehmigung einer Anfrage führt den Übergang aus. Die Genehmigung des Prüfers versetzt den Fall, Testlauf oder die Sitzung in den angeforderten Status; der Anfragende muss die Statusänderung nicht manuell wiederholen.\n- Vorhandene ausstehende Überprüfungen bleiben im Hintergrund erhalten, wenn die Systemfunktion deaktiviert ist, und werden nach der Reaktivierung wieder angezeigt.\n- Der Prüfer wird ausgewählt, wenn ein Tester auf der Entitätsdetailseite auf „Überprüfung anfordern“ klickt.\n\nWenn die Systemfunktion deaktiviert ist, ist dieser Schalter gesperrt. Aktivieren Sie ihn über die Karte „Überprüfungs-Workflow“ oben, um ihn einzuschalten.",
+      "requiresReview": "## Überprüfung erforderlich\nWenn diese Option aktiviert ist, wird der Übergang eines Falls, Testlaufs oder einer Sitzung in diesen Status durch eine genehmigte Überprüfungsanfrage blockiert. Ohne eine genehmigte Anfrage ist der Übergang nicht möglich.\n\n- Die Genehmigung einer Anfrage führt den Übergang aus. Die Genehmigung des Prüfers versetzt den Fall, Testlauf oder die Sitzung in den angeforderten Status; der Anfragende muss die Statusänderung nicht manuell wiederholen.\n- Vorhandene ausstehende Überprüfungen bleiben im Hintergrund erhalten, wenn die Systemfunktion deaktiviert ist, und werden nach der Reaktivierung wieder angezeigt.\n- Der Prüfer wird ausgewählt, wenn ein Tester auf der Entitätsdetailseite auf „Überprüfung anfordern“ klickt.\n\nWenn die Systemfunktion deaktiviert ist, ist dieser Schalter gesperrt. Aktivieren Sie ihn über den Abschnitt „Überprüfungs-Workflow“ oben, um ihn einzuschalten.",
       "projects": "## Projekte\nZeigt die Projekte an, die diesen Workflow nutzen können."
     },
     "testResult": {

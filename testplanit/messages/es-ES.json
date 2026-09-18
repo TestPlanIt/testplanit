@@ -2247,7 +2247,7 @@
           "scanRecent": "Reescanear commits recientes",
           "scanFull": "Escanear historial completo",
           "scanFullHint": "El historial completo recorre cada commit en la rama y rellena retroactivamente los pines de tickets existentes. Los commits ya leídos se sirven desde una caché, y un recorrido que se detuvo en el límite continúa desde ahí la próxima vez.",
-          "scanStarted": "Escaneo de tickets en cola. Esta tarjeta se actualiza mientras se ejecuta.",
+          "scanStarted": "Análisis de tickets en cola.",
           "scanStillRunning": "El escaneo de tickets sigue ejecutándose en segundo plano. Se actualizará aquí cuando termine.",
           "scanFailedToStart": "No se pudo iniciar el escaneo de tickets",
           "runningRecent": "Escaneando commits recientes…",
@@ -2309,7 +2309,24 @@
         "initialScanStarted": "Obteniendo archivos del repositorio y escaneando marcadores de repositorio y tickets vinculados…",
         "scanError": "El escaneo falló: {error}",
         "scanLastScan": "Último escaneo: {date}",
-        "scanNever": "Aún no escaneado"
+        "scanNever": "Aún no escaneado",
+        "stalePins": {
+          "title": "Fijaciones de código obsoletas",
+          "check": "Verificar fijaciones obsoletas",
+          "checkHint": "Lee cada archivo fijado en la punta de la rama y marca las fijaciones cuyo archivo, líneas o símbolo ya no se pueden encontrar.",
+          "remove": "Eliminar fijaciones obsoletas",
+          "checkStarted": "Verificación de fijaciones obsoletas en cola.",
+          "checkFailedToStart": "No se pudo iniciar la verificación de fijaciones obsoletas",
+          "running": "Verificando {checked, number} de {total, plural, one {# archivo} other {# archivos}}…",
+          "neverChecked": "Aún no verificado",
+          "checkFailed": "La última verificación falló",
+          "summary": "{count, plural, =0 {Sin fijaciones obsoletas} one {# fijación obsoleta} other {# fijaciones obsoletas}} · {checked, plural, one {# fijación verificada} other {# fijaciones verificadas}}",
+          "unreadable": "{count, plural, one {# archivo no se pudo leer, por lo que esa fijación no se verificó.} other {# archivos no se pudieron leer, por lo que esas fijaciones no se verificaron.}}",
+          "removed": "{count, plural, =0 {No se eliminó ninguna fijación obsoleta} one {# fijación obsoleta eliminada} other {# fijaciones obsoletas eliminadas}}",
+          "removeFailed": "No se pudieron eliminar las fijaciones obsoletas",
+          "removeConfirm": "¿Eliminar {count, plural, one {# fijación de código} other {# fijaciones de código}} que la última verificación no pudo encontrar en la punta de {name}?",
+          "removeConfirmNote": "Se conservan las fijaciones cuya insignia de obsoleta fue descartada y las fijaciones mantenidas por marcadores del repositorio. Las fijaciones eliminadas se pueden restaurar desde la Papelera."
+        }
       }
     },
     "matrix": {
@@ -7692,7 +7709,7 @@
       "isDefault": "## Por defecto\nIndica si este flujo de trabajo es el predeterminado para tu proyecto.\n\n- El flujo de trabajo predeterminado está preseleccionado para nuevas ejecuciones de pruebas, sesiones y automatización.",
       "isEnabled": "## Habilitado\\nIndica si este flujo de trabajo está activo.",
       "isActive": "## Activo\nIndica si este estado de flujo de trabajo está activo y disponible para su uso.\n\n- Los flujos de trabajo activos se pueden seleccionar al actualizar ejecuciones de pruebas, sesiones o automatización.\n- Los flujos de trabajo inactivos se ocultan de la selección, pero se conservan en los elementos existentes.",
-      "requiresReview": "## Requiere revisión\nCuando está ACTIVADO, la transición de un caso, ejecución de prueba o sesión A este estado está sujeta a una solicitud de revisión aprobada. Sin una solicitud aprobada, la transición está bloqueada.\n\n- Aprobar una solicitud realiza la transición. La aprobación del revisor mueve el caso, la ejecución o la sesión al estado solicitado; el solicitante no repite el cambio de estado manualmente.\n- Las revisiones pendientes existentes se conservan silenciosamente cuando la función a nivel de sistema está DESACTIVADA y reaparecen cuando se vuelve a habilitar.\n- El revisor se selecciona cuando un evaluador hace clic en Solicitar revisión desde la página de detalles de la entidad.\n\nSi la función a nivel de sistema está deshabilitada, este interruptor está bloqueado. Vuelva a habilitarlo desde la tarjeta Flujo de trabajo de revisión anterior para activarlo.",
+      "requiresReview": "## Requiere revisión\nCuando está ACTIVADO, la transición de un caso, ejecución de prueba o sesión A este estado está sujeta a una solicitud de revisión aprobada. Sin una solicitud aprobada, la transición está bloqueada.\n\n- Aprobar una solicitud realiza la transición. La aprobación del revisor mueve el caso, la ejecución o la sesión al estado solicitado; el solicitante no repite el cambio de estado manualmente.\n- Las revisiones pendientes existentes se conservan silenciosamente cuando la función a nivel de sistema está DESACTIVADA y reaparecen cuando se vuelve a habilitar.\n- El revisor se selecciona cuando un evaluador hace clic en Solicitar revisión desde la página de detalles de la entidad.\n\nSi la función a nivel de sistema está deshabilitada, este interruptor está bloqueado. Vuelva a habilitarlo desde la sección Flujo de trabajo de revisión anterior para activarlo.",
       "projects": "## Proyecta\nIndica los proyectos que pueden usar este flujo de trabajo."
     },
     "testResult": {

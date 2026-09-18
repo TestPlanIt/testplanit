@@ -2247,7 +2247,7 @@
           "scanRecent": "Ripeti la scansione dei commit recenti",
           "scanFull": "Scansiona la cronologia completa",
           "scanFullHint": "La cronologia completa attraversa ogni commit sul ramo e retroattivamente crea pin per i ticket esistenti. I commit già letti vengono serviti da una cache e un'esplorazione interrotta al limite continua da lì la volta successiva.",
-          "scanStarted": "Scansione dei ticket in coda. Questa scheda si aggiorna man mano che viene eseguita.",
+          "scanStarted": "Scansione dei ticket in coda.",
           "scanStillRunning": "La scansione dei ticket è ancora in esecuzione in background. Verrà aggiornata qui al termine.",
           "scanFailedToStart": "Impossibile avviare la scansione dei ticket",
           "runningRecent": "Scansione dei commit recenti…",
@@ -2309,7 +2309,24 @@
         "initialScanStarted": "Recupero dei file del repository e scansione dei marcatori del repository e dei ticket collegati…",
         "scanError": "Scansione non riuscita: {error}",
         "scanLastScan": "Ultima scansione: {date}",
-        "scanNever": "Non ancora scansionato"
+        "scanNever": "Non ancora scansionato",
+        "stalePins": {
+          "title": "Pin di codice obsoleti",
+          "check": "Verifica pin obsoleti",
+          "checkHint": "Legge ogni file con pin alla punta del branch e segnala i pin il cui file, righe o simbolo non è più possibile trovare.",
+          "remove": "Rimuovi pin obsoleti",
+          "checkStarted": "Verifica dei pin obsoleti in coda.",
+          "checkFailedToStart": "Impossibile avviare la verifica dei pin obsoleti",
+          "running": "Verifica di {checked, number} su {total, plural, one {# file} other {# file}}…",
+          "neverChecked": "Non ancora verificato",
+          "checkFailed": "L'ultima verifica non è riuscita",
+          "summary": "{count, plural, =0 {Nessun pin obsoleto} one {# pin obsoleto} other {# pin obsoleti}} · {checked, plural, one {# pin} other {# pin}} verificati",
+          "unreadable": "{count, plural, one {# file} other {# file}} non è stato possibile leggere, quindi quei pin non sono stati verificati.",
+          "removed": "{count, plural, =0 {Nessun pin obsoleto rimosso} one {# pin obsoleto rimosso} other {# pin obsoleti rimossi}}",
+          "removeFailed": "Impossibile rimuovere i pin obsoleti",
+          "removeConfirm": "Rimuovere {count, plural, one {# pin di codice} other {# pin di codice}} che l'ultima verifica non è riuscita a trovare alla punta di {name}?",
+          "removeConfirmNote": "I pin il cui badge Obsoleto è stato ignorato e i pin gestiti da marcatori del repository vengono mantenuti. I pin rimossi possono essere ripristinati dal Cestino."
+        }
       }
     },
     "matrix": {
@@ -7692,7 +7709,7 @@
       "isDefault": "## Predefinito\nIndica se questo flusso di lavoro è quello predefinito per il tuo progetto.\n\n- Il flusso di lavoro predefinito è preselezionato per nuove esecuzioni di test, sessioni e automazioni.",
       "isEnabled": "## Abilitato\nIndica se questo flusso di lavoro è abilitato.",
       "isActive": "## Attivo\nIndica se questo stato del flusso di lavoro è attivo e disponibile per l'uso.\n\n- I flussi di lavoro attivi possono essere selezionati durante l'aggiornamento di esecuzioni di test, sessioni o automazioni.\n- I flussi di lavoro inattivi sono nascosti dalla selezione ma conservati negli elementi esistenti.",
-      "requiresReview": "## Richiede revisione\nQuando è ATTIVO, il passaggio di un caso, di un'esecuzione di test o di una sessione IN questo stato è vincolato da una richiesta di revisione approvata. Senza una richiesta approvata, la transizione è bloccata.\n\n- L'approvazione di una richiesta esegue la transizione. L'approvazione del revisore sposta il caso, l'esecuzione o la sessione nello stato richiesto; il richiedente non deve ripetere manualmente il cambio di stato.\n- Le revisioni in sospeso esistenti vengono conservate silenziosamente quando la funzionalità a livello di sistema è DISATTIVATA e riappaiono quando viene riattivata.\n- Il revisore viene selezionato quando un tester fa clic su Richiedi revisione dalla pagina dei dettagli dell'entità.\n\nSe la funzionalità a livello di sistema è disabilitata, questo interruttore è bloccato. Riattivarlo dalla scheda Flusso di lavoro di revisione sopra per attivarlo.",
+      "requiresReview": "## Richiede revisione\nQuando è ATTIVO, il passaggio di un caso, di un'esecuzione di test o di una sessione IN questo stato è vincolato da una richiesta di revisione approvata. Senza una richiesta approvata, la transizione è bloccata.\n\n- L'approvazione di una richiesta esegue la transizione. L'approvazione del revisore sposta il caso, l'esecuzione o la sessione nello stato richiesto; il richiedente non deve ripetere manualmente il cambio di stato.\n- Le revisioni in sospeso esistenti vengono conservate silenziosamente quando la funzionalità a livello di sistema è DISATTIVATA e riappaiono quando viene riattivata.\n- Il revisore viene selezionato quando un tester fa clic su Richiedi revisione dalla pagina dei dettagli dell'entità.\n\nSe la funzionalità a livello di sistema è disabilitata, questo interruttore è bloccato. Riattivalo dalla sezione Flusso di lavoro di revisione sopra per attivarlo.",
       "projects": "## Progetti\nIndica i progetti che possono utilizzare questo flusso di lavoro."
     },
     "testResult": {

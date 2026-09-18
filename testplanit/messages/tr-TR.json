@@ -2247,7 +2247,7 @@
           "scanRecent": "Son Commit'leri Yeniden Tara",
           "scanFull": "Tam Geçmişi Tara",
           "scanFullHint": "Tam geçmiş, dal üzerindeki her commit'i gezer ve mevcut biletler için pinleri geriye dönük olarak doldurur. Zaten okunmuş commit'ler bir önbellekten sunulur ve sınırında duran bir gezinme bir sonraki sefer kaldığı yerden devam eder.",
-          "scanStarted": "Bilet taraması sıraya alındı. Bu kart çalıştıkça güncellenir.",
+          "scanStarted": "Bilet taraması kuyruğa alındı.",
           "scanStillRunning": "Bilet taraması arka planda hâlâ çalışıyor. Tamamlandığında burada güncellenecek.",
           "scanFailedToStart": "Bilet taraması başlatılamadı",
           "runningRecent": "Son commit'ler taranıyor…",
@@ -2309,7 +2309,24 @@
         "initialScanStarted": "Depo dosyaları getiriliyor ve depo işaretçileri ile bağlı biletler için taranıyor…",
         "scanError": "Tarama başarısız oldu: {error}",
         "scanLastScan": "Son tarama: {date}",
-        "scanNever": "Henüz taranmadı"
+        "scanNever": "Henüz taranmadı",
+        "stalePins": {
+          "title": "Eskimiş Kod Sabitlemeleri",
+          "check": "Eskimiş Sabitlemeleri Kontrol Et",
+          "checkHint": "Dal ucundaki her sabitlenmiş dosyayı okur ve dosyası, satırları veya sembolü artık bulunamayan sabitlemeleri işaretler.",
+          "remove": "Eskimiş Sabitlemeleri Kaldır",
+          "checkStarted": "Eskimiş sabitleme kontrolü kuyruğa alındı.",
+          "checkFailedToStart": "Eskimiş sabitleme kontrolü başlatılamadı",
+          "running": "{total, plural, one {# dosyadan} other {# dosyadan}} {checked, number} tanesi kontrol ediliyor…",
+          "neverChecked": "Henüz kontrol edilmedi",
+          "checkFailed": "Son kontrol başarısız oldu",
+          "summary": "{count, plural, =0 {Eskimiş sabitleme yok} one {# eskimiş sabitleme} other {# eskimiş sabitleme}} · {checked, plural, one {# sabitleme} other {# sabitleme}} kontrol edildi",
+          "unreadable": "{count, plural, one {# dosya} other {# dosya}} okunamadı, bu nedenle bu sabitlemeler kontrol edilmedi.",
+          "removed": "{count, plural, =0 {Eskimiş sabitleme kaldırılmadı} one {# eskimiş sabitleme kaldırıldı} other {# eskimiş sabitleme kaldırıldı}}",
+          "removeFailed": "Eskimiş sabitlemeler kaldırılamadı",
+          "removeConfirm": "{name} ucunda son kontrolün bulamadığı {count, plural, one {# Kod Sabitlemesi} other {# Kod Sabitlemesi}} kaldırılsın mı?",
+          "removeConfirmNote": "Eskimiş rozeti kapatılmış sabitlemeler ve depo işaretleyicileri tarafından sürdürülen sabitlemeler korunur. Kaldırılan sabitlemeler Çöp Kutusu'ndan geri yüklenebilir."
+        }
       }
     },
     "matrix": {
@@ -7692,7 +7709,7 @@
       "isDefault": "## Varsayılan\nBu iş akışının projeniz için varsayılan olup olmadığını gösterir.\n\n- Varsayılan iş akışı, yeni test çalıştırmaları, oturumlar ve otomasyon için önceden seçilmiştir.",
       "isEnabled": "## Etkin\nBu iş akışının etkin olup olmadığını gösterir.",
       "isActive": "## Aktif\nBu iş akışı durumunun aktif ve kullanıma hazır olup olmadığını gösterir.\n\n- Aktif iş akışları, test çalıştırmaları, oturumlar veya otomasyon güncellenirken seçilebilir.\n- Etkin olmayan iş akışları seçimden gizlenir ancak mevcut öğelerde korunur.",
-      "requiresReview": "## İnceleme Gerektirir\nAÇIK olduğunda, bir durumun, test çalıştırmasının veya oturumun bu duruma geçişi, onaylanmış bir inceleme talebiyle sınırlandırılır. Onaylanmış bir talep olmadan geçiş engellenir.\n\n- Bir talebin onaylanması geçişi gerçekleştirir. İnceleyicinin onayı durumu, çalıştırmayı veya oturumu talep edilen duruma taşır; talep eden kişi durum değişikliğini elle tekrarlamaz.\n- Sistem düzeyindeki özellik KAPALI olduğunda mevcut bekleyen incelemeler sessizce korunur ve yeniden etkinleştirildiğinde tekrar görünür.\n- Bir test uzmanı, varlık detay sayfasından İnceleme İste düğmesine tıkladığında inceleyici seçilir.\n\nSistem düzeyindeki özellik devre dışı bırakılmışsa, bu anahtar kilitlidir. Bunu açmak için yukarıdaki İnceleme İş Akışı kartından yeniden etkinleştirin.",
+      "requiresReview": "## İnceleme Gerektirir\nAÇIK olduğunda, bir vakanın, test çalıştırmasının veya oturumun bu duruma geçişi, onaylanmış bir inceleme talebiyle sınırlandırılır. Onaylanmış bir talep olmadan geçiş engellenir.\n\n- Bir talebin onaylanması geçişi gerçekleştirir. İnceleyicinin onayı vakayı, çalıştırmayı veya oturumu talep edilen duruma taşır; talep eden kişi durum değişikliğini elle tekrarlamaz.\n- Sistem düzeyindeki özellik KAPALI olduğunda mevcut bekleyen incelemeler sessizce korunur ve yeniden etkinleştirildiğinde tekrar görünür.\n- Bir test uzmanı, varlık detay sayfasından İnceleme İste düğmesine tıkladığında inceleyici seçilir.\n\nSistem düzeyindeki özellik devre dışı bırakılmışsa, bu anahtar kilitlidir. Bunu açmak için yukarıdaki İnceleme İş Akışı bölümünden yeniden etkinleştirin.",
       "projects": "## Projeler\nBu iş akışını kullanabilecek projeleri belirtir."
     },
     "testResult": {

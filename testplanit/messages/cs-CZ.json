@@ -2247,7 +2247,7 @@
           "scanRecent": "Znovu prohledat nedávné commity",
           "scanFull": "Prohledat celou historii",
           "scanFullHint": "Prohledání celé historie projde každý commit ve větvi a doplní piny pro existující tikety. Již přečtené commity se berou z mezipaměti a průchod, který se zastavil na limitu, pokračuje příště odtud.",
-          "scanStarted": "Prohledávání tiketů zařazeno do fronty. Tato karta se aktualizuje během běhu.",
+          "scanStarted": "Skenování tiketů zařazeno do fronty.",
           "scanStillRunning": "Prohledávání tiketů stále běží na pozadí. Zde se aktualizuje, jakmile skončí.",
           "scanFailedToStart": "Prohledávání tiketů se nepodařilo spustit",
           "runningRecent": "Prohledávání nedávných commitů…",
@@ -2309,7 +2309,24 @@
         "initialScanStarted": "Načítání souborů úložiště a prohledávání značek repozitáře a propojených tiketů…",
         "scanError": "Prohledávání selhalo: {error}",
         "scanLastScan": "Poslední prohledávání: {date}",
-        "scanNever": "Zatím neprohledáno"
+        "scanNever": "Zatím neprohledáno",
+        "stalePins": {
+          "title": "Neaktuální značky Code Pin",
+          "check": "Zkontrolovat neaktuální značky",
+          "checkHint": "Načte každý připnutý soubor na špičce větve a označí značky, jejichž soubor, řádky nebo symbol už nelze najít.",
+          "remove": "Odstranit neaktuální značky",
+          "checkStarted": "Kontrola neaktuálních značek zařazena do fronty.",
+          "checkFailedToStart": "Kontrolu neaktuálních značek se nepodařilo spustit",
+          "running": "Kontrola {checked, number} z {total, plural, one {# souboru} few {# souborů} many {# souboru} other {# souborů}}…",
+          "neverChecked": "Zatím nezkontrolováno",
+          "checkFailed": "Poslední kontrola selhala",
+          "summary": "{count, plural, =0 {Žádné neaktuální značky} one {# neaktuální značka} few {# neaktuální značky} many {# neaktuální značky} other {# neaktuálních značek}} · zkontrolováno {checked, plural, one {# značka} few {# značky} many {# značky} other {# značek}}",
+          "unreadable": "{count, plural, one {# soubor} few {# soubory} many {# souboru} other {# souborů}} se nepodařilo přečíst, takže příslušné značky nebyly zkontrolovány.",
+          "removed": "{count, plural, =0 {Nebyly odstraněny žádné neaktuální značky} one {Byla odstraněna # neaktuální značka} few {Byly odstraněny # neaktuální značky} many {Bylo odstraněno # neaktuální značky} other {Bylo odstraněno # neaktuálních značek}}",
+          "removeFailed": "Neaktuální značky se nepodařilo odstranit",
+          "removeConfirm": "Odstranit {count, plural, one {# značku Code Pin, kterou} few {# značky Code Pin, které} many {# značky Code Pin, které} other {# značek Code Pin, které}} poslední kontrola nenašla na špičce {name}?",
+          "removeConfirmNote": "Značky, u kterých byl skryt odznak Neaktuální, a značky udržované markery úložiště, zůstávají zachovány. Odstraněné značky lze obnovit z koše."
+        }
       }
     },
     "matrix": {
@@ -7692,7 +7709,7 @@
       "isDefault": "## Výchozí\nUdává, zda je tento pracovní postup výchozí pro váš projekt.\n\n- Výchozí pracovní postup je předvybraný pro nové testovací běhy, relace a automatizaci.",
       "isEnabled": "## Povoleno\nUdává, zda je tento pracovní postup povolen.",
       "isActive": "## Aktivní\nUdává, zda je tento stav pracovního postupu aktivní a dostupný k použití.\n\n- Aktivní pracovní postupy lze vybrat při aktualizaci testovacích běhů, relací nebo automatizace\n- Neaktivní pracovní postupy jsou skryty z výběru, ale zachovány ve stávajících položkách",
-      "requiresReview": "## Vyžaduje revizi\nPokud je tato funkce ZAPNUTÁ, přechod případu, testovacího běhu nebo relace DO tohoto stavu je podmíněn schválenou žádostí o revizi. Bez schválené žádosti je přechod zablokován.\n\n- Schválení žádosti provede přechod. Schválení revidenta přesune případ, běh nebo relaci do požadovaného stavu; žadatel změnu stavu ručně neopakuje.\n- Existující čekající revize zůstávají tiše zachovány, pokud je systémová funkce VYPNUTÁ, a znovu se objeví po jejím opětovném zapnutí.\n- Revident je vybrán, když tester klikne na Vyžádat revizi na stránce podrobností entity.\n\nPokud je systémová funkce zakázána, tento přepínač je uzamčen. Pro jeho zapnutí znovu povolte funkci pomocí karty Pracovní postup revize výše.",
+      "requiresReview": "## Vyžaduje kontrolu\nPokud je tato možnost ZAPNUTÁ, přechod případu, testovacího běhu nebo relace DO tohoto stavu je podmíněn schválenou žádostí o kontrolu. Bez schválené žádosti je přechod zablokován.\n\n- Schválení žádosti provede přechod. Schválení recenzentem převede případ, běh nebo relaci do požadovaného stavu; žadatel nemusí změnu stavu provádět ručně.\n- Existující čekající kontroly zůstávají tiše zachovány, když je funkce na úrovni systému VYPNUTÁ, a znovu se objeví po opětovném zapnutí.\n- Recenzent je vybrán, když tester klikne na tlačítko Vyžádat kontrolu na stránce podrobností entity.\n\nPokud je funkce na úrovni systému zakázána, tento přepínač je uzamčen. Znovu jej povolte v sekci Pracovní postup kontroly výše, abyste jej mohli zapnout.",
       "projects": "## Projekty\nUdává projekty, které mohou tento pracovní postup používat."
     },
     "testResult": {

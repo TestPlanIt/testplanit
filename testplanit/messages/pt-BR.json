@@ -2247,7 +2247,7 @@
           "scanRecent": "Reanalisar Commits Recentes",
           "scanFull": "Analisar Histórico Completo",
           "scanFullHint": "O histórico completo percorre cada commit na ramificação e preenche retroativamente os pins para tickets existentes. Os commits já lidos são obtidos de um cache, e um percurso que parou no limite continua a partir daí na próxima vez.",
-          "scanStarted": "Análise de tickets na fila. Este cartão é atualizado conforme é executado.",
+          "scanStarted": "Verificação de tickets na fila.",
           "scanStillRunning": "A análise de tickets ainda está em execução em segundo plano. Isso será atualizado aqui quando terminar.",
           "scanFailedToStart": "Não foi possível iniciar a análise de tickets",
           "runningRecent": "Analisando commits recentes…",
@@ -2309,7 +2309,24 @@
         "initialScanStarted": "Buscando arquivos do repositório e analisando marcadores de repositório e tickets vinculados…",
         "scanError": "Falha na análise: {error}",
         "scanLastScan": "Última análise: {date}",
-        "scanNever": "Ainda não analisado"
+        "scanNever": "Ainda não analisado",
+        "stalePins": {
+          "title": "Pins de Código Desatualizados",
+          "check": "Verificar Pins Desatualizados",
+          "checkHint": "Lê cada arquivo fixado na ponta do branch e sinaliza os pins cujo arquivo, linhas ou símbolo não podem mais ser encontrados.",
+          "remove": "Remover Pins Desatualizados",
+          "checkStarted": "Verificação de pins desatualizados na fila.",
+          "checkFailedToStart": "Não foi possível iniciar a verificação de pins desatualizados",
+          "running": "Verificando {checked, number} de {total, plural, one {# arquivo} other {# arquivos}}…",
+          "neverChecked": "Ainda não verificado",
+          "checkFailed": "Última verificação falhou",
+          "summary": "{count, plural, =0 {Nenhum pin obsoleto} one {# pin obsoleto} other {# pins obsoletos}} · {checked, plural, one {# pin verificado} other {# pins verificados}}",
+          "unreadable": "{count, plural, one {# arquivo não pôde ser lido, portanto esse pin não foi verificado.} other {# arquivos não puderam ser lidos, portanto esses pins não foram verificados.}}",
+          "removed": "{count, plural, =0 {Nenhum pin desatualizado foi removido} one {# pin desatualizado removido} other {# pins desatualizados removidos}}",
+          "removeFailed": "Não foi possível remover os pins desatualizados",
+          "removeConfirm": "Remover {count, plural, one {# Pin de Código} other {# Pins de Código}} que a última verificação não conseguiu encontrar na ponta de {name}?",
+          "removeConfirmNote": "Pins cujo selo de Desatualizado foi dispensado e pins mantidos por marcadores do repositório são preservados. Pins removidos podem ser restaurados da Lixeira."
+        }
       }
     },
     "matrix": {
@@ -7692,7 +7709,7 @@
       "isDefault": "## Padrão\nIndica se este fluxo de trabalho é o padrão para o seu projeto.\n\n- O fluxo de trabalho padrão é pré-selecionado para novas execuções de teste, sessões e automação.",
       "isEnabled": "## Ativado\nIndica se este fluxo de trabalho está ativado.",
       "isActive": "## Ativo\nIndica se este estado de fluxo de trabalho está ativo e disponível para uso.\n\n- Fluxos de trabalho ativos podem ser selecionados ao atualizar execuções de teste, sessões ou automação.\n- Fluxos de trabalho inativos ficam ocultos para seleção, mas são preservados nos itens existentes.",
-      "requiresReview": "## Requer revisão\nQuando ATIVADO, a transição de um caso, execução de teste ou sessão PARA este estado é condicionada a uma solicitação de revisão aprovada. Sem uma solicitação aprovada, a transição é bloqueada.\n\n- Aprovar uma solicitação executa a transição. A aprovação do revisor move o caso, execução ou sessão para o estado solicitado; o solicitante não precisa repetir a mudança de estado manualmente.\n- As revisões pendentes existentes são preservadas silenciosamente quando o recurso em nível de sistema está DESATIVADO e reaparecem quando reativado.\n- O revisor é escolhido quando um testador clica em Solicitar Revisão na página de detalhes da entidade.\n\nSe o recurso em nível de sistema estiver desativado, este botão fica bloqueado. Reative-o no card Fluxo de Revisão acima para poder ativá-lo.",
+      "requiresReview": "## Requer revisão\nQuando ATIVADO, a transição de um caso, execução de teste ou sessão PARA este estado é condicionada a uma solicitação de revisão aprovada. Sem uma solicitação aprovada, a transição é bloqueada.\n\n- Aprovar uma solicitação executa a transição. A aprovação do revisor move o caso, execução ou sessão para o estado solicitado; o solicitante não precisa repetir a mudança de estado manualmente.\n- As revisões pendentes existentes são preservadas silenciosamente quando o recurso em nível de sistema está DESATIVADO e reaparecem quando reativado.\n- O revisor é escolhido quando um testador clica em Solicitar Revisão na página de detalhes da entidade.\n\nSe o recurso em nível de sistema estiver desativado, este botão fica bloqueado. Reative-o na seção Fluxo de Revisão acima para poder ativá-lo.",
       "projects": "## Projetos\nIndica os projetos que podem usar este fluxo de trabalho."
     },
     "testResult": {

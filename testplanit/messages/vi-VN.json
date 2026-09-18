@@ -2247,7 +2247,7 @@
           "scanRecent": "Quét lại các Commit Gần đây",
           "scanFull": "Quét Toàn bộ Lịch sử",
           "scanFullHint": "Quét toàn bộ lịch sử sẽ duyệt qua mọi commit trên nhánh và bổ sung ghim cho các ticket hiện có. Các commit đã đọc được lấy từ bộ nhớ đệm, và một lượt duyệt bị dừng do đạt giới hạn sẽ tiếp tục từ đó vào lần sau.",
-          "scanStarted": "Đã xếp hàng quét ticket. Thẻ này sẽ cập nhật khi quá trình chạy.",
+          "scanStarted": "Đã đưa vào hàng đợi quét ticket.",
           "scanStillRunning": "Quá trình quét ticket vẫn đang chạy trong nền. Nó sẽ cập nhật tại đây khi hoàn tất.",
           "scanFailedToStart": "Không thể bắt đầu quét ticket",
           "runningRecent": "Đang quét các commit gần đây…",
@@ -2309,7 +2309,24 @@
         "initialScanStarted": "Đang tải các tệp kho lưu trữ và quét tìm dấu hiệu kho lưu trữ và các ticket đã liên kết…",
         "scanError": "Quét thất bại: {error}",
         "scanLastScan": "Lượt quét gần nhất: {date}",
-        "scanNever": "Chưa quét"
+        "scanNever": "Chưa quét",
+        "stalePins": {
+          "title": "Ghim Mã Đã Cũ",
+          "check": "Kiểm tra Ghim Đã Cũ",
+          "checkHint": "Đọc từng tệp đã ghim tại đầu nhánh và đánh dấu các ghim mà tệp, dòng hoặc ký hiệu không còn được tìm thấy.",
+          "remove": "Xóa Ghim Đã Cũ",
+          "checkStarted": "Đã đưa vào hàng đợi kiểm tra ghim đã cũ.",
+          "checkFailedToStart": "Không thể bắt đầu kiểm tra ghim đã cũ",
+          "running": "Đang kiểm tra {checked, number} trong {total, plural, other {# tệp}}…",
+          "neverChecked": "Chưa được kiểm tra",
+          "checkFailed": "Lần kiểm tra cuối không thành công",
+          "summary": "{count, plural, =0 {Không có ghim đã cũ} other {# ghim đã cũ}} · {checked, plural, other {# ghim}} đã kiểm tra",
+          "unreadable": "{count, plural, other {# tệp}} không thể đọc được, nên các ghim đó không được kiểm tra.",
+          "removed": "{count, plural, =0 {Không có ghim đã cũ nào bị xóa} other {# ghim đã cũ đã bị xóa}}",
+          "removeFailed": "Không thể xóa các ghim đã cũ",
+          "removeConfirm": "Xóa {count, plural, other {# Ghim Mã}} mà lần kiểm tra cuối không tìm thấy tại đầu của {name}?",
+          "removeConfirmNote": "Các ghim có huy hiệu Đã Cũ đã bị bỏ qua và các ghim được duy trì bởi các dấu hiệu của repository sẽ được giữ lại. Các ghim đã bị xóa có thể được khôi phục từ Thùng rác."
+        }
       }
     },
     "matrix": {
@@ -7692,7 +7709,7 @@
       "isDefault": "## Mặc định\nCho biết liệu quy trình làm việc này có phải là mặc định cho dự án của bạn hay không.\n\n- Quy trình làm việc mặc định được chọn trước cho các lần chạy thử nghiệm, phiên và tự động hóa mới.",
       "isEnabled": "## Đã bật\nCho biết liệu quy trình làm việc này có được bật hay không.",
       "isActive": "## Hoạt động\nCho biết trạng thái quy trình công việc này có đang hoạt động và sẵn sàng sử dụng hay không.\n\n- Các quy trình công việc đang hoạt động có thể được chọn khi cập nhật các lần chạy thử nghiệm, phiên hoặc tự động hóa.\n- Các quy trình công việc không hoạt động sẽ bị ẩn khỏi lựa chọn nhưng vẫn được lưu giữ trong các mục hiện có.",
-      "requiresReview": "## Yêu cầu xem xét\nKhi BẬT, việc chuyển đổi một trường hợp, lần chạy thử nghiệm hoặc phiên sang trạng thái này sẽ bị chặn bởi yêu cầu xem xét đã được phê duyệt. Nếu không có yêu cầu được phê duyệt, quá trình chuyển đổi sẽ bị chặn.\n\n- Việc phê duyệt một yêu cầu sẽ thực hiện quá trình chuyển đổi. Sự phê duyệt của người xem xét sẽ chuyển trường hợp, lần chạy hoặc phiên vào trạng thái được yêu cầu; người yêu cầu không cần thực hiện lại thay đổi trạng thái theo cách thủ công.\n- Các đánh giá đang chờ xử lý hiện có sẽ được giữ nguyên một cách âm thầm khi tính năng cấp hệ thống TẮT và sẽ xuất hiện lại khi được bật lại.\n- Người xem xét được chọn khi người kiểm thử nhấp vào Yêu cầu xem xét từ trang chi tiết thực thể.\n\nNếu tính năng cấp hệ thống bị vô hiệu hóa, công tắc này sẽ bị khóa. Hãy bật lại công tắc này từ thẻ Quy trình xem xét ở trên để bật tính năng này.",
+      "requiresReview": "## Yêu cầu xem xét\nKhi BẬT, việc chuyển đổi một trường hợp, lần chạy thử nghiệm hoặc phiên sang trạng thái này sẽ bị chặn bởi yêu cầu xem xét đã được phê duyệt. Nếu không có yêu cầu được phê duyệt, quá trình chuyển đổi sẽ bị chặn.\n\n- Việc phê duyệt một yêu cầu sẽ thực hiện quá trình chuyển đổi. Sự phê duyệt của người xem xét sẽ chuyển trường hợp, lần chạy hoặc phiên vào trạng thái được yêu cầu; người yêu cầu không cần thực hiện lại thay đổi trạng thái theo cách thủ công.\n- Các đánh giá đang chờ xử lý hiện có sẽ được giữ nguyên một cách âm thầm khi tính năng cấp hệ thống TẮT và sẽ xuất hiện lại khi được bật lại.\n- Người xem xét được chọn khi người kiểm thử nhấp vào Yêu cầu xem xét từ trang chi tiết thực thể.\n\nNếu tính năng cấp hệ thống bị vô hiệu hóa, công tắc này sẽ bị khóa. Hãy bật lại tính năng này từ mục Quy trình xem xét ở trên để bật tùy chọn này.",
       "projects": "## Dự án\nCho biết các dự án có thể sử dụng quy trình làm việc này."
     },
     "testResult": {
