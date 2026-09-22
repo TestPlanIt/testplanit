@@ -20,13 +20,21 @@ import {
 } from "@/components/ui/select";
 import { FilePlay, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { ExecutionTargetChoice } from "~/app/actions/execution-targets";
+import { StaticValuesMultiSelect } from "@/components/automation/StaticValuesMultiSelect";
+import {
+  paramValuesFromInputs,
+  serializeParamValues,
+  type ParamValues,
+} from "~/lib/execution/params";
 
 export interface ExecuteRequest {
   targetId: number;
   ref?: string;
+  /** The target's parameters as chosen; absent when it declares none. */
+  inputs?: Record<string, string>;
 }
 
 interface Props {
@@ -49,6 +57,8 @@ interface Props {
   /** Pre-select a target (retry). */
   initialTargetId?: number | null;
   initialRef?: string | null;
+  /** A retry's previous choices, seeded into the target's parameters. */
+  initialInputs?: Record<string, string> | null;
 }
 
 export function ExecuteAutomationDialog({
@@ -65,9 +75,11 @@ export function ExecuteAutomationDialog({
   onDispatched,
   initialTargetId,
   initialRef,
+  initialInputs,
 }: Props) {
   const t = useTranslations("automation.execute");
   const tCommon = useTranslations("common");
+  const tSearch = useTranslations("search");
 
   const enabledTargets = useMemo(
     () => targets.filter((target) => target.isEnabled),
@@ -75,6 +87,7 @@ export function ExecuteAutomationDialog({
   );
   const [targetId, setTargetId] = useState<string>("");
   const [ref, setRef] = useState("");
+  const [paramValues, setParamValues] = useState<ParamValues>({});
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -103,6 +116,28 @@ export function ExecuteAutomationDialog({
   }, [open, enabledTargets, initialTargetId, initialRef]);
 
   const selected = enabledTargets.find((x) => String(x.id) === targetId);
+  const selectedId = selected?.id ?? null;
+  const params = useMemo(() => selected?.paramSchema ?? [], [selected]);
+
+  // Each target declares its own parameters: picking one starts from its
+  // defaults, or from the previous execution's choices on a retry. Seeded
+  // once per chosen target: a targets refetch while the dialog is open (the
+  // run page polls) must not wipe what the user has picked.
+  const seededFor = useRef<number | null>(null);
+  useEffect(() => {
+    if (!open) {
+      seededFor.current = null;
+      return;
+    }
+    if (selectedId === seededFor.current) return;
+    seededFor.current = selectedId;
+    setParamValues(
+      paramValuesFromInputs(
+        params,
+        selectedId === initialTargetId ? initialInputs : null
+      )
+    );
+  }, [open, params, selectedId, initialTargetId, initialInputs]);
 
   const handleSubmit = async () => {
     if (!selected) return;
@@ -112,6 +147,9 @@ export function ExecuteAutomationDialog({
       const message = await submit({
         targetId: selected.id,
         ref: ref.trim() || undefined,
+        ...(params.length > 0
+          ? { inputs: serializeParamValues(params, paramValues) }
+          : {}),
       });
       if (message) {
         setError(message);
@@ -162,6 +200,72 @@ export function ExecuteAutomationDialog({
             />
             <p className="text-xs text-muted-foreground">{t("refHelp")}</p>
           </div>
+          {params.length > 0 && (
+            <div className="space-y-3" data-testid="execute-automation-params">
+              {params.map((param) => {
+                const id = `execute-automation-param-${param.name}`;
+                const value = paramValues[param.name];
+                return (
+                  <div key={param.name} className="space-y-1.5">
+                    <Label htmlFor={id}>{param.label}</Label>
+                    {param.type === "select" ? (
+                      <Select
+                        value={typeof value === "string" ? value : ""}
+                        onValueChange={(v) =>
+                          setParamValues((current) => ({
+                            ...current,
+                            [param.name]: v,
+                          }))
+                        }
+                      >
+                        <SelectTrigger id={id} data-testid={id}>
+                          <SelectValue
+                            placeholder={tCommon("placeholders.selectOption")}
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {param.values.map((option) => (
+                            <SelectItem key={option} value={option}>
+                              <span className="font-mono text-sm">
+                                {option}
+                              </span>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : param.type === "multiselect" ? (
+                      <StaticValuesMultiSelect
+                        values={param.values}
+                        selected={Array.isArray(value) ? value : []}
+                        onChange={(next) =>
+                          setParamValues((current) => ({
+                            ...current,
+                            [param.name]: next,
+                          }))
+                        }
+                        placeholder={tSearch("selectOptions")}
+                        ariaLabel={param.label}
+                        testId={id}
+                      />
+                    ) : (
+                      <Input
+                        id={id}
+                        value={typeof value === "string" ? value : ""}
+                        onChange={(e) =>
+                          setParamValues((current) => ({
+                            ...current,
+                            [param.name]: e.target.value,
+                          }))
+                        }
+                        className="font-mono text-sm"
+                        data-testid={id}
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
           <p
             className="text-sm font-medium"
             data-testid="execute-automation-summary"

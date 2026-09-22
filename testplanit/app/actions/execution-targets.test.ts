@@ -404,6 +404,142 @@ describe("execution-targets actions", () => {
     });
   });
 
+  describe("paramSchema", () => {
+    const base = {
+      name: "Nightly",
+      provider: "GENERIC_WEBHOOK" as const,
+      url: "https://ci.example.com/hooks/tpi",
+    };
+    const browser = {
+      name: "BROWSER",
+      label: "Browser",
+      type: "select" as const,
+      values: ["chrome", "edge", "firefox", "safari"],
+      default: "chrome",
+    };
+
+    it("stores a valid declaration and returns it on the view", async () => {
+      asManager();
+      createTarget.mockImplementation(async (args: any) =>
+        targetRow({ paramSchema: args.data.paramSchema })
+      );
+
+      const result = await createExecutionTarget(PROJECT_ID, {
+        ...base,
+        paramSchema: [
+          browser,
+          {
+            name: "TAGS",
+            label: "Tags",
+            type: "multiselect",
+            values: ["smoke", "regression"],
+            default: ["smoke"],
+          },
+          { name: "NOTE", label: "Note", type: "text" },
+        ],
+      });
+
+      expect(result.success).toBe(true);
+      if (!result.success) return;
+      expect(createTarget.mock.calls[0][0].data.paramSchema).toHaveLength(3);
+      expect(result.target.paramSchema[0]).toEqual(browser);
+    });
+
+    it.each([
+      [
+        "a duplicate name",
+        [browser, { ...browser, label: "Again" }],
+        "paramNameDuplicate",
+      ],
+      [
+        "a reserved TESTPLANIT_ name",
+        [{ ...browser, name: "TESTPLANIT_RUN_ID" }],
+        "paramNameReserved",
+      ],
+      [
+        "a default outside the values",
+        [{ ...browser, default: "opera" }],
+        "paramDefaultNotInValues",
+      ],
+      [
+        "an invalid name",
+        [{ ...browser, name: "my-browser" }],
+        "paramNameInvalid",
+      ],
+      ["no values", [{ ...browser, values: [] }], "paramValuesRequired"],
+      [
+        "a multiselect value containing the separator",
+        [
+          {
+            name: "TAGS",
+            label: "Tags",
+            type: "multiselect" as const,
+            values: ["a,b"],
+            default: [],
+          },
+        ],
+        "paramValueHasSeparator",
+      ],
+    ])("rejects %s at save time", async (_label, paramSchema, code) => {
+      asManager();
+
+      const result = await createExecutionTarget(PROJECT_ID, {
+        ...base,
+        paramSchema: paramSchema as any,
+      });
+
+      expect(result).toMatchObject({
+        success: false,
+        errorCode: `automation.settings.errors.${code}`,
+      });
+      expect(createTarget).not.toHaveBeenCalled();
+    });
+
+    it("rejects a parameter that shares a name with a static input instead of letting it override silently", async () => {
+      asManager();
+
+      const result = await createExecutionTarget(PROJECT_ID, {
+        ...base,
+        staticInputs: { BROWSER: "chrome" },
+        paramSchema: [browser],
+      });
+
+      expect(result).toMatchObject({
+        success: false,
+        errorCode: "automation.settings.errors.paramCollidesWithInput",
+      });
+      expect(createTarget).not.toHaveBeenCalled();
+    });
+
+    it("checks an update against the stored static inputs when only the parameters change", async () => {
+      asManager();
+      mockTargetLookup(targetRow({ staticInputs: { BROWSER: "chrome" } }));
+
+      const result = await updateExecutionTarget(TARGET_ID, {
+        paramSchema: [browser],
+      });
+
+      expect(result).toMatchObject({
+        success: false,
+        errorCode: "automation.settings.errors.paramCollidesWithInput",
+      });
+      expect(updateTarget).not.toHaveBeenCalled();
+    });
+
+    it("keeps the stored declaration when an update omits it", async () => {
+      asManager();
+      mockTargetLookup(targetRow({ paramSchema: [browser] }));
+      updateTarget.mockResolvedValue(targetRow({ paramSchema: [browser] }));
+
+      const result = await updateExecutionTarget(TARGET_ID, {
+        name: "Renamed",
+      });
+
+      expect(result.success).toBe(true);
+      expect(updateTarget.mock.calls[0][0].data.paramSchema).toEqual([browser]);
+    });
+  });
+
   describe("listExecutionTargetChoices", () => {
     it("returns only the sanitized fields — never url, credentials or inputs", async () => {
       mockedSession.mockResolvedValue({
@@ -417,6 +553,16 @@ describe("execution-targets actions", () => {
           provider: "GENERIC_WEBHOOK",
           defaultRef: "main",
           isEnabled: true,
+          paramSchema: [
+            {
+              name: "BROWSER",
+              label: "Browser",
+              type: "select",
+              values: ["chrome", "edge"],
+              default: "chrome",
+            },
+            { name: "broken", type: "select" },
+          ],
         },
       ]);
 
@@ -433,6 +579,7 @@ describe("execution-targets actions", () => {
             provider: true,
             defaultRef: true,
             isEnabled: true,
+            paramSchema: true,
           },
         })
       );
@@ -445,7 +592,19 @@ describe("execution-targets actions", () => {
         "id",
         "isEnabled",
         "name",
+        "paramSchema",
         "provider",
+      ]);
+      // The dispatcher sees the declared parameters (choices and defaults
+      // only); a malformed stored entry is dropped rather than failing the list.
+      expect(result.targets[0].paramSchema).toEqual([
+        {
+          name: "BROWSER",
+          label: "Browser",
+          type: "select",
+          values: ["chrome", "edge"],
+          default: "chrome",
+        },
       ]);
       // This list is open to run editors, so the manager gate is not consulted.
       expect(mockedCanManage).not.toHaveBeenCalled();

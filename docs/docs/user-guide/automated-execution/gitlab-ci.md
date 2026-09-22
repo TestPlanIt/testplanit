@@ -83,13 +83,13 @@ Do not call `run complete` unless the run holds nothing but automated cases; com
 
 1. Open the project's **Settings → Automated Execution** and click **Add target**.
 2. Choose **GitLab CI**, pick the repository, and set the **Branch** the pipeline should run on (the repository's default branch if left empty).
-3. Optionally add **Pipeline variables**, static values sent with every dispatch. They are visible to anyone who can read the pipeline.
+3. Optionally add **Pipeline variables**, static values sent with every dispatch, or **Parameters**, values the person executing a run chooses in the dialog. Both arrive as pipeline variables and are visible to anyone who can read the pipeline.
 4. Under **Credentials**, either rely on the repository's access token, or choose **Use a different credential for dispatch** and enter an access token, a pipeline trigger token, or both.
 5. Save, then click **Verify**. It confirms the credential and the project, and warns when only a trigger token is present, since pipeline status cannot be read then.
 
 ## 6. Execute a run
 
-1. Open a test run with automated cases and click **Execute automated cases**; pick the target and confirm the branch.
+1. Open a test run with automated cases and click **Execute automated cases**; pick the target, confirm the branch, and choose values for any parameters the target declares.
 2. The execution chip shows **Dispatched** with a link to the pipeline, **Running** while it runs, and **Job succeeded** or **Job failed** when GitLab reports the pipeline finished (or when the job calls `run finish`, for trigger tokens). A pipeline that fails because tests failed shows as *Job failed*; the per-case results in the run are the detail.
 
 ## Notes

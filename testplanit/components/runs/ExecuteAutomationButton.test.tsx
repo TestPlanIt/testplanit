@@ -52,7 +52,11 @@ type DialogProps = {
   caseCount: number;
   subset?: boolean;
   skippedCount?: number;
-  submit: (req: { targetId: number; ref?: string }) => Promise<string | null>;
+  submit: (req: {
+    targetId: number;
+    ref?: string;
+    inputs?: Record<string, string>;
+  }) => Promise<string | null>;
 };
 
 function lastDialogProps(): DialogProps {
@@ -134,6 +138,24 @@ describe("ExecuteAutomationButton", () => {
     await lastDialogProps().submit({ targetId: 1, ref: "main" });
     const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
     expect(body).toEqual({ targetId: 1, ref: "main", caseIds: [101, 103] });
+  });
+
+  it("sends the dialog's parameter choices as per-execution inputs", async () => {
+    renderButton();
+    await screen.findByTestId("execute-automation-button");
+    await waitFor(() => expect(lastDialogProps().caseCount).toBe(3));
+
+    const result = await lastDialogProps().submit({
+      targetId: 1,
+      inputs: { BROWSER: "edge", TAGS: "smoke,regression" },
+    });
+
+    expect(result).toBeNull();
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
+    expect(body).toEqual({
+      targetId: 1,
+      inputs: { BROWSER: "edge", TAGS: "smoke,regression" },
+    });
   });
 
   it("is disabled when none of the selected rows are automated", async () => {

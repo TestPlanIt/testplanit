@@ -17,6 +17,7 @@ import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { listExecutionTargetChoices } from "~/app/actions/execution-targets";
 import type { TestRunExecutionRow } from "~/hooks/useTestRunExecutions";
+import { normalizeInputs } from "~/lib/execution/inputs";
 import {
   ExecuteAutomationDialog,
   readExecuteError,
@@ -135,6 +136,10 @@ export function ExecuteAutomationButton({
     return hasSelection ? selectedAutomatedCaseIds : null;
   }, [retryOf, automatedCaseIds, hasSelection, selectedAutomatedCaseIds]);
   const caseCount = subset ? subset.length : automatedCaseIds.length;
+  const retryInputs = useMemo(
+    () => (retryOf ? normalizeInputs(retryOf.inputs) : null),
+    [retryOf]
+  );
   const skippedCount =
     hasSelection && !retryOf
       ? selectedCaseCount - selectedAutomatedCaseIds.length
@@ -203,13 +208,15 @@ export function ExecuteAutomationButton({
         runId={runId}
         initialTargetId={retryOf?.target?.id ?? null}
         initialRef={retryOf?.ref ?? null}
-        submit={async ({ targetId, ref }) => {
+        initialInputs={retryInputs}
+        submit={async ({ targetId, ref, inputs }) => {
           const res = await fetch(`/api/test-runs/${runId}/execute`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               targetId,
               ...(ref ? { ref } : {}),
+              ...(inputs ? { inputs } : {}),
               ...(subset ? { caseIds: subset } : {}),
             }),
           });

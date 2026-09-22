@@ -118,7 +118,7 @@ Commit the workflow to the branch TestPlanIt will dispatch on. GitHub only accep
 1. Open the project's **Settings → Automated Execution** and click **Add target**.
 2. Choose **GitHub Actions**, pick the repository from step 2, and choose the workflow file. If the list cannot be loaded, type the file name (`automated-tests.yml`).
 3. Leave **Branch** empty to dispatch on the repository's default branch, or name the branch that carries the workflow. The dialog on the run page lets a user pick a different ref for one execution.
-4. Optionally add **Workflow inputs**, static values sent with every dispatch (an environment name, for example). Each one must also be declared under `workflow_dispatch.inputs`, and none of them may be secret.
+4. Optionally add **Workflow inputs**, static values sent with every dispatch (an environment name, for example), or **Parameters**, values the person executing a run chooses in the dialog (a browser, for example). Each one must also be declared under `workflow_dispatch.inputs`, and none of them may be secret.
 5. If the repository's stored token cannot start workflows, open **Credentials**, choose **Use a different credential for dispatch**, and paste a token that can.
 6. Set the **Timeout** if two hours is wrong for your suite, then save.
 7. Click **Verify**. A successful check reports **Target verified** and lists the declared inputs. Fix anything it flags before continuing:
@@ -133,7 +133,7 @@ Commit the workflow to the branch TestPlanIt will dispatch on. GitHub only accep
 ## 6. Execute a run
 
 1. Open a test run that holds automated cases (the case list shows a robot icon on each). Runs may mix manual and automated cases.
-2. Click **Execute automated cases**, pick the target, and confirm the branch. The dialog states how many automated cases will be requested.
+2. Click **Execute automated cases**, pick the target, and confirm the branch. If the target declares parameters, choose their values. The dialog states how many automated cases will be requested.
 3. Watch the execution chip in the run header:
    - **Dispatched** within a few seconds. The link opens the workflow page; once TestPlanIt has matched the workflow run, it opens that run directly.
    - **Running** when GitHub reports the job running, or as soon as the first results arrive.

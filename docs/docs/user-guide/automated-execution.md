@@ -30,7 +30,7 @@ Then, for every CI, [Reporting results back](automated-execution/reporting-resul
 ## How it works
 
 1. A project administrator adds one or more execution targets under **Project Settings → Automated Execution** ([settings reference](projects/settings/automation.md)) and uses **Verify** on each.
-2. On a test run, **Execute automated cases** (in the case list header, next to **Start manual testing**) asks TestPlanIt to run the run's automated cases on a target; with rows selected in the case list it runs only the automated cases among them. A single automated case can also be executed from its case page or from the repository list's row menu (**Execute automated test**), which creates a run holding just that case; that run completes itself once the job finishes and its results are in.
+2. On a test run, **Execute automated cases** (in the case list header, next to **Start manual testing**) asks TestPlanIt to run the run's automated cases on a target; with rows selected in the case list it runs only the automated cases among them. If the target declares [parameters](projects/settings/automation.md) (a browser, an environment), the dialog asks for them and sends the choices to the job. A single automated case can also be executed from its case page or from the repository list's row menu (**Execute automated test**), which creates a run holding just that case; that run completes itself once the job finishes and its results are in.
 3. TestPlanIt records an **execution** for the run, promotes a manual run to a [hybrid run](projects/run-details.md#hybrid-test-runs), and starts the job with these parameters:
 
    | Parameter | Value |

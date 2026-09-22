@@ -45,6 +45,7 @@ export async function GET(
       error: true,
       selectionCount: true,
       requestedCaseIds: true,
+      inputs: true,
       dispatchedAt: true,
       resultsReceivedAt: true,
       completedAt: true,

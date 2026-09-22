@@ -28,6 +28,8 @@ export interface TestRunExecutionRow {
   error: string | null;
   selectionCount: number;
   requestedCaseIds: unknown;
+  /** The per-execution inputs as sent (a retry seeds the dialog from them). */
+  inputs?: unknown;
   dispatchedAt: string | null;
   resultsReceivedAt: string | null;
   completedAt: string | null;

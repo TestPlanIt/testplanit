@@ -40,6 +40,12 @@ import {
   StaticInputsEditor,
   type StaticInputRow,
 } from "@/components/automation/StaticInputsEditor";
+import {
+  ExecutionParamsEditor,
+  paramsToRows,
+  rowsToParams,
+  type ExecutionParamRow,
+} from "@/components/automation/ExecutionParamsEditor";
 
 type Provider = ExecutionTargetView["provider"];
 
@@ -88,6 +94,7 @@ export function AutomationTargetDialog({
   const [ref, setRef] = useState<string>(DEFAULT_BRANCH);
   const [url, setUrl] = useState("");
   const [rows, setRows] = useState<StaticInputRow[]>([]);
+  const [paramRows, setParamRows] = useState<ExecutionParamRow[]>([]);
   const [timeoutMinutes, setTimeoutMinutes] = useState(120);
   const [overrideCredentials, setOverrideCredentials] = useState(false);
   const [clearCredentials, setClearCredentials] = useState(false);
@@ -126,6 +133,7 @@ export function AutomationTargetDialog({
       setRef(target.defaultRef ?? DEFAULT_BRANCH);
       setUrl(target.url ?? "");
       setRows(inputsToRows(target.staticInputs));
+      setParamRows(paramsToRows(target.paramSchema));
       setTimeoutMinutes(target.timeoutMinutes);
     } else {
       setName("");
@@ -135,6 +143,7 @@ export function AutomationTargetDialog({
       setRef(DEFAULT_BRANCH);
       setUrl("");
       setRows([]);
+      setParamRows([]);
       setTimeoutMinutes(120);
     }
   }, [open, target]);
@@ -230,6 +239,7 @@ export function AutomationTargetDialog({
         defaultRef: ref === DEFAULT_BRANCH ? null : ref.trim() || null,
         url: isGeneric ? url.trim() || null : null,
         staticInputs: rowsToInputs(rows),
+        paramSchema: rowsToParams(paramRows),
         timeoutMinutes,
         credentials,
         rotateSecret: isGeneric && rotateSecret,
@@ -572,6 +582,14 @@ export function AutomationTargetDialog({
             <StaticInputsEditor rows={rows} onChange={setRows} />
             <p className="text-xs text-muted-foreground">
               {t("staticInputsHelp")}
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>{tGlobal("parameters.tabParameters")}</Label>
+            <ExecutionParamsEditor rows={paramRows} onChange={setParamRows} />
+            <p className="text-xs text-muted-foreground">
+              {t("parametersHelp")}
             </p>
           </div>
 

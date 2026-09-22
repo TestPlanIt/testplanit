@@ -35,7 +35,7 @@ User-Agent: TestPlanIt-Execution/1.0
 ```
 
 - `ref` is the branch or ref chosen for this execution, or `null` for the target's default.
-- `inputs` holds the reserved `TESTPLANIT_*` values and every static variable configured on the target, all as strings.
+- `inputs` holds the reserved `TESTPLANIT_*` values, every static variable configured on the target, and the values chosen for the target's parameters in the Execute dialog, all as strings (a multiple-choice parameter arrives comma-separated).
 - The request follows no redirects and waits at most 10 seconds for a response.
 
 ## The response
@@ -104,7 +104,7 @@ A minimal relay for Buildkite, for example, verifies the signature and calls Bui
 ## Adding the target
 
 1. Open the project's **Settings → Automated Execution** and click **Add target**.
-2. Choose **Generic webhook**, enter the **Webhook URL** (`https://` recommended), and optionally **Variables**, static values sent under `inputs` with every dispatch.
+2. Choose **Generic webhook**, enter the **Webhook URL** (`https://` recommended), and optionally **Variables**, static values sent under `inputs` with every dispatch, or **Parameters**, values the dispatcher picks in the Execute dialog and which arrive under `inputs` the same way.
 3. Save and **copy the signing secret** from the dialog; it is shown once. Store it in the receiver's secret store.
 4. Click **Verify**. For a generic target it validates the URL and reminds you that only a real dispatch proves the receiver works. The **Payload** preview on the target shows exactly what will be sent.
 

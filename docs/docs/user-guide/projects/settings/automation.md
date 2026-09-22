@@ -29,6 +29,12 @@ Every provider takes:
 
 - **Name** — how the target appears on the run page.
 - **Workflow inputs** (GitHub), **Pipeline variables** (GitLab) or **Variables** (generic webhook) — static values sent with every dispatch in addition to the `TESTPLANIT_*` parameters. They are not secret. On GitHub each one must also be declared under `workflow_dispatch.inputs`.
+- **Parameters** — values the person executing a run chooses in the **Execute automated cases** dialog, so one target and one CI job can serve several browsers, environments or devices. Each parameter has an **Input name** (the key the job receives, same rules as a static input), a **Label** shown in the dialog, and a **Type**:
+  - **Single choice** — a list of values and a default; the dialog shows a drop-down.
+  - **Multiple choice** — a list of values and a default selection; the chosen values are sent as one comma-separated string (`chrome,edge`), so a value cannot itself contain a comma.
+  - **Text** — free text with an optional default.
+
+  Every parameter is sent on every dispatch, with its default when the dispatcher leaves it alone. An input name cannot start with `TESTPLANIT_`, cannot repeat within the target, and cannot match one of the target's static inputs. Static inputs and parameters together are limited to 20. On GitHub each parameter must also be declared under `workflow_dispatch.inputs`.
 - **Timeout** — minutes after which an unfinished execution is marked timed out (default 120).
 - **Credentials** — GitHub and GitLab targets use the repository's stored credential unless a different token is entered for dispatch. Starting a job needs the `workflow` scope on GitHub or the `api` scope (or a pipeline trigger token) on GitLab, which a repository registered for reading files may not have.
 

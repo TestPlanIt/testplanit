@@ -57,7 +57,7 @@ export function RunAutomatedCaseDialog({
       runId={null}
       title={t("title")}
       description={t("description")}
-      submit={async ({ targetId, ref }) => {
+      submit={async ({ targetId, ref, inputs }) => {
         const res = await fetch(`/api/projects/${projectId}/execute-cases`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -65,6 +65,7 @@ export function RunAutomatedCaseDialog({
             caseIds: [caseId],
             targetId,
             ...(ref ? { ref } : {}),
+            ...(inputs ? { inputs } : {}),
             runName: t("runName", { title: caseTitle }).slice(0, 255),
           }),
         });

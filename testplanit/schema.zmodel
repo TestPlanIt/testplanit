@@ -4013,6 +4013,7 @@ model ExecutionTarget {
     defaultRef       String?            // null = repository default branch
     url              String?            // GENERIC_WEBHOOK only
     staticInputs     Json               @default("{}")
+    paramSchema      Json               @default("[]") // ExecutionParam[]: values the dispatcher picks at execute time
     credentials      Json?              // optional override, {encrypted}; null = reuse codeRepository.credentials
     timeoutMinutes   Int                @default(120)
     isEnabled        Boolean            @default(true)

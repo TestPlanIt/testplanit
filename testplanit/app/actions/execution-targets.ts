@@ -12,14 +12,27 @@ import { canManageExecutionTargets } from "~/lib/execution/auth";
 import { assertOutboundUrlAllowed } from "~/lib/execution/http";
 import {
   describeInputError,
+  MAX_INPUT_VALUE_LENGTH,
   normalizeInputs,
   validateCustomInputs,
 } from "~/lib/execution/inputs";
 import {
+  describeParamError,
+  MAX_PARAM_LABEL_LENGTH,
+  MAX_PARAM_VALUES,
+  normalizeParamSchema,
+  PARAM_ERROR_CODES,
+  validateParamSchema,
+} from "~/lib/execution/params";
+import {
   resolveTargetCredentials,
   sanitizeExecutionError,
 } from "~/lib/execution/service";
-import type { DispatchCapability, WorkflowChoice } from "~/lib/execution/types";
+import type {
+  DispatchCapability,
+  ExecutionParam,
+  WorkflowChoice,
+} from "~/lib/execution/types";
 import { createGitRepoAdapter } from "~/lib/integrations/adapters/GitRepoAdapter";
 import { resolveStoredCredentials } from "~/lib/integrations/credentials";
 import { captureAuditEvent } from "~/lib/services/auditLog";
@@ -48,6 +61,37 @@ const credentialsSchema = z
   })
   .strict();
 
+const paramValueSchema = z.string().max(MAX_INPUT_VALUE_LENGTH);
+const paramBaseShape = {
+  name: z.string().trim().min(1).max(100),
+  label: z.string().trim().min(1).max(MAX_PARAM_LABEL_LENGTH),
+};
+const executionParamSchema = z.discriminatedUnion("type", [
+  z
+    .object({
+      ...paramBaseShape,
+      type: z.literal("select"),
+      values: z.array(paramValueSchema).max(MAX_PARAM_VALUES),
+      default: paramValueSchema,
+    })
+    .strict(),
+  z
+    .object({
+      ...paramBaseShape,
+      type: z.literal("multiselect"),
+      values: z.array(paramValueSchema).max(MAX_PARAM_VALUES),
+      default: z.array(paramValueSchema).max(MAX_PARAM_VALUES),
+    })
+    .strict(),
+  z
+    .object({
+      ...paramBaseShape,
+      type: z.literal("text"),
+      default: paramValueSchema.optional(),
+    })
+    .strict(),
+]);
+
 const targetInputSchema = z.object({
   name: z.string().trim().min(1).max(100),
   provider: providerSchema,
@@ -56,6 +100,8 @@ const targetInputSchema = z.object({
   defaultRef: z.string().trim().max(255).nullable().optional(),
   url: z.string().trim().max(2000).nullable().optional(),
   staticInputs: z.record(z.string(), z.string()).optional(),
+  /** Values the dispatcher chooses at execute time; see lib/execution/params.ts. */
+  paramSchema: z.array(executionParamSchema).optional(),
   timeoutMinutes: z
     .number()
     .int()
@@ -81,6 +127,7 @@ export interface ExecutionTargetView {
   defaultRef: string | null;
   url: string | null;
   staticInputs: Record<string, string>;
+  paramSchema: ExecutionParam[];
   timeoutMinutes: number;
   isEnabled: boolean;
   hasOwnCredentials: boolean;
@@ -103,6 +150,7 @@ const targetSelect = {
   defaultRef: true,
   url: true,
   staticInputs: true,
+  paramSchema: true,
   timeoutMinutes: true,
   isEnabled: true,
   credentials: true,
@@ -122,6 +170,7 @@ function toView(row: {
   defaultRef: string | null;
   url: string | null;
   staticInputs: unknown;
+  paramSchema: unknown;
   timeoutMinutes: number;
   isEnabled: boolean;
   credentials: unknown;
@@ -141,6 +190,7 @@ function toView(row: {
     defaultRef: row.defaultRef,
     url: row.url,
     staticInputs: normalizeInputs(row.staticInputs),
+    paramSchema: normalizeParamSchema(row.paramSchema),
     timeoutMinutes: row.timeoutMinutes,
     isEnabled: row.isEnabled,
     hasOwnCredentials: row.credentials != null,
@@ -173,6 +223,16 @@ async function validateShape(
     return {
       errorCode: "automation.settings.errors.invalidInputs",
       error: describeInputError(inputErr),
+    };
+  }
+  const paramErr = validateParamSchema(
+    input.paramSchema ?? [],
+    normalizeInputs(input.staticInputs)
+  );
+  if (paramErr) {
+    return {
+      errorCode: `automation.settings.errors.${PARAM_ERROR_CODES[paramErr.code]}`,
+      error: describeParamError(paramErr),
     };
   }
   if (input.provider === "GENERIC_WEBHOOK") {
@@ -257,12 +317,16 @@ export interface ExecutionTargetChoice {
   provider: z.infer<typeof providerSchema>;
   defaultRef: string | null;
   isEnabled: boolean;
+  /** Parameters the dispatcher fills in; option lists and defaults only. */
+  paramSchema: ExecutionParam[];
 }
 
 /**
  * The sanitized list the run page and the case dialog need: anyone who may
  * trigger automated executions in the project may see which targets exist.
- * No credentials, URLs or inputs leave the server.
+ * No credentials, URLs or static inputs leave the server; the parameter
+ * declarations do, because the dispatcher has to see the choices to make
+ * them.
  */
 export async function listExecutionTargetChoices(
   projectId: number
@@ -285,6 +349,7 @@ export async function listExecutionTargetChoices(
       provider: true,
       defaultRef: true,
       isEnabled: true,
+      paramSchema: true,
     },
   });
   return {
@@ -292,6 +357,7 @@ export async function listExecutionTargetChoices(
     targets: rows.map((r) => ({
       ...r,
       provider: r.provider as ExecutionTargetChoice["provider"],
+      paramSchema: normalizeParamSchema(r.paramSchema),
     })),
   };
 }
@@ -381,6 +447,7 @@ export async function createExecutionTarget(
           url:
             input.provider === "GENERIC_WEBHOOK" ? (input.url ?? null) : null,
           staticInputs: normalizeInputs(input.staticInputs),
+          paramSchema: input.paramSchema ?? [],
           timeoutMinutes: input.timeoutMinutes ?? 120,
           isEnabled: input.isEnabled ?? true,
           ...(credentials ? { credentials } : {}),
@@ -449,6 +516,10 @@ export async function updateExecutionTarget(
       parsed.data.staticInputs !== undefined
         ? parsed.data.staticInputs
         : normalizeInputs(existing.staticInputs),
+    paramSchema:
+      parsed.data.paramSchema !== undefined
+        ? parsed.data.paramSchema
+        : normalizeParamSchema(existing.paramSchema),
     timeoutMinutes: parsed.data.timeoutMinutes ?? existing.timeoutMinutes,
     isEnabled: parsed.data.isEnabled ?? existing.isEnabled,
     credentials: parsed.data.credentials,
@@ -517,6 +588,7 @@ export async function updateExecutionTarget(
           url:
             merged.provider === "GENERIC_WEBHOOK" ? (merged.url ?? null) : null,
           staticInputs: normalizeInputs(merged.staticInputs),
+          paramSchema: merged.paramSchema ?? [],
           timeoutMinutes: merged.timeoutMinutes ?? 120,
           isEnabled: merged.isEnabled ?? true,
           // A configuration change invalidates the last verification.

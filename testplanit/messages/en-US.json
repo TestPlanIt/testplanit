@@ -7220,6 +7220,18 @@
       "staticInputsHelp": "Sent with every dispatch, in addition to the TESTPLANIT_* values. Not secret: anyone who can read the repository can see them.",
       "addInput": "Add input",
       "removeInput": "Remove input",
+      "parametersHelp": "Values the person executing a run chooses in the Execute dialog. Each one is sent as an input named after the parameter; a multi-select joins its choices with commas.",
+      "parameterNamePlaceholder": "e.g. BROWSER",
+      "parameterLabelPlaceholder": "e.g. Browser",
+      "parameterTypes": {
+        "select": "Single choice",
+        "multiselect": "Multiple choice",
+        "text": "Text"
+      },
+      "parameterValues": "Values",
+      "parameterValuesPlaceholder": "Type a value and press Enter",
+      "parameterDefaultNone": "No default",
+      "parameterDefaultPlaceholder": "Optional default value",
       "credentials": "Credentials",
       "credentialsHelp": "Leave blank to use the repository's stored credential.",
       "credentialsOverride": "Use a different credential for dispatch",
@@ -7265,7 +7277,19 @@
         "repositoryNotFound": "The code repository no longer exists.",
         "repositoryProviderMismatch": "The repository provider does not match the target provider.",
         "workflowRequired": "Choose a workflow file.",
-        "nameTaken": "A target with this name already exists."
+        "nameTaken": "A target with this name already exists.",
+        "paramNameInvalid": "A parameter's input name must start with a letter or underscore and contain only letters, digits and underscores.",
+        "paramNameDuplicate": "Two parameters have the same input name.",
+        "paramNameReserved": "A parameter's input name cannot start with TESTPLANIT_.",
+        "paramCollidesWithInput": "A parameter has the same input name as a static input. Remove one of them.",
+        "paramLabelRequired": "Every parameter needs a label.",
+        "paramValuesRequired": "A choice parameter needs at least one value.",
+        "paramValuesDuplicate": "A parameter lists the same value twice.",
+        "paramValuesTooMany": "A parameter has too many values.",
+        "paramValueTooLong": "A parameter value is too long.",
+        "paramValueHasSeparator": "Values of a multiple-choice parameter cannot contain commas.",
+        "paramDefaultNotInValues": "A parameter's default is not one of its values.",
+        "tooManyInputs": "Too many inputs: static inputs and parameters together are limited to 20."
       }
     },
     "execute": {

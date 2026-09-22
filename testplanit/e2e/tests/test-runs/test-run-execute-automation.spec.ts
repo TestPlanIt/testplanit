@@ -14,7 +14,8 @@ import {
  *  - submitting records an execution and the chip shows it;
  *  - the plan endpoint lists only the automated case;
  *  - the run became HYBRID;
- *  - the stub receives the signed dispatch (once the worker has run it);
+ *  - the stub receives the signed dispatch (once the worker has run it),
+ *    carrying the Browser parameter chosen in the dialog;
  *  - the history sheet lists the execution.
  *
  * The dispatch itself is done by the execution-dispatch worker, which
@@ -84,6 +85,22 @@ test.describe("Execute automated cases from a run", () => {
       await page
         .getByTestId("automation-target-webhook-url-input")
         .fill(`${stub.url}/hooks/testplanit`);
+      // A single-choice parameter the dispatcher picks in the execute dialog.
+      await page.getByTestId("automation-target-param-add").click();
+      await page.getByTestId("automation-target-param-0-name").fill("BROWSER");
+      await page.getByTestId("automation-target-param-0-label").fill("Browser");
+      const values = page.getByTestId("automation-target-param-0-values-input");
+      for (const value of ["chrome", "edge", "firefox"]) {
+        await values.fill(value);
+        await values.press("Enter");
+      }
+      await expect(
+        page.getByTestId("automation-target-param-0-value")
+      ).toHaveCount(3);
+      // The first value became the default.
+      await expect(
+        page.getByTestId("automation-target-param-0-default")
+      ).toContainText("chrome");
       await page.getByTestId("automation-target-submit").click();
       await expect(
         page.getByTestId("automation-target-revealed-secret-box")
@@ -116,6 +133,12 @@ test.describe("Execute automated cases from a run", () => {
       await expect(
         page.getByTestId("execute-automation-summary")
       ).toContainText("1 automated case");
+      // The target's parameter is offered, pre-filled with its default.
+      const browser = page.getByTestId("execute-automation-param-BROWSER");
+      await expect(browser).toContainText("chrome");
+      await browser.click();
+      await page.getByRole("option", { name: "edge" }).click();
+      await expect(browser).toContainText("edge");
       await page.getByTestId("execute-automation-submit").click();
       await expect(dialog).toBeHidden({ timeout: 15000 });
     });
@@ -157,6 +180,7 @@ test.describe("Execute automated cases from a run", () => {
       };
       expect(body.runId).toBe(runId);
       expect(body.inputs.TESTPLANIT_RUN_ID).toBe(String(runId));
+      expect(body.inputs.BROWSER).toBe("edge");
       expect(body.planUrl).toContain(`/api/test-runs/${runId}/automation-plan`);
       await expect(page.getByTestId("automation-execution-status")).toHaveText(
         /Dispatched|Running/,

@@ -59,7 +59,9 @@ pipeline {
         [key: 'TESTPLANIT_PLAN_URL',     value: '$.planUrl'],
         [key: 'TESTPLANIT_REF',          value: '$.ref'],
         // Static inputs configured on the target arrive under "inputs".
-        [key: 'TEST_ENV',                value: '$.inputs.ENV', defaultValue: 'staging']
+        [key: 'TEST_ENV',                value: '$.inputs.ENV', defaultValue: 'staging'],
+        // So do parameters the dispatcher picks in the Execute dialog.
+        [key: 'BROWSER',                 value: '$.inputs.BROWSER', defaultValue: 'chrome']
       ],
       token: 'testplanit',
       causeString: 'TestPlanIt execution $TESTPLANIT_EXECUTION_ID for run $TESTPLANIT_RUN_ID',
@@ -124,14 +126,15 @@ The stages read the plan with the CLI, run the planned tests, and report the out
 
    The `token` query parameter must match the token in the trigger.
 3. Optionally add **Variables**, static values sent under `inputs` with every dispatch (`ENV=staging` in the example above).
-4. Save. The dialog shows the signing secret once; Jenkins does not use it, so you can close the dialog.
-5. Click **Verify**. For a generic target it checks the URL only and reminds you that only a real dispatch proves the receiver works.
+4. Optionally add **Parameters** for the values a person should choose per execution. The example above expects one named `BROWSER` of type **Single choice** with the values `chrome`, `edge`, `firefox` and `safari` and the default `chrome`; the Execute dialog then shows a **Browser** drop-down and the job reads the choice from `$.inputs.BROWSER`.
+5. Save. The dialog shows the signing secret once; Jenkins does not use it, so you can close the dialog.
+6. Click **Verify**. For a generic target it checks the URL only and reminds you that only a real dispatch proves the receiver works.
 
 If Jenkins is on a private network address, the TestPlanIt operator must list its host in `ALLOWED_PRIVATE_HOSTS`; otherwise the dispatch is refused with *Could not start* and a message naming the blocked host. See [Private addresses](generic-webhook.md#private-addresses).
 
 ## 5. Execute a run
 
-1. Open a test run with automated cases and click **Execute automated cases**; pick the Jenkins target.
+1. Open a test run with automated cases and click **Execute automated cases**; pick the Jenkins target and, if it declares parameters, choose their values.
 2. The execution chip shows **Dispatched** with a link to the Jenkins job page, **Running** as soon as the first results arrive, then **Job succeeded** or **Job failed** when the pipeline's `post` step calls `run finish`.
 3. If the pipeline never calls `run finish` (it crashed before the `post` section, or the trigger was not yet registered), the execution stays *Dispatched* or *Running* until the target's timeout, and can be cancelled from the chip at any time.
 

@@ -46,6 +46,33 @@ export const RESERVED_INPUT_KEYS = {
 
 export const RESERVED_INPUT_PREFIX = "TESTPLANIT_";
 
+export const EXECUTION_PARAM_TYPES = ["select", "multiselect", "text"] as const;
+export type ExecutionParamType = (typeof EXECUTION_PARAM_TYPES)[number];
+
+/**
+ * A value the dispatcher chooses at execute time. Declared on the target
+ * (`ExecutionTarget.paramSchema`), rendered by the execute dialog, and sent
+ * as one per-execution input under `name`. Every kind serializes to a string
+ * because CI providers only accept strings: a multiselect joins its choices
+ * with commas.
+ */
+export type ExecutionParam =
+  | {
+      name: string;
+      label: string;
+      type: "select";
+      values: string[];
+      default: string;
+    }
+  | {
+      name: string;
+      label: string;
+      type: "multiselect";
+      values: string[];
+      default: string[];
+    }
+  | { name: string; label: string; type: "text"; default?: string };
+
 export interface DispatchRequest {
   runId: number;
   executionId: number;
