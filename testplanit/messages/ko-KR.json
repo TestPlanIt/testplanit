@@ -7220,6 +7220,18 @@
       "staticInputsHelp": "TESTPLANIT_* 값에 추가하여 모든 디스패치마다 전송됩니다. 비밀이 아니므로 저장소를 읽을 수 있는 모든 사람이 확인할 수 있습니다.",
       "addInput": "입력 추가",
       "removeInput": "입력 삭제",
+      "parametersHelp": "실행을 수행하는 사용자가 실행 대화 상자에서 선택하는 값입니다. 각 값은 매개변수 이름을 딴 입력으로 전송되며, 다중 선택의 경우 선택 항목이 쉼표로 연결됩니다.",
+      "parameterNamePlaceholder": "예: BROWSER",
+      "parameterLabelPlaceholder": "예: Browser",
+      "parameterTypes": {
+        "select": "단일 선택",
+        "multiselect": "다중 선택",
+        "text": "텍스트"
+      },
+      "parameterValues": "값",
+      "parameterValuesPlaceholder": "값을 입력하고 Enter 키를 누르세요",
+      "parameterDefaultNone": "기본값 없음",
+      "parameterDefaultPlaceholder": "선택적 기본값",
       "credentials": "자격 증명",
       "credentialsHelp": "저장소에 저장된 자격 증명을 사용하려면 비워 두세요.",
       "credentialsOverride": "디스패치에 다른 자격 증명 사용",
@@ -7265,7 +7277,19 @@
         "repositoryNotFound": "코드 저장소가 더 이상 존재하지 않습니다.",
         "repositoryProviderMismatch": "저장소 공급자가 대상 공급자와 일치하지 않습니다.",
         "workflowRequired": "워크플로 파일을 선택하세요.",
-        "nameTaken": "이 이름의 대상이 이미 존재합니다."
+        "nameTaken": "이 이름의 대상이 이미 존재합니다.",
+        "paramNameInvalid": "매개변수의 입력 이름은 문자 또는 밑줄로 시작해야 하며, 문자, 숫자, 밑줄만 포함할 수 있습니다.",
+        "paramNameDuplicate": "두 매개변수의 입력 이름이 동일합니다.",
+        "paramNameReserved": "매개변수의 입력 이름은 TESTPLANIT_로 시작할 수 없습니다.",
+        "paramCollidesWithInput": "매개변수가 정적 입력과 동일한 입력 이름을 가지고 있습니다. 둘 중 하나를 제거하세요.",
+        "paramLabelRequired": "모든 매개변수에는 레이블이 필요합니다.",
+        "paramValuesRequired": "선택 매개변수에는 값이 하나 이상 필요합니다.",
+        "paramValuesDuplicate": "매개변수에 동일한 값이 두 번 나열되어 있습니다.",
+        "paramValuesTooMany": "매개변수의 값이 너무 많습니다.",
+        "paramValueTooLong": "매개변수 값이 너무 깁니다.",
+        "paramValueHasSeparator": "다중 선택 매개변수의 값에는 쉼표를 포함할 수 없습니다.",
+        "paramDefaultNotInValues": "매개변수의 기본값이 값 목록에 없습니다.",
+        "tooManyInputs": "입력이 너무 많습니다: 정적 입력과 매개변수를 합쳐 최대 20개까지 가능합니다."
       }
     },
     "execute": {

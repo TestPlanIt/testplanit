@@ -7220,6 +7220,18 @@
       "staticInputsHelp": "Wird bei jedem Dispatch zusätzlich zu den TESTPLANIT_*-Werten gesendet. Nicht geheim: Jeder, der das Repository lesen kann, kann sie sehen.",
       "addInput": "Eingabe hinzufügen",
       "removeInput": "Eingabe entfernen",
+      "parametersHelp": "Werte, die die Person, die einen Testlauf ausführt, im Dialog „Ausführen“ auswählt. Jeder Wert wird als Eingabe mit dem Namen des Parameters gesendet; bei einer Mehrfachauswahl werden die gewählten Werte durch Kommas getrennt zusammengefügt.",
+      "parameterNamePlaceholder": "z. B. BROWSER",
+      "parameterLabelPlaceholder": "z. B. Browser",
+      "parameterTypes": {
+        "select": "Einzelauswahl",
+        "multiselect": "Mehrfachauswahl",
+        "text": "Text"
+      },
+      "parameterValues": "Werte",
+      "parameterValuesPlaceholder": "Wert eingeben und Enter drücken",
+      "parameterDefaultNone": "Kein Standardwert",
+      "parameterDefaultPlaceholder": "Optionaler Standardwert",
       "credentials": "Anmeldedaten",
       "credentialsHelp": "Leer lassen, um die gespeicherten Anmeldedaten des Repositorys zu verwenden.",
       "credentialsOverride": "Andere Anmeldedaten für den Dispatch verwenden",
@@ -7265,7 +7277,19 @@
         "repositoryNotFound": "Das Code-Repository existiert nicht mehr.",
         "repositoryProviderMismatch": "Der Repository-Anbieter stimmt nicht mit dem Ziel-Anbieter überein.",
         "workflowRequired": "Wählen Sie eine Workflow-Datei aus.",
-        "nameTaken": "Ein Ziel mit diesem Namen existiert bereits."
+        "nameTaken": "Ein Ziel mit diesem Namen existiert bereits.",
+        "paramNameInvalid": "Der Eingabename eines Parameters muss mit einem Buchstaben oder Unterstrich beginnen und darf nur Buchstaben, Ziffern und Unterstriche enthalten.",
+        "paramNameDuplicate": "Zwei Parameter haben denselben Eingabenamen.",
+        "paramNameReserved": "Der Eingabename eines Parameters darf nicht mit TESTPLANIT_ beginnen.",
+        "paramCollidesWithInput": "Ein Parameter hat denselben Eingabenamen wie eine statische Eingabe. Entfernen Sie einen davon.",
+        "paramLabelRequired": "Jeder Parameter benötigt eine Beschriftung.",
+        "paramValuesRequired": "Ein Auswahlparameter benötigt mindestens einen Wert.",
+        "paramValuesDuplicate": "Ein Parameter listet denselben Wert doppelt auf.",
+        "paramValuesTooMany": "Ein Parameter hat zu viele Werte.",
+        "paramValueTooLong": "Ein Parameterwert ist zu lang.",
+        "paramValueHasSeparator": "Werte eines Mehrfachauswahl-Parameters dürfen keine Kommas enthalten.",
+        "paramDefaultNotInValues": "Der Standardwert eines Parameters ist keiner seiner Werte.",
+        "tooManyInputs": "Zu viele Eingaben: Statische Eingaben und Parameter sind zusammen auf 20 begrenzt."
       }
     },
     "execute": {

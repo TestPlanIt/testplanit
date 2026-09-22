@@ -7220,6 +7220,18 @@
       "staticInputsHelp": "Inviati a ogni dispatch, in aggiunta ai valori TESTPLANIT_*. Non sono segreti: chiunque possa leggere il repository può vederli.",
       "addInput": "Aggiungi input",
       "removeInput": "Rimuovi input",
+      "parametersHelp": "Valori scelti dalla persona che esegue un'esecuzione nella finestra di dialogo Esegui. Ciascuno viene inviato come input con il nome del parametro; una selezione multipla unisce le scelte con virgole.",
+      "parameterNamePlaceholder": "es. BROWSER",
+      "parameterLabelPlaceholder": "es. Browser",
+      "parameterTypes": {
+        "select": "Scelta singola",
+        "multiselect": "Scelta multipla",
+        "text": "Testo"
+      },
+      "parameterValues": "Valori",
+      "parameterValuesPlaceholder": "Digita un valore e premi Invio",
+      "parameterDefaultNone": "Nessun valore predefinito",
+      "parameterDefaultPlaceholder": "Valore predefinito opzionale",
       "credentials": "Credenziali",
       "credentialsHelp": "Lascia vuoto per usare la credenziale memorizzata del repository.",
       "credentialsOverride": "Usa una credenziale diversa per il dispatch",
@@ -7265,7 +7277,19 @@
         "repositoryNotFound": "Il repository di codice non esiste più.",
         "repositoryProviderMismatch": "Il provider del repository non corrisponde al provider della destinazione.",
         "workflowRequired": "Scegli un file di workflow.",
-        "nameTaken": "Esiste già una destinazione con questo nome."
+        "nameTaken": "Esiste già una destinazione con questo nome.",
+        "paramNameInvalid": "Il nome di input di un parametro deve iniziare con una lettera o un underscore e contenere solo lettere, cifre e underscore.",
+        "paramNameDuplicate": "Due parametri hanno lo stesso nome di input.",
+        "paramNameReserved": "Il nome di input di un parametro non può iniziare con TESTPLANIT_.",
+        "paramCollidesWithInput": "Un parametro ha lo stesso nome di input di un input statico. Rimuovine uno.",
+        "paramLabelRequired": "Ogni parametro necessita di un'etichetta.",
+        "paramValuesRequired": "Un parametro a scelta richiede almeno un valore.",
+        "paramValuesDuplicate": "Un parametro elenca lo stesso valore due volte.",
+        "paramValuesTooMany": "Un parametro ha troppi valori.",
+        "paramValueTooLong": "Il valore di un parametro è troppo lungo.",
+        "paramValueHasSeparator": "I valori di un parametro a scelta multipla non possono contenere virgole.",
+        "paramDefaultNotInValues": "Il valore predefinito di un parametro non è tra i suoi valori.",
+        "tooManyInputs": "Troppi input: input statici e parametri insieme sono limitati a 20."
       }
     },
     "execute": {

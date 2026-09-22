@@ -7220,6 +7220,18 @@
       "staticInputsHelp": "TESTPLANIT_*の値に加えて、毎回のディスパッチで送信されます。シークレットではありません: リポジトリを読み取れる人は誰でもそれらを確認できます。",
       "addInput": "入力を追加",
       "removeInput": "入力を削除",
+      "parametersHelp": "実行を行う人が「実行」ダイアログで選択する値です。それぞれがパラメーター名にちなんだ入力として送信され、複数選択の場合は選択肢がカンマで結合されます。",
+      "parameterNamePlaceholder": "例：BROWSER",
+      "parameterLabelPlaceholder": "例：ブラウザ",
+      "parameterTypes": {
+        "select": "単一選択",
+        "multiselect": "複数選択",
+        "text": "テキスト"
+      },
+      "parameterValues": "値",
+      "parameterValuesPlaceholder": "値を入力してEnterキーを押します",
+      "parameterDefaultNone": "デフォルトなし",
+      "parameterDefaultPlaceholder": "オプションのデフォルト値",
       "credentials": "認証情報",
       "credentialsHelp": "空欄にすると、リポジトリに保存された認証情報を使用します。",
       "credentialsOverride": "ディスパッチに別の認証情報を使用する",
@@ -7265,7 +7277,19 @@
         "repositoryNotFound": "コードリポジトリは存在しなくなりました。",
         "repositoryProviderMismatch": "リポジトリのプロバイダーがターゲットのプロバイダーと一致しません。",
         "workflowRequired": "ワークフローファイルを選択してください。",
-        "nameTaken": "この名前のターゲットは既に存在します。"
+        "nameTaken": "この名前のターゲットは既に存在します。",
+        "paramNameInvalid": "パラメーターの入力名は、文字またはアンダースコアで始まり、文字、数字、アンダースコアのみを含める必要があります。",
+        "paramNameDuplicate": "パラメーターの入力名が重複しています。",
+        "paramNameReserved": "パラメーターの入力名は TESTPLANIT_ で始めることはできません。",
+        "paramCollidesWithInput": "パラメーターが静的入力と同じ入力名を持っています。いずれか一方を削除してください。",
+        "paramLabelRequired": "すべてのパラメーターにはラベルが必要です。",
+        "paramValuesRequired": "選択式パラメーターには少なくとも一つの値が必要です。",
+        "paramValuesDuplicate": "パラメーターに同じ値が重複して含まれています。",
+        "paramValuesTooMany": "パラメーターの値が多すぎます。",
+        "paramValueTooLong": "パラメーターの値が長すぎます。",
+        "paramValueHasSeparator": "複数選択パラメーターの値にカンマを含めることはできません。",
+        "paramDefaultNotInValues": "パラメーターのデフォルト値がその値のいずれにも含まれていません。",
+        "tooManyInputs": "入力が多すぎます：静的入力とパラメーターを合わせて20個までに制限されています。"
       }
     },
     "execute": {

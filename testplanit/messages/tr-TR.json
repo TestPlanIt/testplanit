@@ -7220,6 +7220,18 @@
       "staticInputsHelp": "TESTPLANIT_* değerlerine ek olarak her gönderimle birlikte gönderilir. Gizli değildir: depoyu okuyabilen herkes bunları görebilir.",
       "addInput": "Girdi ekle",
       "removeInput": "Girdiyi kaldır",
+      "parametersHelp": "Bir test çalıştırmasını yürüten kişinin Çalıştır iletişim kutusunda seçtiği değerler. Her biri parametrenin adını taşıyan bir girdi olarak gönderilir; çoklu seçim, seçimlerini virgülle birleştirir.",
+      "parameterNamePlaceholder": "örn. BROWSER",
+      "parameterLabelPlaceholder": "örn. Tarayıcı",
+      "parameterTypes": {
+        "select": "Tekli seçim",
+        "multiselect": "Çoklu seçim",
+        "text": "Metin"
+      },
+      "parameterValues": "Değerler",
+      "parameterValuesPlaceholder": "Bir değer yazın ve Enter tuşuna basın",
+      "parameterDefaultNone": "Varsayılan yok",
+      "parameterDefaultPlaceholder": "İsteğe bağlı varsayılan değer",
       "credentials": "Kimlik bilgileri",
       "credentialsHelp": "Deponun kayıtlı kimlik bilgisini kullanmak için boş bırakın.",
       "credentialsOverride": "Gönderim için farklı bir kimlik bilgisi kullan",
@@ -7265,7 +7277,19 @@
         "repositoryNotFound": "Kod deposu artık mevcut değil.",
         "repositoryProviderMismatch": "Depo sağlayıcısı hedef sağlayıcısıyla eşleşmiyor.",
         "workflowRequired": "Bir iş akışı dosyası seçin.",
-        "nameTaken": "Bu adla bir hedef zaten mevcut."
+        "nameTaken": "Bu adla bir hedef zaten mevcut.",
+        "paramNameInvalid": "Bir parametrenin girdi adı bir harf veya alt çizgi ile başlamalı ve yalnızca harf, rakam ve alt çizgi içermelidir.",
+        "paramNameDuplicate": "İki parametrenin girdi adı aynı.",
+        "paramNameReserved": "Bir parametrenin girdi adı TESTPLANIT_ ile başlayamaz.",
+        "paramCollidesWithInput": "Bir parametre, statik bir girdiyle aynı girdi adına sahip. Bunlardan birini kaldırın.",
+        "paramLabelRequired": "Her parametrenin bir etikete ihtiyacı var.",
+        "paramValuesRequired": "Bir seçim parametresinin en az bir değere ihtiyacı var.",
+        "paramValuesDuplicate": "Bir parametre aynı değeri iki kez listeliyor.",
+        "paramValuesTooMany": "Bir parametrenin çok fazla değeri var.",
+        "paramValueTooLong": "Bir parametre değeri çok uzun.",
+        "paramValueHasSeparator": "Çoklu seçimli bir parametrenin değerleri virgül içeremez.",
+        "paramDefaultNotInValues": "Bir parametrenin varsayılanı, kendi değerlerinden biri değil.",
+        "tooManyInputs": "Çok fazla girdi: statik girdiler ve parametreler toplamda 20 ile sınırlıdır."
       }
     },
     "execute": {

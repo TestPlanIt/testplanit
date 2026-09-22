@@ -7220,6 +7220,18 @@
       "staticInputsHelp": "تُرسل مع كل إرسال، بالإضافة إلى قيم TESTPLANIT_*. غير سرية: يمكن لأي شخص يستطيع قراءة المستودع رؤيتها.",
       "addInput": "إضافة مدخل",
       "removeInput": "إزالة المدخل",
+      "parametersHelp": "القيم التي يختارها الشخص الذي ينفّذ التشغيل في مربع حوار التنفيذ. يتم إرسال كل قيمة كمدخل يحمل اسم المعامل؛ ويجمع الاختيار المتعدد خياراته بفواصل.",
+      "parameterNamePlaceholder": "مثال: BROWSER",
+      "parameterLabelPlaceholder": "مثال: Browser",
+      "parameterTypes": {
+        "select": "اختيار واحد",
+        "multiselect": "اختيار متعدد",
+        "text": "نص"
+      },
+      "parameterValues": "القيم",
+      "parameterValuesPlaceholder": "اكتب قيمة واضغط Enter",
+      "parameterDefaultNone": "بدون قيمة افتراضية",
+      "parameterDefaultPlaceholder": "قيمة افتراضية اختيارية",
       "credentials": "بيانات الاعتماد",
       "credentialsHelp": "اتركه فارغًا لاستخدام بيانات الاعتماد المخزّنة للمستودع.",
       "credentialsOverride": "استخدام بيانات اعتماد مختلفة للإرسال",
@@ -7265,7 +7277,19 @@
         "repositoryNotFound": "مستودع الكود لم يعد موجودًا.",
         "repositoryProviderMismatch": "مزود المستودع لا يطابق مزود الهدف.",
         "workflowRequired": "اختر ملف سير عمل.",
-        "nameTaken": "يوجد هدف بهذا الاسم بالفعل."
+        "nameTaken": "يوجد هدف بهذا الاسم بالفعل.",
+        "paramNameInvalid": "يجب أن يبدأ اسم إدخال المعامل بحرف أو شرطة سفلية، ولا يمكن أن يحتوي إلا على أحرف وأرقام وشرطات سفلية.",
+        "paramNameDuplicate": "يوجد معاملان لهما نفس اسم الإدخال.",
+        "paramNameReserved": "لا يمكن أن يبدأ اسم إدخال المعامل بـ TESTPLANIT_.",
+        "paramCollidesWithInput": "لدى أحد المعاملات نفس اسم الإدخال الخاص بمدخل ثابت. قم بإزالة أحدهما.",
+        "paramLabelRequired": "يحتاج كل معامل إلى تسمية.",
+        "paramValuesRequired": "يحتاج معامل الاختيار إلى قيمة واحدة على الأقل.",
+        "paramValuesDuplicate": "يدرج أحد المعاملات نفس القيمة مرتين.",
+        "paramValuesTooMany": "لدى أحد المعاملات قيم كثيرة جدًا.",
+        "paramValueTooLong": "قيمة أحد المعاملات طويلة جدًا.",
+        "paramValueHasSeparator": "لا يمكن أن تحتوي قيم معامل الاختيار المتعدد على فواصل.",
+        "paramDefaultNotInValues": "القيمة الافتراضية لأحد المعاملات ليست من ضمن قيمه.",
+        "tooManyInputs": "عدد كبير جدًا من المدخلات: يقتصر مجموع المدخلات الثابتة والمعاملات معًا على 20."
       }
     },
     "execute": {

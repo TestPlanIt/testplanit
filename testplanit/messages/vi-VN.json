@@ -7220,6 +7220,18 @@
       "staticInputsHelp": "Được gửi kèm mỗi lần điều phối, ngoài các giá trị TESTPLANIT_*. Không bí mật: bất kỳ ai có thể đọc kho lưu trữ đều có thể thấy chúng.",
       "addInput": "Thêm đầu vào",
       "removeInput": "Xóa đầu vào",
+      "parametersHelp": "Các giá trị mà người thực thi lần chạy chọn trong hộp thoại Thực thi. Mỗi giá trị được gửi dưới dạng đầu vào có tên theo tham số; lựa chọn nhiều mục sẽ nối các lựa chọn bằng dấu phẩy.",
+      "parameterNamePlaceholder": "vd. BROWSER",
+      "parameterLabelPlaceholder": "vd. Trình duyệt",
+      "parameterTypes": {
+        "select": "Chọn một",
+        "multiselect": "Chọn nhiều",
+        "text": "Văn bản"
+      },
+      "parameterValues": "Giá trị",
+      "parameterValuesPlaceholder": "Nhập giá trị và nhấn Enter",
+      "parameterDefaultNone": "Không có mặc định",
+      "parameterDefaultPlaceholder": "Giá trị mặc định tùy chọn",
       "credentials": "Thông tin xác thực",
       "credentialsHelp": "Để trống để sử dụng thông tin xác thực đã lưu của kho lưu trữ.",
       "credentialsOverride": "Sử dụng thông tin xác thực khác để điều phối",
@@ -7265,7 +7277,19 @@
         "repositoryNotFound": "Kho mã nguồn không còn tồn tại.",
         "repositoryProviderMismatch": "Nhà cung cấp kho lưu trữ không khớp với nhà cung cấp đích.",
         "workflowRequired": "Chọn một tệp quy trình làm việc.",
-        "nameTaken": "Một đích có tên này đã tồn tại."
+        "nameTaken": "Một đích có tên này đã tồn tại.",
+        "paramNameInvalid": "Tên đầu vào của tham số phải bắt đầu bằng chữ cái hoặc dấu gạch dưới và chỉ được chứa chữ cái, chữ số và dấu gạch dưới.",
+        "paramNameDuplicate": "Hai tham số có cùng tên đầu vào.",
+        "paramNameReserved": "Tên đầu vào của tham số không được bắt đầu bằng TESTPLANIT_.",
+        "paramCollidesWithInput": "Một tham số có cùng tên đầu vào với một đầu vào tĩnh. Hãy xóa một trong hai.",
+        "paramLabelRequired": "Mọi tham số đều cần có nhãn.",
+        "paramValuesRequired": "Tham số dạng lựa chọn cần có ít nhất một giá trị.",
+        "paramValuesDuplicate": "Một tham số liệt kê cùng một giá trị hai lần.",
+        "paramValuesTooMany": "Một tham số có quá nhiều giá trị.",
+        "paramValueTooLong": "Giá trị của tham số quá dài.",
+        "paramValueHasSeparator": "Giá trị của tham số nhiều lựa chọn không được chứa dấu phẩy.",
+        "paramDefaultNotInValues": "Giá trị mặc định của tham số không nằm trong các giá trị của nó.",
+        "tooManyInputs": "Quá nhiều đầu vào: đầu vào tĩnh và tham số cộng lại bị giới hạn ở mức 20."
       }
     },
     "execute": {

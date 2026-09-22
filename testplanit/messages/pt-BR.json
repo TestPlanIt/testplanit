@@ -7220,6 +7220,18 @@
       "staticInputsHelp": "Enviado a cada disparo, além dos valores TESTPLANIT_*. Não é secreto: qualquer pessoa que possa ler o repositório pode vê-los.",
       "addInput": "Adicionar entrada",
       "removeInput": "Remover entrada",
+      "parametersHelp": "Valores que a pessoa que executa uma execução escolhe na caixa de diálogo Executar. Cada um é enviado como uma entrada com o nome do parâmetro; uma seleção múltipla une as escolhas com vírgulas.",
+      "parameterNamePlaceholder": "ex.: BROWSER",
+      "parameterLabelPlaceholder": "ex.: Navegador",
+      "parameterTypes": {
+        "select": "Escolha única",
+        "multiselect": "Escolha múltipla",
+        "text": "Texto"
+      },
+      "parameterValues": "Valores",
+      "parameterValuesPlaceholder": "Digite um valor e pressione Enter",
+      "parameterDefaultNone": "Sem padrão",
+      "parameterDefaultPlaceholder": "Valor padrão opcional",
       "credentials": "Credenciais",
       "credentialsHelp": "Deixe em branco para usar a credencial armazenada do repositório.",
       "credentialsOverride": "Usar uma credencial diferente para o disparo",
@@ -7265,7 +7277,19 @@
         "repositoryNotFound": "O repositório de código não existe mais.",
         "repositoryProviderMismatch": "O provedor do repositório não corresponde ao provedor do destino.",
         "workflowRequired": "Escolha um arquivo de workflow.",
-        "nameTaken": "Já existe um destino com este nome."
+        "nameTaken": "Já existe um destino com este nome.",
+        "paramNameInvalid": "O nome de entrada de um parâmetro deve começar com uma letra ou sublinhado e conter apenas letras, dígitos e sublinhados.",
+        "paramNameDuplicate": "Dois parâmetros têm o mesmo nome de entrada.",
+        "paramNameReserved": "O nome de entrada de um parâmetro não pode começar com TESTPLANIT_.",
+        "paramCollidesWithInput": "Um parâmetro tem o mesmo nome de entrada que uma entrada estática. Remova um deles.",
+        "paramLabelRequired": "Todo parâmetro precisa de um rótulo.",
+        "paramValuesRequired": "Um parâmetro de escolha precisa de pelo menos um valor.",
+        "paramValuesDuplicate": "Um parâmetro lista o mesmo valor duas vezes.",
+        "paramValuesTooMany": "Um parâmetro tem valores demais.",
+        "paramValueTooLong": "Um valor de parâmetro é muito longo.",
+        "paramValueHasSeparator": "Valores de um parâmetro de múltipla escolha não podem conter vírgulas.",
+        "paramDefaultNotInValues": "O valor padrão de um parâmetro não está entre seus valores.",
+        "tooManyInputs": "Entradas demais: entradas estáticas e parâmetros juntos são limitados a 20."
       }
     },
     "execute": {

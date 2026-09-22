@@ -7220,6 +7220,18 @@
       "staticInputsHelp": "Se envían con cada activación, además de los valores TESTPLANIT_*. No son secretas: cualquiera que pueda leer el repositorio puede verlas.",
       "addInput": "Agregar entrada",
       "removeInput": "Eliminar entrada",
+      "parametersHelp": "Valores que la persona que ejecuta una ejecución elige en el diálogo Ejecutar. Cada uno se envía como una entrada con el nombre del parámetro; una selección múltiple une sus opciones con comas.",
+      "parameterNamePlaceholder": "p. ej. BROWSER",
+      "parameterLabelPlaceholder": "p. ej. Navegador",
+      "parameterTypes": {
+        "select": "Selección única",
+        "multiselect": "Selección múltiple",
+        "text": "Texto"
+      },
+      "parameterValues": "Valores",
+      "parameterValuesPlaceholder": "Escriba un valor y presione Enter",
+      "parameterDefaultNone": "Sin valor predeterminado",
+      "parameterDefaultPlaceholder": "Valor predeterminado opcional",
       "credentials": "Credenciales",
       "credentialsHelp": "Déjalo en blanco para usar la credencial almacenada del repositorio.",
       "credentialsOverride": "Usar una credencial diferente para la activación",
@@ -7265,7 +7277,19 @@
         "repositoryNotFound": "El repositorio de código ya no existe.",
         "repositoryProviderMismatch": "El proveedor del repositorio no coincide con el proveedor del objetivo.",
         "workflowRequired": "Elige un archivo de flujo de trabajo.",
-        "nameTaken": "Ya existe un objetivo con este nombre."
+        "nameTaken": "Ya existe un objetivo con este nombre.",
+        "paramNameInvalid": "El nombre de entrada de un parámetro debe comenzar con una letra o guion bajo y contener solo letras, dígitos y guiones bajos.",
+        "paramNameDuplicate": "Dos parámetros tienen el mismo nombre de entrada.",
+        "paramNameReserved": "El nombre de entrada de un parámetro no puede comenzar con TESTPLANIT_.",
+        "paramCollidesWithInput": "Un parámetro tiene el mismo nombre de entrada que una entrada estática. Elimine uno de ellos.",
+        "paramLabelRequired": "Todos los parámetros necesitan una etiqueta.",
+        "paramValuesRequired": "Un parámetro de selección necesita al menos un valor.",
+        "paramValuesDuplicate": "Un parámetro lista el mismo valor dos veces.",
+        "paramValuesTooMany": "Un parámetro tiene demasiados valores.",
+        "paramValueTooLong": "Un valor de parámetro es demasiado largo.",
+        "paramValueHasSeparator": "Los valores de un parámetro de selección múltiple no pueden contener comas.",
+        "paramDefaultNotInValues": "El valor predeterminado de un parámetro no está entre sus valores.",
+        "tooManyInputs": "Demasiadas entradas: las entradas estáticas y los parámetros juntos están limitados a 20."
       }
     },
     "execute": {

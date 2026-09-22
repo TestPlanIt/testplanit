@@ -2324,7 +2324,7 @@
           "unreadable": "{count, plural, one {# fichier n'a pas pu être lu} other {# fichiers n'ont pas pu être lus}}, ces épingles n'ont donc pas été vérifiées.",
           "removed": "{count, plural, =0 {Aucune épingle obsolète n'a été supprimée} one {# épingle obsolète supprimée} other {# épingles obsolètes supprimées}}",
           "removeFailed": "Impossible de supprimer les épingles obsolètes",
-          "removeConfirm": "Remove {count, plural, one {# Code Pin} other {# Code Pins}} that the last check could not find at the tip of {name}?",
+          "removeConfirm": "Supprimer {count, plural, one {# Épingle de code} other {# Épingles de code}} que la dernière vérification n'a pas pu trouver à la pointe de {name} ?",
           "removeConfirmNote": "Les épingles dont le badge Obsolète a été ignoré et les épingles maintenues par des marqueurs de dépôt sont conservées. Les épingles supprimées peuvent être restaurées depuis la Corbeille."
         }
       }
@@ -7220,6 +7220,18 @@
       "staticInputsHelp": "Envoyées à chaque déclenchement, en plus des valeurs TESTPLANIT_*. Pas secret : toute personne pouvant lire le dépôt peut les voir.",
       "addInput": "Ajouter une entrée",
       "removeInput": "Supprimer l'entrée",
+      "parametersHelp": "Valeurs choisies par la personne qui exécute un test dans la boîte de dialogue Exécuter. Chacune est envoyée comme une entrée nommée d'après le paramètre ; une sélection multiple joint ses choix par des virgules.",
+      "parameterNamePlaceholder": "p. ex. BROWSER",
+      "parameterLabelPlaceholder": "p. ex. Navigateur",
+      "parameterTypes": {
+        "select": "Choix unique",
+        "multiselect": "Choix multiple",
+        "text": "Texte"
+      },
+      "parameterValues": "Valeurs",
+      "parameterValuesPlaceholder": "Saisissez une valeur et appuyez sur Entrée",
+      "parameterDefaultNone": "Aucune valeur par défaut",
+      "parameterDefaultPlaceholder": "Valeur par défaut facultative",
       "credentials": "Identifiants",
       "credentialsHelp": "Laissez vide pour utiliser l'identifiant enregistré du dépôt.",
       "credentialsOverride": "Utiliser un identifiant différent pour le déclenchement",
@@ -7265,7 +7277,19 @@
         "repositoryNotFound": "Le dépôt de code n'existe plus.",
         "repositoryProviderMismatch": "Le fournisseur du dépôt ne correspond pas au fournisseur de la cible.",
         "workflowRequired": "Choisissez un fichier de workflow.",
-        "nameTaken": "Une cible portant ce nom existe déjà."
+        "nameTaken": "Une cible portant ce nom existe déjà.",
+        "paramNameInvalid": "Le nom d'entrée d'un paramètre doit commencer par une lettre ou un trait de soulignement et ne contenir que des lettres, des chiffres et des traits de soulignement.",
+        "paramNameDuplicate": "Deux paramètres ont le même nom d'entrée.",
+        "paramNameReserved": "Le nom d'entrée d'un paramètre ne peut pas commencer par TESTPLANIT_.",
+        "paramCollidesWithInput": "Un paramètre a le même nom d'entrée qu'une entrée statique. Supprimez l'un des deux.",
+        "paramLabelRequired": "Chaque paramètre nécessite une étiquette.",
+        "paramValuesRequired": "Un paramètre à choix nécessite au moins une valeur.",
+        "paramValuesDuplicate": "Un paramètre liste la même valeur deux fois.",
+        "paramValuesTooMany": "Un paramètre a trop de valeurs.",
+        "paramValueTooLong": "La valeur d'un paramètre est trop longue.",
+        "paramValueHasSeparator": "Les valeurs d'un paramètre à choix multiple ne peuvent pas contenir de virgules.",
+        "paramDefaultNotInValues": "La valeur par défaut d'un paramètre ne fait pas partie de ses valeurs.",
+        "tooManyInputs": "Trop d'entrées : les entrées statiques et les paramètres combinés sont limités à 20."
       }
     },
     "execute": {

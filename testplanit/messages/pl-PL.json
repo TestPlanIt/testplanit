@@ -7220,6 +7220,18 @@
       "staticInputsHelp": "Wysyłane z każdą wysyłką, oprócz wartości TESTPLANIT_*. Nie są tajne: każdy, kto może odczytać repozytorium, może je zobaczyć.",
       "addInput": "Dodaj dane wejściowe",
       "removeInput": "Usuń dane wejściowe",
+      "parametersHelp": "Wartości wybierane przez osobę uruchamiającą przebieg w oknie dialogowym Wykonaj. Każda z nich jest przesyłana jako dane wejściowe nazwane zgodnie z parametrem; wybór wielokrotny łączy wybrane opcje przecinkami.",
+      "parameterNamePlaceholder": "np. BROWSER",
+      "parameterLabelPlaceholder": "np. Przeglądarka",
+      "parameterTypes": {
+        "select": "Pojedynczy wybór",
+        "multiselect": "Wybór wielokrotny",
+        "text": "Tekst"
+      },
+      "parameterValues": "Wartości",
+      "parameterValuesPlaceholder": "Wpisz wartość i naciśnij Enter",
+      "parameterDefaultNone": "Brak domyślnej",
+      "parameterDefaultPlaceholder": "Opcjonalna wartość domyślna",
       "credentials": "Dane uwierzytelniające",
       "credentialsHelp": "Pozostaw puste, aby użyć zapisanych danych uwierzytelniających repozytorium.",
       "credentialsOverride": "Użyj innych danych uwierzytelniających do wysyłki",
@@ -7265,7 +7277,19 @@
         "repositoryNotFound": "Repozytorium kodu już nie istnieje.",
         "repositoryProviderMismatch": "Dostawca repozytorium nie zgadza się z dostawcą celu.",
         "workflowRequired": "Wybierz plik przepływu pracy.",
-        "nameTaken": "Cel o tej nazwie już istnieje."
+        "nameTaken": "Cel o tej nazwie już istnieje.",
+        "paramNameInvalid": "Nazwa wejściowa parametru musi zaczynać się od litery lub znaku podkreślenia i zawierać wyłącznie litery, cyfry oraz znaki podkreślenia.",
+        "paramNameDuplicate": "Dwa parametry mają tę samą nazwę wejściową.",
+        "paramNameReserved": "Nazwa wejściowa parametru nie może zaczynać się od TESTPLANIT_.",
+        "paramCollidesWithInput": "Parametr ma taką samą nazwę wejściową jak statyczne dane wejściowe. Usuń jedno z nich.",
+        "paramLabelRequired": "Każdy parametr wymaga etykiety.",
+        "paramValuesRequired": "Parametr wyboru wymaga co najmniej jednej wartości.",
+        "paramValuesDuplicate": "Parametr zawiera tę samą wartość dwukrotnie.",
+        "paramValuesTooMany": "Parametr ma zbyt wiele wartości.",
+        "paramValueTooLong": "Wartość parametru jest zbyt długa.",
+        "paramValueHasSeparator": "Wartości parametru wielokrotnego wyboru nie mogą zawierać przecinków.",
+        "paramDefaultNotInValues": "Wartość domyślna parametru nie znajduje się wśród jego wartości.",
+        "tooManyInputs": "Zbyt wiele danych wejściowych: statyczne dane wejściowe i parametry łącznie są ograniczone do 20."
       }
     },
     "execute": {

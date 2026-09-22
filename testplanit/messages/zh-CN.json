@@ -7220,6 +7220,18 @@
       "staticInputsHelp": "除 TESTPLANIT_* 值外，随每次调度一起发送。非机密：任何能读取该仓库的人都能看到它们。",
       "addInput": "添加输入",
       "removeInput": "移除输入",
+      "parametersHelp": "执行运行的人员在“执行”对话框中选择的值。每个值都会作为以参数命名的输入发送；多选会用逗号连接其选项。",
+      "parameterNamePlaceholder": "例如 BROWSER",
+      "parameterLabelPlaceholder": "例如 浏览器",
+      "parameterTypes": {
+        "select": "单选",
+        "multiselect": "多选",
+        "text": "文本"
+      },
+      "parameterValues": "值",
+      "parameterValuesPlaceholder": "输入一个值并按 Enter 键",
+      "parameterDefaultNone": "无默认值",
+      "parameterDefaultPlaceholder": "可选的默认值",
       "credentials": "凭据",
       "credentialsHelp": "留空则使用仓库存储的凭据。",
       "credentialsOverride": "为调度使用不同的凭据",
@@ -7265,7 +7277,19 @@
         "repositoryNotFound": "该代码仓库已不存在。",
         "repositoryProviderMismatch": "仓库提供者与目标提供者不匹配。",
         "workflowRequired": "选择一个工作流文件。",
-        "nameTaken": "已存在同名目标。"
+        "nameTaken": "已存在同名目标。",
+        "paramNameInvalid": "参数的输入名称必须以字母或下划线开头，且只能包含字母、数字和下划线。",
+        "paramNameDuplicate": "两个参数具有相同的输入名称。",
+        "paramNameReserved": "参数的输入名称不能以 TESTPLANIT_ 开头。",
+        "paramCollidesWithInput": "某个参数的输入名称与静态输入相同。请删除其中一个。",
+        "paramLabelRequired": "每个参数都需要一个标签。",
+        "paramValuesRequired": "选择型参数至少需要一个值。",
+        "paramValuesDuplicate": "某个参数中列出了重复的值。",
+        "paramValuesTooMany": "某个参数的值过多。",
+        "paramValueTooLong": "某个参数值过长。",
+        "paramValueHasSeparator": "多选参数的值不能包含逗号。",
+        "paramDefaultNotInValues": "某个参数的默认值不在其值列表中。",
+        "tooManyInputs": "输入项过多：静态输入和参数总数限制为 20 个。"
       }
     },
     "execute": {

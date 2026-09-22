@@ -7220,6 +7220,18 @@
       "staticInputsHelp": "Wordt bij elke dispatch meegestuurd, naast de TESTPLANIT_*-waarden. Niet geheim: iedereen die de repository kan lezen, kan deze zien.",
       "addInput": "Invoer toevoegen",
       "removeInput": "Invoer verwijderen",
+      "parametersHelp": "Waarden die de persoon die een run uitvoert kiest in het dialoogvenster Uitvoeren. Elke waarde wordt verzonden als invoer met de naam van de parameter; bij meervoudige selectie worden de keuzes gescheiden door komma's.",
+      "parameterNamePlaceholder": "bijv. BROWSER",
+      "parameterLabelPlaceholder": "bijv. Browser",
+      "parameterTypes": {
+        "select": "Enkele keuze",
+        "multiselect": "Meerdere keuze",
+        "text": "Tekst"
+      },
+      "parameterValues": "Waarden",
+      "parameterValuesPlaceholder": "Typ een waarde en druk op Enter",
+      "parameterDefaultNone": "Geen standaardwaarde",
+      "parameterDefaultPlaceholder": "Optionele standaardwaarde",
       "credentials": "Inloggegevens",
       "credentialsHelp": "Laat leeg om de opgeslagen inloggegevens van de repository te gebruiken.",
       "credentialsOverride": "Gebruik andere inloggegevens voor dispatch",
@@ -7265,7 +7277,19 @@
         "repositoryNotFound": "De coderepository bestaat niet meer.",
         "repositoryProviderMismatch": "De aanbieder van de repository komt niet overeen met de aanbieder van het doel.",
         "workflowRequired": "Kies een workflowbestand.",
-        "nameTaken": "Er bestaat al een doel met deze naam."
+        "nameTaken": "Er bestaat al een doel met deze naam.",
+        "paramNameInvalid": "De invoernaam van een parameter moet beginnen met een letter of underscore en mag alleen letters, cijfers en underscores bevatten.",
+        "paramNameDuplicate": "Twee parameters hebben dezelfde invoernaam.",
+        "paramNameReserved": "De invoernaam van een parameter mag niet beginnen met TESTPLANIT_.",
+        "paramCollidesWithInput": "Een parameter heeft dezelfde invoernaam als een statische invoer. Verwijder een van beide.",
+        "paramLabelRequired": "Elke parameter heeft een label nodig.",
+        "paramValuesRequired": "Een keuzeparameter heeft minstens één waarde nodig.",
+        "paramValuesDuplicate": "Een parameter bevat dezelfde waarde twee keer.",
+        "paramValuesTooMany": "Een parameter heeft te veel waarden.",
+        "paramValueTooLong": "Een parameterwaarde is te lang.",
+        "paramValueHasSeparator": "Waarden van een meerkeuzeparameter mogen geen komma's bevatten.",
+        "paramDefaultNotInValues": "De standaardwaarde van een parameter komt niet overeen met een van de waarden.",
+        "tooManyInputs": "Te veel invoervelden: statische invoer en parameters samen zijn beperkt tot 20."
       }
     },
     "execute": {

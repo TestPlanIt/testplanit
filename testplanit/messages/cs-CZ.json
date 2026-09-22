@@ -7220,6 +7220,18 @@
       "staticInputsHelp": "Odesíláno při každém spuštění, navíc k hodnotám TESTPLANIT_*. Není tajné: kdokoli, kdo může číst úložiště, je uvidí.",
       "addInput": "Přidat vstup",
       "removeInput": "Odstranit vstup",
+      "parametersHelp": "Hodnoty, které osoba spouštějící test run vybere v dialogu Spustit. Každá z nich se odešle jako vstup pojmenovaný podle parametru; víceoborová volba spojí své hodnoty čárkami.",
+      "parameterNamePlaceholder": "např. BROWSER",
+      "parameterLabelPlaceholder": "např. Prohlížeč",
+      "parameterTypes": {
+        "select": "Jedna možnost",
+        "multiselect": "Více možností",
+        "text": "Text"
+      },
+      "parameterValues": "Hodnoty",
+      "parameterValuesPlaceholder": "Zadejte hodnotu a stiskněte Enter",
+      "parameterDefaultNone": "Bez výchozí hodnoty",
+      "parameterDefaultPlaceholder": "Volitelná výchozí hodnota",
       "credentials": "Přihlašovací údaje",
       "credentialsHelp": "Ponechte prázdné pro použití uložených přihlašovacích údajů úložiště.",
       "credentialsOverride": "Použít jiné přihlašovací údaje pro spuštění",
@@ -7265,7 +7277,19 @@
         "repositoryNotFound": "Úložiště kódu již neexistuje.",
         "repositoryProviderMismatch": "Poskytovatel úložiště kódu neodpovídá poskytovateli cíle.",
         "workflowRequired": "Vyberte soubor workflow.",
-        "nameTaken": "Cíl s tímto názvem již existuje."
+        "nameTaken": "Cíl s tímto názvem již existuje.",
+        "paramNameInvalid": "Název vstupu parametru musí začínat písmenem nebo podtržítkem a obsahovat pouze písmena, číslice a podtržítka.",
+        "paramNameDuplicate": "Dva parametry mají stejný název vstupu.",
+        "paramNameReserved": "Název vstupu parametru nesmí začínat na TESTPLANIT_.",
+        "paramCollidesWithInput": "Parametr má stejný název vstupu jako statický vstup. Odstraňte jeden z nich.",
+        "paramLabelRequired": "Každý parametr potřebuje popisek.",
+        "paramValuesRequired": "Parametr s výběrem potřebuje alespoň jednu hodnotu.",
+        "paramValuesDuplicate": "Parametr obsahuje stejnou hodnotu dvakrát.",
+        "paramValuesTooMany": "Parametr má příliš mnoho hodnot.",
+        "paramValueTooLong": "Hodnota parametru je příliš dlouhá.",
+        "paramValueHasSeparator": "Hodnoty parametru s více možnostmi nesmí obsahovat čárky.",
+        "paramDefaultNotInValues": "Výchozí hodnota parametru není mezi jeho hodnotami.",
+        "tooManyInputs": "Příliš mnoho vstupů: statické vstupy a parametry dohromady jsou omezeny na 20."
       }
     },
     "execute": {

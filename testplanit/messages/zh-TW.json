@@ -7220,6 +7220,18 @@
       "staticInputsHelp": "每次派發時都會連同 TESTPLANIT_* 值一起傳送。並非機密：任何能讀取此儲存庫的人都能看到它們。",
       "addInput": "新增輸入",
       "removeInput": "移除輸入",
+      "parametersHelp": "執行測試的人員在「執行」對話方塊中選擇的值。每個值都會以參數命名的輸入形式傳送；多選會以逗號連接其選項。",
+      "parameterNamePlaceholder": "例如 BROWSER",
+      "parameterLabelPlaceholder": "例如 瀏覽器",
+      "parameterTypes": {
+        "select": "單選",
+        "multiselect": "多選",
+        "text": "文字"
+      },
+      "parameterValues": "值",
+      "parameterValuesPlaceholder": "輸入值並按 Enter 鍵",
+      "parameterDefaultNone": "無預設值",
+      "parameterDefaultPlaceholder": "選填預設值",
       "credentials": "憑證",
       "credentialsHelp": "留空以使用儲存庫已儲存的憑證。",
       "credentialsOverride": "使用不同的憑證進行派發",
@@ -7265,7 +7277,19 @@
         "repositoryNotFound": "此程式碼儲存庫已不存在。",
         "repositoryProviderMismatch": "此儲存庫提供者與目標提供者不符。",
         "workflowRequired": "選擇一個工作流程檔案。",
-        "nameTaken": "已存在同名的目標。"
+        "nameTaken": "已存在同名的目標。",
+        "paramNameInvalid": "參數的輸入名稱必須以字母或底線開頭，且只能包含字母、數字和底線。",
+        "paramNameDuplicate": "兩個參數的輸入名稱相同。",
+        "paramNameReserved": "參數的輸入名稱不能以 TESTPLANIT_ 開頭。",
+        "paramCollidesWithInput": "參數的輸入名稱與靜態輸入相同，請移除其中一個。",
+        "paramLabelRequired": "每個參數都需要一個標籤。",
+        "paramValuesRequired": "選擇類型的參數至少需要一個值。",
+        "paramValuesDuplicate": "參數中同一個值列出了兩次。",
+        "paramValuesTooMany": "參數的值過多。",
+        "paramValueTooLong": "參數的值過長。",
+        "paramValueHasSeparator": "多選參數的值不能包含逗號。",
+        "paramDefaultNotInValues": "參數的預設值不在其值清單中。",
+        "tooManyInputs": "輸入項目過多：靜態輸入與參數合計上限為 20 個。"
       }
     },
     "execute": {
