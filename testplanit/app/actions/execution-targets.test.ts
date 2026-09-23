@@ -23,6 +23,7 @@ vi.mock("~/lib/db", () => ({
       update: vi.fn(),
     },
     codeRepository: { findFirst: vi.fn() },
+    configurations: { findMany: vi.fn() },
     $executeRaw: vi.fn(),
   },
 }));
@@ -100,6 +101,7 @@ const findFirst = vi.mocked(baseDb.executionTarget.findFirst) as any;
 const findMany = vi.mocked(baseDb.executionTarget.findMany) as any;
 const createTarget = vi.mocked(baseDb.executionTarget.create) as any;
 const updateTarget = vi.mocked(baseDb.executionTarget.update) as any;
+const findConfigurations = vi.mocked(baseDb.configurations.findMany) as any;
 const findRepo = vi.mocked(baseDb.codeRepository.findFirst) as any;
 
 const PROJECT_ID = 7;
@@ -491,6 +493,60 @@ describe("execution-targets actions", () => {
       expect(result).toMatchObject({
         success: false,
         errorCode: `automation.settings.errors.${code}`,
+      });
+      expect(createTarget).not.toHaveBeenCalled();
+    });
+
+    it("stores a configuration parameter whose default is assigned to the project", async () => {
+      asManager();
+      findConfigurations.mockResolvedValue([
+        { id: 12, name: "Chrome on Windows", variants: [] },
+      ]);
+      createTarget.mockImplementation(async (args: any) =>
+        targetRow({ paramSchema: args.data.paramSchema })
+      );
+      const config = {
+        name: "CONFIG",
+        label: "Configuration",
+        type: "configuration" as const,
+        multiple: false,
+        default: [12],
+      };
+
+      const result = await createExecutionTarget(PROJECT_ID, {
+        ...base,
+        paramSchema: [config],
+      });
+
+      expect(result.success).toBe(true);
+      if (!result.success) return;
+      expect(result.target.paramSchema[0]).toEqual(config);
+      expect(findConfigurations.mock.calls[0][0].where).toMatchObject({
+        id: { in: [12] },
+        projects: { some: { projectId: PROJECT_ID } },
+      });
+    });
+
+    it("rejects a configuration default that is not assigned to the project", async () => {
+      asManager();
+      findConfigurations.mockResolvedValue([]);
+
+      const result = await createExecutionTarget(PROJECT_ID, {
+        ...base,
+        paramSchema: [
+          {
+            name: "CONFIG",
+            label: "Configuration",
+            type: "configuration",
+            multiple: true,
+            default: [12],
+          },
+        ],
+      });
+
+      expect(result).toMatchObject({
+        success: false,
+        errorCode: "automation.settings.errors.paramConfigurationNotAssigned",
       });
       expect(createTarget).not.toHaveBeenCalled();
     });

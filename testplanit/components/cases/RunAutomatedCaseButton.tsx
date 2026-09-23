@@ -48,6 +48,7 @@ export function RunAutomatedCaseDialog({
     <ExecuteAutomationDialog
       open={open}
       onOpenChange={onOpenChange}
+      projectId={projectId}
       targets={targets}
       caseCount={1}
       runId={null}

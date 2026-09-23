@@ -83,7 +83,7 @@ Do not call `run complete` unless the run holds nothing but automated cases; com
 
 1. Open the project's **Settings → Automated Execution** and click **Add target**.
 2. Choose **GitLab CI**, pick the repository, and set the **Branch** the pipeline should run on (the repository's default branch if left empty).
-3. Optionally add **Pipeline variables**, static values sent with every dispatch, or **Parameters**, values the person executing a run chooses in the dialog. Both arrive as pipeline variables and are visible to anyone who can read the pipeline.
+3. Optionally add **Pipeline variables**, static values sent with every dispatch, or **Parameters**, values the person executing a run chooses in the dialog (a browser, or one of the project's configurations, which arrives as `<name>_ID`, `<name>` and `<name>_VARIANTS`). Both arrive as pipeline variables and are visible to anyone who can read the pipeline.
 4. Under **Credentials**, either rely on the repository's access token, or choose **Use a different credential for dispatch** and enter an access token, a pipeline trigger token, or both.
 5. Save, then click **Verify**. It confirms the credential and the project, and warns when only a trigger token is present, since pipeline status cannot be read then.
 

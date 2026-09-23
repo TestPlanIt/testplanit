@@ -46,7 +46,12 @@ export const RESERVED_INPUT_KEYS = {
 
 export const RESERVED_INPUT_PREFIX = "TESTPLANIT_";
 
-export const EXECUTION_PARAM_TYPES = ["select", "multiselect", "text"] as const;
+export const EXECUTION_PARAM_TYPES = [
+  "select",
+  "multiselect",
+  "text",
+  "configuration",
+] as const;
 export type ExecutionParamType = (typeof EXECUTION_PARAM_TYPES)[number];
 
 /**
@@ -55,6 +60,11 @@ export type ExecutionParamType = (typeof EXECUTION_PARAM_TYPES)[number];
  * as one per-execution input under `name`. Every kind serializes to a string
  * because CI providers only accept strings: a multiselect joins its choices
  * with commas.
+ *
+ * A `configuration` parameter offers the configurations assigned to the
+ * project (Admin → Configurations) instead of a fixed value list, and its
+ * choice reaches the job as three inputs: `<name>_ID`, `<name>` (the
+ * configuration name) and `<name>_VARIANTS` (see `configurationInputKeys`).
  */
 export type ExecutionParam =
   | {
@@ -71,7 +81,16 @@ export type ExecutionParam =
       values: string[];
       default: string[];
     }
-  | { name: string; label: string; type: "text"; default?: string };
+  | { name: string; label: string; type: "text"; default?: string }
+  | {
+      name: string;
+      label: string;
+      type: "configuration";
+      /** More than one configuration may be chosen. */
+      multiple: boolean;
+      /** Configuration ids; at most one unless `multiple`. */
+      default: number[];
+    };
 
 export interface DispatchRequest {
   runId: number;

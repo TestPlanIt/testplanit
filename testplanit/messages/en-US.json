@@ -7224,8 +7224,12 @@
       "parameterTypes": {
         "select": "Single choice",
         "multiselect": "Multiple choice",
-        "text": "Text"
+        "text": "Text",
+        "configuration": "Configuration"
       },
+      "parameterConfigurationMultiple": "Allow choosing more than one",
+      "parameterConfigurationHelp": "Offers the configurations assigned to this project. The job receives the choice as {id} (the id), {name} (the name) and {variants} (Category=Variant pairs).",
+      "parameterConfigurationNone": "No configuration is assigned to this project. Assign one under Admin → Configurations first.",
       "parameterValues": "Values",
       "parameterValuesPlaceholder": "Type a value and press Enter",
       "parameterDefaultNone": "No default",
@@ -7287,6 +7291,8 @@
         "paramValueTooLong": "A parameter value is too long.",
         "paramValueHasSeparator": "Values of a multiple-choice parameter cannot contain commas.",
         "paramDefaultNotInValues": "A parameter's default is not one of its values.",
+        "paramDefaultNotSingle": "A single-choice configuration parameter can have only one default.",
+        "paramConfigurationNotAssigned": "A configuration parameter's default is not assigned to this project.",
         "tooManyInputs": "Too many inputs: static inputs and parameters together are limited to 20."
       }
     },

@@ -27,6 +27,25 @@ export const MAX_PARAM_LABEL_LENGTH = 100;
 export const MAX_PARAM_VALUES = 50;
 const NAME_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
+/**
+ * The inputs a configuration parameter becomes. The dialog (and an API
+ * caller) sends the chosen ids under `id`; the server resolves them and
+ * fills `name` and `variants` (`Category=Variant` pairs) so a job can act
+ * on whichever it prefers.
+ */
+export function configurationInputKeys(name: string): {
+  id: string;
+  name: string;
+  variants: string;
+} {
+  return { id: `${name}_ID`, name, variants: `${name}_VARIANTS` };
+}
+
+/** How many input keys a declared parameter occupies. */
+export function paramInputCount(param: ExecutionParam): number {
+  return param.type === "configuration" ? 3 : 1;
+}
+
 export type ParamSchemaError =
   | { code: "NAME_INVALID"; name: string }
   | { code: "NAME_DUPLICATE"; name: string }
@@ -39,6 +58,7 @@ export type ParamSchemaError =
   | { code: "VALUE_TOO_LONG"; name: string }
   | { code: "VALUE_HAS_SEPARATOR"; name: string }
   | { code: "DEFAULT_NOT_IN_VALUES"; name: string }
+  | { code: "DEFAULT_NOT_SINGLE"; name: string }
   | { code: "TOO_MANY_INPUTS"; count: number };
 
 /** The `automation.settings.errors.*` key the UI shows for each problem. */
@@ -54,6 +74,7 @@ export const PARAM_ERROR_CODES: Record<ParamSchemaError["code"], string> = {
   VALUE_TOO_LONG: "paramValueTooLong",
   VALUE_HAS_SEPARATOR: "paramValueHasSeparator",
   DEFAULT_NOT_IN_VALUES: "paramDefaultNotInValues",
+  DEFAULT_NOT_SINGLE: "paramDefaultNotSingle",
   TOO_MANY_INPUTS: "tooManyInputs",
 };
 
@@ -81,6 +102,8 @@ export function describeParamError(err: ParamSchemaError): string {
       return `Values of parameter "${err.name}" cannot contain "${MULTISELECT_SEPARATOR}"`;
     case "DEFAULT_NOT_IN_VALUES":
       return `The default of parameter "${err.name}" is not one of its values`;
+    case "DEFAULT_NOT_SINGLE":
+      return `Parameter "${err.name}" allows one configuration, so it can have at most one default`;
     case "TOO_MANY_INPUTS":
       return `At most ${MAX_CUSTOM_INPUT_KEYS} static inputs and parameters are allowed together (got ${err.count})`;
   }
@@ -97,7 +120,8 @@ export function validateParamSchema(
   staticInputs: Record<string, string> = {}
 ): ParamSchemaError | null {
   const staticKeys = new Set(Object.keys(staticInputs));
-  const total = params.length + staticKeys.size;
+  const total =
+    params.reduce((n, p) => n + paramInputCount(p), 0) + staticKeys.size;
   if (total > MAX_CUSTOM_INPUT_KEYS) {
     return { code: "TOO_MANY_INPUTS", count: total };
   }
@@ -108,12 +132,34 @@ export function validateParamSchema(
     if (name.toUpperCase().startsWith(RESERVED_INPUT_PREFIX)) {
       return { code: "NAME_RESERVED", name };
     }
-    if (seen.has(name)) return { code: "NAME_DUPLICATE", name };
-    seen.add(name);
-    if (staticKeys.has(name)) {
-      return { code: "NAME_COLLIDES_WITH_INPUT", name };
+    // A configuration parameter occupies its derived keys too, so another
+    // parameter or a static input named like one of them would be
+    // overwritten at execute time.
+    const keys =
+      param.type === "configuration"
+        ? Object.values(configurationInputKeys(name))
+        : [name];
+    for (const key of keys) {
+      if (seen.has(key)) return { code: "NAME_DUPLICATE", name: key };
+      seen.add(key);
+      if (staticKeys.has(key)) {
+        return { code: "NAME_COLLIDES_WITH_INPUT", name: key };
+      }
     }
     if (!param.label.trim()) return { code: "LABEL_REQUIRED", name };
+
+    if (param.type === "configuration") {
+      if (param.default.length > MAX_PARAM_VALUES) {
+        return { code: "VALUES_TOO_MANY", name };
+      }
+      if (!param.multiple && param.default.length > 1) {
+        return { code: "DEFAULT_NOT_SINGLE", name };
+      }
+      if (new Set(param.default).size !== param.default.length) {
+        return { code: "VALUES_DUPLICATE", name };
+      }
+      continue;
+    }
 
     if (param.type === "text") {
       if ((param.default ?? "").length > MAX_INPUT_VALUE_LENGTH) {
@@ -160,6 +206,24 @@ function stringList(value: unknown): string[] | null {
   return value.filter((v): v is string => typeof v === "string");
 }
 
+function idList(value: unknown): number[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter(
+    (v): v is number => typeof v === "number" && Number.isInteger(v) && v > 0
+  );
+}
+
+/** Parse a stored `<name>_ID` input ("12" or "12,15") back into ids. */
+export function parseConfigurationIds(value: string | undefined): number[] {
+  if (!value) return [];
+  const out: number[] = [];
+  for (const part of value.split(MULTISELECT_SEPARATOR)) {
+    const id = Number(part.trim());
+    if (Number.isInteger(id) && id > 0 && !out.includes(id)) out.push(id);
+  }
+  return out;
+}
+
 /**
  * Read a stored `paramSchema` column. Entries that do not fit the shape are
  * dropped rather than failing the read: the column is admin-written through
@@ -180,6 +244,18 @@ export function normalizeParamSchema(raw: unknown): ExecutionParam[] {
         label,
         type: "text",
         ...(typeof rec.default === "string" ? { default: rec.default } : {}),
+      });
+      continue;
+    }
+    if (rec.type === "configuration") {
+      const multiple = rec.multiple === true;
+      const defaults = idList(rec.default);
+      out.push({
+        name: rec.name,
+        label,
+        type: "configuration",
+        multiple,
+        default: multiple ? defaults : defaults.slice(0, 1),
       });
       continue;
     }
@@ -207,14 +283,24 @@ export function normalizeParamSchema(raw: unknown): ExecutionParam[] {
   return out;
 }
 
-/** What the execute dialog shows before the dispatcher touches anything. */
+/**
+ * What the execute dialog shows before the dispatcher touches anything.
+ * Keyed by parameter name; a configuration parameter holds its chosen ids
+ * as strings (one, or a list when it allows several).
+ */
 export type ParamValues = Record<string, string | string[]>;
 
 export function defaultParamValues(params: ExecutionParam[]): ParamValues {
   const out: ParamValues = {};
   for (const param of params) {
-    out[param.name] =
-      param.type === "multiselect" ? [...param.default] : (param.default ?? "");
+    if (param.type === "multiselect") {
+      out[param.name] = [...param.default];
+    } else if (param.type === "configuration") {
+      const ids = param.default.map(String);
+      out[param.name] = param.multiple ? ids : (ids[0] ?? "");
+    } else {
+      out[param.name] = param.default ?? "";
+    }
   }
   return out;
 }
@@ -239,6 +325,15 @@ export function paramValuesFromInputs(
   const out = defaultParamValues(params);
   if (!inputs) return out;
   for (const param of params) {
+    if (param.type === "configuration") {
+      // Whether a stored id is still assigned to the project is the
+      // picker's business: it only offers the current ones.
+      const stored = inputs[configurationInputKeys(param.name).id];
+      if (typeof stored !== "string") continue;
+      const ids = parseConfigurationIds(stored).map(String);
+      out[param.name] = param.multiple ? ids : (ids[0] ?? "");
+      continue;
+    }
     const stored = inputs[param.name];
     if (typeof stored !== "string") continue;
     if (param.type === "text") {
@@ -258,7 +353,8 @@ export function paramValuesFromInputs(
 /**
  * Turn the dialog's choices into the per-execution `inputs` map. Every
  * declared parameter is sent, so a CI job can rely on the key being present
- * even when the dispatcher kept the default.
+ * even when the dispatcher kept the default. A configuration parameter is
+ * sent as its ids under `<name>_ID`; the server derives the rest.
  */
 export function serializeParamValues(
   params: ExecutionParam[],
@@ -267,6 +363,14 @@ export function serializeParamValues(
   const out: Record<string, string> = {};
   for (const param of params) {
     const value = values[param.name];
+    if (param.type === "configuration") {
+      const list = Array.isArray(value) ? value : value ? [value] : [];
+      const ids = list.length > 0 ? list : param.default.map(String);
+      out[configurationInputKeys(param.name).id] = (
+        param.multiple ? ids : ids.slice(0, 1)
+      ).join(MULTISELECT_SEPARATOR);
+      continue;
+    }
     if (param.type === "multiselect") {
       const list = Array.isArray(value) ? value : param.default;
       out[param.name] = list.join(MULTISELECT_SEPARATOR);
@@ -309,6 +413,24 @@ export function describeParamInputs(
   const out: ParamInputDescription[] = [];
   const seen = new Set<string>();
   for (const param of params) {
+    if (param.type === "configuration") {
+      // The name is what a person recognises; the id and variants the job
+      // received are folded into the same entry rather than listed as
+      // separate inputs.
+      const keys = configurationInputKeys(param.name);
+      const name = stored[keys.name];
+      const id = stored[keys.id];
+      if (typeof name !== "string" && typeof id !== "string") continue;
+      seen.add(keys.id).add(keys.name).add(keys.variants);
+      const value = typeof name === "string" ? name : (id ?? "");
+      out.push({
+        name: param.name,
+        label: param.label,
+        values: value ? [value] : [],
+        declared: true,
+      });
+      continue;
+    }
     const value = stored[param.name];
     if (typeof value !== "string") continue;
     seen.add(param.name);

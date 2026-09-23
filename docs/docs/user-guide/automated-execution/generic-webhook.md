@@ -35,7 +35,7 @@ User-Agent: TestPlanIt-Execution/1.0
 ```
 
 - `ref` is the branch or ref chosen for this execution, or `null` for the target's default.
-- `inputs` holds the reserved `TESTPLANIT_*` values, every static variable configured on the target, and the values chosen for the target's parameters in the Execute dialog, all as strings (a multiple-choice parameter arrives comma-separated).
+- `inputs` holds the reserved `TESTPLANIT_*` values, every static variable configured on the target, and the values chosen for the target's parameters in the Execute dialog, all as strings (a multiple-choice parameter arrives comma-separated; a configuration parameter arrives as `<name>_ID`, `<name>` and `<name>_VARIANTS`, see [Parameters](../projects/settings/automation.md#adding-a-target)).
 - The request follows no redirects and waits at most 10 seconds for a response.
 
 ## The response

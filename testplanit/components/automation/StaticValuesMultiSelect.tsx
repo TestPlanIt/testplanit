@@ -10,6 +10,8 @@ interface Option {
 
 interface Props {
   values: string[];
+  /** Display text per value; values without one show as themselves, in monospace. */
+  labels?: Record<string, string>;
   selected: string[];
   onChange: (selected: string[]) => void;
   placeholder?: string;
@@ -24,6 +26,7 @@ interface Props {
  */
 export function StaticValuesMultiSelect({
   values,
+  labels,
   selected,
   onChange,
   placeholder,
@@ -31,11 +34,16 @@ export function StaticValuesMultiSelect({
   disabled,
   testId,
 }: Props) {
+  const labelOf = (value: string) => labels?.[value] ?? value;
   const fetchOptions = useMemo<AsyncOptionsFetcher<Option>>(
     () => async (query, page, pageSize) => {
       const lower = query.toLowerCase();
       const filtered = (
-        lower ? values.filter((v) => v.toLowerCase().includes(lower)) : values
+        lower
+          ? values.filter((v) =>
+              (labels?.[v] ?? v).toLowerCase().includes(lower)
+            )
+          : values
       ).map((value) => ({ value }));
       const start = page * pageSize;
       return {
@@ -43,7 +51,7 @@ export function StaticValuesMultiSelect({
         total: filtered.length,
       };
     },
-    [values]
+    [values, labels]
   );
   const selectedOptions = useMemo(
     () => selected.map((value) => ({ value })),
@@ -56,10 +64,14 @@ export function StaticValuesMultiSelect({
         onValueChange={(next) => onChange(next.map((o) => o.value))}
         fetchOptions={fetchOptions}
         getOptionValue={(o) => o.value}
-        getOptionLabel={(o) => o.value}
-        renderOption={(o) => (
-          <span className="font-mono text-sm">{o.value}</span>
-        )}
+        getOptionLabel={(o) => labelOf(o.value)}
+        renderOption={(o) =>
+          labels ? (
+            <span className="text-sm">{labelOf(o.value)}</span>
+          ) : (
+            <span className="font-mono text-sm">{o.value}</span>
+          )
+        }
         placeholder={placeholder}
         ariaLabel={ariaLabel}
         disabled={disabled}

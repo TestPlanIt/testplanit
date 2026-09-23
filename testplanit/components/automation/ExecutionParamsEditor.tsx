@@ -2,6 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -13,8 +14,13 @@ import {
 } from "@/components/ui/select";
 import { Plus, Trash2, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
-import { MULTISELECT_SEPARATOR } from "~/lib/execution/params";
+import { useMemo, useState } from "react";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
+import {
+  configurationInputKeys,
+  MULTISELECT_SEPARATOR,
+} from "~/lib/execution/params";
 import {
   EXECUTION_PARAM_TYPES,
   type ExecutionParam,
@@ -34,6 +40,10 @@ export interface ExecutionParamRow {
   defaultSelect: string;
   defaultMulti: string[];
   defaultText: string;
+  /** Configuration kind: more than one may be chosen. */
+  multiple: boolean;
+  /** Configuration kind: default ids, as strings for the pickers. */
+  defaultConfigurations: string[];
 }
 
 export function paramsToRows(params: ExecutionParam[]): ExecutionParamRow[] {
@@ -41,10 +51,16 @@ export function paramsToRows(params: ExecutionParam[]): ExecutionParamRow[] {
     name: param.name,
     label: param.label,
     type: param.type,
-    values: param.type === "text" ? [] : [...param.values],
+    values:
+      param.type === "select" || param.type === "multiselect"
+        ? [...param.values]
+        : [],
     defaultSelect: param.type === "select" ? param.default : "",
     defaultMulti: param.type === "multiselect" ? [...param.default] : [],
     defaultText: param.type === "text" ? (param.default ?? "") : "",
+    multiple: param.type === "configuration" ? param.multiple : false,
+    defaultConfigurations:
+      param.type === "configuration" ? param.default.map(String) : [],
   }));
 }
 
@@ -71,6 +87,17 @@ export function rowsToParams(rows: ExecutionParamRow[]): ExecutionParam[] {
         values: row.values,
         default: row.defaultMulti,
       });
+    } else if (row.type === "configuration") {
+      const ids = row.defaultConfigurations
+        .map(Number)
+        .filter((id) => Number.isInteger(id) && id > 0);
+      out.push({
+        name,
+        label,
+        type: "configuration",
+        multiple: row.multiple,
+        default: row.multiple ? ids : ids.slice(0, 1),
+      });
     } else {
       const text = row.defaultText;
       out.push({
@@ -93,7 +120,42 @@ function emptyRow(): ExecutionParamRow {
     defaultSelect: "",
     defaultMulti: [],
     defaultText: "",
+    multiple: false,
+    defaultConfigurations: [],
   };
+}
+
+/** Radix Select cannot represent "nothing chosen" as an item value. */
+const NO_DEFAULT = "__none__";
+
+/**
+ * The configurations assigned to a project, as the pickers need them.
+ * Fetched only while a row of the configuration kind exists.
+ */
+export function useProjectConfigurationOptions(
+  projectId: number,
+  enabled: boolean
+) {
+  const { data, isLoading } = useClientQueries(
+    schema
+  ).configurations.useFindMany(
+    {
+      where: {
+        isDeleted: false,
+        isEnabled: true,
+        projects: { some: { projectId } },
+      },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    },
+    { enabled: enabled && projectId > 0 }
+  );
+  return useMemo(() => {
+    const rows = data ?? [];
+    const labels: Record<string, string> = {};
+    for (const row of rows) labels[String(row.id)] = row.name;
+    return { values: Object.keys(labels), labels, isLoading };
+  }, [data, isLoading]);
 }
 
 interface ValuesInputProps {
@@ -173,6 +235,7 @@ function ValuesInput({
 }
 
 interface ExecutionParamsEditorProps {
+  projectId: number;
   rows: ExecutionParamRow[];
   onChange: (rows: ExecutionParamRow[]) => void;
   disabled?: boolean;
@@ -185,6 +248,7 @@ interface ExecutionParamsEditorProps {
  * are filled in per execution.
  */
 export function ExecutionParamsEditor({
+  projectId,
   rows,
   onChange,
   disabled,
@@ -193,6 +257,10 @@ export function ExecutionParamsEditor({
   const t = useTranslations("automation.settings");
   const tCommon = useTranslations("common");
   const tParameters = useTranslations("parameters");
+  const configurations = useProjectConfigurationOptions(
+    projectId,
+    rows.some((row) => row.type === "configuration")
+  );
 
   const update = (index: number, patch: Partial<ExecutionParamRow>) =>
     onChange(rows.map((r, i) => (i === index ? { ...r, ...patch } : r)));
@@ -281,7 +349,93 @@ export function ExecutionParamsEditor({
               </Button>
             </div>
 
-            {row.type === "text" ? (
+            {row.type === "configuration" ? (
+              <div className="space-y-2">
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <Label>{tCommon("fields.default")}</Label>
+                    {row.multiple ? (
+                      <StaticValuesMultiSelect
+                        values={configurations.values}
+                        labels={configurations.labels}
+                        selected={row.defaultConfigurations.filter((id) =>
+                          configurations.values.includes(id)
+                        )}
+                        onChange={(selected) =>
+                          update(index, { defaultConfigurations: selected })
+                        }
+                        placeholder={t("parameterDefaultNone")}
+                        ariaLabel={tCommon("fields.default")}
+                        disabled={
+                          disabled || configurations.values.length === 0
+                        }
+                        testId={`${prefix}-default`}
+                      />
+                    ) : (
+                      <Select
+                        value={
+                          row.defaultConfigurations[0] &&
+                          configurations.values.includes(
+                            row.defaultConfigurations[0]
+                          )
+                            ? row.defaultConfigurations[0]
+                            : NO_DEFAULT
+                        }
+                        onValueChange={(v) =>
+                          update(index, {
+                            defaultConfigurations: v === NO_DEFAULT ? [] : [v],
+                          })
+                        }
+                        disabled={
+                          disabled || configurations.values.length === 0
+                        }
+                      >
+                        <SelectTrigger data-testid={`${prefix}-default`}>
+                          <SelectValue
+                            placeholder={t("parameterDefaultNone")}
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={NO_DEFAULT}>
+                            {t("parameterDefaultNone")}
+                          </SelectItem>
+                          {configurations.values.map((id) => (
+                            <SelectItem key={id} value={id}>
+                              {configurations.labels[id]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
+                  <label className="flex items-center gap-2 pt-6 text-sm">
+                    <Checkbox
+                      checked={row.multiple}
+                      disabled={disabled}
+                      onCheckedChange={(v) =>
+                        update(index, {
+                          multiple: v === true,
+                          defaultConfigurations:
+                            v === true
+                              ? row.defaultConfigurations
+                              : row.defaultConfigurations.slice(0, 1),
+                        })
+                      }
+                      data-testid={`${prefix}-multiple`}
+                    />
+                    <span>{t("parameterConfigurationMultiple")}</span>
+                  </label>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {!configurations.isLoading &&
+                  configurations.values.length === 0
+                    ? t("parameterConfigurationNone")
+                    : t("parameterConfigurationHelp", {
+                        ...configurationInputKeys(row.name.trim() || "NAME"),
+                      })}
+                </p>
+              </div>
+            ) : row.type === "text" ? (
               <div className="space-y-1">
                 <Label htmlFor={`${prefix}-default`}>
                   {tCommon("fields.default")}

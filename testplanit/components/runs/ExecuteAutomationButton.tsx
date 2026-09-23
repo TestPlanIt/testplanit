@@ -201,6 +201,7 @@ export function ExecuteAutomationButton({
       <ExecuteAutomationDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
+        projectId={projectId}
         targets={enabledTargets}
         caseCount={caseCount}
         subset={subset !== null}

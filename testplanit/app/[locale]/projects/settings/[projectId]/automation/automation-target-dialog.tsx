@@ -587,7 +587,11 @@ export function AutomationTargetDialog({
 
           <div className="space-y-1.5">
             <Label>{tGlobal("parameters.tabParameters")}</Label>
-            <ExecutionParamsEditor rows={paramRows} onChange={setParamRows} />
+            <ExecutionParamsEditor
+              projectId={projectId}
+              rows={paramRows}
+              onChange={setParamRows}
+            />
             <p className="text-xs text-muted-foreground">
               {t("parametersHelp")}
             </p>

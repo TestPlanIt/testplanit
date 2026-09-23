@@ -7,6 +7,7 @@ import { getExecutionDispatchQueue } from "~/lib/queues";
 import { JOB_DISPATCH_EXECUTION } from "~/lib/queueNames";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { promoteRunToHybrid } from "~/lib/services/hybridRunProjection";
+import { resolveConfigurationParams } from "./configurationParams";
 import { dispatchExecution } from "./dispatch";
 import {
   describeInputError,
@@ -99,7 +100,6 @@ export async function requestExecution(params: {
       error: describeInputError(inputError),
     };
   }
-  const inputs = normalizeInputs(params.inputs);
   const caseIds = Array.from(new Set(params.caseIds ?? []));
 
   const target = await baseDb.executionTarget.findFirst({
@@ -132,6 +132,26 @@ export async function requestExecution(params: {
       error: "Execution target is disabled",
     };
   }
+
+  // A configuration parameter arrives as ids; the job gets the id, name
+  // and variants of each, resolved here against the project's assignments
+  // so the stored inputs (and the run metadata) already carry them.
+  const paramSchema = normalizeParamSchema(target.paramSchema);
+  const resolved = await resolveConfigurationParams(
+    baseDb,
+    params.projectId,
+    paramSchema,
+    normalizeInputs(params.inputs)
+  );
+  if (!resolved.ok) {
+    return {
+      ok: false,
+      status: 400,
+      code: "INVALID_INPUTS",
+      error: resolved.error,
+    };
+  }
+  const inputs = resolved.inputs;
 
   const rate = await checkDispatchRateLimit(params.projectId);
   if (!rate.allowed) {
@@ -217,7 +237,7 @@ export async function requestExecution(params: {
       // other values rewrites the same lines; every execution's own values
       // stay on its execution row.
       const metadata = runMetadataFromParams(
-        describeParamInputs(normalizeParamSchema(target.paramSchema), inputs)
+        describeParamInputs(paramSchema, inputs)
       );
       if (Object.keys(metadata).length > 0) {
         await tx.testRuns.update({

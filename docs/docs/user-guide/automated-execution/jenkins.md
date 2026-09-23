@@ -126,7 +126,7 @@ The stages read the plan with the CLI, run the planned tests, and report the out
 
    The `token` query parameter must match the token in the trigger.
 3. Optionally add **Variables**, static values sent under `inputs` with every dispatch (`ENV=staging` in the example above).
-4. Optionally add **Parameters** for the values a person should choose per execution. The example above expects one named `BROWSER` of type **Single choice** with the values `chrome`, `edge`, `firefox` and `safari` and the default `chrome`; the Execute dialog then shows a **Browser** drop-down and the job reads the choice from `$.inputs.BROWSER`.
+4. Optionally add **Parameters** for the values a person should choose per execution. The example above expects one named `BROWSER` of type **Single choice** with the values `chrome`, `edge`, `firefox` and `safari` and the default `chrome`; the Execute dialog then shows a **Browser** drop-down and the job reads the choice from `$.inputs.BROWSER`. A parameter of type **Configuration** offers the project's configurations instead; the job reads the choice from `$.inputs.<name>_ID`, `$.inputs.<name>` (the name) or `$.inputs.<name>_VARIANTS` (`Category=Variant` pairs).
 5. Save. The dialog shows the signing secret once; Jenkins does not use it, so you can close the dialog.
 6. Click **Verify**. For a generic target it checks the URL only and reminds you that only a real dispatch proves the receiver works.
 

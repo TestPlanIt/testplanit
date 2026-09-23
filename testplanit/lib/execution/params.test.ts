@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { ExecutionParam } from "./types";
 import {
+  configurationInputKeys,
   defaultParamValues,
   describeParamInputs,
   normalizeParamSchema,
   paramValuesFromInputs,
+  parseConfigurationIds,
   serializeParamValues,
   validateParamSchema,
 } from "./params";
@@ -28,6 +30,20 @@ const note: ExecutionParam = {
   label: "Note",
   type: "text",
   default: "nightly",
+};
+const config: ExecutionParam = {
+  name: "CONFIG",
+  label: "Configuration",
+  type: "configuration",
+  multiple: false,
+  default: [12],
+};
+const configs: ExecutionParam = {
+  name: "CONFIGS",
+  label: "Configurations",
+  type: "configuration",
+  multiple: true,
+  default: [12, 15],
 };
 
 describe("validateParamSchema", () => {
@@ -241,5 +257,147 @@ describe("describeParamInputs", () => {
     ]);
     expect(describeParamInputs([browser], null)).toEqual([]);
     expect(describeParamInputs([browser], "junk")).toEqual([]);
+  });
+});
+
+describe("configuration parameters", () => {
+  it("derives the three input keys from the parameter name", () => {
+    expect(configurationInputKeys("CONFIG")).toEqual({
+      id: "CONFIG_ID",
+      name: "CONFIG",
+      variants: "CONFIG_VARIANTS",
+    });
+  });
+
+  it("accepts a well-formed declaration of either arity", () => {
+    expect(validateParamSchema([config, configs])).toBeNull();
+    expect(
+      validateParamSchema([{ ...config, default: [] }, browser])
+    ).toBeNull();
+  });
+
+  it.each<[string, ExecutionParam[], Record<string, string>, string]>([
+    [
+      "more than one default on a single-choice parameter",
+      [{ ...config, default: [12, 15] }],
+      {},
+      "DEFAULT_NOT_SINGLE",
+    ],
+    [
+      "a repeated default",
+      [{ ...configs, default: [12, 12] }],
+      {},
+      "VALUES_DUPLICATE",
+    ],
+    [
+      "a parameter named like a derived key",
+      [config, { ...browser, name: "CONFIG_ID" }],
+      {},
+      "NAME_DUPLICATE",
+    ],
+    [
+      "a static input named like a derived key",
+      [config],
+      { CONFIG_VARIANTS: "x" },
+      "NAME_COLLIDES_WITH_INPUT",
+    ],
+  ])("rejects %s", (_label, params, statics, code) => {
+    expect(validateParamSchema(params, statics)?.code).toBe(code);
+  });
+
+  it("counts a configuration parameter as three inputs against the cap", () => {
+    const statics = Object.fromEntries(
+      Array.from({ length: 17 }, (_, i) => [`S${i}`, "v"])
+    );
+    expect(validateParamSchema([config], statics)).toBeNull();
+    expect(validateParamSchema([config], { ...statics, S17: "v" })?.code).toBe(
+      "TOO_MANY_INPUTS"
+    );
+  });
+
+  it("normalizes a stored declaration, trimming a single-choice default to one id", () => {
+    expect(
+      normalizeParamSchema([
+        {
+          name: "CONFIG",
+          label: "Configuration",
+          type: "configuration",
+          default: [3, "x", 4],
+        },
+        {
+          name: "CONFIGS",
+          type: "configuration",
+          multiple: true,
+          default: [3, 4],
+        },
+      ])
+    ).toEqual([
+      {
+        name: "CONFIG",
+        label: "Configuration",
+        type: "configuration",
+        multiple: false,
+        default: [3],
+      },
+      {
+        name: "CONFIGS",
+        label: "CONFIGS",
+        type: "configuration",
+        multiple: true,
+        default: [3, 4],
+      },
+    ]);
+  });
+
+  it("parses stored ids leniently", () => {
+    expect(parseConfigurationIds("12, 15,x,12,0")).toEqual([12, 15]);
+    expect(parseConfigurationIds("")).toEqual([]);
+    expect(parseConfigurationIds(undefined)).toEqual([]);
+  });
+
+  it("starts from the default ids, as strings, and sends them under the _ID key", () => {
+    const values = defaultParamValues([config, configs]);
+    expect(values).toEqual({ CONFIG: "12", CONFIGS: ["12", "15"] });
+    expect(serializeParamValues([config, configs], values)).toEqual({
+      CONFIG_ID: "12",
+      CONFIGS_ID: "12,15",
+    });
+    expect(
+      serializeParamValues([config, configs], { CONFIG: "", CONFIGS: [] })
+    ).toEqual({ CONFIG_ID: "12", CONFIGS_ID: "12,15" });
+  });
+
+  it("seeds a retry from the stored _ID input, not the resolved name", () => {
+    expect(
+      paramValuesFromInputs([config, configs], {
+        CONFIG: "Chrome on Windows",
+        CONFIG_ID: "20",
+        CONFIGS_ID: "21,22",
+      })
+    ).toEqual({ CONFIG: "20", CONFIGS: ["21", "22"] });
+  });
+
+  it("describes a resolved configuration by name and folds its derived keys in", () => {
+    expect(
+      describeParamInputs([config, browser], {
+        CONFIG_ID: "12",
+        CONFIG: "Chrome on Windows",
+        CONFIG_VARIANTS: "Browser=Chrome,OS=Windows 11",
+        BROWSER: "edge",
+      })
+    ).toEqual([
+      {
+        name: "CONFIG",
+        label: "Configuration",
+        values: ["Chrome on Windows"],
+        declared: true,
+      },
+      { name: "BROWSER", label: "Browser", values: ["edge"], declared: true },
+    ]);
+    expect(
+      describeParamInputs([config], { CONFIG_ID: "", CONFIG: "" })
+    ).toEqual([
+      { name: "CONFIG", label: "Configuration", values: [], declared: true },
+    ]);
   });
 });

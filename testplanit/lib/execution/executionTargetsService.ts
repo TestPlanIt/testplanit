@@ -11,6 +11,7 @@ import {
   normalizeInputs,
   validateCustomInputs,
 } from "~/lib/execution/inputs";
+import { findAssignedConfigurations } from "~/lib/execution/configurationParams";
 import {
   describeParamError,
   MAX_PARAM_LABEL_LENGTH,
@@ -83,6 +84,14 @@ const executionParamSchema = z.discriminatedUnion("type", [
       ...paramBaseShape,
       type: z.literal("text"),
       default: paramValueSchema.optional(),
+    })
+    .strict(),
+  z
+    .object({
+      ...paramBaseShape,
+      type: z.literal("configuration"),
+      multiple: z.boolean(),
+      default: z.array(z.number().int().positive()).max(MAX_PARAM_VALUES),
     })
     .strict(),
 ]);
@@ -229,6 +238,30 @@ async function validateShape(
       errorCode: `automation.settings.errors.${PARAM_ERROR_CODES[paramErr.code]}`,
       error: describeParamError(paramErr),
     };
+  }
+  // A configuration default must be one the execute dialog will offer:
+  // assigned to this project, enabled and live. Checked at save time so
+  // the first execution does not fail on a stale default.
+  const defaultIds = Array.from(
+    new Set(
+      (input.paramSchema ?? []).flatMap((p) =>
+        p.type === "configuration" ? p.default : []
+      )
+    )
+  );
+  if (defaultIds.length > 0) {
+    const assigned = await findAssignedConfigurations(
+      baseDb,
+      projectId,
+      defaultIds
+    );
+    const missing = defaultIds.find((id) => !assigned.has(id));
+    if (missing !== undefined) {
+      return {
+        errorCode: "automation.settings.errors.paramConfigurationNotAssigned",
+        error: `Configuration ${missing} is not assigned to this project`,
+      };
+    }
   }
   if (input.provider === "GENERIC_WEBHOOK") {
     if (!input.url) {
