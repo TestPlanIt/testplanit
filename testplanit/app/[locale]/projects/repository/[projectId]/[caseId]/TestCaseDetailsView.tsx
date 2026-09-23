@@ -119,7 +119,12 @@ import {
   type CaseDraftExtras,
 } from "~/lib/services/caseDraft";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import { RunAutomatedCaseButton } from "@/components/cases/RunAutomatedCaseButton";
+import {
+  RunAutomatedCaseButton,
+  RunAutomatedCaseDialog,
+  RunAutomatedCaseMenuItem,
+  useRunAutomatedCaseTargets,
+} from "@/components/cases/RunAutomatedCaseButton";
 import { useFindFirstRepositoryCasesFiltered } from "~/hooks/useRepositoryCasesWithFilteredFields";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 import { Link, useRouter } from "~/lib/navigation";
@@ -444,6 +449,8 @@ export function TestCaseDetailsView({
   // Controlled activity-log sheet, opened from the compact kebab menu (the
   // sheet must live outside the menu, which unmounts its children on close).
   const [isCaseAuditOpen, setIsCaseAuditOpen] = useState(false);
+  // Same for the ad-hoc automated-execution dialog opened from that menu.
+  const [isRunAutomatedOpen, setIsRunAutomatedOpen] = useState(false);
   // Compact header: below a rendered width (e.g. the docked side panel) the
   // action buttons collapse into a kebab menu. Measured via ResizeObserver on
   // the form root so it reflects the actual pane width in any context.
@@ -844,6 +851,12 @@ export function TestCaseDetailsView({
   );
 
   const testcase = data as any as ExtendedCases;
+
+  const runAutomatedTargets = useRunAutomatedCaseTargets(
+    Number(projectId),
+    Boolean(testcase?.automated),
+    canExecuteAutomation
+  );
 
   const { data: folders, isLoading: isFoldersLoading } = useClientQueries(
     schema
@@ -2508,14 +2521,11 @@ export function TestCaseDetailsView({
                               <span>{t("common.pageTitles.quickscript")}</span>
                             </DropdownMenuItem>
                           )}
-                          <RunAutomatedCaseButton
-                            projectId={Number(projectId)}
-                            caseId={testcase.id}
-                            caseTitle={testcase.name}
-                            automated={Boolean(testcase.automated)}
-                            canExecute={canExecuteAutomation}
-                            variant="menu-item"
-                          />
+                          {runAutomatedTargets.length > 0 && (
+                            <RunAutomatedCaseMenuItem
+                              onSelect={() => setIsRunAutomatedOpen(true)}
+                            />
+                          )}
                           <DropdownMenuItem
                             className="flex items-center cursor-pointer"
                             onClick={() => setIsCaseAuditOpen(true)}
@@ -2572,14 +2582,24 @@ export function TestCaseDetailsView({
                           )}
                         </DropdownMenuContent>
                       </DropdownMenu>
-                      {/* Sheet lives outside the menu so it survives the menu
-                          closing on item select. */}
+                      {/* Sheet and dialog live outside the menu so they
+                          survive the menu closing on item select. */}
                       <RepositoryCaseAuditLogSheet
                         caseId={testcase.id}
                         open={isCaseAuditOpen}
                         onOpenChange={setIsCaseAuditOpen}
                         hideTrigger
                       />
+                      {runAutomatedTargets.length > 0 && (
+                        <RunAutomatedCaseDialog
+                          projectId={Number(projectId)}
+                          caseId={testcase.id}
+                          caseTitle={testcase.name}
+                          targets={runAutomatedTargets}
+                          open={isRunAutomatedOpen}
+                          onOpenChange={setIsRunAutomatedOpen}
+                        />
+                      )}
                     </div>
                   ) : (
                     <div className="flex items-center space-x-2 justify-end">
@@ -2597,7 +2617,6 @@ export function TestCaseDetailsView({
                         caseTitle={testcase.name}
                         automated={Boolean(testcase.automated)}
                         canExecute={canExecuteAutomation}
-                        variant="button"
                       />
                       {quickScriptEnabled && canAddEdit && (
                         <Button

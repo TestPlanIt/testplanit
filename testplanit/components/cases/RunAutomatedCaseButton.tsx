@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { FilePlay } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "~/lib/navigation";
 import type { ExecutionTargetChoice } from "~/app/actions/execution-targets";
@@ -20,7 +20,6 @@ interface Props {
   caseTitle: string;
   automated: boolean;
   canExecute: boolean;
-  variant: "menu-item" | "button";
 }
 
 interface DialogProps {
@@ -86,11 +85,57 @@ export function RunAutomatedCaseDialog({
   );
 }
 
+const NO_TARGETS: ExecutionTargetChoice[] = [];
+
 /**
- * Ad-hoc execution of one automated case: creates a run holding just this
- * case and dispatches it. Renders nothing unless the case is automated, the
- * viewer may create runs, record results and trigger automation, and the
- * project has an enabled target.
+ * The enabled execution targets an ad-hoc run of this case may use; empty
+ * (so nothing should render) unless the case is automated, the viewer may
+ * create runs, record results and trigger automation, and the project has
+ * an enabled target.
+ */
+export function useRunAutomatedCaseTargets(
+  projectId: number,
+  automated: boolean,
+  canExecute: boolean
+): ExecutionTargetChoice[] {
+  const { data: targets } = useExecutionTargetChoices(
+    projectId,
+    automated && canExecute
+  );
+  return useMemo(() => {
+    if (!automated || !canExecute) return NO_TARGETS;
+    const enabled = (targets ?? []).filter((x) => x.isEnabled);
+    return enabled.length > 0 ? enabled : NO_TARGETS;
+  }, [targets, automated, canExecute]);
+}
+
+/**
+ * The trigger alone, for a dropdown menu. The host owns the dialog and must
+ * render it OUTSIDE the menu: menu content unmounts on item select, which
+ * would take a dialog rendered beside this item down with it.
+ */
+export function RunAutomatedCaseMenuItem({
+  onSelect,
+}: {
+  onSelect: () => void;
+}) {
+  const t = useTranslations("automation.adhoc");
+  return (
+    <DropdownMenuItem
+      className="flex items-center cursor-pointer"
+      onSelect={onSelect}
+      data-testid="run-automated-case-button"
+    >
+      <FilePlay className="me-2 h-4 w-4" />
+      <span>{t("button")}</span>
+    </DropdownMenuItem>
+  );
+}
+
+/**
+ * Ad-hoc execution of one automated case as a standalone button that owns
+ * its dialog: creates a run holding just this case and dispatches it.
+ * Renders nothing unless {@link useRunAutomatedCaseTargets} yields a target.
  */
 export function RunAutomatedCaseButton({
   projectId,
@@ -98,29 +143,15 @@ export function RunAutomatedCaseButton({
   caseTitle,
   automated,
   canExecute,
-  variant,
 }: Props) {
   const t = useTranslations("automation.adhoc");
   const [open, setOpen] = useState(false);
-  const { data: targets } = useExecutionTargetChoices(
-    projectId,
-    automated && canExecute
-  );
-  const enabledTargets = (targets ?? []).filter((x) => x.isEnabled);
+  const targets = useRunAutomatedCaseTargets(projectId, automated, canExecute);
 
-  if (!automated || !canExecute || enabledTargets.length === 0) return null;
+  if (targets.length === 0) return null;
 
-  const trigger =
-    variant === "menu-item" ? (
-      <DropdownMenuItem
-        className="flex items-center cursor-pointer"
-        onSelect={() => setOpen(true)}
-        data-testid="run-automated-case-button"
-      >
-        <FilePlay className="me-2 h-4 w-4" />
-        <span>{t("button")}</span>
-      </DropdownMenuItem>
-    ) : (
+  return (
+    <>
       <Button
         type="button"
         variant="outline"
@@ -133,16 +164,11 @@ export function RunAutomatedCaseButton({
           {t("button")}
         </span>
       </Button>
-    );
-
-  return (
-    <>
-      {trigger}
       <RunAutomatedCaseDialog
         projectId={projectId}
         caseId={caseId}
         caseTitle={caseTitle}
-        targets={enabledTargets}
+        targets={targets}
         open={open}
         onOpenChange={setOpen}
       />
