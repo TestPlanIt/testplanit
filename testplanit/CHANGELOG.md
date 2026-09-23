@@ -1,3 +1,9 @@
+## [1.1.0-beta.20](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.19...v1.1.0-beta.20) (2026-09-23)
+
+### Enhancements
+
+* **automation:** let admins CRUD execution targets via API tokens ([df4cfbf](https://github.com/TestPlanIt/testplanit/commit/df4cfbf4b1024dec61f6a6deae30f00a832985dd))
+
 ## [1.1.0-beta.19](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.18...v1.1.0-beta.19) (2026-09-23)
 
 ### Bug Fixes
