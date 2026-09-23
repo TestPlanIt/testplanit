@@ -13,6 +13,8 @@ import {
   normalizeInputs,
   validateCustomInputs,
 } from "./inputs";
+import { describeParamInputs, normalizeParamSchema } from "./params";
+import { mergeRunMetadataIntoDoc, runMetadataFromParams } from "./runMetadata";
 import { buildAutomationPlan } from "./plan";
 import { checkDispatchRateLimit } from "./rateLimit";
 import {
@@ -106,7 +108,13 @@ export async function requestExecution(params: {
       projectId: params.projectId,
       isDeleted: false,
     },
-    select: { id: true, provider: true, isEnabled: true, defaultRef: true },
+    select: {
+      id: true,
+      provider: true,
+      isEnabled: true,
+      defaultRef: true,
+      paramSchema: true,
+    },
   });
   if (!target) {
     return {
@@ -146,7 +154,7 @@ export async function requestExecution(params: {
           isDeleted: false,
           projectId: params.projectId,
         },
-        select: { id: true, isCompleted: true, testRunType: true },
+        select: { id: true, isCompleted: true, testRunType: true, docs: true },
       });
       if (!run) {
         throw new RequestExecutionError(
@@ -203,6 +211,22 @@ export async function requestExecution(params: {
           adHoc: params.adHoc ?? false,
         },
       });
+      // The parameter choices become run metadata (bold "Label: value"
+      // lines in the run's docs, the shape the reporters write), so the run
+      // itself says what it was executed with. Merged by key: a retry with
+      // other values rewrites the same lines; every execution's own values
+      // stay on its execution row.
+      const metadata = runMetadataFromParams(
+        describeParamInputs(normalizeParamSchema(target.paramSchema), inputs)
+      );
+      if (Object.keys(metadata).length > 0) {
+        await tx.testRuns.update({
+          where: { id: params.runId },
+          data: {
+            docs: JSON.stringify(mergeRunMetadataIntoDoc(run.docs, metadata)),
+          },
+        });
+      }
       await emitExecutionEvent(
         tx,
         EXECUTION_REQUESTED_EVENT,
