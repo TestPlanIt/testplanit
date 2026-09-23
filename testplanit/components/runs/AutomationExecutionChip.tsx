@@ -32,6 +32,7 @@ import { toast } from "sonner";
 import { ACTIVE_EXECUTION_STATUSES } from "~/lib/execution/types";
 import type { TestRunExecutionRow } from "~/hooks/useTestRunExecutions";
 import { AutomationExecutionsSheet } from "./AutomationExecutionsSheet";
+import { ExecutionInputsList, useExecutionInputs } from "./ExecutionInputsList";
 
 export function executionBadgeVariant(
   status: string
@@ -79,8 +80,16 @@ export function AutomationExecutionChip({
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelling, setCancelling] = useState(false);
 
-  const latest = executions[0];
+  const latest = executions[0] as TestRunExecutionRow | undefined;
+  const inputs = useExecutionInputs(latest);
   if (!latest) return null;
+
+  // The chosen values at a glance ("edge · smoke, regression"); the labels
+  // are in the tooltip.
+  const inputsSummary = inputs
+    .map((input) => input.values.join(", "))
+    .filter(Boolean)
+    .join(" · ");
 
   const isActive = ACTIVE_EXECUTION_STATUSES.includes(latest.status as never);
   const timeoutMinutes = latest.target?.timeoutMinutes;
@@ -137,6 +146,7 @@ export function AutomationExecutionChip({
       {latest.externalStatus && (
         <div>{t("externalStatus", { status: latest.externalStatus })}</div>
       )}
+      <ExecutionInputsList execution={latest} />
       {latest.resultsReceivedAt ? (
         <div>{t("resultsReceived")}</div>
       ) : isActive ? (
@@ -174,6 +184,14 @@ export function AutomationExecutionChip({
               {isActive && <Loader2 className="me-1 h-3 w-3 animate-spin" />}
               {statusLabel}
             </Badge>
+            {inputsSummary && (
+              <span
+                className="max-w-48 truncate text-xs text-muted-foreground"
+                data-testid="automation-execution-inputs-summary"
+              >
+                {inputsSummary}
+              </span>
+            )}
           </span>
         </TooltipTrigger>
         <TooltipContent className="max-w-sm">{detail}</TooltipContent>

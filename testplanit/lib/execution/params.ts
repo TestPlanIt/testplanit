@@ -1,4 +1,8 @@
-import { MAX_CUSTOM_INPUT_KEYS, MAX_INPUT_VALUE_LENGTH } from "./inputs";
+import {
+  MAX_CUSTOM_INPUT_KEYS,
+  MAX_INPUT_VALUE_LENGTH,
+  normalizeInputs,
+} from "./inputs";
 import {
   EXECUTION_PARAM_TYPES,
   RESERVED_INPUT_PREFIX,
@@ -270,6 +274,46 @@ export function serializeParamValues(
       out[param.name] =
         typeof value === "string" ? value : (param.default ?? "");
     }
+  }
+  return out;
+}
+
+/** One input of a stored execution, labelled for display. */
+export interface ParamInputDescription {
+  name: string;
+  label: string;
+  /** A multiselect's choices one by one; any other value as stored. */
+  values: string[];
+}
+
+/**
+ * Describe a stored execution's `inputs` for display: the target's declared
+ * parameters first, in schema order and under their labels, then any other
+ * input the request carried (an API caller's custom input) under its key.
+ * A declared parameter the execution did not send is left out: it was not
+ * chosen, and an older execution predates it.
+ */
+export function describeParamInputs(
+  params: ExecutionParam[],
+  inputs: unknown
+): ParamInputDescription[] {
+  const stored = normalizeInputs(inputs);
+  const out: ParamInputDescription[] = [];
+  const seen = new Set<string>();
+  for (const param of params) {
+    const value = stored[param.name];
+    if (typeof value !== "string") continue;
+    seen.add(param.name);
+    out.push({
+      name: param.name,
+      label: param.label,
+      values:
+        param.type === "multiselect" ? splitMultiselectValue(value) : [value],
+    });
+  }
+  for (const [name, value] of Object.entries(stored)) {
+    if (seen.has(name)) continue;
+    out.push({ name, label: name, values: [value] });
   }
   return out;
 }

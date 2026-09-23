@@ -93,7 +93,7 @@ Only cases marked **Automated** are listed. When `executionId` is passed (the CL
 | Timed out | No completion within the target's timeout (default 2 hours) |
 | Cancelled | Cancelled from the run page or by the provider |
 
-A run has at most one execution in flight. On the run page the execution chip shows the current state, who requested it, and a link to the job when the provider gives one; hovering it shows when TestPlanIt gives up waiting. **Cancel** marks the execution cancelled and asks the provider to stop the job when it can; **Retry** after a failure opens the dialog with the same target and branch; **Execution history** lists every execution of the run and stays available after the run is completed.
+A run has at most one execution in flight. On the run page the execution chip shows the current state, who requested it, the parameter values the execution was requested with, and a link to the job when the provider gives one; hovering it shows each parameter under its label and when TestPlanIt gives up waiting. **Cancel** marks the execution cancelled and asks the provider to stop the job when it can; **Retry** after a failure opens the dialog with the same target and branch; **Execution history** lists every execution of the run, with the parameters each was requested with, and stays available after the run is completed.
 
 Two [outbound webhook](webhooks.md) events accompany the lifecycle: `test_run.execution_requested` and `test_run.execution_completed`. Every request, dispatch and completion is also written to the [audit log](audit-logs.md).
 

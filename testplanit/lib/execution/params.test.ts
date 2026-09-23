@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { ExecutionParam } from "./types";
 import {
   defaultParamValues,
+  describeParamInputs,
   normalizeParamSchema,
   paramValuesFromInputs,
   serializeParamValues,
@@ -184,5 +185,37 @@ describe("dialog values", () => {
       BROWSER: "chrome",
       TAGS: "smoke",
     });
+  });
+});
+
+describe("describeParamInputs", () => {
+  it("labels declared parameters in schema order and splits multiselects", () => {
+    expect(
+      describeParamInputs([browser, tags], {
+        TAGS: "smoke,regression",
+        BROWSER: "edge",
+      })
+    ).toEqual([
+      { name: "BROWSER", label: "Browser", values: ["edge"] },
+      { name: "TAGS", label: "Tags", values: ["smoke", "regression"] },
+    ]);
+  });
+
+  it("appends undeclared inputs under their key and skips unsent parameters", () => {
+    expect(
+      describeParamInputs([browser, tags], { BROWSER: "edge", SUITE: "api" })
+    ).toEqual([
+      { name: "BROWSER", label: "Browser", values: ["edge"] },
+      { name: "SUITE", label: "SUITE", values: ["api"] },
+    ]);
+  });
+
+  it("keeps an empty text value and yields nothing for no inputs", () => {
+    const env = { name: "ENV", label: "Environment", type: "text" } as const;
+    expect(describeParamInputs([env], { ENV: "" })).toEqual([
+      { name: "ENV", label: "Environment", values: [""] },
+    ]);
+    expect(describeParamInputs([browser], null)).toEqual([]);
+    expect(describeParamInputs([browser], "junk")).toEqual([]);
   });
 });

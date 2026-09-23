@@ -39,6 +39,8 @@ export interface TestRunExecutionRow {
     name: string;
     provider: string;
     timeoutMinutes?: number;
+    /** The target's declared parameters, to label `inputs` for display. */
+    paramSchema?: unknown;
   } | null;
   requestedBy: { id: string; name: string | null; email: string | null } | null;
 }

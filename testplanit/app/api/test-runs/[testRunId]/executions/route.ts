@@ -50,8 +50,16 @@ export async function GET(
       resultsReceivedAt: true,
       completedAt: true,
       createdAt: true,
+      // paramSchema is choices and defaults only (no url, credentials or
+      // static inputs), so it is safe for everyone who can read the run.
       target: {
-        select: { id: true, name: true, provider: true, timeoutMinutes: true },
+        select: {
+          id: true,
+          name: true,
+          provider: true,
+          timeoutMinutes: true,
+          paramSchema: true,
+        },
       },
       requestedBy: { select: { id: true, name: true, email: true } },
     },

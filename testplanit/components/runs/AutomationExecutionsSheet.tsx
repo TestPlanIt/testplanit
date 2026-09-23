@@ -21,6 +21,7 @@ import { ExternalLink } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { TestRunExecutionRow } from "~/hooks/useTestRunExecutions";
 import { executionBadgeVariant } from "./AutomationExecutionChip";
+import { ExecutionInputsList } from "./ExecutionInputsList";
 
 interface Props {
   open: boolean;
@@ -59,6 +60,7 @@ export function AutomationExecutionsSheet({
                   <TableHead>{tGlobal("common.actions.status")}</TableHead>
                   <TableHead>{t("columnTarget")}</TableHead>
                   <TableHead>{t("columnRef")}</TableHead>
+                  <TableHead>{tGlobal("parameters.tabParameters")}</TableHead>
                   <TableHead>{t("columnCases")}</TableHead>
                   <TableHead>{t("columnRequested")}</TableHead>
                   <TableHead>{tGlobal("common.fields.completed")}</TableHead>
@@ -95,6 +97,12 @@ export function AutomationExecutionsSheet({
                     </TableCell>
                     <TableCell className="font-mono text-xs">
                       {execution.ref ?? "—"}
+                    </TableCell>
+                    <TableCell className="text-xs">
+                      <ExecutionInputsList
+                        execution={execution}
+                        className="space-y-0.5"
+                      />
                     </TableCell>
                     <TableCell className="text-sm">
                       {execution.selectionCount}
