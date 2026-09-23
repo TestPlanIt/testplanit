@@ -1,3 +1,15 @@
+## [1.1.0-beta.19](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.18...v1.1.0-beta.19) (2026-09-23)
+
+### Bug Fixes
+
+* **automation:** execute-automated dialog survives the docked case menu closing ([2993467](https://github.com/TestPlanIt/testplanit/commit/2993467a1bd7e5c795854e38f913d9afd620af8a))
+* **repository:** Estimate and Forecast columns sort with blanks last ([533ca27](https://github.com/TestPlanIt/testplanit/commit/533ca2776af75cf67acc8820b5ac5bc237cba89d))
+
+### Enhancements
+
+* **automation:** executing with parameters writes the choices into the run's documentation ([0956805](https://github.com/TestPlanIt/testplanit/commit/09568055d967adfdadd53dc1d6284a1c800afa0f))
+* **automation:** execution chip and history show the parameters an execution was requested with ([87e3c69](https://github.com/TestPlanIt/testplanit/commit/87e3c692fd41dbe4e641c1fb2cd0af0e04cbb37f))
+
 ## [1.1.0-beta.18](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.17...v1.1.0-beta.18) (2026-09-23)
 
 ### Enhancements
