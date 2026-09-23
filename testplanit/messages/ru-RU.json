@@ -6699,9 +6699,7 @@
   "components": {
     "notifications": {
       "empty": "Нет уведомлений",
-      "aria": {
-        "notifications": "Уведомления ({count, number} непрочитаны)"
-      },
+      "panelTitle": "{count, plural, =0 {Уведомления} one {# новое уведомление} few {# новых уведомления} many {# новых уведомлений} other {# новых уведомления}}",
       "actions": {
         "markRead": "Отметить как прочитанное",
         "markUnread": "Отметить как непрочитанное",

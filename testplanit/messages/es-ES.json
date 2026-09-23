@@ -6699,9 +6699,7 @@
   "components": {
     "notifications": {
       "empty": "Sin notificaciones",
-      "aria": {
-        "notifications": "Notificaciones ({count, number} no leídas)"
-      },
+      "panelTitle": "{count, plural, =0 {Notificaciones} one {# Notificación nueva} other {# Notificaciones nuevas}}",
       "actions": {
         "markRead": "Marcar como leído",
         "markUnread": "Marcar como no leído",

@@ -6699,9 +6699,7 @@
   "components": {
     "notifications": {
       "empty": "Keine Benachrichtigungen",
-      "aria": {
-        "notifications": "Benachrichtigungen ({count, number} ungelesen)"
-      },
+      "panelTitle": "{count, plural, =0 {Benachrichtigungen} one {# Neue Benachrichtigung} other {# Neue Benachrichtigungen}}",
       "actions": {
         "markRead": "Als gelesen markieren",
         "markUnread": "Als ungelesen markieren",

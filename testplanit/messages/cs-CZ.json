@@ -6699,9 +6699,7 @@
   "components": {
     "notifications": {
       "empty": "Žádná oznámení",
-      "aria": {
-        "notifications": "Oznámení ({count, number} nepřečtených)"
-      },
+      "panelTitle": "{count, plural, =0 {Oznámení} one {# Nové oznámení} few {# Nová oznámení} many {# Nového oznámení} other {# Nových oznámení}}",
       "actions": {
         "markRead": "Označit jako přečtené",
         "markUnread": "Označit jako nepřečtené",

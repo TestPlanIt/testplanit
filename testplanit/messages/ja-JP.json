@@ -6699,9 +6699,7 @@
   "components": {
     "notifications": {
       "empty": "通知なし",
-      "aria": {
-        "notifications": "通知（{count, number} 未読）"
-      },
+      "panelTitle": "{count, plural, =0 {通知} other {新着通知 #件}}",
       "actions": {
         "markRead": "既読にする",
         "markUnread": "未読としてマーク",

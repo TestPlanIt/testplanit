@@ -52,7 +52,12 @@ vi.mock("next-intl", () => ({
     const translations: Record<string, string> = {
       title: "Notifications",
       empty: "No notifications",
-      "aria.notifications": `Notifications (${values?.count || 0} unread)`,
+      panelTitle:
+        values?.count === 1
+          ? "1 New Notification"
+          : values?.count > 1
+            ? `${values.count} New Notifications`
+            : "Notifications",
       "actions.menu": "Actions",
       "actions.markRead": "Mark as read",
       "actions.markUnread": "Mark as unread",
@@ -106,7 +111,7 @@ describe("NotificationBell - openNotifications parameter", () => {
 
     // Wait for the dropdown to be visible
     await waitFor(() => {
-      expect(screen.getByText("Notifications")).toBeInTheDocument();
+      expect(screen.getByText("1 New Notification")).toBeInTheDocument();
       expect(screen.getByText("Test Notification 1")).toBeInTheDocument();
     });
   });
@@ -127,7 +132,7 @@ describe("NotificationBell - openNotifications parameter", () => {
     render(<NotificationBell />);
 
     // Dropdown should not be visible
-    expect(screen.queryByText("Notifications")).not.toBeInTheDocument();
+    expect(screen.queryByText("1 New Notification")).not.toBeInTheDocument();
     expect(screen.queryByText("Test Notification 1")).not.toBeInTheDocument();
   });
 

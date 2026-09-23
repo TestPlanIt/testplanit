@@ -319,7 +319,7 @@ export function NotificationBell({
       <div className="pt-4 px-4 pb-2 border-b-2">
         <h3 className="font-semibold">
           <Bell className="inline me-1 w-5 shrink-0" />
-          {tCommon("fields.notificationMode")}
+          {t("panelTitle", { count: unreadCount })}
         </h3>
         <div className="flex justify-between">
           <Button
@@ -436,7 +436,7 @@ export function NotificationBell({
             variant="ghost"
             size="icon"
             className="relative"
-            aria-label={t("aria.notifications", { count: unreadCount })}
+            aria-label={t("panelTitle", { count: unreadCount })}
             data-testid="notification-bell-button"
           >
             <Bell className="h-5 w-5" />

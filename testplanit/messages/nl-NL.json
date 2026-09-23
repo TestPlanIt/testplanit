@@ -6699,9 +6699,7 @@
   "components": {
     "notifications": {
       "empty": "Geen meldingen",
-      "aria": {
-        "notifications": "Meldingen ({count, number} ongelezen)"
-      },
+      "panelTitle": "{count, plural, =0 {Meldingen} one {# Nieuwe melding} other {# Nieuwe meldingen}}",
       "actions": {
         "markRead": "Markeer als gelezen",
         "markUnread": "Markeer als ongelezen",

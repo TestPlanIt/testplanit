@@ -6699,9 +6699,7 @@
   "components": {
     "notifications": {
       "empty": "Bildirim yok",
-      "aria": {
-        "notifications": "Bildirimler ({count, number} okunmamış)"
-      },
+      "panelTitle": "{count, plural, =0 {Bildirimler} one {# Yeni Bildirim} other {# Yeni Bildirim}}",
       "actions": {
         "markRead": "Okundu olarak işaretle",
         "markUnread": "Okunmamış olarak işaretle",

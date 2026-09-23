@@ -6699,9 +6699,7 @@
   "components": {
     "notifications": {
       "empty": "لا توجد إشعارات",
-      "aria": {
-        "notifications": "الإشعارات ({count, number} غير مقروءة)"
-      },
+      "panelTitle": "{count, plural, =0 {الإشعارات} one {# إشعار جديد} two {# إشعاران جديدان} few {# إشعارات جديدة} many {# إشعارًا جديدًا} other {# إشعار جديد}}",
       "actions": {
         "markRead": "وضع علامة كمقروء",
         "markUnread": "وضع علامة كغير مقروء",

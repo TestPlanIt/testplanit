@@ -6699,9 +6699,7 @@
   "components": {
     "notifications": {
       "empty": "알림 없음",
-      "aria": {
-        "notifications": "알림 ({count, number} 읽지 않음)"
-      },
+      "panelTitle": "{count, plural, =0 {알림} other {새 알림 #개}}",
       "actions": {
         "markRead": "읽음으로 표시",
         "markUnread": "읽지 않음으로 표시",

@@ -6699,9 +6699,7 @@
   "components": {
     "notifications": {
       "empty": "Không có thông báo",
-      "aria": {
-        "notifications": "Thông báo ({count, number} chưa đọc)"
-      },
+      "panelTitle": "{count, plural, =0 {Thông báo} other {# Thông báo mới}}",
       "actions": {
         "markRead": "Đánh dấu là đã đọc",
         "markUnread": "Đánh dấu là chưa đọc",
