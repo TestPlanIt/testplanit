@@ -1,3 +1,9 @@
+## [1.1.0-beta.18](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.17...v1.1.0-beta.18) (2026-09-23)
+
+### Enhancements
+
+* **automation:** execution targets declare parameters the dispatcher chooses at execute time ([b0998f2](https://github.com/TestPlanIt/testplanit/commit/b0998f2f80b61332ec74325f47301ce459a3cd95))
+
 ## [1.1.0-beta.17](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.16...v1.1.0-beta.17) (2026-09-18)
 
 ### Enhancements
