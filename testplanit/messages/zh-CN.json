@@ -7339,8 +7339,6 @@
       "title": "执行此自动化用例",
       "description": "TestPlanIt 会创建一个包含此用例的运行，请求目标执行它，并在作业完成时结束该运行。",
       "runName": "自动化：{title}",
-      "runCreated": "已请求执行",
-      "openRun": "打开运行",
       "notAutomated": "此用例未标记为自动化。"
     }
   },

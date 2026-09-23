@@ -7339,8 +7339,6 @@
       "title": "執行此自動化測試案例",
       "description": "TestPlanIt 會建立一個包含此測試案例的測試執行，要求目標執行它，並在作業完成時完成此測試執行。",
       "runName": "自動化：{title}",
-      "runCreated": "已請求執行",
-      "openRun": "開啟測試執行",
       "notAutomated": "此測試案例未標記為自動化。"
     }
   },

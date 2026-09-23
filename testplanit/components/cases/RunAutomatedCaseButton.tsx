@@ -5,8 +5,6 @@ import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { FilePlay } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
-import { toast } from "sonner";
-import { useRouter } from "~/lib/navigation";
 import type { ExecutionTargetChoice } from "~/app/actions/execution-targets";
 import { useExecutionTargetChoices } from "@/components/runs/ExecuteAutomationButton";
 import {
@@ -34,7 +32,7 @@ interface DialogProps {
 /**
  * The ad-hoc dialog on its own, for hosts that own the trigger (the
  * repository list's row menu). Creates a run holding just this case and
- * dispatches it; the toast offers to open the run.
+ * dispatches it; the dialog's success toast offers to open the run.
  */
 export function RunAutomatedCaseDialog({
   projectId,
@@ -46,7 +44,6 @@ export function RunAutomatedCaseDialog({
 }: DialogProps) {
   const t = useTranslations("automation.adhoc");
   const tExecute = useTranslations("automation.execute");
-  const router = useRouter();
   return (
     <ExecuteAutomationDialog
       open={open}
@@ -72,14 +69,7 @@ export function RunAutomatedCaseDialog({
           return readExecuteError(res, tExecute("dispatchFailed"));
         }
         const data = (await res.json()) as { runId: number };
-        toast.success(t("runCreated"), {
-          action: {
-            label: t("openRun"),
-            onClick: () =>
-              router.push(`/projects/runs/${projectId}/${data.runId}`),
-          },
-        });
-        return null;
+        return { createdRun: { projectId, runId: data.runId } };
       }}
     />
   );

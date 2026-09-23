@@ -7339,8 +7339,6 @@
       "title": "Exécuter ce cas automatisé",
       "description": "TestPlanIt crée une exécution contenant ce cas, demande à la cible de l'exécuter, et termine l'exécution lorsque le job se termine.",
       "runName": "Automatisé : {title}",
-      "runCreated": "Exécution demandée",
-      "openRun": "Ouvrir l'exécution",
       "notAutomated": "Ce cas n'est pas marqué comme automatisé."
     }
   },

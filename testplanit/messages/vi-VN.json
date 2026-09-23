@@ -7339,8 +7339,6 @@
       "title": "Thực thi trường hợp tự động này",
       "description": "TestPlanIt tạo một lượt chạy chứa trường hợp này, yêu cầu đích thực thi nó, và hoàn thành lượt chạy khi công việc kết thúc.",
       "runName": "Tự động: {title}",
-      "runCreated": "Đã yêu cầu thực thi",
-      "openRun": "Mở lượt chạy",
       "notAutomated": "Trường hợp này không được đánh dấu là tự động."
     }
   },

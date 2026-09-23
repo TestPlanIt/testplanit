@@ -7339,8 +7339,6 @@
       "title": "Diesen automatisierten Fall ausführen",
       "description": "TestPlanIt erstellt einen Testlauf, der diesen Fall enthält, bittet das Ziel, ihn auszuführen, und schließt den Testlauf ab, sobald der Job beendet ist.",
       "runName": "Automatisiert: {title}",
-      "runCreated": "Ausführung angefordert",
-      "openRun": "Testlauf öffnen",
       "notAutomated": "Dieser Fall ist nicht als automatisiert markiert."
     }
   },

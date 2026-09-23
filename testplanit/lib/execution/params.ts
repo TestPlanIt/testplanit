@@ -284,14 +284,22 @@ export interface ParamInputDescription {
   label: string;
   /** A multiselect's choices one by one; any other value as stored. */
   values: string[];
+  /** Chosen through a parameter the target declares (vs. sent some other way). */
+  declared: boolean;
 }
 
 /**
  * Describe a stored execution's `inputs` for display: the target's declared
  * parameters first, in schema order and under their labels, then any other
- * input the request carried (an API caller's custom input) under its key.
- * A declared parameter the execution did not send is left out: it was not
- * chosen, and an older execution predates it.
+ * input the job received under its key. A declared parameter the execution
+ * did not send is left out: it was not chosen, and an older execution
+ * predates it.
+ *
+ * Before dispatch the stored inputs are the request's own (the parameter
+ * choices); the dispatcher then stores the full set it sent, which adds the
+ * target's static inputs and the reserved TESTPLANIT_* identifiers. The
+ * identifiers are dropped here: they are the run, execution and plan URL the
+ * page already shows.
  */
 export function describeParamInputs(
   params: ExecutionParam[],
@@ -309,11 +317,13 @@ export function describeParamInputs(
       label: param.label,
       values:
         param.type === "multiselect" ? splitMultiselectValue(value) : [value],
+      declared: true,
     });
   }
   for (const [name, value] of Object.entries(stored)) {
     if (seen.has(name)) continue;
-    out.push({ name, label: name, values: [value] });
+    if (name.toUpperCase().startsWith(RESERVED_INPUT_PREFIX)) continue;
+    out.push({ name, label: name, values: [value], declared: false });
   }
   return out;
 }

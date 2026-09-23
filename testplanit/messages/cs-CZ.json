@@ -7339,8 +7339,6 @@
       "title": "Spustit tento automatizovaný případ",
       "description": "TestPlanIt vytvoří běh obsahující tento případ, požádá cíl o jeho spuštění a dokončí běh po dokončení úlohy.",
       "runName": "Automatizováno: {title}",
-      "runCreated": "Spuštění vyžádáno",
-      "openRun": "Otevřít běh",
       "notAutomated": "Tento případ není označen jako automatizovaný."
     }
   },

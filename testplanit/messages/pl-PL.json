@@ -7339,8 +7339,6 @@
       "title": "Wykonaj ten automatyczny przypadek",
       "description": "TestPlanIt tworzy przebieg zawierający ten przypadek, prosi cel o jego wykonanie i kończy przebieg, gdy zadanie się zakończy.",
       "runName": "Automatyczny: {title}",
-      "runCreated": "Zażądano wykonania",
-      "openRun": "Otwórz przebieg",
       "notAutomated": "Ten przypadek nie jest oznaczony jako automatyczny."
     }
   },

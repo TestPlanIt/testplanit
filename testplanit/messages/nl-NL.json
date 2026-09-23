@@ -7339,8 +7339,6 @@
       "title": "Dit geautomatiseerde testgeval uitvoeren",
       "description": "TestPlanIt maakt een run aan met dit testgeval, vraagt het doel om het uit te voeren en voltooit de run wanneer de taak is afgerond.",
       "runName": "Geautomatiseerd: {title}",
-      "runCreated": "Uitvoering aangevraagd",
-      "openRun": "Run openen",
       "notAutomated": "Dit testgeval is niet gemarkeerd als geautomatiseerd."
     }
   },

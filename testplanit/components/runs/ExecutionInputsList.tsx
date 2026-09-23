@@ -40,7 +40,9 @@ export function ExecutionInputsList({
     <dl className={className} data-testid="automation-execution-inputs">
       {inputs.map((input) => (
         <div key={input.name} className="flex gap-1">
-          <dt className="shrink-0 text-muted-foreground">{input.label}:</dt>
+          {/* Opacity rather than a muted colour: this also renders inside
+              the chip's tooltip, on the tooltip background. */}
+          <dt className="shrink-0 opacity-75">{input.label}:</dt>
           <dd className="min-w-0 break-words">
             {input.values.length > 0 ? input.values.join(", ") : "—"}
           </dd>

@@ -7339,8 +7339,6 @@
       "title": "Bu otomatikleştirilmiş senaryoyu yürüt",
       "description": "TestPlanIt bu senaryoyu içeren bir çalıştırma oluşturur, hedeften onu yürütmesini ister ve iş tamamlandığında çalıştırmayı tamamlar.",
       "runName": "Otomatikleştirilmiş: {title}",
-      "runCreated": "Yürütme istendi",
-      "openRun": "Çalıştırmayı aç",
       "notAutomated": "Bu senaryo otomatikleştirilmiş olarak işaretlenmemiş."
     }
   },

@@ -86,14 +86,30 @@ function renderChip(executions: TestRunExecutionRow[]) {
 }
 
 describe("AutomationExecutionChip parameters", () => {
-  it("shows the chosen values inline and labels them in the tooltip", () => {
+  it("offers a parameters icon whose tooltip labels the chosen values", () => {
     renderChip([execution()]);
     expect(
-      screen.getByTestId("automation-execution-inputs-summary")
-    ).toHaveTextContent("edge · smoke, regression");
+      screen.getByTestId("automation-execution-inputs-trigger")
+    ).toBeInTheDocument();
     const list = screen.getByTestId("automation-execution-inputs");
     expect(list).toHaveTextContent("Browser:edge");
     expect(list).toHaveTextContent("Tags:smoke, regression");
+  });
+
+  it("lists other inputs the job received but never the reserved ids", () => {
+    renderChip([
+      execution({
+        inputs: {
+          BROWSER: "edge",
+          FAIL_EVERY: "3",
+          TESTPLANIT_RUN_ID: "60",
+        },
+      }),
+    ]);
+    const list = screen.getByTestId("automation-execution-inputs");
+    expect(list).toHaveTextContent("Browser:edge");
+    expect(list).toHaveTextContent("FAIL_EVERY:3");
+    expect(list).not.toHaveTextContent("TESTPLANIT_RUN_ID");
   });
 
   it("falls back to the input key when the target no longer declares it", () => {
@@ -108,10 +124,10 @@ describe("AutomationExecutionChip parameters", () => {
     );
   });
 
-  it("renders no parameter block for an execution without inputs", () => {
+  it("renders no parameters icon for an execution without inputs", () => {
     renderChip([execution({ inputs: {} })]);
     expect(
-      screen.queryByTestId("automation-execution-inputs-summary")
+      screen.queryByTestId("automation-execution-inputs-trigger")
     ).toBeNull();
     expect(screen.queryByTestId("automation-execution-inputs")).toBeNull();
   });

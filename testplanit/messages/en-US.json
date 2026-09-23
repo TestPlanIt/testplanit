@@ -7339,8 +7339,6 @@
       "title": "Execute this automated case",
       "description": "TestPlanIt creates a run holding this case, asks the target to execute it, and completes the run when the job finishes.",
       "runName": "Automated: {title}",
-      "runCreated": "Execution requested",
-      "openRun": "Open run",
       "notAutomated": "This case is not marked as automated."
     }
   },

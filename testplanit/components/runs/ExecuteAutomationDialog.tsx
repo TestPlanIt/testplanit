@@ -22,6 +22,7 @@ import { FilePlay, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useRouter } from "~/lib/navigation";
 import type { ExecutionTargetChoice } from "~/app/actions/execution-targets";
 import { StaticValuesMultiSelect } from "@/components/automation/StaticValuesMultiSelect";
 import {
@@ -37,6 +38,14 @@ export interface ExecuteRequest {
   inputs?: Record<string, string>;
 }
 
+/**
+ * What a host's `submit` resolves with: an error message to show, null on
+ * success, or the run an ad-hoc request created so the success toast can
+ * offer to open it.
+ */
+export type ExecuteSubmitResult =
+  string | null | { createdRun: { projectId: number; runId: number } };
+
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -51,8 +60,11 @@ interface Props {
   runId: number | null;
   title?: string;
   description?: string;
-  /** Performs the request; resolve with an error message to show, or null on success. */
-  submit: (req: ExecuteRequest) => Promise<string | null>;
+  /**
+   * Performs the request; resolve with an error message to show, null on
+   * success, or the created run for the success toast to offer to open.
+   */
+  submit: (req: ExecuteRequest) => Promise<ExecuteSubmitResult>;
   onDispatched?: () => void;
   /** Pre-select a target (retry). */
   initialTargetId?: number | null;
@@ -80,6 +92,7 @@ export function ExecuteAutomationDialog({
   const t = useTranslations("automation.execute");
   const tCommon = useTranslations("common");
   const tSearch = useTranslations("search");
+  const router = useRouter();
 
   const enabledTargets = useMemo(
     () => targets.filter((target) => target.isEnabled),
@@ -144,18 +157,34 @@ export function ExecuteAutomationDialog({
     setSubmitting(true);
     setError(null);
     try {
-      const message = await submit({
+      const result = await submit({
         targetId: selected.id,
         ref: ref.trim() || undefined,
         ...(params.length > 0
           ? { inputs: serializeParamValues(params, paramValues) }
           : {}),
       });
-      if (message) {
-        setError(message);
+      if (typeof result === "string") {
+        setError(result);
         return;
       }
-      toast.success(t("dispatched"));
+      // One toast per request: when a run was created for it, the toast
+      // is also the way to get there.
+      const createdRun = result?.createdRun;
+      toast.success(
+        t("dispatched"),
+        createdRun
+          ? {
+              action: {
+                label: tCommon("labels.viewTestRunDetails"),
+                onClick: () =>
+                  router.push(
+                    `/projects/runs/${createdRun.projectId}/${createdRun.runId}`
+                  ),
+              },
+            }
+          : undefined
+      );
       onOpenChange(false);
       onDispatched?.();
     } finally {

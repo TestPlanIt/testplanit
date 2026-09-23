@@ -196,8 +196,13 @@ describe("describeParamInputs", () => {
         BROWSER: "edge",
       })
     ).toEqual([
-      { name: "BROWSER", label: "Browser", values: ["edge"] },
-      { name: "TAGS", label: "Tags", values: ["smoke", "regression"] },
+      { name: "BROWSER", label: "Browser", values: ["edge"], declared: true },
+      {
+        name: "TAGS",
+        label: "Tags",
+        values: ["smoke", "regression"],
+        declared: true,
+      },
     ]);
   });
 
@@ -205,15 +210,34 @@ describe("describeParamInputs", () => {
     expect(
       describeParamInputs([browser, tags], { BROWSER: "edge", SUITE: "api" })
     ).toEqual([
-      { name: "BROWSER", label: "Browser", values: ["edge"] },
-      { name: "SUITE", label: "SUITE", values: ["api"] },
+      { name: "BROWSER", label: "Browser", values: ["edge"], declared: true },
+      { name: "SUITE", label: "SUITE", values: ["api"], declared: false },
+    ]);
+  });
+
+  it("drops the reserved TESTPLANIT_* identifiers the dispatcher stores", () => {
+    expect(
+      describeParamInputs([browser], {
+        TESTPLANIT_RUN_ID: "60",
+        TESTPLANIT_PLAN_URL: "http://localhost/plan",
+        BROWSER: "edge",
+        FAIL_EVERY: "3",
+      })
+    ).toEqual([
+      { name: "BROWSER", label: "Browser", values: ["edge"], declared: true },
+      {
+        name: "FAIL_EVERY",
+        label: "FAIL_EVERY",
+        values: ["3"],
+        declared: false,
+      },
     ]);
   });
 
   it("keeps an empty text value and yields nothing for no inputs", () => {
     const env = { name: "ENV", label: "Environment", type: "text" } as const;
     expect(describeParamInputs([env], { ENV: "" })).toEqual([
-      { name: "ENV", label: "Environment", values: [""] },
+      { name: "ENV", label: "Environment", values: [""], declared: true },
     ]);
     expect(describeParamInputs([browser], null)).toEqual([]);
     expect(describeParamInputs([browser], "junk")).toEqual([]);

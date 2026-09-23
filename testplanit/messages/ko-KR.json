@@ -7339,8 +7339,6 @@
       "title": "이 자동화된 케이스 실행",
       "description": "TestPlanIt는 이 케이스를 포함하는 실행을 생성하고 대상에게 실행을 요청한 후 작업이 완료되면 실행을 종료합니다.",
       "runName": "자동화됨: {title}",
-      "runCreated": "실행이 요청되었습니다",
-      "openRun": "실행 열기",
       "notAutomated": "이 케이스는 자동화된 것으로 표시되지 않았습니다."
     }
   },
