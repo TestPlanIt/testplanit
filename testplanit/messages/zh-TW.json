@@ -7224,8 +7224,12 @@
       "parameterTypes": {
         "select": "單選",
         "multiselect": "多選",
-        "text": "文字"
+        "text": "文字",
+        "configuration": "配置"
       },
+      "parameterConfigurationMultiple": "允許選擇多個",
+      "parameterConfigurationHelp": "提供指派給此專案的配置。工作將以 {id}(識別碼)、{name}(名稱)及 {variants}(類別=變體配對)的形式接收所選項目。",
+      "parameterConfigurationNone": "此專案尚未指派任何配置。請先於管理員 → 配置中指派一個。",
       "parameterValues": "值",
       "parameterValuesPlaceholder": "輸入值並按 Enter 鍵",
       "parameterDefaultNone": "無預設值",
@@ -7287,6 +7291,8 @@
         "paramValueTooLong": "參數的值過長。",
         "paramValueHasSeparator": "多選參數的值不能包含逗號。",
         "paramDefaultNotInValues": "參數的預設值不在其值清單中。",
+        "paramDefaultNotSingle": "單選配置參數只能有一個預設值。",
+        "paramConfigurationNotAssigned": "配置參數的預設值未指派給此專案。",
         "tooManyInputs": "輸入項目過多：靜態輸入與參數合計上限為 20 個。"
       }
     },

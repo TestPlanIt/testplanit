@@ -7224,8 +7224,12 @@
       "parameterTypes": {
         "select": "Einzelauswahl",
         "multiselect": "Mehrfachauswahl",
-        "text": "Text"
+        "text": "Text",
+        "configuration": "Konfiguration"
       },
+      "parameterConfigurationMultiple": "Mehrfachauswahl erlauben",
+      "parameterConfigurationHelp": "Bietet die diesem Projekt zugewiesenen Konfigurationen an. Der Job erhält die Auswahl als {id} (die ID), {name} (den Namen) und {variants} (Kategorie=Variante-Paare).",
+      "parameterConfigurationNone": "Diesem Projekt ist keine Konfiguration zugewiesen. Weisen Sie zunächst eine unter Admin → Konfigurationen zu.",
       "parameterValues": "Werte",
       "parameterValuesPlaceholder": "Wert eingeben und Enter drücken",
       "parameterDefaultNone": "Kein Standardwert",
@@ -7287,6 +7291,8 @@
         "paramValueTooLong": "Ein Parameterwert ist zu lang.",
         "paramValueHasSeparator": "Werte eines Mehrfachauswahl-Parameters dürfen keine Kommas enthalten.",
         "paramDefaultNotInValues": "Der Standardwert eines Parameters ist keiner seiner Werte.",
+        "paramDefaultNotSingle": "Ein Konfigurationsparameter mit Einfachauswahl kann nur einen Standardwert haben.",
+        "paramConfigurationNotAssigned": "Der Standardwert eines Konfigurationsparameters ist diesem Projekt nicht zugewiesen.",
         "tooManyInputs": "Zu viele Eingaben: Statische Eingaben und Parameter sind zusammen auf 20 begrenzt."
       }
     },

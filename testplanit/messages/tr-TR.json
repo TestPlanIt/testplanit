@@ -7224,8 +7224,12 @@
       "parameterTypes": {
         "select": "Tekli seçim",
         "multiselect": "Çoklu seçim",
-        "text": "Metin"
+        "text": "Metin",
+        "configuration": "Yapılandırma"
       },
+      "parameterConfigurationMultiple": "Birden fazla seçime izin ver",
+      "parameterConfigurationHelp": "Bu projeye atanmış yapılandırmaları sunar. İş, seçimi {id} (kimlik), {name} (ad) ve {variants} (Kategori=Varyant çiftleri) olarak alır.",
+      "parameterConfigurationNone": "Bu projeye herhangi bir yapılandırma atanmamış. Önce Yönetim → Yapılandırmalar altında bir tane atayın.",
       "parameterValues": "Değerler",
       "parameterValuesPlaceholder": "Bir değer yazın ve Enter tuşuna basın",
       "parameterDefaultNone": "Varsayılan yok",
@@ -7287,6 +7291,8 @@
         "paramValueTooLong": "Bir parametre değeri çok uzun.",
         "paramValueHasSeparator": "Çoklu seçimli bir parametrenin değerleri virgül içeremez.",
         "paramDefaultNotInValues": "Bir parametrenin varsayılanı, kendi değerlerinden biri değil.",
+        "paramDefaultNotSingle": "Tek seçimli bir yapılandırma parametresinin yalnızca bir varsayılanı olabilir.",
+        "paramConfigurationNotAssigned": "Bir yapılandırma parametresinin varsayılanı bu projeye atanmamış.",
         "tooManyInputs": "Çok fazla girdi: statik girdiler ve parametreler toplamda 20 ile sınırlıdır."
       }
     },

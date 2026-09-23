@@ -7224,8 +7224,12 @@
       "parameterTypes": {
         "select": "Chọn một",
         "multiselect": "Chọn nhiều",
-        "text": "Văn bản"
+        "text": "Văn bản",
+        "configuration": "Cấu hình"
       },
+      "parameterConfigurationMultiple": "Cho phép chọn nhiều hơn một",
+      "parameterConfigurationHelp": "Cung cấp các cấu hình được gán cho dự án này. Công việc sẽ nhận lựa chọn dưới dạng {id} (mã), {name} (tên) và {variants} (các cặp Danh mục=Biến thể).",
+      "parameterConfigurationNone": "Không có cấu hình nào được gán cho dự án này. Vui lòng gán một cấu hình trong Quản trị → Cấu hình trước.",
       "parameterValues": "Giá trị",
       "parameterValuesPlaceholder": "Nhập giá trị và nhấn Enter",
       "parameterDefaultNone": "Không có mặc định",
@@ -7287,6 +7291,8 @@
         "paramValueTooLong": "Giá trị của tham số quá dài.",
         "paramValueHasSeparator": "Giá trị của tham số nhiều lựa chọn không được chứa dấu phẩy.",
         "paramDefaultNotInValues": "Giá trị mặc định của tham số không nằm trong các giá trị của nó.",
+        "paramDefaultNotSingle": "Tham số cấu hình chọn một chỉ có thể có một giá trị mặc định.",
+        "paramConfigurationNotAssigned": "Giá trị mặc định của tham số cấu hình chưa được gán cho dự án này.",
         "tooManyInputs": "Quá nhiều đầu vào: đầu vào tĩnh và tham số cộng lại bị giới hạn ở mức 20."
       }
     },

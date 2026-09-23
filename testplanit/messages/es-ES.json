@@ -7224,8 +7224,12 @@
       "parameterTypes": {
         "select": "Selección única",
         "multiselect": "Selección múltiple",
-        "text": "Texto"
+        "text": "Texto",
+        "configuration": "Configuración"
       },
+      "parameterConfigurationMultiple": "Permitir elegir más de uno",
+      "parameterConfigurationHelp": "Ofrece las configuraciones asignadas a este proyecto. El trabajo recibe la elección como {id} (el id), {name} (el nombre) y {variants} (pares Categoría=Variante).",
+      "parameterConfigurationNone": "No hay ninguna configuración asignada a este proyecto. Primero asigne una en Administración → Configuraciones.",
       "parameterValues": "Valores",
       "parameterValuesPlaceholder": "Escriba un valor y presione Enter",
       "parameterDefaultNone": "Sin valor predeterminado",
@@ -7287,6 +7291,8 @@
         "paramValueTooLong": "Un valor de parámetro es demasiado largo.",
         "paramValueHasSeparator": "Los valores de un parámetro de selección múltiple no pueden contener comas.",
         "paramDefaultNotInValues": "El valor predeterminado de un parámetro no está entre sus valores.",
+        "paramDefaultNotSingle": "Un parámetro de configuración de selección única solo puede tener un valor predeterminado.",
+        "paramConfigurationNotAssigned": "El valor predeterminado de un parámetro de configuración no está asignado a este proyecto.",
         "tooManyInputs": "Demasiadas entradas: las entradas estáticas y los parámetros juntos están limitados a 20."
       }
     },

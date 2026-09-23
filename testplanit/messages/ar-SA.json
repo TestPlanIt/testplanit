@@ -7224,8 +7224,12 @@
       "parameterTypes": {
         "select": "اختيار واحد",
         "multiselect": "اختيار متعدد",
-        "text": "نص"
+        "text": "نص",
+        "configuration": "التكوين"
       },
+      "parameterConfigurationMultiple": "السماح باختيار أكثر من واحد",
+      "parameterConfigurationHelp": "يوفر التكوينات المخصصة لهذا المشروع. تتلقى المهمة الاختيار كـ {id} (المعرف) و{name} (الاسم) و{variants} (أزواج الفئة=البديل).",
+      "parameterConfigurationNone": "لم يتم تعيين أي تكوين لهذا المشروع. قم بتعيين واحد ضمن الإدارة → التكوينات أولاً.",
       "parameterValues": "القيم",
       "parameterValuesPlaceholder": "اكتب قيمة واضغط Enter",
       "parameterDefaultNone": "بدون قيمة افتراضية",
@@ -7287,6 +7291,8 @@
         "paramValueTooLong": "قيمة أحد المعاملات طويلة جدًا.",
         "paramValueHasSeparator": "لا يمكن أن تحتوي قيم معامل الاختيار المتعدد على فواصل.",
         "paramDefaultNotInValues": "القيمة الافتراضية لأحد المعاملات ليست من ضمن قيمه.",
+        "paramDefaultNotSingle": "يمكن أن يحتوي معامل التكوين ذو الاختيار الواحد على قيمة افتراضية واحدة فقط.",
+        "paramConfigurationNotAssigned": "لم يتم تعيين القيمة الافتراضية لمعامل التكوين لهذا المشروع.",
         "tooManyInputs": "عدد كبير جدًا من المدخلات: يقتصر مجموع المدخلات الثابتة والمعاملات معًا على 20."
       }
     },

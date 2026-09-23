@@ -7224,8 +7224,12 @@
       "parameterTypes": {
         "select": "Pojedynczy wybór",
         "multiselect": "Wybór wielokrotny",
-        "text": "Tekst"
+        "text": "Tekst",
+        "configuration": "Konfiguracja"
       },
+      "parameterConfigurationMultiple": "Zezwól na wybór więcej niż jednej",
+      "parameterConfigurationHelp": "Oferuje konfiguracje przypisane do tego projektu. Zadanie otrzymuje wybór jako {id} (identyfikator), {name} (nazwa) oraz {variants} (pary Kategoria=Wariant).",
+      "parameterConfigurationNone": "Do tego projektu nie przypisano żadnej konfiguracji. Najpierw przypisz ją w sekcji Administrator → Konfiguracje.",
       "parameterValues": "Wartości",
       "parameterValuesPlaceholder": "Wpisz wartość i naciśnij Enter",
       "parameterDefaultNone": "Brak domyślnej",
@@ -7287,6 +7291,8 @@
         "paramValueTooLong": "Wartość parametru jest zbyt długa.",
         "paramValueHasSeparator": "Wartości parametru wielokrotnego wyboru nie mogą zawierać przecinków.",
         "paramDefaultNotInValues": "Wartość domyślna parametru nie znajduje się wśród jego wartości.",
+        "paramDefaultNotSingle": "Parametr konfiguracji z pojedynczym wyborem może mieć tylko jedną wartość domyślną.",
+        "paramConfigurationNotAssigned": "Wartość domyślna parametru konfiguracji nie jest przypisana do tego projektu.",
         "tooManyInputs": "Zbyt wiele danych wejściowych: statyczne dane wejściowe i parametry łącznie są ograniczone do 20."
       }
     },

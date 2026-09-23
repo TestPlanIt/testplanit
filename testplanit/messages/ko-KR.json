@@ -7224,8 +7224,12 @@
       "parameterTypes": {
         "select": "단일 선택",
         "multiselect": "다중 선택",
-        "text": "텍스트"
+        "text": "텍스트",
+        "configuration": "구성"
       },
+      "parameterConfigurationMultiple": "여러 개 선택 허용",
+      "parameterConfigurationHelp": "이 프로젝트에 할당된 구성을 제공합니다. 작업은 선택 항목을 {id}(ID), {name}(이름), {variants}(카테고리=변형 쌍)로 수신합니다.",
+      "parameterConfigurationNone": "이 프로젝트에 할당된 구성이 없습니다. 먼저 관리자 → 구성에서 하나를 할당하세요.",
       "parameterValues": "값",
       "parameterValuesPlaceholder": "값을 입력하고 Enter 키를 누르세요",
       "parameterDefaultNone": "기본값 없음",
@@ -7287,6 +7291,8 @@
         "paramValueTooLong": "매개변수 값이 너무 깁니다.",
         "paramValueHasSeparator": "다중 선택 매개변수의 값에는 쉼표를 포함할 수 없습니다.",
         "paramDefaultNotInValues": "매개변수의 기본값이 값 목록에 없습니다.",
+        "paramDefaultNotSingle": "단일 선택 구성 매개변수는 기본값을 하나만 가질 수 있습니다.",
+        "paramConfigurationNotAssigned": "구성 매개변수의 기본값이 이 프로젝트에 할당되어 있지 않습니다.",
         "tooManyInputs": "입력이 너무 많습니다: 정적 입력과 매개변수를 합쳐 최대 20개까지 가능합니다."
       }
     },

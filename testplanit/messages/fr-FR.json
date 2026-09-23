@@ -7224,8 +7224,12 @@
       "parameterTypes": {
         "select": "Choix unique",
         "multiselect": "Choix multiple",
-        "text": "Texte"
+        "text": "Texte",
+        "configuration": "Configuration"
       },
+      "parameterConfigurationMultiple": "Autoriser la sélection de plusieurs éléments",
+      "parameterConfigurationHelp": "Propose les configurations assignées à ce projet. Le job reçoit le choix sous forme de {id} (l'identifiant), {name} (le nom) et {variants} (paires Catégorie=Variante).",
+      "parameterConfigurationNone": "Aucune configuration n'est assignée à ce projet. Attribuez-en une d'abord dans Admin → Configurations.",
       "parameterValues": "Valeurs",
       "parameterValuesPlaceholder": "Saisissez une valeur et appuyez sur Entrée",
       "parameterDefaultNone": "Aucune valeur par défaut",
@@ -7287,6 +7291,8 @@
         "paramValueTooLong": "La valeur d'un paramètre est trop longue.",
         "paramValueHasSeparator": "Les valeurs d'un paramètre à choix multiple ne peuvent pas contenir de virgules.",
         "paramDefaultNotInValues": "La valeur par défaut d'un paramètre ne fait pas partie de ses valeurs.",
+        "paramDefaultNotSingle": "Un paramètre de configuration à choix unique ne peut avoir qu'une seule valeur par défaut.",
+        "paramConfigurationNotAssigned": "La valeur par défaut d'un paramètre de configuration n'est pas assignée à ce projet.",
         "tooManyInputs": "Trop d'entrées : les entrées statiques et les paramètres combinés sont limités à 20."
       }
     },

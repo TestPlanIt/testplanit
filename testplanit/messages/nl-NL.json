@@ -7224,8 +7224,12 @@
       "parameterTypes": {
         "select": "Enkele keuze",
         "multiselect": "Meerdere keuze",
-        "text": "Tekst"
+        "text": "Tekst",
+        "configuration": "Configuratie"
       },
+      "parameterConfigurationMultiple": "Meer dan één keuze toestaan",
+      "parameterConfigurationHelp": "Biedt de configuraties die aan dit project zijn toegewezen. De taak ontvangt de keuze als {id} (de id), {name} (de naam) en {variants} (Categorie=Variant paren).",
+      "parameterConfigurationNone": "Er is geen configuratie toegewezen aan dit project. Wijs er eerst een toe onder Beheer → Configuraties.",
       "parameterValues": "Waarden",
       "parameterValuesPlaceholder": "Typ een waarde en druk op Enter",
       "parameterDefaultNone": "Geen standaardwaarde",
@@ -7287,6 +7291,8 @@
         "paramValueTooLong": "Een parameterwaarde is te lang.",
         "paramValueHasSeparator": "Waarden van een meerkeuzeparameter mogen geen komma's bevatten.",
         "paramDefaultNotInValues": "De standaardwaarde van een parameter komt niet overeen met een van de waarden.",
+        "paramDefaultNotSingle": "Een configuratieparameter met enkele keuze kan slechts één standaardwaarde hebben.",
+        "paramConfigurationNotAssigned": "De standaardwaarde van een configuratieparameter is niet toegewezen aan dit project.",
         "tooManyInputs": "Te veel invoervelden: statische invoer en parameters samen zijn beperkt tot 20."
       }
     },

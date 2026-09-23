@@ -7224,8 +7224,12 @@
       "parameterTypes": {
         "select": "単一選択",
         "multiselect": "複数選択",
-        "text": "テキスト"
+        "text": "テキスト",
+        "configuration": "構成"
       },
+      "parameterConfigurationMultiple": "複数選択を許可",
+      "parameterConfigurationHelp": "このプロジェクトに割り当てられた構成を提供します。ジョブは選択結果を {id}(id)、{name}(名前)、{variants}(カテゴリ=バリアントのペア) として受け取ります。",
+      "parameterConfigurationNone": "このプロジェクトには構成が割り当てられていません。まず管理 → 構成で割り当ててください。",
       "parameterValues": "値",
       "parameterValuesPlaceholder": "値を入力してEnterキーを押します",
       "parameterDefaultNone": "デフォルトなし",
@@ -7287,6 +7291,8 @@
         "paramValueTooLong": "パラメーターの値が長すぎます。",
         "paramValueHasSeparator": "複数選択パラメーターの値にカンマを含めることはできません。",
         "paramDefaultNotInValues": "パラメーターのデフォルト値がその値のいずれにも含まれていません。",
+        "paramDefaultNotSingle": "単一選択の構成パラメータには、デフォルトをひとつだけ設定できます。",
+        "paramConfigurationNotAssigned": "構成パラメータのデフォルトがこのプロジェクトに割り当てられていません。",
         "tooManyInputs": "入力が多すぎます：静的入力とパラメーターを合わせて20個までに制限されています。"
       }
     },

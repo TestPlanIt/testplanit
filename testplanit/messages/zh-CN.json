@@ -7224,8 +7224,12 @@
       "parameterTypes": {
         "select": "单选",
         "multiselect": "多选",
-        "text": "文本"
+        "text": "文本",
+        "configuration": "配置"
       },
+      "parameterConfigurationMultiple": "允许选择多个",
+      "parameterConfigurationHelp": "提供分配给此项目的配置。作业将以 {id}（ID）、{name}（名称）和 {variants}（类别=变体对）的形式接收所选内容。",
+      "parameterConfigurationNone": "尚未为此项目分配任何配置。请先在管理员 → 配置下分配一个。",
       "parameterValues": "值",
       "parameterValuesPlaceholder": "输入一个值并按 Enter 键",
       "parameterDefaultNone": "无默认值",
@@ -7287,6 +7291,8 @@
         "paramValueTooLong": "某个参数值过长。",
         "paramValueHasSeparator": "多选参数的值不能包含逗号。",
         "paramDefaultNotInValues": "某个参数的默认值不在其值列表中。",
+        "paramDefaultNotSingle": "单选配置参数只能有一个默认值。",
+        "paramConfigurationNotAssigned": "配置参数的默认值未分配给此项目。",
         "tooManyInputs": "输入项过多：静态输入和参数总数限制为 20 个。"
       }
     },
