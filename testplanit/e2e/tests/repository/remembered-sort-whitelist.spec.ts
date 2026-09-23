@@ -6,7 +6,7 @@ import { expect, test } from "../../fixtures";
  * The per-project sort is remembered in localStorage under a key SHARED by the
  * repository view and the run view, so it can hold column ids the repository
  * findMany cannot order by — run-only columns (status, assignedTo) and
- * UI-computed ones (latestResults, forecast, numeric custom-field ids). Before
+ * UI-computed ones (latestResults, numeric custom-field ids). Before
  * the whitelist, one such id reached orderBy, the server rejected the whole
  * query, and the table rendered empty. These tests seed the poisoned key
  * directly and assert the table still renders rows via the fallback order.

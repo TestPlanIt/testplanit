@@ -62,6 +62,7 @@ import {
   extractPostFetchFilters,
 } from "~/lib/repository/filterWhereCompiler";
 import { serializeWhereForTransport } from "~/lib/repository/whereTransport";
+import { durationSortTerms } from "~/lib/repository/durationSort";
 import type { FilterPredicate } from "~/lib/schemas/repositoryFilterPredicates";
 import {
   ArrowRightLeft,
@@ -252,16 +253,16 @@ const CASE_ISSUES_SELECT = {
 // UI sort columns that map 1:1 to a RepositoryCases scalar column. The
 // remembered sort (localStorage, per project) can hold ANY column id from
 // either the repository or the run view — including UI-computed ones like
-// latestResults/forecast and numeric custom-field ids. Both orderBy builders
-// pass through only these names; anything else falls back to the default
-// order, because one unknown field in orderBy makes the server reject the
-// whole findMany and the table renders empty. Columns that can't be an
+// latestResults and numeric custom-field ids. Both orderBy builders pass
+// through only these names (plus the duration columns, which have their own
+// nulls-last terms — see durationSortTerms); anything else falls back to the
+// default order, because one unknown field in orderBy makes the server reject
+// the whole findMany and the table renders empty. Columns that can't be an
 // orderBy but ARE sortable (latestResults, Dropdown custom fields) order via
 // server-resolved page ids instead — see sortedPageIds.
 const REPOSITORY_CASE_SORTABLE_SCALARS = new Set([
   "id",
   "name",
-  "estimate",
   "stateId",
   "automated",
   "currentVersion",
@@ -1319,7 +1320,16 @@ export default function Cases({
       } else if (REPOSITORY_CASE_SORTABLE_SCALARS.has(column)) {
         return { repositoryCase: { [column]: direction } };
       }
-      // UI-only sorts (latestResults, forecast, custom-field columns) have no
+      // Estimate/Forecast: sparse columns, blanks pinned last in both
+      // directions; the run order breaks ties so pages stay stable.
+      const durationTerms = durationSortTerms(column, direction);
+      if (durationTerms) {
+        return [
+          ...durationTerms.map((term) => ({ repositoryCase: term })),
+          { order: "asc" as const },
+        ];
+      }
+      // UI-only sorts (latestResults, custom-field columns) have no
       // TestRunCases counterpart. The sort is remembered per project and shared
       // with the repository view, so an orderBy the server rejects would empty
       // the whole table — fall back to run order instead.
@@ -1402,9 +1412,15 @@ export default function Cases({
       if (REPOSITORY_CASE_SORTABLE_SCALARS.has(column)) {
         return { [column]: direction };
       }
+      // Estimate/Forecast: sparse columns, blanks pinned last in both
+      // directions; the repository order breaks ties so pages stay stable.
+      const durationTerms = durationSortTerms(column, direction);
+      if (durationTerms) {
+        return [...durationTerms, { order: "asc" as const }];
+      }
       // Dropdown custom-field sorts order via resolved page ids (see
       // fieldOptionPageIds below), so the query keeps its default order here.
-      // Remaining UI-only sorts (forecast, non-dropdown custom-field columns)
+      // Remaining UI-only sorts (non-dropdown custom-field columns)
       // and run-view sorts remembered under the shared per-project key
       // (status, assignedTo) have no RepositoryCases column — an orderBy the
       // server rejects would empty the whole table, so fall back to the
