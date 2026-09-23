@@ -1,29 +1,19 @@
 "use server";
 
-import { randomBytes } from "node:crypto";
-import { z } from "zod";
-import { runWithAuditContext } from "~/lib/auditContext";
-import { baseDb } from "~/lib/db";
-import {
-  createCiDispatchAdapter,
-  REPOSITORY_PROVIDER_FOR,
-} from "~/lib/execution/adapters";
+import { createCiDispatchAdapter } from "~/lib/execution/adapters";
 import { canManageExecutionTargets } from "~/lib/execution/auth";
-import { assertOutboundUrlAllowed } from "~/lib/execution/http";
+import type { Actor } from "~/lib/execution/executionTargetsService";
 import {
-  describeInputError,
-  MAX_INPUT_VALUE_LENGTH,
-  normalizeInputs,
-  validateCustomInputs,
-} from "~/lib/execution/inputs";
-import {
-  describeParamError,
-  MAX_PARAM_LABEL_LENGTH,
-  MAX_PARAM_VALUES,
-  normalizeParamSchema,
-  PARAM_ERROR_CODES,
-  validateParamSchema,
-} from "~/lib/execution/params";
+  createExecutionTargetForActor,
+  deleteExecutionTargetForActor,
+  getExecutionTargetForActor,
+  listExecutionTargetsForActor,
+  setExecutionTargetEnabledForActor,
+  updateExecutionTargetForActor,
+  type ExecutionTargetInput,
+  type ExecutionTargetView,
+} from "~/lib/execution/executionTargetsService";
+import { normalizeParamSchema } from "~/lib/execution/params";
 import {
   resolveTargetCredentials,
   sanitizeExecutionError,
@@ -35,286 +25,42 @@ import type {
 } from "~/lib/execution/types";
 import { createGitRepoAdapter } from "~/lib/integrations/adapters/GitRepoAdapter";
 import { resolveStoredCredentials } from "~/lib/integrations/credentials";
-import { captureAuditEvent } from "~/lib/services/auditLog";
+import { baseDb } from "~/lib/db";
 import { userCanAddEditArea } from "~/lib/services/projectPermissions";
-import { encrypt } from "~/utils/encryption";
 import { ApplicationArea } from "~/zenstack/models";
 import { getServerAuthSession } from "~/server/auth";
 
 /**
- * Execution targets are written only through these actions: credentials are
- * encrypted before they touch the row, URLs are SSRF-checked, and the
- * ZenStack policy denies every direct write.
+ * Thin session-resolving wrappers around lib/execution/executionTargetsService.ts,
+ * which holds the actual create/update/delete logic (credential encryption,
+ * SSRF checks, audit events) so it can also be called from the Bearer-token
+ * API routes under app/api/projects/[projectId]/execution-targets/**. Do not
+ * add actor-parameterized logic here — anything exported from a "use server"
+ * file is a directly callable server action, and a client-supplied `actor`
+ * would be an unauthenticated privilege-escalation path.
  */
 
-const providerSchema = z.enum([
-  "GITHUB_ACTIONS",
-  "GITLAB_CI",
-  "GENERIC_WEBHOOK",
-]);
-
-const credentialsSchema = z
-  .object({
-    personalAccessToken: z.string().trim().min(1).max(4096).optional(),
-    triggerToken: z.string().trim().min(1).max(4096).optional(),
-    secret: z.string().trim().min(8).max(4096).optional(),
-  })
-  .strict();
-
-const paramValueSchema = z.string().max(MAX_INPUT_VALUE_LENGTH);
-const paramBaseShape = {
-  name: z.string().trim().min(1).max(100),
-  label: z.string().trim().min(1).max(MAX_PARAM_LABEL_LENGTH),
-};
-const executionParamSchema = z.discriminatedUnion("type", [
-  z
-    .object({
-      ...paramBaseShape,
-      type: z.literal("select"),
-      values: z.array(paramValueSchema).max(MAX_PARAM_VALUES),
-      default: paramValueSchema,
-    })
-    .strict(),
-  z
-    .object({
-      ...paramBaseShape,
-      type: z.literal("multiselect"),
-      values: z.array(paramValueSchema).max(MAX_PARAM_VALUES),
-      default: z.array(paramValueSchema).max(MAX_PARAM_VALUES),
-    })
-    .strict(),
-  z
-    .object({
-      ...paramBaseShape,
-      type: z.literal("text"),
-      default: paramValueSchema.optional(),
-    })
-    .strict(),
-]);
-
-const targetInputSchema = z.object({
-  name: z.string().trim().min(1).max(100),
-  provider: providerSchema,
-  codeRepositoryId: z.number().int().positive().nullable().optional(),
-  workflowRef: z.string().trim().max(255).nullable().optional(),
-  defaultRef: z.string().trim().max(255).nullable().optional(),
-  url: z.string().trim().max(2000).nullable().optional(),
-  staticInputs: z.record(z.string(), z.string()).optional(),
-  /** Values the dispatcher chooses at execute time; see lib/execution/params.ts. */
-  paramSchema: z.array(executionParamSchema).optional(),
-  timeoutMinutes: z
-    .number()
-    .int()
-    .min(5)
-    .max(24 * 60)
-    .optional(),
-  isEnabled: z.boolean().optional(),
-  /** Omit to keep, null to clear the override, object to replace. */
-  credentials: credentialsSchema.nullable().optional(),
-  /** GENERIC_WEBHOOK: mint a fresh signing secret (revealed once). */
-  rotateSecret: z.boolean().optional(),
-});
-
-export type ExecutionTargetInput = z.infer<typeof targetInputSchema>;
-
-export interface ExecutionTargetView {
-  id: number;
-  projectId: number;
-  name: string;
-  provider: z.infer<typeof providerSchema>;
-  codeRepository: { id: number; name: string; provider: string } | null;
-  workflowRef: string | null;
-  defaultRef: string | null;
-  url: string | null;
-  staticInputs: Record<string, string>;
-  paramSchema: ExecutionParam[];
-  timeoutMinutes: number;
-  isEnabled: boolean;
-  hasOwnCredentials: boolean;
-  lastVerifiedAt: Date | null;
-  lastVerifyError: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-}
+export type { ExecutionTargetInput, ExecutionTargetView };
 
 type ActionResult<T> =
   | ({ success: true } & T)
   | { success: false; error: string; errorCode?: string };
 
-const targetSelect = {
-  id: true,
-  projectId: true,
-  name: true,
-  provider: true,
-  workflowRef: true,
-  defaultRef: true,
-  url: true,
-  staticInputs: true,
-  paramSchema: true,
-  timeoutMinutes: true,
-  isEnabled: true,
-  credentials: true,
-  lastVerifiedAt: true,
-  lastVerifyError: true,
-  createdAt: true,
-  updatedAt: true,
-  codeRepository: { select: { id: true, name: true, provider: true } },
-} as const;
-
-function toView(row: {
-  id: number;
-  projectId: number;
-  name: string;
-  provider: string;
-  workflowRef: string | null;
-  defaultRef: string | null;
-  url: string | null;
-  staticInputs: unknown;
-  paramSchema: unknown;
-  timeoutMinutes: number;
-  isEnabled: boolean;
-  credentials: unknown;
-  lastVerifiedAt: Date | null;
-  lastVerifyError: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-  codeRepository: { id: number; name: string; provider: string } | null;
-}): ExecutionTargetView {
-  return {
-    id: row.id,
-    projectId: row.projectId,
-    name: row.name,
-    provider: row.provider as ExecutionTargetView["provider"],
-    codeRepository: row.codeRepository,
-    workflowRef: row.workflowRef,
-    defaultRef: row.defaultRef,
-    url: row.url,
-    staticInputs: normalizeInputs(row.staticInputs),
-    paramSchema: normalizeParamSchema(row.paramSchema),
-    timeoutMinutes: row.timeoutMinutes,
-    isEnabled: row.isEnabled,
-    hasOwnCredentials: row.credentials != null,
-    lastVerifiedAt: row.lastVerifiedAt,
-    lastVerifyError: row.lastVerifyError,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
-  };
-}
-
-async function requireManager(projectId: number) {
+async function currentActor(): Promise<Actor | null> {
   const session = await getServerAuthSession();
-  if (!session?.user?.id)
-    return { session: null, error: "Unauthorized" as const };
-  const ok = await canManageExecutionTargets(session, projectId);
-  if (!ok) return { session: null, error: "Forbidden" as const };
-  return { session, error: null };
-}
-
-/**
- * Provider-specific shape checks. Returns an error code from the
- * `automation.settings.errors.*` namespace so the UI can localise it.
- */
-async function validateShape(
-  input: ExecutionTargetInput,
-  projectId: number
-): Promise<{ errorCode: string; error: string } | null> {
-  const inputErr = validateCustomInputs(input.staticInputs);
-  if (inputErr) {
-    return {
-      errorCode: "automation.settings.errors.invalidInputs",
-      error: describeInputError(inputErr),
-    };
-  }
-  const paramErr = validateParamSchema(
-    input.paramSchema ?? [],
-    normalizeInputs(input.staticInputs)
-  );
-  if (paramErr) {
-    return {
-      errorCode: `automation.settings.errors.${PARAM_ERROR_CODES[paramErr.code]}`,
-      error: describeParamError(paramErr),
-    };
-  }
-  if (input.provider === "GENERIC_WEBHOOK") {
-    if (!input.url) {
-      return {
-        errorCode: "automation.settings.errors.urlRequired",
-        error: "A webhook URL is required",
-      };
-    }
-    try {
-      assertOutboundUrlAllowed(input.url);
-    } catch (err) {
-      return {
-        errorCode: "automation.settings.errors.urlBlocked",
-        error: err instanceof Error ? err.message : "Invalid URL",
-      };
-    }
-    return null;
-  }
-  const wanted = REPOSITORY_PROVIDER_FOR[input.provider];
-  if (!input.codeRepositoryId) {
-    return {
-      errorCode: "automation.settings.errors.repositoryRequired",
-      error: "A code repository is required",
-    };
-  }
-  const repo = await baseDb.codeRepository.findFirst({
-    where: {
-      id: input.codeRepositoryId,
-      isDeleted: false,
-      projectConfigs: { some: { projectId } },
-    },
-    select: { id: true, provider: true },
-  });
-  if (!repo) {
-    return {
-      errorCode: "automation.settings.errors.repositoryNotFound",
-      error: "Code repository not found",
-    };
-  }
-  if (repo.provider !== wanted) {
-    return {
-      errorCode: "automation.settings.errors.repositoryProviderMismatch",
-      error: `This target needs a ${wanted} repository`,
-    };
-  }
-  if (input.provider === "GITHUB_ACTIONS" && !input.workflowRef) {
-    return {
-      errorCode: "automation.settings.errors.workflowRequired",
-      error: "A workflow file is required",
-    };
-  }
-  return null;
-}
-
-async function nameTaken(projectId: number, name: string, excludeId?: number) {
-  const existing = await baseDb.executionTarget.findFirst({
-    where: {
-      projectId,
-      isDeleted: false,
-      name: { equals: name, mode: "insensitive" },
-      ...(excludeId ? { id: { not: excludeId } } : {}),
-    },
-    select: { id: true },
-  });
-  return existing != null;
-}
-
-async function encryptCredentials(
-  creds: Record<string, string>
-): Promise<{ encrypted: string }> {
-  return { encrypted: await encrypt(JSON.stringify(creds)) };
-}
-
-function mintSecret(): string {
-  return randomBytes(32).toString("hex");
+  if (!session?.user?.id) return null;
+  return {
+    userId: session.user.id,
+    userName: session.user.name ?? undefined,
+    userEmail: session.user.email ?? undefined,
+    access: session.user.access,
+  };
 }
 
 export interface ExecutionTargetChoice {
   id: number;
   name: string;
-  provider: z.infer<typeof providerSchema>;
+  provider: "GITHUB_ACTIONS" | "GITLAB_CI" | "GENERIC_WEBHOOK";
   defaultRef: string | null;
   isEnabled: boolean;
   /** Parameters the dispatcher fills in; option lists and defaults only. */
@@ -365,14 +111,9 @@ export async function listExecutionTargetChoices(
 export async function listExecutionTargets(
   projectId: number
 ): Promise<ActionResult<{ targets: ExecutionTargetView[] }>> {
-  const gate = await requireManager(projectId);
-  if (gate.error) return { success: false, error: gate.error };
-  const rows = await baseDb.executionTarget.findMany({
-    where: { projectId, isDeleted: false },
-    orderBy: [{ name: "asc" }],
-    select: targetSelect,
-  });
-  return { success: true, targets: rows.map(toView) };
+  const actor = await currentActor();
+  if (!actor) return { success: false, error: "Unauthorized" };
+  return listExecutionTargetsForActor(actor, projectId);
 }
 
 export async function createExecutionTarget(
@@ -381,94 +122,9 @@ export async function createExecutionTarget(
 ): Promise<
   ActionResult<{ target: ExecutionTargetView; revealedSecret?: string }>
 > {
-  const gate = await requireManager(projectId);
-  if (gate.error || !gate.session)
-    return { success: false, error: gate.error ?? "Unauthorized" };
-  const session = gate.session;
-
-  const parsed = targetInputSchema.safeParse(rawInput);
-  if (!parsed.success) {
-    return {
-      success: false,
-      error: "Invalid input",
-      errorCode: "automation.settings.errors.invalid",
-    };
-  }
-  const input = parsed.data;
-  const shape = await validateShape(input, projectId);
-  if (shape) return { success: false, ...shape };
-  if (await nameTaken(projectId, input.name)) {
-    return {
-      success: false,
-      errorCode: "automation.settings.errors.nameTaken",
-      error: "A target with this name already exists",
-    };
-  }
-
-  let credentials: { encrypted: string } | null = null;
-  let revealedSecret: string | undefined;
-  if (input.provider === "GENERIC_WEBHOOK") {
-    revealedSecret = input.credentials?.secret ?? mintSecret();
-    credentials = await encryptCredentials({ secret: revealedSecret });
-  } else if (input.credentials && Object.keys(input.credentials).length > 0) {
-    credentials = await encryptCredentials(
-      Object.fromEntries(
-        Object.entries(input.credentials).filter(
-          ([, v]) => typeof v === "string"
-        )
-      ) as Record<string, string>
-    );
-  }
-
-  return runWithAuditContext(
-    {
-      userId: session.user.id,
-      userName: session.user.name ?? undefined,
-      userEmail: session.user.email ?? undefined,
-    },
-    async () => {
-      const row = await baseDb.executionTarget.create({
-        data: {
-          projectId,
-          name: input.name,
-          provider: input.provider,
-          codeRepositoryId:
-            input.provider === "GENERIC_WEBHOOK"
-              ? null
-              : (input.codeRepositoryId ?? null),
-          workflowRef:
-            input.provider === "GITHUB_ACTIONS"
-              ? (input.workflowRef ?? null)
-              : null,
-          defaultRef:
-            input.provider === "GENERIC_WEBHOOK"
-              ? (input.defaultRef ?? null)
-              : (input.defaultRef ?? null),
-          url:
-            input.provider === "GENERIC_WEBHOOK" ? (input.url ?? null) : null,
-          staticInputs: normalizeInputs(input.staticInputs),
-          paramSchema: input.paramSchema ?? [],
-          timeoutMinutes: input.timeoutMinutes ?? 120,
-          isEnabled: input.isEnabled ?? true,
-          ...(credentials ? { credentials } : {}),
-          createdById: session.user.id,
-        },
-        select: targetSelect,
-      });
-      await captureAuditEvent({
-        action: "CREATE",
-        entityType: "ExecutionTarget",
-        entityId: String(row.id),
-        entityName: row.name,
-        projectId,
-        metadata: {
-          provider: row.provider,
-          codeRepositoryId: row.codeRepository?.id ?? null,
-        },
-      });
-      return { success: true, target: toView(row), revealedSecret };
-    }
-  );
+  const actor = await currentActor();
+  if (!actor) return { success: false, error: "Unauthorized" };
+  return createExecutionTargetForActor(actor, projectId, rawInput);
 }
 
 export async function updateExecutionTarget(
@@ -477,226 +133,45 @@ export async function updateExecutionTarget(
 ): Promise<
   ActionResult<{ target: ExecutionTargetView; revealedSecret?: string }>
 > {
-  const existing = await baseDb.executionTarget.findFirst({
-    where: { id: targetId, isDeleted: false },
-    select: targetSelect,
-  });
-  if (!existing) return { success: false, error: "Target not found" };
-  const gate = await requireManager(existing.projectId);
-  if (gate.error || !gate.session)
-    return { success: false, error: gate.error ?? "Unauthorized" };
-  const session = gate.session;
-
-  const parsed = targetInputSchema.partial().safeParse(rawInput);
-  if (!parsed.success) {
-    return {
-      success: false,
-      error: "Invalid input",
-      errorCode: "automation.settings.errors.invalid",
-    };
-  }
-  const merged: ExecutionTargetInput = {
-    name: parsed.data.name ?? existing.name,
-    provider: (parsed.data.provider ??
-      existing.provider) as ExecutionTargetInput["provider"],
-    codeRepositoryId:
-      parsed.data.codeRepositoryId !== undefined
-        ? parsed.data.codeRepositoryId
-        : (existing.codeRepository?.id ?? null),
-    workflowRef:
-      parsed.data.workflowRef !== undefined
-        ? parsed.data.workflowRef
-        : existing.workflowRef,
-    defaultRef:
-      parsed.data.defaultRef !== undefined
-        ? parsed.data.defaultRef
-        : existing.defaultRef,
-    url: parsed.data.url !== undefined ? parsed.data.url : existing.url,
-    staticInputs:
-      parsed.data.staticInputs !== undefined
-        ? parsed.data.staticInputs
-        : normalizeInputs(existing.staticInputs),
-    paramSchema:
-      parsed.data.paramSchema !== undefined
-        ? parsed.data.paramSchema
-        : normalizeParamSchema(existing.paramSchema),
-    timeoutMinutes: parsed.data.timeoutMinutes ?? existing.timeoutMinutes,
-    isEnabled: parsed.data.isEnabled ?? existing.isEnabled,
-    credentials: parsed.data.credentials,
-    rotateSecret: parsed.data.rotateSecret,
-  };
-  const shape = await validateShape(merged, existing.projectId);
-  if (shape) return { success: false, ...shape };
-  if (await nameTaken(existing.projectId, merged.name, existing.id)) {
-    return {
-      success: false,
-      errorCode: "automation.settings.errors.nameTaken",
-      error: "A target with this name already exists",
-    };
-  }
-
-  let credentialsPatch:
-    { credentials: { encrypted: string } } | Record<string, never> = {};
-  let clearCredentials = false;
-  let revealedSecret: string | undefined;
-  if (merged.provider === "GENERIC_WEBHOOK") {
-    if (
-      merged.rotateSecret ||
-      merged.credentials?.secret ||
-      existing.credentials == null
-    ) {
-      revealedSecret = merged.credentials?.secret ?? mintSecret();
-      credentialsPatch = {
-        credentials: await encryptCredentials({ secret: revealedSecret }),
-      };
-    }
-  } else if (merged.credentials === null) {
-    clearCredentials = true;
-  } else if (merged.credentials && Object.keys(merged.credentials).length > 0) {
-    credentialsPatch = {
-      credentials: await encryptCredentials(
-        Object.fromEntries(
-          Object.entries(merged.credentials).filter(
-            ([, v]) => typeof v === "string"
-          )
-        ) as Record<string, string>
-      ),
-    };
-  }
-
-  return runWithAuditContext(
-    {
-      userId: session.user.id,
-      userName: session.user.name ?? undefined,
-      userEmail: session.user.email ?? undefined,
-    },
-    async () => {
-      const row = await baseDb.executionTarget.update({
-        where: { id: existing.id },
-        data: {
-          name: merged.name,
-          provider: merged.provider,
-          codeRepositoryId:
-            merged.provider === "GENERIC_WEBHOOK"
-              ? null
-              : (merged.codeRepositoryId ?? null),
-          workflowRef:
-            merged.provider === "GITHUB_ACTIONS"
-              ? (merged.workflowRef ?? null)
-              : null,
-          defaultRef: merged.defaultRef ?? null,
-          url:
-            merged.provider === "GENERIC_WEBHOOK" ? (merged.url ?? null) : null,
-          staticInputs: normalizeInputs(merged.staticInputs),
-          paramSchema: merged.paramSchema ?? [],
-          timeoutMinutes: merged.timeoutMinutes ?? 120,
-          isEnabled: merged.isEnabled ?? true,
-          // A configuration change invalidates the last verification.
-          lastVerifiedAt: null,
-          lastVerifyError: null,
-          ...credentialsPatch,
-        },
-        select: targetSelect,
-      });
-      if (clearCredentials) {
-        // Json columns cannot be nulled through the ORM's update input; the
-        // override is dropped with a raw statement so the repository's
-        // credential applies again.
-        await baseDb.$executeRaw`UPDATE "ExecutionTarget" SET "credentials" = NULL WHERE "id" = ${existing.id}`;
-      }
-      const view = toView({
-        ...row,
-        credentials: clearCredentials ? null : row.credentials,
-      });
-      await captureAuditEvent({
-        action: "UPDATE",
-        entityType: "ExecutionTarget",
-        entityId: String(row.id),
-        entityName: row.name,
-        projectId: row.projectId,
-        metadata: {
-          provider: row.provider,
-          credentialsChanged:
-            "credentials" in credentialsPatch || clearCredentials,
-          secretRotated: Boolean(revealedSecret),
-        },
-      });
-      return { success: true, target: view, revealedSecret };
-    }
-  );
+  const actor = await currentActor();
+  if (!actor) return { success: false, error: "Unauthorized" };
+  return updateExecutionTargetForActor(actor, targetId, rawInput);
 }
 
 export async function setExecutionTargetEnabled(
   targetId: number,
   isEnabled: boolean
 ): Promise<ActionResult<{ target: ExecutionTargetView }>> {
-  const existing = await baseDb.executionTarget.findFirst({
-    where: { id: targetId, isDeleted: false },
-    select: { id: true, projectId: true, name: true },
-  });
-  if (!existing) return { success: false, error: "Target not found" };
-  const gate = await requireManager(existing.projectId);
-  if (gate.error || !gate.session)
-    return { success: false, error: gate.error ?? "Unauthorized" };
-  const session = gate.session;
-  return runWithAuditContext(
-    {
-      userId: session.user.id,
-      userName: session.user.name ?? undefined,
-      userEmail: session.user.email ?? undefined,
-    },
-    async () => {
-      const row = await baseDb.executionTarget.update({
-        where: { id: existing.id },
-        data: { isEnabled },
-        select: targetSelect,
-      });
-      await captureAuditEvent({
-        action: "UPDATE",
-        entityType: "ExecutionTarget",
-        entityId: String(row.id),
-        entityName: row.name,
-        projectId: row.projectId,
-        changes: { isEnabled: { old: !isEnabled, new: isEnabled } },
-      });
-      return { success: true, target: toView(row) };
-    }
-  );
+  const actor = await currentActor();
+  if (!actor) return { success: false, error: "Unauthorized" };
+  return setExecutionTargetEnabledForActor(actor, targetId, isEnabled);
 }
 
 export async function deleteExecutionTarget(
   targetId: number
 ): Promise<{ success: true } | { success: false; error: string }> {
-  const existing = await baseDb.executionTarget.findFirst({
-    where: { id: targetId, isDeleted: false },
-    select: { id: true, projectId: true, name: true },
-  });
-  if (!existing) return { success: false, error: "Target not found" };
-  const gate = await requireManager(existing.projectId);
-  if (gate.error || !gate.session)
-    return { success: false, error: gate.error ?? "Unauthorized" };
-  const session = gate.session;
-  return runWithAuditContext(
-    {
-      userId: session.user.id,
-      userName: session.user.name ?? undefined,
-      userEmail: session.user.email ?? undefined,
-    },
-    async () => {
-      await baseDb.executionTarget.update({
-        where: { id: existing.id },
-        data: { isDeleted: true, deletedAt: new Date(), isEnabled: false },
-      });
-      await captureAuditEvent({
-        action: "DELETE",
-        entityType: "ExecutionTarget",
-        entityId: String(existing.id),
-        entityName: existing.name,
-        projectId: existing.projectId,
-      });
-      return { success: true };
-    }
-  );
+  const actor = await currentActor();
+  if (!actor) return { success: false, error: "Unauthorized" };
+  return deleteExecutionTargetForActor(actor, targetId);
+}
+
+// Re-exported so a future caller could resolve a single target by id without
+// duplicating the actor-resolution boilerplate; not currently used by the UI.
+export async function getExecutionTarget(
+  targetId: number
+): Promise<ActionResult<{ target: ExecutionTargetView }>> {
+  const actor = await currentActor();
+  if (!actor) return { success: false, error: "Unauthorized" };
+  return getExecutionTargetForActor(actor, targetId);
+}
+
+async function requireManager(projectId: number) {
+  const session = await getServerAuthSession();
+  if (!session?.user?.id)
+    return { session: null, error: "Unauthorized" as const };
+  const ok = await canManageExecutionTargets(session, projectId);
+  if (!ok) return { session: null, error: "Forbidden" as const };
+  return { session, error: null };
 }
 
 /**

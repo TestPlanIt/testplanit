@@ -2,7 +2,13 @@ import { NextResponse, type NextRequest } from "next/server";
 import { ApplicationArea } from "~/zenstack/models";
 import { checkApiRateLimit } from "~/lib/api-rate-limit";
 import { authenticateRequest, hasBearerToken } from "~/lib/api-token-auth";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { baseDb } from "~/lib/db";
+import { createExecutionTargetForActor } from "~/lib/execution/executionTargetsService";
+import {
+  isRouteResponse,
+  resolveExecutionTargetActor,
+} from "~/lib/execution/targetAccess";
 import { userCanAddEditArea } from "~/lib/services/projectPermissions";
 import { getServerAuthSession } from "~/server/auth";
 
@@ -60,3 +66,60 @@ export async function GET(
     { headers: { "Cache-Control": "no-store" } }
   );
 }
+
+/**
+ * POST /api/projects/{projectId}/execution-targets
+ * Body: the same shape the project settings dialog sends (name, provider,
+ * url/codeRepositoryId, staticInputs, paramSchema, credentials, ...).
+ * Requires the same "manage execution targets" permission as the UI
+ * (system admin, project admin, or Settings add/edit) — a bearer token
+ * merely being valid is not enough; createExecutionTargetForActor enforces
+ * it against this project.
+ */
+export const POST = withAuditContext(
+  async (
+    request: NextRequest,
+    { params }: { params: Promise<{ projectId: string }> }
+  ) => {
+    const { projectId: raw } = await params;
+    const projectId = Number.parseInt(raw, 10);
+    if (!Number.isInteger(projectId) || projectId <= 0) {
+      return NextResponse.json(
+        { error: "Invalid project id" },
+        { status: 400 }
+      );
+    }
+    const session = await getServerAuthSession();
+    const resolved = await resolveExecutionTargetActor(request, session);
+    if (isRouteResponse(resolved)) return resolved;
+
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
+
+    const result = await createExecutionTargetForActor(
+      resolved.actor,
+      projectId,
+      body as Parameters<typeof createExecutionTargetForActor>[2]
+    );
+    if (!result.success) {
+      const status =
+        result.error === "Forbidden"
+          ? 403
+          : result.error === "Unauthorized"
+            ? 401
+            : 422;
+      return NextResponse.json(
+        { error: result.error, code: result.errorCode },
+        { status }
+      );
+    }
+    return NextResponse.json(
+      { target: result.target, revealedSecret: result.revealedSecret },
+      { status: 201 }
+    );
+  }
+);
