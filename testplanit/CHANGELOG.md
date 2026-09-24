@@ -1,3 +1,22 @@
+## [1.1.0-beta.21](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.20...v1.1.0-beta.21) (2026-09-24)
+
+### Features
+
+* **reports:** save reports and freeze report results ([#648](https://github.com/TestPlanIt/testplanit/issues/648)) ([01f85be](https://github.com/TestPlanIt/testplanit/commit/01f85be8ee14a178cc1da2d3b8f722e8370cac44))
+
+### Bug Fixes
+
+* **share:** reach the app's own routes from inside the container ([1a505f5](https://github.com/TestPlanIt/testplanit/commit/1a505f58c3d665f0ca4473c9e9b006b9b1fccd9f))
+
+### Enhancements
+
+* **automation:** configuration parameters on execution targets ([643c83d](https://github.com/TestPlanIt/testplanit/commit/643c83d2365333d552a66e751f9d9e62014a8cc6))
+* **notifications:** panel title and bell label show the unread count ([939cb23](https://github.com/TestPlanIt/testplanit/commit/939cb233c4d89c1024c82c2c7e24455895478d28))
+
+### Performance Improvements
+
+* **jira:** load the Jira issue panel faster ([d1c4edb](https://github.com/TestPlanIt/testplanit/commit/d1c4edbfa65dc216e329985a254bc253ed80625e))
+
 ## [1.1.0-beta.20](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.19...v1.1.0-beta.20) (2026-09-23)
 
 ### Enhancements
