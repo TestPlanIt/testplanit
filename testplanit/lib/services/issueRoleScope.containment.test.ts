@@ -382,6 +382,12 @@ const EXEMPT_MILESTONE_MEMBERSHIP_FILES = [
 const EXEMPT_EXTERNAL_KEY_LOOKUP_FILES = [
   "app/api/integrations/jira/search/route.ts",
   "app/api/integrations/jira/test-info/route.ts",
+  // The Jira panel's on-expand companion to test-info: the same tracker-key
+  // lookup (shared panelIssueWhere), reading only the issue's run links to
+  // confirm the requested run belongs to it before returning that run's
+  // cases. Kind-agnostic for the same reason as test-info: the panel shows
+  // whatever row holds the Jira issue.
+  "app/api/integrations/jira/test-run-cases/route.ts",
   // Resolves a caller-supplied tracker key to the one row that holds it, so
   // the API, the MCP server, and the import can attach a ticket without a
   // human opening it in the UI first. Deliberately kind-agnostic on both
