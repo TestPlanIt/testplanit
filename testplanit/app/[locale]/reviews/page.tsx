@@ -1145,6 +1145,7 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
               <ResizablePanelGroup
                 direction="horizontal"
                 autoSaveId="reviews-details-split"
+                persistLayout={!effectiveFullWidth}
                 className="w-full min-w-0"
                 data-testid="reviews-inbox-layout"
               >

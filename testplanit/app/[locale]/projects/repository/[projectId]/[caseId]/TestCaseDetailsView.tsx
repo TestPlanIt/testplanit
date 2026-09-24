@@ -2812,7 +2812,9 @@ export function TestCaseDetailsView({
           <CardContent>
             <ResizablePanelGroup
               direction="horizontal"
-              autoSaveId="case-detail-panels"
+              autoSaveId={
+                inSheet ? "case-detail-panels-docked" : "case-detail-panels"
+              }
             >
               <ResizablePanel
                 id="case-detail-left"

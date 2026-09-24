@@ -401,6 +401,7 @@ export default function RequirementsWorkspace({
               <ResizablePanelGroup
                 direction="horizontal"
                 autoSaveId="project-requirements-panels"
+                persistLayout={!effectiveFullWidth}
                 className="h-full"
                 data-testid="requirements-layout"
               >

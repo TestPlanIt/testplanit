@@ -2182,6 +2182,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                 <ResizablePanelGroup
                   direction="horizontal"
                   autoSaveId="project-repository-panels"
+                  persistLayout={!effectiveFullWidth}
                   data-testid="repository-layout"
                 >
                   <ResizablePanel
@@ -2339,6 +2340,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                     <ResizablePanelGroup
                       direction="horizontal"
                       autoSaveId="repository-details-split"
+                      persistLayout={!effectiveFullWidth}
                       className="h-full w-full min-w-0"
                     >
                       <ResizablePanel
