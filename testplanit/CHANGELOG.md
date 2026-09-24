@@ -1,3 +1,9 @@
+## [1.1.0-beta.22](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.21...v1.1.0-beta.22) (2026-09-24)
+
+### Bug Fixes
+
+* **ui:** stop auto-collapsed panels from being restored on the next visit ([dc02c33](https://github.com/TestPlanIt/testplanit/commit/dc02c33e4d6e7c40995312b1bf4efc62aed64235))
+
 ## [1.1.0-beta.21](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.20...v1.1.0-beta.21) (2026-09-24)
 
 ### Features
