@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import React from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next-intl", () => ({
   useTranslations: (namespace?: string) => (key: string) =>
@@ -106,5 +106,76 @@ describe("ShareLinkList creator column", () => {
     expect(findManyArgs.at(-1).orderBy).toEqual({
       createdBy: { name: "asc" },
     });
+  });
+});
+
+describe("ShareLinkList data and mode columns", () => {
+  const original = rows.map((row) => ({ ...row }));
+
+  function setRows(next: Array<Record<string, unknown>>) {
+    rows.length = 0;
+    rows.push(...(next as typeof rows));
+  }
+
+  function row(overrides: Record<string, unknown>) {
+    return { ...original[0], ...overrides };
+  }
+
+  afterEach(() => {
+    setRows(original);
+  });
+
+  it("marks a report link that has a snapshot as frozen", () => {
+    setRows([row({ snapshot: { capturedAt: "2026-09-20T10:00:00.000Z" } })]);
+    render(<ShareLinkList projectId={7} />);
+
+    expect(screen.getByTestId("share-data-frozen")).toHaveTextContent(
+      "reports.frozen.frozen.title"
+    );
+    expect(screen.queryByTestId("share-data-live")).toBeNull();
+  });
+
+  it("marks report and saved-report links without a snapshot as live", () => {
+    setRows([
+      row({ id: "s1", shareKey: "k1", entityType: "REPORT", snapshot: null }),
+      row({
+        id: "s2",
+        shareKey: "k2",
+        title: "Saved one",
+        entityType: "SAVED_REPORT",
+        snapshot: null,
+      }),
+    ]);
+    render(<ShareLinkList projectId={7} />);
+
+    const live = screen.getAllByTestId("share-data-live");
+    expect(live).toHaveLength(2);
+    live.forEach((badge) =>
+      expect(badge).toHaveTextContent("reports.frozen.live.title")
+    );
+    expect(screen.queryByTestId("share-data-frozen")).toBeNull();
+  });
+
+  it("shows a dash in the data column for other entity types", () => {
+    setRows([row({ entityType: "SEARCH", snapshot: null })]);
+    render(<ShareLinkList projectId={7} />);
+
+    expect(screen.queryByTestId("share-data-live")).toBeNull();
+    expect(screen.queryByTestId("share-data-frozen")).toBeNull();
+    const dataHeader = screen.getByText("common.fields.data").closest("th")!;
+    const headerCells = Array.from(
+      dataHeader.closest("tr")!.querySelectorAll("th")
+    );
+    const dataIndex = headerCells.indexOf(dataHeader);
+    const bodyRow = screen.getByText("Weekly report").closest("tr")!;
+    expect(bodyRow.querySelectorAll("td")[dataIndex]).toHaveTextContent(/^-$/);
+  });
+
+  it("puts the full mode text in the badge's title", () => {
+    setRows([row({ mode: "PASSWORD_PROTECTED" })]);
+    render(<ShareLinkList projectId={7} />);
+
+    const badge = screen.getByTitle("PASSWORD PROTECTED");
+    expect(badge).toHaveTextContent("PASSWORD PROTECTED");
   });
 });
