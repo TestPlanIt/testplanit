@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import { createRoot } from 'react-dom/client';
 import { invoke, router, view } from '@forge/bridge';
-import * as LucideIcons from 'lucide-react';
 
 // Keep in step with AUTOMATED_CASE_SOURCES in the app's utils/testResultTypes.ts.
 const AUTOMATED_CASE_SOURCES = [
@@ -55,9 +54,40 @@ const StatusBadge = ({ status, statusColor, icon, className = "", width = "w-20"
   );
 };
 
+// Status icons can be any Lucide icon an admin picks, so the whole set ships
+// -- about 800 KB, most of the panel's code. It is split into its own chunk and
+// requested at startup, so it downloads alongside the panel's data request
+// instead of delaying it.
+let LucideIcons = null;
+const lucideIconsReady = import(
+  /* webpackChunkName: "lucide-icons" */ 'lucide-react'
+).then((icons) => {
+  LucideIcons = icons;
+  return icons;
+});
+
+const useLucideIcons = () => {
+  const [icons, setIcons] = useState(LucideIcons);
+  useEffect(() => {
+    if (!icons) lucideIconsReady.then((loaded) => setIcons(() => loaded));
+  }, [icons]);
+  return icons;
+};
+
 // Dynamic icon component that maps icon names to Lucide React icons
 const DynamicIcon = ({ name, className = "h-4 w-4", style }) => {
+  const icons = useLucideIcons();
   if (!name) return null;
+  // Same-size placeholder until the icon chunk arrives, so nothing shifts.
+  if (!icons) {
+    return (
+      <span
+        className={className}
+        style={{ display: 'inline-block', ...style }}
+        aria-hidden="true"
+      />
+    );
+  }
 
   // Convert icon name to PascalCase for Lucide React
   // Handle common transformations: kebab-case, snake_case, etc.
@@ -107,15 +137,15 @@ const DynamicIcon = ({ name, className = "h-4 w-4", style }) => {
   // Try to find the icon in Lucide React
   let IconComponent = null;
   for (const variation of iconVariations) {
-    if (LucideIcons[variation]) {
-      IconComponent = LucideIcons[variation];
+    if (icons[variation]) {
+      IconComponent = icons[variation];
       break;
     }
   }
 
   // Fallback to Circle if no icon found
   if (!IconComponent) {
-    IconComponent = LucideIcons.Circle;
+    IconComponent = icons.Circle;
   }
 
   return <IconComponent className={className} style={style} />;
@@ -825,10 +855,33 @@ const SessionRow = ({ session, onOpen }) => {
 const TestRunRow = ({ testRun, onOpen }) => {
   const [expanded, setExpanded] = useState(false);
 
-  // Use display items from API (like TestRunCasesSummary)
-  const displayItems = testRun.displayItems || [];
-  const passedCount = displayItems.filter(item => item.status?.name === 'Passed').length;
+  // The per-case status bar (like TestRunCasesSummary) is fetched the first
+  // time the run is expanded; the collapsed row only needs the totals. An
+  // instance that predates lazy loading still sends it inline with the run.
+  const [lazyItems, setLazyItems] = useState(null);
+  const [itemsLoading, setItemsLoading] = useState(false);
+  const [itemsError, setItemsError] = useState(null);
+  const displayItems = testRun.displayItems || lazyItems || [];
+  const passedCount = testRun.passedCount ??
+    displayItems.filter(item => item.status?.name === 'Passed').length;
   const passRate = testRun.total > 0 ? Math.round((passedCount / testRun.total) * 100) : 0;
+
+  const loadItems = async () => {
+    setItemsLoading(true);
+    setItemsError(null);
+    try {
+      const response = await invoke('getTestRunCases', { testRunId: testRun.id });
+      if (response.error) {
+        setItemsError(response.error);
+      } else {
+        setLazyItems(response.displayItems || []);
+      }
+    } catch (err) {
+      setItemsError(err.message);
+    } finally {
+      setItemsLoading(false);
+    }
+  };
 
   const handleTitleClick = (e) => {
     e.stopPropagation();
@@ -837,6 +890,9 @@ const TestRunRow = ({ testRun, onOpen }) => {
 
   const toggleExpanded = (e) => {
     e.stopPropagation();
+    if (!expanded && !testRun.displayItems && !lazyItems && !itemsLoading) {
+      loadItems();
+    }
     setExpanded(!expanded);
   };
 
@@ -881,6 +937,9 @@ const TestRunRow = ({ testRun, onOpen }) => {
                 {/* Status Bar Visualization */}
                 <div className="flex flex-col space-y-1">
                   <div className="flex h-2.5 w-full rounded-full overflow-hidden bg-muted">
+                    {itemsLoading && (
+                      <div className="h-full w-full animate-pulse bg-muted" title="Loading test cases…" />
+                    )}
                     {/* Individual segments for each test case with actual status colors (like TestRunCasesSummary) */}
                     {displayItems.map((item, index) => {
                       const color = item.status?.color?.value || '#9ca3af';
@@ -901,6 +960,14 @@ const TestRunRow = ({ testRun, onOpen }) => {
                   <div className="text-xs testplanit-text-muted">
                     Total: {testRun.total} cases{testRun.summaryText ? ` (${testRun.summaryText})` : ''}
                   </div>
+                  {itemsError && (
+                    <div className="text-xs text-red-500 flex items-center gap-2">
+                      <span>Couldn't load test cases: {itemsError}</span>
+                      <button className="underline hover:text-primary" onClick={loadItems}>
+                        Retry
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -2115,7 +2182,6 @@ const App = () => {
   const loadTestInfo = async () => {
     try {
       const response = await invoke('getTestInfo');
-      console.log('Response from resolver:', response);
 
       if (response.error) {
         setError(response.error);
