@@ -5,7 +5,7 @@ title: Share Links
 
 # Share Links
 
-Share Links enable you to share reports and other content with stakeholders via secure, customizable URLs with flexible access control options.
+Share Links let you share reports with stakeholders through secure, customizable URLs with flexible access control.
 
 ## Overview
 
@@ -13,29 +13,29 @@ Share Links provide:
 
 - **Three access modes** for different security requirements
 - **Live or frozen data**: re-run the report on every open, or keep the results from when the link was created
-- **Customizable expiration dates** for time-limited access
+- **Expiration dates** for time-limited access
 - **Password protection** for sensitive content
-- **View notifications** when links are accessed
-- **Access analytics** with detailed logs
-- **Link management** to revoke or modify shares
+- **View notifications** when links are opened
+- **View counts** and an audit trail of every access
+- **Link management** to edit, revoke, or delete shares
 
 ## What are Share Links?
 
-Share Links are shareable URLs that allow you to distribute reports and other content to team members, clients, or external stakeholders without requiring them to have a TestPlanIt account.
+Share Links are URLs that let you distribute reports to team members, clients, or external stakeholders, including people without a TestPlanIt account.
 
 ### Key Use Cases
 
 - **Client Reporting**: Share test results with clients using password-protected links
 - **Public Dashboards**: Distribute metrics openly for transparency
 - **Team Collaboration**: Share reports with team members who have project access
-- **Stakeholder Updates**: Provide weekly/monthly reports via expiring links
-- **Executive Summaries**: Share high-level metrics with leadership
+- **Stakeholder Updates**: Provide weekly or monthly reports via expiring links
+- **Release Sign-off**: Share a frozen report that keeps the numbers the team signed off on
 
 ## Share Modes
 
 ### Authenticated Mode
 
-Requires users to sign in with project access.
+Requires viewers to sign in. For a project report, viewers need access to the project. For a [cross-project report](./cross-project-reports.md), viewers need Admin access.
 
 **When to use**:
 
@@ -43,54 +43,44 @@ Requires users to sign in with project access.
 - Internal stakeholder reports
 - Sensitive data requiring authentication
 
-**Features**:
+**Behavior**:
 
-- Redirects to full app with report configuration (live links)
-- Preserves all report settings and filters
-- Full navigation and interactive features
-- Requires project permissions
-
-**Security**: Highest level - requires authentication and project access
+- A live link opens the report in the full app with its configuration restored
+- A frozen link opens the read-only frozen report
 
 ### Public Mode
 
-No authentication required - accessible to anyone with the link.
+No authentication required. Anyone with the link can view the report.
 
 **When to use**:
 
 - Public dashboards
-- Marketing reports
 - Open data sharing
 - Non-sensitive metrics
 
-**Features**:
+**Behavior**:
 
-- Minimal UI (no navigation header)
-- Read-only report view
-- Data filtering (emails/IDs removed)
-- Optimized for external viewing
+- Minimal page with no application navigation
+- Read-only report view with the full report data
 
-**Security**: No authentication required - use only for public data
+**Security**: Anyone with the link can see everything in the report. Use it only for data you are comfortable publishing.
 
 ### Password-Protected Mode
 
-Public access with password requirement.
+Anyone with the link and the password can view the report.
 
 **When to use**:
 
 - Client reports
 - Partner collaboration
 - Confidential external sharing
-- Controlled public access
 
-**Features**:
+**Behavior**:
 
-- Password gate before content access
-- Auth bypass for logged-in users with project access
-- Rate limiting (5 attempts per 15 minutes)
-- Session persistence after verification
-
-**Security**: Moderate - password protection with rate limiting
+- Password gate before any report data loads
+- Signed-in users with access to the project skip the password
+- 5 failed attempts per link lock further attempts from the same IP address for 15 minutes
+- After the correct password, access lasts one hour in that browser tab
 
 ## Live and Frozen Data
 
@@ -99,292 +89,202 @@ Every report share link is either live or frozen. You choose when you create the
 - **Live** (default): the link stores the report's settings and runs the report again each time it is opened, so viewers always see current data.
 - **Frozen**: the report runs once when you create the link, and the link shows those exact results every time it is opened. The numbers never change. To share newer data, create a new link.
 
-A frozen report shows when it was frozen and who froze it. Frozen links:
+A frozen report shows when it was frozen and who froze it, in the viewer's date and time format.
+
+![A frozen report titled Sprint 2 sign-off, with a banner reading Frozen on Sep 24, 2026 09:53 AM by Morgan Diaz above the stored chart and results table](/img/screenshots/user-guide/share-links/frozen-report-view.png)
+
+Frozen links:
 
 - Work in every access mode. Authenticated viewers see the frozen results instead of being sent to the live Reports page.
 - Support sorting, grouping, column visibility, and CSV export on the stored rows.
 - Do not support drill-down.
 - Stop working when the link is revoked, expires, or is deleted, like any other share link.
-- Show a **Frozen** badge in the share lists.
+- Show **Frozen** in the **Data** column of the share lists.
 
 Freezing a report requires the **Reporting** add/edit permission on the project. The report runs with your permissions, so it holds what you can see.
 
 ### Row Limit
 
-A frozen report keeps up to 10,000 rows by default. Administrators can change the limit with the `REPORT_SNAPSHOT_MAX_ROWS` [environment variable](../environment-variables.md#frozen-reports). If a report has more rows, a warning shows the total and offers to freeze a copy that keeps only the first rows. The frozen report then states how many rows it kept out of the total.
+A frozen report keeps up to 10,000 rows by default. Administrators can change the limit with the `REPORT_SNAPSHOT_MAX_ROWS` [environment variable](../environment-variables.md#frozen-reports). If a report has more rows, a confirmation shows the total and the limit. Select **Save** to freeze a copy that keeps only the first rows, or **Cancel** to go back. The frozen report then states how many rows it kept out of the total.
 
 ## Creating Share Links
 
-### From Report Builder
+### From the Reports Page
 
-![The Share Report dialog on its Create Share tab, showing the three share modes, the expiration picker, the view-notification checkbox, and the title and description fields](/img/screenshots/user-guide/share-links/share-report-dialog.png)
+![The Share Report dialog on its Create Share tab, showing the Live and Frozen data choice, the three share modes, the expiration picker, and the view-notification checkbox](/img/screenshots/user-guide/share-links/share-report-dialog.png)
 
-1. **Configure Your Report**
-   - Navigate to Reports page
-   - Select report type (Test Execution, Automation Trends, etc.)
-   - Set date range, dimensions, and metrics
-   - Apply any filters needed
-   - Generate the report
+1. **Run your report**
+   - Open the project's **Reports** page (or **Administration → Reports** for cross-project reports)
+   - Choose a pre-built report or build one in the Report Builder
+   - Set the date range, dimensions, metrics, and filters
+   - Run the report
 
-2. **Click Share Button**
-   - Located in the report toolbar
-   - Opens the Share Dialog
+2. **Select Share**
+   - The share icon is in the report toolbar
+   - It opens the **Share Report** dialog on the **Create Share** tab
 
-3. **Choose Live or Frozen Data**
+3. **Choose live or frozen data**
    - **Live**: re-runs the report each time the link is opened
    - **Frozen**: keeps the results from now; see [Live and Frozen Data](#live-and-frozen-data)
 
-4. **Choose Access Mode**
-   - **Authenticated**: Requires login with project access
-   - **Public**: No authentication required
-   - **Password-Protected**: Requires password to access
+4. **Choose the share mode**
+   - **Authenticated (requires login)**
+   - **Password Protected**
+   - **Public (anyone with link)**
 
-5. **Configure Share Settings**
+5. **Configure the share**
+
+   **Expiration** (optional)
+   - The link expires at the end of the selected day, in your local time
+   - Leave empty for no expiration
+   - Can be changed later
+
+   **Notify me when someone views this link** (optional)
+   - Sends you a notification when the link is viewed, delivered according to your notification preferences
+   - Can be toggled later from the share list
 
    **Title** (optional)
-   - Custom name for the share
-   - Defaults to report type if not provided
+   - Defaults to the report name and the current date and time
 
    **Description** (optional)
-   - Context or notes for viewers
-   - Helpful for identifying share purpose
+   - Context for viewers, shown under the title
 
-   **Expiration Date** (optional)
-   - Set automatic expiration
-   - Leave blank for no expiration
-   - Can be updated later
+   **Password** (Password Protected mode)
+   - Must meet the password policy your administrator set for accounts
+   - Enter it twice to confirm
+   - Stored only as a bcrypt hash
 
-   **Password** (for Password-Protected mode)
-   - Minimum 4 characters recommended
-   - Use strong passwords (12+ characters, mixed case, numbers, symbols)
-   - Password is hashed with bcrypt (10 rounds)
-
-   **Notify on View**
-   - Enable to receive email notifications when link is accessed
-   - Shows viewer name/email (if authenticated) or "Anonymous"
-   - Can be toggled on/off anytime
-
-6. **Create and Copy Link**
-   - Click "Create Share"
-   - Share URL is generated: `/share/{shareKey}`
-   - Click "Copy Link" to copy to clipboard
-   - Share the URL via email, chat, or other channels
+6. **Create and copy the link**
+   - Select **Create Share Link**
+   - The confirmation shows the URL, mode, notifications, views, and whether the data is live or frozen
+   - Select **Copy** to copy the URL, or open it in a new tab
 
 ### Share Link Format
 
 ```text
-https://app.testplanit.com/share/A8j2KmPqR5vWxYz7BnC3DfG9HkL4MtN6
+https://app.testplanit.com/share/A8j2KmPqR5vWxYz7BnC3DfG9HkL4MtN6pQ1sT0uVwXy
 ```
 
-- 43-character random share key
-- 256-bit entropy for security
+- 43-character random share key (256 bits of entropy)
 - URL-safe characters only
-- Outside locale prefix for shorter URLs
+- No locale prefix; each viewer sees the page in their own language
 
 ## Managing Share Links
 
-### Accessing Share Management
+### Where to Manage Shares
 
-**From Project Settings**:
+**Project settings**: open the project, then **Settings → Manage Shares** to see every share in the project.
 
-1. Navigate to your project
-2. Click **Settings** in the project menu
-3. Click **Shares** in the settings navigation
-4. View all shares for the project
+**Administration**: **Administration → Manage Shares** lists shares across all projects, including cross-project shares.
 
-**From Admin (Cross-Project)**:
+**Share dialog**: the **My Shares** tab of the Share Report dialog lists the report shares you created.
 
-1. Navigate to **Admin** section
-2. Click **Shares** to view all shares across all projects
+### Share List Columns
 
-**From Share Dialog**:
+![The project Manage Shares page listing a password-protected share marked Frozen and a public share marked Live in the Data column](/img/screenshots/user-guide/share-links/share-list-data-column.png)
 
-1. Click Share button in Report Builder
-2. Select "My Shares" tab
-3. View and manage existing shares
-
-### Share List Features
-
-**Columns**:
-
-- **Title**: Share name with link to view
-- **Mode**: Access mode (Authenticated/Public/Password-Protected)
-- **Views**: Number of times accessed
-- **Notifications**: On/Off indicator
-- **Created**: Creation date
-- **Expires**: Expiration date or "Never"
+- **Project** (Administration only): the project the share belongs to
+- **Title**: opens the share in a new tab; the description shows below it
+- **Created By** (Manage Shares pages): who created the share
+- **Mode**: Authenticated, Password Protected, or Public
+- **Data**: **Live** or **Frozen** for report shares
+- **Views**: how many times the link was viewed
+- **Notifications**: whether view notifications are on
+- **Created**: when the share was created
+- **Expires**: the expiration date, or none
 - **Status**: Active, Expired, or Revoked
 
 ### Available Actions
 
-**Copy Link**
+**Copy Link**: copies the share URL to the clipboard.
 
-- Copy share URL to clipboard
-- Quick access for distribution
+**Edit** (active shares only): change the title, description, share mode, password, expiration date, and view notifications.
 
-**Edit Share**
+**Toggle notifications** (active shares only): turn view notifications on or off.
 
-- Update title and description
-- Change expiration date
-- Update password (for password-protected shares)
-- Toggle notify on view
+**Revoke** (active shares only): disables the link immediately. Viewers see a "Share Link Revoked" message. Revoking cannot be undone; create a new share if access is needed again.
 
-**Toggle Notifications**
-
-- Enable/disable view notifications
-- Quick toggle button in list
-- Only available for active shares
-
-**Revoke Share**
-
-- Immediately disable access
-- Link shows "Link revoked" message
-- Can be reversed by editing and un-revoking
-- Preserves access logs
-
-**Delete Share**
-
-- Permanently remove share
-- Link shows 404 Not Found
-- Cannot be undone
-- Removes all access logs
+**Delete**: removes the share from the lists and stops the link from working.
 
 ## Accessing Shared Content
 
 ### Public Share Access
 
-1. Click or paste share URL in browser
-2. Report loads immediately (no authentication)
-3. View read-only report content
-4. Minimal UI - no navigation or header
+1. Open the share URL
+2. The report loads without signing in
+3. The report is read-only
 
 ### Password-Protected Share Access
 
-1. Click or paste share URL in browser
-2. Password gate appears
-3. Enter password
-4. On success, report loads
-5. Access persists in browser session
+1. Open the share URL
+2. Enter the password in the password gate
+3. The report loads
 
-**Rate Limiting**: 5 password attempts per 15 minutes per IP address
-
-**Auth Bypass**: If logged in with project access, password is skipped automatically
+After 5 failed attempts on a link, further attempts from the same IP address are blocked for 15 minutes. The password gate shows how many attempts remain. Signed-in users with access to the project skip the password.
 
 ### Authenticated Share Access
 
-1. Click or paste share URL in browser
-2. If not logged in, redirected to signin page
-3. After signin, a live link redirects to the full app with the report configuration, and the report loads with all settings preserved. A frozen link opens its frozen results instead.
+1. Open the share URL
+2. If you are not signed in, you are sent to the sign-in page
+3. After signing in, a live link opens the report in the full app with all settings restored. A frozen link opens its frozen results.
 
-**Access Denied**: Users without project access see "Access denied" message
+Users without access to the project see an access-denied message.
 
-## Access Analytics
+## Views and Access History
 
 ### View Count
 
-- Increments each time link is accessed
-- Tracks unique views per browser session
-- Prevents double-counting refreshes
-- Displayed in share list
+- A view is counted when someone opens the link
+- Reloading the page in the same browser tab does not count another view
+- The count appears in the share lists
 
-### Last Viewed
+### Access History
 
-- Timestamp of most recent access
-- Shows when link was last used
-- Helps identify stale shares
-
-### Access Logs
-
-View detailed access history:
-
-**Log Information**:
-
-- Viewer name (if authenticated) or "Anonymous"
-- Viewer email (if authenticated)
-- IP address
-- User agent (browser/device)
-- Access timestamp
-- Was authenticated (yes/no)
-
-**Accessing Logs**:
-
-1. Navigate to Share Management
-2. Click on share title
-3. View access log table
-4. Filter and sort as needed
+Every access to a share link is recorded in the [audit log](/docs/user-guide/audit-logs) with the viewer (or "Anonymous"), IP address, and time. See [Audit Logging](#audit-logging).
 
 ## Notifications
 
-### Share Link Accessed Notification
+When **Notify me when someone views this link** is on, the share's creator receives a notification each time a view is counted. It includes the share title and the viewer's name, or "Anonymous" for viewers who are not signed in. Notifications are delivered in the app and by email according to your notification preferences.
 
-Triggered when `notifyOnView` is enabled and link is accessed.
-
-**Notification Contains**:
-
-- Share title
-- Viewer name (or "Anonymous")
-- Viewer email (if authenticated)
-- Access timestamp
-- Link to access logs
-
-**Configuration**:
-
-- Enable during share creation
-- Toggle on/off in share list
-- Only share owner receives notifications
-- Email notification delivery
-
-### When Notifications are Sent
-
-- ✅ First view by new viewer
-- ✅ View after session expiration
-- ❌ Same viewer refreshing page
-- ❌ Same viewer within session
+Reloading the page in the same browser tab does not send another notification.
 
 ## Security Features
 
-### Share Key Generation
+### Share Keys
 
-- **Entropy**: 256 bits (32 bytes)
-- **Encoding**: base64url (URL-safe)
-- **Length**: 43 characters
-- **Method**: crypto.randomBytes
-- **Uniqueness**: Collision probability negligible
+- 256 bits of entropy, generated with a cryptographically secure random source
+- base64url encoded, 43 characters
 
 ### Password Protection
 
-- **Hashing**: bcrypt with 10 rounds
-- **Storage**: Hash only, never plain text
-- **Strength**: Minimum 4 characters (12+ recommended)
-- **Verification**: Secure comparison
-- **Rate Limiting**: 5 attempts per 15 minutes per IP
+- Stored as a bcrypt hash (10 rounds), never in plain text
+- Must meet the account password policy set by your administrator
+- 5 failed attempts per link and IP address within 15 minutes lock further attempts until the window resets
+- A correct password issues a signed access token that is valid for one hour and only for that share. Changing the share's password invalidates tokens issued before the change.
 
 ### Access Control
 
-- **Expiration**: Enforced on every access
-- **Revocation**: Checked on every access
-- **Data Filtering**: Emails and internal IDs removed for public shares
-- **Audit Logging**: Every access recorded with IP and timestamp via the following [audit log](/docs/user-guide/audit-logs) actions:
-  - `SHARE_LINK_CREATED` — a share link was generated
-  - `SHARE_LINK_ACCESSED` — a share link was opened
-  - `SHARE_LINK_PASSWORD_VERIFY` — a password attempt was made on a protected link; audited on **both** success and failure so repeated failures are visible as a brute-force signal
-  - `SHARE_LINK_REVOKED` — a share link was revoked
+- Expiration and revocation are checked on every access, including for frozen links
+- Deleted links stop working
 
-### Auth Bypass
+### Audit Logging
 
-Logged-in users with project access automatically bypass password protection:
+Share activity is recorded in the [audit log](/docs/user-guide/audit-logs):
 
-- Check project permissions
-- Skip password gate if access granted
-- Show notification with "View in Full App" link
-- Seamless experience for team members
+- `SHARE_LINK_CREATED` — a share link was created
+- `SHARE_LINK_ACCESSED` — a share link was viewed
+- `SHARE_LINK_PASSWORD_VERIFY` — a password attempt was made on a protected link; recorded on **both** success and failure so repeated failures are visible
+- `SHARE_LINK_REVOKED` — a share link was revoked
+
+### Signed-In Team Members
+
+Signed-in users with access to the project skip the password on password-protected links. For a live project report, a notification offers **View in Full App** to open the report in the application.
 
 ### Multi-Tenant Security
 
-- All queries tenant-scoped via middleware
-- Cross-tenant access blocked
-- Share management shows only current tenant's shares
-- Access logs respect tenant boundaries
+- All queries are scoped to the current tenant
+- Cross-tenant access is blocked
+- Share management shows only the current tenant's shares
 
 ## Best Practices
 
@@ -395,12 +295,10 @@ Logged-in users with project access automatically bypass password protection:
 - Team members with project access
 - Internal stakeholder reports
 - Sensitive data requiring authentication
-- Reports needing interactive features
 
 **Use Public for**:
 
 - Public dashboards and metrics
-- Marketing and transparency reports
 - Open data sharing
 - Non-sensitive information
 
@@ -409,127 +307,61 @@ Logged-in users with project access automatically bypass password protection:
 - Client reports and deliverables
 - Partner collaboration
 - Confidential external sharing
-- Time-limited access to sensitive data
+
+**Use Frozen data for**:
+
+- Release sign-off and audits
+- Reports that must keep the numbers from a point in time
 
 ### Security Recommendations
 
-**Password Strength**:
+**Passwords**:
 
-- Use 12+ characters
-- Mix uppercase, lowercase, numbers, symbols
-- Avoid common words or patterns
-- Don't reuse passwords from other services
+- Use long passwords that mix character types
+- Don't send the password through the same channel as the link
 
 **Expiration Dates**:
 
-- Set expiration for temporary shares
-- Review and extend if needed
-- Expire shares when no longer needed
-- Regular cleanup of old shares
+- Set an expiration for temporary shares
+- Revoke or delete shares that are no longer needed
 
-**Link Distribution**:
+**Monitoring**:
 
-- Don't share passwords via same channel as link
-- Use separate communication methods
-- Verify recipient before sharing
-- Consider short-lived shares for sensitive data
-
-**Access Monitoring**:
-
-- Enable notifications for sensitive shares
-- Review access logs periodically
-- Investigate unexpected access
+- Turn on view notifications for sensitive shares
+- Review share access in the audit log
 - Revoke compromised links immediately
-
-**Regular Maintenance**:
-
-- Review active shares monthly
-- Delete unused shares
-- Update expired shares or extend expiration
-- Revoke shares when no longer needed
 
 ### Performance Tips
 
-- Public shares are optimized for read-only access
-- Large reports may take longer to load
-- Consider filtering data before sharing
-- Set reasonable date ranges for better performance
+- Frozen links load stored results and never re-run the report
+- Large live reports take longer to load
+- Filter the report and set reasonable date ranges before sharing
 
 ## Troubleshooting
 
-### "Link expired" message
+### "Share Link Expired" message
 
-**Cause**: Share has passed expiration date
+The share has passed its expiration date. Ask the share's creator for a new link. If you created it, edit the share and set a later date.
 
-**Solutions**:
+### "Share Link Revoked" message
 
-- Contact share creator to extend expiration
-- Request new share link
-- If you're the owner, edit share and update expiration date
+The share was revoked, and revoking cannot be undone. Ask the share's creator for a new link.
 
-### "Link revoked" message
+### Access denied on an authenticated share
 
-**Cause**: Share was manually revoked by creator
-
-**Solutions**:
-
-- Contact share creator for explanation
-- Request new share link if access still needed
-- If you're the owner, edit share and un-revoke if needed
-
-### "Access denied" for authenticated shares
-
-**Cause**: User doesn't have project access
-
-**Solutions**:
-
-- Contact project owner to request access
-- Verify you're logged in with correct account
-- Check if your project permissions were removed
+You don't have access to the project, or the report is a cross-project report and you are not an Admin. Ask a project owner for access, and check that you are signed in with the right account.
 
 ### Password not working
 
-**Causes**:
-
-- Typo in password (case-sensitive)
-- Rate limiting after failed attempts
-- Incorrect password provided
-
-**Solutions**:
-
-- Verify password carefully (check caps lock)
-- Wait 15 minutes if rate limited
-- Contact share creator to verify password
-- Request password reset if available
+- Passwords are case-sensitive; check Caps Lock
+- After 5 failed attempts you are blocked for 15 minutes; the message shows when you can try again
+- Ask the share's creator to confirm the password
 
 ### Report not loading
 
-**Causes**:
-
-- Network connectivity issues
-- Browser cache problems
-- Server error
-
-**Solutions**:
-
-- Check internet connection
-- Try refreshing the page
-- Clear browser cache and cookies
-- Try different browser
-- Contact support if issue persists
-
-### Password rate limiting
-
-**Message**: "Too many attempts. Try again in 15 minutes."
-
-**Cause**: 5 or more failed password attempts from your IP address
-
-**Solutions**:
-
-- Wait 15 minutes before trying again
-- Verify you have the correct password
-- Use different network if urgent
-- Contact share creator if password is unclear
+- Check your connection and refresh the page
+- Try another browser
+- Contact your administrator if the problem persists
 
 ## API Reference
 
@@ -537,29 +369,49 @@ Logged-in users with project access automatically bypass password protection:
 
 ```typescript
 {
-  id: string;                    // Unique identifier
-  shareKey: string;              // 32-64 char random key
-  entityType: "REPORT";          // Currently only REPORT supported
-  entityConfig: {                // Report configuration
-    reportType: string;
-    dimensions: string[];
-    metrics: string[];
-    startDate: string;
-    endDate: string;
-    page: number;
-    pageSize: number;
-  };
-  projectId: number;
+  id: string;
+  shareKey: string;              // 43-character random key
+  entityType:                    // REPORT for report shares; SAVED_REPORT for
+    | "REPORT"                   // private saved reports; SEARCH and
+    | "SAVED_REPORT"             // REPOSITORY_VIEW for saved searches and views
+    | "SEARCH"
+    | "REPOSITORY_VIEW"
+    | "TEST_CASE"
+    | "TEST_RUN"
+    | "SESSION"
+    | "DASHBOARD";
+  entityId: string | null;
+  entityConfig: object | null;   // The stored report configuration
+  projectId: number | null;      // Null for cross-project shares and saved reports
+  createdById: string;
   mode: "AUTHENTICATED" | "PUBLIC" | "PASSWORD_PROTECTED";
   expiresAt: Date | null;
   notifyOnView: boolean;
   title: string | null;
   description: string | null;
   isRevoked: boolean;
+  isDeleted: boolean;
+  deletedAt: Date | null;
   viewCount: number;
   lastViewedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
+  snapshot?: ReportSnapshot;     // Present for frozen links
+}
+```
+
+### ReportSnapshot Model
+
+```typescript
+{
+  id: string;
+  shareLinkId: string; // One snapshot per frozen link
+  payload: object; // The stored report results
+  rowCount: number; // Rows kept
+  totalRowCount: number; // Rows the report produced
+  truncated: boolean; // True when rows were cut to the row limit
+  capturedById: string;
+  capturedAt: Date;
 }
 ```
 
@@ -577,44 +429,11 @@ Logged-in users with project access automatically bypass password protection:
 }
 ```
 
-### Access Modes
-
-```typescript
-enum ShareLinkMode {
-  AUTHENTICATED       // Requires login + project access
-  PUBLIC             // No auth required
-  PASSWORD_PROTECTED // Public but requires password
-}
-```
-
-### Entity Types
-
-```typescript
-enum ShareLinkEntityType {
-  REPORT            // Currently supported
-  TEST_CASE         // Future
-  TEST_RUN          // Future
-  SESSION           // Future
-  DASHBOARD         // Future
-}
-```
-
 ## Future Enhancements
 
-### Planned Entity Types
-
-- **Test Cases**: Share individual test case details
-- **Test Runs**: Share test run results and metrics
-- **Sessions**: Share session-based testing results
-- **Dashboards**: Share custom dashboard views
-
-### Potential Features
-
-- **Custom Branding**: Logo and colors for public shares
-- **Embed Support**: iframe embedding for websites
-- **Download Options**: Export as PDF or CSV from share
-- **Share Templates**: Predefined share configurations
-- **Bulk Operations**: Create multiple shares at once
-- **Analytics Dashboard**: Comprehensive share analytics
-- **Custom Expiration**: Notifications before expiration
-- **Access Restrictions**: IP whitelisting, domain restrictions
+- **Share other content**: individual test cases, test runs, sessions, and dashboards
+- **Custom branding** for public shares
+- **Embed support** for websites
+- **PDF export** from shares
+- **Expiration reminders** before a share expires
+- **Access restrictions** such as IP allow lists

@@ -27,7 +27,7 @@ The following pre-built reports have cross-project variants. The underlying sema
 - [Impact Analysis History](./projects/reports/impact-analysis-history.md) — every Impact analysis across the projects that have [Impact Analysis enabled](./impact.md), with a **Project** column.
 - [Code Pin Coverage](./projects/reports/code-pin-coverage.md) — pins and uncovered changes across every project with Impact Analysis enabled, with a **Project** column.
 
-The two requirement reports add a **Requirement Project** column naming the project each requirement belongs to. On the traceability report that sits alongside the existing **Project** column, which names the *covering case's* project — a requirement in one project can be covered by a case in another, so the two answer different questions. Requirement [snapshots](./projects/requirements-traceability.md#snapshots) are captured from a single project and stay project-scoped, so there is no cross-project variant of the Requirement Coverage Changes report.
+The two requirement reports add a **Requirement Project** column naming the project each requirement belongs to. On the traceability report that sits alongside the existing **Project** column, which names the _covering case's_ project — a requirement in one project can be covered by a case in another, so the two answer different questions. Requirement [snapshots](./projects/requirements-traceability.md#snapshots) are captured from a single project and stay project-scoped, so there is no cross-project variant of the Requirement Coverage Changes report.
 
 ### Custom Reports
 
@@ -56,4 +56,4 @@ These reports remain available inside each individual project at **Project → R
 
 ## Sharing
 
-Cross-project report Share Links capture the project-scope state in the URL, so external viewers see the same aggregation you saw when you created the link. See [Share Links](./share-links.md).
+Cross-project report Share Links store the report's configuration, including the project scope. A live link re-runs the report when opened; a frozen link always shows the results from when it was created. Authenticated cross-project links require Admin access; use a Public or Password-Protected link to share with others. Cross-project reports can also be saved to your private [Saved Reports](./projects/reports/index.md#saved-reports). See [Share Links](./share-links.md).

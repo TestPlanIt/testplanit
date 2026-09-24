@@ -5,30 +5,29 @@ sidebar_position: 8
 
 # Report Builder
 
-The Report Builder lets you compose a custom report by picking a data source, then choosing dimensions to group by, metrics to measure, and a chart type to render. It sits alongside the pre-built reports on the project's Reports page.
+The Report Builder lets you compose a custom report by picking a data source, then choosing dimensions to group by and metrics to measure. The chart type follows from the dimensions you choose. It sits alongside the pre-built reports on the project's Reports page.
 
 ## Data Sources
 
-| Source | What it covers |
-| --- | --- |
-| **Test Execution** | Test results across runs (status counts, pass rates, elapsed times), plus Impact Analysis counts, selected cases, and selection precision, grouped by trigger or code repository when the project uses [Impact Analysis](../../impact.md) |
-| **Repository Stats** | Cases in the project's test repository (counts, automation status, custom fields) |
-| **User Engagement** | Per-user activity across the project (executions, sessions, results) |
-| **Project Health** | Project-level health metrics (pass rates, churn, recent activity) |
+| Source                  | What it covers                                                                                                                                                                                                                                                                                   |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Test Execution**      | Test results across runs (status counts, pass rates, elapsed times), plus Impact Analysis counts, selected cases, and selection precision, grouped by trigger or code repository when the project uses [Impact Analysis](../../impact.md)                                                        |
+| **Repository Stats**    | Cases in the project's test repository (counts, automation status, custom fields)                                                                                                                                                                                                                |
+| **User Engagement**     | Per-user activity across the project (executions, sessions, results)                                                                                                                                                                                                                             |
+| **Project Health**      | Project-level health metrics (pass rates, churn, recent activity)                                                                                                                                                                                                                                |
 | **Milestone Readiness** | Release readiness per milestone — % of in-scope issues fully passing, plus per-state counts (passed, failed, in progress, not run, uncovered, total). Supports a date-range filter on each milestone's effective date, and a Date dimension that plots readiness chronologically as a line chart |
-| **Session Analysis** | Exploratory testing sessions (durations, findings, executions) |
-| **Issue Tracking** | Linked external issues and their associated test cases |
+| **Session Analysis**    | Exploratory testing sessions (durations, findings, executions)                                                                                                                                                                                                                                   |
+| **Issue Tracking**      | Linked external issues and their associated test cases                                                                                                                                                                                                                                           |
 
 ## Workflow
 
 1. Open the project's **Reports** page.
-2. Switch to the **Custom Reports** tab.
+2. Switch to the **Report Builder** tab.
 3. Pick a **Report Type** — this determines the available dimensions and metrics.
 4. Choose **Dimensions** to group by (e.g., assigned user, priority, week ending). You can stack multiple dimensions; the dimension order controls the grouping hierarchy.
 5. Choose **Metrics** to measure (e.g., Test Results count, Pass Rate, Average Elapsed Time).
 6. Apply any **Filters** (date range, tags, custom fields).
-7. Pick a **Chart Type** — bar, line, pie, or table.
-8. Click **Run Report**.
+7. Click **Run Report**.
 
 Results render as a single, continuously-scrolling list (no page controls) and the columns are sortable. Use **Export CSV** above the table to download the full result set — see [Exporting Results](./index.md#exporting-results).
 
@@ -48,7 +47,7 @@ The Report Builder supports interactive drill-down on every metric cell. Click a
    - For pass rates: status breakdown with colored indicators and the calculated percentage
    - **Export to CSV** button
 3. The drawer shows a table with clickable links to view individual records in context.
-4. Scroll to load more records (50 at a time).
+4. Scroll to load more records (500 at a time).
 
 ### What You Can Drill Into
 
@@ -94,6 +93,6 @@ With [Impact Analysis](../../impact.md) enabled, the Test Execution source offer
 
 When a report is grouped by Folder with **Include Descendants** enabled, drilling into a folder cell resolves to all cases in that folder's subtree — not just direct children — so the drawer matches what the rolled-up metric was actually measuring.
 
-## Sharing
+## Saving and Sharing
 
-A custom report's configuration (data source, dimensions, metrics, filters, chart type) is captured in the URL, so any Share Link you create encodes the exact view your audience will see. See [Share Links](../../share-links.md) for share modes and access control.
+**Save** stores the report — data source, dimensions, metrics, filters, and date range — in your private [Saved Reports](./index.md#saved-reports). **Share** creates a [Share Link](../../share-links.md) with the same configuration. Either can be live, re-running the report on every open, or frozen, keeping the results from the moment you saved or shared. See [Live and Frozen Data](../../share-links.md#live-and-frozen-data).

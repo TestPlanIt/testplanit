@@ -44,18 +44,20 @@ This is separate from the drill-down **Export to CSV** in the [Report Builder](.
 
 ## Saved Reports
 
-Save any report — pre-built or custom — to come back to it later without creating a Share Link. Saved reports are private: only you can see them.
+Save any report — pre-built or custom — to come back to it later without creating a Share Link. Saved reports are private: only you can open them. Administrators see their titles listed under **Administration → Manage Shares**.
 
 1. Run the report.
-2. Select **Save** in the report toolbar.
+2. Select the **Save** icon in the report toolbar, next to Share.
 3. Enter a name and an optional description.
 4. Choose **Live** or **Frozen** data:
    - **Live** reopens the report with every setting restored and fetches current data.
    - **Frozen** keeps the results from now. Opening it shows those exact results, when they were frozen, and by whom. See [Live and Frozen Data](../../share-links.md#live-and-frozen-data) for the row limit and what frozen reports support.
 5. Select **Save**.
 
-To open, rename, or delete a saved report, select **Saved Reports** at the top of the Reports panel. The list shows the reports you saved on this page: project reports on that project's Reports page, and cross-project reports on **Administration → Reports**. A snowflake icon marks frozen reports, which open in a new tab.
+![The Saved Reports menu open at the top right of the Reports page, listing a frozen report marked with a snowflake and a live report, above a live saved report showing its name and description](/img/screenshots/user-guide/projects/reports/saved-reports-menu.png)
+
+To open, rename, or delete a saved report, select **Saved Reports** at the top right of the page, next to the page title. The list shows the reports you saved on this page: project reports on that project's Reports page, and cross-project reports on **Administration → Reports**. A snowflake icon marks frozen reports, which open in a new tab. A live saved report opens on the Reports page with its name and description shown above the results; running a different report there clears them.
 
 ## Sharing
 
-Any report — pre-built or custom — can be shared with team members, clients, and stakeholders using a Share Link. A Share Link can be live (re-runs the report when opened) or frozen (always shows the results from when it was created). See [Share Links](../../share-links.md) for live and frozen data, the three share modes (Public, Password-Protected, Authenticated), password rate limiting, view notifications, and access analytics.
+Any report — pre-built or custom — can be shared with team members, clients, and stakeholders using a Share Link. A Share Link can be live (re-runs the report when opened) or frozen (always shows the results from when it was created). See [Share Links](../../share-links.md) for live and frozen data, the three share modes (Public, Password-Protected, Authenticated), password rate limiting, view notifications, and view counts.

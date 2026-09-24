@@ -100,10 +100,10 @@ These associations can be modified later by visiting the specific administration
 1. Locate the project you wish to modify in the table.
 2. Click the **Edit** button in the corresponding row.
 3. A dialog box will appear, pre-filled with the project's current details. You can modify:
-    - **Icon:** Choose an icon for the project using the icon picker.
-    - **Name:** Update the project name.
-    - **Description:** Modify the project description.
-    - **Completed:** Toggle the completion status and set the **Date** if marking as completed.
+   - **Icon:** Choose an icon for the project using the icon picker.
+   - **Name:** Update the project name.
+   - **Description:** Modify the project description.
+   - **Completed:** Toggle the completion status and set the **Date** if marking as completed.
 4. Click "Submit" to apply the changes.
 
 ## Deleting a Project
@@ -243,34 +243,28 @@ View and manage all Share Links created for reports and other content within the
 
 1. Navigate to your project
 2. Click **Settings** in the project menu
-3. Click **Shares** in the settings navigation
+3. Click **Manage Shares**
 4. View all active, expired, and revoked shares
 
 ### Features
 
 **Share Overview:**
 
-- See all share links for the project
-- View access mode (Authenticated, Public, Password-Protected)
-- Monitor view counts and last accessed timestamps
+- See all share links for the project and who created them
+- View access mode (Authenticated, Public, Password-Protected) and whether report data is live or frozen
+- Monitor view counts
 - Track notification settings for each share
 - Check expiration dates and status (Active, Expired, Revoked)
 
 **Share Actions:**
 
 - **Copy Link**: Copy share URL to clipboard for distribution
-- **Edit**: Modify title, description, expiration date, and settings
-- **Toggle Notifications**: Enable/disable view notifications
-- **Revoke**: Immediately disable access (link shows "Link revoked")
-- **Delete**: Permanently remove share (link shows 404)
+- **Edit** (active shares): Change title, description, share mode, password, expiration date, and notifications
+- **Toggle Notifications** (active shares): Enable/disable view notifications
+- **Revoke** (active shares): Immediately disable access; cannot be undone
+- **Delete**: Remove the share; the link stops working
 
-**Access Analytics:**
-
-- View count per share link
-- Last accessed timestamp
-- Detailed access logs with viewer information
-- IP addresses and user agents
-- Authentication status for each access
+Every access to a share is recorded in the [audit log](./audit-logs.md). See [Share Links](./share-links.md) for details.
 
 ### Share Management Best Practices
 
@@ -325,7 +319,7 @@ System administrators can always edit a result regardless of this setting, and e
 
 When enabled, recording a result that **flips** a completed outcome — for example changing a case from Passed to Failed — requires **Result Details** explaining the change.
 
-The result details note is mandatory only when **both** the previous and new statuses are *completed* statuses **and** their pass/fail judgment differs. A status counts as completed when its **Completed** flag is set on the [Statuses](./statuses.md) admin page. In the default configuration **Skipped** is a completed status, so changing between Skipped and a Passed or Failed result is treated as a flip and requires justification too, not just Passed ↔ Failed. Recording the first result, or moving to or from a *non-completed* status (such as Untested, Retest, or Blocked), is never blocked.
+The result details note is mandatory only when **both** the previous and new statuses are _completed_ statuses **and** their pass/fail judgment differs. A status counts as completed when its **Completed** flag is set on the [Statuses](./statuses.md) admin page. In the default configuration **Skipped** is a completed status, so changing between Skipped and a Passed or Failed result is treated as a flip and requires justification too, not just Passed ↔ Failed. Recording the first result, or moving to or from a _non-completed_ status (such as Untested, Retest, or Blocked), is never blocked.
 
 This setting is off by default and applies to results recorded through the application, the API, and connected agents. Automated result imports (for example CLI or CI result uploads) are not affected.
 
@@ -360,8 +354,8 @@ While the setting is on:
 
 Controls whether automated runs in this project that stopped receiving results are closed automatically. See the system-wide [Abandoned automation cleanup](./statuses.md#abandoned-automation-cleanup) policy for how the sweep works; manual runs are never affected.
 
-- **Inherit system default**: Follow the system-wide policy (the current system threshold — or *off* — is shown in the option label). This is the default.
+- **Inherit system default**: Follow the system-wide policy (the current system threshold — or _off_ — is shown in the option label). This is the default.
 - **Disable for this project**: Never sweep this project's runs, even when the system policy is on.
 - **Custom idle threshold**: Set a project-specific idle time in minutes. A project can opt in this way even when the system policy is off.
 
-Below the threshold, **Move closed runs to** picks the run state a swept run is moved into. It defaults to the project's first enabled **Done**-type run workflow state, marked with a star in the list. Choose a different state if the project distinguishes, say, an *Aborted* state from *Done*; only run states assigned to this project are offered.
+Below the threshold, **Move closed runs to** picks the run state a swept run is moved into. It defaults to the project's first enabled **Done**-type run workflow state, marked with a star in the list. Choose a different state if the project distinguishes, say, an _Aborted_ state from _Done_; only run states assigned to this project are offered.
