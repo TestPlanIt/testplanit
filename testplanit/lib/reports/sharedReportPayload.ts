@@ -1,3 +1,4 @@
+import { internalAppUrl } from "~/lib/internalAppUrl";
 import {
   getCrossProjectReportTypes,
   getProjectReportTypes,
@@ -81,8 +82,8 @@ export async function buildSharedReportPayload({
 
   const endpoint = reportType.endpoint;
 
-  // Use localhost for internal server-to-server communication to avoid SSL issues
-  const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+  // The server's own address, not the browser-facing NEXTAUTH_URL.
+  const baseUrl = internalAppUrl();
 
   // First, fetch metadata (dimensions and metrics with labels) from GET endpoint
   const metadataUrl = new URL(endpoint, baseUrl);

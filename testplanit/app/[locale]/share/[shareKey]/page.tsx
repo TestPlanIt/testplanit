@@ -6,6 +6,7 @@ import { getTranslations } from "next-intl/server";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { internalAppUrl } from "~/lib/internalAppUrl";
 import { redirect } from "~/lib/navigation";
 import { authOptions } from "~/server/auth";
 
@@ -19,8 +20,8 @@ interface SharePageProps {
 export const dynamic = "force-dynamic";
 
 async function fetchShareMetadata(shareKey: string) {
-  // Use NEXTAUTH_URL directly to preserve the correct protocol (http/https)
-  const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+  // The server's own address, not the browser-facing NEXTAUTH_URL.
+  const baseUrl = internalAppUrl();
 
   try {
     // Forward the viewer's session so a saved report resolves for its owner.

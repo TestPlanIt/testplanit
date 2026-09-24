@@ -12,13 +12,14 @@ The `testplanit/.env.example` file in the repository carries the same variables 
 
 ## Core
 
-| Variable          | Default      | Description                                                                                                                                                                                       |
-| ----------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `DATABASE_URL`    | **required** | PostgreSQL connection string, including `?schema=public`.                                                                                                                                         |
-| `NEXTAUTH_URL`    | **required** | The public URL of the application. Also forms the OAuth callback URL that issue-tracker integrations register with their providers: `${NEXTAUTH_URL}/api/integrations/oauth/<provider>/callback`. |
-| `NEXTAUTH_SECRET` | **required** | Session signing secret. Generate with `openssl rand -base64 32`.                                                                                                                                  |
-| `ENCRYPTION_KEY`  | **required** | Key for encrypting stored secrets such as integration credentials and two-factor seeds. Generate with `openssl rand -hex 32`. Changing it makes existing encrypted values unreadable.             |
-| `VALKEY_URL`      | **required** | Valkey or Redis connection string, used for job queues, caches, rate limits, and real-time notifications.                                                                                         |
+| Variable           | Default         | Description                                                                                                                                                                                                                                                     |
+| ------------------ | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`     | **required**    | PostgreSQL connection string, including `?schema=public`.                                                                                                                                                                                                       |
+| `NEXTAUTH_URL`     | **required**    | The public URL of the application. Also forms the OAuth callback URL that issue-tracker integrations register with their providers: `${NEXTAUTH_URL}/api/integrations/oauth/<provider>/callback`.                                                               |
+| `NEXTAUTH_SECRET`  | **required**    | Session signing secret. Generate with `openssl rand -base64 32`.                                                                                                                                                                                                |
+| `ENCRYPTION_KEY`   | **required**    | Key for encrypting stored secrets such as integration credentials and two-factor seeds. Generate with `openssl rand -hex 32`. Changing it makes existing encrypted values unreadable.                                                                           |
+| `VALKEY_URL`       | **required**    | Valkey or Redis connection string, used for job queues, caches, rate limits, and real-time notifications.                                                                                                                                                       |
+| `INTERNAL_APP_URL` | see description | Address the server uses to call its own routes, such as when opening a shared report. Defaults to the address the server listens on (`HOSTNAME:PORT` in the Docker image), falling back to `NEXTAUTH_URL`. Set it only if neither is reachable from the server. |
 
 ## Database
 
