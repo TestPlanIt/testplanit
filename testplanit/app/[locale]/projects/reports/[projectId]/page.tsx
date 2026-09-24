@@ -18,6 +18,7 @@ import { notFound, useParams } from "next/navigation";
 import { useEffect } from "react";
 import { ApplicationArea } from "~/zenstack/models";
 import { ReportBuilder } from "~/components/reports/ReportBuilder";
+import { SavedReportsMenu } from "~/components/reports/SavedReportsMenu";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 
@@ -112,10 +113,13 @@ export default function ProjectReportsPage() {
     <main>
       <Card>
         <CardHeader className="w-full">
-          <SectionHeader className="flex items-center gap-2">
-            <CardTitle>{tCommon("pageTitles.reports")}</CardTitle>
-            <HelpPopover helpKey="projectReports" />
-          </SectionHeader>
+          <div className="flex items-center justify-between gap-2">
+            <SectionHeader className="flex items-center gap-2">
+              <CardTitle>{tCommon("pageTitles.reports")}</CardTitle>
+              <HelpPopover helpKey="projectReports" />
+            </SectionHeader>
+            <SavedReportsMenu projectId={projectId} />
+          </div>
           <CardDescription>
             <span className="flex items-center gap-2">
               <ProjectIcon iconUrl={project.iconUrl} />

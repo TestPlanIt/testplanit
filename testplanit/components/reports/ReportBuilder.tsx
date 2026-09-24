@@ -67,6 +67,8 @@ import { MatrixFilterPanel } from "@/components/matrix/MatrixFilterPanel";
 import { ReportFilters } from "~/components/reports/ReportFilters";
 import { ReportRenderer } from "~/components/reports/ReportRenderer";
 import { RequirementGapGenerateCases } from "~/components/reports/RequirementGapGenerateCases";
+import { SavedReportContext } from "~/components/reports/SavedReportContext";
+import { SaveReportButton } from "~/components/reports/SaveReportButton";
 import { ShareButton } from "~/components/reports/ShareButton";
 import { useMatrixFilters } from "~/hooks/useMatrixFilters";
 import { REQUIREMENT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
@@ -2043,7 +2045,16 @@ function ReportBuilderContent({
       selectedDimensions: any[],
       selectedMetrics: any[],
       updateUrl: boolean = false,
-      { append = false, page = 1 }: { append?: boolean; page?: number } = {}
+      {
+        append = false,
+        page = 1,
+        fresh = false,
+      }: {
+        append?: boolean;
+        page?: number;
+        /** A new run (explicit or auto-run), not a sort or page re-fetch. */
+        fresh?: boolean;
+      } = {}
     ) => {
       try {
         // Don't attempt to run report if metrics are empty (except for pre-built reports)
@@ -2459,6 +2470,13 @@ function ReportBuilderContent({
           setLastRequestBody(shareableBody);
         }
 
+        // Record when the report was generated: on every new run, including
+        // auto-runs from the URL (a saved report or share link), but not on a
+        // sort or page re-fetch.
+        if (updateUrl || fresh) {
+          setReportGeneratedAt(new Date());
+        }
+
         // Only update these when running a new report (not just sorting/paginating)
         if (updateUrl) {
           setLastUsedDimensions(selectedDimensions);
@@ -2474,8 +2492,6 @@ function ReportBuilderContent({
           if (matchesReportType(reportType, "flaky-tests")) {
             setLastUsedConsecutiveRuns(consecutiveRuns);
           }
-          // Record when the report was generated
-          setReportGeneratedAt(new Date());
 
           // Only persist selections to the URL on an explicit run (the Run
           // Report button). Auto-runs / sort / filter re-runs must NOT write the
@@ -2486,6 +2502,8 @@ function ReportBuilderContent({
           if (updateUrl && !currentReport?.isPreBuilt) {
             // Update URL with selections - start with existing params to preserve tab parameter
             const newParams = new URLSearchParams(searchParams.toString());
+            // A new run is no longer the saved report it was opened from.
+            newParams.delete("savedReport");
             // Safety check: ensure reportType is never empty
             const safeReportType =
               reportType && reportType.trim() !== ""
@@ -2589,7 +2607,9 @@ function ReportBuilderContent({
       setError(null);
 
       try {
-        await fetchReportData(selectedDimensions, selectedMetrics, persistUrl);
+        await fetchReportData(selectedDimensions, selectedMetrics, persistUrl, {
+          fresh: true,
+        });
       } finally {
         setLoading(false);
       }
@@ -2918,6 +2938,43 @@ function ReportBuilderContent({
       </span>
     );
   }, [reportSummary, lastUsedDateRange, session]);
+
+  // The stored configuration of the report on screen: what a share link or
+  // saved report reruns (live) or captures (frozen).
+  const shareReportConfig = matchesReportType(reportType, "iteration-matrix")
+    ? {
+        reportType,
+        projectId,
+        filters: matrixFilters,
+      }
+    : matchesReportType(reportType, "automation-candidates")
+      ? {
+          reportType,
+          projectId,
+          // Capture the snapshot the user is currently
+          // viewing — the preset mirrors selection to
+          // `?snapshotId=N` so the share resolves to
+          // that specific snapshot, not whichever one
+          // happens to be latest later.
+          ...(searchParams.get("snapshotId")
+            ? {
+                snapshotId: Number.parseInt(
+                  searchParams.get("snapshotId")!,
+                  10
+                ),
+              }
+            : {}),
+        }
+      : {
+          reportType,
+          // Use the last request body which contains ALL parameters
+          ...(lastRequestBody || {}),
+        };
+  // Set when the report was opened from the Saved Reports menu.
+  const savedReportId = searchParams.get("savedReport");
+  const currentReportTitle = reportTypes.find(
+    (r) => r.id === reportType
+  )?.label;
 
   return (
     <div>
@@ -4498,6 +4555,9 @@ function ReportBuilderContent({
           collapsible
           className="min-h-[calc(100vh-14rem)]"
         >
+          {savedReportId && (
+            <SavedReportContext savedReportId={savedReportId} />
+          )}
           {/* Results Display */}
           <ReportRenderer
             results={results || []}
@@ -4566,43 +4626,18 @@ function ReportBuilderContent({
             userTimezone={session?.user?.preferences?.timezone}
             readOnly={false}
             headerActions={
-              <ShareButton
-                projectId={mode === "project" ? projectId : undefined}
-                reportConfig={
-                  matchesReportType(reportType, "iteration-matrix")
-                    ? {
-                        reportType,
-                        projectId,
-                        filters: matrixFilters,
-                      }
-                    : matchesReportType(reportType, "automation-candidates")
-                      ? {
-                          reportType,
-                          projectId,
-                          // Capture the snapshot the user is currently
-                          // viewing — the preset mirrors selection to
-                          // `?snapshotId=N` so the share resolves to
-                          // that specific snapshot, not whichever one
-                          // happens to be latest later.
-                          ...(searchParams.get("snapshotId")
-                            ? {
-                                snapshotId: Number.parseInt(
-                                  searchParams.get("snapshotId")!,
-                                  10
-                                ),
-                              }
-                            : {}),
-                        }
-                      : {
-                          reportType,
-                          // Use the last request body which contains ALL parameters
-                          ...(lastRequestBody || {}),
-                        }
-                }
-                reportTitle={
-                  reportTypes.find((r) => r.id === reportType)?.label
-                }
-              />
+              <>
+                <SaveReportButton
+                  projectId={mode === "project" ? projectId : undefined}
+                  reportConfig={shareReportConfig}
+                  reportTitle={currentReportTitle}
+                />
+                <ShareButton
+                  projectId={mode === "project" ? projectId : undefined}
+                  reportConfig={shareReportConfig}
+                  reportTitle={currentReportTitle}
+                />
+              </>
             }
           />
         </ResizablePanel>

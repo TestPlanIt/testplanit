@@ -1,9 +1,18 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Stable mock refs via vi.hoisted()
-const { mockMutateAsync } = vi.hoisted(() => ({
+const { mockMutateAsync, mockCreateFrozenLink } = vi.hoisted(() => ({
   mockMutateAsync: vi.fn(),
+  mockCreateFrozenLink: vi.fn(),
+}));
+
+vi.mock("~/hooks/useCreateFrozenReportLink", () => ({
+  useCreateFrozenReportLink: () => ({
+    createFrozenLink: mockCreateFrozenLink,
+    isCreatingFrozen: false,
+  }),
+  buildShareUrl: (shareKey: string) => `http://localhost/share/${shareKey}`,
 }));
 
 // Mock next-intl
@@ -87,6 +96,11 @@ const defaultProps = {
 };
 
 describe("ShareDialog", () => {
+  beforeEach(() => {
+    mockMutateAsync.mockReset();
+    mockCreateFrozenLink.mockReset();
+  });
+
   it("renders dialog when open is true", () => {
     render(<ShareDialog {...defaultProps} />);
     expect(screen.getByText("dialogTitle")).toBeInTheDocument();
@@ -180,5 +194,83 @@ describe("ShareDialog", () => {
 
     // Wait for async state update
     await screen.findByTestId("share-link-created");
+  });
+
+  it("defaults to live and creates the link client-side", async () => {
+    mockMutateAsync.mockResolvedValueOnce({
+      id: 1,
+      shareKey: "abc123",
+      entityType: "REPORT",
+      mode: "AUTHENTICATED",
+      title: "My Report",
+      projectId: 1,
+      expiresAt: null,
+      notifyOnView: false,
+    });
+
+    render(<ShareDialog {...defaultProps} />);
+    expect(screen.getByTestId("report-data-mode-live")).toHaveAttribute(
+      "data-state",
+      "checked"
+    );
+    fireEvent.click(screen.getByTestId("share-create-button"));
+
+    await screen.findByTestId("share-link-created");
+    expect(mockCreateFrozenLink).not.toHaveBeenCalled();
+  });
+
+  it("creates a frozen link through the server when Frozen is chosen", async () => {
+    mockCreateFrozenLink.mockResolvedValueOnce({
+      status: "created",
+      link: {
+        id: "s1",
+        shareKey: "frozen-key",
+        entityType: "REPORT",
+        mode: "AUTHENTICATED",
+        title: "My Report",
+        projectId: 1,
+        expiresAt: null,
+        notifyOnView: false,
+      },
+    });
+
+    render(<ShareDialog {...defaultProps} />);
+    fireEvent.click(screen.getByTestId("report-data-mode-frozen"));
+    fireEvent.click(screen.getByTestId("share-create-button"));
+
+    await screen.findByTestId("share-link-created");
+    expect(mockMutateAsync).not.toHaveBeenCalled();
+    expect(mockCreateFrozenLink).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entityType: "REPORT",
+        reportConfig: defaultProps.reportConfig,
+        projectId: 1,
+        mode: "AUTHENTICATED",
+        allowTruncate: false,
+      })
+    );
+  });
+
+  it("warns when a frozen report is over the row cap and resends with allowTruncate", async () => {
+    mockCreateFrozenLink
+      .mockResolvedValueOnce({
+        status: "truncation-required",
+        truncation: { totalRowCount: 25000, maxRows: 10000 },
+      })
+      .mockResolvedValueOnce({
+        status: "created",
+        link: { id: "s1", shareKey: "frozen-key", mode: "AUTHENTICATED" },
+      });
+
+    render(<ShareDialog {...defaultProps} />);
+    fireEvent.click(screen.getByTestId("report-data-mode-frozen"));
+    fireEvent.click(screen.getByTestId("share-create-button"));
+
+    fireEvent.click(await screen.findByTestId("frozen-truncation-confirm"));
+
+    await screen.findByTestId("share-link-created");
+    expect(mockCreateFrozenLink).toHaveBeenLastCalledWith(
+      expect.objectContaining({ allowTruncate: true })
+    );
   });
 });

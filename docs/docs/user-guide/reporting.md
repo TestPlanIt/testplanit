@@ -23,4 +23,8 @@ See [Cross-Project Reports](./cross-project-reports.md) for the full list of ava
 
 ## Sharing
 
-Cross-project reports support all three Share Link modes (Public, Password-Protected, Authenticated). The shared link captures the exact filter and project-scope state at the time the link was created. See [Share Links](./share-links.md) for share configuration.
+Cross-project reports support all three Share Link modes (Public, Password-Protected, Authenticated). The shared link captures the exact filter and project-scope state at the time the link was created. A live link re-runs the report when opened; a frozen link always shows the results from when it was created. See [Share Links](./share-links.md) for share configuration.
+
+## Saved Reports
+
+Cross-project reports can be saved to your private **Saved Reports** list, live or frozen, the same way as project reports. See [Saved Reports](./projects/reports/index.md#saved-reports).

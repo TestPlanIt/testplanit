@@ -25,6 +25,7 @@ export function ShareLinkCreated({
 
   const t = useTranslations("reports.shareDialog.created");
   const tCommon = useTranslations("common");
+  const tFrozen = useTranslations("reports.frozen");
   const tToast = useTranslations("reports.shareDialog.shareList.toast");
 
   const handleCopy = async () => {
@@ -139,6 +140,21 @@ export function ShareLinkCreated({
             </p>
             <p className="text-sm font-medium">{shareData.viewCount}</p>
           </div>
+          {shareData.entityType === "REPORT" && (
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">
+                {tCommon("fields.data")}
+              </p>
+              <p
+                className="text-sm font-medium"
+                data-testid="share-created-data-mode"
+              >
+                {shareData.frozen
+                  ? tFrozen("frozen.title")
+                  : tFrozen("live.title")}
+              </p>
+            </div>
+          )}
         </div>
       </div>
 

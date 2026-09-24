@@ -28,6 +28,7 @@ import {
   clearPasswordAttempts,
   recordPasswordAttempt,
 } from "~/lib/rate-limit";
+import { verifyShareAccessToken } from "~/lib/shareAccessToken";
 import { POST } from "./route";
 
 const createRequest = (
@@ -201,7 +202,11 @@ describe("POST /api/share/[shareKey]/password-verify", () => {
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
-      expect(data.token).toBe("abc123"); // shareKey is returned as token
+      // A signed token, never the shareKey (which every link holder knows).
+      expect(data.token).not.toBe("abc123");
+      expect(
+        verifyShareAccessToken(data.token, "abc123", mockShareLink.passwordHash)
+      ).toBe(true);
       expect(data.expiresIn).toBe(3600);
     });
 

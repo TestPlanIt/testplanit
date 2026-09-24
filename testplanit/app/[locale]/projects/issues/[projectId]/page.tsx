@@ -671,10 +671,13 @@ function ProjectIssues() {
     <main>
       <Card>
         <CardHeader id="issues-page-header" className="w-full">
-          <SectionHeader className="flex items-center gap-2">
-            <CardTitle>{t("common.fields.issues")}</CardTitle>
-            <HelpPopover helpKey="projectIssues" />
-          </SectionHeader>
+          {/* Same row height as headers that carry an action button. */}
+          <div className="flex min-h-9 items-center">
+            <SectionHeader className="flex items-center gap-2">
+              <CardTitle>{t("common.fields.issues")}</CardTitle>
+              <HelpPopover helpKey="projectIssues" />
+            </SectionHeader>
+          </div>
           <CardDescription>
             <span className="flex items-center gap-2">
               <ProjectIcon iconUrl={project?.iconUrl} />

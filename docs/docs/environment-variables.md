@@ -201,6 +201,14 @@ See [Import from Testmo](import-testmo.md). Chunk sizes are rows per batch write
 | `PARAMETERIZED_RUN_SOFT_CAP`  | `1000`  | Above this many iterations, creation asks for confirmation.       |
 | `PARAMETERIZED_RUN_ASYNC_CAP` | `500`   | Above this many iterations, the run is built by a background job. |
 
+## Frozen Reports
+
+See [Live and Frozen Data](user-guide/share-links.md#live-and-frozen-data).
+
+| Variable                   | Default | Description                                                                                                   |
+| -------------------------- | ------- | ------------------------------------------------------------------------------------------------------------- |
+| `REPORT_SNAPSHOT_MAX_ROWS` | `10000` | Most rows a frozen report keeps. A larger report can still be frozen after a warning, keeping the first rows. |
+
 ## Magic Select
 
 See [Magic Select](user-guide/llm-magic-select.md).

@@ -203,6 +203,7 @@ model User {
     llmUsages                                LlmUsage[]
     generatedLlmReportSnapshots              LlmReportSnapshot[]               @relation("LlmReportSnapshotGeneratedBy")
     capturedRequirementTraceabilitySnapshots RequirementTraceabilitySnapshot[] @relation("RequirementTraceabilitySnapshotCapturedBy")
+    capturedReportSnapshots                  ReportSnapshot[]                  @relation("ReportSnapshotCapturedBy")
     testmoImportJobs                         TestmoImportJob[]
     createdComments                          Comment[]                         @relation("CommentCreator")
     commentMentions                          CommentMention[]                  @relation("CommentMentions")
@@ -5309,6 +5310,7 @@ enum ShareLinkEntityType {
     DASHBOARD
     SEARCH
     REPOSITORY_VIEW
+    SAVED_REPORT
 
     @@deny('all', auth() == null)
     @@allow('read', true)
@@ -5348,6 +5350,7 @@ model ShareLink {
 
     // Relations
     accessLogs   ShareLinkAccessLog[]
+    snapshot     ReportSnapshot?
 
     @@index([shareKey])
     @@index([projectId, createdById])
@@ -5385,6 +5388,39 @@ model ShareLink {
 
     // Cross-project shares (projectId == null) - only creator or admin can manage
     @@allow('create', projectId == null && auth().access != 'NONE')
+}
+
+/// The frozen result of a REPORT or SAVED_REPORT link: the viewer payload the
+/// report produced at capture, served in place of a live run. One per link and
+/// never updated, so a frozen link always shows the same numbers. Written only
+/// by the capture route through the raw client.
+model ReportSnapshot {
+    id            String    @id @default(cuid())
+    shareLinkId   String    @unique
+    shareLink     ShareLink @relation(fields: [shareLinkId], references: [id], onDelete: Cascade)
+    payload       Json
+    /// Rows kept in the payload, and rows the report produced before the cap.
+    rowCount      Int
+    totalRowCount Int
+    truncated     Boolean   @default(false)
+    capturedById  String
+    capturedBy    User      @relation("ReportSnapshotCapturedBy", fields: [capturedById], references: [id], onDelete: Cascade)
+    capturedAt    DateTime  @default(now()) @db.Timestamptz(6)
+
+    @@index([capturedById])
+
+    @@deny('all', auth() == null)
+    @@deny('read', shareLink.isDeleted)
+    @@allow('read', auth().access == 'ADMIN')
+    @@allow('read', shareLink.createdBy.id == auth().id)
+    // Same audience as the link row itself (ShareLink read rules).
+    @@allow('read',
+        shareLink.projectId != null && (
+            shareLink.project.creator.id == auth().id ||
+            shareLink.project.userPermissions?[user.id == auth().id && accessType != 'NO_ACCESS'] ||
+            shareLink.project.assignedUsers?[user.id == auth().id]
+        )
+    )
 }
 
 model ShareLinkAccessLog {

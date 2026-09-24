@@ -12,6 +12,7 @@ Share Links enable you to share reports and other content with stakeholders via 
 Share Links provide:
 
 - **Three access modes** for different security requirements
+- **Live or frozen data**: re-run the report on every open, or keep the results from when the link was created
 - **Customizable expiration dates** for time-limited access
 - **Password protection** for sensitive content
 - **View notifications** when links are accessed
@@ -44,7 +45,7 @@ Requires users to sign in with project access.
 
 **Features**:
 
-- Redirects to full app with report configuration
+- Redirects to full app with report configuration (live links)
 - Preserves all report settings and filters
 - Full navigation and interactive features
 - Requires project permissions
@@ -91,6 +92,27 @@ Public access with password requirement.
 
 **Security**: Moderate - password protection with rate limiting
 
+## Live and Frozen Data
+
+Every report share link is either live or frozen. You choose when you create the link; the choice cannot be changed afterwards.
+
+- **Live** (default): the link stores the report's settings and runs the report again each time it is opened, so viewers always see current data.
+- **Frozen**: the report runs once when you create the link, and the link shows those exact results every time it is opened. The numbers never change. To share newer data, create a new link.
+
+A frozen report shows when it was frozen and who froze it. Frozen links:
+
+- Work in every access mode. Authenticated viewers see the frozen results instead of being sent to the live Reports page.
+- Support sorting, grouping, column visibility, and CSV export on the stored rows.
+- Do not support drill-down.
+- Stop working when the link is revoked, expires, or is deleted, like any other share link.
+- Show a **Frozen** badge in the share lists.
+
+Freezing a report requires the **Reporting** add/edit permission on the project. The report runs with your permissions, so it holds what you can see.
+
+### Row Limit
+
+A frozen report keeps up to 10,000 rows by default. Administrators can change the limit with the `REPORT_SNAPSHOT_MAX_ROWS` [environment variable](../environment-variables.md#frozen-reports). If a report has more rows, a warning shows the total and offers to freeze a copy that keeps only the first rows. The frozen report then states how many rows it kept out of the total.
+
 ## Creating Share Links
 
 ### From Report Builder
@@ -108,12 +130,16 @@ Public access with password requirement.
    - Located in the report toolbar
    - Opens the Share Dialog
 
-3. **Choose Access Mode**
+3. **Choose Live or Frozen Data**
+   - **Live**: re-runs the report each time the link is opened
+   - **Frozen**: keeps the results from now; see [Live and Frozen Data](#live-and-frozen-data)
+
+4. **Choose Access Mode**
    - **Authenticated**: Requires login with project access
    - **Public**: No authentication required
    - **Password-Protected**: Requires password to access
 
-4. **Configure Share Settings**
+5. **Configure Share Settings**
 
    **Title** (optional)
    - Custom name for the share
@@ -138,7 +164,7 @@ Public access with password requirement.
    - Shows viewer name/email (if authenticated) or "Anonymous"
    - Can be toggled on/off anytime
 
-5. **Create and Copy Link**
+6. **Create and Copy Link**
    - Click "Create Share"
    - Share URL is generated: `/share/{shareKey}`
    - Click "Copy Link" to copy to clipboard
@@ -248,8 +274,7 @@ https://app.testplanit.com/share/A8j2KmPqR5vWxYz7BnC3DfG9HkL4MtN6
 
 1. Click or paste share URL in browser
 2. If not logged in, redirected to signin page
-3. After signin, redirected to full app with report configuration
-4. Report loads with all settings preserved
+3. After signin, a live link redirects to the full app with the report configuration, and the report loads with all settings preserved. A frozen link opens its frozen results instead.
 
 **Access Denied**: Users without project access see "Access denied" message
 
@@ -544,7 +569,7 @@ Logged-in users with project access automatically bypass password protection:
 {
   id: string;
   shareLinkId: string;
-  accessedById: string | null;    // User ID if authenticated
+  accessedById: string | null; // User ID if authenticated
   ipAddress: string | null;
   userAgent: string | null;
   wasAuthenticated: boolean;

@@ -374,10 +374,13 @@ function Issues() {
     <main>
       <Card>
         <CardHeader className="w-full">
-          <SectionHeader className="flex items-center gap-2">
-            <CardTitle>{t("common.fields.issues")}</CardTitle>
-            <HelpPopover helpKey="issues" />
-          </SectionHeader>
+          {/* Same row height as headers that carry an action button. */}
+          <div className="flex min-h-9 items-center">
+            <SectionHeader className="flex items-center gap-2">
+              <CardTitle>{t("common.fields.issues")}</CardTitle>
+              <HelpPopover helpKey="issues" />
+            </SectionHeader>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="flex flex-row items-start justify-between gap-4">

@@ -32,12 +32,14 @@ import {
   Ban,
   Bell,
   BellOff,
+  ChartNoAxesColumnIcon,
   CheckCircle2,
   Copy,
   Eye,
   Loader2,
   MoreVertical,
   Pencil,
+  Snowflake,
   Trash,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -79,6 +81,7 @@ export function ShareLinkList({
 }: ShareLinkListProps) {
   const t = useTranslations("reports.shareDialog.shareList");
   const tCommon = useTranslations("common");
+  const tFrozen = useTranslations("reports.frozen");
   const { data: session } = useSession();
   const dateFormat = session?.user?.preferences?.dateFormat;
   const timezone = session?.user?.preferences?.timezone;
@@ -121,6 +124,7 @@ export function ShareLinkList({
           name: true,
         },
       },
+      snapshot: { select: { capturedAt: true } },
     },
     orderBy,
   });
@@ -304,15 +308,17 @@ export function ShareLinkList({
           const share = row.original;
           return (
             <div className="min-w-0">
-              <Link
-                href={`/share/${share.shareKey}`}
-                className="block truncate font-medium hover:underline"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {share.title ||
-                  t("defaultTitle", { entityType: share.entityType })}
-              </Link>
+              <div className="flex min-w-0 items-center gap-2">
+                <Link
+                  href={`/share/${share.shareKey}`}
+                  className="block truncate font-medium hover:underline"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {share.title ||
+                    t("defaultTitle", { entityType: share.entityType })}
+                </Link>
+              </div>
               {share.description && (
                 <p className="truncate text-sm text-muted-foreground">
                   {share.description}
@@ -342,14 +348,55 @@ export function ShareLinkList({
         header: t("columns.mode"),
         enableSorting: false,
         size: 150,
-        cell: ({ row }) => (
-          <Badge
-            variant="secondary"
-            className="text-xs w-fit whitespace-nowrap"
-          >
-            {row.original.mode.replace("_", " ")}
-          </Badge>
-        ),
+        cell: ({ row }) => {
+          const mode = row.original.mode.replace("_", " ");
+          // Truncate rather than clip when the column is narrower than the
+          // label; the full mode shows on hover.
+          return (
+            <Badge
+              variant="secondary"
+              className="text-xs w-fit max-w-full min-w-0 whitespace-nowrap"
+              title={mode}
+            >
+              <span className="truncate">{mode}</span>
+            </Badge>
+          );
+        },
+      },
+      {
+        // Live (re-runs on open) or frozen (stored copy); reports only.
+        id: "data",
+        header: tCommon("fields.data"),
+        enableSorting: false,
+        size: 110,
+        cell: ({ row }) => {
+          const share = row.original;
+          if (
+            share.entityType !== "REPORT" &&
+            share.entityType !== "SAVED_REPORT"
+          ) {
+            return <span className="text-muted-foreground">-</span>;
+          }
+          return share.snapshot ? (
+            <Badge
+              variant="secondary"
+              className="gap-1 text-xs w-fit whitespace-nowrap"
+              data-testid="share-data-frozen"
+            >
+              <Snowflake className="h-3 w-3 shrink-0" />
+              {tFrozen("frozen.title")}
+            </Badge>
+          ) : (
+            <Badge
+              variant="outline"
+              className="gap-1 text-xs w-fit whitespace-nowrap"
+              data-testid="share-data-live"
+            >
+              <ChartNoAxesColumnIcon className="h-3 w-3 shrink-0" />
+              {tFrozen("live.title")}
+            </Badge>
+          );
+        },
       },
       {
         id: "views",
@@ -575,6 +622,7 @@ export function ShareLinkList({
   }, [
     t,
     tCommon,
+    tFrozen,
     showProjectColumn,
     showCreatorColumn,
     copiedId,

@@ -6,11 +6,17 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExpandedState, VisibilityState } from "@tanstack/react-table";
-import { AlertCircle, BarChart3, ExternalLink, Loader2 } from "lucide-react";
+import { AlertCircle, BarChart3, ExternalLink } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { FrozenReportBanner } from "./FrozenReportBanner";
+import {
+  resetSharedReportLoading,
+  SharedReportLoading,
+} from "./SharedReportLoading";
 import { useReportCsvExport } from "~/hooks/useReportCsvExport";
 import { Link } from "~/lib/navigation";
+import { sortSharedReportRows } from "~/lib/reports/sortSharedReportRows";
 import { formatDateRange } from "~/utils/dateFormat";
 
 interface StaticReportViewerProps {
@@ -42,38 +48,31 @@ export function StaticReportViewer({
 
   // Extract config from shareData
   const config = shareData.entityConfig;
+  // A saved report keeps its project inside the config.
+  const projectId: number | undefined =
+    shareData.projectId ?? config?.projectId ?? undefined;
+  const isFrozen = !!(reportData?.frozen ?? shareData.frozen);
 
   // Build full report URL with configuration for "View in Full App" button
   const fullReportUrl = useMemo(() => {
-    if (!shareData.projectId || !config) return null;
+    if (!projectId || !config) return null;
 
     const params = buildSharedReportSearchParams(config);
-    return `/projects/reports/${shareData.projectId}?${params.toString()}`;
-  }, [shareData.projectId, config]);
+    return `/projects/reports/${projectId}?${params.toString()}`;
+  }, [projectId, config]);
 
   // Client-side sorting only — the whole shared result set is in memory and the
   // table virtualizes it (no paging).
-  const sortedResults = useMemo(() => {
-    if (!reportData?.results) return [];
-
-    const processed = [...reportData.results];
-
-    if (sortConfig) {
-      processed.sort((a, b) => {
-        const aValue = a[sortConfig.column];
-        const bValue = b[sortConfig.column];
-
-        if (aValue === bValue) return 0;
-        if (aValue === null || aValue === undefined) return 1;
-        if (bValue === null || bValue === undefined) return -1;
-
-        const comparison = aValue < bValue ? -1 : 1;
-        return sortConfig.direction === "asc" ? comparison : -comparison;
-      });
-    }
-
-    return processed;
-  }, [reportData?.results, sortConfig]);
+  const sortedResults = useMemo(
+    () =>
+      sortSharedReportRows(
+        reportData?.results ?? [],
+        sortConfig,
+        reportData?.metrics ?? [],
+        locale
+      ),
+    [reportData?.results, reportData?.metrics, sortConfig, locale]
+  );
 
   // Handle sort changes
   const handleSortChange = useCallback((columnId: string) => {
@@ -107,12 +106,15 @@ export function StaticReportViewer({
       dimensions: reportData?.dimensions ?? [],
       metrics: reportData?.metrics ?? [],
       projects: reportData?.projects ?? [],
-      projectId: shareData?.projectId,
+      projectId,
     });
-  }, [exportCsv, config, reportData, shareData]);
+  }, [exportCsv, config, reportData, projectId]);
 
   const fetchReportData = useCallback(async () => {
-    if (shareData.entityType !== "REPORT") {
+    if (
+      shareData.entityType !== "REPORT" &&
+      shareData.entityType !== "SAVED_REPORT"
+    ) {
       setError(t("errors.onlyReportSharing"));
       setIsLoading(false);
       return;
@@ -170,15 +172,14 @@ export function StaticReportViewer({
     void fetchReportData();
   }, [fetchReportData]);
 
+  // The report (or its error) is on screen; the next load times its spinner
+  // delay from scratch.
+  useEffect(() => {
+    if (!isLoading) resetSharedReportLoading();
+  }, [isLoading]);
+
   if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground">{t("loading")}</p>
-        </div>
-      </div>
-    );
+    return <SharedReportLoading />;
   }
 
   if (error) {
@@ -205,7 +206,11 @@ export function StaticReportViewer({
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
                 <BarChart3 className="h-5 w-5 text-muted-foreground" />
-                <Badge variant="outline">{shareData.entityType}</Badge>
+                <Badge variant="outline">
+                  {shareData.entityType === "SAVED_REPORT"
+                    ? "REPORT"
+                    : shareData.entityType}
+                </Badge>
               </div>
               <h1
                 data-testid="shared-report-title"
@@ -219,7 +224,8 @@ export function StaticReportViewer({
                 </p>
               )}
             </div>
-            {isAuthenticatedUser && fullReportUrl && (
+            {/* The full app runs the report live; a frozen report stays put. */}
+            {isAuthenticatedUser && fullReportUrl && !isFrozen && (
               <div>
                 <Link href={fullReportUrl}>
                   <Button variant="outline" size="sm">
@@ -234,7 +240,7 @@ export function StaticReportViewer({
           {/* Project info */}
           {shareData.projectName && (
             <div className="mt-4 flex items-center gap-2 text-sm">
-              <span className="text-muted-foreground">{t("fromProject")}:</span>
+              <span className="text-muted-foreground">{t("fromProject")}</span>
               <span className="font-medium">{shareData.projectName}</span>
             </div>
           )}
@@ -242,7 +248,7 @@ export function StaticReportViewer({
           {/* Date range if applicable */}
           {config.startDate && config.endDate && (
             <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
-              <span>{t("dateRange")}:</span>
+              <span>{t("dateRange")}</span>
               <span>
                 {formatDateRange(config.startDate, config.endDate, { locale })}
               </span>
@@ -253,13 +259,18 @@ export function StaticReportViewer({
 
       {/* Report content */}
       <div className="container mx-auto px-4 py-6">
+        {reportData.frozen && (
+          <div className="mb-4">
+            <FrozenReportBanner frozen={reportData.frozen} />
+          </div>
+        )}
         <ReportRenderer
           results={sortedResults}
           chartData={reportData.chartData || reportData.results}
           reportType={config.reportType}
           dimensions={reportData.dimensions || []}
           metrics={reportData.metrics || []}
-          projectId={shareData.projectId}
+          projectId={projectId}
           mode={config.mode}
           projects={reportData.projects || []}
           consecutiveRuns={

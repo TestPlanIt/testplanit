@@ -9040,6 +9040,43 @@
       "title": "You have access to this project",
       "description": "Viewing as {userName} with access to {projectName}.",
       "viewInApp": "View in full app"
+    },
+    "frozen": {
+      "live": {
+        "title": "Live",
+        "description": "Runs the report again each time it is opened, so it always shows current data."
+      },
+      "frozen": {
+        "title": "Frozen",
+        "description": "Captures the report now. It always shows exactly these results and never updates."
+      },
+      "truncation": {
+        "title": "This report is too large to freeze in full",
+        "description": "It has {total, number} rows, and a frozen report keeps at most {max, number}. Save a copy that keeps only the first {max, number} rows?"
+      },
+      "capturedBy": "Frozen on <date></date> by {name}",
+      "capturedAt": "Frozen on <date></date>",
+      "truncatedNotice": "This copy keeps the first {rowCount, number} of {totalRowCount, number} rows."
+    },
+    "savedReports": {
+      "title": "Saved Reports",
+      "saveTitle": "Save Report",
+      "saveDescription": "Save this report to your Saved Reports. Only you can see it.",
+      "saved": "Report saved",
+      "savedDescription": "\"{name}\" was added to your saved reports.",
+      "saveFailed": "Failed to save the report",
+      "empty": "No saved reports yet.",
+      "emptyHint": "Run a report, then select Save to keep it here.",
+      "open": "Open {name}",
+      "frozenBadge": "Frozen",
+      "rename": "Rename",
+      "renameTitle": "Rename Saved Report",
+      "renamed": "Saved report renamed",
+      "renameFailed": "Failed to rename the saved report",
+      "deleteTitle": "Delete saved report?",
+      "deleteConfirm": "\"{name}\" will be removed from your saved reports.",
+      "deleted": "Saved report deleted",
+      "deleteFailed": "Failed to delete the saved report"
     }
   },
   "sharedSteps": {

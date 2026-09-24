@@ -1,8 +1,9 @@
 import { ShareContent } from "@/components/share/ShareContent";
+import { SharedReportLoading } from "@/components/share/SharedReportLoading";
 import { PageTitle } from "@/components/ui/typography";
-import { Loader2 } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { redirect } from "~/lib/navigation";
@@ -22,8 +23,11 @@ async function fetchShareMetadata(shareKey: string) {
   const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
 
   try {
+    // Forward the viewer's session so a saved report resolves for its owner.
+    const cookie = (await headers()).get("cookie");
     const response = await fetch(`${baseUrl}/api/share/${shareKey}`, {
       cache: "no-store",
+      headers: cookie ? { cookie } : undefined,
     });
 
     // Parse response body even for error status codes (403 for revoked/expired, 404 for not found)
@@ -96,13 +100,7 @@ export default async function SharePage({ params }: SharePageProps) {
 
   // For PUBLIC and PASSWORD_PROTECTED modes, ShareContent will handle the logic
   return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-screen items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
-      }
-    >
+    <Suspense fallback={<SharedReportLoading />}>
       <ShareContent
         shareKey={shareKey}
         shareData={shareData}

@@ -1,13 +1,14 @@
 "use client";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { Session } from "next-auth";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { buildSharedReportSearchParams } from "~/components/reports/reportShareParams";
 import { PasswordGate } from "./PasswordGate";
+import { SharedReportLoading } from "./SharedReportLoading";
 import { SharedReportViewer } from "./SharedReportViewer";
 
 interface ShareContentProps {
@@ -21,7 +22,6 @@ export function ShareContent({
   shareData,
   session,
 }: ShareContentProps) {
-  const tCommon = useTranslations("common");
   const tErrors = useTranslations("common.errors");
   const tAuthBypass = useTranslations("reports.authBypass");
   const [isLoading, setIsLoading] = useState(false);
@@ -76,7 +76,7 @@ export function ShareContent({
 
           // Build full report URL with configuration
           let reportUrl: string | undefined;
-          if (data.entityType === "REPORT" && data.projectId) {
+          if (data.entityType === "REPORT" && data.projectId && !data.frozen) {
             const params = buildSharedReportSearchParams(
               shareData.entityConfig
             );
@@ -138,7 +138,7 @@ export function ShareContent({
       const response = await fetch(`/api/share/${shareKey}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token }),
+        body: JSON.stringify({ token, recordView: false }),
       });
 
       if (!response.ok) {
@@ -167,7 +167,7 @@ export function ShareContent({
 
         // Build full report URL with configuration
         let reportUrl: string | undefined;
-        if (data.entityType === "REPORT" && data.projectId) {
+        if (data.entityType === "REPORT" && data.projectId && !data.frozen) {
           const params = buildSharedReportSearchParams(shareData.entityConfig);
           reportUrl = `/projects/reports/${data.projectId}?${params.toString()}`;
         }
@@ -265,11 +265,13 @@ export function ShareContent({
     if (hasInitializedRef.current) return;
     hasInitializedRef.current = true;
 
-    // Handle AUTHENTICATED mode - redirect to Reports page with config
-    if (shareData.mode === "AUTHENTICATED" && session) {
+    // Handle AUTHENTICATED mode - redirect to Reports page with config.
+    // A frozen report stays here: the Reports page would run it live.
+    if (shareData.mode === "AUTHENTICATED" && session && !shareData.frozen) {
       // Build URL params from entityConfig
       const config = shareData.entityConfig;
-      const projectId = shareData.projectId;
+      // A saved report keeps its project inside the config.
+      const projectId = shareData.projectId ?? config?.projectId;
 
       if (!config || typeof config !== "object") {
         console.error("Invalid share configuration:", config);
@@ -283,7 +285,7 @@ export function ShareContent({
       // Redirect to appropriate Reports page
       const reportsUrl = projectId
         ? `/projects/reports/${projectId}?${params.toString()}`
-        : `/reports?${params.toString()}`;
+        : `/admin/reports?${params.toString()}`;
 
       // Increment view count before redirecting (only if not already counted)
       if (!hasViewedInSession()) {
@@ -316,7 +318,7 @@ export function ShareContent({
       return;
     }
 
-    if (shareData.mode === "PUBLIC") {
+    if (shareData.mode === "PUBLIC" || shareData.mode === "AUTHENTICATED") {
       void handlePasswordVerified();
     } else if (shareData.mode === "PASSWORD_PROTECTED" && session) {
       // Check if user has project access (bypass password)
@@ -327,14 +329,7 @@ export function ShareContent({
 
   // Show loading state
   if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground">{tCommon("loading")}</p>
-        </div>
-      </div>
-    );
+    return <SharedReportLoading />;
   }
 
   // Show error state
@@ -377,9 +372,5 @@ export function ShareContent({
   }
 
   // Fallback loading state
-  return (
-    <div className="flex min-h-screen items-center justify-center">
-      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-    </div>
-  );
+  return <SharedReportLoading />;
 }

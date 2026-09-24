@@ -26,6 +26,7 @@ import {
   VisibilityState,
 } from "@tanstack/react-table";
 import { Download } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { useAutomationTrendsColumns } from "~/hooks/useAutomationTrendsColumns";
@@ -213,6 +214,11 @@ export function ReportRenderer({
   emptyPrompt,
   headerActions,
 }: ReportRendererProps) {
+  const { data: session } = useSession();
+  // The viewer's preferred date/time format; the default when signed out.
+  const generatedAtFormat = session?.user?.preferences?.dateFormat
+    ? `${session.user.preferences.dateFormat} ${session.user.preferences.timeFormat || "HH:mm"}`
+    : "PPp";
   const locale = useLocale();
   const tCommon = useTranslations("common");
   const tReports = useTranslations("reports.ui");
@@ -619,7 +625,7 @@ export function ReportRenderer({
                     {tReports("generatedAt")}{" "}
                     <DateFormatter
                       date={reportGeneratedAt}
-                      formatString="PPp"
+                      formatString={generatedAtFormat}
                       timezone={userTimezone}
                     />
                   </p>
@@ -678,8 +684,9 @@ export function ReportRenderer({
                     className="text-sm text-muted-foreground"
                     data-testid="report-results-summary"
                   >
-                    {tCommon("pagination.showing")} {loadedCount}{" "}
-                    {tCommon("of")} {totalCount} {tCommon("results")}
+                    {tCommon("pagination.showing")}{" "}
+                    {loadedCount.toLocaleString(locale)} {tCommon("of")}{" "}
+                    {totalCount.toLocaleString(locale)} {tCommon("results")}
                   </div>
                 )}
                 {onExportCsv && totalCount > 0 && (

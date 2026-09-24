@@ -2,11 +2,13 @@ import { getServerSession } from "next-auth/next";
 import { internalReportBypassToken } from "~/lib/internalReportBypass";
 import { NextRequest, NextResponse } from "next/server";
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import {
-  getCrossProjectReportTypes,
-  getProjectReportTypes,
-} from "~/lib/config/reportTypes";
 import { baseDb } from "~/lib/db";
+import { frozenReportMeta } from "~/lib/reports/frozenReportMeta";
+import { verifyShareAccessToken } from "~/lib/shareAccessToken";
+import {
+  buildSharedReportPayload,
+  callerAuthHeaders,
+} from "~/lib/reports/sharedReportPayload";
 import { authOptions } from "~/server/auth";
 
 export const dynamic = "force-dynamic";
@@ -45,10 +47,21 @@ export const GET = withAuditContext(
               },
             },
           },
+          snapshot: {
+            include: { capturedBy: { select: { name: true } } },
+          },
         },
+        // passwordHash is @omit; the access token is bound to it.
+        omit: { passwordHash: false },
       });
 
-      if (!shareLink) {
+      if (
+        !shareLink ||
+        shareLink.isDeleted ||
+        // A saved report is private to the user who saved it.
+        (shareLink.entityType === "SAVED_REPORT" &&
+          shareLink.createdById !== session?.user?.id)
+      ) {
         return NextResponse.json(
           { error: "Share link not found" },
           { status: 404 }
@@ -73,6 +86,11 @@ export const GET = withAuditContext(
 
       // Handle PASSWORD_PROTECTED mode
       if (shareLink.mode === "PASSWORD_PROTECTED") {
+        const hasValidToken = verifyShareAccessToken(
+          token,
+          shareKey,
+          shareLink.passwordHash
+        );
         // Check if user has project access (bypass password)
         if (session) {
           const hasProjectAccess =
@@ -81,7 +99,7 @@ export const GET = withAuditContext(
             shareLink.project.createdBy === session.user.id ||
             shareLink.project.userPermissions.length > 0;
 
-          if (!hasProjectAccess && token !== shareKey) {
+          if (!hasProjectAccess && !hasValidToken) {
             return NextResponse.json(
               { error: "Valid token required" },
               { status: 401 }
@@ -89,7 +107,7 @@ export const GET = withAuditContext(
           }
         } else {
           // Not logged in, require valid token
-          if (token !== shareKey) {
+          if (!hasValidToken) {
             return NextResponse.json(
               { error: "Valid token required" },
               { status: 401 }
@@ -118,219 +136,52 @@ export const GET = withAuditContext(
         }
       }
 
-      // Only REPORT entity type is supported for now
-      if (shareLink.entityType !== "REPORT") {
+      if (
+        shareLink.entityType !== "REPORT" &&
+        shareLink.entityType !== "SAVED_REPORT"
+      ) {
         return NextResponse.json(
           { error: "Only report shares are supported" },
           { status: 400 }
         );
       }
 
+      // A frozen link serves the output captured when it was created and
+      // never runs the report again.
+      if (shareLink.snapshot) {
+        return NextResponse.json({
+          ...(shareLink.snapshot.payload as Record<string, unknown>),
+          frozen: frozenReportMeta(shareLink.snapshot),
+        });
+      }
+
       const config = shareLink.entityConfig as any;
-      if (!config) {
-        return NextResponse.json(
-          { error: "Invalid report configuration" },
-          { status: 400 }
-        );
-      }
-
-      // Get all available report types
-      const projectReportTypes = getProjectReportTypes((key: string) => key);
-      const crossProjectReportTypes = getCrossProjectReportTypes(
-        (key: string) => key
-      );
-      const allReportTypes = [
-        ...projectReportTypes,
-        ...crossProjectReportTypes,
-      ];
-
-      // Find the report type configuration
-      const reportType = allReportTypes.find(
-        (rt) => rt.id === config.reportType
-      );
-      if (!reportType) {
-        return NextResponse.json(
-          { error: "Unsupported report type" },
-          { status: 400 }
-        );
-      }
-
-      const endpoint = reportType.endpoint;
-
-      // Use localhost for internal server-to-server communication to avoid SSL issues
-      const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
-
-      // First, fetch metadata (dimensions and metrics with labels) from GET endpoint
-      const metadataUrl = new URL(endpoint, baseUrl);
-      if (shareLink.projectId) {
-        metadataUrl.searchParams.set(
-          "projectId",
-          shareLink.projectId.toString()
-        );
-      }
-
-      const metadataResponse = await fetch(metadataUrl.toString(), {
-        method: "GET",
-        headers: {
-          // Internal server-to-server token: the share link (validated
-          // above) IS the read grant, so no user credentials are forwarded.
-          "x-shared-report-bypass": internalReportBypassToken(),
-        },
+      const isSavedReport = shareLink.entityType === "SAVED_REPORT";
+      const result = await buildSharedReportPayload({
+        config,
+        // Saved reports keep their project inside the config (the row itself
+        // has none, which keeps it private).
+        projectId:
+          shareLink.projectId ??
+          (isSavedReport && Number.isInteger(config?.projectId)
+            ? config.projectId
+            : null),
+        // A saved report runs as its owner, with the owner's current
+        // permissions. A share link is itself the read grant, so its internal
+        // fetches carry the share-replay token instead of user credentials.
+        authHeaders: isSavedReport
+          ? callerAuthHeaders(req)
+          : { "x-shared-report-bypass": internalReportBypassToken() },
       });
 
-      if (!metadataResponse.ok) {
-        const errorData = await metadataResponse.json();
+      if (!result.ok) {
         return NextResponse.json(
-          { error: errorData.error || "Failed to fetch report metadata" },
-          { status: metadataResponse.status }
+          { error: result.error },
+          { status: result.status }
         );
       }
 
-      const metadata = await metadataResponse.json();
-
-      // Then, call the report builder POST endpoint to get data
-      // Always fetch ALL results for shared reports (ignore saved pagination settings)
-      const reportBuilderUrl = new URL(endpoint, baseUrl);
-
-      // Forward ALL config parameters to the report endpoint (generic approach)
-      // This ensures pre-built reports get all their required parameters
-      const { reportType: _, ...requestParams } = config;
-      const requestBody = {
-        ...requestParams, // Spread all saved parameters from the config
-        // Always include the share's projectId — the saved config may not
-        // carry it (project-scoped reports historically relied on the URL
-        // query path), but every report route reads it from the body.
-        ...(shareLink.projectId ? { projectId: shareLink.projectId } : {}),
-        page: 1,
-        pageSize: "All", // Always fetch all results for shared reports
-      };
-
-      const reportResponse = await fetch(reportBuilderUrl.toString(), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          // Internal server-to-server token: the share link (validated
-          // above) IS the read grant, so no user credentials are forwarded.
-          "x-shared-report-bypass": internalReportBypassToken(),
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      if (!reportResponse.ok) {
-        const errorData = await reportResponse.json();
-        return NextResponse.json(
-          { error: errorData.error || "Failed to build report" },
-          { status: reportResponse.status }
-        );
-      }
-
-      const reportData = await reportResponse.json();
-
-      // Iteration matrix is a 3-axis grid, not a tabular report — the proxy
-      // returns the full `AxesShape` ({ caseAxis, configAxis, cells, ... }).
-      // Pass it through verbatim as `matrixAxes` so StaticReportViewer can
-      // hand it to MatrixReportPreset without re-fetching (the matrix has no
-      // public-share aggregation endpoint).
-      const isIterationMatrix = config.reportType === "iteration-matrix";
-      // Automation candidates is a snapshot-style LLM report — the bypassed
-      // POST returns `{snapshot: {...}}`. Pass through verbatim so the
-      // viewer renders the persisted snapshot in readOnly mode.
-      const isAutomationCandidates =
-        config.reportType === "automation-candidates";
-
-      // Check if this is a pre-built report (empty dimensions/metrics in config)
-      // Pre-built reports save empty arrays because they don't use the standard dimension/metric selector
-      const isPreBuiltReport =
-        (!config.dimensions || config.dimensions.length === 0) &&
-        (!config.metrics || config.metrics.length === 0);
-
-      let dimensionsWithLabels: any[] = [];
-      let metricsWithLabels: any[] = [];
-      let results: any[] = [];
-      let chartData: any[] = [];
-
-      if (isIterationMatrix) {
-        // Matrix payload lives entirely in the spread below as `matrixAxes`;
-        // results/chartData stay empty so the standard table/chart code path
-        // is a no-op for the shared matrix surface.
-      } else if (isAutomationCandidates) {
-        // Same shape as matrix — the snapshot lives in the spread below as
-        // `automationCandidatesSnapshot`; rows/chart stay empty.
-      } else if (isPreBuiltReport) {
-        // Pre-built reports return data in { data: [...] } format
-        // Don't generate dimension/metric metadata - let the frontend handle column generation
-        results = reportData.data || [];
-        // Some pre-built reports (e.g. execution-log) return a separate statusBreakdown
-        // array for the chart rather than using the paginated table rows.
-        chartData = reportData.statusBreakdown || reportData.data || [];
-        // Leave dimensions and metrics empty for pre-built reports
-        dimensionsWithLabels = [];
-        metricsWithLabels = [];
-      } else {
-        // Dynamic reports: Map dimension and metric IDs to their full metadata objects
-        dimensionsWithLabels = config.dimensions.map((dimId: string) => {
-          const metadataDim = metadata.dimensions.find(
-            (d: any) => d.id === dimId
-          );
-          // ReportChart expects { value, label } format
-          return metadataDim
-            ? { value: metadataDim.id, label: metadataDim.label }
-            : { value: dimId, label: dimId };
-        });
-
-        metricsWithLabels = config.metrics.map((metricId: string) => {
-          const metadataMetric = metadata.metrics.find(
-            (m: any) => m.id === metricId
-          );
-          // ReportChart expects { value, label } format
-          return metadataMetric
-            ? { value: metadataMetric.id, label: metadataMetric.label }
-            : { value: metricId, label: metricId };
-        });
-
-        results = reportData.results;
-        chartData = reportData.allResults || reportData.results;
-      }
-
-      // Format the response to match what StaticReportViewer expects
-      // Note: columns are generated client-side using useReportColumns hook
-      const responsePayload = {
-        results,
-        chartData,
-        dimensions: dimensionsWithLabels,
-        metrics: metricsWithLabels,
-        pagination: {
-          totalCount:
-            reportData.totalCount || reportData.total || results.length,
-          page: reportData.page || 1,
-          pageSize: reportData.pageSize || "All",
-        },
-        // Pass through additional fields for specialized reports (automation-trends, flaky-tests, etc.)
-        ...(reportData.projects && { projects: reportData.projects }),
-        ...(reportData.dateGrouping && {
-          dateGrouping: reportData.dateGrouping,
-        }),
-        ...(reportData.consecutiveRuns && {
-          consecutiveRuns: reportData.consecutiveRuns,
-        }),
-        ...(reportData.totalFlakyTests && {
-          totalFlakyTests: reportData.totalFlakyTests,
-        }),
-        ...(isIterationMatrix && {
-          matrixAxes: {
-            caseAxis: reportData.caseAxis,
-            configAxis: reportData.configAxis,
-            cells: reportData.cells, // Array<[key, value]> — client reconstructs Map
-            cellCount: reportData.cellCount,
-            statusMap: reportData.statusMap,
-          },
-        }),
-        ...(isAutomationCandidates && {
-          automationCandidatesSnapshot: reportData.snapshot,
-        }),
-      };
-
-      return NextResponse.json(responsePayload);
+      return NextResponse.json(result.payload);
     } catch (error) {
       console.error("Error fetching report data for share:", error);
       return NextResponse.json(

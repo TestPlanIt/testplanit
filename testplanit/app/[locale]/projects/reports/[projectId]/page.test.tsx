@@ -32,6 +32,10 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({ projects: { useFindFirst: mockUseFindFirst } }),
 }));
 
+vi.mock("~/components/reports/SavedReportsMenu", () => ({
+  SavedReportsMenu: () => <div data-testid="saved-reports-trigger" />,
+}));
+
 vi.mock("~/components/reports/ReportBuilder", () => ({
   ReportBuilder: ({ projectId }: { projectId: number }) => (
     <div data-testid="report-builder" data-project-id={projectId} />

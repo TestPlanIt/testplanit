@@ -20,6 +20,7 @@ const LABEL_KEY: Record<string, string> = {
   DASHBOARD: "shareDashboardLabel",
   SEARCH: "shareSearchLabel",
   REPOSITORY_VIEW: "shareViewLabel",
+  SAVED_REPORT: "shareReportLabel",
 };
 
 export async function generateMetadata({

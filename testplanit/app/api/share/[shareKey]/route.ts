@@ -1,13 +1,60 @@
 import { AuditAction } from "~/zenstack/models";
 import bcrypt from "bcrypt";
-import { getServerSession } from "next-auth";
+import { getServerSession, type Session } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { baseDb } from "~/lib/db";
+import { frozenReportMeta } from "~/lib/reports/frozenReportMeta";
+import { verifyShareAccessToken } from "~/lib/shareAccessToken";
 import { NotificationService } from "~/lib/services/notificationService";
 import { authOptions } from "~/server/auth";
 
 export const dynamic = "force-dynamic";
+
+/** Frozen-report metadata only; the stored payload is served by ./report. */
+const SNAPSHOT_META_SELECT = {
+  select: {
+    capturedAt: true,
+    rowCount: true,
+    totalRowCount: true,
+    truncated: true,
+    capturedBy: { select: { name: true } },
+  },
+} as const;
+
+/**
+ * The project a share belongs to. A saved report keeps its project inside
+ * its config (the row has none, which keeps it private).
+ */
+async function resolveProjectName(shareLink: {
+  entityType: string;
+  entityConfig: unknown;
+  project: { name: string } | null;
+}): Promise<string | null> {
+  if (shareLink.project) return shareLink.project.name;
+  if (shareLink.entityType !== "SAVED_REPORT") return null;
+  const projectId = (shareLink.entityConfig as { projectId?: unknown } | null)
+    ?.projectId;
+  if (typeof projectId !== "number" || !Number.isInteger(projectId)) {
+    return null;
+  }
+  const project = await baseDb.projects.findUnique({
+    where: { id: projectId },
+    select: { name: true },
+  });
+  return project?.name ?? null;
+}
+
+/** A saved report is private: only the user who saved it can open it. */
+function canOpenSavedReport(
+  shareLink: { entityType: string; createdById: string },
+  session: Session | null
+): boolean {
+  return (
+    shareLink.entityType !== "SAVED_REPORT" ||
+    shareLink.createdById === session?.user?.id
+  );
+}
 
 /**
  * GET /api/share/[shareKey]
@@ -21,6 +68,7 @@ export const GET = withAuditContext(
   ) => {
     try {
       const { shareKey } = await params;
+      const session = await getServerSession(authOptions);
 
       // Fetch share link with project info (no auth required)
       const shareLink = await baseDb.shareLink.findUnique({
@@ -38,12 +86,13 @@ export const GET = withAuditContext(
               name: true,
             },
           },
+          snapshot: SNAPSHOT_META_SELECT,
         },
         // passwordHash is @omit; opt back in to verify PASSWORD_PROTECTED access.
         omit: { passwordHash: false },
       });
 
-      if (!shareLink) {
+      if (!shareLink || !canOpenSavedReport(shareLink, session)) {
         return NextResponse.json(
           { error: "Share link not found" },
           { status: 404 }
@@ -84,10 +133,13 @@ export const GET = withAuditContext(
         title: shareLink.title,
         description: shareLink.description,
         projectId: shareLink.projectId,
-        projectName: shareLink.project?.name || null,
+        projectName: await resolveProjectName(shareLink),
         createdBy: shareLink.createdBy.name,
         viewCount: shareLink.viewCount,
         requiresPassword: shareLink.mode === "PASSWORD_PROTECTED",
+        frozen: shareLink.snapshot
+          ? frozenReportMeta(shareLink.snapshot)
+          : null,
       });
     } catch (error) {
       console.error("Error fetching share link:", error);
@@ -114,6 +166,9 @@ export const POST = withAuditContext(
       const session = await getServerSession(authOptions);
       const body = await req.json();
       const { password, token } = body;
+      // A reload of a share already opened in this browser session re-checks
+      // access without counting another view.
+      const recordView = body.recordView !== false;
 
       // Fetch share link with full details
       const shareLink = await baseDb.shareLink.findUnique({
@@ -138,12 +193,13 @@ export const POST = withAuditContext(
               email: true,
             },
           },
+          snapshot: SNAPSHOT_META_SELECT,
         },
         // passwordHash is @omit; opt back in to verify PASSWORD_PROTECTED access.
         omit: { passwordHash: false },
       });
 
-      if (!shareLink) {
+      if (!shareLink || !canOpenSavedReport(shareLink, session)) {
         return NextResponse.json(
           { error: "Share link not found" },
           { status: 404 }
@@ -200,6 +256,12 @@ export const POST = withAuditContext(
 
       // Handle PASSWORD_PROTECTED mode
       if (shareLink.mode === "PASSWORD_PROTECTED") {
+        // Issued by password-verify once the password was entered.
+        const hasValidToken = verifyShareAccessToken(
+          token,
+          shareKey,
+          shareLink.passwordHash
+        );
         // Check if user has project access (bypass password)
         if (session) {
           const hasProjectAccess =
@@ -208,7 +270,7 @@ export const POST = withAuditContext(
             shareLink.project.createdBy === session.user.id ||
             shareLink.project.userPermissions.length > 0;
 
-          if (!hasProjectAccess) {
+          if (!hasProjectAccess && !hasValidToken) {
             // User is logged in but doesn't have project access, require password
             if (!password || !shareLink.passwordHash) {
               return NextResponse.json(
@@ -233,8 +295,6 @@ export const POST = withAuditContext(
         } else {
           // Not logged in, require password or valid token
           // Token is provided after successful password verification
-          const hasValidToken = token === shareKey;
-
           if (!hasValidToken) {
             if (!password || !shareLink.passwordHash) {
               return NextResponse.json(
@@ -258,90 +318,92 @@ export const POST = withAuditContext(
         }
       }
 
-      // Log access
-      const ipAddress =
-        req.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
-        req.headers.get("x-real-ip") ||
-        null;
-      const userAgent = req.headers.get("user-agent") || null;
+      if (recordView) {
+        // Log access
+        const ipAddress =
+          req.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
+          req.headers.get("x-real-ip") ||
+          null;
+        const userAgent = req.headers.get("user-agent") || null;
 
-      await baseDb.shareLinkAccessLog.create({
-        data: {
-          shareLinkId: shareLink.id,
-          accessedById: session?.user?.id || null,
-          ipAddress,
-          userAgent,
-          wasAuthenticated: !!session,
-        },
-      });
-
-      // Increment view count and update last viewed
-      await baseDb.shareLink.update({
-        where: { id: shareLink.id },
-        data: {
-          viewCount: { increment: 1 },
-          lastViewedAt: new Date(),
-        },
-      });
-
-      // Create audit log
-      await baseDb.auditLog.create({
-        data: {
-          userId: session?.user?.id || null,
-          userEmail: session?.user?.email || null,
-          userName: session?.user?.name || "Anonymous",
-          action: AuditAction.SHARE_LINK_ACCESSED,
-          entityType: "ShareLink",
-          entityId: shareLink.id,
-          entityName: shareLink.title || `${shareLink.entityType} share`,
-          metadata: {
-            shareKey,
-            entityType: shareLink.entityType,
-            mode: shareLink.mode,
+        await baseDb.shareLinkAccessLog.create({
+          data: {
+            shareLinkId: shareLink.id,
+            accessedById: session?.user?.id || null,
             ipAddress,
             userAgent,
+            wasAuthenticated: !!session,
           },
-          projectId: shareLink.projectId,
-        },
-      });
+        });
 
-      // Trigger notification if enabled
-      if (shareLink.notifyOnView) {
-        try {
-          // Build a descriptive title for the notification
-          let notificationTitle = shareLink.title;
+        // Increment view count and update last viewed
+        await baseDb.shareLink.update({
+          where: { id: shareLink.id },
+          data: {
+            viewCount: { increment: 1 },
+            lastViewedAt: new Date(),
+          },
+        });
 
-          if (!notificationTitle) {
-            // Generate title from entity type and project
-            if (shareLink.entityType === "REPORT" && shareLink.entityConfig) {
-              const config = shareLink.entityConfig as any;
-              const reportType = config.reportType
-                ? config.reportType.replace(/-/g, " ")
-                : "report";
-              notificationTitle = shareLink.project?.name
-                ? `${reportType} for ${shareLink.project.name}`
-                : reportType;
-            } else {
-              const entityType = shareLink.entityType
-                .toLowerCase()
-                .replace(/_/g, " ");
-              notificationTitle = shareLink.project?.name
-                ? `${entityType} for ${shareLink.project.name}`
-                : entityType;
+        // Create audit log
+        await baseDb.auditLog.create({
+          data: {
+            userId: session?.user?.id || null,
+            userEmail: session?.user?.email || null,
+            userName: session?.user?.name || "Anonymous",
+            action: AuditAction.SHARE_LINK_ACCESSED,
+            entityType: "ShareLink",
+            entityId: shareLink.id,
+            entityName: shareLink.title || `${shareLink.entityType} share`,
+            metadata: {
+              shareKey,
+              entityType: shareLink.entityType,
+              mode: shareLink.mode,
+              ipAddress,
+              userAgent,
+            },
+            projectId: shareLink.projectId,
+          },
+        });
+
+        // Trigger notification if enabled
+        if (shareLink.notifyOnView) {
+          try {
+            // Build a descriptive title for the notification
+            let notificationTitle = shareLink.title;
+
+            if (!notificationTitle) {
+              // Generate title from entity type and project
+              if (shareLink.entityType === "REPORT" && shareLink.entityConfig) {
+                const config = shareLink.entityConfig as any;
+                const reportType = config.reportType
+                  ? config.reportType.replace(/-/g, " ")
+                  : "report";
+                notificationTitle = shareLink.project?.name
+                  ? `${reportType} for ${shareLink.project.name}`
+                  : reportType;
+              } else {
+                const entityType = shareLink.entityType
+                  .toLowerCase()
+                  .replace(/_/g, " ");
+                notificationTitle = shareLink.project?.name
+                  ? `${entityType} for ${shareLink.project.name}`
+                  : entityType;
+              }
             }
-          }
 
-          await NotificationService.createShareLinkAccessedNotification(
-            shareLink.createdById,
-            notificationTitle || "Shared content",
-            session?.user?.name || null,
-            session?.user?.email || null,
-            shareLink.id,
-            shareLink.projectId ?? undefined
-          );
-        } catch (error) {
-          console.error("Failed to send share access notification:", error);
-          // Don't fail the request if notification fails
+            await NotificationService.createShareLinkAccessedNotification(
+              shareLink.createdById,
+              notificationTitle || "Shared content",
+              session?.user?.name || null,
+              session?.user?.email || null,
+              shareLink.id,
+              shareLink.projectId ?? undefined
+            );
+          } catch (error) {
+            console.error("Failed to send share access notification:", error);
+            // Don't fail the request if notification fails
+          }
         }
       }
 
@@ -355,9 +417,12 @@ export const POST = withAuditContext(
         title: shareLink.title,
         description: shareLink.description,
         projectId: shareLink.projectId,
-        projectName: shareLink.project?.name || null,
-        viewCount: shareLink.viewCount + 1,
+        projectName: await resolveProjectName(shareLink),
+        viewCount: shareLink.viewCount + (recordView ? 1 : 0),
         accessed: true,
+        frozen: shareLink.snapshot
+          ? frozenReportMeta(shareLink.snapshot)
+          : null,
       });
     } catch (error) {
       console.error("Error accessing share link:", error);

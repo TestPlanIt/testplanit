@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 import LoadingSpinner from "~/components/LoadingSpinner";
 import { ReportBuilder } from "~/components/reports/ReportBuilder";
+import { SavedReportsMenu } from "~/components/reports/SavedReportsMenu";
 import { useRouter } from "~/lib/navigation";
 
 export default function AdminReportsPage() {
@@ -34,15 +35,18 @@ export default function AdminReportsPage() {
     <main>
       <Card>
         <CardHeader className="w-full">
-          <SectionHeader className="flex items-center gap-2">
-            <CardTitle
-              data-testid="adminreports-page-title"
-              className="items-center flex gap-1"
-            >
-              {tGlobal("navigation.admin.crossProjectReports")}
-            </CardTitle>
-            <HelpPopover helpKey="crossProjectReports" />
-          </SectionHeader>
+          <div className="flex items-center justify-between gap-2">
+            <SectionHeader className="flex items-center gap-2">
+              <CardTitle
+                data-testid="adminreports-page-title"
+                className="items-center flex gap-1"
+              >
+                {tGlobal("navigation.admin.crossProjectReports")}
+              </CardTitle>
+              <HelpPopover helpKey="crossProjectReports" />
+            </SectionHeader>
+            <SavedReportsMenu projectId={null} />
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           <ReportBuilder mode="cross-project" />
