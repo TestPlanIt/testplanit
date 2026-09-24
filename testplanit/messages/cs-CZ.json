@@ -9040,6 +9040,43 @@
       "title": "Máte přístup k tomuto projektu",
       "description": "Zobrazeno jako {userName} s přístupem k {projectName}.",
       "viewInApp": "Zobrazit v plné aplikaci"
+    },
+    "frozen": {
+      "live": {
+        "title": "Živý",
+        "description": "Spustí sestavu znovu při každém otevření, takže vždy zobrazuje aktuální data."
+      },
+      "frozen": {
+        "title": "Zmrazeno",
+        "description": "Zachytí sestavu nyní. Vždy zobrazuje přesně tyto výsledky a nikdy se neaktualizuje."
+      },
+      "truncation": {
+        "title": "Tato sestava je příliš velká na to, aby ji bylo možné zcela zmrazit",
+        "description": "Má {total, number} řádků a zmrazená sestava jich uchová maximálně {max, number}. Uložit kopii, která obsahuje pouze prvních {max, number} řádků?"
+      },
+      "capturedBy": "Zmrazeno <date></date> uživatelem {name}",
+      "capturedAt": "Zmrazeno <date></date>",
+      "truncatedNotice": "Tato kopie uchovává prvních {rowCount, number} z {totalRowCount, number} řádků."
+    },
+    "savedReports": {
+      "title": "Uložené sestavy",
+      "saveTitle": "Uložit sestavu",
+      "saveDescription": "Uložte tuto sestavu do svých uložených sestav. Uvidíte ji pouze vy.",
+      "saved": "Sestava uložena",
+      "savedDescription": "\"{name}\" byla přidána do vašich uložených sestav.",
+      "saveFailed": "Uložení sestavy se nezdařilo",
+      "empty": "Zatím žádné uložené sestavy.",
+      "emptyHint": "Spusťte sestavu a poté ji uložíte výběrem možnosti Uložit.",
+      "open": "Otevřít {name}",
+      "frozenBadge": "Zmrazeno",
+      "rename": "Přejmenovat",
+      "renameTitle": "Přejmenovat uloženou sestavu",
+      "renamed": "Uložená sestava byla přejmenována",
+      "renameFailed": "Přejmenování uložené sestavy se nezdařilo",
+      "deleteTitle": "Odstranit uloženou sestavu?",
+      "deleteConfirm": "\"{name}\" bude odstraněna z vašich uložených sestav.",
+      "deleted": "Uložená sestava byla odstraněna",
+      "deleteFailed": "Odstranění uložené sestavy se nezdařilo"
     }
   },
   "sharedSteps": {

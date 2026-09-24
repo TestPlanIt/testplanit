@@ -9040,6 +9040,43 @@
       "title": "このプロジェクトへのアクセス権があります",
       "description": "{userName} として表示され、 {projectName}にアクセスできます。",
       "viewInApp": "アプリ全体を表示"
+    },
+    "frozen": {
+      "live": {
+        "title": "ライブ",
+        "description": "開くたびにレポートを再実行し、常に最新のデータを表示します。"
+      },
+      "frozen": {
+        "title": "フリーズ",
+        "description": "現時点のレポートをキャプチャします。常にこの結果のみを表示し、更新されません。"
+      },
+      "truncation": {
+        "title": "このレポートは大きすぎて完全にはフリーズできません",
+        "description": "{total, number}行ありますが、フリーズしたレポートは最大{max, number}行までしか保持できません。最初の{max, number}行のみを保持したコピーを保存しますか？"
+      },
+      "capturedBy": "<date></date>に{name}がフリーズしました",
+      "capturedAt": "<date></date>にフリーズしました",
+      "truncatedNotice": "このコピーには{totalRowCount, number}行中最初の{rowCount, number}行が保持されています。"
+    },
+    "savedReports": {
+      "title": "保存済みレポート",
+      "saveTitle": "レポートを保存",
+      "saveDescription": "このレポートを保存済みレポートに保存します。表示できるのはあなただけです。",
+      "saved": "レポートを保存しました",
+      "savedDescription": "「{name}」を保存済みレポートに追加しました。",
+      "saveFailed": "レポートの保存に失敗しました",
+      "empty": "保存済みレポートはまだありません。",
+      "emptyHint": "レポートを実行してから、「保存」を選択するとここに保存されます。",
+      "open": "{name}を開く",
+      "frozenBadge": "フリーズ",
+      "rename": "名前を変更",
+      "renameTitle": "保存済みレポートの名前を変更",
+      "renamed": "保存済みレポートの名前を変更しました",
+      "renameFailed": "保存済みレポートの名前の変更に失敗しました",
+      "deleteTitle": "保存済みレポートを削除しますか？",
+      "deleteConfirm": "「{name}」が保存済みレポートから削除されます。",
+      "deleted": "保存済みレポートを削除しました",
+      "deleteFailed": "保存済みレポートの削除に失敗しました"
     }
   },
   "sharedSteps": {

@@ -9040,6 +9040,43 @@
       "title": "Hai accesso a questo progetto",
       "description": "Visualizzazione come {userName} con accesso a {projectName}.",
       "viewInApp": "Visualizza l'app completa"
+    },
+    "frozen": {
+      "live": {
+        "title": "In tempo reale",
+        "description": "Esegue nuovamente il report ogni volta che viene aperto, così mostra sempre i dati aggiornati."
+      },
+      "frozen": {
+        "title": "Bloccato",
+        "description": "Acquisisce il report in questo momento. Mostra sempre esattamente questi risultati e non si aggiorna mai."
+      },
+      "truncation": {
+        "title": "Questo report è troppo grande per essere bloccato completamente",
+        "description": "Ha {total, number} righe, e un report bloccato ne conserva al massimo {max, number}. Salvare una copia che mantiene solo le prime {max, number} righe?"
+      },
+      "capturedBy": "Bloccato il <date></date> da {name}",
+      "capturedAt": "Bloccato il <date></date>",
+      "truncatedNotice": "Questa copia mantiene le prime {rowCount, number} righe su {totalRowCount, number}."
+    },
+    "savedReports": {
+      "title": "Report salvati",
+      "saveTitle": "Salva report",
+      "saveDescription": "Salva questo report nei tuoi Report salvati. Solo tu puoi vederlo.",
+      "saved": "Report salvato",
+      "savedDescription": "\"{name}\" è stato aggiunto ai tuoi report salvati.",
+      "saveFailed": "Impossibile salvare il report",
+      "empty": "Nessun report salvato al momento.",
+      "emptyHint": "Esegui un report, quindi seleziona Salva per conservarlo qui.",
+      "open": "Apri {name}",
+      "frozenBadge": "Bloccato",
+      "rename": "Rinomina",
+      "renameTitle": "Rinomina report salvato",
+      "renamed": "Report salvato rinominato",
+      "renameFailed": "Impossibile rinominare il report salvato",
+      "deleteTitle": "Eliminare il report salvato?",
+      "deleteConfirm": "\"{name}\" verrà rimosso dai tuoi report salvati.",
+      "deleted": "Report salvato eliminato",
+      "deleteFailed": "Impossibile eliminare il report salvato"
     }
   },
   "sharedSteps": {

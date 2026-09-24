@@ -9040,6 +9040,43 @@
       "title": "Je hebt toegang tot dit project.",
       "description": "Weergave als {userName} met toegang tot {projectName}.",
       "viewInApp": "Bekijk in de volledige app"
+    },
+    "frozen": {
+      "live": {
+        "title": "Live",
+        "description": "Voert het rapport opnieuw uit elke keer dat het wordt geopend, zodat het altijd actuele gegevens weergeeft."
+      },
+      "frozen": {
+        "title": "Bevroren",
+        "description": "Legt het rapport nu vast. Het toont altijd precies deze resultaten en wordt nooit bijgewerkt."
+      },
+      "truncation": {
+        "title": "Dit rapport is te groot om volledig te bevriezen",
+        "description": "Het heeft {total, number} rijen, en een bevroren rapport bevat maximaal {max, number}. Een kopie opslaan die alleen de eerste {max, number} rijen bevat?"
+      },
+      "capturedBy": "Bevroren op <date></date> door {name}",
+      "capturedAt": "Bevroren op <date></date>",
+      "truncatedNotice": "Deze kopie bevat de eerste {rowCount, number} van {totalRowCount, number} rijen."
+    },
+    "savedReports": {
+      "title": "Opgeslagen rapporten",
+      "saveTitle": "Rapport opslaan",
+      "saveDescription": "Sla dit rapport op in je Opgeslagen rapporten. Alleen jij kunt het zien.",
+      "saved": "Rapport opgeslagen",
+      "savedDescription": "\"{name}\" is toegevoegd aan je opgeslagen rapporten.",
+      "saveFailed": "Het opslaan van het rapport is mislukt",
+      "empty": "Nog geen opgeslagen rapporten.",
+      "emptyHint": "Voer een rapport uit en selecteer vervolgens Opslaan om het hier te bewaren.",
+      "open": "{name} openen",
+      "frozenBadge": "Bevroren",
+      "rename": "Naam wijzigen",
+      "renameTitle": "Naam van opgeslagen rapport wijzigen",
+      "renamed": "Naam van opgeslagen rapport gewijzigd",
+      "renameFailed": "Het wijzigen van de naam van het opgeslagen rapport is mislukt",
+      "deleteTitle": "Opgeslagen rapport verwijderen?",
+      "deleteConfirm": "\"{name}\" wordt verwijderd uit je opgeslagen rapporten.",
+      "deleted": "Opgeslagen rapport verwijderd",
+      "deleteFailed": "Het verwijderen van het opgeslagen rapport is mislukt"
     }
   },
   "sharedSteps": {

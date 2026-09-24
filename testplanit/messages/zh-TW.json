@@ -9040,6 +9040,43 @@
       "title": "您有權存取此項目",
       "description": "以 {userName} 身份查看，並可訪問 {projectName}。",
       "viewInApp": "看完整應用"
+    },
+    "frozen": {
+      "live": {
+        "title": "即時",
+        "description": "每次開啟時重新執行報告，始終顯示最新資料。"
+      },
+      "frozen": {
+        "title": "凍結",
+        "description": "立即擷取此報告。它將始終顯示這些確切的結果，且永不更新。"
+      },
+      "truncation": {
+        "title": "此報告過大，無法完整凍結",
+        "description": "此報告共有 {total, number} 列，而凍結報告最多只能保留 {max, number} 列。是否要儲存僅保留前 {max, number} 列的副本？"
+      },
+      "capturedBy": "由 {name} 於 <date></date> 凍結",
+      "capturedAt": "於 <date></date> 凍結",
+      "truncatedNotice": "此副本保留了 {totalRowCount, number} 列中的前 {rowCount, number} 列。"
+    },
+    "savedReports": {
+      "title": "已儲存的報告",
+      "saveTitle": "儲存報告",
+      "saveDescription": "將此報告儲存至您的已儲存報告。只有您可以看到它。",
+      "saved": "報告已儲存",
+      "savedDescription": "「{name}」已新增至您的已儲存報告。",
+      "saveFailed": "儲存報告失敗",
+      "empty": "尚無已儲存的報告。",
+      "emptyHint": "執行一份報告，然後選擇「儲存」以將其保存於此。",
+      "open": "開啟 {name}",
+      "frozenBadge": "凍結",
+      "rename": "重新命名",
+      "renameTitle": "重新命名已儲存的報告",
+      "renamed": "已儲存的報告已重新命名",
+      "renameFailed": "重新命名已儲存的報告失敗",
+      "deleteTitle": "刪除已儲存的報告？",
+      "deleteConfirm": "「{name}」將從您的已儲存報告中移除。",
+      "deleted": "已儲存的報告已刪除",
+      "deleteFailed": "刪除已儲存的報告失敗"
     }
   },
   "sharedSteps": {

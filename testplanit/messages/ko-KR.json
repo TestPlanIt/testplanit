@@ -9040,6 +9040,43 @@
       "title": "이 프로젝트에 대한 접근 권한이 있습니다.",
       "description": "{userName} 로 보고 있으며 {projectName}에 접근할 수 있습니다.",
       "viewInApp": "전체 앱에서 보기"
+    },
+    "frozen": {
+      "live": {
+        "title": "실시간",
+        "description": "열 때마다 보고서를 다시 실행하여 항상 최신 데이터를 표시합니다."
+      },
+      "frozen": {
+        "title": "고정",
+        "description": "지금 보고서를 캡처합니다. 항상 이 결과만 정확히 표시하며 업데이트되지 않습니다."
+      },
+      "truncation": {
+        "title": "이 보고서는 전체를 고정하기에 너무 큽니다",
+        "description": "{total, number}개의 행이 있으며, 고정된 보고서는 최대 {max, number}개까지 유지됩니다. 처음 {max, number}개의 행만 유지하는 사본을 저장하시겠습니까?"
+      },
+      "capturedBy": "{name}님이 <date></date>에 고정함",
+      "capturedAt": "<date></date>에 고정됨",
+      "truncatedNotice": "이 사본은 전체 {totalRowCount, number}개 행 중 처음 {rowCount, number}개 행을 유지합니다."
+    },
+    "savedReports": {
+      "title": "저장된 보고서",
+      "saveTitle": "보고서 저장",
+      "saveDescription": "이 보고서를 저장된 보고서에 저장합니다. 본인만 볼 수 있습니다.",
+      "saved": "보고서가 저장됨",
+      "savedDescription": "\"{name}\"이(가) 저장된 보고서에 추가되었습니다.",
+      "saveFailed": "보고서를 저장하지 못했습니다",
+      "empty": "아직 저장된 보고서가 없습니다.",
+      "emptyHint": "보고서를 실행한 다음 저장을 선택하여 여기에 보관하세요.",
+      "open": "{name} 열기",
+      "frozenBadge": "고정됨",
+      "rename": "이름 변경",
+      "renameTitle": "저장된 보고서 이름 변경",
+      "renamed": "저장된 보고서 이름이 변경되었습니다",
+      "renameFailed": "저장된 보고서의 이름을 변경하지 못했습니다",
+      "deleteTitle": "저장된 보고서를 삭제하시겠습니까?",
+      "deleteConfirm": "\"{name}\"이(가) 저장된 보고서에서 제거됩니다.",
+      "deleted": "저장된 보고서가 삭제되었습니다",
+      "deleteFailed": "저장된 보고서를 삭제하지 못했습니다"
     }
   },
   "sharedSteps": {

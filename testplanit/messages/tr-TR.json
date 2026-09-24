@@ -9040,6 +9040,43 @@
       "title": "Bu projeye erişiminiz var.",
       "description": "{userName} olarak görüntüleniyor ve {projectName}'e erişim sağlanıyor.",
       "viewInApp": "Uygulamayı tam sürümde görüntüle"
+    },
+    "frozen": {
+      "live": {
+        "title": "Canlı",
+        "description": "Rapor her açıldığında yeniden çalıştırılır, böylece her zaman güncel verileri gösterir."
+      },
+      "frozen": {
+        "title": "Dondurulmuş",
+        "description": "Raporu şu anda yakalar. Her zaman tam olarak bu sonuçları gösterir ve asla güncellenmez."
+      },
+      "truncation": {
+        "title": "Bu rapor tamamen dondurulamayacak kadar büyük",
+        "description": "{total, number} satıra sahip ve dondurulmuş bir rapor en fazla {max, number} satır tutabilir. Yalnızca ilk {max, number} satırı tutan bir kopya kaydedilsin mi?"
+      },
+      "capturedBy": "{name} tarafından <date></date> tarihinde donduruldu",
+      "capturedAt": "<date></date> tarihinde donduruldu",
+      "truncatedNotice": "Bu kopya, {totalRowCount, number} satırın ilk {rowCount, number} tanesini tutar."
+    },
+    "savedReports": {
+      "title": "Kaydedilen Raporlar",
+      "saveTitle": "Raporu Kaydet",
+      "saveDescription": "Bu raporu Kaydedilen Raporlarınıza kaydedin. Yalnızca siz görebilirsiniz.",
+      "saved": "Rapor kaydedildi",
+      "savedDescription": "\"{name}\" kaydedilen raporlarınıza eklendi.",
+      "saveFailed": "Rapor kaydedilemedi",
+      "empty": "Henüz kaydedilmiş rapor yok.",
+      "emptyHint": "Bir rapor çalıştırın, ardından burada tutmak için Kaydet'i seçin.",
+      "open": "{name} öğesini aç",
+      "frozenBadge": "Dondurulmuş",
+      "rename": "Yeniden Adlandır",
+      "renameTitle": "Kaydedilen Raporu Yeniden Adlandır",
+      "renamed": "Kaydedilen rapor yeniden adlandırıldı",
+      "renameFailed": "Kaydedilen rapor yeniden adlandırılamadı",
+      "deleteTitle": "Kaydedilen rapor silinsin mi?",
+      "deleteConfirm": "\"{name}\" kaydedilen raporlarınızdan kaldırılacak.",
+      "deleted": "Kaydedilen rapor silindi",
+      "deleteFailed": "Kaydedilen rapor silinemedi"
     }
   },
   "sharedSteps": {

@@ -9040,6 +9040,43 @@
       "title": "Vous avez accès à ce projet",
       "description": "Affichage en tant que {userName} avec accès à {projectName}.",
       "viewInApp": "Voir dans l'application complète"
+    },
+    "frozen": {
+      "live": {
+        "title": "En direct",
+        "description": "Relance le rapport à chaque ouverture, afin qu'il affiche toujours les données actuelles."
+      },
+      "frozen": {
+        "title": "Figé",
+        "description": "Capture le rapport maintenant. Il affiche toujours exactement ces résultats et ne se met jamais à jour."
+      },
+      "truncation": {
+        "title": "Ce rapport est trop volumineux pour être figé intégralement",
+        "description": "Il contient {total, number} lignes, et un rapport figé en conserve au maximum {max, number}. Enregistrer une copie qui ne conserve que les {max, number} premières lignes ?"
+      },
+      "capturedBy": "Figé le <date></date> par {name}",
+      "capturedAt": "Figé le <date></date>",
+      "truncatedNotice": "Cette copie conserve les {rowCount, number} premières lignes sur {totalRowCount, number}."
+    },
+    "savedReports": {
+      "title": "Rapports enregistrés",
+      "saveTitle": "Enregistrer le rapport",
+      "saveDescription": "Enregistrez ce rapport dans vos rapports enregistrés. Seul vous pouvez le voir.",
+      "saved": "Rapport enregistré",
+      "savedDescription": "\"{name}\" a été ajouté à vos rapports enregistrés.",
+      "saveFailed": "Impossible d'enregistrer le rapport",
+      "empty": "Aucun rapport enregistré pour le moment.",
+      "emptyHint": "Exécutez un rapport, puis sélectionnez Enregistrer pour le conserver ici.",
+      "open": "Ouvrir {name}",
+      "frozenBadge": "Figé",
+      "rename": "Renommer",
+      "renameTitle": "Renommer le rapport enregistré",
+      "renamed": "Rapport enregistré renommé",
+      "renameFailed": "Impossible de renommer le rapport enregistré",
+      "deleteTitle": "Supprimer le rapport enregistré ?",
+      "deleteConfirm": "\"{name}\" sera retiré de vos rapports enregistrés.",
+      "deleted": "Rapport enregistré supprimé",
+      "deleteFailed": "Impossible de supprimer le rapport enregistré"
     }
   },
   "sharedSteps": {

@@ -9040,6 +9040,43 @@
       "title": "Sie haben Zugriff auf dieses Projekt.",
       "description": "Anzeige als {userName} mit Zugriff auf {projectName}.",
       "viewInApp": "In der vollständigen App anzeigen"
+    },
+    "frozen": {
+      "live": {
+        "title": "Live",
+        "description": "Führt den Bericht bei jedem Öffnen erneut aus, sodass er immer aktuelle Daten anzeigt."
+      },
+      "frozen": {
+        "title": "Eingefroren",
+        "description": "Erfasst den Bericht jetzt. Er zeigt immer genau diese Ergebnisse und wird nie aktualisiert."
+      },
+      "truncation": {
+        "title": "Dieser Bericht ist zu groß, um vollständig eingefroren zu werden",
+        "description": "Er hat {total, number} Zeilen, und ein eingefrorener Bericht behält höchstens {max, number}. Eine Kopie speichern, die nur die ersten {max, number} Zeilen enthält?"
+      },
+      "capturedBy": "Eingefroren am <date></date> von {name}",
+      "capturedAt": "Eingefroren am <date></date>",
+      "truncatedNotice": "Diese Kopie enthält die ersten {rowCount, number} von {totalRowCount, number} Zeilen."
+    },
+    "savedReports": {
+      "title": "Gespeicherte Berichte",
+      "saveTitle": "Bericht speichern",
+      "saveDescription": "Speichern Sie diesen Bericht in Ihren gespeicherten Berichten. Nur Sie können ihn sehen.",
+      "saved": "Bericht gespeichert",
+      "savedDescription": "\"{name}\" wurde zu Ihren gespeicherten Berichten hinzugefügt.",
+      "saveFailed": "Der Bericht konnte nicht gespeichert werden",
+      "empty": "Noch keine gespeicherten Berichte.",
+      "emptyHint": "Führen Sie einen Bericht aus und wählen Sie dann Speichern, um ihn hier abzulegen.",
+      "open": "{name} öffnen",
+      "frozenBadge": "Eingefroren",
+      "rename": "Umbenennen",
+      "renameTitle": "Gespeicherten Bericht umbenennen",
+      "renamed": "Gespeicherter Bericht umbenannt",
+      "renameFailed": "Der gespeicherte Bericht konnte nicht umbenannt werden",
+      "deleteTitle": "Gespeicherten Bericht löschen?",
+      "deleteConfirm": "\"{name}\" wird aus Ihren gespeicherten Berichten entfernt.",
+      "deleted": "Gespeicherter Bericht gelöscht",
+      "deleteFailed": "Der gespeicherte Bericht konnte nicht gelöscht werden"
     }
   },
   "sharedSteps": {

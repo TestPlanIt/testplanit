@@ -9040,6 +9040,43 @@
       "title": "Tienes acceso a este proyecto",
       "description": "Visualización como {userName} con acceso a {projectName}.",
       "viewInApp": "Ver en la aplicación completa"
+    },
+    "frozen": {
+      "live": {
+        "title": "En vivo",
+        "description": "Ejecuta el informe nuevamente cada vez que se abre, para que siempre muestre los datos actuales."
+      },
+      "frozen": {
+        "title": "Congelado",
+        "description": "Captura el informe ahora. Siempre muestra exactamente estos resultados y nunca se actualiza."
+      },
+      "truncation": {
+        "title": "Este informe es demasiado grande para congelarlo por completo",
+        "description": "Tiene {total, number} filas, y un informe congelado conserva como máximo {max, number}. ¿Guardar una copia que conserve solo las primeras {max, number} filas?"
+      },
+      "capturedBy": "Congelado el <date></date> por {name}",
+      "capturedAt": "Congelado el <date></date>",
+      "truncatedNotice": "Esta copia conserva las primeras {rowCount, number} de {totalRowCount, number} filas."
+    },
+    "savedReports": {
+      "title": "Informes guardados",
+      "saveTitle": "Guardar informe",
+      "saveDescription": "Guarda este informe en tus Informes guardados. Solo tú puedes verlo.",
+      "saved": "Informe guardado",
+      "savedDescription": "\"{name}\" se agregó a tus informes guardados.",
+      "saveFailed": "Error al guardar el informe",
+      "empty": "Aún no hay informes guardados.",
+      "emptyHint": "Ejecuta un informe y luego selecciona Guardar para conservarlo aquí.",
+      "open": "Abrir {name}",
+      "frozenBadge": "Congelado",
+      "rename": "Renombrar",
+      "renameTitle": "Renombrar informe guardado",
+      "renamed": "Informe guardado renombrado",
+      "renameFailed": "Error al renombrar el informe guardado",
+      "deleteTitle": "¿Eliminar informe guardado?",
+      "deleteConfirm": "\"{name}\" se eliminará de tus informes guardados.",
+      "deleted": "Informe guardado eliminado",
+      "deleteFailed": "Error al eliminar el informe guardado"
     }
   },
   "sharedSteps": {

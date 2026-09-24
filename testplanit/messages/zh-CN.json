@@ -9040,6 +9040,43 @@
       "title": "您有权访问此项目",
       "description": "以 {userName} 身份查看，并可访问 {projectName}。",
       "viewInApp": "查看完整应用"
+    },
+    "frozen": {
+      "live": {
+        "title": "实时",
+        "description": "每次打开时重新运行报告，始终显示最新数据。"
+      },
+      "frozen": {
+        "title": "冻结",
+        "description": "立即捕获报告。它始终精确显示此结果，且永不更新。"
+      },
+      "truncation": {
+        "title": "此报告太大，无法完整冻结",
+        "description": "它共有 {total, number} 行，而冻结报告最多保留 {max, number} 行。是否保存仅保留前 {max, number} 行的副本？"
+      },
+      "capturedBy": "由 {name} 于 <date></date> 冻结",
+      "capturedAt": "于 <date></date> 冻结",
+      "truncatedNotice": "此副本保留了 {totalRowCount, number} 行中的前 {rowCount, number} 行。"
+    },
+    "savedReports": {
+      "title": "已保存的报告",
+      "saveTitle": "保存报告",
+      "saveDescription": "将此报告保存到你的已保存报告中。仅你本人可见。",
+      "saved": "报告已保存",
+      "savedDescription": "“{name}”已添加到你的已保存报告中。",
+      "saveFailed": "保存报告失败",
+      "empty": "暂无已保存的报告。",
+      "emptyHint": "运行一份报告，然后选择“保存”将其保留在此处。",
+      "open": "打开 {name}",
+      "frozenBadge": "冻结",
+      "rename": "重命名",
+      "renameTitle": "重命名已保存的报告",
+      "renamed": "已保存的报告已重命名",
+      "renameFailed": "重命名已保存的报告失败",
+      "deleteTitle": "删除已保存的报告？",
+      "deleteConfirm": "“{name}”将从你的已保存报告中移除。",
+      "deleted": "已保存的报告已删除",
+      "deleteFailed": "删除已保存的报告失败"
     }
   },
   "sharedSteps": {

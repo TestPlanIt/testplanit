@@ -9040,6 +9040,43 @@
       "title": "Masz dostęp do tego projektu",
       "description": "Wyświetlanie jako {userName} z dostępem do {projectName}.",
       "viewInApp": "Zobacz w pełnej aplikacji"
+    },
+    "frozen": {
+      "live": {
+        "title": "Na żywo",
+        "description": "Uruchamia raport ponownie każdorazowo przy otwarciu, dzięki czemu zawsze wyświetla aktualne dane."
+      },
+      "frozen": {
+        "title": "Zamrożony",
+        "description": "Przechwytuje raport teraz. Zawsze wyświetla dokładnie te wyniki i nigdy się nie aktualizuje."
+      },
+      "truncation": {
+        "title": "Ten raport jest za duży, aby zamrozić go w całości",
+        "description": "Ma {total, number} wierszy, a zamrożony raport przechowuje maksymalnie {max, number}. Zapisać kopię zawierającą tylko pierwsze {max, number} wierszy?"
+      },
+      "capturedBy": "Zamrożono <date></date> przez {name}",
+      "capturedAt": "Zamrożono <date></date>",
+      "truncatedNotice": "Ta kopia zawiera pierwsze {rowCount, number} z {totalRowCount, number} wierszy."
+    },
+    "savedReports": {
+      "title": "Zapisane raporty",
+      "saveTitle": "Zapisz raport",
+      "saveDescription": "Zapisz ten raport w Zapisanych raportach. Tylko Ty go zobaczysz.",
+      "saved": "Raport zapisany",
+      "savedDescription": "\"{name}\" został dodany do Twoich zapisanych raportów.",
+      "saveFailed": "Nie udało się zapisać raportu",
+      "empty": "Brak zapisanych raportów.",
+      "emptyHint": "Uruchom raport, a następnie wybierz Zapisz, aby go tu zachować.",
+      "open": "Otwórz {name}",
+      "frozenBadge": "Zamrożony",
+      "rename": "Zmień nazwę",
+      "renameTitle": "Zmień nazwę zapisanego raportu",
+      "renamed": "Nazwa zapisanego raportu zmieniona",
+      "renameFailed": "Nie udało się zmienić nazwy zapisanego raportu",
+      "deleteTitle": "Usunąć zapisany raport?",
+      "deleteConfirm": "\"{name}\" zostanie usunięty z Twoich zapisanych raportów.",
+      "deleted": "Zapisany raport usunięty",
+      "deleteFailed": "Nie udało się usunąć zapisanego raportu"
     }
   },
   "sharedSteps": {

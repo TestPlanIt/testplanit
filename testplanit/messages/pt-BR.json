@@ -9040,6 +9040,43 @@
       "title": "Você tem acesso a este projeto.",
       "description": "Visualizando como {userName} com acesso a {projectName}.",
       "viewInApp": "Ver no aplicativo completo"
+    },
+    "frozen": {
+      "live": {
+        "title": "Ao vivo",
+        "description": "Executa o relatório novamente cada vez que é aberto, para que sempre mostre os dados atuais."
+      },
+      "frozen": {
+        "title": "Congelado",
+        "description": "Captura o relatório agora. Ele sempre mostra exatamente estes resultados e nunca é atualizado."
+      },
+      "truncation": {
+        "title": "Este relatório é muito grande para ser congelado por completo",
+        "description": "Ele tem {total, number} linhas, e um relatório congelado mantém no máximo {max, number}. Salvar uma cópia que mantém apenas as primeiras {max, number} linhas?"
+      },
+      "capturedBy": "Congelado em <date></date> por {name}",
+      "capturedAt": "Congelado em <date></date>",
+      "truncatedNotice": "Esta cópia mantém as primeiras {rowCount, number} de {totalRowCount, number} linhas."
+    },
+    "savedReports": {
+      "title": "Relatórios Salvos",
+      "saveTitle": "Salvar Relatório",
+      "saveDescription": "Salve este relatório em seus Relatórios Salvos. Somente você pode vê-lo.",
+      "saved": "Relatório salvo",
+      "savedDescription": "\"{name}\" foi adicionado aos seus relatórios salvos.",
+      "saveFailed": "Falha ao salvar o relatório",
+      "empty": "Ainda não há relatórios salvos.",
+      "emptyHint": "Execute um relatório e selecione Salvar para mantê-lo aqui.",
+      "open": "Abrir {name}",
+      "frozenBadge": "Congelado",
+      "rename": "Renomear",
+      "renameTitle": "Renomear Relatório Salvo",
+      "renamed": "Relatório salvo renomeado",
+      "renameFailed": "Falha ao renomear o relatório salvo",
+      "deleteTitle": "Excluir relatório salvo?",
+      "deleteConfirm": "\"{name}\" será removido dos seus relatórios salvos.",
+      "deleted": "Relatório salvo excluído",
+      "deleteFailed": "Falha ao excluir o relatório salvo"
     }
   },
   "sharedSteps": {

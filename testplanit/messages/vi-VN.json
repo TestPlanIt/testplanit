@@ -9040,6 +9040,43 @@
       "title": "Bạn có quyền truy cập vào dự án này.",
       "description": "Xem với tư cách {userName} có quyền truy cập vào {projectName}.",
       "viewInApp": "Xem ứng dụng đầy đủ"
+    },
+    "frozen": {
+      "live": {
+        "title": "Trực tiếp",
+        "description": "Chạy lại báo cáo mỗi khi mở, để luôn hiển thị dữ liệu hiện tại."
+      },
+      "frozen": {
+        "title": "Đóng băng",
+        "description": "Chụp lại báo cáo ngay bây giờ. Nó luôn hiển thị chính xác các kết quả này và không bao giờ cập nhật."
+      },
+      "truncation": {
+        "title": "Báo cáo này quá lớn để đóng băng toàn bộ",
+        "description": "Báo cáo có {total, number} hàng, trong khi báo cáo đóng băng chỉ giữ tối đa {max, number} hàng. Lưu một bản sao chỉ giữ lại {max, number} hàng đầu tiên?"
+      },
+      "capturedBy": "Đóng băng vào <date></date> bởi {name}",
+      "capturedAt": "Đóng băng vào <date></date>",
+      "truncatedNotice": "Bản sao này giữ lại {rowCount, number} trong tổng số {totalRowCount, number} hàng."
+    },
+    "savedReports": {
+      "title": "Báo Cáo Đã Lưu",
+      "saveTitle": "Lưu Báo Cáo",
+      "saveDescription": "Lưu báo cáo này vào Báo cáo đã lưu của bạn. Chỉ bạn mới có thể xem nó.",
+      "saved": "Đã lưu báo cáo",
+      "savedDescription": "\"{name}\" đã được thêm vào báo cáo đã lưu của bạn.",
+      "saveFailed": "Không thể lưu báo cáo",
+      "empty": "Chưa có báo cáo nào được lưu.",
+      "emptyHint": "Chạy một báo cáo, sau đó chọn Lưu để giữ nó tại đây.",
+      "open": "Mở {name}",
+      "frozenBadge": "Đóng băng",
+      "rename": "Đổi tên",
+      "renameTitle": "Đổi Tên Báo Cáo Đã Lưu",
+      "renamed": "Đã đổi tên báo cáo đã lưu",
+      "renameFailed": "Không thể đổi tên báo cáo đã lưu",
+      "deleteTitle": "Xóa báo cáo đã lưu?",
+      "deleteConfirm": "\"{name}\" sẽ bị xóa khỏi báo cáo đã lưu của bạn.",
+      "deleted": "Đã xóa báo cáo đã lưu",
+      "deleteFailed": "Không thể xóa báo cáo đã lưu"
     }
   },
   "sharedSteps": {
