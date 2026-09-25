@@ -1,3 +1,13 @@
+## [1.1.0-beta.23](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.22...v1.1.0-beta.23) (2026-09-25)
+
+### Features
+
+* **import:** save and reuse CSV import column mappings ([#649](https://github.com/TestPlanIt/testplanit/issues/649)) ([704e855](https://github.com/TestPlanIt/testplanit/commit/704e855b3d7c977f989d2fe07e76df384ee14bcb))
+
+### Bug Fixes
+
+* **share:** keep blocked users out of project share links ([1b3ecbe](https://github.com/TestPlanIt/testplanit/commit/1b3ecbe5efc0de746963837b46a572fb45f138df))
+
 ## [1.1.0-beta.22](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.21...v1.1.0-beta.22) (2026-09-24)
 
 ### Bug Fixes
