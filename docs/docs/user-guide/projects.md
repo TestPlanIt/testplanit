@@ -59,12 +59,16 @@ Configure the project's operational settings:
 
 Set up who can access the project and with what permissions:
 
-- **Default Access:** Choose the default permission level for users:
-  - **No Access:** Users have no access unless explicitly granted.
-  - **Global Role:** Users inherit their system-wide role permissions.
-  - **Specific Role:** Assign a specific role to all users by default.
+- **Default Project Access:** Choose the baseline access for every user:
+  - **Use Global Role** (default): Every user can access the project, with the permissions of their own global role.
+  - **No Access:** Only users and groups you add to the project can access it.
+  - **A specific role** (for example, _Tester_): Every user can access the project, with that role's permissions.
 - **User-Specific Permissions:** (Optional) Override default access for individual users.
 - **Group Permissions:** (Optional) Set permissions for user groups.
+
+:::warning New projects are visible to everyone by default
+Unless you change **Default Project Access**, a new project uses **Use Global Role**, so every user who can sign in can open it. Choosing a specific role does not restrict the project either. To limit a project to certain people, set **Default Project Access** to **No Access** and add those users or groups. See [Restricted Project (Team-Only Access)](#restricted-project-team-only-access).
+:::
 
 ### Step 4: Templates & Workflows
 
@@ -99,12 +103,13 @@ These associations can be modified later by visiting the specific administration
 
 1. Locate the project you wish to modify in the table.
 2. Click the **Edit** button in the corresponding row.
-3. A dialog box will appear, pre-filled with the project's current details. You can modify:
-   - **Icon:** Choose an icon for the project using the icon picker.
-   - **Name:** Update the project name.
-   - **Description:** Modify the project description.
-   - **Completed:** Toggle the completion status and set the **Date** if marking as completed.
-4. Click "Submit" to apply the changes.
+3. The **Edit Project** dialog opens with three tabs, pre-filled with the project's current settings:
+   - **Details:** Change the **Icon**, **Name**, **Description**, **Default Project Access**, and **Completed** status (with its **Date**).
+   - **Users:** Add users to the project and set each user's project access.
+   - **Groups:** Set the project access for each group.
+4. Click **Save** to apply the changes.
+
+See [Setting Up Access Control](#setting-up-access-control) for how the three tabs work together.
 
 ## Deleting a Project
 
@@ -121,26 +126,36 @@ Deleting a project marks it as inactive and typically hides it from standard vie
 
 The project access system uses a hierarchical permission model that determines who can access projects based on three levels: project defaults, user-specific permissions, and group permissions.
 
+:::warning Projects are open to all users unless you set No Access
+Every new project starts with **Default Project Access** set to **Use Global Role**, which means **every user who can sign in can access the project**. Their permissions in it come from their own global role.
+
+Adding users or groups to such a project does **not** hide it from anyone else. To restrict a project:
+
+1. Go to **Administration > Projects** and click **Edit** on the project.
+2. On the **Details** tab, set **Default Project Access** to **No Access**.
+3. On the **Users** tab, add the users who should have access, and/or on the **Groups** tab, give the right groups access.
+4. Click **Save**.
+
+System administrators (access level `ADMIN`) can always access every project.
+:::
+
 ### Access Types
 
 #### Project-Level Default Access
 
 Every project has a default access type that applies to all users unless overridden:
 
-- **`NO_ACCESS`**: No users can access the project by default. Users must be explicitly granted access through direct user assignment or group membership.
+- **`GLOBAL_ROLE`** (shown as **Use Global Role**; the default for new projects): **Every user with site access can access this project.** Their permissions in the project come from their global role. Use this for projects anyone in your organization should be able to use.
 
-- **`GLOBAL_ROLE`** (Recommended for open projects): **All users with site access can view this project.** Their permissions within the project are determined by their globally assigned role. This is the simplest access model - anyone who can log into the system can access the project.
+- **`SPECIFIC_ROLE`** (shown as the name of a role, such as _Tester_): **Every user with site access can access this project**, with the permissions of the selected role instead of their own global role. Users and groups you add to the project can be given a different role. This setting controls _what_ people can do in the project, not _who_ can see it.
 
-- **`SPECIFIC_ROLE`**: **Users are not automatically granted access to this project.** Access must be explicitly granted through:
-  - **Direct user assignment** - Adding users individually to the project
-  - **Group membership** - Adding a group to the project (all group members inherit access)
+- **`NO_ACCESS`** (shown as **No Access**): **Nobody gets access by default.** Only the project creator, users added on the **Users** tab, members of groups given access on the **Groups** tab, and system administrators can access the project. **This is the only default that restricts who can see a project.**
 
-  When users are assigned via group membership, they will use the role specified for this project unless overridden by a direct user assignment. This provides more control over who can access sensitive or confidential projects.
+:::tip Choosing a default
 
-:::tip Choosing Between Global Role and Specific Role
-
-- Use **Global Role** when you want the project to be accessible to everyone in your organization
-- Use **Specific Role** when you need to restrict access to specific teams or individuals
+- Use **Use Global Role** when everyone should be able to use the project, with their usual permissions.
+- Use **a specific role** when everyone should be able to use the project, but with the same set of permissions (for example, a read-only reference project).
+- Use **No Access** when only certain teams or people should be able to see the project.
 
 :::
 
@@ -170,7 +185,7 @@ The system evaluates access in this priority order:
 3. **Explicit User Denial**: If a user has `NO_ACCESS` permission, they are denied (highest priority for non-admins)
 4. **Explicit User Permission**: User-specific `GLOBAL_ROLE` or `SPECIFIC_ROLE` permissions grant access
 5. **Direct Assignment**: Users explicitly assigned to the project have read access
-6. **Project Default**: If project default is `GLOBAL_ROLE` and user has a role, they get access
+6. **Project Default**: If the project default is `GLOBAL_ROLE` or `SPECIFIC_ROLE`, every user with site access gets access; if it is `NO_ACCESS`, nobody gets access from this step
 7. **Group Permissions**: Evaluated based on group membership and group-specific settings
 
 ### Setting Up Access Control
@@ -180,7 +195,8 @@ When creating or editing a project, you can configure access control through thr
 #### Details Tab
 
 - Set the **Default Project Access** which determines the baseline permission for all users
-- Choose between No Access, Global Role, or a Specific Role from the dropdown
+- Choose **No Access**, **Use Global Role**, or a role from the dropdown
+- Only **No Access** keeps the project hidden from users who are not added on the **Users** or **Groups** tab
 
 #### Users Tab
 
@@ -199,7 +215,7 @@ When creating or editing a project, you can configure access control through thr
 
 #### Open Project (Company-Wide Access)
 
-Set `Default Project Access` to **Global Role** - all users with system roles can access the project with their existing permissions. This is ideal for shared test repositories, company-wide projects, or when you want maximum visibility.
+Leave `Default Project Access` at **Use Global Role** (the default for new projects) - all users with system roles can access the project with their existing permissions. This is ideal for shared test repositories, company-wide projects, or when you want maximum visibility.
 
 **Key points:**
 
@@ -209,17 +225,25 @@ Set `Default Project Access` to **Global Role** - all users with system roles ca
 
 #### Restricted Project (Team-Only Access)
 
-Set `Default Project Access` to **No Access** or **Specific Role** - only explicitly assigned users and groups can access the project. This is ideal for confidential projects, department-specific work, or when you need to control exactly who has access.
+Set `Default Project Access` to **No Access**, then add the people who need access. Only explicitly added users and groups can access the project. This is ideal for confidential projects, department-specific work, or when you need to control exactly who has access.
+
+**Steps:**
+
+1. Go to **Administration > Projects** and click **Edit** on the project.
+2. On the **Details** tab, set **Default Project Access** to **No Access**.
+3. On the **Users** tab, use **Add User** to add each person, and choose their project access (their global role or a specific role).
+4. On the **Groups** tab, set the project access for each group whose members should have access.
+5. Click **Save**.
 
 **Key points:**
 
+- **No Access** is the only default that restricts who can see a project. Choosing a specific role as the default does not.
 - Users must be explicitly added (directly or via groups) to access the project
-- When using a Specific Role, all assigned users get that role unless overridden
-- Group members inherit the project's role unless they have a direct user assignment
+- The project creator and system administrators keep access
 
 #### Uniform Role Project
 
-Set `Default Project Access` to **Specific Role** and select a role - users assigned through groups will use this role within the project regardless of their system role. Individual user assignments can still override this.
+Set `Default Project Access` to a role - every user can access the project and works with that role's permissions regardless of their global role. Users and groups added to the project can be given a different role. To also limit _who_ can access the project, use [Restricted Project (Team-Only Access)](#restricted-project-team-only-access) instead.
 
 #### Mixed Access
 

@@ -5114,7 +5114,7 @@
           "accessHints": {
             "noAccess": "Los usuarios no tendrán acceso a este proyecto a menos que se les otorgue explícitamente mediante asignación directa o membresía de grupo.",
             "globalRole": "Todos los usuarios con acceso al sitio pueden ver este proyecto. Sus permisos se determinan según su rol global.",
-            "specificRole": "Los usuarios no obtienen acceso automáticamente. El acceso debe otorgarse mediante asignación directa de usuario o pertenencia a un grupo. Los usuarios asignados a través de grupos usarán este rol a menos que la asignación directa lo anule."
+            "specificRole": "Todos los usuarios con acceso al sitio pueden ver este proyecto. Sus permisos se determinan por este rol a menos que se reemplacen por una asignación de usuario o grupo directo. Para restringir quién puede ver el proyecto, elija Sin acceso."
           }
         },
         "placeholders": {

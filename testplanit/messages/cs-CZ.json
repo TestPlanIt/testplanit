@@ -5114,7 +5114,7 @@
           "accessHints": {
             "noAccess": "Uživatelé nebudou mít přístup k tomuto projektu, pokud jim nebude explicitně udělen prostřednictvím přímého přiřazení nebo členství ve skupině.",
             "globalRole": "Tento projekt mohou zobrazit všichni uživatelé s přístupem k webu. Jejich oprávnění jsou určena jejich globálně přiřazenou rolí.",
-            "specificRole": "Uživatelům není přístup udělen automaticky. Přístup musí být udělen prostřednictvím přímého přiřazení uživatele nebo členství ve skupině. Uživatelé přiřazení prostřednictvím skupin budou tuto roli používat, pokud není přepsána přímým přiřazením."
+            "specificRole": "Všichni uživatelé s přístupem na web mohou zobrazit tento projekt. Jejich oprávnění jsou určena touto rolí, pokud není přepsat přímým přiřazením uživatele nebo skupiny. Chcete-li omezit, kdo může projekt zobrazit, zvolte Bez přístupu."
           }
         },
         "placeholders": {

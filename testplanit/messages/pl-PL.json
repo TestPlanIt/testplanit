@@ -5114,7 +5114,7 @@
           "accessHints": {
             "noAccess": "Użytkownicy nie będą mieli dostępu do tego projektu, dopóki nie otrzymają na to wyraźnej zgody poprzez bezpośrednie przypisanie lub członkostwo w grupie.",
             "globalRole": "Wszyscy użytkownicy z dostępem do witryny mogą przeglądać ten projekt. Ich uprawnienia są określone przez globalnie przypisaną rolę.",
-            "specificRole": "Użytkownicy nie otrzymują dostępu automatycznie. Dostęp musi zostać przyznany poprzez bezpośrednie przypisanie użytkownika lub członkostwo w grupie. Użytkownicy przypisani za pośrednictwem grup będą korzystać z tej roli, chyba że zostanie ona zastąpiona przez bezpośrednie przypisanie."
+            "specificRole": "Wszyscy użytkownicy z dostępem do witryny mogą wyświetlać ten projekt. Ich uprawnienia są określane przez tę rolę, chyba że zostaną zastąpione przez bezpośrednie przypisanie użytkownika lub grupy. Aby ograniczyć, kto może wyświetlać projekt, wybierz opcję Brak dostępu."
           }
         },
         "placeholders": {

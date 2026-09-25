@@ -5114,7 +5114,7 @@
           "accessHints": {
             "noAccess": "Người dùng sẽ không có quyền truy cập vào dự án này trừ khi được cấp phép rõ ràng thông qua việc chỉ định trực tiếp hoặc tư cách thành viên nhóm.",
             "globalRole": "Tất cả người dùng có quyền truy cập trang web đều có thể xem dự án này. Quyền hạn của họ được xác định bởi vai trò được chỉ định toàn cầu.",
-            "specificRole": "Người dùng không được cấp quyền truy cập tự động. Quyền truy cập phải được cấp thông qua việc chỉ định người dùng trực tiếp hoặc tư cách thành viên nhóm. Người dùng được chỉ định thông qua nhóm sẽ sử dụng vai trò này trừ khi bị ghi đè bởi việc chỉ định trực tiếp."
+            "specificRole": "Tất cả người dùng có quyền truy cập trang web có thể xem dự án này. Các quyền của họ được xác định bởi vai trò này trừ khi bị ghi đè bởi một bài tập trực tiếp cho người dùng hoặc nhóm. Để hạn chế những người có thể xem dự án, hãy chọn Không có quyền truy cập."
           }
         },
         "placeholders": {

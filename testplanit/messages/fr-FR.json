@@ -5114,7 +5114,7 @@
           "accessHints": {
             "noAccess": "Les utilisateurs n'auront accès à ce projet que s'ils y sont explicitement autorisés par le biais d'une affectation directe ou d'une appartenance à un groupe.",
             "globalRole": "Tous les utilisateurs ayant accès au site peuvent consulter ce projet. Leurs autorisations sont déterminées par leur rôle global.",
-            "specificRole": "L'accès n'est pas automatique. Il doit être accordé par attribution directe ou par appartenance à un groupe. Les utilisateurs affectés à un groupe utiliseront ce rôle, sauf s'ils sont affectés directement."
+            "specificRole": "Tous les utilisateurs ayant accès au site peuvent afficher ce projet. Leurs autorisations sont déterminées par ce rôle, sauf en cas de remplacement par une attribution directe d'utilisateur ou de groupe. Pour restreindre qui peut afficher le projet, sélectionnez Pas d'accès."
           }
         },
         "placeholders": {
