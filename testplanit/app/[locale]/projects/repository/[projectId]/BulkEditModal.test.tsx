@@ -179,6 +179,12 @@ vi.mock("~/hooks/useTransitionGateStatus", () => ({
   }),
 }));
 
+const mockInvalidateQueries = vi.fn();
+vi.mock("@tanstack/react-query", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@tanstack/react-query")>()),
+  useQueryClient: () => ({ invalidateQueries: mockInvalidateQueries }),
+}));
+
 vi.mock("~/hooks/useProjectPermissions", () => ({
   useProjectPermissions: vi.fn(),
 }));
@@ -2067,6 +2073,9 @@ describe("BulkEditModal", () => {
         expect(mockUpdateManyRepositoryCases).toHaveBeenCalledWith({
           data: { isDeleted: true },
           where: { id: { in: [1, 2] } },
+        });
+        expect(mockInvalidateQueries).toHaveBeenCalledWith({
+          queryKey: ["folderStats"],
         });
         expect(toast.success).toHaveBeenCalled();
         expect(onSaveSuccess).toHaveBeenCalled();

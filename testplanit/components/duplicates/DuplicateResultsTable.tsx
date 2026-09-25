@@ -74,6 +74,7 @@ export function DuplicateResultsTable({
     void queryClient.invalidateQueries({
       queryKey: ["duplicate-scan-candidates", projectId],
     });
+    void queryClient.invalidateQueries({ queryKey: ["folderStats"] });
     setRowSelection({});
   }, [queryClient, projectId]);
 

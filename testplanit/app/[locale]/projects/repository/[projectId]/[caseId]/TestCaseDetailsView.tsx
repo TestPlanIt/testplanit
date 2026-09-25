@@ -1,6 +1,7 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library -- This file consumes a library API (TanStack Table / TanStack Virtual / react-hook-form watch) that returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it. */
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { AttachmentChanges } from "@/components/AttachmentsDisplay";
@@ -385,6 +386,7 @@ export function TestCaseDetailsView({
   const caseId = caseIdOverride ?? routeParams.caseId;
   const searchParams = useSearchParams();
   const t = useTranslations();
+  const queryClient = useQueryClient();
 
   // Parse and validate projectId
   const projectIdParam = projectId as string;
@@ -1526,6 +1528,9 @@ export function TestCaseDetailsView({
           templateId: data.templateId || undefined,
         },
       });
+      if (data.folderId !== testcase.folderId) {
+        void queryClient.invalidateQueries({ queryKey: ["folderStats"] });
+      }
 
       // Replace the case's tag links on the explicit join model. ZenStack v3
       // has no nested `set:` on update, so delete-all-then-create the new set.

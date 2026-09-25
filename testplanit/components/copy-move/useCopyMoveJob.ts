@@ -1,6 +1,8 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { notifyRepositoryCasesChanged } from "~/hooks/useRepositoryCasesQuery";
 import type { PreflightResponse } from "~/app/api/repository/copy-move/schemas";
 import type {
   CopyMoveJobResult,
@@ -46,6 +48,7 @@ export interface UseCopyMoveJobReturn {
 }
 
 export function useCopyMoveJob(): UseCopyMoveJobReturn {
+  const queryClient = useQueryClient();
   const [jobId, setJobId] = useState<string | null>(null);
   const [status, setStatus] = useState<CopyMoveJobStatus>("idle");
   const [progress, setProgress] = useState<{
@@ -196,6 +199,8 @@ export function useCopyMoveJob(): UseCopyMoveJobReturn {
           if (data.result) {
             setResult(data.result);
           }
+          void queryClient.invalidateQueries({ queryKey: ["folderStats"] });
+          notifyRepositoryCasesChanged();
           // Stop polling
           if (intervalRef.current) {
             clearInterval(intervalRef.current);
@@ -230,7 +235,7 @@ export function useCopyMoveJob(): UseCopyMoveJobReturn {
         intervalRef.current = null;
       }
     };
-  }, [jobId, status]);
+  }, [jobId, status, queryClient]);
 
   // ── Cancel ────────────────────────────────────────────────────────────────
 

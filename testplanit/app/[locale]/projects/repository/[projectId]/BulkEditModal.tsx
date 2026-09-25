@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { formatSeconds } from "@/components/DurationDisplay";
@@ -205,6 +206,7 @@ export function BulkEditModal({
   onCopyMove,
 }: BulkEditModalProps) {
   const t = useTranslations();
+  const queryClient = useQueryClient();
   const tCommon = useTranslations("common");
   const tBulkEdit = useTranslations("repository.bulkEdit");
   const tReviews = useTranslations("reviews.transitionGate");
@@ -1890,6 +1892,7 @@ export function BulkEditModal({
         data: { isDeleted: true },
         where: { id: { in: selectedCaseIds } },
       });
+      void queryClient.invalidateQueries({ queryKey: ["folderStats"] });
       // Use bracket notation to avoid linter error
       const deletedMsgFn = (tBulkEdit as any)["success.casesDeleted"];
       const deletedMsg =
