@@ -17,32 +17,36 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { HelpPopover } from "@/components/ui/help-popover";
+import { Input } from "@/components/ui/input";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import {
-  endOfDay,
-  endOfMonth,
-  endOfQuarter,
-  endOfWeek,
-  endOfYear,
-  startOfDay,
-  startOfMonth,
-  startOfQuarter,
-  startOfWeek,
-  startOfYear,
-  subDays,
-  subMonths,
-  subWeeks,
-  subYears,
-} from "date-fns";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { CalendarDays } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { DateRange } from "react-day-picker";
 import { Control, FieldPath, FieldValues } from "react-hook-form";
+import {
+  DATE_RANGE_PRESET_CATEGORIES,
+  MAX_ROLLING_RANGE_AMOUNT,
+  ROLLING_RANGE_UNITS,
+  isDateRangePresetKey,
+  resolveRelativeDateRange,
+  type DateRangePresetCategory,
+  type DateRangePresetKey,
+  type RelativeDateRange,
+  type RollingRangeUnit,
+} from "~/lib/reports/dateRangePresets";
+import { useRelativeDateRangeLabel } from "~/hooks/useRelativeDateRangeLabel";
 import { cn, type ClassValue } from "~/utils";
 import { formatDateRange } from "~/utils/dateFormat";
 
@@ -62,17 +66,24 @@ interface DateRangePickerFieldProps<T extends FieldValues = FieldValues> {
    * dropdown names the range instead of reading "Custom".
    */
   defaultPreset?: string;
+  /**
+   * The relative range currently chosen, when the caller keeps it (a report
+   * run carries it so the range follows the calendar). null = custom dates.
+   * Omit to let the picker keep it internally.
+   */
+  preset?: RelativeDateRange | null;
+  onPresetChange?: (preset: RelativeDateRange | null) => void;
+  /**
+   * The calendar a relative range resolves on. Defaults to the browser's.
+   */
+  timezone?: string | null;
 }
 
-interface PredefinedRange {
-  label: string;
-  getValue: () => DateRange;
-}
-
-interface RangeCategory {
-  label: string;
-  ranges: Record<string, PredefinedRange>;
-}
+const DEFAULT_ROLLING: RelativeDateRange = {
+  preset: "lastN",
+  amount: 7,
+  unit: "days",
+};
 
 export function DateRangePickerField<T extends FieldValues = FieldValues>({
   control,
@@ -85,346 +96,304 @@ export function DateRangePickerField<T extends FieldValues = FieldValues>({
   className,
   helpKey,
   defaultPreset = "custom",
+  preset: controlledPreset,
+  onPresetChange,
+  timezone,
 }: DateRangePickerFieldProps<T>) {
   const locale = useLocale();
   const t = useTranslations("common.actions");
   const tReports = useTranslations("reports.ui");
-  const tCommon = useTranslations("common");
   const [popoverOpen, setPopoverOpen] = useState(false);
-  const [selectedPreset, setSelectedPreset] = useState<string>(defaultPreset);
+  const [internalPreset, setInternalPreset] =
+    useState<RelativeDateRange | null>(() =>
+      isDateRangePresetKey(defaultPreset) ? { preset: defaultPreset } : null
+    );
+  // "All time" clears the range; remembered so the dropdown can name it.
+  const [allTime, setAllTime] = useState(defaultPreset === "allTime");
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const rangeCategories: Record<string, RangeCategory> = {
-    day: {
-      label: tReports("dateRange.categories.day"),
-      ranges: {
-        today: {
-          label: tReports("dateRange.today"),
-          getValue: () => ({
-            from: startOfDay(today),
-            to: endOfDay(today),
-          }),
-        },
-        yesterday: {
-          label: tReports("dateRange.yesterday"),
-          getValue: () => ({
-            from: startOfDay(subDays(today, 1)),
-            to: endOfDay(subDays(today, 1)),
-          }),
-        },
-        last7Days: {
-          label: tCommon("operators.last7"),
-          getValue: () => ({
-            from: subDays(today, 6),
-            to: today,
-          }),
-        },
-        last30Days: {
-          label: tCommon("operators.last30"),
-          getValue: () => ({
-            from: subDays(today, 29),
-            to: today,
-          }),
-        },
-      },
-    },
-    week: {
-      label: tReports("dateRange.categories.week"),
-      ranges: {
-        thisWeek: {
-          label: tReports("dateRange.thisWeek"),
-          getValue: () => ({
-            from: startOfWeek(today, { weekStartsOn: 1 }),
-            to: endOfWeek(today, { weekStartsOn: 1 }),
-          }),
-        },
-        lastWeek: {
-          label: tReports("dateRange.lastWeek"),
-          getValue: () => {
-            const lastWeek = subWeeks(today, 1);
-            return {
-              from: startOfWeek(lastWeek, { weekStartsOn: 1 }),
-              to: endOfWeek(lastWeek, { weekStartsOn: 1 }),
-            };
-          },
-        },
-        last2Weeks: {
-          label: tReports("dateRange.last2Weeks"),
-          getValue: () => ({
-            from: subWeeks(today, 2),
-            to: today,
-          }),
-        },
-      },
-    },
-    month: {
-      label: tReports("dateRange.categories.month"),
-      ranges: {
-        thisMonth: {
-          label: tReports("dateRange.thisMonth"),
-          getValue: () => ({
-            from: startOfMonth(today),
-            to: endOfMonth(today),
-          }),
-        },
-        lastMonth: {
-          label: tReports("dateRange.lastMonth"),
-          getValue: () => {
-            const lastMonth = subMonths(today, 1);
-            return {
-              from: startOfMonth(lastMonth),
-              to: endOfMonth(lastMonth),
-            };
-          },
-        },
-        last3Months: {
-          label: tReports("dateRange.last3Months"),
-          getValue: () => ({
-            from: subMonths(today, 3),
-            to: today,
-          }),
-        },
-      },
-    },
-    quarter: {
-      label: tReports("dateRange.categories.quarter"),
-      ranges: {
-        thisQuarter: {
-          label: tReports("dateRange.thisQuarter"),
-          getValue: () => ({
-            from: startOfQuarter(today),
-            to: endOfQuarter(today),
-          }),
-        },
-        lastQuarter: {
-          label: tReports("dateRange.lastQuarter"),
-          getValue: () => {
-            const lastQuarter = subMonths(today, 3);
-            return {
-              from: startOfQuarter(lastQuarter),
-              to: endOfQuarter(lastQuarter),
-            };
-          },
-        },
-      },
-    },
-    year: {
-      label: tReports("dateRange.categories.year"),
-      ranges: {
-        thisYear: {
-          label: tCommon("operators.thisYear"),
-          getValue: () => ({
-            from: startOfYear(today),
-            to: endOfYear(today),
-          }),
-        },
-        lastYear: {
-          label: tReports("dateRange.lastYear"),
-          getValue: () => {
-            const lastYear = subYears(today, 1);
-            return {
-              from: startOfYear(lastYear),
-              to: endOfYear(lastYear),
-            };
-          },
-        },
-        last12Months: {
-          label: tReports("dateRange.last12Months"),
-          getValue: () => ({
-            from: subMonths(today, 12),
-            to: today,
-          }),
-        },
-      },
-    },
+  const preset =
+    controlledPreset !== undefined ? controlledPreset : internalPreset;
+  const setPreset = (next: RelativeDateRange | null) => {
+    setInternalPreset(next);
+    onPresetChange?.(next);
   };
 
-  // Helper to find a range by key across all categories
-  const findRangeByKey = (
-    key: string
-  ): { range: PredefinedRange; categoryKey: string } | undefined => {
-    for (const [categoryKey, category] of Object.entries(rangeCategories)) {
-      if (key in category.ranges) {
-        return { range: category.ranges[key], categoryKey };
-      }
-    }
-    return undefined;
+  const relativeLabel = useRelativeDateRangeLabel();
+  const presetLabel = (key: DateRangePresetKey) =>
+    relativeLabel({ preset: key });
+
+  const categoryLabel = (category: DateRangePresetCategory) =>
+    tReports(`dateRange.categories.${category}`);
+
+  const unitLabel = (unit: RollingRangeUnit) =>
+    tReports(`dateRange.rollingUnits.${unit}`);
+
+  // The calendar days the range covers, as local Dates for the calendar.
+  const rangeFor = (relative: RelativeDateRange): DateRange => {
+    const resolved = resolveRelativeDateRange(relative, { timezone });
+    return { from: resolved.fromDay, to: resolved.toDay };
   };
 
-  // Get display label for selected preset
-  const getSelectedLabel = (): string => {
-    if (selectedPreset === "custom") {
-      return tReports("dateRange.custom");
-    }
-    if (selectedPreset === "allTime") {
-      return tReports("dateRange.allTime");
-    }
-    const found = findRangeByKey(selectedPreset);
-    return found?.range.label || tReports("dateRange.custom");
+  const getSelectedLabel = (hasValue: boolean): string => {
+    if (preset) return relativeLabel(preset);
+    if (!hasValue && allTime) return tReports("dateRange.allTime");
+    return tReports("dateRange.custom");
   };
 
   return (
     <FormField
       control={control}
       name={name}
-      render={({ field }) => (
-        <FormItem className={cn("flex flex-col", className)}>
-          {label && (
-            // `w-fit` constrains the label's hit area to its visible content.
-            // FormLabel auto-attaches `htmlFor={formItemId}` pointing at the
-            // trigger button below; a `flex` label without `w-fit` stretches
-            // full-width and turns the empty space to the right of the text
-            // into a hidden trigger — that "phantom" hit area also fights
-            // with outside-click-to-close once the picker is open.
-            <FormLabel className="flex w-fit items-center">
-              {label}
-              {helpKey && <HelpPopover helpKey={helpKey} />}
-            </FormLabel>
-          )}
-          <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-            <PopoverTrigger asChild>
-              <FormControl>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-start font-normal",
-                    !field.value && "text-muted-foreground"
-                  )}
-                  disabled={disabled}
-                  data-testid="date-range-button"
-                >
-                  {field.value ? (
-                    formatDateRange(field.value.from, field.value.to, {
-                      locale,
-                    })
-                  ) : (
-                    <span>
-                      {placeholder || tReports("dateRange.selectDateRange")}
-                    </span>
-                  )}
-                  <CalendarDays className="ms-auto h-4 w-4 opacity-50" />
-                </Button>
-              </FormControl>
-            </PopoverTrigger>
-            <PopoverContent
-              className="w-auto p-0"
-              align="center"
-              sideOffset={5}
-            >
-              <div className="px-3 py-2 text-sm text-muted-foreground text-center border-b border-border">
-                {!field.value?.from
-                  ? tReports("dateRange.chooseStartDate")
-                  : tReports("dateRange.chooseEndDate")}
-              </div>
-              <div className="p-2 border-b border-border">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-between"
-                      data-testid="date-range-preset-select"
-                    >
-                      {getSelectedLabel()}
-                      <CalendarDays className="ms-2 h-4 w-4 opacity-50" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-56">
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setSelectedPreset("custom");
-                      }}
-                    >
-                      {tReports("dateRange.custom")}
-                    </DropdownMenuItem>
-                    {Object.entries(rangeCategories).map(
-                      ([categoryKey, category]) => (
-                        <DropdownMenuSub key={categoryKey}>
+      render={({ field }) => {
+        const choosePreset = (next: RelativeDateRange) => {
+          setAllTime(false);
+          setPreset(next);
+          field.onChange(rangeFor(next));
+        };
+        const chooseCustom = (value: DateRange | undefined) => {
+          setAllTime(false);
+          setPreset(null);
+          field.onChange(value);
+        };
+        return (
+          <FormItem className={cn("flex flex-col", className)}>
+            {label && (
+              // `w-fit` constrains the label's hit area to its visible content.
+              // FormLabel auto-attaches `htmlFor={formItemId}` pointing at the
+              // trigger button below; a `flex` label without `w-fit` stretches
+              // full-width and turns the empty space to the right of the text
+              // into a hidden trigger — that "phantom" hit area also fights
+              // with outside-click-to-close once the picker is open.
+              <FormLabel className="flex w-fit items-center">
+                {label}
+                {helpKey && <HelpPopover helpKey={helpKey} />}
+              </FormLabel>
+            )}
+            <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+              <PopoverTrigger asChild>
+                <FormControl>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-start font-normal",
+                      !field.value && "text-muted-foreground"
+                    )}
+                    disabled={disabled}
+                    data-testid="date-range-button"
+                  >
+                    {field.value ? (
+                      <span className="flex min-w-0 items-center gap-2">
+                        {preset && (
+                          <span className="shrink-0 font-medium">
+                            {getSelectedLabel(true)}
+                          </span>
+                        )}
+                        <span
+                          className={cn(
+                            "truncate",
+                            preset && "text-muted-foreground"
+                          )}
+                        >
+                          {formatDateRange(field.value.from, field.value.to, {
+                            locale,
+                          })}
+                        </span>
+                      </span>
+                    ) : (
+                      <span>
+                        {placeholder || tReports("dateRange.selectDateRange")}
+                      </span>
+                    )}
+                    <CalendarDays className="ms-auto h-4 w-4 opacity-50" />
+                  </Button>
+                </FormControl>
+              </PopoverTrigger>
+              <PopoverContent
+                className="w-auto p-0"
+                align="center"
+                sideOffset={5}
+              >
+                <div className="px-3 py-2 text-sm text-muted-foreground text-center border-b border-border">
+                  {!field.value?.from
+                    ? tReports("dateRange.chooseStartDate")
+                    : tReports("dateRange.chooseEndDate")}
+                </div>
+                <div className="p-2 border-b border-border grid gap-2">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-between"
+                        data-testid="date-range-preset-select"
+                      >
+                        {getSelectedLabel(Boolean(field.value))}
+                        <CalendarDays className="ms-2 h-4 w-4 opacity-50" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-56">
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setAllTime(false);
+                          setPreset(null);
+                        }}
+                      >
+                        {tReports("dateRange.custom")}
+                      </DropdownMenuItem>
+                      {(
+                        Object.entries(DATE_RANGE_PRESET_CATEGORIES) as Array<
+                          [
+                            DateRangePresetCategory,
+                            readonly DateRangePresetKey[],
+                          ]
+                        >
+                      ).map(([category, keys]) => (
+                        <DropdownMenuSub key={category}>
                           <DropdownMenuSubTrigger>
-                            {category.label}
+                            {categoryLabel(category)}
                           </DropdownMenuSubTrigger>
                           <DropdownMenuSubContent>
-                            {Object.entries(category.ranges).map(
-                              ([rangeKey, range]) => (
-                                <DropdownMenuItem
-                                  key={rangeKey}
-                                  onClick={() => {
-                                    setSelectedPreset(rangeKey);
-                                    const rangeValue = range.getValue();
-                                    field.onChange(rangeValue);
-                                  }}
-                                >
-                                  {range.label}
-                                </DropdownMenuItem>
-                              )
-                            )}
+                            {keys.map((key) => (
+                              <DropdownMenuItem
+                                key={key}
+                                onClick={() => choosePreset({ preset: key })}
+                              >
+                                {presetLabel(key)}
+                              </DropdownMenuItem>
+                            ))}
                           </DropdownMenuSubContent>
                         </DropdownMenuSub>
-                      )
-                    )}
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setSelectedPreset("allTime");
-                        field.onChange(undefined);
-                      }}
+                      ))}
+                      <DropdownMenuItem
+                        data-testid="date-range-preset-rolling"
+                        onClick={() =>
+                          choosePreset(
+                            preset?.preset === "lastN"
+                              ? preset
+                              : DEFAULT_ROLLING
+                          )
+                        }
+                      >
+                        {tReports("dateRange.rolling.label")}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setAllTime(true);
+                          setPreset(null);
+                          field.onChange(undefined);
+                        }}
+                      >
+                        {tReports("dateRange.allTime")}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  {preset?.preset === "lastN" && (
+                    <div
+                      className="flex items-center gap-2"
+                      data-testid="date-range-rolling-editor"
                     >
-                      {tReports("dateRange.allTime")}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-              <div>
-                <Calendar
-                  mode="range"
-                  selected={field.value}
-                  onSelect={(range) => {
-                    field.onChange(range);
-                  }}
-                  disabled={(date) => date > maxDate || date < minDate}
-                  autoFocus
-                  numberOfMonths={2}
-                />
-              </div>
-              <div className="p-2 border-t border-border flex gap-2">
-                <Button
-                  variant="ghost"
-                  className="flex-1 justify-center text-sm"
-                  onClick={() => {
-                    field.onChange(undefined);
-                    setSelectedPreset("custom");
-                  }}
-                  disabled={!field.value}
-                >
-                  {t("reset")}
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="flex-1 justify-center text-sm"
-                  onClick={() => {
-                    field.onChange(undefined);
-                    setSelectedPreset("custom");
-                    setPopoverOpen(false);
-                  }}
-                  disabled={!field.value}
-                >
-                  {t("clear")}
-                </Button>
-                <Button
-                  variant="default"
-                  className="flex-1 justify-center text-sm"
-                  onClick={() => {
-                    setPopoverOpen(false);
-                  }}
-                >
-                  {t("done")}
-                </Button>
-              </div>
-            </PopoverContent>
-          </Popover>
-          <FormMessage />
-        </FormItem>
-      )}
+                      <span className="text-sm">
+                        {tReports("dateRange.rolling.last")}
+                      </span>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={MAX_ROLLING_RANGE_AMOUNT}
+                        value={preset.amount}
+                        onChange={(event) => {
+                          const amount = Number(event.target.value);
+                          if (
+                            Number.isInteger(amount) &&
+                            amount >= 1 &&
+                            amount <= MAX_ROLLING_RANGE_AMOUNT
+                          ) {
+                            choosePreset({ ...preset, amount });
+                          }
+                        }}
+                        className="h-8 w-20"
+                        aria-label={tReports("dateRange.rolling.amount")}
+                        data-testid="date-range-rolling-amount"
+                      />
+                      <Select
+                        value={preset.unit}
+                        onValueChange={(unit) =>
+                          choosePreset({
+                            ...preset,
+                            unit: unit as RollingRangeUnit,
+                          })
+                        }
+                      >
+                        <SelectTrigger
+                          className="h-8 flex-1"
+                          aria-label={tReports("dateRange.rolling.unit")}
+                          data-testid="date-range-rolling-unit"
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ROLLING_RANGE_UNITS.map((unit) => (
+                            <SelectItem key={unit} value={unit}>
+                              {unitLabel(unit)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <Calendar
+                    mode="range"
+                    selected={field.value}
+                    onSelect={(range) => chooseCustom(range)}
+                    disabled={(date) => date > maxDate || date < minDate}
+                    autoFocus
+                    numberOfMonths={2}
+                  />
+                </div>
+                <div className="p-2 border-t border-border flex gap-2">
+                  <Button
+                    variant="ghost"
+                    className="flex-1 justify-center text-sm"
+                    onClick={() => chooseCustom(undefined)}
+                    disabled={!field.value}
+                  >
+                    {t("reset")}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="flex-1 justify-center text-sm"
+                    onClick={() => {
+                      chooseCustom(undefined);
+                      setPopoverOpen(false);
+                    }}
+                    disabled={!field.value}
+                  >
+                    {t("clear")}
+                  </Button>
+                  <Button
+                    variant="default"
+                    className="flex-1 justify-center text-sm"
+                    onClick={() => {
+                      setPopoverOpen(false);
+                    }}
+                  >
+                    {t("done")}
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
+            {preset && onPresetChange && (
+              <p
+                className="text-xs text-muted-foreground"
+                data-testid="date-range-relative-hint"
+              >
+                {tReports("dateRange.relativeHint")}
+              </p>
+            )}
+            <FormMessage />
+          </FormItem>
+        );
+      }}
     />
   );
 }

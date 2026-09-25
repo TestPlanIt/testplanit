@@ -1,4 +1,5 @@
 import { baseDb } from "@/lib/db";
+import { resolveRequestDateRange } from "~/lib/reports/dateRangePresets";
 import { sql, type RawBuilder } from "kysely";
 import { NextRequest } from "next/server";
 import { authorizeReportRequest } from "~/utils/reportApiUtils";
@@ -74,13 +75,12 @@ export async function handleExecutionLogPOST(
     if (!authz.ok) return authz.response;
     const {
       projectId,
-      startDate,
-      endDate,
       page = 1,
       pageSize = 25,
       sortColumn = "executedAt",
       sortDirection = "desc",
     } = body;
+    const { startDate, endDate } = resolveRequestDateRange(body);
 
     if (!isCrossProject && !projectId) {
       return Response.json(

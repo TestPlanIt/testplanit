@@ -7881,7 +7881,7 @@
     "reportBuilder": {
       "dimensions": "## Dimensions\nSelect the dimensions you want to analyze in your report. Dimensions are attributes that categorize your data, such as Date, User, Status, etc. You can drag to reorder them.",
       "metrics": "## Metrics\nSelect the metrics you want to measure in your report. Metrics are quantitative measurements derived from your data, such as Test Results Count, Pass Rate, Average Elapsed Time, etc. You can drag to reorder them.",
-      "dateRange": "## Date Range\nFilter your report data by a specific time period. You can select from predefined ranges like 'Last 7 days' or 'Previous month', or define a custom date range. This filter applies to the relevant date field for each report type (e.g., execution date for test results, creation date for test cases).",
+      "dateRange": "## Date Range\nFilter your report data by a specific time period. Choose a preset such as 'Last 7 days', 'Last month' or 'Last N days', or pick a custom start and end date on the calendar.\n\nA preset stays relative: a saved report or live share link works the dates out again each time it opens, in your timezone. Custom dates stay fixed. This filter applies to the relevant date field for each report type (e.g., execution date for test results, creation date for test cases).",
       "dimensionFilters": "## Filters\nNarrow the report to specific values of each selected dimension. Leave a filter empty to include all values for that dimension. Date dimensions are filtered with the date range picker instead."
     },
     "codeRepository": {
@@ -8233,7 +8233,22 @@
         "lastYear": "Last year",
         "last12Months": "Last 12 months",
         "allTime": "All Time",
-        "custom": "Custom Date Range"
+        "custom": "Custom Date Range",
+        "relativeHint": "Updates each time the report opens. Pick dates on the calendar to fix them.",
+        "rolling": {
+          "label": "Last N days, weeks or months…",
+          "last": "Last",
+          "amount": "Number of periods",
+          "unit": "Period",
+          "days": "Last {count, plural, one {# day} other {# days}}",
+          "weeks": "Last {count, plural, one {# week} other {# weeks}}",
+          "months": "Last {count, plural, one {# month} other {# months}}"
+        },
+        "rollingUnits": {
+          "days": "days",
+          "weeks": "weeks",
+          "months": "months"
+        }
       },
       "dateGrouping": {
         "label": "Group By",
@@ -9036,6 +9051,8 @@
       "defaultTitle": "Shared Report",
       "fromProject": "From project:",
       "dateRange": "Date range:",
+      "currentlyReporting": "Currently reporting:",
+      "reportedRange": "Reported:",
       "readOnlyNotice": "This is a read-only shared view",
       "viewCount": "{count, plural, =1 {1 view} other {# views}}",
       "viewInFullApp": "View in Full App",
@@ -9049,6 +9066,18 @@
       "title": "You have access to this project",
       "description": "Viewing as {userName} with access to {projectName}.",
       "viewInApp": "View in full app"
+    },
+    "dateRangeMode": {
+      "label": "Date range",
+      "relative": {
+        "title": "{range} (relative)",
+        "description": "Moves with the date the report is generated. Currently reporting: {dates}."
+      },
+      "fixed": {
+        "title": "Fixed dates",
+        "description": "Always {dates}."
+      },
+      "frozenNote": "A frozen report keeps the dates it ran on: {range}, {dates}."
     },
     "frozen": {
       "live": {

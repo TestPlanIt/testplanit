@@ -100,3 +100,5 @@ When a report is grouped by Folder with **Include Descendants** enabled, drillin
 ## Saving and Sharing
 
 **Save** stores the report — data source, dimensions, metrics, filters, and date range — in your private [Saved Reports](./index.md#saved-reports). **Share** creates a [Share Link](../../share-links.md) with the same configuration. Either can be live, re-running the report on every open, or frozen, keeping the results from the moment you saved or shared. See [Live and Frozen Data](../../share-links.md#live-and-frozen-data).
+
+A date range picked from a preset (**Last week**, **This month**, **Last 14 days**, and so on) is saved as that preset by default, so the dates move with the date a live saved report or share link is opened; the picker says so under the selected range. The Save and Share dialogs offer a **Date range** choice between **Relative** and **Fixed dates** for such a range. Dates picked on the calendar are always fixed.

@@ -10,6 +10,7 @@ const { mockSaveLiveReport, mockCreateFrozenLink, toastSpies } = vi.hoisted(
 );
 
 vi.mock("next-intl", () => ({
+  useLocale: () => "en-US",
   useTranslations: () => (key: string) => key.split(".").pop() ?? key,
 }));
 

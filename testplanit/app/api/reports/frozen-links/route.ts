@@ -1,4 +1,8 @@
 import bcrypt from "bcrypt";
+import {
+  parseRelativeDateRange,
+  resolveRequestDateRange,
+} from "~/lib/reports/dateRangePresets";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
@@ -109,9 +113,15 @@ export const POST = withAuditContext(async (request: NextRequest) => {
 
     // Saved reports keep their project inside the config; the row has none,
     // which is what keeps it private under the ShareLink read rules.
-    const entityConfig = isSavedReport
+    const storedConfig = isSavedReport
       ? { ...body.reportConfig, ...(projectId !== null && { projectId }) }
       : body.reportConfig;
+    // A relative date range ("last week") resolves once, now: the capture
+    // runs on these dates and the stored config keeps them, so the frozen
+    // report names the range it actually covers.
+    const entityConfig = parseRelativeDateRange(storedConfig)
+      ? { ...storedConfig, ...resolveRequestDateRange(storedConfig) }
+      : storedConfig;
 
     const built = await buildSharedReportPayload({
       config: entityConfig,

@@ -1,4 +1,5 @@
 import { baseDb } from "~/lib/db";
+import { resolveRequestDateRange } from "~/lib/reports/dateRangePresets";
 import { DbNull } from "@zenstackhq/orm";
 import { sql } from "kysely";
 import { NextRequest } from "next/server";
@@ -258,11 +259,10 @@ export async function handleFlakyTestsPOST(
       projectId,
       consecutiveRuns = 10,
       flipThreshold = 5,
-      startDate,
-      endDate,
       automatedFilter, // ("automated" | "manual")[]; a single value or "all" also accepted
       dimensions = [], // Array of dimension IDs
     } = body;
+    const { startDate, endDate } = resolveRequestDateRange(body);
 
     // Check if project dimension is requested
     const includeProject = isCrossProject && dimensions.includes("project");

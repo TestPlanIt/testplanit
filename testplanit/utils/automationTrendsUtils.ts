@@ -1,4 +1,5 @@
 import { baseDb } from "@/lib/db";
+import { resolveRequestDateRange } from "~/lib/reports/dateRangePresets";
 import { NextRequest } from "next/server";
 import { authorizeReportRequest } from "~/utils/reportApiUtils";
 import { resolveReportFolderFilter } from "~/utils/reportGrouping";
@@ -175,14 +176,13 @@ export async function handleAutomationTrendsPOST(
     const {
       projectId,
       dimensions: _dimensions = [],
-      startDate,
-      endDate,
       page = 1,
       pageSize: pageSizeParam = 10,
       sortColumn,
       sortDirection = "desc",
       dateGrouping = "weekly",
     } = body;
+    const { startDate, endDate } = resolveRequestDateRange(body);
 
     // Handle pageSize "All" - since we return all data anyway, just normalize it
     const pageSize =

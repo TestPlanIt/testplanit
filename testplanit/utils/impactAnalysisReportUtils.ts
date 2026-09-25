@@ -1,4 +1,5 @@
 import { baseDb } from "@/lib/db";
+import { resolveRequestDateRange } from "~/lib/reports/dateRangePresets";
 import { NextRequest } from "next/server";
 import { authorizeReportRequest } from "~/utils/reportApiUtils";
 import { parseEnumFilter, parseIdListFilter } from "~/utils/reportFilterParams";
@@ -206,11 +207,10 @@ export async function handleImpactAnalysisReportPOST(
     });
     if (!authz.ok) return authz.response;
 
+    const { startDate, endDate } = resolveRequestDateRange(body);
     const {
       projectId,
       lookbackDays = 90,
-      startDate,
-      endDate,
       triggerFilter = "all",
       outcomeFilter = "all",
       configId,
@@ -218,8 +218,6 @@ export async function handleImpactAnalysisReportPOST(
     } = body as {
       projectId?: number | string;
       lookbackDays?: number | string;
-      startDate?: string;
-      endDate?: string;
       // Lists of accepted values; the single-value form is also accepted.
       triggerFilter?: ImpactTriggerFilter | ImpactTrigger[];
       outcomeFilter?: ImpactOutcomeFilter | ImpactRunOutcome[];

@@ -11,6 +11,11 @@ import {
   ReportDataModeField,
   type ReportDataMode,
 } from "@/components/reports/ReportDataModeField";
+import {
+  ReportDateRangeModeField,
+  applyDateRangeMode,
+  type ReportDateRangeMode,
+} from "@/components/reports/ReportDateRangeModeField";
 import { ShareLinkCreated } from "@/components/share/ShareLinkCreated";
 import { ShareLinkList } from "@/components/share/ShareLinkList";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -92,6 +97,8 @@ export function ShareDialog({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [dataMode, setDataMode] = useState<ReportDataMode>("live");
+  const [dateRangeMode, setDateRangeMode] =
+    useState<ReportDateRangeMode>("relative");
 
   // UI state
   const [error, setError] = useState<string | null>(null);
@@ -148,11 +155,16 @@ export function ShareDialog({
 
       // Use provided title or default title with timestamp
       const finalTitle = title || defaultTitle;
+      // Frozen data fixes the dates at capture on its own.
+      const configToStore =
+        dataMode === "frozen"
+          ? reportConfig
+          : applyDateRangeMode(reportConfig, dateRangeMode);
 
       if (dataMode === "frozen") {
         const result = await createFrozenLink({
           entityType: "REPORT",
-          reportConfig,
+          reportConfig: configToStore,
           projectId: projectId ?? null,
           mode,
           password: mode === "PASSWORD_PROTECTED" ? password : null,
@@ -181,7 +193,7 @@ export function ShareDialog({
         data: {
           shareKey,
           entityType: "REPORT",
-          entityConfig: reportConfig,
+          entityConfig: configToStore,
           ...(projectId !== undefined && { projectId }),
           createdById: session.user.id,
           mode,
@@ -283,13 +295,43 @@ export function ShareDialog({
 
           <TabsContent
             value="create"
-            className="space-y-4 mt-4 flex-1 min-h-0 overflow-y-auto"
+            className="space-y-4 mt-4 flex-1 min-h-0 overflow-y-auto px-0.5"
           >
             {error && (
               <Alert variant="destructive">
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
+
+            {/* Title */}
+            <div className="space-y-2">
+              <Label htmlFor="title">{tCommon("fields.title")}</Label>
+              <Input
+                data-testid="share-title-input"
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder={defaultTitle}
+              />
+              <p className="text-xs text-muted-foreground">
+                {t("title.leaveEmptyToUse")} {defaultTitle}
+              </p>
+            </div>
+
+            {/* Description */}
+            <div className="space-y-2">
+              <Label htmlFor="description">
+                {tCommon("fields.description")}
+              </Label>
+              <Textarea
+                data-testid="share-description-input"
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder={t("description.placeholder")}
+                rows={3}
+              />
+            </div>
 
             {/* Live or frozen data */}
             <ReportDataModeField
@@ -299,18 +341,35 @@ export function ShareDialog({
                 setTruncation(null);
               }}
             />
+            <ReportDateRangeModeField
+              config={reportConfig}
+              dataMode={dataMode}
+              value={dateRangeMode}
+              onChange={setDateRangeMode}
+            />
 
             {/* Share Mode */}
             <div className="space-y-3">
               <Label>{t("shareMode.label")}</Label>
               <RadioGroup
+                className="sm:grid-cols-3"
                 value={mode}
                 onValueChange={(v) => {
                   setMode(v as ShareLinkMode);
                   setPasswordError(null);
                 }}
               >
-                <div className="flex items-start space-x-2 rounded-lg border p-4">
+                <div
+                  className={cn(
+                    "flex cursor-pointer items-start space-x-2 rounded-lg border p-3",
+                    mode === "AUTHENTICATED" &&
+                      "bg-primary/10 border-primary/40"
+                  )}
+                  onClick={() => {
+                    setMode("AUTHENTICATED");
+                    setPasswordError(null);
+                  }}
+                >
                   <RadioGroupItem
                     data-testid="share-mode-authenticated"
                     value="AUTHENTICATED"
@@ -332,7 +391,17 @@ export function ShareDialog({
                   </div>
                 </div>
 
-                <div className="flex items-start space-x-2 rounded-lg border p-4">
+                <div
+                  className={cn(
+                    "flex cursor-pointer items-start space-x-2 rounded-lg border p-3",
+                    mode === "PASSWORD_PROTECTED" &&
+                      "bg-primary/10 border-primary/40"
+                  )}
+                  onClick={() => {
+                    setMode("PASSWORD_PROTECTED");
+                    setPasswordError(null);
+                  }}
+                >
                   <RadioGroupItem
                     data-testid="share-mode-password"
                     value="PASSWORD_PROTECTED"
@@ -356,7 +425,16 @@ export function ShareDialog({
                   </div>
                 </div>
 
-                <div className="flex items-start space-x-2 rounded-lg border p-4">
+                <div
+                  className={cn(
+                    "flex cursor-pointer items-start space-x-2 rounded-lg border p-3",
+                    mode === "PUBLIC" && "bg-primary/10 border-primary/40"
+                  )}
+                  onClick={() => {
+                    setMode("PUBLIC");
+                    setPasswordError(null);
+                  }}
+                >
                   <RadioGroupItem
                     data-testid="share-mode-public"
                     value="PUBLIC"
@@ -497,36 +575,6 @@ export function ShareDialog({
                   {t("notifyOnView.description")}
                 </p>
               </div>
-            </div>
-
-            {/* Title */}
-            <div className="space-y-2">
-              <Label htmlFor="title">{tCommon("fields.title")}</Label>
-              <Input
-                data-testid="share-title-input"
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder={defaultTitle}
-              />
-              <p className="text-xs text-muted-foreground">
-                {t("title.leaveEmptyToUse")} {defaultTitle}
-              </p>
-            </div>
-
-            {/* Description */}
-            <div className="space-y-2">
-              <Label htmlFor="description">
-                {tCommon("fields.description")}
-              </Label>
-              <Textarea
-                data-testid="share-description-input"
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder={t("description.placeholder")}
-                rows={3}
-              />
             </div>
 
             <FrozenTruncationWarning

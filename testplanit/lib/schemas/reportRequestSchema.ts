@@ -43,6 +43,16 @@ export const reportRequestSchema = z
     projectId: z.number().optional(),
     startDate: z.iso.datetime().optional(),
     endDate: z.iso.datetime().optional(),
+    // A relative date range ("last week", or "last N days/weeks/months")
+    // resolved on `dateRangeTimezone`'s calendar at run time, so a stored
+    // run follows the calendar. Handlers read their dates through
+    // resolveRequestDateRange, which prefers this over startDate/endDate.
+    // Lenient on purpose: a malformed relative range falls back to the
+    // absolute dates rather than failing the run.
+    dateRangePreset: z.string().nullish(),
+    dateRangeAmount: z.union([z.number(), z.string()]).nullish(),
+    dateRangeUnit: z.string().nullish(),
+    dateRangeTimezone: z.string().nullish(),
     page: z.number().int().positive().optional().default(1),
     pageSize: z
       .union([z.number().int().positive(), z.literal("All")])

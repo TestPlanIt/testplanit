@@ -10,6 +10,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { cn } from "~/utils";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { AlertTriangle } from "lucide-react";
@@ -37,11 +38,16 @@ export function ReportDataModeField({
       <RadioGroup
         value={value}
         onValueChange={(next) => onChange(next as ReportDataMode)}
+        className="sm:grid-cols-2"
       >
         {(["live", "frozen"] as const).map((option) => (
           <div
             key={option}
-            className="flex items-start space-x-2 rounded-lg border p-4"
+            className={cn(
+              "flex cursor-pointer items-start space-x-2 rounded-lg border p-3",
+              value === option && "bg-primary/10 border-primary/40"
+            )}
+            onClick={() => onChange(option)}
           >
             <RadioGroupItem
               data-testid={`report-data-mode-${option}`}

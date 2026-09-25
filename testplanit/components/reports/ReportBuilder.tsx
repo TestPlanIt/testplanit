@@ -74,6 +74,11 @@ import MultiSelect from "react-select";
 import { z } from "zod/v4";
 import { DateFormatter } from "~/components/DateFormatter";
 import { DateRangePickerField } from "~/components/forms/DateRangePickerField";
+import {
+  parseRelativeDateRange,
+  resolveRelativeDateRange,
+  type RelativeDateRange,
+} from "~/lib/reports/dateRangePresets";
 import { DrillDownDrawer } from "~/components/reports/DrillDownDrawer";
 import { ReportFilterChips } from "~/components/reports/ReportFilterChips";
 import { MatrixFilterPanel } from "@/components/matrix/MatrixFilterPanel";
@@ -265,6 +270,38 @@ function automatedFilterBody(values: Array<string | number | null>) {
     .map((value) => (Number(value) === 1 ? "automated" : "manual"));
 }
 
+/**
+ * The date range a page opens with: the URL's relative range resolved on
+ * its stored timezone, else its custom dates. Read at mount so the first
+ * auto-run carries it — the metadata effect restores the rest of the URL
+ * only after its fetch resolves, which is later than that run.
+ */
+function initialDateRangeFromUrl(params: {
+  get(name: string): string | null;
+}): { preset: RelativeDateRange | null; range: DateRange | undefined } {
+  const preset = parseRelativeDateRange({
+    dateRangePreset: params.get("dateRangePreset"),
+    dateRangeAmount: params.get("dateRangeAmount"),
+    dateRangeUnit: params.get("dateRangeUnit"),
+  });
+  if (preset) {
+    const resolved = resolveRelativeDateRange(preset, {
+      timezone: params.get("dateRangeTimezone"),
+    });
+    return { preset, range: { from: resolved.fromDay, to: resolved.toDay } };
+  }
+  const startDate = params.get("startDate");
+  const endDate = params.get("endDate");
+  if (!startDate) return { preset: null, range: undefined };
+  return {
+    preset: null,
+    range: {
+      from: new Date(startDate),
+      to: endDate ? new Date(endDate) : undefined,
+    },
+  };
+}
+
 /** ...and the cross-project pair of them, which also filter by project. */
 function isCrossProjectRequirementReport(reportType: string): boolean {
   return (
@@ -429,11 +466,16 @@ function ReportBuilderContent({
   // A load-more fetch is in flight (execution-log only).
   const [loadingMore, setLoadingMore] = useState(false);
 
+  // The date range the URL opened with (a saved report or share redirect).
+  const [initialDateRange] = useState(() =>
+    initialDateRangeFromUrl(searchParams)
+  );
+
   // Form for date range
   const form = useForm<DateRangeFormData>({
     resolver: standardSchemaResolver(dateRangeSchema),
     defaultValues: {
-      dateRange: undefined,
+      dateRange: initialDateRange.range,
     },
   });
 
@@ -641,7 +683,17 @@ function ReportBuilderContent({
   >({});
   const [lastUsedDateRange, setLastUsedDateRange] = useState<
     DateRange | undefined
-  >(undefined);
+  >(initialDateRange.range);
+  // The relative range behind the picked dates ("last week"), when there is
+  // one. A run carries it so a saved report or live share follows the
+  // calendar instead of freezing on today's dates; null = custom dates.
+  const [dateRangePreset, setDateRangePreset] =
+    useState<RelativeDateRange | null>(initialDateRange.preset);
+  // The calendar relative ranges resolve on: the user's timezone preference,
+  // else the browser's. Stored with the run so every viewer sees one range.
+  const dateRangeTimezone =
+    session?.user?.preferences?.timezone ||
+    Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   // Automation Candidates state. Snapshot-style report has two knobs:
   //   - how many manual cases to send to the LLM (default 25, max 100)
@@ -2252,13 +2304,31 @@ function ReportBuilderContent({
         const startDateParam = searchParams.get("startDate");
         const endDateParam = searchParams.get("endDate");
 
-        // Load date range from URL if present
-        if (startDateParam) {
+        // Load date range from URL if present. A relative range (a saved
+        // report or share made with "last week") resolves on today's
+        // calendar, in the saver's timezone; only custom dates restore as
+        // stored.
+        const urlPreset = parseRelativeDateRange({
+          dateRangePreset: searchParams.get("dateRangePreset"),
+          dateRangeAmount: searchParams.get("dateRangeAmount"),
+          dateRangeUnit: searchParams.get("dateRangeUnit"),
+        });
+        if (urlPreset) {
+          const resolved = resolveRelativeDateRange(urlPreset, {
+            timezone: searchParams.get("dateRangeTimezone"),
+          });
+          form.setValue("dateRange", {
+            from: resolved.fromDay,
+            to: resolved.toDay,
+          });
+          setDateRangePreset(urlPreset);
+        } else if (startDateParam) {
           const dateRange: DateRange = {
             from: new Date(startDateParam),
             to: endDateParam ? new Date(endDateParam) : undefined,
           };
           form.setValue("dateRange", dateRange);
+          setDateRangePreset(null);
         }
 
         // Load dimension value filters from URL if present. Stored as JSON
@@ -2406,8 +2476,18 @@ function ReportBuilderContent({
             setLastUsedDimensions(selectedDims);
             setLastUsedMetrics(selectedMets);
 
-            // Also set the last used date range if present
-            if (startDateParam) {
+            // Also set the last used date range if present — the resolved
+            // range for a relative one, so the results header names the
+            // dates this run covers rather than the stored ones.
+            if (urlPreset) {
+              const resolved = resolveRelativeDateRange(urlPreset, {
+                timezone: searchParams.get("dateRangeTimezone"),
+              });
+              setLastUsedDateRange({
+                from: resolved.fromDay,
+                to: resolved.toDay,
+              });
+            } else if (startDateParam) {
               setLastUsedDateRange({
                 from: new Date(startDateParam),
                 to: endDateParam ? new Date(endDateParam) : undefined,
@@ -2789,8 +2869,22 @@ function ReportBuilderContent({
           body.sortDirection = sortConfig.direction;
         }
 
-        // Add date range if specified
-        if (dateRange?.from) {
+        // Add date range if specified. A relative range resolves now, on
+        // the stored timezone, and travels with the run so a saved report or
+        // live share resolves it again when viewed.
+        if (dateRangePreset) {
+          const resolved = resolveRelativeDateRange(dateRangePreset, {
+            timezone: dateRangeTimezone,
+          });
+          body.startDate = resolved.startDate;
+          body.endDate = resolved.endDate;
+          body.dateRangePreset = dateRangePreset.preset;
+          if (dateRangePreset.preset === "lastN") {
+            body.dateRangeAmount = dateRangePreset.amount;
+            body.dateRangeUnit = dateRangePreset.unit;
+          }
+          body.dateRangeTimezone = dateRangeTimezone;
+        } else if (dateRange?.from) {
           // Convert local date to UTC date string (YYYY-MM-DD format then to ISO)
           const year = dateRange.from.getFullYear();
           const month = String(dateRange.from.getMonth() + 1).padStart(2, "0");
@@ -2990,6 +3084,25 @@ function ReportBuilderContent({
             );
 
             // Add date range to URL if specified, or remove if cleared
+            for (const key of [
+              "dateRangePreset",
+              "dateRangeAmount",
+              "dateRangeUnit",
+              "dateRangeTimezone",
+            ]) {
+              newParams.delete(key);
+            }
+            if (dateRangePreset) {
+              newParams.set("dateRangePreset", dateRangePreset.preset);
+              if (dateRangePreset.preset === "lastN") {
+                newParams.set(
+                  "dateRangeAmount",
+                  String(dateRangePreset.amount)
+                );
+                newParams.set("dateRangeUnit", dateRangePreset.unit);
+              }
+              newParams.set("dateRangeTimezone", dateRangeTimezone);
+            }
             if (dateRange?.from) {
               newParams.set("startDate", dateRange.from.toISOString());
               if (dateRange.to) {
@@ -3069,6 +3182,8 @@ function ReportBuilderContent({
       baselineSnapshotId,
       compareSnapshotId,
       includeUnchanged,
+      dateRangePreset,
+      dateRangeTimezone,
     ]
   );
 
@@ -3604,6 +3719,9 @@ function ReportBuilderContent({
                               name="dateRange"
                               label={tReports("dateRange.selectDateRange")}
                               helpKey="reportBuilder.dateRange"
+                              preset={dateRangePreset}
+                              onPresetChange={setDateRangePreset}
+                              timezone={dateRangeTimezone}
                             />
                           </div>
                         )}
@@ -4306,6 +4424,9 @@ function ReportBuilderContent({
                           name="dateRange"
                           label={tReports("dateRange.selectDateRange")}
                           helpKey="reportBuilder.dateRange"
+                          preset={dateRangePreset}
+                          onPresetChange={setDateRangePreset}
+                          timezone={dateRangeTimezone}
                         />
                       </div>
 

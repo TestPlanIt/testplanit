@@ -333,6 +333,24 @@ describe("parsePerTypeReportParams", () => {
     expect(other.filterValues).toEqual({});
   });
 
+  it("carries a relative date range to the URL for the builder to resolve", () => {
+    const params = buildSharedReportSearchParams({
+      reportType: "flaky-tests",
+      startDate: "2026-09-14T07:00:00.000Z",
+      endDate: "2026-09-21T06:59:59.999Z",
+      dateRangePreset: "lastN",
+      dateRangeAmount: 14,
+      dateRangeUnit: "days",
+      dateRangeTimezone: "America/Los_Angeles",
+    });
+    expect(params.get("dateRangePreset")).toBe("lastN");
+    expect(params.get("dateRangeAmount")).toBe("14");
+    expect(params.get("dateRangeUnit")).toBe("days");
+    expect(params.get("dateRangeTimezone")).toBe("America/Los_Angeles");
+    // The stored dates still travel for consumers that predate presets.
+    expect(params.get("startDate")).toBe("2026-09-14T07:00:00.000Z");
+  });
+
   it("falls back to defaults on invalid values", () => {
     const state = parsePerTypeReportParams(
       new URLSearchParams(

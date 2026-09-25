@@ -195,6 +195,51 @@ describe("POST /api/reports/frozen-links", () => {
     expect(baseDb.auditLog.create).toHaveBeenCalled();
   });
 
+  it("resolves a relative date range at capture and stores the dates it ran on", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-23T17:00:00.000Z"));
+    try {
+      mockReportRun(1);
+      const response = await POST(
+        createRequest({
+          entityType: "REPORT",
+          reportConfig: {
+            ...reportConfig,
+            // Stale dates from when the report was set up; the preset is
+            // what the capture must honour.
+            startDate: "2026-01-05T00:00:00.000Z",
+            endDate: "2026-01-11T23:59:59.999Z",
+            dateRangePreset: "lastWeek",
+            dateRangeTimezone: "Etc/UTC",
+          },
+          projectId: 10,
+          mode: "PUBLIC",
+        })
+      );
+      expect(response.status).toBe(201);
+
+      const lastWeek = {
+        startDate: "2026-09-14T00:00:00.000Z",
+        endDate: "2026-09-20T23:59:59.999Z",
+      };
+      // The capture ran on last week's dates...
+      expect(JSON.parse(mockFetch.mock.calls[1][1].body)).toMatchObject(
+        lastWeek
+      );
+      // ...and the stored config names them, keeping the preset for the label.
+      expect(mockShareLinkCreate).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          entityConfig: expect.objectContaining({
+            ...lastWeek,
+            dateRangePreset: "lastWeek",
+          }),
+        }),
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("asks for confirmation when the report exceeds the row cap, creating nothing", async () => {
     process.env.REPORT_SNAPSHOT_MAX_ROWS = "2";
     mockReportRun(5);

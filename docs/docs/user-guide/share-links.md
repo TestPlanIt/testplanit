@@ -89,6 +89,8 @@ Every report share link is either live or frozen. You choose when you create the
 - **Live** (default): the link stores the report's settings and runs the report again each time it is opened, so viewers always see current data.
 - **Frozen**: the report runs once when you create the link, and the link shows those exact results every time it is opened. The numbers never change. To share newer data, create a new link.
 
+A date range chosen from the picker's presets, such as **Last week** or **Last 14 days**, can stay relative on a live link: the range moves with the date the link is opened, using the timezone of the person who created the link. When you create the link, a **Date range** choice offers **Relative** (the default) or **Fixed dates**, which keeps the dates the range covers today. A custom start and end date are always fixed. The viewer names a relative range and the dates it covers right now, for example "Last week · Currently reporting: Sep 14, 2026 – Sep 20, 2026". A frozen link keeps the dates the report ran on when it was frozen and shows them as "Reported:".
+
 A frozen report shows when it was frozen and who froze it, in the viewer's date and time format.
 
 ![A frozen report titled Sprint 2 sign-off, with a banner reading Frozen on Sep 24, 2026 09:53 AM by Morgan Diaz above the stored chart and results table](/img/screenshots/user-guide/share-links/frozen-report-view.png)

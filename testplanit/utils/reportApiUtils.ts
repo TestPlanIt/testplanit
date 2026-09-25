@@ -1,4 +1,5 @@
 import { baseDb } from "@/lib/db";
+import { resolveRequestDateRange } from "~/lib/reports/dateRangePresets";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 import { authenticateRequest } from "~/lib/api-token-auth";
@@ -386,8 +387,6 @@ export async function handleReportPOST(req: NextRequest, config: ReportConfig) {
       projectId,
       dimensions,
       metrics,
-      startDate,
-      endDate,
       folderIncludeDescendants,
       dimensionFilters,
       page = 1,
@@ -395,6 +394,7 @@ export async function handleReportPOST(req: NextRequest, config: ReportConfig) {
       sortColumn,
       sortDirection,
     } = body;
+    const { startDate, endDate } = resolveRequestDateRange(body);
 
     // Validate with Zod schema
     const validation = reportRequestSchema.safeParse({

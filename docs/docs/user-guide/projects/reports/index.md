@@ -50,7 +50,7 @@ Save any report — pre-built or custom — to come back to it later without cre
 2. Select the **Save** icon in the report toolbar, next to Share.
 3. Enter a name and an optional description.
 4. Choose **Live** or **Frozen** data:
-   - **Live** reopens the report with every setting restored and fetches current data.
+   - **Live** reopens the report with every setting restored and fetches current data. A preset date range such as **Last week** moves with the date you open it.
    - **Frozen** keeps the results from now. Opening it shows those exact results, when they were frozen, and by whom. See [Live and Frozen Data](../../share-links.md#live-and-frozen-data) for the row limit and what frozen reports support.
 5. Select **Save**.
 

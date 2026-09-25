@@ -29,6 +29,11 @@ import {
   ReportDataModeField,
   type ReportDataMode,
 } from "./ReportDataModeField";
+import {
+  ReportDateRangeModeField,
+  applyDateRangeMode,
+  type ReportDateRangeMode,
+} from "./ReportDateRangeModeField";
 
 interface SaveReportButtonProps {
   /** The report's project; omitted for cross-project reports. */
@@ -90,6 +95,8 @@ function SaveReportDialog({
   const [name, setName] = useState(reportTitle ?? "");
   const [description, setDescription] = useState("");
   const [dataMode, setDataMode] = useState<ReportDataMode>("live");
+  const [dateRangeMode, setDateRangeMode] =
+    useState<ReportDateRangeMode>("relative");
   const [truncation, setTruncation] = useState<FrozenTruncation | null>(null);
 
   const { saveLiveReport, isSaving } = useSavedReports({
@@ -102,11 +109,16 @@ function SaveReportDialog({
 
   const handleSave = async (allowTruncate = false) => {
     if (!trimmedName) return;
+    // Frozen data fixes the dates at capture on its own.
+    const configToStore =
+      dataMode === "frozen"
+        ? reportConfig
+        : applyDateRangeMode(reportConfig, dateRangeMode);
     try {
       if (dataMode === "frozen") {
         const result = await createFrozenLink({
           entityType: "SAVED_REPORT",
-          reportConfig: buildSavedReportConfig(reportConfig, projectId),
+          reportConfig: buildSavedReportConfig(configToStore, projectId),
           projectId,
           title: trimmedName,
           description: description.trim() || null,
@@ -120,7 +132,7 @@ function SaveReportDialog({
         await saveLiveReport({
           name: trimmedName,
           description,
-          reportConfig,
+          reportConfig: configToStore,
         });
       }
       setTruncation(null);
@@ -142,7 +154,7 @@ function SaveReportDialog({
           <DialogTitle>{t("saveTitle")}</DialogTitle>
           <DialogDescription>{t("saveDescription")}</DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-2">
+        <div className="space-y-4 px-0.5 py-2">
           <div className="space-y-2">
             <Label htmlFor="save-report-name">{tCommon("name")}</Label>
             <Input
@@ -173,6 +185,12 @@ function SaveReportDialog({
               setDataMode(value);
               setTruncation(null);
             }}
+          />
+          <ReportDateRangeModeField
+            config={reportConfig}
+            dataMode={dataMode}
+            value={dateRangeMode}
+            onChange={setDateRangeMode}
           />
           <FrozenTruncationWarning
             truncation={truncation}

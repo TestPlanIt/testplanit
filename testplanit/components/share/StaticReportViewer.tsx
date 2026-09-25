@@ -20,6 +20,11 @@ import {
 import { useReportCsvExport } from "~/hooks/useReportCsvExport";
 import { Link } from "~/lib/navigation";
 import { sortSharedReportRows } from "~/lib/reports/sortSharedReportRows";
+import { useRelativeDateRangeLabel } from "~/hooks/useRelativeDateRangeLabel";
+import {
+  parseRelativeDateRange,
+  resolveRequestDateRange,
+} from "~/lib/reports/dateRangePresets";
 import { formatDateRange } from "~/utils/dateFormat";
 
 interface StaticReportViewerProps {
@@ -55,6 +60,12 @@ export function StaticReportViewer({
   const projectId: number | undefined =
     shareData.projectId ?? config?.projectId ?? undefined;
   const isFrozen = !!(reportData?.frozen ?? shareData.frozen);
+  const relativeLabel = useRelativeDateRangeLabel();
+  const relativeRange = parseRelativeDateRange(config);
+  const dateRange =
+    relativeRange && !isFrozen
+      ? resolveRequestDateRange(config)
+      : { startDate: config?.startDate, endDate: config?.endDate };
 
   // Build full report URL with configuration for "View in Full App" button
   const fullReportUrl = useMemo(() => {
@@ -248,12 +259,33 @@ export function StaticReportViewer({
             </div>
           )}
 
-          {/* Date range if applicable */}
-          {config.startDate && config.endDate && (
-            <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
-              <span>{t("dateRange")}</span>
+          {/* Date range if applicable. A relative range names itself and,
+              on a live share, resolves on today's calendar; a frozen share
+              keeps the dates it was captured on. */}
+          {dateRange.startDate && dateRange.endDate && (
+            <div
+              className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted-foreground"
+              data-testid="shared-report-date-range"
+            >
+              {relativeRange ? (
+                <>
+                  <span className="font-medium text-foreground">
+                    {relativeLabel(relativeRange)}
+                  </span>
+                  <span aria-hidden="true">{"·"}</span>
+                  <span>
+                    {isFrozen ? t("reportedRange") : t("currentlyReporting")}
+                  </span>
+                </>
+              ) : (
+                <span>{t("dateRange")}</span>
+              )}
               <span>
-                {formatDateRange(config.startDate, config.endDate, { locale })}
+                {formatDateRange(dateRange.startDate, dateRange.endDate, {
+                  locale,
+                  // A relative range's days are the saver's calendar days.
+                  timeZone: relativeRange ? config?.dateRangeTimezone : null,
+                })}
               </span>
             </div>
           )}
