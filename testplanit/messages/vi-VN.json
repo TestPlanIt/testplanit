@@ -9819,5 +9819,30 @@
     "inProject": "{label} trong {project}",
     "testRunSummary": "{count, plural, =0 {Không có trường hợp thử nghiệm nào} =1 {{count} trường hợp thử nghiệm} other {{count} trường hợp thử nghiệm}} trong {project}",
     "projectSummary": "{cases, plural, =1 {{cases} trường hợp thử nghiệm} other {{cases} trường hợp thử nghiệm}} · {runs, plural, =1 {{runs} lượt chạy thử nghiệm} other {{runs} lượt chạy thử nghiệm}}"
+  },
+  "importMappings": {
+    "title": "Ánh xạ đã lưu",
+    "saveTitle": "Lưu ánh xạ",
+    "saveDescription": "Đặt tên cho ánh xạ cột này để bạn có thể áp dụng nó cho các lần nhập khẩu sau này.",
+    "namePlaceholder": "ví dụ: Xuất hàng tuần từ bảng tính hồi quy",
+    "descriptionPlaceholder": "Tệp đến từ đâu hoặc khi nào cần sử dụng ánh xạ này",
+    "shareLabel": "Chia sẻ với những người khác",
+    "shareHint": "Mọi người đều có thể áp dụng nó. Chỉ bạn và những người quản trị viên mới có thể chỉnh sửa hoặc xóa nó.",
+    "shareHintTemplate": "Bất kỳ ai nhập vào một dự án sử dụng mẫu <b>{template}</b> đều có thể áp dụng nó. Chỉ bạn và những người quản trị viên mới có thể chỉnh sửa hoặc xóa nó.",
+    "saved": "Ánh xạ đã được lưu",
+    "empty": "Chưa có ánh xạ nào được lưu",
+    "suggested": "Khớp với tệp này",
+    "mine": "Ánh xạ của tôi",
+    "shared": "Được chia sẻ bởi những người khác",
+    "sharedBy": "Được chia sẻ bởi {name}",
+    "suggestionBanner": "\"<highlight>{name}</highlight>\" khớp với các cột của tệp này.",
+    "loadFailed": "Ánh xạ đã lưu này không còn hợp lệ.",
+    "skippedTitle": "Một số cột đã lưu chưa được áp dụng",
+    "missingColumns": "Không có trong tệp tải lên: {columns}",
+    "unavailableFields": "Không có trường phù hợp để ánh xạ: {columns}",
+    "editTitle": "Chỉnh sửa ánh xạ đã lưu",
+    "update": "Cập nhật với ánh xạ hiện tại",
+    "updateConfirm": "\"{name}\" sẽ được cập nhật với ánh xạ cột hiện tại và cài đặt.",
+    "savePrompt": "Lưu ánh xạ cột này cho lần sau?"
   }
 }

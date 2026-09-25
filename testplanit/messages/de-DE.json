@@ -9819,5 +9819,30 @@
     "inProject": "{label} in {project}",
     "testRunSummary": "{count, plural, =0 {Keine Testfälle} =1 {{count} Testfall} other {{count} Testfälle}} in {project}",
     "projectSummary": "{cases, plural, =1 {{cases} Testfall} other {{cases} Testfälle}} · {runs, plural, =1 {{runs} Testlauf} other {{runs} Testläufe}}"
+  },
+  "importMappings": {
+    "title": "Gespeicherte Zuordnungen",
+    "saveTitle": "Zuordnung speichern",
+    "saveDescription": "Benennen Sie diese Spaltenzuordnung, um sie auf zukünftige Importe anwenden zu können.",
+    "namePlaceholder": "z.B. Wöchentlicher Export aus dem Regressionstabelle",
+    "descriptionPlaceholder": "Woher die Datei kommt oder wann diese Zuordnung verwendet werden sollte",
+    "shareLabel": "Mit anderen teilen",
+    "shareHint": "Alle können sie verwenden. Nur Sie und Administratoren können sie bearbeiten oder löschen.",
+    "shareHintTemplate": "Alle, die in ein Projekt importieren, das die Vorlage <b>{template}</b> verwendet, können sie anwenden. Nur Sie und Administratoren können sie bearbeiten oder löschen.",
+    "saved": "Zuordnung gespeichert",
+    "empty": "Noch keine gespeicherten Zuordnungen",
+    "suggested": "Entspricht dieser Datei",
+    "mine": "Meine Zuordnungen",
+    "shared": "Von anderen geteilt",
+    "sharedBy": "Geteilt von {name}",
+    "suggestionBanner": "„<highlight>{name}</highlight>",
+    "loadFailed": "Diese gespeicherte Zuordnung ist nicht mehr gültig.",
+    "skippedTitle": "Einige gespeicherte Spalten wurden nicht angewendet",
+    "missingColumns": "Nicht in der hochgeladenen Datei vorhanden: {columns}",
+    "unavailableFields": "Kein entsprechendes Feld zum Zuordnen: {columns}",
+    "editTitle": "Gespeicherte Zuordnung bearbeiten",
+    "update": "Mit aktueller Zuordnung aktualisieren",
+    "updateConfirm": "„{name}",
+    "savePrompt": "Diese Spaltenzuordnung für das nächste Mal speichern?"
   }
 }

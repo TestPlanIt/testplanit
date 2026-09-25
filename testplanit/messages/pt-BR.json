@@ -9819,5 +9819,30 @@
     "inProject": "{label} em {project}",
     "testRunSummary": "{count, plural, =0 {Nenhum caso de teste} =1 {{count} caso de teste} other {{count} casos de teste}} em {project}",
     "projectSummary": "{cases, plural, =1 {{cases} caso de teste} other {{cases} casos de teste}} · {runs, plural, =1 {{runs} execução de teste} other {{runs} execuções de teste}}"
+  },
+  "importMappings": {
+    "title": "Mapeamentos salvos",
+    "saveTitle": "Salvar mapeamento",
+    "saveDescription": "Nomeie este mapeamento de coluna para que você possa aplicá-lo a importações posteriores.",
+    "namePlaceholder": "p. ex. Exportação semanal da planilha de regressão",
+    "descriptionPlaceholder": "De onde o arquivo vem ou quando usar este mapeamento",
+    "shareLabel": "Compartilhar com outros",
+    "shareHint": "Todos podem aplicá-lo. Apenas você e os administradores podem editá-lo ou excluí-lo.",
+    "shareHintTemplate": "Qualquer pessoa que importe para um projeto que use o template <b>{template}</b> pode aplicá-lo. Apenas você e os administradores podem editá-lo ou excluí-lo.",
+    "saved": "Mapeamento salvo",
+    "empty": "Nenhum mapeamento salvo ainda",
+    "suggested": "Corresponde a este arquivo",
+    "mine": "Meus mapeamentos",
+    "shared": "Compartilhado por outros",
+    "sharedBy": "Compartilhado por {name}",
+    "suggestionBanner": "\"<highlight>{name}</highlight>\" corresponde às colunas deste arquivo.",
+    "loadFailed": "Este mapeamento salvo não é mais válido.",
+    "skippedTitle": "Algumas colunas salvas não foram aplicadas",
+    "missingColumns": "Não está no arquivo enviado: {columns}",
+    "unavailableFields": "Nenhum campo correspondente para mapear: {columns}",
+    "editTitle": "Editar mapeamento salvo",
+    "update": "Atualizar com o mapeamento atual",
+    "updateConfirm": "\"{name}\" será atualizado com o mapeamento de coluna e as configurações atuais.",
+    "savePrompt": "Salvar este mapeamento de coluna para a próxima vez?"
   }
 }

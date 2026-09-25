@@ -437,6 +437,7 @@ export const upgradeNotifications: Record<string, UpgradeNotification> = {
         <li><strong>DeepSeek</strong> — DeepSeek V4 joins the supported LLM providers.</li>
         <li><strong>Automated execution</strong> — dispatch a run's automated cases to GitHub Actions, GitLab CI or a signed webhook and collect the results back into the same run; manual and automated cases now live in one hybrid run. Configure targets under <strong>Project Settings → Automated Execution</strong>.</li>
         <li><strong>Saved and frozen reports</strong> — save any report and reopen it from <strong>Saved Reports</strong> on the Reports page. Saved reports and share links can be live or frozen: a frozen report keeps the exact results from when it was captured, with who captured it and when.</li>
+        <li><strong>Saved import mappings</strong> — save the column mapping from the Test Cases, Shared Steps, or dataset CSV import and apply it to later imports.</li>
       </ul>
       <p>Read the <a href="https://docs.testplanit.com/blog/v1.1-release" target="_blank">1.1 release announcement</a> for the complete list of what's new.</p>
     `,

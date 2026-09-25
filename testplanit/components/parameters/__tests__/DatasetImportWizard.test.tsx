@@ -3,6 +3,25 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+// Saved mappings have their own suite. The stub stands in for the menu: its
+// button applies `savedMapping.toApply` through the wizard's onApply.
+const savedMapping = vi.hoisted(() => ({
+  toApply: null as unknown,
+  result: undefined as unknown,
+}));
+vi.mock("@/components/import/SavedImportMappings", () => ({
+  SavedImportMappings: ({ onApply }: { onApply: (m: unknown) => unknown }) => (
+    <button
+      type="button"
+      data-testid="apply-saved-mapping"
+      onClick={async () => {
+        savedMapping.result = await onApply(savedMapping.toApply);
+      }}
+    />
+  ),
+  SaveImportMappingPrompt: () => null,
+}));
+
 // next-intl mock — surface the keys the wizard uses
 vi.mock("next-intl", () => ({
   useTranslations:
@@ -127,6 +146,7 @@ describe("DatasetImportWizard", () => {
           open={true}
           onClose={vi.fn()}
           caseId={1}
+          projectId={1}
           parameters={SAMPLE_PARAMS}
           existingRowCount={3}
         />
@@ -149,6 +169,7 @@ describe("DatasetImportWizard", () => {
           open={false}
           onClose={vi.fn()}
           caseId={1}
+          projectId={1}
           parameters={SAMPLE_PARAMS}
           existingRowCount={0}
         />
@@ -164,6 +185,7 @@ describe("DatasetImportWizard", () => {
           open={true}
           onClose={vi.fn()}
           caseId={42}
+          projectId={1}
           parameters={SAMPLE_PARAMS}
           existingRowCount={0}
         />
@@ -182,6 +204,7 @@ describe("DatasetImportWizard", () => {
           open={true}
           onClose={vi.fn()}
           caseId={42}
+          projectId={1}
           parameters={SAMPLE_PARAMS}
           existingRowCount={0}
         />
@@ -215,6 +238,7 @@ describe("DatasetImportWizard", () => {
           open={true}
           onClose={vi.fn()}
           caseId={42}
+          projectId={1}
           parameters={SAMPLE_PARAMS}
           existingRowCount={0}
         />
@@ -245,6 +269,7 @@ describe("DatasetImportWizard", () => {
           open={true}
           onClose={onClose}
           caseId={77}
+          projectId={1}
           parameters={SAMPLE_PARAMS}
           existingRowCount={0}
         />
@@ -296,6 +321,7 @@ describe("DatasetImportWizard", () => {
           open={true}
           onClose={onClose}
           caseId={77}
+          projectId={1}
           parameters={SAMPLE_PARAMS}
           existingRowCount={0}
         />
@@ -328,6 +354,7 @@ describe("DatasetImportWizard", () => {
           open={true}
           onClose={vi.fn()}
           caseId={1}
+          projectId={1}
           parameters={SAMPLE_PARAMS}
           existingRowCount={0}
         />
@@ -341,5 +368,60 @@ describe("DatasetImportWizard", () => {
     expect(
       screen.getByText("The CSV data you uploaded will be lost.")
     ).toBeInTheDocument();
+  });
+
+  it("applies a saved mapping to columns the auto-match left unmapped", async () => {
+    savedMapping.toApply = {
+      id: "m1",
+      name: "Weekly export",
+      templateId: null,
+      config: {
+        version: 1,
+        columns: [
+          { column: "User", field: "username" },
+          { column: "Amt", field: "amount" },
+          { column: "Region", field: "amount" },
+          { column: "Notes", field: "comment" },
+        ],
+        settings: {},
+      },
+    };
+    render(
+      wrap(
+        <DatasetImportWizard
+          open={true}
+          onClose={vi.fn()}
+          caseId={77}
+          projectId={1}
+          parameters={SAMPLE_PARAMS}
+          existingRowCount={0}
+        />
+      )
+    );
+    await uploadCsv("User,Amt,Notes\nalice,100,x\n");
+
+    fireEvent.click(screen.getByTestId("apply-saved-mapping"));
+    await waitFor(() => expect(savedMapping.result).toBeDefined());
+    expect(savedMapping.result).toMatchObject({
+      missingColumns: ["Region"],
+      unavailableFields: [{ column: "Notes", field: "comment" }],
+    });
+
+    fireEvent.click(screen.getByTestId("dataset-import-wizard-next"));
+    await waitFor(() =>
+      expect(
+        screen.getByTestId("dataset-import-wizard-step-preview")
+      ).toBeInTheDocument()
+    );
+    fireEvent.click(screen.getByTestId("dataset-import-wizard-next"));
+    fireEvent.click(await screen.findByTestId("dataset-import-wizard-commit"));
+
+    await waitFor(() => expect(global.fetch).toHaveBeenCalled());
+    const body = JSON.parse((global.fetch as any).mock.calls[0][1].body);
+    expect(body.mapping).toEqual({
+      User: "username",
+      Amt: "amount",
+      Notes: "__skip__",
+    });
   });
 });

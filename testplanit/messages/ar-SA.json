@@ -9819,5 +9819,30 @@
     "inProject": "{label} في {project}",
     "testRunSummary": "{count, plural, =0 {لا توجد حالات اختبار} =1 {{count} حالة اختبار} other {{count} حالات اختبار}} في {project}",
     "projectSummary": "{cases, plural, =1 {{cases} حالة اختبار} other {{cases} حالات اختبار}} · {runs, plural, =1 {{runs} عملية تشغيل اختبار} other {{runs} عمليات تشغيل اختبار}}"
+  },
+  "importMappings": {
+    "title": "التعيينات المحفوظة",
+    "saveTitle": "حفظ التعيين",
+    "saveDescription": "قم بتسمية هذا التعيين للأعمدة حتى تتمكن من تطبيقه على عمليات الاستيراد لاحقًا.",
+    "namePlaceholder": "مثال: تصدير أسبوعي من ورقة الانحدار",
+    "descriptionPlaceholder": "مصدر الملف أو متى يتم استخدام هذا التعيين",
+    "shareLabel": "مشاركة مع الآخرين",
+    "shareHint": "يمكن للجميع تطبيقه. فقط أنت والمسؤولون يمكنكم تعديله أو حذفه.",
+    "shareHintTemplate": "أي شخص يستورد إلى مشروع يستخدم القالب <b>{template}</b> يمكنه تطبيقه. فقط أنت والمسؤولون يمكنكم تعديله أو حذفه.",
+    "saved": "تم حفظ التعيين",
+    "empty": "لا توجد تعيينات محفوظة بعد",
+    "suggested": "يطابق هذا الملف",
+    "mine": "تعييناتي",
+    "shared": "مشاركة من قبل الآخرين",
+    "sharedBy": "مشاركة من قبل {name}",
+    "suggestionBanner": "\"<highlight>{name}</highlight>\" يطابق أعمدة هذا الملف.",
+    "loadFailed": "هذا التعيين المحفوظ لم يعد صالحًا.",
+    "skippedTitle": "لم يتم تطبيق بعض الأعمدة المحفوظة",
+    "missingColumns": "غير موجود في الملف المرفوع: {columns}",
+    "unavailableFields": "لا توجد حقول متطابقة للتعيين إلى: {columns}",
+    "editTitle": "تعديل التعيين المحفوظ",
+    "update": "التحديث بالتعيين الحالي",
+    "updateConfirm": "سيتم تحديث \"{name}\" بتعيين الأعمدة والإعدادات الحالية.",
+    "savePrompt": "حفظ تعيين الأعمدة هذا للمرة القادمة؟"
   }
 }

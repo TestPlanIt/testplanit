@@ -32,6 +32,11 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
   }),
 }));
 
+vi.mock("@/components/import/SavedImportMappings", () => ({
+  SavedImportMappings: () => null,
+  SaveImportMappingPrompt: () => null,
+}));
+
 vi.mock("@/components/ui/use-toast", () => ({
   useToast: () => ({
     toast: vi.fn(),

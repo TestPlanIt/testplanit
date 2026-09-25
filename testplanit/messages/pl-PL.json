@@ -9819,5 +9819,30 @@
     "inProject": "{label} w {project}",
     "testRunSummary": "{count, plural, =0 {Brak przypadków testowych} =1 {{count} przypadek testowy} few {{count} przypadki testowe} many {{count} przypadków testowych} other {{count} przypadków testowych}} w {project}",
     "projectSummary": "{cases, plural, =1 {{cases} przypadek testowy} few {{cases} przypadki testowe} many {{cases} przypadków testowych} other {{cases} przypadków testowych}} · {runs, plural, =1 {{runs} przebieg testowy} few {{runs} przebiegi testowe} many {{runs} przebiegów testowych} other {{runs} przebiegów testowych}}"
+  },
+  "importMappings": {
+    "title": "Zapisane mapowania",
+    "saveTitle": "Zapisz mapowanie",
+    "saveDescription": "Nazwij to mapowanie kolumn, aby móc zastosować je do przyszłych importów.",
+    "namePlaceholder": "np. Cotygodniowy eksport z arkusza regresji",
+    "descriptionPlaceholder": "Skąd pochodzi plik lub kiedy używać tego mapowania",
+    "shareLabel": "Udostępnij innym",
+    "shareHint": "Każdy może go stosować. Tylko Ty i administratorzy możecie go edytować lub usuwać.",
+    "shareHintTemplate": "Każdy, kto importuje do projektu używającego szablonu <b>{template}</b>, może go stosować. Tylko Ty i administratorzy możecie go edytować lub usuwać.",
+    "saved": "Mapowanie zapisane",
+    "empty": "Brak zapisanych mapowań",
+    "suggested": "Pasuje do tego pliku",
+    "mine": "Moje mapowania",
+    "shared": "Udostępnione przez innych",
+    "sharedBy": "Udostępnione przez {name}",
+    "suggestionBanner": "\"<highlight>{name}</highlight>\" odpowiada kolumnom tego pliku.",
+    "loadFailed": "To zapisane mapowanie nie jest już prawidłowe.",
+    "skippedTitle": "Nie zastosowano niektórych zapisanych kolumn",
+    "missingColumns": "Nie w przesłanym pliku: {columns}",
+    "unavailableFields": "Brak pasującego pola do zmapowania: {columns}",
+    "editTitle": "Edytuj zapisane mapowanie",
+    "update": "Zaktualizuj bieżącym mapowaniem",
+    "updateConfirm": "\"{name}\" zostanie zaktualizowane bieżącym mapowaniem kolumn i ustawieniami.",
+    "savePrompt": "Zapisać to mapowanie kolumn na następny raz?"
   }
 }

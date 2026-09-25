@@ -37,6 +37,12 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import UploadAttachments from "@/components/UploadAttachments";
+import {
+  SavedImportMappings,
+  SaveImportMappingPrompt,
+  type CurrentImportMapping,
+  type LoadedImportMapping,
+} from "@/components/import/SavedImportMappings";
 import { WizardStepIndicator } from "@/components/ui/WizardStepIndicator";
 import {
   AlertCircle,
@@ -48,7 +54,7 @@ import {
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import Papa from "papaparse";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod/v4";
 import {
@@ -60,6 +66,10 @@ import {
   autoMapImportColumns,
   type MappableField,
 } from "~/lib/utils/autoMapImportColumns";
+import {
+  applySavedImportMapping,
+  type AppliedImportMapping,
+} from "~/lib/schemas/savedImportMapping";
 import { parseStepsCell } from "~/lib/utils/parseExportedSteps";
 import {
   convertMarkdownCasesToImportData,
@@ -413,194 +423,277 @@ export function ImportCasesWizard({
   const selectedTemplate = templates?.find(
     (t) => t.id.toString() === selectedTemplateId
   );
-  const templateFields = useMemo<MappableField[]>(() => {
-    if (!selectedTemplate) return [];
+  const buildTemplateFields = useCallback(
+    (template: typeof selectedTemplate): MappableField[] => {
+      if (!template) return [];
 
-    const fields: MappableField[] = selectedTemplate.caseFields.map((cf) => ({
-      id: cf.caseField.systemName,
-      displayName: cf.caseField.displayName,
-      isRequired: cf.caseField.isRequired,
-      type: cf.caseField.type.type,
-    }));
+      const fields: MappableField[] = template.caseFields.map((cf) => ({
+        id: cf.caseField.systemName,
+        displayName: cf.caseField.displayName,
+        isRequired: cf.caseField.isRequired,
+        type: cf.caseField.type.type,
+      }));
 
-    // Add system fields - Name is always required
-    if (!fields.some((f) => f.id === "name")) {
-      fields.unshift({
-        id: "name",
-        displayName: tGlobal("common.name"),
-        isRequired: true,
-        type: "Text String",
-      });
-    }
-
-    // Add system fields if they don't already exist in the template
-    const systemFields: MappableField[] = [
-      {
-        id: "estimate",
-        displayName: tCommon("fields.estimate"),
-        isRequired: false,
-        type: "Integer",
-      },
-      {
-        id: "forecast",
-        displayName: tCommon("fields.forecast"),
-        isRequired: false,
-        type: "Integer",
-      },
-      {
-        id: "automated",
-        displayName: tCommon("fields.automated"),
-        isRequired: false,
-        type: "Checkbox",
-      },
-      {
-        id: "tags",
-        displayName: tCommon("fields.tags"),
-        isRequired: false,
-        type: "Tags",
-      },
-      {
-        id: "steps",
-        displayName: tCommon("fields.steps"),
-        isRequired: false,
-        type: "Steps",
-      },
-      {
-        // Pairs with the row's "steps" column. Multi-row mode: names the
-        // per-step expected result column instead of relying on alias-based
-        // auto-detection. Single-row mode: the Steps cell becomes one step
-        // carrying this cell as its expected result.
-        id: "expectedResult",
-        displayName: tCommon("fields.expectedResult"),
-        isRequired: false,
-        type: "ExpectedResult",
-      },
-      {
-        id: "attachments",
-        displayName: tCommon("fields.attachments"),
-        isRequired: false,
-        type: "Attachments",
-      },
-      {
-        id: "issues",
-        displayName: tCommon("fields.issues"),
-        isRequired: false,
-        type: "Issues",
-      },
-      {
-        id: "linkedCases",
-        displayName: tGlobal("repository.fields.linkedCases"),
-        isRequired: false,
-        type: "LinkedCases",
-      },
-      {
-        id: "workflowState",
-        displayName: tGlobal(
-          "repository.cases.importWizard.fields.workflowState"
-        ),
-        isRequired: false,
-        type: "WorkflowState",
-      },
-      {
-        id: "createdAt",
-        displayName: tCommon("fields.createdAt"),
-        isRequired: false,
-        type: "DateTime",
-      },
-      {
-        id: "createdBy",
-        displayName: tCommon("fields.createdBy"),
-        isRequired: false,
-        type: "User",
-      },
-      {
-        id: "version",
-        displayName: tCommon("fields.version"),
-        isRequired: false,
-        type: "Integer",
-      },
-      {
-        id: "testRuns",
-        displayName: tCommon("fields.testRuns"),
-        isRequired: false,
-        type: "TestRuns",
-      },
-      {
-        id: "id",
-        displayName: t("importWizard.fields.caseId"),
-        isRequired: false,
-        type: "ID",
-        description: t("importWizard.fields.caseIdDescription"),
-      },
-    ];
-
-    // Only add system fields that don't already exist in template fields
-    systemFields.forEach((systemField) => {
-      if (!fields.some((f) => f.id === systemField.id)) {
-        fields.push(systemField);
+      // Add system fields - Name is always required
+      if (!fields.some((f) => f.id === "name")) {
+        fields.unshift({
+          id: "name",
+          displayName: tGlobal("common.name"),
+          isRequired: true,
+          type: "Text String",
+        });
       }
-    });
 
-    // Add folder field if needed
-    if (importLocation !== "single_folder") {
-      fields.unshift({
-        id: "folder",
-        displayName: tCommon("fields.folder"),
-        isRequired: true,
-        type: "Text String",
+      // Add system fields if they don't already exist in the template
+      const systemFields: MappableField[] = [
+        {
+          id: "estimate",
+          displayName: tCommon("fields.estimate"),
+          isRequired: false,
+          type: "Integer",
+        },
+        {
+          id: "forecast",
+          displayName: tCommon("fields.forecast"),
+          isRequired: false,
+          type: "Integer",
+        },
+        {
+          id: "automated",
+          displayName: tCommon("fields.automated"),
+          isRequired: false,
+          type: "Checkbox",
+        },
+        {
+          id: "tags",
+          displayName: tCommon("fields.tags"),
+          isRequired: false,
+          type: "Tags",
+        },
+        {
+          id: "steps",
+          displayName: tCommon("fields.steps"),
+          isRequired: false,
+          type: "Steps",
+        },
+        {
+          // Pairs with the row's "steps" column. Multi-row mode: names the
+          // per-step expected result column instead of relying on alias-based
+          // auto-detection. Single-row mode: the Steps cell becomes one step
+          // carrying this cell as its expected result.
+          id: "expectedResult",
+          displayName: tCommon("fields.expectedResult"),
+          isRequired: false,
+          type: "ExpectedResult",
+        },
+        {
+          id: "attachments",
+          displayName: tCommon("fields.attachments"),
+          isRequired: false,
+          type: "Attachments",
+        },
+        {
+          id: "issues",
+          displayName: tCommon("fields.issues"),
+          isRequired: false,
+          type: "Issues",
+        },
+        {
+          id: "linkedCases",
+          displayName: tGlobal("repository.fields.linkedCases"),
+          isRequired: false,
+          type: "LinkedCases",
+        },
+        {
+          id: "workflowState",
+          displayName: tGlobal(
+            "repository.cases.importWizard.fields.workflowState"
+          ),
+          isRequired: false,
+          type: "WorkflowState",
+        },
+        {
+          id: "createdAt",
+          displayName: tCommon("fields.createdAt"),
+          isRequired: false,
+          type: "DateTime",
+        },
+        {
+          id: "createdBy",
+          displayName: tCommon("fields.createdBy"),
+          isRequired: false,
+          type: "User",
+        },
+        {
+          id: "version",
+          displayName: tCommon("fields.version"),
+          isRequired: false,
+          type: "Integer",
+        },
+        {
+          id: "testRuns",
+          displayName: tCommon("fields.testRuns"),
+          isRequired: false,
+          type: "TestRuns",
+        },
+        {
+          id: "id",
+          displayName: t("importWizard.fields.caseId"),
+          isRequired: false,
+          type: "ID",
+          description: t("importWizard.fields.caseIdDescription"),
+        },
+      ];
+
+      // Only add system fields that don't already exist in template fields
+      systemFields.forEach((systemField) => {
+        if (!fields.some((f) => f.id === systemField.id)) {
+          fields.push(systemField);
+        }
       });
-    }
 
-    return fields;
-  }, [selectedTemplate, importLocation, t, tGlobal, tCommon]);
+      // Add folder field if needed
+      if (importLocation !== "single_folder") {
+        fields.unshift({
+          id: "folder",
+          displayName: tCommon("fields.folder"),
+          isRequired: true,
+          type: "Text String",
+        });
+      }
+
+      return fields;
+    },
+    [importLocation, t, tGlobal, tCommon]
+  );
+  const templateFields = useMemo(
+    () => buildTemplateFields(selectedTemplate),
+    [buildTemplateFields, selectedTemplate]
+  );
 
   // Create field mappings from column headers using auto-matching
   const createFieldMappings = (columnHeaders: string[]): FieldMapping[] =>
     autoMapImportColumns(columnHeaders, templateFields);
 
+  const readCsv = (
+    file: File,
+    options: { delimiter: Delimiter; hasHeaders: boolean; encoding: Encoding }
+  ) =>
+    new Promise<{ columnHeaders: string[]; rows: ParsedCase[] }>(
+      (resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const text = e.target?.result as string;
+
+          Papa.parse(text, {
+            delimiter: options.delimiter,
+            header: options.hasHeaders,
+            encoding: options.encoding,
+            skipEmptyLines: true,
+            complete: (results) => {
+              if (options.hasHeaders) {
+                resolve({
+                  columnHeaders: results.meta.fields || [],
+                  rows: results.data as ParsedCase[],
+                });
+                return;
+              }
+              const firstRow = (results.data[0] as string[]) ?? [];
+              const columnHeaders = firstRow.map((_, i) => `Column ${i + 1}`);
+              resolve({
+                columnHeaders,
+                rows: results.data.map((row: any) => {
+                  const obj: ParsedCase = {};
+                  columnHeaders.forEach((h, i) => {
+                    obj[h] = row[i];
+                  });
+                  return obj;
+                }),
+              });
+            },
+            error: (error: any) => reject(error),
+          });
+        };
+        reader.onerror = () => reject(reader.error);
+        reader.readAsText(file, options.encoding);
+      }
+    );
+
   // Parse CSV file - only called when advancing from page 1 to page 2
   const parseCSVFile = () => {
     if (!selectedFile) return;
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const text = e.target?.result as string;
-
-      Papa.parse(text, {
-        delimiter,
-        header: hasHeaders,
-        encoding,
-        skipEmptyLines: true,
-        complete: (results) => {
-          let columnHeaders: string[] = [];
-
-          if (hasHeaders) {
-            columnHeaders = results.meta.fields || [];
-            setParsedData(results.data as ParsedCase[]);
-          } else {
-            const firstRow = results.data[0] as string[];
-            columnHeaders = firstRow.map((_, i) => `Column ${i + 1}`);
-            setParsedData(
-              results.data.map((row: any) => {
-                const obj: ParsedCase = {};
-                columnHeaders.forEach((h, i) => {
-                  obj[h] = row[i];
-                });
-                return obj;
-              })
-            );
-          }
-
-          setFieldMappings(createFieldMappings(columnHeaders));
-        },
-        error: (error: any) => {
-          toast.error(tGlobal("sharedSteps.importWizard.errors.parseFailed"), {
-            description: error.message,
-          });
-        },
+    readCsv(selectedFile, { delimiter, hasHeaders, encoding })
+      .then(({ columnHeaders, rows }) => {
+        setParsedData(rows);
+        setFieldMappings(createFieldMappings(columnHeaders));
+      })
+      .catch((error: any) => {
+        toast.error(tGlobal("sharedSteps.importWizard.errors.parseFailed"), {
+          description: error?.message,
+        });
       });
+  };
+
+  // Applies a saved mapping, first switching to its template and re-reading
+  // the file when it was saved with other parse settings. Columns the saved
+  // mapping doesn't name keep their auto-matched field.
+  const handleApplySavedMapping = async (
+    saved: LoadedImportMapping
+  ): Promise<AppliedImportMapping | null> => {
+    if (!selectedFile) return null;
+    const { settings, columns } = saved.config;
+    const savedTemplate =
+      templates?.find((template) => template.id === saved.templateId) ??
+      selectedTemplate;
+    const nextParse = {
+      delimiter: settings.delimiter ?? delimiter,
+      hasHeaders: settings.hasHeaders ?? hasHeaders,
+      encoding: settings.encoding ?? encoding,
     };
-    reader.readAsText(selectedFile, encoding);
+
+    let columnHeaders = fieldMappings.map((m) => m.csvColumn);
+    if (
+      nextParse.delimiter !== delimiter ||
+      nextParse.hasHeaders !== hasHeaders ||
+      nextParse.encoding !== encoding
+    ) {
+      try {
+        const parsed = await readCsv(selectedFile, nextParse);
+        columnHeaders = parsed.columnHeaders;
+        setParsedData(parsed.rows);
+      } catch (error: any) {
+        toast.error(tGlobal("sharedSteps.importWizard.errors.parseFailed"), {
+          description: error?.message,
+        });
+        return null;
+      }
+      setDelimiter(nextParse.delimiter);
+      setHasHeaders(nextParse.hasHeaders);
+      setEncoding(nextParse.encoding);
+    }
+
+    const fields = buildTemplateFields(savedTemplate);
+    const applied = applySavedImportMapping(
+      autoMapImportColumns(columnHeaders, fields).map((m) => ({
+        column: m.csvColumn,
+        field: m.templateField,
+      })),
+      columns,
+      fields.map((f) => f.id)
+    );
+
+    if (savedTemplate) setSelectedTemplateId(savedTemplate.id.toString());
+    if (settings.rowMode) setRowMode(settings.rowMode);
+    setFieldMappings(
+      applied.mappings.map((m) => ({
+        csvColumn: m.column,
+        templateField: m.field,
+      }))
+    );
+    setImportErrors([]);
+    setImportWarnings([]);
+    return applied;
   };
 
   // Parse Markdown file - called when advancing from page 1 to page 2 with markdown file type
@@ -1231,11 +1324,31 @@ export function ImportCasesWizard({
     </div>
   );
 
+  const currentMapping: CurrentImportMapping = {
+    columns: fieldMappings.map((m) => ({
+      column: m.csvColumn,
+      field: m.templateField,
+    })),
+    settings: { delimiter, hasHeaders, encoding, rowMode },
+  };
+
   const renderPage2 = () => (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
         {t("importWizard.page2.description")}
       </p>
+
+      {fileType === "csv" && fieldMappings.length > 0 && (
+        <SavedImportMappings
+          wizard="TEST_CASES"
+          projectId={projectId}
+          templateId={selectedTemplate?.id ?? null}
+          templateName={selectedTemplate?.templateName ?? null}
+          headers={fieldMappings.map((m) => m.csvColumn)}
+          current={currentMapping}
+          onApply={handleApplySavedMapping}
+        />
+      )}
 
       {getUnmappedRequiredFields().length > 0 && (
         <Alert variant="destructive">
@@ -1576,6 +1689,15 @@ export function ImportCasesWizard({
 
     return (
       <div className="space-y-4">
+        {fileType === "csv" && (
+          <SaveImportMappingPrompt
+            wizard="TEST_CASES"
+            projectId={projectId}
+            templateId={selectedTemplate?.id ?? null}
+            templateName={selectedTemplate?.templateName ?? null}
+            current={currentMapping}
+          />
+        )}
         {multiRowDiagnostics && multiRowAggregated && (
           <Alert>
             <AlertCircle className="h-4 w-4" />

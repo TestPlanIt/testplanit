@@ -9819,5 +9819,30 @@
     "inProject": "{project}内の{label}",
     "testRunSummary": "{project}内の{count, plural, =0 {テストケースなし} =1 {{count}件のテストケース} other {{count}件のテストケース}}",
     "projectSummary": "{cases, plural, =1 {{cases}件のテストケース} other {{cases}件のテストケース}} · {runs, plural, =1 {{runs}件のテスト実行} other {{runs}件のテスト実行}}"
+  },
+  "importMappings": {
+    "title": "保存されたマッピング",
+    "saveTitle": "マッピングを保存",
+    "saveDescription": "このカラムマッピングに名前を付けると、後のインポートで適用できます。",
+    "namePlaceholder": "例：リグレッションシートからの週次エクスポート",
+    "descriptionPlaceholder": "ファイルの出所、またはこのマッピングを使用する時期",
+    "shareLabel": "他のユーザーと共有",
+    "shareHint": "すべてのユーザーが適用できます。編集および削除できるのはあなたと管理者のみです。",
+    "shareHintTemplate": "<b>{template}</b>テンプレートを使用するプロジェクトにインポートするすべてのユーザーが適用できます。編集および削除できるのはあなたと管理者のみです。",
+    "saved": "マッピングが保存されました",
+    "empty": "まだ保存されたマッピングがありません",
+    "suggested": "このファイルと一致",
+    "mine": "マイマッピング",
+    "shared": "他のユーザーが共有",
+    "sharedBy": "{name}が共有",
+    "suggestionBanner": "「<highlight>{name}</highlight>」がこのファイルの列と一致します。",
+    "loadFailed": "この保存されたマッピングは無効になりました。",
+    "skippedTitle": "保存された列の一部が適用されませんでした",
+    "missingColumns": "アップロードされたファイルに含まれていません: {columns}",
+    "unavailableFields": "マップするマッチングフィールドがありません: {columns}",
+    "editTitle": "保存されたマッピングを編集",
+    "update": "現在のマッピングで更新",
+    "updateConfirm": "\"{name}\" は現在の列マッピングと設定で更新されます。",
+    "savePrompt": "このマッピングを次回のために保存しますか？"
   }
 }

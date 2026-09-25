@@ -9819,5 +9819,30 @@
     "inProject": "{label} dans {project}",
     "testRunSummary": "{count, plural, =0 {Aucun cas de test} =1 {{count} cas de test} other {{count} cas de test}} dans {project}",
     "projectSummary": "{cases, plural, =1 {{cases} cas de test} other {{cases} cas de test}} · {runs, plural, =1 {{runs} essai} other {{runs} essais}}"
+  },
+  "importMappings": {
+    "title": "Mappages enregistrés",
+    "saveTitle": "Enregistrer le mappage",
+    "saveDescription": "Nommez ce mappage de colonne pour pouvoir l'appliquer aux importations ultérieures.",
+    "namePlaceholder": "p. ex. Exportation hebdomadaire de la feuille de régression",
+    "descriptionPlaceholder": "D'où provient le fichier ou quand utiliser ce mappage",
+    "shareLabel": "Partager avec d'autres",
+    "shareHint": "Tout le monde peut l'appliquer. Seuls vous et les administrateurs pouvez le modifier ou le supprimer.",
+    "shareHintTemplate": "Toute personne important dans un projet utilisant le modèle <b>{template}</b> peut l'appliquer. Seuls vous et les administrateurs pouvez le modifier ou le supprimer.",
+    "saved": "Mappage enregistré",
+    "empty": "Aucun mappage enregistré pour le moment",
+    "suggested": "Correspond à ce fichier",
+    "mine": "Mes mappages",
+    "shared": "Partagé par d'autres",
+    "sharedBy": "Partagé par {name}",
+    "suggestionBanner": "« <highlight>{name}</highlight> » correspond aux colonnes de ce fichier.",
+    "loadFailed": "Ce mappage enregistré n'est plus valide.",
+    "skippedTitle": "Certaines colonnes enregistrées n'ont pas été appliquées",
+    "missingColumns": "Absent du fichier importé : {columns}",
+    "unavailableFields": "Aucun champ correspondant à mapper : {columns}",
+    "editTitle": "Modifier le mappage enregistré",
+    "update": "Mettre à jour avec le mappage actuel",
+    "updateConfirm": "« {name} » sera mis à jour avec le mappage de colonne et les paramètres actuels.",
+    "savePrompt": "Enregistrer ce mappage de colonne pour la prochaine fois ?"
   }
 }

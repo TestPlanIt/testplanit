@@ -9819,5 +9819,30 @@
     "inProject": "{project} 中的 {label}",
     "testRunSummary": "在 {project} 中{count, plural, =0 {没有测试用例} =1 {有 {count} 个测试用例} other {有 {count} 个测试用例}}",
     "projectSummary": "{cases, plural, =1 {{cases} 个测试用例} other {{cases} 个测试用例}} · {runs, plural, =1 {{runs} 个测试运行} other {{runs} 个测试运行}}"
+  },
+  "importMappings": {
+    "title": "已保存的映射",
+    "saveTitle": "保存映射",
+    "saveDescription": "为此列映射命名，以便将其应用于后续导入。",
+    "namePlaceholder": "例如：从回归测试表的每周导出",
+    "descriptionPlaceholder": "文件来源或何时使用此映射",
+    "shareLabel": "与其他人共享",
+    "shareHint": "所有人都可以应用它。只有您和管理员可以编辑或删除它。",
+    "shareHintTemplate": "任何导入使用<b>{template}</b>模板的项目的人都可以应用它。只有您和管理员可以编辑或删除它。",
+    "saved": "映射已保存",
+    "empty": "尚无已保存的映射",
+    "suggested": "与此文件匹配",
+    "mine": "我的映射",
+    "shared": "由其他人共享",
+    "sharedBy": "由{name}共享",
+    "suggestionBanner": "\"<highlight>{name}</highlight>\"与此文件的列匹配。",
+    "loadFailed": "此已保存的映射已失效。",
+    "skippedTitle": "某些已保存的列未被应用",
+    "missingColumns": "未在上传的文件中：{columns}",
+    "unavailableFields": "没有匹配的字段可映射到：{columns}",
+    "editTitle": "编辑已保存的映射",
+    "update": "用当前映射更新",
+    "updateConfirm": "\"{name}\"将用当前列映射和设置进行更新。",
+    "savePrompt": "下次保存此列映射吗？"
   }
 }

@@ -9819,5 +9819,30 @@
     "inProject": "{label} en {project}",
     "testRunSummary": "{count, plural, =0 {Sin casos de prueba} =1 {{count} caso de prueba} other {{count} casos de prueba}} en {project}",
     "projectSummary": "{cases, plural, =1 {{cases} caso de prueba} other {{cases} casos de prueba}} · {runs, plural, =1 {{runs} ejecución de prueba} other {{runs} ejecuciones de prueba}}"
+  },
+  "importMappings": {
+    "title": "Asignaciones guardadas",
+    "saveTitle": "Guardar asignación",
+    "saveDescription": "Nombre esta asignación de columna para poder aplicarla a futuras importaciones.",
+    "namePlaceholder": "p. ej. Exportación semanal de la hoja de regresión",
+    "descriptionPlaceholder": "De dónde viene el archivo o cuándo usar esta asignación",
+    "shareLabel": "Compartir con otros",
+    "shareHint": "Todos pueden aplicarla. Solo tú y los administradores pueden editarla o eliminarla.",
+    "shareHintTemplate": "Cualquiera que importe a un proyecto que use la plantilla <b>{template}</b> puede aplicarla. Solo tú y los administradores pueden editarla o eliminarla.",
+    "saved": "Asignación guardada",
+    "empty": "Sin asignaciones guardadas aún",
+    "suggested": "Coincide con este archivo",
+    "mine": "Mis asignaciones",
+    "shared": "Compartido por otros",
+    "sharedBy": "Compartido por {name}",
+    "suggestionBanner": "\"<highlight>{name}</highlight>\" coincide con las columnas de este archivo.",
+    "loadFailed": "Esta asignación guardada ya no es válida.",
+    "skippedTitle": "Algunas columnas guardadas no se aplicaron",
+    "missingColumns": "No está en el archivo cargado: {columns}",
+    "unavailableFields": "Sin campo coincidente para asignar: {columns}",
+    "editTitle": "Editar asignación guardada",
+    "update": "Actualizar con la asignación actual",
+    "updateConfirm": "\"{name}\" se actualizará con la asignación de columna actual y la configuración.",
+    "savePrompt": "¿Guardar esta asignación de columna para la próxima vez?"
   }
 }

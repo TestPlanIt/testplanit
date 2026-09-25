@@ -41,6 +41,8 @@ Map your CSV columns to the appropriate shared step fields:
 - **Combined Step Data**: All steps in JSON or formatted text (for single-row exports)
 - **Steps Data**: Alternative field name for combined step data
 
+To reuse a mapping on later imports, save it from the **Saved mappings** menu on this page. See [Saved Column Mappings](../import-export.md#saved-column-mappings).
+
 ### Step 3: Preview Import Data
 
 Review the data that will be imported before finalizing the import. You can navigate through pages of data to ensure everything looks correct.

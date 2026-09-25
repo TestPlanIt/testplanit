@@ -9819,5 +9819,30 @@
     "inProject": "{label} in {project}",
     "testRunSummary": "{count, plural, =0 {Geen testgevallen} =1 {{count} testgeval} other {{count} testgevallen}} in {project}",
     "projectSummary": "{cases, plural, =1 {{cases} testgeval} other {{cases} testgevallen}} · {runs, plural, =1 {{runs} testrun} other {{runs} testruns}}"
+  },
+  "importMappings": {
+    "title": "Opgeslagen koppelingen",
+    "saveTitle": "Koppeling opslaan",
+    "saveDescription": "Geef deze kolomkoppeling een naam zodat u deze later kunt toepassen op importen.",
+    "namePlaceholder": "bijv. Wekelijkse export uit het regressieblad",
+    "descriptionPlaceholder": "Waar het bestand vandaan komt of wanneer u deze koppeling moet gebruiken",
+    "shareLabel": "Delen met anderen",
+    "shareHint": "Iedereen kan het toepassen. Alleen u en beheerders kunnen het bewerken of verwijderen.",
+    "shareHintTemplate": "Iedereen die in een project importeert dat de <b>{template}</b> sjabloon gebruikt, kan het toepassen. Alleen u en beheerders kunnen het bewerken of verwijderen.",
+    "saved": "Koppeling opgeslagen",
+    "empty": "Nog geen opgeslagen koppelingen",
+    "suggested": "Komt overeen met dit bestand",
+    "mine": "Mijn koppelingen",
+    "shared": "Gedeeld door anderen",
+    "sharedBy": "Gedeeld door {name}",
+    "suggestionBanner": "\"<highlight>{name}</highlight>\" komt overeen met de kolommen van dit bestand.",
+    "loadFailed": "Deze opgeslagen koppeling is niet meer geldig.",
+    "skippedTitle": "Enkele opgeslagen kolommen zijn niet toegepast",
+    "missingColumns": "Niet in het geüploade bestand: {columns}",
+    "unavailableFields": "Geen overeenkomstig veld om aan toe te wijzen: {columns}",
+    "editTitle": "Opgeslagen koppeling bewerken",
+    "update": "Bijwerken met huidige koppeling",
+    "updateConfirm": "\"{name}\" wordt bijgewerkt met de huidige kolomkoppeling en instellingen.",
+    "savePrompt": "Deze kolomkoppeling de volgende keer opslaan?"
   }
 }

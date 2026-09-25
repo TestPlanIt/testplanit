@@ -1,7 +1,16 @@
 "use client";
 
 import { ConfirmStep } from "@/components/parameters/wizard/ConfirmStep";
-import { MapColumnsStep } from "@/components/parameters/wizard/MapColumnsStep";
+import {
+  SavedImportMappings,
+  SaveImportMappingPrompt,
+  type LoadedImportMapping,
+} from "@/components/import/SavedImportMappings";
+import {
+  autoMapDatasetColumns,
+  MapColumnsStep,
+  SKIP_VALUE,
+} from "@/components/parameters/wizard/MapColumnsStep";
 import { PreviewStep } from "@/components/parameters/wizard/PreviewStep";
 import { UploadStep } from "@/components/parameters/wizard/UploadStep";
 import {
@@ -30,6 +39,10 @@ import Papa from "papaparse";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import type { ParameterShape } from "~/lib/schemas/datasetRowSchema";
+import {
+  applySavedImportMapping,
+  type ImportColumnMapping,
+} from "~/lib/schemas/savedImportMapping";
 
 interface ParameterRecord {
   id: number;
@@ -45,6 +58,7 @@ export interface DatasetImportWizardProps {
   open: boolean;
   onClose: () => void;
   caseId: number;
+  projectId: number;
   parameters: ParameterRecord[];
   existingRowCount: number;
 }
@@ -67,6 +81,7 @@ export function DatasetImportWizard({
   open,
   onClose,
   caseId,
+  projectId,
   parameters,
   existingRowCount,
 }: DatasetImportWizardProps) {
@@ -125,6 +140,29 @@ export function DatasetImportWizard({
     () => parameters.map((p) => ({ name: p.name, required: p.required })),
     [parameters]
   );
+
+  const currentColumns: ImportColumnMapping[] = csvHeaders.map((h) => ({
+    column: h,
+    field: mapping[h] && mapping[h] !== SKIP_VALUE ? mapping[h] : null,
+  }));
+
+  const handleApplySavedMapping = (saved: LoadedImportMapping) => {
+    const auto = autoMapDatasetColumns(csvHeaders, mapStepParameters);
+    const applied = applySavedImportMapping(
+      csvHeaders.map((h) => ({
+        column: h,
+        field: auto[h] === SKIP_VALUE ? null : auto[h],
+      })),
+      saved.config.columns,
+      parameters.map((p) => p.name)
+    );
+    setMapping(
+      Object.fromEntries(
+        applied.mappings.map((m) => [m.column, m.field ?? SKIP_VALUE])
+      )
+    );
+    return applied;
+  };
 
   const handleFileSelected = (_file: File, text: string) => {
     setCsvText(text);
@@ -208,6 +246,17 @@ export function DatasetImportWizard({
             mapping={mapping}
             onMappingChange={setMapping}
             onValidityChange={setMapValid}
+            toolbar={
+              csvHeaders.length > 0 && (
+                <SavedImportMappings
+                  wizard="DATASET"
+                  projectId={projectId}
+                  headers={csvHeaders}
+                  current={{ columns: currentColumns }}
+                  onApply={handleApplySavedMapping}
+                />
+              )
+            }
           />
         );
       case 3:
@@ -221,13 +270,21 @@ export function DatasetImportWizard({
         );
       case 4:
         return (
-          <ConfirmStep
-            validRowCount={validRowCount}
-            errorRowCount={errorRowCount}
-            existingRowCount={existingRowCount}
-            mode={mode}
-            onModeChange={setMode}
-          />
+          <>
+            <SaveImportMappingPrompt
+              wizard="DATASET"
+              projectId={projectId}
+              current={{ columns: currentColumns }}
+              className="mx-6 mt-6"
+            />
+            <ConfirmStep
+              validRowCount={validRowCount}
+              errorRowCount={errorRowCount}
+              existingRowCount={existingRowCount}
+              mode={mode}
+              onModeChange={setMode}
+            />
+          </>
         );
       default:
         return null;

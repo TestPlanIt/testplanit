@@ -212,6 +212,7 @@ export function ConfigureParametersSheet({
         open={showImportWizard}
         onClose={() => setShowImportWizard(false)}
         caseId={caseId}
+        projectId={projectId}
         parameters={parameters as never}
         existingRowCount={existingRowCount}
       />

@@ -213,6 +213,7 @@ model User {
     scimTokensRevoked                        ScimToken[]                       @relation("ScimTokenRevokedBy")
     scimTokensRotated                        ScimToken[]                       @relation("ScimTokenRotatedBy")
     createdShareLinks                        ShareLink[]                       @relation("ShareLinkCreator")
+    importMappings                           ImportMapping[]                   @relation("ImportMappingCreator")
     shareLinkAccessLogs                      ShareLinkAccessLog[]              @relation("ShareLinkAccessor")
     reviewsRequested                         ReviewRequest[]                   @relation("ReviewRequestedBy")
     reviewsAssigned                          ReviewRequest[]                   @relation("ReviewAssignedToUser")
@@ -1160,6 +1161,7 @@ model Templates {
     projects        TemplateProjectAssignment[]
     repositoryCases RepositoryCases[]
     sessions        Sessions[]
+    importMappings  ImportMapping[]
 
     @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
@@ -5388,6 +5390,53 @@ model ShareLink {
 
     // Cross-project shares (projectId == null) - only creator or admin can manage
     @@allow('create', createdById == auth().id && projectId == null && auth().access != 'NONE')
+}
+
+enum ImportMappingWizard {
+    TEST_CASES
+    SHARED_STEPS
+    DATASET
+
+    @@deny('all', auth() == null)
+    @@allow('read', true)
+}
+
+/// A named CSV import column mapping, private to its creator unless shared. A
+/// shared test-case mapping is readable in every project that uses its
+/// template; other shared mappings are readable by everyone. Shape of config:
+/// lib/schemas/savedImportMapping.ts.
+model ImportMapping {
+    id          String              @id @default(cuid())
+    name        String              @length(1, 120)
+    description String?             @length(0, 500)
+    wizard      ImportMappingWizard
+    config      Json
+    templateId  Int?
+    template    Templates?          @relation(fields: [templateId], references: [id], onDelete: SetNull)
+    isShared    Boolean             @default(false)
+    createdById String
+    createdBy   User                @relation("ImportMappingCreator", fields: [createdById], references: [id], onDelete: Cascade)
+    isDeleted   Boolean             @default(false)
+    deletedAt   DateTime?           @db.Timestamptz(6)
+    createdAt   DateTime            @default(now()) @db.Timestamptz(6)
+    updatedAt   DateTime            @updatedAt
+
+    @@index([createdById, wizard, isDeleted])
+    @@index([wizard, isShared, isDeleted])
+
+    @@deny('all', auth() == null)
+    @@allow('all', auth().access == 'ADMIN')
+
+    @@allow('read,update,delete', createdById == auth().id)
+
+    @@allow('read',
+        isShared && (
+            templateId == null ||
+            template.projects?[projectId in auth().accessibleProjectIds]
+        )
+    )
+
+    @@allow('create', createdById == auth().id && auth().access != 'NONE')
 }
 
 /// The frozen result of a REPORT or SAVED_REPORT link: the viewer payload the

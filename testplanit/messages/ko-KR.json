@@ -9819,5 +9819,30 @@
     "inProject": "{project}의 {label}",
     "testRunSummary": "{project}에 {count, plural, =0 {테스트 케이스 없음} =1 {테스트 케이스 {count}개} other {테스트 케이스 {count}개}}",
     "projectSummary": "{cases, plural, =1 {테스트 케이스 {cases}개} other {테스트 케이스 {cases}개}} · {runs, plural, =1 {테스트 실행 {runs}개} other {테스트 실행 {runs}개}}"
+  },
+  "importMappings": {
+    "title": "저장된 매핑",
+    "saveTitle": "매핑 저장",
+    "saveDescription": "나중에 가져오기에 적용할 수 있도록 이 열 매핑의 이름을 지정하세요.",
+    "namePlaceholder": "예: 회귀 시트에서 주간 내보내기",
+    "descriptionPlaceholder": "파일의 출처 또는 이 매핑을 사용할 시기",
+    "shareLabel": "다른 사람과 공유",
+    "shareHint": "누구나 적용할 수 있습니다. 편집 또는 삭제는 당신과 관리자만 할 수 있습니다.",
+    "shareHintTemplate": "<b>{template}</b> 템플릿을 사용하는 프로젝트로 가져오는 모든 사람이 적용할 수 있습니다. 편집 또는 삭제는 당신과 관리자만 할 수 있습니다.",
+    "saved": "매핑 저장됨",
+    "empty": "아직 저장된 매핑이 없습니다",
+    "suggested": "이 파일과 일치",
+    "mine": "내 매핑",
+    "shared": "다른 사용자가 공유함",
+    "sharedBy": "{name}이 공유함",
+    "suggestionBanner": "“<highlight>{name}</highlight>” matches this file's columns.",
+    "loadFailed": "이 저장된 매핑은 더 이상 유효하지 않습니다.",
+    "skippedTitle": "일부 저장된 열이 적용되지 않음",
+    "missingColumns": "업로드된 파일에 없음: {columns}",
+    "unavailableFields": "매핑할 일치하는 필드 없음: {columns}",
+    "editTitle": "저장된 매핑 편집",
+    "update": "현재 매핑으로 업데이트",
+    "updateConfirm": "\"{name}\"이 현재 열 매핑 및 설정으로 업데이트됩니다.",
+    "savePrompt": "이 열 매핑을 다음 번을 위해 저장하시겠습니까?"
   }
 }

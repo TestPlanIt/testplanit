@@ -9819,5 +9819,30 @@
     "inProject": "{label} v {project}",
     "testRunSummary": "{count, plural, =0 {Žádné testovací případy} =1 {{count} testovací případ} few {{count} testovací případy} other {{count} testovacích případů}} v {project}",
     "projectSummary": "{cases, plural, =1 {{cases} testovací případ} few {{cases} testovací případy} other {{cases} testovacích případů}} · {runs, plural, =1 {{runs} testovací běh} few {{runs} testovací běhy} other {{runs} testovacích běhů}}"
+  },
+  "importMappings": {
+    "title": "Uložená mapování",
+    "saveTitle": "Uložit mapování",
+    "saveDescription": "Pojmenujte toto mapování sloupců, abyste jej mohli použít pro pozdější import.",
+    "namePlaceholder": "např. Týdenní export z listu regrese",
+    "descriptionPlaceholder": "Odkud soubor pochází nebo kdy použít toto mapování",
+    "shareLabel": "Sdílet s ostatními",
+    "shareHint": "Každý jej může použít. Pouze vy a administrátoři jej můžete upravovat nebo odstraňovat.",
+    "shareHintTemplate": "Kdokoli importující do projektu, který používá šablonu <b>{template}</b>, ji může použít. Pouze vy a administrátoři ji můžete upravovat nebo odstraňovat.",
+    "saved": "Mapování uloženo",
+    "empty": "Zatím žádná uložená mapování",
+    "suggested": "Odpovídá tomuto souboru",
+    "mine": "Moje mapování",
+    "shared": "Sdíleno ostatními",
+    "sharedBy": "Sdíleno uživatelem {name}",
+    "suggestionBanner": "„<highlight>{name}</highlight>",
+    "loadFailed": "Toto uložené mapování již není platné.",
+    "skippedTitle": "Některé uložené sloupce nebyly použity",
+    "missingColumns": "V nahraném souboru nejsou: {columns}",
+    "unavailableFields": "Žádné pole neodpovídá k mapování: {columns}",
+    "editTitle": "Upravit uložené mapování",
+    "update": "Aktualizovat pomocí aktuálního mapování",
+    "updateConfirm": "„{name}",
+    "savePrompt": "Uložit toto mapování sloupců na příště?"
   }
 }

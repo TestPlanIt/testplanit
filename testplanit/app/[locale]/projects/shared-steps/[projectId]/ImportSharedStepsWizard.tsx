@@ -26,6 +26,12 @@ import {
 import { Separator } from "@/components/ui/separator";
 import UploadAttachments from "@/components/UploadAttachments";
 import {
+  SavedImportMappings,
+  SaveImportMappingPrompt,
+  type CurrentImportMapping,
+  type LoadedImportMapping,
+} from "@/components/import/SavedImportMappings";
+import {
   AlertCircle,
   CheckCircle2,
   ChevronLeft,
@@ -34,9 +40,14 @@ import {
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import Papa from "papaparse";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod/v4";
+import {
+  applySavedImportMapping,
+  type AppliedImportMapping,
+  type ImportColumnMapping,
+} from "~/lib/schemas/savedImportMapping";
 
 interface ImportSharedStepsWizardProps {
   open: boolean;
@@ -56,6 +67,117 @@ interface FieldMapping {
 interface ParsedSharedStep {
   [key: string]: any;
 }
+
+interface SharedStepField {
+  id: string;
+  displayName: string;
+  isRequired: boolean;
+  type: string;
+}
+
+// Matches CSV headers to shared step fields by name, then common aliases,
+// then partial names. Headerless files ("Column 1"...) stay unmapped.
+function autoMapSharedStepColumns(
+  columnHeaders: string[],
+  sharedStepFields: SharedStepField[],
+  hasHeaders: boolean
+): FieldMapping[] {
+  const usedFields = new Set<string>();
+  return columnHeaders.map((col: string) => {
+    // Try to auto-map columns based on name matching
+    let matchedField: string | null = null;
+
+    if (hasHeaders) {
+      const normalizedColName = col.toLowerCase().trim();
+
+      // Try to find exact match first
+      const exactMatch = sharedStepFields.find(
+        (field) =>
+          !usedFields.has(field.id) &&
+          (field.displayName.toLowerCase() === normalizedColName ||
+            field.id.toLowerCase() === normalizedColName)
+      );
+
+      if (exactMatch) {
+        matchedField = exactMatch.id;
+        usedFields.add(exactMatch.id);
+      } else {
+        // Try common variations
+        const commonMappings: Record<string, string> = {
+          group: "groupName",
+          "group name": "groupName",
+          "shared step group": "groupName",
+          "shared step group name": "groupName",
+          step: "step",
+          "test step": "step",
+          action: "step",
+          "expected result": "expectedResult",
+          expected: "expectedResult",
+          result: "expectedResult",
+          "expected outcome": "expectedResult",
+          order: "order",
+          sequence: "order",
+          position: "order",
+          index: "order",
+          // Export format mappings
+          "step #": "stepNumber",
+          "step number": "stepNumber",
+          "step content": "stepContent",
+          "expected result content": "expectedResultContent",
+          "combined step data": "combinedStepData",
+          "steps data": "stepsData",
+          combinedstepdata: "combinedStepData",
+          stepsdata: "stepsData",
+        };
+
+        // Check if column name matches any common mapping
+        for (const [commonName, fieldId] of Object.entries(commonMappings)) {
+          if (
+            normalizedColName === commonName ||
+            normalizedColName.includes(commonName)
+          ) {
+            const field = sharedStepFields.find(
+              (f) => f.id === fieldId && !usedFields.has(f.id)
+            );
+            if (field) {
+              matchedField = fieldId;
+              usedFields.add(fieldId);
+              break;
+            }
+          }
+        }
+
+        // If still no match, try partial matching
+        if (!matchedField) {
+          const partialMatch = sharedStepFields.find(
+            (field) =>
+              !usedFields.has(field.id) &&
+              (normalizedColName.includes(field.displayName.toLowerCase()) ||
+                normalizedColName.includes(field.id.toLowerCase()) ||
+                field.displayName.toLowerCase().includes(normalizedColName) ||
+                field.id.toLowerCase().includes(normalizedColName))
+          );
+
+          if (partialMatch) {
+            matchedField = partialMatch.id;
+            usedFields.add(partialMatch.id);
+          }
+        }
+      }
+    }
+
+    return {
+      csvColumn: col,
+      templateField: matchedField,
+    };
+  });
+}
+
+const toColumnMappings = (mappings: FieldMapping[]): ImportColumnMapping[] =>
+  mappings.map((m) => ({ column: m.csvColumn, field: m.templateField }));
+
+const fromColumnMappings = (mappings: ImportColumnMapping[]): FieldMapping[] =>
+  mappings.map((m) => ({ csvColumn: m.column, templateField: m.field }));
 
 // Zod validation schema for page 1
 const createPage1Schema = (t: any) =>
@@ -97,6 +219,11 @@ export function ImportSharedStepsWizard({
 
   // Page 3 state
   const [previewIndex, setPreviewIndex] = useState(0);
+
+  const pendingSavedMappingRef = useRef<{
+    columns: ImportColumnMapping[];
+    resolve: (applied: AppliedImportMapping | null) => void;
+  } | null>(null);
 
   // Validation errors state
   const [validationErrors, setValidationErrors] =
@@ -164,9 +291,36 @@ export function ImportSharedStepsWizard({
     return fields;
   }, [tCommon, t, rowMode]);
 
-  // Parse CSV file
+  const lastParseRef = useRef<{
+    file: File;
+    delimiter: Delimiter;
+    hasHeaders: boolean;
+    encoding: Encoding;
+    rowMode: RowMode;
+  } | null>(null);
+
+  // Parse CSV file. Coming back to the mapping page with the same file and
+  // settings keeps the current mapping instead of re-matching from scratch.
   useEffect(() => {
     if (selectedFile && currentPage === 2) {
+      const last = lastParseRef.current;
+      if (
+        last &&
+        last.file === selectedFile &&
+        last.delimiter === delimiter &&
+        last.hasHeaders === hasHeaders &&
+        last.encoding === encoding &&
+        last.rowMode === rowMode
+      ) {
+        return;
+      }
+      lastParseRef.current = {
+        file: selectedFile,
+        delimiter,
+        hasHeaders,
+        encoding,
+        rowMode,
+      };
       const reader = new FileReader();
       reader.onload = (e) => {
         const text = e.target?.result as string;
@@ -196,105 +350,29 @@ export function ImportSharedStepsWizard({
               );
             }
 
-            // Initialize field mappings with automatic matching
-            const usedFields = new Set<string>();
-            const mappings = columnHeaders.map((col: string) => {
-              // Try to auto-map columns based on name matching
-              let matchedField: string | null = null;
-
-              if (hasHeaders) {
-                const normalizedColName = col.toLowerCase().trim();
-
-                // Try to find exact match first
-                const exactMatch = sharedStepFields.find(
-                  (field) =>
-                    !usedFields.has(field.id) &&
-                    (field.displayName.toLowerCase() === normalizedColName ||
-                      field.id.toLowerCase() === normalizedColName)
-                );
-
-                if (exactMatch) {
-                  matchedField = exactMatch.id;
-                  usedFields.add(exactMatch.id);
-                } else {
-                  // Try common variations
-                  const commonMappings: Record<string, string> = {
-                    group: "groupName",
-                    "group name": "groupName",
-                    "shared step group": "groupName",
-                    "shared step group name": "groupName",
-                    step: "step",
-                    "test step": "step",
-                    action: "step",
-                    "expected result": "expectedResult",
-                    expected: "expectedResult",
-                    result: "expectedResult",
-                    "expected outcome": "expectedResult",
-                    order: "order",
-                    sequence: "order",
-                    position: "order",
-                    index: "order",
-                    // Export format mappings
-                    "step #": "stepNumber",
-                    "step number": "stepNumber",
-                    "step content": "stepContent",
-                    "expected result content": "expectedResultContent",
-                    "combined step data": "combinedStepData",
-                    "steps data": "stepsData",
-                    combinedstepdata: "combinedStepData",
-                    stepsdata: "stepsData",
-                  };
-
-                  // Check if column name matches any common mapping
-                  for (const [commonName, fieldId] of Object.entries(
-                    commonMappings
-                  )) {
-                    if (
-                      normalizedColName === commonName ||
-                      normalizedColName.includes(commonName)
-                    ) {
-                      const field = sharedStepFields.find(
-                        (f) => f.id === fieldId && !usedFields.has(f.id)
-                      );
-                      if (field) {
-                        matchedField = fieldId;
-                        usedFields.add(fieldId);
-                        break;
-                      }
-                    }
-                  }
-
-                  // If still no match, try partial matching
-                  if (!matchedField) {
-                    const partialMatch = sharedStepFields.find(
-                      (field) =>
-                        !usedFields.has(field.id) &&
-                        (normalizedColName.includes(
-                          field.displayName.toLowerCase()
-                        ) ||
-                          normalizedColName.includes(field.id.toLowerCase()) ||
-                          field.displayName
-                            .toLowerCase()
-                            .includes(normalizedColName) ||
-                          field.id.toLowerCase().includes(normalizedColName))
-                    );
-
-                    if (partialMatch) {
-                      matchedField = partialMatch.id;
-                      usedFields.add(partialMatch.id);
-                    }
-                  }
-                }
-              }
-
-              return {
-                csvColumn: col,
-                templateField: matchedField,
-              };
-            });
-            setFieldMappings(mappings);
+            const autoMappings = autoMapSharedStepColumns(
+              columnHeaders,
+              sharedStepFields,
+              hasHeaders
+            );
+            const pending = pendingSavedMappingRef.current;
+            if (pending) {
+              pendingSavedMappingRef.current = null;
+              const applied = applySavedImportMapping(
+                toColumnMappings(autoMappings),
+                pending.columns,
+                sharedStepFields.map((f) => f.id)
+              );
+              setFieldMappings(fromColumnMappings(applied.mappings));
+              pending.resolve(applied);
+              return;
+            }
+            setFieldMappings(autoMappings);
           },
           error: (error: any) => {
+            lastParseRef.current = null;
+            pendingSavedMappingRef.current?.resolve(null);
+            pendingSavedMappingRef.current = null;
             toast.error(t("importWizard.errors.parseFailed"), {
               description: error.message,
             });
@@ -309,9 +387,55 @@ export function ImportSharedStepsWizard({
     delimiter,
     hasHeaders,
     encoding,
+    rowMode,
     t,
     sharedStepFields,
   ]);
+
+  // Applies a saved mapping. When it was saved with other parse settings or
+  // row mode, those are restored and the parse effect applies the mapping to
+  // the re-read columns.
+  const handleApplySavedMapping = (
+    saved: LoadedImportMapping
+  ): Promise<AppliedImportMapping | null> | AppliedImportMapping | null => {
+    const { settings, columns } = saved.config;
+    const next = {
+      delimiter: settings.delimiter ?? delimiter,
+      hasHeaders: settings.hasHeaders ?? hasHeaders,
+      encoding: settings.encoding ?? encoding,
+      rowMode: settings.rowMode ?? rowMode,
+    };
+
+    if (
+      next.delimiter !== delimiter ||
+      next.hasHeaders !== hasHeaders ||
+      next.encoding !== encoding ||
+      next.rowMode !== rowMode
+    ) {
+      return new Promise((resolve) => {
+        pendingSavedMappingRef.current?.resolve(null);
+        pendingSavedMappingRef.current = { columns, resolve };
+        setDelimiter(next.delimiter);
+        setHasHeaders(next.hasHeaders);
+        setEncoding(next.encoding);
+        setRowMode(next.rowMode);
+      });
+    }
+
+    const applied = applySavedImportMapping(
+      toColumnMappings(
+        autoMapSharedStepColumns(
+          fieldMappings.map((m) => m.csvColumn),
+          sharedStepFields,
+          hasHeaders
+        )
+      ),
+      columns,
+      sharedStepFields.map((f) => f.id)
+    );
+    setFieldMappings(fromColumnMappings(applied.mappings));
+    return applied;
+  };
 
   const handleFileSelect = (files: File[]) => {
     if (files.length > 0) {
@@ -583,11 +707,26 @@ export function ImportSharedStepsWizard({
     </div>
   );
 
+  const currentMapping: CurrentImportMapping = {
+    columns: toColumnMappings(fieldMappings),
+    settings: { delimiter, hasHeaders, encoding, rowMode },
+  };
+
   const renderPage2 = () => (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
         {t("importWizard.page2.description")}
       </p>
+
+      {fieldMappings.length > 0 && (
+        <SavedImportMappings
+          wizard="SHARED_STEPS"
+          projectId={projectId}
+          headers={fieldMappings.map((m) => m.csvColumn)}
+          current={currentMapping}
+          onApply={handleApplySavedMapping}
+        />
+      )}
 
       {getUnmappedRequiredFields().length > 0 && (
         <Alert variant="destructive">
@@ -650,6 +789,11 @@ export function ImportSharedStepsWizard({
 
     return (
       <div className="space-y-4">
+        <SaveImportMappingPrompt
+          wizard="SHARED_STEPS"
+          projectId={projectId}
+          current={currentMapping}
+        />
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
             {t("importWizard.page3.showing", {
