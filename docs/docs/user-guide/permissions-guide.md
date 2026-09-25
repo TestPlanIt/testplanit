@@ -135,11 +135,17 @@ Every user has a system-wide access level that determines their baseline permiss
 
 Projects can be configured with different access models to control who can view and modify content.
 
+:::warning By default, every project is open to every user
+New projects are created with the default access type **GLOBAL_ROLE** (shown as **Use Global Role**), so every user with access level `USER` or higher can access them with the permissions of their own global role. Adding users or groups to a project does not hide it from anyone else.
+
+To restrict a project to specific people, go to **Administration > Projects**, click **Edit** on the project, set **Default Project Access** to **No Access** on the **Details** tab, then add the people who need access on the **Users** and/or **Groups** tabs. See [Scenario 2: Confidential Project](#scenario-2-confidential-project).
+:::
+
 ### Project Access Types
 
-#### GLOBAL_ROLE (Recommended)
+#### GLOBAL_ROLE (Default)
 
-**Behavior**: Access based on user's global role
+**Behavior**: Every user can access the project, with the permissions of their own global role. New projects use this setting unless you choose another.
 
 **When to Use**:
 
@@ -193,22 +199,22 @@ Every user except those with access level `NONE` (or an explicit NO_ACCESS permi
 
 **Setting Default Access Type**:
 
-1. Navigate to project settings
-2. Select **Default Access Type**:
-   - **GLOBAL_ROLE** (most common — everyone uses their own global role)
-   - **SPECIFIC_ROLE** (everyone uses the project's default role)
-   - **NO_ACCESS** (private — explicit grants only)
-3. If using SPECIFIC_ROLE, select a **Default Role**
-4. Save changes
+1. Go to **Administration > Projects** and click **Edit** on the project
+2. On the **Details** tab, select **Default Project Access**:
+   - **Use Global Role** (`GLOBAL_ROLE`, the default — everyone uses their own global role)
+   - A role name, such as *Tester* (`SPECIFIC_ROLE` — everyone uses that role)
+   - **No Access** (`NO_ACCESS` — private, explicit grants only)
+3. Click **Save**
 
 **Managing Project Members**:
 
-1. Navigate to **Project Settings** > **Members**
-2. Click **Add Member** to assign users
-3. For each member, configure:
-   - **Access Type**: Choose permission model
-   - **Role**: Select role (if using SPECIFIC_ROLE)
-4. Remove users to revoke access
+1. Go to **Administration > Projects** and click **Edit** on the project
+2. On the **Users** tab, use **Add User** to add users, and set each user's **Project Access** (**Project Default**, **No Access**, **User's Global Role**, or a specific role)
+3. On the **Groups** tab, set each group's **Project Access**
+4. Remove users to revoke access they were given on this tab
+5. Click **Save**
+
+Adding members only restricts the project when **Default Project Access** is **No Access**. With any other default, everyone else can still access the project.
 
 ## Roles and Permissions
 
@@ -561,10 +567,10 @@ Waiting is what clears the server-side cache. Logging out and back in refreshes 
 
 **Steps**:
 
-1. Create project
-2. Set default access type: NO_ACCESS
-3. Explicitly assign team members with the appropriate role
-4. Or assign a dedicated group
+1. Create the project (or open an existing one from **Administration > Projects** and click **Edit**)
+2. Set **Default Project Access** to **No Access** — without this step, every user can still access the project
+3. On the **Users** tab, add team members with the appropriate role
+4. Or, on the **Groups** tab, give a dedicated group access
 
 **Result**: Only the project creator, assigned users and groups, and administrators can access
 

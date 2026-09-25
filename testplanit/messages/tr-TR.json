@@ -4794,7 +4794,7 @@
           "accessHints": {
             "noAccess": "Kullanıcılar, doğrudan atama veya grup üyeliği yoluyla açıkça izin verilmedikçe bu projeye erişemezler.",
             "globalRole": "Siteye erişim izni olan tüm kullanıcılar bu projeyi görüntüleyebilir. İzinleri, kendilerine atanan genel role göre belirlenir.",
-            "specificRole": "Kullanıcılara otomatik olarak erişim izni verilmez. Erişim, doğrudan kullanıcı ataması veya grup üyeliği yoluyla verilmelidir. Gruplar aracılığıyla atanan kullanıcılar, doğrudan atama ile geçersiz kılınmadığı sürece bu rolü kullanacaktır."
+            "specificRole": "Tüm site erişimine sahip kullanıcılar bu projeyi görüntüleyebilir. İzinleri, doğrudan kullanıcı veya grup atamasıyla geçersiz kılınmadığı sürece bu rol tarafından belirlenir. Projeyi görüntüleyebilenleri kısıtlamak için Erişim Yok seçeneğini seçin."
           }
         },
         "placeholders": {
