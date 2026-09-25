@@ -3519,6 +3519,10 @@ export default function Cases({
           sourceProjectId={projectId}
           sourceFolderId={activeCopyMoveFolderId ?? undefined}
           sourceFolderName={activeCopyMoveFolderName || undefined}
+          onComplete={() => {
+            setRowSelection({});
+            setSelectedCaseIdsForBulkEdit([]);
+          }}
         />
       )}
 

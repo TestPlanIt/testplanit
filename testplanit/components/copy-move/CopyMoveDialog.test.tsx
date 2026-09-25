@@ -585,6 +585,20 @@ describe("CopyMoveDialog", () => {
     expect(mockJobState.reset).not.toHaveBeenCalled();
   });
 
+  it("calls onComplete once when the job completes", () => {
+    const onComplete = vi.fn();
+    const { rerender } = render(
+      <CopyMoveDialog {...DEFAULT_PROPS} onComplete={onComplete} />
+    );
+    expect(onComplete).not.toHaveBeenCalled();
+
+    mockJobState.status = "completed";
+    rerender(<CopyMoveDialog {...DEFAULT_PROPS} onComplete={onComplete} />);
+    rerender(<CopyMoveDialog {...DEFAULT_PROPS} onComplete={() => {}} />);
+
+    expect(onComplete).toHaveBeenCalledOnce();
+  });
+
   // Test 16: Dialog close when idle calls reset
   it("Dialog close when idle calls job.reset", async () => {
     mockJobState.status = "idle";

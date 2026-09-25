@@ -36,7 +36,7 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFindManyRepositoryCasesByDescendants } from "~/hooks/useRepositoryCasesByDescendants";
 import { Link } from "~/lib/navigation";
 import { cn } from "~/utils";
@@ -53,6 +53,7 @@ export interface CopyMoveDialogProps {
   sourceProjectId: number;
   sourceFolderId?: number; // triggers folder-tree mode
   sourceFolderName?: string; // display name for folder
+  onComplete?: () => void;
 }
 
 export function CopyMoveDialog({
@@ -62,6 +63,7 @@ export function CopyMoveDialog({
   sourceProjectId,
   sourceFolderId,
   sourceFolderName,
+  onComplete,
 }: CopyMoveDialogProps) {
   const t = useTranslations("components.copyMove");
   const tCommon = useTranslations("common");
@@ -87,6 +89,16 @@ export function CopyMoveDialog({
 
   // ── Job hook ─────────────────────────────────────────────────────────────
   const job = useCopyMoveJob();
+
+  const onCompleteRef = useRef(onComplete);
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
+  useEffect(() => {
+    if (job.status === "completed") {
+      onCompleteRef.current?.();
+    }
+  }, [job.status]);
 
   // ── Data hooks ───────────────────────────────────────────────────────────
   const { data: projects = [], isLoading: projectsLoading } = useClientQueries(
