@@ -203,6 +203,37 @@ describe("parsePerTypeReportParams", () => {
     expect(all.filterValues).toEqual({});
   });
 
+  it.each(["test-case-health", "impact-analysis", "code-pin-coverage"])(
+    "restores an all-time lookback (0) on %s",
+    (reportType) => {
+      expect(
+        parsePerTypeReportParams(
+          new URLSearchParams("lookbackDays=0"),
+          reportType
+        ).lookbackDays
+      ).toBe(0);
+      expect(
+        parsePerTypeReportParams(
+          new URLSearchParams("lookbackDays=-5"),
+          reportType
+        ).lookbackDays
+      ).toBe(90);
+      expect(
+        parsePerTypeReportParams(
+          new URLSearchParams("lookbackDays=abc"),
+          reportType
+        ).lookbackDays
+      ).toBe(90);
+    }
+  );
+
+  it("round-trips an all-time lookback through a share config", () => {
+    const params = buildSharedReportSearchParams({ lookbackDays: 0 });
+    expect(
+      parsePerTypeReportParams(params, "code-pin-coverage").lookbackDays
+    ).toBe(0);
+  });
+
   it("ignores params a report type does not own", () => {
     const state = parsePerTypeReportParams(
       new URLSearchParams("consecutiveRuns=6&requirementIds=4451"),

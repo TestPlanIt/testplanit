@@ -229,6 +229,19 @@ function positiveIntParam(
   return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
 }
 
+/**
+ * The lookback period in days, where 0 is the Lookback Period control's
+ * "All time" — a positive-only parse would restore it as the default.
+ */
+function lookbackDaysParam(
+  params: ReadableSearchParams,
+  fallback: number
+): number {
+  const raw = params.get("lookbackDays");
+  if (raw === null || !/^\d+$/.test(raw)) return fallback;
+  return Number(raw);
+}
+
 /** A positive-integer id param whose absence (or garbage) means "none". */
 function optionalIdParam(
   params: ReadableSearchParams,
@@ -403,11 +416,7 @@ export function parsePerTypeReportParams(
       "minExecutionsForRate",
       state.minExecutionsForRate
     );
-    state.lookbackDays = positiveIntParam(
-      params,
-      "lookbackDays",
-      state.lookbackDays
-    );
+    state.lookbackDays = lookbackDaysParam(params, state.lookbackDays);
     setMenuValues(filterValues, "automated", automatedMenuValues(params));
     setMenuValues(
       filterValues,
@@ -422,11 +431,7 @@ export function parsePerTypeReportParams(
   }
 
   if (base === "impact-analysis") {
-    state.lookbackDays = positiveIntParam(
-      params,
-      "lookbackDays",
-      state.lookbackDays
-    );
+    state.lookbackDays = lookbackDaysParam(params, state.lookbackDays);
     setMenuValues(
       filterValues,
       "trigger",
@@ -445,11 +450,7 @@ export function parsePerTypeReportParams(
   }
 
   if (base === "code-pin-coverage") {
-    state.lookbackDays = positiveIntParam(
-      params,
-      "lookbackDays",
-      state.lookbackDays
-    );
+    state.lookbackDays = lookbackDaysParam(params, state.lookbackDays);
     setMenuValues(
       filterValues,
       "pinCoverage",
