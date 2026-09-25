@@ -1,3 +1,15 @@
+## [1.1.0-beta.24](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.23...v1.1.0-beta.24) (2026-09-25)
+
+### Bug Fixes
+
+* **admin:** make the Trash search filter work ([5f9a0f9](https://github.com/TestPlanIt/testplanit/commit/5f9a0f98fbc08833ba5bce731722bb5cc9700426))
+* **repository:** clear case selection when a copy/move job completes ([ef0d5f8](https://github.com/TestPlanIt/testplanit/commit/ef0d5f818cf0cbf8f21b6d571a77d99583c5f964))
+* **repository:** refresh folder case counts after deletes and moves ([ffe81d3](https://github.com/TestPlanIt/testplanit/commit/ffe81d34ebc8827de0ebf8b689f028099fb6f501))
+
+### Performance Improvements
+
+* **tables:** upgrade @tanstack/react-table to v9 ([fe92f30](https://github.com/TestPlanIt/testplanit/commit/fe92f300805320b0d35ab0684e2d54e0c4a7ccab))
+
 ## [1.1.0-beta.23](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.22...v1.1.0-beta.23) (2026-09-25)
 
 ### Features
