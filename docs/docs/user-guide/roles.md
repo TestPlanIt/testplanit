@@ -60,7 +60,7 @@ Roles define the permissions users have within the application and specific proj
 
 - **Admin:** Full access to all application settings and all projects.
 - **Project Admin:** Full access to administrative functions for a project to which the user has access.
-- **User:** Default role for new users. Can view and interact with projects they are assigned to, based on the project-specific role assigned to them.
+- **User:** Default role for new users. Can view and interact with every project whose default access is not **No Access**, plus any project they are added to. See [Project Access Control](./projects.md#project-access-control).
 - **No Access:** The user's access to the system is revoked. The user can log in, but not interact with any projects.
 
 ## Custom Roles
@@ -103,14 +103,14 @@ The specific permissions granted by each role are configured when the role is cr
 
 A user's final permissions within a specific project are determined by a hierarchy, ensuring the most specific assignment takes precedence:
 
-1. **User-Specific Project Role:** If a user has been explicitly assigned a specific role *for that project* (via **Project Settings -> Members -> User -> Edit**), that role's permissions are used, overriding all other settings.
+1. **User-Specific Project Role:** If a user has been explicitly assigned a specific role *for that project* (on the **Users** tab of **Administration -> Projects -> Edit**), that role's permissions are used, overriding all other settings.
 
-2. **Group-Specific Project Role(s):** If the user hasn't been assigned a specific role directly, the system checks the groups they belong to. If one or more of their groups have been assigned a specific role *for that project* (via **Project Settings -> Members -> Group -> Edit**), the role providing the *highest level of access* (most permissions) among those group assignments is used.
+2. **Group-Specific Project Role(s):** If the user hasn't been assigned a specific role directly, the system checks the groups they belong to. If one or more of their groups have been assigned a specific role *for that project* (on the **Groups** tab of **Administration -> Projects -> Edit**), the role providing the *highest level of access* (most permissions) among those group assignments is used.
 
-3. **Project Default Role:** If neither the user nor their groups have a specific role assigned for the project, the system checks the project's **Default Access Settings** (in **Project Settings -> General**):
-    - If the default access is set to **"Use Specific Role"**, the role selected as the project's default role is used.
+3. **Project Default Role:** If neither the user nor their groups have a specific role assigned for the project, the system checks the project's **Default Project Access** (on the **Details** tab of **Administration -> Projects -> Edit**):
+    - If the default access is set to a role, that role is used.
 
-4. **User's Global Role:** If none of the above apply (e.g., the project's default access is set to **"Use Global Role"**), the user's *global* role (assigned in **Administration -> Users**) determines their permissions within the project.
+4. **User's Global Role:** If none of the above apply (e.g., the project's default access is set to **"Use Global Role"**, the default for new projects), the user's *global* role (assigned in **Administration -> Users**) determines their permissions within the project.
 
 5. **No Access:** If the project's default access is set to **"No Access"** and the user hasn't been granted access via steps 1 or 2, they will not have access to the project.
 

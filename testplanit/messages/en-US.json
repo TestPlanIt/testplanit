@@ -4794,7 +4794,7 @@
           "accessHints": {
             "noAccess": "Users will not have access to this project unless explicitly granted through direct assignment or group membership.",
             "globalRole": "All users with site access can view this project. Their permissions are determined by their globally assigned role.",
-            "specificRole": "Users are not automatically granted access. Access must be granted through direct user assignment or group membership. Users assigned via groups will use this role unless overridden by direct assignment."
+            "specificRole": "All users with site access can view this project. Their permissions are determined by this role unless overridden by a direct user or group assignment. To restrict who can view the project, choose No Access."
           }
         },
         "placeholders": {

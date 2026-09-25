@@ -4794,7 +4794,7 @@
           "accessHints": {
             "noAccess": "Benutzer haben keinen Zugriff auf dieses Projekt, es sei denn, ihnen wird dieser ausdrücklich durch direkte Zuweisung oder Gruppenzugehörigkeit gewährt.",
             "globalRole": "Alle Benutzer mit Zugriff auf die Website können dieses Projekt einsehen. Ihre Berechtigungen werden durch ihre global zugewiesene Rolle bestimmt.",
-            "specificRole": "Benutzer erhalten nicht automatisch Zugriff. Der Zugriff muss durch direkte Benutzerzuweisung oder Gruppenmitgliedschaft gewährt werden. Benutzer, die über Gruppen zugewiesen wurden, verwenden diese Rolle, sofern sie nicht durch direkte Zuweisung überschrieben werden."
+            "specificRole": "Alle Benutzer mit Website-Zugriff können dieses Projekt anzeigen. Ihre Berechtigungen werden durch diese Rolle bestimmt, sofern nicht durch eine direkte Benutzer- oder Gruppenzuordnung außer Kraft gesetzt. Wählen Sie \"Kein Zugriff\", um einzuschränken, wer das Projekt anzeigen kann."
           }
         },
         "placeholders": {

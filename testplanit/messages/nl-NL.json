@@ -4794,7 +4794,7 @@
           "accessHints": {
             "noAccess": "Gebruikers krijgen geen toegang tot dit project, tenzij dit expliciet is verleend via een directe toewijzing of lidmaatschap van een groep.",
             "globalRole": "Alle gebruikers met toegang tot de site kunnen dit project bekijken. Hun rechten worden bepaald door hun globaal toegewezen rol.",
-            "specificRole": "Gebruikers krijgen niet automatisch toegang. Toegang moet worden verleend via directe toewijzing aan de gebruiker of via lidmaatschap van een groep. Gebruikers die via groepen zijn toegewezen, gebruiken deze rol, tenzij dit wordt overschreven door directe toewijzing."
+            "specificRole": "Alle gebruikers met sitetoegangen kunnen dit project bekijken. Hun machtigingen worden bepaald door deze rol, tenzij dit wordt overschreven door een directe gebruiker- of groepstoewijzing. Als u wilt beperken wie het project kan bekijken, kiest u Geen toegang."
           }
         },
         "placeholders": {
