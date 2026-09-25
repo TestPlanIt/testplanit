@@ -51,7 +51,7 @@ type MaybeRunModeCase = { testRunCaseId?: number };
 import {
   RowSelectionState,
   Updater as TableUpdater,
-} from "@tanstack/react-table";
+} from "@/components/tables/tableFeatures";
 import {
   IN_REVIEW_DIMENSION,
   type FilterDimensionRegistry,
@@ -2347,8 +2347,12 @@ export default function Cases({
         }
       } else {
         // Regular click - toggle single row
-        const newSelection = { ...rowSelection };
-        newSelection[rowIndex.toString()] = !newSelection[rowIndex.toString()];
+        const newSelection: RowSelectionState = { ...rowSelection };
+        if (newSelection[rowIndex.toString()]) {
+          delete newSelection[rowIndex.toString()];
+        } else {
+          newSelection[rowIndex.toString()] = true;
+        }
         handleTableRowSelectionChange(() => newSelection);
 
         // Update last selected index only if selecting (not deselecting)
@@ -2515,7 +2519,7 @@ export default function Cases({
     }
   }, [copyMoveFolderId, copyMoveFolderName]);
 
-  const columns: CustomColumnDef<any>[] = useMemo(() => {
+  const columns: CustomColumnDef<ExtendedCases>[] = useMemo(() => {
     const built = getColumns(
       userPreferencesForColumns,
       uniqueCaseFieldList,
@@ -3098,7 +3102,7 @@ export default function Cases({
     fetchAllData: fetchAllDataForHook,
     currentData: cases,
     selectedIds: selectedCaseIdsForBulkEdit,
-    columns: columns,
+    columns: columns as CustomColumnDef<any>[],
     columnVisibility: columnVisibility,
     fileNamePrefix: "testplanit-cases",
     t: t as TFunction,

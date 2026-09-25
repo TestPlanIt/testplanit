@@ -1,5 +1,5 @@
 import { cleanup, render, renderHook, screen } from "@testing-library/react";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@/components/tables/tableFeatures";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 

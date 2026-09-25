@@ -5,7 +5,10 @@ import { buildSharedReportSearchParams } from "@/components/reports/reportShareP
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExpandedState, VisibilityState } from "@tanstack/react-table";
+import {
+  ExpandedState,
+  VisibilityState,
+} from "@/components/tables/tableFeatures";
 import { AlertCircle, BarChart3, ExternalLink } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";

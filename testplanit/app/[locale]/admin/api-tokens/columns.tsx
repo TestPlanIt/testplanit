@@ -3,7 +3,7 @@ import { UserNameCell } from "@/components/tables/UserNameCell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { ApiToken, User } from "~/zenstack/models";
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef } from "@/components/tables/tableFeatures";
 import { Ban } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";

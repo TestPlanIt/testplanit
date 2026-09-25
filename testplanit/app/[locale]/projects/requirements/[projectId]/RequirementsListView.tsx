@@ -1,6 +1,6 @@
 "use client";
 
-import type { Row } from "@tanstack/react-table";
+import type { Row } from "@/components/tables/tableFeatures";
 import { useQueryClient } from "@tanstack/react-query";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import {
@@ -1078,7 +1078,7 @@ const RequirementsListView = forwardRef<
   // "I am no longer hovered" through native drag events so the single
   // `useDrop` above can read the current target synchronously.
   const getRowProps = useCallback(
-    (row: Row<any>) => {
+    (row: Row<RequirementRow>) => {
       const requirement = row.original as RequirementRow;
       if (!canAddEdit || isFiltering) return {};
       return {

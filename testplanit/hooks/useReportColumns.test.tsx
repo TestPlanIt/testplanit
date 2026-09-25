@@ -36,7 +36,7 @@ vi.mock("next-intl", () => ({
   useLocale: () => "en",
 }));
 
-vi.mock("@tanstack/react-table", () => ({
+vi.mock("@/components/tables/tableFeatures", () => ({
   createColumnHelper: () => ({
     accessor: (accessor: any, config: any) => ({ accessor, ...config }),
   }),

@@ -18,7 +18,7 @@ import { DateFormatter } from "@/components/DateFormatter";
 import { DateRangePicker } from "@/components/forms/DateRangePicker";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@/components/tables/tableFeatures";
 import { useSession } from "next-auth/react";
 
 import {

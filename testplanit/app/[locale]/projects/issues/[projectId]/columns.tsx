@@ -13,7 +13,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import type { Issue } from "~/zenstack/models";
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef } from "@/components/tables/tableFeatures";
 import DOMPurify from "dompurify";
 import { Activity } from "lucide-react";
 import { useMemo, type ReactNode } from "react";
@@ -360,7 +360,7 @@ export function useIssueColumns({
         header: tTestCases,
         enableSorting: true,
         enableResizing: true,
-        sortingFn: "basic",
+        sortFn: "basic",
         size: 75,
         minSize: 60,
         maxSize: 150,
@@ -392,7 +392,7 @@ export function useIssueColumns({
         header: tTestRuns,
         enableSorting: true,
         enableResizing: true,
-        sortingFn: "basic",
+        sortFn: "basic",
         size: 75,
         minSize: 60,
         maxSize: 150,
@@ -423,7 +423,7 @@ export function useIssueColumns({
         header: tSessions,
         enableSorting: true,
         enableResizing: true,
-        sortingFn: "basic",
+        sortFn: "basic",
         size: 75,
         minSize: 60,
         maxSize: 150,
@@ -453,7 +453,7 @@ export function useIssueColumns({
         header: tMilestones,
         enableSorting: true,
         enableResizing: true,
-        sortingFn: "basic",
+        sortFn: "basic",
         size: 75,
         minSize: 60,
         maxSize: 150,

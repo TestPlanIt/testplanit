@@ -2,7 +2,10 @@
  * Hook for generating table columns for drill-down data
  */
 
-import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
+import {
+  createColumnHelper,
+  type ColumnDef,
+} from "@/components/tables/tableFeatures";
 import { format } from "date-fns";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo } from "react";

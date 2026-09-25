@@ -21,7 +21,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { RowSelectionState, VisibilityState } from "@tanstack/react-table";
+import type {
+  RowSelectionState,
+  VisibilityState,
+} from "@/components/tables/tableFeatures";
 import {
   ChevronDown,
   Loader2,
@@ -605,7 +608,10 @@ export function MemberIssuesTable({
       }
       const key = String(issueId);
       const willSelect = !current[key];
-      setRowSelection({ ...current, [key]: willSelect });
+      const next: RowSelectionState = { ...current };
+      if (willSelect) next[key] = true;
+      else delete next[key];
+      setRowSelection(next);
       if (willSelect) lastToggledIssueIdRef.current = issueId;
     },
     []

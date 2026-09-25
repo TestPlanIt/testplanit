@@ -1,4 +1,4 @@
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef, type RowData } from "@/components/tables/tableFeatures";
 import { describe, expect, it } from "vitest";
 
 interface TestData {
@@ -14,7 +14,7 @@ interface CustomColumnMeta {
 }
 
 // Extract the column visibility logic from DataTable for testing
-function getVisibleColumns<TData>(
+function getVisibleColumns<TData extends RowData>(
   columns: ColumnDef<TData>[],
   columnVisibility: Record<string, boolean>,
   effectiveColumnVisibility: Record<string, boolean>

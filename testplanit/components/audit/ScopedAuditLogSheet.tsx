@@ -27,7 +27,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { AuditAction } from "~/zenstack/models";
-import type { VisibilityState } from "@tanstack/react-table";
+import type { VisibilityState } from "@/components/tables/tableFeatures";
 import { endOfDay, startOfDay } from "date-fns";
 import { History } from "lucide-react";
 import { useSession } from "next-auth/react";

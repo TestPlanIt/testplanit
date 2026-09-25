@@ -1,5 +1,4 @@
 "use client";
-/* eslint-disable react-hooks/incompatible-library -- This file consumes a library API (TanStack Table / TanStack Virtual / react-hook-form watch) that returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it. */
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
@@ -63,10 +62,12 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  type ColumnDef,
+  type ColumnDef as TanStackColumnDef,
+  columnSizingFeature,
+  columnVisibilityFeature,
   flexRender,
-  getCoreRowModel,
-  useReactTable,
+  tableFeatures,
+  useTable,
 } from "@tanstack/react-table";
 import {
   ChevronLeft,
@@ -121,6 +122,16 @@ interface DatasetRecord {
   id: number;
   rows: DatasetRowRecord[];
 }
+
+const datasetTableFeatures = tableFeatures({
+  columnVisibilityFeature,
+  columnSizingFeature,
+});
+
+type ColumnDef<TData extends DatasetRowRecord> = TanStackColumnDef<
+  typeof datasetTableFeatures,
+  TData
+>;
 
 /**
  * Operating mode for `DatasetTab`.
@@ -524,6 +535,7 @@ export function DatasetTab({
     sharedReadonlyRows,
   ]);
   const editCellRef = useRef<EditCellState | null>(null);
+  // eslint-disable-next-line react-hooks/refs
   editCellRef.current = editCell;
 
   // ---------- Dataset bootstrap ----------
@@ -1345,10 +1357,10 @@ export function DatasetTab({
     handleSelectAllClick,
   ]);
 
-  const table = useReactTable<DatasetRowRecord>({
+  const table = useTable({
+    features: datasetTableFeatures,
     data: rows,
     columns,
-    getCoreRowModel: getCoreRowModel(),
     getRowId: (row) => String(row.id),
   });
 

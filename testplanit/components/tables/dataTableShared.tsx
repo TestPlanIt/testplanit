@@ -27,9 +27,10 @@ import {
   flexRender,
   OnChangeFn,
   Row,
+  type RowData,
   SortingState,
   Updater,
-} from "@tanstack/react-table";
+} from "@/components/tables/tableFeatures";
 import {
   ArrowDownAZ,
   ArrowDownUp,
@@ -159,12 +160,14 @@ export function reconcileColumnOrder(
  * context when idle, so their handles compete globally and would bleed over the
  * pinned column as it stays put while other columns scroll under it.
  */
-export const getCommonPinningStyles = (column: Column<any>): CSSProperties => {
+export const getCommonPinningStyles = <TData extends RowData>(
+  column: Column<TData>
+): CSSProperties => {
   const isPinned = column.getIsPinned();
   const isLastLeftPinnedColumn =
-    isPinned === "left" && column.getIsLastColumn("left");
+    isPinned === "start" && column.getIsLastColumn("start");
   const isFirstRightPinnedColumn =
-    isPinned === "right" && column.getIsFirstColumn("right");
+    isPinned === "end" && column.getIsFirstColumn("end");
 
   return {
     boxShadow: isLastLeftPinnedColumn
@@ -172,8 +175,8 @@ export const getCommonPinningStyles = (column: Column<any>): CSSProperties => {
       : isFirstRightPinnedColumn
         ? "-4px 0 8px -4px rgba(0,0,0,0.3)"
         : undefined,
-    left: isPinned === "left" ? `${column.getStart("left")}px` : undefined,
-    right: isPinned === "right" ? `${column.getStart("right")}px` : undefined,
+    left: isPinned === "start" ? `${column.getStart("start")}px` : undefined,
+    right: isPinned === "end" ? `${column.getStart("end")}px` : undefined,
     position: isPinned ? "sticky" : "relative",
     width: column.getSize(),
     maxWidth: column.columnDef.maxSize,
@@ -189,17 +192,19 @@ export const getCommonPinningStyles = (column: Column<any>): CSSProperties => {
  * horizontally scrolled content doesn't bleed through. Width is set by the
  * engine's flex sizing, not here.
  */
-export function getFlexPinningStyles(column: Column<any, any>): CSSProperties {
+export function getFlexPinningStyles<TData extends RowData>(
+  column: Column<TData>
+): CSSProperties {
   const isPinned = column.getIsPinned();
   if (!isPinned) return {};
   const isLastLeftPinned =
-    isPinned === "left" && column.getIsLastColumn("left");
+    isPinned === "start" && column.getIsLastColumn("start");
   const isFirstRightPinned =
-    isPinned === "right" && column.getIsFirstColumn("right");
+    isPinned === "end" && column.getIsFirstColumn("end");
   return {
     position: "sticky",
-    left: isPinned === "left" ? column.getStart("left") : undefined,
-    right: isPinned === "right" ? column.getStart("right") : undefined,
+    left: isPinned === "start" ? column.getStart("start") : undefined,
+    right: isPinned === "end" ? column.getStart("end") : undefined,
     zIndex: 2,
     boxShadow: isLastLeftPinned
       ? "4px 0 8px -4px rgba(0,0,0,0.3)"
@@ -214,10 +219,10 @@ export function getFlexPinningStyles(column: Column<any, any>): CSSProperties {
  * ignoring a stale sort that points at a column the current set lacks, plus the
  * change handler that funnels TanStack's updater back into `onSortChange`.
  */
-export function useSortingAdapter(
+export function useSortingAdapter<TData extends RowData>(
   sortConfig: SortConfig | null | undefined,
   onSortChange: ((columnId: string) => void) | undefined,
-  columns: ColumnDef<any, any>[]
+  columns: ColumnDef<TData, any>[]
 ): { sorting: SortingState; handleSortingChange: OnChangeFn<SortingState> } {
   const sorting: SortingState = useMemo(() => {
     if (!sortConfig) return [];
@@ -263,7 +268,7 @@ export function useSortingAdapter(
  * Deliberately silent on a GROUPED row: that row's own cell already carries
  * a chevron, and this is what stops it doubling.
  */
-export function RowExpanderPrefix<TData>({
+export function RowExpanderPrefix<TData extends RowData>({
   row,
   subRowsLabel,
 }: {
@@ -331,7 +336,7 @@ export function RowExpanderPrefix<TData>({
  * (the paged engine's behaviour): pin the expander whenever it is present, even
  * alongside explicit `meta.isPinned` columns.
  */
-export function useInitialColumnPinning({
+export function useInitialColumnPinning<TData extends RowData>({
   columns,
   grouping,
   getSubRows,
@@ -340,17 +345,17 @@ export function useInitialColumnPinning({
   autoPinLast = true,
   alwaysPinExpander = false,
 }: {
-  columns: ColumnDef<any, any>[];
+  columns: ColumnDef<TData, any>[];
   grouping?: string[];
-  getSubRows?: (row: any, index: number) => any[] | undefined;
+  getSubRows?: (row: TData, index: number) => TData[] | undefined;
   enabled?: boolean;
   autoPinFirstLast?: boolean;
   autoPinLast?: boolean;
   alwaysPinExpander?: boolean;
 }): [ColumnPinningState, Dispatch<SetStateAction<ColumnPinningState>>] {
   const [columnPinning, setColumnPinning] = useState<ColumnPinningState>({
-    left: [],
-    right: [],
+    start: [],
+    end: [],
   });
   const initialPinningDone = useRef(false);
 
@@ -379,7 +384,7 @@ export function useInitialColumnPinning({
     } else if (alwaysPinExpander && hasExpander) {
       left.unshift("expander");
     }
-    setColumnPinning({ left, right });
+    setColumnPinning({ start: left, end: right });
     initialPinningDone.current = true;
   }, [
     enabled,
@@ -403,14 +408,14 @@ export function useInitialColumnPinning({
  * dnd-kit sensors use a 5px activation distance so a plain click (sort) or a
  * resize-handle drag never starts a column drag.
  */
-export function usePersistedColumnOrder({
+export function usePersistedColumnOrder<TData extends RowData>({
   enabled,
   storageKey,
   finalColumns,
 }: {
   enabled: boolean;
   storageKey?: string;
-  finalColumns: ColumnDef<any, any>[];
+  finalColumns: ColumnDef<TData, any>[];
 }): {
   columnOrder: ColumnOrderState;
   setColumnOrder: Dispatch<SetStateAction<ColumnOrderState>>;
@@ -474,9 +479,9 @@ export function usePersistedColumnOrder({
  * engines; only gated on `groupingActive` so ungrouped tables never pay for it
  * (see feedback: gate grouped branches on groupingActive).
  */
-export function resolveGroupableCellContent(
-  cell: Cell<any, unknown>,
-  row: Row<any>,
+export function resolveGroupableCellContent<TData extends RowData>(
+  cell: Cell<TData, unknown>,
+  row: Row<TData>,
   groupingActive: boolean,
   tActions: (key: string) => string
 ): ReactNode {

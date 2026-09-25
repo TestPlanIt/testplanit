@@ -24,7 +24,7 @@ import {
   ExpandedState,
   OnChangeFn,
   VisibilityState,
-} from "@tanstack/react-table";
+} from "@/components/tables/tableFeatures";
 import { Download } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";

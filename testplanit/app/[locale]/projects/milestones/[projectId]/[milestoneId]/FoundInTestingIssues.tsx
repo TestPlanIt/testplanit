@@ -17,7 +17,10 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
-import type { ColumnDef, VisibilityState } from "@tanstack/react-table";
+import type {
+  ColumnDef,
+  VisibilityState,
+} from "@/components/tables/tableFeatures";
 import { Bug, ChevronDown, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";

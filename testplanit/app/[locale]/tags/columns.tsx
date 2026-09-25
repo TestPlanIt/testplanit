@@ -4,7 +4,7 @@ import { SessionsListDisplay } from "@/components/tables/SessionListDisplay";
 import { TagsDisplay } from "@/components/tables/TagDisplay";
 import { TestRunsListDisplay } from "@/components/tables/TestRunsListDisplay";
 import type { Tags } from "~/zenstack/models";
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef } from "@/components/tables/tableFeatures";
 import { useMemo } from "react";
 
 export interface ExtendedTags extends Tags {
@@ -37,7 +37,7 @@ export const useTagColumns = (
         header: name,
         enableSorting: true,
         enableResizing: true,
-        sortingFn: "alphanumeric",
+        sortFn: "alphanumeric",
         enableHiding: false,
         meta: { isPinned: "left" },
         size: 500,
@@ -56,7 +56,7 @@ export const useTagColumns = (
         header: testCases,
         enableSorting: true,
         enableResizing: true,
-        sortingFn: "basic",
+        sortFn: "basic",
         size: 130,
         cell: ({ row }) => {
           const count = row.original.repositoryCasesCount;
@@ -86,7 +86,7 @@ export const useTagColumns = (
         header: testRuns,
         enableSorting: true,
         enableResizing: true,
-        sortingFn: "basic",
+        sortFn: "basic",
         size: 130,
         cell: ({ row }) => {
           const count = row.original.testRunsCount;
@@ -114,7 +114,7 @@ export const useTagColumns = (
         header: sessions,
         enableSorting: true,
         enableResizing: true,
-        sortingFn: "basic",
+        sortFn: "basic",
         size: 130,
         cell: ({ row }) => {
           const count = row.original.sessionsCount;
@@ -142,7 +142,7 @@ export const useTagColumns = (
         header: projects,
         enableSorting: true,
         enableResizing: true,
-        sortingFn: "basic",
+        sortFn: "basic",
         size: 130,
         cell: ({ row }) => {
           const projects = row.original.projects || [];

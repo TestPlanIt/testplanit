@@ -27,7 +27,7 @@ import {
   ColumnDef,
   ExpandedState,
   VisibilityState,
-} from "@tanstack/react-table";
+} from "@/components/tables/tableFeatures";
 import {
   Bot,
   ChevronDown,

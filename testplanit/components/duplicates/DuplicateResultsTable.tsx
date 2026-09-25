@@ -6,7 +6,7 @@ import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
 import { Button } from "@/components/ui/button";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { RowSelectionState, Updater } from "@tanstack/react-table";
+import { RowSelectionState, Updater } from "@/components/tables/tableFeatures";
 import { CopyX, Link2, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useCallback, useMemo, useState } from "react";
@@ -221,8 +221,12 @@ export function DuplicateResultsTable({
         }
         setRowSelection(rangeSelection);
       } else {
-        const newSelection = { ...rowSelection };
-        newSelection[rowIndex.toString()] = !newSelection[rowIndex.toString()];
+        const newSelection: RowSelectionState = { ...rowSelection };
+        if (newSelection[rowIndex.toString()]) {
+          delete newSelection[rowIndex.toString()];
+        } else {
+          newSelection[rowIndex.toString()] = true;
+        }
         setRowSelection(newSelection);
         if (!rowSelection[rowIndex.toString()]) {
           setLastSelectedIndex(rowIndex);

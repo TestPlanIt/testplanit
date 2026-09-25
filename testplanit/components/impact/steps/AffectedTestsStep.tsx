@@ -14,7 +14,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { ColumnDef, RowSelectionState } from "@tanstack/react-table";
+import type {
+  ColumnDef,
+  RowSelectionState,
+} from "@/components/tables/tableFeatures";
 import {
   AlertCircle,
   AlertTriangle,

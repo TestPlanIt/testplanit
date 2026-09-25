@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { SectionHeader } from "@/components/ui/typography";
-import type { RowSelectionState } from "@tanstack/react-table";
+import type { RowSelectionState } from "@/components/tables/tableFeatures";
 import { Boxes, PenSquare } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";

@@ -15,7 +15,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import type { Issue } from "~/zenstack/models";
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef } from "@/components/tables/tableFeatures";
 import { useMemo } from "react";
 import DOMPurify from "dompurify";
 import { Plug, SquarePen, Trash } from "lucide-react";

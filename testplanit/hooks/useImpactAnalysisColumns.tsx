@@ -5,7 +5,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
+import {
+  ColumnDef,
+  createColumnHelper,
+} from "@/components/tables/tableFeatures";
 import { format, formatDistanceToNow } from "date-fns";
 import { ExternalLink } from "lucide-react";
 import { useTranslations } from "next-intl";

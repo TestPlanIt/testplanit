@@ -12,7 +12,10 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { RepositoryCaseSource } from "~/zenstack/models";
-import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
+import {
+  ColumnDef,
+  createColumnHelper,
+} from "@/components/tables/tableFeatures";
 import { formatDistanceToNow } from "date-fns";
 import { Layers } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -273,7 +276,7 @@ export function useExecutionLogColumns(
           );
         },
         enableSorting: true,
-        sortingFn: (rowA, rowB) => {
+        sortFn: (rowA, rowB) => {
           const aVal = rowA.original.executedAt;
           const bVal = rowB.original.executedAt;
           if (!aVal && !bVal) return 0;

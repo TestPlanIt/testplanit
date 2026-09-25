@@ -9,7 +9,10 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { RepositoryCaseSource } from "~/zenstack/models";
-import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
+import {
+  ColumnDef,
+  createColumnHelper,
+} from "@/components/tables/tableFeatures";
 import { format, formatDistanceToNow } from "date-fns";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
@@ -97,7 +100,7 @@ export function useIssueTestCoverageSummaryColumns(
               );
             },
             enableSorting: true,
-            sortingFn: (rowA, rowB) => {
+            sortFn: (rowA, rowB) => {
               const aVal = rowA.original.project;
               const bVal = rowB.original.project;
               const aStr = aVal?.name || String(aVal || "");
@@ -224,7 +227,7 @@ export function useIssueTestCoverageSummaryColumns(
           );
         },
         enableSorting: true,
-        sortingFn: (rowA, rowB, _columnId) => {
+        sortFn: (rowA, rowB, _columnId) => {
           // When grouped, rows have subRows - sort by the count of subRows (which equals linkedTestCases)
           const hasSubRowsA = rowA.subRows && rowA.subRows.length > 0;
           const hasSubRowsB = rowB.subRows && rowB.subRows.length > 0;

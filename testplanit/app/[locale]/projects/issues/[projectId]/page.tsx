@@ -17,7 +17,7 @@ import {
 import { SectionHeader } from "@/components/ui/typography";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { IssueListFilters } from "@/components/issues/IssueListFilters";
-import type { VisibilityState } from "@tanstack/react-table";
+import type { VisibilityState } from "@/components/tables/tableFeatures";
 import { useQueryClient } from "@tanstack/react-query";
 import { ClipboardCheck, MoreVertical, RotateCcw } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";

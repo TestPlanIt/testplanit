@@ -16,7 +16,7 @@ import {
 import DOMPurify from "dompurify";
 import { stripHtmlTags } from "~/utils/stripHtmlTags";
 import { Activity } from "lucide-react";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@/components/tables/tableFeatures";
 import { useTranslations } from "next-intl";
 import { useMemo, type CSSProperties } from "react";
 import type {

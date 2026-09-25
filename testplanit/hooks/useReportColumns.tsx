@@ -1,4 +1,4 @@
-import { createColumnHelper } from "@tanstack/react-table";
+import { createColumnHelper } from "@/components/tables/tableFeatures";
 import { Compass } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo } from "react";
@@ -787,7 +787,7 @@ export function useReportColumns(
               t("common.fields.multipleValues" as any)
             );
           },
-          sortingFn: (rowA, rowB) => {
+          sortFn: (rowA, rowB) => {
             const aVal = rowA.getValue(dimensionId) as any;
             const bVal = rowB.getValue(dimensionId) as any;
 
@@ -1148,7 +1148,7 @@ export function useReportColumns(
               </span>
             );
           },
-          sortingFn: (rowA, rowB) => {
+          sortFn: (rowA, rowB) => {
             const aVal = Number(rowA.getValue(metricId)) || 0;
             const bVal = Number(rowB.getValue(metricId)) || 0;
             return aVal - bVal;

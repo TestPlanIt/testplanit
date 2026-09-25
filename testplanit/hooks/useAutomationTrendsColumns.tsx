@@ -1,4 +1,4 @@
-import { createColumnHelper } from "@tanstack/react-table";
+import { createColumnHelper } from "@/components/tables/tableFeatures";
 import { formatInTimeZone } from "date-fns-tz";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo } from "react";

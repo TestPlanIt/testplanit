@@ -7,7 +7,7 @@ import { CasesListDisplay } from "@/components/tables/CaseListDisplay";
 import { UserNameCell } from "@/components/tables/UserNameCell";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/tables/DataTable";
-import { type ColumnDef } from "@tanstack/react-table";
+import { type ColumnDef } from "@/components/tables/tableFeatures";
 import {
   Database,
   DatabaseArrowUp,

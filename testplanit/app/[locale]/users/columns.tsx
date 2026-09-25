@@ -3,7 +3,7 @@ import { UserNameCell } from "@/components/tables/UserNameCell";
 import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
 import type { AccessibleProject } from "~/app/actions/getUserAccessibleProjects";
 import type { User } from "~/zenstack/models";
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef } from "@/components/tables/tableFeatures";
 import { useMemo } from "react";
 
 export interface ExtendedUser extends User {

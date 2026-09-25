@@ -7,7 +7,10 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { RepositoryCaseSource } from "~/zenstack/models";
-import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
+import {
+  ColumnDef,
+  createColumnHelper,
+} from "@/components/tables/tableFeatures";
 import { format, formatDistanceToNow } from "date-fns";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
@@ -68,7 +71,7 @@ export function useTestCaseHealthColumns(
             );
           },
           enableSorting: true,
-          sortingFn: (rowA, rowB) => {
+          sortFn: (rowA, rowB) => {
             const aVal = rowA.original.project;
             const bVal = rowB.original.project;
             const aStr = aVal?.name || String(aVal || "");
@@ -173,7 +176,7 @@ export function useTestCaseHealthColumns(
           );
         },
         enableSorting: true,
-        sortingFn: (rowA, rowB) => {
+        sortFn: (rowA, rowB) => {
           const statusPriority: Record<HealthStatus, number> = {
             always_failing: 1,
             never_executed: 2,
@@ -278,7 +281,7 @@ export function useTestCaseHealthColumns(
           );
         },
         enableSorting: true,
-        sortingFn: (rowA, rowB) => {
+        sortFn: (rowA, rowB) => {
           const aVal = rowA.original.lastExecutedAt;
           const bVal = rowB.original.lastExecutedAt;
           if (!aVal && !bVal) return 0;

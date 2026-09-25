@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import type { CaseExportTemplate } from "~/zenstack/models";
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef } from "@/components/tables/tableFeatures";
 import { Edit, Trash } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";

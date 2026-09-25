@@ -11,7 +11,10 @@ import { IssuePriorityDisplay } from "@/components/IssuePriorityDisplay";
 import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
 import { ProjectNameDisplay } from "@/components/search/ProjectNameDisplay";
 import StatusDisplay from "@/components/StatusDisplay";
-import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
+import {
+  ColumnDef,
+  createColumnHelper,
+} from "@/components/tables/tableFeatures";
 import { format } from "date-fns";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo } from "react";

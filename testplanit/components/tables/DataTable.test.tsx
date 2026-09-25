@@ -4,20 +4,21 @@
  * Note: The DataTable component uses @tanstack/react-table with
  * columnResizeMode: "onChange" which causes an infinite re-render OOM crash in
  * the jsdom environment. To work around this, the tests for rendering behavior
- * use a partial mock of useReactTable that disables column resizing callbacks.
+ * use a partial mock of useTable that disables column resizing callbacks.
  * Logic-only tests follow the same pattern as DataTable.columnVisibility.test.ts.
  */
-import {
-  ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
+import { useTable } from "@tanstack/react-table";
 import { fireEvent, render, screen } from "@testing-library/react";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { reconcileColumnOrder } from "./DataTable";
+import {
+  type ColumnDef,
+  dataTableFeatures,
+  flexRender,
+  type RowData,
+  type RowSelectionState,
+} from "./tableFeatures";
 
 vi.mock("~/lib/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
@@ -54,7 +55,9 @@ interface _CustomColumnMeta {
  * Mirrors the column-pinning initialization in DataTable.
  * Extracts left/right pinned column IDs from column meta.
  */
-function getInitialColumnPinning<TData>(columns: ColumnDef<TData>[]) {
+function getInitialColumnPinning<TData extends RowData>(
+  columns: ColumnDef<TData>[]
+) {
   const left: string[] = [];
   const right: string[] = [];
 
@@ -71,9 +74,9 @@ function getInitialColumnPinning<TData>(columns: ColumnDef<TData>[]) {
 /**
  * Mirrors the sortConfig→SortingState conversion in DataTable.
  */
-function sortConfigToSortingState(
+function sortConfigToSortingState<TData extends RowData>(
   sortConfig: { column: string; direction: "asc" | "desc" } | undefined,
-  columns: ColumnDef<any>[]
+  columns: ColumnDef<TData>[]
 ) {
   if (!sortConfig) return [];
   const exists = columns.some((col) => col.id === sortConfig.column);
@@ -181,16 +184,15 @@ describe("DataTable row model behavior", () => {
 
   it("row model contains all data rows", () => {
     const TableWrapper = () => {
-      const table = useReactTable({
+      const table = useTable({
+        features: dataTableFeatures,
         data: testData,
         columns: testColumns,
-        getCoreRowModel: getCoreRowModel(),
-        getSortedRowModel: getSortedRowModel(),
         state: {
           columnVisibility: {},
           rowSelection: {},
           sorting: [],
-          columnPinning: {},
+          columnPinning: { start: [], end: [] },
           columnSizing: {},
         },
         onSortingChange: vi.fn(),
@@ -213,24 +215,23 @@ describe("DataTable row model behavior", () => {
   });
 
   it("row selection state is managed correctly", () => {
-    const selectionRef = { value: {} as Record<string, boolean> };
+    const selectionRef = { value: {} as RowSelectionState };
 
     const TableWrapper = () => {
-      const [rowSelection, setRowSelection] = React.useState<
-        Record<string, boolean>
-      >({});
+      const [rowSelection, setRowSelection] = React.useState<RowSelectionState>(
+        {}
+      );
 
-      const table = useReactTable({
+      const table = useTable({
+        features: dataTableFeatures,
         data: testData,
         columns: testColumns,
-        getCoreRowModel: getCoreRowModel(),
-        getSortedRowModel: getSortedRowModel(),
         enableRowSelection: true,
         state: {
           columnVisibility: {},
           rowSelection,
           sorting: [],
-          columnPinning: {},
+          columnPinning: { start: [], end: [] },
           columnSizing: {},
         },
         onSortingChange: vi.fn(),
@@ -276,16 +277,15 @@ describe("DataTable row model behavior", () => {
 
   it("empty data renders 0 rows", () => {
     const TableWrapper = () => {
-      const table = useReactTable({
+      const table = useTable({
+        features: dataTableFeatures,
         data: [],
         columns: testColumns,
-        getCoreRowModel: getCoreRowModel(),
-        getSortedRowModel: getSortedRowModel(),
         state: {
           columnVisibility: {},
           rowSelection: {},
           sorting: [],
-          columnPinning: {},
+          columnPinning: { start: [], end: [] },
           columnSizing: {},
         },
         onSortingChange: vi.fn(),
@@ -324,7 +324,7 @@ const DataTableTestDouble: React.FC<{
   isLoading?: boolean;
   onSortChange?: (columnId: string) => void;
   sortConfig?: { column: string; direction: "asc" | "desc" };
-  rowSelection?: Record<string, boolean>;
+  rowSelection?: RowSelectionState;
   onRowSelectionChange?: (updater: any) => void;
   onTestCaseClick?: (id: number | string) => void;
   emptyMessage?: string;
@@ -339,11 +339,10 @@ const DataTableTestDouble: React.FC<{
   onTestCaseClick,
   emptyMessage = "No results",
 }) => {
-  const table = useReactTable({
+  const table = useTable({
+    features: dataTableFeatures,
     data,
     columns,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
     enableRowSelection: true,
     enableColumnResizing: false,
     state: {
@@ -352,7 +351,7 @@ const DataTableTestDouble: React.FC<{
       sorting: sortConfig
         ? [{ id: sortConfig.column, desc: sortConfig.direction === "desc" }]
         : [],
-      columnPinning: {},
+      columnPinning: { start: [], end: [] },
       columnSizing: {},
     },
     onSortingChange: vi.fn(),

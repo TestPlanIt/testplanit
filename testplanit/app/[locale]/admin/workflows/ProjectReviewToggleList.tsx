@@ -8,7 +8,7 @@ import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
 import { ProjectNameCell } from "@/components/tables/ProjectNameCell";
 import { Switch } from "@/components/ui/switch";
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef } from "@/components/tables/tableFeatures";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";

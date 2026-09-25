@@ -11,7 +11,7 @@ import { AuditAction } from "~/zenstack/models";
 import type { AuditLog } from "~/zenstack/models";
 import { useRecordKeyConfig } from "~/hooks/useRecordKeyConfig";
 import { parseRecordId, RECORD_TYPES, type RecordType } from "~/lib/recordKey";
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef } from "@/components/tables/tableFeatures";
 import { Cog, Eye } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";

@@ -10,7 +10,7 @@ import { IssueListFilters } from "@/components/issues/IssueListFilters";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SectionHeader } from "@/components/ui/typography";
 import { HelpPopover } from "@/components/ui/help-popover";
-import type { VisibilityState } from "@tanstack/react-table";
+import type { VisibilityState } from "@/components/tables/tableFeatures";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";

@@ -17,7 +17,7 @@ import {
 import { Button, buttonVariants } from "@/components/ui/button";
 import { CardContent } from "@/components/ui/card";
 import { useQueryClient } from "@tanstack/react-query";
-import { ColumnDef, VisibilityState } from "@tanstack/react-table";
+import { ColumnDef, VisibilityState } from "@/components/tables/tableFeatures";
 import { AlertTriangle, UndoDot } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";

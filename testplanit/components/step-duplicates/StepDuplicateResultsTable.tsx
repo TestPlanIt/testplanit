@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useQueryClient } from "@tanstack/react-query";
-import { RowSelectionState, Updater } from "@tanstack/react-table";
+import { RowSelectionState, Updater } from "@/components/tables/tableFeatures";
 import { CopyX, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useCallback, useMemo, useState } from "react";
@@ -467,8 +467,12 @@ export function StepDuplicateResultsTable({
         }
         setRowSelection(rangeSelection);
       } else {
-        const newSelection = { ...rowSelection };
-        newSelection[idAt(rowIndex)] = !newSelection[idAt(rowIndex)];
+        const newSelection: RowSelectionState = { ...rowSelection };
+        if (newSelection[idAt(rowIndex)]) {
+          delete newSelection[idAt(rowIndex)];
+        } else {
+          newSelection[idAt(rowIndex)] = true;
+        }
         setRowSelection(newSelection);
         if (!rowSelection[idAt(rowIndex)]) {
           setLastSelectedIndex(rowIndex);

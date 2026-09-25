@@ -1,7 +1,7 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef } from "@/components/tables/tableFeatures";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import React, { useCallback, useEffect, useState } from "react";
@@ -642,26 +642,23 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
   // Combine isCompleted with isSoftDeletedInRun for disabling logic
   const isDisabled = isCompleted || isSoftDeletedInRun;
 
-  const selectedCount = table?.getState
-    ? Object.keys(table.getState().rowSelection || {}).length
-    : 0;
+  const rowSelection = table?.store?.state.rowSelection;
+  const selectedCount = rowSelection ? Object.keys(rowSelection).length : 0;
 
   const isRowSelected =
-    selectedCount > 0 && table?.getState().rowSelection
-      ? Object.entries(table.getState().rowSelection).some(
-          ([key, selected]) => {
-            if (!selected) return false;
-            const row = table.getRow(key);
-            return row?.original?.id === caseId;
-          }
-        )
+    selectedCount > 0 && rowSelection
+      ? Object.entries(rowSelection).some(([key, selected]) => {
+          if (!selected) return false;
+          const row = table.getRow(key);
+          return row?.original?.id === caseId;
+        })
       : false;
 
   const isMenuDisabled = selectedCount > 0 && !isRowSelected;
 
   const getSelectedCases = () => {
     if (!table || selectedCount === 0) return [];
-    return Object.keys(table.getState().rowSelection || {}).map(
+    return Object.keys(rowSelection || {}).map(
       (rowId) => table.getRow(rowId).original
     );
   };
@@ -1375,9 +1372,11 @@ const SelectAllCheckbox = React.memo(function SelectAllCheckbox({
             <Checkbox
               data-testid="select-all-cases-checkbox"
               checked={
-                table.getIsSomeRowsSelected()
-                  ? "indeterminate"
-                  : table.getIsAllRowsSelected()
+                table.getIsAllRowsSelected()
+                  ? true
+                  : table.getIsSomeRowsSelected()
+                    ? "indeterminate"
+                    : false
               }
               onCheckedChange={(value) => {
                 if (!handleSelectAllClick) {

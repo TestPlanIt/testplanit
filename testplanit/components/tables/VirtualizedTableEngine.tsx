@@ -1,5 +1,4 @@
 "use client";
-/* eslint-disable react-hooks/incompatible-library -- This file consumes TanStack Table / TanStack Virtual APIs that return unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it (same as components/matrix/MatrixGrid.tsx and hooks/useVirtualizedInfiniteList.ts). */
 
 import { Button } from "@/components/ui/button";
 import {
@@ -16,21 +15,7 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import {
-  ColumnDef,
-  ColumnSizingState,
-  ExpandedState,
-  flexRender,
-  getCoreRowModel,
-  getExpandedRowModel,
-  getGroupedRowModel,
-  OnChangeFn,
-  Row,
-  RowSelectionState,
-  Updater,
-  useReactTable,
-  VisibilityState,
-} from "@tanstack/react-table";
+import { useTable } from "@tanstack/react-table";
 import {
   ArrowDownAZ,
   ArrowDownUp,
@@ -56,6 +41,7 @@ import { cn } from "~/utils";
 import {
   ColumnMenuItems,
   type CustomColumnMeta,
+  type DataRow,
   type SortConfig,
   getFlexPinningStyles,
   resolveGroupableCellContent,
@@ -66,6 +52,18 @@ import {
   usePersistedColumnOrder,
   useSortingAdapter,
 } from "./dataTableShared";
+import {
+  type ColumnDef,
+  type ColumnSizingState,
+  dataTableFeatures,
+  type ExpandedState,
+  flexRender,
+  type OnChangeFn,
+  type Row,
+  type RowSelectionState,
+  type Updater,
+  type VisibilityState,
+} from "./tableFeatures";
 import { tableStyles } from "./tableStyles";
 
 /**
@@ -198,9 +196,9 @@ export interface VirtualizedRowExtraProps {
   onDragLeave?: (event: React.DragEvent<HTMLDivElement>) => void;
 }
 
-export interface VirtualizedTableEngineProps {
-  columns: ColumnDef<any, any>[];
-  data: any[];
+export interface VirtualizedTableEngineProps<TData extends DataRow = any> {
+  columns: ColumnDef<TData, any>[];
+  data: TData[];
 
   columnVisibility: VisibilityState;
   onColumnVisibilityChange: (visibility: VisibilityState) => void;
@@ -232,7 +230,7 @@ export interface VirtualizedTableEngineProps {
   expanded?: ExpandedState;
   onExpandedChange?: OnChangeFn<ExpandedState>;
 
-  getSubRows?: (row: any, index: number) => any[] | undefined;
+  getSubRows?: (row: TData, index: number) => TData[] | undefined;
   subRowsLabel?: string;
 
   /**
@@ -248,7 +246,7 @@ export interface VirtualizedTableEngineProps {
   /** Stable row identity for selection state — without it TanStack keys
    * selection by row INDEX, which silently re-targets selections when the
    * data is filtered or re-sorted. */
-  getRowId?: (originalRow: any, index: number) => string;
+  getRowId?: (originalRow: TData, index: number) => string;
   /** Row-level click, mirroring paged mode's `onTestCaseClick`. Interactive
    * cell content (checkboxes, buttons) must stop propagation to opt out.
    * Grouped lead rows never fire it. */
@@ -408,7 +406,7 @@ export interface VirtualizedTableEngineProps {
    * DOM node reads `event.currentTarget` from one of the handlers below, or
    * queries `[data-row-id]`.
    */
-  getRowProps?: (row: Row<any>) => VirtualizedRowExtraProps | undefined;
+  getRowProps?: (row: Row<TData>) => VirtualizedRowExtraProps | undefined;
   /**
    * Nesting depth for a table that models its own hierarchy as a `depth`
    * field on a FLAT data array rather than through TanStack's `getSubRows`
@@ -425,7 +423,7 @@ export interface VirtualizedTableEngineProps {
    * softened intra-group dividers, matching pinned-cell fill) rather than a
    * second, parallel nesting style.
    */
-  getRowNestingDepth?: (row: Row<any>) => number;
+  getRowNestingDepth?: (row: Row<TData>) => number;
   /**
    * Where, in px from the first cell's inline start, to paint a FULL-ROW-
    * HEIGHT nesting guide — or `null`/undefined for none.
@@ -443,12 +441,12 @@ export interface VirtualizedTableEngineProps {
    * The offset is the CALLER's to compute because only the caller knows its
    * own indent and leading slots.
    */
-  getRowNestingGuideOffset?: (row: Row<any>) => number | null;
+  getRowNestingGuideOffset?: (row: Row<TData>) => number | null;
   testIdPrefix?: string;
   rowTestIdPrefix?: string;
 }
 
-export function VirtualizedTableEngine({
+export function VirtualizedTableEngine<TData extends DataRow>({
   columns,
   data,
   columnVisibility,
@@ -493,7 +491,7 @@ export function VirtualizedTableEngine({
   getRowNestingGuideOffset,
   testIdPrefix = "virtualized-table",
   rowTestIdPrefix = "virtualized-row",
-}: VirtualizedTableEngineProps) {
+}: VirtualizedTableEngineProps<TData>) {
   const t = useTranslations("common.table");
   const tActions = useTranslations("common.actions");
   const tLabels = useTranslations("common.labels");
@@ -597,13 +595,10 @@ export function VirtualizedTableEngine({
     finalColumns,
   });
 
-  const table = useReactTable({
+  const table = useTable({
+    features: dataTableFeatures,
     data,
     columns: finalColumns,
-    getCoreRowModel: getCoreRowModel(),
-    getGroupedRowModel: groupingActive ? getGroupedRowModel() : undefined,
-    getExpandedRowModel:
-      groupingActive || getSubRows ? getExpandedRowModel() : undefined,
     getSubRows,
     enableSorting: true,
     // The CALLER owns row order (server orderBy or its own sort of `data`) —
@@ -641,7 +636,7 @@ export function VirtualizedTableEngine({
   // Flush widths to storage when a resize gesture settles — writing on every
   // onChange tick would hammer localStorage. `isResizingColumn` is the dragged
   // column id while active and false once released.
-  const isResizingColumn = table.getState().columnSizingInfo.isResizingColumn;
+  const isResizingColumn = table.state.columnResizing.isResizingColumn;
   const wasResizingRef = useRef<string | false>(false);
   useEffect(() => {
     if (wasResizingRef.current && !isResizingColumn && columnSizingStorage) {

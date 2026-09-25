@@ -3,7 +3,7 @@ import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import type { Status } from "~/zenstack/models";
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef } from "@/components/tables/tableFeatures";
 import { SquarePen, Trash } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { IconName } from "~/types/globals";

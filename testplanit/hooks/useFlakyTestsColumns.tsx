@@ -1,7 +1,10 @@
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { LatestResultsCell } from "@/components/tables/LatestResultsCell";
 import { RepositoryCaseSource } from "~/zenstack/models";
-import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
+import {
+  ColumnDef,
+  createColumnHelper,
+} from "@/components/tables/tableFeatures";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 
@@ -68,7 +71,7 @@ export function useFlakyTestsColumns(
             );
           },
           enableSorting: true,
-          sortingFn: (rowA, rowB) => {
+          sortFn: (rowA, rowB) => {
             const aVal = rowA.original.project;
             const bVal = rowB.original.project;
 
