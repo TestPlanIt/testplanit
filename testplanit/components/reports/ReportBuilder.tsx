@@ -1,6 +1,10 @@
 "use client";
 import { DraggableList } from "@/components/DraggableCaseFields";
 import {
+  flattenFolderOptions,
+  transformFolders,
+} from "@/components/forms/FolderSelect";
+import {
   flattenMilestoneTree,
   MilestoneOptionContent,
   transformMilestones,
@@ -39,10 +43,18 @@ import {
   Filter,
   Flag,
   FolderOpen,
+  FolderTree,
   LayoutTemplate,
   ListChecks,
   Loader2,
+  Clock,
+  GitBranch,
+  HeartPulse,
   Milestone,
+  Pin,
+  Tag,
+  Tags,
+  Zap,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations, useLocale } from "next-intl";
@@ -138,7 +150,9 @@ import {
 } from "~/utils/reportUtils";
 import { sortPreBuiltReportRows } from "~/utils/preBuiltReportSort";
 import {
+  mergeSeenOptions,
   mergeSeenProjectOptions,
+  withLatestCounts,
   withLatestProjectCounts,
   type ProjectFilterOption,
 } from "~/utils/reportProjectFilterOptions";
@@ -149,12 +163,7 @@ import {
   resolveSyncedReportType,
   resolveTabChange,
 } from "./reportUrlUtils";
-import {
-  parsePerTypeReportParams,
-  type CoverageFilterValue,
-  type ImpactOutcomeFilterValue,
-  type ImpactTriggerFilterValue,
-} from "./reportShareParams";
+import { parsePerTypeReportParams } from "./reportShareParams";
 
 interface ReportBuilderProps {
   mode: "project" | "cross-project";
@@ -243,6 +252,16 @@ function isFilterableRequirementReport(reportType: string): boolean {
     matchesReportType(reportType, "requirement-coverage-gaps") ||
     matchesReportType(reportType, "requirement-traceability")
   );
+}
+
+/**
+ * The Automated menu's selection (1 = automated, 0 = manual; the All Cases
+ * row stores null) as the flaky/health reports' `automatedFilter` list.
+ */
+function automatedFilterBody(values: Array<string | number | null>) {
+  return values
+    .filter((value) => value !== null)
+    .map((value) => (Number(value) === 1 ? "automated" : "manual"));
 }
 
 /** ...and the cross-project pair of them, which also filter by project. */
@@ -348,7 +367,6 @@ function ReportBuilderContent({
   const tCoverage = useTranslations("requirements.coverage");
   const tDimensions = useTranslations("reports.dimensions");
   const tMetrics = useTranslations("reports.metrics");
-  const tRuns = useTranslations("runs");
   const tGlobal = useTranslations();
   const customStyles = getCustomStyles({ theme });
   const searchParams = useSearchParams();
@@ -509,7 +527,7 @@ function ReportBuilderContent({
   const [selectedFilterValues, setSelectedFilterValues] = useState<
     Record<string, Array<string | number>>
   >(() => ({
-    ...initialPerTypeParams.trendsFilterValues,
+    ...initialPerTypeParams.filterValues,
     ...(initialPerTypeParams.requirementCoverageStates.length > 0
       ? { coverage: initialPerTypeParams.requirementCoverageStates }
       : {}),
@@ -532,6 +550,15 @@ function ReportBuilderContent({
   const [seenProjectOptions, setSeenProjectOptions] = useState<
     ProjectFilterOption[]
   >([]);
+  // The same union for the other case-count groups, so picking one template,
+  // state, or Automated value never hides the rest.
+  // Which report/project the unfiltered option list has been fetched for.
+  const optionsSeededForRef = useRef<string | null>(null);
+  const [seenCaseOptions, setSeenCaseOptions] = useState<{
+    templates: any[];
+    states: any[];
+    automated: any[];
+  }>({ templates: [], states: [], automated: [] });
   // The cross-project requirement reports source their Projects filter from
   // their OWN endpoint (requirements-enabled projects, requirement counts),
   // not from the repository-cases view-options the trends filter uses --
@@ -552,6 +579,17 @@ function ReportBuilderContent({
     configurations: [],
   });
 
+  // The flaky report's options beyond the view-options case filters: case
+  // and run tags, plus the execution-scope milestones/configurations
+  // (project-scoped only). Fetched once per report and project, like the
+  // requirement reports' options.
+  const [flakyFilterOptions, setFlakyFilterOptions] = useState<{
+    caseTags: { id: number; name: string; count: number }[];
+    runTags: { id: number; name: string; count: number }[];
+    milestones: RequirementMilestoneFilterOption[];
+    configurations: { id: number; name: string }[];
+  }>({ caseTags: [], runTags: [], milestones: [], configurations: [] });
+
   // Legacy state for builder tab priority filter
   const [selectedPriorityValues, setSelectedPriorityValues] = useState<
     string[]
@@ -570,6 +608,10 @@ function ReportBuilderContent({
   // folders so a parent folder includes its whole subtree.
   const [folderIncludeDescendants, setFolderIncludeDescendants] =
     useState(false);
+  // The pre-built reports' Folders filter: whether a picked folder brings
+  // its subfolders' cases too. On by default — "cases under this folder".
+  const [filterFolderIncludeSubfolders, setFilterFolderIncludeSubfolders] =
+    useState(initialPerTypeParams.folderIncludeSubfolders);
   // Per-dimension value filters: dimension id -> selected value objects
   // ({ id, name, ... } from the dimension-values lookup). Empty/missing
   // means "all values" for that dimension. The date dimension is excluded
@@ -649,9 +691,6 @@ function ReportBuilderContent({
   const [flipThreshold, setFlipThreshold] = useState(
     initialPerTypeParams.flipThreshold
   );
-  const [flakyAutomatedFilter, setFlakyAutomatedFilter] = useState<
-    "all" | "automated" | "manual"
-  >(initialPerTypeParams.flakyAutomatedFilter);
   // Track the consecutiveRuns value used when report was last run (for stable chart/table rendering)
   const [lastUsedConsecutiveRuns, setLastUsedConsecutiveRuns] = useState(
     initialPerTypeParams.consecutiveRuns
@@ -667,33 +706,26 @@ function ReportBuilderContent({
   const [lookbackDays, setLookbackDays] = useState(
     initialPerTypeParams.lookbackDays
   );
-  const [healthAutomatedFilter, setHealthAutomatedFilter] = useState<
-    "all" | "automated" | "manual"
-  >(initialPerTypeParams.healthAutomatedFilter);
-  const [healthStatusFilter, setHealthStatusFilter] = useState<
-    "all" | "healthy" | "never_executed" | "always_passing" | "always_failing"
-  >(initialPerTypeParams.healthStatusFilter);
-  const [healthStaleFilter, setHealthStaleFilter] = useState<
-    "all" | "stale" | "notStale"
-  >(initialPerTypeParams.healthStaleFilter);
-
-  // Impact analysis history state (shares lookbackDays with test case health)
-  const [impactTriggerFilter, setImpactTriggerFilter] =
-    useState<ImpactTriggerFilterValue>(
-      initialPerTypeParams.impactTriggerFilter
-    );
-  const [impactOutcomeFilter, setImpactOutcomeFilter] =
-    useState<ImpactOutcomeFilterValue>(
-      initialPerTypeParams.impactOutcomeFilter
-    );
-  const [impactConfigId, setImpactConfigId] = useState<number | null>(
-    initialPerTypeParams.impactConfigId
-  );
-  const [coverageFilter, setCoverageFilter] = useState<CoverageFilterValue>(
-    initialPerTypeParams.coverageFilter
-  );
   const isImpactHistory = matchesReportType(reportType, "impact-analysis");
   const isCodePinCoverage = matchesReportType(reportType, "code-pin-coverage");
+  const hasFolderFilter =
+    mode === "project" &&
+    (matchesReportType(reportType, "flaky-tests") ||
+      matchesReportType(reportType, "test-case-health") ||
+      matchesReportType(reportType, "automation-trends"));
+  const { data: reportFolders } = useClientQueries(
+    schema
+  ).repositoryFolders.useFindMany(
+    {
+      where: { projectId: Number(projectId), isDeleted: false },
+      orderBy: { order: "asc" },
+      select: { id: true, name: true, parentId: true },
+    },
+    {
+      enabled:
+        hasFolderFilter && Boolean(projectId) && !isNaN(Number(projectId)),
+    }
+  );
   const { data: impactConnections } = useClientQueries(
     schema
   ).projectCodeRepositoryConfig.useFindMany(
@@ -813,6 +845,80 @@ function ReportBuilderContent({
   // Drill-down functionality
   const drillDown = useDrillDown();
 
+  const mergeCaseOptions = useCallback((options: any) => {
+    setSeenCaseOptions((previous) => {
+      const templates = mergeSeenOptions(
+        previous.templates,
+        options?.templates,
+        (t) => t?.id
+      );
+      const states = mergeSeenOptions(
+        previous.states,
+        options?.states,
+        (s) => s?.id
+      );
+      const automated = mergeSeenOptions(
+        previous.automated,
+        options?.automated,
+        (a) => a?.value
+      );
+      return templates === previous.templates &&
+        states === previous.states &&
+        automated === previous.automated
+        ? previous
+        : { templates, states, automated };
+    });
+  }, []);
+
+  // The execution-scope (milestone/configuration) menu entries, shared by the
+  // requirement reports and the flaky report.
+  const executionScopeFilterItems = useCallback(
+    (
+      milestones: RequirementMilestoneFilterOption[],
+      configurations: { id: number; name: string }[]
+    ) => {
+      const items: any[] = [];
+      if (milestones.length > 0) {
+        // Options browse as the same indented parent → child tree every
+        // milestone picker renders, each row through the shared
+        // MilestoneOptionContent (type icon + tracker-source badge).
+        const flattened = flattenMilestoneTree(transformMilestones(milestones));
+        items.push({
+          id: "milestone",
+          name: tCommon("fields.milestone"),
+          icon: Milestone,
+          options: flattened.map((milestone) => ({
+            id: Number(milestone.value),
+            name: milestone.label,
+            milestoneOption: milestone,
+          })),
+          renderOptionContent: (option: any) =>
+            option.milestoneOption ? (
+              <MilestoneOptionContent milestone={option.milestoneOption} />
+            ) : (
+              <span className="truncate">{option.name}</span>
+            ),
+        });
+      }
+      if (configurations.length > 0) {
+        items.push({
+          id: "configuration",
+          name: tCommon("fields.configuration"),
+          icon: Combine,
+          options: configurations,
+          renderOptionContent: (option: any) => (
+            <span className="flex min-w-0 items-center gap-2">
+              <Combine className="h-4 w-4 shrink-0" />
+              <span className="truncate">{option.name}</span>
+            </span>
+          ),
+        });
+      }
+      return items;
+    },
+    [tCommon]
+  );
+
   // Build filter items for automation trends
   const filterItems = useMemo(() => {
     // The requirement reports put every filter in ONE menu -- coverage
@@ -868,46 +974,191 @@ function ReportBuilderContent({
         (matchesReportType(reportType, "requirement-coverage-gaps") ||
           matchesReportType(reportType, "requirement-traceability"))
       ) {
-        if (requirementFilterOptions.milestones.length > 0) {
-          // Options browse as the same indented parent → child tree every
-          // milestone picker renders, each row through the shared
-          // MilestoneOptionContent (type icon + tracker-source badge).
-          const flattened = flattenMilestoneTree(
-            transformMilestones(requirementFilterOptions.milestones)
-          );
-          items.push({
-            id: "milestone",
-            name: tCommon("fields.milestone"),
-            icon: Milestone,
-            options: flattened.map((milestone) => ({
-              id: Number(milestone.value),
-              name: milestone.label,
-              milestoneOption: milestone,
-            })),
-            renderOptionContent: (option: any) =>
-              option.milestoneOption ? (
-                <MilestoneOptionContent milestone={option.milestoneOption} />
-              ) : (
-                <span className="truncate">{option.name}</span>
-              ),
-          });
-        }
-        if (requirementFilterOptions.configurations.length > 0) {
-          items.push({
-            id: "configuration",
-            name: tCommon("fields.configuration"),
-            icon: Combine,
-            options: requirementFilterOptions.configurations,
-            renderOptionContent: (option: any) => (
-              <span className="flex min-w-0 items-center gap-2">
-                <Combine className="h-4 w-4 shrink-0" />
-                <span className="truncate">{option.name}</span>
-              </span>
-            ),
-          });
-        }
+        items.push(
+          ...executionScopeFilterItems(
+            requirementFilterOptions.milestones,
+            requirementFilterOptions.configurations
+          )
+        );
       }
       return items;
+    }
+
+    // Folders browse as the repository tree, indented by depth.
+    const folderById = new Map(
+      (reportFolders ?? []).map((folder) => [folder.id, folder])
+    );
+    const folderPath = (id: number) => {
+      const names: string[] = [];
+      const seen = new Set<number>();
+      let current = folderById.get(id);
+      while (current && !seen.has(current.id)) {
+        seen.add(current.id);
+        names.unshift(current.name);
+        current =
+          current.parentId != null
+            ? folderById.get(current.parentId)
+            : undefined;
+      }
+      return names;
+    };
+    const folderItems =
+      hasFolderFilter && (reportFolders?.length ?? 0) > 0
+        ? [
+            {
+              id: "folders",
+              name: tCommon("fields.folder"),
+              icon: FolderTree,
+              options: flattenFolderOptions(
+                transformFolders(reportFolders ?? [])
+              ).map((folder) => {
+                const path = folderPath(Number(folder.value));
+                return {
+                  id: Number(folder.value),
+                  name: folder.label,
+                  level: folder.level,
+                  fullName: path.join(" › "),
+                  parentPath: path.slice(0, -1).join(" › "),
+                };
+              }),
+              // Browsing shows the tree; a search result loses its place in
+              // it, so it names its parent folders instead.
+              renderOptionContent: (
+                option: any,
+                { searching }: { searching: boolean }
+              ) => (
+                <span
+                  className="flex min-w-0 items-center gap-2"
+                  style={
+                    searching
+                      ? undefined
+                      : { paddingInlineStart: `${option.level * 12}px` }
+                  }
+                >
+                  <FolderOpen className="h-4 w-4 shrink-0" />
+                  <span className="truncate">{option.name}</span>
+                  {searching && option.parentPath && (
+                    <span className="min-w-0 truncate text-xs text-muted-foreground">
+                      {option.parentPath}
+                    </span>
+                  )}
+                </span>
+              ),
+            },
+          ]
+        : [];
+
+    // A report without case counts offers Automated/Manual as a plain pair.
+    const automatedItem = {
+      id: "automated",
+      name: tCommon("fields.automated"),
+      icon: Bot,
+      options: [
+        { id: 1, name: tCommon("yes") },
+        { id: 0, name: tCommon("no") },
+      ],
+    };
+    // Impact and code pin reports can narrow to repository connections
+    // once a project has more than one.
+    const repositoryItems =
+      mode === "project" && (impactConnections?.length ?? 0) > 1
+        ? [
+            {
+              id: "repository",
+              name: tCommon("pageTitles.repository"),
+              icon: GitBranch,
+              options: (impactConnections ?? []).map((connection) => ({
+                id: connection.id,
+                name: connection.repository.name,
+                connection,
+              })),
+              renderOptionContent: (option: any) => (
+                <CodeRepositoryName
+                  name={option.connection.repository.name}
+                  provider={option.connection.repository.provider}
+                  branch={option.connection.branch}
+                />
+              ),
+            },
+          ]
+        : [];
+
+    if (matchesReportType(reportType, "test-case-health")) {
+      return [
+        automatedItem,
+        ...folderItems,
+        {
+          id: "healthStatus",
+          name: tReports("testCaseHealth.status"),
+          icon: HeartPulse,
+          options: (
+            [
+              ["healthy", "healthy"],
+              ["always_passing", "alwaysPassing"],
+              ["always_failing", "alwaysFailing"],
+              ["never_executed", "neverExecuted"],
+            ] as const
+          ).map(([id, key]) => ({
+            id,
+            name: tReports(`testCaseHealth.healthStatus.${key}`),
+          })),
+        },
+        {
+          id: "staleness",
+          name: tReports("testCaseHealth.staleFilter"),
+          icon: Clock,
+          options: [
+            { id: "stale", name: tReports("testCaseHealth.stale") },
+            { id: "notStale", name: tReports("testCaseHealth.notStale") },
+          ],
+        },
+      ];
+    }
+
+    if (isImpactHistory) {
+      return [
+        {
+          id: "trigger",
+          name: tDimensions("trigger"),
+          icon: Zap,
+          options: (["manual", "pull_request", "push"] as const).map(
+            (trigger) => ({
+              id: trigger,
+              name: tGlobal(IMPACT_TRIGGER_LABEL_KEY[trigger] as any),
+            })
+          ),
+        },
+        {
+          id: "outcome",
+          name: tGlobal("reports.dimensions.outcome"),
+          icon: CircleDot,
+          options: (
+            ["failed", "passed", "not_executed", "no_run"] as const
+          ).map((outcome) => ({
+            id: outcome,
+            name: tGlobal(IMPACT_OUTCOME_LABEL_KEY[outcome] as any),
+          })),
+        },
+        ...repositoryItems,
+      ];
+    }
+
+    if (isCodePinCoverage) {
+      return [
+        {
+          id: "pinCoverage",
+          name: tReports("codePinCoverage.coverageFilter"),
+          icon: Pin,
+          options: [
+            { id: "gaps", name: tReports("codePinCoverage.coverageGaps") },
+            {
+              id: "pinned",
+              name: tReports("codePinCoverage.coveragePinned"),
+            },
+          ],
+        },
+        ...repositoryItems,
+      ];
     }
 
     if (!filterOptions) return [];
@@ -928,26 +1179,30 @@ function ReportBuilderContent({
     }
 
     // Templates filter
-    if (filterOptions.templates && filterOptions.templates.length > 0) {
+    if (seenCaseOptions.templates.length > 0) {
       items.push({
         id: "templates",
         name: tCommon("fields.templates"),
         icon: LayoutTemplate,
-        options: filterOptions.templates.map((t: any) => ({
-          id: t.id,
-          name: t.name,
-          count: t.count,
-        })),
+        options: withLatestCounts(
+          seenCaseOptions.templates,
+          filterOptions.templates,
+          (t) => t?.id
+        ).map((t: any) => ({ id: t.id, name: t.name, count: t.count })),
       });
     }
 
     // States filter
-    if (filterOptions.states && filterOptions.states.length > 0) {
+    if (seenCaseOptions.states.length > 0) {
       items.push({
         id: "states",
         name: tCommon("ui.search.states"),
         icon: CircleDashed,
-        options: filterOptions.states.map((s: any) => ({
+        options: withLatestCounts(
+          seenCaseOptions.states,
+          filterOptions.states,
+          (s) => s?.id
+        ).map((s: any) => ({
           id: s.id,
           name: s.name,
           icon: s.icon,
@@ -957,17 +1212,21 @@ function ReportBuilderContent({
       });
     }
 
+    items.push(...folderItems);
+
     // Automated filter
-    if (filterOptions.automated && filterOptions.automated.length > 0) {
+    if (seenCaseOptions.automated.length > 0) {
       items.push({
         id: "automated",
         name: tCommon("fields.automated"),
         icon: Bot,
-        options: filterOptions.automated.map((a: any) => ({
+        options: withLatestCounts(
+          seenCaseOptions.automated,
+          filterOptions.automated,
+          (a) => a?.value
+        ).map((a: any) => ({
           id: a.value ? 1 : 0,
-          name: a.value
-            ? tCommon("fields.automated")
-            : tCommon("fields.manual"),
+          name: a.value ? tCommon("yes") : tCommon("no"),
           count: a.count,
         })),
       });
@@ -993,26 +1252,66 @@ function ReportBuilderContent({
       );
     }
 
+    if (matchesReportType(reportType, "flaky-tests")) {
+      if (flakyFilterOptions.caseTags.length > 0) {
+        items.push({
+          id: "caseTags",
+          name: tReports("flakyTests.caseTags"),
+          icon: Tag,
+          options: flakyFilterOptions.caseTags,
+        });
+      }
+      if (flakyFilterOptions.runTags.length > 0) {
+        items.push({
+          id: "runTags",
+          name: tReports("flakyTests.runTags"),
+          icon: Tags,
+          options: flakyFilterOptions.runTags,
+        });
+      }
+      items.push(
+        ...executionScopeFilterItems(
+          flakyFilterOptions.milestones,
+          flakyFilterOptions.configurations
+        )
+      );
+    }
+
     return items;
   }, [
     filterOptions,
     seenProjectOptions,
+    seenCaseOptions,
     tCommon,
     tCoverage,
+    tReports,
+    tDimensions,
+    tGlobal,
     reportType,
+    mode,
+    isImpactHistory,
+    isCodePinCoverage,
+    impactConnections,
+    hasFolderFilter,
+    reportFolders,
     requirementFilterOptions,
+    flakyFilterOptions,
+    executionScopeFilterItems,
   ]);
 
   // Reset the remembered options whenever the report itself changes — a
   // different report may cover a different set of projects entirely.
   useEffect(() => {
     setSeenProjectOptions([]);
+    setSeenCaseOptions({ templates: [], states: [], automated: [] });
   }, [reportType, mode, projectId]);
 
   useEffect(() => {
     setSeenProjectOptions((previous) =>
       mergeSeenProjectOptions(previous, filterOptions?.projects)
     );
+    mergeCaseOptions(filterOptions);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterOptions]);
 
   // Build active filter chips from selectedFilterValues
@@ -1041,7 +1340,7 @@ function ReportBuilderContent({
             (opt: any) => opt.id === valueId
           );
           if (option) {
-            valueName = option.name;
+            valueName = option.fullName ?? option.name;
             icon = option.icon || null;
             iconColor = option.iconColor || null;
           }
@@ -1517,12 +1816,12 @@ function ReportBuilderContent({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, reportTypes]);
 
-  // Fetch filter options when report type changes to automation-trends or when filters change
+  // Fetch filter options when report type changes to automation-trends or
+  // flaky-tests, or when filters change
   useEffect(() => {
     if (
-      reportType === "automation-trends" ||
-      (isCrossProjectReport(reportType) &&
-        matchesReportType(reportType, "automation-trends"))
+      matchesReportType(reportType, "automation-trends") ||
+      matchesReportType(reportType, "flaky-tests")
     ) {
       // Build filter payload to send to view-options API
       const filterPayload: any = {};
@@ -1530,6 +1829,11 @@ function ReportBuilderContent({
       // For project-specific mode, include projectId
       if (mode === "project" && projectId) {
         filterPayload.projectId = projectId;
+      }
+
+      if (mode === "project" && selectedFilterValues.folders?.length) {
+        filterPayload.folderIds = selectedFilterValues.folders.map(Number);
+        filterPayload.folderIncludeDescendants = filterFolderIncludeSubfolders;
       }
 
       // Add active filters to get updated counts based on current selection
@@ -1584,9 +1888,46 @@ function ReportBuilderContent({
           .catch(() => {
             // Failed to fetch filter options - ignore
           });
+
+        // A report opened with filters already applied (a share or saved
+        // report) would only ever be offered the picked values; fetch the
+        // unfiltered option list once so every value stays selectable.
+        const seedKey = `${reportType}:${mode}:${projectId ?? ""}`;
+        const hasSelection = Object.values(selectedFilterValues).some(
+          (values) => values && values.length > 0
+        );
+        if (hasSelection && optionsSeededForRef.current !== seedKey) {
+          optionsSeededForRef.current = seedKey;
+          fetch(apiEndpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(
+              mode === "project" && projectId ? { projectId } : {}
+            ),
+          })
+            .then((res) => res.json())
+            .then((data) => {
+              setSeenProjectOptions((previous) =>
+                mergeSeenProjectOptions(previous, data?.projects)
+              );
+              mergeCaseOptions(data);
+            })
+            .catch(() => {
+              // The filtered response still supplies the options.
+            });
+        } else if (!hasSelection) {
+          optionsSeededForRef.current = seedKey;
+        }
       }
     }
-  }, [reportType, projectId, mode, selectedFilterValues]);
+  }, [
+    reportType,
+    projectId,
+    mode,
+    selectedFilterValues,
+    filterFolderIncludeSubfolders,
+    mergeCaseOptions,
+  ]);
 
   // The requirement reports' filter options. Fetched once per report and
   // project, and deliberately NOT re-fetched when a selection changes, so
@@ -1615,6 +1956,47 @@ function ReportBuilderContent({
           projects: Array.isArray(data.projects) ? data.projects : [],
           priorities: Array.isArray(data.priorities) ? data.priorities : [],
           statuses: Array.isArray(data.statuses) ? data.statuses : [],
+          milestones: Array.isArray(data.milestones) ? data.milestones : [],
+          configurations: Array.isArray(data.configurations)
+            ? data.configurations
+            : [],
+        });
+      })
+      .catch(() => {
+        // Filter options are optional; the report still runs unfiltered.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [reportType, currentReportEndpoint, mode, projectId]);
+
+  // The flaky report's tag and execution-scope options.
+  useEffect(() => {
+    if (
+      !matchesReportType(reportType, "flaky-tests") ||
+      !currentReportEndpoint
+    ) {
+      setFlakyFilterOptions({
+        caseTags: [],
+        runTags: [],
+        milestones: [],
+        configurations: [],
+      });
+      return;
+    }
+    if (mode === "project" && !projectId) return;
+    const url = new URL(currentReportEndpoint, window.location.origin);
+    if (mode === "project" && projectId) {
+      url.searchParams.set("projectId", String(projectId));
+    }
+    let cancelled = false;
+    fetch(url.toString())
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (cancelled || !data) return;
+        setFlakyFilterOptions({
+          caseTags: Array.isArray(data.caseTags) ? data.caseTags : [],
+          runTags: Array.isArray(data.runTags) ? data.runTags : [],
           milestones: Array.isArray(data.milestones) ? data.milestones : [],
           configurations: Array.isArray(data.configurations)
             ? data.configurations
@@ -2150,7 +2532,44 @@ function ReportBuilderContent({
         if (matchesReportType(reportType, "flaky-tests")) {
           body.consecutiveRuns = consecutiveRuns;
           body.flipThreshold = flipThreshold;
-          body.automatedFilter = flakyAutomatedFilter;
+          // The menu's case filters (which tests are listed) and run filters
+          // (which executions count toward the flip history).
+          const dynamicFieldFilters: Record<number, (string | number)[]> = {};
+          const flakyFilterBodyKeys: Record<string, string> = {
+            projects: "projectIds",
+            templates: "templateIds",
+            states: "stateIds",
+            caseTags: "caseTagIds",
+            runTags: "runTagIds",
+            milestone: "milestoneIds",
+            configuration: "configIds",
+          };
+          if (selectedFilterValues.automated?.length) {
+            body.automatedFilter = automatedFilterBody(
+              selectedFilterValues.automated
+            );
+          }
+          Object.entries(selectedFilterValues).forEach(([key, values]) => {
+            if (!values || values.length === 0) return;
+            if (key === "projects" && mode !== "cross-project") return;
+            if (
+              (key === "milestone" || key === "configuration") &&
+              mode === "cross-project"
+            ) {
+              return;
+            }
+            if (flakyFilterBodyKeys[key]) {
+              body[flakyFilterBodyKeys[key]] = values.map(Number);
+            } else if (key.startsWith("dynamic_")) {
+              const fieldId = parseInt(key.split("_")[1]);
+              if (!isNaN(fieldId)) {
+                dynamicFieldFilters[fieldId] = values;
+              }
+            }
+          });
+          if (Object.keys(dynamicFieldFilters).length > 0) {
+            body.dynamicFieldFilters = dynamicFieldFilters;
+          }
           // Always include dimensions for cross-project reports (project should be auto-added)
           if (
             isCrossProjectReport(reportType) &&
@@ -2170,9 +2589,17 @@ function ReportBuilderContent({
           body.staleDaysThreshold = staleDaysThreshold;
           body.minExecutionsForRate = minExecutionsForRate;
           body.lookbackDays = lookbackDays;
-          body.automatedFilter = healthAutomatedFilter;
-          body.healthStatusFilter = healthStatusFilter;
-          body.staleFilter = healthStaleFilter;
+          if (selectedFilterValues.automated?.length) {
+            body.automatedFilter = automatedFilterBody(
+              selectedFilterValues.automated
+            );
+          }
+          if (selectedFilterValues.healthStatus?.length) {
+            body.healthStatusFilter = selectedFilterValues.healthStatus;
+          }
+          if (selectedFilterValues.staleness?.length) {
+            body.staleFilter = selectedFilterValues.staleness;
+          }
           // Always include dimensions for cross-project reports (project should be auto-added)
           if (
             isCrossProjectReport(reportType) &&
@@ -2187,10 +2614,19 @@ function ReportBuilderContent({
           }
         }
 
+        if (hasFolderFilter && selectedFilterValues.folders?.length) {
+          body.folderIds = selectedFilterValues.folders.map(Number);
+          body.folderIncludeDescendants = filterFolderIncludeSubfolders;
+        }
+
         if (matchesReportType(reportType, "code-pin-coverage")) {
           body.lookbackDays = lookbackDays;
-          body.coverageFilter = coverageFilter;
-          if (impactConfigId !== null) body.configId = impactConfigId;
+          if (selectedFilterValues.pinCoverage?.length) {
+            body.coverageFilter = selectedFilterValues.pinCoverage;
+          }
+          if (selectedFilterValues.repository?.length) {
+            body.configId = selectedFilterValues.repository.map(Number);
+          }
           if (isCrossProjectReport(reportType)) {
             const dimValues = selectedDimensions.map((d) => d.value);
             if (!dimValues.includes("project")) dimValues.unshift("project");
@@ -2200,9 +2636,15 @@ function ReportBuilderContent({
 
         if (matchesReportType(reportType, "impact-analysis")) {
           body.lookbackDays = lookbackDays;
-          body.triggerFilter = impactTriggerFilter;
-          body.outcomeFilter = impactOutcomeFilter;
-          if (impactConfigId !== null) body.configId = impactConfigId;
+          if (selectedFilterValues.trigger?.length) {
+            body.triggerFilter = selectedFilterValues.trigger;
+          }
+          if (selectedFilterValues.outcome?.length) {
+            body.outcomeFilter = selectedFilterValues.outcome;
+          }
+          if (selectedFilterValues.repository?.length) {
+            body.configId = selectedFilterValues.repository.map(Number);
+          }
           if (isCrossProjectReport(reportType)) {
             const dimValues = selectedDimensions.map((d) => d.value);
             if (!dimValues.includes("project")) dimValues.unshift("project");
@@ -2577,16 +3019,14 @@ function ReportBuilderContent({
       dateGrouping,
       selectedFilterValues,
       folderIncludeDescendants,
+      hasFolderFilter,
+      filterFolderIncludeSubfolders,
       dimensionValueFilters,
       consecutiveRuns,
       flipThreshold,
-      flakyAutomatedFilter,
       staleDaysThreshold,
       minExecutionsForRate,
       lookbackDays,
-      healthAutomatedFilter,
-      healthStatusFilter,
-      healthStaleFilter,
       requirementScope,
       requirementCoverageStates,
       includeNotRunDebt,
@@ -3150,45 +3590,6 @@ function ReportBuilderContent({
                         </div>
                       )}
 
-                      {/* Filters Section for Automation Trends */}
-                      {(reportType === "automation-trends" ||
-                        (isCrossProjectReport(reportType) &&
-                          matchesReportType(reportType, "automation-trends")) ||
-                        isFilterableRequirementReport(reportType)) &&
-                        filterItems.length > 0 && (
-                          <div className="grid gap-2">
-                            <div className="flex items-center gap-2">
-                              <label className="text-sm font-medium">
-                                {tCommon("ui.search.filters")}
-                              </label>
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                              {tReports("filtersDescription")}
-                            </p>
-                            <ReportFilterChips
-                              activeFilters={activeFilterChips}
-                              onRemoveFilter={handleRemoveFilter}
-                              onClearAll={handleClearAllFilters}
-                            />
-                            <ReportFilters
-                              selectedFilter={selectedFilterType}
-                              onFilterChange={setSelectedFilterType}
-                              filterItems={filterItems}
-                              selectedValues={selectedFilterValues}
-                              onValuesChange={(filterType, values) => {
-                                setSelectedFilterValues((prev) => {
-                                  if (!values || values.length === 0) {
-                                    const { [filterType]: _, ...rest } = prev;
-                                    return rest;
-                                  }
-                                  return { ...prev, [filterType]: values };
-                                });
-                              }}
-                              totalCount={filterOptions?.totalCount || 0}
-                            />
-                          </div>
-                        )}
-
                       {/* Flaky Tests Parameters */}
                       {(reportType === "flaky-tests" ||
                         (isCrossProjectReport(reportType) &&
@@ -3253,58 +3654,6 @@ function ReportBuilderContent({
                                 {flipThreshold}
                               </span>
                             </div>
-                          </div>
-
-                          {/* Test Case Type Filter */}
-                          <div className="grid gap-2">
-                            <label className="text-sm font-medium">
-                              {tReports("flakyTests.includeFilter")}
-                            </label>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  className="w-full justify-between"
-                                >
-                                  {flakyAutomatedFilter === "all"
-                                    ? tRuns("typeFilter.both")
-                                    : flakyAutomatedFilter === "manual"
-                                      ? tCommon("fields.manual")
-                                      : tCommon("fields.automated")}
-                                  <ChevronDown className="ms-2 h-4 w-4 opacity-50" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent
-                                align="start"
-                                className="w-full"
-                              >
-                                <DropdownMenuGroup>
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      setFlakyAutomatedFilter("all")
-                                    }
-                                  >
-                                    {tRuns("typeFilter.both")}
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      setFlakyAutomatedFilter("manual")
-                                    }
-                                  >
-                                    {tCommon("fields.manual")}
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      setFlakyAutomatedFilter("automated")
-                                    }
-                                  >
-                                    {tCommon("fields.automated")}
-                                  </DropdownMenuItem>
-                                </DropdownMenuGroup>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
                           </div>
                         </div>
                       )}
@@ -3560,193 +3909,6 @@ function ReportBuilderContent({
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </div>
-
-                          {/* Test Case Type Filter */}
-                          <div className="grid gap-2">
-                            <label className="text-sm font-medium">
-                              {tReports("testCaseHealth.includeFilter")}
-                            </label>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  className="w-full justify-between"
-                                >
-                                  {healthAutomatedFilter === "all"
-                                    ? tRuns("typeFilter.both")
-                                    : healthAutomatedFilter === "manual"
-                                      ? tCommon("fields.manual")
-                                      : tCommon("fields.automated")}
-                                  <ChevronDown className="ms-2 h-4 w-4 opacity-50" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent
-                                align="start"
-                                className="w-full"
-                              >
-                                <DropdownMenuGroup>
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      setHealthAutomatedFilter("all")
-                                    }
-                                  >
-                                    {tRuns("typeFilter.both")}
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      setHealthAutomatedFilter("manual")
-                                    }
-                                  >
-                                    {tCommon("fields.manual")}
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      setHealthAutomatedFilter("automated")
-                                    }
-                                  >
-                                    {tCommon("fields.automated")}
-                                  </DropdownMenuItem>
-                                </DropdownMenuGroup>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-
-                          {/* Health Status Filter */}
-                          <div className="grid gap-2">
-                            <label className="text-sm font-medium">
-                              {tReports("testCaseHealth.status")}
-                            </label>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  className="w-full justify-between"
-                                >
-                                  {healthStatusFilter === "all"
-                                    ? tCommon("filters.all")
-                                    : healthStatusFilter === "healthy"
-                                      ? tReports(
-                                          "testCaseHealth.healthStatus.healthy"
-                                        )
-                                      : healthStatusFilter === "always_passing"
-                                        ? tReports(
-                                            "testCaseHealth.healthStatus.alwaysPassing"
-                                          )
-                                        : healthStatusFilter ===
-                                            "always_failing"
-                                          ? tReports(
-                                              "testCaseHealth.healthStatus.alwaysFailing"
-                                            )
-                                          : tReports(
-                                              "testCaseHealth.healthStatus.neverExecuted"
-                                            )}
-                                  <ChevronDown className="ms-2 h-4 w-4 opacity-50" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent
-                                align="start"
-                                className="w-full"
-                              >
-                                <DropdownMenuGroup>
-                                  <DropdownMenuItem
-                                    onClick={() => setHealthStatusFilter("all")}
-                                  >
-                                    {tCommon("filters.all")}
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      setHealthStatusFilter("healthy")
-                                    }
-                                  >
-                                    {tReports(
-                                      "testCaseHealth.healthStatus.healthy"
-                                    )}
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      setHealthStatusFilter("always_passing")
-                                    }
-                                  >
-                                    {tReports(
-                                      "testCaseHealth.healthStatus.alwaysPassing"
-                                    )}
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      setHealthStatusFilter("always_failing")
-                                    }
-                                  >
-                                    {tReports(
-                                      "testCaseHealth.healthStatus.alwaysFailing"
-                                    )}
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      setHealthStatusFilter("never_executed")
-                                    }
-                                  >
-                                    {tReports(
-                                      "testCaseHealth.healthStatus.neverExecuted"
-                                    )}
-                                  </DropdownMenuItem>
-                                </DropdownMenuGroup>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-
-                          {/* Staleness Filter */}
-                          <div className="grid gap-2">
-                            <label className="text-sm font-medium">
-                              {tReports("testCaseHealth.staleFilter")}
-                            </label>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  className="w-full justify-between"
-                                >
-                                  {healthStaleFilter === "all"
-                                    ? tCommon("filters.all")
-                                    : healthStaleFilter === "stale"
-                                      ? tReports("testCaseHealth.stale")
-                                      : tReports("testCaseHealth.notStale")}
-                                  <ChevronDown className="ms-2 h-4 w-4 opacity-50" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent
-                                align="start"
-                                className="w-full"
-                              >
-                                <DropdownMenuGroup>
-                                  <DropdownMenuItem
-                                    onClick={() => setHealthStaleFilter("all")}
-                                  >
-                                    {tCommon("filters.all")}
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      setHealthStaleFilter("stale")
-                                    }
-                                  >
-                                    {tReports("testCaseHealth.stale")}
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      setHealthStaleFilter("notStale")
-                                    }
-                                  >
-                                    {tReports("testCaseHealth.notStale")}
-                                  </DropdownMenuItem>
-                                </DropdownMenuGroup>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
                         </div>
                       )}
 
@@ -3821,255 +3983,6 @@ function ReportBuilderContent({
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </div>
-
-                          {isCodePinCoverage && (
-                            <div className="grid gap-2">
-                              <label className="text-sm font-medium">
-                                {tReports("codePinCoverage.coverageFilter")}
-                              </label>
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    className="w-full justify-between"
-                                    data-testid="code-pin-coverage-filter"
-                                  >
-                                    {coverageFilter === "all"
-                                      ? tCommon("filters.all")
-                                      : coverageFilter === "gaps"
-                                        ? tReports(
-                                            "codePinCoverage.coverageGaps"
-                                          )
-                                        : tReports(
-                                            "codePinCoverage.coveragePinned"
-                                          )}
-                                    <ChevronDown className="ms-2 h-4 w-4 opacity-50" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent
-                                  align="start"
-                                  className="w-full"
-                                >
-                                  <DropdownMenuGroup>
-                                    <DropdownMenuItem
-                                      onClick={() => setCoverageFilter("all")}
-                                    >
-                                      {tCommon("filters.all")}
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      onClick={() => setCoverageFilter("gaps")}
-                                    >
-                                      {tReports("codePinCoverage.coverageGaps")}
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      onClick={() =>
-                                        setCoverageFilter("pinned")
-                                      }
-                                    >
-                                      {tReports(
-                                        "codePinCoverage.coveragePinned"
-                                      )}
-                                    </DropdownMenuItem>
-                                  </DropdownMenuGroup>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
-                          )}
-
-                          {isImpactHistory && (
-                            <>
-                              <div className="grid gap-2">
-                                <label className="text-sm font-medium">
-                                  {tDimensions("trigger")}
-                                </label>
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button
-                                      type="button"
-                                      variant="outline"
-                                      size="sm"
-                                      className="w-full justify-between"
-                                      data-testid="impact-history-trigger"
-                                    >
-                                      {impactTriggerFilter === "all"
-                                        ? tCommon("filters.all")
-                                        : tGlobal(
-                                            IMPACT_TRIGGER_LABEL_KEY[
-                                              impactTriggerFilter
-                                            ] as any
-                                          )}
-                                      <ChevronDown className="ms-2 h-4 w-4 opacity-50" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent
-                                    align="start"
-                                    className="w-full"
-                                  >
-                                    <DropdownMenuGroup>
-                                      <DropdownMenuItem
-                                        onClick={() =>
-                                          setImpactTriggerFilter("all")
-                                        }
-                                      >
-                                        {tCommon("filters.all")}
-                                      </DropdownMenuItem>
-                                      {(
-                                        [
-                                          "manual",
-                                          "pull_request",
-                                          "push",
-                                        ] as const
-                                      ).map((trigger) => (
-                                        <DropdownMenuItem
-                                          key={trigger}
-                                          onClick={() =>
-                                            setImpactTriggerFilter(trigger)
-                                          }
-                                        >
-                                          {tGlobal(
-                                            IMPACT_TRIGGER_LABEL_KEY[
-                                              trigger
-                                            ] as any
-                                          )}
-                                        </DropdownMenuItem>
-                                      ))}
-                                    </DropdownMenuGroup>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </div>
-
-                              <div className="grid gap-2">
-                                <label className="text-sm font-medium">
-                                  {tGlobal("reports.dimensions.outcome")}
-                                </label>
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button
-                                      type="button"
-                                      variant="outline"
-                                      size="sm"
-                                      className="w-full justify-between"
-                                      data-testid="impact-history-outcome"
-                                    >
-                                      {impactOutcomeFilter === "all"
-                                        ? tCommon("filters.all")
-                                        : tGlobal(
-                                            IMPACT_OUTCOME_LABEL_KEY[
-                                              impactOutcomeFilter
-                                            ] as any
-                                          )}
-                                      <ChevronDown className="ms-2 h-4 w-4 opacity-50" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent
-                                    align="start"
-                                    className="w-full"
-                                  >
-                                    <DropdownMenuGroup>
-                                      <DropdownMenuItem
-                                        onClick={() =>
-                                          setImpactOutcomeFilter("all")
-                                        }
-                                      >
-                                        {tCommon("filters.all")}
-                                      </DropdownMenuItem>
-                                      {(
-                                        [
-                                          "failed",
-                                          "passed",
-                                          "not_executed",
-                                          "no_run",
-                                        ] as const
-                                      ).map((outcome) => (
-                                        <DropdownMenuItem
-                                          key={outcome}
-                                          onClick={() =>
-                                            setImpactOutcomeFilter(outcome)
-                                          }
-                                        >
-                                          {tGlobal(
-                                            IMPACT_OUTCOME_LABEL_KEY[
-                                              outcome
-                                            ] as any
-                                          )}
-                                        </DropdownMenuItem>
-                                      ))}
-                                    </DropdownMenuGroup>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </div>
-                            </>
-                          )}
-
-                          {mode === "project" &&
-                            (impactConnections?.length ?? 0) > 1 && (
-                              <div className="grid gap-2">
-                                <label className="text-sm font-medium">
-                                  {tCommon("pageTitles.repository")}
-                                </label>
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button
-                                      type="button"
-                                      variant="outline"
-                                      size="sm"
-                                      className="w-full justify-between"
-                                      data-testid="impact-history-repository"
-                                    >
-                                      {(() => {
-                                        const selected =
-                                          impactConnections?.find(
-                                            (c) => c.id === impactConfigId
-                                          );
-                                        return selected ? (
-                                          <CodeRepositoryName
-                                            name={selected.repository.name}
-                                            branch={selected.branch}
-                                          />
-                                        ) : (
-                                          tReports(
-                                            "impactAnalysis.allRepositories"
-                                          )
-                                        );
-                                      })()}
-                                      <ChevronDown className="ms-2 h-4 w-4 opacity-50" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent
-                                    align="start"
-                                    className="w-full"
-                                  >
-                                    <DropdownMenuGroup>
-                                      <DropdownMenuItem
-                                        onClick={() => setImpactConfigId(null)}
-                                      >
-                                        {tReports(
-                                          "impactAnalysis.allRepositories"
-                                        )}
-                                      </DropdownMenuItem>
-                                      {impactConnections?.map((connection) => (
-                                        <DropdownMenuItem
-                                          key={connection.id}
-                                          onClick={() =>
-                                            setImpactConfigId(connection.id)
-                                          }
-                                        >
-                                          <CodeRepositoryName
-                                            name={connection.repository.name}
-                                            provider={
-                                              connection.repository.provider
-                                            }
-                                            branch={connection.branch}
-                                          />
-                                        </DropdownMenuItem>
-                                      ))}
-                                    </DropdownMenuGroup>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </div>
-                            )}
                         </div>
                       )}
 
@@ -4182,6 +4095,72 @@ function ReportBuilderContent({
                           </div>
                         </div>
                       )}
+
+                      {/* Filters: every pre-built report's filters live in this one menu */}
+                      {(matchesReportType(reportType, "automation-trends") ||
+                        matchesReportType(reportType, "flaky-tests") ||
+                        matchesReportType(reportType, "test-case-health") ||
+                        isImpactHistory ||
+                        isCodePinCoverage ||
+                        isFilterableRequirementReport(reportType)) &&
+                        filterItems.length > 0 && (
+                          <div className="grid gap-2">
+                            <div className="flex items-center gap-2">
+                              <label className="text-sm font-medium">
+                                {tCommon("ui.search.filters")}
+                              </label>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {tReports("filtersDescription")}
+                            </p>
+                            <ReportFilterChips
+                              activeFilters={activeFilterChips}
+                              onRemoveFilter={handleRemoveFilter}
+                              onClearAll={handleClearAllFilters}
+                            />
+                            <ReportFilters
+                              selectedFilter={selectedFilterType}
+                              onFilterChange={setSelectedFilterType}
+                              filterItems={filterItems}
+                              selectedValues={selectedFilterValues}
+                              onValuesChange={(filterType, values) => {
+                                setSelectedFilterValues((prev) => {
+                                  if (!values || values.length === 0) {
+                                    const { [filterType]: _, ...rest } = prev;
+                                    return rest;
+                                  }
+                                  return { ...prev, [filterType]: values };
+                                });
+                              }}
+                              totalCount={filterOptions?.totalCount}
+                            />
+                            {hasFolderFilter &&
+                              (selectedFilterValues.folders?.length ?? 0) >
+                                0 && (
+                                <label className="flex items-start gap-2">
+                                  <Checkbox
+                                    checked={filterFolderIncludeSubfolders}
+                                    onCheckedChange={(checked) =>
+                                      setFilterFolderIncludeSubfolders(
+                                        checked === true
+                                      )
+                                    }
+                                    data-testid="filter-folder-include-subfolders"
+                                  />
+                                  <span className="grid gap-0.5">
+                                    <span className="text-sm font-medium">
+                                      {tReports("folderDescendants.label")}
+                                    </span>
+                                    <span className="text-xs text-muted-foreground">
+                                      {tReports(
+                                        "folderDescendants.filterDescription"
+                                      )}
+                                    </span>
+                                  </span>
+                                </label>
+                              )}
+                          </div>
+                        )}
 
                       {/* Run Report Button */}
                       <Button

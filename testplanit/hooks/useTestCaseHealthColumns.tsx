@@ -22,6 +22,7 @@ interface TestCaseHealthRow {
   testCaseName: string;
   testCaseSource: string;
   testCaseHasParameters: boolean;
+  testCaseAutomated: boolean;
   createdAt: string;
   lastExecutedAt: string | null;
   daysSinceLastExecution: number | null;
@@ -98,6 +99,7 @@ export function useTestCaseHealthColumns(
               name={info.row.original.testCaseName}
               source={info.row.original.testCaseSource as RepositoryCaseSource}
               hasParameters={info.row.original.testCaseHasParameters}
+              automated={info.row.original.testCaseAutomated}
               link={
                 rowProjectId
                   ? `/projects/repository/${rowProjectId}/${info.row.original.testCaseId}`

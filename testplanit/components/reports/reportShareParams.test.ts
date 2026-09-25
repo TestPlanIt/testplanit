@@ -117,9 +117,7 @@ describe("parsePerTypeReportParams", () => {
     );
     expect(state.consecutiveRuns).toBe(6);
     expect(state.flipThreshold).toBe(5);
-    expect(state.flakyAutomatedFilter).toBe("manual");
-    // Health owns its own copy of the shared body key.
-    expect(state.healthAutomatedFilter).toBe("all");
+    expect(state.filterValues).toEqual({ automated: [0] });
   });
 
   it("hydrates test-case-health params including its automatedFilter", () => {
@@ -133,10 +131,27 @@ describe("parsePerTypeReportParams", () => {
     expect(state.staleDaysThreshold).toBe(60);
     expect(state.minExecutionsForRate).toBe(3);
     expect(state.lookbackDays).toBe(180);
-    expect(state.healthAutomatedFilter).toBe("automated");
-    expect(state.healthStatusFilter).toBe("always_failing");
-    expect(state.healthStaleFilter).toBe("stale");
-    expect(state.flakyAutomatedFilter).toBe("all");
+    expect(state.filterValues).toEqual({
+      automated: [1],
+      healthStatus: ["always_failing"],
+      staleness: ["stale"],
+    });
+  });
+
+  it("hydrates multi-value health filters and treats all as no filter", () => {
+    const state = parsePerTypeReportParams(
+      buildSharedReportSearchParams({
+        automatedFilter: ["automated", "manual"],
+        healthStatusFilter: ["never_executed", "always_failing", "bogus"],
+        staleFilter: "all",
+      }),
+      "cross-project-test-case-health"
+    );
+    expect(state.filterValues).toEqual({
+      automated: [1, 0],
+      // Menu order, not request order; unknown values dropped.
+      healthStatus: ["never_executed", "always_failing"],
+    });
   });
 
   it("hydrates impact history params and drops a junk repository id", () => {
@@ -147,17 +162,45 @@ describe("parsePerTypeReportParams", () => {
       "impact-analysis"
     );
     expect(state.lookbackDays).toBe(30);
-    expect(state.impactTriggerFilter).toBe("push");
-    expect(state.impactOutcomeFilter).toBe("failed");
-    expect(state.impactConfigId).toBe(9);
+    expect(state.filterValues).toEqual({
+      trigger: ["push"],
+      outcome: ["failed"],
+      repository: [9],
+    });
+
+    const multi = parsePerTypeReportParams(
+      new URLSearchParams(
+        "triggerFilter=manual,push&outcomeFilter=failed,no_run&configId=9,4"
+      ),
+      "impact-analysis"
+    );
+    expect(multi.filterValues).toEqual({
+      trigger: ["manual", "push"],
+      outcome: ["failed", "no_run"],
+      repository: [9, 4],
+    });
 
     const junk = parsePerTypeReportParams(
       new URLSearchParams("triggerFilter=cron&outcomeFilter=maybe&configId=x"),
       "cross-project-impact-analysis"
     );
-    expect(junk.impactTriggerFilter).toBe("all");
-    expect(junk.impactOutcomeFilter).toBe("all");
-    expect(junk.impactConfigId).toBeNull();
+    expect(junk.filterValues).toEqual({});
+  });
+
+  it("hydrates code pin coverage filters from one value or a list", () => {
+    const single = parsePerTypeReportParams(
+      new URLSearchParams("coverageFilter=gaps&configId=3"),
+      "code-pin-coverage"
+    );
+    expect(single.filterValues).toEqual({
+      pinCoverage: ["gaps"],
+      repository: [3],
+    });
+    const all = parsePerTypeReportParams(
+      new URLSearchParams("coverageFilter=all"),
+      "code-pin-coverage"
+    );
+    expect(all.filterValues).toEqual({});
   });
 
   it("ignores params a report type does not own", () => {
@@ -204,11 +247,59 @@ describe("parsePerTypeReportParams", () => {
       "automation-trends"
     );
     expect(state.dateGrouping).toBe("monthly");
-    expect(state.trendsFilterValues.projects).toEqual([1, 2]);
-    expect(state.trendsFilterValues.templates).toEqual([7]);
-    expect(state.trendsFilterValues.automated).toEqual([1, null]);
-    expect(state.trendsFilterValues["dynamic_12"]).toEqual(["red", "blue"]);
-    expect(state.trendsFilterValues["dynamic_13"]).toBeUndefined();
+    expect(state.filterValues.projects).toEqual([1, 2]);
+    expect(state.filterValues.templates).toEqual([7]);
+    expect(state.filterValues.automated).toEqual([1, null]);
+    expect(state.filterValues["dynamic_12"]).toEqual(["red", "blue"]);
+    expect(state.filterValues["dynamic_13"]).toBeUndefined();
+  });
+
+  it("hydrates flaky-tests case and run filters into the filter menu", () => {
+    const params = buildSharedReportSearchParams({
+      reportType: "cross-project-flaky-tests",
+      automatedFilter: "automated",
+      projectIds: [1, 2],
+      stateIds: [3],
+      caseTagIds: [4],
+      runTagIds: [5, 6],
+      milestoneIds: [7],
+      configIds: [8],
+      dynamicFieldFilters: { 12: ["red"] },
+    });
+    const state = parsePerTypeReportParams(params, "cross-project-flaky-tests");
+    expect(state.filterValues).toEqual({
+      automated: [1],
+      projects: [1, 2],
+      states: [3],
+      caseTags: [4],
+      runTags: [5, 6],
+      milestone: [7],
+      configuration: [8],
+      dynamic_12: ["red"],
+    });
+  });
+
+  it("hydrates the Folders filter and its subfolder switch on case reports", () => {
+    const state = parsePerTypeReportParams(
+      new URLSearchParams("folderIds=12,40&folderIncludeDescendants=false"),
+      "test-case-health"
+    );
+    expect(state.filterValues).toEqual({ folders: [12, 40] });
+    expect(state.folderIncludeSubfolders).toBe(false);
+
+    const defaulted = parsePerTypeReportParams(
+      new URLSearchParams("folderIds=12"),
+      "automation-trends"
+    );
+    expect(defaulted.filterValues).toEqual({ folders: [12] });
+    expect(defaulted.folderIncludeSubfolders).toBe(true);
+
+    // Reports without a Folders filter ignore the param.
+    const other = parsePerTypeReportParams(
+      new URLSearchParams("folderIds=12"),
+      "impact-analysis"
+    );
+    expect(other.filterValues).toEqual({});
   });
 
   it("falls back to defaults on invalid values", () => {
@@ -220,7 +311,7 @@ describe("parsePerTypeReportParams", () => {
     );
     expect(state.consecutiveRuns).toBe(10);
     expect(state.flipThreshold).toBe(5);
-    expect(state.flakyAutomatedFilter).toBe("all");
+    expect(state.filterValues).toEqual({});
   });
 });
 

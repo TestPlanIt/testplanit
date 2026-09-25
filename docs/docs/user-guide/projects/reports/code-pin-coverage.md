@@ -33,11 +33,16 @@ Rows exist for every directory that has a pin or an uncovered change, so a direc
 
 The chart shows the directories with the most pins and uncovered files side by side.
 
-## Filters
+## Settings
 
 - **Lookback Period** — 7–365 days, or all time (default 90); it scopes the analyses that supply uncovered and stale files, not the pins
-- **Repository** — one connected repository, or all
-- **Show** — All, Changed without pins, or With pins
+
+## Filters
+
+Filters live in the **Filters** menu at the bottom of the report settings. Each filter accepts several values, and a row matches if it has any of them. When you use several filters, a row must match all of them. A filter with nothing selected doesn't narrow the report.
+
+- **Show** — Changed without pins, With pins
+- **Repository** — the project's connected repositories (shown when the project has more than one)
 
 ## Sort Order
 

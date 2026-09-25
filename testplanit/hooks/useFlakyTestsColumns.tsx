@@ -23,6 +23,7 @@ interface FlakyTestRow {
   testCaseName: string;
   testCaseSource: string;
   testCaseHasParameters: boolean;
+  testCaseAutomated: boolean;
   flipCount: number;
   executions: ExecutionStatus[];
   project?: {
@@ -101,6 +102,7 @@ export function useFlakyTestsColumns(
               name={info.row.original.testCaseName}
               source={info.row.original.testCaseSource as RepositoryCaseSource}
               hasParameters={info.row.original.testCaseHasParameters}
+              automated={info.row.original.testCaseAutomated}
               link={
                 rowProjectId
                   ? `/projects/repository/${rowProjectId}/${info.row.original.testCaseId}`

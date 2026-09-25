@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { getUserAccessibleProjects } from "~/app/actions/getUserAccessibleProjects";
 import { baseDb } from "~/lib/db";
+import { resolveReportFolderFilter } from "~/utils/reportGrouping";
 import {
   attachmentsWhereClause,
   shapeAttachmentsFacet,
@@ -27,6 +28,10 @@ interface ViewOptionsRequest {
   stateIds?: number[];
   automated?: number[];
   dynamicFieldFilters?: Record<number, (string | number)[]>;
+  // Pre-built reports' Folders filter (subtrees unless
+  // folderIncludeDescendants is false).
+  folderIds?: number[];
+  folderIncludeDescendants?: boolean;
   // Multi-dimension FilterBar contract (spec §8). When `predicates` is
   // present the filter-aware facet engine runs and the legacy filter fields
   // above are ignored; when absent, the legacy path below is unchanged.
@@ -167,6 +172,15 @@ export async function POST(request: Request) {
 
     if (stateIds && stateIds.length > 0) {
       baseWhere.stateId = { in: stateIds };
+    }
+
+    const reportFolderIds = await resolveReportFolderFilter(
+      baseDb,
+      body.folderIds,
+      body.folderIncludeDescendants
+    );
+    if (reportFolderIds) {
+      baseWhere.folderId = { in: reportFolderIds };
     }
 
     if (automatedFilter && automatedFilter.length > 0) {

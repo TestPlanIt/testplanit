@@ -151,10 +151,33 @@ describe("impact analysis report", () => {
     expect(where).toMatchObject({
       isDeleted: false,
       projectId: 42,
-      configId: 9,
-      trigger: "pull_request",
+      configId: { in: [9] },
+      OR: [{ trigger: { in: ["pull_request"] } }],
     });
     expect(where.createdAt.gte).toBeInstanceOf(Date);
+  });
+
+  it("accepts several triggers, outcomes and repositories at once", async () => {
+    mockFindMany.mockResolvedValue([
+      analysis({ id: 1, trigger: null }),
+      analysis({ id: 2, trigger: null, testRun: null }),
+    ]);
+    const res = await handleImpactAnalysisReportPOST(
+      post({
+        projectId: 42,
+        lookbackDays: 0,
+        triggerFilter: ["manual", "push", "cron"],
+        outcomeFilter: ["no_run", "passed"],
+        configId: [9, 4],
+      }),
+      false
+    );
+    const body = await res.json();
+    expect(mockFindMany.mock.calls[0][0].where).toMatchObject({
+      configId: { in: [9, 4] },
+      OR: [{ trigger: null }, { trigger: { in: ["push"] } }],
+    });
+    expect(body.data.map((r: any) => r.analysisId)).toEqual([2]);
   });
 
   it("maps the manual trigger filter to analyses without a trigger and filters by outcome after shaping", async () => {
@@ -173,7 +196,7 @@ describe("impact analysis report", () => {
     );
     const body = await res.json();
     expect(mockFindMany.mock.calls[0][0].where).toMatchObject({
-      trigger: null,
+      OR: [{ trigger: null }],
     });
     expect(mockFindMany.mock.calls[0][0].where.createdAt).toBeUndefined();
     expect(body.data.map((r: any) => r.analysisId)).toEqual([2]);

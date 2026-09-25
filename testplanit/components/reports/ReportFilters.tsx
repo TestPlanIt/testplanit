@@ -17,7 +17,7 @@ import {
   User,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useCallback, useMemo, type ReactNode } from "react";
+import { useCallback, useMemo, useRef, type ReactNode } from "react";
 import type { AsyncOptionsFetcher } from "~/hooks/useAsyncComboboxOptions";
 import { IconName } from "~/types/globals";
 import { cn } from "~/utils";
@@ -28,6 +28,9 @@ interface FilterOption {
   icon?: { name: string } | null;
   iconColor?: { value: string } | null;
   count?: number;
+  /** A label that stays unambiguous out of context (a folder's full path),
+   * shown for a selected value in place of `name`. */
+  fullName?: string;
 }
 
 interface FilterItem {
@@ -40,7 +43,10 @@ interface FilterItem {
    *  way the rest of the app's pickers do (type icon + source badge, the
    *  Combine icon). The row chrome (selection state, count, click) stays
    *  the generic renderer's. */
-  renderOptionContent?: (option: FilterOption) => ReactNode;
+  renderOptionContent?: (
+    option: FilterOption,
+    context: { searching: boolean }
+  ) => ReactNode;
   field?: {
     type: string;
     fieldId: number;
@@ -81,7 +87,7 @@ export function ReportFilters({
   filterItems,
   selectedValues,
   onValuesChange,
-  totalCount = 0,
+  totalCount,
 }: ReportFiltersProps) {
   const tFilters = useTranslations("reports.ui.filters");
   const tGlobal = useTranslations();
@@ -321,25 +327,29 @@ export function ReportFilters({
           {/* Automated filter */}
           {selectedFilter === "automated" && (
             <>
-              <div
-                role="button"
-                tabIndex={0}
-                className={cn(
-                  "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                  isValueSelected("automated", null) &&
-                    "bg-primary/20 hover:bg-primary/30"
-                )}
-                onClick={() => toggleFilterValue("automated", null)}
-              >
-                <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <span className="truncate">
-                    {tGlobal("repository.views.allCases")}
+              {/* The All Cases row needs a case count; a report without
+                  counts leaves an empty selection to mean all. */}
+              {totalCount !== undefined && (
+                <div
+                  role="button"
+                  tabIndex={0}
+                  className={cn(
+                    "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                    isValueSelected("automated", null) &&
+                      "bg-primary/20 hover:bg-primary/30"
+                  )}
+                  onClick={() => toggleFilterValue("automated", null)}
+                >
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <span className="truncate">
+                      {tGlobal("repository.views.allCases")}
+                    </span>
+                  </div>
+                  <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
+                    {totalCount}
                   </span>
                 </div>
-                <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
-                  {totalCount}
-                </span>
-              </div>
+              )}
               {selectedFilterItem.options?.map((option) => {
                 // Expect numeric values (1 for automated, 0 for manual)
                 const isAutomated = option.id === 1;
@@ -363,9 +373,11 @@ export function ReportFilters({
                       )}
                       <span className="truncate">{option.name}</span>
                     </div>
-                    <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
-                      {option.count || 0}
-                    </span>
+                    {option.count !== undefined && (
+                      <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
+                        {option.count}
+                      </span>
+                    )}
                   </div>
                 );
               })}
@@ -392,7 +404,7 @@ export function ReportFilters({
                     </span>
                   </div>
                   <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
-                    {totalCount}
+                    {totalCount ?? 0}
                   </span>
                 </div>
 
@@ -496,8 +508,12 @@ function GenericFilterValuePicker({
   placeholder: string;
 }) {
   const options = useMemo(() => filterItem.options ?? [], [filterItem]);
+  // The rows being rendered answer the latest query, so a custom renderer
+  // can show extra context (a folder's path) only while searching.
+  const queryRef = useRef("");
   const fetchOptions = useMemo<AsyncOptionsFetcher<FilterOption>>(
     () => async (query, page, pageSize) => {
+      queryRef.current = query;
       const lower = query.toLowerCase();
       const filtered = lower
         ? options.filter((option) => option.name.toLowerCase().includes(lower))
@@ -534,10 +550,12 @@ function GenericFilterValuePicker({
         }
         fetchOptions={fetchOptions}
         getOptionValue={(option) => option.id as string | number}
-        getOptionLabel={(option) => option.name}
+        getOptionLabel={(option) => option.fullName ?? option.name}
         renderOption={(option) =>
           filterItem.renderOptionContent ? (
-            filterItem.renderOptionContent(option)
+            filterItem.renderOptionContent(option, {
+              searching: queryRef.current !== "",
+            })
           ) : (
             <span className="flex min-w-0 flex-1 items-center">
               <span className="min-w-0 flex-1 truncate">{option.name}</span>

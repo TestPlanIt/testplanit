@@ -172,7 +172,7 @@ describe("code pin coverage report", () => {
     expect(body.data.map((r: any) => r.directory)).toEqual(["src/z"]);
     expect(
       db.projectCodeRepositoryConfig.findMany.mock.calls[0][0].where
-    ).toMatchObject({ purpose: "IMPACT", projectId: 42, id: 9 });
+    ).toMatchObject({ purpose: "IMPACT", projectId: 42, id: { in: [9] } });
     expect(db.impactAnalysis.findMany.mock.calls[0][0].where).toMatchObject({
       status: "COMPLETED",
       configId: { in: [9] },
@@ -183,6 +183,33 @@ describe("code pin coverage report", () => {
     expect(db.repositoryCases.count).toHaveBeenCalledWith({
       where: { projectId: 42, isDeleted: false },
     });
+  });
+
+  it("keeps rows matching any selected coverage value", async () => {
+    db.repositoryCaseCodePin.findMany.mockResolvedValue([pin(1, "src/a/b.ts")]);
+    db.impactAnalysis.findMany.mockResolvedValue([
+      {
+        id: 1,
+        configId: 9,
+        createdAt: new Date(),
+        result: { uncoveredFiles: ["src/z/y.ts"] },
+      },
+    ]);
+    const run = async (coverageFilter: unknown) =>
+      (
+        await (
+          await handleCodePinCoverageReportPOST(
+            post("code-pin-coverage", { projectId: 42, coverageFilter }),
+            false
+          )
+        ).json()
+      ).data
+        .map((r: any) => r.directory)
+        .sort();
+
+    expect(await run(["gaps", "pinned"])).toEqual(["src/a", "src/z"]);
+    expect(await run(["pinned"])).toEqual(["src/a"]);
+    expect(await run("all")).toEqual(["src/a", "src/z"]);
   });
 
   it("scopes the cross-project report to projects with Impact enabled", async () => {

@@ -22,6 +22,7 @@ export interface ExecutionLogRow {
   testCaseName: string;
   testCaseSource: string;
   testCaseHasParameters: boolean;
+  testCaseAutomated: boolean;
   testRunId: number;
   testRunName: string;
   testRunIsDeleted: boolean;
@@ -50,6 +51,7 @@ interface CombinedExecutionRow {
   case_name: string;
   case_source: string;
   case_has_parameters: boolean;
+  case_automated: boolean;
   run_id: number;
   run_name: string;
   run_is_deleted: boolean;
@@ -148,6 +150,7 @@ export async function handleExecutionLogPOST(
             rc.name as case_name,
             rc.source::text as case_source,
             rc."hasParameters" as case_has_parameters,
+            rc."automated" as case_automated,
             tr.id as run_id,
             tr.name as run_name,
             tr."isDeleted" as run_is_deleted,
@@ -182,6 +185,7 @@ export async function handleExecutionLogPOST(
             rc.name as case_name,
             rc.source::text as case_source,
             rc."hasParameters" as case_has_parameters,
+            rc."automated" as case_automated,
             tr.id as run_id,
             tr.name as run_name,
             tr."isDeleted" as run_is_deleted,
@@ -412,6 +416,7 @@ export async function handleExecutionLogPOST(
         testCaseName: r.case_name,
         testCaseSource: r.case_source,
         testCaseHasParameters: r.case_has_parameters,
+        testCaseAutomated: r.case_automated,
         testRunId: Number(r.run_id),
         testRunName: r.run_name,
         testRunIsDeleted: r.run_is_deleted,

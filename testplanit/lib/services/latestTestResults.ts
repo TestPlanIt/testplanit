@@ -33,6 +33,7 @@ export interface RawExecutionResult {
   test_case_name: string;
   test_case_source: string;
   test_case_has_parameters: boolean;
+  test_case_automated: boolean;
   result_id: number;
   execution_source: "manual" | "automated";
   test_run_id: number | null;
@@ -74,6 +75,29 @@ export interface LatestTestResultsQueryOptions {
    * several projects.
    */
   includeProject?: boolean;
+  /** Restrict to cases in these projects. */
+  projectIds?: number[] | null;
+  /** Restrict to cases using these templates. */
+  templateIds?: number[] | null;
+  /** Restrict to cases in these workflow states. */
+  stateIds?: number[] | null;
+  /** Restrict to cases in these folders (already expanded to subtrees). */
+  folderIds?: number[] | null;
+  /** Restrict to cases carrying any of these tags. */
+  caseTagIds?: number[] | null;
+  /**
+   * Only count executions recorded against runs carrying any of these tags.
+   * This and the two run filters below narrow the execution history, not
+   * the case list: a case with no execution in a matching run has no rows.
+   */
+  runTagIds?: number[] | null;
+  /**
+   * Only count executions from runs in these milestones or their
+   * descendants — a release's runs often hang off its child sprints.
+   */
+  milestoneIds?: number[] | null;
+  /** Only count executions from runs in these configurations. */
+  configIds?: number[] | null;
 }
 
 /**
@@ -91,6 +115,14 @@ export async function queryLatestTestResults({
   sources,
   automatedFlag,
   includeProject = false,
+  projectIds,
+  templateIds,
+  stateIds,
+  folderIds,
+  caseTagIds,
+  runTagIds,
+  milestoneIds,
+  configIds,
 }: LatestTestResultsQueryOptions): Promise<RawExecutionResult[]> {
   // An empty id list means "no cases", which no WHERE clause can express —
   // return early rather than emitting `IN ()`.
@@ -116,6 +148,53 @@ export async function queryLatestTestResults({
     : sql``;
   const automatedFlagFilter =
     automatedFlag == null ? sql`` : sql`AND rc."automated" = ${automatedFlag}`;
+  const projectIdsFilter = projectIds?.length
+    ? sql`AND rc."projectId" = ANY(${projectIds}::int[])`
+    : sql``;
+  const templateFilter = templateIds?.length
+    ? sql`AND rc."templateId" = ANY(${templateIds}::int[])`
+    : sql``;
+  const stateFilter = stateIds?.length
+    ? sql`AND rc."stateId" = ANY(${stateIds}::int[])`
+    : sql``;
+  const folderFilter = folderIds
+    ? sql`AND rc."folderId" = ANY(${folderIds}::int[])`
+    : sql``;
+  const caseTagFilter = caseTagIds?.length
+    ? sql`AND EXISTS (
+          SELECT 1 FROM "RepositoryCaseTag" rct
+          WHERE rct."caseId" = rc.id AND rct."tagId" = ANY(${caseTagIds}::int[])
+        )`
+    : sql``;
+  const caseFilters = sql`${caseFilter} ${projectFilter} ${projectIdsFilter} ${sourceFilter} ${automatedFlagFilter} ${templateFilter} ${stateFilter} ${folderFilter} ${caseTagFilter}`;
+
+  const milestoneActive = Boolean(milestoneIds?.length);
+  const milestoneCte = milestoneActive
+    ? sql`scope_milestones AS (
+        SELECT m.id FROM "Milestones" m WHERE m.id = ANY(${milestoneIds}::int[])
+        UNION
+        SELECT child.id FROM "Milestones" child
+        JOIN scope_milestones sm ON child."parentId" = sm.id
+      ),`
+    : sql``;
+  // _TagsToTestRuns: A = Tags.id, B = TestRuns.id.
+  const runFilters = sql`${
+    runTagIds?.length
+      ? sql`AND EXISTS (
+          SELECT 1 FROM "_TagsToTestRuns" ttr
+          WHERE ttr."B" = tr.id AND ttr."A" = ANY(${runTagIds}::int[])
+        )`
+      : sql``
+  } ${
+    milestoneActive
+      ? sql`AND tr."milestoneId" IN (SELECT id FROM scope_milestones)`
+      : sql``
+  } ${
+    configIds?.length
+      ? sql`AND tr."configId" = ANY(${configIds}::int[])`
+      : sql``
+  }`;
+
   const manualDateFilter = sql`${
     startDate ? sql`AND trr."executedAt" >= ${startDate}` : sql``
   } ${endDate ? sql`AND trr."executedAt" <= ${endDate}` : sql``}`;
@@ -125,12 +204,14 @@ export async function queryLatestTestResults({
 
   return (
     await sql<RawExecutionResult>`
-      WITH combined_results AS (
+      WITH ${milestoneActive ? sql`RECURSIVE` : sql``} ${milestoneCte}
+      combined_results AS (
         SELECT
           rc.id as test_case_id,
           rc.name as test_case_name,
           rc.source::text as test_case_source,
           rc."hasParameters" as test_case_has_parameters,
+          rc."automated" as test_case_automated,
           trr.id as result_id,
           CASE WHEN tr."isDeleted" = false THEN trc."testRunId" ELSE NULL END as test_run_id,
           s.name as status_name,
@@ -149,10 +230,8 @@ export async function queryLatestTestResults({
         INNER JOIN "Status" s ON s.id = trr."statusId" AND (s."isSuccess" = true OR s."isFailure" = true)
         INNER JOIN "Color" c ON c.id = s."colorId"
         WHERE rc."isDeleted" = false
-          ${caseFilter}
-          ${projectFilter}
-          ${sourceFilter}
-          ${automatedFlagFilter}
+          ${caseFilters}
+          ${runFilters}
           ${manualDateFilter}
 
         UNION ALL
@@ -162,6 +241,7 @@ export async function queryLatestTestResults({
           rc.name as test_case_name,
           rc.source::text as test_case_source,
           rc."hasParameters" as test_case_has_parameters,
+          rc."automated" as test_case_automated,
           jr.id as result_id,
           CASE WHEN tr."isDeleted" = false THEN jts."testRunId" ELSE NULL END as test_run_id,
           COALESCE(s.name, jr.type::text) as status_name,
@@ -187,10 +267,8 @@ export async function queryLatestTestResults({
         LEFT JOIN "Status" s ON s.id = jr."statusId"
         LEFT JOIN "Color" c ON c.id = s."colorId"
         WHERE rc."isDeleted" = false
-          ${caseFilter}
-          ${projectFilter}
-          ${sourceFilter}
-          ${automatedFlagFilter}
+          ${caseFilters}
+          ${runFilters}
           AND (
             COALESCE(s."isSuccess", jr.type = 'PASSED') = true
             OR COALESCE(s."isFailure", jr.type IN ('FAILURE', 'ERROR')) = true
@@ -204,6 +282,7 @@ export async function queryLatestTestResults({
           test_case_name,
           test_case_source,
           test_case_has_parameters,
+          test_case_automated,
           result_id,
           test_run_id,
           status_name,

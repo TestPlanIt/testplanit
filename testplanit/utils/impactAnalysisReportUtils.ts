@@ -1,6 +1,7 @@
 import { baseDb } from "@/lib/db";
 import { NextRequest } from "next/server";
 import { authorizeReportRequest } from "~/utils/reportApiUtils";
+import { parseEnumFilter, parseIdListFilter } from "~/utils/reportFilterParams";
 
 export type ImpactTrigger = "manual" | "pull_request" | "push";
 export type ImpactRunOutcome = "no_run" | "not_executed" | "passed" | "failed";
@@ -219,9 +220,10 @@ export async function handleImpactAnalysisReportPOST(
       lookbackDays?: number | string;
       startDate?: string;
       endDate?: string;
-      triggerFilter?: ImpactTriggerFilter;
-      outcomeFilter?: ImpactOutcomeFilter;
-      configId?: number | string | null;
+      // Lists of accepted values; the single-value form is also accepted.
+      triggerFilter?: ImpactTriggerFilter | ImpactTrigger[];
+      outcomeFilter?: ImpactOutcomeFilter | ImpactRunOutcome[];
+      configId?: number | string | null | Array<number | string>;
       dimensions?: string[];
     };
 
@@ -248,14 +250,11 @@ export async function handleImpactAnalysisReportPOST(
     const gte = from.length ? new Date(Math.max(...from.map((d) => +d))) : null;
     const lte = endDate ? new Date(endDate) : null;
 
-    const trigger = IMPACT_TRIGGERS.includes(triggerFilter as ImpactTrigger)
-      ? (triggerFilter as ImpactTrigger)
-      : null;
-    const outcome = IMPACT_RUN_OUTCOMES.includes(
-      outcomeFilter as ImpactRunOutcome
-    )
-      ? (outcomeFilter as ImpactRunOutcome)
-      : null;
+    const triggers = parseEnumFilter(triggerFilter, IMPACT_TRIGGERS);
+    const outcomes = parseEnumFilter(outcomeFilter, IMPACT_RUN_OUTCOMES);
+    const configIds = parseIdListFilter(configId);
+    // A manual analysis stores no trigger.
+    const namedTriggers = triggers?.filter((t) => t !== "manual") ?? [];
 
     const analyses = (await baseDb.impactAnalysis.findMany({
       where: {
@@ -263,11 +262,16 @@ export async function handleImpactAnalysisReportPOST(
         ...(isCrossProject
           ? { project: { isDeleted: false, impactEnabled: true } }
           : { projectId: Number(projectId) }),
-        ...(configId ? { configId: Number(configId) } : {}),
-        ...(trigger
-          ? trigger === "manual"
-            ? { trigger: null }
-            : { trigger }
+        ...(configIds ? { configId: { in: configIds } } : {}),
+        ...(triggers
+          ? {
+              OR: [
+                ...(triggers.includes("manual") ? [{ trigger: null }] : []),
+                ...(namedTriggers.length > 0
+                  ? [{ trigger: { in: namedTriggers } }]
+                  : []),
+              ],
+            }
           : {}),
         ...(gte || lte
           ? { createdAt: { ...(gte ? { gte } : {}), ...(lte ? { lte } : {}) } }
@@ -328,7 +332,7 @@ export async function handleImpactAnalysisReportPOST(
 
     const rows = analyses
       .map((analysis) => toReportRow(analysis, includeProject))
-      .filter((row) => outcome === null || row.outcome === outcome);
+      .filter((row) => outcomes === null || outcomes.includes(row.outcome));
 
     return Response.json({
       data: rows,

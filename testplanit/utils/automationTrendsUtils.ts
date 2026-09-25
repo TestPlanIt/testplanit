@@ -1,6 +1,7 @@
 import { baseDb } from "@/lib/db";
 import { NextRequest } from "next/server";
 import { authorizeReportRequest } from "~/utils/reportApiUtils";
+import { resolveReportFolderFilter } from "~/utils/reportGrouping";
 
 interface PeriodData {
   periodStart: string;
@@ -230,6 +231,15 @@ export async function handleAutomationTrendsPOST(
     // Add stateIds filter if provided
     if (stateIds.length > 0) {
       baseWhere.stateId = { in: stateIds.map(Number) };
+    }
+
+    const folderIds = await resolveReportFolderFilter(
+      baseDb,
+      body.folderIds,
+      body.folderIncludeDescendants
+    );
+    if (folderIds) {
+      baseWhere.folderId = { in: folderIds };
     }
 
     // Add automated filter if provided

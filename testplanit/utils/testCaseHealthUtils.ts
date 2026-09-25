@@ -2,6 +2,11 @@ import { baseDb } from "@/lib/db";
 import { sql } from "kysely";
 import { NextRequest } from "next/server";
 import { authorizeReportRequest } from "~/utils/reportApiUtils";
+import { resolveReportFolderFilter } from "~/utils/reportGrouping";
+import {
+  automatedFlagFilter,
+  parseEnumFilter,
+} from "~/utils/reportFilterParams";
 
 export type HealthStatus =
   "healthy" | "never_executed" | "always_passing" | "always_failing";
@@ -11,6 +16,7 @@ export interface TestCaseHealthRow {
   testCaseName: string;
   testCaseSource: string;
   testCaseHasParameters: boolean;
+  testCaseAutomated: boolean;
   createdAt: string;
   lastExecutedAt: string | null;
   daysSinceLastExecution: number | null;
@@ -32,6 +38,7 @@ interface RawHealthResult {
   test_case_name: string;
   test_case_source: string;
   test_case_has_parameters: boolean;
+  test_case_automated: boolean;
   created_at: Date;
   last_executed_at: Date | null;
   all_time_last_executed_at: Date | null;
@@ -161,9 +168,11 @@ export async function handleTestCaseHealthPOST(
       lookbackDays = 90,
       startDate,
       endDate,
-      automatedFilter, // "all" | "automated" | "manual"
-      healthStatusFilter, // "all" | "healthy" | "never_executed" | "always_passing" | "always_failing"
-      staleFilter, // "all" | "stale" | "notStale"
+      // Each filter is a list of accepted values; a single value, or "all"
+      // for no filter, is also accepted.
+      automatedFilter, // "automated" | "manual"
+      healthStatusFilter, // "healthy" | "never_executed" | "always_passing" | "always_failing"
+      staleFilter, // "stale" | "notStale"
       dimensions = [],
     } = body;
 
@@ -205,16 +214,15 @@ export async function handleTestCaseHealthPOST(
     // "Automated" means the case's `automated` flag — the definitive
     // marker (reporters flip it) — not the source enum, which records where
     // the case came from.
-    const automatedFlag =
-      automatedFilter === "automated"
-        ? true
-        : automatedFilter === "manual"
-          ? false
-          : null;
-    const sourceFilterSql =
-      automatedFlag == null
-        ? sql``
-        : sql`AND rc."automated" = ${automatedFlag}`;
+    const automatedFlag = automatedFlagFilter(automatedFilter);
+    const folderIds = await resolveReportFolderFilter(
+      baseDb,
+      body.folderIds,
+      body.folderIncludeDescendants
+    );
+    const sourceFilterSql = sql`${
+      automatedFlag == null ? sql`` : sql`AND rc."automated" = ${automatedFlag}`
+    } ${folderIds ? sql`AND rc."folderId" = ANY(${folderIds}::int[])` : sql``}`;
 
     // Build project filter
     const projectFilterSql =
@@ -350,6 +358,7 @@ export async function handleTestCaseHealthPOST(
         rc.name as test_case_name,
         rc.source::text as test_case_source,
         rc."hasParameters" as test_case_has_parameters,
+        rc."automated" as test_case_automated,
         rc."createdAt" as created_at,
         ae.last_executed_at,
         ate.all_time_last as all_time_last_executed_at,
@@ -416,6 +425,7 @@ export async function handleTestCaseHealthPOST(
         testCaseName: row.test_case_name,
         testCaseSource: row.test_case_source,
         testCaseHasParameters: row.test_case_has_parameters,
+        testCaseAutomated: row.test_case_automated,
         createdAt: row.created_at.toISOString(),
         lastExecutedAt: lastEver ? new Date(lastEver).toISOString() : null,
         daysSinceLastExecution,
@@ -437,23 +447,23 @@ export async function handleTestCaseHealthPOST(
     });
 
     // Apply derived-field filters (health status, staleness) after computation
-    const validHealthStatuses: HealthStatus[] = [
+    const healthStatuses = parseEnumFilter<HealthStatus>(healthStatusFilter, [
       "healthy",
       "never_executed",
       "always_passing",
       "always_failing",
-    ];
+    ]);
+    const staleness = parseEnumFilter(staleFilter, [
+      "stale",
+      "notStale",
+    ] as const);
     const filteredResults = healthResults.filter((r) => {
-      if (
-        healthStatusFilter &&
-        healthStatusFilter !== "all" &&
-        validHealthStatuses.includes(healthStatusFilter as HealthStatus) &&
-        r.healthStatus !== healthStatusFilter
-      ) {
+      if (healthStatuses && !healthStatuses.includes(r.healthStatus)) {
         return false;
       }
-      if (staleFilter === "stale" && !r.isStale) return false;
-      if (staleFilter === "notStale" && r.isStale) return false;
+      if (staleness && !staleness.includes(r.isStale ? "stale" : "notStale")) {
+        return false;
+      }
       return true;
     });
 

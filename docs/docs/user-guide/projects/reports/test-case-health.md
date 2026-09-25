@@ -22,16 +22,20 @@ Each case is classified into one of four buckets:
 
 Independent of the health bucket, a case is flagged as **stale** when `daysSinceLastExecution > staleDaysThreshold` (default 30 days).
 
-## Filters
+## Settings
 
-At generation time:
-
-- **Include** — Both, Manual only, or Automated only
-- **Health Status** — All, Healthy, Always Passing, Always Failing, or Never Executed
-- **Staleness** — All, Stale, or Not Stale
 - **Stale Days Threshold** — 7–90 days (default 30)
 - **Min Executions for Rate** — 3–20 executions needed before a case can be classified as Always Passing or Always Failing (default 5)
 - **Lookback Days** — 0–365; `0` means all-time
+
+## Filters
+
+Filters live in the **Filters** menu at the bottom of the report settings. Each filter accepts several values, and a row matches if it has any of them. When you use several filters, a row must match all of them. A filter with nothing selected doesn't narrow the report.
+
+- **Automated** — Yes (automated cases), No (manual cases)
+- **Folder** — cases in the selected folders (project report only). **Include subfolders**, on by default, also covers every folder beneath them.
+- **Health Status** — Healthy, Always Passing, Always Failing, Never Executed
+- **Staleness** — Stale, Not Stale
 
 ## Sort Order
 

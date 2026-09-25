@@ -1,9 +1,16 @@
+import { baseDb } from "~/lib/db";
+import { DbNull } from "@zenstackhq/orm";
+import { sql } from "kysely";
 import { NextRequest } from "next/server";
-import { authorizeReportRequest } from "~/utils/reportApiUtils";
+import { getExecutionScopeFilterOptions } from "~/lib/services/executionScopeFilterOptions";
+import { parseExecutionScopeBody } from "~/lib/services/executionScopeParam";
 import {
   queryLatestTestResults,
   type RawExecutionResult,
 } from "~/lib/services/latestTestResults";
+import { authorizeReportRequest } from "~/utils/reportApiUtils";
+import { automatedFlagFilter } from "~/utils/reportFilterParams";
+import { resolveReportFolderFilter } from "~/utils/reportGrouping";
 
 interface ExecutionStatus {
   resultId: number;
@@ -20,6 +27,7 @@ interface FlakyTestRow {
   testCaseName: string;
   testCaseSource: string;
   testCaseHasParameters: boolean;
+  testCaseAutomated: boolean;
   flipCount: number;
   executions: ExecutionStatus[];
   project?: {
@@ -82,6 +90,158 @@ function hasRequiredFlakiness(executions: ExecutionStatus[]): boolean {
   return hasSuccess && hasNonSuccess;
 }
 
+const MAX_FILTER_IDS = 500;
+
+/**
+ * An optional id-list body filter: absent/null/[] is inactive (undefined),
+ * a bounded list of positive integers is active, anything else is invalid.
+ */
+function parseIdFilter(
+  raw: unknown
+): { ok: true; ids: number[] | undefined } | { ok: false } {
+  if (raw === undefined || raw === null) return { ok: true, ids: undefined };
+  if (!Array.isArray(raw) || raw.length > MAX_FILTER_IDS) return { ok: false };
+  const ids = raw.map(Number);
+  if (ids.some((id) => !Number.isInteger(id) || id <= 0)) return { ok: false };
+  return { ok: true, ids: ids.length > 0 ? ids : undefined };
+}
+
+/**
+ * Custom field filters (field id -> accepted values), in the same shape the
+ * automation trends filter sends. Absent/null/{} is inactive.
+ */
+function parseDynamicFieldFilters(
+  raw: unknown
+):
+  | { ok: true; filters: Map<number, Array<string | number>> | undefined }
+  | { ok: false } {
+  if (raw === undefined || raw === null)
+    return { ok: true, filters: undefined };
+  if (typeof raw !== "object" || Array.isArray(raw)) return { ok: false };
+  const filters = new Map<number, Array<string | number>>();
+  for (const [key, values] of Object.entries(raw)) {
+    const fieldId = Number(key);
+    if (!Number.isInteger(fieldId) || fieldId <= 0 || !Array.isArray(values)) {
+      return { ok: false };
+    }
+    const scalars = values.filter(
+      (value): value is string | number =>
+        typeof value === "string" || typeof value === "number"
+    );
+    if (scalars.length !== values.length) return { ok: false };
+    if (scalars.length > 0) filters.set(fieldId, scalars);
+  }
+  return { ok: true, filters: filters.size > 0 ? filters : undefined };
+}
+
+/**
+ * The ids of the cases whose custom field values match EVERY filter. Within
+ * one field any listed value matches; a multi-select value matches when it
+ * contains any listed value. Values live in JSON, which Prisma cannot `in`
+ * over, so matching happens here.
+ */
+async function resolveDynamicFieldCaseIds(
+  filters: Map<number, Array<string | number>>,
+  projectIds: number[] | undefined
+): Promise<number[]> {
+  const rows = await baseDb.caseFieldValues.findMany({
+    where: {
+      fieldId: { in: [...filters.keys()] },
+      value: { not: DbNull },
+      testCase: {
+        isDeleted: false,
+        ...(projectIds ? { projectId: { in: projectIds } } : {}),
+      },
+    },
+    select: { testCaseId: true, fieldId: true, value: true },
+  });
+
+  const matchedFieldsByCase = new Map<number, Set<number>>();
+  for (const row of rows) {
+    const accepted = filters.get(row.fieldId)!;
+    const value = row.value;
+    const matches = Array.isArray(value)
+      ? accepted.some((candidate) => value.includes(candidate))
+      : accepted.includes(value as string | number);
+    if (!matches) continue;
+    const matched = matchedFieldsByCase.get(row.testCaseId) ?? new Set();
+    matched.add(row.fieldId);
+    matchedFieldsByCase.set(row.testCaseId, matched);
+  }
+
+  return [...matchedFieldsByCase.entries()]
+    .filter(([, matched]) => matched.size === filters.size)
+    .map(([caseId]) => caseId);
+}
+
+/**
+ * Filter options the view-options endpoint does not supply: case tags, run
+ * tags, and (project-scoped only) the execution-scope milestones and
+ * configurations. Also serves the report's empty dimension/metric metadata.
+ */
+export async function handleFlakyTestsOptionsGET(
+  req: NextRequest,
+  isCrossProject: boolean
+) {
+  const projectIdParam =
+    Number(new URL(req.url).searchParams.get("projectId")) || undefined;
+  const authz = await authorizeReportRequest(req, {
+    requiresAdmin: isCrossProject,
+    projectId: isCrossProject ? undefined : projectIdParam,
+  });
+  if (!authz.ok) return authz.response;
+
+  if (!isCrossProject && !projectIdParam) {
+    return Response.json({ error: "Project ID is required" }, { status: 400 });
+  }
+
+  const caseWhere = {
+    isDeleted: false,
+    ...(isCrossProject ? {} : { projectId: projectIdParam }),
+  };
+  const [caseTags, runTags, scopeOptions] = await Promise.all([
+    baseDb.tags.findMany({
+      where: { isDeleted: false, caseTags: { some: { case: caseWhere } } },
+      select: {
+        id: true,
+        name: true,
+        _count: { select: { caseTags: { where: { case: caseWhere } } } },
+      },
+      orderBy: { name: "asc" },
+    }),
+    // Raw SQL: the ORM's relation filter and count over the implicit
+    // _TagsToTestRuns table (A = Tags.id, B = TestRuns.id) took over a
+    // minute on a project with ~20k tagged runs.
+    sql<{ id: number; name: string; count: number }>`
+      SELECT t.id, t.name, count(*)::int AS count
+      FROM "_TagsToTestRuns" ttr
+      JOIN "TestRuns" tr ON tr.id = ttr."B" AND tr."isDeleted" = false
+      JOIN "Tags" t ON t.id = ttr."A" AND t."isDeleted" = false
+      ${isCrossProject ? sql`` : sql`WHERE tr."projectId" = ${projectIdParam}`}
+      GROUP BY t.id, t.name
+      ORDER BY t.name
+    `
+      .execute(baseDb.$qb)
+      .then((result) => result.rows),
+    isCrossProject
+      ? { milestones: [], configurations: [] }
+      : getExecutionScopeFilterOptions(projectIdParam!),
+  ]);
+
+  return Response.json({
+    dimensions: [],
+    metrics: [],
+    caseTags: caseTags.map((tag) => ({
+      id: tag.id,
+      name: tag.name,
+      count: tag._count.caseTags,
+    })),
+    runTags,
+    milestones: scopeOptions.milestones,
+    configurations: scopeOptions.configurations,
+  });
+}
+
 export async function handleFlakyTestsPOST(
   req: NextRequest,
   isCrossProject: boolean
@@ -100,7 +260,7 @@ export async function handleFlakyTestsPOST(
       flipThreshold = 5,
       startDate,
       endDate,
-      automatedFilter, // "all" | "automated" | "manual"
+      automatedFilter, // ("automated" | "manual")[]; a single value or "all" also accepted
       dimensions = [], // Array of dimension IDs
     } = body;
 
@@ -119,6 +279,30 @@ export async function handleFlakyTestsPOST(
       );
     }
 
+    const projectIds = parseIdFilter(body.projectIds);
+    const templateIds = parseIdFilter(body.templateIds);
+    const stateIds = parseIdFilter(body.stateIds);
+    const caseTagIds = parseIdFilter(body.caseTagIds);
+    const runTagIds = parseIdFilter(body.runTagIds);
+    const dynamicFieldFilters = parseDynamicFieldFilters(
+      body.dynamicFieldFilters
+    );
+    const executionScope = parseExecutionScopeBody(
+      body.milestoneIds,
+      body.configIds
+    );
+    if (
+      !projectIds.ok ||
+      !templateIds.ok ||
+      !stateIds.ok ||
+      !caseTagIds.ok ||
+      !runTagIds.ok ||
+      !dynamicFieldFilters.ok ||
+      !executionScope.ok
+    ) {
+      return Response.json({ error: "Invalid filters" }, { status: 400 });
+    }
+
     // Parse dates
     const startDateParsed = startDate ? new Date(startDate) : null;
     const endDateParsed = endDate ? new Date(endDate) : null;
@@ -127,22 +311,43 @@ export async function handleFlakyTestsPOST(
     // "Automated" means the case's `automated` flag — the definitive
     // marker (reporters flip it) — not the source enum, which records where
     // the case came from.
-    const automatedFlag =
-      automatedFilter === "automated"
-        ? true
-        : automatedFilter === "manual"
-          ? false
-          : null; // null means no filter (show all)
+    const automatedFlag = automatedFlagFilter(automatedFilter);
 
-    // Ranked executions come from the shared service, which composes the
-    // date/flag/project filters into one statement.
+    // The project filter only narrows the cross-project report; a
+    // project-scoped one is already a single project.
+    const scopedProjectIds = isCrossProject
+      ? projectIds.ids
+      : [projectIdNum as number];
+    const folderIds = await resolveReportFolderFilter(
+      baseDb,
+      body.folderIds,
+      body.folderIncludeDescendants
+    );
+    const caseIds = dynamicFieldFilters.filters
+      ? await resolveDynamicFieldCaseIds(
+          dynamicFieldFilters.filters,
+          scopedProjectIds
+        )
+      : undefined;
+
+    // Ranked executions come from the shared service, which composes every
+    // filter into one statement.
     const rawResults: RawExecutionResult[] = await queryLatestTestResults({
       limit: runs,
+      caseIds,
       projectId: isCrossProject ? null : projectIdNum,
+      projectIds: isCrossProject ? projectIds.ids : undefined,
       startDate: startDateParsed,
       endDate: endDateParsed,
       automatedFlag,
       includeProject,
+      templateIds: templateIds.ids,
+      stateIds: stateIds.ids,
+      folderIds,
+      caseTagIds: caseTagIds.ids,
+      runTagIds: runTagIds.ids,
+      milestoneIds: executionScope.scope?.milestoneIds,
+      configIds: executionScope.scope?.configIds,
     });
 
     // Group results by test case (and project if included)
@@ -153,6 +358,7 @@ export async function handleFlakyTestsPOST(
         testCaseName: string;
         testCaseSource: string;
         testCaseHasParameters: boolean;
+        testCaseAutomated: boolean;
         projectId?: number;
         projectName?: string;
         executions: ExecutionStatus[];
@@ -173,6 +379,7 @@ export async function handleFlakyTestsPOST(
           testCaseName: row.test_case_name,
           testCaseSource: row.test_case_source,
           testCaseHasParameters: row.test_case_has_parameters,
+          testCaseAutomated: row.test_case_automated,
           projectId: includeProject ? row.project_id : undefined,
           projectName: includeProject ? row.project_name : undefined,
           executions: [],
@@ -214,6 +421,7 @@ export async function handleFlakyTestsPOST(
           testCaseName: testCase.testCaseName,
           testCaseSource: testCase.testCaseSource,
           testCaseHasParameters: testCase.testCaseHasParameters,
+          testCaseAutomated: testCase.testCaseAutomated,
           flipCount,
           executions: testCase.executions,
           project:

@@ -121,17 +121,8 @@ interface ReadableSearchParams {
   get(name: string): string | null;
 }
 
-export type AutomatedFilterValue = "all" | "automated" | "manual";
-export type HealthStatusFilterValue =
-  "all" | "healthy" | "never_executed" | "always_passing" | "always_failing";
-export type HealthStaleFilterValue = "all" | "stale" | "notStale";
 export type DateGroupingValue =
   "daily" | "weekly" | "monthly" | "quarterly" | "annually";
-export type ImpactTriggerFilterValue =
-  "all" | "manual" | "pull_request" | "push";
-export type ImpactOutcomeFilterValue =
-  "all" | "failed" | "passed" | "not_executed" | "no_run";
-export type CoverageFilterValue = "all" | "gaps" | "pinned";
 export type RequirementCoverageStateValue =
   "PASSED" | "FAILED" | "NOT_RUN" | "UNCOVERED";
 
@@ -143,20 +134,9 @@ export type RequirementCoverageStateValue =
 export interface PerTypeReportUrlState {
   consecutiveRuns: number;
   flipThreshold: number;
-  flakyAutomatedFilter: AutomatedFilterValue;
   staleDaysThreshold: number;
   minExecutionsForRate: number;
   lookbackDays: number;
-  healthAutomatedFilter: AutomatedFilterValue;
-  healthStatusFilter: HealthStatusFilterValue;
-  healthStaleFilter: HealthStaleFilterValue;
-  /** Impact analysis history: which trigger, which run outcome, which
-   * repository connection (null = every connection). */
-  impactTriggerFilter: ImpactTriggerFilterValue;
-  impactOutcomeFilter: ImpactOutcomeFilterValue;
-  impactConfigId: number | null;
-  /** Code pin coverage: which rows to show. */
-  coverageFilter: CoverageFilterValue;
   requirementIds: number[];
   requirementCoverageStates: RequirementCoverageStateValue[];
   /** Gaps/traceability execution scope (milestone/configuration) — the
@@ -172,23 +152,18 @@ export interface PerTypeReportUrlState {
   compareSnapshotId: number | null;
   includeUnchanged: boolean;
   dateGrouping: DateGroupingValue;
-  trendsFilterValues: Record<string, Array<string | number>>;
+  /** Folders filter: whether picked folders bring their subfolders. */
+  folderIncludeSubfolders: boolean;
+  /** The Filters menu's selections: menu key -> selected values. */
+  filterValues: Record<string, Array<string | number>>;
 }
 
 export const PER_TYPE_REPORT_PARAM_DEFAULTS: PerTypeReportUrlState = {
   consecutiveRuns: 10,
   flipThreshold: 5,
-  flakyAutomatedFilter: "all",
   staleDaysThreshold: 30,
   minExecutionsForRate: 5,
   lookbackDays: 90,
-  healthAutomatedFilter: "all",
-  healthStatusFilter: "all",
-  healthStaleFilter: "all",
-  impactTriggerFilter: "all",
-  impactOutcomeFilter: "all",
-  impactConfigId: null,
-  coverageFilter: "all",
   requirementIds: [],
   requirementCoverageStates: [],
   requirementMilestoneIds: [],
@@ -203,44 +178,29 @@ export const PER_TYPE_REPORT_PARAM_DEFAULTS: PerTypeReportUrlState = {
   compareSnapshotId: null,
   includeUnchanged: false,
   dateGrouping: "weekly",
-  trendsFilterValues: {},
+  folderIncludeSubfolders: true,
+  filterValues: {},
 };
 
-const AUTOMATED_FILTER_VALUES: readonly AutomatedFilterValue[] = [
-  "all",
-  "automated",
-  "manual",
-];
-const HEALTH_STATUS_FILTER_VALUES: readonly HealthStatusFilterValue[] = [
-  "all",
+const HEALTH_STATUS_FILTER_VALUES = [
   "healthy",
   "never_executed",
   "always_passing",
   "always_failing",
-];
-const IMPACT_TRIGGER_FILTER_VALUES: readonly ImpactTriggerFilterValue[] = [
-  "all",
+] as const;
+const HEALTH_STALE_FILTER_VALUES = ["stale", "notStale"] as const;
+const IMPACT_TRIGGER_FILTER_VALUES = [
   "manual",
   "pull_request",
   "push",
-];
-const IMPACT_OUTCOME_FILTER_VALUES: readonly ImpactOutcomeFilterValue[] = [
-  "all",
+] as const;
+const IMPACT_OUTCOME_FILTER_VALUES = [
   "failed",
   "passed",
   "not_executed",
   "no_run",
-];
-const COVERAGE_FILTER_VALUES: readonly CoverageFilterValue[] = [
-  "all",
-  "gaps",
-  "pinned",
-];
-const HEALTH_STALE_FILTER_VALUES: readonly HealthStaleFilterValue[] = [
-  "all",
-  "stale",
-  "notStale",
-];
+] as const;
+const PIN_COVERAGE_FILTER_VALUES = ["gaps", "pinned"] as const;
 const DATE_GROUPING_VALUES: readonly DateGroupingValue[] = [
   "daily",
   "weekly",
@@ -381,9 +341,28 @@ export function parsePerTypeReportParams(
     requirementCoverageStates: [],
     requirementMilestoneIds: [],
     requirementConfigIds: [],
-    trendsFilterValues: {},
+    filterValues: {},
   };
+  const filterValues: Record<string, Array<string | number>> = {};
   const base = baseReportType(reportType);
+
+  // The case-based reports' Folders filter.
+  if (
+    base === "flaky-tests" ||
+    base === "test-case-health" ||
+    base === "automation-trends"
+  ) {
+    setMenuValues(
+      filterValues,
+      "folders",
+      idListParam(params, "folderIds", MAX_FILTER_MENU_IDS)
+    );
+    state.folderIncludeSubfolders = booleanParam(
+      params,
+      "folderIncludeDescendants",
+      state.folderIncludeSubfolders
+    );
+  }
 
   if (base === "flaky-tests") {
     state.consecutiveRuns = positiveIntParam(
@@ -398,12 +377,19 @@ export function parsePerTypeReportParams(
     );
     // The control caps the threshold below the run count.
     state.flipThreshold = Math.min(flipThreshold, state.consecutiveRuns - 1);
-    state.flakyAutomatedFilter = enumParam(
-      params,
-      "automatedFilter",
-      AUTOMATED_FILTER_VALUES,
-      state.flakyAutomatedFilter
+    Object.assign(
+      filterValues,
+      filterMenuValues(params, [
+        ["projectIds", "projects"],
+        ["templateIds", "templates"],
+        ["stateIds", "states"],
+        ["caseTagIds", "caseTags"],
+        ["runTagIds", "runTags"],
+        ["milestoneIds", "milestone"],
+        ["configIds", "configuration"],
+      ])
     );
+    setMenuValues(filterValues, "automated", automatedMenuValues(params));
   }
 
   if (base === "test-case-health") {
@@ -422,23 +408,16 @@ export function parsePerTypeReportParams(
       "lookbackDays",
       state.lookbackDays
     );
-    state.healthAutomatedFilter = enumParam(
-      params,
-      "automatedFilter",
-      AUTOMATED_FILTER_VALUES,
-      state.healthAutomatedFilter
+    setMenuValues(filterValues, "automated", automatedMenuValues(params));
+    setMenuValues(
+      filterValues,
+      "healthStatus",
+      enumListParam(params, "healthStatusFilter", HEALTH_STATUS_FILTER_VALUES)
     );
-    state.healthStatusFilter = enumParam(
-      params,
-      "healthStatusFilter",
-      HEALTH_STATUS_FILTER_VALUES,
-      state.healthStatusFilter
-    );
-    state.healthStaleFilter = enumParam(
-      params,
-      "staleFilter",
-      HEALTH_STALE_FILTER_VALUES,
-      state.healthStaleFilter
+    setMenuValues(
+      filterValues,
+      "staleness",
+      enumListParam(params, "staleFilter", HEALTH_STALE_FILTER_VALUES)
     );
   }
 
@@ -448,21 +427,21 @@ export function parsePerTypeReportParams(
       "lookbackDays",
       state.lookbackDays
     );
-    state.impactTriggerFilter = enumParam(
-      params,
-      "triggerFilter",
-      IMPACT_TRIGGER_FILTER_VALUES,
-      state.impactTriggerFilter
+    setMenuValues(
+      filterValues,
+      "trigger",
+      enumListParam(params, "triggerFilter", IMPACT_TRIGGER_FILTER_VALUES)
     );
-    state.impactOutcomeFilter = enumParam(
-      params,
-      "outcomeFilter",
-      IMPACT_OUTCOME_FILTER_VALUES,
-      state.impactOutcomeFilter
+    setMenuValues(
+      filterValues,
+      "outcome",
+      enumListParam(params, "outcomeFilter", IMPACT_OUTCOME_FILTER_VALUES)
     );
-    const configId = params.get("configId");
-    state.impactConfigId =
-      configId !== null && /^\d+$/.test(configId) ? Number(configId) : null;
+    setMenuValues(
+      filterValues,
+      "repository",
+      idListParam(params, "configId", MAX_FILTER_MENU_IDS)
+    );
   }
 
   if (base === "code-pin-coverage") {
@@ -471,15 +450,16 @@ export function parsePerTypeReportParams(
       "lookbackDays",
       state.lookbackDays
     );
-    state.coverageFilter = enumParam(
-      params,
-      "coverageFilter",
-      COVERAGE_FILTER_VALUES,
-      state.coverageFilter
+    setMenuValues(
+      filterValues,
+      "pinCoverage",
+      enumListParam(params, "coverageFilter", PIN_COVERAGE_FILTER_VALUES)
     );
-    const configId = params.get("configId");
-    state.impactConfigId =
-      configId !== null && /^\d+$/.test(configId) ? Number(configId) : null;
+    setMenuValues(
+      filterValues,
+      "repository",
+      idListParam(params, "configId", MAX_FILTER_MENU_IDS)
+    );
   }
 
   if (
@@ -544,40 +524,90 @@ export function parsePerTypeReportParams(
       DATE_GROUPING_VALUES,
       state.dateGrouping
     );
-    // The reverse of the run body's selectedFilterValues mapping.
-    const filterValues: Record<string, Array<string | number>> = {};
-    const simpleFilters: Array<[string, string]> = [
-      ["projectIds", "projects"],
-      ["templateIds", "templates"],
-      ["stateIds", "states"],
-      ["automated", "automated"],
-    ];
-    for (const [paramName, filterKey] of simpleFilters) {
-      const values = valueListParam(params, paramName);
-      if (values) filterValues[filterKey] = values;
-    }
-    const dynamicRaw = params.get("dynamicFieldFilters");
-    if (dynamicRaw) {
-      try {
-        const parsed = JSON.parse(dynamicRaw);
-        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-          for (const [fieldId, values] of Object.entries(parsed)) {
-            if (!Array.isArray(values) || values.length === 0) continue;
-            const scalars = values.filter(
-              (member): member is string | number =>
-                typeof member === "string" || typeof member === "number"
-            );
-            if (scalars.length > 0) {
-              filterValues[`dynamic_${fieldId}`] = scalars;
-            }
-          }
-        }
-      } catch {
-        // Malformed param — leave the dynamic filters unset.
-      }
-    }
-    state.trendsFilterValues = filterValues;
+    Object.assign(
+      filterValues,
+      filterMenuValues(params, [
+        ["projectIds", "projects"],
+        ["templateIds", "templates"],
+        ["stateIds", "states"],
+        ["automated", "automated"],
+      ])
+    );
   }
 
+  state.filterValues = filterValues;
   return state;
+}
+
+/** Cap on a restored id-list filter; a longer list is a malformed URL. */
+const MAX_FILTER_MENU_IDS = 200;
+
+function setMenuValues(
+  filterValues: Record<string, Array<string | number>>,
+  key: string,
+  values: Array<string | number>
+) {
+  if (values.length > 0) filterValues[key] = values;
+}
+
+/**
+ * The known members of an enum filter param, which may be one value
+ * ("stale"), a list ("stale,notStale"), or "all" (no filter).
+ */
+function enumListParam(
+  params: ReadableSearchParams,
+  name: string,
+  allowed: readonly string[]
+): string[] {
+  const values = valueListParam(params, name) ?? [];
+  return allowed.filter((value) => values.includes(value));
+}
+
+/**
+ * The flaky and health reports' `automatedFilter` as the menu's Automated
+ * option ids (1 = automated, 0 = manual), the same ids the automation
+ * trends menu uses.
+ */
+function automatedMenuValues(params: ReadableSearchParams): number[] {
+  return enumListParam(params, "automatedFilter", ["automated", "manual"]).map(
+    (value) => (value === "automated" ? 1 : 0)
+  );
+}
+
+/**
+ * The filter menu's selections, rebuilt from the run body's keys — the
+ * reverse of ReportBuilder's selectedFilterValues -> body mapping. Each
+ * pair is [body param, menu key]; custom field filters ride the
+ * `dynamicFieldFilters` JSON object.
+ */
+function filterMenuValues(
+  params: ReadableSearchParams,
+  simpleFilters: Array<[string, string]>
+): Record<string, Array<string | number>> {
+  const filterValues: Record<string, Array<string | number>> = {};
+  for (const [paramName, filterKey] of simpleFilters) {
+    const values = valueListParam(params, paramName);
+    if (values) filterValues[filterKey] = values;
+  }
+  const dynamicRaw = params.get("dynamicFieldFilters");
+  if (dynamicRaw) {
+    try {
+      const parsed = JSON.parse(dynamicRaw);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        for (const [fieldId, values] of Object.entries(parsed)) {
+          if (!Array.isArray(values) || values.length === 0) continue;
+          const scalars = values.filter(
+            (member): member is string | number =>
+              typeof member === "string" || typeof member === "number"
+          );
+          if (scalars.length > 0) {
+            filterValues[`dynamic_${fieldId}`] = scalars;
+          }
+        }
+      }
+    } catch {
+      // Malformed param — leave the dynamic filters unset.
+    }
+  }
+  return filterValues;
 }

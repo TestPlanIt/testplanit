@@ -34,6 +34,7 @@ import {
   resolveRequirementDisplayPriority,
   resolveRequirementDisplayStatus,
 } from "~/utils/issueDisplayText";
+import { getExecutionScopeFilterOptions } from "~/lib/services/executionScopeFilterOptions";
 import { authorizeReportRequest } from "~/utils/reportApiUtils";
 
 /**
@@ -170,45 +171,10 @@ export async function handleRequirementReportOptionsGET(
       }))
       .sort((a, b) => a.name.localeCompare(b.name));
 
-  // Execution-scope picker options — project-scoped reports only (a
-  // milestone belongs to one project, so a cross-project scope picker
-  // would be a grab-bag of same-named rows from different projects).
-  // Completed milestones stay listed on purpose: "coverage on the shipped
-  // release" is the milestone axis's whole point. Configurations follow
-  // the run-creation picker's enabled+assigned convention.
-  const [scopeMilestones, scopeConfigurations] = isCrossProject
-    ? [[], []]
-    : await Promise.all([
-        baseDb.milestones.findMany({
-          where: { projectId: projectIdParam, isDeleted: false },
-          // Everything the shared MilestoneOptionContent renders — the type
-          // icon, the tree position, and the tracker-source badge fields —
-          // so the report's filter menu can show milestones the way every
-          // other picker does.
-          select: {
-            id: true,
-            name: true,
-            parentId: true,
-            integrationId: true,
-            externalKind: true,
-            externalState: true,
-            externalUrl: true,
-            detachedAt: true,
-            mergedToExternalId: true,
-            milestoneType: { select: { icon: { select: { name: true } } } },
-          },
-          orderBy: { name: "asc" },
-        }),
-        baseDb.configurations.findMany({
-          where: {
-            isDeleted: false,
-            isEnabled: true,
-            projects: { some: { projectId: projectIdParam } },
-          },
-          select: { id: true, name: true },
-          orderBy: { name: "asc" },
-        }),
-      ]);
+  // Execution-scope picker options — project-scoped reports only.
+  const scopeOptions = isCrossProject
+    ? { milestones: [], configurations: [] }
+    : await getExecutionScopeFilterOptions(projectIdParam);
 
   return Response.json({
     dimensions: [],
@@ -224,8 +190,8 @@ export async function handleRequirementReportOptionsGET(
       : [],
     priorities: toOptions(priorities),
     statuses: toOptions(statuses),
-    milestones: scopeMilestones,
-    configurations: scopeConfigurations,
+    milestones: scopeOptions.milestones,
+    configurations: scopeOptions.configurations,
   });
 }
 

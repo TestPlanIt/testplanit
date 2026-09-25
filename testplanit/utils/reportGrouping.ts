@@ -247,3 +247,56 @@ export async function getFolderSubtreeIds(
   `;
   return rows.map((row) => row.id);
 }
+
+/**
+ * The given folders plus every folder beneath them — the pre-built reports'
+ * Folders filter, where picking a parent folder means its whole subtree.
+ * `UNION` (not `UNION ALL`) so overlapping picks, or a parent cycle, cannot
+ * repeat or recurse forever.
+ */
+export async function getFoldersSubtreeIds(
+  db: any,
+  folderIds: number[]
+): Promise<number[]> {
+  if (folderIds.length === 0) return [];
+  const rows: Array<{ id: number }> = await db.$queryRaw`
+    WITH RECURSIVE subtree AS (
+      SELECT id FROM "RepositoryFolders"
+      WHERE id = ANY(${folderIds}::int[]) AND "isDeleted" = false
+      UNION
+      SELECT f.id FROM "RepositoryFolders" f
+      INNER JOIN subtree s ON f."parentId" = s.id
+      WHERE f."isDeleted" = false
+    )
+    SELECT id FROM subtree
+  `;
+  return rows.map((row) => row.id);
+}
+
+/**
+ * The folder ids a pre-built report's Folders filter restricts cases to, or
+ * null when the filter is inactive. With `includeSubfolders` (the default)
+ * each picked folder brings its whole subtree, like the Report Builder's
+ * Include subfolders switch. Picked folders that no longer exist resolve to
+ * an empty list, which matches no case.
+ */
+export async function resolveReportFolderFilter(
+  db: any,
+  rawFolderIds: unknown,
+  rawIncludeSubfolders: unknown
+): Promise<number[] | null> {
+  const values = Array.isArray(rawFolderIds)
+    ? rawFolderIds
+    : rawFolderIds == null
+      ? []
+      : [rawFolderIds];
+  const folderIds = [
+    ...new Set(
+      values.map(Number).filter((id) => Number.isInteger(id) && id > 0)
+    ),
+  ];
+  if (folderIds.length === 0) return null;
+  return rawIncludeSubfolders === false
+    ? folderIds
+    : getFoldersSubtreeIds(db, folderIds);
+}

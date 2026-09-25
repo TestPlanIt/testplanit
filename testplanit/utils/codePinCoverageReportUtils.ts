@@ -1,6 +1,7 @@
 import { baseDb } from "@/lib/db";
 import { NextRequest } from "next/server";
 import { authorizeReportRequest } from "~/utils/reportApiUtils";
+import { parseEnumFilter, parseIdListFilter } from "~/utils/reportFilterParams";
 import {
   directoryOf,
   type CodePinCoverageRow,
@@ -205,8 +206,9 @@ export async function handleCodePinCoverageReportPOST(
     } = body as {
       projectId?: number | string;
       lookbackDays?: number | string;
-      configId?: number | string | null;
-      coverageFilter?: CoverageFilter;
+      // Lists of accepted values; the single-value form is also accepted.
+      configId?: number | string | null | Array<number | string>;
+      coverageFilter?: CoverageFilter | Array<"gaps" | "pinned">;
       dimensions?: string[];
     };
     if (!isCrossProject && !projectId) {
@@ -223,6 +225,7 @@ export async function handleCodePinCoverageReportPOST(
     const since = lookback === 0 ? null : new Date();
     if (since) since.setDate(since.getDate() - lookback);
 
+    const connectionIds = parseIdListFilter(configId);
     const projectScope = isCrossProject
       ? { project: { isDeleted: false, impactEnabled: true } }
       : { projectId: Number(projectId) };
@@ -231,7 +234,7 @@ export async function handleCodePinCoverageReportPOST(
       where: {
         purpose: "IMPACT",
         ...projectScope,
-        ...(configId ? { id: Number(configId) } : {}),
+        ...(connectionIds ? { id: { in: connectionIds } } : {}),
         repository: { isDeleted: false },
       },
       select: {
@@ -287,10 +290,18 @@ export async function handleCodePinCoverageReportPOST(
       caseTotals: new Map(caseCounts),
       includeProject,
     });
-    if (coverageFilter === "gaps") {
-      rows = rows.filter((r) => r.pinCount === 0 && r.uncoveredFileCount > 0);
-    } else if (coverageFilter === "pinned") {
-      rows = rows.filter((r) => r.pinCount > 0);
+    const coverage = parseEnumFilter(coverageFilter, [
+      "gaps",
+      "pinned",
+    ] as const);
+    if (coverage) {
+      rows = rows.filter(
+        (r) =>
+          (coverage.includes("gaps") &&
+            r.pinCount === 0 &&
+            r.uncoveredFileCount > 0) ||
+          (coverage.includes("pinned") && r.pinCount > 0)
+      );
     }
 
     return Response.json({

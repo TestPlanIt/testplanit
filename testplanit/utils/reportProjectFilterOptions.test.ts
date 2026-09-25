@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  mergeSeenOptions,
   mergeSeenProjectOptions,
+  withLatestCounts,
   withLatestProjectCounts,
 } from "./reportProjectFilterOptions";
 
@@ -68,5 +70,52 @@ describe("withLatestProjectCounts", () => {
     expect(withLatestProjectCounts([A], [{ id: 1 }])).toEqual([
       { id: 1, name: "Apollo", count: 0 },
     ]);
+  });
+});
+
+describe("mergeSeenOptions / withLatestCounts (any option group)", () => {
+  const byValue = (option: any) => option?.value;
+
+  it("keeps an option the latest response dropped, showing zero", () => {
+    // The first response lists both Automated values; after picking Yes the
+    // server only counts Yes.
+    let seen = mergeSeenOptions<any>(
+      [],
+      [
+        { value: true, count: 5 },
+        { value: false, count: 3 },
+      ],
+      byValue
+    );
+    seen = mergeSeenOptions(seen, [{ value: true, count: 5 }], byValue);
+    expect(
+      withLatestCounts(seen, [{ value: true, count: 5 }], byValue)
+    ).toEqual([
+      { value: true, count: 5 },
+      { value: false, count: 0 },
+    ]);
+  });
+
+  it("stores options without their count and keeps first-seen order", () => {
+    const seen = mergeSeenOptions<any>(
+      [],
+      [
+        { id: 2, name: "B", icon: { name: "x" }, count: 1 },
+        { id: 1, name: "A", count: 9 },
+      ],
+      (o) => o?.id
+    );
+    expect(seen).toEqual([
+      { id: 2, name: "B", icon: { name: "x" } },
+      { id: 1, name: "A" },
+    ]);
+  });
+
+  it("returns the previous array when nothing is new", () => {
+    const previous = [{ id: 1, name: "A" }];
+    expect(
+      mergeSeenOptions(previous, [{ id: 1, name: "A", count: 2 }], (o) => o?.id)
+    ).toBe(previous);
+    expect(mergeSeenOptions(previous, undefined, (o) => o?.id)).toBe(previous);
   });
 });

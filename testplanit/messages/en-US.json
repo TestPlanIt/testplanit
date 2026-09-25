@@ -8351,6 +8351,8 @@
         "oldest": "Old",
         "noFlakyTests": "No flaky tests found matching the criteria",
         "includeFilter": "Include",
+        "caseTags": "Test Case Tags",
+        "runTags": "Test Run Tags",
         "testRunDeleted": "Test run has been deleted",
         "chart": {
           "highPriority": "Needs attention",
@@ -8693,7 +8695,8 @@
       },
       "folderDescendants": {
         "label": "Include subfolders",
-        "description": "Count results from subfolders toward each parent folder."
+        "description": "Count results from subfolders toward each parent folder.",
+        "filterDescription": "Also include test cases in the selected folders' subfolders."
       },
       "dimensionFilters": {
         "allValues": "All values"

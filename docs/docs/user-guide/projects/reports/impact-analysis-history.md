@@ -35,12 +35,17 @@ Outcomes are read from each status's success and failure flags, not its name.
 
 The chart stacks analyses per week by trigger.
 
-## Filters
+## Settings
 
 - **Lookback Period** — 7–365 days, or all time (default 90)
-- **Trigger** — All, Manual, Pull request, or Push
-- **Outcome** — All, Failed, Passed, Not executed, or No run
-- **Repository** — one connected repository, or all
+
+## Filters
+
+Filters live in the **Filters** menu at the bottom of the report settings. Each filter accepts several values, and a row matches if it has any of them. When you use several filters, a row must match all of them. A filter with nothing selected doesn't narrow the report.
+
+- **Trigger** — Manual, Pull request, Push
+- **Outcome** — Failed, Passed, Not executed, No run
+- **Repository** — the project's connected repositories (shown when the project has more than one)
 
 ## Sort Order
 
