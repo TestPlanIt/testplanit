@@ -5370,7 +5370,7 @@ model ShareLink {
     @@allow('all', projectId != null && project.creator.id == auth().id)
     @@allow('read,update,delete', createdBy.id == auth().id)
     @@allow('create',
-        projectId != null && (
+        createdById == auth().id && projectId != null && projectId in auth().accessibleProjectIds && (
             project.creator.id == auth().id ||
             project.userPermissions?[user.id == auth().id && accessType != 'NO_ACCESS'] ||
             project.assignedUsers?[user.id == auth().id] ||
@@ -5378,7 +5378,7 @@ model ShareLink {
         )
     )
     @@allow('read',
-        projectId != null && (
+        projectId != null && projectId in auth().accessibleProjectIds && (
             project.creator.id == auth().id ||
             project.userPermissions?[user.id == auth().id && accessType != 'NO_ACCESS'] ||
             project.assignedUsers?[user.id == auth().id]
@@ -5387,7 +5387,7 @@ model ShareLink {
     @@allow('read', projectId == null && createdBy.id == auth().id)
 
     // Cross-project shares (projectId == null) - only creator or admin can manage
-    @@allow('create', projectId == null && auth().access != 'NONE')
+    @@allow('create', createdById == auth().id && projectId == null && auth().access != 'NONE')
 }
 
 /// The frozen result of a REPORT or SAVED_REPORT link: the viewer payload the
