@@ -4090,7 +4090,7 @@
       "notifications": "Thông báo",
       "imports": "Nhập dữ liệu",
       "integrations": "Tích hợp vấn đề",
-      "webhooks": "Webhooks",
+      "webhooks": "Webhook",
       "junit": "JUnit",
       "datasets": "Bộ dữ liệu được chia sẻ",
       "testCaseParameters": "Tham số trường hợp kiểm thử",

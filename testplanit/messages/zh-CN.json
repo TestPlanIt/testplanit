@@ -1605,7 +1605,7 @@
         "outboundCreateUrlMustUseHttps": "URL必须使用HTTPS",
         "outboundNameLabel": "姓名",
         "outboundUnnamedConfig": "（未命名的 webhook）",
-        "outboundCreateUrl": "URL",
+        "outboundCreateUrl": "网址",
         "outboundCreateUrlHelp": "目标 URL。Slack 传入 webhook URL 会自动检测。",
         "outboundCreateUrlPlaceholder": "https://hooks.slack.com/services/...",
         "outboundDetectedSlack": "检测到：Slack",
@@ -3006,7 +3006,7 @@
       "addToRunDraftBlocked": "如果此项目的“从测试运行中排除草稿案例”选项已启用，则无法将草稿案例添加到运行中。",
       "copyMoveToProject": "复制/移动",
       "export": "出口",
-      "quickScript": "QuickScript",
+      "quickScript": "快速脚本",
       "parameterizedStatusReadOnly": "状态由迭代结果计算得出——点击打开",
       "cannotReorderAcrossPages": "无法跨多个页面重新排列测试用例。要重新排序，请从页面大小菜单中选择“全部”以在一个页面上查看所有用例，或取消选择其他页面上的用例。您仍然可以将选定的用例拖到文件夹中。",
       "exportModal": {
@@ -3271,7 +3271,7 @@
       "exportError": "导出失败，请重试。"
     },
     "quickScript": {
-      "title": "QuickScript",
+      "title": "快速脚本",
       "description": "使用模板或人工智能将选定的测试用例转换为自动化脚本。",
       "templatePlaceholder": "选择一个模板……",
       "searchPlaceholder": "搜索模板...",
@@ -4098,7 +4098,7 @@
       "prompts": "提示配置",
       "exportTemplates": "导出模板",
       "codeRepositories": "代码库",
-      "quickScript": "QuickScript",
+      "quickScript": "快速脚本",
       "advanced": "先进的",
       "sso": "验证",
       "security": "安全",

@@ -260,7 +260,7 @@
       "scope": "Umfang",
       "success": "Erfolg",
       "failure": "Versagen",
-      "completed": "Vollendet",
+      "completed": "Abgeschlossen",
       "elapsed": "Verstrichene Zeit",
       "totalElapsed": "Gesamte verstrichene Zeit",
       "totalEstimate": "Geschätzte verbleibende Zeit",
@@ -420,7 +420,7 @@
         "record_key_enabled": "Datensatzschlüssel aktiviert"
       },
       "options": {
-        "label": "Etikett",
+        "label": "Label",
         "validation": {
           "empty": "Die Option darf nicht leer sein.",
           "invalidChars": "Option enthält ein ungültiges Zeichen: \"{char}\"",
@@ -695,8 +695,8 @@
       "justificationRequiredDescription": "Um ein abgeschlossenes Ergebnis in ein anderes Ergebnis umzuwandeln, sind Ergebnisdetails erforderlich, die die Änderung erläutern.",
       "requiredFieldMissing": "Ein erforderliches Ergebnisfeld hat keinen Wert.",
       "editWindowExpired": "Das Bearbeitungsfenster für dieses Ergebnis wurde geschlossen. Bitte starten Sie stattdessen einen neuen Versuch.",
-      "issueRequiredOnFailure": "Verknüpftes Problem erforderlich",
-      "issueRequiredOnFailureDescription": "Ein Fehlerergebnis erfordert mindestens ein verknüpftes Problem. Verknüpfen Sie ein Problem, bevor Sie speichern.",
+      "issueRequiredOnFailure": "Verknüpftes Ticket erforderlich",
+      "issueRequiredOnFailureDescription": "Ein Fehlerergebnis erfordert mindestens ein verknüpftes Ticket. Verknüpfen Sie ein Ticket, bevor Sie speichern.",
       "noModelsFound": "Keine Modelle gefunden",
       "failedToFetchModels": "Modelle konnten nicht abgerufen werden",
       "failedToCopyToClipboard": "Fehler beim Kopieren in die Zwischenablage",
@@ -705,7 +705,7 @@
     },
     "pageTitles": {
       "appName": "TestPlanIt",
-      "dashboard": "Armaturenbrett",
+      "dashboard": "Dashboard",
       "twoFactorVerification": "Zwei-Faktor-Verifizierung",
       "changePassword": "Kennwort ändern",
       "twoFactorSetup": "Zwei-Faktor-Einrichtung",
@@ -722,7 +722,7 @@
       "aiModels": "KI-Modelle",
       "integrations": "Integrationen",
       "quickscript": "QuickScript",
-      "advanced": "Fortschrittlich",
+      "advanced": "Erweitert",
       "reviews": "Rezensionen",
       "webhooks": "Webhooks",
       "shares": "Freigaben",
@@ -830,7 +830,7 @@
       "sortByDate": "Nach Datum sortieren",
       "testRuns": "{count, plural, =0 {Keine Testläufe} =1 {1 Testlauf} other {# Testläufe}}",
       "sessions": "{count, plural, =0 {Keine Sitzungen} =1 {1 Sitzung} other {# Sitzungen}}",
-      "issues": "{count, plural, =0 {Keine Probleme} =1 {1 Problem} other {# Probleme}}",
+      "issues": "{count, plural, =0 {Keine Tickets} =1 {1 Ticket} other {# Tickets}}",
       "noOptions": "Keine Optionen verfügbar",
       "multiConfiguration": "Teil einer Multi-Konfigurationsgruppe",
       "compositionLocked": "Zusammensetzung gesperrt – die Fallmenge ist eingefroren",
@@ -1344,7 +1344,7 @@
   },
   "navigation": {
     "menu": {
-      "dashboard": "Armaturenbrett",
+      "dashboard": "Dashboard",
       "admin": "Verwaltung",
       "profile": "Profil"
     },
@@ -1468,7 +1468,7 @@
           "linkedProjects": "Verknüpfte externe Projekte",
           "linkedProjectsDescription": "Externe Projekte, die über diese Integration verbunden wurden.",
           "noLinkedProjects": "Keine externen Projekte verknüpft",
-          "noLinkedProjectsDescription": "Fügen Sie ein externes Projekt hinzu, um die Problemsuche und -synchronisierung zu aktivieren.",
+          "noLinkedProjectsDescription": "Fügen Sie ein externes Projekt hinzu, um die Ticketsuche und -Synchronisierung zu aktivieren.",
           "addProjects": "Projekte hinzufügen",
           "addSelected": "Ausgewählte hinzufügen",
           "setAsDefault": "Als Standard festlegen",
@@ -1484,28 +1484,28 @@
           "projectSelectorLabel": "Projekt",
           "defaultIssueTypeHelp": "Beim Erstellen neuer Tickets in TestPlanIt wird dieser Tickettyp automatisch ausgewählt. Das spart Zeit, wenn Sie häufig Tickets desselben Typs erstellen.",
           "automaticSyncHelp": "Wenn diese Funktion aktiviert ist, werden Vorgänge automatisch synchronisiert, sobald Änderungen im externen System erkannt werden (über Webhooks). Eine manuelle Synchronisierung ist jederzeit möglich.",
-          "removeWarningTitle": "Durch das Entfernen dieser Problemintegration wird Folgendes erreicht:",
+          "removeWarningTitle": "Das Entfernen dieser Ticket-Integration führt zu:",
           "removeWarning1": "Trennen Sie alle verknüpften Vorgänge von dieser Vorgangsintegration (die Vorgänge bleiben in der Datenbank).",
-          "removeWarning2": "Entfernen Sie alle für die Problemintegration spezifischen Einstellungen für dieses Projekt.",
-          "removeWarning3": "Eine Neukonfiguration ist erforderlich, wenn Sie diese Problemintegration erneut verwenden möchten.",
+          "removeWarning2": "Entfernen Sie alle für die Ticket-Integration spezifischen Einstellungen für dieses Projekt",
+          "removeWarning3": "Eine Neukonfiguration ist erforderlich, wenn Sie diese Ticket-Integration erneut verwenden möchten",
           "removeWarning4": "Entfernen Sie den für diese Integration konfigurierten eingehenden Webhook.",
           "switchIntegration": "Switch-Integration",
           "switchWarningTitle": "Der Wechsel zu einem anderen KI-Modell wird Folgendes bewirken:",
-          "switchWarning1": "Trennen Sie alle aktuell mit der aktuellen Problemintegration verknüpften Probleme.",
+          "switchWarning1": "Trenne alle Tickets, die derzeit mit der aktuellen Ticket-Integration verknüpft sind",
           "switchWarning2": "Die Einträge in der Datenbank bleiben erhalten (sie werden entkoppelt).",
-          "switchWarning3": "Ersetzen Sie die aktuelle Problemintegrationskonfiguration durch die neue.",
+          "switchWarning3": "Ersetze die aktuelle Konfiguration der Ticket-Integration durch die neue",
           "switchWarning4": "Entfernen Sie den für die aktuelle Integration konfigurierten eingehenden Webhook.",
-          "importIssues": "Probleme importieren",
-          "importTitle": "Probleme aus {name} importieren",
-          "importDescription": "Rufen Sie Probleme aus diesem verknüpften Projekt in Ihr Projekt ab. Vorhandene Probleme werden nicht dupliziert, und importierte Probleme bleiben durch Synchronisierung aktuell.",
+          "importIssues": "Ticket importieren",
+          "importTitle": "Ticket aus {name} importieren",
+          "importDescription": "Übernimm Tickets aus diesem verknüpften Projekt in dein Projekt. Bestehende Tickets werden nicht dupliziert, und importierte Tickets bleiben durch die Synchronisierung auf dem aktuellen Stand.",
           "importUpdatedWithin": "Aktualisiert innerhalb",
           "importLastDays": "Letzte {days} Tage",
           "importMax": "Maximal zu importieren",
           "importPreview": "Vorschau",
-          "importPreviewResult": "~{count, plural, one {# Problem} other {# Probleme}} entsprechen diesem Filter. Bis zu {cap} werden importiert.",
+          "importPreviewResult": "~{count, plural, one {# Ticket} other {# Tickets}} entsprechen diesem Filter. Bis zu {cap} werden importiert.",
           "importOverCap": "Das überschreitet die Obergrenze von {cap}; nur die {cap} zuletzt aktualisierten werden importiert.",
           "importStart": "Importieren",
-          "importStarted": "Import gestartet. Probleme werden in Kürze angezeigt.",
+          "importStarted": "Import gestartet. Tickets werden in Kürze angezeigt.",
           "importFailed": "Import fehlgeschlagen",
           "importPreviewFailed": "Übereinstimmungen konnten nicht geschätzt werden",
           "milestoneSync": {
@@ -1522,33 +1522,33 @@
           }
         },
         "integrationAssigned": "Integration erfolgreich zugewiesen",
-        "integrationAssignError": "Fehler beim Zuordnen der Problemintegration zum Projekt",
+        "integrationAssignError": "Fehler beim Zuordnen der Ticket-Integration zum Projekt",
         "integrationRemoved": "Integration erfolgreich entfernt",
-        "integrationRemoveError": "Die Problemintegration konnte nicht aus dem Projekt entfernt werden.",
+        "integrationRemoveError": "Die Ticket-Integration konnte nicht aus dem Projekt entfernt werden.",
         "add": {
           "jira": {
-            "description": "Verbinden Sie Ihr Jira-Konto, um Probleme direkt in TestPlanIt zu verwalten."
+            "description": "Verbinden Sie Ihr Jira-Konto, um Tickets direkt in TestPlanIt zu verwalten."
           },
           "simple_url": {
-            "description": "Anbindung an ein Drittanbietersystem zur Problemverfolgung."
+            "description": "Verbinde dich mit einem Drittanbietersystem zur Ticket-Verfolgung."
           },
           "github": {
-            "description": "Verbinde dich mit GitHub für die Problemverfolgung und Repository-Verwaltung."
+            "description": "Verbinde dich mit GitHub für die Ticket-Verfolgung und Repository-Verwaltung."
           },
           "gitlab": {
-            "description": "Verbinde dich mit GitLab, um Probleme und Merge-Anfragen zu verfolgen."
+            "description": "Verbinde dich mit GitLab, um Tickets und Merge-Anfragen zu verfolgen."
           },
           "gitea": {
-            "description": "Verbinden Sie sich mit einer selbst gehosteten Gitea-, Forgejo- oder Gogs-Instanz, um Probleme zu verfolgen."
+            "description": "Verbinden Sie sich mit einer selbst gehosteten Gitea-, Forgejo- oder Gogs-Instanz, um Tickets zu verfolgen."
           },
           "azure_devops": {
             "description": "Stellen Sie eine Verbindung zu Azure DevOps her, um Arbeitselemente zu verfolgen."
           },
           "redmine": {
-            "description": "Verbinden Sie sich mit einer selbst gehosteten Redmine-Instanz zur Problemverfolgung."
+            "description": "Verbinden Sie sich mit einer selbst gehosteten Redmine-Instanz zur Ticket-Verfolgung."
           },
           "mantisbt": {
-            "description": "Verbinden Sie sich mit einer selbst gehosteten MantisBT-Instanz zur Problemverfolgung."
+            "description": "Verbinden Sie sich mit einer selbst gehosteten MantisBT-Instanz zur Ticket-Verfolgung."
           }
         }
       },
@@ -1596,14 +1596,14 @@
         "outboundEmpty": "Es sind keine ausgehenden Webhooks konfiguriert. Fügen Sie einen hinzu, um TestPlanIt-Ereignisse an Slack oder eine beliebige HMAC-signierte URL zu senden.",
         "outboundAddButton": "Ausgehenden Webhook hinzufügen",
         "outboundCreateTitle": "Neuer ausgehender Webhook",
-        "outboundCreateName": "Name",
+        "outboundCreateName": "Namen",
         "outboundCreateNameHelp": "Eine Bezeichnung für dieses Ziel, z. B. „Engineering Slack“.",
         "outboundCreateNamePlaceholder": "Engineering Slack",
         "outboundCreateNameRequired": "Die Angabe des Namens ist erforderlich.",
         "outboundCreateUrlRequired": "Eine URL ist erforderlich.",
         "outboundCreateUrlInvalid": "Geben Sie eine gültige URL ein (https://example.com/...).",
         "outboundCreateUrlMustUseHttps": "Die URL muss HTTPS verwenden.",
-        "outboundNameLabel": "Name",
+        "outboundNameLabel": "Namen",
         "outboundUnnamedConfig": "(unbenannter Webhook)",
         "outboundCreateUrl": "URL",
         "outboundCreateUrlHelp": "Die Ziel-URL. Slack-Webhook-URLs werden automatisch erkannt.",
@@ -1921,7 +1921,7 @@
         "loadError": "Datensätze konnten nicht geladen werden",
         "retry": "Versuchen Sie es erneut",
         "columns": {
-          "name": "Name",
+          "name": "Namen",
           "columns": "Spalten",
           "rows": "Reihen",
           "version": "Version",
@@ -1941,7 +1941,7 @@
         "create": {
           "title": "Neuer gemeinsam genutzter Datensatz",
           "description": "Die Datensätze sind projektbezogen und stehen für jeden Testfall in diesem Projekt zur Verfügung.",
-          "nameLabel": "Name",
+          "nameLabel": "Namen",
           "namePlaceholder": "z. B. Kundenkonten",
           "descriptionLabel": "Beschreibung",
           "descriptionPlaceholder": "Optionale Hinweise zum Inhalt dieses Datensatzes.",
@@ -2283,7 +2283,7 @@
       "delayed": "Verzögert",
       "pastDue": "Überfällig",
       "started": "Begonnen",
-      "completed": "Vollendet"
+      "completed": "Abgeschlossen"
     },
     "status": {
       "stop": "Stoppen",
@@ -2330,7 +2330,7 @@
       "confirmDescription": "Mit dem Erreichen dieses Meilensteins werden auch die folgenden damit verbundenen Punkte erledigt:",
       "impactActiveTestRuns": "{count, plural, one {# aktiver Testlauf} other {# aktive Testläufe}}",
       "impactActiveSessions": "{count, plural, one {# aktive Sitzung} other {# aktive Sitzungen}}",
-      "impactDescendantMilestones": "{count, plural, one {# Meilenstein der Nachkommen} other {# Meilensteine der Nachkommen}}",
+      "impactDescendantMilestones": "{count, plural, one {# untergeordneter Meilenstein} other {# untergeordnete Meilensteine}}",
       "completeTestRunsLabel": "Zugehörige Testläufe abschließen ({count, plural, one {# aktiv} other {# aktiv}})",
       "completeSessionsLabel": "Zugehörige Sitzungen abschließen ({count, plural, one {# aktiv} other {# aktiv}})",
       "testRunStateLabel": "Status des abgeschlossenen Testlaufs",
@@ -2409,7 +2409,7 @@
       "foundInTestingEmpty": "Keine Probleme beim Testen gefunden.",
       "inScopeCrossBadge": "Im Geltungsbereich",
       "refresh": "Aktualisieren",
-      "columnKey": "Name",
+      "columnKey": "Namen",
       "columnStatus": "Status",
       "columnCoverage": "Abdeckung",
       "columnSource": "Quelle",
@@ -2440,14 +2440,14 @@
       "overflowImportError": "Mitgliedsprobleme konnten nicht aus Jira importiert werden.",
       "emptyCta": "Verknüpfe ein Problem, um zu beginnen.",
       "columnDescription": "Beschreibung",
-      "unlinkConfirmTitle": "Problem trennen?",
-      "unlinkConfirmDescription": "Dadurch wird das Problem von diesem Meilenstein entfernt. Das Problem selbst bleibt erhalten und kann später erneut verknüpft werden.",
-      "totalsUncovered": "{count, plural, one {# nicht abgedecktes Problem} other {# nicht abgedeckte Probleme}}",
+      "unlinkConfirmTitle": "Ticket-Verknüpfung aufheben?",
+      "unlinkConfirmDescription": "Dadurch wird das Ticket von diesem Meilenstein entfernt. Das Ticket selbst bleibt erhalten und kann später erneut verknüpft werden.",
+      "totalsUncovered": "{count, plural, one {# nicht abgedecktes Ticket} other {# nicht abgedeckte Tickets}}",
       "percentReady": "{percent, number}% bereit",
-      "readinessSummary": "{passed, number} bestanden · {failed, number} fehlgeschlagen · {inProgress, number} im Gange · {notRun, number} nicht ausgeführt · {uncovered, number} nicht abgedeckt (von {total, number} Problemen)",
+      "readinessSummary": "{passed, number} bestanden · {failed, number} fehlgeschlagen · {inProgress, number} im Gange · {notRun, number} nicht ausgeführt · {uncovered, number} nicht abgedeckt (von {total, number} Tickets)",
       "filterHasUntested": "Hat ungetestete Fälle",
-      "createRunNoCases": "Keines der ausgewählten Probleme hat verknüpfte Testfälle.",
-      "createTestRunDetailed": "Testlauf erstellen ({issues, plural, one {# Problem} other {# Probleme}} · {cases, plural, one {# Fall} other {# Fälle}})"
+      "createRunNoCases": "Keines der ausgewählten Tickets hat verknüpfte Testfälle.",
+      "createTestRunDetailed": "Testlauf erstellen ({issues, plural, one {# Ticket} other {# Tickets}} · {cases, plural, one {# Fall} other {# Fälle}})"
     },
     "complete": {
       "skippedForPermission": "Der Meilenstein wurde abgeschlossen. Die zugehörigen Testläufe und Sitzungen wurden offen gelassen, da Sie nicht die Berechtigung haben, diese abzuschließen.",
@@ -2613,7 +2613,7 @@
       "yourProjects": "Ihre Projekte",
       "projects": "Sie haben Zugriff auf {count, plural, =1 {# Projekt} other {# Projekte}}",
       "loading": "Dashboard wird geladen...",
-      "noItems": "Nichts, was Ihnen zugewiesen ist, erfordert jetzt Ihre Aufmerksamkeit.",
+      "noItems": "Alles erledigt – dir sind derzeit keine Aufgaben zugewiesen.",
       "pendingRuns": "Ausstehende Testläufe",
       "activeSessions": "Aktive Sitzungen",
       "yourActiveSessions": "{count, plural, =0 {Keine aktiven Sitzungen} =1 {# Aktive Sitzungen} other {# Aktive Sitzungen}}",
@@ -2657,7 +2657,7 @@
       "activeRuns": "{count, plural, =0 {# Aktive Läufe} =1 {# Aktiver Lauf} other {# Aktive Läufe}}",
       "automationRunsInProgress": "{count, plural, =0 {# Automatisierungsläufe in Bearbeitung} =1 {# Automatisierungslauf in Bearbeitung} other {# Automatisierungsläufe in Bearbeitung}}",
       "activeSessions": "{count, plural, =0 {# Aktive Sitzungen} =1 {# Aktive Sitzung} other {# Aktive Sitzungen}}",
-      "issues": "{count, plural, =0 {# Probleme} =1 {# Problem} other {# Probleme}}"
+      "issues": "{count, plural, =0 {# Tickets} =1 {# Ticket} other {# Tickets}}"
     }
   },
   "users": {
@@ -2756,7 +2756,7 @@
         "viewDetails": "Details anzeigen",
         "columnAction": "Aktion",
         "columnEntityType": "Typ",
-        "columnEntityName": "Name",
+        "columnEntityName": "Namen",
         "columnTimestamp": "Zeitstempel",
         "allActions": "Alle Aktionen",
         "allTypes": "Alle Typen",
@@ -2927,7 +2927,7 @@
     "orphanedFieldsWarning": "Dieser Testfall enthält {count, plural, =1 {# Feldwert} other {# Feldwerte}} , die {count, plural, =1 {sind,} other {sind,}} nicht in der aktuellen Vorlage enthalten sind \"{templateName}\". {count, plural, =1 {Dieses Feld ist} other {Diese Felder sind}} unten aufgeführt, können aber möglicherweise erst bearbeitet werden, nachdem sie der Vorlage hinzugefügt wurden.",
     "title": "Testfall-Repository",
     "folders": "Ordner",
-    "showDescendants": "Alle Nachkommen anzeigen",
+    "showDescendants": "Alle untergeordneten Elemente anzeigen",
     "addFolder": "Ordner hinzufügen",
     "emptyFolders": "Klicken Sie oben auf die Schaltfläche „Ordner hinzufügen“, um den ersten Ordner hinzuzufügen.",
     "selectedAllCases": "{count, plural, =0 {Alle Fälle ausgewählt} one {# Fälle auf allen Seiten ausgewählt} other {# Fälle auf allen Seiten ausgewählt}}",
@@ -2977,7 +2977,7 @@
       "rename": "Ordner umbenennen"
     },
     "cases": {
-      "filter": "Filtergehäuse...",
+      "filter": "Filter Testfälle...",
       "selectFolder": "Wählen Sie einen Ordner aus, um Testfälle hinzuzufügen oder anzuzeigen.",
       "selectCases": "Testfälle auswählen",
       "noTestCases": "Keine Testfälle anzuzeigen.",
@@ -3039,10 +3039,10 @@
           "markdownParseFailed": "Fehler beim Parsen der Markdown-Datei",
           "markdownLlmFailed": "KI-Parsing nicht verfügbar, Standardparser wird verwendet",
           "validationTitle": "Importvalidierung fehlgeschlagen",
-          "validationSummary": "{count, plural, one {# Problem wurde} other {# Probleme wurden}} in Ihrer Datei gefunden. Es wurden keine Testfälle importiert.",
+          "validationSummary": "{count, plural, one {# Ticket wurde} other {# Tickets wurden}} in Ihrer Datei gefunden. Es wurden keine Testfälle importiert.",
           "validationEntry": "Zeile {row, number} · {field}: {message}",
           "validationEntryNamed": "Zeile {row, number} \"{name}\" · {field}: {message}",
-          "validationMore": "{count, plural, one {# weiteres Problem wird} other {# weitere Probleme werden}} nicht angezeigt.",
+          "validationMore": "{count, plural, one {# weiteres Ticket wird} other {# weitere Tickets werden}} nicht angezeigt.",
           "validationMultiRowNote": "Die Zeilennummern beziehen sich auf die gruppierten Testfälle in der Vorschau, nicht auf die rohen CSV-Zeilen.",
           "partialTitle": "Einige Testfälle wurden nicht importiert",
           "partialSummary": "{failed, plural, one {# Zeile konnte} other {# Zeilen konnten}} nicht importiert werden. {imported, plural, one {# Testfall wurde} other {# Testfälle wurden}} erfolgreich importiert."
@@ -3157,12 +3157,12 @@
       "byReview": "Überprüfung",
       "allTemplates": "Alle Vorlagen",
       "allStates": "Alle Staaten",
-      "allCreators": "Alle Schöpfer",
+      "allCreators": "Alle Ersteller",
       "allCases": "Alle Fälle",
       "allAssignees": "Alle Beauftragten",
       "anyTag": "Beliebiges Tag",
       "noTags": "Keine Tags",
-      "byTag": "Etikett",
+      "byTag": "Tag",
       "byIssue": "Ticket",
       "anyIssue": "Jedes Ticket",
       "noIssues": "Keine Tickets"
@@ -3385,7 +3385,7 @@
       },
       "selectSource": {
         "title": "Anforderungsquelle auswählen",
-        "description": "Wählen Sie aus, ob Testfälle aus einem Problem oder einem Anforderungsdokument generiert werden sollen.",
+        "description": "Wählen Sie aus, ob Testfälle aus einem Ticket oder einem Anforderungsdokument generiert werden sollen.",
         "folderContextTip": "Vorhandene Testfälle aus \"{folderName}\" und dessen übergeordneten/untergeordneten Ordnern werden als Kontext verwendet, um Duplikate zu vermeiden. Stellen Sie sicher, dass Sie den richtigen Ordner ausgewählt haben, bevor Sie fortfahren.",
         "currentFolder": "aktueller Ordner",
         "fromIssue": "Aus der Ausgabe",
@@ -3424,7 +3424,7 @@
         "robotsSkipped": "{count, plural, one {# Seite übersprungen} other {# Seiten übersprungen}} (robots.txt)"
       },
       "selectIssue": {
-        "title": "Externes Problem auswählen",
+        "title": "Externes Ticket auswählen",
         "description": "Wählen Sie ein Ticket aus Ihrem externen System (z. B. Jira) aus, um Testfälle zu generieren.",
         "searchButton": "Ausgaben suchen"
       },
@@ -3490,7 +3490,7 @@
         "imported": "{count, plural, =1 {1 Testfall erfolgreich importiert} other {# Testfälle erfolgreich importiert}}"
       },
       "importData": {
-        "issueDescription": "Externes Problem im Zusammenhang mit der Testfallgenerierung",
+        "issueDescription": "Externes Ticket im Zusammenhang mit der Testfallgenerierung",
         "generatedFolderName": "Generiert"
       },
       "errors": {
@@ -3499,7 +3499,7 @@
         "noTestCasesGenerated": "Es wurden keine Testfälle generiert. Bitte versuchen Sie es erneut mit anderen Eingaben.",
         "jobNoLongerAvailable": "Diese Generation ist nicht mehr verfügbar. Starten Sie eine neue Generation über den Assistenten zum Generieren von Testfällen.",
         "noAiModel": "Für dieses Projekt ist kein KI-Modell konfiguriert. Bitte konfigurieren Sie ein KI-Modell in den Projekteinstellungen.",
-        "noIssueSelected": "Bitte wählen Sie ein Problem aus, für das Testfälle generiert werden sollen.",
+        "noIssueSelected": "Bitte wählen Sie ein Ticket aus, für das Testfälle generiert werden sollen.",
         "noDocumentProvided": "Bitte geben Sie die Details der Anforderungsdokumente an.",
         "noTemplateSelected": "Bitte wählen Sie eine Vorlage für die Testfälle aus.",
         "noFieldsSelected": "Bitte wählen Sie mindestens ein Feld aus, für das Inhalte generiert werden sollen.",
@@ -3587,8 +3587,8 @@
         "saveAllAndImport": "Alles speichern & importieren",
         "discardAndImport": "Änderungen verwerfen & importieren"
       },
-      "linkedIssuesDroppedTitle": "Einige damit zusammenhängende Probleme wurden nicht berücksichtigt.",
-      "linkedIssuesDropped": "{count, plural, =1 {# verknüpftes Problem wurde verworfen} other {# verknüpfte Probleme wurden verworfen}} aufgrund des Token-Budgets: {keys}.",
+      "linkedIssuesDroppedTitle": "Einige damit zusammenhängende Tickets wurden nicht berücksichtigt.",
+      "linkedIssuesDropped": "{count, plural, =1 {# verknüpftes Ticket wurde verworfen} other {# verknüpfte Tickets wurden verworfen}} aufgrund des Token-Budgets: {keys}.",
       "linkedIssuesPreviewHeading": "Verknüpfte Tickets, die aufgenommen werden",
       "contextImages": {
         "pickerHeading": "Als Kontext einzuschließende Bilder (bis zu {max})",
@@ -3665,7 +3665,7 @@
       }
     },
     "filterPlaceholder": "Filter-Tags...",
-    "defaultName": "Unbenanntes Etikett",
+    "defaultName": "Unbenannter Tag",
     "noProject": "Kein Projekt",
     "description": "Verwalten und organisieren Sie Ihre Testfälle und Sitzungen mit Tags.",
     "detail": {
@@ -4089,7 +4089,7 @@
       "recordKeys": "Datensatzschlüssel",
       "notifications": "Benachrichtigungen",
       "imports": "Datenimporte",
-      "integrations": "Problemintegrationen",
+      "integrations": "Ticket-Integration",
       "webhooks": "Webhooks",
       "junit": "JUnit",
       "datasets": "Gemeinsame Datensätze",
@@ -4200,7 +4200,7 @@
           "users": "Benutzer",
           "groups": "Gruppen",
           "user_groups": "Benutzergruppen",
-          "issue_targets": "Problemintegrationen",
+          "issue_targets": "Ticket-Integration",
           "tags": "Tags",
           "sessions": "Sitzungen",
           "session_results": "Sitzungsergebnisse",
@@ -4218,7 +4218,7 @@
           "run_result_steps": "Ergebnisse des Testlaufs",
           "run_links": "Testlauf-Links",
           "run_tags": "Testlauf-Tags",
-          "issues": "Probleme",
+          "issues": "Tickets",
           "milestone_issues": "Meilenstein-Probleme",
           "repository_case_issues": "Repository-Fallprobleme",
           "run_issues": "Probleme beim Testlauf",
@@ -4725,7 +4725,7 @@
         "button": "Projekt hinzufügen",
         "title": "Neues Projekt hinzufügen",
         "defaultFields": "Standardvorlage, Standard-Meilensteintyp sowie alle Workflows und Status werden dem Projekt bei der Erstellung hinzugefügt.",
-        "selectIssueTracker": "Problemverfolgung auswählen",
+        "selectIssueTracker": "Ticket-Verfolgung auswählen",
         "issueTrackerRequired": "Ein Issue-Tracker ist erforderlich."
       },
       "wizard": {
@@ -4740,7 +4740,7 @@
         "labels": {
           "selected": "Ausgewählt",
           "statuses": "Teststatus",
-          "issueTrackers": "Problemverfolgung"
+          "issueTrackers": "Ticket-Verfolgung"
         },
         "placeholders": {
           "projectName": "Geben Sie den Projektnamen ein",
@@ -5577,12 +5577,12 @@
         "title": "Problemkonfiguration löschen",
         "confirmMessage": "Sind Sie sicher, dass Sie die Konfiguration <bold>{name}</bold>löschen möchten?",
         "warning": "Diese Aktion kann nicht rückgängig gemacht werden. Alle Projekte, die diesem Tracker aktuell zugewiesen sind, werden dem Standard-Tracker neu zugewiesen. Erwägen Sie stattdessen, die Konfiguration zu deaktivieren.",
-        "cannotDeleteDefault": "Der Standard-Problemverfolgungs-Tracker kann nicht gelöscht werden.",
+        "cannotDeleteDefault": "Die Standard-Ticket-Verfolgung kann nicht gelöscht werden.",
         "noDefaultFound": "Löschen nicht möglich: Es wurde kein Standard-Issue-Tracker gefunden, dem Projekte neu zugewiesen werden können."
       },
       "add": {
-        "title": "Problemverfolgung hinzufügen",
-        "description": "Erstellen Sie eine neue Konfiguration für ein Problemverfolgungssystem.",
+        "title": "Ticket-Verfolgung hinzufügen",
+        "description": "Erstellen Sie eine neue Konfiguration für ein Ticket-Verfolgungssystem.",
         "name": "Konfigurationsname",
         "name_placeholder": "z. B. Projekt-Jira-Links",
         "system_type": "Systemtyp",
@@ -5605,20 +5605,20 @@
     },
     "issues": {
       "description": "Verwalten Sie Probleme für diesen Issue-Tracker",
-      "filterPlaceholder": "Filterprobleme...",
+      "filterPlaceholder": "Filter Tickets...",
       "add": {
-        "button": "Problem hinzufügen",
-        "title": "Neues Problem hinzufügen"
+        "button": "Ticket hinzufügen",
+        "title": "Neues Ticket hinzufügen"
       },
       "edit": {
-        "title": "Problem bearbeiten"
+        "title": "Ticket bearbeiten"
       },
       "delete": {
-        "title": "Problem löschen",
-        "confirmMessage": "Möchten Sie das Problem \"{name}\" wirklich löschen?"
+        "title": "Ticket löschen",
+        "confirmMessage": "Möchten Sie das Ticket \"{name}\" wirklich löschen?"
       },
       "syncIssue": "Synchronisierungsproblem durch externes System",
-      "syncSuccess": "Problem erfolgreich synchronisiert",
+      "syncSuccess": "Ticket erfolgreich synchronisiert",
       "syncSuccessDescription": "Die Ausgabe \"{name}\" wurde mit den neuesten Informationen aus dem externen System aktualisiert.",
       "syncError": "Synchronisierungsproblem fehlgeschlagen",
       "syncErrorDescription": "Das Problem konnte nicht synchronisiert werden. Bitte versuchen Sie es später erneut."
@@ -5709,14 +5709,14 @@
     "integrations": {
       "description": "Verwaltung von Drittanbieterintegrationen für die Problemverfolgung",
       "list": {
-        "title": "Konfigurierte Problemintegrationen",
-        "description": "Ihre konfigurierten Problemintegrationen anzeigen und verwalten"
+        "title": "Konfigurierte Ticket-Integrationen",
+        "description": "Ihre konfigurierten Ticket-Integrationen anzeigen und verwalten"
       },
       "empty": {
-        "message": "Bisher keine Problemintegrationen konfiguriert"
+        "message": "Bisher keine Ticket-Integrationen konfiguriert"
       },
       "addIntegration": "Problemintegration hinzufügen",
-      "allIntegrations": "Alle Problemintegrationen",
+      "allIntegrations": "Alle Ticket-Integrationen",
       "manageDescription": "Konfigurieren und verwalten Sie Ihre Integrationen für externe Serviceprobleme",
       "status": {
         "active": "Aktiv",
@@ -7907,7 +7907,7 @@
       "testCase": "Testfall",
       "milestone": "Meilenstein",
       "template": "Vorlage",
-      "creator": "Schöpfer",
+      "creator": "Ersteller",
       "state": "Zustand",
       "source": "Quelle",
       "folder": "Ordner",
@@ -7919,9 +7919,9 @@
       "priority": "Priorität",
       "automationStatus": "Automatisierungsstatus",
       "issueType": "Ausgabetyp",
-      "issueTracker": "Problemverfolgung",
+      "issueTracker": "Ticket-Verfolgung",
       "issueStatus": "Ausgabestatus",
-      "tag": "Etikett",
+      "tag": "Tag",
       "feature": "Funktion",
       "model": "Modell",
       "integration": "Anbindung",
@@ -7934,7 +7934,7 @@
       "inProgress": "Im Gange",
       "notRun": "Nicht ausgeführt",
       "uncovered": "Nicht abgedeckt",
-      "totalIssues": "Probleme insgesamt",
+      "totalIssues": "Tickets insgesamt",
       "testResults": "Testergebnisse",
       "testResultCount": "Testergebnisse zählen",
       "passRate": "Bestehensquote (%)",
@@ -8748,7 +8748,7 @@
     "confirmSummaryMode": "Modus: {mode}",
     "cancelUploadTitle": "Upload verwerfen?",
     "cancelUploadDescription": "Die von Ihnen hochgeladenen CSV-Daten gehen verloren.",
-    "importCommit": "Import",
+    "importCommit": "Importieren",
     "importSuccess": "Importiert {count, plural, =1 {# Zeile} other {# Zeilen}}",
     "addSuccess": "Parameter \"{name}\" hinzugefügt",
     "addError": "Parameter konnte nicht hinzugefügt werden",

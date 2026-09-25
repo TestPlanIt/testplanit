@@ -3006,7 +3006,7 @@
       "addToRunDraftBlocked": "如果此專案的「從測試執行中排除草稿案例」選項已啟用，則無法將草稿案例新增至執行階段。",
       "copyMoveToProject": "複製/移動",
       "export": "出口",
-      "quickScript": "QuickScript",
+      "quickScript": "快速指令碼",
       "parameterizedStatusReadOnly": "狀態由迭代結果計算得出——點擊打開",
       "cannotReorderAcrossPages": "無法跨多個頁面重新排列測試案例。若要重新排序，請從頁面大小選單中選擇「全部」以在一個頁面上查看所有用例，或取消選擇其他頁面上的用例。您仍然可以將選定的用例拖曳到資料夾中。",
       "exportModal": {
@@ -3271,7 +3271,7 @@
       "exportError": "匯出失敗，請重試。"
     },
     "quickScript": {
-      "title": "QuickScript",
+      "title": "快速指令碼",
       "description": "使用範本或人工智慧將選定的測試案例轉換為自動化腳本。",
       "templatePlaceholder": "選擇一個模板…",
       "searchPlaceholder": "搜尋模板...",
@@ -4098,7 +4098,7 @@
       "prompts": "提示配置",
       "exportTemplates": "匯出模板",
       "codeRepositories": "程式碼庫",
-      "quickScript": "QuickScript",
+      "quickScript": "快速指令碼",
       "advanced": "先進的",
       "sso": "驗證",
       "security": "安全",
