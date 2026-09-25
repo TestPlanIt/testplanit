@@ -1,5 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
+import { schema } from "~/zenstack/schema";
 import { checkAdminAuth, itemTypeToModelMap } from "../shared";
+
+const schemaModelNames: Record<string, string> = { Issues: "Issue" };
+
+function getSearchField(itemType: string): "name" | "key" | null {
+  const fields = (
+    schema.models as Record<string, { fields: Record<string, unknown> }>
+  )[schemaModelNames[itemType] ?? itemType]?.fields;
+  if (fields?.name) return "name";
+  if (itemType === "AppConfig" && fields?.key) return "key";
+  return null;
+}
 
 export async function GET(
   request: NextRequest,
@@ -30,27 +42,11 @@ export async function GET(
 
   const whereClause: any = { isDeleted: true };
 
-  if (search && model.fields && model.name) {
-    whereClause.AND = whereClause.AND || [];
-    whereClause.AND.push({
-      name: {
-        contains: search,
-        mode: "insensitive",
-      },
-    });
-  } else if (
-    search &&
-    itemType === "AppConfig" &&
-    model.fields &&
-    model.fields.key
-  ) {
-    whereClause.AND = whereClause.AND || [];
-    whereClause.AND.push({
-      key: {
-        contains: search,
-        mode: "insensitive",
-      },
-    });
+  const searchField = getSearchField(itemType);
+  if (search && searchField) {
+    whereClause.AND = [
+      { [searchField]: { contains: search, mode: "insensitive" } },
+    ];
   }
 
   try {

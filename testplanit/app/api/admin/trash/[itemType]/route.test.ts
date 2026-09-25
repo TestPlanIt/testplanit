@@ -237,6 +237,41 @@ describe("Admin Trash Route", () => {
       );
     });
 
+    it.each([
+      ["RepositoryCases", "name"],
+      ["Issues", "name"],
+      ["AppConfig", "key"],
+    ])("filters %s by %s when search is given", async (itemType, field) => {
+      setupAdminSession();
+      mockModel.count.mockResolvedValue(0);
+      mockModel.findMany.mockResolvedValue([]);
+
+      const request = createMockRequest({ searchParams: { search: "login" } });
+      await GET(request, createMockContext(itemType));
+
+      const where = {
+        isDeleted: true,
+        AND: [{ [field]: { contains: "login", mode: "insensitive" } }],
+      };
+      expect(mockModel.count).toHaveBeenCalledWith({ where });
+      expect(mockModel.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where })
+      );
+    });
+
+    it("ignores search for item types without a searchable field", async () => {
+      setupAdminSession();
+      mockModel.count.mockResolvedValue(0);
+      mockModel.findMany.mockResolvedValue([]);
+
+      const request = createMockRequest({ searchParams: { search: "login" } });
+      await GET(request, createMockContext("Steps"));
+
+      expect(mockModel.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { isDeleted: true } })
+      );
+    });
+
     it("serializes bigint values to strings in response", async () => {
       setupAdminSession();
       mockModel.count.mockResolvedValue(1);
