@@ -104,15 +104,14 @@ describe("DELETE /api/projects/[projectId]/requirements/snapshots/[snapshotId]",
     expect(mockedUpdate).not.toHaveBeenCalled();
   });
 
-  it("soft-deletes with a deletedAt stamp and returns the id", async () => {
+  it("soft-deletes and returns the id", async () => {
     const response = await DELETE(makeRequest(), params());
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ id: 42 });
     expect(mockedUpdate).toHaveBeenCalledTimes(1);
     const call = mockedUpdate.mock.calls[0][0];
     expect(call.where).toEqual({ id: 42 });
-    expect(call.data.isDeleted).toBe(true);
-    expect(call.data.deletedAt).toBeInstanceOf(Date);
+    expect(call.data).toEqual({ isDeleted: true });
   });
 
   it("500s with a generic body when the write throws", async () => {

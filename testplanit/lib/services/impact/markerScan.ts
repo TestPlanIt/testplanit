@@ -660,11 +660,10 @@ export async function syncMarkerPins(
       },
     });
   }
-  const deletedAt = new Date();
   for (const batch of chunk(toRemove, BATCH_SIZE)) {
     await db.repositoryCaseCodePin.updateMany({
       where: { id: { in: batch } },
-      data: { isDeleted: true, deletedAt },
+      data: { isDeleted: true },
     });
   }
 

@@ -290,7 +290,7 @@ describe("syncIssuePins", () => {
 
     expect(db.repositoryCaseCodePin.updateMany).toHaveBeenCalledWith({
       where: { id: { in: [3] } },
-      data: { isDeleted: true, deletedAt: expect.any(Date) },
+      data: { isDeleted: true },
     });
     expect(report.removed).toBe(1);
     expect(report.truncated).toBe(true);
@@ -341,7 +341,7 @@ describe("syncIssuePins", () => {
 
     expect(db.repositoryCaseCodePin.updateMany).toHaveBeenCalledWith({
       where: { id: { in: [6] } },
-      data: { isDeleted: true, deletedAt: expect.any(Date) },
+      data: { isDeleted: true },
     });
     expect(report).toMatchObject({ removed: 1, full: true });
   });
@@ -624,7 +624,7 @@ describe("syncIssuePins", () => {
       ]);
       expect(db.repositoryCaseCodePin.updateMany).toHaveBeenCalledWith({
         where: { id: { in: [8] } },
-        data: { isDeleted: true, deletedAt: expect.any(Date) },
+        data: { isDeleted: true },
       });
       expect(report.removed).toBe(1);
     });

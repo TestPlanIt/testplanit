@@ -92,7 +92,7 @@ describe("POST /api/code-repositories/[id]/stale-pins/remove", () => {
         staleDismissedAt: null,
         source: { notIn: ["ANNOTATION", "MAPFILE"] },
       },
-      data: { isDeleted: true, deletedAt: expect.any(Date) },
+      data: { isDeleted: true },
     });
   });
 

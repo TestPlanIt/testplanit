@@ -511,8 +511,7 @@ describe("syncMarkerPins", () => {
     expect(db.repositoryCaseCodePin.updateMany).toHaveBeenCalledTimes(1);
     const call = db.repositoryCaseCodePin.updateMany.mock.calls[0][0] as any;
     expect(call.where).toEqual({ id: { in: [2, 3] } });
-    expect(call.data.isDeleted).toBe(true);
-    expect(call.data.deletedAt).toBeInstanceOf(Date);
+    expect(call.data).toEqual({ isDeleted: true });
     expect(report).toMatchObject({
       created: 0,
       updated: 0,

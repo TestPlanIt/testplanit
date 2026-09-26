@@ -265,7 +265,7 @@ export async function DELETE(
     }
     await db.repositoryCaseCodePin.update({
       where: { id: pinId },
-      data: { isDeleted: true, deletedAt: new Date() },
+      data: { isDeleted: true },
     });
     return NextResponse.json({ ok: true });
   } catch (error) {

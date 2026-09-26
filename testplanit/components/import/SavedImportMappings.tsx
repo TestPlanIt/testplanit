@@ -276,7 +276,7 @@ export function SavedImportMappings({
     try {
       await updateMapping({
         where: { id: deleteTarget.id },
-        data: { isDeleted: true, deletedAt: new Date() },
+        data: { isDeleted: true },
       });
       toast.success(tCommon("messages.deleteSuccess"));
       setDeleteTarget(null);

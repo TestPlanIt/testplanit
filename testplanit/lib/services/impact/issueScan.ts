@@ -494,11 +494,10 @@ export async function syncIssuePins(
         removable(row)
     )
     .map((row) => row.id);
-  const deletedAt = new Date();
   for (const batch of chunk(stale, BATCH_SIZE)) {
     await db.repositoryCaseCodePin.updateMany({
       where: { id: { in: batch } },
-      data: { isDeleted: true, deletedAt },
+      data: { isDeleted: true },
     });
   }
   report.removed = stale.length;

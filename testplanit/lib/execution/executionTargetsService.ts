@@ -673,7 +673,7 @@ export async function deleteExecutionTargetForActor(
     async () => {
       await baseDb.executionTarget.update({
         where: { id: existing.id },
-        data: { isDeleted: true, deletedAt: new Date(), isEnabled: false },
+        data: { isDeleted: true, isEnabled: false },
       });
       await captureAuditEvent({
         action: "DELETE",

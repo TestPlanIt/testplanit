@@ -325,7 +325,7 @@ describe("SavedImportMappings", () => {
     await waitFor(() =>
       expect(mocks.updateMapping).toHaveBeenCalledWith({
         where: { id: "m-private" },
-        data: { isDeleted: true, deletedAt: expect.any(Date) },
+        data: { isDeleted: true },
       })
     );
   });

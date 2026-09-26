@@ -894,7 +894,7 @@ describe("execution-targets actions", () => {
       const data = updateTarget.mock.calls[0][0].data;
       expect(data.isDeleted).toBe(true);
       expect(data.isEnabled).toBe(false);
-      expect(data.deletedAt).toBeInstanceOf(Date);
+      expect(data).not.toHaveProperty("deletedAt");
       expect(mockedAudit).toHaveBeenCalledWith(
         expect.objectContaining({ action: "DELETE" })
       );

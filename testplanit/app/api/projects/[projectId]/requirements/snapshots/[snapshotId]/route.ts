@@ -79,7 +79,7 @@ export const DELETE = withAuditContext(
 
       await baseDb.requirementTraceabilitySnapshot.update({
         where: { id: snapshot.id },
-        data: { isDeleted: true, deletedAt: new Date() },
+        data: { isDeleted: true },
       });
 
       return NextResponse.json({ id: snapshot.id });

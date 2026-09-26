@@ -215,7 +215,7 @@ export default function SharedStepsPage() {
     if (!selectedGroup) return;
     await updateGroupMutation.mutateAsync({
       where: { id: selectedGroup.id },
-      data: { isDeleted: true, deletedAt: new Date() },
+      data: { isDeleted: true },
     });
     setShowDeleteDialog(false);
     setSelectedGroupId(null);

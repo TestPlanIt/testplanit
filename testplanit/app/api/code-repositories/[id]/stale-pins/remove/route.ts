@@ -64,7 +64,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     const result = await db.repositoryCaseCodePin.updateMany({
       where: removableStalePinsWhere(configId),
-      data: { isDeleted: true, deletedAt: new Date() },
+      data: { isDeleted: true },
     });
 
     return NextResponse.json({ removed: result.count });

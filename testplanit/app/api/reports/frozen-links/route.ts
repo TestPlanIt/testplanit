@@ -192,7 +192,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
       // run live, so retire it before reporting the failure.
       await baseDb.shareLink.update({
         where: { id: shareLink.id },
-        data: { isDeleted: true, deletedAt: new Date(), isRevoked: true },
+        data: { isDeleted: true, isRevoked: true },
       });
       throw error;
     }

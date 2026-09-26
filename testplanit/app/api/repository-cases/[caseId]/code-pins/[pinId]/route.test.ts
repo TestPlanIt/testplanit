@@ -122,8 +122,7 @@ describe("DELETE /api/repository-cases/[caseId]/code-pins/[pinId]", () => {
       expect(db.repositoryCaseCodePin.update).toHaveBeenCalledTimes(1);
       const args = db.repositoryCaseCodePin.update.mock.calls[0][0];
       expect(args.where).toEqual({ id: 7 });
-      expect(args.data.isDeleted).toBe(true);
-      expect(args.data.deletedAt).toBeInstanceOf(Date);
+      expect(args.data).toEqual({ isDeleted: true });
     }
   );
 
