@@ -4,9 +4,10 @@
 // iteration-matrix filters expansion, and the parser's type gating —
 // a param must only hydrate the state its report type owns.
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   buildSharedReportSearchParams,
+  initialDateRangeFromUrl,
   parsePerTypeReportParams,
   PER_TYPE_REPORT_PARAM_DEFAULTS,
 } from "./reportShareParams";
@@ -466,5 +467,58 @@ describe("requirement snapshot params", () => {
     );
     expect(other.baselineSnapshotId).toBeNull();
     expect(other.includeUnchanged).toBe(false);
+  });
+});
+
+describe("initialDateRangeFromUrl", () => {
+  it("resolves a relative range on the URL's timezone and ignores stored dates", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-23T17:00:00.000Z"));
+    try {
+      const seed = initialDateRangeFromUrl(
+        new URLSearchParams(
+          "dateRangePreset=lastWeek&dateRangeTimezone=Etc/UTC" +
+            "&startDate=2026-01-05T00:00:00.000Z&endDate=2026-01-11T23:59:59.999Z"
+        )
+      );
+      expect(seed.preset).toEqual({ preset: "lastWeek" });
+      expect([seed.range?.from?.getDate(), seed.range?.to?.getDate()]).toEqual([
+        14, 20,
+      ]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("seeds a rolling window", () => {
+    const seed = initialDateRangeFromUrl(
+      new URLSearchParams(
+        "dateRangePreset=lastN&dateRangeAmount=14&dateRangeUnit=days"
+      )
+    );
+    expect(seed.preset).toEqual({ preset: "lastN", amount: 14, unit: "days" });
+    expect(seed.range?.from).toBeInstanceOf(Date);
+  });
+
+  it("restores custom dates as fixed, and nothing when there are none", () => {
+    const custom = initialDateRangeFromUrl(
+      new URLSearchParams(
+        "startDate=2026-01-05T00:00:00.000Z&endDate=2026-01-11T23:59:59.999Z"
+      )
+    );
+    expect(custom.preset).toBeNull();
+    expect(custom.range?.from?.toISOString()).toBe("2026-01-05T00:00:00.000Z");
+    expect(initialDateRangeFromUrl(new URLSearchParams())).toEqual({
+      preset: null,
+      range: undefined,
+    });
+    // A malformed preset falls back to the stored dates.
+    const junk = initialDateRangeFromUrl(
+      new URLSearchParams(
+        "dateRangePreset=fortnight&startDate=2026-01-05T00:00:00.000Z"
+      )
+    );
+    expect(junk.preset).toBeNull();
+    expect(junk.range?.from).toBeInstanceOf(Date);
   });
 });

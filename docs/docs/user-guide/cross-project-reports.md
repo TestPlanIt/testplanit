@@ -56,4 +56,4 @@ These reports remain available inside each individual project at **Project → R
 
 ## Sharing
 
-Cross-project report Share Links store the report's configuration, including the project scope. A live link re-runs the report when opened; a frozen link always shows the results from when it was created. Authenticated cross-project links require Admin access; use a Public or Password-Protected link to share with others. Cross-project reports can also be saved to your private [Saved Reports](./projects/reports/index.md#saved-reports). See [Share Links](./share-links.md).
+Cross-project report Share Links store the report's configuration, including the project scope. A live link re-runs the report when opened, and a preset date range such as **Last week** moves with the date it is opened; a frozen link always shows the results from when it was created. Authenticated cross-project links require Admin access; use a Public or Password-Protected link to share with others. Cross-project reports can also be saved to your private [Saved Reports](./projects/reports/index.md#saved-reports). See [Share Links](./share-links.md).

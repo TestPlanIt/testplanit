@@ -169,7 +169,10 @@ import {
   resolveSyncedReportType,
   resolveTabChange,
 } from "./reportUrlUtils";
-import { parsePerTypeReportParams } from "./reportShareParams";
+import {
+  initialDateRangeFromUrl,
+  parsePerTypeReportParams,
+} from "./reportShareParams";
 
 interface ReportBuilderProps {
   mode: "project" | "cross-project";
@@ -268,38 +271,6 @@ function automatedFilterBody(values: Array<string | number | null>) {
   return values
     .filter((value) => value !== null)
     .map((value) => (Number(value) === 1 ? "automated" : "manual"));
-}
-
-/**
- * The date range a page opens with: the URL's relative range resolved on
- * its stored timezone, else its custom dates. Read at mount so the first
- * auto-run carries it — the metadata effect restores the rest of the URL
- * only after its fetch resolves, which is later than that run.
- */
-function initialDateRangeFromUrl(params: {
-  get(name: string): string | null;
-}): { preset: RelativeDateRange | null; range: DateRange | undefined } {
-  const preset = parseRelativeDateRange({
-    dateRangePreset: params.get("dateRangePreset"),
-    dateRangeAmount: params.get("dateRangeAmount"),
-    dateRangeUnit: params.get("dateRangeUnit"),
-  });
-  if (preset) {
-    const resolved = resolveRelativeDateRange(preset, {
-      timezone: params.get("dateRangeTimezone"),
-    });
-    return { preset, range: { from: resolved.fromDay, to: resolved.toDay } };
-  }
-  const startDate = params.get("startDate");
-  const endDate = params.get("endDate");
-  if (!startDate) return { preset: null, range: undefined };
-  return {
-    preset: null,
-    range: {
-      from: new Date(startDate),
-      to: endDate ? new Date(endDate) : undefined,
-    },
-  };
 }
 
 /** ...and the cross-project pair of them, which also filter by project. */

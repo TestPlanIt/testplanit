@@ -171,6 +171,72 @@ describe("StaticReportViewer", () => {
     expect(screen.queryByTestId("frozen-report-banner")).toBeNull();
   });
 
+  it("names a relative range and the dates it currently covers on a live report", async () => {
+    render(
+      <StaticReportViewer
+        shareData={shareData({
+          entityConfig: {
+            reportType: "repository-stats",
+            startDate: "2026-01-05T00:00:00.000Z",
+            endDate: "2026-01-11T23:59:59.999Z",
+            dateRangePreset: "lastWeek",
+            dateRangeTimezone: "Etc/UTC",
+          },
+        })}
+        shareMode="PUBLIC"
+      />
+    );
+
+    const range = await screen.findByTestId("shared-report-date-range");
+    expect(range).toHaveTextContent("reports.ui.dateRange.lastWeek");
+    expect(range).toHaveTextContent("reports.sharedReport.currentlyReporting");
+    // Resolved for today, not the stored January dates.
+    expect(range).not.toHaveTextContent("Jan 5, 2026");
+  });
+
+  it("shows the captured dates of a frozen relative range as reported", async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({ ...reportPayload, frozen: frozenMeta })
+    );
+    render(
+      <StaticReportViewer
+        shareData={shareData({
+          entityConfig: {
+            reportType: "repository-stats",
+            startDate: "2026-09-14T00:00:00.000Z",
+            endDate: "2026-09-20T23:59:59.999Z",
+            dateRangePreset: "lastWeek",
+            dateRangeTimezone: "Etc/UTC",
+          },
+        })}
+        shareMode="PUBLIC"
+      />
+    );
+
+    const range = await screen.findByTestId("shared-report-date-range");
+    expect(range).toHaveTextContent("reports.sharedReport.reportedRange");
+    expect(range).toHaveTextContent("Sep 14, 2026 – Sep 20, 2026");
+  });
+
+  it("labels a fixed range as a plain date range", async () => {
+    render(
+      <StaticReportViewer
+        shareData={shareData({
+          entityConfig: {
+            reportType: "repository-stats",
+            startDate: "2026-09-14T00:00:00.000Z",
+            endDate: "2026-09-20T23:59:59.999Z",
+          },
+        })}
+        shareMode="PUBLIC"
+      />
+    );
+
+    const range = await screen.findByTestId("shared-report-date-range");
+    expect(range).toHaveTextContent("reports.sharedReport.dateRange");
+    expect(range).not.toHaveTextContent("currentlyReporting");
+  });
+
   it("shows the frozen banner and no full-app link for a frozen report", async () => {
     fetchMock.mockResolvedValue(
       jsonResponse({ ...reportPayload, frozen: frozenMeta })
