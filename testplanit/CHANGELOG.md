@@ -1,3 +1,18 @@
+## [1.1.0-beta.25](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.24...v1.1.0-beta.25) (2026-09-26)
+
+### Features
+
+* **reports:** one multi-select Filters menu for every pre-built report ([1ddc389](https://github.com/TestPlanIt/testplanit/commit/1ddc389c045306900ab8af9157122caac84f85af))
+* **reports:** relative date ranges for saved and shared live reports ([143f198](https://github.com/TestPlanIt/testplanit/commit/143f1981c6082ddf25c62e89e493b1cc17c67e21))
+* **reports:** total line and group-row totals for builder charts and tables ([1f0e1e1](https://github.com/TestPlanIt/testplanit/commit/1f0e1e150d570d4dc7cf45651d5a683b00b0989d))
+* **trash:** cover every soft-deletable model in Admin Trash ([67dce4d](https://github.com/TestPlanIt/testplanit/commit/67dce4d40b47e2eb4265429d1c53009845af3310))
+
+### Bug Fixes
+
+* **i18n:** restore ICU placeholders in es-ES, tr-TR, cs-CZ and pl-PL ([db5c861](https://github.com/TestPlanIt/testplanit/commit/db5c8619d136a5de9fcc40dca20e608fed858b8e))
+* **projects:** state that only No Access restricts a project ([e5e269d](https://github.com/TestPlanIt/testplanit/commit/e5e269d7d3af78e6a9d9f8ac7c7cb3abaaabe968))
+* **reports:** keep an all-time lookback when restoring a shared report ([cfcdbf8](https://github.com/TestPlanIt/testplanit/commit/cfcdbf8669e64c3431831430b87517e2939c9059))
+
 ## [1.1.0-beta.24](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.23...v1.1.0-beta.24) (2026-09-25)
 
 ### Bug Fixes
