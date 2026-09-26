@@ -5992,7 +5992,21 @@
         "issueConfigs": "Configurations des problèmes",
         "sharedStepGroups": "Groupes de pas partagés",
         "dataSets": "Ensembles de données",
-        "impactAnalyses": "Analyses d'impact"
+        "impactAnalyses": "Analyses d'impact",
+        "dataSetRows": "Lignes de l'ensemble de données",
+        "duplicateScanResults": "Résultats d'analyse en double",
+        "executionTargets": "Cibles d'exécution",
+        "importMappings": "Mappages d'importation",
+        "llmReportSnapshots": "Instantanés de rapport IA",
+        "notifications": "Notifications",
+        "requirementTraceabilitySnapshots": "Instantanés de traçabilité",
+        "reviewRequests": "Demandes de révision",
+        "shareLinks": "Lien de partage",
+        "stepSequenceMatches": "Correspondances de séquence d'étapes",
+        "stepSequenceMatchCases": "Cas de correspondance de séquence d'étapes",
+        "testRunCases": "Cas d'exécution de test",
+        "testRunCaseDataSetSnapshots": "Instantanés d'ensemble de données d'exécution de test",
+        "testRunCaseIterations": "Itérations d'exécution de test"
       },
       "table": {
         "title": "Supprimé {itemType}",

@@ -5992,7 +5992,21 @@
         "issueConfigs": "問題配置",
         "sharedStepGroups": "共同步驟小組",
         "dataSets": "數據集",
-        "impactAnalyses": "影響分析"
+        "impactAnalyses": "影響分析",
+        "dataSetRows": "資料集行",
+        "duplicateScanResults": "重複掃描結果",
+        "executionTargets": "執行目標",
+        "importMappings": "匯入對應",
+        "llmReportSnapshots": "AI 報告快照",
+        "notifications": "通知",
+        "requirementTraceabilitySnapshots": "追溯性快照",
+        "reviewRequests": "審查請求",
+        "shareLinks": "分享連結",
+        "stepSequenceMatches": "步驟序列匹配",
+        "stepSequenceMatchCases": "步驟序列匹配用例",
+        "testRunCases": "測試運行用例",
+        "testRunCaseDataSetSnapshots": "測試運行用例資料集快照",
+        "testRunCaseIterations": "測試運行疊代"
       },
       "table": {
         "title": "已刪除 {itemType}",

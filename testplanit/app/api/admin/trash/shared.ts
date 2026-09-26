@@ -4,6 +4,11 @@ import { authenticateApiToken } from "~/lib/api-token-auth";
 import { enrichFromApiAuth } from "~/lib/auditContextWrappers";
 import { getServerAuthSession } from "~/server/auth";
 import { db } from "~/server/db";
+import {
+  trashItemTypeByName,
+  trashItemTypes,
+  TrashItemType,
+} from "./itemTypes";
 
 // Helper to check admin authentication (session or API token)
 export async function checkAdminAuth(
@@ -62,44 +67,23 @@ export async function checkAdminAuth(
   return { userId };
 }
 
-export const itemTypeToModelMap: Record<string, any> = {
-  User: db.user,
-  Groups: db.groups,
-  Roles: db.roles,
-  Projects: db.projects,
-  Milestones: db.milestones,
-  MilestoneTypes: db.milestoneTypes,
-  CaseFields: db.caseFields,
-  ResultFields: db.resultFields,
-  FieldOptions: db.fieldOptions,
-  Templates: db.templates,
-  Status: db.status,
-  Workflows: db.workflows,
-  ConfigCategories: db.configCategories,
-  ConfigVariants: db.configVariants,
-  Configurations: db.configurations,
-  Tags: db.tags,
-  Repositories: db.repositories,
-  RepositoryFolders: db.repositoryFolders,
-  RepositoryCaseLink: db.repositoryCaseLink,
-  RepositoryCaseCodePin: db.repositoryCaseCodePin,
-  RepositoryCases: db.repositoryCases,
-  RepositoryCaseVersions: db.repositoryCaseVersions,
-  Attachments: db.attachments,
-  Steps: db.steps,
-  Sessions: db.sessions,
-  SessionResults: db.sessionResults,
-  TestRuns: db.testRuns,
-  TestRunResults: db.testRunResults,
-  TestRunStepResults: db.testRunStepResults,
-  Issues: db.issue,
-  AppConfig: db.appConfig,
-  CodeRepository: db.codeRepository,
-  ImpactAnalysis: db.impactAnalysis,
-  LlmIntegration: db.llmIntegration,
-  Integration: db.integration,
-  PromptConfig: db.promptConfig,
-  CaseExportTemplate: db.caseExportTemplate,
-  SharedStepGroup: db.sharedStepGroup,
-  DataSet: db.dataSet,
-};
+export interface TrashModel extends TrashItemType {
+  model: any;
+}
+
+// Resolves a public item type to its raw (policy-free, hook-free) delegate.
+// Returns null for unknown types and for delegates the client does not expose.
+export function getTrashModel(itemType: string): TrashModel | null {
+  const entry = trashItemTypeByName[itemType];
+  if (!entry) return null;
+  const model = (db as unknown as Record<string, unknown>)[entry.delegate];
+  if (!model) return null;
+  return { ...entry, model };
+}
+
+export const itemTypeToModelMap: Record<string, any> = Object.fromEntries(
+  trashItemTypes.map((entry) => [
+    entry.itemType,
+    (db as unknown as Record<string, unknown>)[entry.delegate],
+  ])
+);

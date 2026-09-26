@@ -5992,7 +5992,21 @@
         "issueConfigs": "Probleemconfiguraties",
         "sharedStepGroups": "Gedeelde stappengroepen",
         "dataSets": "Gegevenssets",
-        "impactAnalyses": "Impactanalyses"
+        "impactAnalyses": "Impactanalyses",
+        "dataSetRows": "Datasetrijen",
+        "duplicateScanResults": "Resultaten dubbele scan",
+        "executionTargets": "Uitvoeringsdoelen",
+        "importMappings": "Importtoewijzingen",
+        "llmReportSnapshots": "AI-rapportmomentopnamen",
+        "notifications": "Meldingen",
+        "requirementTraceabilitySnapshots": "Traceerbaarheidsmomentopnamen",
+        "reviewRequests": "Beoordelingsverzoeken",
+        "shareLinks": "Deellinks",
+        "stepSequenceMatches": "Stapsequentiematchings",
+        "stepSequenceMatchCases": "Stapsequencematchgevallen",
+        "testRunCases": "Testuitvoeringsgevallen",
+        "testRunCaseDataSetSnapshots": "Testuitvoeringsdatasetmomentopnamen",
+        "testRunCaseIterations": "Testuitvoeringsiteraties"
       },
       "table": {
         "title": "Verwijderd {itemType}",

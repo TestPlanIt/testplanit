@@ -5992,7 +5992,21 @@
         "issueConfigs": "問題構成",
         "sharedStepGroups": "共有ステップグループ",
         "dataSets": "データセット",
-        "impactAnalyses": "影響分析"
+        "impactAnalyses": "影響分析",
+        "dataSetRows": "データセット行",
+        "duplicateScanResults": "重複スキャン結果",
+        "executionTargets": "実行ターゲット",
+        "importMappings": "インポートマッピング",
+        "llmReportSnapshots": "AIレポートスナップショット",
+        "notifications": "通知",
+        "requirementTraceabilitySnapshots": "トレーサビリティスナップショット",
+        "reviewRequests": "レビュー依頼",
+        "shareLinks": "共有リンク",
+        "stepSequenceMatches": "ステップシーケンスマッチ",
+        "stepSequenceMatchCases": "ステップシーケンスマッチケース",
+        "testRunCases": "テスト実行ケース",
+        "testRunCaseDataSetSnapshots": "テスト実行データセットスナップショット",
+        "testRunCaseIterations": "テスト実行イテレーション"
       },
       "table": {
         "title": "削除されました {itemType}",

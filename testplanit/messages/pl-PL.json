@@ -5992,7 +5992,21 @@
         "issueConfigs": "Konfiguracje problemów",
         "sharedStepGroups": "Wspólne grupy kroków",
         "dataSets": "Zestawy danych",
-        "impactAnalyses": "Analizy wpływu"
+        "impactAnalyses": "Analizy wpływu",
+        "dataSetRows": "Wiersze zestawu danych",
+        "duplicateScanResults": "Wyniki skanowania duplikatów",
+        "executionTargets": "Cele wykonania",
+        "importMappings": "Mapowania importu",
+        "llmReportSnapshots": "Migawki raportu AI",
+        "notifications": "Powiadomienia",
+        "requirementTraceabilitySnapshots": "Migawki śledzenia",
+        "reviewRequests": "Prośby o przegląd",
+        "shareLinks": "Udostępnij linki",
+        "stepSequenceMatches": "Dopasowania sekwencji kroków",
+        "stepSequenceMatchCases": "Przypadki dopasowania sekwencji kroków",
+        "testRunCases": "Przypadki testowe",
+        "testRunCaseDataSetSnapshots": "Migawki zestawu danych przebiegu testu",
+        "testRunCaseIterations": "Iteracje przebiegu testu"
       },
       "table": {
         "title": "Usunięto {itemType}",

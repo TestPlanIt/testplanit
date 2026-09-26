@@ -5992,7 +5992,21 @@
         "issueConfigs": "Problemkonfigurationen",
         "sharedStepGroups": "Gemeinsame Schrittgruppen",
         "dataSets": "Datensätze",
-        "impactAnalyses": "Auswirkungsanalysen"
+        "impactAnalyses": "Auswirkungsanalysen",
+        "dataSetRows": "Datensatzzeilen",
+        "duplicateScanResults": "Duplikatscan-Ergebnisse",
+        "executionTargets": "Ausführungsziele",
+        "importMappings": "Importzuordnungen",
+        "llmReportSnapshots": "KI-Bericht-Snapshots",
+        "notifications": "Benachrichtigungen",
+        "requirementTraceabilitySnapshots": "Rückverfolgbarkeits-Momentaufnahmen",
+        "reviewRequests": "Überprüfungsanfragen",
+        "shareLinks": "Links teilen",
+        "stepSequenceMatches": "Schrittsequenz-Übereinstimmungen",
+        "stepSequenceMatchCases": "Schrittsequenz-Übereinstimmungsfälle",
+        "testRunCases": "Testlauffälle",
+        "testRunCaseDataSetSnapshots": "Testlauf-Dataset-Snapshots",
+        "testRunCaseIterations": "Testlauf-Iterationen"
       },
       "table": {
         "title": "Gelöscht {itemType}",

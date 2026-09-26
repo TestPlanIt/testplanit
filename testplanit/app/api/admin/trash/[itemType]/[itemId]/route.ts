@@ -1,73 +1,12 @@
-import { baseDb } from "@/lib/db";
 import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { getS3Client } from "~/lib/s3Client";
 import { NextRequest, NextResponse } from "next/server";
-import { authenticateApiToken } from "~/lib/api-token-auth";
-import {
-  enrichFromApiAuth,
-  withAuditContext,
-} from "~/lib/auditContextWrappers";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { syncRunCaseStatusAfterResultRemoval } from "~/lib/services/runCaseStatusSync";
 import { isForeignKeyError, isNotFoundError } from "~/lib/utils/errors";
-import { getServerAuthSession } from "~/server/auth";
 import { db } from "~/server/db";
-
-// Helper to check admin authentication (session or API token)
-async function checkAdminAuth(
-  request: NextRequest
-): Promise<{ error?: NextResponse; userId?: string }> {
-  const session = await getServerAuthSession();
-  let userId = session?.user?.id;
-  let userAccess: string | undefined = session?.user?.access ?? undefined;
-
-  if (!userId) {
-    const apiAuth = await authenticateApiToken(request);
-    if (!apiAuth.authenticated) {
-      return {
-        error: NextResponse.json(
-          { error: apiAuth.error, code: apiAuth.errorCode },
-          { status: 401 }
-        ),
-      };
-    }
-    userId = apiAuth.userId;
-    userAccess = apiAuth.access;
-
-    if (apiAuth.userId) {
-      enrichFromApiAuth({
-        userId: apiAuth.userId,
-        userName: apiAuth.userName,
-        userEmail: apiAuth.userEmail,
-      });
-    }
-  }
-
-  if (!userId) {
-    return {
-      error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
-    };
-  }
-
-  if (!userAccess) {
-    const user = await baseDb.user.findUnique({
-      where: { id: userId },
-      select: { access: true },
-    });
-    userAccess = user?.access;
-  }
-
-  if (userAccess !== "ADMIN") {
-    return {
-      error: NextResponse.json(
-        { error: "Admin access required" },
-        { status: 403 }
-      ),
-    };
-  }
-
-  return { userId };
-}
+import { checkAdminAuth, getTrashModel, TrashModel } from "../../shared";
 
 // This used to build its own client with no `endpoint`, so purge deletes always
 // went to real AWS S3 and silently missed the object on any S3-compatible
@@ -89,83 +28,35 @@ async function deleteS3Object(bucketName: string, key: string) {
       `[S3 Delete] Error deleting object ${bucketName}/${key}:`,
       error
     );
-    // Depending on requirements, you might want to throw this error
-    // or handle it (e.g., by logging and continuing)
-    throw error; // Re-throwing for now, can be adjusted
+    throw error;
   }
 }
 
-// Consistent map structure providing model delegate and modelName string
-const itemTypeToModelMap: Record<string, { model: any; modelName: string }> = {
-  User: { model: db.user, modelName: "User" },
-  Groups: { model: db.groups, modelName: "Groups" },
-  Roles: { model: db.roles, modelName: "Roles" },
-  Projects: { model: db.projects, modelName: "Projects" },
-  Milestones: { model: db.milestones, modelName: "Milestones" },
-  MilestoneTypes: { model: db.milestoneTypes, modelName: "MilestoneTypes" },
-  CaseFields: { model: db.caseFields, modelName: "CaseFields" },
-  ResultFields: { model: db.resultFields, modelName: "ResultFields" },
-  FieldOptions: { model: db.fieldOptions, modelName: "FieldOptions" },
-  Templates: { model: db.templates, modelName: "Templates" },
-  Status: { model: db.status, modelName: "Status" },
-  Workflows: { model: db.workflows, modelName: "Workflows" },
-  ConfigCategories: {
-    model: db.configCategories,
-    modelName: "ConfigCategories",
-  },
-  ConfigVariants: { model: db.configVariants, modelName: "ConfigVariants" },
-  Configurations: { model: db.configurations, modelName: "Configurations" },
-  Tags: { model: db.tags, modelName: "Tags" },
-  Repositories: { model: db.repositories, modelName: "Repositories" },
-  RepositoryFolders: {
-    model: db.repositoryFolders,
-    modelName: "RepositoryFolders",
-  },
-  RepositoryCaseLink: {
-    model: db.repositoryCaseLink,
-    modelName: "RepositoryCaseLink",
-  },
-  RepositoryCaseCodePin: {
-    model: db.repositoryCaseCodePin,
-    modelName: "RepositoryCaseCodePin",
-  },
-  RepositoryCases: { model: db.repositoryCases, modelName: "RepositoryCases" },
-  RepositoryCaseVersions: {
-    model: db.repositoryCaseVersions,
-    modelName: "RepositoryCaseVersions",
-  },
-  Attachments: { model: db.attachments, modelName: "Attachments" },
-  Steps: { model: db.steps, modelName: "Steps" },
-  Sessions: { model: db.sessions, modelName: "Sessions" },
-  SessionResults: { model: db.sessionResults, modelName: "SessionResults" },
-  SessionVersions: { model: db.sessionVersions, modelName: "SessionVersions" }, // Added SessionVersions
-  TestRuns: { model: db.testRuns, modelName: "TestRuns" },
-  TestRunCases: { model: db.testRunCases, modelName: "TestRunCases" }, // Added TestRunCases
-  TestRunResults: { model: db.testRunResults, modelName: "TestRunResults" },
-  TestRunStepResults: {
-    model: db.testRunStepResults,
-    modelName: "TestRunStepResults",
-  },
-  Issues: { model: db.issue, modelName: "Issues" },
-  AppConfig: { model: db.appConfig, modelName: "AppConfig" },
-  JUnitTestSuite: { model: db.jUnitTestSuite, modelName: "JUnitTestSuite" },
-  JUnitTestResult: { model: db.jUnitTestResult, modelName: "JUnitTestResult" },
-  JUnitProperty: { model: db.jUnitProperty, modelName: "JUnitProperty" },
-  JUnitAttachment: { model: db.jUnitAttachment, modelName: "JUnitAttachment" },
-  JUnitTestStep: { model: db.jUnitTestStep, modelName: "JUnitTestStep" },
-  CodeRepository: { model: db.codeRepository, modelName: "CodeRepository" },
-  ImpactAnalysis: { model: db.impactAnalysis, modelName: "ImpactAnalysis" },
-  LlmIntegration: { model: db.llmIntegration, modelName: "LlmIntegration" },
-  Integration: { model: db.integration, modelName: "Integration" },
-  PromptConfig: { model: db.promptConfig, modelName: "PromptConfig" },
-  CaseExportTemplate: {
-    model: db.caseExportTemplate,
-    modelName: "CaseExportTemplate",
-  },
-  SharedStepGroup: { model: db.sharedStepGroup, modelName: "SharedStepGroup" },
-  DataSet: { model: db.dataSet, modelName: "DataSet" },
-  // Ensure all models that can be soft-deleted and purged are in this map with the correct structure.
-};
+// Coerces the URL segment to the model's primary-key type.
+function parseItemId(
+  entry: TrashModel,
+  itemId: string
+): { id: string | number } | { error: NextResponse } {
+  if (entry.idType === "Int") {
+    const parsedId = parseInt(itemId, 10);
+    if (isNaN(parsedId)) {
+      return {
+        error: NextResponse.json(
+          {
+            error: `Invalid Item ID format for ${entry.modelName}. Expected integer.`,
+          },
+          { status: 400 }
+        ),
+      };
+    }
+    return { id: parsedId };
+  }
+  return { id: itemId };
+}
+
+function displayName(item: any): string | undefined {
+  return item?.name || item?.title || item?.label || item?.email;
+}
 
 // PATCH handler for restoring an item (setting isDeleted = false)
 export const PATCH = withAuditContext(
@@ -178,9 +69,9 @@ export const PATCH = withAuditContext(
 
     const params = await context.params;
     const { itemType, itemId } = params;
-    const modelMapEntry = itemTypeToModelMap[itemType];
+    const entry = getTrashModel(itemType);
 
-    if (!modelMapEntry) {
+    if (!entry) {
       return NextResponse.json({ error: "Invalid item type" }, { status: 404 });
     }
 
@@ -191,71 +82,13 @@ export const PATCH = withAuditContext(
       );
     }
 
+    const parsed = parseItemId(entry, itemId);
+    if ("error" in parsed) return parsed.error;
+    const idForQuery = parsed.id;
+
     try {
-      let idForQuery: string | number = itemId;
-      const intIdModels = [
-        "Roles",
-        "Groups",
-        "Projects",
-        "Milestones",
-        "MilestoneTypes",
-        "Icon",
-        "CaseFields",
-        "ResultFields",
-        "FieldOptions",
-        "Templates",
-        "Status",
-        "Workflows",
-        "ConfigCategories",
-        "ConfigVariants",
-        "Configurations",
-        "Tags",
-        "Repositories",
-        "RepositoryFolders",
-        "RepositoryCases",
-        "RepositoryCaseVersions",
-        "Attachments",
-        "Steps",
-        "Sessions",
-        "SessionResults",
-        "SessionVersions",
-        "TestRuns",
-        "TestRunCases",
-        "TestRunResults",
-        "TestRunStepResults",
-        "Issues",
-        "JUnitTestSuite",
-        "JUnitTestResult",
-        "JUnitProperty",
-        "JUnitAttachment",
-        "JUnitTestStep",
-        "RepositoryCaseLink",
-        "RepositoryCaseCodePin",
-        "CodeRepository",
-        "ImpactAnalysis",
-        "LlmIntegration",
-        "Integration",
-        "PromptConfig",
-        "CaseExportTemplate",
-        "SharedStepGroup",
-        "DataSet",
-      ];
-
-      if (intIdModels.includes(modelMapEntry.modelName)) {
-        const parsedId = parseInt(itemId, 10);
-        if (isNaN(parsedId)) {
-          return NextResponse.json(
-            {
-              error: `Invalid Item ID format for ${modelMapEntry.modelName}. Expected integer.`,
-            },
-            { status: 400 }
-          );
-        }
-        idForQuery = parsedId;
-      }
-
-      const restoredItem = await modelMapEntry.model.update({
-        where: { id: idForQuery as any }, // Cast as any for now
+      const restoredItem = await entry.model.update({
+        where: { id: idForQuery as any },
         data: { isDeleted: false },
       });
 
@@ -267,7 +100,7 @@ export const PATCH = withAuditContext(
       // The purge (DELETE) handler needs no equivalent: it only ever removes
       // rows that are already soft-deleted, which the status was already
       // re-derived without.
-      if (modelMapEntry.modelName === "TestRunResults") {
+      if (entry.modelName === "TestRunResults") {
         const restored = restoredItem as {
           testRunCaseId?: number;
           iterationId?: number | null;
@@ -283,12 +116,9 @@ export const PATCH = withAuditContext(
       // Audit the restore operation
       await captureAuditEvent({
         action: "UPDATE",
-        entityType: modelMapEntry.modelName,
+        entityType: entry.modelName,
         entityId: String(idForQuery),
-        entityName:
-          (restoredItem as any).name ||
-          (restoredItem as any).title ||
-          (restoredItem as any).email,
+        entityName: displayName(restoredItem),
         metadata: {
           operation: "restore_from_trash",
         },
@@ -300,14 +130,14 @@ export const PATCH = withAuditContext(
       if (isNotFoundError(error)) {
         return NextResponse.json(
           {
-            error: `${modelMapEntry.modelName} with ID ${itemId} not found or already not deleted.`,
+            error: `${entry.modelName} with ID ${itemId} not found or already not deleted.`,
           },
           { status: 404 }
         );
       }
       return NextResponse.json(
         {
-          error: `Failed to restore ${modelMapEntry.modelName}: ${error.message}`,
+          error: `Failed to restore ${entry.modelName}: ${error.message}`,
         },
         { status: 500 }
       );
@@ -326,10 +156,9 @@ export const DELETE = withAuditContext(
 
     const params = await context.params;
     const { itemType, itemId } = params;
-    const modelMapEntry = itemTypeToModelMap[itemType]; // Use modelMapEntry
+    const entry = getTrashModel(itemType);
 
-    if (!modelMapEntry) {
-      // Check modelMapEntry
+    if (!entry) {
       return NextResponse.json({ error: "Invalid item type" }, { status: 404 });
     }
 
@@ -340,105 +169,39 @@ export const DELETE = withAuditContext(
       );
     }
 
-    let idForQuery: string | number = itemId;
-
-    const intIdModels = [
-      "Roles",
-      "Groups",
-      "Projects",
-      "Milestones",
-      "MilestoneTypes",
-      "Icon",
-      "CaseFields",
-      "ResultFields",
-      "FieldOptions",
-      "Templates",
-      "Status",
-      "Workflows",
-      "ConfigCategories",
-      "ConfigVariants",
-      "Configurations",
-      "Tags",
-      "Repositories",
-      "RepositoryFolders",
-      "RepositoryCases",
-      "RepositoryCaseVersions",
-      "Attachments",
-      "Steps",
-      "Sessions",
-      "SessionResults",
-      "SessionVersions",
-      "TestRuns",
-      "TestRunCases",
-      "TestRunResults",
-      "TestRunStepResults",
-      "Issues",
-      "JUnitTestSuite",
-      "JUnitTestResult",
-      "JUnitProperty",
-      "JUnitAttachment",
-      "JUnitTestStep",
-      "RepositoryCaseLink",
-      "RepositoryCaseCodePin",
-      "CodeRepository",
-      "ImpactAnalysis",
-      "LlmIntegration",
-      "Integration",
-      "PromptConfig",
-      "CaseExportTemplate",
-      "SharedStepGroup",
-      "DataSet",
-    ];
-
-    if (intIdModels.includes(modelMapEntry.modelName)) {
-      // Use modelMapEntry.modelName
-      idForQuery = parseInt(itemId, 10);
-      if (isNaN(idForQuery)) {
-        return NextResponse.json(
-          {
-            error: `Invalid ID format for ${modelMapEntry.modelName}. Expected integer.`,
-          },
-          { status: 400 }
-        );
-      }
-    }
+    const parsed = parseItemId(entry, itemId);
+    if ("error" in parsed) return parsed.error;
+    const idForQuery = parsed.id;
 
     try {
-      const itemToPurge = await modelMapEntry.model.findUnique({
-        // Use modelMapEntry.model
+      const itemToPurge = await entry.model.findUnique({
         where: { id: idForQuery as any },
       });
 
       if (!itemToPurge) {
         return NextResponse.json(
-          { error: `${modelMapEntry.modelName} with ID ${itemId} not found.` }, // Use modelMapEntry.modelName
+          { error: `${entry.modelName} with ID ${itemId} not found.` },
           { status: 404 }
         );
       }
 
-      if (
-        typeof (itemToPurge as any).isDeleted === "boolean" &&
-        !(itemToPurge as any).isDeleted
-      ) {
+      if (!(itemToPurge as any).isDeleted) {
         return NextResponse.json(
           {
-            error: `${modelMapEntry.modelName} with ID ${itemId} is not marked as deleted. Purge operation aborted.`,
+            error: `${entry.modelName} with ID ${itemId} is not marked as deleted. Purge operation aborted.`,
           },
           { status: 400 }
         );
       }
 
-      await modelMapEntry.model.delete({ where: { id: idForQuery as any } }); // Use modelMapEntry.model
+      await entry.model.delete({ where: { id: idForQuery as any } });
 
       // Audit the permanent delete (purge) operation
       await captureAuditEvent({
         action: "DELETE",
-        entityType: modelMapEntry.modelName,
+        entityType: entry.modelName,
         entityId: String(idForQuery),
-        entityName:
-          (itemToPurge as any).name ||
-          (itemToPurge as any).title ||
-          (itemToPurge as any).email,
+        entityName: displayName(itemToPurge),
         metadata: {
           operation: "permanent_delete",
           purgedFromTrash: true,
@@ -446,10 +209,7 @@ export const DELETE = withAuditContext(
       });
 
       // If itemType is Attachments, delete from S3
-      if (
-        modelMapEntry.modelName === "Attachments" &&
-        (itemToPurge as any).url
-      ) {
+      if (entry.modelName === "Attachments" && (itemToPurge as any).url) {
         const attachmentUrl = (itemToPurge as any).url;
         try {
           const urlObject = new URL(attachmentUrl);
@@ -463,7 +223,6 @@ export const DELETE = withAuditContext(
             console.error(
               "[S3 Delete] AWS_BUCKET_NAME environment variable is not set. Cannot delete from S3."
             );
-            // Decide on behavior: fail the request or just log? For now, log and continue.
           } else if (s3Key) {
             await deleteS3Object(bucketName, s3Key);
           } else {
@@ -476,41 +235,39 @@ export const DELETE = withAuditContext(
             `[PURGE /api/admin/trash/${itemType}/${itemId}] Failed to delete attachment from S3. URL: ${attachmentUrl}. Error:`,
             s3Error
           );
-          // Optional: Decide if this failure should make the whole purge fail.
-          // For now, we'll return a success for DB purge but log the S3 error.
-          // You might want to return a different status or error message.
+          // The DB purge already succeeded; report success and log the S3 miss.
         }
       }
 
       return NextResponse.json(
         {
-          message: `${modelMapEntry.modelName} with ID ${itemId} purged successfully.`,
-        }, // Use modelMapEntry.modelName
+          message: `${entry.modelName} with ID ${itemId} purged successfully.`,
+        },
         { status: 200 }
       );
     } catch (error: any) {
       console.error(
-        `Failed to purge ${modelMapEntry.modelName} with ID ${itemId}:`,
+        `Failed to purge ${entry.modelName} with ID ${itemId}:`,
         error
-      ); // Use modelMapEntry.modelName
+      );
       if (isNotFoundError(error)) {
         return NextResponse.json(
-          { error: `${modelMapEntry.modelName} with ID ${itemId} not found.` }, // Use modelMapEntry.modelName
+          { error: `${entry.modelName} with ID ${itemId} not found.` },
           { status: 404 }
         );
       }
       if (isForeignKeyError(error)) {
         return NextResponse.json(
           {
-            error: `Failed to purge ${modelMapEntry.modelName} due to existing related data. Please ensure related items are also removed or handle cascading deletes appropriately.`,
+            error: `Failed to purge ${entry.modelName} due to existing related data. Please ensure related items are also removed or handle cascading deletes appropriately.`,
           },
           { status: 409 }
         );
       }
       return NextResponse.json(
         {
-          error: `Failed to purge ${modelMapEntry.modelName}: ${error.message}`,
-        }, // Use modelMapEntry.modelName
+          error: `Failed to purge ${entry.modelName}: ${error.message}`,
+        },
         { status: 500 }
       );
     }

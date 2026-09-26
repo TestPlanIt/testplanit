@@ -5992,7 +5992,21 @@
         "issueConfigs": "Cấu hình sự cố",
         "sharedStepGroups": "Nhóm bước chung",
         "dataSets": "Bộ dữ liệu",
-        "impactAnalyses": "Phân tích ảnh hưởng"
+        "impactAnalyses": "Phân tích ảnh hưởng",
+        "dataSetRows": "Hàng dữ liệu",
+        "duplicateScanResults": "Kết quả Quét bản sao",
+        "executionTargets": "Mục tiêu Thực hiện",
+        "importMappings": "Ánh xạ Nhập",
+        "llmReportSnapshots": "Ảnh chụp nhanh Báo cáo AI",
+        "notifications": "Thông báo",
+        "requirementTraceabilitySnapshots": "Ảnh chụp nhanh Khả năng Truy xuất",
+        "reviewRequests": "Yêu cầu Xem xét",
+        "shareLinks": "Liên kết Chia sẻ",
+        "stepSequenceMatches": "Trùng khớp Trình tự Bước",
+        "stepSequenceMatchCases": "Trường hợp Trùng khớp Trình tự Bước",
+        "testRunCases": "Các trường hợp chạy thử nghiệm",
+        "testRunCaseDataSetSnapshots": "Ảnh chụp nhanh Tập dữ liệu Lần chạy thử nghiệm",
+        "testRunCaseIterations": "Lần Lặp lại Chạy thử nghiệm"
       },
       "table": {
         "title": "Đã xóa {itemType}",
@@ -7881,7 +7895,7 @@
     "reportBuilder": {
       "dimensions": "## Kích thước\nChọn các kích thước bạn muốn phân tích trong báo cáo. Kích thước là các thuộc tính phân loại dữ liệu của bạn, chẳng hạn như Ngày, Người dùng, Trạng thái, v.v. Bạn có thể kéo để sắp xếp lại thứ tự chúng.",
       "metrics": "## Số liệu\nChọn các số liệu bạn muốn đo trong báo cáo. Số liệu là các phép đo định lượng được suy ra từ dữ liệu của bạn, chẳng hạn như Số kết quả kiểm tra, Tỷ lệ đạt, Thời gian trung bình, v.v. Bạn có thể kéo để sắp xếp lại thứ tự chúng.",
-      "dateRange": "## Date Range\nFilter your report data by a specific time period. Choose a preset such as 'Last 7 days', 'Last month' or 'Last N days', or pick a custom start and end date on the calendar.\n\nA preset stays relative: a saved report or live share link works the dates out again each time it opens, in your timezone. Custom dates stay fixed. This filter applies to the relevant date field for each report type (e.g., execution date for test results, creation date for test cases).",
+      "dateRange": "## Phạm vi Ngày\nLọc dữ liệu báo cáo của bạn theo một khoảng thời gian cụ thể. Chọn một cài đặt sẵn như 'Últimos 7 días', 'Mes pasado' hoặc 'Últimos N días', hoặc chọn ngày bắt đầu và kết thúc tùy chỉnh trên lịch.\n\nMột cài đặt sẵn luôn có tính chất tương đối: một báo cáo đã lưu hoặc liên kết chia sẻ trực tiếp sẽ tính toán lại các ngày mỗi khi mở, trong múi giờ của bạn. Các ngày tùy chỉnh vẫn cố định. Bộ lọc này áp dụng cho trường ngày liên quan cho từng loại báo cáo (ví dụ: ngày thực thi cho kết quả kiểm tra, ngày tạo cho các trường hợp kiểm tra).",
       "dimensionFilters": "## Bộ lọc\nGiới hạn báo cáo theo các giá trị cụ thể của từng chiều đã chọn. Để trống một bộ lọc để bao gồm tất cả giá trị của chiều đó. Các chiều ngày được lọc bằng bộ chọn khoảng ngày thay thế."
     },
     "codeRepository": {

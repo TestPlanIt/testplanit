@@ -5992,7 +5992,21 @@
         "issueConfigs": "Issue Configs",
         "sharedStepGroups": "Shared Step Groups",
         "dataSets": "Datasets",
-        "impactAnalyses": "Impact Analyses"
+        "impactAnalyses": "Impact Analyses",
+        "dataSetRows": "Dataset Rows",
+        "duplicateScanResults": "Duplicate Scan Results",
+        "executionTargets": "Execution Targets",
+        "importMappings": "Import Mappings",
+        "llmReportSnapshots": "AI Report Snapshots",
+        "notifications": "Notifications",
+        "requirementTraceabilitySnapshots": "Traceability Snapshots",
+        "reviewRequests": "Review Requests",
+        "shareLinks": "Share Links",
+        "stepSequenceMatches": "Step Sequence Matches",
+        "stepSequenceMatchCases": "Step Sequence Match Cases",
+        "testRunCases": "Test Run Cases",
+        "testRunCaseDataSetSnapshots": "Test Run Dataset Snapshots",
+        "testRunCaseIterations": "Test Run Iterations"
       },
       "table": {
         "title": "Deleted {itemType}",

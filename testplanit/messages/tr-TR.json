@@ -5992,7 +5992,21 @@
         "issueConfigs": "Sorun Yapılandırmaları",
         "sharedStepGroups": "Ortak Adım Grupları",
         "dataSets": "Veri kümeleri",
-        "impactAnalyses": "Etki Analizleri"
+        "impactAnalyses": "Etki Analizleri",
+        "dataSetRows": "Veri kümesi satırları",
+        "duplicateScanResults": "Kopya Tarama Sonuçları",
+        "executionTargets": "Yürütme Hedefleri",
+        "importMappings": "İçe Aktarma Eşlemeleri",
+        "llmReportSnapshots": "AI Rapor Anlık Görüntüleri",
+        "notifications": "Bildirimler",
+        "requirementTraceabilitySnapshots": "İzlenebilirlik Anlık Görüntüleri",
+        "reviewRequests": "İnceleme Talepleri",
+        "shareLinks": "Bağlantıları Paylaş",
+        "stepSequenceMatches": "Adım Sırası Eşleşmeleri",
+        "stepSequenceMatchCases": "Adım Sırası Eşleşme Senaryoları",
+        "testRunCases": "Test Çalıştırma Senaryoları",
+        "testRunCaseDataSetSnapshots": "Test Çalıştırma Senaryo Veri Kümesi Anlık Görüntüleri",
+        "testRunCaseIterations": "Test Çalıştırma İterasyonları"
       },
       "table": {
         "title": "Silindi {itemType}",

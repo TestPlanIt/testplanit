@@ -5992,7 +5992,21 @@
         "issueConfigs": "تكوينات المشكلات",
         "sharedStepGroups": "مجموعات الخطوات المشتركة",
         "dataSets": "مجموعات البيانات",
-        "impactAnalyses": "تحليلات التأثير"
+        "impactAnalyses": "تحليلات التأثير",
+        "dataSetRows": "صفوف مجموعة البيانات",
+        "duplicateScanResults": "نتائج فحص التكرارات",
+        "executionTargets": "أهداف التنفيذ",
+        "importMappings": "تعيينات الاستيراد",
+        "llmReportSnapshots": "لقطات تقرير الذكاء الاصطناعي",
+        "notifications": "الإشعارات",
+        "requirementTraceabilitySnapshots": "لقطات قابلية التتبع",
+        "reviewRequests": "طلبات المراجعة",
+        "shareLinks": "روابط المشاركة",
+        "stepSequenceMatches": "مطابقات تسلسل الخطوات",
+        "stepSequenceMatchCases": "حالات مطابقة تسلسل الخطوات",
+        "testRunCases": "حالات تشغيل الاختبار",
+        "testRunCaseDataSetSnapshots": "لقطات مجموعة بيانات حالات تشغيل الاختبار",
+        "testRunCaseIterations": "تكرارات تشغيل الاختبار"
       },
       "table": {
         "title": "محذوفات {itemType}",

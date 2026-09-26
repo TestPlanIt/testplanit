@@ -5992,7 +5992,21 @@
         "issueConfigs": "问题配置",
         "sharedStepGroups": "共同步骤小组",
         "dataSets": "数据集",
-        "impactAnalyses": "影响分析"
+        "impactAnalyses": "影响分析",
+        "dataSetRows": "数据集行",
+        "duplicateScanResults": "重复扫描结果",
+        "executionTargets": "执行目标",
+        "importMappings": "导入映射",
+        "llmReportSnapshots": "AI 报告快照",
+        "notifications": "通知",
+        "requirementTraceabilitySnapshots": "可追溯性快照",
+        "reviewRequests": "审查请求",
+        "shareLinks": "分享链接",
+        "stepSequenceMatches": "步骤序列匹配",
+        "stepSequenceMatchCases": "步骤序列匹配用例",
+        "testRunCases": "测试运行用例",
+        "testRunCaseDataSetSnapshots": "测试运行数据集快照",
+        "testRunCaseIterations": "测试运行迭代"
       },
       "table": {
         "title": "已删除 {itemType}",
@@ -7098,7 +7112,7 @@
     },
     "linkedCases": {
       "title": "关联测试用例",
-      "titleWithCount": "{count, plural, =0 {Linked Test Cases} =1 {# Linked Test Case} other {# Linked Test Cases}}",
+      "titleWithCount": "{count, plural, =0 {关联测试用例} =1 {# 个关联测试用例} other {# 个关联测试用例}}",
       "empty": "没有关联的测试用例。",
       "addLinkDialogTitle": "关联测试用例",
       "searchPlaceholder": "搜索测试用例……",
@@ -7130,7 +7144,7 @@
       "dismissFailed": "关闭可疑标记失败。"
     },
     "references": {
-      "title": "{count, plural, =0 {References} =1 {{count} Reference} other {{count} References}}",
+      "title": "{count, plural, =0 {引用} =1 {{count} 条引用} other {{count} 条引用}}",
       "empty": "暂无引用。",
       "emptyHint": "附加影响此需求的工单。",
       "addReference": "添加引用",
@@ -7156,7 +7170,7 @@
       "loadFailed": "加载覆盖率失败。",
       "retry": "重试",
       "panelTitle": "覆盖测试用例",
-      "panelTitleWithCount": "{count, plural, =0 {Covering Test Cases} =1 {Covering # Test Case} other {Covering # Test Cases}}",
+      "panelTitleWithCount": "{count, plural, =0 {覆盖测试用例} =1 {覆盖 # 个测试用例} other {覆盖 # 个测试用例}}",
       "panelDescription": "计入此需求覆盖率的所有测试用例 — 包括直接关联的用例以及关联到其下任何需求的用例。要添加或移除链接，请使用关联测试用例。",
       "panelEmpty": "尚无测试用例覆盖此需求。",
       "columnCase": "测试用例",

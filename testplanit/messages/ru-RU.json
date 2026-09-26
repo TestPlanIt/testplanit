@@ -5992,7 +5992,21 @@
         "issueConfigs": "Конфигурации проблем",
         "sharedStepGroups": "Общие группы для совместного выполнения шагов",
         "dataSets": "Наборы данных",
-        "impactAnalyses": "Анализ влияния"
+        "impactAnalyses": "Анализ влияния",
+        "dataSetRows": "Строки набора данных",
+        "duplicateScanResults": "Результаты повторного сканирования",
+        "executionTargets": "Цели выполнения",
+        "importMappings": "Импортировать сопоставления",
+        "llmReportSnapshots": "Снимки отчетов ИИ",
+        "notifications": "Уведомления",
+        "requirementTraceabilitySnapshots": "Снимки трассируемости",
+        "reviewRequests": "Запросы на проверку",
+        "shareLinks": "Поделиться ссылками",
+        "stepSequenceMatches": "Совпадения последовательности шагов",
+        "stepSequenceMatchCases": "Тестовые случаи совпадения последовательности шагов",
+        "testRunCases": "Примеры тестовых заданий",
+        "testRunCaseDataSetSnapshots": "Снимки набора данных тестового запуска",
+        "testRunCaseIterations": "Итерации тестового запуска"
       },
       "table": {
         "title": "Удалено {itemType}",

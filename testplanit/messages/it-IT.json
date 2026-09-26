@@ -5992,7 +5992,21 @@
         "issueConfigs": "Configurazioni dei problemi",
         "sharedStepGroups": "Gruppi di passi condivisi",
         "dataSets": "Set di dati",
-        "impactAnalyses": "Analisi di impatto"
+        "impactAnalyses": "Analisi di impatto",
+        "dataSetRows": "Righe del dataset",
+        "duplicateScanResults": "Risultati scansione duplicata",
+        "executionTargets": "Obiettivi di esecuzione",
+        "importMappings": "Mapping di importazione",
+        "llmReportSnapshots": "Istantanee report IA",
+        "notifications": "Notifiche",
+        "requirementTraceabilitySnapshots": "Istantanee di tracciabilità",
+        "reviewRequests": "Richieste di revisione",
+        "shareLinks": "Link di condivisione",
+        "stepSequenceMatches": "Corrispondenze sequenza passaggi",
+        "stepSequenceMatchCases": "Casi di corrispondenza sequenza passaggi",
+        "testRunCases": "Casi di esecuzione test",
+        "testRunCaseDataSetSnapshots": "Istantanee dataset esecuzione test",
+        "testRunCaseIterations": "Iterazioni di esecuzione test"
       },
       "table": {
         "title": "Eliminato {itemType}",

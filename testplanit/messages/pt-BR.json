@@ -5992,7 +5992,21 @@
         "issueConfigs": "Configurações de problemas",
         "sharedStepGroups": "Grupos de passos compartilhados",
         "dataSets": "Conjuntos de Dados",
-        "impactAnalyses": "Análises de Impacto"
+        "impactAnalyses": "Análises de Impacto",
+        "dataSetRows": "Linhas do conjunto de dados",
+        "duplicateScanResults": "Resultados de varredura duplicada",
+        "executionTargets": "Destinos de execução",
+        "importMappings": "Mapeamentos de importação",
+        "llmReportSnapshots": "Instantâneos de relatório de IA",
+        "notifications": "Notificações",
+        "requirementTraceabilitySnapshots": "Instantâneos de rastreabilidade",
+        "reviewRequests": "Solicitações de revisão",
+        "shareLinks": "Links compartilhados",
+        "stepSequenceMatches": "Correspondências de sequência de etapas",
+        "stepSequenceMatchCases": "Casos de correspondência de sequência de etapas",
+        "testRunCases": "Casos de teste",
+        "testRunCaseDataSetSnapshots": "Instantâneos do conjunto de dados de teste",
+        "testRunCaseIterations": "Iterações de teste"
       },
       "table": {
         "title": "Excluído {itemType}",

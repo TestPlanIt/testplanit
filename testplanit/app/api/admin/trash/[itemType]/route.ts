@@ -1,17 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { schema } from "~/zenstack/schema";
-import { checkAdminAuth, itemTypeToModelMap } from "../shared";
-
-const schemaModelNames: Record<string, string> = { Issues: "Issue" };
-
-function getSearchField(itemType: string): "name" | "key" | null {
-  const fields = (
-    schema.models as Record<string, { fields: Record<string, unknown> }>
-  )[schemaModelNames[itemType] ?? itemType]?.fields;
-  if (fields?.name) return "name";
-  if (itemType === "AppConfig" && fields?.key) return "key";
-  return null;
-}
+import { checkAdminAuth, getTrashModel } from "../shared";
 
 export async function GET(
   request: NextRequest,
@@ -24,9 +12,9 @@ export async function GET(
 
   const itemType = routeParams.itemType;
 
-  const model = itemTypeToModelMap[itemType];
+  const entry = getTrashModel(itemType);
 
-  if (!model) {
+  if (!entry) {
     console.error(
       `[API /api/admin/trash/[itemType]] Invalid item type received: ${itemType}`
     );
@@ -42,19 +30,18 @@ export async function GET(
 
   const whereClause: any = { isDeleted: true };
 
-  const searchField = getSearchField(itemType);
-  if (search && searchField) {
+  if (search && entry.searchField) {
     whereClause.AND = [
-      { [searchField]: { contains: search, mode: "insensitive" } },
+      { [entry.searchField]: { contains: search, mode: "insensitive" } },
     ];
   }
 
   try {
-    const totalCount = await model.count({
+    const totalCount = await entry.model.count({
       where: whereClause,
     });
 
-    const items = await model.findMany({
+    const items = await entry.model.findMany({
       where: whereClause,
       orderBy: {
         [sortBy]: sortDir,
