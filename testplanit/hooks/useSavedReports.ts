@@ -256,7 +256,7 @@ export function useSavedReports({
     async (id: string) => {
       await updateShareLink({
         where: { id },
-        data: { isDeleted: true, deletedAt: new Date() },
+        data: { isDeleted: true },
       });
     },
     [updateShareLink]

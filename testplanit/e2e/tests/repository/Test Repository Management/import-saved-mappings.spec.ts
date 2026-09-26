@@ -91,7 +91,7 @@ test.describe("Saved import column mappings", () => {
         {
           data: {
             where: { id: mapping.id },
-            data: { isDeleted: true, deletedAt: new Date().toISOString() },
+            data: { isDeleted: true },
           },
         }
       );

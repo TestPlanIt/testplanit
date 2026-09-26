@@ -272,7 +272,7 @@ export function useSavedRepositoryViews({
       // Soft delete, matching saved searches and the project-wide convention.
       await updateShareLink({
         where: { id },
-        data: { isDeleted: true, deletedAt: new Date() },
+        data: { isDeleted: true },
       });
       await refetch();
     },
