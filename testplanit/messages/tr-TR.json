@@ -2243,7 +2243,7 @@
           "description": "Bir commit'i bir bileti adlandıran (PROJ-123, #42, AB#42), bu billete bağlı her test senaryosu üzerinde - commit'in değiştirdiği fonksiyonlar veya sınıflarda nerede diff onları gösteriyorsa, aksi takdirde tüm dosya üzerinde - Kod Pimleri haline getirir; böylece o kodu yapılan sonraki değişiklikler senaryoları yeniden bulur. TestPlanIt'in henüz tutmadığı adlandırılmış bir bilet, projenin sorun izleyicisinden içe aktarılır; bu nedenle bağlanabilir.",
           "enableLabel": "Commit mesajlarından Kod Pimleri türet",
           "enableDescription": "Her ön bellek yenilemesinde daldaki son commit'leri tarar. Yalnızca analiz edilen commit'lerden bilet anahtarlarını okuyan analizi tutmak için kapatın; manuel taramalar yine de çalışır.",
-          "skippedLarge": "{count, plural, one {{count} commit sabitlenecek kadar büyük olduğu için atlandı} other {{count} commit sabitlenecek kadar büyük olduğu için atlandı}}",
+          "skippedLarge": "{count, plural, one {# commit sabitlenecek kadar büyük olduğu için atlandı} other {# commit sabitlenecek kadar büyük olduğu için atlandı}}",
           "fetchCapped": "Bağlı bir bileti adlandıran her commit'in dosyaları bu geçişte okunmadı; geri kalanlar sonraki taramada alınır.",
           "scanRecent": "Son Commit'leri Yeniden Tara",
           "scanFull": "Tam Geçmişi Tara",
@@ -2325,7 +2325,7 @@
           "unreadable": "{count, plural, one {# dosya} other {# dosya}} okunamadığı için, o pin'ler kontrol edilmedi.",
           "removed": "{count, plural, =0 {Bayat pin kaldırılmadı} one {# bayat pin kaldırıldı} other {# bayat pin kaldırıldı}}",
           "removeFailed": "Bayat pin'ler kaldırılamadı",
-          "removeConfirm": "Son kontrol {name} ucunda bulamadığı {count, plural, one {{count} Kod Pimi} other {{count} Kod Pimi}} kaldırılsın mı?",
+          "removeConfirm": "Son kontrol {name} ucunda bulamadığı {count, plural, one {# Kod Pimi} other {# Kod Pimi}} kaldırılsın mı?",
           "removeConfirmNote": "Bayat rozeti kapatılan pin'ler ve depo işaretçileri tarafından tutulan pin'ler tutulur. Kaldırılan pin'ler Çöp Kutusu'ndan geri yüklenebilir."
         }
       }

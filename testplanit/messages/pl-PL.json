@@ -4353,7 +4353,7 @@
         "pinFile": "{path}",
         "pinGlob": "Pasuje {pattern}",
         "pinSymbol": "{path} · {symbol}",
-        "pathDetail": "Znaleziono „{term}",
+        "pathDetail": "Znaleziono „{term}” w {field}",
         "fieldName": "nazwa sprawy",
         "fieldContent": "treść sprawy",
         "fieldTag": "etykietka",

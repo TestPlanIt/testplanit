@@ -2243,7 +2243,7 @@
           "description": "Los cambios confirmados que nombran una entrada (PROJ-123, #42, AB#42) se convierten en Code Pins en todos los casos de prueba vinculados a esa entrada — en las funciones o clases que cambió la confirmación donde la diferencia las muestra, de lo contrario en todo el archivo — para que los cambios posteriores a ese código encuentren los casos nuevamente. Una entrada nombrada que TestPlanIt aún no contiene se importa del rastreador de problemas del proyecto para que se pueda vincular.",
           "enableLabel": "Derivar Code Pins de mensajes de confirmación",
           "enableDescription": "Escanea las confirmaciones recientes en la rama en cada actualización de caché. Desactive para mantener análisis leyendo claves de entrada de las confirmaciones analizadas solo; los escaneos manuales aún se ejecutan.",
-          "skippedLarge": "{count, plural, one {{count} confirmación fue} other {{count} confirmaciones fueron}} omitida como demasiado grande para anclar.",
+          "skippedLarge": "{count, plural, one {# confirmación fue} other {# confirmaciones fueron}} omitida como demasiado grande para anclar.",
           "fetchCapped": "No todas las confirmaciones que nombraron una entrada vinculada tuvieron sus archivos leídos en este paso; el resto se toma en el siguiente escaneo.",
           "scanRecent": "Rescanear confirmaciones recientes",
           "scanFull": "Escanear historial completo",
@@ -2258,20 +2258,20 @@
           "imported": "{imported, plural, =0 {Ninguna entrada nueva fue importada desde el rastreador.} one {Se importó # entrada desde el rastreador.} other {Se importaron # entradas desde el rastreador.}}",
           "fullCapped": "El recorrido se detuvo en {count, number} confirmaciones antes de llegar al inicio de la rama. Ejecute Escanear historial completo de nuevo para continuar desde donde se detuvo.",
           "stale": "Un escaneo iniciado {date} nunca reportó — el trabajador puede haber sido reiniciado. Póngalo en cola de nuevo para continuar.",
-          "summaryCommits": "{commits, plural, one {{count} confirmación} other {{count} confirmaciones}} leídas{cached, plural, =0 {} other { ({cached, number} del caché de confirmación)}} · {naming, number} nombró una entrada · {tickets, plural, one {{count} entrada distinta} other {{count} entradas distintas}}",
+          "summaryCommits": "{commits, plural, one {# confirmación} other {# confirmaciones}} leídas{cached, plural, =0 {} other { ({cached, number} del caché de confirmación)}} · {naming, number} nombró una entrada · {tickets, plural, one {# entrada distinta} other {# entradas distintas}}",
           "summaryPins": "Entradas: {created, number} creadas · {updated, number} actualizadas · {removed, number} eliminadas",
           "noLinkedHint": "Las entradas solo anclan casos de prueba una vez que un caso de prueba está vinculado a ellas. Vincule casos a las entradas importadas, luego vuelva a escanear.",
           "importFailuresTitle": "Claves no encontradas en el rastreador ({shown} de {total}):",
           "windowCapped": "Solo se leyeron las {count, number} confirmaciones más recientes (el límite de ventana reciente). Use Escanear historial completo para leer las más antiguas.",
           "runningWalk": "{commits, number} confirmaciones leídas hasta ahora{cached, plural, =0 {} other { ({cached, number} del caché de confirmación)}} — las entradas se buscan una vez que finaliza el recorrido",
           "runningImport": "{commits, number} confirmaciones leídas · importación de entradas: {lookups, number} buscadas en el rastreador · {imported, number} importadas",
-          "summaryCommitsOnly": "{commits, plural, one {{count} confirmación} other {{count} confirmaciones}} leídas",
-          "importSkipped": "{skipped, plural, one {{count} clave no fue} other {{count} claves no fueron}} buscadas aún porque un escaneo realiza un número limitado de búsquedas en el rastreador. Ejecute el escaneo nuevamente para continuar.",
+          "summaryCommitsOnly": "{commits, plural, one {# confirmación} other {# confirmaciones}} leídas",
+          "importSkipped": "{skipped, plural, one {# clave no fue} other {# claves no fueron}} buscadas aún porque un escaneo realiza un número limitado de búsquedas en el rastreador. Ejecute el escaneo nuevamente para continuar.",
           "cancelRequested": "Cancelación solicitada. El escaneo se detiene en su siguiente paso; las confirmaciones ya leídas se mantienen en caché.",
           "cancelled": "Escaneo cancelado {date}. Las confirmaciones leídas antes de la cancelación se conservan en el caché de confirmación; las entradas no se actualizaron.",
-          "importMoved": "{moved, plural, one {{count} clave es un nombre antiguo} other {{count} claves son nombres antiguos}} de entradas ya importadas; se movieron o cambiaron de nombre en el rastreador.",
-          "importFailed": "{failed, plural, one {{count} clave no fue} other {{count} claves no fueron}} encontrada en el rastreador, listada a continuación.",
-          "summaryMatched": "{matched, plural, one {{count} confirmación} other {{count} confirmaciones}} nombró una entrada vinculada a un caso de prueba",
+          "importMoved": "{moved, plural, one {# clave es un nombre antiguo} other {# claves son nombres antiguos}} de entradas ya importadas; se movieron o cambiaron de nombre en el rastreador.",
+          "importFailed": "{failed, plural, one {# clave no fue} other {# claves no fueron}} encontrada en el rastreador, listada a continuación.",
+          "summaryMatched": "{matched, plural, one {# confirmación} other {# confirmaciones}} nombró una entrada vinculada a un caso de prueba",
           "summarySymbolPins": "({count, number} de las entradas creadas apuntan a una función o clase en lugar de un archivo completo.)"
         },
         "markers": {
@@ -2279,11 +2279,11 @@
           "description": "Las anotaciones de comentarios como @testplanit case:123 y las entradas en .testplanit/testmap.yml se convierten en Code Pins en cada actualización de caché.",
           "skippedPrivacy": "Omitido: el almacenamiento en caché de archivos está deshabilitado.",
           "skippedPartial": "Omitido: solo se almacenaron parcialmente en caché los contenidos del archivo.",
-          "summary": "{annotations, plural, one {{count} anotación} other {{count} anotaciones}} · {mapEntries, plural, one {{count} entrada de mapa} other {{count} entradas de mapa}} · {created} creada · {updated} actualizada · {removed} eliminada",
-          "problems": "{count, plural, one {{count} problema} other {{count} problemas}}"
+          "summary": "{annotations, plural, one {# anotación} other {# anotaciones}} · {mapEntries, plural, one {# entrada de mapa} other {# entradas de mapa}} · {created} creada · {updated} actualizada · {removed} eliminada",
+          "problems": "{count, plural, one {# problema} other {# problemas}}"
         },
         "saved": "Configuración de Impact Analysis guardada",
-        "disconnectWarning1": "Eliminar {count, plural, one {{count} Code Pin} other {{count} Code Pins}} y el historial de análisis de este repositorio",
+        "disconnectWarning1": "Eliminar {count, plural, one {# Code Pin} other {# Code Pins}} y el historial de análisis de este repositorio",
         "disconnectSuccess": "Repositorio de aplicación desconectado",
         "disconnectError": "No se pudo desconectar el repositorio de aplicación",
         "repositories": {
@@ -2292,7 +2292,7 @@
           "connect": "Conectar repositorio",
           "allConnected": "Todos los repositorios registrados ya están conectados.",
           "columnCache": "Caché",
-          "pinTotal": "{count, plural, one {{count} Code Pin} other {{count} Code Pins}}",
+          "pinTotal": "{count, plural, one {# Code Pin} other {# Code Pins}}",
           "cacheDisabled": "Almacenamiento en caché desactivado",
           "edit": "Editar conexión",
           "connectTitle": "Conectar un repositorio",
@@ -2303,7 +2303,7 @@
           "viewDescription": "Cómo está conectado este repositorio. Actualice el caché o ejecute un escaneo de entrada desde aquí; use Editar para cambiar la configuración.",
           "empty": "Aún no hay repositorios conectados",
           "emptyDescription": "Conecte el repositorio de la aplicación en prueba para comenzar a analizar cambios.",
-          "lastScan": "{created, plural, one {{count} entrada} other {{count} entradas}} creadas por el último escaneo",
+          "lastScan": "{created, plural, one {# entrada} other {# entradas}} creadas por el último escaneo",
           "scanFailed": "Error en el último escaneo",
           "scanCancelled": "Último escaneo cancelado"
         },
@@ -2318,14 +2318,14 @@
           "remove": "Eliminar entradas obsoletas",
           "checkStarted": "Verificación de entrada obsoleta en cola.",
           "checkFailedToStart": "No se pudo iniciar la verificación de entrada obsoleta",
-          "running": "Comprobando {checked, number} de {total, plural, one {{count} archivo} other {{count} archivos}}…",
+          "running": "Comprobando {checked, number} de {total, plural, one {# archivo} other {# archivos}}…",
           "neverChecked": "Aún no se ha comprobado",
           "checkFailed": "Error en la última verificación",
-          "summary": "{count, plural, =0 {Sin entradas obsoletas} one {{count} entrada obsoleta} other {{count} entradas obsoletas}} · {checked, plural, one {{count} entrada} other {{count} entradas}} verificada",
-          "unreadable": "{count, plural, one {{count} archivo no se pudo leer} other {{count} archivos no se pudieron leer}}, por lo que esas entradas no se comprobaron.",
-          "removed": "{count, plural, =0 {Ninguna entrada obsoleta fue eliminada} one {{count} entrada obsoleta eliminada} other {{count} entradas obsoletas eliminadas}}",
+          "summary": "{count, plural, =0 {Sin entradas obsoletas} one {# entrada obsoleta} other {# entradas obsoletas}} · {checked, plural, one {# entrada} other {# entradas}} verificada",
+          "unreadable": "{count, plural, one {# archivo no se pudo leer} other {# archivos no se pudieron leer}}, por lo que esas entradas no se comprobaron.",
+          "removed": "{count, plural, =0 {Ninguna entrada obsoleta fue eliminada} one {# entrada obsoleta eliminada} other {# entradas obsoletas eliminadas}}",
           "removeFailed": "No se pudieron eliminar las entradas obsoletas",
-          "removeConfirm": "¿Eliminar {count, plural, one {{count} Code Pin} other {{count} Code Pins}} que la última verificación no pudo encontrar en la punta de {name}?",
+          "removeConfirm": "¿Eliminar {count, plural, one {# Code Pin} other {# Code Pins}} que la última verificación no pudo encontrar en la punta de {name}?",
           "removeConfirmNote": "Se mantienen las entradas cuya insignia Stale fue descartada y las entradas mantenidas por marcadores de repositorio. Las entradas eliminadas se pueden restaurar desde la Papelera."
         }
       }
@@ -3174,7 +3174,7 @@
         },
         "warnings": {
           "partialTitle": "Algunos enlaces de problemas no se crearon",
-          "summary": "{count, plural, one {{count} celda de problema} other {{count} celdas de problema}} no se pudieron vincular. Se importaron los casos de prueba."
+          "summary": "{count, plural, one {# celda de problema} other {# celdas de problema}} no se pudieron vincular. Se importaron los casos de prueba."
         },
         "page1": {
           "fileType": {
@@ -3799,9 +3799,9 @@
       "errorSnippetTooLarge": "El bloque anclado es demasiado grande.",
       "errorSymbolNotFound": "Símbolo no encontrado en el archivo.",
       "filePlaceholder": "Buscar archivos...",
-      "filesCached": "{count, plural, one {{count} archivo} other {{count} archivos}} en caché · {date}",
+      "filesCached": "{count, plural, one {# archivo} other {# archivos}} en caché · {date}",
       "filesLive": "Listando archivos en directo desde el repositorio",
-      "globMatches": "{count, plural, =0 {Sin archivos en caché coinciden} one {{count} archivo en caché coincide} other {{count} archivos en caché coinciden}}",
+      "globMatches": "{count, plural, =0 {Sin archivos en caché coinciden} one {# archivo en caché coincide} other {# archivos en caché coinciden}}",
       "globPlaceholder": "src/pagos/**",
       "kind": "Tipo",
       "kindFile": "Archivo completo",
@@ -3842,7 +3842,7 @@
       "viewerFailed": "No se pudo cargar el archivo.",
       "viewerLoading": "Cargando archivo…",
       "viewerTooLarge": "Este archivo es demasiado grande para mostrar. Ingrese los números de línea en su lugar.",
-      "repositoriesCount": "{count, plural, one {{count} repositorio} other {{count} repositorios}}"
+      "repositoriesCount": "{count, plural, one {# repositorio} other {# repositorios}}"
     },
     "diffView": {
       "added": "Línea añadida",
@@ -4286,14 +4286,14 @@
         "latestOnBranch": "Última en {branch}",
         "previousAnalysisLabel": "Comenzar desde un análisis anterior",
         "previousAnalysisPlaceholder": "Seleccione un análisis...",
-        "previousAnalysisOption": "{sha} · {date} · {count, plural, one {{count} prueba afectada} other {{count} pruebas afectadas}}",
+        "previousAnalysisOption": "{sha} · {date} · {count, plural, one {# prueba afectada} other {# pruebas afectadas}}",
         "sameCommit": "La base y la cabeza son la misma confirmación.",
         "swapped": "La base y la cabeza se intercambiaron para que los cambios se lean hacia adelante.",
         "loadingCommits": "Cargando confirmaciones…",
         "noCommits": "No se encontraron confirmaciones."
       },
       "diff": {
-        "summary": "{files, plural, one {{count} archivo} other {{count} archivos}} cambió · +{additions, number} −{deletions, number}",
+        "summary": "{files, plural, one {# archivo} other {# archivos}} cambió · +{additions, number} −{deletions, number}",
         "truncated": "El proveedor devolvió una diferencia parcial. Algunos archivos cambiados no se muestran o no tienen parche.",
         "noChanges": "Sin cambios entre estas confirmaciones.",
         "statusModified": "Modificado",
@@ -4304,7 +4304,7 @@
         "showFullPatch": "Mostrar parche completo",
         "binary": "Archivo binario",
         "noPatch": "Parche no disponible",
-        "pinnedFiles": "{count, plural, one {{count} entrada} other {{count} entradas}}",
+        "pinnedFiles": "{count, plural, one {# entrada} other {# entradas}}",
         "loading": "Comparando confirmaciones…"
       },
       "loading": {
@@ -4337,7 +4337,7 @@
         "tierRelatedTooltip": "Vinculado a un caso fuertemente afectado, o sus señales puntuaron por debajo de {threshold, number}.",
         "showDetails": "Mostrar razones",
         "hideDetails": "Ocultar razones",
-        "excluded": "{count, plural, one {{count} caso ya en la ejecución fue omitido} other {{count} casos ya en la ejecución fueron omitidos}}"
+        "excluded": "{count, plural, one {# caso ya en la ejecución fue omitido} other {# casos ya en la ejecución fueron omitidos}}"
       },
       "noAffected": {
         "title": "No se encontraron pruebas afectadas",
@@ -4358,7 +4358,7 @@
         "fieldContent": "contenido de caso",
         "fieldTag": "etiqueta",
         "fieldFolder": "carpeta",
-        "historyDetail": "{count, plural, one {{count} ejecución anterior} other {{count} ejecuciones anteriores}} después de cambios en los mismos archivos",
+        "historyDetail": "{count, plural, one {# ejecución anterior} other {# ejecuciones anteriores}} después de cambios en los mismos archivos",
         "historyFailed": "Falló en una ejecución anterior después de cambios similares",
         "linkedDetail": "Vinculado al caso {caseId}",
         "issueDetail": "Vinculado a {key}, nombrado en {count, plural, one {confirmación {sha}} other {# confirmaciones}}"
@@ -4366,22 +4366,22 @@
       "stale": {
         "badge": "Duro",
         "tooltipAnalysis": "El bloque anclado no se pudo encontrar en la confirmación base; coincidió solo por ruta de archivo. Re-ancle desde la página del caso de prueba.",
-        "title": "{count, plural, one {{count} entrada obsoleta} other {{count} entradas obsoletas}}",
+        "title": "{count, plural, one {# entrada obsoleta} other {# entradas obsoletas}}",
         "description": "Estas entradas ya no coinciden con el código. Re-anclas desde la página del caso de prueba."
       },
       "uncovered": {
-        "title": "{count, plural, one {{count} archivo cambiado no tiene prueba} other {{count} archivos cambiados no tienen pruebas}}",
+        "title": "{count, plural, one {# archivo cambiado no tiene prueba} other {# archivos cambiados no tienen pruebas}}",
         "description": "Ningún caso de prueba está vinculado a estos archivos. Ancle un caso para cerrar la brecha.",
         "pinAction": "Anclar un caso..."
       },
       "warnings": {
         "diff_truncated_by_provider": "El proveedor devolvió una diferencia parcial.",
-        "diff_truncated_by_budget": "Solo parte de la diferencia se ajustaba al contexto de IA; {count, plural, one {{count} archivo fue} other {{count} archivos fueron}} resumida solo por ruta.",
+        "diff_truncated_by_budget": "Solo parte de la diferencia se ajustaba al contexto de IA; {count, plural, one {# archivo fue} other {# archivos fueron}} resumida solo por ruta.",
         "llm_not_configured": "Sin integración LLM activa: se omitió la clasificación de IA.",
         "search_fallback_db": "Índice de búsqueda no disponible: la coincidencia de palabras clave utilizó la base de datos.",
         "search_index_empty": "El índice de búsqueda no contiene casos de prueba para este proyecto, por lo que la coincidencia de palabras clave recurrió a los nombres de casos de prueba en la base de datos y puede haber perdido coincidencias en el contenido del caso. Pida a un administrador que reconstruya el índice de búsqueda en Administración → Motor de búsqueda.",
         "ai_partial": "Algunos lotes de IA fallaron; los resultados pueden estar incompletos.",
-        "ai_truncated": "{count, plural, one {{count} lote de IA fue} other {{count} lotes de IA fueron}} cortado por el modelo.",
+        "ai_truncated": "{count, plural, one {# lote de IA fue} other {# lotes de IA fueron}} cortado por el modelo.",
         "no_candidates": "No coincidió ningún caso de prueba.",
         "anchor_fetch_capped": "Algunos archivos anclados fueron coincididos solo por ruta (límite de búsqueda alcanzado).",
         "issue_commit_fetch_capped": "Algunas confirmaciones que nombran entradas no fueron leídas archivo por archivo (límite de búsqueda alcanzado); sus casos no cubren archivos específicos."
@@ -4390,7 +4390,7 @@
         "analyze": "Analizar",
         "reanalyze": "Analizar de nuevo",
         "refine": "Volver a los cambios",
-        "accept": "{count, plural, one {{count} Agregar caso} other {{count} Agregar casos}}",
+        "accept": "{count, plural, one {Agregar # caso} other {Agregar # casos}}",
         "cancelAnalysis": "Cancelar análisis"
       },
       "errors": {
@@ -6700,7 +6700,7 @@
   "components": {
     "notifications": {
       "empty": "Sin notificaciones",
-      "panelTitle": "{count, plural, =0 {Notificaciones} one {{count} Nueva notificación} other {{count} Nuevas notificaciones}}",
+      "panelTitle": "{count, plural, =0 {Notificaciones} one {# Nueva notificación} other {# Nuevas notificaciones}}",
       "actions": {
         "markRead": "Marcar como leído",
         "markUnread": "Marcar como no leído",
@@ -7098,7 +7098,7 @@
     },
     "linkedCases": {
       "title": "Casos de prueba vinculados",
-      "titleWithCount": "{count, plural, =0 {Casos de prueba vinculados} =1 {{count} Caso de prueba vinculado} other {{count} Casos de prueba vinculados}}",
+      "titleWithCount": "{count, plural, =0 {Casos de prueba vinculados} =1 {# Caso de prueba vinculado} other {# Casos de prueba vinculados}}",
       "empty": "No hay casos de prueba vinculados.",
       "addLinkDialogTitle": "Vincular casos de prueba",
       "searchPlaceholder": "Buscar casos de prueba...",
@@ -7156,7 +7156,7 @@
       "loadFailed": "No se pudo cargar la cobertura.",
       "retry": "Reintentar",
       "panelTitle": "Casos de prueba de cobertura",
-      "panelTitleWithCount": "{count, plural, =0 {Casos de prueba de cobertura} =1 {{count} Caso de prueba de cobertura} other {{count} Casos de prueba de cobertura}}",
+      "panelTitleWithCount": "{count, plural, =0 {Casos de prueba de cobertura} =1 {# Caso de prueba de cobertura} other {# Casos de prueba de cobertura}}",
       "panelDescription": "Cada caso de prueba contabilizado en la cobertura de este requisito: los casos vinculados directamente a él, además de los casos vinculados a cualquier requisito debajo de él. Para agregar o quitar enlaces, usa Casos de prueba vinculados.",
       "panelEmpty": "Aún ningún caso de prueba cubre este requisito.",
       "columnCase": "Caso de Prueba",

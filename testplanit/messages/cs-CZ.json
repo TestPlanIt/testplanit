@@ -4353,7 +4353,7 @@
         "pinFile": "{path}",
         "pinGlob": "Odpovídá {pattern}",
         "pinSymbol": "{path} · {symbol}",
-        "pathDetail": "Odpovídá „{term}",
+        "pathDetail": "Odpovídá „{term}“ v {field}",
         "fieldName": "název případu",
         "fieldContent": "obsah případu",
         "fieldTag": "štítek",
