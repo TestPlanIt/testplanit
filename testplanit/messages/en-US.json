@@ -406,6 +406,7 @@
       "folder": "Folder",
       "parentFolder": "Parent Folder for new cases",
       "multipleValues": "Multiple Values",
+      "multipleValuesCount": "Multiple Values ({count, number})",
       "provider": "Provider",
       "updatedAt": "Updated At",
       "tools": "Tools",
@@ -8698,6 +8699,11 @@
         "description": "Count results from subfolders toward each parent folder.",
         "filterDescription": "Also include test cases in the selected folders' subfolders."
       },
+      "chartTotals": {
+        "label": "Show total line",
+        "description": "Add a line combining every series into one value per date."
+      },
+      "groupedTotal": "Total of the {count, plural, one {# row} other {# rows}} in this group",
       "dimensionFilters": {
         "allValues": "All values"
       },

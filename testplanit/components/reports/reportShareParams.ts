@@ -154,6 +154,8 @@ export interface PerTypeReportUrlState {
   dateGrouping: DateGroupingValue;
   /** Folders filter: whether picked folders bring their subfolders. */
   folderIncludeSubfolders: boolean;
+  /** Custom reports: draw the chart's total line across every series. */
+  includeTotals: boolean;
   /** The Filters menu's selections: menu key -> selected values. */
   filterValues: Record<string, Array<string | number>>;
 }
@@ -179,6 +181,7 @@ export const PER_TYPE_REPORT_PARAM_DEFAULTS: PerTypeReportUrlState = {
   includeUnchanged: false,
   dateGrouping: "weekly",
   folderIncludeSubfolders: true,
+  includeTotals: false,
   filterValues: {},
 };
 
@@ -358,6 +361,10 @@ export function parsePerTypeReportParams(
   };
   const filterValues: Record<string, Array<string | number>> = {};
   const base = baseReportType(reportType);
+
+  // The custom reports' chart total line. Not gated by type: every
+  // dimension-and-metric report can plot a date axis.
+  state.includeTotals = booleanParam(params, "includeTotals", false);
 
   // The case-based reports' Folders filter.
   if (

@@ -20,6 +20,7 @@ import {
 import { REQUIREMENT_COVERAGE_STATE_ORDER } from "@/components/reports/RequirementCoverageOverview";
 import { RequirementSnapshotPicker } from "@/components/reports/RequirementSnapshotPicker";
 import { Switch } from "@/components/ui/switch";
+import { metricUnit } from "~/utils/metricUnits";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -608,6 +609,25 @@ function ReportBuilderContent({
   // folders so a parent folder includes its whole subtree.
   const [folderIncludeDescendants, setFolderIncludeDescendants] =
     useState(false);
+  // Plot the sum of every series at each date when the date dimension is
+  // combined with another dimension. Computed in the chart; the flag rides
+  // the run body so saved reports and shares keep it.
+  const [includeTotals, setIncludeTotals] = useState(
+    initialPerTypeParams.includeTotals
+  );
+  // The multi-line chart the total line belongs to: a time axis (the date
+  // dimension, or milestones plotted by their dates), at least one series
+  // dimension, and one summable metric (rates do not add up).
+  const totalLineApplies = (
+    selectedDimensions: Array<{ value: string }>,
+    selectedMetrics: Array<{ value: string }>
+  ) =>
+    selectedDimensions.length > 1 &&
+    selectedDimensions.some(
+      (d) => d.value === "date" || d.value === "milestone"
+    ) &&
+    selectedMetrics.length === 1 &&
+    metricUnit(selectedMetrics[0].value) !== "percent";
   // The pre-built reports' Folders filter: whether a picked folder brings
   // its subfolders' cases too. On by default — "cases under this folder".
   const [filterFolderIncludeSubfolders, setFilterFolderIncludeSubfolders] =
@@ -2495,6 +2515,14 @@ function ReportBuilderContent({
           body.dimensionFilters = activeDimensionFilters;
         }
 
+        // The chart's total line, when the selection can plot one.
+        if (
+          includeTotals &&
+          totalLineApplies(selectedDimensions, selectedMetrics)
+        ) {
+          body.includeTotals = true;
+        }
+
         // For automation trends, add selected filter values and date grouping
         if (matchesReportType(reportType, "automation-trends")) {
           // Build filters object from selectedFilterValues
@@ -2996,6 +3024,12 @@ function ReportBuilderContent({
               newParams.delete("dimensionFilters");
             }
 
+            if (body.includeTotals) {
+              newParams.set("includeTotals", "true");
+            } else {
+              newParams.delete("includeTotals");
+            }
+
             router.replace(`${pathname}?${newParams.toString()}`);
           }
         }
@@ -3019,6 +3053,7 @@ function ReportBuilderContent({
       dateGrouping,
       selectedFilterValues,
       folderIncludeDescendants,
+      includeTotals,
       hasFolderFilter,
       filterFolderIncludeSubfolders,
       dimensionValueFilters,
@@ -3262,6 +3297,30 @@ function ReportBuilderContent({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dimensionValueFilters]);
+
+  // The total line is drawn client-side, so toggling it needs no re-run:
+  // the chart re-renders from the flag. Keep the URL and the stored run
+  // body in step so a refresh, save or share keeps the choice.
+  useEffect(() => {
+    if (isPreBuiltReport(reportType) || !results) return;
+    setLastRequestBody((prev: any) =>
+      prev
+        ? includeTotals
+          ? { ...prev, includeTotals: true }
+          : (({ includeTotals: _omit, ...rest }) => rest)(prev)
+        : prev
+    );
+    const newParams = new URLSearchParams(searchParams.toString());
+    if (includeTotals) {
+      newParams.set("includeTotals", "true");
+    } else {
+      newParams.delete("includeTotals");
+    }
+    if (newParams.toString() !== searchParams.toString()) {
+      router.replace(`${pathname}?${newParams.toString()}`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [includeTotals]);
 
   // Filter options based on selections
   useEffect(() => {
@@ -4321,6 +4380,29 @@ function ReportBuilderContent({
                         </label>
                       )}
 
+                      {/* Chart total line — offered only when the chart
+                          can plot one (see totalLineApplies). */}
+                      {!isPreBuiltReport(reportType) &&
+                        totalLineApplies(dimensions, metrics) && (
+                          <label className="flex items-start gap-2">
+                            <Checkbox
+                              checked={includeTotals}
+                              onCheckedChange={(checked) =>
+                                setIncludeTotals(checked === true)
+                              }
+                              data-testid="chart-include-totals"
+                            />
+                            <span className="grid gap-0.5">
+                              <span className="text-sm font-medium">
+                                {tReports("chartTotals.label")}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {tReports("chartTotals.description")}
+                              </span>
+                            </span>
+                          </label>
+                        )}
+
                       {/* Per-dimension value filters. The date dimension is
                           covered by the date-range picker above. */}
                       {!isPreBuiltReport(reportType) &&
@@ -4547,6 +4629,7 @@ function ReportBuilderContent({
                 : undefined
             }
             chartData={allResults ?? undefined}
+            showChartTotals={includeTotals}
             reportType={reportType}
             dimensions={lastUsedDimensions}
             metrics={lastUsedMetrics}

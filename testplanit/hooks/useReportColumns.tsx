@@ -1,4 +1,9 @@
 import { createColumnHelper } from "@/components/tables/tableFeatures";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Compass } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo } from "react";
@@ -515,6 +520,12 @@ export function useReportColumns(
             }
           },
           aggregatedCell: (info) => {
+            // A group whose children differ on this dimension says how many
+            // rows it spans, so the totals beside it have a denominator.
+            const multipleValuesLabel = t("common.fields.multipleValuesCount", {
+              count: info.row.subRows.length,
+            });
+
             // Special handling for user, creator, and assignedTo dimensions
             if (
               dimensionId === "user" ||
@@ -556,7 +567,7 @@ export function useReportColumns(
                     return userId ? { id: userId, name: userId } : null;
                   }
                 },
-                t("common.fields.multipleValues" as any),
+                multipleValuesLabel,
                 t
               );
             }
@@ -572,7 +583,7 @@ export function useReportColumns(
                     color={status?.color}
                   />
                 ),
-                t("common.fields.multipleValues" as any)
+                multipleValuesLabel
               );
             }
 
@@ -610,7 +621,7 @@ export function useReportColumns(
                     return "-";
                   }
                 },
-                t("common.fields.multipleValues" as any)
+                multipleValuesLabel
               );
             }
 
@@ -630,7 +641,7 @@ export function useReportColumns(
                     <WorkflowStateDisplay state={transformedState} size="sm" />
                   );
                 },
-                t("common.fields.multipleValues" as any)
+                multipleValuesLabel
               );
             }
 
@@ -652,7 +663,7 @@ export function useReportColumns(
                     <span>{sourceValue || tCommon("labels.unknown")}</span>
                   );
                 },
-                t("common.fields.multipleValues" as any)
+                multipleValuesLabel
               );
             }
 
@@ -666,7 +677,7 @@ export function useReportColumns(
                     name={value?.name || value?.templateName || ""}
                   />
                 ),
-                t("common.fields.multipleValues" as any)
+                multipleValuesLabel
               );
             }
 
@@ -681,7 +692,7 @@ export function useReportColumns(
                   }
                   return <GroupNameCell groupId={String(groupId)} />;
                 },
-                t("common.fields.multipleValues" as any)
+                multipleValuesLabel
               );
             }
 
@@ -693,7 +704,7 @@ export function useReportColumns(
                 (configData) => (
                   <ConfigurationNameDisplay configuration={configData} />
                 ),
-                t("common.fields.multipleValues" as any)
+                multipleValuesLabel
               );
             }
 
@@ -717,7 +728,7 @@ export function useReportColumns(
                     />
                   );
                 },
-                t("common.fields.multipleValues" as any)
+                multipleValuesLabel
               );
             }
 
@@ -727,7 +738,7 @@ export function useReportColumns(
                 info.row.subRows,
                 (subRow) => subRow.original[dimensionId],
                 (testRunData) => <TestRunNameDisplay testRun={testRunData} />,
-                t("common.fields.multipleValues" as any)
+                multipleValuesLabel
               );
             }
 
@@ -765,7 +776,7 @@ export function useReportColumns(
                     />
                   );
                 },
-                t("common.fields.multipleValues" as any)
+                multipleValuesLabel
               );
             }
 
@@ -784,7 +795,7 @@ export function useReportColumns(
                   </span>
                 );
               },
-              t("common.fields.multipleValues" as any)
+              multipleValuesLabel
             );
           },
           sortFn: (rowA, rowB) => {
@@ -943,17 +954,19 @@ export function useReportColumns(
               );
             }
 
-            // For time metrics, show the total or average based on the metric type
+            // Time metrics total their children: for an average metric the
+            // group row is the sum of the children's averages (one run of
+            // all of them — the same figure as the chart's total line), so
+            // it carries a Σ marker and a tooltip since the header says
+            // "Avg.". A total metric's sum needs no marker.
             if (isDurationMetric) {
-              // For "average" metrics, calculate average; for "total" metrics, use sum
               const isAverage =
                 metricId.toLowerCase().includes("avg") ||
                 metricId.toLowerCase().includes("average") ||
                 metricLabel.toLowerCase().includes("avg") ||
                 metricLabel.toLowerCase().includes("average");
-              const value = isAverage ? total / subRows.length : total;
 
-              if (value === 0) {
+              if (total === 0) {
                 return (
                   <span className="inline-flex items-center px-2 py-1 text-xs font-bold bg-primary/10 text-primary rounded-full">
                     -
@@ -961,16 +974,34 @@ export function useReportColumns(
                 );
               }
 
-              const humanReadableDuration = toHumanReadable(value, {
+              const humanReadableDuration = toHumanReadable(total, {
                 isSeconds: isSecondsFormat,
                 locale: locale,
                 largest: 2,
                 round: true,
               });
+              if (!isAverage) {
+                return (
+                  <span className="inline-flex items-center px-2 py-1 text-xs bg-primary/10 text-primary rounded-full font-bold">
+                    {humanReadableDuration}
+                  </span>
+                );
+              }
               return (
-                <span className="inline-flex items-center px-2 py-1 text-xs bg-primary/10 text-primary rounded-full font-bold">
-                  {humanReadableDuration}
-                </span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span
+                      className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-primary/10 text-primary rounded-full font-bold"
+                      data-testid="grouped-duration-total"
+                    >
+                      <span aria-hidden="true">{"Σ"}</span>
+                      {humanReadableDuration}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {t("reports.ui.groupedTotal", { count: subRows.length })}
+                  </TooltipContent>
+                </Tooltip>
               );
             }
 

@@ -49,7 +49,26 @@ vi.mock("./ReportSunburstChart", () => ({
 }));
 
 vi.mock("./ReportMultiLineChart", () => ({
-  ReportMultiLineChart: () => <div data-testid="ReportMultiLineChart" />,
+  ReportMultiLineChart: ({
+    data,
+  }: {
+    data?: Array<{
+      name: string;
+      emphasis?: boolean;
+      values: Array<{ value: number }>;
+    }>;
+  }) => (
+    <div
+      data-testid="ReportMultiLineChart"
+      data-series={JSON.stringify(
+        data?.map((s) => ({
+          name: s.name,
+          emphasis: s.emphasis ?? false,
+          values: s.values.map((v) => v.value),
+        }))
+      )}
+    />
+  ),
 }));
 
 vi.mock("./ReportMultiMetricBarChart", () => ({
@@ -307,6 +326,133 @@ describe("ReportChart", () => {
       />
     );
     expect(screen.getByTestId("ReportMultiLineChart")).toBeInTheDocument();
+  });
+
+  const multiLineDimensions = [
+    { value: "date", label: "Date" },
+    { value: "testCase", label: "Test Case" },
+  ];
+  const multiLineResults = [
+    {
+      date: { executedAt: "2026-07-02T00:00:00.000Z" },
+      testCase: { id: 1, name: "Login" },
+      "Avg. Elapsed Time": 12,
+    },
+    {
+      date: { executedAt: "2026-07-01T00:00:00.000Z" },
+      testCase: { id: 1, name: "Login" },
+      "Avg. Elapsed Time": 10,
+    },
+    {
+      date: { executedAt: "2026-07-01T00:00:00.000Z" },
+      testCase: { id: 2, name: "Checkout" },
+      "Avg. Elapsed Time": 30,
+    },
+  ];
+  const readSeries = () =>
+    JSON.parse(
+      screen.getByTestId("ReportMultiLineChart").getAttribute("data-series")!
+    ) as Array<{ name: string; emphasis: boolean; values: number[] }>;
+
+  it("appends an emphasized total series summing the plotted series per date", () => {
+    render(
+      <ReportChart
+        results={multiLineResults}
+        showTotals
+        dimensions={multiLineDimensions}
+        metrics={[{ value: "avgElapsedTime", label: "Avg. Elapsed Time" }]}
+      />
+    );
+    const series = readSeries();
+    expect(series.map((s) => s.name)).toEqual([
+      "Login",
+      "Checkout",
+      "common.labels.total",
+    ]);
+    const total = series[2];
+    expect(total.emphasis).toBe(true);
+    // Sorted chronologically: 07-01 = 10 + 30, 07-02 = 12 (Checkout has no
+    // value that day and contributes nothing).
+    expect(total.values).toEqual([40, 12]);
+    expect(series[0].emphasis).toBe(false);
+  });
+
+  it("plots no total series when the option is off", () => {
+    render(
+      <ReportChart
+        results={multiLineResults}
+        dimensions={multiLineDimensions}
+        metrics={[{ value: "avgElapsedTime", label: "Avg. Elapsed Time" }]}
+      />
+    );
+    expect(readSeries().map((s) => s.name)).toEqual(["Login", "Checkout"]);
+  });
+
+  it("plots no total series for a percentage metric", () => {
+    render(
+      <ReportChart
+        results={multiLineResults.map((row) => ({
+          date: row.date,
+          testCase: row.testCase,
+          "Pass Rate (%)": 50,
+        }))}
+        showTotals
+        dimensions={multiLineDimensions}
+        metrics={[{ value: "passRate", label: "Pass Rate (%)" }]}
+      />
+    );
+    expect(readSeries().map((s) => s.name)).toEqual(["Login", "Checkout"]);
+  });
+
+  it("sums the plotted series per milestone when milestones form the time axis", () => {
+    const m1 = { id: 1, name: "Sprint 1", date: "2026-06-01T00:00:00.000Z" };
+    const m2 = { id: 2, name: "Sprint 2", date: "2026-06-15T00:00:00.000Z" };
+    render(
+      <ReportChart
+        results={[
+          {
+            milestone: m2,
+            status: { name: "Passed" },
+            "Test Results Count": 5,
+          },
+          {
+            milestone: m1,
+            status: { name: "Passed" },
+            "Test Results Count": 8,
+          },
+          {
+            milestone: m1,
+            status: { name: "Failed" },
+            "Test Results Count": 2,
+          },
+        ]}
+        showTotals
+        dimensions={[
+          { value: "milestone", label: "Milestone" },
+          { value: "status", label: "Status" },
+        ]}
+        metrics={[{ value: "testResults", label: "Test Results Count" }]}
+      />
+    );
+    const series = readSeries();
+    expect(series.map((s) => s.name)).toEqual([
+      "Passed",
+      "Failed",
+      "common.labels.total",
+    ]);
+    expect(series[2].values).toEqual([10, 5]);
+  });
+
+  it("plots no total series when there is only one series to sum", () => {
+    render(
+      <ReportChart
+        results={multiLineResults.slice(0, 2)}
+        showTotals
+        dimensions={multiLineDimensions}
+        metrics={[{ value: "avgElapsedTime", label: "Avg. Elapsed Time" }]}
+      />
+    );
+    expect(readSeries().map((s) => s.name)).toEqual(["Login"]);
   });
 
   it("renders nothing when date metric is present (date metrics not visualized)", () => {

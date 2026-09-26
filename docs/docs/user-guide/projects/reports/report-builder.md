@@ -31,6 +31,10 @@ The Report Builder lets you compose a custom report by picking a data source, th
 
 Results render as a single, continuously-scrolling list (no page controls) and the columns are sortable. Use **Export CSV** above the table to download the full result set — see [Exporting Results](./index.md#exporting-results).
 
+With more than one dimension, rows group by the first dimension and each group row totals its children: counts and elapsed times are summed, and rates are averaged. An averaged metric such as Avg. Elapsed Time is summed too — the group row is one run of everything beneath it, the same figure as the chart's total line — and carries a **Σ** marker whose tooltip gives the number of rows totalled.
+
+When the **Date** dimension (or **Milestone**, which plots chronologically by each milestone's date) is combined with another dimension — for example Date and Test Case with Avg. Elapsed Time — the chart draws one line per value of the other dimension. Turn on **Show total line** to add a dashed line that sums the plotted series at each point on the time axis; with Avg. Elapsed Time by Test Case, that is the time one run of all the selected cases would take. The option is not offered for percentage metrics such as Pass Rate, since rates do not add up.
+
 The builder keeps its configuration in the page URL, so other parts of the app can link into a pre-configured report. For example, the **Elapsed time report** action on a case's [Test Result History](../repository-case-details.mdx#test-result-history) opens a Test Execution report with **Date** and **Test Case** dimensions, the **Avg. Elapsed Time** metric, and the Test Case filter set to that case.
 
 ## Drill-Down

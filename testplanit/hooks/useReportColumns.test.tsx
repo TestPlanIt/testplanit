@@ -1,3 +1,4 @@
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { render, renderHook } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { useReportColumns } from "./useReportColumns";
@@ -550,6 +551,46 @@ describe("useReportColumns", () => {
       // The aggregatedCell should use original data, not getValue
       const aggregatedContent = statusColumn.aggregatedCell(mockGroupedInfo);
       expect(aggregatedContent).toBeTruthy();
+    });
+  });
+
+  describe("Grouped duration totals", () => {
+    // Three child rows of 1, 2 and 3 minutes (seconds), like three test cases
+    // under one date.
+    const groupedInfo = (metricId: string) => ({
+      getValue: () => 0,
+      row: {
+        subRows: [60, 120, 180].map((seconds) => ({
+          original: {},
+          getValue: (id: string) => (id === metricId ? seconds : undefined),
+        })),
+      },
+    });
+    const renderAggregated = (metricId: string) => {
+      const { result } = renderHook(() =>
+        useReportColumns(["date", "testCase"], [metricId])
+      );
+      const column = result.current.find((col: any) => col.id === metricId);
+      return render(
+        <TooltipProvider>
+          {column.aggregatedCell(groupedInfo(metricId))}
+        </TooltipProvider>
+      );
+    };
+
+    it("sums an average duration metric across the group and marks it with Σ", () => {
+      const { container, getByTestId } = renderAggregated("avgElapsedTime");
+      // 360 seconds, not the 120-second mean of the children.
+      expect(container.textContent).toContain("6 minutes");
+      expect(container.textContent).not.toContain("2 minutes");
+      expect(getByTestId("grouped-duration-total").textContent).toContain("Σ");
+    });
+
+    it("sums a total duration metric without the marker", () => {
+      const { container, queryByTestId } = renderAggregated("totalElapsedTime");
+      expect(container.textContent).toContain("6 minutes");
+      expect(queryByTestId("grouped-duration-total")).toBeNull();
+      expect(container.textContent).not.toContain("Σ");
     });
   });
 });

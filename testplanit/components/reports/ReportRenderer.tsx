@@ -74,6 +74,8 @@ interface ReportRendererProps {
   // Data
   results: any[];
   chartData?: any[];
+  // Multi-line chart: also plot the sum of every series at each date.
+  showChartTotals?: boolean;
 
   // Config
   reportType: string;
@@ -173,6 +175,7 @@ interface ReportRendererProps {
 export function ReportRenderer({
   results,
   chartData,
+  showChartTotals = false,
   reportType,
   dimensions = [],
   metrics = [],
@@ -463,6 +466,7 @@ export function ReportRenderer({
       chart: (
         <ReportChart
           results={chartResults}
+          showTotals={showChartTotals}
           dimensions={dimensions}
           metrics={metrics}
           reportType={reportType}
@@ -483,6 +487,7 @@ export function ReportRenderer({
     };
   }, [
     chartData,
+    showChartTotals,
     results,
     reportType,
     dimensions,

@@ -62,6 +62,9 @@ export const reportRequestSchema = z
     dimensionFilters: z
       .record(z.string(), z.array(z.union([z.string(), z.number()])))
       .optional(),
+    // Chart option carried in the run body so saved reports and shares keep
+    // it: plot the sum of every series at each date. Aggregation ignores it.
+    includeTotals: z.boolean().nullish(),
     // Requirement report scope: confine the gaps/traceability reports to
     // these requirements' subtrees. Empty means whole-project, same as
     // omitting it. `.nullish()` — a restored share config may carry an

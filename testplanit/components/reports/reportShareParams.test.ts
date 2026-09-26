@@ -346,6 +346,43 @@ describe("parsePerTypeReportParams", () => {
   });
 });
 
+describe("chart total line param", () => {
+  it("serializes the run body's includeTotals flag", () => {
+    const params = buildSharedReportSearchParams({
+      reportType: "test-execution",
+      dimensions: ["date", "testCase"],
+      metrics: ["avgElapsedTime"],
+      includeTotals: true,
+    });
+    expect(params.get("includeTotals")).toBe("true");
+  });
+
+  it("hydrates includeTotals for any report type and defaults it off", () => {
+    expect(
+      parsePerTypeReportParams(
+        new URLSearchParams("includeTotals=true"),
+        "test-execution"
+      ).includeTotals
+    ).toBe(true);
+    expect(
+      parsePerTypeReportParams(
+        new URLSearchParams("includeTotals=true"),
+        "repository-stats"
+      ).includeTotals
+    ).toBe(true);
+    expect(
+      parsePerTypeReportParams(new URLSearchParams(""), "test-execution")
+        .includeTotals
+    ).toBe(false);
+    expect(
+      parsePerTypeReportParams(
+        new URLSearchParams("includeTotals=yes"),
+        "test-execution"
+      ).includeTotals
+    ).toBe(false);
+  });
+});
+
 describe("requirement snapshot params", () => {
   it("serializes the snapshot ids the requirement reports send", () => {
     const params = buildSharedReportSearchParams({
