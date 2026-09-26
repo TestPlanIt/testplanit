@@ -406,6 +406,7 @@
       "folder": "Dossier",
       "parentFolder": "Dossier parent pour les nouveaux cas",
       "multipleValues": "Valeurs multiples",
+      "multipleValuesCount": "Valeurs multiples ({count, number})",
       "provider": "Fournisseur",
       "updatedAt": "Mise à jour le",
       "tools": "Outils",
@@ -457,8 +458,8 @@
         "invalidUrl": "Format d'URL invalide"
       },
       "worker": "Travailleur",
-      "hasCodePins": "A des épingles de code",
-      "noCodePins": "Aucune épingle de code"
+      "hasCodePins": "Possède des épingles de code",
+      "noCodePins": "Pas d'épingles de code"
     },
     "filter": {
       "placeholder": "Filtrer {item}..."
@@ -1109,7 +1110,7 @@
       "noAutomatedTestResults": "Aucun résultat de test automatisé n'a été trouvé pour cette exécution.",
       "automatedResults": "Résultats automatisés",
       "latestAutomatedResult": "Dernier résultat automatisé",
-      "hybridRunHint": "Cette exécution contient des cas manuels et automatisés. Les résultats automatisés signalés dans l'exécution mettent à jour le statut de chaque cas ; tout cas peut toujours être exécuté manuellement."
+      "hybridRunHint": "Cette exécution contient des cas manuels et automatisés. Les résultats automatisés rapportés dans l'exécution mettent à jour le statut de chaque cas ; n'importe quel cas peut toujours être exécuté manuellement."
     },
     "time": {
       "minutes": "{count, plural, =1 {minute} other {minutes}}",
@@ -1510,9 +1511,9 @@
             "title": "Synchronisation des exigences",
             "description": "Synchronisez les types de problèmes du gestionnaire qui comptent comme exigences. Les problèmes existants sont reclassés en conséquence.",
             "enableLabel": "Activer la classification des exigences",
-            "issueTypesLabel": "Types de problème",
+            "issueTypesLabel": "Types de problèmes",
             "issueTypesPlaceholder": "Sélectionnez les types de problème",
-            "issueTypesAriaLabel": "Types de problème d'exigence",
+            "issueTypesAriaLabel": "Types de problèmes d'exigence",
             "labelsLabel": "Étiquettes",
             "labelsPlaceholder": "Sélectionner des étiquettes",
             "labelsAriaLabel": "Étiquettes des exigences",
@@ -1527,7 +1528,7 @@
             "importOfferBodyFloor": "Au moins {count, plural, one {{count} problème} other {{count} problèmes}} des types sélectionnés se trouvent dans le gestionnaire — l'importation n'est pas limitée à ce nombre.",
             "importOfferBodyUnknown": "Impossible de déterminer avec précision le nombre de problèmes des types sélectionnés présents dans le gestionnaire. L'importation peut tout de même se poursuivre et récupérera toutes les correspondances.",
             "importOfferConfirm": "Importer maintenant",
-            "importStarted": "Importation démarrée. Les problèmes apparaîtront au fur et à mesure de leur importation.",
+            "importStarted": "Importation démarrée. Les problèmes apparaîtront au fur et à mesure de l'importation.",
             "importFailed": "Impossible de démarrer l'importation",
             "importAlreadyRunning": "Une importation est déjà en cours pour ce projet de gestionnaire",
             "importNoTypes": "Sélectionnez et enregistrez au moins un type de problème avant d'importer",
@@ -1536,7 +1537,7 @@
             "importStopConfirmTitle": "Arrêter cette importation ?",
             "importStopConfirmBody": "L'arrêt prend effet une fois l'importation de la page en cours terminée. Les problèmes déjà importés seront conservés.",
             "importStopRequested": "Arrêt demandé — l'importation s'arrêtera après la page en cours.",
-            "importStopNotRunning": "Cette importation est déjà terminée ou a déjà été arrêtée.",
+            "importStopNotRunning": "Cette importation a déjà terminé ou a déjà été arrêtée.",
             "importCancelled": "Importation annulée",
             "settingsSaved": "Paramètres des types d'exigence enregistrés",
             "saveError": "Échec de l'enregistrement des paramètres des types d'exigence"
@@ -1575,7 +1576,7 @@
       },
       "webhooks": {
         "description": "Configurez les webhooks entrants pour maintenir la synchronisation des tickets liés.",
-        "inboundDescription": "Recevez les mises à jour des problèmes depuis votre suivi des problèmes, ainsi que les pull requests et les pushes depuis les dépôts connectés.",
+        "inboundDescription": "Recevez les mises à jour des tickets de votre système de suivi des problèmes, ainsi que les demandes d'extraction et les poussées des dépôts connectés.",
         "outboundDescription": "Configurez les webhooks sortants pour envoyer les événements TestPlanIt à Slack ou à toute URL signée HMAC.",
         "directionInbound": "Entrant",
         "directionOutbound": "Sortie",
@@ -1844,34 +1845,34 @@
         "codeRepos": {
           "empty": "Aucun dépôt n'est connecté pour l'analyse d'impact. <link>Connectez-en un</link> d'abord.",
           "unsupported": "Les dépôts {provider} ne peuvent pas envoyer de webhooks à TestPlanIt.",
-          "eventPullRequest": "Demandes de tirage",
-          "eventPullRequestHelp": "Lorsqu'une pull request est ouverte, analysez ses modifications par rapport à la branche cible et composez une exécution.",
-          "eventPush": "Pushes vers {branch}",
-          "eventPushDefault": "Pushes vers la branche par défaut",
-          "eventPushHelp": "Pour chaque push vers la branche de base, analysez les commits poussés et composez une exécution.",
-          "setupGithub": "Dans GitHub, ouvrez Paramètres → Webhooks du dépôt, collez l'URL et le secret, définissez le type de contenu sur application/json, puis choisissez les événements Pull requests et Pushes.",
-          "setupGitlab": "Dans GitLab, ouvrez Paramètres → Webhooks du projet, collez l'URL, collez le secret en tant que jeton secret, puis activez les déclencheurs Merge request events et Push events.",
-          "setupGitea": "Dans Gitea, ouvrez Paramètres → Webhooks du dépôt, collez l'URL et le secret, définissez le type de contenu sur application/json, puis choisissez les événements Pull Request et Push.",
-          "setupAdo": "Dans Azure DevOps, créez des Service Hooks de type Web Hooks pour les événements Pull request created et Code pushed, collez l'URL, puis saisissez le nom d'utilisateur et le mot de passe que vous avez saisis ici comme authentification de base.",
-          "setupBitbucket": "Dans Bitbucket, ouvrez Paramètres → Webhooks du dépôt, collez l'URL et le secret, puis choisissez les déclencheurs Pull request created et Repository push.",
-          "rotateConfirm": "La rotation du secret invalide l'URL et le secret actuels ; mettez à jour ensuite les paramètres de webhook du dépôt.",
-          "deleteConfirm": "Supprimer ce webhook de dépôt ? Les pull requests et les pushes ne déclencheront plus d'analyses.",
-          "eventBranchPush": "Pushes vers d'autres branches",
-          "eventBranchPushHelp": "Analysez chaque push vers toute autre branche par rapport à la branche de base, comme une pull request, et composez une exécution pour chacun.",
+          "eventPullRequest": "Demandes d'extraction",
+          "eventPullRequestHelp": "Lorsqu'une demande d'extraction est ouverte, analysez ses modifications par rapport à la branche cible et composez une exécution.",
+          "eventPush": "Poussées vers {branch}",
+          "eventPushDefault": "Poussées vers la branche par défaut",
+          "eventPushHelp": "Pour chaque poussée vers la branche de base, analysez les commits poussés et composez une exécution.",
+          "setupGithub": "Sur GitHub, ouvrez Paramètres du dépôt → Webhooks, collez l'URL et le secret, réglez le type de contenu sur application/json et choisissez les événements Demandes d'extraction et Poussées.",
+          "setupGitlab": "Sur GitLab, ouvrez Paramètres du projet → Webhooks, collez l'URL, collez le secret comme jeton secret et activez les déclencheurs d'événements de demande de fusion et de poussée.",
+          "setupGitea": "Sur Gitea, ouvrez Paramètres du dépôt → Webhooks, collez l'URL et le secret, réglez le type de contenu sur application/json et choisissez les événements Demande d'extraction et Poussée.",
+          "setupAdo": "Dans Azure DevOps, créez des crochets de service de type Crochets Web pour les événements Demande d'extraction créée et Code poussé, collez l'URL et saisissez le nom d'utilisateur et le mot de passe que vous avez tapés ici comme authentification de base.",
+          "setupBitbucket": "Sur Bitbucket, ouvrez Paramètres du dépôt → Webhooks, collez l'URL et le secret, et choisissez les déclencheurs Demande d'extraction créée et Poussée du dépôt.",
+          "rotateConfirm": "La rotation du secret invalide l'URL et le secret actuel ; mettez à jour les paramètres du webhook du dépôt par la suite.",
+          "deleteConfirm": "Supprimer ce webhook de dépôt ? Les demandes d'extraction et les poussées ne démarreront plus les analyses.",
+          "eventBranchPush": "Poussées vers d'autres branches",
+          "eventBranchPushHelp": "Analysez chaque poussée vers n'importe quelle autre branche par rapport à la branche de base, comme une demande d'extraction, et composez une exécution pour chacune.",
           "baseBranch": "Branche de base",
-          "baseBranchHelp": "Les pushes vers cette branche sont analysés seuls ; les pull requests et les autres branches y sont comparées. Laissez vide pour utiliser la branche de la connexion."
+          "baseBranchHelp": "Les poussées vers cette branche sont analysées par elles-mêmes ; les demandes d'extraction et les autres branches y sont comparées. Laissez vide pour utiliser la branche de la connexion."
         },
-        "inboundEmptyState": "Aucun webhook entrant pour le moment. <link>Ajoutez-en un</link> pour recevoir les mises à jour des problèmes depuis votre suivi des problèmes, ou les pull requests et pushes depuis un dépôt connecté.",
+        "inboundEmptyState": "Pas encore de webhooks entrants. <link>Ajoutez-en un</link> pour recevoir les mises à jour des tickets de votre système de suivi des problèmes, ou les demandes d'extraction et les poussées d'un dépôt connecté.",
         "inboundChooserBitbucket": "Bitbucket",
         "wizard": {
           "description": "Choisissez ce qui enverra des webhooks à TestPlanIt, puis copiez l'URL et le secret dans ce système.",
           "stepConnect": "Connecter",
           "sourceIssues": "Suivi des problèmes",
-          "sourceIssuesHelp": "Synchronisez les problèmes liés avec les mises à jour de {tracker}.",
-          "sourceIssuesHelpGeneric": "Synchronisez les problèmes liés avec les mises à jour de l'intégration des problèmes du projet.",
-          "sourceRepositoryHelp": "Démarrez une analyse d'impact et composez une exécution de test lorsqu'une pull request est ouverte ou que des commits sont poussés.",
-          "noRepositoryAvailable": "Chaque dépôt connecté possède déjà un webhook ou ne peut pas envoyer de webhooks.",
-          "repositoryPlaceholder": "Choisissez un dépôt"
+          "sourceIssuesHelp": "Maintenir les tickets liés à jour avec les mises à jour de {tracker}.",
+          "sourceIssuesHelpGeneric": "Maintenez les tickets liés à jour avec les mises à jour de l'intégration des problèmes du projet.",
+          "sourceRepositoryHelp": "Démarrez une analyse d'impact et composez une exécution de test lorsqu'une demande d'extraction est ouverte ou que des commits sont poussés.",
+          "noRepositoryAvailable": "Chaque dépôt connecté dispose déjà d'un webhook ou ne peut pas envoyer de webhooks.",
+          "repositoryPlaceholder": "Choisir un dépôt"
         }
       },
       "aiModels": {
@@ -2067,7 +2068,7 @@
           "ttlBefore": "Mettre en cache pendant",
           "ttlDays": "{count, plural, one {jour} other {jours}}"
         },
-        "confirmDisconnect": "Êtes-vous sûr de vouloir déconnecter «{name}» de ce projet ?",
+        "confirmDisconnect": "Êtes-vous sûr de vouloir déconnecter « {name} » de ce projet ?",
         "contentsError": "Échec de la mise en cache du contenu du fichier",
         "disconnect": "Déconnexion du dépôt",
         "disconnectWarningTitle": "La déconnexion de ce dépôt aura pour effet :",
@@ -2084,7 +2085,7 @@
           "pathLabel": "Chemin",
           "patternLabel": "Modèle",
           "previewFiles": "Aperçu des fichiers",
-          "rootHint": "Laissez le chemin vide, ou saisissez ., pour commencer à la racine du dépôt ; le chemin . avec le motif **/* inclut tous les fichiers.",
+          "rootHint": "Laissez le chemin vide, ou saisissez ., pour commencer à la racine du dépôt ; le chemin . avec le modèle **/* inclut chaque fichier.",
           "scanningRepo": "Analyse des fichiers du dépôt… ({seconds}s)",
           "title": "Modèles de chemin",
           "truncatedBadge": "Les résultats peuvent être incomplets (limite du fournisseur)"
@@ -2094,7 +2095,7 @@
           "rateLimited": "Limité par le fournisseur — nouvelle tentative dans {seconds, number}s…",
           "resolvingBranch": "Résolution de la branche…",
           "scanningFiles": "Analyse des fichiers dans {scope}…",
-          "scanningFilesCount": "Analyse des fichiers dans {scope}… ({count, number} trouvé)"
+          "scanningFilesCount": "Analyse des fichiers dans {scope}… ({count, number} trouvés)"
         },
         "refreshComplete": "Cache actualisé : {fileCount} fichiers",
         "refreshInProgress": "L'actualisation du cache est toujours en cours en arrière-plan. Cela se mettra à jour ici une fois terminé.",
@@ -2102,7 +2103,7 @@
         "refreshSuccess": "Cache actualisé : {fileCount} fichiers ({contentCached} contenus mis en cache)",
         "repository": {
           "branchLabel": "Branche",
-          "branchesTruncatedHint": "Affichage des {count, number} premières branches. Tapez pour rechercher dans tout le dépôt.",
+          "branchesTruncatedHint": "Affichage des {count, number} premières branches. Tapez pour rechercher dans l'ensemble du dépôt.",
           "placeholder": "Sélectionnez un dépôt de code..."
         },
         "save": "Enregistrer la configuration",
@@ -2214,96 +2215,96 @@
       "impact": {
         "description": "Activez l'analyse d'impact des tests et connectez les dépôts de l'application testée.",
         "enableLabel": "Activer l'analyse d'impact",
-        "enableDescription": "Permettre aux membres de l'équipe de sélectionner les tests concernés par les modifications de code lors de la composition d'une exécution de test.",
+        "enableDescription": "Permettre aux membres de l'équipe de sélectionner les tests affectés à partir des modifications de code lors de la composition d'une exécution de test.",
         "enabledToast": "Analyse d'impact activée",
         "disabledToast": "Analyse d'impact désactivée",
         "noRepos": {
-          "adminDescription": "Configurez une connexion à un dépôt avant de configurer l'analyse d'impact pour ce projet."
+          "adminDescription": "Configurez une connexion au dépôt avant de configurer l'impact pour ce projet."
         },
         "repository": {
-          "title": "Dépôt de l'application",
+          "title": "Dépôt d'application",
           "description": "Sélectionnez un dépôt qui contient une partie de l'application testée. Un projet testé sur plusieurs services peut connecter un dépôt par service.",
           "branchPlaceholder": "Sélectionnez une branche...",
           "branchInputPlaceholder": "Laissez vide pour utiliser la branche par défaut du dépôt",
-          "branchesUnavailable": "Impossible de lister les branches : {error}",
-          "branchesFallbackHint": "Saisissez plutôt le nom de la branche."
+          "branchesUnavailable": "Les branches n'ont pas pu être listées : {error}",
+          "branchesFallbackHint": "Tapez plutôt le nom de la branche."
         },
         "pathPatterns": {
-          "description": "Quels fichiers de l'application inclure. Chaque ligne combine un chemin de base et un modèle glob. Exemple : path=src + pattern=**/* inclut tout ce qui se trouve sous src.",
+          "description": "Fichiers d'application à inclure. Chaque ligne combine un chemin de base et un modèle glob. Exemple : chemin=src + modèle=**/* inclut tout sous src.",
           "pathPlaceholder": "src"
         },
         "cache": {
           "description": "Les fichiers sont mis en cache dans Valkey afin que le sélecteur de fichiers Code Pin et les marqueurs de dépôt restent rapides.",
-          "disabledWarning": "La mise en cache des fichiers est désactivée. Les marqueurs de dépôt ne sont pas analysés, et le sélecteur de fichiers Code Pin liste les fichiers en direct depuis votre fournisseur à chaque ouverture.",
+          "disabledWarning": "La mise en cache des fichiers est désactivée. Les marqueurs de dépôt ne sont pas analysés et le sélecteur de fichiers Code Pin liste les fichiers en direct de votre fournisseur à chaque ouverture.",
           "contentsIncomplete": "Seuls {cached} des {total} contenus de fichiers sont mis en cache. Actualisez à nouveau pour terminer."
         },
         "tickets": {
           "title": "Tickets liés",
-          "description": "Les commits qui nomment un ticket (PROJ-123, #42, AB#42) deviennent des épingles de code sur chaque cas de test lié à ce ticket — sur les fonctions ou classes que le commit a modifiées lorsque le diff les indique, sinon sur le fichier entier — afin que les modifications ultérieures de ce code retrouvent les cas concernés. Un ticket nommé que TestPlanIt ne possède pas encore est importé depuis le suivi des problèmes du projet afin de pouvoir être lié.",
-          "enableLabel": "Déduire les Code Pins à partir des messages de commit",
-          "enableDescription": "Analyse les commits récents de la branche à chaque actualisation du cache. Désactivez pour que les analyses ne lisent les clés de ticket que depuis les commits analysés ; les analyses manuelles continuent de s'exécuter.",
-          "skippedLarge": "{count, plural, one {# commit a été ignoré} other {# commits ont été ignorés}} car trop volumineux pour être épinglé.",
-          "fetchCapped": "Tous les commits nommant un ticket lié n'ont pas eu leurs fichiers lus lors de cette passe ; les autres seront traités lors de la prochaine analyse.",
+          "description": "Les commits qui nomment un ticket (PROJ-123, #42, AB#42) deviennent des épingles de code sur chaque cas de test lié à ce ticket — sur les fonctions ou classes que le commit a modifiées lorsque le diff les montre, sinon sur l'ensemble du fichier — afin que les modifications ultérieures de ce code retrouvent les cas. Un ticket nommé que TestPlanIt ne détient pas encore est importé du gestionnaire de problèmes du projet afin qu'il puisse être lié.",
+          "enableLabel": "Dériver les épingles de code des messages de commit",
+          "enableDescription": "Analyse les commits récents sur la branche à chaque actualisation du cache. Désactivez cette option pour que les analyses lisent les clés de ticket à partir des commits analysés uniquement ; les analyses manuelles s'exécutent toujours.",
+          "skippedLarge": "{count, plural, one {# commit a} other {# commits ont}} été ignorés comme trop volumineux à épingler.",
+          "fetchCapped": "Pas tous les commits qui ont nommé un ticket lié ont eu leurs fichiers lus lors de ce passage ; le reste est récupéré lors de la prochaine analyse.",
           "scanRecent": "Réanalyser les commits récents",
           "scanFull": "Analyser l'historique complet",
-          "scanFullHint": "L'historique complet parcourt chaque commit de la branche et rétablit les épingles pour les tickets existants. Les commits déjà lus sont servis depuis un cache, et un parcours arrêté à la limite reprend à partir de là la prochaine fois.",
-          "scanStarted": "Analyse du ticket mise en file d'attente.",
-          "scanStillRunning": "L'analyse des tickets est toujours en cours en arrière-plan. Cela se mettra à jour ici une fois terminée.",
+          "scanFullHint": "L'historique complet parcourt chaque commit sur la branche et remplit les épingles pour les tickets existants. Les commits déjà lus sont servis d'un cache, et une marche qui s'est arrêtée au cap continue de là la prochaine fois.",
+          "scanStarted": "Analyse des tickets mise en file d'attente.",
+          "scanStillRunning": "L'analyse des tickets s'exécute toujours en arrière-plan. Cela se mettra à jour ici une fois terminé.",
           "scanFailedToStart": "Impossible de démarrer l'analyse des tickets",
           "runningRecent": "Analyse des commits récents…",
           "runningFull": "Analyse de l'historique complet…",
           "runningProgress": "{commits, number} commits lus · {matched, number} ont nommé un ticket lié · {fetched, number} d'entre eux inspectés",
           "fullBadge": "Historique complet",
-          "imported": "{imported, plural, =0 {Aucun nouveau ticket n'a été importé depuis le suivi.} one {# ticket a été importé depuis le suivi.} other {# tickets ont été importés depuis le suivi.}}",
-          "fullCapped": "Le parcours s'est arrêté à {count, number} commits avant d'atteindre le début de la branche. Relancez Analyser l'historique complet pour continuer à partir de l'endroit où il s'est arrêté.",
-          "stale": "Une analyse démarrée le {date} n'a jamais renvoyé de résultat — le worker a peut-être été redémarré. Mettez-la à nouveau en file d'attente pour continuer.",
-          "summaryCommits": "{commits, plural, one {# commit} other {# commits}} lus{cached, plural, =0 {} other { ({cached, number} depuis le cache des commits)}} · {naming, number} ont nommé un ticket · {tickets, plural, one {# ticket distinct} other {# tickets distincts}}",
+          "imported": "{imported, plural, =0 {Aucun nouveau ticket n'a été importé du gestionnaire.} one {# ticket a été importé du gestionnaire.} other {# tickets ont été importés du gestionnaire.}}",
+          "fullCapped": "La marche s'est arrêtée à {count, number} commits avant d'atteindre le début de la branche. Exécutez Analyser l'historique complet à nouveau pour continuer à partir du point où elle s'est arrêtée.",
+          "stale": "Une analyse démarrée {date} n'a jamais rapporté — le travailleur peut avoir été redémarré. Mettez-la en file d'attente à nouveau pour continuer.",
+          "summaryCommits": "{commits, plural, one {# commit} other {# commits}} lus{cached, plural, =0 {} other { ({cached, number} du cache de commit)}} · {naming, number} nommés un ticket · {tickets, plural, one {# ticket distinct} other {# tickets distincts}}",
           "summaryPins": "Épingles : {created, number} créées · {updated, number} mises à jour · {removed, number} supprimées",
-          "noLinkedHint": "Les tickets n'épinglent les cas de test qu'une fois qu'un cas de test leur est lié. Liez les cas aux tickets importés, puis relancez l'analyse.",
-          "importFailuresTitle": "Clés introuvables dans le suivi ({shown} sur {total}) :",
-          "windowCapped": "Seuls les {count, number} commits les plus récents ont été lus (limite de la fenêtre récente). Utilisez Analyser l'historique complet pour lire les plus anciens.",
-          "runningWalk": "{commits, number} commits lus jusqu'à présent{cached, plural, =0 {} other { ({cached, number} depuis le cache des commits)}} — les tickets sont recherchés une fois le parcours terminé",
-          "runningImport": "{commits, number} commits lus · importation des tickets : {lookups, number} recherchés dans le suivi · {imported, number} importés",
-          "summaryCommitsOnly": "{commits, plural, one {# commit lu} other {# commits lus}}",
-          "importSkipped": "{skipped, plural, one {# clé n'a pas encore été recherchée} other {# clés n'ont pas encore été recherchées}} car une analyse effectue un nombre limité de recherches dans le suivi. Relancez l'analyse pour continuer.",
-          "cancelRequested": "Annulation demandée. L'analyse s'arrête à sa prochaine étape ; les commits déjà lus restent en cache.",
-          "cancelled": "Analyse annulée le {date}. Les commits lus avant l'annulation sont conservés dans le cache des commits ; les épingles n'ont pas été mises à jour.",
-          "importMoved": "{moved, plural, one {# clé est un ancien nom} other {# clés sont d'anciens noms}} de tickets déjà importés ; ils ont été déplacés ou renommés dans le suivi.",
-          "importFailed": "{failed, plural, one {# clé n'a pas été trouvée dans le suivi, listée ci-dessous.} other {# clés n'ont pas été trouvées dans le suivi, listées ci-dessous.}}",
-          "summaryMatched": "{matched, plural, one {# commit a nommé un ticket lié à un cas de test} other {# commits ont nommé un ticket lié à un cas de test}}",
+          "noLinkedHint": "Les épingles des cas de test ne commencent qu'une fois qu'un cas de test est lié. Liez les cas aux tickets importés, puis réanalysez.",
+          "importFailuresTitle": "Clés introuvables dans le gestionnaire ({shown} sur {total}) :",
+          "windowCapped": "Seuls les {count, number} commits les plus récents ont été lus (le cap de la fenêtre récente). Utilisez Analyser l'historique complet pour lire les anciens.",
+          "runningWalk": "{commits, number} commits lus jusqu'à présent{cached, plural, =0 {} other { ({cached, number} du cache de commit)}} — les tickets sont recherchés une fois la marche terminée",
+          "runningImport": "{commits, number} commits lus · importation de tickets : {lookups, number} recherchés dans le gestionnaire · {imported, number} importés",
+          "summaryCommitsOnly": "{commits, plural, one {# commit} other {# commits}} lus",
+          "importSkipped": "{skipped, plural, one {# clé n'a} other {# clés n'ont}} pas encore été recherchées car une analyse effectue un nombre limité de recherches de gestionnaire. Exécutez l'analyse à nouveau pour continuer.",
+          "cancelRequested": "Annulation demandée. L'analyse s'arrête à sa prochaine étape ; les commits déjà lus restent mis en cache.",
+          "cancelled": "Analyse annulée {date}. Les commits lus avant l'annulation sont conservés dans le cache de commit ; les épingles n'ont pas été mises à jour.",
+          "importMoved": "{moved, plural, one {# clé est un ancien nom} other {# clés sont des anciens noms}} de tickets déjà importés ; ils ont été déplacés ou renommés dans le gestionnaire.",
+          "importFailed": "{failed, plural, one {# clé n'a} other {# clés n'ont}} pas été trouvée dans le gestionnaire, énumérée ci-dessous.",
+          "summaryMatched": "{matched, plural, one {# commit} other {# commits}} a nommé un ticket lié à un cas de test",
           "summarySymbolPins": "({count, number} des épingles créées ciblent une fonction ou une classe plutôt qu'un fichier entier.)"
         },
         "markers": {
           "title": "Marqueurs de dépôt",
-          "description": "Les annotations de commentaire comme @testplanit case:123 et les entrées dans .testplanit/testmap.yml deviennent des Code Pins à chaque actualisation du cache.",
+          "description": "Les annotations de commentaires comme @testplanit case:123 et les entrées dans .testplanit/testmap.yml deviennent des épingles de code à chaque actualisation du cache.",
           "skippedPrivacy": "Ignoré : la mise en cache des fichiers est désactivée.",
-          "skippedPartial": "Ignoré : le contenu des fichiers n'a été mis en cache que partiellement.",
-          "summary": "{annotations, plural, one {# annotation} other {# annotations}} · {mapEntries, plural, one {# entrée de correspondance} other {# entrées de correspondance}} · {created} créés · {updated} mis à jour · {removed} supprimés",
+          "skippedPartial": "Ignoré : les contenus de fichiers ont été seulement partiellement mis en cache.",
+          "summary": "{annotations, plural, one {# annotation} other {# annotations}} · {mapEntries, plural, one {# entrée de carte} other {# entrées de carte}} · {created} créées · {updated} mises à jour · {removed} supprimées",
           "problems": "{count, plural, one {# problème} other {# problèmes}}"
         },
-        "saved": "Configuration de l'analyse d'impact enregistrée",
-        "disconnectWarning1": "Supprimer {count, plural, one {# Code Pin} other {# Code Pins}} et l'historique d'analyse de ce dépôt",
-        "disconnectSuccess": "Dépôt de l'application déconnecté",
-        "disconnectError": "Échec de la déconnexion du dépôt de l'application",
+        "saved": "Configuration d'analyse d'impact enregistrée",
+        "disconnectWarning1": "Supprimer {count, plural, one {# épingle de code} other {# épingles de code}} et l'historique d'analyse pour ce dépôt",
+        "disconnectSuccess": "Dépôt d'application déconnecté",
+        "disconnectError": "Échec de la déconnexion du dépôt d'application",
         "repositories": {
           "title": "Dépôts connectés",
-          "description": "Chaque dépôt analysé par ce projet. Chacun conserve sa propre branche, ses modèles de chemin, son cache et ses épingles de code.",
-          "connect": "Connecter un dépôt",
-          "allConnected": "Tous les dépôts enregistrés sont déjà connectés.",
+          "description": "Chaque dépôt que ce projet analyse. Chacun conserve sa propre branche, ses modèles de chemin, son cache et ses épingles de code.",
+          "connect": "Connecter le dépôt",
+          "allConnected": "Chaque dépôt enregistré est déjà connecté.",
           "columnCache": "Cache",
-          "pinTotal": "{count, plural, one {# Code Pin} other {# Code Pins}}",
+          "pinTotal": "{count, plural, one {# épingle de code} other {# épingles de code}}",
           "cacheDisabled": "Mise en cache désactivée",
           "edit": "Modifier la connexion",
           "connectTitle": "Connecter un dépôt",
           "editTitle": "Modifier {name}",
-          "view": "Voir la connexion",
+          "view": "Afficher la connexion",
           "connectDescription": "Choisissez un dépôt enregistré de l'application testée et indiquez quelle branche et quels chemins lire.",
           "editDescription": "Modifiez la branche, les modèles de chemin, le cache et l'analyse des tickets pour cette connexion.",
-          "viewDescription": "Comment ce dépôt est connecté. Actualisez le cache ou lancez une analyse des tickets ici ; utilisez Modifier pour changer les paramètres.",
-          "empty": "Aucun dépôt connecté pour le moment",
-          "emptyDescription": "Connectez le dépôt de l'application testée pour commencer à analyser les modifications.",
-          "lastScan": "{created, plural, one {# épingle créée par la dernière analyse} other {# épingles créées par la dernière analyse}}",
-          "scanFailed": "La dernière analyse a échoué",
+          "viewDescription": "Comment ce dépôt est connecté. Actualisez le cache ou exécutez une analyse des tickets à partir d'ici ; utilisez Modifier pour changer les paramètres.",
+          "empty": "Aucun dépôt connecté pour l'instant",
+          "emptyDescription": "Connectez le dépôt de l'application testée pour commencer l'analyse des modifications.",
+          "lastScan": "{created, plural, one {# épingle} other {# épingles}} créée par la dernière analyse",
+          "scanFailed": "Dernière analyse échouée",
           "scanCancelled": "Dernière analyse annulée"
         },
         "initialScanStarted": "Récupération des fichiers du dépôt et analyse des marqueurs de dépôt et des tickets liés…",
@@ -2313,19 +2314,19 @@
         "stalePins": {
           "title": "Épingles de code obsolètes",
           "check": "Vérifier les épingles obsolètes",
-          "checkHint": "Lit chaque fichier épinglé à la pointe de la branche et signale les épingles dont le fichier, les lignes ou le symbole sont introuvables.",
+          "checkHint": "Lit chaque fichier épinglé à la pointe de la branche et signale les épingles dont le fichier, les lignes ou le symbole ne peuvent plus être trouvés.",
           "remove": "Supprimer les épingles obsolètes",
           "checkStarted": "Vérification des épingles obsolètes mise en file d'attente.",
           "checkFailedToStart": "Impossible de démarrer la vérification des épingles obsolètes",
           "running": "Vérification de {checked, number} sur {total, plural, one {# fichier} other {# fichiers}}…",
-          "neverChecked": "Pas encore vérifié",
-          "checkFailed": "La dernière vérification a échoué",
-          "summary": "{count, plural, =0 {Aucune épingle obsolète} one {# épingle obsolète} other {# épingles obsolètes}} · {checked, plural, one {# épingle vérifiée} other {# épingles vérifiées}}",
-          "unreadable": "{count, plural, one {# fichier n'a pas pu être lu} other {# fichiers n'ont pas pu être lus}}, ces épingles n'ont donc pas été vérifiées.",
-          "removed": "{count, plural, =0 {Aucune épingle obsolète n'a été supprimée} one {# épingle obsolète supprimée} other {# épingles obsolètes supprimées}}",
+          "neverChecked": "Pas encore vérifiés",
+          "checkFailed": "Dernière vérification échouée",
+          "summary": "{count, plural, =0 {Pas d'épingles obsolètes} one {# épingle obsolète} other {# épingles obsolètes}} · {checked, plural, one {# épingle} other {# épingles}} vérifiées",
+          "unreadable": "{count, plural, one {# fichier} other {# fichiers}} n'ont pas pu être lus, donc ces épingles n'ont pas été vérifiées.",
+          "removed": "{count, plural, =0 {Pas d'épingles obsolètes supprimées} one {# épingle obsolète supprimée} other {# épingles obsolètes supprimées}}",
           "removeFailed": "Impossible de supprimer les épingles obsolètes",
-          "removeConfirm": "Supprimer {count, plural, one {# Épingle de code} other {# Épingles de code}} que la dernière vérification n'a pas pu trouver à la pointe de {name} ?",
-          "removeConfirmNote": "Les épingles dont le badge Obsolète a été ignoré et les épingles maintenues par des marqueurs de dépôt sont conservées. Les épingles supprimées peuvent être restaurées depuis la Corbeille."
+          "removeConfirm": "Supprimer {count, plural, one {# épingle de code} other {# épingles de code}} que la dernière vérification n'a pas pu trouver à la pointe de {name} ?",
+          "removeConfirmNote": "Les épingles dont le badge Obsolète a été rejeté et les épingles maintenues par les marqueurs de dépôt sont conservées. Les épingles supprimées peuvent être restaurées à partir de la Corbeille."
         }
       }
     },
@@ -2973,15 +2974,15 @@
   "repository": {
     "version": {
       "notFound": "Version du cas de test introuvable.",
-      "caseNotFoundTitle": "Ce cas de test est introuvable",
-      "caseNotFoundDescription": "Le cas de test auquel appartient cette version n'existe pas dans ce projet, ou il a été supprimé. Vérifiez le lien que vous avez suivi.",
+      "caseNotFoundTitle": "Ce cas de test n'a pas été trouvé",
+      "caseNotFoundDescription": "Le cas de test auquel appartient cette version n'existe pas dans ce projet ou a été supprimé. Vérifiez le lien que vous avez suivi.",
       "backToRepository": "Retour au dépôt",
       "invalidVersionTitle": "« {version} » n'est pas un numéro de version",
-      "invalidVersionDescription": "Les versions sont des nombres entiers qui commencent à 1. Vérifiez le lien que vous avez suivi, ou ouvrez le cas de test et choisissez une version dans son historique.",
+      "invalidVersionDescription": "Les versions sont des nombres entiers comptant à partir de 1. Vérifiez le lien que vous avez suivi, ou ouvrez le cas de test et choisissez une version dans son historique.",
       "notRecordedTitle": "La version {version} de ce cas de test n'a pas été enregistrée",
-      "notRecordedDescription": "Il n'y a pas d'instantané enregistré pour cette version, le cas de test ne peut donc pas être affiché tel qu'il était à ce moment-là. Les versions sont enregistrées lors de l'enregistrement d'un cas ; les cas créés ou modifiés avant l'enregistrement des instantanés n'ont pas d'historique à afficher.",
-      "viewCurrentCase": "Voir le cas de test actuel",
-      "snapshotUnavailable": "La version {version} n'a pas été enregistrée, ce résultat ne peut donc pas être affiché tel que le cas se présentait lors de son exécution.",
+      "notRecordedDescription": "Il n'y a pas d'instantané sauvegardé pour cette version, donc le cas de test ne peut pas être affiché tel qu'il était à ce stade. Les versions sont enregistrées lorsqu'un cas est enregistré ; les cas créés ou modifiés avant l'enregistrement des instantanés n'ont pas d'historique à afficher.",
+      "viewCurrentCase": "Afficher le cas de test actuel",
+      "snapshotUnavailable": "La version {version} n'a pas été enregistrée, donc ce résultat ne peut pas être affiché tel que le cas était quand il a tourné.",
       "detailsRegion": "Détails du cas de test",
       "metadataRegion": "métadonnées des cas de test",
       "versionCreated": "Version {version}",
@@ -3172,8 +3173,8 @@
           "partialSummary": "{failed, plural, one {# ligne n'a pas pu être importée} other {# lignes n'ont pas pu être importées}}. {imported, plural, one {# cas de test a été importé} other {# cas de test ont été importés}} avec succès."
         },
         "warnings": {
-          "partialTitle": "Certains liens de problème n'ont pas été créés",
-          "summary": "{count, plural, one {# cellule de problème} other {# cellules de problème}} n'ont pas pu être liées. Les cas de test ont été importés."
+          "partialTitle": "Certains liens de problèmes n'ont pas été créés",
+          "summary": "{count, plural, one {# cellule de problème} other {# cellules de problèmes}} n'a pas pu être lié. Les cas de test ont été importés."
         },
         "page1": {
           "fileType": {
@@ -3248,19 +3249,19 @@
       "errorMessage": "Erreur inconnue lors de l'ajout d'un nouveau cas de test"
     },
     "draft": {
-      "saving": "Enregistrement…",
+      "saving": "Sauvegarde…",
       "saved": "Toutes les modifications enregistrées {time}",
       "unsaved": "Modifications non enregistrées",
-      "saveFailed": "Impossible d'enregistrer — nouvelle tentative en cours",
+      "saveFailed": "Impossible d'enregistrer — nouvelle tentative",
       "restoreTitle": "Restaurer les modifications non enregistrées ?",
-      "restoreDescription": "Vous avez des modifications non enregistrées de ce cas de test depuis {age}. Restaurez-les, ou annulez-les et chargez la version enregistrée.",
+      "restoreDescription": "Vous avez des modifications non enregistrées apportées à ce cas de test de {age}. Restaurez-les ou rejetez-les et chargez la version enregistrée.",
       "restoreTitleNew": "Restaurer le cas de test non enregistré ?",
-      "restoreDescriptionNew": "Vous avez commencé un cas de test {age} et ne l'avez jamais enregistré. Restaurez ce que vous avez écrit, ou annulez-le et recommencez.",
-      "restoreStaleWarning": "Ce cas de test a été enregistré par une autre personne depuis que votre brouillon a été rédigé. La restauration remplacera leur contenu lors de l'enregistrement.",
-      "restoreDiscard": "Annuler",
-      "bannerText": "Vous avez des modifications non enregistrées de ce cas de test depuis {age}.",
-      "bannerAction": "Reprendre l'édition",
-      "bannerDiscard": "Les annuler"
+      "restoreDescriptionNew": "Vous avez commencé un cas de test {age} et ne l'avez jamais enregistré. Restaurez ce que vous avez écrit ou rejetez-le et commencez à nouveau.",
+      "restoreStaleWarning": "Ce cas de test a été enregistré par quelqu'un d'autre depuis la rédaction de votre brouillon. La restauration remplace son contenu lorsque vous enregistrez.",
+      "restoreDiscard": "Rejeter",
+      "bannerText": "Vous avez des modifications non enregistrées apportées à ce cas de test de {age}.",
+      "bannerAction": "Reprendre la modification",
+      "bannerDiscard": "Les rejeter"
     },
     "columns": {
       "selectCase": "Sélectionner le cas",
@@ -3789,51 +3790,51 @@
       "anchoredAt": "Ancrée à {sha}",
       "caseLabel": "Cas de test",
       "contentUnavailable": "Le contenu du fichier n'est pas disponible.",
-      "description": "Code que ce cas couvre. Une modification à l'intérieur d'un bloc épinglé intègre le cas dans les analyses d'impact.",
+      "description": "Code que ce cas couvre. Un changement à l'intérieur d'un bloc épinglé tire le cas dans les analyses d'impact.",
       "duplicate": "Cette épingle existe déjà.",
-      "empty": "Aucune épingle de code pour l'instant.",
+      "empty": "Aucune épingle de code pour le moment.",
       "endLine": "Ligne de fin",
       "errorFileNotFound": "Fichier introuvable à la pointe de la branche.",
-      "errorLineOutOfRange": "La plage de lignes est en dehors du fichier.",
+      "errorLineOutOfRange": "La plage de lignes se trouve en dehors du fichier.",
       "errorSnippetTooLarge": "Le bloc épinglé est trop volumineux.",
       "errorSymbolNotFound": "Symbole introuvable dans le fichier.",
-      "filePlaceholder": "Rechercher des fichiers...",
+      "filePlaceholder": "Fichiers de recherche...",
       "filesCached": "{count, plural, one {# fichier} other {# fichiers}} en cache · {date}",
-      "filesLive": "Liste des fichiers en direct depuis le dépôt",
+      "filesLive": "Liste des fichiers en direct à partir du dépôt",
       "globMatches": "{count, plural, =0 {Aucun fichier en cache ne correspond} one {# fichier en cache correspond} other {# fichiers en cache correspondent}}",
       "globPlaceholder": "src/payments/**",
       "kind": "Type",
       "kindFile": "Fichier entier",
       "kindGlob": "Modèle glob",
-      "kindLabel": "Épingler sur",
+      "kindLabel": "Épingler à",
       "kindRange": "Lignes",
       "kindSymbol": "Symbole",
-      "linesHint": "Cliquez sur un numéro de ligne pour commencer, maj-clic pour terminer.",
-      "location": "Emplacement",
-      "managedTooltip": "Géré par le dépôt. Modifiez le marqueur dans le code.",
-      "noFilesCached": "Aucune liste de fichiers en cache. Demandez à un administrateur de projet d'actualiser le cache du dépôt.",
-      "notePlaceholder": "Pourquoi ce cas couvre ce code (facultatif)",
+      "linesHint": "Cliquez sur un numéro de ligne pour commencer, shift+clic pour terminer.",
+      "location": "Localisation",
+      "managedTooltip": "Géré par le dépôt. Modifier le marqueur dans le code.",
+      "noFilesCached": "Pas de liste de fichiers en cache. Demandez à un administrateur de projet d'actualiser le cache du dépôt.",
+      "notePlaceholder": "Pourquoi ce cas couvre ce code (optionnel)",
       "reanchor": "Réancrer",
       "reanchorFailed": "Impossible de réancrer l'épingle",
       "reanchorSuccess": "Épingle réancrée",
-      "removeConfirm": "Retirer cette épingle ?",
-      "removeFailed": "Impossible de retirer l'épingle",
-      "removeSuccess": "Épingle retirée",
+      "removeConfirm": "Supprimer cette épingle ?",
+      "removeFailed": "Impossible de supprimer l'épingle",
+      "removeSuccess": "Épingle supprimée",
       "sourceAnnotation": "Annotation",
-      "sourceMapfile": "Fichier de mappage",
+      "sourceMapfile": "Fichier de carte",
       "staleFileDeleted": "fichier supprimé",
       "staleSnippetNotFound": "lignes introuvables",
       "staleSymbolNotFound": "symbole introuvable",
-      "staleTooltip": "Le bloc épinglé est introuvable à la pointe de la branche : {reason}.",
+      "staleTooltip": "Le bloc épinglé n'a pas pu être trouvé à la pointe de la branche : {reason}.",
       "startLine": "Ligne de début",
-      "symbolHint": "La déclaration est localisée par son nom dans le fichier.",
-      "symbolNoneDetected": "Aucun symbole détecté, saisissez un nom.",
-      "symbolPlaceholder": "nomDeFonction",
-      "symbolSelectPlaceholder": "Sélectionnez ou saisissez un symbole...",
+      "symbolHint": "La déclaration est localisée par nom dans le fichier.",
+      "symbolNoneDetected": "Aucun symbole détecté, tapez un nom.",
+      "symbolPlaceholder": "functionName",
+      "symbolSelectPlaceholder": "Sélectionnez ou tapez un symbole...",
       "updateSuccess": "Épingle mise à jour",
       "updateFailed": "Impossible de mettre à jour l'épingle",
       "editDialogTitle": "Modifier cette épingle",
-      "editDialogDescription": "Le fichier et le type d'épingle restent inchangés. Pour les modifier, retirez cette épingle et ajoutez-en une nouvelle.",
+      "editDialogDescription": "Le fichier et le type d'épingle restent tels qu'ils sont. Pour changer l'un ou l'autre, supprimez cette épingle et ajoutez-en une nouvelle.",
       "editAction": "Modifier l'épingle",
       "symbolSearchPlaceholder": "Rechercher des symboles...",
       "symbolUseTyped": "Utiliser « {symbol} »",
@@ -4256,16 +4257,16 @@
       "title": "Impact",
       "analyzeImpact": "Analyser l'impact",
       "description": "Choisissez deux commits de l'application testée et sélectionnez les cas de test que les modifications affectent.",
-      "noRepository": "Connectez le dépôt de l'application dans les paramètres du projet pour utiliser Impact.",
-      "aiUnavailable": "Aucune intégration LLM active : les résultats proviennent uniquement des épingles de code, de la correspondance de mots-clés et de l'historique des exécutions.",
+      "noRepository": "Connectez le dépôt d'application dans les paramètres du projet pour utiliser Impact.",
+      "aiUnavailable": "Pas d'intégration LLM active : les résultats proviennent uniquement des épingles de code, de la correspondance de mots-clés et de l'historique d'exécution.",
       "steps": {
-        "review": "Tests concernés"
+        "review": "Tests affectés"
       },
       "pull": {
-        "label": "Pull request",
-        "selectPlaceholder": "Sélectionnez une pull request...",
-        "searchPlaceholder": "Rechercher par numéro, titre, auteur ou branche...",
-        "stateOpen": "Ouvert",
+        "label": "Demande d'extraction",
+        "selectPlaceholder": "Sélectionnez une demande d'extraction...",
+        "searchPlaceholder": "Recherche par numéro, titre, auteur ou branche...",
+        "stateOpen": "Ouvrir",
         "stateMerged": "Fusionné",
         "stateClosed": "Fermé",
         "resolved": "Comparaison de {base} sur {target} avec {head} sur {source}."
@@ -4273,36 +4274,36 @@
       "pick": {
         "modeLabel": "Choisir les modifications par",
         "modeCommits": "Commits",
-        "modeCommitsHint": "Ce qui a changé entre deux builds, pour que vous puissiez retester tout ce qui a été ajouté depuis le dernier que vous avez vérifié.",
-        "modePullHint": "Ce que cette pull request modifie, mesuré depuis le point de divergence de sa branche, afin que les travaux ajoutés entre-temps sur la branche cible soient exclus.",
+        "modeCommitsHint": "Ce qui a changé entre deux builds, afin que vous puissiez retester tout ce qui a atterri depuis celui que vous avez dernièrement vérifié.",
+        "modePullHint": "Ce que cette demande d'extraction change, mesuré à partir du point où sa branche s'est séparée, afin que le travail atterri sur la branche cible entre-temps soit laissé de côté.",
         "baseLabel": "Commit de base",
-        "headLabel": "Commit final",
-        "commitPlaceholder": "Rechercher des commits...",
-        "searchHint": "Saisissez un sha de commit, ou filtrez les commits chargés par message ou auteur.",
+        "headLabel": "Commit principal",
+        "commitPlaceholder": "Commits de recherche...",
+        "searchHint": "Tapez un sha de commit ou filtrez les commits chargés par message ou auteur.",
         "refLabel": "Ou collez une référence",
-        "refPlaceholder": "Branche, tag ou sha",
+        "refPlaceholder": "Branche, balise ou sha",
         "refNotFound": "Référence introuvable",
-        "latestOnBranch": "Dernier sur {branch}",
-        "previousAnalysisLabel": "Démarrer à partir d'une analyse précédente",
+        "latestOnBranch": "Dernière sur {branch}",
+        "previousAnalysisLabel": "Commencer par une analyse précédente",
         "previousAnalysisPlaceholder": "Sélectionnez une analyse...",
         "previousAnalysisOption": "{sha} · {date} · {count, plural, one {# test affecté} other {# tests affectés}}",
-        "sameCommit": "La base et le final sont le même commit.",
-        "swapped": "La base et le final ont été échangés afin que les modifications se lisent dans l'ordre.",
+        "sameCommit": "La base et la tête sont le même commit.",
+        "swapped": "La base et la tête ont été échangées afin que les modifications se lisent en avant.",
         "loadingCommits": "Chargement des commits…",
         "noCommits": "Aucun commit trouvé."
       },
       "diff": {
-        "summary": "{files, plural, one {# fichier} other {# fichiers}} modifiés · +{additions, number} −{deletions, number}",
-        "truncated": "Le fournisseur a renvoyé un diff partiel. Certains fichiers modifiés ne sont pas affichés ou n'ont pas de patch.",
+        "summary": "{files, plural, one {# fichier} other {# fichiers}} modifié · +{additions, number} −{deletions, number}",
+        "truncated": "Le fournisseur a renvoyé un diff partiel. Certains fichiers modifiés ne sont pas affichés ou n'ont pas de correctif.",
         "noChanges": "Aucune modification entre ces commits.",
         "statusModified": "Modifié",
         "statusRenamed": "Renommé",
         "showPatch": "Afficher les modifications",
         "hidePatch": "Masquer les modifications",
-        "largePatch": "Grand patch ({lines, number} lignes)",
-        "showFullPatch": "Afficher le patch complet",
+        "largePatch": "Grand correctif ({lines, number} lignes)",
+        "showFullPatch": "Afficher le correctif complet",
         "binary": "Fichier binaire",
-        "noPatch": "Patch non disponible",
+        "noPatch": "Correctif non disponible",
         "pinnedFiles": "{count, plural, one {# épingle} other {# épingles}}",
         "loading": "Comparaison des commits…"
       },
@@ -4311,32 +4312,32 @@
         "resolving_config": "Résolution de la configuration du dépôt…",
         "fetching_diff": "Récupération du diff…",
         "matching_pins": "Correspondance des épingles de code…",
-        "matching_issues": "Correspondance des tickets mentionnés dans les commits…",
+        "matching_issues": "Correspondance des tickets nommés dans les commits…",
         "searching_cases": "Recherche de cas de test par mot-clé…",
-        "scoring_history": "Évaluation de l'historique des exécutions…",
+        "scoring_history": "Notation de l'historique d'exécution…",
         "waiting_for_ai": "En attente de l'IA…",
         "merging": "Combinaison des résultats…",
-        "ranking": "{current} sur {total} cas de test candidats classés",
+        "ranking": "Classement de {current} sur {total} cas de test candidats",
         "reused": "Réutilisation d'une analyse récente des mêmes commits."
       },
       "affected": {
-        "selectedOf": "Sélection de {selected, number} sur {total, number} cas de test affectés",
-        "thresholdHint": "Les tests ayant obtenu un score de {threshold, number} ou plus sont sélectionnés et affichés par défaut ; réduisez le score minimum pour voir les autres. Chaque test indique pourquoi il a été sélectionné.",
+        "selectedOf": "Sélectionné {selected, number} sur {total, number} cas de test affectés",
+        "thresholdHint": "Les tests qui ont obtenu un score de {threshold, number} ou supérieur commencent sélectionnés et affichés ; abaissez le score minimum pour voir le reste. Chaque test montre pourquoi il a été sélectionné.",
         "shownCount": "Affichage de {shown, number} sur {total, number}",
         "minScore": "Score minimum",
-        "selectShown": "Sélectionner les éléments affichés ({count, number})",
-        "deselectShown": "Désélectionner les éléments affichés ({count, number})",
+        "selectShown": "Sélectionnez affiché ({count, number})",
+        "deselectShown": "Désélectionner affiché ({count, number})",
         "noneShown": "Aucun test ne correspond aux filtres.",
         "reasons": "Pourquoi",
         "tierPinned": "Épinglé",
         "tierAffected": "Affecté",
         "tierRelated": "Associé",
-        "tierPinnedTooltip": "Une épingle de code sur ce cas croise la modification. Les cas épinglés sont toujours classés en premier.",
-        "tierAffectedTooltip": "Les autres signaux placent ce cas au niveau ou au-dessus du seuil d'impact de {threshold, number}.",
-        "tierRelatedTooltip": "Lié à un cas fortement affecté, ou ses signaux ont obtenu un score inférieur à {threshold, number}.",
+        "tierPinnedTooltip": "Une épingle de code sur ce cas coupe le changement. Les cas épinglés se classent toujours en premier.",
+        "tierAffectedTooltip": "Les autres signaux placent ce cas au ou au-dessus du seuil affecté de {threshold, number}.",
+        "tierRelatedTooltip": "Lié à un cas fortement affecté, ou ses signaux ont été notés en dessous de {threshold, number}.",
         "showDetails": "Afficher les raisons",
         "hideDetails": "Masquer les raisons",
-        "excluded": "{count, plural, one {# cas déjà présent dans l'exécution a été ignoré} other {# cas déjà présents dans l'exécution ont été ignorés}}"
+        "excluded": "{count, plural, one {# cas déjà dans l'exécution a été ignoré} other {# cas déjà dans l'exécution ont été ignorés}}"
       },
       "noAffected": {
         "title": "Aucun test affecté trouvé",
@@ -4352,38 +4353,38 @@
         "pinFile": "{path}",
         "pinGlob": "Correspond à {pattern}",
         "pinSymbol": "{path} · {symbol}",
-        "pathDetail": "Correspondance de « {term} » dans {field}",
+        "pathDetail": "Correspondance « {term} » dans {field}",
         "fieldName": "nom du cas",
         "fieldContent": "contenu du cas",
         "fieldTag": "étiquette",
         "fieldFolder": "dossier",
-        "historyDetail": "{count, plural, one {# exécution antérieure} other {# exécutions antérieures}} après des modifications des mêmes fichiers",
-        "historyFailed": "Échoué lors d'une exécution antérieure après des modifications similaires",
+        "historyDetail": "{count, plural, one {# exécution antérieure} other {# exécutions antérieures}} après les modifications des mêmes fichiers",
+        "historyFailed": "Échoué dans une exécution antérieure après des modifications similaires",
         "linkedDetail": "Lié au cas {caseId}",
-        "issueDetail": "Lié à {key}, mentionné dans {count, plural, one {commit {sha}} other {# commits}}"
+        "issueDetail": "Lié à {key}, nommé dans {count, plural, one {commit {sha}} other {# commits}}"
       },
       "stale": {
-        "badge": "Obsolète",
-        "tooltipAnalysis": "Le bloc épinglé est introuvable au commit de base ; correspondance établie uniquement par chemin de fichier. Réépinglez depuis la page du cas de test.",
+        "badge": "Vicié",
+        "tooltipAnalysis": "Le bloc épinglé n'a pas pu être trouvé au commit de base ; correspond par chemin de fichier uniquement. Réépinglez depuis la page du cas de test.",
         "title": "{count, plural, one {# épingle obsolète} other {# épingles obsolètes}}",
         "description": "Ces épingles ne correspondent plus au code. Réancrez-les depuis la page du cas de test."
       },
       "uncovered": {
-        "title": "{count, plural, one {# fichier modifié n'a aucun test} other {# fichiers modifiés n'ont aucun test}}",
-        "description": "Aucun cas de test n'est lié à ces fichiers. Épinglez un cas pour combler cette lacune.",
+        "title": "{count, plural, one {# fichier modifié n'a} other {# fichiers modifiés n'ont}} pas de test",
+        "description": "Aucun cas de test n'est lié à ces fichiers. Épinglez un cas pour combler le fossé.",
         "pinAction": "Épingler un cas..."
       },
       "warnings": {
         "diff_truncated_by_provider": "Le fournisseur a renvoyé un diff partiel.",
-        "diff_truncated_by_budget": "Seule une partie du diff tenait dans le contexte de l'IA ; {count, plural, one {# fichier a été} other {# fichiers ont été}} résumés uniquement par chemin.",
-        "llm_not_configured": "Aucune intégration LLM active : le classement par IA a été ignoré.",
+        "diff_truncated_by_budget": "Seule une partie du diff s'adapte au contexte de l'IA ; {count, plural, one {# fichier a} other {# fichiers ont}} été résumés par chemin uniquement.",
+        "llm_not_configured": "Pas d'intégration LLM active : le classement de l'IA a été ignoré.",
         "search_fallback_db": "Index de recherche indisponible : la correspondance de mots-clés a utilisé la base de données.",
-        "search_index_empty": "L'index de recherche ne contient aucun cas de test pour ce projet. La recherche par mots-clés s'est donc rabattue sur les noms des cas de test dans la base de données et a pu manquer des correspondances dans le contenu des cas. Demandez à un administrateur de reconstruire l'index de recherche dans Administration → Moteur de recherche.",
+        "search_index_empty": "L'index de recherche ne contient pas de cas de test pour ce projet, donc la correspondance de mots-clés est revenue aux noms de cas de test dans la base de données et peut avoir manqué les correspondances sur le contenu des cas. Demandez à un administrateur de reconstruire l'index de recherche sous Administration → Moteur de recherche.",
         "ai_partial": "Certains lots d'IA ont échoué ; les résultats peuvent être incomplets.",
-        "ai_truncated": "{count, plural, one {# lot d'IA a été} other {# lots d'IA ont été}} tronqués par le modèle.",
+        "ai_truncated": "{count, plural, one {# lot d'IA a} other {# lots d'IA ont}} été interrompus par le modèle.",
         "no_candidates": "Aucun cas de test ne correspond.",
-        "anchor_fetch_capped": "Certains fichiers épinglés ont été mis en correspondance uniquement par chemin (limite de récupération atteinte).",
-        "issue_commit_fetch_capped": "Certains commits mentionnant des tickets n'ont pas été lus fichier par fichier (limite de récupération atteinte) ; leurs cas ne couvrent aucun fichier spécifique."
+        "anchor_fetch_capped": "Certains fichiers épinglés ont été mis en correspondance par chemin uniquement (limite de récupération atteinte).",
+        "issue_commit_fetch_capped": "Certains commits nommant des tickets n'ont pas été lus fichier par fichier (limite de récupération atteinte) ; leurs cas ne couvrent aucun fichier spécifique."
       },
       "actions": {
         "analyze": "Analyser",
@@ -4394,15 +4395,15 @@
       },
       "errors": {
         "generic": "Une erreur s'est produite lors de l'analyse des modifications. Veuillez réessayer.",
-        "pullFailed": "Impossible de lire les commits de cette pull request. Choisissez-en une autre, ou indiquez les commits vous-même.",
+        "pullFailed": "Impossible de lire les commits de cette demande d'extraction. Choisissez-en une autre ou nommez vous-même les commits.",
         "compareFailed": "Impossible de comparer les commits.",
         "analysisFailed": "L'analyse a échoué : {error}",
         "cancelled": "L'analyse a été annulée.",
-        "timeout": "L'analyse prend trop de temps. Revenez plus tard ou réessayez.",
+        "timeout": "L'analyse prend trop de temps. Revérifiez plus tard ou réessayez.",
         "branchesFailed": "Impossible de lister les branches.",
         "commitsFailed": "Impossible de charger les commits.",
-        "disabled": "Impact n'est pas activé pour ce projet.",
-        "noConfig": "Connectez d'abord le dépôt de l'application dans les paramètres du projet.",
+        "disabled": "L'impact n'est pas activé pour ce projet.",
+        "noConfig": "Connectez d'abord le dépôt d'application dans les paramètres du projet.",
         "configRequired": "Choisissez un dépôt à analyser."
       },
       "repositoryPlaceholder": "Sélectionnez un dépôt...",
@@ -5525,9 +5526,9 @@
       "rotate": {
         "confirm": "Faire tourner le jeton",
         "title": "Faire tourner le jeton SCIM",
-        "description": "Générer un nouveau jeton porteur pour « {name} ». Le jeton conserve son nom, son IdP et tout ce qu'il a provisionné — seul le secret change.",
-        "overlapLabel": "Conserver l'ancien jeton fonctionnel pendant",
-        "overlapHint": "Votre IdP continue de provisionner avec l'ancien jeton jusqu'à la fin de cette fenêtre, afin que vous puissiez coller le nouveau sans interruption.",
+        "description": "Générez un nouveau support pour « {name} ». Le jeton garde son nom, son IdP et tout ce qu'il a provisionné — seul le secret change.",
+        "overlapLabel": "Maintenir l'ancien jeton opérationnel pendant",
+        "overlapHint": "Votre IdP continue à fournir avec l'ancien jeton jusqu'à la fin de cette fenêtre, afin que vous puissiez y coller le nouveau sans interruption.",
         "overlapNone": "Basculer immédiatement",
         "overlap1h": "1 heure",
         "overlap24h": "24 heures",
@@ -5536,20 +5537,20 @@
         "submit": "Faire tourner le jeton",
         "submitting": "Rotation en cours…",
         "revealTitle": "Nouveau jeton SCIM",
-        "revealDescriptionOverlap": "Collez ceci dans votre IdP avant la fin de la fenêtre de chevauchement. Le jeton précédent continue de fonctionner jusque-là.",
-        "revealDescriptionImmediate": "Le jeton précédent a immédiatement cessé de fonctionner. Collez ceci dans votre IdP maintenant pour reprendre le provisionnement."
+        "revealDescriptionOverlap": "Collez ceci dans votre IdP avant la fin de la fenêtre de chevauchement. L'ancien jeton continue de fonctionner jusqu'à ce moment.",
+        "revealDescriptionImmediate": "L'ancien jeton a cessé de fonctionner immédiatement. Collez ceci dans votre IdP maintenant pour reprendre l'approvisionnement."
       },
       "roleMappings": {
         "title": "Mappages de rôles",
-        "description": "Associez un rôle affirmé par votre fournisseur d'identité sur un utilisateur à un niveau d'accès. Les mappages de rôles sont prioritaires sur les mappages de groupes, ils peuvent donc augmenter ou réduire l'accès.",
-        "empty": "Aucun mappage de rôle pour l'instant. Les utilisateurs sont régis par les mappages de groupes et le niveau d'accès par défaut.",
-        "roleLabel": "Valeur du rôle",
-        "rolePlaceholder": "Valeur du rôle provenant de votre IdP, par ex. qa-lead",
+        "description": "Mappez un rôle que votre fournisseur d'identité affirme sur un utilisateur à un niveau d'accès. Les mappages de rôles ont priorité sur les mappages de groupe, de sorte qu'ils peuvent augmenter ou diminuer l'accès.",
+        "empty": "Aucun mappage de rôles pour l'instant. Les utilisateurs sont régis par les mappages de groupe et le niveau d'accès par défaut.",
+        "roleLabel": "Valeur de rôle",
+        "rolePlaceholder": "Valeur de rôle de votre IdP, par ex. qa-lead",
         "accessLabel": "Niveau d'accès",
         "add": "Ajouter un mappage",
         "remove": "Supprimer le mappage",
-        "saved": "Mappage de rôle enregistré",
-        "errorRoleRequired": "Saisissez la valeur du rôle envoyée par votre IdP."
+        "saved": "Mappage de rôles enregistré",
+        "errorRoleRequired": "Entrez la valeur de rôle que votre IdP envoie."
       }
     },
     "tags": {
@@ -5870,8 +5871,8 @@
       "mappedAccessSelect": "Sélectionnez le niveau d'accès...",
       "projectMappings": {
         "label": "Accès par projet",
-        "description": "Accordez à ce groupe un niveau d'accès sur des projets spécifiques, à la place — ou en plus — du niveau global ci-dessus.",
-        "empty": "Aucun accès par projet. Les membres n'obtiennent que le niveau global ci-dessus et le niveau par défaut propre à chaque projet.",
+        "description": "Accordez à ce groupe un niveau d'accès sur des projets spécifiques, au lieu de — ou en plus de — le niveau à l'échelle de l'organisation ci-dessus.",
+        "empty": "Aucun accès par projet. Les membres ne reçoivent que le niveau à l'échelle de l'organisation ci-dessus et le défaut propre de chaque projet.",
         "projectPlaceholder": "Sélectionnez un projet…",
         "accessLabel": "Niveau d'accès",
         "add": "Ajouter un projet",
@@ -6476,7 +6477,7 @@
         "generate_from_url_app": "Générer des cas de test à partir d'une URL (tests d'application)",
         "automation_candidates": "Rapport des candidats à l'automatisation",
         "derive_case_steps": "Dérivation des étapes par IA",
-        "impact_analysis": "Impact : Sélection des tests affectés"
+        "impact_analysis": "Impact : sélection de tests affectés"
       }
     },
     "elasticsearch": {
@@ -6993,7 +6994,7 @@
       "searchPlaceholder": "Rechercher des exigences...",
       "emptyTitle": "Aucune exigence pour l'instant",
       "emptyDescription": "Créez votre première exigence pour commencer à construire l'arborescence des exigences de ce projet.",
-      "loadFailed": "Échec du chargement des exigences.",
+      "loadFailed": "Impossible de charger les exigences.",
       "addRoot": "Ajouter une exigence",
       "addChild": "Ajouter une exigence enfant",
       "rename": "Renommer",
@@ -7001,7 +7002,7 @@
       "collapseAll": "Réduire tout",
       "dropToRootHint": "Déposez ici pour déplacer au niveau supérieur",
       "moveSuccess": "Exigence déplacée.",
-      "moveFailed": "Échec du déplacement de l'exigence.",
+      "moveFailed": "Impossible de déplacer l'exigence.",
       "moveRejected": "Ce déplacement a été rejeté :",
       "dragDisabled": "Cette exigence ne peut pas être déplacée pour le moment."
     },
@@ -7022,7 +7023,7 @@
       "documentationPlaceholder": "Saisir la documentation de l'exigence...",
       "lockedHint": "Ce champ est géré par le système de suivi connecté et ne peut pas être modifié ici.",
       "saveSuccess": "Exigence enregistrée.",
-      "saveFailed": "Échec de l'enregistrement de l'exigence."
+      "saveFailed": "Impossible d'enregistrer l'exigence."
     },
     "provenance": {
       "syncedLabel": "Synchronisé",
@@ -7035,10 +7036,10 @@
       "detachDialogDescription": "Le détachement rend cette exigence entièrement modifiable dans TestPlanIt et rompt son lien avec le système de suivi connecté. Cette action est irréversible — le rattachement au système de suivi n'est pas encore pris en charge.",
       "detachConfirm": "Détacher",
       "detachSuccess": "Exigence détachée.",
-      "detachFailed": "Échec du détachement de l'exigence.",
+      "detachFailed": "Impossible de détacher l'exigence.",
       "exclude": "Ne pas utiliser comme exigence",
       "excludeSuccess": "N'est plus utilisé comme exigence. Il apparaît sur la page Tickets du projet.",
-      "excludeFailed": "Échec de la mise à jour de la classification de l'exigence."
+      "excludeFailed": "Impossible de mettre à jour la classification de l'exigence."
     },
     "override": {
       "promoteTitle": "Utiliser ce problème comme exigence ?",
@@ -7059,10 +7060,10 @@
       "submit": "Créer une exigence",
       "submitHint": "Appuyez sur Entrée pour créer",
       "success": "Exigence créée.",
-      "failed": "Échec de la création de l'exigence.",
+      "failed": "Impossible de créer l'exigence.",
       "modeCreate": "Nouvelle exigence",
       "modePromote": "Promouvoir un problème existant",
-      "promoteDescription": "Utiliser un problème déjà synchronisé avec ce projet comme exigence. Il quitte les vues Problèmes, conserve la hiérarchie de son outil de suivi et reste une exigence lors des synchronisations et des modifications de configuration.",
+      "promoteDescription": "Utilisez un problème déjà synchronisé avec ce projet comme exigence. Il quitte les vues Problèmes, conserve la hiérarchie de son outil de suivi et reste une exigence lors des synchronisations et des modifications de configuration.",
       "promoteParentNote": "Suit la hiérarchie de l'outil de suivi",
       "promoteIssueLabel": "Problème",
       "promoteChooseIssue": "Choisir un problème",
@@ -7075,7 +7076,7 @@
       "dialogTitle": "Modifier l'exigence",
       "submit": "Enregistrer les modifications",
       "success": "Exigence mise à jour.",
-      "failed": "Échec de la mise à jour de l'exigence.",
+      "failed": "Impossible de mettre à jour l'exigence.",
       "lockedTooltip": "Cette exigence est synchronisée depuis le système de suivi connecté. Détachez-la pour la renommer."
     },
     "delete": {
@@ -7083,17 +7084,17 @@
       "confirmNoChildren": "Êtes-vous sûr de vouloir supprimer cette exigence ? Cette action peut être annulée.",
       "confirmWithChildren": "Cette exigence a {count, plural, one {{count} descendant} other {{count} descendants}} qui seront également supprimés. Cette action peut être annulée.",
       "success": "Exigence supprimée.",
-      "failed": "Échec de la suppression de l'exigence.",
+      "failed": "Impossible de supprimer l'exigence.",
       "undo": "Annuler",
       "undoSuccess": "Exigence restaurée.",
-      "undoFailed": "Échec de la restauration de l'exigence."
+      "undoFailed": "Impossible de restaurer l'exigence."
     },
     "attachments": {
       "empty": "Aucune pièce jointe",
       "uploadSuccess": "Pièce jointe téléchargée.",
-      "uploadFailed": "Échec du téléchargement de la pièce jointe.",
+      "uploadFailed": "Impossible de télécharger la pièce jointe.",
       "removeSuccess": "Pièce jointe supprimée.",
-      "removeFailed": "Échec de la suppression de la pièce jointe."
+      "removeFailed": "Impossible de supprimer la pièce jointe."
     },
     "linkedCases": {
       "title": "Cas de test liés",
@@ -7102,10 +7103,10 @@
       "addLinkDialogTitle": "Lier des cas de test",
       "searchPlaceholder": "Rechercher des cas de test...",
       "linkSuccess": "Cas de test lié.",
-      "linkFailed": "Échec de la liaison du cas de test.",
+      "linkFailed": "Impossible de lier le cas de test.",
       "unlinkConfirm": "Êtes-vous sûr de vouloir dissocier ce cas de test ?",
       "unlinkSuccess": "Cas de test dissocié.",
-      "unlinkFailed": "Échec de la dissociation du cas de test.",
+      "unlinkFailed": "Impossible de dissocier le cas de test.",
       "columnCase": "Cas de test"
     },
     "linkedRequirements": {
@@ -7114,10 +7115,10 @@
       "addLinkDialogTitle": "Lier des exigences",
       "searchPlaceholder": "Rechercher des exigences...",
       "linkSuccess": "Exigence liée.",
-      "linkFailed": "Échec de la liaison de l'exigence.",
+      "linkFailed": "Impossible de lier l'exigence.",
       "unlinkConfirm": "Êtes-vous sûr de vouloir dissocier cette exigence ?",
       "unlinkSuccess": "Exigence dissociée.",
-      "unlinkFailed": "Échec de la dissociation de l'exigence."
+      "unlinkFailed": "Impossible de dissocier l'exigence."
     },
     "suspect": {
       "badgeLabel": "Suspecte",
@@ -7126,7 +7127,7 @@
       "dismissConfirm": "Ignorer ce signalement suspect ? Une modification plus récente de l'exigence le signalera à nouveau.",
       "dismissAction": "Ignorer le signalement",
       "dismissSuccess": "Signalement suspect ignoré.",
-      "dismissFailed": "Échec du rejet du signalement suspect."
+      "dismissFailed": "Impossible de rejeter le signalement suspect."
     },
     "references": {
       "title": "{count, plural, =0 {Références} =1 {{count} Référence} other {{count} Références}}",
@@ -7135,27 +7136,27 @@
       "addReference": "Ajouter une référence",
       "createDialogLabel": "Références",
       "attachSuccess": "Référence attachée.",
-      "attachFailed": "Échec de l'attachement de la référence.",
+      "attachFailed": "Impossible d'attacher la référence.",
       "removeConfirm": "Êtes-vous sûr de vouloir supprimer cette référence ?",
       "removeSuccess": "Référence supprimée.",
-      "removeFailed": "Échec de la suppression de la référence.",
+      "removeFailed": "Impossible de supprimer la référence.",
       "columnReference": "Référence"
     },
     "coverage": {
       "title": "Couverture",
       "uncovered": "Non couvert",
       "uncoveredTooltip": "Aucun cas de test n'est lié à cette exigence ou à l'un de ses descendants.",
-      "statusPassed": "Passé",
+      "statusPassed": "Succès",
       "statusFailed": "Échoué",
       "statusNotRun": "Non exécuté",
       "countLabel": "{passed}/{total}",
-      "breakdownTooltip": "Passé : {passed} · Échoué : {failed} · En cours : {inProgress} · Non exécuté : {notRun}",
+      "breakdownTooltip": "Succès : {passed} · Échec : {failed} · En cours : {inProgress} · Non exécuté : {notRun}",
       "showOnlyUncovered": "Afficher seulement les non couverts",
       "showOnlyUncoveredUnavailable": "Les données de couverture ne sont pas disponibles pour le moment.",
-      "loadFailed": "Échec du chargement de la couverture.",
+      "loadFailed": "Impossible de charger la couverture.",
       "retry": "Réessayer",
       "panelTitle": "Cas de test couvrants",
-      "panelTitleWithCount": "{count, plural, =0 {Cas de test couvrants} =1 {# cas de test couvrant} other {# cas de test couvrants}}",
+      "panelTitleWithCount": "{count, plural, =0 {Cas de test couvrants} =1 {# Cas de test couvrant} other {# Cas de test couvrants}}",
       "panelDescription": "Tous les cas de test comptabilisés dans la couverture de cette exigence — les cas liés directement plus les cas liés à toute exigence en dessous. Pour ajouter ou supprimer des liens, utilisez Cas de test liés.",
       "panelEmpty": "Aucun cas de test ne couvre encore cette exigence.",
       "columnCase": "Cas de test",
@@ -7193,147 +7194,147 @@
   "automation": {
     "settings": {
       "title": "Exécution automatisée",
-      "description": "Cibles vers lesquelles ce projet peut envoyer ses cas automatisés.",
+      "description": "Les cibles que ce projet peut envoyer à ses cas automatisés.",
       "emptyTitle": "Aucune cible d'exécution pour l'instant",
-      "emptyDescription": "Ajoutez une cible pour exécuter les cas automatisés de ce projet depuis une exécution de test : un workflow GitHub Actions, un pipeline GitLab CI, ou un webhook signé.",
+      "emptyDescription": "Ajoutez une cible pour exécuter les cas automatisés de ce projet à partir d'une exécution de test : un flux de travail GitHub Actions, un pipeline GitLab CI ou un webhook signé.",
       "createButton": "Ajouter une cible",
       "createTitle": "Nouvelle cible d'exécution",
       "editTitle": "Modifier la cible d'exécution",
-      "namePlaceholder": "par ex. Nightly E2E",
+      "namePlaceholder": "par ex. Nuit E2E",
       "repository": "Dépôt de code",
       "repositoryPlaceholder": "Choisir un dépôt",
-      "noRepositories": "Aucun dépôt {provider} n'est enregistré. Demandez à un administrateur d'en ajouter un dans Admin → Dépôts de code.",
+      "noRepositories": "Aucun dépôt {provider} n'est enregistré. Demandez à un administrateur d'en ajouter un sous Admin → Dépôts de code.",
       "workflow": "Flux de travail",
-      "workflowPlaceholder": "Choisir un fichier de workflow",
-      "workflowHelp": "Le workflow doit déclarer un déclencheur workflow_dispatch avec les entrées TESTPLANIT_* ; GitHub refuse les entrées non déclarées.",
-      "workflowsUnavailable": "Impossible de lister les workflows ({error}). Saisissez plutôt le nom du fichier de workflow.",
+      "workflowPlaceholder": "Choisir un fichier de flux de travail",
+      "workflowHelp": "Le flux de travail doit déclarer un déclencheur workflow_dispatch avec les entrées TESTPLANIT_* ; GitHub refuse les entrées non déclarées.",
+      "workflowsUnavailable": "Les flux de travail n'ont pas pu être listés ({error}). Saisissez plutôt le nom du fichier de flux de travail.",
       "workflowInputPlaceholder": "par ex. e2e.yml",
       "defaultRef": "Branche",
-      "defaultRefHelp": "Les exécutions démarrent sur cette branche, sauf si une référence différente est fournie au moment de l'exécution.",
+      "defaultRefHelp": "Les exécutions commencent sur cette branche sauf si une ref différente est donnée au moment de l'exécution.",
       "defaultRefDefault": "Branche par défaut du dépôt",
       "defaultRefPlaceholder": "par ex. main",
-      "staticInputs": "Entrées du workflow",
-      "variables": "Variables du pipeline",
+      "staticInputs": "Entrées du flux de travail",
+      "variables": "Variables de pipeline",
       "webhookVariables": "Variables",
-      "staticInputsHelp": "Envoyées à chaque déclenchement, en plus des valeurs TESTPLANIT_*. Pas secret : toute personne pouvant lire le dépôt peut les voir.",
+      "staticInputsHelp": "Envoyé à chaque envoi, en plus des valeurs TESTPLANIT_*. Pas secret : quiconque peut lire le dépôt peut les voir.",
       "addInput": "Ajouter une entrée",
       "removeInput": "Supprimer l'entrée",
-      "parametersHelp": "Valeurs choisies par la personne qui exécute un test dans la boîte de dialogue Exécuter. Chacune est envoyée comme une entrée nommée d'après le paramètre ; une sélection multiple joint ses choix par des virgules.",
-      "parameterNamePlaceholder": "p. ex. BROWSER",
-      "parameterLabelPlaceholder": "p. ex. Navigateur",
+      "parametersHelp": "Valeurs que la personne qui exécute une exécution choisit dans la boîte de dialogue Exécuter. Chacune est envoyée sous forme d'une entrée portant le nom du paramètre ; une multi-sélection joint ses choix avec des virgules.",
+      "parameterNamePlaceholder": "par ex. NAVIGATEUR",
+      "parameterLabelPlaceholder": "par ex. Navigateur",
       "parameterTypes": {
         "select": "Choix unique",
         "multiselect": "Choix multiple",
         "text": "Texte",
         "configuration": "Configuration"
       },
-      "parameterConfigurationMultiple": "Autoriser la sélection de plusieurs éléments",
-      "parameterConfigurationHelp": "Propose les configurations assignées à ce projet. Le job reçoit le choix sous forme de {id} (l'identifiant), {name} (le nom) et {variants} (paires Catégorie=Variante).",
-      "parameterConfigurationNone": "Aucune configuration n'est assignée à ce projet. Attribuez-en une d'abord dans Admin → Configurations.",
+      "parameterConfigurationMultiple": "Permettre de choisir plus d'un",
+      "parameterConfigurationHelp": "Offre les configurations affectées à ce projet. Le travail reçoit le choix sous {id} (l'id), {name} (le nom) et {variants} (paires Catégorie=Variante).",
+      "parameterConfigurationNone": "Aucune configuration n'est affectée à ce projet. Affectez-en une sous Admin → Configurations en premier.",
       "parameterValues": "Valeurs",
-      "parameterValuesPlaceholder": "Saisissez une valeur et appuyez sur Entrée",
+      "parameterValuesPlaceholder": "Tapez une valeur et appuyez sur Entrée",
       "parameterDefaultNone": "Aucune valeur par défaut",
-      "parameterDefaultPlaceholder": "Valeur par défaut facultative",
-      "credentials": "Identifiants",
-      "credentialsHelp": "Laissez vide pour utiliser l'identifiant enregistré du dépôt.",
-      "credentialsOverride": "Utiliser un identifiant différent pour le déclenchement",
-      "personalAccessToken": "Jeton d'accès",
-      "personalAccessTokenHelp": "GitHub : un jeton avec la portée workflow (classique) ou Actions lecture/écriture (précis). GitLab : un jeton avec la portée api.",
-      "triggerToken": "Jeton de déclenchement du pipeline",
-      "triggerTokenHelp": "Facultatif. Démarre les pipelines sans jeton d'accès, mais leur statut ne peut pas être lu.",
-      "clearCredentials": "Supprimer la surcharge et utiliser l'identifiant du dépôt",
+      "parameterDefaultPlaceholder": "Valeur par défaut optionnelle",
+      "credentials": "Titres d'identification",
+      "credentialsHelp": "Laissez vide pour utiliser les titres d'identification stockés du dépôt.",
+      "credentialsOverride": "Utiliser des titres d'identification différents pour l'envoi",
+      "personalAccessToken": "Jeton d'accès personnel",
+      "personalAccessTokenHelp": "GitHub : un jeton avec la portée workflow (classique) ou Actions lecture/écriture (granulaire). GitLab : un jeton avec la portée api.",
+      "triggerToken": "Jeton de déclenchement de pipeline",
+      "triggerTokenHelp": "Optionnel. Démarre les pipelines sans jeton d'accès, mais leur statut ne peut pas être lu.",
+      "clearCredentials": "Supprimer le remplacement et utiliser les titres d'identification du dépôt",
       "webhookUrl": "URL du webhook",
       "webhookUrlPlaceholder": "https://ci.example.com/hooks/testplanit",
-      "webhookUrlHelp": "TestPlanIt envoie ici un POST signé. Le destinataire vérifie X-TestPlanIt-Signature, démarre le job et renvoie les résultats avec le reporter ou le CLI.",
+      "webhookUrlHelp": "TestPlanIt envoie un POST signé ici. Le récepteur vérifie l'en-tête X-TestPlanIt-Signature, démarre le travail et rapporte les résultats avec le rapporteur ou CLI.",
       "secret": "Secret de signature",
-      "secretHelp": "Généré à l'enregistrement de la cible et affiché une seule fois.",
+      "secretHelp": "Généré à l'enregistrement de la cible et affiché une fois.",
       "secretCustom": "Fournir mon propre secret",
       "rotateSecret": "Générer un nouveau secret de signature",
       "payloadPreview": "Charge utile",
       "timeout": "Délai d'expiration (minutes)",
-      "timeoutHelp": "Une exécution qui n'est pas terminée d'ici là est marquée comme expirée.",
-      "hasOwnCredentials": "Identifiant propre",
-      "usesRepositoryCredentials": "Identifiant du dépôt",
+      "timeoutHelp": "Une exécution qui n'a pas terminé d'ici là est marquée comme expirée.",
+      "hasOwnCredentials": "Propre titre d'identification",
+      "usesRepositoryCredentials": "Titre d'identification du dépôt",
       "verifying": "Vérification en cours…",
       "verifyOk": "Cible vérifiée",
-      "verifyOkWithWarnings": "Cible vérifiée avec avertissements",
-      "verifyFailed": "Échec de la vérification",
+      "verifyOkWithWarnings": "Cible vérifiée avec des avertissements",
+      "verifyFailed": "Vérification échouée",
       "declaredInputs": "Entrées déclarées : {inputs}",
       "lastVerified": "Dernière vérification",
-      "neverVerified": "Pas encore vérifiée",
+      "neverVerified": "Pas encore vérifiées",
       "deleteConfirmTitle": "Supprimer cette cible d'exécution ?",
-      "deleteConfirm": "Les exécutions passées conservent leur historique. Les exécutions ne peuvent plus être envoyées vers cette cible.",
+      "deleteConfirm": "Les exécutions passées conservent leur historique. Les exécutions ne peuvent plus être expédiées vers cette cible.",
       "saved": "Cible d'exécution enregistrée",
       "deleted": "Cible d'exécution supprimée",
       "enabledToast": "Cible activée",
       "disabledToast": "Cible désactivée",
       "revealedSecretTitle": "Copiez le secret de signature maintenant",
-      "revealedSecretWarning": "Ce secret n'est affiché qu'une seule fois. Votre destinataire l'utilise pour vérifier l'en-tête X-TestPlanIt-Signature à chaque déclenchement ; les systèmes qui s'authentifient d'une autre manière (un jeton de déclenchement Jenkins, par exemple) peuvent l'ignorer. Stockez-le dans le magasin de secrets de votre système CI ; TestPlanIt ne peut pas l'afficher à nouveau.",
+      "revealedSecretWarning": "Ce secret n'est affiché qu'une seule fois. Votre récepteur l'utilise pour vérifier l'en-tête X-TestPlanIt-Signature sur chaque envoi ; les systèmes qui s'authentifient d'une autre manière (un jeton de déclenchement Jenkins, par exemple) peuvent l'ignorer. Stockez-le dans la banque de secrets de votre système CI ; TestPlanIt ne peut pas l'afficher à nouveau.",
       "secretCopied": "Secret copié",
       "errors": {
         "invalid": "La cible n'a pas pu être enregistrée. Vérifiez le formulaire et réessayez.",
         "invalidInputs": "L'une des entrées n'est pas valide.",
-        "urlRequired": "Une URL de webhook est requise.",
+        "urlRequired": "Une URL webhook est requise.",
         "urlBlocked": "L'URL du webhook pointe vers une adresse privée ou interne.",
-        "repositoryRequired": "Choisissez un dépôt de code.",
+        "repositoryRequired": "Choisir un dépôt de code.",
         "repositoryNotFound": "Le dépôt de code n'existe plus.",
         "repositoryProviderMismatch": "Le fournisseur du dépôt ne correspond pas au fournisseur de la cible.",
-        "workflowRequired": "Choisissez un fichier de workflow.",
+        "workflowRequired": "Choisir un fichier de flux de travail.",
         "nameTaken": "Une cible portant ce nom existe déjà.",
         "paramNameInvalid": "Le nom d'entrée d'un paramètre doit commencer par une lettre ou un trait de soulignement et ne contenir que des lettres, des chiffres et des traits de soulignement.",
         "paramNameDuplicate": "Deux paramètres ont le même nom d'entrée.",
         "paramNameReserved": "Le nom d'entrée d'un paramètre ne peut pas commencer par TESTPLANIT_.",
-        "paramCollidesWithInput": "Un paramètre a le même nom d'entrée qu'une entrée statique. Supprimez l'un des deux.",
-        "paramLabelRequired": "Chaque paramètre nécessite une étiquette.",
-        "paramValuesRequired": "Un paramètre à choix nécessite au moins une valeur.",
-        "paramValuesDuplicate": "Un paramètre liste la même valeur deux fois.",
+        "paramCollidesWithInput": "Un paramètre a le même nom d'entrée qu'une entrée statique. Supprimer l'un d'eux.",
+        "paramLabelRequired": "Chaque paramètre doit avoir une étiquette.",
+        "paramValuesRequired": "Un paramètre de choix doit avoir au moins une valeur.",
+        "paramValuesDuplicate": "Un paramètre répertorie deux fois la même valeur.",
         "paramValuesTooMany": "Un paramètre a trop de valeurs.",
-        "paramValueTooLong": "La valeur d'un paramètre est trop longue.",
+        "paramValueTooLong": "Une valeur de paramètre est trop longue.",
         "paramValueHasSeparator": "Les valeurs d'un paramètre à choix multiple ne peuvent pas contenir de virgules.",
-        "paramDefaultNotInValues": "La valeur par défaut d'un paramètre ne fait pas partie de ses valeurs.",
+        "paramDefaultNotInValues": "La valeur par défaut d'un paramètre ne figure pas parmi ses valeurs.",
         "paramDefaultNotSingle": "Un paramètre de configuration à choix unique ne peut avoir qu'une seule valeur par défaut.",
         "paramConfigurationNotAssigned": "La valeur par défaut d'un paramètre de configuration n'est pas assignée à ce projet.",
-        "tooManyInputs": "Trop d'entrées : les entrées statiques et les paramètres combinés sont limités à 20."
+        "tooManyInputs": "Trop d'entrées : les entrées statiques et les paramètres sont limités à 20 au total."
       }
     },
     "execute": {
       "button": "Exécuter les cas automatisés",
       "title": "Exécuter les cas automatisés",
-      "description": "TestPlanIt démarre le job de la cible avec l'identifiant de cette exécution. Le job lit le plan des cas automatisés, les exécute et renvoie les résultats dans cette exécution.",
+      "description": "TestPlanIt démarre le travail de la cible avec l'ID de cette exécution. Le travail lit le plan des cas automatisés, les exécute et rapporte les résultats dans cette exécution.",
       "noTargets": "Aucune cible d'exécution n'est configurée pour ce projet.",
-      "noAutomatedCases": "Cette exécution n'a aucun cas automatisé à exécuter.",
-      "activeExecution": "Une exécution est déjà en cours pour cette exécution de test.",
+      "noAutomatedCases": "Cette exécution n'a pas de cas automatisés à exécuter.",
+      "activeExecution": "Une exécution est déjà en cours pour cette exécution.",
       "target": "Cible",
       "targetPlaceholder": "Choisir une cible",
-      "ref": "Branche ou référence",
+      "ref": "Branche ou ref",
       "refHelp": "Laissez vide pour utiliser la branche par défaut de la cible.",
       "caseCountSummary": "{count, plural, one {# cas automatisé sera demandé} other {# cas automatisés seront demandés}}",
-      "buttonSelected": "{count, plural, one {Exécuter # cas de test automatisé sélectionné} other {Exécuter # cas de test automatisés sélectionnés}}",
+      "buttonSelected": "{count, plural, one {Exécuter # cas automatisé sélectionné} other {Exécuter # cas automatisés sélectionnés}}",
       "noAutomatedSelected": "Aucun des cas sélectionnés n'est un cas automatisé dans cette exécution.",
       "selectedCaseCountSummary": "{count, plural, one {# cas automatisé sélectionné sera demandé} other {# cas automatisés sélectionnés seront demandés}}",
       "skippedSelection": "{count, plural, one {# cas sélectionné n'est pas un cas automatisé dans cette exécution et est ignoré.} other {# cas sélectionnés ne sont pas des cas automatisés dans cette exécution et sont ignorés.}}",
-      "resultsNote": "Les résultats s'associent à cette exécution lorsque le job rapporte avec TESTPLANIT_RUN_ID={runId}.",
+      "resultsNote": "Les résultats s'attachent à cette exécution lorsque le travail rapporte avec TESTPLANIT_RUN_ID={runId}.",
       "submit": "Exécuter",
       "submitting": "Demande en cours…",
       "dispatched": "Exécution demandée",
       "dispatchFailed": "L'exécution n'a pas pu être demandée",
       "status": "Exécution",
       "requestedBy": "Demandé par {name}",
-      "timesOutAt": "Abandonne à",
+      "timesOutAt": "Abandon à",
       "cancel": "Annuler l'exécution",
       "cancelConfirmTitle": "Annuler cette exécution ?",
-      "cancelConfirm": "TestPlanIt la marque comme annulée et demande au fournisseur d'arrêter le job dès que possible. Les résultats qui arrivent quand même sont conservés.",
+      "cancelConfirm": "TestPlanIt la marque comme annulée et demande au fournisseur d'arrêter le travail si possible. Les résultats qui arrivent toujours sont conservés.",
       "cancelled": "Exécution annulée",
       "retry": "Réessayer",
-      "history": "Historique des exécutions",
-      "historyTitle": "Historique des exécutions",
-      "historyDescription": "Chaque déclenchement des cas automatisés de cette exécution, du plus récent au plus ancien.",
-      "historyEmpty": "Aucune exécution pour l'instant.",
+      "history": "Historique d'exécution",
+      "historyTitle": "Historique d'exécution",
+      "historyDescription": "Chaque envoi des cas automatisés de cette exécution, les plus récents en premier.",
+      "historyEmpty": "Aucune exécution pour le moment.",
       "columnTarget": "Cible",
-      "columnRef": "Référence",
+      "columnRef": "Réf",
       "columnRequested": "Demandé",
       "columnCases": "Cas",
-      "columnLink": "Tâche",
+      "columnLink": "Travail",
       "externalStatus": "Statut du fournisseur : {status}",
       "awaitingResults": "En attente des résultats",
       "resultsReceived": "Résultats reçus"
@@ -7341,7 +7342,7 @@
     "adhoc": {
       "button": "Exécuter le test automatisé",
       "title": "Exécuter ce cas automatisé",
-      "description": "TestPlanIt crée une exécution contenant ce cas, demande à la cible de l'exécuter, et termine l'exécution lorsque le job se termine.",
+      "description": "TestPlanIt crée une exécution contenant ce cas, demande à la cible de l'exécuter et termine l'exécution à la fin du travail.",
       "runName": "Automatisé : {title}",
       "notAutomated": "Ce cas n'est pas marqué comme automatisé."
     }
@@ -7356,10 +7357,10 @@
       "PENDING": "En attente",
       "DISPATCHED": "Envoyé",
       "RUNNING": "En cours d'exécution",
-      "SUCCEEDED": "Job réussi",
-      "FAILED": "Échec du job",
-      "DISPATCH_FAILED": "Impossible de démarrer",
-      "TIMED_OUT": "Expiré",
+      "SUCCEEDED": "Travail réussi",
+      "FAILED": "Travail échoué",
+      "DISPATCH_FAILED": "N'a pas pu démarrer",
+      "TIMED_OUT": "Dépassement du délai",
       "CANCELLED": "Annulé"
     },
     "ApplicationArea": {
@@ -7391,7 +7392,7 @@
     }
   },
   "charts": {
-    "openInRepository": "Ouvrir ces cas dans le référentiel",
+    "openInRepository": "Ouvrir ces cas dans le dépôt",
     "average": "Moyenne",
     "count": "Compte : {count, number}",
     "percent": "Pourcentage : {percent}%",
@@ -7488,7 +7489,7 @@
     "scim": "## Provisionnement SCIM\nImportez les utilisateurs de votre fournisseur d'identité dans TestPlanIt via SCIM 2.0.",
     "scimConflicts": "## Journal des conflits d'ID externe\nÉvénements d'identité SCIM nécessitant une intervention du système (liaison, résurrection, remplacement du nom d'affichage, membres ignorés).",
     "scimFallbackDefault": "## Accès mappé par défaut\nNiveau d'accès attribué aux utilisateurs non couverts par un mappage de groupe.",
-    "scimRoleMappings": "## Mappages de rôles\nAssocie une valeur `roles` fournie par votre fournisseur d'identité à un niveau d'accès. Un mappage de rôle a priorité sur les mappages de groupe : un utilisateur auquel l'IdP attribue un rôle mappé reçoit ce niveau même si un groupe lui accorderait davantage. Les valeurs de rôle non mappées sont ignorées.",
+    "scimRoleMappings": "## Mappages des rôles\nSe mappe une valeur `roles` affirmée par votre fournisseur d'identité sur un niveau d'accès. Un mappage de rôle a la priorité sur les mappages de groupes : un utilisateur auquel le fournisseur d'identité attribue un rôle mappé reçoit ce niveau même si un groupe lui accorderait davantage. Les valeurs de rôle non mappées sont ignorées.",
     "integrations": "## Intégrations de suivi des problèmes\nGérer les intégrations tierces pour le suivi des problèmes.",
     "notifications": "## Administration des notifications\nDéfinissez les préférences de notification par défaut (les utilisateurs peuvent les modifier) et envoyez les notifications système.",
     "notificationsSystem": "## Notifications système\nEnvoyer des annonces importantes à tous les utilisateurs.",
@@ -7615,7 +7616,7 @@
       "name": "## Nom du rôle\nUn nom ou des mots-clés clairs, concis et descriptifs, utilisés dans tous les projets.\n\n- Permet aux membres de l'équipe de trouver rapidement les cas de test, les exécutions de test et les sessions associés.",
       "isDefault": "## Rôle par défaut\nIndique si ce rôle est le rôle par défaut pour votre projet.\n\n- Le rôle par défaut est présélectionné pour les nouveaux utilisateurs.\n- Peut être modifié à tout moment.",
       "permissions": {
-        "canAddEdit": "## Ajouter/Modifier\nIndique si ce rôle peut ajouter et modifier la zone d'application associée.\n\n- **Exécution automatisée** accorde le droit de démarrer, relancer et annuler les exécutions automatisées sur un fournisseur CI. L'enregistrement des résultats nécessite toujours les droits Ajouter/Modifier sur **Résultats d'exécution de test**, et démarrer une exécution depuis le référentiel nécessite également les droits Ajouter/Modifier sur **Exécutions de tests** car cela crée ou prolonge une exécution.",
+        "canAddEdit": "## Ajouter/Modifier\nIndique si ce rôle peut ajouter et modifier la zone d'application associée.\n\n- **Exécution automatisée** accorde le droit de démarrer, réessayer et annuler les exécutions automatisées sur un fournisseur CI. L'enregistrement des résultats nécessite toujours **Résultats d'exécution de test** Ajouter/Modifier, et le démarrage depuis le dépôt nécessite aussi **Exécutions de test** Ajouter/Modifier car cela crée ou étend une exécution.",
         "canDelete": "## Supprimer\nIndique si ce rôle peut supprimer la zone d'application associée.",
         "canClose": "## Fermer\nIndique si ce rôle peut fermer la zone d'application associée.",
         "canApprove": "## Approuver\nIndique si ce rôle peut approuver les demandes de révision pour le domaine d'application concerné. S'applique uniquement au référentiel de cas de test, aux exécutions de tests et aux sessions.",
@@ -7625,7 +7626,7 @@
     "group": {
       "name": "## Nom du groupe\nUn nom ou des mots-clés clairs, concis et descriptifs utilisés dans tous les projets.\n\n- Permet aux membres de l'équipe de trouver rapidement les cas de test, les exécutions de test et les sessions associés.",
       "users": "## Utilisateurs\nIndique les utilisateurs affectés à ce groupe.",
-      "projectMappedAccess": "## Accès par projet\nAccorde aux membres de ce groupe un niveau d'accès sur un projet spécifique, résolu selon les règles de permission normales du projet.\n\n- **Utilisateur** donne aux membres leur propre rôle global sur ce projet\n- **Administrateur de projet** et **Administrateur** accordent tous deux le rôle Administrateur de projet sur ce projet — au sein d'un seul projet, Administrateur de projet est le niveau d'accès le plus élevé qui existe\n- L'accès par projet ne fait qu'**accorder**. Il ne peut pas retirer un accès que le paramètre par défaut du projet accorde déjà, c'est pourquoi il n'y a pas d'option « Aucun » ici\n- La suppression d'un mappage retire l'accès accordé ; les membres reviennent au paramètre par défaut du projet",
+      "projectMappedAccess": "## Accès par projet\nAccorde aux membres de ce groupe un niveau d'accès sur un projet spécifique, résolu selon les règles de permission normales du projet.\n\n- **Utilisateur** donne aux membres leur rôle global propre sur ce projet\n- **Admin du projet** et **Admin** accordent tous deux le rôle Admin du projet sur ce projet — au sein d'un même projet, Admin du projet est la concession la plus forte qu'il y ait\n- L'accès par projet ne fait que **donner**. Il ne peut pas retirer l'accès que la valeur par défaut du projet accorde déjà, c'est pourquoi il n'y a pas d'option « Aucun » ici\n- La suppression d'un mappage retire la concession ; les membres reviennent à la valeur par défaut du projet",
       "mappedAccess": "## Niveau d'accès mappé\nLes membres de ce groupe reçoivent au moins ce niveau d'accès lors de la prochaine synchronisation.\n\n- Le niveau le plus élevé parmi tous les groupes d'un utilisateur l'emporte\n- « Aucun mappage » signifie que ce groupe n'affecte pas l'accès — les membres reviennent à la valeur par défaut définie sur la page SCIM\n- Une modification manuelle de l'accès d'un utilisateur prend le pas sur le mappage (et est signalée sur l'écran de modification de cet utilisateur)"
     },
     "template": {
@@ -7640,9 +7641,9 @@
       "name": "## Nom de l'intégration\nÉtiquette descriptive pour cette intégration LLM.\n\n- Utilisée pour l'identifier dans les listes et les paramètres.\n- Exemple : « OpenAI GPT-4o » ou « Ollama interne ».",
       "provider": "## Fournisseur\nLe service LLM qui gère cette intégration.\n\n- Détermine le protocole API et les modèles disponibles.\n- Ne peut pas être modifié après sa création.",
       "apiKey": "## Clé API\nVotre clé d'authentification pour l'API du fournisseur LLM.\n\n- À obtenir depuis la console développeur de votre fournisseur.\n- Conservée chiffrée et jamais affichée après enregistrement.\n- Non requise pour Ollama (déploiement local).",
-      "endpoint": "## Point de terminaison API\nURL de base de l'API du fournisseur LLM.\n\n- Laisser vide pour OpenAI, Anthropic, Gemini et DeepSeek — les URL officielles sont utilisées automatiquement\n- Obligatoire pour Ollama (par exemple, `http://localhost:11434`), Azure OpenAI et LLM personnalisé\n- Facultatif pour tout fournisseur — indiquez un proxy compatible OpenAI (par exemple, LiteLLM) en saisissant son URL\n- **Les adresses privées/internes** (localhost, 127.0.0.1, adresses IP privées, métadonnées cloud) sont bloquées, sauf autorisation explicite via la variable d'environnement `ALLOWED_PRIVATE_HOSTS`",
+      "endpoint": "## Point de terminaison API\nURL de base de l'API du fournisseur LLM.\n\n- Laisser vide pour OpenAI, Anthropic, Gemini et DeepSeek — les URL officielles sont utilisées automatiquement\n- Obligatoire pour Ollama (par exemple `http://localhost:11434`), Azure OpenAI et LLM personnalisé\n- Facultatif pour tout fournisseur — indiquez un proxy compatible OpenAI (par exemple, LiteLLM) en saisissant son URL\n- **Les adresses privées/internes** (localhost, 127.0.0.1, adresses IP privées, métadonnées cloud) sont bloquées, sauf autorisation explicite via la variable d'environnement `ALLOWED_PRIVATE_HOSTS`",
       "deploymentName": "## Nom du déploiement Azure\nLe nom de votre déploiement de modèle Azure OpenAI.\n\n- Disponible dans Azure OpenAI Studio, sous Déploiements.\n- Différent du nom du modèle ; par exemple, `my-gpt4-deploy` correspond à `gpt-4`.\n- Requis uniquement pour Azure OpenAI.",
-      "defaultModel": "## Modèle par défaut\nLe modèle utilisé pour les requêtes d'IA avec cette intégration.\n\n- Pour OpenAI, Anthropic, Gemini, DeepSeek, Ollama, et les points de terminaison personnalisés compatibles OpenAI (par exemple LiteLLM) — les modèles disponibles sont récupérés automatiquement\n- Lorsque le fournisseur communique également la tarification des modèles, les champs de coût sont remplis automatiquement lors de la sélection\n- Assurez-vous que le modèle est activé dans votre compte fournisseur\n- Exemple : `gpt-4o`, `claude-3-5-sonnet-20241022`, `gemini-1.5-pro`, `deepseek-v4-flash`",
+      "defaultModel": "## Modèle par défaut\nLe modèle utilisé pour les requêtes d'IA avec cette intégration.\n\n- Pour OpenAI, Anthropic, Gemini, DeepSeek, Ollama et les points de terminaison personnalisés compatibles OpenAI (par exemple LiteLLM) — les modèles disponibles sont récupérés automatiquement\n- Lorsque le fournisseur communique également la tarification des modèles, les champs de coût sont remplis automatiquement lors de la sélection\n- Assurez-vous que le modèle est activé dans votre compte fournisseur\n- Exemple : `gpt-4o`, `claude-3-5-sonnet-20241022`, `gemini-1.5-pro`, `deepseek-v4-flash`",
       "maxTokensPerRequest": "## Nombre maximal de jetons par requête\nLe **plafond strict sur les jetons de _sortie_** que le modèle peut générer en une seule réponse.\n\n- Limite la longueur de la **réponse** du modèle — pas la quantité de contexte que vous lui envoyez\n- Les requêtes demandant plus que cette limite sont **rejetées avant d'atteindre le modèle**\n- Réglez-la sur la sortie maximale réelle de votre modèle — par exemple `128000` pour Claude Opus/Sonnet, `64000` pour Claude Haiku, `65536` pour Gemini, `16384` pour GPT-4o\n- Trop bas → les fonctionnalités d'IA échouent ou produisent une sortie tronquée",
       "defaultMaxTokens": "## Nombre maximal de jetons par défaut\nLa **longueur de _sortie_** demandée pour ce modèle d'IA, limitée par _Nombre maximal de jetons par requête_.\n\n- **Génération de cas de test** (toutes les sources, y compris le panneau des tickets Jira), **Analyse Markdown des cas de test**, **Assistant de rédaction de l'éditeur**, et **Sélection intelligente des cas de test** utilisent toujours cette valeur — leur _Nombre maximal de jetons de sortie_ de la configuration des invites n'est pas appliqué\n- **Génération de code d'export**, **Suggestions de tags par IA**, **Dérivation d'étapes par IA**, et le **Rapport des candidats à l'automatisation** utilisent plutôt leur propre _Nombre maximal de jetons de sortie_ défini dans **Admin → Configuration des invites**\n- Les modèles qui réfléchissent avant de répondre (par exemple Claude Opus 5) consomment une partie de ce budget pour le raisonnement — laissez de la place pour la réponse\n- Il ne contrôle **pas** la quantité de code du référentiel que QuickScript envoie au modèle — ce budget est déterminé automatiquement à partir de la fenêtre de contexte du modèle\n- Maintenez-le ≤ _Nombre maximal de jetons par requête_",
       "repoContextBudget": "## Budget de contexte du référentiel\nLa quantité de code de votre référentiel connecté que QuickScript envoie au modèle lors de la génération d'un script.\n\n- **Défini automatiquement** à partir de la fenêtre de contexte d'entrée du modèle sélectionné — il n'y a rien à configurer ici\n- Les modèles à plus grand contexte (Claude, Gemini, DeepSeek) en reçoivent davantage ; les petits modèles locaux reçoivent une quantité sûre qui ne débordera pas\n- Plus de contexte ancre le script dans vos objets de page et fixtures réels — cela ne change pas la longueur du script généré",
@@ -7735,7 +7736,7 @@
       "isDefault": "## Par défaut\nIndique si ce flux de travail est celui par défaut de votre projet.\n\n- Le flux de travail par défaut est présélectionné pour les nouvelles exécutions de tests, les sessions et l'automatisation.",
       "isEnabled": "## Activé\nIndique si ce flux de travail est activé.",
       "isActive": "## Actif\nIndique si cet état de workflow est actif et disponible.\n\n- Les workflows actifs peuvent être sélectionnés lors de la mise à jour des exécutions de tests, des sessions ou de l'automatisation.\n- Les workflows inactifs sont masqués, mais conservés dans les éléments existants.",
-      "requiresReview": "## Nécessite une révision\nLorsque cette option est activée, le passage d'un cas, d'une exécution de test ou d'une session à cet état est conditionné par une demande de révision approuvée. Sans demande approuvée, la transition est bloquée.\n\n- L'approbation d'une demande effectue la transition. L'approbation du réviseur fait passer le cas, l'exécution ou la session à l'état demandé ; le demandeur n'a pas à répéter manuellement le changement d'état.\n- Les révisions en attente existantes sont conservées silencieusement lorsque la fonctionnalité système est désactivée et réapparaissent lorsqu'elle est réactivée.\n- Le réviseur est sélectionné lorsqu'un testeur clique sur « Demander une révision » depuis la page de détails de l'entité.\n\nSi la fonctionnalité système est désactivée, ce commutateur est verrouillé. Réactivez-le depuis la section « Flux de travail de révision » ci-dessus pour l'activer.",
+      "requiresReview": "## Nécessite une révision\nLorsque cette option est activée, le passage d'un cas, d'une exécution de test ou d'une session à cet état est conditionné par une demande de révision approuvée. Sans demande approuvée, la transition est bloquée.\n\n- L'approbation d'une demande effectue la transition. L'approbation du réviseur fait passer le cas, l'exécution ou la session à l'état demandé ; le demandeur n'a pas à répéter manuellement le changement d'état.\n- Les révisions en attente existantes sont conservées silencieusement lorsque la fonctionnalité système est désactivée et réapparaissent lorsqu'elle est réactivée.\n- Le réviseur est sélectionné lorsqu'un testeur clique sur « Demander une révision » depuis la page de détails de l'entité.\n\nSi la fonctionnalité système est désactivée, ce commutateur est verrouillé. Réactivez-le depuis la carte « Flux de travail de révision » ci-dessus pour l'activer.",
       "projects": "## Projets\nIndique les projets qui peuvent utiliser ce flux de travail."
     },
     "testResult": {
@@ -7844,9 +7845,9 @@
       "avgLatency": "## Latence moyenne\nTemps moyen mis par le fournisseur pour répondre à un appel de ce groupe.",
       "successRate": "## Taux de réussite\nPourcentage d'appels de ce groupe s'étant terminés sans erreur.",
       "errorCount": "## Appels échoués\nNombre d'appels de ce groupe s'étant terminés par une erreur.",
-      "impactAnalysisCount": "## Nombre d'analyses d'impact\nNombre d'analyses d'impact démarrées dans ce groupe, qu'elles aient composé une exécution ou non.",
-      "affectedCasesSelected": "## Cas affectés sélectionnés\nCas épinglés et affectés sélectionnés par les analyses de ce groupe, additionnés.",
-      "selectionPrecision": "## Précision de sélection (%)\nParmi les cas que les analyses d'impact ont sélectionnés et qui ont ensuite été exécutés, la part de ceux ayant échoué. Vide lorsqu'aucun élément sélectionné n'a été exécuté."
+      "impactAnalysisCount": "## Nombre d'analyses d'impact\nNombre d'analyses d'impact commencées dans ce groupe, qu'elles aient composé une exécution ou non.",
+      "affectedCasesSelected": "## Cas affectés sélectionnés\nCas épinglés et affectés que les analyses de ce groupe ont sélectionnés, totalisés.",
+      "selectionPrecision": "## Précision de la sélection (%)\nParmi les cas que les analyses d'impact ont sélectionnés et qui ont ensuite été exécutés, la part de ceux qui ont échoué. Vide si rien sélectionné n'a été exécuté."
     },
     "reportDimensions": {
       "user": "## Dimension utilisateur\nRegroupe les résultats par l'utilisateur qui a exécuté les tests ou qui est affecté aux éléments.",
@@ -7874,13 +7875,13 @@
       "model": "## Dimension Modèle\nRegroupe l'utilisation du LLM par modèle ayant traité l'appel.",
       "integration": "## Dimension Intégration\nRegroupe l'utilisation du LLM par intégration LLM configurée ayant géré l'appel.",
       "outcome": "## Dimension Résultat\nSépare l'utilisation du LLM en appels réussis et échoués.",
-      "trigger": "## Dimension du déclencheur\nRegroupe selon la façon dont l'analyse d'impact ayant composé l'exécution de test a été démarrée : manuellement, depuis une pull request, ou depuis un push. Les exécutions sans analyse composée sont classées dans Aucun.",
-      "codeRepository": "## Dimension du dépôt de code\nRegroupe selon le dépôt connecté dont l'analyse d'impact a composé l'exécution de test. Les exécutions sans analyse sont classées dans Aucun."
+      "trigger": "## Dimension de déclenchement\nGroupe par la manière dont l'analyse d'impact qui a composé l'exécution de test a été démarrée : à la main, depuis une demande de tirage ou depuis un envoi. Les exécutions sans analyse composée tombent dans Aucun.",
+      "codeRepository": "## Dimension du dépôt de code\nGroupe par le dépôt connecté dont l'analyse d'impact a composé l'exécution de test. Les exécutions sans analyse tombent dans Aucun."
     },
     "reportBuilder": {
       "dimensions": "## Dimensions\nSélectionnez les dimensions que vous souhaitez analyser dans votre rapport. Les dimensions sont des attributs qui catégorisent vos données, comme la date, l'utilisateur, le statut, etc. Vous pouvez les réorganiser par glisser-déposer.",
       "metrics": "## Métriques\nSélectionnez les métriques que vous souhaitez inclure dans votre rapport. Les métriques sont des mesures quantitatives issues de vos données, telles que le nombre de résultats de test, le taux de réussite, le temps moyen écoulé, etc. Vous pouvez les réorganiser par glisser-déposer.",
-      "dateRange": "## Plage de dates\nFiltrez les données de votre rapport selon une période spécifique. Vous pouvez choisir parmi des plages prédéfinies comme « 7 derniers jours » ou « Mois précédent », ou définir une plage de dates personnalisée. Ce filtre s'applique au champ de date correspondant à chaque type de rapport (par exemple, la date d'exécution pour les résultats de test, la date de création pour les cas de test).",
+      "dateRange": "## Période\nFiltrez vos données de rapport par une période de temps spécifique. Choisissez un préréglage tel que « 7 derniers jours », « Dernier mois » ou « N derniers jours », ou sélectionnez une date de début et de fin personnalisée sur le calendrier.\n\nUn préréglage reste relatif : un rapport enregistré ou un lien de partage en direct recalcule les dates à chaque ouverture, dans votre fuseau horaire. Les dates personnalisées restent fixes. Ce filtre s'applique au champ de date pertinent pour chaque type de rapport (par exemple, date d'exécution pour les résultats de test, date de création pour les cas de test).",
       "dimensionFilters": "## Filtres\nRestreignez le rapport à des valeurs spécifiques pour chaque dimension sélectionnée. Laissez un filtre vide pour inclure toutes les valeurs de cette dimension. Les dimensions de date sont filtrées à l'aide du sélecteur de plage de dates."
     },
     "codeRepository": {
@@ -8172,8 +8173,8 @@
     },
     "projectRunsFilters": "## Filtrage des exécutions de test\n\nActivez ou désactivez une puce pour affiner la liste. Les puces s'appliquent aux onglets Actives et Terminées, et sont mémorisées sur cet appareil pour ce projet.\n\n- **Manuel** / **Automatisé** — limite la liste à ce type d'exécution. Activer les deux (ou les désactiver toutes les deux) affiche toutes les exécutions.\n- **Mes exécutions de test** — uniquement les exécutions auxquelles vous participez : vous avez créé l'exécution, un cas de test vous y est assigné, ou vous avez enregistré un résultat de test dans celle-ci.",
     "projectSessionsFilters": "## Filtrage des sessions\n\nActivez une puce pour affiner la liste. Les puces s'appliquent aux onglets Actives et Terminées, et sont mémorisées sur cet appareil pour ce projet.\n\n- **Mes sessions** — uniquement les sessions auxquelles vous participez : vous avez créé la session, ou elle vous est assignée.",
-    "projectImpact": "## Impact\nConnectez le référentiel de l'application testée afin que ce projet puisse exécuter une analyse d'impact des tests : choisissez deux commits pour voir quels cas de test sont affectés par les modifications, et associez les cas de test au code qu'ils couvrent.",
-    "projectAutomation": "## Exécution automatisée\nLes cibles d'exécution indiquent à TestPlanIt où exécuter les cas automatisés de ce projet : un workflow GitHub Actions, un pipeline GitLab CI, ou un webhook signé pour tout autre système. Lorsqu'une exécution est lancée, TestPlanIt démarre la tâche avec l'identifiant de l'exécution et une URL de plan ; la tâche lit le plan, exécute les tests correspondants, et renvoie les résultats via un rapporteur ou la CLI associée à cette exécution. Les cibles peuvent être désactivées sans être supprimées."
+    "projectImpact": "## Impact\nConnectez le dépôt de l'application testée pour que ce projet puisse exécuter l'analyse d'impact des tests : choisissez deux commits pour voir quels cas de test les modifications affectent et épinglez les cas de test au code qu'ils couvrent.",
+    "projectAutomation": "## Exécution automatisée\nLes cibles d'exécution indiquent à TestPlanIt où exécuter les cas automatisés de ce projet : un workflow GitHub Actions, un pipeline GitLab CI ou un webhook signé pour tout autre système. Lorsqu'une exécution est exécutée, TestPlanIt démarre le travail avec l'ID d'exécution et une URL de plan ; le travail lit le plan, exécute les tests correspondants et rapporte les résultats avec un rapporteur ou le CLI épinglé à cette exécution. Les cibles peuvent être désactivées sans être supprimées."
   },
   "reports": {
     "ui": {
@@ -8232,7 +8233,22 @@
         "lastYear": "L'année dernière",
         "last12Months": "Les 12 derniers mois",
         "allTime": "Tout le temps",
-        "custom": "Plage de dates personnalisée"
+        "custom": "Plage de dates personnalisée",
+        "relativeHint": "Mise à jour à chaque ouverture du rapport. Sélectionnez les dates sur le calendrier pour les fixer.",
+        "rolling": {
+          "label": "N derniers jours, semaines ou mois…",
+          "last": "Dernier",
+          "amount": "Nombre de périodes",
+          "unit": "Période",
+          "days": "Dernier {count, plural, one {# jour} other {# jours}}",
+          "weeks": "Dernier {count, plural, one {# semaine} other {# semaines}}",
+          "months": "Dernier {count, plural, one {# mois} other {# mois}}"
+        },
+        "rollingUnits": {
+          "days": "jours",
+          "weeks": "semaines",
+          "months": "mois"
+        }
       },
       "dateGrouping": {
         "label": "Grouper par",
@@ -8332,12 +8348,12 @@
           "description": "Comparez un instantané de traçabilité enregistré à un instantané ultérieur ou à la matrice en direct pour voir la couverture de quelles exigences a changé"
         },
         "impactAnalysis": {
-          "label": "Historique des analyses d'impact",
-          "description": "Chaque analyse d'impact : ce qui l'a déclenchée, ce qu'elle a modifié, les cas qu'elle a sélectionnés, et le résultat de l'exécution qu'elle a composée"
+          "label": "Historique d'analyse d'impact",
+          "description": "Chaque analyse d'impact : ce qui l'a démarrée, ce qu'elle a changé, les cas qu'elle a sélectionnés et comment l'exécution qu'elle a composée s'est déroulée"
         },
         "codePinCoverage": {
-          "label": "Couverture des Code Pins",
-          "description": "Où se trouvent les Code Pins, par dépôt et répertoire, et où les changements récents n'ont pas été couverts"
+          "label": "Couverture des épingles de code",
+          "description": "Où se trouvent les épingles de code, par dépôt et répertoire, et où les modifications récentes n'ont pas été couvertes"
         }
       },
       "flakyTests": {
@@ -8351,6 +8367,8 @@
         "oldest": "Vieux",
         "noFlakyTests": "Aucun test non concluant correspondant aux critères n'a été trouvé.",
         "includeFilter": "Inclure",
+        "caseTags": "Balises des cas de test",
+        "runTags": "Balises d'exécution de test",
         "testRunDeleted": "L'essai a été supprimé.",
         "chart": {
           "highPriority": "Nécessite une attention particulière",
@@ -8568,7 +8586,7 @@
         "noData": "Aucune donnée d'exigence disponible pour ce rapport.",
         "noGaps": "Aucun écart de couverture trouvé — chaque exigence possède au moins un cas de test lié.",
         "scopeLabel": "Limiter aux exigences",
-        "scopeHelp": "Limiter le rapport aux exigences sélectionnées et à tout ce qui se trouve en dessous. Laissez vide pour générer un rapport sur toutes les exigences du projet.",
+        "scopeHelp": "Limitez le rapport aux exigences sélectionnées et à tout ce qui se trouve en dessous. Laissez vide pour générer un rapport sur toutes les exigences du projet.",
         "scopePlaceholder": "Toutes les exigences",
         "covered": "Couvert",
         "byHierarchy": "Couverture par exigence de premier niveau",
@@ -8579,8 +8597,8 @@
         "debtAging": "Ancienneté de la dette",
         "ageUnder30": "Moins de 30 jours",
         "age30to90": "30 à 90 jours",
-        "age90to180": "90–180 jours",
-        "age180to365": "180–365 jours",
+        "age90to180": "90 à 180 jours",
+        "age180to365": "180 à 365 jours",
         "ageOver365": "Plus d'un an",
         "includeNotRun": "Inclure les exigences dont les tests n'ont jamais été exécutés",
         "otherRoots": "Autres ({count, plural, one {# hiérarchie} other {# hiérarchies}})",
@@ -8606,7 +8624,7 @@
         "snapshotDeleted": "Instantané supprimé.",
         "snapshotDeleteFailed": "Impossible de supprimer l'instantané.",
         "baselineLabel": "Instantané de référence",
-        "requirementProject": "Projet de l'exigence",
+        "requirementProject": "Projet d'exigence",
         "compareLabel": "Comparer à",
         "baselineRequired": "Choisissez un instantané de référence pour exécuter ce rapport.",
         "includeUnchanged": "Inclure les exigences inchangées",
@@ -8683,24 +8701,30 @@
           "description": "Liste plate des enregistrements de résultats de tests individuels avec statut, exécuteur et horodatage pour l'ensemble des projets"
         },
         "impactAnalysis": {
-          "label": "Historique des analyses d'impact inter-projets",
-          "description": "Analyses d'impact sur tous les projets ayant l'analyse d'impact activée"
+          "label": "Historique d'analyse d'impact inter-projets",
+          "description": "Analyses d'impact dans tous les projets ayant l'analyse d'impact activée"
         },
         "codePinCoverage": {
-          "label": "Couverture des Code Pins inter-projets",
-          "description": "Couverture des Code Pins sur tous les projets ayant l'analyse d'impact activée"
+          "label": "Couverture des épingles de code inter-projets",
+          "description": "Couverture des épingles de code dans tous les projets ayant l'analyse d'impact activée"
         }
       },
       "folderDescendants": {
         "label": "Inclure les sous-dossiers",
-        "description": "Compter les résultats des sous-dossiers vers chaque dossier parent."
+        "description": "Compter les résultats des sous-dossiers vers chaque dossier parent.",
+        "filterDescription": "Inclure aussi les cas de test dans les sous-dossiers des dossiers sélectionnés."
       },
+      "chartTotals": {
+        "label": "Afficher la ligne de total",
+        "description": "Ajoutez une ligne combinant chaque série en une valeur par date."
+      },
+      "groupedTotal": "Total des {count, plural, one {# ligne} other {# lignes}} dans ce groupe",
       "dimensionFilters": {
         "allValues": "Toutes les valeurs"
       },
       "impactAnalysis": {
-        "lookbackDaysHelp": "Analyses démarrées dans ce nombre de jours. Tout le temps lit chaque analyse conservée par le projet.",
-        "triggerPush": "Poussée",
+        "lookbackDaysHelp": "Analyses commencées dans cette période en jours. Tous les temps lisent chaque analyse que le projet conserve.",
+        "triggerPush": "Envoi",
         "outcomeNotExecuted": "Non exécuté",
         "outcomeNoRun": "Aucune exécution",
         "allRepositories": "Tous les dépôts",
@@ -8716,36 +8740,36 @@
         "stats": {
           "analyses": "Analyses",
           "runsComposed": "Exécutions composées",
-          "runsComposedTooltip": "Analyses ayant créé une exécution de test, manuellement ou à partir d'un événement de dépôt.",
-          "runsWithFailures": "Exécutions avec échecs",
-          "runsWithFailuresTooltip": "Exécutions composées dans lesquelles au moins un cas sélectionné a échoué, en proportion des exécutions composées qui ont été exécutées.",
-          "medianAffected": "Médiane des cas affectés",
+          "runsComposedTooltip": "Analyses qui ont créé une exécution de test, à la main ou depuis un événement de dépôt.",
+          "runsWithFailures": "Exécutions avec des échecs",
+          "runsWithFailuresTooltip": "Exécutions composées dans lesquelles au moins un cas sélectionné a échoué, en tant que part des exécutions composées qui ont été exécutées.",
+          "medianAffected": "Cas affectés médians",
           "medianAffectedTooltip": "Le nombre médian de cas épinglés et affectés qu'une analyse a sélectionnés.",
           "acceptedShare": "Part acceptée",
-          "acceptedShareTooltip": "Cas qu'un relecteur a acceptés, en proportion de tous les cas épinglés et affectés suggérés par les analyses."
+          "acceptedShareTooltip": "Cas qu'un réviseur a acceptés, en tant que part de tous les cas épinglés et affectés que les analyses ont suggérés."
         }
       },
       "codePinCoverage": {
-        "lookbackDaysHelp": "Les fichiers non couverts proviennent des analyses démarrées dans ce nombre de jours. Tout le temps lit chaque analyse terminée.",
+        "lookbackDaysHelp": "Les fichiers non couverts proviennent des analyses commencées dans cette période en jours. Tous les temps lisent chaque analyse complétée.",
         "directory": "Répertoire",
         "rootDirectory": "(racine du dépôt)",
-        "casesWithPins": "Cas avec pins",
-        "stalePins": "Pins obsolètes",
-        "stalePinsHelp": "Épingle les éléments que la dernière analyse de la connexion n'a pas pu trouver au niveau du commit HEAD.",
+        "casesWithPins": "Cas avec des épingles",
+        "stalePins": "Épingles obsolètes",
+        "stalePinsHelp": "Épingles que la dernière analyse de la connexion ne pouvait pas trouver au commit principal.",
         "uncoveredFiles": "Fichiers modifiés non couverts",
-        "uncoveredFilesHelp": "Fichiers modifiés qu'aucun pin ne couvre, comptés une fois par fichier sur l'ensemble des analyses de la période.",
-        "coverageFilter": "Afficher",
-        "coverageGaps": "Modifié sans pins",
-        "coveragePinned": "Avec pins",
-        "kindBreakdown": "{file, number} fichier entier · {range, number} lignes · {symbol, number} symbole · {glob, number} glob",
+        "uncoveredFilesHelp": "Fichiers modifiés qu'aucune épingle n'a couverts, comptés une fois par fichier dans les analyses de la fenêtre.",
+        "coverageFilter": "Montrer",
+        "coverageGaps": "Modifiés sans épingles",
+        "coveragePinned": "Avec des épingles",
+        "kindBreakdown": "{file, number} fichiers entiers · {range, number} lignes · {symbol, number} symbole · {glob, number} glob",
         "sourceBreakdown": "{manual, number} manuel · {ai, number} IA · {annotation, number} annotation · {mapfile, number} fichier de mappage · {issue, number} ticket",
         "stats": {
-          "casesWithPinsTooltip": "Cas de test avec au moins un Code Pin, en proportion des cas du projet.",
-          "gapDirectories": "Répertoires modifiés sans pins",
-          "gapDirectoriesTooltip": "Répertoires où une analyse de la période a trouvé des fichiers modifiés mais qu'aucun pin ne couvre."
+          "casesWithPinsTooltip": "Cas de test ayant au moins une épingle de code, en tant que part des cas du projet.",
+          "gapDirectories": "Répertoires modifiés sans épingles",
+          "gapDirectoriesTooltip": "Répertoires où une analyse de la fenêtre a trouvé des fichiers modifiés mais aucune épingle ne couvre quoi que ce soit."
         },
         "chart": {
-          "byDirectory": "Pins et fichiers non couverts par répertoire"
+          "byDirectory": "Épingles et fichiers non couverts par répertoire"
         }
       }
     },
@@ -8781,7 +8805,7 @@
       "feature": "Fonctionnalité",
       "model": "Modèle",
       "outcome": "Résultat",
-      "trigger": "Déclencheur",
+      "trigger": "Déclenchement",
       "codeRepository": "Dépôt de code"
     },
     "metrics": {
@@ -8836,7 +8860,7 @@
       "errorCount": "Appels échoués",
       "impactAnalysisCount": "Nombre d'analyses d'impact",
       "affectedCasesSelected": "Cas affectés sélectionnés",
-      "selectionPrecision": "Précision de sélection (%)"
+      "selectionPrecision": "Précision de la sélection (%)"
     },
     "drillDown": {
       "title": "Archives détaillées",
@@ -9027,6 +9051,8 @@
       "defaultTitle": "Rapport partagé",
       "fromProject": "Du projet :",
       "dateRange": "Période :",
+      "currentlyReporting": "Rapport actuel :",
+      "reportedRange": "Rapporté :",
       "readOnlyNotice": "Il s'agit d'une vue partagée en lecture seule",
       "viewCount": "{count, plural, =1 {1 vue} other {# vues}}",
       "viewInFullApp": "Afficher dans l'application complète",
@@ -9041,18 +9067,30 @@
       "description": "Affichage en tant que {userName} avec accès à {projectName}.",
       "viewInApp": "Voir dans l'application complète"
     },
+    "dateRangeMode": {
+      "label": "Période",
+      "relative": {
+        "title": "{range} (relatif)",
+        "description": "Varie avec la date de génération du rapport. Rapport actuel : {dates}."
+      },
+      "fixed": {
+        "title": "Dates fixes",
+        "description": "Toujours {dates}."
+      },
+      "frozenNote": "Un rapport figé conserve les dates sur lesquelles il a été exécuté : {range}, {dates}."
+    },
     "frozen": {
       "live": {
         "title": "En direct",
-        "description": "Relance le rapport à chaque ouverture, afin qu'il affiche toujours les données actuelles."
+        "description": "Exécute le rapport à nouveau à chaque fois qu'il est ouvert, afin qu'il affiche toujours les données actuelles."
       },
       "frozen": {
         "title": "Figé",
         "description": "Capture le rapport maintenant. Il affiche toujours exactement ces résultats et ne se met jamais à jour."
       },
       "truncation": {
-        "title": "Ce rapport est trop volumineux pour être figé intégralement",
-        "description": "Il contient {total, number} lignes, et un rapport figé en conserve au maximum {max, number}. Enregistrer une copie qui ne conserve que les {max, number} premières lignes ?"
+        "title": "Ce rapport est trop volumineux pour être figé entièrement",
+        "description": "Il a {total, number} lignes, et un rapport figé en conserve au maximum {max, number}. Enregistrez une copie qui ne conserve que les {max, number} premières lignes ?"
       },
       "capturedBy": "Figé le <date></date> par {name}",
       "capturedAt": "Figé le <date></date>",
@@ -9063,7 +9101,7 @@
       "saveTitle": "Enregistrer le rapport",
       "saveDescription": "Enregistrez ce rapport dans vos rapports enregistrés. Seul vous pouvez le voir.",
       "saved": "Rapport enregistré",
-      "savedDescription": "\"{name}\" a été ajouté à vos rapports enregistrés.",
+      "savedDescription": "« {name} » a été ajouté à vos rapports enregistrés.",
       "saveFailed": "Impossible d'enregistrer le rapport",
       "empty": "Aucun rapport enregistré pour le moment.",
       "emptyHint": "Exécutez un rapport, puis sélectionnez Enregistrer pour le conserver ici.",
@@ -9074,7 +9112,7 @@
       "renamed": "Rapport enregistré renommé",
       "renameFailed": "Impossible de renommer le rapport enregistré",
       "deleteTitle": "Supprimer le rapport enregistré ?",
-      "deleteConfirm": "\"{name}\" sera retiré de vos rapports enregistrés.",
+      "deleteConfirm": "« {name} » sera supprimé de vos rapports enregistrés.",
       "deleted": "Rapport enregistré supprimé",
       "deleteFailed": "Impossible de supprimer le rapport enregistré"
     }
@@ -9823,12 +9861,12 @@
   "importMappings": {
     "title": "Mappages enregistrés",
     "saveTitle": "Enregistrer le mappage",
-    "saveDescription": "Nommez ce mappage de colonne pour pouvoir l'appliquer aux importations ultérieures.",
-    "namePlaceholder": "p. ex. Exportation hebdomadaire de la feuille de régression",
+    "saveDescription": "Nommez ce mappage de colonnes pour pouvoir l'appliquer à vos prochains imports.",
+    "namePlaceholder": "Par exemple, export hebdomadaire de la feuille de régression",
     "descriptionPlaceholder": "D'où provient le fichier ou quand utiliser ce mappage",
-    "shareLabel": "Partager avec d'autres",
-    "shareHint": "Tout le monde peut l'appliquer. Seuls vous et les administrateurs pouvez le modifier ou le supprimer.",
-    "shareHintTemplate": "Toute personne important dans un projet utilisant le modèle <b>{template}</b> peut l'appliquer. Seuls vous et les administrateurs pouvez le modifier ou le supprimer.",
+    "shareLabel": "Partager avec les autres",
+    "shareHint": "Tout le monde peut l'appliquer. Seul vous et les administrateurs pouvez le modifier ou le supprimer.",
+    "shareHintTemplate": "Toute personne qui importe dans un projet utilisant le modèle <b>{template}</b> peut l'appliquer. Seul vous et les administrateurs pouvez le modifier ou le supprimer.",
     "saved": "Mappage enregistré",
     "empty": "Aucun mappage enregistré pour le moment",
     "suggested": "Correspond à ce fichier",
@@ -9838,11 +9876,11 @@
     "suggestionBanner": "« <highlight>{name}</highlight> » correspond aux colonnes de ce fichier.",
     "loadFailed": "Ce mappage enregistré n'est plus valide.",
     "skippedTitle": "Certaines colonnes enregistrées n'ont pas été appliquées",
-    "missingColumns": "Absent du fichier importé : {columns}",
+    "missingColumns": "Absent du fichier téléchargé : {columns}",
     "unavailableFields": "Aucun champ correspondant à mapper : {columns}",
     "editTitle": "Modifier le mappage enregistré",
     "update": "Mettre à jour avec le mappage actuel",
-    "updateConfirm": "« {name} » sera mis à jour avec le mappage de colonne et les paramètres actuels.",
-    "savePrompt": "Enregistrer ce mappage de colonne pour la prochaine fois ?"
+    "updateConfirm": "« {name} » sera mis à jour avec le mappage de colonnes et les paramètres actuels.",
+    "savePrompt": "Enregistrer ce mappage de colonnes pour la prochaine fois ?"
   }
 }
