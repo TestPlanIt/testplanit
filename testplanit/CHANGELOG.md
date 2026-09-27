@@ -1,3 +1,13 @@
+## [1.1.0-beta.26](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.25...v1.1.0-beta.26) (2026-09-27)
+
+### Features
+
+* **projects:** add a read-only Access page under project settings ([3f7a179](https://github.com/TestPlanIt/testplanit/commit/3f7a179d8ae29a9ba25928c3069cf66247d91aaf))
+
+### Enhancements
+
+* **projects:** align the Access page with the users directory ([d03ce89](https://github.com/TestPlanIt/testplanit/commit/d03ce89446ea293da2ccea58c113e28e58dc375a))
+
 ## [1.1.0-beta.25](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.24...v1.1.0-beta.25) (2026-09-26)
 
 ### Features
