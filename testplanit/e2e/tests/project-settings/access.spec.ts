@@ -48,11 +48,27 @@ test.describe("Project Settings - Access", () => {
       await expect(memberRow).toContainText("Project Default");
     });
 
+    await test.step("The filter narrows the list by name or email", async () => {
+      await page
+        .getByTestId("project-access-filter")
+        .fill(`access-member-${ts}`);
+      await expect(
+        page.getByTestId(`project-access-row-${member.data.id}`)
+      ).toBeVisible();
+      await expect(
+        page.getByTestId(`project-access-row-${adminId}`)
+      ).toHaveCount(0);
+      await page.getByTestId("project-access-filter").fill("");
+      await expect(
+        page.getByTestId(`project-access-row-${adminId}`)
+      ).toBeVisible();
+    });
+
     await test.step("An admin sees the edit link, not the admin-only note", async () => {
       await expect(page.getByTestId("project-access-admin-note")).toHaveCount(
         0
       );
-      await page.getByTestId("project-access-edit-link").click();
+      await page.getByTestId("project-access-edit-button").click();
       await expect(page).toHaveURL(
         new RegExp(`/admin/projects\\?edit=${projectId}&tab=users`)
       );
@@ -108,9 +124,11 @@ test.describe("Project Settings - Access", () => {
         timeout: 15000,
       });
       await expect(page.getByTestId("project-access-admin-note")).toContainText(
-        "Only administrators can change this setting."
+        "Only System Administrators can modify project access."
       );
-      await expect(page.getByTestId("project-access-edit-link")).toHaveCount(0);
+      await expect(page.getByTestId("project-access-edit-button")).toHaveCount(
+        0
+      );
 
       const ownRow = page.getByTestId(
         `project-access-row-${projectAdmin.data.id}`

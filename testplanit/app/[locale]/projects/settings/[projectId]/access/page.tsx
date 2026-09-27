@@ -5,6 +5,7 @@ import { schema } from "~/zenstack/schema";
 import { Loading } from "@/components/Loading";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import { DataTable } from "@/components/tables/DataTable";
+import { Filter } from "@/components/tables/Filter";
 import {
   Card,
   CardContent,
@@ -12,9 +13,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { PageTitle, SectionHeader } from "@/components/ui/typography";
-import { Info, SquareArrowOutUpRight } from "lucide-react";
+import { Info, SquarePen } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { notFound, useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -22,7 +24,7 @@ import { ApplicationArea } from "~/zenstack/models";
 import { useProjectAccessRoster } from "~/hooks/useProjectAccessRoster";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
-import { Link } from "~/lib/navigation";
+import { useRouter } from "~/lib/navigation";
 import {
   ACCESS_SORT_COLUMNS,
   sortAccessRows,
@@ -35,6 +37,7 @@ export default function ProjectAccessPage() {
   const params = useParams();
   const projectId = parseInt(params.projectId as string);
   const { session, status, isLoading: isAuthLoading } = useRequireAuth();
+  const router = useRouter();
   const locale = useLocale();
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
@@ -72,15 +75,23 @@ export default function ProjectAccessPage() {
   >({});
   const columns = useAccessColumns();
 
-  const rows = useMemo<AccessRow[]>(
-    () =>
-      sortAccessRows(
-        (roster ?? []).map((entry) => ({ ...entry, id: entry.userId })),
-        sortConfig.column,
-        sortConfig.direction
-      ),
-    [roster, sortConfig]
-  );
+  // The roster is one unpaged fetch, so the name/email filter runs here;
+  // `Filter` debounces the input itself.
+  const [searchString, setSearchString] = useState("");
+  const rows = useMemo<AccessRow[]>(() => {
+    const needle = searchString.trim().toLowerCase();
+    const matching = (roster ?? []).filter(
+      (entry) =>
+        needle.length === 0 ||
+        entry.name.toLowerCase().includes(needle) ||
+        (entry.email ?? "").toLowerCase().includes(needle)
+    );
+    return sortAccessRows(
+      matching.map((entry) => ({ ...entry, id: entry.userId })),
+      sortConfig.column,
+      sortConfig.direction
+    );
+  }, [roster, searchString, sortConfig]);
 
   useEffect(() => {
     if (projectLoading || permissionsLoading || !session?.user) return;
@@ -133,26 +144,39 @@ export default function ProjectAccessPage() {
     }
   };
 
-  // Only system ADMINs can reach Administration → Projects, so the edit link
-  // is offered to them alone; everyone else with settings access is told who
-  // can change access.
+  // Only system ADMINs can reach Administration → Projects, so the edit
+  // button is offered to them alone; everyone else with settings access is
+  // told who can change access.
   const isSystemAdmin = session?.user?.access === "ADMIN";
-  const editInAdminLabel = [
-    tGlobal("navigation.menu.admin"),
-    tCommon("fields.projects"),
-    tGlobal("admin.projects.edit.title"),
-  ].join(" › ");
+  const editButtonLabel = tGlobal("projects.settings.access.editButton");
 
   return (
     <main>
       <Card>
         <CardHeader className="w-full">
-          <SectionHeader className="flex items-center gap-2">
-            <CardTitle data-testid="project-access-title">
-              {tCommon("fields.access")}
-            </CardTitle>
-            <HelpPopover helpKey="projectAccess" />
-          </SectionHeader>
+          <div className="flex items-center justify-between gap-2">
+            <SectionHeader className="flex items-center gap-2">
+              <CardTitle data-testid="project-access-title">
+                {tCommon("fields.access")}
+              </CardTitle>
+              <HelpPopover helpKey="projectAccess" />
+            </SectionHeader>
+            {isSystemAdmin && (
+              <Button
+                onClick={() =>
+                  router.push(`/admin/projects?edit=${projectId}&tab=users`)
+                }
+                aria-label={editButtonLabel}
+                className="group gap-0 transition-all duration-200 hover:gap-2"
+                data-testid="project-access-edit-button"
+              >
+                <SquarePen className="h-4 w-4" />
+                <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+                  {editButtonLabel}
+                </span>
+              </Button>
+            )}
+          </div>
           <CardDescription>
             <span className="flex items-center gap-2">
               <ProjectIcon iconUrl={project.iconUrl} />
@@ -161,22 +185,13 @@ export default function ProjectAccessPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {isSystemAdmin ? (
-            <Link
-              href={`/admin/projects?edit=${projectId}&tab=users`}
-              className="inline-flex items-center gap-1.5 text-sm text-primary underline-offset-4 hover:underline"
-              data-testid="project-access-edit-link"
-            >
-              <SquareArrowOutUpRight className="h-4 w-4" aria-hidden="true" />
-              {editInAdminLabel}
-            </Link>
-          ) : (
+          {!isSystemAdmin && (
             <p
               className="flex items-center gap-1.5 text-sm text-muted-foreground"
               data-testid="project-access-admin-note"
             >
               <Info className="h-4 w-4" aria-hidden="true" />
-              {tGlobal("admin.workflows.systemFeatureCard.adminOnlyNotice")}
+              {tGlobal("projects.settings.access.adminOnlyNote")}
             </p>
           )}
 
@@ -185,30 +200,43 @@ export default function ProjectAccessPage() {
               {tCommon("errors.unknown")}
             </p>
           ) : (
-            <div className="space-y-2">
-              {roster && roster.length > 0 && (
-                <p className="text-sm text-muted-foreground">
-                  {tGlobal("admin.auditLogs.showing", {
-                    loaded: roster.length.toLocaleString(locale),
-                    total: roster.length.toLocaleString(locale),
-                  })}
-                </p>
-              )}
-              <DataTable
-                virtualized
-                fillViewport
-                columns={columns}
-                data={rows}
-                onSortChange={handleSortChange}
-                onSortColumn={handleSortColumn}
-                sortConfig={sortConfig}
-                columnVisibility={columnVisibility}
-                onColumnVisibilityChange={setColumnVisibility}
-                isLoading={rosterLoading}
-                resetKey={`${sortConfig.column}|${sortConfig.direction}`}
-                testIdPrefix="project-access-table"
-                rowTestIdPrefix="project-access-row"
-              />
+            <div>
+              <div className="flex flex-row items-start justify-between gap-4">
+                <div className="flex flex-col grow w-full sm:w-1/3 min-w-[150px]">
+                  <Filter
+                    key="project-access-filter"
+                    placeholder={tGlobal("users.filter")}
+                    initialSearchString={searchString}
+                    onSearchChange={setSearchString}
+                    dataTestId="project-access-filter"
+                  />
+                </div>
+                {roster && roster.length > 0 && (
+                  <p className="text-sm text-muted-foreground shrink-0">
+                    {tGlobal("admin.auditLogs.showing", {
+                      loaded: rows.length.toLocaleString(locale),
+                      total: roster.length.toLocaleString(locale),
+                    })}
+                  </p>
+                )}
+              </div>
+              <div className="mt-4 w-full">
+                <DataTable
+                  virtualized
+                  fillViewport
+                  columns={columns}
+                  data={rows}
+                  onSortChange={handleSortChange}
+                  onSortColumn={handleSortColumn}
+                  sortConfig={sortConfig}
+                  columnVisibility={columnVisibility}
+                  onColumnVisibilityChange={setColumnVisibility}
+                  isLoading={rosterLoading}
+                  resetKey={`${searchString}|${sortConfig.column}|${sortConfig.direction}`}
+                  testIdPrefix="project-access-table"
+                  rowTestIdPrefix="project-access-row"
+                />
+              </div>
             </div>
           )}
         </CardContent>

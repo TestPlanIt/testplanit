@@ -2328,6 +2328,10 @@
           "removeConfirm": "Rimuovere {count, plural, one {# Code Pin} other {# Code Pin}} che l'ultimo controllo non è riuscito a trovare al suggerimento di {name}?",
           "removeConfirmNote": "I pin il cui badge Scaduto è stato ignorato e i pin mantenuti dai marcatori del repository vengono conservati. I pin rimossi possono essere ripristinati dal Cestino."
         }
+      },
+      "access": {
+        "editButton": "Modifica accesso al progetto",
+        "adminOnlyNote": "Solo gli amministratori di sistema possono modificare l'accesso al progetto."
       }
     },
     "matrix": {

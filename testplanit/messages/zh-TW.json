@@ -2328,6 +2328,10 @@
           "removeConfirm": "移除 {count, plural, one {# 個代碼引腳} other {# 個代碼引腳}}（上次檢查在 {name} 的頂端找不到）？",
           "removeConfirmNote": "已關閉「陳舊」徽章的引腳和由儲存庫標記維護的引腳被保留。移除的引腳可以從「垃圾桶」還原。"
         }
+      },
+      "access": {
+        "editButton": "編輯項目存取權限",
+        "adminOnlyNote": "只有系統管理員可以修改專案存取權限。"
       }
     },
     "matrix": {

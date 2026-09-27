@@ -9,7 +9,7 @@ description: See who can open a project and the role each person holds there
 The project-level **Settings → Access** page lists every user who can open the project and the role that decides what they can do in it. It is read-only: access is granted and changed by an administrator under **Administration → Projects → Edit Project**.
 
 :::note
-Only system administrators and project administrators can open this page. System administrators see a link straight to the project's edit dialog; everyone else sees a note that only administrators can change this setting.
+Only system administrators and project administrators can open this page. System administrators see an **Edit Project Access** button that opens the project's edit dialog; everyone else sees a note that only System Administrators can modify project access.
 :::
 
 ## How to access
@@ -23,11 +23,12 @@ Each user is listed with these columns:
 
 | Column               | Description                                                                                                                               |
 | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| **User**             | The user's name and email, linking to their profile.                                                                                      |
+| **Name**             | The user's name and avatar, linking to their profile.                                                                                     |
+| **Email**            | The user's email address.                                                                                                                 |
 | **Role**             | The [role](../../permissions-guide.md) that governs the user in this project. Admins and Project Admins show their system access instead. |
 | **Effective Access** | Where the access comes from: **User Permissions**, **Group Permissions**, **Project Default**, or **System Access** (see below).          |
 
-Click a column header to sort.
+Type in the filter box to narrow the list by name or email; the count beside it shows how many of the project's users match. Click a column header to sort.
 
 ### Where access comes from
 
@@ -41,4 +42,4 @@ Users whose access resolves to **No Access** are not listed. System administrato
 
 ## Changing access
 
-Access is changed in **Administration → Projects → Edit Project**, on the **Users** and **Groups** tabs. System administrators can use the **Edit access** link at the top of this page to open that dialog directly.
+Access is changed in **Administration → Projects → Edit Project**, on the **Users** and **Groups** tabs. System administrators can use the **Edit Project Access** button at the top of this page to open that dialog directly on the **Users** tab.

@@ -2328,6 +2328,10 @@
           "removeConfirm": "Remover {count, plural, one {# Code Pin} other {# Code Pins}} que a última verificação não conseguiu encontrar na ponta de {name}?",
           "removeConfirmNote": "Pins cuja insígnia Antigo foi descartada e pins mantidos por marcadores de repositório são mantidos. Pins removidos podem ser restaurados da Lixeira."
         }
+      },
+      "access": {
+        "editButton": "Editar Acesso ao Projeto",
+        "adminOnlyNote": "Apenas administradores do sistema podem modificar o acesso ao projeto."
       }
     },
     "matrix": {

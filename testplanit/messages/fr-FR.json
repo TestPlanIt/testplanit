@@ -2328,6 +2328,10 @@
           "removeConfirm": "Supprimer {count, plural, one {# épingle de code} other {# épingles de code}} que la dernière vérification n'a pas pu trouver à la pointe de {name} ?",
           "removeConfirmNote": "Les épingles dont le badge Obsolète a été rejeté et les épingles maintenues par les marqueurs de dépôt sont conservées. Les épingles supprimées peuvent être restaurées à partir de la Corbeille."
         }
+      },
+      "access": {
+        "editButton": "Modifier l'accès au projet",
+        "adminOnlyNote": "Seuls les administrateurs système peuvent modifier l'accès au projet."
       }
     },
     "matrix": {

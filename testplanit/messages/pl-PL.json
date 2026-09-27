@@ -2328,6 +2328,10 @@
           "removeConfirm": "Usunąć {count, plural, one {# Code Pin} other {# Code Pins}}, które ostatnie sprawdzenie nie mogło znaleźć na górze {name}?",
           "removeConfirmNote": "Szpilki, których badge Stale został odrzucony i szpilki utrzymywane przez znaczniki repozytorium są przechowywane. Usunięte szpilki można przywrócić z kosza."
         }
+      },
+      "access": {
+        "editButton": "Edytuj dostęp do projektu",
+        "adminOnlyNote": "Tylko administratorzy systemowi mogą modyfikować dostęp do projektu."
       }
     },
     "matrix": {

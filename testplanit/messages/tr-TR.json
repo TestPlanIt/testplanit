@@ -2328,6 +2328,10 @@
           "removeConfirm": "Son kontrol {name} ucunda bulamadığı {count, plural, one {# Kod Pimi} other {# Kod Pimi}} kaldırılsın mı?",
           "removeConfirmNote": "Bayat rozeti kapatılan pin'ler ve depo işaretçileri tarafından tutulan pin'ler tutulur. Kaldırılan pin'ler Çöp Kutusu'ndan geri yüklenebilir."
         }
+      },
+      "access": {
+        "editButton": "Proje Erişimini Düzenle",
+        "adminOnlyNote": "Yalnızca Sistem Yöneticileri proje erişimini değiştirebilir."
       }
     },
     "matrix": {

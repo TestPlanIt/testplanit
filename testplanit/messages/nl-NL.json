@@ -2328,6 +2328,10 @@
           "removeConfirm": "Verwijder {count, plural, one {# code pin} other {# code pins}} die de laatste controle niet kon vinden op de tip van {name}?",
           "removeConfirmNote": "Pins waarvan het verouderde badge is genegeerd en pins die door repositorymarkeringen worden onderhouden, blijven behouden. Verwijderde pins kunnen worden hersteld uit de Trash."
         }
+      },
+      "access": {
+        "editButton": "Projecttoegang bewerken",
+        "adminOnlyNote": "Alleen systeembeheerders kunnen projecttoegang wijzigen."
       }
     },
     "matrix": {

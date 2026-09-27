@@ -2328,6 +2328,10 @@
           "removeConfirm": "Odebrat {count, plural, one {# značku Code Pin} few {# značky Code Pin} many {# značky Code Pin} other {# značek Code Pin}}, které poslední kontrola nemohla najít na hrotu {name}?",
           "removeConfirmNote": "Piny, jejichž příznak Zastaralý byl zrušen, a piny udržované značkami úložiště jsou zachovány. Odstraněné piny lze obnovit z Koše."
         }
+      },
+      "access": {
+        "editButton": "Upravit přístup k projektu",
+        "adminOnlyNote": "Pouze správci systému mohou upravit přístup k projektu."
       }
     },
     "matrix": {

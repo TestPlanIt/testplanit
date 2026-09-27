@@ -1,16 +1,16 @@
-import { Avatar } from "@/components/Avatar";
+import { EmailCell } from "@/components/EmailDisplay";
 import type { ColumnDef } from "@/components/tables/tableFeatures";
+import { UserNameCell } from "@/components/tables/UserNameCell";
 import { Badge } from "@/components/ui/badge";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { RoleNameDisplay } from "~/components/RoleNameDisplay";
 import type { ProjectAccessRosterEntry } from "~/hooks/useProjectAccessRoster";
-import { Link } from "~/lib/navigation";
 
 /** A roster entry keyed the way DataTable expects (`id`). */
 export type AccessRow = ProjectAccessRosterEntry & { id: string };
 
-export const ACCESS_SORT_COLUMNS = ["name", "role", "source"] as const;
+export const ACCESS_SORT_COLUMNS = ["name", "email", "role", "source"] as const;
 export type AccessSortColumn = (typeof ACCESS_SORT_COLUMNS)[number];
 
 const SYSTEM_ACCESS_RANK: Record<AccessRow["systemAccess"], number> = {
@@ -39,6 +39,11 @@ export function sortAccessRows(
         );
       case "source":
         return a.source.localeCompare(b.source) || a.name.localeCompare(b.name);
+      case "email":
+        return (
+          (a.email ?? "").localeCompare(b.email ?? "") ||
+          a.name.localeCompare(b.name)
+        );
       default:
         return a.name.localeCompare(b.name);
     }
@@ -88,37 +93,27 @@ export function useAccessColumns(): ColumnDef<AccessRow>[] {
       {
         id: "name",
         accessorKey: "name",
-        header: tCommon("access.user"),
+        header: tCommon("name"),
         enableSorting: true,
         enableResizing: true,
         enableHiding: false,
         meta: { isPinned: "left" },
         size: 320,
         cell: ({ row }) => (
-          <span className="flex items-center gap-2 min-w-0">
-            <span className="shrink-0">
-              <Avatar
-                alt={row.original.name}
-                height={20}
-                width={20}
-                image={row.original.image ?? ""}
-              />
-            </span>
-            <span className="flex flex-col min-w-0">
-              <Link
-                href={`/users/profile/${row.original.userId}`}
-                className="truncate hover:underline"
-              >
-                {row.original.name}
-              </Link>
-              {row.original.email && (
-                <span className="truncate text-xs text-muted-foreground">
-                  {row.original.email}
-                </span>
-              )}
-            </span>
-          </span>
+          <div className="flex items-center">
+            <UserNameCell userId={row.original.userId} />
+          </div>
         ),
+      },
+      {
+        id: "email",
+        accessorKey: "email",
+        header: tCommon("fields.email"),
+        enableSorting: true,
+        enableResizing: true,
+        size: 240,
+        cell: ({ row }) =>
+          row.original.email ? <EmailCell email={row.original.email} /> : null,
       },
       {
         id: "role",

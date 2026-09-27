@@ -2328,6 +2328,10 @@
           "removeConfirm": "Xóa {count, plural, one {# Mã pin} other {# Mã pin}} mà lần kiểm tra cuối cùng không thể tìm thấy ở mẹo của {name}?",
           "removeConfirmNote": "Các mã pin có huy hiệu cũ bị loại bỏ và các mã pin được duy trì bởi ký hiệu kho lưu trữ được giữ lại. Các mã pin bị xóa có thể được khôi phục từ Thùng rác."
         }
+      },
+      "access": {
+        "editButton": "Chỉnh sửa Quyền truy cập Dự án",
+        "adminOnlyNote": "Chỉ có Quản trị viên Hệ thống mới có thể sửa đổi quyền truy cập dự án."
       }
     },
     "matrix": {

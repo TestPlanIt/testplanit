@@ -2328,6 +2328,10 @@
           "removeConfirm": "Remove {count, plural, one {# Code Pin} other {# Code Pins}} that the last check could not find at the tip of {name}?",
           "removeConfirmNote": "Pins whose Stale badge was dismissed and pins maintained by repository markers are kept. Removed pins can be restored from the Trash."
         }
+      },
+      "access": {
+        "editButton": "Edit Project Access",
+        "adminOnlyNote": "Only System Administrators can modify project access."
       }
     },
     "matrix": {

@@ -2328,6 +2328,10 @@
           "removeConfirm": "{count, plural, one {# Code-Pin entfernen} other {# Code-Pins entfernen}}, die die letzte Überprüfung nicht finden konnte, am Zweig-Tipp von {name}?",
           "removeConfirmNote": "Pins, deren Stale-Markierung verworfen wurde, und Pins, die von Repository-Markierungen verwaltet werden, bleiben bestehen. Entfernte Pins können aus dem Papierkorb wiederhergestellt werden."
         }
+      },
+      "access": {
+        "editButton": "Projektzugriff bearbeiten",
+        "adminOnlyNote": "Nur Systemadministratoren können den Projektzugriff ändern."
       }
     },
     "matrix": {

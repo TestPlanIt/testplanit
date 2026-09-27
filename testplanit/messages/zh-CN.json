@@ -2328,6 +2328,10 @@
           "removeConfirm": "删除 {count, plural, other {# 个代码引脚}} 上次检查在 {name} 的分支尖端处找不到？",
           "removeConfirmNote": "已关闭陈旧徽章的引脚和由存储库标记维护的引脚将保留。已删除的引脚可以从回收站恢复。"
         }
+      },
+      "access": {
+        "editButton": "编辑项目访问权限",
+        "adminOnlyNote": "只有系统管理员可以修改项目访问权限。"
       }
     },
     "matrix": {

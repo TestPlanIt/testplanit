@@ -55,6 +55,15 @@ describe("sortAccessRows", () => {
     ]);
   });
 
+  it("sorts by email, with missing emails first", () => {
+    const withEmail = rows.map((r) =>
+      r.name === "Zed" ? { ...r, email: "a@example.com" } : r
+    );
+    expect(
+      sortAccessRows(withEmail, "email", "asc").map((r) => r.name)
+    ).toEqual(["Amy", "Bea", "Kim", "Zed"]);
+  });
+
   it("sorts by source", () => {
     expect(sortAccessRows(rows, "source", "asc").map((r) => r.source)).toEqual([
       "GROUP_PERMISSION",

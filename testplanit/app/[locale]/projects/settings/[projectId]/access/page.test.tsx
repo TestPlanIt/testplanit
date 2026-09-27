@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -46,13 +46,27 @@ vi.mock("~/hooks/useVirtualizedInfiniteList", () => ({
   }),
 }));
 
+// `Filter` debounces its input; collapse that so a typed value applies at once.
+vi.mock("@/components/Debounce", () => ({
+  useDebounce: (value: string) => value,
+}));
+
+// The canonical user cell fetches its own user row; it has its own coverage,
+// so it is stubbed to the id it was asked for.
+vi.mock("@/components/tables/UserNameCell", () => ({
+  UserNameCell: ({ userId }: { userId: string }) => (
+    <span data-testid={`user-name-${userId}`}>{userId}</span>
+  ),
+}));
+
+const mockPush = vi.fn();
 vi.mock("~/lib/navigation", () => ({
   Link: ({ href, children, ...rest }: any) => (
     <a href={href} {...rest}>
       {children}
     </a>
   ),
-  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
+  useRouter: () => ({ push: mockPush, replace: vi.fn() }),
 }));
 
 // `useRequireAuth` reaches for the locale-aware router, which needs a mounted
@@ -149,6 +163,7 @@ describe("ProjectAccessPage (Project → Settings → Access)", () => {
   beforeEach(() => {
     mockNotFound.mockReset();
     mockUseRoster.mockReset();
+    mockPush.mockReset();
     currentSession = { user: { id: "user-1", access: "ADMIN" } };
     currentSessionStatus = "authenticated";
     mockProjectData = { id: 42, name: "Apollo", iconUrl: null };
@@ -167,7 +182,9 @@ describe("ProjectAccessPage (Project → Settings → Access)", () => {
     // The test i18n mock echoes unknown keys back, so the reused keys are
     // asserted by name.
     const adminRow = screen.getByTestId("project-access-row-admin-1");
-    expect(adminRow).toHaveTextContent("Ada Admin");
+    expect(
+      adminRow.querySelector('[data-testid="user-name-admin-1"]')
+    ).not.toBeNull();
     expect(adminRow).toHaveTextContent("ada@example.com");
     expect(adminRow).toHaveTextContent("common.access.admin");
     expect(adminRow).toHaveTextContent("common.fields.systemAccess");
@@ -178,19 +195,19 @@ describe("ProjectAccessPage (Project → Settings → Access)", () => {
       "admin.projects.edit.labels.groupPermissions"
     );
     expect(
-      userRow.querySelector('a[href*="/users/profile/user-9"]')
+      userRow.querySelector('[data-testid="user-name-user-9"]')
+    ).not.toBeNull();
+    expect(
+      userRow.querySelector('a[href="mailto:tess@example.com"]')
     ).not.toBeNull();
   });
 
-  it("offers a system ADMIN the deep link into Edit Project's Users tab", () => {
+  it("offers a system ADMIN an Edit Project Access button into Edit Project's Users tab", () => {
     render(<AccessPage />);
-    const link = screen.getByTestId("project-access-edit-link");
-    expect(link.getAttribute("href")).toContain(
-      "/admin/projects?edit=42&tab=users"
-    );
-    expect(link).toHaveTextContent(
-      "navigation.menu.admin › common.fields.projects › admin.projects.edit.title"
-    );
+    const button = screen.getByTestId("project-access-edit-button");
+    expect(button).toHaveTextContent("projects.settings.access.editButton");
+    fireEvent.click(button);
+    expect(mockPush).toHaveBeenCalledWith("/admin/projects?edit=42&tab=users");
     expect(screen.queryByTestId("project-access-admin-note")).toBeNull();
   });
 
@@ -198,9 +215,9 @@ describe("ProjectAccessPage (Project → Settings → Access)", () => {
     currentSession = { user: { id: "user-1", access: "PROJECTADMIN" } };
     render(<AccessPage />);
     expect(screen.getByTestId("project-access-admin-note")).toHaveTextContent(
-      "admin.workflows.systemFeatureCard.adminOnlyNotice"
+      "projects.settings.access.adminOnlyNote"
     );
-    expect(screen.queryByTestId("project-access-edit-link")).toBeNull();
+    expect(screen.queryByTestId("project-access-edit-button")).toBeNull();
   });
 
   it("only fetches the roster once project-admin authority is confirmed", () => {
@@ -216,6 +233,21 @@ describe("ProjectAccessPage (Project → Settings → Access)", () => {
     mockIsProjectAdmin = false;
     expect(() => render(<AccessPage />)).toThrow("NEXT_NOT_FOUND");
     expect(mockNotFound).toHaveBeenCalled();
+  });
+
+  it("filters the roster by name or email", () => {
+    render(<AccessPage />);
+    expect(
+      screen.getByTestId("project-access-row-admin-1")
+    ).toBeInTheDocument();
+    expect(screen.getByTestId("project-access-row-user-9")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByTestId("project-access-filter"), {
+      target: { value: "tess@" },
+    });
+
+    expect(screen.queryByTestId("project-access-row-admin-1")).toBeNull();
+    expect(screen.getByTestId("project-access-row-user-9")).toBeInTheDocument();
   });
 
   it("shows the empty state when nobody can access the project", () => {

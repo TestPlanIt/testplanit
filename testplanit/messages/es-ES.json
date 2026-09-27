@@ -2328,6 +2328,10 @@
           "removeConfirm": "¿Eliminar {count, plural, one {# Code Pin} other {# Code Pins}} que la última verificación no pudo encontrar en la punta de {name}?",
           "removeConfirmNote": "Se mantienen las entradas cuya insignia Stale fue descartada y las entradas mantenidas por marcadores de repositorio. Las entradas eliminadas se pueden restaurar desde la Papelera."
         }
+      },
+      "access": {
+        "editButton": "Editar acceso al proyecto",
+        "adminOnlyNote": "Solo los administradores del sistema pueden modificar el acceso al proyecto."
       }
     },
     "matrix": {
