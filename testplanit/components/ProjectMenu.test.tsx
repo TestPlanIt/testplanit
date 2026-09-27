@@ -349,6 +349,19 @@ describe("ProjectsMenu", () => {
       );
     });
 
+    it("renders the Access settings link first in the settings section for admin", () => {
+      render(<ProjectsMenu isCollapsed={false} onToggleCollapse={vi.fn()} />);
+      const link = document.getElementById("settings-access-link");
+      expect(link).not.toBeNull();
+      expect(link?.getAttribute("href")).toContain(
+        "/projects/settings/42/access"
+      );
+      const settingsLinks = Array.from(
+        document.querySelectorAll('a[id^="settings-"]')
+      ).map((a) => a.id);
+      expect(settingsLinks[0]).toBe("settings-access-link");
+    });
+
     it("renders the Impact settings link after QuickScript for admin", () => {
       render(<ProjectsMenu isCollapsed={false} onToggleCollapse={vi.fn()} />);
       const link = document.getElementById("settings-impact-link");

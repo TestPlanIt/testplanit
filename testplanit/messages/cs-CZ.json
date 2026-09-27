@@ -7482,6 +7482,7 @@
     "projectParameters": "## Parametry testovacích případů\nNakonfigurujte datově řízené testování tohoto projektu — názvy vlastností iterace JUnit pro importované výsledky a znovupoužitelné datové sady pro parametrizované případy.",
     "projectAdvanced": "## Pokročilé\nPokročilá nastavení pro tento projekt — prefix ID záznamu, pracovní postup revize výsledků, automatické vytváření úkolů při selhání a okno pro úpravu výsledků.",
     "projectShares": "## Spravovat sdílení\nSdílitelné odkazy na reporty tohoto projektu, každý s vlastní úrovní přístupu — veřejný, vyžadující přihlášení nebo chráněný heslem. Odvolání odkazu ukončí jeho přístup.",
+    "projectAccess": "## Přístup\nKaždý uživatel, který může otevřít tento projekt, a role, která určuje, co zde mohou dělat. Role uživatele pochází z jejich vlastního nastavení přístupu k projektu, skupiny, do které patří, nebo výchozího přístupu projektu, v tomto pořadí. Správci systému a správci projektů mají plný přístup bez ohledu na roli. Přístup se změňuje správcem v sekci Administrace › Projekty › Upravit projekt.",
     "groups": "## Skupiny\nSkupiny vám umožňují přiřadit přístup k projektu a role mnoha uživatelům najednou. Přidejte členy přímo, nebo namapujte skupinu od vašeho poskytovatele identity.",
     "roles": "## Role\nRole určují, co mohou uživatelé dělat — každá z nich přepíná oprávnění pro jednotlivé oblasti aplikace. Přiřaďte roli uživatelům přímo nebo jako výchozí pro projekt.",
     "sso": "## Ověřování\nSpravujte, jak se uživatelé přihlašují a zda se mohou registrovat nové účty.",

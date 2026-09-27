@@ -24,6 +24,7 @@ import {
   FilePlay,
   Radio,
   Home,
+  KeyRound,
   Layers,
   // ClipboardList, not ListChecks — ListChecks is already in use elsewhere in
   // the app and the two read as the same glyph at nav size.
@@ -321,6 +322,13 @@ export default function ProjectsMenu({
     // Settings
     ...(canSeeSettings
       ? [
+          {
+            icon: KeyRound,
+            label: tCommon("fields.access"),
+            path: "settings/access",
+            id: "settings-access-link",
+            section: "settings" as MenuSection,
+          },
           {
             icon: Plug,
             label: t("admin.menu.integrations"),

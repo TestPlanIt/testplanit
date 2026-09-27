@@ -364,6 +364,7 @@ const sidebars: SidebarsConfig = {
               type: 'category',
               label: 'Settings',
               items: [
+                'user-guide/projects/settings/access', // Read-only roster of who can open the project and their role
                 'user-guide/projects/settings/integrations', // Project issue integration selection
                 'user-guide/webhooks', // Inbound and outbound webhooks (configured per project)
                 'user-guide/projects/settings/ai-models', // Project AI model default + per-feature overrides

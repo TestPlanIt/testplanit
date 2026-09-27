@@ -7482,6 +7482,7 @@
     "projectParameters": "## Test Case Parameters\nConfigure this project's data-driven testing — JUnit iteration property names for imported results and reusable data sets for parameterized cases.",
     "projectAdvanced": "## Advanced\nAdvanced settings for this project — the record ID prefix, result review workflow, automatic issue creation on failure, and the result edit window.",
     "projectShares": "## Manage Shares\nShareable links to this project's reports, each with its own access level — public, sign-in required, or password protected. Revoking a link cuts off its access.",
+    "projectAccess": "## Access\nEvery user who can open this project and the role that decides what they may do here. A user's role comes from their own project access setting, a group they belong to, or the project's default access, in that order. System administrators and project administrators have full access regardless of role. Access is changed by an administrator under Administration › Projects › Edit Project.",
     "groups": "## Groups\nGroups let you assign project access and roles to many users at once. Add members directly, or map a group from your identity provider.",
     "roles": "## Roles\nRoles control what users can do — each one toggles permissions per application area. Assign a role to users directly or as a project default.",
     "sso": "## Authentication\nManage how users sign in and whether new accounts can register.",

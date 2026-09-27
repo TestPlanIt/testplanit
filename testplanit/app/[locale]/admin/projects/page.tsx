@@ -4,6 +4,7 @@ import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
+import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "~/lib/navigation";
 
@@ -21,7 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { SectionHeader } from "@/components/ui/typography";
 import { DeleteProject } from "./DeleteProject";
-import { EditProjectModal } from "./EditProject";
+import { EditProjectModal, type EditProjectTab } from "./EditProject";
 
 import {
   AlertDialog,
@@ -149,13 +150,28 @@ function ProjectAdmin() {
     []
   );
 
+  // `?edit=<projectId>[&tab=users|groups]` opens that project's edit dialog
+  // on arrival, so other pages (the project's Access settings page) can
+  // deep-link straight to it. Closing the dialog drops the params so a reload
+  // does not reopen it.
+  const searchParams = useSearchParams();
+  const deepLinkEditId = Number.parseInt(searchParams.get("edit") ?? "", 10);
+  const hasDeepLinkEdit =
+    Number.isInteger(deepLinkEditId) && deepLinkEditId > 0;
+  const tabParam = searchParams.get("tab");
+  const deepLinkTab: EditProjectTab =
+    tabParam === "users" || tabParam === "groups" ? tabParam : "details";
+
   const handleOpenEditModal = useCallback((project: ExtendedProjects) => {
     setEditingProject(project);
   }, []);
 
   const handleCloseEditModal = useCallback(() => {
     setEditingProject(null);
-  }, []);
+    if (hasDeepLinkEdit) {
+      router.replace("/admin/projects");
+    }
+  }, [hasDeepLinkEdit, router]);
 
   const handleOpenAddModal = useCallback(() => {
     setIsAddModalOpen(true);
@@ -332,6 +348,31 @@ function ProjectAdmin() {
     () => processProjectsWithEffectiveMembers(projectsRaw as any, allUsers), // Pass allUsers for default role calculation
     [projectsRaw, allUsers]
   );
+
+  // The deep-linked project may sit outside the loaded page (or the current
+  // filter), so it is fetched on its own with the same include the table rows
+  // carry, then processed the same way so the dialog sees a full row.
+  const { data: deepLinkedProjectRaw } = useClientQueries(
+    schema
+  ).projects.useFindUnique(
+    { where: { id: hasDeepLinkEdit ? deepLinkEditId : 0 }, include },
+    { enabled: !!session?.user && hasDeepLinkEdit }
+  );
+  const deepLinkedProjectId = deepLinkedProjectRaw?.id;
+  useEffect(() => {
+    if (!hasDeepLinkEdit || !deepLinkedProjectRaw || !allUsers) return;
+    setEditingProject((current) =>
+      current
+        ? current
+        : (processProjectsWithEffectiveMembers(
+            [deepLinkedProjectRaw as any],
+            allUsers
+          )[0] as unknown as ExtendedProjects)
+    );
+    // Re-run only when a different project arrives; refetches of the same row
+    // must not reopen a dialog the user has closed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasDeepLinkEdit, deepLinkedProjectId, allUsers === undefined]);
 
   // Client-side sort by relation count over the full set (count columns only).
   const displayedProjects = useMemo(() => {
@@ -576,6 +617,11 @@ function ProjectAdmin() {
           project={editingProject}
           isOpen={!!editingProject}
           onClose={handleCloseEditModal}
+          initialTab={
+            hasDeepLinkEdit && editingProject.id === deepLinkEditId
+              ? deepLinkTab
+              : "details"
+          }
         />
       )}
 
