@@ -3,10 +3,6 @@ import { ApplicationArea } from "~/zenstack/models";
 /**
  * Comprehensive permission definitions for all ApplicationAreas
  * Including the new areas: SharedSteps, Issues, Reporting, Settings
- *
- * Note: Forecasting and IssueIntegration are still in the schema but not used:
- * - Forecasting: No page exists for this feature
- * - IssueIntegration: Handled as part of Settings permissions
  */
 
 export const getComprehensiveRolePermissions = () => {
@@ -93,16 +89,6 @@ export const getComprehensiveRolePermissions = () => {
         canDelete: true,
         canClose: true,
       },
-      [ApplicationArea.IssueIntegration]: {
-        canAddEdit: true,
-        canDelete: true,
-        canClose: true,
-      }, // Not used - part of Settings
-      [ApplicationArea.Forecasting]: {
-        canAddEdit: true,
-        canDelete: true,
-        canClose: true,
-      }, // Not used - no page exists
       [ApplicationArea.Reporting]: {
         canAddEdit: true,
         canDelete: true,
@@ -197,16 +183,6 @@ export const getComprehensiveRolePermissions = () => {
         canDelete: false,
         canClose: true,
       }, // Can manage issues
-      [ApplicationArea.IssueIntegration]: {
-        canAddEdit: false,
-        canDelete: false,
-        canClose: false,
-      }, // Not used
-      [ApplicationArea.Forecasting]: {
-        canAddEdit: true,
-        canDelete: false,
-        canClose: false,
-      }, // Not used
       [ApplicationArea.Reporting]: {
         canAddEdit: true,
         canDelete: false,
@@ -301,16 +277,6 @@ export const getComprehensiveRolePermissions = () => {
         canDelete: false,
         canClose: false,
       }, // Can link issues
-      [ApplicationArea.IssueIntegration]: {
-        canAddEdit: false,
-        canDelete: false,
-        canClose: false,
-      }, // Not used
-      [ApplicationArea.Forecasting]: {
-        canAddEdit: false,
-        canDelete: false,
-        canClose: false,
-      }, // Not used
       [ApplicationArea.Reporting]: {
         canAddEdit: false,
         canDelete: false,
@@ -405,16 +371,6 @@ export const getComprehensiveRolePermissions = () => {
         canDelete: false,
         canClose: false,
       },
-      [ApplicationArea.IssueIntegration]: {
-        canAddEdit: false,
-        canDelete: false,
-        canClose: false,
-      }, // Not used
-      [ApplicationArea.Forecasting]: {
-        canAddEdit: false,
-        canDelete: false,
-        canClose: false,
-      }, // Not used
       [ApplicationArea.Reporting]: {
         canAddEdit: false,
         canDelete: false,
@@ -510,16 +466,6 @@ export const getComprehensiveRolePermissions = () => {
         canDelete: false,
         canClose: false,
       },
-      [ApplicationArea.IssueIntegration]: {
-        canAddEdit: false,
-        canDelete: false,
-        canClose: false,
-      }, // Not used
-      [ApplicationArea.Forecasting]: {
-        canAddEdit: false,
-        canDelete: false,
-        canClose: false,
-      }, // Not used
       [ApplicationArea.Reporting]: {
         canAddEdit: false,
         canDelete: false,
@@ -571,28 +517,12 @@ export const getSpecialAreaRules = () => {
       description: "Project settings management",
     },
 
-    // IssueIntegration - Not used, handled as part of Settings
-    [ApplicationArea.IssueIntegration]: {
-      requiresProjectAdmin: true,
-      allowSystemAdmin: true,
-      allowProjectAdmin: true,
-      description: "External issue tracker configuration (part of Settings)",
-    },
-
     // Reporting might have special visibility rules
     [ApplicationArea.Reporting]: {
       requiresProjectAdmin: false, // Managers can also create reports
       allowSystemAdmin: true,
       allowProjectAdmin: true,
       description: "Project reports and analytics",
-    },
-
-    // Forecasting - Not used, no page exists
-    [ApplicationArea.Forecasting]: {
-      requiresProjectAdmin: false,
-      allowSystemAdmin: true,
-      allowProjectAdmin: true,
-      description: "Test execution forecasting (not implemented)",
     },
   };
 };

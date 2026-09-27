@@ -50,8 +50,6 @@ Defines distinct functional areas within the application for granular permission
 - Tags
 - SharedSteps
 - Issues
-- IssueIntegration
-- Forecasting
 - Reporting
 - Settings
 

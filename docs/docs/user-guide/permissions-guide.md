@@ -241,8 +241,6 @@ Permissions are granted per application area. The complete list of areas is:
 - **Tags** - Creating new tags
 - **SharedSteps** - Managing shared test step groups
 - **Issues** - Issue tracking and management
-- **IssueIntegration** - Managing external issue tracker integrations
-- **Forecasting** - Time and effort forecasting
 - **Reporting** - Reports and analytics
 - **Settings** - Project settings
 

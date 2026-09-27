@@ -46,8 +46,6 @@ const {
     "Tags",
     "SharedSteps",
     "Issues",
-    "IssueIntegration",
-    "Forecasting",
     "Reporting",
     "Settings",
   ];

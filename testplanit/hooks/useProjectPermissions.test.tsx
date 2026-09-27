@@ -25,8 +25,6 @@ enum ApplicationArea {
   Tags = "Tags",
   SharedSteps = "SharedSteps",
   Issues = "Issues",
-  IssueIntegration = "IssueIntegration",
-  Forecasting = "Forecasting",
   Reporting = "Reporting",
   Settings = "Settings",
 }
@@ -176,16 +174,6 @@ const mockAllAreaPermissions: AllAreaPermissions = {
     canAddEdit: true,
     canDelete: false,
     canClose: true,
-  },
-  [ApplicationArea.IssueIntegration]: {
-    canAddEdit: false,
-    canDelete: false,
-    canClose: false,
-  },
-  [ApplicationArea.Forecasting]: {
-    canAddEdit: true,
-    canDelete: false,
-    canClose: false,
   },
   [ApplicationArea.Reporting]: {
     canAddEdit: false,
