@@ -244,6 +244,34 @@ describe("DataTable (virtualized mode)", () => {
     expect(guides[0].getAttribute("style")).toContain("36px");
   });
 
+  it("keeps an expanded row open when the data array is replaced", async () => {
+    const makeData = () => [
+      {
+        id: 1,
+        name: "Parent",
+        count: 0,
+        subRows: [{ id: 11, name: "Child", count: 0 }],
+      },
+    ];
+    const { props, rerender } = renderTable({
+      data: makeData(),
+      getSubRows: (row: RowShape) => row.subRows,
+      getRowId: (row: RowShape) => String(row.id),
+    });
+
+    expect(screen.queryByTestId("virtualized-row-11")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("row-expander"));
+    expect(screen.getByTestId("virtualized-row-11")).toBeInTheDocument();
+
+    // A refetch hands the table a new array with the same rows.
+    await act(async () => {
+      rerender(<DataTable {...props} data={makeData()} />);
+    });
+    await act(async () => {});
+
+    expect(screen.getByTestId("virtualized-row-11")).toBeInTheDocument();
+  });
+
   it("gives a root row no nesting guide", () => {
     renderTable({
       data: [{ id: 1, name: "Root", count: 0 }],

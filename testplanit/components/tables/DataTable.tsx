@@ -813,6 +813,10 @@ function PagedTable<TData extends DataRow, TValue>({
     data: localData,
     columns: finalColumns as ColumnDef<TData, any>[],
     getSubRows: getSubRows,
+    // v9 resets expansion from the core row model on every data change (v8
+    // only did so from the grouped model), which collapses open rows after a
+    // refetch. Rows are keyed by getRowId, so expansion survives new data.
+    autoResetExpanded: false,
     ...(getRowId ? { getRowId } : {}),
     enableColumnPinning: true,
     enableColumnResizing: true,

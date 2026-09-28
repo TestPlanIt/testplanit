@@ -600,6 +600,8 @@ export function VirtualizedTableEngine<TData extends DataRow>({
     data,
     columns: finalColumns,
     getSubRows,
+    // See DataTable: keep open rows open across a refetch under v9.
+    autoResetExpanded: false,
     enableSorting: true,
     // The CALLER owns row order (server orderBy or its own sort of `data`) —
     // sortConfig is display state. Without this, TanStack re-sorts the rows
