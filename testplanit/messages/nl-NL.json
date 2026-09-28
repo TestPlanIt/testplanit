@@ -2243,6 +2243,8 @@
           "description": "Commits die een ticket noemen (PROJ-123, #42, AB#42) worden Code Pins op elk testgeval dat aan dat ticket is gekoppeld — op de functies of klassen die de commit heeft gewijzigd waar het diff ze toont, anders op het hele bestand — zodat latere wijzigingen in die code de zaken opnieuw vinden. Een benoemd ticket TestPlanIt houdt nog niet vast wordt geïmporteerd uit de projectissuetracker zodat deze kan worden gekoppeld.",
           "enableLabel": "Code Pins afleiden van commitmeldingen",
           "enableDescription": "Scant recente commits op de branch bij elke cachevernieuwing. Schakel uit om analyses alleen ticket-sleutels uit de geanalyseerde commits te laten lezen; handmatige scans worden nog steeds uitgevoerd.",
+          "resultLinksLabel": "Ook tickets tellen die aan testresultaten zijn toegevoegd",
+          "resultLinksDescription": "Een ticket dat aan een testresultaat of stapresultaat is toegevoegd, koppelt ook de zaak waarvoor dat resultaat is vastgelegd, dus de bijbehorende commits worden ook aan die zaak vastgepind en geselecteerd. Uit, alleen tickets die rechtstreeks aan een testgeval zijn gekoppeld, tellen mee.",
           "skippedLarge": "{count, plural, one {# commit was} other {# commits waren}} overgeslagen omdat deze te groot is om vast te zetten.",
           "fetchCapped": "Niet elke commit die een gekoppeld ticket noemde, heeft zijn bestanden deze pass gelezen; de rest worden bij de volgende scan opgehaald.",
           "scanRecent": "Recente commits opnieuw scannen",

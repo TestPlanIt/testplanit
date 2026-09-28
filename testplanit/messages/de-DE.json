@@ -2243,6 +2243,8 @@
           "description": "Commits, die ein Ticket bezeichnen (PROJ-123, #42, AB#42), werden zu Code-Pins auf jedem Testfall, der mit diesem Ticket verknüpft ist — auf den Funktionen oder Klassen, die der Commit geändert hat, wo der Diff sie zeigt, andernfalls auf der gesamten Datei — damit spätere Änderungen an diesem Code die Fälle erneut finden. Ein benanntes Ticket, das TestPlanIt noch nicht hält, wird aus dem Issue-Tracker des Projekts importiert, damit es verknüpft werden kann.",
           "enableLabel": "Code-Pins aus Commit-Nachrichten ableiten",
           "enableDescription": "Scannt aktuelle Commits im Zweig bei jeder Cache-Aktualisierung. Deaktivieren Sie diese Option, um Analysen die Ticket-Schlüssel nur aus den analysierten Commits lesen zu lassen; manuelle Scans werden trotzdem ausgeführt.",
+          "resultLinksLabel": "Auch Tickets zählen, die zu Testergebnissen hinzugefügt wurden",
+          "resultLinksDescription": "Ein Ticket, das zu einem Testergebnis oder Schritttestergebnis hinzugefügt wird, verlinkt auch den Fall, für den dieses Ergebnis aufgezeichnet wurde, sodass seine Commits diese Anfrage auch anheften und auswählen. Aus, nur Tickets, die direkt mit einem Testfall verlinkt sind, werden gezählt.",
           "skippedLarge": "{count, plural, one {# Commit wurde} other {# Commits wurden}} übersprungen, da er zu groß zum Pinnen ist.",
           "fetchCapped": "Nicht jeder Commit, der ein verknüpftes Ticket benannt hat, ließ seine Dateien in diesem Durchgang lesen; die restlichen werden beim nächsten Scan aufgegriffen.",
           "scanRecent": "Aktuelle Commits erneut scannen",

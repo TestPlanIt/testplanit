@@ -2243,6 +2243,8 @@
           "description": "Commits que nomeiam um tíquete (PROJ-123, #42, AB#42) se tornam Code Pins em cada caso de teste vinculado a esse tíquete — nas funções ou classes que o commit alterou onde o diff as mostra, caso contrário em todo o arquivo — para que alterações posteriores a esse código encontrem os casos novamente. Um tíquete nomeado que TestPlanIt ainda não tem é importado do rastreador de problemas do projeto para que possa ser vinculado.",
           "enableLabel": "Derivar Code Pins de mensagens de commit",
           "enableDescription": "Verifica commits recentes na ramificação em cada atualização de cache. Desative para manter análises lendo chaves de tíquete apenas dos commits analisados; digitalizações manuais ainda são executadas.",
+          "resultLinksLabel": "Contar também tickets adicionados aos resultados de teste",
+          "resultLinksDescription": "Um ticket adicionado a um resultado de teste ou resultado de etapa também vincula o caso para o qual esse resultado foi registrado, portanto seus commits fixam e selecionam esse caso também. Desativado, apenas tickets vinculados diretamente a um caso de teste contam.",
           "skippedLarge": "{count, plural, one {# commit foi} other {# commits foram}} ignorados por serem grandes demais para fixar.",
           "fetchCapped": "Nem todos os commits que nomearam um tíquete vinculado tiveram seus arquivos lidos nesta passagem; o restante será encontrado na próxima varredura.",
           "scanRecent": "Rescan Commits Recentes",

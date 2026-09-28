@@ -2243,6 +2243,8 @@
           "description": "Commity, które nazywają bilet (PROJ-123, #42, AB#42), stają się Code Pins na każdym przypadku testowym powiązanym z tym biletem — na funkcjach lub klasach, które commit zmienił tam, gdzie to pokazuje diff, w przeciwnym razie na całym pliku — tak że później zmiany tego kodu znajdują przypadki ponownie. Nazwany bilet TestPlanIt nie trzyma jeszcze jest importowany z problemów systemu śledzenia projektu, aby można go było połączyć.",
           "enableLabel": "Pochodnie Code Pins z komunikatów commit",
           "enableDescription": "Skanuje ostatnie commity na gałęzi przy każdym odświeżeniu pamięci podręcznej. Wyłącz, aby analiz czytały klucze biletów z analizowanych commitów tylko; skanowania ręczne są nadal uruchamiane.",
+          "resultLinksLabel": "Uwzględniaj również bilety dodane do wyników testów",
+          "resultLinksDescription": "Bilet dodany do wyniku testu lub wyniku kroku łączy również przypadek testowy, dla którego ten wynik został zarejestrowany, więc jego commity przypinają i zaznaczają ten przypadek. Wyłączone: tylko bilety bezpośrednio powiązane z przypadkiem testowym się liczą.",
           "skippedLarge": "{count, plural, one {# commit został} other {# commity zostały}} pominięte jako zbyt duże do przypięcia.",
           "fetchCapped": "Nie każdy commit, który nazwał powiązany bilet, miał swoje pliki przeczytane w tym przebiegu; reszta jest odbierana w następnym skanowaniu.",
           "scanRecent": "Ponownie zeskanuj ostatnie commity",

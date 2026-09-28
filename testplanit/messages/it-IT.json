@@ -2243,6 +2243,8 @@
           "description": "I commit che denominano un ticket (PROJ-123, #42, AB#42) diventano Code Pin su ogni caso di test collegato a quel ticket — sulle funzioni o sulle classi che il commit ha modificato dove la diff le mostra, altrimenti sul file intero — quindi i successivi cambiamenti a quel codice trovano di nuovo i casi. Un ticket denominato che TestPlanIt non contiene ancora viene importato dal tracker dei problemi del progetto in modo da poter essere collegato.",
           "enableLabel": "Derivi code pin dai messaggi di commit",
           "enableDescription": "Esegue la scansione dei commit recenti sul ramo ad ogni aggiornamento della cache. Disattiva per mantenere le analisi che leggono le chiavi dei ticket solo dai commit analizzati; le scansioni manuali vengono comunque eseguite.",
+          "resultLinksLabel": "Conta anche i ticket aggiunti ai risultati dei test",
+          "resultLinksDescription": "Un ticket aggiunto a un risultato di test o risultato di step collega anche il caso per il quale è stato registrato il risultato, quindi i suoi commit fissano e selezionano anche quel caso. Disattivato, solo i ticket collegati direttamente a un caso di test vengono conteggiati.",
           "skippedLarge": "{count, plural, one {# commit è stato} other {# commit sono stati}} saltati perché troppo grandi per bloccare.",
           "fetchCapped": "Non tutti i commit che hanno denominato un ticket collegato hanno avuto i loro file letti in questo passaggio; il resto viene recuperato nella prossima scansione.",
           "scanRecent": "Esegui nuova scansione dei commit recenti",

@@ -2243,6 +2243,8 @@
           "description": "Les commits qui nomment un ticket (PROJ-123, #42, AB#42) deviennent des épingles de code sur chaque cas de test lié à ce ticket — sur les fonctions ou classes que le commit a modifiées lorsque le diff les montre, sinon sur l'ensemble du fichier — afin que les modifications ultérieures de ce code retrouvent les cas. Un ticket nommé que TestPlanIt ne détient pas encore est importé du gestionnaire de problèmes du projet afin qu'il puisse être lié.",
           "enableLabel": "Dériver les épingles de code des messages de commit",
           "enableDescription": "Analyse les commits récents sur la branche à chaque actualisation du cache. Désactivez cette option pour que les analyses lisent les clés de ticket à partir des commits analysés uniquement ; les analyses manuelles s'exécutent toujours.",
+          "resultLinksLabel": "Compter également les tickets ajoutés aux résultats de test",
+          "resultLinksDescription": "Un ticket ajouté à un résultat de test ou à un résultat d'étape lie également le cas pour lequel ce résultat a été enregistré, de sorte que ses commits épinglent et sélectionnent également ce cas. Désactivé, seuls les tickets liés directement à un cas de test sont comptabilisés.",
           "skippedLarge": "{count, plural, one {# commit a} other {# commits ont}} été ignorés comme trop volumineux à épingler.",
           "fetchCapped": "Pas tous les commits qui ont nommé un ticket lié ont eu leurs fichiers lus lors de ce passage ; le reste est récupéré lors de la prochaine analyse.",
           "scanRecent": "Réanalyser les commits récents",

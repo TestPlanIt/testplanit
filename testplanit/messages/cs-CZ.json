@@ -2243,6 +2243,8 @@
           "description": "Commity, které jmenují lístek (PROJ-123, #42, AB#42), se stanou kódovými piny u každého testovacího případu propojeného s tímto lístkem — v funkcích nebo třídách, které commit změnil, kde to diff zobrazuje, jinak v celém souboru — takže pozdější změny tohoto kódu najdou případy znovu. Pojmenovaný lístek TestPlanIt dosud nedrží se importuje z projektu úkolníku, aby jej bylo možné propojit.",
           "enableLabel": "Odvozovat kódové piny ze zpráv o commitech",
           "enableDescription": "Skenuje nedávné commity na větvi při každém obnovení mezipaměti. Vypněte, aby analýzy čtely klíče tiketů pouze z analyzovaných commitů; ruční skenování stále probíhá.",
+          "resultLinksLabel": "Také počítat lístky přidané do výsledků testů",
+          "resultLinksDescription": "Lístek přidaný k výsledku testu nebo výsledku kroku také propojuje případ, pro který byl výsledek zaznamenán, takže jeho commity připojují a vybírají také tento případ. Pokud je vypnuto, počítají se pouze lístky přímo připojené k testovacímu případu.",
           "skippedLarge": "{count, plural, one {# commit byl} other {# commity byly}} přeskočeny jako příliš velké na fixaci.",
           "fetchCapped": "Ne všechny commity, které jmenovaly propojený lístek, měly své soubory přečteny v tomto průchodu; zbytek bude vyzvednut při dalším skenování.",
           "scanRecent": "Znovu skenovat nedávné commity",

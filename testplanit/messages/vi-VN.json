@@ -2243,6 +2243,8 @@
           "description": "Các lần cam kết đặt tên một phiếu (PROJ-123, #42, AB#42) trở thành Mã pin trên mọi trường hợp kiểm thử được liên kết với phiếu đó — trên các hàm hoặc lớp mà lần cam kết thay đổi ở nơi diff hiển thị chúng, nếu không thì trên toàn bộ tệp — vì vậy các thay đổi sau này đối với mã đó sẽ tìm thấy các trường hợp một lần nữa. Một phiếu có tên mà TestPlanIt chưa có được nhập từ dự án theo dõi vấn đề để có thể được liên kết.",
           "enableLabel": "Lấy mã pin từ thông báo cam kết",
           "enableDescription": "Quét các lần cam kết gần đây trên nhánh trên mỗi lần làm mới bộ nhớ đệm. Tắt để giữ cho các phân tích chỉ đọc khóa phiếu từ các lần cam kết được phân tích; các quét thủ công vẫn chạy.",
+          "resultLinksLabel": "Cũng tính các vé được thêm vào kết quả kiểm thử",
+          "resultLinksDescription": "Một vé được thêm vào kết quả kiểm thử hoặc kết quả bước cũng liên kết trường hợp mà kết quả đó được ghi lại, vì vậy các cam kết của nó sẽ ghim và chọn trường hợp đó. Tắt, chỉ các vé được liên kết trực tiếp với trường hợp kiểm thử mới được tính.",
           "skippedLarge": "{count, plural, one {# lần cam kết đã} other {# lần cam kết đã}} bị bỏ qua vì quá lớn để ghim.",
           "fetchCapped": "Không phải mỗi lần cam kết đặt tên một phiếu được liên kết đều có các tệp của nó được đọc trong lần vượt qua này; phần còn lại được chọn trong lần quét tiếp theo.",
           "scanRecent": "Quét lại các lần cam kết gần đây",

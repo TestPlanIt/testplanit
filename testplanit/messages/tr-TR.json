@@ -2243,6 +2243,8 @@
           "description": "Bir commit'i bir bileti adlandıran (PROJ-123, #42, AB#42), bu billete bağlı her test senaryosu üzerinde - commit'in değiştirdiği fonksiyonlar veya sınıflarda nerede diff onları gösteriyorsa, aksi takdirde tüm dosya üzerinde - Kod Pimleri haline getirir; böylece o kodu yapılan sonraki değişiklikler senaryoları yeniden bulur. TestPlanIt'in henüz tutmadığı adlandırılmış bir bilet, projenin sorun izleyicisinden içe aktarılır; bu nedenle bağlanabilir.",
           "enableLabel": "Commit mesajlarından Kod Pimleri türet",
           "enableDescription": "Her ön bellek yenilemesinde daldaki son commit'leri tarar. Yalnızca analiz edilen commit'lerden bilet anahtarlarını okuyan analizi tutmak için kapatın; manuel taramalar yine de çalışır.",
+          "resultLinksLabel": "Ayrıca test sonuçlarına eklenen biletleri say",
+          "resultLinksDescription": "Bir test sonucuna veya adım sonucuna eklenen bir bilet, o sonucun kaydedildiği durumu da bağlantılandırır, böylece işlemeleri de o durumu sabitleştirir ve seçer. Kapalı olduğunda, yalnızca doğrudan bir test durumuna bağlantılanan biletler sayılır.",
           "skippedLarge": "{count, plural, one {# commit sabitlenecek kadar büyük olduğu için atlandı} other {# commit sabitlenecek kadar büyük olduğu için atlandı}}",
           "fetchCapped": "Bağlı bir bileti adlandıran her commit'in dosyaları bu geçişte okunmadı; geri kalanlar sonraki taramada alınır.",
           "scanRecent": "Son Commit'leri Yeniden Tara",

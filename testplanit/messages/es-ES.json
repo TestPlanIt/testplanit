@@ -2243,6 +2243,8 @@
           "description": "Los cambios confirmados que nombran una entrada (PROJ-123, #42, AB#42) se convierten en Code Pins en todos los casos de prueba vinculados a esa entrada — en las funciones o clases que cambió la confirmación donde la diferencia las muestra, de lo contrario en todo el archivo — para que los cambios posteriores a ese código encuentren los casos nuevamente. Una entrada nombrada que TestPlanIt aún no contiene se importa del rastreador de problemas del proyecto para que se pueda vincular.",
           "enableLabel": "Derivar Code Pins de mensajes de confirmación",
           "enableDescription": "Escanea las confirmaciones recientes en la rama en cada actualización de caché. Desactive para mantener análisis leyendo claves de entrada de las confirmaciones analizadas solo; los escaneos manuales aún se ejecutan.",
+          "resultLinksLabel": "También contar tickets añadidos a resultados de prueba",
+          "resultLinksDescription": "Un ticket añadido a un resultado de prueba o resultado de paso también vincula el caso para el que se registró ese resultado, por lo que sus commits fijan y seleccionan ese caso también. Desactivado, solo los tickets vinculados directamente a un caso de prueba cuentan.",
           "skippedLarge": "{count, plural, one {# confirmación fue} other {# confirmaciones fueron}} omitida como demasiado grande para anclar.",
           "fetchCapped": "No todas las confirmaciones que nombraron una entrada vinculada tuvieron sus archivos leídos en este paso; el resto se toma en el siguiente escaneo.",
           "scanRecent": "Rescanear confirmaciones recientes",
