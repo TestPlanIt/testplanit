@@ -49,9 +49,9 @@ test.describe("Configuration Project Scoping - Admin", () => {
     });
 
     await test.step("Open the Projects badge and verify the assigned project is listed", async () => {
-      // The configuration has no variants, so the only popover-trigger badge in
-      // the row is the Projects count. Open it and verify the project is listed.
-      const projectsBadge = row!.locator('button[aria-haspopup="dialog"]');
+      // The Projects count is an AsyncCombobox trigger (aria-haspopup="listbox");
+      // the Variants popover, absent here, would be aria-haspopup="dialog".
+      const projectsBadge = row!.locator('button[aria-haspopup="listbox"]');
       await expect(projectsBadge).toBeVisible({ timeout: 5000 });
       await projectsBadge.click();
 

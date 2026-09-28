@@ -780,9 +780,10 @@ test.describe("Search & Filter", () => {
         `/en-US/projects/repository/${projectId}?node=${folderId}&pageSize=10`
       );
       await page.waitForLoadState("networkidle");
-      await expect(page.locator("text=/of 25/")).toBeVisible({
-        timeout: 10000,
-      });
+      // Scope to the pagination summary: a bare text regex also matches the
+      // project name in the header, whose timestamp can end in "1-".
+      const paginationInfo = page.getByTestId("pagination-info");
+      await expect(paginationInfo).toHaveText(/of 25/, { timeout: 10000 });
     });
 
     await test.step("Navigate to page 2", async () => {
@@ -794,9 +795,10 @@ test.describe("Search & Filter", () => {
       await page.waitForLoadState("networkidle");
 
       // Verify we're on page 2
-      await expect(page.locator("text=/11-20 of/")).toBeVisible({
-        timeout: 5000,
-      });
+      await expect(page.getByTestId("pagination-info")).toHaveText(
+        /^11-20 of/,
+        { timeout: 5000 }
+      );
     });
 
     await test.step("Apply a filter and verify it resets to page 1", async () => {
@@ -805,8 +807,8 @@ test.describe("Search & Filter", () => {
       await searchInput.fill("Target");
       await page.waitForLoadState("networkidle");
 
-      // Verify we're reset to page 1 of filtered results (starts with "Showing 1-")
-      await expect(page.locator("text=/1-/")).toBeVisible({
+      // Verify we're reset to page 1 of filtered results (starts with "1-")
+      await expect(page.getByTestId("pagination-info")).toHaveText(/^1-/, {
         timeout: 5000,
       });
     });

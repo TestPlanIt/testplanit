@@ -329,7 +329,11 @@ async function main() {
   console.log("=" + "=".repeat(50) + "\n");
 
   try {
-    // Step 0: Ensure schema exists (handles fresh databases)
+    // Step 0: Clear stale data first. The push below cannot drop enum values
+    // or columns that existing rows (seeded by an older schema) still use.
+    await resetDatabase();
+
+    // Step 0.1: Ensure schema exists (handles fresh databases)
     await ensureSchema();
 
     // Step 0.5: Apply PostgreSQL extensions + custom indexes (e.g.,
@@ -342,9 +346,6 @@ async function main() {
     // all unmanaged triggers, so they must be re-applied here. Idempotent
     // via DROP IF EXISTS + CREATE and CREATE OR REPLACE for functions.
     await ensureAuditTriggers();
-
-    // Step 1: Reset database
-    await resetDatabase();
 
     // Step 2: Seed core data (this runs tsx db/seed.ts)
     await seedCoreData();
