@@ -1,3 +1,17 @@
+## [1.1.0-beta.27](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.26...v1.1.0-beta.27) (2026-09-28)
+
+### Features
+
+* **roles:** derive project-admin authority from the Project Settings permission ([2cafa5d](https://github.com/TestPlanIt/testplanit/commit/2cafa5d0e5cfcba2e1a85bd7cadaba97ee93f8e2))
+
+### Bug Fixes
+
+* **translations:** update "Settings" to "Project Settings" in multiple language files ([973fba4](https://github.com/TestPlanIt/testplanit/commit/973fba4fd39b7b0681518c73bee014183ea2b55d))
+
+### Enhancements
+
+* **roles:** drop the unused Issue Integration and Forecasting permission areas ([a64e7ca](https://github.com/TestPlanIt/testplanit/commit/a64e7cac43f5b657b6d718bb8b8401acd1014995))
+
 ## [1.1.0-beta.26](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.25...v1.1.0-beta.26) (2026-09-27)
 
 ### Features
