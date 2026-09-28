@@ -369,15 +369,25 @@ export function useCaseDraft({
     restoreResolvedRef.current = true;
     if (!winner) return;
     const baseline = settledBaselineRef.current ?? baselineDigest;
-    if (caseDraftDigest(winner.values, winner.extras) === baseline) {
+    const digest = caseDraftDigest(winner.values, winner.extras);
+    if (digest === baseline) {
       // The draft matches what the editor already shows — nothing to restore.
       return;
     }
+    // The server read can settle after the user has started typing, at which
+    // point the local mirror (written on the first keystroke) is this very
+    // session's draft. Offering it back would interrupt the user with their
+    // own words, so anything identical to the current form is not a restore.
+    const shown = caseDraftDigest(
+      form.getValues() as Record<string, unknown>,
+      extrasRef.current ?? {}
+    );
+    if (digest === shown) return;
     setPendingRestore(winner);
     setRestoreBaseVersion(
       winner === remote ? (serverDraft?.baseVersion ?? null) : null
     );
-  }, [baselineDigest, detecting, serverDraft, storageKey]);
+  }, [baselineDigest, detecting, form, serverDraft, storageKey]);
 
   const clear = useCallback(() => {
     clearTimers();

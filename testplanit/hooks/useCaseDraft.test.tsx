@@ -432,6 +432,30 @@ describe("useCaseDraft restore", () => {
     expect(api.draft.pendingRestore).toBeNull();
   });
 
+  it("does not offer the draft this session wrote when the server read settles late", async () => {
+    // The read is still pending when the user starts typing; the first
+    // keystroke mirrors the draft to localStorage.
+    mockUseFindFirst.mockReturnValue({ data: undefined });
+    const view = renderCaseDraft();
+    typeName("Login works, then logs out");
+    expect(readLocalCaseDraft(STORAGE_KEY)?.values.name).toBe(
+      "Login works, then logs out"
+    );
+
+    // Now the read settles with no server row and the check runs against a
+    // mirror that is this session's own work.
+    mockUseFindFirst.mockReturnValue({ data: null });
+    view.rerender(
+      <QueryClientProvider client={queryClient}>
+        <Harness overrides={{}} />
+      </QueryClientProvider>
+    );
+
+    await flush();
+    expect(api.draft.pendingRestore).toBeNull();
+    expect(api.draft.isDirty).toBe(true);
+  });
+
   it("prefers the newer of the server row and the local mirror", async () => {
     writeLocalCaseDraft(
       STORAGE_KEY,
