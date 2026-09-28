@@ -28,6 +28,7 @@ import { DataTable } from "@/components/tables/DataTable";
 import { ColumnDef } from "@/components/tables/tableFeatures";
 import {
   AlertCircle,
+  Ban,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
@@ -61,6 +62,8 @@ interface Job {
   finishedOn?: number;
   processedOn?: number;
   state: string;
+  /** The job's processor polls a cancel flag, so Cancel can stop it early. */
+  cancellable?: boolean;
 }
 
 interface QueueJobsViewProps {
@@ -87,12 +90,12 @@ export function QueueJobsView({
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >({});
-  const [forceRemoveDialog, setForceRemoveDialog] = useState<{
-    show: boolean;
-    jobId: string | null;
-    action: string | null;
-    errorMessage: string | null;
-  }>({ show: false, jobId: null, action: null, errorMessage: null });
+  // A removal the server refused because a worker holds the job.
+  const [blockedDialog, setBlockedDialog] = useState<{
+    jobId: string;
+    message: string;
+    cancellable: boolean;
+  } | null>(null);
 
   const loadJobs = useCallback(async () => {
     try {
@@ -155,37 +158,25 @@ export function QueueJobsView({
       if (!response.ok) {
         const error = await response.json();
 
-        // Check if this is an active/locked job error
-        if (
-          (error.error?.includes("Cannot remove active") ||
-            error.error?.includes("locked by a worker")) &&
-          !force
-        ) {
-          // Ask user if they want to force remove
-          setForceRemoveDialog({
-            show: true,
+        // 409: a worker is processing the job, so nothing was removed. Offer
+        // Cancel when its processor honours the flag, and force removal for
+        // a lock left by a worker that died.
+        if (error.active && !force) {
+          setBlockedDialog({
             jobId,
-            action,
-            errorMessage: error.error,
+            message: error.error,
+            cancellable: error.cancellable === true,
           });
-          return; // Exit early, dialog will handle the retry
+          return;
         }
 
         throw new Error(error.error || "Action failed");
       }
 
       const result = await response.json();
-
-      // Show appropriate message for partial success vs full success
-      if (result.partialSuccess) {
-        toast("Partial Success", {
-          description: result.message,
-        });
-      } else {
-        toast.success(t("success.actionCompleted"), {
-          description: result.message,
-        });
-      }
+      toast.success(t("success.actionCompleted"), {
+        description: result.message,
+      });
 
       // Reload jobs and parent queue stats
       await loadJobs();
@@ -347,6 +338,18 @@ export function QueueJobsView({
                 disabled={actionInProgress === job.id}
               >
                 <ChevronUp className="h-4 w-4" />
+              </Button>
+            )}
+            {job.state === "active" && job.cancellable === true && (
+              <Button
+                variant="ghost"
+                className="px-2 py-1 h-auto"
+                onClick={() => performJobAction(job.id, "cancel")}
+                disabled={actionInProgress === job.id}
+                aria-label={t("cancelJob.button")}
+                data-testid={`queue-job-cancel-${job.id}`}
+              >
+                <Ban className="h-4 w-4" />
               </Button>
             )}
             <Button
@@ -579,30 +582,26 @@ export function QueueJobsView({
         </Dialog>
       )}
 
-      {/* Force Remove Confirmation Dialog */}
+      {/* A worker holds the job: cancel it, or force the removal of a lock left by a dead worker */}
       <Dialog
-        open={forceRemoveDialog.show}
+        open={blockedDialog !== null}
         onOpenChange={(open) => {
           if (!open) {
-            setForceRemoveDialog({
-              show: false,
-              jobId: null,
-              action: null,
-              errorMessage: null,
-            });
+            setBlockedDialog(null);
             setActionInProgress(null);
           }
         }}
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t("forceRemove.title")}</DialogTitle>
+            <DialogTitle>{t("activeJob.title")}</DialogTitle>
             <DialogDescription asChild>
               <div className="space-y-4">
-                <p>{forceRemoveDialog.errorMessage}</p>
-                <p className="font-semibold">{t("forceRemove.question")}</p>
+                <p>{blockedDialog?.message}</p>
                 <p className="text-sm text-muted-foreground">
-                  {t("forceRemove.warning")}
+                  {blockedDialog?.cancellable
+                    ? t("activeJob.cancelHint")
+                    : t("forceRemove.warning")}
                 </p>
               </div>
             </DialogDescription>
@@ -611,33 +610,31 @@ export function QueueJobsView({
             <Button
               variant="outline"
               onClick={() => {
-                setForceRemoveDialog({
-                  show: false,
-                  jobId: null,
-                  action: null,
-                  errorMessage: null,
-                });
+                setBlockedDialog(null);
                 setActionInProgress(null);
               }}
             >
-              {tGlobal("common.cancel")}
+              {tGlobal("common.actions.close")}
             </Button>
+            {blockedDialog?.cancellable && (
+              <Button
+                onClick={async () => {
+                  const jobId = blockedDialog.jobId;
+                  setBlockedDialog(null);
+                  await performJobAction(jobId, "cancel");
+                }}
+                data-testid="queue-job-cancel-confirm"
+              >
+                <Ban className="h-4 w-4" />
+                {t("cancelJob.button")}
+              </Button>
+            )}
             <Button
               variant="destructive"
               onClick={async () => {
-                setForceRemoveDialog({
-                  show: false,
-                  jobId: null,
-                  action: null,
-                  errorMessage: null,
-                });
-                if (forceRemoveDialog.jobId && forceRemoveDialog.action) {
-                  await performJobAction(
-                    forceRemoveDialog.jobId,
-                    forceRemoveDialog.action,
-                    true
-                  );
-                }
+                const jobId = blockedDialog?.jobId;
+                setBlockedDialog(null);
+                if (jobId) await performJobAction(jobId, "remove", true);
               }}
             >
               {t("forceRemove.confirm")}

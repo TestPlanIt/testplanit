@@ -67,7 +67,8 @@ async function fetchContentsBatched(
     retryAfterSeconds: number;
   },
   branch: string,
-  initialConcurrency: number
+  initialConcurrency: number,
+  assertNotCancelled: () => Promise<void> = async () => {}
 ): Promise<{ contentMap: Map<string, string>; contentRateLimited: boolean }> {
   const contentMap = new Map<string, string>();
   let concurrency = initialConcurrency;
@@ -75,6 +76,7 @@ async function fetchContentsBatched(
   let i = 0;
 
   while (i < files.length) {
+    await assertNotCancelled();
     if (consecutiveRateLimits >= MAX_RATE_LIMIT_RETRIES) {
       console.warn(
         `[repoCacheRefresh] Giving up after ${MAX_RATE_LIMIT_RETRIES} consecutive rate limits — ${contentMap.size}/${files.length} files cached`
@@ -562,9 +564,14 @@ export async function scanRepoIssues(
     const branch = config.branch || (await adapter.getDefaultBranch());
     // A stale cancel from an earlier run must not stop this one.
     await clearCancelRequest(config.id);
+    // The settings page cancels through the connection's flag; an admin
+    // cancelling the job from the Queues page arrives through `opts`.
+    const isCancelled = opts.isCancelled;
     return await runIssueScan(dbClient, config, adapter, branch, {
       ...opts,
-      isCancelled: opts.isCancelled ?? (() => cancelRequested(config.id)),
+      isCancelled: async () =>
+        (await cancelRequested(config.id)) ||
+        (isCancelled ? await isCancelled() : false),
     });
   } catch (err) {
     // The route marked the config running; leave a report, not a flag.
@@ -598,6 +605,14 @@ export interface RefreshResult {
   error?: string;
 }
 
+export interface RefreshRepoCacheOptions {
+  /** Polled between fetch batches; true stops the refresh with an error. */
+  isCancelled?: () => Promise<boolean>;
+}
+
+/** What a refresh an administrator stopped records as its error. */
+export const REFRESH_CANCELLED_MESSAGE = "Cancelled from the Queues page";
+
 /**
  * Refresh the code repository cache for a given ProjectCodeRepositoryConfig.
  *
@@ -609,8 +624,14 @@ export interface RefreshResult {
  */
 export async function refreshRepoCache(
   configId: number,
-  dbClient: DbClient
+  dbClient: DbClient,
+  opts: RefreshRepoCacheOptions = {}
 ): Promise<RefreshResult> {
+  const assertNotCancelled = async () => {
+    if (opts.isCancelled && (await opts.isCancelled())) {
+      throw new Error(REFRESH_CANCELLED_MESSAGE);
+    }
+  };
   const config = await (dbClient as any).projectCodeRepositoryConfig.findUnique(
     {
       where: { id: configId },
@@ -679,6 +700,7 @@ export async function refreshRepoCache(
     // per-file rate limits. Fall back to the API tree-walk + per-file fetch
     // when the provider has no archive support or the archive download fails.
     let tree: ArchiveTree | null = null;
+    await assertNotCancelled();
     try {
       tree = await adapter.downloadArchiveTree(branch);
     } catch (archiveErr) {
@@ -689,6 +711,7 @@ export async function refreshRepoCache(
       tree = null;
     }
 
+    await assertNotCancelled();
     if (tree) {
       const matched = applyPathPatterns(tree.files, pathPatterns);
       contentMap = await tree.getContents(new Set(matched.map((f) => f.path)));
@@ -718,7 +741,8 @@ export async function refreshRepoCache(
         files,
         adapter,
         branch,
-        10
+        10,
+        assertNotCancelled
       ));
     }
 
@@ -772,7 +796,9 @@ export async function refreshRepoCache(
       );
     }
     if (shouldScanIssues(config)) {
-      await runIssueScan(dbClient, config, adapter, branch);
+      await runIssueScan(dbClient, config, adapter, branch, {
+        isCancelled: opts.isCancelled,
+      });
     }
 
     return {

@@ -52,12 +52,23 @@ export interface StalePinCheckProgress {
 }
 
 export type StalePinCheckOutcome =
-  StalePinCheckReport | { error: string; checkedAt: string };
+  | StalePinCheckReport
+  | { error: string; checkedAt: string }
+  | { cancelled: true; checkedAt: string };
 
 export interface StalePinCheckOptions {
   /** Wait between rate-limit retries; tests shorten it. */
   retryDelayMs?: number;
   now?: () => Date;
+  /** Polled between progress writes; true stops the check before any verdict is written. */
+  isCancelled?: () => Promise<boolean>;
+}
+
+class StalePinCheckCancelledError extends Error {
+  constructor() {
+    super("Stale pin check cancelled");
+    this.name = "StalePinCheckCancelledError";
+  }
 }
 
 interface PinRow {
@@ -162,6 +173,11 @@ export async function checkStalePins(
   const now = opts.now ?? (() => new Date());
   const retryDelayMs = opts.retryDelayMs ?? DEFAULT_RETRY_MS;
   const startedAt = now().toISOString();
+  const assertNotCancelled = async () => {
+    if (opts.isCancelled && (await opts.isCancelled())) {
+      throw new StalePinCheckCancelledError();
+    }
+  };
   try {
     const loaded = await loadRepoConfigForWorker(db, configId, {
       purpose: "IMPACT",
@@ -244,10 +260,14 @@ export async function checkStalePins(
       }
       progress.checkedFiles++;
       if (progress.checkedFiles % PROGRESS_EVERY_FILES === 0) {
+        await assertNotCancelled();
         progress.progressAt = now().toISOString();
         await storeReport(db, configId, { ...progress });
       }
     }
+    // Verdicts are written all at once, so a cancel that lands during the
+    // reads leaves every pin as it was.
+    await assertNotCancelled();
 
     const checkedAt = now();
     for (const batch of chunk(freshIds, UPDATE_BATCH)) {
@@ -293,11 +313,16 @@ export async function checkStalePins(
     await storeReport(db, configId, report);
     return report;
   } catch (err) {
-    const report = {
-      error:
-        err instanceof Error ? err.message : "Unknown error during stale check",
-      checkedAt: now().toISOString(),
-    };
+    const report =
+      err instanceof StalePinCheckCancelledError
+        ? { cancelled: true as const, checkedAt: now().toISOString() }
+        : {
+            error:
+              err instanceof Error
+                ? err.message
+                : "Unknown error during stale check",
+            checkedAt: now().toISOString(),
+          };
     await storeReport(db, configId, report);
     return report;
   }

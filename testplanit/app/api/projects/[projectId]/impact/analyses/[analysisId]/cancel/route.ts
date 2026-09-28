@@ -5,6 +5,7 @@ import { getEnhancedDb } from "~/lib/auth/utils";
 import { authorizeProjectAdminForProject } from "~/lib/integrations/importAuthorization";
 import { getImpactAnalysisQueue } from "~/lib/queues";
 import { impactCancelKey } from "~/lib/services/impact/jobKeys";
+import { setCancelFlags } from "~/lib/services/jobCancel";
 import { isAccessPolicyError } from "~/lib/utils/errors";
 import { authOptions } from "~/server/auth";
 
@@ -79,7 +80,7 @@ export async function POST(
     }
 
     const connection = await queue!.client;
-    await connection.set(impactCancelKey(job.id as string), "1", { EX: 3600 });
+    await setCancelFlags(connection, [impactCancelKey(job.id as string)]);
     return NextResponse.json({
       message:
         "Cancellation requested, the analysis will stop at the next phase",

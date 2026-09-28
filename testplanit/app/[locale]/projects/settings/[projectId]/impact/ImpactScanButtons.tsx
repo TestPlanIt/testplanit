@@ -14,7 +14,7 @@ import { History, Loader2, ScanSearch, XCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useIssueScan } from "~/hooks/useIssueScan";
-import { isIssueScanStale, readIssueScanReport } from "./issueScanReport";
+import { isIssueScanInFlight, readIssueScanReport } from "./issueScanReport";
 
 export interface ImpactScanConnection {
   id: number;
@@ -70,35 +70,32 @@ export function ImpactScanButtons({
   const [requestedFull, setRequestedFull] = useState<boolean | null>(null);
   const [cancelling, setCancelling] = useState(false);
 
+  // The report comes through the queue-backed status resolver, so queued
+  // and running here mean the queue holds the job.
   const issueView = readIssueScanReport(config.issueScanReport);
-  const scanRunning = issueView.kind === "running";
-  const scanStale = scanRunning && isIssueScanStale(issueView.progress);
-  // Which button's scan is in flight: the report knows once the worker has
-  // written it; until then, the one that was clicked.
+  const scanInFlight = isIssueScanInFlight(issueView);
+  // Which button's scan is in flight: the report knows once the request was
+  // recorded; until then, the one that was clicked.
   const activeScanFull: boolean | null =
-    issueView.kind === "running" && !scanStale
+    issueView.kind === "running"
       ? issueView.progress.full
-      : isScanning
-        ? requestedFull
-        : null;
+      : issueView.kind === "queued"
+        ? issueView.queued.full
+        : isScanning
+          ? requestedFull
+          : null;
 
   // A scan queued elsewhere (the dialog, a webhook, a cache refresh) is
-  // followed too, unless its flag is old enough to be a leftover.
+  // followed too.
   const followedRef = useRef(false);
   useEffect(() => {
-    if (
-      scanRunning &&
-      !scanStale &&
-      !isScanning &&
-      !isFollowing &&
-      !followedRef.current
-    ) {
+    if (scanInFlight && !isScanning && !isFollowing && !followedRef.current) {
       followedRef.current = true;
       void followScan().finally(() => {
         followedRef.current = false;
       });
     }
-  }, [scanRunning, scanStale, isScanning, isFollowing, followScan]);
+  }, [scanInFlight, isScanning, isFollowing, followScan]);
 
   const handleScan = (full: boolean) => {
     setRequestedFull(full);
@@ -172,7 +169,7 @@ export function ImpactScanButtons({
           </TooltipTrigger>
           <TooltipContent>{t("tickets.scanFullHint")}</TooltipContent>
         </Tooltip>
-        {scanRunning && !scanStale && (
+        {scanInFlight && (
           <Button
             type="button"
             variant="outline"

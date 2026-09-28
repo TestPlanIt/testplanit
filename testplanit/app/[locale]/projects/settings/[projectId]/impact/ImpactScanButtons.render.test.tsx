@@ -87,6 +87,35 @@ describe("ImpactScanButtons", () => {
     });
   });
 
+  it("follows a queued scan and offers Cancel for it, showing which button asked", () => {
+    const queued = {
+      ...config,
+      issueScanReport: { queued: true, full: false, behind: { kind: "sweep" } },
+    };
+    render(
+      <ImpactScanButtons config={queued} refetchConfigs={refetchConfigs} />
+    );
+    expect(scan.followScan).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId("impact-repo-scan-cancel-11")).toBeVisible();
+  });
+
+  it("neither follows nor offers Cancel for a scan the queue lost", () => {
+    const interrupted = {
+      ...config,
+      issueScanReport: {
+        interrupted: true,
+        startedAt: "2026-09-28T04:00:00Z",
+        scannedAt: "2026-09-28T10:00:00Z",
+      },
+    };
+    render(
+      <ImpactScanButtons config={interrupted} refetchConfigs={refetchConfigs} />
+    );
+    expect(scan.followScan).not.toHaveBeenCalled();
+    expect(screen.queryByTestId("impact-repo-scan-cancel-11")).toBeNull();
+    expect(screen.getByTestId("impact-repo-scan-recent-11")).toBeEnabled();
+  });
+
   it("shows the hook's error under the buttons", () => {
     scan.scanError = "boom";
     render(

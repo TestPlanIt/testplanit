@@ -2114,7 +2114,8 @@
           "repositoryRequired": "需要存储库"
         },
         "disconnectWarningCache": "删除所有缓存的存储库文件",
-        "disconnectWarningPatterns": "移除路径模式和分支配置"
+        "disconnectWarningPatterns": "移除路径模式和分支配置",
+        "refreshInterrupted": "缓存刷新在完成前被中断。请再次刷新以完成。"
       },
       "advanced": {
         "description": "每个项目都设有针对特定功能的开关。新增的开关将在此处显示。",
@@ -2328,7 +2329,18 @@
           "removed": "{count, plural, =0 {未删除任何陈旧引脚} other {已删除 # 个陈旧引脚}}",
           "removeFailed": "无法删除陈旧的引脚",
           "removeConfirm": "删除 {count, plural, other {# 个代码引脚}} 上次检查在 {name} 的分支尖端处找不到？",
-          "removeConfirmNote": "已关闭陈旧徽章的引脚和由存储库标记维护的引脚将保留。已删除的引脚可以从回收站恢复。"
+          "removeConfirmNote": "已关闭陈旧徽章的引脚和由存储库标记维护的引脚将保留。已删除的引脚可以从回收站恢复。",
+          "checkCancelled": "上次检查已取消",
+          "interrupted": "在 {date} 启动的检查从未报告回来——工作程序可能已重新启动。再次将其加入队列以继续。"
+        },
+        "jobs": {
+          "queued": "已加入队列",
+          "queuedBehind": "{what, select, sweep {等待夜间缓存刷新完成。} refresh {等待缓存刷新完成。} scan {等待工单扫描完成。} stale {等待过期锁定检查完成。} other {等待另一个任务完成。}}",
+          "notResponding": "无响应",
+          "notRespondingHint": "仍在运行，但自 {date} 以来未报告任何进度。它可能在等待提供程序；如果它未继续，请取消它。",
+          "interruptedRescan": "已中断——重新扫描",
+          "interruptedRecheck": "已中断——再次检查",
+          "interruptedRefresh": "已中断——再次刷新"
         }
       },
       "access": {
@@ -6673,6 +6685,13 @@
           "question": "你想强制删除这个职位吗？",
           "warning": "这将尝试多次移除该任务，每次移除操作都会有延迟。注意：如果该任务确实被正在运行的工作进程锁定，则移除操作仍可能失败。",
           "confirm": "强制移除"
+        },
+        "cancelJob": {
+          "button": "取消任务"
+        },
+        "activeJob": {
+          "title": "一个工作进程正在处理此任务",
+          "cancelHint": "取消要求工作进程在下次检查时停止；任务停止后将离开队列。强制移除仅在持有该任务的工作进程已消失且其锁已过期时才有效。"
         }
       }
     },

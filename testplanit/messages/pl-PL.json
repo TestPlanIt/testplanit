@@ -2114,7 +2114,8 @@
           "repositoryRequired": "Repozytorium jest wymagane"
         },
         "disconnectWarningCache": "Usuń wszystkie pliki z pamięci podręcznej repozytorium",
-        "disconnectWarningPatterns": "Usuń wzorzec ścieżki i konfiguracje gałęzi"
+        "disconnectWarningPatterns": "Usuń wzorzec ścieżki i konfiguracje gałęzi",
+        "refreshInterrupted": "Odświeżanie pamięci podręcznej zostało przerwane przed zakończeniem. Odśwież ponownie, aby dokończyć."
       },
       "advanced": {
         "description": "Przełączniki dla poszczególnych projektów, umożliwiające tworzenie funkcji, które są brane pod uwagę. Nowe przełączniki będą się pojawiać tutaj w miarę ich wprowadzania.",
@@ -2328,7 +2329,18 @@
           "removed": "{count, plural, =0 {Brak usunięte starych szpilek} one {# stara szpila usunięta} other {# stare szpilki usunięte}}",
           "removeFailed": "Nie można było usunąć starych szpilek",
           "removeConfirm": "Usunąć {count, plural, one {# Code Pin} other {# Code Pins}}, które ostatnie sprawdzenie nie mogło znaleźć na górze {name}?",
-          "removeConfirmNote": "Szpilki, których badge Stale został odrzucony i szpilki utrzymywane przez znaczniki repozytorium są przechowywane. Usunięte szpilki można przywrócić z kosza."
+          "removeConfirmNote": "Szpilki, których badge Stale został odrzucony i szpilki utrzymywane przez znaczniki repozytorium są przechowywane. Usunięte szpilki można przywrócić z kosza.",
+          "checkCancelled": "Ostatnia kontrola anulowana",
+          "interrupted": "Kontrola rozpoczęta {date} nigdy nie zgłosiła się — pracownik mógł zostać ponownie uruchomiony. Umieść ją w kolejce ponownie, aby kontynuować."
+        },
+        "jobs": {
+          "queued": "W kolejce",
+          "queuedBehind": "{what, select, sweep {Oczekiwanie na zakończenie nocnego odświeżenia pamięci podręcznej.} refresh {Oczekiwanie na zakończenie odświeżenia pamięci podręcznej.} scan {Oczekiwanie na zakończenie skanowania biletów.} stale {Oczekiwanie na zakończenie kontroli nieświeżych pinów.} other {Oczekiwanie na zakończenie innego zadania.}}",
+          "notResponding": "Nie odpowiada",
+          "notRespondingHint": "Nadal działa, ale od {date} nie zgłoszono żadnego postępu. Może czekać na dostawcę; anuluj, jeśli nie wznowi pracy.",
+          "interruptedRescan": "Przerwane — ponowne skanowanie",
+          "interruptedRecheck": "Przerwane — sprawdź ponownie",
+          "interruptedRefresh": "Przerwane — odśwież ponownie"
         }
       },
       "access": {
@@ -6673,6 +6685,13 @@
           "question": "Czy chcesz wymusić usunięcie tego zadania?",
           "warning": "Spowoduje to wielokrotną próbę usunięcia go z opóźnieniem. Uwaga: nawet jeśli zadanie jest rzeczywiście zablokowane przez działający proces roboczy, może się nie powieść.",
           "confirm": "Wymuś usunięcie"
+        },
+        "cancelJob": {
+          "button": "Anuluj zadanie"
+        },
+        "activeJob": {
+          "title": "Worker przetwarza to zadanie",
+          "cancelHint": "Anulowanie prosi workera o zatrzymanie się przy następnym sprawdzeniu; zadanie opuszcza kolejkę po zatrzymaniu się. Wymuszenie usunięcia działa tylko wtedy, gdy worker, który przechowywał zadanie, zniknął i jego blokada wygasła."
         }
       }
     },

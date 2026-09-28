@@ -21,6 +21,7 @@ const messages = {
   networkError: "Network error",
   refreshComplete: (fileCount: number) => `Done: ${fileCount}`,
   refreshInProgress: "Still running",
+  interrupted: "Interrupted",
 };
 
 const target = { repositoryId: 3, configId: 11 };

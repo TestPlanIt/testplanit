@@ -48,10 +48,18 @@ function makeParams() {
   return { params: Promise.resolve({ id: "8" }) };
 }
 
-function makeQueue(jobs: Array<Record<string, unknown>> = []) {
+function makeQueue(existing: Record<string, unknown> | null = null) {
   return {
-    getJobs: vi.fn().mockResolvedValue(jobs),
-    add: vi.fn().mockResolvedValue({ id: "job-9" }),
+    getJob: vi.fn().mockResolvedValue(existing),
+    add: vi.fn().mockResolvedValue({ id: "scan-issues-9" }),
+  };
+}
+
+function liveJob(state: string) {
+  return {
+    id: "scan-issues-9",
+    getState: vi.fn().mockResolvedValue(state),
+    remove: vi.fn().mockResolvedValue(undefined),
   };
 }
 
@@ -124,8 +132,9 @@ describe("POST /api/code-repositories/[id]/scan-issues", () => {
     expect(res.status).toBe(503);
   });
 
-  it("marks the config running and queues a full-history scan", async () => {
+  it("marks the config queued, not running, and adds a full-history scan under its own id", async () => {
     (getCurrentTenantId as any).mockReturnValue("tenant-a");
+    queue.add.mockResolvedValue({ id: "scan-issues-tenant-a-9" });
 
     const res = await POST(
       request({ projectConfigId: 9, full: true }),
@@ -133,44 +142,67 @@ describe("POST /api/code-repositories/[id]/scan-issues", () => {
     );
 
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ queued: true, jobId: "job-9" });
+    expect(await res.json()).toEqual({
+      queued: true,
+      jobId: "scan-issues-tenant-a-9",
+    });
     expect(db.projectCodeRepositoryConfig.update).toHaveBeenCalledWith({
       where: { id: 9 },
       data: {
-        issueScanReport: expect.objectContaining({
-          running: true,
+        issueScanReport: {
+          queued: true,
           full: true,
-          scannedCommits: 0,
-        }),
+          requestedAt: expect.any(String),
+        },
       },
     });
-    expect(queue.add).toHaveBeenCalledWith(JOB_SCAN_REPO_ISSUES, {
-      configId: 9,
-      full: true,
-      tenantId: "tenant-a",
-    });
+    expect(queue.getJob).toHaveBeenCalledWith("scan-issues-tenant-a-9");
+    expect(queue.add).toHaveBeenCalledWith(
+      JOB_SCAN_REPO_ISSUES,
+      { configId: 9, full: true, tenantId: "tenant-a" },
+      { jobId: "scan-issues-tenant-a-9" }
+    );
+    // The queued mark lands before the job exists, never after the worker's.
+    expect(
+      db.projectCodeRepositoryConfig.update.mock.invocationCallOrder[0]
+    ).toBeLessThan(queue.add.mock.invocationCallOrder[0]);
   });
 
   it("queues a recent-window scan when full is not asked for", async () => {
     await POST(request({ projectConfigId: "9" }), makeParams());
 
-    expect(queue.add).toHaveBeenCalledWith(JOB_SCAN_REPO_ISSUES, {
-      configId: 9,
-      full: false,
-      tenantId: undefined,
-    });
+    expect(queue.add).toHaveBeenCalledWith(
+      JOB_SCAN_REPO_ISSUES,
+      { configId: 9, full: false, tenantId: undefined },
+      { jobId: "scan-issues-9" }
+    );
   });
 
-  it("joins a scan already queued for the same config instead of adding another", async () => {
-    queue = makeQueue([
-      { id: "job-3", name: JOB_SCAN_REPO_ISSUES, data: { configId: 9 } },
-    ]);
+  it("joins a scan already queued or running for the same config instead of adding another", async () => {
+    for (const state of ["waiting", "active", "delayed"]) {
+      queue = makeQueue(liveJob(state));
+      (getRepoCacheQueue as any).mockReturnValue(queue);
+
+      const res = await POST(request({ projectConfigId: 9 }), makeParams());
+
+      expect(await res.json()).toEqual({
+        queued: true,
+        jobId: "scan-issues-9",
+      });
+      expect(queue.add).not.toHaveBeenCalled();
+      expect(db.projectCodeRepositoryConfig.update).not.toHaveBeenCalled();
+    }
+  });
+
+  it("drops a finished job still held by retention so the new scan can take its id", async () => {
+    const finished = liveJob("completed");
+    queue = makeQueue(finished);
     (getRepoCacheQueue as any).mockReturnValue(queue);
 
     const res = await POST(request({ projectConfigId: 9 }), makeParams());
 
-    expect(await res.json()).toEqual({ queued: true, jobId: "job-3" });
-    expect(queue.add).not.toHaveBeenCalled();
-    expect(db.projectCodeRepositoryConfig.update).not.toHaveBeenCalled();
+    expect(res.status).toBe(200);
+    expect(finished.remove).toHaveBeenCalled();
+    expect(queue.add).toHaveBeenCalled();
   });
 });

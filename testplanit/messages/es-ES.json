@@ -2114,7 +2114,8 @@
           "repositoryRequired": "Se requiere repositorio"
         },
         "disconnectWarningCache": "Eliminar todos los archivos del repositorio en caché",
-        "disconnectWarningPatterns": "Eliminar patrones de ruta y configuraciones de rama"
+        "disconnectWarningPatterns": "Eliminar patrones de ruta y configuraciones de rama",
+        "refreshInterrupted": "La actualización de caché se interrumpió antes de finalizar. Actualice nuevamente para completar."
       },
       "advanced": {
         "description": "Opciones de configuración específicas para cada proyecto. Las nuevas opciones aparecerán aquí a medida que se vayan implementando.",
@@ -2328,7 +2329,18 @@
           "removed": "{count, plural, =0 {Ninguna entrada obsoleta fue eliminada} one {# entrada obsoleta eliminada} other {# entradas obsoletas eliminadas}}",
           "removeFailed": "No se pudieron eliminar las entradas obsoletas",
           "removeConfirm": "¿Eliminar {count, plural, one {# Code Pin} other {# Code Pins}} que la última verificación no pudo encontrar en la punta de {name}?",
-          "removeConfirmNote": "Se mantienen las entradas cuya insignia Stale fue descartada y las entradas mantenidas por marcadores de repositorio. Las entradas eliminadas se pueden restaurar desde la Papelera."
+          "removeConfirmNote": "Se mantienen las entradas cuya insignia Stale fue descartada y las entradas mantenidas por marcadores de repositorio. Las entradas eliminadas se pueden restaurar desde la Papelera.",
+          "checkCancelled": "Última comprobación cancelada",
+          "interrupted": "Una comprobación iniciada {date} nunca reportó — el trabajador puede haber sido reiniciado. Póngalo en cola nuevamente para continuar."
+        },
+        "jobs": {
+          "queued": "En cola",
+          "queuedBehind": "{what, select, sweep {Esperando a que finalice la actualización de caché nocturna.} refresh {Esperando a que finalice una actualización de caché.} scan {Esperando a que finalice un escaneo de tickets.} stale {Esperando a que finalice una comprobación de pines obsoletos.} other {Esperando a que finalice otro trabajo.}}",
+          "notResponding": "Sin respuesta",
+          "notRespondingHint": "Aún en ejecución, pero no se ha reportado progreso desde {date}. Puede estar esperando al proveedor; cancélelo si no se reanuda.",
+          "interruptedRescan": "Interrumpido — volver a escanear",
+          "interruptedRecheck": "Interrumpido — comprobar nuevamente",
+          "interruptedRefresh": "Interrumpido — actualizar nuevamente"
         }
       },
       "access": {
@@ -6673,6 +6685,13 @@
           "question": "¿Quieres forzar la eliminación de este trabajo?",
           "warning": "Esto intentará eliminarlo varias veces con retrasos. Nota: Si el trabajo está realmente bloqueado por un trabajador en ejecución, aún podría fallar.",
           "confirm": "Forzar eliminación"
+        },
+        "cancelJob": {
+          "button": "Cancelar trabajo"
+        },
+        "activeJob": {
+          "title": "Un worker está procesando este trabajo",
+          "cancelHint": "Cancelar le pide al worker que se detenga en su próxima verificación; el trabajo sale de la cola una vez que se ha detenido. Forzar eliminación solo funciona cuando el worker que tenía el trabajo se ha ido y su bloqueo ha expirado."
         }
       }
     },

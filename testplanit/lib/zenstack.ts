@@ -27,6 +27,7 @@ import { getPoolConfig } from "./db/poolConfig";
 import { createDialect } from "./db/readWriteDialect";
 import { getReplicaUrls } from "./db/replicaConfig";
 import { esSyncPlugin } from "./zenstack-plugins/esSyncPlugin";
+import { repoJobStatusPlugin } from "./zenstack-plugins/repoJobStatusPlugin";
 import { sideEffectsPlugin } from "./zenstack-plugins/sideEffectsPlugin";
 
 function createClients() {
@@ -50,7 +51,15 @@ function createClients() {
   // functions read the row back through `rawClient` on a separate connection,
   // which cannot see uncommitted data. Indexing from inside the transaction
   // silently skipped rows whenever the transaction outlived the read.
-  const baseClient = rawClient.$use(sideEffectsPlugin).$use(esSyncPlugin);
+  // `repoJobStatusPlugin` is read-side: it reports a connection's jobs from
+  // the repo-cache queue instead of the saved flags, so the settings pages
+  // see Queued / Running / Interrupted through the RPC reads they already
+  // make. It sits on the base client so workers reading through rawClient
+  // never pay the queue lookups.
+  const baseClient = rawClient
+    .$use(sideEffectsPlugin)
+    .$use(esSyncPlugin)
+    .$use(repoJobStatusPlugin);
   // dangerouslyAllowRawSql: the sideEffectsPlugin's beforeEntityMutation hook
   // injects the audit-context GUC via a raw `SELECT set_config(...)` inside the
   // mutation's transaction. When a mutation originates from this policy client

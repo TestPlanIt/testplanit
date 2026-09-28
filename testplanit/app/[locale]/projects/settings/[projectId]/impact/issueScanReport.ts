@@ -1,4 +1,5 @@
 import type { IssueScanReport } from "~/lib/services/impact/issueScan";
+import type { RepoJobBehind } from "~/lib/services/impact/repoJobStatus";
 
 export type IssueScanRunningStage = "walk" | "import" | "inspect";
 
@@ -16,28 +17,29 @@ export interface IssueScanRunning {
   importedIssues: number;
 }
 
-/** A running flag older than this with no progress is treated as abandoned. */
-export const ISSUE_SCAN_STALE_MS = 30 * 60 * 1000;
-
-/**
- * True when a scan's running flag looks left behind: the worker that owned
- * it died or never knew the job, so nothing will clear it. The page then
- * offers to queue the scan again rather than waiting on it.
- */
-export function isIssueScanStale(
-  progress: IssueScanRunning,
-  now: number = Date.now()
-): boolean {
-  const last = progress.progressAt ?? progress.startedAt;
-  if (!last) return true;
-  const at = Date.parse(last);
-  if (!Number.isFinite(at)) return true;
-  return now - at > ISSUE_SCAN_STALE_MS;
+export interface IssueScanQueued {
+  full: boolean;
+  requestedAt: string | null;
+  /** What the worker is busy with, when the queue said. */
+  behind: RepoJobBehind | null;
 }
 
 export type IssueScanReportView =
   | { kind: "never" }
-  | { kind: "running"; progress: IssueScanRunning }
+  | { kind: "queued"; queued: IssueScanQueued }
+  | {
+      kind: "running";
+      progress: IssueScanRunning;
+      /** The queue holds the job, but progress stopped a while ago. */
+      unresponsive: boolean;
+    }
+  /** The queue lost the job while the report still said running. */
+  | {
+      kind: "interrupted";
+      full: boolean;
+      startedAt: string | null;
+      scannedAt: string | null;
+    }
   | { kind: "error"; error: string; scannedAt: string | null }
   | { kind: "cancelled"; full: boolean; scannedAt: string | null }
   | {
@@ -51,33 +53,59 @@ function asNumber(value: unknown): number {
   return typeof value === "number" && Number.isFinite(value) ? value : 0;
 }
 
+function asString(value: unknown): string | null {
+  return typeof value === "string" ? value : null;
+}
+
+const BEHIND_KINDS = new Set([
+  "scan-issues",
+  "stale-pins",
+  "refresh-cache",
+  "sweep",
+  "other",
+]);
+
+/** The `behind` the status resolver attaches to a queued report. */
+export function readJobBehind(raw: unknown): RepoJobBehind | null {
+  if (!raw || typeof raw !== "object") return null;
+  const record = raw as Record<string, unknown>;
+  if (typeof record.kind !== "string" || !BEHIND_KINDS.has(record.kind)) {
+    return null;
+  }
+  return {
+    kind: record.kind as RepoJobBehind["kind"],
+    configId: typeof record.configId === "number" ? record.configId : null,
+  };
+}
+
 /**
- * Classifies the `issueScanReport` JSON stored on an IMPACT config. The
- * repo-cache worker writes `{ running: true, ... }` with progress counts while
- * a scan walks the branch, `{ error, scannedAt }` when the scan failed, or the
- * full `IssueScanReport` when it ran.
+ * Classifies the `issueScanReport` JSON stored on an IMPACT config, as the
+ * queue-backed status resolver hands it out: `{ queued: true }` while the
+ * job waits, `{ running: true, ... }` with progress counts while a scan
+ * walks the branch, `{ interrupted: true }` when the queue lost the job,
+ * `{ cancelled: true }`, `{ error, scannedAt }` when the scan failed, or
+ * the full `IssueScanReport` when it ran.
  */
 export function readIssueScanReport(raw: unknown): IssueScanReportView {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
     return { kind: "never" };
   }
   const record = raw as Record<string, unknown>;
-  const scannedAt =
-    typeof record.scannedAt === "string" ? record.scannedAt : null;
+  const scannedAt = asString(record.scannedAt);
+  const full = record.full === true;
 
   if (record.running === true) {
     return {
       kind: "running",
+      unresponsive: record.unresponsive === true,
       progress: {
-        full: record.full === true,
+        full,
         stage:
           record.stage === "import" || record.stage === "inspect"
             ? record.stage
             : "walk",
-        startedAt:
-          typeof record.startedAt === "string" ? record.startedAt : null,
-        progressAt:
-          typeof record.progressAt === "string" ? record.progressAt : null,
+        startedAt: asString(record.startedAt),
+        progressAt: asString(record.progressAt),
         scannedCommits: asNumber(record.scannedCommits),
         cachedCommits: asNumber(record.cachedCommits),
         matchedCommits: asNumber(record.matchedCommits),
@@ -87,11 +115,29 @@ export function readIssueScanReport(raw: unknown): IssueScanReportView {
       },
     };
   }
+  if (record.queued === true) {
+    return {
+      kind: "queued",
+      queued: {
+        full,
+        requestedAt: asString(record.requestedAt),
+        behind: readJobBehind(record.behind),
+      },
+    };
+  }
+  if (record.interrupted === true) {
+    return {
+      kind: "interrupted",
+      full,
+      startedAt: asString(record.startedAt),
+      scannedAt,
+    };
+  }
   if (typeof record.error === "string") {
     return { kind: "error", error: record.error, scannedAt };
   }
   if (record.cancelled === true) {
-    return { kind: "cancelled", full: record.full === true, scannedAt };
+    return { kind: "cancelled", full, scannedAt };
   }
   if (scannedAt === null) {
     return { kind: "never" };
@@ -116,7 +162,7 @@ export function readIssueScanReport(raw: unknown): IssueScanReportView {
       unchanged: asNumber(record.unchanged),
       fetchCapped: record.fetchCapped === true,
       truncated: record.truncated === true,
-      full: record.full === true,
+      full,
       importedIssues: asNumber(record.importedIssues),
       importFailures: asNumber(record.importFailures),
       importSkipped: asNumber(record.importSkipped),
@@ -136,4 +182,9 @@ export function readIssueScanReport(raw: unknown): IssueScanReportView {
       scannedAt,
     },
   };
+}
+
+/** A scan is queued or running: the buttons wait and the page keeps polling. */
+export function isIssueScanInFlight(view: IssueScanReportView): boolean {
+  return view.kind === "queued" || view.kind === "running";
 }

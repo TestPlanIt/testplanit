@@ -1,6 +1,6 @@
 import type { APIRequestContext, Page } from "@playwright/test";
 import { expect, test } from "../../fixtures";
-import { mockImpactApi } from "../../utils/impact-mocks";
+import { mockImpactApi, mockRepoJobsApi } from "../../utils/impact-mocks";
 
 /**
  * Impact project settings (/projects/settings/[projectId]/impact).
@@ -15,6 +15,8 @@ import { mockImpactApi } from "../../utils/impact-mocks";
  *   input and the Linked Tickets switches persist `issueScanEnabled` and
  *   `issueResultLinks`; View
  *   opens it read-only; Disconnect on the card removes the connection.
+ * - Job states come from the queue: running, queued and pending flags that
+ *   no job backs are shown as interrupted, and the read rewrites them.
  * - A second repository can be connected alongside the first: the page lists
  *   both cards, the Connect dialog offers only repositories not yet
  *   connected, and a card's Disconnect removes only that connection.
@@ -367,6 +369,120 @@ test.describe("Impact project settings", () => {
       await expect(page.getByTestId("impact-repos-empty")).toBeVisible({
         timeout: 15000,
       });
+    });
+  });
+
+  test("reports jobs from the queue: flags the queue does not back show as interrupted", async ({
+    page,
+    api,
+    request,
+    baseURL,
+  }) => {
+    const ts = uid();
+    const base = baseURL || "http://localhost:3000";
+    const projectId = await api.createProject(`E2E Impact Jobs ${ts}`);
+    const repositoryId = await api.createCodeRepository(
+      `E2E Impact Repo ${ts}`
+    );
+    const config = await api.createImpactConfig(projectId, repositoryId, {
+      branch: "main",
+    });
+
+    await mockImpactApi(page, { configuredBranch: "main" });
+    await mockRepoJobsApi(page);
+
+    await test.step("Seed running and queued flags that no job in the queue backs", async () => {
+      // What a deploy leaves behind: the worker died mid-scan, the check was
+      // asked for but its job is gone, and a refresh was pending.
+      const res = await request.patch(
+        `${base}/api/model/projectCodeRepositoryConfig/update`,
+        {
+          data: {
+            where: { id: config.id },
+            data: {
+              issueScanReport: {
+                running: true,
+                full: true,
+                startedAt: "2026-09-28T04:00:00.000Z",
+                progressAt: "2026-09-28T04:06:00.000Z",
+                stage: "walk",
+                scannedCommits: 40,
+              },
+              stalePinReport: {
+                queued: true,
+                requestedAt: "2026-09-28T09:00:00.000Z",
+              },
+              cacheStatus: "pending",
+            },
+          },
+        }
+      );
+      expect(res.ok(), await res.text()).toBe(true);
+    });
+
+    await test.step("The card reports every job as interrupted, not as running", async () => {
+      await page.goto(`/en-US/projects/settings/${projectId}/impact`);
+      const card = page.getByTestId(`impact-repo-card-${config.id}`);
+      await expect(card).toBeVisible({ timeout: 15000 });
+      await expect(
+        page.getByTestId(`impact-repo-tickets-${config.id}`)
+      ).toContainText("Interrupted — rescan");
+      await expect(
+        page.getByTestId(`impact-repo-stale-${config.id}`)
+      ).toContainText("Interrupted — check again");
+      await expect(
+        page.getByTestId(`impact-repo-cache-${config.id}`)
+      ).toContainText("Interrupted — refresh again");
+      // Nothing is in flight, so the buttons are usable and Cancel is absent.
+      await expect(
+        page.getByTestId(`impact-repo-scan-recent-${config.id}`)
+      ).toBeEnabled();
+      await expect(
+        page.getByTestId(`impact-repo-stale-check-${config.id}`)
+      ).toBeEnabled();
+      await expect(
+        page.getByTestId(`impact-repo-scan-cancel-${config.id}`)
+      ).toHaveCount(0);
+    });
+
+    await test.step("The read rewrote the saved flags, so the leftovers are gone for good", async () => {
+      const res = await request.get(
+        `${base}/api/model/projectCodeRepositoryConfig/findFirst`,
+        {
+          params: {
+            q: JSON.stringify({
+              where: { id: config.id },
+              select: {
+                issueScanReport: true,
+                stalePinReport: true,
+                cacheStatus: true,
+              },
+            }),
+          },
+        }
+      );
+      const row = (await res.json()).data;
+      expect(row.issueScanReport).toMatchObject({
+        interrupted: true,
+        full: true,
+        startedAt: "2026-09-28T04:00:00.000Z",
+      });
+      expect(row.stalePinReport).toMatchObject({
+        interrupted: true,
+        startedAt: "2026-09-28T09:00:00.000Z",
+      });
+      expect(row.cacheStatus).toBe("interrupted");
+    });
+
+    await test.step("The dialog shows the interrupted scan and offers to queue it again", async () => {
+      await page.getByTestId(`impact-repo-view-${config.id}`).click();
+      const dialog = page.getByTestId("impact-repository-dialog");
+      await expect(dialog).toBeVisible({ timeout: 10000 });
+      await expect(
+        page.getByTestId("impact-issue-scan-interrupted")
+      ).toBeVisible();
+      await expect(page.getByTestId("impact-issue-scan-cancel")).toHaveCount(0);
+      await expect(page.getByTestId("impact-issue-scan-recent")).toBeEnabled();
     });
   });
 

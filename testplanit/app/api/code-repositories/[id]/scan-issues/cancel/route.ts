@@ -3,9 +3,10 @@ import { baseDb } from "@/lib/db";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
-import { JOB_SCAN_REPO_ISSUES } from "~/lib/queueNames";
 import { getRepoCacheQueue } from "~/lib/queues";
 import { issueScanCancelKey } from "~/lib/services/impact/jobKeys";
+import { findRepoJob, isLiveJobState } from "~/lib/services/impact/repoJobs";
+import { setCancelFlags } from "~/lib/services/jobCancel";
 import { authOptions } from "~/server/auth";
 
 interface RouteParams {
@@ -69,33 +70,31 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
         { status: 404 }
       );
     }
-    const running =
-      !!config.issueScanReport &&
-      typeof config.issueScanReport === "object" &&
-      (config.issueScanReport as { running?: unknown }).running === true;
-    const full =
-      !!config.issueScanReport &&
-      typeof config.issueScanReport === "object" &&
-      (config.issueScanReport as { full?: unknown }).full === true;
+    const report =
+      config.issueScanReport && typeof config.issueScanReport === "object"
+        ? (config.issueScanReport as {
+            running?: unknown;
+            queued?: unknown;
+            full?: unknown;
+          })
+        : null;
+    // The read above came through the queue-backed resolver, so a running
+    // or queued flag here is one the queue vouched for (or was just
+    // rewritten as interrupted, which is neither).
+    const running = report?.running === true || report?.queued === true;
     const cancelledReport = {
       cancelled: true,
-      full,
+      full: report?.full === true,
       scannedAt: new Date().toISOString(),
     };
 
     const queue = getRepoCacheQueue();
     const tenantId = getCurrentTenantId();
-    const jobs = queue
-      ? await queue.getJobs(["active", "waiting", "delayed"])
-      : [];
-    const job = jobs.find(
-      (j) =>
-        j.name === JOB_SCAN_REPO_ISSUES &&
-        Number(j.data?.configId) === configId &&
-        j.data?.tenantId === tenantId
-    );
+    const found = queue
+      ? await findRepoJob(queue, "scan-issues", configId, tenantId)
+      : null;
 
-    if (!job) {
+    if (!found || !isLiveJobState(found.state)) {
       if (running) {
         await (baseDb as any).projectCodeRepositoryConfig.update({
           where: { id: configId },
@@ -105,9 +104,8 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ cancelled: true, wasRunning: running });
     }
 
-    const state = await job.getState();
-    if (state === "waiting" || state === "delayed") {
-      await job.remove();
+    if (found.state !== "active") {
+      await found.job.remove();
       await (baseDb as any).projectCodeRepositoryConfig.update({
         where: { id: configId },
         data: { issueScanReport: cancelledReport },
@@ -116,9 +114,8 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     }
 
     // Active: the worker stops at its next check and writes the report.
-    const connection = await queue!.client;
-    await connection.set(issueScanCancelKey(configId), "1", { EX: 3600 });
-    return NextResponse.json({ cancelling: true, jobId: job.id });
+    await setCancelFlags(await queue!.client, [issueScanCancelKey(configId)]);
+    return NextResponse.json({ cancelling: true, jobId: found.job.id });
   } catch (err: unknown) {
     console.error("[POST scan-issues/cancel]:", err);
     const message =

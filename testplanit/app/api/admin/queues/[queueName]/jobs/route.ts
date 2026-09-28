@@ -4,6 +4,7 @@ import { getAllQueues } from "@/lib/queues";
 import { Job, Queue } from "bullmq";
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateApiToken } from "~/lib/api-token-auth";
+import { cancelFlagsForJob } from "~/lib/services/jobCancel";
 import { getServerAuthSession } from "~/server/auth";
 
 function getQueueByName(queueName: string): Queue | null {
@@ -149,6 +150,7 @@ export async function GET(
             finishedOn: job.finishedOn,
             processedOn: job.processedOn,
             state,
+            cancellable: cancelFlagsForJob(queueName, job) !== null,
           };
         } catch {
           // Return what we can — getState() may fail for scheduler entries

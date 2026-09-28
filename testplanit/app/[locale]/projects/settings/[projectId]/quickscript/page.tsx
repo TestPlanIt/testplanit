@@ -197,6 +197,7 @@ export default function QuickScriptPage() {
         refreshComplete: (fileCount) =>
           tRepo("refreshComplete", { fileCount: String(fileCount) }),
         refreshInProgress: tRepo("refreshInProgress"),
+        interrupted: tRepo("refreshInterrupted"),
       },
     });
 

@@ -2114,7 +2114,8 @@
           "repositoryRequired": "Depo gereklidir"
         },
         "disconnectWarningCache": "Önbelleğe alınmış tüm depo dosyalarını kaldırın",
-        "disconnectWarningPatterns": "Yol kalıbını ve dallanma yapılandırmalarını kaldırın"
+        "disconnectWarningPatterns": "Yol kalıbını ve dallanma yapılandırmalarını kaldırın",
+        "refreshInterrupted": "Önbellek yenilemesi tamamlanmadan kesildi. Tamamlamak için yeniden yenileyin."
       },
       "advanced": {
         "description": "Proje bazında, kişisel tercihlere dayalı özellikler için geçiş düğmeleri. Yeni geçiş düğmeleri eklendikçe burada görünecektir.",
@@ -2328,7 +2329,18 @@
           "removed": "{count, plural, =0 {Bayat pin kaldırılmadı} one {# bayat pin kaldırıldı} other {# bayat pin kaldırıldı}}",
           "removeFailed": "Bayat pin'ler kaldırılamadı",
           "removeConfirm": "Son kontrol {name} ucunda bulamadığı {count, plural, one {# Kod Pimi} other {# Kod Pimi}} kaldırılsın mı?",
-          "removeConfirmNote": "Bayat rozeti kapatılan pin'ler ve depo işaretçileri tarafından tutulan pin'ler tutulur. Kaldırılan pin'ler Çöp Kutusu'ndan geri yüklenebilir."
+          "removeConfirmNote": "Bayat rozeti kapatılan pin'ler ve depo işaretçileri tarafından tutulan pin'ler tutulur. Kaldırılan pin'ler Çöp Kutusu'ndan geri yüklenebilir.",
+          "checkCancelled": "Son kontrol iptal edildi",
+          "interrupted": "{date} tarihinde başlayan bir kontrol geri rapor vermedi — çalışan yeniden başlatılmış olabilir. Devam etmek için tekrar sıraya alın."
+        },
+        "jobs": {
+          "queued": "Kuyruğa alındı",
+          "queuedBehind": "{what, select, sweep {Gece önbellek yenilemesinin bitmesini bekliyor.} refresh {Bir önbellek yenilemesinin bitmesini bekliyor.} scan {Bir bilet taramasının bitmesini bekliyor.} stale {Eski bir pin kontrolünün bitmesini bekliyor.} other {Başka bir işin bitmesini bekliyor.}}",
+          "notResponding": "Yanıt vermiyor",
+          "notRespondingHint": "{date} tarihinden beri çalışıyor ancak ilerleme rapor edilmedi. Sağlayıcıyı bekliyor olabilir; devam etmezse iptal edin.",
+          "interruptedRescan": "Kesildi — yeniden tara",
+          "interruptedRecheck": "Kesildi — tekrar kontrol et",
+          "interruptedRefresh": "Kesildi — yeniden yenile"
         }
       },
       "access": {
@@ -6673,6 +6685,13 @@
           "question": "Bu işi zorla kaldırmak ister misiniz?",
           "warning": "Bu işlem, gecikmelerle birden fazla kez kaldırmayı deneyecektir. Not: Eğer işlem gerçekten çalışan bir işçi tarafından kilitlenmişse, yine de başarısız olabilir.",
           "confirm": "Zorla Kaldır"
+        },
+        "cancelJob": {
+          "button": "İşi iptal et"
+        },
+        "activeJob": {
+          "title": "Bir çalışan bu işi işliyor",
+          "cancelHint": "İptal et, çalışandan bir sonraki kontrolünde durmasını ister; iş durduğunda kuyruktan çıkar. Zorla Kaldır, yalnızca işi tutan çalışan gittikten ve kilidi süresi dolduğunda çalışır."
         }
       }
     },

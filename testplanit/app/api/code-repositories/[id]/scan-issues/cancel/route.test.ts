@@ -34,7 +34,7 @@ const params = () => ({ params: Promise.resolve({ id: "8" }) });
 
 function makeJob(state: string) {
   return {
-    id: "job-3",
+    id: "scan-issues-9",
     name: JOB_SCAN_REPO_ISSUES,
     data: { configId: 9 },
     getState: vi.fn().mockResolvedValue(state),
@@ -42,10 +42,10 @@ function makeJob(state: string) {
   };
 }
 
-function makeQueue(jobs: unknown[]) {
+function makeQueue(job: unknown = null) {
   const client = { set: vi.fn().mockResolvedValue("OK") };
   return {
-    getJobs: vi.fn().mockResolvedValue(jobs),
+    getJob: vi.fn().mockResolvedValue(job),
     client: Promise.resolve(client),
     _client: client,
   };
@@ -64,7 +64,7 @@ describe("POST /api/code-repositories/[id]/scan-issues/cancel", () => {
       issueScanReport: { running: true, full: true },
     });
     db.projectCodeRepositoryConfig.update.mockResolvedValue({});
-    (getRepoCacheQueue as any).mockReturnValue(makeQueue([]));
+    (getRepoCacheQueue as any).mockReturnValue(makeQueue());
   });
 
   it("returns 401 without a session and 403 for a plain user", async () => {
@@ -86,13 +86,15 @@ describe("POST /api/code-repositories/[id]/scan-issues/cancel", () => {
     );
   });
 
-  it("removes a waiting job and marks the report cancelled", async () => {
+  it("removes a waiting job, found by its deterministic id, and marks the report cancelled", async () => {
     const job = makeJob("waiting");
-    (getRepoCacheQueue as any).mockReturnValue(makeQueue([job]));
+    const queue = makeQueue(job);
+    (getRepoCacheQueue as any).mockReturnValue(queue);
 
     const res = await POST(request({ projectConfigId: 9 }), params());
 
     expect(await res.json()).toEqual({ cancelled: true, wasRunning: false });
+    expect(queue.getJob).toHaveBeenCalledWith("scan-issues-9");
     expect(job.remove).toHaveBeenCalled();
     expect(db.projectCodeRepositoryConfig.update).toHaveBeenCalledWith({
       where: { id: 9 },
@@ -108,25 +110,48 @@ describe("POST /api/code-repositories/[id]/scan-issues/cancel", () => {
 
   it("flags an active job for the worker to stop", async () => {
     const job = makeJob("active");
-    const queue = makeQueue([job]);
+    const queue = makeQueue(job);
     (getRepoCacheQueue as any).mockReturnValue(queue);
 
     const res = await POST(request({ projectConfigId: 9 }), params());
 
-    expect(await res.json()).toEqual({ cancelling: true, jobId: "job-3" });
+    expect(await res.json()).toEqual({
+      cancelling: true,
+      jobId: "scan-issues-9",
+    });
+    // The expiry goes positionally, the one form both a raw ioredis client
+    // and BullMQ's wrapped client take.
     expect(queue._client.set).toHaveBeenCalledWith(
       "impact:issue-scan:cancel:9",
       "1",
-      { EX: 3600 }
+      "EX",
+      3600
     );
     expect(job.remove).not.toHaveBeenCalled();
     expect(db.projectCodeRepositoryConfig.update).not.toHaveBeenCalled();
   });
 
-  it("clears a leftover running flag when no job exists", async () => {
+  it("clears a leftover running or queued flag when no live job exists", async () => {
     const res = await POST(request({ projectConfigId: 9 }), params());
 
     expect(await res.json()).toEqual({ cancelled: true, wasRunning: true });
+    expect(db.projectCodeRepositoryConfig.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: { issueScanReport: expect.objectContaining({ cancelled: true }) },
+      })
+    );
+
+    db.projectCodeRepositoryConfig.update.mockClear();
+    db.projectCodeRepositoryConfig.findUnique.mockResolvedValue({
+      id: 9,
+      purpose: "IMPACT",
+      issueScanReport: { queued: true, full: false },
+    });
+    (getRepoCacheQueue as any).mockReturnValue(makeQueue(makeJob("completed")));
+
+    const again = await POST(request({ projectConfigId: 9 }), params());
+
+    expect(await again.json()).toEqual({ cancelled: true, wasRunning: true });
     expect(db.projectCodeRepositoryConfig.update).toHaveBeenCalledWith(
       expect.objectContaining({
         data: { issueScanReport: expect.objectContaining({ cancelled: true }) },

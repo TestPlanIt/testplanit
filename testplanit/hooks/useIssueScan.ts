@@ -26,18 +26,17 @@ const DEFAULT_POLL_MS = 2500;
 /** ~30 minutes at the default interval: a full-history walk can be long. */
 const DEFAULT_MAX_POLLS = 720;
 
-function isRunning(report: unknown): boolean {
-  return (
-    !!report &&
-    typeof report === "object" &&
-    (report as Record<string, unknown>).running === true
-  );
+/** The queue-backed report says the scan is waiting for the worker or on it. */
+function isInFlight(report: unknown): boolean {
+  if (!report || typeof report !== "object") return false;
+  const record = report as Record<string, unknown>;
+  return record.running === true || record.queued === true;
 }
 
 /**
  * Queues a ticket scan for an Impact config (recent window or full history)
- * and polls the config's `issueScanReport` until the worker clears its
- * `running` flag. The report itself is read by the caller from the refetched
+ * and polls the config's `issueScanReport` until it is neither queued nor
+ * running. The report itself is read by the caller from the refetched
  * config; this hook only drives the request and the polling.
  */
 export function useIssueScan({
@@ -62,7 +61,7 @@ export function useIssueScan({
       await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
       if (unmounted.current) return;
       const { data } = await refetchConfig();
-      if (!isRunning(data?.issueScanReport)) return;
+      if (!isInFlight(data?.issueScanReport)) return;
     }
     toast.info(messages.stillRunning);
   }, [refetchConfig, maxPolls, pollIntervalMs, messages.stillRunning]);
@@ -147,9 +146,8 @@ export function useIssueScan({
   );
 
   /**
-   * Resume polling for a scan that was already running when the page opened.
-   * Following never blocks the buttons: a flag left behind by a worker that
-   * died mid-scan must stay recoverable by queueing again.
+   * Resume polling for a scan that was already queued or running when the
+   * page opened. Following never blocks the buttons.
    */
   const followScan = useCallback(async () => {
     setIsFollowing(true);

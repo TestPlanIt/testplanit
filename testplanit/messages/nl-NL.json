@@ -2114,7 +2114,8 @@
           "repositoryRequired": "Een repository is vereist"
         },
         "disconnectWarningCache": "Verwijder alle in de cache opgeslagen repositorybestanden",
-        "disconnectWarningPatterns": "Verwijder padpatroon- en vertakkingsconfiguraties"
+        "disconnectWarningPatterns": "Verwijder padpatroon- en vertakkingsconfiguraties",
+        "refreshInterrupted": "De cache-refresh is onderbroken voordat deze was voltooid. Vernieuwen om dit af te ronden."
       },
       "advanced": {
         "description": "Per project kunt u opties in- of uitschakelen voor specifieke functies. Nieuwe opties verschijnen hier zodra ze beschikbaar komen.",
@@ -2328,7 +2329,18 @@
           "removed": "{count, plural, =0 {Geen verouderde pins zijn verwijderd} one {# verouderde pin verwijderd} other {# verouderde pins verwijderd}}",
           "removeFailed": "Kon de verouderde pins niet verwijderen",
           "removeConfirm": "Verwijder {count, plural, one {# code pin} other {# code pins}} die de laatste controle niet kon vinden op de tip van {name}?",
-          "removeConfirmNote": "Pins waarvan het verouderde badge is genegeerd en pins die door repositorymarkeringen worden onderhouden, blijven behouden. Verwijderde pins kunnen worden hersteld uit de Trash."
+          "removeConfirmNote": "Pins waarvan het verouderde badge is genegeerd en pins die door repositorymarkeringen worden onderhouden, blijven behouden. Verwijderde pins kunnen worden hersteld uit de Trash.",
+          "checkCancelled": "Laatste controle geannuleerd",
+          "interrupted": "Een controle die op {date} is gestart, heeft niet meer gemeld — de worker is mogelijk opnieuw gestart. Plaats deze opnieuw in de wachtrij om door te gaan."
+        },
+        "jobs": {
+          "queued": "In wachtrij geplaatst",
+          "queuedBehind": "{what, select, sweep {Wachten tot de nachtelijke cache-refresh is voltooid.} refresh {Wachten tot een cache-refresh is voltooid.} scan {Wachten tot een ticket-scan is voltooid.} stale {Wachten tot een controle op verouderde pinnen is voltooid.} other {Wachten tot een ander item klaar is.}}",
+          "notResponding": "Reageert niet",
+          "notRespondingHint": "Nog steeds actief, maar sinds {date} is geen voortgang gerapporteerd. Dit kan betekenen dat het op de provider wacht; annuleer het als het niet wordt hervat.",
+          "interruptedRescan": "Onderbroken — opnieuw scannen",
+          "interruptedRecheck": "Onderbroken — opnieuw controleren",
+          "interruptedRefresh": "Onderbroken — opnieuw vernieuwen"
         }
       },
       "access": {
@@ -6673,6 +6685,13 @@
           "question": "Wilt u deze taak geforceerd verwijderen?",
           "warning": "Hiermee wordt geprobeerd de taak meerdere keren te verwijderen, met vertraging. Let op: zelfs als de taak daadwerkelijk is vergrendeld door een actieve worker, kan deze nog steeds mislukken.",
           "confirm": "Geforceerd verwijderen"
+        },
+        "cancelJob": {
+          "button": "Taak annuleren"
+        },
+        "activeJob": {
+          "title": "Een worker verwerkt deze taak",
+          "cancelHint": "Annuleren vraagt de worker om te stoppen bij de volgende controle; de taak verlaat de wachtrij zodra deze is gestopt. Geforceerd verwijderen werkt alleen als de worker die de taak behield weg is en de vergrendeling is verlopen."
         }
       }
     },

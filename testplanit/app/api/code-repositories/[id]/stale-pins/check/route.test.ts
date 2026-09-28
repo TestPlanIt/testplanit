@@ -52,10 +52,10 @@ function makeParams() {
   return { params: Promise.resolve({ id: "8" }) };
 }
 
-function makeQueue(jobs: Array<Record<string, unknown>> = []) {
+function makeQueue(existing: Record<string, unknown> | null = null) {
   return {
-    getJobs: vi.fn().mockResolvedValue(jobs),
-    add: vi.fn().mockResolvedValue({ id: "job-9" }),
+    getJob: vi.fn().mockResolvedValue(existing),
+    add: vi.fn().mockResolvedValue({ id: "stale-pins-9" }),
   };
 }
 
@@ -137,38 +137,41 @@ describe("POST /api/code-repositories/[id]/stale-pins/check", () => {
     expect(res.status).toBe(503);
   });
 
-  it("marks the config running and queues the check", async () => {
+  it("marks the config queued, not running, and adds the check under its own id", async () => {
     (getCurrentTenantId as any).mockReturnValue("tenant-a");
+    queue.add.mockResolvedValue({ id: "stale-pins-tenant-a-9" });
 
     const res = await POST(request({ projectConfigId: "9" }), makeParams());
 
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ queued: true, jobId: "job-9" });
+    expect(await res.json()).toEqual({
+      queued: true,
+      jobId: "stale-pins-tenant-a-9",
+    });
     expect(db.projectCodeRepositoryConfig.update).toHaveBeenCalledWith({
       where: { id: 9 },
       data: {
-        stalePinReport: expect.objectContaining({
-          running: true,
-          checkedFiles: 0,
-          totalFiles: 0,
-        }),
+        stalePinReport: { queued: true, requestedAt: expect.any(String) },
       },
     });
-    expect(queue.add).toHaveBeenCalledWith(JOB_CHECK_STALE_PINS, {
-      configId: 9,
-      tenantId: "tenant-a",
-    });
+    expect(queue.add).toHaveBeenCalledWith(
+      JOB_CHECK_STALE_PINS,
+      { configId: 9, tenantId: "tenant-a" },
+      { jobId: "stale-pins-tenant-a-9" }
+    );
   });
 
   it("joins a check already queued for the same config instead of adding another", async () => {
-    queue = makeQueue([
-      { id: "job-3", name: JOB_CHECK_STALE_PINS, data: { configId: 9 } },
-    ]);
+    queue = makeQueue({
+      id: "stale-pins-9",
+      getState: vi.fn().mockResolvedValue("waiting"),
+      remove: vi.fn(),
+    });
     (getRepoCacheQueue as any).mockReturnValue(queue);
 
     const res = await POST(request({ projectConfigId: 9 }), makeParams());
 
-    expect(await res.json()).toEqual({ queued: true, jobId: "job-3" });
+    expect(await res.json()).toEqual({ queued: true, jobId: "stale-pins-9" });
     expect(queue.add).not.toHaveBeenCalled();
     expect(db.projectCodeRepositoryConfig.update).not.toHaveBeenCalled();
   });

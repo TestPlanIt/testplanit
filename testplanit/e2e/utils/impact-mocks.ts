@@ -559,6 +559,72 @@ export async function mockImpactApi(
   return calls;
 }
 
+export interface RepoJobsMockCalls {
+  /** Bodies of POST scan-issues, in order. */
+  scans: Array<Record<string, unknown>>;
+  /** Bodies of POST scan-issues/cancel, in order. */
+  scanCancels: Array<Record<string, unknown>>;
+  /** Bodies of POST stale-pins/check, in order. */
+  staleChecks: Array<Record<string, unknown>>;
+  /** Bodies of POST refresh-cache, in order. */
+  refreshes: Array<Record<string, unknown>>;
+}
+
+/**
+ * Answer the repo-cache job requests the Impact settings page sends the way
+ * the routes do — `{ queued: true, jobId }` under the deterministic id one
+ * connection's job of a kind gets — without a job ever reaching BullMQ.
+ * What the page shows for the job afterwards comes from the config row the
+ * page refetches, so a spec sets the row's `issueScanReport`,
+ * `stalePinReport` or `cacheStatus` to drive Queued, Running, Not
+ * responding or Interrupted.
+ */
+export async function mockRepoJobsApi(page: Page): Promise<RepoJobsMockCalls> {
+  const calls: RepoJobsMockCalls = {
+    scans: [],
+    scanCancels: [],
+    staleChecks: [],
+    refreshes: [],
+  };
+  const body = (route: Route): Record<string, unknown> => {
+    try {
+      return route.request().postDataJSON() as Record<string, unknown>;
+    } catch {
+      return {};
+    }
+  };
+  const queued = (route: Route, kind: string, sink: unknown[]) => {
+    if (route.request().method() !== "POST") return route.fallback();
+    const data = body(route);
+    sink.push(data);
+    return fulfillJson(route, {
+      queued: true,
+      jobId: `${kind}-${data.projectConfigId ?? 0}`,
+    });
+  };
+
+  await page.route(
+    /\/api\/code-repositories\/\d+\/scan-issues\/cancel$/,
+    (route) => {
+      if (route.request().method() !== "POST") return route.fallback();
+      calls.scanCancels.push(body(route));
+      return fulfillJson(route, { cancelled: true, wasRunning: true });
+    }
+  );
+  await page.route(/\/api\/code-repositories\/\d+\/scan-issues$/, (route) =>
+    queued(route, "scan-issues", calls.scans)
+  );
+  await page.route(
+    /\/api\/code-repositories\/\d+\/stale-pins\/check$/,
+    (route) => queued(route, "stale-pins", calls.staleChecks)
+  );
+  await page.route(/\/api\/code-repositories\/\d+\/refresh-cache$/, (route) =>
+    queued(route, "refresh-cache", calls.refreshes)
+  );
+
+  return calls;
+}
+
 /** POST /api/repository-cases/[caseId]/code-pins request body. */
 export interface CodePinCreateBody {
   configId: number;

@@ -2,8 +2,8 @@ import { getCurrentTenantId } from "@/lib/multiTenantDb";
 import { baseDb } from "@/lib/db";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
-import { JOB_REFRESH_SINGLE_REPO_CACHE } from "~/lib/queueNames";
 import { getRepoCacheQueue } from "~/lib/queues";
+import { enqueueRepoJob } from "~/lib/services/impact/repoJobs";
 import { authOptions } from "~/server/auth";
 
 interface RouteParams {
@@ -80,28 +80,22 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     const tenantId = getCurrentTenantId();
 
-    // Reuse an in-flight refresh for the same config+tenant rather than piling
-    // up duplicate jobs if the user clicks Refresh repeatedly.
-    const existingJobs = await queue.getJobs(["active", "waiting", "delayed"]);
-    const existing = existingJobs.find(
-      (j) =>
-        j.name === JOB_REFRESH_SINGLE_REPO_CACHE &&
-        Number(j.data?.configId) === configId &&
-        j.data?.tenantId === tenantId
-    );
-
-    // Mark pending immediately so the UI reflects "in progress" before the
-    // worker picks the job up.
-    await (baseDb as any).projectCodeRepositoryConfig.update({
-      where: { id: configId },
-      data: { cacheStatus: "pending", cacheError: null },
+    // One refresh per config+tenant at a time: a click while one is queued
+    // or running joins it. `pending` marks the request; the queue-backed
+    // status resolver reports it as queued until the worker picks it up.
+    const { jobId } = await enqueueRepoJob(queue, {
+      kind: "refresh-cache",
+      configId,
+      tenantId,
+      beforeAdd: async () => {
+        await (baseDb as any).projectCodeRepositoryConfig.update({
+          where: { id: configId },
+          data: { cacheStatus: "pending", cacheError: null },
+        });
+      },
     });
 
-    const job =
-      existing ??
-      (await queue.add(JOB_REFRESH_SINGLE_REPO_CACHE, { configId, tenantId }));
-
-    return NextResponse.json({ queued: true, jobId: job.id });
+    return NextResponse.json({ queued: true, jobId });
   } catch (err: unknown) {
     console.error("[POST refresh-cache]:", err);
     const message =

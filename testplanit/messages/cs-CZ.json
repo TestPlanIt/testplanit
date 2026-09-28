@@ -2114,7 +2114,8 @@
           "repositoryRequired": "Repozitář je povinný"
         },
         "disconnectWarningCache": "Odebrání všech souborů repozitáře uložených v mezipaměti",
-        "disconnectWarningPatterns": "Odebrání konfigurací vzorů cest a větví"
+        "disconnectWarningPatterns": "Odebrání konfigurací vzorů cest a větví",
+        "refreshInterrupted": "Obnovení mezipaměti bylo přerušeno dříve, než se dokončilo. Obnovte znovu, abyste jej dokončili."
       },
       "advanced": {
         "description": "Přepínače pro jednotlivé projekty pro volitelné funkce. Nové přepínače se zde objeví, jakmile budou zavedeny.",
@@ -2328,7 +2329,18 @@
           "removed": "{count, plural, =0 {Žádné zastaralé piny nebyly odstraněny} one {# zastaralý pin odstraněn} other {# zastaralé piny odstraněny}}",
           "removeFailed": "Odebrat zastaralé piny se nepodařilo",
           "removeConfirm": "Odebrat {count, plural, one {# značku Code Pin} few {# značky Code Pin} many {# značky Code Pin} other {# značek Code Pin}}, které poslední kontrola nemohla najít na hrotu {name}?",
-          "removeConfirmNote": "Piny, jejichž příznak Zastaralý byl zrušen, a piny udržované značkami úložiště jsou zachovány. Odstraněné piny lze obnovit z Koše."
+          "removeConfirmNote": "Piny, jejichž příznak Zastaralý byl zrušen, a piny udržované značkami úložiště jsou zachovány. Odstraněné piny lze obnovit z Koše.",
+          "checkCancelled": "Poslední kontrola zrušena",
+          "interrupted": "Kontrola spuštěná {date} se nikdy nehlásila zpět — pracovní proces mohl být restartován. Zařaďte ji znovu, abyste pokračovali."
+        },
+        "jobs": {
+          "queued": "Zařazeno do fronty",
+          "queuedBehind": "{what, select, sweep {Čekání na dokončení noční aktualizace mezipaměti.} refresh {Čekání na dokončení aktualizace mezipaměti.} scan {Čekání na dokončení skenování lístku.} stale {Čekání na dokončení kontroly zastaralého připnutí.} other {Čekání na dokončení jiné úlohy.}}",
+          "notResponding": "Nereaguje",
+          "notRespondingHint": "Stále běží, ale od {date} nebyl hlášen žádný pokrok. Může čekat na poskytovatele; zrušte ji, pokud se neobnoví.",
+          "interruptedRescan": "Přerušeno — znovu skenovat",
+          "interruptedRecheck": "Přerušeno — zkontrolovat znovu",
+          "interruptedRefresh": "Přerušeno — obnovit znovu"
         }
       },
       "access": {
@@ -6673,6 +6685,13 @@
           "question": "Chcete vynutit odstranění této úlohy?",
           "warning": "Systém se pokusí úlohu odstranit vícekrát s prodlevami. Poznámka: Pokud je úloha skutečně uzamčena běžícím pracovním procesem, odstranění se přesto nemusí zdařit.",
           "confirm": "Vynutit odstranění"
+        },
+        "cancelJob": {
+          "button": "Zrušit úlohu"
+        },
+        "activeJob": {
+          "title": "Pracovník zpracovává tuto úlohu",
+          "cancelHint": "Zrušení požádá pracovníka, aby zastavil při příštím ověření; úloha opustí frontu, jakmile se zastaví. Vynucené odebrání funguje pouze v případě, že pracovník, který úlohu držel, je pryč a jeho zámek vypršel."
         }
       }
     },

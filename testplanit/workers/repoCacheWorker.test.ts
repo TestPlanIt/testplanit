@@ -23,9 +23,20 @@ vi.mock("../lib/valkey", () => ({
 // Mock the multiTenantDb module to return our mock db client
 vi.mock("../lib/multiTenantDb", () => ({
   getDbClientForJob: vi.fn(() => mockDb),
+  getAllTenantIds: vi.fn(() => []),
   isMultiTenantMode: vi.fn(() => false),
   validateMultiTenantJobData: vi.fn(),
   disconnectAllTenantClients: vi.fn(),
+}));
+
+const mockGetRepoCacheQueue = vi.fn();
+vi.mock("../lib/queues", () => ({
+  getRepoCacheQueue: () => mockGetRepoCacheQueue(),
+}));
+
+const mockMarkInterrupted = vi.fn();
+vi.mock("../lib/services/impact/repoJobStatus", () => ({
+  markInterruptedRepoJobs: (...args: any[]) => mockMarkInterrupted(...args),
 }));
 
 // Mock repoFileCache
@@ -118,7 +129,9 @@ describe("RepoCacheWorker", () => {
 
       const result = await processor(mockJob);
 
-      expect(mockRefreshRepoCache).toHaveBeenCalledWith(101, mockDb);
+      expect(mockRefreshRepoCache).toHaveBeenCalledWith(101, mockDb, {
+        isCancelled: expect.any(Function),
+      });
       expect(result).toMatchObject({
         status: "completed",
         successCount: 1,
@@ -147,7 +160,11 @@ describe("RepoCacheWorker", () => {
 
       const result = await processor(mockJob);
 
-      expect(mockRefreshRepoCache).toHaveBeenCalledWith(101, mockDb);
+      expect(mockRefreshRepoCache).toHaveBeenCalledWith(
+        101,
+        mockDb,
+        expect.anything()
+      );
       expect(result).toMatchObject({
         status: "completed",
         failCount: 1,
@@ -180,7 +197,11 @@ describe("RepoCacheWorker", () => {
       const result = await processor(mockJob);
 
       // Second config should still be processed
-      expect(mockRefreshRepoCache).toHaveBeenCalledWith(102, mockDb);
+      expect(mockRefreshRepoCache).toHaveBeenCalledWith(
+        102,
+        mockDb,
+        expect.anything()
+      );
       expect(result).toMatchObject({
         status: "completed",
         failCount: 1,
@@ -317,7 +338,86 @@ describe("RepoCacheWorker", () => {
     });
   });
 
+  describe(`${JOB_REFRESH_EXPIRED_CACHES} progress`, () => {
+    it("records which config the sweep is on before each refresh", async () => {
+      mockDb.projectCodeRepositoryConfig.findMany.mockResolvedValue(
+        mockConfigs
+      );
+      mockGetFiles.mockResolvedValue([]);
+      mockRefreshRepoCache.mockResolvedValue({ success: true, fileCount: 1 });
+      const updateProgress = vi.fn().mockResolvedValue(undefined);
+
+      const { processor } = await import("./repoCacheWorker");
+      await processor({
+        id: "job-sweep",
+        name: JOB_REFRESH_EXPIRED_CACHES,
+        data: {},
+        updateProgress,
+      } as unknown as Job);
+
+      expect(updateProgress).toHaveBeenNthCalledWith(1, {
+        configId: 101,
+        at: expect.any(Number),
+        index: 0,
+        total: 2,
+      });
+      expect(updateProgress).toHaveBeenNthCalledWith(2, {
+        configId: 102,
+        at: expect.any(Number),
+        index: 1,
+        total: 2,
+      });
+    });
+  });
+
+  describe("start-up cleanup", () => {
+    it("marks flags the queue does not back as interrupted", async () => {
+      const queue = { getJob: vi.fn(), getActive: vi.fn() };
+      mockGetRepoCacheQueue.mockReturnValue(queue);
+      mockMarkInterrupted.mockResolvedValue(2);
+
+      const { cleanupInterruptedRepoJobs } = await import("./repoCacheWorker");
+      await cleanupInterruptedRepoJobs();
+
+      expect(mockMarkInterrupted).toHaveBeenCalledWith(
+        mockDb,
+        queue,
+        undefined
+      );
+    });
+
+    it("does nothing without a queue", async () => {
+      mockGetRepoCacheQueue.mockReturnValue(null);
+
+      const { cleanupInterruptedRepoJobs } = await import("./repoCacheWorker");
+      await cleanupInterruptedRepoJobs();
+
+      expect(mockMarkInterrupted).not.toHaveBeenCalled();
+    });
+  });
+
   describe(`${JOB_CHECK_STALE_PINS} job`, () => {
+    it("counts a cancelled check as skipped, not failed", async () => {
+      mockCheckStalePins.mockResolvedValue({
+        cancelled: true,
+        checkedAt: "2026-09-28T00:00:00Z",
+      });
+
+      const { processor } = await import("./repoCacheWorker");
+
+      const result = await processor({
+        id: "job-stale-cancel",
+        name: JOB_CHECK_STALE_PINS,
+        data: { configId: 101 },
+      } as Job);
+
+      expect(result).toMatchObject({
+        successCount: 0,
+        failCount: 0,
+        skippedCount: 1,
+      });
+    });
+
     it("runs the stale pin check for the config and counts a success", async () => {
       mockCheckStalePins.mockResolvedValue({
         pins: 40,
@@ -333,7 +433,9 @@ describe("RepoCacheWorker", () => {
         data: { configId: 101, tenantId: "tenant-a" },
       } as Job);
 
-      expect(mockCheckStalePins).toHaveBeenCalledWith(101, mockDb);
+      expect(mockCheckStalePins).toHaveBeenCalledWith(101, mockDb, {
+        isCancelled: expect.any(Function),
+      });
       expect(mockRefreshRepoCache).not.toHaveBeenCalled();
       expect(result).toMatchObject({ successCount: 1, failCount: 0 });
     });
@@ -388,6 +490,7 @@ describe("RepoCacheWorker", () => {
 
       expect(mockScanRepoIssues).toHaveBeenCalledWith(101, mockDb, {
         full: true,
+        isCancelled: expect.any(Function),
       });
       expect(mockRefreshRepoCache).not.toHaveBeenCalled();
       expect(result).toMatchObject({ successCount: 1, failCount: 0 });
@@ -409,6 +512,7 @@ describe("RepoCacheWorker", () => {
 
       expect(mockScanRepoIssues).toHaveBeenCalledWith(101, mockDb, {
         full: false,
+        isCancelled: expect.any(Function),
       });
       expect(result).toMatchObject({ successCount: 0, failCount: 1 });
     });
@@ -493,7 +597,9 @@ describe("RepoCacheWorker", () => {
 
       const result = await processor(mockJob);
 
-      expect(mockRefreshRepoCache).toHaveBeenCalledWith(101, mockDb);
+      expect(mockRefreshRepoCache).toHaveBeenCalledWith(101, mockDb, {
+        isCancelled: expect.any(Function),
+      });
       expect(result).toMatchObject({ successCount: 1, failCount: 0 });
       // It must NOT scan all configs like the expired-cache job does.
       expect(
@@ -517,7 +623,11 @@ describe("RepoCacheWorker", () => {
 
       const result = await processor(mockJob);
 
-      expect(mockRefreshRepoCache).toHaveBeenCalledWith(102, mockDb);
+      expect(mockRefreshRepoCache).toHaveBeenCalledWith(
+        102,
+        mockDb,
+        expect.anything()
+      );
       expect(result).toMatchObject({ successCount: 0, failCount: 1 });
     });
 

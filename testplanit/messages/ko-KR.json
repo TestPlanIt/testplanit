@@ -2114,7 +2114,8 @@
           "repositoryRequired": "저장소가 필요합니다"
         },
         "disconnectWarningCache": "캐시된 저장소 파일을 모두 제거합니다",
-        "disconnectWarningPatterns": "경로 패턴 및 분기 구성을 제거합니다"
+        "disconnectWarningPatterns": "경로 패턴 및 분기 구성을 제거합니다",
+        "refreshInterrupted": "캐시 새로고침이 완료되기 전에 중단되었습니다. 다시 새로고침하여 완료하세요."
       },
       "advanced": {
         "description": "프로젝트별로 특정 기능을 활성화/비활성화할 수 있는 토글 기능입니다. 새로운 토글 기능은 추가되는 대로 여기에 표시됩니다.",
@@ -2328,7 +2329,18 @@
           "removed": "{count, plural, =0 {오래된 핀이 제거되지 않았습니다} one {# 오래된 핀 제거됨} other {# 오래된 핀들 제거됨}}",
           "removeFailed": "오래된 핀을 제거할 수 없습니다",
           "removeConfirm": "마지막 확인에서 {name}의 팁에서 찾을 수 없는 {count, plural, one {# 코드 핀} other {# 코드 핀}}을 제거하시겠습니까?",
-          "removeConfirmNote": "오래된 배지가 해제되었고 저장소 마커로 유지되는 핀은 유지됩니다. 제거된 핀은 휴지통에서 복원할 수 있습니다."
+          "removeConfirmNote": "오래된 배지가 해제되었고 저장소 마커로 유지되는 핀은 유지됩니다. 제거된 핀은 휴지통에서 복원할 수 있습니다.",
+          "checkCancelled": "마지막 확인이 취소됨",
+          "interrupted": "{date}에 시작된 확인이 응답을 보내지 않았습니다. 워커가 다시 시작되었을 수 있습니다. 계속하려면 다시 대기열에 추가하세요."
+        },
+        "jobs": {
+          "queued": "대기열에 추가됨",
+          "queuedBehind": "{what, select, sweep {야간 캐시 새로고침이 완료될 때까지 기다리는 중입니다.} refresh {캐시 새로고침이 완료될 때까지 기다리는 중입니다.} scan {티켓 스캔이 완료될 때까지 기다리는 중입니다.} stale {부실 핀 확인이 완료될 때까지 기다리는 중입니다.} other {다른 작업이 완료될 때까지 기다리는 중입니다.}}",
+          "notResponding": "응답 없음",
+          "notRespondingHint": "{date} 이후 진행 상황이 보고되지 않았지만 계속 실행 중입니다. 공급자를 기다리고 있을 수 있습니다. 진행이 재개되지 않으면 취소하세요.",
+          "interruptedRescan": "중단됨 — 다시 스캔",
+          "interruptedRecheck": "중단됨 — 다시 확인",
+          "interruptedRefresh": "중단됨 — 다시 새로고침"
         }
       },
       "access": {
@@ -6673,6 +6685,13 @@
           "question": "이 작업을 강제로 삭제하시겠습니까?",
           "warning": "이렇게 하면 지연 시간을 두고 여러 번 제거를 시도합니다. 참고: 실행 중인 워커에 의해 작업이 실제로 잠겨 있는 경우 실패할 수 있습니다.",
           "confirm": "강제 제거"
+        },
+        "cancelJob": {
+          "button": "작업 취소"
+        },
+        "activeJob": {
+          "title": "워커가 이 작업을 처리 중입니다",
+          "cancelHint": "취소는 워커에게 다음 확인 시점에 중지하도록 요청합니다. 작업이 중지되면 대기열에서 제거됩니다. 강제 제거는 작업을 보유한 워커가 사라지고 잠금이 만료된 경우에만 작동합니다."
         }
       }
     },

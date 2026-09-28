@@ -2114,7 +2114,8 @@
           "repositoryRequired": "Repository is required"
         },
         "disconnectWarningCache": "Remove all cached repository files",
-        "disconnectWarningPatterns": "Remove path pattern and branch configurations"
+        "disconnectWarningPatterns": "Remove path pattern and branch configurations",
+        "refreshInterrupted": "The cache refresh was interrupted before it finished. Refresh again to complete."
       },
       "advanced": {
         "description": "Per-project toggles for opinionated features. New toggles will appear here as they are introduced.",
@@ -2328,7 +2329,18 @@
           "removed": "{count, plural, =0 {No stale pins were removed} one {# stale pin removed} other {# stale pins removed}}",
           "removeFailed": "Could not remove the stale pins",
           "removeConfirm": "Remove {count, plural, one {# Code Pin} other {# Code Pins}} that the last check could not find at the tip of {name}?",
-          "removeConfirmNote": "Pins whose Stale badge was dismissed and pins maintained by repository markers are kept. Removed pins can be restored from the Trash."
+          "removeConfirmNote": "Pins whose Stale badge was dismissed and pins maintained by repository markers are kept. Removed pins can be restored from the Trash.",
+          "checkCancelled": "Last check cancelled",
+          "interrupted": "A check started {date} never reported back — the worker may have been restarted. Queue it again to continue."
+        },
+        "jobs": {
+          "queued": "Queued",
+          "queuedBehind": "{what, select, sweep {Waiting for the nightly cache refresh to finish.} refresh {Waiting for a cache refresh to finish.} scan {Waiting for a ticket scan to finish.} stale {Waiting for a stale pin check to finish.} other {Waiting for another job to finish.}}",
+          "notResponding": "Not responding",
+          "notRespondingHint": "Still running, but no progress has been reported since {date}. It may be waiting on the provider; cancel it if it does not resume.",
+          "interruptedRescan": "Interrupted — rescan",
+          "interruptedRecheck": "Interrupted — check again",
+          "interruptedRefresh": "Interrupted — refresh again"
         }
       },
       "access": {
@@ -6673,6 +6685,13 @@
           "question": "Do you want to force remove this job?",
           "warning": "This will attempt to remove it multiple times with delays. Note: If the job is truly locked by a running worker, it may still fail.",
           "confirm": "Force Remove"
+        },
+        "cancelJob": {
+          "button": "Cancel job"
+        },
+        "activeJob": {
+          "title": "A worker is processing this job",
+          "cancelHint": "Cancel asks the worker to stop at its next check; the job leaves the queue once it has stopped. Force Remove only works when the worker that held the job is gone and its lock has expired."
         }
       }
     },

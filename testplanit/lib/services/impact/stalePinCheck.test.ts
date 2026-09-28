@@ -289,6 +289,37 @@ describe("checkStalePins", () => {
     });
   });
 
+  it("stops at the next progress write when cancelled, leaving every pin as it was", async () => {
+    const files: Record<string, string> = {};
+    const pins = [];
+    for (let i = 1; i <= 30; i++) {
+      files[`src/f${i}.ts`] = "nothing like the snippet";
+      pins.push(pin({ id: i, filePath: `src/f${i}.ts` }));
+    }
+    stubFiles(files);
+    db.repositoryCaseCodePin.findMany.mockResolvedValue(pins);
+    let reads = 0;
+    (getFileAtCommit as any).mockImplementation(async () => {
+      reads++;
+      return { content: "nothing like the snippet", cached: false };
+    });
+
+    const report = await checkStalePins(5, db as any, {
+      now: () => NOW,
+      isCancelled: async () => reads >= 25,
+    });
+
+    expect(report).toEqual({ cancelled: true, checkedAt: NOW.toISOString() });
+    expect(reads).toBe(25);
+    expect(db.repositoryCaseCodePin.updateMany).not.toHaveBeenCalled();
+    expect(db.projectCodeRepositoryConfig.update).toHaveBeenLastCalledWith({
+      where: { id: 5 },
+      data: {
+        stalePinReport: { cancelled: true, checkedAt: NOW.toISOString() },
+      },
+    });
+  });
+
   it("writes verdicts in bounded batches", async () => {
     stubFiles({ "src/a.ts": FUNC_FILE });
     db.repositoryCaseCodePin.findMany.mockResolvedValue(

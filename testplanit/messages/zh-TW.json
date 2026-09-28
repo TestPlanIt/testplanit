@@ -2114,7 +2114,8 @@
           "repositoryRequired": "需要儲存庫"
         },
         "disconnectWarningCache": "移除所有快取的儲存庫檔案",
-        "disconnectWarningPatterns": "移除路徑模式和分支設定"
+        "disconnectWarningPatterns": "移除路徑模式和分支設定",
+        "refreshInterrupted": "快取重新整理在完成前被中斷。再次重新整理以完成。"
       },
       "advanced": {
         "description": "每個項目都設有針對特定功能的開關。新增的開關將在此處顯示。",
@@ -2328,7 +2329,18 @@
           "removed": "{count, plural, =0 {未移除任何陳舊引腳} one {# 個陳舊引腳已移除} other {# 個陳舊引腳已移除}}",
           "removeFailed": "無法移除陳舊引腳",
           "removeConfirm": "移除 {count, plural, one {# 個代碼引腳} other {# 個代碼引腳}}（上次檢查在 {name} 的頂端找不到）？",
-          "removeConfirmNote": "已關閉「陳舊」徽章的引腳和由儲存庫標記維護的引腳被保留。移除的引腳可以從「垃圾桶」還原。"
+          "removeConfirmNote": "已關閉「陳舊」徽章的引腳和由儲存庫標記維護的引腳被保留。移除的引腳可以從「垃圾桶」還原。",
+          "checkCancelled": "上次檢查已取消",
+          "interrupted": "在 {date} 開始的檢查從未回報 — 背景工作可能已重新啟動。再次將其排入佇列以繼續。"
+        },
+        "jobs": {
+          "queued": "已排入佇列",
+          "queuedBehind": "{what, select, sweep {等待每晚的快取重新整理完成。} refresh {等待快取重新整理完成。} scan {等待票證掃描完成。} stale {等待過期釘選檢查完成。} other {等待另一個工作完成。}}",
+          "notResponding": "無回應",
+          "notRespondingHint": "仍在執行中，但自 {date} 以來未報告進度。它可能在等待提供者；如果未恢復，請取消它。",
+          "interruptedRescan": "已中斷 — 重新掃描",
+          "interruptedRecheck": "已中斷 — 再次檢查",
+          "interruptedRefresh": "已中斷 — 再次重新整理"
         }
       },
       "access": {
@@ -6673,6 +6685,13 @@
           "question": "你想強制刪除這個職缺嗎？",
           "warning": "這將嘗試多次移除該任務，每次移除操作都會有延遲。注意：如果該任務確實被正在執行的工作進程鎖定，則移除操作仍可能失敗。",
           "confirm": "強制移除"
+        },
+        "cancelJob": {
+          "button": "取消作業"
+        },
+        "activeJob": {
+          "title": "工作程序正在處理此作業",
+          "cancelHint": "「取消」會要求工作程序在下次檢查時停止；作業停止後會離開佇列。「強制移除」僅在持有該作業的工作程序消失且其鎖定已過期時才有效。"
         }
       }
     },

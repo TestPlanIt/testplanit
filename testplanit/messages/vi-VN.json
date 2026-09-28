@@ -2114,7 +2114,8 @@
           "repositoryRequired": "Cần có kho lưu trữ"
         },
         "disconnectWarningCache": "Xóa tất cả các tệp kho lưu trữ đã được lưu vào bộ nhớ cache",
-        "disconnectWarningPatterns": "Xóa cấu hình mẫu đường dẫn và nhánh"
+        "disconnectWarningPatterns": "Xóa cấu hình mẫu đường dẫn và nhánh",
+        "refreshInterrupted": "Làm mới bộ nhớ cache bị gián đoạn trước khi hoàn tất. Vui lòng làm mới lại để hoàn thành."
       },
       "advanced": {
         "description": "Các tùy chọn bật/tắt riêng cho từng dự án đối với các tính năng mang tính chủ quan. Các tùy chọn mới sẽ xuất hiện ở đây khi chúng được giới thiệu.",
@@ -2328,7 +2329,18 @@
           "removed": "{count, plural, =0 {Không xóa mã pin cũ} one {# mã pin cũ bị xóa} other {# mã pin cũ bị xóa}}",
           "removeFailed": "Không thể xóa các mã pin cũ",
           "removeConfirm": "Xóa {count, plural, one {# Mã pin} other {# Mã pin}} mà lần kiểm tra cuối cùng không thể tìm thấy ở mẹo của {name}?",
-          "removeConfirmNote": "Các mã pin có huy hiệu cũ bị loại bỏ và các mã pin được duy trì bởi ký hiệu kho lưu trữ được giữ lại. Các mã pin bị xóa có thể được khôi phục từ Thùng rác."
+          "removeConfirmNote": "Các mã pin có huy hiệu cũ bị loại bỏ và các mã pin được duy trì bởi ký hiệu kho lưu trữ được giữ lại. Các mã pin bị xóa có thể được khôi phục từ Thùng rác.",
+          "checkCancelled": "Kiểm tra cuối cùng đã bị hủy",
+          "interrupted": "Kiểm tra bắt đầu {date} không bao giờ gửi lại thông báo — máy worker có thể đã được khởi động lại. Hãy xếp hàng đợi lại để tiếp tục."
+        },
+        "jobs": {
+          "queued": "Đã xếp hàng đợi",
+          "queuedBehind": "{what, select, sweep {Chờ đợi làm mới bộ nhớ cache hàng đêm kết thúc.} refresh {Chờ đợi làm mới bộ nhớ cache kết thúc.} scan {Chờ đợi quét vé kết thúc.} stale {Chờ đợi kiểm tra ghim cũ kết thúc.} other {Chờ đợi công việc khác kết thúc.}}",
+          "notResponding": "Không phản hồi",
+          "notRespondingHint": "Vẫn đang chạy, nhưng không có tiến trình nào được báo cáo kể từ {date}. Nó có thể đang chờ nhà cung cấp; hãy hủy nó nếu nó không tiếp tục.",
+          "interruptedRescan": "Bị gián đoạn — quét lại",
+          "interruptedRecheck": "Bị gián đoạn — kiểm tra lại",
+          "interruptedRefresh": "Bị gián đoạn — làm mới lại"
         }
       },
       "access": {
@@ -6673,6 +6685,13 @@
           "question": "Bạn có muốn buộc xóa công việc này không?",
           "warning": "Thao tác này sẽ cố gắng xóa nó nhiều lần với độ trễ. Lưu ý: Nếu công việc thực sự bị khóa bởi một tiến trình đang chạy, nó vẫn có thể thất bại.",
           "confirm": "Buộc gỡ bỏ"
+        },
+        "cancelJob": {
+          "button": "Hủy công việc"
+        },
+        "activeJob": {
+          "title": "Một worker đang xử lý công việc này",
+          "cancelHint": "Hủy yêu cầu worker dừng lại ở lần kiểm tra tiếp theo; công việc sẽ rời khỏi hàng đợi sau khi nó dừng lại. Xóa bắt buộc chỉ hoạt động khi worker nắm giữ công việc đã biến mất và khóa của nó đã hết hạn."
         }
       }
     },

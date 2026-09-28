@@ -2114,7 +2114,8 @@
           "repositoryRequired": "É necessário um repositório"
         },
         "disconnectWarningCache": "Remova todos os arquivos de repositório em cache",
-        "disconnectWarningPatterns": "Remover padrões de caminho e configurações de ramificação"
+        "disconnectWarningPatterns": "Remover padrões de caminho e configurações de ramificação",
+        "refreshInterrupted": "A atualização do cache foi interrompida antes de ser concluída. Atualize novamente para completar."
       },
       "advanced": {
         "description": "Opções específicas para cada projeto que definem suas preferências. Novas opções aparecerão aqui conforme forem introduzidas.",
@@ -2328,7 +2329,18 @@
           "removed": "{count, plural, =0 {Nenhum pin antigo foi removido} one {# pin antigo removido} other {# pins antigos removidos}}",
           "removeFailed": "Não foi possível remover os pins antigos",
           "removeConfirm": "Remover {count, plural, one {# Code Pin} other {# Code Pins}} que a última verificação não conseguiu encontrar na ponta de {name}?",
-          "removeConfirmNote": "Pins cuja insígnia Antigo foi descartada e pins mantidos por marcadores de repositório são mantidos. Pins removidos podem ser restaurados da Lixeira."
+          "removeConfirmNote": "Pins cuja insígnia Antigo foi descartada e pins mantidos por marcadores de repositório são mantidos. Pins removidos podem ser restaurados da Lixeira.",
+          "checkCancelled": "Última verificação cancelada",
+          "interrupted": "Uma verificação iniciada em {date} nunca retornou — o worker pode ter sido reiniciado. Coloque-a novamente na fila para continuar."
+        },
+        "jobs": {
+          "queued": "Na fila",
+          "queuedBehind": "{what, select, sweep {Aguardando a atualização de cache noturna terminar.} refresh {Aguardando uma atualização de cache terminar.} scan {Aguardando uma varredura de tíquete terminar.} stale {Aguardando uma verificação de pin desatualizado terminar.} other {Aguardando outro trabalho terminar.}}",
+          "notResponding": "Sem resposta",
+          "notRespondingHint": "Ainda em execução, mas nenhum progresso foi relatado desde {date}. Pode estar aguardando o provedor; cancele se não retomar.",
+          "interruptedRescan": "Interrompido — fazer varredura novamente",
+          "interruptedRecheck": "Interrompido — verificar novamente",
+          "interruptedRefresh": "Interrompido — atualizar novamente"
         }
       },
       "access": {
@@ -6673,6 +6685,13 @@
           "question": "Deseja remover esta vaga à força?",
           "warning": "Isso tentará removê-lo várias vezes com atrasos. Observação: se a tarefa estiver realmente bloqueada por um processo em execução, ela ainda poderá falhar.",
           "confirm": "Forçar remoção"
+        },
+        "cancelJob": {
+          "button": "Cancelar tarefa"
+        },
+        "activeJob": {
+          "title": "Um trabalhador está processando essa tarefa",
+          "cancelHint": "Cancelar pede ao trabalhador que pare na próxima verificação; a tarefa sai da fila uma vez interrompida. Forçar Remoção funciona apenas quando o trabalhador que mantinha a tarefa desapareceu e seu bloqueio expirou."
         }
       }
     },

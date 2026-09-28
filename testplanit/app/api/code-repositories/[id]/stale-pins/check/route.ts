@@ -4,8 +4,8 @@ import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { authorizeProjectAdminForProject } from "~/lib/integrations/importAuthorization";
-import { JOB_CHECK_STALE_PINS } from "~/lib/queueNames";
 import { getRepoCacheQueue } from "~/lib/queues";
+import { enqueueRepoJob } from "~/lib/services/impact/repoJobs";
 import { authOptions } from "~/server/auth";
 
 interface RouteParams {
@@ -20,8 +20,9 @@ const bodySchema = z.object({
  * POST /api/code-repositories/[id]/stale-pins/check
  * Queue a stale Code Pin check for one Impact connection. Mirrors
  * scan-issues: the repo-cache worker evaluates every pin against the branch
- * tip and the settings page polls the config's stalePinReport, which holds
- * `{ running: true, ... }` until the check finishes.
+ * tip and the settings page polls the config's stalePinReport, which the
+ * queue-backed status resolver reports as queued, running or interrupted
+ * until the check finishes.
  */
 export async function POST(req: NextRequest, { params }: RouteParams) {
   try {
@@ -92,37 +93,27 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     const tenantId = getCurrentTenantId();
 
-    // One check per config at a time: a click while one runs joins it.
-    const existingJobs = await queue.getJobs(["active", "waiting", "delayed"]);
-    const existing = existingJobs.find(
-      (j) =>
-        j.name === JOB_CHECK_STALE_PINS &&
-        Number(j.data?.configId) === configId &&
-        j.data?.tenantId === tenantId
-    );
-    if (existing) {
-      return NextResponse.json({ queued: true, jobId: existing.id });
-    }
-
-    // Mark it running now so the page shows progress before the worker starts.
-    const startedAt = new Date().toISOString();
-    await (baseDb as any).projectCodeRepositoryConfig.update({
-      where: { id: configId },
-      data: {
-        stalePinReport: {
-          running: true,
-          startedAt,
-          progressAt: startedAt,
-          checkedFiles: 0,
-          totalFiles: 0,
-          pins: 0,
-        },
+    // One check per config at a time: a click while one is queued or running
+    // joins it. The config records only that the check was asked for; the
+    // worker writes `running` when it starts.
+    const { jobId } = await enqueueRepoJob(queue, {
+      kind: "stale-pins",
+      configId,
+      tenantId,
+      beforeAdd: async () => {
+        await (baseDb as any).projectCodeRepositoryConfig.update({
+          where: { id: configId },
+          data: {
+            stalePinReport: {
+              queued: true,
+              requestedAt: new Date().toISOString(),
+            },
+          },
+        });
       },
     });
 
-    const job = await queue.add(JOB_CHECK_STALE_PINS, { configId, tenantId });
-
-    return NextResponse.json({ queued: true, jobId: job.id });
+    return NextResponse.json({ queued: true, jobId });
   } catch (err: unknown) {
     console.error("[POST stale-pins/check]:", err);
     const message =

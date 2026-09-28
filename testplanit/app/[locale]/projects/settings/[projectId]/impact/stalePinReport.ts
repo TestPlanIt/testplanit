@@ -1,5 +1,6 @@
 import type { StalePinCheckReport } from "~/lib/services/impact/stalePinCheck";
-import { ISSUE_SCAN_STALE_MS } from "./issueScanReport";
+import type { RepoJobBehind } from "~/lib/services/impact/repoJobStatus";
+import { readJobBehind } from "./issueScanReport";
 
 export interface StalePinCheckRunning {
   startedAt: string | null;
@@ -10,9 +11,24 @@ export interface StalePinCheckRunning {
   pins: number;
 }
 
+export interface StalePinCheckQueued {
+  requestedAt: string | null;
+  /** What the worker is busy with, when the queue said. */
+  behind: RepoJobBehind | null;
+}
+
 export type StalePinReportView =
   | { kind: "never" }
-  | { kind: "running"; progress: StalePinCheckRunning }
+  | { kind: "queued"; queued: StalePinCheckQueued }
+  | {
+      kind: "running";
+      progress: StalePinCheckRunning;
+      /** The queue holds the job, but progress stopped a while ago. */
+      unresponsive: boolean;
+    }
+  /** The queue lost the job while the report still said running. */
+  | { kind: "interrupted"; startedAt: string | null; checkedAt: string | null }
+  | { kind: "cancelled"; checkedAt: string | null }
   | { kind: "error"; error: string; checkedAt: string | null }
   | { kind: "checked"; report: StalePinCheckReport };
 
@@ -20,26 +36,16 @@ function asNumber(value: unknown): number {
   return typeof value === "number" && Number.isFinite(value) ? value : 0;
 }
 
-/**
- * True when a check's running flag looks left behind: the worker that owned
- * it died or never knew the job, so nothing will clear it. The page then
- * lets the check be queued again rather than waiting on it.
- */
-export function isStalePinCheckAbandoned(
-  progress: StalePinCheckRunning,
-  now: number = Date.now()
-): boolean {
-  const last = progress.progressAt ?? progress.startedAt;
-  if (!last) return true;
-  const at = Date.parse(last);
-  if (!Number.isFinite(at)) return true;
-  return now - at > ISSUE_SCAN_STALE_MS;
+function asString(value: unknown): string | null {
+  return typeof value === "string" ? value : null;
 }
 
 /**
- * Classifies the `stalePinReport` JSON stored on an IMPACT config. The
- * repo-cache worker writes `{ running: true, ... }` with progress while a
- * check reads files, `{ error, checkedAt }` when it failed, or the full
+ * Classifies the `stalePinReport` JSON stored on an IMPACT config, as the
+ * queue-backed status resolver hands it out: `{ queued: true }` while the
+ * job waits, `{ running: true, ... }` with progress while a check reads
+ * files, `{ interrupted: true }` when the queue lost the job,
+ * `{ cancelled: true }`, `{ error, checkedAt }` when it failed, or the full
  * `StalePinCheckReport` when it ran.
  */
 export function readStalePinReport(raw: unknown): StalePinReportView {
@@ -47,28 +53,43 @@ export function readStalePinReport(raw: unknown): StalePinReportView {
     return { kind: "never" };
   }
   const record = raw as Record<string, unknown>;
-  const checkedAt =
-    typeof record.checkedAt === "string" ? record.checkedAt : null;
+  const checkedAt = asString(record.checkedAt);
 
   if (record.running === true) {
     return {
       kind: "running",
+      unresponsive: record.unresponsive === true,
       progress: {
-        startedAt:
-          typeof record.startedAt === "string" ? record.startedAt : null,
-        progressAt:
-          typeof record.progressAt === "string" ? record.progressAt : null,
+        startedAt: asString(record.startedAt),
+        progressAt: asString(record.progressAt),
         checkedFiles: asNumber(record.checkedFiles),
         totalFiles: asNumber(record.totalFiles),
         pins: asNumber(record.pins),
       },
     };
   }
-
+  if (record.queued === true) {
+    return {
+      kind: "queued",
+      queued: {
+        requestedAt: asString(record.requestedAt),
+        behind: readJobBehind(record.behind),
+      },
+    };
+  }
+  if (record.interrupted === true) {
+    return {
+      kind: "interrupted",
+      startedAt: asString(record.startedAt),
+      checkedAt,
+    };
+  }
+  if (record.cancelled === true) {
+    return { kind: "cancelled", checkedAt };
+  }
   if (typeof record.error === "string") {
     return { kind: "error", error: record.error, checkedAt };
   }
-
   if (checkedAt === null) {
     return { kind: "never" };
   }
@@ -81,8 +102,7 @@ export function readStalePinReport(raw: unknown): StalePinReportView {
     kind: "checked",
     report: {
       checkedAt,
-      checkedSha:
-        typeof record.checkedSha === "string" ? record.checkedSha : "",
+      checkedSha: asString(record.checkedSha) ?? "",
       pins: asNumber(record.pins),
       checked: asNumber(record.checked),
       stale: asNumber(record.stale),
@@ -96,4 +116,9 @@ export function readStalePinReport(raw: unknown): StalePinReportView {
       },
     },
   };
+}
+
+/** A check is queued or running: the buttons wait and the page keeps polling. */
+export function isStalePinCheckInFlight(view: StalePinReportView): boolean {
+  return view.kind === "queued" || view.kind === "running";
 }

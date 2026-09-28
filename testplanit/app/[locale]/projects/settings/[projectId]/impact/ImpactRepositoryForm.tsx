@@ -44,11 +44,10 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { format } from "date-fns";
-import { formatInTimeZone } from "date-fns-tz";
 import {
   AlertTriangle,
   CheckCircle,
+  Clock,
   History,
   Loader2,
   RefreshCw,
@@ -65,9 +64,8 @@ import { useIssueScan } from "~/hooks/useIssueScan";
 import { useRepoCacheRefresh } from "~/hooks/useRepoCacheRefresh";
 import { useRepoPreviewFiles } from "~/hooks/useRepoPreviewFiles";
 import type { RepoBranch } from "~/lib/integrations/adapters/GitRepoAdapter";
-import { getDateFnsLocale } from "~/utils/locales";
-import { mapDateTimeFormatString } from "~/utils/mapDateTimeFormat";
-import { isIssueScanStale, readIssueScanReport } from "./issueScanReport";
+import { formatReportDate } from "./formatReportDate";
+import { isIssueScanInFlight, readIssueScanReport } from "./issueScanReport";
 import { readMarkerScanReport } from "./markerScanReport";
 
 export interface CodeRepositoryOption {
@@ -114,7 +112,6 @@ interface BranchOption {
 const DEFAULT_BRANCH_OPTION: BranchOption = { name: "" };
 const DEFAULT_BRANCH_VALUE = "*";
 const DEFAULT_PATH_PATTERNS = [{ path: "src", pattern: "**/*" }];
-const DEFAULT_DATE_FORMAT = "MM-dd-yyyy";
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -123,6 +120,24 @@ function formatBytes(bytes: number): string {
 }
 
 export type ImpactRepositoryFormMode = "add" | "edit" | "view";
+
+/** What a queued job waits for, from the status resolver's `behind`. */
+export function behindSelector(
+  behind: { kind: string } | null
+): "sweep" | "refresh" | "scan" | "stale" | "other" {
+  switch (behind?.kind) {
+    case "sweep":
+      return "sweep";
+    case "refresh-cache":
+      return "refresh";
+    case "scan-issues":
+      return "scan";
+    case "stale-pins":
+      return "stale";
+    default:
+      return "other";
+  }
+}
 
 interface ImpactRepositoryFormProps {
   projectId: number;
@@ -257,6 +272,7 @@ export function ImpactRepositoryForm({
         refreshComplete: (fileCount) =>
           tRepo("refreshComplete", { fileCount: String(fileCount) }),
         refreshInProgress: tRepo("refreshInProgress"),
+        interrupted: tRepo("refreshInterrupted"),
       },
     });
 
@@ -505,57 +521,36 @@ export function ImpactRepositoryForm({
       ? `${preferences.dateFormat} ${preferences.timeFormat}`
       : (preferences?.dateFormat ?? undefined);
 
-  const formatScanDate = (iso: string): string => {
-    const date = new Date(iso);
-    if (Number.isNaN(date.getTime())) return iso;
-    const formatString = mapDateTimeFormatString(
-      preferredDateTimeFormat ?? DEFAULT_DATE_FORMAT
-    );
-    const dateLocale = getDateFnsLocale(locale);
-    const timezone = preferences?.timezone;
-    try {
-      return timezone
-        ? formatInTimeZone(date, timezone.replace(/_/g, "/"), formatString, {
-            locale: dateLocale,
-          })
-        : format(date, formatString, { locale: dateLocale });
-    } catch {
-      return format(date, formatString, { locale: dateLocale });
-    }
-  };
+  const formatScanDate = (iso: string): string =>
+    formatReportDate(iso, locale, preferences);
 
   const configData = existingConfig;
   const markerView = readMarkerScanReport(existingConfig?.markerScanReport);
+  // The report comes through the queue-backed status resolver, so queued
+  // and running here mean the queue holds the job.
   const issueView = readIssueScanReport(existingConfig?.issueScanReport);
-  const scanRunning = issueView.kind === "running";
-  const scanStale =
-    issueView.kind === "running" && isIssueScanStale(issueView.progress);
-  // Which button's scan is in flight: the report knows once the worker has
-  // written it; until then, the one that was clicked.
+  const scanInFlight = isIssueScanInFlight(issueView);
+  // Which button's scan is in flight: the report knows once the request was
+  // recorded; until then, the one that was clicked.
   const activeScanFull: boolean | null =
-    issueView.kind === "running" && !scanStale
+    issueView.kind === "running"
       ? issueView.progress.full
-      : isScanning
-        ? requestedFull
-        : null;
+      : issueView.kind === "queued"
+        ? issueView.queued.full
+        : isScanning
+          ? requestedFull
+          : null;
 
-  // A scan queued elsewhere (or before a reload) is followed the same way,
-  // unless its flag is old enough to be a leftover nobody will clear.
+  // A scan queued elsewhere (or before a reload) is followed the same way.
   const followedRef = useRef(false);
   useEffect(() => {
-    if (
-      scanRunning &&
-      !scanStale &&
-      !isScanning &&
-      !isFollowing &&
-      !followedRef.current
-    ) {
+    if (scanInFlight && !isScanning && !isFollowing && !followedRef.current) {
       followedRef.current = true;
       void followScan().finally(() => {
         followedRef.current = false;
       });
     }
-  }, [scanRunning, scanStale, isScanning, isFollowing, followScan]);
+  }, [scanInFlight, isScanning, isFollowing, followScan]);
 
   return (
     <Form {...(form as any)}>
@@ -827,6 +822,22 @@ export function ImpactRepositoryForm({
                                     </Badge>
                                   </>
                                 )}
+                                {configData.cacheStatus === "queued" && (
+                                  <>
+                                    <Clock className="h-4 w-4 text-muted-foreground" />
+                                    <Badge variant="secondary">
+                                      {t("jobs.queued")}
+                                    </Badge>
+                                  </>
+                                )}
+                                {configData.cacheStatus === "interrupted" && (
+                                  <>
+                                    <AlertTriangle className="h-4 w-4 text-warning" />
+                                    <Badge variant="outline">
+                                      {t("jobs.interruptedRefresh")}
+                                    </Badge>
+                                  </>
+                                )}
                               </div>
                             </div>
 
@@ -968,7 +979,7 @@ export function ImpactRepositoryForm({
                     </TooltipTrigger>
                     <TooltipContent>{t("tickets.scanFullHint")}</TooltipContent>
                   </Tooltip>
-                  {scanRunning && !scanStale && (
+                  {scanInFlight && (
                     <Button
                       type="button"
                       variant="outline"
@@ -1057,20 +1068,51 @@ export function ImpactRepositoryForm({
               <Badge variant="secondary">{t("scanNever")}</Badge>
             )}
 
-            {issueView.kind === "running" && scanStale && (
-              <Alert data-testid="impact-issue-scan-stale">
+            {issueView.kind === "interrupted" && (
+              <Alert data-testid="impact-issue-scan-interrupted">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription>
                   {t("tickets.stale", {
-                    date: issueView.progress.startedAt
-                      ? formatScanDate(issueView.progress.startedAt)
+                    date: issueView.startedAt
+                      ? formatScanDate(issueView.startedAt)
                       : "",
                   })}
                 </AlertDescription>
               </Alert>
             )}
 
-            {issueView.kind === "running" && !scanStale && (
+            {issueView.kind === "queued" && (
+              <div
+                className="flex items-center gap-2"
+                data-testid="impact-issue-scan-queued"
+              >
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                <span>{t("jobs.queued")}</span>
+                <span className="text-muted-foreground">
+                  {t("jobs.queuedBehind", {
+                    what: behindSelector(issueView.queued.behind),
+                  })}
+                </span>
+              </div>
+            )}
+
+            {issueView.kind === "running" && issueView.unresponsive && (
+              <Alert data-testid="impact-issue-scan-unresponsive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  {t("jobs.notResponding")}{" "}
+                  {t("jobs.notRespondingHint", {
+                    date: formatScanDate(
+                      issueView.progress.progressAt ??
+                        issueView.progress.startedAt ??
+                        ""
+                    ),
+                  })}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {issueView.kind === "running" && !issueView.unresponsive && (
               <div
                 className="flex items-center gap-2"
                 data-testid="impact-issue-scan-progress"

@@ -24,7 +24,7 @@ import { AlertTriangle, Loader2, PinOff, SearchCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
-import { isStalePinCheckAbandoned, readStalePinReport } from "./stalePinReport";
+import { isStalePinCheckInFlight, readStalePinReport } from "./stalePinReport";
 
 export interface ImpactStalePinConnection {
   id: number;
@@ -61,9 +61,11 @@ export function ImpactStalePinButtons({
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const view = readStalePinReport(config.stalePinReport);
-  const running =
-    view.kind === "running" && !isStalePinCheckAbandoned(view.progress);
+  // The report comes through the queue-backed status resolver, so queued
+  // and running here mean the queue holds the job.
+  const running = isStalePinCheckInFlight(
+    readStalePinReport(config.stalePinReport)
+  );
 
   const handleCheck = async () => {
     setCheckRequested(true);

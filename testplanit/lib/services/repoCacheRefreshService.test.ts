@@ -70,7 +70,11 @@ import { resolveRefToSha } from "~/lib/services/impact/compareService";
 import { walkCommits } from "~/lib/services/impact/commitWalk";
 import { syncIssuePins } from "~/lib/services/impact/issueScan";
 import { syncMarkerPins } from "~/lib/services/impact/markerScan";
-import { refreshRepoCache, scanRepoIssues } from "./repoCacheRefreshService";
+import {
+  REFRESH_CANCELLED_MESSAGE,
+  refreshRepoCache,
+  scanRepoIssues,
+} from "./repoCacheRefreshService";
 import {
   IssueKeyResolutionError,
   resolveIssueKeys,
@@ -760,6 +764,30 @@ describe("refreshRepoCache", () => {
         })
       );
       expect(syncMarkerPins).not.toHaveBeenCalled();
+    });
+
+    it("records a cancel from the Queues page as the error and fetches nothing more", async () => {
+      const adapter = makeTreeWalkAdapter(["lib/auth.ts", "lib/b.ts"]);
+      (createGitRepoAdapter as any).mockReturnValue(adapter);
+
+      const result = await refreshRepoCache(5, db, {
+        isCancelled: async () => true,
+      });
+
+      expect(result).toMatchObject({
+        success: false,
+        error: REFRESH_CANCELLED_MESSAGE,
+      });
+      expect(adapter.listFilesInPaths).not.toHaveBeenCalled();
+      expect(update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            cacheStatus: "error",
+            cacheError: REFRESH_CANCELLED_MESSAGE,
+          }),
+        })
+      );
+      expect(syncIssuePins).not.toHaveBeenCalled();
     });
   });
 });

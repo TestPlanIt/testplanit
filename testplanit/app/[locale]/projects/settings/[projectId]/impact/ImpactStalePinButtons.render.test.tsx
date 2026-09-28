@@ -112,15 +112,27 @@ describe("ImpactStalePinButtons", () => {
     expect(screen.queryByTestId("impact-repo-stale-remove-11")).toBeNull();
   });
 
-  it("lets an abandoned check be queued again", () => {
+  it("disables the check while one is queued for the connection", () => {
+    render(
+      <ImpactStalePinButtons
+        config={{ ...config, stalePinReport: { queued: true } }}
+        staleCount={0}
+        onChanged={onChanged}
+      />
+    );
+
+    expect(screen.getByTestId("impact-repo-stale-check-11")).toBeDisabled();
+  });
+
+  it("lets a check the queue lost be queued again", () => {
     render(
       <ImpactStalePinButtons
         config={{
           ...config,
           stalePinReport: {
-            running: true,
+            interrupted: true,
             startedAt: "2026-01-01T00:00:00Z",
-            progressAt: "2026-01-01T00:00:00Z",
+            checkedAt: "2026-01-01T00:30:00Z",
           },
         }}
         staleCount={0}

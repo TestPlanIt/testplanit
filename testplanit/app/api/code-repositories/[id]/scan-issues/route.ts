@@ -3,8 +3,8 @@ import { baseDb } from "@/lib/db";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
-import { JOB_SCAN_REPO_ISSUES } from "~/lib/queueNames";
 import { getRepoCacheQueue } from "~/lib/queues";
+import { enqueueRepoJob } from "~/lib/services/impact/repoJobs";
 import { authOptions } from "~/server/auth";
 
 interface RouteParams {
@@ -21,8 +21,9 @@ const bodySchema = z.object({
  * POST /api/code-repositories/[id]/scan-issues
  * Queue a ticket scan for one Impact config without refreshing its file
  * cache. Mirrors refresh-cache: the work runs in the repo-cache worker and the
- * settings page polls the config's issueScanReport, which holds
- * `{ running: true, ... }` until the scan finishes.
+ * settings page polls the config's issueScanReport, which the queue-backed
+ * status resolver reports as queued, running or interrupted until the scan
+ * finishes.
  */
 export async function POST(req: NextRequest, { params }: RouteParams) {
   try {
@@ -93,44 +94,29 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     const tenantId = getCurrentTenantId();
 
-    // One scan per config at a time: a click while one runs joins it.
-    const existingJobs = await queue.getJobs(["active", "waiting", "delayed"]);
-    const existing = existingJobs.find(
-      (j) =>
-        j.name === JOB_SCAN_REPO_ISSUES &&
-        Number(j.data?.configId) === configId &&
-        j.data?.tenantId === tenantId
-    );
-    if (existing) {
-      return NextResponse.json({ queued: true, jobId: existing.id });
-    }
-
-    // Mark it running now so the page shows progress before the worker starts.
-    await (baseDb as any).projectCodeRepositoryConfig.update({
-      where: { id: configId },
-      data: {
-        issueScanReport: {
-          running: true,
-          full,
-          startedAt: new Date().toISOString(),
-          progressAt: new Date().toISOString(),
-          stage: "walk",
-          scannedCommits: 0,
-          matchedCommits: 0,
-          fetchedCommits: 0,
-          importLookups: 0,
-          importedIssues: 0,
-        },
+    // One scan per config at a time: a click while one is queued or running
+    // joins it. The config records only that the scan was asked for; the
+    // worker writes `running` when it starts.
+    const { jobId } = await enqueueRepoJob(queue, {
+      kind: "scan-issues",
+      configId,
+      tenantId,
+      data: { full },
+      beforeAdd: async () => {
+        await (baseDb as any).projectCodeRepositoryConfig.update({
+          where: { id: configId },
+          data: {
+            issueScanReport: {
+              queued: true,
+              full,
+              requestedAt: new Date().toISOString(),
+            },
+          },
+        });
       },
     });
 
-    const job = await queue.add(JOB_SCAN_REPO_ISSUES, {
-      configId,
-      full,
-      tenantId,
-    });
-
-    return NextResponse.json({ queued: true, jobId: job.id });
+    return NextResponse.json({ queued: true, jobId });
   } catch (err: unknown) {
     console.error("[POST scan-issues]:", err);
     const message =

@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ISSUE_SCAN_STALE_MS } from "./issueScanReport";
-import { isStalePinCheckAbandoned, readStalePinReport } from "./stalePinReport";
+import { isStalePinCheckInFlight, readStalePinReport } from "./stalePinReport";
 
 describe("readStalePinReport", () => {
   it("treats missing or malformed values as never checked", () => {
@@ -19,6 +18,7 @@ describe("readStalePinReport", () => {
       })
     ).toEqual({
       kind: "running",
+      unresponsive: false,
       progress: {
         startedAt: "2026-09-18T00:00:00Z",
         progressAt: null,
@@ -71,45 +71,55 @@ describe("readStalePinReport", () => {
   });
 });
 
-describe("isStalePinCheckAbandoned", () => {
-  const base = { checkedFiles: 0, totalFiles: 0, pins: 0 };
-  const now = Date.parse("2026-09-18T12:00:00Z");
-
-  it("judges by the last progress write, falling back to the start", () => {
-    const fresh = new Date(now - 1000).toISOString();
-    const old = new Date(now - ISSUE_SCAN_STALE_MS - 1).toISOString();
+describe("queue-backed states", () => {
+  it("reports a queued check with what the worker is busy with", () => {
     expect(
-      isStalePinCheckAbandoned(
-        { ...base, startedAt: old, progressAt: fresh },
-        now
-      )
-    ).toBe(false);
-    expect(
-      isStalePinCheckAbandoned(
-        { ...base, startedAt: fresh, progressAt: old },
-        now
-      )
-    ).toBe(true);
-    expect(
-      isStalePinCheckAbandoned(
-        { ...base, startedAt: fresh, progressAt: null },
-        now
-      )
-    ).toBe(false);
+      readStalePinReport({
+        queued: true,
+        requestedAt: "2026-09-28T10:00:00Z",
+        behind: { kind: "scan-issues", configId: 4 },
+      })
+    ).toEqual({
+      kind: "queued",
+      queued: {
+        requestedAt: "2026-09-28T10:00:00Z",
+        behind: { kind: "scan-issues", configId: 4 },
+      },
+    });
   });
 
-  it("treats a missing or unparsable timestamp as abandoned", () => {
+  it("carries the resolver's not-responding verdict on a running check", () => {
     expect(
-      isStalePinCheckAbandoned(
-        { ...base, startedAt: null, progressAt: null },
-        now
-      )
-    ).toBe(true);
+      readStalePinReport({ running: true, unresponsive: true })
+    ).toMatchObject({ kind: "running", unresponsive: true });
+  });
+
+  it("reports a check the queue lost as interrupted, and a stopped one as cancelled", () => {
     expect(
-      isStalePinCheckAbandoned(
-        { ...base, startedAt: "nope", progressAt: null },
-        now
-      )
-    ).toBe(true);
+      readStalePinReport({
+        interrupted: true,
+        startedAt: "2026-09-28T04:00:00Z",
+        checkedAt: "2026-09-28T10:00:00Z",
+      })
+    ).toEqual({
+      kind: "interrupted",
+      startedAt: "2026-09-28T04:00:00Z",
+      checkedAt: "2026-09-28T10:00:00Z",
+    });
+    expect(
+      readStalePinReport({ cancelled: true, checkedAt: "2026-09-28T10:00:00Z" })
+    ).toEqual({ kind: "cancelled", checkedAt: "2026-09-28T10:00:00Z" });
+  });
+
+  it("counts queued and running as in flight, nothing else", () => {
+    expect(isStalePinCheckInFlight(readStalePinReport({ queued: true }))).toBe(
+      true
+    );
+    expect(isStalePinCheckInFlight(readStalePinReport({ running: true }))).toBe(
+      true
+    );
+    expect(
+      isStalePinCheckInFlight(readStalePinReport({ interrupted: true }))
+    ).toBe(false);
   });
 });

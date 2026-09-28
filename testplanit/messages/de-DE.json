@@ -2114,7 +2114,8 @@
           "repositoryRequired": "Ein Repository ist erforderlich"
         },
         "disconnectWarningCache": "Entfernen Sie alle zwischengespeicherten Repository-Dateien",
-        "disconnectWarningPatterns": "Pfadmuster und Zweigkonfigurationen entfernen"
+        "disconnectWarningPatterns": "Pfadmuster und Zweigkonfigurationen entfernen",
+        "refreshInterrupted": "Die Cache-Aktualisierung wurde unterbrochen, bevor sie abgeschlossen wurde. Aktualisieren Sie erneut, um den Vorgang abzuschließen."
       },
       "advanced": {
         "description": "Projektspezifische Schalter für vordefinierte Funktionen. Neue Schalter werden hier angezeigt, sobald sie eingeführt werden.",
@@ -2328,7 +2329,18 @@
           "removed": "{count, plural, =0 {Keine veralteten Pins wurden entfernt} one {# veralteter Pin entfernt} other {# veraltete Pins entfernt}}",
           "removeFailed": "Die veralteten Pins konnten nicht entfernt werden",
           "removeConfirm": "{count, plural, one {# Code-Pin entfernen} other {# Code-Pins entfernen}}, die die letzte Überprüfung nicht finden konnte, am Zweig-Tipp von {name}?",
-          "removeConfirmNote": "Pins, deren Stale-Markierung verworfen wurde, und Pins, die von Repository-Markierungen verwaltet werden, bleiben bestehen. Entfernte Pins können aus dem Papierkorb wiederhergestellt werden."
+          "removeConfirmNote": "Pins, deren Stale-Markierung verworfen wurde, und Pins, die von Repository-Markierungen verwaltet werden, bleiben bestehen. Entfernte Pins können aus dem Papierkorb wiederhergestellt werden.",
+          "checkCancelled": "Letzte Überprüfung abgebrochen",
+          "interrupted": "Eine Überprüfung, die am {date} gestartet wurde, hat keine Rückmeldung gegeben – der Worker wurde möglicherweise neu gestartet. Stellen Sie sie erneut in die Warteschlange, um fortzufahren."
+        },
+        "jobs": {
+          "queued": "In der Warteschlange",
+          "queuedBehind": "{what, select, sweep {Warten auf Abschluss der nächtlichen Cache-Aktualisierung.} refresh {Warten auf Abschluss einer Cache-Aktualisierung.} scan {Warten auf Abschluss eines Ticket-Scans.} stale {Warten auf Abschluss einer Überprüfung abgelaufener Pins.} other {Warten auf Abschluss eines anderen Jobs.}}",
+          "notResponding": "Antwortet nicht",
+          "notRespondingHint": "Läuft noch, aber seit {date} wurde kein Fortschritt gemeldet. Es kann sein, dass es auf den Provider wartet; brechen Sie es ab, wenn es nicht fortgesetzt wird.",
+          "interruptedRescan": "Unterbrochen – erneut scannen",
+          "interruptedRecheck": "Unterbrochen – erneut überprüfen",
+          "interruptedRefresh": "Unterbrochen – erneut aktualisieren"
         }
       },
       "access": {
@@ -6673,6 +6685,13 @@
           "question": "Soll dieser Auftrag zwangsweise entfernt werden?",
           "warning": "Es wird versucht, den Vorgang mehrmals mit Verzögerungen zu beenden. Hinweis: Falls der Auftrag tatsächlich von einem laufenden Prozess blockiert wird, kann der Vorgang dennoch fehlschlagen.",
           "confirm": "Erzwingen Entfernen"
+        },
+        "cancelJob": {
+          "button": "Job abbrechen"
+        },
+        "activeJob": {
+          "title": "Ein Worker verarbeitet diesen Job",
+          "cancelHint": "\"Abbrechen\" fordert den Worker auf, beim nächsten Check zu stoppen; der Job verlässt die Warteschlange, sobald er gestoppt hat. \"Erzwungenes Löschen\" funktioniert nur, wenn der Worker, der den Job hielt, weg ist und seine Sperre abgelaufen ist."
         }
       }
     },

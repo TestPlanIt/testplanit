@@ -2114,7 +2114,8 @@
           "repositoryRequired": "È richiesto un repository"
         },
         "disconnectWarningCache": "Rimuovere tutti i file del repository memorizzati nella cache",
-        "disconnectWarningPatterns": "Rimuovi le configurazioni del percorso e del ramo"
+        "disconnectWarningPatterns": "Rimuovi le configurazioni del percorso e del ramo",
+        "refreshInterrupted": "L'aggiornamento della cache è stato interrotto prima del completamento. Aggiorna di nuovo per completare."
       },
       "advanced": {
         "description": "Opzioni di attivazione specifiche per ogni progetto, relative a funzionalità predefinite. Le nuove opzioni verranno visualizzate qui man mano che saranno introdotte.",
@@ -2328,7 +2329,18 @@
           "removed": "{count, plural, =0 {Nessun pin scaduto rimosso} one {# pin scaduto rimosso} other {# pin scaduti rimossi}}",
           "removeFailed": "Impossibile rimuovere i pin scaduti",
           "removeConfirm": "Rimuovere {count, plural, one {# Code Pin} other {# Code Pin}} che l'ultimo controllo non è riuscito a trovare al suggerimento di {name}?",
-          "removeConfirmNote": "I pin il cui badge Scaduto è stato ignorato e i pin mantenuti dai marcatori del repository vengono conservati. I pin rimossi possono essere ripristinati dal Cestino."
+          "removeConfirmNote": "I pin il cui badge Scaduto è stato ignorato e i pin mantenuti dai marcatori del repository vengono conservati. I pin rimossi possono essere ripristinati dal Cestino.",
+          "checkCancelled": "Ultimo controllo annullato",
+          "interrupted": "Un controllo avviato {date} non ha mai inviato una risposta — il worker potrebbe essere stato riavviato. Mettilo di nuovo in coda per continuare."
+        },
+        "jobs": {
+          "queued": "In coda",
+          "queuedBehind": "{what, select, sweep {In attesa del completamento dell'aggiornamento della cache notturna.} refresh {In attesa del completamento di un aggiornamento della cache.} scan {In attesa del completamento di una scansione dei ticket.} stale {In attesa del completamento di un controllo dei pin obsoleti.} other {In attesa del completamento di un altro processo.}}",
+          "notResponding": "Non risponde",
+          "notRespondingHint": "Ancora in esecuzione, ma nessun progresso è stato segnalato dal {date}. Potrebbe essere in attesa del provider; annullalo se non riprende.",
+          "interruptedRescan": "Interrotto — esegui nuovamente la scansione",
+          "interruptedRecheck": "Interrotto — controlla di nuovo",
+          "interruptedRefresh": "Interrotto — aggiorna di nuovo"
         }
       },
       "access": {
@@ -6673,6 +6685,13 @@
           "question": "Vuoi forzare la rimozione di questo lavoro?",
           "warning": "Questo tenterà di rimuoverlo più volte, con ritardi. Nota: se il processo è effettivamente bloccato da un worker in esecuzione, potrebbe comunque non riuscire.",
           "confirm": "Forza la rimozione"
+        },
+        "cancelJob": {
+          "button": "Annulla processo"
+        },
+        "activeJob": {
+          "title": "Un worker sta elaborando questo processo",
+          "cancelHint": "Annulla chiede al worker di fermarsi al prossimo controllo; il processo esce dalla coda una volta interrotto. Rimozione forzata funziona solo quando il worker che deteneva il processo è scomparso e il suo blocco è scaduto."
         }
       }
     },

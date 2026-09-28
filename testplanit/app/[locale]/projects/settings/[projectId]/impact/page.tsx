@@ -33,6 +33,7 @@ import { PageTitle, SectionHeader } from "@/components/ui/typography";
 import {
   AlertTriangle,
   CheckCircle,
+  Clock,
   Eye,
   GitBranch,
   Loader2,
@@ -53,12 +54,14 @@ import { ImpactRepositoryDialog } from "./ImpactRepositoryDialog";
 import { ImpactScanButtons } from "./ImpactScanButtons";
 import { ImpactStalePinButtons } from "./ImpactStalePinButtons";
 import {
+  behindSelector,
   type CodeRepositoryOption,
   type ImpactConfigRow,
   type ImpactRepositoryFormMode,
 } from "./ImpactRepositoryForm";
-import { readIssueScanReport } from "./issueScanReport";
-import { isStalePinCheckAbandoned, readStalePinReport } from "./stalePinReport";
+import { formatReportDate } from "./formatReportDate";
+import { isIssueScanInFlight, readIssueScanReport } from "./issueScanReport";
+import { isStalePinCheckInFlight, readStalePinReport } from "./stalePinReport";
 import { MANAGED_PIN_SOURCES } from "~/lib/services/impact/stalePinRules";
 
 interface DialogState {
@@ -67,16 +70,18 @@ interface DialogState {
   configId: number | null;
 }
 
-/** A refresh, scan, or stale pin check is in flight for this connection. */
+/**
+ * A refresh, scan, or stale pin check is queued or running for this
+ * connection. The rows come through the queue-backed status resolver, so
+ * these flags mean the queue holds the job.
+ */
 function isBusy(config: ImpactConfigRow): boolean {
-  if (
+  return (
     config.cacheStatus === "pending" ||
-    readIssueScanReport(config.issueScanReport).kind === "running"
-  ) {
-    return true;
-  }
-  const stale = readStalePinReport(config.stalePinReport);
-  return stale.kind === "running" && !isStalePinCheckAbandoned(stale.progress);
+    config.cacheStatus === "queued" ||
+    isIssueScanInFlight(readIssueScanReport(config.issueScanReport)) ||
+    isStalePinCheckInFlight(readStalePinReport(config.stalePinReport))
+  );
 }
 
 export default function ImpactSettingsPage() {
@@ -328,15 +333,62 @@ export default function ImpactSettingsPage() {
         </span>
       );
     }
+    if (config.cacheStatus === "queued") {
+      return (
+        <span className="flex items-center gap-2">
+          <Clock className="h-4 w-4 text-muted-foreground" />
+          <span>{t("jobs.queued")}</span>
+        </span>
+      );
+    }
+    if (config.cacheStatus === "interrupted") {
+      return (
+        <span className="flex items-center gap-2">
+          <AlertTriangle className="h-4 w-4 text-warning" />
+          <span>{t("jobs.interruptedRefresh")}</span>
+        </span>
+      );
+    }
     return (
       <Badge variant="secondary">{tRepo("cache.statusNeverFetched")}</Badge>
     );
   };
 
+  const renderQueued = (behind: { kind: string } | null) => (
+    <span className="flex items-center gap-2">
+      <Clock className="h-4 w-4 text-muted-foreground" />
+      <span>{t("jobs.queued")}</span>
+      <span className="text-xs text-muted-foreground">
+        {t("jobs.queuedBehind", { what: behindSelector(behind) })}
+      </span>
+    </span>
+  );
+
+  const renderNotResponding = (since: string | null) => (
+    <span className="flex items-center gap-2">
+      <AlertTriangle className="h-4 w-4 text-warning" />
+      <span>{t("jobs.notResponding")}</span>
+      {since && (
+        <span className="text-xs text-muted-foreground">
+          {t("jobs.notRespondingHint", {
+            date: formatReportDate(since, locale, preferences),
+          })}
+        </span>
+      )}
+    </span>
+  );
+
   const renderTicketStatus = (config: ImpactConfigRow) => {
     const view = readIssueScanReport(config.issueScanReport);
     switch (view.kind) {
+      case "queued":
+        return renderQueued(view.queued.behind);
       case "running":
+        if (view.unresponsive) {
+          return renderNotResponding(
+            view.progress.progressAt ?? view.progress.startedAt
+          );
+        }
         return (
           <span className="flex items-center gap-2">
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -347,6 +399,13 @@ export default function ImpactSettingsPage() {
                   : "tickets.runningRecent"
               )}
             </span>
+          </span>
+        );
+      case "interrupted":
+        return (
+          <span className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-warning" />
+            <span>{t("jobs.interruptedRescan")}</span>
           </span>
         );
       case "scanned":
@@ -382,8 +441,14 @@ export default function ImpactSettingsPage() {
     const view = readStalePinReport(config.stalePinReport);
     const staleCount = staleByConfig.get(config.id) ?? 0;
     switch (view.kind) {
+      case "queued":
+        return renderQueued(view.queued.behind);
       case "running":
-        if (isStalePinCheckAbandoned(view.progress)) break;
+        if (view.unresponsive) {
+          return renderNotResponding(
+            view.progress.progressAt ?? view.progress.startedAt
+          );
+        }
         return (
           <span className="flex items-center gap-2">
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -395,6 +460,15 @@ export default function ImpactSettingsPage() {
             </span>
           </span>
         );
+      case "interrupted":
+        return (
+          <span className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-warning" />
+            <span>{t("jobs.interruptedRecheck")}</span>
+          </span>
+        );
+      case "cancelled":
+        return <span>{t("stalePins.checkCancelled")}</span>;
       case "checked":
         return (
           <span className="flex flex-wrap items-center gap-2">

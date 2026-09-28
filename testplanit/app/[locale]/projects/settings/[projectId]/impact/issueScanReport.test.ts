@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
-  ISSUE_SCAN_STALE_MS,
-  isIssueScanStale,
+  isIssueScanInFlight,
   readIssueScanReport,
+  readJobBehind,
 } from "./issueScanReport";
 
 describe("readIssueScanReport", () => {
@@ -122,6 +122,7 @@ describe("readIssueScanReport", () => {
     });
     expect(view).toEqual({
       kind: "running",
+      unresponsive: false,
       progress: {
         full: true,
         stage: "import",
@@ -159,45 +160,77 @@ describe("readIssueScanReport", () => {
     });
   });
 
-  describe("isIssueScanStale", () => {
-    const now = Date.parse("2026-09-13T12:00:00Z");
-    const progress = (
-      startedAt: string | null,
-      progressAt: string | null = null
-    ) => ({
-      full: false,
-      stage: "walk" as const,
-      startedAt,
-      progressAt,
-      scannedCommits: 0,
-      cachedCommits: 0,
-      matchedCommits: 0,
-      fetchedCommits: 0,
-      importLookups: 0,
-      importedIssues: 0,
-    });
+  it("carries the resolver's not-responding verdict on a running scan", () => {
+    expect(
+      readIssueScanReport({ running: true, unresponsive: true })
+    ).toMatchObject({ kind: "running", unresponsive: true });
+  });
 
-    it("trusts a flag younger than the cutoff", () => {
-      expect(isIssueScanStale(progress("2026-09-13T11:50:00Z"), now)).toBe(
-        false
-      );
+  it("reports a queued scan with what the worker is busy with", () => {
+    expect(
+      readIssueScanReport({
+        queued: true,
+        full: true,
+        requestedAt: "2026-09-28T10:00:00Z",
+        behind: { kind: "sweep", configId: 4 },
+      })
+    ).toEqual({
+      kind: "queued",
+      queued: {
+        full: true,
+        requestedAt: "2026-09-28T10:00:00Z",
+        behind: { kind: "sweep", configId: 4 },
+      },
     });
+    expect(readIssueScanReport({ queued: true })).toEqual({
+      kind: "queued",
+      queued: { full: false, requestedAt: null, behind: null },
+    });
+  });
 
-    it("treats a flag older than the cutoff as abandoned", () => {
-      const old = new Date(now - ISSUE_SCAN_STALE_MS - 1).toISOString();
-      expect(isIssueScanStale(progress(old), now)).toBe(true);
+  it("reports a scan the queue lost as interrupted", () => {
+    expect(
+      readIssueScanReport({
+        interrupted: true,
+        full: true,
+        startedAt: "2026-09-28T04:00:00Z",
+        scannedAt: "2026-09-28T10:00:00Z",
+      })
+    ).toEqual({
+      kind: "interrupted",
+      full: true,
+      startedAt: "2026-09-28T04:00:00Z",
+      scannedAt: "2026-09-28T10:00:00Z",
     });
+  });
 
-    it("judges by the last progress write when there is one", () => {
-      const oldStart = new Date(now - 3 * ISSUE_SCAN_STALE_MS).toISOString();
-      expect(
-        isIssueScanStale(progress(oldStart, "2026-09-13T11:55:00Z"), now)
-      ).toBe(false);
-    });
+  it("counts queued and running as in flight, nothing else", () => {
+    expect(isIssueScanInFlight(readIssueScanReport({ queued: true }))).toBe(
+      true
+    );
+    expect(isIssueScanInFlight(readIssueScanReport({ running: true }))).toBe(
+      true
+    );
+    expect(
+      isIssueScanInFlight(readIssueScanReport({ interrupted: true }))
+    ).toBe(false);
+    expect(
+      isIssueScanInFlight(
+        readIssueScanReport({ scannedAt: "2026-09-13T00:00:00Z" })
+      )
+    ).toBe(false);
+  });
 
-    it("treats a flag with no usable start time as abandoned", () => {
-      expect(isIssueScanStale(progress(null), now)).toBe(true);
-      expect(isIssueScanStale(progress("not a date"), now)).toBe(true);
+  it("reads only a well-formed behind", () => {
+    expect(readJobBehind({ kind: "refresh-cache", configId: 9 })).toEqual({
+      kind: "refresh-cache",
+      configId: 9,
     });
+    expect(readJobBehind({ kind: "other" })).toEqual({
+      kind: "other",
+      configId: null,
+    });
+    expect(readJobBehind({ kind: "bogus" })).toBeNull();
+    expect(readJobBehind("sweep")).toBeNull();
   });
 });

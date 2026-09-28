@@ -302,6 +302,11 @@ async function scheduleJobs() {
         {
           name: JOB_REFRESH_EXPIRED_CACHES,
           data: { tenantId },
+          // The repo-cache worker runs one job at a time and a sweep can
+          // take hours. BullMQ takes the plain wait list before prioritized
+          // jobs, so a priority here lets a user's scan, check or refresh
+          // go first whenever both are waiting.
+          opts: { priority: 10 },
         }
       );
 

@@ -2114,7 +2114,8 @@
           "repositoryRequired": "Un dépôt est requis"
         },
         "disconnectWarningCache": "Supprimer tous les fichiers de dépôt mis en cache",
-        "disconnectWarningPatterns": "Supprimer les configurations de chemin et de branche"
+        "disconnectWarningPatterns": "Supprimer les configurations de chemin et de branche",
+        "refreshInterrupted": "L'actualisation du cache a été interrompue avant sa fin. Actualisez à nouveau pour terminer."
       },
       "advanced": {
         "description": "Options par projet pour les fonctionnalités spécifiques. Les nouvelles options apparaîtront ici au fur et à mesure de leur introduction.",
@@ -2328,7 +2329,18 @@
           "removed": "{count, plural, =0 {Pas d'épingles obsolètes supprimées} one {# épingle obsolète supprimée} other {# épingles obsolètes supprimées}}",
           "removeFailed": "Impossible de supprimer les épingles obsolètes",
           "removeConfirm": "Supprimer {count, plural, one {# épingle de code} other {# épingles de code}} que la dernière vérification n'a pas pu trouver à la pointe de {name} ?",
-          "removeConfirmNote": "Les épingles dont le badge Obsolète a été rejeté et les épingles maintenues par les marqueurs de dépôt sont conservées. Les épingles supprimées peuvent être restaurées à partir de la Corbeille."
+          "removeConfirmNote": "Les épingles dont le badge Obsolète a été rejeté et les épingles maintenues par les marqueurs de dépôt sont conservées. Les épingles supprimées peuvent être restaurées à partir de la Corbeille.",
+          "checkCancelled": "Vérification dernière annulée",
+          "interrupted": "Une vérification commencée {date} n'a jamais signalé son état — le worker a peut-être été redémarré. Mettez-la en file à nouveau pour continuer."
+        },
+        "jobs": {
+          "queued": "En file d'attente",
+          "queuedBehind": "{what, select, sweep {En attente de la fin de l'actualisation du cache nocturne.} refresh {En attente de la fin d'une actualisation du cache.} scan {En attente de la fin d'une analyse de ticket.} stale {En attente de la fin d'une vérification de pin obsolète.} other {En attente de la fin d'une autre tâche.}}",
+          "notResponding": "Ne répond pas",
+          "notRespondingHint": "Toujours en cours d'exécution, mais aucune progression n'a été signalée depuis {date}. Il se peut qu'il attende le provider ; annulez-le s'il ne reprend pas.",
+          "interruptedRescan": "Interrompue — analyser à nouveau",
+          "interruptedRecheck": "Interrompue — vérifier à nouveau",
+          "interruptedRefresh": "Interrompue — actualiser à nouveau"
         }
       },
       "access": {
@@ -6673,6 +6685,13 @@
           "question": "Voulez-vous forcer la suppression de cette tâche ?",
           "warning": "Cette opération tentera de la supprimer à plusieurs reprises, avec des délais. Remarque : si la tâche est effectivement bloquée par un processus en cours d'exécution, elle peut tout de même échouer.",
           "confirm": "Forcer la suppression"
+        },
+        "cancelJob": {
+          "button": "Annuler la tâche"
+        },
+        "activeJob": {
+          "title": "Un worker traite actuellement cette tâche",
+          "cancelHint": "Cancel demande au worker de s'arrêter lors de sa prochaine vérification ; la tâche quitte la file d'attente une fois qu'elle s'est arrêtée. Force Remove fonctionne uniquement quand le worker qui détenait la tâche a disparu et son verrou a expiré."
         }
       }
     },

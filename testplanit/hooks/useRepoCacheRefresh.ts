@@ -17,6 +17,8 @@ export interface RepoCacheRefreshMessages {
   networkError: string;
   refreshComplete: (fileCount: number) => string;
   refreshInProgress: string;
+  /** The queue lost the job before the worker finished. */
+  interrupted: string;
 }
 
 interface UseRepoCacheRefreshArgs {
@@ -80,7 +82,13 @@ export function useRepoCacheRefresh({
         const status = fresh?.cacheStatus;
         const fileCount = fresh?.cacheFileCount;
 
-        if (status == null || status === "pending") {
+        // `queued` and `pending` come from the queue-backed status resolver:
+        // the job is waiting for the worker, or the worker is on it.
+        if (status == null || status === "queued") {
+          setRefreshStep(messages.pending);
+          continue;
+        }
+        if (status === "pending") {
           setRefreshStep(
             fileCount != null
               ? messages.cachingFiles(fileCount)
@@ -91,6 +99,8 @@ export function useRepoCacheRefresh({
 
         if (status === "error") {
           setRefreshError(fresh?.cacheError ?? messages.contentsError);
+        } else if (status === "interrupted") {
+          setRefreshError(messages.interrupted);
         } else {
           toast.success(messages.refreshComplete(fileCount ?? 0));
         }
