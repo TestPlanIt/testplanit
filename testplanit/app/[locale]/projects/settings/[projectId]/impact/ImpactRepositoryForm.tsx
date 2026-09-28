@@ -92,6 +92,7 @@ export interface ImpactConfigRow {
   cacheError: string | null;
   markerScanReport: unknown;
   issueScanEnabled: boolean;
+  issueResultLinks: boolean;
   issueScanReport: unknown;
   stalePinReport?: unknown;
   repository: CodeRepositoryOption;
@@ -175,6 +176,7 @@ export function ImpactRepositoryForm({
     cacheEnabled: z.boolean().default(true),
     cacheTtlDays: z.number().int().min(1).max(30).default(7),
     issueScanEnabled: z.boolean().default(true),
+    issueResultLinks: z.boolean().default(false),
   });
 
   type FormData = z.infer<typeof formSchema>;
@@ -186,6 +188,7 @@ export function ImpactRepositoryForm({
     cacheEnabled: true,
     cacheTtlDays: 7,
     issueScanEnabled: true,
+    issueResultLinks: false,
   };
   const valuesFromConfig = (row: ImpactConfigRow): FormData => ({
     repositoryId: String(row.repositoryId),
@@ -196,6 +199,7 @@ export function ImpactRepositoryForm({
     cacheEnabled: row.cacheEnabled ?? true,
     cacheTtlDays: row.cacheTtlDays ?? 7,
     issueScanEnabled: row.issueScanEnabled ?? true,
+    issueResultLinks: row.issueResultLinks ?? false,
   });
 
   const [branchesError, setBranchesError] = useState<string | null>(null);
@@ -445,6 +449,7 @@ export function ImpactRepositoryForm({
         cacheEnabled: values.cacheEnabled,
         cacheTtlDays: values.cacheTtlDays,
         issueScanEnabled: values.issueScanEnabled,
+        issueResultLinks: values.issueResultLinks,
         ...cacheResetFields,
       };
 
@@ -1009,6 +1014,31 @@ export function ImpactRepositoryForm({
                     </FormLabel>
                     <p className="text-muted-foreground">
                       {t("tickets.enableDescription")}
+                    </p>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control as any}
+              name="issueResultLinks"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      disabled={readOnly}
+                      data-testid="impact-issue-result-links"
+                    />
+                  </FormControl>
+                  <div className="space-y-0.5">
+                    <FormLabel className="font-medium">
+                      {t("tickets.resultLinksLabel")}
+                    </FormLabel>
+                    <p className="text-muted-foreground">
+                      {t("tickets.resultLinksDescription")}
                     </p>
                   </div>
                   <FormMessage />

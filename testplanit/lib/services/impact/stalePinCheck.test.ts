@@ -33,6 +33,7 @@ const config = {
   purpose: "IMPACT",
   branch: "main",
   cacheEnabled: true,
+  issueResultLinks: false,
   repositoryId: 9,
   repository: { id: 9, name: "acme/app", provider: "github", settings: null },
 };

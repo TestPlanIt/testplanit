@@ -326,6 +326,7 @@ export const processor = async (
       commits: compare.commits,
       changedPaths,
       caseFilter: { isArchived: false, ...caseFilter },
+      includeResultLinks: config.issueResultLinks,
       maxCommitFetches: cfg.issueMaxCommitFetches,
       getCommitFiles: async (commit) => {
         try {

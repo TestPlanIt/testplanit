@@ -15,6 +15,8 @@ export interface LoadedRepoConfig {
   purpose: RepoConfigPurpose;
   branch: string | null;
   cacheEnabled: boolean;
+  /** Tickets on test results also link the result's case (IMPACT only). */
+  issueResultLinks: boolean;
   repositoryId: number;
   repository: {
     id: number;
@@ -35,6 +37,7 @@ const configSelect = {
   purpose: true,
   branch: true,
   cacheEnabled: true,
+  issueResultLinks: true,
   repositoryId: true,
   repository: {
     select: {
@@ -77,6 +80,7 @@ type ConfigRow = {
   purpose: RepoConfigPurpose;
   branch: string | null;
   cacheEnabled: boolean;
+  issueResultLinks: boolean;
   repositoryId: number;
   repository: {
     id: number;
@@ -102,6 +106,7 @@ async function toLoadedRepo(row: ConfigRow | null): Promise<LoadedRepo | null> {
       purpose: row.purpose,
       branch: row.branch,
       cacheEnabled: row.cacheEnabled,
+      issueResultLinks: row.issueResultLinks,
       repositoryId: row.repositoryId,
       repository,
     },

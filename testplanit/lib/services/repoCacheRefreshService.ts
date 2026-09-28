@@ -209,6 +209,8 @@ interface IssueScanConfigRow {
   id: number;
   projectId: number;
   cacheEnabled: boolean;
+  /** Tickets on test results also link the result's case. */
+  issueResultLinks: boolean;
   project: { createdBy: string };
 }
 
@@ -472,6 +474,7 @@ async function runIssueScan(
             withSymbols: cfg.issueScanSymbolPins,
           }),
         symbolPins: cfg.issueScanSymbolPins,
+        includeResultLinks: config.issueResultLinks,
         maxCommitFetches: full
           ? cfg.issueScanFullMaxCommitFetches
           : cfg.issueScanMaxCommitFetches,

@@ -40,6 +40,7 @@ const configRow = {
   purpose: "IMPACT" as const,
   branch: "main",
   cacheEnabled: true,
+  issueResultLinks: false,
   repositoryId: 22,
   repository: {
     id: 22,
@@ -107,6 +108,7 @@ describe("loadRepoConfigForUser", () => {
       purpose: "IMPACT",
       branch: "main",
       cacheEnabled: true,
+      issueResultLinks: false,
       repositoryId: 22,
       repository: {
         id: 22,

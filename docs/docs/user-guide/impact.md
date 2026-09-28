@@ -231,6 +231,8 @@ Test cases are linked to tickets — Jira issues, GitHub issues, Azure DevOps wo
 
 A key is only ever matched against tickets that are already linked to a test case in the project, so a stray word that looks like a key selects nothing.
 
+A ticket a tester added to a test result or a step result is not counted as a link by default. The **Also count tickets added to test results** switch on the connection's [Linked Tickets card](projects/settings/impact.md#linked-tickets) counts those links too; the ticket then also selects and pins the case that result was recorded for, as long as the result, its run entry, and the case are not deleted, the case is not archived, and the case belongs to the same project.
+
 The connection is used in two directions:
 
 - **In an analysis.** Every commit between the base and head is read for ticket keys. Cases linked to a named ticket are selected with the **Ticket** reason at a score just below a Code Pin, and they count as covering the files those particular commits changed. This is the strongest signal short of a pin: the change itself says which ticket it is for.

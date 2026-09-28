@@ -3931,6 +3931,7 @@ model ProjectCodeRepositoryConfig {
     cacheError            String?
     markerScanReport      Json?                       // IMPACT only: summary of the last repo-marker scan
     issueScanEnabled      Boolean                     @default(true)   // IMPACT only: derive Code Pins from ticket keys in commit messages
+    issueResultLinks      Boolean                     @default(false)  // IMPACT only: a ticket on a test result also links the result's case
     issueScanReport       Json?                       // IMPACT only: summary (or running state) of the last ticket-key scan
     stalePinReport        Json?                       // IMPACT only: summary (or running state) of the last stale Code Pin check
     createdAt             DateTime                    @default(now())

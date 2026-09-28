@@ -87,14 +87,42 @@ describe("tokenMatchesKey", () => {
 });
 
 describe("resolveLinkedIssues", () => {
+  type ResultRow = Awaited<
+    ReturnType<IssueLookupDb["testRunResults"]["findMany"]>
+  >[number];
+  type StepResultRow = Awaited<
+    ReturnType<IssueLookupDb["testRunStepResults"]["findMany"]>
+  >[number];
+
   function makeDb(
     issues: Array<{ id: number; externalKey: string | null }>,
-    links: Array<{ caseId: number; issueId: number }>
+    links: Array<{ caseId: number; issueId: number }>,
+    viaResults: { results?: ResultRow[]; stepResults?: StepResultRow[] } = {}
   ) {
     return {
       issue: { findMany: vi.fn().mockResolvedValue(issues) },
       repositoryCaseIssue: { findMany: vi.fn().mockResolvedValue(links) },
+      testRunResults: {
+        findMany: vi.fn().mockResolvedValue(viaResults.results ?? []),
+      },
+      testRunStepResults: {
+        findMany: vi.fn().mockResolvedValue(viaResults.stepResults ?? []),
+      },
     } satisfies IssueLookupDb;
+  }
+
+  function resultRow(caseId: number, ...issueIds: number[]): ResultRow {
+    return {
+      testRunCase: { repositoryCaseId: caseId },
+      issues: issueIds.map((id) => ({ id })),
+    };
+  }
+
+  function stepResultRow(caseId: number, ...issueIds: number[]): StepResultRow {
+    return {
+      testRunResult: { testRunCase: { repositoryCaseId: caseId } },
+      issues: issueIds.map((id) => ({ id })),
+    };
   }
 
   it("queries by exact keys and trailing #number, then maps issues to linked cases", async () => {
@@ -152,6 +180,167 @@ describe("resolveLinkedIssues", () => {
     });
     expect(resolved.issues.size).toBe(0);
     expect(db.issue.findMany).not.toHaveBeenCalled();
+  });
+
+  describe("with result links", () => {
+    const tokens = extractIssueTokens("PROJ-7");
+    const caseInProject = { projectId: 5, isDeleted: false };
+    const liveCase = { ...caseInProject, isArchived: false };
+
+    it("leaves result links out unless asked, and never reads the result tables", async () => {
+      const db = makeDb([{ id: 1, externalKey: "PROJ-7" }], [], {
+        results: [resultRow(300, 1)],
+        stepResults: [stepResultRow(301, 1)],
+      });
+      const resolved = await resolveLinkedIssues(db, { projectId: 5, tokens });
+      expect(resolved.issues.size).toBe(0);
+      expect(db.testRunResults.findMany).not.toHaveBeenCalled();
+      expect(db.testRunStepResults.findMany).not.toHaveBeenCalled();
+      const where = db.issue.findMany.mock.calls[0][0].where;
+      expect(where.caseIssues.some.case).toEqual(caseInProject);
+      expect(where.AND).toBeUndefined();
+    });
+
+    it("finds issues linked only through a result, and resolves them to the result's case", async () => {
+      const db = makeDb([{ id: 1, externalKey: "PROJ-7" }], [], {
+        results: [resultRow(300, 1)],
+      });
+      const resolved = await resolveLinkedIssues(db, {
+        projectId: 5,
+        tokens,
+        caseFilter: { isArchived: false },
+        includeResultLinks: true,
+      });
+
+      const where = db.issue.findMany.mock.calls[0][0].where;
+      expect(where.caseIssues).toBeUndefined();
+      expect(where.AND).toEqual([
+        {
+          OR: [
+            { caseIssues: { some: { case: caseInProject } } },
+            {
+              testRunResults: {
+                some: {
+                  isDeleted: false,
+                  testRunCase: {
+                    isDeleted: false,
+                    repositoryCase: caseInProject,
+                  },
+                },
+              },
+            },
+            {
+              testRunStepResults: {
+                some: {
+                  isDeleted: false,
+                  testRunResult: {
+                    isDeleted: false,
+                    testRunCase: {
+                      isDeleted: false,
+                      repositoryCase: caseInProject,
+                    },
+                  },
+                },
+              },
+            },
+          ],
+        },
+      ]);
+      expect(where.OR).toEqual([{ externalKey: { in: ["PROJ-7"] } }]);
+      expect([...resolved.issues.values()]).toEqual([
+        { id: 1, key: "PROJ-7", caseIds: [300] },
+      ]);
+    });
+
+    it("skips deleted results and run cases, and applies the case filter to the result's case", async () => {
+      const db = makeDb(
+        [
+          { id: 1, externalKey: "PROJ-7" },
+          { id: 2, externalKey: "PROJ-8" },
+        ],
+        [],
+        { results: [resultRow(300, 1)] }
+      );
+      await resolveLinkedIssues(db, {
+        projectId: 5,
+        tokens,
+        caseFilter: { isArchived: false },
+        includeResultLinks: true,
+      });
+
+      expect(db.testRunResults.findMany).toHaveBeenCalledWith({
+        where: {
+          isDeleted: false,
+          issues: { some: { id: { in: [1, 2] } } },
+          testRunCase: { isDeleted: false, repositoryCase: liveCase },
+        },
+        select: {
+          testRunCase: { select: { repositoryCaseId: true } },
+          issues: { where: { id: { in: [1, 2] } }, select: { id: true } },
+        },
+      });
+      expect(db.testRunStepResults.findMany).toHaveBeenCalledWith({
+        where: {
+          isDeleted: false,
+          issues: { some: { id: { in: [1, 2] } } },
+          testRunResult: {
+            isDeleted: false,
+            testRunCase: { isDeleted: false, repositoryCase: liveCase },
+          },
+        },
+        select: {
+          testRunResult: {
+            select: { testRunCase: { select: { repositoryCaseId: true } } },
+          },
+          issues: { where: { id: { in: [1, 2] } }, select: { id: true } },
+        },
+      });
+    });
+
+    it("resolves a step-result link to the result's case", async () => {
+      const db = makeDb([{ id: 1, externalKey: "PROJ-7" }], [], {
+        stepResults: [stepResultRow(301, 1)],
+      });
+      const resolved = await resolveLinkedIssues(db, {
+        projectId: 5,
+        tokens,
+        includeResultLinks: true,
+      });
+      expect(resolved.issues.get(1)?.caseIds).toEqual([301]);
+    });
+
+    it("lists a case once however many ways it is linked, and keeps links per issue", async () => {
+      const db = makeDb(
+        [
+          { id: 1, externalKey: "PROJ-7" },
+          { id: 2, externalKey: "PROJ-8" },
+        ],
+        [{ caseId: 100, issueId: 1 }],
+        {
+          results: [resultRow(100, 1), resultRow(100, 1, 2), resultRow(50, 2)],
+          stepResults: [stepResultRow(100, 1), stepResultRow(70, 2)],
+        }
+      );
+      const resolved = await resolveLinkedIssues(db, {
+        projectId: 5,
+        tokens: extractIssueTokens("PROJ-7 PROJ-8"),
+        includeResultLinks: true,
+      });
+      expect([...resolved.issues.values()]).toEqual([
+        { id: 1, key: "PROJ-7", caseIds: [100] },
+        { id: 2, key: "PROJ-8", caseIds: [50, 70, 100] },
+      ]);
+    });
+
+    it("still drops an issue whose only results fail the filters", async () => {
+      const db = makeDb([{ id: 1, externalKey: "PROJ-7" }], []);
+      const resolved = await resolveLinkedIssues(db, {
+        projectId: 5,
+        tokens,
+        includeResultLinks: true,
+      });
+      expect(resolved.issues.size).toBe(0);
+    });
   });
 });
 

@@ -12,7 +12,8 @@ import { mockImpactApi } from "../../utils/impact-mocks";
  *   QuickScript binding (purpose QUICKSCRIPT) untouched — then the
  *   connection's card lists it; Edit opens the dialog where the branch
  *   combobox (fed by the mocked branches route) replaces the free-text
- *   input and the Linked Tickets switch persists `issueScanEnabled`; View
+ *   input and the Linked Tickets switches persist `issueScanEnabled` and
+ *   `issueResultLinks`; View
  *   opens it read-only; Disconnect on the card removes the connection.
  * - A second repository can be connected alongside the first: the page lists
  *   both cards, the Connect dialog offers only repositories not yet
@@ -49,6 +50,7 @@ async function fetchRepoConfig(
   branch: string | null;
   purpose: string;
   issueScanEnabled: boolean;
+  issueResultLinks: boolean;
 } | null> {
   const res = await request.get(
     `${baseURL}/api/model/projectCodeRepositoryConfig/findFirst`,
@@ -62,6 +64,7 @@ async function fetchRepoConfig(
             branch: true,
             purpose: true,
             issueScanEnabled: true,
+            issueResultLinks: true,
           },
         }),
       },
@@ -304,8 +307,17 @@ test.describe("Impact project settings", () => {
           ?.issueScanEnabled
       ).toBe(true);
 
+      const resultLinksSwitch = page.getByTestId("impact-issue-result-links");
+      await expect(resultLinksSwitch).toHaveAttribute("aria-checked", "false");
+      expect(
+        (await fetchRepoConfig(request, base, projectId, "IMPACT"))
+          ?.issueResultLinks
+      ).toBe(false);
+
       await ticketSwitch.click();
       await expect(ticketSwitch).toHaveAttribute("aria-checked", "false");
+      await resultLinksSwitch.click();
+      await expect(resultLinksSwitch).toHaveAttribute("aria-checked", "true");
       await page.getByTestId("impact-save").click();
       await expect
         .poll(
@@ -315,6 +327,10 @@ test.describe("Impact project settings", () => {
           { timeout: 15000 }
         )
         .toBe(false);
+      expect(
+        (await fetchRepoConfig(request, base, projectId, "IMPACT"))
+          ?.issueResultLinks
+      ).toBe(true);
     });
 
     await test.step("Regression: the QuickScript page shows no connected repository", async () => {

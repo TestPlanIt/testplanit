@@ -123,6 +123,11 @@ export interface IssueScanOptions {
    * none. Needs `getCommitFiles` to supply `symbolsByPath`.
    */
   symbolPins?: boolean;
+  /**
+   * Also pin to the cases whose test results (or step results) a ticket was
+   * added to, not only the cases linked to the ticket directly.
+   */
+  includeResultLinks?: boolean;
 }
 
 export interface IssueScanReport {
@@ -302,6 +307,7 @@ export async function syncIssuePins(
           projectId: config.projectId,
           tokens: [...allTokens.values()],
           caseFilter: { isArchived: false },
+          includeResultLinks: opts.includeResultLinks,
         })
       : null;
 

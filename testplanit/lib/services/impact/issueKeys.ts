@@ -88,6 +88,22 @@ export interface IssueLookupDb {
       args: unknown
     ): Promise<Array<{ caseId: number; issueId: number }>>;
   };
+  testRunResults: {
+    findMany(args: unknown): Promise<
+      Array<{
+        testRunCase: { repositoryCaseId: number };
+        issues: Array<{ id: number }>;
+      }>
+    >;
+  };
+  testRunStepResults: {
+    findMany(args: unknown): Promise<
+      Array<{
+        testRunResult: { testRunCase: { repositoryCaseId: number } };
+        issues: Array<{ id: number }>;
+      }>
+    >;
+  };
 }
 
 export interface ResolveLinkedIssuesInput {
@@ -95,6 +111,12 @@ export interface ResolveLinkedIssuesInput {
   tokens: IssueToken[];
   /** Extra filter on the linked cases (archived, workflow state, ...). */
   caseFilter?: Record<string, unknown>;
+  /**
+   * Also treat a ticket added to a test result or step result as linked to
+   * the case that result was recorded for. Off, only cases linked to the
+   * ticket directly count.
+   */
+  includeResultLinks?: boolean;
 }
 
 export interface ResolvedIssues {
@@ -105,10 +127,70 @@ export interface ResolvedIssues {
 }
 
 /**
+ * Cases each issue is linked to through test results and step results: the
+ * repository case of the run case the result was recorded for. Two batched
+ * queries keyed by issue id; deleted results, run cases and cases are left
+ * out, as are cases the filter rejects.
+ */
+async function casesViaResults(
+  db: IssueLookupDb,
+  issueIds: number[],
+  caseWhere: Record<string, unknown>
+): Promise<Array<{ caseId: number; issueId: number }>> {
+  const issueFilter = { id: { in: issueIds } };
+  const [results, stepResults] = await Promise.all([
+    db.testRunResults.findMany({
+      where: {
+        isDeleted: false,
+        issues: { some: issueFilter },
+        testRunCase: { isDeleted: false, repositoryCase: caseWhere },
+      },
+      select: {
+        testRunCase: { select: { repositoryCaseId: true } },
+        issues: { where: issueFilter, select: { id: true } },
+      },
+    }),
+    db.testRunStepResults.findMany({
+      where: {
+        isDeleted: false,
+        issues: { some: issueFilter },
+        testRunResult: {
+          isDeleted: false,
+          testRunCase: { isDeleted: false, repositoryCase: caseWhere },
+        },
+      },
+      select: {
+        testRunResult: {
+          select: { testRunCase: { select: { repositoryCaseId: true } } },
+        },
+        issues: { where: issueFilter, select: { id: true } },
+      },
+    }),
+  ]);
+  const out: Array<{ caseId: number; issueId: number }> = [];
+  for (const row of results) {
+    for (const issue of row.issues) {
+      out.push({ caseId: row.testRunCase.repositoryCaseId, issueId: issue.id });
+    }
+  }
+  for (const row of stepResults) {
+    for (const issue of row.issues) {
+      out.push({
+        caseId: row.testRunResult.testRunCase.repositoryCaseId,
+        issueId: issue.id,
+      });
+    }
+  }
+  return out;
+}
+
+/**
  * Resolve tokens to issues that are linked to cases in the project. Keys are
  * compared exactly, or by trailing `#<number>` for number-keyed trackers, so
  * `#12` in a message finds GitHub's `#12` and GitLab's `group/project#12`
  * alike. Issues with no linked case are not returned: they select nothing.
+ * With `includeResultLinks`, a ticket a tester added while recording a
+ * result (or a step result) is linked to that result's case as well.
  */
 export async function resolveLinkedIssues(
   db: IssueLookupDb,
@@ -135,31 +217,53 @@ export async function resolveLinkedIssues(
     keyClauses.push({ externalKey: { endsWith: `#${number}` } });
   }
 
+  const includeResultLinks = input.includeResultLinks === true;
+  const caseInProject = { projectId: input.projectId, isDeleted: false };
+  const linkClauses: Record<string, unknown>[] = [
+    { caseIssues: { some: { case: caseInProject } } },
+  ];
+  if (includeResultLinks) {
+    const liveRunCase = { isDeleted: false, repositoryCase: caseInProject };
+    linkClauses.push(
+      {
+        testRunResults: {
+          some: { isDeleted: false, testRunCase: liveRunCase },
+        },
+      },
+      {
+        testRunStepResults: {
+          some: {
+            isDeleted: false,
+            testRunResult: { isDeleted: false, testRunCase: liveRunCase },
+          },
+        },
+      }
+    );
+  }
+
   const rows = await db.issue.findMany({
     where: {
       isDeleted: false,
-      caseIssues: {
-        some: { case: { projectId: input.projectId, isDeleted: false } },
-      },
+      ...(linkClauses.length === 1
+        ? linkClauses[0]
+        : { AND: [{ OR: linkClauses }] }),
       OR: keyClauses,
     },
     select: { id: true, externalKey: true },
   });
   if (rows.length === 0) return empty;
 
-  const links = await db.repositoryCaseIssue.findMany({
-    where: {
-      issueId: { in: rows.map((row) => row.id) },
-      case: {
-        projectId: input.projectId,
-        isDeleted: false,
-        ...(input.caseFilter ?? {}),
-      },
-    },
-    select: { caseId: true, issueId: true },
-  });
+  const issueIds = rows.map((row) => row.id);
+  const caseWhere = { ...caseInProject, ...(input.caseFilter ?? {}) };
+  const [directLinks, resultLinks] = await Promise.all([
+    db.repositoryCaseIssue.findMany({
+      where: { issueId: { in: issueIds }, case: caseWhere },
+      select: { caseId: true, issueId: true },
+    }),
+    includeResultLinks ? casesViaResults(db, issueIds, caseWhere) : [],
+  ]);
   const casesByIssue = new Map<number, Set<number>>();
-  for (const link of links) {
+  for (const link of [...directLinks, ...resultLinks]) {
     let set = casesByIssue.get(link.issueId);
     if (!set) {
       set = new Set();

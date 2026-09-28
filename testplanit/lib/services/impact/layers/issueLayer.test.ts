@@ -19,11 +19,17 @@ function commit(sha: string, message: string): RepoCommit {
 
 function makeDb(
   issues: Array<{ id: number; externalKey: string | null }>,
-  links: Array<{ caseId: number; issueId: number }>
+  links: Array<{ caseId: number; issueId: number }>,
+  resultLinks: Array<{
+    testRunCase: { repositoryCaseId: number };
+    issues: Array<{ id: number }>;
+  }> = []
 ) {
   return {
     issue: { findMany: vi.fn().mockResolvedValue(issues) },
     repositoryCaseIssue: { findMany: vi.fn().mockResolvedValue(links) },
+    testRunResults: { findMany: vi.fn().mockResolvedValue(resultLinks) },
+    testRunStepResults: { findMany: vi.fn().mockResolvedValue([]) },
   };
 }
 
@@ -196,6 +202,30 @@ describe("runIssueLayer", () => {
     });
     expect(out.layer.get(9)?.reasons[0]).not.toHaveProperty("files");
     expect(out.fetchCapped).toBe(false);
+  });
+
+  it("selects the case a ticket was added to through a result only when result links are on", async () => {
+    const viaResult = {
+      testRunCase: { repositoryCaseId: 12 },
+      issues: [{ id: 1 }],
+    };
+    const off = makeDb([{ id: 1, externalKey: "PROJ-1" }], [], [viaResult]);
+    expect((await run(off, [commit(SHA_A, "PROJ-1")])).layer.size).toBe(0);
+    expect(off.testRunResults.findMany).not.toHaveBeenCalled();
+
+    const on = makeDb(
+      [{ id: 1, externalKey: "PROJ-1" }],
+      [{ caseId: 9, issueId: 1 }],
+      [viaResult]
+    );
+    const out = await run(on, [commit(SHA_A, "PROJ-1")], {
+      includeResultLinks: true,
+    });
+    expect([...out.layer.keys()].sort((a, b) => a - b)).toEqual([9, 12]);
+    expect(out.layer.get(12)?.reasons[0]).toMatchObject({
+      kind: "ISSUE",
+      issueKey: "PROJ-1",
+    });
   });
 
   it("passes the case filter through to the link lookup", async () => {

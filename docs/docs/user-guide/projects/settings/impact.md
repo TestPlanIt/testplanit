@@ -48,6 +48,18 @@ Commits are picked from this branch in the Impact dialog, and Code Pins are anch
 
 One or more rows combining a base **Path** with a glob **Pattern** decide which application files Impact works with — the files offered in the Code Pin file picker, scanned for repository markers, and cached. For example, path `src` with pattern `**/*` includes everything under `src`. Leave the path blank, or enter `.`, to start at the repository root; path `.` with pattern `**/*` includes every file in the repository. Use **Add Path** to add rows.
 
+Rows add to each other: a file is included when it matches any row. To leave files out, put the exclusion inside the pattern with a `!( )` group rather than adding a row that starts with `!`. Some examples, each with path `src`:
+
+| Pattern                                      | Includes                                                       |
+| -------------------------------------------- | -------------------------------------------------------------- |
+| `**/*.ts`                                    | Every `.ts` file under `src`                                   |
+| `**/!(*.test).ts`                            | Every `.ts` file except `*.test.ts`                            |
+| `**/!(*.test\|*.spec).ts`                    | Every `.ts` file except `*.test.ts` and `*.spec.ts`            |
+| `**/!(*.test\|*.spec\|*.stories).@(ts\|tsx)` | Every `.ts` and `.tsx` file except test, spec and story files  |
+| `**/!(*.test\|*.spec).*`                     | Every file, whatever its extension, except test and spec files |
+
+`**/` matches zero or more directories, so these patterns cover files directly in `src` as well as nested ones.
+
 **Preview Files** resolves the branch and patterns and lists the matching files with their count, showing progress while the repository is scanned and retrying when the provider rate-limits the request. A **Results may be incomplete (provider limit)** badge appears when the provider capped the listing.
 
 ## Cache Settings
@@ -68,6 +80,7 @@ Saving a connection whose files have never been fetched — a new connection, or
 Commits on the configured branch that name a ticket (`PROJ-123`, `#42`, `AB#42`) become Code Pins with the **Ticket** source on every test case linked to that ticket — symbol pins on the functions or classes the commit changed where its diff shows them, whole-file pins otherwise — so later changes to that code find the cases again. See [Linked tickets](../../impact.md#linked-tickets) for how keys are read and which files are pinned. The card holds:
 
 - **Derive Code Pins from commit messages** — on by default. The scan runs on every cache refresh, after repository markers. Turning it off stops the refresh-time scan; analyses still read ticket keys from the commits they compare, and the manual scans below still run. Saved with **Save Configuration**.
+- **Also count tickets added to test results** — off by default. When on, a ticket a tester added to a test result or a step result counts as linked to the case that result was recorded for, so the scan and analyses pin and select that case too. Deleted results, deleted run entries, archived or deleted cases, and results from other projects are not counted. Turning it off removes the pins it added when a later scan reaches their commits. Saved with **Save Configuration**.
 - Every scan also **imports the tickets the commits name** that TestPlanIt does not hold yet: each is fetched from the project's issue tracker and created as an issue, the same way the case importer resolves ticket keys. An imported ticket arrives with no test case links, so it selects nothing until a case is linked to it; the point is that it is there to link. A project with no active issue tracker, or with several, imports nothing.
   The three scan buttons below sit on the connection's card on the settings page and in the connection dialog; either place starts the same scan.
 

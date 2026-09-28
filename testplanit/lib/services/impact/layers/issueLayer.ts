@@ -16,6 +16,11 @@ export interface IssueLayerInput {
   /** Every changed path of the range. */
   changedPaths: string[];
   caseFilter?: Record<string, unknown>;
+  /**
+   * Also select the cases whose test results (or step results) a ticket was
+   * added to, not only the cases linked to the ticket directly.
+   */
+  includeResultLinks?: boolean;
   /** Commits whose own file list may be fetched; the rest carry no files. */
   maxCommitFetches: number;
   /** Paths one commit touched, or null when they cannot be read. */
@@ -70,6 +75,7 @@ export async function runIssueLayer(
     projectId: input.projectId,
     tokens: [...allTokens.values()],
     caseFilter: input.caseFilter,
+    includeResultLinks: input.includeResultLinks,
   });
   if (resolved.issues.size === 0) return empty;
 

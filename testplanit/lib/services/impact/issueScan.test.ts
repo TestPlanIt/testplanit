@@ -34,14 +34,21 @@ interface Row {
   isDeleted: boolean;
 }
 
+type ResultRow = Awaited<
+  ReturnType<IssueScanDb["testRunResults"]["findMany"]>
+>[number];
+
 function makeDb(
   issues: Array<{ id: number; externalKey: string | null }>,
   links: Array<{ caseId: number; issueId: number }>,
-  pins: Row[] = []
+  pins: Row[] = [],
+  resultLinks: ResultRow[] = []
 ) {
   return {
     issue: { findMany: vi.fn().mockResolvedValue(issues) },
     repositoryCaseIssue: { findMany: vi.fn().mockResolvedValue(links) },
+    testRunResults: { findMany: vi.fn().mockResolvedValue(resultLinks) },
+    testRunStepResults: { findMany: vi.fn().mockResolvedValue([]) },
     repositoryCaseCodePin: {
       // Older fixtures describe whole-file pins; fill in what the scan reads.
       findMany: vi
@@ -143,6 +150,28 @@ describe("syncIssuePins", () => {
         },
       })
     );
+  });
+
+  it("pins the case a ticket was added to through a test result when result links are on", async () => {
+    const viaResult: ResultRow = {
+      testRunCase: { repositoryCaseId: 41 },
+      issues: [{ id: 30 }],
+    };
+    const off = makeDb(LINKED.issues, [], [], [viaResult]);
+    const offReport = await sync(off, [commit(SHA_NEW, "PROJ-9 fix")]);
+    expect(offReport).toMatchObject({ matchedCommits: 0, created: 0 });
+    expect(off.testRunResults.findMany).not.toHaveBeenCalled();
+
+    const on = makeDb(LINKED.issues, LINKED.links, [], [viaResult]);
+    const report = await sync(on, [commit(SHA_NEW, "PROJ-9 fix")], {
+      includeResultLinks: true,
+    });
+
+    expect(created(on).map((pin: any) => [pin.caseId, pin.filePath])).toEqual([
+      [22, "src/a.ts"],
+      [41, "src/a.ts"],
+    ]);
+    expect(report).toMatchObject({ matchedCommits: 1, issues: 1, created: 2 });
   });
 
   it("does nothing beyond the report when no commit names a linked ticket", async () => {

@@ -88,6 +88,7 @@ function makeConfig(overrides: Record<string, unknown> = {}) {
     cacheEnabled: true,
     cacheTtlDays: 7,
     issueScanEnabled: true,
+    issueResultLinks: false,
     pathPatterns: [],
     repository: { credentials: {}, settings: null, provider: "github" },
     project: { createdBy: OWNER },
@@ -255,11 +256,19 @@ describe("refreshRepoCache", () => {
         actorId: OWNER,
         maxCommitFetches: 100,
         maxFilesPerCommit: 50,
+        includeResultLinks: false,
       });
       expect(typeof opts.getCommitFiles).toBe("function");
       expect(typeof opts.importIssues).toBe("function");
       expect(typeof opts.onProgress).toBe("function");
       expect(storedIssueReport()).toEqual({ created: 1 });
+    });
+
+    it("passes the connection's result-links switch to the scan", async () => {
+      db = makeDb(makeConfig({ issueResultLinks: true }));
+      await refreshRepoCache(5, db);
+      const [, , opts] = (syncIssuePins as any).mock.calls[0];
+      expect(opts.includeResultLinks).toBe(true);
     });
 
     it("marks the scan running while it walks, then stores the report", async () => {
