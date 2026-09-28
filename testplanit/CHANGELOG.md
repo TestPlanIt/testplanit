@@ -1,3 +1,15 @@
+## [1.1.0-beta.29](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.28...v1.1.0-beta.29) (2026-09-28)
+
+### Features
+
+* **impact:** count tickets on test results as case links per connection ([217513c](https://github.com/TestPlanIt/testplanit/commit/217513cbb10f0a4525cc5ba227d05dcdeb141452))
+* **localization:** add result links feature to multiple language files ([4b1e219](https://github.com/TestPlanIt/testplanit/commit/4b1e21935dbf407c4ca1521f30904e04b354e4fb))
+
+### Bug Fixes
+
+* **cases:** snapshot a version on every change to the automated flag ([0d1313f](https://github.com/TestPlanIt/testplanit/commit/0d1313f5eecb71c67ca2cd7aa52790387fd86faa))
+* **impact:** report repository job status from the queue, not from saved flags ([7e708bd](https://github.com/TestPlanIt/testplanit/commit/7e708bd7f79b1d369e3a7f9c1b9fe6c9f5be0629))
+
 ## [1.1.0-beta.28](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.27...v1.1.0-beta.28) (2026-09-28)
 
 ### Bug Fixes
