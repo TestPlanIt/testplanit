@@ -18,6 +18,7 @@ const {
   NO_AREA_PERMISSIONS,
   areaPermissionsFrom,
   hasProjectAccess,
+  isProjectAdminFor,
   permissionsForArea,
   resolveEffectiveProjectAccess,
   resolveEligibleRoleIds,
@@ -49,6 +50,8 @@ interface Fixture {
   groupPerms?: Array<{ accessType: string; role?: unknown }>;
   projectDefaultAccessType?: string;
   projectDefaultRole?: unknown;
+  projectCreatedBy?: string;
+  assigned?: boolean;
   missingUser?: boolean;
   missingProject?: boolean;
 }
@@ -72,6 +75,7 @@ const makeDb = (f: Fixture) => ({
         ? null
         : {
             id: 1,
+            createdBy: f.projectCreatedBy ?? "someone-else",
             defaultAccessType: f.projectDefaultAccessType ?? "DEFAULT",
             defaultRole: f.projectDefaultRole ?? null,
           }
@@ -82,6 +86,9 @@ const makeDb = (f: Fixture) => ({
   },
   groupProjectPermission: {
     findMany: vi.fn().mockResolvedValue(f.groupPerms ?? []),
+  },
+  projectAssignment: {
+    findUnique: vi.fn().mockResolvedValue(f.assigned ? { userId: "u1" } : null),
   },
 });
 
@@ -326,6 +333,118 @@ describe("resolveEffectiveProjectAccess", () => {
     });
     await resolveEffectiveProjectAccess("u1", 1, db as never);
     expect(db.groupProjectPermission.findMany).not.toHaveBeenCalled();
+  });
+});
+
+describe("project admins", () => {
+  const settingsAdminRole = (id = 9) => ({
+    id,
+    name: "Lead",
+    rolePermissions: [
+      { area: "Settings", canAddEdit: true, canDelete: false, canClose: false },
+    ],
+  });
+
+  const resolve = (f: Fixture) =>
+    resolveEffectiveProjectAccess("u1", 1, makeDb(f) as never);
+
+  it("a Settings canAddEdit role on the user's own row makes a project admin with the full grid", async () => {
+    const r = await resolve({
+      userPerm: { accessType: "SPECIFIC_ROLE", role: settingsAdminRole() },
+    });
+    expect(r.isProjectAdmin).toBe(true);
+    expect(areaPermissionsFrom(r, "TestRuns" as never)).toEqual(
+      ALL_AREA_PERMISSIONS
+    );
+    expect(r.effectiveRole?.name).toBe("Lead");
+  });
+
+  it("the Settings bit counts however the ladder reaches the role — group grant and project default included", async () => {
+    const viaGroup = await resolve({
+      groupIds: [1],
+      groupPerms: [{ accessType: "SPECIFIC_ROLE", role: settingsAdminRole() }],
+    });
+    expect(viaGroup.isProjectAdmin).toBe(true);
+
+    const viaGlobal = await resolve({
+      globalRole: settingsAdminRole() as never,
+      projectDefaultAccessType: "GLOBAL_ROLE",
+    });
+    expect(viaGlobal.isProjectAdmin).toBe(true);
+
+    const viaDefaultRole = await resolve({
+      projectDefaultAccessType: "SPECIFIC_ROLE",
+      projectDefaultRole: settingsAdminRole(),
+    });
+    expect(viaDefaultRole.isProjectAdmin).toBe(true);
+  });
+
+  it("a role without the Settings bit is not a project admin, whatever else it grants", async () => {
+    const r = await resolve({
+      userPerm: { accessType: "SPECIFIC_ROLE", role: closerRole() },
+    });
+    expect(r.isProjectAdmin).toBe(false);
+    expect(areaPermissionsFrom(r, "Milestones" as never)).toEqual(
+      NO_AREA_PERMISSIONS
+    );
+  });
+
+  it("the project's creator is a project admin even when the project default denies", async () => {
+    const r = await resolve({
+      projectCreatedBy: "u1",
+      projectDefaultAccessType: "NO_ACCESS",
+    });
+    expect(r.isProjectAdmin).toBe(true);
+    expect(hasProjectAccess(r)).toBe(true);
+    expect(areaPermissionsFrom(r, "TestRuns" as never)).toEqual(
+      ALL_AREA_PERMISSIONS
+    );
+  });
+
+  it("the user's own NO_ACCESS row outranks the creator and Settings-bit paths", async () => {
+    const r = await resolve({
+      projectCreatedBy: "u1",
+      globalRole: settingsAdminRole() as never,
+      userPerm: { accessType: "NO_ACCESS" },
+    });
+    expect(r.isProjectAdmin).toBe(false);
+    expect(hasProjectAccess(r)).toBe(false);
+  });
+
+  it("a system PROJECTADMIN is a project admin only where assigned", async () => {
+    const assigned = await resolve({ access: "PROJECTADMIN", assigned: true });
+    expect(assigned.isProjectAdmin).toBe(true);
+
+    const notAssigned = await resolve({ access: "PROJECTADMIN" });
+    expect(notAssigned.isProjectAdmin).toBe(false);
+  });
+
+  it("a system ADMIN is a project admin everywhere, even when denied", async () => {
+    const r = await resolve({
+      access: "ADMIN",
+      userPerm: { accessType: "NO_ACCESS" },
+    });
+    expect(r.isProjectAdmin).toBe(true);
+  });
+
+  it("isProjectAdminFor answers the same question in one call", async () => {
+    await expect(
+      isProjectAdminFor(
+        "u1",
+        1,
+        makeDb({
+          userPerm: { accessType: "SPECIFIC_ROLE", role: settingsAdminRole() },
+        }) as never
+      )
+    ).resolves.toBe(true);
+    await expect(isProjectAdminFor("u1", 1, makeDb({}) as never)).resolves.toBe(
+      false
+    );
+  });
+
+  it("reports isProjectAdmin: false when unresolved", async () => {
+    const r = await resolve({ missingProject: true });
+    expect(r.isProjectAdmin).toBe(false);
   });
 });
 

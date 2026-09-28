@@ -35,6 +35,9 @@ vi.mock("~/lib/db", () => {
     groupProjectPermission: {
       findMany: vi.fn(),
     },
+    projectAssignment: {
+      findUnique: vi.fn(),
+    },
   };
   return { baseDb: dbStub };
 });
@@ -65,12 +68,9 @@ describe("POST /api/get-user-permissions — caller authentication (CR-02)", () 
       defaultAccessType: "NO_ACCESS",
       defaultRole: null,
     });
-    // Backs authorizeProjectAdminForProject's isProjectAdmin computation —
-    // default to "not a project admin" so existing assertions on hasAccess/
-    // effectiveRole/permissions are unaffected.
-    (baseDb as any).projects.findFirst.mockResolvedValue(null);
     (baseDb as any).userProjectPermission.findUnique.mockResolvedValue(null);
     (baseDb as any).groupProjectPermission.findMany.mockResolvedValue([]);
+    (baseDb as any).projectAssignment.findUnique.mockResolvedValue(null);
   });
 
   it("returns 401 when no session is present (anonymous caller)", async () => {
@@ -187,6 +187,14 @@ describe("POST /api/get-user-permissions — caller authentication (CR-02)", () 
     (getServerAuthSession as any).mockResolvedValue({
       user: { id: "admin-user", access: "ADMIN" },
     });
+    // The ladder reads the access level off the user row, not the session.
+    const { baseDb } = await import("~/lib/db");
+    (baseDb as any).user.findUnique.mockResolvedValue({
+      id: "admin-user",
+      access: "ADMIN",
+      role: { id: 1, rolePermissions: [] },
+      groups: [],
+    });
 
     const { POST } = await import("./route");
     const response = await POST(
@@ -203,8 +211,6 @@ describe("POST /api/get-user-permissions — caller authentication (CR-02)", () 
     (getServerAuthSession as any).mockResolvedValue({
       user: { id: "caller-user", access: "NONE" },
     });
-    const { baseDb } = await import("~/lib/db");
-    (baseDb as any).projects.findFirst.mockResolvedValue(null);
 
     const { POST } = await import("./route");
     const response = await POST(
@@ -216,13 +222,68 @@ describe("POST /api/get-user-permissions — caller authentication (CR-02)", () 
     expect(body.isProjectAdmin).toBe(false);
   });
 
-  it("includes isProjectAdmin: true for a caller who is the project's Project Admin", async () => {
+  it("includes isProjectAdmin: true (and the full grid) for a USER whose project role carries Settings canAddEdit", async () => {
     const { getServerAuthSession } = await import("~/server/auth");
     (getServerAuthSession as any).mockResolvedValue({
-      user: { id: "caller-user", access: "NONE" },
+      user: { id: "caller-user", access: "USER" },
     });
     const { baseDb } = await import("~/lib/db");
-    (baseDb as any).projects.findFirst.mockResolvedValue({ id: 42 });
+    (baseDb as any).user.findUnique.mockResolvedValue({
+      id: "caller-user",
+      access: "USER",
+      role: { id: 1, rolePermissions: [] },
+      groups: [],
+    });
+    (baseDb as any).userProjectPermission.findUnique.mockResolvedValue({
+      accessType: "SPECIFIC_ROLE",
+      role: {
+        id: 9,
+        name: "Lead",
+        rolePermissions: [
+          {
+            area: "Settings",
+            canAddEdit: true,
+            canDelete: false,
+            canClose: false,
+          },
+        ],
+      },
+    });
+
+    const { POST } = await import("./route");
+    const response = await POST(
+      makeRequest({ userId: "caller-user", projectId: 42 })
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.isProjectAdmin).toBe(true);
+    expect(body.effectiveRole).toBe("Lead");
+    expect(body.permissions.TestRuns).toEqual({
+      canAddEdit: true,
+      canDelete: true,
+      canClose: true,
+    });
+  });
+
+  it("includes isProjectAdmin: true for the project's creator", async () => {
+    const { getServerAuthSession } = await import("~/server/auth");
+    (getServerAuthSession as any).mockResolvedValue({
+      user: { id: "caller-user", access: "USER" },
+    });
+    const { baseDb } = await import("~/lib/db");
+    (baseDb as any).user.findUnique.mockResolvedValue({
+      id: "caller-user",
+      access: "USER",
+      role: { id: 1, rolePermissions: [] },
+      groups: [],
+    });
+    (baseDb as any).projects.findUnique.mockResolvedValue({
+      id: 42,
+      createdBy: "caller-user",
+      defaultAccessType: "NO_ACCESS",
+      defaultRole: null,
+    });
 
     const { POST } = await import("./route");
     const response = await POST(

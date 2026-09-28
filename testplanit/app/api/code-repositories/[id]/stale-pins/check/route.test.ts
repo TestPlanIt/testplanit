@@ -15,7 +15,6 @@ vi.mock("@/lib/multiTenantDb", () => ({
 
 const { db } = vi.hoisted(() => ({
   db: {
-    user: { findUnique: vi.fn() },
     projectCodeRepositoryConfig: { findUnique: vi.fn(), update: vi.fn() },
   },
 }));
@@ -25,8 +24,13 @@ vi.mock("~/lib/queues", () => ({
   getRepoCacheQueue: vi.fn(),
 }));
 
+vi.mock("~/lib/integrations/importAuthorization", () => ({
+  authorizeProjectAdminForProject: vi.fn(),
+}));
+
 import { getCurrentTenantId } from "@/lib/multiTenantDb";
 import { getServerSession } from "next-auth/next";
+import { authorizeProjectAdminForProject } from "~/lib/integrations/importAuthorization";
 import { JOB_CHECK_STALE_PINS } from "~/lib/queueNames";
 import { getRepoCacheQueue } from "~/lib/queues";
 import { POST } from "./route";
@@ -65,10 +69,15 @@ describe("POST /api/code-repositories/[id]/stale-pins/check", () => {
     (getServerSession as any).mockResolvedValue(session);
     (getCurrentTenantId as any).mockReturnValue(undefined);
     (getRepoCacheQueue as any).mockReturnValue(queue);
-    db.user.findUnique.mockResolvedValue({ access: "PROJECTADMIN" });
+    (authorizeProjectAdminForProject as any).mockResolvedValue({
+      ok: true,
+      status: 200,
+      projectId: 4,
+    });
     db.projectCodeRepositoryConfig.findUnique.mockResolvedValue({
       id: 9,
       purpose: "IMPACT",
+      projectId: 4,
     });
     db.projectCodeRepositoryConfig.update.mockResolvedValue({});
   });
@@ -81,12 +90,17 @@ describe("POST /api/code-repositories/[id]/stale-pins/check", () => {
     expect(res.status).toBe(401);
   });
 
-  it("returns 403 for a user who is not an admin or project admin", async () => {
-    db.user.findUnique.mockResolvedValue({ access: "USER" });
+  it("returns 403 for a user who is not a project admin of the config's project", async () => {
+    (authorizeProjectAdminForProject as any).mockResolvedValue({
+      ok: false,
+      status: 403,
+      error: "Forbidden",
+    });
 
     const res = await POST(request({ projectConfigId: 9 }), makeParams());
 
     expect(res.status).toBe(403);
+    expect(authorizeProjectAdminForProject).toHaveBeenCalledWith(session, 4);
     expect(queue.add).not.toHaveBeenCalled();
   });
 

@@ -6,7 +6,7 @@ import { canManageWebhookConfig } from "~/lib/webhooks/auth";
 /**
  * Who may create, edit, verify or delete a project's execution targets.
  * Mirrors the write policy on ProjectCodeRepositoryConfig: system admins,
- * project admins (creator / "Project Admin" role / global PROJECTADMIN on an
+ * project admins (creator / role with Settings canAddEdit / global PROJECTADMIN on an
  * assigned project), and anyone whose role grants add/edit on Settings.
  */
 export async function canManageExecutionTargets(

@@ -19,7 +19,9 @@ import { useTranslations } from "next-intl";
 import { notFound, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ProjectAuditLog } from "~/components/projects/ProjectAuditLog";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
+import { ApplicationArea } from "~/zenstack/models";
 
 export default function ProjectAuditLogsPage() {
   const params = useParams();
@@ -70,10 +72,15 @@ export default function ProjectAuditLogsPage() {
     }
   );
 
-  // Access control check - must be ADMIN or PROJECTADMIN
+  // Access control: project admins (the same resolution the settings pages
+  // gate on) plus system ADMIN / PROJECTADMIN.
+  const { isProjectAdmin, isLoading: permissionsLoading } =
+    useProjectPermissions(projectId, ApplicationArea.Settings);
   useEffect(() => {
+    if (permissionsLoading) return;
     if (!projectLoading && project && session?.user) {
       const hasAccess =
+        isProjectAdmin ||
         session.user.access === "ADMIN" ||
         session.user.access === "PROJECTADMIN";
 
@@ -83,7 +90,7 @@ export default function ProjectAuditLogsPage() {
     } else if (!projectLoading && !project && session?.user) {
       notFound();
     }
-  }, [project, projectLoading, session]);
+  }, [project, projectLoading, permissionsLoading, isProjectAdmin, session]);
 
   if (isAuthLoading) {
     return <Loading />;

@@ -184,7 +184,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
           select: {
             rolePermissions: {
               where: {
-                area: "TestRunResults",
+                area: { in: ["TestRunResults", "Settings"] },
                 canAddEdit: true,
               },
               select: {
@@ -257,7 +257,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
                         name: true,
                         rolePermissions: {
                           where: {
-                            area: "TestRunResults",
+                            area: { in: ["TestRunResults", "Settings"] },
                             canAddEdit: true,
                           },
                           select: {
@@ -285,7 +285,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
                         name: true,
                         rolePermissions: {
                           where: {
-                            area: "TestRunResults",
+                            area: { in: ["TestRunResults", "Settings"] },
                             canAddEdit: true,
                           },
                           select: {
@@ -301,7 +301,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
                     name: true,
                     rolePermissions: {
                       where: {
-                        area: "TestRunResults",
+                        area: { in: ["TestRunResults", "Settings"] },
                         canAddEdit: true,
                       },
                       select: {

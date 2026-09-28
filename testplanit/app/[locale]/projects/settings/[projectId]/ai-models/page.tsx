@@ -151,7 +151,7 @@ export default function ProjectAiModelsPage() {
   // `authorizeProjectAdminForProject` enforces server-side:
   // 1. System ADMIN users always have access
   // 2. System PROJECTADMIN users, on projects they are assigned to
-  // 3. Users with the Project Admin role on this specific project
+  // 3. Users with a role with Settings canAddEdit on this specific project
   // 4. The project's creator
   // Tiers 3 and 4 were the standing TODO here, and 404'd until now.
   const { isProjectAdmin, isLoading: permissionsLoading } =

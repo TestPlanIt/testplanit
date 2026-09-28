@@ -14,7 +14,7 @@ import {
   isUniqueConstraintError,
 } from "~/lib/utils/errors";
 import { authOptions } from "~/server/auth";
-import { ApplicationArea, ProjectAccessType } from "~/zenstack/models";
+import { ApplicationArea } from "~/zenstack/models";
 import { z } from "zod/v4";
 
 // The external-pick shape a manual traceability reference can carry —
@@ -169,20 +169,14 @@ export async function POST(
     // effect -- baseDb carries no policy plugin, so the enhanced-client join
     // create below is the FINAL enforcement, not the first. This pre-gate
     // must stay EXACTLY as wide as the RequirementIssueReference create
-    // policy (schema.zmodel:1708-1728) -- never narrower (a false 403 for a
-    // caller the policy allows) and never wider on the write path (a
-    // shell/join write for a caller the policy will refuse). 27.1-REVIEW.md's
-    // WR-01 found the previous ladder-precedence-only pre-gate diverged in
-    // both directions: it 403'd a caller whose own role is literally named
-    // "Project Admin" (the policy's role.name == 'Project Admin' clause,
-    // schema.zmodel:1711, needs no canAddEdit bit), and it admitted a
-    // non-assigned system PROJECTADMIN whom the policy denies (the policy's
-    // PROJECTADMIN clause, schema.zmodel:1715, additionally requires
-    // assignedUsers?[user.id == auth().id]) -- reproducing CR-01's
-    // write-before-authorization shape for that population. The two clauses
-    // below close both gaps: the Project-Admin-named-role check, and an
-    // assignment-gated PROJECTADMIN check in place of the old unconditional
-    // isSystemProjectAdmin short-circuit.
+    // policy -- never narrower (a false 403 for a caller the policy allows)
+    // and never wider on the write path (a shell/join write for a caller the
+    // policy will refuse). The policy admits the TestCaseRepository canAddEdit
+    // holders, project admins (`projectId in auth().adminProjectIds`, which
+    // `access.isProjectAdmin` mirrors), and a system PROJECTADMIN only when
+    // assigned to the project -- hence the assignment-gated PROJECTADMIN
+    // check below in place of an unconditional isSystemProjectAdmin
+    // short-circuit.
     const access = await resolveEffectiveProjectAccess(
       session.user.id,
       projectId
@@ -191,10 +185,7 @@ export async function POST(
       access.effectiveRole,
       ApplicationArea.TestCaseRepository
     );
-    const isProjectAdminNamedRole =
-      access.userAccessType === ProjectAccessType.SPECIFIC_ROLE &&
-      access.effectiveRole?.name === "Project Admin";
-    let mayEdit = roleGrant.canAddEdit || isProjectAdminNamedRole;
+    let mayEdit = roleGrant.canAddEdit || access.isProjectAdmin;
     if (!mayEdit) {
       if (access.isSystemAdmin) {
         // ADMIN passes every model policy unconditionally

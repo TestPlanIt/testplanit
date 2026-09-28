@@ -239,10 +239,10 @@ describe("ProjectsMenu", () => {
       expect(screen.queryByTestId("project-menu-section-settings")).toBeNull();
     });
 
-    it("shows settings section for a USER holding the per-project Project Admin role", () => {
+    it("shows settings section for a USER the server resolves as a project admin", () => {
       // `isProjectAdmin` is the server's own resolution
       // (`authorizeProjectAdminForProject`), which admits project creators and
-      // per-project "Project Admin" role holders regardless of system access.
+      // holders of a role with Settings canAddEdit regardless of system access.
       mockUseSession.mockReturnValue(mockRegularSession);
       mockUseProjectPermissions.mockReturnValue({
         permissions: { canAddEdit: false, canDelete: false, canClose: false },
@@ -254,9 +254,9 @@ describe("ProjectsMenu", () => {
       expect(screen.getByTestId("project-menu-section-settings")).toBeDefined();
     });
 
-    it("hides settings section when only the unenforced Settings area bit is set", () => {
-      // Nothing server-side honours `Settings.canAddEdit`, so a role carrying
-      // it used to get a settings menu whose every page 404'd.
+    it("keys off the server's isProjectAdmin flag, not the raw Settings area bits", () => {
+      // The server folds `Settings.canAddEdit` into `isProjectAdmin`; the
+      // menu never re-derives it from the permission grid.
       mockUseSession.mockReturnValue(mockRegularSession);
       mockUseProjectPermissions.mockReturnValue({
         permissions: { canAddEdit: true, canDelete: true, canClose: true },

@@ -63,7 +63,7 @@ export default function ProjectParametersSettingsPage() {
   // `isProjectAdmin` resolves the same ladder server-side
   // (`authorizeProjectAdminForProject`), including the PROJECTADMIN
   // must-be-assigned rule this guard used to spell out inline, plus the
-  // project-creator and per-project "Project Admin" role tiers it missed.
+  // project-creator and per-project role with Settings canAddEdit tiers it missed.
   const { isProjectAdmin, isLoading: permissionsLoading } =
     useProjectPermissions(projectId, ApplicationArea.Settings);
 

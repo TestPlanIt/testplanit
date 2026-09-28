@@ -22,12 +22,11 @@
  *
  *   - `PROJECTADMIN` is a *system access level*, not a role. Project-admin
  *     authority is decided by `authorizeProjectAdminForProject`, which
- *     recognises system ADMIN, the project creator, a `SPECIFIC_ROLE`
- *     **user** permission naming a "Project Admin" role, or system
- *     PROJECTADMIN plus `assignedUsers` membership. A *group* permission row
- *     is none of those, so no mapping written here can confer project-admin
- *     authority — only the per-area RBAC permissions the member's own role
- *     carries.
+ *     recognises system ADMIN, the project creator, system PROJECTADMIN plus
+ *     `assignedUsers` membership, or an effective project role carrying
+ *     Settings canAddEdit. A GLOBAL_ROLE mapping therefore confers
+ *     project-admin authority exactly when the member's own global role
+ *     carries that bit — the mapping itself adds nothing beyond the role.
  *   - `SPECIFIC_ROLE` would need a role id, and this mapping deliberately
  *     does not pick roles on the operator's behalf. An earlier version bound
  *     PROJECTADMIN/ADMIN to a role *named* "Project Admin", which conflated a

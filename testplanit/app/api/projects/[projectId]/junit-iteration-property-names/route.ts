@@ -7,10 +7,11 @@
  * teams with custom CI emitters (`iterationIndex`, `dataRow`, etc.) use
  * this endpoint to add their own names.
  *
- * Access control: project-admin or system admin only. The check is the
- * same shape as the other project-settings routes — ZenStack's `@@allow`
- * policy on `Projects` is the authoritative gate; this route additionally
- * verifies session access for fast-path 401/403 rejection.
+ * Access control: project admins only, resolved by
+ * `authorizeProjectAdminForProject` — the same gate every other
+ * project-settings surface uses (system ADMIN, the project creator, an
+ * assigned system PROJECTADMIN, or an effective role with Settings
+ * canAddEdit).
  *
  * Validation rules (T-06-01-05 defense + UX hygiene):
  *   - Array length capped at 16 (a sane upper bound — projects with more
@@ -25,7 +26,6 @@
  *     `Object.entries` (prototype-pollution defense-in-depth).
  */
 
-import { ProjectAccessType } from "~/zenstack/models";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
@@ -33,6 +33,7 @@ import { z } from "zod/v4";
 import { updateAuditContext } from "~/lib/auditContext";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { baseDb } from "~/lib/db";
+import { authorizeProjectAdminForProject } from "~/lib/integrations/importAuthorization";
 import { authOptions } from "~/server/auth";
 
 const RESERVED_PROTOTYPE_KEYS = new Set([
@@ -83,46 +84,14 @@ export const PUT = withAuditContext(
         );
       }
 
-      // Admin / project-admin gate. Matches the shape used by sibling
-      // routes (e.g. integrations/route.ts) — session.user.access is the
-      // canonical role marker.
-      const isAdmin = session.user.access === "ADMIN";
-      const isProjectAdmin = session.user.access === "PROJECTADMIN";
-      if (!isAdmin && !isProjectAdmin) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-      }
-
-      // Confirm the project exists and the caller has access to it. We
-      // reuse the same access-where shape used by the integrations route
-      // so the authorization model is uniform.
-      const project = await baseDb.projects.findFirst({
-        where: {
-          id: projectId,
-          isDeleted: false,
-          ...(isAdmin
-            ? {}
-            : {
-                OR: [
-                  {
-                    userPermissions: {
-                      some: {
-                        userId: session.user.id,
-                        accessType: { not: ProjectAccessType.NO_ACCESS },
-                      },
-                    },
-                  },
-                  {
-                    assignedUsers: {
-                      some: { userId: session.user.id },
-                    },
-                  },
-                ],
-              }),
-        },
-        select: { id: true },
-      });
-      if (!project) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      // Project-admin gate; also confirms the project exists and is not
+      // deleted.
+      const auth = await authorizeProjectAdminForProject(session, projectId);
+      if (!auth.ok) {
+        return NextResponse.json(
+          { error: auth.error ?? "Forbidden" },
+          { status: auth.status }
+        );
       }
 
       const body = await request.json();

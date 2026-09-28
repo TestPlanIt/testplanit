@@ -135,6 +135,7 @@ describe("POST /api/projects/[projectId]/requirements/[issueId]/references", () 
     mockedResolveEffectiveProjectAccess.mockResolvedValue({
       isSystemAdmin: false,
       isSystemProjectAdmin: false,
+      isProjectAdmin: false,
       accessDenied: false,
       effectiveRole: {
         id: 1,
@@ -251,6 +252,7 @@ describe("POST /api/projects/[projectId]/requirements/[issueId]/references", () 
     mockedResolveEffectiveProjectAccess.mockResolvedValue({
       isSystemAdmin: false,
       isSystemProjectAdmin: false,
+      isProjectAdmin: false,
       accessDenied: false,
       effectiveRole: {
         id: 2,
@@ -287,6 +289,7 @@ describe("POST /api/projects/[projectId]/requirements/[issueId]/references", () 
     mockedResolveEffectiveProjectAccess.mockResolvedValue({
       isSystemAdmin: false,
       isSystemProjectAdmin: false,
+      isProjectAdmin: false,
       accessDenied: false,
       effectiveRole: {
         id: 2,
@@ -319,6 +322,7 @@ describe("POST /api/projects/[projectId]/requirements/[issueId]/references", () 
     mockedResolveEffectiveProjectAccess.mockResolvedValue({
       isSystemAdmin: false,
       isSystemProjectAdmin: false,
+      isProjectAdmin: false,
       accessDenied: false,
       effectiveRole: {
         id: 2,
@@ -553,14 +557,26 @@ describe("POST /api/projects/[projectId]/requirements/[issueId]/references", () 
   // RequirementIssueReference create policy (schema.zmodel:1708-1728), not
   // merely narrower-or-wider. These two populations diverged under the
   // previous ladder-precedence-only pre-gate (recorded RED, now GREEN).
-  it("allows a caller whose own project role is named 'Project Admin' even without the TestCaseRepository canAddEdit bit", async () => {
-    // The policy's role.name == 'Project Admin' clause (schema.zmodel:1711)
-    // passes with no rolePermissions check.
+  it("allows a project admin (Settings canAddEdit on the effective role) even without the TestCaseRepository canAddEdit bit", async () => {
+    // The policy's `projectId in auth().adminProjectIds` clause passes with
+    // no TestCaseRepository check; the ladder reports it as isProjectAdmin.
     mockedResolveEffectiveProjectAccess.mockResolvedValue({
       isSystemAdmin: false,
       isSystemProjectAdmin: false,
+      isProjectAdmin: true,
       accessDenied: false,
-      effectiveRole: { id: 3, name: "Project Admin", rolePermissions: [] },
+      effectiveRole: {
+        id: 3,
+        name: "Lead",
+        rolePermissions: [
+          {
+            area: ApplicationArea.Settings,
+            canAddEdit: true,
+            canDelete: false,
+            canClose: false,
+          },
+        ],
+      },
       userAccessType: ProjectAccessType.SPECIFIC_ROLE,
       groupAccessType: null,
       projectDefaultAccessType: null,
@@ -585,6 +601,7 @@ describe("POST /api/projects/[projectId]/requirements/[issueId]/references", () 
     mockedResolveEffectiveProjectAccess.mockResolvedValue({
       isSystemAdmin: false,
       isSystemProjectAdmin: true,
+      isProjectAdmin: false,
       accessDenied: false,
       effectiveRole: null,
       userAccessType: null,
@@ -614,6 +631,7 @@ describe("POST /api/projects/[projectId]/requirements/[issueId]/references", () 
     mockedResolveEffectiveProjectAccess.mockResolvedValue({
       isSystemAdmin: false,
       isSystemProjectAdmin: true,
+      isProjectAdmin: false,
       accessDenied: false,
       effectiveRole: null,
       userAccessType: null,

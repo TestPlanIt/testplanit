@@ -9,7 +9,6 @@ import {
   resolveEffectiveProjectAccess,
   type AreaPermissions,
 } from "~/lib/services/areaPermission";
-import { authorizeProjectAdminForProject } from "~/lib/integrations/importAuthorization";
 import { getServerAuthSession } from "~/server/auth";
 
 // Define the input schema using Zod
@@ -122,12 +121,9 @@ export async function POST(request: Request) {
       });
     }
 
-    // Otherwise return the detailed permissions
-    const isProjectAdminResult = await authorizeProjectAdminForProject(
-      session,
-      projectId
-    );
-
+    // Otherwise return the detailed permissions. `isProjectAdmin` is the
+    // ladder's own project-admin verdict, the same one the settings routes
+    // enforce through `authorizeProjectAdminForProject`.
     return NextResponse.json({
       hasAccess: hasProjectAccess(resolution),
       effectiveRole: isSystemAdmin
@@ -137,7 +133,7 @@ export async function POST(request: Request) {
           : effectiveRole?.name || null,
       effectiveRoleId,
       permissions: resultData,
-      isProjectAdmin: isProjectAdminResult.ok,
+      isProjectAdmin: resolution.isProjectAdmin,
     });
   } catch (error) {
     console.error("Error fetching permissions:", error);

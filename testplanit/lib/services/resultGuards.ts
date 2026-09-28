@@ -45,6 +45,11 @@ export type RolePermissionSnapshot =
 export type ProjectAccessTypeValue =
   "DEFAULT" | "NO_ACCESS" | "GLOBAL_ROLE" | "SPECIFIC_ROLE";
 
+/**
+ * Callers load `rolePermissions` pre-filtered to the rows that grant result
+ * mutation: TestRunResults canAddEdit, or Settings canAddEdit (a project
+ * admin, who holds every bit on every area). Any surviving row is a grant.
+ */
 export function roleCanAddEditTestRunResults(
   role: RolePermissionSnapshot
 ): boolean {
@@ -122,10 +127,7 @@ export function hasResultMutationPermission({
     }
 
     if (explicitUserPermission.accessType === "SPECIFIC_ROLE") {
-      return (
-        explicitUserPermission.role?.name === "Project Admin" ||
-        roleCanAddEditTestRunResults(explicitUserPermission.role)
-      );
+      return roleCanAddEditTestRunResults(explicitUserPermission.role);
     }
 
     if (explicitUserPermission.accessType === "GLOBAL_ROLE") {
@@ -136,10 +138,7 @@ export function hasResultMutationPermission({
   const groupPermissionAllows = project.groupPermissions.some(
     (groupPermission) => {
       if (groupPermission.accessType === "SPECIFIC_ROLE") {
-        return (
-          groupPermission.role?.name === "Project Admin" ||
-          roleCanAddEditTestRunResults(groupPermission.role)
-        );
+        return roleCanAddEditTestRunResults(groupPermission.role);
       }
 
       if (groupPermission.accessType === "GLOBAL_ROLE") {

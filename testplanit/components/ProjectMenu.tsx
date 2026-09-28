@@ -187,27 +187,22 @@ export default function ProjectsMenu({
   const canSeeReports =
     reportingPerms && (reportingPerms.canAddEdit || reportingPerms.canDelete);
 
-  // Project audit log is restricted to system ADMINs and PROJECTADMINs.
-  const canSeeAuditLogs =
-    session?.user?.access === "ADMIN" ||
-    session?.user?.access === "PROJECTADMIN";
-
-  // Check if user can see Settings. `isProjectAdmin` is the same resolution
-  // the settings pages and their server actions gate on
-  // (`authorizeProjectAdminForProject` / `canManageWebhookConfig`):
+  // Settings and the project audit log are for project admins.
+  // `isProjectAdmin` is the server's own resolution — the same one the
+  // settings pages, their server actions and the write policies gate on:
   // 1. System ADMIN users (always have access to all projects)
   // 2. System PROJECTADMIN users, on projects they are assigned to
-  // 3. Users holding the per-project "Project Admin" role
+  // 3. Users whose effective project role carries Settings canAddEdit
   // 4. The project's creator
-  //
-  // This deliberately no longer keys off the `Settings` area's `canAddEdit`
-  // bit: nothing on the server honours that bit, so a role carrying it got a
-  // full settings menu whose every page 404'd and whose every write 403'd.
   const { isProjectAdmin } = useProjectPermissions(
     safeProjectId,
     ApplicationArea.Settings
   );
   const canSeeSettings = isProjectAdmin;
+  const canSeeAuditLogs =
+    isProjectAdmin ||
+    session?.user?.access === "ADMIN" ||
+    session?.user?.access === "PROJECTADMIN";
 
   const menuOptions: MenuOption[] = [
     // Project

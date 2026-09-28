@@ -20,13 +20,17 @@
  * already enforces project membership + isDeleted hiding.)
  */
 
-import { ApplicationArea, ProjectAccessType } from "~/zenstack/models";
+import { ApplicationArea } from "~/zenstack/models";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
 import { updateAuditContext } from "~/lib/auditContext";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { baseDb } from "~/lib/db";
+import {
+  areaPermissionsFrom,
+  resolveEffectiveProjectAccess,
+} from "~/lib/services/areaPermission";
 import { authOptions } from "~/server/auth";
 
 export const runtime = "nodejs";
@@ -86,119 +90,22 @@ export const DELETE = withAuditContext(
 
 /**
  * Mirrors the Reporting.canDelete branch of the snapshot's ZenStack policy.
- * Returns true if the user is a system admin, the project's creator, a
- * project admin assigned to the project, or has a role (via user or group
- * permission) whose Reporting RolePermission has canDelete.
- *
- * Implemented as one Prisma query rather than walking the auth context so
- * the route doesn't ALSO have to keep up with policy edits in two places —
- * the policy stays the source of truth and this helper expresses the same
- * predicate.
+ * Returns true if the user is a system admin, a project admin (creator,
+ * assigned PROJECTADMIN, or an effective role with Settings canAddEdit), or
+ * has an effective role whose Reporting RolePermission has canDelete — the
+ * ladder in lib/services/areaPermission.ts, so this route and the policy
+ * cannot drift.
  */
 async function userCanDeleteReportingFor(
   userId: string,
   projectId: number
 ): Promise<boolean> {
-  const user = await baseDb.user.findUnique({
-    where: { id: userId },
-    select: { access: true },
-  });
-  if (!user) return false;
-  if (user.access === "ADMIN") return true;
-
   const project = await baseDb.projects.findFirst({
     where: { id: projectId, isDeleted: false },
-    select: {
-      createdBy: true,
-      assignedUsers: {
-        where: { userId },
-        select: { userId: true },
-      },
-      userPermissions: {
-        where: {
-          userId,
-          accessType: { not: ProjectAccessType.NO_ACCESS },
-        },
-        select: {
-          accessType: true,
-          role: {
-            select: {
-              name: true,
-              rolePermissions: {
-                where: { area: ApplicationArea.Reporting },
-                select: { canDelete: true },
-              },
-            },
-          },
-        },
-      },
-      groupPermissions: {
-        where: {
-          group: {
-            assignedUsers: { some: { userId } },
-          },
-          accessType: { not: ProjectAccessType.NO_ACCESS },
-        },
-        select: {
-          accessType: true,
-          role: {
-            select: {
-              rolePermissions: {
-                where: { area: ApplicationArea.Reporting },
-                select: { canDelete: true },
-              },
-            },
-          },
-        },
-      },
-    },
+    select: { id: true },
   });
   if (!project) return false;
 
-  if (project.createdBy === userId) return true;
-
-  if (user.access === "PROJECTADMIN" && project.assignedUsers.length > 0) {
-    return true;
-  }
-
-  for (const up of project.userPermissions) {
-    if (up.accessType === "SPECIFIC_ROLE") {
-      if (up.role?.name === "Project Admin") return true;
-      if (up.role?.rolePermissions.some((p) => p.canDelete)) return true;
-    }
-  }
-
-  // GLOBAL_ROLE group permission falls back to the auth user's own role.
-  // SPECIFIC_ROLE group permission carries its own role.
-  if (project.groupPermissions.length > 0) {
-    for (const gp of project.groupPermissions) {
-      if (
-        gp.accessType === "SPECIFIC_ROLE" &&
-        gp.role?.rolePermissions.some((p) => p.canDelete)
-      ) {
-        return true;
-      }
-      if (gp.accessType === "GLOBAL_ROLE") {
-        // Walk the user's global role's Reporting canDelete.
-        const userRole = await baseDb.user.findUnique({
-          where: { id: userId },
-          select: {
-            role: {
-              select: {
-                rolePermissions: {
-                  where: { area: ApplicationArea.Reporting },
-                  select: { canDelete: true },
-                },
-              },
-            },
-          },
-        });
-        if (userRole?.role?.rolePermissions.some((p) => p.canDelete)) {
-          return true;
-        }
-      }
-    }
-  }
-
-  return false;
+  const resolution = await resolveEffectiveProjectAccess(userId, projectId);
+  return areaPermissionsFrom(resolution, ApplicationArea.Reporting).canDelete;
 }

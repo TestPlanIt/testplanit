@@ -22,6 +22,7 @@ const mockProjectsFindMany = vi.fn();
 const mockUppFindMany = vi.fn();
 const mockGppFindMany = vi.fn();
 const mockAssignmentFindMany = vi.fn();
+const mockRolePermFindMany = vi.fn();
 
 /**
  * Valkey null so the differential matrix below runs UNCACHED.
@@ -46,6 +47,9 @@ vi.mock("~/lib/db", () => ({
     },
     projectAssignment: {
       findMany: (...a: unknown[]) => mockAssignmentFindMany(...a),
+    },
+    rolePermission: {
+      findMany: (...a: unknown[]) => mockRolePermFindMany(...a),
     },
   },
 }));
@@ -156,6 +160,7 @@ function wireMocks(user: UserForAuth, cases: ProjectCase[]) {
   mockAssignmentFindMany.mockResolvedValue(
     cases.filter((c) => c.assigned).map((c) => ({ projectId: c.id }))
   );
+  mockRolePermFindMany.mockResolvedValue([]);
 }
 
 describe("resolveAccessibleProjectIds — differential vs original read policy", () => {
@@ -807,6 +812,232 @@ describe("resolveCollaboratorScope — named scenarios", () => {
  * These inject their own client via resetModules + doMock, because the module
  * reads valkeyConnection at import time.
  */
+describe("resolveAdminProjectIds — the project-admin ladder", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  const ADMIN_ROLE = 5;
+  const PLAIN_ROLE = 6;
+
+  interface AdminCase {
+    id: number;
+    createdBy?: string;
+    defaultAccessType?: DefaultType;
+    defaultRoleId?: number | null;
+    userPerm?: { accessType: UserPerm; roleId?: number | null };
+    groupPerms?: Array<{
+      accessType: "SPECIFIC_ROLE" | "GLOBAL_ROLE";
+      roleId: number | null;
+    }>;
+    assigned?: boolean;
+  }
+
+  function wire(cases: AdminCase[]) {
+    mockProjectsFindMany.mockResolvedValue(
+      cases.map((c) => ({
+        id: c.id,
+        createdBy: c.createdBy ?? "someone-else",
+        defaultAccessType: c.defaultAccessType ?? "DEFAULT",
+        defaultRoleId: c.defaultRoleId ?? null,
+      }))
+    );
+    mockUppFindMany.mockResolvedValue(
+      cases
+        .filter((c) => c.userPerm)
+        .map((c) => ({
+          projectId: c.id,
+          accessType: c.userPerm!.accessType,
+          roleId: c.userPerm!.roleId ?? null,
+        }))
+    );
+    mockGppFindMany.mockResolvedValue(
+      cases.flatMap((c) =>
+        (c.groupPerms ?? []).map((g) => ({ projectId: c.id, ...g }))
+      )
+    );
+    mockAssignmentFindMany.mockResolvedValue(
+      cases.filter((c) => c.assigned).map((c) => ({ projectId: c.id }))
+    );
+    // Only ADMIN_ROLE carries Settings canAddEdit.
+    mockRolePermFindMany.mockResolvedValue([{ roleId: ADMIN_ROLE }]);
+  }
+
+  const user = (over: Partial<UserForAuth> = {}): UserForAuth => ({
+    id: USER_ID,
+    access: "USER",
+    roleId: PLAIN_ROLE,
+    role: null,
+    ...over,
+  });
+
+  async function admins(u: UserForAuth, cases: AdminCase[]) {
+    wire(cases);
+    const { resolveAdminProjectIds } = await import("./authContext");
+    return resolveAdminProjectIds(u);
+  }
+
+  it("queries the Settings canAddEdit roles once alongside the four scope reads", async () => {
+    await admins(user(), [{ id: 1 }]);
+    expect(mockRolePermFindMany).toHaveBeenCalledTimes(1);
+    expect(mockRolePermFindMany.mock.calls[0][0]).toEqual({
+      where: { area: "Settings", canAddEdit: true },
+      select: { roleId: true },
+    });
+  });
+
+  it("includes the projects the user created", async () => {
+    expect(
+      await admins(user(), [{ id: 1, createdBy: USER_ID }, { id: 2 }])
+    ).toEqual([1]);
+  });
+
+  it("includes a project a system PROJECTADMIN is assigned to, not others", async () => {
+    expect(
+      await admins(user({ access: "PROJECTADMIN" }), [
+        { id: 1, assigned: true },
+        { id: 2 },
+      ])
+    ).toEqual([1]);
+  });
+
+  it("does not treat a USER's bare assignment as admin", async () => {
+    expect(await admins(user(), [{ id: 1, assigned: true }])).toEqual([]);
+  });
+
+  it("includes a project where the user's SPECIFIC_ROLE row carries the admin role", async () => {
+    expect(
+      await admins(user(), [
+        {
+          id: 1,
+          userPerm: { accessType: "SPECIFIC_ROLE", roleId: ADMIN_ROLE },
+        },
+        {
+          id: 2,
+          userPerm: { accessType: "SPECIFIC_ROLE", roleId: PLAIN_ROLE },
+        },
+      ])
+    ).toEqual([1]);
+  });
+
+  it("uses the user's global role under a GLOBAL_ROLE row", async () => {
+    const cases: AdminCase[] = [
+      { id: 1, userPerm: { accessType: "GLOBAL_ROLE" } },
+    ];
+    expect(await admins(user({ roleId: ADMIN_ROLE }), cases)).toEqual([1]);
+    expect(await admins(user({ roleId: PLAIN_ROLE }), cases)).toEqual([]);
+  });
+
+  it("a per-user NO_ACCESS row outranks creator, assignment and default", async () => {
+    expect(
+      await admins(user({ access: "PROJECTADMIN", roleId: ADMIN_ROLE }), [
+        {
+          id: 1,
+          createdBy: USER_ID,
+          assigned: true,
+          defaultAccessType: "GLOBAL_ROLE",
+          userPerm: { accessType: "NO_ACCESS" },
+        },
+      ])
+    ).toEqual([]);
+  });
+
+  it("the user's own row decides before group grants", async () => {
+    expect(
+      await admins(user(), [
+        {
+          id: 1,
+          userPerm: { accessType: "SPECIFIC_ROLE", roleId: PLAIN_ROLE },
+          groupPerms: [{ accessType: "SPECIFIC_ROLE", roleId: ADMIN_ROLE }],
+        },
+      ])
+    ).toEqual([]);
+  });
+
+  it("a group SPECIFIC_ROLE grant with the admin role qualifies", async () => {
+    expect(
+      await admins(user(), [
+        {
+          id: 1,
+          groupPerms: [{ accessType: "SPECIFIC_ROLE", roleId: ADMIN_ROLE }],
+        },
+        {
+          id: 2,
+          groupPerms: [{ accessType: "SPECIFIC_ROLE", roleId: PLAIN_ROLE }],
+        },
+      ])
+    ).toEqual([1]);
+  });
+
+  it("a group SPECIFIC_ROLE grant wins over a group GLOBAL_ROLE grant", async () => {
+    expect(
+      await admins(user({ roleId: ADMIN_ROLE }), [
+        {
+          id: 1,
+          groupPerms: [
+            { accessType: "SPECIFIC_ROLE", roleId: PLAIN_ROLE },
+            { accessType: "GLOBAL_ROLE", roleId: null },
+          ],
+        },
+      ])
+    ).toEqual([]);
+  });
+
+  it("a group GLOBAL_ROLE grant carries the member's admin global role", async () => {
+    const cases: AdminCase[] = [
+      { id: 1, groupPerms: [{ accessType: "GLOBAL_ROLE", roleId: null }] },
+    ];
+    expect(await admins(user({ roleId: ADMIN_ROLE }), cases)).toEqual([1]);
+    expect(await admins(user({ roleId: PLAIN_ROLE }), cases)).toEqual([]);
+  });
+
+  it("falls through to a GLOBAL_ROLE project default", async () => {
+    const cases: AdminCase[] = [{ id: 1, defaultAccessType: "GLOBAL_ROLE" }];
+    expect(await admins(user({ roleId: ADMIN_ROLE }), cases)).toEqual([1]);
+    expect(await admins(user({ roleId: PLAIN_ROLE }), cases)).toEqual([]);
+  });
+
+  it("falls through to a SPECIFIC_ROLE project default carrying the admin role", async () => {
+    expect(
+      await admins(user(), [
+        {
+          id: 1,
+          defaultAccessType: "SPECIFIC_ROLE",
+          defaultRoleId: ADMIN_ROLE,
+        },
+        {
+          id: 2,
+          defaultAccessType: "SPECIFIC_ROLE",
+          defaultRoleId: PLAIN_ROLE,
+        },
+        { id: 3, defaultAccessType: "NO_ACCESS" },
+        { id: 4, defaultAccessType: "DEFAULT" },
+      ])
+    ).toEqual([1]);
+  });
+
+  it("never grants a NONE user through a role", async () => {
+    expect(
+      await admins(user({ access: "NONE", roleId: ADMIN_ROLE }), [
+        {
+          id: 1,
+          userPerm: { accessType: "SPECIFIC_ROLE", roleId: ADMIN_ROLE },
+        },
+        { id: 2, defaultAccessType: "GLOBAL_ROLE" },
+      ])
+    ).toEqual([]);
+  });
+
+  it("is returned on the auth context beside accessibleProjectIds", async () => {
+    wire([
+      { id: 1, createdBy: USER_ID },
+      { id: 2, defaultAccessType: "DEFAULT" },
+    ]);
+    const { buildAuthContext } = await import("./authContext");
+    const ctx = await buildAuthContext(user());
+    expect(ctx.accessibleProjectIds).toEqual([1, 2]);
+    expect(ctx.adminProjectIds).toEqual([1]);
+  });
+});
+
 describe("resolveAccessibleProjectIds — Valkey cache", () => {
   function makeFakeValkey() {
     const store = new Map<string, string>();
@@ -853,6 +1084,7 @@ describe("resolveAccessibleProjectIds — Valkey cache", () => {
     mockUppFindMany.mockResolvedValue([]);
     mockGppFindMany.mockResolvedValue([]);
     mockAssignmentFindMany.mockResolvedValue([]);
+    mockRolePermFindMany.mockResolvedValue([]);
   }
 
   async function withValkey(redis: unknown) {

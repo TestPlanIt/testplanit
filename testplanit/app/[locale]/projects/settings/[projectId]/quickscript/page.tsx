@@ -175,7 +175,7 @@ export default function QuickScriptPage() {
 
   // Project-admin authority, resolved server-side by
   // `authorizeProjectAdminForProject`: system ADMIN, the project's creator, a
-  // holder of the per-project "Project Admin" role, or a system PROJECTADMIN
+  // holder of the per-project role with Settings canAddEdit, or a system PROJECTADMIN
   // assigned to this project. Gating on `session.user.access` alone 404'd the
   // creator/role-holder tiers that the settings APIs already accept.
   const { isProjectAdmin, isLoading: permissionsLoading } =

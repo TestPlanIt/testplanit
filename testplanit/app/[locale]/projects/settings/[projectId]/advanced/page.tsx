@@ -173,7 +173,7 @@ export default function AdvancedPage() {
   // Access guard: project-admin tier per D-18 / Open Question 4. Resolved by
   // `authorizeProjectAdminForProject` server-side, so this admits the same
   // four tiers it does — system ADMIN, assigned system PROJECTADMIN, holder of
-  // the per-project "Project Admin" role, and the project's creator — rather
+  // the per-project role with Settings canAddEdit, and the project's creator — rather
   // than only the two system access levels.
   // Mirrors the quickscript page guard: imperative `notFound()` from useEffect
   // so unauthorized users hit the global not-found surface.

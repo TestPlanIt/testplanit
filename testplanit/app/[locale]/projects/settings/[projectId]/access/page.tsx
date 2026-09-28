@@ -54,7 +54,7 @@ export default function ProjectAccessPage() {
 
   // Project-admin authority, resolved server-side the same way the settings
   // APIs gate: system ADMIN, the project's creator, a holder of the
-  // per-project "Project Admin" role, or a system PROJECTADMIN assigned here.
+  // per-project role with Settings canAddEdit, or a system PROJECTADMIN assigned here.
   const { isProjectAdmin, isLoading: permissionsLoading } =
     useProjectPermissions(projectId, ApplicationArea.Settings);
 

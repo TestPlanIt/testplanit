@@ -1,5 +1,6 @@
 import type { Session } from "next-auth";
 import { baseDb } from "~/lib/db";
+import { isProjectAdminFor } from "~/lib/services/areaPermission";
 
 export interface ImportAuthResult {
   ok: boolean;
@@ -102,13 +103,12 @@ export interface MilestoneSyncAuthResult {
 
 /**
  * The bare project-ADMIN check against a KNOWN projectId — no mapping
- * validation, no SIMPLE_URL rejection. Mirrors the `ProjectIntegration`
- * `@@allow('create,update,delete', …)` ACL condition (schema.zmodel
- * ~4788-4794):
- *   project.creator == auth()
- *   || project.userPermissions?[... accessType == 'SPECIFIC_ROLE' && role.name == 'Project Admin']
- *   || project.assignedUsers?[... auth().access == 'PROJECTADMIN']
- *   || auth().access == 'ADMIN'
+ * validation, no SIMPLE_URL rejection. The server-side twin of the policies'
+ * `projectId in auth().adminProjectIds` clause: system ADMIN, the project's
+ * creator, a system PROJECTADMIN assigned to the project, or an effective
+ * role on the project carrying Settings canAddEdit. The ladder lives in
+ * lib/services/areaPermission.ts so this, the UI's `isProjectAdmin` flag and
+ * the area-permission gates all answer alike.
  *
  * Exported for callers whose projectId does NOT come from an active
  * IntegrationProject mapping — e.g. the milestone unlink route, whose
@@ -130,30 +130,15 @@ export async function authorizeProjectAdminForProject(
     return { ok: true, status: 200, projectId };
   }
 
-  const isAdmin = await baseDb.projects.findFirst({
-    where: {
-      id: projectId,
-      isDeleted: false,
-      OR: [
-        { creator: { id: userId } },
-        {
-          userPermissions: {
-            some: {
-              userId,
-              accessType: "SPECIFIC_ROLE",
-              role: { name: "Project Admin" },
-            },
-          },
-        },
-        ...(session.user!.access === "PROJECTADMIN"
-          ? [{ assignedUsers: { some: { userId } } }]
-          : []),
-      ],
-    },
-    select: { id: true },
-  });
+  const [project, isAdmin] = await Promise.all([
+    baseDb.projects.findFirst({
+      where: { id: projectId, isDeleted: false },
+      select: { id: true },
+    }),
+    isProjectAdminFor(userId, projectId),
+  ]);
 
-  if (!isAdmin) {
+  if (!project || !isAdmin) {
     return { ok: false, status: 403, error: "Forbidden" };
   }
 
