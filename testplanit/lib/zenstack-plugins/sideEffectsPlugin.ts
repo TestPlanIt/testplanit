@@ -98,6 +98,7 @@ import {
 } from "~/lib/services/auditLog";
 import { invalidateApiTokenCache } from "~/lib/api-token-cache";
 import { enqueueRunReadyCheck } from "~/lib/services/runReadyCheck";
+import { snapshotAutomatedFlip } from "~/lib/services/caseAutomatedVersioning";
 
 // Models whose standalone hooked-client writes set the app.audit_context GUC so
 // the CDC trigger records the acting user. When the write is already inside an
@@ -288,6 +289,61 @@ async function cancelReviewsForHardDeleted(
     names.set(old.id, old.name ?? "");
   }
   await cancelAndAnnounceReviews(tx, model, names, "hard-delete");
+}
+
+/**
+ * Every update that changes `RepositoryCases.automated` leaves a version
+ * snapshot behind.
+ *
+ * Automation Trends reads each case's automated state off its version
+ * timeline, not the live flag (see lib/services/caseAutomatedVersioning.ts),
+ * so a flag-only write — the reporter SDK's `updateTestCase`, the MCP
+ * `cases_update` tool, a JUnit import matching an existing case — left the
+ * case counted as its old state for every period. Hooking the model covers
+ * every hooked-client writer at once, including reporter versions already
+ * deployed in CI, and reverts (true→false) as much as flips.
+ *
+ * Skip rule: a caller that changes `currentVersion` in the same write is
+ * taking responsibility for its own snapshot (the full case editor, bulk
+ * edit, submit-result, the imports all bump-then-snapshot). Compared on the
+ * before/after images rather than the query args so `updateMany` and an
+ * explicit `currentVersion: n` are treated the same as `{ increment: 1 }`.
+ *
+ * Rows are paired by id, not by index: for a multi-row update the before
+ * SELECT and the RETURNING rows are not guaranteed to come back in the same
+ * order.
+ *
+ * The nested writes go through `client.$unuseAll()`: it shares the mutation's
+ * transaction (the hook client is transaction-bound) but drops the plugins,
+ * so the bump cannot re-enter this hook and, when the write arrived through
+ * the policy client, the snapshot is not subject to the acting user's read
+ * policy on the case's creator/project relations. The audit GUC set in
+ * beforeEntityMutation still attributes the version row to the actor.
+ */
+async function snapshotAutomatedFlips(
+  client: { $unuseAll(): unknown },
+  before: any[],
+  after: any[]
+): Promise<void> {
+  const beforeById = new Map<number, any>();
+  for (const old of before) {
+    if (old?.id != null) beforeById.set(old.id, old);
+  }
+  const flipped: number[] = [];
+  for (const row of after) {
+    if (row?.id == null) continue;
+    const old = beforeById.get(row.id);
+    if (!old) continue;
+    if (row.automated === old.automated) continue;
+    if (row.currentVersion !== old.currentVersion) continue;
+    flipped.push(row.id);
+  }
+  if (flipped.length === 0) return;
+
+  const plain = client.$unuseAll() as unknown as TxClient;
+  for (const caseId of flipped) {
+    await snapshotAutomatedFlip(plain, caseId);
+  }
 }
 
 const CREDENTIAL_WRITE_OPERATIONS = new Set([
@@ -539,6 +595,7 @@ export const sideEffectsPlugin = definePlugin(schema, {
             before,
             after
           );
+          await snapshotAutomatedFlips(client, before, after);
           break;
         }
 

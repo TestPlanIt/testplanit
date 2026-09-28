@@ -939,7 +939,9 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                   // Minimal, non-destructive update: ensure the referenced
                   // case is linkable without overwriting the user's curated
                   // fields (name, className, template, state, estimate,
-                  // folder, order).
+                  // folder, order). A manual→automated flip here is
+                  // snapshotted by the ORM side-effects hook (baseDb is the
+                  // hooked client), so Automation Trends sees the change.
                   const linkable = await baseDb.repositoryCases.update({
                     where: { id: existing.id },
                     data: {
@@ -967,6 +969,9 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                 });
 
                 if (repositoryCase) {
+                  // A manual→automated flip is snapshotted by the ORM
+                  // side-effects hook; an already-automated case gets no
+                  // extra version.
                   repositoryCase = await baseDb.repositoryCases.update({
                     where: { id: repositoryCase.id },
                     data: {

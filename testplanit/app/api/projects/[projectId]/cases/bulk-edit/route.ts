@@ -455,7 +455,17 @@ export const POST = withAuditContext(
 
             // Create version snapshot if requested
             // Note: The test case was already updated with currentVersion incremented above
-            if (validatedData.createVersions) {
+            //
+            // A change to `automated` is snapshotted even when the caller
+            // opted out of versions: Automation Trends reads the flag's
+            // history off the version timeline, so an unsnapshotted flip
+            // leaves the case counted as its old state in the report. The
+            // ORM hook that catches flag-only writes elsewhere skips this
+            // route because the update above bumps currentVersion.
+            const automatedFlips =
+              updateData.automated !== undefined &&
+              updateData.automated !== caseItem.automated;
+            if (validatedData.createVersions || automatedFlips) {
               await createTestCaseVersionInTransaction(tx, caseId, {
                 // Preserve original creator metadata
                 creatorId: caseItem.creatorId,

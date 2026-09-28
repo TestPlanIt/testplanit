@@ -683,6 +683,10 @@ export const POST = withAuditContext(async (request: NextRequest) => {
               if (existingCase) {
                 isUpdate = true;
                 reusedCaseId = caseData.id;
+                // `automated` is written together with the currentVersion
+                // bump below, not here: a flag change on its own would make
+                // the ORM side-effects hook write a snapshot of its own on
+                // top of the one this import records.
                 newCase = await enhancedDb.repositoryCases.update({
                   where: { id: caseData.id },
                   data: {
@@ -690,7 +694,6 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                     folderId: caseData.folderId,
                     templateId: caseData.templateId,
                     stateId: stateId,
-                    automated: caseData.automated,
                     estimate: caseData.estimate,
                     forecastManual: caseData.forecastManual,
                   },
@@ -886,10 +889,15 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                   ? caseData.version
                   : highestVersion + 1;
 
-              // Update the case's currentVersion
-              await enhancedDb.repositoryCases.update({
+              // Update the case's currentVersion, carrying the automated flag
+              // in the same write so the side-effects hook sees a caller that
+              // snapshots for itself.
+              newCase = await enhancedDb.repositoryCases.update({
                 where: { id: newCase.id },
-                data: { currentVersion: versionNumber },
+                data: {
+                  currentVersion: versionNumber,
+                  automated: caseData.automated,
+                },
               });
             } else if (reusedCaseId !== null) {
               // A restored soft-deleted case keeps its earlier version

@@ -1507,6 +1507,72 @@ describe("Bulk Edit API Route", () => {
       expect(data.result.versionsCreated).toBe(0);
       expect(mockCreateMany).not.toHaveBeenCalled();
     });
+
+    it("still snapshots a case whose automated flag flips when createVersions is false", async () => {
+      // Automation Trends reads the flag's history off the version timeline,
+      // so the opt-out must not apply to an automated change. Case 1 is
+      // manual and flips; case 2 is already automated and gets no version.
+      const mockCreate = vi.fn().mockResolvedValue({ id: 1, version: 2 });
+      (baseDb.$transaction as any).mockImplementation(async (callback: any) => {
+        return callback({
+          $executeRaw: vi.fn().mockResolvedValue([]),
+          $queryRaw: vi.fn().mockResolvedValue([]),
+          repositoryCaseVersions: {
+            create: mockCreate,
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+          },
+          repositoryCases: {
+            findUnique: vi
+              .fn()
+              .mockImplementation(({ where }: { where: { id: number } }) =>
+                Promise.resolve(
+                  mockCases.find((c) => c.id === where.id) ?? null
+                )
+              ),
+            update: vi.fn().mockResolvedValue({}),
+          },
+          caseFieldValues: {
+            create: vi.fn(),
+            update: vi.fn(),
+            delete: vi.fn(),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          caseFieldVersionValues: {
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+          },
+          steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
+          workflows: { findUnique: vi.fn().mockResolvedValue(null) },
+          reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
+        });
+      });
+
+      const [request, context] = createRequest({
+        caseIds: [1, 2],
+        updates: { automated: true },
+        createVersions: false,
+      });
+      const response = await POST(request, context);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.result.versionsCreated).toBe(1);
+      expect(mockCreate).toHaveBeenCalledTimes(1);
+      expect(mockCreate.mock.calls[0][0].data.repositoryCaseId).toBe(1);
+      expect(mockCreate.mock.calls[0][0].data.automated).toBe(true);
+    });
   });
 
   describe("Steps Updates", () => {
