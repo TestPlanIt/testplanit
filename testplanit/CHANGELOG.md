@@ -1,3 +1,13 @@
+## [1.1.0-beta.28](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.27...v1.1.0-beta.28) (2026-09-28)
+
+### Bug Fixes
+
+* **e2e:** truncate before the schema push and repair three stale selectors ([ae24d75](https://github.com/TestPlanIt/testplanit/commit/ae24d759121f34389e837a74157fed3cfb0db250))
+* **llm:** retry without temperature when any provider rejects it ([8f37587](https://github.com/TestPlanIt/testplanit/commit/8f3758777cb45c67425cbd5148cb6cd06cfcd7f8))
+* **repository:** never offer a case draft that matches what the editor shows ([28e9675](https://github.com/TestPlanIt/testplanit/commit/28e967598f826e6f7e26c28f3ddf375a4e742f5d))
+* **repository:** skip redundant node URL writes so pending router navigations survive ([b03978d](https://github.com/TestPlanIt/testplanit/commit/b03978d0b0472f7f2524b12d69c69a49c2490389))
+* **tables:** keep expanded rows open across refetches under react-table v9 ([a01e4d5](https://github.com/TestPlanIt/testplanit/commit/a01e4d5db82c5f9ebf7939adc571b367424c2551))
+
 ## [1.1.0-beta.27](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.26...v1.1.0-beta.27) (2026-09-28)
 
 ### Features
