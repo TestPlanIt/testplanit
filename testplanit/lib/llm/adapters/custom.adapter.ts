@@ -95,24 +95,65 @@ export class CustomLlmAdapter extends BaseLlmAdapter {
     }
   }
 
+  /**
+   * POST a request body to the configured endpoint and throw the mapped
+   * error on a non-OK response. Shared by chat, chatStream, and the
+   * capability probe.
+   */
+  private async postCustomRequest(
+    body: CustomApiRequest,
+    signal: AbortSignal | undefined
+  ): Promise<Response> {
+    const response = await this.safeFetchLongRunning(this.endpoint, {
+      method: "POST",
+      headers: this.getCustomHeaders(),
+      body: JSON.stringify(body),
+      signal,
+    });
+
+    if (!response.ok) {
+      await this.handleErrorResponse(response);
+    }
+
+    return response;
+  }
+
+  protected async sendTemperatureProbe(model: string): Promise<void> {
+    const response = await this.postCustomRequest(
+      this.buildCustomRequest(
+        {
+          messages: [{ role: "user", content: "ping" }],
+          model,
+          maxTokens: 1,
+          temperature: BaseLlmAdapter.PROBE_TEMPERATURE,
+          userId: "probe",
+          feature: "probe",
+        },
+        false
+      ),
+      AbortSignal.timeout(10000)
+    );
+    try {
+      await response.text();
+    } catch {
+      // ignore — only acceptance matters
+    }
+  }
+
   async chat(request: LlmRequest): Promise<LlmResponse> {
     this.validateRequest(request);
 
-    const customRequest = this.buildCustomRequest(request, false);
+    const model = request.model || this.getDefaultModel();
 
     try {
       // Use request timeout if provided, otherwise fall back to config timeout
       const timeout = request.timeout ?? this.getTimeout();
-      const response = await this.safeFetchLongRunning(this.endpoint, {
-        method: "POST",
-        headers: this.getCustomHeaders(),
-        body: JSON.stringify(customRequest),
-        signal: AbortSignal.timeout(timeout),
-      });
-
-      if (!response.ok) {
-        await this.handleErrorResponse(response);
-      }
+      const response = await this.withTemperatureFallback(model, () =>
+        this.postCustomRequest(
+          this.buildCustomRequest(request, false),
+          AbortSignal.timeout(timeout)
+        )
+      );
 
       const data = (await response.json()) as CustomApiResponse;
       return this.mapCustomResponse(
@@ -135,22 +176,18 @@ export class CustomLlmAdapter extends BaseLlmAdapter {
   ): AsyncGenerator<LlmStreamResponse, void, unknown> {
     this.validateRequest(request);
 
-    const customRequest = this.buildCustomRequest(request, true);
+    const model = request.model || this.getDefaultModel();
 
     // Use request timeout if provided, otherwise fall back to config timeout.
     // timeout === 0 means no timeout (e.g. streaming where the full duration is unknown).
     // Use safeFetchLongRunning to bypass undici's 5-min body timeout.
     const timeout = request.timeout ?? this.getTimeout();
-    const response = await this.safeFetchLongRunning(this.endpoint, {
-      method: "POST",
-      headers: this.getCustomHeaders(),
-      body: JSON.stringify(customRequest),
-      signal: timeout > 0 ? AbortSignal.timeout(timeout) : undefined,
-    });
-
-    if (!response.ok) {
-      await this.handleErrorResponse(response);
-    }
+    const response = await this.withTemperatureFallback(model, () =>
+      this.postCustomRequest(
+        this.buildCustomRequest(request, true),
+        timeout > 0 ? AbortSignal.timeout(timeout) : undefined
+      )
+    );
 
     const reader = response.body?.getReader();
     if (!reader) {
@@ -396,13 +433,21 @@ export class CustomLlmAdapter extends BaseLlmAdapter {
     const settings = this.config.integration
       .settings as CustomLlmSettings | null;
 
+    const model = request.model || this.getDefaultModel();
     const customRequest: CustomApiRequest = {
-      model: request.model || this.getDefaultModel(),
+      model,
       messages: this.toCustomMessages(
         request.messages,
         settings?.visionSupport === true
       ),
-      temperature: request.temperature ?? this.config.config.defaultTemperature,
+      // Consulted on every build so a retry after a temperature rejection
+      // omits it; the field-mapping pass below still renames it when present.
+      ...(this.modelSupportsTemperature(model)
+        ? {
+            temperature:
+              request.temperature ?? this.config.config.defaultTemperature,
+          }
+        : {}),
       max_tokens: request.maxTokens ?? this.config.config.defaultMaxTokens,
       stream,
       ...template,

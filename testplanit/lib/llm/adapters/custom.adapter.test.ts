@@ -265,6 +265,71 @@ describe("CustomLlmAdapter", () => {
       expect(response.completionTokens).toBe(25);
     });
 
+    it("retries without temperature when the endpoint rejects it, honouring field mappings", async () => {
+      const config = createTestConfig(
+        {},
+        { requestFieldMappings: { temperature: "temp" } }
+      );
+      const adapter = new CustomLlmAdapter(config);
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        headers: new Headers({ "content-type": "application/json" }),
+        json: async () => ({
+          error: {
+            message:
+              "litellm.UnsupportedParamsError: us.anthropic.claude-opus-5 does not support temperature=0.7. Only temperature=1 is supported.",
+          },
+        }),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ content: "Retried" }),
+      });
+
+      const response = await adapter.chat({
+        messages: [{ role: "user", content: "Hello" }],
+        model: "custom-opus-5",
+        userId: "user-123",
+        feature: "test",
+      });
+
+      expect(response.content).toBe("Retried");
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      const firstBody = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(firstBody.temp).toBe(0.7);
+      expect(firstBody.temperature).toBeUndefined();
+      const retryBody = JSON.parse(mockFetch.mock.calls[1][1].body);
+      expect(retryBody.temp).toBeUndefined();
+      expect(retryBody.temperature).toBeUndefined();
+    });
+
+    it("probeModelCapabilities reports temperature as unsupported on a proxy rejection", async () => {
+      const adapter = new CustomLlmAdapter(createTestConfig());
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        headers: new Headers({ "content-type": "application/json" }),
+        json: async () => ({
+          error: {
+            message:
+              "litellm.UnsupportedParamsError: us.anthropic.claude-opus-5 does not support temperature=0.5. Only temperature=1 is supported.",
+          },
+        }),
+      });
+
+      const result = await adapter.probeModelCapabilities(
+        "custom-opus-5-probe"
+      );
+
+      expect(result.unsupportedParams).toEqual(["temperature"]);
+      const probeBody = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(probeBody.temperature).toBe(0.5);
+      expect(probeBody.max_tokens).toBe(1);
+    });
+
     it("should apply request field mappings", async () => {
       const config = createTestConfig(
         {},

@@ -275,6 +275,169 @@ describe("OpenAIAdapter", () => {
     });
   });
 
+  describe("temperature rejection handling", () => {
+    const liteLlmRejection = () => ({
+      ok: false,
+      status: 400,
+      headers: new Headers({ "content-type": "application/json" }),
+      json: async () => ({
+        error: {
+          message:
+            "litellm.UnsupportedParamsError: us.anthropic.claude-opus-5 does not support temperature=0.7. Only temperature=1 is supported. To drop unsupported params, set `litellm.drop_params = True`.",
+          type: "invalid_request_error",
+          code: "400",
+        },
+      }),
+    });
+
+    const okCompletion = (text: string) => ({
+      ok: true,
+      json: async () => ({
+        id: "chatcmpl-1",
+        object: "chat.completion",
+        created: 1,
+        model: "claude-opus-5",
+        choices: [
+          {
+            index: 0,
+            message: { role: "assistant", content: text },
+            finish_reason: "stop",
+          },
+        ],
+        usage: { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 },
+      }),
+    });
+
+    it("retries without temperature when the proxy rejects it, then remembers the model", async () => {
+      const adapter = new OpenAIAdapter(createTestConfig());
+
+      mockFetch.mockResolvedValueOnce(liteLlmRejection());
+      mockFetch.mockResolvedValueOnce(okCompletion("first"));
+
+      const request: LlmRequest = {
+        messages: [{ role: "user", content: "Hello" }],
+        model: "claude-opus-5-via-openai",
+        userId: "user-123",
+        feature: "test",
+      };
+
+      const first = await adapter.chat(request);
+      expect(first.content).toBe("first");
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      expect(JSON.parse(mockFetch.mock.calls[0][1].body).temperature).toBe(0.7);
+      expect(
+        JSON.parse(mockFetch.mock.calls[1][1].body).temperature
+      ).toBeUndefined();
+
+      // A fresh adapter for the same provider+model skips the param outright
+      mockFetch.mockResolvedValueOnce(okCompletion("second"));
+      const second = await new OpenAIAdapter(createTestConfig()).chat(request);
+      expect(second.content).toBe("second");
+      expect(mockFetch).toHaveBeenCalledTimes(3);
+      expect(
+        JSON.parse(mockFetch.mock.calls[2][1].body).temperature
+      ).toBeUndefined();
+    });
+
+    it("does not retry other 400s", async () => {
+      const adapter = new OpenAIAdapter(createTestConfig());
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        headers: new Headers({ "content-type": "application/json" }),
+        json: async () => ({ error: { message: "Invalid model specified" } }),
+      });
+
+      await expect(
+        adapter.chat({
+          messages: [{ role: "user", content: "Hello" }],
+          model: "gpt-4-bad-request",
+          userId: "user-123",
+          feature: "test",
+        })
+      ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it("skips temperature up-front when the persisted probe marks it unsupported", async () => {
+      const base = createTestConfig();
+      const adapter = new OpenAIAdapter({
+        ...base,
+        config: {
+          ...base.config,
+          settings: {
+            modelCapabilities: {
+              "gpt-probed": {
+                unsupportedParams: ["temperature"],
+                probedAt: "2026-09-28T00:00:00.000Z",
+              },
+            },
+          },
+        },
+      });
+
+      mockFetch.mockResolvedValueOnce(okCompletion("ok"));
+      await adapter.chat({
+        messages: [{ role: "user", content: "Hello" }],
+        model: "gpt-probed",
+        userId: "user-123",
+        feature: "test",
+      });
+
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(
+        JSON.parse(mockFetch.mock.calls[0][1].body).temperature
+      ).toBeUndefined();
+    });
+
+    it("probeModelCapabilities reports temperature as unsupported on a proxy rejection", async () => {
+      const adapter = new OpenAIAdapter(createTestConfig());
+
+      mockFetch.mockResolvedValueOnce(liteLlmRejection());
+
+      const result = await adapter.probeModelCapabilities(
+        "claude-opus-5-probe"
+      );
+
+      expect(result.unsupportedParams).toEqual(["temperature"]);
+      const probeBody = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(probeBody.temperature).toBe(0.5);
+      expect(probeBody.max_completion_tokens).toBe(1);
+      expect(mockFetch.mock.calls[0][0]).toBe(
+        "https://api.openai.com/v1/chat/completions"
+      );
+    });
+
+    it("probeModelCapabilities returns [] when the model accepts temperature", async () => {
+      const adapter = new OpenAIAdapter(createTestConfig());
+
+      mockFetch.mockResolvedValueOnce({
+        ...okCompletion("pong"),
+        text: async () => "",
+      });
+
+      const result = await adapter.probeModelCapabilities("gpt-4");
+
+      expect(result.unsupportedParams).toEqual([]);
+    });
+
+    it("probeModelCapabilities re-throws unrelated failures", async () => {
+      const adapter = new OpenAIAdapter(createTestConfig());
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        headers: new Headers({ "content-type": "application/json" }),
+        json: async () => ({ error: { message: "Invalid API key" } }),
+      });
+
+      await expect(
+        adapter.probeModelCapabilities("gpt-4")
+      ).rejects.toMatchObject({ code: "AUTHENTICATION_ERROR" });
+    });
+  });
+
   describe("testConnection", () => {
     it("should return true when connection is successful", async () => {
       const config = createTestConfig();

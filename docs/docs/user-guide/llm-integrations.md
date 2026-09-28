@@ -220,7 +220,7 @@ Saving an integration with a changed `billingPeriodStartDay` clears any threshol
 
 Both the **Test Connection** button and the **Update / Create** action probe the configured model for parameter support before persisting. This avoids paying for a failed-and-retried request the first time an AI feature actually fires.
 
-**What gets probed.** TestPlanIt sends a 1-token request with `temperature: 1` to the configured model and watches for parameter-rejection errors. Today only the `temperature` parameter is probed — newer Anthropic adaptive-thinking models (e.g., Claude Opus 4.7) return a deprecation error rather than ignoring the field. The probe code is structured so additional parameters can be added later without changing the storage shape.
+**What gets probed.** TestPlanIt sends a 1-token request with a non-default `temperature` to the configured model and watches for parameter-rejection errors. Today only the `temperature` parameter is probed — newer Anthropic adaptive-thinking models (Claude Opus 4.7 and later) return a deprecation error rather than ignoring the field, and a LiteLLM proxy in front of such a model rejects any temperature other than `1`. The probe runs for Anthropic, OpenAI, Azure OpenAI, DeepSeek, and Custom LLM integrations, so it covers a proxy configured under any of those provider types. The probe code is structured so additional parameters can be added later without changing the storage shape.
 
 **What gets stored.** The result lands in `LlmProviderConfig.settings.modelCapabilities` keyed by model id:
 
@@ -256,7 +256,7 @@ An explicit `supportsVision` always wins over the name-based detection, in both 
 - **Clicking Test Connection** runs a probe and captures the result in the form. A success toast confirms the connection.
 - **Clicking Update / Create** runs the probe automatically if no successful test has been performed in this session, or if any credential-affecting field (provider, API key, endpoint, deployment name, default model) has been edited since the last test. A failed probe at this stage aborts the save and surfaces the same error toast as Test Connection — the admin can fix and retry without losing form state.
 
-**Runtime fallback.** Each adapter still carries an in-memory cache that catches and remembers parameter-rejection errors at chat-request time. If a model is updated by the provider after an integration is configured, the first chat request will hit the new error, retry without the rejected param, and remember it for the rest of the process — giving you correct behavior until the next Test Connection re-probes and persists the change.
+**Runtime fallback.** The same adapters also carry an in-memory cache that catches and remembers parameter-rejection errors at chat-request time. If a model is updated by the provider after an integration is configured, the first chat request will hit the new error, retry without the rejected param, and remember it for the rest of the process — giving you correct behavior until the next Test Connection re-probes and persists the change.
 
 ### Project Assignment
 
