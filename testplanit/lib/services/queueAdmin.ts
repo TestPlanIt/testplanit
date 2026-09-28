@@ -2,25 +2,18 @@ import type { Job, Queue } from "bullmq";
 import { getAllQueues } from "~/lib/queues";
 import { cancelFlagsForJob, setCancelFlags } from "./jobCancel";
 
-/** The queues the admin Queues page can act on, by their public name. */
+/**
+ * Resolve an admin-page queue name (the BullMQ queue's own `name`, as the
+ * list route publishes it) to its Queue across every queue in the registry,
+ * so a queue added to getAllQueues() is reachable without a map update.
+ */
 export function getQueueByName(queueName: string): Queue | null {
-  const allQueues = getAllQueues();
-  const queueMap: Record<string, Queue | null> = {
-    "forecast-updates": allQueues.forecastQueue,
-    notifications: allQueues.notificationQueue,
-    emails: allQueues.emailQueue,
-    "issue-sync": allQueues.syncQueue,
-    "testmo-imports": allQueues.testmoImportQueue,
-    "elasticsearch-reindex": allQueues.elasticsearchReindexQueue,
-    "audit-logs": allQueues.auditLogQueue,
-    "budget-alerts": allQueues.budgetAlertQueue,
-    "auto-tag": allQueues.autoTagQueue,
-    "repo-cache": allQueues.repoCacheQueue,
-    "copy-move": allQueues.copyMoveQueue,
-    "duplicate-scan": allQueues.duplicateScanQueue,
-    "step-scan": allQueues.stepScanQueue,
-  };
-  return queueMap[queueName] ?? null;
+  for (const queue of Object.values(getAllQueues())) {
+    if (queue && queue.name === queueName) {
+      return queue;
+    }
+  }
+  return null;
 }
 
 /**

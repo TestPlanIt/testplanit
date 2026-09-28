@@ -1,31 +1,11 @@
 import { getCurrentTenantId, isMultiTenantMode } from "@/lib/multiTenantDb";
 import { baseDb } from "@/lib/db";
-import { getAllQueues } from "@/lib/queues";
-import { Job, Queue } from "bullmq";
+import { Job } from "bullmq";
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateApiToken } from "~/lib/api-token-auth";
 import { cancelFlagsForJob } from "~/lib/services/jobCancel";
+import { getQueueByName } from "~/lib/services/queueAdmin";
 import { getServerAuthSession } from "~/server/auth";
-
-function getQueueByName(queueName: string): Queue | null {
-  const allQueues = getAllQueues();
-  const queueMap: Record<string, Queue | null> = {
-    "forecast-updates": allQueues.forecastQueue,
-    notifications: allQueues.notificationQueue,
-    emails: allQueues.emailQueue,
-    "issue-sync": allQueues.syncQueue,
-    "testmo-imports": allQueues.testmoImportQueue,
-    "elasticsearch-reindex": allQueues.elasticsearchReindexQueue,
-    "audit-logs": allQueues.auditLogQueue,
-    "budget-alerts": allQueues.budgetAlertQueue,
-    "auto-tag": allQueues.autoTagQueue,
-    "repo-cache": allQueues.repoCacheQueue,
-    "copy-move": allQueues.copyMoveQueue,
-    "duplicate-scan": allQueues.duplicateScanQueue,
-    "step-scan": allQueues.stepScanQueue,
-  };
-  return queueMap[queueName] ?? null;
-}
 
 // GET: Get jobs from a specific queue
 export async function GET(

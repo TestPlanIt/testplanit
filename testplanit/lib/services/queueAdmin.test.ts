@@ -1,14 +1,40 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { JOB_SCAN_REPO_ISSUES, REPO_CACHE_QUEUE_NAME } from "~/lib/queueNames";
+import {
+  JOB_SCAN_REPO_ISSUES,
+  REPO_CACHE_QUEUE_NAME,
+  WEBHOOK_DISPATCH_QUEUE_NAME,
+} from "~/lib/queueNames";
 
 vi.mock("~/lib/queues", () => ({ getAllQueues: vi.fn(() => ({})) }));
 
+import { getAllQueues } from "~/lib/queues";
 import {
   ActiveJobError,
   cancelJob,
+  getQueueByName,
   NotCancellableError,
   removeJob,
 } from "./queueAdmin";
+
+describe("getQueueByName", () => {
+  it("resolves any registry queue by its own name, including ones added after the admin page", () => {
+    const repoCache = { name: REPO_CACHE_QUEUE_NAME };
+    const webhookDispatch = { name: WEBHOOK_DISPATCH_QUEUE_NAME };
+    vi.mocked(getAllQueues).mockReturnValue({
+      repoCacheQueue: repoCache,
+      webhookDispatchQueue: webhookDispatch,
+      unavailableQueue: null,
+    } as unknown as ReturnType<typeof getAllQueues>);
+
+    expect(getQueueByName(WEBHOOK_DISPATCH_QUEUE_NAME)).toBe(webhookDispatch);
+    expect(getQueueByName(REPO_CACHE_QUEUE_NAME)).toBe(repoCache);
+    expect(getQueueByName("no-such-queue")).toBeNull();
+
+    vi.mocked(getAllQueues).mockImplementation(
+      () => ({}) as unknown as ReturnType<typeof getAllQueues>
+    );
+  });
+});
 
 function job(state: string, extra: Record<string, unknown> = {}) {
   return {
