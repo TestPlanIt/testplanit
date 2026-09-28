@@ -55,6 +55,7 @@ import { useDragTargetKind } from "~/hooks/useDragTargetKind";
 import { ItemTypes } from "~/types/dndTypes";
 import { DeleteFolderModal } from "./DeleteFolderModal";
 import { EditFolderModal } from "./EditFolder";
+import { syncNodeUrlParam } from "./nodeUrlParam";
 
 interface ArboristNode {
   id: string;
@@ -869,10 +870,7 @@ const TreeView: React.FC<{
         if (folderId) {
           setSelectedId(node.id);
           onSelectFolder(folderId);
-
-          const url = new URL(window.location.href);
-          url.searchParams.set("node", folderId.toString());
-          window.history.replaceState({}, "", url.toString());
+          syncNodeUrlParam(folderId);
         }
       }
     },
@@ -1080,11 +1078,7 @@ const TreeView: React.FC<{
             }
 
             onSelectFolder(folderId);
-
-            // Update URL with the new folder ID
-            const url = new URL(window.location.href);
-            url.searchParams.set("node", folderId.toString());
-            window.history.replaceState({}, "", url.toString());
+            syncNodeUrlParam(folderId);
           } else if (retriesLeft > 0) {
             // Node not found yet (may still be rendering after state update), retry after a delay
             // Use longer delay to allow React to complete its render cycle
@@ -1857,9 +1851,7 @@ const TreeView: React.FC<{
           onDeleted={() => {
             onSelectFolder(null);
             setSelectedId(null);
-            const url = new URL(window.location.href);
-            url.searchParams.delete("node");
-            window.history.replaceState({}, "", url.toString());
+            syncNodeUrlParam(null);
           }}
           open={deleteModalState.open}
           onClose={() => setDeleteModalState({ open: false, node: null })}
