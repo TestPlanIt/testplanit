@@ -640,7 +640,8 @@ export async function resolveTemplateForProject(
 
 /**
  * Resolve a workflow state for the CASES scope (NOT runs). Pass `name` to
- * select by name; omit to take the first by `order asc`.
+ * select by name; omit to take the state marked Default, else the first by
+ * `order asc` — the web UI's choice.
  *
  * Cannot use `/api/cli/lookup` — that endpoint hardcodes
  * `WorkflowScope.RUNS` (see /api/cli/lookup/route.ts line 106).
@@ -661,7 +662,7 @@ export async function resolveCaseWorkflowState(
         projects: { some: { projectId } },
         ...(name ? { name } : {}),
       },
-      orderBy: { order: "asc" },
+      orderBy: [{ isDefault: "desc" }, { order: "asc" }],
       take: 1,
     },
     env,

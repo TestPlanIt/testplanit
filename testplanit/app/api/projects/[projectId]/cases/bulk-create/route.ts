@@ -311,7 +311,8 @@ export const POST = withAuditContext(
           continue;
         }
 
-        // CASES-scope workflow state: named one, else first by order.
+        // CASES-scope workflow state: the named one, else the one marked
+        // Default, else the first by order — the web UI's choice.
         const state = await baseDb.workflows.findFirst({
           where: {
             projects: { some: { projectId } },
@@ -320,7 +321,7 @@ export const POST = withAuditContext(
             scope: "CASES",
             ...(stateName ? { name: stateName } : {}),
           },
-          orderBy: { order: "asc" },
+          orderBy: [{ isDefault: "desc" }, { order: "asc" }],
           select: { id: true, name: true },
         });
         if (!state) {

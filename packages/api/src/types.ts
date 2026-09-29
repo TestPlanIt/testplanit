@@ -577,9 +577,15 @@ export interface CreateTestCasesOptions {
    * {@link BulkTestCaseInput.folderId}.
    */
   folderId: number;
-  /** Template for the batch. Defaults to the project's first enabled template. */
+  /**
+   * Template for the batch. Defaults to the template marked Default, else the
+   * project's first enabled template.
+   */
   templateId?: number;
-  /** Default CASES workflow state name; each case may override it. */
+  /**
+   * Default CASES workflow state name; each case may override it. Defaults to
+   * the state marked Default, else the first by order.
+   */
   stateName?: string;
   cases: BulkTestCaseInput[];
 }

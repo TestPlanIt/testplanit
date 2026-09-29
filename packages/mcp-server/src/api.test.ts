@@ -473,7 +473,7 @@ describe("resolveCaseWorkflowState()", () => {
     expect(body.where.name).toBe("Active");
   });
 
-  it("TC-20: no name → returns first by order asc (take: 1, orderBy order asc)", async () => {
+  it("TC-20: no name → prefers the state marked Default, then order asc (take: 1)", async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse(200, { data: [{ id: 3, name: "Draft" }] }));
     const result = await resolveCaseWorkflowState(7, ENV);
     expect(result.id).toBe(3);
@@ -482,7 +482,7 @@ describe("resolveCaseWorkflowState()", () => {
     const url = call[0] as string;
     const qParam = new URL(url).searchParams.get("q");
     const body = JSON.parse(decodeURIComponent(qParam!));
-    expect(body.orderBy).toEqual({ order: "asc" });
+    expect(body.orderBy).toEqual([{ isDefault: "desc" }, { order: "asc" }]);
     expect(body.take).toBe(1);
     expect(body.where.name).toBeUndefined();
   });

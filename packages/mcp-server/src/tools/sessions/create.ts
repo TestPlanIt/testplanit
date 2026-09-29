@@ -38,7 +38,10 @@ export async function resolveSessionState(
         projects: { some: { projectId } },
         ...(name ? { name } : {}),
       } satisfies WorkflowsWhereInput,
-      orderBy: { order: "asc" } satisfies WorkflowsOrderByWithRelationInput,
+      orderBy: [
+        { isDefault: "desc" },
+        { order: "asc" },
+      ] satisfies WorkflowsOrderByWithRelationInput[],
       take: 1,
     },
     env,
@@ -90,7 +93,7 @@ export function registerSessionsCreate(
           .min(1)
           .optional()
           .describe(
-            "SESSIONS workflow state name. Defaults to the first state by order.",
+            "SESSIONS workflow state name. Defaults to the state marked Default, else the first by order.",
           ),
         tags: z
           .array(z.union([z.number().int().positive(), z.string().min(1)]))

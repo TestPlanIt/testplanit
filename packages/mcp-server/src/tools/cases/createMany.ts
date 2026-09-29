@@ -79,7 +79,7 @@ export function registerCasesCreateMany(
           .min(1)
           .optional()
           .describe(
-            "Default CASES workflow state name for the batch. Defaults to the first state by order. Each case may override it.",
+            "Default CASES workflow state name for the batch. Defaults to the state marked Default, else the first by order. Each case may override it.",
           ),
         integrationId: z
           .number()

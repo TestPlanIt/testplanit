@@ -115,6 +115,20 @@ describe("registerRunsCreate", () => {
     expect(body.data.state).toEqual({ connect: { id: 5 } });
   });
 
+  it("defaults to the RUNS state marked Default, then the first by order", async () => {
+    setupDefaultMocks();
+    const { client } = await setupClient();
+    await client.callTool({
+      name: "testplanit_runs_create",
+      arguments: { projectId: 1, name: "Smoke Suite" },
+    });
+    const stateLookup = mockZenstack.mock.calls[0]?.[2] as any;
+    expect(stateLookup.orderBy).toEqual([
+      { isDefault: "desc" },
+      { order: "asc" },
+    ]);
+  });
+
   it("adds test cases via testRunCases.createMany when caseIds provided", async () => {
     // 1. resolveRunState
     mockZenstack.mockResolvedValueOnce([MOCK_STATE]);

@@ -286,6 +286,20 @@ describe("Bulk Create API Route", () => {
       expect(data.error).toContain("No enabled template");
     });
 
+    it("prefers the CASES state marked Default when stateName is omitted", async () => {
+      const [req, ctx] = createRequest({
+        folderId: 12,
+        cases: [{ name: "A" }],
+      });
+      await POST(req, ctx);
+
+      expect(baseDb.workflows.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: [{ isDefault: "desc" }, { order: "asc" }],
+        })
+      );
+    });
+
     it("prefers the template marked Default when templateId is omitted", async () => {
       const [req, ctx] = createRequest({
         folderId: 12,

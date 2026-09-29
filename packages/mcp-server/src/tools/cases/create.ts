@@ -44,7 +44,7 @@ export function registerCasesCreate(
           .string()
           .min(1)
           .optional()
-          .describe("CASES workflow state name. Defaults to the first state by order."),
+          .describe("CASES workflow state name. Defaults to the state marked Default, else the first by order."),
         steps: z
           .array(
             z.object({
