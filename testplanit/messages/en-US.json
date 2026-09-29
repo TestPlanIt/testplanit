@@ -619,6 +619,7 @@
       "noSuccessStatus": "No success status selected",
       "missingTestRunCase": "Test run case ID is missing",
       "fieldRequired": "This field is required",
+      "restrictedFieldRequired": "Only users who can edit restricted fields can fill this in.",
       "projectNameExists": "A project with this name already exists",
       "defaultNotFound": "Default value not found",
       "emailExists": "A user with this email already exists",

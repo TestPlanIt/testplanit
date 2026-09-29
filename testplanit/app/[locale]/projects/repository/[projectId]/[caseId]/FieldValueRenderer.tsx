@@ -126,7 +126,7 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
   const renderDiffWrapper = (
     current: any,
     previous: any,
-    renderer: (value: any) => React.ReactElement
+    renderer: (value: any) => React.ReactNode
   ) => {
     const isDifferent =
       Array.isArray(current) && Array.isArray(previous)
@@ -165,6 +165,14 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
     const showDiff = previousFieldValue !== undefined;
     const isEffectivelyReadOnly =
       isEditMode && fieldIsRestricted && !canEditRestricted;
+    // A read-only Link can be empty: a restricted field shown in edit mode, or
+    // one side of a version diff.
+    const renderLink = (val: unknown) =>
+      val ? (
+        <Link target="_blank" href={String(val)} rel="noreferrer">
+          {String(val)}
+        </Link>
+      ) : null;
 
     if (fieldType === "Dropdown" || fieldType === "Multi-Select") {
       const caseField = template.caseFields.find(
@@ -415,15 +423,9 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
             )}
           />
         ) : showDiff ? (
-          renderDiffWrapper(fieldValue, previousFieldValue, (val) => (
-            <Link target="_blank" href={val.toString()} rel="noreferrer">
-              {val.toString()}
-            </Link>
-          ))
+          renderDiffWrapper(fieldValue, previousFieldValue, renderLink)
         ) : (
-          <Link target="_blank" href={fieldValue.toString()} rel="noreferrer">
-            {fieldValue.toString()}
-          </Link>
+          renderLink(fieldValue)
         );
       case "Number":
       case "Integer":
@@ -626,6 +628,11 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
           data-testid={`field-error-${systemName}`}
         >
           {error}
+        </p>
+      )}
+      {error && isEditMode && fieldIsRestricted && !canEditRestricted && (
+        <p className="text-sm text-muted-foreground">
+          {t("common.errors.restrictedFieldRequired")}
         </p>
       )}
     </div>
