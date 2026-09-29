@@ -619,6 +619,7 @@
       "noSuccessStatus": "Kein Erfolgsstatus ausgewählt",
       "missingTestRunCase": "Die Testlauf-Fall-ID fehlt.",
       "fieldRequired": "Dieses Feld ist erforderlich",
+      "restrictedFieldRequired": "Nur Benutzer, die eingeschränkte Felder bearbeiten können, können dies ausfüllen.",
       "projectNameExists": "Ein Projekt mit diesem Namen existiert bereits.",
       "defaultNotFound": "Standardwert nicht gefunden",
       "emailExists": "Ein Benutzer mit dieser E-Mail-Adresse existiert bereits.",

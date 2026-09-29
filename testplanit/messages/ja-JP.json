@@ -619,6 +619,7 @@
       "noSuccessStatus": "成功ステータスが選択されていません",
       "missingTestRunCase": "テスト実行ケースIDがありません",
       "fieldRequired": "この項目は必須です",
+      "restrictedFieldRequired": "このフィールドを編集できるユーザーのみがこれを入力できます。",
       "projectNameExists": "この名前のプロジェクトは既に存在します",
       "defaultNotFound": "デフォルト値が見つかりません",
       "emailExists": "このメールアドレスを持つユーザーは既に存在します",

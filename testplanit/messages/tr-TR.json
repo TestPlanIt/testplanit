@@ -619,6 +619,7 @@
       "noSuccessStatus": "Başarı durumu seçilmedi.",
       "missingTestRunCase": "Test çalıştırma senaryo kimliği eksik.",
       "fieldRequired": "Bu alan zorunludur.",
+      "restrictedFieldRequired": "Yalnızca kısıtlı alanları düzenleyebilen kullanıcılar bunu doldurabilir.",
       "projectNameExists": "Bu isimde bir proje zaten mevcut.",
       "defaultNotFound": "Varsayılan değer bulunamadı.",
       "emailExists": "Bu e-posta adresine sahip bir kullanıcı zaten mevcut.",

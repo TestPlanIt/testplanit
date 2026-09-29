@@ -619,6 +619,7 @@
       "noSuccessStatus": "Nebyl vybrán žádný úspěšný stav",
       "missingTestRunCase": "Chybí ID případu v testovacím běhu",
       "fieldRequired": "Toto pole je povinné",
+      "restrictedFieldRequired": "Toto pole mohou vyplnit pouze uživatelé, kteří mohou upravovat omezená pole.",
       "projectNameExists": "Projekt s tímto názvem již existuje",
       "defaultNotFound": "Výchozí hodnota nebyla nalezena",
       "emailExists": "Uživatel s tímto emailem již existuje",

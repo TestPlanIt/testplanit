@@ -619,6 +619,7 @@
       "noSuccessStatus": "未选择成功状态",
       "missingTestRunCase": "测试运行用例 ID 缺失",
       "fieldRequired": "此字段是必需的",
+      "restrictedFieldRequired": "只有能够编辑受限字段的用户才能填写此项。",
       "projectNameExists": "已存在一个同名项目",
       "defaultNotFound": "未找到默认值",
       "emailExists": "已存在使用此电子邮件地址的用户",

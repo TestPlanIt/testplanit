@@ -619,6 +619,7 @@
       "noSuccessStatus": "Chưa chọn trạng thái thành công nào.",
       "missingTestRunCase": "Mã định danh trường hợp chạy thử nghiệm bị thiếu.",
       "fieldRequired": "Trường này là bắt buộc",
+      "restrictedFieldRequired": "Chỉ những người dùng có thể chỉnh sửa các trường bị hạn chế mới có thể điền vào đây.",
       "projectNameExists": "Đã có một dự án với tên gọi này tồn tại.",
       "defaultNotFound": "Không tìm thấy giá trị mặc định",
       "emailExists": "Đã có người dùng có địa chỉ email này.",

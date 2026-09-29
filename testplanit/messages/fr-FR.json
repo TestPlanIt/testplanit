@@ -619,6 +619,7 @@
       "noSuccessStatus": "Aucun statut de réussite sélectionné",
       "missingTestRunCase": "L'identifiant du cas d'exécution de test est manquant.",
       "fieldRequired": "Ce champ est obligatoire",
+      "restrictedFieldRequired": "Seuls les utilisateurs qui peuvent modifier les champs restreints peuvent remplir ceci.",
       "projectNameExists": "Un projet portant ce nom existe déjà.",
       "defaultNotFound": "Valeur par défaut introuvable",
       "emailExists": "Un utilisateur avec cette adresse e-mail existe déjà.",

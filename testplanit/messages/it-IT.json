@@ -619,6 +619,7 @@
       "noSuccessStatus": "Nessuno stato di successo selezionato",
       "missingTestRunCase": "ID del caso di esecuzione del test mancante",
       "fieldRequired": "Questo campo è obbligatorio",
+      "restrictedFieldRequired": "Solo gli utenti che possono modificare i campi limitati possono compilare questo campo.",
       "projectNameExists": "Esiste già un progetto con questo nome",
       "defaultNotFound": "Valore predefinito non trovato",
       "emailExists": "Esiste già un utente con questa email",

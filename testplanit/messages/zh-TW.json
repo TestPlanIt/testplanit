@@ -619,6 +619,7 @@
       "noSuccessStatus": "未選擇成功狀態",
       "missingTestRunCase": "測試運行用例 ID 缺失",
       "fieldRequired": "此欄位是必需的",
+      "restrictedFieldRequired": "只有能編輯受限制欄位的使用者才能填寫此欄位。",
       "projectNameExists": "已存在一個同名項目",
       "defaultNotFound": "未找到預設值",
       "emailExists": "已存在使用此電子郵件地址的用戶",

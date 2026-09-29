@@ -619,6 +619,7 @@
       "noSuccessStatus": "Geen successtatus geselecteerd",
       "missingTestRunCase": "Testrun case-ID ontbreekt",
       "fieldRequired": "Dit veld is verplicht",
+      "restrictedFieldRequired": "Alleen gebruikers die beperkte velden kunnen bewerken, kunnen dit invullen.",
       "projectNameExists": "Er bestaat al een project met deze naam",
       "defaultNotFound": "Standaardwaarde niet gevonden",
       "emailExists": "Er bestaat al een gebruiker met dit e-mailadres",

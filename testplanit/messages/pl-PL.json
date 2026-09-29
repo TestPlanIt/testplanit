@@ -619,6 +619,7 @@
       "noSuccessStatus": "Nie wybrano statusu powodzenia",
       "missingTestRunCase": "Brak identyfikatora przypadku testu",
       "fieldRequired": "To pole jest wymagane",
+      "restrictedFieldRequired": "Tylko użytkownicy, którzy mogą edytować pola z ograniczeniami dostępu, mogą to wypełnić.",
       "projectNameExists": "Projekt o tej nazwie już istnieje",
       "defaultNotFound": "Nie znaleziono wartości domyślnej",
       "emailExists": "Użytkownik o tym adresie e-mail już istnieje",

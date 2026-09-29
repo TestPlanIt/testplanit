@@ -619,6 +619,7 @@
       "noSuccessStatus": "لم يتم تحديد حالة النجاح",
       "missingTestRunCase": "معرّف حالة تشغيل الاختبار مفقود",
       "fieldRequired": "هذا الحقل مطلوب",
+      "restrictedFieldRequired": "فقط المستخدمون الذين يمكنهم تعديل الحقول المقيدة يمكنهم ملء هذا.",
       "projectNameExists": "يوجد مشروع بهذا الاسم مسبقًا",
       "defaultNotFound": "القيمة الافتراضية غير موجودة",
       "emailExists": "يوجد مستخدم بهذا البريد الإلكتروني بالفعل",
