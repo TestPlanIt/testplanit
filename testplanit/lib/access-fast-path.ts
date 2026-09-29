@@ -18,9 +18,10 @@
  */
 
 import { NextResponse } from "next/server";
+import { ApplicationArea } from "~/zenstack/models";
 import {
   getAccessManifest,
-  hasWriteAccess,
+  hasAreaWriteAccess,
   type AccessManifest,
 } from "./access-manifest";
 import { baseDb } from "./db";
@@ -29,19 +30,19 @@ import { normalizeRichTextWrite } from "./richTextColumns";
 import { buildGucPayload } from "./audit/gucContext";
 
 /**
- * Models whose access is entirely determined by a direct `project` relation.
- * Listed models support the fast-create path when the request body provides
+ * Models whose access is entirely determined by a direct `project` relation,
+ * each with the area whose add/edit grant its create policy requires. Listed
+ * models support the fast-create path when the request body provides
  * `project: { connect: { id } }`.
  */
-const FAST_CREATE_MODELS = new Set([
-  "repositoryCases",
-  "repositoryFolders",
-  "repositories",
-  "testRuns",
-  "sessions",
-  "milestones",
-  "comments",
-  "steps",
+const FAST_CREATE_MODELS: ReadonlyMap<string, ApplicationArea> = new Map([
+  ["repositoryCases", ApplicationArea.TestCaseRepository],
+  ["repositoryFolders", ApplicationArea.TestCaseRepository],
+  ["repositories", ApplicationArea.TestCaseRepository],
+  ["steps", ApplicationArea.TestCaseRepository],
+  ["testRuns", ApplicationArea.TestRuns],
+  ["sessions", ApplicationArea.Sessions],
+  ["milestones", ApplicationArea.Milestones],
 ]);
 
 interface ParsedPath {
@@ -63,7 +64,8 @@ export async function tryFastPathCreate(params: {
 
   if (!userId || !parsedPath) return null;
   if (parsedPath.operation !== "create") return null;
-  if (!FAST_CREATE_MODELS.has(parsedPath.model)) return null;
+  const area = FAST_CREATE_MODELS.get(parsedPath.model);
+  if (!area) return null;
 
   // Extract projectId from the request body.
   // For most models, projectId is directly on the body. For models like
@@ -81,7 +83,11 @@ export async function tryFastPathCreate(params: {
     return null;
   }
 
-  if (!hasWriteAccess(manifest, projectId)) {
+  const canWrite = hasAreaWriteAccess(manifest, projectId, area);
+  // A manifest cached before per-area grants were recorded can't answer;
+  // the regular handler evaluates the real policy.
+  if (canWrite === undefined) return null;
+  if (!canWrite) {
     // Explicit deny. ZenStack's 403 formatting is preserved by the regular
     // path; rather than reproducing it, return 403 here. Nginx ingress maps
     // 403 → 422 (see route.ts remapping) so we go straight to that.
@@ -104,10 +110,9 @@ export async function tryFastPathCreate(params: {
 
   // rawDb carries no plugins, so the rich-text normalization that
   // sideEffectsPlugin applies to every other ORM write has to happen here.
-  normalizeRichTextWrite(
-    parsedPath.model.charAt(0).toUpperCase() + parsedPath.model.slice(1),
-    { data }
-  );
+  const modelName =
+    parsedPath.model.charAt(0).toUpperCase() + parsedPath.model.slice(1);
+  normalizeRichTextWrite(modelName, { data });
 
   try {
     if (!getDbModel(parsedPath.model)) return null;

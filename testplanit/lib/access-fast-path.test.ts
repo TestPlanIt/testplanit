@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { txCreate, findUnique } = vi.hoisted(() => ({
+const { txCreate, findUnique, hasAreaWriteAccess } = vi.hoisted(() => ({
+  hasAreaWriteAccess: vi.fn((): boolean | undefined => true),
   txCreate: vi.fn(async ({ data }: { data: unknown }) => ({
     id: 1,
     ...(data as object),
@@ -10,7 +11,7 @@ const { txCreate, findUnique } = vi.hoisted(() => ({
 
 vi.mock("./access-manifest", () => ({
   getAccessManifest: vi.fn(async () => ({})),
-  hasWriteAccess: vi.fn(() => true),
+  hasAreaWriteAccess,
   invalidateAccessManifest: vi.fn(),
 }));
 
@@ -45,6 +46,8 @@ const writtenData = () =>
 describe("tryFastPathCreate rich-text normalization", () => {
   beforeEach(() => {
     txCreate.mockClear();
+    hasAreaWriteAccess.mockReset();
+    hasAreaWriteAccess.mockReturnValue(true);
   });
 
   // The MCP server sends step text as written (#658); this path writes
@@ -87,5 +90,43 @@ describe("tryFastPathCreate rich-text normalization", () => {
     });
 
     expect(writtenData().mission).toEqual(doc);
+  });
+});
+
+describe("tryFastPathCreate permissions", () => {
+  beforeEach(() => {
+    txCreate.mockClear();
+    hasAreaWriteAccess.mockReset();
+  });
+
+  const createSession = () =>
+    tryFastPathCreate({
+      parsedPath: { model: "sessions", operation: "create" },
+      requestBody: { data: { project: { connect: { id: 7 } }, name: "S" } },
+      userId: "user-1",
+    });
+
+  it("checks the area the model's policy requires", async () => {
+    hasAreaWriteAccess.mockReturnValue(true);
+    await createSession();
+    expect(hasAreaWriteAccess).toHaveBeenCalledWith(
+      expect.anything(),
+      7,
+      "Sessions"
+    );
+  });
+
+  it("refuses a user whose add/edit grant is in another area", async () => {
+    // Add/edit on Tags alone used to be enough to create a session here.
+    hasAreaWriteAccess.mockReturnValue(false);
+    const res = await createSession();
+    expect(res?.status).toBe(422);
+    expect(txCreate).not.toHaveBeenCalled();
+  });
+
+  it("defers to the full policy check when the cached manifest predates area data", async () => {
+    hasAreaWriteAccess.mockReturnValue(undefined);
+    expect(await createSession()).toBeNull();
+    expect(txCreate).not.toHaveBeenCalled();
   });
 });

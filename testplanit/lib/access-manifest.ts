@@ -8,8 +8,8 @@
  *
  * An "access manifest" is a precomputed, cacheable summary of what a given
  * user can do across all projects. Once cached, a route handler can check
- * `hasWriteAccess(manifest, projectId)` in O(1) and bypass ZenStack's
- * policy engine for the fast path.
+ * `hasAreaWriteAccess(manifest, projectId, area)` in O(1) and bypass
+ * ZenStack's policy engine for the fast path.
  *
  * The manifest only covers the common case: reads, creates and updates on
  * project-scoped models that inherit access from their parent project.
@@ -28,16 +28,21 @@ const MANIFEST_CACHE_TTL_SECONDS = 60;
 const MANIFEST_CACHE_PREFIX = "access:manifest:";
 
 /**
- * Compact per-project access summary. Booleans aggregate across all
- * `ApplicationArea`s — good enough for CRUD on project-scoped models.
- * Area-specific checks (e.g. "canClose on TestRuns") still go through
- * ZenStack.
+ * Compact per-project access summary. The booleans aggregate across all
+ * `ApplicationArea`s; `writableAreas` keeps the per-area add/edit grants that
+ * a create's policy actually requires. Other checks (e.g. "canClose on
+ * TestRuns") still go through ZenStack.
  */
 export interface ProjectAccess {
   /** User can read resources in this project. */
   canRead: boolean;
   /** User can create/update resources in this project (any area). */
   canWrite: boolean;
+  /**
+   * The areas the user can create/update in, or "all". Absent on manifests
+   * cached before it was added.
+   */
+  writableAreas?: string[] | "all";
   /** User can delete resources in this project (any area). */
   canDelete: boolean;
 }
@@ -55,7 +60,20 @@ const ADMIN_ACCESS: ProjectAccess = {
   canRead: true,
   canWrite: true,
   canDelete: true,
+  writableAreas: "all",
 };
+
+type AreaPermission = { area: string; canAddEdit: boolean; canDelete: boolean };
+
+/** Project access granted by one role's permission rows. */
+function accessFrom(perms: AreaPermission[]): ProjectAccess {
+  return {
+    canRead: true,
+    canWrite: perms.some((rp) => rp.canAddEdit),
+    canDelete: perms.some((rp) => rp.canDelete),
+    writableAreas: perms.filter((rp) => rp.canAddEdit).map((rp) => rp.area),
+  };
+}
 
 const NO_ACCESS: ProjectAccess = {
   canRead: false,
@@ -212,28 +230,24 @@ async function computeAccessManifest(
 function computeProjectAccess(ctx: {
   userId: string;
   userAccess: string | null;
-  globalRolePermissions: Array<{
-    area: ApplicationArea;
-    canAddEdit: boolean;
-    canDelete: boolean;
-  }>;
+  globalRolePermissions: AreaPermission[];
   project: {
     createdBy: string;
     defaultAccessType: string;
     defaultRoleId: number | null;
     defaultRole: {
-      rolePermissions: Array<{ canAddEdit: boolean; canDelete: boolean }>;
+      rolePermissions: AreaPermission[];
     } | null;
     userPermissions: Array<{
       accessType: string;
       role: {
-        rolePermissions: Array<{ canAddEdit: boolean; canDelete: boolean }>;
+        rolePermissions: AreaPermission[];
       } | null;
     }>;
     groupPermissions: Array<{
       accessType: string;
       role: {
-        rolePermissions: Array<{ canAddEdit: boolean; canDelete: boolean }>;
+        rolePermissions: AreaPermission[];
       } | null;
     }>;
     assignedUsers: Array<{ userId: string }>;
@@ -259,13 +273,7 @@ function computeProjectAccess(ctx: {
       userPerm.role?.rolePermissions,
       ctx.globalRolePermissions
     );
-    if (perms !== null) {
-      return {
-        canRead: true,
-        canWrite: perms.some((rp) => rp.canAddEdit),
-        canDelete: perms.some((rp) => rp.canDelete),
-      };
-    }
+    if (perms !== null) return accessFrom(perms);
   }
 
   // Group permission: first non-NO_ACCESS group grant we find.
@@ -276,46 +284,24 @@ function computeProjectAccess(ctx: {
       gp.role?.rolePermissions,
       ctx.globalRolePermissions
     );
-    if (perms !== null) {
-      return {
-        canRead: true,
-        canWrite: perms.some((rp) => rp.canAddEdit),
-        canDelete: perms.some((rp) => rp.canDelete),
-      };
-    }
+    if (perms !== null) return accessFrom(perms);
   }
 
   // Project default access.
   switch (ctx.project.defaultAccessType) {
     case "GLOBAL_ROLE":
       if (ctx.globalRolePermissions.length > 0) {
-        return {
-          canRead: true,
-          canWrite: ctx.globalRolePermissions.some((rp) => rp.canAddEdit),
-          canDelete: ctx.globalRolePermissions.some((rp) => rp.canDelete),
-        };
+        return accessFrom(ctx.globalRolePermissions);
       }
       return NO_ACCESS;
     case "SPECIFIC_ROLE":
       if (ctx.project.defaultRole) {
-        return {
-          canRead: true,
-          canWrite: ctx.project.defaultRole.rolePermissions.some(
-            (rp) => rp.canAddEdit
-          ),
-          canDelete: ctx.project.defaultRole.rolePermissions.some(
-            (rp) => rp.canDelete
-          ),
-        };
+        return accessFrom(ctx.project.defaultRole.rolePermissions);
       }
       return NO_ACCESS;
     case "DEFAULT":
       return ctx.globalRolePermissions.length > 0
-        ? {
-            canRead: true,
-            canWrite: ctx.globalRolePermissions.some((rp) => rp.canAddEdit),
-            canDelete: ctx.globalRolePermissions.some((rp) => rp.canDelete),
-          }
+        ? accessFrom(ctx.globalRolePermissions)
         : NO_ACCESS;
     default:
       return NO_ACCESS;
@@ -324,10 +310,9 @@ function computeProjectAccess(ctx: {
 
 function resolveRolePermissions(
   accessType: string,
-  specificRolePermissions:
-    Array<{ canAddEdit: boolean; canDelete: boolean }> | undefined,
-  globalRolePermissions: Array<{ canAddEdit: boolean; canDelete: boolean }>
-): Array<{ canAddEdit: boolean; canDelete: boolean }> | null {
+  specificRolePermissions: AreaPermission[] | undefined,
+  globalRolePermissions: AreaPermission[]
+): AreaPermission[] | null {
   if (accessType === "SPECIFIC_ROLE") {
     return specificRolePermissions ?? null;
   }
@@ -347,6 +332,25 @@ export function hasWriteAccess(
 ): boolean {
   if (manifest.isAdmin) return true;
   return manifest.projects[projectId]?.canWrite ?? false;
+}
+
+/**
+ * Can the user create/update in `area` on the project? `undefined` when the
+ * manifest predates per-area data, so the caller can defer to the full
+ * policy check instead of guessing.
+ */
+export function hasAreaWriteAccess(
+  manifest: AccessManifest,
+  projectId: number,
+  area: ApplicationArea
+): boolean | undefined {
+  if (manifest.isAdmin) return true;
+  const project = manifest.projects[projectId];
+  if (!project) return false;
+  if (project.writableAreas === undefined) return undefined;
+  return (
+    project.writableAreas === "all" || project.writableAreas.includes(area)
+  );
 }
 
 /**
