@@ -133,13 +133,15 @@ export function registerRunResultsCreate(
     },
     async (input) => {
       try {
-        // Fetch the test run case to get testRunId, projectId, and templateId
-        // (templateId is needed to resolve fieldValues by name).
+        // Fetch the test run case to get testRunId, projectId, templateId
+        // (needed to resolve fieldValues by name) and the case's current
+        // version, which the result records as the version executed — the
+        // same value the web UI sends.
         const runCase = await zenstack<{
           id: number;
           testRunId: number;
           testRun: { projectId: number };
-          repositoryCase: { templateId: number | null };
+          repositoryCase: { templateId: number | null; currentVersion: number };
         } | null>(
           "testRunCases",
           "findUnique",
@@ -149,7 +151,9 @@ export function registerRunResultsCreate(
               id: true,
               testRunId: true,
               testRun: { select: { projectId: true } },
-              repositoryCase: { select: { templateId: true } },
+              repositoryCase: {
+                select: { templateId: true, currentVersion: true },
+              },
             } satisfies TestRunCasesSelect,
           },
           deps.env
@@ -309,7 +313,7 @@ export function registerRunResultsCreate(
             notes: plainTextToProseMirrorDoc(input.notes),
             elapsed: input.elapsed ?? null,
             attempt,
-            testRunCaseVersion: 1,
+            testRunCaseVersion: runCase.repositoryCase.currentVersion,
             fieldValues: serverFieldValues,
           },
           deps.env

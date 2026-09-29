@@ -66,7 +66,7 @@ const RUN_CASE = {
   id: 50,
   testRunId: 7,
   testRun: { projectId: 1 },
-  repositoryCase: { templateId: 12 },
+  repositoryCase: { templateId: 12, currentVersion: 3 },
 };
 
 async function setupClient() {
@@ -114,6 +114,27 @@ describe("registerRunResultsCreate", () => {
       attempt: 3,
     });
     expect(body.fieldValues).toBeUndefined();
+  });
+
+  it("records the case's current version as the version executed", async () => {
+    mockZenstack.mockResolvedValueOnce(RUN_CASE);
+    mockZenstack.mockResolvedValueOnce([{ id: 5 }]);
+    mockZenstack.mockResolvedValueOnce(0);
+    mockFetch.mockResolvedValueOnce(okSubmitResponse(999));
+    mockZenstack.mockResolvedValueOnce(makeRawDetail());
+
+    const { client } = await setupClient();
+    await client.callTool({
+      name: "testplanit_test_run_results_create",
+      arguments: { testRunCaseId: 50, statusName: "Passed" },
+    });
+
+    const lookup = mockZenstack.mock.calls[0]?.[2] as {
+      select: { repositoryCase: { select: Record<string, boolean> } };
+    };
+    expect(lookup.select.repositoryCase.select.currentVersion).toBe(true);
+    const body = JSON.parse(mockFetch.mock.calls[0]?.[1].body as string);
+    expect(body.testRunCaseVersion).toBe(3);
   });
 
   it("wraps plain-text notes in a ProseMirror doc (one paragraph per line) and passes elapsed seconds through unchanged", async () => {

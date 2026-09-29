@@ -147,6 +147,7 @@ export const POST = withAuditContext(
           testRun: {
             select: { projectId: true, isCompleted: true },
           },
+          repositoryCase: { select: { currentVersion: true } },
         },
       });
       if (!runCase) {
@@ -239,7 +240,7 @@ export const POST = withAuditContext(
               evidence: {},
               executedById,
               attempt: 1,
-              testRunCaseVersion: 1,
+              testRunCaseVersion: runCase.repositoryCase.currentVersion,
             },
           });
 
