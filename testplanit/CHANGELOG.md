@@ -1,3 +1,53 @@
+## [1.1.0-beta.30](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.29...v1.1.0-beta.30) (2026-09-29)
+
+### Features
+
+* **cases:** one writer for API-created cases, with the web UI's field checks ([4d03721](https://github.com/TestPlanIt/testplanit/commit/4d0372112aac5d8dcf6d1a636dbb015984af534c))
+* **mcp:** record results per iteration and like the web UI's result dialog ([c8eeaa5](https://github.com/TestPlanIt/testplanit/commit/c8eeaa5df1ba2a1d5258d022a6aa5bc62b1a30a3))
+* **mcp:** return rich text as Markdown so it survives a round trip ([1f86953](https://github.com/TestPlanIt/testplanit/commit/1f86953bac26c7503ed34c499dc9751b40ec3b43))
+* **runs:** generate iterations for data-driven cases added outside the create dialog ([30222a3](https://github.com/TestPlanIt/testplanit/commit/30222a3f29326c8b2e30195d4846fff8a8da10a0))
+* **sessions:** record session versions for API clients ([0eb2283](https://github.com/TestPlanIt/testplanit/commit/0eb22834cefe775d509cbf6b1cde111a9d3d9df5))
+
+### Bug Fixes
+
+* **admin:** resolve queue names from the registry instead of a stale map ([dea6d4c](https://github.com/TestPlanIt/testplanit/commit/dea6d4cd04ddbf1a84693d6a059887b28145d7f3))
+* **admin:** show configuration variants and match them in the list filter ([1bf353a](https://github.com/TestPlanIt/testplanit/commit/1bf353a10fc46a10511b570e8c5c8d36da475312))
+* **api:** check the model's own area on the create fast path ([9148a98](https://github.com/TestPlanIt/testplanit/commit/9148a980d2f9bae6ab334532679e12a5d4032cd2))
+* **api:** gate relation-form state changes and fill a milestone's creator ([4a76250](https://github.com/TestPlanIt/testplanit/commit/4a76250d964528c7ef02c147044164434d09eb53))
+* **auth:** allow one step of clock drift when verifying TOTP codes ([dab59ca](https://github.com/TestPlanIt/testplanit/commit/dab59ca5a457e5f0eb25614b963d91b9de482bce))
+* **cases:** default to the template marked Default when none is given ([46d3e2e](https://github.com/TestPlanIt/testplanit/commit/46d3e2efa0e4cd0923d79d26aeded24783a5164c)), closes [#656](https://github.com/TestPlanIt/testplanit/issues/656)
+* **cases:** default to the workflow state marked Default ([79d7a43](https://github.com/TestPlanIt/testplanit/commit/79d7a439cadb5bf8c090bdc11a142d43aa106a55))
+* **cases:** enforce restricted custom fields on the server ([60b8795](https://github.com/TestPlanIt/testplanit/commit/60b8795e2e53fb555377ce94ea1903496a69b0c7))
+* **cases:** open edit mode on a case with an empty restricted link ([bba3aa6](https://github.com/TestPlanIt/testplanit/commit/bba3aa68788382232314bc70d5bf106905d0e5e2))
+* **cases:** require add/edit on the repository for bulk-create ([6f268d8](https://github.com/TestPlanIt/testplanit/commit/6f268d8ed870fae3b6add09a821857ca9729f059))
+* **cases:** save Date custom fields and keep text fields as text in Add Case ([b24f5ae](https://github.com/TestPlanIt/testplanit/commit/b24f5ae2af879505ad18a8ffffc2ae91f7c56b8f))
+* **folders:** reject folder parents that would corrupt the tree ([b06f5ea](https://github.com/TestPlanIt/testplanit/commit/b06f5ea1b94c0114ae2679cad467918543aacf27))
+* **import:** isolate each imported case and stop restoring deleted ones ([8aed4ca](https://github.com/TestPlanIt/testplanit/commit/8aed4caad64ba25d2c342def855cbaaa0ac07bc0))
+* **import:** mark inline code when it is the only Markdown in a field ([269ef73](https://github.com/TestPlanIt/testplanit/commit/269ef73eaa57316ef443501167632052b391c401)), closes [#655](https://github.com/TestPlanIt/testplanit/issues/655)
+* **mcp:** convert Markdown in step text and Text Long fields server-side ([ac3918b](https://github.com/TestPlanIt/testplanit/commit/ac3918bd32ce281999fd3c07ba0484579df6f7a7)), closes [#658](https://github.com/TestPlanIt/testplanit/issues/658)
+* **mcp:** keep the host's error code in tool errors ([453a0e6](https://github.com/TestPlanIt/testplanit/commit/453a0e61576761b34ec578c79c023a351a5f26b1))
+* **mcp:** keep the issue a failed result requires when unlinking ([90d1893](https://github.com/TestPlanIt/testplanit/commit/90d1893e06c247b0119db6eeb952c82d047f327f))
+* **mcp:** link issues to test cases through the join model ([7e3902c](https://github.com/TestPlanIt/testplanit/commit/7e3902cff7f6365e0b680708df4eedf1d1f149eb))
+* **mcp:** move completed runs and sessions to their Done state ([ba1dd0f](https://github.com/TestPlanIt/testplanit/commit/ba1dd0fad9fd67442c0b616f6dbdc03c9fad30ef))
+* **mcp:** offer the Default milestone type and default to it ([eb08603](https://github.com/TestPlanIt/testplanit/commit/eb08603c5885f65eaeaab1d6042b06a1a92dfec5))
+* **mcp:** place new cases and folders after their siblings ([9bdb86a](https://github.com/TestPlanIt/testplanit/commit/9bdb86aaf80e5ed372c9e12bdb2015d8b6b72b1a))
+* **mcp:** record one version per cases_update, even when it flips automated ([f38d13e](https://github.com/TestPlanIt/testplanit/commit/f38d13ed4022caa5c4f2dc51fe08f204440fbec4))
+* **mcp:** rename a folder aside when folders_delete deletes it ([59385a9](https://github.com/TestPlanIt/testplanit/commit/59385a93f5afe48cd0c3742da28b46c120e19d05))
+* **mcp:** report whether an approval actually moved the entity ([9120032](https://github.com/TestPlanIt/testplanit/commit/91200328936af0d31e127589f9fd67da33423b58))
+* **mcp:** stop returning trashed sessions and counting removed rows ([7f6e974](https://github.com/TestPlanIt/testplanit/commit/7f6e97440ae867f844676bb8b9d8bf7054b55fd5))
+* **mcp:** store cases_update custom field values in the web UI's shapes ([eb10d81](https://github.com/TestPlanIt/testplanit/commit/eb10d8149f42a04d45b463d345e6e99af2c58350))
+* **reports:** load User Engagement user filter options without timing out ([9c4ae0b](https://github.com/TestPlanIt/testplanit/commit/9c4ae0bd7cf0ec41afab9355da2d3ee53dc0929b))
+* **results:** record each case's version when adding results in bulk ([db0c8f6](https://github.com/TestPlanIt/testplanit/commit/db0c8f6bad8d335d6fc45752748cbba1f1f0648d)), closes [#657](https://github.com/TestPlanIt/testplanit/issues/657) [#657](https://github.com/TestPlanIt/testplanit/issues/657)
+* **results:** record the case's current version on API and iteration results ([4d82d45](https://github.com/TestPlanIt/testplanit/commit/4d82d4562a4483299ca7c940564ce6075ab45e45)), closes [#657](https://github.com/TestPlanIt/testplanit/issues/657)
+* **runs:** record bulk results against each case's own template ([bd4c45f](https://github.com/TestPlanIt/testplanit/commit/bd4c45f61ab6f444ef51fcd3f20f3ead9e4ff716))
+* **runs:** refuse to reopen a completed test run ([81e17be](https://github.com/TestPlanIt/testplanit/commit/81e17bedc595b8a9419fe2c03e6bf7497be47430))
+* **search:** reindex a case after its steps or custom fields change ([c16a184](https://github.com/TestPlanIt/testplanit/commit/c16a18421dda4e0cf5d587d9c98ab39e0d6d9188))
+* **tags:** resolve tag names from API clients the way the web UI does ([f71de44](https://github.com/TestPlanIt/testplanit/commit/f71de44509254985c2ca1d3507d627b5806f3ee0))
+
+### Performance Improvements
+
+* **db:** index JUnit results by the user who submitted them ([bd50b0d](https://github.com/TestPlanIt/testplanit/commit/bd50b0d69bd1b0d9fa0d34f6f94fb92b6b43c868))
+
 ## [1.1.0-beta.29](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.28...v1.1.0-beta.29) (2026-09-28)
 
 ### Features
