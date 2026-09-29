@@ -32,18 +32,55 @@ export const applyInlineFormatting = (text: string): string => {
   const matches: Array<{
     start: number;
     end: number;
-    type: "bold" | "italic";
+    type: "bold" | "italic" | "code";
     content: string;
   }> = [];
 
+  const codePattern = /`([^`]+)`/g;
   const boldPattern = /\*\*(.*?)\*\*/g;
   const italicPattern = /\*(.*?)\*/g;
+
+  // A rejected match may have paired an asterisk inside an earlier span with
+  // one outside it; rescanning from the next character lets the outside one
+  // pair up on its own.
+  const overlapsExisting = (
+    pattern: RegExp,
+    start: number,
+    end: number
+  ): boolean => {
+    const overlaps = matches.some(
+      (match) => start < match.end && end > match.start
+    );
+    if (overlaps) pattern.lastIndex = start + 1;
+    return overlaps;
+  };
+
+  // Code spans first: their content is literal, so asterisks inside them are
+  // not emphasis.
+  let codeMatch: RegExpExecArray | null;
+  while ((codeMatch = codePattern.exec(text)) !== null) {
+    matches.push({
+      start: codeMatch.index,
+      end: codeMatch.index + codeMatch[0].length,
+      type: "code",
+      content: codeMatch[1],
+    });
+  }
 
   let boldMatch: RegExpExecArray | null;
   while ((boldMatch = boldPattern.exec(text)) !== null) {
     // `****` carries no text; emitting an empty <strong> would only drop the
     // literal asterisks the author typed.
     if (boldMatch[1] === "") continue;
+    if (
+      overlapsExisting(
+        boldPattern,
+        boldMatch.index,
+        boldMatch.index + boldMatch[0].length
+      )
+    ) {
+      continue;
+    }
     matches.push({
       start: boldMatch.index,
       end: boldMatch.index + boldMatch[0].length,
@@ -67,13 +104,10 @@ export const applyInlineFormatting = (text: string): string => {
     const start = italicMatch.index;
     const end = start + italicMatch[0].length;
     // Overlap, not just "starts inside": an italic that begins before a bold
-    // span and runs into it would otherwise survive and produce interleaved
-    // tags. Nested emphasis (`*a **b** c*`) is left as literal asterisks
-    // rather than half-applied.
-    const overlapsBold = matches.some(
-      (bold) => start < bold.end && end > bold.start
-    );
-    if (overlapsBold) continue;
+    // or code span and runs into it would otherwise survive and produce
+    // interleaved tags. Nested emphasis (`*a **b** c*`) is left as literal
+    // asterisks rather than half-applied.
+    if (overlapsExisting(italicPattern, start, end)) continue;
 
     matches.push({ start, end, type: "italic", content: italicMatch[1] });
   }
@@ -94,10 +128,13 @@ export const applyInlineFormatting = (text: string): string => {
     }
 
     const escapedContent = escapeHtml(match.content);
-    output +=
+    const tag =
       match.type === "bold"
-        ? `<strong>${escapedContent}</strong>`
-        : `<em>${escapedContent}</em>`;
+        ? "strong"
+        : match.type === "italic"
+          ? "em"
+          : "code";
+    output += `<${tag}>${escapedContent}</${tag}>`;
 
     currentIndex = match.end;
   });

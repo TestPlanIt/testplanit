@@ -319,6 +319,43 @@ describe("applyInlineFormatting", () => {
       "<strong>a *b* c</strong>"
     );
   });
+
+  it("marks inline code", () => {
+    expect(applyInlineFormatting("The board shows its `3` statuses")).toBe(
+      "The board shows its <code>3</code> statuses"
+    );
+    expect(applyInlineFormatting("`a` then **b** then `c`")).toBe(
+      "<code>a</code> then <strong>b</strong> then <code>c</code>"
+    );
+  });
+
+  it("keeps asterisks inside inline code literal", () => {
+    expect(applyInlineFormatting("run `a * b * c` now")).toBe(
+      "run <code>a * b * c</code> now"
+    );
+    expect(applyInlineFormatting("glob `**/*.ts` and *x*")).toBe(
+      "glob <code>**/*.ts</code> and <em>x</em>"
+    );
+  });
+
+  it("escapes HTML inside inline code and leaves a lone backtick literal", () => {
+    expect(applyInlineFormatting("tag `<div>` here")).toBe(
+      "tag <code>&lt;div&gt;</code> here"
+    );
+    expect(applyInlineFormatting("it`s fine")).toBe("it`s fine");
+  });
+});
+
+describe("inline code alone in a field", () => {
+  // Issue #655: one code span is a single weak signal, so the text takes the
+  // plain-text path, which used to ignore backticks.
+  it("becomes a code mark through ensureTipTapJSON", () => {
+    const doc = ensureTipTapJSON("The board shows its `3` statuses");
+
+    expect(isLikelyMarkdown("The board shows its `3` statuses")).toBe(false);
+    expect(collectText(doc)).toBe("The board shows its 3 statuses");
+    expect(marksOn(doc, "3")).toContain("code");
+  });
 });
 
 describe("emphasis is rendered the same by both conversion paths", () => {
