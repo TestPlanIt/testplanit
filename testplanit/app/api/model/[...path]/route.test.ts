@@ -1081,6 +1081,31 @@ describe("ZenStack chokepoint Review & Approval gate", () => {
     expect(baseHandlerMock).not.toHaveBeenCalled();
   });
 
+  it("gates a state change sent as a relation connect, as API clients send it", async () => {
+    const { assertReviewGatePasses } =
+      await import("~/lib/services/reviewGate");
+    const { ReviewGateError } = await import("~/lib/utils/errors");
+    (assertReviewGatePasses as any).mockRejectedValue(
+      new ReviewGateError("REVIEW_REQUIRED", "CASE", 42, 99)
+    );
+
+    const { PATCH } = await import("./route");
+    const req = makeUpdateRequest({
+      where: { id: 42 },
+      data: { state: { connect: { id: 99 } } },
+    });
+    const res = await PATCH(req, {
+      params: Promise.resolve({ path: ["repositoryCases", "update"] }),
+    });
+
+    expect(res.status).toBe(403);
+    expect((await res.json()).error.code).toBe("REVIEW_REQUIRED");
+    const [, entityType, entityId, toStateId] = (assertReviewGatePasses as any)
+      .mock.calls[0];
+    expect([entityType, entityId, toStateId]).toEqual(["CASE", 42, 99]);
+    expect(baseHandlerMock).not.toHaveBeenCalled();
+  });
+
   it("translates AlreadyPendingError to a 409 with PENDING_REVIEW_EXISTS payload", async () => {
     const { assertReviewGatePasses } =
       await import("~/lib/services/reviewGate");
