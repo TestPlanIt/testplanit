@@ -85,7 +85,7 @@ test.describe("Two-Factor Authentication", () => {
     api,
     baseURL,
   }) => {
-    const timestamp = Date.now();
+    const timestamp = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
     const testEmail = `2fa-totp-${timestamp}@${TEST_EMAIL_DOMAIN}`;
     const testPassword = "Password123!";
 
@@ -163,7 +163,7 @@ test.describe("Two-Factor Authentication", () => {
   });
 
   test("2FA verification with backup code", async ({ page, api, baseURL }) => {
-    const timestamp = Date.now();
+    const timestamp = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
     const testEmail = `2fa-backup-${timestamp}@${TEST_EMAIL_DOMAIN}`;
     const testPassword = "Password123!";
 
@@ -245,7 +245,7 @@ test.describe("Two-Factor Authentication", () => {
   });
 
   test("2FA with invalid code shows error", async ({ page, api, baseURL }) => {
-    const timestamp = Date.now();
+    const timestamp = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
     const testEmail = `2fa-invalid-${timestamp}@${TEST_EMAIL_DOMAIN}`;
     const testPassword = "Password123!";
 
