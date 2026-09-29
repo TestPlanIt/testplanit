@@ -72,7 +72,7 @@ export function registerCasesCreateMany(
           .positive()
           .optional()
           .describe(
-            "Template for the whole batch. Defaults to the project's first enabled template.",
+            "Template for the whole batch. Defaults to the template marked Default when it is assigned to the project, otherwise the project's first enabled template.",
           ),
         stateName: z
           .string()

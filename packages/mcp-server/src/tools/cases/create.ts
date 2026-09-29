@@ -38,7 +38,7 @@ export function registerCasesCreate(
           .positive()
           .optional()
           .describe(
-            "Template to use. Defaults to the project's first enabled template. Use testplanit_templates_list to see available templates and their fields.",
+            "Template to use. Defaults to the template marked Default when it is assigned to the project, otherwise the project's first enabled template. Use testplanit_templates_list to see available templates and their fields.",
           ),
         stateName: z
           .string()

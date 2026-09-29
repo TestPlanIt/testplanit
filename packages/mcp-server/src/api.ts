@@ -551,7 +551,8 @@ export async function resolveActiveRepository(
 /**
  * Resolve a default template assigned to the project (cases require
  * `templateId` per RepositoryCases.templateId being non-nullable —
- * VERIFIED in schema.zmodel).
+ * VERIFIED in schema.zmodel). Prefers the template marked Default, as the
+ * web UI does, then the lowest id.
  */
 export async function resolveDefaultTemplate(
   projectId: number,
@@ -567,7 +568,7 @@ export async function resolveDefaultTemplate(
         projects: { some: { projectId } },
       },
       select: { id: true },
-      orderBy: { id: "asc" },
+      orderBy: [{ isDefault: "desc" }, { id: "asc" }],
       take: 1,
     },
     env,
@@ -588,8 +589,8 @@ export async function resolveDefaultTemplate(
  * assigned to the project — throwing a 422 with a human-readable message when
  * it is not, so the agent gets a clear "that template isn't available here"
  * instead of a downstream foreign-key / policy error. When `templateId` is
- * omitted, this falls back to `resolveDefaultTemplate` (first enabled template
- * assigned to the project).
+ * omitted, this falls back to `resolveDefaultTemplate` (the project's Default
+ * template, else its first enabled one).
  */
 export async function resolveTemplateForProject(
   projectId: number,

@@ -260,6 +260,20 @@ describe("Bulk Create API Route", () => {
       expect(res.status).toBe(422);
       expect(data.error).toContain("No enabled template");
     });
+
+    it("prefers the template marked Default when templateId is omitted", async () => {
+      const [req, ctx] = createRequest({
+        folderId: 12,
+        cases: [{ name: "A" }],
+      });
+      await POST(req, ctx);
+
+      expect(baseDb.templates.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: [{ isDefault: "desc" }, { id: "asc" }],
+        })
+      );
+    });
   });
 
   describe("Happy path", () => {

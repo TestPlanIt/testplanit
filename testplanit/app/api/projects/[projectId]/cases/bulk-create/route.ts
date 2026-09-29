@@ -123,7 +123,7 @@ export const POST = withAuditContext(
             isEnabled: true,
             projects: { some: { projectId } },
           },
-          orderBy: { id: "asc" },
+          orderBy: [{ isDefault: "desc" }, { id: "asc" }],
           select: { id: true },
         });
         if (!def) {

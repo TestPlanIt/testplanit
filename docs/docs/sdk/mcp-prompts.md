@@ -196,7 +196,7 @@ Create these 20 test cases in project Acme under the "Checkout" folder using the
 
 1. (Optional) `testplanit_templates_list({ projectId: <P> })` → lists the project's enabled templates, each with the case fields it defines. The agent picks the right `templateId` and sees which custom fields (e.g. `Priority`) that template accepts.
 2. (Optional) `testplanit_folders_list({ projectId: <P> })` → resolves the "Checkout" folder id.
-3. `testplanit_cases_create_many({ projectId: <P>, folderId: <id>, templateId: <id>, cases: [ { name, steps, tags, customFields }, ... ] })` → creates all of them in one call. Each case may override `folderId`/`stateName`; `templateId` defaults to the project's first enabled template when omitted.
+3. `testplanit_cases_create_many({ projectId: <P>, folderId: <id>, templateId: <id>, cases: [ { name, steps, tags, customFields }, ... ] })` → creates all of them in one call. Each case may override `folderId`/`stateName`; `templateId` defaults to the template marked Default (or the project's first enabled template when the Default one isn't assigned) when omitted.
 
 **What comes back:** a per-case results array so partial failures are visible — each entry is either a success (with the new `caseId`) or an error (with a message). A custom field that isn't part of the chosen template is reported as a per-case error rather than silently dropped.
 
