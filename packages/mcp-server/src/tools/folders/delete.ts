@@ -86,12 +86,33 @@ export function registerFoldersDelete(server: McpServer, deps: FoldersDeleteDeps
           );
         }
 
+        // Rename on delete, as the web UI does: the folder's name stays
+        // unique among its live siblings only while the deleted one steps
+        // aside, so a new folder of the same name can be created and deleted.
+        const folder = await zenstack<{ name: string } | null>(
+          "repositoryFolders",
+          "findUnique",
+          {
+            where: { id: input.folderId },
+            select: { name: true } satisfies RepositoryFoldersSelect,
+          },
+          deps.env,
+        );
+        if (!folder) {
+          throw new TestPlanItHttpError(`Folder ${input.folderId} not found.`, {
+            statusCode: 404,
+          });
+        }
+
         const result = await zenstack<{ id: number; isDeleted: boolean }>(
           "repositoryFolders",
           "update",
           {
             where: { id: input.folderId },
-            data: { isDeleted: true },
+            data: {
+              isDeleted: true,
+              name: `${folder.name}_deleted_${Date.now()}`,
+            },
             select: FOLDER_DELETE_SELECT,
           },
           deps.env,
