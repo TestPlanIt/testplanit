@@ -36,6 +36,10 @@ vi.mock("~/lib/services/jira-panel-generation", () => ({
   loadTemplateData: vi.fn(),
 }));
 
+vi.mock("~/lib/services/projectPermissions", () => ({
+  userCanAddEditArea: vi.fn(),
+}));
+
 vi.mock("~/lib/services/testCaseImport", () => ({
   persistGeneratedTestCases: vi.fn(),
 }));
@@ -54,6 +58,7 @@ vi.mock("~/lib/services/resolveIssueKeys", () => ({
 }));
 
 import { getServerSession } from "next-auth";
+import { userCanAddEditArea } from "~/lib/services/projectPermissions";
 import {
   authenticateApiTokenForMethod,
   extractBearerToken,
@@ -117,6 +122,7 @@ beforeEach(() => {
   });
   // Default template resolution (no explicit templateId → default lookup).
   (baseDb.templates.findFirst as any).mockResolvedValue({ id: 22 });
+  (userCanAddEditArea as any).mockResolvedValue(true);
   (loadTemplateData as any).mockResolvedValue({
     template: { id: 22, name: "Default", fields: [] },
     fieldMappings: [
@@ -226,6 +232,25 @@ describe("Bulk Create API Route", () => {
       const data = await res.json();
       expect(res.status).toBe(404);
       expect(data.error).toBe("Project not found or access denied");
+    });
+
+    it("returns 403 when the user cannot add or edit repository cases", async () => {
+      (userCanAddEditArea as any).mockResolvedValue(false);
+
+      const [req, ctx] = createRequest({
+        folderId: 12,
+        cases: [{ name: "A" }],
+      });
+      const res = await POST(req, ctx);
+
+      expect(res.status).toBe(403);
+      expect(userCanAddEditArea).toHaveBeenCalledWith(
+        "user-123",
+        1,
+        "TestCaseRepository",
+        "ADMIN"
+      );
+      expect(persistGeneratedTestCases).not.toHaveBeenCalled();
     });
 
     it("returns 400 for an invalid body (no cases)", async () => {

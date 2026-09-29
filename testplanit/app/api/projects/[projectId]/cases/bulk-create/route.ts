@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
+import { ApplicationArea } from "~/zenstack/models";
 import { authorizeProjectApiRequest } from "~/lib/api/authorizeProjectApiRequest";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { baseDb } from "~/lib/db";
 import { loadTemplateData } from "~/lib/services/jira-panel-generation";
+import { userCanAddEditArea } from "~/lib/services/projectPermissions";
 import {
   IssueKeyResolutionError,
   resolveIssueKeys,
@@ -91,6 +93,25 @@ export const POST = withAuditContext(
       }
       const { userId, userName } = auth.actor;
       const project = auth.project;
+
+      // The importer writes through the base client, so the policy that
+      // requires add/edit on the repository for a single create has to be
+      // checked here.
+      const canAddEdit = await userCanAddEditArea(
+        userId,
+        projectId,
+        ApplicationArea.TestCaseRepository,
+        auth.actor.access
+      );
+      if (!canAddEdit) {
+        return NextResponse.json(
+          {
+            error:
+              "You do not have permission to add test cases to this project.",
+          },
+          { status: 403 }
+        );
+      }
 
       // ── Parse + validate body ─────────────────────────────────────────────
       const body = await request.json();
