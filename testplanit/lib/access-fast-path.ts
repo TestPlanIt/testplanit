@@ -25,6 +25,7 @@ import {
 } from "./access-manifest";
 import { baseDb } from "./db";
 import { rawDb } from "./rawDb";
+import { normalizeRichTextWrite } from "./richTextColumns";
 import { buildGucPayload } from "./audit/gucContext";
 
 /**
@@ -100,6 +101,13 @@ export async function tryFastPathCreate(params: {
   // policy evaluation) and return the response in ZenStack's RPC format.
   const data = extractCreateData(requestBody);
   if (!data) return null;
+
+  // rawDb carries no plugins, so the rich-text normalization that
+  // sideEffectsPlugin applies to every other ORM write has to happen here.
+  normalizeRichTextWrite(
+    parsedPath.model.charAt(0).toUpperCase() + parsedPath.model.slice(1),
+    { data }
+  );
 
   try {
     if (!getDbModel(parsedPath.model)) return null;

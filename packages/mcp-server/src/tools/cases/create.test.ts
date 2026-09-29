@@ -23,7 +23,6 @@ vi.mock("./customFields.js", () => ({
 vi.mock("./steps.js", () => ({
   createStepsForCase: vi.fn(),
   replaceStepsForCase: vi.fn(),
-  wrapPlainTextInProseMirror: vi.fn((text: string) => ({ type: "doc", text })),
 }));
 
 vi.mock("./fetchDetail.js", () => ({

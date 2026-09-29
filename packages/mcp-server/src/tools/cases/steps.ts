@@ -8,33 +8,11 @@ export interface StepInput {
 }
 
 /**
- * Wrap plain text in the minimal valid Tiptap ProseMirror doc structure.
- *
- * The TestPlanIt UI renders `Steps.step` and `Steps.expectedResult` via
- * Tiptap; passing a raw string would render as garbage. Agent-supplied text
- * must be wrapped before writing. Empty/null/undefined input produces a
- * paragraph node with no children (valid empty ProseMirror doc).
- */
-export function wrapPlainTextInProseMirror(
-  text: string | null | undefined,
-): unknown {
-  if (text == null || text === "") {
-    return { type: "doc", content: [{ type: "paragraph", content: [] }] };
-  }
-  return {
-    type: "doc",
-    content: [
-      {
-        type: "paragraph",
-        content: [{ type: "text", text }],
-      },
-    ],
-  };
-}
-
-/**
  * Create steps for a case in order. Called by create.ts AFTER the case row
- * exists. Each step text is wrapped in ProseMirror format before writing.
+ * exists. Step text is sent as the agent wrote it: the host converts a string
+ * written to `Steps.step` / `Steps.expectedResult` into a Tiptap document
+ * (Markdown, HTML or plain text), the same conversion the bulk-create route
+ * and CSV import use, so every writer stores the same document.
  *
  * Sequential creates are used instead of createMany to ensure relation-connect
  * syntax (`testCase: { connect: { id } }`) works cleanly with ZenStack's RPC.
@@ -52,11 +30,8 @@ export async function createStepsForCase(
         data: {
           testCase: { connect: { id: caseId } },
           order: step.order ?? index,
-          step: wrapPlainTextInProseMirror(step.text ?? ""),
-          expectedResult:
-            step.expectedResult != null
-              ? wrapPlainTextInProseMirror(step.expectedResult)
-              : null,
+          step: step.text ?? "",
+          expectedResult: step.expectedResult ?? null,
         },
       },
       env,

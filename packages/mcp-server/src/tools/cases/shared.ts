@@ -103,6 +103,9 @@ export function extractProseMirrorText(doc: unknown): string {
     if (!node || typeof node !== "object") return "";
     const n = node as { type?: string; text?: string; content?: unknown[] };
     if (n.type === "text" && typeof n.text === "string") return n.text;
+    // The host turns a single newline into a hard break, so read it back as
+    // one — otherwise "Step 1\nStep 2" comes back as "Step 1Step 2".
+    if (n.type === "hardBreak" || n.type === "hard_break") return "\n";
     if (Array.isArray(n.content)) {
       // For block-level nodes, children are inline — concatenate without
       // separators. For container nodes (doc, bullet_list, ordered_list,
@@ -200,8 +203,8 @@ function resolveCustomFieldValue(
 ): unknown {
   const type = field?.type?.type;
 
-  // Text Long holds a rich-text document, stored as a JSON string by the web
-  // UI and as plain text by this server. Flatten both to text so a reader
+  // Text Long holds a rich-text document, stored as a JSON string by current
+  // hosts and as plain text by older ones. Flatten both to text so a reader
   // never has to detect the shape (issue #594).
   if (type === "Text Long" && value != null) {
     return extractProseMirrorText(value);

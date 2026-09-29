@@ -37,7 +37,11 @@
 import { definePlugin } from "@zenstackhq/orm";
 import { schema } from "~/zenstack/schema";
 
-import { normalizeRichTextWrite } from "~/lib/richTextColumns";
+import {
+  normalizeRichTextWrite,
+  normalizeTextLongFieldValueWrite,
+  type FieldTypeReader,
+} from "~/lib/richTextColumns";
 import { encrypt } from "@/utils/encryption";
 import { resolveStoredCredentials } from "~/lib/integrations/credentials";
 
@@ -469,6 +473,14 @@ export const sideEffectsPlugin = definePlugin(schema, {
     // site. See lib/richTextColumns.ts.
     if (RICH_TEXT_WRITE_OPERATIONS.has(operation)) {
       normalizeRichTextWrite(model, args);
+      if (model === "CaseFieldValues") {
+        await normalizeTextLongFieldValueWrite(
+          model,
+          operation,
+          args,
+          client.$unuseAll() as unknown as FieldTypeReader
+        );
+      }
     }
 
     if (

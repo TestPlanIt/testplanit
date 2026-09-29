@@ -50,6 +50,24 @@ describe("extractProseMirrorText", () => {
     expect(extractProseMirrorText(doc)).toBe("First\nSecond");
   });
 
+  it("reads a hard break as a newline", () => {
+    // What the host stores for "Step 1\nStep 2".
+    const doc = {
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [
+            { type: "text", text: "Step 1" },
+            { type: "hardBreak" },
+            { type: "text", text: "Step 2" },
+          ],
+        },
+      ],
+    };
+    expect(extractProseMirrorText(doc)).toBe("Step 1\nStep 2");
+  });
+
   it("extracts text from bold-marked nodes (marks are ignored, text passes through)", () => {
     const doc = {
       type: "doc",

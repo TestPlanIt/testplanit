@@ -55,6 +55,36 @@ async function storedShape(
   return rows[0]?.shape ?? null;
 }
 
+/** A Text Long value: the jsonb type and, for a string, the document it holds. */
+async function storedFieldValue(
+  id: number
+): Promise<{ shape: string | null; doc: any }> {
+  const rows = await raw.$queryRawUnsafe<
+    Array<{ shape: string | null; txt: string | null }>
+  >(
+    `SELECT jsonb_typeof(value) AS shape, value #>> '{}' AS txt FROM "CaseFieldValues" WHERE id = $1`,
+    id
+  );
+  const row = rows[0];
+  return {
+    shape: row?.shape ?? null,
+    doc: row?.shape === "string" && row.txt ? JSON.parse(row.txt) : null,
+  };
+}
+
+/** Mark types on the first text node reading `needle`. */
+function marksOn(node: any, needle: string): string[] | undefined {
+  if (!node) return undefined;
+  if (node.type === "text" && node.text === needle) {
+    return (node.marks ?? []).map((m: any) => m.type);
+  }
+  for (const child of node.content ?? []) {
+    const found = marksOn(child, needle);
+    if (found) return found;
+  }
+  return undefined;
+}
+
 async function storedText(
   table: string,
   column: string,
@@ -73,6 +103,8 @@ describeIntegration("rich-text write normalization (live DB)", () => {
   let repositoryId: number;
   let folderId: number;
   let caseId: number;
+  let textLongFieldId: number;
+  let textStringFieldId: number;
 
   beforeAll(async () => {
     // The worktree .env DATABASE_URL resolves to `ew`; this suite writes and
@@ -151,16 +183,44 @@ describeIntegration("rich-text write normalization (live DB)", () => {
       select: { id: true },
     });
     caseId = testCase.id;
+
+    const fieldType = async (type: string) => {
+      const row = await raw.caseFieldTypes.findFirst({
+        where: { type },
+        select: { id: true },
+      });
+      if (!row) throw new Error(`Test prerequisite: no "${type}" field type`);
+      return row.id;
+    };
+    const makeField = async (type: string, suffix: string) =>
+      (
+        await raw.caseFields.create({
+          data: {
+            displayName: `${STAMP} ${suffix}`,
+            systemName: `${STAMP.replace(/-/g, "_")}_${suffix}`,
+            typeId: await fieldType(type),
+          },
+          select: { id: true },
+        })
+      ).id;
+    textLongFieldId = await makeField("Text Long", "long");
+    textStringFieldId = await makeField("Text String", "short");
   }, 60_000);
 
   afterAll(async () => {
     if (projectId) {
       await raw.steps.deleteMany({ where: { testCaseId: caseId } });
+      await raw.caseFieldValues.deleteMany({ where: { testCaseId: caseId } });
       await raw.repositoryCases.deleteMany({ where: { projectId } });
       await raw.repositoryFolders.deleteMany({ where: { projectId } });
       await raw.repositories.deleteMany({ where: { projectId } });
       await raw.projects.deleteMany({ where: { id: projectId } });
     }
+    await raw.caseFields.deleteMany({
+      where: {
+        id: { in: [textLongFieldId, textStringFieldId].filter(Boolean) },
+      },
+    });
     if (adminUserId) {
       await raw.user.deleteMany({ where: { id: adminUserId } });
     }
@@ -266,5 +326,93 @@ describeIntegration("rich-text write normalization (live DB)", () => {
     expect(await storedShape("RepositoryFolders", "docs", folder.id)).toBe(
       "object"
     );
+  });
+
+  it("converts Markdown step text into marks (#658)", async () => {
+    const created = await baseDb.steps.create({
+      data: {
+        testCaseId: caseId,
+        order: 5,
+        step: "Open the **New leads** board" as never,
+        expectedResult: "The board shows its `3` statuses" as never,
+      },
+      select: { id: true },
+    });
+
+    const row = await raw.steps.findUnique({
+      where: { id: created.id },
+      select: { step: true, expectedResult: true },
+    });
+    expect(marksOn(row?.step, "New leads")).toEqual(["bold"]);
+    expect(marksOn(row?.expectedResult, "3")).toEqual(["code"]);
+  });
+
+  describe("Text Long custom field values", () => {
+    it("stores Markdown written through a relation connect as a serialized document", async () => {
+      // The shape the MCP server writes.
+      const created = await baseDb.caseFieldValues.create({
+        data: {
+          testCase: { connect: { id: caseId } },
+          field: { connect: { id: textLongFieldId } },
+          value: "Created by the **beta** MCP.",
+        },
+        select: { id: true },
+      });
+
+      const { shape, doc } = await storedFieldValue(created.id);
+      expect(shape).toBe("string");
+      expect(doc.type).toBe("doc");
+      expect(marksOn(doc, "beta")).toEqual(["bold"]);
+    });
+
+    it("converts an update that names only the row", async () => {
+      const created = await baseDb.caseFieldValues.create({
+        data: { testCaseId: caseId, fieldId: textLongFieldId, value: DbNull },
+        select: { id: true },
+      });
+
+      await baseDb.caseFieldValues.update({
+        where: { id: created.id },
+        data: { value: "- first\n- second" },
+      });
+
+      const { doc } = await storedFieldValue(created.id);
+      expect(doc.content[0].type).toBe("bulletList");
+    });
+
+    it("keeps a serialized document byte-identical", async () => {
+      const serialized = JSON.stringify(DOC);
+      const created = await baseDb.caseFieldValues.create({
+        data: {
+          testCaseId: caseId,
+          fieldId: textLongFieldId,
+          value: serialized,
+        },
+        select: { id: true },
+      });
+
+      const rows = await raw.$queryRawUnsafe<Array<{ txt: string }>>(
+        `SELECT value #>> '{}' AS txt FROM "CaseFieldValues" WHERE id = $1`,
+        created.id
+      );
+      expect(rows[0]?.txt).toBe(serialized);
+    });
+
+    it("leaves a Text String value as written", async () => {
+      const created = await baseDb.caseFieldValues.create({
+        data: {
+          testCaseId: caseId,
+          fieldId: textStringFieldId,
+          value: "**not rich text**",
+        },
+        select: { id: true },
+      });
+
+      const rows = await raw.$queryRawUnsafe<Array<{ txt: string }>>(
+        `SELECT value #>> '{}' AS txt FROM "CaseFieldValues" WHERE id = $1`,
+        created.id
+      );
+      expect(rows[0]?.txt).toBe("**not rich text**");
+    });
   });
 });
