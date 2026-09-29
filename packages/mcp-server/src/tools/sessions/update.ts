@@ -129,6 +129,35 @@ export function registerSessionsUpdate(
           } else {
             data.completedAt = null;
           }
+          // Completing moves the session to the project's first Done state, as
+          // the web UI's Complete dialog does, unless a state was named.
+          if (input.isCompleted && input.stateName === undefined) {
+            const owner = await zenstack<{ projectId: number } | null>(
+              "sessions",
+              "findUnique",
+              { where: { id: input.sessionId }, select: { projectId: true } },
+              deps.env,
+            );
+            const done = owner
+              ? await zenstack<{ id: number } | null>(
+                  "workflows",
+                  "findFirst",
+                  {
+                    where: {
+                      projects: { some: { projectId: owner.projectId } },
+                      scope: "SESSIONS",
+                      workflowType: "DONE",
+                      isEnabled: true,
+                      isDeleted: false,
+                    },
+                    orderBy: { order: "asc" },
+                    select: { id: true },
+                  },
+                  deps.env,
+                )
+              : null;
+            if (done) data.state = { connect: { id: done.id } };
+          }
         }
 
         if (input.tags !== undefined) {

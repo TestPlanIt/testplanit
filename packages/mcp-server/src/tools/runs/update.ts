@@ -133,6 +133,35 @@ export function registerRunsUpdate(
           } else {
             data.completedAt = null;
           }
+          // Completing moves the run to the project's first Done state, as
+          // the web UI's Complete dialog does, unless a state was named.
+          if (input.isCompleted && input.stateName === undefined) {
+            const owner = await zenstack<{ projectId: number } | null>(
+              "testRuns",
+              "findUnique",
+              { where: { id: input.runId }, select: { projectId: true } },
+              deps.env,
+            );
+            const done = owner
+              ? await zenstack<{ id: number } | null>(
+                  "workflows",
+                  "findFirst",
+                  {
+                    where: {
+                      projects: { some: { projectId: owner.projectId } },
+                      scope: "RUNS",
+                      workflowType: "DONE",
+                      isEnabled: true,
+                      isDeleted: false,
+                    },
+                    orderBy: { order: "asc" },
+                    select: { id: true },
+                  },
+                  deps.env,
+                )
+              : null;
+            if (done) data.state = { connect: { id: done.id } };
+          }
         }
 
         if (input.tags !== undefined) {
