@@ -47,6 +47,10 @@ import {
   assertValidFolderParent,
   type FolderReader,
 } from "~/lib/folderParentGuard";
+import {
+  assertRestrictedFieldWrite,
+  type RestrictedFieldReader,
+} from "~/lib/restrictedFieldGuard";
 import { resolveStoredCredentials } from "~/lib/integrations/credentials";
 
 /** Write operations whose args can carry a rich-text column value. */
@@ -478,6 +482,14 @@ export const sideEffectsPlugin = definePlugin(schema, {
     if (RICH_TEXT_WRITE_OPERATIONS.has(operation)) {
       normalizeRichTextWrite(model, args);
       if (model === "CaseFieldValues") {
+        await assertRestrictedFieldWrite(
+          model,
+          operation,
+          args,
+          (client as unknown as { $auth?: { id?: string; access?: string } })
+            .$auth,
+          client.$unuseAll() as unknown as RestrictedFieldReader
+        );
         await normalizeTextLongFieldValueWrite(
           model,
           operation,

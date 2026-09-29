@@ -34,6 +34,9 @@ vi.mock("~/lib/db", () => ({
     caseFieldVersionValues: {
       createMany: vi.fn(() => Promise.resolve({ count: 0 })),
     },
+    caseFields: {
+      findMany: vi.fn(() => Promise.resolve([])),
+    },
     steps: {
       create: vi.fn(),
       update: vi.fn(),
@@ -43,6 +46,10 @@ vi.mock("~/lib/db", () => ({
   },
 }));
 
+vi.mock("~/lib/services/projectPermissions", () => ({
+  userCanAddEditArea: vi.fn(),
+}));
+
 vi.mock("~/lib/services/auditLog", () => ({
   auditBulkUpdate: vi.fn(() => Promise.resolve()),
 }));
@@ -50,6 +57,7 @@ vi.mock("~/lib/services/auditLog", () => ({
 import { getServerSession } from "next-auth";
 import { baseDb } from "~/lib/db";
 import { auditBulkUpdate } from "~/lib/services/auditLog";
+import { userCanAddEditArea } from "~/lib/services/projectPermissions";
 
 describe("Bulk Edit API Route", () => {
   const mockSession = {
@@ -124,6 +132,7 @@ describe("Bulk Edit API Route", () => {
     (getServerSession as any).mockResolvedValue(mockSession);
     (baseDb.projects.findFirst as any).mockResolvedValue(mockProject);
     (baseDb.repositoryCases.findMany as any).mockResolvedValue(mockCases);
+    (userCanAddEditArea as any).mockResolvedValue(true);
 
     // Set up a default transaction mock with all necessary methods
     (baseDb.$transaction as any).mockImplementation(async (callback: any) => {
@@ -200,6 +209,41 @@ describe("Bulk Edit API Route", () => {
 
       expect(response.status).toBe(401);
       expect(data.error).toBe("Unauthorized");
+    });
+  });
+
+  describe("Permissions", () => {
+    it("returns 403 without add/edit on the repository", async () => {
+      (userCanAddEditArea as any).mockResolvedValue(false);
+      const [request, context] = createRequest({
+        caseIds: [1, 2],
+        updates: { name: "Renamed" },
+      });
+      const response = await POST(request, context);
+
+      expect(response.status).toBe(403);
+      expect(baseDb.$transaction).not.toHaveBeenCalled();
+    });
+
+    it("returns 403 for a restricted field without the restricted-fields permission", async () => {
+      (baseDb.caseFields.findMany as any).mockResolvedValue([
+        { displayName: "Secret" },
+      ]);
+      (userCanAddEditArea as any).mockImplementation(
+        async (_u: string, _p: number, area: string) =>
+          area === "TestCaseRepository"
+      );
+      const [request, context] = createRequest({
+        caseIds: [1, 2],
+        updates: {},
+        customFieldUpdates: [{ fieldId: 9, value: "x", operation: "update" }],
+      });
+      const response = await POST(request, context);
+      const data = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(data.error).toContain("Secret");
+      expect(baseDb.$transaction).not.toHaveBeenCalled();
     });
   });
 

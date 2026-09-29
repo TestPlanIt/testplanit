@@ -16,6 +16,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { tryFastPathCreate } from "~/lib/access-fast-path";
 import { injectUserFields } from "~/lib/api/injectUserFields";
 import { baseDb } from "~/lib/db";
+import { getAuthDb } from "~/lib/zenstack";
 import { createRawDbClient } from "~/lib/rawDbClient";
 import { loadTemplateData } from "~/lib/services/jira-panel-generation";
 import { persistGeneratedTestCases } from "~/lib/services/testCaseImport";
@@ -425,6 +426,99 @@ describeIntegration("API write paths (live DB)", () => {
       expect(
         await raw.repositoryCases.count({ where: { name: names[0] } })
       ).toBe(0);
+    });
+  });
+
+  describe("restricted custom fields", () => {
+    it("lets a user re-save a restricted value but not change it without permission", async () => {
+      const textString = await raw.caseFieldTypes.findFirst({
+        where: { type: "Text String" },
+        select: { id: true },
+      });
+      const field = await raw.caseFields.create({
+        data: {
+          displayName: `${STAMP} secret`,
+          systemName: `${STAMP.replace(/-/g, "_")}_secret`,
+          typeId: textString!.id,
+          isRestricted: true,
+        },
+        select: { id: true },
+      });
+      // Add/edit on the repository, nothing on restricted fields.
+      const role = await raw.roles.create({
+        data: {
+          name: `${STAMP}-editor`,
+          rolePermissions: {
+            create: [{ area: "TestCaseRepository", canAddEdit: true }],
+          },
+        },
+        include: { rolePermissions: true },
+      });
+      const editor = await raw.user.create({
+        data: {
+          email: `${STAMP}-editor@example.com`,
+          name: "Editor",
+          authMethod: "INTERNAL",
+          access: "USER",
+          accessSource: "MANUAL",
+          roleId: role.id,
+          password: "$2a$10$placeholderplaceholderplaceholderplaceholder",
+        },
+        select: { id: true },
+      });
+      await raw.userProjectPermission.create({
+        data: {
+          userId: editor.id,
+          projectId,
+          accessType: "SPECIFIC_ROLE",
+          roleId: role.id,
+        },
+      });
+      const caseId = await createCase(`${STAMP}-restricted`);
+      const value = await raw.caseFieldValues.create({
+        data: { testCaseId: caseId, fieldId: field.id, value: "original" },
+        select: { id: true },
+      });
+
+      try {
+        const asEditor = await getAuthDb({
+          id: editor.id,
+          access: "USER",
+          roleId: role.id,
+          role: {
+            id: role.id,
+            name: role.name,
+            rolePermissions: role.rolePermissions,
+          },
+        } as never);
+
+        // The web UI re-saves every field, restricted ones included.
+        await asEditor.caseFieldValues.update({
+          where: { id: value.id },
+          data: { value: "original" },
+        });
+        await expect(
+          asEditor.caseFieldValues.update({
+            where: { id: value.id },
+            data: { value: "changed" },
+          })
+        ).rejects.toThrow(/restricted/);
+
+        const stored = await raw.caseFieldValues.findUnique({
+          where: { id: value.id },
+          select: { value: true },
+        });
+        expect(stored?.value).toBe("original");
+      } finally {
+        await raw.caseFieldValues.deleteMany({ where: { id: value.id } });
+        await raw.userProjectPermission.deleteMany({
+          where: { userId: editor.id },
+        });
+        await raw.user.deleteMany({ where: { id: editor.id } });
+        await raw.rolePermission.deleteMany({ where: { roleId: role.id } });
+        await raw.roles.deleteMany({ where: { id: role.id } });
+        await raw.caseFields.deleteMany({ where: { id: field.id } });
+      }
     });
   });
 
