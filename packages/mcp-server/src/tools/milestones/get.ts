@@ -33,7 +33,7 @@ export interface MilestonesGetDeps {
 
 /**
  * `testplanit_milestones_get` — fetch a single milestone with the full
- * denormalized header, plain-text note + docs (ProseMirror), pooled
+ * denormalized header, note + docs as Markdown, pooled
  * `statusCounts`, and three inlined linked arrays:
  *   - linkedTestRuns (cap 250 — wider than the standard 100; milestones
  *     legitimately carry hundreds of runs)
@@ -55,7 +55,7 @@ export function registerMilestonesGet(
     "testplanit_milestones_get",
     {
       description:
-        "Fetch a single Milestone by id with denormalized header (milestoneType {id,name}, creator, parentId, directChildrenCount, commentCount, totalDescendants), note + docs (ProseMirror plain text), pooled statusCounts (testRuns + sessions merged) + untested + total, and three inlined linked arrays — linkedTestRuns (cap 250), linkedSessions (cap 100), children (cap 100, 1-level deep with totalDescendants). When an array overflows the cap the response carries truncated.<key>: true; the rest is reachable via testplanit_milestones_list with parentId, or testplanit_test_runs_list. No icon field — schema only carries an icon class identifier, deliberately dropped for v1.",
+        "Fetch a single Milestone by id with denormalized header (milestoneType {id,name}, creator, parentId, directChildrenCount, commentCount, totalDescendants), note + docs (as Markdown), pooled statusCounts (testRuns + sessions merged) + untested + total, and three inlined linked arrays — linkedTestRuns (cap 250), linkedSessions (cap 100), children (cap 100, 1-level deep with totalDescendants). When an array overflows the cap the response carries truncated.<key>: true; the rest is reachable via testplanit_milestones_list with parentId, or testplanit_test_runs_list. No icon field — schema only carries an icon class identifier, deliberately dropped for v1.",
       inputSchema: { milestoneId: z.number().int().positive() },
     },
     async (input) => {

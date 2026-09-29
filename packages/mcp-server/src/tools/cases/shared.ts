@@ -3,6 +3,7 @@ import type {
 } from "@db/input";
 import { zenstack, lookup } from "../../api.js";
 import { TestPlanItHttpError } from "../../http.js";
+import { proseMirrorToMarkdown } from "../../richText.js";
 import type { EnvConfig } from "../../env.js";
 import { deriveWebUrl, stripSettings } from "../code-repositories/shared.js";
 
@@ -36,39 +37,6 @@ export async function resolveTagIds(
 }
 
 /**
- * Block-level node types per Tiptap / ProseMirror schema. Children of
- * these nodes are joined inline (no extra newlines between text runs);
- * the newline goes BETWEEN sibling block nodes only. Inline-content
- * containers (e.g., `text` itself) never appear here.
- *
- * (WR-05: previously the walker inserted "\n" between every non-paragraph
- * child, corrupting code blocks and over-indenting nested lists.)
- */
-const BLOCK_TYPES = new Set([
-  "paragraph",
-  "code_block",
-  "codeBlock",
-  "heading",
-  "list_item",
-  "listItem",
-  "blockquote",
-]);
-
-/**
- * Walk a Tiptap ProseMirror document and extract concatenated plain text.
- * Marks (bold, italic, links) are ignored — only `text` nodes contribute.
- *
- * Newlines are inserted BETWEEN block-level nodes (paragraphs, headings,
- * code blocks, list items, blockquotes) — never within them. This matches
- * Tiptap `Node.textBetween` semantics and avoids the corruption mode
- * where a code block with two text runs gets a stray newline injected
- * between the runs (WR-05).
- *
- * Defensive: returns `""` on null/undefined, and returns a plain string
- * unchanged when it does not hold a serialized document (see
- * `parseSerializedDoc`).
- */
-/**
  * Wrap agent-supplied plain text in a ProseMirror doc, one paragraph per
  * line, so the TestPlanIt UI (which renders these Json columns with Tiptap)
  * shows it. A bare string stored in a Tiptap column renders as an empty
@@ -85,83 +53,6 @@ export function plainTextToProseMirrorDoc(
       : { type: "paragraph", content: [{ type: "text", text: line }] },
   );
   return { type: "doc", content: paragraphs };
-}
-
-export function extractProseMirrorText(doc: unknown): string {
-  if (doc == null) return "";
-
-  // The web UI writes rich text as `JSON.stringify(doc)` while this server
-  // writes the document object, so the same column comes back in either
-  // shape depending on which client saved the row last. Parse the
-  // serialized form so readers get the same text either way.
-  let value: unknown = doc;
-  if (typeof value === "string") {
-    const parsed = parseSerializedDoc(value);
-    if (parsed === null) return value;
-    value = parsed;
-  }
-
-  const collectFromNode = (node: unknown): string => {
-    if (!node || typeof node !== "object") return "";
-    const n = node as { type?: string; text?: string; content?: unknown[] };
-    if (n.type === "text" && typeof n.text === "string") return n.text;
-    // The host turns a single newline into a hard break, so read it back as
-    // one — otherwise "Step 1\nStep 2" comes back as "Step 1Step 2".
-    if (n.type === "hardBreak" || n.type === "hard_break") return "\n";
-    if (Array.isArray(n.content)) {
-      // For block-level nodes, children are inline — concatenate without
-      // separators. For container nodes (doc, bullet_list, ordered_list,
-      // etc.), children are themselves blocks — join with "\n".
-      const isBlock = n.type ? BLOCK_TYPES.has(n.type) : false;
-      const parts = n.content.map(collectFromNode);
-      return isBlock ? parts.join("") : parts.join("\n");
-    }
-    return "";
-  };
-
-  const root = value as { type?: string; content?: unknown[] };
-  if (Array.isArray(root)) {
-    return (root as unknown[]).map(collectFromNode).join("\n");
-  }
-  if (root.type === "doc" && Array.isArray(root.content)) {
-    return root.content.map(collectFromNode).join("\n");
-  }
-  return collectFromNode(value);
-}
-
-/**
- * Recognise a rich-text document that was stored as a JSON string.
- *
- * Only the two shapes the walker above understands count: a `doc` node, or a
- * bare array of nodes. Anything else — a JSON object that is not a document,
- * a JSON scalar, malformed JSON — is a plain-text value that happens to look
- * like JSON, so it is returned as `null` and passes through untouched rather
- * than being flattened to "".
- */
-function parseSerializedDoc(value: string): unknown | null {
-  const trimmed = value.trim();
-  if (!trimmed.startsWith("{") && !trimmed.startsWith("[")) return null;
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(trimmed);
-  } catch {
-    return null;
-  }
-
-  if (Array.isArray(parsed)) {
-    return parsed.length > 0 && parsed.every(isProseMirrorNode) ? parsed : null;
-  }
-  if (!isProseMirrorNode(parsed)) return null;
-  return (parsed as { type?: string }).type === "doc" ? parsed : null;
-}
-
-function isProseMirrorNode(value: unknown): boolean {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    typeof (value as { type?: unknown }).type === "string"
-  );
 }
 
 interface RawFieldOptionAssignment {
@@ -206,10 +97,10 @@ function resolveCustomFieldValue(
   const type = field?.type?.type;
 
   // Text Long holds a rich-text document, stored as a JSON string by current
-  // hosts and as plain text by older ones. Flatten both to text so a reader
-  // never has to detect the shape (issue #594).
+  // hosts and as plain text by older ones. Return Markdown for both, so a
+  // value read here can be written back without losing its formatting.
   if (type === "Text Long" && value != null) {
-    return extractProseMirrorText(value);
+    return proseMirrorToMarkdown(value);
   }
 
   const options = (field?.fieldOptions ?? [])
@@ -539,8 +430,8 @@ export function mapCaseDetail(
     steps: (raw.steps ?? []).map((s) => ({
       id: s.id,
       order: s.order,
-      step: extractProseMirrorText(s.step),
-      expectedResult: extractProseMirrorText(s.expectedResult),
+      step: proseMirrorToMarkdown(s.step),
+      expectedResult: proseMirrorToMarkdown(s.expectedResult),
     })),
     customFields: denormalizeCustomFields(raw.caseFieldValues),
     issues: (raw.caseIssues ?? []).map((ci) => ({

@@ -1,7 +1,7 @@
 import type {
   MilestonesInclude,
 } from "@db/input";
-import { extractProseMirrorText } from "../cases/shared.js";
+import { proseMirrorToMarkdown } from "../../richText.js";
 import {
   computeStatusRollup,
   type StatusGroup,
@@ -197,8 +197,8 @@ export function mapMilestoneDetail(
   );
   return {
     ...head,
-    note: extractProseMirrorText(raw.note),
-    docs: extractProseMirrorText(raw.docs),
+    note: proseMirrorToMarkdown(raw.note),
+    docs: proseMirrorToMarkdown(raw.docs),
     linkedTestRuns: raw.testRuns.map((r) => ({
       id: r.id,
       name: r.name,

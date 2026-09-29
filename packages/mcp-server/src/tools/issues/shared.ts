@@ -2,7 +2,7 @@ import type {
   IssueInclude,
   IssueSelect,
 } from "@db/input";
-import { extractProseMirrorText } from "../cases/shared.js";
+import { proseMirrorToMarkdown } from "../../richText.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Typed includes — every literal carries `as const satisfies IssueInclude`.
@@ -169,7 +169,7 @@ export function mapIssueDetail(raw: RawIssueDetail, flags: IssueDetailFlags) {
     priority: raw.priority ?? null,
     issueTypeName: raw.issueTypeName ?? null,
     issueTypeIconUrl: raw.issueTypeIconUrl ?? null,
-    note: extractProseMirrorText(raw.note),
+    note: proseMirrorToMarkdown(raw.note),
     linkedCases: raw.caseIssues.map((ci) => ({
       id: ci.case.id,
       name: ci.case.name,
@@ -179,7 +179,7 @@ export function mapIssueDetail(raw: RawIssueDetail, flags: IssueDetailFlags) {
     linkedSessions: raw.sessions.map((s) => ({
       id: s.id,
       name: s.name,
-      mission: extractProseMirrorText(s.mission),
+      mission: proseMirrorToMarkdown(s.mission),
       isCompleted: s.isCompleted,
       state: s.state ? { id: s.state.id, name: s.state.name } : null,
     })),

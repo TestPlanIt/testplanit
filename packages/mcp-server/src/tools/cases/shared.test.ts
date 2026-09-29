@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
-  extractProseMirrorText,
   denormalizeCustomFields,
   buildFolderBreadcrumb,
   mapCaseRow,
@@ -35,212 +34,6 @@ describe("resolveTagIds", () => {
   });
 });
 
-// ── extractProseMirrorText ─────────────────────────────────────────────────
-
-describe("extractProseMirrorText", () => {
-  it("extracts text from a plain paragraph", () => {
-    const doc = {
-      type: "doc",
-      content: [
-        {
-          type: "paragraph",
-          content: [{ type: "text", text: "Step 1 body" }],
-        },
-      ],
-    };
-    expect(extractProseMirrorText(doc)).toBe("Step 1 body");
-  });
-
-  it("joins multiple paragraphs with newline", () => {
-    const doc = {
-      type: "doc",
-      content: [
-        { type: "paragraph", content: [{ type: "text", text: "First" }] },
-        { type: "paragraph", content: [{ type: "text", text: "Second" }] },
-      ],
-    };
-    expect(extractProseMirrorText(doc)).toBe("First\nSecond");
-  });
-
-  it("reads a hard break as a newline", () => {
-    // What the host stores for "Step 1\nStep 2".
-    const doc = {
-      type: "doc",
-      content: [
-        {
-          type: "paragraph",
-          content: [
-            { type: "text", text: "Step 1" },
-            { type: "hardBreak" },
-            { type: "text", text: "Step 2" },
-          ],
-        },
-      ],
-    };
-    expect(extractProseMirrorText(doc)).toBe("Step 1\nStep 2");
-  });
-
-  it("extracts text from bold-marked nodes (marks are ignored, text passes through)", () => {
-    const doc = {
-      type: "doc",
-      content: [
-        {
-          type: "paragraph",
-          content: [
-            {
-              type: "text",
-              text: "Bold",
-              marks: [{ type: "bold" }],
-            },
-          ],
-        },
-      ],
-    };
-    expect(extractProseMirrorText(doc)).toBe("Bold");
-  });
-
-  it("returns empty string for null input", () => {
-    expect(extractProseMirrorText(null)).toBe("");
-  });
-
-  it("returns empty string for undefined input", () => {
-    expect(extractProseMirrorText(undefined)).toBe("");
-  });
-
-  it("returns the string verbatim when input is already a string (defensive — historical data)", () => {
-    expect(extractProseMirrorText("plain text step")).toBe("plain text step");
-  });
-
-  // Issue #594: the web UI stores rich text as `JSON.stringify(doc)`, so the
-  // same column comes back as a document object or as a string of one
-  // depending on which client saved the row last.
-  it("extracts text from a document the web UI stored as a JSON string", () => {
-    const serialized = JSON.stringify({
-      type: "doc",
-      content: [
-        {
-          type: "paragraph",
-          content: [
-            { type: "text", text: "Open the login page in a private window." },
-          ],
-        },
-      ],
-    });
-    expect(extractProseMirrorText(serialized)).toBe(
-      "Open the login page in a private window.",
-    );
-  });
-
-  it("joins block nodes with newlines when the document arrives as a JSON string", () => {
-    const serialized = JSON.stringify({
-      type: "doc",
-      content: [
-        { type: "paragraph", content: [{ type: "text", text: "First" }] },
-        { type: "paragraph", content: [{ type: "text", text: "Second" }] },
-      ],
-    });
-    expect(extractProseMirrorText(serialized)).toBe("First\nSecond");
-  });
-
-  it("extracts an array of nodes stored as a JSON string", () => {
-    const serialized = JSON.stringify([
-      { type: "paragraph", content: [{ type: "text", text: "Line A" }] },
-      { type: "paragraph", content: [{ type: "text", text: "Line B" }] },
-    ]);
-    expect(extractProseMirrorText(serialized)).toBe("Line A\nLine B");
-  });
-
-  it("returns plain text that merely looks like JSON verbatim", () => {
-    // Flattening this to "" would silently destroy the user's content.
-    expect(extractProseMirrorText('{"foo": 1}')).toBe('{"foo": 1}');
-    expect(extractProseMirrorText("[1, 2, 3]")).toBe("[1, 2, 3]");
-  });
-
-  it("returns malformed JSON verbatim", () => {
-    expect(extractProseMirrorText('{"type": "doc"')).toBe('{"type": "doc"');
-  });
-
-  it("extracts from array of nodes (no doc wrapper)", () => {
-    const nodes = [
-      { type: "paragraph", content: [{ type: "text", text: "Line A" }] },
-      { type: "paragraph", content: [{ type: "text", text: "Line B" }] },
-    ];
-    const result = extractProseMirrorText(nodes);
-    expect(result).toContain("Line A");
-    expect(result).toContain("Line B");
-  });
-
-  it("WR-05: code_block with multiple text runs concatenates inline (no stray newlines)", () => {
-    const doc = {
-      type: "doc",
-      content: [
-        {
-          type: "code_block",
-          content: [
-            { type: "text", text: "const x = 1;" },
-            { type: "text", text: " // inline" },
-          ],
-        },
-      ],
-    };
-    // Code-block runs are joined inline; only one block in the doc, so no
-    // outer newline either.
-    expect(extractProseMirrorText(doc)).toBe("const x = 1; // inline");
-  });
-
-  it("WR-05: bullet_list of two items renders one line per item (no extra blanks)", () => {
-    const doc = {
-      type: "doc",
-      content: [
-        {
-          type: "bullet_list",
-          content: [
-            {
-              type: "list_item",
-              content: [
-                {
-                  type: "paragraph",
-                  content: [{ type: "text", text: "first" }],
-                },
-              ],
-            },
-            {
-              type: "list_item",
-              content: [
-                {
-                  type: "paragraph",
-                  content: [{ type: "text", text: "second" }],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    };
-    // bullet_list is a non-block container (joins children with "\n"),
-    // list_item / paragraph are block-level (children inline). Result is
-    // exactly "first\nsecond" — not "first\n\nsecond" (the bug).
-    expect(extractProseMirrorText(doc)).toBe("first\nsecond");
-  });
-
-  it("WR-05: heading with multiple inline runs renders as one line", () => {
-    const doc = {
-      type: "doc",
-      content: [
-        {
-          type: "heading",
-          attrs: { level: 1 },
-          content: [
-            { type: "text", text: "Hello, " },
-            { type: "text", text: "world" },
-          ],
-        },
-      ],
-    };
-    expect(extractProseMirrorText(doc)).toBe("Hello, world");
-  });
-});
-
 // ── denormalizeCustomFields ────────────────────────────────────────────────
 
 describe("denormalizeCustomFields", () => {
@@ -266,7 +59,7 @@ describe("denormalizeCustomFields", () => {
   });
 
   // Issue #594: Text Long is a rich-text document — the UI stores a JSON
-  // string, this server stores plain text. Readers get text either way.
+  // string, older hosts stored plain text. Readers get Markdown either way.
   it("flattens a Text Long value the web UI stored as a JSON string", () => {
     const rows = [
       {
@@ -280,6 +73,40 @@ describe("denormalizeCustomFields", () => {
       },
     ];
     expect(denormalizeCustomFields(rows)).toEqual({ Description: "Notes here" });
+  });
+
+  it("returns a formatted Text Long value as Markdown, so it can be written back intact", () => {
+    const rows = [
+      {
+        value: JSON.stringify({
+          type: "doc",
+          content: [
+            {
+              type: "paragraph",
+              content: [
+                { type: "text", text: "Use " },
+                { type: "text", text: "care", marks: [{ type: "bold" }] },
+              ],
+            },
+            {
+              type: "bulletList",
+              content: [
+                {
+                  type: "listItem",
+                  content: [
+                    { type: "paragraph", content: [{ type: "text", text: "one" }] },
+                  ],
+                },
+              ],
+            },
+          ],
+        }),
+        field: { displayName: "Description", type: { type: "Text Long" } },
+      },
+    ];
+    expect(denormalizeCustomFields(rows)).toEqual({
+      Description: "Use **care**\n\n- one",
+    });
   });
 
   it("passes a Text Long value this server stored as plain text through unchanged", () => {

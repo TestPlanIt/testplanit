@@ -40,7 +40,7 @@ export function registerSessionsUpdate(
           .string()
           .nullable()
           .optional()
-          .describe("Updated mission statement. Pass null to clear."),
+          .describe("Updated mission statement; Markdown is formatted. Pass null to clear."),
         stateName: z
           .string()
           .min(1)

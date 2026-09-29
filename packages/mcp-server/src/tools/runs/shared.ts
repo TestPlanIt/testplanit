@@ -11,10 +11,8 @@ import type {
 } from "@db/input";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
-import {
-  extractProseMirrorText,
-  denormalizeCustomFields,
-} from "../cases/shared.js";
+import { denormalizeCustomFields } from "../cases/shared.js";
+import { proseMirrorToMarkdown } from "../../richText.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Typed includes — every literal carries `as const satisfies Prisma.<Model><Include|Select>`.
@@ -151,7 +149,7 @@ export const STEP_RESULT_SELECT = {
   id: true,
   statusId: true,
   stepStatus: { select: { id: true, name: true } },
-  notes: true, // Json? -> extractProseMirrorText
+  notes: true, // Json? -> proseMirrorToMarkdown
   evidence: true, // Json? -> as-is per D7-08
   executedAt: true,
   elapsed: true,
@@ -915,9 +913,9 @@ export function mapStepResult(raw: RawStepResult) {
       : null,
     stepId: raw.step?.id ?? null,
     stepOrder: raw.step?.order ?? null,
-    stepText: extractProseMirrorText(raw.step?.step),
-    expectedResultText: extractProseMirrorText(raw.step?.expectedResult),
-    notes: extractProseMirrorText(raw.notes),
+    stepText: proseMirrorToMarkdown(raw.step?.step),
+    expectedResultText: proseMirrorToMarkdown(raw.step?.expectedResult),
+    notes: proseMirrorToMarkdown(raw.notes),
     evidence: raw.evidence, // D7-08 — surface as-is, no truncation
     executedAt: raw.executedAt,
     elapsed: raw.elapsed ?? null,
@@ -956,7 +954,7 @@ export function mapRunResultDetail(raw: RawRunResultDetail) {
     executedAt: raw.executedAt,
     editedAt: raw.editedAt,
     elapsed: raw.elapsed ?? null,
-    notes: extractProseMirrorText(raw.notes),
+    notes: proseMirrorToMarkdown(raw.notes),
     evidence: raw.evidence, // D7-08
     status: raw.status ? { id: raw.status.id, name: raw.status.name } : null,
     executedBy: raw.executedBy

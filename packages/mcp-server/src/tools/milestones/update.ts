@@ -6,7 +6,7 @@ import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
-import { extractProseMirrorText } from "../cases/shared.js";
+import { proseMirrorToMarkdown } from "../../richText.js";
 
 export interface MilestonesUpdateDeps {
   env: EnvConfig;
@@ -52,7 +52,7 @@ export function registerMilestonesUpdate(
           .string()
           .nullable()
           .optional()
-          .describe("Updated plain-text note. Pass null to clear."),
+          .describe("Updated note; Markdown is formatted. Pass null to clear."),
         milestoneTypeId: z
           .number()
           .int()
@@ -148,7 +148,7 @@ export function registerMilestonesUpdate(
           parent: raw.parent
             ? { id: raw.parent.id, name: raw.parent.name }
             : null,
-          note: extractProseMirrorText(raw.note),
+          note: proseMirrorToMarkdown(raw.note),
         };
 
         return {

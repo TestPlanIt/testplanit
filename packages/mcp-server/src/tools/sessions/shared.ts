@@ -4,10 +4,8 @@ import type {
   SessionResultsWhereInput,
   SessionsInclude,
 } from "@db/input";
-import {
-  extractProseMirrorText,
-  denormalizeCustomFields,
-} from "../cases/shared.js";
+import { denormalizeCustomFields } from "../cases/shared.js";
+import { proseMirrorToMarkdown } from "../../richText.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Typed includes — every literal carries `as const satisfies Prisma.<Model><Include|Select>`.
@@ -221,8 +219,8 @@ export function mapSessionRow(raw: RawSessionRow) {
     isCompleted: raw.isCompleted,
     completedAt: raw.completedAt ?? null,
     createdAt: raw.createdAt,
-    mission: extractProseMirrorText(raw.mission),
-    note: extractProseMirrorText(raw.note),
+    mission: proseMirrorToMarkdown(raw.mission),
+    note: proseMirrorToMarkdown(raw.note),
     project: raw.project
       ? { id: raw.project.id, name: raw.project.name }
       : null,
@@ -269,7 +267,7 @@ function mapSessionResultInline(raw: RawSessionResultInline) {
     id: raw.id,
     createdAt: raw.createdAt,
     elapsed: raw.elapsed ?? null,
-    resultDataText: extractProseMirrorText(raw.resultData),
+    resultDataText: proseMirrorToMarkdown(raw.resultData),
     status: raw.status ? { id: raw.status.id, name: raw.status.name } : null,
     createdBy: raw.createdBy
       ? {

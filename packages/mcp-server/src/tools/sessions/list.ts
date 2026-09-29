@@ -27,7 +27,7 @@ export function registerSessionsList(
     "testplanit_sessions_list",
     {
       description:
-        "List sessions scoped to a project. Filters: stateId, isCompleted, createdById (user id, string), from/to (createdAt date range, ISO 8601). Cursor pagination ordered by createdAt DESC then id DESC (BL-04 deterministic). Each row carries denormalized state/createdBy/assignedTo/template/configuration/milestone/tags + mission and note extracted to plain text. (per SESS-01)",
+        "List sessions scoped to a project. Filters: stateId, isCompleted, createdById (user id, string), from/to (createdAt date range, ISO 8601). Cursor pagination ordered by createdAt DESC then id DESC (BL-04 deterministic). Each row carries denormalized state/createdBy/assignedTo/template/configuration/milestone/tags + mission and note as Markdown. (per SESS-01)",
       inputSchema: {
         projectId: z.number().int().positive(),
         stateId: z.number().int().positive().optional(),

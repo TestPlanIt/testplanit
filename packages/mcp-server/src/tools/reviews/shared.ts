@@ -9,7 +9,7 @@ import type {
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { TestPlanItHttpError, validateToken } from "../../http.js";
-import { extractProseMirrorText } from "../cases/shared.js";
+import { proseMirrorToMarkdown } from "../../richText.js";
 
 const FETCH_TIMEOUT_MS = 10000;
 
@@ -21,7 +21,7 @@ export type ReviewEntityType = "CASE" | "RUN" | "SESSION";
  * consumption: the polymorphic entity is resolved to a name, the workflow
  * transition is a `{from,to}` pair, and the requester's submit-time prose
  * (a paired REVIEW_REQUEST Comment, not a column on ReviewRequest) is
- * extracted to plain text.
+ * returned as Markdown.
  */
 export const REVIEW_ROW_INCLUDE = {
   project: { select: { id: true, name: true } },
@@ -277,7 +277,7 @@ export async function hydrateEntities(
  * The hybrid design keeps that text in the entity's Comments thread
  * (`Comment.type = REVIEW_REQUEST`, linked back via `reviewRequestId`)
  * rather than on ReviewRequest itself, so it takes a second call. Content
- * is TipTap JSON; agents get plain text. When a request somehow carries
+ * is TipTap JSON; agents get Markdown. When a request somehow carries
  * more than one REVIEW_REQUEST comment the earliest wins — that is the one
  * written at submit time.
  */
@@ -308,7 +308,7 @@ export async function fetchRequestNotes(
 
   for (const row of rows) {
     if (!row.reviewRequestId || map.has(row.reviewRequestId)) continue;
-    const text = extractProseMirrorText(row.content).trim();
+    const text = proseMirrorToMarkdown(row.content).trim();
     if (text) map.set(row.reviewRequestId, text);
   }
   return map;

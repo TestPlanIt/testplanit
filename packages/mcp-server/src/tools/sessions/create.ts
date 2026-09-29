@@ -75,7 +75,7 @@ export function registerSessionsCreate(
         mission: z
           .string()
           .optional()
-          .describe("Plain-text mission statement for the session."),
+          .describe("Mission statement for the session. Markdown is formatted."),
         milestoneId: z
           .number()
           .int()
