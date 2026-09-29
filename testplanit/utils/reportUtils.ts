@@ -1,4 +1,5 @@
 import { DEFECT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
+import { queryEngagementUserIds } from "~/lib/engagementUserIdsQuery";
 import { queryProjectRelevantIssueIds } from "~/lib/projectIssueIdsQuery";
 import {
   buildFolderAncestorMap,
@@ -2209,6 +2210,39 @@ export function createRepositoryStatsMetricRegistry(
 export function createUserEngagementDimensionRegistry(
   isProjectSpecific: boolean = true
 ) {
+  const scopedProjectId = (projectId?: number) =>
+    isProjectSpecific && projectId ? Number(projectId) : undefined;
+
+  const engagedUserIds = (db: any, projectId?: number) =>
+    queryEngagementUserIds(db, scopedProjectId(projectId));
+
+  // The User dimension also lists project members with no activity yet.
+  const userDimensionIds = async (
+    db: any,
+    projectId?: number
+  ): Promise<string[]> => {
+    const scoped = scopedProjectId(projectId);
+    if (scoped === undefined) return engagedUserIds(db, projectId);
+    const [engaged, assigned, permitted] = await Promise.all([
+      engagedUserIds(db, projectId),
+      db.projectAssignment.findMany({
+        where: { projectId: scoped },
+        select: { userId: true },
+      }),
+      db.userProjectPermission.findMany({
+        where: { projectId: scoped },
+        select: { userId: true },
+      }),
+    ]);
+    return [
+      ...new Set<string>([
+        ...engaged,
+        ...assigned.map((a: { userId: string }) => a.userId),
+        ...permitted.map((p: { userId: string }) => p.userId),
+      ]),
+    ];
+  };
+
   return {
     project: !isProjectSpecific
       ? {
@@ -2265,91 +2299,45 @@ export function createUserEngagementDimensionRegistry(
         const users = await db.user.findMany({
           where: {
             isDeleted: false,
-            OR: [
-              // Users assigned to projects
-              ...(isProjectSpecific && projectId
-                ? [
-                    {
-                      projects: {
-                        some: {
-                          projectId: Number(projectId),
-                        },
-                      },
-                    },
-                  ]
-                : []),
-              // Users with project permissions
-              ...(isProjectSpecific && projectId
-                ? [
-                    {
-                      projectPermissions: {
-                        some: {
-                          projectId: Number(projectId),
-                        },
-                      },
-                    },
-                  ]
-                : []),
-              // Users who created test cases
-              {
-                repositoryCases: {
-                  some: {
-                    ...(isProjectSpecific && projectId
-                      ? { projectId: Number(projectId) }
-                      : {}),
-                    isDeleted: false,
-                  },
-                },
-              },
-              // Users who executed tests
-              {
-                testRunResults: {
-                  some: {
-                    isDeleted: false,
-                    testRun: {
-                      ...(isProjectSpecific && projectId
-                        ? { projectId: Number(projectId) }
-                        : {}),
-                      isDeleted: false,
-                    },
-                  },
-                },
-              },
-              // Users who submitted automated results
-              {
-                junitTestResults: {
-                  some: {
-                    testSuite: {
-                      testRun: {
-                        ...(isProjectSpecific && projectId
-                          ? { projectId: Number(projectId) }
-                          : {}),
-                        isDeleted: false,
-                      },
-                    },
-                  },
-                },
-              },
-              // Users who participated in sessions
-              {
-                sessionResults: {
-                  some: {
-                    isDeleted: false,
-                    session: {
-                      ...(isProjectSpecific && projectId
-                        ? { projectId: Number(projectId) }
-                        : {}),
-                      isDeleted: false,
-                    },
-                  },
-                },
-              },
-            ],
+            id: { in: await userDimensionIds(db, projectId) },
           },
           select: { id: true, name: true, email: true },
           orderBy: { name: "asc" },
         });
         return users;
+      },
+      filterValues: async (
+        db: any,
+        projectId: number | undefined,
+        opts: { search?: string; ids?: string[]; skip: number; take: number }
+      ) => {
+        const userIds = await userDimensionIds(db, projectId);
+        const requested = opts.ids ? new Set(opts.ids) : null;
+        const where = {
+          isDeleted: false,
+          id: {
+            in: requested ? userIds.filter((id) => requested.has(id)) : userIds,
+          },
+          ...(opts.search
+            ? {
+                OR: [
+                  { name: { contains: opts.search, mode: "insensitive" } },
+                  { email: { contains: opts.search, mode: "insensitive" } },
+                ],
+              }
+            : {}),
+        };
+        const [users, total] = await Promise.all([
+          db.user.findMany({
+            where,
+            select: { id: true, name: true, email: true },
+            orderBy: { name: "asc" },
+            skip: opts.skip,
+            take: opts.take,
+          }),
+          db.user.count({ where }),
+        ]);
+        return { results: users, total };
       },
       groupBy: "userId",
       join: { user: true },
@@ -2366,62 +2354,7 @@ export function createUserEngagementDimensionRegistry(
             users: {
               some: {
                 isDeleted: false,
-                OR: [
-                  // Users who created repository cases
-                  {
-                    repositoryCases: {
-                      some: {
-                        ...(isProjectSpecific && projectId
-                          ? { projectId: Number(projectId) }
-                          : {}),
-                        isDeleted: false,
-                      },
-                    },
-                  },
-                  // Users who executed tests
-                  {
-                    testRunResults: {
-                      some: {
-                        isDeleted: false,
-                        testRun: {
-                          ...(isProjectSpecific && projectId
-                            ? { projectId: Number(projectId) }
-                            : {}),
-                          isDeleted: false,
-                        },
-                      },
-                    },
-                  },
-                  // Users who submitted automated results
-                  {
-                    junitTestResults: {
-                      some: {
-                        testSuite: {
-                          testRun: {
-                            ...(isProjectSpecific && projectId
-                              ? { projectId: Number(projectId) }
-                              : {}),
-                            isDeleted: false,
-                          },
-                        },
-                      },
-                    },
-                  },
-                  // Users who participated in sessions
-                  {
-                    sessionResults: {
-                      some: {
-                        isDeleted: false,
-                        session: {
-                          ...(isProjectSpecific && projectId
-                            ? { projectId: Number(projectId) }
-                            : {}),
-                          isDeleted: false,
-                        },
-                      },
-                    },
-                  },
-                ],
+                id: { in: await engagedUserIds(db, projectId) },
               },
             },
           },
@@ -2446,62 +2379,7 @@ export function createUserEngagementDimensionRegistry(
               some: {
                 user: {
                   isDeleted: false,
-                  OR: [
-                    // Users who created repository cases
-                    {
-                      repositoryCases: {
-                        some: {
-                          ...(isProjectSpecific && projectId
-                            ? { projectId: Number(projectId) }
-                            : {}),
-                          isDeleted: false,
-                        },
-                      },
-                    },
-                    // Users who executed tests
-                    {
-                      testRunResults: {
-                        some: {
-                          isDeleted: false,
-                          testRun: {
-                            ...(isProjectSpecific && projectId
-                              ? { projectId: Number(projectId) }
-                              : {}),
-                            isDeleted: false,
-                          },
-                        },
-                      },
-                    },
-                    // Users who submitted automated results
-                    {
-                      junitTestResults: {
-                        some: {
-                          testSuite: {
-                            testRun: {
-                              ...(isProjectSpecific && projectId
-                                ? { projectId: Number(projectId) }
-                                : {}),
-                              isDeleted: false,
-                            },
-                          },
-                        },
-                      },
-                    },
-                    // Users who participated in sessions
-                    {
-                      sessionResults: {
-                        some: {
-                          isDeleted: false,
-                          session: {
-                            ...(isProjectSpecific && projectId
-                              ? { projectId: Number(projectId) }
-                              : {}),
-                            isDeleted: false,
-                          },
-                        },
-                      },
-                    },
-                  ],
+                  id: { in: await engagedUserIds(db, projectId) },
                 },
               },
             },

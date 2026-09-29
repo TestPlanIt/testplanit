@@ -1,10 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
+import { queryEngagementUserIds } from "~/lib/engagementUserIdsQuery";
 import {
   buildDateFilter,
   createIssueTrackingDimensionRegistry,
   createIssueTrackingMetricRegistry,
   createTestExecutionDimensionRegistry,
   createTestExecutionMetricRegistry,
+  createUserEngagementDimensionRegistry,
   createUserEngagementMetricRegistry,
   dimensionToDraggableField,
   draggableFieldToDimension,
@@ -16,6 +18,10 @@ import {
 
 vi.mock("~/lib/projectIssueIdsQuery", () => ({
   queryProjectRelevantIssueIds: vi.fn().mockResolvedValue([11, 12, 13]),
+}));
+
+vi.mock("~/lib/engagementUserIdsQuery", () => ({
+  queryEngagementUserIds: vi.fn(),
 }));
 
 describe("reportUtils", () => {
@@ -739,6 +745,115 @@ describe("reportUtils", () => {
 
       expect(rows).toHaveLength(1);
       expect(rows[0].testCaseCount).toBe(2); // cases 42 and 108205
+    });
+  });
+
+  describe("user-engagement user/role/group dimensions", () => {
+    function dimensionDb() {
+      return {
+        projectAssignment: {
+          findMany: vi.fn().mockResolvedValue([{ userId: "member" }]),
+        },
+        userProjectPermission: {
+          findMany: vi.fn().mockResolvedValue([{ userId: "granted" }]),
+        },
+        user: {
+          findMany: vi.fn().mockResolvedValue([]),
+          count: vi.fn().mockResolvedValue(0),
+        },
+        roles: { findMany: vi.fn().mockResolvedValue([]) },
+        groups: { findMany: vi.fn().mockResolvedValue([]) },
+      };
+    }
+
+    const whereOf = (fn: any) => fn.mock.calls[0][0].where;
+
+    it("scopes activity to the project and adds project members to the user list", async () => {
+      vi.mocked(queryEngagementUserIds).mockResolvedValue(["active", "member"]);
+      const db = dimensionDb();
+
+      await createUserEngagementDimensionRegistry(true).user.getValues(db, 370);
+
+      expect(queryEngagementUserIds).toHaveBeenCalledWith(db, 370);
+      expect(whereOf(db.user.findMany)).toEqual({
+        isDeleted: false,
+        id: { in: ["active", "member", "granted"] },
+      });
+    });
+
+    it("ignores the project and membership tables in cross-project mode", async () => {
+      vi.mocked(queryEngagementUserIds).mockResolvedValue(["active"]);
+      const db = dimensionDb();
+
+      await createUserEngagementDimensionRegistry(false).user.getValues(
+        db,
+        370
+      );
+
+      expect(queryEngagementUserIds).toHaveBeenCalledWith(db, undefined);
+      expect(db.projectAssignment.findMany).not.toHaveBeenCalled();
+      expect(db.userProjectPermission.findMany).not.toHaveBeenCalled();
+      expect(whereOf(db.user.findMany).id).toEqual({ in: ["active"] });
+    });
+
+    it("searches and pages the user filter picker in the database", async () => {
+      vi.mocked(queryEngagementUserIds).mockResolvedValue(["active"]);
+      const db = dimensionDb();
+      db.user.findMany.mockResolvedValue([
+        { id: "active", name: "Ada", email: "ada@example.com" },
+      ]);
+      db.user.count.mockResolvedValue(41);
+
+      const lookup = await createUserEngagementDimensionRegistry(
+        true
+      ).user.filterValues(db, 370, { search: "ad", skip: 25, take: 25 });
+
+      expect(lookup).toEqual({
+        results: [{ id: "active", name: "Ada", email: "ada@example.com" }],
+        total: 41,
+      });
+      const args = db.user.findMany.mock.calls[0][0];
+      expect(args.skip).toBe(25);
+      expect(args.take).toBe(25);
+      expect(args.where).toEqual({
+        isDeleted: false,
+        id: { in: ["active", "member", "granted"] },
+        OR: [
+          { name: { contains: "ad", mode: "insensitive" } },
+          { email: { contains: "ad", mode: "insensitive" } },
+        ],
+      });
+      expect(whereOf(db.user.count)).toEqual(args.where);
+    });
+
+    it("restores picker labels only for requested ids in scope", async () => {
+      vi.mocked(queryEngagementUserIds).mockResolvedValue(["active"]);
+      const db = dimensionDb();
+
+      await createUserEngagementDimensionRegistry(true).user.filterValues(
+        db,
+        370,
+        { ids: ["member", "stranger"], skip: 0, take: 25 }
+      );
+
+      expect(whereOf(db.user.findMany).id).toEqual({ in: ["member"] });
+    });
+
+    it("limits roles and groups to engaged users, without project members", async () => {
+      vi.mocked(queryEngagementUserIds).mockResolvedValue(["active"]);
+      const db = dimensionDb();
+      const registry = createUserEngagementDimensionRegistry(true);
+
+      await registry.role.getValues(db, 370);
+      await registry.group.getValues(db, 370);
+
+      expect(whereOf(db.roles.findMany).users).toEqual({
+        some: { isDeleted: false, id: { in: ["active"] } },
+      });
+      expect(whereOf(db.groups.findMany).assignedUsers).toEqual({
+        some: { user: { isDeleted: false, id: { in: ["active"] } } },
+      });
+      expect(db.projectAssignment.findMany).not.toHaveBeenCalled();
     });
   });
 
