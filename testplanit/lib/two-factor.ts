@@ -25,7 +25,7 @@ function getLegacyKey(): string {
 
 // Configuration options for TOTP
 const TOTP_OPTIONS = {
-  window: 1, // Allow 1 step before/after for clock drift
+  epochTolerance: 30, // Allow 1 step (30s) before/after for clock drift
 };
 
 /**

@@ -106,6 +106,37 @@ describe("Two-Factor Authentication", () => {
       expect(result).toBe(true);
     });
 
+    describe("clock drift", () => {
+      // Mid-way through a 30s time step, so no step boundary is crossed
+      // between generating and verifying.
+      const now = 1_790_000_025;
+
+      beforeEach(() => {
+        vi.useFakeTimers({ toFake: ["Date"] });
+        vi.setSystemTime(now * 1000);
+      });
+
+      afterEach(() => {
+        vi.useRealTimers();
+      });
+
+      it("accepts a token one time step either side of now", async () => {
+        const secret = generateSecret();
+
+        for (const epoch of [now - 30, now + 30]) {
+          const token = await generate({ secret, epoch });
+          expect(await verifyTOTP(token, secret)).toBe(true);
+        }
+      });
+
+      it("rejects a token two time steps old", async () => {
+        const secret = generateSecret();
+        const token = await generate({ secret, epoch: now - 60 });
+
+        expect(await verifyTOTP(token, secret)).toBe(false);
+      });
+    });
+
     it("should return false for invalid token", async () => {
       const secret = generateSecret();
 
