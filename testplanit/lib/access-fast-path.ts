@@ -27,6 +27,11 @@ import {
 import { baseDb } from "./db";
 import { rawDb } from "./rawDb";
 import { normalizeRichTextWrite } from "./richTextColumns";
+import {
+  assertValidFolderParent,
+  type FolderReader,
+} from "./folderParentGuard";
+import { ORMError, ORMErrorReason } from "@zenstackhq/orm";
 import { buildGucPayload } from "./audit/gucContext";
 
 /**
@@ -108,14 +113,21 @@ export async function tryFastPathCreate(params: {
   const data = extractCreateData(requestBody);
   if (!data) return null;
 
-  // rawDb carries no plugins, so the rich-text normalization that
-  // sideEffectsPlugin applies to every other ORM write has to happen here.
+  // rawDb carries no plugins, so the write checks sideEffectsPlugin applies to
+  // every other ORM write have to happen here.
   const modelName =
     parsedPath.model.charAt(0).toUpperCase() + parsedPath.model.slice(1);
   normalizeRichTextWrite(modelName, { data });
 
   try {
     if (!getDbModel(parsedPath.model)) return null;
+
+    await assertValidFolderParent(
+      modelName,
+      "create",
+      { data },
+      rawDb as unknown as FolderReader
+    );
 
     // The fast path skips enhance() AND the $extends injectAuditGuc hook, so
     // set the GUC explicitly inside the create's transaction — otherwise the
@@ -134,6 +146,15 @@ export async function tryFastPathCreate(params: {
     });
     return NextResponse.json({ data: result }, { status: 201 });
   } catch (err: unknown) {
+    if (
+      err instanceof ORMError &&
+      err.reason === ORMErrorReason.INVALID_INPUT
+    ) {
+      return NextResponse.json(
+        { error: { message: err.message, rejectedByValidation: true } },
+        { status: 422 }
+      );
+    }
     // Mirror ZenStack's error shape so clients see the same behaviour.
     const message =
       err instanceof Error ? err.message : "Internal server error";

@@ -43,6 +43,10 @@ import {
   type FieldTypeReader,
 } from "~/lib/richTextColumns";
 import { encrypt } from "@/utils/encryption";
+import {
+  assertValidFolderParent,
+  type FolderReader,
+} from "~/lib/folderParentGuard";
 import { resolveStoredCredentials } from "~/lib/integrations/credentials";
 
 /** Write operations whose args can carry a rich-text column value. */
@@ -481,6 +485,15 @@ export const sideEffectsPlugin = definePlugin(schema, {
           client.$unuseAll() as unknown as FieldTypeReader
         );
       }
+    }
+
+    if (model === "RepositoryFolders") {
+      await assertValidFolderParent(
+        model,
+        operation,
+        args,
+        client.$unuseAll() as unknown as FolderReader
+      );
     }
 
     if (
