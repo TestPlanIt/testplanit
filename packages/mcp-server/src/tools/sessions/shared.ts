@@ -4,6 +4,8 @@ import type {
   SessionResultsWhereInput,
   SessionsInclude,
 } from "@db/input";
+import { postHostJson } from "../../api.js";
+import type { EnvConfig } from "../../env.js";
 import { denormalizeCustomFields } from "../cases/shared.js";
 import { proseMirrorToMarkdown } from "../../richText.js";
 
@@ -368,4 +370,34 @@ export function mapFinding(raw: RawFinding) {
     priority: raw.priority,
     externalSystem: raw.integration?.provider ?? null,
   };
+}
+
+export type SessionVersionRecord =
+  | { recorded: true; version: number }
+  | { recorded: false; reason: string };
+
+/**
+ * Snapshot the session into its version history, as the web UI does on
+ * create and edit (`bumpVersion` for an edit). Never throws: the session is
+ * already written, so a host without the versions route is reported in the
+ * result instead of failing the call.
+ */
+export async function recordSessionVersion(
+  sessionId: number,
+  bumpVersion: boolean,
+  env: EnvConfig,
+): Promise<SessionVersionRecord> {
+  try {
+    const out = await postHostJson<{ version?: { version?: number } }>(
+      `/api/sessions/${sessionId}/versions`,
+      bumpVersion ? { bumpVersion: true } : {},
+      env,
+    );
+    return { recorded: true, version: out.version?.version ?? 0 };
+  } catch (err) {
+    return {
+      recorded: false,
+      reason: err instanceof Error ? err.message : String(err),
+    };
+  }
 }

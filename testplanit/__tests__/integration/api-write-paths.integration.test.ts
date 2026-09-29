@@ -19,6 +19,7 @@ import { baseDb } from "~/lib/db";
 import { getAuthDb } from "~/lib/zenstack";
 import { createRawDbClient } from "~/lib/rawDbClient";
 import { loadTemplateData } from "~/lib/services/jira-panel-generation";
+import { createSessionVersionInTransaction } from "~/lib/services/sessionVersionService";
 import { persistGeneratedTestCases } from "~/lib/services/testCaseImport";
 
 const RUN_INTEGRATION = process.env.RUN_DB_INTEGRATION === "1";
@@ -518,6 +519,84 @@ describeIntegration("API write paths (live DB)", () => {
         await raw.rolePermission.deleteMany({ where: { roleId: role.id } });
         await raw.roles.deleteMany({ where: { id: role.id } });
         await raw.caseFields.deleteMany({ where: { id: field.id } });
+      }
+    });
+  });
+
+  describe("session versions", () => {
+    it("snapshots a session, then a bumped edit, from the database", async () => {
+      const state = await raw.workflows.findFirst({
+        where: { scope: "SESSIONS", isEnabled: true, isDeleted: false },
+        select: { id: true, name: true },
+      });
+      if (!state) throw new Error("Test prerequisite: no SESSIONS state");
+      const tag = await raw.tags.create({
+        data: { name: `${STAMP}-session-tag` },
+        select: { id: true },
+      });
+      const session = await raw.sessions.create({
+        data: {
+          name: `${STAMP}-session`,
+          projectId,
+          templateId,
+          stateId: state.id,
+          createdById: userId,
+          tags: { connect: [{ id: tag.id }] },
+        },
+        select: { id: true },
+      });
+
+      try {
+        const v1 = await baseDb.$transaction((tx) =>
+          createSessionVersionInTransaction(tx as never, session.id, {
+            actor: { id: userId, name: "Integration Runner" },
+          })
+        );
+        expect(v1.version).toBe(1);
+
+        await raw.sessions.update({
+          where: { id: session.id },
+          data: { name: `${STAMP}-session-renamed` },
+        });
+        const v2 = await baseDb.$transaction((tx) =>
+          createSessionVersionInTransaction(tx as never, session.id, {
+            bumpVersion: true,
+            actor: { id: userId, name: "Integration Runner" },
+          })
+        );
+        expect(v2.version).toBe(2);
+
+        const rows = await raw.sessionVersions.findMany({
+          where: { sessionId: session.id },
+          orderBy: { version: "asc" },
+          select: {
+            version: true,
+            name: true,
+            stateName: true,
+            templateName: true,
+            tags: true,
+          },
+        });
+        expect(rows.map((r) => [r.version, r.name])).toEqual([
+          [1, `${STAMP}-session`],
+          [2, `${STAMP}-session-renamed`],
+        ]);
+        expect(rows[0].stateName).toBe(state.name);
+        expect(rows[0].templateName).toBe("Default Template");
+        expect(JSON.parse(rows[0].tags as string)).toEqual([
+          { id: tag.id, name: `${STAMP}-session-tag` },
+        ]);
+        const current = await raw.sessions.findUnique({
+          where: { id: session.id },
+          select: { currentVersion: true },
+        });
+        expect(current?.currentVersion).toBe(2);
+      } finally {
+        await raw.sessionVersions.deleteMany({
+          where: { sessionId: session.id },
+        });
+        await raw.sessions.deleteMany({ where: { id: session.id } });
+        await raw.tags.deleteMany({ where: { id: tag.id } });
       }
     });
   });

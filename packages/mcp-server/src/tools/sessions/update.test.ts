@@ -3,10 +3,10 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-vi.mock("../../api.js", () => ({ zenstack: vi.fn() }));
+vi.mock("../../api.js", () => ({ zenstack: vi.fn(), postHostJson: vi.fn() }));
 vi.mock("../cases/shared.js", async (orig) => ({ ...(await orig<object>()), resolveTagIds: vi.fn() }));
 
-import { zenstack } from "../../api.js";
+import { postHostJson, zenstack } from "../../api.js";
 import { registerSessionsUpdate } from "./update.js";
 
 const mockZenstack = vi.mocked(zenstack);
@@ -68,5 +68,19 @@ describe("testplanit_sessions_update completion", () => {
   it("leaves the state alone when reopening", async () => {
     await call({ sessionId: 5, isCompleted: false });
     expect(updateData()).toEqual({ isCompleted: false, completedAt: null });
+  });
+
+  it("records a bumped version of the edited session", async () => {
+    vi.mocked(postHostJson).mockResolvedValueOnce({ version: { version: 4 } });
+    const result = await call({ sessionId: 5, isCompleted: false });
+
+    expect(vi.mocked(postHostJson).mock.calls[0]!.slice(0, 2)).toEqual([
+      "/api/sessions/5/versions",
+      { bumpVersion: true },
+    ]);
+    expect((result.structuredContent as any)?.version ?? JSON.parse((result.content as any)[0].text).version).toEqual({
+      recorded: true,
+      version: 4,
+    });
   });
 });

@@ -13,6 +13,7 @@ type WorkflowsOrderByWithRelationInput = NonNullable<
 import {
   SESSION_DETAIL_INCLUDE,
   mapSessionDetail,
+  recordSessionVersion,
   type RawSessionDetail,
 } from "./shared.js";
 
@@ -141,6 +142,8 @@ export function registerSessionsCreate(
           deps.env,
         );
 
+        const version = await recordSessionVersion(created.id, false, deps.env);
+
         const raw = await zenstack<RawSessionDetail | null>(
           "sessions",
           "findUnique",
@@ -165,7 +168,7 @@ export function registerSessionsCreate(
           sessionResults: sessionResultsRaw.slice(0, SESSION_RESULTS_INLINE_CAP),
         };
 
-        const detail = mapSessionDetail(trimmedRaw, { truncated });
+        const detail = { ...mapSessionDetail(trimmedRaw, { truncated }), version };
         return {
           content: [{ type: "text", text: JSON.stringify(detail) }],
           structuredContent: detail as unknown as Record<string, unknown>,
