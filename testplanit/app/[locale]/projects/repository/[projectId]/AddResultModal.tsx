@@ -954,7 +954,6 @@ export function AddResultModal({
         // Handle bulk result submission
         const bulkPromises = selectedCases.map(async (selectedCase) => {
           if (!selectedCase.testRunCaseId) return;
-          const caseVersion = 1;
 
           const result = await submitTestRunResult({
             testRunId,
@@ -964,7 +963,7 @@ export function AddResultModal({
             evidence: values.evidence as any,
             elapsed: elapsedInSeconds,
             attempt: values.attempt as number,
-            testRunCaseVersion: caseVersion,
+            testRunCaseVersion: selectedCase.currentVersion,
             issueIds: issueIdsToConnect,
             stepIssueCount,
             inProgressStateId: inProgressWorkflow?.id ?? null,
