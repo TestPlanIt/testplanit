@@ -93,6 +93,7 @@ describe("registerRunResultsCreate", () => {
     mockZenstack.mockResolvedValueOnce([{ id: 5 }]);
     // 3. testRunResults.count
     mockZenstack.mockResolvedValueOnce(2);
+    mockZenstack.mockResolvedValueOnce({ id: 11 }); // in-progress run state
     // submit-result via fetch
     mockFetch.mockResolvedValueOnce(okSubmitResponse(999));
     // 4. testRunResults.findUnique (re-fetch)
@@ -116,10 +117,92 @@ describe("registerRunResultsCreate", () => {
     expect(body.fieldValues).toBeUndefined();
   });
 
+  it("uses test-run statuses, moves the run to In Progress, and links issues", async () => {
+    mockZenstack.mockResolvedValueOnce(RUN_CASE);
+    mockZenstack.mockResolvedValueOnce([{ id: 5 }]);
+    mockZenstack.mockResolvedValueOnce(0);
+    mockZenstack.mockResolvedValueOnce({ id: 11 }); // in-progress run state
+    mockFetch.mockResolvedValueOnce(okSubmitResponse(999));
+    mockZenstack.mockResolvedValueOnce(makeRawDetail());
+
+    const { client } = await setupClient();
+    await client.callTool({
+      name: "testplanit_test_run_results_create",
+      arguments: { testRunCaseId: 50, statusName: "Failed", issueIds: [3, 4] },
+    });
+
+    const statusWhere = (mockZenstack.mock.calls[1]![2] as any).where;
+    expect(statusWhere.scope).toEqual({
+      some: { scope: { name: "Test Run" } },
+    });
+    const stateWhere = (mockZenstack.mock.calls[3]![2] as any).where;
+    expect(stateWhere).toMatchObject({ scope: "RUNS", workflowType: "IN_PROGRESS" });
+    const body = JSON.parse(mockFetch.mock.calls[0]?.[1].body as string);
+    expect(body).toMatchObject({ inProgressStateId: 11, issueIds: [3, 4] });
+  });
+
+  it("refuses a case-level result for a data-driven case", async () => {
+    mockZenstack.mockResolvedValueOnce({ ...RUN_CASE, totalIterations: 3 });
+
+    const { client } = await setupClient();
+    const result = await client.callTool({
+      name: "testplanit_test_run_results_create",
+      arguments: { testRunCaseId: 50, statusName: "Passed" },
+    });
+
+    expect(result.isError).toBe(true);
+    expect(JSON.stringify(result.content)).toContain("iterationId");
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("records a result against one iteration, counting attempts per iteration", async () => {
+    mockZenstack.mockResolvedValueOnce({ ...RUN_CASE, totalIterations: 3 });
+    mockZenstack.mockResolvedValueOnce({ id: 7 }); // iteration belongs to the case
+    mockZenstack.mockResolvedValueOnce([{ id: 5 }]); // status
+    mockZenstack.mockResolvedValueOnce(1); // prior results for this iteration
+    mockZenstack.mockResolvedValueOnce({ id: 11 }); // in-progress run state
+    mockFetch.mockResolvedValueOnce(okSubmitResponse(999));
+    mockZenstack.mockResolvedValueOnce(makeRawDetail());
+
+    const { client } = await setupClient();
+    const result = await client.callTool({
+      name: "testplanit_test_run_results_create",
+      arguments: { testRunCaseId: 50, statusName: "Passed", iterationId: 7 },
+    });
+
+    expect(result.isError).toBeFalsy();
+    const iterationLookup = mockZenstack.mock.calls[1]!;
+    expect(iterationLookup[0]).toBe("testRunCaseIteration");
+    expect((iterationLookup[2] as any).where).toEqual({
+      id: 7,
+      testRunCaseId: 50,
+      isDeleted: false,
+    });
+    const countWhere = (mockZenstack.mock.calls[3]![2] as any).where;
+    expect(countWhere.iterationId).toBe(7);
+    const body = JSON.parse(mockFetch.mock.calls[0]?.[1].body as string);
+    expect(body).toMatchObject({ iterationId: 7, attempt: 2 });
+  });
+
+  it("refuses an iteration that belongs to another case", async () => {
+    mockZenstack.mockResolvedValueOnce({ ...RUN_CASE, totalIterations: 3 });
+    mockZenstack.mockResolvedValueOnce(null);
+
+    const { client } = await setupClient();
+    const result = await client.callTool({
+      name: "testplanit_test_run_results_create",
+      arguments: { testRunCaseId: 50, statusName: "Passed", iterationId: 99 },
+    });
+
+    expect(result.isError).toBe(true);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
   it("records the case's current version as the version executed", async () => {
     mockZenstack.mockResolvedValueOnce(RUN_CASE);
     mockZenstack.mockResolvedValueOnce([{ id: 5 }]);
     mockZenstack.mockResolvedValueOnce(0);
+    mockZenstack.mockResolvedValueOnce({ id: 11 }); // in-progress run state
     mockFetch.mockResolvedValueOnce(okSubmitResponse(999));
     mockZenstack.mockResolvedValueOnce(makeRawDetail());
 
@@ -141,6 +224,7 @@ describe("registerRunResultsCreate", () => {
     mockZenstack.mockResolvedValueOnce(RUN_CASE);
     mockZenstack.mockResolvedValueOnce([{ id: 5 }]);
     mockZenstack.mockResolvedValueOnce(0);
+    mockZenstack.mockResolvedValueOnce({ id: 11 }); // in-progress run state
     mockFetch.mockResolvedValueOnce(okSubmitResponse(999));
     mockZenstack.mockResolvedValueOnce(makeRawDetail({ elapsed: 95 }));
 
@@ -177,6 +261,7 @@ describe("registerRunResultsCreate", () => {
     mockZenstack.mockResolvedValueOnce(RUN_CASE);
     mockZenstack.mockResolvedValueOnce([{ id: 5 }]);
     mockZenstack.mockResolvedValueOnce(0);
+    mockZenstack.mockResolvedValueOnce({ id: 11 }); // in-progress run state
     mockFetch.mockResolvedValueOnce(okSubmitResponse(999));
     mockZenstack.mockResolvedValueOnce(makeRawDetail());
 
@@ -211,6 +296,7 @@ describe("registerRunResultsCreate", () => {
       },
     ]);
     mockZenstack.mockResolvedValueOnce(0); // count
+    mockZenstack.mockResolvedValueOnce({ id: 11 }); // in-progress run state
     mockFetch.mockResolvedValueOnce(okSubmitResponse(999));
     mockZenstack.mockResolvedValueOnce(makeRawDetail());
 
@@ -248,6 +334,7 @@ describe("registerRunResultsCreate", () => {
       },
     ]);
     mockZenstack.mockResolvedValueOnce(0);
+    mockZenstack.mockResolvedValueOnce({ id: 11 }); // in-progress run state
     mockFetch.mockResolvedValueOnce(okSubmitResponse(999));
     mockZenstack.mockResolvedValueOnce(makeRawDetail());
 
@@ -300,6 +387,7 @@ describe("registerRunResultsCreate", () => {
     mockZenstack.mockResolvedValueOnce(RUN_CASE);
     mockZenstack.mockResolvedValueOnce([{ id: 5 }]);
     mockZenstack.mockResolvedValueOnce(0); // count (no fieldValues path, no template lookup)
+    mockZenstack.mockResolvedValueOnce({ id: 11 }); // in-progress run state
     mockFetch.mockResolvedValueOnce(
       errorSubmitResponse(400, {
         error: "A required result field is missing a value",
