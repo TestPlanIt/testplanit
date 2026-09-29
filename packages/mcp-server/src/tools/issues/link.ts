@@ -123,6 +123,116 @@ async function unlinkCases(
   );
 }
 
+interface ResultIssueState {
+  id: number;
+  status: { isFailure: boolean } | null;
+  issues: Array<{ id: number }>;
+  stepResults: Array<{ id: number; issues: Array<{ id: number }> }>;
+  testRun: {
+    project: {
+      requireIssueOnFailure: boolean;
+      projectIntegrations: Array<{ id: number }>;
+    };
+  };
+}
+
+/**
+ * Refuse to unlink the last issue from a failed result when its project
+ * requires an issue on failure — the check the web UI's edit-result route
+ * applies. Issues on the result and on its step results both count.
+ */
+async function assertUnlinkKeepsRequiredIssue(
+  issueId: number,
+  entityType: "testRunResult" | "testRunStepResult",
+  entityIds: number[],
+  env: EnvConfig,
+): Promise<void> {
+  const resultIds =
+    entityType === "testRunResult"
+      ? entityIds
+      : [
+          ...new Set(
+            (
+              (await zenstack<Array<{ testRunResultId: number }>>(
+                "testRunStepResults",
+                "findMany",
+                {
+                  where: { id: { in: entityIds } },
+                  select: { testRunResultId: true },
+                },
+                env,
+              )) ?? []
+            ).map((r) => r.testRunResultId),
+          ),
+        ];
+  if (resultIds.length === 0) return;
+
+  const results =
+    (await zenstack<ResultIssueState[]>(
+      "testRunResults",
+      "findMany",
+      {
+        where: { id: { in: resultIds } },
+        select: {
+          id: true,
+          status: { select: { isFailure: true } },
+          issues: { select: { id: true } },
+          stepResults: {
+            select: { id: true, issues: { select: { id: true } } },
+          },
+          testRun: {
+            select: {
+              project: {
+                select: {
+                  requireIssueOnFailure: true,
+                  projectIntegrations: {
+                    where: {
+                      isActive: true,
+                      integration: { status: "ACTIVE" },
+                    },
+                    select: { id: true },
+                    take: 1,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      env,
+    )) ?? [];
+
+  const unlinking = new Set(entityIds);
+  for (const r of results) {
+    const project = r.testRun.project;
+    if (
+      !project.requireIssueOnFailure ||
+      project.projectIntegrations.length === 0 ||
+      !r.status?.isFailure
+    ) {
+      continue;
+    }
+    const resultLevel = r.issues.filter(
+      (i) => !(entityType === "testRunResult" && unlinking.has(r.id) && i.id === issueId),
+    ).length;
+    const stepLevel = r.stepResults.reduce(
+      (sum, sr) =>
+        sum +
+        sr.issues.filter(
+          (i) =>
+            !(entityType === "testRunStepResult" && unlinking.has(sr.id) && i.id === issueId),
+        ).length,
+      0,
+    );
+    if (resultLevel + stepLevel === 0) {
+      throw new TestPlanItHttpError(
+        `Result ${r.id} is a failure and its project requires a linked issue; unlinking issue ${issueId} would leave it with none.`,
+        { statusCode: 400, code: "ISSUE_REQUIRED_ON_FAILURE" },
+      );
+    }
+  }
+}
+
 interface IssueTargetInput {
   issueId?: number;
   externalKey?: string;
@@ -243,6 +353,17 @@ export function registerIssuesUnlink(
     },
     async (input) => {
       try {
+        if (
+          input.entityType === "testRunResult" ||
+          input.entityType === "testRunStepResult"
+        ) {
+          await assertUnlinkKeepsRequiredIssue(
+            input.issueId,
+            input.entityType,
+            input.entityIds,
+            deps.env,
+          );
+        }
         if (input.entityType === "testCase") {
           await unlinkCases(input.issueId, input.entityIds, deps.env);
         } else {

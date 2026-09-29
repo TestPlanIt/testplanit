@@ -323,4 +323,62 @@ describe("registerIssuesUnlink", () => {
     const text = JSON.parse((result.content[0] as any).text);
     expect(text.unlinked).toBe(3);
   });
+
+  describe("unlinking from results that require an issue on failure", () => {
+    const failedResult = (issues: number[], stepIssues: number[] = []) => ({
+      id: 5,
+      status: { isFailure: true },
+      issues: issues.map((id) => ({ id })),
+      stepResults: [{ id: 9, issues: stepIssues.map((id) => ({ id })) }],
+      testRun: {
+        project: { requireIssueOnFailure: true, projectIntegrations: [{ id: 1 }] },
+      },
+    });
+
+    it("refuses to remove the last issue from a failed result", async () => {
+      mockZenstack.mockResolvedValueOnce([failedResult([7978])]);
+      const { client } = await setupUnlinkClient();
+      const result = await client.callTool({
+        name: "testplanit_issues_unlink",
+        arguments: { issueId: 7978, entityType: "testRunResult", entityIds: [5] },
+      });
+
+      expect(result.isError).toBe(true);
+      expect(JSON.stringify(result.content)).toContain("ISSUE_REQUIRED_ON_FAILURE");
+      expect(
+        mockZenstack.mock.calls.some((c) => c[0] === "issue" && c[1] === "update"),
+      ).toBe(false);
+    });
+
+    it("allows it while a step result still carries an issue", async () => {
+      mockZenstack.mockResolvedValueOnce([failedResult([7978], [11])]);
+      mockZenstack.mockResolvedValueOnce({ id: 7978 });
+      const { client } = await setupUnlinkClient();
+      const result = await client.callTool({
+        name: "testplanit_issues_unlink",
+        arguments: { issueId: 7978, entityType: "testRunResult", entityIds: [5] },
+      });
+
+      expect(result.isError).toBeFalsy();
+    });
+
+    it("does not check results in projects without the requirement", async () => {
+      mockZenstack.mockResolvedValueOnce([
+        {
+          ...failedResult([7978]),
+          testRun: {
+            project: { requireIssueOnFailure: false, projectIntegrations: [] },
+          },
+        },
+      ]);
+      mockZenstack.mockResolvedValueOnce({ id: 7978 });
+      const { client } = await setupUnlinkClient();
+      const result = await client.callTool({
+        name: "testplanit_issues_unlink",
+        arguments: { issueId: 7978, entityType: "testRunResult", entityIds: [5] },
+      });
+
+      expect(result.isError).toBeFalsy();
+    });
+  });
 });
