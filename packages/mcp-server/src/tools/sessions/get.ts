@@ -23,7 +23,7 @@ export function registerSessionsGet(
     "testplanit_sessions_get",
     {
       description:
-        "Fetch a single session by id with denormalized header (state/createdBy/assignedTo/template/configuration/milestone/tags), session-level linked issues, mission and note (as Markdown), customFields (flat name-keyed dict from sessionFieldValues), and sessionResults inline up to 100 (D7-12 — when more exist, `truncated: true` is set; call testplanit_session_results_list({sessionId}) with cursor pagination for the full set). (per SESS-02 / D7-12)",
+        "Fetch a single session by id with denormalized header (state/createdBy/assignedTo/template/configuration/milestone/tags), session-level linked issues, mission and note (as Markdown), customFields (flat name-keyed dict from sessionFieldValues), and sessionResults inline up to 100 (when more exist, `truncated: true` is set; call testplanit_session_results_list({sessionId}) with cursor pagination for the full set).",
       inputSchema: {
         sessionId: z.number().int().positive(),
       },

@@ -27,7 +27,7 @@ export function registerCasesUpdate(
     "testplanit_cases_update",
     {
       description:
-        "Update a test case (partial). Provide only the fields to change: name, automated, steps (replaces all current steps), tags (replaces the tag set), customFields (upserts each), stateName, folderId. Returns the full denormalized case detail (CASE-02 shape). (per D-05 / CASE-04)",
+        "Update a test case (partial). Provide only the fields to change: name, automated, steps (replaces all current steps), tags (replaces the tag set), customFields (upserts each), stateName, folderId. Returns the full denormalized case detail (same shape as testplanit_cases_get).",
       inputSchema: {
         caseId: z.number().int().positive().describe("ID of the test case to update."),
         name: z.string().min(1).max(2000).optional().describe("New test case name."),

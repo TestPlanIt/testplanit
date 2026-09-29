@@ -142,7 +142,7 @@ export function registerCasesGet(server: McpServer, deps: CasesGetDeps): void {
     "testplanit_cases_get",
     {
       description:
-        "Fetch a single test case by id with full denormalized details — steps (Markdown, so a step can be edited and written back without losing its formatting), custom fields (flat dict), folder breadcrumb, tags, linked issues, linked automated tests. (per D-05 / CASE-02)",
+        "Fetch a single test case by id with full denormalized details — steps (Markdown, so a step can be edited and written back without losing its formatting), custom fields (flat dict), folder breadcrumb, tags, linked issues, linked automated tests.",
       inputSchema: {
         caseId: z.number().int().positive(),
       },

@@ -77,10 +77,10 @@ export function registerSessionsFindings(
     "testplanit_sessions_findings_list",
     {
       description:
-        "List findings — Issue rows linked to a session OR retrieve the cross-cutting view of one issue across sessions/results. Provide EXACTLY ONE of `sessionId` or `issueId` (XOR; per D7-11). " +
-        "sessionId mode returns { session: {id,name}, findings: Issue[], truncated }. Findings are issues linked to the session OR to any of the session's results (Issue.sessions OR Issue.sessionResults.session per D7-11). Capped at 500 rows; truncated:true indicates overflow. " +
+        "List findings — Issue rows linked to a session OR retrieve the cross-cutting view of one issue across sessions/results. Provide EXACTLY ONE of `sessionId` or `issueId` (exactly one). " +
+        "sessionId mode returns { session: {id,name}, findings: Issue[], truncated }. Findings are issues linked to the session OR to any of the session's results (Issue.sessions OR Issue.sessionResults.session). Capped at 500 rows; truncated:true indicates overflow. " +
         "issueId mode returns { issue: {...full Issue with externalSystem}, linkedSessions: [...], linkedSessionResults: [...] } — use this to ask 'where did this issue surface?'. " +
-        "Note: issueKey (e.g. JIRA-123) is intentionally NOT supported in Phase 7 because Issue.externalKey is not globally unique; resolve external keys via the upcoming Phase-8 issue tools first. (per SESS-05 / D7-11)",
+        "Note: issueKey (e.g. JIRA-123) is not accepted because Issue.externalKey is not globally unique; resolve a key to an issueId with testplanit_issues_find_by_key or testplanit_issues_resolve first.",
       inputSchema: {
         sessionId: z.number().int().positive().optional(),
         issueId: z.number().int().positive().optional(),
