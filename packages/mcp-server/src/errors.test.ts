@@ -120,6 +120,17 @@ describe("mapHttpErrorToToolResult", () => {
       expect(result.content[0].text).toContain("tpi_***");
     });
 
+    it("keeps an unmapped host error code in the fallback text", () => {
+      // The completion gate answers 403 with only a code in the body.
+      const err = new TestPlanItHttpError("HTTP 403 from /api/model/sessions/update", {
+        statusCode: 403,
+        code: "COMPLETE_NOT_PERMITTED",
+      });
+      expect(mapHttpErrorToToolResult(err).content[0].text).toBe(
+        "Request failed: HTTP 403 from /api/model/sessions/update (HTTP 403, COMPLETE_NOT_PERMITTED)",
+      );
+    });
+
     it("WR-03: redacts tpi_* substrings on the network/runtime Error fallback", () => {
       const err = new Error("ECONNREFUSED — token tpi_supersecretvalue rejected");
       const result = mapHttpErrorToToolResult(err);
