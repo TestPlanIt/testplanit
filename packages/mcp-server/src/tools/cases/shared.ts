@@ -30,7 +30,9 @@ export async function resolveTagIds(
     const result = await lookup({ type: "tag", name: t, createIfMissing: true }, env);
     out.push(result.id);
   }
-  return out;
+  // Names resolve case-insensitively, so ["Smoke", "smoke"] — or an id plus
+  // its name — would otherwise write the same case-tag link twice and fail.
+  return [...new Set(out)];
 }
 
 /**

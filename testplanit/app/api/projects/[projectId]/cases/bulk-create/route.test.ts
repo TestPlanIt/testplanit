@@ -28,12 +28,16 @@ vi.mock("~/lib/db", () => ({
     repositoryFolders: { findFirst: vi.fn() },
     workflows: { findFirst: vi.fn() },
     repositoryCases: { findFirst: vi.fn() },
-    tags: { upsert: vi.fn() },
+    tags: { findMany: vi.fn() },
   },
 }));
 
 vi.mock("~/lib/services/jira-panel-generation", () => ({
   loadTemplateData: vi.fn(),
+}));
+
+vi.mock("~/lib/services/tagResolution", () => ({
+  resolveTagByName: vi.fn(),
 }));
 
 vi.mock("~/lib/services/projectPermissions", () => ({
@@ -59,6 +63,7 @@ vi.mock("~/lib/services/resolveIssueKeys", () => ({
 
 import { getServerSession } from "next-auth";
 import { userCanAddEditArea } from "~/lib/services/projectPermissions";
+import { resolveTagByName } from "~/lib/services/tagResolution";
 import {
   authenticateApiTokenForMethod,
   extractBearerToken,
@@ -144,9 +149,14 @@ beforeEach(() => {
     name: "Draft",
   });
   (baseDb.repositoryCases.findFirst as any).mockResolvedValue({ order: 4 });
-  (baseDb.tags.upsert as any).mockImplementation(async ({ where }: any) => ({
-    id: where.name === "Regression" ? 50 : 51,
+  (resolveTagByName as any).mockImplementation(async (name: string) => ({
+    id: name === "Regression" ? 50 : 51,
+    name,
+    created: false,
   }));
+  (baseDb.tags.findMany as any).mockImplementation(async ({ where }: any) =>
+    where.id.in.filter((id: number) => id !== 999).map((id: number) => ({ id }))
+  );
   (resolveIssueKeys as any).mockResolvedValue(new Map());
   importerEchoSuccess();
 });
@@ -361,12 +371,45 @@ describe("Bulk Create API Route", () => {
       const res = await POST(req, ctx);
       expect(res.status).toBe(200);
 
-      // "Regression" was upserted to id 50; combined with explicit id 4.
+      // "Regression" resolved to id 50; combined with explicit id 4.
       const importInput = (persistGeneratedTestCases as any).mock.calls[0][0];
       const tc = importInput.testCases[0];
       expect(tc.steps).toEqual([{ step: "do x", expectedResult: "y" }]);
       expect(tc.tagIds).toEqual([4, 50]);
       expect(importInput.autoGenerateTags).toBe(false);
+    });
+
+    it("links a tag named twice, by id and by name, once", async () => {
+      const [req, ctx] = createRequest({
+        folderId: 12,
+        cases: [{ name: "A", tags: [50, "Regression", " Regression "] }],
+      });
+      await POST(req, ctx);
+
+      const tc = (persistGeneratedTestCases as any).mock.calls[0][0]
+        .testCases[0];
+      expect(tc.tagIds).toEqual([50]);
+    });
+
+    it("fails only the case citing a tag id that does not exist", async () => {
+      const [req, ctx] = createRequest({
+        folderId: 12,
+        cases: [
+          { name: "A", tags: [999] },
+          { name: "B", tags: [4] },
+        ],
+      });
+      const res = await POST(req, ctx);
+      const data = await res.json();
+
+      expect(data.results[0]).toMatchObject({
+        name: "A",
+        status: "error",
+        error: "Tag id(s) not found: 999.",
+      });
+      const imported = (persistGeneratedTestCases as any).mock.calls[0][0]
+        .testCases;
+      expect(imported.map((c: any) => c.name)).toEqual(["B"]);
     });
 
     it("groups cases by (folderId, stateName) — one importer call per group", async () => {

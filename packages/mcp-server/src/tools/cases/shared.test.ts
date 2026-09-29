@@ -7,14 +7,16 @@ import {
   mapCaseDetail,
   lastUpdatedAtFromRaw,
   resolveLatestResult,
+  resolveTagIds,
 } from "./shared.js";
 import { TestPlanItHttpError } from "../../http.js";
 
 vi.mock("../../api.js", () => ({
   zenstack: vi.fn(),
+  lookup: vi.fn(),
 }));
 
-import { zenstack } from "../../api.js";
+import { lookup, zenstack } from "../../api.js";
 
 const mockZenstack = vi.mocked(zenstack);
 
@@ -22,6 +24,16 @@ const mockEnv = {
   apiUrl: "https://testplanit.example.com",
   apiToken: "tpi_testtoken",
 };
+
+// ── resolveTagIds ──────────────────────────────────────────────────────────
+
+describe("resolveTagIds", () => {
+  it("returns each tag once, whether named twice or by id and name", async () => {
+    vi.mocked(lookup).mockResolvedValue({ id: 12, name: "Smoke" } as never);
+    const ids = await resolveTagIds([12, "Smoke", "smoke"], mockEnv);
+    expect(ids).toEqual([12]);
+  });
+});
 
 // ── extractProseMirrorText ─────────────────────────────────────────────────
 

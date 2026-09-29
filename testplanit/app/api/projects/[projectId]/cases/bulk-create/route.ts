@@ -6,6 +6,7 @@ import { withAuditContext } from "~/lib/auditContextWrappers";
 import { baseDb } from "~/lib/db";
 import { loadTemplateData } from "~/lib/services/jira-panel-generation";
 import { userCanAddEditArea } from "~/lib/services/projectPermissions";
+import { resolveTagByName } from "~/lib/services/tagResolution";
 import {
   IssueKeyResolutionError,
   resolveIssueKeys,
@@ -203,14 +204,8 @@ export const POST = withAuditContext(
         }
       }
       for (const name of allTagNames) {
-        if (!name) continue;
-        const tag = await baseDb.tags.upsert({
-          where: { name },
-          create: { name, isDeleted: false },
-          update: {},
-          select: { id: true },
-        });
-        tagNameToId.set(name, tag.id);
+        const tag = await resolveTagByName(name, { createIfMissing: true });
+        if (tag) tagNameToId.set(name, tag.id);
       }
 
       // ── Pre-resolve all issue keys to ids once ───────────────────────────
@@ -274,9 +269,44 @@ export const POST = withAuditContext(
         withResolvableIssues.push(c);
       }
 
+      // ── Numeric tag ids must name a live tag ──────────────────────────────
+      // An unknown id failed the join insert; a deleted one was linked but
+      // hidden in the UI while still showing in the version snapshot.
+      const numericTagIds = new Set(
+        withResolvableIssues.flatMap((c) =>
+          (c.tags ?? []).filter((t): t is number => typeof t === "number")
+        )
+      );
+      const liveTagIds = new Set(
+        numericTagIds.size > 0
+          ? (
+              await baseDb.tags.findMany({
+                where: { id: { in: [...numericTagIds] }, isDeleted: false },
+                select: { id: true },
+              })
+            ).map((t) => t.id)
+          : []
+      );
+      const withValidTags: IndexedCase[] = [];
+      for (const c of withResolvableIssues) {
+        const missing = (c.tags ?? []).filter(
+          (t): t is number => typeof t === "number" && !liveTagIds.has(t)
+        );
+        if (missing.length > 0) {
+          resultsById.set(c.__id, {
+            id: c.__id,
+            name: c.name,
+            status: "error",
+            error: `Tag id(s) not found: ${missing.join(", ")}.`,
+          });
+          continue;
+        }
+        withValidTags.push(c);
+      }
+
       // ── Group valid cases by effective (folderId, stateName) ──────────────
       const groups = new Map<string, IndexedCase[]>();
-      for (const c of withResolvableIssues) {
+      for (const c of withValidTags) {
         const folderId = c.folderId ?? data.folderId;
         const stateName = c.stateName ?? data.stateName ?? "";
         const key = `${folderId}::${stateName}`;
@@ -345,14 +375,10 @@ export const POST = withAuditContext(
         });
 
         const importCases: ImportInput["testCases"] = groupCases.map((c) => {
-          const tagIds: number[] = [];
+          const tagIds = new Set<number>();
           for (const t of c.tags ?? []) {
-            if (typeof t === "number") {
-              tagIds.push(t);
-            } else {
-              const id = tagNameToId.get(t.trim());
-              if (id != null) tagIds.push(id);
-            }
+            const id = typeof t === "number" ? t : tagNameToId.get(t.trim());
+            if (id != null) tagIds.add(id);
           }
           const steps = c.steps?.map((s) => ({
             step: s.text,
@@ -363,7 +389,7 @@ export const POST = withAuditContext(
             id: c.__id,
             name: c.name,
             fieldValues: c.customFields ?? {},
-            ...(tagIds.length > 0 ? { tagIds } : {}),
+            ...(tagIds.size > 0 ? { tagIds: [...tagIds] } : {}),
             ...(steps ? { steps } : {}),
             ...(issueIds?.length ? { issueIds } : {}),
           };
