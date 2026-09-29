@@ -33,9 +33,15 @@ export function registerSessionResultsGet(
       try {
         const raw = await zenstack<RawSessionResultDetail | null>(
           "sessionResults",
-          "findUnique",
+          "findFirst",
           {
-            where: { id: input.resultId },
+            // Deleted results, and results of a trashed session, read as not
+            // found.
+            where: {
+              id: input.resultId,
+              isDeleted: false,
+              session: { isDeleted: false },
+            },
             // SESSION_RESULT_DETAIL_INCLUDE (07-01) ships:
             //   - status / createdBy / session denormalized
             //   - attachments (isDeleted:false), issues (isDeleted:false)

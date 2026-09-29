@@ -259,10 +259,12 @@ describe("registerMilestonesList", () => {
     expect(mockZenstack.mock.calls[1]?.[1]).toBe("groupBy");
     const runBody = getCallBody(1) as {
       by: string[];
-      where: { testRunId: { in: number[] } };
+      where: { testRunId: { in: number[] }; isDeleted: boolean };
     };
     expect(runBody.by).toEqual(["testRunId", "statusId"]);
     expect(runBody.where.testRunId.in).toEqual([10, 11]);
+    // Cases removed from a run no longer count toward the milestone.
+    expect(runBody.where.isDeleted).toBe(false);
 
     // Verify call 3 was sessionResults.groupBy with where.sessionId.in.
     expect(mockZenstack.mock.calls[2]?.[0]).toBe("sessionResults");

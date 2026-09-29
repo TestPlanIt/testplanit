@@ -42,7 +42,9 @@ const CHILDREN_CAP_PLUS_ONE = MILESTONE_CHILDREN_CAP + 1;
 export const MILESTONE_ROW_INCLUDE = {
   milestoneType: { select: { id: true, name: true } },
   creator: { select: { id: true, name: true, email: true } },
-  _count: { select: { children: true, comments: true } },
+  _count: {
+    select: { children: true, comments: { where: { isDeleted: false } } },
+  },
   testRuns: { where: { isDeleted: false }, select: { id: true } },
   sessions: { where: { isDeleted: false }, select: { id: true } },
 } as const satisfies MilestonesInclude;
@@ -53,7 +55,9 @@ export const MILESTONE_ROW_INCLUDE = {
 export const MILESTONE_DETAIL_INCLUDE = {
   milestoneType: { select: { id: true, name: true } },
   creator: { select: { id: true, name: true, email: true } },
-  _count: { select: { children: true, comments: true } },
+  _count: {
+    select: { children: true, comments: { where: { isDeleted: false } } },
+  },
   testRuns: {
     where: { isDeleted: false },
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],

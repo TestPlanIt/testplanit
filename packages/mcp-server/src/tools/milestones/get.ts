@@ -150,7 +150,8 @@ export function registerMilestonesGet(
               "groupBy",
               {
                 by: ["testRunId", "statusId"],
-                where: { testRunId: { in: runIds } },
+                // Cases removed from a run no longer count toward it.
+                where: { testRunId: { in: runIds }, isDeleted: false },
                 _count: { id: true },
               } satisfies TestRunCasesGroupByArgs,
               deps.env,

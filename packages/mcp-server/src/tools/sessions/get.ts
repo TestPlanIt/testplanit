@@ -32,9 +32,10 @@ export function registerSessionsGet(
       try {
         const raw = await zenstack<RawSessionDetail | null>(
           "sessions",
-          "findUnique",
+          "findFirst",
           {
-            where: { id: input.sessionId },
+            // A trashed session reads as not found, as in the web UI.
+            where: { id: input.sessionId, isDeleted: false },
             include: SESSION_DETAIL_INCLUDE,
           },
           deps.env,
