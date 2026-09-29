@@ -19,6 +19,7 @@ import { useRequireAuth } from "~/hooks/useRequireAuth";
 import AddConfigurationWizard from "./AddConfigurationWizard";
 import { BulkEditConfigurations } from "./BulkEditConfigurations";
 import { ConfigWithVariants, useColumns } from "./configColumns";
+import { configurationMatchesSearch } from "./configurationListUtils";
 import { DeleteConfiguration } from "./DeleteConfig";
 import { EditConfiguration } from "./EditConfig";
 
@@ -68,7 +69,11 @@ function Configurations(): React.ReactElement | null {
         isDeleted: false,
       },
       include: {
-        variants: { include: { variant: true } },
+        variants: {
+          include: {
+            variant: { include: { category: { select: { name: true } } } },
+          },
+        },
         projects: {
           select: {
             projectId: true,
@@ -95,10 +100,9 @@ function Configurations(): React.ReactElement | null {
       );
     }
 
-    const searchLower = debouncedSearchString.trim().toLowerCase();
-    if (searchLower) {
+    if (debouncedSearchString.trim()) {
       result = result.filter((config) =>
-        config.name.toLowerCase().includes(searchLower)
+        configurationMatchesSearch(config, debouncedSearchString)
       );
     }
 

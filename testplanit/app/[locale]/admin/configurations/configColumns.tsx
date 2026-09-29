@@ -2,11 +2,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -17,15 +12,10 @@ import {
 } from "@/components/ui/tooltip";
 import type { Configurations } from "~/zenstack/models";
 import { ColumnDef } from "@/components/tables/tableFeatures";
-import {
-  CircleCheckBig,
-  CircleSlash2,
-  Component,
-  SquarePen,
-  Trash,
-} from "lucide-react";
+import { CircleSlash2, SquarePen, Trash } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useMemo, useState } from "react";
+import { sortVariantsByCategory } from "./configurationListUtils";
 
 export type ConfigWithVariants = Configurations & {
   variants: {
@@ -34,6 +24,7 @@ export type ConfigWithVariants = Configurations & {
       name: string;
       isEnabled: boolean;
       categoryId: number;
+      category?: { name: string };
     };
   }[];
   projects?: {
@@ -231,42 +222,26 @@ export const useColumns = (
         header: t("fields.variants"),
         enableSorting: true,
         enableResizing: true,
-        size: 100,
-        cell: ({ row }) => {
-          const hasVariants = row.original.variants.length > 0;
-          return (
-            <div className="text-center">
-              {hasVariants && (
-                <Popover>
-                  <PopoverTrigger
-                    className="cursor-default"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                    }}
-                  >
-                    <Badge>
-                      {" "}
-                      <Component className="w-4 h-4 me-1" />
-                      {row.original.variants.length}
-                    </Badge>
-                  </PopoverTrigger>
-                  <PopoverContent>
-                    {row.original.variants.map((variant) => (
-                      <Badge key={variant.variant.id}>
-                        {variant.variant.isEnabled ? (
-                          <CircleCheckBig className="w-4 h-4" />
-                        ) : (
-                          <CircleSlash2 className="w-4 h-4 text-destructive" />
-                        )}
-                        <span className="ms-1">{variant.variant.name}</span>
-                      </Badge>
-                    ))}
-                  </PopoverContent>
-                </Popover>
-              )}
-            </div>
-          );
-        },
+        size: 350,
+        cell: ({ row }) => (
+          <div className="flex flex-wrap gap-1">
+            {sortVariantsByCategory(row.original.variants).map(
+              ({ variant }) => (
+                <Badge
+                  key={variant.id}
+                  variant={variant.isEnabled ? "default" : "outline"}
+                  title={variant.category?.name}
+                  data-testid={`config-variant-${row.original.id}-${variant.id}`}
+                >
+                  {!variant.isEnabled && (
+                    <CircleSlash2 className="w-4 h-4 me-1 text-destructive" />
+                  )}
+                  {variant.name}
+                </Badge>
+              )
+            )}
+          </div>
+        ),
       },
       {
         id: "projects",
