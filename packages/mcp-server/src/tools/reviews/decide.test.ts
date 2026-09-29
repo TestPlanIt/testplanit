@@ -3,6 +3,13 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerReviewsDecide } from "./decide.js";
+import { zenstack } from "../../api.js";
+
+vi.mock("../../api.js", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../api.js")>()),
+  zenstack: vi.fn(),
+}));
+const mockZenstack = vi.mocked(zenstack);
 
 const mockEnv = {
   apiUrl: "https://testplanit.example.com",
@@ -97,6 +104,35 @@ describe("testplanit_reviews_decide", () => {
 
   it("reports that an approval applied the workflow transition", async () => {
     stubFetch({ ok: true, body: decidedRow() });
+    mockZenstack.mockResolvedValueOnce({ stateId: 6 });
+    const client = await setupClient();
+
+    const result = await callTool(client, {
+      reviewRequestId: "rr1",
+      decision: "APPROVED",
+    });
+
+    expect(mockZenstack).toHaveBeenCalledWith(
+      "repositoryCases",
+      "findUnique",
+      { where: { id: 11 }, select: { stateId: true } },
+      mockEnv,
+    );
+    expect(result.structuredContent).toMatchObject({
+      id: "rr1",
+      status: "APPROVED",
+      transitionApplied: true,
+      appliedStateId: 6,
+      currentStateId: 6,
+      decidedAt: "2026-02-02T00:00:00.000Z",
+    });
+  });
+
+  it("reports an approval whose transition the host did not apply", async () => {
+    // The host applies the transition best-effort and can skip or fail it
+    // without failing the decision.
+    stubFetch({ ok: true, body: decidedRow() });
+    mockZenstack.mockResolvedValueOnce({ stateId: 2 });
     const client = await setupClient();
 
     const result = await callTool(client, {
@@ -105,11 +141,10 @@ describe("testplanit_reviews_decide", () => {
     });
 
     expect(result.structuredContent).toMatchObject({
-      id: "rr1",
       status: "APPROVED",
-      transitionApplied: true,
-      appliedStateId: 6,
-      decidedAt: "2026-02-02T00:00:00.000Z",
+      transitionApplied: false,
+      appliedStateId: null,
+      currentStateId: 2,
     });
   });
 
