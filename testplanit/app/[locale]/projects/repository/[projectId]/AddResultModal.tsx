@@ -387,43 +387,76 @@ export function AddResultModal({
     return map;
   }, [issueDetails]);
 
+  // A bulk result has no single run case: each selected case keeps its own
+  // template and attempt history.
+  const isSingleCase = !isBulkResult && testRunCaseId != null;
+  const bulkRunCaseIds = isBulkResult
+    ? selectedCases
+        .map((selectedCase) => selectedCase.testRunCaseId)
+        .filter((id): id is number => id != null)
+    : [];
+  const bulkTemplateIds = isBulkResult
+    ? Array.from(
+        new Set(selectedCases.map((selectedCase) => selectedCase.templateId))
+      )
+    : [];
+
   // Query previous test run results to determine the correct attempt number
   const { data: previousResults } = useClientQueries(
     schema
-  ).testRunResults.useFindMany({
-    where: {
-      testRunCaseId,
+  ).testRunResults.useFindMany(
+    {
+      where: {
+        testRunCaseId,
+      },
+      orderBy: {
+        attempt: "desc",
+      },
+      take: 1,
     },
-    orderBy: {
-      attempt: "desc",
-    },
-    take: 1,
-  });
+    { enabled: isSingleCase }
+  );
+
+  const { data: bulkLatestAttempts, isLoading: isLoadingBulkAttempts } =
+    useClientQueries(schema).testRunResults.useGroupBy(
+      {
+        by: ["testRunCaseId"],
+        where: { testRunCaseId: { in: bulkRunCaseIds } },
+        _max: { attempt: true },
+      },
+      { enabled: bulkRunCaseIds.length > 0 }
+    );
 
   // Find the repository case to get its template ID
   const { data: repositoryCase, isLoading: isLoadingCase } = useClientQueries(
     schema
-  ).repositoryCases.useFindFirst({
-    where: {
-      testRuns: {
-        some: {
-          id: testRunCaseId,
+  ).repositoryCases.useFindFirst(
+    {
+      where: {
+        testRuns: {
+          some: {
+            id: testRunCaseId,
+          },
         },
       },
+      select: {
+        id: true,
+        name: true,
+        templateId: true,
+        currentVersion: true,
+      },
     },
-    select: {
-      id: true,
-      name: true,
-      templateId: true,
-      currentVersion: true,
-    },
-  });
+    { enabled: isSingleCase }
+  );
 
-  // Fetch template result fields if we have a case with a template
+  // Fetch the result fields of the case's template, or of every selected
+  // case's template for a bulk result
   const { data: templateResultFields, isLoading: isLoadingTemplateFields } =
     useClientQueries(schema).templateResultAssignment.useFindMany({
       where: {
-        templateId: repositoryCase?.templateId || 0,
+        templateId: isBulkResult
+          ? { in: bulkTemplateIds }
+          : repositoryCase?.templateId || 0,
         resultField: { isEnabled: true, isDeleted: false },
       },
       include: {
@@ -487,10 +520,30 @@ export function AddResultModal({
       ? Math.max(previousResults[0].attempt, currentAttempt) + 1
       : currentAttempt;
 
-  // Update templateFields state when template result fields are loaded
+  // Result field ids each template carries, so a bulk result sends every case
+  // only the fields of its own template
+  const resultFieldIdsByTemplate = React.useMemo(() => {
+    const map = new Map<number, Set<number>>();
+    for (const assignment of templateResultFields ?? []) {
+      const ids = map.get(assignment.templateId) ?? new Set<number>();
+      ids.add(assignment.resultFieldId);
+      map.set(assignment.templateId, ids);
+    }
+    return map;
+  }, [templateResultFields]);
+
+  // Update templateFields state when template result fields are loaded. A
+  // field shared by several selected templates is shown once.
   useEffect(() => {
     if (templateResultFields) {
-      setTemplateFields(templateResultFields);
+      const seen = new Set<number>();
+      setTemplateFields(
+        templateResultFields.filter((assignment) => {
+          if (seen.has(assignment.resultFieldId)) return false;
+          seen.add(assignment.resultFieldId);
+          return true;
+        })
+      );
     }
   }, [templateResultFields]);
 
@@ -862,6 +915,7 @@ export function AddResultModal({
     // so the correlation worker groups them and the step rows inherit the run's
     // name/project from the result row.
     beginOperation();
+    let bulkFailedCaseNames: string[] = [];
 
     try {
       let elapsedInSeconds: number | null = null;
@@ -952,9 +1006,18 @@ export function AddResultModal({
 
       if (isBulkResult && selectedCases.length > 0) {
         // Handle bulk result submission
+        const latestAttemptByRunCase = new Map(
+          (bulkLatestAttempts ?? []).map((group) => [
+            group.testRunCaseId,
+            group._max?.attempt ?? 0,
+          ])
+        );
         const bulkPromises = selectedCases.map(async (selectedCase) => {
           if (!selectedCase.testRunCaseId) return;
 
+          const templateFieldIds = resultFieldIdsByTemplate.get(
+            selectedCase.templateId
+          );
           const result = await submitTestRunResult({
             testRunId,
             testRunCaseId: selectedCase.testRunCaseId,
@@ -962,12 +1025,15 @@ export function AddResultModal({
             notes: values.resultData || emptyEditorContent,
             evidence: values.evidence as any,
             elapsed: elapsedInSeconds,
-            attempt: values.attempt as number,
+            attempt:
+              (latestAttemptByRunCase.get(selectedCase.testRunCaseId) ?? 0) + 1,
             testRunCaseVersion: selectedCase.currentVersion,
             issueIds: issueIdsToConnect,
             stepIssueCount,
             inProgressStateId: inProgressWorkflow?.id ?? null,
-            fieldValues: resultFieldValues,
+            fieldValues: resultFieldValues.filter((fv) =>
+              templateFieldIds?.has(fv.fieldId)
+            ),
           });
 
           // Save step results if any exist
@@ -1183,7 +1249,19 @@ export function AddResultModal({
             void fetch(`/api/forecast/update?caseId=${selectedCase.id}`);
         });
 
-        await Promise.all(bulkPromises);
+        // Each case is its own submission: report the ones the server refused
+        // rather than dropping them behind a success toast.
+        const settled = await Promise.allSettled(bulkPromises);
+        const failures = settled.flatMap((outcome, index) =>
+          outcome.status === "rejected"
+            ? [{ name: selectedCases[index].name, reason: outcome.reason }]
+            : []
+        );
+        if (failures.length === settled.length) throw failures[0].reason;
+        if (failures.length > 0) {
+          console.error("Bulk result submissions failed:", failures);
+          bulkFailedCaseNames = failures.map((failure) => failure.name);
+        }
       } else if (testRunCaseId && repositoryCase?.currentVersion) {
         // Handle single result submission
         const result = await submitTestRunResult({
@@ -1446,20 +1524,30 @@ export function AddResultModal({
       setSelectedStepIssues({});
       setSelectedSharedItemIssues({}); // Reset shared item issues
 
-      toast.success(
-        isBulkResult
-          ? tCommon("actions.resultsAdded", {
-              count: selectedCases.length,
-            })
-          : tCommon("actions.resultAdded"),
-        {
-          description: isBulkResult
-            ? tCommon("actions.resultsAddedDescription", {
+      if (bulkFailedCaseNames.length > 0) {
+        toast.error(
+          tCommon("bulk.partialFailure", {
+            failedCount: bulkFailedCaseNames.length,
+            totalCount: selectedCases.length,
+          }),
+          { description: bulkFailedCaseNames.join(", ") }
+        );
+      } else {
+        toast.success(
+          isBulkResult
+            ? tCommon("actions.resultsAdded", {
                 count: selectedCases.length,
               })
-            : tCommon("actions.resultAddedDescription"),
-        }
-      );
+            : tCommon("actions.resultAdded"),
+          {
+            description: isBulkResult
+              ? tCommon("actions.resultsAddedDescription", {
+                  count: selectedCases.length,
+                })
+              : tCommon("actions.resultAddedDescription"),
+          }
+        );
+      }
 
       onClose();
 
@@ -1518,6 +1606,7 @@ export function AddResultModal({
     !session ||
     !statuses ||
     isLoadingCase ||
+    isLoadingBulkAttempts ||
     isLoadingTemplateFields ||
     isLoadingProject;
 
@@ -1856,7 +1945,7 @@ export function AddResultModal({
             {tCommon("actions.addResult")}
             {iterationLabel ? ` — ${iterationLabel}` : ""}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription asChild>
             <div className="text-sm text-muted-foreground flex flex-col gap-1">
               {isBulkResult ? (
                 tCommon("actions.addingResultsToMultiple", {
