@@ -33,7 +33,7 @@ export function registerMilestoneTypesList(
     "testplanit_milestone_types_list",
     {
       description:
-        "List all milestone types assigned to a project (via the MilestoneTypesAssignment junction). Returns {items:[{id, name, isDefault}]} sorted by name asc. No cursor pagination — types-per-project is small (~10 typical). Every milestones_list row + milestones_get response also denormalizes milestoneType:{id,name} inline; this tool exists for full-catalog or filter-picker use cases. No icon field — schema only carries an icon class identifier, deliberately dropped for v1.",
+        "List the milestone types a project can use: those assigned to it, plus the type marked Default, which every project can use. Returns {items:[{id, name, isDefault}]} sorted by name asc. No cursor pagination — types-per-project is small (~10 typical). Every milestones_list row + milestones_get response also denormalizes milestoneType:{id,name} inline; this tool exists for full-catalog or filter-picker use cases. No icon field — schema only carries an icon class identifier, deliberately dropped for v1.",
       inputSchema: { projectId: z.number().int().positive() },
     },
     async (input) => {
@@ -44,7 +44,12 @@ export function registerMilestoneTypesList(
           {
             where: {
               isDeleted: false,
-              projects: { some: { projectId: input.projectId } },
+              // The Default type is available to every project, with or
+              // without an assignment row — the web UI offers it too.
+              OR: [
+                { isDefault: true },
+                { projects: { some: { projectId: input.projectId } } },
+              ],
             },
             select: { id: true, name: true, isDefault: true },
             orderBy: { name: "asc" },

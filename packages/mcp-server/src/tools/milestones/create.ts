@@ -6,6 +6,7 @@ import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
+import { TestPlanItHttpError } from "../../http.js";
 import { proseMirrorToMarkdown } from "../../richText.js";
 
 export interface MilestonesCreateDeps {
@@ -38,7 +39,7 @@ export function registerMilestonesCreate(
     "testplanit_milestones_create",
     {
       description:
-        "Create a new milestone in a project. Use testplanit_milestone_types_list to get available milestoneTypeId values. Optionally nest under a parent milestone. Returns the created milestone header.",
+        "Create a new milestone in a project. The milestone type defaults to the one marked Default; use testplanit_milestone_types_list to pick another. Optionally nest under a parent milestone. Returns the created milestone header.",
       inputSchema: {
         projectId: z
           .number()
@@ -50,8 +51,9 @@ export function registerMilestonesCreate(
           .number()
           .int()
           .positive()
+          .optional()
           .describe(
-            "Milestone type ID. Use testplanit_milestone_types_list to get the available types.",
+            "Milestone type ID. Defaults to the type marked Default. Use testplanit_milestone_types_list to get the available types.",
           ),
         parentId: z
           .number()
@@ -67,6 +69,27 @@ export function registerMilestonesCreate(
     },
     async (input) => {
       try {
+        // The web UI preselects the type marked Default.
+        let milestoneTypeId = input.milestoneTypeId;
+        if (milestoneTypeId == null) {
+          const def = await zenstack<{ id: number } | null>(
+            "milestoneTypes",
+            "findFirst",
+            {
+              where: { isDefault: true, isDeleted: false },
+              select: { id: true },
+            },
+            deps.env,
+          );
+          if (!def) {
+            throw new TestPlanItHttpError(
+              "No milestone type is marked Default; pass milestoneTypeId (see testplanit_milestone_types_list).",
+              { statusCode: 422 },
+            );
+          }
+          milestoneTypeId = def.id;
+        }
+
         const raw = await zenstack<RawCreatedMilestone>(
           "milestones",
           "create",
@@ -74,7 +97,7 @@ export function registerMilestonesCreate(
             data: {
               name: input.name,
               project: { connect: { id: input.projectId } },
-              milestoneType: { connect: { id: input.milestoneTypeId } },
+              milestoneType: { connect: { id: milestoneTypeId } },
               ...(input.parentId
                 ? { parent: { connect: { id: input.parentId } } }
                 : {}),
