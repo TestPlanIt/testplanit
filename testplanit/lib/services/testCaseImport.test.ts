@@ -237,6 +237,133 @@ describe("persistGeneratedTestCases version 1 snapshot", () => {
     return captured;
   }
 
+  describe("custom field values on the name-keyed path", () => {
+    const MAPPINGS = [
+      {
+        fieldName: "Priority",
+        caseFieldId: 1,
+        fieldType: "Dropdown",
+        fieldOptions: [
+          { id: 11, name: "Low" },
+          { id: 12, name: "High", isDefault: true },
+        ],
+        isRequired: true,
+      },
+      {
+        fieldName: "Regression",
+        caseFieldId: 2,
+        fieldType: "Checkbox",
+        isChecked: true,
+      },
+      { fieldName: "Points", caseFieldId: 3, fieldType: "Integer" },
+      {
+        fieldName: "Secret",
+        caseFieldId: 4,
+        fieldType: "Text String",
+        isRestricted: true,
+      },
+    ];
+
+    async function importWith(
+      fieldValues: Record<string, unknown>,
+      opts: { strict?: boolean; canEditRestrictedFields?: boolean } = {}
+    ) {
+      const tx = stubTx({});
+      auditedTransactionMock.mockImplementationOnce(async (fn: any) => fn(tx));
+      const result = await persistGeneratedTestCases(
+        {
+          ...buildInput(),
+          fieldMappings: MAPPINGS,
+          strictFieldValues: opts.strict ?? true,
+          testCases: [{ id: "a", name: "A", fieldValues, steps: [] }],
+        } as any,
+        {
+          userId: "u1",
+          userName: "User",
+          canEditRestrictedFields: opts.canEditRestrictedFields,
+        }
+      );
+      const written = (tx.caseFieldValues.createMany as any).mock.calls[0]?.[0]
+        .data as Array<{ fieldId: number; value: unknown }> | undefined;
+      return {
+        result: result.results[0],
+        values: Object.fromEntries(
+          (written ?? []).map((w) => [w.fieldId, w.value])
+        ),
+      };
+    }
+
+    it("stores values in the UI's shape and fills template defaults", async () => {
+      const { result, values } = await importWith({ Points: "5" });
+      expect(result.status).toBe("success");
+      // Priority: its default option. Regression: isChecked. Points: a number.
+      expect(values).toEqual({ 1: 12, 2: true, 3: 5 });
+    });
+
+    it("stores a Checkbox sent as 'false' unchecked", async () => {
+      const { values } = await importWith({
+        Priority: "Low",
+        Regression: "false",
+      });
+      expect(values[2]).toBe(false);
+      expect(values[1]).toBe(11);
+    });
+
+    it("fails the case on a value the field cannot hold", async () => {
+      const { result } = await importWith({ Points: "lots" });
+      expect(result).toMatchObject({
+        status: "error",
+        error: "Custom field 'Points' expects a whole number.",
+      });
+    });
+
+    it("fails the case when a required field has no value", async () => {
+      const noDefault = MAPPINGS.map((m) =>
+        m.fieldName === "Priority"
+          ? { ...m, fieldOptions: [{ id: 11, name: "Low" }] }
+          : m
+      );
+      const tx = stubTx({});
+      auditedTransactionMock.mockImplementationOnce(async (fn: any) => fn(tx));
+      const result = await persistGeneratedTestCases(
+        {
+          ...buildInput(),
+          fieldMappings: noDefault,
+          strictFieldValues: true,
+          testCases: [{ id: "a", name: "A", fieldValues: {}, steps: [] }],
+        } as any,
+        { userId: "u1", userName: "User" }
+      );
+      expect(result.results[0]).toMatchObject({
+        status: "error",
+        error: "Required custom field 'Priority' has no value.",
+      });
+    });
+
+    it("refuses a restricted field from an author without permission", async () => {
+      const { result } = await importWith(
+        { Secret: "x" },
+        { canEditRestrictedFields: false }
+      );
+      expect(result.status).toBe("error");
+      expect(result.error).toMatch(/restricted/);
+      const allowed = await importWith(
+        { Secret: "x" },
+        { canEditRestrictedFields: true }
+      );
+      expect(allowed.values[4]).toBe("x");
+    });
+
+    it("drops an unusable value instead of failing outside strict mode", async () => {
+      const { result, values } = await importWith(
+        { Points: "lots" },
+        { strict: false }
+      );
+      expect(result.status).toBe("success");
+      expect(values[3]).toBeUndefined();
+    });
+  });
+
   it("undoes only the failing case and keeps the cases already created", async () => {
     // One interactive transaction holds the whole group. A failed statement
     // used to abort it, so later cases failed and COMMIT quietly rolled back

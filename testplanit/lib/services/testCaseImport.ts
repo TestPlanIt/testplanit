@@ -5,6 +5,11 @@ import {
 } from "~/zenstack/models";
 import { z } from "zod/v4";
 import { auditedTransaction } from "~/lib/audit/auditedTransaction";
+import {
+  coerceCaseFieldValue,
+  defaultCaseFieldValue,
+  isMissingValue,
+} from "~/lib/services/caseFieldValueCoercion";
 import { upsertLinkedIssueShell } from "~/lib/services/linkedIssueUpsert";
 import { resolveCreateStateRemap } from "~/lib/services/reviewGate";
 import { emptyEditorContent } from "~/app/constants/backend";
@@ -48,9 +53,18 @@ const FieldMappingSchema = z.object({
       z.object({
         id: z.number(),
         name: z.string(),
+        isDefault: z.boolean().optional(),
       })
     )
     .optional(),
+  // Field metadata for defaults and validation; server-built mappings
+  // (loadTemplateData) carry it, the generation wizard's may not.
+  isRequired: z.boolean().optional(),
+  isRestricted: z.boolean().optional(),
+  isChecked: z.boolean().nullable().optional(),
+  defaultValue: z.string().nullable().optional(),
+  minValue: z.number().nullable().optional(),
+  maxValue: z.number().nullable().optional(),
 });
 
 // AddCase inline parameters/dataset (PARAM-AddCase). Both optional; datasetRows
@@ -108,6 +122,10 @@ export const ImportInputSchema = z.object({
   autoGenerateTags: z.boolean(),
   testCases: z.array(TestCaseInputSchema),
   fieldMappings: z.array(FieldMappingSchema),
+  // API writers (bulk-create) fail a case on a custom field value, required
+  // field or restricted field the UI would refuse; the generation flows keep
+  // their best-effort behaviour and drop a value they can't store.
+  strictFieldValues: z.boolean().optional(),
   source: z.enum(RepositoryCaseSource).optional(),
   // Issue linking (optional)
   issue: z
@@ -169,45 +187,8 @@ export interface ImportResult {
 export interface ImportAuthor {
   userId: string;
   userName: string;
-}
-
-function processFieldValue(
-  fieldType: string,
-  fieldValue: any,
-  fieldOptions?: { id: number; name: string }[]
-): any {
-  switch (fieldType) {
-    case "Text Long":
-      if (typeof fieldValue === "string") {
-        return JSON.stringify(ensureTipTapJSON(fieldValue));
-      }
-      return JSON.stringify(fieldValue);
-
-    case "Dropdown":
-    case "Multi-Select":
-      if (Array.isArray(fieldValue)) {
-        return fieldValue.map((optionName: any) => {
-          const option = fieldOptions?.find((fo) => fo.name === optionName);
-          return option ? option.id : optionName;
-        });
-      } else if (typeof fieldValue === "string") {
-        const option = fieldOptions?.find((fo) => fo.name === fieldValue);
-        return option ? option.id : fieldValue;
-      }
-      return fieldValue;
-
-    case "Checkbox":
-      return Boolean(fieldValue);
-
-    case "Integer":
-      return parseInt(fieldValue as string) || 0;
-
-    case "Number":
-      return parseFloat(fieldValue as string) || 0;
-
-    default:
-      return fieldValue;
-  }
+  /** False when the author may not set restricted fields (strict mode). */
+  canEditRestrictedFields?: boolean;
 }
 
 function convertStepToTipTap(value: any) {
@@ -743,35 +724,59 @@ export async function persistGeneratedTestCases(
               });
             }
           } else {
-            // Name-keyed path (wizard import) — resolve via fieldMappings
+            // Name-keyed path (generation flows, bulk-create) — resolve via
+            // fieldMappings, storing each value in the shape the web UI does
+            // and starting unset fields from the template's defaults.
+            const strict = data.strictFieldValues === true;
+            const provided = new Map<string, unknown>();
             for (const [fieldName, fieldValue] of Object.entries(
               testCase.fieldValues
             )) {
+              const mapping = fieldMappingsByName.get(fieldName);
+              if (!mapping || mapping.fieldType === "Steps") continue;
+              if (fieldValue == null) continue;
               if (
-                fieldName === "Steps" ||
-                fieldName.toLowerCase().includes("steps")
+                strict &&
+                mapping.isRestricted &&
+                author.canEditRestrictedFields === false
               ) {
+                throw new Error(
+                  `Custom field '${fieldName}' is restricted; you do not have permission to set it.`
+                );
+              }
+              const coerced = coerceCaseFieldValue(mapping, fieldValue);
+              if (!coerced.ok) {
+                if (strict) throw new Error(coerced.error);
                 continue;
               }
+              provided.set(fieldName, coerced.value);
+            }
 
-              const mapping = fieldMappingsByName.get(fieldName);
-              if (mapping && fieldValue != null) {
-                const processedValue = processFieldValue(
-                  mapping.fieldType,
-                  fieldValue,
-                  mapping.fieldOptions
+            for (const mapping of data.fieldMappings) {
+              if (mapping.fieldType === "Steps") continue;
+              const value = provided.has(mapping.fieldName)
+                ? provided.get(mapping.fieldName)
+                : defaultCaseFieldValue(mapping);
+              if (
+                strict &&
+                mapping.isRequired &&
+                isMissingValue(mapping, value)
+              ) {
+                throw new Error(
+                  `Required custom field '${mapping.fieldName}' has no value.`
                 );
-                fieldValueData.push({
-                  testCaseId: newCase.id,
-                  fieldId: mapping.caseFieldId,
-                  value: processedValue,
-                });
-                fieldVersionValueData.push({
-                  versionId: newVersion.id,
-                  field: fieldName,
-                  value: processedValue,
-                });
               }
+              if (value === undefined) continue;
+              fieldValueData.push({
+                testCaseId: newCase.id,
+                fieldId: mapping.caseFieldId,
+                value,
+              });
+              fieldVersionValueData.push({
+                versionId: newVersion.id,
+                field: mapping.fieldName,
+                value,
+              });
             }
           }
 

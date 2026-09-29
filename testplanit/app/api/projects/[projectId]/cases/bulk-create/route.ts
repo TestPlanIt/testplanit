@@ -60,8 +60,8 @@ const bulkCreateSchema = z.object({
   // Integration to resolve `issues` keys against. Optional — the project's
   // single active issue-tracker integration is used when it is unambiguous.
   integrationId: z.number().int().positive().optional(),
-  // Batch-level template (optional — defaults to the project's first enabled
-  // template, matching the single-create tool).
+  // Batch-level template (optional — defaults to the template marked Default,
+  // else the project's first enabled template).
   templateId: z.number().int().positive().optional(),
   // Batch-level default folder + state. Each case may override either.
   folderId: z.number().int().positive(),
@@ -168,6 +168,14 @@ export const POST = withAuditContext(
       }
       const templateName = loaded.template.name;
       const fieldMappings = loaded.fieldMappings;
+      const canEditRestrictedFields = fieldMappings.some((m) => m.isRestricted)
+        ? await userCanAddEditArea(
+            userId,
+            projectId,
+            ApplicationArea.TestCaseRestrictedFields,
+            auth.actor.access
+          )
+        : true;
       // Custom fields the agent may set: every mapped (non-Steps) field name.
       const validFieldNames = new Set(fieldMappings.map((m) => m.fieldName));
 
@@ -182,7 +190,16 @@ export const POST = withAuditContext(
         const unknownFields = Object.keys(c.customFields ?? {}).filter(
           (k) => !validFieldNames.has(k)
         );
-        if (unknownFields.length > 0) {
+        // The importer stores at most 255 characters; say so rather than
+        // truncating the name.
+        if (c.name.length > 255) {
+          resultsById.set(c.__id, {
+            id: c.__id,
+            name: c.name,
+            status: "error",
+            error: `Name is ${c.name.length} characters; the limit is 255.`,
+          });
+        } else if (unknownFields.length > 0) {
           resultsById.set(c.__id, {
             id: c.__id,
             name: c.name,
@@ -380,10 +397,14 @@ export const POST = withAuditContext(
             const id = typeof t === "number" ? t : tagNameToId.get(t.trim());
             if (id != null) tagIds.add(id);
           }
-          const steps = c.steps?.map((s) => ({
-            step: s.text,
-            expectedResult: s.expectedResult,
-          }));
+          // Honor each step's `order`; the importer numbers steps by position.
+          const steps = c.steps
+            ?.map((s, index) => ({ s, at: s.order ?? index }))
+            .sort((a, b) => a.at - b.at)
+            .map(({ s }) => ({
+              step: s.text,
+              expectedResult: s.expectedResult,
+            }));
           const issueIds = issueIdsByCase.get(c.__id);
           return {
             id: c.__id,
@@ -409,12 +430,14 @@ export const POST = withAuditContext(
           autoGenerateTags: false,
           testCases: importCases,
           fieldMappings,
+          strictFieldValues: true,
           source: "MANUAL",
         };
 
         const res = await persistGeneratedTestCases(importInput, {
           userId,
           userName: userName || "Unknown User",
+          canEditRestrictedFields,
         });
 
         if (res.status === "error") {

@@ -379,6 +379,87 @@ describe("Bulk Create API Route", () => {
       expect(importInput.autoGenerateTags).toBe(false);
     });
 
+    it("asks the importer to validate field values the way the UI does", async () => {
+      const [req, ctx] = createRequest({
+        folderId: 12,
+        cases: [{ name: "A" }],
+      });
+      await POST(req, ctx);
+
+      const [input, author] = (persistGeneratedTestCases as any).mock.calls[0];
+      expect(input.strictFieldValues).toBe(true);
+      // No restricted field on the template, so no permission lookup.
+      expect(author.canEditRestrictedFields).toBe(true);
+    });
+
+    it("checks restricted-field permission when the template has one", async () => {
+      (loadTemplateData as any).mockResolvedValue({
+        template: { id: 22, name: "Default", fields: [] },
+        fieldMappings: [
+          {
+            fieldName: "Secret",
+            caseFieldId: 9,
+            fieldType: "Text String",
+            isRestricted: true,
+          },
+        ],
+      });
+      (userCanAddEditArea as any).mockImplementation(
+        async (_u: string, _p: number, area: string) =>
+          area === "TestCaseRepository"
+      );
+      const [req, ctx] = createRequest({
+        folderId: 12,
+        cases: [{ name: "A" }],
+      });
+      await POST(req, ctx);
+
+      const [, author] = (persistGeneratedTestCases as any).mock.calls[0];
+      expect(author.canEditRestrictedFields).toBe(false);
+    });
+
+    it("keeps steps in their given order", async () => {
+      const [req, ctx] = createRequest({
+        folderId: 12,
+        cases: [
+          {
+            name: "A",
+            steps: [
+              { text: "third", order: 2 },
+              { text: "first", order: 0 },
+              { text: "second", order: 1 },
+            ],
+          },
+        ],
+      });
+      await POST(req, ctx);
+
+      const tc = (persistGeneratedTestCases as any).mock.calls[0][0]
+        .testCases[0];
+      expect(tc.steps.map((s: any) => s.step)).toEqual([
+        "first",
+        "second",
+        "third",
+      ]);
+    });
+
+    it("fails a case whose name is longer than 255 characters instead of cutting it", async () => {
+      const [req, ctx] = createRequest({
+        folderId: 12,
+        cases: [{ name: "x".repeat(256) }, { name: "B" }],
+      });
+      const res = await POST(req, ctx);
+      const data = await res.json();
+
+      expect(data.results[0]).toMatchObject({
+        status: "error",
+        error: "Name is 256 characters; the limit is 255.",
+      });
+      const imported = (persistGeneratedTestCases as any).mock.calls[0][0]
+        .testCases;
+      expect(imported.map((c: any) => c.name)).toEqual(["B"]);
+    });
+
     it("links a tag named twice, by id and by name, once", async () => {
       const [req, ctx] = createRequest({
         folderId: 12,

@@ -17,6 +17,7 @@ import { tryFastPathCreate } from "~/lib/access-fast-path";
 import { injectUserFields } from "~/lib/api/injectUserFields";
 import { baseDb } from "~/lib/db";
 import { createRawDbClient } from "~/lib/rawDbClient";
+import { loadTemplateData } from "~/lib/services/jira-panel-generation";
 import { persistGeneratedTestCases } from "~/lib/services/testCaseImport";
 
 const RUN_INTEGRATION = process.env.RUN_DB_INTEGRATION === "1";
@@ -325,6 +326,105 @@ describeIntegration("API write paths (live DB)", () => {
       const secondId = second.results[0].caseId as number;
       caseIds.push(secondId);
       expect(secondId).not.toBe(firstId);
+    });
+  });
+
+  describe("custom field values from API writers", () => {
+    it("stores values in the web UI's shapes, from the real template", async () => {
+      const loaded = await loadTemplateData(templateId);
+      if (!loaded) throw new Error("Default Template did not load");
+      // Steps are never a field value; the filter is by type, not by name.
+      expect(loaded.fieldMappings.some((m) => m.fieldType === "Steps")).toBe(
+        false
+      );
+
+      const name = `${STAMP}-fields`;
+      const result = await persistGeneratedTestCases(
+        {
+          projectId,
+          projectName: "Project",
+          repositoryId,
+          folderId,
+          folderName: "Folder",
+          templateId,
+          templateName: loaded.template.name,
+          stateId,
+          stateName: "Draft",
+          maxOrder: 0,
+          autoGenerateTags: false,
+          source: "MANUAL",
+          strictFieldValues: true,
+          fieldMappings: loaded.fieldMappings,
+          testCases: [
+            {
+              id: name,
+              name,
+              fieldValues: { Priority: " high ", Description: "Use **care**" },
+            },
+          ],
+        },
+        { userId, userName: "Integration Runner" }
+      );
+      expect(result.results[0].status).toBe("success");
+      const caseId = result.results[0].caseId as number;
+      caseIds.push(caseId);
+
+      const rows = await raw.$queryRawUnsafe<
+        Array<{ name: string; shape: string; value: unknown }>
+      >(
+        `SELECT f."displayName" AS name, jsonb_typeof(v.value) AS shape, v.value
+           FROM "CaseFieldValues" v JOIN "CaseFields" f ON f.id = v."fieldId"
+          WHERE v."testCaseId" = $1`,
+        caseId
+      );
+      const byName = Object.fromEntries(rows.map((r) => [r.name, r]));
+      const high = await raw.fieldOptions.findFirst({
+        where: { name: "High" },
+      });
+      expect(byName.Priority).toMatchObject({
+        shape: "number",
+        value: high?.id,
+      });
+      expect(byName.Description.shape).toBe("string");
+      expect(byName.Description.value as string).toContain('"bold"');
+    });
+
+    it("fails only the case whose value the field cannot hold", async () => {
+      const loaded = await loadTemplateData(templateId);
+      const names = [`${STAMP}-bad-priority`, `${STAMP}-ok-priority`];
+      const result = await persistGeneratedTestCases(
+        {
+          projectId,
+          projectName: "Project",
+          repositoryId,
+          folderId,
+          folderName: "Folder",
+          templateId,
+          templateName: "Default Template",
+          stateId,
+          stateName: "Draft",
+          maxOrder: 0,
+          autoGenerateTags: false,
+          source: "MANUAL",
+          strictFieldValues: true,
+          fieldMappings: loaded!.fieldMappings,
+          testCases: [
+            { id: "a", name: names[0], fieldValues: { Priority: "Urgent" } },
+            { id: "b", name: names[1], fieldValues: { Priority: "Low" } },
+          ],
+        },
+        { userId, userName: "Integration Runner" }
+      );
+      caseIds.push(
+        ...result.results
+          .filter((r) => r.caseId != null)
+          .map((r) => r.caseId as number)
+      );
+      expect(result.results.map((r) => r.status)).toEqual(["error", "success"]);
+      expect(result.results[0].error).toMatch(/Priority/);
+      expect(
+        await raw.repositoryCases.count({ where: { name: names[0] } })
+      ).toBe(0);
     });
   });
 

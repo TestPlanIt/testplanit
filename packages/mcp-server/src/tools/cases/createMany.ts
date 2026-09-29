@@ -11,7 +11,7 @@ export interface CasesCreateManyDeps {
 const FETCH_TIMEOUT_MS = 30000;
 
 /** Per-case outcome echoed back from the bulk-create route. */
-interface BulkCaseResult {
+export interface BulkCaseResult {
   id: string;
   name: string;
   status: "success" | "error";
@@ -19,7 +19,7 @@ interface BulkCaseResult {
   error?: string;
 }
 
-interface BulkCreateResponse {
+export interface BulkCreateResponse {
   success: boolean;
   importedCount: number;
   failedCount: number;
