@@ -3,7 +3,7 @@ import * as z from "zod/v4";
 import { zenstack, resolveActiveRepository } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
-import { fetchFolderDetail } from "./shared.js";
+import { fetchFolderDetail, nextFolderOrder } from "./shared.js";
 
 export interface FoldersCreateDeps {
   env: EnvConfig;
@@ -28,6 +28,11 @@ export function registerFoldersCreate(server: McpServer, deps: FoldersCreateDeps
           name: input.name,
           project: { connect: { id: input.projectId } },
           repository: { connect: { id: repositoryId } },
+          order: await nextFolderOrder(
+            input.projectId,
+            input.parentId ?? null,
+            deps.env,
+          ),
         };
         if (input.parentId !== undefined) {
           data["parent"] = { connect: { id: input.parentId } };

@@ -128,6 +128,26 @@ describe("testplanit_cases_create", () => {
     });
   });
 
+  it("places the case after the folder's last case, as the web UI does", async () => {
+    zenstackMock.mockImplementation(async (model: string, op: string) =>
+      model === "repositoryCases" && op === "findFirst"
+        ? { order: 41 }
+        : { id: 99 },
+    );
+
+    await callTool({ projectId: 7, folderId: 12, name: "Ordered" });
+
+    const lookup = zenstackMock.mock.calls.find(
+      (c) => c[0] === "repositoryCases" && c[1] === "findFirst",
+    );
+    expect(lookup![2]).toMatchObject({
+      where: { folderId: 12 },
+      orderBy: { order: "desc" },
+    });
+    const createCall = zenstackMock.mock.calls.find((c) => c[1] === "create");
+    expect((createCall![2] as { data: { order: number } }).data.order).toBe(42);
+  });
+
   it("writes steps via createStepsForCase after case creation", async () => {
     await callTool({
       projectId: 7,

@@ -92,10 +92,24 @@ export function registerCasesCreate(
         );
         const tagIds = await resolveTagIds(input.tags, deps.env);
 
+        // New cases go after the folder's last case, as in the web UI;
+        // without an order every case written here sorted to the top.
+        const lastInFolder = await zenstack<{ order: number } | null>(
+          "repositoryCases",
+          "findFirst",
+          {
+            where: { folderId: input.folderId },
+            orderBy: { order: "desc" },
+            select: { order: true },
+          },
+          deps.env,
+        );
+
         // Case create body — relation-connect syntax throughout (D-02 anti-pattern check).
         // creatorId is NOT passed — auto-injected by /api/model/[...path]/route.ts.
         const data: Record<string, unknown> = {
           name: input.name,
+          order: (lastInFolder?.order ?? 0) + 1,
           source: "MANUAL",
           automated: false,
           project: { connect: { id: input.projectId } },

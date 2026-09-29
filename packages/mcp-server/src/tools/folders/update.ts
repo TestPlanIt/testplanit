@@ -3,7 +3,7 @@ import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
-import { fetchFolderDetail } from "./shared.js";
+import { fetchFolderDetail, nextFolderOrder } from "./shared.js";
 
 export interface FoldersUpdateDeps {
   env: EnvConfig;
@@ -29,6 +29,20 @@ export function registerFoldersUpdate(server: McpServer, deps: FoldersUpdateDeps
           data["parent"] = input.parentId === null
             ? { disconnect: true }
             : { connect: { id: input.parentId } };
+          // A moved folder goes after its new siblings.
+          const folder = await zenstack<{ projectId: number } | null>(
+            "repositoryFolders",
+            "findUnique",
+            { where: { id: input.folderId }, select: { projectId: true } },
+            deps.env,
+          );
+          if (folder) {
+            data["order"] = await nextFolderOrder(
+              folder.projectId,
+              input.parentId,
+              deps.env,
+            );
+          }
         }
         if (Object.keys(data).length > 0) {
           await zenstack(
