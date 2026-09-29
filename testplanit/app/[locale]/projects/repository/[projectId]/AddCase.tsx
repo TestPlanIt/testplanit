@@ -105,8 +105,9 @@ const mapFieldToZodType = (field: any, t: (key: any) => string) => {
         ? z.boolean().prefault(field.caseField.isChecked)
         : z.boolean().prefault(field.caseField.isChecked).optional();
     case "Date":
-      // Use z.any() to skip Zod validation - we'll handle nulls via resolver transformation
-      return z.any();
+      // Validated by hand in onSubmit (required dates). `.optional()` is
+      // load-bearing: zod 4.4+ rejects a missing key on a bare z.any().
+      return z.any().optional();
     case "Multi-Select":
       return isRequired ? z.number().array() : z.number().array().optional();
     case "Dropdown":
@@ -262,13 +263,11 @@ const createFormSchema = (fields: any[], t: (key: any) => string) => {
     automated: z.boolean().prefault(false),
   };
 
+  // Every field needs a schema entry: the resolver strips keys the schema
+  // doesn't list, which is how Date values used to vanish before saving.
   const dynamicSchema = fields.reduce(
     (schema, field) => {
-      const fieldName = field.caseField.id.toString();
-      // Skip Date fields entirely - we'll handle them manually without validation
-      if (field.caseField.type.type !== "Date") {
-        schema[fieldName] = mapFieldToZodType(field, t);
-      }
+      schema[field.caseField.id.toString()] = mapFieldToZodType(field, t);
       return schema;
     },
     {} as Record<string, z.ZodTypeAny>
@@ -990,6 +989,12 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
       }
     }
 
+    const numericFieldIds = new Set(
+      (selectedTemplate?.caseFields ?? [])
+        .filter((f) => ["Integer", "Number"].includes(f.caseField.type.type))
+        .map((f) => f.caseField.id.toString())
+    );
+
     try {
       if (session) {
         const convertedData: FormValues = {
@@ -998,8 +1003,11 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
           templateId: Number(data.templateId),
           ...Object.entries(data).reduce(
             (acc, [key, value]) => {
-              if (typeof value === "string" && !isNaN(Number(value))) {
-                acc[key] = Number(value);
+              // Only Integer and Number fields hold numbers. Converting every
+              // numeric-looking string stored an empty Text String or Link as
+              // 0 and "007" as 7.
+              if (numericFieldIds.has(key) && typeof value === "string") {
+                acc[key] = value.trim() === "" ? undefined : Number(value);
               } else {
                 acc[key] = value;
               }
