@@ -506,6 +506,11 @@ export async function persistGeneratedTestCases(
       }
 
       for (const testCase of data.testCases) {
+        // Each case gets its own savepoint. Without it a failing case left its
+        // earlier writes behind, and a failed statement aborted the whole
+        // transaction: every later case failed, and COMMIT silently rolled
+        // back the cases already reported as created.
+        await tx.$executeRawUnsafe("SAVEPOINT import_case");
         try {
           const calculatedOrder = data.maxOrder + importedCount + 1;
           // Use subfolder if one was created for this page, otherwise use the
@@ -533,53 +538,28 @@ export async function persistGeneratedTestCases(
               ? [{ id: sharedIssue.id }]
               : [];
 
-          // 1. Create-or-restore the repository case. A prior soft-
-          // deleted case at the same (projectId, name, className,
-          // source) tuple — including `className: null`, which Postgres
-          // treats as distinct so the @@unique constraint doesn't fire
-          // — gets resurrected with the fresh payload instead of
-          // 23505ing. We can't use Prisma's compound-unique upsert here
-          // because the generated type rejects null for nullable
-          // members (`className: string`, not `string | null`), so the
-          // find-then-branch pattern is the typesafe path.
+          // 1. Create the repository case. The (projectId, name, className,
+          // source) unique index never fires here: className is null, and
+          // Postgres treats nulls as distinct.
           const caseName = testCase.name.slice(0, 255);
           const caseSource = data.source ?? RepositoryCaseSource.API;
-          const caseFields = {
-            repositoryId: data.repositoryId,
-            folderId: targetFolderId,
-            templateId: data.templateId,
-            stateId: effectiveStateId,
-            order: calculatedOrder,
-            creatorId: userId,
-            automated: testCase.automated ?? false,
-            estimate: testCase.estimate,
-            currentVersion: 1,
-          };
-          const softDeletedExisting = await tx.repositoryCases.findFirst({
-            where: {
+          const newCase = await tx.repositoryCases.create({
+            data: {
               projectId: data.projectId,
               name: caseName,
-              className: null,
               source: caseSource,
-              isDeleted: true,
+              repositoryId: data.repositoryId,
+              folderId: targetFolderId,
+              templateId: data.templateId,
+              stateId: effectiveStateId,
+              order: calculatedOrder,
+              creatorId: userId,
+              automated: testCase.automated ?? false,
+              estimate: testCase.estimate,
+              currentVersion: 1,
             },
             select: { id: true },
           });
-          const newCase = softDeletedExisting
-            ? await tx.repositoryCases.update({
-                where: { id: softDeletedExisting.id },
-                data: { ...caseFields, isDeleted: false },
-                select: { id: true },
-              })
-            : await tx.repositoryCases.create({
-                data: {
-                  projectId: data.projectId,
-                  name: caseName,
-                  source: caseSource,
-                  ...caseFields,
-                },
-                select: { id: true },
-              });
 
           // Link tags/issues through the explicit join models. The implicit
           // m2m `connect` syntax was replaced by RepositoryCaseTag /
@@ -911,6 +891,7 @@ export async function persistGeneratedTestCases(
             );
           }
 
+          await tx.$executeRawUnsafe("RELEASE SAVEPOINT import_case");
           importedIds.push(newCase.id);
           importedCount++;
           results.push({
@@ -920,6 +901,10 @@ export async function persistGeneratedTestCases(
             caseId: newCase.id,
           });
         } catch (error) {
+          // Undo this case only. If even that fails the transaction is
+          // unusable, so let it abort rather than report anything as created.
+          await tx.$executeRawUnsafe("ROLLBACK TO SAVEPOINT import_case");
+          await tx.$executeRawUnsafe("RELEASE SAVEPOINT import_case");
           const msg = error instanceof Error ? error.message : String(error);
           errors.push(`Failed to import "${testCase.name}": ${msg}`);
           results.push({

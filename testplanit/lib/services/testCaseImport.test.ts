@@ -187,6 +187,7 @@ describe("persistGeneratedTestCases version 1 snapshot", () => {
       dataSet: { create: vi.fn() },
       dataSetVersion: { create: vi.fn() },
       dataSetRow: { createMany: vi.fn() },
+      $executeRawUnsafe: vi.fn(async () => 0),
     };
   }
 
@@ -235,6 +236,66 @@ describe("persistGeneratedTestCases version 1 snapshot", () => {
     expect(result.errors).toEqual([]);
     return captured;
   }
+
+  it("undoes only the failing case and keeps the cases already created", async () => {
+    // One interactive transaction holds the whole group. A failed statement
+    // used to abort it, so later cases failed and COMMIT quietly rolled back
+    // the ones reported as created; each case now runs in its own savepoint.
+    const tx = stubTx({});
+    tx.repositoryCases.create = vi
+      .fn()
+      .mockResolvedValueOnce({ id: 501 })
+      .mockRejectedValueOnce(new Error("insert or update violates foreign key"))
+      .mockResolvedValueOnce({ id: 503 });
+    auditedTransactionMock.mockImplementationOnce(async (fn: any) => fn(tx));
+
+    const result = await persistGeneratedTestCases(
+      {
+        ...buildInput(),
+        testCases: ["A", "B", "C"].map((name) => ({
+          id: name,
+          name,
+          fieldValues: {},
+          steps: [],
+        })),
+      } as any,
+      { userId: "u1", userName: "User" }
+    );
+
+    expect(result.results.map((r: any) => [r.name, r.status])).toEqual([
+      ["A", "success"],
+      ["B", "error"],
+      ["C", "success"],
+    ]);
+    expect(tx.$executeRawUnsafe.mock.calls.map((c: any[]) => c[0])).toEqual([
+      "SAVEPOINT import_case",
+      "RELEASE SAVEPOINT import_case",
+      "SAVEPOINT import_case",
+      "ROLLBACK TO SAVEPOINT import_case",
+      "RELEASE SAVEPOINT import_case",
+      "SAVEPOINT import_case",
+      "RELEASE SAVEPOINT import_case",
+    ]);
+  });
+
+  it("creates a new case even when a deleted case has the same name", async () => {
+    // Restoring the deleted row brought back its old steps and versions, and
+    // its version 1 collided with the new snapshot.
+    const tx = stubTx({});
+    (tx.repositoryCases as any).findFirst = vi.fn(async () => ({ id: 42 }));
+    auditedTransactionMock.mockImplementationOnce(async (fn: any) => fn(tx));
+
+    await persistGeneratedTestCases(
+      {
+        ...buildInput(),
+        testCases: [{ id: "a", name: "Login", fieldValues: {}, steps: [] }],
+      } as any,
+      { userId: "u1", userName: "User" }
+    );
+
+    expect(tx.repositoryCases.update).not.toHaveBeenCalled();
+    expect(tx.repositoryCases.create).toHaveBeenCalledTimes(1);
+  });
 
   it("snapshots steps exactly as the Steps rows store them", async () => {
     const captured = await importOneCase();
