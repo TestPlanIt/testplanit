@@ -1008,6 +1008,68 @@ describe("ZenStack chokepoint mode:read enforcement", () => {
   });
 });
 
+describe("search sync after step and custom field writes", () => {
+  function makeRequest(model: string, body: unknown): NextRequest {
+    const headers = new Headers();
+    headers.set("content-type", "application/json");
+    const json = JSON.stringify(body);
+    return {
+      method: "PATCH",
+      headers,
+      url: `http://localhost:3000/api/model/${model}/update`,
+      clone() {
+        return this;
+      },
+      async text() {
+        return json;
+      },
+    } as unknown as NextRequest;
+  }
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    const { getServerAuthSession } = await import("~/server/auth");
+    (getServerAuthSession as any).mockResolvedValue({
+      user: { id: "user-1", email: "u@e.com", name: "U" },
+    });
+    const { extractBearerToken } = await import("~/lib/api-token-auth");
+    (extractBearerToken as any).mockReturnValue(null);
+    const { baseDb } = await import("~/lib/db");
+    (baseDb as any).user.findUnique.mockResolvedValue({
+      id: "user-1",
+      email: "u@e.com",
+      name: "U",
+    });
+    baseHandlerMock.mockClear();
+  });
+
+  it.each(["caseFieldValues", "steps"])(
+    "reindexes the case a %s write belongs to",
+    async (model) => {
+      // The written row names its case through testCaseId; reading a
+      // repositoryCaseId that doesn't exist left the index stale.
+      baseHandlerMock.mockResolvedValue(
+        new Response(JSON.stringify({ data: { id: 3, testCaseId: 77 } }), {
+          status: 200,
+        })
+      );
+      const { syncRepositoryCaseToElasticsearch } =
+        await import("~/services/repositoryCaseSync");
+      (syncRepositoryCaseToElasticsearch as any).mockResolvedValue(undefined);
+
+      const { PATCH } = await import("./route");
+      await PATCH(makeRequest(model, { where: { id: 3 }, data: {} }), {
+        params: Promise.resolve({ path: [model, "update"] }),
+      });
+
+      expect(syncRepositoryCaseToElasticsearch).toHaveBeenCalledWith(
+        77,
+        undefined
+      );
+    }
+  );
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Plan 01-04: Review & Approval gate at the auto-API chokepoint.
 // Verifies that PATCH/PUT to a gated model with `data.stateId` calls

@@ -1550,16 +1550,17 @@ async function handleRequest(
         const result = responseBody ? JSON.parse(responseBody) : null;
         const data = result?.data;
 
-        if (data?.repositoryCaseId) {
-          syncRepositoryCaseToElasticsearch(
-            data.repositoryCaseId,
-            tenantId
-          ).catch((error: any) => {
-            console.error(
-              `Failed to sync repository case ${data.repositoryCaseId} after step update to Elasticsearch:`,
-              error
-            );
-          });
+        // Steps and CaseFieldValues point at their case through testCaseId.
+        const caseId = data?.testCaseId;
+        if (typeof caseId === "number") {
+          syncRepositoryCaseToElasticsearch(caseId, tenantId).catch(
+            (error: any) => {
+              console.error(
+                `Failed to sync repository case ${caseId} after step update to Elasticsearch:`,
+                error
+              );
+            }
+          );
         }
       } catch (e) {
         console.error(
@@ -1581,16 +1582,17 @@ async function handleRequest(
         const result = responseBody ? JSON.parse(responseBody) : null;
         const data = result?.data;
 
-        if (data?.repositoryCaseId) {
-          syncRepositoryCaseToElasticsearch(
-            data.repositoryCaseId,
-            tenantId
-          ).catch((error: any) => {
-            console.error(
-              `Failed to sync repository case ${data.repositoryCaseId} after custom field update to Elasticsearch:`,
-              error
-            );
-          });
+        // Steps and CaseFieldValues point at their case through testCaseId.
+        const caseId = data?.testCaseId;
+        if (typeof caseId === "number") {
+          syncRepositoryCaseToElasticsearch(caseId, tenantId).catch(
+            (error: any) => {
+              console.error(
+                `Failed to sync repository case ${caseId} after custom field update to Elasticsearch:`,
+                error
+              );
+            }
+          );
         }
       } catch (e) {
         console.error(
