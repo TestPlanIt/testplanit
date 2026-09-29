@@ -12,7 +12,7 @@ The TestPlanIt MCP server lets AI agents — Claude Desktop, Cursor, custom MCP-
 
 - List, fetch, create (one at a time or many in a single bulk call), update, and soft-delete test cases (with steps, custom fields, tags, folder breadcrumb, linked issues, and linked automated tests inline)
 - List a project's templates and the case fields each defines, and choose which template a new case uses — custom fields are validated against that template
-- List and create test runs, add cases to existing runs, submit test results, and update run state
+- List and create test runs, add cases to existing runs, submit test results, update run state, and complete runs (a completed run can't be reopened)
 - List sessions, session results, and session findings — the exploratory testing surface — and create or update sessions
 - Create and update milestones, mark them started or complete, and list milestone progress with pooled status rollups inline
 - Resolve issues by external key (Jira / GitHub / Azure DevOps) and walk the issue → linked test cases graph
@@ -23,6 +23,10 @@ The TestPlanIt MCP server lets AI agents — Claude Desktop, Cursor, custom MCP-
 - Generate a QuickScript (AI automation script) from one or more test cases, following the project's connected code repository when one is configured
 - List the review requests assigned to you — the Review inbox queue, covering both direct assignment and assignment to a role you hold — with the subject, the workflow transition being requested, and the requester's note
 - Approve, request changes on, or reject a review request on your behalf — the same eligibility, append-only, and auto-transition rules the app enforces, and refused outright for read-only tokens
+
+:::note Shared steps
+The MCP server doesn't support shared steps. A shared step group appears in a fetched case as an empty step, and updating a case's steps replaces all of them, which removes any shared step groups from the case. Add or edit shared steps in the web UI.
+:::
 
 See the [npm package README](https://www.npmjs.com/package/@testplanit/mcp-server) for the full tool reference, including request/response schemas for all 50 tools.
 

@@ -95,7 +95,7 @@ Your MCP client discovers each tool's full parameters automatically, so the list
 | `testplanit_cases_get` | Get a single test case with its fields and steps. |
 | `testplanit_cases_create` | Create a test case, stored the way the web UI stores it: Markdown in steps and Text Long fields is formatted, custom field values are checked against the template, template defaults fill fields left out, and required fields must have a value. Optionally pass `templateId` (defaults to the template marked Default, else the project's first enabled template) and `issues` keys to link. Records the version 1 snapshot, so the case has history from the start. |
 | `testplanit_cases_create_many` | Create many test cases in one call — far faster than per-case creates, with the same checks as a single create. Each case takes the same fields plus optional per-case `folderId`/`stateName`; returns a per-case success/failure result so partial failures are visible. |
-| `testplanit_cases_update` | Update a test case. Custom fields are validated against the case's template. Bumps the case version and records a snapshot, the same as saving in the web UI. |
+| `testplanit_cases_update` | Update a test case. Custom fields are validated against the case's template. Bumps the case version and records a snapshot, the same as saving in the web UI. Shared steps aren't supported: `steps` sets plain steps only, and replacing the steps removes any shared step groups from the case. Add or edit shared steps in the web UI. |
 | `testplanit_cases_delete` | Delete a test case. |
 | `testplanit_cases_generate_script` | Generate a QuickScript (AI automation test script) from one or more test cases. Resolves the project's export template and, when a code repository is connected, follows the repo's existing framework/fixtures/page objects. Requires QuickScript to be enabled for the project. Returns the generated file(s) plus the resolved framework/language/fileExtension. |
 
@@ -130,7 +130,7 @@ Your MCP client discovers each tool's full parameters automatically, so the list
 | `testplanit_test_runs_cases_list` | List the cases included in a test run. |
 | `testplanit_test_run_case_iterations_list` | List the iterations (one per data row) of a data-driven case in a run, with sensitive values redacted. |
 | `testplanit_runs_create` | Create a test run, with its cases in the same create; data-driven cases get their iterations, as in the web UI. |
-| `testplanit_runs_update` | Update a test run. |
+| `testplanit_runs_update` | Update a test run: rename it, change its state, milestone, configuration, or tags, or complete it. A completed run can't be reopened. |
 | `testplanit_runs_cases_add` | Add test cases to a run (restores previously removed cases, untested) and generates iterations for data-driven ones. |
 | `testplanit_runs_cases_update` | Edit a case's row within a run — assign/unassign a tester or change its position. |
 | `testplanit_runs_cases_remove` | Remove test cases from a run (soft-delete, including their recorded results). |

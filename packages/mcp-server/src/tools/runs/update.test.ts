@@ -65,8 +65,11 @@ describe("testplanit_runs_update completion", () => {
     ).toBe(false);
   });
 
-  it("leaves the state alone when reopening", async () => {
-    await call({ runId: 5, isCompleted: false });
-    expect(updateData()).toEqual({ isCompleted: false, completedAt: null });
+  it("refuses to reopen a run", async () => {
+    const result = (await call({ runId: 5, isCompleted: false })) as any;
+
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toMatch(/cannot be reopened/);
+    expect(mockZenstack).not.toHaveBeenCalled();
   });
 });

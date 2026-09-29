@@ -57,7 +57,9 @@ export function registerCasesUpdate(
             }),
           )
           .optional()
-          .describe("New step set. Replaces ALL existing steps (soft-deletes them first)."),
+          .describe(
+            "New step set. Replaces ALL existing steps (soft-deletes them first). Shared steps aren't supported: these are plain steps, and replacing the steps removes any shared step groups from the case (a shared step group reads back from testplanit_cases_get as an empty step).",
+          ),
         tags: z
           .array(z.union([z.number().int().positive(), z.string().min(1)]))
           .optional()

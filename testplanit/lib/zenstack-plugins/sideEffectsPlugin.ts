@@ -51,6 +51,10 @@ import {
   assertRestrictedFieldWrite,
   type RestrictedFieldReader,
 } from "~/lib/restrictedFieldGuard";
+import {
+  assertRunNotReopened,
+  type CompletedRunReader,
+} from "~/lib/runReopenGuard";
 import { resolveStoredCredentials } from "~/lib/integrations/credentials";
 
 /** Write operations whose args can carry a rich-text column value. */
@@ -505,6 +509,15 @@ export const sideEffectsPlugin = definePlugin(schema, {
         operation,
         args,
         client.$unuseAll() as unknown as FolderReader
+      );
+    }
+
+    if (model === "TestRuns") {
+      await assertRunNotReopened(
+        model,
+        operation,
+        args,
+        client.$unuseAll() as unknown as CompletedRunReader
       );
     }
 
