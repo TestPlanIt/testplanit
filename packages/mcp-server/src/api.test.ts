@@ -107,12 +107,30 @@ describe("zenstack() — POST/PATCH/DELETE dispatch", () => {
     expect(opts.method).toBe("PATCH");
   });
 
-  it.each(["delete", "deleteMany"])("TC-06: %s uses DELETE", async (operation) => {
-    fetchMock.mockResolvedValueOnce(jsonResponse(200, { data: {} }));
-    await zenstack("repositoryCases", operation, { where: { id: 1 } }, ENV);
-    const opts = fetchMock.mock.calls[0][1] as RequestInit;
-    expect(opts.method).toBe("DELETE");
-  });
+  it.each(["delete", "deleteMany"])(
+    "TC-06: %s uses DELETE with its args in ?q= and no body",
+    async (operation) => {
+      fetchMock.mockResolvedValueOnce(jsonResponse(200, { data: {} }));
+      await zenstack("repositoryCaseIssue", operation, { where: { issueId: 1 } }, ENV);
+      const [url, opts] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(opts.method).toBe("DELETE");
+      expect(opts.body).toBeUndefined();
+      // The RPC handler reads delete args from `q` only; a body is ignored,
+      // which would turn deleteMany into an unfiltered delete.
+      const q = new URL(url).searchParams.get("q");
+      expect(JSON.parse(q!)).toEqual({ where: { issueId: 1 } });
+    },
+  );
+
+  it.each([undefined, {}, { where: {} }])(
+    "TC-06b: refuses deleteMany without a where filter (%j)",
+    async (body) => {
+      await expect(
+        zenstack("repositoryCaseIssue", "deleteMany", body, ENV),
+      ).rejects.toBeInstanceOf(TestPlanItHttpError);
+      expect(fetchMock).not.toHaveBeenCalled();
+    },
+  );
 });
 
 // ---------------------------------------------------------------------------

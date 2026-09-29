@@ -58,8 +58,9 @@ describe("registerIssuesLink", () => {
     mockZenstack.mockReset();
   });
 
-  // 1. Single testCase link → correct connect shape
-  it("links a single testCase", async () => {
+  // 1. Single testCase link → a RepositoryCaseIssue join row. Issue has no
+  // direct relation to cases, so an `issue.update` connect would be rejected.
+  it("links a single testCase through the join model", async () => {
     mockZenstack.mockResolvedValueOnce({ id: 7978 });
     const { client } = await setupLinkClient();
     const result = await client.callTool({
@@ -68,11 +69,11 @@ describe("registerIssuesLink", () => {
     });
     expect(result.isError).toBeFalsy();
     const { model, op, body } = getCallArgs();
-    expect(model).toBe("issue");
-    expect(op).toBe("update");
-    expect(body.where).toEqual({ id: 7978 });
-    expect((body.data as any).repositoryCases).toEqual({
-      connect: [{ id: 101 }],
+    expect(model).toBe("repositoryCaseIssue");
+    expect(op).toBe("createMany");
+    expect(body).toEqual({
+      data: [{ issueId: 7978, caseId: 101 }],
+      skipDuplicates: true,
     });
     const text = JSON.parse((result.content[0] as any).text);
     expect(text.linked).toBe(1);
@@ -90,7 +91,7 @@ describe("registerIssuesLink", () => {
     });
     expect(result.isError).toBeFalsy();
     const { body } = getCallArgs();
-    expect((body.data as any).repositoryCases.connect).toHaveLength(9);
+    expect(body.data as unknown[]).toHaveLength(9);
     const text = JSON.parse((result.content[0] as any).text);
     expect(text.linked).toBe(9);
   });
@@ -181,7 +182,7 @@ describe("registerIssuesLink by externalKey", () => {
     expect(result.isError).toBeFalsy();
     expect(mockResolve).toHaveBeenCalledWith(3, ["PROJ-1"], deps.env, undefined);
     const { body } = getCallArgs();
-    expect((body.where as any).id).toBe(4242);
+    expect(body.data).toEqual([{ issueId: 4242, caseId: 101 }]);
     const text = JSON.parse((result.content[0] as any).text);
     expect(text.issueId).toBe(4242);
   });
@@ -287,8 +288,8 @@ describe("registerIssuesUnlink", () => {
     mockZenstack.mockReset();
   });
 
-  // 7. Single unlink → correct disconnect shape
-  it("unlinks a single testCase", async () => {
+  // 7. Single unlink → the join rows for that issue and case are removed
+  it("unlinks a single testCase through the join model", async () => {
     mockZenstack.mockResolvedValueOnce({ id: 7978 });
     const { client } = await setupUnlinkClient();
     const result = await client.callTool({
@@ -297,11 +298,9 @@ describe("registerIssuesUnlink", () => {
     });
     expect(result.isError).toBeFalsy();
     const { model, op, body } = getCallArgs();
-    expect(model).toBe("issue");
-    expect(op).toBe("update");
-    expect((body.data as any).repositoryCases).toEqual({
-      disconnect: [{ id: 101 }],
-    });
+    expect(model).toBe("repositoryCaseIssue");
+    expect(op).toBe("deleteMany");
+    expect(body).toEqual({ where: { issueId: 7978, caseId: { in: [101] } } });
     const text = JSON.parse((result.content[0] as any).text);
     expect(text.unlinked).toBe(1);
   });
@@ -320,7 +319,7 @@ describe("registerIssuesUnlink", () => {
     });
     expect(result.isError).toBeFalsy();
     const { body } = getCallArgs();
-    expect((body.data as any).repositoryCases.disconnect).toHaveLength(3);
+    expect(body).toEqual({ where: { issueId: 1, caseId: { in: [10, 11, 12] } } });
     const text = JSON.parse((result.content[0] as any).text);
     expect(text.unlinked).toBe(3);
   });

@@ -18,8 +18,10 @@ const ENTITY_TYPES = [
 ] as const;
 type EntityType = (typeof ENTITY_TYPES)[number];
 
-const ENTITY_RELATION: Record<EntityType, string> = {
-  testCase: "repositoryCases",
+// Relations on Issue for the entity types linked through an implicit
+// many-to-many. Test cases are linked through the RepositoryCaseIssue join
+// model instead — see linkCases / unlinkCases.
+const ENTITY_RELATION: Record<Exclude<EntityType, "testCase">, string> = {
   session: "sessions",
   testRun: "testRuns",
   testRunResult: "testRunResults",
@@ -86,6 +88,40 @@ const UNLINK_INPUT_SCHEMA = {
     .max(100)
     .describe("One or more entity IDs to unlink from the issue."),
 };
+
+/** Link cases through the join model, as the web UI does. */
+async function linkCases(
+  issueId: number,
+  caseIds: number[],
+  env: EnvConfig,
+): Promise<void> {
+  await zenstack(
+    "repositoryCaseIssue",
+    "createMany",
+    {
+      data: caseIds.map((caseId) => ({ issueId, caseId })),
+      skipDuplicates: true,
+    },
+    env,
+  );
+}
+
+/**
+ * Remove case links. The join rows carry no soft-delete column, so they are
+ * deleted — the same as unlinking in the web UI.
+ */
+async function unlinkCases(
+  issueId: number,
+  caseIds: number[],
+  env: EnvConfig,
+): Promise<void> {
+  await zenstack(
+    "repositoryCaseIssue",
+    "deleteMany",
+    { where: { issueId, caseId: { in: caseIds } } },
+    env,
+  );
+}
 
 interface IssueTargetInput {
   issueId?: number;
@@ -158,21 +194,25 @@ export function registerIssuesLink(
     async (input) => {
       try {
         const issueId = await resolveTargetIssueId(input, deps.env);
-        const relation = ENTITY_RELATION[input.entityType];
-        await zenstack(
-          "issue",
-          "update",
-          {
-            where: { id: issueId },
-            data: {
-              [relation]: {
-                connect: input.entityIds.map((id) => ({ id })),
+        if (input.entityType === "testCase") {
+          await linkCases(issueId, input.entityIds, deps.env);
+        } else {
+          const relation = ENTITY_RELATION[input.entityType];
+          await zenstack(
+            "issue",
+            "update",
+            {
+              where: { id: issueId },
+              data: {
+                [relation]: {
+                  connect: input.entityIds.map((id) => ({ id })),
+                },
               },
+              select: { id: true },
             },
-            select: { id: true },
-          },
-          deps.env,
-        );
+            deps.env,
+          );
+        }
         const result = {
           linked: input.entityIds.length,
           issueId,
@@ -203,21 +243,25 @@ export function registerIssuesUnlink(
     },
     async (input) => {
       try {
-        const relation = ENTITY_RELATION[input.entityType];
-        await zenstack(
-          "issue",
-          "update",
-          {
-            where: { id: input.issueId },
-            data: {
-              [relation]: {
-                disconnect: input.entityIds.map((id) => ({ id })),
+        if (input.entityType === "testCase") {
+          await unlinkCases(input.issueId, input.entityIds, deps.env);
+        } else {
+          const relation = ENTITY_RELATION[input.entityType];
+          await zenstack(
+            "issue",
+            "update",
+            {
+              where: { id: input.issueId },
+              data: {
+                [relation]: {
+                  disconnect: input.entityIds.map((id) => ({ id })),
+                },
               },
+              select: { id: true },
             },
-            select: { id: true },
-          },
-          deps.env,
-        );
+            deps.env,
+          );
+        }
         const result = {
           unlinked: input.entityIds.length,
           issueId: input.issueId,

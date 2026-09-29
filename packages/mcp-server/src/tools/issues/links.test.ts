@@ -120,7 +120,7 @@ describe("registerIssuesListLinks", () => {
   });
 
   // 6. Outbound: target=cases
-  it("outbound target=cases → model=repositoryCases, where with issues some + isDeleted false", async () => {
+  it("outbound target=cases → model=repositoryCases, filtered through the caseIssues join", async () => {
     mockZenstack.mockResolvedValueOnce([
       { id: 10, name: "Case 10", source: "MANUAL", automated: false },
     ]);
@@ -134,13 +134,11 @@ describe("registerIssuesListLinks", () => {
     expect(target.model).toBe("repositoryCases");
     expect(target.op).toBe("findMany");
     const body = getCallBody(0);
-    const where = body?.where as {
-      isDeleted?: boolean;
-      issues?: { some?: { id?: number; isDeleted?: boolean } };
-    };
-    expect(where.isDeleted).toBe(false);
-    expect(where.issues?.some?.id).toBe(42);
-    expect(where.issues?.some?.isDeleted).toBe(false);
+    // RepositoryCases has no `issues` relation; a filter on it is rejected.
+    expect(body?.where).toEqual({
+      isDeleted: false,
+      caseIssues: { some: { issue: { id: 42, isDeleted: false } } },
+    });
     const data = structured(result);
     const items = data.items as Array<Record<string, unknown>>;
     expect(items[0]).toEqual({
@@ -302,8 +300,8 @@ describe("registerIssuesListLinks", () => {
     });
   });
 
-  // 12. Inbound caseId → model=issue, where.repositoryCases.some.id
-  it("inbound caseId → model=issue, where.repositoryCases.some={id, isDeleted:false}", async () => {
+  // 12. Inbound caseId → model=issue, filtered through the caseIssues join
+  it("inbound caseId → model=issue, where.caseIssues.some.case={id, isDeleted:false}", async () => {
     mockZenstack.mockResolvedValueOnce([
       {
         id: 70,
@@ -328,13 +326,10 @@ describe("registerIssuesListLinks", () => {
     });
     expect(getCallTarget(0).model).toBe("issue");
     const body = getCallBody(0);
-    const where = body?.where as {
-      isDeleted?: boolean;
-      repositoryCases?: { some?: { id?: number; isDeleted?: boolean } };
-    };
-    expect(where.isDeleted).toBe(false);
-    expect(where.repositoryCases?.some?.id).toBe(99);
-    expect(where.repositoryCases?.some?.isDeleted).toBe(false);
+    expect(body?.where).toEqual({
+      isDeleted: false,
+      caseIssues: { some: { case: { id: 99, isDeleted: false } } },
+    });
     const data = structured(result);
     const items = data.items as Array<Record<string, unknown>>;
     expect(items[0]).toMatchObject({

@@ -144,7 +144,8 @@ const INBOUND_KEY_TO_RELATION: Record<
   string,
   { relation: string; hasIsDeleted: boolean }
 > = {
-  caseId: { relation: "repositoryCases", hasIsDeleted: true },
+  // Through the RepositoryCaseIssue join model: `caseIssues.some.case`.
+  caseId: { relation: "caseIssues", hasIsDeleted: true },
   sessionId: { relation: "sessions", hasIsDeleted: true },
   sessionResultId: { relation: "sessionResults", hasIsDeleted: true },
   runId: { relation: "testRuns", hasIsDeleted: true },
@@ -245,14 +246,19 @@ export function registerIssuesListLinks(
         if (hasIssue) {
           const target = input.target as Target;
           const desc = OUTBOUND_MAP[target];
+          // Cases reach issues through the RepositoryCaseIssue join model;
+          // every other target has a direct `issues` relation.
+          const linkClause =
+            target === "cases"
+              ? {
+                  caseIssues: {
+                    some: { issue: { id: input.issueId, isDeleted: false } },
+                  },
+                }
+              : { issues: { some: { id: input.issueId, isDeleted: false } } };
           const issueClause = desc.hasIsDeleted
-            ? {
-                isDeleted: false,
-                issues: { some: { id: input.issueId, isDeleted: false } },
-              }
-            : {
-                issues: { some: { id: input.issueId, isDeleted: false } },
-              };
+            ? { isDeleted: false, ...linkClause }
+            : linkClause;
           body.where = issueClause;
           body.select = desc.selectShape;
           const rows =
@@ -284,7 +290,9 @@ export function registerIssuesListLinks(
           : { id: inboundId };
         body.where = {
           isDeleted: false,
-          [rel.relation]: { some: someClause },
+          [rel.relation]: {
+            some: inboundKey === "caseId" ? { case: someClause } : someClause,
+          },
         };
         body.include = ISSUE_ROW_INCLUDE;
         const rows =

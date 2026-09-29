@@ -39,7 +39,8 @@ function bearerHeaders(env: EnvConfig): Record<string, string> {
  * `@testplanit/mcp-server` has NO dependency on `@testplanit/api` (D-01).
  *
  * Read operations use GET with `?q=encodeURIComponent(JSON.stringify(body))`.
- * Write operations use POST/PATCH/DELETE with the JSON body.
+ * Create/update operations use POST/PATCH with the JSON body; delete
+ * operations use DELETE with their args in `?q=`, as the RPC handler expects.
  *
  * Errors:
  *  - Non-2xx → throws TestPlanItHttpError with statusCode + (when present) code
@@ -61,12 +62,27 @@ export async function zenstack<T>(
   const baseUrl = env.apiUrl;
   let response: Response;
 
-  if (READ_OPS.has(operation)) {
+  if (READ_OPS.has(operation) || DELETE_OPS.has(operation)) {
+    // The RPC handler reads `delete` / `deleteMany` args from `?q=` only and
+    // ignores a body: a `where` sent in the body is dropped and `deleteMany`
+    // runs unfiltered. Refuse a delete with no `where` rather than send one.
+    const isDelete = DELETE_OPS.has(operation);
+    const where = (body as { where?: unknown } | null | undefined)?.where;
+    if (
+      isDelete &&
+      (where == null ||
+        (typeof where === "object" && Object.keys(where).length === 0))
+    ) {
+      throw new TestPlanItHttpError(
+        `Refusing ${model}.${operation} without a where filter.`,
+        { statusCode: 400 },
+      );
+    }
     const q = body !== undefined && body !== null
       ? `?q=${encodeURIComponent(JSON.stringify(body))}`
       : "";
     response = await fetch(`${baseUrl}/api/model/${model}/${operation}${q}`, {
-      method: "GET",
+      method: isDelete ? "DELETE" : "GET",
       headers: bearerHeaders(env),
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
@@ -75,9 +91,7 @@ export async function zenstack<T>(
       ? "POST"
       : PATCH_OPS.has(operation)
         ? "PATCH"
-        : DELETE_OPS.has(operation)
-          ? "DELETE"
-          : "POST"; // default for any unrecognized op
+        : "POST"; // default for any unrecognized op
     response = await fetch(`${baseUrl}/api/model/${model}/${operation}`, {
       method,
       headers: bearerHeaders(env),
