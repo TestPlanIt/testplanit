@@ -128,14 +128,15 @@ Your MCP client discovers each tool's full parameters automatically, so the list
 | `testplanit_test_runs_list` | List test runs in a project. |
 | `testplanit_test_runs_get` | Get a single test run. |
 | `testplanit_test_runs_cases_list` | List the cases included in a test run. |
-| `testplanit_runs_create` | Create a test run. |
+| `testplanit_test_run_case_iterations_list` | List the iterations (one per data row) of a data-driven case in a run, with sensitive values redacted. |
+| `testplanit_runs_create` | Create a test run, with its cases in the same create; data-driven cases get their iterations, as in the web UI. |
 | `testplanit_runs_update` | Update a test run. |
-| `testplanit_runs_cases_add` | Add test cases to a run (restores previously removed cases). |
+| `testplanit_runs_cases_add` | Add test cases to a run (restores previously removed cases, untested) and generates iterations for data-driven ones. |
 | `testplanit_runs_cases_update` | Edit a case's row within a run — assign/unassign a tester or change its position. |
 | `testplanit_runs_cases_remove` | Remove test cases from a run (soft-delete, including their recorded results). |
 | `testplanit_test_run_results_list` | List execution results — manual and automated (JUnit-family) rows, discriminated by `source`. |
 | `testplanit_test_run_results_get` | Get a single result with detail (step-level for manual results; stack trace / stdout / stderr for automated). |
-| `testplanit_test_run_results_create` | Record a result for a case in a run. |
+| `testplanit_test_run_results_create` | Record a result for a case in a run; for a data-driven case, pass the `iterationId` of the data row. |
 | `testplanit_automation_targets_list` | List a project's execution targets (where automated cases can be dispatched). |
 | `testplanit_runs_execute` | Ask TestPlanIt to execute a run's automated cases on a target (CI dispatch). |
 | `testplanit_runs_automation_plan` | Read the plan a dispatched job executes: automated cases with selectors and id tokens. |

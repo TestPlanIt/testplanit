@@ -29,6 +29,10 @@ import {
   registerAutomationTargetsList,
   type AutomationTargetsListDeps,
 } from "./targets-list.js";
+import {
+  registerRunCaseIterationsList,
+  type RunCaseIterationsListDeps,
+} from "./iterations-list.js";
 
 export type RunsDeps =
   & RunsListDeps
@@ -42,7 +46,8 @@ export type RunsDeps =
   & RunsCasesRemoveDeps
   & RunsExecuteDeps
   & RunsAutomationPlanDeps
-  & AutomationTargetsListDeps;
+  & AutomationTargetsListDeps
+  & RunCaseIterationsListDeps;
 
 export function registerRuns(server: McpServer, deps: RunsDeps): void {
   registerRunsList(server, deps);
@@ -57,6 +62,7 @@ export function registerRuns(server: McpServer, deps: RunsDeps): void {
   registerRunsExecute(server, deps);
   registerRunsAutomationPlan(server, deps);
   registerAutomationTargetsList(server, deps);
+  registerRunCaseIterationsList(server, deps);
 }
 
 export {

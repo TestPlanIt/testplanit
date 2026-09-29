@@ -1,7 +1,9 @@
 import { getCurrentTenantId } from "@/lib/multiTenantDb";
+import type { Session } from "next-auth";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
+import { authenticateRequest } from "~/lib/api-token-auth";
 import { getEnhancedDb } from "~/lib/auth/utils";
 import { auditedTransaction } from "~/lib/audit/auditedTransaction";
 import { withAuditContext } from "~/lib/auditContextWrappers";
@@ -14,6 +16,8 @@ import {
 } from "~/lib/services/iterationCardinality";
 import { materializeIterations } from "~/lib/services/iterationFanOut";
 import { captureAuditEvent } from "~/lib/services/auditLog";
+import { userCanAddEditArea } from "~/lib/services/projectPermissions";
+import { ApplicationArea } from "~/zenstack/models";
 import { authOptions } from "~/server/auth";
 
 /**
@@ -42,27 +46,34 @@ import { authOptions } from "~/server/auth";
  * and prompt the user before invoking this endpoint. The server's only
  * refusal is hardRefuse.
  *
- * Access enforcement: getEnhancedDb(session) confirms the caller can read
- * the run's TestRunCases. The run-existence check is the gate; if the
+ * Access enforcement: accepts a browser session or an API token, requires
+ * add/edit on test runs, and getEnhancedDb confirms the caller can read the
+ * run's TestRunCases. The run-existence check is the gate; if the
  * caller cannot read the run they get 404 (we deliberately don't reveal
  * "run exists but you can't see it").
  *
- * Idempotency: this endpoint trusts the caller (the modal) to invoke it
- * exactly once per newly-created run. A second call would create duplicate
- * snapshots + iteration rows. Wave 2 callers (re-generation flows) must
- * gate on `TestRunCases.totalIterations > 0` before re-invoking.
+ * Idempotency: run cases that already have a dataset snapshot are skipped,
+ * so a second call (e.g. after cases are added to the run) fans out only the
+ * cases that have no iterations yet.
  */
 
 export const POST = withAuditContext(
   async (
-    _request: NextRequest,
+    request: NextRequest,
     { params }: { params: Promise<{ testRunId: string }> }
   ) => {
     try {
+      // A browser session, or an API token (the MCP server's runs_create and
+      // runs_cases_add call this after adding cases).
       const session = await getServerSession(authOptions);
-      if (!session?.user?.id) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      const auth = await authenticateRequest(request, session);
+      if (!auth.authenticated) {
+        return NextResponse.json(
+          { error: auth.error, code: auth.errorCode },
+          { status: auth.status }
+        );
       }
+      const userId = auth.user.userId;
 
       const { testRunId: runIdParam } = await params;
       const testRunId = parseInt(runIdParam, 10);
@@ -73,7 +84,7 @@ export const POST = withAuditContext(
         );
       }
 
-      const db = await getEnhancedDb(session);
+      const db = await getEnhancedDb({ user: { id: userId } } as Session);
 
       // Verify run exists AND caller has read access. We need projectId for
       // the cardinality query and configId presence for the fan-out factor.
@@ -86,6 +97,16 @@ export const POST = withAuditContext(
           { error: "Test run not found" },
           { status: 404 }
         );
+      }
+      if (
+        !(await userCanAddEditArea(
+          userId,
+          run.projectId,
+          ApplicationArea.TestRuns,
+          auth.user.access
+        ))
+      ) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
 
       // Resolve the run's cases. We need RepositoryCase.id, name, and
@@ -104,7 +125,9 @@ export const POST = withAuditContext(
           }>;
         };
       }> = await db.testRunCases.findMany({
-        where: { testRunId, isDeleted: false },
+        // Cases that already have iterations are left alone, so calling this
+        // again after adding cases to the run only fans out the new ones.
+        where: { testRunId, isDeleted: false, dataSetSnapshot: { is: null } },
         select: {
           repositoryCaseId: true,
           repositoryCase: {
@@ -198,7 +221,7 @@ export const POST = withAuditContext(
       const tenantId = getCurrentTenantId();
       const job = await queue.add("generate", {
         testRunId,
-        userId: session.user.id,
+        userId,
         tenantId,
       });
 

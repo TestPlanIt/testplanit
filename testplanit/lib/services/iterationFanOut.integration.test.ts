@@ -363,6 +363,30 @@ describeIntegration("materializeIterations (live DB)", () => {
     });
   });
 
+  it("fans out a run case once, however many times it is called", async () => {
+    // Called again after cases are added to a run (runs_cases_add), the
+    // fan-out must leave already-materialized cases alone.
+    const { baseDb, materializeIterations } = await importDeps();
+    await withRollback(baseDb, async (tx) => {
+      const fx = await seedFixture(tx);
+      await materializeIterations(fx.testRunId, tx);
+      const again = await materializeIterations(fx.testRunId, tx);
+
+      expect(again.iterationCount).toBe(0);
+      expect(again.parameterizedRunCaseCount).toBe(0);
+      expect(
+        await tx.testRunCaseIteration.count({
+          where: { testRunCaseId: fx.testRunCaseId },
+        })
+      ).toBe(3);
+      expect(
+        await tx.testRunCaseDataSetSnapshot.count({
+          where: { testRunCaseId: fx.testRunCaseId },
+        })
+      ).toBe(1);
+    });
+  });
+
   it("updates TestRunCases.totalIterations to the row count", async () => {
     const { baseDb, materializeIterations } = await importDeps();
     await withRollback(baseDb, async (tx) => {

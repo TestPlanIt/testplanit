@@ -9,7 +9,7 @@ import type {
   TestRunStepResultsSelect,
   TestRunsInclude,
 } from "@db/input";
-import { zenstack } from "../../api.js";
+import { postHostJson, zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { denormalizeCustomFields } from "../cases/shared.js";
 import { proseMirrorToMarkdown } from "../../richText.js";
@@ -999,4 +999,41 @@ export function mapRunResultDetail(raw: RawRunResultDetail) {
     attachments: (raw.attachments ?? []).map(mapAttachment),
     issues: (raw.issues ?? []).map(mapIssue),
   };
+}
+
+export type IterationGeneration =
+  | { generated: true; iterationCount: number; async: boolean }
+  | { generated: false; reason: string };
+
+/**
+ * Create the iterations for the run's parameterized cases that don't have
+ * them yet — what the web UI does after it creates a run. Without it a
+ * data-driven case in a run created here had no iterations, and its results
+ * bypassed the per-row rollup. Safe to repeat: cases that already have
+ * iterations are skipped by the host.
+ *
+ * Never throws: the run already exists, so a host that can't generate them
+ * (too many rows, or a host without this route for API tokens) is reported
+ * in the result instead of failing the call.
+ */
+export async function generateRunIterations(
+  runId: number,
+  env: EnvConfig,
+): Promise<IterationGeneration> {
+  try {
+    const out = await postHostJson<{
+      iterationCount?: number;
+      async?: boolean;
+    }>(`/api/test-runs/${runId}/generate-iterations`, {}, env, 30000);
+    return {
+      generated: true,
+      iterationCount: out.iterationCount ?? 0,
+      async: out.async === true,
+    };
+  } catch (err) {
+    return {
+      generated: false,
+      reason: err instanceof Error ? err.message : String(err),
+    };
+  }
 }

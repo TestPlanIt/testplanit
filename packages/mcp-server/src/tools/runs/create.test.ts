@@ -8,6 +8,7 @@ vi.mock("../../api.js", () => ({
   zenstack: vi.fn(),
   lookup: vi.fn(),
   resolveTagIds: vi.fn(),
+  postHostJson: vi.fn(),
 }));
 
 // resolveTagIds lives in cases/shared — mock that separately
@@ -15,7 +16,7 @@ vi.mock("../cases/shared.js", () => ({
   resolveTagIds: vi.fn(),
 }));
 
-import { zenstack, lookup } from "../../api.js";
+import { postHostJson, zenstack, lookup } from "../../api.js";
 import { resolveTagIds } from "../cases/shared.js";
 import { registerRunsCreate } from "./create.js";
 
@@ -78,6 +79,7 @@ describe("registerRunsCreate", () => {
     mockZenstack.mockReset();
     mockLookup.mockReset();
     mockResolveTagIds.mockReset();
+    vi.mocked(postHostJson).mockReset();
   });
 
   it("creates a minimal run (no caseIds, no optional fields)", async () => {
@@ -129,18 +131,20 @@ describe("registerRunsCreate", () => {
     ]);
   });
 
-  it("adds test cases via testRunCases.createMany when caseIds provided", async () => {
+  it("creates the run and its cases in one create, then generates iterations", async () => {
     // 1. resolveRunState
     mockZenstack.mockResolvedValueOnce([MOCK_STATE]);
     mockResolveTagIds.mockResolvedValueOnce([]);
-    // 2. testRuns.create
+    // 2. testRuns.create (cases nested)
     mockZenstack.mockResolvedValueOnce(MOCK_CREATED_RUN);
-    // 3. testRunCases.createMany
-    mockZenstack.mockResolvedValueOnce({ count: 3 });
-    // 4. testRuns.findUnique
+    // 3. testRuns.findUnique
     mockZenstack.mockResolvedValueOnce({ ...MOCK_RUN_RAW, testCases: [] });
-    // 5. groupBy
+    // 4. groupBy
     mockZenstack.mockResolvedValueOnce([]);
+    vi.mocked(postHostJson).mockResolvedValueOnce({
+      async: false,
+      iterationCount: 6,
+    });
 
     const { client } = await setupClient();
     const result = await client.callTool({
@@ -149,13 +153,50 @@ describe("registerRunsCreate", () => {
     });
     expect(result.isError).toBeFalsy();
 
-    const createManyCall = mockZenstack.mock.calls[2];
-    expect(createManyCall?.[0]).toBe("testRunCases");
-    expect(createManyCall?.[1]).toBe("createMany");
-    const data = (createManyCall?.[2] as any).data;
-    expect(data).toHaveLength(3);
-    expect(data[0]).toEqual({ testRunId: 42, repositoryCaseId: 10, order: 1 });
-    expect(data[2]).toEqual({ testRunId: 42, repositoryCaseId: 30, order: 3 });
+    const create = (mockZenstack.mock.calls[1]?.[2] as any).data;
+    expect(create.testCases.create).toEqual([
+      { repositoryCase: { connect: { id: 10 } }, order: 1 },
+      { repositoryCase: { connect: { id: 20 } }, order: 2 },
+      { repositoryCase: { connect: { id: 30 } }, order: 3 },
+    ]);
+    expect(
+      mockZenstack.mock.calls.some(
+        (c) => c[0] === "testRunCases" && c[1] === "createMany",
+      ),
+    ).toBe(false);
+    expect(vi.mocked(postHostJson).mock.calls[0]?.[0]).toBe(
+      "/api/test-runs/42/generate-iterations",
+    );
+    expect(JSON.parse((result.content[0] as any).text).iterations).toEqual({
+      generated: true,
+      iterationCount: 6,
+      async: false,
+    });
+  });
+
+  it("keeps the run and reports why when iterations cannot be generated", async () => {
+    mockZenstack.mockResolvedValueOnce([MOCK_STATE]);
+    mockResolveTagIds.mockResolvedValueOnce([]);
+    mockZenstack.mockResolvedValueOnce(MOCK_CREATED_RUN);
+    mockZenstack.mockResolvedValueOnce({ ...MOCK_RUN_RAW, testCases: [] });
+    mockZenstack.mockResolvedValueOnce([]);
+    vi.mocked(postHostJson).mockRejectedValueOnce(
+      new TestPlanItHttpError("HTTP 422 from /api/test-runs/42/generate-iterations", {
+        statusCode: 422,
+      }),
+    );
+
+    const { client } = await setupClient();
+    const result = await client.callTool({
+      name: "testplanit_runs_create",
+      arguments: { projectId: 1, name: "Smoke Suite", caseIds: [10] },
+    });
+
+    expect(result.isError).toBeFalsy();
+    const out = JSON.parse((result.content[0] as any).text);
+    expect(out.id).toBe(42);
+    expect(out.iterations.generated).toBe(false);
+    expect(out.iterations.reason).toContain("422");
   });
 
   it("resolves stateName via workflows.findMany with name filter", async () => {
@@ -196,7 +237,7 @@ describe("registerRunsCreate", () => {
     expect(body.configuration).toEqual({ connect: { id: 3 } });
   });
 
-  it("skips testRunCases.createMany when caseIds is empty", async () => {
+  it("adds no cases and generates no iterations when caseIds is empty", async () => {
     setupDefaultMocks();
     const { client } = await setupClient();
     await client.callTool({
@@ -209,6 +250,7 @@ describe("registerRunsCreate", () => {
       (c) => c[0] === "testRunCases" && c[1] === "createMany",
     );
     expect(createManyCalls).toHaveLength(0);
+    expect(postHostJson).not.toHaveBeenCalled();
   });
 
   it("propagates HTTP error from state resolution", async () => {

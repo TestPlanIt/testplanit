@@ -1177,6 +1177,14 @@ export default function TestRunPage() {
         });
 
         await updateTestRunForecast(Number(runId));
+
+        // Data-driven cases added here need their iterations, as on a new
+        // run. The route skips cases that already have them.
+        await fetch(`/api/test-runs/${runId}/generate-iterations`, {
+          method: "POST",
+        }).catch((fanOutErr) => {
+          console.error("[generate-iterations]", fanOutErr);
+        });
       } else {
         // No test case changes, just update the basic info
         await updateTestRuns({

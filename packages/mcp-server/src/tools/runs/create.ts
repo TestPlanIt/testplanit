@@ -18,6 +18,7 @@ import {
   mapRunDetailTestCase,
   type RawRunRow,
   type RawRunDetailTestCase,
+  generateRunIterations,
 } from "./shared.js";
 
 export interface RunsCreateDeps {
@@ -138,26 +139,28 @@ export function registerRunsCreate(
               ...(tagIds.length > 0
                 ? { tags: { connect: tagIds.map((id) => ({ id })) } }
                 : {}),
+              // In the same create, as the web UI does: a bad case id fails
+              // the whole call instead of leaving an empty run behind.
+              ...(input.caseIds && input.caseIds.length > 0
+                ? {
+                    testCases: {
+                      create: input.caseIds.map((caseId, i) => ({
+                        repositoryCase: { connect: { id: caseId } },
+                        order: i + 1,
+                      })),
+                    },
+                  }
+                : {}),
             },
             select: { id: true },
           },
           deps.env,
         );
 
-        if (input.caseIds && input.caseIds.length > 0) {
-          await zenstack(
-            "testRunCases",
-            "createMany",
-            {
-              data: input.caseIds.map((caseId, i) => ({
-                testRunId: created.id,
-                repositoryCaseId: caseId,
-                order: i + 1,
-              })),
-            },
-            deps.env,
-          );
-        }
+        const iterations =
+          input.caseIds && input.caseIds.length > 0
+            ? await generateRunIterations(created.id, deps.env)
+            : undefined;
 
         const raw = await zenstack<
           (RawRunRow & { testCases: RawRunDetailTestCase[] }) | null
@@ -198,6 +201,7 @@ export function registerRunsCreate(
           total: rollup.total,
           testCases,
           testCasesNextCursor,
+          ...(iterations ? { iterations } : {}),
         };
 
         return {

@@ -31,10 +31,9 @@ export { applyMapping, SKIP_SENTINEL } from "~/lib/utils/datasetMapping";
  *      Using the wrong name fails at runtime with column-not-found.
  *   4. Counters (`totalIterations`) are written transactionally. Pass/fail
  *      counters stay at zero until iteration results land (Wave 2, Task 6).
- *   5. Idempotency at the run level is the CALLER's responsibility — this
- *      helper trusts that no snapshot or iteration rows already exist for
- *      the targeted TestRunCases. The route enforces this by only calling
- *      materializeIterations on freshly-created TestRunCases.
+ *   5. Repeat calls are safe: a TestRunCase that already has a snapshot is
+ *      skipped, so calling this after cases are added to a run fans out only
+ *      the new ones.
  *
  * Cross-project safety: the dataset query is filtered by `projectId =
  * testRun.projectId` per the Phase 1 carry-forward (DataSet @@deny does
@@ -78,7 +77,8 @@ export interface MaterializeIterationsOptions {
 /**
  * Fan out every parameterized TestRunCase for the given run.
  *
- * Loads each TestRunCase row whose RepositoryCase has hasParameters=true,
+ * Loads each TestRunCase row whose RepositoryCase has hasParameters=true and
+ * that has no dataset snapshot yet (so repeat calls are safe),
  * snapshots the case's parameters + dataset rows, then materializes one
  * TestRunCaseIteration per row. All writes happen inside the caller-owned
  * transaction `tx`.
@@ -119,6 +119,8 @@ export async function materializeIterations(
       testRunId,
       isDeleted: false,
       repositoryCase: { hasParameters: true, isDeleted: false },
+      // Already fanned out: keep its snapshot and iterations.
+      dataSetSnapshot: { is: null },
     },
     select: {
       id: true,
