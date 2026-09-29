@@ -117,22 +117,31 @@ describe("testplanit_cases_update", () => {
     );
     expect(updateCall).toBeDefined();
     const data = (updateCall![2] as { data: Record<string, unknown> }).data;
-    expect(data).toEqual({ name: "new name" });
+    expect(data).toEqual({ name: "new name", currentVersion: { increment: 1 } });
 
     // Steps and custom field helpers should NOT have been called
     expect(replaceStepsForCaseMock).not.toHaveBeenCalled();
     expect(resolveCustomFieldsMock).not.toHaveBeenCalled();
   });
 
-  it("partial update: automated flag writes only automated in data", async () => {
-    await callTool({ caseId: 99, automated: true });
+  it("flips automated in the same write as the version bump, so only one version is recorded", async () => {
+    // The automated-flag hook snapshots a flip unless currentVersion changes
+    // in the same write; a separate bump used to record two versions.
+    await callTool({ caseId: 99, automated: true, steps: [{ text: "s" }] });
 
-    const updateCall = zenstackMock.mock.calls.find(
+    const caseWrites = zenstackMock.mock.calls.filter(
       (c) => c[0] === "repositoryCases" && c[1] === "update",
     );
-    expect(updateCall).toBeDefined();
-    const data = (updateCall![2] as { data: Record<string, unknown> }).data;
-    expect(data).toEqual({ automated: true });
+    expect(caseWrites).toHaveLength(1);
+    const data = (caseWrites[0]![2] as { data: Record<string, unknown> }).data;
+    expect(data).toEqual({ automated: true, currentVersion: { increment: 1 } });
+    // Steps land before the case write, so the snapshot sees them.
+    expect(replaceStepsForCaseMock.mock.invocationCallOrder[0]!).toBeLessThan(
+      zenstackMock.mock.invocationCallOrder[
+        zenstackMock.mock.calls.indexOf(caseWrites[0]!)
+      ]!,
+    );
+    expect(createCaseVersionMock).toHaveBeenCalledWith(99, {}, env);
   });
 
   it("updates tags via the caseTags join (replace-all = deleteMany + create)", async () => {
@@ -255,7 +264,7 @@ describe("testplanit_cases_update", () => {
 
     expect(createCaseVersionMock).toHaveBeenCalledWith(
       99,
-      { bumpVersion: true },
+      {},
       env,
     );
     // Written after the case write and before the detail re-fetch.
@@ -268,7 +277,7 @@ describe("testplanit_cases_update", () => {
     await callTool({ caseId: 99, steps: [{ text: "s" }] });
     expect(createCaseVersionMock).toHaveBeenCalledWith(
       99,
-      { bumpVersion: true },
+      {},
       env,
     );
     expect(createCaseVersionMock.mock.invocationCallOrder[0]!).toBeGreaterThan(
@@ -279,7 +288,7 @@ describe("testplanit_cases_update", () => {
     await callTool({ caseId: 99, customFields: { F: "v" } });
     expect(createCaseVersionMock).toHaveBeenCalledWith(
       99,
-      { bumpVersion: true },
+      {},
       env,
     );
   });

@@ -131,17 +131,10 @@ export function registerCasesUpdate(
           };
         }
 
-        // Only write if there are scalar/relation fields to update.
+        // Steps and field values first: they don't touch the case row, so
+        // the one case write below can carry the version bump with every
+        // other change, as a web UI save does.
         let changed = false;
-        if (Object.keys(data).length > 0) {
-          await zenstack(
-            "repositoryCases",
-            "update",
-            { where: { id: input.caseId }, data },
-            deps.env,
-          );
-          changed = true;
-        }
 
         // Steps replacement: soft-delete existing + create new (T-06-06).
         if (input.steps !== undefined) {
@@ -165,12 +158,24 @@ export function registerCasesUpdate(
           changed = true;
         }
 
-        // An edit through this tool has to leave the same history a UI save
-        // does: bump currentVersion and snapshot the case as it now stands
-        // (#598). Skipped when the call carried no writable field, so a
-        // read-shaped update doesn't invent a version.
-        if (changed) {
-          await createCaseVersion(input.caseId, { bumpVersion: true }, deps.env);
+        // An edit through this tool leaves the same history a UI save does
+        // (#598): one version bump, in the same write as the case's own
+        // changes, then a snapshot of the case as it now stands. Bumping in a
+        // separate call let the automated-flag hook snapshot the half-written
+        // case first, so flipping `automated` recorded two versions. Skipped
+        // when the call carried no writable field, so a read-shaped update
+        // doesn't invent a version.
+        if (changed || Object.keys(data).length > 0) {
+          await zenstack(
+            "repositoryCases",
+            "update",
+            {
+              where: { id: input.caseId },
+              data: { ...data, currentVersion: { increment: 1 } },
+            },
+            deps.env,
+          );
+          await createCaseVersion(input.caseId, {}, deps.env);
         }
 
         // Re-fetch with full D-10 denormalized shape.
