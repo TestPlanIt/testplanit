@@ -9,6 +9,7 @@ import { stripEphemeralHash } from "../../lib/services/automatedTestName";
 import { normalizeAutomationClassName } from "./classNameNormalizer";
 import {
   createWorkflowResolver,
+  findOrCreateProjectRepository,
   resolveUserId,
   toBooleanValue,
   toDateValue,
@@ -168,7 +169,7 @@ export const importAutomationCases = async (
   configuration: TestmoMappingConfiguration,
   datasetRows: Map<string, any[]>,
   projectIdMap: Map<number, number>,
-  repositoryIdMap: Map<number, number>,
+  _repositoryIdMap: Map<number, number>,
   _folderIdMap: Map<number, number>,
   templateIdMap: Map<number, number>,
   projectDefaultTemplateMap: Map<number, number | null>,
@@ -310,40 +311,10 @@ export const importAutomationCases = async (
           group;
         const processedForGroup = testmoCaseIds.length;
 
-        let repositoryId: number | undefined;
-        for (const [, mappedRepoId] of repositoryIdMap.entries()) {
-          const repoCheck = await tx.repositories.findFirst({
-            where: { id: mappedRepoId, projectId },
-          });
-          if (repoCheck) {
-            repositoryId = mappedRepoId;
-            break;
-          }
-        }
-
-        if (!repositoryId) {
-          let repository = await tx.repositories.findFirst({
-            where: {
-              projectId,
-              isActive: true,
-              isDeleted: false,
-              isArchived: false,
-            },
-            orderBy: { id: "asc" },
-          });
-
-          if (!repository) {
-            repository = await tx.repositories.create({
-              data: {
-                projectId,
-                isActive: true,
-                isDeleted: false,
-                isArchived: false,
-              },
-            });
-          }
-          repositoryId = repository.id;
-        }
+        const { id: repositoryId } = await findOrCreateProjectRepository(
+          tx,
+          projectId
+        );
 
         let folderId: number | undefined;
         let folderNameForVersion: string | null = null;

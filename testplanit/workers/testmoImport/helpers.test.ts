@@ -1,8 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   buildNumberIdMap,
   buildStringIdMap,
   buildTemplateFieldMaps,
+  findOrCreateProjectRepository,
   resolveUserId,
   toBooleanValue,
   toDateValue,
@@ -492,5 +493,47 @@ describe("toInputJsonValue", () => {
       // JSON fallback converts Date to string
       expect(result).toBe("2024-01-15T10:30:00.000Z");
     }
+  });
+});
+
+describe("findOrCreateProjectRepository", () => {
+  const client = (existing: { id: number } | null) => ({
+    repositories: {
+      findFirst: vi.fn().mockResolvedValue(existing),
+      create: vi.fn().mockResolvedValue({ id: 99 }),
+    },
+  });
+
+  it("reuses the project's oldest active repository", async () => {
+    const c = client({ id: 7 });
+    await expect(findOrCreateProjectRepository(c as any, 3)).resolves.toEqual({
+      id: 7,
+      created: false,
+    });
+    expect(c.repositories.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          projectId: 3,
+          isActive: true,
+          isDeleted: false,
+          isArchived: false,
+        },
+        orderBy: { id: "asc" },
+      })
+    );
+    expect(c.repositories.create).not.toHaveBeenCalled();
+  });
+
+  it("creates a repository only when the project has none", async () => {
+    const c = client(null);
+    await expect(findOrCreateProjectRepository(c as any, 3)).resolves.toEqual({
+      id: 99,
+      created: true,
+    });
+    expect(c.repositories.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ projectId: 3 }),
+      })
+    );
   });
 });

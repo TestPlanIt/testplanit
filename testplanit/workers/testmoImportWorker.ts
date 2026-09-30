@@ -86,6 +86,7 @@ import {
   buildStringIdMap,
   buildTemplateFieldMaps,
   createWorkflowResolver,
+  findOrCreateProjectRepository,
   resolveUserId,
   toBooleanValue,
   toDateValue,
@@ -2837,26 +2838,16 @@ const importRepositories = async (
       continue;
     }
 
-    const existingRepository = await tx.repositories.findFirst({
-      where: { projectId, isDeleted: false },
-      orderBy: { id: "asc" },
-    });
-
-    let repositoryId: number;
-
-    if (existingRepository && repositoryRows.length === 0) {
-      repositoryId = existingRepository.id;
-      summary.mapped += 1;
-      incrementEntityProgress(context, "repositories", 0, 1);
-    } else {
-      const repository = await tx.repositories.create({
-        data: {
-          projectId,
-        },
-      });
-      repositoryId = repository.id;
+    const { id: repositoryId, created } = await findOrCreateProjectRepository(
+      tx,
+      projectId
+    );
+    if (created) {
       summary.created += 1;
       incrementEntityProgress(context, "repositories", 1, 0);
+    } else {
+      summary.mapped += 1;
+      incrementEntityProgress(context, "repositories", 0, 1);
     }
 
     repositoryIdMap.set(repoId, repositoryId);
@@ -2965,10 +2956,7 @@ const importRepositoryFolders = async (
   ): Promise<number> => {
     let repositoryId = repositoryIdMap.get(repoSourceId);
     if (!repositoryId) {
-      const repository = await db.repositories.create({
-        data: { projectId },
-      });
-      repositoryId = repository.id;
+      repositoryId = (await findOrCreateProjectRepository(db, projectId)).id;
       repositoryIdMap.set(repoSourceId, repositoryId);
     }
     return repositoryId;
@@ -3563,10 +3551,8 @@ const importRepositoryCases = async (
 
         let repositoryId = repositoryIdMap.get(targetRepoId);
         if (repositoryId === undefined) {
-          const repository = await tx.repositories.create({
-            data: { projectId },
-          });
-          repositoryId = repository.id;
+          repositoryId = (await findOrCreateProjectRepository(tx, projectId))
+            .id;
           repositoryIdMap.set(targetRepoId, repositoryId);
         }
 
