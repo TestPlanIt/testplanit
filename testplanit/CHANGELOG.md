@@ -1,3 +1,9 @@
+## [1.1.0-beta.31](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.30...v1.1.0-beta.31) (2026-09-30)
+
+### Bug Fixes
+
+* **folders:** allow folder parents in another repository of the same project ([024cc4e](https://github.com/TestPlanIt/testplanit/commit/024cc4e1ed03a6175e3d63d3c5b3addf85ef5416))
+
 ## [1.1.0-beta.30](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.29...v1.1.0-beta.30) (2026-09-29)
 
 ### Features
