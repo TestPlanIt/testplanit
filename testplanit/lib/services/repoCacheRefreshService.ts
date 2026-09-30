@@ -8,6 +8,7 @@ import {
 import {
   repoFileCache,
   type RepoFileEntry,
+  type StagedRepoCache,
 } from "~/lib/integrations/cache/RepoFileCache";
 import {
   applyPathPatterns,
@@ -610,6 +611,20 @@ export interface RefreshRepoCacheOptions {
   isCancelled?: () => Promise<boolean>;
 }
 
+/** A live cache whose recorded contents cover every listed file. */
+async function hasCompleteLiveCache(config: {
+  id: number;
+  cacheFileCount: number | null;
+  cacheContentFileCount: number | null;
+}): Promise<boolean> {
+  return (
+    config.cacheFileCount != null &&
+    config.cacheContentFileCount != null &&
+    config.cacheContentFileCount >= config.cacheFileCount &&
+    (await repoFileCache.hasFiles(config.id))
+  );
+}
+
 /** What a refresh an administrator stopped records as its error. */
 export const REFRESH_CANCELLED_MESSAGE = "Cancelled from the Queues page";
 
@@ -619,8 +634,9 @@ export const REFRESH_CANCELLED_MESSAGE = "Cancelled from the Queues page";
  * This is the shared logic used by both the API route (manual refresh) and
  * the background worker (automatic refresh on expiry).
  *
- * Performs: invalidate old cache → fetch file list → store in Valkey →
- * fetch file contents → store in Valkey → update DB status.
+ * Performs: fetch file list and contents → stage in Valkey → swap the staged
+ * keys in for the live ones → update DB status. The old cache stays live
+ * when the fetch fails, is cancelled, or comes back rate-limited.
  */
 export async function refreshRepoCache(
   configId: number,
@@ -677,15 +693,14 @@ export async function refreshRepoCache(
   );
   const branch = config.branch || (await adapter.getDefaultBranch());
 
-  // Invalidate existing cache
-  await repoFileCache.invalidate(config.id);
-
-  // Update DB status to "pending"
+  // The live cache keeps serving until the new download is staged and
+  // swapped in, so a slow or failed refresh never leaves the config empty.
   await (dbClient as any).projectCodeRepositoryConfig.update({
     where: { id: config.id },
     data: { cacheStatus: "pending", cacheError: null },
   });
 
+  let staged: StagedRepoCache | null = null;
   try {
     const pathPatterns =
       (config.pathPatterns as unknown as PathPattern[]) ?? [];
@@ -748,14 +763,53 @@ export async function refreshRepoCache(
 
     const totalSize = files.reduce((sum, f) => sum + (f.size ?? 0), 0);
 
-    // Store file list in Valkey
-    await repoFileCache.setFiles(config.id, files, config.cacheTtlDays, {
+    staged = await repoFileCache.stage(config.id, files, contentMap, {
       truncated,
     });
+    await assertNotCancelled();
 
-    // Record the file list now so the UI can show the list count. Status stays
-    // "pending" until contents are cached so "success" never lies about content
-    // being available.
+    // Half a repo must not replace a complete one: keep the live cache and
+    // record the partial fetch as the refresh's error.
+    if (contentRateLimited && (await hasCompleteLiveCache(config))) {
+      await repoFileCache.discardStaged(staged);
+      staged = null;
+      const message = `Provider rate limit reached after fetching ${contentMap.size} of ${files.length} file contents; the previous cache is still in use`;
+      await repoFileCache.setError(config.id, message, config.cacheTtlDays);
+      await (dbClient as any).projectCodeRepositoryConfig.update({
+        where: { id: config.id },
+        data: { cacheStatus: "error", cacheError: message },
+      });
+      if (shouldScanMarkers(config)) {
+        await runMarkerScan(
+          dbClient,
+          config,
+          adapter,
+          branch,
+          contentMap,
+          true
+        );
+      }
+      if (shouldScanIssues(config)) {
+        await runIssueScan(dbClient, config, adapter, branch, {
+          isCancelled: opts.isCancelled,
+        });
+      }
+      return {
+        success: false,
+        fileCount: files.length,
+        totalSize,
+        truncated,
+        contentCached: contentMap.size,
+        contentRateLimited: true,
+        error: message,
+      };
+    }
+
+    await repoFileCache.commitStaged(staged, config.cacheTtlDays);
+    staged = null;
+
+    // Status stays "pending" until the counts match what is now live, so
+    // "success" never lies about content being available.
     await (dbClient as any).projectCodeRepositoryConfig.update({
       where: { id: config.id },
       data: {
@@ -765,14 +819,6 @@ export async function refreshRepoCache(
         cacheError: null,
       },
     });
-
-    if (contentMap.size > 0) {
-      await repoFileCache.setFileContents(
-        config.id,
-        contentMap,
-        config.cacheTtlDays
-      );
-    }
 
     // Finalize: mark success now that contents are cached. cacheContentFileCount
     // records how many file contents were actually stored — the UI warns when
@@ -815,13 +861,18 @@ export async function refreshRepoCache(
         ? fetchErr.message
         : "Unknown error during file fetch";
 
-    // Store error in both Valkey and DB
-    await repoFileCache.setError(config.id, errorMessage, config.cacheTtlDays);
+    if (staged) await repoFileCache.discardStaged(staged);
+    // Store error in both Valkey and DB. A kept cache keeps its fetch time.
+    const keptCache = await repoFileCache.setError(
+      config.id,
+      errorMessage,
+      config.cacheTtlDays
+    );
     await (dbClient as any).projectCodeRepositoryConfig.update({
       where: { id: config.id },
       data: {
         cacheStatus: "error",
-        cacheLastFetchedAt: new Date(),
+        ...(!keptCache && { cacheLastFetchedAt: new Date() }),
         cacheError: errorMessage,
       },
     });

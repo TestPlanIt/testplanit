@@ -1,4 +1,4 @@
-import { createHash } from "crypto";
+import { createHash, randomUUID } from "crypto";
 import { Redis } from "ioredis";
 import { getCurrentTenantId } from "~/lib/multiTenantDb";
 import valkeyConnection from "../../valkey";
@@ -36,6 +36,24 @@ export interface CacheMetadata {
   status: RepoCacheStatus;
   error?: string;
   truncated?: boolean; // true if provider returned incomplete file list (GitHub)
+  lastError?: { message: string; at: string }; // failed refresh; files above still served
+}
+
+// Staging keys are swapped in right after they are written; the TTL only
+// clears keys left behind by a refresh that crashed in between.
+const STAGING_TTL_SECONDS = 60 * 60;
+
+export interface StagedRepoCache {
+  projectConfigId: number;
+  token: string;
+  hasContents: boolean;
+}
+
+/** Pipelines and transactions report per-command errors instead of throwing. */
+function assertExecOk(results: [Error | null, unknown][] | null): void {
+  if (!results) throw new Error("Valkey transaction was aborted");
+  const failed = results.find(([err]) => err);
+  if (failed) throw failed[0];
 }
 
 export class RepoFileCache {
@@ -85,89 +103,168 @@ export class RepoFileCache {
     }
   }
 
+  private getStagingKeys(projectConfigId: number, token: string) {
+    const suffix = `:staging:${token}`;
+    return {
+      files: this.getFilesKey(projectConfigId) + suffix,
+      meta: this.getMetaKey(projectConfigId) + suffix,
+      contents: this.getContentsKey(projectConfigId) + suffix,
+    };
+  }
+
+  /** True when a file list is live for the config. */
+  async hasFiles(projectConfigId: number): Promise<boolean> {
+    if (!this.valkey) return false;
+    try {
+      return (await this.valkey.exists(this.getFilesKey(projectConfigId))) > 0;
+    } catch (err) {
+      console.error(
+        `[RepoFileCache] Failed to check files for config ${projectConfigId}:`,
+        err
+      );
+      return false;
+    }
+  }
+
   /**
-   * Store file list with TTL. Both files and metadata keys share the same TTL.
-   * @param ttlDays - from ProjectCodeRepositoryConfig.cacheTtlDays (days, NOT seconds)
+   * Write a refreshed file list, metadata and contents to staging keys beside
+   * the live ones. Readers keep the live cache until commitStaged() swaps the
+   * staging keys in; discardStaged() drops them instead.
    */
-  async setFiles(
+  async stage(
     projectConfigId: number,
     files: RepoFileEntry[],
-    ttlDays: number,
-    options?: { truncated?: boolean; error?: string }
-  ): Promise<void> {
-    if (!this.valkey) return;
+    contents: Map<string, string>,
+    options?: { truncated?: boolean }
+  ): Promise<StagedRepoCache> {
+    const staged: StagedRepoCache = {
+      projectConfigId,
+      token: randomUUID(),
+      hasContents: contents.size > 0,
+    };
+    if (!this.valkey) return staged;
 
-    // Convert days to seconds — TTL conversion happens ONLY here and in setError
-    const ttlSeconds = ttlDays * 24 * 3600;
-
+    const keys = this.getStagingKeys(projectConfigId, staged.token);
     const meta: CacheMetadata = {
       fetchedAt: new Date().toISOString(),
       fileCount: files.length,
       totalSize: files.reduce((sum, f) => sum + (f.size ?? 0), 0),
-      status: options?.error ? "error" : "success",
-      ...(options?.error && { error: options.error }),
+      status: "success",
       ...(options?.truncated && { truncated: true }),
     };
 
     try {
       const pipeline = this.valkey.pipeline();
-      pipeline.setex(
-        this.getFilesKey(projectConfigId),
-        ttlSeconds,
-        JSON.stringify(files)
-      );
-      pipeline.setex(
-        this.getMetaKey(projectConfigId),
-        ttlSeconds,
-        JSON.stringify(meta)
-      );
-      await pipeline.exec();
+      pipeline.setex(keys.files, STAGING_TTL_SECONDS, JSON.stringify(files));
+      pipeline.setex(keys.meta, STAGING_TTL_SECONDS, JSON.stringify(meta));
+      if (staged.hasContents) {
+        pipeline.hset(keys.contents, Object.fromEntries(contents));
+        pipeline.expire(keys.contents, STAGING_TTL_SECONDS);
+      }
+      assertExecOk(await pipeline.exec());
     } catch (err) {
       console.error(
-        `[RepoFileCache] Failed to cache files for config ${projectConfigId}:`,
+        `[RepoFileCache] Failed to stage cache for config ${projectConfigId}:`,
         err
       );
-      throw err; // Re-throw — caller should handle and mark cache as error
+      await this.discardStaged(staged);
+      throw err;
+    }
+    return staged;
+  }
+
+  /**
+   * Swap staged keys in for the live ones in one transaction. The contents
+   * hash is replaced whole, so files deleted upstream do not linger.
+   * @param ttlDays - from ProjectCodeRepositoryConfig.cacheTtlDays (days, NOT seconds)
+   */
+  async commitStaged(staged: StagedRepoCache, ttlDays: number): Promise<void> {
+    if (!this.valkey) return;
+
+    const ttlSeconds = ttlDays * 24 * 3600;
+    const { projectConfigId, token } = staged;
+    const from = this.getStagingKeys(projectConfigId, token);
+    const to = {
+      files: this.getFilesKey(projectConfigId),
+      meta: this.getMetaKey(projectConfigId),
+      contents: this.getContentsKey(projectConfigId),
+    };
+
+    const tx = this.valkey.multi();
+    tx.rename(from.files, to.files).expire(to.files, ttlSeconds);
+    tx.rename(from.meta, to.meta).expire(to.meta, ttlSeconds);
+    if (staged.hasContents) {
+      tx.rename(from.contents, to.contents).expire(to.contents, ttlSeconds);
+    } else {
+      tx.del(to.contents);
+    }
+    assertExecOk(await tx.exec());
+  }
+
+  /** Drop staged keys, leaving the live cache as it was. */
+  async discardStaged(staged: StagedRepoCache): Promise<void> {
+    if (!this.valkey) return;
+
+    const keys = this.getStagingKeys(staged.projectConfigId, staged.token);
+    try {
+      await this.valkey.del(keys.files, keys.meta, keys.contents);
+    } catch (err) {
+      console.error(
+        `[RepoFileCache] Failed to discard staged cache for config ${staged.projectConfigId}:`,
+        err
+      );
     }
   }
 
   /**
-   * Store a cache error (no files available). Uses the same TTL as a successful fetch
-   * so the status panel shows the error, not "never fetched".
+   * Record a failed refresh. When a file list is still live, its metadata is
+   * kept and the failure is added as lastError, so the old files stay usable.
+   * Otherwise an error entry is stored with the cache TTL so the status panel
+   * shows the error, not "never fetched".
+   * @returns true when a live cache was kept
    */
   async setError(
     projectConfigId: number,
     error: string,
     ttlDays: number
-  ): Promise<void> {
-    if (!this.valkey) return;
+  ): Promise<boolean> {
+    if (!this.valkey) return false;
 
-    // Convert days to seconds — same conversion as setFiles
-    const ttlSeconds = ttlDays * 24 * 3600;
-
-    const meta: CacheMetadata = {
-      fetchedAt: new Date().toISOString(),
-      fileCount: 0,
-      totalSize: 0,
-      status: "error",
-      error,
-    };
+    const metaKey = this.getMetaKey(projectConfigId);
+    const at = new Date().toISOString();
 
     try {
-      const pipeline = this.valkey.pipeline();
-      // Don't store an empty file list key on error — just the metadata
-      pipeline.setex(
-        this.getMetaKey(projectConfigId),
-        ttlSeconds,
+      if (await this.hasFiles(projectConfigId)) {
+        const meta = await this.getMeta(projectConfigId);
+        if (meta) {
+          await this.valkey.set(
+            metaKey,
+            JSON.stringify({ ...meta, lastError: { message: error, at } }),
+            "KEEPTTL"
+          );
+        }
+        return true;
+      }
+
+      const meta: CacheMetadata = {
+        fetchedAt: at,
+        fileCount: 0,
+        totalSize: 0,
+        status: "error",
+        error,
+      };
+      await this.valkey.setex(
+        metaKey,
+        ttlDays * 24 * 3600,
         JSON.stringify(meta)
       );
-      await pipeline.exec();
     } catch (err) {
       console.error(
         `[RepoFileCache] Failed to set error metadata for config ${projectConfigId}:`,
         err
       );
     }
+    return false;
   }
 
   /**
@@ -211,39 +308,6 @@ export class RepoFileCache {
         err
       );
       return null;
-    }
-  }
-
-  /**
-   * Store file contents as a Redis hash (path→content). Uses the same TTL as the
-   * file list so all cache keys expire together.
-   * Failures are logged but not re-thrown — content cache is a performance
-   * optimization and callers fall back to live fetches on cache miss.
-   */
-  async setFileContents(
-    projectConfigId: number,
-    contents: Map<string, string>,
-    ttlDays: number
-  ): Promise<void> {
-    if (!this.valkey || contents.size === 0) return;
-
-    const key = this.getContentsKey(projectConfigId);
-    const ttlSeconds = ttlDays * 24 * 3600;
-
-    try {
-      const hashData: Record<string, string> = {};
-      for (const [path, content] of contents) {
-        hashData[path] = content;
-      }
-      const pipeline = this.valkey.pipeline();
-      pipeline.hset(key, hashData);
-      pipeline.expire(key, ttlSeconds);
-      await pipeline.exec();
-    } catch (err) {
-      console.error(
-        `[RepoFileCache] Failed to set file contents for config ${projectConfigId}:`,
-        err
-      );
     }
   }
 

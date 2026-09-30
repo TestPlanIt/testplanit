@@ -4,20 +4,15 @@ vi.mock("~/lib/integrations/adapters/GitRepoAdapter", () => ({
   createGitRepoAdapter: vi.fn(),
 }));
 
-vi.mock("~/lib/integrations/cache/RepoFileCache", () => ({
-  repoFileCache: {
-    invalidate: vi.fn(),
-    setFiles: vi.fn(),
-    setFileContents: vi.fn(),
-    setError: vi.fn(),
-  },
-}));
-
 vi.mock("~/lib/services/impact/compareService", () => ({
   resolveRefToSha: vi.fn(),
 }));
 
-vi.mock("~/lib/valkey", () => ({ default: null }));
+// The real file cache runs against this, so tests read back what it stored.
+vi.mock("~/lib/valkey", async () => {
+  const { FakeValkey } = await import("~/__tests__/helpers/fakeValkey");
+  return { default: new FakeValkey() };
+});
 
 vi.mock("~/lib/services/impact/commitWalk", () => ({
   walkCommits: vi.fn(),
@@ -65,8 +60,10 @@ vi.mock("~/lib/services/impact/markerScan", async (importOriginal) => ({
 }));
 
 import { createGitRepoAdapter } from "~/lib/integrations/adapters/GitRepoAdapter";
+import type { FakeValkey } from "~/__tests__/helpers/fakeValkey";
 import { repoFileCache } from "~/lib/integrations/cache/RepoFileCache";
 import { resolveRefToSha } from "~/lib/services/impact/compareService";
+import valkeyConnection from "~/lib/valkey";
 import { walkCommits } from "~/lib/services/impact/commitWalk";
 import { syncIssuePins } from "~/lib/services/impact/issueScan";
 import { syncMarkerPins } from "~/lib/services/impact/markerScan";
@@ -82,6 +79,21 @@ import {
 } from "./resolveIssueKeys";
 
 const OWNER = "user-42";
+const valkey = valkeyConnection as unknown as FakeValkey;
+
+/** A complete cache, as the last successful refresh left it live. */
+async function seedLiveCache(contents: Record<string, string>) {
+  const staged = await repoFileCache.stage(
+    5,
+    Object.keys(contents).map((path) => ({ path, size: 1, type: "file" })),
+    new Map(Object.entries(contents))
+  );
+  await repoFileCache.commitStaged(staged, 7);
+}
+
+function stagingKeys(): string[] {
+  return valkey.keys().filter((key) => key.includes(":staging:"));
+}
 
 function makeConfig(overrides: Record<string, unknown> = {}) {
   return {
@@ -158,14 +170,11 @@ function storedReport(): any {
 }
 
 describe("refreshRepoCache", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
     vi.spyOn(console, "warn").mockImplementation(() => {});
     db = makeDb(makeConfig());
-    (repoFileCache.invalidate as any).mockResolvedValue(undefined);
-    (repoFileCache.setFiles as any).mockResolvedValue(undefined);
-    (repoFileCache.setFileContents as any).mockResolvedValue(undefined);
-    (repoFileCache.setError as any).mockResolvedValue(undefined);
+    await valkey.flushall();
     (resolveRefToSha as any).mockResolvedValue("abc123");
     (syncMarkerPins as any).mockResolvedValue({ pinsCreated: 2 });
     (walkCommits as any).mockResolvedValue({
@@ -722,21 +731,19 @@ describe("refreshRepoCache", () => {
   });
 
   describe("cache write-through", () => {
-    it("stores the file list and contents, then marks the config successful", async () => {
+    /** The DB fields each update wrote, in order. */
+    function cacheUpdates(): Record<string, unknown>[] {
+      return update.mock.calls
+        .map(([args]: any[]) => args.data)
+        .filter((data: any) => !("markerScanReport" in data))
+        .filter((data: any) => !("issueScanReport" in data));
+    }
+
+    it("replaces the live cache whole, then records the counts and success", async () => {
+      await seedLiveCache({ "lib/auth.ts": "old", "lib/gone.ts": "old" });
+
       const result = await refreshRepoCache(5, db);
 
-      expect(repoFileCache.invalidate).toHaveBeenCalledWith(5);
-      expect(repoFileCache.setFiles).toHaveBeenCalledWith(
-        5,
-        [{ path: "lib/auth.ts", size: 22 }],
-        7,
-        { truncated: false }
-      );
-      expect(repoFileCache.setFileContents).toHaveBeenCalledWith(
-        5,
-        expect.any(Map),
-        7
-      );
       expect(result).toMatchObject({
         success: true,
         fileCount: 1,
@@ -744,9 +751,27 @@ describe("refreshRepoCache", () => {
         contentCached: 1,
         contentRateLimited: false,
       });
+      expect(await repoFileCache.getFiles(5)).toEqual([
+        { path: "lib/auth.ts", size: 22 },
+      ]);
+      // Deleted upstream, so gone from the contents too.
+      expect(await repoFileCache.getFileContents(5)).toEqual(
+        new Map([["lib/auth.ts", "// @testplanit case: 1"]])
+      );
+      expect(await repoFileCache.getMeta(5)).toMatchObject({
+        status: "success",
+        fileCount: 1,
+      });
+      expect(stagingKeys()).toEqual([]);
+      expect(cacheUpdates()).toEqual([
+        { cacheStatus: "pending", cacheError: null },
+        expect.objectContaining({ cacheFileCount: 1, cacheError: null }),
+        { cacheStatus: "success", cacheContentFileCount: 1 },
+      ]);
     });
 
-    it("records the provider failure on the config and reports it", async () => {
+    it("keeps the old cache readable when the archive and the fallback both fail", async () => {
+      await seedLiveCache({ "lib/auth.ts": "old" });
       const adapter = makeTreeWalkAdapter(["lib/auth.ts"]);
       adapter.listFilesInPaths.mockRejectedValue(new Error("HTTP 500"));
       (createGitRepoAdapter as any).mockReturnValue(adapter);
@@ -754,16 +779,41 @@ describe("refreshRepoCache", () => {
       const result = await refreshRepoCache(5, db);
 
       expect(result).toMatchObject({ success: false, error: "HTTP 500" });
-      expect(repoFileCache.setError).toHaveBeenCalledWith(5, "HTTP 500", 7);
-      expect(update).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({
-            cacheStatus: "error",
-            cacheError: "HTTP 500",
-          }),
-        })
+      expect(await repoFileCache.getFiles(5)).toEqual([
+        { path: "lib/auth.ts", size: 1, type: "file" },
+      ]);
+      expect(await repoFileCache.getFileContents(5)).toEqual(
+        new Map([["lib/auth.ts", "old"]])
       );
+      expect(await repoFileCache.getMeta(5)).toMatchObject({
+        status: "success",
+        lastError: { message: "HTTP 500" },
+      });
+      // The kept cache keeps its fetch time.
+      expect(cacheUpdates().at(-1)).toEqual({
+        cacheStatus: "error",
+        cacheError: "HTTP 500",
+      });
       expect(syncMarkerPins).not.toHaveBeenCalled();
+    });
+
+    it("records the provider failure when there is no cache to keep", async () => {
+      const adapter = makeTreeWalkAdapter(["lib/auth.ts"]);
+      adapter.listFilesInPaths.mockRejectedValue(new Error("HTTP 500"));
+      (createGitRepoAdapter as any).mockReturnValue(adapter);
+
+      const result = await refreshRepoCache(5, db);
+
+      expect(result).toMatchObject({ success: false, error: "HTTP 500" });
+      expect(await repoFileCache.getMeta(5)).toMatchObject({
+        status: "error",
+        error: "HTTP 500",
+      });
+      expect(cacheUpdates().at(-1)).toEqual({
+        cacheStatus: "error",
+        cacheLastFetchedAt: expect.any(Date),
+        cacheError: "HTTP 500",
+      });
     });
 
     it("records a cancel from the Queues page as the error and fetches nothing more", async () => {
@@ -789,12 +839,101 @@ describe("refreshRepoCache", () => {
       );
       expect(syncIssuePins).not.toHaveBeenCalled();
     });
+
+    it("drops the staged download and keeps the old cache when cancelled after staging", async () => {
+      await seedLiveCache({ "lib/auth.ts": "old" });
+      const stage = vi.spyOn(repoFileCache, "stage");
+
+      const result = await refreshRepoCache(5, db, {
+        isCancelled: async () => stage.mock.calls.length > 0,
+      });
+
+      expect(stage).toHaveBeenCalledTimes(1);
+      expect(result).toMatchObject({
+        success: false,
+        error: REFRESH_CANCELLED_MESSAGE,
+      });
+      expect(stagingKeys()).toEqual([]);
+      expect(await repoFileCache.getFileContents(5)).toEqual(
+        new Map([["lib/auth.ts", "old"]])
+      );
+      expect(cacheUpdates().some((data) => "cacheFileCount" in data)).toBe(
+        false
+      );
+    });
+
+    it("keeps a complete cache rather than replace it with a rate-limited partial one", async () => {
+      await seedLiveCache({ "lib/auth.ts": "old", "lib/b.ts": "old" });
+      db = makeDb(makeConfig({ cacheFileCount: 2, cacheContentFileCount: 2 }));
+      const adapter = makeTreeWalkAdapter(["lib/auth.ts", "lib/b.ts"]);
+      adapter.getFileContent.mockRejectedValue(
+        new Error("API rate limit exceeded")
+      );
+      (createGitRepoAdapter as any).mockReturnValue(adapter);
+
+      const result = await refreshRepoCache(5, db);
+
+      expect(result).toMatchObject({
+        success: false,
+        contentRateLimited: true,
+        error: expect.stringMatching(/rate limit.*previous cache/i),
+      });
+      expect(await repoFileCache.getFileContents(5)).toEqual(
+        new Map([
+          ["lib/auth.ts", "old"],
+          ["lib/b.ts", "old"],
+        ])
+      );
+      expect(stagingKeys()).toEqual([]);
+      expect(cacheUpdates()).toEqual([
+        { cacheStatus: "pending", cacheError: null },
+        { cacheStatus: "error", cacheError: result.error },
+      ]);
+      expect(await repoFileCache.getMeta(5)).toMatchObject({
+        status: "success",
+        fileCount: 2,
+        lastError: { message: result.error },
+      });
+      expect(syncMarkerPins).not.toHaveBeenCalled();
+      expect(storedReport()).toMatchObject({ skipped: "partial_contents" });
+    });
+
+    it("stages under the tenant's keys and swaps them into the tenant's live keys", async () => {
+      process.env.INSTANCE_TENANT_ID = "acme";
+      const rename = vi.spyOn(valkey, "rename");
+      try {
+        await refreshRepoCache(5, db);
+      } finally {
+        delete process.env.INSTANCE_TENANT_ID;
+      }
+
+      const moves = rename.mock.calls.map(([from, to]) => [
+        from.replace(/:staging:.*/, ":staging:<token>"),
+        to,
+      ]);
+      expect(moves).toEqual([
+        [
+          "repo-files:acme:config:5:staging:<token>",
+          "repo-files:acme:config:5",
+        ],
+        [
+          "repo-files-meta:acme:config:5:staging:<token>",
+          "repo-files-meta:acme:config:5",
+        ],
+        [
+          "repo-file-contents:acme:config:5:staging:<token>",
+          "repo-file-contents:acme:config:5",
+        ],
+      ]);
+      expect(valkey.keys().every((key) => key.includes(":acme:"))).toBe(true);
+    });
   });
 });
 
 describe("scanRepoIssues", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    await valkey.flushall();
     vi.spyOn(console, "warn").mockImplementation(() => {});
     db = makeDb(makeConfig());
     (walkCommits as any).mockResolvedValue({
@@ -843,10 +982,12 @@ describe("scanRepoIssues", () => {
   });
 
   it("does not touch the file cache", async () => {
+    const stage = vi.spyOn(repoFileCache, "stage");
+
     await scanRepoIssues(5, db, { full: true });
 
-    expect(repoFileCache.invalidate).not.toHaveBeenCalled();
-    expect(repoFileCache.setFiles).not.toHaveBeenCalled();
+    expect(stage).not.toHaveBeenCalled();
+    expect(await repoFileCache.getMeta(5)).toBeNull();
   });
 
   it("refuses a config that is not for impact analysis", async () => {
