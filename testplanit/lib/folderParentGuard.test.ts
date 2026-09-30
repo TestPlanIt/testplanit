@@ -7,12 +7,14 @@ import {
 
 // Project 1 / repository 1:  1 ─┬─ 2 ── 3
 //                               └─ 4 (deleted)
+// Project 1 / repository 7:  5
 // Project 2 / repository 2:  10
 const FOLDERS = [
   { id: 1, parentId: null, projectId: 1, repositoryId: 1, isDeleted: false },
   { id: 2, parentId: 1, projectId: 1, repositoryId: 1, isDeleted: false },
   { id: 3, parentId: 2, projectId: 1, repositoryId: 1, isDeleted: false },
   { id: 4, parentId: 1, projectId: 1, repositoryId: 1, isDeleted: true },
+  { id: 5, parentId: null, projectId: 1, repositoryId: 7, isDeleted: false },
   { id: 10, parentId: null, projectId: 2, repositoryId: 2, isDeleted: false },
 ];
 
@@ -65,9 +67,11 @@ describe("assertValidFolderParent", () => {
   });
 
   it("rejects a parent in another project", async () => {
-    await expect(move(3, { parentId: 10 })).rejects.toThrow(
-      /another repository/
-    );
+    await expect(move(3, { parentId: 10 })).rejects.toThrow(/another project/);
+  });
+
+  it("allows a parent in another repository of the same project", async () => {
+    await expect(move(5, { parentId: 2 })).resolves.toBeUndefined();
   });
 
   it("checks the scope of a new folder's parent", async () => {
@@ -88,7 +92,11 @@ describe("assertValidFolderParent", () => {
     ).resolves.toBeUndefined();
     await expect(
       create({ name: "New", projectId: 1, repositoryId: 1, parentId: 10 })
-    ).rejects.toThrow(/another repository/);
+    ).rejects.toThrow(/another project/);
+    // The repository page may send a different repository of the same project.
+    await expect(
+      create({ name: "New", projectId: 1, repositoryId: 7, parentId: 2 })
+    ).resolves.toBeUndefined();
   });
 
   it("does not look anything up when the parent is not changing", async () => {

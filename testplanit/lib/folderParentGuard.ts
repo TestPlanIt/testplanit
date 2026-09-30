@@ -62,8 +62,8 @@ function requestedParent(
 
 function scopeOf(
   data: Record<string, unknown>,
-  scalar: "projectId" | "repositoryId",
-  relation: "project" | "repository"
+  scalar: "projectId",
+  relation: "project"
 ): number | undefined {
   return (
     idOf(data[scalar]) ??
@@ -73,9 +73,15 @@ function scopeOf(
 
 /**
  * Reject a folder create or move whose parent would corrupt the tree: a
- * parent that is missing or deleted, in another project or repository, or the
- * folder itself or one of its descendants. A cycle hangs every recursive
- * folder query and the search indexer's folder-path walk.
+ * parent that is missing or deleted, in another project, or the folder itself
+ * or one of its descendants. A cycle hangs every recursive folder query and
+ * the search indexer's folder-path walk.
+ *
+ * The parent's repository is deliberately not compared. A project can have
+ * several active Repositories rows, the folder tree is scoped by project
+ * alone, and the repository page creates folders under whichever row it finds
+ * first — so a project's folders already span repositories, and requiring a
+ * match rejected ordinary nested creates and moves.
  */
 export async function assertValidFolderParent(
   model: string,
@@ -97,10 +103,8 @@ export async function assertValidFolderParent(
 
   let folderId: number | undefined;
   let projectId: number | undefined;
-  let repositoryId: number | undefined;
   if (operation === "create") {
     projectId = scopeOf(data, "projectId", "project");
-    repositoryId = scopeOf(data, "repositoryId", "repository");
   } else {
     folderId = idOf(payload.where?.id);
     if (folderId === undefined) return;
@@ -110,7 +114,6 @@ export async function assertValidFolderParent(
     });
     if (!folder) return;
     projectId = folder.projectId;
-    repositoryId = folder.repositoryId;
   }
 
   const parent = await reader.repositoryFolders.findUnique({
@@ -120,11 +123,8 @@ export async function assertValidFolderParent(
   if (!parent || parent.isDeleted) {
     reject(`Parent folder ${parentId} does not exist.`);
   }
-  if (
-    (projectId !== undefined && parent!.projectId !== projectId) ||
-    (repositoryId !== undefined && parent!.repositoryId !== repositoryId)
-  ) {
-    reject(`Parent folder ${parentId} belongs to another repository.`);
+  if (projectId !== undefined && parent!.projectId !== projectId) {
+    reject(`Parent folder ${parentId} belongs to another project.`);
   }
 
   if (folderId === undefined) return;
