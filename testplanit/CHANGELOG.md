@@ -1,3 +1,9 @@
+## [1.0.11](https://github.com/TestPlanIt/testplanit/compare/v1.0.10...v1.0.11) (2026-10-01)
+
+### Bug Fixes
+
+* **reports:** keep Report Builder selections out of the URL and add the missing cs_CZ locale migration ([#660](https://github.com/TestPlanIt/testplanit/issues/660)) ([8d4ccad](https://github.com/TestPlanIt/testplanit/commit/8d4ccadda60d57a1fbe34dcbdbaaca2abd1b2520))
+
 ## [1.0.10](https://github.com/TestPlanIt/testplanit/compare/v1.0.9...v1.0.10) (2026-09-25)
 
 ### Bug Fixes
