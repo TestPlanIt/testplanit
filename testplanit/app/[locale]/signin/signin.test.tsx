@@ -256,6 +256,47 @@ describe("Signin Page", () => {
     });
   });
 
+  function mockAdminContact(body: { enabled?: boolean; email: string | null }) {
+    (global.fetch as ReturnType<typeof vi.fn>).mockImplementation(
+      (url: string) =>
+        Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(url === "/api/admin-contact" ? body : {}),
+        })
+    );
+  }
+
+  it("links the trouble-signing-in line to the admin's email", async () => {
+    mockAdminContact({ enabled: true, email: "admin@example.com" });
+
+    render(<Signin />);
+    await waitForFormToRender();
+
+    const line = await screen.findByTestId("signin-admin-contact");
+    expect(line.querySelector("a")).toHaveAttribute(
+      "href",
+      "mailto:admin@example.com"
+    );
+  });
+
+  it("shows the trouble-signing-in line without a link when there is no admin email", async () => {
+    render(<Signin />);
+    await waitForFormToRender();
+
+    const line = await screen.findByTestId("signin-admin-contact");
+    expect(line.querySelector("a")).toBeNull();
+  });
+
+  it("omits the trouble-signing-in line when the admin contact is turned off", async () => {
+    mockAdminContact({ enabled: false, email: null });
+
+    render(<Signin />);
+    await waitForFormToRender();
+
+    expect(screen.getByTestId("signin-button")).toBeInTheDocument();
+    expect(screen.queryByTestId("signin-admin-contact")).toBeNull();
+  });
+
   it("redirects to 2FA setup page when 2FA_SETUP_REQUIRED error is returned", async () => {
     const user = userEvent.setup();
     mockSignIn.mockResolvedValue({

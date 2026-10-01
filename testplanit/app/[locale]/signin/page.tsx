@@ -110,6 +110,9 @@ const Signin: NextPage = () => {
   // server-side, so this works even after the dialog was closed and reopened.
   const [showCodeEntry, setShowCodeEntry] = useState(false);
   const [adminEmail, setAdminEmail] = useState<string | null>(null);
+  // Hidden until /api/admin-contact answers, so the line never flashes on
+  // deployments that turned it off (SIGNIN_ADMIN_CONTACT=false).
+  const [showAdminContact, setShowAdminContact] = useState(false);
   const [sessionCleared, setSessionCleared] = useState(false);
   // 2FA state
   const [show2FAInput, setShow2FAInput] = useState(false);
@@ -134,8 +137,14 @@ const Signin: NextPage = () => {
     if (!sessionCleared) return;
     fetch("/api/admin-contact")
       .then((res) => res.json())
-      .then((data) => setAdminEmail(data.email))
-      .catch(() => setAdminEmail(null));
+      .then((data) => {
+        setShowAdminContact(data.enabled !== false);
+        setAdminEmail(data.email ?? null);
+      })
+      .catch(() => {
+        setShowAdminContact(true);
+        setAdminEmail(null);
+      });
   }, [sessionCleared]);
 
   // Check for error query parameter
@@ -814,8 +823,11 @@ const Signin: NextPage = () => {
           )}
 
           {/* Trouble signing in message */}
-          {sessionCleared && !isLoadingSsoProviders && (
-            <div className="w-full mt-6 text-center text-sm text-muted-foreground">
+          {sessionCleared && !isLoadingSsoProviders && showAdminContact && (
+            <div
+              className="w-full mt-6 text-center text-sm text-muted-foreground"
+              data-testid="signin-admin-contact"
+            >
               {t("auth.signin.troubleSigningIn")}{" "}
               {adminEmail ? (
                 <a
