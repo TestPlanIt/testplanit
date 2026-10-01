@@ -1,3 +1,12 @@
+## [1.1.0-beta.32](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.31...v1.1.0-beta.32) (2026-10-01)
+
+### Bug Fixes
+
+* **db:** let the cs_CZ locale migration run on databases that already have it ([2299c08](https://github.com/TestPlanIt/testplanit/commit/2299c08a91c2caf7391f27dc0f5fd1c45eca002d))
+* **impact:** keep the repo cache live until a refresh succeeds ([e49d4bf](https://github.com/TestPlanIt/testplanit/commit/e49d4bf93066c72274ddca6f2ea86a87e95e25a6))
+* **import:** reuse the project's repository in the Testmo import ([e82b347](https://github.com/TestPlanIt/testplanit/commit/e82b34749068bfacc555745c30d4c3ec69374548))
+* **reports:** keep Report Builder selections out of the URL ([ea170dd](https://github.com/TestPlanIt/testplanit/commit/ea170dd2d0fa63313317dde603bc7fe79787db7c))
+
 ## [1.1.0-beta.31](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.30...v1.1.0-beta.31) (2026-09-30)
 
 ### Bug Fixes
