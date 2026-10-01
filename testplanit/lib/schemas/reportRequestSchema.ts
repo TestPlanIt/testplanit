@@ -35,6 +35,14 @@ function isPreBuiltReport(reportType: string): boolean {
   return PRE_BUILT_REPORT_TYPES.includes(reportType as any);
 }
 
+// Per-dimension value filters: dimension id -> selected value ids. Shared
+// with the persisted Report Builder state so both surfaces accept the same
+// shape.
+export const dimensionFiltersSchema = z.record(
+  z.string(),
+  z.array(z.union([z.string(), z.number()]))
+);
+
 export const reportRequestSchema = z
   .object({
     reportType: z.string(),
@@ -66,12 +74,9 @@ export const reportRequestSchema = z
     // When the folder dimension is grouped, roll each result up into its
     // ancestor folders so a parent folder includes its whole subtree.
     folderIncludeDescendants: z.boolean().optional().default(false),
-    // Per-dimension value filters: dimension id -> selected value ids.
-    // Rows whose group key for that dimension is not in the list are
+    // Rows whose group key for a filtered dimension is not in the list are
     // dropped. Unknown dimension ids are ignored server-side.
-    dimensionFilters: z
-      .record(z.string(), z.array(z.union([z.string(), z.number()])))
-      .optional(),
+    dimensionFilters: dimensionFiltersSchema.optional(),
     // Chart option carried in the run body so saved reports and shares keep
     // it: plot the sum of every series at each date. Aggregation ignores it.
     includeTotals: z.boolean().nullish(),

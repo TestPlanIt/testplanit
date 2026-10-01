@@ -17,6 +17,193 @@
  *    new report's dimension options.
  */
 
+import type { ReportBuilderStateConfig } from "~/lib/schemas/reportBuilderStateSchema";
+
+/** URL key carrying the id of a persisted Report Builder selection. */
+export const REPORT_STATE_URL_KEY = "state";
+
+/**
+ * Pre-state keys that spelled the whole selection out in the URL. Still read
+ * so bookmarks from before the change restore; never written any more, since
+ * a "Select all" over thousands of filter values pushed the URL past what
+ * ingress accepts (414).
+ */
+export const LEGACY_REPORT_SELECTION_URL_KEYS = [
+  "dimensions",
+  "metrics",
+  "startDate",
+  "endDate",
+  "dimensionFilters",
+] as const;
+
+/** Removes every selection-carrying key (state id and legacy params). */
+export function stripReportSelectionParams(params: URLSearchParams): void {
+  params.delete(REPORT_STATE_URL_KEY);
+  for (const key of LEGACY_REPORT_SELECTION_URL_KEYS) {
+    params.delete(key);
+  }
+}
+
+/**
+ * True when the URL carries a selection that will trigger an auto-run once
+ * it resolves: a state id, or legacy dimensions plus metrics.
+ */
+export function hasReportSelectionInUrl(params: URLSearchParams): boolean {
+  return (
+    Boolean(params.get(REPORT_STATE_URL_KEY)) ||
+    Boolean(params.get("dimensions") && params.get("metrics"))
+  );
+}
+
+export interface BuildReportBuilderStateConfigInput {
+  dimensions: Array<{ value: string }>;
+  metrics: Array<{ value: string }>;
+  dateRange?: { from?: Date; to?: Date };
+  /** Picker selections per dimension id; only selected dimensions persist. */
+  dimensionValueFilters: Record<
+    string,
+    Array<{ id: string | number }> | undefined
+  >;
+}
+
+/**
+ * The selection to persist after an explicit Run Report: dimension and
+ * metric ids in order, the date range as ISO strings, and each selected
+ * dimension's filter value ids (names are display-only and resolved on load
+ * through the values lookup).
+ */
+export function buildReportBuilderStateConfig({
+  dimensions,
+  metrics,
+  dateRange,
+  dimensionValueFilters,
+}: BuildReportBuilderStateConfigInput): ReportBuilderStateConfig {
+  const config: ReportBuilderStateConfig = {
+    dimensions: dimensions.map((d) => d.value),
+    metrics: metrics.map((m) => m.value),
+  };
+
+  if (dateRange?.from) {
+    config.startDate = dateRange.from.toISOString();
+    if (dateRange.to) {
+      config.endDate = dateRange.to.toISOString();
+    }
+  }
+
+  const selectedDimensionIds = new Set(config.dimensions);
+  const dimensionFilters: Record<string, Array<string | number>> = {};
+  for (const [dimId, values] of Object.entries(dimensionValueFilters)) {
+    if (!values || values.length === 0) continue;
+    if (!selectedDimensionIds.has(dimId)) continue;
+    dimensionFilters[dimId] = values.map((v) => v.id);
+  }
+  if (Object.keys(dimensionFilters).length > 0) {
+    config.dimensionFilters = dimensionFilters;
+  }
+
+  return config;
+}
+
+/**
+ * Reads the legacy spelled-out selection from the URL into the same shape a
+ * persisted state returns, so both forms share one restore path. Returns
+ * null when none of the legacy keys is present.
+ */
+export function parseLegacyReportUrlParams(
+  params: URLSearchParams
+): ReportBuilderStateConfig | null {
+  const dimensionsParam = params.get("dimensions");
+  const metricsParam = params.get("metrics");
+  const startDate = params.get("startDate");
+  const endDate = params.get("endDate");
+  const dimensionFiltersParam = params.get("dimensionFilters");
+
+  if (
+    !dimensionsParam &&
+    !metricsParam &&
+    !startDate &&
+    !dimensionFiltersParam
+  ) {
+    return null;
+  }
+
+  const config: ReportBuilderStateConfig = {
+    dimensions: dimensionsParam
+      ? dimensionsParam.split(",").filter(Boolean)
+      : [],
+    metrics: metricsParam ? metricsParam.split(",").filter(Boolean) : [],
+  };
+  if (startDate) {
+    config.startDate = startDate;
+    if (endDate) config.endDate = endDate;
+  }
+  const dimensionFilters = parseLegacyDimensionFilters(dimensionFiltersParam);
+  if (dimensionFilters) config.dimensionFilters = dimensionFilters;
+  return config;
+}
+
+/**
+ * Legacy `dimensionFilters` param: JSON `{ dimId: [id, ...] }`, where an
+ * entry may also be an `{ id }` object from even older URLs. Malformed input
+ * yields null (ignored, filters left as they are).
+ */
+function parseLegacyDimensionFilters(
+  raw: string | null
+): Record<string, Array<string | number>> | null {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return null;
+    }
+    const out: Record<string, Array<string | number>> = {};
+    for (const [dimId, values] of Object.entries(parsed)) {
+      if (!Array.isArray(values) || values.length === 0) continue;
+      const ids = values
+        .map((v: unknown) =>
+          typeof v === "object" && v !== null ? (v as { id?: unknown }).id : v
+        )
+        .filter(
+          (id): id is string | number =>
+            (typeof id === "string" && id !== "") || typeof id === "number"
+        );
+      if (ids.length === 0) continue;
+      out[dimId] = ids;
+    }
+    return Object.keys(out).length > 0 ? out : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Fallback writer used only when the state could not be persisted: spells
+ * the selection out in the legacy keys so the URL stays restorable.
+ */
+export function applyLegacyReportUrlParams(
+  params: URLSearchParams,
+  config: ReportBuilderStateConfig
+): void {
+  params.set("dimensions", config.dimensions.join(","));
+  params.set("metrics", config.metrics.join(","));
+  if (config.startDate) {
+    params.set("startDate", config.startDate);
+    if (config.endDate) {
+      params.set("endDate", config.endDate);
+    } else {
+      params.delete("endDate");
+    }
+  } else {
+    params.delete("startDate");
+    params.delete("endDate");
+  }
+  if (config.dimensionFilters) {
+    params.set("dimensionFilters", JSON.stringify(config.dimensionFilters));
+  } else {
+    params.delete("dimensionFilters");
+  }
+}
+
 export interface BuildCleanReportUrlParamsInput {
   reportType: string;
   tab: string;

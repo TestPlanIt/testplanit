@@ -219,6 +219,7 @@ model User {
     createdShareLinks                        ShareLink[]                       @relation("ShareLinkCreator")
     importMappings                           ImportMapping[]                   @relation("ImportMappingCreator")
     shareLinkAccessLogs                      ShareLinkAccessLog[]              @relation("ShareLinkAccessor")
+    reportBuilderStates                      ReportBuilderState[]              @relation("ReportBuilderStateCreator")
     reviewsRequested                         ReviewRequest[]                   @relation("ReviewRequestedBy")
     reviewsAssigned                          ReviewRequest[]                   @relation("ReviewAssignedToUser")
     reviewsDecided                           ReviewRequest[]                   @relation("ReviewDecidedBy")
@@ -682,6 +683,7 @@ model Projects {
     comments                         Comment[]
     auditLogs                        AuditLog[]
     shareLinks                       ShareLink[]
+    reportBuilderStates              ReportBuilderState[]
     assignedExportTemplates          CaseExportTemplateProjectAssignment[]
     defaultCaseExportTemplateId      Int?
     defaultCaseExportTemplate        CaseExportTemplate?                   @relation("ProjectDefaultExportTemplate", fields: [defaultCaseExportTemplateId], references: [id], onDelete: SetNull)
@@ -5499,6 +5501,47 @@ model ShareLinkAccessLog {
     @@allow('all', auth().access == 'ADMIN')
     @@allow('read', shareLink.createdBy.id == auth().id)
     @@allow('create', true)
+}
+
+// Report Builder selection persisted server-side; the page URL carries only its id.
+model ReportBuilderState {
+    id          String    @id @default(cuid())
+    projectId   Int?
+    project     Projects? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    createdById String
+    createdBy   User      @relation("ReportBuilderStateCreator", fields: [createdById], references: [id], onDelete: Cascade)
+    reportType  String
+    config      Json
+    configHash  String
+    createdAt   DateTime  @default(now()) @db.Timestamptz(6)
+    lastUsedAt  DateTime  @default(now()) @db.Timestamptz(6)
+
+    @@index([projectId, configHash])
+    @@index([createdById])
+
+    // Access control
+    @@deny('all', auth() == null)
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('read', projectId != null && project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN'])
+    @@allow('read', projectId != null && project.creator.id == auth().id)
+    @@allow('read', createdBy.id == auth().id)
+    @@allow('create',
+        projectId != null && (
+            project.creator.id == auth().id ||
+            project.userPermissions?[user.id == auth().id && accessType != 'NO_ACCESS'] ||
+            project.assignedUsers?[user.id == auth().id] ||
+            (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE')
+        )
+    )
+    @@allow('read',
+        projectId != null && (
+            project.creator.id == auth().id ||
+            project.userPermissions?[user.id == auth().id && accessType != 'NO_ACCESS'] ||
+            project.assignedUsers?[user.id == auth().id]
+        )
+    )
+    @@allow('read', projectId == null && createdBy.id == auth().id)
+    @@allow('create', projectId == null && auth().access != 'NONE')
 }
 
 model ProjectIntegration {

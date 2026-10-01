@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/actions/share-links", () => ({
   auditShareLinkCreation: vi.fn(),
@@ -7,6 +7,7 @@ vi.mock("@/actions/share-links", () => ({
 
 import {
   buildSavedReportConfig,
+  resolveSavedReportHref,
   savedReportHref,
   savedReportProjectId,
   type SavedReport,
@@ -76,5 +77,75 @@ describe("savedReportHref", () => {
         report({ frozen: { capturedAt: new Date(), truncated: false } })
       )
     ).toBe("/share/key-1");
+  });
+});
+
+describe("resolveSavedReportHref", () => {
+  const customConfig = {
+    reportType: "test-execution",
+    projectId: 7,
+    dimensions: ["testRun"],
+    metrics: ["testCaseCount"],
+    dimensionFilters: { testRun: [1, 2, 3] },
+    includeTotals: true,
+  };
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("moves a live custom report's selection into a state row", async () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ id: "state-1" }),
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const href = await resolveSavedReportHref(report({ config: customConfig }));
+    expect(href.startsWith("/projects/reports/7?")).toBe(true);
+    const params = new URLSearchParams(href.split("?")[1]);
+    expect(params.get("state")).toBe("state-1");
+    expect(params.get("savedReport")).toBe("r1");
+    expect(params.get("includeTotals")).toBe("true");
+    expect(params.has("dimensions")).toBe(false);
+    expect(params.has("dimensionFilters")).toBe(false);
+    const [, init] = fetchMock.mock.calls[0] as unknown as [
+      string,
+      RequestInit,
+    ];
+    expect(JSON.parse(String(init.body))).toEqual({
+      projectId: 7,
+      reportType: "test-execution",
+      config: {
+        dimensions: ["testRun"],
+        metrics: ["testCaseCount"],
+        dimensionFilters: { testRun: [1, 2, 3] },
+      },
+    });
+  });
+
+  it("falls back to the spelled-out params when the state cannot be saved", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({ ok: false }))
+    );
+    const href = await resolveSavedReportHref(report({ config: customConfig }));
+    const params = new URLSearchParams(href.split("?")[1]);
+    expect(params.has("state")).toBe(false);
+    expect(params.get("dimensions")).toBe("testRun");
+  });
+
+  it("does not save a state for a pre-built report or a frozen one", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    expect(await resolveSavedReportHref(report())).toBe(
+      savedReportHref(report())
+    );
+    expect(
+      await resolveSavedReportHref(
+        report({ frozen: { capturedAt: new Date(), truncated: false } })
+      )
+    ).toBe("/share/key-1");
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

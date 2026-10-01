@@ -1,7 +1,7 @@
 "use client";
 
 import { ReportRenderer } from "@/components/reports/ReportRenderer";
-import { buildSharedReportSearchParams } from "@/components/reports/reportShareParams";
+import { buildSharedReportSearchParamsWithState } from "@/components/reports/reportShareParams";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -67,13 +67,27 @@ export function StaticReportViewer({
       ? resolveRequestDateRange(config)
       : { startDate: config?.startDate, endDate: config?.endDate };
 
-  // Build full report URL with configuration for "View in Full App" button
-  const fullReportUrl = useMemo(() => {
-    if (!projectId || !config) return null;
-
-    const params = buildSharedReportSearchParams(config);
-    return `/projects/reports/${projectId}?${params.toString()}`;
-  }, [projectId, config]);
+  // Full report URL for the "View in Full App" button. Resolved once the
+  // builder selection is saved server-side, so a shared report with a large
+  // filter list opens in the builder through a short URL. Only a signed-in
+  // viewer of a live report sees the button, and only they may save it.
+  const [fullReportUrl, setFullReportUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!projectId || !config || !isAuthenticatedUser || isFrozen) {
+      setFullReportUrl(null);
+      return;
+    }
+    let cancelled = false;
+    void buildSharedReportSearchParamsWithState(config, projectId).then(
+      (params) => {
+        if (cancelled) return;
+        setFullReportUrl(`/projects/reports/${projectId}?${params.toString()}`);
+      }
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId, config, isAuthenticatedUser, isFrozen]);
 
   // Client-side sorting only — the whole shared result set is in memory and the
   // table virtualizes it (no paging).

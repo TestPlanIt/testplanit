@@ -8,7 +8,10 @@ import {
   auditShareLinkCreation,
   prepareShareLinkData,
 } from "@/actions/share-links";
-import { buildSharedReportSearchParams } from "~/components/reports/reportShareParams";
+import {
+  buildSharedReportSearchParams,
+  buildSharedReportSearchParamsWithState,
+} from "~/components/reports/reportShareParams";
 import { schema } from "~/zenstack/schema";
 
 /**
@@ -83,15 +86,36 @@ export function buildSavedReportConfig(
  * config through the same URL contract share links use, plus
  * `savedReport=<id>` so the page can show its name and description.
  */
-export function savedReportHref(report: SavedReport): string {
+export function savedReportHref(
+  report: SavedReport,
+  searchParams: URLSearchParams = buildSharedReportSearchParams(report.config)
+): string {
   if (report.frozen) return `/share/${report.shareKey}`;
-  const searchParams = buildSharedReportSearchParams(report.config);
   // Lets the Reports page name the saved report it is showing.
   searchParams.set("savedReport", report.id);
   const params = searchParams.toString();
   return report.projectId !== null
     ? `/projects/reports/${report.projectId}?${params}`
     : `/admin/reports?${params}`;
+}
+
+/**
+ * savedReportHref with a live report's builder selection saved to a
+ * ReportBuilderState row first, so a saved report whose filter lists
+ * thousands of ids opens through a short URL. Falls back to the
+ * spelled-out params if the save fails.
+ */
+export async function resolveSavedReportHref(
+  report: SavedReport
+): Promise<string> {
+  if (report.frozen) return savedReportHref(report);
+  return savedReportHref(
+    report,
+    await buildSharedReportSearchParamsWithState(
+      report.config,
+      report.projectId
+    )
+  );
 }
 
 export interface UseSavedReportsOptions {

@@ -148,7 +148,7 @@ describe("StaticReportViewer", () => {
     expect(await screen.findByTestId("renderer-project-id")).toHaveTextContent(
       "42"
     );
-    expect(screen.getByTestId("view-in-full-app-link")).toHaveAttribute(
+    expect(await screen.findByTestId("view-in-full-app-link")).toHaveAttribute(
       "href",
       expect.stringMatching(/^\/projects\/reports\/42\?/)
     );
@@ -164,7 +164,7 @@ describe("StaticReportViewer", () => {
     );
 
     await screen.findByTestId("report-renderer");
-    expect(screen.getByTestId("view-in-full-app-link")).toHaveAttribute(
+    expect(await screen.findByTestId("view-in-full-app-link")).toHaveAttribute(
       "href",
       expect.stringMatching(/^\/projects\/reports\/7\?/)
     );
@@ -235,6 +235,58 @@ describe("StaticReportViewer", () => {
     const range = await screen.findByTestId("shared-report-date-range");
     expect(range).toHaveTextContent("reports.sharedReport.dateRange");
     expect(range).not.toHaveTextContent("currentlyReporting");
+  });
+
+  it("moves the builder selection into a state row for the full-app link", async () => {
+    fetchMock.mockImplementation(async (url: string) =>
+      String(url) === "/api/reports/state"
+        ? jsonResponse({ id: "state-1" })
+        : jsonResponse(reportPayload)
+    );
+    render(
+      <StaticReportViewer
+        shareData={shareData({
+          entityConfig: {
+            reportType: "test-execution",
+            dimensions: ["testRun"],
+            metrics: ["testCaseCount"],
+            dimensionFilters: { testRun: [1, 2, 3] },
+          },
+        })}
+        shareMode="PASSWORD_PROTECTED"
+        isAuthenticatedUser
+      />
+    );
+
+    const link = await screen.findByTestId("view-in-full-app-link");
+    const href = link.getAttribute("href")!;
+    expect(href.startsWith("/projects/reports/7?")).toBe(true);
+    const params = new URLSearchParams(href.split("?")[1]);
+    expect(params.get("state")).toBe("state-1");
+    expect(params.get("reportType")).toBe("test-execution");
+    expect(params.has("dimensionFilters")).toBe(false);
+    expect(params.has("dimensions")).toBe(false);
+    const stateCall = fetchMock.mock.calls.find(
+      ([url]) => String(url) === "/api/reports/state"
+    )!;
+    expect(JSON.parse(stateCall[1].body)).toEqual({
+      projectId: 7,
+      reportType: "test-execution",
+      config: {
+        dimensions: ["testRun"],
+        metrics: ["testCaseCount"],
+        dimensionFilters: { testRun: [1, 2, 3] },
+      },
+    });
+  });
+
+  it("does not save a state for an anonymous viewer", async () => {
+    render(<StaticReportViewer shareData={shareData()} shareMode="PUBLIC" />);
+    await screen.findByTestId("report-renderer");
+    expect(
+      fetchMock.mock.calls.some(([url]) => String(url) === "/api/reports/state")
+    ).toBe(false);
+    expect(screen.queryByTestId("view-in-full-app-link")).toBeNull();
   });
 
   it("shows the frozen banner and no full-app link for a frozen report", async () => {

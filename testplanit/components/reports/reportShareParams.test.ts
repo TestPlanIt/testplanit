@@ -4,9 +4,10 @@
 // iteration-matrix filters expansion, and the parser's type gating —
 // a param must only hydrate the state its report type owns.
 
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   buildSharedReportSearchParams,
+  buildSharedReportSearchParamsWithState,
   initialDateRangeFromUrl,
   parsePerTypeReportParams,
   PER_TYPE_REPORT_PARAM_DEFAULTS,
@@ -33,6 +34,36 @@ describe("buildSharedReportSearchParams", () => {
     });
     expect(params.get("page")).toBe("1");
     expect(params.get("pageSize")).toBe("25");
+  });
+
+  it("leaves the builder selection out and carries the state id when given one", () => {
+    const params = buildSharedReportSearchParams(
+      {
+        reportType: "test-execution",
+        startDate: "2026-01-01T00:00:00.000Z",
+        endDate: "2026-01-31T00:00:00.000Z",
+        dimensions: ["project", "user"],
+        metrics: ["testResultCount"],
+        dimensionFilters: { project: [1, 2] },
+        includeTotals: true,
+        dateRangePreset: "lastMonth",
+      },
+      { stateId: "state-1" }
+    );
+
+    expect(params.get("state")).toBe("state-1");
+    expect(params.get("reportType")).toBe("test-execution");
+    expect(params.get("includeTotals")).toBe("true");
+    expect(params.get("dateRangePreset")).toBe("lastMonth");
+    for (const key of [
+      "dimensions",
+      "metrics",
+      "startDate",
+      "endDate",
+      "dimensionFilters",
+    ]) {
+      expect(params.has(key)).toBe(false);
+    }
   });
 
   it("drops projectId, null/undefined, empty strings, arrays, and objects", () => {
@@ -520,5 +551,56 @@ describe("initialDateRangeFromUrl", () => {
     );
     expect(junk.preset).toBeNull();
     expect(junk.range?.from).toBeInstanceOf(Date);
+  });
+});
+
+describe("buildSharedReportSearchParamsWithState", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const config = {
+    reportType: "test-execution",
+    dimensions: ["testRun"],
+    metrics: ["testCaseCount"],
+    dimensionFilters: { testRun: [1, 2, 3] },
+    includeTotals: true,
+  };
+
+  it("saves the selection and writes only its id", async () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ id: "state-9" }),
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+    const params = await buildSharedReportSearchParamsWithState(config, 7);
+    expect(params.get("state")).toBe("state-9");
+    expect(params.has("dimensionFilters")).toBe(false);
+    expect(params.get("includeTotals")).toBe("true");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/reports/state",
+      expect.objectContaining({ method: "POST" })
+    );
+  });
+
+  it("spells the selection out when the save fails or there is nothing to save", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({ ok: false }))
+    );
+    const fallback = await buildSharedReportSearchParamsWithState(config, 7);
+    expect(fallback.has("state")).toBe(false);
+    expect(JSON.parse(fallback.get("dimensionFilters")!)).toEqual({
+      testRun: [1, 2, 3],
+    });
+
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const preBuilt = await buildSharedReportSearchParamsWithState(
+      { reportType: "flaky-tests", consecutiveRuns: 8 },
+      7
+    );
+    expect(preBuilt.get("consecutiveRuns")).toBe("8");
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

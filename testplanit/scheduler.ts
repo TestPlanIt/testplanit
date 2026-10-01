@@ -20,6 +20,7 @@ import {
   JOB_REVIEW_REMINDERS,
   JOB_SEND_DAILY_DIGEST,
   JOB_SWEEP_ABANDONED_RUNS,
+  JOB_SWEEP_REPORT_BUILDER_STATES,
   JOB_UPDATE_ALL_CASES,
 } from "./lib/queueNames";
 
@@ -246,6 +247,26 @@ async function scheduleJobs() {
 
       console.log(
         `Upserted job scheduler "${JOB_SWEEP_ABANDONED_RUNS}"${tenantId ? ` for tenant ${tenantId}` : ""} with pattern "${CRON_SCHEDULE_EVERY_15_MIN}" on queue "${FORECAST_QUEUE_NAME}".`
+      );
+
+      // Report Builder URL-state sweep — drops persisted builder selections
+      // that have not been opened for REPORT_BUILDER_STATE_RETENTION_DAYS
+      // and are not referenced by a share link.
+      const reportStatesId = tenantId
+        ? `${JOB_SWEEP_REPORT_BUILDER_STATES}-${tenantId}`
+        : JOB_SWEEP_REPORT_BUILDER_STATES;
+
+      await forecastQueue.upsertJobScheduler(
+        reportStatesId,
+        { pattern: CRON_SCHEDULE_DAILY_3AM },
+        {
+          name: JOB_SWEEP_REPORT_BUILDER_STATES,
+          data: { tenantId },
+        }
+      );
+
+      console.log(
+        `Upserted job scheduler "${JOB_SWEEP_REPORT_BUILDER_STATES}"${tenantId ? ` for tenant ${tenantId}` : ""} with pattern "${CRON_SCHEDULE_DAILY_3AM}" on queue "${FORECAST_QUEUE_NAME}".`
       );
     }
 

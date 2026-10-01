@@ -79,8 +79,10 @@ describe("ShareContent", () => {
   beforeEach(() => {
     sessionStorage.clear();
     fetchMock.mockReset();
-    fetchMock.mockImplementation(async () =>
-      jsonResponse({ ...shareData(), title: "Weekly" })
+    fetchMock.mockImplementation(async (url: string) =>
+      String(url) === "/api/reports/state"
+        ? jsonResponse({ id: "state-1" })
+        : jsonResponse({ ...shareData(), title: "Weekly" })
     );
     vi.stubGlobal("fetch", fetchMock);
     Object.defineProperty(window, "location", {
@@ -117,7 +119,19 @@ describe("ShareContent", () => {
       expect(window.location.href).toMatch(/^\/projects\/reports\/7\?/)
     );
     expect(window.location.href).toContain("reportType=repository-stats");
+    // The builder selection is saved first and only its id rides the URL.
+    expect(window.location.href).toContain("state=state-1");
+    expect(window.location.href).not.toContain("dimensions=");
     expect(postBodies()).toEqual([
+      {
+        url: "/api/reports/state",
+        method: "POST",
+        body: {
+          projectId: 7,
+          reportType: "repository-stats",
+          config: { dimensions: ["user"], metrics: [] },
+        },
+      },
       { url: `/api/share/${SHARE_KEY}`, method: "POST", body: {} },
     ]);
     expect(screen.queryByTestId("shared-report-viewer")).toBeNull();
@@ -225,7 +239,9 @@ describe("ShareContent", () => {
     await waitFor(() =>
       expect(window.location.href).toMatch(/^\/projects\/reports\/7\?/)
     );
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(
+      postBodies().filter((call) => call.url.startsWith("/api/share/"))
+    ).toEqual([]);
   });
 
   it("counts the first view of a public link", async () => {

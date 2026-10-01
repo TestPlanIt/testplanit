@@ -16,6 +16,10 @@
 
 import type { DateRange } from "react-day-picker";
 import {
+  REPORT_STATE_CONFIG_KEYS,
+  resolveReportBuilderStateId,
+} from "./reportBuilderStateLink";
+import {
   parseRelativeDateRange,
   resolveRelativeDateRange,
   type RelativeDateRange,
@@ -67,18 +71,34 @@ function isScalar(value: unknown): value is string | number | boolean {
  * mangled. Nothing is enumerated per report type: a parameter added to
  * a report's request body reaches the redirect automatically.
  */
+export interface BuildSharedReportSearchParamsOptions {
+  /**
+   * Id of the ReportBuilderState row holding the config's dimensions,
+   * metrics, dates, and dimensionFilters. Those keys are then left out of
+   * the URL and `state=<id>` carried instead, so a filter over thousands
+   * of ids cannot push the URL past what ingress accepts.
+   */
+  stateId?: string | null;
+}
+
 export function buildSharedReportSearchParams(
-  config: unknown
+  config: unknown,
+  { stateId }: BuildSharedReportSearchParamsOptions = {}
 ): URLSearchParams {
   const params = new URLSearchParams();
   if (!config || typeof config !== "object" || Array.isArray(config)) {
     return params;
   }
 
+  const omittedKeys = stateId
+    ? new Set<string>([...OMITTED_CONFIG_KEYS, ...REPORT_STATE_CONFIG_KEYS])
+    : OMITTED_CONFIG_KEYS;
+  if (stateId) params.set("state", stateId);
+
   for (const [key, value] of Object.entries(
     config as Record<string, unknown>
   )) {
-    if (OMITTED_CONFIG_KEYS.has(key) || value == null || value === "") {
+    if (omittedKeys.has(key) || value == null || value === "") {
       continue;
     }
 
@@ -121,6 +141,19 @@ export function buildSharedReportSearchParams(
   }
 
   return params;
+}
+
+/**
+ * buildSharedReportSearchParams with the builder selection moved into a
+ * ReportBuilderState row first. Falls back to the spelled-out params when
+ * the config has no such selection (pre-built reports) or the save fails.
+ */
+export async function buildSharedReportSearchParamsWithState(
+  config: unknown,
+  projectId: number | null | undefined
+): Promise<URLSearchParams> {
+  const stateId = await resolveReportBuilderStateId(config, projectId);
+  return buildSharedReportSearchParams(config, { stateId });
 }
 
 /** The subset of URLSearchParams both directions of the contract need. */

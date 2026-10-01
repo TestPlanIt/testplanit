@@ -6,7 +6,7 @@ import { Session } from "next-auth";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { buildSharedReportSearchParams } from "~/components/reports/reportShareParams";
+import { buildSharedReportSearchParamsWithState } from "~/components/reports/reportShareParams";
 import { PasswordGate } from "./PasswordGate";
 import { SharedReportLoading } from "./SharedReportLoading";
 import { SharedReportViewer } from "./SharedReportViewer";
@@ -77,8 +77,9 @@ export function ShareContent({
           // Build full report URL with configuration
           let reportUrl: string | undefined;
           if (data.entityType === "REPORT" && data.projectId && !data.frozen) {
-            const params = buildSharedReportSearchParams(
-              shareData.entityConfig
+            const params = await buildSharedReportSearchParamsWithState(
+              shareData.entityConfig,
+              data.projectId
             );
             reportUrl = `/projects/reports/${data.projectId}?${params.toString()}`;
           }
@@ -168,7 +169,10 @@ export function ShareContent({
         // Build full report URL with configuration
         let reportUrl: string | undefined;
         if (data.entityType === "REPORT" && data.projectId && !data.frozen) {
-          const params = buildSharedReportSearchParams(shareData.entityConfig);
+          const params = await buildSharedReportSearchParamsWithState(
+            shareData.entityConfig,
+            data.projectId
+          );
           reportUrl = `/projects/reports/${data.projectId}?${params.toString()}`;
         }
 
@@ -279,36 +283,44 @@ export function ShareContent({
         return;
       }
 
-      // Construct URL with report configuration
-      const params = buildSharedReportSearchParams(config);
+      // Construct the URL with the report configuration. The builder
+      // selection is saved server-side first so a large filter list does
+      // not ride the URL.
+      const redirect = async () => {
+        const params = await buildSharedReportSearchParamsWithState(
+          config,
+          projectId
+        );
 
-      // Redirect to appropriate Reports page
-      const reportsUrl = projectId
-        ? `/projects/reports/${projectId}?${params.toString()}`
-        : `/admin/reports?${params.toString()}`;
+        // Redirect to appropriate Reports page
+        const reportsUrl = projectId
+          ? `/projects/reports/${projectId}?${params.toString()}`
+          : `/admin/reports?${params.toString()}`;
 
-      // Increment view count before redirecting (only if not already counted)
-      if (!hasViewedInSession()) {
-        // Mark as counted BEFORE making the request to prevent race conditions
-        markViewedInSession();
+        // Increment view count before redirecting (only if not already counted)
+        if (!hasViewedInSession()) {
+          // Mark as counted BEFORE making the request to prevent race conditions
+          markViewedInSession();
 
-        fetch(`/api/share/${shareKey}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({}),
-        })
-          .then(() => {
-            window.location.href = reportsUrl;
+          fetch(`/api/share/${shareKey}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({}),
           })
-          .catch((error) => {
-            console.error("Error counting view:", error);
-            // Redirect anyway even if view counting fails
-            window.location.href = reportsUrl;
-          });
-      } else {
-        // Already counted, just redirect
-        window.location.href = reportsUrl;
-      }
+            .then(() => {
+              window.location.href = reportsUrl;
+            })
+            .catch((error) => {
+              console.error("Error counting view:", error);
+              // Redirect anyway even if view counting fails
+              window.location.href = reportsUrl;
+            });
+        } else {
+          // Already counted, just redirect
+          window.location.href = reportsUrl;
+        }
+      };
+      void redirect();
       return;
     }
 

@@ -142,7 +142,7 @@ describe("SavedReportsMenu", () => {
     expect(itemFor("Live pass rate")).toHaveAttribute("title", "Updated daily");
   });
 
-  it("opens a live report in place on the Reports page", () => {
+  it("opens a live report in place on the Reports page", async () => {
     openMenu();
 
     fireEvent.click(itemFor("Live pass rate"));
@@ -150,8 +150,39 @@ describe("SavedReportsMenu", () => {
     const href = savedReportHref(liveReport);
     expect(href).toContain("/projects/reports/7?");
     expect(href).toContain("savedReport=live-1");
-    expect(assignSpy).toHaveBeenCalledWith(href);
+    await waitFor(() => expect(assignSpy).toHaveBeenCalledWith(href));
     expect(openSpy).not.toHaveBeenCalled();
+  });
+
+  it("opens a live custom report through a saved builder state", async () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ id: "state-1" }),
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+    holder.reports = [
+      {
+        ...liveReport,
+        config: {
+          reportType: "test-execution",
+          projectId: 7,
+          dimensions: ["testRun"],
+          metrics: ["testCaseCount"],
+          dimensionFilters: { testRun: [1, 2, 3] },
+        },
+      },
+    ];
+    openMenu();
+
+    fireEvent.click(itemFor("Live pass rate"));
+
+    await waitFor(() => expect(assignSpy).toHaveBeenCalled());
+    const href: string = assignSpy.mock.calls[0][0];
+    const params = new URLSearchParams(href.split("?")[1]);
+    expect(params.get("state")).toBe("state-1");
+    expect(params.get("savedReport")).toBe("live-1");
+    expect(params.has("dimensionFilters")).toBe(false);
+    vi.unstubAllGlobals();
   });
 
   it("opens a frozen report in a new tab", () => {

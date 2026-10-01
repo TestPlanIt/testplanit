@@ -270,7 +270,11 @@ describe("reportApiUtils", () => {
         requiresAdmin: false,
         projectId: 5,
       });
-      expect(result).toEqual({ ok: true, bypass: false });
+      expect(result).toEqual({
+        ok: true,
+        bypass: false,
+        user: { userId: "u1", access: "USER" },
+      });
     });
 
     it("returns 403 when the caller cannot read the project", async () => {
@@ -296,7 +300,11 @@ describe("reportApiUtils", () => {
         requiresAdmin: false,
         projectId: 5,
       });
-      expect(result).toEqual({ ok: true, bypass: false });
+      expect(result).toEqual({
+        ok: true,
+        bypass: false,
+        user: { userId: "admin", access: "ADMIN" },
+      });
       expect(getEnhancedDb).not.toHaveBeenCalled();
     });
   });

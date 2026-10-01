@@ -40,6 +40,7 @@ import { toast } from "sonner";
 import {
   SAVED_REPORT_DESCRIPTION_MAX_LENGTH,
   SAVED_REPORT_NAME_MAX_LENGTH,
+  resolveSavedReportHref,
   savedReportHref,
   useSavedReports,
   type SavedReport,
@@ -66,15 +67,15 @@ export function SavedReportsMenu({ projectId }: SavedReportsMenuProps) {
   const { reports, isLoading, renameReport, deleteReport, isMutating } =
     useSavedReports({ projectId, enabled: open || renameTarget !== null });
 
-  const handleOpenReport = (report: SavedReport) => {
+  const handleOpenReport = async (report: SavedReport) => {
     setOpen(false);
-    const href = savedReportHref(report);
     if (report.frozen) {
       // The frozen viewer is a standalone page; keep the reports page open.
-      window.open(href, "_blank", "noopener,noreferrer");
+      // Opened synchronously so the popup is not blocked.
+      window.open(savedReportHref(report), "_blank", "noopener,noreferrer");
     } else {
       // A full load: ReportBuilder hydrates its state from the URL on mount.
-      window.location.assign(href);
+      window.location.assign(await resolveSavedReportHref(report));
     }
   };
 
