@@ -14,6 +14,7 @@ import {
   JOB_MILESTONE_DUE_NOTIFICATIONS,
   JOB_REVIEW_REMINDERS,
   JOB_SWEEP_ABANDONED_RUNS,
+  JOB_SWEEP_REPORT_BUILDER_STATES,
   JOB_UPDATE_ALL_CASES,
   JOB_UPDATE_SINGLE_CASE,
 } from "../lib/queueNames";
@@ -24,6 +25,7 @@ import {
 } from "../lib/services/abandonedRuns";
 import { captureAuditEvent } from "../lib/services/auditLog";
 import { NotificationService } from "../lib/services/notificationService";
+import { sweepReportBuilderStates } from "../lib/services/reportBuilderState";
 import { getReviewReminderThresholdDays } from "../lib/services/reviewReminderConfig";
 import { withTenantContext } from "../lib/tenantContext";
 import { emitReviewReminderEvent } from "../lib/webhooks/event-emitters/reviewEvents";
@@ -62,6 +64,7 @@ export {
   JOB_MILESTONE_DUE_NOTIFICATIONS,
   JOB_REVIEW_REMINDERS,
   JOB_SWEEP_ABANDONED_RUNS,
+  JOB_SWEEP_REPORT_BUILDER_STATES,
   JOB_UPDATE_ALL_CASES,
   JOB_UPDATE_SINGLE_CASE,
 };
@@ -1008,6 +1011,23 @@ export const processor = async (job: Job<ForecastJobDataBase>) =>
           );
         } catch (error) {
           console.error(`Job ${job.id}: Error in abandoned-run sweep`, error);
+          throw error;
+        }
+        break;
+
+      case JOB_SWEEP_REPORT_BUILDER_STATES:
+        console.log(`Job ${job.id}: Starting Report Builder state sweep.`);
+        try {
+          const sweep = await sweepReportBuilderStates(db);
+          successCount = sweep.deleted;
+          console.log(
+            `Job ${job.id} completed: Deleted ${sweep.deleted} Report Builder states unused since ${sweep.cutoff.toISOString()}.`
+          );
+        } catch (error) {
+          console.error(
+            `Job ${job.id}: Error in Report Builder state sweep`,
+            error
+          );
           throw error;
         }
         break;

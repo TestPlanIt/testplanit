@@ -91,13 +91,21 @@ import {
   draggableFieldToDimension,
   getReportSummary,
 } from "~/utils/reportUtils";
+import type { ReportBuilderStateConfig } from "~/lib/schemas/reportBuilderStateSchema";
 import {
+  applyLegacyReportUrlParams,
   buildCleanReportUrlParams,
+  buildReportBuilderStateConfig,
+  hasReportSelectionInUrl,
   isUrlInSyncWithReportType,
+  parseLegacyReportUrlParams,
+  REPORT_STATE_URL_KEY,
   resolveSyncedActiveTab,
   resolveSyncedReportType,
   resolveTabChange,
+  stripReportSelectionParams,
 } from "./reportUrlUtils";
+import { mintReportBuilderStateId } from "./reportBuilderStateLink";
 
 interface ReportBuilderProps {
   mode: "project" | "cross-project";
@@ -1135,87 +1143,88 @@ function ReportBuilderContent({
           return;
         }
 
-        // Load from URL parameters if present
-        const dimensionsParam = searchParams.get("dimensions");
-        const metricsParam = searchParams.get("metrics");
-        const startDateParam = searchParams.get("startDate");
-        const endDateParam = searchParams.get("endDate");
+        // Load the selection from the URL if present: a persisted state id
+        // (what Run Report writes) or the legacy spelled-out params that
+        // older bookmarks still carry. Both feed the same restore path.
+        const stateId = searchParams.get(REPORT_STATE_URL_KEY);
+        let urlConfig: ReportBuilderStateConfig | null = null;
+        if (stateId) {
+          try {
+            const stateResponse = await fetch(
+              `/api/reports/state?id=${encodeURIComponent(stateId)}`
+            );
+            if (stateResponse.ok) {
+              const stored = await stateResponse.json();
+              // A state saved for another report does not apply here.
+              if (stored?.reportType === reportType && stored.config) {
+                urlConfig = stored.config as ReportBuilderStateConfig;
+              }
+            }
+          } catch {
+            // Unreachable state service — treated as no selection in the URL
+          }
+        } else {
+          urlConfig = parseLegacyReportUrlParams(searchParams);
+        }
 
         // Load date range from URL if present
-        if (startDateParam) {
+        if (urlConfig?.startDate) {
           const dateRange: DateRange = {
-            from: new Date(startDateParam),
-            to: endDateParam ? new Date(endDateParam) : undefined,
+            from: new Date(urlConfig.startDate),
+            to: urlConfig.endDate ? new Date(urlConfig.endDate) : undefined,
           };
           form.setValue("dateRange", dateRange);
         }
 
-        // Load dimension value filters from URL if present. Stored as JSON
-        // ids only ({ dimId: [id, ...] }); the picker labels are resolved
-        // through the dimension-values lookup. Only replace state when the
-        // content actually differs — this effect re-runs on every
-        // searchParams change, and a fresh-but-equal object would retrigger
-        // the filter-change re-run.
-        const dimensionFiltersParam = searchParams.get("dimensionFilters");
-        if (dimensionFiltersParam) {
-          try {
-            const parsed = JSON.parse(dimensionFiltersParam);
-            const restored: Record<string, any[]> = {};
-            if (
-              parsed &&
-              typeof parsed === "object" &&
-              !Array.isArray(parsed)
-            ) {
-              for (const [dimId, values] of Object.entries(parsed)) {
-                if (!Array.isArray(values) || values.length === 0) continue;
-                const ids = values
-                  .map((v: any) =>
-                    typeof v === "object" && v !== null ? v.id : v
-                  )
-                  .filter((id: any) => id != null && id !== "");
-                if (ids.length === 0) continue;
-                // Resolve display labels for the picker badges
-                const lookupUrl = new URL(
-                  currentReport.endpoint,
-                  window.location.origin
-                );
-                if (mode === "project" && projectId) {
-                  lookupUrl.searchParams.set("projectId", projectId.toString());
-                }
-                lookupUrl.searchParams.set("dimensionId", dimId);
-                lookupUrl.searchParams.set("ids", ids.join(","));
-                lookupUrl.searchParams.set("pageSize", String(ids.length));
-                let byId = new Map<string, any>();
-                try {
-                  const lookupResponse = await fetch(lookupUrl.toString());
-                  if (lookupResponse.ok) {
-                    const lookup = await lookupResponse.json();
-                    byId = new Map(
-                      (lookup.results ?? []).map((r: any) => [String(r.id), r])
-                    );
-                  }
-                } catch {
-                  // Label lookup failed — fall back to id-as-name below
-                }
-                restored[dimId] = ids.map(
-                  (id: any) => byId.get(String(id)) ?? { id, name: String(id) }
+        // Restore dimension value filters. Stored as ids only
+        // ({ dimId: [id, ...] }); the picker labels are resolved through the
+        // dimension-values lookup, POSTed because the id list can run to
+        // thousands of entries. Only replace state when the content actually
+        // differs — this effect re-runs on every searchParams change, and a
+        // fresh-but-equal object would retrigger the filter-change re-run.
+        if (urlConfig?.dimensionFilters) {
+          const restored: Record<string, any[]> = {};
+          for (const [dimId, ids] of Object.entries(
+            urlConfig.dimensionFilters
+          )) {
+            if (!ids || ids.length === 0) continue;
+            let byId = new Map<string, any>();
+            try {
+              const lookupResponse = await fetch(currentReport.endpoint, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  ...(mode === "project" && projectId ? { projectId } : {}),
+                  dimensionId: dimId,
+                  ids,
+                }),
+              });
+              if (lookupResponse.ok) {
+                const lookup = await lookupResponse.json();
+                byId = new Map(
+                  (lookup.results ?? []).map((r: any) => [String(r.id), r])
                 );
               }
+            } catch {
+              // Label lookup failed — fall back to id-as-name below
             }
-            if (Object.keys(restored).length > 0) {
-              setDimensionValueFilters((prev) =>
-                JSON.stringify(prev) === JSON.stringify(restored)
-                  ? prev
-                  : restored
-              );
-            }
-          } catch {
-            // Malformed param — ignore and leave filters as they are
+            restored[dimId] = ids.map(
+              (id) => byId.get(String(id)) ?? { id, name: String(id) }
+            );
+          }
+          if (Object.keys(restored).length > 0) {
+            setDimensionValueFilters((prev) =>
+              JSON.stringify(prev) === JSON.stringify(restored)
+                ? prev
+                : restored
+            );
           }
         }
 
-        if (dimensionsParam) {
-          const dimIds = dimensionsParam.split(",");
+        const dimIds = urlConfig?.dimensions ?? [];
+        const metIds = urlConfig?.metrics ?? [];
+
+        if (dimIds.length > 0) {
           // Preserve order from URL by mapping instead of filtering
           const selectedDims = dimIds
             .map((id) => dimOpts.find((d: any) => d.value === id))
@@ -1251,8 +1260,7 @@ function ReportBuilderContent({
           }
         }
 
-        if (metricsParam) {
-          const metIds = metricsParam.split(",");
+        if (metIds.length > 0) {
           // Preserve order from URL by mapping instead of filtering
           const selectedMets = metIds
             .map((id) => metOpts.find((m: any) => m.value === id))
@@ -1261,9 +1269,7 @@ function ReportBuilderContent({
         }
 
         // Store selections for auto-run
-        if (dimensionsParam && metricsParam) {
-          const dimIds = dimensionsParam.split(",");
-          const metIds = metricsParam.split(",");
+        if (dimIds.length > 0 && metIds.length > 0) {
           // Preserve order from URL by mapping instead of filtering
           let selectedDims = dimIds
             .map((id) => dimOpts.find((d: any) => d.value === id))
@@ -1296,10 +1302,10 @@ function ReportBuilderContent({
             setLastUsedMetrics(selectedMets);
 
             // Also set the last used date range if present
-            if (startDateParam) {
+            if (urlConfig?.startDate) {
               setLastUsedDateRange({
-                from: new Date(startDateParam),
-                to: endDateParam ? new Date(endDateParam) : undefined,
+                from: new Date(urlConfig.startDate),
+                to: urlConfig.endDate ? new Date(urlConfig.endDate) : undefined,
               });
             }
           } else {
@@ -1309,6 +1315,12 @@ function ReportBuilderContent({
             // no-results guidance instead of spinning forever.
             setResults([]);
           }
+        } else if (stateId) {
+          // The state id did not resolve to a runnable selection (swept,
+          // unreadable, or saved for another report) — same completed-empty
+          // handling so the results panel does not wait for a run that will
+          // never fire.
+          setResults([]);
         }
       } catch (err) {
         console.error("Failed to load report metadata:", err);
@@ -1534,6 +1546,34 @@ function ReportBuilderContent({
           throw new Error(validation.error.issues[0].message);
         }
 
+        // On an explicit run the selection is persisted server-side and the
+        // URL carries only its id: a "Select all" over thousands of filter
+        // values used to spell every id into the URL and push it past the
+        // ingress limit (414). Links stay shareable and bookmarkable. The
+        // save runs alongside the report request so the URL write below
+        // lands as soon as results do — an extra round-trip there would
+        // widen the window in which a tab click gets clobbered.
+        const persistUrlState = updateUrl && !currentReport?.isPreBuilt;
+        const safeReportType =
+          reportType && reportType.trim() !== ""
+            ? reportType
+            : "test-execution";
+        const stateConfig = persistUrlState
+          ? buildReportBuilderStateConfig({
+              dimensions: selectedDimensions,
+              metrics: selectedMetrics,
+              dateRange: dateRange?.from ? (dateRange as DateRange) : undefined,
+              dimensionValueFilters,
+            })
+          : null;
+        const stateIdPromise: Promise<string | null> = stateConfig
+          ? mintReportBuilderStateId({
+              projectId: mode === "project" && projectId ? projectId : null,
+              reportType: safeReportType,
+              config: stateConfig,
+            })
+          : Promise.resolve(null);
+
         const response = await fetch(currentReport!.endpoint, {
           method: "POST",
           headers: {
@@ -1706,60 +1746,33 @@ function ReportBuilderContent({
           // its URL write would clobber the new tab/reportType (the bounce). The
           // selections are already in the URL from the explicit run, so auto-runs
           // don't need to rewrite them.
-          if (updateUrl && !currentReport?.isPreBuilt) {
+          if (stateConfig) {
             // Update URL with selections - start with existing params to preserve tab parameter
             const newParams = new URLSearchParams(searchParams.toString());
-            // Safety check: ensure reportType is never empty
-            const safeReportType =
-              reportType && reportType.trim() !== ""
-                ? reportType
-                : "test-execution";
             newParams.set("reportType", safeReportType);
-            newParams.set(
-              "dimensions",
-              selectedDimensions.map((d) => d.value).join(",")
-            );
-            newParams.set(
-              "metrics",
-              selectedMetrics.map((m) => m.value).join(",")
-            );
+            stripReportSelectionParams(newParams);
 
-            // Add date range to URL if specified, or remove if cleared
-            if (dateRange?.from) {
-              newParams.set("startDate", dateRange.from.toISOString());
-              if (dateRange.to) {
-                newParams.set("endDate", dateRange.to.toISOString());
-              } else {
-                newParams.delete("endDate");
-              }
+            const stateId = await stateIdPromise;
+            if (stateId) {
+              newParams.set(REPORT_STATE_URL_KEY, stateId);
             } else {
-              // Remove date parameters when cleared
-              newParams.delete("startDate");
-              newParams.delete("endDate");
+              // The state could not be saved; spell the selection out so
+              // the URL is still restorable.
+              applyLegacyReportUrlParams(newParams, stateConfig);
             }
 
-            // Persist dimension value filters as ids only (names are
-            // display-only and resolved on load via the values lookup) or
-            // drop the param when none.
-            const urlDimensionFilters: Record<
-              string,
-              Array<string | number>
-            > = {};
-            Object.entries(dimensionValueFilters).forEach(([dimId, values]) => {
-              if (!values || values.length === 0) return;
-              if (!selectedDimensions.some((d) => d.value === dimId)) return;
-              urlDimensionFilters[dimId] = values.map((v: any) => v.id);
-            });
-            if (Object.keys(urlDimensionFilters).length > 0) {
-              newParams.set(
-                "dimensionFilters",
-                JSON.stringify(urlDimensionFilters)
-              );
-            } else {
-              newParams.delete("dimensionFilters");
+            // If the user moved to another tab or report while this run was
+            // in flight, the live URL already belongs to that navigation;
+            // writing this run's params over it would bounce them back.
+            const liveParams = new URLSearchParams(window.location.search);
+            const liveTab = liveParams.get("tab");
+            const liveReportType = liveParams.get("reportType");
+            const navigatedAway =
+              (liveTab !== null && liveTab !== newParams.get("tab")) ||
+              (liveReportType !== null && liveReportType !== safeReportType);
+            if (!navigatedAway) {
+              router.replace(`${pathname}?${newParams.toString()}`);
             }
-
-            router.replace(`${pathname}?${newParams.toString()}`);
           }
         }
       } catch (err: any) {
@@ -1829,7 +1842,7 @@ function ReportBuilderContent({
     !error &&
     (loading ||
       Boolean(currentReport?.isPreBuilt) ||
-      Boolean(searchParams.get("dimensions") && searchParams.get("metrics")));
+      hasReportSelectionInUrl(searchParams));
 
   const handleLoadMore = useCallback(() => {
     if (!isExecutionLog || loadingMore) return;

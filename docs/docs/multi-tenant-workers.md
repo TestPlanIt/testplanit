@@ -143,6 +143,8 @@ This creates separate scheduled jobs per tenant:
 - `refresh-expired-repo-caches-tenant-b`
 - `sweep-abandoned-runs-tenant-a`
 - `sweep-abandoned-runs-tenant-b`
+- `sweep-report-builder-states-tenant-a`
+- `sweep-report-builder-states-tenant-b`
 
 ## Job Queue Admin UI
 
