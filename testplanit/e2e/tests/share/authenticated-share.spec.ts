@@ -198,8 +198,9 @@ test.describe("Authenticated Share Flow", () => {
       // Verify the URL contains the report configuration parameters
       const finalUrl = page.url();
       expect(finalUrl).toContain("reportType=repository-stats");
-      expect(finalUrl).toContain("dimensions=testCase");
-      expect(finalUrl).toContain("metrics=testCaseCount");
+      // The builder selection rides a server-side state row, not the URL.
+      expect(finalUrl).toMatch(/[?&]state=[A-Za-z0-9]+/);
+      expect(finalUrl).not.toContain("dimensions=");
 
       // Verify we're on the Report Builder tab (not viewing static share)
       const reportBuilder = page.locator("text=/Report Builder/i");

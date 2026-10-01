@@ -6,6 +6,7 @@ import { Session } from "next-auth";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { buildSharedReportUrlParams } from "~/components/reports/reportBuilderStateLink";
 import { PasswordGate } from "./PasswordGate";
 import { SharedReportViewer } from "./SharedReportViewer";
 
@@ -76,35 +77,10 @@ export function ShareContent({
           // Build full report URL with configuration
           let reportUrl: string | undefined;
           if (data.entityType === "REPORT" && data.projectId) {
-            const config = shareData.entityConfig;
-            const params = new URLSearchParams();
-
-            if (config.reportType) params.set("reportType", config.reportType);
-            if (config.startDate) params.set("startDate", config.startDate);
-            if (config.endDate) params.set("endDate", config.endDate);
-            if (config.dimensions)
-              params.set(
-                "dimensions",
-                Array.isArray(config.dimensions)
-                  ? config.dimensions.join(",")
-                  : config.dimensions
-              );
-            if (config.metrics)
-              params.set(
-                "metrics",
-                Array.isArray(config.metrics)
-                  ? config.metrics.join(",")
-                  : config.metrics
-              );
-            if (config.dimensionFilters)
-              params.set(
-                "dimensionFilters",
-                JSON.stringify(config.dimensionFilters)
-              );
-            if (config.page) params.set("page", config.page.toString());
-            if (config.pageSize)
-              params.set("pageSize", config.pageSize.toString());
-
+            const params = await buildSharedReportUrlParams(
+              shareData.entityConfig,
+              data.projectId
+            );
             reportUrl = `/projects/reports/${data.projectId}?${params.toString()}`;
           }
 
@@ -193,35 +169,10 @@ export function ShareContent({
         // Build full report URL with configuration
         let reportUrl: string | undefined;
         if (data.entityType === "REPORT" && data.projectId) {
-          const config = shareData.entityConfig;
-          const params = new URLSearchParams();
-
-          if (config.reportType) params.set("reportType", config.reportType);
-          if (config.startDate) params.set("startDate", config.startDate);
-          if (config.endDate) params.set("endDate", config.endDate);
-          if (config.dimensions)
-            params.set(
-              "dimensions",
-              Array.isArray(config.dimensions)
-                ? config.dimensions.join(",")
-                : config.dimensions
-            );
-          if (config.metrics)
-            params.set(
-              "metrics",
-              Array.isArray(config.metrics)
-                ? config.metrics.join(",")
-                : config.metrics
-            );
-          if (config.dimensionFilters)
-            params.set(
-              "dimensionFilters",
-              JSON.stringify(config.dimensionFilters)
-            );
-          if (config.page) params.set("page", config.page.toString());
-          if (config.pageSize)
-            params.set("pageSize", config.pageSize.toString());
-
+          const params = await buildSharedReportUrlParams(
+            shareData.entityConfig,
+            data.projectId
+          );
           reportUrl = `/projects/reports/${data.projectId}?${params.toString()}`;
         }
 
@@ -330,58 +281,41 @@ export function ShareContent({
         return;
       }
 
-      // Construct URL with report configuration
-      const params = new URLSearchParams();
+      // Construct the URL with the report configuration. The builder
+      // selection is saved server-side first so a large filter list does
+      // not ride the URL.
+      const redirect = async () => {
+        const params = await buildSharedReportUrlParams(config, projectId);
 
-      if (config.reportType) params.set("reportType", config.reportType);
-      if (config.startDate) params.set("startDate", config.startDate);
-      if (config.endDate) params.set("endDate", config.endDate);
-      if (config.dimensions)
-        params.set(
-          "dimensions",
-          Array.isArray(config.dimensions)
-            ? config.dimensions.join(",")
-            : config.dimensions
-        );
-      if (config.metrics)
-        params.set(
-          "metrics",
-          Array.isArray(config.metrics)
-            ? config.metrics.join(",")
-            : config.metrics
-        );
-      if (config.dimensionFilters)
-        params.set("dimensionFilters", JSON.stringify(config.dimensionFilters));
-      if (config.page) params.set("page", config.page.toString());
-      if (config.pageSize) params.set("pageSize", config.pageSize.toString());
+        // Redirect to appropriate Reports page
+        const reportsUrl = projectId
+          ? `/projects/reports/${projectId}?${params.toString()}`
+          : `/reports?${params.toString()}`;
 
-      // Redirect to appropriate Reports page
-      const reportsUrl = projectId
-        ? `/projects/reports/${projectId}?${params.toString()}`
-        : `/reports?${params.toString()}`;
+        // Increment view count before redirecting (only if not already counted)
+        if (!hasViewedInSession()) {
+          // Mark as counted BEFORE making the request to prevent race conditions
+          markViewedInSession();
 
-      // Increment view count before redirecting (only if not already counted)
-      if (!hasViewedInSession()) {
-        // Mark as counted BEFORE making the request to prevent race conditions
-        markViewedInSession();
-
-        fetch(`/api/share/${shareKey}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({}),
-        })
-          .then(() => {
-            window.location.href = reportsUrl;
+          fetch(`/api/share/${shareKey}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({}),
           })
-          .catch((error) => {
-            console.error("Error counting view:", error);
-            // Redirect anyway even if view counting fails
-            window.location.href = reportsUrl;
-          });
-      } else {
-        // Already counted, just redirect
-        window.location.href = reportsUrl;
-      }
+            .then(() => {
+              window.location.href = reportsUrl;
+            })
+            .catch((error) => {
+              console.error("Error counting view:", error);
+              // Redirect anyway even if view counting fails
+              window.location.href = reportsUrl;
+            });
+        } else {
+          // Already counted, just redirect
+          window.location.href = reportsUrl;
+        }
+      };
+      void redirect();
       return;
     }
 

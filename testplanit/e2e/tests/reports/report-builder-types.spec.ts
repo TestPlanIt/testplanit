@@ -278,14 +278,16 @@ test.describe("Report Builder - Multiple Report Types", () => {
       );
     });
 
-    await test.step("Run the report and verify the dimension param is in the URL", async () => {
+    await test.step("Run the report and verify the selection is persisted as a state id in the URL", async () => {
       // Run the report
       const runButton = page.locator('[data-testid="run-report-button"]');
       await expect(runButton).toBeEnabled({ timeout: 10000 });
       await runReport(page);
 
-      // Verify URL contains the dimension param
-      await expect(page).toHaveURL(/dimensions=testCase/);
+      // The selection is stored server-side; the URL carries only its id
+      // and none of the legacy spelled-out params.
+      await expect(page).toHaveURL(/[?&]state=[A-Za-z0-9]+/);
+      await expect(page).not.toHaveURL(/dimensions=/);
     });
 
     await test.step("Reload and verify params persist and the report auto-runs", async () => {

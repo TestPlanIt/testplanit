@@ -1,6 +1,7 @@
 "use client";
 
 import { ReportRenderer } from "@/components/reports/ReportRenderer";
+import { buildSharedReportUrlParams } from "@/components/reports/reportBuilderStateLink";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -42,32 +43,29 @@ export function StaticReportViewer({
   // Extract config from shareData
   const config = shareData.entityConfig;
 
-  // Build full report URL with configuration for "View in Full App" button
-  const fullReportUrl = useMemo(() => {
-    if (!shareData.projectId || !config) return null;
-
-    const params = new URLSearchParams();
-    if (config.reportType) params.set("reportType", config.reportType);
-    if (config.startDate) params.set("startDate", config.startDate);
-    if (config.endDate) params.set("endDate", config.endDate);
-    if (config.dimensions)
-      params.set(
-        "dimensions",
-        Array.isArray(config.dimensions)
-          ? config.dimensions.join(",")
-          : config.dimensions
-      );
-    if (config.metrics)
-      params.set(
-        "metrics",
-        Array.isArray(config.metrics)
-          ? config.metrics.join(",")
-          : config.metrics
-      );
-    if (config.dimensionFilters)
-      params.set("dimensionFilters", JSON.stringify(config.dimensionFilters));
-    return `/projects/reports/${shareData.projectId}?${params.toString()}`;
-  }, [shareData.projectId, config]);
+  // Full report URL for the "View in Full App" button. Resolved once the
+  // builder selection is saved server-side, so a shared report with a large
+  // filter list opens in the builder through a short URL. Only a signed-in
+  // viewer sees the button, and only they may save the selection.
+  const [fullReportUrl, setFullReportUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!shareData.projectId || !config || !isAuthenticatedUser) {
+      setFullReportUrl(null);
+      return;
+    }
+    let cancelled = false;
+    void buildSharedReportUrlParams(config, shareData.projectId).then(
+      (params) => {
+        if (cancelled) return;
+        setFullReportUrl(
+          `/projects/reports/${shareData.projectId}?${params.toString()}`
+        );
+      }
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [shareData.projectId, config, isAuthenticatedUser]);
 
   // Client-side sorting only — the whole shared result set is in memory and the
   // table virtualizes it (no paging).

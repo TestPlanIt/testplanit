@@ -1,7 +1,10 @@
 import { baseDb } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
-import { authenticateRequest } from "~/lib/api-token-auth";
+import {
+  authenticateRequest,
+  type AuthenticatedUser,
+} from "~/lib/api-token-auth";
 import { getEnhancedDb } from "~/lib/auth/utils";
 import { isValidReportBypass } from "~/lib/internalReportBypass";
 import { reportRequestSchema } from "~/lib/schemas/reportRequestSchema";
@@ -108,7 +111,11 @@ interface ReportConfig {
 export async function authorizeReportRequest(
   req: NextRequest,
   opts: { requiresAdmin: boolean; projectId?: number }
-): Promise<{ ok: true; bypass: boolean } | { ok: false; response: Response }> {
+): Promise<
+  | { ok: true; bypass: true; user?: undefined }
+  | { ok: true; bypass: false; user: AuthenticatedUser }
+  | { ok: false; response: Response }
+> {
   if (isValidReportBypass(req.headers.get("x-shared-report-bypass"))) {
     return { ok: true, bypass: true };
   }
@@ -129,7 +136,7 @@ export async function authorizeReportRequest(
         response: Response.json({ error: "Unauthorized" }, { status: 401 }),
       };
     }
-    return { ok: true, bypass: false };
+    return { ok: true, bypass: false, user: auth.user };
   }
 
   if (opts.projectId && auth.user.access !== "ADMIN") {
@@ -148,7 +155,86 @@ export async function authorizeReportRequest(
     }
   }
 
-  return { ok: true, bypass: false };
+  return { ok: true, bypass: false, user: auth.user };
+}
+
+// Exact-id label lookups arrive with however many ids the builder's
+// "Select all" produced. Each chunk becomes one IN list, keeping every query
+// well inside the driver's bind-parameter limit.
+const VALUE_LOOKUP_CHUNK_SIZE = 1000;
+
+interface DimensionValueLookupOptions {
+  search?: string;
+  ids?: string[];
+  page: number;
+  pageSize: number;
+}
+
+/**
+ * Values of one dimension for the per-dimension filter picker: searched and
+ * paginated, or looked up by exact ids to restore picker labels. Serves both
+ * the GET query-string form and the POST JSON form of the lookup.
+ */
+async function lookupDimensionValues(
+  dimension: DimensionConfig,
+  projectId: number | undefined,
+  { search, ids, page, pageSize }: DimensionValueLookupOptions
+): Promise<{ results: DimensionDisplayValue[]; total: number }> {
+  // Dimensions with a dedicated filter-value lookup search and paginate
+  // in the database instead of materializing every group value.
+  if (dimension.filterValues) {
+    if (ids && ids.length > VALUE_LOOKUP_CHUNK_SIZE) {
+      const results: DimensionDisplayValue[] = [];
+      let total = 0;
+      for (let i = 0; i < ids.length; i += VALUE_LOOKUP_CHUNK_SIZE) {
+        const chunk = ids.slice(i, i + VALUE_LOOKUP_CHUNK_SIZE);
+        const lookup = await dimension.filterValues(baseDb, projectId, {
+          search: search || undefined,
+          ids: chunk,
+          skip: 0,
+          take: chunk.length,
+        });
+        results.push(...lookup.results);
+        total += lookup.total;
+      }
+      return { results, total };
+    }
+    return dimension.filterValues(baseDb, projectId, {
+      search: search || undefined,
+      ids,
+      skip: page * pageSize,
+      take: pageSize,
+    });
+  }
+
+  const rawValues = await dimension.getValues(baseDb, projectId);
+  const displayValues = (rawValues as unknown[]).map((value) => {
+    const display = dimension.display(value);
+    // Value ids key the filter; date-style dimensions have no id and are
+    // excluded from the pickers, but fall back to the date string.
+    const id = display.id ?? display.executedAt ?? display.createdAt ?? null;
+    const name =
+      display.name ??
+      (typeof display.executedAt === "string"
+        ? display.executedAt
+        : typeof display.createdAt === "string"
+          ? display.createdAt
+          : String(id));
+    return { ...display, id, name };
+  });
+
+  const idSet = ids ? new Set(ids) : null;
+  const idFiltered = idSet
+    ? displayValues.filter((v) => idSet.has(String(v.id)))
+    : displayValues;
+  const filtered = search
+    ? idFiltered.filter((v) => String(v.name).toLowerCase().includes(search))
+    : idFiltered;
+
+  return {
+    results: filtered.slice(page * pageSize, (page + 1) * pageSize),
+    total: filtered.length,
+  };
 }
 
 // Helper: cartesian product
@@ -290,52 +376,14 @@ export async function handleReportGET(req: NextRequest, config: ReportConfig) {
         ? Math.min(Math.max(1, pageSizeParam), 10000)
         : 25;
 
-      // Dimensions with a dedicated filter-value lookup search and paginate
-      // in the database instead of materializing every group value.
-      if (dimension.filterValues) {
-        const lookup = await dimension.filterValues(baseDb, projectId, {
-          search: search || undefined,
+      return Response.json(
+        await lookupDimensionValues(dimension, projectId, {
+          search,
           ids,
-          skip: valuesPage * valuesPageSize,
-          take: valuesPageSize,
-        });
-        return Response.json(lookup);
-      }
-
-      const rawValues = await dimension.getValues(baseDb, projectId);
-      const displayValues = (rawValues as unknown[]).map((value) => {
-        const display = dimension.display(value);
-        // Value ids key the filter; date-style dimensions have no id and are
-        // excluded from the pickers, but fall back to the date string.
-        const id =
-          display.id ?? display.executedAt ?? display.createdAt ?? null;
-        const name =
-          display.name ??
-          (typeof display.executedAt === "string"
-            ? display.executedAt
-            : typeof display.createdAt === "string"
-              ? display.createdAt
-              : String(id));
-        return { ...display, id, name };
-      });
-
-      const idSet = ids ? new Set(ids) : null;
-      const idFiltered = idSet
-        ? displayValues.filter((v) => idSet.has(String(v.id)))
-        : displayValues;
-      const filtered = search
-        ? idFiltered.filter((v) =>
-            String(v.name).toLowerCase().includes(search)
-          )
-        : idFiltered;
-
-      return Response.json({
-        results: filtered.slice(
-          valuesPage * valuesPageSize,
-          (valuesPage + 1) * valuesPageSize
-        ),
-        total: filtered.length,
-      });
+          page: valuesPage,
+          pageSize: valuesPageSize,
+        })
+      );
     }
 
     // Filter out undefined entries
@@ -375,6 +423,15 @@ export async function handleReportPOST(req: NextRequest, config: ReportConfig) {
       projectId: body?.projectId ? Number(body.projectId) : undefined,
     });
     if (!authz.ok) return authz.response;
+
+    // Value-lookup mode: { dimensionId, ids } resolves picker labels for a
+    // stored selection. The id list can run to thousands of entries (the
+    // picker's "Select all"), which is why it travels in the body and not in
+    // the query string like the GET form.
+    if (typeof body?.dimensionId === "string") {
+      return handleDimensionValueLookupPOST(body, config);
+    }
+
     const {
       projectId,
       dimensions,
@@ -492,6 +549,49 @@ export async function handleReportPOST(req: NextRequest, config: ReportConfig) {
     const errorMessage = e instanceof Error ? e.message : "Unknown error";
     return Response.json({ error: errorMessage }, { status: 500 });
   }
+}
+
+async function handleDimensionValueLookupPOST(
+  body: { dimensionId: string; ids?: unknown; projectId?: unknown },
+  config: ReportConfig
+) {
+  const projectId = body.projectId ? Number(body.projectId) : undefined;
+  if (config.requiresProjectId && !projectId) {
+    return Response.json({ error: "Project ID is required" }, { status: 400 });
+  }
+
+  const dimensionRegistry = config.createDimensionRegistry(
+    !config.requiresAdmin
+  );
+  const dimension = dimensionRegistry[body.dimensionId];
+  if (!dimension) {
+    return Response.json(
+      { error: `Unsupported dimension: ${body.dimensionId}` },
+      { status: 400 }
+    );
+  }
+
+  if (!Array.isArray(body.ids)) {
+    return Response.json({ error: "ids must be an array" }, { status: 400 });
+  }
+  const ids = body.ids
+    .filter(
+      (v): v is string | number =>
+        typeof v === "string" || typeof v === "number"
+    )
+    .map((v) => String(v).trim())
+    .filter(Boolean);
+  if (ids.length === 0) {
+    return Response.json({ results: [], total: 0 });
+  }
+
+  return Response.json(
+    await lookupDimensionValues(dimension, projectId, {
+      ids,
+      page: 0,
+      pageSize: ids.length,
+    })
+  );
 }
 
 async function handleCrossProjectAggregation({

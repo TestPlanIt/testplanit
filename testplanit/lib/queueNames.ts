@@ -39,3 +39,4 @@ export const JOB_AUTO_COMPLETE_MILESTONES = "auto-complete-milestones";
 export const JOB_MILESTONE_DUE_NOTIFICATIONS = "milestone-due-notifications";
 export const JOB_REVIEW_REMINDERS = "review-reminders";
 export const JOB_SWEEP_ABANDONED_RUNS = "sweep-abandoned-runs";
+export const JOB_SWEEP_REPORT_BUILDER_STATES = "sweep-report-builder-states";

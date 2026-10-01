@@ -508,12 +508,13 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
       await runReport(page);
     });
 
-    await test.step("Verify results load and URL contains dimensions parameter", async () => {
+    await test.step("Verify results load and URL carries the persisted state id", async () => {
       // Wait for results to load
       await expect(table).toBeVisible({ timeout: 10000 });
 
-      // Verify URL contains dimensions parameter
-      await expect(page).toHaveURL(/dimensions=testCase/);
+      // The selection is stored server-side; the URL carries only its id
+      await expect(page).toHaveURL(/[?&]state=[A-Za-z0-9]+/);
+      await expect(page).not.toHaveURL(/dimensions=/);
     });
 
     await test.step("Reload page and verify report auto-runs with persisted parameters", async () => {
