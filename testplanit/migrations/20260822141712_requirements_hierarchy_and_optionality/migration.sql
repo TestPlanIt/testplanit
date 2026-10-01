@@ -1,5 +1,5 @@
 -- AlterEnum
-ALTER TYPE "Locale" ADD VALUE 'cs_CZ';
+ALTER TYPE "Locale" ADD VALUE IF NOT EXISTS 'cs_CZ';
 
 -- AlterTable
 ALTER TABLE "Attachments" ADD COLUMN     "issueId" INTEGER;
