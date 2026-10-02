@@ -43,6 +43,29 @@ describe("test-case-generation prompt — excluded-field compatibility", () => {
     expect(inline).toContain(TEXT_FIELD_GUIDANCE);
   });
 
+  it("places linked issues in the seeded and fallback user prompts", () => {
+    expect(fallback.userPrompt).toContain("{{LINKED_ISSUES_SECTION}}");
+    expect(readSource("db/seedPromptConfig.ts")).toContain(
+      "{{LINKED_ISSUES_SECTION}}"
+    );
+    const names = PROMPT_FEATURE_VARIABLES[
+      LLM_FEATURES.TEST_CASE_GENERATION
+    ].map((v) => v.name);
+    expect(names).toContain("LINKED_ISSUES_SECTION");
+  });
+
+  it("does not ask for padded text fields", () => {
+    for (const source of [
+      fallback.systemPrompt,
+      readSource("db/seedPromptConfig.ts"),
+      readSource("app/api/llm/generate-test-cases/shared.ts"),
+    ]) {
+      expect(source).not.toMatch(
+        /minimum 2-3 sentences|DO NOT leave optional text fields empty/
+      );
+    }
+  });
+
   it("offers EXCLUDED_FIELDS_LIST in the prompt editor's variable picker", () => {
     // The picker reads this registry directly (not the DB `variables` column),
     // so admins on existing installs see the variable without a reseed.

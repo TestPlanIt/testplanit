@@ -361,6 +361,9 @@ export async function persistGeneratedTestCases(
           .filter((url): url is string => !!url)
       );
       const folderIdBySourceUrl = new Map<string, number>();
+      // Version snapshots record the folder each case actually lands in;
+      // callers' `folderName` can be a placeholder rather than the real name.
+      const folderNameById = new Map<number, string>();
 
       if (sourceUrls.size > 1) {
         // Multiple pages — create a subfolder per page
@@ -444,6 +447,7 @@ export async function persistGeneratedTestCases(
             }
           }
           folderIdBySourceUrl.set(url, folder.id);
+          folderNameById.set(folder.id, folderName);
         }
       }
 
@@ -463,6 +467,12 @@ export async function persistGeneratedTestCases(
         });
         resolvedTargetFolderId = folder.id;
         resolvedFolderName = data.destinationFolder.name;
+      } else {
+        const target = await tx.repositoryFolders.findUnique({
+          where: { id: data.folderId },
+          select: { name: true },
+        });
+        if (target) resolvedFolderName = target.name;
       }
 
       // Strict-transitive gate: if the caller picked a state at or past
@@ -676,7 +686,8 @@ export async function persistGeneratedTestCases(
               projectId: data.projectId,
               repositoryId: data.repositoryId,
               folderId: targetFolderId,
-              folderName: resolvedFolderName,
+              folderName:
+                folderNameById.get(targetFolderId) ?? resolvedFolderName,
               templateId: data.templateId,
               templateName: data.templateName,
               name: testCase.name.slice(0, 255),

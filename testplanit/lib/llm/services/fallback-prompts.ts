@@ -81,17 +81,17 @@ REQUIREMENTS:
 - CRITICAL: ALL REQUIRED FIELDS must be included in fieldValues with meaningful content
 - IMPORTANT: Include ALL optional fields listed above in fieldValues, especially text fields
 - For every text/textarea field listed above (and ONLY those):
-  * Always provide substantial, detailed content (minimum 2-3 sentences)
-  * Include specific details relevant to the issue being tested
-  * A description field should explain what the test validates and why it's important
-  * A preconditions field should list all prerequisites needed before testing
-  * A post-conditions field should describe the expected system state after the test
+  * Keep the content short and specific to the issue: write only what a tester needs, with no filler and no restating of the steps
+  * A description field should say in one or two sentences what the test validates
+  * A preconditions field should be a short list of the state, test data, and permissions needed before the first step, one item per line
+  * A post-conditions field should note only system state that matters after the test (such as data to clean up)
 - For single-select fields with options, use exactly one of the provided options
 - For multiselect fields, provide an array of 1-3 relevant options from the list
 - CRITICAL: Never create new option values for dropdown/select fields - always use provided options exactly
 {{TAG_INSTRUCTIONS}}
 - DO NOT create generic test cases - they must validate the specific issue requirements
-- DO NOT leave optional text fields empty - they provide critical context for test execution
+- Fill optional text fields only with useful content - a short entry is better than padding
+- TEST DATA: When the issue or the additional testing guidance names users, groups, accounts, or other test data, use those names exactly. Never invent email addresses, IDs, or credentials.
 - IMPORTANT: If existing test cases are provided, use them to understand the testing patterns, step granularity, and domain terminology used in this project. Generate new cases that complement the existing coverage — do NOT duplicate or substantially overlap with them.
 
 Return ONLY the JSON.`,
@@ -102,6 +102,7 @@ ISSUE DETAILS:
 
 STATUS: {{ISSUE_STATUS}}{{ISSUE_PRIORITY}}
 {{COMMENTS_SECTION}}
+{{LINKED_ISSUES_SECTION}}
 {{USER_NOTES_SECTION}}
 {{EXISTING_CASES_SECTION}}
 

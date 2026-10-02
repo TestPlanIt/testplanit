@@ -89,6 +89,10 @@ export const PROMPT_FEATURE_VARIABLES: Record<LlmFeature, PromptVariable[]> = {
     { name: "ISSUE_PRIORITY", description: "Issue priority level" },
     { name: "COMMENTS_SECTION", description: "Relevant issue comments" },
     {
+      name: "LINKED_ISSUES_SECTION",
+      description: "Related linked issues with their bodies and comments",
+    },
+    {
       name: "USER_NOTES_SECTION",
       description: "Additional user-provided notes",
     },

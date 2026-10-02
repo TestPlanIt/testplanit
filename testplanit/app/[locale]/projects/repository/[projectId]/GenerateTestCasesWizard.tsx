@@ -100,6 +100,7 @@ import {
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import { useFolderStats } from "~/lib/useFolderStats";
 import { importGeneratedTestCases } from "~/app/actions/importGeneratedTestCases";
 import {
   convertHtmlToTipTapJSON,
@@ -1452,6 +1453,10 @@ export function GenerateTestCasesWizard({
     null
   );
   const [userNotes, setUserNotes] = useState("");
+  const notesLinkCount = useMemo(
+    () => userNotes.match(/\bhttps?:\/\/\S+|\bwww\.\S+/gi)?.length ?? 0,
+    [userNotes]
+  );
   const [quantity, setQuantity] = useState<string>("several");
   const [autoGenerateTags, setAutoGenerateTags] = useState(true);
   // INT-06: opt-in toggle (default false) — when on, the LLM emits a parameter
@@ -1860,6 +1865,40 @@ export function GenerateTestCasesWizard({
     },
     take: 1,
   });
+
+  // How many existing cases the generator can draw on for style and dedup:
+  // the folder's own subtree plus the cases directly in each ancestor —
+  // the same scope fetchHierarchyContext searches. Both queries share the
+  // repository tree's cache, so opening the wizard costs no extra request.
+  const contextQueriesEnabled = open && !isSeeded && folderId > 0;
+  const { data: folderStatsData } = useFolderStats({
+    projectId,
+    enabled: contextQueriesEnabled,
+  });
+  const { data: projectFolders } = useClientQueries(
+    schema
+  ).repositoryFolders.useFindMany(
+    {
+      where: { projectId, isDeleted: false },
+      orderBy: { order: "asc" },
+    },
+    { enabled: contextQueriesEnabled }
+  );
+  const folderContextCaseCount = useMemo(() => {
+    if (!(folderId > 0)) return 0;
+    if (!folderStatsData || !projectFolders) return null;
+    const statsById = new Map(folderStatsData.map((s) => [s.folderId, s]));
+    const parentById = new Map(projectFolders.map((f) => [f.id, f.parentId]));
+    let count = statsById.get(folderId)?.totalCaseCount ?? 0;
+    const seen = new Set([folderId]);
+    let parentId = parentById.get(folderId);
+    while (parentId && !seen.has(parentId)) {
+      seen.add(parentId);
+      count += statsById.get(parentId)?.directCaseCount ?? 0;
+      parentId = parentById.get(parentId);
+    }
+    return count;
+  }, [folderId, folderStatsData, projectFolders]);
 
   // Fetch default workflow state for new test cases
   const { data: defaultWorkflow } = useClientQueries(
@@ -4051,20 +4090,49 @@ export function GenerateTestCasesWizard({
                 only a repository launch can act on — a seeded launch never
                 selects a folder (the per-issue destination folder is created
                 at import), so the tip is hidden there. */}
-            {!isSeeded && (
-              <Alert className="mt-2 bg-primary/10 border-primary/50">
-                <AlertDescription>
-                  <div className="flex items-center gap-2 text-xs text-start">
-                    <Info className="w-4 h-4 text-muted-foreground shrink-0" />
-                    {t("generateTestCases.selectSource.folderContextTip", {
+            {!isSeeded &&
+              (folderContextCaseCount === 0 ? (
+                <Alert variant="destructive" className="mt-2">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>
+                    {t(
+                      "generateTestCases.selectSource.folderContextEmptyTitle"
+                    )}
+                  </AlertTitle>
+                  <AlertDescription className="text-xs">
+                    {t("generateTestCases.selectSource.folderContextEmpty", {
                       folderName:
                         folderName ??
                         t("generateTestCases.selectSource.currentFolder"),
                     })}
-                  </div>
-                </AlertDescription>
-              </Alert>
-            )}
+                  </AlertDescription>
+                </Alert>
+              ) : (
+                <Alert className="mt-2 bg-primary/10 border-primary/50">
+                  <AlertDescription>
+                    <div className="flex items-center gap-2 text-xs text-start">
+                      <Info className="w-4 h-4 text-muted-foreground shrink-0" />
+                      {folderContextCaseCount === null
+                        ? t("generateTestCases.selectSource.folderContextTip", {
+                            folderName:
+                              folderName ??
+                              t("generateTestCases.selectSource.currentFolder"),
+                          })
+                        : t(
+                            "generateTestCases.selectSource.folderContextCount",
+                            {
+                              count: folderContextCaseCount,
+                              folderName:
+                                folderName ??
+                                t(
+                                  "generateTestCases.selectSource.currentFolder"
+                                ),
+                            }
+                          )}
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              ))}
           </DialogHeader>
 
           {!isNotificationReopen && (
@@ -5208,6 +5276,25 @@ export function GenerateTestCasesWizard({
                           rows={6}
                           className="mb-4"
                         />
+
+                        {/* Links are never fetched — resolving arbitrary
+                            user URLs is unsafe and most need auth — so say
+                            so before the user relies on one. */}
+                        {notesLinkCount > 0 && (
+                          <Alert className="mb-4">
+                            <AlertTriangle className="h-4 w-4" />
+                            <AlertTitle>
+                              {t(
+                                "generateTestCases.addNotes.linksIgnoredTitle"
+                              )}
+                            </AlertTitle>
+                            <AlertDescription className="text-xs">
+                              {t("generateTestCases.addNotes.linksIgnored", {
+                                count: notesLinkCount,
+                              })}
+                            </AlertDescription>
+                          </Alert>
+                        )}
 
                         {/* Auto-generate tags option */}
                         <div className="flex items-center space-x-2 mb-4">

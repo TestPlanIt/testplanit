@@ -3544,6 +3544,9 @@
         "title": "Select Requirements Source",
         "description": "Choose whether to generate test cases from an issue or a requirements document.",
         "folderContextTip": "Existing test cases from \"{folderName}\" and its parent/child folders will be used as context to avoid duplicates. Make sure you have selected the correct folder before proceeding.",
+        "folderContextCount": "{count, plural, =1 {# existing test case} other {# existing test cases}} in \"{folderName}\" and its parent/child folders will be used as context to match your project's style and avoid duplicates.",
+        "folderContextEmptyTitle": "No existing test cases to use as context",
+        "folderContextEmpty": "\"{folderName}\" and its parent/child folders have no test cases, so the AI has no examples of your project's style or existing coverage. For better results, start the generator from the folder where these test cases belong, next to related cases.",
         "currentFolder": "current folder",
         "fromIssue": "From Issue",
         "fromDocument": "From Document",
@@ -3595,6 +3598,8 @@
         "description": "Provide additional context and guidance to help the AI generate better test cases.",
         "quantity": "Number of test cases to generate",
         "placeholder": "Add specific instructions for test case generation...\n\nFor example:\n• Focus on security testing\n• Include edge cases and boundary conditions\n• Test both happy path and error scenarios\n• Consider mobile and desktop scenarios\n• Focus on API testing",
+        "linksIgnoredTitle": "Links in notes are not opened",
+        "linksIgnored": "{count, plural, =1 {The link} other {The # links}} in your notes will be sent as plain text only. To use a document or spreadsheet, paste the relevant content (scenarios, test data, expected results) into the notes.",
         "suggestions": "Quick Suggestions:",
         "quantityOptions": {
           "justOne": "Just one",

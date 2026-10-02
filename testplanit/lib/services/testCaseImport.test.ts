@@ -237,6 +237,41 @@ describe("persistGeneratedTestCases version 1 snapshot", () => {
     return captured;
   }
 
+  it("snapshots the target folder's real name, not the caller's placeholder", async () => {
+    const captured: { version?: any } = {};
+    auditedTransactionMock.mockImplementationOnce(async (fn: any) => {
+      const tx = stubTx(captured);
+      tx.repositoryFolders.findUnique = vi.fn(async () => ({
+        name: "Manage my groups",
+      }));
+      return fn(tx);
+    });
+
+    const result = await persistGeneratedTestCases(
+      {
+        projectId: 1,
+        projectName: "Project",
+        repositoryId: 1,
+        folderId: 788,
+        // The generate wizard passes a translated "Generated" label here.
+        folderName: "Generated",
+        templateId: 1,
+        templateName: "Template",
+        stateId: 1,
+        stateName: "Draft",
+        maxOrder: 0,
+        autoGenerateTags: false,
+        testCases: [{ id: "case-1", name: "Imported case", fieldValues: {} }],
+        fieldMappings: [],
+      } as any,
+      { userId: "u1", userName: "User" }
+    );
+
+    expect(result.status).toBe("success");
+    expect(captured.version.folderId).toBe(788);
+    expect(captured.version.folderName).toBe("Manage my groups");
+  });
+
   describe("custom field values on the name-keyed path", () => {
     const MAPPINGS = [
       {

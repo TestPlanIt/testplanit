@@ -432,6 +432,28 @@ describe("LlmManager", () => {
       });
     });
 
+    it("attributes usage to metadata.projectId when projectId is unset", async () => {
+      mockDb.llmIntegration.findUnique.mockResolvedValue(mockLlmIntegration);
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(
+        mockLlmIntegration.llmProviderConfig
+      );
+      mockDb.llmUsage.create.mockResolvedValue({});
+      mockDb.llmRateLimit.upsert.mockResolvedValue({});
+
+      await manager.chat(1, {
+        messages: [{ role: "user", content: "Hello" }],
+        userId: "user-123",
+        feature: "test_case_generation",
+        metadata: { projectId: 3, issueKey: "ADM-1" },
+      });
+
+      expect(mockDb.llmUsage.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          project: { connect: { id: 3 } },
+        }),
+      });
+    });
+
     it("should track error on failed chat request", async () => {
       const mockError = new Error("API error");
       mockDb.llmIntegration.findUnique.mockResolvedValue(mockLlmIntegration);

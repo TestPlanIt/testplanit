@@ -149,7 +149,10 @@ describe("GenerateTestCasesWizard — seeded-launch header", () => {
     // repository launch can act on — seeded launches (milestone rows, gap
     // report rows) never select a folder, the per-issue destination folder
     // is created at import. The alert must be gated on !isSeeded.
-    expect(src).toMatch(/\{!isSeeded && \([\s\S]{0,400}?folderContextTip/);
+    // Both the info tip and the empty-context warning sit inside that gate.
+    expect(src).toMatch(
+      /\{!isSeeded &&\s*\([\s\S]{0,400}?folderContextEmpty[\s\S]{0,1600}?folderContextTip/
+    );
   });
 });
 
