@@ -71,6 +71,7 @@ import { loadRequirementTraceability } from "~/lib/services/requirementTraceabil
 import { loadRequirementTraceabilitySnapshot } from "~/lib/services/requirementTraceabilitySnapshot";
 import { groupTraceabilityRows } from "~/lib/services/requirementTraceabilitySnapshotShape";
 import { authorizeReportRequest } from "~/utils/reportApiUtils";
+import { MAX_EXECUTION_SCOPE_IDS } from "~/utils/requirementExecutionScope";
 
 import type { RequirementTraceabilityData } from "~/lib/services/requirementTraceability";
 import type { RequirementTraceabilityRow } from "~/lib/services/requirementTraceabilityExport";
@@ -635,6 +636,43 @@ describe("snapshot rendering (gaps/traceability)", () => {
         executionScope: { milestoneIds: [9], configIds: [4] },
       }
     );
+  });
+
+  it("accepts an execution scope longer than 200 ids per axis, up to the shared cap", async () => {
+    const milestoneIds = Array.from({ length: 201 }, (_, i) => i + 1);
+    const configIds = Array.from(
+      { length: MAX_EXECUTION_SCOPE_IDS },
+      (_, i) => i + 1
+    );
+
+    const response = await handleRequirementCoverageReportPOST(
+      makeRequest({ projectId: 5, milestoneIds, configIds }),
+      "traceability"
+    );
+
+    expect(response.status).toBe(200);
+    expect(mockedLoad).toHaveBeenCalledWith(
+      5,
+      { accessibleProjectIds: [5] },
+      undefined,
+      { rootIds: undefined, executionScope: { milestoneIds, configIds } }
+    );
+  });
+
+  it("400s an execution scope axis past the shared cap without loading", async () => {
+    const response = await handleRequirementCoverageReportPOST(
+      makeRequest({
+        projectId: 5,
+        milestoneIds: Array.from(
+          { length: MAX_EXECUTION_SCOPE_IDS + 1 },
+          (_, i) => i + 1
+        ),
+      }),
+      "traceability"
+    );
+
+    expect(response.status).toBe(400);
+    expect(mockedLoad).not.toHaveBeenCalled();
   });
 
   it("applies the coverage-state filter and the scope to the snapshot's rows", async () => {

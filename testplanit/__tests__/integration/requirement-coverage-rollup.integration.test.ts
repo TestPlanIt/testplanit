@@ -41,6 +41,7 @@ import {
   getRequirementCoveringCases,
 } from "~/lib/services/requirementCoverage";
 import { getAuthDb } from "~/lib/zenstack";
+import { MAX_EXECUTION_SCOPE_IDS } from "~/utils/requirementExecutionScope";
 
 const RUN_INTEGRATION = process.env.RUN_DB_INTEGRATION === "1";
 const HAS_DB_URL = Boolean(process.env.DATABASE_URL);
@@ -1860,6 +1861,51 @@ describeIntegration("execution scope (milestone/configuration)", () => {
     expect(entry.status).toBe("NOT_RUN");
     expect(entry.notRun).toBe(1);
     expect(entry.linkedCaseCount).toBe(1);
+  });
+
+  it("a scope at the per-axis cap runs and counts exactly like the ids in it that exist", async () => {
+    // Ids far above anything this database holds, so only the real one can
+    // match — the list's length must not change the answer.
+    const padding = (real: number) => [
+      real,
+      ...Array.from(
+        { length: MAX_EXECUTION_SCOPE_IDS - 1 },
+        (_, i) => 1_000_000_000 + i
+      ),
+    ];
+
+    const milestoneOnly = await coverageWith({
+      milestoneIds: padding(milestoneChildId),
+    });
+    expect(milestoneOnly).toEqual(
+      await coverageWith({ milestoneIds: [milestoneChildId] })
+    );
+
+    const bothAxes = await coverageWith({
+      milestoneIds: padding(milestoneParentId),
+      configIds: padding(configAId),
+    });
+    expect(bothAxes).toEqual(
+      await coverageWith({
+        milestoneIds: [milestoneParentId],
+        configIds: [configAId],
+      })
+    );
+    expect(bothAxes.status).toBe("FAILED");
+
+    const covering = await getRequirementCoveringCases(
+      projectId,
+      [requirementId],
+      scope,
+      {
+        executionScope: {
+          milestoneIds: padding(milestoneChildId),
+          configIds: padding(configAId),
+        },
+      },
+      scopeDb
+    );
+    expect(covering.get(requirementId)?.[0].lastTestRunId).toBe(runChildId);
   });
 
   it("the drill-down lists with the same frame the rollup counted with", async () => {

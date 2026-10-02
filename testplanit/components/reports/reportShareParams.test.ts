@@ -12,6 +12,7 @@ import {
   parsePerTypeReportParams,
   PER_TYPE_REPORT_PARAM_DEFAULTS,
 } from "./reportShareParams";
+import { MAX_EXECUTION_SCOPE_IDS } from "~/utils/requirementExecutionScope";
 
 describe("buildSharedReportSearchParams", () => {
   it("serializes scalars, joins scalar arrays, and JSON-encodes objects", () => {
@@ -340,6 +341,22 @@ describe("parsePerTypeReportParams", () => {
       configuration: [8],
       dynamic_12: ["red"],
     });
+  });
+
+  it("restores a requirement report's execution scope past 200 ids per axis, and stops at the server's cap", () => {
+    const ids = (length: number) => Array.from({ length }, (_, i) => i + 1);
+
+    const restored = parsePerTypeReportParams(
+      buildSharedReportSearchParams({
+        reportType: "requirement-traceability",
+        milestoneIds: ids(201),
+        configIds: ids(MAX_EXECUTION_SCOPE_IDS + 5),
+      }),
+      "requirement-traceability"
+    );
+
+    expect(restored.requirementMilestoneIds).toEqual(ids(201));
+    expect(restored.requirementConfigIds).toEqual(ids(MAX_EXECUTION_SCOPE_IDS));
   });
 
   it("hydrates the Folders filter and its subfolder switch on case reports", () => {

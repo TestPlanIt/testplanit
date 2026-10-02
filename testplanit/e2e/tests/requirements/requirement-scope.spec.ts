@@ -99,7 +99,7 @@ test.describe("Requirement coverage scoping", () => {
     });
   });
 
-  test("keeps the requirements list working when every milestone of a large project is selected", async ({
+  test("keeps the requirements page working when every milestone and configuration of a large project is selected", async ({
     api,
     page,
     request,
@@ -116,58 +116,110 @@ test.describe("Requirement coverage scoping", () => {
     );
 
     // One past the most ids a scope carries on a query string.
-    const milestoneCount = 201;
-    const milestoneIds: number[] = [];
-    for (let start = 0; start < milestoneCount; start += 20) {
-      const size = Math.min(20, milestoneCount - start);
-      milestoneIds.push(
-        ...(await Promise.all(
-          Array.from({ length: size }, (_, offset) =>
-            api.createMilestone(projectId, `Sprint ${start + offset} ${ts}`)
-          )
-        ))
-      );
-    }
+    const axisSize = 201;
+    const createInBatches = async (
+      create: (index: number) => Promise<number>
+    ) => {
+      const ids: number[] = [];
+      for (let start = 0; start < axisSize; start += 20) {
+        const size = Math.min(20, axisSize - start);
+        ids.push(
+          ...(await Promise.all(
+            Array.from({ length: size }, (_, offset) => create(start + offset))
+          ))
+        );
+      }
+      return ids;
+    };
+    const milestoneIds = await createInBatches((index) =>
+      api.createMilestone(projectId, `Sprint ${index} ${ts}`)
+    );
+    const configIds = await createInBatches((index) =>
+      api.createConfiguration(`zz Scope config ${index} ${ts}`, projectId)
+    );
 
-    await test.step("The coverage route accepts the whole selection as a POST body", async () => {
+    await test.step("The coverage route accepts both whole selections as a POST body", async () => {
       const res = await request.post(
         `${baseURL}/api/projects/${projectId}/requirements/coverage`,
-        { data: { milestoneIds } }
+        { data: { milestoneIds, configIds } }
       );
       expect(res.status()).toBe(200);
       expect((await res.json()).coverage[String(requirementId)]).toBeDefined();
     });
 
-    await test.step("Select all in the milestone scope picker leaves the list loaded", async () => {
-      await page.goto(`/en-US/projects/requirements/${projectId}`);
-      const row = page.getByTestId(`requirement-row-${requirementId}`);
-      await expect(row).toBeVisible({ timeout: 15000 });
-
-      const scopedRequest = (path: string) =>
-        page.waitForResponse(
-          (response) =>
-            response.url().includes(path) &&
-            response.request().method() === "POST" &&
-            (response.request().postDataJSON()?.milestoneIds?.length ?? 0) ===
-              milestoneCount
+    // Resolves with the next POST to `path` whose body carries a full
+    // selection on `axis`.
+    const scopedPost = (
+      path: string,
+      axis: "milestoneIds" | "configIds",
+      matchesUrl: (url: string) => boolean = () => true
+    ) =>
+      page.waitForResponse((response) => {
+        const sent = response.request();
+        return (
+          sent.method() === "POST" &&
+          new URL(response.url()).pathname === path &&
+          matchesUrl(response.url()) &&
+          (sent.postDataJSON()?.[axis]?.length ?? 0) === axisSize
         );
-      const coverageResponse = scopedRequest(
-        `/api/projects/${projectId}/requirements/coverage`
+      });
+    const requirementsApi = `/api/projects/${projectId}/requirements`;
+    // Every scope-aware read the page makes with a requirement open: the
+    // list's rollup and roots page, and the detail pane's own breakdown and
+    // covering cases.
+    const scopedReads = (axis: "milestoneIds" | "configIds") => [
+      scopedPost(
+        `${requirementsApi}/coverage`,
+        axis,
+        (url) => !url.includes("requirementIds=")
+      ),
+      scopedPost(`${requirementsApi}/coverage`, axis, (url) =>
+        url.includes(`requirementIds=${requirementId}`)
+      ),
+      scopedPost(`${requirementsApi}/tree`, axis),
+      scopedPost(`${requirementsApi}/${requirementId}/covering-cases`, axis),
+    ];
+    const selectAll = async (pickerTestId: string) => {
+      await page.getByTestId(pickerTestId).getByRole("combobox").click();
+      const selectAllButton = page.getByTestId(
+        "multi-async-combobox-select-all"
       );
-      const treeResponse = scopedRequest(
-        `/api/projects/${projectId}/requirements/tree`
-      );
-
-      await page
-        .getByTestId("requirements-scope-milestone")
-        .getByRole("combobox")
-        .click();
-      await page.getByTestId("multi-async-combobox-select-all").click();
-
-      expect((await coverageResponse).status()).toBe(200);
-      expect((await treeResponse).status()).toBe(200);
+      await selectAllButton.click();
+      // Both pickers render the same button, so the next one must not open
+      // while this dropdown is still closing.
+      await page.keyboard.press("Escape");
+      await expect(selectAllButton).toHaveCount(0);
+    };
+    const expectLoaded = async (reads: Promise<{ status(): number }>[]) => {
+      for (const response of await Promise.all(reads)) {
+        expect(response.status()).toBe(200);
+      }
       await expect(page.getByTestId("requirements-list-error")).toHaveCount(0);
-      await expect(row).toBeVisible();
+      await expect(
+        page.getByTestId(`requirement-row-${requirementId}`)
+      ).toBeVisible();
+    };
+
+    await page.goto(
+      `/en-US/projects/requirements/${projectId}?requirement=${requirementId}`
+    );
+    await expect(page.getByTestId("requirement-detail-panel")).toBeVisible({
+      timeout: 15000,
+    });
+    await expect(
+      page.getByTestId(`requirement-row-${requirementId}`)
+    ).toBeVisible({ timeout: 15000 });
+
+    await test.step("Select all in the milestone scope picker leaves the page loaded", async () => {
+      const reads = scopedReads("milestoneIds");
+      await selectAll("requirements-scope-milestone");
+      await expectLoaded(reads);
+    });
+
+    await test.step("Select all in the configuration scope picker leaves the page loaded", async () => {
+      const reads = scopedReads("configIds");
+      await selectAll("requirements-scope-configuration");
+      await expectLoaded(reads);
     });
   });
 });

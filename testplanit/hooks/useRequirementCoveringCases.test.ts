@@ -1,8 +1,12 @@
-import { describe, expect, it, vi } from "vitest";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { renderHook, waitFor } from "@testing-library/react";
+import { createElement, type ReactNode } from "react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   invalidateRequirementCoveringCases,
   isRequirementCoveringCasesQueryKey,
+  useRequirementCoveringCases,
 } from "./useRequirementCoveringCases";
 
 describe("isRequirementCoveringCasesQueryKey", () => {
@@ -105,5 +109,65 @@ describe("invalidateRequirementCoveringCases", () => {
     expect(predicate({ queryKey: ["requirementCoveringCases", 9, 42] })).toBe(
       false
     );
+  });
+});
+
+describe("execution scope transport", () => {
+  let fetchMock: ReturnType<typeof vi.fn>;
+
+  const wrapper = ({ children }: { children: ReactNode }) =>
+    createElement(
+      QueryClientProvider,
+      {
+        client: new QueryClient({
+          defaultOptions: { queries: { retry: false } },
+        }),
+      },
+      children
+    );
+
+  beforeEach(() => {
+    fetchMock = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ requirementId: 42, cases: [] }),
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("keeps a short scope on the GET query string", async () => {
+    const { result } = renderHook(
+      () =>
+        useRequirementCoveringCases(5, 42, {
+          milestoneIds: [],
+          configIds: [4],
+        }),
+      { wrapper }
+    );
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/projects/5/requirements/42/covering-cases?configIds=4"
+    );
+  });
+
+  it("sends a scope too long for the URL as a POST body", async () => {
+    const scope = {
+      milestoneIds: [7],
+      configIds: Array.from({ length: 201 }, (_, i) => i + 1),
+    };
+    const { result } = renderHook(
+      () => useRequirementCoveringCases(5, 42, scope),
+      { wrapper }
+    );
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("/api/projects/5/requirements/42/covering-cases");
+    expect(init.method).toBe("POST");
+    expect(JSON.parse(init.body)).toEqual(scope);
   });
 });

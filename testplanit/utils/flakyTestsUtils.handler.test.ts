@@ -49,6 +49,7 @@ import {
   handleFlakyTestsOptionsGET,
   handleFlakyTestsPOST,
 } from "~/utils/flakyTestsUtils";
+import { MAX_EXECUTION_SCOPE_IDS } from "~/utils/requirementExecutionScope";
 
 const post = (body: Record<string, unknown>) =>
   new NextRequest("http://localhost/api/report-builder/flaky-tests", {
@@ -98,6 +99,27 @@ describe("handleFlakyTestsPOST filters", () => {
       milestoneIds: [6],
       configIds: [8],
     });
+  });
+
+  it("accepts a milestone or configuration scope longer than 200 ids, and rejects one past the shared cap", async () => {
+    const milestoneIds = Array.from({ length: 201 }, (_, i) => i + 1);
+    const configIds = Array.from(
+      { length: MAX_EXECUTION_SCOPE_IDS },
+      (_, i) => i + 1
+    );
+
+    const accepted = await handleFlakyTestsPOST(
+      post({ projectId: 7, milestoneIds, configIds }),
+      false
+    );
+    expect(accepted.status).toBe(200);
+    expect(queryOptions()).toMatchObject({ milestoneIds, configIds });
+
+    const rejected = await handleFlakyTestsPOST(
+      post({ projectId: 7, configIds: [...configIds, configIds.length + 1] }),
+      false
+    );
+    expect(rejected.status).toBe(400);
   });
 
   it("treats empty and null filters as inactive", async () => {
