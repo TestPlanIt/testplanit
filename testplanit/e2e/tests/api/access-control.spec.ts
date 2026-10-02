@@ -1141,3 +1141,417 @@ test.describe("Access Control - Identity Escalation (ACL-06)", () => {
     }
   });
 });
+
+test.describe("Access Control - Locked Identity and Decision Fields (ACL-07)", () => {
+  let memberCtx: BrowserContext;
+  let memberUserId: string;
+  let projectA: number;
+  let projectB: number;
+  let caseId: number;
+
+  test.beforeAll(async ({ browser, baseURL, api, request }) => {
+    projectA = await api.createProject(`ACL-07 A ${Date.now()}`);
+    projectB = await api.createProject(`ACL-07 B ${Date.now()}`);
+
+    const memberEmail = `acl07-member-${Date.now()}@example.com`;
+    const member = await api.createUser({
+      name: "ACL-07 Member",
+      email: memberEmail,
+      password: "password123",
+      access: "USER",
+    });
+    memberUserId = member.data.id;
+
+    // Grant before signing in: accessibleProjectIds is resolved per session and
+    // cached, so a grant made after sign-in would not be visible to the member.
+    for (const [projectId, accessType] of [
+      [projectA, "GLOBAL_ROLE"],
+      [projectB, "NO_ACCESS"],
+    ] as const) {
+      const res = await request.post(
+        `${baseURL}/api/model/userProjectPermission/create`,
+        { data: { data: { userId: memberUserId, projectId, accessType } } }
+      );
+      expect(res.status()).toBe(201);
+    }
+
+    const rootFolderId = await api.getRootFolderId(projectA);
+    caseId = await api.createTestCase(
+      projectA,
+      rootFolderId,
+      `ACL-07 Case ${Date.now()}`
+    );
+
+    memberCtx = await signInSecondaryContext(
+      browser,
+      baseURL!,
+      memberEmail,
+      "password123"
+    );
+  });
+
+  test.afterAll(async ({ api }) => {
+    await api.deleteProject(projectA);
+    await api.deleteProject(projectB);
+    await api.deleteUser(memberUserId);
+    await memberCtx.close();
+  });
+
+  test("verification tokens are not readable or deletable by others", async ({
+    request,
+    baseURL,
+  }) => {
+    const identifier = `acl07-vt-${Date.now()}@example.com`;
+    const token = `acl07-token-${Date.now()}`;
+
+    await test.step("Seed a verification token as admin", async () => {
+      const res = await request.post(
+        `${baseURL}/api/model/verificationToken/create`,
+        {
+          data: {
+            data: {
+              identifier,
+              token,
+              expires: new Date(Date.now() + 86400000).toISOString(),
+            },
+          },
+        }
+      );
+      expect(res.status()).toBe(201);
+    });
+
+    const countForIdentifier = async () => {
+      const res = await request.get(
+        `${baseURL}/api/model/verificationToken/count`,
+        { params: { q: JSON.stringify({ where: { identifier } }) } }
+      );
+      expect(res.status()).toBe(200);
+      return (await res.json()).data as number;
+    };
+
+    try {
+      await test.step("An unauthenticated caller cannot read it", async () => {
+        const res = await fetch(
+          `${baseURL}/api/model/verificationToken/findMany?q=${encodeURIComponent(
+            JSON.stringify({ where: { identifier } })
+          )}`
+        );
+        // A policy-filtered read answers 200 with nothing, which is the
+        // invariant that matters; a hard denial is equally acceptable.
+        if (res.status === 200) {
+          expect((await res.json()).data ?? []).toHaveLength(0);
+        } else {
+          expect(res.status).toBeGreaterThanOrEqual(400);
+        }
+      });
+
+      await test.step("A signed-in non-admin cannot read it", async () => {
+        const res = await memberCtx.request.get(
+          `${baseURL}/api/model/verificationToken/findMany`,
+          {
+            headers: sameOriginRequestHeaders(),
+            params: { q: JSON.stringify({ where: { identifier } }) },
+          }
+        );
+        if (res.status() === 200) {
+          expect((await res.json()).data ?? []).toHaveLength(0);
+        } else {
+          expect(res.status()).toBeGreaterThanOrEqual(400);
+        }
+      });
+
+      await test.step("An unauthenticated caller cannot delete it", async () => {
+        // Assert on the surviving row, not the status: a denied write can
+        // answer 422 only because the result could not be read back.
+        await fetch(`${baseURL}/api/model/verificationToken/deleteMany`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ where: { identifier } }),
+        }).catch(() => {});
+        expect(await countForIdentifier()).toBe(1);
+      });
+    } finally {
+      await request
+        .delete(`${baseURL}/api/model/verificationToken/deleteMany`, {
+          params: { q: JSON.stringify({ where: { identifier } }) },
+        })
+        .catch(() => {});
+    }
+  });
+
+  test("a share link's target cannot be repointed after creation", async ({
+    request,
+    baseURL,
+  }) => {
+    const shareKey = `acl07share${Date.now()}${"0".repeat(40)}`.slice(0, 40);
+    let shareId = "";
+
+    await test.step("Member creates a share link in their own project", async () => {
+      const res = await memberCtx.request.post(
+        `${baseURL}/api/model/shareLink/create`,
+        {
+          headers: sameOriginRequestHeaders(),
+          data: {
+            data: {
+              shareKey,
+              entityType: "TEST_RUN",
+              entityId: String(caseId),
+              projectId: projectA,
+              createdById: memberUserId,
+              mode: "PUBLIC",
+            },
+          },
+        }
+      );
+      expect(res.status()).toBe(201);
+      shareId = (await res.json()).data.id;
+    });
+
+    const storedLink = async () => {
+      const res = await request.get(
+        `${baseURL}/api/model/shareLink/findFirst`,
+        {
+          params: {
+            q: JSON.stringify({
+              where: { id: shareId },
+              select: { projectId: true, entityId: true, title: true },
+            }),
+          },
+        }
+      );
+      expect(res.status()).toBe(200);
+      return (await res.json()).data;
+    };
+
+    try {
+      await test.step("Repointing it at an inaccessible project does not take effect", async () => {
+        await memberCtx.request
+          .patch(`${baseURL}/api/model/shareLink/update`, {
+            headers: sameOriginRequestHeaders(),
+            data: { where: { id: shareId }, data: { projectId: projectB } },
+          })
+          .catch(() => {});
+        expect((await storedLink()).projectId).toBe(projectA);
+      });
+
+      await test.step("Repointing it at another entity does not take effect", async () => {
+        await memberCtx.request
+          .patch(`${baseURL}/api/model/shareLink/update`, {
+            headers: sameOriginRequestHeaders(),
+            data: { where: { id: shareId }, data: { entityId: "999999" } },
+          })
+          .catch(() => {});
+        expect((await storedLink()).entityId).toBe(String(caseId));
+      });
+
+      await test.step("The creator can still rename it", async () => {
+        const res = await memberCtx.request.patch(
+          `${baseURL}/api/model/shareLink/update`,
+          {
+            headers: sameOriginRequestHeaders(),
+            data: { where: { id: shareId }, data: { title: "ACL-07 renamed" } },
+          }
+        );
+        expect(res.status()).toBe(200);
+        expect((await storedLink()).title).toBe("ACL-07 renamed");
+      });
+    } finally {
+      await request
+        .delete(`${baseURL}/api/model/shareLink/delete`, {
+          params: { q: JSON.stringify({ where: { id: shareId } }) },
+        })
+        .catch(() => {});
+    }
+  });
+
+  test("a requester cannot approve their own review request", async ({
+    request,
+    baseURL,
+    adminUserId,
+  }) => {
+    const statesRes = await request.get(
+      `${baseURL}/api/model/workflows/findMany`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: { scope: "CASES", isDeleted: false },
+            select: { id: true },
+            orderBy: { order: "asc" },
+            take: 2,
+          }),
+        },
+      }
+    );
+    expect(statesRes.status()).toBe(200);
+    const states = (await statesRes.json()).data as { id: number }[];
+    expect(states.length).toBeGreaterThanOrEqual(2);
+
+    let reviewId = "";
+    await test.step("Member requests a review, assigned to the admin", async () => {
+      const res = await memberCtx.request.post(
+        `${baseURL}/api/model/reviewRequest/create`,
+        {
+          headers: sameOriginRequestHeaders(),
+          data: {
+            data: {
+              projectId: projectA,
+              entityType: "CASE",
+              entityId: caseId,
+              requestedByUserId: memberUserId,
+              assigneeUserId: adminUserId,
+              fromStateId: states[0].id,
+              toStateId: states[1].id,
+              status: "PENDING",
+            },
+          },
+        }
+      );
+      expect(res.status()).toBe(201);
+      reviewId = (await res.json()).data.id;
+    });
+
+    const storedReview = async () => {
+      const res = await request.get(
+        `${baseURL}/api/model/reviewRequest/findFirst`,
+        {
+          params: {
+            q: JSON.stringify({
+              where: { id: reviewId },
+              select: {
+                status: true,
+                decidedByUserId: true,
+                assigneeUserId: true,
+              },
+            }),
+          },
+        }
+      );
+      expect(res.status()).toBe(200);
+      return (await res.json()).data;
+    };
+
+    try {
+      await test.step("Self-approval does not take effect", async () => {
+        await memberCtx.request
+          .patch(`${baseURL}/api/model/reviewRequest/update`, {
+            headers: sameOriginRequestHeaders(),
+            data: {
+              where: { id: reviewId },
+              data: {
+                status: "APPROVED",
+                decidedByUserId: memberUserId,
+                decidedAt: new Date().toISOString(),
+              },
+            },
+          })
+          .catch(() => {});
+        const row = await storedReview();
+        expect(row.status).toBe("PENDING");
+        expect(row.decidedByUserId).toBeNull();
+      });
+
+      await test.step("Making themselves the assignee does not take effect", async () => {
+        await memberCtx.request
+          .patch(`${baseURL}/api/model/reviewRequest/update`, {
+            headers: sameOriginRequestHeaders(),
+            data: {
+              where: { id: reviewId },
+              data: { assigneeUserId: memberUserId },
+            },
+          })
+          .catch(() => {});
+        expect((await storedReview()).assigneeUserId).toBe(adminUserId);
+      });
+
+      await test.step("No status change lands on this path, cancelling included", async () => {
+        // Cancelling a request is `cancelReviewRequest` in app/actions/reviews.ts,
+        // which writes through the raw client behind its own requester check —
+        // the reviews specs cover that path. Nothing cancels through the model
+        // API, so status is closed here rather than carved out for CANCELLED.
+        await memberCtx.request
+          .patch(`${baseURL}/api/model/reviewRequest/update`, {
+            headers: sameOriginRequestHeaders(),
+            data: {
+              where: { id: reviewId },
+              data: { status: "CANCELLED" },
+            },
+          })
+          .catch(() => {});
+        expect((await storedReview()).status).toBe("PENDING");
+      });
+
+      await test.step("An admin can still change status through the model API", async () => {
+        // Guards the enum comparison that a post-update form of this rule got
+        // wrong: it failed in SQL and broke every status write, admins included.
+        const res = await request.patch(
+          `${baseURL}/api/model/reviewRequest/update`,
+          { data: { where: { id: reviewId }, data: { status: "CANCELLED" } } }
+        );
+        expect([200, 422]).toContain(res.status());
+        expect((await storedReview()).status).toBe("CANCELLED");
+      });
+    } finally {
+      await request
+        .patch(`${baseURL}/api/model/reviewRequest/update`, {
+          data: { where: { id: reviewId }, data: { isDeleted: true } },
+        })
+        .catch(() => {});
+    }
+  });
+
+  test("a row's creator and project cannot be reassigned, even by an admin", async ({
+    request,
+    baseURL,
+  }) => {
+    // These columns are locked for everyone, so the admin context makes the
+    // assertion about the lock rather than about the member's role grid. A
+    // cross-project move creates new rows and soft-deletes the sources, so
+    // nothing legitimately rewrites projectId.
+    const storedCase = async () => {
+      const res = await request.get(
+        `${baseURL}/api/model/repositoryCases/findFirst`,
+        {
+          params: {
+            q: JSON.stringify({
+              where: { id: caseId },
+              select: { creatorId: true, projectId: true, name: true },
+            }),
+          },
+        }
+      );
+      expect(res.status()).toBe(200);
+      return (await res.json()).data;
+    };
+
+    const before = await storedCase();
+    expect(before.projectId).toBe(projectA);
+
+    await test.step("A normal field still updates, proving write access", async () => {
+      const renamed = `ACL-07 Case renamed ${Date.now()}`;
+      const res = await request.patch(
+        `${baseURL}/api/model/repositoryCases/update`,
+        { data: { where: { id: caseId }, data: { name: renamed } } }
+      );
+      expect(res.status()).toBe(200);
+      expect((await storedCase()).name).toBe(renamed);
+    });
+
+    await test.step("Reassigning the creator does not take effect", async () => {
+      await request
+        .patch(`${baseURL}/api/model/repositoryCases/update`, {
+          data: { where: { id: caseId }, data: { creatorId: memberUserId } },
+        })
+        .catch(() => {});
+      expect((await storedCase()).creatorId).toBe(before.creatorId);
+    });
+
+    await test.step("Moving it to another project does not take effect", async () => {
+      await request
+        .patch(`${baseURL}/api/model/repositoryCases/update`, {
+          data: { where: { id: caseId }, data: { projectId: projectB } },
+        })
+        .catch(() => {});
+      expect((await storedCase()).projectId).toBe(projectA);
+    });
+  });
+});

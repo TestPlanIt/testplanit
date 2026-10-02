@@ -577,8 +577,11 @@ test.describe("SSO and Magic Link", () => {
           .update(plainToken + secret)
           .digest("hex");
 
-        // Insert the hashed token into the verificationToken table via admin API
-        const tokenRes = await page.request.post(
+        // Insert through the `request` fixture, which carries its own admin
+        // storageState. The bogus-token GET to /api/auth/callback/email above
+        // makes NextAuth clear the page context's session cookie, so
+        // `page.request` is unauthenticated by this point.
+        const tokenRes = await request.post(
           `${baseURL}/api/model/verificationToken/create`,
           {
             data: {
