@@ -16,8 +16,11 @@ import {
  * - ACL-03: User with NO_ACCESS permission sees empty data on reads
  * - ACL-04: Unauthenticated requests are rejected with 422
  * - ACL-05: Role-based area permissions deny writes when canAddEdit is false
- * - ACL-06: Nobody but an admin can create users, raise access levels, or
+ * - ACL-06: GLOBAL_ROLE member can create, update and soft-delete Steps
+ * - ACL-07: Nobody but an admin can create users, raise access levels, or
  *   repoint an API token or sign-in account at another user
+ * - ACL-08: Identity, decision and project columns reject updates — no
+ *   self-approved review, no repointed share link, no forged creator
  *
  * Critical: ZenStack's 403 responses are remapped to 422 by the route handler
  * at app/api/model/[...path]/route.ts to prevent nginx ingress from replacing
@@ -862,7 +865,7 @@ test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
   });
 });
 
-test.describe("Access Control - Identity Escalation (ACL-06)", () => {
+test.describe("Access Control - Identity Escalation (ACL-07)", () => {
   let memberCtx: BrowserContext;
   let memberEmail: string;
   let memberUserId: string;
@@ -1142,7 +1145,7 @@ test.describe("Access Control - Identity Escalation (ACL-06)", () => {
   });
 });
 
-test.describe("Access Control - Locked Identity and Decision Fields (ACL-07)", () => {
+test.describe("Access Control - Locked Identity and Decision Fields (ACL-08)", () => {
   let memberCtx: BrowserContext;
   let memberUserId: string;
   let projectA: number;
