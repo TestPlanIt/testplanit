@@ -157,6 +157,29 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
       expect(data.error).toBe("Forbidden");
     });
 
+    it.each([
+      ["access", { access: "ADMIN" }],
+      ["roleId", { roleId: 2 }],
+      ["isApi", { isApi: true }],
+      ["isActive", { isActive: false }],
+      ["isDeleted", { isDeleted: true }],
+    ])(
+      "returns 403 when a non-admin user sets %s on their own profile",
+      async (field, body) => {
+        (getServerAuthSession as any).mockResolvedValue(mockUserSession);
+
+        const request = createRequest(body);
+        const context = createContext("user-123");
+        const response = await PATCH(request, context);
+        const data = await response.json();
+
+        expect(response.status).toBe(403);
+        expect(data.error).toBe(`Only admins can update: ${field}`);
+        expect(baseDb.user.findUnique).not.toHaveBeenCalled();
+        expect(baseDb.$transaction).not.toHaveBeenCalled();
+      }
+    );
+
     it("allows admin to update any user", async () => {
       (getServerAuthSession as any).mockResolvedValue(mockAdminSession);
       (baseDb.user.findUnique as any).mockResolvedValue(mockExistingUser);

@@ -11,6 +11,12 @@ const { mockDb, mockHash, mockIsEmailServerConfigured } = vi.hoisted(() => ({
     registrationSettings: {
       findFirst: vi.fn(),
     },
+    roles: {
+      findFirst: vi.fn(),
+    },
+    ssoProvider: {
+      findFirst: vi.fn(),
+    },
     $transaction: vi.fn(),
   },
   mockHash: vi.fn(),
@@ -46,8 +52,6 @@ describe("POST /api/auth/signup", () => {
     email: "test@example.com",
     password: "password123",
     emailVerifToken: "verification-token-123",
-    access: "NONE" as const,
-    roleId: 1,
   };
 
   const mockNewUser = {
@@ -63,6 +67,8 @@ describe("POST /api/auth/signup", () => {
     mockHash.mockResolvedValue("hashed-password");
     // Default: email server is configured
     mockIsEmailServerConfigured.mockReturnValue(true);
+    mockDb.roles.findFirst.mockResolvedValue({ id: 1 });
+    mockDb.ssoProvider.findFirst.mockResolvedValue(null);
   });
 
   describe("Email Verification Required (default)", () => {
@@ -255,6 +261,93 @@ describe("POST /api/auth/signup", () => {
 
       expect(response.status).toBe(403);
       expect(data.errorCode).toBe("auth.signup.registrationDisabled");
+      expect(mockDb.$transaction).not.toHaveBeenCalled();
+    });
+
+    it("should return 403 when Force SSO is enabled", async () => {
+      mockDb.user.findFirst.mockResolvedValue(null);
+      mockDb.ssoProvider.findFirst.mockResolvedValue({ id: "provider-1" });
+
+      const response = await signup(createRequest(validSignupData));
+      const data = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(data.errorCode).toBe("auth.signup.registrationDisabled");
+      expect(mockDb.ssoProvider.findFirst).toHaveBeenCalledWith({
+        where: { forceSso: true },
+        select: { id: true },
+      });
+      expect(mockHash).not.toHaveBeenCalled();
+      expect(mockDb.$transaction).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Access Level and Role", () => {
+    beforeEach(() => {
+      mockDb.user.findFirst.mockResolvedValue(null);
+      mockDb.$transaction.mockImplementation(async (callback) => {
+        const tx = {
+          user: {
+            create: mockDb.user.create,
+          },
+        };
+        return callback(tx);
+      });
+      mockDb.user.create.mockResolvedValue(mockNewUser);
+    });
+
+    it("should ignore access and roleId sent in the request", async () => {
+      mockDb.registrationSettings.findFirst.mockResolvedValue({
+        allowOpenRegistration: true,
+        requireEmailVerification: true,
+        defaultAccess: "NONE",
+      });
+      mockDb.roles.findFirst.mockResolvedValue({ id: 7 });
+
+      const response = await signup(
+        createRequest({ ...validSignupData, access: "ADMIN", roleId: 99 })
+      );
+
+      expect(response.status).toBe(201);
+      expect(mockDb.user.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ access: "NONE", roleId: 7 }),
+        select: expect.any(Object),
+      });
+    });
+
+    it("should use the default access from registration settings", async () => {
+      mockDb.registrationSettings.findFirst.mockResolvedValue({
+        allowOpenRegistration: true,
+        requireEmailVerification: true,
+        defaultAccess: "USER",
+      });
+
+      await signup(createRequest(validSignupData));
+
+      expect(mockDb.user.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ access: "USER" }),
+        select: expect.any(Object),
+      });
+    });
+
+    it("should default access to NONE when no registration settings exist", async () => {
+      mockDb.registrationSettings.findFirst.mockResolvedValue(null);
+
+      await signup(createRequest(validSignupData));
+
+      expect(mockDb.user.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ access: "NONE" }),
+        select: expect.any(Object),
+      });
+    });
+
+    it("should return 500 when no default role exists", async () => {
+      mockDb.registrationSettings.findFirst.mockResolvedValue(null);
+      mockDb.roles.findFirst.mockResolvedValue(null);
+
+      const response = await signup(createRequest(validSignupData));
+
+      expect(response.status).toBe(500);
       expect(mockDb.$transaction).not.toHaveBeenCalled();
     });
 
