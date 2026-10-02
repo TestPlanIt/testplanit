@@ -1,3 +1,9 @@
+## [1.0.12](https://github.com/TestPlanIt/testplanit/compare/v1.0.11...v1.0.12) (2026-10-02)
+
+### Bug Fixes
+
+* **security:** close privilege escalation and identity reassignment paths ([#662](https://github.com/TestPlanIt/testplanit/issues/662)) ([3319c75](https://github.com/TestPlanIt/testplanit/commit/3319c759ebfb47572c80ae6832dc072ffc582d58))
+
 ## [1.0.11](https://github.com/TestPlanIt/testplanit/compare/v1.0.10...v1.0.11) (2026-10-01)
 
 ### Bug Fixes
