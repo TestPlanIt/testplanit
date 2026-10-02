@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { isEmailServerConfigured } from "~/lib/email/emailConfig";
 import { isUniqueConstraintError } from "~/lib/utils/errors";
+import { isForceSsoEnabled } from "~/lib/utils/force-sso";
 import { db } from "~/server/db";
 
 /**
@@ -15,7 +16,8 @@ import { db } from "~/server/db";
  * Security: This endpoint is intentionally public to allow user registration.
  * Access control is handled by:
  * - Email domain restrictions (checked by caller)
- * - Default access level from registration settings
+ * - Access level and role resolved server-side from registration settings
+ *   and the default role, never taken from the request
  * - No sensitive data exposure in response
  */
 
@@ -24,8 +26,6 @@ const signupSchema = z.object({
   email: z.string().email(),
   password: z.string().min(4),
   emailVerifToken: z.string().optional(),
-  access: z.enum(["NONE", "USER", "ADMIN"]).default("NONE"),
-  roleId: z.number().int().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -34,6 +34,17 @@ export async function POST(req: NextRequest) {
 
     // Validate input
     const validatedData = signupSchema.parse(body);
+
+    // Force SSO disables local account creation
+    if (await isForceSsoEnabled()) {
+      return NextResponse.json(
+        {
+          errorCode: "auth.signup.registrationDisabled",
+          error: "Registration is currently disabled",
+        },
+        { status: 403 }
+      );
+    }
 
     // Hash password
     const hashedPassword = await hash(validatedData.password, 10);
@@ -72,28 +83,24 @@ export async function POST(req: NextRequest) {
       isEmailServerConfigured() &&
       (registrationSettings?.requireEmailVerification ?? true);
 
-    // Resolve roleId: use provided value, or look up default role by isDefault flag / name
-    let roleId = validatedData.roleId;
-    if (!roleId) {
-      const defaultRole =
-        (await db.roles.findFirst({
-          where: { isDefault: true, isDeleted: false },
-        })) ??
-        (await db.roles.findFirst({
-          where: { name: "user", isDeleted: false },
-        }));
+    // Resolve roleId: look up default role by isDefault flag / name
+    const defaultRole =
+      (await db.roles.findFirst({
+        where: { isDefault: true, isDeleted: false },
+      })) ??
+      (await db.roles.findFirst({
+        where: { name: "user", isDeleted: false },
+      }));
 
-      if (!defaultRole) {
-        return NextResponse.json(
-          {
-            error:
-              "No default role found. Please ensure a default role exists.",
-          },
-          { status: 500 }
-        );
-      }
-      roleId = defaultRole.id;
+    if (!defaultRole) {
+      return NextResponse.json(
+        {
+          error: "No default role found. Please ensure a default role exists.",
+        },
+        { status: 500 }
+      );
     }
+    const roleId = defaultRole.id;
 
     // Create user with preferences in a transaction
     const user = await db.$transaction(async (tx) => {
@@ -109,7 +116,7 @@ export async function POST(req: NextRequest) {
             ? new Date(Date.now() + 24 * 60 * 60 * 1000)
             : null,
           emailVerified: requireEmailVerification ? null : new Date(),
-          access: validatedData.access,
+          access: registrationSettings?.defaultAccess ?? "NONE",
           roleId,
           isActive: true,
           isDeleted: false,
