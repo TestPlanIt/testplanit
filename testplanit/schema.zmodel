@@ -78,7 +78,9 @@ model Account {
     @@index([userId])
 
     @@deny('all', auth() == null)
-    @@allow('create', true) // Allow creation during sign-in
+    @@deny('post-update', userId != before().userId)
+    // Sign-in links accounts through the raw client
+    @@allow('create', auth().access == 'ADMIN')
     @@allow('read, update, delete', auth().id == userId || auth().access == 'ADMIN')
 }
 
@@ -242,9 +244,8 @@ model User {
     @@index([accessSource])
     @@index([scimTokenId])
     @@deny('delete, update, read', auth() == null)
-    @@allow('create', true)
-    @@allow('create, delete', (auth().access == 'ADMIN'))
-    @@allow('update', (auth().access == 'ADMIN' || auth().id == this.id))
+    // Signup, SSO provisioning and profile self-edits use dedicated routes on the raw client
+    @@allow('create, update, delete', auth().access == 'ADMIN')
     // Directory scoping: admins and the user themself read freely; everyone
     // else reads only collaborators — users sharing ≥1 effectively-accessible
     // project, resolved into AuthCtx per request (lib/authContext.ts).
@@ -289,8 +290,7 @@ model UserPreferences {
     hasCompletedWelcomeTour             Boolean          @default(false)
     hasCompletedInitialPreferencesSetup Boolean          @default(false)
 
-    @@deny('delete, update, read', auth() == null)
-    @@allow('create', true)
+    @@deny('all', auth() == null)
     @@allow('create,update,delete', auth().id == userId || auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -301,7 +301,7 @@ model ApiToken {
     name        String    @length(1, 100)       // User-friendly token name
     token       String    @unique               // SHA-256 hashed token
     tokenPrefix String                          // First 8 chars for identification (e.g., "tpi_xxxx")
-    userId      String
+    userId      String    @deny('update', true)
     user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
     scopes      String[]  @default([])          // API scopes - empty means full access. Recognized: "mode:read" (narrows to read-only), "client:mcp" (attributes audit to MCP source). Convention: <namespace>:<value>. See packages/mcp-server/README.md.
     expiresAt   DateTime?                       // Optional expiration date
@@ -314,8 +314,7 @@ model ApiToken {
     @@index([token])
     @@index([isActive, expiresAt])
     @@deny('all', auth() == null)
-    @@allow('create', auth().access != null)
-    @@allow('read, update, delete', auth().id == userId || auth().access == 'ADMIN')
+    @@allow('create, read, update, delete', auth().id == userId || auth().access == 'ADMIN')
 }
 
 // IdP source for a SCIM token. Drives per-IdP leniency in downstream PATCH

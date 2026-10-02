@@ -21,6 +21,7 @@ The Sign-in Enforcement section combines three toggles that govern how users sig
 When enabled, this setting:
 
 - **Removes the traditional email/password login form** from the sign-in page
+- **Rejects email/password sign-in requests**, including ones sent directly to the API
 - **Completely disables the signup page** (returns 404)
 - Requires all users to authenticate through configured SSO providers
 - Prevents creation of local accounts

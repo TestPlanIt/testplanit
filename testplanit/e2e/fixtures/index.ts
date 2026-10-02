@@ -74,6 +74,8 @@ export interface WorkerCleanup {
    * (deleting) every OTHER file's tracked resources first.
    */
   forFile(file: string): Promise<TrackedResources>;
+  /** Worker-lifetime admin request context, independent of test storageState. */
+  adminRequest: APIRequestContext;
 }
 
 /**
@@ -136,7 +138,8 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
     const api = new ApiHelper(
       request,
       baseURL || "http://localhost:3000",
-      tracked
+      tracked,
+      workerCleanup.adminRequest
     );
 
     // Provide the API helper to the test
@@ -182,6 +185,7 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
       };
 
       await use({
+        adminRequest: adminContext,
         async forFile(file: string) {
           await flushAllExcept(file);
           let tracked = stores.get(file);

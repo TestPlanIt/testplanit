@@ -27,6 +27,8 @@ import { invalidateSessionUserCache } from "~/lib/session-cache";
  * Security: This endpoint requires authentication and enforces:
  * - Users can only update themselves OR
  * - Admin users can update any user
+ * - Only admins can set access, roleId, isApi, isActive, isDeleted and
+ *   emailVerified
  */
 
 const updateUserSchema = z.object({
@@ -78,6 +80,26 @@ export const PATCH = withAuditContext(
 
       const body = await req.json();
       const validatedData = updateUserSchema.parse(body);
+
+      // Only admins can change access level, role, API access or account status
+      if (session.user.access !== "ADMIN") {
+        const adminOnlyFields = [
+          "access",
+          "roleId",
+          "isApi",
+          "isActive",
+          "isDeleted",
+        ] as const;
+        const attempted = adminOnlyFields.filter(
+          (f) => validatedData[f] !== undefined
+        );
+        if (attempted.length > 0) {
+          return NextResponse.json(
+            { error: `Only admins can update: ${attempted.join(", ")}` },
+            { status: 403 }
+          );
+        }
+      }
 
       // Check if user exists
       const existingUser = await baseDb.user.findUnique({

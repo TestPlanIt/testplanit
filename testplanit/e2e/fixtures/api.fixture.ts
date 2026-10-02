@@ -120,6 +120,9 @@ export interface CodePinRow {
  */
 export class ApiHelper {
   private request: APIRequestContext;
+  // Admin-session context for admin-only setup calls. The `request` above
+  // follows the test's own storageState, which auth specs set to signed-out.
+  private adminRequest: APIRequestContext;
   private baseURL: string;
   private tracked: TrackedResources;
   private cachedTemplateIds: Map<number, number> = new Map(); // projectId -> templateId
@@ -130,9 +133,11 @@ export class ApiHelper {
   constructor(
     request: APIRequestContext,
     baseURL: string,
-    tracked: TrackedResources = createTrackedResources()
+    tracked: TrackedResources = createTrackedResources(),
+    adminRequest: APIRequestContext = request
   ) {
     this.request = request;
+    this.adminRequest = adminRequest;
     this.baseURL = baseURL;
     this.tracked = tracked;
   }
@@ -145,11 +150,12 @@ export class ApiHelper {
    */
   private async get(
     url: string,
-    options?: Parameters<APIRequestContext["get"]>[1]
+    options?: Parameters<APIRequestContext["get"]>[1],
+    request: APIRequestContext = this.request
   ): Promise<APIResponse> {
     for (let attempt = 0; ; attempt++) {
       try {
-        return await this.request.get(url, options);
+        return await request.get(url, options);
       } catch (error: any) {
         if (attempt < 2 && String(error?.message).includes("ECONNRESET")) {
           await new Promise((r) => setTimeout(r, 250 * (attempt + 1)));
@@ -4133,7 +4139,12 @@ export class ApiHelper {
 
   /**
    * Create a user via API (for testing user management features)
-   * Note: Matches the structure used by the signup page
+   *
+   * Uses the admin user-create endpoint through the admin-session context,
+   * so it works from signed-out specs too. Unverified users
+   * (`emailVerified: false`) go through the public signup endpoint instead —
+   * it is the one that stores the email verification token — and are then
+   * raised to the requested access.
    */
   async createUser(options: {
     name: string;
@@ -4146,21 +4157,67 @@ export class ApiHelper {
   }): Promise<{
     data: { id: string; name: string; email: string; access: string };
   }> {
-    // Use dedicated signup API endpoint instead of ZenStack
-    // (ZenStack 2.21+ has issues with unauthenticated nested creates)
-    const payload = {
-      name: options.name,
-      email: options.email,
-      password: options.password,
-      emailVerifToken: crypto.randomUUID(),
-      access: options.access || "USER",
-      ...(options.roleId ? { roleId: options.roleId } : {}),
-    };
+    const access = options.access || "USER";
 
-    const response = await this.request.post(
-      `${this.baseURL}/api/auth/signup`,
+    if (options.emailVerified === false) {
+      // The signup endpoint assigns the default access and role itself
+      const signupResponse = await this.request.post(
+        `${this.baseURL}/api/auth/signup`,
+        {
+          data: {
+            name: options.name,
+            email: options.email,
+            password: options.password,
+            emailVerifToken: crypto.randomUUID(),
+          },
+        }
+      );
+
+      if (!signupResponse.ok()) {
+        const error = await signupResponse.text();
+        throw new Error(`Failed to create user: ${error}`);
+      }
+
+      const signupResult = await signupResponse.json();
+
+      if (signupResult.data.access !== access || options.roleId) {
+        const updateResponse = await this.adminRequest.patch(
+          `${this.baseURL}/api/users/${signupResult.data.id}`,
+          {
+            data: {
+              access,
+              ...(options.roleId ? { roleId: options.roleId } : {}),
+            },
+          }
+        );
+
+        if (!updateResponse.ok()) {
+          const error = await updateResponse.text();
+          throw new Error(`Failed to create user: ${error}`);
+        }
+        signupResult.data.access = access;
+      }
+
+      return signupResult;
+    }
+
+    const roleId = options.roleId ?? (await this.getDefaultRoleId());
+
+    const response = await this.adminRequest.post(
+      `${this.baseURL}/api/admin/users/create`,
       {
-        data: payload,
+        data: {
+          name: options.name,
+          email: options.email,
+          password: options.password,
+          access,
+          roleId,
+          ...(options.isActive !== undefined
+            ? { isActive: options.isActive }
+            : {}),
+          // null marks the email as verified at creation
+          emailVerified: null,
+        },
       }
     );
 
@@ -4169,30 +4226,39 @@ export class ApiHelper {
       throw new Error(`Failed to create user: ${error}`);
     }
 
-    const result = await response.json();
+    return response.json();
+  }
 
-    // Verify email by default for test users (unless explicitly set to false)
-    if (options.emailVerified !== false) {
-      // Use direct Prisma update via dedicated endpoint
-      // Try to update emailVerified, but don't fail if it doesn't work
-      try {
-        await this.request.post(
-          `${this.baseURL}/api/test-helpers/verify-email`,
-          {
-            data: { userId: result.data.id },
-          }
-        );
-      } catch (error) {
-        // If the endpoint doesn't exist or fails, log but continue
-        // This allows tests to run even if email verification doesn't work
-        console.warn(
-          `Could not verify email for user ${result.data.id}:`,
-          error
-        );
+  /**
+   * Resolve the role new users get by default: the role flagged isDefault,
+   * falling back to the seeded "user" role (same lookup as the signup endpoint).
+   */
+  private async getDefaultRoleId(): Promise<number> {
+    for (const where of [
+      { isDefault: true, isDeleted: false },
+      { name: "user", isDeleted: false },
+    ]) {
+      const response = await this.get(
+        `${this.baseURL}/api/model/roles/findFirst`,
+        {
+          params: {
+            q: JSON.stringify({ where, select: { id: true } }),
+          },
+        },
+        this.adminRequest
+      );
+
+      if (!response.ok()) {
+        throw new Error("Failed to fetch roles");
+      }
+
+      const result = await response.json();
+      if (result.data?.id) {
+        return result.data.id;
       }
     }
 
-    return result;
+    throw new Error("No default role found");
   }
 
   /**
@@ -4241,13 +4307,8 @@ export class ApiHelper {
   }
 
   /**
-   * Set a user's system-level access level (NONE | USER | PROJECTADMIN | ADMIN).
-   *
-   * The signup endpoint's Zod schema only accepts NONE | USER | ADMIN
-   * (`app/api/auth/signup/route.ts`), so PROJECTADMIN cannot be minted at
-   * registration. The user-update PATCH endpoint accepts all four values
-   * (`app/api/users/[userId]/route.ts`), so the cross-tenant E2E specs use
-   * the two-step flow: signup as USER → PATCH access to PROJECTADMIN.
+   * Set a user's system-level access level (NONE | USER | PROJECTADMIN | ADMIN)
+   * through the user-update PATCH endpoint (`app/api/users/[userId]/route.ts`).
    *
    * Caller must hold an ADMIN session (the PATCH endpoint authorizes via
    * `session.user.id === userId || session.user.access === 'ADMIN'`).

@@ -29,6 +29,7 @@ import {
 import { getCachedSessionUser, touchLastActive } from "~/lib/session-cache";
 import { auditAuthEvent } from "~/lib/services/auditLog";
 import { isEmailDomainAllowed } from "~/lib/utils/email-domain-validation";
+import { isForceSsoEnabled } from "~/lib/utils/force-sso";
 import { db } from "~/server/db";
 import { createCustomDbAdapter } from "./auth-adapter";
 
@@ -1062,6 +1063,15 @@ function authorize(db: DbClient) {
       | undefined
   ) => {
     if (!credentials) throw new Error("Missing credentials");
+
+    // Force SSO disables password sign-in
+    if (await isForceSsoEnabled()) {
+      auditAuthEvent("LOGIN_FAILED", null, credentials.email || "unknown", {
+        reason: "force_sso",
+        provider: "credentials",
+      }).catch(console.error);
+      return null;
+    }
 
     // Handle 2FA completion flow
     if (credentials.pendingAuthToken && credentials.twoFactorToken) {

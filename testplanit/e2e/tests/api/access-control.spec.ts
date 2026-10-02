@@ -16,6 +16,8 @@ import {
  * - ACL-03: User with NO_ACCESS permission sees empty data on reads
  * - ACL-04: Unauthenticated requests are rejected with 422
  * - ACL-05: Role-based area permissions deny writes when canAddEdit is false
+ * - ACL-06: Nobody but an admin can create users, raise access levels, or
+ *   repoint an API token or sign-in account at another user
  *
  * Critical: ZenStack's 403 responses are remapped to 422 by the route handler
  * at app/api/model/[...path]/route.ts to prevent nginx ingress from replacing
@@ -857,5 +859,285 @@ test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
 
       expect(deleteResponse.status()).toBe(200);
     });
+  });
+});
+
+test.describe("Access Control - Identity Escalation (ACL-06)", () => {
+  let memberCtx: BrowserContext;
+  let memberEmail: string;
+  let memberUserId: string;
+
+  const findUser = async (
+    request: import("@playwright/test").APIRequestContext,
+    baseURL: string,
+    where: Record<string, unknown>
+  ): Promise<{ id: string; access: string } | null> => {
+    const response = await request.get(`${baseURL}/api/model/user/findFirst`, {
+      params: {
+        q: JSON.stringify({ where, select: { id: true, access: true } }),
+      },
+    });
+    expect(response.status()).toBe(200);
+    return (await response.json()).data;
+  };
+
+  test.beforeAll(async ({ browser, baseURL, api }) => {
+    memberEmail = `acl-escalation-${Date.now()}@example.com`;
+    const memberResult = await api.createUser({
+      name: "ACL Escalation Member",
+      email: memberEmail,
+      password: "password123",
+      access: "USER",
+    });
+    memberUserId = memberResult.data.id;
+
+    memberCtx = await signInSecondaryContext(
+      browser,
+      baseURL!,
+      memberEmail,
+      "password123"
+    );
+  });
+
+  test.afterAll(async ({ api }) => {
+    await api.deleteUser(memberUserId);
+    await memberCtx.close();
+  });
+
+  test("unauthenticated create on user is rejected and stores nothing", async ({
+    browser,
+    request,
+    baseURL,
+  }) => {
+    const email = `acl-unauth-admin-${Date.now()}@example.com`;
+    const unauthCtx = await browser.newContext({ storageState: undefined });
+    try {
+      const response = await unauthCtx.request.post(
+        `${baseURL}/api/model/user/create`,
+        {
+          data: {
+            data: { name: "Unauth Admin", email, access: "ADMIN", roleId: 1 },
+          },
+        }
+      );
+      expect(response.status()).toBe(422);
+    } finally {
+      await unauthCtx.close();
+    }
+
+    // A denied read-back also answers 422 after the row is written, so the
+    // status alone does not prove the create was refused.
+    expect(await findUser(request, baseURL!, { email })).toBeNull();
+  });
+
+  test("member cannot raise their own access through the model API", async ({
+    request,
+    baseURL,
+  }) => {
+    const response = await memberCtx.request.patch(
+      `${baseURL}/api/model/user/update`,
+      {
+        headers: sameOriginRequestHeaders(),
+        data: {
+          where: { id: memberUserId },
+          data: { access: "ADMIN" },
+        },
+      }
+    );
+
+    expect(response.status()).toBe(422);
+    const member = await findUser(request, baseURL!, { id: memberUserId });
+    expect(member?.access).toBe("USER");
+  });
+
+  test("member cannot raise their own access through the user update route", async ({
+    request,
+    baseURL,
+  }) => {
+    const response = await memberCtx.request.patch(
+      `${baseURL}/api/users/${memberUserId}`,
+      {
+        headers: sameOriginRequestHeaders(),
+        data: { access: "ADMIN" },
+      }
+    );
+
+    expect(response.status()).toBe(403);
+    const member = await findUser(request, baseURL!, { id: memberUserId });
+    expect(member?.access).toBe("USER");
+  });
+
+  test("member can still update their own name through the user update route", async ({
+    baseURL,
+  }) => {
+    const response = await memberCtx.request.patch(
+      `${baseURL}/api/users/${memberUserId}`,
+      {
+        headers: sameOriginRequestHeaders(),
+        data: { name: "ACL Escalation Member Renamed" },
+      }
+    );
+
+    expect(response.status()).toBe(200);
+  });
+
+  test("member cannot move their API token to another user", async ({
+    request,
+    baseURL,
+    adminUserId,
+  }) => {
+    let tokenId = "";
+
+    await test.step("Create an API token as the member", async () => {
+      const createResponse = await memberCtx.request.post(
+        `${baseURL}/api/api-tokens`,
+        {
+          headers: sameOriginRequestHeaders(),
+          data: { name: `ACL Escalation Token ${Date.now()}` },
+        }
+      );
+      expect(createResponse.status()).toBe(200);
+      tokenId = (await createResponse.json()).id;
+    });
+
+    try {
+      await test.step("Try to reassign the token to the admin", async () => {
+        const response = await memberCtx.request.patch(
+          `${baseURL}/api/model/apiToken/update`,
+          {
+            headers: sameOriginRequestHeaders(),
+            data: {
+              where: { id: tokenId },
+              data: { userId: adminUserId },
+            },
+          }
+        );
+        expect(response.status()).toBe(422);
+      });
+
+      await test.step("Confirm the token still belongs to the member", async () => {
+        const findResponse = await request.get(
+          `${baseURL}/api/model/apiToken/findFirst`,
+          {
+            params: {
+              q: JSON.stringify({
+                where: { id: tokenId },
+                select: { userId: true },
+              }),
+            },
+          }
+        );
+        expect(findResponse.status()).toBe(200);
+        expect((await findResponse.json()).data?.userId).toBe(memberUserId);
+      });
+    } finally {
+      await request
+        .delete(`${baseURL}/api/model/apiToken/delete`, {
+          params: { q: JSON.stringify({ where: { id: tokenId } }) },
+        })
+        .catch(() => {});
+    }
+  });
+
+  test("member cannot link a sign-in account to another user", async ({
+    request,
+    baseURL,
+    adminUserId,
+  }) => {
+    const providerAccountId = `acl-escalation-${Date.now()}`;
+
+    const response = await memberCtx.request.post(
+      `${baseURL}/api/model/account/create`,
+      {
+        headers: sameOriginRequestHeaders(),
+        data: {
+          data: {
+            userId: adminUserId,
+            type: "oauth",
+            provider: "google",
+            providerAccountId,
+          },
+        },
+      }
+    );
+    expect(response.status()).toBe(422);
+
+    const findResponse = await request.get(
+      `${baseURL}/api/model/account/findFirst`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: { providerAccountId },
+            select: { id: true },
+          }),
+        },
+      }
+    );
+    expect(findResponse.status()).toBe(200);
+    expect((await findResponse.json()).data).toBeNull();
+  });
+
+  test("member cannot repoint their own sign-in account at another user", async ({
+    request,
+    baseURL,
+    adminUserId,
+  }) => {
+    let accountId = "";
+
+    await test.step("Link a sign-in account to the member as admin", async () => {
+      const createResponse = await request.post(
+        `${baseURL}/api/model/account/create`,
+        {
+          data: {
+            data: {
+              userId: memberUserId,
+              type: "oauth",
+              provider: "google",
+              providerAccountId: `acl-escalation-own-${Date.now()}`,
+            },
+          },
+        }
+      );
+      expect(createResponse.status()).toBe(201);
+      accountId = (await createResponse.json()).data.id;
+    });
+
+    try {
+      await test.step("Try to repoint the account at the admin", async () => {
+        const response = await memberCtx.request.patch(
+          `${baseURL}/api/model/account/update`,
+          {
+            headers: sameOriginRequestHeaders(),
+            data: {
+              where: { id: accountId },
+              data: { userId: adminUserId },
+            },
+          }
+        );
+        expect(response.status()).toBe(422);
+      });
+
+      await test.step("Confirm the account still belongs to the member", async () => {
+        const findResponse = await request.get(
+          `${baseURL}/api/model/account/findFirst`,
+          {
+            params: {
+              q: JSON.stringify({
+                where: { id: accountId },
+                select: { userId: true },
+              }),
+            },
+          }
+        );
+        expect(findResponse.status()).toBe(200);
+        expect((await findResponse.json()).data?.userId).toBe(memberUserId);
+      });
+    } finally {
+      await request
+        .delete(`${baseURL}/api/model/account/delete`, {
+          params: { q: JSON.stringify({ where: { id: accountId } }) },
+        })
+        .catch(() => {});
+    }
   });
 });

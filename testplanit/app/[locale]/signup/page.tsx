@@ -217,7 +217,6 @@ const Signup: NextPage = () => {
           emailVerifToken: requireEmailVerification
             ? await generateEmailVerificationToken()
             : undefined,
-          access: registrationSettings?.defaultAccess || "NONE",
         }),
       });
 
