@@ -1,3 +1,19 @@
+## [1.1.0-beta.33](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.32...v1.1.0-beta.33) (2026-10-02)
+
+### Features
+
+* **auth:** let deployments remove the sign-in admin contact line ([c9eaa46](https://github.com/TestPlanIt/testplanit/commit/c9eaa462526427472cf43591c8f6eb26461f6526))
+
+### Bug Fixes
+
+* **auth:** enforce Force SSO on the server and stop users raising their own access ([012711a](https://github.com/TestPlanIt/testplanit/commit/012711aba31da26279031eb0ed94b866538343e3))
+* **requirements:** accept an execution scope of more than 200 milestones ([36e66ce](https://github.com/TestPlanIt/testplanit/commit/36e66ce439a4940c91f19ac04bc26f3e08f56fb6)), closes [#661](https://github.com/TestPlanIt/testplanit/issues/661)
+* **security:** close privilege escalation and identity reassignment paths ([51675e7](https://github.com/TestPlanIt/testplanit/commit/51675e754edd0ae3ea58d7779013fed55f7fc400))
+
+### Enhancements
+
+* **llm:** tighten generated test cases and surface missing context ([71d6e53](https://github.com/TestPlanIt/testplanit/commit/71d6e53339d4be4caf9ba6ac0a667c5fb766aa13))
+
 ## [1.1.0-beta.32](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.31...v1.1.0-beta.32) (2026-10-01)
 
 ### Bug Fixes
