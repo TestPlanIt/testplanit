@@ -3544,6 +3544,9 @@
         "title": "Selecteer Vereistenbron",
         "description": "Kies of u testcases wilt genereren op basis van een probleem of een vereistendocument.",
         "folderContextTip": "Bestaande testgevallen uit \"{folderName}\" en de bijbehorende mappen worden als context gebruikt om duplicaten te voorkomen. Zorg ervoor dat u de juiste map hebt geselecteerd voordat u verdergaat.",
+        "folderContextCount": "{count, plural, =1 {# existing test case} other {# existing test cases}} in \"{folderName}\" and its parent/child folders will be used as context to match your project's style and avoid duplicates.",
+        "folderContextEmptyTitle": "Geen bestaande testcases om als context te gebruiken",
+        "folderContextEmpty": "\"{folderName}\" en de bovenliggende/onderliggende mappen bevatten geen testcases, dus de AI heeft geen voorbeelden van uw projectstijl of bestaande dekking. Voor betere resultaten start u de generator vanuit de map waar deze testcases thuishoren, naast gerelateerde cases.",
         "currentFolder": "huidige map",
         "fromIssue": "Van uitgave",
         "fromDocument": "Van document",
@@ -3595,6 +3598,8 @@
         "description": "Bied aanvullende context en begeleiding om de AI te helpen betere testcases te genereren.",
         "quantity": "Aantal te genereren testcases",
         "placeholder": "Voeg specifieke instructies toe voor het genereren van testcases...\n\nBijvoorbeeld:\n• Focus op beveiligingstesten\n• Neem edge cases en randvoorwaarden op\n• Test zowel happy path- als error-scenario's\n• Houd rekening met mobiele en desktop-scenario's\n• Focus op API-testen",
+        "linksIgnoredTitle": "Links in notities worden niet geopend",
+        "linksIgnored": "{count, plural, =1 {The link} other {The # links}} in your notes will be sent as plain text only. To use a document or spreadsheet, paste the relevant content (scenarios, test data, expected results) into the notes.",
         "suggestions": "Snelle suggesties:",
         "quantityOptions": {
           "justOne": "Slechts één",

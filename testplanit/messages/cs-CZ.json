@@ -3544,6 +3544,9 @@
         "title": "Vybrat zdroj požadavků",
         "description": "Vyberte, zda chcete generovat testovací případy z problému nebo z dokumentu s požadavky.",
         "folderContextTip": "Existující testovací případy ze složky \"{folderName}\" a jejích nadřazených/podřazených složek budou použity jako kontext, aby se zabránilo duplicitám. Před pokračováním se ujistěte, že jste vybrali správnou složku.",
+        "folderContextCount": "{count, plural, =1 {# existing test case} other {# existing test cases}} in \"{folderName}\" and its parent/child folders will be used as context to match your project's style and avoid duplicates.",
+        "folderContextEmptyTitle": "Žádné existující testovací případy k použití jako kontext",
+        "folderContextEmpty": "Složka \"{folderName}\" a její nadřazené/podřazené složky neobsahují testovací případy, takže AI nemá příklady stylu vašeho projektu nebo stávajícího pokrytí. Pro lepší výsledky spusťte generátor ze složky, do které tyto testovací případy patří, vedle souvisejících případů.",
         "currentFolder": "aktuální složka",
         "fromIssue": "Z problému",
         "fromDocument": "Z dokumentu",
@@ -3595,6 +3598,8 @@
         "description": "Poskytněte další kontext a pokyny, které pomohou AI vygenerovat lepší testovací případy.",
         "quantity": "Počet testovacích případů k vygenerování",
         "placeholder": "Přidejte konkrétní pokyny pro generování testovacích případů...\n\nNapříklad:\n• Zaměřte se na bezpečnostní testování\n• Zahrňte krajní případy a hraniční podmínky\n• Testujte jak úspěšný scénář, tak chybové scénáře\n• Zvažte scénáře pro mobilní i desktopové zařízení\n• Zaměřte se na testování API",
+        "linksIgnoredTitle": "Odkazy v poznámkách nejsou otevřeny",
+        "linksIgnored": "{count, plural, =1 {The link} other {The # links}} in your notes will be sent as plain text only. To use a document or spreadsheet, paste the relevant content (scenarios, test data, expected results) into the notes.",
         "suggestions": "Rychlé návrhy:",
         "quantityOptions": {
           "justOne": "Pouze jeden",

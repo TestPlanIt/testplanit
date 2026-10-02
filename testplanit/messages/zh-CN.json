@@ -3544,6 +3544,9 @@
         "title": "选择需求来源",
         "description": "选择是从问题文档还是需求文档生成测试用例。",
         "folderContextTip": "为避免重复，系统将使用“{folderName}”及其父/子文件夹中的现有测试用例作为上下文。请确保在继续操作前已选择正确的文件夹。",
+        "folderContextCount": "{count, plural, =1 {# 个现有测试用例} other {# 个现有测试用例}}在\"{folderName}\"及其父级/子级文件夹中将用作上下文，以匹配您的项目风格并避免重复。",
+        "folderContextEmptyTitle": "没有现有测试用例可用作上下文",
+        "folderContextEmpty": "\"{folderName}\"及其父级/子级文件夹中没有测试用例，因此AI无法参考您的项目风格或现有覆盖范围的示例。为获得更好的结果，请从这些测试用例所属的文件夹中启动生成器，将其放在相关用例的旁边。",
         "currentFolder": "当前文件夹",
         "fromIssue": "期刊",
         "fromDocument": "从文档",
@@ -3595,6 +3598,8 @@
         "description": "提供更多背景信息和指导，以帮助人工智能生成更好的测试用例。",
         "quantity": "要生成的测试用例数量",
         "placeholder": "添加测试用例生成的具体说明……\n\n例如：\n• 重点关注安全测试\n• 包含边界情况和边缘情况\n• 同时测试正常路径和错误路径\n• 考虑移动端和桌面端场景\n• 重点关注 API 测试",
+        "linksIgnoredTitle": "注释中的链接未打开",
+        "linksIgnored": "{count, plural, =1 {该链接} other {您注释中的 # 个链接}}将仅作为纯文本发送。要使用文档或电子表格，请将相关内容（场景、测试数据、预期结果）粘贴到注释中。",
         "suggestions": "快速建议：",
         "quantityOptions": {
           "justOne": "只有一个",

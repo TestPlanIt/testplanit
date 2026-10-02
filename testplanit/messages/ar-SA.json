@@ -3544,6 +3544,9 @@
         "title": "اختر مصدر المتطلبات",
         "description": "اختر ما إذا كنت تريد إنشاء حالات اختبار من مشكلة أو من مستند متطلبات.",
         "folderContextTip": "سيتم استخدام حالات الاختبار الموجودة من \"{folderName}\" ومجلداتها الأصلية/الفرعية كسياق لتجنب التكرارات. تأكد من تحديد المجلد الصحيح قبل المتابعة.",
+        "folderContextCount": "{count, plural, =1 {# existing test case} other {# existing test cases}} in \"{folderName}\" and its parent/child folders will be used as context to match your project's style and avoid duplicates.",
+        "folderContextEmptyTitle": "لا توجد حالات اختبار موجودة لاستخدامها كسياق",
+        "folderContextEmpty": "\"{folderName}\" والمجلدات الأب/التابعة لها لا تحتوي على حالات اختبار، لذا ليس لدى الذكاء الاصطناعي أمثلة على نمط مشروعك أو التغطية الموجودة. للحصول على نتائج أفضل، ابدأ المولد من المجلد الذي تنتمي إليه حالات الاختبار هذه، بجانب الحالات ذات الصلة.",
         "currentFolder": "المجلد الحالي",
         "fromIssue": "من مشكلة",
         "fromDocument": "من مستند",
@@ -3595,6 +3598,8 @@
         "description": "قدّم سياقًا وتوجيهات إضافية لمساعدة الذكاء الاصطناعي على إنشاء حالات اختبار أفضل.",
         "quantity": "عدد حالات الاختبار المطلوب إنشاؤها",
         "placeholder": "أضف تعليمات محددة لإنشاء حالات الاختبار...\n\nعلى سبيل المثال:\n• التركيز على اختبار الأمان\n• تضمين الحالات الحدية وشروط الحدود\n• اختبار المسار الصحيح وسيناريوهات الأخطاء\n• مراعاة سيناريوهات الأجهزة المحمولة وأجهزة سطح المكتب\n• التركيز على اختبار API",
+        "linksIgnoredTitle": "الروابط في الملاحظات لا تُفتح",
+        "linksIgnored": "{count, plural, =1 {The link} other {The # links}} in your notes will be sent as plain text only. To use a document or spreadsheet, paste the relevant content (scenarios, test data, expected results) into the notes.",
         "suggestions": "اقتراحات سريعة:",
         "quantityOptions": {
           "justOne": "واحدة فقط",

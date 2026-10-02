@@ -3544,6 +3544,9 @@
         "title": "要件ソースを選択",
         "description": "問題からテスト ケースを生成するか、要件ドキュメントから生成するかを選択します。",
         "folderContextTip": "重複を避けるため、「{folderName}」およびその親/子フォルダにある既存のテストケースがコンテキストとして使用されます。続行する前に、正しいフォルダを選択していることを確認してください。",
+        "folderContextCount": "{count, plural, =1 {# existing test case} other {# existing test cases}} in \"{folderName}\" and its parent/child folders will be used as context to match your project's style and avoid duplicates.",
+        "folderContextEmptyTitle": "コンテキストとして使用する既存テストケースがありません",
+        "folderContextEmpty": "\"{folderName}\"とその親/子フォルダにテストケースがないため、AIがプロジェクトのスタイルや既存のカバレッジの例がありません。より良い結果を得るために、これらのテストケースが属するフォルダから、関連するケースの隣でジェネレータを開始してください。",
         "currentFolder": "現在のフォルダ",
         "fromIssue": "発行元",
         "fromDocument": "文書から",
@@ -3595,6 +3598,8 @@
         "description": "AI がより良いテスト ケースを生成できるように、追加のコンテキストとガイダンスを提供します。",
         "quantity": "生成するテストケースの数",
         "placeholder": "テストケース生成のための具体的な指示を追加します...\n\n例:\n• セキュリティテストに重点を置く\n• エッジケースと境界条件を含める\n• ハッピーパスとエラーシナリオの両方をテストする\n• モバイルとデスクトップのシナリオを考慮する\n• APIテストに重点を置く",
+        "linksIgnoredTitle": "メモ内のリンクは開かれません",
+        "linksIgnored": "{count, plural, =1 {The link} other {The # links}} in your notes will be sent as plain text only. To use a document or spreadsheet, paste the relevant content (scenarios, test data, expected results) into the notes.",
         "suggestions": "簡単な提案:",
         "quantityOptions": {
           "justOne": "たった一つ",

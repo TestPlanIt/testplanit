@@ -3544,6 +3544,9 @@
         "title": "Chọn nguồn yêu cầu",
         "description": "Chọn xem bạn muốn tạo các trường hợp kiểm thử từ một vấn đề hay từ một tài liệu yêu cầu.",
         "folderContextTip": "Các trường hợp kiểm thử hiện có từ \"{folderName}\" và các thư mục cha/con của nó sẽ được sử dụng làm ngữ cảnh để tránh trùng lặp. Hãy chắc chắn rằng bạn đã chọn đúng thư mục trước khi tiếp tục.",
+        "folderContextCount": "{count, plural, =1 {# existing test case} other {# existing test cases}} in \"{folderName}\" and its parent/child folders will be used as context to match your project's style and avoid duplicates.",
+        "folderContextEmptyTitle": "Không có trường hợp kiểm thử hiện có để sử dụng làm bối cảnh",
+        "folderContextEmpty": "\"{folderName}\" và các thư mục cha/con của nó không có trường hợp kiểm thử nào, do đó AI không có ví dụ về kiểu của dự án bạn hoặc phạm vi hiện có. Để có kết quả tốt hơn, hãy bắt đầu trình tạo từ thư mục nơi những trường hợp kiểm thử này thuộc về, bên cạnh các trường hợp liên quan.",
         "currentFolder": "thư mục hiện tại",
         "fromIssue": "Từ ấn bản",
         "fromDocument": "Từ tài liệu",
@@ -3595,6 +3598,8 @@
         "description": "Cung cấp thêm ngữ cảnh và hướng dẫn để giúp AI tạo ra các trường hợp kiểm thử tốt hơn.",
         "quantity": "Số lượng trường hợp thử nghiệm cần tạo",
         "placeholder": "Thêm hướng dẫn cụ thể cho việc tạo trường hợp kiểm thử...\n\nVí dụ:\n• Tập trung vào kiểm thử bảo mật\n• Bao gồm các trường hợp ngoại lệ và điều kiện biên\n• Kiểm thử cả trường hợp thành công và lỗi\n• Xem xét các trường hợp trên thiết bị di động và máy tính để bàn\n• Tập trung vào kiểm thử API",
+        "linksIgnoredTitle": "Các liên kết trong ghi chú không được mở",
+        "linksIgnored": "{count, plural, =1 {The link} other {The # links}} in your notes will be sent as plain text only. To use a document or spreadsheet, paste the relevant content (scenarios, test data, expected results) into the notes.",
         "suggestions": "Gợi ý nhanh:",
         "quantityOptions": {
           "justOne": "Chỉ một",

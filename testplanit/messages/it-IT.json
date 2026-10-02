@@ -3544,6 +3544,9 @@
         "title": "Seleziona la fonte dei requisiti",
         "description": "Scegliere se generare casi di test da un problema o da un documento di requisiti.",
         "folderContextTip": "I casi di test esistenti in \"{folderName}\" e nelle relative cartelle padre/figlio verranno utilizzati come contesto per evitare duplicati. Assicurati di aver selezionato la cartella corretta prima di procedere.",
+        "folderContextCount": "{count, plural, =1 {# existing test case} other {# existing test cases}} in \"{folderName}\" and its parent/child folders will be used as context to match your project's style and avoid duplicates.",
+        "folderContextEmptyTitle": "Nessun caso di test esistente da utilizzare come contesto",
+        "folderContextEmpty": "\"{folderName}\" e le relative cartelle padre/figlie non hanno casi di test, quindi l'IA non ha esempi dello stile del tuo progetto o della copertura esistente. Per risultati migliori, avvia il generatore dalla cartella dove appartengono questi casi di test, accanto ai casi correlati.",
         "currentFolder": "cartella corrente",
         "fromIssue": "Dal problema",
         "fromDocument": "Dal documento",
@@ -3595,6 +3598,8 @@
         "description": "Fornire ulteriore contesto e indicazioni per aiutare l'IA a generare casi di test migliori.",
         "quantity": "Numero di casi di test da generare",
         "placeholder": "Aggiungi istruzioni specifiche per la generazione di casi di test...\n\nAd esempio:\n• Concentrati sui test di sicurezza\n• Includi casi limite e condizioni al contorno\n• Testa sia scenari di percorso felice che di errore\n• Considera scenari mobili e desktop\n• Concentrati sui test API",
+        "linksIgnoredTitle": "I link nelle note non vengono aperti",
+        "linksIgnored": "{count, plural, =1 {The link} other {The # links}} in your notes will be sent as plain text only. To use a document or spreadsheet, paste the relevant content (scenarios, test data, expected results) into the notes.",
         "suggestions": "Suggerimenti rapidi:",
         "quantityOptions": {
           "justOne": "Solo uno",

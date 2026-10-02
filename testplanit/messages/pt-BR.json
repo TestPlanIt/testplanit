@@ -3544,6 +3544,9 @@
         "title": "Selecione a fonte de requisitos",
         "description": "Escolha se deseja gerar casos de teste a partir de um problema ou de um documento de requisitos.",
         "folderContextTip": "Os casos de teste existentes de \"{folderName}\" e suas pastas pai/filho serão usados como contexto para evitar duplicatas. Certifique-se de ter selecionado a pasta correta antes de prosseguir.",
+        "folderContextCount": "{count, plural, =1 {# existing test case} other {# existing test cases}} in \"{folderName}\" and its parent/child folders will be used as context to match your project's style and avoid duplicates.",
+        "folderContextEmptyTitle": "Nenhum caso de teste existente para usar como contexto",
+        "folderContextEmpty": "\"{folderName}\" e suas pastas pai/filha não possuem casos de teste, então a IA não tem exemplos do estilo do seu projeto ou cobertura existente. Para melhores resultados, inicie o gerador a partir da pasta onde esses casos de teste pertencem, próximo aos casos relacionados.",
         "currentFolder": "pasta atual",
         "fromIssue": "Da edição",
         "fromDocument": "Do documento",
@@ -3595,6 +3598,8 @@
         "description": "Forneça contexto e orientação adicionais para ajudar a IA a gerar melhores casos de teste.",
         "quantity": "Número de casos de teste a serem gerados",
         "placeholder": "Adicione instruções específicas para a geração de casos de teste...\n\nPor exemplo:\n• Concentre-se em testes de segurança\n• Inclua casos extremos e condições de contorno\n• Teste cenários de sucesso e de erro\n• Considere cenários para dispositivos móveis e desktops\n• Concentre-se em testes de API",
+        "linksIgnoredTitle": "Links nas notas não são abertos",
+        "linksIgnored": "{count, plural, =1 {The link} other {The # links}} in your notes will be sent as plain text only. To use a document or spreadsheet, paste the relevant content (scenarios, test data, expected results) into the notes.",
         "suggestions": "Sugestões rápidas:",
         "quantityOptions": {
           "justOne": "Apenas um",

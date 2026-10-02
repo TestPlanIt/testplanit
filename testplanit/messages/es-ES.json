@@ -3544,6 +3544,9 @@
         "title": "Seleccionar Fuente de Requisitos",
         "description": "Elija si desea generar casos de prueba a partir de un problema o de un documento de requisitos.",
         "folderContextTip": "Los casos de prueba existentes de \"{folderName}\" y sus carpetas padre/hijo se utilizarán como contexto para evitar duplicados. Asegúrese de haber seleccionado la carpeta correcta antes de continuar.",
+        "folderContextCount": "{count, plural, =1 {# existing test case} other {# existing test cases}} in \"{folderName}\" and its parent/child folders will be used as context to match your project's style and avoid duplicates.",
+        "folderContextEmptyTitle": "No hay casos de prueba existentes para usar como contexto",
+        "folderContextEmpty": "\"{folderName}\" y sus carpetas principales/secundarias no tienen casos de prueba, por lo que la IA no tiene ejemplos del estilo de su proyecto o cobertura existente. Para mejores resultados, inicie el generador desde la carpeta donde pertenecen estos casos de prueba, junto a casos relacionados.",
         "currentFolder": "carpeta actual",
         "fromIssue": "De la emisión",
         "fromDocument": "Desde documento",
@@ -3595,6 +3598,8 @@
         "description": "Proporcionar contexto y orientación adicionales para ayudar a que la IA genere mejores casos de prueba.",
         "quantity": "Número de casos de prueba a generar",
         "placeholder": "Agregue instrucciones específicas para la generación de casos de prueba...\n\nPor ejemplo:\n• Enfóquese en las pruebas de seguridad\n• Incluya casos extremos y condiciones límite\n• Pruebe escenarios de ruta feliz y de error\n• Considere escenarios móviles y de escritorio\n• Enfóquese en las pruebas de API",
+        "linksIgnoredTitle": "Los enlaces en las notas no se abren",
+        "linksIgnored": "{count, plural, =1 {The link} other {The # links}} in your notes will be sent as plain text only. To use a document or spreadsheet, paste the relevant content (scenarios, test data, expected results) into the notes.",
         "suggestions": "Sugerencias rápidas:",
         "quantityOptions": {
           "justOne": "Sólo uno",

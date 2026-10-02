@@ -3544,6 +3544,9 @@
         "title": "Sélectionner la source des exigences",
         "description": "Choisissez si vous souhaitez générer des cas de test à partir d'un problème ou d'un document d'exigences.",
         "folderContextTip": "Les cas de test existants du dossier « {folderName} » et de ses sous-dossiers serviront de contexte afin d'éviter les doublons. Assurez-vous d'avoir sélectionné le bon dossier avant de continuer.",
+        "folderContextCount": "{count, plural, =1 {# existing test case} other {# existing test cases}} in \"{folderName}\" and its parent/child folders will be used as context to match your project's style and avoid duplicates.",
+        "folderContextEmptyTitle": "Aucun cas de test existant à utiliser comme contexte",
+        "folderContextEmpty": "« {folderName} » et ses dossiers parents/enfants n'ont aucun cas de test, donc l'IA n'a aucun exemple du style de votre projet ou de la couverture existante. Pour de meilleurs résultats, lancez le générateur à partir du dossier où ces cas de test appartiennent, à côté des cas connexes.",
         "currentFolder": "dossier actuel",
         "fromIssue": "Extrait du numéro",
         "fromDocument": "Extrait du document",
@@ -3595,6 +3598,8 @@
         "description": "Fournissez un contexte et des indications supplémentaires pour aider l'IA à générer de meilleurs cas de test.",
         "quantity": "Nombre de cas de test à générer",
         "placeholder": "Ajoutez des instructions spécifiques pour la génération des cas de test…\n\nPar exemple :\n• Privilégiez les tests de sécurité\n• Incluez les cas limites et les conditions limites\n• Testez les scénarios nominaux et d’erreur\n• Prenez en compte les scénarios mobiles et de bureau\n• Privilégiez les tests d’API",
+        "linksIgnoredTitle": "Les liens dans les notes ne sont pas ouverts",
+        "linksIgnored": "{count, plural, =1 {The link} other {The # links}} in your notes will be sent as plain text only. To use a document or spreadsheet, paste the relevant content (scenarios, test data, expected results) into the notes.",
         "suggestions": "Suggestions rapides :",
         "quantityOptions": {
           "justOne": "Un seul",

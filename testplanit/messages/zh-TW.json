@@ -3544,6 +3544,9 @@
         "title": "選擇需求來源",
         "description": "選擇是從問題文件還是需求文件產生測試案例。",
         "folderContextTip": "為避免重複，系統將使用「{folderName}」及其父/子資料夾中的現有測試案例作為上下文。請確保在繼續操作前已選擇正確的資料夾。",
+        "folderContextCount": "{count, plural, =1 {# existing test case} other {# existing test cases}} in \"{folderName}\" and its parent/child folders will be used as context to match your project's style and avoid duplicates.",
+        "folderContextEmptyTitle": "沒有現有測試案例可用作內容",
+        "folderContextEmpty": "「{folderName}」及其上層/下層資料夾中沒有測試案例，因此 AI 沒有您專案風格或現有涵蓋範圍的範例。為了獲得更好的結果，請從這些測試案例所屬的資料夾開始產生器，位於相關案例的旁邊。",
         "currentFolder": "目前資料夾",
         "fromIssue": "期刊",
         "fromDocument": "從文件",
@@ -3595,6 +3598,8 @@
         "description": "提供更多背景資訊和指導，以幫助人工智慧產生更好的測試案例。",
         "quantity": "要產生的測試用例數量",
         "placeholder": "新增測試案例生成的具體指示...\n\n例如：\n• 專注於安全性測試\n• 包含邊緣案例與邊界條件\n• 測試正常路徑與錯誤情境\n• 考慮行動裝置與桌面情境\n• 專注於 API 測試",
+        "linksIgnoredTitle": "筆記中的連結未開啟",
+        "linksIgnored": "{count, plural, =1 {筆記中的連結} other {筆記中的 # 個連結}}將以純文字形式發送。若要使用文件或試算表，請將相關內容（案例、測試資料、預期結果）貼到筆記中。",
         "suggestions": "快速建議：",
         "quantityOptions": {
           "justOne": "只有一個",

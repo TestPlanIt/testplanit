@@ -3544,6 +3544,9 @@
         "title": "Gereksinim Kaynağını Seçin",
         "description": "Test senaryolarını bir sorun belgesinden mi yoksa gereksinimler belgesinden mi oluşturacağınızı seçin.",
         "folderContextTip": "\"{folderName}\" ve üst/alt klasörlerindeki mevcut test örnekleri, tekrarları önlemek için bağlam olarak kullanılacaktır. Devam etmeden önce doğru klasörü seçtiğinizden emin olun.",
+        "folderContextCount": "{count, plural, =1 {# existing test case} other {# existing test cases}} in \"{folderName}\" and its parent/child folders will be used as context to match your project's style and avoid duplicates.",
+        "folderContextEmptyTitle": "Bağlam olarak kullanılacak mevcut test durumu yok",
+        "folderContextEmpty": "\"{folderName}\" ve onun üst/alt klasörleri test durumu içermediğinden, yapay zeka projenizin stili veya mevcut kapsamının örneklerine sahip değildir. Daha iyi sonuçlar için, üreteciyi bu test durumlarının ait olduğu klasörden, ilgili durumların yanında başlatın.",
         "currentFolder": "mevcut klasör",
         "fromIssue": "Sayıdan itibaren",
         "fromDocument": "Belgeden",
@@ -3595,6 +3598,8 @@
         "description": "Yapay zekanın daha iyi test senaryoları oluşturmasına yardımcı olmak için ek bağlam ve rehberlik sağlayın.",
         "quantity": "Oluşturulacak test senaryosu sayısı",
         "placeholder": "Test senaryosu oluşturma için özel talimatlar ekleyin...\n\nÖrneğin:\n• Güvenlik testine odaklanın\n• Uç durumları ve sınır koşullarını dahil edin\n• Hem başarılı hem de hata senaryolarını test edin\n• Mobil ve masaüstü senaryolarını göz önünde bulundurun\n• API testine odaklanın",
+        "linksIgnoredTitle": "Notlardaki bağlantılar açılmıyor",
+        "linksIgnored": "{count, plural, =1 {The link} other {The # links}} in your notes will be sent as plain text only. To use a document or spreadsheet, paste the relevant content (scenarios, test data, expected results) into the notes.",
         "suggestions": "Hızlı Öneriler:",
         "quantityOptions": {
           "justOne": "Sadece bir tane",

@@ -3544,6 +3544,9 @@
         "title": "Anforderungsquelle auswählen",
         "description": "Wählen Sie aus, ob Testfälle aus einem Ticket oder einem Anforderungsdokument generiert werden sollen.",
         "folderContextTip": "Vorhandene Testfälle aus \"{folderName}\" und dessen übergeordneten/untergeordneten Ordnern werden als Kontext verwendet, um Duplikate zu vermeiden. Stellen Sie sicher, dass Sie den richtigen Ordner ausgewählt haben, bevor Sie fortfahren.",
+        "folderContextCount": "{count, plural, =1 {# existing test case} other {# existing test cases}} in \"{folderName}\" and its parent/child folders will be used as context to match your project's style and avoid duplicates.",
+        "folderContextEmptyTitle": "Keine vorhandenen Testfälle als Kontext verfügbar",
+        "folderContextEmpty": "\"{folderName}\" und dessen übergeordnete/untergeordnete Ordner enthalten keine Testfälle, daher hat die KI keine Beispiele für den Stil oder die vorhandene Abdeckung Ihres Projekts. Starten Sie den Generator für bessere Ergebnisse im Ordner, in dem diese Testfälle gehören, neben verwandten Fällen.",
         "currentFolder": "aktueller Ordner",
         "fromIssue": "Aus der Ausgabe",
         "fromDocument": "Aus dem Dokument",
@@ -3595,6 +3598,8 @@
         "description": "Geben Sie zusätzlichen Kontext und Anleitungen, damit die KI bessere Testfälle generieren kann.",
         "quantity": "Anzahl der zu generierenden Testfälle",
         "placeholder": "Fügen Sie spezifische Anweisungen zur Testfallgenerierung hinzu...\n\nZum Beispiel:\n• Fokus auf Sicherheitstests\n• Grenzfälle und Randbedingungen einbeziehen\n• Sowohl den Normalfall als auch Fehlerszenarien testen\n• Mobile und Desktop-Szenarien berücksichtigen\n• Fokus auf API-Tests",
+        "linksIgnoredTitle": "Links in Notizen werden nicht geöffnet",
+        "linksIgnored": "{count, plural, =1 {The link} other {The # links}} in your notes will be sent as plain text only. To use a document or spreadsheet, paste the relevant content (scenarios, test data, expected results) into the notes.",
         "suggestions": "Kurzvorschläge:",
         "quantityOptions": {
           "justOne": "Nur eins",

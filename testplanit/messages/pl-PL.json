@@ -3544,6 +3544,9 @@
         "title": "Wybierz źródło wymagań",
         "description": "Wybierz, czy chcesz generować przypadki testowe na podstawie zgłoszenia czy dokumentu wymagań.",
         "folderContextTip": "Istniejące przypadki testowe z folderu „{folderName}” i jego folderów nadrzędnych/podrzędnych zostaną użyte jako kontekst, aby uniknąć duplikatów. Przed kontynuowaniem upewnij się, że wybrałeś właściwy folder.",
+        "folderContextCount": "{count, plural, =1 {# existing test case} other {# existing test cases}} in \"{folderName}\" and its parent/child folders will be used as context to match your project's style and avoid duplicates.",
+        "folderContextEmptyTitle": "Brak istniejących przypadków testowych do użycia jako kontekst",
+        "folderContextEmpty": "\"{folderName}\" i jego foldery nadrzędne/podrzędne nie zawierają przypadków testowych, więc AI nie ma przykładów stylu projektu ani istniejącego zakresu. Aby uzyskać lepsze wyniki, uruchom generator z folderu, w którym znajdują się te przypadki testowe, obok powiązanych przypadków.",
         "currentFolder": "bieżący folder",
         "fromIssue": "Z wydania",
         "fromDocument": "Z dokumentu",
@@ -3595,6 +3598,8 @@
         "description": "Zapewnij dodatkowy kontekst i wskazówki, które pomogą sztucznej inteligencji generować lepsze przypadki testowe.",
         "quantity": "Liczba przypadków testowych do wygenerowania",
         "placeholder": "Dodaj szczegółowe instrukcje dotyczące generowania przypadków testowych...\n\nNa przykład:\n• Skup się na testowaniu bezpieczeństwa\n• Uwzględnij przypadki brzegowe i warunki brzegowe\n• Przetestuj scenariusze zarówno prawidłowej ścieżki, jak i błędu\n• Weź pod uwagę scenariusze mobilne i stacjonarne\n• Skup się na testowaniu interfejsu API",
+        "linksIgnoredTitle": "Linki w notatkach nie są otwierane",
+        "linksIgnored": "{count, plural, =1 {The link} other {The # links}} in your notes will be sent as plain text only. To use a document or spreadsheet, paste the relevant content (scenarios, test data, expected results) into the notes.",
         "suggestions": "Szybkie sugestie:",
         "quantityOptions": {
           "justOne": "Tylko jeden",
