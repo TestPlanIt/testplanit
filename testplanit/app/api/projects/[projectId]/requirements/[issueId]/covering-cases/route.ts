@@ -2,7 +2,11 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { resolveViewerProjectScope } from "~/lib/authContext";
 import { baseDb } from "~/lib/db";
-import { parseExecutionScopeQuery } from "~/lib/services/executionScopeParam";
+import {
+  parseExecutionScopeQuery,
+  parseExecutionScopeRequestBody,
+  type ExecutionScopeParseResult,
+} from "~/lib/services/executionScopeParam";
 import { REQUIREMENT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import {
   getRequirementCoveringCases,
@@ -17,6 +21,10 @@ export type RequirementCoveringCaseRow = RequirementCoveringCase & {
 export type RequirementCoveringCasesResponse = {
   requirementId: number;
   cases: RequirementCoveringCaseRow[];
+};
+
+type RouteContext = {
+  params: Promise<{ projectId: string; issueId: string }>;
 };
 
 /**
@@ -38,10 +46,27 @@ export type RequirementCoveringCasesResponse = {
  * (addressed id is not a live requirement in this project) -> 200/500.
  * Deliberately NOT gated on `Projects.requirementsEnabled` — see
  * 26-VALIDATION.md carve-out 4.
+ *
+ * POST is the same read with the execution scope as its JSON body
+ * (`{ milestoneIds, configIds }`), for a scope too long for a query
+ * string.
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string; issueId: string }> }
+export function GET(request: NextRequest, context: RouteContext) {
+  return handleCoveringCases(context, () =>
+    parseExecutionScopeQuery(request.nextUrl.searchParams)
+  );
+}
+
+export function POST(request: NextRequest, context: RouteContext) {
+  return handleCoveringCases(context, () =>
+    parseExecutionScopeRequestBody(request)
+  );
+}
+
+async function handleCoveringCases(
+  { params }: RouteContext,
+  readExecutionScope: () =>
+    ExecutionScopeParseResult | Promise<ExecutionScopeParseResult>
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -94,9 +119,7 @@ export async function GET(
     // Same optional execution frame as the coverage rollup route, so the
     // drill-down beneath a scoped chip lists with the rule the chip
     // counted with.
-    const executionScopeResult = parseExecutionScopeQuery(
-      request.nextUrl.searchParams
-    );
+    const executionScopeResult = await readExecutionScope();
     if (!executionScopeResult.ok) {
       return NextResponse.json(
         { error: "Invalid milestoneIds/configIds" },

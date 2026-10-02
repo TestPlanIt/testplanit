@@ -1,7 +1,11 @@
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { resolveViewerProjectScope } from "~/lib/authContext";
-import { parseExecutionScopeQuery } from "~/lib/services/executionScopeParam";
+import {
+  parseExecutionScopeQuery,
+  parseExecutionScopeRequestBody,
+  type ExecutionScopeParseResult,
+} from "~/lib/services/executionScopeParam";
 import {
   getRequirementCoverage,
   type RequirementCoverageBreakdown,
@@ -12,6 +16,8 @@ export type RequirementCoverageResponse = {
   projectId: number;
   coverage: Record<string, RequirementCoverageBreakdown>;
 };
+
+type RouteContext = { params: Promise<{ projectId: string }> };
 
 /**
  * GET /api/projects/[projectId]/requirements/coverage
@@ -35,10 +41,29 @@ export type RequirementCoverageResponse = {
  * that flag is a presentation opt-in, not an access-control boundary
  * (see 26-VALIDATION.md carve-out 4); the security boundary here is the
  * session check plus the project-scope check below.
+ *
+ * POST is the same read with the execution scope as its JSON body
+ * (`{ milestoneIds, configIds }`), for a scope too long for a query
+ * string; `requirementIds` stays a query param on both.
  */
-export async function GET(
+export function GET(request: NextRequest, context: RouteContext) {
+  return handleCoverage(request, context, () =>
+    parseExecutionScopeQuery(request.nextUrl.searchParams)
+  );
+}
+
+export function POST(request: NextRequest, context: RouteContext) {
+  return handleCoverage(request, context, () =>
+    parseExecutionScopeRequestBody(request)
+  );
+}
+
+async function handleCoverage(
   request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> }
+  { params }: RouteContext,
+  readExecutionScope: () =>
+    | ExecutionScopeParseResult
+    | Promise<ExecutionScopeParseResult>
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -98,13 +123,11 @@ export async function GET(
       rootIds = parsed;
     }
 
-    // Optional execution scope (?milestoneIds=…&configIds=…): the same
-    // hybrid frame every other coverage surface accepts — see
-    // lib/services/executionScopeParam.ts. Absent keys keep the rollup
+    // Optional execution scope (?milestoneIds=…&configIds=…, or the POST
+    // body): the same hybrid frame every other coverage surface accepts —
+    // see lib/services/executionScopeParam.ts. Absent keys keep the rollup
     // global and byte-identical to the unscoped statement.
-    const executionScopeResult = parseExecutionScopeQuery(
-      request.nextUrl.searchParams
-    );
+    const executionScopeResult = await readExecutionScope();
     if (!executionScopeResult.ok) {
       return NextResponse.json(
         { error: "Invalid milestoneIds/configIds" },

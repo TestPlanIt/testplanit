@@ -4,6 +4,10 @@ import {
   isExecutionScopeActive,
   type LatestResultExecutionScope,
 } from "~/lib/services/latestCaseResults";
+import {
+  MAX_EXECUTION_SCOPE_IDS,
+  MAX_EXECUTION_SCOPE_QUERY_IDS,
+} from "~/utils/requirementExecutionScope";
 
 /**
  * The one wire format for the requirement coverage family's execution
@@ -14,10 +18,7 @@ import {
  * snapshot capture.
  */
 
-/** Per-axis id-list cap. A scope names the milestones/configurations a
- * release frame cares about — a list past this size is a malformed
- * request, not a bigger frame. */
-export const MAX_EXECUTION_SCOPE_IDS = 200;
+export { MAX_EXECUTION_SCOPE_IDS, MAX_EXECUTION_SCOPE_QUERY_IDS };
 
 const axisSchema = z
   .array(z.number().int().positive())
@@ -45,6 +46,9 @@ export function toExecutionScope(input: {
   return isExecutionScopeActive(scope) ? scope : undefined;
 }
 
+export type ExecutionScopeParseResult =
+  { ok: true; scope: LatestResultExecutionScope | undefined } | { ok: false };
+
 /**
  * Imperative equivalent for handlers that hand-parse their JSON body
  * (`utils/requirementCoverageReportUtils.ts`'s convention): each raw value
@@ -54,7 +58,7 @@ export function toExecutionScope(input: {
 export function parseExecutionScopeBody(
   rawMilestoneIds: unknown,
   rawConfigIds: unknown
-): { ok: true; scope: LatestResultExecutionScope | undefined } | { ok: false } {
+): ExecutionScopeParseResult {
   const milestone = parseAxis(rawMilestoneIds);
   if (!milestone.ok) return { ok: false };
   const config = parseAxis(rawConfigIds);
@@ -70,11 +74,13 @@ export function parseExecutionScopeBody(
 
 /**
  * Query-string form (`?milestoneIds=1,2&configIds=3`) for the GET routes.
- * A missing key is an inactive axis; an empty or malformed value is a 400.
+ * A missing key is an inactive axis; an empty or malformed value is a 400,
+ * and so is a list past `MAX_EXECUTION_SCOPE_QUERY_IDS` — a scope that long
+ * arrives through `parseExecutionScopeRequestBody` instead.
  */
 export function parseExecutionScopeQuery(
   searchParams: URLSearchParams
-): { ok: true; scope: LatestResultExecutionScope | undefined } | { ok: false } {
+): ExecutionScopeParseResult {
   const milestone = parseCsvAxis(searchParams.get("milestoneIds"));
   if (!milestone.ok) return { ok: false };
   const config = parseCsvAxis(searchParams.get("configIds"));
@@ -88,13 +94,35 @@ export function parseExecutionScopeQuery(
   };
 }
 
+/**
+ * The POST twin of `parseExecutionScopeQuery`: the same read, with the
+ * scope as the request's JSON body (`{ milestoneIds, configIds }`) because
+ * it is too long for a query string. An unreadable body is a 400.
+ */
+export async function parseExecutionScopeRequestBody(
+  request: Request
+): Promise<ExecutionScopeParseResult> {
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return { ok: false };
+  }
+  if (typeof body !== "object" || body === null || Array.isArray(body)) {
+    return { ok: false };
+  }
+  const { milestoneIds, configIds } = body as Record<string, unknown>;
+  return parseExecutionScopeBody(milestoneIds, configIds);
+}
+
 function parseAxis(
-  raw: unknown
+  raw: unknown,
+  max = MAX_EXECUTION_SCOPE_IDS
 ): { ok: true; ids: number[] | undefined } | { ok: false } {
   if (raw === undefined || raw === null) {
     return { ok: true, ids: undefined };
   }
-  if (!Array.isArray(raw) || raw.length > MAX_EXECUTION_SCOPE_IDS) {
+  if (!Array.isArray(raw) || raw.length > max) {
     return { ok: false };
   }
   const ids = raw.map(Number);
@@ -111,7 +139,7 @@ function parseCsvAxis(
     return { ok: true, ids: undefined };
   }
   const parts = raw.split(",").filter((part) => part !== "");
-  return parseAxis(parts);
+  return parseAxis(parts, MAX_EXECUTION_SCOPE_QUERY_IDS);
 }
 
 /** Order-insensitive equality of two frozen scope axis lists — the changes

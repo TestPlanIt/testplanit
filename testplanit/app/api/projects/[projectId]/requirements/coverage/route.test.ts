@@ -18,7 +18,7 @@ import { getRequirementCoverage } from "~/lib/services/requirementCoverage";
 
 import type { RequirementCoverageBreakdown } from "~/lib/services/requirementCoverage";
 
-import { GET } from "./route";
+import { GET, POST } from "./route";
 
 const mockedSession = getServerSession as unknown as ReturnType<typeof vi.fn>;
 const mockedResolveScope = resolveViewerProjectScope as unknown as ReturnType<
@@ -211,5 +211,62 @@ describe("GET /api/projects/[projectId]/requirements/coverage", () => {
     expect(res.status).toBe(500);
     const body = await res.json();
     expect(JSON.stringify(body)).not.toContain("RepositoryCases");
+  });
+});
+
+describe("POST /api/projects/[projectId]/requirements/coverage", () => {
+  const scopedRequest = (body: unknown, query = "") =>
+    new NextRequest(
+      `http://localhost/api/projects/5/requirements/coverage${query}`,
+      { method: "POST", body: JSON.stringify(body) }
+    );
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockedSession.mockResolvedValue({
+      user: { id: "user-1", access: "USER" },
+    });
+    mockedResolveScope.mockResolvedValue([5]);
+    mockedGetCoverage.mockResolvedValue(new Map());
+  });
+
+  it("reads an execution scope longer than a query string can carry from the body", async () => {
+    const milestoneIds = Array.from({ length: 201 }, (_, i) => i + 1);
+
+    const res = await POST(
+      scopedRequest({ milestoneIds, configIds: [4] }, "?requirementIds=21011"),
+      params("5")
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockedGetCoverage).toHaveBeenCalledWith(
+      5,
+      { accessibleProjectIds: [5] },
+      { rootIds: [21011], executionScope: { milestoneIds, configIds: [4] } }
+    );
+  });
+
+  it("400s a malformed scope body without running the rollup", async () => {
+    const res = await POST(scopedRequest({ milestoneIds: [0] }), params("5"));
+
+    expect(res.status).toBe(400);
+    expect(mockedGetCoverage).not.toHaveBeenCalled();
+  });
+
+  it("keeps GET's gate order: 401 before the body is read", async () => {
+    mockedSession.mockResolvedValue(null);
+
+    const res = await POST(scopedRequest("not a scope"), params("5"));
+
+    expect(res.status).toBe(401);
+  });
+
+  it("still 403s a project outside the viewer's scope", async () => {
+    mockedResolveScope.mockResolvedValue([9]);
+
+    const res = await POST(scopedRequest({ milestoneIds: [1] }), params("5"));
+
+    expect(res.status).toBe(403);
+    expect(mockedGetCoverage).not.toHaveBeenCalled();
   });
 });

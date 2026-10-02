@@ -173,6 +173,20 @@ async function resolveCoverageSortValues(
   }
 }
 
+/** The unfiltered roots window: GET's page, and POST's `include: "roots"`. */
+async function readRootsPage(
+  projectId: number,
+  limit: number,
+  cursor: RequirementRootsCursor | null,
+  sort: RequirementTreeSort
+) {
+  const [total, page] = await Promise.all([
+    countProjectRequirements(projectId),
+    getRequirementRootsPage({ projectId, limit, cursor, sort }),
+  ]);
+  return { total, rows: page.rows, nextCursor: page.nextCursor };
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
@@ -268,21 +282,9 @@ export async function GET(
       ),
     };
 
-    const [total, page] = await Promise.all([
-      countProjectRequirements(projectId),
-      getRequirementRootsPage({
-        projectId,
-        limit,
-        cursor: cursorResult.cursor,
-        sort,
-      }),
-    ]);
-
-    return NextResponse.json({
-      total,
-      rows: page.rows,
-      nextCursor: page.nextCursor,
-    });
+    return NextResponse.json(
+      await readRootsPage(projectId, limit, cursorResult.cursor, sort)
+    );
   } catch (error) {
     console.error("Requirements tree error:", error);
     return NextResponse.json(
@@ -324,7 +326,10 @@ const requirementTreeFilterBodySchema = z.object({
   // `.optional()` is `T | undefined` — it rejects null, which 400'd every
   // search and filter in the browser.
   cursor: requirementTreeCursorSchema.nullish(),
-  include: z.enum(["ids", "rows"]),
+  // "roots" is not a filter request: it is GET's unfiltered roots page,
+  // asked for by POST because its execution scope is too long for a query
+  // string. Only `limit`, `cursor`, `sort` and the scope are read for it.
+  include: z.enum(["ids", "rows", "roots"]),
   // Same closed union and same default as the GET path's query params --
   // the filtered page is paged by the same keyset and must be ordered the
   // same way, or scrolling a filtered list would walk a different order
@@ -399,6 +404,12 @@ export async function POST(
         executionScope
       ),
     };
+
+    if (include === "roots") {
+      return NextResponse.json(
+        await readRootsPage(projectId, limit, cursor, sort)
+      );
+    }
 
     const axes: RequirementTreeFilterAxes = { search, status, source };
     const coverageAxisActive = coverage.length > 0;

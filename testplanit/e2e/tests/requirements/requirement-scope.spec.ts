@@ -98,4 +98,76 @@ test.describe("Requirement coverage scoping", () => {
       ).toBeVisible();
     });
   });
+
+  test("keeps the requirements list working when every milestone of a large project is selected", async ({
+    api,
+    page,
+    request,
+    baseURL,
+  }) => {
+    test.slow();
+    const ts = uid();
+    const projectId = await api.createProject(`E2E Req Scope All ${ts}`);
+    await api.enableRequirements(projectId);
+    const requirementId = await api.createRequirement(
+      projectId,
+      `SCOPEALL-${ts}`,
+      `Scoped all ${ts}`
+    );
+
+    // One past the most ids a scope carries on a query string.
+    const milestoneCount = 201;
+    const milestoneIds: number[] = [];
+    for (let start = 0; start < milestoneCount; start += 20) {
+      const size = Math.min(20, milestoneCount - start);
+      milestoneIds.push(
+        ...(await Promise.all(
+          Array.from({ length: size }, (_, offset) =>
+            api.createMilestone(projectId, `Sprint ${start + offset} ${ts}`)
+          )
+        ))
+      );
+    }
+
+    await test.step("The coverage route accepts the whole selection as a POST body", async () => {
+      const res = await request.post(
+        `${baseURL}/api/projects/${projectId}/requirements/coverage`,
+        { data: { milestoneIds } }
+      );
+      expect(res.status()).toBe(200);
+      expect((await res.json()).coverage[String(requirementId)]).toBeDefined();
+    });
+
+    await test.step("Select all in the milestone scope picker leaves the list loaded", async () => {
+      await page.goto(`/en-US/projects/requirements/${projectId}`);
+      const row = page.getByTestId(`requirement-row-${requirementId}`);
+      await expect(row).toBeVisible({ timeout: 15000 });
+
+      const scopedRequest = (path: string) =>
+        page.waitForResponse(
+          (response) =>
+            response.url().includes(path) &&
+            response.request().method() === "POST" &&
+            (response.request().postDataJSON()?.milestoneIds?.length ?? 0) ===
+              milestoneCount
+        );
+      const coverageResponse = scopedRequest(
+        `/api/projects/${projectId}/requirements/coverage`
+      );
+      const treeResponse = scopedRequest(
+        `/api/projects/${projectId}/requirements/tree`
+      );
+
+      await page
+        .getByTestId("requirements-scope-milestone")
+        .getByRole("combobox")
+        .click();
+      await page.getByTestId("multi-async-combobox-select-all").click();
+
+      expect((await coverageResponse).status()).toBe(200);
+      expect((await treeResponse).status()).toBe(200);
+      await expect(page.getByTestId("requirements-list-error")).toHaveCount(0);
+      await expect(row).toBeVisible();
+    });
+  });
 });

@@ -1,10 +1,16 @@
 import { describe, expect, it } from "vitest";
 import {
+  MAX_EXECUTION_SCOPE_IDS,
+  MAX_EXECUTION_SCOPE_QUERY_IDS,
   parseExecutionScopeBody,
   parseExecutionScopeQuery,
+  parseExecutionScopeRequestBody,
   sameExecutionScope,
   toExecutionScope,
 } from "./executionScopeParam";
+
+const idList = (length: number) =>
+  Array.from({ length }, (_, index) => index + 1);
 
 describe("toExecutionScope", () => {
   it("returns undefined when neither axis is active", () => {
@@ -52,9 +58,50 @@ describe("parseExecutionScopeBody", () => {
     expect(parseExecutionScopeBody(undefined, raw)).toEqual({ ok: false });
   });
 
+  it("accepts an axis longer than a query string can carry", () => {
+    const ids = idList(MAX_EXECUTION_SCOPE_QUERY_IDS + 1);
+    expect(parseExecutionScopeBody(ids, undefined)).toEqual({
+      ok: true,
+      scope: { milestoneIds: ids, configIds: undefined },
+    });
+  });
+
   it("rejects an axis past the cap", () => {
-    const tooMany = Array.from({ length: 201 }, (_, index) => index + 1);
+    const tooMany = idList(MAX_EXECUTION_SCOPE_IDS + 1);
     expect(parseExecutionScopeBody(tooMany, undefined)).toEqual({ ok: false });
+  });
+});
+
+describe("parseExecutionScopeRequestBody", () => {
+  const request = (body: string) =>
+    new Request("http://localhost/scope", { method: "POST", body });
+
+  it("reads both axes from the JSON body", async () => {
+    const milestoneIds = idList(MAX_EXECUTION_SCOPE_QUERY_IDS + 1);
+    expect(
+      await parseExecutionScopeRequestBody(
+        request(JSON.stringify({ milestoneIds, configIds: [3] }))
+      )
+    ).toEqual({ ok: true, scope: { milestoneIds, configIds: [3] } });
+  });
+
+  it("treats an empty object as an inactive scope", async () => {
+    expect(await parseExecutionScopeRequestBody(request("{}"))).toEqual({
+      ok: true,
+      scope: undefined,
+    });
+  });
+
+  it.each([
+    ["an unreadable body", "not json"],
+    ["an empty body", ""],
+    ["a bare array", "[1,2]"],
+    ["null", "null"],
+    ["a malformed axis", JSON.stringify({ milestoneIds: [0] })],
+  ])("rejects %s", async (_label, body) => {
+    expect(await parseExecutionScopeRequestBody(request(body))).toEqual({
+      ok: false,
+    });
   });
 });
 
@@ -85,6 +132,25 @@ describe("parseExecutionScopeQuery", () => {
     expect(
       parseExecutionScopeQuery(new URLSearchParams("milestoneIds="))
     ).toEqual({ ok: true, scope: undefined });
+  });
+
+  it("rejects a list longer than the query-string cap", () => {
+    const atCap = idList(MAX_EXECUTION_SCOPE_QUERY_IDS);
+    expect(
+      parseExecutionScopeQuery(
+        new URLSearchParams({ configIds: atCap.join(",") })
+      )
+    ).toEqual({
+      ok: true,
+      scope: { milestoneIds: undefined, configIds: atCap },
+    });
+    expect(
+      parseExecutionScopeQuery(
+        new URLSearchParams({
+          configIds: idList(MAX_EXECUTION_SCOPE_QUERY_IDS + 1).join(","),
+        })
+      )
+    ).toEqual({ ok: false });
   });
 });
 

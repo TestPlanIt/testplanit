@@ -198,6 +198,52 @@ describe("useRequirementsTree", () => {
     expect(result.current.isLoading).toBe(false);
   });
 
+  it("asks for the roots page by POST when the execution scope is too long for a query string", async () => {
+    const milestoneIds = Array.from({ length: 201 }, (_, i) => i + 1);
+    const filters = {
+      ...INACTIVE_FILTERS,
+      executionScope: { milestoneIds, configIds: [4] },
+    };
+    const { result } = renderHook(() =>
+      useRequirementsTree({ projectId: 1, filters })
+    );
+
+    await resolveCount("lazy", 600);
+    const req = await waitFor(() =>
+      findPending("/requirements/tree", { method: "POST" })
+    );
+    expect(req.url).toBe("/api/projects/1/requirements/tree");
+    expect(parseBody(req)).toEqual({
+      include: "roots",
+      limit: 100,
+      cursor: null,
+      sort: { column: "name", direction: "asc" },
+      milestoneIds,
+      configIds: [4],
+    });
+    await act(async () => {
+      resolveJson(req, { total: 600, rows: [makeRow(1)], nextCursor: null });
+    });
+
+    await waitFor(() => expect(result.current.rows).toHaveLength(1));
+    expect(result.current.isFiltering).toBe(false);
+    expect(countPending("/requirements/tree?limit=")).toBe(0);
+  });
+
+  it("keeps a scope that fits on the roots page's query string", async () => {
+    const filters = {
+      ...INACTIVE_FILTERS,
+      executionScope: { milestoneIds: [9, 2], configIds: [] },
+    };
+    renderHook(() => useRequirementsTree({ projectId: 1, filters }));
+
+    await resolveCount("lazy", 600);
+    const req = await waitFor(() =>
+      findPending("/requirements/tree?limit=", { method: "GET" })
+    );
+    expect(req.url).toContain("milestoneIds=9%2C2");
+  });
+
   // Deep-link reach-forward. A linked row can sit past the first roots page,
   // and the list's scroll-into-view has nothing to aim at until it is loaded.
   it("pages forward until a locateId row lands, then stops", async () => {

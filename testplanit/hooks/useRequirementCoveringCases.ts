@@ -5,8 +5,8 @@ import {
 } from "@tanstack/react-query";
 import type { RequirementCoveringCasesResponse } from "~/app/api/projects/[projectId]/requirements/[issueId]/covering-cases/route";
 import {
-  appendExecutionScopeParams,
   executionScopeKey,
+  fetchWithExecutionScope,
   type RequirementExecutionScopeSelection,
 } from "~/utils/requirementExecutionScope";
 
@@ -84,11 +84,10 @@ export function useRequirementCoveringCases(
   return useQuery<RequirementCoveringCasesResponse>({
     queryKey: ["requirementCoveringCases", projectId, requirementId, scopeKey],
     queryFn: async () => {
-      const params = new URLSearchParams();
-      appendExecutionScopeParams(params, executionScope);
-      const query = params.toString();
-      const response = await fetch(
-        `/api/projects/${projectId}/requirements/${requirementId}/covering-cases${query ? `?${query}` : ""}`
+      const response = await fetchWithExecutionScope(
+        `/api/projects/${projectId}/requirements/${requirementId}/covering-cases`,
+        new URLSearchParams(),
+        executionScope
       );
       if (!response.ok) {
         throw new Error("Failed to fetch requirement covering cases");

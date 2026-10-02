@@ -16,6 +16,16 @@ export const EMPTY_EXECUTION_SCOPE: RequirementExecutionScopeSelection = {
   configIds: [],
 };
 
+/** Per-axis id-list cap on a request body. It matches the most a picker's
+ * "Select all" can return, so a scope the UI can build is always one the
+ * server accepts. */
+export const MAX_EXECUTION_SCOPE_IDS = 10000;
+
+/** Per-axis cap on the query-string form. Past it the ids no longer fit a
+ * URL that every proxy in front of the app will pass, so the scope travels
+ * in a POST body instead (see `fetchWithExecutionScope`). */
+export const MAX_EXECUTION_SCOPE_QUERY_IDS = 200;
+
 export function isExecutionScopeSelectionActive(
   scope: RequirementExecutionScopeSelection | undefined | null
 ): boolean {
@@ -52,6 +62,40 @@ export function executionScopeBodyFields(
       : {}),
     ...(scope.configIds.length > 0 ? { configIds: scope.configIds } : {}),
   };
+}
+
+/** True while both axes are short enough for `appendExecutionScopeParams`. */
+export function executionScopeFitsQuery(
+  scope: RequirementExecutionScopeSelection | undefined | null
+): boolean {
+  return (
+    !scope ||
+    (scope.milestoneIds.length <= MAX_EXECUTION_SCOPE_QUERY_IDS &&
+      scope.configIds.length <= MAX_EXECUTION_SCOPE_QUERY_IDS)
+  );
+}
+
+/**
+ * Fetches a scope-aware read. The scope rides the query string of a GET
+ * while it fits; a longer one is sent as the JSON body of a POST to the
+ * same URL, which every such route answers identically. `params` holds the
+ * caller's other query params and stays on the URL either way.
+ */
+export function fetchWithExecutionScope(
+  path: string,
+  params: URLSearchParams,
+  scope: RequirementExecutionScopeSelection | undefined | null
+): Promise<Response> {
+  const fitsQuery = executionScopeFitsQuery(scope);
+  if (fitsQuery) appendExecutionScopeParams(params, scope);
+  const query = params.toString();
+  const url = query ? `${path}?${query}` : path;
+  if (fitsQuery) return fetch(url);
+  return fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(executionScopeBodyFields(scope)),
+  });
 }
 
 /** True when a snapshot row was captured under an execution scope — the

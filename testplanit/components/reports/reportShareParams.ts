@@ -24,6 +24,7 @@ import {
   resolveRelativeDateRange,
   type RelativeDateRange,
 } from "~/lib/reports/dateRangePresets";
+import { MAX_EXECUTION_SCOPE_IDS } from "~/utils/requirementExecutionScope";
 
 /** Matches ReportBuilder's local getBaseReportType (cross-project variants). */
 function baseReportType(reportType: string): string {
@@ -256,10 +257,6 @@ const REQUIREMENT_COVERAGE_STATE_VALUES: readonly RequirementCoverageStateValue[
 
 /** Mirrors the server's requirementIds cap (reportRequestSchema). */
 const MAX_REQUIREMENT_SCOPE_IDS = 1000;
-
-/** Mirrors the server's per-axis execution-scope cap
- * (lib/services/executionScopeParam.ts). */
-const MAX_EXECUTION_SCOPE_IDS = 200;
 
 function positiveIntParam(
   params: ReadableSearchParams,

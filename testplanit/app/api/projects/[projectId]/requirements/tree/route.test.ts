@@ -599,6 +599,49 @@ describe("POST /api/projects/[projectId]/requirements/tree", () => {
     expect(callArgs.sort.coverageValues.values).toEqual([0, 30_003]);
   });
 
+  it('include: "roots" returns the unfiltered roots page GET serves, with the execution scope read from the body', async () => {
+    const milestoneIds = Array.from({ length: 201 }, (_, i) => i + 1);
+    mockedGetCoverage.mockResolvedValue(new Map([[1, breakdown()]]));
+    mockedGetRequirementRootsPage.mockResolvedValue({
+      rows: [makeRow({ id: 1 })],
+      nextCursor: { value: 0, id: 1 },
+    });
+
+    const res = await POST(
+      makePostRequest("5", {
+        include: "roots",
+        limit: 100000,
+        cursor: { value: 3, id: 9 },
+        sort: { column: "coverage", direction: "desc" },
+        milestoneIds,
+      }),
+      params("5")
+    );
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({
+      total: 42,
+      rows: [expect.objectContaining({ id: 1 })],
+      nextCursor: { value: 0, id: 1 },
+    });
+    expect(mockedGetCoverage).toHaveBeenCalledWith(
+      5,
+      { accessibleProjectIds: [5] },
+      { executionScope: { milestoneIds, configIds: undefined } }
+    );
+    expect(mockedGetRequirementRootsPage).toHaveBeenCalledWith({
+      projectId: 5,
+      limit: 100,
+      cursor: { value: 3, id: 9 },
+      sort: {
+        column: "coverage",
+        direction: "desc",
+        coverageValues: { ids: [1], values: [0] },
+      },
+    });
+    expect(mockedResolveRequirementMatches).not.toHaveBeenCalled();
+  });
+
   it("never runs the coverage rollup for a plain Issue sort column", async () => {
     const res = await POST(
       makePostRequest("5", {

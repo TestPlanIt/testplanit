@@ -6,8 +6,8 @@ import {
 import type { RequirementCoverageResponse } from "~/app/api/projects/[projectId]/requirements/coverage/route";
 import type { RequirementCoverageBreakdown } from "~/lib/services/requirementCoverage";
 import {
-  appendExecutionScopeParams,
   executionScopeKey,
+  fetchWithExecutionScope,
   type RequirementExecutionScopeSelection,
 } from "~/utils/requirementExecutionScope";
 
@@ -84,11 +84,10 @@ export function useRequirementCoverage(
   return useQuery<RequirementCoverageResponse>({
     queryKey: ["requirementCoverage", projectId, scopeKey],
     queryFn: async () => {
-      const params = new URLSearchParams();
-      appendExecutionScopeParams(params, executionScope);
-      const query = params.toString();
-      const response = await fetch(
-        `/api/projects/${projectId}/requirements/coverage${query ? `?${query}` : ""}`
+      const response = await fetchWithExecutionScope(
+        `/api/projects/${projectId}/requirements/coverage`,
+        new URLSearchParams(),
+        executionScope
       );
       if (!response.ok) {
         throw new Error("Failed to fetch requirement coverage");
@@ -127,12 +126,10 @@ export function useRequirementCoverageBreakdown(
       scopeKey,
     ],
     queryFn: async () => {
-      const params = new URLSearchParams({
-        requirementIds: String(requirementId),
-      });
-      appendExecutionScopeParams(params, executionScope);
-      const response = await fetch(
-        `/api/projects/${projectId}/requirements/coverage?${params.toString()}`
+      const response = await fetchWithExecutionScope(
+        `/api/projects/${projectId}/requirements/coverage`,
+        new URLSearchParams({ requirementIds: String(requirementId) }),
+        executionScope
       );
       if (!response.ok) {
         throw new Error("Failed to fetch requirement coverage");

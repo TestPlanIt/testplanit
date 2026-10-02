@@ -4,6 +4,7 @@ import type { RequirementCoverageFilter } from "~/lib/services/requirementCovera
 import {
   appendExecutionScopeParams,
   executionScopeBodyFields,
+  executionScopeFitsQuery,
   executionScopeKey,
   type RequirementExecutionScopeSelection,
 } from "~/utils/requirementExecutionScope";
@@ -218,6 +219,26 @@ async function fetchRootsPage(
   sort: RequirementsTreeSort,
   executionScope?: RequirementExecutionScopeSelection
 ): Promise<RequirementRootsPageResponse> {
+  // A scope too long for the query string asks for the same page by POST.
+  if (!executionScopeFitsQuery(executionScope)) {
+    const res = await fetch(`/api/projects/${projectId}/requirements/tree`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        include: "roots",
+        limit: REQUIREMENTS_TREE_PAGE_SIZE,
+        cursor,
+        sort,
+        ...executionScopeBodyFields(executionScope),
+      }),
+    });
+    if (!res.ok) {
+      throw new Error(
+        `Failed to fetch requirements tree page (status ${res.status})`
+      );
+    }
+    return res.json() as Promise<RequirementRootsPageResponse>;
+  }
   const params = new URLSearchParams({
     limit: String(REQUIREMENTS_TREE_PAGE_SIZE),
     sortColumn: sort.column,

@@ -3,22 +3,25 @@
 // server's parsers agree, so this suite imports BOTH sides and asserts the
 // round trip rather than re-stating each module's shape twice.
 
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   parseExecutionScopeBody,
   parseExecutionScopeQuery,
   toExecutionScope,
-  MAX_EXECUTION_SCOPE_IDS,
 } from "~/lib/services/executionScopeParam";
 
 import {
   appendExecutionScopeParams,
   executionScopeBodyFields,
+  executionScopeFitsQuery,
   executionScopeKey,
+  fetchWithExecutionScope,
   isExecutionScopeSelectionActive,
   isSnapshotExecutionScoped,
   EMPTY_EXECUTION_SCOPE,
+  MAX_EXECUTION_SCOPE_IDS,
+  MAX_EXECUTION_SCOPE_QUERY_IDS,
   type RequirementExecutionScopeSelection,
 } from "./requirementExecutionScope";
 
@@ -26,6 +29,8 @@ const scope = (
   milestoneIds: number[],
   configIds: number[]
 ): RequirementExecutionScopeSelection => ({ milestoneIds, configIds });
+
+const idList = (length: number) => Array.from({ length }, (_, i) => i + 1);
 
 describe("executionScopeKey", () => {
   it("is empty for an inactive selection, so an unscoped query key is unchanged", () => {
@@ -164,18 +169,77 @@ describe("appendExecutionScopeParams round-trips through parseExecutionScopeQuer
     });
   });
 
-  it("round-trips a selection at the per-axis cap, and one past it is a 400", () => {
-    const atCap = Array.from(
-      { length: MAX_EXECUTION_SCOPE_IDS },
-      (_, i) => i + 1
-    );
+  it("round-trips a selection at the query-string cap, and one past it is a 400", () => {
+    const atCap = idList(MAX_EXECUTION_SCOPE_QUERY_IDS);
     expect(roundTrip(scope(atCap, [])).parsed).toEqual({
       ok: true,
       scope: { milestoneIds: atCap, configIds: undefined },
     });
 
-    const pastCap = [...atCap, MAX_EXECUTION_SCOPE_IDS + 1];
+    const pastCap = idList(MAX_EXECUTION_SCOPE_QUERY_IDS + 1);
     expect(roundTrip(scope(pastCap, [])).parsed).toEqual({ ok: false });
+  });
+});
+
+describe("executionScopeFitsQuery", () => {
+  const atCap = idList(MAX_EXECUTION_SCOPE_QUERY_IDS);
+  const pastCap = idList(MAX_EXECUTION_SCOPE_QUERY_IDS + 1);
+
+  it.each([
+    ["no scope", undefined, true],
+    ["an inactive scope", EMPTY_EXECUTION_SCOPE, true],
+    ["both axes at the cap", scope(atCap, atCap), true],
+    ["the milestone axis past the cap", scope(pastCap, []), false],
+    ["the configuration axis past the cap", scope([], pastCap), false],
+  ])("%s -> %s", (_label, selection, expected) => {
+    expect(executionScopeFitsQuery(selection)).toBe(expected);
+  });
+});
+
+describe("fetchWithExecutionScope", () => {
+  const fetchMock = vi.fn(async () => new Response("{}"));
+  vi.stubGlobal("fetch", fetchMock);
+  afterEach(() => fetchMock.mockClear());
+
+  it("sends a scope that fits as a GET query string", async () => {
+    await fetchWithExecutionScope(
+      "/api/coverage",
+      new URLSearchParams({ requirementIds: "7" }),
+      scope([9, 2], [4])
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/coverage?requirementIds=7&milestoneIds=9%2C2&configIds=4"
+    );
+  });
+
+  it("sends a bare GET for an inactive scope and no other params", async () => {
+    await fetchWithExecutionScope(
+      "/api/coverage",
+      new URLSearchParams(),
+      EMPTY_EXECUTION_SCOPE
+    );
+    expect(fetchMock).toHaveBeenCalledWith("/api/coverage");
+  });
+
+  it("sends a scope too long for the URL as a POST body the server accepts", async () => {
+    const milestoneIds = idList(MAX_EXECUTION_SCOPE_QUERY_IDS + 1);
+    await fetchWithExecutionScope(
+      "/api/coverage",
+      new URLSearchParams({ requirementIds: "7" }),
+      scope(milestoneIds, [4])
+    );
+
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [
+      string,
+      RequestInit,
+    ];
+    expect(url).toBe("/api/coverage?requirementIds=7");
+    expect(init.method).toBe("POST");
+    const body = JSON.parse(init.body as string);
+    expect(parseExecutionScopeBody(body.milestoneIds, body.configIds)).toEqual({
+      ok: true,
+      scope: { milestoneIds, configIds: [4] },
+    });
   });
 });
 
@@ -207,6 +271,17 @@ describe("executionScopeBodyFields round-trips through parseExecutionScopeBody",
       ok: true,
       scope: { milestoneIds: undefined, configIds: [4] },
     });
+  });
+
+  it("round-trips a selection at the per-axis cap, and one past it is a 400", () => {
+    const atCap = idList(MAX_EXECUTION_SCOPE_IDS);
+    expect(roundTrip(scope(atCap, [])).parsed).toEqual({
+      ok: true,
+      scope: { milestoneIds: atCap, configIds: undefined },
+    });
+
+    const pastCap = idList(MAX_EXECUTION_SCOPE_IDS + 1);
+    expect(roundTrip(scope([], pastCap)).parsed).toEqual({ ok: false });
   });
 
   it("sends no keys at all for an inactive selection", () => {
