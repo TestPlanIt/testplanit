@@ -2311,6 +2311,18 @@
           "scanFailed": "Ultima scansione non riuscita",
           "scanCancelled": "Ultima scansione annullata"
         },
+        "bulk": {
+          "label": "{count, plural, one {Il tuo repository:} other {Tutti i # repository:}}",
+          "scanRecentHint": "Esegui di nuovo la scansione dei commit recenti in {count, plural, one {il repository connesso} other {tutti i # repository connessi}}.",
+          "scanFullHint": "Esamina ogni commit nel ramo di {count, plural, one {il repository connesso} other {tutti i # repository connessi}} e riempi i pin per i ticket esistenti.",
+          "scanFullConfirm": "Questo esamina ogni commit nel ramo di {count, plural, one {il repository connesso} other {tutti i # repository connessi}}. I repository vengono scansionati uno alla volta, quindi questa operazione può richiedere molto tempo, e ogni esame legge i commit attraverso l'API del provider, il che contribuisce al limite di velocità.",
+          "checkStaleHint": "Controlla i Code Pin di {count, plural, one {il repository connesso} other {tutti i # repository connessi}} rispetto a ogni tip del ramo.",
+          "removeStaleHint": "Rimuovi {count, plural, one {# Code Pin obsoleto} other {# Code Pin obsoleti}} su {repos, plural, one {# repository} other {# repository}}.",
+          "removeConfirm": "Rimuovi {count, plural, one {# Code Pin} other {# Code Pin}} che gli ultimi controlli non hanno potuto trovare al tip del ramo, su {repos, plural, one {# repository} other {# repository}}?",
+          "queued": "In coda per {count, plural, one {# repository} other {# repository}}.{skipped, plural, =0 {} one { # era già in esecuzione.} other { # erano già in esecuzione.}}",
+          "allRunning": "Già in coda o in esecuzione per ogni repository.",
+          "failed": "Non è stato possibile avviare per: {names}"
+        },
         "initialScanStarted": "Recupero dei file del repository e scansione dei marcatori del repository e dei ticket collegati…",
         "scanError": "Scansione non riuscita: {error}",
         "scanLastScan": "Ultima scansione: {date}",

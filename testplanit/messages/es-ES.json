@@ -2311,6 +2311,18 @@
           "scanFailed": "Error en el último escaneo",
           "scanCancelled": "Último escaneo cancelado"
         },
+        "bulk": {
+          "label": "{count, plural, one {Su repositorio:} other {Todos los # repositorios:}}",
+          "scanRecentHint": "Vuelva a escanear las confirmaciones recientes en {count, plural, one {el repositorio conectado} other {todos los # repositorios conectados}}.",
+          "scanFullHint": "Recorra cada confirmación en la rama de {count, plural, one {el repositorio conectado} other {todos los # repositorios conectados}} y rellene los pines para tickets existentes.",
+          "scanFullConfirm": "Esto recorre cada confirmación en la rama de {count, plural, one {el repositorio conectado} other {todos los # repositorios conectados}}. Los repositorios se escanean de uno en uno, por lo que esto puede tomar mucho tiempo, y cada recorrido lee confirmaciones a través de la API del proveedor, lo que cuenta con su límite de velocidad.",
+          "checkStaleHint": "Verifique los Code Pins de {count, plural, one {el repositorio conectado} other {todos los # repositorios conectados}} contra cada punta de rama.",
+          "removeStaleHint": "Eliminar {count, plural, one {# Code Pin obsoleto} other {# Code Pins obsoletos}} en {repos, plural, one {# repositorio} other {# repositorios}}.",
+          "removeConfirm": "¿Eliminar {count, plural, one {# Code Pin} other {# Code Pins}} que las últimas verificaciones no pudieron encontrar en la punta de la rama, en {repos, plural, one {# repositorio} other {# repositorios}}?",
+          "queued": "En cola para {count, plural, one {# repositorio} other {# repositorios}}.{skipped, plural, =0 {} one { # ya estaba en ejecución.} other { # ya estaban en ejecución.}}",
+          "allRunning": "Ya en cola o en ejecución para todos los repositorios.",
+          "failed": "No se pudo iniciar para: {names}"
+        },
         "initialScanStarted": "Obtención de archivos del repositorio y escaneo de marcadores de repositorio y entradas vinculadas…",
         "scanError": "Error de escaneo: {error}",
         "scanLastScan": "Último escaneo: {date}",

@@ -2311,6 +2311,18 @@
           "scanFailed": "Última varredura falhou",
           "scanCancelled": "Última varredura cancelada"
         },
+        "bulk": {
+          "label": "{count, plural, one {Seu repositório:} other {Todos os # repositórios:}}",
+          "scanRecentHint": "Verificar novamente commits recentes em {count, plural, one {o repositório conectado} other {todos os # repositórios conectados}}.",
+          "scanFullHint": "Percorrer cada commit no branch de {count, plural, one {o repositório conectado} other {todos os # repositórios conectados}} e preencher pinos para tickets existentes.",
+          "scanFullConfirm": "Isso percorre cada commit no branch de {count, plural, one {o repositório conectado} other {todos os # repositórios conectados}}. Os repositórios são verificados um de cada vez, portanto, isso pode levar muito tempo, e cada percurso lê commits através da API do provedor, o que conta contra seu limite de taxa.",
+          "checkStaleHint": "Verificar os Pinos de Código de {count, plural, one {o repositório conectado} other {todos os # repositórios conectados}} em relação a cada ponta do branch.",
+          "removeStaleHint": "Remover {count, plural, one {# Pino de Código obsoleto} other {# Pinos de Código obsoletos}} em {repos, plural, one {# repositório} other {# repositórios}}.",
+          "removeConfirm": "Remover {count, plural, one {# Pino de Código} other {# Pinos de Código}} que as últimas verificações não conseguiram encontrar na ponta do branch, em {repos, plural, one {# repositório} other {# repositórios}}?",
+          "queued": "Enfileirado para {count, plural, one {# repositório} other {# repositórios}}.{skipped, plural, =0 {} one { # já estava em execução.} other { # já estavam em execução.}}",
+          "allRunning": "Já enfileirado ou em execução para cada repositório.",
+          "failed": "Não foi possível iniciar para: {names}"
+        },
         "initialScanStarted": "Buscando arquivos do repositório e verificando marcadores de repositório e tíquetes vinculados…",
         "scanError": "Falha na varredura: {error}",
         "scanLastScan": "Última varredura: {date}",

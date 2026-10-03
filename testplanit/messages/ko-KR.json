@@ -2311,6 +2311,18 @@
           "scanFailed": "마지막 스캔 실패",
           "scanCancelled": "마지막 스캔 취소됨"
         },
+        "bulk": {
+          "label": "{count, plural, one {저장소:} other {모든 # 저장소:}}",
+          "scanRecentHint": "연결된 {count, plural, one {저장소} other {# 개의 저장소}}에서 최근 커밋을 다시 스캔합니다.",
+          "scanFullHint": "{count, plural, one {연결된 저장소} other {모든 # 개의 연결된 저장소}}의 브랜치의 모든 커밋을 순회하고 기존 티켓에 대한 핀을 역입력합니다.",
+          "scanFullConfirm": "{count, plural, one {연결된 저장소} other {모든 # 개의 연결된 저장소}}의 브랜치의 모든 커밋을 순회합니다. 저장소는 한 번에 하나씩 스캔되므로 시간이 오래 걸릴 수 있으며, 각 순회는 제공자의 API를 통해 커밋을 읽으므로 속도 제한에 영향을 줍니다.",
+          "checkStaleHint": "{count, plural, one {연결된 저장소} other {모든 # 개의 연결된 저장소}}의 코드 핀을 각 브랜치 끝에 대해 확인합니다.",
+          "removeStaleHint": "{repos, plural, one {# 저장소} other {# 개의 저장소}}에서 {count, plural, one {# 개의 오래된 코드 핀} other {# 개의 오래된 코드 핀}}을 제거합니다.",
+          "removeConfirm": "{repos, plural, one {# 저장소} other {# 개의 저장소}}에서 마지막 확인에서 브랜치 끝에서 찾을 수 없는 {count, plural, one {# 개의 코드 핀} other {# 개의 코드 핀}}을 제거하시겠습니까?",
+          "queued": "{count, plural, one {# 저장소} other {# 개의 저장소}}에 대해 대기열에 추가되었습니다.{skipped, plural, =0 {} one { # 개가 이미 실행 중입니다.} other { # 개가 이미 실행 중입니다.}}",
+          "allRunning": "모든 저장소에 대해 이미 대기열에 추가되었거나 실행 중입니다.",
+          "failed": "다음에 대해 시작할 수 없습니다: {names}"
+        },
         "initialScanStarted": "저장소 파일을 가져오고 저장소 마커 및 연결된 티켓을 스캔 중…",
         "scanError": "스캔 실패: {error}",
         "scanLastScan": "마지막 스캔: {date}",

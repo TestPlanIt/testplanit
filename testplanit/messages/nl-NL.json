@@ -2311,6 +2311,18 @@
           "scanFailed": "Scan mislukt",
           "scanCancelled": "Scan geannuleerd"
         },
+        "bulk": {
+          "label": "{count, plural, one {Uw repository:} other {Alle # repositories:}}",
+          "scanRecentHint": "Scan recente commits opnieuw in {count, plural, one {de verbonden repository} other {alle # verbonden repositories}}.",
+          "scanFullHint": "Loop elke commit op de branch van {count, plural, one {de verbonden repository} other {alle # verbonden repositories}} door en vul pins voor bestaande tickets in.",
+          "scanFullConfirm": "Dit loopt elke commit op de branch van {count, plural, one {de verbonden repository} other {alle # verbonden repositories}} door. Repositories worden één voor één gescand, dus dit kan lange tijd duren, en elke walk leest commits via de API van de provider, wat meerekent voor de ratelimit.",
+          "checkStaleHint": "Controleer de Code Pins van {count, plural, one {de verbonden repository} other {alle # verbonden repositories}} tegen elke branch tip.",
+          "removeStaleHint": "Verwijder {count, plural, one {# verouderde Code Pin} other {# verouderde Code Pins}} over {repos, plural, one {# repository} other {# repositories}}.",
+          "removeConfirm": "Verwijder {count, plural, one {# Code Pin} other {# Code Pins}} die de laatste controles niet konden vinden op de branch tip, over {repos, plural, one {# repository} other {# repositories}}?",
+          "queued": "In wachtrij gezet voor {count, plural, one {# repository} other {# repositories}}.{skipped, plural, =0 {} one { # werd al uitgevoerd.} other { # werden al uitgevoerd.}}",
+          "allRunning": "Al in wachtrij of actief voor elke repository.",
+          "failed": "Kon niet starten voor: {names}"
+        },
         "initialScanStarted": "Bestanden van de opslagplaats ophalen en scannen op repositorymarkeringen en gekoppelde tickets…",
         "scanError": "Scan mislukt: {error}",
         "scanLastScan": "Laatste scan: {date}",

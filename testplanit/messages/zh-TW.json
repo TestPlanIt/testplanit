@@ -2311,6 +2311,18 @@
           "scanFailed": "上次掃描失敗",
           "scanCancelled": "上次掃描已取消"
         },
+        "bulk": {
+          "label": "{count, plural, other {所有 # 個儲存庫：}}",
+          "scanRecentHint": "在{count, plural, other {所有 # 個連線的儲存庫}}中重新掃描最近的提交。",
+          "scanFullHint": "逐一檢查{count, plural, other {所有 # 個連線的儲存庫}}的分支上的每個提交，並為現有票證補填腳釘。",
+          "scanFullConfirm": "這將逐一檢查{count, plural, other {所有 # 個連線的儲存庫}}的分支上的每個提交。儲存庫會逐個掃描，因此可能需要很長時間，且每次檢查都會透過提供者的 API 讀取提交，這會佔用其速率限制。",
+          "checkStaleHint": "根據各分支尖端檢查{count, plural, other {所有 # 個連線的儲存庫}}的代碼腳釘。",
+          "removeStaleHint": "移除{repos, plural, other {# 個儲存庫}}中的{count, plural, other {# 個陳舊代碼腳釘}}。",
+          "removeConfirm": "移除最後一次檢查無法在分支尖端找到的{count, plural, other {# 個代碼腳釘}}，跨越{repos, plural, other {# 個儲存庫}}？",
+          "queued": "已排入{count, plural, other {# 個儲存庫}}的佇列。{skipped, plural, =0 {} other { # 個已在執行中。}}",
+          "allRunning": "已為每個儲存庫排入佇列或正在執行。",
+          "failed": "無法啟動：{names}"
+        },
         "initialScanStarted": "正在擷取儲存庫檔案並掃描儲存庫標記和連結工單……",
         "scanError": "掃描失敗：{error}",
         "scanLastScan": "上次掃描：{date}",
@@ -3544,7 +3556,7 @@
         "title": "選擇需求來源",
         "description": "選擇是從問題文件還是需求文件產生測試案例。",
         "folderContextTip": "為避免重複，系統將使用「{folderName}」及其父/子資料夾中的現有測試案例作為上下文。請確保在繼續操作前已選擇正確的資料夾。",
-        "folderContextCount": "{count, plural, =1 {# existing test case} other {# existing test cases}} in \"{folderName}\" and its parent/child folders will be used as context to match your project's style and avoid duplicates.",
+        "folderContextCount": "{count, plural, =1 {# 個現有測試案例} other {# 個現有測試案例}}在 \"{folderName}\" 及其父/子資料夾中將被用作上下文，以符合您專案的風格並避免重複。",
         "folderContextEmptyTitle": "沒有現有測試案例可用作內容",
         "folderContextEmpty": "「{folderName}」及其上層/下層資料夾中沒有測試案例，因此 AI 沒有您專案風格或現有涵蓋範圍的範例。為了獲得更好的結果，請從這些測試案例所屬的資料夾開始產生器，位於相關案例的旁邊。",
         "currentFolder": "目前資料夾",

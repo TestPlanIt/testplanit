@@ -2311,6 +2311,18 @@
           "scanFailed": "Letzter Scan fehlgeschlagen",
           "scanCancelled": "Letzter Scan abgebrochen"
         },
+        "bulk": {
+          "label": "{count, plural, one {Ihr Repository:} other {Alle # Repositories:}}",
+          "scanRecentHint": "Aktuelle Commits im {count, plural, one {verbundenen Repository} other {allen # verbundenen Repositories}} erneut scannen.",
+          "scanFullHint": "Jeden Commit im Branch des {count, plural, one {verbundenen Repositorys} other {aller # verbundenen Repositories}} durchlaufen und Pins für vorhandene Tickets ergänzen.",
+          "scanFullConfirm": "Dies durchläuft jeden Commit im Branch des {count, plural, one {verbundenen Repositorys} other {aller # verbundenen Repositories}}. Repositories werden nacheinander gescannt, daher kann dies lange dauern, und jeder Durchlauf liest Commits über die API des Anbieters, was auf sein Ratenlimit angerechnet wird.",
+          "checkStaleHint": "Überprüfen Sie die Code Pins des {count, plural, one {verbundenen Repositorys} other {aller # verbundenen Repositories}} gegen jeden Branch-Tip.",
+          "removeStaleHint": "Entfernen Sie {count, plural, one {# veralteten Code Pin} other {# veraltete Code Pins}} über {{repos, plural, one {# Repository} other {# Repositories}}}.",
+          "removeConfirm": "Entfernen Sie {count, plural, one {# Code Pin} other {# Code Pins}}, die die letzten Überprüfungen nicht am Branch-Tip finden konnten, über {{repos, plural, one {# Repository} other {# Repositories}}}}?",
+          "queued": "In Warteschlange für {{count, plural, one {# Repository} other {# Repositories}}.{skipped, plural, =0 {} one { # wurde bereits ausgeführt.} other { # wurden bereits ausgeführt.}}",
+          "allRunning": "Bereits in der Warteschlange oder wird für jedes Repository ausgeführt.",
+          "failed": "Konnte nicht starten für: {names}"
+        },
         "initialScanStarted": "Repository-Dateien abrufen und nach Repository-Markierungen und verknüpften Tickets scannen…",
         "scanError": "Scan fehlgeschlagen: {error}",
         "scanLastScan": "Letzter Scan: {date}",

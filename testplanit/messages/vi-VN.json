@@ -2311,6 +2311,18 @@
           "scanFailed": "Lần quét cuối cùng không thành công",
           "scanCancelled": "Lần quét cuối cùng bị hủy"
         },
+        "bulk": {
+          "label": "{count, plural, one {Kho lưu trữ của bạn:} other {Tất cả # kho lưu trữ:}}",
+          "scanRecentHint": "Quét lại các commit gần đây trong {count, plural, one {kho lưu trữ được kết nối} other {tất cả # kho lưu trữ được kết nối}}.",
+          "scanFullHint": "Duyệt qua mọi commit trên nhánh của {count, plural, one {kho lưu trữ được kết nối} other {tất cả # kho lưu trữ được kết nối}} và backfill chân ghim cho các vé hiện có.",
+          "scanFullConfirm": "Điều này sẽ duyệt qua mọi commit trên nhánh của {count, plural, one {kho lưu trữ được kết nối} other {tất cả # kho lưu trữ được kết nối}}. Các kho lưu trữ được quét từng cái một, vì vậy điều này có thể mất nhiều thời gian, và mỗi lần duyệt sẽ đọc các commit thông qua API của nhà cung cấp, điều này tính vào giới hạn tốc độ của nó.",
+          "checkStaleHint": "Kiểm tra Code Pins của {count, plural, one {kho lưu trữ được kết nối} other {tất cả # kho lưu trữ được kết nối}} so với mỗi tip nhánh.",
+          "removeStaleHint": "Xóa {count, plural, one {# Code Pin lỗi thời} other {# Code Pins lỗi thời}} trên {repos, plural, one {# kho lưu trữ} other {# kho lưu trữ}}.",
+          "removeConfirm": "Xóa {count, plural, one {# Code Pin} other {# Code Pins}} mà các lần kiểm tra gần đây không thể tìm thấy ở tip nhánh, trên {repos, plural, one {# kho lưu trữ} other {# kho lưu trữ}}?",
+          "queued": "Được xếp hàng cho {count, plural, one {# kho lưu trữ} other {# kho lưu trữ}}.{skipped, plural, =0 {} one { # đã chạy rồi.} other { # đã chạy rồi.}}",
+          "allRunning": "Đã được xếp hàng hoặc đang chạy cho mọi kho lưu trữ.",
+          "failed": "Không thể bắt đầu cho: {names}"
+        },
         "initialScanStarted": "Đang tìm nạp các tệp kho lưu trữ và quét các ký hiệu kho lưu trữ và phiếu được liên kết…",
         "scanError": "Quét không thành công: {error}",
         "scanLastScan": "Lần quét cuối cùng: {date}",

@@ -89,9 +89,16 @@ export function ImpactBulkActions({
   const tCommon = useTranslations("common");
 
   const [pending, setPending] = useState<BulkAction | null>(null);
-  const [confirm, setConfirm] = useState<"scanFull" | "removeStale" | null>(
-    null
+  // The dialog keeps its last action while closed, so its text holds still
+  // as it fades out.
+  const [confirm, setConfirm] = useState<"scanFull" | "removeStale">(
+    "scanFull"
   );
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const openConfirm = (action: "scanFull" | "removeStale") => {
+    setConfirm(action);
+    setConfirmOpen(true);
+  };
 
   const staleTargets = configs.filter(
     (config) => (staleByConfig.get(config.id) ?? 0) > 0
@@ -122,6 +129,7 @@ export function ImpactBulkActions({
       action === "removeStale" ? 0 : configs.length - targets.length;
     if (targets.length === 0) {
       toast.info(t("bulk.allRunning"));
+      setConfirmOpen(false);
       return;
     }
 
@@ -170,7 +178,7 @@ export function ImpactBulkActions({
           })
         );
       }
-      setConfirm(null);
+      setConfirmOpen(false);
     } finally {
       setPending(null);
       await onChanged();
@@ -229,21 +237,21 @@ export function ImpactBulkActions({
         {button(
           "scanRecent",
           ScanSearch,
-          t("bulk.scanRecent"),
+          t("tickets.scanRecent"),
           t("bulk.scanRecentHint", { count }),
           () => void run("scanRecent")
         )}
         {button(
           "scanFull",
           History,
-          t("bulk.scanFull"),
+          t("tickets.scanFull"),
           t("bulk.scanFullHint", { count }),
-          () => setConfirm("scanFull")
+          () => openConfirm("scanFull")
         )}
         {button(
           "checkStale",
           SearchCheck,
-          t("bulk.checkStale"),
+          t("stalePins.check"),
           t("bulk.checkStaleHint", { count }),
           () => void run("checkStale")
         )}
@@ -251,20 +259,20 @@ export function ImpactBulkActions({
           button(
             "removeStale",
             PinOff,
-            t("bulk.removeStale"),
+            t("stalePins.remove"),
             t("bulk.removeStaleHint", {
               count: totalStale,
               repos: staleTargets.length,
             }),
-            () => setConfirm("removeStale"),
+            () => openConfirm("removeStale"),
             { disabled: anyCheckRunning, destructive: true }
           )}
       </ActionBar>
 
       <AlertDialog
-        open={confirm !== null}
+        open={confirmOpen}
         onOpenChange={(open) => {
-          if (!open && pending === null) setConfirm(null);
+          if (!open && pending === null) setConfirmOpen(false);
         }}
       >
         <AlertDialogContent>
@@ -278,8 +286,8 @@ export function ImpactBulkActions({
                 }
               />
               {confirm === "removeStale"
-                ? t("bulk.removeStale")
-                : t("bulk.scanFull")}
+                ? t("stalePins.remove")
+                : t("tickets.scanFull")}
             </AlertDialogTitle>
             <AlertDialogDescription asChild className="space-y-2">
               <div>
@@ -307,7 +315,7 @@ export function ImpactBulkActions({
               onClick={(event) => {
                 // Keep the dialog open until the requests settle.
                 event.preventDefault();
-                if (confirm) void run(confirm);
+                void run(confirm);
               }}
               disabled={pending !== null}
               className={
@@ -325,8 +333,8 @@ export function ImpactBulkActions({
                 <History className="h-4 w-4" />
               )}
               {confirm === "removeStale"
-                ? t("bulk.removeStale")
-                : t("bulk.scanFull")}
+                ? t("stalePins.remove")
+                : t("tickets.scanFull")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

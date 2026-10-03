@@ -7,15 +7,18 @@ vi.mock("@/lib/multiTenantDb", () => ({ getCurrentTenantId: vi.fn() }));
 
 const { db } = vi.hoisted(() => ({
   db: {
-    user: { findUnique: vi.fn() },
     projectCodeRepositoryConfig: { findUnique: vi.fn(), update: vi.fn() },
   },
 }));
 vi.mock("@/lib/db", () => ({ baseDb: db }));
 vi.mock("~/lib/queues", () => ({ getRepoCacheQueue: vi.fn() }));
+vi.mock("~/lib/integrations/importAuthorization", () => ({
+  authorizeProjectAdminForProject: vi.fn(),
+}));
 
 import { getCurrentTenantId } from "@/lib/multiTenantDb";
 import { getServerSession } from "next-auth/next";
+import { authorizeProjectAdminForProject } from "~/lib/integrations/importAuthorization";
 import { JOB_SCAN_REPO_ISSUES } from "~/lib/queueNames";
 import { getRepoCacheQueue } from "~/lib/queues";
 import { POST } from "./route";
@@ -57,23 +60,32 @@ describe("POST /api/code-repositories/[id]/scan-issues/cancel", () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     (getServerSession as any).mockResolvedValue({ user: { id: "u1" } });
     (getCurrentTenantId as any).mockReturnValue(undefined);
-    db.user.findUnique.mockResolvedValue({ access: "ADMIN" });
+    (authorizeProjectAdminForProject as any).mockResolvedValue({
+      ok: true,
+      status: 200,
+      projectId: 4,
+    });
     db.projectCodeRepositoryConfig.findUnique.mockResolvedValue({
       id: 9,
       purpose: "IMPACT",
+      projectId: 4,
       issueScanReport: { running: true, full: true },
     });
     db.projectCodeRepositoryConfig.update.mockResolvedValue({});
     (getRepoCacheQueue as any).mockReturnValue(makeQueue());
   });
 
-  it("returns 401 without a session and 403 for a plain user", async () => {
+  it("returns 401 without a session and 403 for a user who is not an admin of the config's project", async () => {
     (getServerSession as any).mockResolvedValue(null);
     expect((await POST(request({ projectConfigId: 9 }), params())).status).toBe(
       401
     );
     (getServerSession as any).mockResolvedValue({ user: { id: "u1" } });
-    db.user.findUnique.mockResolvedValue({ access: "USER" });
+    (authorizeProjectAdminForProject as any).mockResolvedValue({
+      ok: false,
+      status: 403,
+      error: "Forbidden",
+    });
     expect((await POST(request({ projectConfigId: 9 }), params())).status).toBe(
       403
     );

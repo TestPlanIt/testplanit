@@ -2311,6 +2311,18 @@
           "scanFailed": "Ostatnie skanowanie nie powiodło się",
           "scanCancelled": "Ostatnie skanowanie anulowane"
         },
+        "bulk": {
+          "label": "{count, plural, one {Twoje repozytorium:} few {Wszystkie # repozytoria:} many {Wszystkich # репозиториев:} other {Wszystkie # repozytoriów:}}",
+          "scanRecentHint": "Ponownie przeskanuj ostatnie commity w {count, plural, one {połączonym repozytorium} few {# połączonych repozytoriach} many {# połączonych репозиториях} other {# połączonych repozytoriach}}.",
+          "scanFullHint": "Przejrzyj każdy commit na gałęzi {count, plural, one {połączonego repozytorium} few {# połączonych repozytoriów} many {# połączonych репозиториев} other {# połączonych repozytoriów}} i uzupełnij backfill pinów dla istniejących biletów.",
+          "scanFullConfirm": "To przejrzy każdy commit na gałęzi {count, plural, one {połączonego repozytorium} few {# połączonych repozytoriów} many {# połączonych репозиториев} other {# połączonych repozytoriów}}. Repozytoria są skanowane po jednym, więc może to trwać długo, a każde przejście odczytuje commity za pośrednictwem API dostawcy, co liczy się w jego limicie szybkości.",
+          "checkStaleHint": "Sprawdź Piny Kodu {count, plural, one {połączonego repozytorium} few {# połączonych repozytoriów} many {# połączonych репозиториев} other {# połączonych repozytoriów}} względem każdego końca gałęzi.",
+          "removeStaleHint": "Usuń {count, plural, one {# nieaktualny Pin Kodu} few {# nieaktualnych Pinów Kodu} many {# nieaktualnych Pinów Kodu} other {# nieaktualnych Pinów Kodu}} w {repos, plural, one {# repozytorium} few {# repozytoriach} many {# репозиториях} other {# repozytoriach}}.",
+          "removeConfirm": "Usunąć {count, plural, one {# Pin Kodu} few {# Piny Kodu} many {# Pinów Kodu} other {# Pinów Kodu}}, których ostatnie sprawdzenia nie mogły znaleźć na końcu gałęzi, w {repos, plural, one {# repozytorium} few {# repozytoriach} many {# репозиториях} other {# repozytoriach}}?",
+          "queued": "Postawione w kolejce dla {count, plural, one {# repozytorium} few {# repozytoriów} many {# репозиториев} other {# repozytoriów}}.{skipped, plural, =0 {} one { # był już uruchomiony.} few { # były już uruchomione.} many { # было уже запущено.} other { # były już uruchomione.}}",
+          "allRunning": "Już w kolejce lub uruchomione dla każdego repozytorium.",
+          "failed": "Nie można było uruchomić dla: {names}"
+        },
         "initialScanStarted": "Pobieranie plików repozytorium i skanowanie w poszukiwaniu znaczników repozytorium i powiązanych biletów…",
         "scanError": "Skanowanie nie powiodło się: {error}",
         "scanLastScan": "Ostatnie skanowanie: {date}",

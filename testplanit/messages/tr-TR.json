@@ -2311,6 +2311,18 @@
           "scanFailed": "Son tarama başarısız oldu",
           "scanCancelled": "Son tarama iptal edildi"
         },
+        "bulk": {
+          "label": "{count, plural, one {Deponuz:} other {Tüm # depo:}}",
+          "scanRecentHint": "Son commit'leri {count, plural, one {bağlı depoda} other {tüm # bağlı depoda}} yeniden tara.",
+          "scanFullHint": "{count, plural, one {Bağlı deponun} other {Tüm # bağlı deponun}} dalındaki her commit'i yürüyün ve mevcut biletler için pin'leri geri doldur.",
+          "scanFullConfirm": "{count, plural, one {Bağlı deponun} other {Tüm # bağlı deponun}} dalındaki her commit'i yürür. Depolar birer birer taranır, bu nedenle uzun sürebilir ve her yürüyüş, sağlayıcının API'si aracılığıyla commit'leri okur; bu da hız sınırınıza karşılık gelir.",
+          "checkStaleHint": "{count, plural, one {Bağlı deponun} other {Tüm # bağlı deponun}} Kod Pin'lerini her dal ucuna karşı kontrol et.",
+          "removeStaleHint": "{count, plural, one {# eski Kod Pin} other {# eski Kod Pin}} {repos, plural, one {# depo} other {# depo}} genelinde kaldır.",
+          "removeConfirm": "{count, plural, one {# Kod Pin} other {# Kod Pin}} son kontroller {repos, plural, one {# depo} other {# depo}} genelinde dal ucunda bulamadığı kaldırılsın mı?",
+          "queued": "{count, plural, one {# depo} other {# depo}} için sıraya alındı.{skipped, plural, =0 {} one { # zaten çalışıyordu.} other { # zaten çalışıyordu.}}",
+          "allRunning": "Her depo için zaten sıraya alındı veya çalışıyor.",
+          "failed": "Şu depolar için başlatılamadı: {names}"
+        },
         "initialScanStarted": "Depo dosyaları getiriliyor ve depo işaretçileri ve bağlantılı biletleri taranıyor…",
         "scanError": "Tarama başarısız oldu: {error}",
         "scanLastScan": "Son tarama: {date}",

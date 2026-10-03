@@ -158,6 +158,29 @@ describe("ImpactBulkActions", () => {
     ]);
   });
 
+  it("closes the full-history dialog when every connection is already scanning", async () => {
+    render(
+      <ImpactBulkActions
+        configs={configs.map((config) => ({
+          ...config,
+          issueScanReport: { queued: true, full: false },
+        }))}
+        staleByConfig={new Map()}
+        onChanged={onChanged}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId("impact-bulk-scanFull"));
+    fireEvent.click(screen.getByTestId("impact-bulk-confirm"));
+    await flush();
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(toast.info).toHaveBeenCalledWith(
+      "projects.settings.impact.bulk.allRunning"
+    );
+    expect(screen.queryByTestId("impact-bulk-confirm")).toBeNull();
+  });
+
   it("checks stale pins on every connection", async () => {
     fetchMock.mockResolvedValue(jsonResponse({ queued: true }));
     render(

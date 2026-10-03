@@ -2311,6 +2311,18 @@
           "scanFailed": "Poslední skenování selhalo",
           "scanCancelled": "Poslední skenování zrušeno"
         },
+        "bulk": {
+          "label": "{count, plural, one {Vaše úložiště:} few {Všechna # úložiště:} many {Všechna # úložišť:} other {Všechna # úložišť:}}",
+          "scanRecentHint": "Přeskenovat poslední commity v {count, plural, one {připojeném úložišti} few {připojených # úložištích} many {připojených # úložištích} other {připojených # úložištích}}.",
+          "scanFullHint": "Projít každý commit na větvi {count, plural, one {připojeného úložiště} few {připojených # úložišť} many {připojených # úložišť} other {připojených # úložišť}} a vyplnit back-fill pinů pro existující lístky.",
+          "scanFullConfirm": "Toto projde každý commit na větvi {count, plural, one {připojeného úložiště} few {připojených # úložišť} many {připojených # úložišť} other {připojených # úložišť}}. Úložiště jsou skenována jedno po druhém, takže to může trvat dlouho a každý průchod čte commity přes API poskytovatele, což se počítá do jeho limitu rychlosti.",
+          "checkStaleHint": "Zkontrolovat Code Pins {count, plural, one {připojeného úložiště} few {připojených # úložišť} many {připojených # úložišť} other {připojených # úložišť}} proti špičce každé větve.",
+          "removeStaleHint": "Odstraní {count, plural, one {# zastaralý Code Pin} few {# zastaralé Code Pins} many {# zastaralých Code Pins} other {# zastaralých Code Pins}} v rámci {repos, plural, one {# úložiště} few {# úložišť} many {# úložišť} other {# úložišť}}.",
+          "removeConfirm": "Odstraní {count, plural, one {# Code Pin} few {# Code Pins} many {# Code Pins} other {# Code Pins}}, které poslední kontroly nemohly najít na špičce větve, v rámci {repos, plural, one {# úložiště} few {# úložišť} many {# úložišť} other {# úložišť}}?",
+          "queued": "Zařazeno do fronty pro {count, plural, one {# úložiště} few {# úložiště} many {# úložišť} other {# úložišť}}.{skipped, plural, =0 {} one { # již běželo.} few { # již běžela.} many { # již běžela.} other { # již běžela.}}",
+          "allRunning": "Již zařazeno do fronty nebo spuštěno pro každé úložiště.",
+          "failed": "Nelze spustit pro: {names}"
+        },
         "initialScanStarted": "Načítání souborů úložiště a prohledávání značek repozitáře a propojených tiketů…",
         "scanError": "Skenování selhalo: {error}",
         "scanLastScan": "Poslední skenování: {date}",

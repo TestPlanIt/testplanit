@@ -2311,6 +2311,18 @@
           "scanFailed": "最後のスキャンに失敗しました",
           "scanCancelled": "最後のスキャンがキャンセルされました"
         },
+        "bulk": {
+          "label": "{count, plural, other {すべての # リポジトリ:}}",
+          "scanRecentHint": "接続されたリポジトリを再スキャンします（{count, plural, one {1 つ} other {# つ}}）。",
+          "scanFullHint": "{count, plural, one {接続されたリポジトリ} other {接続されたすべての # リポジトリ}}のブランチのすべてのコミットをウォークし、既存のチケットのピンをバックフィルします。",
+          "scanFullConfirm": "{count, plural, one {接続されたリポジトリ} other {接続されたすべての # リポジトリ}}のブランチのすべてのコミットをウォークします。リポジトリは一度に 1 つずつスキャンされるため、この処理には長時間かかる可能性があり、各ウォークではプロバイダーの API 経由でコミットを読み取り、このプロセスはレート制限にカウントされます。",
+          "checkStaleHint": "{count, plural, one {接続されたリポジトリ} other {接続されたすべての # リポジトリ}}のコード ピンを各ブランチ先端に対してチェックします。",
+          "removeStaleHint": "{count, plural, one {# 個のスタレ コード ピン} other {# 個のスタレ コード ピン}}を{repos, plural, one {# リポジトリ} other {# リポジトリ}}全体で削除します。",
+          "removeConfirm": "{repos, plural, one {# リポジトリ} other {# リポジトリ}}全体で、最後のチェックでブランチ先端に見つからなかった{count, plural, one {# 個のコード ピン} other {# 個のコード ピン}}を削除しますか？",
+          "queued": "{count, plural, one {# リポジトリ} other {# リポジトリ}}でキューに登録されました。{skipped, plural, =0 {} one {# は既に実行中です。} other {# は既に実行中です。}}",
+          "allRunning": "すべてのリポジトリに対して既にキューに登録されているか、実行中です。",
+          "failed": "以下では開始できませんでした: {names}"
+        },
         "initialScanStarted": "リポジトリファイルを取得し、リポジトリマーカーとリンクされたチケットをスキャンしています…",
         "scanError": "スキャンに失敗しました: {error}",
         "scanLastScan": "最後のスキャン: {date}",

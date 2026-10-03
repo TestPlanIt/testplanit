@@ -3,6 +3,7 @@ import { baseDb } from "@/lib/db";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
+import { authorizeProjectAdminForProject } from "~/lib/integrations/importAuthorization";
 import { getRepoCacheQueue } from "~/lib/queues";
 import { enqueueRepoJob } from "~/lib/services/impact/repoJobs";
 import { authOptions } from "~/server/auth";
@@ -32,14 +33,6 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const user = await baseDb.user.findUnique({
-      where: { id: session.user.id },
-      select: { access: true },
-    });
-    if (!user?.access || !["ADMIN", "PROJECTADMIN"].includes(user.access)) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
     // params.id is the repository id (for URL consistency); the config is the unit of work.
     await params;
 
@@ -65,7 +58,12 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const config = await (baseDb as any).projectCodeRepositoryConfig.findUnique(
       {
         where: { id: configId },
-        select: { id: true, purpose: true, issueScanReport: true },
+        select: {
+          id: true,
+          purpose: true,
+          projectId: true,
+          issueScanReport: true,
+        },
       }
     );
     if (!config) {
@@ -73,6 +71,15 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
         { error: "Configuration not found" },
         { status: 404 }
       );
+    }
+    // Project-admin gate on the config's own project — the same authority
+    // the Impact settings page and the config's write policy key off.
+    const auth = await authorizeProjectAdminForProject(
+      session,
+      config.projectId
+    );
+    if (!auth.ok) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     if (config.purpose !== "IMPACT") {
       return NextResponse.json(

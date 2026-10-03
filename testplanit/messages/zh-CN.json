@@ -2311,6 +2311,18 @@
           "scanFailed": "上次扫描失败",
           "scanCancelled": "上次扫描已取消"
         },
+        "bulk": {
+          "label": "{count, plural, other {所有 # 个存储库:}}",
+          "scanRecentHint": "在{count, plural, other {所有 # 个已连接的存储库}}中重新扫描最近的提交。",
+          "scanFullHint": "遍历{count, plural, other {所有 # 个已连接的存储库}}的分支上的每个提交，并为现有工单回填代码引脚。",
+          "scanFullConfirm": "这将遍历{count, plural, other {所有 # 个已连接的存储库}}的分支上的每个提交。存储库一次扫描一个，因此这可能需要很长时间，每次遍历都会通过提供商的 API 读取提交，这会计入其速率限制。",
+          "checkStaleHint": "根据每个分支提示检查{count, plural, other {所有 # 个已连接的存储库}}的代码引脚。",
+          "removeStaleHint": "删除{repos, plural, other {# 个存储库}}中的{count, plural, other {# 个过期的代码引脚}}。",
+          "removeConfirm": "删除上次检查无法在分支提示处找到的{count, plural, other {# 个代码引脚}}，跨越{repos, plural, other {# 个存储库}}？",
+          "queued": "已为{count, plural, other {# 个存储库}}排队。{skipped, plural, =0 {} other { # 个已在运行。}}",
+          "allRunning": "已为每个存储库排队或正在运行。",
+          "failed": "无法为以下存储库启动：{names}"
+        },
         "initialScanStarted": "正在获取存储库文件并扫描存储库标记和关联票证……",
         "scanError": "扫描失败：{error}",
         "scanLastScan": "上次扫描：{date}",

@@ -2311,6 +2311,18 @@
           "scanFailed": "Dernière analyse échouée",
           "scanCancelled": "Dernière analyse annulée"
         },
+        "bulk": {
+          "label": "{count, plural, one {Votre référentiel :} other {Tous les # référentiels :}}",
+          "scanRecentHint": "Rescanner les commits récents dans {count, plural, one {le référentiel connecté} other {tous les # référentiels connectés}}.",
+          "scanFullHint": "Parcourir chaque commit sur la branche de {count, plural, one {le référentiel connecté} other {tous les # référentiels connectés}} et remplir rétroactivement les épingles pour les tickets existants.",
+          "scanFullConfirm": "Cela parcourt chaque commit sur la branche de {count, plural, one {le référentiel connecté} other {tous les # référentiels connectés}}. Les référentiels sont analysés un à la fois, ce qui peut prendre beaucoup de temps, et chaque parcours lit les commits via l'API du fournisseur, ce qui compte par rapport à sa limite de débit.",
+          "checkStaleHint": "Vérifier les épingles de code de {count, plural, one {le référentiel connecté} other {tous les # référentiels connectés}} par rapport à chaque pointe de branche.",
+          "removeStaleHint": "Supprimer {count, plural, one {# épingle de code obsolète} other {# épingles de code obsolètes}} sur {repos, plural, one {# référentiel} other {# référentiels}}.",
+          "removeConfirm": "Supprimer {count, plural, one {# épingle de code} other {# épingles de code}} que les dernières vérifications n'ont pas pu trouver à la pointe de la branche, sur {repos, plural, one {# référentiel} other {# référentiels}} ?",
+          "queued": "En file d'attente pour {count, plural, one {# référentiel} other {# référentiels}}.{skipped, plural, =0 {} one { # s'exécutait déjà.} other { # s'exécutaient déjà.}}",
+          "allRunning": "Déjà en file d'attente ou en cours d'exécution pour chaque référentiel.",
+          "failed": "Impossible de démarrer pour : {names}"
+        },
         "initialScanStarted": "Récupération des fichiers du dépôt et analyse des marqueurs de dépôt et des tickets liés…",
         "scanError": "Échec de l'analyse : {error}",
         "scanLastScan": "Dernière analyse : {date}",

@@ -626,7 +626,7 @@ export default function ImpactSettingsPage() {
                   </div>
                   {connectButton}
                 </div>
-                {configs.length > 0 && (
+                {configs.length > 1 && (
                   <ImpactBulkActions
                     configs={configs}
                     staleByConfig={staleByConfig}
