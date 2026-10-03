@@ -5,9 +5,13 @@ const isDev = process.env.NODE_ENV !== "production";
 // buffers and native memory.
 const HEAP_RATIO = 0.75;
 
-/** A PM2 size ("512M", "2G", or bare bytes) in megabytes; null if unreadable. */
+// PM2 restarts a worker that outgrows its ceiling, so a ceiling below this
+// would only produce a restart loop.
+const MIN_RESTART_MB = 64;
+
+/** A size ("512M", "2G", or bare bytes) in megabytes; null if unreadable. */
 function toMegabytes(size) {
-  const match = /^(\d+(?:\.\d+)?)\s*([KMG])?$/i.exec(String(size).trim());
+  const match = /^(\d+(?:\.\d+)?)\s*([KMG])?B?$/i.exec(String(size).trim());
   if (!match) return null;
   const value = Number(match[1]);
   const unit = (match[2] || "").toUpperCase();
@@ -15,6 +19,19 @@ function toMegabytes(size) {
   if (unit === "M") return value;
   if (unit === "K") return value / 1024;
   return value / (1024 * 1024);
+}
+
+/** The size as PM2 accepts it: whole digits and an uppercase K, M or G. */
+function toPm2Size(size, megabytes) {
+  const trimmed = String(size).trim();
+  return /^\d+[KMG]?$/.test(trimmed) ? trimmed : `${Math.floor(megabytes)}M`;
+}
+
+const warned = new Set();
+function warnOnce(message) {
+  if (warned.has(message)) return;
+  warned.add(message);
+  console.warn(`[ecosystem] ${message}`);
 }
 
 /**
@@ -25,40 +42,51 @@ function toMegabytes(size) {
  * The heap defaults to 75% of whichever restart ceiling applies, so setting a
  * ceiling alone is enough. A heap set at a broader level than the ceiling is
  * ignored, so raising one worker never pairs its ceiling with another's heap.
+ * A value that cannot be used is skipped with a warning: an unreadable or
+ * tiny ceiling falls through to the next level, and a heap that does not fit
+ * under the ceiling falls back to the 75% default.
  */
 function memoryLimits(defaultRestart, { prefix, shared = false } = {}) {
-  const read = (name) => process.env[name] || undefined;
   const levels = [];
-  if (prefix) {
-    levels.push({
-      restart: read(`${prefix}_MAX_MEMORY_RESTART`),
-      heap: read(`${prefix}_MAX_OLD_SPACE_MB`),
-    });
-  }
-  if (shared) {
-    levels.push({
-      restart: read("WORKER_MAX_MEMORY_RESTART"),
-      heap: read("WORKER_MAX_OLD_SPACE_MB"),
-    });
-  }
+  if (prefix) levels.push(prefix);
+  if (shared) levels.push("WORKER");
 
-  const restartLevel = levels.findIndex((level) => level.restart);
-  let restart =
-    restartLevel === -1 ? defaultRestart : levels[restartLevel].restart;
-  if (toMegabytes(restart) === null) {
-    console.warn(
-      `[ecosystem] Ignoring unreadable memory ceiling "${restart}"; using ${defaultRestart}.`
-    );
-    restart = defaultRestart;
+  let restart = defaultRestart;
+  let restartMb = toMegabytes(defaultRestart);
+  let restartLevel = -1;
+  for (const [index, level] of levels.entries()) {
+    const name = `${level}_MAX_MEMORY_RESTART`;
+    const value = process.env[name];
+    if (!value) continue;
+    const megabytes = toMegabytes(value);
+    if (megabytes === null || megabytes < MIN_RESTART_MB) {
+      warnOnce(
+        `Ignoring ${name}="${value}": expected a size of at least ${MIN_RESTART_MB}M, such as 512M or 2G.`
+      );
+      continue;
+    }
+    restart = toPm2Size(value, megabytes);
+    restartMb = megabytes;
+    restartLevel = index;
+    break;
   }
 
   const candidates =
     restartLevel === -1 ? levels : levels.slice(0, restartLevel + 1);
-  const heapSetting = candidates.map((level) => level.heap).find(Boolean);
-  const heapMb =
-    Number(heapSetting) > 0
-      ? Math.floor(Number(heapSetting))
-      : Math.floor(toMegabytes(restart) * HEAP_RATIO);
+  let heapMb = Math.floor(restartMb * HEAP_RATIO);
+  for (const level of candidates) {
+    const name = `${level}_MAX_OLD_SPACE_MB`;
+    const value = process.env[name];
+    if (!value) continue;
+    const megabytes = Math.floor(Number(value));
+    if (megabytes > 0 && megabytes < restartMb) {
+      heapMb = megabytes;
+      break;
+    }
+    warnOnce(
+      `Ignoring ${name}="${value}": expected a whole number of megabytes below the ${restart} ceiling.`
+    );
+  }
 
   return {
     max_memory_restart: restart,

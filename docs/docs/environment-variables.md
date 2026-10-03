@@ -168,7 +168,7 @@ The repo cache, copy/move, duplicate scan, Magic Select, and step scan workers a
 
 Memory ceilings, applied by the process manager in the workers image. Each worker restarts when its resident size passes its ceiling, and its Node heap defaults to 75% of that ceiling, so setting a ceiling alone is enough. Set a `*_MAX_OLD_SPACE_MB` value only to choose the heap yourself.
 
-`WORKER_*` raises every worker whose default ceiling is 512M. Workers with higher defaults keep them. A worker-specific variable takes precedence over `WORKER_*`, and a heap set in `WORKER_MAX_OLD_SPACE_MB` is ignored for a worker whose own ceiling is set.
+`WORKER_*` raises every worker whose default ceiling is 512M. Workers with higher defaults keep them. A worker-specific variable takes precedence over `WORKER_*`, and a heap set in `WORKER_MAX_OLD_SPACE_MB` is ignored for a worker whose own ceiling is set. A heap must be smaller than its ceiling; one that is not is ignored, and the 75% default applies.
 
 | Variable                                   | Default            | Description                                                                                   |
 | ------------------------------------------ | ------------------ | --------------------------------------------------------------------------------------------- |
