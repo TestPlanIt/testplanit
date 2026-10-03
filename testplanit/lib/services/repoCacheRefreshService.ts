@@ -49,6 +49,28 @@ function isRateLimitError(err: unknown): boolean {
   return msg.includes("rate limit") || msg.includes("429");
 }
 
+/** The error the adapters throw on an HTTP 401/403, e.g. "HTTP 403 Forbidden". */
+function isAuthError(err: unknown): boolean {
+  return err instanceof Error && /^HTTP (401|403)\b/.test(err.message);
+}
+
+/**
+ * Why an archive download must not fall back to the per-file API path. A
+ * rejected credential or an exhausted quota fails that path too — only after
+ * thousands of requests, which keeps a rate-limited token limited. Returns
+ * null for failures the fallback can still recover from (network, 5xx).
+ */
+function archiveFailureReason(err: unknown): string | null {
+  if (isAuthError(err)) {
+    const status = (err as Error).message.match(/^HTTP \d{3}[^:]*/)?.[0];
+    return `Archive download rejected (${status}) — check the repository token's type and scopes`;
+  }
+  if (isRateLimitError(err)) {
+    return "Provider rate limit reached before the archive download could start; retry after the limit resets";
+  }
+  return null;
+}
+
 const MAX_RATE_LIMIT_RETRIES = 3;
 const DEFAULT_RETRY_SECONDS = 60;
 
@@ -713,12 +735,17 @@ export async function refreshRepoCache(
     // Prefer ONE archive download that yields BOTH the file list and the file
     // contents (like `git clone`) — no per-directory API tree-walk and no
     // per-file rate limits. Fall back to the API tree-walk + per-file fetch
-    // when the provider has no archive support or the archive download fails.
+    // when the provider has no archive support or the archive download fails
+    // for a reason the per-file path can survive. An auth rejection or a rate
+    // limit is surfaced instead: the outer catch keeps the live cache and
+    // records the cause where the settings page shows it.
     let tree: ArchiveTree | null = null;
     await assertNotCancelled();
     try {
       tree = await adapter.downloadArchiveTree(branch);
     } catch (archiveErr) {
+      const reason = archiveFailureReason(archiveErr);
+      if (reason) throw new Error(reason);
       console.warn(
         `[repoCacheRefresh] Archive download failed, falling back to tree-walk + per-file fetch:`,
         archiveErr

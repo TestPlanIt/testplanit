@@ -81,6 +81,16 @@ export class AzureDevOpsRepoAdapter extends GitRepoAdapter {
     return this.makeTextRequest(url, { headers: this.authHeaders });
   }
 
+  protected archiveStripsTopDir = false;
+
+  /** Single-request zip archive of the whole tree at `ref`. */
+  protected buildArchiveRequest(ref: string) {
+    return {
+      url: `${this.repoApiUrl}/items?path=%2F&$format=zip&download=true&versionDescriptor.version=${encodeURIComponent(ref)}&versionDescriptor.versionType=branch&api-version=7.0`,
+      headers: this.authHeaders,
+    };
+  }
+
   async getFileContentAtCommit(path: string, sha: string): Promise<string> {
     const url = `${this.repoApiUrl}/items?path=${encodeURIComponent(path)}&versionDescriptor.version=${encodeURIComponent(sha)}&versionDescriptor.versionType=commit&api-version=7.0`;
     return this.makeTextRequest(url, { headers: this.authHeaders });

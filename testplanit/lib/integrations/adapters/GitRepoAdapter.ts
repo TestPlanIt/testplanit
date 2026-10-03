@@ -433,9 +433,7 @@ export abstract class GitRepoAdapter {
             throw new Error(`Rate limit exceeded.${suffix}`);
           }
           const errorText = await response.text().catch(() => "");
-          throw new Error(
-            `HTTP ${response.status} ${response.statusText}: ${errorText.slice(0, 200)}`
-          );
+          throw this.httpError(response, errorText);
         }
 
         // Read as text and parse ourselves so a non-JSON body (e.g. a path that
@@ -518,9 +516,7 @@ export abstract class GitRepoAdapter {
             throw new Error(`Rate limit exceeded.`);
           }
           const errorText = await response.text().catch(() => "");
-          throw new Error(
-            `HTTP ${response.status} ${response.statusText}: ${errorText.slice(0, 200)}`
-          );
+          throw this.httpError(response, errorText);
         }
 
         return await response.text();
@@ -528,6 +524,28 @@ export abstract class GitRepoAdapter {
         clearTimeout(timeoutId);
       }
     });
+  }
+
+  /**
+   * The error for a non-2xx response. Some rejections arrive as a whole HTML
+   * page (Bitbucket's 403 on an archive download); its markup tells the reader
+   * nothing, so only the status line is kept for those.
+   */
+  private httpError(response: Response, body: string): Error {
+    const detail = /^\s*<(!doctype|html)/i.test(body) ? "" : body.slice(0, 200);
+    return new Error(
+      `HTTP ${response.status} ${response.statusText}${detail ? `: ${detail}` : ""}`
+    );
+  }
+
+  /** `headers` without the credential, for a request to another host. */
+  private withoutAuthorization(
+    headers: HeadersInit | undefined
+  ): HeadersInit | undefined {
+    if (!headers) return headers;
+    const copy = new Headers(headers);
+    copy.delete("Authorization");
+    return copy;
   }
 
   /**
@@ -584,9 +602,7 @@ export abstract class GitRepoAdapter {
             throw new Error(`Rate limit exceeded.`);
           }
           const errorText = await response.text().catch(() => "");
-          throw new Error(
-            `HTTP ${response.status} ${response.statusText}: ${errorText.slice(0, 200)}`
-          );
+          throw this.httpError(response, errorText);
         }
 
         return Buffer.from(await response.arrayBuffer());
@@ -630,9 +646,20 @@ export abstract class GitRepoAdapter {
     const buffer = await this.makeBinaryRequest(request.url, {
       headers: request.headers,
     });
+    return this.archiveTreeFromZip(buffer, this.archiveStripsTopDir);
+  }
+
+  /**
+   * The file list and lazy content extraction for a zip of a repository tree.
+   * `stripTopDir` removes the single wrapper directory providers put around
+   * every entry.
+   */
+  protected async archiveTreeFromZip(
+    buffer: Buffer,
+    stripTopDir: boolean
+  ): Promise<ArchiveTree> {
     const JSZip = (await import("jszip")).default;
     const zip = await JSZip.loadAsync(buffer);
-    const stripTopDir = this.archiveStripsTopDir;
 
     // Enumerate entries cheaply (no decompression) to build the file list.
     // Contents are decompressed lazily, and only for the paths the caller wants.
@@ -731,8 +758,17 @@ export abstract class GitRepoAdapter {
     const redirectUrl = this.sanitizeUrl(new URL(location, response.url).href);
     await assertSsrfSafeResolved(redirectUrl);
 
+    // A hop to another host drops the credential, as fetch's own redirect
+    // handling would: a signed download URL (an archive handed off to object
+    // storage) authenticates itself and rejects a second Authorization header,
+    // and the token must not reach a host it was never issued for.
+    const originalOrigin = response.url ? new URL(response.url).origin : null;
+    const sameOrigin = new URL(redirectUrl).origin === originalOrigin;
     const redirectResponse = await fetch(redirectUrl, {
       ...options,
+      headers: sameOrigin
+        ? options.headers
+        : this.withoutAuthorization(options.headers),
       signal,
       redirect: "error", // no further redirects
     });
@@ -741,9 +777,7 @@ export abstract class GitRepoAdapter {
 
     if (!redirectResponse.ok) {
       const errorText = await redirectResponse.text().catch(() => "");
-      throw new Error(
-        `HTTP ${redirectResponse.status} ${redirectResponse.statusText}: ${errorText.slice(0, 200)}`
-      );
+      throw this.httpError(redirectResponse, errorText);
     }
 
     if (mode === "binary") {

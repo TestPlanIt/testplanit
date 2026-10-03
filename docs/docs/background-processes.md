@@ -304,6 +304,8 @@ All workers require:
 - PostgreSQL database configured
 - Environment variables properly set
 
+The Repo Cache Worker also needs `git` on its `PATH` to read Bitbucket Cloud repositories. The `workers` Docker image includes it. See [Bitbucket Cloud requirements](./user-guide/code-repositories.md#bitbucket-cloud-requirements).
+
 ## Monitoring
 
 You can monitor worker health and performance using:

@@ -33,6 +33,13 @@ Administrators register and manage repository connections here. The connection i
 
 Authentication is per-repository (token-based, or email + API token for Bitbucket). Credentials are entered by an administrator when the repository is registered, stored encrypted, and never shown again: when you edit a repository the secret fields start blank, and leaving one blank keeps the stored value. Repositories registered before TestPlanIt encrypted these credentials are encrypted automatically the first time the upgraded server starts; `scripts/encrypt-code-repository-credentials.ts` runs the same pass by hand.
 
+### Bitbucket Cloud requirements
+
+- **Token type**: use an Atlassian **API token** created for the account whose email you enter. Repository, project and workspace access tokens are not accepted, and app passwords no longer work on Bitbucket Cloud.
+- **Token scope**: the API token needs at least `read:repository:bitbucket`.
+- **Git on the workers**: TestPlanIt reads a Bitbucket repository's files with a single shallow Git fetch over HTTPS. The `workers` Docker image includes `git`. If you run the workers outside Docker, install `git` and make sure it is on the worker process's `PATH`.
+- **Without Git**: when no `git` binary is found, TestPlanIt downloads the repository as a zip from bitbucket.org instead. Bitbucket refuses that download for repositories whose Git history is larger than 2 GB.
+
 ## Registering a repository
 
 1. Click **Add** (or **Add Repository** from the empty state).
@@ -80,6 +87,8 @@ The data flow spans the admin page and project settings:
    - **Impact Analysis**: **Analyze impact** lists the repository's branches and commits, compares two commits, and selects the Affected Tests; the Code Pins panel on test case pages picks from the repository's files; and repository markers and ticket keys in recent commit messages are scanned into Code Pins on each cache refresh.
 
 File listings are cached (in Valkey) and can be refreshed from the project's QuickScript or Impact Analysis settings.
+
+When the provider rejects the repository's token or rate limits the account, the cache refresh stops and the project's QuickScript or Impact Analysis settings show the reason. The previously cached files stay in use until a refresh succeeds.
 
 :::info
 For security, TestPlanIt blocks repository URLs that resolve to private or loopback addresses (SSRF protection). Self-hosted hosts must be allowlisted via the `ALLOWED_PRIVATE_HOSTS` environment variable.

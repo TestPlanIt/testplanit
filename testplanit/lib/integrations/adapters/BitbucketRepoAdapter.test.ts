@@ -4,6 +4,12 @@ import { BitbucketRepoAdapter } from "./BitbucketRepoAdapter";
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 
+// No git binary unless a test supplies one, so the zip link is the route.
+const mockGitShallowArchive = vi.fn();
+vi.mock("../gitShallowArchive", () => ({
+  gitShallowArchive: (...args: unknown[]) => mockGitShallowArchive(...args),
+}));
+
 // Mock DNS resolution to avoid real lookups in tests
 vi.mock("~/utils/ssrf", async (importOriginal) => {
   const actual = await importOriginal<typeof import("~/utils/ssrf")>();
@@ -29,6 +35,7 @@ describe("BitbucketRepoAdapter", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGitShallowArchive.mockResolvedValue(null);
     adapter = new BitbucketRepoAdapter(
       { email: "test@example.com", apiToken: "testtoken" },
       { workspace: "myworkspace", repoSlug: "myrepo" }
@@ -438,6 +445,53 @@ describe("BitbucketRepoAdapter", () => {
       expect(
         [...result!.keys()].some((k) => k.startsWith("myworkspace-"))
       ).toBe(false);
+    });
+
+    it("reads the tree from a shallow git fetch when git is installed", async () => {
+      const JSZip = (await import("jszip")).default;
+      const zip = new JSZip();
+      zip.file("src/foo.ts", "export const foo = 1;");
+      zip.file("README.md", "# readme");
+      mockGitShallowArchive.mockResolvedValue(
+        await zip.generateAsync({ type: "nodebuffer" })
+      );
+
+      const tree = await adapter.downloadArchiveTree("main");
+
+      expect(mockGitShallowArchive).toHaveBeenCalledWith({
+        url: "https://bitbucket.org/myworkspace/myrepo.git",
+        ref: "main",
+        authorization: `Basic ${Buffer.from("x-bitbucket-api-token-auth:testtoken").toString("base64")}`,
+        timeoutMs: 600000,
+      });
+      expect(mockFetch).not.toHaveBeenCalled();
+      // A git archive has no wrapper directory to strip.
+      expect(tree!.files.map((f) => f.path).sort()).toEqual([
+        "README.md",
+        "src/foo.ts",
+      ]);
+      const contents = await tree!.getContents(new Set(["src/foo.ts"]));
+      expect(contents.get("src/foo.ts")).toBe("export const foo = 1;");
+    });
+
+    it("sends a legacy app password to git under its own username", async () => {
+      const legacy = new BitbucketRepoAdapter(
+        { username: "olduser", appPassword: "oldpass" },
+        { workspace: "myworkspace", repoSlug: "myrepo" }
+      );
+      mockGitShallowArchive.mockRejectedValue(
+        new Error("HTTP 401 Unauthorized")
+      );
+
+      await expect(legacy.downloadArchiveTree("main")).rejects.toThrow(
+        "HTTP 401 Unauthorized"
+      );
+      expect(mockGitShallowArchive).toHaveBeenCalledWith(
+        expect.objectContaining({
+          authorization: `Basic ${Buffer.from("olduser:oldpass").toString("base64")}`,
+        })
+      );
+      expect(mockFetch).not.toHaveBeenCalled();
     });
 
     it("returns only wantedPaths when provided", async () => {

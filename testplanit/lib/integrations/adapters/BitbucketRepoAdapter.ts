@@ -13,6 +13,7 @@ import {
   RepoCommit,
   RepoFileEntry,
   TestConnectionResult,
+  type ArchiveTree,
   type ListPullRequestsOptions,
   type ListPullRequestsResult,
   type PullRequestState,
@@ -31,8 +32,10 @@ import {
   splitMultiFileDiff,
   stripDiffHeaders,
 } from "../diff/parseUnifiedDiff";
+import { gitShallowArchive } from "../gitShallowArchive";
 
 const MAX_FILES = 10000;
+const GIT_FETCH_TIMEOUT_MS = 10 * 60 * 1000;
 
 const DIFFSTAT_STATUS: Record<string, ChangedFileStatus> = {
   added: "added",
@@ -57,6 +60,7 @@ function parseRawAuthor(raw: string | undefined): {
 export class BitbucketRepoAdapter extends GitRepoAdapter {
   private email: string;
   private apiToken: string;
+  private gitUsername: string;
   private workspace: string;
   private repoSlug: string;
 
@@ -68,6 +72,9 @@ export class BitbucketRepoAdapter extends GitRepoAdapter {
     // Support both new (email/apiToken) and legacy (username/appPassword) credentials
     this.email = credentials.email ?? credentials.username;
     this.apiToken = credentials.apiToken ?? credentials.appPassword;
+    this.gitUsername = credentials.apiToken
+      ? "x-bitbucket-api-token-auth"
+      : this.email;
     this.workspace = settings?.workspace ?? "";
     this.repoSlug = settings?.repoSlug ?? "";
   }
@@ -408,6 +415,33 @@ export class BitbucketRepoAdapter extends GitRepoAdapter {
   async getFileContent(path: string, branch: string): Promise<string> {
     const url = `https://api.bitbucket.org/2.0/repositories/${this.workspace}/${this.repoSlug}/src/${encodeURIComponent(branch)}/${path}`;
     return this.makeTextRequest(url, { headers: this.authHeaders });
+  }
+
+  /**
+   * Git's HTTPS protocol takes the token with a fixed username; an account
+   * email is only valid on the REST API.
+   */
+  private get gitAuthorization() {
+    const encoded = Buffer.from(
+      `${this.gitUsername}:${this.apiToken}`
+    ).toString("base64");
+    return `Basic ${encoded}`;
+  }
+
+  /**
+   * One shallow Git fetch of `ref`. The website's zip link is an unofficial
+   * endpoint that refuses repositories whose history exceeds 2 GB, so it is
+   * only the route when no `git` binary is installed.
+   */
+  async downloadArchiveTree(ref: string): Promise<ArchiveTree | null> {
+    const zip = await gitShallowArchive({
+      url: `https://bitbucket.org/${encodeURIComponent(this.workspace)}/${encodeURIComponent(this.repoSlug)}.git`,
+      ref,
+      authorization: this.gitAuthorization,
+      timeoutMs: GIT_FETCH_TIMEOUT_MS,
+    });
+    if (!zip) return super.downloadArchiveTree(ref);
+    return this.archiveTreeFromZip(zip, false);
   }
 
   /** Single-request zip archive of the whole tree at `ref`. */

@@ -237,7 +237,8 @@ CMD ["node", "server.js"]
 FROM node:24-alpine AS workers
 ENV NODE_ENV=production
 WORKDIR /app/testplanit
-RUN apk add --no-cache postgresql-client
+# git: the repo-cache worker reads Bitbucket repositories with a shallow fetch.
+RUN apk add --no-cache postgresql-client git
 # System chromium for the URL-crawl screenshot capture. playwright-core
 # drives it — no browser download. Capture is ON by default in this image;
 # set CRAWL_SCREENSHOTS=false in the deployment env to disable.

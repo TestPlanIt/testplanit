@@ -163,6 +163,35 @@ describe("GitRepoAdapter redirect protection", () => {
     expect(mockFetch.mock.calls[1][1]).toEqual(
       expect.objectContaining({ redirect: "error" })
     );
+    // Same host: the credential travels with the second request.
+    const authAfterRedirect = new Headers(mockFetch.mock.calls[1][1].headers);
+    expect(authAfterRedirect.get("Authorization")).toBe(
+      new Headers(mockFetch.mock.calls[0][1].headers).get("Authorization")
+    );
+  });
+
+  it("drops the credential when the redirect leaves the origin", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 302,
+      statusText: "Found",
+      headers: new Headers({
+        Location: "https://codeload.github.com/testorg/testrepo?token=signed",
+      }),
+      url: "https://api.github.com/repos/testorg/testrepo",
+      json: () => Promise.resolve({}),
+      text: () => Promise.resolve(""),
+    });
+    mockFetch.mockResolvedValueOnce(makeResponse({ default_branch: "main" }));
+
+    await adapter.getDefaultBranch();
+
+    expect(
+      new Headers(mockFetch.mock.calls[0][1].headers).get("Authorization")
+    ).not.toBeNull();
+    expect(
+      new Headers(mockFetch.mock.calls[1][1].headers).get("Authorization")
+    ).toBeNull();
   });
 
   it("rejects redirect with no Location header", async () => {
@@ -192,6 +221,39 @@ describe("GitRepoAdapter redirect protection", () => {
     expect(mockFetch).toHaveBeenCalledWith(
       expect.any(String),
       expect.objectContaining({ redirect: "manual" })
+    );
+  });
+});
+
+describe("GitRepoAdapter error messages", () => {
+  let adapter: GitHubRepoAdapter;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    adapter = new GitHubRepoAdapter(
+      { personalAccessToken: "test-token" },
+      { owner: "testorg", repo: "testrepo" }
+    );
+    (adapter as any).rateLimitDelay = 0;
+    (adapter as any).lastRequestTime = 0;
+    (adapter as any).maxRetries = 0;
+  });
+
+  it("keeps the response body when it carries a reason", async () => {
+    mockFetch.mockResolvedValue(makeResponse({ message: "Not Found" }, 404));
+
+    await expect(adapter.getDefaultBranch()).rejects.toThrow(
+      'HTTP 404 Error: {"message":"Not Found"}'
+    );
+  });
+
+  it("keeps only the status line when the rejection is an HTML page", async () => {
+    mockFetch.mockResolvedValue(
+      makeResponse("<!DOCTYPE html>\n<html><body>Forbidden</body></html>", 403)
+    );
+
+    await expect(adapter.getDefaultBranch()).rejects.toThrow(
+      /^HTTP 403 Error$/
     );
   });
 });

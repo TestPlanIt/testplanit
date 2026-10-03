@@ -200,6 +200,39 @@ describe("AzureDevOpsRepoAdapter", () => {
     });
   });
 
+  describe("downloadArchiveTree", () => {
+    it("reads the whole tree from one zip download", async () => {
+      const JSZip = (await import("jszip")).default;
+      const zip = new JSZip();
+      zip.file("src/index.ts", "export const a = 1;");
+      zip.file("README.md", "# readme");
+      const buf: Buffer = await zip.generateAsync({ type: "nodebuffer" });
+      mockFetch.mockResolvedValueOnce({
+        ...makeResponse({}),
+        arrayBuffer: () =>
+          Promise.resolve(
+            buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)
+          ),
+      });
+
+      const tree = await adapter.downloadArchiveTree("feature/x");
+
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      const [url, init] = mockFetch.mock.calls[0];
+      expect(url).toContain("/items?path=%2F&$format=zip&download=true");
+      expect(url).toContain("versionDescriptor.version=feature%2Fx");
+      expect(url).toContain("versionDescriptor.versionType=branch");
+      expect(init.headers.Authorization).toMatch(/^Basic /);
+      // The zip is rooted at the repository: no wrapper directory to strip.
+      expect(tree!.files.map((f) => f.path).sort()).toEqual([
+        "README.md",
+        "src/index.ts",
+      ]);
+      const contents = await tree!.getContents(new Set(["src/index.ts"]));
+      expect(contents.get("src/index.ts")).toBe("export const a = 1;");
+    });
+  });
+
   describe("getFileContentAtCommit", () => {
     it("fetches item content with a commit version descriptor", async () => {
       mockFetch.mockResolvedValueOnce(textResponse("const x = 2;"));

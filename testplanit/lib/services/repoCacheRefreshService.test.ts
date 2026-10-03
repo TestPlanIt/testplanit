@@ -770,6 +770,64 @@ describe("refreshRepoCache", () => {
       ]);
     });
 
+    it("does not fetch file by file when the archive download is rejected", async () => {
+      await seedLiveCache({ "lib/auth.ts": "old" });
+      const adapter = makeTreeWalkAdapter(["lib/auth.ts"]);
+      adapter.downloadArchiveTree.mockRejectedValue(
+        new Error("HTTP 403 Forbidden")
+      );
+      (createGitRepoAdapter as any).mockReturnValue(adapter);
+
+      const result = await refreshRepoCache(5, db);
+
+      const message =
+        "Archive download rejected (HTTP 403 Forbidden) — check the repository token's type and scopes";
+      expect(result).toMatchObject({ success: false, error: message });
+      expect(adapter.listFilesInPaths).not.toHaveBeenCalled();
+      expect(adapter.getFileContent).not.toHaveBeenCalled();
+      expect(await repoFileCache.getFileContents(5)).toEqual(
+        new Map([["lib/auth.ts", "old"]])
+      );
+      expect(cacheUpdates().at(-1)).toEqual({
+        cacheStatus: "error",
+        cacheError: message,
+      });
+    });
+
+    it("does not fetch file by file when the archive download is rate limited", async () => {
+      const adapter = makeTreeWalkAdapter(["lib/auth.ts"]);
+      adapter.downloadArchiveTree.mockRejectedValue(
+        new Error("Rate limit exceeded.")
+      );
+      (createGitRepoAdapter as any).mockReturnValue(adapter);
+
+      const result = await refreshRepoCache(5, db);
+
+      expect(result).toMatchObject({
+        success: false,
+        error:
+          "Provider rate limit reached before the archive download could start; retry after the limit resets",
+      });
+      expect(adapter.listFilesInPaths).not.toHaveBeenCalled();
+      expect(adapter.getFileContent).not.toHaveBeenCalled();
+      expect(cacheUpdates().at(-1)).toMatchObject({ cacheStatus: "error" });
+    });
+
+    it("still fetches file by file when the provider has no archive support", async () => {
+      const adapter = makeTreeWalkAdapter(["lib/auth.ts"]);
+      adapter.downloadArchiveTree.mockResolvedValue(null);
+      (createGitRepoAdapter as any).mockReturnValue(adapter);
+
+      const result = await refreshRepoCache(5, db);
+
+      expect(result).toMatchObject({ success: true, fileCount: 1 });
+      expect(adapter.listFilesInPaths).toHaveBeenCalled();
+      expect(adapter.getFileContent).toHaveBeenCalledWith(
+        "lib/auth.ts",
+        "main"
+      );
+    });
+
     it("keeps the old cache readable when the archive and the fallback both fail", async () => {
       await seedLiveCache({ "lib/auth.ts": "old" });
       const adapter = makeTreeWalkAdapter(["lib/auth.ts"]);
