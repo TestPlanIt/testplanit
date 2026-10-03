@@ -6,8 +6,10 @@ vi.stubGlobal("fetch", mockFetch);
 
 // No git binary unless a test supplies one, so the zip link is the route.
 const mockGitShallowArchive = vi.fn();
+const mockGitDefaultBranch = vi.fn();
 vi.mock("../gitShallowArchive", () => ({
   gitShallowArchive: (...args: unknown[]) => mockGitShallowArchive(...args),
+  gitDefaultBranch: (...args: unknown[]) => mockGitDefaultBranch(...args),
 }));
 
 // Mock DNS resolution to avoid real lookups in tests
@@ -36,6 +38,7 @@ describe("BitbucketRepoAdapter", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGitShallowArchive.mockResolvedValue(null);
+    mockGitDefaultBranch.mockResolvedValue(null);
     adapter = new BitbucketRepoAdapter(
       { email: "test@example.com", apiToken: "testtoken" },
       { workspace: "myworkspace", repoSlug: "myrepo" }
@@ -65,6 +68,27 @@ describe("BitbucketRepoAdapter", () => {
   });
 
   describe("getDefaultBranch", () => {
+    it("asks git first and spends no API request", async () => {
+      mockGitDefaultBranch.mockResolvedValue("develop");
+
+      expect(await adapter.getDefaultBranch()).toBe("develop");
+      expect(mockGitDefaultBranch).toHaveBeenCalledWith({
+        url: "https://bitbucket.org/myworkspace/myrepo.git",
+        authorization: `Basic ${Buffer.from("x-bitbucket-api-token-auth:testtoken").toString("base64")}`,
+        timeoutMs: 30000,
+      });
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("asks the API when git cannot answer", async () => {
+      mockGitDefaultBranch.mockRejectedValue(new Error("git fetch failed: x"));
+      mockFetch.mockResolvedValueOnce(
+        makeResponse({ mainbranch: { name: "trunk" } })
+      );
+
+      expect(await adapter.getDefaultBranch()).toBe("trunk");
+    });
+
     it("returns mainbranch.name", async () => {
       mockFetch.mockResolvedValueOnce(
         makeResponse({ mainbranch: { name: "master" } })

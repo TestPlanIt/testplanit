@@ -32,10 +32,11 @@ import {
   splitMultiFileDiff,
   stripDiffHeaders,
 } from "../diff/parseUnifiedDiff";
-import { gitShallowArchive } from "../gitShallowArchive";
+import { gitDefaultBranch, gitShallowArchive } from "../gitShallowArchive";
 
 const MAX_FILES = 10000;
 const GIT_FETCH_TIMEOUT_MS = 10 * 60 * 1000;
+const GIT_LS_REMOTE_TIMEOUT_MS = 30 * 1000;
 
 const DIFFSTAT_STATUS: Record<string, ChangedFileStatus> = {
   added: "added",
@@ -324,7 +325,19 @@ export class BitbucketRepoAdapter extends GitRepoAdapter {
     };
   }
 
+  /**
+   * Git answers this without touching the API quota, so a rate-limited token
+   * can still start a refresh. The API is the route when git is not installed
+   * or cannot answer.
+   */
   async getDefaultBranch(): Promise<string> {
+    const fromGit = await gitDefaultBranch({
+      url: this.gitUrl,
+      authorization: this.gitAuthorization,
+      timeoutMs: GIT_LS_REMOTE_TIMEOUT_MS,
+    }).catch(() => null);
+    if (fromGit) return fromGit;
+
     const data = await this.makeRequest<any>(
       `https://api.bitbucket.org/2.0/repositories/${this.workspace}/${this.repoSlug}`,
       { headers: this.authHeaders }
@@ -417,6 +430,10 @@ export class BitbucketRepoAdapter extends GitRepoAdapter {
     return this.makeTextRequest(url, { headers: this.authHeaders });
   }
 
+  private get gitUrl() {
+    return `https://bitbucket.org/${encodeURIComponent(this.workspace)}/${encodeURIComponent(this.repoSlug)}.git`;
+  }
+
   /**
    * Git's HTTPS protocol takes the token with a fixed username; an account
    * email is only valid on the REST API.
@@ -435,7 +452,7 @@ export class BitbucketRepoAdapter extends GitRepoAdapter {
    */
   async downloadArchiveTree(ref: string): Promise<ArchiveTree | null> {
     const zip = await gitShallowArchive({
-      url: `https://bitbucket.org/${encodeURIComponent(this.workspace)}/${encodeURIComponent(this.repoSlug)}.git`,
+      url: this.gitUrl,
       ref,
       authorization: this.gitAuthorization,
       timeoutMs: GIT_FETCH_TIMEOUT_MS,

@@ -17,18 +17,38 @@ function git(
   args: string[],
   env: NodeJS.ProcessEnv,
   timeoutMs: number
-): Promise<void> {
+): Promise<string> {
   return new Promise((resolve, reject) => {
     execFile(
       "git",
       args,
       { env, timeout: timeoutMs },
-      (err, _stdout, stderr) => {
-        if (!err) return resolve();
+      (err, stdout, stderr) => {
+        if (!err) return resolve(String(stdout ?? ""));
         reject(Object.assign(err, { stderr: String(stderr ?? "") }));
       }
     );
   });
+}
+
+/**
+ * Git's environment for one authenticated HTTPS request. The credential
+ * travels here, never in the URL or the argument list, so it does not appear
+ * in the process table or in Git's error output.
+ */
+function gitEnv(authorization: string): NodeJS.ProcessEnv {
+  return {
+    ...process.env,
+    GIT_TERMINAL_PROMPT: "0",
+    GIT_CONFIG_NOSYSTEM: "1",
+    GIT_CONFIG_GLOBAL: "/dev/null",
+    GIT_ALLOW_PROTOCOL: "https",
+    GIT_CONFIG_COUNT: "2",
+    GIT_CONFIG_KEY_0: "http.extraHeader",
+    GIT_CONFIG_VALUE_0: `Authorization: ${authorization}`,
+    GIT_CONFIG_KEY_1: "http.followRedirects",
+    GIT_CONFIG_VALUE_1: "false",
+  };
 }
 
 /**
@@ -72,9 +92,6 @@ function toAdapterError(err: any, ref: string, timeoutMs: number): Error {
  * fetch replaces thousands of per-file API requests and is not subject to the
  * provider's API quota or its archive-download size cap.
  *
- * The credential travels in the environment, never in the URL or the argument
- * list, so it does not appear in the process table or in Git's error output.
- *
  * @returns null when no `git` binary is installed
  */
 export async function gitShallowArchive(
@@ -85,18 +102,7 @@ export async function gitShallowArchive(
     throw new Error(`Invalid ref "${ref}"`);
   }
 
-  const env: NodeJS.ProcessEnv = {
-    ...process.env,
-    GIT_TERMINAL_PROMPT: "0",
-    GIT_CONFIG_NOSYSTEM: "1",
-    GIT_CONFIG_GLOBAL: "/dev/null",
-    GIT_ALLOW_PROTOCOL: "https",
-    GIT_CONFIG_COUNT: "2",
-    GIT_CONFIG_KEY_0: "http.extraHeader",
-    GIT_CONFIG_VALUE_0: `Authorization: ${authorization}`,
-    GIT_CONFIG_KEY_1: "http.followRedirects",
-    GIT_CONFIG_VALUE_1: "false",
-  };
+  const env = gitEnv(authorization);
 
   const workDir = await mkdtemp(join(tmpdir(), "repo-archive-"));
   const repoDir = join(workDir, "repo.git");
@@ -129,5 +135,29 @@ export async function gitShallowArchive(
     throw toAdapterError(err, ref, timeoutMs);
   } finally {
     await rm(workDir, { recursive: true, force: true });
+  }
+}
+
+/**
+ * The repository's default branch, read from the remote's HEAD over Git's
+ * HTTPS protocol. Costs nothing against the provider's API quota.
+ *
+ * @returns null when no `git` binary is installed or the remote's HEAD names
+ * no branch
+ */
+export async function gitDefaultBranch(
+  request: Omit<ShallowArchiveRequest, "ref">
+): Promise<string | null> {
+  const { url, authorization, timeoutMs } = request;
+  try {
+    const out = await git(
+      ["ls-remote", "--symref", url, "HEAD"],
+      gitEnv(authorization),
+      timeoutMs
+    );
+    return /^ref: refs\/heads\/(\S+)\s+HEAD$/m.exec(out)?.[1] ?? null;
+  } catch (err: any) {
+    if (err?.code === "ENOENT") return null;
+    throw toAdapterError(err, "HEAD", timeoutMs);
   }
 }

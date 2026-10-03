@@ -7,7 +7,7 @@ vi.mock("node:child_process", () => {
   return { execFile, default: { execFile } };
 });
 
-import { gitShallowArchive } from "./gitShallowArchive";
+import { gitDefaultBranch, gitShallowArchive } from "./gitShallowArchive";
 
 type Call = { args: string[]; env: NodeJS.ProcessEnv; timeout: number };
 
@@ -171,5 +171,60 @@ describe("gitShallowArchive", () => {
       gitShallowArchive({ ...request, ref: "--upload-pack=evil" })
     ).rejects.toThrow('Invalid ref "--upload-pack=evil"');
     expect(mockExecFile).not.toHaveBeenCalled();
+  });
+});
+
+describe("gitDefaultBranch", () => {
+  const { url, authorization, timeoutMs } = request;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("reads the branch the remote's HEAD points at", async () => {
+    mockExecFile.mockImplementation((_cmd, _args, _opts, done) =>
+      done(null, "ref: refs/heads/release/2.x\tHEAD\n3f1c9d2\tHEAD\n", "")
+    );
+
+    expect(await gitDefaultBranch({ url, authorization, timeoutMs })).toBe(
+      "release/2.x"
+    );
+    const [, args, opts] = mockExecFile.mock.calls[0];
+    expect(args).toEqual(["ls-remote", "--symref", url, "HEAD"]);
+    expect(opts.env.GIT_CONFIG_VALUE_0).toBe("Authorization: Basic c2VjcmV0");
+  });
+
+  it("returns null when the remote's HEAD names no branch", async () => {
+    mockExecFile.mockImplementation((_cmd, _args, _opts, done) =>
+      done(null, "3f1c9d2\tHEAD\n", "")
+    );
+
+    expect(
+      await gitDefaultBranch({ url, authorization, timeoutMs })
+    ).toBeNull();
+  });
+
+  it("returns null when git is not installed", async () => {
+    mockExecFile.mockImplementation((_cmd, _args, _opts, done) =>
+      done(Object.assign(new Error("spawn git ENOENT"), { code: "ENOENT" }))
+    );
+
+    expect(
+      await gitDefaultBranch({ url, authorization, timeoutMs })
+    ).toBeNull();
+  });
+
+  it("reports a rejected token as an adapter error", async () => {
+    mockExecFile.mockImplementation((_cmd, _args, _opts, done) =>
+      done(
+        new Error("exit 128"),
+        "",
+        "fatal: could not read Username for 'https://bitbucket.org': terminal prompts disabled"
+      )
+    );
+
+    await expect(
+      gitDefaultBranch({ url, authorization, timeoutMs })
+    ).rejects.toThrow("HTTP 401 Unauthorized");
   });
 });
