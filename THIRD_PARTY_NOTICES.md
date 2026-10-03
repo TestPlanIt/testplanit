@@ -14,8 +14,11 @@ This document covers third-party dependencies across all distributed TestPlanIt 
 - **CLI** (`cli/`) — published as a standalone npm package
 - **Documentation site** (`docs/`) — Docusaurus-powered docs
 - **Atlassian Forge plugin** (`forge-app/`) — Jira integration shipped via Atlassian Marketplace
+- **Published packages** (`packages/*`) — the `@testplanit/*` npm packages: API client, MCP server, Playwright reporter, and WebdriverIO reporter
 
-Workspace-internal packages under `@testplanit/*` and `packages/*` are first-party and not listed here.
+The `@testplanit/*` packages are themselves first-party and not listed here, but the third-party runtime and peer dependencies they ship with are — see [Published Package Dependencies](#published-package-dependencies).
+
+The `demo/` workspace is a private internal recording tool. It is never published or distributed, so its dependencies are out of scope.
 
 ---
 
@@ -1101,6 +1104,36 @@ Workspace-internal packages under `@testplanit/*` and `packages/*` are first-par
 - **Repository**: <https://github.com/isaacs/node-glob>
 - **Copyright**: Copyright (c) Isaac Z. Schlueter
 
+### Changesets
+
+- **Version**: various (cli 3.x, changelog-github 1.x)
+- **License**: MIT
+- **Repository**: <https://github.com/changesets/changesets>
+- **Copyright**: Copyright (c) 2019 Ben Conolly
+- **Note**: Includes `@changesets/cli` and `@changesets/changelog-github`, used at the monorepo root to version and publish the `@testplanit/*` packages.
+
+### conventional-changelog-conventionalcommits
+
+- **Version**: 9.x
+- **License**: ISC
+- **Repository**: <https://github.com/conventional-changelog/conventional-changelog>
+- **Copyright**: Copyright © conventional-changelog team
+
+### baseline-browser-mapping
+
+- **Version**: 2.x
+- **License**: Apache-2.0
+- **Repository**: <https://github.com/web-platform-dx/baseline-browser-mapping>
+- **Copyright**: Copyright (c) web-platform-dx contributors
+- **Note**: The published `LICENSE.txt` carries the Apache-2.0 text without a copyright notice; attribution follows the upstream project.
+
+### @udecode/cn
+
+- **Version**: 52.x
+- **License**: MIT
+- **Repository**: <https://github.com/udecode/plate>
+- **Copyright**: Copyright (c) Ziad Beyens, Dylan Schiemann, Joe Anderson, Felix Feng
+
 ### shadcn/ui
 
 - **Version**: 4.x
@@ -1274,6 +1307,65 @@ The TestPlanIt Forge plugin (`forge-app/` workspace package) runs inside Atlassi
 - **Repository**: <https://github.com/babel/babel>
 - **Copyright**: Copyright (c) 2014-present Sebastian McKenzie and other contributors
 - **Note**: Includes `@babel/core`, `@babel/preset-env`, and `@babel/preset-react`.
+
+### babel-loader (dev only)
+
+- **Version**: 10.x
+- **License**: MIT
+- **Repository**: <https://github.com/babel/babel-loader>
+- **Copyright**: Copyright (c) 2014-2019 Luís Couto
+
+### css-loader (dev only)
+
+- **Version**: 7.x
+- **License**: MIT
+- **Repository**: <https://github.com/webpack-contrib/css-loader>
+- **Copyright**: Copyright JS Foundation and other contributors
+
+### style-loader (dev only)
+
+- **Version**: 4.x
+- **License**: MIT
+- **Repository**: <https://github.com/webpack-contrib/style-loader>
+- **Copyright**: Copyright JS Foundation and other contributors
+
+### mini-css-extract-plugin (dev only)
+
+- **Version**: 2.x
+- **License**: MIT
+- **Repository**: <https://github.com/webpack-contrib/mini-css-extract-plugin>
+- **Copyright**: Copyright JS Foundation and other contributors
+
+### html-webpack-plugin (dev only)
+
+- **Version**: 5.x
+- **License**: MIT
+- **Repository**: <https://github.com/jantimon/html-webpack-plugin>
+- **Copyright**: Copyright JS Foundation and other contributors
+
+---
+
+## Published Package Dependencies
+
+The `@testplanit/*` packages under `packages/*` are published to npm separately from the application. The packages themselves are first-party; the third-party dependencies they ship with are listed below.
+
+`@testplanit/api` has no third-party dependencies. `@testplanit/playwright-reporter` and `@testplanit/wdio-reporter` depend on `@testplanit/api` plus peer dependencies that the consuming project installs rather than the package bundling them: `@playwright/test` (>= 1.44, Apache-2.0, already listed under Testing Dependencies) and the WebdriverIO packages below.
+
+### @modelcontextprotocol/sdk
+
+- **Version**: 1.x
+- **License**: MIT
+- **Repository**: <https://github.com/modelcontextprotocol/typescript-sdk>
+- **Copyright**: Copyright (c) 2024 Anthropic, PBC
+- **Note**: Runtime dependency of `@testplanit/mcp-server`, which also depends on Zod (listed above).
+
+### @wdio/reporter and @wdio/types (peer)
+
+- **Version**: 8.x or 9.x
+- **License**: MIT
+- **Repository**: <https://github.com/webdriverio/webdriverio>
+- **Copyright**: Copyright (c) OpenJS Foundation and other contributors
+- **Note**: Peer dependencies of `@testplanit/wdio-reporter`. They are not bundled; the consuming project supplies them with its WebdriverIO installation.
 
 ---
 
@@ -2893,5 +2985,5 @@ For our commercial license, we ensure all dependencies allow commercial use and 
 
 ---
 
-_Last updated: September 2026_
+_Last updated: October 2026_
 _This document is automatically generated and manually reviewed quarterly._
