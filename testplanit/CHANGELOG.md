@@ -1,3 +1,10 @@
+## [1.1.0-beta.34](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.33...v1.1.0-beta.34) (2026-10-03)
+
+### Bug Fixes
+
+* **impact:** read a Bitbucket repository's default branch through git ([5e4ce31](https://github.com/TestPlanIt/testplanit/commit/5e4ce319b27782e727f745f90da760c89736b695))
+* **impact:** stop repository cache refreshes from exhausting the provider's API quota ([6bc434f](https://github.com/TestPlanIt/testplanit/commit/6bc434f10a09283aba827845764e209d15a6a576))
+
 ## [1.1.0-beta.33](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.32...v1.1.0-beta.33) (2026-10-02)
 
 ### Features
