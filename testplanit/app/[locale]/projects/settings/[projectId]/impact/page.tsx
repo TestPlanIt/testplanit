@@ -25,7 +25,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ActionBar } from "@/components/ui/action-bar";
+import {
+  ActionBar,
+  ActionButtonContent,
+  collapsibleActionClass,
+} from "@/components/ui/action-bar";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -50,6 +54,7 @@ import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 import { Link } from "~/lib/navigation";
 import { ApplicationArea } from "~/zenstack/models";
+import { ImpactBulkActions } from "./ImpactBulkActions";
 import { ImpactRepositoryDialog } from "./ImpactRepositoryDialog";
 import { ImpactScanButtons } from "./ImpactScanButtons";
 import { ImpactStalePinButtons } from "./ImpactStalePinButtons";
@@ -621,6 +626,13 @@ export default function ImpactSettingsPage() {
                   </div>
                   {connectButton}
                 </div>
+                {configs.length > 0 && (
+                  <ImpactBulkActions
+                    configs={configs}
+                    staleByConfig={staleByConfig}
+                    onChanged={refetchPinState}
+                  />
+                )}
               </CardHeader>
               <CardContent
                 className="space-y-3"
@@ -702,39 +714,53 @@ export default function ImpactSettingsPage() {
                           )}
                       </div>
                       <div className="flex shrink-0 flex-col items-end gap-2">
-                        <div className="flex items-center gap-1">
+                        <ActionBar
+                          compact
+                          data-testid={`impact-repo-manage-${config.id}`}
+                        >
                           <Button
                             type="button"
                             variant="ghost"
-                            size="icon"
                             aria-label={t("repositories.view")}
+                            className={collapsibleActionClass()}
                             onClick={() => openDialog("view", config.id)}
                             data-testid={`impact-repo-view-${config.id}`}
                           >
-                            <Eye className="h-4 w-4" />
+                            <ActionButtonContent
+                              icon={Eye}
+                              label={t("repositories.view")}
+                            />
                           </Button>
                           <Button
                             type="button"
                             variant="ghost"
-                            size="icon"
                             aria-label={t("repositories.edit")}
+                            className={collapsibleActionClass()}
                             onClick={() => openDialog("edit", config.id)}
                             data-testid={`impact-repo-edit-${config.id}`}
                           >
-                            <SquarePen className="h-4 w-4" />
+                            <ActionButtonContent
+                              icon={SquarePen}
+                              label={t("repositories.edit")}
+                            />
                           </Button>
                           <Button
                             type="button"
                             variant="ghost"
-                            size="icon"
-                            className="text-destructive"
                             aria-label={tRepo("disconnect")}
+                            className={collapsibleActionClass(
+                              undefined,
+                              "text-destructive"
+                            )}
                             onClick={() => setDisconnectTarget(config)}
                             data-testid={`impact-repo-disconnect-${config.id}`}
                           >
-                            <Unlink className="h-4 w-4" />
+                            <ActionButtonContent
+                              icon={Unlink}
+                              label={tRepo("disconnect")}
+                            />
                           </Button>
-                        </div>
+                        </ActionBar>
                         <ActionBar
                           compact
                           className="flex-wrap justify-end"
