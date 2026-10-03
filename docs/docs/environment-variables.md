@@ -166,14 +166,20 @@ See [Background Processes](background-processes.md). Each variable sets how many
 
 The repo cache, copy/move, duplicate scan, Magic Select, and step scan workers always process one job at a time. The matching `*_CONCURRENCY` variables for them only change the value shown on the Job Queues page.
 
-Memory ceilings for the two heaviest workers, applied by the process manager in the workers image:
+Memory ceilings, applied by the process manager in the workers image. Each worker restarts when its resident size passes its ceiling, and its Node heap defaults to 75% of that ceiling, so setting a ceiling alone is enough. Set a `*_MAX_OLD_SPACE_MB` value only to choose the heap yourself.
 
-| Variable                                   | Default | Description                                                |
-| ------------------------------------------ | ------- | ---------------------------------------------------------- |
-| `TESTMO_IMPORT_MAX_MEMORY_RESTART`         | `4G`    | Restart the Testmo import worker above this resident size. |
-| `TESTMO_IMPORT_MAX_OLD_SPACE_MB`           | `3072`  | Node heap for the Testmo import worker.                    |
-| `ELASTICSEARCH_REINDEX_MAX_MEMORY_RESTART` | `2G`    | Restart the reindex worker above this resident size.       |
-| `ELASTICSEARCH_REINDEX_MAX_OLD_SPACE_MB`   | `1536`  | Node heap for the reindex worker.                          |
+`WORKER_*` raises every worker whose default ceiling is 512M. Workers with higher defaults keep them. A worker-specific variable takes precedence over `WORKER_*`, and a heap set in `WORKER_MAX_OLD_SPACE_MB` is ignored for a worker whose own ceiling is set.
+
+| Variable                                   | Default            | Description                                                                                   |
+| ------------------------------------------ | ------------------ | --------------------------------------------------------------------------------------------- |
+| `WORKER_MAX_MEMORY_RESTART`                | `512M`             | Restart each 512M-tier worker above this resident size.                                       |
+| `WORKER_MAX_OLD_SPACE_MB`                  | 75% of the ceiling | Node heap for each 512M-tier worker.                                                          |
+| `TESTMO_IMPORT_MAX_MEMORY_RESTART`         | `4G`               | Restart the Testmo import worker above this resident size.                                    |
+| `TESTMO_IMPORT_MAX_OLD_SPACE_MB`           | 75% of the ceiling | Node heap for the Testmo import worker.                                                       |
+| `ELASTICSEARCH_REINDEX_MAX_MEMORY_RESTART` | `2G`               | Restart the reindex worker above this resident size.                                          |
+| `ELASTICSEARCH_REINDEX_MAX_OLD_SPACE_MB`   | 75% of the ceiling | Node heap for the reindex worker.                                                             |
+| `REPO_CACHE_MAX_MEMORY_RESTART`            | `512M`             | Restart the repo cache worker above this resident size. Raise it for very large repositories. |
+| `REPO_CACHE_MAX_OLD_SPACE_MB`              | 75% of the ceiling | Node heap for the repo cache worker.                                                          |
 
 ## Testmo Import
 
