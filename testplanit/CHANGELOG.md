@@ -1,3 +1,15 @@
+## [1.1.0-beta.35](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.34...v1.1.0-beta.35) (2026-10-03)
+
+### Features
+
+* **impact:** run scans and stale pin checks on every connected repository ([d09a792](https://github.com/TestPlanIt/testplanit/commit/d09a7927c8cd36c21f066da61c1924be65ea0f98))
+* **workers:** let installs raise worker memory ceilings through env ([32d5184](https://github.com/TestPlanIt/testplanit/commit/32d518404d2d85eb7717771ba0aead1fefc2fb75))
+
+### Bug Fixes
+
+* **impact:** tidy the all-repositories actions and gate scans per project ([0b17a3b](https://github.com/TestPlanIt/testplanit/commit/0b17a3b040905cf9fbcbd647519c12c39afe1bbb))
+* **workers:** reject worker memory settings PM2 or Node cannot use ([586108a](https://github.com/TestPlanIt/testplanit/commit/586108a0614e11f461e2cb8761c5f84463eab14c))
+
 ## [1.1.0-beta.34](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.33...v1.1.0-beta.34) (2026-10-03)
 
 ### Bug Fixes
