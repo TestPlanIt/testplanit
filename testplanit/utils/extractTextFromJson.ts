@@ -70,3 +70,74 @@ export const extractTextWithImageMarkers = (doc: unknown): string => {
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 };
+
+const LINE_BREAK_CONTAINERS = new Set([
+  "doc",
+  "bulletList",
+  "orderedList",
+  "taskList",
+  "listItem",
+  "taskItem",
+  "blockquote",
+  "tableCell",
+  "tableHeader",
+]);
+
+/**
+ * Like `extractTextFromNode`, but keeps the document's line structure: block
+ * nodes (paragraphs, headings, list items, code blocks) and hard breaks each
+ * start a new line, list items get a "- " / "1. " marker, and tables become
+ * `| cell | cell |` rows padded to a common column width. Used where the text
+ * is laid out for reading (PDF export) rather than searched or previewed.
+ */
+export const extractTextWithLineBreaks = (doc: unknown): string => {
+  const walkTable = (table: any): string => {
+    const rows: string[][] = (table.content ?? []).map((row: any) =>
+      (row?.content ?? []).map((cell: any) =>
+        walk(cell)
+          .replace(/\s*\n\s*/g, " ")
+          .trim()
+      )
+    );
+    const widths: number[] = [];
+    for (const row of rows) {
+      row.forEach((cell, i) => {
+        widths[i] = Math.max(widths[i] ?? 0, cell.length);
+      });
+    }
+    return rows
+      .map(
+        (row) =>
+          `| ${row.map((cell, i) => cell.padEnd(widths[i])).join(" | ")} |`
+      )
+      .join("\n");
+  };
+
+  const walk = (node: any): string => {
+    if (!node || typeof node !== "object") return "";
+    if (node.type === "hardBreak") return "\n";
+    if (node.type === "table") return walkTable(node);
+    if (typeof node.text === "string") return node.text;
+    if (!Array.isArray(node.content)) return "";
+
+    if (node.type === "bulletList" || node.type === "orderedList") {
+      const start = Number(node.attrs?.start) || 1;
+      return node.content
+        .map((item: any, i: number) => {
+          const marker = node.type === "orderedList" ? `${start + i}. ` : "- ";
+          const indent = " ".repeat(marker.length);
+          return marker + walk(item).replace(/\n/g, `\n${indent}`);
+        })
+        .join("\n");
+    }
+
+    const parts: string[] = node.content.map(walk);
+    return LINE_BREAK_CONTAINERS.has(node.type)
+      ? parts.join("\n")
+      : parts.join("");
+  };
+
+  return walk(doc)
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+};

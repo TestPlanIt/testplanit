@@ -6,7 +6,7 @@ import { ExportOptions } from "../app/[locale]/projects/repository/[projectId]/E
 import { CustomColumnDef } from "../components/tables/ColumnSelection";
 import type { RowData } from "../components/tables/tableFeatures";
 import { logDataExport } from "../lib/services/auditClient";
-import { extractTextFromNode } from "../utils/extractTextFromJson";
+import { extractTextWithLineBreaks } from "../utils/extractTextFromJson";
 import { tiptapToMarkdown } from "../utils/tiptapToMarkdown";
 import { useRecordKeyConfig } from "~/hooks/useRecordKeyConfig";
 import { RECORD_TYPES } from "~/lib/recordKey";
@@ -48,7 +48,7 @@ const formatStepContent = (
     // If parsing failed/skipped and it's still a string, use it directly
     if (typeof parsedContent === "string") return parsedContent;
     // Otherwise, extract text from the parsed object
-    return extractTextFromNode(parsedContent) ?? "";
+    return extractTextWithLineBreaks(parsedContent);
   } else if (formatOption === "markdown") {
     if (typeof parsedContent === "string") return parsedContent;
     return tiptapToMarkdown(parsedContent);
@@ -313,7 +313,8 @@ const formatItemData = <TData extends RowData>(
               case "Text Long":
                 if (options.textLongFormat === "plainText") {
                   const p = safeJsonParse(rawValue);
-                  value = typeof p === "string" ? p : extractTextFromNode(p);
+                  value =
+                    typeof p === "string" ? p : extractTextWithLineBreaks(p);
                 } else if (options.textLongFormat === "markdown") {
                   const p = safeJsonParse(rawValue);
                   value = typeof p === "string" ? p : tiptapToMarkdown(p);

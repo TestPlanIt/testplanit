@@ -21,9 +21,9 @@ vi.mock("papaparse", () => ({
   unparse: mockUnparse,
 }));
 
-// Mock extractTextFromNode using the hoisted mock
+// Mock the plain-text extractor using the hoisted mock
 vi.mock("../utils/extractTextFromJson", () => ({
-  extractTextFromNode: mockExtractText,
+  extractTextWithLineBreaks: mockExtractText,
 }));
 
 // Mock next-intl (provide a simple t function)
