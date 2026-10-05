@@ -4,8 +4,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { ArrowLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useParams, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { RequirementBreadcrumb } from "@/components/requirements/RequirementBreadcrumb";
 import { Button } from "@/components/ui/button";
@@ -66,6 +66,24 @@ export default function RequirementDetailsPage() {
 
   const parsed = Number(requirementIdParam);
   const requirementId = Number.isFinite(parsed) ? parsed : null;
+
+  // `?edit=1` opens the page already in edit mode -- how the list's row menu
+  // Edit lands here for users whose details open in a new window. Captured
+  // once, then dropped from the URL so a reload doesn't re-enter edit mode.
+  const searchParams = useSearchParams();
+  const wantsEdit = searchParams.get("edit") === "1";
+  const [editRequest] = useState(() =>
+    wantsEdit && requirementId != null ? { id: requirementId, token: 1 } : null
+  );
+  useEffect(() => {
+    if (!wantsEdit) return;
+    router.replace(
+      `/projects/requirements/${projectId}/${requirementIdParam}`,
+      {
+        scroll: false,
+      }
+    );
+  }, [wantsEdit, router, projectId, requirementIdParam]);
 
   // Delete is gated on the SAME project-admin permission the workspace uses
   // to decide whether to hand the panel an `onRequestDelete` at all. The
@@ -192,6 +210,7 @@ export default function RequirementDetailsPage() {
         // restores the full context. The panel renders it inline with the
         // title -- see `backHref`.
         backHref={`/projects/requirements/${projectId}?requirement=${requirementId}`}
+        editRequest={editRequest}
         // Delete works here, unlike in the first cut of this route. The
         // affordance is gated on BOTH the same project-admin permission the
         // workspace gates it on AND the descendant count having actually

@@ -278,20 +278,21 @@ model PasswordHistory {
 }
 
 model UserPreferences {
-    id                                  String           @id @default(uuid())
-    userId                              String           @unique @deny('update', true)
-    user                                User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-    theme                               Theme            @default(Purple)
-    itemsPerPage                        ItemsPerPage     @default(P10)
-    locale                              Locale           @default(en_US)
-    dateFormat                          DateFormat       @default(MM_DD_YYYY_DASH)
-    timeFormat                          TimeFormat       @default(HH_MM_A)
-    timezone                            String           @default("Etc/UTC")
-    notificationMode                    NotificationMode @default(USE_GLOBAL)
-    emailNotifications                  Boolean          @default(true)
-    inAppNotifications                  Boolean          @default(true)
-    hasCompletedWelcomeTour             Boolean          @default(false)
-    hasCompletedInitialPreferencesSetup Boolean          @default(false)
+    id                                  String             @id @default(uuid())
+    userId                              String             @unique @deny('update', true)
+    user                                User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+    theme                               Theme              @default(Purple)
+    itemsPerPage                        ItemsPerPage       @default(P10)
+    locale                              Locale             @default(en_US)
+    dateFormat                          DateFormat         @default(MM_DD_YYYY_DASH)
+    timeFormat                          TimeFormat         @default(HH_MM_A)
+    timezone                            String             @default("Etc/UTC")
+    notificationMode                    NotificationMode   @default(USE_GLOBAL)
+    emailNotifications                  Boolean            @default(true)
+    inAppNotifications                  Boolean            @default(true)
+    detailsDisplayMode                  DetailsDisplayMode @default(DOCKED)
+    hasCompletedWelcomeTour             Boolean            @default(false)
+    hasCompletedInitialPreferencesSetup Boolean            @default(false)
 
     @@deny('all', auth() == null)
     @@allow('create,update,delete', auth().id == userId || auth().access == 'ADMIN')
@@ -472,6 +473,15 @@ enum TimeFormat {
     HH_MM_A  // "hh:mm a"
     HH_MM_Z  // "HH:mm z"
     HH_MM_Z_A  // "hh:mm z a"
+
+    @@deny('all', auth() == null)
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', true) // Allow reads for signup
+}
+
+enum DetailsDisplayMode {
+    DOCKED
+    NEW_WINDOW
 
     @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')

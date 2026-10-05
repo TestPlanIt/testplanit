@@ -380,6 +380,7 @@ const mockSession: Session = {
       notificationMode: NotificationMode.USE_GLOBAL,
       emailNotifications: true,
       inAppNotifications: true,
+      detailsDisplayMode: "DOCKED",
       hasCompletedWelcomeTour: false,
       hasCompletedInitialPreferencesSetup: false,
     },

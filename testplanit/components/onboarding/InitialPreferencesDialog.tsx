@@ -32,6 +32,7 @@ import {
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import {
   DateFormat,
+  DetailsDisplayMode,
   ItemsPerPage,
   Locale,
   NotificationMode,
@@ -61,6 +62,7 @@ const FormSchema = z.object({
   timeFormat: z.nativeEnum(TimeFormat),
   timezone: z.string().min(1),
   notificationMode: z.nativeEnum(NotificationMode),
+  detailsDisplayMode: z.nativeEnum(DetailsDisplayMode),
 });
 
 export function InitialPreferencesDialog() {
@@ -131,6 +133,8 @@ export function InitialPreferencesDialog() {
           : detectedTimezone,
       notificationMode:
         userPreferences?.notificationMode ?? NotificationMode.USE_GLOBAL,
+      detailsDisplayMode:
+        userPreferences?.detailsDisplayMode ?? DetailsDisplayMode.DOCKED,
     }),
     [userPreferences, detectedTimezone]
   );
@@ -333,6 +337,7 @@ export function InitialPreferencesDialog() {
         timeFormat: data.timeFormat,
         timezone: data.timezone,
         notificationMode: data.notificationMode,
+        detailsDisplayMode: data.detailsDisplayMode,
         emailNotifications:
           data.notificationMode === "IN_APP_EMAIL_IMMEDIATE" ||
           data.notificationMode === "IN_APP_EMAIL_DAILY",
@@ -466,6 +471,7 @@ export function InitialPreferencesDialog() {
   const themeOptions = Object.values(Theme);
   const localeOptions = Object.values(Locale);
   const notificationModeOptions = Object.values(NotificationMode);
+  const detailsDisplayModeOptions = Object.values(DetailsDisplayMode);
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
@@ -562,6 +568,106 @@ export function InitialPreferencesDialog() {
                 )}
               />
 
+              <div className="grid gap-4 sm:col-span-2 sm:grid-cols-3">
+                <FormField
+                  control={form.control}
+                  name="dateFormat"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("dateFormat")}</FormLabel>
+                      <FormControl>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder={t("dateFormat")} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {dateFormatOptions.map((option) => (
+                              <SelectItem key={option} value={option}>
+                                <DateFormatter
+                                  date={sampleDate}
+                                  formatString={option}
+                                  timezone={form.watch("timezone")}
+                                />
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="timeFormat"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("timeFormat")}</FormLabel>
+                      <FormControl>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder={t("timeFormat")} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {timeFormatOptions.map((option) => (
+                              <SelectItem key={option} value={option}>
+                                <span className="font-mono">
+                                  <DateFormatter
+                                    date={sampleDate}
+                                    formatString={option}
+                                    timezone={form.watch("timezone")}
+                                  />
+                                </span>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="timezone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{tGlobal("common.fields.timezone")}</FormLabel>
+                      <FormControl>
+                        <AsyncCombobox<TimezoneOption>
+                          value={
+                            timezoneOptions.find(
+                              (opt) => opt.id === field.value
+                            ) ?? null
+                          }
+                          onValueChange={(option) => {
+                            const newValue = option ? option.id : "Etc/UTC";
+                            form.setValue("timezone", newValue);
+                            field.onChange(newValue);
+                          }}
+                          fetchOptions={fetchTimezoneOptions}
+                          renderOption={renderTimezoneOption}
+                          getOptionValue={getTimezoneOptionValue}
+                          placeholder={t("timezonePlaceholder")}
+                          className="flex w-full"
+                          showTotal
+                          showUnassigned={false}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
               <FormField
                 control={form.control}
                 name="itemsPerPage"
@@ -626,97 +732,37 @@ export function InitialPreferencesDialog() {
 
               <FormField
                 control={form.control}
-                name="dateFormat"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("dateFormat")}</FormLabel>
-                    <FormControl>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder={t("dateFormat")} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {dateFormatOptions.map((option) => (
-                            <SelectItem key={option} value={option}>
-                              <DateFormatter
-                                date={sampleDate}
-                                formatString={option}
-                                timezone={form.watch("timezone")}
-                              />
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="timeFormat"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("timeFormat")}</FormLabel>
-                    <FormControl>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder={t("timeFormat")} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {timeFormatOptions.map((option) => (
-                            <SelectItem key={option} value={option}>
-                              <span className="font-mono">
-                                <DateFormatter
-                                  date={sampleDate}
-                                  formatString={option}
-                                  timezone={form.watch("timezone")}
-                                />
-                              </span>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="timezone"
+                name="detailsDisplayMode"
                 render={({ field }) => (
                   <FormItem className="sm:col-span-2">
-                    <FormLabel className="mr-2">
-                      {tGlobal("common.fields.timezone")}
+                    <FormLabel>
+                      {tGlobal("common.fields.detailsDisplayMode")}
                     </FormLabel>
                     <FormControl>
-                      <AsyncCombobox<TimezoneOption>
-                        value={
-                          timezoneOptions.find(
-                            (opt) => opt.id === field.value
-                          ) ?? null
-                        }
-                        onValueChange={(option) => {
-                          const newValue = option ? option.id : "Etc/UTC";
-                          form.setValue("timezone", newValue);
-                          field.onChange(newValue);
-                        }}
-                        fetchOptions={fetchTimezoneOptions}
-                        renderOption={renderTimezoneOption}
-                        getOptionValue={getTimezoneOptionValue}
-                        placeholder={t("timezonePlaceholder")}
-                        showTotal
-                        showUnassigned={false}
-                      />
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
+                        <SelectTrigger
+                          className="sm:w-[calc(50%-0.5rem)]"
+                          data-testid="initial-preferences-details-display-mode-select"
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {detailsDisplayModeOptions.map((option) => (
+                            <SelectItem key={option} value={option}>
+                              {option === "NEW_WINDOW"
+                                ? tGlobal(
+                                    "users.profile.preferences.detailsDisplayMode.newWindow"
+                                  )
+                                : tGlobal(
+                                    "users.profile.preferences.detailsDisplayMode.docked"
+                                  )}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </FormControl>
                     <FormMessage />
                   </FormItem>

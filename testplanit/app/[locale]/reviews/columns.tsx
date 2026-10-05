@@ -162,6 +162,11 @@ interface UseColumnsArgs {
    * clicks still follow the link, so "open in a new tab" keeps working.
    */
   onOpenCase?: (caseId: number, projectId: number) => void;
+  /**
+   * Open a CASE row's full page in a new window on click. Set for users whose
+   * details preference is "new window"; `onOpenCase` is left unset then.
+   */
+  openCaseInNewWindow?: boolean;
 }
 
 /**
@@ -233,6 +238,7 @@ export const useColumns = ({
   testRunById,
   sessionById,
   onOpenCase,
+  openCaseInNewWindow,
 }: UseColumnsArgs): ColumnDef<InboxTableRow>[] => {
   return useMemo(() => {
     const baseColumns: ColumnDef<InboxTableRow>[] = [
@@ -269,6 +275,7 @@ export const useColumns = ({
                     ? undefined
                     : `/projects/repository/${projectId}/${c.id}`
                 }
+                linkTarget={openCaseInNewWindow ? "_blank" : undefined}
                 size="medium"
                 maxLines={1}
               />
@@ -607,5 +614,6 @@ export const useColumns = ({
     testRunById,
     sessionById,
     onOpenCase,
+    openCaseInNewWindow,
   ]);
 };

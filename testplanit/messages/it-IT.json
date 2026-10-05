@@ -328,6 +328,7 @@
       "locale": "Lingua",
       "timezone": "Fuso orario",
       "itemsPerPage": "Elementi per pagina",
+      "detailsDisplayMode": "Apri dettagli in",
       "notificationMode": "Notifiche",
       "value": "Valore",
       "key": "Chiave",
@@ -2838,7 +2839,11 @@
         "emailDisabledForScim": "L'indirizzo email viene gestito dal tuo provider di identità tramite SCIM e non può essere modificato qui."
       },
       "preferences": {
-        "title": "Preferenze"
+        "title": "Preferenze",
+        "detailsDisplayMode": {
+          "docked": "Pannello ancorato",
+          "newWindow": "Nuova finestra"
+        }
       },
       "assignments": {
         "title": "Incarichi",
@@ -7601,6 +7606,7 @@
       "projects": "## Assegnazione progetto\nSeleziona a quali progetti può accedere questo utente.\n\n- Controlla quali progetti vengono visualizzati nella dashboard dell'utente\n- Richiesto per la partecipazione al progetto\n- Può essere modificato in seguito dagli amministratori\n- Usa \"Seleziona tutto\" per assegnare rapidamente tutti i progetti disponibili",
       "groups": "## Assegnazione gruppo\nSeleziona a quali gruppi appartiene questo utente.\n\n- I gruppi aiutano a organizzare utenti e permessi\n- Gli utenti ereditano i permessi dai loro gruppi\n- Semplifica la gestione degli accessi\n- Possono essere modificati in seguito dagli amministratori",
       "itemsPerPage": "## Elementi per pagina\nControlla il numero predefinito di elementi mostrati nelle tabelle e negli elenchi.\n\n- Influisce su tutte le viste impaginate nell'applicazione\n- Può essere modificato in qualsiasi momento\n- Aiuta a gestire in modo efficiente grandi set di dati\n- Opzioni disponibili: 10, 25, 50 o 100 elementi",
+      "detailsDisplayMode": "## Apri dettagli in\nSceglie cosa succede quando fai clic su un elemento in un elenco che può mostrare i suoi dettagli accanto ad esso.\n\n- **Pannello ancorato:** I dettagli si aprono in un pannello accanto all'elenco\n- **Nuova finestra:** I dettagli si aprono nella loro pagina in una nuova finestra\n- Si applica al repository dei casi di test, alla posta in arrivo di revisione e ai requisiti",
       "dateFormat": "## Formato data\nImposta il formato di visualizzazione della data preferito.\n\n- Applicato in modo coerente in tutta l'applicazione\n- Aiuta a garantire l'accuratezza dell'interpretazione della data\n- Le modifiche hanno effetto immediato\n- Gli esempi mostrati nel menu a discesa riflettono il formato effettivo",
       "timeFormat": "## Formato ora\nImposta il formato di visualizzazione dell'ora preferito.\n\n- Scegli tra i formati a 12 e 24 ore\n- Applicato in modo coerente in tutta l'applicazione\n- Le modifiche hanno effetto immediato\n- Gli esempi mostrati nel menu a discesa riflettono il formato effettivo",
       "timezone": "## Fuso orario\nImposta il fuso orario preferito per la visualizzazione di data e ora.\n\n- Applicato in modo coerente in tutta l'applicazione",

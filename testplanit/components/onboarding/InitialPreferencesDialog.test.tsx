@@ -87,6 +87,16 @@ describe("InitialPreferencesDialog", () => {
     ).toBeInTheDocument();
   });
 
+  it("offers the details display preference", async () => {
+    render(<InitialPreferencesDialog />);
+
+    expect(
+      await screen.findByTestId(
+        "initial-preferences-details-display-mode-select"
+      )
+    ).toBeInTheDocument();
+  });
+
   it("does not render when preferences are already completed", () => {
     mockUseFindFirstUserPreferences.mockReturnValue({
       data: {

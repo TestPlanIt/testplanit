@@ -328,6 +328,7 @@
       "locale": "Language",
       "timezone": "Timezone",
       "itemsPerPage": "Items Per Page",
+      "detailsDisplayMode": "Open Details In",
       "notificationMode": "Notifications",
       "value": "Value",
       "key": "Key",
@@ -2838,7 +2839,11 @@
         "emailDisabledForScim": "Email is managed by your identity provider via SCIM and cannot be changed here."
       },
       "preferences": {
-        "title": "Preferences"
+        "title": "Preferences",
+        "detailsDisplayMode": {
+          "docked": "Docked panel",
+          "newWindow": "New window"
+        }
       },
       "assignments": {
         "title": "Assignments",
@@ -7601,6 +7606,7 @@
       "projects": "## Project Assignment\nSelect which projects this user can access.\n\n- Controls which projects appear in the user's dashboard\n- Required for project participation\n- Can be modified later by administrators\n- Use \"Select All\" to quickly assign all available projects",
       "groups": "## Group Assignment\nSelect which groups this user belongs to.\n\n- Groups help organize users and permissions\n- Users inherit permissions from their groups\n- Simplifies access management\n- Can be modified later by administrators",
       "itemsPerPage": "## Items Per Page\nControls the default number of items shown in tables and lists.\n\n- Affects all paginated views in the application\n- Can be changed at any time\n- Helps manage large data sets efficiently\n- Available options: 10, 25, 50, or 100 items",
+      "detailsDisplayMode": "## Open Details In\nChooses what happens when you click an item in a list that can show its details beside it.\n\n- **Docked panel:** Details open in a panel next to the list\n- **New window:** Details open on their own page in a new window\n- Applies to the test case repository, the review inbox, and requirements",
       "dateFormat": "## Date Format\nSets your preferred date display format.\n\n- Applied consistently across the application\n- Helps ensure date interpretation accuracy\n- Changes take effect immediately\n- Examples shown in the dropdown reflect the actual format",
       "timeFormat": "## Time Format\nSets your preferred time display format.\n\n- Choose between 12-hour and 24-hour formats\n- Applied consistently across the application\n- Changes take effect immediately\n- Examples shown in the dropdown reflect the actual format",
       "timezone": "## Timezone\nSets your preferred timezone for date and time display.\n\n- Applied consistently across the application",

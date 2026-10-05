@@ -95,6 +95,7 @@ import {
 import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
 import { notifyTestCaseAssignment } from "~/app/actions/test-run-notifications";
 import { ForecastDisplay } from "~/components/ForecastDisplay";
+import { useDetailsDisplayMode } from "~/hooks/useDetailsDisplayMode";
 import LoadingSpinner from "~/components/LoadingSpinner";
 import { Link } from "~/lib/navigation";
 import { IconName } from "~/types/globals";
@@ -321,6 +322,11 @@ const NameCell = React.memo(function NameCell({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { opensInNewWindow } = useDetailsDisplayMode();
+  // Plain repository browsing with the "new window" preference: the click
+  // opens the full case page in a new window instead of the docked panel.
+  const opensFullPageInNewWindow =
+    !isRunMode && !isSelectionMode && opensInNewWindow;
 
   // DISABLED: Fetch all folders to build the path hierarchy
   // TODO: Replace with API endpoint that fetches only the path for a specific folder
@@ -451,13 +457,16 @@ const NameCell = React.memo(function NameCell({
           "group min-w-0 flex-auto",
           isSoftDeletedInRun && "line-through text-muted-foreground"
         )}
-        target={isSelectionMode ? "_blank" : undefined}
+        target={
+          isSelectionMode || opensFullPageInNewWindow ? "_blank" : undefined
+        }
         onClick={(e) => {
           // In plain repository browsing, open the case in the docked details
           // panel (via the `case` URL param) instead of navigating away — but let
           // modified/middle clicks fall through so the full page still opens in
-          // a new tab. Run and selection modes keep their existing behavior.
-          if (isRunMode || isSelectionMode) return;
+          // a new tab. Run and selection modes keep their existing behavior, and
+          // the "new window" preference lets the link's own target handle it.
+          if (isRunMode || isSelectionMode || opensFullPageInNewWindow) return;
           if (
             e.metaKey ||
             e.ctrlKey ||
@@ -478,8 +487,8 @@ const NameCell = React.memo(function NameCell({
           {/* The link icon signals "opens a new page" — only true when the
               click navigates (selection mode → new tab, run mode → case page).
               In plain repository browsing the click opens the docked details
-              panel, so hide it. */}
-          {(isRunMode || isSelectionMode) && (
+              panel, so hide it — unless the user prefers a new window. */}
+          {(isRunMode || isSelectionMode || opensFullPageInNewWindow) && (
             <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
           )}
         </div>

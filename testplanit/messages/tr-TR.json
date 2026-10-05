@@ -328,6 +328,7 @@
       "locale": "Dil",
       "timezone": "Saat dilimi",
       "itemsPerPage": "Sayfa Başına Öğe Sayısı",
+      "detailsDisplayMode": "Detayları Aç",
       "notificationMode": "Bildirimler",
       "value": "Değer",
       "key": "Anahtar",
@@ -2838,7 +2839,11 @@
         "emailDisabledForScim": "E-posta adresiniz, kimlik sağlayıcınız tarafından SCIM aracılığıyla yönetilir ve burada değiştirilemez."
       },
       "preferences": {
-        "title": "Tercihler"
+        "title": "Tercihler",
+        "detailsDisplayMode": {
+          "docked": "Sabitlenmiş panel",
+          "newWindow": "Yeni pencere"
+        }
       },
       "assignments": {
         "title": "Atamalar",
@@ -7601,6 +7606,7 @@
       "projects": "## Proje Ataması\nBu kullanıcının hangi projelere erişebileceğini seçin.\n\n- Kullanıcının kontrol panelinde hangi projelerin görüneceğini kontrol eder\n- Proje katılımı için gereklidir\n- Yöneticiler tarafından daha sonra değiştirilebilir\n- Mevcut tüm projeleri hızlıca atamak için \"Tümünü Seç\"i kullanın",
       "groups": "## Grup Ataması\nBu kullanıcının hangi gruplara ait olduğunu seçin.\n\n- Gruplar, kullanıcıları ve izinleri düzenlemeye yardımcı olur\n- Kullanıcılar, gruplarından izinleri devralır\n- Erişim yönetimini basitleştirir\n- Yöneticiler tarafından daha sonra değiştirilebilir",
       "itemsPerPage": "## Sayfa Başına Öğe Sayısı\nTablolarda ve listelerde gösterilen varsayılan öğe sayısını kontrol eder.\n\n- Uygulamadaki tüm sayfalı görünümleri etkiler\n- İstediğiniz zaman değiştirilebilir\n- Büyük veri kümelerini verimli bir şekilde yönetmeye yardımcı olur\n- Mevcut seçenekler: 10, 25, 50 veya 100 öğe",
+      "detailsDisplayMode": "## Detayları Aç\nListe içinde detaylarını yanında gösterebilen bir öğeyi tıkladığınızda ne olacağını seçer.\n\n- **Sabitlenmiş panel:** Detaylar listenin yanında bir panelde açılır\n- **Yeni pencere:** Detaylar yeni penceredeki kendi sayfasında açılır\n- Test durumu deposu, inceleme gelen kutusuna ve gereksinimlerine uygulanır",
       "dateFormat": "## Tarih Biçimi\nTercih ettiğiniz tarih görüntüleme biçimini ayarlar.\n\n- Uygulama genelinde tutarlı bir şekilde uygulanır\n- Tarih yorumlama doğruluğunu sağlamaya yardımcı olur\n- Değişiklikler hemen yürürlüğe girer\n- Açılır menüde gösterilen örnekler gerçek biçimi yansıtır",
       "timeFormat": "## Zaman Biçimi\nTercih ettiğiniz zaman görüntüleme biçimini ayarlar.\n\n- 12 saatlik ve 24 saatlik biçimler arasında seçim yapın\n- Uygulama genelinde tutarlı bir şekilde uygulanır\n- Değişiklikler hemen yürürlüğe girer\n- Açılır menüde gösterilen örnekler gerçek biçimi yansıtır",
       "timezone": "## Saat Dilimi\nTarih ve saat gösterimi için tercih ettiğiniz saat dilimini ayarlar.\n\n- Uygulama genelinde tutarlı bir şekilde uygulanır.",

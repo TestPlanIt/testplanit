@@ -3,6 +3,7 @@ import { z } from "zod/v4";
 import {
   Access,
   DateFormat,
+  DetailsDisplayMode,
   ItemsPerPage,
   Locale,
   NotificationMode,
@@ -52,6 +53,7 @@ const updateUserSchema = z.object({
       notificationMode: z.enum(NotificationMode).optional(),
       emailNotifications: z.boolean().optional(),
       inAppNotifications: z.boolean().optional(),
+      detailsDisplayMode: z.enum(DetailsDisplayMode).optional(),
     })
     .optional(),
 });

@@ -51,6 +51,7 @@ import { UserComments } from "@/components/UserComments";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import {
   DateFormat,
+  DetailsDisplayMode,
   ItemsPerPage,
   Locale,
   NotificationMode,
@@ -261,6 +262,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
     timeFormat: z.nativeEnum(TimeFormat),
     timezone: z.string().min(1, { message: tEdit("timezoneRequired") }),
     notificationMode: z.nativeEnum(NotificationMode),
+    detailsDisplayMode: z.nativeEnum(DetailsDisplayMode),
   });
 
   const defaultFormValues = useMemo(
@@ -293,6 +295,8 @@ const UserProfile: React.FC<UserProfileProps> = ({
         "Etc/UTC",
       notificationMode:
         user?.userPreferences?.notificationMode ?? NotificationMode.USE_GLOBAL,
+      detailsDisplayMode:
+        user?.userPreferences?.detailsDisplayMode ?? DetailsDisplayMode.DOCKED,
     }),
     [
       user?.name,
@@ -353,6 +357,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
           timeFormat: data.timeFormat,
           timezone: data.timezone,
           notificationMode: data.notificationMode,
+          detailsDisplayMode: data.detailsDisplayMode,
           emailNotifications:
             data.notificationMode === "IN_APP_EMAIL_IMMEDIATE" ||
             data.notificationMode === "IN_APP_EMAIL_DAILY",
@@ -446,6 +451,11 @@ const UserProfile: React.FC<UserProfileProps> = ({
     setIsEditing(false);
     form.reset(defaultFormValues);
   };
+
+  const getDetailsDisplayModeLabel = (mode: DetailsDisplayMode) =>
+    mode === "NEW_WINDOW"
+      ? t("preferences.detailsDisplayMode.newWindow")
+      : t("preferences.detailsDisplayMode.docked");
 
   const getNotificationModeLabel = (mode: NotificationMode) => {
     switch (mode) {
@@ -1089,6 +1099,23 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                           )}
                                         </Badge>
                                       </div>
+
+                                      <Separator className="opacity-50" />
+
+                                      <div
+                                        className="flex items-center justify-between"
+                                        data-testid="user-details-display-mode-display"
+                                      >
+                                        <span className="text-sm">
+                                          {tCommon("fields.detailsDisplayMode")}
+                                        </span>
+                                        <Badge variant="secondary">
+                                          {getDetailsDisplayModeLabel(
+                                            user.userPreferences
+                                              .detailsDisplayMode
+                                          )}
+                                        </Badge>
+                                      </div>
                                     </div>
 
                                     <div className="space-y-3">
@@ -1483,6 +1510,52 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                               )}
                                               showTotal={true}
                                             />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+
+                                    <FormField
+                                      control={form.control}
+                                      name="detailsDisplayMode"
+                                      render={({ field }) => (
+                                        <FormItem>
+                                          <FormLabel className="flex items-center">
+                                            {tCommon(
+                                              "fields.detailsDisplayMode"
+                                            )}
+                                            <HelpPopover helpKey="user.detailsDisplayMode" />
+                                          </FormLabel>
+                                          <FormControl>
+                                            <Select
+                                              onValueChange={(value) => {
+                                                form.setValue(
+                                                  "detailsDisplayMode",
+                                                  value as DetailsDisplayMode
+                                                );
+                                                field.onChange(value);
+                                              }}
+                                              value={field.value}
+                                            >
+                                              <SelectTrigger data-testid="profile-details-display-mode-select">
+                                                <SelectValue />
+                                              </SelectTrigger>
+                                              <SelectContent>
+                                                {Object.values(
+                                                  DetailsDisplayMode
+                                                ).map((value) => (
+                                                  <SelectItem
+                                                    key={value}
+                                                    value={value}
+                                                  >
+                                                    {getDetailsDisplayModeLabel(
+                                                      value
+                                                    )}
+                                                  </SelectItem>
+                                                ))}
+                                              </SelectContent>
+                                            </Select>
                                           </FormControl>
                                           <FormMessage />
                                         </FormItem>

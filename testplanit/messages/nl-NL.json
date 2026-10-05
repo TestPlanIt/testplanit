@@ -328,6 +328,7 @@
       "locale": "Taal",
       "timezone": "Tijdzone",
       "itemsPerPage": "Items per pagina",
+      "detailsDisplayMode": "Details openen in",
       "notificationMode": "Meldingen",
       "value": "Waarde",
       "key": "Sleutel",
@@ -2838,7 +2839,11 @@
         "emailDisabledForScim": "Uw e-mailadres wordt beheerd door uw identiteitsprovider via SCIM en kan hier niet worden gewijzigd."
       },
       "preferences": {
-        "title": "Voorkeuren"
+        "title": "Voorkeuren",
+        "detailsDisplayMode": {
+          "docked": "Vastgezet paneel",
+          "newWindow": "Nieuw venster"
+        }
       },
       "assignments": {
         "title": "Opdrachten",
@@ -7601,6 +7606,7 @@
       "projects": "## Projecttoewijzing\nSelecteer tot welke projecten deze gebruiker toegang heeft.\n\n- Bepaalt welke projecten in het dashboard van de gebruiker verschijnen\n- Vereist voor projectdeelname\n- Kan later door beheerders worden gewijzigd\n- Gebruik \"Alles selecteren\" om snel alle beschikbare projecten toe te wijzen",
       "groups": "## Groepstoewijzing\nSelecteer tot welke groepen deze gebruiker behoort.\n\n- Groepen helpen bij het organiseren van gebruikers en machtigingen\n- Gebruikers erven machtigingen van hun groepen\n- Vereenvoudigt toegangsbeheer\n- Kan later door beheerders worden gewijzigd",
       "itemsPerPage": "## Items per pagina\nBepaalt het standaard aantal items dat in tabellen en lijsten wordt weergegeven.\n\n- Beïnvloedt alle paginaweergaven in de toepassing.\n- Kan op elk moment worden gewijzigd.\n- Helpt grote datasets efficiënt te beheren.\n- Beschikbare opties: 10, 25, 50 of 100 items.",
+      "detailsDisplayMode": "## Details openen in\nBepaal wat er gebeurt wanneer u op een item in een lijst klikt dat de details ervan naast zich kan weergeven.\n\n- **Vastgezet paneel:** Details worden geopend in een paneel naast de lijst\n- **Nieuw venster:** Details worden geopend op hun eigen pagina in een nieuw venster\n- Van toepassing op de testcase-repository, de beoordelingsinbox en vereisten",
       "dateFormat": "## Datumnotatie\nStelt uw voorkeursnotatie voor de datumweergave in.\n\n- Wordt consistent toegepast in de hele applicatie\n- Helpt de nauwkeurigheid van de datuminterpretatie te garanderen\n- Wijzigingen worden onmiddellijk van kracht\n- De voorbeelden in de vervolgkeuzelijst weerspiegelen de werkelijke notatie",
       "timeFormat": "## Tijdnotatie\nStelt uw voorkeursnotatie voor tijdweergave in.\n\n- Kies tussen 12-uurs- en 24-uursnotaties\n- Wordt consistent toegepast in de hele applicatie\n- Wijzigingen treden onmiddellijk in werking\n- De voorbeelden in de vervolgkeuzelijst weerspiegelen de werkelijke notatie",
       "timezone": "## Tijdzone\nStelt uw voorkeurstijdzone in voor de weergave van datum en tijd.\n\n- Wordt consistent toegepast in de hele applicatie",

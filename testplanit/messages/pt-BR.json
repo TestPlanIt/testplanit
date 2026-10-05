@@ -328,6 +328,7 @@
       "locale": "Linguagem",
       "timezone": "Fuso horário",
       "itemsPerPage": "Itens por página",
+      "detailsDisplayMode": "Abrir Detalhes Em",
       "notificationMode": "Notificações",
       "value": "Valor",
       "key": "Chave",
@@ -2838,7 +2839,11 @@
         "emailDisabledForScim": "O gerenciamento de e-mail é feito pelo seu provedor de identidade via SCIM e não pode ser alterado aqui."
       },
       "preferences": {
-        "title": "Preferências"
+        "title": "Preferências",
+        "detailsDisplayMode": {
+          "docked": "Painel encaixado",
+          "newWindow": "Nova janela"
+        }
       },
       "assignments": {
         "title": "Atribuições",
@@ -7601,6 +7606,7 @@
       "projects": "## Atribuição de Projetos\nSelecione a quais projetos este usuário pode acessar.\n\n- Controla quais projetos aparecem no painel do usuário\n- Obrigatório para participação no projeto\n- Pode ser modificado posteriormente pelos administradores\n- Use \"Selecionar tudo\" para atribuir rapidamente todos os projetos disponíveis",
       "groups": "## Atribuição de Grupos\nSelecione a quais grupos este usuário pertence.\n\n- Os grupos ajudam a organizar usuários e permissões\n- Os usuários herdam as permissões de seus grupos\n- Simplifica o gerenciamento de acesso\n- Pode ser modificado posteriormente pelos administradores",
       "itemsPerPage": "## Itens por Página\nControla o número padrão de itens exibidos em tabelas e listas.\n\n- Afeta todas as visualizações paginadas do aplicativo\n- Pode ser alterado a qualquer momento\n- Ajuda a gerenciar grandes conjuntos de dados com eficiência\n- Opções disponíveis: 10, 25, 50 ou 100 itens",
+      "detailsDisplayMode": "## Abrir Detalhes Em\nEscolhe o que acontece quando você clica em um item em uma lista que pode mostrar seus detalhes ao lado.\n\n- **Painel encaixado:** Os detalhes são abertos em um painel ao lado da lista\n- **Nova janela:** Os detalhes são abertos em sua própria página em uma nova janela\n- Aplica-se ao repositório de casos de teste, à caixa de entrada de revisão e aos requisitos",
       "dateFormat": "## Formato de Data\nDefine o formato de exibição de data preferido.\n\n- Aplicado de forma consistente em todo o aplicativo\n- Ajuda a garantir a precisão na interpretação da data\n- As alterações entram em vigor imediatamente\n- Os exemplos mostrados no menu suspenso refletem o formato real",
       "timeFormat": "## Formato de Hora\nDefine o formato de exibição de hora preferido.\n\n- Escolha entre os formatos de 12 e 24 horas\n- Aplicado de forma consistente em todo o aplicativo\n- As alterações entram em vigor imediatamente\n- Os exemplos mostrados no menu suspenso refletem o formato real",
       "timezone": "## Fuso horário\nDefine o fuso horário de sua preferência para exibição de data e hora.\n\n- Aplicado de forma consistente em todo o aplicativo",

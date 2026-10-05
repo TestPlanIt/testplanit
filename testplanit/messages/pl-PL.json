@@ -328,6 +328,7 @@
       "locale": "Język",
       "timezone": "Strefa czasowa",
       "itemsPerPage": "Liczba elementów na stronę",
+      "detailsDisplayMode": "Otwórz szczegóły w",
       "notificationMode": "Powiadomienia",
       "value": "Wartość",
       "key": "Klawisz",
@@ -2838,7 +2839,11 @@
         "emailDisabledForScim": "Adres e-mail jest zarządzany przez dostawcę tożsamości za pośrednictwem SCIM i nie można go tutaj zmienić."
       },
       "preferences": {
-        "title": "Preferencje"
+        "title": "Preferencje",
+        "detailsDisplayMode": {
+          "docked": "Dokowany panel",
+          "newWindow": "Nowe okno"
+        }
       },
       "assignments": {
         "title": "Zadania",
@@ -7601,6 +7606,7 @@
       "projects": "## Przypisanie projektu\nWybierz projekty, do których dany użytkownik ma dostęp.\n\n— Kontroluje, które projekty pojawiają się na pulpicie użytkownika.\n— Wymagane do uczestnictwa w projekcie.\n— Może zostać później zmodyfikowane przez administratorów.\n— Użyj opcji „Zaznacz wszystko”, aby szybko przypisać wszystkie dostępne projekty.",
       "groups": "## Przypisanie grupy\nWybierz grupy, do których należy ten użytkownik.\n\n- Grupy pomagają organizować użytkowników i uprawnienia\n- Użytkownicy dziedziczą uprawnienia ze swoich grup\n- Ułatwia zarządzanie dostępem\n- Administratorzy mogą później modyfikować",
       "itemsPerPage": "## Elementów na stronę\nSteruje domyślną liczbą elementów wyświetlanych w tabelach i listach.\n\n— Dotyczy wszystkich widoków stronicowanych w aplikacji\n— Można zmienić w dowolnym momencie\n— Pomaga efektywnie zarządzać dużymi zestawami danych\n— Dostępne opcje: 10, 25, 50 lub 100 elementów",
+      "detailsDisplayMode": "## Otwórz szczegóły w\nOkreśla, co się stanie po kliknięciu elementu na liście, który może wyświetlać jego szczegóły obok.\n\n- **Dokowany panel:** Szczegóły otwierają się w panelu obok listy\n- **Nowe okno:** Szczegóły otwierają się na ich własnej stronie w nowym oknie\n- Dotyczy repozytorium przypadków testowych, skrzynki przeglądu i wymagań",
       "dateFormat": "## Format daty\nUstawia preferowany format wyświetlania daty.\n\n— Stosowany spójnie w całej aplikacji\n— Pomaga zapewnić dokładność interpretacji daty\n— Zmiany wchodzą w życie natychmiast\n— Przykłady pokazane na liście rozwijanej odzwierciedlają rzeczywisty format",
       "timeFormat": "## Format czasu\nUstawia preferowany format wyświetlania czasu.\n\n- Wybierz pomiędzy formatem 12-godzinnym i 24-godzinnym\n- Stosowany spójnie w całej aplikacji\n- Zmiany wchodzą w życie natychmiast\n- Przykłady pokazane na liście rozwijanej odzwierciedlają rzeczywisty format",
       "timezone": "## Strefa czasowa\nUstawia preferowaną strefę czasową do wyświetlania daty i godziny.\n\n- Stosowana spójnie w całej aplikacji",

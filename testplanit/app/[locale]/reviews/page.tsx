@@ -65,6 +65,7 @@ import {
   type ReviewableEntityType,
 } from "~/components/reviews/ReviewDecisionDialogs";
 import { cancelReviewRequest } from "~/app/actions/reviews";
+import { useDetailsDisplayMode } from "~/hooks/useDetailsDisplayMode";
 import { useReviewAssigneeRoleIds } from "~/hooks/useReviewAssigneeRoleIds";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
 import { usePathname, useRouter } from "~/lib/navigation";
@@ -793,6 +794,7 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
     () => setCaseParams(null, "replace"),
     [setCaseParams]
   );
+  const { opensInNewWindow } = useDetailsDisplayMode();
 
   const columns = useColumns({
     t,
@@ -803,7 +805,8 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
     caseById,
     testRunById,
     sessionById,
-    onOpenCase: openCase,
+    onOpenCase: opensInNewWindow ? undefined : openCase,
+    openCaseInNewWindow: opensInNewWindow,
   });
 
   // DataTable's `DataRow` shape requires every row to carry `id` + `name`.

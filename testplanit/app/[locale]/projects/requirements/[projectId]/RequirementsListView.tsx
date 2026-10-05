@@ -11,7 +11,7 @@ import {
 } from "@/components/forms/MilestoneSelect";
 import { schema } from "~/zenstack/schema";
 import { ClipboardPlus, Combine, Search, X } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import {
   forwardRef,
   useCallback,
@@ -35,6 +35,7 @@ import { useDebounce } from "@/components/Debounce";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useDetailsDisplayMode } from "~/hooks/useDetailsDisplayMode";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import {
   invalidateRequirementCoverage,
@@ -370,12 +371,24 @@ const RequirementsListView = forwardRef<
   const [listSelectedIds, setListSelectedIds] = useState<
     readonly (number | null)[]
   >([null, null]);
+  const locale = useLocale();
+  const { opensInNewWindow } = useDetailsDisplayMode();
   const handleSelectRequirement = useCallback(
     (issueId: number) => {
+      // The "new window" preference: a row click opens the requirement's
+      // full page instead of selecting it into the docked panel.
+      if (opensInNewWindow) {
+        window.open(
+          `/${locale}/projects/requirements/${projectId}/${issueId}`,
+          "_blank",
+          "noopener"
+        );
+        return;
+      }
       setListSelectedIds(([, previous]) => [previous, issueId]);
       onSelectRequirement(issueId);
     },
-    [onSelectRequirement]
+    [onSelectRequirement, opensInNewWindow, locale, projectId]
   );
   const scrollToRequirementId = listSelectedIds.includes(selectedRequirementId)
     ? null
@@ -775,9 +788,19 @@ const RequirementsListView = forwardRef<
   // name+title written together, locked rows refused.
   const handleRequestEdit = useCallback(
     (requirement: RequirementRow) => {
+      // The "new window" preference: Edit opens the requirement's full page
+      // already in edit mode instead of the docked panel.
+      if (opensInNewWindow) {
+        window.open(
+          `/${locale}/projects/requirements/${projectId}/${requirement.id}?edit=1`,
+          "_blank",
+          "noopener"
+        );
+        return;
+      }
       onRequestEdit?.(requirement.id);
     },
-    [onRequestEdit]
+    [onRequestEdit, opensInNewWindow, locale, projectId]
   );
 
   // In lazy mode, expanding (never collapsing) a node whose children are
@@ -1630,7 +1653,7 @@ const RequirementsListView = forwardRef<
         }
         onCreated={(id) => {
           refreshRequirements();
-          onSelectRequirement(id);
+          if (!opensInNewWindow) onSelectRequirement(id);
           invalidateCoverage();
         }}
       />

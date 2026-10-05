@@ -94,6 +94,7 @@ When viewing your own profile, you can view and edit these preferences:
 - **Theme**: Choose from Light, Dark, System, Green, Orange, Purple, **Accessible**, or **Accessible (Dark)** themes (with color indicators). Accessible (light) and Accessible (Dark) are high-contrast options tuned for [WCAG 2.2](https://www.w3.org/TR/WCAG22/) Level AA — see [Accessibility](./user-menu.md#accessibility)
 - **Locale**: Language preference (English, Czech, German, Spanish, French, Italian, Dutch, Polish, Portuguese, Turkish, Vietnamese, Arabic, Russian, Chinese Simplified, Chinese Traditional, Japanese, Korean). Right-to-left languages such as Arabic switch the entire interface to a mirrored right-to-left layout.
 - **Items Per Page**: Number of items to show in paginated tables (10, 25, 50, 100)
+- **Open Details In**: Where an item's details open when you click it in the test case repository, the review inbox, or requirements. **Docked panel** (the default) shows them beside the list; **New window** opens the item's own page in a new window.
 
 #### Date & Time Formatting
 

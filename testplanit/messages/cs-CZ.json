@@ -328,6 +328,7 @@
       "locale": "Jazyk",
       "timezone": "Časové pásmo",
       "itemsPerPage": "Položek na stránku",
+      "detailsDisplayMode": "Otevřít detaily v",
       "notificationMode": "Oznámení",
       "value": "Hodnota",
       "key": "Klíč",
@@ -2838,7 +2839,11 @@
         "emailDisabledForScim": "E-mail je spravován vaším poskytovatelem identity prostřednictvím SCIM a nelze jej zde změnit."
       },
       "preferences": {
-        "title": "Předvolby"
+        "title": "Předvolby",
+        "detailsDisplayMode": {
+          "docked": "Ukotvený panel",
+          "newWindow": "Nové okno"
+        }
       },
       "assignments": {
         "title": "Přiřazení",
@@ -3556,7 +3561,7 @@
         "title": "Vybrat zdroj požadavků",
         "description": "Vyberte, zda chcete generovat testovací případy z problému nebo z dokumentu s požadavky.",
         "folderContextTip": "Existující testovací případy ze složky \"{folderName}\" a jejích nadřazených/podřazených složek budou použity jako kontext, aby se zabránilo duplicitám. Před pokračováním se ujistěte, že jste vybrali správnou složku.",
-        "folderContextCount": "{count, plural, =1 {# existing test case} other {# existing test cases}} in \"{folderName}\" and its parent/child folders will be used as context to match your project's style and avoid duplicates.",
+        "folderContextCount": "{count, plural, =1 {# existující testovací případ} few {# existující testovací případy} many {# existujících testovacích případů} other {# existujících testovacích případů}} ve složce \"{folderName}\" a jejích nadřazených/podřízených složkách bude použit jako kontext pro sladění se stylem vašeho projektu a zamezení duplikátům.",
         "folderContextEmptyTitle": "Žádné existující testovací případy k použití jako kontext",
         "folderContextEmpty": "Složka \"{folderName}\" a její nadřazené/podřazené složky neobsahují testovací případy, takže AI nemá příklady stylu vašeho projektu nebo stávajícího pokrytí. Pro lepší výsledky spusťte generátor ze složky, do které tyto testovací případy patří, vedle souvisejících případů.",
         "currentFolder": "aktuální složka",
@@ -3611,7 +3616,7 @@
         "quantity": "Počet testovacích případů k vygenerování",
         "placeholder": "Přidejte konkrétní pokyny pro generování testovacích případů...\n\nNapříklad:\n• Zaměřte se na bezpečnostní testování\n• Zahrňte krajní případy a hraniční podmínky\n• Testujte jak úspěšný scénář, tak chybové scénáře\n• Zvažte scénáře pro mobilní i desktopové zařízení\n• Zaměřte se na testování API",
         "linksIgnoredTitle": "Odkazy v poznámkách nejsou otevřeny",
-        "linksIgnored": "{count, plural, =1 {The link} other {The # links}} in your notes will be sent as plain text only. To use a document or spreadsheet, paste the relevant content (scenarios, test data, expected results) into the notes.",
+        "linksIgnored": "{count, plural, =1 {Odkaz} few {# odkazy} many {# odkazů} other {# odkazů}} v poznámkách bude odeslán pouze jako prostý text. Chcete-li použít dokument nebo tabulku, vložte příslušný obsah (scénáře, testovací data, očekávané výsledky) do poznámek.",
         "suggestions": "Rychlé návrhy:",
         "quantityOptions": {
           "justOne": "Pouze jeden",
@@ -7601,6 +7606,7 @@
       "projects": "## Přiřazení projektů\nVyberte, ke kterým projektům bude mít tento uživatel přístup.\n\n- Určuje, které projekty se zobrazí na dashboardu uživatele\n- Vyžadováno pro účast na projektu\n- Administrátoři to mohou později upravit\n- Pomocí \"Vybrat vše\" rychle přiřadíte všechny dostupné projekty",
       "groups": "## Přiřazení skupin\nVyberte, do kterých skupin tento uživatel patří.\n\n- Skupiny pomáhají organizovat uživatele a oprávnění\n- Uživatelé dědí oprávnění ze svých skupin\n- Zjednodušuje správu přístupu\n- Administrátoři to mohou později upravit",
       "itemsPerPage": "## Počet položek na stránku\nUrčuje výchozí počet položek zobrazených v tabulkách a seznamech.\n\n- Ovlivňuje všechny stránkované zobrazení v aplikaci\n- Lze kdykoli změnit\n- Pomáhá efektivně spravovat velké datové sady\n- Dostupné možnosti: 10, 25, 50 nebo 100 položek",
+      "detailsDisplayMode": "## Otevřít detaily v\nZvolí, co se stane, když kliknete na položku v seznamu, která může zobrazit své detaily vedle ní.\n\n- **Ukotvený panel:** Detaily se otevřou v panelu vedle seznamu\n- **Nové okno:** Detaily se otevřou na vlastní stránce v novém okně\n- Platí pro úložiště testovacích případů, přijatou poštu a požadavky",
       "dateFormat": "## Formát data\nNastaví preferovaný formát zobrazení data.\n\n- Používá se jednotně v celé aplikaci\n- Pomáhá zajistit přesnou interpretaci data\n- Změny se projeví okamžitě\n- Příklady zobrazené v rozbalovací nabídce odpovídají skutečnému formátu",
       "timeFormat": "## Formát času\nNastaví preferovaný formát zobrazení času.\n\n- Vyberte mezi 12hodinovým a 24hodinovým formátem\n- Používá se jednotně v celé aplikaci\n- Změny se projeví okamžitě\n- Příklady zobrazené v rozbalovací nabídce odpovídají skutečnému formátu",
       "timezone": "## Časové pásmo\nNastaví preferované časové pásmo pro zobrazení data a času.\n\n- Používá se jednotně v celé aplikaci",

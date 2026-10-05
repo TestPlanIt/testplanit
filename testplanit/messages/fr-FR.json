@@ -328,6 +328,7 @@
       "locale": "Langue",
       "timezone": "Fuseau horaire",
       "itemsPerPage": "Articles par page",
+      "detailsDisplayMode": "Ouvrir les détails dans",
       "notificationMode": "Notifications",
       "value": "Valeur",
       "key": "Clé",
@@ -2838,7 +2839,11 @@
         "emailDisabledForScim": "Votre adresse e-mail est gérée par votre fournisseur d'identité via SCIM et ne peut pas être modifiée ici."
       },
       "preferences": {
-        "title": "Préférences"
+        "title": "Préférences",
+        "detailsDisplayMode": {
+          "docked": "Panneau ancré",
+          "newWindow": "Nouvelle fenêtre"
+        }
       },
       "assignments": {
         "title": "Affectations",
@@ -7601,6 +7606,7 @@
       "projects": "## Affectation de projet\nSélectionnez les projets auxquels cet utilisateur peut accéder.\n\n- Contrôle les projets affichés dans le tableau de bord de l'utilisateur.\n- Obligatoire pour participer aux projets.\n- Modifiable ultérieurement par les administrateurs.\n- Utilisez « Tout sélectionner » pour affecter rapidement tous les projets disponibles.",
       "groups": "## Affectation aux groupes\nSélectionnez les groupes auxquels appartient cet utilisateur.\n\n- Les groupes permettent d'organiser les utilisateurs et leurs permissions.\n- Les utilisateurs héritent des permissions de leurs groupes.\n- Simplifie la gestion des accès.\n- Peut être modifié ultérieurement par les administrateurs.",
       "itemsPerPage": "## Éléments par page\nContrôle le nombre par défaut d'éléments affichés dans les tableaux et les listes.\n\n- Affecte toutes les vues paginées de l'application.\n- Peut être modifié à tout moment.\n- Permet de gérer efficacement les grands ensembles de données.\n- Options disponibles : 10, 25, 50 ou 100 éléments.",
+      "detailsDisplayMode": "## Ouvrir les détails dans\nDéfinit ce qui se passe lorsque vous cliquez sur un élément d'une liste qui peut afficher ses détails à côté.\n\n- **Panneau ancré:** Les détails s'ouvrent dans un panneau à côté de la liste\n- **Nouvelle fenêtre:** Les détails s'ouvrent sur leur propre page dans une nouvelle fenêtre\n- S'applique au référentiel de cas de test, à la boîte de réception d'examen et aux exigences",
       "dateFormat": "## Format de date\nDéfinit votre format d'affichage de date préféré.\n\n- Appliqué de manière uniforme dans toute l'application\n- Contribue à garantir l'exactitude de l'interprétation des dates\n- Les modifications prennent effet immédiatement\n- Les exemples affichés dans la liste déroulante reflètent le format réel",
       "timeFormat": "## Format de l'heure\nDéfinit votre format d'affichage de l'heure préféré.\n\n- Choisissez entre les formats 12 heures et 24 heures\n- Appliqué de manière uniforme dans toute l'application\n- Les modifications prennent effet immédiatement\n- Les exemples affichés dans la liste déroulante reflètent le format réel",
       "timezone": "## Fuseau horaire\nDéfinit votre fuseau horaire préféré pour l'affichage de la date et de l'heure.\n\n- Appliqué de manière uniforme à toute l'application",

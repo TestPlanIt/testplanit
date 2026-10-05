@@ -328,6 +328,7 @@
       "locale": "Idioma",
       "timezone": "Timezone",
       "itemsPerPage": "Elementos por página",
+      "detailsDisplayMode": "Abrir detalles en",
       "notificationMode": "Notificaciones",
       "value": "Valor",
       "key": "Clave",
@@ -2838,7 +2839,11 @@
         "emailDisabledForScim": "El correo electrónico lo gestiona su proveedor de identidad a través de SCIM y no se puede modificar aquí."
       },
       "preferences": {
-        "title": "Preferencias"
+        "title": "Preferencias",
+        "detailsDisplayMode": {
+          "docked": "Panel acoplado",
+          "newWindow": "Nueva ventana"
+        }
       },
       "assignments": {
         "title": "Tareas",
@@ -7601,6 +7606,7 @@
       "projects": "## Asignación de proyecto\nSeleccione a qué proyectos puede acceder este usuario.\n\n- Controla qué proyectos aparecen en el panel de control del usuario\n- Requerido para la participación del proyecto\n- Puede ser modificado más tarde por los administradores\n- Use \"Seleccionar todo\" para asignar rápidamente todos los proyectos disponibles",
       "groups": "## Asignación de grupo\nSeleccione a qué grupos pertenece este usuario.\n\n- Grupos ayudan a organizar usuarios y permisos\n- Los usuarios heredan permisos de sus grupos\n- Simplifica la gestión de acceso\n- Puede ser modificada más tarde por los administradores",
       "itemsPerPage": "## Artículos por página\nControla el número predeterminado de elementos mostrados en tablas y listas.\n\n- Afecta todas las vistas paginadas en la aplicación\n- Se puede cambiar en cualquier momento\n- Ayuda a gestionar los grandes conjuntos de datos eficientemente\n- Opciones disponibles: 10, 25, 50 o 100 artículos",
+      "detailsDisplayMode": "## Abrir detalles en\nElige qué sucede cuando haces clic en un elemento en una lista que puede mostrar sus detalles junto a él.\n\n- **Panel acoplado:** Los detalles se abren en un panel junto a la lista\n- **Nueva ventana:** Los detalles se abren en su propia página en una nueva ventana\n- Se aplica al repositorio de casos de prueba, la bandeja de entrada de revisión y los requisitos",
       "dateFormat": "## Formato de fecha\nEstablece tu formato de visualización de fecha preferido.\n\n- Aplicado consistentemente a través de la aplicación\n- Ayuda a asegurar la precisión de la interpretación de la fecha\n- Los cambios surten efecto inmediatamente\n- Los ejemplos mostrados en la lista desplegable reflejan el formato real",
       "timeFormat": "## Formato de hora\nEstablece tu formato de visualización de hora preferido.\n\n- Elija entre las 12 horas y las 24 horas formatos\n- Aplicado consistentemente a través de la aplicación\n- Los cambios surten efecto inmediatamente\n- Los ejemplos mostrados en el menú desplegable reflejan el formato real",
       "timezone": "## Zona horaria\nEstablece tu zona horaria preferida para la visualización de fecha y hora.\n\n- Aplicado consistentemente en toda la aplicación",

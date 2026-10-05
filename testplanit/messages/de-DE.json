@@ -328,6 +328,7 @@
       "locale": "Sprache",
       "timezone": "Zeitzone",
       "itemsPerPage": "Elemente pro Seite",
+      "detailsDisplayMode": "Details öffnen in",
       "notificationMode": "Benachrichtigungen",
       "value": "Wert",
       "key": "Schlüssel",
@@ -2838,7 +2839,11 @@
         "emailDisabledForScim": "Die E-Mail-Verwaltung erfolgt durch Ihren Identitätsanbieter über SCIM und kann hier nicht geändert werden."
       },
       "preferences": {
-        "title": "Präferenzen"
+        "title": "Präferenzen",
+        "detailsDisplayMode": {
+          "docked": "Angedocktes Panel",
+          "newWindow": "Neues Fenster"
+        }
       },
       "assignments": {
         "title": "Aufgaben",
@@ -7601,6 +7606,7 @@
       "projects": "## Projektzuweisung\nWählen Sie aus, auf welche Projekte dieser Benutzer Zugriff hat.\n\n- Steuert, welche Projekte im Dashboard des Benutzers angezeigt werden.\n- Erforderlich für die Projektteilnahme.\n- Kann später von Administratoren geändert werden.\n- Verwenden Sie „Alle auswählen“, um schnell alle verfügbaren Projekte zuzuweisen.",
       "groups": "## Gruppenzuordnung\nWählen Sie die Gruppen aus, denen dieser Benutzer angehört.\n\n- Gruppen helfen bei der Organisation von Benutzern und Berechtigungen.\n- Benutzer erben Berechtigungen von ihren Gruppen.\n- Vereinfacht die Zugriffsverwaltung.\n- Kann später von Administratoren geändert werden.",
       "itemsPerPage": "## Elemente pro Seite\nSteuert die Standardanzahl der in Tabellen und Listen angezeigten Elemente.\n\n- Betrifft alle paginierten Ansichten der Anwendung.\n- Kann jederzeit geändert werden.\n- Hilft bei der effizienten Verwaltung großer Datensätze.\n- Verfügbare Optionen: 10, 25, 50 oder 100 Elemente.",
+      "detailsDisplayMode": "## Details öffnen in\nBestimmt, was passiert, wenn Sie auf ein Element in einer Liste klicken, das seine Details daneben anzeigen kann.\n\n- **Angedocktes Panel:** Details werden in einem Panel neben der Liste geöffnet\n- **Neues Fenster:** Details werden auf ihrer eigenen Seite in einem neuen Fenster geöffnet\n- Gilt für das Testfall-Repository, den Review-Posteingang und Anforderungen",
       "dateFormat": "## Datumsformat\nLegt Ihr bevorzugtes Datumsanzeigeformat fest.\n\n- Wird in der gesamten Anwendung einheitlich angewendet.\n- Trägt zur korrekten Datumsinterpretation bei.\n- Änderungen werden sofort wirksam.\n- Die im Dropdown-Menü angezeigten Beispiele entsprechen dem tatsächlichen Format.",
       "timeFormat": "## Zeitformat\nLegt Ihr bevorzugtes Zeitanzeigeformat fest.\n\n– Wählen Sie zwischen 12-Stunden- und 24-Stunden-Format.\n– Wird in der gesamten Anwendung einheitlich angewendet.\n– Änderungen werden sofort wirksam.\n– Die im Dropdown-Menü angezeigten Beispiele entsprechen dem tatsächlichen Format.",
       "timezone": "## Zeitzone\nLegt Ihre bevorzugte Zeitzone für die Datums- und Zeitanzeige fest.\n\n- Wird in der gesamten Anwendung einheitlich angewendet.",

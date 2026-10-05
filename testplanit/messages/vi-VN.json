@@ -328,6 +328,7 @@
       "locale": "Ngôn ngữ",
       "timezone": "Múi giờ",
       "itemsPerPage": "Số mục trên mỗi trang",
+      "detailsDisplayMode": "Mở Chi tiết Trong",
       "notificationMode": "Thông báo",
       "value": "Giá trị",
       "key": "Chìa khóa",
@@ -2838,7 +2839,11 @@
         "emailDisabledForScim": "Địa chỉ email được quản lý bởi nhà cung cấp danh tính của bạn thông qua SCIM và không thể thay đổi ở đây."
       },
       "preferences": {
-        "title": "Tùy chọn"
+        "title": "Tùy chọn",
+        "detailsDisplayMode": {
+          "docked": "Bảng điều khiển đã nằm sẵn",
+          "newWindow": "Cửa sổ mới"
+        }
       },
       "assignments": {
         "title": "Nhiệm vụ được giao",
@@ -3556,7 +3561,7 @@
         "title": "Chọn nguồn yêu cầu",
         "description": "Chọn xem bạn muốn tạo các trường hợp kiểm thử từ một vấn đề hay từ một tài liệu yêu cầu.",
         "folderContextTip": "Các trường hợp kiểm thử hiện có từ \"{folderName}\" và các thư mục cha/con của nó sẽ được sử dụng làm ngữ cảnh để tránh trùng lặp. Hãy chắc chắn rằng bạn đã chọn đúng thư mục trước khi tiếp tục.",
-        "folderContextCount": "{count, plural, =1 {# existing test case} other {# existing test cases}} in \"{folderName}\" and its parent/child folders will be used as context to match your project's style and avoid duplicates.",
+        "folderContextCount": "{count, plural, =1 {# test case hiện có} other {# test case hiện có}} trong \"{folderName}\" và các thư mục parent/child của nó sẽ được sử dụng làm ngữ cảnh để khớp với phong cách của dự án và tránh trùng lặp.",
         "folderContextEmptyTitle": "Không có trường hợp kiểm thử hiện có để sử dụng làm bối cảnh",
         "folderContextEmpty": "\"{folderName}\" và các thư mục cha/con của nó không có trường hợp kiểm thử nào, do đó AI không có ví dụ về kiểu của dự án bạn hoặc phạm vi hiện có. Để có kết quả tốt hơn, hãy bắt đầu trình tạo từ thư mục nơi những trường hợp kiểm thử này thuộc về, bên cạnh các trường hợp liên quan.",
         "currentFolder": "thư mục hiện tại",
@@ -3611,7 +3616,7 @@
         "quantity": "Số lượng trường hợp thử nghiệm cần tạo",
         "placeholder": "Thêm hướng dẫn cụ thể cho việc tạo trường hợp kiểm thử...\n\nVí dụ:\n• Tập trung vào kiểm thử bảo mật\n• Bao gồm các trường hợp ngoại lệ và điều kiện biên\n• Kiểm thử cả trường hợp thành công và lỗi\n• Xem xét các trường hợp trên thiết bị di động và máy tính để bàn\n• Tập trung vào kiểm thử API",
         "linksIgnoredTitle": "Các liên kết trong ghi chú không được mở",
-        "linksIgnored": "{count, plural, =1 {The link} other {The # links}} in your notes will be sent as plain text only. To use a document or spreadsheet, paste the relevant content (scenarios, test data, expected results) into the notes.",
+        "linksIgnored": "{count, plural, =1 {Liên kết} other {# liên kết}} trong ghi chú của bạn sẽ được gửi dưới dạng văn bản thuần túy. Để sử dụng tài liệu hoặc bảng tính, hãy dán nội dung liên quan (kịch bản, dữ liệu kiểm tra, kết quả mong đợi) vào ghi chú.",
         "suggestions": "Gợi ý nhanh:",
         "quantityOptions": {
           "justOne": "Chỉ một",
@@ -7601,6 +7606,7 @@
       "projects": "## Phân công dự án\nChọn các dự án mà người dùng này có thể truy cập.\n\n- Kiểm soát các dự án hiển thị trên bảng điều khiển của người dùng\n- Bắt buộc để tham gia dự án\n- Có thể được quản trị viên chỉnh sửa sau\n- Sử dụng \"Chọn tất cả\" để nhanh chóng phân công tất cả các dự án có sẵn",
       "groups": "## Phân công nhóm\nChọn nhóm mà người dùng này thuộc về.\n\n- Nhóm giúp tổ chức người dùng và quyền hạn\n- Người dùng kế thừa quyền hạn từ nhóm của họ\n- Đơn giản hóa việc quản lý quyền truy cập\n- Có thể được quản trị viên chỉnh sửa sau này",
       "itemsPerPage": "## Số mục trên mỗi trang\nĐiều khiển số lượng mục mặc định hiển thị trong bảng và danh sách.\n\n- Ảnh hưởng đến tất cả các chế độ xem phân trang trong ứng dụng\n- Có thể thay đổi bất cứ lúc nào\n- Giúp quản lý các tập dữ liệu lớn một cách hiệu quả\n- Các tùy chọn có sẵn: 10, 25, 50 hoặc 100 mục",
+      "detailsDisplayMode": "## Mở Chi tiết Trong\nChọn những gì sẽ xảy ra khi bạn nhấp vào một mục trong danh sách có thể hiển thị chi tiết bên cạnh nó.\n\n- **Bảng điều khiển đã nằm sẵn:** Chi tiết mở trong bảng điều khiển bên cạnh danh sách\n- **Cửa sổ mới:** Chi tiết mở trên trang riêng của chúng trong cửa sổ mới\n- Áp dụng cho kho lưu trữ test case, hộp thư đến bài kiểm tra và yêu cầu",
       "dateFormat": "## Định dạng ngày tháng\nĐặt định dạng hiển thị ngày tháng ưa thích của bạn.\n\n- Được áp dụng nhất quán trên toàn ứng dụng\n- Giúp đảm bảo độ chính xác khi diễn giải ngày tháng\n- Thay đổi có hiệu lực ngay lập tức\n- Các ví dụ hiển thị trong menu thả xuống phản ánh định dạng thực tế",
       "timeFormat": "## Định dạng thời gian\nThiết lập định dạng hiển thị thời gian ưa thích của bạn.\n\n- Chọn giữa định dạng 12 giờ và 24 giờ\n- Được áp dụng nhất quán trên toàn ứng dụng\n- Thay đổi có hiệu lực ngay lập tức\n- Các ví dụ hiển thị trong menu thả xuống phản ánh định dạng thực tế",
       "timezone": "## Múi giờ\nĐặt múi giờ ưa thích của bạn cho việc hiển thị ngày và giờ.\n\n- Được áp dụng nhất quán trên toàn bộ ứng dụng",

@@ -110,8 +110,16 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
   };
 });
 
+let mockDetailsDisplayMode: "DOCKED" | "NEW_WINDOW" = "DOCKED";
 vi.mock("next-auth/react", () => ({
-  useSession: () => ({ data: { user: { id: "test-user-1" } } }),
+  useSession: () => ({
+    data: {
+      user: {
+        id: "test-user-1",
+        preferences: { detailsDisplayMode: mockDetailsDisplayMode },
+      },
+    },
+  }),
 }));
 
 vi.mock("next-intl", () => ({
@@ -1069,6 +1077,7 @@ function dispatchDragLeave(el: Element, relatedTarget: EventTarget) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockDetailsDisplayMode = "DOCKED";
   // ColumnSelection remembers visibility per storageKey; a choice persisted
   // by one test must never leak into the next one's "default layout" checks.
   window.localStorage.clear();
@@ -1134,6 +1143,52 @@ describe("RequirementsListView", () => {
         }),
         isError: false,
       });
+    });
+
+    it("selects a clicked row into the docked panel by default", async () => {
+      const openSpy = vi.spyOn(window, "open").mockReturnValue(null);
+      const { onSelectRequirement } = renderView();
+      await waitForTree();
+
+      fireEvent.click(await screen.findByTestId("requirement-name-cell-1"));
+
+      expect(onSelectRequirement).toHaveBeenCalledWith(1);
+      expect(openSpy).not.toHaveBeenCalled();
+      openSpy.mockRestore();
+    });
+
+    it("opens a clicked row's full page in a new window under the new-window preference", async () => {
+      mockDetailsDisplayMode = "NEW_WINDOW";
+      const openSpy = vi.spyOn(window, "open").mockReturnValue(null);
+      const { onSelectRequirement } = renderView();
+      await waitForTree();
+
+      fireEvent.click(await screen.findByTestId("requirement-name-cell-1"));
+
+      expect(openSpy).toHaveBeenCalledWith(
+        "/en-US/projects/requirements/42/1",
+        "_blank",
+        "noopener"
+      );
+      expect(onSelectRequirement).not.toHaveBeenCalled();
+      openSpy.mockRestore();
+    });
+
+    it("opens the row menu's Edit on the full page in edit mode under the new-window preference", async () => {
+      mockDetailsDisplayMode = "NEW_WINDOW";
+      const openSpy = vi.spyOn(window, "open").mockReturnValue(null);
+      renderView();
+      await waitForTree();
+
+      openMenu(await screen.findByTestId("requirement-actions-trigger-1"));
+      fireEvent.click(await screen.findByTestId("requirement-action-edit-1"));
+
+      expect(openSpy).toHaveBeenCalledWith(
+        "/en-US/projects/requirements/42/1?edit=1",
+        "_blank",
+        "noopener"
+      );
+      openSpy.mockRestore();
     });
 
     it("renders only the parent row while collapsed, then reveals both children on chevron click", async () => {
