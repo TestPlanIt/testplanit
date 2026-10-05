@@ -1,3 +1,9 @@
+## [1.1.0-beta.36](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.35...v1.1.0-beta.36) (2026-10-05)
+
+### Bug Fixes
+
+* **export:** keep line breaks in PDF and plain-text exports ([42baf93](https://github.com/TestPlanIt/testplanit/commit/42baf930edc53818e933635dc64e275e5902bbe4)), closes [#664](https://github.com/TestPlanIt/testplanit/issues/664)
+
 ## [1.1.0-beta.35](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.34...v1.1.0-beta.35) (2026-10-03)
 
 ### Features
