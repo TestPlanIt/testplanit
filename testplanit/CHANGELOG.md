@@ -1,3 +1,9 @@
+## [1.1.0-beta.37](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.36...v1.1.0-beta.37) (2026-10-05)
+
+### Features
+
+* **preferences:** let users open details in a new window instead of the docked panel ([b015ece](https://github.com/TestPlanIt/testplanit/commit/b015ece9e3e57de26a90b93c33da8bf18deec8d5))
+
 ## [1.1.0-beta.36](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.35...v1.1.0-beta.36) (2026-10-05)
 
 ### Bug Fixes
