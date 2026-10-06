@@ -2,7 +2,15 @@ import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DropZoneOverlay } from "./DropZoneOverlay";
 
-const dragState = { isDraggingCase: false };
+const dragState: {
+  isDraggingCase: boolean;
+  reorderBlockedReason: "sort" | "search" | null;
+  canCopyIntoCurrentFolder: boolean;
+} = {
+  isDraggingCase: false,
+  reorderBlockedReason: null,
+  canCopyIntoCurrentFolder: false,
+};
 const modifierState = { copyHeld: false, moveHeld: false };
 
 vi.mock("next-intl", () => ({
@@ -20,6 +28,8 @@ vi.mock("~/hooks/useDragModifier", () => ({
 
 beforeEach(() => {
   dragState.isDraggingCase = false;
+  dragState.reorderBlockedReason = null;
+  dragState.canCopyIntoCurrentFolder = false;
   modifierState.copyHeld = false;
   modifierState.moveHeld = false;
 });
@@ -106,6 +116,111 @@ describe("DropZoneOverlay", () => {
     );
     // Copy wins when both are somehow held, matching the drag preview's badge.
     expect(screen.getByText("dropZoneTreeCopy")).toBeInTheDocument();
+  });
+
+  it("says to remove the sort when the sorted list refuses reorder drops", () => {
+    dragState.isDraggingCase = true;
+    dragState.reorderBlockedReason = "sort";
+
+    render(
+      <DropZoneOverlay kind="reorder" testId="zone">
+        <p>list</p>
+      </DropZoneOverlay>
+    );
+
+    expect(screen.getByText("dropZoneReorderBlockedSort")).toBeInTheDocument();
+    expect(screen.queryByText("dropZoneReorder")).toBeNull();
+    expect(screen.getByTestId("zone")).toHaveAttribute("data-blocked", "true");
+  });
+
+  it("says to clear the search when relevance order refuses reorder drops", () => {
+    dragState.isDraggingCase = true;
+    dragState.reorderBlockedReason = "search";
+
+    render(
+      <DropZoneOverlay kind="reorder" testId="zone">
+        <p>list</p>
+      </DropZoneOverlay>
+    );
+
+    expect(
+      screen.getByText("dropZoneReorderBlockedSearch")
+    ).toBeInTheDocument();
+  });
+
+  it("names the copy key beside the blocked reorder when a copy is possible", () => {
+    dragState.isDraggingCase = true;
+    dragState.reorderBlockedReason = "sort";
+    dragState.canCopyIntoCurrentFolder = true;
+
+    render(
+      <DropZoneOverlay kind="reorder" testId="zone">
+        <p>list</p>
+      </DropZoneOverlay>
+    );
+
+    expect(
+      screen.getByText("dropZoneReorderBlockedSortMac")
+    ).toBeInTheDocument();
+    expect(screen.getByTestId("zone")).toHaveAttribute("data-blocked", "true");
+  });
+
+  it("turns into a copy target once the copy modifier is held, even while sorted", () => {
+    dragState.isDraggingCase = true;
+    dragState.reorderBlockedReason = "sort";
+    dragState.canCopyIntoCurrentFolder = true;
+    modifierState.copyHeld = true;
+
+    render(
+      <DropZoneOverlay kind="reorder" testId="zone">
+        <p>list</p>
+      </DropZoneOverlay>
+    );
+
+    expect(screen.getByText("dropZoneCopyHere")).toBeInTheDocument();
+    expect(screen.getByTestId("zone")).not.toHaveAttribute("data-blocked");
+  });
+
+  it("offers the copy over the reorder when the modifier is held in default order", () => {
+    dragState.isDraggingCase = true;
+    dragState.canCopyIntoCurrentFolder = true;
+    modifierState.copyHeld = true;
+
+    render(
+      <DropZoneOverlay kind="reorder" testId="zone">
+        <p>list</p>
+      </DropZoneOverlay>
+    );
+
+    expect(screen.getByText("dropZoneCopyHere")).toBeInTheDocument();
+  });
+
+  it("ignores the copy modifier where the list cannot take a copy", () => {
+    dragState.isDraggingCase = true;
+    dragState.reorderBlockedReason = "sort";
+    modifierState.copyHeld = true;
+
+    render(
+      <DropZoneOverlay kind="reorder" testId="zone">
+        <p>list</p>
+      </DropZoneOverlay>
+    );
+
+    expect(screen.getByText("dropZoneReorderBlockedSort")).toBeInTheDocument();
+  });
+
+  it("keeps the tree zone inviting a drop while the list refuses reorders", () => {
+    dragState.isDraggingCase = true;
+    dragState.reorderBlockedReason = "sort";
+
+    render(
+      <DropZoneOverlay kind="tree" testId="zone">
+        <p>tree</p>
+      </DropZoneOverlay>
+    );
+
+    expect(screen.getByText("dropZoneTreeMac")).toBeInTheDocument();
+    expect(screen.getByTestId("zone")).not.toHaveAttribute("data-blocked");
   });
 
   it("stays hidden where the zone cannot accept a drop", () => {

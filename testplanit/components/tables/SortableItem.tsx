@@ -29,6 +29,7 @@ function SortableItem({
   index,
   visibleColumns,
   canDragTestCase,
+  canReorder = true,
   onReorder,
   cellPinningStyleFn,
   selectedItemsForDrag,
@@ -41,6 +42,10 @@ function SortableItem({
   index: number;
   visibleColumns: any[];
   canDragTestCase: boolean;
+  /** Whether a dragged row may be dropped on this one to reorder. False keeps
+   * the row a drag source (so it can still land on a folder) while the list
+   * is sorted or searched and its positions no longer mean `order`. */
+  canReorder?: boolean;
   onReorder: (dragIndex: number, hoverIndex: number) => void;
   cellPinningStyleFn: (column: Column<any>) => CSSProperties;
   selectedItemsForDrag?: DraggedCaseInfo[];
@@ -147,6 +152,7 @@ function SortableItem({
   >(
     () => ({
       accept: itemType,
+      canDrop: () => canReorder,
       collect(monitor) {
         return {
           handlerId: monitor.getHandlerId(),
@@ -160,7 +166,11 @@ function SortableItem({
         const dragIndex = item.index;
         const hoverIndex = index;
 
-        if (!rowRef.current || !monitor.isOver({ shallow: true })) {
+        if (
+          !canReorder ||
+          !rowRef.current ||
+          !monitor.isOver({ shallow: true })
+        ) {
           setHoverPosition(null);
           return;
         }
@@ -207,7 +217,7 @@ function SortableItem({
         setHoverPosition(null);
       },
     }),
-    [index, onReorder, hoverPosition]
+    [index, onReorder, hoverPosition, canReorder]
   );
 
   useEffect(() => {
@@ -216,12 +226,14 @@ function SortableItem({
     }
   }, [isOverCurrent]);
 
+  // Only a droppable row counts as the reorder zone; otherwise the drag
+  // preview would promise a reorder that the drop refuses.
   useEffect(() => {
-    if (isOverCurrent) {
+    if (isOverCurrent && canReorder) {
       setIsOverReorderZone(true);
       return () => setIsOverReorderZone(false);
     }
-  }, [isOverCurrent, setIsOverReorderZone]);
+  }, [isOverCurrent, canReorder, setIsOverReorderZone]);
 
   useEffect(() => {
     dragPreview(getEmptyImage(), { captureDraggingState: true });

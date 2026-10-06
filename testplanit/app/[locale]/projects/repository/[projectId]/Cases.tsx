@@ -90,6 +90,8 @@ import { toast } from "sonner";
 import { fetchAllCasesForExport as fetchAllCasesAction } from "~/app/actions/exportActions";
 import { TFunction, useExportData } from "~/hooks/useExportData";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import { useDragTargetKind } from "~/hooks/useDragTargetKind";
+import { useDragModifier } from "~/hooks/useDragModifier";
 import {
   useRepositoryCasesInvalidation,
   useRepositoryCasesQuery,
@@ -2104,6 +2106,60 @@ export default function Cases({
   const isMultiConfigMode =
     isRunMode && selectedRunIds && selectedRunIds.length > 1;
 
+  // Dragging a case has two destinations, gated separately so a sort does not
+  // hide the whole feature:
+  //  - back into the list, to reorder — only in the default `order` sort and
+  //    outside a search, because rows in any other order would compute `order`
+  //    values from the wrong neighbours and corrupt the persisted order.
+  //    Filter chips narrow the set without changing its order, so they do not
+  //    block it. Disabled in multi-config mode (ordering a merged view of
+  //    multiple runs is undefined) and when the run's composition is locked.
+  //  - onto a folder in the tree, to copy or move — any sort or search, but
+  //    only in the folder view (the tree is the drop target) and outside runs
+  //    (the run tree refuses case drops).
+  const canDragCases =
+    !isSelectionMode &&
+    !isCompleted &&
+    !compositionLocked &&
+    !isMultiConfigMode &&
+    ((isRunMode && canAddEditRun) || (!isRunMode && canAddEdit));
+  const canReorderCases = canDragCases && isDefaultSort && !searchActive;
+  const canDragCasesToFolders =
+    canDragCases && !isRunMode && viewType === "folders";
+  const showDragHandles = canReorderCases || canDragCasesToFolders;
+
+  // Tell the list drop zone why it refuses drops while rows are still
+  // draggable, so it can say what to undo. A search wins over a sort: clearing
+  // the sort alone would leave the list in relevance order.
+  const reorderBlockedReason =
+    showDragHandles && !canReorderCases
+      ? searchActive
+        ? "search"
+        : "sort"
+      : null;
+  const {
+    isDraggingCase,
+    setReorderBlockedReason,
+    setCanCopyIntoCurrentFolder,
+  } = useDragTargetKind();
+  useEffect(() => {
+    setReorderBlockedReason(reorderBlockedReason);
+    return () => setReorderBlockedReason(null);
+  }, [reorderBlockedReason, setReorderBlockedReason]);
+
+  // With the copy modifier held, a drop on the list copies the dragged cases
+  // into the folder it shows — under any sort, since a copy lands at the end
+  // and never touches `order`. Rows refuse drops meanwhile so the outer copy
+  // target (ProjectRepository) is the one that fires.
+  const canCopyIntoCurrentFolder =
+    canDragCasesToFolders && folderId != null && folderId > 0;
+  useEffect(() => {
+    setCanCopyIntoCurrentFolder(canCopyIntoCurrentFolder);
+    return () => setCanCopyIntoCurrentFolder(false);
+  }, [canCopyIntoCurrentFolder, setCanCopyIntoCurrentFolder]);
+  const { copyHeld } = useDragModifier(isDraggingCase);
+  const copyIntoFolderActive = copyHeld && canCopyIntoCurrentFolder;
+
   // Handle selection changes
   const _handleSelectAll = useCallback(() => {
     if (!isSelectionMode || !onSelectionChange || !cases) return;
@@ -2584,15 +2640,8 @@ export default function Cases({
       isSelectionMode
         ? selectedTestCases.length
         : selectedCaseIdsForBulkEdit.length,
-      // Pass enableReorder to show/hide grip handle
-      // Disabled in multi-config mode: ordering a merged view of multiple runs is undefined.
-      // Disabled when the run's composition is locked: reordering is frozen.
-      isDefaultSort &&
-        !isSelectionMode &&
-        !isCompleted &&
-        !compositionLocked &&
-        !isMultiConfigMode &&
-        ((isRunMode && canAddEditRun) || (!isRunMode && canAddEdit)),
+      // Grip handle: shown whenever rows can be dragged, to reorder or to a folder
+      showDragHandles,
       // QuickScript per-row action
       quickScriptEnabled,
       canAddEdit,
@@ -2685,7 +2734,7 @@ export default function Cases({
     canDelete,
     canAddEditRun,
     canAddEdit,
-    isDefaultSort,
+    showDragHandles,
     sortConfig,
     handleCheckboxClick,
     handleSelectAllClick,
@@ -2703,8 +2752,6 @@ export default function Cases({
     renderLatestResults,
     excludeNotStartedFromRuns,
     handleDeleteCase,
-    compositionLocked,
-    isMultiConfigMode,
   ]);
 
   // Create lightweight column metadata for ColumnSelection component
@@ -3422,21 +3469,8 @@ export default function Cases({
                 onSortColumn={isCompleted ? undefined : handleSortColumn}
                 onHideColumn={(columnId) => columnHideRef.current?.(columnId)}
                 sortConfig={isCompleted ? undefined : sortConfig}
-                enableReorder={
-                  isDefaultSort &&
-                  // Rows sit in relevance order during a search, so a drag
-                  // would compute `order` values from relevance-ordered
-                  // neighbours and corrupt the persisted case order. Filter
-                  // chips do NOT disable reordering (parity with the pre-chip
-                  // ViewSelector filters) — they narrow the set without
-                  // changing its order.
-                  !searchActive &&
-                  !isSelectionMode &&
-                  !isCompleted &&
-                  !compositionLocked &&
-                  !isMultiConfigMode &&
-                  ((isRunMode && canAddEditRun) || (!isRunMode && canAddEdit))
-                }
+                enableReorder={canReorderCases && !copyIntoFolderActive}
+                enableDrag={showDragHandles}
                 onReorder={handleReorder}
                 columnVisibility={columnVisibility}
                 onColumnVisibilityChange={handleColumnVisibilityChange}

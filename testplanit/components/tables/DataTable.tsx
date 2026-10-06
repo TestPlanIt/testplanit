@@ -160,7 +160,11 @@ export interface PagedDataTableProps<
   TValue = any,
 > extends DataTableBaseProps<TData, TValue> {
   virtualized?: false;
+  /** Rows accept drops from each other to reorder (implies `enableDrag`). */
   enableReorder?: boolean;
+  /** Rows are drag sources even when `enableReorder` is false, so they can be
+   * dropped on targets outside the table (folders) while the list is sorted. */
+  enableDrag?: boolean;
   onReorder?: (dragIndex: number, hoverIndex: number) => void;
   selectedItemsForDrag?: DraggedCaseInfoForSortableItem[];
   itemType?: string;
@@ -491,6 +495,7 @@ function PagedTable<TData extends DataRow, TValue>({
   onHideColumn,
   sortConfig: sortConfigProp,
   enableReorder,
+  enableDrag,
   onReorder,
   columnVisibility,
   onColumnVisibilityChange,
@@ -1089,8 +1094,10 @@ function PagedTable<TData extends DataRow, TValue>({
                 const isGrouped = row.getIsGrouped();
                 const isSubRow = depth > 0;
 
-                // Use SortableItem when enableReorder is true and not a grouped row
-                if (enableReorder && !isGrouped && onReorder) {
+                // Draggable rows render through SortableItem; reordering among
+                // them is gated separately so a sorted list still lets a case
+                // be dragged out to a folder.
+                if ((enableReorder || enableDrag) && !isGrouped && onReorder) {
                   return (
                     <SortableItem
                       key={row.id}
@@ -1102,6 +1109,7 @@ function PagedTable<TData extends DataRow, TValue>({
                       // renders in table order.
                       visibleColumns={table.getVisibleLeafColumns()}
                       canDragTestCase={true}
+                      canReorder={!!enableReorder}
                       onReorder={onReorder}
                       cellPinningStyleFn={getCommonPinningStyles}
                       selectedItemsForDrag={selectedItemsForDragFinal}

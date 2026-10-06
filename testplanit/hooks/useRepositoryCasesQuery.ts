@@ -40,6 +40,17 @@ import {
 export const REPOSITORY_CASES_QUERY_ROOT = "repositoryCasesQuery";
 
 /**
+ * Roots of the id-resolving sort queries (`useCaseIdsByLatestStatus`,
+ * `useCaseIdsByFieldOption`). A Latest Results or Dropdown-field sort resolves
+ * the page's case ids first and the list query then filters to exactly those
+ * ids, so a stale id page pins the list to its old rows no matter how often
+ * the list itself refetches — the count moves, the table does not. They are
+ * invalidated together with the list for that reason.
+ */
+export const CASE_IDS_BY_LATEST_STATUS_QUERY_ROOT = "caseIdsByLatestStatus";
+export const CASE_IDS_BY_FIELD_OPTION_QUERY_ROOT = "caseIdsByFieldOption";
+
+/**
  * Window event any non-ZenStack mutation path (raw fetch, server action,
  * import/AI wizards) dispatches after it changes the case list.
  */
@@ -115,15 +126,22 @@ export function repositoryCasesQueryKey(
 }
 
 /**
- * Mark every case-list query stale and refetch the active ones. This is the
- * single entry point — callers never reach for an individual `refetch`.
+ * Mark every case-list query stale and refetch the active ones — including the
+ * id pages an id-resolved sort feeds into the list. This is the single entry
+ * point — callers never reach for an individual `refetch`.
  */
-export function invalidateRepositoryCasesQueries(
+export async function invalidateRepositoryCasesQueries(
   queryClient: QueryClient
 ): Promise<void> {
-  return queryClient.invalidateQueries({
-    queryKey: [REPOSITORY_CASES_QUERY_ROOT],
-  });
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: [REPOSITORY_CASES_QUERY_ROOT] }),
+    queryClient.invalidateQueries({
+      queryKey: [CASE_IDS_BY_LATEST_STATUS_QUERY_ROOT],
+    }),
+    queryClient.invalidateQueries({
+      queryKey: [CASE_IDS_BY_FIELD_OPTION_QUERY_ROOT],
+    }),
+  ]);
 }
 
 /**

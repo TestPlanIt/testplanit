@@ -73,7 +73,7 @@ The page features a resizable two-panel layout:
     * **Test Case Table (`DataTable`)**: Displays the list of test cases based on the current selection/filters. Supports:
         * **Sorting via the column header menu**: Each column header opens a menu with **Sort ascending**, **Sort descending**, **Manual sort** (clears the sort), and **Hide column**. The active sort column shows a faint tint plus a directional accent bar — along the top edge when sorted ascending, the bottom edge when descending. The sort column and direction are remembered per project.
         * **Reordering and resizing columns**: Drag a header by its grip to reorder columns, or drag a header's right edge to resize it. The pinned checkbox, Name, and Actions columns stay in place. Column order and width are remembered per project alongside your visibility choices.
-        * Reordering cases via drag-and-drop within the table (only when sorted by the default `order` column and not in selection mode).
+        * Dragging cases: drag a row by its grip to a folder in the tree to copy or move it, or to a new position within the table to reorder. Reordering needs the default `order` sort and no active search; copying and moving work under any sort, and holding the copy modifier while dropping on the table copies the cases into the current folder.
         * Clicking a test case name opens its details in a docked [Test Case Details](./repository-case-details.mdx) panel beside the list (see [Test Case Details Panel](#test-case-details-panel) below).
     * **Quick Add Row (`AddCaseRow`)**: An inline form at the bottom of the table for quickly adding a new test case with just a name and state (uses the project's default template).
 
@@ -234,12 +234,14 @@ Clicking a test case name opens its [Test Case Details](./repository-case-detail
 
 While you drag a test case, the valid drop destinations are outlined with a dashed border and labeled so the outcome is clear before you release:
 
-* The reorder zone within the case list shows **Drop to reorder**.
+* The reorder zone within the case list shows **Drop to reorder**. If the list is sorted by another column it shows **Remove the sort to reorder — hold ⌥ to copy into this folder** instead (**Ctrl** on Windows and Linux; during a search the label starts with **Clear the search to reorder**), and a plain drop on a row does nothing; you can still drop the case on a folder. Once you hold the copy modifier over the list, the label switches to **Drop to copy into this folder**.
 * The folder tree shows **Drop on a folder — hold ⇧ to move, ⌥ to copy** (on Windows and Linux, **Drop on a folder — hold Shift to move, Ctrl to copy**). Once you hold a modifier, the label switches to **Drop on a folder to move** or **Drop on a folder to copy** to confirm the chosen action.
 
 ### Reordering Test Cases
 
 When the table is sorted by the default **Order** column and selection mode is off, you can drag any test case row to a new position within the same folder. A blue indicator line shows where the case will land. Releasing the row commits the new order.
+
+The drag grips stay visible when the table is sorted by another column, so you can still drag cases to a folder, or hold the copy modifier (⌥ on Mac, Ctrl on Windows and Linux) and drop them back on the table to copy them into the current folder. Choose **Manual sort** from a column header menu to return to the default order and reorder cases again.
 
 ### Moving Test Cases to a Folder
 

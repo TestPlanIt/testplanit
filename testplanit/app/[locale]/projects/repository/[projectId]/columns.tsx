@@ -1491,7 +1491,9 @@ export const getColumns = (
   isMultiConfigRun?: boolean,
   totalItems?: number,
   selectedCount?: number,
-  enableReorder?: boolean,
+  /** Render the grip in the selection column. True whenever rows can be
+   * dragged at all (to reorder or to a folder), not only when reorder is on. */
+  showDragHandle?: boolean,
   quickScriptEnabled?: boolean,
   canAddEdit?: boolean,
   onQuickScript?: (caseId: number) => void,
@@ -1556,8 +1558,7 @@ export const getColumns = (
   const selectionColumn: ColumnDef<ExtendedCases> = {
     id: "select",
     header: ({ table }) => {
-      // Show handle when reordering is enabled
-      const showHandle = enableReorder;
+      const showHandle = showDragHandle;
 
       // Determine if all items are selected (for tooltip message)
       const isAllSelected =
@@ -1581,8 +1582,7 @@ export const getColumns = (
     },
     cell: ({ row }) => {
       const isDeletedInRun = isRunMode && row.original.isDeleted;
-      // Show handle when reordering is enabled
-      const showHandle = enableReorder;
+      const showHandle = showDragHandle;
 
       return (
         <div

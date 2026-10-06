@@ -299,6 +299,9 @@ vi.mock("@/components/dnd/DragStateBridge", () => ({
 vi.mock("@/components/dnd/DropZoneOverlay", () => ({
   DropZoneOverlay: ({ children }: any) => <div>{children}</div>,
 }));
+vi.mock("@/components/dnd/CopyIntoFolderDropTarget", () => ({
+  CopyIntoFolderDropTarget: ({ children }: any) => <div>{children}</div>,
+}));
 vi.mock("@/components/ui/SimpleDndProvider", () => ({
   SimpleDndProvider: ({ children }: any) => children,
 }));

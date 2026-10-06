@@ -50,6 +50,15 @@ vi.mock("~/lib/navigation", () => ({
   permanentRedirect: vi.fn(),
 }));
 
+const dragModifierState = vi.hoisted(() => ({
+  copyHeld: false,
+  moveHeld: false,
+}));
+vi.mock("~/hooks/useDragModifier", () => ({
+  useDragModifier: () => dragModifierState,
+  isMacPlatform: () => true,
+}));
+
 vi.mock("next-intl", () => ({
   useTranslations: vi.fn((namespace?: string) => {
     return (key: string) => (namespace ? `${namespace}.${key}` : key);
@@ -1195,6 +1204,69 @@ describe("Search x filter intersection (spec §9)", () => {
     expect(screen.getByTestId("sorted-by-relevance")).toBeInTheDocument();
     const tableProps = vi.mocked(DataTable).mock.calls.at(-1)?.[0] as any;
     expect(tableProps.enableReorder).toBe(false);
+    // Relevance order blocks reordering, not dragging: a search hit can still
+    // be dragged to a folder.
+    expect(tableProps.enableDrag).toBe(true);
+  });
+
+  it("keeps rows draggable to folders when the list is sorted, with reordering off", async () => {
+    const { readStoredColumnSort } =
+      await import("@/components/tables/ColumnSelection");
+    (readStoredColumnSort as any).mockReturnValue({
+      column: "name",
+      direction: "desc",
+    });
+    try {
+      setupMocks({ data: [mockCase] });
+
+      render(<Cases {...defaultProps} viewType="folders" folderId={1} />);
+      await screen.findByTestId("data-table");
+
+      const tableProps = vi.mocked(DataTable).mock.calls.at(-1)?.[0] as any;
+      expect(tableProps.enableReorder).toBe(false);
+      expect(tableProps.enableDrag).toBe(true);
+    } finally {
+      (readStoredColumnSort as any).mockReturnValue(null);
+    }
+  });
+
+  it("hands a copy-modifier drop to the folder copy target instead of reordering", async () => {
+    dragModifierState.copyHeld = true;
+    try {
+      setupMocks({ data: [mockCase] });
+
+      render(<Cases {...defaultProps} viewType="folders" folderId={1} />);
+      await screen.findByTestId("data-table");
+
+      const tableProps = vi.mocked(DataTable).mock.calls.at(-1)?.[0] as any;
+      // Rows refuse the drop so the outer copy target fires; the row stays a
+      // drag source.
+      expect(tableProps.enableReorder).toBe(false);
+      expect(tableProps.enableDrag).toBe(true);
+    } finally {
+      dragModifierState.copyHeld = false;
+    }
+  });
+
+  it("hides drag handles in a sorted view that has no folder tree to drop on", async () => {
+    const { readStoredColumnSort } =
+      await import("@/components/tables/ColumnSelection");
+    (readStoredColumnSort as any).mockReturnValue({
+      column: "name",
+      direction: "desc",
+    });
+    try {
+      setupMocks({ data: [mockCase] });
+
+      render(<Cases {...defaultProps} viewType="all" />);
+      await screen.findByTestId("data-table");
+
+      const tableProps = vi.mocked(DataTable).mock.calls.at(-1)?.[0] as any;
+      expect(tableProps.enableReorder).toBe(false);
+      expect(tableProps.enableDrag).toBe(false);
+    } finally {
+      (readStoredColumnSort as any).mockReturnValue(null);
+    }
   });
 
   it("keeps reordering enabled when only filter chips are active", async () => {

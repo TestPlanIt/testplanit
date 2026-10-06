@@ -7,6 +7,11 @@ import { useDebounce } from "@/components/Debounce";
 import { UnifiedDragPreview } from "@/components/dnd/UnifiedDragPreview";
 import { DragStateBridge } from "@/components/dnd/DragStateBridge";
 import { DropZoneOverlay } from "@/components/dnd/DropZoneOverlay";
+import {
+  CopyIntoFolderDropTarget,
+  type CopyDropHandler,
+  type CopyDropItems,
+} from "@/components/dnd/CopyIntoFolderDropTarget";
 import { PageFileDropOverlay } from "@/components/PageFileDropOverlay";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import {
@@ -1537,6 +1542,24 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
     setFolderHierarchy(hierarchy);
   }, []);
 
+  // The tree owns the copy job (spinner on the target node, completion toasts,
+  // refetches), so a copy dropped on the case list runs through its handler.
+  const copyDropHandlerRef = useRef<CopyDropHandler | null>(null);
+  const handleCopyDropHandlerReady = useCallback((handler: CopyDropHandler) => {
+    copyDropHandlerRef.current = handler;
+  }, []);
+  const handleCopyIntoSelectedFolder = useCallback(
+    (items: CopyDropItems) => {
+      if (selectedFolderId == null || !selectedFolderName) return;
+      void copyDropHandlerRef.current?.(
+        items,
+        selectedFolderId,
+        selectedFolderName
+      );
+    },
+    [selectedFolderId, selectedFolderName]
+  );
+
   const handleRefetchFolders = useCallback(
     (refetch: () => Promise<unknown>) => {
       refetchFoldersRef.current = refetch;
@@ -2309,6 +2332,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                             onCopyMoveFolder={
                               showCopyMove ? handleCopyMoveFolder : undefined
                             }
+                            onCopyDropHandlerReady={handleCopyDropHandlerReady}
                           />
                         ) : null}
                       </DropZoneOverlay>
@@ -2582,50 +2606,55 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                           kind="reorder"
                           testId="reorder-drop-zone"
                         >
-                          {/* Search intersects, it no longer bypasses (spec
+                          <CopyIntoFolderDropTarget
+                            onCopy={handleCopyIntoSelectedFolder}
+                            testId="copy-into-folder-drop-target"
+                          >
+                            {/* Search intersects, it no longer bypasses (spec
                               §9): folder scope, grouping axis and predicates
                               all stay real; the resolved id set rides
                               alongside as searchResultIds. */}
-                          <Cases
-                            folderId={selectedFolderId}
-                            viewType={selectedItem}
-                            predicates={predicates}
-                            filterRegistry={filterRegistry}
-                            predicatesKey={canonicalKey}
-                            onClearFilters={clearPredicates}
-                            inReviewCaseIds={inReviewCaseIds}
-                            codePinsEnabled={codePinsActive}
-                            isSelectionMode={isSelectionMode}
-                            selectedTestCases={selectedTestCases}
-                            selectedRunIds={selectedRunIds}
-                            onSelectionChange={onSelectionChange}
-                            onConfirm={onConfirm}
-                            hideHeader={hideHeader}
-                            isRunMode={isRunMode}
-                            onRunSelectionChange={onRunSelectionChange}
-                            onTestCaseClick={onTestCaseClick}
-                            isCompleted={isCompleted}
-                            compositionLocked={compositionLocked}
-                            canAddEdit={canAddEdit}
-                            canAddEditRun={canAddEditRun}
-                            canDelete={canDelete}
-                            selectedFolderCaseCount={selectedFolderCaseCount}
-                            overridePagination={overridePagination}
-                            searchResultIds={activeSearchResultIds}
-                            searchKey={activeSearchKey}
-                            searchText={activeSearchText}
-                            searchPending={searchPending}
-                            searchFailed={searchFailed}
-                            copyMoveFolderId={copyMoveFolderId}
-                            copyMoveFolderName={copyMoveFolderName}
-                            onCopyMoveFolderDialogClose={
-                              handleCopyMoveFolderDialogClose
-                            }
-                            descendantFolderIds={descendantFolderIds}
-                            showDescendants={showDescendants}
-                            folderPathMap={folderPathMap}
-                            onCaseNavChange={setCaseNav}
-                          />
+                            <Cases
+                              folderId={selectedFolderId}
+                              viewType={selectedItem}
+                              predicates={predicates}
+                              filterRegistry={filterRegistry}
+                              predicatesKey={canonicalKey}
+                              onClearFilters={clearPredicates}
+                              inReviewCaseIds={inReviewCaseIds}
+                              codePinsEnabled={codePinsActive}
+                              isSelectionMode={isSelectionMode}
+                              selectedTestCases={selectedTestCases}
+                              selectedRunIds={selectedRunIds}
+                              onSelectionChange={onSelectionChange}
+                              onConfirm={onConfirm}
+                              hideHeader={hideHeader}
+                              isRunMode={isRunMode}
+                              onRunSelectionChange={onRunSelectionChange}
+                              onTestCaseClick={onTestCaseClick}
+                              isCompleted={isCompleted}
+                              compositionLocked={compositionLocked}
+                              canAddEdit={canAddEdit}
+                              canAddEditRun={canAddEditRun}
+                              canDelete={canDelete}
+                              selectedFolderCaseCount={selectedFolderCaseCount}
+                              overridePagination={overridePagination}
+                              searchResultIds={activeSearchResultIds}
+                              searchKey={activeSearchKey}
+                              searchText={activeSearchText}
+                              searchPending={searchPending}
+                              searchFailed={searchFailed}
+                              copyMoveFolderId={copyMoveFolderId}
+                              copyMoveFolderName={copyMoveFolderName}
+                              onCopyMoveFolderDialogClose={
+                                handleCopyMoveFolderDialogClose
+                              }
+                              descendantFolderIds={descendantFolderIds}
+                              showDescendants={showDescendants}
+                              folderPathMap={folderPathMap}
+                              onCaseNavChange={setCaseNav}
+                            />
+                          </CopyIntoFolderDropTarget>
                         </DropZoneOverlay>
                       </ResizablePanel>
                       {selectedCaseId && (

@@ -186,6 +186,10 @@ vi.mock("~/hooks/useDragTargetKind", () => ({
     setIsDraggingCase: vi.fn(),
     isDraggingFolder: dragTargetMock.isDraggingFolder,
     setIsDraggingFolder: vi.fn(),
+    reorderBlockedReason: null,
+    setReorderBlockedReason: vi.fn(),
+    canCopyIntoCurrentFolder: false,
+    setCanCopyIntoCurrentFolder: vi.fn(),
   }),
 }));
 

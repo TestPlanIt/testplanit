@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchCaseIdsByFieldOption } from "~/app/actions/caseIdsByFieldOption";
 import { serializeWhereForTransport } from "~/lib/repository/whereTransport";
+import { CASE_IDS_BY_FIELD_OPTION_QUERY_ROOT } from "./useRepositoryCasesQuery";
 
 /**
  * Page of case ids ordered by one Dropdown custom field's selected option,
@@ -22,7 +23,14 @@ export function useCaseIdsByFieldOption(args: {
   const { where, fieldId, direction, skip, take, enabled } = args;
 
   const { data, isFetching } = useQuery({
-    queryKey: ["caseIdsByFieldOption", where, fieldId, direction, skip, take],
+    queryKey: [
+      CASE_IDS_BY_FIELD_OPTION_QUERY_ROOT,
+      where,
+      fieldId,
+      direction,
+      skip,
+      take,
+    ],
     queryFn: async () => {
       const result = await fetchCaseIdsByFieldOption({
         // React Flight cannot encode the where's Json-null sentinels; they
