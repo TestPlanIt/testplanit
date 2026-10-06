@@ -334,6 +334,15 @@ export function StaticReportViewer({
           totalFlakyTests={reportData.totalFlakyTests}
           matrixAxes={reportData.matrixAxes}
           automationCandidatesSnapshot={reportData.automationCandidatesSnapshot}
+          resultsTrend={
+            reportData.periods && reportData.settings
+              ? {
+                  periods: reportData.periods,
+                  projects: reportData.projects || [],
+                  settings: reportData.settings,
+                }
+              : undefined
+          }
           loadedCount={sortedResults.length}
           totalCount={
             reportData.pagination?.totalCount || reportData.results?.length || 0

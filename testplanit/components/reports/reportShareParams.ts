@@ -26,6 +26,12 @@ import {
   type RelativeDateRange,
 } from "~/lib/reports/dateRangePresets";
 import { MAX_EXECUTION_SCOPE_IDS } from "~/utils/requirementExecutionScope";
+import {
+  DEFAULT_TREND_RUN_SOURCE,
+  TREND_ATTEMPT_MODES,
+  TREND_RUN_SOURCES,
+  type TrendAttemptMode,
+} from "~/utils/resultsTrendShared";
 
 /** Matches ReportBuilder's local getBaseReportType (cross-project variants). */
 function baseReportType(reportType: string): string {
@@ -197,6 +203,13 @@ export interface PerTypeReportUrlState {
   folderIncludeSubfolders: boolean;
   /** Custom reports: draw the chart's total line across every series. */
   includeTotals: boolean;
+  /** Results trend: the counting rules and which rates the charts show. */
+  trendShowPassRate: boolean;
+  trendShowFailRate: boolean;
+  trendShowCounts: boolean;
+  trendCountSkipped: boolean;
+  trendIncludeAborted: boolean;
+  trendAttemptMode: TrendAttemptMode;
   /** The Filters menu's selections: menu key -> selected values. */
   filterValues: Record<string, Array<string | number>>;
 }
@@ -220,10 +233,16 @@ export const PER_TYPE_REPORT_PARAM_DEFAULTS: PerTypeReportUrlState = {
   baselineSnapshotId: null,
   compareSnapshotId: null,
   includeUnchanged: false,
-  // Automation trends overrides this to weekly (see parsePerTypeReportParams).
+  // The trend reports override this to weekly (see parsePerTypeReportParams).
   dateGrouping: "daily",
   folderIncludeSubfolders: true,
   includeTotals: false,
+  trendShowPassRate: false,
+  trendShowFailRate: true,
+  trendShowCounts: false,
+  trendCountSkipped: false,
+  trendIncludeAborted: true,
+  trendAttemptMode: "all",
   filterValues: {},
 };
 
@@ -398,13 +417,15 @@ export function parsePerTypeReportParams(
   // dimension-and-metric report can plot a date axis.
   state.includeTotals = booleanParam(params, "includeTotals", false);
 
-  // The date dimension's calendar period. Automation trends opens weekly;
-  // the custom reports open daily, which is how they always grouped.
+  // The date dimension's calendar period. The two trend reports open
+  // weekly; the custom reports open daily, which is how they always grouped.
   state.dateGrouping = enumParam(
     params,
     "dateGrouping",
     DATE_GROUPING_VALUES,
-    base === "automation-trends" ? "weekly" : "daily"
+    base === "automation-trends" || base === "results-trend"
+      ? "weekly"
+      : "daily"
   );
 
   // The case-based reports' Folders filter.
@@ -508,6 +529,56 @@ export function parsePerTypeReportParams(
       filterValues,
       "repository",
       idListParam(params, "configId", MAX_FILTER_MENU_IDS)
+    );
+  }
+
+  if (base === "results-trend") {
+    // The run body's runSource is the Result types filter: one type picked
+    // narrows the report, "both" (or nothing) is the unfiltered menu.
+    const runSource = enumParam(
+      params,
+      "runSource",
+      TREND_RUN_SOURCES,
+      DEFAULT_TREND_RUN_SOURCE
+    );
+    if (runSource !== "both") {
+      setMenuValues(filterValues, "resultType", [runSource]);
+    }
+    state.trendShowPassRate = booleanParam(
+      params,
+      "showPassRate",
+      state.trendShowPassRate
+    );
+    state.trendShowFailRate = booleanParam(
+      params,
+      "showFailRate",
+      state.trendShowFailRate
+    );
+    state.trendShowCounts = booleanParam(
+      params,
+      "showCounts",
+      state.trendShowCounts
+    );
+    state.trendCountSkipped = booleanParam(
+      params,
+      "countSkipped",
+      state.trendCountSkipped
+    );
+    state.trendIncludeAborted = booleanParam(
+      params,
+      "includeAborted",
+      state.trendIncludeAborted
+    );
+    state.trendAttemptMode = enumParam(
+      params,
+      "attemptMode",
+      TREND_ATTEMPT_MODES,
+      state.trendAttemptMode
+    );
+    setMenuValues(
+      filterValues,
+      "projects",
+      idListParam(params, "projectIds", MAX_FILTER_MENU_IDS)
     );
   }
 

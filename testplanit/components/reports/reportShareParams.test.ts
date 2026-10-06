@@ -645,3 +645,83 @@ describe("buildSharedReportSearchParamsWithState", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });
+
+describe("results-trend params", () => {
+  it("restores the grouping, run source, counting rules and project filter", () => {
+    const state = parsePerTypeReportParams(
+      new URLSearchParams(
+        "dateGrouping=monthly&runSource=manual&showPassRate=true&showFailRate=false&showCounts=false&countSkipped=true&includeAborted=false&attemptMode=latest&projectIds=3,5"
+      ),
+      "cross-project-results-trend"
+    );
+    expect(state.dateGrouping).toBe("monthly");
+    expect(state.trendShowPassRate).toBe(true);
+    expect(state.trendShowFailRate).toBe(false);
+    expect(state.trendShowCounts).toBe(false);
+    expect(state.trendCountSkipped).toBe(true);
+    expect(state.trendIncludeAborted).toBe(false);
+    expect(state.trendAttemptMode).toBe("latest");
+    expect(state.filterValues).toEqual({
+      projects: [3, 5],
+      resultType: ["manual"],
+    });
+  });
+
+  it("falls back to the defaults for a grouping, source or mode it does not offer", () => {
+    const state = parsePerTypeReportParams(
+      new URLSearchParams(
+        "dateGrouping=hourly&runSource=ci&attemptMode=first&countSkipped=maybe"
+      ),
+      "results-trend"
+    );
+    expect(state.dateGrouping).toBe("weekly");
+    expect(state.filterValues).toEqual({});
+    expect(state.trendShowPassRate).toBe(false);
+    expect(state.trendShowFailRate).toBe(true);
+    expect(state.trendShowCounts).toBe(false);
+    expect(state.trendAttemptMode).toBe("all");
+    expect(state.trendCountSkipped).toBe(false);
+    expect(state.trendIncludeAborted).toBe(true);
+  });
+
+  it("round-trips a share config", () => {
+    const params = buildSharedReportSearchParams({
+      dateGrouping: "quarterly",
+      runSource: "automated",
+      countSkipped: true,
+      includeAborted: false,
+      attemptMode: "latest",
+      projectIds: [2],
+      timezone: "Europe/Paris",
+    });
+    const state = parsePerTypeReportParams(
+      params,
+      "cross-project-results-trend"
+    );
+    expect(state.dateGrouping).toBe("quarterly");
+    expect(state.trendCountSkipped).toBe(true);
+    expect(state.trendIncludeAborted).toBe(false);
+    expect(state.trendAttemptMode).toBe("latest");
+    expect(state.filterValues).toEqual({
+      projects: [2],
+      resultType: ["automated"],
+    });
+  });
+
+  it("leaves the Result types filter empty for a run over both types", () => {
+    const state = parsePerTypeReportParams(
+      new URLSearchParams("runSource=both"),
+      "results-trend"
+    );
+    expect(state.filterValues).toEqual({});
+  });
+
+  it("ignores the trend params on another report type", () => {
+    const state = parsePerTypeReportParams(
+      new URLSearchParams("runSource=manual&attemptMode=latest"),
+      "flaky-tests"
+    );
+    expect(state.filterValues).toEqual({});
+    expect(state.trendAttemptMode).toBe("all");
+  });
+});

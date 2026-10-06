@@ -7,6 +7,8 @@ import { z } from "zod/v4";
 const PRE_BUILT_REPORT_TYPES = [
   "automation-trends",
   "cross-project-automation-trends",
+  "results-trend",
+  "cross-project-results-trend",
   "flaky-tests",
   "cross-project-flaky-tests",
   "test-case-health",

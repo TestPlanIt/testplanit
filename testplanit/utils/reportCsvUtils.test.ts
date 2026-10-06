@@ -582,3 +582,71 @@ describe("requirement-coverage-changes CSV", () => {
     expect(rows[1]["reports.ui.requirementCoverage.casesRemoved"]).toBe(1);
   });
 });
+
+describe("results-trend CSV", () => {
+  it("writes one row per project-period with the combined row labeled", () => {
+    const t = (key: string) => key;
+    const rows = buildReportCsvRows({
+      reportType: "cross-project-results-trend",
+      isCrossProject: true,
+      locale: "en-US",
+      t,
+      rows: [
+        {
+          project: null,
+          periodStart: "2026-09-28",
+          partial: true,
+          runs: 3,
+          results: 40,
+          passed: 30,
+          failed: 5,
+          skipped: 5,
+          other: 0,
+          passRate: 85.71,
+          failRate: 14.29,
+        },
+        {
+          project: { id: 1, name: "Web" },
+          periodStart: "2026-09-21",
+          partial: false,
+          runs: 0,
+          results: 0,
+          passed: 0,
+          failed: 0,
+          skipped: 0,
+          other: 0,
+          passRate: null,
+          failRate: null,
+        },
+      ],
+    });
+    expect(rows).toEqual([
+      {
+        "common.fields.project": "reports.ui.resultsTrend.chart.allProjects",
+        "reports.ui.resultsTrend.period": "2026-09-28",
+        "reports.ui.resultsTrend.inProgress": "common.yes",
+        "common.fields.testRuns": 3,
+        "common.results": 40,
+        "reports.metrics.passed": 30,
+        "reports.metrics.failed": 5,
+        "reports.ui.resultsTrend.skipped": 5,
+        "reports.ui.resultsTrend.other": 0,
+        "common.fields.passRate": 85.71,
+        "reports.ui.resultsTrend.failRate": 14.29,
+      },
+      {
+        "common.fields.project": "Web",
+        "reports.ui.resultsTrend.period": "2026-09-21",
+        "reports.ui.resultsTrend.inProgress": "common.no",
+        "common.fields.testRuns": 0,
+        "common.results": 0,
+        "reports.metrics.passed": 0,
+        "reports.metrics.failed": 0,
+        "reports.ui.resultsTrend.skipped": 0,
+        "reports.ui.resultsTrend.other": 0,
+        "common.fields.passRate": "",
+        "reports.ui.resultsTrend.failRate": "",
+      },
+    ]);
+  });
+});

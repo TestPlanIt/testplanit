@@ -370,4 +370,45 @@ test.describe("Report Builder - Multiple Report Types", () => {
       await expect(table).toBeVisible({ timeout: 10000 });
     });
   });
+
+  test("Report builder loads the results-trend report and re-runs on a setting change", async ({
+    api,
+    page,
+  }) => {
+    const projectId = await createProjectWithTestData(api);
+    // An automated run with no results yet still counts as a run, so the
+    // report has a row to show.
+    await api.createTestRun(projectId, `Trend JUnit Run ${Date.now()}`, {
+      testRunType: "JUNIT",
+    });
+
+    await test.step("Open the results-trend pre-built report", async () => {
+      await navigateToReport(page, projectId, "results-trend");
+      await expect(page.getByTestId("results-trend-settings")).toBeVisible({
+        timeout: 10000,
+      });
+      await expect(page.getByTestId("report-date-grouping")).toBeVisible();
+    });
+
+    await test.step("Run the report and verify the verdict and the table", async () => {
+      await runReport(page);
+      await expect(page.getByTestId("results-trend-verdict")).toBeVisible({
+        timeout: 30_000,
+      });
+      await expect(page.locator("[role='table']").first()).toBeVisible();
+    });
+
+    await test.step("Changing the grouping re-runs the report and lands in the URL", async () => {
+      await page.getByTestId("report-date-grouping").click();
+      await page.getByRole("option", { name: "Monthly" }).click();
+      await expect
+        .poll(() => new URL(page.url()).searchParams.get("dateGrouping"), {
+          timeout: 15_000,
+        })
+        .toBe("monthly");
+      await expect(page.getByTestId("results-trend-verdict")).toBeVisible({
+        timeout: 30_000,
+      });
+    });
+  });
 });

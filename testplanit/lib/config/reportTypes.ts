@@ -18,6 +18,7 @@ import {
   GitCompareArrows,
   MapPin,
   Radar,
+  ChartSpline,
 } from "lucide-react";
 
 export interface ReportType {
@@ -99,6 +100,14 @@ export const getProjectReportTypes = (tReports: any): ReportType[] => [
     description: tReports("reportTypes.automationTrends.description"),
     icon: TrendingUp,
     endpoint: "/api/report-builder/automation-trends",
+    isPreBuilt: true,
+  },
+  {
+    id: "results-trend",
+    label: tReports("reportTypes.resultsTrend.label"),
+    description: tReports("reportTypes.resultsTrend.description"),
+    icon: ChartSpline,
+    endpoint: "/api/report-builder/results-trend",
     isPreBuilt: true,
   },
   {
@@ -230,6 +239,14 @@ export const getCrossProjectReportTypes = (tReports: any): ReportType[] => [
     ),
     icon: TrendingUp,
     endpoint: "/api/report-builder/cross-project-automation-trends",
+    isPreBuilt: true,
+  },
+  {
+    id: "cross-project-results-trend",
+    label: tReports("crossProjectReportTypes.resultsTrend.label"),
+    description: tReports("crossProjectReportTypes.resultsTrend.description"),
+    icon: ChartSpline,
+    endpoint: "/api/report-builder/cross-project-results-trend",
     isPreBuilt: true,
   },
   {

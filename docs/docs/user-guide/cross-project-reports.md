@@ -9,7 +9,7 @@ Cross-project reports aggregate data across every project in the system into a s
 
 ## Project Scope
 
-By default, a cross-project report runs across every project the admin has access to. You can narrow the scope by selecting specific projects in the **Projects** filter at the top of the builder, or group results by project by including the **Project** dimension.
+By default, a cross-project report runs across every project the admin has access to. You can narrow the scope by selecting specific projects in the **Projects** filter in the builder's Filters menu, or group results by project by including the **Project** dimension.
 
 ## Available Reports
 
@@ -17,15 +17,16 @@ By default, a cross-project report runs across every project the admin has acces
 
 The following pre-built reports have cross-project variants. The underlying semantics, filters, and column shapes are the same as the per-project versions — the cross-project variant just aggregates across multiple projects. Click through for the full behavior reference.
 
-- [Automation Trends](./projects/reports/automation-trends.md) — repository growth pivoted by automation status, summed across projects.
+- [Automated Test Cases Trend](./projects/reports/automation-trends.md) — repository growth pivoted by automation status, summed across projects.
+- [Code Pin Coverage](./projects/reports/code-pin-coverage.md) — pins and uncovered changes across every project with Impact Analysis enabled, with a **Project** column.
 - [Execution Log](./projects/reports/execution-log.md) — flat chronological log of every test result across the selected projects.
 - [Flaky Tests](./projects/reports/flaky-tests.md) — flaky cases identified across the selected projects.
+- [Impact Analysis History](./projects/reports/impact-analysis-history.md) — every Impact analysis across the projects that have [Impact Analysis enabled](./impact.md), with a **Project** column.
 - [Issue Test Coverage](./projects/reports/issue-test-coverage.md) — coverage rolled up across each project's issue integrations.
 - [Requirement Coverage Gaps](./projects/requirements-traceability.md#reports) — coverage debt across every project that has [requirements enabled](./projects/requirements.md#enabling-requirements).
 - [Requirement Traceability](./projects/requirements-traceability.md#reports) — the traceability matrix across every project that has requirements enabled.
 - [Test Case Health](./projects/reports/test-case-health.md) — health scores aggregated across the portfolio.
-- [Impact Analysis History](./projects/reports/impact-analysis-history.md) — every Impact analysis across the projects that have [Impact Analysis enabled](./impact.md), with a **Project** column.
-- [Code Pin Coverage](./projects/reports/code-pin-coverage.md) — pins and uncovered changes across every project with Impact Analysis enabled, with a **Project** column.
+- [Test Result Failure Rate Trend](./projects/reports/results-trend.md) — pass and fail rates of test results over time by project, with a per-project fail-rate heatmap and the direction of the failure rate.
 
 The two requirement reports add a **Requirement Project** column naming the project each requirement belongs to. On the traceability report that sits alongside the existing **Project** column, which names the _covering case's_ project — a requirement in one project can be covered by a case in another, so the two answer different questions. Requirement [snapshots](./projects/requirements-traceability.md#snapshots) are captured from a single project and stay project-scoped, so there is no cross-project variant of the Requirement Coverage Changes report.
 

@@ -255,6 +255,40 @@ function buildCodePinCoverage(p: BuildReportCsvParams): CsvRow[] {
   });
 }
 
+function buildResultsTrend(p: BuildReportCsvParams): CsvRow[] {
+  const { rows, t } = p;
+  const h = {
+    project: t("common.fields.project"),
+    period: t("reports.ui.resultsTrend.period"),
+    partial: t("reports.ui.resultsTrend.inProgress"),
+    runs: t("common.fields.testRuns"),
+    results: t("common.results"),
+    passed: t("reports.metrics.passed"),
+    failed: t("reports.metrics.failed"),
+    skipped: t("reports.ui.resultsTrend.skipped"),
+    other: t("reports.ui.resultsTrend.other"),
+    passRate: t("common.fields.passRate"),
+    failRate: t("reports.ui.resultsTrend.failRate"),
+  };
+  return rows.map((r: any) => {
+    const row: CsvRow = {};
+    // The combined row has no project; it is labeled the way the table is.
+    row[h.project] =
+      r.project?.name ?? t("reports.ui.resultsTrend.chart.allProjects");
+    row[h.period] = r.periodStart ?? "";
+    row[h.partial] = r.partial ? t("common.yes") : t("common.no");
+    row[h.runs] = r.runs ?? 0;
+    row[h.results] = r.results ?? 0;
+    row[h.passed] = r.passed ?? 0;
+    row[h.failed] = r.failed ?? 0;
+    row[h.skipped] = r.skipped ?? 0;
+    row[h.other] = r.other ?? 0;
+    row[h.passRate] = r.passRate ?? "";
+    row[h.failRate] = r.failRate ?? "";
+    return row;
+  });
+}
+
 function buildIssueTestCoverage(p: BuildReportCsvParams): CsvRow[] {
   const { rows, t, isCrossProject } = p;
   const h = {
@@ -591,6 +625,8 @@ export function buildReportCsvRows(p: BuildReportCsvParams): CsvRow[] {
       return buildImpactAnalysis(p);
     case "code-pin-coverage":
       return buildCodePinCoverage(p);
+    case "results-trend":
+      return buildResultsTrend(p);
     case "requirement-coverage-gaps":
       return buildRequirementCoverageGaps(p);
     case "requirement-traceability":

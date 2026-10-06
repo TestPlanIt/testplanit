@@ -7,6 +7,7 @@ import { metricUnit } from "~/utils/metricUnits";
 import { stringToColorCode } from "~/utils/stringToColorCode";
 import { formatReportPeriod } from "~/utils/reportPeriodFormat";
 import type { DateGrouping } from "~/lib/reports/dateGrouping";
+import type { ResultsTrendMeta } from "~/utils/resultsTrendShared";
 import { FlakyTestsBubbleChart } from "./FlakyTestsBubbleChart";
 import { IssueTestCoverageChart } from "./IssueTestCoverageChart";
 import RecentResultsDonut from "./RecentResultsDonut";
@@ -20,6 +21,7 @@ import {
   SmallMultipleData,
 } from "./ReportSmallMultiplesGroupedBar";
 import { ReportSunburstChart } from "./ReportSunburstChart";
+import { ResultsTrendChart } from "./ResultsTrendChart";
 import { CodePinCoverageChart } from "./CodePinCoverageChart";
 import { ImpactAnalysisChart } from "./ImpactAnalysisChart";
 import { TestCaseHealthChart } from "./TestCaseHealthChart";
@@ -118,6 +120,8 @@ interface ReportChartProps {
   projectId?: number | string; // Project ID for building links in charts
   /** The period each date row covers; labels the time axis' tooltips. */
   dateGrouping?: DateGrouping;
+  /** Results trend: the weeks, projects and settings of the run. */
+  resultsTrend?: ResultsTrendMeta;
 }
 
 // Helper to determine chart type
@@ -378,6 +382,7 @@ export const ReportChart: React.FC<ReportChartProps> = ({
   totalFlakyTests,
   projectId,
   dateGrouping = "daily",
+  resultsTrend,
 }) => {
   const locale = useLocale();
   const t = useTranslations();
@@ -534,6 +539,16 @@ export const ReportChart: React.FC<ReportChartProps> = ({
   // Code pin coverage: summary tiles + pins vs uncovered files by directory.
   if (reportType && matchesReportType(reportType, "code-pin-coverage")) {
     return <CodePinCoverageChart data={results} />;
+  }
+
+  // Results trend: verdict, headline stats, rate chart, heatmap
+  // and per-project detail. Needs the run's week axis to lay out.
+  if (
+    reportType &&
+    matchesReportType(reportType, "results-trend") &&
+    resultsTrend
+  ) {
+    return <ResultsTrendChart data={results} meta={resultsTrend} />;
   }
 
   // Special handling for issue test coverage report - use stacked bar chart

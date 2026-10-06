@@ -228,6 +228,10 @@ export async function buildSharedReportPayload({
     ...(reportData.totalFlakyTests && {
       totalFlakyTests: reportData.totalFlakyTests,
     }),
+    // Results trend: the period axis and settings the chart lays
+    // out from (projects ride the generic pass-through above).
+    ...(reportData.periods && { periods: reportData.periods }),
+    ...(reportData.settings && { settings: reportData.settings }),
     ...(isIterationMatrix && {
       matrixAxes: {
         caseAxis: reportData.caseAxis,

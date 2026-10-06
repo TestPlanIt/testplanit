@@ -8377,7 +8377,7 @@
           "description": "Issue creation, resolution, and impact analysis"
         },
         "automationTrends": {
-          "label": "Automation Trends",
+          "label": "Automated Test Cases Trend",
           "description": "Track automation progress week-over-week by priority"
         },
         "flakyTests": {
@@ -8423,6 +8423,10 @@
         "codePinCoverage": {
           "label": "Code Pin Coverage",
           "description": "Where Code Pins are, by repository and directory, and where recent changes went uncovered"
+        },
+        "resultsTrend": {
+          "label": "Test Result Failure Rate Trend",
+          "description": "Pass and fail rates of test results over time, and whether the failure rate is getting better or worse"
         }
       },
       "flakyTests": {
@@ -8742,7 +8746,7 @@
           "description": "Token usage, cost, and reliability of LLM features across projects"
         },
         "automationTrends": {
-          "label": "Cross-Project Automation Trends",
+          "label": "Cross-Project Automated Test Cases Trend",
           "description": "Track automation progress week-over-week by priority across projects"
         },
         "flakyTests": {
@@ -8776,6 +8780,10 @@
         "codePinCoverage": {
           "label": "Cross-Project Code Pin Coverage",
           "description": "Code Pin coverage across every project with Impact Analysis enabled"
+        },
+        "resultsTrend": {
+          "label": "Cross-Project Test Result Failure Rate Trend",
+          "description": "Pass and fail rates of test results over time by project, and whether the failure rate is getting better or worse"
         }
       },
       "folderDescendants": {
@@ -8839,6 +8847,79 @@
         },
         "chart": {
           "byDirectory": "Pins and uncovered files by directory"
+        }
+      },
+      "resultsTrend": {
+        "period": "Period",
+        "runSource": "Result types",
+        "runSources": {
+          "automated": "Automated",
+          "manual": "Manual"
+        },
+        "showPassRate": "Show pass rate",
+        "showPassRateHelp": "Draw the pass rate on the chart's right-hand axis, with its own fitted trend, and add it to the headline figures. Off by default: the report is about the failure rate.",
+        "showFailRate": "Show fail rate",
+        "showFailRateHelp": "Draw the fail rate on the chart's right-hand axis, with its fitted trend, and show it in the headline figures. On by default.",
+        "showCounts": "Show result totals",
+        "showCountsHelp": "Draw the passed, failed, skipped and other totals as stacked bars on the chart beside the rates. Off by default: the report is about the rates.",
+        "countSkipped": "Count skipped results in rates",
+        "countSkippedHelp": "Skipped results are left out of the pass and fail rate denominator unless this is on. Other statuses always stay in.",
+        "includeAborted": "Include aborted runs",
+        "includeAbortedHelp": "Runs sitting in the project's abandoned-run state are counted unless this is off.",
+        "latestAttemptOnly": "Latest attempt only",
+        "latestAttemptOnlyHelp": "Count one result per case per run, its latest attempt, instead of every imported attempt.",
+        "failRate": "Fail rate",
+        "skipped": "Skipped",
+        "other": "Other",
+        "inProgress": "in progress",
+        "verdict": {
+          "better": "Failure rate is getting better",
+          "worse": "Failure rate is getting worse",
+          "steady": "Failure rate is holding steady",
+          "notEnough": "Not enough complete periods to call a trend yet.",
+          "notEnoughDetail": "The trend needs at least two complete periods with results.",
+          "detail": "The trend line runs from {start} to {end}, a change of {change} points over {count} complete {grouping, select, daily {days} weekly {weeks} monthly {months} quarterly {quarters} other {years}}."
+        },
+        "stats": {
+          "lastComplete": "Last complete period ({period}), compared with the average of the complete periods before it.",
+          "results": "Results executed",
+          "runs": "Runs",
+          "deltaPoints": "{change} pts vs. the previous {count, plural, one {# period} other {# periods}}",
+          "deltaPercent": "{change}% vs. the previous {count, plural, one {# period} other {# periods}}",
+          "noBaseline": "Nothing earlier to compare against"
+        },
+        "chart": {
+          "allProjects": "All selected projects",
+          "period": "{grouping, select, weekly {Week of {date}} other {{date}}}",
+          "partialPeriod": "{grouping, select, weekly {Week of {period}} other {{period}}} (in progress)",
+          "rateTrend": "{rate} trend"
+        },
+        "heatmap": {
+          "title": "Fail rate by project and period",
+          "help": "Each cell is the project's fail rate for the period; shading reaches full intensity at 35%. The trend column is the change in the fitted fail-rate line over the complete periods. * marks the period in progress.",
+          "trend": "Trend"
+        },
+        "trend": {
+          "points": "{change} pts"
+        },
+        "detail": {
+          "title": "Results and rates by period"
+        },
+        "method": {
+          "title": "How this is counted",
+          "runSource": {
+            "automated": "Automated runs only: every run type except manual, with their imported results. A run belongs to the period it was created in.",
+            "manual": "Manual runs only, with the results recorded on them. A run belongs to the period it was created in.",
+            "both": "Every run: automated runs with their imported results and manual runs with the results recorded on them. A run belongs to the period it was created in."
+          },
+          "periods": "{grouping, select, daily {Days} weekly {Weeks (starting Monday)} monthly {Months} quarterly {Quarters} other {Years}} are cut in {timezone}. The current one is in progress and is left out of the trend and the headline figures.",
+          "everyAttempt": "A retried test counts once per attempt.",
+          "latestAttempt": "Only the latest attempt of each case in a run is counted.",
+          "skippedExcluded": "Skipped results (a status that is completed without a pass or a failure) are left out of the pass and fail rates; other statuses stay in.",
+          "skippedCounted": "Skipped results are counted in the pass and fail rates.",
+          "abortedIncluded": "Runs in the abandoned-run state are included.",
+          "abortedExcluded": "Runs in the abandoned-run state are left out.",
+          "trend": "The trend is a straight line fitted to the fail rate over complete periods with results. A change of more than one point either way calls it better or worse."
         }
       }
     },

@@ -1,11 +1,11 @@
 ---
-title: Automation Trends
+title: Automated Test Cases Trend
 sidebar_position: 2
 ---
 
-# Automation Trends
+# Automated Test Cases Trend
 
-Tracks test repository growth over time, pivoted by automation status. Use it to monitor an automation initiative's progress and to spot periods where manual-case authorship is outpacing automation.
+Tracks test repository growth over time, pivoted by automation status. Use it to monitor an automation initiative's progress and to spot periods where manual-case authorship is outpacing automation. For how test results are doing over time (pass and fail rates), see the [Test Result Failure Rate Trend](./results-trend.md) report.
 
 ## What It Shows
 
@@ -21,7 +21,7 @@ Counts are cumulative — a case is included in every period from its creation o
 ## Settings
 
 - **Date Range** — limit the report to a window of periods. Cases created before the window still count toward the periods shown; the range controls which periods appear, not which cases are included.
-- **Period Grouping** — daily / weekly / monthly / quarterly / annually (default: weekly)
+- **Group By** — daily, weekly (the default), monthly, quarterly or annually
 
 ## Filters
 
@@ -34,4 +34,4 @@ Filters live in the **Filters** menu at the bottom of the report settings. Each 
 
 ## Dimensions and Metrics
 
-Automation Trends is available both as a pre-built report (fixed configuration) and as a custom report in the [Report Builder](./report-builder.md). When used as a custom report, available dimensions include Automation Status, Priority, and Week Ending (plus Project when used in cross-project mode).
+Automated Test Cases Trend is available both as a pre-built report (fixed configuration) and as a custom report in the [Report Builder](./report-builder.md). When used as a custom report, available dimensions include Automation Status, Priority, and Week Ending (plus Project when used in cross-project mode).

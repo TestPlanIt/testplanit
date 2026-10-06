@@ -34,6 +34,7 @@ import {
   VisibilityState,
 } from "@/components/tables/tableFeatures";
 import {
+  Beaker,
   Bot,
   ChevronDown,
   ChevronLeft,
@@ -123,6 +124,13 @@ import {
   useRequirementTraceabilityColumns,
 } from "~/hooks/useRequirementCoverageReportColumns";
 import { useCodePinCoverageColumns } from "~/hooks/useCodePinCoverageColumns";
+import { useResultsTrendColumns } from "~/hooks/useResultsTrendColumns";
+import {
+  TREND_RUN_SOURCES,
+  type ResultsTrendMeta,
+  type TrendAttemptMode,
+  type TrendRunSource,
+} from "~/utils/resultsTrendShared";
 import {
   IMPACT_OUTCOME_LABEL_KEY,
   IMPACT_TRIGGER_LABEL_KEY,
@@ -297,6 +305,7 @@ function isPreBuiltReport(reportType: string): boolean {
   const baseType = getBaseReportType(reportType);
   return [
     "automation-trends",
+    "results-trend",
     "flaky-tests",
     "test-case-health",
     "issue-test-coverage",
@@ -304,6 +313,55 @@ function isPreBuiltReport(reportType: string): boolean {
     ...REQUIREMENT_REPORT_TYPE_IDS,
     ...IMPACT_REPORT_TYPE_IDS,
   ].includes(baseType as (typeof REQUIREMENT_REPORT_TYPE_IDS)[number]);
+}
+
+const TREND_URL_PARAM_KEYS = [
+  "runSource",
+  "showPassRate",
+  "showFailRate",
+  "showCounts",
+  "countSkipped",
+  "includeAborted",
+  "attemptMode",
+  "projectIds",
+] as const;
+
+/** The trend report's URL params; `null` clears them (another report ran). */
+function applyTrendUrlParams(
+  params: URLSearchParams,
+  trend: {
+    runSource?: string;
+    showPassRate?: boolean;
+    showFailRate?: boolean;
+    showCounts?: boolean;
+    countSkipped?: boolean;
+    includeAborted?: boolean;
+    attemptMode?: string;
+    projectIds?: number[];
+  } | null
+) {
+  for (const key of TREND_URL_PARAM_KEYS) params.delete(key);
+  if (!trend) return;
+  if (trend.runSource) params.set("runSource", trend.runSource);
+  if (trend.showPassRate !== undefined) {
+    params.set("showPassRate", String(trend.showPassRate));
+  }
+  if (trend.showFailRate !== undefined) {
+    params.set("showFailRate", String(trend.showFailRate));
+  }
+  if (trend.showCounts !== undefined) {
+    params.set("showCounts", String(trend.showCounts));
+  }
+  if (trend.countSkipped !== undefined) {
+    params.set("countSkipped", String(trend.countSkipped));
+  }
+  if (trend.includeAborted !== undefined) {
+    params.set("includeAborted", String(trend.includeAborted));
+  }
+  if (trend.attemptMode) params.set("attemptMode", trend.attemptMode);
+  if (trend.projectIds?.length) {
+    params.set("projectIds", trend.projectIds.join(","));
+  }
 }
 
 /**
@@ -759,6 +817,38 @@ function ReportBuilderContent({
   );
   const isImpactHistory = matchesReportType(reportType, "impact-analysis");
   const isCodePinCoverage = matchesReportType(reportType, "code-pin-coverage");
+  const isResultsTrend = matchesReportType(reportType, "results-trend");
+  // Results trend: the run source and counting rules, and the period axis /
+  // ranked projects / settings the last run came back with.
+  // The Result types filter: one type picked narrows the report to it;
+  // none or both picked counts every run.
+  const trendRunSource: TrendRunSource = useMemo(() => {
+    const picked = (selectedFilterValues.resultType ?? []).filter(
+      (value): value is TrendRunSource =>
+        (TREND_RUN_SOURCES as readonly unknown[]).includes(value)
+    );
+    return picked.length === 1 ? picked[0] : "both";
+  }, [selectedFilterValues.resultType]);
+  const [trendShowPassRate, setTrendShowPassRate] = useState(
+    initialPerTypeParams.trendShowPassRate
+  );
+  const [trendShowFailRate, setTrendShowFailRate] = useState(
+    initialPerTypeParams.trendShowFailRate
+  );
+  const [trendShowCounts, setTrendShowCounts] = useState(
+    initialPerTypeParams.trendShowCounts
+  );
+  const [trendCountSkipped, setTrendCountSkipped] = useState(
+    initialPerTypeParams.trendCountSkipped
+  );
+  const [trendIncludeAborted, setTrendIncludeAborted] = useState(
+    initialPerTypeParams.trendIncludeAborted
+  );
+  const [trendAttemptMode, setTrendAttemptMode] = useState<TrendAttemptMode>(
+    initialPerTypeParams.trendAttemptMode
+  );
+  const [resultsTrendMeta, setResultsTrendMeta] =
+    useState<ResultsTrendMeta | null>(null);
   const hasFolderFilter =
     mode === "project" &&
     (matchesReportType(reportType, "flaky-tests") ||
@@ -796,6 +886,17 @@ function ReportBuilderContent({
         Boolean(projectId) &&
         !isNaN(Number(projectId)),
     }
+  );
+
+  // The trend report's Projects filter offers every project, not only the
+  // ones with automated runs in the window.
+  const { data: trendProjects } = useClientQueries(schema).projects.useFindMany(
+    {
+      where: { isDeleted: false },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    },
+    { enabled: isResultsTrend && mode === "cross-project" }
   );
 
   // Resolve display labels for scope options restored from the URL as
@@ -1212,6 +1313,36 @@ function ReportBuilderContent({
       ];
     }
 
+    if (isResultsTrend) {
+      const resultTypeItem = {
+        id: "resultType",
+        name: tReports("resultsTrend.runSource"),
+        icon: Beaker,
+        options: [
+          {
+            id: "automated",
+            name: tReports("resultsTrend.runSources.automated"),
+          },
+          { id: "manual", name: tReports("resultsTrend.runSources.manual") },
+        ],
+      };
+      if (mode !== "cross-project" || !trendProjects?.length) {
+        return [resultTypeItem];
+      }
+      return [
+        {
+          id: "projects",
+          name: tCommon("fields.projects"),
+          icon: FolderOpen,
+          options: trendProjects.map((project) => ({
+            id: project.id,
+            name: project.name,
+          })),
+        },
+        resultTypeItem,
+      ];
+    }
+
     if (!filterOptions) return [];
 
     const items: any[] = [];
@@ -1342,6 +1473,8 @@ function ReportBuilderContent({
     mode,
     isImpactHistory,
     isCodePinCoverage,
+    isResultsTrend,
+    trendProjects,
     impactConnections,
     hasFolderFilter,
     reportFolders,
@@ -1593,6 +1726,11 @@ function ReportBuilderContent({
     mode === "cross-project"
   );
 
+  const resultsTrendColumns = useResultsTrendColumns(
+    resultsTrendMeta?.settings.dateGrouping ?? lastUsedDateGrouping,
+    mode === "cross-project"
+  );
+
   // Use issue test coverage columns for issue-test-coverage report
   const issueTestCoverageSummaryColumns = useIssueTestCoverageSummaryColumns(
     projectId,
@@ -1688,20 +1826,22 @@ function ReportBuilderContent({
           ? impactAnalysisColumns
           : matchesReportType(reportType, "code-pin-coverage")
             ? codePinCoverageColumns
-            : matchesReportType(reportType, "issue-test-coverage")
-              ? issueTestCoverageSummaryColumns
-              : matchesReportType(reportType, "execution-log")
-                ? executionLogColumns
-                : matchesReportType(reportType, "requirement-coverage-gaps")
-                  ? requirementCoverageGapColumns
-                  : matchesReportType(reportType, "requirement-traceability")
-                    ? requirementTraceabilityColumns
-                    : matchesReportType(
-                          reportType,
-                          "requirement-coverage-changes"
-                        )
-                      ? requirementCoverageChangeColumns
-                      : standardColumns;
+            : matchesReportType(reportType, "results-trend")
+              ? resultsTrendColumns
+              : matchesReportType(reportType, "issue-test-coverage")
+                ? issueTestCoverageSummaryColumns
+                : matchesReportType(reportType, "execution-log")
+                  ? executionLogColumns
+                  : matchesReportType(reportType, "requirement-coverage-gaps")
+                    ? requirementCoverageGapColumns
+                    : matchesReportType(reportType, "requirement-traceability")
+                      ? requirementTraceabilityColumns
+                      : matchesReportType(
+                            reportType,
+                            "requirement-coverage-changes"
+                          )
+                        ? requirementCoverageChangeColumns
+                        : standardColumns;
 
   // Single source of truth for row grouping. issue-test-coverage is ALWAYS
   // grouped by issue (issues with expandable test cases) — its last two columns
@@ -1780,6 +1920,23 @@ function ReportBuilderContent({
         stalePinCount: true,
         uncoveredFileCount: true,
         uncoveredAnalysisCount: false,
+      });
+    }
+  }, [reportType]);
+
+  React.useEffect(() => {
+    if (matchesReportType(reportType, "results-trend")) {
+      setColumnVisibility({
+        project: true,
+        weekStart: true,
+        runs: true,
+        results: true,
+        passed: true,
+        failed: true,
+        skipped: true,
+        other: true,
+        passRate: true,
+        failRate: true,
       });
     }
   }, [reportType]);
@@ -2740,6 +2897,26 @@ function ReportBuilderContent({
           }
         }
 
+        if (isResultsTrend) {
+          body.dateGrouping = dateGrouping;
+          body.runSource = trendRunSource;
+          body.showPassRate = trendShowPassRate;
+          body.showFailRate = trendShowFailRate;
+          body.showCounts = trendShowCounts;
+          body.countSkipped = trendCountSkipped;
+          body.includeAborted = trendIncludeAborted;
+          body.attemptMode = trendAttemptMode;
+          // Weeks are cut on the viewer's calendar; stored with the run so
+          // a share replays the same weeks for every viewer.
+          body.timezone = dateRangeTimezone;
+          if (
+            isCrossProjectReport(reportType) &&
+            selectedFilterValues.projects?.length
+          ) {
+            body.projectIds = selectedFilterValues.projects.map(Number);
+          }
+        }
+
         if (matchesReportType(reportType, "impact-analysis")) {
           body.lookbackDays = lookbackDays;
           if (selectedFilterValues.trigger?.length) {
@@ -2987,6 +3164,15 @@ function ReportBuilderContent({
             setAutomationTrendsProjects(data.projects);
           }
 
+          // The trend chart lays out from the run's period axis and settings.
+          if (data.periods && data.settings) {
+            setResultsTrendMeta({
+              periods: data.periods,
+              projects: data.projects ?? [],
+              settings: data.settings,
+            });
+          }
+
           // Set total count to all data length
           setTotalCount(allData.length);
 
@@ -3135,6 +3321,7 @@ function ReportBuilderContent({
             } else {
               newParams.delete("dateGrouping");
             }
+            applyTrendUrlParams(newParams, isResultsTrend ? body : null);
 
             // If the user moved to another tab or report while this run was
             // in flight, the live URL already belongs to that navigation;
@@ -3188,6 +3375,14 @@ function ReportBuilderContent({
       includeUnchanged,
       dateRangePreset,
       dateRangeTimezone,
+      isResultsTrend,
+      trendRunSource,
+      trendShowPassRate,
+      trendShowFailRate,
+      trendShowCounts,
+      trendCountSkipped,
+      trendIncludeAborted,
+      trendAttemptMode,
     ]
   );
 
@@ -3404,6 +3599,64 @@ function ReportBuilderContent({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFilterValues, dateGrouping]);
+
+  // Re-run the trend report when its grouping, run source, counting rules
+  // or project filter change, once it has run, and keep the URL in step so
+  // a refresh restores the choice.
+  useEffect(() => {
+    if (!isResultsTrend || !results) return;
+    void runReport(lastUsedDimensions, lastUsedMetrics);
+    const newParams = new URLSearchParams(searchParams.toString());
+    newParams.set("dateGrouping", dateGrouping);
+    applyTrendUrlParams(newParams, {
+      runSource: trendRunSource,
+      showPassRate: trendShowPassRate,
+      showFailRate: trendShowFailRate,
+      showCounts: trendShowCounts,
+      countSkipped: trendCountSkipped,
+      includeAborted: trendIncludeAborted,
+      attemptMode: trendAttemptMode,
+      projectIds:
+        mode === "cross-project"
+          ? (selectedFilterValues.projects ?? []).map(Number)
+          : [],
+    });
+    if (newParams.toString() !== searchParams.toString()) {
+      router.replace(`${pathname}?${newParams.toString()}`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    dateGrouping,
+    trendRunSource,
+    trendCountSkipped,
+    trendIncludeAborted,
+    trendAttemptMode,
+    selectedFilterValues.projects,
+  ]);
+
+  // The rate lines are chart options: no re-run, the charts re-render from
+  // the run's settings. Keep the stored run body and the URL in step so a
+  // refresh, save or share keeps the choice.
+  useEffect(() => {
+    if (!isResultsTrend || !results) return;
+    const shown = {
+      showPassRate: trendShowPassRate,
+      showFailRate: trendShowFailRate,
+      showCounts: trendShowCounts,
+    };
+    setResultsTrendMeta((prev) =>
+      prev ? { ...prev, settings: { ...prev.settings, ...shown } } : prev
+    );
+    setLastRequestBody((prev: any) => (prev ? { ...prev, ...shown } : prev));
+    const newParams = new URLSearchParams(searchParams.toString());
+    newParams.set("showPassRate", String(trendShowPassRate));
+    newParams.set("showFailRate", String(trendShowFailRate));
+    newParams.set("showCounts", String(trendShowCounts));
+    if (newParams.toString() !== searchParams.toString()) {
+      router.replace(`${pathname}?${newParams.toString()}`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trendShowPassRate, trendShowFailRate, trendShowCounts]);
 
   // Re-run a custom report when its date grouping changes, once it has run
   // with the date dimension (mirrors the automation-trends behavior above),
@@ -3752,8 +4005,9 @@ function ReportBuilderContent({
                           </div>
                         )}
 
-                      {/* Date Grouping Selection for Automation Trends */}
-                      {matchesReportType(reportType, "automation-trends") && (
+                      {/* Date Grouping Selection for the two trend reports */}
+                      {(matchesReportType(reportType, "automation-trends") ||
+                        isResultsTrend) && (
                         <div className="grid gap-2">
                           <label className="text-sm font-medium">
                             {tReports("dateGrouping.label")}
@@ -3764,7 +4018,7 @@ function ReportBuilderContent({
                               setDateGrouping(value)
                             }
                           >
-                            <SelectTrigger>
+                            <SelectTrigger data-testid="report-date-grouping">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -4110,6 +4364,119 @@ function ReportBuilderContent({
                         </div>
                       )}
 
+                      {/* Results Trend parameters */}
+                      {isResultsTrend && (
+                        <div
+                          className="grid gap-4"
+                          data-testid="results-trend-settings"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              id="results-trend-show-pass-rate"
+                              checked={trendShowPassRate}
+                              onCheckedChange={setTrendShowPassRate}
+                              data-testid="results-trend-show-pass-rate"
+                            />
+                            <label
+                              htmlFor="results-trend-show-pass-rate"
+                              className="text-sm font-medium"
+                            >
+                              {tReports("resultsTrend.showPassRate")}
+                            </label>
+                            <HelpPopover
+                              helpKey={`## ${tReports("resultsTrend.showPassRate")}\n${tReports("resultsTrend.showPassRateHelp")}`}
+                            />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              id="results-trend-show-fail-rate"
+                              checked={trendShowFailRate}
+                              onCheckedChange={setTrendShowFailRate}
+                              data-testid="results-trend-show-fail-rate"
+                            />
+                            <label
+                              htmlFor="results-trend-show-fail-rate"
+                              className="text-sm font-medium"
+                            >
+                              {tReports("resultsTrend.showFailRate")}
+                            </label>
+                            <HelpPopover
+                              helpKey={`## ${tReports("resultsTrend.showFailRate")}\n${tReports("resultsTrend.showFailRateHelp")}`}
+                            />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              id="results-trend-show-counts"
+                              checked={trendShowCounts}
+                              onCheckedChange={setTrendShowCounts}
+                              data-testid="results-trend-show-counts"
+                            />
+                            <label
+                              htmlFor="results-trend-show-counts"
+                              className="text-sm font-medium"
+                            >
+                              {tReports("resultsTrend.showCounts")}
+                            </label>
+                            <HelpPopover
+                              helpKey={`## ${tReports("resultsTrend.showCounts")}\n${tReports("resultsTrend.showCountsHelp")}`}
+                            />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              id="results-trend-count-skipped"
+                              checked={trendCountSkipped}
+                              onCheckedChange={setTrendCountSkipped}
+                              data-testid="results-trend-count-skipped"
+                            />
+                            <label
+                              htmlFor="results-trend-count-skipped"
+                              className="text-sm font-medium"
+                            >
+                              {tReports("resultsTrend.countSkipped")}
+                            </label>
+                            <HelpPopover
+                              helpKey={`## ${tReports("resultsTrend.countSkipped")}\n${tReports("resultsTrend.countSkippedHelp")}`}
+                            />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              id="results-trend-include-aborted"
+                              checked={trendIncludeAborted}
+                              onCheckedChange={setTrendIncludeAborted}
+                              data-testid="results-trend-include-aborted"
+                            />
+                            <label
+                              htmlFor="results-trend-include-aborted"
+                              className="text-sm font-medium"
+                            >
+                              {tReports("resultsTrend.includeAborted")}
+                            </label>
+                            <HelpPopover
+                              helpKey={`## ${tReports("resultsTrend.includeAborted")}\n${tReports("resultsTrend.includeAbortedHelp")}`}
+                            />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              id="results-trend-latest-attempt"
+                              checked={trendAttemptMode === "latest"}
+                              onCheckedChange={(checked) =>
+                                setTrendAttemptMode(checked ? "latest" : "all")
+                              }
+                              data-testid="results-trend-latest-attempt"
+                            />
+                            <label
+                              htmlFor="results-trend-latest-attempt"
+                              className="text-sm font-medium"
+                            >
+                              {tReports("resultsTrend.latestAttemptOnly")}
+                            </label>
+                            <HelpPopover
+                              helpKey={`## ${tReports("resultsTrend.latestAttemptOnly")}\n${tReports("resultsTrend.latestAttemptOnlyHelp")}`}
+                            />
+                          </div>
+                        </div>
+                      )}
+
                       {/* Impact Analysis History / Code Pin Coverage parameters */}
                       {(isImpactHistory || isCodePinCoverage) && (
                         <div className="grid gap-4">
@@ -4300,6 +4667,7 @@ function ReportBuilderContent({
                         matchesReportType(reportType, "test-case-health") ||
                         isImpactHistory ||
                         isCodePinCoverage ||
+                        isResultsTrend ||
                         isFilterableRequirementReport(reportType)) &&
                         filterItems.length > 0 && (
                           <div className="grid gap-2">
@@ -4821,6 +5189,7 @@ function ReportBuilderContent({
             minExecutionsForRate={minExecutionsForRate}
             lookbackDays={lookbackDays}
             dateGrouping={lastUsedDateGrouping}
+            resultsTrend={resultsTrendMeta ?? undefined}
             totalFlakyTests={
               matchesReportType(reportType, "flaky-tests") && allResults
                 ? allResults.length

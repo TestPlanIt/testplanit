@@ -30,6 +30,7 @@ import { Download } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo } from "react";
+import { useResultsTrendColumns } from "~/hooks/useResultsTrendColumns";
 import { useAutomationTrendsColumns } from "~/hooks/useAutomationTrendsColumns";
 import { useExecutionLogColumns } from "~/hooks/useExecutionLogColumns";
 import { useFlakyTestsColumns } from "~/hooks/useFlakyTestsColumns";
@@ -47,6 +48,7 @@ import { sortRequirementReportRows } from "~/utils/requirementReportSort";
 import { RequirementCoverageChangesOverview } from "@/components/reports/RequirementCoverageChangesOverview";
 import { RequirementCoverageOverview } from "@/components/reports/RequirementCoverageOverview";
 import { RequirementDebtOverview } from "@/components/reports/RequirementDebtOverview";
+import type { ResultsTrendMeta } from "~/utils/resultsTrendShared";
 
 // Helper functions for report type matching
 // These helpers allow us to write code that works with both project-level and cross-project variants
@@ -120,6 +122,11 @@ interface ReportRendererProps {
   // "regenerate this for a public viewer" interaction.
   automationCandidatesSnapshot?: any;
 
+  // Results trend: the run's period axis, ranked projects and
+  // settings, which the chart lays out from (the rows alone cannot say
+  // which weeks exist or how they were cut).
+  resultsTrend?: ResultsTrendMeta;
+
   // Results count + infinite scroll. `loadedCount` is how many rows are
   // currently in `results` (the "X" in "Showing X of Y"); `totalCount` is the
   // full match count. For full-set reports loadedCount === totalCount and
@@ -192,6 +199,7 @@ export function ReportRenderer({
   totalFlakyTests,
   matrixAxes,
   automationCandidatesSnapshot,
+  resultsTrend,
   loadedCount,
   totalCount,
   hasMore = false,
@@ -280,6 +288,11 @@ export function ReportRenderer({
     mode === "cross-project"
   );
 
+  const resultsTrendColumns = useResultsTrendColumns(
+    resultsTrend?.settings.dateGrouping ?? "weekly",
+    mode === "cross-project"
+  );
+
   const issueTestCoverageColumns = useIssueTestCoverageSummaryColumns(
     projectId,
     dimensionIds,
@@ -320,20 +333,22 @@ export function ReportRenderer({
           ? impactAnalysisColumns
           : matchesReportType(reportType, "code-pin-coverage")
             ? codePinCoverageColumns
-            : matchesReportType(reportType, "issue-test-coverage")
-              ? issueTestCoverageColumns
-              : matchesReportType(reportType, "execution-log")
-                ? executionLogColumns
-                : matchesReportType(reportType, "requirement-coverage-gaps")
-                  ? requirementCoverageGapColumns
-                  : matchesReportType(reportType, "requirement-traceability")
-                    ? requirementTraceabilityColumns
-                    : matchesReportType(
-                          reportType,
-                          "requirement-coverage-changes"
-                        )
-                      ? requirementCoverageChangeColumns
-                      : standardColumns;
+            : matchesReportType(reportType, "results-trend")
+              ? resultsTrendColumns
+              : matchesReportType(reportType, "issue-test-coverage")
+                ? issueTestCoverageColumns
+                : matchesReportType(reportType, "execution-log")
+                  ? executionLogColumns
+                  : matchesReportType(reportType, "requirement-coverage-gaps")
+                    ? requirementCoverageGapColumns
+                    : matchesReportType(reportType, "requirement-traceability")
+                      ? requirementTraceabilityColumns
+                      : matchesReportType(
+                            reportType,
+                            "requirement-coverage-changes"
+                          )
+                        ? requirementCoverageChangeColumns
+                        : standardColumns;
 
   const columns = preGeneratedColumns || generatedColumns;
 
@@ -343,6 +358,7 @@ export function ReportRenderer({
   const isTestCaseHealth = matchesReportType(reportType, "test-case-health");
   const isImpactAnalysis = matchesReportType(reportType, "impact-analysis");
   const isCodePinCoverage = matchesReportType(reportType, "code-pin-coverage");
+  const isResultsTrend = matchesReportType(reportType, "results-trend");
   const isIssueTestCoverage = matchesReportType(
     reportType,
     "issue-test-coverage"
@@ -389,6 +405,33 @@ export function ReportRenderer({
     sortConfig,
   ]);
 
+  // The results trend's table rolls each period up: cross-project, the
+  // combined row leads and expands to the project rows of that period;
+  // single-project, the combined row only repeats the project's own, so the
+  // project rows stand alone. The rows arrive sorted, and filtering keeps
+  // that order within each level. The CSV keeps the flat rows.
+  const trendTableRows = useMemo(() => {
+    if (!isResultsTrend) return null;
+    const rows = (results ?? []) as any[];
+    if (mode !== "cross-project") {
+      return rows.filter((row) => row.project !== null);
+    }
+    const projectRowsByPeriod = new Map<string, any[]>();
+    for (const row of rows) {
+      if (row.project === null) continue;
+      const bucket = projectRowsByPeriod.get(row.periodStart) ?? [];
+      bucket.push(row);
+      projectRowsByPeriod.set(row.periodStart, bucket);
+    }
+    return rows
+      .filter((row) => row.project === null)
+      .map((row) => ({
+        ...row,
+        subRows: projectRowsByPeriod.get(row.periodStart) ?? [],
+      }));
+  }, [isResultsTrend, mode, results]);
+  const trendNested = trendTableRows !== null && mode === "cross-project";
+
   // Maximum number of data points to render in charts
   const MAX_CHART_DATA_POINTS = 50;
 
@@ -415,6 +458,7 @@ export function ReportRenderer({
         !isTestCaseHealth &&
         !isImpactAnalysis &&
         !isCodePinCoverage &&
+        !isResultsTrend &&
         !isIssueTestCoverage &&
         !isExecutionLog &&
         (dimensionIds.length === 0 || metricIds.length === 0))
@@ -464,6 +508,7 @@ export function ReportRenderer({
       isTestCaseHealth ||
       isImpactAnalysis ||
       isCodePinCoverage ||
+      isResultsTrend ||
       isIssueTestCoverage ||
       isExecutionLog
         ? dataForChart
@@ -482,12 +527,14 @@ export function ReportRenderer({
           totalFlakyTests={totalFlakyTests}
           projectId={projectId}
           dateGrouping={customDateGrouping}
+          resultsTrend={resultsTrend}
         />
       ),
       isTruncated:
         isTestCaseHealth ||
         isImpactAnalysis ||
         isCodePinCoverage ||
+        isResultsTrend ||
         isIssueTestCoverage
           ? false
           : isTruncated,
@@ -510,8 +557,12 @@ export function ReportRenderer({
     isAutomationTrends,
     isFlakyTests,
     isTestCaseHealth,
+    isImpactAnalysis,
+    isCodePinCoverage,
+    isResultsTrend,
     isIssueTestCoverage,
     isExecutionLog,
+    resultsTrend,
   ]);
 
   // Iteration Matrix preset bypasses the chart/table pipeline entirely.
@@ -598,6 +649,7 @@ export function ReportRenderer({
                           isTestCaseHealth ||
                           isImpactAnalysis ||
                           isCodePinCoverage ||
+                          isResultsTrend ||
                           isIssueTestCoverage ||
                           isExecutionLog
                         ? tReports("noDataAvailable")
@@ -699,8 +751,16 @@ export function ReportRenderer({
                     data-testid="report-results-summary"
                   >
                     {tCommon("pagination.showing")}{" "}
-                    {loadedCount.toLocaleString(locale)} {tCommon("of")}{" "}
-                    {totalCount.toLocaleString(locale)} {tCommon("results")}
+                    {(trendTableRows
+                      ? trendTableRows.length
+                      : loadedCount
+                    ).toLocaleString(locale)}{" "}
+                    {tCommon("of")}{" "}
+                    {(trendTableRows
+                      ? trendTableRows.length
+                      : totalCount
+                    ).toLocaleString(locale)}{" "}
+                    {tCommon("results")}
                   </div>
                 )}
                 {onExportCsv && totalCount > 0 && (
@@ -723,7 +783,7 @@ export function ReportRenderer({
               virtualized
               pinLastColumn={false}
               columns={columns as ColumnDef<any>[]}
-              data={requirementSortedResults}
+              data={trendTableRows ?? requirementSortedResults}
               columnVisibility={columnVisibility}
               onColumnVisibilityChange={onColumnVisibilityChange}
               columnSizingStorageKey={`report:${getBaseReportType(reportType)}`}
@@ -737,12 +797,16 @@ export function ReportRenderer({
               getSubRows={
                 isExecutionLog
                   ? (row: any) => row.steps as any[] | undefined
-                  : undefined
+                  : trendNested
+                    ? (row: any) => row.subRows as any[] | undefined
+                    : undefined
               }
               subRowsLabel={
                 isExecutionLog
                   ? tCommon("fields.steps").toLowerCase()
-                  : undefined
+                  : trendNested
+                    ? tCommon("fields.projects").toLowerCase()
+                    : undefined
               }
               hasMore={hasMore}
               isLoading={isLoading}
