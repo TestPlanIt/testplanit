@@ -335,6 +335,81 @@ describe("reportUtils", () => {
 
   // The elapsed metrics read durations from BOTH sources: manual results
   // (TestRunResults.elapsed) and automated results (JUnitTestResult.time).
+  describe("hand-rolled date reducers honor the date grouping", () => {
+    it("user engagement createdCaseCount buckets creation dates by period", async () => {
+      const db = {
+        repositoryCases: {
+          findMany: vi.fn().mockResolvedValue([
+            {
+              createdAt: "2026-05-04T09:00:00.000Z",
+              creatorId: "u1",
+              projectId: 370,
+            },
+            {
+              createdAt: "2026-05-28T23:30:00.000Z",
+              creatorId: "u1",
+              projectId: 370,
+            },
+            {
+              createdAt: "2026-06-01T01:00:00.000Z",
+              creatorId: "u2",
+              projectId: 370,
+            },
+          ]),
+        },
+      };
+      const registry = createUserEngagementMetricRegistry(true);
+
+      const monthly = await registry.createdCaseCount.aggregate(
+        db,
+        370,
+        ["executedAt"],
+        { dateGrouping: "monthly" }
+      );
+      expect(monthly).toEqual([
+        { executedAt: "2026-05-01T00:00:00.000Z", createdCaseCount: 2 },
+        { executedAt: "2026-06-01T00:00:00.000Z", createdCaseCount: 1 },
+      ]);
+
+      // Absent grouping keeps the UTC day, as before the option existed.
+      const daily = await registry.createdCaseCount.aggregate(
+        db,
+        370,
+        ["executedAt"],
+        {}
+      );
+      expect(daily.map((r: any) => r.executedAt)).toEqual([
+        "2026-05-04T00:00:00.000Z",
+        "2026-05-28T00:00:00.000Z",
+        "2026-06-01T00:00:00.000Z",
+      ]);
+    });
+
+    it("issue tracking issueCount buckets creation dates by period", async () => {
+      const db = {
+        issue: {
+          findMany: vi.fn().mockResolvedValue([
+            { id: 11, createdAt: "2026-02-10T09:00:00.000Z", priority: "High" },
+            { id: 12, createdAt: "2026-03-30T23:30:00.000Z", priority: "Low" },
+            { id: 13, createdAt: "2026-04-01T01:00:00.000Z", priority: "Low" },
+          ]),
+        },
+      };
+      const registry = createIssueTrackingMetricRegistry(true);
+
+      const quarterly = await registry.issueCount.aggregate(
+        db,
+        5,
+        ["createdAt"],
+        { dateGrouping: "quarterly" }
+      );
+      expect(quarterly).toEqual([
+        { createdAt: "2026-01-01T00:00:00.000Z", issueCount: 2 },
+        { createdAt: "2026-04-01T00:00:00.000Z", issueCount: 1 },
+      ]);
+    });
+  });
+
   describe("elapsed metrics combine manual and JUnit durations", () => {
     const DAY1 = new Date("2026-07-01T10:00:00.000Z");
     const DAY2 = new Date("2026-07-02T10:00:00.000Z");

@@ -261,6 +261,76 @@ test.describe("Report Builder - Multiple Report Types", () => {
     });
   });
 
+  test("Date dimension offers Group By and re-buckets rows by month", async ({
+    api,
+    page,
+  }) => {
+    const projectId = await createProjectWithTestData(api);
+    const groupBy = page.getByTestId("date-grouping-select");
+
+    await test.step("Group By is absent without the date dimension", async () => {
+      await navigateToReport(
+        page,
+        projectId,
+        "repository-stats",
+        ["testCase"],
+        ["testCaseCount"]
+      );
+      await expect(
+        page.locator('[data-testid="run-report-button"]')
+      ).toBeEnabled({ timeout: 10000 });
+      await expect(groupBy).toHaveCount(0);
+    });
+
+    await test.step("Group By appears with the date dimension, defaulting to Daily", async () => {
+      await navigateToReport(
+        page,
+        projectId,
+        "repository-stats",
+        ["date"],
+        ["testCaseCount"]
+      );
+      await expect(groupBy).toBeVisible({ timeout: 10000 });
+      await expect(groupBy).toHaveText("Daily");
+    });
+
+    await test.step("Run daily: the two cases created today land on one day row", async () => {
+      await runReport(page);
+      const table = page.locator("[role='table']").first();
+      await expect(table).toBeVisible({ timeout: 10000 });
+      // A day label carries a day number (en-US: 10/6/2026).
+      await expect(table.locator("[role='cell']").first()).toHaveText(
+        /^\d{1,2}\/\d{1,2}\/\d{4}$/
+      );
+      await expect(page).toHaveURL(/dateGrouping=daily/);
+    });
+
+    await test.step("Switch to Monthly: re-runs, labels the month, updates the URL", async () => {
+      await groupBy.click();
+      await page.getByRole("option", { name: "Monthly" }).click();
+      await expect(groupBy).toHaveText("Monthly");
+      await expect(page).toHaveURL(/dateGrouping=monthly/, { timeout: 10000 });
+      const firstCell = page
+        .locator("[role='table']")
+        .first()
+        .locator("[role='cell']")
+        .first();
+      // A month label is "Oct 2026": no day number.
+      await expect(firstCell).toHaveText(/^[A-Z][a-z]{2} \d{4}$/, {
+        timeout: 15000,
+      });
+    });
+
+    await test.step("Reload restores Monthly from the URL", async () => {
+      await page.reload();
+      await page.waitForLoadState("networkidle");
+      await expect(groupBy).toHaveText("Monthly", { timeout: 10000 });
+      await expect(
+        page.locator("[role='table']").first().locator("[role='cell']").first()
+      ).toHaveText(/^[A-Z][a-z]{2} \d{4}$/, { timeout: 15000 });
+    });
+  });
+
   test("Report builder URL params persist dimensions and metrics on reload", async ({
     api,
     page,

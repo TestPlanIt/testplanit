@@ -39,6 +39,8 @@ The [Report Builder](./projects/reports/report-builder.md) is available in cross
 - Issue Tracking
 - [LLM Usage](./llm-usage-report.md) — AI token usage, cost, and reliability. Cross-project only; it has no per-project counterpart.
 
+The builder's options work the same way here as in a project, including the [**Group By**](./projects/reports/report-builder.md#workflow) choice (day, week, month, quarter or year) that appears once the **Date** dimension is selected.
+
 Drill-down works the same way as in per-project mode (it just shows records from any of the selected projects). The exception is LLM Usage, which does not support drill-down.
 
 ## Exporting Results

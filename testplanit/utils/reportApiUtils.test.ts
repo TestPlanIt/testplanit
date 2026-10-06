@@ -35,10 +35,13 @@ import { getServerSession } from "next-auth";
 import { authenticateRequest } from "~/lib/api-token-auth";
 import { getEnhancedDb } from "~/lib/auth/utils";
 import { internalReportBypassToken } from "~/lib/internalReportBypass";
+import { reportRequestSchema } from "~/lib/schemas/reportRequestSchema";
+import { groupResults } from "./reportGrouping";
 import {
   authorizeReportRequest,
   cartesianProduct,
   filterRowsByDimensionValues,
+  handleReportPOST,
 } from "./reportApiUtils";
 
 describe("reportApiUtils", () => {
@@ -306,6 +309,129 @@ describe("reportApiUtils", () => {
         user: { userId: "admin", access: "ADMIN" },
       });
       expect(getEnhancedDb).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("handleReportPOST date grouping", () => {
+    // Raw executions on three days across May and June; the stub metric
+    // groups them with the real helper so the handler's filters are what
+    // decide the bucket.
+    const executions = [
+      { executedAt: "2026-05-04T09:00:00.000Z" },
+      { executedAt: "2026-05-28T23:30:00.000Z" },
+      { executedAt: "2026-06-01T01:00:00.000Z" },
+    ];
+    const aggregate = vi.fn(
+      async (
+        _db: unknown,
+        _projectId: unknown,
+        groupBy: string[],
+        filters: any
+      ) =>
+        groupResults(
+          executions,
+          groupBy,
+          {
+            create: () => ({ n: 0 }),
+            add: (acc) => {
+              acc.n++;
+            },
+            finalize: (acc) => ({ testResults: acc.n }),
+          },
+          { dateGrouping: filters?.dateGrouping }
+        )
+    );
+    const config = {
+      reportType: "cross-project-test-execution",
+      requiresProjectId: false,
+      requiresAdmin: true,
+      createDimensionRegistry: () => ({
+        date: {
+          id: "date",
+          label: "Execution Date",
+          getValues: async () => [],
+          groupBy: "executedAt",
+          join: {},
+          display: (val: any) => val,
+        },
+      }),
+      createMetricRegistry: () => ({
+        testResults: { id: "testResults", label: "Test Results", aggregate },
+      }),
+    } as any;
+
+    const post = async (body: Record<string, unknown>) => {
+      const req = new NextRequest(
+        "http://localhost/api/report-builder/cross-project-test-execution",
+        {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-shared-report-bypass": internalReportBypassToken(),
+          },
+          body: JSON.stringify(body),
+        }
+      );
+      const res = await handleReportPOST(req, config);
+      return { status: res.status, json: await res.json() };
+    };
+
+    beforeEach(() => {
+      aggregate.mockClear();
+      vi.mocked(reportRequestSchema.safeParse).mockReturnValue({
+        success: true,
+        data: {},
+      } as any);
+    });
+
+    it("passes the grouping to the aggregates, keys rows by period and echoes it", async () => {
+      const { status, json } = await post({
+        dimensions: ["date"],
+        metrics: ["testResults"],
+        dateGrouping: "monthly",
+      });
+      expect(status).toBe(200);
+      expect(aggregate).toHaveBeenCalledWith(
+        expect.anything(),
+        undefined,
+        ["executedAt"],
+        expect.objectContaining({ dateGrouping: "monthly" }),
+        ["date"]
+      );
+      expect(json.results).toEqual([
+        {
+          date: { executedAt: "2026-05-01T00:00:00.000Z" },
+          "Test Results": 2,
+        },
+        {
+          date: { executedAt: "2026-06-01T00:00:00.000Z" },
+          "Test Results": 1,
+        },
+      ]);
+      expect(json.dateGrouping).toBe("monthly");
+    });
+
+    it("groups by day when the body omits or garbles the grouping", async () => {
+      for (const body of [{}, { dateGrouping: "hourly" }]) {
+        const { json } = await post({
+          dimensions: ["date"],
+          metrics: ["testResults"],
+          ...body,
+        });
+        expect(aggregate).toHaveBeenLastCalledWith(
+          expect.anything(),
+          undefined,
+          ["executedAt"],
+          expect.objectContaining({ dateGrouping: "daily" }),
+          ["date"]
+        );
+        expect(json.results.map((r: any) => r.date.executedAt)).toEqual([
+          "2026-05-04T00:00:00.000Z",
+          "2026-05-28T00:00:00.000Z",
+          "2026-06-01T00:00:00.000Z",
+        ]);
+        expect(json.dateGrouping).toBe("daily");
+      }
     });
   });
 });

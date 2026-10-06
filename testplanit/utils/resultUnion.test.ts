@@ -2,10 +2,46 @@ import { describe, expect, it, vi } from "vitest";
 import {
   fetchEngagementExecutionRows,
   fetchJunitResultRows,
+  groupEngagementRows,
   junitResultWhere,
 } from "./resultUnion";
 
 describe("resultUnion", () => {
+  describe("groupEngagementRows", () => {
+    const rows = [
+      { executedAt: "2026-05-04T09:00:00.000Z", userId: "u1", groupIds: [] },
+      { executedAt: "2026-05-28T23:30:00.000Z", userId: "u1", groupIds: [] },
+      { executedAt: "2026-06-01T01:00:00.000Z", userId: "u1", groupIds: [] },
+    ];
+    const count = () =>
+      [() => ({ n: 0 }), (bucket: any) => bucket.n++] as const;
+
+    it("buckets executedAt by the UTC day when no grouping is given", () => {
+      const [make, add] = count();
+      const grouped = groupEngagementRows(rows, ["executedAt"], make, add);
+      expect([...grouped.keys()]).toEqual([
+        "2026-05-04T00:00:00.000Z",
+        "2026-05-28T00:00:00.000Z",
+        "2026-06-01T00:00:00.000Z",
+      ]);
+    });
+
+    it("buckets executedAt by the requested period", () => {
+      const [make, add] = count();
+      const grouped = groupEngagementRows(
+        rows,
+        ["executedAt", "userId"],
+        make,
+        add,
+        "monthly"
+      );
+      expect([...grouped.values()]).toEqual([
+        { n: 2, executedAt: "2026-05-01T00:00:00.000Z", userId: "u1" },
+        { n: 1, executedAt: "2026-06-01T00:00:00.000Z", userId: "u1" },
+      ]);
+    });
+  });
+
   const filters = {
     startDate: "2026-07-01T00:00:00.000Z",
     endDate: "2026-09-30T23:59:59.999Z",
