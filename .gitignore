@@ -80,3 +80,4 @@ demo/
 
 # Vitest 5 artifact directory
 .vitest/
+docs/.eslintcache
