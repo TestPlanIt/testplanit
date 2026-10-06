@@ -134,6 +134,7 @@ export function StaticReportViewer({
       dimensions: reportData?.dimensions ?? [],
       metrics: reportData?.metrics ?? [],
       projects: reportData?.projects ?? [],
+      dateGrouping: reportData?.dateGrouping || config?.dateGrouping,
       projectId,
     });
   }, [exportCsv, config, reportData, projectId]);
@@ -329,9 +330,7 @@ export function StaticReportViewer({
           staleDaysThreshold={config.staleDaysThreshold}
           minExecutionsForRate={config.minExecutionsForRate}
           lookbackDays={config.lookbackDays}
-          dateGrouping={
-            reportData.dateGrouping || config.dateGrouping || "weekly"
-          }
+          dateGrouping={reportData.dateGrouping || config.dateGrouping}
           totalFlakyTests={reportData.totalFlakyTests}
           matrixAxes={reportData.matrixAxes}
           automationCandidatesSnapshot={reportData.automationCandidatesSnapshot}

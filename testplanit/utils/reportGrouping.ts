@@ -17,6 +17,8 @@
  * did, so `reportApiUtils` can map them back to display values unchanged.
  */
 
+import { bucketDateIso, type DateGrouping } from "~/lib/reports/dateGrouping";
+
 type RawResult = Record<string, any>;
 
 interface FieldValue {
@@ -30,6 +32,8 @@ export interface GroupingOptions {
   // folderId -> [self, parent, grandparent, ...]. Present only when the folder
   // dimension is grouped with descendants enabled.
   folderAncestors?: Map<number, number[]>;
+  // The calendar period a date dimension buckets into. Absent = daily.
+  dateGrouping?: DateGrouping;
 }
 
 /**
@@ -41,12 +45,6 @@ export interface GroupAccumulator<A> {
   create: () => A;
   add: (acc: A, result: RawResult) => void;
   finalize: (acc: A) => Record<string, unknown>;
-}
-
-function normalizeDay(value: unknown): string {
-  const date = new Date(value as string);
-  date.setUTCHours(0, 0, 0, 0);
-  return date.toISOString();
 }
 
 /**
@@ -65,13 +63,13 @@ function fieldValues(
   switch (field) {
     case "executedAt": {
       if (!result.executedAt) return [{ key: "unknown", value: null }];
-      const iso = normalizeDay(result.executedAt);
+      const iso = bucketDateIso(result.executedAt, options.dateGrouping);
       return [{ key: iso, value: iso }];
     }
     case "createdAt": {
-      // Repository-stats groups cases by creation day.
+      // Repository-stats groups cases by creation period.
       if (!result.createdAt) return [{ key: "unknown", value: null }];
-      const iso = normalizeDay(result.createdAt);
+      const iso = bucketDateIso(result.createdAt, options.dateGrouping);
       return [{ key: iso, value: iso }];
     }
     case "executedById":

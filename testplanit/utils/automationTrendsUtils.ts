@@ -3,6 +3,7 @@ import { resolveRequestDateRange } from "~/lib/reports/dateRangePresets";
 import { NextRequest } from "next/server";
 import { authorizeReportRequest } from "~/utils/reportApiUtils";
 import { resolveReportFolderFilter } from "~/utils/reportGrouping";
+import { generatePeriods, type DateGrouping } from "~/lib/reports/dateGrouping";
 
 interface PeriodData {
   periodStart: string;
@@ -10,107 +11,7 @@ interface PeriodData {
   [key: string]: number | string; // Dynamic project columns
 }
 
-type DateGrouping = "daily" | "weekly" | "monthly" | "quarterly" | "annually";
-
-function getPeriodDates(
-  date: Date,
-  grouping: DateGrouping
-): { start: Date; end: Date } {
-  const utcDate = new Date(
-    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
-  );
-
-  switch (grouping) {
-    case "daily": {
-      const start = new Date(utcDate);
-      start.setUTCHours(0, 0, 0, 0);
-      const end = new Date(utcDate);
-      end.setUTCHours(23, 59, 59, 999);
-      return { start, end };
-    }
-    case "weekly": {
-      const start = new Date(utcDate);
-      const day = start.getUTCDay();
-      const daysSinceSunday = day === 0 ? 6 : day - 1;
-      start.setUTCDate(start.getUTCDate() - daysSinceSunday);
-      start.setUTCHours(0, 0, 0, 0);
-      const end = new Date(start);
-      end.setUTCDate(end.getUTCDate() + 6);
-      end.setUTCHours(23, 59, 59, 999);
-      return { start, end };
-    }
-    case "monthly": {
-      const start = new Date(
-        Date.UTC(utcDate.getUTCFullYear(), utcDate.getUTCMonth(), 1, 0, 0, 0, 0)
-      );
-      // End is the last millisecond of the last day of the month
-      const end = new Date(
-        Date.UTC(
-          utcDate.getUTCFullYear(),
-          utcDate.getUTCMonth() + 1,
-          1,
-          0,
-          0,
-          0,
-          0
-        )
-      );
-      end.setUTCMilliseconds(-1); // Go back 1ms from start of next month
-      return { start, end };
-    }
-    case "quarterly": {
-      const quarter = Math.floor(utcDate.getUTCMonth() / 3);
-      const start = new Date(
-        Date.UTC(utcDate.getUTCFullYear(), quarter * 3, 1, 0, 0, 0, 0)
-      );
-      // End is the last millisecond of the last day of the quarter
-      const end = new Date(
-        Date.UTC(utcDate.getUTCFullYear(), quarter * 3 + 3, 1, 0, 0, 0, 0)
-      );
-      end.setUTCMilliseconds(-1); // Go back 1ms from start of next quarter
-      return { start, end };
-    }
-    case "annually": {
-      const start = new Date(
-        Date.UTC(utcDate.getUTCFullYear(), 0, 1, 0, 0, 0, 0)
-      );
-      // End is the last millisecond of December 31st
-      const end = new Date(
-        Date.UTC(utcDate.getUTCFullYear() + 1, 0, 1, 0, 0, 0, 0)
-      );
-      end.setUTCMilliseconds(-1); // Go back 1ms from start of next year
-      return { start, end };
-    }
-    default:
-      return getPeriodDates(date, "weekly");
-  }
-}
-
-/**
- * Generate a contiguous list of periods spanning [lo, hi] at the given grouping.
- * Unlike deriving periods only from dates that have activity, this fills gaps so
- * the cumulative trend line is continuous.
- */
-export function generatePeriods(
-  lo: Date,
-  hi: Date,
-  grouping: DateGrouping
-): { start: Date; end: Date }[] {
-  const periods: { start: Date; end: Date }[] = [];
-  if (lo > hi) return periods;
-
-  let cursor = getPeriodDates(lo, grouping).start;
-  const hiTime = hi.getTime();
-  let guard = 0;
-  while (cursor.getTime() <= hiTime && guard < 100000) {
-    const period = getPeriodDates(cursor, grouping);
-    periods.push(period);
-    // Jump into the next period (1ms past the current period's end)
-    cursor = new Date(period.end.getTime() + 1);
-    guard++;
-  }
-  return periods;
-}
+export { generatePeriods } from "~/lib/reports/dateGrouping";
 
 /**
  * Min / max over a numeric array WITHOUT spreading it into function arguments.

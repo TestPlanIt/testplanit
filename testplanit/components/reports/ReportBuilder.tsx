@@ -1524,12 +1524,17 @@ function ReportBuilderContent({
         startDate: dateRange?.from?.toISOString(),
         endDate: dateRange?.to?.toISOString(),
         folderIncludeDescendants,
+        // A clicked date row drills into the whole period it covers.
+        ...(lastUsedDimensions.some((d) => d.value === "date")
+          ? { dateGrouping: lastUsedDateGrouping }
+          : {}),
       };
 
       drillDown.handleMetricClick(context);
     },
     [
       lastUsedDimensions,
+      lastUsedDateGrouping,
       reportType,
       mode,
       projectId,
@@ -1550,7 +1555,8 @@ function ReportBuilderContent({
     lastUsedDimensions,
     lastUsedMetrics,
     supportsDrillDown ? handleMetricClick : undefined,
-    projectId
+    projectId,
+    lastUsedDateGrouping
   );
 
   // Use automation trends columns for automation-trends report
@@ -2586,6 +2592,15 @@ function ReportBuilderContent({
           body.includeTotals = true;
         }
 
+        // The date dimension's calendar period: the server buckets rows by
+        // it and the table, chart, CSV and share label them the same way.
+        if (
+          !isPreBuiltReport(reportType) &&
+          selectedDimensions.some((d) => d.value === "date")
+        ) {
+          body.dateGrouping = dateGrouping;
+        }
+
         // For automation trends, add selected filter values and date grouping
         if (matchesReportType(reportType, "automation-trends")) {
           // Build filters object from selectedFilterValues
@@ -3023,8 +3038,9 @@ function ReportBuilderContent({
             setAutomationTrendsProjects(data.projects);
           }
 
-          // Chart shows the full dataset; only refresh it on a new run.
-          if (updateUrl) {
+          // Chart shows the full dataset; refresh it on a new run (explicit
+          // or an auto re-run with new data), never on a sort re-fetch.
+          if (updateUrl || fresh) {
             setAllResults(fullData);
           }
 
@@ -3047,9 +3063,11 @@ function ReportBuilderContent({
 
         // Record when the report was generated: on every new run, including
         // auto-runs from the URL (a saved report or share link), but not on a
-        // sort or page re-fetch.
+        // sort or page re-fetch. The date grouping the rows were bucketed by
+        // follows the same rule so their labels match the data.
         if (updateUrl || fresh) {
           setReportGeneratedAt(new Date());
+          setLastUsedDateGrouping(dateGrouping);
         }
 
         // Only update these when running a new report (not just sorting/paginating)
@@ -3059,10 +3077,6 @@ function ReportBuilderContent({
           setLastUsedDateRange(
             dateRange?.from ? (dateRange as DateRange) : undefined
           );
-          // Update last used date grouping for automation trends
-          if (matchesReportType(reportType, "automation-trends")) {
-            setLastUsedDateGrouping(dateGrouping);
-          }
           // Update last used consecutive runs for flaky tests
           if (matchesReportType(reportType, "flaky-tests")) {
             setLastUsedConsecutiveRuns(consecutiveRuns);
@@ -3115,6 +3129,11 @@ function ReportBuilderContent({
               newParams.set("includeTotals", "true");
             } else {
               newParams.delete("includeTotals");
+            }
+            if (body.dateGrouping) {
+              newParams.set("dateGrouping", body.dateGrouping);
+            } else {
+              newParams.delete("dateGrouping");
             }
 
             // If the user moved to another tab or report while this run was
@@ -3280,6 +3299,7 @@ function ReportBuilderContent({
       metrics: lastUsedMetrics,
       projects: automationTrendsProjects,
       consecutiveRuns: lastUsedConsecutiveRuns,
+      dateGrouping: lastUsedDateGrouping,
       projectId: mode === "project" ? projectId : undefined,
     });
   }, [
@@ -3295,6 +3315,7 @@ function ReportBuilderContent({
     lastUsedMetrics,
     automationTrendsProjects,
     lastUsedConsecutiveRuns,
+    lastUsedDateGrouping,
     projectId,
   ]);
 
@@ -3383,6 +3404,26 @@ function ReportBuilderContent({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFilterValues, dateGrouping]);
+
+  // Re-run a custom report when its date grouping changes, once it has run
+  // with the date dimension (mirrors the automation-trends behavior above),
+  // and keep the URL in step so a refresh restores the choice.
+  useEffect(() => {
+    if (
+      !isPreBuiltReport(reportType) &&
+      lastUsedDimensions.some((d) => d.value === "date") &&
+      lastUsedMetrics.length > 0 &&
+      results
+    ) {
+      void runReport(lastUsedDimensions, lastUsedMetrics);
+      const newParams = new URLSearchParams(searchParams.toString());
+      newParams.set("dateGrouping", dateGrouping);
+      if (newParams.toString() !== searchParams.toString()) {
+        router.replace(`${pathname}?${newParams.toString()}`);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dateGrouping]);
 
   // Re-run custom reports when dimension value filters change, once a report
   // has been run (mirrors the automation-trends filter behavior above).
@@ -3712,12 +3753,7 @@ function ReportBuilderContent({
                         )}
 
                       {/* Date Grouping Selection for Automation Trends */}
-                      {(reportType === "automation-trends" ||
-                        (isCrossProjectReport(reportType) &&
-                          matchesReportType(
-                            reportType,
-                            "automation-trends"
-                          ))) && (
+                      {matchesReportType(reportType, "automation-trends") && (
                         <div className="grid gap-2">
                           <label className="text-sm font-medium">
                             {tReports("dateGrouping.label")}
@@ -4463,6 +4499,43 @@ function ReportBuilderContent({
                           data-testid="dimensions-select"
                         />
                       </div>
+
+                      {/* Date grouping — the calendar period each date row
+                          covers, once the date dimension is selected. */}
+                      {dimensions.some((d) => d.value === "date") && (
+                        <div className="grid gap-2">
+                          <label className="text-sm font-medium">
+                            {tReports("dateGrouping.label")}
+                          </label>
+                          <Select
+                            value={dateGrouping}
+                            onValueChange={(value: any) =>
+                              setDateGrouping(value)
+                            }
+                          >
+                            <SelectTrigger data-testid="date-grouping-select">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="daily">
+                                {tReports("dateGrouping.daily")}
+                              </SelectItem>
+                              <SelectItem value="weekly">
+                                {tReports("dateGrouping.weekly")}
+                              </SelectItem>
+                              <SelectItem value="monthly">
+                                {tReports("dateGrouping.monthly")}
+                              </SelectItem>
+                              <SelectItem value="quarterly">
+                                {tReports("dateGrouping.quarterly")}
+                              </SelectItem>
+                              <SelectItem value="annually">
+                                {tReports("dateGrouping.annually")}
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
 
                       {/* Folder subtree roll-up — only relevant when grouping
                           by folder. */}

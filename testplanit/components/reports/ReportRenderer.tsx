@@ -1,5 +1,6 @@
 "use client";
 
+import { isDateGrouping, type DateGrouping } from "~/lib/reports/dateGrouping";
 import { AutomationCandidatesReportPreset } from "@/components/automationCandidates/AutomationCandidatesReportPreset";
 import { ReportChart } from "@/components/dataVisualizations/ReportChart";
 import { DateFormatter } from "@/components/DateFormatter";
@@ -187,7 +188,7 @@ export function ReportRenderer({
   staleDaysThreshold: _staleDaysThreshold,
   minExecutionsForRate: _minExecutionsForRate,
   lookbackDays: _lookbackDays,
-  dateGrouping = "weekly",
+  dateGrouping,
   totalFlakyTests,
   matrixAxes,
   automationCandidatesSnapshot,
@@ -234,18 +235,24 @@ export function ReportRenderer({
   const metricIds = useMemo(() => metrics.map((m) => m.value), [metrics]);
 
   // Generate columns using all the specialized hooks (only if not pre-generated)
+  // Automation trends has always opened weekly; the custom reports group
+  // by day unless the run said otherwise.
+  const customDateGrouping: DateGrouping = isDateGrouping(dateGrouping)
+    ? dateGrouping
+    : "daily";
   const standardColumns = useReportColumns(
     dimensionIds,
     metricIds,
     dimensions,
     metrics,
     undefined, // No drill-down for shared reports
-    projectId
+    projectId,
+    customDateGrouping
   );
 
   const automationTrendsColumns = useAutomationTrendsColumns(
     projects,
-    dateGrouping
+    dateGrouping ?? "weekly"
   );
 
   const flakyTestsColumns = useFlakyTestsColumns(
@@ -474,6 +481,7 @@ export function ReportRenderer({
           consecutiveRuns={consecutiveRuns}
           totalFlakyTests={totalFlakyTests}
           projectId={projectId}
+          dateGrouping={customDateGrouping}
         />
       ),
       isTruncated:
@@ -487,6 +495,7 @@ export function ReportRenderer({
     };
   }, [
     chartData,
+    customDateGrouping,
     showChartTotals,
     results,
     reportType,

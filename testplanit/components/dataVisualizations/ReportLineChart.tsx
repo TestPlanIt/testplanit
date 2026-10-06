@@ -10,11 +10,14 @@ interface ReportLineChartProps {
   data: SimpleChartDataPoint[];
   /** Format Y-axis ticks as durations (values are seconds). */
   durationTicks?: boolean;
+  /** Tooltip label for a point's date (e.g. the period it covers). */
+  formatDate?: (date: Date) => string;
 }
 
 export const ReportLineChart: React.FC<ReportLineChartProps> = ({
   data,
   durationTicks = false,
+  formatDate,
 }) => {
   const locale = useLocale();
   const svgRef = useRef<SVGSVGElement | null>(null);
@@ -147,7 +150,9 @@ export const ReportLineChart: React.FC<ReportLineChartProps> = ({
           const dt = new Date(d.name);
           const dateLabel = isNaN(dt.getTime())
             ? d.name
-            : d3.timeFormat("%b %d, %Y")(dt);
+            : formatDate
+              ? formatDate(dt)
+              : d3.timeFormat("%b %d, %Y")(dt);
           // When a label is present (e.g. a milestone name plotted on its date),
           // lead with it and show the date beneath; otherwise the date is the title.
           tooltipRef.current.innerHTML = d.label
@@ -175,7 +180,7 @@ export const ReportLineChart: React.FC<ReportLineChartProps> = ({
       .ease(d3.easeBackOut.overshoot(1.3))
       .attr("r", 5)
       .style("opacity", 1);
-  }, [data, width, height, t, locale, durationTicks]);
+  }, [data, width, height, t, locale, durationTicks, formatDate]);
 
   return (
     <div

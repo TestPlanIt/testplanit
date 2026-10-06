@@ -300,6 +300,30 @@ describe("parsePerTypeReportParams", () => {
     expect(absent.includeNotRunDebt).toBe(true);
   });
 
+  it("reads the date grouping for any report, defaulting per type", () => {
+    expect(
+      parsePerTypeReportParams(
+        new URLSearchParams("dateGrouping=quarterly"),
+        "cross-project-test-execution"
+      ).dateGrouping
+    ).toBe("quarterly");
+    // Custom reports always grouped by day; automation trends opens weekly.
+    expect(
+      parsePerTypeReportParams(new URLSearchParams(), "test-execution")
+        .dateGrouping
+    ).toBe("daily");
+    expect(
+      parsePerTypeReportParams(new URLSearchParams(), "automation-trends")
+        .dateGrouping
+    ).toBe("weekly");
+    expect(
+      parsePerTypeReportParams(
+        new URLSearchParams("dateGrouping=hourly"),
+        "repository-stats"
+      ).dateGrouping
+    ).toBe("daily");
+  });
+
   it("hydrates automation-trends filters from both list encodings", () => {
     const state = parsePerTypeReportParams(
       new URLSearchParams(

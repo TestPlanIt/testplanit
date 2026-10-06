@@ -593,4 +593,36 @@ describe("useReportColumns", () => {
       expect(container.textContent).not.toContain("Σ");
     });
   });
+
+  describe("date dimension", () => {
+    const value = { executedAt: "2025-03-03T00:00:00.000Z" };
+    const info = { getValue: () => value, row: { original: { date: value } } };
+
+    const renderDate = (dateGrouping?: any) => {
+      const { result } = renderHook(() =>
+        useReportColumns(
+          ["date"],
+          ["testResults"],
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          dateGrouping
+        )
+      );
+      const column = result.current.find((col: any) => col.id === "date");
+      return render(<TooltipProvider>{column.cell(info)}</TooltipProvider>);
+    };
+
+    it("labels the UTC day by default", () => {
+      expect(renderDate().container.textContent).toBe("3/3/2025");
+    });
+
+    it("spells out the period the row was grouped by", () => {
+      expect(renderDate("weekly").container.textContent).toBe(
+        "Mar 3, 2025 - Mar 9, 2025"
+      );
+      expect(renderDate("monthly").container.textContent).toBe("Mar 2025");
+    });
+  });
 });

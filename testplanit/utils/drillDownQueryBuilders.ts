@@ -22,6 +22,7 @@ import type {
   TestRunsWhereInput,
 } from "~/zenstack/input";
 import type { DrillDownContext } from "~/lib/types/reportDrillDown";
+import { periodBoundsUtc } from "~/lib/reports/dateGrouping";
 import { DEFECT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 
 /**
@@ -83,32 +84,41 @@ export const DRILL_DOWN_DIMENSIONS_BY_REPORT: Record<
   "milestone-readiness": new Set(["date", "milestone"]),
 };
 
+type DateBounds = { gte?: Date; lt?: Date; lte?: Date };
+
 /**
- * Normalize date to start of day in UTC
+ * The overlap of a clicked date row's period and the report-level date
+ * range. Spreading one over the other replaced the row's period with the
+ * whole range, so a drill-down listed every record the report covered.
  */
-function startOfDayUTC(date: Date | string): Date {
-  const d = typeof date === "string" ? new Date(date) : date;
-  return new Date(
-    Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 0, 0, 0, 0)
-  );
+function intersectDateFilter(
+  existing: DateBounds | undefined,
+  range: DateBounds | undefined
+): DateBounds | undefined {
+  if (!existing) return range;
+  if (!range) return existing;
+  const out: DateBounds = {};
+  const latest = (a?: Date, b?: Date) => (a && b ? (a > b ? a : b) : (a ?? b));
+  const earliest = (a?: Date, b?: Date) =>
+    a && b ? (a < b ? a : b) : (a ?? b);
+  const gte = latest(existing.gte, range.gte);
+  const lt = earliest(existing.lt, range.lt);
+  const lte = earliest(existing.lte, range.lte);
+  if (gte) out.gte = gte;
+  if (lt) out.lt = lt;
+  if (lte) out.lte = lte;
+  return out;
 }
 
 /**
- * Normalize date to end of day in UTC
+ * Bounds of the calendar period a clicked date row covers: the day by
+ * default, or the week/month/quarter/year the report was grouped by.
  */
-function endOfDayUTC(date: Date | string): Date {
-  const d = typeof date === "string" ? new Date(date) : date;
-  return new Date(
-    Date.UTC(
-      d.getUTCFullYear(),
-      d.getUTCMonth(),
-      d.getUTCDate(),
-      23,
-      59,
-      59,
-      999
-    )
-  );
+function dateDimensionBounds(
+  context: DrillDownContext,
+  value: Date | string
+): { gte: Date; lt: Date } {
+  return periodBoundsUtc(value, context.dateGrouping ?? "daily");
 }
 
 /**
@@ -215,7 +225,7 @@ export function buildImpactAnalysesQuery(
   }
   if (context.dimensions.date?.executedAt) {
     const date = new Date(context.dimensions.date.executedAt);
-    where.createdAt = { gte: startOfDayUTC(date), lt: endOfDayUTC(date) };
+    where.createdAt = dateDimensionBounds(context, date);
   } else if (context.startDate || context.endDate) {
     where.createdAt = {
       ...(context.startDate ? { gte: new Date(context.startDate) } : {}),
@@ -375,10 +385,7 @@ export function buildTestExecutionQuery(
   // Apply date filter
   if (context.dimensions.date?.executedAt) {
     const date = new Date(context.dimensions.date.executedAt);
-    where.executedAt = {
-      gte: startOfDayUTC(date),
-      lt: endOfDayUTC(date),
-    };
+    where.executedAt = dateDimensionBounds(context, date);
   }
 
   // Apply report-level date range
@@ -391,10 +398,10 @@ export function buildTestExecutionQuery(
     dateRangeFilter.executedAt &&
     typeof dateRangeFilter.executedAt === "object"
   ) {
-    const existing = where.executedAt as any;
-    where.executedAt = existing
-      ? { ...existing, ...(dateRangeFilter.executedAt as any) }
-      : dateRangeFilter.executedAt;
+    where.executedAt = intersectDateFilter(
+      where.executedAt as DateBounds | undefined,
+      dateRangeFilter.executedAt as DateBounds
+    );
   }
 
   // Exclude untested status - only show actual test results
@@ -568,10 +575,7 @@ export function buildJunitResultQuery(
 
   if (context.dimensions.date?.executedAt) {
     const date = new Date(context.dimensions.date.executedAt);
-    where.executedAt = {
-      gte: startOfDayUTC(date),
-      lt: endOfDayUTC(date),
-    };
+    where.executedAt = dateDimensionBounds(context, date);
   }
 
   const dateRangeFilter = buildDateFilter(
@@ -583,10 +587,10 @@ export function buildJunitResultQuery(
     dateRangeFilter.executedAt &&
     typeof dateRangeFilter.executedAt === "object"
   ) {
-    const existing = where.executedAt as any;
-    where.executedAt = existing
-      ? { ...existing, ...(dateRangeFilter.executedAt as any) }
-      : dateRangeFilter.executedAt;
+    where.executedAt = intersectDateFilter(
+      where.executedAt as DateBounds | undefined,
+      dateRangeFilter.executedAt as DateBounds
+    );
   }
 
   return {
@@ -672,10 +676,7 @@ export function buildTestRunsQuery(
   // Date dimension and report-level range apply to the run's creation day
   if (context.dimensions.date?.executedAt) {
     const date = new Date(context.dimensions.date.executedAt);
-    where.createdAt = {
-      gte: startOfDayUTC(date),
-      lt: endOfDayUTC(date),
-    };
+    where.createdAt = dateDimensionBounds(context, date);
   }
   const dateRangeFilter = buildDateFilter(
     context.startDate,
@@ -686,10 +687,10 @@ export function buildTestRunsQuery(
     dateRangeFilter.createdAt &&
     typeof dateRangeFilter.createdAt === "object"
   ) {
-    const existing = where.createdAt as any;
-    where.createdAt = existing
-      ? { ...existing, ...(dateRangeFilter.createdAt as any) }
-      : dateRangeFilter.createdAt;
+    where.createdAt = intersectDateFilter(
+      where.createdAt as DateBounds | undefined,
+      dateRangeFilter.createdAt as DateBounds
+    );
   }
 
   // Apply configuration filter
@@ -862,10 +863,7 @@ export function buildRepositoryStatsQuery(
         "getTime" in createdAtValue)
     ) {
       const date = new Date(createdAtValue as string | Date);
-      where.createdAt = {
-        gte: startOfDayUTC(date),
-        lt: endOfDayUTC(date),
-      };
+      where.createdAt = dateDimensionBounds(context, date);
     }
   } else if (context.dimensions.date?.executedAt) {
     // Fallback: if executedAt is provided (from test-execution date dimension), use it
@@ -877,10 +875,7 @@ export function buildRepositoryStatsQuery(
         "getTime" in executedAtValue)
     ) {
       const date = new Date(executedAtValue as string | Date);
-      where.createdAt = {
-        gte: startOfDayUTC(date),
-        lt: endOfDayUTC(date),
-      };
+      where.createdAt = dateDimensionBounds(context, date);
     }
   }
 
@@ -891,8 +886,10 @@ export function buildRepositoryStatsQuery(
     "createdAt"
   );
   if (creationRangeFilter.createdAt) {
-    const existing = where.createdAt as any;
-    where.createdAt = { ...(existing || {}), ...creationRangeFilter.createdAt };
+    where.createdAt = intersectDateFilter(
+      where.createdAt as DateBounds | undefined,
+      creationRangeFilter.createdAt as DateBounds
+    );
   }
 
   return {
@@ -1041,8 +1038,9 @@ export function buildTestCasesQuery(
   const executedAtFilter: any = {};
   if (context.dimensions.date?.executedAt) {
     const date = new Date(context.dimensions.date.executedAt);
-    executedAtFilter.gte = startOfDayUTC(date);
-    executedAtFilter.lt = endOfDayUTC(date);
+    const bounds = dateDimensionBounds(context, date);
+    executedAtFilter.gte = bounds.gte;
+    executedAtFilter.lt = bounds.lt;
   }
   if (context.startDate) {
     executedAtFilter.gte = executedAtFilter.gte ?? new Date(context.startDate);
@@ -1146,10 +1144,7 @@ export function buildSessionsQuery(
     context.dimensions.date?.executedAt;
   if (clickedSessionDate) {
     const date = new Date(clickedSessionDate as string);
-    where.createdAt = {
-      gte: startOfDayUTC(date),
-      lt: endOfDayUTC(date),
-    };
+    where.createdAt = dateDimensionBounds(context, date);
   }
 
   // Apply report-level date range
@@ -1162,10 +1157,10 @@ export function buildSessionsQuery(
     dateRangeFilter.createdAt &&
     typeof dateRangeFilter.createdAt === "object"
   ) {
-    const existing = where.createdAt as any;
-    where.createdAt = existing
-      ? { ...existing, ...(dateRangeFilter.createdAt as any) }
-      : dateRangeFilter.createdAt;
+    where.createdAt = intersectDateFilter(
+      where.createdAt as DateBounds | undefined,
+      dateRangeFilter.createdAt as DateBounds
+    );
   }
 
   return {
@@ -1240,10 +1235,7 @@ export function buildSessionResultsQuery(
   // Apply date filter
   if (context.dimensions.date?.executedAt) {
     const date = new Date(context.dimensions.date.executedAt);
-    where.createdAt = {
-      gte: startOfDayUTC(date),
-      lt: endOfDayUTC(date),
-    };
+    where.createdAt = dateDimensionBounds(context, date);
   }
 
   // Apply report-level date range
@@ -1256,10 +1248,10 @@ export function buildSessionResultsQuery(
     dateRangeFilter.createdAt &&
     typeof dateRangeFilter.createdAt === "object"
   ) {
-    const existing = where.createdAt as any;
-    where.createdAt = existing
-      ? { ...existing, ...(dateRangeFilter.createdAt as any) }
-      : dateRangeFilter.createdAt;
+    where.createdAt = intersectDateFilter(
+      where.createdAt as DateBounds | undefined,
+      dateRangeFilter.createdAt as DateBounds
+    );
   }
 
   return {
@@ -1358,10 +1350,7 @@ export function buildIssuesQuery(
     context.dimensions.date?.executedAt;
   if (clickedDate) {
     const date = new Date(clickedDate as string);
-    where.createdAt = {
-      gte: startOfDayUTC(date),
-      lt: endOfDayUTC(date),
-    };
+    where.createdAt = dateDimensionBounds(context, date);
   }
 
   // Apply report-level date range
@@ -1374,10 +1363,10 @@ export function buildIssuesQuery(
     dateRangeFilter.createdAt &&
     typeof dateRangeFilter.createdAt === "object"
   ) {
-    const existing = where.createdAt as any;
-    where.createdAt = existing
-      ? { ...existing, ...(dateRangeFilter.createdAt as any) }
-      : dateRangeFilter.createdAt;
+    where.createdAt = intersectDateFilter(
+      where.createdAt as DateBounds | undefined,
+      dateRangeFilter.createdAt as DateBounds
+    );
   }
 
   return {
@@ -1457,13 +1446,7 @@ export function buildMilestonesQuery(
       const date =
         typeof dateValue === "string" ? new Date(dateValue) : dateValue;
       if (!isNaN(date.getTime())) {
-        const startOfDay = startOfDayUTC(date);
-        const nextDayStart = new Date(startOfDay);
-        nextDayStart.setUTCDate(nextDayStart.getUTCDate() + 1);
-        where.createdAt = {
-          gte: startOfDay,
-          lt: nextDayStart,
-        };
+        where.createdAt = dateDimensionBounds(context, date);
       }
     }
   }
@@ -1565,14 +1548,7 @@ export function buildMilestoneCompletionQuery(
       const date =
         typeof dateValue === "string" ? new Date(dateValue) : dateValue;
       if (!isNaN(date.getTime())) {
-        const startOfDay = startOfDayUTC(date);
-        const nextDayStart = new Date(startOfDay);
-        nextDayStart.setUTCDate(nextDayStart.getUTCDate() + 1);
-
-        milestoneFilter.createdAt = {
-          gte: startOfDay,
-          lt: nextDayStart,
-        };
+        milestoneFilter.createdAt = dateDimensionBounds(context, date);
       }
     }
   }

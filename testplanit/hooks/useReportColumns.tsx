@@ -17,6 +17,8 @@ import { toHumanReadable } from "~/utils/duration";
 import { getDateFnsLocale } from "~/utils/locales";
 import { metricUnit } from "~/utils/metricUnits";
 import { getUserIdFromRow } from "~/utils/reportUtils";
+import { formatReportPeriod } from "~/utils/reportPeriodFormat";
+import type { DateGrouping } from "~/lib/reports/dateGrouping";
 
 // Component imports - only using existing components
 import { ConfigurationNameDisplay } from "~/components/ConfigurationNameDisplay";
@@ -107,7 +109,9 @@ export function useReportColumns(
     row: any;
   }) => void,
   /** Project ID for generating links in project-specific reports */
-  projectId?: number | string
+  projectId?: number | string,
+  /** The period each date row covers; its label spells the period out. */
+  dateGrouping: DateGrouping = "daily"
 ) {
   const t = useTranslations();
   const tCommon = useTranslations("common");
@@ -251,25 +255,15 @@ export function useReportColumns(
                   return <span>-</span>;
                 }
 
-                try {
-                  const date = new Date(dateValue);
-                  if (isNaN(date.getTime())) {
-                    return <span>-</span>;
-                  }
-                  // Use UTC components to avoid timezone conversion issues
-                  // The backend normalizes dates to UTC midnight for grouping
-                  const year = date.getUTCFullYear();
-                  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
-                  const day = String(date.getUTCDate()).padStart(2, "0");
-                  const formattedDate = new Date(
-                    `${year}-${month}-${day}T12:00:00.000Z`
-                  );
-                  return (
-                    <span>{formattedDate.toLocaleDateString(locale)}</span>
-                  );
-                } catch {
-                  return <span>-</span>;
-                }
+                // The backend keys the row by the UTC start of its period;
+                // the label spells out the day/week/month/quarter/year.
+                const label = formatReportPeriod(
+                  dateValue,
+                  dateGrouping,
+                  locale
+                );
+                if (!label) return <span>-</span>;
+                return <span className="whitespace-nowrap">{label}</span>;
               case "project": {
                 // Get the full project object from the row data
                 const projectData = info.row.original[dimensionId];
@@ -600,26 +594,13 @@ export function useReportColumns(
                   );
                 },
                 (dateValue) => {
-                  if (!dateValue) return "-";
-                  try {
-                    const date = new Date(dateValue);
-                    if (isNaN(date.getTime())) return "-";
-                    // Use UTC components to avoid timezone conversion issues
-                    const year = date.getUTCFullYear();
-                    const month = String(date.getUTCMonth() + 1).padStart(
-                      2,
-                      "0"
-                    );
-                    const day = String(date.getUTCDate()).padStart(2, "0");
-                    const formattedDate = new Date(
-                      `${year}-${month}-${day}T12:00:00.000Z`
-                    );
-                    return (
-                      <span>{formattedDate.toLocaleDateString(locale)}</span>
-                    );
-                  } catch {
-                    return "-";
-                  }
+                  const label = formatReportPeriod(
+                    dateValue,
+                    dateGrouping,
+                    locale
+                  );
+                  if (!label) return "-";
+                  return <span className="whitespace-nowrap">{label}</span>;
                 },
                 multipleValuesLabel
               );
@@ -1201,5 +1182,6 @@ export function useReportColumns(
     tReportsMetrics,
     onMetricClick,
     projectId,
+    dateGrouping,
   ]);
 }

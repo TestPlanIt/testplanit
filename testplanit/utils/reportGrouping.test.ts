@@ -25,6 +25,29 @@ describe("reportGrouping", () => {
       expect(rows).toHaveLength(2);
     });
 
+    it("buckets executedAt by the requested period", () => {
+      const results = [
+        { executedAt: "2026-05-04T09:00:00.000Z" },
+        { executedAt: "2026-05-13T23:30:00.000Z" },
+        { executedAt: "2026-06-01T01:00:00.000Z" },
+      ];
+      const monthly = groupResults(results, ["executedAt"], countAcc, {
+        dateGrouping: "monthly",
+      });
+      expect(monthly).toEqual([
+        { executedAt: "2026-05-01T00:00:00.000Z", count: 2 },
+        { executedAt: "2026-06-01T00:00:00.000Z", count: 1 },
+      ]);
+      const weekly = groupResults(results, ["executedAt"], countAcc, {
+        dateGrouping: "weekly",
+      });
+      expect(weekly).toHaveLength(3);
+      expect(weekly[0]).toEqual({
+        executedAt: "2026-05-04T00:00:00.000Z",
+        count: 1,
+      });
+    });
+
     it("normalizes executedAt to the UTC day", () => {
       const results = [
         { executedAt: "2026-05-26T09:00:00.000Z" },

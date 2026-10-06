@@ -142,6 +142,39 @@ describe("drillDownQueryBuilders", () => {
       expect((result.where?.executedAt as any).lt).toBeInstanceOf(Date);
     });
 
+    it("drills a grouped date row into its whole period", () => {
+      const context = createBaseContext({
+        dimensions: {
+          date: { id: "2024-06-01", executedAt: "2024-06-01T00:00:00.000Z" },
+        },
+        dateGrouping: "monthly",
+      });
+      const result = buildTestExecutionQuery(context, 0, 10);
+
+      expect(result.where?.executedAt).toEqual({
+        gte: new Date("2024-06-01T00:00:00.000Z"),
+        lt: new Date("2024-07-01T00:00:00.000Z"),
+      });
+    });
+
+    it("keeps a date row's period inside the report range", () => {
+      const context = createBaseContext({
+        dimensions: {
+          date: { id: "2026-05-01", executedAt: "2026-05-01T00:00:00.000Z" },
+        },
+        dateGrouping: "monthly",
+        startDate: "2026-04-06T05:00:00.000Z",
+        endDate: "2026-10-07T04:59:59.999Z",
+      });
+      const result = buildTestExecutionQuery(context, 0, 10);
+
+      // The range used to overwrite the period, listing the whole range.
+      expect(result.where?.executedAt).toEqual({
+        gte: new Date("2026-05-01T00:00:00.000Z"),
+        lt: new Date("2026-06-01T00:00:00.000Z"),
+      });
+    });
+
     it("should apply date range filters", () => {
       const context = createBaseContext({
         startDate: "2024-01-01",

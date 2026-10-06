@@ -13,6 +13,7 @@
 import { useLocale, useTranslations } from "next-intl";
 import Papa from "papaparse";
 import { useCallback, useState } from "react";
+import type { DateGrouping } from "~/lib/reports/dateGrouping";
 import { logDataExport } from "~/lib/services/auditClient";
 import {
   buildReportCsvRows,
@@ -29,6 +30,8 @@ export interface ReportCsvExportParams {
   metrics?: Array<{ value: string; label: string; apiLabel?: string }>;
   projects?: Array<{ id: number; name: string }>;
   consecutiveRuns?: number;
+  /** Custom reports: the period each date row covers (default daily). */
+  dateGrouping?: DateGrouping;
   projectId?: number | string;
 }
 
@@ -50,6 +53,7 @@ export function useReportCsvExport() {
           projects: params.projects,
           isCrossProject: params.isCrossProject,
           consecutiveRuns: params.consecutiveRuns,
+          dateGrouping: params.dateGrouping,
           locale,
           // next-intl types `t` with a strict key union; the CSV builder takes
           // dynamic string keys, so adapt at the boundary.

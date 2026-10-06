@@ -67,10 +67,11 @@ export const reportRequestSchema = z
       .optional(),
     sortColumn: z.string().optional(),
     sortDirection: z.enum(["asc", "desc"]).optional(),
+    // The calendar period a date dimension buckets into. Handlers default
+    // it themselves: weekly for automation trends, daily for custom reports.
     dateGrouping: z
       .enum(["daily", "weekly", "monthly", "quarterly", "annually"])
-      .optional()
-      .default("weekly"),
+      .optional(),
     // When the folder dimension is grouped, roll each result up into its
     // ancestor folders so a parent folder includes its whole subtree.
     folderIncludeDescendants: z.boolean().optional().default(false),

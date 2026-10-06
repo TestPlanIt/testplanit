@@ -11,6 +11,8 @@
  * translator) so this module stays pure and unit-testable.
  */
 
+import type { DateGrouping } from "~/lib/reports/dateGrouping";
+import { formatReportPeriodIso } from "~/utils/reportPeriodFormat";
 import { format } from "date-fns";
 import { ROOT_DIRECTORY } from "~/utils/codePinCoverageShared";
 import { formatRequirementCellText } from "~/utils/issueDisplayText";
@@ -38,6 +40,8 @@ export interface BuildReportCsvParams {
   consecutiveRuns?: number;
   /** Automation-trends projects (drives per-project columns). */
   projects?: Array<{ id: number; name: string }>;
+  /** Custom reports: the period each date row covers (default daily). */
+  dateGrouping?: DateGrouping;
   locale: string;
   t: Translate;
 }
@@ -511,15 +515,19 @@ function isTimeMetric(m: { value: string; label: string }): boolean {
   );
 }
 
-function dimensionValue(row: any, dimId: string): string {
+function dimensionValue(
+  row: any,
+  dimId: string,
+  dateGrouping: DateGrouping = "daily"
+): string {
   const v = row[dimId];
   if (v == null) return "";
   if (dimId === "date") {
     const d = typeof v === "object" ? (v.executedAt ?? v.createdAt ?? null) : v;
-    // The backend normalizes grouping dates to UTC midnight; the on-screen
-    // column reads UTC components. Use UTC here too, otherwise users behind
-    // UTC see every date shifted back a day.
-    return fmtDateUtc(d);
+    // The backend keys date rows by the UTC start of their period; the
+    // on-screen column reads UTC components. Use UTC here too, otherwise
+    // users behind UTC see every date shifted back a day.
+    return formatReportPeriodIso(d, dateGrouping);
   }
   if (typeof v === "object") {
     return v.name ?? v.title ?? v.templateName ?? v.email ?? "";
@@ -528,11 +536,11 @@ function dimensionValue(row: any, dimId: string): string {
 }
 
 function buildCustom(p: BuildReportCsvParams): CsvRow[] {
-  const { rows, dimensions = [], metrics = [], locale } = p;
+  const { rows, dimensions = [], metrics = [], locale, dateGrouping } = p;
   return rows.map((r: any) => {
     const row: CsvRow = {};
     for (const dim of dimensions) {
-      row[dim.label] = dimensionValue(r, dim.value);
+      row[dim.label] = dimensionValue(r, dim.value, dateGrouping);
     }
     for (const metric of metrics) {
       const raw = r[metricAccessor(metric)];

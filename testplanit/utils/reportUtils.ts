@@ -1,3 +1,4 @@
+import { bucketDateIso, type DateGrouping } from "~/lib/reports/dateGrouping";
 import { DEFECT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { queryEngagementUserIds } from "~/lib/engagementUserIdsQuery";
 import { queryProjectRelevantIssueIds } from "~/lib/projectIssueIdsQuery";
@@ -195,27 +196,29 @@ function repositoryCaseSelect(
 }
 
 /**
- * Builds the folder ancestor map when, and only when, the folder dimension is
- * grouped with descendants enabled. Returned as grouping options ready to pass
- * to `groupResults`.
+ * The per-request grouping options for `groupResults`: the date dimension's
+ * calendar period, and the folder ancestor map when, and only when, the
+ * folder dimension is grouped with descendants enabled.
  */
 async function folderGroupingOptions(
   db: any,
   projectId: number | undefined,
   isProjectSpecific: boolean,
   groupBy: string[],
-  filters?: { folderIncludeDescendants?: boolean }
+  filters?: { folderIncludeDescendants?: boolean; dateGrouping?: DateGrouping }
 ): Promise<GroupingOptions> {
-  if (groupBy.includes("folderId") && filters?.folderIncludeDescendants) {
-    return {
-      folderAncestors: await buildFolderAncestorMap(
-        db,
-        projectId,
-        isProjectSpecific
-      ),
-    };
+  const options: GroupingOptions = {};
+  if (filters?.dateGrouping) {
+    options.dateGrouping = filters.dateGrouping;
   }
-  return {};
+  if (groupBy.includes("folderId") && filters?.folderIncludeDescendants) {
+    options.folderAncestors = await buildFolderAncestorMap(
+      db,
+      projectId,
+      isProjectSpecific
+    );
+  }
+  return options;
 }
 
 // Helper to generate a human-readable summary
@@ -2527,7 +2530,8 @@ export function createUserEngagementMetricRegistry(
           () => ({ executionCount: 0 }),
           (bucket) => {
             bucket.executionCount++;
-          }
+          },
+          filters?.dateGrouping
         );
         return Array.from(grouped.values());
       },
@@ -2569,9 +2573,7 @@ export function createUserEngagementMetricRegistry(
             const key = groupBy
               .map((field) => {
                 if (field === "createdAt" || field === "executedAt") {
-                  const date = new Date(result.createdAt);
-                  date.setUTCHours(0, 0, 0, 0);
-                  return date.toISOString();
+                  return bucketDateIso(result.createdAt, filters?.dateGrouping);
                 } else if (field === "userId") {
                   return result.creatorId;
                 }
@@ -2583,9 +2585,10 @@ export function createUserEngagementMetricRegistry(
               acc[key] = {
                 ...groupBy.reduce((obj: any, field) => {
                   if (field === "createdAt" || field === "executedAt") {
-                    const date = new Date(result.createdAt);
-                    date.setUTCHours(0, 0, 0, 0);
-                    obj[field] = date.toISOString();
+                    obj[field] = bucketDateIso(
+                      result.createdAt,
+                      filters?.dateGrouping
+                    );
                   } else if (field === "userId") {
                     obj[field] = result.creatorId;
                   } else {
@@ -2760,9 +2763,7 @@ export function createUserEngagementMetricRegistry(
             const key = groupBy
               .map((field) => {
                 if (field === "createdAt" || field === "executedAt") {
-                  const date = new Date(result.createdAt);
-                  date.setUTCHours(0, 0, 0, 0);
-                  return date.toISOString();
+                  return bucketDateIso(result.createdAt, filters?.dateGrouping);
                 } else if (field === "userId") {
                   return result.createdById;
                 } else if (field === "projectId") {
@@ -2776,9 +2777,10 @@ export function createUserEngagementMetricRegistry(
               acc[key] = {
                 ...groupBy.reduce((obj: any, field) => {
                   if (field === "createdAt" || field === "executedAt") {
-                    const date = new Date(result.createdAt);
-                    date.setUTCHours(0, 0, 0, 0);
-                    obj[field] = date.toISOString();
+                    obj[field] = bucketDateIso(
+                      result.createdAt,
+                      filters?.dateGrouping
+                    );
                   } else if (field === "userId") {
                     obj[field] = result.createdById;
                   } else if (field === "projectId") {
@@ -2972,7 +2974,8 @@ export function createUserEngagementMetricRegistry(
           (bucket, row) => {
             bucket.totalElapsed += row.elapsed || 0;
             bucket.count++;
-          }
+          },
+          filters?.dateGrouping
         );
         return Array.from(grouped.values()).map(
           ({ totalElapsed, count, ...dims }: any) => ({
@@ -3109,7 +3112,8 @@ export function createUserEngagementMetricRegistry(
             ) {
               bucket.lastActiveDate = row.executedAt;
             }
-          }
+          },
+          filters?.dateGrouping
         );
         return Array.from(grouped.values());
       },
@@ -3608,9 +3612,10 @@ export function createIssueTrackingMetricRegistry(
               const key = groupBy
                 .map((field) => {
                   if (field === "createdAt") {
-                    const date = new Date(issue.createdAt);
-                    date.setUTCHours(0, 0, 0, 0);
-                    return date.toISOString();
+                    return bucketDateIso(
+                      issue.createdAt,
+                      filters?.dateGrouping
+                    );
                   } else if (field === "priority") {
                     // Normalize priority for case-insensitive grouping
                     return normalizePriority(issue[field]);
@@ -3623,9 +3628,10 @@ export function createIssueTrackingMetricRegistry(
                 const groupData: any = {};
                 groupBy.forEach((field) => {
                   if (field === "createdAt") {
-                    const date = new Date(issue.createdAt);
-                    date.setUTCHours(0, 0, 0, 0);
-                    groupData.createdAt = date.toISOString();
+                    groupData.createdAt = bucketDateIso(
+                      issue.createdAt,
+                      filters?.dateGrouping
+                    );
                   } else if (field === "createdById") {
                     groupData.createdById = issue.createdById;
                   } else if (field === "integrationId") {
@@ -3720,9 +3726,10 @@ export function createIssueTrackingMetricRegistry(
               const key = groupBy
                 .map((field) => {
                   if (field === "createdAt") {
-                    const date = new Date(result.createdAt);
-                    date.setUTCHours(0, 0, 0, 0);
-                    return date.toISOString();
+                    return bucketDateIso(
+                      result.createdAt,
+                      filters?.dateGrouping
+                    );
                   } else if (field === "projectId") {
                     return projectId;
                   } else if (field === "priority") {
@@ -3737,9 +3744,10 @@ export function createIssueTrackingMetricRegistry(
                 acc[key] = {
                   ...groupBy.reduce((obj: any, field) => {
                     if (field === "createdAt") {
-                      const date = new Date(result.createdAt);
-                      date.setUTCHours(0, 0, 0, 0);
-                      obj[field] = date.toISOString();
+                      obj[field] = bucketDateIso(
+                        result.createdAt,
+                        filters?.dateGrouping
+                      );
                     } else if (field === "projectId") {
                       obj[field] = projectId;
                     } else if (field === "priority") {

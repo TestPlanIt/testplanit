@@ -9,17 +9,24 @@ import {
 import { getEnhancedDb } from "~/lib/auth/utils";
 import { isValidReportBypass } from "~/lib/internalReportBypass";
 import { reportRequestSchema } from "~/lib/schemas/reportRequestSchema";
+import {
+  bucketDateIso,
+  isDateGrouping,
+  type DateGrouping,
+} from "~/lib/reports/dateGrouping";
 import { authOptions } from "~/server/auth";
 
 // Type for Prisma client
 type Prisma = typeof baseDb;
 
 // Filters passed through to a metric's aggregate. Date bounds plus
-// per-dimension options (folder subtree roll-up) carried like dateGrouping.
+// per-dimension options: the folder subtree roll-up and the calendar period
+// a date dimension buckets into.
 interface DateFilters {
   startDate?: string;
   endDate?: string;
   folderIncludeDescendants?: boolean;
+  dateGrouping?: DateGrouping;
 }
 
 // Dimension value display result
@@ -452,6 +459,11 @@ export async function handleReportPOST(req: NextRequest, config: ReportConfig) {
       sortDirection,
     } = body;
     const { startDate, endDate } = resolveRequestDateRange(body);
+    // The date dimension's calendar period. Absent means daily, which is
+    // what every run before the option existed grouped by.
+    const dateGrouping: DateGrouping = isDateGrouping(body.dateGrouping)
+      ? body.dateGrouping
+      : "daily";
 
     // Validate with Zod schema
     const validation = reportRequestSchema.safeParse({
@@ -528,6 +540,7 @@ export async function handleReportPOST(req: NextRequest, config: ReportConfig) {
         startDate,
         endDate,
         folderIncludeDescendants,
+        dateGrouping,
         dimensionFilters,
         page,
         pageSize,
@@ -546,6 +559,7 @@ export async function handleReportPOST(req: NextRequest, config: ReportConfig) {
       startDate,
       endDate,
       folderIncludeDescendants,
+      dateGrouping,
       dimensionFilters,
       page,
       pageSize,
@@ -609,6 +623,7 @@ async function handleCrossProjectAggregation({
   startDate,
   endDate,
   folderIncludeDescendants,
+  dateGrouping = "daily",
   dimensionFilters,
   page = 1,
   pageSize,
@@ -622,6 +637,7 @@ async function handleCrossProjectAggregation({
   startDate?: string;
   endDate?: string;
   folderIncludeDescendants?: boolean;
+  dateGrouping?: DateGrouping;
   dimensionFilters?: Record<string, Array<string | number>>;
   page?: number;
   pageSize?: number | "All";
@@ -655,7 +671,7 @@ async function handleCrossProjectAggregation({
             baseDb,
             undefined, // No projectId for cross-project
             groupBy,
-            { startDate, endDate, folderIncludeDescendants },
+            { startDate, endDate, folderIncludeDescendants, dateGrouping },
             dimensions
           )
         : Promise.resolve([])
@@ -725,16 +741,12 @@ async function handleCrossProjectAggregation({
             if (!resultObj.executedAt) {
               return "unknown";
             }
-            const date = new Date(resultObj.executedAt as string);
-            date.setUTCHours(0, 0, 0, 0);
-            return date.toISOString();
+            return bucketDateIso(resultObj.executedAt as string, dateGrouping);
           } else if (config.groupBy === "createdAt") {
             if (!resultObj.createdAt) {
               return "unknown";
             }
-            const date = new Date(resultObj.createdAt as string);
-            date.setUTCHours(0, 0, 0, 0);
-            return date.toISOString();
+            return bucketDateIso(resultObj.createdAt as string, dateGrouping);
           }
           return String(resultObj[config.groupBy] ?? "unknown");
         })
@@ -752,22 +764,28 @@ async function handleCrossProjectAggregation({
             const lookup = dimensionLookups[dimIndex];
 
             if (config.groupBy === "executedAt") {
-              // Special handling for date dimension
+              // Date dimension: the row carries the period start
               if (!resultObj.executedAt) {
                 row[config.id] = { executedAt: null, name: "None" };
               } else {
-                const date = new Date(resultObj.executedAt as string);
-                date.setUTCHours(0, 0, 0, 0);
-                row[config.id] = { executedAt: date.toISOString() };
+                row[config.id] = {
+                  executedAt: bucketDateIso(
+                    resultObj.executedAt as string,
+                    dateGrouping
+                  ),
+                };
               }
             } else if (config.groupBy === "createdAt") {
-              // Special handling for date dimension with createdAt
+              // Date dimension keyed on creation: same, on createdAt
               if (!resultObj.createdAt) {
                 row[config.id] = { createdAt: null, name: "None" };
               } else {
-                const date = new Date(resultObj.createdAt as string);
-                date.setUTCHours(0, 0, 0, 0);
-                row[config.id] = { createdAt: date.toISOString() };
+                row[config.id] = {
+                  createdAt: bucketDateIso(
+                    resultObj.createdAt as string,
+                    dateGrouping
+                  ),
+                };
               }
             } else {
               const fullDimValue = lookup.get(String(dimValue));
@@ -948,6 +966,9 @@ async function handleCrossProjectAggregation({
     totalCount,
     page,
     pageSize: pageSize || totalCount,
+    // Echoed so the table, chart, CSV and shares label each date row by
+    // the period it covers.
+    ...(dimensions.includes("date") ? { dateGrouping } : {}),
   });
 }
 
@@ -960,6 +981,7 @@ async function handleProjectSpecificAggregation({
   startDate,
   endDate,
   folderIncludeDescendants,
+  dateGrouping = "daily",
   dimensionFilters,
   page = 1,
   pageSize,
@@ -974,6 +996,7 @@ async function handleProjectSpecificAggregation({
   startDate?: string;
   endDate?: string;
   folderIncludeDescendants?: boolean;
+  dateGrouping?: DateGrouping;
   dimensionFilters?: Record<string, Array<string | number>>;
   page?: number;
   pageSize?: number | "All";
@@ -1007,7 +1030,7 @@ async function handleProjectSpecificAggregation({
             baseDb,
             projectId,
             groupBy,
-            { startDate, endDate, folderIncludeDescendants },
+            { startDate, endDate, folderIncludeDescendants, dateGrouping },
             dimensions
           )
         : Promise.resolve([])
@@ -1077,16 +1100,12 @@ async function handleProjectSpecificAggregation({
             if (!resultObj.executedAt) {
               return "unknown";
             }
-            const date = new Date(resultObj.executedAt as string);
-            date.setUTCHours(0, 0, 0, 0);
-            return date.toISOString();
+            return bucketDateIso(resultObj.executedAt as string, dateGrouping);
           } else if (config.groupBy === "createdAt") {
             if (!resultObj.createdAt) {
               return "unknown";
             }
-            const date = new Date(resultObj.createdAt as string);
-            date.setUTCHours(0, 0, 0, 0);
-            return date.toISOString();
+            return bucketDateIso(resultObj.createdAt as string, dateGrouping);
           }
           return String(resultObj[config.groupBy] ?? "unknown");
         })
@@ -1104,22 +1123,28 @@ async function handleProjectSpecificAggregation({
             const lookup = dimensionLookups[dimIndex];
 
             if (config.groupBy === "executedAt") {
-              // Special handling for date dimension
+              // Date dimension: the row carries the period start
               if (!resultObj.executedAt) {
                 row[config.id] = { executedAt: null, name: "None" };
               } else {
-                const date = new Date(resultObj.executedAt as string);
-                date.setUTCHours(0, 0, 0, 0);
-                row[config.id] = { executedAt: date.toISOString() };
+                row[config.id] = {
+                  executedAt: bucketDateIso(
+                    resultObj.executedAt as string,
+                    dateGrouping
+                  ),
+                };
               }
             } else if (config.groupBy === "createdAt") {
-              // Special handling for date dimension with createdAt
+              // Date dimension keyed on creation: same, on createdAt
               if (!resultObj.createdAt) {
                 row[config.id] = { createdAt: null, name: "None" };
               } else {
-                const date = new Date(resultObj.createdAt as string);
-                date.setUTCHours(0, 0, 0, 0);
-                row[config.id] = { createdAt: date.toISOString() };
+                row[config.id] = {
+                  createdAt: bucketDateIso(
+                    resultObj.createdAt as string,
+                    dateGrouping
+                  ),
+                };
               }
             } else {
               const fullDimValue = lookup.get(String(dimValue));
@@ -1343,5 +1368,8 @@ async function handleProjectSpecificAggregation({
     totalCount,
     page,
     pageSize: pageSize || totalCount,
+    // Echoed so the table, chart, CSV and shares label each date row by
+    // the period it covers.
+    ...(dimensions.includes("date") ? { dateGrouping } : {}),
   });
 }

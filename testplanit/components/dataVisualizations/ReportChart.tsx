@@ -5,6 +5,8 @@ import { useIssueColors } from "~/hooks/useIssueColors";
 import { toHumanReadable } from "~/utils/duration";
 import { metricUnit } from "~/utils/metricUnits";
 import { stringToColorCode } from "~/utils/stringToColorCode";
+import { formatReportPeriod } from "~/utils/reportPeriodFormat";
+import type { DateGrouping } from "~/lib/reports/dateGrouping";
 import { FlakyTestsBubbleChart } from "./FlakyTestsBubbleChart";
 import { IssueTestCoverageChart } from "./IssueTestCoverageChart";
 import RecentResultsDonut from "./RecentResultsDonut";
@@ -114,6 +116,8 @@ interface ReportChartProps {
   consecutiveRuns?: number; // For flaky tests report
   totalFlakyTests?: number; // Total count of flaky tests (for showing "not shown" count)
   projectId?: number | string; // Project ID for building links in charts
+  /** The period each date row covers; labels the time axis' tooltips. */
+  dateGrouping?: DateGrouping;
 }
 
 // Helper to determine chart type
@@ -373,9 +377,14 @@ export const ReportChart: React.FC<ReportChartProps> = ({
   consecutiveRuns = 10,
   totalFlakyTests,
   projectId,
+  dateGrouping = "daily",
 }) => {
   const locale = useLocale();
   const t = useTranslations();
+  // A date row is keyed by the UTC start of its period; the tooltip spells
+  // the period out at the grouping's precision.
+  const formatPeriodLabel = (date: Date) =>
+    formatReportPeriod(date, dateGrouping, locale);
   const { getPriorityDotColor, getStatusDotColor } = useIssueColors();
 
   // Early return if results is not a valid array
@@ -689,6 +698,9 @@ export const ReportChart: React.FC<ReportChartProps> = ({
           <ReportLineChart
             data={transformedData}
             durationTicks={isElapsedTimeMetric(metric)}
+            formatDate={
+              dimension?.value === "date" ? formatPeriodLabel : undefined
+            }
           />
         );
       }
@@ -956,6 +968,9 @@ export const ReportChart: React.FC<ReportChartProps> = ({
         <ReportMultiLineChart
           data={transformedData}
           durationTicks={chartMetrics.every(isElapsedTimeMetric)}
+          formatDate={
+            dateDimension.value === "date" ? formatPeriodLabel : undefined
+          }
         />
       );
     }

@@ -14,6 +14,7 @@
  * place and the two directions cannot drift apart.
  */
 
+import { DATE_GROUPINGS, type DateGrouping } from "~/lib/reports/dateGrouping";
 import type { DateRange } from "react-day-picker";
 import {
   REPORT_STATE_CONFIG_KEYS,
@@ -162,8 +163,7 @@ interface ReadableSearchParams {
   get(name: string): string | null;
 }
 
-export type DateGroupingValue =
-  "daily" | "weekly" | "monthly" | "quarterly" | "annually";
+export type DateGroupingValue = DateGrouping;
 export type RequirementCoverageStateValue =
   "PASSED" | "FAILED" | "NOT_RUN" | "UNCOVERED";
 
@@ -220,7 +220,8 @@ export const PER_TYPE_REPORT_PARAM_DEFAULTS: PerTypeReportUrlState = {
   baselineSnapshotId: null,
   compareSnapshotId: null,
   includeUnchanged: false,
-  dateGrouping: "weekly",
+  // Automation trends overrides this to weekly (see parsePerTypeReportParams).
+  dateGrouping: "daily",
   folderIncludeSubfolders: true,
   includeTotals: false,
   filterValues: {},
@@ -245,13 +246,7 @@ const IMPACT_OUTCOME_FILTER_VALUES = [
   "no_run",
 ] as const;
 const PIN_COVERAGE_FILTER_VALUES = ["gaps", "pinned"] as const;
-const DATE_GROUPING_VALUES: readonly DateGroupingValue[] = [
-  "daily",
-  "weekly",
-  "monthly",
-  "quarterly",
-  "annually",
-];
+const DATE_GROUPING_VALUES: readonly DateGroupingValue[] = DATE_GROUPINGS;
 const REQUIREMENT_COVERAGE_STATE_VALUES: readonly RequirementCoverageStateValue[] =
   ["PASSED", "FAILED", "NOT_RUN", "UNCOVERED"];
 
@@ -402,6 +397,15 @@ export function parsePerTypeReportParams(
   // The custom reports' chart total line. Not gated by type: every
   // dimension-and-metric report can plot a date axis.
   state.includeTotals = booleanParam(params, "includeTotals", false);
+
+  // The date dimension's calendar period. Automation trends opens weekly;
+  // the custom reports open daily, which is how they always grouped.
+  state.dateGrouping = enumParam(
+    params,
+    "dateGrouping",
+    DATE_GROUPING_VALUES,
+    base === "automation-trends" ? "weekly" : "daily"
+  );
 
   // The case-based reports' Folders filter.
   if (
@@ -563,12 +567,6 @@ export function parsePerTypeReportParams(
   }
 
   if (base === "automation-trends") {
-    state.dateGrouping = enumParam(
-      params,
-      "dateGrouping",
-      DATE_GROUPING_VALUES,
-      state.dateGrouping
-    );
     Object.assign(
       filterValues,
       filterMenuValues(params, [

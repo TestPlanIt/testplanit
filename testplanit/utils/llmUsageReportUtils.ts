@@ -1,3 +1,4 @@
+import { bucketDateIso, type DateGrouping } from "~/lib/reports/dateGrouping";
 import { buildDateFilter } from "~/utils/resultUnion";
 
 /**
@@ -60,15 +61,17 @@ type UsageRow = {
 /**
  * Fetches the usage rows once and buckets them by the requested group keys.
  * With an empty groupBy this yields a single overall bucket (the framework's
- * "totals" mode). createdAt group keys are normalized to UTC midnight to
- * match the shared report pipeline's date handling.
+ * "totals" mode). createdAt group keys are the UTC start of the requested
+ * calendar period, matching the shared report pipeline's date handling.
  */
 async function aggregateUsage<B extends Record<string, unknown>>(
   db: any,
   projectId: number | undefined,
   isProjectSpecific: boolean,
   groupBy: string[],
-  filters: { startDate?: string; endDate?: string } | undefined,
+  filters:
+    | { startDate?: string; endDate?: string; dateGrouping?: DateGrouping }
+    | undefined,
   init: () => B,
   accumulate: (bucket: B, row: UsageRow) => void
 ): Promise<Array<Record<string, unknown> & B>> {
@@ -100,7 +103,7 @@ async function aggregateUsage<B extends Record<string, unknown>>(
     const key = groupFields
       .map((field) =>
         field === "createdAt"
-          ? dayIso(row.createdAt)
+          ? bucketDateIso(row.createdAt, filters?.dateGrouping)
           : String(row[field as keyof UsageRow] ?? "null")
       )
       .join("|");
@@ -112,7 +115,7 @@ async function aggregateUsage<B extends Record<string, unknown>>(
       for (const field of groupFields) {
         groupKeys[field] =
           field === "createdAt"
-            ? dayIso(row.createdAt)
+            ? bucketDateIso(row.createdAt, filters?.dateGrouping)
             : row[field as keyof UsageRow];
       }
       grouped.set(key, bucket);

@@ -210,6 +210,18 @@ describe("buildReportCsvRows", () => {
     expect(row["Avg. Elapsed Time"]).toBe("1 minute");
   });
 
+  it("custom report: a grouped date row is labeled by its period", () => {
+    const [row] = buildReportCsvRows({
+      ...base,
+      reportType: "test-execution",
+      rows: [{ date: { executedAt: "2025-03-01T00:00:00.000Z" }, Count: 2 }],
+      dimensions: [{ value: "date", label: "Date" }],
+      metrics: [{ value: "testResults", label: "Count" }],
+      dateGrouping: "monthly",
+    });
+    expect(row["Date"]).toBe("2025-03");
+  });
+
   it("custom report: zero-duration metric is a blank cell, not a hyphen", () => {
     const [row] = buildReportCsvRows({
       ...base,

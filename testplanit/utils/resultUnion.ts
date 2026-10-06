@@ -26,6 +26,8 @@
  * own query shapes — any semantic change here must be mirrored there.
  */
 
+import { bucketDateIso, type DateGrouping } from "~/lib/reports/dateGrouping";
+
 /**
  * Where-clause for automated durations. Automated results live in
  * JUnitTestResult (duration in `time`, seconds) rather than TestRunResults,
@@ -314,15 +316,14 @@ export function groupEngagementRows(
   rows: any[],
   groupBy: string[],
   makeBucket: () => any,
-  accumulate: (bucket: any, row: any) => void
+  accumulate: (bucket: any, row: any) => void,
+  dateGrouping?: DateGrouping
 ) {
   const grouped = new Map<string, any>();
   const add = (row: any, groupId: number | null) => {
     const keyFor = (field: string) => {
       if (field === "executedAt") {
-        const date = new Date(row.executedAt);
-        date.setUTCHours(0, 0, 0, 0);
-        return date.toISOString();
+        return bucketDateIso(row.executedAt, dateGrouping);
       }
       if (field === "groupId") return groupId;
       return row[field];
