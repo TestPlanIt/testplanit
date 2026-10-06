@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
       .slice(0, limit);
 
     // Check which jobs have generated results in Redis
-    const connection = await queue.client;
+    const connection = await queue.getBackend().client;
     const jobs = await Promise.all(
       allJobs.map(async (job) => {
         const state = await job.getState();

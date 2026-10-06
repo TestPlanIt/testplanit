@@ -4,7 +4,9 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "lib": ["ES2022"],
-    "baseUrl": ".",
+    "types": ["node"],
+    "ignoreDeprecations": "6.0",
+    "rootDir": "../..",
     "paths": {
       "@db/input": ["../../testplanit/zenstack/input"],
       "@db/input/*": ["../../testplanit/zenstack/input/*"],

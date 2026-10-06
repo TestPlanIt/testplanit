@@ -54,10 +54,10 @@
     "tag": "latest"
   },
   "devDependencies": {
-    "@types/node": "^26.5.1",
-    "@vitest/coverage-v8": "^4.1.11",
+    "@types/node": "^26.6.4",
+    "@vitest/coverage-v8": "^5.0.3",
     "tsup": "^8.5.1",
-    "typescript": "^5.9.3",
-    "vitest": "^4.1.11"
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.3"
   }
 }

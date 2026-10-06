@@ -188,7 +188,7 @@ export function startStepSequenceScanWorker() {
     STEP_SCAN_QUEUE_NAME,
     withTenantContext(async (job) => {
       const db = getDbClientForJob(job.data);
-      const redis = await worker!.client;
+      const redis = await worker!.getBackend().client;
       return processStepScan(job, db, redis);
     }),
     {

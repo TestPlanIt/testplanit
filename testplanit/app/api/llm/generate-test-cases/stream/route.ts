@@ -300,7 +300,7 @@ export async function POST(req: NextRequest) {
               job.data?.userId === session.user.id &&
               job.data?.projectId === projectId
             ) {
-              const connection = await queue!.client;
+              const connection = await queue!.getBackend().client;
               const base64 = await connection.get(
                 screenshotKey(urlJobId, pageIndex)
               );

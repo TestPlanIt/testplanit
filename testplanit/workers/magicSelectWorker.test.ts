@@ -40,6 +40,7 @@ vi.mock("bullmq", async (importOriginal) => {
     Worker: class MockWorker {
       on = vi.fn();
       close = vi.fn();
+      getBackend = () => ({ client: this.client });
       client = Promise.resolve({
         get: vi.fn().mockResolvedValue(null),
         del: vi.fn().mockResolvedValue(0),

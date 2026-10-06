@@ -77,9 +77,8 @@ export async function removeJob(
   let scheduleRemoved = false;
   if (isRepeatable && repeatKey) {
     try {
-      const repeatable = await queue.getRepeatableJobs();
-      if (repeatable.some((entry) => entry.key === repeatKey)) {
-        await queue.removeRepeatableByKey(repeatKey);
+      if (await queue.getJobScheduler(repeatKey)) {
+        await queue.removeJobScheduler(repeatKey);
         scheduleRemoved = true;
       }
     } catch (error) {
@@ -132,7 +131,7 @@ export async function cancelJob(
         "This job cannot be cancelled while it runs; wait for it to finish."
       );
     }
-    await setCancelFlags(await queue.client, keys);
+    await setCancelFlags(await queue.getBackend().client, keys);
     return { cancelling: true, removed: false };
   }
   if (

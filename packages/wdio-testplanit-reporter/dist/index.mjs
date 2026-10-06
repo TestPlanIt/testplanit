@@ -1306,12 +1306,20 @@ ${error.stack}` : "";
       }
       const runCaseKey = `${this.state.testRunId}_${repositoryCaseId}`;
       if (!this.state.testRunCaseMap.has(runCaseKey)) {
-        const testRunCase = await this.client.findOrAddTestCaseToRun({
-          testRunId: this.state.testRunId,
-          repositoryCaseId
-        });
-        this.state.testRunCaseMap.set(runCaseKey, testRunCase.id);
-        this.log("Added case to run:", testRunCase.id);
+        try {
+          const testRunCase = await this.client.findOrAddTestCaseToRun({
+            testRunId: this.state.testRunId,
+            repositoryCaseId
+          });
+          this.state.testRunCaseMap.set(runCaseKey, testRunCase.id);
+          this.log("Added case to run:", testRunCase.id);
+        } catch (err) {
+          this.state.testRunCaseMap.set(runCaseKey, 0);
+          this.log(
+            "Could not add case to run (composition locked?); reporting the result anyway:",
+            err instanceof Error ? err.message : String(err)
+          );
+        }
       }
       const statusId = this.state.statusIds[result.status] || this.state.statusIds.failed;
       const junitType = this.mapStatusToJUnitType(result.status);

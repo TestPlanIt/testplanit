@@ -14,7 +14,7 @@ const fakeRedis = {
 
 vi.mock("~/lib/queues", () => ({
   getGenerateFromUrlQueue: vi.fn(() => ({
-    client: Promise.resolve(fakeRedis),
+    getBackend: () => ({ client: Promise.resolve(fakeRedis) }),
   })),
 }));
 
@@ -39,7 +39,7 @@ beforeEach(() => {
   store.clear();
   vi.clearAllMocks();
   vi.mocked(getGenerateFromUrlQueue).mockReturnValue({
-    client: Promise.resolve(fakeRedis),
+    getBackend: () => ({ client: Promise.resolve(fakeRedis) }),
   } as never);
 });
 

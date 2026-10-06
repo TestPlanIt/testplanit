@@ -19,7 +19,7 @@ const mockRedisClient = {
 
 // ─── Mock bullmq Worker to provide a mock Redis client ───────────────────────
 // autoTagWorker.ts sets the module-level `worker` variable in startWorker().
-// We mock the Worker class so the instance provides a `.client` promise
+// We mock the Worker class so the instance provides a backend `.client` promise
 // pointing to our mock Redis client.
 
 vi.mock("bullmq", async (importOriginal) => {
@@ -27,6 +27,7 @@ vi.mock("bullmq", async (importOriginal) => {
   return {
     ...original,
     Worker: class MockWorker {
+      getBackend = () => ({ client: this.client });
       client = Promise.resolve(mockRedisClient);
       on = vi.fn();
       close = vi.fn();
@@ -148,7 +149,7 @@ const mockRepositoryCases = [
 ];
 
 // Helper to load a fresh module and call startWorker to initialise the
-// module-level `worker` variable so `worker!.client` works in the processor.
+// module-level `worker` variable so `worker!.getBackend().client` works in the processor.
 async function loadWorker() {
   const mod = await import("./autoTagWorker");
   // Call startWorker to create the Worker instance (sets module-level `worker`)

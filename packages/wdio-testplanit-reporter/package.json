@@ -51,19 +51,19 @@
     "tag": "latest"
   },
   "peerDependencies": {
-    "@wdio/reporter": "^8.0.0 || ^9.0.0",
-    "@wdio/types": "^8.0.0 || ^9.0.0"
+    "@wdio/reporter": "^8.0.0 || ^9.0.0 || ^10.0.0",
+    "@wdio/types": "^8.0.0 || ^9.0.0 || ^10.0.0"
   },
   "dependencies": {
     "@testplanit/api": "workspace:^"
   },
   "devDependencies": {
-    "@types/node": "^26.5.1",
-    "@vitest/coverage-v8": "^4.1.11",
-    "@wdio/reporter": "^9.31.2",
-    "@wdio/types": "^9.31.2",
+    "@types/node": "^26.6.4",
+    "@vitest/coverage-v8": "^5.0.3",
+    "@wdio/reporter": "^10.0.0",
+    "@wdio/types": "^10.0.0",
     "tsup": "^8.5.1",
-    "typescript": "^5.9.3",
-    "vitest": "^4.1.11"
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.3"
   }
 }

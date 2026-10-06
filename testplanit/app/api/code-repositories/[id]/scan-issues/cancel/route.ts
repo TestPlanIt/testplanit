@@ -122,7 +122,9 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     }
 
     // Active: the worker stops at its next check and writes the report.
-    await setCancelFlags(await queue!.client, [issueScanCancelKey(configId)]);
+    await setCancelFlags(await queue!.getBackend().client, [
+      issueScanCancelKey(configId),
+    ]);
     return NextResponse.json({ cancelling: true, jobId: found.job.id });
   } catch (err: unknown) {
     console.error("[POST scan-issues/cancel]:", err);

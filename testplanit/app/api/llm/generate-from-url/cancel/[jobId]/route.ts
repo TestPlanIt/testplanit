@@ -64,7 +64,7 @@ export async function POST(
 
     // Active -- set Redis cancellation flag for worker to pick up between pages,
     // AND try to force-fail the job so it stops immediately even during a long LLM call
-    const connection = await queue.client;
+    const connection = await queue.getBackend().client;
     await connection.set(`generate-from-url:cancel:${jobId}`, "1", {
       EX: 3600,
     });

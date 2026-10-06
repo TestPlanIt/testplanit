@@ -77,3 +77,6 @@ demo/
 .localization-audit*
 
 .idea/testplanit/prisma/seedMcpDemo.ts
+
+# Vitest 5 artifact directory
+.vitest/

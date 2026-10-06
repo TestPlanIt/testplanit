@@ -598,7 +598,7 @@ const processor = async (
     const db = getDbClientForJob(job.data);
 
     // 3. Check for pre-start cancellation
-    const redis = await worker!.client;
+    const redis = await worker!.getBackend().client;
     const cancelledAtStart = await redis.get(cancelKey(job.id));
     if (cancelledAtStart) {
       await redis.del(cancelKey(job.id));

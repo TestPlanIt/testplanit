@@ -48,7 +48,6 @@ describe("Admin Queue Routes - API Token Authentication", () => {
           completed: 0,
           failed: 0,
           delayed: 0,
-          paused: 0,
         }),
         getJobs: vi.fn().mockResolvedValue([]),
         isPaused: vi.fn().mockResolvedValue(false),

@@ -86,7 +86,7 @@ const processor = async (
   const service = new TagAnalysisService(db, llmManager, promptResolver);
 
   // 4. Check for pre-start cancellation
-  const redis = await worker!.client;
+  const redis = await worker!.getBackend().client;
   const cancelled = await redis.get(cancelKey(job.id));
   if (cancelled) {
     await redis.del(cancelKey(job.id));

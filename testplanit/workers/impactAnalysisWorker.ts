@@ -112,7 +112,7 @@ export const processor = async (
   );
   validateMultiTenantJobData(job.data);
 
-  const redis = await worker!.client;
+  const redis = await worker!.getBackend().client;
   const cancelKey = impactCancelKey(String(job.id));
   const isCancelled = async () => Boolean(await redis.get(cancelKey));
   const assertNotCancelled = async () => {

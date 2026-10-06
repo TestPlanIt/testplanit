@@ -39,6 +39,7 @@ vi.mock("bullmq", async (importOriginal) => {
   return {
     ...original,
     Worker: class MockWorker {
+      getBackend = () => ({ client: this.client });
       client = Promise.resolve(mockRedisClient);
       on = vi.fn();
       close = vi.fn();
@@ -149,7 +150,7 @@ function makePair(caseAId: number, caseBId: number, score = 0.8) {
 }
 
 // Helper to load a fresh module and call startDuplicateScanWorker to initialise
-// the module-level `worker` variable so `worker!.client` works in the processor.
+// the module-level `worker` variable so `worker!.getBackend().client` works in the processor.
 async function loadWorker() {
   const mod = await import("./duplicateScanWorker");
   mod.startDuplicateScanWorker();

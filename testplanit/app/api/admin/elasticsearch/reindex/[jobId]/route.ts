@@ -102,7 +102,7 @@ export async function GET(
 
     // Get job logs from Redis
     const logsKey = `${BULLMQ_PREFIX}:${elasticsearchReindexQueue.name}:${jobId}:logs`;
-    const connection = await elasticsearchReindexQueue.client;
+    const connection = await elasticsearchReindexQueue.getBackend().client;
     const logs = await connection.lrange(logsKey, 0, -1);
 
     let result = null;

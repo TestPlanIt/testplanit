@@ -29,6 +29,7 @@ allowBuilds:
   'keytar': true
   'msgpackr-extract': true
   'msw': true
+  pnpm: true
   'prisma': true
   'sharp': true
   'tree-sitter': true
@@ -80,7 +81,7 @@ overrides:
   '@babel/plugin-transform-modules-systemjs': '>=7.29.4'
   'nodemailer': '>=9.0.1'
   'cheerio': '>=1.0.0'
-  'ioredis': '5.11.1'
+  'ioredis': '^6.0.0'
   'lodash': '>=4.18.0'
   'lodash-es': '>=4.18.0'
   'undici': '^7.28.0'
@@ -120,6 +121,11 @@ overrides:
   'yaml@2': '>=2.8.3'
   'defu': '>=6.1.5'
   'joi': '^17.13.4'
+  # @atlaskit/editor-prosemirror (forge-app) pins older prosemirror packages,
+  # which left two copies of prosemirror-view/model and broke the editor's types.
+  'prosemirror-model': '^1.25.12'
+  'prosemirror-view': '^1.42.6'
+  'prosemirror-transform': '^1.12.2'
 
 patchedDependencies:
   '@acid-info/docusaurus-og@1.0.3-beta.2': patches/@acid-info__docusaurus-og@1.0.3-beta.2.patch

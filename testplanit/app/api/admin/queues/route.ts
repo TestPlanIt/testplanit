@@ -205,14 +205,13 @@ export async function GET(request: NextRequest) {
           let counts;
           if (multiTenant) {
             // Get all jobs and filter by tenantId
-            const [waiting, active, completed, failed, delayed, paused] =
+            const [waiting, active, completed, failed, delayed] =
               await Promise.all([
                 queue.getJobs(["waiting"], 0, 1000),
                 queue.getJobs(["active"], 0, 1000),
                 queue.getJobs(["completed"], 0, 1000),
                 queue.getJobs(["failed"], 0, 1000),
                 queue.getJobs(["delayed"], 0, 1000),
-                queue.getJobs(["paused"], 0, 1000),
               ]);
 
             // Filter jobs by tenantId (strip null entries from getJobs)
@@ -227,7 +226,6 @@ export async function GET(request: NextRequest) {
               completed: filterByTenant(completed),
               failed: filterByTenant(failed),
               delayed: filterByTenant(delayed),
-              paused: filterByTenant(paused),
             };
           } else {
             // Single-tenant mode: use standard counts

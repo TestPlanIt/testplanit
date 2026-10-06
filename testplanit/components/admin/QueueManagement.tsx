@@ -38,7 +38,6 @@ interface QueueCounts {
   completed: number;
   failed: number;
   delayed: number;
-  paused: number;
 }
 
 interface QueueInfo {
