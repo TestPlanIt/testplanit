@@ -1,3 +1,9 @@
+## [1.1.0-beta.39](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.38...v1.1.0-beta.39) (2026-10-07)
+
+### Features
+
+* **impact:** exclude rows in repository path patterns ([9aaccc6](https://github.com/TestPlanIt/testplanit/commit/9aaccc6f44bf42e5b7961016c6e97e09bc201c16))
+
 ## [1.1.0-beta.38](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.37...v1.1.0-beta.38) (2026-10-07)
 
 ### Features
