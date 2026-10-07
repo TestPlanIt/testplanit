@@ -3790,6 +3790,7 @@ enum AdapterType {
     REDMINE
     MANTISBT
     BITBUCKET
+    CLICKUP
 
     @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')
@@ -5785,6 +5786,10 @@ model WebhookConfig {
     // Branch a repository webhook compares pushes against; empty = the
     // connection's branch.
     baseBranch              String?
+    // Id of the webhook registered on the tracker's side when TestPlanIt
+    // created it through the tracker API (ClickUp), so it can be removed
+    // again when this config is deleted or rotated.
+    externalWebhookId       String?
     endpointHealth          EndpointHealth               @default(HEALTHY)
     url                     String?
     name                    String?

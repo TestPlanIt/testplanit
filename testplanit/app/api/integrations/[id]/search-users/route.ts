@@ -51,8 +51,9 @@ export async function GET(
       );
     }
 
-    // For Jira, search users
-    if (integration.provider === "JIRA" && adapter.searchUsers) {
+    // Adapters that can look users up on the tracker answer the search;
+    // the rest have no directory to offer.
+    if (adapter.searchUsers) {
       const result = await adapter.searchUsers(
         query,
         projectKey,

@@ -1,6 +1,7 @@
 import type { AdapterType } from "~/zenstack/models";
 import { azureDevopsAdapter } from "./azure-devops";
 import { bitbucketAdapter } from "./bitbucket";
+import { clickupAdapter } from "./clickup";
 import { genericHmacAdapter } from "./generic-hmac";
 import { giteaAdapter } from "./gitea";
 import { gitlabAdapter } from "./gitlab";
@@ -35,6 +36,7 @@ export const ADAPTER_REGISTRY: Record<AdapterType, WebhookAdapter | null> = {
   REDMINE: redmineAdapter,
   MANTISBT: mantisbtAdapter,
   BITBUCKET: bitbucketAdapter,
+  CLICKUP: clickupAdapter,
   SLACK: null,
   GENERIC_HMAC: null,
 };
@@ -77,6 +79,7 @@ export const OUTBOUND_ADAPTER_REGISTRY: Record<
   REDMINE: null,
   MANTISBT: null,
   BITBUCKET: null,
+  CLICKUP: null,
   SLACK: slackAdapter,
   GENERIC_HMAC: genericHmacAdapter,
 };
@@ -98,7 +101,8 @@ export function getOutboundAdapter(
       adapterType === "GITLAB" ||
       adapterType === "GITEA" ||
       adapterType === "REDMINE" ||
-      adapterType === "MANTISBT"
+      adapterType === "MANTISBT" ||
+      adapterType === "CLICKUP"
     ) {
       throw new Error(
         `Adapter ${adapterType} is INBOUND-only — call getAdapter() instead`

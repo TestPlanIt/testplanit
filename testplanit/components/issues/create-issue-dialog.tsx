@@ -602,10 +602,11 @@ export function CreateIssueDialog({
         // Use the selected issue type (only for providers that support it)
         if (selectedIssueType) {
           payload.issueType = selectedIssueType.id;
-        } else if (activeIntegration.integration?.provider !== "GITHUB") {
-          // Try common issue type IDs as fallback (for Jira, Azure DevOps, etc.)
-          const commonTypes = ["10001", "10002", "10003", "10004", "10005"];
-          payload.issueType = commonTypes[0];
+        } else if (activeIntegration.integration?.provider === "JIRA") {
+          // Jira requires an issue type; fall back to the id its default
+          // scheme gives the first standard type. Other trackers pick their
+          // own default when none is sent.
+          payload.issueType = "10001";
         }
 
         // Add entity linking information

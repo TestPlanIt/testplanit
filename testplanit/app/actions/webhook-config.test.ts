@@ -23,9 +23,19 @@ const mockWebhookConfigSecretUpdate = vi.fn();
 const mockWebhookDeliveryFindUnique = vi.fn();
 const mockWebhookDeliveryFindMany = vi.fn();
 const mockAuditLogFindMany = vi.fn();
+const mockProjectIntegrationFindFirst = vi.fn();
+const mockUserIntegrationAuthFindFirst = vi.fn();
 const mockTransaction = vi.fn();
 vi.mock("~/lib/db", () => ({
   baseDb: {
+    projectIntegration: {
+      findFirst: (...args: unknown[]) =>
+        mockProjectIntegrationFindFirst(...args),
+    },
+    userIntegrationAuth: {
+      findFirst: (...args: unknown[]) =>
+        mockUserIntegrationAuthFindFirst(...args),
+    },
     webhookConfig: {
       findFirst: (...args: unknown[]) => mockWebhookConfigFindFirst(...args),
       findUnique: (...args: unknown[]) => mockWebhookConfigFindUnique(...args),
@@ -85,6 +95,20 @@ const mockCanManageWebhookConfig = vi.fn();
 vi.mock("~/lib/webhooks/auth", () => ({
   canManageWebhookConfig: (...args: unknown[]) =>
     mockCanManageWebhookConfig(...args),
+}));
+
+// The ClickUp registration path loads IntegrationManager on demand and asks
+// it for the acting user's adapter; the adapter's register/unregister calls
+// are what the ClickUp tests assert on.
+const mockRegisterWebhook = vi.fn();
+const mockUnregisterWebhook = vi.fn();
+const mockGetAdapter = vi.fn();
+vi.mock("~/lib/integrations/IntegrationManager", () => ({
+  IntegrationManager: {
+    getInstance: () => ({
+      getAdapter: (...args: unknown[]) => mockGetAdapter(...args),
+    }),
+  },
 }));
 
 const mockEncrypt = vi.fn();
@@ -347,7 +371,7 @@ describe("webhook-config server actions", () => {
           direction: "INBOUND",
           codeRepositoryConfigId: null,
         },
-        select: { id: true },
+        select: { id: true, externalWebhookId: true },
       });
       expect(mockWebhookConfigCreate).toHaveBeenCalledWith({
         data: expect.objectContaining({
@@ -399,6 +423,179 @@ describe("webhook-config server actions", () => {
         }),
         select: { id: true },
       });
+    });
+
+    it("creates a CLICKUP config from a pasted secret without touching ClickUp", async () => {
+      mockWebhookConfigFindFirst.mockResolvedValue(null);
+      mockWebhookConfigCreate.mockResolvedValue({ id: "cfg-cu-1" });
+
+      const result = await createOrRotateInboundWebhook({
+        projectId: 42,
+        adapterType: "CLICKUP",
+        secretInput: { kind: "CLICKUP", secret: "  minted-by-clickup  " },
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.configId).toBe("cfg-cu-1");
+      // The admin already has the secret; nothing to reveal.
+      expect(result.secret).toBeUndefined();
+      expect(mockEncrypt).toHaveBeenCalledWith("minted-by-clickup");
+      expect(mockGetAdapter).not.toHaveBeenCalled();
+      expect(mockWebhookConfigCreate).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          adapterType: "CLICKUP",
+          secret: "enc:minted-by-clickup",
+          externalWebhookId: null,
+        }),
+        select: { id: true },
+      });
+    });
+
+    it("registers a CLICKUP webhook through the user's adapter when no secret is pasted", async () => {
+      mockWebhookConfigFindFirst.mockResolvedValue(null);
+      mockWebhookConfigCreate.mockResolvedValue({ id: "cfg-cu-2" });
+      mockProjectIntegrationFindFirst.mockResolvedValue({
+        integrationId: 7,
+        config: { externalProjectId: "901", externalProjectKey: "901" },
+      });
+      mockUserIntegrationAuthFindFirst.mockResolvedValue({ id: "auth-1" });
+      mockRegisterWebhook.mockResolvedValue({
+        id: "wh-9",
+        url: "ignored",
+        events: ["taskStatusUpdated"],
+        secret: "clickup-minted",
+        active: true,
+      });
+      mockGetAdapter.mockResolvedValue({
+        registerWebhook: mockRegisterWebhook,
+        unregisterWebhook: mockUnregisterWebhook,
+      });
+
+      const result = await createOrRotateInboundWebhook({
+        projectId: 42,
+        adapterType: "CLICKUP",
+        secretInput: { kind: "CLICKUP" },
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.secret).toBeUndefined();
+      // Adapter resolved for the acting user, not whichever token is first.
+      expect(mockGetAdapter).toHaveBeenCalledWith("7", undefined, "user-123");
+      expect(mockUserIntegrationAuthFindFirst).toHaveBeenCalledWith({
+        where: { userId: "user-123", integrationId: 7, isActive: true },
+        select: { id: true },
+      });
+      // Registered against the receiver URL for the project's linked List.
+      expect(mockRegisterWebhook).toHaveBeenCalledWith(
+        expect.stringMatching(
+          /^https:\/\/app\.example\.test\/api\/webhooks\/whk_[0-9a-f]{64}$/
+        ),
+        ["taskStatusUpdated"],
+        undefined,
+        { listId: "901" }
+      );
+      expect(mockUnregisterWebhook).not.toHaveBeenCalled();
+      expect(mockEncrypt).toHaveBeenCalledWith("clickup-minted");
+      expect(mockWebhookConfigCreate).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          adapterType: "CLICKUP",
+          secret: "enc:clickup-minted",
+          externalWebhookId: "wh-9",
+        }),
+        select: { id: true },
+      });
+    });
+
+    it("rotating an auto-registered CLICKUP webhook removes the old registration first", async () => {
+      mockWebhookConfigFindFirst.mockResolvedValue({
+        id: "cfg-cu-2",
+        externalWebhookId: "wh-old",
+      });
+      mockWebhookConfigUpdate.mockResolvedValue({ id: "cfg-cu-2" });
+      mockProjectIntegrationFindFirst.mockResolvedValue({
+        integrationId: 7,
+        config: {},
+      });
+      mockUserIntegrationAuthFindFirst.mockResolvedValue({ id: "auth-1" });
+      mockUnregisterWebhook.mockResolvedValue(undefined);
+      mockRegisterWebhook.mockResolvedValue({
+        id: "wh-new",
+        secret: "fresh-secret",
+      });
+      mockGetAdapter.mockResolvedValue({
+        registerWebhook: mockRegisterWebhook,
+        unregisterWebhook: mockUnregisterWebhook,
+      });
+
+      const result = await createOrRotateInboundWebhook({
+        projectId: 42,
+        adapterType: "CLICKUP",
+      });
+
+      expect(result.success).toBe(true);
+      expect(mockUnregisterWebhook).toHaveBeenCalledWith("wh-old");
+      expect(mockRegisterWebhook).toHaveBeenCalledWith(
+        expect.any(String),
+        ["taskStatusUpdated"],
+        undefined,
+        { listId: undefined }
+      );
+      expect(mockWebhookConfigUpdate).toHaveBeenCalledWith({
+        where: { id: "cfg-cu-2" },
+        data: expect.objectContaining({
+          secret: "enc:fresh-secret",
+          externalWebhookId: "wh-new",
+        }),
+        select: { id: true },
+      });
+    });
+
+    it("refuses CLICKUP auto-registration when the admin has not authorized ClickUp", async () => {
+      mockWebhookConfigFindFirst.mockResolvedValue(null);
+      mockProjectIntegrationFindFirst.mockResolvedValue({
+        integrationId: 7,
+        config: {},
+      });
+      mockUserIntegrationAuthFindFirst.mockResolvedValue(null);
+
+      const result = await createOrRotateInboundWebhook({
+        projectId: 42,
+        adapterType: "CLICKUP",
+      });
+
+      expect(result).toEqual({
+        success: false,
+        error:
+          "Authorize the ClickUp integration for your account before registering a webhook",
+      });
+      expect(mockGetAdapter).not.toHaveBeenCalled();
+      expect(mockWebhookConfigCreate).not.toHaveBeenCalled();
+    });
+
+    it("reports a ClickUp registration failure and writes nothing", async () => {
+      mockWebhookConfigFindFirst.mockResolvedValue(null);
+      mockProjectIntegrationFindFirst.mockResolvedValue({
+        integrationId: 7,
+        config: {},
+      });
+      mockUserIntegrationAuthFindFirst.mockResolvedValue({ id: "auth-1" });
+      mockRegisterWebhook.mockRejectedValue(new Error("HTTP 400: bad list"));
+      mockGetAdapter.mockResolvedValue({
+        registerWebhook: mockRegisterWebhook,
+        unregisterWebhook: mockUnregisterWebhook,
+      });
+
+      const result = await createOrRotateInboundWebhook({
+        projectId: 42,
+        adapterType: "CLICKUP",
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain(
+        "ClickUp refused the webhook registration"
+      );
+      expect(result.error).toContain("HTTP 400: bad list");
+      expect(mockWebhookConfigCreate).not.toHaveBeenCalled();
     });
 
     it("returns friendly error when AZURE_DEVOPS missing secretInput", async () => {
@@ -465,7 +662,7 @@ describe("webhook-config server actions", () => {
           direction: "INBOUND",
           codeRepositoryConfigId: null,
         },
-        select: { id: true },
+        select: { id: true, externalWebhookId: true },
       });
       expect(mockWebhookConfigCreate).toHaveBeenCalledWith({
         data: expect.objectContaining({
@@ -518,6 +715,64 @@ describe("webhook-config server actions", () => {
       expect(mockWebhookConfigDelete).toHaveBeenCalledWith({
         where: { id: "cfg-1" },
       });
+    });
+
+    it("removes an auto-registered ClickUp webhook after deleting its config", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({
+        projectId: 42,
+        direction: "INBOUND",
+        adapterType: "CLICKUP",
+        externalWebhookId: "wh-9",
+      });
+      mockWebhookConfigDelete.mockResolvedValue({ id: "cfg-cu" });
+      mockProjectIntegrationFindFirst.mockResolvedValue({
+        integrationId: 7,
+        config: {},
+      });
+      mockUserIntegrationAuthFindFirst.mockResolvedValue({ id: "auth-1" });
+      mockUnregisterWebhook.mockResolvedValue(undefined);
+      mockGetAdapter.mockResolvedValue({
+        registerWebhook: mockRegisterWebhook,
+        unregisterWebhook: mockUnregisterWebhook,
+      });
+
+      const result = await deleteInboundWebhook({
+        webhookConfigId: "cfg-cu",
+        projectId: 42,
+      });
+
+      expect(result).toEqual({ success: true });
+      expect(mockWebhookConfigDelete).toHaveBeenCalledWith({
+        where: { id: "cfg-cu" },
+      });
+      expect(mockUnregisterWebhook).toHaveBeenCalledWith("wh-9");
+    });
+
+    it("still succeeds when the ClickUp-side removal fails", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({
+        projectId: 42,
+        direction: "INBOUND",
+        adapterType: "CLICKUP",
+        externalWebhookId: "wh-9",
+      });
+      mockWebhookConfigDelete.mockResolvedValue({ id: "cfg-cu" });
+      mockProjectIntegrationFindFirst.mockResolvedValue({
+        integrationId: 7,
+        config: {},
+      });
+      mockUserIntegrationAuthFindFirst.mockResolvedValue({ id: "auth-1" });
+      mockUnregisterWebhook.mockRejectedValue(new Error("HTTP 404"));
+      mockGetAdapter.mockResolvedValue({
+        registerWebhook: mockRegisterWebhook,
+        unregisterWebhook: mockUnregisterWebhook,
+      });
+
+      const result = await deleteInboundWebhook({
+        webhookConfigId: "cfg-cu",
+        projectId: 42,
+      });
+
+      expect(result).toEqual({ success: true });
     });
 
     it("returns Not found when projectId mismatch (cross-tenant attempt)", async () => {
@@ -986,6 +1241,38 @@ describe("webhook-config server actions", () => {
         fetchSpy.mock.calls[1][1].headers as Record<string, string>
       )["x-hub-signature-256"];
       expect(sig1).toBe(sig2);
+    });
+
+    it("CLICKUP: posts a bare hex HMAC-SHA256 in x-signature over the synthetic taskStatusUpdated payload", async () => {
+      mockWebhookConfigFindUnique.mockResolvedValue({
+        token: FIXTURE_TOKEN,
+        secret: "enc:clickup-minted",
+        projectId: 42,
+        adapterType: "CLICKUP",
+      });
+      fetchSpy.mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({ outcome: "synthetic" }),
+      });
+
+      const result = await sendTestWebhook("cfg-cu");
+
+      expect(result).toEqual({
+        ok: true,
+        statusCode: 200,
+        outcome: "synthetic",
+      });
+      const [, init] = fetchSpy.mock.calls[0];
+      const expected = createHmac("sha256", "clickup-minted")
+        .update(init.body)
+        .digest("hex");
+      expect(init.headers["x-signature"]).toBe(expected);
+      expect(init.headers["x-signature"]).not.toMatch(/^sha256=/);
+      const parsed = JSON.parse(init.body);
+      expect(parsed.event).toBe("taskStatusUpdated");
+      expect(parsed.task_id).toBe("__synthetic__");
+      expect(parsed.history_items[0].after.status).toBe("Synthetic");
     });
 
     it("Test 13 (AZURE_DEVOPS): posts Authorization: Basic <base64> with synthetic workitem.updated payload", async () => {

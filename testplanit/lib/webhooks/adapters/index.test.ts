@@ -84,6 +84,8 @@ describe("getAdapter / ADAPTER_REGISTRY", () => {
     expect(registry.GITHUB?.adapterType).toBe("GITHUB");
     expect(registry.AZURE_DEVOPS).toBeDefined();
     expect(registry.AZURE_DEVOPS?.adapterType).toBe("AZURE_DEVOPS");
+    expect(registry.CLICKUP).toBeDefined();
+    expect(registry.CLICKUP?.adapterType).toBe("CLICKUP");
     // outbound-only adapters: null in the inbound registry; outbound
     // dispatch lives in workers/webhook-dispatch-worker.ts, not here.
     expect(registry.SLACK).toBeNull();
@@ -97,6 +99,12 @@ describe("getAdapter / ADAPTER_REGISTRY", () => {
       "JIRA",
       "GITHUB",
       "AZURE_DEVOPS",
+      "GITLAB",
+      "GITEA",
+      "REDMINE",
+      "MANTISBT",
+      "BITBUCKET",
+      "CLICKUP",
       "SLACK",
       "GENERIC_HMAC",
     ];

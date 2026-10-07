@@ -10,7 +10,7 @@ slug: /faq
 
 ### What is TestPlanIt?
 
-TestPlanIt is an open-source test management platform for creating, managing, and executing test plans. It supports manual testing, automated test result integration, exploratory testing sessions, and integrates with popular issue trackers like Jira, GitHub, GitLab, Azure DevOps, Redmine, and MantisBT.
+TestPlanIt is an open-source test management platform for creating, managing, and executing test plans. It supports manual testing, automated test result integration, exploratory testing sessions, and integrates with popular issue trackers like Jira, GitHub, GitLab, Azure DevOps, Redmine, MantisBT, and ClickUp.
 
 ### Is TestPlanIt free?
 
@@ -75,6 +75,7 @@ Yes, TestPlanIt has built-in integrations with:
 - **Azure DevOps** - Sync with Azure Boards work items
 - **Redmine** - Connect to a self-hosted Redmine instance for issue tracking
 - **MantisBT** - Connect to a self-hosted MantisBT instance for issue tracking
+- **ClickUp** - Create and sync ClickUp tasks through an OAuth app
 
 See the [integrations documentation](/docs/user-guide/integrations) for setup instructions.
 

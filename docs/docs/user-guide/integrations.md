@@ -5,7 +5,7 @@ title: 'Issue Tracking and External Integrations'
 
 # Issue Tracking and External Integrations
 
-TestPlanIt provides comprehensive issue tracking capabilities, allowing you to track bugs, tasks, and other issues directly within the platform or integrate with external issue tracking systems like Jira, GitHub Issues, GitLab, Gitea/Forgejo/Gogs, Azure DevOps, Redmine, MantisBT, and more.
+TestPlanIt provides comprehensive issue tracking capabilities, allowing you to track bugs, tasks, and other issues directly within the platform or integrate with external issue tracking systems like Jira, GitHub Issues, GitLab, Gitea/Forgejo/Gogs, Azure DevOps, Redmine, MantisBT, ClickUp, and more.
 
 ## Internal Issue Management
 
@@ -159,7 +159,22 @@ Connect to a self-hosted MantisBT instance for issue tracking.
 - Inbound webhook support for status sync via a MantisBT webhook plugin
 - Configurable instance URL — works with any self-hosted MantisBT deployment
 
-### 8. **Simple URL Integration**
+### 8. **ClickUp Integration**
+
+Connect to ClickUp for task tracking.
+
+**Features:**
+
+- Create ClickUp tasks directly from TestPlanIt, choosing the task type (ClickUp custom task types) and priority
+- Search tasks by name or by exact task ID or custom task ID (e.g., `PROJ-42`)
+- Custom fields of the linked List are offered on the create form (text, number, currency, URL, email, phone, date, dropdown, labels, and checkbox fields) and read back on every synced task
+- Images and videos embedded in the description are uploaded to the created task as attachments
+- Task links and dependencies surfaced as linked issues
+- Rich text converted to Markdown for the task description
+- OAuth 2.0 authentication (per user; ClickUp tokens never expire)
+- Inbound webhook support for real-time status sync, registered in ClickUp by TestPlanIt
+
+### 9. **Simple URL Integration**
 
 A flexible integration for any issue tracking system that uses URL-based linking.
 
@@ -182,7 +197,7 @@ A flexible integration for any issue tracking system that uses URL-based linking
 
 1. Navigate to **Administration** → **Integrations**
 2. Click **Add Integration**
-3. Select your integration type (Jira, GitHub, GitLab, Gitea/Forgejo/Gogs, Azure DevOps, Redmine, MantisBT, or Simple URL)
+3. Select your integration type (Jira, GitHub, GitLab, Gitea/Forgejo/Gogs, Azure DevOps, Redmine, MantisBT, ClickUp, or Simple URL)
 4. Fill in the integration details:
 
 ```yaml
@@ -384,6 +399,37 @@ OAuth 2.0 gives **per-user attribution**: each user authorizes individually and 
 
 3. In TestPlanIt, add a Gitea integration, choose **OAuth 2.0**, and enter the **Client ID** and **Client Secret** along with the instance URL.
 4. Finish the shared steps in [Completing the OAuth setup](#completing-the-oauth-setup-all-providers) — the integration must be activated, assigned to a project, and have a linked repository before issues can be created.
+
+#### ClickUp with OAuth 2.0
+
+ClickUp integrations are OAuth-only — ClickUp has no personal API token mode in TestPlanIt. Each user authorizes individually and tasks are created as that user.
+
+1. In ClickUp, open **Settings → Apps** (`https://app.clickup.com/settings/apps`) and create a new app.
+2. Set the app's **Redirect URL** to:
+
+   ```text
+   <your-testplanit-url>/api/integrations/oauth/clickup/callback
+   ```
+
+   TestPlanIt shows this exact URL (with a copy button) in the integration dialog when you choose ClickUp.
+3. Copy the app's **Client ID** and **Client Secret**.
+4. In TestPlanIt, add a ClickUp integration and enter the **Client ID** and **Client Secret**, plus:
+
+```text
+ClickUp Team (Workspace) ID: Required — the number after app.clickup.com/ in any ClickUp URL
+Default ClickUp List ID: Optional — the List tasks are created in when a project has no linked List
+```
+
+5. Finish the shared steps in [Completing the OAuth setup](#completing-the-oauth-setup-all-providers). The **external project** you link to a TestPlanIt project is a ClickUp **List**; the picker shows every List in the workspace as `Space / Folder / List`.
+
+**Notes:**
+
+- ClickUp has no OAuth scopes. Access is granted per workspace on ClickUp's consent screen.
+- ClickUp access tokens do not expire and are never refreshed. To cut off access, remove the app under **Settings → Apps** in ClickUp, or deauthorize it in TestPlanIt.
+- ClickUp has no flat project concept: the Workspace ID is required so TestPlanIt can walk the Space → Folder → List hierarchy, and issue types are the workspace's **custom task types** (the plain Task is always offered).
+- Custom task IDs (available on some ClickUp plans) are used as the issue key when a task has one; otherwise the ClickUp task ID is used.
+- Statuses are defined per List in ClickUp and are passed through as-is; priorities map to ClickUp's Urgent / High / Normal / Low.
+- ClickUp limits API calls per token (100 requests per minute on most plans). Bulk imports and large List pickers back off automatically.
 
 #### Completing the OAuth setup (all providers)
 
@@ -627,7 +673,7 @@ When enabled, TestPlanIt can:
 
 ### Real-time updates via inbound webhooks
 
-For Jira, GitHub, GitLab, Gitea/Forgejo/Gogs, Azure DevOps, Redmine, and MantisBT integrations, TestPlanIt can also subscribe to events emitted by the external tracker so issue changes appear in TestPlanIt without waiting for a manual refresh. When an inbound webhook is configured for a project:
+For Jira, GitHub, GitLab, Gitea/Forgejo/Gogs, Azure DevOps, Redmine, MantisBT, and ClickUp integrations, TestPlanIt can also subscribe to events emitted by the external tracker so issue changes appear in TestPlanIt without waiting for a manual refresh. When an inbound webhook is configured for a project:
 
 - Status, assignee, and other supported fields on linked issues update within seconds of the change in the external tracker.
 - New issues filed directly in the external tracker are imported into TestPlanIt's Issues list automatically the first time they are referenced by a webhook event.
@@ -648,6 +694,7 @@ field support varies by provider:
 - **GitHub / GitLab / Gitea**: Fixed field set (title, description, labels); no custom fields
 - **Redmine**: Trackers are discovered as issue types; statuses, priorities, and custom fields are read from the instance
 - **MantisBT**: Categories are discovered as issue types; statuses and priorities are read from the instance
+- **ClickUp**: Custom task types are discovered as issue types; the linked List's custom fields are discovered per List (ClickUp scopes fields to Lists rather than task types)
 
 ### Custom Field Support
 
@@ -679,7 +726,7 @@ TestPlanIt preserves rich text formatting when creating external issues:
 TestPlanIt automatically converts between:
 
 - TipTap Editor JSON → Atlassian Document Format (Jira)
-- TipTap Editor JSON → Markdown (GitHub, GitLab, Gitea/Forgejo/Gogs, Redmine, MantisBT)
+- TipTap Editor JSON → Markdown (GitHub, GitLab, Gitea/Forgejo/Gogs, Redmine, MantisBT, ClickUp)
 - TipTap Editor JSON → HTML (Azure DevOps)
 - User references → Account IDs
 - Dates → ISO 8601 format
@@ -761,6 +808,7 @@ Respect external API limits:
 - Azure DevOps: No published hard limit
 - Redmine: Configured per-instance (no default limit)
 - MantisBT: Configured per-instance (no default limit)
+- ClickUp: 100 requests/minute per token (higher on some plans)
 
 ## Security Considerations
 
@@ -810,6 +858,10 @@ curl -H "X-Redmine-API-Key: YOUR_API_KEY" \
 # Test MantisBT connection
 curl -H "Authorization: YOUR_API_TOKEN" \
   https://your-mantisbt-instance.com/api/rest/users/me
+
+# Test ClickUp connection (OAuth access token, no "Bearer" prefix)
+curl -H "Authorization: YOUR_ACCESS_TOKEN" \
+  https://api.clickup.com/api/v2/user
 ```
 
 ### Common Issues
@@ -936,6 +988,11 @@ curl -H "Authorization: YOUR_API_TOKEN" \
 **MantisBT:**
 
 - An API token belonging to a user with permission to view and report issues in the linked project(s)
+
+**ClickUp:**
+
+- An OAuth app created under **Settings → Apps** in ClickUp, with TestPlanIt's callback as its Redirect URL
+- Each authorizing user must be a member of the workspace with permission to view and create tasks in the linked List; inbound webhooks are registered with that user's authorization and stop when it is revoked
 
 ## API Reference
 

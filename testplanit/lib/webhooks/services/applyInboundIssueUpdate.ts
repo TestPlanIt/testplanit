@@ -31,6 +31,7 @@ function inboundProviderForAdapter(
   | "GITEA"
   | "REDMINE"
   | "MANTISBT"
+  | "CLICKUP"
   | null {
   switch (adapterType) {
     case "JIRA":
@@ -47,6 +48,8 @@ function inboundProviderForAdapter(
       return "REDMINE";
     case "MANTISBT":
       return "MANTISBT";
+    case "CLICKUP":
+      return "CLICKUP";
     default:
       return null;
   }

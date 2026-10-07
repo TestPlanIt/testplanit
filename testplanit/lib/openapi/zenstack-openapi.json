@@ -161102,7 +161102,8 @@
           "GITLAB",
           "GITEA",
           "REDMINE",
-          "MANTISBT"
+          "MANTISBT",
+          "CLICKUP"
         ]
       },
       "EnumIntegrationProviderFilter": {
@@ -164074,7 +164075,8 @@
           "GITEA",
           "REDMINE",
           "MANTISBT",
-          "BITBUCKET"
+          "BITBUCKET",
+          "CLICKUP"
         ]
       },
       "EnumAdapterTypeFilter": {
@@ -1071043,6 +1071045,16 @@
               }
             ]
           },
+          "externalWebhookId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "endpointHealth": {
             "$ref": "#/components/schemas/EndpointHealth"
           },
@@ -1071207,6 +1071219,9 @@
             ]
           },
           "baseBranch": {
+            "type": "boolean"
+          },
+          "externalWebhookId": {
             "type": "boolean"
           },
           "endpointHealth": {
@@ -1071536,6 +1071551,19 @@
               }
             ]
           },
+          "externalWebhookId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "endpointHealth": {
             "oneOf": [
               {
@@ -1071802,6 +1071830,19 @@
             ]
           },
           "baseBranch": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "externalWebhookId": {
             "oneOf": [
               {
                 "$ref": "#/components/schemas/StringNullableFilter"
@@ -1072083,6 +1072124,19 @@
               }
             ]
           },
+          "externalWebhookId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "endpointHealth": {
             "oneOf": [
               {
@@ -1072343,6 +1072397,19 @@
               }
             ]
           },
+          "externalWebhookId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableWithAggregatesFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "endpointHealth": {
             "oneOf": [
               {
@@ -1072572,6 +1072639,16 @@
               }
             ]
           },
+          "externalWebhookId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SortOrder"
+              },
+              {
+                "$ref": "#/components/schemas/SortOrderInput"
+              }
+            ]
+          },
           "endpointHealth": {
             "$ref": "#/components/schemas/SortOrder"
           },
@@ -1072676,6 +1072753,7 @@
           "subscribedEvents",
           "codeRepositoryConfigId",
           "baseBranch",
+          "externalWebhookId",
           "endpointHealth",
           "url",
           "name",
@@ -1072759,6 +1072837,9 @@
           "baseBranch": {
             "type": "boolean"
           },
+          "externalWebhookId": {
+            "type": "boolean"
+          },
           "endpointHealth": {
             "type": "boolean"
           },
@@ -1072827,6 +1072908,9 @@
           "baseBranch": {
             "type": "integer"
           },
+          "externalWebhookId": {
+            "type": "integer"
+          },
           "endpointHealth": {
             "type": "integer"
           },
@@ -1072872,6 +1072956,7 @@
           "subscribedEvents",
           "codeRepositoryConfigId",
           "baseBranch",
+          "externalWebhookId",
           "endpointHealth",
           "url",
           "name",
@@ -1072913,6 +1072998,9 @@
             "type": "boolean"
           },
           "baseBranch": {
+            "type": "boolean"
+          },
+          "externalWebhookId": {
             "type": "boolean"
           },
           "endpointHealth": {
@@ -1073031,6 +1073119,16 @@
             ]
           },
           "baseBranch": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "externalWebhookId": {
             "oneOf": [
               {
                 "type": "null"
@@ -1073178,6 +1073276,9 @@
           "baseBranch": {
             "type": "boolean"
           },
+          "externalWebhookId": {
+            "type": "boolean"
+          },
           "endpointHealth": {
             "type": "boolean"
           },
@@ -1073294,6 +1073395,16 @@
             ]
           },
           "baseBranch": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "externalWebhookId": {
             "oneOf": [
               {
                 "type": "null"
@@ -1073621,6 +1073732,16 @@
               }
             ]
           },
+          "externalWebhookId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "endpointHealth": {
             "$ref": "#/components/schemas/EndpointHealth"
           },
@@ -1073799,6 +1073920,16 @@
             ]
           },
           "baseBranch": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "externalWebhookId": {
             "oneOf": [
               {
                 "type": "null"
@@ -1073987,6 +1074118,19 @@
             ]
           },
           "baseBranch": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "externalWebhookId": {
             "oneOf": [
               {
                 "type": "string"
@@ -1074229,6 +1074373,19 @@
               }
             ]
           },
+          "externalWebhookId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "endpointHealth": {
             "oneOf": [
               {
@@ -1074412,6 +1074569,16 @@
               }
             ]
           },
+          "externalWebhookId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "endpointHealth": {
             "$ref": "#/components/schemas/EndpointHealth"
           },
@@ -1074534,6 +1074701,16 @@
             ]
           },
           "baseBranch": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "externalWebhookId": {
             "oneOf": [
               {
                 "type": "null"
@@ -1074686,6 +1074863,16 @@
             ]
           },
           "baseBranch": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "externalWebhookId": {
             "oneOf": [
               {
                 "type": "null"
@@ -1074867,6 +1075054,19 @@
             ]
           },
           "baseBranch": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "externalWebhookId": {
             "oneOf": [
               {
                 "type": "string"
@@ -1075119,6 +1075319,19 @@
               }
             ]
           },
+          "externalWebhookId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "endpointHealth": {
             "oneOf": [
               {
@@ -1075321,6 +1075534,16 @@
             ]
           },
           "baseBranch": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "externalWebhookId": {
             "oneOf": [
               {
                 "type": "null"
@@ -1075719,6 +1075942,19 @@
             ]
           },
           "baseBranch": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "externalWebhookId": {
             "oneOf": [
               {
                 "type": "string"
@@ -1076195,6 +1076431,16 @@
               }
             ]
           },
+          "externalWebhookId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "endpointHealth": {
             "$ref": "#/components/schemas/EndpointHealth"
           },
@@ -1076332,6 +1076578,16 @@
             ]
           },
           "baseBranch": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "externalWebhookId": {
             "oneOf": [
               {
                 "type": "null"
@@ -1076514,6 +1076770,19 @@
             ]
           },
           "baseBranch": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "externalWebhookId": {
             "oneOf": [
               {
                 "type": "string"
@@ -1076763,6 +1077032,19 @@
               }
             ]
           },
+          "externalWebhookId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "endpointHealth": {
             "oneOf": [
               {
@@ -1076958,6 +1077240,16 @@
             ]
           },
           "baseBranch": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "externalWebhookId": {
             "oneOf": [
               {
                 "type": "null"
@@ -1077354,6 +1077646,19 @@
             ]
           },
           "baseBranch": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "externalWebhookId": {
             "oneOf": [
               {
                 "type": "string"
@@ -1077830,6 +1078135,16 @@
               }
             ]
           },
+          "externalWebhookId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "endpointHealth": {
             "$ref": "#/components/schemas/EndpointHealth"
           },
@@ -1077977,6 +1078292,16 @@
             ]
           },
           "baseBranch": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "externalWebhookId": {
             "oneOf": [
               {
                 "type": "null"
@@ -1078156,6 +1078481,19 @@
             ]
           },
           "baseBranch": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "externalWebhookId": {
             "oneOf": [
               {
                 "type": "string"
@@ -1078406,6 +1078744,19 @@
             ]
           },
           "baseBranch": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "externalWebhookId": {
             "oneOf": [
               {
                 "type": "string"
@@ -1078747,6 +1079098,16 @@
               }
             ]
           },
+          "externalWebhookId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "endpointHealth": {
             "$ref": "#/components/schemas/EndpointHealth"
           },
@@ -1078894,6 +1079255,16 @@
             ]
           },
           "baseBranch": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "externalWebhookId": {
             "oneOf": [
               {
                 "type": "null"
@@ -1079073,6 +1079444,19 @@
             ]
           },
           "baseBranch": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "externalWebhookId": {
             "oneOf": [
               {
                 "type": "string"
@@ -1079323,6 +1079707,19 @@
             ]
           },
           "baseBranch": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "externalWebhookId": {
             "oneOf": [
               {
                 "type": "string"
@@ -1079644,6 +1080041,16 @@
               }
             ]
           },
+          "externalWebhookId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "endpointHealth": {
             "$ref": "#/components/schemas/EndpointHealth"
           },
@@ -1079791,6 +1080198,16 @@
             ]
           },
           "baseBranch": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "externalWebhookId": {
             "oneOf": [
               {
                 "type": "null"
@@ -1079970,6 +1080387,19 @@
             ]
           },
           "baseBranch": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "externalWebhookId": {
             "oneOf": [
               {
                 "type": "string"
@@ -1080220,6 +1080650,19 @@
             ]
           },
           "baseBranch": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "externalWebhookId": {
             "oneOf": [
               {
                 "type": "string"

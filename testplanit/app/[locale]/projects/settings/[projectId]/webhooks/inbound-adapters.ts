@@ -8,7 +8,8 @@ export type IssueInboundAdapterType =
   | "GITLAB"
   | "GITEA"
   | "REDMINE"
-  | "MANTISBT";
+  | "MANTISBT"
+  | "CLICKUP";
 
 const ISSUE_ADAPTERS: Record<string, IssueInboundAdapterType> = {
   JIRA: "JIRA",
@@ -18,6 +19,7 @@ const ISSUE_ADAPTERS: Record<string, IssueInboundAdapterType> = {
   GITEA: "GITEA",
   REDMINE: "REDMINE",
   MANTISBT: "MANTISBT",
+  CLICKUP: "CLICKUP",
 };
 
 /**
@@ -31,7 +33,14 @@ export function inboundAdapterForProvider(
 }
 
 export type IssueAdapterSlug =
-  "jira" | "github" | "ado" | "gitlab" | "gitea" | "redmine" | "mantisbt";
+  | "jira"
+  | "github"
+  | "ado"
+  | "gitlab"
+  | "gitea"
+  | "redmine"
+  | "mantisbt"
+  | "clickup";
 
 const SLUGS: Record<IssueInboundAdapterType, IssueAdapterSlug> = {
   JIRA: "jira",
@@ -41,6 +50,7 @@ const SLUGS: Record<IssueInboundAdapterType, IssueAdapterSlug> = {
   GITEA: "gitea",
   REDMINE: "redmine",
   MANTISBT: "mantisbt",
+  CLICKUP: "clickup",
 };
 
 export function adapterSlug(adapterType: IssueInboundAdapterType) {
@@ -64,6 +74,8 @@ export function adapterLabelKey(adapterType: string): string | null {
       return "inboundChooserRedmine";
     case "MANTISBT":
       return "inboundChooserMantisbt";
+    case "CLICKUP":
+      return "inboundChooserClickup";
     case "BITBUCKET":
       return "inboundChooserBitbucket";
     case "SLACK":
@@ -83,6 +95,7 @@ const TITLE_KEYS: Record<IssueInboundAdapterType, string> = {
   GITEA: "inboundGiteaTitle",
   REDMINE: "inboundRedmineTitle",
   MANTISBT: "inboundMantisbtTitle",
+  CLICKUP: "inboundClickupTitle",
 };
 
 export function adapterTitleKey(adapterType: IssueInboundAdapterType) {
@@ -101,6 +114,7 @@ export const ISSUE_SCOPE_HINT: Record<
   GITEA: { key: "inboundGiteaScopeHint", rich: true },
   REDMINE: { key: "inboundRedmineScopeHint", rich: false },
   MANTISBT: { key: "inboundMantisbtScopeHint", rich: false },
+  CLICKUP: { key: "inboundClickupScopeHint", rich: true },
 };
 
 /** Per-adapter setup steps shown beside a freshly minted URL and secret. */
@@ -151,6 +165,11 @@ export const ISSUE_SETUP_STEP_KEYS: Record<IssueInboundAdapterType, string[]> =
       "setupStepsMantisbtStep3",
       "setupStepsMantisbtStep4",
     ],
+    CLICKUP: [
+      "setupStepsClickupStep1",
+      "setupStepsClickupStep2",
+      "setupStepsClickupStep3",
+    ],
   };
 
 /** Setup hint for a repository webhook, keyed by the verifying adapter. */
@@ -169,7 +188,8 @@ export function hasRotatableSecret(adapterType: string): boolean {
     adapterType === "GITHUB" ||
     adapterType === "GITLAB" ||
     adapterType === "GITEA" ||
-    adapterType === "BITBUCKET"
+    adapterType === "BITBUCKET" ||
+    adapterType === "CLICKUP"
   );
 }
 

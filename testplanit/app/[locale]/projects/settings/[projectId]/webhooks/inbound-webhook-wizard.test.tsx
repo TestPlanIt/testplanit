@@ -394,6 +394,54 @@ describe("InboundWebhookWizard", () => {
     );
   });
 
+  it("lets TestPlanIt register the ClickUp webhook when the secret is left blank", async () => {
+    mockCreateInbound.mockResolvedValue({
+      success: true,
+      configId: "cfg-clickup",
+      url: "https://tpi.example/api/webhooks/whk_clickup",
+    });
+    renderWizard({ issueAdapter: "CLICKUP", repositories: [] });
+
+    fireEvent.click(screen.getByTestId("webhook-wizard-next"));
+    expect(screen.getByTestId("webhook-wizard-clickup")).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("webhook-create-button"));
+
+    await waitFor(() =>
+      expect(mockCreateInbound).toHaveBeenCalledWith({
+        projectId: 42,
+        adapterType: "CLICKUP",
+        secretInput: { kind: "CLICKUP" },
+      })
+    );
+    expect(
+      await screen.findByTestId("webhook-inbound-revealed-box")
+    ).toBeInTheDocument();
+  });
+
+  it("sends a pasted ClickUp secret as the secret input", async () => {
+    mockCreateInbound.mockResolvedValue({
+      success: true,
+      configId: "cfg-clickup",
+      url: "https://tpi.example/api/webhooks/whk_clickup",
+    });
+    renderWizard({ issueAdapter: "CLICKUP", repositories: [] });
+
+    fireEvent.click(screen.getByTestId("webhook-wizard-next"));
+    fireEvent.change(
+      screen.getByTestId("webhook-inbound-clickup-secret-input"),
+      { target: { value: "  minted-by-clickup  " } }
+    );
+    fireEvent.click(screen.getByTestId("webhook-create-button"));
+
+    await waitFor(() =>
+      expect(mockCreateInbound).toHaveBeenCalledWith({
+        projectId: 42,
+        adapterType: "CLICKUP",
+        secretInput: { kind: "CLICKUP", secret: "minted-by-clickup" },
+      })
+    );
+  });
+
   it("stays on the Configure step and reports a failed create", async () => {
     mockCreateInbound.mockResolvedValue({ success: false, error: "Forbidden" });
     renderWizard();

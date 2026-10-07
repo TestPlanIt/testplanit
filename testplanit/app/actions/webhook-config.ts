@@ -8,11 +8,13 @@ import {
 } from "~/lib/webhooks/codeChangeEvents";
 
 import type { AdapterType } from "~/zenstack/models";
+import type { IssueAdapter } from "~/lib/integrations/adapters/IssueAdapter";
 
 import { runWithAuditContext } from "~/lib/auditContext";
 import { baseDb } from "~/lib/db";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { isUniqueConstraintError } from "~/lib/utils/errors";
+import { SYNTHETIC_TASK_ID } from "~/lib/webhooks/adapters/clickup";
 import { SYNTHETIC_ISSUE_KEY } from "~/lib/webhooks/adapters/jira";
 import { canManageWebhookConfig } from "~/lib/webhooks/auth";
 import { webhookEvents } from "~/lib/webhooks/events";
@@ -116,6 +118,21 @@ const SYNTHETIC_MANTISBT_PAYLOAD = JSON.stringify({
   issue: { id: 0, status: { name: "new" } },
 });
 
+// ClickUp: bare hex HMAC-SHA256 in `x-signature`. task_id `__synthetic__`
+// is the non-forgeable synthetic sentinel — no workspace can mint a task
+// with that id.
+const SYNTHETIC_CLICKUP_PAYLOAD = JSON.stringify({
+  event: "taskStatusUpdated",
+  task_id: SYNTHETIC_TASK_ID,
+  history_items: [
+    {
+      field: "status",
+      before: { status: "to do" },
+      after: { status: "Synthetic" },
+    },
+  ],
+});
+
 // Repository webhooks are tested with a pull request instead of an issue:
 // number 0 (real pull requests start at 1) is the sentinel the code-change
 // handler recognises, and the signature proves the secret matches.
@@ -157,6 +174,7 @@ const ISSUE_SYNTHETIC_REQUESTS: Partial<Record<AdapterType, SyntheticRequest>> =
     AZURE_DEVOPS: { body: SYNTHETIC_ADO_PAYLOAD },
     REDMINE: { body: SYNTHETIC_REDMINE_PAYLOAD },
     MANTISBT: { body: SYNTHETIC_MANTISBT_PAYLOAD },
+    CLICKUP: { body: SYNTHETIC_CLICKUP_PAYLOAD },
   };
 
 /** What the Send test action posts to a repository webhook. */
@@ -248,6 +266,12 @@ function signSyntheticRequest(
       // Their webhook plugins send no signature; the URL token is the
       // credential, so the synthetic request is posted unsigned.
       break;
+    case "CLICKUP":
+      // ClickUp sends the bare hex digest, without a `sha256=` prefix.
+      headers["x-signature"] = createHmac("sha256", plainSecret)
+        .update(request.body)
+        .digest("hex");
+      break;
     default:
       return null;
   }
@@ -287,7 +311,14 @@ export type AdapterSecretInput =
   | { kind: "AZURE_DEVOPS"; username: string; password: string }
   | { kind: "GITLAB" }
   | { kind: "GITEA" }
-  | { kind: "BITBUCKET" };
+  | { kind: "BITBUCKET" }
+  /**
+   * ClickUp mints the signing secret itself when a webhook is created
+   * through its API. An admin who created the webhook that way pastes the
+   * secret here; left empty, TestPlanIt registers the webhook in ClickUp
+   * with the admin's own authorization and keeps the secret ClickUp returns.
+   */
+  | { kind: "CLICKUP"; secret?: string };
 
 /**
  * The plaintext an inbound adapter stores as its `secret`, and whether the
@@ -315,6 +346,21 @@ function mintInboundSecret(
     // unguessable URL token is the credential. Mint and store an (unused)
     // secret to satisfy the schema, and reveal only the URL.
     return { plaintext: generateSecret(), reveal: false };
+  }
+  if (adapterType === "CLICKUP") {
+    // The admin pasted the secret ClickUp returned from its Create Webhook
+    // call. Automatic registration never reaches here — see
+    // registerClickUpWebhook, which supplies ClickUp's secret directly.
+    const secret =
+      secretInput?.kind === "CLICKUP" ? secretInput.secret?.trim() : "";
+    if (!secret) {
+      console.error(
+        "[webhook-config] missing ClickUp webhook secret",
+        redactToken(scopeForLog)
+      );
+      return null;
+    }
+    return { plaintext: secret, reveal: false };
   }
   if (adapterType === "AZURE_DEVOPS") {
     if (
@@ -346,6 +392,152 @@ function mintInboundSecret(
 }
 
 /**
+ * The project's active ClickUp integration, authenticated as the acting
+ * user, plus the List the project is linked to. ClickUp webhooks belong to
+ * the user who creates them, so the adapter has to carry that user's own
+ * authorization rather than whichever token happens to be stored first.
+ */
+async function clickUpAdapterForProject(
+  projectId: number,
+  userId: string
+): Promise<{ error: string } | { adapter: IssueAdapter; listId?: string }> {
+  const projectIntegration = await baseDb.projectIntegration.findFirst({
+    where: {
+      projectId,
+      isActive: true,
+      integration: { provider: "CLICKUP", isDeleted: false },
+    },
+    select: { integrationId: true, config: true },
+  });
+  if (!projectIntegration) {
+    return {
+      error: "No active ClickUp integration is assigned to this project",
+    };
+  }
+  const authorized = await baseDb.userIntegrationAuth.findFirst({
+    where: {
+      userId,
+      integrationId: projectIntegration.integrationId,
+      isActive: true,
+    },
+    select: { id: true },
+  });
+  if (!authorized) {
+    return {
+      error:
+        "Authorize the ClickUp integration for your account before registering a webhook",
+    };
+  }
+  // Loaded on demand: the manager pulls in every tracker adapter, which the
+  // other adapters' paths through this action never need.
+  const { IntegrationManager } =
+    await import("~/lib/integrations/IntegrationManager");
+  const adapter = await IntegrationManager.getInstance().getAdapter(
+    String(projectIntegration.integrationId),
+    undefined,
+    userId
+  );
+  if (!adapter?.registerWebhook || !adapter.unregisterWebhook) {
+    return { error: "The ClickUp integration cannot register webhooks" };
+  }
+  const config = projectIntegration.config as Record<string, unknown> | null;
+  const listId = config?.externalProjectId ?? config?.externalProjectKey;
+  return {
+    adapter,
+    listId: typeof listId === "string" && listId ? listId : undefined,
+  };
+}
+
+/**
+ * Register the receiver URL as a webhook in ClickUp and hand back the
+ * secret ClickUp minted for it, retiring the previously registered webhook
+ * first on a rotation. Failures come back as the message the admin sees.
+ */
+async function registerClickUpWebhook(args: {
+  projectId: number;
+  userId: string;
+  url: string;
+  previousExternalWebhookId: string | null;
+}): Promise<
+  | { ok: true; secret: string; externalWebhookId: string }
+  | { ok: false; error: string }
+> {
+  const resolved = await clickUpAdapterForProject(args.projectId, args.userId);
+  if ("error" in resolved) return { ok: false, error: resolved.error };
+  const { adapter, listId } = resolved;
+
+  if (args.previousExternalWebhookId) {
+    try {
+      await adapter.unregisterWebhook!(args.previousExternalWebhookId);
+    } catch (err) {
+      // The old registration points at a token that is about to stop
+      // working, so a leftover only costs ClickUp failed deliveries.
+      console.warn(
+        "[webhook-config] could not remove the previous ClickUp webhook",
+        err
+      );
+    }
+  }
+
+  try {
+    const { CLICKUP_WEBHOOK_EVENTS } =
+      await import("~/lib/integrations/adapters/ClickUpAdapter");
+    const registered = await (
+      adapter.registerWebhook as (
+        url: string,
+        events: string[],
+        secret?: string,
+        options?: { listId?: string }
+      ) => Promise<{ id: string; secret?: string }>
+    )(args.url, [...CLICKUP_WEBHOOK_EVENTS], undefined, { listId });
+    if (!registered.secret) {
+      return { ok: false, error: "ClickUp did not return a webhook secret" };
+    }
+    return {
+      ok: true,
+      secret: registered.secret,
+      externalWebhookId: registered.id,
+    };
+  } catch (err) {
+    console.error("[webhook-config] ClickUp webhook registration failed", err);
+    return {
+      ok: false,
+      error: `ClickUp refused the webhook registration: ${
+        err instanceof Error ? err.message : String(err)
+      }`,
+    };
+  }
+}
+
+/**
+ * Remove a webhook TestPlanIt registered in ClickUp. Best effort: the
+ * local config is going away regardless, and a registration left behind
+ * only produces failed deliveries on ClickUp's side.
+ */
+async function unregisterClickUpWebhook(args: {
+  projectId: number;
+  userId: string;
+  externalWebhookId: string;
+}): Promise<void> {
+  try {
+    const resolved = await clickUpAdapterForProject(
+      args.projectId,
+      args.userId
+    );
+    if ("error" in resolved) {
+      console.warn(
+        "[webhook-config] leaving ClickUp webhook registered:",
+        resolved.error
+      );
+      return;
+    }
+    await resolved.adapter.unregisterWebhook!(args.externalWebhookId);
+  } catch (err) {
+    console.warn("[webhook-config] could not remove the ClickUp webhook", err);
+  }
+}
+
+/**
  * Create or rotate an inbound `WebhookConfig` for the (project, adapterType)
  * pair across all 3 inbound adapter types (JIRA / GITHUB / AZURE_DEVOPS).
  *
@@ -368,9 +560,10 @@ export async function createOrRotateInboundWebhook(input: {
   const { projectId, adapterType, secretInput } = input;
 
   const session = await getServerAuthSession();
-  if (!session?.user) {
+  if (!session?.user?.id) {
     return { success: false, error: "Unauthorized" };
   }
+  const actorId = session.user.id;
 
   return runWithAuditContext(
     {
@@ -396,11 +589,55 @@ export async function createOrRotateInboundWebhook(input: {
         return { success: false, error: "Forbidden" };
       }
 
-      const minted = mintInboundSecret(
-        adapterType,
-        secretInput,
-        `projectId:${projectId}`
-      );
+      const token = generateToken();
+      const origin = process.env.NEXTAUTH_URL ?? "";
+      const url = `${origin}/api/webhooks/${token}`;
+
+      let existing: { id: string; externalWebhookId: string | null } | null;
+      try {
+        existing = await baseDb.webhookConfig.findFirst({
+          where: {
+            projectId,
+            adapterType,
+            direction: "INBOUND",
+            codeRepositoryConfigId: null,
+          },
+          select: { id: true, externalWebhookId: true },
+        });
+      } catch (err) {
+        console.error("[webhook-config] lookup failed (create/rotate)", err);
+        return {
+          success: false,
+          error: "Failed to save webhook configuration",
+        };
+      }
+
+      // ClickUp with no pasted secret: TestPlanIt registers the webhook in
+      // ClickUp itself and stores the secret ClickUp minted for it.
+      const autoRegisterClickUp =
+        adapterType === "CLICKUP" &&
+        !(secretInput?.kind === "CLICKUP" && secretInput.secret?.trim());
+      let externalWebhookId: string | null = null;
+      let minted: { plaintext: string; reveal: boolean } | null;
+      if (autoRegisterClickUp) {
+        const registered = await registerClickUpWebhook({
+          projectId,
+          userId: actorId,
+          url,
+          previousExternalWebhookId: existing?.externalWebhookId ?? null,
+        });
+        if (!registered.ok) {
+          return { success: false, error: registered.error };
+        }
+        externalWebhookId = registered.externalWebhookId;
+        minted = { plaintext: registered.secret, reveal: false };
+      } else {
+        minted = mintInboundSecret(
+          adapterType,
+          secretInput,
+          `projectId:${projectId}`
+        );
+      }
       if (!minted) {
         return {
           success: false,
@@ -409,8 +646,6 @@ export async function createOrRotateInboundWebhook(input: {
       }
       const plaintextToEncrypt = minted.plaintext;
       const returnSecretToAdmin = minted.reveal;
-
-      const token = generateToken();
 
       let encryptedSecret: string;
       try {
@@ -423,9 +658,6 @@ export async function createOrRotateInboundWebhook(input: {
         };
       }
 
-      const origin = process.env.NEXTAUTH_URL ?? "";
-      const url = `${origin}/api/webhooks/${token}`;
-
       const buildResult = (configId: string): CreateOrRotateResult => ({
         success: true,
         configId,
@@ -434,22 +666,17 @@ export async function createOrRotateInboundWebhook(input: {
       });
 
       try {
-        const existing = await baseDb.webhookConfig.findFirst({
-          where: {
-            projectId,
-            adapterType,
-            direction: "INBOUND",
-            codeRepositoryConfigId: null,
-          },
-          select: { id: true },
-        });
-
         let config: { id: string };
         if (existing) {
           // Rotation overwrites — old token immediately invalid.
           config = await baseDb.webhookConfig.update({
             where: { id: existing.id },
-            data: { token, secret: encryptedSecret, isActive: true },
+            data: {
+              token,
+              secret: encryptedSecret,
+              isActive: true,
+              externalWebhookId,
+            },
             select: { id: true },
           });
         } else {
@@ -461,6 +688,7 @@ export async function createOrRotateInboundWebhook(input: {
               token,
               secret: encryptedSecret,
               isActive: true,
+              externalWebhookId,
             },
             select: { id: true },
           });
@@ -547,9 +775,10 @@ export async function deleteInboundWebhook(input: {
   const { webhookConfigId, projectId } = input;
 
   const session = await getServerAuthSession();
-  if (!session?.user) {
+  if (!session?.user?.id) {
     return { success: false, error: "Unauthorized" };
   }
+  const actorId = session.user.id;
 
   return runWithAuditContext(
     {
@@ -565,11 +794,18 @@ export async function deleteInboundWebhook(input: {
       let config: {
         projectId: number;
         direction?: "INBOUND" | "OUTBOUND";
+        adapterType?: AdapterType;
+        externalWebhookId?: string | null;
       } | null;
       try {
         config = await baseDb.webhookConfig.findUnique({
           where: { id: webhookConfigId },
-          select: { projectId: true, direction: true },
+          select: {
+            projectId: true,
+            direction: true,
+            adapterType: true,
+            externalWebhookId: true,
+          },
         });
       } catch (err) {
         console.error("[webhook-config] lookup failed (delete)", err);
@@ -607,7 +843,6 @@ export async function deleteInboundWebhook(input: {
 
       try {
         await baseDb.webhookConfig.delete({ where: { id: webhookConfigId } });
-        return { success: true };
       } catch (err) {
         console.error("[webhook-config] delete failed", err);
         return {
@@ -615,6 +850,17 @@ export async function deleteInboundWebhook(input: {
           error: "Failed to delete webhook configuration",
         };
       }
+
+      // A webhook TestPlanIt registered in ClickUp is removed there too,
+      // so ClickUp stops delivering to a URL that no longer exists.
+      if (config.adapterType === "CLICKUP" && config.externalWebhookId) {
+        await unregisterClickUpWebhook({
+          projectId: config.projectId,
+          userId: actorId,
+          externalWebhookId: config.externalWebhookId,
+        });
+      }
+      return { success: true };
     }
   ); // end runWithAuditContext
 }
@@ -777,6 +1023,8 @@ export interface SendTestWebhookResult {
  *     is the credential. SYNTHETIC_REDMINE_PAYLOAD body.
  *   - MANTISBT: unsigned (a Mantis webhook plugin cannot sign); the URL token
  *     is the credential. SYNTHETIC_MANTISBT_PAYLOAD body.
+ *   - CLICKUP: HMAC-SHA256 over SYNTHETIC_CLICKUP_PAYLOAD as a bare hex
+ *     digest in `x-signature`.
  *   - BITBUCKET (repository only): HMAC-SHA256; `x-hub-signature` +
  *     `x-event-key: pullrequest:created` headers.
  *

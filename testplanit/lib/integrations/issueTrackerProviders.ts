@@ -13,4 +13,5 @@ export const ISSUE_TRACKING_PROVIDERS = [
   IntegrationProvider.GITEA,
   IntegrationProvider.REDMINE,
   IntegrationProvider.MANTISBT,
+  IntegrationProvider.CLICKUP,
 ];

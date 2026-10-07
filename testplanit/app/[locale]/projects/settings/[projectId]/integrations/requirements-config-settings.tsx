@@ -70,6 +70,7 @@ const REQUIREMENT_TYPE_CAPABLE_PROVIDERS = new Set([
   "MANTISBT",
   "GITHUB",
   "GITEA",
+  "CLICKUP",
 ]);
 
 /** Providers whose designation vocabulary is labels, not issue types. Also

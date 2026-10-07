@@ -25,7 +25,7 @@ Only system administrators and project administrators can open this page.
 | | The **linked external projects** and which one is the **default** |
 | | The **default issue type** (Jira) for each linked project |
 
-Only integrations a system administrator has created and activated appear here. Supported providers are Jira, GitHub, GitLab, Gitea, Azure DevOps, Redmine, MantisBT, and Simple URL. If none exist, the page shows a **No issue integration assigned** empty state and an admin must configure one first.
+Only integrations a system administrator has created and activated appear here. Supported providers are Jira, GitHub, GitLab, Gitea, Azure DevOps, Redmine, MantisBT, ClickUp, and Simple URL. If none exist, the page shows a **No issue integration assigned** empty state and an admin must configure one first.
 
 ## Assigning an integration
 
@@ -75,7 +75,7 @@ Imported issues are created **in this project** and behave like any other linked
 - They are removed only by **manual** delete — there is no automatic pruning. Hide ones you don't need with the filters on the [Issues list](../issues.md).
 
 :::note
-Which filtering happens at the tracker depends on the provider. Jira, GitHub, and Azure DevOps apply the recency window in the tracker query; other providers fetch pages and apply the window afterward, so a windowed import there may scan more issues before it reaches the cap. **Simple URL** integrations have no tracker API and do not offer import.
+Which filtering happens at the tracker depends on the provider. Jira, GitHub, Azure DevOps, and ClickUp apply the recency window in the tracker query; other providers fetch pages and apply the window afterward, so a windowed import there may scan more issues before it reaches the cap. **Simple URL** integrations have no tracker API and do not offer import.
 :::
 
 :::info
@@ -102,7 +102,7 @@ Enabling or changing milestone sync settings, running **Sync now**, and **Import
 
 ## Requirement Sync
 
-For requirement-capable providers (Jira, Azure DevOps, GitLab, Redmine, MantisBT, GitHub, and Gitea), a **Requirement Sync** section appears on the active integration's settings. It chooses which tracker issue types count as requirements in this project — existing issues are reclassified to match whenever you change the selection:
+For requirement-capable providers (Jira, Azure DevOps, GitLab, Redmine, MantisBT, ClickUp, GitHub, and Gitea), a **Requirement Sync** section appears on the active integration's settings. It chooses which tracker issue types count as requirements in this project — existing issues are reclassified to match whenever you change the selection:
 
 - **Enable requirement classification** — turns classification on; the picker below stays disabled until it is.
 - **Issue types** — a multi-select of the issue types across all of this integration's linked external projects (for example Epic, Story, or a custom Requirement type).

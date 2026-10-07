@@ -109,7 +109,7 @@ TestPlanIt is a comprehensive test management platform designed to help teams pl
 ### Requirements
 
 - **Requirement hierarchies** - Model what the system should do as requirement trees — multiple independent hierarchies per project, nested to any depth (opt-in per project)
-- **Tracker-synced requirements** - Designate which issue types count as requirements and mirror them, hierarchy included, as live read-only requirements; supported for Jira, Azure DevOps, GitLab, Redmine, and MantisBT, with GitHub classifying by label
+- **Tracker-synced requirements** - Designate which issue types count as requirements and mirror them, hierarchy included, as live read-only requirements; supported for Jira, Azure DevOps, GitLab, Redmine, MantisBT, and ClickUp, with GitHub classifying by label
 - **Three ownership modes** - Keep a requirement synced and locked to the tracker, detach it to local ownership while keeping its tracker reference, or author it natively in TestPlanIt
 - **Rich documentation** - Every requirement carries rich-text documentation and attachments, editable even on synced requirements
 - **Many-to-many test linkage** - Link test cases to requirements from either side, including cases in other projects
@@ -128,6 +128,7 @@ TestPlanIt is a comprehensive test management platform designed to help teams pl
 - **Azure DevOps integration** - Sync with Azure Boards work items
 - **Redmine integration** - Connect to a self-hosted Redmine instance for issue tracking
 - **MantisBT integration** - Connect to a self-hosted MantisBT instance for issue tracking
+- **ClickUp integration** - Create and sync ClickUp tasks, with custom fields, attachments and task links
 - **OAuth 2.0 authentication** - Use OAuth for GitHub, GitLab, and Gitea/Forgejo connections (no personal access token required)
 - **Two-way sync** - Optional outbound notifications and inbound webhook updates between TestPlanIt and the issue tracker
 - **Linked-issue context for AI** - Auto-tag and test case generation pull labels, components, and metadata from linked issues
@@ -258,7 +259,7 @@ TestPlanIt is a comprehensive test management platform designed to help teams pl
 
 ### Inbound Webhooks
 
-- **Issue-tracker sync** - Configure inbound webhooks from Jira / GitHub / GitLab / Gitea / Azure DevOps / Redmine / MantisBT so issue updates flow back into TestPlanIt
+- **Issue-tracker sync** - Configure inbound webhooks from Jira / GitHub / GitLab / Gitea / Azure DevOps / Redmine / MantisBT / ClickUp so issue updates flow back into TestPlanIt
 - **Adapter-aware** - The inbound config is keyed to the issue integration so swapping providers cleanly resets the webhook
 
 ### Agent Integrations

@@ -784,6 +784,7 @@ describe("JiraLinkService", () => {
                 "GITEA",
                 "REDMINE",
                 "MANTISBT",
+                "CLICKUP",
               ],
             },
           },

@@ -131,6 +131,7 @@ function WizardBody({
   const [baseBranch, setBaseBranch] = useState("");
   const [adoUsername, setAdoUsername] = useState("");
   const [adoPassword, setAdoPassword] = useState("");
+  const [clickupSecret, setClickupSecret] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [revealed, setRevealed] = useState<Revealed | null>(null);
 
@@ -153,7 +154,12 @@ function WizardBody({
         username: adoUsername,
         password: adoPassword,
       } as const)
-    : undefined;
+    : adapterType === "CLICKUP" && source === "issues"
+      ? ({
+          kind: "CLICKUP",
+          ...(clickupSecret.trim() ? { secret: clickupSecret.trim() } : {}),
+        } as const)
+      : undefined;
 
   async function create() {
     if (!canCreate || !source) return;
@@ -345,6 +351,34 @@ function WizardBody({
     );
   }
 
+  function renderClickUpSecret() {
+    return (
+      <div className="space-y-3" data-testid="webhook-wizard-clickup">
+        <p className="text-xs text-muted-foreground">
+          {t("inboundClickupRegisterHint")}
+        </p>
+        <div className="space-y-1">
+          <Label htmlFor="webhook-inbound-clickup-secret-input">
+            {t("inboundClickupSecret")}
+          </Label>
+          <Input
+            id="webhook-inbound-clickup-secret-input"
+            data-testid="webhook-inbound-clickup-secret-input"
+            type="password"
+            value={clickupSecret}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setClickupSecret(e.target.value)
+            }
+            autoComplete="off"
+          />
+          <p className="text-xs text-muted-foreground">
+            {t("inboundClickupSecretHelp")}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   function renderIssueDetails(adapter: IssueInboundAdapterType) {
     const hint = ISSUE_SCOPE_HINT[adapter];
     return (
@@ -369,6 +403,7 @@ function WizardBody({
           </p>
         )}
         {needsCredentials && renderCredentials()}
+        {adapter === "CLICKUP" && renderClickUpSecret()}
       </div>
     );
   }

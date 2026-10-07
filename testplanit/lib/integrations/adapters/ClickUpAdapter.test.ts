@@ -55,11 +55,12 @@ describe("ClickUpAdapter", () => {
         linkIssue: true,
         syncIssue: true,
         searchIssues: true,
-        webhooks: false,
-        customFields: false,
-        attachments: false,
-        linkedIssues: false,
+        webhooks: true,
+        customFields: true,
+        attachments: true,
+        linkedIssues: true,
         comments: true,
+        milestones: false,
       });
     });
   });
@@ -317,6 +318,61 @@ describe("ClickUpAdapter", () => {
       const result = await adapter.getIssue("abc123");
       expect(result.key).toBe("TP-42");
     });
+
+    it("asks for the markdown description and maps the plain Task type", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockClickUpTask),
+      });
+
+      const result = await adapter.getIssue("abc123");
+
+      const [calledUrl] = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      expect(calledUrl).toBe(
+        "https://api.clickup.com/api/v2/task/abc123?include_markdown_description=true"
+      );
+      expect(result.issueType).toEqual({ id: "0", name: "Task" });
+      expect(result.customFields).toMatchObject({
+        _clickup_list_id: "901234567",
+      });
+    });
+
+    it("resolves a custom task id inside the configured workspace", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ ...mockClickUpTask, custom_id: "TP-42" }),
+      });
+
+      await adapter.getIssue("TP-42");
+
+      const [calledUrl] = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      expect(calledUrl).toBe(
+        "https://api.clickup.com/api/v2/task/TP-42?include_markdown_description=true&custom_task_ids=true&team_id=9013456789"
+      );
+    });
+
+    it("surfaces custom field values and the custom task type", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            ...mockClickUpTask,
+            custom_item_id: 1300,
+            custom_fields: [
+              { id: "f-sev", name: "Severity", type: "drop_down", value: 2 },
+              { id: "f-empty", name: "Notes", type: "text", value: null },
+            ],
+          }),
+      });
+
+      const result = await adapter.getIssue("abc123");
+
+      expect(result.issueType).toEqual({ id: "1300", name: "Type 1300" });
+      expect(result.customFields).toEqual({
+        _clickup_list_id: "901234567",
+        "f-sev": 2,
+      });
+    });
   });
 
   describe("searchIssues", () => {
@@ -569,6 +625,736 @@ describe("ClickUpAdapter", () => {
       await expect(noTeamAdapter.getProjects()).rejects.toThrow(
         "Team (workspace) ID not configured"
       );
+    });
+  });
+
+  describe("custom task types", () => {
+    beforeEach(async () => {
+      await authenticateAdapter(adapter);
+    });
+
+    it("offers the plain Task first and then the workspace's custom task types", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            custom_items: [
+              { id: 1300, name: "Bug", name_plural: "Bugs" },
+              { id: 1301, name: "Story", name_plural: "Stories" },
+            ],
+          }),
+      });
+
+      const types = await adapter.getIssueTypes("901234567");
+
+      const [calledUrl] = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      expect(calledUrl).toBe(
+        "https://api.clickup.com/api/v2/team/9013456789/custom_item"
+      );
+      expect(types).toEqual([
+        { id: "0", name: "Task" },
+        { id: "1300", name: "Bug" },
+        { id: "1301", name: "Story" },
+      ]);
+    });
+
+    it("names a task's custom type once the types have been loaded", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({ custom_items: [{ id: 1300, name: "Bug" }] }),
+      });
+      await adapter.getIssueTypes("901234567");
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({ ...mockClickUpTask, custom_item_id: 1300 }),
+      });
+      const result = await adapter.getIssue("abc123");
+      expect(result.issueType).toEqual({ id: "1300", name: "Bug" });
+    });
+
+    it("sends a custom task type on create and ignores ids that are not types", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockClickUpTask),
+      });
+      await adapter.createIssue({
+        title: "Typed",
+        projectId: "",
+        issueType: "1300",
+      });
+      let body = JSON.parse(
+        mockFetch.mock.calls[mockFetch.mock.calls.length - 1][1].body
+      );
+      expect(body.custom_item_id).toBe(1300);
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockClickUpTask),
+      });
+      await adapter.createIssue({
+        title: "Untyped",
+        projectId: "",
+        issueType: "not-a-type",
+      });
+      body = JSON.parse(
+        mockFetch.mock.calls[mockFetch.mock.calls.length - 1][1].body
+      );
+      expect(body).not.toHaveProperty("custom_item_id");
+    });
+  });
+
+  describe("custom fields", () => {
+    const listFields = {
+      fields: [
+        { id: "f-text", name: "Notes", type: "text", required: false },
+        {
+          id: "f-sev",
+          name: "Severity",
+          type: "drop_down",
+          required: true,
+          type_config: {
+            options: [
+              { id: "opt-high", name: "High", orderindex: 0 },
+              { id: "opt-low", name: "Low", orderindex: 1 },
+            ],
+          },
+        },
+        {
+          id: "f-area",
+          name: "Area",
+          type: "labels",
+          type_config: {
+            options: [
+              { id: "lab-api", label: "API" },
+              { id: "lab-ui", label: "UI" },
+            ],
+          },
+        },
+        { id: "f-points", name: "Points", type: "number" },
+        { id: "f-due", name: "Target", type: "date" },
+        { id: "f-flag", name: "Regression", type: "checkbox" },
+        { id: "f-owner", name: "Owner", type: "users" },
+        { id: "f-sum", name: "Rollup", type: "formula" },
+      ],
+    };
+
+    beforeEach(async () => {
+      await authenticateAdapter(adapter);
+    });
+
+    it("getCustomFields reads the List's fields and their options", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(listFields),
+      });
+
+      const fields = await adapter.getCustomFields("901234567");
+
+      const [calledUrl] = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      expect(calledUrl).toBe(
+        "https://api.clickup.com/api/v2/list/901234567/field"
+      );
+      expect(fields).toHaveLength(8);
+      expect(fields[1]).toEqual({
+        id: "f-sev",
+        name: "Severity",
+        type: "drop_down",
+        required: true,
+        options: [
+          { id: "opt-high", value: "High" },
+          { id: "opt-low", value: "Low" },
+        ],
+      });
+      expect(fields[2].options).toEqual([
+        { id: "lab-api", value: "API" },
+        { id: "lab-ui", value: "UI" },
+      ]);
+      expect(fields[0]).not.toHaveProperty("options");
+    });
+
+    it("getIssueTypeFields offers only editable field types in the create-form shape", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(listFields),
+      });
+
+      const fields = await adapter.getIssueTypeFields("901234567", "0");
+
+      expect(fields.map((f: any) => f.key)).toEqual([
+        "f-text",
+        "f-sev",
+        "f-area",
+        "f-points",
+        "f-due",
+        "f-flag",
+      ]);
+      expect(fields[1]).toMatchObject({
+        key: "f-sev",
+        name: "Severity",
+        required: true,
+        allowedValues: [
+          { id: "opt-high", name: "High" },
+          { id: "opt-low", name: "Low" },
+        ],
+      });
+      expect(fields[2].schema).toEqual({ type: "array" });
+      expect(fields[3].schema).toEqual({ type: "number" });
+      expect(fields[5].allowedValues).toEqual([
+        { id: "true", name: "Yes" },
+        { id: "false", name: "No" },
+      ]);
+    });
+
+    it("caches the List's fields across calls", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(listFields),
+      });
+      await adapter.getCustomFields("901234567");
+      const calls = mockFetch.mock.calls.length;
+      await adapter.getIssueTypeFields("901234567", "0");
+      expect(mockFetch.mock.calls.length).toBe(calls);
+    });
+
+    it("createIssue coerces custom field values per type and drops unknown keys", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(listFields),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockClickUpTask),
+      });
+
+      await adapter.createIssue({
+        title: "With fields",
+        projectId: "",
+        customFields: {
+          "f-text": "hello",
+          "f-sev": "opt-high",
+          "f-area": "lab-api",
+          "f-points": "5",
+          "f-due": "2026-10-06T00:00:00.000Z",
+          "f-flag": "true",
+          "f-owner": "7",
+          reporter: { accountId: "1" },
+          "f-blank": "",
+        },
+      });
+
+      const body = JSON.parse(
+        mockFetch.mock.calls[mockFetch.mock.calls.length - 1][1].body
+      );
+      expect(body.custom_fields).toEqual([
+        { id: "f-text", value: "hello" },
+        { id: "f-sev", value: "opt-high" },
+        { id: "f-area", value: ["lab-api"] },
+        { id: "f-points", value: 5 },
+        { id: "f-due", value: Date.parse("2026-10-06T00:00:00.000Z") },
+        { id: "f-flag", value: true },
+      ]);
+    });
+
+    it("createIssue omits custom_fields entirely when nothing usable was given", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(listFields),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockClickUpTask),
+      });
+
+      await adapter.createIssue({
+        title: "No fields",
+        projectId: "",
+        customFields: { reporter: { accountId: "1" } },
+      });
+
+      const body = JSON.parse(
+        mockFetch.mock.calls[mockFetch.mock.calls.length - 1][1].body
+      );
+      expect(body).not.toHaveProperty("custom_fields");
+    });
+
+    it("updateIssue writes each custom field through its own endpoint and re-reads the task", async () => {
+      // PUT task → field list → POST field → GET task
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockClickUpTask),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(listFields),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({}),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ ...mockClickUpTask, name: "Renamed" }),
+      });
+
+      const result = await adapter.updateIssue("abc123", {
+        title: "Renamed",
+        customFields: { "f-points": 8 },
+      });
+
+      const fieldCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 2];
+      expect(fieldCall[0]).toBe(
+        "https://api.clickup.com/api/v2/task/abc123/field/f-points"
+      );
+      expect(fieldCall[1].method).toBe("POST");
+      expect(JSON.parse(fieldCall[1].body)).toEqual({ value: 8 });
+      expect(result.title).toBe("Renamed");
+    });
+  });
+
+  describe("statuses and priorities", () => {
+    beforeEach(async () => {
+      await authenticateAdapter(adapter);
+    });
+
+    it("getStatuses reads the default List's statuses", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: "901234567",
+            statuses: [
+              { status: "to do", type: "open" },
+              { status: "done", type: "closed" },
+            ],
+          }),
+      });
+
+      expect(await adapter.getStatuses()).toEqual([
+        { id: "to do", name: "to do" },
+        { id: "done", name: "done" },
+      ]);
+    });
+
+    it("getStatuses is empty without a default List", async () => {
+      const noList = new ClickUpAdapter({ provider: "CLICKUP" });
+      await authenticateAdapter(noList);
+      expect(await noList.getStatuses()).toEqual([]);
+    });
+
+    it("getPriorities lists ClickUp's four levels", async () => {
+      expect((await adapter.getPriorities()).map((p) => p.id)).toEqual([
+        "urgent",
+        "high",
+        "normal",
+        "low",
+      ]);
+    });
+  });
+
+  describe("searchIssues filters", () => {
+    beforeEach(async () => {
+      await authenticateAdapter(adapter);
+    });
+
+    it("narrows to custom task types via custom_items[]", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ tasks: [], last_page: true }),
+      });
+
+      await adapter.searchIssues({ issueTypeIds: ["1300", "1301"] });
+
+      const [calledUrl] = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      const params = new URL(calledUrl).searchParams;
+      expect(params.getAll("custom_items[]")).toEqual(["1300", "1301"]);
+    });
+
+    it("matches a query against the custom id as well as the name", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            tasks: [
+              { ...mockClickUpTask, id: "aaa", custom_id: "TP-7", name: "x" },
+              { ...mockClickUpTask, id: "bbb", custom_id: "TP-8", name: "y" },
+            ],
+            last_page: true,
+          }),
+      });
+
+      const result = await adapter.searchIssues({ query: "tp-7" });
+      expect(result.issues.map((i) => i.key)).toEqual(["TP-7"]);
+    });
+  });
+
+  describe("countIssues", () => {
+    beforeEach(async () => {
+      await authenticateAdapter(adapter);
+    });
+
+    it("is exact when the first page is also the last", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({ tasks: [mockClickUpTask], last_page: true }),
+      });
+      expect(await adapter.countIssues({})).toEqual({
+        count: 1,
+        exactness: "exact",
+      });
+    });
+
+    it("is a floor when more pages follow", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            tasks: Array.from({ length: 100 }, () => mockClickUpTask),
+            last_page: false,
+          }),
+      });
+      expect(await adapter.countIssues({})).toEqual({
+        count: 100,
+        exactness: "floor",
+      });
+    });
+
+    it("is unknown without a List", async () => {
+      const noList = new ClickUpAdapter({ provider: "CLICKUP" });
+      await authenticateAdapter(noList);
+      expect(await noList.countIssues({})).toEqual({
+        count: 0,
+        exactness: "unknown",
+      });
+    });
+  });
+
+  describe("users", () => {
+    beforeEach(async () => {
+      await authenticateAdapter(adapter);
+    });
+
+    const teams = {
+      teams: [
+        {
+          id: "9013456789",
+          name: "Acme",
+          members: [
+            {
+              user: {
+                id: 1,
+                username: "alice",
+                email: "alice@example.com",
+                profilePicture: "https://img/alice.png",
+              },
+            },
+            { user: { id: 2, username: "bob", email: "bob@example.com" } },
+          ],
+        },
+        { id: "other", name: "Other", members: [{ user: { id: 9 } }] },
+      ],
+    };
+
+    it("searchUsers filters the configured workspace's members client-side", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(teams),
+      });
+
+      const result = await adapter.searchUsers("ali");
+
+      const [calledUrl] = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      expect(calledUrl).toBe("https://api.clickup.com/api/v2/team");
+      expect(result).toEqual({
+        users: [
+          {
+            accountId: "1",
+            displayName: "alice",
+            emailAddress: "alice@example.com",
+            avatarUrls: { "48x48": "https://img/alice.png" },
+          },
+        ],
+        total: 1,
+      });
+    });
+
+    it("searchUsers pages an empty query over every member", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(teams),
+      });
+
+      const result = await adapter.searchUsers("", undefined, 1, 1);
+      expect(result.total).toBe(2);
+      expect(result.users.map((u) => u.accountId)).toEqual(["2"]);
+    });
+
+    it("getCurrentUser maps the authorized user", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            user: { id: 1, username: "alice", email: "alice@example.com" },
+          }),
+      });
+
+      expect(await adapter.getCurrentUser()).toEqual({
+        accountId: "1",
+        displayName: "alice",
+        emailAddress: "alice@example.com",
+      });
+    });
+  });
+
+  describe("linked issues", () => {
+    beforeEach(async () => {
+      await authenticateAdapter(adapter);
+    });
+
+    it("maps task links and both directions of a dependency", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            ...mockClickUpTask,
+            linked_tasks: [
+              { task_id: "abc123", link_id: "lnk001" },
+              { task_id: "lnk002", link_id: "abc123" },
+            ],
+            dependencies: [
+              { task_id: "abc123", depends_on: "dep001", type: 1 },
+              { task_id: "dep002", depends_on: "abc123", type: 1 },
+            ],
+          }),
+      });
+
+      const refs = await adapter.getLinkedIssues("abc123");
+
+      expect(refs).toEqual([
+        { id: "lnk001", linkType: "relates to", direction: "outward" },
+        { id: "lnk002", linkType: "relates to", direction: "outward" },
+        { id: "dep001", linkType: "waiting on", direction: "outward" },
+        { id: "dep002", linkType: "blocking", direction: "inward" },
+      ]);
+    });
+
+    it("fails soft with an empty list", async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 404,
+        text: () => Promise.resolve("not found"),
+        headers: new Headers(),
+      });
+      expect(await adapter.getLinkedIssues("missing")).toEqual([]);
+    });
+  });
+
+  describe("attachments", () => {
+    beforeEach(async () => {
+      await authenticateAdapter(adapter);
+    });
+
+    it("uploadAttachment posts multipart form data under the attachment field", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: "att-1",
+            title: "shot.png",
+            url: "https://attachments.clickup.com/att-1/shot.png",
+          }),
+      });
+
+      const result = await adapter.uploadAttachment(
+        "abc123",
+        Buffer.from("png-bytes"),
+        "shot.png"
+      );
+
+      const [calledUrl, options] =
+        mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      expect(calledUrl).toBe(
+        "https://api.clickup.com/api/v2/task/abc123/attachment"
+      );
+      expect(options.method).toBe("POST");
+      expect(options.body).toBeInstanceOf(FormData);
+      const part = (options.body as FormData).get("attachment") as File;
+      expect(part.name).toBe("shot.png");
+      expect(options.headers["Content-Type"]).toBeUndefined();
+      expect(result).toEqual({
+        id: "att-1",
+        url: "https://attachments.clickup.com/att-1/shot.png",
+      });
+    });
+
+    it("listAttachments reads them off the task, preferring the signed URL", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            ...mockClickUpTask,
+            attachments: [
+              {
+                id: "att-1",
+                title: "shot.png",
+                mimetype: "image/png",
+                size: 1234,
+                date: "1700000000000",
+                url: "https://attachments.clickup.com/att-1/shot.png",
+                url_w_query:
+                  "https://attachments.clickup.com/att-1/shot.png?sig=abc",
+              },
+              { id: "att-2", title: "gone.txt", url: "x", deleted: true },
+              { id: "att-3", title: "nolink.txt" },
+            ],
+          }),
+      });
+
+      const list = await adapter.listAttachments("abc123");
+
+      expect(list).toEqual([
+        {
+          id: "att-1",
+          filename: "shot.png",
+          mimeType: "image/png",
+          byteSize: 1234,
+          createdAt: new Date(1700000000000),
+          contentUrl: "https://attachments.clickup.com/att-1/shot.png?sig=abc",
+        },
+      ]);
+    });
+
+    it("downloadAttachment fetches the content URL and keeps a real content type", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        headers: new Headers({
+          "content-type": "image/png",
+          "content-length": "3",
+        }),
+        arrayBuffer: () => Promise.resolve(new Uint8Array([1, 2, 3]).buffer),
+      });
+
+      const result = await adapter.downloadAttachment({
+        id: "att-1",
+        filename: "shot.png",
+        contentUrl: "https://attachments.clickup.com/att-1/shot.png?sig=abc",
+      });
+
+      const [calledUrl] = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      expect(calledUrl).toBe(
+        "https://attachments.clickup.com/att-1/shot.png?sig=abc"
+      );
+      expect(result.mimeType).toBe("image/png");
+      expect([...result.buffer]).toEqual([1, 2, 3]);
+    });
+
+    it("downloadAttachment refuses metadata without a content URL", async () => {
+      await expect(
+        adapter.downloadAttachment({ id: "att-1", filename: "x" })
+      ).rejects.toThrow("no download URL");
+    });
+  });
+
+  describe("webhooks", () => {
+    beforeEach(async () => {
+      await authenticateAdapter(adapter);
+    });
+
+    it("registerWebhook creates the webhook on the workspace scoped to a List and returns ClickUp's secret", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: "wh-1",
+            webhook: {
+              id: "wh-1",
+              endpoint: "https://tpi.example/api/webhooks/whk_1",
+              events: ["taskStatusUpdated"],
+              health: { status: "active", fail_count: 0 },
+              secret: "minted-by-clickup",
+            },
+          }),
+      });
+
+      const result = await adapter.registerWebhook(
+        "https://tpi.example/api/webhooks/whk_1",
+        ["taskStatusUpdated"],
+        undefined,
+        { listId: "555" }
+      );
+
+      const [calledUrl, options] =
+        mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      expect(calledUrl).toBe(
+        "https://api.clickup.com/api/v2/team/9013456789/webhook"
+      );
+      expect(options.method).toBe("POST");
+      expect(JSON.parse(options.body)).toEqual({
+        endpoint: "https://tpi.example/api/webhooks/whk_1",
+        events: ["taskStatusUpdated"],
+        list_id: 555,
+      });
+      expect(result).toEqual({
+        id: "wh-1",
+        url: "https://tpi.example/api/webhooks/whk_1",
+        events: ["taskStatusUpdated"],
+        secret: "minted-by-clickup",
+        active: true,
+      });
+    });
+
+    it("registerWebhook falls back to the default List and the handled events", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: "wh-2",
+            webhook: { id: "wh-2", secret: "s", events: ["taskStatusUpdated"] },
+          }),
+      });
+
+      await adapter.registerWebhook("https://tpi.example/hook", []);
+
+      const body = JSON.parse(
+        mockFetch.mock.calls[mockFetch.mock.calls.length - 1][1].body
+      );
+      expect(body.list_id).toBe(901234567);
+      expect(body.events).toEqual(["taskStatusUpdated"]);
+    });
+
+    it("registerWebhook rejects a response without a secret", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ id: "wh-3", webhook: { id: "wh-3" } }),
+      });
+      await expect(
+        adapter.registerWebhook("https://tpi.example/hook", [])
+      ).rejects.toThrow("webhook id and secret");
+    });
+
+    it("registerWebhook needs a workspace id", async () => {
+      const noTeam = new ClickUpAdapter({ provider: "CLICKUP" });
+      await authenticateAdapter(noTeam);
+      await expect(
+        noTeam.registerWebhook("https://tpi.example/hook", [])
+      ).rejects.toThrow("Team (workspace) ID not configured");
+    });
+
+    it("unregisterWebhook deletes the webhook", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 204,
+      });
+
+      await adapter.unregisterWebhook("wh-1");
+
+      const [calledUrl, options] =
+        mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      expect(calledUrl).toBe("https://api.clickup.com/api/v2/webhook/wh-1");
+      expect(options.method).toBe("DELETE");
     });
   });
 });

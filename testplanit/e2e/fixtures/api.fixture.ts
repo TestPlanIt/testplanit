@@ -3572,7 +3572,7 @@ export class ApiHelper {
    * unlocks the matching inbound adapter; no real upstream calls are made.
    */
   async createIssueIntegration(
-    provider: "JIRA" | "GITHUB" | "AZURE_DEVOPS",
+    provider: "JIRA" | "GITHUB" | "AZURE_DEVOPS" | "CLICKUP",
     name?: string
   ): Promise<number> {
     const integrationName =
@@ -3586,11 +3586,25 @@ export class ApiHelper {
           }
         : provider === "GITHUB"
           ? { personalAccessToken: "ghp_fakePATforE2Etesting1234567890" }
-          : {
-              personalAccessToken: "fake-azure-pat-for-e2e-testing",
-              organizationUrl: "https://dev.azure.com/fakeorg",
-            };
-    const authType = provider === "JIRA" ? "API_KEY" : "PERSONAL_ACCESS_TOKEN";
+          : provider === "CLICKUP"
+            ? {
+                clientId: "fake-clickup-client-id",
+                clientSecret: "fake-clickup-client-secret",
+              }
+            : {
+                personalAccessToken: "fake-azure-pat-for-e2e-testing",
+                organizationUrl: "https://dev.azure.com/fakeorg",
+              };
+    const authType =
+      provider === "JIRA"
+        ? "API_KEY"
+        : provider === "CLICKUP"
+          ? "OAUTH2"
+          : "PERSONAL_ACCESS_TOKEN";
+    // ClickUp keeps its workspace id in the clear-text settings, next to
+    // the encrypted OAuth client credentials.
+    const settings =
+      provider === "CLICKUP" ? { teamId: "9013456789" } : undefined;
 
     const response = await this.request.post(
       `${this.baseURL}/api/integrations`,
@@ -3600,6 +3614,7 @@ export class ApiHelper {
           type: provider,
           authType,
           config,
+          ...(settings ? { settings } : {}),
           // Creation defaults to INACTIVE until a successful test-connection
           // vouches for the credentials — which fake credentials never pass.
           // The endpoint accepts an explicit status, so vouch here: specs
@@ -3647,7 +3662,7 @@ export class ApiHelper {
    */
   async setupProjectIssueIntegration(
     projectId: number,
-    provider: "JIRA" | "GITHUB" | "AZURE_DEVOPS"
+    provider: "JIRA" | "GITHUB" | "AZURE_DEVOPS" | "CLICKUP"
   ): Promise<number> {
     const integrationId = await this.createIssueIntegration(provider);
     await this.assignIssueIntegrationToProject(projectId, integrationId);
