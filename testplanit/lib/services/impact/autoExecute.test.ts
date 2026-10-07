@@ -59,6 +59,7 @@ describe("executeAutoRun", () => {
         env: expect.objectContaining({
           db,
           tenantId: "t-1",
+          systemReason: "webhook:auto-execute",
           guc: expect.objectContaining({
             userId: "owner-1",
             source: "worker",
@@ -143,7 +144,11 @@ describe("executeAutoRun", () => {
 
     const result = await executeAutoRun(db as never, params);
 
-    expect(result).toEqual({ requested: false, reason: "failed", code: "error" });
+    expect(result).toEqual({
+      requested: false,
+      reason: "failed",
+      code: "error",
+    });
     expect(db.webhookDelivery.update).toHaveBeenCalledWith({
       where: { id: "del-1" },
       data: { error: "execute:error" },

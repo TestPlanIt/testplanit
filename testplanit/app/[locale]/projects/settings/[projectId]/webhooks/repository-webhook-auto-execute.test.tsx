@@ -160,7 +160,9 @@ describe("RepositoryWebhookAutoExecute", () => {
     mockTargets.mockReturnValue({ data: [smoke], isLoading: false });
     const { onChanged } = renderSection();
 
-    fireEvent.click(screen.getByTestId("webhook-repository-auto-execute-switch"));
+    fireEvent.click(
+      screen.getByTestId("webhook-repository-auto-execute-switch")
+    );
     expect(
       (
         screen.getByTestId(
@@ -195,7 +197,9 @@ describe("RepositoryWebhookAutoExecute", () => {
     mockTargets.mockReturnValue({ data: [smoke, nightly], isLoading: false });
     renderSection();
 
-    fireEvent.click(screen.getByTestId("webhook-repository-auto-execute-switch"));
+    fireEvent.click(
+      screen.getByTestId("webhook-repository-auto-execute-switch")
+    );
 
     expect(
       screen.getByTestId("webhook-repository-auto-execute-save")
@@ -218,9 +222,9 @@ describe("RepositoryWebhookAutoExecute", () => {
       autoExecuteInputs: { env: "prod" },
     });
 
-    expect(
-      (screen.getByTestId("param-env") as HTMLInputElement).value
-    ).toBe("prod");
+    expect((screen.getByTestId("param-env") as HTMLInputElement).value).toBe(
+      "prod"
+    );
     expect(
       screen.queryByTestId("webhook-repository-auto-execute-save")
     ).toBeNull();
@@ -279,7 +283,9 @@ describe("RepositoryWebhookAutoExecute", () => {
     });
     renderSection();
 
-    fireEvent.click(screen.getByTestId("webhook-repository-auto-execute-switch"));
+    fireEvent.click(
+      screen.getByTestId("webhook-repository-auto-execute-switch")
+    );
     fireEvent.click(screen.getByTestId("webhook-repository-auto-execute-save"));
 
     await waitFor(() =>

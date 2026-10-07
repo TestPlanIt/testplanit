@@ -91,6 +91,12 @@ export interface RequestExecutionEnv {
   db: DbClient;
   tenantId?: string;
   guc: GucPayload;
+  /**
+   * Why the dispatch job has no request actor (`scope:identifier`, e.g.
+   * `webhook:auto-execute`); stamped on the job's audit frame as the
+   * system actor's reason.
+   */
+  systemReason: string;
 }
 
 export async function requestExecution(params: {
@@ -297,6 +303,7 @@ export async function requestExecution(params: {
       entityId: String(created.id),
       projectId: params.projectId,
       userId: params.requestedById,
+      tenantId,
       metadata: {
         testRunId: params.runId,
         targetId: target.id,
@@ -321,18 +328,32 @@ export async function requestExecution(params: {
 
   const queue = getExecutionDispatchQueue();
   if (queue) {
-    await enqueueWithAuditContext(
-      queue,
-      JOB_DISPATCH_EXECUTION,
-      { executionId: created.id, tenantId },
-      {
-        // Unique per request: BullMQ returns an existing job for a repeated
-        // jobId, and completed jobs are retained, so a bare execution id could
-        // collide with a retained job from another database on the same Valkey.
-        // No colons: BullMQ reserves them for repeatable-job ids.
-        jobId: `dispatch-${tenantId ?? "default"}-${created.id}-${Date.now()}`,
-      }
-    );
+    const jobData = { executionId: created.id, tenantId };
+    const jobOptions = {
+      // Unique per request: BullMQ returns an existing job for a repeated
+      // jobId, and completed jobs are retained, so a bare execution id could
+      // collide with a retained job from another database on the same Valkey.
+      // No colons: BullMQ reserves them for repeatable-job ids.
+      jobId: `dispatch-${tenantId ?? "default"}-${created.id}-${Date.now()}`,
+    };
+    // A worker has no request audit frame: the job is stamped as the system
+    // actor with the worker's reason, instead of the enqueue refusing it.
+    if (env) {
+      await enqueueWithAuditContext(
+        queue,
+        JOB_DISPATCH_EXECUTION,
+        jobData,
+        { systemReason: env.systemReason },
+        jobOptions
+      );
+    } else {
+      await enqueueWithAuditContext(
+        queue,
+        JOB_DISPATCH_EXECUTION,
+        jobData,
+        jobOptions
+      );
+    }
     return { ok: true, execution: created, queued: true };
   }
 

@@ -83,6 +83,7 @@ export async function executeAutoRun(
           source: "worker",
           tenantId: params.tenantId ?? null,
         },
+        systemReason: "webhook:auto-execute",
       },
     });
     if (!result.ok) return fail(result.code);
