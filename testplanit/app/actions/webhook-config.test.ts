@@ -24,8 +24,12 @@ const mockWebhookDeliveryFindUnique = vi.fn();
 const mockWebhookDeliveryFindMany = vi.fn();
 const mockAuditLogFindMany = vi.fn();
 const mockTransaction = vi.fn();
+const mockExecutionTargetFindFirst = vi.fn();
 vi.mock("~/lib/db", () => ({
   baseDb: {
+    executionTarget: {
+      findFirst: (...args: unknown[]) => mockExecutionTargetFindFirst(...args),
+    },
     webhookConfig: {
       findFirst: (...args: unknown[]) => mockWebhookConfigFindFirst(...args),
       findUnique: (...args: unknown[]) => mockWebhookConfigFindUnique(...args),
@@ -114,6 +118,7 @@ import {
   deleteInboundWebhook,
   deleteJiraWebhook,
   sendTestWebhook,
+  updateCodeRepositoryWebhookAutoExecute,
   updateCodeRepositoryWebhookEvents,
 } from "./webhook-config";
 
@@ -2579,6 +2584,115 @@ describe("webhook-config server actions", () => {
       });
 
       expect(result).toEqual({ success: false, error: "Forbidden" });
+      expect(mockWebhookConfigUpdateMany).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("updateCodeRepositoryWebhookAutoExecute", () => {
+    beforeEach(() => {
+      mockWebhookConfigUpdateMany.mockReset();
+      mockExecutionTargetFindFirst.mockReset();
+    });
+
+    it("saves the target, ref and inputs after checking the target is the project's and enabled", async () => {
+      mockExecutionTargetFindFirst.mockResolvedValueOnce({ isEnabled: true });
+      mockWebhookConfigUpdateMany.mockResolvedValueOnce({ count: 1 });
+
+      const result = await updateCodeRepositoryWebhookAutoExecute({
+        projectId: 42,
+        webhookConfigId: "whc-1",
+        enabled: true,
+        targetId: 4,
+        ref: " main ",
+        inputs: { browser: "chrome" },
+      });
+
+      expect(result).toEqual({ success: true });
+      expect(mockExecutionTargetFindFirst).toHaveBeenCalledWith({
+        where: { id: 4, projectId: 42, isDeleted: false },
+        select: { isEnabled: true },
+      });
+      expect(mockWebhookConfigUpdateMany).toHaveBeenCalledWith({
+        where: {
+          id: "whc-1",
+          projectId: 42,
+          direction: "INBOUND",
+          codeRepositoryConfigId: { not: null },
+        },
+        data: {
+          autoExecuteEnabled: true,
+          autoExecuteTargetId: 4,
+          autoExecuteRef: "main",
+          autoExecuteInputs: { browser: "chrome" },
+        },
+      });
+    });
+
+    it("refuses to turn it on without a target", async () => {
+      const result = await updateCodeRepositoryWebhookAutoExecute({
+        projectId: 42,
+        webhookConfigId: "whc-1",
+        enabled: true,
+        targetId: null,
+      });
+
+      expect(result.success).toBe(false);
+      expect(mockWebhookConfigUpdateMany).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      [null, "Execution target not found"],
+      [{ isEnabled: false }, "Execution target is disabled"],
+    ])(
+      "refuses a target that is deleted, foreign or disabled (%o)",
+      async (target, error) => {
+        mockExecutionTargetFindFirst.mockResolvedValueOnce(target);
+
+        const result = await updateCodeRepositoryWebhookAutoExecute({
+          projectId: 42,
+          webhookConfigId: "whc-1",
+          enabled: true,
+          targetId: 4,
+        });
+
+        expect(result).toEqual({ success: false, error });
+        expect(mockWebhookConfigUpdateMany).not.toHaveBeenCalled();
+      }
+    );
+
+    it("turns it off keeping the choices, without checking the target", async () => {
+      mockWebhookConfigUpdateMany.mockResolvedValueOnce({ count: 1 });
+
+      const result = await updateCodeRepositoryWebhookAutoExecute({
+        projectId: 42,
+        webhookConfigId: "whc-1",
+        enabled: false,
+        targetId: 4,
+        ref: "",
+      });
+
+      expect(result).toEqual({ success: true });
+      expect(mockExecutionTargetFindFirst).not.toHaveBeenCalled();
+      expect(mockWebhookConfigUpdateMany.mock.calls[0][0].data).toEqual({
+        autoExecuteEnabled: false,
+        autoExecuteTargetId: 4,
+        autoExecuteRef: null,
+        autoExecuteInputs: {},
+      });
+    });
+
+    it("returns Forbidden without touching the database when not authorized", async () => {
+      mockCanManageWebhookConfig.mockResolvedValueOnce(false);
+
+      const result = await updateCodeRepositoryWebhookAutoExecute({
+        projectId: 42,
+        webhookConfigId: "whc-1",
+        enabled: true,
+        targetId: 4,
+      });
+
+      expect(result).toEqual({ success: false, error: "Forbidden" });
+      expect(mockExecutionTargetFindFirst).not.toHaveBeenCalled();
       expect(mockWebhookConfigUpdateMany).not.toHaveBeenCalled();
     });
   });

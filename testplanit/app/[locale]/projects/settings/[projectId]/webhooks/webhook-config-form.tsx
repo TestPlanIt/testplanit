@@ -97,6 +97,10 @@ interface InboundConfig {
   updatedAt: Date;
   subscribedEvents: string[];
   baseBranch: string | null;
+  autoExecuteEnabled: boolean;
+  autoExecuteTargetId: number | null;
+  autoExecuteRef: string | null;
+  autoExecuteInputs: unknown;
   codeRepositoryConfigId: number | null;
   codeRepositoryConfig: RepositoryWebhookRow["codeRepositoryConfig"] | null;
 }
@@ -160,6 +164,10 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
       updatedAt: true,
       subscribedEvents: true,
       baseBranch: true,
+      autoExecuteEnabled: true,
+      autoExecuteTargetId: true,
+      autoExecuteRef: true,
+      autoExecuteInputs: true,
       codeRepositoryConfigId: true,
       codeRepositoryConfig: {
         select: {
@@ -722,6 +730,10 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
             isActive: config.isActive,
             subscribedEvents: config.subscribedEvents,
             baseBranch: config.baseBranch ?? null,
+            autoExecuteEnabled: config.autoExecuteEnabled,
+            autoExecuteTargetId: config.autoExecuteTargetId,
+            autoExecuteRef: config.autoExecuteRef,
+            autoExecuteInputs: config.autoExecuteInputs,
             endpointHealth: config.endpointHealth,
             lastReceivedAt: config.lastReceivedAt,
             codeRepositoryConfig: config.codeRepositoryConfig,

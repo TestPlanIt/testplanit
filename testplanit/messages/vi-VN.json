@@ -1862,7 +1862,12 @@
           "eventBranchPush": "Đẩy tới các nhánh khác",
           "eventBranchPushHelp": "Phân tích mỗi lần đẩy lên bất kỳ nhánh nào khác so với nhánh cơ sở, giống như yêu cầu kéo, và soạn một lần chạy cho mỗi lần.",
           "baseBranch": "Nhánh cơ sở",
-          "baseBranchHelp": "Các lần đẩy lên nhánh này được phân tích riêng; các yêu cầu kéo và các nhánh khác được so sánh với nó. Để trống để sử dụng nhánh của kết nối."
+          "baseBranchHelp": "Các lần đẩy lên nhánh này được phân tích riêng; các yêu cầu kéo và các nhánh khác được so sánh với nó. Để trống để sử dụng nhánh của kết nối.",
+          "autoExecute": "Thực thi các ca tự động",
+          "autoExecuteHelp": "Sau khi lượt chạy được tạo, yêu cầu thực thi tự động các ca tự động của nó trên mục tiêu này. Các ca thủ công vẫn ở trong lượt chạy cho người kiểm thử.",
+          "autoExecuteNoTargets": "Chưa có mục tiêu thực thi nào được cấu hình cho dự án này. <link>Thêm một mục tiêu</link> để tự động thực thi các lượt chạy.",
+          "autoExecuteTargetMissing": "Mục tiêu thực thi đã chọn đã bị xóa hoặc vô hiệu hóa. Lượt chạy vẫn được tạo, nhưng không có yêu cầu thực thi nào cho đến khi bạn chọn mục tiêu khác.",
+          "autoExecuteSaveError": "Không thể lưu cài đặt thực thi tự động"
         },
         "inboundEmptyState": "Chưa có webhook đến. <link>Thêm một</link> để nhận cập nhật vấn đề từ công cụ theo dõi vấn đề của bạn, hoặc yêu cầu kéo và lần đẩy từ kho lưu trữ được kết nối.",
         "inboundChooserBitbucket": "Bitbucket",

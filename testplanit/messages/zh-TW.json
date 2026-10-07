@@ -1862,7 +1862,12 @@
           "eventBranchPush": "推送至其他分支",
           "eventBranchPushHelp": "分析對任何其他分支的每次推送（如拉取請求相對於基本分支），並為每次推送構建執行。",
           "baseBranch": "基本分支",
-          "baseBranchHelp": "推送至此分支時會自行分析；拉取請求和其他分支會與其進行比較。留空則使用連線的分支。"
+          "baseBranchHelp": "推送至此分支時會自行分析；拉取請求和其他分支會與其進行比較。留空則使用連線的分支。",
+          "autoExecute": "執行自動化案例",
+          "autoExecuteHelp": "測試執行建立後，在此目標上請求自動執行其中的自動化案例。手動案例保留在執行中供測試人員執行。",
+          "autoExecuteNoTargets": "此專案尚未設定執行目標。<link>新增一個</link>以自動執行測試執行。",
+          "autoExecuteTargetMissing": "所選執行目標已被刪除或停用。測試執行仍會建立，但在您選擇其他目標之前不會請求執行。",
+          "autoExecuteSaveError": "無法儲存自動執行設定"
         },
         "inboundEmptyState": "尚無入站 Webhook。<link>新增一個</link>以接收來自問題追蹤器的問題更新，或來自連線儲存庫的拉取請求和推送。",
         "inboundChooserBitbucket": "Bitbucket",

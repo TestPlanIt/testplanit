@@ -60,6 +60,7 @@ import {
   healthBadgeVariant,
   type EndpointHealth,
 } from "./inbound-adapters";
+import { RepositoryWebhookAutoExecute } from "./repository-webhook-auto-execute";
 
 export interface RepositoryWebhookRow {
   id: string;
@@ -68,6 +69,10 @@ export interface RepositoryWebhookRow {
   isActive: boolean;
   subscribedEvents: string[];
   baseBranch: string | null;
+  autoExecuteEnabled: boolean;
+  autoExecuteTargetId: number | null;
+  autoExecuteRef: string | null;
+  autoExecuteInputs: unknown;
   endpointHealth: EndpointHealth;
   lastReceivedAt: Date | string | null;
   codeRepositoryConfig: {
@@ -461,6 +466,15 @@ export function RepositoryWebhookCard({
               </Label>
             </div>
           </div>
+        )}
+
+        {!revealed && (
+          <RepositoryWebhookAutoExecute
+            projectId={projectId}
+            webhookConfigId={hook.id}
+            settings={hook}
+            onChanged={onChanged}
+          />
         )}
 
         <div className="flex flex-wrap items-center gap-2">

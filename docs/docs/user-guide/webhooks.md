@@ -100,9 +100,15 @@ A second kind of inbound webhook comes from the application's **code repositorie
 
 The **base branch** is set on the webhook and defaults to the connection's branch under Impact Analysis (or the repository default when none is configured). Set it when the branch you integrate on differs from the one the connection tracks. Each event, and the base branch, can be changed later on the webhook's card. A run is only created when the analysis finds at least one affected test; otherwise the delivery says so. The run is created by the project's creator, in the project's default run state, with the event's link in its note, and the analysis is linked to the run as if a reviewer had accepted every affected test.
 
+### Executing automated cases
+
+A run composed from a repository webhook can also be sent for [automated execution](automated-execution.md) as soon as it exists, the way **Execute automated cases** on the run would. Turn on **Execute automated cases** on the webhook's card, choose the [execution target](automated-execution.md), optionally a branch or ref (blank uses the target's default branch), and the values of the target's parameters, then click **Save**. The setting is unavailable until the project has an enabled execution target.
+
+Every composed run is then requested on that target as the project's creator, covering the run's automated cases; manual cases stay in the run for testers. Nothing is requested when the run has no automated cases, or when the target has been deleted or disabled since the setting was saved. The setting stays on in that case, and the card warns that the target is gone until you choose another. When no execution is requested, the delivery records the reason (`execute:no_automated_cases`, `execute:target_not_found`, `execute:target_disabled`). The request also follows the same limits as the run's **Execute** button: a run that is already completed or already executing records `execute:run_completed` or `execute:execution_in_progress`, and a project past its execution rate limit records `execute:rate_limited`.
+
 ### Deliveries
 
-Repository deliveries appear on the **Deliveries** tab like any other. The subject moves from the event (`pull_request:12`, `push:main`) to the analysis (`analysis:77`) and then to the run (`run:300`); a delivery that was received but not acted on carries the reason (`ignored:push_other_branch`, `ignored:event_disabled`, `run:no_affected_cases`, `duplicate`).
+Repository deliveries appear on the **Deliveries** tab like any other. The subject moves from the event (`pull_request:12`, `push:main`) to the analysis (`analysis:77`) and then to the run (`run:300`); a delivery that was received but not acted on carries the reason (`ignored:push_other_branch`, `ignored:event_disabled`, `run:no_affected_cases`, `execute:target_not_found`, `duplicate`).
 
 ### Provider setup
 

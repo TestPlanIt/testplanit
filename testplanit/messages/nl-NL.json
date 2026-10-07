@@ -1862,7 +1862,12 @@
           "eventBranchPush": "Pushen naar andere branches",
           "eventBranchPushHelp": "Analyseer elke push naar een ander branch tegen de basisbranch, zoals een pull request, en stel voor elke push een testrun samen.",
           "baseBranch": "Basisbranch",
-          "baseBranchHelp": "Pushen naar deze branch worden op zichzelf geanalyseerd; pull requests en andere branches worden ermee vergeleken. Laat leeg om de branch van de verbinding te gebruiken."
+          "baseBranchHelp": "Pushen naar deze branch worden op zichzelf geanalyseerd; pull requests en andere branches worden ermee vergeleken. Laat leeg om de branch van de verbinding te gebruiken.",
+          "autoExecute": "Geautomatiseerde cases uitvoeren",
+          "autoExecuteHelp": "Vraag na het samenstellen van de run geautomatiseerde uitvoering van de geautomatiseerde cases aan op dit doel. Handmatige cases blijven in de run voor testers.",
+          "autoExecuteNoTargets": "Er is geen uitvoeringsdoel geconfigureerd voor dit project. <link>Voeg er een toe</link> om runs automatisch uit te voeren.",
+          "autoExecuteTargetMissing": "Het gekozen uitvoeringsdoel is verwijderd of uitgeschakeld. Runs worden nog steeds samengesteld, maar er wordt geen uitvoering aangevraagd totdat u een ander doel kiest.",
+          "autoExecuteSaveError": "De instellingen voor geautomatiseerde uitvoering konden niet worden opgeslagen"
         },
         "inboundEmptyState": "Nog geen inkomende webhooks. <link>Voeg één toe</link> om issue-updates van uw issue tracker of pull requests en pushes van een verbonden repository te ontvangen.",
         "inboundChooserBitbucket": "Bitbucket",

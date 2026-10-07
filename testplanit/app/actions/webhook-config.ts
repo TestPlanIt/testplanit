@@ -11,6 +11,11 @@ import type { AdapterType } from "~/zenstack/models";
 
 import { runWithAuditContext } from "~/lib/auditContext";
 import { baseDb } from "~/lib/db";
+import {
+  describeInputError,
+  normalizeInputs,
+  validateCustomInputs,
+} from "~/lib/execution/inputs";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { isUniqueConstraintError } from "~/lib/utils/errors";
 import { SYNTHETIC_ISSUE_KEY } from "~/lib/webhooks/adapters/jira";
@@ -2114,6 +2119,94 @@ export async function updateCodeRepositoryWebhookEvents(input: {
         return { success: true };
       } catch (err) {
         console.error("[webhook-config] event update failed", err);
+        return { success: false, error: "Failed to update webhook" };
+      }
+    }
+  );
+}
+
+/**
+ * Turn a repository webhook's automated execution on or off and choose what
+ * it requests: the target, the ref (empty = the target's default) and the
+ * target's parameter inputs. Turning it on needs a live, enabled target of
+ * the project; the choices are kept when it is turned off.
+ */
+export async function updateCodeRepositoryWebhookAutoExecute(input: {
+  projectId: number;
+  webhookConfigId: string;
+  enabled: boolean;
+  targetId: number | null;
+  ref?: string | null;
+  inputs?: Record<string, string>;
+}): Promise<{ success: boolean; error?: string }> {
+  const { projectId, webhookConfigId, enabled } = input;
+  const targetId =
+    typeof input.targetId === "number" &&
+    Number.isInteger(input.targetId) &&
+    input.targetId > 0
+      ? input.targetId
+      : null;
+  if (enabled && targetId === null) {
+    return { success: false, error: "Choose an execution target" };
+  }
+  const inputError = validateCustomInputs(input.inputs);
+  if (inputError) {
+    return { success: false, error: describeInputError(inputError) };
+  }
+  const session = await getServerAuthSession();
+  if (!session?.user) {
+    return { success: false, error: "Unauthorized" };
+  }
+  return runWithAuditContext(
+    {
+      userId: session.user.id,
+      userName: session.user.name ?? undefined,
+      userEmail: session.user.email ?? undefined,
+    },
+    async () => {
+      let authorized: boolean;
+      try {
+        authorized = await canManageWebhookConfig(session, projectId);
+      } catch (err) {
+        console.error("[webhook-config] auth check failed", err);
+        return { success: false, error: "Failed to update webhook" };
+      }
+      if (!authorized) {
+        return { success: false, error: "Forbidden" };
+      }
+      try {
+        if (enabled && targetId !== null) {
+          const target = await baseDb.executionTarget.findFirst({
+            where: { id: targetId, projectId, isDeleted: false },
+            select: { isEnabled: true },
+          });
+          if (!target) {
+            return { success: false, error: "Execution target not found" };
+          }
+          if (!target.isEnabled) {
+            return { success: false, error: "Execution target is disabled" };
+          }
+        }
+        const updated = await baseDb.webhookConfig.updateMany({
+          where: {
+            id: webhookConfigId,
+            projectId,
+            direction: "INBOUND",
+            codeRepositoryConfigId: { not: null },
+          },
+          data: {
+            autoExecuteEnabled: enabled,
+            autoExecuteTargetId: targetId,
+            autoExecuteRef: normalizeBranch(input.ref),
+            autoExecuteInputs: normalizeInputs(input.inputs),
+          },
+        });
+        if (updated.count === 0) {
+          return { success: false, error: "Webhook not found" };
+        }
+        return { success: true };
+      } catch (err) {
+        console.error("[webhook-config] auto-execute update failed", err);
         return { success: false, error: "Failed to update webhook" };
       }
     }

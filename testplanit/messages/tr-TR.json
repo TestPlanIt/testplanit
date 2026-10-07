@@ -1862,7 +1862,12 @@
           "eventBranchPush": "Diğer dallara taşımalar",
           "eventBranchPushHelp": "Diğer dallar taşımasını analiz edin - bir çekme isteği gibi - taban dalına karşı ve her biri için bir çalıştırma oluşturun.",
           "baseBranch": "Temel dal",
-          "baseBranchHelp": "Bu dala taşımalar kendi başlarına analiz edilir; çekme istekleri ve diğer dallar ona karşı karşılaştırılır. Bağlantının dalını kullanmak için boş bırakın."
+          "baseBranchHelp": "Bu dala taşımalar kendi başlarına analiz edilir; çekme istekleri ve diğer dallar ona karşı karşılaştırılır. Bağlantının dalını kullanmak için boş bırakın.",
+          "autoExecute": "Otomatik senaryoları çalıştır",
+          "autoExecuteHelp": "Koşu oluşturulduktan sonra, otomatik senaryolarının bu hedefte otomatik olarak çalıştırılmasını iste. Manuel senaryolar test uzmanları için koşuda kalır.",
+          "autoExecuteNoTargets": "Bu proje için yapılandırılmış bir çalıştırma hedefi yok. Koşuları otomatik çalıştırmak için <link>bir tane ekleyin</link>.",
+          "autoExecuteTargetMissing": "Seçilen çalıştırma hedefi silindi veya devre dışı bırakıldı. Koşular yine oluşturulur, ancak başka bir hedef seçene kadar çalıştırma istenmez.",
+          "autoExecuteSaveError": "Otomatik çalıştırma ayarları kaydedilemedi"
         },
         "inboundEmptyState": "Henüz gelen web kancası yok. Sorun izleyicinizden sorun güncellemeleri almak veya bağlı bir depodan çekme istekleri ve taşımalar almak için <link>birini ekleyin</link>.",
         "inboundChooserBitbucket": "Bitbucket",

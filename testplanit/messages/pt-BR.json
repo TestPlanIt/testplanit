@@ -1862,7 +1862,12 @@
           "eventBranchPush": "Pushes para outras ramificações",
           "eventBranchPushHelp": "Analisa cada push em qualquer outra ramificação em relação à ramificação base, como um pull request, e compõe uma run para cada.",
           "baseBranch": "Ramificação base",
-          "baseBranchHelp": "Pushes para esta ramificação são analisados sozinhos; pull requests e outras ramificações são comparados com ela. Deixe vazio para usar a ramificação da conexão."
+          "baseBranchHelp": "Pushes para esta ramificação são analisados sozinhos; pull requests e outras ramificações são comparados com ela. Deixe vazio para usar a ramificação da conexão.",
+          "autoExecute": "Executar casos automatizados",
+          "autoExecuteHelp": "Depois que a execução for criada, solicitar a execução automatizada dos seus casos automatizados neste destino. Os casos manuais permanecem na execução para os testadores.",
+          "autoExecuteNoTargets": "Nenhum destino de execução está configurado para este projeto. <link>Adicione um</link> para executar as execuções automaticamente.",
+          "autoExecuteTargetMissing": "O destino de execução escolhido foi excluído ou desativado. As execuções continuam sendo criadas, mas nenhuma execução é solicitada até você escolher outro destino.",
+          "autoExecuteSaveError": "Não foi possível salvar as configurações de execução automatizada"
         },
         "inboundEmptyState": "Ainda não há webhooks de entrada. <link>Adicione um</link> para receber atualizações de problemas do seu rastreador de problemas, ou pull requests e pushes de um repositório conectado.",
         "inboundChooserBitbucket": "Bitbucket",

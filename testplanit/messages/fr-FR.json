@@ -1862,7 +1862,12 @@
           "eventBranchPush": "Poussées vers d'autres branches",
           "eventBranchPushHelp": "Analysez chaque poussée vers n'importe quelle autre branche par rapport à la branche de base, comme une demande d'extraction, et composez une exécution pour chacune.",
           "baseBranch": "Branche de base",
-          "baseBranchHelp": "Les poussées vers cette branche sont analysées par elles-mêmes ; les demandes d'extraction et les autres branches y sont comparées. Laissez vide pour utiliser la branche de la connexion."
+          "baseBranchHelp": "Les poussées vers cette branche sont analysées par elles-mêmes ; les demandes d'extraction et les autres branches y sont comparées. Laissez vide pour utiliser la branche de la connexion.",
+          "autoExecute": "Exécuter les cas automatisés",
+          "autoExecuteHelp": "Une fois l'exécution créée, demander l'exécution automatisée de ses cas automatisés sur cette cible. Les cas manuels restent dans l'exécution pour les testeurs.",
+          "autoExecuteNoTargets": "Aucune cible d'exécution n'est configurée pour ce projet. <link>Ajoutez-en une</link> pour exécuter les exécutions automatiquement.",
+          "autoExecuteTargetMissing": "La cible d'exécution choisie a été supprimée ou désactivée. Les exécutions sont toujours créées, mais aucune exécution n'est demandée tant que vous n'avez pas choisi une autre cible.",
+          "autoExecuteSaveError": "Impossible d'enregistrer les paramètres d'exécution automatisée"
         },
         "inboundEmptyState": "Pas encore de webhooks entrants. <link>Ajoutez-en un</link> pour recevoir les mises à jour des tickets de votre système de suivi des problèmes, ou les demandes d'extraction et les poussées d'un dépôt connecté.",
         "inboundChooserBitbucket": "Bitbucket",
