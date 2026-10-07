@@ -700,7 +700,10 @@ export function NotificationContent({
   }
 
   // Handle system announcements
-  if (notification.type === "SYSTEM_ANNOUNCEMENT") {
+  if (
+    notification.type === "SYSTEM_ANNOUNCEMENT" ||
+    notification.type === "WHATS_NEW"
+  ) {
     const hasRichContent = notification.data?.richContent;
     const hasHtmlContent = notification.data?.htmlContent;
 
@@ -737,53 +740,6 @@ export function NotificationContent({
             </p>
           )}
         </div>
-      </div>
-    );
-  }
-
-  // Handle URL generation completion
-  if (notification.type === "GENERATE_FROM_URL_COMPLETE") {
-    if (data.projectId && data.jobId) {
-      const reviewLink = `/projects/repository/${data.projectId}?urlJobId=${data.jobId}`;
-      const isFailure = data.error === true;
-
-      return (
-        <div className="space-y-2">
-          <h4 className="font-medium text-sm">{notification.title}</h4>
-          <div className="text-sm text-muted-foreground space-y-1">
-            <p>{notification.message}</p>
-            {data.url && <p className="text-xs truncate">{data.url}</p>}
-            {!isFailure && (
-              <div className="flex items-center gap-1">
-                <Link
-                  href={reviewLink}
-                  className="font-medium text-primary hover:underline inline-flex items-center gap-1"
-                >
-                  {t("reviewGeneratedCases")}
-                  <ExternalLink className="h-3 w-3" />
-                </Link>
-              </div>
-            )}
-            {data.projectName && (
-              <div className="flex items-center gap-1 flex-wrap">
-                <span>{t("inProject")}</span>
-                <ProjectNameCell
-                  projectId={data.projectId}
-                  value={data.projectName}
-                  size="sm"
-                />
-              </div>
-            )}
-          </div>
-        </div>
-      );
-    }
-
-    // Fallback for notifications without complete data
-    return (
-      <div className="space-y-1">
-        <h4 className="font-medium text-sm">{notification.title}</h4>
-        <p className="text-sm text-muted-foreground">{notification.message}</p>
       </div>
     );
   }

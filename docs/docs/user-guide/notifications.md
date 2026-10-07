@@ -17,14 +17,30 @@ The notification system consists of:
 
 ## Notification Types
 
-TestPlanIt currently supports the following notification types:
+Every notification TestPlanIt sends belongs to one of the types below. They are grouped the way they appear under **What to notify me about** on your profile, where each one has a switch that is on by default (see [Choosing which notifications you receive](#choosing-which-notifications-you-receive)). Two types are **always on** and cannot be switched off; two are sent to **administrators** only.
 
-- **Work Assigned** - When a test case or exploratory testing session is assigned to you
-- **Comment Mentions** - When someone mentions you in a comment (@username)
-- **System Announcements** - Important system-wide announcements and updates
-- **Milestone Due Reminder** - When a milestone's due date is approaching or overdue
-- **Test Run Ready to Complete** - When every test case in a run has been executed, sent to the users who can complete that run; includes a **Review and complete** link to the run
-- **Integration Connection Expired** - When an OAuth integration connection you authorized can no longer refresh its token and must be reconnected; includes a **Reconnect** link that starts the consent flow
+| Group               | Notification                                       | Sent when                                                                                        | Sent to                                                              |
+| ------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------- |
+| Assignments         | **Work assigned to me**                            | A test run case is assigned to you, singly or in bulk (including automatic distribution)         | The assignee                                                         |
+| Assignments         | **Session assigned to me**                         | A session is created with you as its assignee, or reassigned to you                              | The assignee                                                         |
+| Comments            | **Mentions in comments**                           | Someone @-mentions you in a comment on a case, run, session or milestone, or in a review comment | Each mentioned user except the author                                |
+| Reviews             | **Review requested**                               | A review is requested from you or from a role you hold, singly or in bulk                        | The reviewer or role holders, minus the requester                    |
+| Reviews             | **Review approved**                                | A reviewer approves your request                                                                 | The requester                                                        |
+| Reviews             | **Changes requested**                              | A reviewer asks for changes on your request                                                      | The requester                                                        |
+| Reviews             | **Review rejected**                                | A reviewer rejects your request                                                                  | The requester                                                        |
+| Reviews             | **Review cancelled**                               | A request you were asked to review is cancelled, or the item under review is deleted             | The pending reviewers, minus whoever cancelled                       |
+| Reviews             | **Review reminders**                               | A review you owe is older than the reminder threshold (hourly), or the requester nudges you      | The pending reviewers                                                |
+| Runs and milestones | **Test run ready to complete**                     | Every case in a run has a result; includes a **Review and complete** link                        | Users who can close the run, plus admins and project admins          |
+| Runs and milestones | **Milestone due reminders**                        | A milestone is inside its reminder window or overdue (daily)                                     | The milestone creator and everyone involved in its runs and sessions |
+| Sharing             | **Share link viewed**                              | Someone opens a share link you created with notify-on-view enabled                               | The link creator                                                     |
+| AI and jobs         | **AI steps derived**                               | An AI step-derivation job you started has written steps                                          | The user who started the job                                         |
+| Integrations        | **Integration needs re-authorization** (always on) | Your OAuth connection to an integration expired or was revoked; includes a **Reconnect** link    | The connection owner                                                 |
+| System              | **Admin announcements** (always on)                | An administrator sends a system notification from **Admin → Notifications**                      | Every active user                                                    |
+| System              | **What's New after an upgrade**                    | Your first page load after TestPlanIt is upgraded to a version with release notes                | The current user                                                     |
+| Administration      | **New user registrations** (admins)                | A new user signs up through the form, SSO or SAML                                                | All administrators                                                   |
+| Administration      | **AI budget alerts** (admins)                      | LLM spend crosses a budget threshold for the billing period                                      | All administrators                                                   |
+
+A type added in a future release is on for everyone automatically; nothing needs to be changed after an upgrade.
 
 ## Notification Center UI
 
@@ -239,6 +255,8 @@ If a project is configured so that its **default access** role can close test ru
 
 ## User Preferences
 
+Two settings on your profile control notifications. The **notification mode** decides _how_ you are reached; the per-type switches decide _what_ you are told about.
+
 ### Notification Modes
 
 Users can configure their notification preferences with these modes:
@@ -249,14 +267,26 @@ Users can configure their notification preferences with these modes:
 4. **None** (`NONE`) - No notifications (not recommended)
 5. **Use Global Settings** (`USE_GLOBAL`) - Follow system-wide default settings
 
+### Choosing which notifications you receive
+
+Below the notification mode, the **What to notify me about** section lists every notification type you can receive, grouped as in the [table above](#notification-types), each with a switch:
+
+- Every switch is **on by default**. Switch a type off to stop it on every channel: the bell, immediate email and the daily digest. The change saves as soon as you flip the switch.
+- **Always on** types (integration re-authorization, admin announcements) are shown switched on and cannot be changed.
+- Types sent only to administrators appear only on an administrator's profile.
+- **Reset to defaults** turns every type back on.
+- If your effective mode is **None**, the switches stay editable, but nothing is delivered until you pick another mode.
+
+Muting a type affects only what _you_ receive. A review request to a role you hold is still created and still appears in your [Reviews inbox](reviews-inbox.md); you are simply not notified about it, and the requester's recipient preview counts you as silenced.
+
 ### Configuring Preferences
 
 Users can manage their notification preferences in their profile:
 
 1. Navigate to your user profile
-2. Click on "Notification Preferences"
-3. Select your preferred notification mode
-4. Save changes
+2. Open the **Preferences** section and click **Edit**
+3. Select your preferred notification mode and save
+4. Under **What to notify me about**, switch off any type you do not want
 
 ## Email Templates
 
@@ -422,10 +452,10 @@ If new notifications only appear after a manual page refresh, the SSE event stre
 
 ### Adding New Notification Types
 
-1. Add the type to the notification enum in schema
-2. Create handler in the appropriate service
-3. Queue notification job when event occurs
-4. Update email templates if needed
+1. Add the type to the `NotificationType` enum in `schema.zmodel` and run `pnpm generate`
+2. Add a matching entry to the catalogue in `lib/notifications/catalogue.ts` (group, audience, whether it is optional) and the `users.profile.notifications.types.<TYPE>` label and description in `messages/en-US.json`; the catalogue test fails until both exist
+3. Add a rendering branch in `components/NotificationContent.tsx` and, if the type is emailed, in `workers/emailWorker.ts`
+4. Queue the notification job when the event occurs; the worker applies the user's mode and muted-type preferences, so no per-type delivery code is needed
 
 ### Creating New Email Templates
 

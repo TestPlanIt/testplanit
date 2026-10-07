@@ -81,8 +81,6 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
       timeFormat: "HH_MM_A",
       timezone: "Etc/UTC",
       notificationMode: "USE_GLOBAL",
-      emailNotifications: true,
-      inAppNotifications: true,
     },
   };
 
@@ -480,8 +478,6 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
           timeFormat: "HH_MM_A",
           timezone: "Etc/UTC",
           notificationMode: "USE_GLOBAL",
-          emailNotifications: true,
-          inAppNotifications: true,
         },
       };
       (baseDb.$transaction as any).mockResolvedValue(updatedUser);
@@ -502,8 +498,6 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
         userPreferences: {
           ...mockExistingUser.userPreferences,
           notificationMode: "IN_APP_EMAIL_IMMEDIATE",
-          emailNotifications: true,
-          inAppNotifications: true,
         },
       };
       (baseDb.$transaction as any).mockResolvedValue(updatedUser);
@@ -511,8 +505,6 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
       const request = createRequest({
         userPreferences: {
           notificationMode: "IN_APP_EMAIL_IMMEDIATE",
-          emailNotifications: true,
-          inAppNotifications: true,
         },
       });
       const context = createContext("user-123");

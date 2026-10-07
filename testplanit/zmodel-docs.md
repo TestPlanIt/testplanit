@@ -3302,8 +3302,7 @@ erDiagram
   TimeFormat timeFormat
   String timezone
   NotificationMode notificationMode
-  Boolean emailNotifications
-  Boolean inAppNotifications
+  NotificationType[] mutedNotificationTypes
   Boolean hasCompletedWelcomeTour
   Boolean hasCompletedInitialPreferencesSetup
 }

@@ -158504,6 +158504,220 @@
           }
         }
       },
+      "NotificationType": {
+        "type": "string",
+        "enum": [
+          "WORK_ASSIGNED",
+          "SESSION_ASSIGNED",
+          "SYSTEM_ANNOUNCEMENT",
+          "USER_REGISTERED",
+          "COMMENT_MENTION",
+          "MILESTONE_DUE_REMINDER",
+          "SHARE_LINK_ACCESSED",
+          "LLM_BUDGET_ALERT",
+          "COPY_MOVE_COMPLETE",
+          "GENERATE_FROM_URL_COMPLETE",
+          "REVIEW_REQUESTED",
+          "REVIEW_APPROVED",
+          "REVIEW_CHANGES_REQUESTED",
+          "REVIEW_REJECTED",
+          "REVIEW_CANCELLED",
+          "REVIEW_REMINDER",
+          "AI_STEPS_DERIVED",
+          "INTEGRATION_AUTH_EXPIRED",
+          "RUN_READY_TO_COMPLETE",
+          "WHATS_NEW"
+        ]
+      },
+      "EnumNotificationTypeNullableListFilter": {
+        "type": "object",
+        "properties": {
+          "equals": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/NotificationType"
+                }
+              }
+            ]
+          },
+          "has": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/NotificationType"
+              }
+            ]
+          },
+          "hasEvery": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationType"
+            }
+          },
+          "hasSome": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationType"
+            }
+          },
+          "isEmpty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "EnumNotificationTypeFilter": {
+        "type": "object",
+        "properties": {
+          "equals": {
+            "$ref": "#/components/schemas/NotificationType"
+          },
+          "in": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationType"
+            }
+          },
+          "notIn": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationType"
+            }
+          },
+          "not": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NotificationType"
+              },
+              {
+                "$ref": "#/components/schemas/NestedEnumNotificationTypeFilter"
+              }
+            ]
+          }
+        }
+      },
+      "NestedEnumNotificationTypeFilter": {
+        "type": "object",
+        "properties": {
+          "equals": {
+            "$ref": "#/components/schemas/NotificationType"
+          },
+          "in": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationType"
+            }
+          },
+          "notIn": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationType"
+            }
+          },
+          "not": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NotificationType"
+              },
+              {
+                "$ref": "#/components/schemas/NestedEnumNotificationTypeFilter"
+              }
+            ]
+          }
+        }
+      },
+      "EnumNotificationTypeWithAggregatesFilter": {
+        "type": "object",
+        "properties": {
+          "equals": {
+            "$ref": "#/components/schemas/NotificationType"
+          },
+          "in": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationType"
+            }
+          },
+          "notIn": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationType"
+            }
+          },
+          "not": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NotificationType"
+              },
+              {
+                "$ref": "#/components/schemas/NestedEnumNotificationTypeWithAggregatesFilter"
+              }
+            ]
+          },
+          "_count": {
+            "$ref": "#/components/schemas/NestedIntFilter"
+          },
+          "_min": {
+            "$ref": "#/components/schemas/NestedEnumNotificationTypeFilter"
+          },
+          "_max": {
+            "$ref": "#/components/schemas/NestedEnumNotificationTypeFilter"
+          }
+        }
+      },
+      "NestedEnumNotificationTypeWithAggregatesFilter": {
+        "type": "object",
+        "properties": {
+          "equals": {
+            "$ref": "#/components/schemas/NotificationType"
+          },
+          "in": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationType"
+            }
+          },
+          "notIn": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationType"
+            }
+          },
+          "not": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NotificationType"
+              },
+              {
+                "$ref": "#/components/schemas/NestedEnumNotificationTypeWithAggregatesFilter"
+              }
+            ]
+          },
+          "_count": {
+            "$ref": "#/components/schemas/NestedIntFilter"
+          },
+          "_min": {
+            "$ref": "#/components/schemas/NestedEnumNotificationTypeFilter"
+          },
+          "_max": {
+            "$ref": "#/components/schemas/NestedEnumNotificationTypeFilter"
+          }
+        }
+      },
+      "EnumNotificationTypeFieldUpdateOperationsInput": {
+        "type": "object",
+        "properties": {
+          "set": {
+            "$ref": "#/components/schemas/NotificationType"
+          }
+        }
+      },
       "DetailsDisplayMode": {
         "type": "string",
         "enum": [
@@ -163068,176 +163282,6 @@
         "properties": {
           "set": {
             "$ref": "#/components/schemas/JUnitAttachmentType"
-          }
-        }
-      },
-      "NotificationType": {
-        "type": "string",
-        "enum": [
-          "WORK_ASSIGNED",
-          "SESSION_ASSIGNED",
-          "SYSTEM_ANNOUNCEMENT",
-          "USER_REGISTERED",
-          "COMMENT_MENTION",
-          "MILESTONE_DUE_REMINDER",
-          "SHARE_LINK_ACCESSED",
-          "LLM_BUDGET_ALERT",
-          "COPY_MOVE_COMPLETE",
-          "GENERATE_FROM_URL_COMPLETE",
-          "REVIEW_REQUESTED",
-          "REVIEW_APPROVED",
-          "REVIEW_CHANGES_REQUESTED",
-          "REVIEW_REJECTED",
-          "REVIEW_CANCELLED",
-          "REVIEW_REMINDER",
-          "AI_STEPS_DERIVED",
-          "INTEGRATION_AUTH_EXPIRED",
-          "RUN_READY_TO_COMPLETE"
-        ]
-      },
-      "EnumNotificationTypeFilter": {
-        "type": "object",
-        "properties": {
-          "equals": {
-            "$ref": "#/components/schemas/NotificationType"
-          },
-          "in": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/NotificationType"
-            }
-          },
-          "notIn": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/NotificationType"
-            }
-          },
-          "not": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/NotificationType"
-              },
-              {
-                "$ref": "#/components/schemas/NestedEnumNotificationTypeFilter"
-              }
-            ]
-          }
-        }
-      },
-      "NestedEnumNotificationTypeFilter": {
-        "type": "object",
-        "properties": {
-          "equals": {
-            "$ref": "#/components/schemas/NotificationType"
-          },
-          "in": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/NotificationType"
-            }
-          },
-          "notIn": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/NotificationType"
-            }
-          },
-          "not": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/NotificationType"
-              },
-              {
-                "$ref": "#/components/schemas/NestedEnumNotificationTypeFilter"
-              }
-            ]
-          }
-        }
-      },
-      "EnumNotificationTypeWithAggregatesFilter": {
-        "type": "object",
-        "properties": {
-          "equals": {
-            "$ref": "#/components/schemas/NotificationType"
-          },
-          "in": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/NotificationType"
-            }
-          },
-          "notIn": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/NotificationType"
-            }
-          },
-          "not": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/NotificationType"
-              },
-              {
-                "$ref": "#/components/schemas/NestedEnumNotificationTypeWithAggregatesFilter"
-              }
-            ]
-          },
-          "_count": {
-            "$ref": "#/components/schemas/NestedIntFilter"
-          },
-          "_min": {
-            "$ref": "#/components/schemas/NestedEnumNotificationTypeFilter"
-          },
-          "_max": {
-            "$ref": "#/components/schemas/NestedEnumNotificationTypeFilter"
-          }
-        }
-      },
-      "NestedEnumNotificationTypeWithAggregatesFilter": {
-        "type": "object",
-        "properties": {
-          "equals": {
-            "$ref": "#/components/schemas/NotificationType"
-          },
-          "in": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/NotificationType"
-            }
-          },
-          "notIn": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/NotificationType"
-            }
-          },
-          "not": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/NotificationType"
-              },
-              {
-                "$ref": "#/components/schemas/NestedEnumNotificationTypeWithAggregatesFilter"
-              }
-            ]
-          },
-          "_count": {
-            "$ref": "#/components/schemas/NestedIntFilter"
-          },
-          "_min": {
-            "$ref": "#/components/schemas/NestedEnumNotificationTypeFilter"
-          },
-          "_max": {
-            "$ref": "#/components/schemas/NestedEnumNotificationTypeFilter"
-          }
-        }
-      },
-      "EnumNotificationTypeFieldUpdateOperationsInput": {
-        "type": "object",
-        "properties": {
-          "set": {
-            "$ref": "#/components/schemas/NotificationType"
           }
         }
       },
@@ -332428,11 +332472,11 @@
           "notificationMode": {
             "$ref": "#/components/schemas/NotificationMode"
           },
-          "emailNotifications": {
-            "type": "boolean"
-          },
-          "inAppNotifications": {
-            "type": "boolean"
+          "mutedNotificationTypes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationType"
+            }
           },
           "detailsDisplayMode": {
             "$ref": "#/components/schemas/DetailsDisplayMode"
@@ -332455,8 +332499,7 @@
           "timeFormat",
           "timezone",
           "notificationMode",
-          "emailNotifications",
-          "inAppNotifications",
+          "mutedNotificationTypes",
           "detailsDisplayMode",
           "hasCompletedWelcomeTour",
           "hasCompletedInitialPreferencesSetup"
@@ -332502,10 +332545,7 @@
           "notificationMode": {
             "type": "boolean"
           },
-          "emailNotifications": {
-            "type": "boolean"
-          },
-          "inAppNotifications": {
+          "mutedNotificationTypes": {
             "type": "boolean"
           },
           "detailsDisplayMode": {
@@ -332680,25 +332720,8 @@
               }
             ]
           },
-          "emailNotifications": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/BoolFilter"
-              },
-              {
-                "type": "boolean"
-              }
-            ]
-          },
-          "inAppNotifications": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/BoolFilter"
-              },
-              {
-                "type": "boolean"
-              }
-            ]
+          "mutedNotificationTypes": {
+            "$ref": "#/components/schemas/EnumNotificationTypeNullableListFilter"
           },
           "detailsDisplayMode": {
             "oneOf": [
@@ -332853,25 +332876,8 @@
               }
             ]
           },
-          "emailNotifications": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/BoolFilter"
-              },
-              {
-                "type": "boolean"
-              }
-            ]
-          },
-          "inAppNotifications": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/BoolFilter"
-              },
-              {
-                "type": "boolean"
-              }
-            ]
+          "mutedNotificationTypes": {
+            "$ref": "#/components/schemas/EnumNotificationTypeNullableListFilter"
           },
           "detailsDisplayMode": {
             "oneOf": [
@@ -333030,25 +333036,8 @@
               }
             ]
           },
-          "emailNotifications": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/BoolWithAggregatesFilter"
-              },
-              {
-                "type": "boolean"
-              }
-            ]
-          },
-          "inAppNotifications": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/BoolWithAggregatesFilter"
-              },
-              {
-                "type": "boolean"
-              }
-            ]
+          "mutedNotificationTypes": {
+            "$ref": "#/components/schemas/EnumNotificationTypeNullableListFilter"
           },
           "detailsDisplayMode": {
             "oneOf": [
@@ -333140,10 +333129,7 @@
           "notificationMode": {
             "$ref": "#/components/schemas/SortOrder"
           },
-          "emailNotifications": {
-            "$ref": "#/components/schemas/SortOrder"
-          },
-          "inAppNotifications": {
+          "mutedNotificationTypes": {
             "$ref": "#/components/schemas/SortOrder"
           },
           "detailsDisplayMode": {
@@ -333169,12 +333155,49 @@
           "timeFormat",
           "timezone",
           "notificationMode",
-          "emailNotifications",
-          "inAppNotifications",
+          "mutedNotificationTypes",
           "detailsDisplayMode",
           "hasCompletedWelcomeTour",
           "hasCompletedInitialPreferencesSetup"
         ]
+      },
+      "UserPreferencesCreatemutedNotificationTypesInput": {
+        "type": "object",
+        "properties": {
+          "set": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationType"
+            }
+          }
+        },
+        "required": [
+          "set"
+        ]
+      },
+      "UserPreferencesUpdatemutedNotificationTypesInput": {
+        "type": "object",
+        "properties": {
+          "set": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationType"
+            }
+          },
+          "push": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NotificationType"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/NotificationType"
+                }
+              }
+            ]
+          }
+        }
       },
       "UserPreferencesCountAggregateInput": {
         "type": "object",
@@ -333206,10 +333229,7 @@
           "notificationMode": {
             "type": "boolean"
           },
-          "emailNotifications": {
-            "type": "boolean"
-          },
-          "inAppNotifications": {
+          "mutedNotificationTypes": {
             "type": "boolean"
           },
           "detailsDisplayMode": {
@@ -333256,10 +333276,7 @@
           "notificationMode": {
             "type": "integer"
           },
-          "emailNotifications": {
-            "type": "integer"
-          },
-          "inAppNotifications": {
+          "mutedNotificationTypes": {
             "type": "integer"
           },
           "detailsDisplayMode": {
@@ -333285,8 +333302,7 @@
           "timeFormat",
           "timezone",
           "notificationMode",
-          "emailNotifications",
-          "inAppNotifications",
+          "mutedNotificationTypes",
           "detailsDisplayMode",
           "hasCompletedWelcomeTour",
           "hasCompletedInitialPreferencesSetup",
@@ -333321,12 +333337,6 @@
             "type": "boolean"
           },
           "notificationMode": {
-            "type": "boolean"
-          },
-          "emailNotifications": {
-            "type": "boolean"
-          },
-          "inAppNotifications": {
             "type": "boolean"
           },
           "detailsDisplayMode": {
@@ -333433,26 +333443,6 @@
               }
             ]
           },
-          "emailNotifications": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "boolean"
-              }
-            ]
-          },
-          "inAppNotifications": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "boolean"
-              }
-            ]
-          },
           "detailsDisplayMode": {
             "oneOf": [
               {
@@ -333513,12 +333503,6 @@
             "type": "boolean"
           },
           "notificationMode": {
-            "type": "boolean"
-          },
-          "emailNotifications": {
-            "type": "boolean"
-          },
-          "inAppNotifications": {
             "type": "boolean"
           },
           "detailsDisplayMode": {
@@ -333625,26 +333609,6 @@
               }
             ]
           },
-          "emailNotifications": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "boolean"
-              }
-            ]
-          },
-          "inAppNotifications": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "boolean"
-              }
-            ]
-          },
           "detailsDisplayMode": {
             "oneOf": [
               {
@@ -333742,11 +333706,18 @@
           "notificationMode": {
             "$ref": "#/components/schemas/NotificationMode"
           },
-          "emailNotifications": {
-            "type": "boolean"
-          },
-          "inAppNotifications": {
-            "type": "boolean"
+          "mutedNotificationTypes": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "$ref": "#/components/schemas/NotificationType"
+                }
+              ]
+            }
           },
           "detailsDisplayMode": {
             "$ref": "#/components/schemas/DetailsDisplayMode"
@@ -333798,8 +333769,6 @@
           "timeFormat",
           "timezone",
           "notificationMode",
-          "emailNotifications",
-          "inAppNotifications",
           "detailsDisplayMode",
           "hasCompletedWelcomeTour",
           "hasCompletedInitialPreferencesSetup"
@@ -333832,11 +333801,18 @@
           "notificationMode": {
             "$ref": "#/components/schemas/NotificationMode"
           },
-          "emailNotifications": {
-            "type": "boolean"
-          },
-          "inAppNotifications": {
-            "type": "boolean"
+          "mutedNotificationTypes": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/UserPreferencesCreatemutedNotificationTypesInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/NotificationType"
+                }
+              }
+            ]
           },
           "detailsDisplayMode": {
             "$ref": "#/components/schemas/DetailsDisplayMode"
@@ -333938,23 +333914,16 @@
               }
             ]
           },
-          "emailNotifications": {
+          "mutedNotificationTypes": {
             "oneOf": [
               {
-                "type": "boolean"
+                "$ref": "#/components/schemas/UserPreferencesUpdatemutedNotificationTypesInput"
               },
               {
-                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
-              }
-            ]
-          },
-          "inAppNotifications": {
-            "oneOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/NotificationType"
+                }
               }
             ]
           },
@@ -334076,23 +334045,16 @@
               }
             ]
           },
-          "emailNotifications": {
+          "mutedNotificationTypes": {
             "oneOf": [
               {
-                "type": "boolean"
+                "$ref": "#/components/schemas/UserPreferencesUpdatemutedNotificationTypesInput"
               },
               {
-                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
-              }
-            ]
-          },
-          "inAppNotifications": {
-            "oneOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/NotificationType"
+                }
               }
             ]
           },
@@ -334158,11 +334120,18 @@
           "notificationMode": {
             "$ref": "#/components/schemas/NotificationMode"
           },
-          "emailNotifications": {
-            "type": "boolean"
-          },
-          "inAppNotifications": {
-            "type": "boolean"
+          "mutedNotificationTypes": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/UserPreferencesCreatemutedNotificationTypesInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/NotificationType"
+                }
+              }
+            ]
           },
           "detailsDisplayMode": {
             "$ref": "#/components/schemas/DetailsDisplayMode"
@@ -334205,11 +334174,18 @@
           "notificationMode": {
             "$ref": "#/components/schemas/NotificationMode"
           },
-          "emailNotifications": {
-            "type": "boolean"
-          },
-          "inAppNotifications": {
-            "type": "boolean"
+          "mutedNotificationTypes": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/UserPreferencesCreatemutedNotificationTypesInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/NotificationType"
+                }
+              }
+            ]
           },
           "detailsDisplayMode": {
             "$ref": "#/components/schemas/DetailsDisplayMode"
@@ -334249,11 +334225,18 @@
           "notificationMode": {
             "$ref": "#/components/schemas/NotificationMode"
           },
-          "emailNotifications": {
-            "type": "boolean"
-          },
-          "inAppNotifications": {
-            "type": "boolean"
+          "mutedNotificationTypes": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/UserPreferencesCreatemutedNotificationTypesInput"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/NotificationType"
+                }
+              }
+            ]
           },
           "detailsDisplayMode": {
             "$ref": "#/components/schemas/DetailsDisplayMode"
@@ -334349,23 +334332,16 @@
               }
             ]
           },
-          "emailNotifications": {
+          "mutedNotificationTypes": {
             "oneOf": [
               {
-                "type": "boolean"
+                "$ref": "#/components/schemas/UserPreferencesUpdatemutedNotificationTypesInput"
               },
               {
-                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
-              }
-            ]
-          },
-          "inAppNotifications": {
-            "oneOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/NotificationType"
+                }
               }
             ]
           },
@@ -334484,23 +334460,16 @@
               }
             ]
           },
-          "emailNotifications": {
+          "mutedNotificationTypes": {
             "oneOf": [
               {
-                "type": "boolean"
+                "$ref": "#/components/schemas/UserPreferencesUpdatemutedNotificationTypesInput"
               },
               {
-                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
-              }
-            ]
-          },
-          "inAppNotifications": {
-            "oneOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/NotificationType"
+                }
               }
             ]
           },

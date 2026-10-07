@@ -338,13 +338,6 @@ export function InitialPreferencesDialog() {
         timezone: data.timezone,
         notificationMode: data.notificationMode,
         detailsDisplayMode: data.detailsDisplayMode,
-        emailNotifications:
-          data.notificationMode === "IN_APP_EMAIL_IMMEDIATE" ||
-          data.notificationMode === "IN_APP_EMAIL_DAILY",
-        inAppNotifications:
-          data.notificationMode === "IN_APP" ||
-          data.notificationMode === "IN_APP_EMAIL_IMMEDIATE" ||
-          data.notificationMode === "IN_APP_EMAIL_DAILY",
         hasCompletedInitialPreferencesSetup: true,
       };
 

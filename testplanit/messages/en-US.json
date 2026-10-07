@@ -2876,11 +2876,97 @@
           "label": "Notification Mode",
           "useGlobal": "Use Global Settings"
         },
-        "options": {
-          "title": "Additional Options",
-          "email": {
-            "label": "Email Notifications",
-            "description": "Receive notifications via email"
+        "typeSection": {
+          "title": "What to notify me about",
+          "description": "Every kind of notification is on by default. Switch off the ones you do not want. The notification mode above still decides how you are reached.",
+          "modeNoneNote": "Nothing is delivered while your notification mode is None. Your choices here apply as soon as you pick another mode.",
+          "locked": "Always on",
+          "resetToDefaults": "Reset to defaults",
+          "adminOnly": "Sent to administrators"
+        },
+        "groups": {
+          "assignments": "Assignments",
+          "comments": "Comments",
+          "reviews": "Reviews",
+          "runsAndMilestones": "Runs and milestones",
+          "sharing": "Sharing",
+          "aiAndJobs": "AI and jobs",
+          "integrations": "Integrations",
+          "system": "System",
+          "administration": "Administration"
+        },
+        "types": {
+          "WORK_ASSIGNED": {
+            "label": "Work assigned to me",
+            "description": "A test run case is assigned to you, singly or in bulk."
+          },
+          "SESSION_ASSIGNED": {
+            "label": "Session assigned to me",
+            "description": "A session is created with you as its assignee, or reassigned to you."
+          },
+          "COMMENT_MENTION": {
+            "label": "Mentions in comments",
+            "description": "Someone @-mentions you in a comment on a case, run, session, milestone or review."
+          },
+          "REVIEW_REQUESTED": {
+            "label": "Review requested",
+            "description": "A review is requested from you or from a role you hold."
+          },
+          "REVIEW_APPROVED": {
+            "label": "Review approved",
+            "description": "A reviewer approves your request."
+          },
+          "REVIEW_CHANGES_REQUESTED": {
+            "label": "Changes requested",
+            "description": "A reviewer asks for changes on your request."
+          },
+          "REVIEW_REJECTED": {
+            "label": "Review rejected",
+            "description": "A reviewer rejects your request."
+          },
+          "REVIEW_CANCELLED": {
+            "label": "Review cancelled",
+            "description": "A request you were asked to review is cancelled, or the item under review is deleted."
+          },
+          "REVIEW_REMINDER": {
+            "label": "Review reminders",
+            "description": "A review you owe is older than the reminder threshold, or the requester nudges you."
+          },
+          "RUN_READY_TO_COMPLETE": {
+            "label": "Test run ready to complete",
+            "description": "Every case in a run you can complete has a result."
+          },
+          "MILESTONE_DUE_REMINDER": {
+            "label": "Milestone due reminders",
+            "description": "A milestone you are involved in is due soon or overdue."
+          },
+          "SHARE_LINK_ACCESSED": {
+            "label": "Share link viewed",
+            "description": "Someone opens a share link you created with notify-on-view enabled."
+          },
+          "AI_STEPS_DERIVED": {
+            "label": "AI steps derived",
+            "description": "An AI step-derivation job you started has written steps."
+          },
+          "INTEGRATION_AUTH_EXPIRED": {
+            "label": "Integration needs re-authorization",
+            "description": "Your connection to an integration expired or was revoked and must be reconnected."
+          },
+          "SYSTEM_ANNOUNCEMENT": {
+            "label": "Admin announcements",
+            "description": "An administrator sends a system notification to every user."
+          },
+          "WHATS_NEW": {
+            "label": "What's New after an upgrade",
+            "description": "A summary of new features on your first visit after TestPlanIt is upgraded."
+          },
+          "USER_REGISTERED": {
+            "label": "New user registrations",
+            "description": "A new user signs up through the form, SSO or SAML."
+          },
+          "LLM_BUDGET_ALERT": {
+            "label": "AI budget alerts",
+            "description": "LLM spend crosses a budget threshold for the billing period."
           }
         },
         "success": {
@@ -6827,10 +6913,6 @@
         "userRegisteredMessageSso": "{userName} ({userEmail}) has registered via SSO",
         "userRegisteredMessageForm": "{userName} ({userEmail}) has registered via the registration form",
         "viewUserList": "View user list",
-        "reviewGeneratedCases": "Review generated test cases",
-        "generateFromUrlCompleteTitle": "Pages crawled successfully",
-        "generateFromUrlCompleteMessage": "{pages, plural, one {# page} other {# pages}} crawled from {url} in project \"{projectName}\". Click to review and generate test cases.",
-        "generateFromUrlFailedTitle": "URL crawl failed",
         "reviewRequestedTitle": "Review requested",
         "reviewApprovedTitle": "Review approved",
         "reviewChangesRequestedTitle": "Changes requested",

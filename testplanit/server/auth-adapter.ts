@@ -267,8 +267,6 @@ export function createCustomDbAdapter(db: DbClient): Adapter {
               timeFormat: "HH_MM_A",
               timezone: "Etc/UTC",
               notificationMode: "USE_GLOBAL",
-              emailNotifications: true,
-              inAppNotifications: true,
             },
           },
         },

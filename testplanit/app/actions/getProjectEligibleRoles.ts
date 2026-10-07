@@ -2,13 +2,15 @@
 
 import { ApplicationArea } from "~/zenstack/models";
 import { baseDb } from "~/lib/db";
+import { decideNotificationDelivery } from "~/lib/notifications/delivery";
 import { getServerAuthSession } from "~/server/auth";
 
 /**
- * Users the notification worker would drop on delivery: an explicit NONE
- * preference, or USE_GLOBAL (the implied mode when the user has no
- * preferences row) while the global default mode is NONE. Mirrors the
- * JOB_CREATE_NOTIFICATION branch of workers/notificationWorker.ts.
+ * Users the notification worker would drop on delivery of a
+ * REVIEW_REQUESTED notification: an explicit NONE preference, USE_GLOBAL
+ * (the implied mode when the user has no preferences row) while the global
+ * default mode is NONE, or a muted REVIEW_REQUESTED type. Shares the
+ * worker's decision helper so the preview and the delivery agree.
  */
 async function resolveSilencedUserIds(userIds: string[]): Promise<Set<string>> {
   const silenced = new Set<string>();
@@ -17,7 +19,11 @@ async function resolveSilencedUserIds(userIds: string[]): Promise<Set<string>> {
   const [prefs, globalSettings] = await Promise.all([
     baseDb.userPreferences.findMany({
       where: { userId: { in: userIds } },
-      select: { userId: true, notificationMode: true },
+      select: {
+        userId: true,
+        notificationMode: true,
+        mutedNotificationTypes: true,
+      },
     }),
     baseDb.appConfig.findUnique({
       where: { key: "notificationSettings" },
@@ -25,16 +31,15 @@ async function resolveSilencedUserIds(userIds: string[]): Promise<Set<string>> {
     }),
   ]);
 
-  const globalMode =
-    (globalSettings?.value as { defaultMode?: string } | null)?.defaultMode ||
-    "IN_APP";
-  const modeByUser = new Map(prefs.map((p) => [p.userId, p.notificationMode]));
+  const prefsByUser = new Map(prefs.map((p) => [p.userId, p]));
 
   for (const userId of userIds) {
-    const mode = modeByUser.get(userId) || "USE_GLOBAL";
-    if (mode === "NONE" || (mode === "USE_GLOBAL" && globalMode === "NONE")) {
-      silenced.add(userId);
-    }
+    const decision = decideNotificationDelivery({
+      preferences: prefsByUser.get(userId),
+      globalSettingsValue: globalSettings?.value,
+      type: "REVIEW_REQUESTED",
+    });
+    if (!decision.deliver) silenced.add(userId);
   }
 
   return silenced;

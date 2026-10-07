@@ -288,8 +288,7 @@ model UserPreferences {
     timeFormat                          TimeFormat         @default(HH_MM_A)
     timezone                            String             @default("Etc/UTC")
     notificationMode                    NotificationMode   @default(USE_GLOBAL)
-    emailNotifications                  Boolean            @default(true)
-    inAppNotifications                  Boolean            @default(true)
+    mutedNotificationTypes              NotificationType[] @default([])
     detailsDisplayMode                  DetailsDisplayMode @default(DOCKED)
     hasCompletedWelcomeTour             Boolean            @default(false)
     hasCompletedInitialPreferencesSetup Boolean            @default(false)
@@ -540,6 +539,7 @@ enum NotificationType {
     AI_STEPS_DERIVED
     INTEGRATION_AUTH_EXPIRED
     RUN_READY_TO_COMPLETE
+    WHATS_NEW
 
     @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')

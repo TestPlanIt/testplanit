@@ -110,6 +110,7 @@ When viewing your own profile, you can view and edit these preferences:
   - In-App Only
   - In-App + Email (Immediate)
   - In-App + Email (Daily Digest)
+- **What to notify me about**: Shown on your own profile below the mode. Every notification type has a switch that is on by default; switch off the ones you do not want and the change saves immediately. Two types are always on, administrator-only types appear only for administrators, and **Reset to defaults** turns everything back on. See [Notifications](notifications-inbox.md#notification-preferences) for the list of types.
 
 ### API Tokens
 

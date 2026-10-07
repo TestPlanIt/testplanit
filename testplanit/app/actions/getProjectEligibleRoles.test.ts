@@ -255,6 +255,46 @@ describe("getProjectEligibleRoles — union of four eligibility paths", () => {
     ]);
   });
 
+  it("notifyCount excludes holders who muted review requests, but not other mutes", async () => {
+    mockRolesFindMany.mockResolvedValue(ROLES);
+    mockUserProjectPermissionFindMany.mockImplementation((args: any) => {
+      if (args.where.accessType === "SPECIFIC_ROLE") {
+        return Promise.resolve([
+          { roleId: 10, userId: "alice" },
+          { roleId: 10, userId: "bob" },
+          { roleId: 10, userId: "carol" },
+        ]);
+      }
+      return Promise.resolve([]);
+    });
+    mockGroupProjectPermissionFindMany.mockResolvedValue([]);
+    mockUserPreferencesFindMany.mockResolvedValue([
+      {
+        userId: "alice",
+        notificationMode: "IN_APP",
+        mutedNotificationTypes: ["REVIEW_REQUESTED"],
+      },
+      {
+        userId: "bob",
+        notificationMode: "IN_APP",
+        mutedNotificationTypes: ["MILESTONE_DUE_REMINDER"],
+      },
+    ]);
+
+    const result = await getProjectEligibleRoles(1);
+
+    // Alice muted the type this preview is about; Bob muted something else;
+    // Carol has no preferences row. Two of three are told.
+    expect(result).toEqual([
+      { id: 10, name: "QA Lead", userCount: 3, notifyCount: 2 },
+    ]);
+    expect(mockUserPreferencesFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        select: expect.objectContaining({ mutedNotificationTypes: true }),
+      })
+    );
+  });
+
   it("USE_GLOBAL holders inherit a global default of NONE", async () => {
     mockRolesFindMany.mockResolvedValue(ROLES);
     mockUserProjectPermissionFindMany.mockImplementation((args: any) => {

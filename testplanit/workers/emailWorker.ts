@@ -113,10 +113,6 @@ const processor = async (job: Job) => {
           if (data.projectId && data.milestoneId) {
             notificationUrl = `${baseUrl}/${urlLocale}/projects/milestones/${data.projectId}/${data.milestoneId}`;
           }
-        } else if (notification.type === "GENERATE_FROM_URL_COMPLETE") {
-          if (data.projectId && data.jobId && !data.error) {
-            notificationUrl = `${baseUrl}/${urlLocale}/projects/repository/${data.projectId}?urlJobId=${data.jobId}`;
-          }
         } else if (notification.type === "USER_REGISTERED") {
           // Surface the admin user list so the recipient can find the
           // newly-registered user without an extra search step.
@@ -205,7 +201,10 @@ const processor = async (job: Job) => {
               notificationUrl = `${baseUrl}/${urlLocale}/projects/milestones/${data.projectId}/${data.milestoneId}`;
             }
           }
-        } else if (notification.type === "SYSTEM_ANNOUNCEMENT") {
+        } else if (
+          notification.type === "SYSTEM_ANNOUNCEMENT" ||
+          notification.type === "WHATS_NEW"
+        ) {
           // For system announcements, check if we have rich content or raw HTML
           if (data.htmlContent) {
             // Use raw HTML content (e.g., from upgrade notifications)
@@ -242,28 +241,6 @@ const processor = async (job: Job) => {
               dueDate: formattedDueDate,
             }
           );
-        } else if (notification.type === "GENERATE_FROM_URL_COMPLETE") {
-          if (data.error) {
-            translatedTitle = await getServerTranslation(
-              userLocale,
-              "components.notifications.content.generateFromUrlFailedTitle"
-            );
-            translatedMessage = notification.message;
-          } else {
-            translatedTitle = await getServerTranslation(
-              userLocale,
-              "components.notifications.content.generateFromUrlCompleteTitle"
-            );
-            translatedMessage = await getServerTranslation(
-              userLocale,
-              "components.notifications.content.generateFromUrlCompleteMessage",
-              {
-                pages: data.pagesProcessed ?? 0,
-                url: data.url ?? "",
-                projectName: data.projectName ?? "",
-              }
-            );
-          }
         } else if (notification.type === "USER_REGISTERED") {
           translatedTitle = await getServerTranslation(
             userLocale,
@@ -618,10 +595,6 @@ const processor = async (job: Job) => {
               if (data.projectId && data.milestoneId) {
                 url = `${baseUrl}/${urlLocale}/projects/milestones/${data.projectId}/${data.milestoneId}`;
               }
-            } else if (notification.type === "GENERATE_FROM_URL_COMPLETE") {
-              if (data.projectId && data.jobId && !data.error) {
-                url = `${baseUrl}/${urlLocale}/projects/repository/${data.projectId}?urlJobId=${data.jobId}`;
-              }
             } else if (notification.type === "INTEGRATION_AUTH_EXPIRED") {
               // OAuth re-auth kickoff is an API route — no locale prefix.
               if (data.provider && data.integrationId) {
@@ -715,27 +688,6 @@ const processor = async (job: Job) => {
                   dueDate: formattedDueDate,
                 }
               );
-            } else if (notification.type === "GENERATE_FROM_URL_COMPLETE") {
-              if (data.error) {
-                translatedTitle = await getServerTranslation(
-                  userLocale,
-                  "components.notifications.content.generateFromUrlFailedTitle"
-                );
-              } else {
-                translatedTitle = await getServerTranslation(
-                  userLocale,
-                  "components.notifications.content.generateFromUrlCompleteTitle"
-                );
-                translatedMessage = await getServerTranslation(
-                  userLocale,
-                  "components.notifications.content.generateFromUrlCompleteMessage",
-                  {
-                    pages: data.pagesProcessed ?? 0,
-                    url: data.url ?? "",
-                    projectName: data.projectName ?? "",
-                  }
-                );
-              }
             } else if (
               notification.type === "REVIEW_REQUESTED" ||
               notification.type === "REVIEW_APPROVED" ||

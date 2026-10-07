@@ -55,6 +55,7 @@ import {
   ItemsPerPage,
   Locale,
   NotificationMode,
+  NotificationType,
   Theme,
   TimeFormat,
 } from "~/zenstack/models";
@@ -74,7 +75,7 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import * as React from "react";
 import { use, useCallback, useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod/v4";
 import { UserAssignments } from "~/components/users/UserAssignments";
 import { UserAuditLog } from "~/components/users/UserAuditLog";
@@ -84,6 +85,8 @@ import { useRouter } from "~/lib/navigation";
 import { ApiTokenSettings } from "./ApiTokenSettings";
 import { ChangePasswordModal } from "./ChangePasswordModal";
 import { EditAvatar } from "./EditAvatar";
+import { NotificationTypePreferences } from "./NotificationTypePreferences";
+import { resolveEffectiveNotificationMode } from "~/lib/notifications/delivery";
 import { RemoveAvatar } from "./RemoveAvatar";
 import { TwoFactorSettings } from "./TwoFactorSettings";
 
@@ -262,6 +265,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
     timeFormat: z.nativeEnum(TimeFormat),
     timezone: z.string().min(1, { message: tEdit("timezoneRequired") }),
     notificationMode: z.nativeEnum(NotificationMode),
+    mutedNotificationTypes: z.array(z.nativeEnum(NotificationType)),
     detailsDisplayMode: z.nativeEnum(DetailsDisplayMode),
   });
 
@@ -295,6 +299,8 @@ const UserProfile: React.FC<UserProfileProps> = ({
         "Etc/UTC",
       notificationMode:
         user?.userPreferences?.notificationMode ?? NotificationMode.USE_GLOBAL,
+      mutedNotificationTypes:
+        user?.userPreferences?.mutedNotificationTypes ?? [],
       detailsDisplayMode:
         user?.userPreferences?.detailsDisplayMode ?? DetailsDisplayMode.DOCKED,
     }),
@@ -310,6 +316,14 @@ const UserProfile: React.FC<UserProfileProps> = ({
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: standardSchemaResolver(FormSchema),
     defaultValues: defaultFormValues,
+  });
+  const watchedMutedNotificationTypes = useWatch({
+    control: form.control,
+    name: "mutedNotificationTypes",
+  });
+  const watchedNotificationMode = useWatch({
+    control: form.control,
+    name: "notificationMode",
   });
 
   const allTimezoneOptions = useMemo<TimezoneOption[]>(() => {
@@ -357,14 +371,8 @@ const UserProfile: React.FC<UserProfileProps> = ({
           timeFormat: data.timeFormat,
           timezone: data.timezone,
           notificationMode: data.notificationMode,
+          mutedNotificationTypes: data.mutedNotificationTypes,
           detailsDisplayMode: data.detailsDisplayMode,
-          emailNotifications:
-            data.notificationMode === "IN_APP_EMAIL_IMMEDIATE" ||
-            data.notificationMode === "IN_APP_EMAIL_DAILY",
-          inAppNotifications:
-            data.notificationMode === "IN_APP" ||
-            data.notificationMode === "IN_APP_EMAIL_IMMEDIATE" ||
-            data.notificationMode === "IN_APP_EMAIL_DAILY",
         },
       };
 
@@ -1661,6 +1669,37 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                     />
                                   </div>
                                 </Form>
+                              )}
+                              {isOwnProfile && (
+                                <div className="px-4 pt-6">
+                                  <Separator className="opacity-50 mb-6" />
+                                  <NotificationTypePreferences
+                                    value={
+                                      isEditing
+                                        ? watchedMutedNotificationTypes
+                                        : (user.userPreferences
+                                            .mutedNotificationTypes ?? [])
+                                    }
+                                    onChange={(next) =>
+                                      form.setValue(
+                                        "mutedNotificationTypes",
+                                        next,
+                                        { shouldDirty: true }
+                                      )
+                                    }
+                                    readOnly={!isEditing}
+                                    isAdmin={isAdmin}
+                                    effectiveMode={resolveEffectiveNotificationMode(
+                                      {
+                                        notificationMode: isEditing
+                                          ? watchedNotificationMode
+                                          : user.userPreferences
+                                              .notificationMode,
+                                      },
+                                      globalSettings?.value
+                                    )}
+                                  />
+                                </div>
                               )}
                             </AccordionContent>
                           </AccordionItem>

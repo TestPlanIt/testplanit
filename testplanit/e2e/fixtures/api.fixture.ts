@@ -4285,8 +4285,7 @@ export class ApiHelper {
         timeFormat?: string;
         timezone?: string;
         notificationMode?: string;
-        emailNotifications?: boolean;
-        inAppNotifications?: boolean;
+        mutedNotificationTypes?: string[];
       };
     };
   }): Promise<{ data: any }> {
