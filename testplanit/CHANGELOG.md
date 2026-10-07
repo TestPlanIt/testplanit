@@ -1,3 +1,9 @@
+## [1.1.0-beta.38](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.37...v1.1.0-beta.38) (2026-10-07)
+
+### Features
+
+* **webhooks:** execute automated cases in runs composed from repository webhooks ([#665](https://github.com/TestPlanIt/testplanit/issues/665)) ([1f8d93e](https://github.com/TestPlanIt/testplanit/commit/1f8d93e9e55971d684ec6a6af53fd1aa0526843f))
+
 ## [1.1.0-beta.37](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.36...v1.1.0-beta.37) (2026-10-05)
 
 ### Features
