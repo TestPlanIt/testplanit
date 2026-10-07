@@ -28,7 +28,7 @@ export interface RepoPreviewProgress {
 
 export interface RepoPreviewRequest {
   branch?: string;
-  pathPatterns: { path: string; pattern: string }[];
+  pathPatterns: { path: string; pattern: string; exclude?: boolean }[];
   cacheEnabled: boolean;
 }
 

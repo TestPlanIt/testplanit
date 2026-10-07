@@ -234,6 +234,48 @@ describe("buildDiffSummary", () => {
     );
   });
 
+  it("lists files matched by project settings as excluded, outside the file cap", () => {
+    const small = { ...cfg, maxDiffFiles: 2 };
+    const isExcludedBySettings = (file: ChangedFile) =>
+      file.path === "gradle/libs.versions.toml" ||
+      file.path === "app/build.gradle.kts";
+    const summary = buildDiffSummary(
+      compare([
+        changed("gradle/libs.versions.toml"),
+        changed("src/a.ts"),
+        changed("app/build.gradle.kts"),
+        changed("src/b.ts"),
+        changed("pnpm-lock.yaml"),
+      ]),
+      small,
+      { isExcludedBySettings }
+    );
+
+    expect(summary.files.map((f) => f.path)).toEqual(["src/a.ts", "src/b.ts"]);
+    expect(summary.excludedFiles).toEqual([
+      { path: "gradle/libs.versions.toml", class: "settings" },
+      { path: "app/build.gradle.kts", class: "settings" },
+    ]);
+    // Two kept source files fit the cap; the lockfile was cut by it, not classified.
+    expect(summary.truncatedByBudget).toBe(true);
+    expect(summary.omittedFileCount).toBe(1);
+    expect(summary.totalFiles).toBe(5);
+    expect(renderDiffSummaryForPrompt(summary)).toContain(
+      "Excluded: 2 by project settings"
+    );
+  });
+
+  it("renders settings exclusions before the fixed classes", () => {
+    const summary = buildDiffSummary(
+      compare([changed("CHANGELOG.md"), changed("pnpm-lock.yaml")]),
+      cfg,
+      { isExcludedBySettings: (file) => file.path === "CHANGELOG.md" }
+    );
+    expect(renderDiffSummaryForPrompt(summary)).toContain(
+      "Excluded: 1 by project settings, 1 lockfile"
+    );
+  });
+
   it("pluralizes lockfiles", () => {
     const summary = buildDiffSummary(
       compare([changed("yarn.lock"), changed("go.sum")]),

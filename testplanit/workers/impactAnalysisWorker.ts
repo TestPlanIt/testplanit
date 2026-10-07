@@ -27,6 +27,8 @@ import { planAiCandidates } from "../lib/services/impact/aiCandidates";
 import { runAiLayer } from "../lib/services/impact/layers/aiLayer";
 import { runHistoryLayer } from "../lib/services/impact/layers/historyLayer";
 import { executeAutoRun } from "../lib/services/impact/autoExecute";
+import { excludeGlobsOf } from "../lib/integrations/repoPathPatterns";
+import { createExcludedPathMatcher } from "../lib/services/impact/excludedPaths";
 import { createRunFromAnalysis } from "../lib/services/impact/autoRun";
 import { runIssueLayer } from "../lib/services/impact/layers/issueLayer";
 import { runPathLayer } from "../lib/services/impact/layers/pathLayer";
@@ -200,10 +202,20 @@ export const processor = async (
       baseSha,
       headSha,
     });
+    // Files the connection's exclude rows cover stay in the stored diff, so
+    // the analysis still shows the whole change, but every way of finding
+    // cases (pins, tickets, keywords, the AI prompt) works from the rest.
+    const isExcludedBySettings = createExcludedPathMatcher(
+      excludeGlobsOf(config.pathPatterns)
+    );
+    const keptFiles = compare.files.filter((f) => !isExcludedBySettings(f));
+    const excludedBySettings = compare.files.filter((f) =>
+      isExcludedBySettings(f)
+    );
     const diffRecords = toDiffFileRecords(compare);
     const changedPaths = Array.from(
       new Set(
-        compare.files.flatMap((f) =>
+        keptFiles.flatMap((f) =>
           f.previousPath ? [f.path, f.previousPath] : [f.path]
         )
       )
@@ -218,7 +230,19 @@ export const processor = async (
       deletions: compare.files.reduce((n, f) => n + f.deletions, 0),
       truncated: compare.truncated,
     });
-    const diffSummary = buildDiffSummary(compare, cfg, { maxTokensPerRequest });
+    const diffSummary = buildDiffSummary(compare, cfg, {
+      maxTokensPerRequest,
+      isExcludedBySettings,
+    });
+    if (excludedBySettings.length > 0) {
+      warnings.push({
+        code: "paths_excluded_by_settings",
+        detail: {
+          count: excludedBySettings.length,
+          paths: excludedBySettings.slice(0, 50).map((f) => f.path),
+        },
+      });
+    }
     if (diffSummary.truncatedByProvider) {
       warnings.push({
         code: "diff_truncated_by_provider",
@@ -237,6 +261,7 @@ export const processor = async (
     await enterPhase("matching_pins", {
       filesTotal: compare.files.length,
       filesIncluded: diffSummary.files.length,
+      filesExcludedBySettings: excludedBySettings.length,
     });
     const pinRows = (await db.repositoryCaseCodePin.findMany({
       where: {
@@ -260,7 +285,7 @@ export const processor = async (
     })) as PinRow[];
 
     const hunksByPath = new Map(diffRecords.map((r) => [r.path, r.hunks]));
-    const filesForMatch: DiffFileForMatch[] = compare.files.map((f) => ({
+    const filesForMatch: DiffFileForMatch[] = keptFiles.map((f) => ({
       path: f.path,
       previousPath: f.previousPath,
       status: f.status,
@@ -338,7 +363,10 @@ export const processor = async (
             commit,
             maxFiles: cfg.maxDiffFiles,
           });
-          return files?.paths ?? null;
+          return (
+            files?.paths.filter((path) => !isExcludedBySettings({ path })) ??
+            null
+          );
         } catch (error) {
           console.warn(
             `[impact] could not read files of commit ${commit.shortSha}:`,

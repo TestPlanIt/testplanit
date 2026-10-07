@@ -5,6 +5,11 @@ import {
   PathPatternsCard,
   pathPatternsSchema,
 } from "@/components/code-repositories/PathPatternsCard";
+import {
+  pathPatternRows,
+  repoConnectionData,
+  repoPreviewRequest,
+} from "@/components/code-repositories/repoConnectionForm";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { DateFormatter } from "@/components/DateFormatter";
@@ -227,7 +232,9 @@ export default function QuickScriptPage() {
       form.reset({
         repositoryId: "",
         branch: "",
-        pathPatterns: [{ path: "tests/e2e", pattern: "**/*.ts" }],
+        pathPatterns: [
+          { path: "tests/e2e", pattern: "**/*.ts", exclude: false },
+        ],
         cacheEnabled: true,
         cacheTtlDays: 7,
       });
@@ -244,27 +251,30 @@ export default function QuickScriptPage() {
     defaultValues: {
       repositoryId: "",
       branch: "",
-      pathPatterns: [{ path: "tests/e2e", pattern: "**/*.ts" }],
+      pathPatterns: [{ path: "tests/e2e", pattern: "**/*.ts", exclude: false }],
       cacheEnabled: true,
       cacheTtlDays: 7,
     },
   });
 
-  // Populate form when existing config loads
+  // Populate the form when a different row arrives or it was saved, not on
+  // every poll while a refresh runs: that would wipe edits.
   useEffect(() => {
     if (existingConfig) {
       form.reset({
         repositoryId: String(existingConfig.repositoryId),
         branch: existingConfig.branch ?? "",
-        pathPatterns: (existingConfig.pathPatterns as {
-          path: string;
-          pattern: string;
-        }[]) ?? [{ path: "", pattern: "*" }],
+        pathPatterns: ((rows) =>
+          rows.length > 0
+            ? rows
+            : [{ path: "", pattern: "*", exclude: false }])(
+          pathPatternRows(existingConfig.pathPatterns)
+        ),
         cacheEnabled: (existingConfig as any).cacheEnabled ?? true,
         cacheTtlDays: existingConfig.cacheTtlDays ?? 7,
       });
     }
-  }, [existingConfig]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [existingConfig?.id, String(existingConfig?.updatedAt)]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const selectedRepositoryId = form.watch("repositoryId");
   const cacheEnabled = form.watch("cacheEnabled");
@@ -272,11 +282,7 @@ export default function QuickScriptPage() {
   const handlePreview = () => {
     const values = form.getValues();
     if (!values.repositoryId) return;
-    void runPreview(values.repositoryId, {
-      branch: values.branch || undefined,
-      pathPatterns: values.pathPatterns,
-      cacheEnabled: values.cacheEnabled,
-    });
+    void runPreview(values.repositoryId, repoPreviewRequest(values));
   };
 
   const handleRefreshCache = () => {
@@ -291,32 +297,10 @@ export default function QuickScriptPage() {
     try {
       const repositoryId = parseInt(values.repositoryId);
 
-      // Only reset cache status when content-affecting fields actually change.
-      // Changing TTL or cacheEnabled doesn't invalidate the existing cached files.
-      const cacheContentChanged =
-        !existingConfig ||
-        existingConfig.repositoryId !== repositoryId ||
-        existingConfig.branch !== (values.branch || null) ||
-        JSON.stringify(existingConfig.pathPatterns) !==
-          JSON.stringify(values.pathPatterns);
-
-      const cacheResetFields = cacheContentChanged
-        ? {
-            cacheStatus: null,
-            cacheLastFetchedAt: null,
-            cacheFileCount: null,
-            cacheTotalSize: null,
-            cacheError: null,
-          }
-        : {};
-
-      const sharedData = {
-        branch: values.branch || null,
-        pathPatterns: values.pathPatterns,
-        cacheEnabled: values.cacheEnabled,
-        cacheTtlDays: values.cacheTtlDays,
-        ...cacheResetFields,
-      };
+      const { data: sharedData } = repoConnectionData(
+        existingConfig as any,
+        values
+      );
 
       if (existingConfig) {
         await updateConfig.mutateAsync({

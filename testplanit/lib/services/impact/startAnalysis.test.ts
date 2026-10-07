@@ -103,6 +103,37 @@ describe("startImpactAnalysis", () => {
     expect(db.impactAnalysis.create).toHaveBeenCalled();
   });
 
+  it("keys reuse on the connection's exclude rows", async () => {
+    const db = makeDb();
+    const queue = makeQueue();
+
+    await startImpactAnalysis(db, loaded, queue, input);
+    expect(db.impactAnalysis.findFirst.mock.calls[0][0].where).toMatchObject({
+      settingsHash: null,
+    });
+    expect(db.impactAnalysis.create.mock.calls[0][0].data).toMatchObject({
+      settingsHash: null,
+    });
+
+    const withExclusions = {
+      ...loaded,
+      config: {
+        ...loaded.config,
+        pathPatterns: [
+          { path: "src", pattern: "**/*" },
+          { path: "", pattern: "**/CHANGELOG*", exclude: true },
+        ],
+      },
+    };
+    await startImpactAnalysis(db, withExclusions, queue, input);
+    const hash =
+      db.impactAnalysis.findFirst.mock.calls[1][0].where.settingsHash;
+    expect(hash).toMatch(/^[0-9a-f]{16}$/);
+    expect(db.impactAnalysis.create.mock.calls[1][0].data.settingsHash).toBe(
+      hash
+    );
+  });
+
   it("reports an unknown ref and the same-commit case without writing", async () => {
     (resolveRefToSha as any).mockImplementation(
       async (_a: unknown, ref: string) => {

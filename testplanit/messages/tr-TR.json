@@ -1863,11 +1863,11 @@
           "eventBranchPushHelp": "Diğer dallar taşımasını analiz edin - bir çekme isteği gibi - taban dalına karşı ve her biri için bir çalıştırma oluşturun.",
           "baseBranch": "Temel dal",
           "baseBranchHelp": "Bu dala taşımalar kendi başlarına analiz edilir; çekme istekleri ve diğer dallar ona karşı karşılaştırılır. Bağlantının dalını kullanmak için boş bırakın.",
-          "autoExecute": "Otomatik senaryoları çalıştır",
-          "autoExecuteHelp": "Koşu oluşturulduktan sonra, otomatik senaryolarının bu hedefte otomatik olarak çalıştırılmasını iste. Manuel senaryolar test uzmanları için koşuda kalır.",
-          "autoExecuteNoTargets": "Bu proje için yapılandırılmış bir çalıştırma hedefi yok. Koşuları otomatik çalıştırmak için <link>bir tane ekleyin</link>.",
-          "autoExecuteTargetMissing": "Seçilen çalıştırma hedefi silindi veya devre dışı bırakıldı. Koşular yine oluşturulur, ancak başka bir hedef seçene kadar çalıştırma istenmez.",
-          "autoExecuteSaveError": "Otomatik çalıştırma ayarları kaydedilemedi"
+          "autoExecute": "Otomatikleştirilmiş vakaları yürüt",
+          "autoExecuteHelp": "Çalıştırma oluşturulduktan sonra, otomatikleştirilmiş vakaların bu hedefte otomatik olarak yürütülmesini isteyin. Manuel vakalar test ediciler için çalıştırmada kalır.",
+          "autoExecuteNoTargets": "Bu proje için hiçbir yürütme hedefi yapılandırılmamıştır. Çalıştırmaları otomatik olarak yürütmek için <link>bir tane ekleyin</link>.",
+          "autoExecuteTargetMissing": "Seçilen yürütme hedefi silindi veya devre dışı bırakıldı. Çalıştırmalar yine de oluşturulur, ancak başka bir hedef seçene kadar hiçbir yürütme istenmez.",
+          "autoExecuteSaveError": "Otomatik yürütme ayarları kaydedilemedi"
         },
         "inboundEmptyState": "Henüz gelen web kancası yok. Sorun izleyicinizden sorun güncellemeleri almak veya bağlı bir depodan çekme istekleri ve taşımalar almak için <link>birini ekleyin</link>.",
         "inboundChooserBitbucket": "Bitbucket",
@@ -2030,7 +2030,7 @@
           "branchPlaceholder": "Deponun varsayılan dalını kullanmak için boş bırakın."
         },
         "pathPatterns": {
-          "description": "Dahil edilecek dosyaları belirtin. Her satır, temel bir yol ve bir glob deseni birleştirir. Örnekler: path=tests/e2e/pages + pattern=* bu klasördeki tüm dosyaları doğrudan içerir; path=src + pattern=**/*.test.ts tüm test dosyalarını özyinelemeli olarak içerir.",
+          "description": "QuickScript'in AI bağlamı olarak okuyabileceği depo dosyaları.",
           "pathPlaceholder": "testler/e2e/sayfalar",
           "exceedsLimit": "Toplam boyut, yapay zeka bağlam sınırını {overflow}kadar aşıyor. Dışa aktarma sırasında dosyalar, dışa aktarılan test durumuna göre alaka düzeyine göre sıralanır; en alakalı dosyalar önce dahil edilir ve bütçeye ulaşıldığında daha düşük sıralamalı dosyalar atlanır. Hangi dosyaların dahil edileceği konusunda daha fazla kontrol sahibi olmak istiyorsanız, yol kalıplarınızı daraltın."
         },
@@ -2088,11 +2088,11 @@
         },
         "pathPatterns": {
           "addPath": "Yol Ekle",
+          "exclude": "Hariç tut",
           "files": "{count, plural, one {# dosya} other {# dosyalar}}",
           "pathLabel": "Yol",
           "patternLabel": "Model",
           "previewFiles": "Dosyaları Önizle",
-          "rootHint": "Depo kökünde başlamak için yolu boş bırakın veya . girin; . yolu **/* desenli tüm dosyaları içerir.",
           "scanningRepo": "Depo dosyaları taranıyor… ({seconds}s)",
           "title": "Yol Desenleri",
           "truncatedBadge": "Sonuçlar eksik olabilir (sağlayıcı sınırlaması)"
@@ -2238,7 +2238,7 @@
           "branchesFallbackHint": "Bunun yerine dal adını yazın."
         },
         "pathPatterns": {
-          "description": "Hangi uygulama dosyalarının dahil edileceği. Her satır bir taban yolu ve bir glob deseni birleştirir. Örnek: path=src + pattern=**/* src altındaki her şeyi içerir.",
+          "description": "Impact'in hangi uygulama dosyalarını okuduğu: Kod Pin dosya seçici, önbellek, depo işaretçileri ve bir analizin hangi değiştirilmiş dosyaları yoksayacağı.",
           "pathPlaceholder": "src"
         },
         "cache": {
@@ -4430,7 +4430,8 @@
         "ai_truncated": "{count, plural, one {# yapay zeka toplu işi} other {# yapay zeka toplu işi}} model tarafından kesildi.",
         "no_candidates": "Hiçbir test senaryosu eşleşmedi.",
         "anchor_fetch_capped": "Bazı sabitlenmiş dosyalar yalnızca yol tarafından eşleştirildi (getirme sınırına ulaşıldı).",
-        "issue_commit_fetch_capped": "Biletleri adlandıran bazı commit'ler dosya dosya okunmadı (getirme sınırına ulaşıldı); kendi senaryoları belirli dosyaları kapsamıyor."
+        "issue_commit_fetch_capped": "Biletleri adlandıran bazı commit'ler dosya dosya okunmadı (getirme sınırına ulaşıldı); kendi senaryoları belirli dosyaları kapsamıyor.",
+        "paths_excluded_by_settings": "{count, plural, one {# değiştirilmiş dosya yok sayıldı} other {# değiştirilmiş dosya yok sayıldı}} depo ayarları tarafından hariç tutulan yollar nedeniyle."
       },
       "actions": {
         "analyze": "Analiz et",
@@ -8241,6 +8242,7 @@
     "projectRunsFilters": "## Test çalıştırmalarını filtreleme\n\nListeyi daraltmak için bir etiketi açıp kapatın. Etiketler hem Aktif hem de Tamamlanmış sekmelerine uygulanır ve bu proje için bu cihazda hatırlanır.\n\n- **Manuel** / **Otomatik** — listeyi o türdeki çalıştırmalarla sınırlar. Her ikisini de açmak (veya her ikisini de kapatmak) tüm çalıştırmaları gösterir.\n- **Test Çalıştırmalarım** — yalnızca sizin dahil olduğunuz çalıştırmalar: çalıştırmayı siz oluşturdunuz, içinde size bir test durumu atanmış ya da içinde bir test sonucu kaydetmişsiniz.",
     "projectSessionsFilters": "## Oturumları filtreleme\n\nListeyi daraltmak için bir çip seçin/kaldırın. Çipler hem Etkin hem de Tamamlanan sekmelerine uygulanır ve bu proje için bu cihazda hatırlanır.\n\n- **Oturumlarım** — yalnızca içinde bulunduğunuz oturumlar: oturumu siz oluşturdunuz veya size atanmış.",
     "projectImpact": "## Etki\nUygulama deposunu bağlayın, böylece bu proje test etki analizi çalıştırabilir: iki işlemeyi seçerek değişikliklerin hangi test senaryolarını etkilediğini görün ve test senaryolarını kapsadıkları koda sabitleyin.",
+    "pathPatterns": "## Yol Desenleri\nHer satır bir temel **yolu** bir glob **deseniyle** birleştirir. Satırlar toplanır: bir dosya herhangi bir satır bununla eşleştiğinde dahil edilir.\n\n- `src` + `**/*` — `src` altındaki her şey\n- boş veya `.` + `**/*` — depo içindeki her dosya\n- `src` + `**/!(*.test|*.spec).ts` — testler hariç `.ts` dosyaları\n\n### Hariç Tut\nBir satırda **Hariç Tut** işaretini koyun; dosyalarını başka bir satır bunları dahil etse bile kaldırın. Hariçtutmalar dosya seçiciye ve önbelleğe uygulanır ve Impact için bir analizin değiştirilen dosyalarına uygulanır; bu sayede neredeyse her istek çekmesinde değişen bir dosya ilgisiz test durumlarını çekmekten durdurulur. En az bir satırın işaretsiz kalması gerekir.\n\n- boş + `**/CHANGELOG*` — herhangi bir derinlikte her değişiklik günlüğü\n- `app` + `build.gradle.kts` — yalnızca sürümü güncelleyen bir derleme dosyası",
     "projectAutomation": "## Otomatikleştirilmiş Yürütme\nYürütme hedefleri, TestPlanIt'e bu projenin otomatikleştirilmiş senaryolarını nerede yürüteceğini söyler: bir GitHub Actions iş akışı, bir GitLab CI işlem hattı veya diğer herhangi bir sistem için imzalı bir web kancası. Bir çalıştırma yürütüldüğünde, TestPlanIt işi çalıştırma kimliği ve bir plan URL'si ile başlatır; iş planı okur, eşleşen testleri çalıştırır ve sonuçları o çalıştırmaya sabitlenmiş bir muhabir veya CLI ile geri bildirir. Hedefler silinmeden devre dışı bırakılabilir."
   },
   "reports": {

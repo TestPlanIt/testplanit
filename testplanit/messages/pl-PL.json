@@ -1863,11 +1863,11 @@
           "eventBranchPushHelp": "Przeanalizuj każde wciśnięcie do innej gałęzi względem gałęzi bazowej, jak żądanie ściągnięcia, i skomponuj przebieg dla każdego.",
           "baseBranch": "Gałąź bazowa",
           "baseBranchHelp": "Wciśnięcia do tej gałęzi są analizowane samodzielnie; żądania ściągnięcia i inne gałęzie są porównywane z nią. Zostaw puste, aby użyć gałęzi połączenia.",
-          "autoExecute": "Wykonaj przypadki automatyczne",
-          "autoExecuteHelp": "Po utworzeniu przebiegu zażądaj automatycznego wykonania jego przypadków automatycznych w tym celu. Przypadki ręczne pozostają w przebiegu dla testerów.",
-          "autoExecuteNoTargets": "Dla tego projektu nie skonfigurowano celu wykonania. <link>Dodaj cel</link>, aby automatycznie wykonywać przebiegi.",
-          "autoExecuteTargetMissing": "Wybrany cel wykonania został usunięty lub wyłączony. Przebiegi są nadal tworzone, ale wykonanie nie jest żądane, dopóki nie wybierzesz innego celu.",
-          "autoExecuteSaveError": "Nie udało się zapisać ustawień automatycznego wykonania"
+          "autoExecute": "Wykonaj zautomatyzowane przypadki",
+          "autoExecuteHelp": "Po skomponowaniu przebiegu poproś o zautomatyzowane wykonanie jego zautomatyzowanych przypadków na tym celu. Przypadki ręczne pozostają w przebiegu dla testerów.",
+          "autoExecuteNoTargets": "Brak skonfigurowanego celu wykonania dla tego projektu. <link>Dodaj jeden</link> aby automatycznie wykonywać przebiegi.",
+          "autoExecuteTargetMissing": "Wybrany cel wykonania został usunięty lub wyłączony. Przebiegi są nadal komponowane, ale brak żądania wykonania do czasu wybrania innego celu.",
+          "autoExecuteSaveError": "Nie można zapisać ustawień zautomatyzowanego wykonania"
         },
         "inboundEmptyState": "Brak przychodzących webhoków jeszcze. <link>Dodaj jeden</link>, aby otrzymać aktualizacje problemów z systemu śledzenia problemów, lub żądania ściągnięcia i wciśnięcia z podłączonego repozytorium.",
         "inboundChooserBitbucket": "Bitbucket",
@@ -2030,7 +2030,7 @@
           "branchPlaceholder": "Pozostaw puste, aby użyć domyślnej gałęzi repozytorium"
         },
         "pathPatterns": {
-          "description": "Określ, które pliki mają zostać uwzględnione. Każdy wiersz łączy ścieżkę bazową i wzorzec globu. Przykłady: ścieżka=tests/e2e/pages + wzór=* uwzględnia wszystkie pliki bezpośrednio w tym folderze; ścieżka=src + wzór=**/*.test.ts uwzględnia rekurencyjnie wszystkie pliki testowe.",
+          "description": "Pliki repozytorium, które QuickScript może odczytać jako kontekst AI.",
           "pathPlaceholder": "testy/e2e/strony",
           "exceedsLimit": "Całkowity rozmiar przekracza limit kontekstu AI o {overflow}. Podczas eksportu pliki są klasyfikowane według istotności dla eksportowanego przypadku testowego — pliki najbardziej istotne są uwzględniane jako pierwsze, a pliki o niższej randze są pomijane po osiągnięciu budżetu. Zawęź wzorce ścieżek, jeśli chcesz mieć większą kontrolę nad tym, które pliki są uwzględniane."
         },
@@ -2088,11 +2088,11 @@
         },
         "pathPatterns": {
           "addPath": "Dodaj ścieżkę",
+          "exclude": "Wyklucz",
           "files": "{count, plural, one {# plik} other {# pliki}}",
           "pathLabel": "Ścieżka",
           "patternLabel": "Wzór",
           "previewFiles": "Podgląd plików",
-          "rootHint": "Zostaw ścieżkę pustą lub wpisz ., aby rozpocząć w głównym katalogu repozytorium; ścieżka . ze wzorem **/* zawiera każdy plik.",
           "scanningRepo": "Skanowanie plików repozytorium… ({seconds}s)",
           "title": "Wzory ścieżek",
           "truncatedBadge": "Wyniki mogą być niekompletne (limit dostawcy)"
@@ -2238,7 +2238,7 @@
           "branchesFallbackHint": "Zamiast tego wpisz nazwę gałęzi."
         },
         "pathPatterns": {
-          "description": "Które pliki aplikacji mają być uwzględnione. Każdy wiersz łączy ścieżkę bazową i wzorzec glob. Przykład: path=src + pattern=**/* zawiera wszystko w src.",
+          "description": "Pliki aplikacji, które odczytuje Impact: selektor pliku Code Pin, pamięć podręczna, markery repozytorium i które zmienione pliki analiza ignoruje.",
           "pathPlaceholder": "src"
         },
         "cache": {
@@ -4430,7 +4430,8 @@
         "ai_truncated": "{count, plural, one {# partia sztucznej inteligencji była} other {# partie sztucznej inteligencji były}} odcięte przez model.",
         "no_candidates": "Żaden przypadek testowy nie pasował.",
         "anchor_fetch_capped": "Niektóre przypięte pliki były dopasowywane tylko ścieżką (osiągnięty limit pobierania).",
-        "issue_commit_fetch_capped": "Niektóre commity nazywające bilety nie były przeczytane plik po pliku (osiągnięty limit pobierania); ich przypadki nie obejmują żadnych konkretnych plików."
+        "issue_commit_fetch_capped": "Niektóre commity nazywające bilety nie były przeczytane plik po pliku (osiągnięty limit pobierania); ich przypadki nie obejmują żadnych konkretnych plików.",
+        "paths_excluded_by_settings": "{count, plural, one {# zmieniony plik został} few {# zmienione pliki zostały} many {# zmienionych plików zostało} other {# zmienionych plików zostało}} zignorowany ze względu na ścieżki wykluczone repozytorium."
       },
       "actions": {
         "analyze": "Analizuj",
@@ -8241,6 +8242,7 @@
     "projectRunsFilters": "## Filtrowanie przebiegów testowych\n\nPrzełącz etykietę, aby zawęzić listę. Etykiety mają zastosowanie zarówno do kart Aktywne, jak i Zakończone, i są zapamiętywane na tym urządzeniu dla tego projektu.\n\n- **Ręczne** / **Automatyczne** — ogranicz listę do danego typu przebiegu. Włączenie obu (lub wyłączenie obu) pokazuje wszystkie przebiegi.\n- **Moje przebiegi testowe** — tylko przebiegi, w których uczestniczysz: utworzyłeś przebieg, przypisano Ci w nim przypadek testowy lub zarejestrowałeś w nim wynik testu.",
     "projectSessionsFilters": "## Filtrowanie sesji\n\nPrzełącz etykietę, aby zawęzić listę. Etykiety mają zastosowanie zarówno do kart Aktywne, jak i Zakończone, i są zapamiętywane na tym urządzeniu dla tego projektu.\n\n- **Moje sesje** — tylko sesje, w których uczestniczysz: utworzyłeś sesję lub została ona Ci przypisana.",
     "projectImpact": "## Wpływ\nPołącz repozytorium aplikacji poddawanej testom, aby ten projekt mógł uruchamiać analizę wpływu testów: wybierz dwa commity, aby zobaczyć, które przypadki testowe są przez zmiany dotknięte, i przypinaj przypadki testowe do kodu, który obejmują.",
+    "pathPatterns": "## Wzorce ścieżek\nKażdy wiersz łączy bazową **ścieżkę** ze wzorcem glob **pattern**. Wiersze się sumują: plik jest dołączany, gdy dowolny wiersz go dopasuje.\n\n- `src` + `**/*` — wszystko pod `src`\n- puste lub `.` + `**/*` — każdy plik w repozytorium\n- `src` + `**/!(*.test|*.spec).ts` — pliki `.ts` z wyjątkiem testów\n\n### Wyklucz\nZaznacz **Wyklucz** w wierszu, aby usunąć jego pliki, nawet jeśli inny wiersz je dołącza. Wykluczenia dotyczą selektora plików i pamięci podręcznej, a dla Impact dotyczy zmienonych plików analizy, więc plik, który zmienia się niemal przy każdym pull requeście, przestaje wciągać niepowiązane przypadki testowe. Co najmniej jeden wiersz musi pozostać niezaznaczony.\n\n- puste + `**/CHANGELOG*` — każdy dziennik zmian, na dowolnej głębokości\n- `app` + `build.gradle.kts` — plik kompilacji, który tylko aktualizuje wersję",
     "projectAutomation": "## Zautomatyzowane wykonanie\nCele wykonania informują TestPlanIt, gdzie wykonać zautomatyzowane przypadki testowe tego projektu: przepływ pracy GitHub Actions, potok GitLab CI lub podpisany webhook dla każdego innego systemu. Gdy przebieg jest wykonywany, TestPlanIt uruchamia zadanie z ID przebiegu i adresem URL planu; zadanie odczytuje plan, uruchamia pasujące testy i raportuje wyniki z powrotem za pomocą reportera lub CLI przypiętego do tego przebiegu. Cele mogą być wyłączone bez usuwania."
   },
   "reports": {

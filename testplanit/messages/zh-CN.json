@@ -1864,9 +1864,9 @@
           "baseBranch": "基础分支",
           "baseBranchHelp": "对此分支的推送将独立进行分析；拉取请求和其他分支将与其进行比较。留空以使用连接的分支。",
           "autoExecute": "执行自动化用例",
-          "autoExecuteHelp": "测试运行创建后，在此目标上请求自动执行其中的自动化用例。手动用例保留在运行中供测试人员执行。",
-          "autoExecuteNoTargets": "此项目尚未配置执行目标。<link>添加一个</link>以自动执行测试运行。",
-          "autoExecuteTargetMissing": "所选执行目标已被删除或禁用。测试运行仍会创建，但在您选择其他目标之前不会请求执行。",
+          "autoExecuteHelp": "运行编排完成后，请求在此目标上自动执行其自动化用例。手动用例保留在运行中供测试人员使用。",
+          "autoExecuteNoTargets": "未为此项目配置执行目标。<link>添加一个</link>以自动执行运行。",
+          "autoExecuteTargetMissing": "所选的执行目标已删除或已禁用。运行仍会编排，但在您选择另一个目标之前不会请求执行。",
           "autoExecuteSaveError": "无法保存自动执行设置"
         },
         "inboundEmptyState": "还没有入站 webhook。<link>添加一个</link>以接收来自您的问题跟踪器的问题更新，或来自连接的存储库的拉取请求和推送。",
@@ -2030,7 +2030,7 @@
           "branchPlaceholder": "留空则使用仓库默认分支"
         },
         "pathPatterns": {
-          "description": "指定要包含的文件。每一行都包含一个基本路径和一个 glob 模式。例如：`path=tests/e2e/pages + pattern=*` 直接包含该文件夹中的所有文件；`path=src + pattern=**/*.test.ts` 递归包含所有测试文件。",
+          "description": "QuickScript 可以作为 AI 上下文读取的存储库文件。",
           "pathPlaceholder": "测试/端到端/页面",
           "exceedsLimit": "总大小超出 AI 上下文限制 {overflow}。导出过程中，文件会根据与待导出测试用例的相关性进行排序——相关性最高的文件优先导出，当达到预算上限时，相关性较低的文件将被跳过。如果您希望更精确地控制要导出的文件，请缩小路径模式。"
         },
@@ -2088,11 +2088,11 @@
         },
         "pathPatterns": {
           "addPath": "添加路径",
+          "exclude": "排除",
           "files": "{count, plural, other {# 文件集}}",
           "pathLabel": "路径",
           "patternLabel": "模式",
           "previewFiles": "预览文件",
-          "rootHint": "将路径留空或输入 . 以从存储库根目录开始；路径 . 与模式 **/* 包括每个文件。",
           "scanningRepo": "正在扫描存储库文件… ({seconds}s)",
           "title": "路径模式",
           "truncatedBadge": "结果可能不完整（受提供商限制）"
@@ -2238,7 +2238,7 @@
           "branchesFallbackHint": "改为键入分支名称。"
         },
         "pathPatterns": {
-          "description": "要包括的应用程序文件。每行组合一个基本路径和一个 glob 模式。示例：path=src + pattern=**/* 包括 src 下的所有内容。",
+          "description": "Impact 读取的应用程序文件：代码 Pin 文件选择器、缓存、存储库标记以及分析忽略的已更改文件。",
           "pathPlaceholder": "src"
         },
         "cache": {
@@ -4430,7 +4430,8 @@
         "ai_truncated": "{count, plural, other {# 个AI批次已}}被模型截断。",
         "no_candidates": "没有匹配的测试用例。",
         "anchor_fetch_capped": "某些固定文件只按路径匹配（已达到获取限制）。",
-        "issue_commit_fetch_capped": "某些命名工单的提交未被逐个文件读取（已达到获取限制）；其用例不覆盖特定文件。"
+        "issue_commit_fetch_capped": "某些命名工单的提交未被逐个文件读取（已达到获取限制）；其用例不覆盖特定文件。",
+        "paths_excluded_by_settings": "{count, plural, one {# 个变更的文件被} other {# 个变更的文件被}}忽略，因为它被仓库的排除路径所过滤。"
       },
       "actions": {
         "analyze": "分析",
@@ -8241,6 +8242,7 @@
     "projectRunsFilters": "## 筛选测试运行\n\n切换标签以缩小列表范围。标签同时适用于“活动”和“已完成”标签页,并会在此设备上为该项目记住您的选择。\n\n- **手动** / **自动化** — 将列表限制为该类型的运行。同时开启(或同时关闭)两者将显示所有运行。\n- **我的测试运行** — 仅显示您参与的运行:您创建了该运行、您被分配了其中的测试用例,或您在其中记录了测试结果。",
     "projectSessionsFilters": "## 筛选会话\n\n切换标签以缩小列表范围。标签同时适用于“进行中”和“已完成”选项卡,并会在此设备上为该项目记住相应设置。\n\n- **我的会话** — 仅显示您参与的会话:由您创建的会话,或分配给您的会话。",
     "projectImpact": "## 影响\n连接应用程序代码的仓库，以便此项目可以运行测试影响分析：选择两个提交以查看更改影响哪些测试用例，并将测试用例固定到其覆盖的代码。",
+    "pathPatterns": "## 路径模式\n每一行将基础**路径**与通配符**模式**组合在一起。行按顺序叠加：当任何一行匹配文件时，该文件将被包含。\n\n- `src` + `**/*` — `src` 下的所有内容\n- 空白或 `.` + `**/*` — 存储库中的每个文件\n- `src` + `**/!(*.test|*.spec).ts` — `.ts` 文件，除了测试\n\n### 排除\n在某一行上勾选**排除**以移除其文件，即使另一行包含它们。排除适用于文件选择器和缓存，对于影响分析的已更改文件也适用，因此在几乎每个拉取请求中都会更改的文件会停止引入不相关的测试用例。至少有一行必须保持未勾选状态。\n\n- 空白 + `**/CHANGELOG*` — 每个变更日志，在任何深度\n- `app` + `build.gradle.kts` — 仅更新版本的构建文件",
     "projectAutomation": "## 自动化执行\n执行目标告诉 TestPlanIt 在哪里执行此项目的自动化用例：GitHub Actions 工作流、GitLab CI 管道或任何其他系统的已签名网络钩子。当运行被执行时，TestPlanIt 使用运行 id 和计划 URL 启动任务；任务读取计划，运行匹配的测试，并使用记者或 CLI 将结果报告回来。目标可以在不删除的情况下禁用。"
   },
   "reports": {

@@ -20,7 +20,9 @@ export type DiffFileClass =
   | "lockfile"
   | "vendored"
   | "minified"
-  | "binary";
+  | "binary"
+  /** Matched the connection's excluded paths. */
+  | "settings";
 
 export type DiffDetailLevel = "patch" | "hunks" | "path";
 
@@ -183,7 +185,8 @@ export type AnalysisWarningCode =
   | "ai_truncated"
   | "no_candidates"
   | "anchor_fetch_capped"
-  | "issue_commit_fetch_capped";
+  | "issue_commit_fetch_capped"
+  | "paths_excluded_by_settings";
 
 export interface AnalysisWarning {
   code: AnalysisWarningCode;
@@ -284,6 +287,7 @@ export interface ImpactProgress {
   message: string;
   filesTotal?: number;
   filesIncluded?: number;
+  filesExcludedBySettings?: number;
   pinsMatched?: number;
   pinsStale?: number;
   issuesMatched?: number;

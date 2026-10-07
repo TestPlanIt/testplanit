@@ -1,5 +1,7 @@
 import { RefNotFoundError, resolveRefToSha } from "./compareService";
 import { impactConfig } from "./config";
+import { excludeGlobsOf } from "~/lib/integrations/repoPathPatterns";
+import { excludedPathsHash } from "./excludedPaths";
 import { impactJobId } from "./jobKeys";
 import type { LoadedRepo } from "./repoAccess";
 import type { ImpactAnalysisJobData, ImpactAutoRun } from "./types";
@@ -85,12 +87,18 @@ export async function startImpactAnalysis(
     };
   }
 
+  // An earlier analysis of the same pair only stands in for a new one while
+  // the connection's exclude rows are what they were when it ran.
+  const settingsHash = excludedPathsHash(
+    excludeGlobsOf(loaded.config.pathPatterns)
+  );
   if (!input.force) {
     const reusable = await db.impactAnalysis.findFirst({
       where: {
         configId,
         baseSha,
         headSha,
+        settingsHash,
         status: "COMPLETED",
         isDeleted: false,
         createdAt: {
@@ -118,6 +126,7 @@ export async function startImpactAnalysis(
       headSha,
       baseRef: input.base === baseSha ? null : input.base,
       headRef: input.head === headSha ? null : input.head,
+      settingsHash,
       notes: input.notes ?? null,
       trigger: input.trigger ?? null,
       triggerLabel: input.triggerLabel ?? null,

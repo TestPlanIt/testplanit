@@ -3934,7 +3934,7 @@ model ProjectCodeRepositoryConfig {
     repositoryId          Int
     repository            CodeRepository              @relation(fields: [repositoryId], references: [id])
     branch                String?                     // null = use repository's default branch
-    pathPatterns          Json                        // Array of { path: string, pattern: string }
+    pathPatterns          Json                        // Array of { path: string, pattern: string, exclude?: boolean }; an exclude row removes its files everywhere, incl. (IMPACT) the changed files of an analysis
     cacheEnabled          Boolean                     @default(true)   // false = no file caching (privacy mode)
     cacheTtlDays          Int                         @default(7)
     cacheStatus           String?                     // "success" | "error" | "pending" | null (never fetched)
@@ -4183,6 +4183,9 @@ model ImpactAnalysis {
     headSha           String                      @deny('update', true)
     baseRef           String?
     headRef           String?
+    // Hash of the connection's excluded paths at creation; a later analysis
+    // of the same pair is only reused while the settings still match.
+    settingsHash      String?
     status            ImpactAnalysisStatus        @default(PENDING)
     error             String?
     jobId             String?

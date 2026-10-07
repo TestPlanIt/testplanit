@@ -1863,10 +1863,10 @@
           "eventBranchPushHelp": "分析對任何其他分支的每次推送（如拉取請求相對於基本分支），並為每次推送構建執行。",
           "baseBranch": "基本分支",
           "baseBranchHelp": "推送至此分支時會自行分析；拉取請求和其他分支會與其進行比較。留空則使用連線的分支。",
-          "autoExecute": "執行自動化案例",
-          "autoExecuteHelp": "測試執行建立後，在此目標上請求自動執行其中的自動化案例。手動案例保留在執行中供測試人員執行。",
-          "autoExecuteNoTargets": "此專案尚未設定執行目標。<link>新增一個</link>以自動執行測試執行。",
-          "autoExecuteTargetMissing": "所選執行目標已被刪除或停用。測試執行仍會建立，但在您選擇其他目標之前不會請求執行。",
+          "autoExecute": "執行自動化測試用例",
+          "autoExecuteHelp": "執行階段組成後，請求在此目標上執行其自動化測試用例的自動執行。手動測試用例保留在執行階段中供測試人員使用。",
+          "autoExecuteNoTargets": "未為此專案配置執行目標。<link>新增一個</link>以自動執行執行階段。",
+          "autoExecuteTargetMissing": "選定的執行目標已被刪除或停用。執行階段仍然組成，但在您選擇另一個目標之前不會請求執行。",
           "autoExecuteSaveError": "無法儲存自動執行設定"
         },
         "inboundEmptyState": "尚無入站 Webhook。<link>新增一個</link>以接收來自問題追蹤器的問題更新，或來自連線儲存庫的拉取請求和推送。",
@@ -2030,7 +2030,7 @@
           "branchPlaceholder": "留空則使用倉庫預設分支"
         },
         "pathPatterns": {
-          "description": "指定要包含的檔案。每一行都包含一個基本路徑和一個 glob 模式。例如：`path=tests/e2e/pages + pattern=*` 直接包含該資料夾中的所有檔案；`path=src + pattern=**/*.test.ts` 遞歸包含所有測試檔案。",
+          "description": "QuickScript 可能會讀取為 AI 上下文的存放庫檔案。",
           "pathPlaceholder": "測試/端到端/頁面",
           "exceedsLimit": "總大小超出 AI 情境限制 {overflow}。在匯出過程中，文件會根據與待匯出測試案例的相關性進行排序——相關性最高的文件優先導出，當達到預算上限時，相關性較低的文件將被跳過。如果您希望更精確地控制要匯出的文件，請縮小路徑模式。"
         },
@@ -2088,11 +2088,11 @@
         },
         "pathPatterns": {
           "addPath": "新增路徑",
+          "exclude": "排除",
           "files": "{count, plural, one {# 個檔案} other {# 個檔案}}",
           "pathLabel": "路徑",
           "patternLabel": "圖案",
           "previewFiles": "預覽檔案",
-          "rootHint": "將路徑留白或輸入 . 以從儲存庫根目錄開始；使用路徑 . 和圖案 **/* 包含每個檔案。",
           "scanningRepo": "正在掃描儲存庫檔案… ({seconds}s)",
           "title": "路徑模式",
           "truncatedBadge": "結果可能不完整（提供者限制）"
@@ -2238,7 +2238,7 @@
           "branchesFallbackHint": "改為輸入分支名稱。"
         },
         "pathPatterns": {
-          "description": "要包含哪些應用程式檔案。每一列結合基本路徑和 glob 圖案。範例：路徑 = src + 圖案 = **/* 包含 src 下的所有內容。",
+          "description": "Impact 讀取的應用程式檔案：程式碼釘選檔案選擇器、快取、存放庫標記以及分析忽略的已變更檔案。",
           "pathPlaceholder": "src"
         },
         "cache": {
@@ -4430,7 +4430,8 @@
         "ai_truncated": "{count, plural, one {# 個 AI 批次} other {# 個 AI 批次}} 被模型截斷。",
         "no_candidates": "沒有測試案例符合。",
         "anchor_fetch_capped": "某些引腳檔案僅按路徑符合（達到擷取限制）。",
-        "issue_commit_fetch_capped": "某些命名工單的提交未逐檔案讀取（達到擷取限制）；其案例不涵蓋特定檔案。"
+        "issue_commit_fetch_capped": "某些命名工單的提交未逐檔案讀取（達到擷取限制）；其案例不涵蓋特定檔案。",
+        "paths_excluded_by_settings": "{count, plural, one {# 個變更的檔案已} other {# 個變更的檔案已}}因儲存庫的排除路徑而被忽略。"
       },
       "actions": {
         "analyze": "分析",
@@ -8241,6 +8242,7 @@
     "projectRunsFilters": "## 篩選測試運行\n\n切換標籤以縮小列表範圍。標籤同時適用於「進行中」和「已完成」分頁，並會在此裝置上針對此專案記住設定。\n\n- **手動** / **自動化** — 將列表限制為該類型的運行。同時開啟（或同時關閉）兩者將顯示所有運行。\n- **我的測試運行** — 僅顯示您參與的運行：您建立了該運行、您被指派了其中的測試用例，或您在其中記錄了測試結果。",
     "projectSessionsFilters": "## 篩選工作階段\n\n切換晶片以縮小清單範圍。晶片同時套用於「進行中」及「已完成」分頁，並會針對此裝置和此專案記住設定。\n\n- **我的工作階段** — 僅顯示您參與的工作階段：由您建立的工作階段，或指派給您的工作階段。",
     "projectImpact": "## 影響\n連結應用程式的儲存庫，使此專案可以執行測試影響分析：選擇兩個提交以查看變更會影響哪些測試案例，並將測試案例釘選到其涵蓋的程式碼。",
+    "pathPatterns": "## 路徑模式\n每一行將基礎 **路徑** 與 glob **模式** 結合。行會累加：當任何一行符合時，檔案即被包含。\n\n- `src` + `**/*` — `src` 下的所有內容\n- 空白或 `.` + `**/*` — 儲存庫中的每個檔案\n- `src` + `**/!(*.test|*.spec).ts` — `.ts` 檔案，但不包括測試\n\n### 排除\n在一行上勾選 **排除** 以移除其檔案，即使其他行包含它們。排除項適用於檔案選擇器和快取，以及對於影響分析的已變更檔案，因此在幾乎每個提取請求上都變更的檔案會停止提取無關的測試案例。至少有一行必須保持未勾選。\n\n- 空白 + `**/CHANGELOG*` — 每個 changelog，在任何深度\n- `app` + `build.gradle.kts` — 只會提升版本的建置檔案",
     "projectAutomation": "## 自動化執行\n執行目標告知 TestPlanIt 在何處執行此專案的自動化案例：GitHub Actions 工作流程、GitLab CI 管道，或用於任何其他系統的簽名 webhook。執行執行時，TestPlanIt 會使用執行 ID 和計劃 URL 啟動工作；工作會讀取計劃、執行相符的測試，並透過記錄者或 CLI 釘選至該執行來報告結果。目標可以停用而無需刪除。"
   },
   "reports": {

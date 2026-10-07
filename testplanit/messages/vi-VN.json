@@ -1863,10 +1863,10 @@
           "eventBranchPushHelp": "Phân tích mỗi lần đẩy lên bất kỳ nhánh nào khác so với nhánh cơ sở, giống như yêu cầu kéo, và soạn một lần chạy cho mỗi lần.",
           "baseBranch": "Nhánh cơ sở",
           "baseBranchHelp": "Các lần đẩy lên nhánh này được phân tích riêng; các yêu cầu kéo và các nhánh khác được so sánh với nó. Để trống để sử dụng nhánh của kết nối.",
-          "autoExecute": "Thực thi các ca tự động",
-          "autoExecuteHelp": "Sau khi lượt chạy được tạo, yêu cầu thực thi tự động các ca tự động của nó trên mục tiêu này. Các ca thủ công vẫn ở trong lượt chạy cho người kiểm thử.",
-          "autoExecuteNoTargets": "Chưa có mục tiêu thực thi nào được cấu hình cho dự án này. <link>Thêm một mục tiêu</link> để tự động thực thi các lượt chạy.",
-          "autoExecuteTargetMissing": "Mục tiêu thực thi đã chọn đã bị xóa hoặc vô hiệu hóa. Lượt chạy vẫn được tạo, nhưng không có yêu cầu thực thi nào cho đến khi bạn chọn mục tiêu khác.",
+          "autoExecute": "Thực thi các trường hợp tự động",
+          "autoExecuteHelp": "Sau khi lần chạy được soạn thảo, hãy yêu cầu thực thi tự động các trường hợp tự động của nó trên mục tiêu này. Các trường hợp thủ công vẫn ở trong lần chạy cho người kiểm tra.",
+          "autoExecuteNoTargets": "Không có mục tiêu thực thi nào được cấu hình cho dự án này. <link>Thêm một</link> để thực thi các lần chạy tự động.",
+          "autoExecuteTargetMissing": "Mục tiêu thực thi đã chọn đã bị xóa hoặc vô hiệu hóa. Các lần chạy vẫn được soạn thảo, nhưng không có yêu cầu thực thi cho đến khi bạn chọn mục tiêu khác.",
           "autoExecuteSaveError": "Không thể lưu cài đặt thực thi tự động"
         },
         "inboundEmptyState": "Chưa có webhook đến. <link>Thêm một</link> để nhận cập nhật vấn đề từ công cụ theo dõi vấn đề của bạn, hoặc yêu cầu kéo và lần đẩy từ kho lưu trữ được kết nối.",
@@ -2030,7 +2030,7 @@
           "branchPlaceholder": "Để trống nếu muốn sử dụng nhánh mặc định của kho lưu trữ."
         },
         "pathPatterns": {
-          "description": "Hãy chỉ định các tệp cần bao gồm. Mỗi hàng kết hợp đường dẫn cơ sở và mẫu glob. Ví dụ: path=tests/e2e/pages + pattern=* bao gồm tất cả các tệp trực tiếp trong thư mục đó; path=src + pattern=**/*.test.ts bao gồm tất cả các tệp kiểm thử một cách đệ quy.",
+          "description": "Tệp kho lưu trữ nào mà QuickScript có thể đọc làm ngữ cảnh AI.",
           "pathPlaceholder": "bài kiểm tra/e2e/trang",
           "exceedsLimit": "Tổng kích thước vượt quá giới hạn ngữ cảnh AI là {overflow}. Trong quá trình xuất, các tệp được xếp hạng theo mức độ liên quan đến trường hợp thử nghiệm đang được xuất — các tệp liên quan nhất được đưa vào trước và các tệp được xếp hạng thấp hơn sẽ bị bỏ qua khi đạt đến giới hạn ngân sách. Thu hẹp các mẫu đường dẫn của bạn nếu bạn muốn kiểm soát nhiều hơn các tệp được bao gồm."
         },
@@ -2088,11 +2088,11 @@
         },
         "pathPatterns": {
           "addPath": "Thêm đường dẫn",
+          "exclude": "Loại trừ",
           "files": "{count, plural, one {# tập tin} other {# tập tin}}",
           "pathLabel": "Con đường",
           "patternLabel": "Mẫu",
           "previewFiles": "Xem trước tệp",
-          "rootHint": "Để đường dẫn trống hoặc nhập ., để bắt đầu từ gốc kho lưu trữ; đường dẫn . có mẫu **/* bao gồm mọi tệp.",
           "scanningRepo": "Đang quét các tệp kho lưu trữ… ({seconds}s)",
           "title": "Các kiểu đường đi",
           "truncatedBadge": "Kết quả có thể không đầy đủ (giới hạn của nhà cung cấp)"
@@ -2238,7 +2238,7 @@
           "branchesFallbackHint": "Nhập tên nhánh thay vào đó."
         },
         "pathPatterns": {
-          "description": "Những tệp ứng dụng nào sẽ được bao gồm. Mỗi hàng kết hợp một đường dẫn cơ sở và một mẫu toàn cầu. Ví dụ: đường dẫn=src + mẫu=**/* bao gồm mọi thứ trong src.",
+          "description": "Tệp ứng dụng nào mà Impact đọc: trình chọn tệp Code Pin, bộ nhớ đệm, điểm đánh dấu kho lưu trữ và tệp đã thay đổi nào mà phân tích bỏ qua.",
           "pathPlaceholder": "src"
         },
         "cache": {
@@ -4430,7 +4430,8 @@
         "ai_truncated": "{count, plural, one {# lô AI đã} other {# lô AI đã}} bị cắt ngắn bởi mô hình.",
         "no_candidates": "Không có trường hợp kiểm thử nào khớp.",
         "anchor_fetch_capped": "Một số tệp được ghim được khớp theo đường dẫn chỉ (đã đạt giới hạn tìm nạp).",
-        "issue_commit_fetch_capped": "Một số cam kết đặt tên vé không được đọc từng tệp (đã đạt giới hạn tìm nạp); các trường hợp của họ không bao gồm các tệp cụ thể."
+        "issue_commit_fetch_capped": "Một số cam kết đặt tên vé không được đọc từng tệp (đã đạt giới hạn tìm nạp); các trường hợp của họ không bao gồm các tệp cụ thể.",
+        "paths_excluded_by_settings": "{count, plural, other {# tệp được thay đổi đã}} bị bỏ qua vì các đường dẫn được loại trừ của kho lưu trữ."
       },
       "actions": {
         "analyze": "Phân tích",
@@ -8241,6 +8242,7 @@
     "projectRunsFilters": "## Lọc lần chạy thử nghiệm\n\nBật/tắt một thẻ để thu hẹp danh sách. Các thẻ áp dụng cho cả tab Đang hoạt động và Đã hoàn thành, và được ghi nhớ trên thiết bị này cho dự án này.\n\n- **Thủ công** / **Tự động** — giới hạn danh sách theo loại lần chạy đó. Bật cả hai (hoặc tắt cả hai) sẽ hiển thị tất cả các lần chạy.\n- **Lần chạy thử nghiệm của tôi** — chỉ các lần chạy bạn tham gia: bạn đã tạo lần chạy, bạn được gán một trường hợp kiểm thử trong đó, hoặc bạn đã ghi lại một kết quả kiểm thử trong đó.",
     "projectSessionsFilters": "## Lọc phiên\n\nBật một chip để thu hẹp danh sách. Các chip áp dụng cho cả tab Đang hoạt động và Đã hoàn tất, và được ghi nhớ trên thiết bị này cho dự án này.\n\n- **Phiên của tôi** — chỉ các phiên bạn tham gia: bạn đã tạo phiên, hoặc phiên được giao cho bạn.",
     "projectImpact": "## Tác động\nKết nối kho lưu trữ của ứng dụng đang được kiểm thử để dự án này có thể chạy phân tích tác động kiểm thử: chọn hai commit để xem trường hợp kiểm thử nào mà các thay đổi ảnh hưởng, và ghim các trường hợp kiểm thử vào mã mà chúng bao phủ.",
+    "pathPatterns": "## Mẫu Đường Dẫn\nMỗi hàng kết hợp một **đường dẫn** cơ sở với một **mẫu** glob. Các hàng cộng dồn: một tệp được bao gồm khi bất kỳ hàng nào khớp với nó.\n\n- `src` + `**/*` — mọi thứ dưới `src`\n- trống hoặc `.` + `**/*` — mọi tệp trong kho lưu trữ\n- `src` + `**/!(*.test|*.spec).ts` — các tệp `.ts` ngoại trừ các bài kiểm tra\n\n### Loại Trừ\nĐánh dấu **Loại Trừ** trên một hàng để xóa các tệp của nó ngay cả khi một hàng khác bao gồm chúng. Các loại trừ áp dụng cho bộ chọn tệp và bộ đệm, và đối với Tác Động đối với các tệp đã thay đổi của một phân tích, vì vậy một tệp thay đổi trong hầu hết mọi yêu cầu kéo ngừng kéo vào các trường hợp kiểm tra không liên quan. Ít nhất một hàng phải vẫn chưa được đánh dấu.\n\n- trống + `**/CHANGELOG*` — mọi changelog, ở bất kỳ độ sâu nào\n- `app` + `build.gradle.kts` — một tệp xây dựng chỉ nâng cấp phiên bản",
     "projectAutomation": "## Thực thi Tự động\nCác mục tiêu thực thi cho TestPlanIt biết nơi thực thi các trường hợp tự động của dự án này: quy trình làm việc GitHub Actions, đường ống GitLab CI, hoặc webhook được ký cho bất kỳ hệ thống nào khác. Khi một lần chạy được thực thi, TestPlanIt bắt đầu công việc với id lần chạy và URL kế hoạch; công việc đọc kế hoạch, chạy các kiểm thử phù hợp, và báo cáo kết quả trở lại với một trình báo cáo hoặc CLI được ghim vào lần chạy đó. Các mục tiêu có thể bị vô hiệu hóa mà không bị xóa."
   },
   "reports": {

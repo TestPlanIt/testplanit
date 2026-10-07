@@ -1864,10 +1864,10 @@
           "baseBranch": "Rama base",
           "baseBranchHelp": "Las inserciones en esta rama se analizan por sí solas; las solicitudes de extracción y otras ramas se comparan contra ella. Déjelo vacío para usar la rama de la conexión.",
           "autoExecute": "Ejecutar casos automatizados",
-          "autoExecuteHelp": "Una vez creada la ejecución, solicitar la ejecución automatizada de sus casos automatizados en este destino. Los casos manuales permanecen en la ejecución para los testers.",
-          "autoExecuteNoTargets": "No hay ningún destino de ejecución configurado para este proyecto. <link>Añade uno</link> para ejecutar las ejecuciones automáticamente.",
-          "autoExecuteTargetMissing": "El destino de ejecución elegido se eliminó o se desactivó. Las ejecuciones se siguen creando, pero no se solicita ninguna ejecución hasta que elijas otro destino.",
-          "autoExecuteSaveError": "No se pudo guardar la configuración de ejecución automatizada"
+          "autoExecuteHelp": "Después de que se compone la ejecución, solicita la ejecución automatizada de sus casos automatizados en este objetivo. Los casos manuales permanecen en la ejecución para los probadores.",
+          "autoExecuteNoTargets": "No hay un objetivo de ejecución configurado para este proyecto. <link>Agregue uno</link> para ejecutar ejecuciones automáticamente.",
+          "autoExecuteTargetMissing": "El objetivo de ejecución elegido fue eliminado o deshabilitado. Las ejecuciones aún se componen, pero no se solicita ejecución hasta que elija otro objetivo.",
+          "autoExecuteSaveError": "No se pudieron guardar los parámetros de ejecución automatizada"
         },
         "inboundEmptyState": "Aún no hay webhooks entrantes. <link>Agregue uno</link> para recibir actualizaciones de problemas de su rastreador de problemas, o solicitudes de extracción e inserciones de un repositorio conectado.",
         "inboundChooserBitbucket": "Bitbucket",
@@ -2030,7 +2030,7 @@
           "branchPlaceholder": "Déjelo en blanco para usar la rama predeterminada del repositorio"
         },
         "pathPatterns": {
-          "description": "Especifique los archivos que se incluirán. Cada fila combina una ruta base y un patrón global. Ejemplos: path=tests/e2e/pages + pattern=* incluye todos los archivos directamente en esa carpeta; path=src + pattern=**/*.test.ts incluye todos los archivos de prueba recursivamente.",
+          "description": "Qué archivos del repositorio puede leer QuickScript como contexto de IA.",
           "pathPlaceholder": "pruebas/e2e/páginas",
           "exceedsLimit": "El tamaño total supera el límite del contexto de IA en {overflow}. Durante la exportación, los archivos se clasifican según su relevancia para el caso de prueba que se exporta: los archivos más relevantes se incluyen primero y los de menor rango se omiten al alcanzar el límite. Reduzca los patrones de ruta si desea tener más control sobre los archivos incluidos."
         },
@@ -2088,11 +2088,11 @@
         },
         "pathPatterns": {
           "addPath": "Agregar ruta",
+          "exclude": "Excluir",
           "files": "{count, plural, one {# archivo} other {# archivos}}",
           "pathLabel": "Ruta",
           "patternLabel": "Patrón",
           "previewFiles": "Vista previa de archivos",
-          "rootHint": "Deje la ruta en blanco o ingrese . para comenzar en la raíz del repositorio; la ruta . con el patrón **/* incluye todos los archivos.",
           "scanningRepo": "Escaneando archivos del repositorio… ({seconds}s)",
           "title": "Patrones de ruta",
           "truncatedBadge": "Los resultados pueden estar incompletos (límite del proveedor)"
@@ -2238,7 +2238,7 @@
           "branchesFallbackHint": "Escribe el nombre de la rama en su lugar."
         },
         "pathPatterns": {
-          "description": "Qué archivos de aplicación incluir. Cada fila combina una ruta base y un patrón glob. Ejemplo: path=src + pattern=**/* incluye todo bajo src.",
+          "description": "Qué archivos de aplicación lee Impact: el selector de archivos de Code Pin, la caché, marcadores de repositorio y qué archivos cambiados ignora un análisis.",
           "pathPlaceholder": "src"
         },
         "cache": {
@@ -4430,7 +4430,8 @@
         "ai_truncated": "{count, plural, one {# lote de IA fue} other {# lotes de IA fueron}} cortado por el modelo.",
         "no_candidates": "No coincidió ningún caso de prueba.",
         "anchor_fetch_capped": "Algunos archivos anclados fueron coincididos solo por ruta (límite de búsqueda alcanzado).",
-        "issue_commit_fetch_capped": "Algunas confirmaciones que nombran entradas no fueron leídas archivo por archivo (límite de búsqueda alcanzado); sus casos no cubren archivos específicos."
+        "issue_commit_fetch_capped": "Algunas confirmaciones que nombran entradas no fueron leídas archivo por archivo (límite de búsqueda alcanzado); sus casos no cubren archivos específicos.",
+        "paths_excluded_by_settings": "{count, plural, one {# archivo modificado fue} other {# archivos modificados fueron}} ignorado porque la configuración del repositorio contiene rutas excluidas."
       },
       "actions": {
         "analyze": "Analizar",
@@ -8241,6 +8242,7 @@
     "projectRunsFilters": "## Filtrado de ejecuciones de prueba\n\nActive o desactive un chip para acotar la lista. Los chips se aplican tanto a las pestañas Activas como Completadas, y se recuerdan en este dispositivo para este proyecto.\n\n- **Manual** / **Automatizado** — limita la lista a ese tipo de ejecución. Activar ambos (o desactivar ambos) muestra todas las ejecuciones.\n- **Mis Ejecuciones de Prueba** — solo las ejecuciones en las que usted participa: usted creó la ejecución, tiene asignado un caso de prueba en ella, o registró un resultado de prueba en ella.",
     "projectSessionsFilters": "## Filtrado de sesiones\n\nActive un chip para reducir la lista. Los chips se aplican tanto a las pestañas Activas como Completadas, y se recuerdan en este dispositivo para este proyecto.\n\n- **Mis Sesiones** — solo las sesiones en las que participa: usted creó la sesión, o está asignada a usted.",
     "projectImpact": "## Impacto\nConecte el repositorio de la aplicación bajo prueba para que este proyecto pueda ejecutar análisis de impacto de prueba: elija dos confirmaciones para ver qué casos de prueba afectan los cambios e fije casos de prueba al código que cubren.",
+    "pathPatterns": "## Patrones de Ruta\nCada fila combina una **ruta** base con un **patrón** glob. Las filas se acumulan: un archivo se incluye cuando cualquier fila coincide con él.\n\n- `src` + `**/*` — todo bajo `src`\n- en blanco o `.` + `**/*` — cada archivo en el repositorio\n- `src` + `**/!(*.test|*.spec).ts` — archivos `.ts` excepto pruebas\n\n### Excluir\nMarque **Excluir** en una fila para eliminar sus archivos incluso cuando otra fila los incluye. Las exclusiones se aplican al selector de archivos y caché, y para Impacto a los archivos modificados de un análisis, para que un archivo que cambia en casi cada solicitud de extracción deje de incluir casos de prueba no relacionados. Al menos una fila debe permanecer sin marcar.\n\n- en blanco + `**/CHANGELOG*` — cada registro de cambios, a cualquier profundidad\n- `app` + `build.gradle.kts` — un archivo de compilación que solo aumenta la versión",
     "projectAutomation": "## Ejecución automatizada\nLos objetivos de ejecución le indican a TestPlanIt dónde ejecutar los casos automatizados de este proyecto: un flujo de trabajo de GitHub Actions, una canalización de GitLab CI o un webhook firmado para cualquier otro sistema. Cuando se ejecuta una ejecución, TestPlanIt inicia el trabajo con el id de ejecución y una URL de plan; el trabajo lee el plan, ejecuta las pruebas coincidentes e informa los resultados con un reportero o la CLI fijada en esa ejecución. Los objetivos se pueden deshabilitar sin ser eliminados."
   },
   "reports": {

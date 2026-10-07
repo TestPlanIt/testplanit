@@ -1864,9 +1864,9 @@
           "baseBranch": "Basis-Zweig",
           "baseBranchHelp": "Pushes zu diesem Zweig werden von selbst analysiert; Pull-Anfragen und andere Zweige werden damit verglichen. Leer lassen, um den Standard-Zweig der Verbindung zu verwenden.",
           "autoExecute": "Automatisierte Fälle ausführen",
-          "autoExecuteHelp": "Nachdem der Lauf erstellt wurde, die automatisierte Ausführung seiner automatisierten Fälle auf diesem Ziel anfordern. Manuelle Fälle bleiben für Tester im Lauf.",
+          "autoExecuteHelp": "Nachdem der Lauf erstellt wurde, fordern Sie die automatisierte Ausführung seiner automatisierten Fälle auf diesem Ziel an. Manuelle Fälle bleiben im Lauf für Tester.",
           "autoExecuteNoTargets": "Für dieses Projekt ist kein Ausführungsziel konfiguriert. <link>Fügen Sie eines hinzu</link>, um Läufe automatisch auszuführen.",
-          "autoExecuteTargetMissing": "Das gewählte Ausführungsziel wurde gelöscht oder deaktiviert. Läufe werden weiterhin erstellt, aber keine Ausführung angefordert, bis Sie ein anderes Ziel wählen.",
+          "autoExecuteTargetMissing": "Das gewählte Ausführungsziel wurde gelöscht oder deaktiviert. Läufe werden immer noch erstellt, aber keine Ausführung wird angefordert, bis Sie ein anderes Ziel wählen.",
           "autoExecuteSaveError": "Die Einstellungen für die automatisierte Ausführung konnten nicht gespeichert werden"
         },
         "inboundEmptyState": "Noch keine eingehenden Webhooks. <link>Fügen Sie eines hinzu</link>, um Problemupdates von Ihrem Issue-Tracker oder Pull-Anfragen und Pushes aus einem verbundenen Repository zu erhalten.",
@@ -2030,7 +2030,7 @@
           "branchPlaceholder": "Lassen Sie dieses Feld leer, um den Standardzweig des Repositorys zu verwenden."
         },
         "pathPatterns": {
-          "description": "Geben Sie an, welche Dateien einbezogen werden sollen. Jede Zeile kombiniert einen Basispfad und ein Glob-Muster. Beispiele: `path=tests/e2e/pages + pattern=*` schließt alle Dateien direkt in diesem Ordner ein; `path=src + pattern=**/*.test.ts` schließt alle Testdateien rekursiv ein.",
+          "description": "Welche Repository-Dateien QuickScript als KI-Kontext lesen darf.",
           "pathPlaceholder": "tests/e2e/pages",
           "exceedsLimit": "Die Gesamtgröße überschreitet das KI-Kontextlimit um {overflow}. Beim Export werden die Dateien nach ihrer Relevanz für den zu exportierenden Testfall sortiert – die relevantesten Dateien werden zuerst berücksichtigt, und Dateien mit niedrigerer Relevanz werden übersprungen, sobald das Budget erreicht ist. Schränken Sie Ihre Pfadmuster ein, wenn Sie genauer steuern möchten, welche Dateien berücksichtigt werden."
         },
@@ -2088,11 +2088,11 @@
         },
         "pathPatterns": {
           "addPath": "Pfad hinzufügen",
+          "exclude": "Ausschließen",
           "files": "{count, plural, one {# Datei} other {# Dateien}}",
           "pathLabel": "Weg",
           "patternLabel": "Muster",
           "previewFiles": "Vorschau der Dateien",
-          "rootHint": "Lassen Sie den Pfad leer oder geben Sie . ein, um im Repositorystamm zu beginnen; Pfad . mit Muster **/* schließt jede Datei ein.",
           "scanningRepo": "Repository-Dateien werden durchsucht… ({seconds}s)",
           "title": "Pfadmuster",
           "truncatedBadge": "Die Ergebnisse können unvollständig sein (Anbieterbeschränkung)"
@@ -2238,7 +2238,7 @@
           "branchesFallbackHint": "Geben Sie stattdessen den Namen des Zweigs ein."
         },
         "pathPatterns": {
-          "description": "Welche Anwendungsdateien eingebunden werden sollen. Jede Zeile kombiniert einen Basispfad und ein Glob-Muster. Beispiel: Pfad=src + Muster=**/* schließt alles unter src ein.",
+          "description": "Welche Anwendungsdateien Impact liest: den Code Pin Dateibrowser, den Cache, Repository-Marker und welche geänderten Dateien eine Analyse ignoriert.",
           "pathPlaceholder": "src"
         },
         "cache": {
@@ -4430,7 +4430,8 @@
         "ai_truncated": "{count, plural, one {# KI-Batch wurde} other {# KI-Batches wurden}} vom Modell unterbrochen.",
         "no_candidates": "Kein Testfall passend.",
         "anchor_fetch_capped": "Einige gepinnte Dateien wurden nur nach Pfad abgestimmt (Abruflimit erreicht).",
-        "issue_commit_fetch_capped": "Einige Commits, die Tickets benannten, wurden nicht Datei für Datei gelesen (Abruflimit erreicht); ihre Testfälle decken keine spezifischen Dateien ab."
+        "issue_commit_fetch_capped": "Einige Commits, die Tickets benannten, wurden nicht Datei für Datei gelesen (Abruflimit erreicht); ihre Testfälle decken keine spezifischen Dateien ab.",
+        "paths_excluded_by_settings": "{count, plural, one {# geänderte Datei wurde} other {# geänderte Dateien wurden}} aufgrund der ausgeschlossenen Pfade des Repositorys ignoriert."
       },
       "actions": {
         "analyze": "Analysieren",
@@ -8241,6 +8242,7 @@
     "projectRunsFilters": "## Testläufe filtern\n\nAktivieren Sie ein Chip, um die Liste einzugrenzen. Chips gelten sowohl für die Tabs „Aktiv“ als auch „Abgeschlossen“ und werden auf diesem Gerät für dieses Projekt gespeichert.\n\n- **Manuell** / **Automatisiert** — beschränkt die Liste auf diese Art von Testlauf. Wenn beide aktiviert (oder beide deaktiviert) sind, werden alle Testläufe angezeigt.\n- **Meine Testläufe** — nur Testläufe, an denen Sie beteiligt sind: Sie haben den Testlauf erstellt, Ihnen ist ein Testfall darin zugewiesen, oder Sie haben ein Testergebnis darin erfasst.",
     "projectSessionsFilters": "## Sitzungen filtern\n\nAktivieren Sie einen Chip, um die Liste einzugrenzen. Chips gelten sowohl für die Registerkarten \"Aktiv\" als auch \"Abgeschlossen\" und werden auf diesem Gerät für dieses Projekt gespeichert.\n\n- **Meine Sitzungen** — nur Sitzungen, an denen Sie beteiligt sind: Sie haben die Sitzung erstellt oder sie wurde Ihnen zugewiesen.",
     "projectImpact": "## Impact\nVerbinden Sie das Repository der zu testenden Anwendung, damit dieses Projekt Testauswirkungsanalysen ausführen kann: Wählen Sie zwei Commits aus, um zu sehen, welche Testfälle die Änderungen betreffen, und heften Sie Testfälle an den von ihnen abgedeckten Code.",
+    "pathPatterns": "## Pfadmuster\nJede Zeile kombiniert einen Basis-**Pfad** mit einem Glob-**Muster**. Zeilen addieren sich: Eine Datei wird einbezogen, wenn eine Zeile sie erfasst.\n\n- `src` + `**/*` — alles unter `src`\n- leer oder `.` + `**/*` — jede Datei im Repository\n- `src` + `**/!(*.test|*.spec).ts` — `.ts`-Dateien außer Tests\n\n### Ausschließen\nAktivieren Sie **Ausschließen** in einer Zeile, um ihre Dateien zu entfernen, auch wenn eine andere Zeile sie einbezieht. Ausschlüsse gelten für die Dateiauswahl und den Cache, und für Impact auf die geänderten Dateien einer Analyse, sodass eine Datei, die sich bei fast jedem Pull Request ändert, keine unrelated Test Cases einzieht. Mindestens eine Zeile muss deaktiviert bleiben.\n\n- leer + `**/CHANGELOG*` — jedes Changelog in beliebiger Tiefe\n- `app` + `build.gradle.kts` — eine Build-Datei, die nur die Version erhöht",
     "projectAutomation": "## Automatisierte Ausführung\nAusführungsziele teilen TestPlanIt mit, wo die automatisierten Fälle dieses Projekts ausgeführt werden sollen: ein GitHub Actions-Workflow, eine GitLab CI-Pipeline oder ein signierter Webhook für jedes andere System. Wenn ein Lauf ausgeführt wird, startet TestPlanIt den Auftrag mit der Laufkennung und einer Plan-URL; der Auftrag liest den Plan, führt die passenden Tests aus und meldet die Ergebnisse mit einem Reporter oder der an diesen Lauf angehefteten CLI zurück. Ziele können deaktiviert werden, ohne gelöscht zu werden."
   },
   "reports": {

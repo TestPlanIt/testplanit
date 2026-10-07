@@ -1864,10 +1864,10 @@
           "baseBranch": "Základní větev",
           "baseBranchHelp": "Pushe do této větve jsou analyzovány samy o sobě; pull requesty a ostatní větve jsou porovnávány proti ní. Ponechte prázdné pro použití větve připojení.",
           "autoExecute": "Spouštět automatizované případy",
-          "autoExecuteHelp": "Po sestavení běhu vyžádat automatizované spuštění jeho automatizovaných případů na tomto cíli. Manuální případy zůstávají v běhu pro testery.",
-          "autoExecuteNoTargets": "Pro tento projekt není nakonfigurován žádný cíl spuštění. <link>Přidejte jeden</link>, aby se běhy spouštěly automaticky.",
-          "autoExecuteTargetMissing": "Zvolený cíl spuštění byl smazán nebo zakázán. Běhy se stále sestavují, ale žádné spuštění se nevyžaduje, dokud nezvolíte jiný cíl.",
-          "autoExecuteSaveError": "Nastavení automatizovaného spuštění se nepodařilo uložit"
+          "autoExecuteHelp": "Po složení běhu požádat o automatizované spuštění jeho automatizovaných případů na tomto cíli. Manuální případy zůstanou v běhu pro testery.",
+          "autoExecuteNoTargets": "Pro tento projekt není nakonfigurován žádný cíl spuštění. <link>Přidejte jeden</link> pro automatické spouštění běhů.",
+          "autoExecuteTargetMissing": "Zvolený cíl spuštění byl smazán nebo deaktivován. Běhy jsou stále složeny, ale není požadováno spuštění, dokud si nevyberete jiný cíl.",
+          "autoExecuteSaveError": "Nepodařilo se uložit nastavení automatizovaného spuštění"
         },
         "inboundEmptyState": "Zatím žádné příchozí webhooky. <link>Přidejte jeden</link>, chcete-li přijímat aktualizace položek z vašeho nástroje pro sledování položek nebo pull requesty a pushe z připojeného úložiště.",
         "inboundChooserBitbucket": "Bitbucket",
@@ -2030,7 +2030,7 @@
           "branchPlaceholder": "Ponechte prázdné pro použití výchozí větve úložiště"
         },
         "pathPatterns": {
-          "description": "Určete, které soubory zahrnout. Každý řádek kombinuje základní cestu a glob vzor. Příklady: path=tests/e2e/pages + pattern=* zahrne všechny soubory přímo v této složce; path=src + pattern=**/*.test.ts zahrne všechny testovací soubory rekurzivně.",
+          "description": "Které soubory úložiště může QuickScript číst jako kontextu AI.",
           "pathPlaceholder": "tests/e2e/pages",
           "exceedsLimit": "Celková velikost přesahuje limit AI kontextu o {overflow}. Během exportu jsou soubory řazeny podle relevance k exportovanému testovacímu případu — nejrelevantnější soubory jsou zahrnuty jako první a soubory s nižším pořadím jsou přeskočeny po dosažení limitu. Pokud chcete mít větší kontrolu nad tím, které soubory jsou zahrnuty, zúžte své vzory cest."
         },
@@ -2088,11 +2088,11 @@
         },
         "pathPatterns": {
           "addPath": "Přidat cestu",
+          "exclude": "Vyloučit",
           "files": "{count, plural, one {# soubor} few {# soubory} many {# souboru} other {# souborů}}",
           "pathLabel": "Cesta",
           "patternLabel": "Vzor",
           "previewFiles": "Náhled souborů",
-          "rootHint": "Nechte cestu prázdnou, nebo zadejte „.",
           "scanningRepo": "Skenování souborů repozitáře… ({seconds}s)",
           "title": "Vzory cest",
           "truncatedBadge": "Výsledky mohou být neúplné (omezení poskytovatele)"
@@ -2238,7 +2238,7 @@
           "branchesFallbackHint": "Místo toho zadejte název větve."
         },
         "pathPatterns": {
-          "description": "Které soubory aplikace zahrnout. Každý řádek kombinuje základní cestu a glob vzor. Příklad: cesta=src + vzor=**/* zahrnuje vše pod src.",
+          "description": "Které soubory aplikace čte Impact: výběr souborů kódu Pin, mezipaměť, značky úložiště a které změněné soubory analýza ignoruje.",
           "pathPlaceholder": "src"
         },
         "cache": {
@@ -4430,7 +4430,8 @@
         "ai_truncated": "{count, plural, one {# dávka AI byla} other {# dávky AI byly}} zkráceny modelem.",
         "no_candidates": "Žádný testovací případ se neshodl.",
         "anchor_fetch_capped": "Některé fixované soubory byly shodovány pouze podle cesty (dosažen limit načítání).",
-        "issue_commit_fetch_capped": "Některé commity pojmenování tiketů nebyly přečteny soubor po souboru (dosažen limit načítání); jejich případy nepokrývají žádné konkrétní soubory."
+        "issue_commit_fetch_capped": "Některé commity pojmenování tiketů nebyly přečteny soubor po souboru (dosažen limit načítání); jejich případy nepokrývají žádné konkrétní soubory.",
+        "paths_excluded_by_settings": "{count, plural, one {# změněný soubor byl} few {# změněné soubory byly} many {# změněných souborů bylo} other {# změněných souborů bylo}} ignorován kvůli vyloučeným cestám úložiště."
       },
       "actions": {
         "analyze": "Analyzovat",
@@ -8241,6 +8242,7 @@
     "projectRunsFilters": "## Filtrování testovacích běhů\n\nPřepnutím štítku zúžíte seznam. Štítky se vztahují na obě karty, Aktivní i Dokončené, a jsou na tomto zařízení zapamatovány pro tento projekt.\n\n- **Manuální** / **Automatizované** — omezí seznam na daný typ běhu. Zapnutí obou (nebo vypnutí obou) zobrazí všechny běhy.\n- **Moje testovací běhy** — pouze běhy, kterých se účastníte: vytvořili jste běh, je vám v něm přiřazen testovací případ, nebo jste v něm zaznamenali výsledek testu.",
     "projectSessionsFilters": "## Filtrování relací\n\nPřepnutím štítku zúžíte seznam. Štítky se vztahují na obě karty, Aktivní i Dokončené, a jsou na tomto zařízení zapamatovány pro tento projekt.\n\n- **Moje relace** — pouze relace, kterých se účastníte: vytvořili jste relaci nebo je vám přiřazena.",
     "projectImpact": "## Dopad\nPřipojte úložiště testované aplikace, aby tento projekt mohl spouštět analýzu dopadu testů: vyberte dva commity a zjistěte, které testovací případy jsou změnami ovlivněny, a připněte testovací případy ke kódu, který pokrývají.",
+    "pathPatterns": "## Vzory cest\nKaždý řádek kombinuje základní **cestu** se glob **vzorem**. Řádky se sčítají: soubor je zahrnut, pokud jej odpovídá libovolný řádek.\n\n- `src` + `**/*` — všechno pod `src`\n- prázdné nebo `.` + `**/*` — každý soubor v repozitáři\n- `src` + `**/!(*.test|*.spec).ts` — soubory `.ts` mimo testy\n\n### Vyloučení\nZaškrtněte **Vyloučení** na řádku, abyste odstranili jeho soubory, i když je jiný řádek obsahuje. Vyloučení se vztahují na výběr souborů a mezipaměť, a pro Impact na změněné soubory analýzy, takže soubor, který se mění téměř v každém pull requestu, přestane stahovat nesouvisející testovací případy. Nejméně jeden řádek musí zůstat nezaškrtnutý.\n\n- prázdné + `**/CHANGELOG*` — každý changelog v libovolné hloubce\n- `app` + `build.gradle.kts` — soubor buildu, který pouze zvyšuje verzi",
     "projectAutomation": "## Automatizované provedení\nCíle provedení říkají TestPlanIt, kde spustit automatizované případy tohoto projektu: pracovní postup GitHub Actions, kanál GitLab CI nebo podepsaný webhook pro libovolný jiný systém. Když je běh spuštěn, TestPlanIt spustí úlohu s ID běhu a adresou URL plánu; úloha přečte plán, spustí odpovídající testy a vrátí výsledky pomocí reportéra nebo CLI připnutého k tomuto běhu. Cíle mohou být zakázány bez jejich odstranění."
   },
   "reports": {

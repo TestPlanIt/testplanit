@@ -57,6 +57,7 @@ const config: LoadedRepoConfig = {
   branch: "main",
   cacheEnabled: true,
   issueResultLinks: false,
+  pathPatterns: [],
   repositoryId: 9,
   repository: { id: 9, name: "acme/app", provider: "github", settings: null },
 };

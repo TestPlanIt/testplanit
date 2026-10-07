@@ -1863,11 +1863,11 @@
           "eventBranchPushHelp": "Analyseer elke push naar een ander branch tegen de basisbranch, zoals een pull request, en stel voor elke push een testrun samen.",
           "baseBranch": "Basisbranch",
           "baseBranchHelp": "Pushen naar deze branch worden op zichzelf geanalyseerd; pull requests en andere branches worden ermee vergeleken. Laat leeg om de branch van de verbinding te gebruiken.",
-          "autoExecute": "Geautomatiseerde cases uitvoeren",
-          "autoExecuteHelp": "Vraag na het samenstellen van de run geautomatiseerde uitvoering van de geautomatiseerde cases aan op dit doel. Handmatige cases blijven in de run voor testers.",
-          "autoExecuteNoTargets": "Er is geen uitvoeringsdoel geconfigureerd voor dit project. <link>Voeg er een toe</link> om runs automatisch uit te voeren.",
-          "autoExecuteTargetMissing": "Het gekozen uitvoeringsdoel is verwijderd of uitgeschakeld. Runs worden nog steeds samengesteld, maar er wordt geen uitvoering aangevraagd totdat u een ander doel kiest.",
-          "autoExecuteSaveError": "De instellingen voor geautomatiseerde uitvoering konden niet worden opgeslagen"
+          "autoExecute": "Automatische test cases uitvoeren",
+          "autoExecuteHelp": "Nadat de testrun is samengesteld, moet u automatische uitvoering van de geautomatiseerde cases op dit doel aanvragen. Handmatige cases blijven in de testrun voor testers.",
+          "autoExecuteNoTargets": "Er is geen uitvoeringsdoel geconfigureerd voor dit project. <link>Voeg er een toe</link> om testruns automatisch uit te voeren.",
+          "autoExecuteTargetMissing": "Het gekozen uitvoeringsdoel is verwijderd of uitgeschakeld. Testruns worden nog steeds samengesteld, maar er wordt geen uitvoering aangevraagd totdat u een ander doel kiest.",
+          "autoExecuteSaveError": "Kan de instellingen voor automatische uitvoering niet opslaan"
         },
         "inboundEmptyState": "Nog geen inkomende webhooks. <link>Voeg één toe</link> om issue-updates van uw issue tracker of pull requests en pushes van een verbonden repository te ontvangen.",
         "inboundChooserBitbucket": "Bitbucket",
@@ -2030,7 +2030,7 @@
           "branchPlaceholder": "Laat dit veld leeg om de standaardbranch van de repository te gebruiken."
         },
         "pathPatterns": {
-          "description": "Geef aan welke bestanden moeten worden opgenomen. Elke regel combineert een basispad met een glob-patroon. Voorbeelden: path=tests/e2e/pages + pattern=* bevat alle bestanden direct in die map; path=src + pattern=**/*.test.ts bevat alle testbestanden recursief.",
+          "description": "Welke repository-bestanden QuickScript als AI-context mag lezen.",
           "pathPlaceholder": "tests/e2e/pagina's",
           "exceedsLimit": "De totale grootte overschrijdt de AI-contextlimiet met {overflow}. Tijdens het exporteren worden bestanden gerangschikt op relevantie voor de te exporteren testcase. De meest relevante bestanden worden als eerste opgenomen en minder relevante bestanden worden overgeslagen wanneer het budget is bereikt. Verfijn uw padpatronen als u meer controle wilt over welke bestanden worden opgenomen."
         },
@@ -2088,11 +2088,11 @@
         },
         "pathPatterns": {
           "addPath": "Pad toevoegen",
+          "exclude": "Uitsluiten",
           "files": "{count, plural, one {# bestand} other {# bestanden}}",
           "pathLabel": "Pad",
           "patternLabel": "Patroon",
           "previewFiles": "Voorbeeldbestanden",
-          "rootHint": "Laat het pad leeg, of voer . in, om te beginnen bij de repositorywortels; padtype . met patroon **/* bevat elk bestand.",
           "scanningRepo": "Bestanden in de repository scannen… ({seconds}s)",
           "title": "Padpatronen",
           "truncatedBadge": "De resultaten kunnen onvolledig zijn (beperkingen van de aanbieder)"
@@ -2238,7 +2238,7 @@
           "branchesFallbackHint": "Typ in plaats daarvan de naam van de branch."
         },
         "pathPatterns": {
-          "description": "Welke toepassingsbestanden u wilt opnemen. Elke rij combineert een basispad en een glob-patroon. Voorbeeld: pad=src + patroon=**/* bevat alles onder src.",
+          "description": "Welke toepassingsbestanden Impact leest: de Code Pin-bestandskiezer, de cache, repository-markers en welke gewijzigde bestanden een analyse negeert.",
           "pathPlaceholder": "src"
         },
         "cache": {
@@ -4430,7 +4430,8 @@
         "ai_truncated": "{count, plural, one {# AI-batch was} other {# AI-batches waren}} afgesneden door het model.",
         "no_candidates": "Geen testgeval kwam overeen.",
         "anchor_fetch_capped": "Enkele vastgezette bestanden zijn afgestemd op pad alleen (fetchlimiet bereikt).",
-        "issue_commit_fetch_capped": "Sommige commits die tickets noemden, werden niet bestand voor bestand gelezen (fetchlimiet bereikt); hun zaken dekken geen specifieke bestanden."
+        "issue_commit_fetch_capped": "Sommige commits die tickets noemden, werden niet bestand voor bestand gelezen (fetchlimiet bereikt); hun zaken dekken geen specifieke bestanden.",
+        "paths_excluded_by_settings": "{count, plural, one {# gewijzigd bestand werd} other {# gewijzigde bestanden werden}} genegeerd vanwege de uitgesloten paden van de repository."
       },
       "actions": {
         "analyze": "Analyseren",
@@ -8241,6 +8242,7 @@
     "projectRunsFilters": "## Testruns filteren\n\nSchakel een chip in om de lijst te beperken. Chips zijn van toepassing op zowel het tabblad Actief als Voltooid, en worden op dit apparaat onthouden voor dit project.\n\n- **Handmatig** / **Geautomatiseerd** — beperk de lijst tot dat type run. Als u beide inschakelt (of beide uitschakelt), worden alle runs weergegeven.\n- **Mijn testruns** — alleen runs waaraan u deelneemt: u heeft de run aangemaakt, u heeft een testgeval toegewezen gekregen in de run, of u heeft een testresultaat vastgelegd in de run.",
     "projectSessionsFilters": "## Sessies filteren\n\nSchakel een chip in om de lijst te beperken. Chips zijn van toepassing op zowel het tabblad Actief als Voltooid, en worden op dit apparaat onthouden voor dit project.\n\n- **Mijn sessies** — alleen sessies waaraan je deelneemt: je hebt de sessie aangemaakt, of ze is aan jou toegewezen.",
     "projectImpact": "## Impact\nVerbind de repository van de toepassing onder test zodat dit project test impact analysis kan uitvoeren: selecteer twee commits om te zien welke testcases de wijzigingen beïnvloeden, en speld testcases vast aan de code die zij dekken.",
+    "pathPatterns": "## Padpatronen\nElke rij combineert een basis **pad** met een glob **patroon**. Rijen tellen op: een bestand wordt opgenomen wanneer een rij ervan overeenkomt.\n\n- `src` + `**/*` — alles onder `src`\n- leeg of `.` + `**/*` — elk bestand in de repository\n- `src` + `**/!(*.test|*.spec).ts` — `.ts` bestanden behalve tests\n\n### Uitsluiten\nVink **Uitsluiten** aan op een rij om de bestanden ervan te verwijderen, zelfs wanneer een ander rij ze opneemt. Uitsluitingen gelden voor de bestandenkiezer en cache, en voor Impact op de gewijzigde bestanden van een analyse, zodat een bestand dat op bijna elke pull request verandert, geen onverwante testgevallen optrekt. Ten minste één rij moet uitgevinkt blijven.\n\n- leeg + `**/CHANGELOG*` — elk changelog, op elke diepte\n- `app` + `build.gradle.kts` — een bouwbestand dat alleen de versie bijwerkt",
     "projectAutomation": "## Geautomatiseerde uitvoering\nUitvoeringsdoelen vertellen TestPlanIt waar dit project's geautomatiseerde cases uit te voeren: een GitHub Actions-workflow, een GitLab CI-pipeline, of een ondertekende webhook voor elk ander systeem. Wanneer een run wordt uitgevoerd, start TestPlanIt de taak met het run-id en een plan-URL; de taak leest het plan, voert de overeenkomende tests uit en rapporteert resultaten terug met een reporter of de CLI vastgespeld aan die run. Doelen kunnen worden uitgeschakeld zonder te worden verwijderd."
   },
   "reports": {

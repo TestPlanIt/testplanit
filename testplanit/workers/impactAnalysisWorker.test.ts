@@ -477,6 +477,54 @@ describe("impactAnalysisWorker", () => {
     mockFindManyCaseIssues.mockResolvedValue([]);
   });
 
+  it("ignores changed files matched by the connection's exclude rows", async () => {
+    mockLoadRepoConfig.mockResolvedValue({
+      config: {
+        id: 7,
+        projectId: 1,
+        purpose: "IMPACT",
+        branch: "main",
+        cacheEnabled: false,
+        pathPatterns: [
+          { path: "", pattern: "**/*" },
+          { path: "src/payments", pattern: "**", exclude: true },
+        ],
+        repositoryId: 3,
+        repository: { id: 3, name: "app", provider: "github", settings: null },
+      },
+      adapter,
+    });
+    const { processor } = await loadWorker();
+
+    const out = await processor(makeJob());
+
+    // The stored diff keeps every file; everything that finds cases sees only the kept one.
+    const diff = mockSaveDiff.mock.calls[0][2];
+    expect(diff).toMatchObject({
+      changedPaths: [LOGIN_PATH],
+      changedDirs: ["src", "src/auth"],
+      fileCount: 2,
+    });
+    expect(diff.diffRecords.map((r: { path: string }) => r.path)).toEqual([
+      LOGIN_PATH,
+      CHARGE_PATH,
+    ]);
+    expect(out.uncoveredCount).toBe(1);
+    const result = savedResult();
+    expect(result.warnings).toContainEqual({
+      code: "paths_excluded_by_settings",
+      detail: { count: 1, paths: [CHARGE_PATH] },
+    });
+    expect(mockUpdateProgress).toHaveBeenCalledWith(
+      expect.objectContaining({
+        phase: "matching_pins",
+        filesTotal: 2,
+        filesIncluded: 1,
+        filesExcludedBySettings: 1,
+      })
+    );
+  });
+
   it("runs pins, path and history only when no LLM is configured and reports the phases in order", async () => {
     const { processor } = await loadWorker();
 

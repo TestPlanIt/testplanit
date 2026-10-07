@@ -17,12 +17,14 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Checkbox } from "@/components/ui/checkbox";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Eye, Loader2, Plus, Trash, XCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
-import { type Control, useFieldArray } from "react-hook-form";
+import { type Control, useFieldArray, useWatch } from "react-hook-form";
 import * as z from "zod/v4";
 import type {
   RepoPreviewProgress,
@@ -32,11 +34,14 @@ import type {
 export interface PathPatternValue {
   path: string;
   pattern: string;
+  /** Subtract instead of include; see `PathPattern.exclude`. */
+  exclude?: boolean;
 }
 
 /**
  * The `pathPatterns` field of a code repository configuration form. A blank
- * path (or ".") means the repository root; the pattern is required.
+ * path (or ".") means the repository root; the pattern is required; at least
+ * one row must include (exclude rows alone would select nothing).
  */
 export function pathPatternsSchema(tRepo: (key: string) => string) {
   return z
@@ -44,9 +49,12 @@ export function pathPatternsSchema(tRepo: (key: string) => string) {
       z.object({
         path: z.string().trim(),
         pattern: z.string().trim().min(1, tRepo("validation.patternRequired")),
+        exclude: z.boolean().optional().default(false),
       })
     )
-    .min(1, tRepo("validation.pathPatternRequired"));
+    .refine((rows) => rows.some((row) => !row.exclude), {
+      message: tRepo("validation.pathPatternRequired"),
+    });
 }
 
 interface PathPatternsCardProps {
@@ -93,78 +101,128 @@ export function PathPatternsCard({
     control,
     name: "pathPatterns",
   });
+  // Live values: excluded rows are tinted, and the last include row cannot
+  // be removed while exclude rows can.
+  const rows = (useWatch({ control, name: "pathPatterns" }) ?? []) as
+    PathPatternValue[] | undefined;
+  const includeCount = (rows ?? []).filter((row) => !row?.exclude).length;
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{tRepo("pathPatterns.title")}</CardTitle>
-        <CardDescription>
-          {description} {tRepo("pathPatterns.rootHint")}
-        </CardDescription>
+        <CardTitle className="flex items-center">
+          {tRepo("pathPatterns.title")}
+          <HelpPopover helpKey="pathPatterns" />
+        </CardTitle>
+        <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {fields.map((row, index) => (
-          <div key={row.id} className="flex items-start gap-2">
-            <FormField
-              control={control}
-              name={`pathPatterns.${index}.path`}
-              render={({ field }) => (
-                <FormItem className="flex-1">
-                  {index === 0 && (
-                    <FormLabel>{tRepo("pathPatterns.pathLabel")}</FormLabel>
+        <div className="space-y-1">
+          {fields.map((row, index) => {
+            const excluded = Boolean(rows?.[index]?.exclude);
+            return (
+              <div
+                key={row.id}
+                className={`-mx-2 flex items-start gap-2 rounded-md border-s-2 px-2 ${
+                  excluded
+                    ? "border-destructive/60 bg-destructive/5"
+                    : "border-transparent"
+                }`}
+                data-testid={`${testIdPrefix}-row-${index}`}
+                data-excluded={excluded ? "true" : "false"}
+              >
+                <FormField
+                  control={control}
+                  name={`pathPatterns.${index}.exclude`}
+                  render={({ field }) => (
+                    <FormItem className="w-16 shrink-0 text-center">
+                      {index === 0 && (
+                        <FormLabel>{tRepo("pathPatterns.exclude")}</FormLabel>
+                      )}
+                      <div className="flex h-10 items-center justify-center">
+                        <FormControl>
+                          <Checkbox
+                            checked={Boolean(field.value)}
+                            onCheckedChange={(value) =>
+                              field.onChange(value === true)
+                            }
+                            disabled={readOnly}
+                            aria-label={tRepo("pathPatterns.exclude")}
+                            data-testid={`${testIdPrefix}-exclude-${index}`}
+                          />
+                        </FormControl>
+                      </div>
+                    </FormItem>
                   )}
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder={pathPlaceholder}
-                      data-testid={`${testIdPrefix}-path-${index}`}
-                      disabled={readOnly}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={control}
-              name={`pathPatterns.${index}.pattern`}
-              render={({ field }) => (
-                <FormItem className="flex-1">
-                  {index === 0 && (
-                    <FormLabel>{tRepo("pathPatterns.patternLabel")}</FormLabel>
+                />
+                <FormField
+                  control={control}
+                  name={`pathPatterns.${index}.path`}
+                  render={({ field }) => (
+                    <FormItem className="flex-1">
+                      {index === 0 && (
+                        <FormLabel>{tRepo("pathPatterns.pathLabel")}</FormLabel>
+                      )}
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder={pathPlaceholder}
+                          data-testid={`${testIdPrefix}-path-${index}`}
+                          disabled={readOnly}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder={defaultPattern}
-                      data-testid={`${testIdPrefix}-pattern-${index}`}
-                      disabled={readOnly}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className={index === 0 ? "mt-8" : ""}
-              onClick={() => remove(index)}
-              disabled={readOnly || fields.length === 1}
-              aria-label={tCommon("actions.delete")}
-            >
-              <Trash className="h-4 w-4" />
-            </Button>
-          </div>
-        ))}
+                />
+                <FormField
+                  control={control}
+                  name={`pathPatterns.${index}.pattern`}
+                  render={({ field }) => (
+                    <FormItem className="flex-1">
+                      {index === 0 && (
+                        <FormLabel>
+                          {tRepo("pathPatterns.patternLabel")}
+                        </FormLabel>
+                      )}
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder={defaultPattern}
+                          data-testid={`${testIdPrefix}-pattern-${index}`}
+                          disabled={readOnly}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className={index === 0 ? "mt-8" : ""}
+                  onClick={() => remove(index)}
+                  disabled={
+                    readOnly || (!rows?.[index]?.exclude && includeCount <= 1)
+                  }
+                  aria-label={tCommon("actions.delete")}
+                >
+                  <Trash className="h-4 w-4 text-destructive" />
+                </Button>
+              </div>
+            );
+          })}
+        </div>
 
         {!readOnly && (
           <Button
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => append({ path: "", pattern: defaultPattern })}
+            onClick={() =>
+              append({ path: "", pattern: defaultPattern, exclude: false })
+            }
             data-testid={`${testIdPrefix}-add-path`}
           >
             <Plus className="h-4 w-4" />

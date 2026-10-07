@@ -2030,7 +2030,7 @@
           "branchPlaceholder": "Leave blank to use repository default branch"
         },
         "pathPatterns": {
-          "description": "Specify which files to include. Each row combines a base path and a glob pattern. Examples: path=tests/e2e/pages + pattern=* includes all files directly in that folder; path=src + pattern=**/*.test.ts includes all test files recursively.",
+          "description": "Which repository files QuickScript may read as AI context.",
           "pathPlaceholder": "tests/e2e/pages",
           "exceedsLimit": "Total size exceeds the AI context limit by {overflow}. During export, files are ranked by relevance to the test case being exported — the most relevant files are included first and lower-ranked files are skipped when the budget is reached. Narrow your path patterns if you want more control over which files are included."
         },
@@ -2088,11 +2088,11 @@
         },
         "pathPatterns": {
           "addPath": "Add Path",
+          "exclude": "Exclude",
           "files": "{count, plural, one {# file} other {# files}}",
           "pathLabel": "Path",
           "patternLabel": "Pattern",
           "previewFiles": "Preview Files",
-          "rootHint": "Leave the path blank, or enter ., to start at the repository root; path . with pattern **/* includes every file.",
           "scanningRepo": "Scanning repository files… ({seconds}s)",
           "title": "Path Patterns",
           "truncatedBadge": "Results may be incomplete (provider limit)"
@@ -2238,7 +2238,7 @@
           "branchesFallbackHint": "Type the branch name instead."
         },
         "pathPatterns": {
-          "description": "Which application files to include. Each row combines a base path and a glob pattern. Example: path=src + pattern=**/* includes everything under src.",
+          "description": "Which application files Impact reads: the Code Pin file picker, the cache, repository markers, and which changed files an analysis ignores.",
           "pathPlaceholder": "src"
         },
         "cache": {
@@ -4430,7 +4430,8 @@
         "ai_truncated": "{count, plural, one {# AI batch was} other {# AI batches were}} cut off by the model.",
         "no_candidates": "No test case matched.",
         "anchor_fetch_capped": "Some pinned files were matched by path only (fetch limit reached).",
-        "issue_commit_fetch_capped": "Some commits naming tickets were not read file by file (fetch limit reached); their cases cover no specific files."
+        "issue_commit_fetch_capped": "Some commits naming tickets were not read file by file (fetch limit reached); their cases cover no specific files.",
+        "paths_excluded_by_settings": "{count, plural, one {# changed file was} other {# changed files were}} ignored because of the repository's excluded paths."
       },
       "actions": {
         "analyze": "Analyze",
@@ -8241,6 +8242,7 @@
     "projectRunsFilters": "## Filtering test runs\n\nToggle a chip to narrow the list. Chips apply to both the Active and Completed tabs, and are remembered on this device for this project.\n\n- **Manual** / **Automated** — limit the list to that kind of run. Turning both on (or both off) shows every run.\n- **My Test Runs** — only runs you take part in: you created the run, you are assigned a test case in it, or you recorded a test result in it.",
     "projectSessionsFilters": "## Filtering sessions\n\nToggle a chip to narrow the list. Chips apply to both the Active and Completed tabs, and are remembered on this device for this project.\n\n- **My Sessions** — only sessions you take part in: you created the session, or it is assigned to you.",
     "projectImpact": "## Impact\nConnect the repository of the application under test so this project can run test impact analysis: pick two commits to see which test cases the changes affect, and pin test cases to the code they cover.",
+    "pathPatterns": "## Path Patterns\nEach row combines a base **path** with a glob **pattern**. Rows add up: a file is included when any row matches it.\n\n- `src` + `**/*` — everything under `src`\n- blank or `.` + `**/*` — every file in the repository\n- `src` + `**/!(*.test|*.spec).ts` — `.ts` files except tests\n\n### Exclude\nTick **Exclude** on a row to remove its files even when another row includes them. Exclusions apply to the file picker and cache, and for Impact to the changed files of an analysis, so a file that changes on almost every pull request stops pulling in unrelated test cases. At least one row must stay unticked.\n\n- blank + `**/CHANGELOG*` — every changelog, at any depth\n- `app` + `build.gradle.kts` — a build file that only bumps the version",
     "projectAutomation": "## Automated Execution\nExecution targets tell TestPlanIt where to execute this project's automated cases: a GitHub Actions workflow, a GitLab CI pipeline, or a signed webhook for any other system. When a run is executed, TestPlanIt starts the job with the run id and a plan URL; the job reads the plan, runs the matching tests, and reports results back with a reporter or the CLI pinned to that run. Targets can be disabled without being deleted."
   },
   "reports": {

@@ -1864,9 +1864,9 @@
           "baseBranch": "Branche de base",
           "baseBranchHelp": "Les poussées vers cette branche sont analysées par elles-mêmes ; les demandes d'extraction et les autres branches y sont comparées. Laissez vide pour utiliser la branche de la connexion.",
           "autoExecute": "Exécuter les cas automatisés",
-          "autoExecuteHelp": "Une fois l'exécution créée, demander l'exécution automatisée de ses cas automatisés sur cette cible. Les cas manuels restent dans l'exécution pour les testeurs.",
-          "autoExecuteNoTargets": "Aucune cible d'exécution n'est configurée pour ce projet. <link>Ajoutez-en une</link> pour exécuter les exécutions automatiquement.",
-          "autoExecuteTargetMissing": "La cible d'exécution choisie a été supprimée ou désactivée. Les exécutions sont toujours créées, mais aucune exécution n'est demandée tant que vous n'avez pas choisi une autre cible.",
+          "autoExecuteHelp": "Une fois la série composée, demandez l'exécution automatisée de ses cas automatisés sur cette cible. Les cas manuels restent dans la série pour les testeurs.",
+          "autoExecuteNoTargets": "Aucune cible d'exécution n'est configurée pour ce projet. <link>Ajoutez-en une</link> pour exécuter les séries automatiquement.",
+          "autoExecuteTargetMissing": "La cible d'exécution choisie a été supprimée ou désactivée. Les séries sont toujours composées, mais aucune exécution n'est demandée jusqu'à ce que vous choisissiez une autre cible.",
           "autoExecuteSaveError": "Impossible d'enregistrer les paramètres d'exécution automatisée"
         },
         "inboundEmptyState": "Pas encore de webhooks entrants. <link>Ajoutez-en un</link> pour recevoir les mises à jour des tickets de votre système de suivi des problèmes, ou les demandes d'extraction et les poussées d'un dépôt connecté.",
@@ -2030,7 +2030,7 @@
           "branchPlaceholder": "Laissez vide pour utiliser la branche par défaut du dépôt"
         },
         "pathPatterns": {
-          "description": "Spécifiez les fichiers à inclure. Chaque ligne combine un chemin de base et un modèle glob. Exemples : `path=tests/e2e/pages + pattern=*` inclut tous les fichiers directement dans ce dossier ; `path=src + pattern=**/*.test.ts` inclut tous les fichiers de test de manière récursive.",
+          "description": "Quels fichiers de référentiel QuickScript peut lire comme contexte IA.",
           "pathPlaceholder": "tests/e2e/pages",
           "exceedsLimit": "La taille totale dépasse la limite du contexte IA de {overflow}. Lors de l'exportation, les fichiers sont classés par ordre de pertinence pour le cas de test exporté : les fichiers les plus pertinents sont inclus en premier et les fichiers moins pertinents sont ignorés lorsque le budget est atteint. Affinez vos modèles de chemin si vous souhaitez un contrôle plus précis sur les fichiers inclus."
         },
@@ -2088,11 +2088,11 @@
         },
         "pathPatterns": {
           "addPath": "Ajouter un chemin",
+          "exclude": "Exclure",
           "files": "{count, plural, one {# fichier} other {# fichiers}}",
           "pathLabel": "Chemin",
           "patternLabel": "Modèle",
           "previewFiles": "Aperçu des fichiers",
-          "rootHint": "Laissez le chemin vide, ou saisissez ., pour commencer à la racine du dépôt ; le chemin . avec le modèle **/* inclut chaque fichier.",
           "scanningRepo": "Analyse des fichiers du dépôt… ({seconds}s)",
           "title": "Modèles de chemin",
           "truncatedBadge": "Les résultats peuvent être incomplets (limite du fournisseur)"
@@ -2238,7 +2238,7 @@
           "branchesFallbackHint": "Tapez plutôt le nom de la branche."
         },
         "pathPatterns": {
-          "description": "Fichiers d'application à inclure. Chaque ligne combine un chemin de base et un modèle glob. Exemple : chemin=src + modèle=**/* inclut tout sous src.",
+          "description": "Quels fichiers d'application Impact lit : le sélecteur de fichier Code Pin, le cache, les marqueurs de référentiel et les fichiers modifiés qu'une analyse ignore.",
           "pathPlaceholder": "src"
         },
         "cache": {
@@ -4430,7 +4430,8 @@
         "ai_truncated": "{count, plural, one {# lot d'IA a} other {# lots d'IA ont}} été interrompus par le modèle.",
         "no_candidates": "Aucun cas de test ne correspond.",
         "anchor_fetch_capped": "Certains fichiers épinglés ont été mis en correspondance par chemin uniquement (limite de récupération atteinte).",
-        "issue_commit_fetch_capped": "Certains commits nommant des tickets n'ont pas été lus fichier par fichier (limite de récupération atteinte) ; leurs cas ne couvrent aucun fichier spécifique."
+        "issue_commit_fetch_capped": "Certains commits nommant des tickets n'ont pas été lus fichier par fichier (limite de récupération atteinte) ; leurs cas ne couvrent aucun fichier spécifique.",
+        "paths_excluded_by_settings": "{count, plural, one {# fichier modifié a} other {# fichiers modifiés ont}} été ignorés en raison des chemins exclus du référentiel."
       },
       "actions": {
         "analyze": "Analyser",
@@ -8241,6 +8242,7 @@
     "projectRunsFilters": "## Filtrage des exécutions de test\n\nActivez ou désactivez une puce pour affiner la liste. Les puces s'appliquent aux onglets Actives et Terminées, et sont mémorisées sur cet appareil pour ce projet.\n\n- **Manuel** / **Automatisé** — limite la liste à ce type d'exécution. Activer les deux (ou les désactiver toutes les deux) affiche toutes les exécutions.\n- **Mes exécutions de test** — uniquement les exécutions auxquelles vous participez : vous avez créé l'exécution, un cas de test vous y est assigné, ou vous avez enregistré un résultat de test dans celle-ci.",
     "projectSessionsFilters": "## Filtrage des sessions\n\nActivez une puce pour affiner la liste. Les puces s'appliquent aux onglets Actives et Terminées, et sont mémorisées sur cet appareil pour ce projet.\n\n- **Mes sessions** — uniquement les sessions auxquelles vous participez : vous avez créé la session, ou elle vous est assignée.",
     "projectImpact": "## Impact\nConnectez le dépôt de l'application testée pour que ce projet puisse exécuter l'analyse d'impact des tests : choisissez deux commits pour voir quels cas de test les modifications affectent et épinglez les cas de test au code qu'ils couvrent.",
+    "pathPatterns": "## Modèles de chemin\nChaque ligne combine un **chemin** de base avec un **modèle** glob. Les lignes s'ajoutent : un fichier est inclus si une ligne le correspond.\n\n- `src` + `**/*` — tout ce qui se trouve sous `src`\n- vide ou `.` + `**/*` — chaque fichier du dépôt\n- `src` + `**/!(*.test|*.spec).ts` — fichiers `.ts` sauf les tests\n\n### Exclure\nCochez **Exclure** sur une ligne pour supprimer ses fichiers même si une autre ligne les inclut. Les exclusions s'appliquent au sélecteur de fichiers et au cache, et pour l'impact aux fichiers modifiés d'une analyse, donc un fichier qui change à chaque demande d'extraction arrête de récupérer les cas de test non liés. Au moins une ligne doit rester décochée.\n\n- vide + `**/CHANGELOG*` — chaque changelog, à n'importe quelle profondeur\n- `app` + `build.gradle.kts` — un fichier de compilation qui augmente uniquement la version",
     "projectAutomation": "## Exécution automatisée\nLes cibles d'exécution indiquent à TestPlanIt où exécuter les cas automatisés de ce projet : un workflow GitHub Actions, un pipeline GitLab CI ou un webhook signé pour tout autre système. Lorsqu'une exécution est exécutée, TestPlanIt démarre le travail avec l'ID d'exécution et une URL de plan ; le travail lit le plan, exécute les tests correspondants et rapporte les résultats avec un rapporteur ou le CLI épinglé à cette exécution. Les cibles peuvent être désactivées sans être supprimées."
   },
   "reports": {

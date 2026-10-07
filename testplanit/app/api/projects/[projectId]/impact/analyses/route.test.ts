@@ -425,6 +425,7 @@ describe("POST /api/projects/[projectId]/impact/analyses", () => {
         headSha: SHA_B,
         baseRef: "main",
         headRef: "feature",
+        settingsHash: null,
         notes: "release smoke",
         trigger: null,
         triggerLabel: null,

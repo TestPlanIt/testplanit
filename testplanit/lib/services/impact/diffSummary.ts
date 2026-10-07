@@ -48,9 +48,11 @@ const CLASS_ORDER: Record<DiffFileClass, number> = {
   vendored: 4,
   minified: 4,
   binary: 4,
+  settings: 4,
 };
 
 const EXCLUDED_RENDER_ORDER: DiffFileClass[] = [
+  "settings",
   "lockfile",
   "generated",
   "vendored",
@@ -286,19 +288,31 @@ function compareFiles(a: PreparedFile, b: PreparedFile): number {
 export function buildDiffSummary(
   compare: CompareResult,
   cfg: ImpactConfig,
-  opts: { maxTokensPerRequest?: number } = {}
+  opts: {
+    maxTokensPerRequest?: number;
+    /** The connection's excluded paths; a matching file is listed as excluded by settings and takes no budget. */
+    isExcludedBySettings?: (file: ChangedFile) => boolean;
+  } = {}
 ): DiffSummary {
   const rawFiles = Array.isArray(compare.files) ? compare.files : [];
+  const excludedFiles: DiffSummary["excludedFiles"] = [];
+  const candidates: ChangedFile[] = [];
+  for (const file of rawFiles) {
+    if (opts.isExcludedBySettings?.(file)) {
+      excludedFiles.push({ path: file.path, class: "settings" });
+    } else {
+      candidates.push(file);
+    }
+  }
   let truncatedByBudget = false;
   let omittedFileCount = 0;
-  let capped = rawFiles;
-  if (rawFiles.length > cfg.maxDiffFiles) {
-    capped = rawFiles.slice(0, cfg.maxDiffFiles);
+  let capped = candidates;
+  if (candidates.length > cfg.maxDiffFiles) {
+    capped = candidates.slice(0, cfg.maxDiffFiles);
     truncatedByBudget = true;
-    omittedFileCount = rawFiles.length - cfg.maxDiffFiles;
+    omittedFileCount = candidates.length - cfg.maxDiffFiles;
   }
 
-  const excludedFiles: DiffSummary["excludedFiles"] = [];
   const included: PreparedFile[] = [];
   for (const file of capped) {
     const cls = classifyPath(file.path, Boolean(file.isBinary));
@@ -413,7 +427,13 @@ function excludedLine(excluded: DiffSummary["excludedFiles"]): string | null {
     const n = counts.get(cls);
     if (!n) continue;
     const label =
-      cls === "lockfile" ? (n === 1 ? "lockfile" : "lockfiles") : cls;
+      cls === "lockfile"
+        ? n === 1
+          ? "lockfile"
+          : "lockfiles"
+        : cls === "settings"
+          ? "by project settings"
+          : cls;
     parts.push(`${n} ${label}`);
   }
   for (const [cls, n] of counts) {
