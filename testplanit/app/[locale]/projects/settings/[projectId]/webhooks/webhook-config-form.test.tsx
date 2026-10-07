@@ -52,6 +52,9 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
 
 // The wizard has its own suite; here it is a probe that records its props
 // and lets a test fire `onCreated`.
+vi.mock("./repository-webhook-auto-execute", () => ({
+  RepositoryWebhookAutoExecute: () => null,
+}));
 vi.mock("./inbound-webhook-wizard", () => ({
   InboundWebhookWizard: (props: any) => {
     mockWizard(props);

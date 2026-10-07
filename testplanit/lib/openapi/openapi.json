@@ -1092368,6 +1092368,30 @@
               }
             ]
           },
+          "autoExecuteEnabled": {
+            "type": "boolean"
+          },
+          "autoExecuteTargetId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "autoExecuteRef": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "autoExecuteInputs": {},
           "endpointHealth": {
             "$ref": "#/components/schemas/EndpointHealth"
           },
@@ -1092475,6 +1092499,8 @@
           "secret",
           "isActive",
           "subscribedEvents",
+          "autoExecuteEnabled",
+          "autoExecuteInputs",
           "endpointHealth",
           "consecutiveFailureCount",
           "createdAt",
@@ -1092535,6 +1092561,18 @@
             "type": "boolean"
           },
           "externalWebhookId": {
+            "type": "boolean"
+          },
+          "autoExecuteEnabled": {
+            "type": "boolean"
+          },
+          "autoExecuteTargetId": {
+            "type": "boolean"
+          },
+          "autoExecuteRef": {
+            "type": "boolean"
+          },
+          "autoExecuteInputs": {
             "type": "boolean"
           },
           "endpointHealth": {
@@ -1092877,6 +1092915,45 @@
               }
             ]
           },
+          "autoExecuteEnabled": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/BoolFilter"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "autoExecuteTargetId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntNullableFilter"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "autoExecuteRef": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "autoExecuteInputs": {
+            "$ref": "#/components/schemas/JsonFilter"
+          },
           "endpointHealth": {
             "oneOf": [
               {
@@ -1093168,6 +1093245,45 @@
               }
             ]
           },
+          "autoExecuteEnabled": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/BoolFilter"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "autoExecuteTargetId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntNullableFilter"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "autoExecuteRef": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "autoExecuteInputs": {
+            "$ref": "#/components/schemas/JsonFilter"
+          },
           "endpointHealth": {
             "oneOf": [
               {
@@ -1093450,6 +1093566,45 @@
               }
             ]
           },
+          "autoExecuteEnabled": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/BoolFilter"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "autoExecuteTargetId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntNullableFilter"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "autoExecuteRef": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "autoExecuteInputs": {
+            "$ref": "#/components/schemas/JsonFilter"
+          },
           "endpointHealth": {
             "oneOf": [
               {
@@ -1093723,6 +1093878,45 @@
               }
             ]
           },
+          "autoExecuteEnabled": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/BoolWithAggregatesFilter"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "autoExecuteTargetId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntNullableWithAggregatesFilter"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "autoExecuteRef": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableWithAggregatesFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "autoExecuteInputs": {
+            "$ref": "#/components/schemas/JsonWithAggregatesFilter"
+          },
           "endpointHealth": {
             "oneOf": [
               {
@@ -1093962,6 +1094156,32 @@
               }
             ]
           },
+          "autoExecuteEnabled": {
+            "$ref": "#/components/schemas/SortOrder"
+          },
+          "autoExecuteTargetId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SortOrder"
+              },
+              {
+                "$ref": "#/components/schemas/SortOrderInput"
+              }
+            ]
+          },
+          "autoExecuteRef": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SortOrder"
+              },
+              {
+                "$ref": "#/components/schemas/SortOrderInput"
+              }
+            ]
+          },
+          "autoExecuteInputs": {
+            "$ref": "#/components/schemas/SortOrder"
+          },
           "endpointHealth": {
             "$ref": "#/components/schemas/SortOrder"
           },
@@ -1094067,6 +1094287,10 @@
           "codeRepositoryConfigId",
           "baseBranch",
           "externalWebhookId",
+          "autoExecuteEnabled",
+          "autoExecuteTargetId",
+          "autoExecuteRef",
+          "autoExecuteInputs",
           "endpointHealth",
           "url",
           "name",
@@ -1094153,6 +1094377,18 @@
           "externalWebhookId": {
             "type": "boolean"
           },
+          "autoExecuteEnabled": {
+            "type": "boolean"
+          },
+          "autoExecuteTargetId": {
+            "type": "boolean"
+          },
+          "autoExecuteRef": {
+            "type": "boolean"
+          },
+          "autoExecuteInputs": {
+            "type": "boolean"
+          },
           "endpointHealth": {
             "type": "boolean"
           },
@@ -1094224,6 +1094460,18 @@
           "externalWebhookId": {
             "type": "integer"
           },
+          "autoExecuteEnabled": {
+            "type": "integer"
+          },
+          "autoExecuteTargetId": {
+            "type": "integer"
+          },
+          "autoExecuteRef": {
+            "type": "integer"
+          },
+          "autoExecuteInputs": {
+            "type": "integer"
+          },
           "endpointHealth": {
             "type": "integer"
           },
@@ -1094270,6 +1094518,10 @@
           "codeRepositoryConfigId",
           "baseBranch",
           "externalWebhookId",
+          "autoExecuteEnabled",
+          "autoExecuteTargetId",
+          "autoExecuteRef",
+          "autoExecuteInputs",
           "endpointHealth",
           "url",
           "name",
@@ -1094314,6 +1094566,15 @@
             "type": "boolean"
           },
           "externalWebhookId": {
+            "type": "boolean"
+          },
+          "autoExecuteEnabled": {
+            "type": "boolean"
+          },
+          "autoExecuteTargetId": {
+            "type": "boolean"
+          },
+          "autoExecuteRef": {
             "type": "boolean"
           },
           "endpointHealth": {
@@ -1094442,6 +1094703,36 @@
             ]
           },
           "externalWebhookId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "autoExecuteEnabled": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "autoExecuteTargetId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "autoExecuteRef": {
             "oneOf": [
               {
                 "type": "null"
@@ -1094592,6 +1094883,15 @@
           "externalWebhookId": {
             "type": "boolean"
           },
+          "autoExecuteEnabled": {
+            "type": "boolean"
+          },
+          "autoExecuteTargetId": {
+            "type": "boolean"
+          },
+          "autoExecuteRef": {
+            "type": "boolean"
+          },
           "endpointHealth": {
             "type": "boolean"
           },
@@ -1094727,6 +1095027,36 @@
               }
             ]
           },
+          "autoExecuteEnabled": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "autoExecuteTargetId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "autoExecuteRef": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "endpointHealth": {
             "oneOf": [
               {
@@ -1094844,6 +1095174,9 @@
           "codeRepositoryConfigId": {
             "type": "boolean"
           },
+          "autoExecuteTargetId": {
+            "type": "boolean"
+          },
           "consecutiveFailureCount": {
             "type": "boolean"
           }
@@ -1094856,6 +1095189,9 @@
             "type": "boolean"
           },
           "codeRepositoryConfigId": {
+            "type": "boolean"
+          },
+          "autoExecuteTargetId": {
             "type": "boolean"
           },
           "consecutiveFailureCount": {
@@ -1094877,6 +1095213,16 @@
             ]
           },
           "codeRepositoryConfigId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "autoExecuteTargetId": {
             "oneOf": [
               {
                 "type": "null"
@@ -1094912,6 +1095258,16 @@
             ]
           },
           "codeRepositoryConfigId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          },
+          "autoExecuteTargetId": {
             "oneOf": [
               {
                 "type": "null"
@@ -1095055,6 +1095411,30 @@
               }
             ]
           },
+          "autoExecuteEnabled": {
+            "type": "boolean"
+          },
+          "autoExecuteTargetId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "autoExecuteRef": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "autoExecuteInputs": {},
           "endpointHealth": {
             "$ref": "#/components/schemas/EndpointHealth"
           },
@@ -1095192,6 +1095572,8 @@
           "token",
           "secret",
           "isActive",
+          "autoExecuteEnabled",
+          "autoExecuteInputs",
           "endpointHealth",
           "consecutiveFailureCount",
           "createdAt",
@@ -1095250,6 +1095632,37 @@
               {
                 "type": "string"
               }
+            ]
+          },
+          "autoExecuteEnabled": {
+            "type": "boolean"
+          },
+          "autoExecuteTargetId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "autoExecuteRef": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "autoExecuteInputs": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNullValueInput"
+              },
+              {}
             ]
           },
           "endpointHealth": {
@@ -1095454,6 +1095867,50 @@
               {
                 "type": "null"
               }
+            ]
+          },
+          "autoExecuteEnabled": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "autoExecuteTargetId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "autoExecuteRef": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "autoExecuteInputs": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNullValueInput"
+              },
+              {}
             ]
           },
           "endpointHealth": {
@@ -1095699,6 +1096156,50 @@
               }
             ]
           },
+          "autoExecuteEnabled": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "autoExecuteTargetId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "autoExecuteRef": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "autoExecuteInputs": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNullValueInput"
+              },
+              {}
+            ]
+          },
           "endpointHealth": {
             "oneOf": [
               {
@@ -1095892,6 +1096393,37 @@
               }
             ]
           },
+          "autoExecuteEnabled": {
+            "type": "boolean"
+          },
+          "autoExecuteTargetId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "autoExecuteRef": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "autoExecuteInputs": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNullValueInput"
+              },
+              {}
+            ]
+          },
           "endpointHealth": {
             "$ref": "#/components/schemas/EndpointHealth"
           },
@@ -1096031,6 +1096563,37 @@
               {
                 "type": "string"
               }
+            ]
+          },
+          "autoExecuteEnabled": {
+            "type": "boolean"
+          },
+          "autoExecuteTargetId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "autoExecuteRef": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "autoExecuteInputs": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNullValueInput"
+              },
+              {}
             ]
           },
           "endpointHealth": {
@@ -1096193,6 +1096756,37 @@
               {
                 "type": "string"
               }
+            ]
+          },
+          "autoExecuteEnabled": {
+            "type": "boolean"
+          },
+          "autoExecuteTargetId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "autoExecuteRef": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "autoExecuteInputs": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNullValueInput"
+              },
+              {}
             ]
           },
           "endpointHealth": {
@@ -1096390,6 +1096984,50 @@
               {
                 "type": "null"
               }
+            ]
+          },
+          "autoExecuteEnabled": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "autoExecuteTargetId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "autoExecuteRef": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "autoExecuteInputs": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNullValueInput"
+              },
+              {}
             ]
           },
           "endpointHealth": {
@@ -1096645,6 +1097283,50 @@
               }
             ]
           },
+          "autoExecuteEnabled": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "autoExecuteTargetId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "autoExecuteRef": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "autoExecuteInputs": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNullValueInput"
+              },
+              {}
+            ]
+          },
           "endpointHealth": {
             "oneOf": [
               {
@@ -1096864,6 +1097546,37 @@
               {
                 "type": "string"
               }
+            ]
+          },
+          "autoExecuteEnabled": {
+            "type": "boolean"
+          },
+          "autoExecuteTargetId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "autoExecuteRef": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "autoExecuteInputs": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNullValueInput"
+              },
+              {}
             ]
           },
           "endpointHealth": {
@@ -1097278,6 +1097991,50 @@
               {
                 "type": "null"
               }
+            ]
+          },
+          "autoExecuteEnabled": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "autoExecuteTargetId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "autoExecuteRef": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "autoExecuteInputs": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNullValueInput"
+              },
+              {}
             ]
           },
           "endpointHealth": {
@@ -1097754,6 +1098511,37 @@
               }
             ]
           },
+          "autoExecuteEnabled": {
+            "type": "boolean"
+          },
+          "autoExecuteTargetId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "autoExecuteRef": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "autoExecuteInputs": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNullValueInput"
+              },
+              {}
+            ]
+          },
           "endpointHealth": {
             "$ref": "#/components/schemas/EndpointHealth"
           },
@@ -1097908,6 +1098696,37 @@
               {
                 "type": "string"
               }
+            ]
+          },
+          "autoExecuteEnabled": {
+            "type": "boolean"
+          },
+          "autoExecuteTargetId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "autoExecuteRef": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "autoExecuteInputs": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNullValueInput"
+              },
+              {}
             ]
           },
           "endpointHealth": {
@@ -1098106,6 +1098925,50 @@
               {
                 "type": "null"
               }
+            ]
+          },
+          "autoExecuteEnabled": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "autoExecuteTargetId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "autoExecuteRef": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "autoExecuteInputs": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNullValueInput"
+              },
+              {}
             ]
           },
           "endpointHealth": {
@@ -1098358,6 +1099221,50 @@
               }
             ]
           },
+          "autoExecuteEnabled": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "autoExecuteTargetId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "autoExecuteRef": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "autoExecuteInputs": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNullValueInput"
+              },
+              {}
+            ]
+          },
           "endpointHealth": {
             "oneOf": [
               {
@@ -1098570,6 +1099477,37 @@
               {
                 "type": "string"
               }
+            ]
+          },
+          "autoExecuteEnabled": {
+            "type": "boolean"
+          },
+          "autoExecuteTargetId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "autoExecuteRef": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "autoExecuteInputs": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNullValueInput"
+              },
+              {}
             ]
           },
           "endpointHealth": {
@@ -1098982,6 +1099920,50 @@
               {
                 "type": "null"
               }
+            ]
+          },
+          "autoExecuteEnabled": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "autoExecuteTargetId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "autoExecuteRef": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "autoExecuteInputs": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNullValueInput"
+              },
+              {}
             ]
           },
           "endpointHealth": {
@@ -1099458,6 +1100440,37 @@
               }
             ]
           },
+          "autoExecuteEnabled": {
+            "type": "boolean"
+          },
+          "autoExecuteTargetId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "autoExecuteRef": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "autoExecuteInputs": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNullValueInput"
+              },
+              {}
+            ]
+          },
           "endpointHealth": {
             "$ref": "#/components/schemas/EndpointHealth"
           },
@@ -1099622,6 +1100635,37 @@
               {
                 "type": "string"
               }
+            ]
+          },
+          "autoExecuteEnabled": {
+            "type": "boolean"
+          },
+          "autoExecuteTargetId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "autoExecuteRef": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "autoExecuteInputs": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNullValueInput"
+              },
+              {}
             ]
           },
           "endpointHealth": {
@@ -1099817,6 +1100861,50 @@
               {
                 "type": "null"
               }
+            ]
+          },
+          "autoExecuteEnabled": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "autoExecuteTargetId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "autoExecuteRef": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "autoExecuteInputs": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNullValueInput"
+              },
+              {}
             ]
           },
           "endpointHealth": {
@@ -1100080,6 +1101168,50 @@
               {
                 "type": "null"
               }
+            ]
+          },
+          "autoExecuteEnabled": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "autoExecuteTargetId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "autoExecuteRef": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "autoExecuteInputs": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNullValueInput"
+              },
+              {}
             ]
           },
           "endpointHealth": {
@@ -1100421,6 +1101553,37 @@
               }
             ]
           },
+          "autoExecuteEnabled": {
+            "type": "boolean"
+          },
+          "autoExecuteTargetId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "autoExecuteRef": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "autoExecuteInputs": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNullValueInput"
+              },
+              {}
+            ]
+          },
           "endpointHealth": {
             "$ref": "#/components/schemas/EndpointHealth"
           },
@@ -1100585,6 +1101748,37 @@
               {
                 "type": "string"
               }
+            ]
+          },
+          "autoExecuteEnabled": {
+            "type": "boolean"
+          },
+          "autoExecuteTargetId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "autoExecuteRef": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "autoExecuteInputs": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNullValueInput"
+              },
+              {}
             ]
           },
           "endpointHealth": {
@@ -1100780,6 +1101974,50 @@
               {
                 "type": "null"
               }
+            ]
+          },
+          "autoExecuteEnabled": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "autoExecuteTargetId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "autoExecuteRef": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "autoExecuteInputs": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNullValueInput"
+              },
+              {}
             ]
           },
           "endpointHealth": {
@@ -1101043,6 +1102281,50 @@
               {
                 "type": "null"
               }
+            ]
+          },
+          "autoExecuteEnabled": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "autoExecuteTargetId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "autoExecuteRef": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "autoExecuteInputs": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNullValueInput"
+              },
+              {}
             ]
           },
           "endpointHealth": {
@@ -1101364,6 +1102646,37 @@
               }
             ]
           },
+          "autoExecuteEnabled": {
+            "type": "boolean"
+          },
+          "autoExecuteTargetId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "autoExecuteRef": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "autoExecuteInputs": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNullValueInput"
+              },
+              {}
+            ]
+          },
           "endpointHealth": {
             "$ref": "#/components/schemas/EndpointHealth"
           },
@@ -1101528,6 +1102841,37 @@
               {
                 "type": "string"
               }
+            ]
+          },
+          "autoExecuteEnabled": {
+            "type": "boolean"
+          },
+          "autoExecuteTargetId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "autoExecuteRef": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "autoExecuteInputs": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNullValueInput"
+              },
+              {}
             ]
           },
           "endpointHealth": {
@@ -1101723,6 +1103067,50 @@
               {
                 "type": "null"
               }
+            ]
+          },
+          "autoExecuteEnabled": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "autoExecuteTargetId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "autoExecuteRef": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "autoExecuteInputs": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNullValueInput"
+              },
+              {}
             ]
           },
           "endpointHealth": {
@@ -1101986,6 +1103374,50 @@
               {
                 "type": "null"
               }
+            ]
+          },
+          "autoExecuteEnabled": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "autoExecuteTargetId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "autoExecuteRef": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "autoExecuteInputs": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNullValueInput"
+              },
+              {}
             ]
           },
           "endpointHealth": {

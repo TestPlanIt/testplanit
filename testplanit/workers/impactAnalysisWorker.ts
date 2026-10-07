@@ -26,6 +26,7 @@ import { impactCancelKey } from "../lib/services/impact/jobKeys";
 import { planAiCandidates } from "../lib/services/impact/aiCandidates";
 import { runAiLayer } from "../lib/services/impact/layers/aiLayer";
 import { runHistoryLayer } from "../lib/services/impact/layers/historyLayer";
+import { executeAutoRun } from "../lib/services/impact/autoExecute";
 import { createRunFromAnalysis } from "../lib/services/impact/autoRun";
 import { runIssueLayer } from "../lib/services/impact/layers/issueLayer";
 import { runPathLayer } from "../lib/services/impact/layers/pathLayer";
@@ -603,11 +604,25 @@ export const processor = async (
     };
     await saveResult(db, analysisId, result);
     if (job.data.autoRun) {
-      // A webhook started this analysis: compose the run it asked for. A
-      // failure here is logged on the delivery, never on the analysis, which
-      // is complete and reviewable either way.
+      // A webhook started this analysis: compose the run it asked for, then
+      // request its automated execution when the webhook says to. A failure
+      // here is logged on the delivery, never on the analysis, which is
+      // complete and reviewable either way.
       try {
-        await createRunFromAnalysis(db, analysisId, job.data.autoRun);
+        const run = await createRunFromAnalysis(
+          db,
+          analysisId,
+          job.data.autoRun
+        );
+        if (run.created) {
+          await executeAutoRun(db, {
+            webhookConfigId: job.data.autoRun.webhookConfigId,
+            testRunId: run.testRunId,
+            projectId,
+            deliveryId: job.data.autoRun.deliveryId,
+            tenantId: job.data.tenantId,
+          });
+        }
       } catch (error) {
         console.error(
           `[impact] auto-run for analysis ${analysisId} failed:`,

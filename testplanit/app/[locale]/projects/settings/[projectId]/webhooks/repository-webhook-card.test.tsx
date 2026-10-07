@@ -36,6 +36,11 @@ vi.mock("~/app/actions/webhook-config", () => ({
   setWebhookActive: (...a: unknown[]) => mockSetActive(...a),
   sendTestWebhook: (...a: unknown[]) => mockSendTest(...a),
 }));
+vi.mock("./repository-webhook-auto-execute", () => ({
+  RepositoryWebhookAutoExecute: () => (
+    <div data-testid="webhook-repository-auto-execute" />
+  ),
+}));
 vi.mock("@/components/webhooks/webhook-adapter-icon", () => ({
   WebhookAdapterIcon: () => null,
 }));
@@ -81,6 +86,9 @@ vi.mock("@/components/ui/alert-dialog", () => ({
 
 import { RepositoryWebhookCard } from "./repository-webhook-card";
 
+// The auto-execute section has its own tests
+// (repository-webhook-auto-execute.test.tsx); here it is a placeholder.
+
 const hook = {
   id: "whc-1",
   token: "whk_" + "a".repeat(64),
@@ -88,6 +96,10 @@ const hook = {
   isActive: true,
   subscribedEvents: ["code:pull_request", "code:push"],
   baseBranch: null,
+  autoExecuteEnabled: false,
+  autoExecuteTargetId: null,
+  autoExecuteRef: null,
+  autoExecuteInputs: {},
   endpointHealth: "HEALTHY" as const,
   lastReceivedAt: null,
   codeRepositoryConfig: {

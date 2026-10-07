@@ -24,16 +24,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "~/lib/navigation";
 import type { ExecutionTargetChoice } from "~/app/actions/execution-targets";
-import { useProjectConfigurationOptions } from "@/components/automation/ExecutionParamsEditor";
-import { StaticValuesMultiSelect } from "@/components/automation/StaticValuesMultiSelect";
+import { ExecutionParamFields } from "@/components/automation/ExecutionParamFields";
 import {
   paramValuesFromInputs,
   serializeParamValues,
   type ParamValues,
 } from "~/lib/execution/params";
-
-/** Radix Select cannot represent "nothing chosen" as an item value. */
-const NO_CONFIGURATION = "__none__";
 
 export interface ExecuteRequest {
   targetId: number;
@@ -98,7 +94,6 @@ export function ExecuteAutomationDialog({
 }: Props) {
   const t = useTranslations("automation.execute");
   const tCommon = useTranslations("common");
-  const tSearch = useTranslations("search");
   const router = useRouter();
 
   const enabledTargets = useMemo(
@@ -138,10 +133,6 @@ export function ExecuteAutomationDialog({
   const selected = enabledTargets.find((x) => String(x.id) === targetId);
   const selectedId = selected?.id ?? null;
   const params = useMemo(() => selected?.paramSchema ?? [], [selected]);
-  const configurations = useProjectConfigurationOptions(
-    projectId,
-    open && params.some((param) => param.type === "configuration")
-  );
 
   // Each target declares its own parameters: picking one starts from its
   // defaults, or from the previous execution's choices on a retry. Seeded
@@ -241,120 +232,15 @@ export function ExecuteAutomationDialog({
             <p className="text-xs text-muted-foreground">{t("refHelp")}</p>
           </div>
           {params.length > 0 && (
-            <div className="space-y-3" data-testid="execute-automation-params">
-              {params.map((param) => {
-                const id = `execute-automation-param-${param.name}`;
-                const value = paramValues[param.name];
-                return (
-                  <div key={param.name} className="space-y-1.5">
-                    <Label htmlFor={id}>{param.label}</Label>
-                    {param.type === "select" ? (
-                      <Select
-                        value={typeof value === "string" ? value : ""}
-                        onValueChange={(v) =>
-                          setParamValues((current) => ({
-                            ...current,
-                            [param.name]: v,
-                          }))
-                        }
-                      >
-                        <SelectTrigger id={id} data-testid={id}>
-                          <SelectValue
-                            placeholder={tCommon("placeholders.selectOption")}
-                          />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {param.values.map((option) => (
-                            <SelectItem key={option} value={option}>
-                              <span className="font-mono text-sm">
-                                {option}
-                              </span>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : param.type === "configuration" ? (
-                      param.multiple ? (
-                        <StaticValuesMultiSelect
-                          values={configurations.values}
-                          labels={configurations.labels}
-                          selected={(Array.isArray(value) ? value : []).filter(
-                            (id) => configurations.values.includes(id)
-                          )}
-                          onChange={(next) =>
-                            setParamValues((current) => ({
-                              ...current,
-                              [param.name]: next,
-                            }))
-                          }
-                          placeholder={tSearch("selectOptions")}
-                          ariaLabel={param.label}
-                          testId={id}
-                        />
-                      ) : (
-                        <Select
-                          value={
-                            typeof value === "string" &&
-                            configurations.values.includes(value)
-                              ? value
-                              : NO_CONFIGURATION
-                          }
-                          onValueChange={(v) =>
-                            setParamValues((current) => ({
-                              ...current,
-                              [param.name]: v === NO_CONFIGURATION ? "" : v,
-                            }))
-                          }
-                        >
-                          <SelectTrigger id={id} data-testid={id}>
-                            <SelectValue
-                              placeholder={tCommon("placeholders.selectOption")}
-                            />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value={NO_CONFIGURATION}>
-                              {tCommon("labels.noConfiguration")}
-                            </SelectItem>
-                            {configurations.values.map((option) => (
-                              <SelectItem key={option} value={option}>
-                                {configurations.labels[option]}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )
-                    ) : param.type === "multiselect" ? (
-                      <StaticValuesMultiSelect
-                        values={param.values}
-                        selected={Array.isArray(value) ? value : []}
-                        onChange={(next) =>
-                          setParamValues((current) => ({
-                            ...current,
-                            [param.name]: next,
-                          }))
-                        }
-                        placeholder={tSearch("selectOptions")}
-                        ariaLabel={param.label}
-                        testId={id}
-                      />
-                    ) : (
-                      <Input
-                        id={id}
-                        value={typeof value === "string" ? value : ""}
-                        onChange={(e) =>
-                          setParamValues((current) => ({
-                            ...current,
-                            [param.name]: e.target.value,
-                          }))
-                        }
-                        className="font-mono text-sm"
-                        data-testid={id}
-                      />
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+            <ExecutionParamFields
+              projectId={projectId}
+              params={params}
+              values={paramValues}
+              onChange={setParamValues}
+              active={open}
+              idPrefix="execute-automation-param"
+              testId="execute-automation-params"
+            />
           )}
           <p
             className="text-sm font-medium"
