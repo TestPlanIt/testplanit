@@ -17,6 +17,8 @@ export interface LoadedRepoConfig {
   cacheEnabled: boolean;
   /** Tickets on test results also link the result's case (IMPACT only). */
   issueResultLinks: boolean;
+  /** The include/exclude rows, as stored; an analysis ignores what the exclude rows match. */
+  pathPatterns: unknown;
   repositoryId: number;
   repository: {
     id: number;
@@ -38,6 +40,7 @@ const configSelect = {
   branch: true,
   cacheEnabled: true,
   issueResultLinks: true,
+  pathPatterns: true,
   repositoryId: true,
   repository: {
     select: {
@@ -81,6 +84,7 @@ type ConfigRow = {
   branch: string | null;
   cacheEnabled: boolean;
   issueResultLinks: boolean;
+  pathPatterns: unknown;
   repositoryId: number;
   repository: {
     id: number;
@@ -107,6 +111,7 @@ async function toLoadedRepo(row: ConfigRow | null): Promise<LoadedRepo | null> {
       branch: row.branch,
       cacheEnabled: row.cacheEnabled,
       issueResultLinks: row.issueResultLinks,
+      pathPatterns: row.pathPatterns,
       repositoryId: row.repositoryId,
       repository,
     },

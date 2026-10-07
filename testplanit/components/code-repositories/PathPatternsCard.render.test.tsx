@@ -44,9 +44,7 @@ describe("PathPatternsCard", () => {
     expect(screen.getByTestId("t-path-0")).toHaveValue("src");
     expect(screen.getByTestId("t-pattern-0")).toHaveValue("**/*");
     expect(
-      screen.getByText(
-        /projects\.settings\.codeRepository\.pathPatterns\.rootHint/
-      )
+      screen.getByRole("button", { name: "common.aria.help" })
     ).toBeInTheDocument();
     // The only row cannot be removed.
     expect(
@@ -60,6 +58,65 @@ describe("PathPatternsCard", () => {
     expect(
       screen.getAllByRole("button", { name: "common.actions.delete" })[0]
     ).toBeEnabled();
+  });
+
+  it("marks excluded rows and only guards the last include row from removal", () => {
+    function Rows() {
+      const form = useForm({
+        defaultValues: {
+          pathPatterns: [
+            { path: "src", pattern: "**/*", exclude: false },
+            { path: "", pattern: "**/CHANGELOG*", exclude: true },
+          ],
+        },
+      });
+      return (
+        <Form {...form}>
+          <PathPatternsCard
+            control={form.control as any}
+            description="Which files"
+            pathPlaceholder="src"
+            defaultPattern="**/*"
+            testIdPrefix="t"
+            isPreviewing={false}
+            preview={null}
+            previewProgress={null}
+            onPreview={vi.fn()}
+          />
+        </Form>
+      );
+    }
+    render(<Rows />);
+
+    expect(screen.getByTestId("t-exclude-0")).toHaveAttribute(
+      "aria-checked",
+      "false"
+    );
+    expect(screen.getByTestId("t-exclude-1")).toHaveAttribute(
+      "aria-checked",
+      "true"
+    );
+    expect(screen.getByTestId("t-row-0")).toHaveAttribute(
+      "data-excluded",
+      "false"
+    );
+    expect(screen.getByTestId("t-row-1")).toHaveAttribute(
+      "data-excluded",
+      "true"
+    );
+    const [removeInclude, removeExclude] = screen.getAllByRole("button", {
+      name: "common.actions.delete",
+    });
+    expect(removeInclude).toBeDisabled();
+    expect(removeExclude).toBeEnabled();
+
+    // Ticking Exclude on the first row tints it and lifts the guard.
+    fireEvent.click(screen.getByTestId("t-exclude-0"));
+    expect(screen.getByTestId("t-row-0")).toHaveAttribute(
+      "data-excluded",
+      "true"
+    );
+    expect(removeInclude).toBeEnabled();
   });
 
   it("hides editing controls and disables inputs when read-only", () => {

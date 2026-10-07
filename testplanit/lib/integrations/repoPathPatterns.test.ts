@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  excludeGlobsOf,
   applyPathPatterns,
   DEEP_SCAN_DEPTH,
   extractBasePaths,
@@ -115,6 +116,76 @@ describe("applyPathPatterns", () => {
   it("returns all files unchanged when there are no patterns", () => {
     const files = [file("a.ts"), file("b.ts")];
     expect(applyPathPatterns(files, [])).toBe(files);
+  });
+});
+
+describe("excludeGlobsOf", () => {
+  it("composes exclude rows into root-relative globs, trimmed, deduped, sorted", () => {
+    expect(
+      excludeGlobsOf([
+        { path: "src", pattern: "**/*" },
+        { path: "", pattern: " **/CHANGELOG* ", exclude: true },
+        { path: "./app", pattern: "build.gradle.kts", exclude: true },
+        { path: "app/", pattern: "build.gradle.kts", exclude: true },
+        { path: ".", pattern: "  ", exclude: true },
+      ])
+    ).toEqual(["**/CHANGELOG*", "app/build.gradle.kts"]);
+  });
+
+  it("takes the stored value as is", () => {
+    expect(excludeGlobsOf(null)).toEqual([]);
+    expect(excludeGlobsOf([null, "x", { pattern: 1, exclude: true }])).toEqual(
+      []
+    );
+  });
+});
+
+describe("applyPathPatterns with exclude rows", () => {
+  const files = [
+    file("src/a.ts"),
+    file("src/CHANGELOG.md"),
+    file("src/generated/api.ts"),
+    file("docs/x.md"),
+    file(".github/workflows/ci.yml"),
+  ];
+
+  it("drops what the exclude rows match from what the include rows matched", () => {
+    expect(
+      applyPathPatterns(files, [
+        { path: "src", pattern: "**/*" },
+        { path: "", pattern: "**/CHANGELOG*", exclude: true },
+        { path: "src/generated", pattern: "**", exclude: true },
+      ]).map((f) => f.path)
+    ).toEqual(["src/a.ts"]);
+  });
+
+  it("starts from every file when only exclude rows exist, dotfiles included", () => {
+    expect(
+      applyPathPatterns(files, [
+        { path: ".github", pattern: "**", exclude: true },
+        { path: "", pattern: "**/CHANGELOG*", exclude: true },
+      ]).map((f) => f.path)
+    ).toEqual(["src/a.ts", "src/generated/api.ts", "docs/x.md"]);
+  });
+
+  it("keeps the pre-flag behaviour for rows without the flag", () => {
+    expect(
+      applyPathPatterns(files, [{ path: "docs", pattern: "*.md" }]).map(
+        (f) => f.path
+      )
+    ).toEqual(["docs/x.md"]);
+  });
+});
+
+describe("scopes ignore exclude rows", () => {
+  it("does not widen the scan for an exclude row", () => {
+    const rows = [
+      { path: "src", pattern: "*.ts" },
+      { path: "", pattern: "**/CHANGELOG*", exclude: true },
+    ];
+    expect(extractBasePaths(rows)).toEqual(["src"]);
+    expect(extractBasePathScopes(rows)).toEqual([{ path: "src", maxDepth: 1 }]);
+    expect(extractBasePathScopes([rows[1]])).toEqual([]);
   });
 });
 

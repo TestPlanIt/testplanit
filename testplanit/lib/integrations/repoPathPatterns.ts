@@ -3,6 +3,43 @@ import micromatch from "micromatch";
 export interface PathPattern {
   path: string;
   pattern: string;
+  /**
+   * Subtract instead of include: files this row matches are left out even
+   * when another row includes them, everywhere the connection filters the
+   * repository (listing, cache, markers, and for Impact the changed files of
+   * an analysis). Absent on rows saved before the flag existed = include.
+   */
+  exclude?: boolean;
+}
+
+/** The rows that include files; exclude rows never widen a scan. */
+export function includeRows(pathPatterns: PathPattern[]): PathPattern[] {
+  return pathPatterns.filter((row) => !row.exclude);
+}
+
+function composeGlob(basePath: string, pattern: string): string {
+  const base = normalizeBasePath(basePath);
+  return base ? `${base}/${pattern}` : pattern;
+}
+
+/**
+ * The exclude rows as root-relative globs: trimmed, deduped, sorted. Takes
+ * the stored JSON value as is, so the Impact worker and the reuse key read
+ * the connection row directly.
+ */
+export function excludeGlobsOf(pathPatterns: unknown): string[] {
+  if (!Array.isArray(pathPatterns)) return [];
+  const globs = new Set<string>();
+  for (const row of pathPatterns) {
+    if (!row || typeof row !== "object" || !(row as PathPattern).exclude) {
+      continue;
+    }
+    const { path, pattern } = row as PathPattern;
+    const trimmed = typeof pattern === "string" ? pattern.trim() : "";
+    if (!trimmed) continue;
+    globs.add(composeGlob(typeof path === "string" ? path : "", trimmed));
+  }
+  return [...globs].sort();
 }
 
 /**
@@ -32,9 +69,10 @@ export function normalizeBasePath(basePath: string): string {
  * naive "drop empty strings" guard would silently skip the repository root.
  */
 export function extractBasePaths(pathPatterns: PathPattern[]): string[] {
-  if (!pathPatterns.length) return [];
+  const includes = includeRows(pathPatterns);
+  if (!includes.length) return [];
   const paths = new Set<string>();
-  for (const { path: basePath } of pathPatterns) {
+  for (const { path: basePath } of includes) {
     paths.add(normalizeBasePath(basePath));
   }
   return [...paths];
@@ -77,9 +115,10 @@ export function globScanDepth(pattern: string): number {
 export function extractBasePathScopes(
   pathPatterns: PathPattern[]
 ): BasePathScope[] {
-  if (!pathPatterns.length) return [];
+  const includes = includeRows(pathPatterns);
+  if (!includes.length) return [];
   const depthByBase = new Map<string, number>();
-  for (const { path: basePath, pattern } of pathPatterns) {
+  for (const { path: basePath, pattern } of includes) {
     const base = normalizeBasePath(basePath);
     const depth = globScanDepth(pattern);
     depthByBase.set(base, Math.max(depthByBase.get(base) ?? 0, depth));
@@ -91,24 +130,38 @@ export function extractBasePathScopes(
 }
 
 /**
- * Filter a flat file list down to those matching the combined base + glob
- * patterns. A root pattern uses the glob as-is (e.g. "CLAUDE.md", with no "./"
- * prefix) so micromatch matches root-level paths.
+ * Filter a flat file list down to those matching the include rows (combined
+ * base + glob, unioned), then drop whatever the exclude rows match. A root
+ * pattern uses the glob as-is (e.g. "CLAUDE.md", with no "./" prefix) so
+ * micromatch matches root-level paths. With no include rows every file is a
+ * candidate. Exclude globs also match dotfiles, so `.github/**` works.
  */
 export function applyPathPatterns<T extends { path: string }>(
   allFiles: T[],
   pathPatterns: PathPattern[]
 ): T[] {
-  if (!pathPatterns.length) return allFiles;
-
-  const matched = new Set<string>();
-  const filePaths = allFiles.map((f) => f.path);
-  for (const { path: basePath, pattern } of pathPatterns) {
-    const base = normalizeBasePath(basePath);
-    const globPattern = base ? `${base}/${pattern}` : pattern;
-    const matchedPaths = micromatch(filePaths, globPattern);
-    matchedPaths.forEach((p: string) => matched.add(p));
+  const includes = includeRows(pathPatterns);
+  let kept = allFiles;
+  if (includes.length) {
+    const matched = new Set<string>();
+    const filePaths = allFiles.map((f) => f.path);
+    for (const { path: basePath, pattern } of includes) {
+      const matchedPaths = micromatch(
+        filePaths,
+        composeGlob(basePath, pattern)
+      );
+      matchedPaths.forEach((p: string) => matched.add(p));
+    }
+    kept = allFiles.filter((f) => matched.has(f.path));
   }
-
-  return allFiles.filter((f) => matched.has(f.path));
+  const excludes = excludeGlobsOf(pathPatterns);
+  if (!excludes.length) return kept;
+  const excluded = new Set<string>(
+    micromatch(
+      kept.map((f) => f.path),
+      excludes,
+      { dot: true }
+    )
+  );
+  return kept.filter((f) => !excluded.has(f.path));
 }

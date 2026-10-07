@@ -3,9 +3,13 @@
 import { CodeRepositoryName } from "@/components/CodeRepositoryName";
 import {
   PathPatternsCard,
-  type PathPatternValue,
   pathPatternsSchema,
 } from "@/components/code-repositories/PathPatternsCard";
+import {
+  pathPatternRows,
+  repoConnectionData,
+  repoPreviewRequest,
+} from "@/components/code-repositories/repoConnectionForm";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { DateFormatter } from "@/components/DateFormatter";
@@ -93,6 +97,7 @@ export interface ImpactConfigRow {
   issueResultLinks: boolean;
   issueScanReport: unknown;
   stalePinReport?: unknown;
+  updatedAt?: Date | string;
   repository: CodeRepositoryOption;
   /** Live Code Pins on this connection, when the list query counted them. */
   _count?: { codePins: number };
@@ -111,7 +116,9 @@ interface BranchOption {
 
 const DEFAULT_BRANCH_OPTION: BranchOption = { name: "" };
 const DEFAULT_BRANCH_VALUE = "*";
-const DEFAULT_PATH_PATTERNS = [{ path: "src", pattern: "**/*" }];
+const DEFAULT_PATH_PATTERNS = [
+  { path: "src", pattern: "**/*", exclude: false },
+];
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -208,9 +215,10 @@ export function ImpactRepositoryForm({
   const valuesFromConfig = (row: ImpactConfigRow): FormData => ({
     repositoryId: String(row.repositoryId),
     branch: row.branch ?? "",
-    pathPatterns: (row.pathPatterns as PathPatternValue[] | null) ?? [
-      { path: "", pattern: "**/*" },
-    ],
+    pathPatterns: ((rows) =>
+      rows.length > 0 ? rows : [{ path: "", pattern: "**/*", exclude: false }])(
+      pathPatternRows(row.pathPatterns)
+    ),
     cacheEnabled: row.cacheEnabled ?? true,
     cacheTtlDays: row.cacheTtlDays ?? 7,
     issueScanEnabled: row.issueScanEnabled ?? true,
@@ -329,9 +337,11 @@ export function ImpactRepositoryForm({
       : defaultFormValues,
   });
 
+  // Reset to the stored row when a different row arrives or it was saved,
+  // not on every poll while a refresh or scan runs: that would wipe edits.
   useEffect(() => {
     if (existingConfig) form.reset(valuesFromConfig(existingConfig));
-  }, [existingConfig]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [existingConfig?.id, String(existingConfig?.updatedAt)]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const selectedRepositoryId = form.watch("repositoryId");
   const cacheEnabled = form.watch("cacheEnabled");
@@ -421,11 +431,7 @@ export function ImpactRepositoryForm({
   const handlePreview = () => {
     const values = form.getValues();
     if (!values.repositoryId) return;
-    void runPreview(values.repositoryId, {
-      branch: values.branch || undefined,
-      pathPatterns: values.pathPatterns,
-      cacheEnabled: values.cacheEnabled,
-    });
+    void runPreview(values.repositoryId, repoPreviewRequest(values));
   };
 
   const handleRefreshCache = () => {
@@ -442,31 +448,14 @@ export function ImpactRepositoryForm({
     try {
       const repositoryId = parseInt(values.repositoryId);
 
-      const cacheContentChanged =
-        !existingConfig ||
-        existingConfig.repositoryId !== repositoryId ||
-        existingConfig.branch !== (values.branch || null) ||
-        JSON.stringify(existingConfig.pathPatterns) !==
-          JSON.stringify(values.pathPatterns);
-
-      const cacheResetFields = cacheContentChanged
-        ? {
-            cacheStatus: null,
-            cacheLastFetchedAt: null,
-            cacheFileCount: null,
-            cacheTotalSize: null,
-            cacheError: null,
-          }
-        : {};
-
+      const { data: connectionData, cacheContentChanged } = repoConnectionData(
+        existingConfig,
+        values
+      );
       const sharedData = {
-        branch: values.branch || null,
-        pathPatterns: values.pathPatterns,
-        cacheEnabled: values.cacheEnabled,
-        cacheTtlDays: values.cacheTtlDays,
+        ...connectionData,
         issueScanEnabled: values.issueScanEnabled,
         issueResultLinks: values.issueResultLinks,
-        ...cacheResetFields,
       };
 
       let savedId: number;

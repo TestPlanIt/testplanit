@@ -33,7 +33,7 @@ Bind the project to a registered code repository so AI-generated scripts follow 
 
 - **Code Repository** — select a repository a system administrator registered under [Administration → Code Repositories](../../code-repositories.md). If none exist, an empty state links administrators to set one up.
 - **Branch** — leave blank to use the repository's default branch.
-- **Path Patterns** — one or more rows combining a base **path** with a glob **pattern** (for example path `tests/e2e/pages` + pattern `**/*.ts`). Leave the path blank, or enter `.`, to start at the repository root; path `.` with pattern `**/*` includes every file. To leave files out, use a `!( )` group inside the pattern, such as `**/!(*.test|*.spec).ts`; see the [Impact settings examples](impact.md#path-patterns). Use **Add Path** to add rows.
+- **Path Patterns** — one or more rows combining a base **path** with a glob **pattern** (for example path `tests/e2e/pages` + pattern `**/*.ts`). Leave the path blank, or enter `.`, to start at the repository root; path `.` with pattern `**/*` includes every file. Tick **Exclude** on a row to leave its files out even when another row includes them, such as a blank path with `**/CHANGELOG*`; see the [Impact settings examples](impact.md#path-patterns). Use **Add Path** to add rows.
 - **Preview Files** — resolve the branch and patterns and list the matching files, their count, and total size.
 
 :::warning

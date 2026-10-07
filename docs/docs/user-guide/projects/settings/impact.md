@@ -62,6 +62,16 @@ Rows add to each other: a file is included when it matches any row. To leave fil
 
 `**/` matches zero or more directories, so these patterns cover files directly in `src` as well as nested ones.
 
+Tick **Exclude** on a row to turn it into an exclusion; excluded rows are tinted. An excluded row removes the files it matches even when another row includes them, and it applies everywhere the connection filters the repository: the Code Pin file picker, the cache, the repository marker scan, and the changed files of an analysis. Use it for files that change on almost every pull request without changing behaviour, such as a build file that only bumps the app version or a version catalog; left in, their changed lines would pull many unrelated cases into every analysis. A changed file an Exclude row matches still appears in the analysis's diff, but it contributes no Code Pin matches, ticket matches or search terms, and the AI does not see it; the analysis says how many files were ignored in its warnings. Exclude rows match dotfiles too. Examples:
+
+| Path   | Pattern                     | Excludes                                                    |
+| ------ | --------------------------- | ----------------------------------------------------------- |
+| `app`  | `build.gradle.kts`          | That one file                                               |
+| blank  | `gradle/libs.versions.toml` | That one file                                               |
+| blank  | `**/CHANGELOG*`             | Every file whose name starts with `CHANGELOG`, at any depth |
+
+At least one row must stay unticked. Changing an excluded row refreshes the cache, and the next analysis of the same commits runs fresh instead of reusing an earlier result.
+
 **Preview Files** resolves the branch and patterns and lists the matching files with their count, showing progress while the repository is scanned and retrying when the provider rate-limits the request. A **Results may be incomplete (provider limit)** badge appears when the provider capped the listing.
 
 ## Cache Settings

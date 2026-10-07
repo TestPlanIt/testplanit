@@ -934056,6 +934056,16 @@
               }
             ]
           },
+          "settingsHash": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "status": {
             "$ref": "#/components/schemas/ImpactAnalysisStatus"
           },
@@ -934297,6 +934307,9 @@
             "type": "boolean"
           },
           "headRef": {
+            "type": "boolean"
+          },
+          "settingsHash": {
             "type": "boolean"
           },
           "status": {
@@ -934624,6 +934637,19 @@
             ]
           },
           "headRef": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "settingsHash": {
             "oneOf": [
               {
                 "$ref": "#/components/schemas/StringNullableFilter"
@@ -935031,6 +935057,19 @@
               }
             ]
           },
+          "settingsHash": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "status": {
             "oneOf": [
               {
@@ -935413,6 +935452,19 @@
               }
             ]
           },
+          "settingsHash": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "status": {
             "oneOf": [
               {
@@ -935769,6 +935821,19 @@
               }
             ]
           },
+          "settingsHash": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableWithAggregatesFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "status": {
             "oneOf": [
               {
@@ -936083,6 +936148,16 @@
               }
             ]
           },
+          "settingsHash": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SortOrder"
+              },
+              {
+                "$ref": "#/components/schemas/SortOrderInput"
+              }
+            ]
+          },
           "status": {
             "$ref": "#/components/schemas/SortOrder"
           },
@@ -936261,6 +936336,7 @@
           "headSha",
           "baseRef",
           "headRef",
+          "settingsHash",
           "status",
           "error",
           "jobId",
@@ -936387,6 +936463,9 @@
           "headRef": {
             "type": "boolean"
           },
+          "settingsHash": {
+            "type": "boolean"
+          },
           "status": {
             "type": "boolean"
           },
@@ -936488,6 +936567,9 @@
           "headRef": {
             "type": "integer"
           },
+          "settingsHash": {
+            "type": "integer"
+          },
           "status": {
             "type": "integer"
           },
@@ -936572,6 +936654,7 @@
           "headSha",
           "baseRef",
           "headRef",
+          "settingsHash",
           "status",
           "error",
           "jobId",
@@ -936621,6 +936704,9 @@
             "type": "boolean"
           },
           "headRef": {
+            "type": "boolean"
+          },
+          "settingsHash": {
             "type": "boolean"
           },
           "status": {
@@ -936749,6 +936835,16 @@
             ]
           },
           "headRef": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "settingsHash": {
             "oneOf": [
               {
                 "type": "null"
@@ -936988,6 +937084,9 @@
           "headRef": {
             "type": "boolean"
           },
+          "settingsHash": {
+            "type": "boolean"
+          },
           "status": {
             "type": "boolean"
           },
@@ -937114,6 +937213,16 @@
             ]
           },
           "headRef": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "settingsHash": {
             "oneOf": [
               {
                 "type": "null"
@@ -937676,6 +937785,16 @@
               }
             ]
           },
+          "settingsHash": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "status": {
             "$ref": "#/components/schemas/ImpactAnalysisStatus"
           },
@@ -937944,6 +938063,16 @@
               }
             ]
           },
+          "settingsHash": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "status": {
             "$ref": "#/components/schemas/ImpactAnalysisStatus"
           },
@@ -938161,6 +938290,19 @@
             ]
           },
           "headRef": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "settingsHash": {
             "oneOf": [
               {
                 "type": "string"
@@ -938489,6 +938631,19 @@
               }
             ]
           },
+          "settingsHash": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "status": {
             "oneOf": [
               {
@@ -938779,6 +938934,16 @@
               }
             ]
           },
+          "settingsHash": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "status": {
             "$ref": "#/components/schemas/ImpactAnalysisStatus"
           },
@@ -938977,6 +939142,16 @@
             ]
           },
           "headRef": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "settingsHash": {
             "oneOf": [
               {
                 "type": "null"
@@ -939188,6 +939363,16 @@
             ]
           },
           "headRef": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "settingsHash": {
             "oneOf": [
               {
                 "type": "null"
@@ -939414,6 +939599,19 @@
             ]
           },
           "headRef": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "settingsHash": {
             "oneOf": [
               {
                 "type": "string"
@@ -939759,6 +939957,19 @@
               }
             ]
           },
+          "settingsHash": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "status": {
             "oneOf": [
               {
@@ -940085,6 +940296,16 @@
             ]
           },
           "headRef": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "settingsHash": {
             "oneOf": [
               {
                 "type": "null"
@@ -940541,6 +940762,19 @@
             ]
           },
           "headRef": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "settingsHash": {
             "oneOf": [
               {
                 "type": "string"
@@ -941151,6 +941385,16 @@
               }
             ]
           },
+          "settingsHash": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "status": {
             "$ref": "#/components/schemas/ImpactAnalysisStatus"
           },
@@ -941353,6 +941597,16 @@
             ]
           },
           "headRef": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "settingsHash": {
             "oneOf": [
               {
                 "type": "null"
@@ -941579,6 +941833,19 @@
             ]
           },
           "headRef": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "settingsHash": {
             "oneOf": [
               {
                 "type": "string"
@@ -941924,6 +942191,19 @@
               }
             ]
           },
+          "settingsHash": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "status": {
             "oneOf": [
               {
@@ -942250,6 +942530,16 @@
             ]
           },
           "headRef": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "settingsHash": {
             "oneOf": [
               {
                 "type": "null"
@@ -942706,6 +942996,19 @@
             ]
           },
           "headRef": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "settingsHash": {
             "oneOf": [
               {
                 "type": "string"
@@ -943316,6 +943619,16 @@
               }
             ]
           },
+          "settingsHash": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "status": {
             "$ref": "#/components/schemas/ImpactAnalysisStatus"
           },
@@ -943522,6 +943835,16 @@
             ]
           },
           "headRef": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "settingsHash": {
             "oneOf": [
               {
                 "type": "null"
@@ -943739,6 +944062,19 @@
             ]
           },
           "headRef": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "settingsHash": {
             "oneOf": [
               {
                 "type": "string"
@@ -944094,6 +944430,19 @@
               }
             ]
           },
+          "settingsHash": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "status": {
             "oneOf": [
               {
@@ -944410,6 +944759,16 @@
             ]
           },
           "headRef": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "settingsHash": {
             "oneOf": [
               {
                 "type": "null"
@@ -944867,6 +945226,19 @@
             ]
           },
           "headRef": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "settingsHash": {
             "oneOf": [
               {
                 "type": "string"
@@ -945464,6 +945836,16 @@
               }
             ]
           },
+          "settingsHash": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "status": {
             "$ref": "#/components/schemas/ImpactAnalysisStatus"
           },
@@ -945670,6 +946052,16 @@
             ]
           },
           "headRef": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "settingsHash": {
             "oneOf": [
               {
                 "type": "null"
@@ -945894,6 +946286,19 @@
             ]
           },
           "headRef": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "settingsHash": {
             "oneOf": [
               {
                 "type": "string"
@@ -946237,6 +946642,19 @@
             ]
           },
           "headRef": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "settingsHash": {
             "oneOf": [
               {
                 "type": "string"
@@ -946686,6 +947104,16 @@
               }
             ]
           },
+          "settingsHash": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "status": {
             "$ref": "#/components/schemas/ImpactAnalysisStatus"
           },
@@ -946891,6 +947319,16 @@
             ]
           },
           "headRef": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "settingsHash": {
             "oneOf": [
               {
                 "type": "null"
@@ -947114,6 +947552,19 @@
             ]
           },
           "headRef": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "settingsHash": {
             "oneOf": [
               {
                 "type": "string"
@@ -947469,6 +947920,19 @@
               }
             ]
           },
+          "settingsHash": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "status": {
             "oneOf": [
               {
@@ -947788,6 +948252,16 @@
             ]
           },
           "headRef": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "settingsHash": {
             "oneOf": [
               {
                 "type": "null"
@@ -948251,6 +948725,19 @@
             ]
           },
           "headRef": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "settingsHash": {
             "oneOf": [
               {
                 "type": "string"

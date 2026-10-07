@@ -84,6 +84,10 @@ export function warningCount(warning: AnalysisWarning): number | undefined {
     const value = detail.omittedFileCount ?? detail.count;
     return typeof value === "number" ? value : 0;
   }
+  if (warning.code === "paths_excluded_by_settings") {
+    const value = detail.count;
+    return typeof value === "number" ? value : 0;
+  }
   if (warning.code === "ai_truncated") {
     const batches = detail.truncatedBatches;
     if (Array.isArray(batches)) return batches.length;
