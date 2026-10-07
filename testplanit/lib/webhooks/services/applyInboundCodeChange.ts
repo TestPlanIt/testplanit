@@ -224,6 +224,7 @@ export async function applyInboundCodeChange(
           label,
           url,
           deliveryId,
+          webhookConfigId,
         },
       }
     );

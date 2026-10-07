@@ -1862,7 +1862,12 @@
           "eventBranchPush": "推送到其他分支",
           "eventBranchPushHelp": "分析对任何其他分支的每次推送，就像拉取请求一样，与基础分支进行比较，并为每次推送组成一个运行。",
           "baseBranch": "基础分支",
-          "baseBranchHelp": "对此分支的推送将独立进行分析；拉取请求和其他分支将与其进行比较。留空以使用连接的分支。"
+          "baseBranchHelp": "对此分支的推送将独立进行分析；拉取请求和其他分支将与其进行比较。留空以使用连接的分支。",
+          "autoExecute": "执行自动化用例",
+          "autoExecuteHelp": "测试运行创建后，在此目标上请求自动执行其中的自动化用例。手动用例保留在运行中供测试人员执行。",
+          "autoExecuteNoTargets": "此项目尚未配置执行目标。<link>添加一个</link>以自动执行测试运行。",
+          "autoExecuteTargetMissing": "所选执行目标已被删除或禁用。测试运行仍会创建，但在您选择其他目标之前不会请求执行。",
+          "autoExecuteSaveError": "无法保存自动执行设置"
         },
         "inboundEmptyState": "还没有入站 webhook。<link>添加一个</link>以接收来自您的问题跟踪器的问题更新，或来自连接的存储库的拉取请求和推送。",
         "inboundChooserBitbucket": "Bitbucket",

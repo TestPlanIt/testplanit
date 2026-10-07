@@ -1862,7 +1862,12 @@
           "eventBranchPush": "Pushes zu anderen Zweigen",
           "eventBranchPushHelp": "Analysieren Sie jeden Push zu einem anderen Zweig gegen den Basiszweig, wie einen Pull-Request, und verfassen Sie einen Testlauf für jeden.",
           "baseBranch": "Basis-Zweig",
-          "baseBranchHelp": "Pushes zu diesem Zweig werden von selbst analysiert; Pull-Anfragen und andere Zweige werden damit verglichen. Leer lassen, um den Standard-Zweig der Verbindung zu verwenden."
+          "baseBranchHelp": "Pushes zu diesem Zweig werden von selbst analysiert; Pull-Anfragen und andere Zweige werden damit verglichen. Leer lassen, um den Standard-Zweig der Verbindung zu verwenden.",
+          "autoExecute": "Automatisierte Fälle ausführen",
+          "autoExecuteHelp": "Nachdem der Lauf erstellt wurde, die automatisierte Ausführung seiner automatisierten Fälle auf diesem Ziel anfordern. Manuelle Fälle bleiben für Tester im Lauf.",
+          "autoExecuteNoTargets": "Für dieses Projekt ist kein Ausführungsziel konfiguriert. <link>Fügen Sie eines hinzu</link>, um Läufe automatisch auszuführen.",
+          "autoExecuteTargetMissing": "Das gewählte Ausführungsziel wurde gelöscht oder deaktiviert. Läufe werden weiterhin erstellt, aber keine Ausführung angefordert, bis Sie ein anderes Ziel wählen.",
+          "autoExecuteSaveError": "Die Einstellungen für die automatisierte Ausführung konnten nicht gespeichert werden"
         },
         "inboundEmptyState": "Noch keine eingehenden Webhooks. <link>Fügen Sie eines hinzu</link>, um Problemupdates von Ihrem Issue-Tracker oder Pull-Anfragen und Pushes aus einem verbundenen Repository zu erhalten.",
         "inboundChooserBitbucket": "Bitbucket",

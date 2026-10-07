@@ -5784,6 +5784,15 @@ model WebhookConfig {
     // Branch a repository webhook compares pushes against; empty = the
     // connection's branch.
     baseBranch              String?
+    // Repository webhook only: request automated execution of the run each
+    // analysis composes, on this target with this ref and these parameter
+    // inputs (empty ref = the target's default). Kept when the target is
+    // deleted or disabled later; the request is then skipped and the
+    // delivery says so.
+    autoExecuteEnabled      Boolean                      @default(false)
+    autoExecuteTargetId     Int?
+    autoExecuteRef          String?
+    autoExecuteInputs       Json                         @default("{}")
     endpointHealth          EndpointHealth               @default(HEALTHY)
     url                     String?
     name                    String?

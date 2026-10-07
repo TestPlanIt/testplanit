@@ -1,7 +1,9 @@
 import { z } from "zod";
 import { auditedTransaction } from "~/lib/audit/auditedTransaction";
+import { withAuditGuc, type GucPayload } from "~/lib/audit/gucContext";
 import { enqueueWithAuditContext } from "~/lib/auditContextEnqueue";
 import { baseDb } from "~/lib/db";
+import type { DbClient } from "~/lib/zenstack";
 import { getCurrentTenantId } from "~/lib/multiTenantDb";
 import { getExecutionDispatchQueue } from "~/lib/queues";
 import { JOB_DISPATCH_EXECUTION } from "~/lib/queueNames";
@@ -80,6 +82,17 @@ class RequestExecutionError extends Error {
   }
 }
 
+/**
+ * Where a request runs outside an HTTP request: a worker passes the job's
+ * tenant client, tenant id and audit actor, since the shared multi-tenant
+ * worker has no per-tenant `baseDb` and no ALS audit frame.
+ */
+export interface RequestExecutionEnv {
+  db: DbClient;
+  tenantId?: string;
+  guc: GucPayload;
+}
+
 export async function requestExecution(params: {
   runId: number;
   projectId: number;
@@ -90,7 +103,12 @@ export async function requestExecution(params: {
   inputs?: Record<string, string>;
   /** Created by "Run automated test": the run holds only this case and completes itself. */
   adHoc?: boolean;
+  env?: RequestExecutionEnv;
 }): Promise<RequestExecutionResult> {
+  const env = params.env;
+  const db: DbClient = env?.db ?? baseDb;
+  const transaction = <T>(fn: (tx: any) => Promise<T>): Promise<T> =>
+    env ? withAuditGuc(env.db, env.guc, fn) : auditedTransaction(fn);
   const inputError = validateCustomInputs(params.inputs);
   if (inputError) {
     return {
@@ -102,7 +120,7 @@ export async function requestExecution(params: {
   }
   const caseIds = Array.from(new Set(params.caseIds ?? []));
 
-  const target = await baseDb.executionTarget.findFirst({
+  const target = await db.executionTarget.findFirst({
     where: {
       id: params.targetId,
       projectId: params.projectId,
@@ -138,7 +156,7 @@ export async function requestExecution(params: {
   // so the stored inputs (and the run metadata) already carry them.
   const paramSchema = normalizeParamSchema(target.paramSchema);
   const resolved = await resolveConfigurationParams(
-    baseDb,
+    db as never,
     params.projectId,
     paramSchema,
     normalizeInputs(params.inputs)
@@ -163,10 +181,10 @@ export async function requestExecution(params: {
     };
   }
 
-  const tenantId = getCurrentTenantId();
+  const tenantId = env ? env.tenantId : getCurrentTenantId();
   let created: { id: number; status: string; selectionCount: number };
   try {
-    created = await auditedTransaction(async (tx) => {
+    created = await transaction(async (tx) => {
       await tx.$executeRaw`SELECT id FROM "TestRuns" WHERE id = ${params.runId} FOR UPDATE`;
       const run = await tx.testRuns.findFirst({
         where: {
@@ -320,6 +338,6 @@ export async function requestExecution(params: {
 
   // No queue (Valkey absent): dispatch on the request path so the feature
   // still works in a single-process deployment.
-  await dispatchExecution(baseDb, created.id, { tenantId });
+  await dispatchExecution(db, created.id, { tenantId });
   return { ok: true, execution: created, queued: false };
 }

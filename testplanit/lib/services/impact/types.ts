@@ -262,6 +262,8 @@ export interface ImpactAutoRun {
   url?: string | null;
   /** The inbound delivery row to annotate with the run outcome. */
   deliveryId?: string;
+  /** The repository webhook whose auto-execute setting applies to the run. */
+  webhookConfigId?: string;
 }
 
 export interface ImpactAnalysisJobData {

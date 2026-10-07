@@ -1862,7 +1862,12 @@
           "eventBranchPush": "Pushe do ostatních větví",
           "eventBranchPushHelp": "Analyzujte každý push do jakékoli jiné větve oproti základní větvi, podobně jako pull request, a sestavte testovací běh pro každý z nich.",
           "baseBranch": "Základní větev",
-          "baseBranchHelp": "Pushe do této větve jsou analyzovány samy o sobě; pull requesty a ostatní větve jsou porovnávány proti ní. Ponechte prázdné pro použití větve připojení."
+          "baseBranchHelp": "Pushe do této větve jsou analyzovány samy o sobě; pull requesty a ostatní větve jsou porovnávány proti ní. Ponechte prázdné pro použití větve připojení.",
+          "autoExecute": "Spouštět automatizované případy",
+          "autoExecuteHelp": "Po sestavení běhu vyžádat automatizované spuštění jeho automatizovaných případů na tomto cíli. Manuální případy zůstávají v běhu pro testery.",
+          "autoExecuteNoTargets": "Pro tento projekt není nakonfigurován žádný cíl spuštění. <link>Přidejte jeden</link>, aby se běhy spouštěly automaticky.",
+          "autoExecuteTargetMissing": "Zvolený cíl spuštění byl smazán nebo zakázán. Běhy se stále sestavují, ale žádné spuštění se nevyžaduje, dokud nezvolíte jiný cíl.",
+          "autoExecuteSaveError": "Nastavení automatizovaného spuštění se nepodařilo uložit"
         },
         "inboundEmptyState": "Zatím žádné příchozí webhooky. <link>Přidejte jeden</link>, chcete-li přijímat aktualizace položek z vašeho nástroje pro sledování položek nebo pull requesty a pushe z připojeného úložiště.",
         "inboundChooserBitbucket": "Bitbucket",

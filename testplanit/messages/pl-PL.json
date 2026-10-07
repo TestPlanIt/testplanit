@@ -1862,7 +1862,12 @@
           "eventBranchPush": "Wciśnięcia do innych gałęzi",
           "eventBranchPushHelp": "Przeanalizuj każde wciśnięcie do innej gałęzi względem gałęzi bazowej, jak żądanie ściągnięcia, i skomponuj przebieg dla każdego.",
           "baseBranch": "Gałąź bazowa",
-          "baseBranchHelp": "Wciśnięcia do tej gałęzi są analizowane samodzielnie; żądania ściągnięcia i inne gałęzie są porównywane z nią. Zostaw puste, aby użyć gałęzi połączenia."
+          "baseBranchHelp": "Wciśnięcia do tej gałęzi są analizowane samodzielnie; żądania ściągnięcia i inne gałęzie są porównywane z nią. Zostaw puste, aby użyć gałęzi połączenia.",
+          "autoExecute": "Wykonaj przypadki automatyczne",
+          "autoExecuteHelp": "Po utworzeniu przebiegu zażądaj automatycznego wykonania jego przypadków automatycznych w tym celu. Przypadki ręczne pozostają w przebiegu dla testerów.",
+          "autoExecuteNoTargets": "Dla tego projektu nie skonfigurowano celu wykonania. <link>Dodaj cel</link>, aby automatycznie wykonywać przebiegi.",
+          "autoExecuteTargetMissing": "Wybrany cel wykonania został usunięty lub wyłączony. Przebiegi są nadal tworzone, ale wykonanie nie jest żądane, dopóki nie wybierzesz innego celu.",
+          "autoExecuteSaveError": "Nie udało się zapisać ustawień automatycznego wykonania"
         },
         "inboundEmptyState": "Brak przychodzących webhoków jeszcze. <link>Dodaj jeden</link>, aby otrzymać aktualizacje problemów z systemu śledzenia problemów, lub żądania ściągnięcia i wciśnięcia z podłączonego repozytorium.",
         "inboundChooserBitbucket": "Bitbucket",

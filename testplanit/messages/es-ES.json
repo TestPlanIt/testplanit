@@ -1862,7 +1862,12 @@
           "eventBranchPush": "Inserciones en otras ramas",
           "eventBranchPushHelp": "Analice cada inserción en cualquier otra rama contra la rama base, como una solicitud de extracción, e inserte una ejecución para cada una.",
           "baseBranch": "Rama base",
-          "baseBranchHelp": "Las inserciones en esta rama se analizan por sí solas; las solicitudes de extracción y otras ramas se comparan contra ella. Déjelo vacío para usar la rama de la conexión."
+          "baseBranchHelp": "Las inserciones en esta rama se analizan por sí solas; las solicitudes de extracción y otras ramas se comparan contra ella. Déjelo vacío para usar la rama de la conexión.",
+          "autoExecute": "Ejecutar casos automatizados",
+          "autoExecuteHelp": "Una vez creada la ejecución, solicitar la ejecución automatizada de sus casos automatizados en este destino. Los casos manuales permanecen en la ejecución para los testers.",
+          "autoExecuteNoTargets": "No hay ningún destino de ejecución configurado para este proyecto. <link>Añade uno</link> para ejecutar las ejecuciones automáticamente.",
+          "autoExecuteTargetMissing": "El destino de ejecución elegido se eliminó o se desactivó. Las ejecuciones se siguen creando, pero no se solicita ninguna ejecución hasta que elijas otro destino.",
+          "autoExecuteSaveError": "No se pudo guardar la configuración de ejecución automatizada"
         },
         "inboundEmptyState": "Aún no hay webhooks entrantes. <link>Agregue uno</link> para recibir actualizaciones de problemas de su rastreador de problemas, o solicitudes de extracción e inserciones de un repositorio conectado.",
         "inboundChooserBitbucket": "Bitbucket",

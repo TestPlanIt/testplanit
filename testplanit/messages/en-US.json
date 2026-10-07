@@ -1862,7 +1862,12 @@
           "eventBranchPush": "Pushes to other branches",
           "eventBranchPushHelp": "Analyze every push to any other branch against the base branch, like a pull request, and compose a run for each.",
           "baseBranch": "Base branch",
-          "baseBranchHelp": "Pushes to this branch are analyzed on their own; pull requests and other branches are compared against it. Leave empty to use the connection's branch."
+          "baseBranchHelp": "Pushes to this branch are analyzed on their own; pull requests and other branches are compared against it. Leave empty to use the connection's branch.",
+          "autoExecute": "Execute automated cases",
+          "autoExecuteHelp": "After the run is composed, request automated execution of its automated cases on this target. Manual cases stay in the run for testers.",
+          "autoExecuteNoTargets": "No execution target is configured for this project. <link>Add one</link> to execute runs automatically.",
+          "autoExecuteTargetMissing": "The chosen execution target was deleted or disabled. Runs are still composed, but no execution is requested until you choose another target.",
+          "autoExecuteSaveError": "Could not save the automated execution settings"
         },
         "inboundEmptyState": "No inbound webhooks yet. <link>Add one</link> to receive issue updates from your issue tracker, or pull requests and pushes from a connected repository.",
         "inboundChooserBitbucket": "Bitbucket",

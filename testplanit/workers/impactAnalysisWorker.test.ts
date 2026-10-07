@@ -200,6 +200,11 @@ vi.mock("../lib/services/impact/autoRun", () => ({
   createRunFromAnalysis: (...args: any[]) => mockCreateRunFromAnalysis(...args),
 }));
 
+const mockExecuteAutoRun = vi.fn();
+vi.mock("../lib/services/impact/autoExecute", () => ({
+  executeAutoRun: (...args: any[]) => mockExecuteAutoRun(...args),
+}));
+
 vi.mock("../lib/services/impact/persistence", () => ({
   markRunning: (...args: any[]) => mockMarkRunning(...args),
   saveDiff: (...args: any[]) => mockSaveDiff(...args),
@@ -559,6 +564,50 @@ describe("impactAnalysisWorker", () => {
     const out = await processor(makeJob({ data: { ...jobData, autoRun } }));
     expect(out.status).toBe("complete");
     expect(mockMarkFailed).not.toHaveBeenCalled();
+  });
+
+  it("requests the webhook's automated execution once the run exists", async () => {
+    const { processor } = await loadWorker();
+    const autoRun = {
+      trigger: "push",
+      label: "master abc1234…def5678",
+      deliveryId: "del-2",
+      webhookConfigId: "whc-1",
+    };
+    mockCreateRunFromAnalysis.mockResolvedValueOnce({
+      created: true,
+      testRunId: 300,
+      caseCount: 4,
+    });
+
+    await processor(makeJob({ data: { ...jobData, autoRun } }));
+
+    expect(mockExecuteAutoRun).toHaveBeenCalledWith(mockDb, {
+      webhookConfigId: "whc-1",
+      testRunId: 300,
+      projectId: jobData.projectId,
+      deliveryId: "del-2",
+      tenantId: undefined,
+    });
+  });
+
+  it("requests no execution when no run was composed", async () => {
+    const { processor } = await loadWorker();
+    mockCreateRunFromAnalysis.mockResolvedValueOnce({
+      created: false,
+      reason: "no_cases",
+    });
+
+    await processor(
+      makeJob({
+        data: {
+          ...jobData,
+          autoRun: { trigger: "push", label: "x", webhookConfigId: "whc-1" },
+        },
+      })
+    );
+
+    expect(mockExecuteAutoRun).not.toHaveBeenCalled();
   });
 
   it("does not compose a run for an analysis a user started", async () => {
