@@ -75,6 +75,7 @@ export default function AdvancedPage() {
         excludeNotStartedFromRuns: true,
         requirementsEnabled: true,
         autoLockCompositionOnInProgress: true,
+        enforceCaseDependencies: true,
         abandonedRunIdleMinutes: true,
         abandonedRunStateId: true,
         projectIntegrations: {
@@ -202,6 +203,7 @@ export default function AdvancedPage() {
   const excludeNotStartedFromRuns = project?.excludeNotStartedFromRuns ?? false;
   const autoLockCompositionOnInProgress =
     project?.autoLockCompositionOnInProgress ?? false;
+  const enforceCaseDependencies = project?.enforceCaseDependencies ?? false;
   // Requiring a linked issue is only meaningful when the project has an active
   // issue integration to link from; without one the toggle is forced off.
   const hasIssueIntegration = (project?.projectIntegrations?.length ?? 0) > 0;
@@ -299,6 +301,22 @@ export default function AdvancedPage() {
       );
     } catch {
       toast.error(t("autoLockComposition.saveError"));
+    }
+  };
+
+  const handleToggleCaseDependencies = async (enabled: boolean) => {
+    try {
+      await updateProject.mutateAsync({
+        where: { id: projectId },
+        data: { enforceCaseDependencies: enabled },
+      });
+      toast.success(
+        enabled
+          ? t("caseDependencies.enabledToast")
+          : t("caseDependencies.disabledToast")
+      );
+    } catch {
+      toast.error(t("caseDependencies.saveError"));
     }
   };
 
@@ -789,6 +807,28 @@ export default function AdvancedPage() {
                 </Label>
                 <p className="text-sm text-muted-foreground">
                   {t("autoLockComposition.description")}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="space-y-3">
+                <Label className="flex items-center gap-3">
+                  <Switch
+                    id="case-dependencies-toggle"
+                    data-testid="case-dependencies-toggle"
+                    checked={enforceCaseDependencies}
+                    onCheckedChange={handleToggleCaseDependencies}
+                    disabled={projectLoading || updateProject.isPending}
+                  />
+                  <span className="text-base font-medium">
+                    {t("caseDependencies.label")}
+                  </span>
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  {t("caseDependencies.description")}
                 </p>
               </div>
             </CardContent>

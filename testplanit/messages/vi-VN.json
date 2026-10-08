@@ -694,6 +694,8 @@
       "failedToDeleteRepository": "Không thể xóa kho lưu trữ",
       "permissionDenied": "Bạn không có quyền truy cập vào trang này.",
       "resultSubmitPermissionDenied": "Bạn không thể gửi kết quả cho trường hợp này. Hãy yêu cầu quản trị viên dự án chỉ định cho bạn.",
+      "dependenciesNotPassed": "Bị chặn bởi các phụ thuộc",
+      "dependenciesNotPassedDescription": "Trường hợp kiểm thử này không thể được thực thi cho đến khi {count, plural, =0 {các trường hợp nó phụ thuộc vào đã} one {trường hợp nó phụ thuộc vào đã} other {tất cả # trường hợp nó phụ thuộc vào đã}} vượt qua trong lần chạy này.",
       "justificationRequired": "Cần có sự giải thích.",
       "justificationRequiredDescription": "Việc thay đổi kết quả đã hoàn thành sang một kết quả khác đòi hỏi phải có Chi tiết Kết quả giải thích sự thay đổi đó.",
       "requiredFieldMissing": "Một trường kết quả bắt buộc bị thiếu giá trị.",
@@ -1573,6 +1575,9 @@
           },
           "mantisbt": {
             "description": "Kết nối với máy chủ MantisBT tự lưu trữ để theo dõi sự cố."
+          },
+          "clickup": {
+            "description": "Kết nối với ClickUp để theo dõi tác vụ và quản lý dự án."
           }
         }
       },
@@ -1844,6 +1849,15 @@
         "setupStepsMantisbtStep2": "Trong cấu hình plugin, chọn các sự kiện tạo và cập nhật sự cố.",
         "setupStepsMantisbtStep3": "Dán URL ở trên làm đích webhook và lưu lại.",
         "setupStepsMantisbtStep4": "Tạo hoặc cập nhật một sự cố trong MantisBT; trạng thái của sự cố được liên kết sẽ đồng bộ tại đây.",
+        "inboundChooserClickup": "ClickUp",
+        "inboundClickupTitle": "Webhook đến của ClickUp",
+        "inboundClickupScopeHint": "Các sự kiện ClickUp <code>taskStatusUpdated</code> cập nhật các vấn đề TestPlanIt được liên kết. Các sự kiện tác vụ khác được chấp nhận nhưng không cập nhật vấn đề.",
+        "inboundClickupRegisterHint": "ClickUp không có trang cài đặt webhook: webhooks được tạo thông qua API của nó, và ClickUp chọn bí mật ký. Để trống bí mật và TestPlanIt đăng ký webhook này trong ClickUp cho Danh sách được liên kết bằng cách sử dụng ủy quyền ClickUp của bạn.",
+        "inboundClickupSecret": "Bí mật webhook (tùy chọn)",
+        "inboundClickupSecretHelp": "Chỉ cần thiết nếu bạn tự tạo webhook bằng Create Webhook API của ClickUp: dán bí mật mà ClickUp trả về. Được lưu trữ được mã hóa khi đang chờ.",
+        "setupStepsClickupStep1": "Nếu bạn để trống bí mật, TestPlanIt đã đăng ký webhook này với ClickUp cho Danh sách được liên kết — không có gì để cấu hình trong ClickUp.",
+        "setupStepsClickupStep2": "Nếu bạn tự đăng ký webhook thông qua Create Webhook API của ClickUp, hãy đảm bảo điểm cuối của nó là URL dưới đây và đăng ký nó cho sự kiện taskStatusUpdated.",
+        "setupStepsClickupStep3": "Sử dụng \"Gửi webhook kiểm thử\" dưới đây để xác minh đường ống. Xoay bí mật đăng ký một webhook mới trong ClickUp.",
         "codeRepos": {
           "empty": "Không có kho lưu trữ nào được kết nối cho Phân tích ảnh hưởng. <link>Kết nối một</link> trước tiên.",
           "unsupported": "{provider} các kho lưu trữ không thể gửi webhook tới TestPlanIt.",
@@ -2025,7 +2039,7 @@
           "branchPlaceholder": "Để trống nếu muốn sử dụng nhánh mặc định của kho lưu trữ."
         },
         "pathPatterns": {
-          "description": "Hãy chỉ định các tệp cần bao gồm. Mỗi hàng kết hợp đường dẫn cơ sở và mẫu glob. Ví dụ: path=tests/e2e/pages + pattern=* bao gồm tất cả các tệp trực tiếp trong thư mục đó; path=src + pattern=**/*.test.ts bao gồm tất cả các tệp kiểm thử một cách đệ quy.",
+          "description": "Chỉ định các tệp cần bao gồm. Mỗi hàng kết hợp đường dẫn cơ sở và mẫu glob. Ví dụ: path=tests/e2e/pages + pattern=* bao gồm tất cả các tệp trực tiếp trong thư mục đó; path=src + pattern=**/*.test.ts bao gồm tất cả các tệp kiểm thử một cách đệ quy.",
           "pathPlaceholder": "bài kiểm tra/e2e/trang",
           "exceedsLimit": "Tổng kích thước vượt quá giới hạn ngữ cảnh AI là {overflow}. Trong quá trình xuất, các tệp được xếp hạng theo mức độ liên quan đến trường hợp thử nghiệm đang được xuất — các tệp liên quan nhất được đưa vào trước và các tệp được xếp hạng thấp hơn sẽ bị bỏ qua khi đạt đến giới hạn ngân sách. Thu hẹp các mẫu đường dẫn của bạn nếu bạn muốn kiểm soát nhiều hơn các tệp được bao gồm."
         },
@@ -2087,7 +2101,7 @@
           "pathLabel": "Con đường",
           "patternLabel": "Mẫu",
           "previewFiles": "Xem trước tệp",
-          "rootHint": "Để đường dẫn trống hoặc nhập ., để bắt đầu từ gốc kho lưu trữ; đường dẫn . có mẫu **/* bao gồm mọi tệp.",
+          "rootHint": "Để trống đường dẫn hoặc nhập . để bắt đầu tại thư mục gốc của kho; path . với pattern **/* bao gồm mọi tệp.",
           "scanningRepo": "Đang quét các tệp kho lưu trữ… ({seconds}s)",
           "title": "Các kiểu đường đi",
           "truncatedBadge": "Kết quả có thể không đầy đủ (giới hạn của nhà cung cấp)"
@@ -2179,6 +2193,13 @@
           "disabledToast": "Các Lần chạy thử nghiệm sẽ không còn tự động khóa thành phần của chúng nữa",
           "saveError": "Không thể cập nhật cài đặt tự động khóa thành phần"
         },
+        "caseDependencies": {
+          "label": "Thực thi các phụ thuộc trường hợp kiểm thử trong các lần chạy kiểm thử",
+          "description": "Khi bật, một trường hợp kiểm thử trong một lần chạy sẽ bị chặn cho đến khi mọi trường hợp nó phụ thuộc vào (liên kết \"Phụ thuộc vào\") đã vượt qua trong cùng một lần chạy đó. Các trường hợp bị chặn được đánh dấu trong lần chạy và kết quả cho chúng bị từ chối. Khi phụ thuộc cuối cùng vượt qua, người được giao nhiệm vụ của trường hợp sẽ nhận được thông báo rằng nó đã sẵn sàng. Các phụ thuộc không nằm trong lần chạy sẽ không chặn.",
+          "enabledToast": "Các phụ thuộc trường hợp kiểm thử sẽ được thực thi trong các lần chạy kiểm thử",
+          "disabledToast": "Các phụ thuộc trường hợp kiểm thử sẽ không còn được thực thi",
+          "saveError": "Không thể cập nhật cài đặt thực thi phụ thuộc"
+        },
         "editWindow": {
           "label": "Cửa sổ chỉnh sửa kết quả",
           "description": "Bạn vẫn có thể chỉnh sửa kết quả ngay tại chỗ sau một thời gian nhất định. Sau khi cửa sổ chỉnh sửa đóng lại, việc sửa lỗi yêu cầu phải thực hiện lại. Quản trị viên hệ thống luôn có thể chỉnh sửa.",
@@ -2233,7 +2254,7 @@
           "branchesFallbackHint": "Nhập tên nhánh thay vào đó."
         },
         "pathPatterns": {
-          "description": "Những tệp ứng dụng nào sẽ được bao gồm. Mỗi hàng kết hợp một đường dẫn cơ sở và một mẫu toàn cầu. Ví dụ: đường dẫn=src + mẫu=**/* bao gồm mọi thứ trong src.",
+          "description": "Tệp ứng dụng nào cần bao gồm. Mỗi hàng kết hợp đường dẫn cơ sở và mẫu glob. Ví dụ: path=src + pattern=**/* bao gồm mọi thứ dưới src.",
           "pathPlaceholder": "src"
         },
         "cache": {
@@ -2876,11 +2897,101 @@
           "label": "Chế độ thông báo",
           "useGlobal": "Sử dụng cài đặt toàn cầu"
         },
-        "options": {
-          "title": "Các tùy chọn bổ sung",
-          "email": {
-            "label": "Thông báo qua email",
-            "description": "Nhận thông báo qua email"
+        "typeSection": {
+          "title": "Thông báo cho tôi về cái gì",
+          "description": "Mặc định, mọi loại thông báo đều được bật. Tắt các loại bạn không muốn. Chế độ thông báo ở trên vẫn quyết định cách bạn nhận được thông báo.",
+          "modeNoneNote": "Không có gì được gửi khi chế độ thông báo của bạn là Không có. Những lựa chọn của bạn sẽ áp dụng ngay khi bạn chọn chế độ khác.",
+          "locked": "Luôn bật",
+          "resetToDefaults": "Đặt lại về mặc định",
+          "adminOnly": "Gửi cho quản trị viên"
+        },
+        "groups": {
+          "assignments": "Nhiệm vụ được giao",
+          "comments": "Bình luận",
+          "reviews": "Đánh giá",
+          "runsAndMilestones": "Lần chạy và cột mốc",
+          "sharing": "Chia sẻ",
+          "aiAndJobs": "AI và công việc",
+          "integrations": "Tích hợp",
+          "system": "Hệ thống",
+          "administration": "Sự quản lý"
+        },
+        "types": {
+          "WORK_ASSIGNED": {
+            "label": "Công việc được giao cho tôi",
+            "description": "Một trường hợp chạy thử nghiệm được giao cho bạn, đơn lẻ hoặc hàng loạt."
+          },
+          "SESSION_ASSIGNED": {
+            "label": "Phiên được giao cho tôi",
+            "description": "Một phiên được tạo với bạn là người được giao, hoặc được giao lại cho bạn."
+          },
+          "RUN_CASE_UNBLOCKED": {
+            "label": "Trường hợp được giao đã được mở khóa",
+            "description": "Một trường hợp thử nghiệm được giao cho bạn trong một lần chạy trở nên có thể thực thi được vì các trường hợp nó phụ thuộc vào đã vượt qua."
+          },
+          "COMMENT_MENTION": {
+            "label": "Được đề cập trong phần bình luận",
+            "description": "Ai đó @-mentioned bạn trong một bình luận về một trường hợp, lần chạy, phiên, cột mốc hoặc bài đánh giá."
+          },
+          "REVIEW_REQUESTED": {
+            "label": "Yêu cầu xem xét",
+            "description": "Một bài đánh giá được yêu cầu từ bạn hoặc từ một vai trò bạn nắm giữ."
+          },
+          "REVIEW_APPROVED": {
+            "label": "Đánh giá đã được phê duyệt",
+            "description": "Một người đánh giá phê duyệt yêu cầu của bạn."
+          },
+          "REVIEW_CHANGES_REQUESTED": {
+            "label": "Những thay đổi được yêu cầu",
+            "description": "Một người đánh giá yêu cầu những thay đổi về yêu cầu của bạn."
+          },
+          "REVIEW_REJECTED": {
+            "label": "Đánh giá bị từ chối",
+            "description": "Một người đánh giá từ chối yêu cầu của bạn."
+          },
+          "REVIEW_CANCELLED": {
+            "label": "Đánh giá bị hủy bỏ",
+            "description": "Yêu cầu xem xét bạn được yêu cầu được hủy bỏ, hoặc mục được xem xét bị xóa."
+          },
+          "REVIEW_REMINDER": {
+            "label": "Nhắc nhở xem xét",
+            "description": "Một bài đánh giá bạn nợ cũ hơn ngưỡng nhắc nhở, hoặc người yêu cầu nhắc nhở bạn."
+          },
+          "RUN_READY_TO_COMPLETE": {
+            "label": "Lần chạy thử nghiệm sẵn sàng hoàn tất",
+            "description": "Mọi trường hợp trong một lần chạy mà bạn có thể hoàn tất đều có kết quả."
+          },
+          "MILESTONE_DUE_REMINDER": {
+            "label": "Nhắc nhở cột mốc đến hạn",
+            "description": "Một cột mốc bạn tham gia sắp đến hạn hoặc đã quá hạn."
+          },
+          "SHARE_LINK_ACCESSED": {
+            "label": "Liên kết chia sẻ được xem",
+            "description": "Ai đó mở một liên kết chia sẻ bạn tạo với chế độ thông báo khi xem được bật."
+          },
+          "AI_STEPS_DERIVED": {
+            "label": "Các bước AI được lấy",
+            "description": "Một công việc lấy bước AI bạn bắt đầu đã viết các bước."
+          },
+          "INTEGRATION_AUTH_EXPIRED": {
+            "label": "Tích hợp cần được ủy quyền lại",
+            "description": "Kết nối của bạn với một tích hợp hết hạn hoặc bị thu hồi và phải được kết nối lại."
+          },
+          "SYSTEM_ANNOUNCEMENT": {
+            "label": "Thông báo của quản trị viên",
+            "description": "Một quản trị viên gửi thông báo hệ thống cho mọi người dùng."
+          },
+          "WHATS_NEW": {
+            "label": "Có gì mới sau khi nâng cấp",
+            "description": "Tóm tắt các tính năng mới trong lần truy cập đầu tiên của bạn sau khi TestPlanIt được nâng cấp."
+          },
+          "USER_REGISTERED": {
+            "label": "Đăng ký người dùng mới",
+            "description": "Một người dùng mới đăng ký thông qua biểu mẫu, SSO hoặc SAML."
+          },
+          "LLM_BUDGET_ALERT": {
+            "label": "Cảnh báo ngân sách AI",
+            "description": "Chi tiêu LLM vượt quá ngưỡng ngân sách cho kỳ hóa đơn."
           }
         },
         "success": {
@@ -3127,6 +3238,13 @@
       "modifierHintMac": "Nhấn giữ ⇧ để di chuyển hoặc ⌥ để sao chép trong khi kéo chuột để bỏ qua menu này.",
       "modifierHintWin": "Giữ phím Shift để di chuyển hoặc phím Ctrl để sao chép trong khi kéo chuột để bỏ qua menu này.",
       "dropZoneReorder": "Thả để sắp xếp lại",
+      "dropZoneReorderBlockedSort": "Loại bỏ sắp xếp để sắp xếp lại các trường hợp trong thư mục này",
+      "dropZoneReorderBlockedSortMac": "Loại bỏ sắp xếp để sắp xếp lại — giữ ⌥ để sao chép vào thư mục này",
+      "dropZoneReorderBlockedSortWin": "Loại bỏ sắp xếp để sắp xếp lại — giữ Ctrl để sao chép vào thư mục này",
+      "dropZoneReorderBlockedSearch": "Xóa tìm kiếm để sắp xếp lại các trường hợp trong thư mục này",
+      "dropZoneReorderBlockedSearchMac": "Xóa tìm kiếm để sắp xếp lại — giữ ⌥ để sao chép vào thư mục này",
+      "dropZoneReorderBlockedSearchWin": "Xóa tìm kiếm để sắp xếp lại — giữ Ctrl để sao chép vào thư mục này",
+      "dropZoneCopyHere": "Thả để sao chép vào thư mục này",
       "dropZoneFolder": "Thả vào một thư mục để lồng vào, hoặc giữa các thư mục để sắp xếp lại",
       "dropZoneTreeMac": "Thả vào một thư mục — giữ ⇧ để di chuyển, ⌥ để sao chép",
       "dropZoneTreeWin": "Thả vào một thư mục — giữ Shift để di chuyển, Ctrl để sao chép",
@@ -4087,6 +4205,13 @@
       "lockError": "Không thể khóa thành phần của lần chạy",
       "unlockError": "Không thể mở khóa thành phần của lần chạy",
       "addBlocked": "Thành phần của lần chạy này đã bị khóa, do đó không thể thêm trường hợp thử nghiệm. Hãy mở khóa trước để thay đổi tập hợp trường hợp thử nghiệm."
+    },
+    "dependencies": {
+      "blocked": "Bị chặn",
+      "blockedBy": "Bị chặn cho đến khi {count, plural, one {trường hợp này vượt qua} other {các trường hợp này vượt qua}} trong lần chạy này:",
+      "blockedNotice": "Trường hợp thử nghiệm này không thể được thực thi cho đến khi {count, plural, one {trường hợp nó phụ thuộc vào đã} other {tất cả # trường hợp nó phụ thuộc vào đã}} vượt qua trong lần chạy này.",
+      "notInRun": "{count, plural, one {# trường hợp cái này phụ thuộc vào là} other {# trường hợp cái này phụ thuộc vào là}} không nằm trong lần chạy này và sẽ không chặn thực thi:",
+      "unblocked": "Tất cả các trường hợp cái này phụ thuộc vào đã vượt qua trong lần chạy này."
     },
     "distribute": {
       "title": "Phân bổ phân công",
@@ -6202,6 +6327,10 @@
         "mantisbt": {
           "name": "MantisBT",
           "description": "Kết nối với máy chủ MantisBT tự lưu trữ để theo dõi sự cố"
+        },
+        "clickup": {
+          "name": "ClickUp",
+          "description": "Kết nối với ClickUp để theo dõi tác vụ và quản lý dự án"
         }
       },
       "filterPlaceholder": "Tích hợp bộ lọc...",
@@ -6312,7 +6441,13 @@
         "mantisBTApiKeyHelp": "Tạo một mã tại cài đặt tài khoản MantisBT của bạn → API Tokens",
         "mantisBTUrl": "URL MantisBT",
         "mantisBTUrlPlaceholder": "https://mantisbt.example.com",
-        "mantisBTUrlHelp": "URL cơ sở của phiên bản MantisBT của bạn"
+        "mantisBTUrlHelp": "URL cơ sở của phiên bản MantisBT của bạn",
+        "clickupTeamId": "ID Nhóm ClickUp (Workspace)",
+        "clickupTeamIdPlaceholder": "ví dụ: 9013456789",
+        "clickupTeamIdHelp": "Tìm thấy trong URL ClickUp sau app.clickup.com/",
+        "clickupListId": "ID Danh sách ClickUp Mặc định",
+        "clickupListIdPlaceholder": "ví dụ: 901234567",
+        "clickupListIdHelp": "Danh sách mà các tác vụ được tạo theo mặc định; có thể ghi đè cho mỗi vấn đề"
       },
       "authType": {
         "api_key": "Khóa API",
@@ -6820,10 +6955,6 @@
         "userRegisteredMessageSso": "{userName} ({userEmail}) đã đăng ký qua SSO",
         "userRegisteredMessageForm": "{userName} ({userEmail}) đã đăng ký thông qua mẫu đăng ký",
         "viewUserList": "Xem danh sách người dùng",
-        "reviewGeneratedCases": "Xem xét các trường hợp kiểm thử được tạo ra",
-        "generateFromUrlCompleteTitle": "Các trang đã được thu thập thông tin thành công",
-        "generateFromUrlCompleteMessage": "{pages, plural, one {# trang} other {# trang}} được thu thập từ {url} trong dự án \"{projectName}\". Nhấp vào để xem lại và tạo các trường hợp kiểm thử.",
-        "generateFromUrlFailedTitle": "Quá trình thu thập dữ liệu URL thất bại",
         "reviewRequestedTitle": "Yêu cầu xem xét",
         "reviewApprovedTitle": "Đánh giá đã được phê duyệt",
         "reviewChangesRequestedTitle": "Những thay đổi được yêu cầu",
@@ -6864,7 +6995,12 @@
         "runReadyToCompleteTitle": "Lượt Chạy Kiểm Thử Đã Sẵn Sàng Hoàn Tất",
         "runReadyToCompleteExecuted": "{count, plural, =2 {Cả hai trường hợp} other {Tất cả # trường hợp}} đã được thực thi.",
         "runReadyToCompleteEmailMessage": "{caseCount, plural, =2 {Cả hai trường hợp} other {Tất cả # trường hợp}} đã được thực thi trong lần chạy kiểm thử \"{testRunName}\" (dự án \"{projectName}\"). Lần chạy đã sẵn sàng để được đánh dấu là hoàn thành.",
-        "runReadyToCompleteReason": "Bạn nhận được thông báo này vì bạn có quyền hoàn tất các lượt chạy kiểm thử trong dự án này."
+        "runReadyToCompleteReason": "Bạn nhận được thông báo này vì bạn có quyền hoàn tất các lượt chạy kiểm thử trong dự án này.",
+        "runCaseUnblockedTitle": "Test Case Sẵn sàng Thực thi",
+        "runCaseUnblockedPrerequisitePassed": "{prerequisiteName} đã vượt qua, vì vậy trường hợp kiểm thử được gán cho bạn không còn bị chặn:",
+        "runCaseUnblockedEmailMessage": "\"{testCaseName}\" trong lần chạy kiểm thử \"{testRunName}\" (dự án \"{projectName}\") không còn bị chặn: \"{prerequisiteName}\" đã vượt qua. Nó được gán cho bạn và sẵn sàng để thực thi.",
+        "runCaseUnblockedReason": "Bạn nhận được tin nhắn này vì test case được gán cho bạn.",
+        "inTestRun": "trong lần chạy kiểm thử"
       }
     },
     "issues": {
@@ -7477,6 +7613,11 @@
     "alreadyLinked": "Vụ việc này đã có liên hệ với nhau.",
     "cannotLinkSelf": "Không thể liên kết một vụ việc với chính nó.",
     "circularLink": "Đã phát hiện liên kết vòng lặp.",
+    "dependsOn": "Phụ thuộc vào",
+    "blocks": "Chặn",
+    "dependsOnOption": "Phụ thuộc vào — trường hợp này yêu cầu trường hợp được chọn phải vượt qua trước",
+    "blocksOption": "Chặn — trường hợp được chọn yêu cầu trường hợp này phải vượt qua trước",
+    "dependencyHint": "Khi bắt buộc phụ thuộc được bật, một trường hợp trong bài kiểm thử không thể được thực hiện cho đến khi các trường hợp nó phụ thuộc vào đã vượt qua trong bài đó.",
     "failedToCreate": "Không thể tạo liên kết.",
     "confirmRemoveLink": "Bạn có chắc chắn muốn xóa liên kết này không?",
     "DEPENDS_ON": "Sự phụ thuộc",
@@ -7741,6 +7882,8 @@
       "redmineUrl": "## URL Redmine\nURL cơ sở của phiên bản Redmine của bạn.\n\n- Định dạng: https://redmine.example.com\n- Không bao gồm /issues hoặc các đường dẫn khác\n- Phải có thể truy cập được từ máy chủ này",
       "mantisBTApiKey": "## Mã thông báo API MantisBT\nMã thông báo REST API cá nhân của bạn.\n\n- Tạo một mã tại cài đặt tài khoản MantisBT của bạn → API Tokens\n- Được giới hạn theo quyền của người dùng của bạn; sử dụng tài khoản dịch vụ cho các tích hợp dùng chung",
       "mantisBTUrl": "## URL MantisBT\nURL cơ sở của phiên bản MantisBT của bạn.\n\n- Định dạng: https://mantisbt.example.com\n- Không bao gồm /api/rest hoặc các đường dẫn khác\n- Phải có thể truy cập được từ máy chủ này",
+      "clickupTeamId": "## ID nhóm ClickUp (Không gian làm việc)\nID số của Nhóm ClickUp (còn gọi là Không gian làm việc) mà các tác vụ thuộc về.\n\n- Tìm thấy trong URL ClickUp: app.clickup.com/{teamId}/...\n- Cần thiết để duyệt Khoảng không gian/Thư mục/Danh sách khi chọn một dự án",
+      "clickupListId": "## ID danh sách ClickUp mặc định\nDanh sách mà các tác vụ mới được tạo theo mặc định.\n\n- Tìm thấy trong URL ClickUp hoặc thông qua tùy chọn \"Sao chép liên kết\" của Danh sách\n- Tùy chọn — một Danh sách cụ thể có thể được chọn cho mỗi vấn đề thay thế",
       "githubBaseUrl": "## URL cơ sở ở API\nĐường dẫn gốc API GitHub đầy đủ dành cho GitHub Enterprise Server.\n\n- Thường kết thúc bằng /api/v3\n- Để trống nếu muốn sử dụng api.github.com\n- Phải có thể truy cập được từ máy chủ này"
     },
     "config": {
@@ -8370,7 +8513,7 @@
           "description": "Phân tích tác động, giải quyết vấn đề và quá trình phát sinh vấn đề."
         },
         "automationTrends": {
-          "label": "Xu hướng tự động hóa",
+          "label": "Xu hướng trường hợp kiểm thử tự động",
           "description": "Theo dõi tiến độ tự động hóa hàng tuần theo mức độ ưu tiên"
         },
         "flakyTests": {
@@ -8416,6 +8559,10 @@
         "codePinCoverage": {
           "label": "Độ phủ Code Pin",
           "description": "Nơi các Code Pin ở, theo kho lưu trữ và thư mục, và nơi các thay đổi gần đây không được phủ"
+        },
+        "resultsTrend": {
+          "label": "Xu hướng tỷ lệ thất bại kết quả kiểm thử",
+          "description": "Tỷ lệ vượt qua và không vượt qua kết quả kiểm thử theo thời gian, và liệu tỷ lệ thất bại có đang cải thiện hay tệ đi"
         }
       },
       "flakyTests": {
@@ -8735,7 +8882,7 @@
           "description": "Mức sử dụng token, chi phí và độ tin cậy của các tính năng LLM trên các dự án"
         },
         "automationTrends": {
-          "label": "Xu hướng tự động hóa xuyên dự án",
+          "label": "Xu hướng trường hợp kiểm thử tự động xuyên dự án",
           "description": "Theo dõi tiến độ tự động hóa hàng tuần theo mức độ ưu tiên trên các dự án."
         },
         "flakyTests": {
@@ -8769,6 +8916,10 @@
         "codePinCoverage": {
           "label": "Độ phủ Code Pin Xuyên Dự án",
           "description": "Độ phủ Code Pin trên mỗi dự án đã bật Phân tích Tác động"
+        },
+        "resultsTrend": {
+          "label": "Xu hướng tỷ lệ thất bại kết quả kiểm thử xuyên dự án",
+          "description": "Tỷ lệ vượt qua và không vượt qua kết quả kiểm thử theo thời gian theo dự án, và liệu tỷ lệ thất bại có đang cải thiện hay tệ đi"
         }
       },
       "folderDescendants": {
@@ -8832,6 +8983,79 @@
         },
         "chart": {
           "byDirectory": "Ghim và tệp chưa được phủ theo thư mục"
+        }
+      },
+      "resultsTrend": {
+        "period": "Giai đoạn",
+        "runSource": "Loại kết quả",
+        "runSources": {
+          "automated": "Tự động",
+          "manual": "Thủ công"
+        },
+        "showPassRate": "Hiển thị tỷ lệ vượt qua",
+        "showPassRateHelp": "Vẽ tỷ lệ vượt qua trên trục bên phải của biểu đồ, với xu hướng được điều chỉnh riêng của nó, và thêm nó vào các con số tiêu đề. Tắt theo mặc định: báo cáo là về tỷ lệ thất bại.",
+        "showFailRate": "Hiển thị tỷ lệ thất bại",
+        "showFailRateHelp": "Vẽ tỷ lệ thất bại trên trục bên phải của biểu đồ, với xu hướng được điều chỉnh của nó, và hiển thị nó trong các con số tiêu đề. Bật theo mặc định.",
+        "showCounts": "Hiển thị tổng kết quả",
+        "showCountsHelp": "Vẽ các tổng đã vượt qua, không vượt qua, bỏ qua và các tổng khác dưới dạng các thanh xếp chồng trên biểu đồ bên cạnh các tỷ lệ. Tắt theo mặc định: báo cáo là về các tỷ lệ.",
+        "countSkipped": "Đếm kết quả bỏ qua trong tỷ lệ",
+        "countSkippedHelp": "Kết quả bỏ qua bị loại khỏi mẫu số tỷ lệ vượt qua và không vượt qua trừ khi tùy chọn này được bật. Các trạng thái khác luôn ở trong.",
+        "includeAborted": "Bao gồm các bài chạy bị hủy",
+        "includeAbortedHelp": "Các bài chạy ở trạng thái bài chạy bị tỏ rơi của dự án được đếm trừ khi tùy chọn này tắt.",
+        "latestAttemptOnly": "Chỉ lần cố gắng mới nhất",
+        "latestAttemptOnlyHelp": "Đếm một kết quả cho mỗi trường hợp cho mỗi bài chạy, lần cố gắng mới nhất của nó, thay vì mọi lần cố gắng được nhập.",
+        "failRate": "Tỷ lệ thất bại",
+        "skipped": "Bỏ qua",
+        "other": "Khác",
+        "inProgress": "đang tiến hành",
+        "verdict": {
+          "better": "Tỷ lệ thất bại đang cải thiện",
+          "worse": "Tỷ lệ thất bại đang tệ hơn",
+          "steady": "Tỷ lệ thất bại ổn định",
+          "notEnough": "Chưa có đủ giai đoạn hoàn chỉnh để gọi xu hướng.",
+          "notEnoughDetail": "Xu hướng cần ít nhất hai giai đoạn hoàn chỉnh có kết quả.",
+          "detail": "Đường xu hướng chạy từ {start} đến {end}, thay đổi {change} điểm trên {count} hoàn chỉnh {grouping, select, daily {ngày} weekly {tuần} monthly {tháng} quarterly {quý} other {năm}}."
+        },
+        "stats": {
+          "lastComplete": "Giai đoạn hoàn chỉnh cuối cùng ({period}), so sánh với trung bình của các giai đoạn hoàn chỉnh trước đó.",
+          "results": "Kết quả được thực hiện",
+          "runs": "Chạy",
+          "deltaPoints": "{change} pts so với {count, plural, one {# giai đoạn} other {# giai đoạn}} trước đó",
+          "deltaPercent": "{change}% so với {count, plural, one {# giai đoạn} other {# giai đoạn}} trước đó",
+          "noBaseline": "Không có gì ở trước để so sánh"
+        },
+        "chart": {
+          "allProjects": "Tất cả các dự án đã chọn",
+          "period": "{grouping, select, weekly {Tuần của {date}} other {{date}}}",
+          "partialPeriod": "{grouping, select, weekly {Tuần của {period}} other {{period}}} (đang tiến hành)",
+          "rateTrend": "Xu hướng {rate}"
+        },
+        "heatmap": {
+          "title": "Tỷ lệ thất bại theo dự án và giai đoạn",
+          "help": "Mỗi ô là tỷ lệ thất bại của dự án cho giai đoạn; tô bóng đạt cường độ đầy đủ ở 35%. Cột xu hướng là sự thay đổi trong đường tỷ lệ thất bại được điều chỉnh trên các giai đoạn hoàn chỉnh. * đánh dấu giai đoạn đang tiến hành.",
+          "trend": "Xu hướng"
+        },
+        "trend": {
+          "points": "{change} điểm"
+        },
+        "detail": {
+          "title": "Kết quả và tỷ lệ theo giai đoạn"
+        },
+        "method": {
+          "title": "Cách đếm này",
+          "runSource": {
+            "automated": "Chỉ các bài chạy tự động: mọi loại bài chạy ngoại trừ thủ công, với kết quả nhập của chúng. Một bài chạy thuộc về giai đoạn nó được tạo ra.",
+            "manual": "Chỉ các bài chạy thủ công, với kết quả được ghi lại trên chúng. Một bài chạy thuộc về giai đoạn nó được tạo ra.",
+            "both": "Mọi bài chạy: các bài chạy tự động với kết quả nhập của chúng và các bài chạy thủ công với kết quả được ghi lại trên chúng. Một bài chạy thuộc về giai đoạn nó được tạo ra."
+          },
+          "periods": "{grouping, select, daily {Ngày} weekly {Tuần (bắt đầu thứ Hai)} monthly {Tháng} quarterly {Quý} other {Năm}} được cắt trong {timezone}. Cái hiện tại đang tiến hành và bị loại khỏi xu hướng và các con số tiêu đề.",
+          "everyAttempt": "Một bài kiểm thử được thử lại được tính một lần cho mỗi lần cố gắng.",
+          "latestAttempt": "Chỉ lần cố gắng mới nhất của mỗi trường hợp trong một bài chạy được tính.",
+          "skippedExcluded": "Kết quả bỏ qua (một trạng thái hoàn thành mà không có sự vượt qua hay thất bại) bị loại khỏi tỷ lệ vượt qua và không vượt qua; các trạng thái khác ở trong.",
+          "skippedCounted": "Kết quả bỏ qua được tính vào tỷ lệ vượt qua và không vượt qua.",
+          "abortedIncluded": "Các bài chạy ở trạng thái bài chạy bị tỏ rơi được bao gồm.",
+          "abortedExcluded": "Các bài chạy ở trạng thái bài chạy bị tỏ rơi bị loại khỏi.",
+          "trend": "Xu hướng là một đường thẳng phù hợp với tỷ lệ thất bại trên các giai đoạn hoàn chỉnh có kết quả. Sự thay đổi hơn một điểm theo cách nào gọi nó tốt hơn hay tệ hơn."
         }
       }
     },

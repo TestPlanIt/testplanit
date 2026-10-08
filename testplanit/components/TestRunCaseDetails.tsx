@@ -44,6 +44,7 @@ import {
   Bot,
   Combine,
   LayoutTemplate,
+  Lock,
   Plus,
   SquarePen,
   SquareStack,
@@ -59,7 +60,12 @@ import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useTestRunCaseDetail } from "~/hooks/useTestRunCaseDetail";
 import {
+  isBlockedByDependencies,
+  type CaseDependencyState,
+} from "~/utils/caseDependencies";
+import {
   isIssueRequiredOnFailureSubmitResultError,
+  isDependenciesNotPassedSubmitResultError,
   isJustificationRequiredSubmitResultError,
   isPermissionDeniedSubmitResultError,
   submitTestRunResult,
@@ -90,6 +96,11 @@ interface TestRunCaseDetailsProps {
   }>;
   isTransitioning?: boolean;
   isCompleted?: boolean;
+  /**
+   * Dependency gate state for this run case (only when the project enforces
+   * dependencies). A blocked case shows why and takes no result.
+   */
+  dependencyState?: CaseDependencyState;
   /**
    * Phase 3 — iteration-aware step text substitution. When set, the inner
    * step renderer receives the iteration's effective parameter values so
@@ -129,6 +140,7 @@ export function TestRunCaseDetails({
   testRunCasesData,
   isTransitioning = false,
   isCompleted = false,
+  dependencyState,
   stepParameters,
   activeIterationId,
   activeIterationLabel,
@@ -493,6 +505,12 @@ export function TestRunCaseDetails({
         setSelectedStatusId(successStatus.id.toString());
         setFlipErrorOnOpen(true);
         setShowAddResultModal(true);
+      } else if (isDependenciesNotPassedSubmitResultError(error)) {
+        toast.error(tCommon("errors.dependenciesNotPassed"), {
+          description: tCommon("errors.dependenciesNotPassedDescription", {
+            count: error.blockedBy?.length ?? 0,
+          }),
+        });
       } else {
         toast.error(tCommon("errors.error"), {
           description: tCommon("errors.somethingWentWrong"),
@@ -503,12 +521,14 @@ export function TestRunCaseDetails({
     }
   };
 
+  const isBlockedByDependency = isBlockedByDependencies(dependencyState);
   const isDisabled =
     isSubmitting ||
     isLoading ||
     isLoadingPermissions ||
     isTransitioning ||
     isCompleted ||
+    isBlockedByDependency ||
     !canAddEditResults;
   const isNavigationDisabled =
     isSubmitting || isLoading || isLoadingPermissions || isTransitioning;
@@ -590,6 +610,68 @@ export function TestRunCaseDetails({
           </div>
         </div>
       )}
+      {dependencyState &&
+        (isBlockedByDependency || dependencyState.notInRun.length > 0) && (
+          <div
+            className="mx-4 mt-2 rounded-md border px-3 py-2 text-sm space-y-2"
+            data-testid="run-case-dependency-notice"
+          >
+            {isBlockedByDependency && (
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 font-medium">
+                  <Lock className="h-4 w-4 shrink-0" />
+                  <span>
+                    {tGlobal("runs.dependencies.blockedNotice", {
+                      count: dependencyState.blockedBy.length,
+                    })}
+                  </span>
+                </div>
+                <p className="text-muted-foreground">
+                  {tGlobal("runs.dependencies.blockedBy", {
+                    count: dependencyState.blockedBy.length,
+                  })}
+                </p>
+                <ul className="list-disc ps-5">
+                  {dependencyState.blockedBy.map((prerequisite) => (
+                    <li key={prerequisite.testRunCaseId}>
+                      <CaseDisplay
+                        id={prerequisite.repositoryCaseId}
+                        name={
+                          prerequisite.name ??
+                          `#${prerequisite.repositoryCaseId}`
+                        }
+                        projectId={projectId}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {dependencyState.notInRun.length > 0 && (
+              <div className="space-y-1 text-muted-foreground">
+                <p>
+                  {tGlobal("runs.dependencies.notInRun", {
+                    count: dependencyState.notInRun.length,
+                  })}
+                </p>
+                <ul className="list-disc ps-5">
+                  {dependencyState.notInRun.map((prerequisite) => (
+                    <li key={prerequisite.repositoryCaseId}>
+                      <CaseDisplay
+                        id={prerequisite.repositoryCaseId}
+                        name={
+                          prerequisite.name ??
+                          `#${prerequisite.repositoryCaseId}`
+                        }
+                        projectId={projectId}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
       <div className="sticky top-0 z-20 flex justify-between items-center gap-2 bg-primary p-4">
         <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
           {testRunId && canAddEditResults && (
@@ -737,6 +819,20 @@ export function TestRunCaseDetails({
                                   setSelectedStatusId(status.id.toString());
                                   setIssueErrorOnOpen(true);
                                   setShowAddResultModal(true);
+                                } else if (
+                                  isDependenciesNotPassedSubmitResultError(
+                                    error
+                                  )
+                                ) {
+                                  toast.error(
+                                    tCommon("errors.dependenciesNotPassed"),
+                                    {
+                                      description: tCommon(
+                                        "errors.dependenciesNotPassedDescription",
+                                        { count: error.blockedBy?.length ?? 0 }
+                                      ),
+                                    }
+                                  );
                                 } else {
                                   toast.error(tCommon("errors.error"), {
                                     description: tCommon(

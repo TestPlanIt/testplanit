@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   isIssueRequiredOnFailureSubmitResultError,
+  isDependenciesNotPassedSubmitResultError,
   isJustificationRequiredSubmitResultError,
   isPermissionDeniedSubmitResultError,
   submitTestRunResult,
@@ -228,6 +229,12 @@ export function IterationResultPanel({
         setEscalatedStatusId(statusId.toString());
         setIssueErrorOnOpen(true);
         setShowAddResultModal(true);
+      } else if (isDependenciesNotPassedSubmitResultError(error)) {
+        toast.error(tCommon("errors.dependenciesNotPassed"), {
+          description: tCommon("errors.dependenciesNotPassedDescription", {
+            count: error.blockedBy?.length ?? 0,
+          }),
+        });
       } else {
         toast.error(tCommon("errors.error"), {
           description: tCommon("errors.somethingWentWrong"),

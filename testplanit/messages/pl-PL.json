@@ -694,6 +694,8 @@
       "failedToDeleteRepository": "Nie udało się usunąć repozytorium",
       "permissionDenied": "Nie masz uprawnień dostępu do tej strony.",
       "resultSubmitPermissionDenied": "Nie możesz przesłać wyników dla tej sprawy. Poproś administratora projektu o jej przypisanie.",
+      "dependenciesNotPassed": "Zablokowane przez zależności",
+      "dependenciesNotPassedDescription": "Ten przypadek testowy nie może być wykonany do czasu, aż {count, plural, =0 {przypadki, od których zależy, przejdą} one {przypadek, od którego zależy, przejdzie} few {# przypadki, od których zależy, przejdą} many {# przypadków, od których zależy, przejdzie} other {wszystkie # przypadki, od których zależy, przejdą}} w tym przebiegu.",
       "justificationRequired": "Wymagane uzasadnienie",
       "justificationRequiredDescription": "Aby zmienić zakończony wynik na inny, należy zapoznać się ze szczegółami wyniku wyjaśniającymi zmianę.",
       "requiredFieldMissing": "Wymagane pole wyniku nie zawiera wartości.",
@@ -1573,6 +1575,9 @@
           },
           "mantisbt": {
             "description": "Połącz się z samodzielnie hostowaną instancją MantisBT w celu śledzenia problemów."
+          },
+          "clickup": {
+            "description": "Połącz się z ClickUp, aby śledzić zadania i zarządzać projektami."
           }
         }
       },
@@ -1844,6 +1849,15 @@
         "setupStepsMantisbtStep2": "W konfiguracji wtyczki wybierz zdarzenia utworzenia i aktualizacji problemu.",
         "setupStepsMantisbtStep3": "Wklej powyższy adres URL jako cel webhooka i zapisz.",
         "setupStepsMantisbtStep4": "Utwórz lub zaktualizuj problem w MantisBT; status powiązanego problemu zostanie tutaj zsynchronizowany.",
+        "inboundChooserClickup": "ClickUp",
+        "inboundClickupTitle": "Przychodzący webhook ClickUp",
+        "inboundClickupScopeHint": "Zdarzenia ClickUp <code>taskStatusUpdated</code> aktualizują powiązane problemy TestPlanIt. Inne zdarzenia zadań są akceptowane, ale nie aktualizują problemów.",
+        "inboundClickupRegisterHint": "ClickUp nie ma strony ustawień webhooków: webhooki są tworzone przez jej API, a ClickUp wybiera tajny klucz podpisu. Pozostaw tajny klucz pusty, a TestPlanIt zarejestruje ten webhook w ClickUp dla powiązanej Listy, używając twojej autoryzacji ClickUp.",
+        "inboundClickupSecret": "Tajny klucz webhhooku (opcjonalnie)",
+        "inboundClickupSecretHelp": "Wymagane tylko wtedy, gdy samodzielnie utworzyłeś webhook za pomocą API Create Webhook ClickUp: wklej tajny klucz zwrócony przez ClickUp. Przechowywany w zaszyfrowanej formie.",
+        "setupStepsClickupStep1": "Jeśli pozostawiłeś tajny klucz pusty, TestPlanIt już zarejestrował ten webhook w ClickUp dla powiązanej Listy — nie ma nic do skonfigurowania w ClickUp.",
+        "setupStepsClickupStep2": "Jeśli zarejestrowałeś webhook samodzielnie za pomocą API Create Webhook ClickUp, upewnij się, że jego punkt końcowy jest adresem URL poniżej i zasubskrybuj go do zdarzenia taskStatusUpdated.",
+        "setupStepsClickupStep3": "Użyj opcji \"Wyślij testowy webhook\" poniżej, aby zweryfikować potok. Rotacja tajnego klucza rejestruje nowy webhook w ClickUp.",
         "codeRepos": {
           "empty": "Żadne repozytoria nie są podłączone do Impact Analysis. <link>Najpierw połącz jedno</link>.",
           "unsupported": "Repozytoria {provider} nie mogą wysyłać webhooki do TestPlanIt.",
@@ -2025,7 +2039,7 @@
           "branchPlaceholder": "Pozostaw puste, aby użyć domyślnej gałęzi repozytorium"
         },
         "pathPatterns": {
-          "description": "Określ, które pliki mają zostać uwzględnione. Każdy wiersz łączy ścieżkę bazową i wzorzec globu. Przykłady: ścieżka=tests/e2e/pages + wzór=* uwzględnia wszystkie pliki bezpośrednio w tym folderze; ścieżka=src + wzór=**/*.test.ts uwzględnia rekurencyjnie wszystkie pliki testowe.",
+          "description": "Określ, które pliki mają zostać uwzględnione. Każdy wiersz łączy ścieżkę bazową i wzorzec globu. Przykłady: path=tests/e2e/pages + pattern=* uwzględnia wszystkie pliki bezpośrednio w tym folderze; path=src + pattern=**/*.test.ts uwzględnia rekurencyjnie wszystkie pliki testowe.",
           "pathPlaceholder": "testy/e2e/strony",
           "exceedsLimit": "Całkowity rozmiar przekracza limit kontekstu AI o {overflow}. Podczas eksportu pliki są klasyfikowane według istotności dla eksportowanego przypadku testowego — pliki najbardziej istotne są uwzględniane jako pierwsze, a pliki o niższej randze są pomijane po osiągnięciu budżetu. Zawęź wzorce ścieżek, jeśli chcesz mieć większą kontrolę nad tym, które pliki są uwzględniane."
         },
@@ -2087,7 +2101,7 @@
           "pathLabel": "Ścieżka",
           "patternLabel": "Wzór",
           "previewFiles": "Podgląd plików",
-          "rootHint": "Zostaw ścieżkę pustą lub wpisz ., aby rozpocząć w głównym katalogu repozytorium; ścieżka . ze wzorem **/* zawiera każdy plik.",
+          "rootHint": "Pozostaw ścieżkę pustą lub wprowadź ., aby rozpocząć od katalogu głównego repozytorium; ścieżka . ze wzorem **/* uwzględnia każdy plik.",
           "scanningRepo": "Skanowanie plików repozytorium… ({seconds}s)",
           "title": "Wzory ścieżek",
           "truncatedBadge": "Wyniki mogą być niekompletne (limit dostawcy)"
@@ -2179,6 +2193,13 @@
           "disabledToast": "Przebiegi testów nie będą już automatycznie blokować swojej kompozycji",
           "saveError": "Nie udało się zaktualizować ustawienia automatycznej blokady kompozycji"
         },
+        "caseDependencies": {
+          "label": "Egzekwuj zależności przypadków testowych w przebiegach testów",
+          "description": "Po włączeniu przypadek testowy w przebiegu jest blokowany do czasu, aż każdy przypadek, od którego zależy (link \"Zależy od\"), przejdzie w tym samym przebiegu. Zablokowane przypadki są oznaczone w przebiegu, a wyniki dla nich są odrzucane. Gdy ostatnia zależność przejdzie, przypisana osoba zostanie powiadomiona, że jest gotowa. Zależności, które nie znajdują się w przebiegu, nie blokują.",
+          "enabledToast": "Zależności przypadków testowych będą egzekwowane w przebiegach testów",
+          "disabledToast": "Zależności przypadków testowych nie będą już egzekwowane",
+          "saveError": "Nie udało się zaktualizować ustawienie egzekwowania zależności"
+        },
         "editWindow": {
           "label": "Okno edycji wyników",
           "description": "Jak długo po zarejestrowaniu wyniku można go nadal edytować. Po zamknięciu okna poprawki wymagają ponownej próby. Administratorzy systemu zawsze mogą edytować.",
@@ -2233,7 +2254,7 @@
           "branchesFallbackHint": "Zamiast tego wpisz nazwę gałęzi."
         },
         "pathPatterns": {
-          "description": "Które pliki aplikacji mają być uwzględnione. Każdy wiersz łączy ścieżkę bazową i wzorzec glob. Przykład: path=src + pattern=**/* zawiera wszystko w src.",
+          "description": "Które pliki aplikacji uwzględnić. Każdy wiersz łączy ścieżkę bazową i wzorzec globu. Przykład: path=src + pattern=**/* uwzględnia wszystko w src.",
           "pathPlaceholder": "src"
         },
         "cache": {
@@ -2876,11 +2897,101 @@
           "label": "Tryb powiadomień",
           "useGlobal": "Użyj ustawień globalnych"
         },
-        "options": {
-          "title": "Opcje dodatkowe",
-          "email": {
-            "label": "Powiadomienia e-mail",
-            "description": "Otrzymuj powiadomienia e-mailem"
+        "typeSection": {
+          "title": "O czym mnie powiadomić",
+          "description": "Domyślnie wszystkie rodzaje powiadomień są włączone. Wyłącz te, których nie chcesz. Tryb powiadomień powyżej nadal decyduje o tym, jak się z Tobą skontaktować.",
+          "modeNoneNote": "Nic nie jest dostarczane, gdy tryb powiadomień to Brak. Twoje wybory tutaj będą obowiązywać, gdy tylko wybierzesz inny tryb.",
+          "locked": "Zawsze włączone",
+          "resetToDefaults": "Przywróć do ustawień domyślnych",
+          "adminOnly": "Wysłano do administratorów"
+        },
+        "groups": {
+          "assignments": "Przydzielenia",
+          "comments": "Komentarze",
+          "reviews": "Recenzje",
+          "runsAndMilestones": "Przebiegi i kamienie milowe",
+          "sharing": "Udostępnianie",
+          "aiAndJobs": "AI i zadania",
+          "integrations": "Integracje",
+          "system": "System",
+          "administration": "Administracja"
+        },
+        "types": {
+          "WORK_ASSIGNED": {
+            "label": "Praca przydzielona do mnie",
+            "description": "Przypadek przebiegu testowego jest Ci przydzielony, indywidualnie lub zbiorczo."
+          },
+          "SESSION_ASSIGNED": {
+            "label": "Sesja przydzielona do mnie",
+            "description": "Sesja jest tworzona z Tobą jako jej osobą przydzieloną lub zostaje Ci przedzielona."
+          },
+          "RUN_CASE_UNBLOCKED": {
+            "label": "Przydzielony przypadek odblokowany",
+            "description": "Przypadek testowy przydzielony Ci w przebiegu staje się możliwy do wykonania, ponieważ przejście przypadków, od których on zależy."
+          },
+          "COMMENT_MENTION": {
+            "label": "Wzmianki w komentarzach",
+            "description": "Ktoś wspomina Cię znakiem @ w komentarzu do sprawy, przebiegu, sesji, kamienia milowego lub recenzji."
+          },
+          "REVIEW_REQUESTED": {
+            "label": "Poproszono o recenzję",
+            "description": "Recenzja jest dla Ciebie lub dla roli, którą pełnisz."
+          },
+          "REVIEW_APPROVED": {
+            "label": "Recenzja zatwierdzona",
+            "description": "Recenzent zatwierdza Twoją prośbę."
+          },
+          "REVIEW_CHANGES_REQUESTED": {
+            "label": "Żądane zmiany",
+            "description": "Recenzent prosi o zmiany w Twojej prośbie."
+          },
+          "REVIEW_REJECTED": {
+            "label": "Recenzja odrzucona",
+            "description": "Recenzent odrzuca Twoją prośbę."
+          },
+          "REVIEW_CANCELLED": {
+            "label": "Recenzja anulowana",
+            "description": "Prośba o recenzję, którą poproszono Cię przejrzeć, jest anulowana, lub element będący przedmiotem recenzji jest usuwany."
+          },
+          "REVIEW_REMINDER": {
+            "label": "Przypomnienia o recenzjach",
+            "description": "Recenzja, którą masz, jest starsza niż próg przypomnienia, lub osoba wnioskująca Cię motywuje."
+          },
+          "RUN_READY_TO_COMPLETE": {
+            "label": "Przebieg testowy gotowy do ukończenia",
+            "description": "Każdy przypadek w przebiegu, który możesz ukończyć, ma wynik."
+          },
+          "MILESTONE_DUE_REMINDER": {
+            "label": "Przypomnienia o terminie kamienia milowego",
+            "description": "Kamień milowy, w którym bierzesz udział, zbliża się lub jest opóźniony."
+          },
+          "SHARE_LINK_ACCESSED": {
+            "label": "Udostępniony link wyświetlony",
+            "description": "Ktoś otwiera link udostępniający, który utworzyłeś z włączoną opcją powiadamiania przy wyświetleniu."
+          },
+          "AI_STEPS_DERIVED": {
+            "label": "Kroki pochodne AI",
+            "description": "Zadanie wyprowadzania kroków AI, które rozpocząłeś, napisało kroki."
+          },
+          "INTEGRATION_AUTH_EXPIRED": {
+            "label": "Integracja wymaga ponownego upoważnienia",
+            "description": "Twoje połączenie z integracją wygasło lub zostało odwołane i musi zostać ponownie połączone."
+          },
+          "SYSTEM_ANNOUNCEMENT": {
+            "label": "Ogłoszenia administratora",
+            "description": "Administrator wysyła powiadomienie systemowe do każdego użytkownika."
+          },
+          "WHATS_NEW": {
+            "label": "Co nowego po aktualizacji",
+            "description": "Podsumowanie nowych funkcji podczas pierwszej wizyty po uaktualnieniu TestPlanIt."
+          },
+          "USER_REGISTERED": {
+            "label": "Nowe rejestracje użytkowników",
+            "description": "Nowy użytkownik rejestruje się poprzez formularz, SSO lub SAML."
+          },
+          "LLM_BUDGET_ALERT": {
+            "label": "Alerty budżetowe AI",
+            "description": "Wydatki LLM przekraczają próg budżetu dla okresu rozliczeniowego."
           }
         },
         "success": {
@@ -3127,6 +3238,13 @@
       "modifierHintMac": "Przytrzymaj ⇧, aby przesunąć lub ⌥, aby skopiować, a przeciągając, aby pominąć to menu.",
       "modifierHintWin": "Aby pominąć to menu, przytrzymaj klawisz Shift, aby przesunąć, lub klawisz Ctrl, aby skopiować, podczas przeciągania.",
       "dropZoneReorder": "Upuść, aby zmienić kolejność",
+      "dropZoneReorderBlockedSort": "Usuń sortowanie, aby zmienić kolejność przypadków w tym folderze",
+      "dropZoneReorderBlockedSortMac": "Usuń sortowanie, aby zmienić kolejność — przytrzymaj ⌥, aby skopiować do tego folderu",
+      "dropZoneReorderBlockedSortWin": "Usuń sortowanie, aby zmienić kolejność — przytrzymaj Ctrl, aby skopiować do tego folderu",
+      "dropZoneReorderBlockedSearch": "Wyczyść wyszukiwanie, aby zmienić kolejność przypadków w tym folderze",
+      "dropZoneReorderBlockedSearchMac": "Wyczyść wyszukiwanie, aby zmienić kolejność — przytrzymaj ⌥, aby skopiować do tego folderu",
+      "dropZoneReorderBlockedSearchWin": "Wyczyść wyszukiwanie, aby zmienić kolejność — przytrzymaj Ctrl, aby skopiować do tego folderu",
+      "dropZoneCopyHere": "Upuść, aby skopiować do tego folderu",
       "dropZoneFolder": "Upuść na folder, aby zagnieździć, lub między folderami, aby zmienić kolejność",
       "dropZoneTreeMac": "Upuść na folder — przytrzymaj ⇧, aby przenieść, ⌥, aby skopiować",
       "dropZoneTreeWin": "Upuść na folder — przytrzymaj Shift, aby przenieść, Ctrl, aby skopiować",
@@ -4087,6 +4205,13 @@
       "lockError": "Nie udało się zablokować kompozycji przebiegu",
       "unlockError": "Nie udało się odblokować kompozycji przebiegu",
       "addBlocked": "Kompozycja tego przebiegu jest zablokowana, więc nie można dodawać przypadków testowych. Odblokuj go najpierw, aby zmienić zestaw przypadków."
+    },
+    "dependencies": {
+      "blocked": "Zablokowany",
+      "blockedBy": "Zablokowany do {count, plural, one {tego przypadku przechodzącego} few {tych # przypadków przechodzących} many {tych # przypadków przechodzących} other {tych # przypadków przechodzących}} w tym przebiegu:",
+      "blockedNotice": "Ten przypadek testowy nie może być wykonany do czasu {count, plural, one {przypadku, od którego zależy, przeszedł} few {wszystkich # przypadków, od których zależy, przeszły} many {wszystkich # przypadków, od których zależy, przeszły} other {wszystkich # przypadków, od których zależy, przeszły}} w tym przebiegu.",
+      "notInRun": "{count, plural, one {# przypadek, od którego zależy, to} few {# przypadki, od których zależy, to} many {# przypadków, od których zależy, to} other {# przypadków, od których zależy, to}} nie w tym przebiegu i nie będzie blokować wykonania:",
+      "unblocked": "Wszystkie przypadki, od których zależy ten, przeszły w tym przebiegu."
     },
     "distribute": {
       "title": "Rozdziel przypisania",
@@ -6202,6 +6327,10 @@
         "mantisbt": {
           "name": "MantisBT",
           "description": "Połącz się z samodzielnie hostowaną instancją MantisBT w celu śledzenia problemów"
+        },
+        "clickup": {
+          "name": "ClickUp",
+          "description": "Połącz się z ClickUp w celu śledzenia zadań i zarządzania projektami"
         }
       },
       "filterPlaceholder": "Integracje filtrów...",
@@ -6312,7 +6441,13 @@
         "mantisBTApiKeyHelp": "Utwórz go w ustawieniach konta MantisBT → Tokeny API",
         "mantisBTUrl": "Adres URL MantisBT",
         "mantisBTUrlPlaceholder": "https://mantisbt.example.com",
-        "mantisBTUrlHelp": "Podstawowy adres URL Twojej instancji MantisBT"
+        "mantisBTUrlHelp": "Podstawowy adres URL Twojej instancji MantisBT",
+        "clickupTeamId": "Identyfikator zespołu ClickUp (obszar roboczy)",
+        "clickupTeamIdPlaceholder": "np. 9013456789",
+        "clickupTeamIdHelp": "Znajduje się w adresie URL ClickUp po app.clickup.com/",
+        "clickupListId": "Domyślny identyfikator listy ClickUp",
+        "clickupListIdPlaceholder": "np. 901234567",
+        "clickupListIdHelp": "Lista, w której domyślnie tworzone są zadania; można zastąpić dla każdego problemu"
       },
       "authType": {
         "api_key": "Klucz API",
@@ -6820,10 +6955,6 @@
         "userRegisteredMessageSso": "{userName} ({userEmail}) zarejestrował się za pomocą SSO",
         "userRegisteredMessageForm": "{userName} ({userEmail}) zarejestrował się poprzez formularz rejestracyjny",
         "viewUserList": "Wyświetl listę użytkowników",
-        "reviewGeneratedCases": "Przejrzyj wygenerowane przypadki testowe",
-        "generateFromUrlCompleteTitle": "Strony przeszukane pomyślnie",
-        "generateFromUrlCompleteMessage": "{pages, plural, one {# strona} other {# strony}} pobrane z {url} w projekcie „{projectName}”. Kliknij, aby przejrzeć i wygenerować przypadki testowe.",
-        "generateFromUrlFailedTitle": "Nie udało się przeszukać adresu URL",
         "reviewRequestedTitle": "Poproszono o recenzję",
         "reviewApprovedTitle": "Recenzja zatwierdzona",
         "reviewChangesRequestedTitle": "Żądane zmiany",
@@ -6864,7 +6995,12 @@
         "runReadyToCompleteTitle": "Przebieg testu gotowy do zakończenia",
         "runReadyToCompleteExecuted": "{count, plural, one {# przypadek testowy został wykonany} =2 {Oba przypadki testowe zostały wykonane} few {Wszystkie # przypadki testowe zostały wykonane} many {Wszystkie # przypadków testowych zostało wykonanych} other {Wszystkie # przypadków testowych zostało wykonanych}}.",
         "runReadyToCompleteEmailMessage": "{caseCount, plural, one {Przypadek testowy # został wykonany} =2 {Obydwa przypadki testowe zostały wykonane} few {# przypadki testowe zostały wykonane} many {Wszystkie # przypadków testowych zostało wykonanych} other {Wszystkie # przypadków testowych zostało wykonanych}} w przebiegu testowym „{testRunName}” (projekt „{projectName}”). Przebieg jest gotowy do oznaczenia jako zakończony.",
-        "runReadyToCompleteReason": "Otrzymujesz tę wiadomość, ponieważ możesz kończyć przebiegi testów w tym projekcie."
+        "runReadyToCompleteReason": "Otrzymujesz tę wiadomość, ponieważ możesz kończyć przebiegi testów w tym projekcie.",
+        "runCaseUnblockedTitle": "Przypadek testowy gotowy do wykonania",
+        "runCaseUnblockedPrerequisitePassed": "{prerequisiteName} przeszedł, więc ten przypadek testowy przypisany do Ciebie nie jest już zablokowany:",
+        "runCaseUnblockedEmailMessage": "\"{testCaseName}\" w przebiegu testowym \"{testRunName}\" (projekt \"{projectName}\") nie jest już zablokowany: \"{prerequisiteName}\" przeszedł. Jest do Ciebie przypisany i gotowy do wykonania.",
+        "runCaseUnblockedReason": "Otrzymujesz to, ponieważ przypadek testowy jest do Ciebie przypisany.",
+        "inTestRun": "w przebiegu testowym"
       }
     },
     "issues": {
@@ -7477,6 +7613,11 @@
     "alreadyLinked": "Ta sprawa jest już powiązana.",
     "cannotLinkSelf": "Nie można połączyć sprawy z samą sobą.",
     "circularLink": "Wykryto połączenie cykliczne.",
+    "dependsOn": "Zależy od",
+    "blocks": "Blokuje",
+    "dependsOnOption": "Zależy od — ten przypadek wymaga, aby wybrany przypadek przeszedł najpierw",
+    "blocksOption": "Blokuje — wybrany przypadek wymaga, aby ten przypadek przeszedł najpierw",
+    "dependencyHint": "Gdy wymuszanie zależności jest włączone, przypadek w przebiegu testu nie może być wykonywany, dopóki przypadki, od których zależy, nie będą miały statusu \"Passed\" w tym przebiegu.",
     "failedToCreate": "Nie udało się utworzyć linku.",
     "confirmRemoveLink": "Czy na pewno chcesz usunąć ten link?",
     "DEPENDS_ON": "Zależność",
@@ -7741,6 +7882,8 @@
       "redmineUrl": "## Adres URL Redmine\nPodstawowy adres URL Twojej instancji Redmine.\n\n- Format: https://redmine.example.com\n- Nie uwzględniaj /issues ani innych ścieżek\n- Musi być dostępny z tego serwera",
       "mantisBTApiKey": "## Token API MantisBT\nTwój osobisty token REST API.\n\n- Utwórz go w ustawieniach konta MantisBT → Tokeny API\n- Zakres odpowiada uprawnieniom Twojego użytkownika; użyj konta serwisowego dla współdzielonych integracji",
       "mantisBTUrl": "## Adres URL MantisBT\nPodstawowy adres URL Twojej instancji MantisBT.\n\n- Format: https://mantisbt.example.com\n- Nie uwzględniaj /api/rest ani innych ścieżek\n- Musi być dostępny z tego serwera",
+      "clickupTeamId": "## Identyfikator zespołu ClickUp (obszaru roboczego)\nNumeryczny identyfikator zespołu ClickUp (zwanego również obszarem roboczym), do którego należą zadania.\n\n- Znajduje się w adresie URL ClickUp: app.clickup.com/{teamId}/...\n- Wymagany do przeglądania przestrzeni/folderów/list podczas wyboru projektu",
+      "clickupListId": "## Domyślny identyfikator listy ClickUp\nLista, w której domyślnie tworzone są nowe zadania.\n\n- Znajduje się w adresie URL ClickUp lub za pośrednictwem opcji \"Kopiuj link\" listy\n- Opcjonalnie — określoną listę można wybrać dla każdego problemu oddzielnie",
       "githubBaseUrl": "## Podstawowy adres URL API\nPełny katalog główny API GitHub dla GitHub Enterprise Server.\n\n- Zazwyczaj kończy się na /api/v3\n- Pozostaw puste, aby użyć api.github.com\n- Musi być dostępny z tego serwera"
     },
     "config": {
@@ -8370,7 +8513,7 @@
           "description": "Tworzenie problemów, rozwiązywanie ich i analiza wpływu"
         },
         "automationTrends": {
-          "label": "Trendy automatyzacji",
+          "label": "Trend zautomatyzowanych przypadków testowych",
           "description": "Śledź postęp automatyzacji tydzień po tygodniu według priorytetu"
         },
         "flakyTests": {
@@ -8416,6 +8559,10 @@
         "codePinCoverage": {
           "label": "Pokrycie Code Pin",
           "description": "Gdzie znajdują się Code Piny, według repozytorium i katalogu, oraz gdzie ostatnie zmiany były nie pokryte"
+        },
+        "resultsTrend": {
+          "label": "Trend współczynnika niepowodzeń wyników testów",
+          "description": "Wskaźniki powodzenia i niepowodzenia wyników testów w czasie oraz informacja o tym, czy współczynnik niepowodzenia się poprawia czy pogarsza"
         }
       },
       "flakyTests": {
@@ -8735,7 +8882,7 @@
           "description": "Użycie tokenów, koszt i niezawodność funkcji LLM w projektach"
         },
         "automationTrends": {
-          "label": "Trendy automatyzacji międzyprojektowej",
+          "label": "Trend zautomatyzowanych przypadków testowych dla wielu projektów",
           "description": "Śledź postęp automatyzacji tydzień po tygodniu według priorytetów w różnych projektach"
         },
         "flakyTests": {
@@ -8769,6 +8916,10 @@
         "codePinCoverage": {
           "label": "Pokrycie Code Pin między projektami",
           "description": "Pokrycie Code Pin we wszystkich projektach z włączoną analizą wpływu"
+        },
+        "resultsTrend": {
+          "label": "Trend współczynnika niepowodzeń wyników testów dla wielu projektów",
+          "description": "Wskaźniki powodzenia i niepowodzenia wyników testów w czasie według projektów oraz informacja o tym, czy współczynnik niepowodzenia się poprawia czy pogarsza"
         }
       },
       "folderDescendants": {
@@ -8832,6 +8983,79 @@
         },
         "chart": {
           "byDirectory": "Piny i zmienione pliki bez pokrycia wg katalogu"
+        }
+      },
+      "resultsTrend": {
+        "period": "Okres",
+        "runSource": "Typy wyników",
+        "runSources": {
+          "automated": "Zautomatyzowany",
+          "manual": "Ręczne"
+        },
+        "showPassRate": "Pokaż wskaźnik zdawalności",
+        "showPassRateHelp": "Narysuj wskaźnik zdawalności na osi po prawej stronie wykresu z własnym dopasowanym trendem i dodaj go do głównych liczb. Domyślnie wyłączone: raport dotyczy współczynnika niepowodzenia.",
+        "showFailRate": "Pokaż współczynnik niepowodzenia",
+        "showFailRateHelp": "Narysuj współczynnik niepowodzenia na osi po prawej stronie wykresu z dopasowanym trendem i pokaż go w głównych liczbach. Domyślnie włączone.",
+        "showCounts": "Pokaż sumy wyników",
+        "showCountsHelp": "Narysuj sumy zdanych, nieudanych, pominiętych i pozostałych wyników jako słupki skumulowane na wykresie obok współczynników. Domyślnie wyłączone: raport dotyczy współczynników.",
+        "countSkipped": "Uwzględnij pominięte wyniki w współczynnikach",
+        "countSkippedHelp": "Wyniki pominięte są wyłączone ze mianownika wskaźnika zdawalności i niepowodzenia, chyba że ta opcja jest włączona. Inne statusy zawsze pozostają.",
+        "includeAborted": "Uwzględnij przerwane uruchomienia",
+        "includeAbortedHelp": "Uruchomienia w stanie porzuconego uruchomienia projektu są liczone, chyba że ta opcja jest wyłączona.",
+        "latestAttemptOnly": "Tylko najnowsza próba",
+        "latestAttemptOnlyHelp": "Policz jeden wynik na przypadek na uruchomienie, jego najnowszą próbę, zamiast każdej zaimportowanej próby.",
+        "failRate": "Współczynnik niepowodzenia",
+        "skipped": "Pominięto",
+        "other": "Inny",
+        "inProgress": "w toku",
+        "verdict": {
+          "better": "Współczynnik niepowodzenia się poprawia",
+          "worse": "Współczynnik niepowodzenia się pogarsza",
+          "steady": "Współczynnik niepowodzenia utrzymuje się na stałym poziomie",
+          "notEnough": "Nie wystarczająco pełnych okresów, aby określić trend.",
+          "notEnoughDetail": "Trend wymaga co najmniej dwóch pełnych okresów z wynikami.",
+          "detail": "Linia trendu biegnie od {start} do {end}, zmiana {change} punktów przez {count} pełne {grouping, select, daily {dni} weekly {tygodnie} monthly {miesiące} quarterly {kwartały} other {lata}}."
+        },
+        "stats": {
+          "lastComplete": "Ostatni pełny okres ({period}), porównany ze średnią pełnych okresów poprzedzających go.",
+          "results": "Wykonane wyniki",
+          "runs": "Uruchomienia",
+          "deltaPoints": "{change} pkt vs. poprzednie {count, plural, one {# okresu} few {# okresy} many {# okresów} other {# okresów}}",
+          "deltaPercent": "{change}% vs. poprzednie {count, plural, one {# okresu} few {# okresy} many {# okresów} other {# okresów}}",
+          "noBaseline": "Nie ma wcześniejszych danych do porównania"
+        },
+        "chart": {
+          "allProjects": "Wszystkie wybrane projekty",
+          "period": "{grouping, select, weekly {Tydzień {date}} other {{date}}}",
+          "partialPeriod": "{grouping, select, weekly {Tydzień {period}} other {{period}}} (w toku)",
+          "rateTrend": "Trend {rate}"
+        },
+        "heatmap": {
+          "title": "Współczynnik niepowodzenia według projektu i okresu",
+          "help": "Każda komórka to współczynnik niepowodzenia projektu dla okresu; cieniowanie osiąga pełną intensywność na 35%. Kolumna trendu to zmiana dopasowanej linii współczynnika niepowodzenia w pełnych okresach. * oznacza okres w toku.",
+          "trend": "Trend"
+        },
+        "trend": {
+          "points": "{change} pkt"
+        },
+        "detail": {
+          "title": "Wyniki i współczynniki według okresu"
+        },
+        "method": {
+          "title": "Jak się to liczy",
+          "runSource": {
+            "automated": "Tylko uruchomienia zautomatyzowane: każdy typ uruchomienia poza ręcznym, z ich zaimportowanymi wynikami. Uruchomienie należy do okresu, w którym zostało utworzone.",
+            "manual": "Tylko ręczne uruchomienia z zapisanymi na nich wynikami. Uruchomienie należy do okresu, w którym zostało utworzone.",
+            "both": "Każde uruchomienie: uruchomienia zautomatyzowane z ich zaimportowanymi wynikami i uruchomienia ręczne z zapisanymi na nich wynikami. Uruchomienie należy do okresu, w którym zostało utworzone."
+          },
+          "periods": "{grouping, select, daily {Dni} weekly {Tygodnie (począwszy od poniedziałku)} monthly {Miesiące} quarterly {Kwartały} other {Lata}} są przycinane w {timezone}. Bieżący jest w toku i jest wyłączony z trendu i głównych liczb.",
+          "everyAttempt": "Ponowiona próba testu liczy się raz na próbę.",
+          "latestAttempt": "Liczona jest tylko najnowsza próba każdego przypadku w uruchomieniu.",
+          "skippedExcluded": "Wyniki pominięte (status ukończony bez powodzenia lub niepowodzenia) są wyłączone ze wskaźników zdawalności i niepowodzenia; pozostałe statusy pozostają.",
+          "skippedCounted": "Wyniki pominięte są liczone we wskaźnikach zdawalności i niepowodzenia.",
+          "abortedIncluded": "Uruchomienia w stanie porzuconego uruchomienia są uwzględniane.",
+          "abortedExcluded": "Uruchomienia w stanie porzuconego uruchomienia są wyłączone.",
+          "trend": "Trend to linia prosta dopasowana do współczynnika niepowodzenia w pełnych okresach z wynikami. Zmiana więcej niż jednego punktu w obu kierunkach decyduje o lepszym lub gorszym rezultacie."
         }
       }
     },

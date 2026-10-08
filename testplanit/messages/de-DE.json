@@ -694,6 +694,8 @@
       "failedToDeleteRepository": "Fehler beim Löschen des Repositorys",
       "permissionDenied": "Sie haben keine Berechtigung, auf diese Seite zuzugreifen.",
       "resultSubmitPermissionDenied": "Sie können für diesen Fall keine Ergebnisse einreichen. Bitten Sie einen Projektadministrator, Ihnen den Fall zuzuweisen.",
+      "dependenciesNotPassed": "Blockiert durch Abhängigkeiten",
+      "dependenciesNotPassedDescription": "Dieser Testfall kann nicht ausgeführt werden, bis {count, plural, =0 {die Fälle, von denen er abhängt, in diesem Durchlauf bestanden haben} one {der Fall, von dem er abhängt, in diesem Durchlauf bestanden hat} other {alle # Fälle, von denen er abhängt, in diesem Durchlauf bestanden haben}}.",
       "justificationRequired": "Begründung erforderlich",
       "justificationRequiredDescription": "Um ein abgeschlossenes Ergebnis in ein anderes Ergebnis umzuwandeln, sind Ergebnisdetails erforderlich, die die Änderung erläutern.",
       "requiredFieldMissing": "Ein erforderliches Ergebnisfeld hat keinen Wert.",
@@ -1573,6 +1575,9 @@
           },
           "mantisbt": {
             "description": "Verbinden Sie sich mit einer selbst gehosteten MantisBT-Instanz zur Ticket-Verfolgung."
+          },
+          "clickup": {
+            "description": "Verbinden Sie sich mit ClickUp für Aufgabenverfolgung und Projektmanagement."
           }
         }
       },
@@ -1844,6 +1849,15 @@
         "setupStepsMantisbtStep2": "Wählen Sie in der Plugin-Konfiguration die Ereignisse „Problem erstellt“ und „Problem aktualisiert“ aus.",
         "setupStepsMantisbtStep3": "Fügen Sie die obige URL als Webhook-Ziel ein und speichern Sie.",
         "setupStepsMantisbtStep4": "Erstellen oder aktualisieren Sie ein Problem in MantisBT; der Status des verknüpften Problems wird hier synchronisiert.",
+        "inboundChooserClickup": "ClickUp",
+        "inboundClickupTitle": "ClickUp Inbound-Webhook",
+        "inboundClickupScopeHint": "ClickUp <code>taskStatusUpdated</code>-Ereignisse aktualisieren verknüpfte TestPlanIt-Probleme. Andere Task-Ereignisse werden akzeptiert, aktualisieren aber keine Probleme.",
+        "inboundClickupRegisterHint": "ClickUp hat keine Webhook-Einstellungsseite: Webhooks werden über seine API erstellt, und ClickUp wählt das Signierungsgeheimnis. Lassen Sie das Geheimnis leer, und TestPlanIt registriert diesen Webhook in ClickUp für die verknüpfte Liste mit Ihrer ClickUp-Autorisierung.",
+        "inboundClickupSecret": "Webhook-Geheimnis (optional)",
+        "inboundClickupSecretHelp": "Nur erforderlich, wenn Sie den Webhook selbst mit der ClickUp-API zum Erstellen von Webhooks erstellt haben: Fügen Sie das Geheimnis ein, das ClickUp zurückgegeben hat. Verschlüsselt im Ruhezustand gespeichert.",
+        "setupStepsClickupStep1": "Wenn Sie das Geheimnis leer gelassen haben, hat TestPlanIt diesen Webhook bereits bei ClickUp für die verknüpfte Liste registriert – es gibt nichts zu konfigurieren in ClickUp.",
+        "setupStepsClickupStep2": "Wenn Sie den Webhook selbst über die ClickUp-API zum Erstellen von Webhooks registriert haben, stellen Sie sicher, dass sein Endpunkt die folgende URL ist und abonnieren Sie das Ereignis taskStatusUpdated.",
+        "setupStepsClickupStep3": "Verwenden Sie \"Webhook testen\" unten, um die Pipeline zu überprüfen. Das Rotieren des Geheimnisses registriert einen neuen Webhook in ClickUp.",
         "codeRepos": {
           "empty": "Keine Repositorys sind für die Auswirkungsanalyse verbunden. <link>Verbinden Sie zuerst eines</link>.",
           "unsupported": "{provider}-Repositorys können keine Webhooks an TestPlanIt senden.",
@@ -2025,7 +2039,7 @@
           "branchPlaceholder": "Lassen Sie dieses Feld leer, um den Standardzweig des Repositorys zu verwenden."
         },
         "pathPatterns": {
-          "description": "Geben Sie an, welche Dateien einbezogen werden sollen. Jede Zeile kombiniert einen Basispfad und ein Glob-Muster. Beispiele: `path=tests/e2e/pages + pattern=*` schließt alle Dateien direkt in diesem Ordner ein; `path=src + pattern=**/*.test.ts` schließt alle Testdateien rekursiv ein.",
+          "description": "Geben Sie an, welche Dateien einbezogen werden sollen. Jede Zeile kombiniert einen Basispfad und ein Glob-Muster. Beispiele: path=tests/e2e/pages + pattern=* bezieht alle Dateien direkt in diesem Ordner ein; path=src + pattern=**/*.test.ts bezieht alle Testdateien rekursiv ein.",
           "pathPlaceholder": "tests/e2e/pages",
           "exceedsLimit": "Die Gesamtgröße überschreitet das KI-Kontextlimit um {overflow}. Beim Export werden die Dateien nach ihrer Relevanz für den zu exportierenden Testfall sortiert – die relevantesten Dateien werden zuerst berücksichtigt, und Dateien mit niedrigerer Relevanz werden übersprungen, sobald das Budget erreicht ist. Schränken Sie Ihre Pfadmuster ein, wenn Sie genauer steuern möchten, welche Dateien berücksichtigt werden."
         },
@@ -2087,7 +2101,7 @@
           "pathLabel": "Weg",
           "patternLabel": "Muster",
           "previewFiles": "Vorschau der Dateien",
-          "rootHint": "Lassen Sie den Pfad leer oder geben Sie . ein, um im Repositorystamm zu beginnen; Pfad . mit Muster **/* schließt jede Datei ein.",
+          "rootHint": "Lassen Sie den Pfad leer oder geben Sie . ein, um am Repository-Stammverzeichnis zu beginnen; path . mit pattern **/* bezieht jede Datei ein.",
           "scanningRepo": "Repository-Dateien werden durchsucht… ({seconds}s)",
           "title": "Pfadmuster",
           "truncatedBadge": "Die Ergebnisse können unvollständig sein (Anbieterbeschränkung)"
@@ -2179,6 +2193,13 @@
           "disabledToast": "Testläufe sperren ihre Zusammensetzung nicht mehr automatisch",
           "saveError": "Die Einstellung für die automatische Sperrung der Zusammensetzung konnte nicht aktualisiert werden"
         },
+        "caseDependencies": {
+          "label": "Testfallabhängigkeiten in Testläufen erzwingen",
+          "description": "Wenn diese Option aktiviert ist, wird ein Testfall in einem Durchlauf blockiert, bis jeder Fall, von dem er abhängt (ein Link \"Abhängig von\"), in diesem Durchlauf bestanden hat. Blockierte Fälle werden im Durchlauf gekennzeichnet und Ergebnisse für sie werden abgelehnt. Wenn die letzte Abhängigkeit erfolgreich ist, wird dem Verantwortlichen des Falls mitgeteilt, dass es bereit ist. Abhängigkeiten, die nicht im Durchlauf vorhanden sind, blockieren nicht.",
+          "enabledToast": "Testfallabhängigkeiten werden in Testläufen erzwungen",
+          "disabledToast": "Testfallabhängigkeiten werden nicht mehr erzwungen",
+          "saveError": "Fehler beim Aktualisieren der Abhängigkeitsdurchsetzungseinstellung"
+        },
         "editWindow": {
           "label": "Ergebnisbearbeitungsfenster",
           "description": "Wie lange nach der Ergebnisspeicherung kann ein Ergebnis noch direkt bearbeitet werden? Nach Ablauf des Bearbeitungszeitraums ist für Korrekturen ein neuer Versuch erforderlich. Systemadministratoren können jederzeit Änderungen vornehmen.",
@@ -2233,7 +2254,7 @@
           "branchesFallbackHint": "Geben Sie stattdessen den Namen des Zweigs ein."
         },
         "pathPatterns": {
-          "description": "Welche Anwendungsdateien eingebunden werden sollen. Jede Zeile kombiniert einen Basispfad und ein Glob-Muster. Beispiel: Pfad=src + Muster=**/* schließt alles unter src ein.",
+          "description": "Welche Anwendungsdateien einbezogen werden sollen. Jede Zeile kombiniert einen Basispfad und ein Glob-Muster. Beispiel: path=src + pattern=**/* bezieht alles unter src ein.",
           "pathPlaceholder": "src"
         },
         "cache": {
@@ -2876,11 +2897,101 @@
           "label": "Benachrichtigungsmodus",
           "useGlobal": "Globale Einstellungen verwenden"
         },
-        "options": {
-          "title": "Zusätzliche Optionen",
-          "email": {
-            "label": "E-Mail-Benachrichtigungen",
-            "description": "Benachrichtigungen per E-Mail erhalten"
+        "typeSection": {
+          "title": "Worüber mich benachrichtigen",
+          "description": "Jede Art von Benachrichtigung ist standardmäßig aktiviert. Schalten Sie die aus, die Sie nicht möchten. Der Benachrichtigungsmodus oben entscheidet immer noch, wie Sie erreicht werden.",
+          "modeNoneNote": "Es wird nichts zugestellt, während Ihr Benachrichtigungsmodus \"Keine\" ist. Ihre Auswahlmöglichkeiten gelten, sobald Sie einen anderen Modus auswählen.",
+          "locked": "Immer aktiviert",
+          "resetToDefaults": "Auf Standard zurücksetzen",
+          "adminOnly": "An Administratoren gesendet"
+        },
+        "groups": {
+          "assignments": "Aufgaben",
+          "comments": "Kommentare",
+          "reviews": "Rezensionen",
+          "runsAndMilestones": "Läufe und Meilensteine",
+          "sharing": "Freigabe",
+          "aiAndJobs": "KI und Jobs",
+          "integrations": "Integrationen",
+          "system": "System",
+          "administration": "Verwaltung"
+        },
+        "types": {
+          "WORK_ASSIGNED": {
+            "label": "Mir zugewiesene Arbeit",
+            "description": "Ein Testfall wird Ihnen einzeln oder in großen Mengen zugewiesen."
+          },
+          "SESSION_ASSIGNED": {
+            "label": "Mir zugewiesene Sitzung",
+            "description": "Eine Sitzung wird mit Ihnen als Bevollmächtigter erstellt oder Ihnen neu zugewiesen."
+          },
+          "RUN_CASE_UNBLOCKED": {
+            "label": "Zugewiesener Fall entsperrt",
+            "description": "Ein Testfall, der Ihnen in einem Lauf zugewiesen wurde, wird ausführbar, da die Fälle, von denen er abhängt, bestanden haben."
+          },
+          "COMMENT_MENTION": {
+            "label": "Erwähnungen in Kommentaren",
+            "description": "Jemand @-erwähnt Sie in einem Kommentar zu einem Fall, Lauf, einer Sitzung, einem Meilenstein oder einer Rezension."
+          },
+          "REVIEW_REQUESTED": {
+            "label": "Überprüfung angefordert",
+            "description": "Eine Überprüfung wird von Ihnen oder von einer Rolle, die Sie innehaben, angefordert."
+          },
+          "REVIEW_APPROVED": {
+            "label": "Überprüfung genehmigt",
+            "description": "Ein Prüfer genehmigt Ihre Anfrage."
+          },
+          "REVIEW_CHANGES_REQUESTED": {
+            "label": "Änderungen angefordert",
+            "description": "Ein Prüfer fordert Änderungen Ihrer Anfrage an."
+          },
+          "REVIEW_REJECTED": {
+            "label": "Überprüfung abgelehnt",
+            "description": "Ein Prüfer lehnt Ihre Anfrage ab."
+          },
+          "REVIEW_CANCELLED": {
+            "label": "Überprüfung storniert",
+            "description": "Ein Überprüfungsantrag, den Sie überprüfen sollten, wird storniert, oder das überprüfte Element wird gelöscht."
+          },
+          "REVIEW_REMINDER": {
+            "label": "Überprüfungserinnerungen",
+            "description": "Eine Überprüfung, die Sie schuldig sind, ist älter als die Erinnerungsschwelle, oder der Anforderer drängt Sie."
+          },
+          "RUN_READY_TO_COMPLETE": {
+            "label": "Testlauf abschlussbereit",
+            "description": "Jeder Fall in einem Lauf, den Sie abschließen können, hat ein Ergebnis."
+          },
+          "MILESTONE_DUE_REMINDER": {
+            "label": "Meilenstein-Fälligkeitserinnerungen",
+            "description": "Ein Meilenstein, an dem Sie beteiligt sind, wird bald fällig oder ist überfällig."
+          },
+          "SHARE_LINK_ACCESSED": {
+            "label": "Freigabelink angezeigt",
+            "description": "Jemand öffnet einen Freigabelink, den Sie mit aktivierter Benachrichtigung bei Ansicht erstellt haben."
+          },
+          "AI_STEPS_DERIVED": {
+            "label": "KI-Schritte abgeleitet",
+            "description": "Ein KI-Schritt-Ableitungs-Job, den Sie gestartet haben, hat Schritte geschrieben."
+          },
+          "INTEGRATION_AUTH_EXPIRED": {
+            "label": "Integration benötigt erneute Autorisierung",
+            "description": "Ihre Verbindung zu einer Integration ist abgelaufen oder wurde widerrufen und muss erneut verbunden werden."
+          },
+          "SYSTEM_ANNOUNCEMENT": {
+            "label": "Administrator-Ankündigungen",
+            "description": "Ein Administrator sendet eine Systembenachrichtigung an jeden Benutzer."
+          },
+          "WHATS_NEW": {
+            "label": "Neuerungen nach einem Upgrade",
+            "description": "Eine Zusammenfassung neuer Funktionen bei Ihrem ersten Besuch nach dem Upgrade von TestPlanIt."
+          },
+          "USER_REGISTERED": {
+            "label": "Neue Benutzerregistrierungen",
+            "description": "Ein neuer Benutzer meldet sich über das Formular, SSO oder SAML an."
+          },
+          "LLM_BUDGET_ALERT": {
+            "label": "KI-Budgetwarnungen",
+            "description": "LLM-Ausgaben überschreiten eine Budgetschwelle für die Abrechnung."
           }
         },
         "success": {
@@ -3127,6 +3238,13 @@
       "modifierHintMac": "Halten Sie ⇧ gedrückt, um zu verschieben, oder ⌥, um zu kopieren, während Sie ziehen, um dieses Menü zu überspringen.",
       "modifierHintWin": "Halten Sie beim Ziehen die Umschalttaste gedrückt, um zu verschieben, oder die Strg-Taste, um zu kopieren, um dieses Menü zu überspringen.",
       "dropZoneReorder": "Zum Neuordnen ablegen",
+      "dropZoneReorderBlockedSort": "Entfernen Sie die Sortierung, um Fälle in diesem Ordner neu zu ordnen",
+      "dropZoneReorderBlockedSortMac": "Entfernen Sie die Sortierung zum Neuordnen — halten Sie ⌥, um in diesen Ordner zu kopieren",
+      "dropZoneReorderBlockedSortWin": "Entfernen Sie die Sortierung zum Neuordnen — halten Sie Strg, um in diesen Ordner zu kopieren",
+      "dropZoneReorderBlockedSearch": "Löschen Sie die Suche, um Fälle in diesem Ordner neu zu ordnen",
+      "dropZoneReorderBlockedSearchMac": "Löschen Sie die Suche zum Neuordnen — halten Sie ⌥, um in diesen Ordner zu kopieren",
+      "dropZoneReorderBlockedSearchWin": "Löschen Sie die Suche zum Neuordnen — halten Sie Strg, um in diesen Ordner zu kopieren",
+      "dropZoneCopyHere": "Ablegen zum Kopieren in diesen Ordner",
       "dropZoneFolder": "Auf einem Ordner ablegen, um zu verschachteln, oder zwischen Ordnern, um die Reihenfolge zu ändern",
       "dropZoneTreeMac": "Auf einem Ordner ablegen — ⇧ halten zum Verschieben, ⌥ zum Kopieren",
       "dropZoneTreeWin": "Auf einem Ordner ablegen — Umschalt halten zum Verschieben, Strg zum Kopieren",
@@ -4087,6 +4205,13 @@
       "lockError": "Die Zusammensetzung des Laufs konnte nicht gesperrt werden",
       "unlockError": "Die Zusammensetzung des Laufs konnte nicht entsperrt werden",
       "addBlocked": "Die Zusammensetzung dieses Laufs ist gesperrt, daher können keine Testfälle hinzugefügt werden. Entsperre sie zuerst, um die Fallmenge zu ändern."
+    },
+    "dependencies": {
+      "blocked": "Blockiert",
+      "blockedBy": "Blockiert bis {count, plural, one {dieser Fall besteht} other {diese # Fälle bestehen}} in diesem Lauf:",
+      "blockedNotice": "Dieser Testfall kann nicht ausgeführt werden, bis {count, plural, one {der Fall, von dem er abhängt, bestanden hat} other {alle # Fälle, von denen er abhängt, bestanden haben}} in diesem Lauf.",
+      "notInRun": "{count, plural, one {# Fall, von dem dieser abhängt, ist} other {# Fälle, von denen dieser abhängt, sind}} nicht in diesem Lauf und blockiert die Ausführung nicht:",
+      "unblocked": "Alle Fälle, von denen dieser abhängt, haben in diesem Lauf bestanden."
     },
     "distribute": {
       "title": "Zuweisungen verteilen",
@@ -6202,6 +6327,10 @@
         "mantisbt": {
           "name": "MantisBT",
           "description": "Verbinden Sie sich mit einer selbst gehosteten MantisBT-Instanz zur Problemverfolgung"
+        },
+        "clickup": {
+          "name": "ClickUp",
+          "description": "Verbinden Sie sich mit ClickUp für Aufgabenverfolgung und Projektmanagement"
         }
       },
       "filterPlaceholder": "Filterintegrationen...",
@@ -6312,7 +6441,13 @@
         "mantisBTApiKeyHelp": "Erstellen Sie eines unter Ihren MantisBT-Kontoeinstellungen → API-Token",
         "mantisBTUrl": "MantisBT-URL",
         "mantisBTUrlPlaceholder": "https://mantisbt.example.com",
-        "mantisBTUrlHelp": "Die Basis-URL Ihrer MantisBT-Instanz"
+        "mantisBTUrlHelp": "Die Basis-URL Ihrer MantisBT-Instanz",
+        "clickupTeamId": "ClickUp Team (Workspace) ID",
+        "clickupTeamIdPlaceholder": "z.B. 9013456789",
+        "clickupTeamIdHelp": "Befindet sich in der ClickUp-URL nach app.clickup.com/",
+        "clickupListId": "Standard ClickUp List ID",
+        "clickupListIdPlaceholder": "z.B. 901234567",
+        "clickupListIdHelp": "Die Liste, in der Aufgaben standardmäßig erstellt werden; kann pro Problem überschrieben werden"
       },
       "authType": {
         "api_key": "API-Schlüssel",
@@ -6820,10 +6955,6 @@
         "userRegisteredMessageSso": "{userName} ({userEmail}) hat sich über SSO registriert",
         "userRegisteredMessageForm": "{userName} ({userEmail}) hat sich über das Anmeldeformular registriert",
         "viewUserList": "Benutzerliste anzeigen",
-        "reviewGeneratedCases": "Generierte Testfälle prüfen",
-        "generateFromUrlCompleteTitle": "Seiten erfolgreich gecrawlt",
-        "generateFromUrlCompleteMessage": "{pages, plural, one {# Seite} other {# Seiten}} gecrawlt von {url} im Projekt \"{projectName}\". Klicken Sie hier, um Testfälle zu überprüfen und zu generieren.",
-        "generateFromUrlFailedTitle": "URL-Crawling fehlgeschlagen",
         "reviewRequestedTitle": "Überprüfung angefordert",
         "reviewApprovedTitle": "Prüfung genehmigt",
         "reviewChangesRequestedTitle": "Änderungen angefordert",
@@ -6864,7 +6995,12 @@
         "runReadyToCompleteTitle": "Testlauf bereit zum Abschluss",
         "runReadyToCompleteExecuted": "{count, plural, one {# Testfall wurde} =2 {Beide Testfälle wurden} other {Alle # Testfälle wurden}} ausgeführt.",
         "runReadyToCompleteEmailMessage": "{caseCount, plural, one {# Testfall wurde} =2 {Beide Testfälle wurden} other {Alle # Testfälle wurden}} im Testlauf \"{testRunName}\" (Projekt \"{projectName}\") ausgeführt. Der Testlauf kann als abgeschlossen markiert werden.",
-        "runReadyToCompleteReason": "Sie erhalten diese Nachricht, weil Sie Testläufe in diesem Projekt abschließen können."
+        "runReadyToCompleteReason": "Sie erhalten diese Nachricht, weil Sie Testläufe in diesem Projekt abschließen können.",
+        "runCaseUnblockedTitle": "Testfall bereit zur Ausführung",
+        "runCaseUnblockedPrerequisitePassed": "{prerequisiteName} bestanden, daher ist dieser Testfall, der Ihnen zugewiesen ist, nicht mehr blockiert:",
+        "runCaseUnblockedEmailMessage": "\"{testCaseName}\" in Testlauf \"{testRunName}\" (Projekt \"{projectName}\") ist nicht mehr blockiert: \"{prerequisiteName}\" bestanden. Es ist Ihnen zugewiesen und bereit zur Ausführung.",
+        "runCaseUnblockedReason": "Sie erhalten dies, weil der Testfall Ihnen zugewiesen ist.",
+        "inTestRun": "in Testlauf"
       }
     },
     "issues": {
@@ -7477,6 +7613,11 @@
     "alreadyLinked": "Dieser Fall ist bereits verlinkt.",
     "cannotLinkSelf": "Ein Fall kann nicht mit sich selbst verknüpft werden.",
     "circularLink": "Kreisförmige Verbindung erkannt.",
+    "dependsOn": "Hängt ab von",
+    "blocks": "Blockiert",
+    "dependsOnOption": "Abhängig von – dieser Fall erfordert, dass der ausgewählte Fall zuerst erfolgreich ist",
+    "blocksOption": "Blockiert – der ausgewählte Fall erfordert, dass dieser Fall zuerst erfolgreich ist",
+    "dependencyHint": "Wenn die Abhängigkeitserzwingung aktiviert ist, kann ein Fall in einem Testlauf erst ausgeführt werden, wenn die Fälle, von denen er abhängt, in diesem Lauf erfolgreich waren.",
     "failedToCreate": "Link konnte nicht erstellt werden.",
     "confirmRemoveLink": "Möchten Sie diesen Link wirklich entfernen?",
     "DEPENDS_ON": "Abhängigkeit",
@@ -7741,6 +7882,8 @@
       "redmineUrl": "## Redmine-URL\nDie Basis-URL Ihrer Redmine-Instanz.\n\n- Format: https://redmine.example.com\n- Fügen Sie nicht /issues oder andere Pfade hinzu\n- Muss von diesem Server aus erreichbar sein",
       "mantisBTApiKey": "## MantisBT-API-Token\nIhr persönliches REST-API-Token.\n\n- Erstellen Sie eines unter Ihren MantisBT-Kontoeinstellungen → API-Token\n- Beschränkt auf die Berechtigungen Ihres Benutzers; verwenden Sie für gemeinsam genutzte Integrationen ein Dienstkonto",
       "mantisBTUrl": "## MantisBT-URL\nDie Basis-URL Ihrer MantisBT-Instanz.\n\n- Format: https://mantisbt.example.com\n- Fügen Sie nicht /api/rest oder andere Pfade hinzu\n- Muss von diesem Server aus erreichbar sein",
+      "clickupTeamId": "## ClickUp Team (Workspace) ID\nDie numerische ID des ClickUp Teams (auch Workspace genannt), zu dem die Aufgaben gehören.\n\n- Zu finden in der ClickUp-URL: app.clickup.com/{teamId}/...\n- Erforderlich zum Durchsuchen von Spaces/Ordnern/Listen bei der Projektauswahl",
+      "clickupListId": "## Standard-ClickUp-Listen-ID\nDie Liste, in der neue Aufgaben standardmäßig erstellt werden.\n\n- Zu finden in der ClickUp-URL oder über die Option \"Link kopieren\" der Liste\n- Optional – eine bestimmte Liste kann stattdessen pro Problem ausgewählt werden",
       "githubBaseUrl": "## API-Basis-URL\nVollständiges GitHub-API-Verzeichnis für GitHub Enterprise Server.\n\n- Endet üblicherweise auf /api/v3\n- Lassen Sie das Feld leer, um api.github.com zu verwenden\n- Muss von diesem Server aus erreichbar sein"
     },
     "config": {
@@ -8370,7 +8513,7 @@
           "description": "Problementstehung, Problemlösung und Folgenabschätzung"
         },
         "automationTrends": {
-          "label": "Automatisierungstrends",
+          "label": "Trend der automatisierten Testfälle",
           "description": "Verfolgen Sie den Automatisierungsfortschritt wöchentlich nach Priorität."
         },
         "flakyTests": {
@@ -8416,6 +8559,10 @@
         "codePinCoverage": {
           "label": "Code-Pin-Abdeckung",
           "description": "Wo sich Code-Pins befinden, nach Repository und Verzeichnis, und wo jüngste Änderungen nicht abgedeckt waren"
+        },
+        "resultsTrend": {
+          "label": "Trend der Fehlgeschlagenquote von Testergebnissen",
+          "description": "Erfolgs- und Fehlgeschlagenquoten von Testergebnissen im Laufe der Zeit und ob sich die Fehlgeschlagenquote verbessert oder verschlechtert"
         }
       },
       "flakyTests": {
@@ -8735,7 +8882,7 @@
           "description": "Token-Nutzung, Kosten und Zuverlässigkeit von LLM-Funktionen projektübergreifend"
         },
         "automationTrends": {
-          "label": "Trends in der projektübergreifenden Automatisierung",
+          "label": "Trend der projektübergreifenden automatisierten Testfälle",
           "description": "Verfolgen Sie den Automatisierungsfortschritt wöchentlich nach Priorität in allen Projekten."
         },
         "flakyTests": {
@@ -8769,6 +8916,10 @@
         "codePinCoverage": {
           "label": "Projektübergreifende Code-Pin-Abdeckung",
           "description": "Code-Pin-Abdeckung in jedem Projekt mit Impact-Analyse aktiviert"
+        },
+        "resultsTrend": {
+          "label": "Trend der projektübergreifenden Fehlgeschlagenquote von Testergebnissen",
+          "description": "Erfolgs- und Fehlgeschlagenquoten von Testergebnissen im Laufe der Zeit nach Projekt und ob sich die Fehlgeschlagenquote verbessert oder verschlechtert"
         }
       },
       "folderDescendants": {
@@ -8832,6 +8983,79 @@
         },
         "chart": {
           "byDirectory": "Pins und nicht abgedeckte Dateien nach Verzeichnis"
+        }
+      },
+      "resultsTrend": {
+        "period": "Zeitraum",
+        "runSource": "Ergebnistypen",
+        "runSources": {
+          "automated": "Automatisiert",
+          "manual": "Manuell"
+        },
+        "showPassRate": "Erfolgsquote anzeigen",
+        "showPassRateHelp": "Zeichnen Sie die Erfolgsquote auf der rechten Achse des Diagramms mit ihrem eigenen angepassten Trend ein und fügen Sie sie zu den Kennzahlen hinzu. Standardmäßig aus: Der Bericht behandelt die Fehlgeschlagenquote.",
+        "showFailRate": "Fehlgeschlagenquote anzeigen",
+        "showFailRateHelp": "Zeichnen Sie die Fehlgeschlagenquote auf der rechten Achse des Diagramms mit ihrem angepassten Trend ein und zeigen Sie sie in den Kennzahlen an. Standardmäßig an.",
+        "showCounts": "Ergebnissummen anzeigen",
+        "showCountsHelp": "Zeichnen Sie die bestandenen, fehlgeschlagenen, übersprungenen und anderen Summen als gestapelte Balken im Diagramm neben den Quoten ein. Standardmäßig aus: Der Bericht behandelt die Quoten.",
+        "countSkipped": "Übersprungene Ergebnisse in Quoten einzählen",
+        "countSkippedHelp": "Übersprungene Ergebnisse werden aus dem Nenner der Erfolgs- und Fehlgeschlagenquote gelassen, es sei denn, dies ist aktiviert. Andere Status bleiben immer erhalten.",
+        "includeAborted": "Abgebrochene Läufe einschließen",
+        "includeAbortedHelp": "Läufe im Status des verlassenen Laufs des Projekts werden gezählt, es sei denn, dies ist deaktiviert.",
+        "latestAttemptOnly": "Nur der neueste Versuch",
+        "latestAttemptOnlyHelp": "Zählen Sie einen Ergebnis pro Fall pro Lauf, seinen neuesten Versuch, anstatt jeden importierten Versuch zu zählen.",
+        "failRate": "Fehlgeschlagenquote",
+        "skipped": "Übersprungen",
+        "other": "Andere",
+        "inProgress": "im Gange",
+        "verdict": {
+          "better": "Fehlgeschlagenquote verbessert sich",
+          "worse": "Fehlgeschlagenquote verschlechtert sich",
+          "steady": "Fehlgeschlagenquote bleibt gleich",
+          "notEnough": "Nicht genug vollständige Zeiträume, um einen Trend zu erkennen.",
+          "notEnoughDetail": "Der Trend erfordert mindestens zwei vollständige Zeiträume mit Ergebnissen.",
+          "detail": "Die Trendlinie verläuft von {start} bis {end}, eine Änderung von {change} Punkten über {count} vollständige {grouping, select, daily {Tage} weekly {Wochen} monthly {Monate} quarterly {Quartale} other {Jahre}}."
+        },
+        "stats": {
+          "lastComplete": "Letzter vollständiger Zeitraum ({period}), verglichen mit dem Durchschnitt der vollständigen Zeiträume davor.",
+          "results": "Ausgeführte Ergebnisse",
+          "runs": "Läufe",
+          "deltaPoints": "{change} Punkte gegenüber dem/den vorherigen {count, plural, one {# Zeitraum} other {# Zeiträumen}}",
+          "deltaPercent": "{change}% gegenüber dem/den vorherigen {count, plural, one {# Zeitraum} other {# Zeiträumen}}",
+          "noBaseline": "Keine früheren Daten zum Vergleichen vorhanden"
+        },
+        "chart": {
+          "allProjects": "Alle ausgewählten Projekte",
+          "period": "{grouping, select, weekly {Woche von {date}} other {{date}}}",
+          "partialPeriod": "{grouping, select, weekly {Woche von {period}} other {{period}}} (im Gange)",
+          "rateTrend": "{rate} Trend"
+        },
+        "heatmap": {
+          "title": "Fehlgeschlagenquote nach Projekt und Zeitraum",
+          "help": "Jede Zelle ist die Fehlgeschlagenquote des Projekts für den Zeitraum; die Schattierung erreicht volle Intensität bei 35%. Die Trendspalte ist die Änderung der angepassten Fehlgeschlagenquotenlinie über den vollständigen Zeiträumen. * kennzeichnet den Zeitraum im Gange.",
+          "trend": "Trend"
+        },
+        "trend": {
+          "points": "{change} Punkte"
+        },
+        "detail": {
+          "title": "Ergebnisse und Quoten nach Zeitraum"
+        },
+        "method": {
+          "title": "Wie dies gezählt wird",
+          "runSource": {
+            "automated": "Nur automatisierte Läufe: alle Lauftypen außer manuellen mit ihren importierten Ergebnissen. Ein Lauf gehört zu dem Zeitraum, in dem er erstellt wurde.",
+            "manual": "Nur manuelle Läufe mit den darin aufgezeichneten Ergebnissen. Ein Lauf gehört zu dem Zeitraum, in dem er erstellt wurde.",
+            "both": "Alle Läufe: automatisierte Läufe mit ihren importierten Ergebnissen und manuelle Läufe mit den darin aufgezeichneten Ergebnissen. Ein Lauf gehört zu dem Zeitraum, in dem er erstellt wurde."
+          },
+          "periods": "{grouping, select, daily {Tage} weekly {Wochen (Beginn Montag)} monthly {Monate} quarterly {Quartale} other {Jahre}} werden in {timezone} aufgeteilt. Der aktuelle Zeitraum läuft noch und wird aus dem Trend und den Kennzahlen ausgelassen.",
+          "everyAttempt": "Ein wiederholter Test wird einmal pro Versuch gezählt.",
+          "latestAttempt": "Nur der neueste Versuch jedes Falls in einem Lauf wird gezählt.",
+          "skippedExcluded": "Übersprungene Ergebnisse (ein Status, der abgeschlossen ist ohne Erfolg oder Fehler) werden aus den Erfolgs- und Fehlgeschlagenquoten gelassen; andere Status bleiben erhalten.",
+          "skippedCounted": "Übersprungene Ergebnisse werden in den Erfolgs- und Fehlgeschlagenquoten gezählt.",
+          "abortedIncluded": "Läufe im Status des verlassenen Laufs werden einschließlich gezählt.",
+          "abortedExcluded": "Läufe im Status des verlassenen Laufs werden ausgelassen.",
+          "trend": "Der Trend ist eine gerade Linie, die über vollständige Zeiträume mit Ergebnissen an die Fehlgeschlagenquote angepasst wird. Eine Änderung von mehr als einem Punkt in beide Richtungen führt zu einer besseren oder schlechteren Bewertung."
         }
       }
     },

@@ -46,6 +46,22 @@ vi.mock("~/lib/services/testCaseVersionService", () => ({
   createTestCaseVersionInTransaction: vi.fn().mockResolvedValue({ id: 4242 }),
 }));
 
+// Dependency gate + handoff. The gate's own query logic is covered by
+// lib/services/dependencyGate.test.ts; here the route's contract is under
+// test: when it consults the gate, where it rejects, and whom it notifies.
+const dependencyMocks = vi.hoisted(() => ({
+  assertDependencyGateOpen: vi.fn().mockResolvedValue(undefined),
+  findUnblockedDependants: vi.fn().mockResolvedValue([]),
+  notifyUnblockedDependants: vi.fn().mockResolvedValue(undefined),
+}));
+vi.mock("~/lib/services/dependencyGate", () => ({
+  assertDependencyGateOpen: dependencyMocks.assertDependencyGateOpen,
+  findUnblockedDependants: dependencyMocks.findUnblockedDependants,
+}));
+vi.mock("~/lib/services/dependencyHandoff", () => ({
+  notifyUnblockedDependants: dependencyMocks.notifyUnblockedDependants,
+}));
+
 // Spy on updateAuditContext while keeping the rest of the module real so the
 // withAuditContext wrapper (runWithAuditContext / extractAuditContextFromHeaders)
 // still works. Lets us assert the acting user is stamped onto the audit-context
@@ -63,6 +79,7 @@ import { authenticateRequest } from "~/lib/api-token-auth";
 import { baseDb } from "~/lib/db";
 import { syncRepositoryCaseToElasticsearch } from "~/services/repositoryCaseSync";
 import { createTestCaseVersionInTransaction } from "~/lib/services/testCaseVersionService";
+import { DependencyGateError } from "~/lib/utils/errors";
 
 describe("Submit Result API Route", () => {
   const validBody = {
@@ -130,6 +147,7 @@ describe("Submit Result API Route", () => {
     };
     testRunCases: {
       update: ReturnType<typeof vi.fn>;
+      findUnique: ReturnType<typeof vi.fn>;
     };
     repositoryCases: {
       update: ReturnType<typeof vi.fn>;
@@ -183,6 +201,8 @@ describe("Submit Result API Route", () => {
       },
       testRunCases: {
         update: vi.fn().mockResolvedValue({ id: 10 }),
+        // Post-write pass state read by the dependency handoff.
+        findUnique: vi.fn().mockResolvedValue({ status: { isSuccess: true } }),
       },
       repositoryCases: {
         update: vi.fn().mockResolvedValue({ id: 55 }),
@@ -514,6 +534,161 @@ describe("Submit Result API Route", () => {
         55,
         { copyFieldValues: true }
       );
+    });
+  });
+
+  describe("dependency gate", () => {
+    beforeEach(() => {
+      // clearAllMocks keeps implementations; restore the open-gate defaults
+      // so one test's rejection cannot leak into the next.
+      dependencyMocks.assertDependencyGateOpen.mockReset();
+      dependencyMocks.assertDependencyGateOpen.mockResolvedValue(undefined);
+      dependencyMocks.findUnblockedDependants.mockReset();
+      dependencyMocks.findUnblockedDependants.mockResolvedValue([]);
+      dependencyMocks.notifyUnblockedDependants.mockReset();
+      dependencyMocks.notifyUnblockedDependants.mockResolvedValue(undefined);
+    });
+
+    const enforcingRunCase = () => ({
+      ...baseRunCase,
+      status: { isSuccess: false },
+      repositoryCase: { ...baseRunCase.repositoryCase, name: "Create order" },
+      testRun: {
+        ...baseRunCase.testRun,
+        name: "Order to billing",
+        projectId: 3,
+        project: {
+          ...baseRunCase.testRun.project,
+          name: "Telco",
+          enforceCaseDependencies: true,
+        },
+      },
+    });
+
+    it("never consults the gate when the project does not enforce dependencies", async () => {
+      const response = await POST(createRequest(validBody));
+
+      expect(response.status).toBe(200);
+      expect(dependencyMocks.assertDependencyGateOpen).not.toHaveBeenCalled();
+      expect(dependencyMocks.findUnblockedDependants).not.toHaveBeenCalled();
+      expect(dependencyMocks.notifyUnblockedDependants).not.toHaveBeenCalled();
+    });
+
+    it("checks the gate inside the transaction, before the result is written", async () => {
+      (baseDb.testRunCases.findFirst as any).mockResolvedValue(
+        enforcingRunCase()
+      );
+      const order: string[] = [];
+      dependencyMocks.assertDependencyGateOpen.mockImplementation(async () => {
+        order.push("gate");
+      });
+      txMocks.testRunResults.create.mockImplementation(async () => {
+        order.push("create");
+        return { id: 999 };
+      });
+
+      const response = await POST(createRequest(validBody));
+
+      expect(response.status).toBe(200);
+      expect(dependencyMocks.assertDependencyGateOpen).toHaveBeenCalledWith(
+        txMocks,
+        { testRunId: validBody.testRunId, repositoryCaseId: 55 }
+      );
+      expect(order).toEqual(["gate", "create"]);
+    });
+
+    it("returns 409 DEPENDENCIES_NOT_PASSED with the blockers and writes nothing when blocked", async () => {
+      (baseDb.testRunCases.findFirst as any).mockResolvedValue(
+        enforcingRunCase()
+      );
+      dependencyMocks.assertDependencyGateOpen.mockRejectedValue(
+        new DependencyGateError(1, 55, [
+          { testRunCaseId: 9, repositoryCaseId: 54, name: "Provisioning" },
+        ])
+      );
+
+      const response = await POST(createRequest(validBody));
+      const data = await response.json();
+
+      expect(response.status).toBe(409);
+      expect(data.code).toBe("DEPENDENCIES_NOT_PASSED");
+      expect(data.blockedBy).toEqual([
+        { testRunCaseId: 9, repositoryCaseId: 54, name: "Provisioning" },
+      ]);
+      expect(txMocks.testRunResults.create).not.toHaveBeenCalled();
+      expect(txMocks.testRunCases.update).not.toHaveBeenCalled();
+    });
+
+    it("hands off to the dependants' assignees when the case moves from not-passed to passed", async () => {
+      (baseDb.testRunCases.findFirst as any).mockResolvedValue(
+        enforcingRunCase()
+      );
+      const dependants = [
+        {
+          testRunCaseId: 20,
+          repositoryCaseId: 56,
+          name: "Verify provisioning",
+          assignedToId: "prov",
+        },
+      ];
+      dependencyMocks.findUnblockedDependants.mockResolvedValue(dependants);
+
+      const response = await POST(createRequest(validBody));
+
+      expect(response.status).toBe(200);
+      expect(dependencyMocks.findUnblockedDependants).toHaveBeenCalledWith(
+        txMocks,
+        { testRunId: validBody.testRunId, repositoryCaseId: 55 }
+      );
+      expect(dependencyMocks.notifyUnblockedDependants).toHaveBeenCalledWith({
+        dependants,
+        actorUserId: "user-1",
+        testRunId: validBody.testRunId,
+        testRunName: "Order to billing",
+        projectId: 3,
+        projectName: "Telco",
+        prerequisiteCaseName: "Create order",
+      });
+    });
+
+    it("does not hand off again when the case was already passed", async () => {
+      (baseDb.testRunCases.findFirst as any).mockResolvedValue({
+        ...enforcingRunCase(),
+        status: { isSuccess: true },
+      });
+
+      const response = await POST(createRequest(validBody));
+
+      expect(response.status).toBe(200);
+      expect(dependencyMocks.findUnblockedDependants).not.toHaveBeenCalled();
+      expect(dependencyMocks.notifyUnblockedDependants).not.toHaveBeenCalled();
+    });
+
+    it("does not hand off when the new status is not a pass", async () => {
+      (baseDb.testRunCases.findFirst as any).mockResolvedValue(
+        enforcingRunCase()
+      );
+      txMocks.testRunCases.findUnique.mockResolvedValue({
+        status: { isSuccess: false },
+      });
+
+      const response = await POST(createRequest(validBody));
+
+      expect(response.status).toBe(200);
+      expect(dependencyMocks.findUnblockedDependants).not.toHaveBeenCalled();
+      expect(dependencyMocks.notifyUnblockedDependants).not.toHaveBeenCalled();
+    });
+
+    it("skips the notification when no dependant opened", async () => {
+      (baseDb.testRunCases.findFirst as any).mockResolvedValue(
+        enforcingRunCase()
+      );
+      dependencyMocks.findUnblockedDependants.mockResolvedValue([]);
+
+      const response = await POST(createRequest(validBody));
+
+      expect(response.status).toBe(200);
+      expect(dependencyMocks.notifyUnblockedDependants).not.toHaveBeenCalled();
     });
   });
 

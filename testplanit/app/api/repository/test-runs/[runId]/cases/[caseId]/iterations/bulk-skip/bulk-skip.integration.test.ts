@@ -17,7 +17,9 @@
  *     HTTP — the auth + Zod layers are covered by unit-style tests.
  */
 
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { Client } from "pg";
+import { DEPENDENCY_GATE_GUARD_SQL } from "~/scripts/apply-triggers";
 
 import {
   computeWorstOfStatus,
@@ -39,6 +41,19 @@ describeIntegration("iteration bulk-skip (live DB)", () => {
   };
 
   const ROLLBACK_SENTINEL = "__BULK_SKIP_TEST_ROLLBACK__";
+
+  // The dependency-gate case below relies on the trigger being present, as
+  // it is on any booted instance; a bare scratch database has not run the
+  // app's trigger apply, so install it here like the other trigger suites.
+  beforeAll(async () => {
+    const client = new Client({ connectionString: process.env.DATABASE_URL });
+    await client.connect();
+    try {
+      await client.query(DEPENDENCY_GATE_GUARD_SQL);
+    } finally {
+      await client.end();
+    }
+  });
 
   async function withRollback<T>(
     baseDb: any,
@@ -323,6 +338,81 @@ describeIntegration("iteration bulk-skip (live DB)", () => {
       // untested tier 3 since "skipped" iterations are `isCompleted=true`
       // and not failure/success).
       expect(runCase!.statusId).toBe(skipped!.id);
+    });
+  });
+
+  it("is refused by the dependency-gate trigger while a prerequisite in the run has not passed", async () => {
+    const { baseDb, materializeIterations } = await importDeps();
+    await withRollback(baseDb, async (tx) => {
+      const fixture = await seedFixture(tx);
+      await materializeIterations(fixture.testRunId, tx);
+
+      // Enforce dependencies, and make the parameterized case depend on a
+      // second case that sits untested in the same run.
+      await tx.projects.update({
+        where: { id: fixture.projectId },
+        data: { enforceCaseDependencies: true },
+      });
+      const paramCase = await tx.testRunCases.findUnique({
+        where: { id: fixture.testRunCaseId },
+        select: {
+          repositoryCaseId: true,
+          repositoryCase: {
+            select: {
+              repositoryId: true,
+              folderId: true,
+              templateId: true,
+              stateId: true,
+            },
+          },
+        },
+      });
+      const prerequisite = await tx.repositoryCases.create({
+        data: {
+          projectId: fixture.projectId,
+          repositoryId: paramCase.repositoryCase.repositoryId,
+          folderId: paramCase.repositoryCase.folderId,
+          templateId: paramCase.repositoryCase.templateId,
+          name: `Prerequisite ${Date.now()}`,
+          stateId: paramCase.repositoryCase.stateId,
+          creatorId: fixture.creatorId,
+        },
+        select: { id: true },
+      });
+      await tx.repositoryCaseLink.create({
+        data: {
+          caseAId: paramCase.repositoryCaseId,
+          caseBId: prerequisite.id,
+          type: "DEPENDS_ON",
+          createdById: fixture.creatorId,
+        },
+      });
+      await tx.testRunCases.create({
+        data: {
+          testRunId: fixture.testRunId,
+          repositoryCaseId: prerequisite.id,
+          order: 1,
+        },
+      });
+
+      const skipped = await tx.status.findUnique({
+        where: { systemName: "skipped" },
+        select: { id: true },
+      });
+      const iters = await tx.testRunCaseIteration.findMany({
+        where: { testRunCaseId: fixture.testRunCaseId },
+        select: { id: true },
+      });
+
+      await expect(
+        bulkSkip(tx, {
+          testRunId: fixture.testRunId,
+          testRunCaseId: fixture.testRunCaseId,
+          iterationIds: iters.map((i: any) => i.id),
+          skippedStatusId: skipped!.id,
+          executedById: fixture.creatorId,
+        })
+      ).rejects.toThrow(/blocked until its prerequisites pass/i);
     });
   });
 

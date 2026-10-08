@@ -176,3 +176,59 @@ describe("LinkedCasesPanel — latest result", () => {
     expect(hrefs.some((h) => h?.includes("/projects/runs/"))).toBe(false);
   });
 });
+
+describe("LinkedCasesPanel — dependency direction", () => {
+  beforeEach(() => {
+    mockLinkFindMany.mockReset();
+    mockUseLatestTestResults.mockReset();
+    mockUseLatestTestResults.mockReturnValue({});
+  });
+
+  it("labels an outgoing DEPENDS_ON link as depends on", () => {
+    // This case (100) is caseA: it depends on 200.
+    mockLinkFindMany.mockReturnValue({ data: [LINK], refetch: vi.fn() });
+
+    renderPanel();
+
+    expect(screen.getByTestId("linked-case-type-1")).toHaveTextContent(
+      "linkedCases.dependsOn"
+    );
+  });
+
+  it("labels an incoming DEPENDS_ON link as blocks", () => {
+    // Another case (300) depends on this one: this case blocks it.
+    mockLinkFindMany.mockReturnValue({
+      data: [
+        {
+          ...LINK,
+          id: 2,
+          caseAId: 300,
+          caseBId: 100,
+          caseA: { id: 300, name: "Dependant", source: "MANUAL" },
+          caseB: { id: 100, name: "This case", source: "MANUAL" },
+        },
+      ],
+      refetch: vi.fn(),
+    });
+
+    renderPanel();
+
+    expect(screen.getByTestId("linked-case-type-2")).toHaveTextContent(
+      "linkedCases.blocks"
+    );
+    expect(screen.getByText("Dependant")).toBeInTheDocument();
+  });
+
+  it("keeps the type label for symmetric link types", () => {
+    mockLinkFindMany.mockReturnValue({
+      data: [{ ...LINK, id: 3, type: "SAME_TEST_DIFFERENT_SOURCE" }],
+      refetch: vi.fn(),
+    });
+
+    renderPanel();
+
+    expect(screen.getByTestId("linked-case-type-3")).toHaveTextContent(
+      "linkedCases.SAME_TEST_DIFFERENT_SOURCE"
+    );
+  });
+});

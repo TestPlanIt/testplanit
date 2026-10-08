@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { TestRunCaseDetails } from "@/components/TestRunCaseDetails";
 import { useActiveIterationFromUrl } from "~/hooks/useActiveIterationFromUrl";
 import type { OverrideParameterSchemaEntry } from "~/lib/schemas/iterationOverrideSchema";
+import { isBlockedByDependencies } from "~/utils/caseDependencies";
 import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 
 import { IterationBulkConfirmDialog } from "./IterationBulkConfirmDialog";
@@ -494,7 +495,10 @@ export function IterationAwareTestRunCaseDetails({
               projectId={projectId}
               iteration={activeIteration}
               totalIterations={totalIterations}
-              isDisabled={isRunCompleted}
+              isDisabled={
+                isRunCompleted ||
+                isBlockedByDependencies(innerProps.dependencyState)
+              }
               canAddEditResults={canAddEditResults}
               stepParameters={stepParameters}
               onAfterSubmit={handleAdvanceAfterResult}

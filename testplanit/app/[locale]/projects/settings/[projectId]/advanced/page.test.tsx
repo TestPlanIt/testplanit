@@ -51,6 +51,7 @@ let mockProjectData:
       id: number;
       reviewWorkflowEnabled: boolean;
       requireResultFlipJustification?: boolean;
+      enforceCaseDependencies?: boolean;
       editResultsDurationSeconds?: number | null;
       abandonedRunIdleMinutes?: number | null;
       abandonedRunStateId?: number | null;
@@ -215,6 +216,37 @@ describe("AdvancedPage (per-project advanced settings)", () => {
       expect(mockMutateAsync).toHaveBeenCalledWith({
         where: { id: 42 },
         data: { reviewWorkflowEnabled: false },
+      });
+    });
+  });
+
+  it("(cd1) case-dependencies switch reflects the current value", () => {
+    mockProjectData = {
+      id: 42,
+      reviewWorkflowEnabled: false,
+      enforceCaseDependencies: true,
+    };
+    render(<AdvancedPage />);
+    expect(screen.getByTestId("case-dependencies-toggle")).toHaveAttribute(
+      "data-state",
+      "checked"
+    );
+  });
+
+  it("(cd2) toggling case dependencies calls mutateAsync with the new value", async () => {
+    mockProjectData = {
+      id: 42,
+      reviewWorkflowEnabled: false,
+      enforceCaseDependencies: false,
+    };
+    render(<AdvancedPage />);
+
+    fireEvent.click(screen.getByTestId("case-dependencies-toggle"));
+
+    await waitFor(() => {
+      expect(mockMutateAsync).toHaveBeenCalledWith({
+        where: { id: 42 },
+        data: { enforceCaseDependencies: true },
       });
     });
   });

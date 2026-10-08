@@ -694,6 +694,8 @@
       "failedToDeleteRepository": "Échec de la suppression du dépôt",
       "permissionDenied": "Vous n'êtes pas autorisé à accéder à cette page.",
       "resultSubmitPermissionDenied": "Vous ne pouvez pas soumettre de résultats pour ce dossier. Veuillez demander à un administrateur de projet de vous l'attribuer.",
+      "dependenciesNotPassed": "Bloqué par des dépendances",
+      "dependenciesNotPassedDescription": "Ce cas de test ne peut pas être exécuté jusqu'à ce que {count, plural, =0 {les cas dont il dépend aient} one {le cas dont il dépend ait} other {les # cas dont il dépend aient}} réussi dans cette exécution.",
       "justificationRequired": "Justification requise",
       "justificationRequiredDescription": "Pour modifier un résultat final, il est nécessaire de fournir des détails sur le résultat expliquant le changement.",
       "requiredFieldMissing": "Un champ de résultat obligatoire est vide.",
@@ -1573,6 +1575,9 @@
           },
           "mantisbt": {
             "description": "Connectez-vous à une instance MantisBT auto-hébergée pour le suivi des problèmes."
+          },
+          "clickup": {
+            "description": "Connectez-vous à ClickUp pour le suivi des tâches et la gestion de projet."
           }
         }
       },
@@ -1844,6 +1849,15 @@
         "setupStepsMantisbtStep2": "Dans la configuration du plugin, choisissez les événements de création et de mise à jour de problème.",
         "setupStepsMantisbtStep3": "Collez l'URL ci-dessus comme cible du webhook et enregistrez.",
         "setupStepsMantisbtStep4": "Créez ou mettez à jour un problème dans MantisBT ; le statut du problème lié sera synchronisé ici.",
+        "inboundChooserClickup": "ClickUp",
+        "inboundClickupTitle": "Webhook entrant ClickUp",
+        "inboundClickupScopeHint": "Les événements ClickUp <code>taskStatusUpdated</code> mettent à jour les tickets TestPlanIt associés. Les autres événements de tâche sont acceptés, mais ne mettent pas à jour les tickets.",
+        "inboundClickupRegisterHint": "ClickUp n'a pas de page de paramètres webhook : les webhooks sont créés via son API, et ClickUp choisit le secret de signature. Laissez le secret vide et TestPlanIt enregistrera ce webhook dans ClickUp pour la Liste associée en utilisant votre autorisation ClickUp.",
+        "inboundClickupSecret": "Secret du webhook (optionnel)",
+        "inboundClickupSecretHelp": "Uniquement nécessaire si vous avez créé vous-même le webhook avec l'API Create Webhook de ClickUp : collez le secret que ClickUp a renvoyé. Stocké chiffré au repos.",
+        "setupStepsClickupStep1": "Si vous avez laissé le secret vide, TestPlanIt a déjà enregistré ce webhook auprès de ClickUp pour la Liste associée — il n'y a rien à configurer dans ClickUp.",
+        "setupStepsClickupStep2": "Si vous avez enregistré vous-même le webhook via l'API Create Webhook de ClickUp, assurez-vous que son point de terminaison est l'URL ci-dessous et abonnez-le à l'événement taskStatusUpdated.",
+        "setupStepsClickupStep3": "Utilisez « Envoyer un webhook de test » ci-dessous pour vérifier le pipeline. La rotation du secret enregistre un nouveau webhook dans ClickUp.",
         "codeRepos": {
           "empty": "Aucun dépôt n'est connecté pour l'analyse d'impact. <link>Connectez-en un</link> d'abord.",
           "unsupported": "Les dépôts {provider} ne peuvent pas envoyer de webhooks à TestPlanIt.",
@@ -2025,7 +2039,7 @@
           "branchPlaceholder": "Laissez vide pour utiliser la branche par défaut du dépôt"
         },
         "pathPatterns": {
-          "description": "Spécifiez les fichiers à inclure. Chaque ligne combine un chemin de base et un modèle glob. Exemples : `path=tests/e2e/pages + pattern=*` inclut tous les fichiers directement dans ce dossier ; `path=src + pattern=**/*.test.ts` inclut tous les fichiers de test de manière récursive.",
+          "description": "Spécifiez les fichiers à inclure. Chaque ligne combine un chemin de base et un modèle glob. Exemples : path=tests/e2e/pages + pattern=* inclut tous les fichiers directement dans ce dossier ; path=src + pattern=**/*.test.ts inclut tous les fichiers de test de manière récursive.",
           "pathPlaceholder": "tests/e2e/pages",
           "exceedsLimit": "La taille totale dépasse la limite du contexte IA de {overflow}. Lors de l'exportation, les fichiers sont classés par ordre de pertinence pour le cas de test exporté : les fichiers les plus pertinents sont inclus en premier et les fichiers moins pertinents sont ignorés lorsque le budget est atteint. Affinez vos modèles de chemin si vous souhaitez un contrôle plus précis sur les fichiers inclus."
         },
@@ -2087,7 +2101,7 @@
           "pathLabel": "Chemin",
           "patternLabel": "Modèle",
           "previewFiles": "Aperçu des fichiers",
-          "rootHint": "Laissez le chemin vide, ou saisissez ., pour commencer à la racine du dépôt ; le chemin . avec le modèle **/* inclut chaque fichier.",
+          "rootHint": "Laissez le chemin vide, ou entrez ., pour commencer à la racine du référentiel ; path . avec pattern **/* inclut tous les fichiers.",
           "scanningRepo": "Analyse des fichiers du dépôt… ({seconds}s)",
           "title": "Modèles de chemin",
           "truncatedBadge": "Les résultats peuvent être incomplets (limite du fournisseur)"
@@ -2179,6 +2193,13 @@
           "disabledToast": "Les exécutions de test ne verrouilleront plus automatiquement leur composition",
           "saveError": "Échec de la mise à jour du paramètre de verrouillage automatique de la composition"
         },
+        "caseDependencies": {
+          "label": "Appliquer les dépendances entre cas de test dans les exécutions de test",
+          "description": "Lorsqu'elle est activée, un cas de test dans une exécution est bloqué jusqu'à ce que chaque cas dont il dépend (un lien « Dépend de ») ait réussi dans la même exécution. Les cas bloqués sont marqués dans l'exécution et les résultats pour eux sont refusés. Lorsque la dernière dépendance réussit, le responsable du cas est notifié qu'il est prêt. Les dépendances qui ne figurent pas dans l'exécution ne bloquent pas.",
+          "enabledToast": "Les dépendances entre cas de test seront appliquées dans les exécutions de test",
+          "disabledToast": "Les dépendances entre cas de test ne seront plus appliquées",
+          "saveError": "Échec de la mise à jour du paramètre d'application des dépendances"
+        },
         "editWindow": {
           "label": "Fenêtre d'édition des résultats",
           "description": "Il est possible de modifier un résultat pendant un certain temps après son enregistrement. Une fois la fenêtre fermée, toute correction nécessitera une nouvelle tentative. Les administrateurs système peuvent toujours le modifier.",
@@ -2233,7 +2254,7 @@
           "branchesFallbackHint": "Tapez plutôt le nom de la branche."
         },
         "pathPatterns": {
-          "description": "Fichiers d'application à inclure. Chaque ligne combine un chemin de base et un modèle glob. Exemple : chemin=src + modèle=**/* inclut tout sous src.",
+          "description": "Fichiers d'application à inclure. Chaque ligne combine un chemin de base et un modèle glob. Exemple : path=src + pattern=**/* inclut tout ce qui se trouve sous src.",
           "pathPlaceholder": "src"
         },
         "cache": {
@@ -2876,11 +2897,101 @@
           "label": "Mode de notification",
           "useGlobal": "Utiliser les paramètres globaux"
         },
-        "options": {
-          "title": "Options supplémentaires",
-          "email": {
-            "label": "Notifications par e-mail",
-            "description": "Recevez des notifications par e-mail"
+        "typeSection": {
+          "title": "Ce que je souhaite recevoir comme notification",
+          "description": "Tous les types de notification sont activés par défaut. Désactivez ceux que vous ne souhaitez pas. Le mode de notification ci-dessus détermine toujours comment vous êtes contacté.",
+          "modeNoneNote": "Rien n'est livré lorsque votre mode de notification est Aucun. Vos choix ici s'appliquent dès que vous choisissez un autre mode.",
+          "locked": "Toujours activé",
+          "resetToDefaults": "Réinitialiser par défaut",
+          "adminOnly": "Envoyé aux administrateurs"
+        },
+        "groups": {
+          "assignments": "Affectations",
+          "comments": "Commentaires",
+          "reviews": "Avis",
+          "runsAndMilestones": "Exécutions et étapes clés",
+          "sharing": "Partage",
+          "aiAndJobs": "IA et tâches",
+          "integrations": "Intégrations",
+          "system": "Système",
+          "administration": "Administration"
+        },
+        "types": {
+          "WORK_ASSIGNED": {
+            "label": "Travail qui m'est assigné",
+            "description": "Un cas de test d'exécution vous est assigné, individuellement ou en masse."
+          },
+          "SESSION_ASSIGNED": {
+            "label": "Session qui m'est assignée",
+            "description": "Une session est créée avec vous comme assigné, ou vous est réassignée."
+          },
+          "RUN_CASE_UNBLOCKED": {
+            "label": "Cas assigné débloqué",
+            "description": "Un cas de test qui vous est assigné dans une exécution devient exécutable car les cas dont il dépend ont réussi."
+          },
+          "COMMENT_MENTION": {
+            "label": "Mentions dans les commentaires",
+            "description": "Quelqu'un vous @-mentionne dans un commentaire sur un cas, une exécution, une session, une étape clé ou un avis."
+          },
+          "REVIEW_REQUESTED": {
+            "label": "Avis demandé",
+            "description": "Un avis vous est demandé ou à un rôle que vous tenez."
+          },
+          "REVIEW_APPROVED": {
+            "label": "Avis approuvé",
+            "description": "Un examinateur approuve votre demande."
+          },
+          "REVIEW_CHANGES_REQUESTED": {
+            "label": "Modifications demandées",
+            "description": "Un examinateur demande des modifications à votre demande."
+          },
+          "REVIEW_REJECTED": {
+            "label": "Avis rejeté",
+            "description": "Un examinateur rejette votre demande."
+          },
+          "REVIEW_CANCELLED": {
+            "label": "Avis annulé",
+            "description": "Une demande d'avis que vous deviez examiner est annulée, ou l'élément en cours d'examen est supprimé."
+          },
+          "REVIEW_REMINDER": {
+            "label": "Rappels de révision",
+            "description": "Un avis que vous devez fournir est plus ancien que le seuil de rappel, ou le demandeur vous relance."
+          },
+          "RUN_READY_TO_COMPLETE": {
+            "label": "Exécution de test prête à terminer",
+            "description": "Tous les cas d'une exécution que vous pouvez terminer ont un résultat."
+          },
+          "MILESTONE_DUE_REMINDER": {
+            "label": "Rappels d'échéance d'étape clé",
+            "description": "Une étape clé dont vous êtes impliqué arrive bientôt à échéance ou est en retard."
+          },
+          "SHARE_LINK_ACCESSED": {
+            "label": "Lien de partage consulté",
+            "description": "Quelqu'un ouvre un lien de partage que vous avez créé avec la notification de consultation activée."
+          },
+          "AI_STEPS_DERIVED": {
+            "label": "Étapes dérivées par l'IA",
+            "description": "Une tâche de dérivation d'étapes par l'IA que vous avez lancée a écrit des étapes."
+          },
+          "INTEGRATION_AUTH_EXPIRED": {
+            "label": "L'intégration a besoin d'une nouvelle autorisation",
+            "description": "Votre connexion à une intégration a expiré ou a été révoquée et doit être reconnectée."
+          },
+          "SYSTEM_ANNOUNCEMENT": {
+            "label": "Annonces d'administrateur",
+            "description": "Un administrateur envoie une notification système à chaque utilisateur."
+          },
+          "WHATS_NEW": {
+            "label": "Quoi de neuf après une mise à jour",
+            "description": "Un résumé des nouvelles fonctionnalités lors de votre première visite après la mise à niveau de TestPlanIt."
+          },
+          "USER_REGISTERED": {
+            "label": "Nouvelles inscriptions d'utilisateur",
+            "description": "Un nouvel utilisateur s'inscrit via le formulaire, SSO ou SAML."
+          },
+          "LLM_BUDGET_ALERT": {
+            "label": "Alertes de budget IA",
+            "description": "Les dépenses LLM dépassent un seuil budgétaire pour la période de facturation."
           }
         },
         "success": {
@@ -3127,6 +3238,13 @@
       "modifierHintMac": "Maintenez ⇧ pour déplacer ou ⌥ pour copier tout en faisant glisser pour ignorer ce menu.",
       "modifierHintWin": "Maintenez la touche Maj enfoncée pour déplacer ou la touche Ctrl pour copier tout en faisant glisser pour ignorer ce menu.",
       "dropZoneReorder": "Déposer pour réorganiser",
+      "dropZoneReorderBlockedSort": "Supprimez le tri pour réorganiser les cas dans ce dossier",
+      "dropZoneReorderBlockedSortMac": "Supprimez le tri pour réorganiser — maintenez ⌥ enfoncée pour copier dans ce dossier",
+      "dropZoneReorderBlockedSortWin": "Supprimez le tri pour réorganiser — maintenez Ctrl enfoncée pour copier dans ce dossier",
+      "dropZoneReorderBlockedSearch": "Effacez la recherche pour réorganiser les cas dans ce dossier",
+      "dropZoneReorderBlockedSearchMac": "Effacez la recherche pour réorganiser — maintenez ⌥ enfoncée pour copier dans ce dossier",
+      "dropZoneReorderBlockedSearchWin": "Effacez la recherche pour réorganiser — maintenez Ctrl enfoncée pour copier dans ce dossier",
+      "dropZoneCopyHere": "Déposer pour copier dans ce dossier",
       "dropZoneFolder": "Déposez sur un dossier pour l'imbriquer, ou entre les dossiers pour réorganiser",
       "dropZoneTreeMac": "Déposer sur un dossier — maintenez ⇧ pour déplacer, ⌥ pour copier",
       "dropZoneTreeWin": "Déposer sur un dossier — maintenez Maj pour déplacer, Ctrl pour copier",
@@ -4087,6 +4205,13 @@
       "lockError": "Échec du verrouillage de la composition de l'exécution",
       "unlockError": "Échec du déverrouillage de la composition de l'exécution",
       "addBlocked": "La composition de cette exécution est verrouillée, les cas de test ne peuvent donc pas être ajoutés. Déverrouillez-la d'abord pour modifier l'ensemble des cas."
+    },
+    "dependencies": {
+      "blocked": "Bloqué",
+      "blockedBy": "Bloqué jusqu'à {count, plural, one {ce cas réussit} other {ces # cas réussissent}} dans cette exécution :",
+      "blockedNotice": "Ce cas de test ne peut pas être exécuté jusqu'à {count, plural, one {le cas dont il dépend a} other {tous les # cas dont il dépend ont}} réussi dans cette exécution.",
+      "notInRun": "{count, plural, one {# cas dont celui-ci dépend est} other {# cas dont celui-ci dépend sont}} absents de cette exécution et ne bloqueront pas l'exécution :",
+      "unblocked": "Tous les cas dont celui-ci dépend ont réussi dans cette exécution."
     },
     "distribute": {
       "title": "Répartir les affectations",
@@ -6202,6 +6327,10 @@
         "mantisbt": {
           "name": "MantisBT",
           "description": "Connectez-vous à une instance MantisBT auto-hébergée pour le suivi des problèmes"
+        },
+        "clickup": {
+          "name": "ClickUp",
+          "description": "Connectez-vous à ClickUp pour le suivi des tâches et la gestion de projet"
         }
       },
       "filterPlaceholder": "Intégrations de filtres...",
@@ -6312,7 +6441,13 @@
         "mantisBTApiKeyHelp": "Créez-en un dans les paramètres de votre compte MantisBT → Jetons API",
         "mantisBTUrl": "URL MantisBT",
         "mantisBTUrlPlaceholder": "https://mantisbt.example.com",
-        "mantisBTUrlHelp": "L'URL de base de votre instance MantisBT"
+        "mantisBTUrlHelp": "L'URL de base de votre instance MantisBT",
+        "clickupTeamId": "ID d'équipe ClickUp (Workspace)",
+        "clickupTeamIdPlaceholder": "par exemple 9013456789",
+        "clickupTeamIdHelp": "Trouvé dans l'URL ClickUp après app.clickup.com/",
+        "clickupListId": "ID de liste ClickUp par défaut",
+        "clickupListIdPlaceholder": "par exemple 901234567",
+        "clickupListIdHelp": "La liste dans laquelle les tâches sont créées par défaut ; peut être remplacée par problème"
       },
       "authType": {
         "api_key": "Clé API",
@@ -6820,10 +6955,6 @@
         "userRegisteredMessageSso": "{userName} ({userEmail}) s'est enregistré via SSO",
         "userRegisteredMessageForm": "{userName} ({userEmail}) s'est inscrit via le formulaire d'inscription",
         "viewUserList": "Afficher la liste des utilisateurs",
-        "reviewGeneratedCases": "Examiner les cas de test générés",
-        "generateFromUrlCompleteTitle": "Pages explorées avec succès",
-        "generateFromUrlCompleteMessage": "{pages, plural, one {# page} other {# pages}} extraites de {url} dans le projet «{projectName}». Cliquez pour consulter et générer des cas de test.",
-        "generateFromUrlFailedTitle": "Échec de l'exploration de l'URL",
         "reviewRequestedTitle": "Demande d'avis",
         "reviewApprovedTitle": "Avis approuvé",
         "reviewChangesRequestedTitle": "Modifications demandées",
@@ -6864,7 +6995,12 @@
         "runReadyToCompleteTitle": "Cycle de test prêt à être terminé",
         "runReadyToCompleteExecuted": "{count, plural, one {Le cas # a été exécuté.} =2 {Les deux cas ont été exécutés.} other {Tous les # cas ont été exécutés.}}",
         "runReadyToCompleteEmailMessage": "{caseCount, plural, one {Le cas # a été exécuté} =2 {Les deux cas ont été exécutés} other {Tous les # cas ont été exécutés}} dans le cycle de test « {testRunName} » (projet « {projectName} »). Le cycle est prêt à être marqué comme terminé.",
-        "runReadyToCompleteReason": "Vous recevez ceci parce que vous pouvez terminer les cycles de test dans ce projet."
+        "runReadyToCompleteReason": "Vous recevez ceci parce que vous pouvez terminer les cycles de test dans ce projet.",
+        "runCaseUnblockedTitle": "Cas de test prêt à être exécuté",
+        "runCaseUnblockedPrerequisitePassed": "{prerequisiteName} réussi, le cas qui vous est assigné n'est donc plus bloqué :",
+        "runCaseUnblockedEmailMessage": "\"{testCaseName}\" dans la série de tests \"{testRunName}\" (projet \"{projectName}\") n'est plus bloqué : \"{prerequisiteName}\" a réussi. Il vous est assigné et prêt à être exécuté.",
+        "runCaseUnblockedReason": "Vous recevez ceci parce que le cas de test vous est assigné.",
+        "inTestRun": "dans la série de tests"
       }
     },
     "issues": {
@@ -7477,6 +7613,11 @@
     "alreadyLinked": "Ce dossier est déjà lié.",
     "cannotLinkSelf": "Impossible de lier un cas à lui-même.",
     "circularLink": "Lien circulaire détecté.",
+    "dependsOn": "Dépend de",
+    "blocks": "Bloque",
+    "dependsOnOption": "Dépend de — ce cas nécessite que le cas sélectionné réussisse en premier",
+    "blocksOption": "Bloque — le cas sélectionné nécessite que ce cas réussisse en premier",
+    "dependencyHint": "Avec l'application des dépendances activée, un cas d'une série de tests ne peut pas être exécuté tant que les cas dont il dépend n'ont pas réussi dans cette série.",
     "failedToCreate": "Impossible de créer le lien.",
     "confirmRemoveLink": "Êtes-vous sûr de vouloir supprimer ce lien ?",
     "DEPENDS_ON": "Dépendance",
@@ -7741,6 +7882,8 @@
       "redmineUrl": "## URL Redmine\nL'URL de base de votre instance Redmine.\n\n- Format : https://redmine.example.com\n- N'incluez pas /issues ni d'autres chemins\n- Doit être accessible depuis ce serveur",
       "mantisBTApiKey": "## Jeton API MantisBT\nVotre jeton API REST personnel.\n\n- Créez-en un dans les paramètres de votre compte MantisBT → Jetons API\n- Limité aux autorisations de votre utilisateur ; utilisez un compte de service pour les intégrations partagées",
       "mantisBTUrl": "## URL MantisBT\nL'URL de base de votre instance MantisBT.\n\n- Format : https://mantisbt.example.com\n- N'incluez pas /api/rest ni d'autres chemins\n- Doit être accessible depuis ce serveur",
+      "clickupTeamId": "## ID d'équipe ClickUp (espace de travail)\nL'ID numérique de l'équipe ClickUp (également appelée espace de travail) à laquelle les tâches appartiennent.\n\n- Trouvé dans l'URL ClickUp : app.clickup.com/{teamId}/...\n- Requis pour parcourir les espaces/dossiers/listes lors de la sélection d'un projet",
+      "clickupListId": "## ID de liste ClickUp par défaut\nLa liste dans laquelle les nouvelles tâches sont créées par défaut.\n\n- Trouvé dans l'URL ClickUp ou via l'option \"Copier le lien\" de la liste\n- Facultatif — une liste spécifique peut être choisie par problème à la place",
       "githubBaseUrl": "## URL de base de l'API\nRacine complète de l'API GitHub pour GitHub Enterprise Server.\n\n- Se termine généralement par /api/v3\n- Laissez ce champ vide pour utiliser api.github.com\n- Doit être accessible depuis ce serveur"
     },
     "config": {
@@ -8370,7 +8513,7 @@
           "description": "Création, résolution et analyse d'impact des problèmes"
         },
         "automationTrends": {
-          "label": "Tendances en matière d'automatisation",
+          "label": "Tendance des cas de test automatisés",
           "description": "Suivre les progrès de l'automatisation semaine après semaine par priorité"
         },
         "flakyTests": {
@@ -8416,6 +8559,10 @@
         "codePinCoverage": {
           "label": "Couverture des épingles de code",
           "description": "Où se trouvent les épingles de code, par dépôt et répertoire, et où les modifications récentes n'ont pas été couvertes"
+        },
+        "resultsTrend": {
+          "label": "Tendance du taux d'échec des résultats de test",
+          "description": "Les taux de réussite et d'échec des résultats de test au fil du temps, et si le taux d'échec s'améliore ou s'aggrave"
         }
       },
       "flakyTests": {
@@ -8735,7 +8882,7 @@
           "description": "Utilisation des jetons, coût et fiabilité des fonctionnalités LLM entre les projets"
         },
         "automationTrends": {
-          "label": "Tendances en matière d'automatisation inter-projets",
+          "label": "Tendance inter-projets des cas de test automatisés",
           "description": "Suivre l'avancement de l'automatisation semaine après semaine, par priorité, pour l'ensemble des projets."
         },
         "flakyTests": {
@@ -8769,6 +8916,10 @@
         "codePinCoverage": {
           "label": "Couverture des épingles de code inter-projets",
           "description": "Couverture des épingles de code dans tous les projets ayant l'analyse d'impact activée"
+        },
+        "resultsTrend": {
+          "label": "Tendance inter-projets du taux d'échec des résultats de test",
+          "description": "Les taux de réussite et d'échec des résultats de test au fil du temps par projet, et si le taux d'échec s'améliore ou s'aggrave"
         }
       },
       "folderDescendants": {
@@ -8832,6 +8983,79 @@
         },
         "chart": {
           "byDirectory": "Épingles et fichiers non couverts par répertoire"
+        }
+      },
+      "resultsTrend": {
+        "period": "Période",
+        "runSource": "Types de résultats",
+        "runSources": {
+          "automated": "Automatisé",
+          "manual": "Manuel"
+        },
+        "showPassRate": "Afficher le taux de réussite",
+        "showPassRateHelp": "Tracez le taux de réussite sur l'axe droit du graphique, avec sa propre tendance ajustée, et ajoutez-le aux chiffres en gras. Désactivé par défaut : le rapport concerne le taux d'échec.",
+        "showFailRate": "Afficher le taux d'échec",
+        "showFailRateHelp": "Tracez le taux d'échec sur l'axe droit du graphique, avec sa tendance ajustée, et affichez-le dans les chiffres en gras. Activé par défaut.",
+        "showCounts": "Afficher les totaux des résultats",
+        "showCountsHelp": "Tracez les totaux réussis, échoués, ignorés et autres sous forme de barres empilées sur le graphique à côté des taux. Désactivé par défaut : le rapport concerne les taux.",
+        "countSkipped": "Compter les résultats ignorés dans les taux",
+        "countSkippedHelp": "Les résultats ignorés sont laissés hors du dénominateur du taux de réussite et d'échec à moins que cela soit activé. Les autres statuts restent toujours.",
+        "includeAborted": "Inclure les séries abandonnées",
+        "includeAbortedHelp": "Les séries se trouvant dans l'état de série abandonnée du projet sont comptées à moins que cela ne soit désactivé.",
+        "latestAttemptOnly": "Dernière tentative uniquement",
+        "latestAttemptOnlyHelp": "Comptez un résultat par cas par série, sa dernière tentative, au lieu de chaque tentative importée.",
+        "failRate": "Taux d'échec",
+        "skipped": "Ignoré",
+        "other": "Autre",
+        "inProgress": "en cours",
+        "verdict": {
+          "better": "Le taux d'échec s'améliore",
+          "worse": "Le taux d'échec s'aggrave",
+          "steady": "Le taux d'échec reste stable",
+          "notEnough": "Pas assez de périodes complètes pour identifier une tendance pour le moment.",
+          "notEnoughDetail": "La tendance nécessite au moins deux périodes complètes avec des résultats.",
+          "detail": "La ligne de tendance s'étend de {start} à {end}, un changement de {change} points sur {count} {grouping, select, daily {jours} weekly {semaines} monthly {mois} quarterly {trimestres} other {années}} complets."
+        },
+        "stats": {
+          "lastComplete": "Dernière période complète ({period}), comparée à la moyenne des périodes complètes précédentes.",
+          "results": "Résultats exécutés",
+          "runs": "Séries",
+          "deltaPoints": "{change} pts par rapport aux {count, plural, one {# période} other {# périodes}} précédentes",
+          "deltaPercent": "{change}% par rapport aux {count, plural, one {# période} other {# périodes}} précédentes",
+          "noBaseline": "Rien de précédent pour comparer"
+        },
+        "chart": {
+          "allProjects": "Tous les projets sélectionnés",
+          "period": "{grouping, select, weekly {Semaine du {date}} other {{date}}}",
+          "partialPeriod": "{grouping, select, weekly {Semaine du {period}} other {{period}}} (en cours)",
+          "rateTrend": "Tendance {rate}"
+        },
+        "heatmap": {
+          "title": "Taux d'échec par projet et période",
+          "help": "Chaque cellule est le taux d'échec du projet pour la période ; l'ombrage atteint l'intensité maximale à 35 %. La colonne de tendance est le changement dans la ligne de taux d'échec ajustée sur les périodes complètes. * marque la période en cours.",
+          "trend": "Tendance"
+        },
+        "trend": {
+          "points": "{change} pts"
+        },
+        "detail": {
+          "title": "Résultats et taux par période"
+        },
+        "method": {
+          "title": "Comment cela est compté",
+          "runSource": {
+            "automated": "Séries automatisées uniquement : tous les types de séries sauf manuel, avec leurs résultats importés. Une série appartient à la période au cours de laquelle elle a été créée.",
+            "manual": "Séries manuelles uniquement, avec les résultats enregistrés dessus. Une série appartient à la période au cours de laquelle elle a été créée.",
+            "both": "Chaque série : séries automatisées avec leurs résultats importés et séries manuelles avec les résultats enregistrés dessus. Une série appartient à la période au cours de laquelle elle a été créée."
+          },
+          "periods": "{grouping, select, daily {jours} weekly {semaines (commençant le lundi)} monthly {mois} quarterly {trimestres} other {années}} sont coupés dans {timezone}. L'un actuel est en cours et est laissé de côté de la tendance et des chiffres en gras.",
+          "everyAttempt": "Un test réessayé compte une fois par tentative.",
+          "latestAttempt": "Seule la dernière tentative de chaque cas dans une série est comptée.",
+          "skippedExcluded": "Les résultats ignorés (un statut qui est terminé sans passer ni échouer) sont laissés hors des taux de réussite et d'échec ; les autres statuts restent.",
+          "skippedCounted": "Les résultats ignorés sont comptés dans les taux de réussite et d'échec.",
+          "abortedIncluded": "Les séries dans l'état de série abandonnée sont incluses.",
+          "abortedExcluded": "Les séries dans l'état de série abandonnée sont laissées de côté.",
+          "trend": "La tendance est une ligne droite ajustée au taux d'échec sur les périodes complètes avec résultats. Un changement de plus d'un point d'un côté ou de l'autre le qualifie de meilleur ou pire."
         }
       }
     },

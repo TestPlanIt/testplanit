@@ -694,6 +694,8 @@
       "failedToDeleteRepository": "Failed to delete repository",
       "permissionDenied": "You do not have permission to access this page.",
       "resultSubmitPermissionDenied": "You can’t submit results for this case. Ask a project admin to assign it to you.",
+      "dependenciesNotPassed": "Blocked by dependencies",
+      "dependenciesNotPassedDescription": "This test case can't be executed until {count, plural, =0 {the cases it depends on have} one {the case it depends on has} other {all # cases it depends on have}} passed in this run.",
       "justificationRequired": "Justification required",
       "justificationRequiredDescription": "Flipping a completed result to a different outcome requires Result Details explaining the change.",
       "requiredFieldMissing": "A required result field is missing a value.",
@@ -2191,6 +2193,13 @@
           "disabledToast": "Test Runs will no longer auto-lock their composition",
           "saveError": "Failed to update the composition auto-lock setting"
         },
+        "caseDependencies": {
+          "label": "Enforce test case dependencies in test runs",
+          "description": "When enabled, a test case in a run is blocked until every case it depends on (a \"Depends on\" link) has passed in that same run. Blocked cases are marked in the run and results for them are refused. When the last dependency passes, the case's assignee is notified that it is ready. Dependencies that aren't in the run don't block.",
+          "enabledToast": "Test case dependencies will be enforced in test runs",
+          "disabledToast": "Test case dependencies will no longer be enforced",
+          "saveError": "Failed to update the dependency enforcement setting"
+        },
         "editWindow": {
           "label": "Result edit window",
           "description": "How long after a result is recorded it can still be edited in place. After the window closes, corrections require a new attempt. System administrators can always edit.",
@@ -2915,6 +2924,10 @@
           "SESSION_ASSIGNED": {
             "label": "Session assigned to me",
             "description": "A session is created with you as its assignee, or reassigned to you."
+          },
+          "RUN_CASE_UNBLOCKED": {
+            "label": "Assigned case unblocked",
+            "description": "A test case assigned to you in a run becomes executable because the cases it depends on have passed."
           },
           "COMMENT_MENTION": {
             "label": "Mentions in comments",
@@ -4192,6 +4205,13 @@
       "lockError": "Failed to lock the run composition",
       "unlockError": "Failed to unlock the run composition",
       "addBlocked": "This run's composition is locked, so test cases can't be added. Unlock it first to change the case set."
+    },
+    "dependencies": {
+      "blocked": "Blocked",
+      "blockedBy": "Blocked until {count, plural, one {this case passes} other {these cases pass}} in this run:",
+      "blockedNotice": "This test case can't be executed until {count, plural, one {the case it depends on has} other {all # cases it depends on have}} passed in this run.",
+      "notInRun": "{count, plural, one {# case this one depends on is} other {# cases this one depends on are}} not in this run and won't block execution:",
+      "unblocked": "All cases this one depends on have passed in this run."
     },
     "distribute": {
       "title": "Distribute assignments",
@@ -6975,7 +6995,12 @@
         "runReadyToCompleteTitle": "Test Run Ready to Complete",
         "runReadyToCompleteExecuted": "{count, plural, one {# case has} =2 {Both cases have} other {All # cases have}} been executed.",
         "runReadyToCompleteEmailMessage": "{caseCount, plural, one {# case has} =2 {Both cases have} other {All # cases have}} been executed in test run \"{testRunName}\" (project \"{projectName}\"). The run is ready to be marked completed.",
-        "runReadyToCompleteReason": "You are receiving this because you can complete test runs in this project."
+        "runReadyToCompleteReason": "You are receiving this because you can complete test runs in this project.",
+        "runCaseUnblockedTitle": "Test Case Ready to Execute",
+        "runCaseUnblockedPrerequisitePassed": "{prerequisiteName} passed, so this case assigned to you is no longer blocked:",
+        "runCaseUnblockedEmailMessage": "\"{testCaseName}\" in test run \"{testRunName}\" (project \"{projectName}\") is no longer blocked: \"{prerequisiteName}\" passed. It is assigned to you and ready to execute.",
+        "runCaseUnblockedReason": "You are receiving this because the test case is assigned to you.",
+        "inTestRun": "in test run"
       }
     },
     "issues": {
@@ -7588,6 +7613,11 @@
     "alreadyLinked": "This case is already linked.",
     "cannotLinkSelf": "Cannot link a case to itself.",
     "circularLink": "Circular link detected.",
+    "dependsOn": "Depends on",
+    "blocks": "Blocks",
+    "dependsOnOption": "Depends on — this case requires the selected case to pass first",
+    "blocksOption": "Blocks — the selected case requires this case to pass first",
+    "dependencyHint": "With dependency enforcement on, a case in a test run can't be executed until the cases it depends on have passed in that run.",
     "failedToCreate": "Failed to create link.",
     "confirmRemoveLink": "Are you sure you want to remove this link?",
     "DEPENDS_ON": "Dependency",

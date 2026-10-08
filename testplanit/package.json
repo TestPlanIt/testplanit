@@ -20,7 +20,7 @@
     "dev": "next dev",
     "dev:testdb": "dotenv -e .env.test -- pnpm dev",
     "postinstall": "zenstack format --schema schema.zmodel && zenstack generate --schema schema.zmodel -o zenstack && tsx scripts/generate-openapi.ts",
-    "lint": "eslint . && pnpm type-check && pnpm check:case-status",
+    "lint": "NODE_OPTIONS='--max-old-space-size=8192' eslint . && pnpm type-check && pnpm check:case-status",
     "type-check": "next typegen && NODE_OPTIONS='--max-old-space-size=8192' tsc --noEmit --incremental false",
     "format": "prettier --write --ignore-path .gitignore --ignore-path .prettierignore .",
     "format:check": "prettier --check --ignore-path .gitignore --ignore-path .prettierignore .",

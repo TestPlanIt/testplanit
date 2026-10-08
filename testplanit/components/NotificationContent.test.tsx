@@ -52,6 +52,10 @@ describe("NotificationContent", () => {
     const mockT = vi.fn((key: string, params?: any) => {
       const translations: Record<string, string> = {
         testCaseAssignmentTitle: "New Test Case Assignment",
+        runCaseUnblockedTitle: "Test Case Ready to Execute",
+        runCaseUnblockedPrerequisitePassed:
+          "{prerequisiteName} passed, so this case assigned to you is no longer blocked:",
+        inTestRun: "in test run",
         multipleTestCaseAssignmentTitle: "Multiple Test Cases Assigned",
         sessionAssignmentTitle: "New Session Assignment",
         systemAnnouncementTitle: "System Announcement",
@@ -318,6 +322,62 @@ describe("NotificationContent", () => {
 
       expect(screen.getByText("stored fallback message")).toBeInTheDocument();
       // No run link when projectId/testRunId are missing
+      expect(screen.queryByRole("link")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("Run Case Unblocked", () => {
+    it("names the prerequisite and links to the case in its run", () => {
+      const notification = {
+        id: "unblocked-1",
+        type: "RUN_CASE_UNBLOCKED",
+        title: "Test case ready to execute",
+        message: "stored fallback message",
+        data: {
+          projectId: 3,
+          projectName: "Telco",
+          testRunId: 50,
+          testRunName: "Order to billing",
+          testRunCaseId: 20,
+          testCaseId: 2,
+          testCaseName: "Verify provisioning",
+          prerequisiteCaseName: "Create order",
+          unblockedById: "crm",
+        },
+      };
+
+      render(<NotificationContent notification={notification} />);
+
+      expect(
+        screen.getByTestId("notification-run-case-unblocked")
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText("Test Case Ready to Execute")
+      ).toBeInTheDocument();
+      expect(screen.getByText(/Create order passed/)).toBeInTheDocument();
+      expect(screen.getByText("Verify provisioning")).toBeInTheDocument();
+      expect(screen.getByText("Order to billing")).toBeInTheDocument();
+      expect(screen.getByText("Telco")).toBeInTheDocument();
+      expect(screen.getByRole("link")).toHaveAttribute(
+        "href",
+        "/projects/runs/3/50?selectedCase=2"
+      );
+    });
+
+    it("falls back to the stored title and message when data is incomplete", () => {
+      render(
+        <NotificationContent
+          notification={{
+            id: "unblocked-2",
+            type: "RUN_CASE_UNBLOCKED",
+            title: "Test case ready to execute",
+            message: "stored fallback message",
+            data: {},
+          }}
+        />
+      );
+
+      expect(screen.getByText("stored fallback message")).toBeInTheDocument();
       expect(screen.queryByRole("link")).not.toBeInTheDocument();
     });
   });

@@ -172,3 +172,34 @@ export function isAlreadyPendingError(
     (/entityType/.test(text) && /entityId/.test(text))
   );
 }
+
+/**
+ * Thrown by the dependency gate (`lib/services/dependencyGate.ts`) when a
+ * result is recorded for a run case whose `DEPENDS_ON` prerequisites in the
+ * same run have not all passed. Carries the blocking prerequisites so the
+ * client can name them.
+ */
+export class DependencyGateError extends Error {
+  readonly code = "DEPENDENCIES_NOT_PASSED" as const;
+
+  constructor(
+    public readonly testRunId: number,
+    public readonly repositoryCaseId: number,
+    public readonly blockedBy: ReadonlyArray<{
+      testRunCaseId: number;
+      repositoryCaseId: number;
+      name: string | null;
+    }>
+  ) {
+    super(
+      `Test case ${repositoryCaseId} in run ${testRunId} is blocked until its prerequisites pass`
+    );
+    this.name = "DependencyGateError";
+  }
+}
+
+export function isDependencyGateError(
+  err: unknown
+): err is DependencyGateError {
+  return err instanceof DependencyGateError;
+}

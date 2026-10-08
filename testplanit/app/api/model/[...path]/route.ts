@@ -100,6 +100,7 @@ import { syncRepositoryCaseToElasticsearch } from "~/services/repositoryCaseSync
 import { syncSessionToElasticsearch } from "~/services/sessionSearch";
 import { syncSharedStepToElasticsearch } from "~/services/sharedStepSearch";
 import { syncTestRunToElasticsearch } from "~/services/testRunSearch";
+import { findBlockingPrerequisites } from "~/lib/services/dependencyGate";
 
 // Use AsyncLocalStorage for request-scoped API token auth (thread-safe)
 type ApiAuthContext = { userId: string; email?: string; name?: string } | null;
@@ -988,6 +989,84 @@ async function handleRequest(
               e
             );
           }
+        }
+      }
+    }
+
+    // Dependency-gate parity for direct `testRunResults` writes (the public
+    // API client records results this way, bypassing submit-result). The gate
+    // proper runs inside the submit-result transaction; this route cannot
+    // share a transaction with ZenStack's handler, so here it is a read-only
+    // preflight with the same structured answer. Covers create, createMany
+    // and upsert; a nested create through another model, raw SQL, or any
+    // other writer is caught by the tpl_dependency_gate_guard trigger
+    // (scripts/apply-triggers.ts), which is the authoritative backstop.
+    if (
+      isMutation &&
+      parsedPath &&
+      parsedPath.model === "testRunResults" &&
+      ["create", "createMany", "upsert"].includes(parsedPath.operation)
+    ) {
+      const body = requestBody as {
+        data?: unknown;
+        create?: Record<string, unknown>;
+      } | null;
+      const payloads: Array<Record<string, unknown>> =
+        parsedPath.operation === "upsert"
+          ? body?.create
+            ? [body.create]
+            : []
+          : Array.isArray(body?.data)
+            ? (body.data as Array<Record<string, unknown>>)
+            : body?.data && typeof body.data === "object"
+              ? [body.data as Record<string, unknown>]
+              : [];
+      const runCaseIds = new Set<number>();
+      for (const data of payloads) {
+        const rawRunCaseId =
+          (data.testRunCaseId as number | string | undefined) ??
+          (
+            data.testRunCase as
+              { connect?: { id?: number | string } } | undefined
+          )?.connect?.id;
+        const runCaseId =
+          typeof rawRunCaseId === "number"
+            ? rawRunCaseId
+            : typeof rawRunCaseId === "string" && rawRunCaseId !== ""
+              ? Number(rawRunCaseId)
+              : NaN;
+        if (Number.isFinite(runCaseId)) runCaseIds.add(runCaseId);
+      }
+      for (const runCaseId of runCaseIds) {
+        const runCase = await baseDb.testRunCases.findUnique({
+          where: { id: runCaseId },
+          select: {
+            testRunId: true,
+            repositoryCaseId: true,
+            testRun: {
+              select: {
+                project: { select: { enforceCaseDependencies: true } },
+              },
+            },
+          },
+        });
+        if (!runCase?.testRun.project.enforceCaseDependencies) continue;
+        const blockedBy = await findBlockingPrerequisites(baseDb, {
+          testRunId: runCase.testRunId,
+          repositoryCaseId: runCase.repositoryCaseId,
+        });
+        if (blockedBy.length > 0) {
+          return NextResponse.json(
+            {
+              error: {
+                code: "DEPENDENCIES_NOT_PASSED",
+                message:
+                  "This test case is blocked until its prerequisites in this run have passed",
+                blockedBy,
+              },
+            },
+            { status: 409 }
+          );
         }
       }
     }

@@ -694,6 +694,8 @@
       "failedToDeleteRepository": "删除存储库失败",
       "permissionDenied": "您没有权限访问此页面。",
       "resultSubmitPermissionDenied": "您无法提交此案例的结果。请联系项目管理员将其分配给您。",
+      "dependenciesNotPassed": "被依赖项阻止",
+      "dependenciesNotPassedDescription": "在此运行中，此测试用例必须等到 {count, plural, =0 {它依赖的用例都} one {它依赖的用例} other {它依赖的所有 # 个用例都}} 通过后才能执行。",
       "justificationRequired": "需要提供理由",
       "justificationRequiredDescription": "将已完成的结果更改为不同的结果需要结果详情来解释更改。",
       "requiredFieldMissing": "必填结果字段缺少值。",
@@ -1573,6 +1575,9 @@
           },
           "mantisbt": {
             "description": "连接到自托管的 MantisBT 实例以进行问题跟踪。"
+          },
+          "clickup": {
+            "description": "连接到 ClickUp 进行任务跟踪和项目管理。"
           }
         }
       },
@@ -1844,6 +1849,15 @@
         "setupStepsMantisbtStep2": "在插件配置中，选择问题创建和问题更新事件。",
         "setupStepsMantisbtStep3": "将上方的 URL 粘贴为 webhook 目标并保存。",
         "setupStepsMantisbtStep4": "在 MantisBT 中创建或更新一个问题；关联问题的状态将在此处同步。",
+        "inboundChooserClickup": "ClickUp",
+        "inboundClickupTitle": "ClickUp 入站 webhook",
+        "inboundClickupScopeHint": "ClickUp <code>taskStatusUpdated</code> 事件会更新关联的 TestPlanIt 问题。其他任务事件可被接受但不会更新问题。",
+        "inboundClickupRegisterHint": "ClickUp 没有 webhook 设置页面：webhook 通过其 API 创建，ClickUp 选择签名密钥。将密钥留空，TestPlanIt 将使用您的 ClickUp 授权在 ClickUp 中为关联的列表注册此 webhook。",
+        "inboundClickupSecret": "Webhook 密钥（可选）",
+        "inboundClickupSecretHelp": "仅在您使用 ClickUp 的 Create Webhook API 自己创建 webhook 时需要：粘贴 ClickUp 返回的密钥。静止时加密存储。",
+        "setupStepsClickupStep1": "如果您将密钥留空，TestPlanIt 已为关联的列表在 ClickUp 中注册了此 webhook — ClickUp 中无需配置任何内容。",
+        "setupStepsClickupStep2": "如果您通过 ClickUp 的 Create Webhook API 自己注册了 webhook，请确保其端点是下面的 URL，并将其订阅到 taskStatusUpdated 事件。",
+        "setupStepsClickupStep3": "使用下面的",
         "codeRepos": {
           "empty": "没有为影响分析连接任何存储库。请先<link>连接一个</link>。",
           "unsupported": "{provider} 存储库无法向 TestPlanIt 发送 Webhook。",
@@ -2087,7 +2101,7 @@
           "pathLabel": "路径",
           "patternLabel": "模式",
           "previewFiles": "预览文件",
-          "rootHint": "将路径留空或输入 . 以从存储库根目录开始；路径 . 与模式 **/* 包括每个文件。",
+          "rootHint": "将路径留空或输入 . 以从存储库根目录开始；路径 . 与模式 **/* 包含每个文件。",
           "scanningRepo": "正在扫描存储库文件… ({seconds}s)",
           "title": "路径模式",
           "truncatedBadge": "结果可能不完整（受提供商限制）"
@@ -2179,6 +2193,13 @@
           "disabledToast": "测试运行将不再自动锁定其组成",
           "saveError": "更新组成自动锁定设置失败"
         },
+        "caseDependencies": {
+          "label": "在测试运行中强制执行测试用例依赖关系",
+          "description": "启用后，测试运行中的测试用例将被阻止，直到它所依赖的每个用例（",
+          "enabledToast": "测试用例依赖关系将在测试运行中强制执行",
+          "disabledToast": "测试用例依赖关系将不再被强制执行",
+          "saveError": "更新依赖关系强制设置失败"
+        },
         "editWindow": {
           "label": "结果编辑窗口",
           "description": "结果记录后，仍可在一段时间内进行编辑。窗口关闭后，修改需要重新尝试。系统管理员始终可以进行编辑。",
@@ -2233,7 +2254,7 @@
           "branchesFallbackHint": "改为键入分支名称。"
         },
         "pathPatterns": {
-          "description": "要包括的应用程序文件。每行组合一个基本路径和一个 glob 模式。示例：path=src + pattern=**/* 包括 src 下的所有内容。",
+          "description": "要包含的应用程序文件。每行结合一个基本路径和一个glob模式。示例：path=src + pattern=**/* 包含src下的所有内容。",
           "pathPlaceholder": "src"
         },
         "cache": {
@@ -2876,11 +2897,101 @@
           "label": "通知模式",
           "useGlobal": "使用全局设置"
         },
-        "options": {
-          "title": "其他选项",
-          "email": {
-            "label": "电子邮件通知",
-            "description": "通过电子邮件接收通知"
+        "typeSection": {
+          "title": "通知我什么",
+          "description": "默认情况下，所有类型的通知都是打开的。关闭您不想要的通知。上面的通知模式仍然决定您如何被通知。",
+          "modeNoneNote": "当您的通知模式为无时，不会传送任何内容。一旦您选择其他模式，您在此处的选择将立即应用。",
+          "locked": "始终开启",
+          "resetToDefaults": "重置为默认值",
+          "adminOnly": "已发送给管理员"
+        },
+        "groups": {
+          "assignments": "任务分配",
+          "comments": "评论",
+          "reviews": "评论",
+          "runsAndMilestones": "运行和里程碑",
+          "sharing": "共享",
+          "aiAndJobs": "AI 和作业",
+          "integrations": "集成",
+          "system": "系统",
+          "administration": "管理"
+        },
+        "types": {
+          "WORK_ASSIGNED": {
+            "label": "分配给我的工作",
+            "description": "测试运行用例单独或批量分配给您。"
+          },
+          "SESSION_ASSIGNED": {
+            "label": "分配给我的会话",
+            "description": "使用您作为受支配人创建会话，或重新分配给您。"
+          },
+          "RUN_CASE_UNBLOCKED": {
+            "label": "分配的用例已解除阻止",
+            "description": "分配给您在运行中的测试用例变得可执行，因为它所依赖的用例已通过。"
+          },
+          "COMMENT_MENTION": {
+            "label": "评论中的提及",
+            "description": "有人在关于用例、运行、会话、里程碑或评论的评论中 @-提及您。"
+          },
+          "REVIEW_REQUESTED": {
+            "label": "请求审查",
+            "description": "从您或您担任的角色请求审查。"
+          },
+          "REVIEW_APPROVED": {
+            "label": "审查已批准",
+            "description": "审阅者批准了您的请求。"
+          },
+          "REVIEW_CHANGES_REQUESTED": {
+            "label": "请求更改",
+            "description": "审阅者要求对您的请求进行更改。"
+          },
+          "REVIEW_REJECTED": {
+            "label": "审查被拒绝",
+            "description": "审阅者拒绝了您的请求。"
+          },
+          "REVIEW_CANCELLED": {
+            "label": "审查已取消",
+            "description": "您被要求审查的请求被取消，或者正在审查的项目被删除。"
+          },
+          "REVIEW_REMINDER": {
+            "label": "审查提醒",
+            "description": "您欠的审查早于提醒阈值，或请求者对您进行提醒。"
+          },
+          "RUN_READY_TO_COMPLETE": {
+            "label": "测试运行准备完成",
+            "description": "运行中您可以完成的每个用例都有结果。"
+          },
+          "MILESTONE_DUE_REMINDER": {
+            "label": "里程碑截止日期提醒",
+            "description": "您参与的里程碑即将到期或已逾期。"
+          },
+          "SHARE_LINK_ACCESSED": {
+            "label": "共享链接已查看",
+            "description": "有人打开了您创建的启用了通知-查看的共享链接。"
+          },
+          "AI_STEPS_DERIVED": {
+            "label": "AI 步骤已推导",
+            "description": "您启动的 AI 步骤推导作业已编写步骤。"
+          },
+          "INTEGRATION_AUTH_EXPIRED": {
+            "label": "集成需要重新授权",
+            "description": "与集成的连接已过期或被撤销，必须重新连接。"
+          },
+          "SYSTEM_ANNOUNCEMENT": {
+            "label": "管理员公告",
+            "description": "管理员向每个用户发送系统通知。"
+          },
+          "WHATS_NEW": {
+            "label": "升级后的新功能",
+            "description": "在 TestPlanIt 升级后首次访问时新功能的摘要。"
+          },
+          "USER_REGISTERED": {
+            "label": "新用户注册",
+            "description": "新用户通过表单、SSO 或 SAML 注册。"
+          },
+          "LLM_BUDGET_ALERT": {
+            "label": "AI 预算警报",
+            "description": "LLM 支出跨越计费期间的预算阈值。"
           }
         },
         "success": {
@@ -3127,6 +3238,13 @@
       "modifierHintMac": "按住 ⇧ 移动或按住 ⌥ 复制，拖动即可跳过此菜单。",
       "modifierHintWin": "按住Shift键移动或按住Ctrl键复制，拖动即可跳过此菜单。",
       "dropZoneReorder": "放置以重新排序",
+      "dropZoneReorderBlockedSort": "删除排序以对此文件夹中的用例重新排序",
+      "dropZoneReorderBlockedSortMac": "删除排序以重新排序 — 按住 ⌥ 以复制到此文件夹",
+      "dropZoneReorderBlockedSortWin": "删除排序以重新排序 — 按住 Ctrl 以复制到此文件夹",
+      "dropZoneReorderBlockedSearch": "清除搜索以对此文件夹中的用例重新排序",
+      "dropZoneReorderBlockedSearchMac": "清除搜索以重新排序 — 按住 ⌥ 以复制到此文件夹",
+      "dropZoneReorderBlockedSearchWin": "清除搜索以重新排序 — 按住 Ctrl 以复制到此文件夹",
+      "dropZoneCopyHere": "拖放以复制到此文件夹",
       "dropZoneFolder": "拖放到文件夹上以嵌套，或拖放到文件夹之间以重新排序",
       "dropZoneTreeMac": "放置到文件夹 — 按住 ⇧ 移动，⌥ 复制",
       "dropZoneTreeWin": "放置到文件夹 — 按住 Shift 移动，Ctrl 复制",
@@ -4087,6 +4205,13 @@
       "lockError": "锁定运行组成失败",
       "unlockError": "解锁运行组成失败",
       "addBlocked": "此运行的组成已锁定，因此无法添加测试用例。请先解锁以更改用例集。"
+    },
+    "dependencies": {
+      "blocked": "已屏蔽",
+      "blockedBy": "屏蔽直到 {count, plural, one {此用例通过} other {这些用例通过}} 在此运行中：",
+      "blockedNotice": "测试用例无法执行，直到 {count, plural, one {它所依赖的用例已} other {它所依赖的所有 # 个用例已}} 在此运行中通过。",
+      "notInRun": "{count, plural, one {此用例依赖的 # 个用例是} other {此用例依赖的 # 个用例是}} 不在此运行中，不会阻止执行：",
+      "unblocked": "此用例依赖的所有用例都在此运行中通过。"
     },
     "distribute": {
       "title": "分配任务",
@@ -6202,6 +6327,10 @@
         "mantisbt": {
           "name": "MantisBT",
           "description": "连接到自托管的 MantisBT 实例以进行问题跟踪"
+        },
+        "clickup": {
+          "name": "ClickUp",
+          "description": "连接到 ClickUp 进行任务跟踪和项目管理"
         }
       },
       "filterPlaceholder": "过滤器集成……",
@@ -6312,7 +6441,13 @@
         "mantisBTApiKeyHelp": "在您的 MantisBT 账户设置 →“API 令牌”下创建一个",
         "mantisBTUrl": "MantisBT URL",
         "mantisBTUrlPlaceholder": "https://mantisbt.example.com",
-        "mantisBTUrlHelp": "您的 MantisBT 实例的基本 URL"
+        "mantisBTUrlHelp": "您的 MantisBT 实例的基本 URL",
+        "clickupTeamId": "ClickUp 团队（工作区）ID",
+        "clickupTeamIdPlaceholder": "例如 9013456789",
+        "clickupTeamIdHelp": "在 ClickUp 网址中 app.clickup.com/ 之后找到",
+        "clickupListId": "默认 ClickUp 列表 ID",
+        "clickupListIdPlaceholder": "例如 901234567",
+        "clickupListIdHelp": "默认创建任务的列表；可以按问题覆盖"
       },
       "authType": {
         "api_key": "API密钥",
@@ -6820,10 +6955,6 @@
         "userRegisteredMessageSso": "{userName} ({userEmail}) 已通过 SSO 注册",
         "userRegisteredMessageForm": "{userName} ({userEmail}) 已通过注册表单注册",
         "viewUserList": "查看用户列表",
-        "reviewGeneratedCases": "审查生成的测试用例",
-        "generateFromUrlCompleteTitle": "页面抓取成功",
-        "generateFromUrlCompleteMessage": "{pages, plural, one {# 页} other {# 页数}} 已从项目“{projectName}中的 {url} 爬取。点击查看并生成测试用例。",
-        "generateFromUrlFailedTitle": "URL 爬取失败",
         "reviewRequestedTitle": "请求审查",
         "reviewApprovedTitle": "审核已获批准",
         "reviewChangesRequestedTitle": "请求更改",
@@ -6864,7 +6995,12 @@
         "runReadyToCompleteTitle": "测试运行已准备好完成",
         "runReadyToCompleteExecuted": "{count, plural, =2 {两个用例都已执行。} other {全部 # 个用例已执行。}}",
         "runReadyToCompleteEmailMessage": "{caseCount, plural, =2 {两个用例均已} other {全部 # 个用例均已}}在测试运行“{testRunName}”（项目“{projectName}”）中执行完成。该运行已准备好标记为已完成。",
-        "runReadyToCompleteReason": "您收到此通知是因为您可以完成此项目中的测试运行。"
+        "runReadyToCompleteReason": "您收到此通知是因为您可以完成此项目中的测试运行。",
+        "runCaseUnblockedTitle": "测试用例已准备好执行",
+        "runCaseUnblockedPrerequisitePassed": "{prerequisiteName} 已通过，因此分配给您的此用例不再被阻止：",
+        "runCaseUnblockedEmailMessage": "测试运行 \"{testRunName}\"（项目 \"{projectName}\")中的 \"{testCaseName}\" 不再被阻止：\"{prerequisiteName}\" 已通过。它已分配给您，准备好执行。",
+        "runCaseUnblockedReason": "您收到此消息是因为测试用例已分配给您。",
+        "inTestRun": "在测试运行中"
       }
     },
     "issues": {
@@ -7477,6 +7613,11 @@
     "alreadyLinked": "此案已关联。",
     "cannotLinkSelf": "无法将案件与其自身关联。",
     "circularLink": "检测到环状链接。",
+    "dependsOn": "依赖于",
+    "blocks": "阻止",
+    "dependsOnOption": "依赖于 — 此用例要求所选用例首先通过",
+    "blocksOption": "阻止 — 所选用例要求此用例首先通过",
+    "dependencyHint": "启用依赖关系强制后，测试运行中的用例在该运行中其依赖的用例通过之前无法执行。",
     "failedToCreate": "链接创建失败。",
     "confirmRemoveLink": "您确定要删除此链接吗？",
     "DEPENDS_ON": "依赖性",
@@ -7741,6 +7882,8 @@
       "redmineUrl": "## Redmine URL\n您的 Redmine 实例的基本 URL。\n\n- 格式：https://redmine.example.com\n- 请勿包含 /issues 或其他路径\n- 必须可从此服务器访问",
       "mantisBTApiKey": "## MantisBT API 令牌\n您的个人 REST API 令牌。\n\n- 在您的 MantisBT 账户设置 →“API 令牌”下创建一个\n- 权限范围限定于您用户的权限；共享集成请使用服务账户",
       "mantisBTUrl": "## MantisBT URL\n您的 MantisBT 实例的基本 URL。\n\n- 格式：https://mantisbt.example.com\n- 请勿包含 /api/rest 或其他路径\n- 必须可从此服务器访问",
+      "clickupTeamId": "## ClickUp 团队（工作区）ID\nClickUp 团队（也称为工作区）的任务所属的数字 ID。\n\n- 可在 ClickUp URL 中找到：app.clickup.com/{teamId}/...\n- 选择项目时需要浏览空间/文件夹/列表",
+      "clickupListId": "## 默认 ClickUp 列表 ID\n默认创建新任务的列表。\n\n- 可在 ClickUp URL 中找到，或通过列表的",
       "githubBaseUrl": "## API 基础 URL\nGitHub Enterprise Server 的完整 GitHub API 根目录。\n\n- 通常以 /api/v3 结尾\n- 留空则使用 api.github.com\n- 必须可从此服务器访问"
     },
     "config": {
@@ -8370,7 +8513,7 @@
           "description": "问题产生、解决和影响分析"
         },
         "automationTrends": {
-          "label": "自动化趋势",
+          "label": "自动化测试用例趋势",
           "description": "按优先级每周跟踪自动化进度"
         },
         "flakyTests": {
@@ -8416,6 +8559,10 @@
         "codePinCoverage": {
           "label": "代码固定覆盖",
           "description": "代码固定的位置（按仓库和目录），以及最近的更改未覆盖的位置"
+        },
+        "resultsTrend": {
+          "label": "测试结果失败率趋势",
+          "description": "测试结果的通过率和失败率随时间的变化，以及失败率是在改善还是恶化"
         }
       },
       "flakyTests": {
@@ -8735,7 +8882,7 @@
           "description": "跨项目的 LLM 功能令牌使用量、费用和可靠性"
         },
         "automationTrends": {
-          "label": "跨项目自动化趋势",
+          "label": "跨项目自动化测试用例趋势",
           "description": "按优先级逐周跟踪各项目的自动化进度"
         },
         "flakyTests": {
@@ -8769,6 +8916,10 @@
         "codePinCoverage": {
           "label": "跨项目代码引脚覆盖率",
           "description": "在所有已启用影响分析的项目中的代码引脚覆盖率"
+        },
+        "resultsTrend": {
+          "label": "跨项目测试结果失败率趋势",
+          "description": "按项目划分的测试结果通过率和失败率随时间的变化，以及失败率是在改善还是恶化"
         }
       },
       "folderDescendants": {
@@ -8832,6 +8983,79 @@
         },
         "chart": {
           "byDirectory": "按目录划分的引脚和未覆盖文件"
+        }
+      },
+      "resultsTrend": {
+        "period": "时期",
+        "runSource": "结果类型",
+        "runSources": {
+          "automated": "自动化",
+          "manual": "手动"
+        },
+        "showPassRate": "显示通过率",
+        "showPassRateHelp": "在图表的右轴上绘制通过率，具有自己拟合的趋势，并将其添加到标题数据。默认关闭：该报告关于失败率。",
+        "showFailRate": "显示失败率",
+        "showFailRateHelp": "在图表的右轴上绘制失败率，带有其拟合的趋势，并在标题数据中显示。默认开启。",
+        "showCounts": "显示结果总数",
+        "showCountsHelp": "在图表旁边将通过、失败、跳过和其他总数绘制为堆积条形。默认关闭：该报告关于比率。",
+        "countSkipped": "在费率中计算跳过的结果",
+        "countSkippedHelp": "除非打开此选项，否则跳过的结果将从通过率和失败率分母中排除。其他状态始终保留。",
+        "includeAborted": "包括已中止的运行",
+        "includeAbortedHelp": "坐在项目中止运行状态中的运行会被计数，除非此选项关闭。",
+        "latestAttemptOnly": "仅最新尝试",
+        "latestAttemptOnlyHelp": "每个运行中每个用例计算一个结果（其最新尝试），而不是每个导入的尝试。",
+        "failRate": "失败率",
+        "skipped": "跳过",
+        "other": "其他",
+        "inProgress": "进行中",
+        "verdict": {
+          "better": "失败率在改善",
+          "worse": "失败率在恶化",
+          "steady": "失败率保持稳定",
+          "notEnough": "没有足够完整的时期来确定趋势。",
+          "notEnoughDetail": "趋势需要至少两个具有结果的完整时期。",
+          "detail": "趋势线从{start}到{end}，在{count}个完整的{grouping, select, daily {天} weekly {周} monthly {个月} quarterly {季度} other {年}}内变化{change}个百分点。"
+        },
+        "stats": {
+          "lastComplete": "最后完整时期({period})，与之前完整时期的平均值比较。",
+          "results": "执行的结果",
+          "runs": "运行",
+          "deltaPoints": "{change}分 对比之前的{count, plural, one {# 时期} other {# 时期}}",
+          "deltaPercent": "{change}% 对比之前的{count, plural, one {# 时期} other {# 时期}}",
+          "noBaseline": "没有更早的数据用于比较"
+        },
+        "chart": {
+          "allProjects": "所有选定的项目",
+          "period": "{grouping, select, weekly {周开始于{date}} other {{date}}}",
+          "partialPeriod": "{grouping, select, weekly {周开始于{period}} other {{period}}}（进行中）",
+          "rateTrend": "{rate}趋势"
+        },
+        "heatmap": {
+          "title": "按项目和时期的失败率",
+          "help": "每个单元格是该项目在该时期的失败率；阴影在35%时达到完全强度。趋势列是完整时期内拟合失败率线的变化。*标记正在进行的时期。",
+          "trend": "趋势"
+        },
+        "trend": {
+          "points": "{change}分"
+        },
+        "detail": {
+          "title": "按时期的结果和比率"
+        },
+        "method": {
+          "title": "这是如何计数的",
+          "runSource": {
+            "automated": "仅自动化运行：除手动外的每个运行类型及其导入的结果。运行属于其创建时所在的时期。",
+            "manual": "仅手动运行及记录在其上的结果。运行属于其创建时所在的时期。",
+            "both": "每个运行：自动化运行及其导入的结果和手动运行及记录在其上的结果。运行属于其创建时所在的时期。"
+          },
+          "periods": "{grouping, select, daily {天} weekly {周（从星期一开始）} monthly {月} quarterly {季度} other {年}}在{timezone}中切割。当前时期正在进行中，从趋势和标题数据中排除。",
+          "everyAttempt": "重试的测试每次尝试计算一次。",
+          "latestAttempt": "仅计算运行中每个用例的最新尝试。",
+          "skippedExcluded": "跳过的结果（已完成但未通过或失败的状态）从通过率和失败率中排除；其他状态保留。",
+          "skippedCounted": "跳过的结果计入通过率和失败率。",
+          "abortedIncluded": "包括处于中止运行状态的运行。",
+          "abortedExcluded": "排除处于中止运行状态的运行。",
+          "trend": "趋势是对具有结果的完整时期内失败率的直线拟合。任何一个方向上超过一个百分点的变化都被认为是改善或恶化。"
         }
       }
     },

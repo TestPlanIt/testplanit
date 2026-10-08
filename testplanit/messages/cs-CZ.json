@@ -694,6 +694,8 @@
       "failedToDeleteRepository": "Nepodařilo se smazat úložiště",
       "permissionDenied": "Nemáte oprávnění pro přístup k této stránce.",
       "resultSubmitPermissionDenied": "Nemůžete odesílat výsledky pro tento případ. Požádejte administrátora projektu, aby vám jej přiřadil.",
+      "dependenciesNotPassed": "Blokováno závislostmi",
+      "dependenciesNotPassedDescription": "Tento případ testu nelze spustit, dokud {count, plural, =0 {případy, na kterých závisí, mají} one {případ, na kterém závisí, má} few {případy, na kterých závisí, mají} many {případy, na kterých závisí, mají} other {všech # případů, na kterých závisí, mají}} neprojdou v tomto běhu.",
       "justificationRequired": "Zdůvodnění je povinné",
       "justificationRequiredDescription": "Obrácení dokončeného výsledku na jiný výstup vyžaduje podrobnosti výsledku vysvětlující změnu.",
       "requiredFieldMissing": "Povinnému poli výsledku chybí hodnota.",
@@ -1573,6 +1575,9 @@
           },
           "mantisbt": {
             "description": "Připojte se k vlastní instanci MantisBT pro sledování problémů."
+          },
+          "clickup": {
+            "description": "Připojte se ke ClickUp pro sledování úkolů a správu projektů."
           }
         }
       },
@@ -1844,6 +1849,15 @@
         "setupStepsMantisbtStep2": "V konfiguraci pluginu vyberte události vytvoření problému a aktualizace problému.",
         "setupStepsMantisbtStep3": "Vložte výše uvedenou URL adresu jako cíl webhooku a uložte.",
         "setupStepsMantisbtStep4": "Vytvořte nebo aktualizujte problém v MantisBT; stav propojeného problému se sem synchronizuje.",
+        "inboundChooserClickup": "ClickUp",
+        "inboundClickupTitle": "Příchozí webhook ClickUp",
+        "inboundClickupScopeHint": "Události ClickUp <code>taskStatusUpdated</code> aktualizují propojené problémy TestPlanIt. Ostatní události úkolů jsou přijímány, ale neaktualizují problémy.",
+        "inboundClickupRegisterHint": "ClickUp nemá stránku nastavení webhooků: webhooky se vytvářejí prostřednictvím jeho API a ClickUp si volí podpisový tajemství. Ponechte tajemství prázdné a TestPlanIt zaregistruje tento webhook v ClickUp pro propojený seznam pomocí vaší autorizace ClickUp.",
+        "inboundClickupSecret": "Tajemství webhooku (volitelné)",
+        "inboundClickupSecretHelp": "Potřebné pouze v případě, že jste si webhook vytvořili sami pomocí ClickUp API Create Webhook: vložte tajemství vrácené ClickUp. Uloženo šifrované v klidu.",
+        "setupStepsClickupStep1": "Pokud jste nechali tajemství prázdné, TestPlanIt již zaregistroval tento webhook s ClickUp pro propojený seznam — v ClickUp není co konfigurovat.",
+        "setupStepsClickupStep2": "Pokud jste si webhook zaregistrovali sami prostřednictvím ClickUp API Create Webhook, ujistěte se, že jeho koncový bod je následující adresa URL a přihlaste se k události taskStatusUpdated.",
+        "setupStepsClickupStep3": "Použijte níže \"Poslat testovací webhook\" k ověření kanálu. Rotace tajemství zaregistruje nový webhook v ClickUp.",
         "codeRepos": {
           "empty": "Pro analýzu dopadu není připojeno žádné úložiště. Nejprve <link>připojte nějaký</link>.",
           "unsupported": "Úložiště {provider} nemohou odesílat webhooky do TestPlanIt.",
@@ -2025,7 +2039,7 @@
           "branchPlaceholder": "Ponechte prázdné pro použití výchozí větve úložiště"
         },
         "pathPatterns": {
-          "description": "Určete, které soubory zahrnout. Každý řádek kombinuje základní cestu a glob vzor. Příklady: path=tests/e2e/pages + pattern=* zahrne všechny soubory přímo v této složce; path=src + pattern=**/*.test.ts zahrne všechny testovací soubory rekurzivně.",
+          "description": "Určete, které soubory chcete zahrnout. Každý řádek kombinuje základní cestu a vzor glob. Příklady: cesta=testy/e2e/stránky + vzor=* zahrnuje všechny soubory přímo v této složce; cesta=src + vzor=**/*.test.ts zahrnuje všechny soubory testu rekurzivně.",
           "pathPlaceholder": "tests/e2e/pages",
           "exceedsLimit": "Celková velikost přesahuje limit AI kontextu o {overflow}. Během exportu jsou soubory řazeny podle relevance k exportovanému testovacímu případu — nejrelevantnější soubory jsou zahrnuty jako první a soubory s nižším pořadím jsou přeskočeny po dosažení limitu. Pokud chcete mít větší kontrolu nad tím, které soubory jsou zahrnuty, zúžte své vzory cest."
         },
@@ -2087,7 +2101,7 @@
           "pathLabel": "Cesta",
           "patternLabel": "Vzor",
           "previewFiles": "Náhled souborů",
-          "rootHint": "Nechte cestu prázdnou, nebo zadejte „.",
+          "rootHint": "Nechte cestu prázdnou nebo zadejte ., aby se začalo v kořenu úložiště; cesta . se vzorem **/* zahrnuje každý soubor.",
           "scanningRepo": "Skenování souborů repozitáře… ({seconds}s)",
           "title": "Vzory cest",
           "truncatedBadge": "Výsledky mohou být neúplné (omezení poskytovatele)"
@@ -2179,6 +2193,13 @@
           "disabledToast": "Testovací běhy již nebudou automaticky uzamykat svou kompozici",
           "saveError": "Nepodařilo se aktualizovat nastavení automatického uzamčení kompozice"
         },
+        "caseDependencies": {
+          "label": "Vynucovat závislosti testovacích případů v testovacích běhech",
+          "description": "Pokud je povoleno, je testovací případ v běhu blokován, dokud každý případ, na kterém závisí (odkaz \"Závisí na\"), projde ve stejném běhu. Blokované případy jsou v běhu označeny a výsledky pro ně jsou zamítnuty. Když projde poslední závislost, je přiřaditeli případu oznámeno, že je připraven. Závislosti, které nejsou v běhu, neblokují.",
+          "enabledToast": "Závislosti testovacích případů budou vynucovány v testovacích běhech",
+          "disabledToast": "Závislosti testovacích případů již nebudou vynucovány",
+          "saveError": "Nepodařilo se aktualizovat nastavení vynucování závislostí"
+        },
         "editWindow": {
           "label": "Okno úprav výsledku",
           "description": "Jak dlouho po zaznamenání výsledku lze tento výsledek stále upravovat na místě. Po uzavření okna vyžadují opravy nový pokus. Systémoví administrátoři mohou vždy upravovat.",
@@ -2233,7 +2254,7 @@
           "branchesFallbackHint": "Místo toho zadejte název větve."
         },
         "pathPatterns": {
-          "description": "Které soubory aplikace zahrnout. Každý řádek kombinuje základní cestu a glob vzor. Příklad: cesta=src + vzor=**/* zahrnuje vše pod src.",
+          "description": "Které soubory aplikace zahrnout. Každý řádek kombinuje základní cestu a vzor glob. Příklad: cesta=src + vzor=**/* zahrnuje vše pod src.",
           "pathPlaceholder": "src"
         },
         "cache": {
@@ -2876,11 +2897,101 @@
           "label": "Režim oznámení",
           "useGlobal": "Použít globální nastavení"
         },
-        "options": {
-          "title": "Další možnosti",
-          "email": {
-            "label": "E-mailová oznámení",
-            "description": "Přijímat oznámení e-mailem"
+        "typeSection": {
+          "title": "Co mi mám oznámit",
+          "description": "Všechny typy oznámení jsou ve výchozím nastavení zapnuty. Vypněte ty, které nechcete. Režim oznámení výše stále rozhoduje, jak vás dosáhneme.",
+          "modeNoneNote": "Nic se nedoručuje, pokud je váš režim oznámení Žádný. Vaše volby zde se použijí, jakmile zvolíte jiný režim.",
+          "locked": "Vždy zapnuto",
+          "resetToDefaults": "Obnovit výchozí nastavení",
+          "adminOnly": "Odesláno správcům"
+        },
+        "groups": {
+          "assignments": "Přiřazení",
+          "comments": "Komentáře",
+          "reviews": "Recenze",
+          "runsAndMilestones": "Běhy a milníky",
+          "sharing": "Sdílení",
+          "aiAndJobs": "AI a úlohy",
+          "integrations": "Integrace",
+          "system": "Systém",
+          "administration": "Správa"
+        },
+        "types": {
+          "WORK_ASSIGNED": {
+            "label": "Práce mi přiřazená",
+            "description": "Případ testovacího běhu vám je přiřazen jednotlivě nebo hromadně."
+          },
+          "SESSION_ASSIGNED": {
+            "label": "Relace mi přiřazená",
+            "description": "Relace je vytvořena s vámi jako jejím příjemcem nebo vám je znovu přiřazena."
+          },
+          "RUN_CASE_UNBLOCKED": {
+            "label": "Přiřazený případ odblokován",
+            "description": "Testovací případ vám přiřazený v běhu se stane spustitelným, protože případy, na kterých závisí, prošly."
+          },
+          "COMMENT_MENTION": {
+            "label": "Zmínky v komentářích",
+            "description": "Někdo vás @-zmíní v komentáři na případu, běhu, relaci, milníku nebo recenzi."
+          },
+          "REVIEW_REQUESTED": {
+            "label": "Recenze požadována",
+            "description": "Recenze je od vás požadována nebo z role, kterou zastáváte."
+          },
+          "REVIEW_APPROVED": {
+            "label": "Recenze schválena",
+            "description": "Recenzent schválí váš požadavek."
+          },
+          "REVIEW_CHANGES_REQUESTED": {
+            "label": "Požadovány změny",
+            "description": "Recenzent požaduje změny vašeho požadavku."
+          },
+          "REVIEW_REJECTED": {
+            "label": "Recenze odmítnuta",
+            "description": "Recenzent odmítne váš požadavek."
+          },
+          "REVIEW_CANCELLED": {
+            "label": "Recenze zrušena",
+            "description": "Požadavek, který jste měli zkontrolovat, je zrušen, nebo je položka pod přezkumem odstraněna."
+          },
+          "REVIEW_REMINDER": {
+            "label": "Připomenutí recenzí",
+            "description": "Recenze, kterou dlužíte, je starší než prahová hodnota připomenutí, nebo vás žadatel upozorní."
+          },
+          "RUN_READY_TO_COMPLETE": {
+            "label": "Testovací běh připraven k dokončení",
+            "description": "Každý případ v běhu, který můžete dokončit, má výsledek."
+          },
+          "MILESTONE_DUE_REMINDER": {
+            "label": "Připomenutí splatnosti milníků",
+            "description": "Milník, na kterém se podílíte, se blíží nebo je po splatnosti."
+          },
+          "SHARE_LINK_ACCESSED": {
+            "label": "Odkaz pro sdílení zobrazen",
+            "description": "Někdo otevře odkaz na sdílení, který jste vytvořili s povoleným oznámením při zobrazení."
+          },
+          "AI_STEPS_DERIVED": {
+            "label": "Kroky odvozené z AI",
+            "description": "Úloha odvozování kroků AI, kterou jste spustili, napsala kroky."
+          },
+          "INTEGRATION_AUTH_EXPIRED": {
+            "label": "Integrace vyžaduje nové ověření",
+            "description": "Vaše připojení k integraci vypršelo nebo bylo odvoláno a musí být znovu připojeno."
+          },
+          "SYSTEM_ANNOUNCEMENT": {
+            "label": "Oznámení správce",
+            "description": "Správce odešle systémové oznámení každému uživateli."
+          },
+          "WHATS_NEW": {
+            "label": "Co je nového po upgradu",
+            "description": "Souhrn nových funkcí při první návštěvě po upgradu TestPlanIt."
+          },
+          "USER_REGISTERED": {
+            "label": "Nové registrace uživatelů",
+            "description": "Nový uživatel se zaregistruje pomocí formuláře, SSO nebo SAML."
+          },
+          "LLM_BUDGET_ALERT": {
+            "label": "Upozornění na rozpočet AI",
+            "description": "Výdaje LLM překročí prahovou hodnotu rozpočtu za fakturační období."
           }
         },
         "success": {
@@ -3127,6 +3238,13 @@
       "modifierHintMac": "Podržte ⇧ pro přesun nebo ⌥ pro kopírování při přetahování a přeskočte tuto nabídku.",
       "modifierHintWin": "Podržte Shift pro přesun nebo Ctrl pro kopírování při přetahování a přeskočte tuto nabídku.",
       "dropZoneReorder": "Přetáhněte pro přeuspořádání",
+      "dropZoneReorderBlockedSort": "Odeberte řazení, chcete-li změnit pořadí případů v rámci této složky",
+      "dropZoneReorderBlockedSortMac": "Odeberte řazení pro změnu pořadí — přidržte ⌥ pro zkopírování do této složky",
+      "dropZoneReorderBlockedSortWin": "Odeberte řazení pro změnu pořadí — přidržte Ctrl pro zkopírování do této složky",
+      "dropZoneReorderBlockedSearch": "Vymažte vyhledávání, chcete-li změnit pořadí případů v rámci této složky",
+      "dropZoneReorderBlockedSearchMac": "Vymažte vyhledávání pro změnu pořadí — přidržte ⌥ pro zkopírování do této složky",
+      "dropZoneReorderBlockedSearchWin": "Vymažte vyhledávání pro změnu pořadí — přidržte Ctrl pro zkopírování do této složky",
+      "dropZoneCopyHere": "Přetáhněte pro zkopírování do této složky",
       "dropZoneFolder": "Přetáhněte na složku pro vnoření, nebo mezi složky pro přeuspořádání",
       "dropZoneTreeMac": "Přetáhněte na složku — podržte ⇧ pro přesunutí, ⌥ pro kopírování",
       "dropZoneTreeWin": "Přetáhněte na složku — podržte Shift pro přesunutí, Ctrl pro kopírování",
@@ -4087,6 +4205,13 @@
       "lockError": "Nepodařilo se uzamknout složení běhu",
       "unlockError": "Nepodařilo se odemknout složení běhu",
       "addBlocked": "Složení tohoto běhu je uzamčeno, proto nelze přidávat testovací případy. Chcete-li změnit sadu případů, nejprve jej odemkněte."
+    },
+    "dependencies": {
+      "blocked": "Blokováno",
+      "blockedBy": "Blokováno až {count, plural, one {tento případ prošel} few {tyto # případy prošly} many {těchto # případů prošlo} other {tyto případy projdou}} v tomto běhu:",
+      "blockedNotice": "Tento testovací případ nelze spustit, dokud {count, plural, one {případ, na kterém závisí, neprošel} few {všechny # případy, na kterých závisí, neprošly} many {všech # případů, na kterých závisí, neprošlo} other {všech # případů, na kterých závisí, neprojde}} v tomto běhu.",
+      "notInRun": "{count, plural, one {# případ, na kterém tento závisí, je} few {# případy, na kterých tento závisí, jsou} many {# případů, na kterých tento závisí, je} other {# případy, na kterých tento závisí, jsou}} v tomto běhu a nebudou blokovat spuštění:",
+      "unblocked": "Všechny případy, na kterých tento závisí, v tomto běhu prošly."
     },
     "distribute": {
       "title": "Rozdělit přiřazení",
@@ -6202,6 +6327,10 @@
         "mantisbt": {
           "name": "MantisBT",
           "description": "Připojte se k vlastní instanci MantisBT pro sledování úkolů"
+        },
+        "clickup": {
+          "name": "ClickUp",
+          "description": "Připojte se na ClickUp pro sledování úkolů a správu projektů"
         }
       },
       "filterPlaceholder": "Filtrovat integrace...",
@@ -6312,7 +6441,13 @@
         "mantisBTApiKeyHelp": "Vytvořte jej v nastavení účtu MantisBT → API tokeny",
         "mantisBTUrl": "URL adresa MantisBT",
         "mantisBTUrlPlaceholder": "https://mantisbt.example.com",
-        "mantisBTUrlHelp": "Základní URL adresa vaší instance MantisBT"
+        "mantisBTUrlHelp": "Základní URL adresa vaší instance MantisBT",
+        "clickupTeamId": "ID týmu ClickUp (pracovní prostor)",
+        "clickupTeamIdPlaceholder": "např. 9013456789",
+        "clickupTeamIdHelp": "Najdete v URL adrese ClickUp za app.clickup.com/",
+        "clickupListId": "Výchozí ID seznamu ClickUp",
+        "clickupListIdPlaceholder": "např. 901234567",
+        "clickupListIdHelp": "Seznam, ve kterém se ve výchozím nastavení vytváří úkoly; lze přepsat pro jednotlivý problém"
       },
       "authType": {
         "api_key": "Klíč API",
@@ -6820,10 +6955,6 @@
         "userRegisteredMessageSso": "{userName} ({userEmail}) se zaregistroval přes SSO",
         "userRegisteredMessageForm": "{userName} ({userEmail}) se zaregistroval prostřednictvím registračního formuláře",
         "viewUserList": "Zobrazit seznam uživatelů",
-        "reviewGeneratedCases": "Zkontrolovat vygenerované testovací případy",
-        "generateFromUrlCompleteTitle": "Stránky byly úspěšně prohledány",
-        "generateFromUrlCompleteMessage": "{pages, plural, one {# stránka byla stažena} few {# stránky byly staženy} many {# stránky bylo staženo} other {# stránek bylo staženo}} z {url} v projektu „{projectName}“. Kliknutím zobrazíte a vygenerujete testovací případy.",
-        "generateFromUrlFailedTitle": "Prohledávání URL se nezdařilo",
         "reviewRequestedTitle": "Vyžádána revize",
         "reviewApprovedTitle": "Revize schválena",
         "reviewChangesRequestedTitle": "Vyžádány změny",
@@ -6864,7 +6995,12 @@
         "runReadyToCompleteTitle": "Testovací běh připraven k dokončení",
         "runReadyToCompleteExecuted": "{count, plural, one {# případ byl proveden} =2 {Oba případy byly provedeny} few {Všechny # případy byly provedeny} many {Všechny # případy byly provedeny} other {Všech # případů bylo provedeno}}.",
         "runReadyToCompleteEmailMessage": "{caseCount, plural, one {# případ byl proveden} =2 {Oba případy byly provedeny} few {Všechny # případy byly provedeny} many {Všechny # případy byly provedeny} other {Všech # případů bylo provedeno}} v testovacím běhu \"{testRunName}\" (projekt \"{projectName}\"). Běh je připraven k označení jako dokončený.",
-        "runReadyToCompleteReason": "Toto oznámení dostáváte, protože můžete dokončovat testovací běhy v tomto projektu."
+        "runReadyToCompleteReason": "Toto oznámení dostáváte, protože můžete dokončovat testovací běhy v tomto projektu.",
+        "runCaseUnblockedTitle": "Testovací případ připraven ke spuštění",
+        "runCaseUnblockedPrerequisitePassed": "{prerequisiteName} proběhl úspěšně, takže tento případ přiřazený vám již není blokován:",
+        "runCaseUnblockedEmailMessage": "\"{testCaseName}\" v testovacím běhu \"{testRunName}\" (projekt \"{projectName}\") již není blokován: \"{prerequisiteName}\" proběhl úspěšně. Je vám přiřazen a připraven ke spuštění.",
+        "runCaseUnblockedReason": "Tuto zprávu dostáváte, protože vám je testovací případ přiřazen.",
+        "inTestRun": "v testovacím běhu"
       }
     },
     "issues": {
@@ -7477,6 +7613,11 @@
     "alreadyLinked": "Tento případ je již propojen.",
     "cannotLinkSelf": "Případ nelze propojit sám se sebou.",
     "circularLink": "Byl zjištěn cyklický odkaz.",
+    "dependsOn": "Závisí na",
+    "blocks": "Blokuje",
+    "dependsOnOption": "Závisí na — tento případ vyžaduje, aby se nejdříve úspěšně provedl vybraný případ",
+    "blocksOption": "Blokuje — vybraný případ vyžaduje, aby se nejdříve úspěšně provedl tento případ",
+    "dependencyHint": "Pokud je vynucení závislostí povoleno, nelze případ v testu spustit, dokud se v tomto testu úspěšně neprovedly případy, na kterých závisí.",
     "failedToCreate": "Nepodařilo se vytvořit odkaz.",
     "confirmRemoveLink": "Opravdu chcete odebrat tento odkaz?",
     "DEPENDS_ON": "Závislost",
@@ -7741,6 +7882,8 @@
       "redmineUrl": "## URL adresa Redmine\nZákladní URL adresa vaší instance Redmine.\n\n- Formát: https://redmine.example.com\n- Nezahrnujte /issues ani jiné cesty\n- Musí být přístupná z tohoto serveru",
       "mantisBTApiKey": "## API token MantisBT\nVáš osobní token REST API.\n\n- Vytvořte jej v nastavení účtu MantisBT → API tokeny\n- Je omezen na oprávnění vašeho uživatele; pro sdílené integrace použijte servisní účet",
       "mantisBTUrl": "## URL adresa MantisBT\nZákladní URL adresa vaší instance MantisBT.\n\n- Formát: https://mantisbt.example.com\n- Nezahrnujte /api/rest ani jiné cesty\n- Musí být přístupná z tohoto serveru",
+      "clickupTeamId": "## ID týmu ClickUp (Workspace)\nNumerické ID týmu ClickUp (nazývaného také Workspace), ke kterému úkoly patří.\n\n- Najdete v adrese URL ClickUp: app.clickup.com/{teamId}/...\n- Vyžadováno pro procházení Spaces/Folders/Lists při výběru projektu",
+      "clickupListId": "## Výchozí ID seznamu ClickUp\nSeznam, ve kterém se ve výchozím nastavení vytvářejí nové úkoly.\n\n- Najdete v adrese URL ClickUp nebo pomocí možnosti \"Kopírovat odkaz\" seznamu\n- Volitelné — konkrétní seznam lze zvolit jednotlivě pro každý problém",
       "githubBaseUrl": "## Základní URL adresa API\nÚplný kořen API GitHub pro GitHub Enterprise Server.\n\n- Obvykle končí na /api/v3\n- Ponechte prázdné pro použití api.github.com\n- Musí být přístupný z tohoto serveru"
     },
     "config": {
@@ -8370,7 +8513,7 @@
           "description": "Vytváření problémů, jejich řešení a analýza dopadu"
         },
         "automationTrends": {
-          "label": "Trendy automatizace",
+          "label": "Trend automatizovaných testovacích případů",
           "description": "Sledujte pokrok v automatizaci týden po týdnu podle priority"
         },
         "flakyTests": {
@@ -8416,6 +8559,10 @@
         "codePinCoverage": {
           "label": "Pokrytí kódových pinů",
           "description": "Kde jsou kódové piny, podle úložiště a adresáře, a kde nedošlo k pokrytí nedávných změn"
+        },
+        "resultsTrend": {
+          "label": "Trend míry selhání výsledků testů",
+          "description": "Míra úspěchu a selhání výsledků testů v průběhu času a zda se míra selhání zlepšuje či zhoršuje"
         }
       },
       "flakyTests": {
@@ -8735,7 +8882,7 @@
           "description": "Využití tokenů, náklady a spolehlivost funkcí LLM napříč projekty"
         },
         "automationTrends": {
-          "label": "Trendy automatizace napříč projekty",
+          "label": "Trend automatizovaných testovacích případů v rámci projektů",
           "description": "Sledujte pokrok automatizace týden po týdnu podle priority napříč projekty"
         },
         "flakyTests": {
@@ -8769,6 +8916,10 @@
         "codePinCoverage": {
           "label": "Pokrytí kódových pinů projektů Cross-Project",
           "description": "Pokrytí kódových pinů ve všech projektech s povolenou analýzou dopadu"
+        },
+        "resultsTrend": {
+          "label": "Trend míry selhání výsledků testů v rámci projektů",
+          "description": "Míra úspěchu a selhání výsledků testů v průběhu času podle projektu a zda se míra selhání zlepšuje či zhoršuje"
         }
       },
       "folderDescendants": {
@@ -8832,6 +8983,79 @@
         },
         "chart": {
           "byDirectory": "Piny a nepokryté soubory podle adresáře"
+        }
+      },
+      "resultsTrend": {
+        "period": "Období",
+        "runSource": "Typy výsledků",
+        "runSources": {
+          "automated": "Automatizované",
+          "manual": "Manuálně"
+        },
+        "showPassRate": "Zobrazit procento úspěšnosti",
+        "showPassRateHelp": "Nakreslete procento úspěšnosti na pravé ose grafu s vlastním přizpůsobeným trendem a přidejte jej do hlavních čísel. Ve výchozím nastavení vypnuto: zpráva se týká míry selhání.",
+        "showFailRate": "Zobrazit míru selhání",
+        "showFailRateHelp": "Nakreslete míru selhání na pravé ose grafu s přizpůsobeným trendem a zobrazte ji v hlavních číslech. Ve výchozím nastavení zapnuto.",
+        "showCounts": "Zobrazit celkový počet výsledků",
+        "showCountsHelp": "Nakreslete součty prošlých, selhavších, přeskočených a ostatních výsledků jako skládané sloupce v grafu vedle sazeb. Ve výchozím nastavení vypnuto: zpráva se týká sazeb.",
+        "countSkipped": "Počítat přeskočené výsledky v sazbách",
+        "countSkippedHelp": "Přeskočené výsledky jsou vynechány ze jmenovatele míry úspěchu a selhání, pokud není toto nastavení zapnuto. Ostatní stavy zůstávají.",
+        "includeAborted": "Zahrnout přerušené testy",
+        "includeAbortedHelp": "Testy v stavu přerušeného testu projektu se počítají, pokud to není vypnuto.",
+        "latestAttemptOnly": "Pouze poslední pokus",
+        "latestAttemptOnlyHelp": "Počítejte jeden výsledek na případ na test, jeho poslední pokus, místo každého importovaného pokusu.",
+        "failRate": "Míra selhání",
+        "skipped": "Přeskočeno",
+        "other": "Ostatní",
+        "inProgress": "probíhá",
+        "verdict": {
+          "better": "Míra selhání se zlepšuje",
+          "worse": "Míra selhání se zhoršuje",
+          "steady": "Míra selhání se drží na stejné úrovni",
+          "notEnough": "Dosud není dostatek úplných období k určení trendu.",
+          "notEnoughDetail": "Trend vyžaduje nejméně dvě úplná období s výsledky.",
+          "detail": "Trendová čára běží od {start} do {end}, změna {change} bodů během {count} úplných {grouping, select, daily {dní} weekly {týdnů} monthly {měsíců} quarterly {čtvrtletí} other {let}}."
+        },
+        "stats": {
+          "lastComplete": "Poslední úplné období ({period}), v porovnání s průměrem úplných období před ním.",
+          "results": "Provedené výsledky",
+          "runs": "Testy",
+          "deltaPoints": "{change} bodů v porovnání s předchozím {count, plural, one {# období} few {# období} many {# období} other {# období}}",
+          "deltaPercent": "{change}% v porovnání s předchozím {count, plural, one {# období} few {# období} many {# období} other {# období}}",
+          "noBaseline": "Nic staršího k porovnání"
+        },
+        "chart": {
+          "allProjects": "Všechny vybrané projekty",
+          "period": "{grouping, select, weekly {Týden od {date}} other {{date}}}",
+          "partialPeriod": "{grouping, select, weekly {Týden od {period}} other {{period}}} (probíhá)",
+          "rateTrend": "{rate} trend"
+        },
+        "heatmap": {
+          "title": "Míra selhání podle projektu a období",
+          "help": "Každá buňka je míra selhání projektu za období; stínování dosahuje plné intenzity na 35%. Trendový sloupec je změna v přizpůsobené trendové čáře míry selhání během úplných období. * označuje období v pokroku.",
+          "trend": "Trend"
+        },
+        "trend": {
+          "points": "{change} bodů"
+        },
+        "detail": {
+          "title": "Výsledky a sazby podle období"
+        },
+        "method": {
+          "title": "Jak se to počítá",
+          "runSource": {
+            "automated": "Pouze automatizované testy: každý typ testu kromě manuálního se jejich importovanými výsledky. Test patří do období, ve kterém byl vytvořen.",
+            "manual": "Pouze ruční testy s výsledky na nich zaznamenanými. Test patří do období, ve kterém byl vytvořen.",
+            "both": "Každý test: automatizované testy se jejich importovanými výsledky a manuální testy s výsledky na nich zaznamenanými. Test patří do období, ve kterém byl vytvořen."
+          },
+          "periods": "{grouping, select, daily {Dny} weekly {Týdny (počínaje pondělím)} monthly {Měsíce} quarterly {Čtvrtletí} other {Roky}} se řezají v {timezone}. Aktuální je v pokroku a je vyloučen z trendu a hlavních čísel.",
+          "everyAttempt": "Opakovaný test se počítá jednou za pokus.",
+          "latestAttempt": "Počítá se pouze poslední pokus každého případu v testu.",
+          "skippedExcluded": "Přeskočené výsledky (stav, který je dokončen bez úspěchu nebo selhání) jsou vynechány z procentuální sazby úspěchu a selhání; ostatní stavy zůstávají.",
+          "skippedCounted": "Přeskočené výsledky se počítají v procentuální sazbě úspěchu a selhání.",
+          "abortedIncluded": "Testy v stavu přerušeného testu jsou zahrnuty.",
+          "abortedExcluded": "Testy v stavu přerušeného testu jsou vyloučeny.",
+          "trend": "Trend je přímka přizpůsobená míře selhání během úplných období s výsledky. Změna více než jednoho bodu tak či onak se nazývá lepší nebo horší."
         }
       }
     },

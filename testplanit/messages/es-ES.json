@@ -694,6 +694,8 @@
       "failedToDeleteRepository": "Error al eliminar el repositorio",
       "permissionDenied": "No tienes permiso para acceder a esta página.",
       "resultSubmitPermissionDenied": "No puedes enviar los resultados de este caso. Pídele a un administrador del proyecto que te lo asigne.",
+      "dependenciesNotPassed": "Bloqueado por dependencias",
+      "dependenciesNotPassedDescription": "Este caso de prueba no se puede ejecutar hasta que {count, plural, =0 {los casos de los que depende hayan} one {el caso del que depende haya} other {todos los # casos de los que depende hayan}} pasado en esta ejecución.",
       "justificationRequired": "Se requiere justificación",
       "justificationRequiredDescription": "Para cambiar un resultado ya completado a un resultado diferente, se requieren Detalles del resultado que expliquen el cambio.",
       "requiredFieldMissing": "Falta un valor en un campo de resultado obligatorio.",
@@ -1573,6 +1575,9 @@
           },
           "mantisbt": {
             "description": "Conéctese a una instancia autohospedada de MantisBT para el seguimiento de incidencias."
+          },
+          "clickup": {
+            "description": "Conéctate a ClickUp para el seguimiento de tareas y la gestión de proyectos."
           }
         }
       },
@@ -1844,6 +1849,15 @@
         "setupStepsMantisbtStep2": "En la configuración del complemento, elija los eventos de incidencia creada e incidencia actualizada.",
         "setupStepsMantisbtStep3": "Pegue la URL anterior como destino del webhook y guarde.",
         "setupStepsMantisbtStep4": "Cree o actualice una incidencia en MantisBT; el estado de la incidencia vinculada se sincronizará aquí.",
+        "inboundChooserClickup": "ClickUp",
+        "inboundClickupTitle": "Webhook entrante de ClickUp",
+        "inboundClickupScopeHint": "Los eventos <code>taskStatusUpdated</code> de ClickUp actualizan los problemas vinculados de TestPlanIt. Se aceptan otros eventos de tareas, pero no actualizan los problemas.",
+        "inboundClickupRegisterHint": "ClickUp no tiene una página de configuración de webhooks: los webhooks se crean a través de su API, y ClickUp elige el secreto de firma. Deja el secreto en blanco y TestPlanIt registra este webhook en ClickUp para la Lista vinculada utilizando tu autorización de ClickUp.",
+        "inboundClickupSecret": "Secreto de webhook (opcional)",
+        "inboundClickupSecretHelp": "Solo es necesario si creaste el webhook tú mismo con la API de Crear Webhook de ClickUp: pega el secreto que ClickUp devolvió. Se almacena cifrado en reposo.",
+        "setupStepsClickupStep1": "Si dejaste el secreto en blanco, TestPlanIt ya ha registrado este webhook con ClickUp para la Lista vinculada — no hay nada que configurar en ClickUp.",
+        "setupStepsClickupStep2": "Si registraste el webhook tú mismo a través de la API de Crear Webhook de ClickUp, asegúrate de que su endpoint sea la URL a continuación y suscríbelo al evento taskStatusUpdated.",
+        "setupStepsClickupStep3": "Usa \"Enviar webhook de prueba\" a continuación para verificar la tubería. Rotar el secreto registra un webhook nuevo en ClickUp.",
         "codeRepos": {
           "empty": "No hay repositorios conectados para Impact Analysis. <link>Conecte uno</link> primero.",
           "unsupported": "Los repositorios de {provider} no pueden enviar webhooks a TestPlanIt.",
@@ -2025,7 +2039,7 @@
           "branchPlaceholder": "Déjelo en blanco para usar la rama predeterminada del repositorio"
         },
         "pathPatterns": {
-          "description": "Especifique los archivos que se incluirán. Cada fila combina una ruta base y un patrón global. Ejemplos: path=tests/e2e/pages + pattern=* incluye todos los archivos directamente en esa carpeta; path=src + pattern=**/*.test.ts incluye todos los archivos de prueba recursivamente.",
+          "description": "Especifica qué archivos incluir. Cada fila combina una ruta base y un patrón global. Ejemplos: path=tests/e2e/pages + pattern=* incluye todos los archivos directamente en esa carpeta; path=src + pattern=**/*.test.ts incluye todos los archivos de prueba recursivamente.",
           "pathPlaceholder": "pruebas/e2e/páginas",
           "exceedsLimit": "El tamaño total supera el límite del contexto de IA en {overflow}. Durante la exportación, los archivos se clasifican según su relevancia para el caso de prueba que se exporta: los archivos más relevantes se incluyen primero y los de menor rango se omiten al alcanzar el límite. Reduzca los patrones de ruta si desea tener más control sobre los archivos incluidos."
         },
@@ -2087,7 +2101,7 @@
           "pathLabel": "Ruta",
           "patternLabel": "Patrón",
           "previewFiles": "Vista previa de archivos",
-          "rootHint": "Deje la ruta en blanco o ingrese . para comenzar en la raíz del repositorio; la ruta . con el patrón **/* incluye todos los archivos.",
+          "rootHint": "Deja la ruta en blanco o ingresa . para comenzar en la raíz del repositorio; la ruta . con el patrón **/* incluye todos los archivos.",
           "scanningRepo": "Escaneando archivos del repositorio… ({seconds}s)",
           "title": "Patrones de ruta",
           "truncatedBadge": "Los resultados pueden estar incompletos (límite del proveedor)"
@@ -2179,6 +2193,13 @@
           "disabledToast": "Las Ejecuciones de Prueba ya no bloquearán automáticamente su composición",
           "saveError": "No se pudo actualizar el ajuste de bloqueo automático de composición"
         },
+        "caseDependencies": {
+          "label": "Aplicar dependencias de casos de prueba en ejecuciones de pruebas",
+          "description": "Cuando está habilitado, un caso de prueba en una ejecución se bloquea hasta que todos los casos de los que depende (un enlace \"Depende de\") hayan pasado en esa misma ejecución. Los casos bloqueados se marcan en la ejecución y se rechazan los resultados para ellos. Cuando pasa la última dependencia, se notifica al asignado del caso que está listo. Las dependencias que no están en la ejecución no bloquean.",
+          "enabledToast": "Las dependencias de casos de prueba se aplicarán en ejecuciones de pruebas",
+          "disabledToast": "Las dependencias de casos de prueba ya no se aplicarán",
+          "saveError": "No se pudo actualizar la configuración de aplicación de dependencias"
+        },
         "editWindow": {
           "label": "Ventana de edición de resultados",
           "description": "¿Cuánto tiempo después de registrar un resultado aún se puede editar directamente? Una vez que se cierra la ventana, las correcciones requieren un nuevo intento. Los administradores del sistema siempre pueden editar.",
@@ -2233,7 +2254,7 @@
           "branchesFallbackHint": "Escribe el nombre de la rama en su lugar."
         },
         "pathPatterns": {
-          "description": "Qué archivos de aplicación incluir. Cada fila combina una ruta base y un patrón glob. Ejemplo: path=src + pattern=**/* incluye todo bajo src.",
+          "description": "Qué archivos de aplicación incluir. Cada fila combina una ruta base y un patrón global. Ejemplo: path=src + pattern=**/* incluye todo en src.",
           "pathPlaceholder": "src"
         },
         "cache": {
@@ -2876,11 +2897,101 @@
           "label": "Modo de notificación",
           "useGlobal": "Usar ajustes globales"
         },
-        "options": {
-          "title": "Opciones adicionales",
-          "email": {
-            "label": "Notificaciones por email",
-            "description": "Recibir notificaciones por correo electrónico"
+        "typeSection": {
+          "title": "Qué notificarme",
+          "description": "Todos los tipos de notificaciones están activados de forma predeterminada. Desactive los que no desee. El modo de notificación anterior aún decide cómo se le contacta.",
+          "modeNoneNote": "No se entrega nada mientras su modo de notificación es Ninguno. Sus opciones aquí se aplican tan pronto como elige otro modo.",
+          "locked": "Siempre activado",
+          "resetToDefaults": "Restablecer a los valores predeterminados",
+          "adminOnly": "Enviado a administradores"
+        },
+        "groups": {
+          "assignments": "Asignaciones",
+          "comments": "Comentarios",
+          "reviews": "Revisiones",
+          "runsAndMilestones": "Ejecuciones e hitos",
+          "sharing": "Compartir",
+          "aiAndJobs": "IA y trabajos",
+          "integrations": "Integraciones",
+          "system": "Sistema",
+          "administration": "Administración"
+        },
+        "types": {
+          "WORK_ASSIGNED": {
+            "label": "Trabajo asignado a mí",
+            "description": "Se le asigna un caso de ejecución de prueba, individual o en masa."
+          },
+          "SESSION_ASSIGNED": {
+            "label": "Sesión asignada a mí",
+            "description": "Se crea una sesión con usted como asignado, o se le reasigna."
+          },
+          "RUN_CASE_UNBLOCKED": {
+            "label": "Caso asignado desbloqueado",
+            "description": "Un caso de prueba asignado a usted en una ejecución se vuelve ejecutable porque los casos de los que depende han pasado."
+          },
+          "COMMENT_MENTION": {
+            "label": "Menciones en comentarios",
+            "description": "Alguien te menciona con @ en un comentario sobre un caso, ejecución, sesión, hito o revisión."
+          },
+          "REVIEW_REQUESTED": {
+            "label": "Revisión solicitada",
+            "description": "Se solicita una revisión de usted o de un rol que ostenta."
+          },
+          "REVIEW_APPROVED": {
+            "label": "Revisión aprobada",
+            "description": "Un revisor aprueba su solicitud."
+          },
+          "REVIEW_CHANGES_REQUESTED": {
+            "label": "Cambios solicitados",
+            "description": "Un revisor solicita cambios en su solicitud."
+          },
+          "REVIEW_REJECTED": {
+            "label": "Revisión rechazada",
+            "description": "Un revisor rechaza su solicitud."
+          },
+          "REVIEW_CANCELLED": {
+            "label": "Revisión cancelada",
+            "description": "Se cancela una solicitud que le pidieron que revise, o se elimina el elemento en revisión."
+          },
+          "REVIEW_REMINDER": {
+            "label": "Recordatorios de revisión",
+            "description": "Una revisión que debe hacer es más antigua que el umbral de recordatorio, o el solicitante le da un codazo."
+          },
+          "RUN_READY_TO_COMPLETE": {
+            "label": "Ejecución de prueba lista para completar",
+            "description": "Cada caso en una ejecución que puede completar tiene un resultado."
+          },
+          "MILESTONE_DUE_REMINDER": {
+            "label": "Recordatorios de vencimiento de hitos",
+            "description": "Un hito en el que está involucrado vence pronto o está vencido."
+          },
+          "SHARE_LINK_ACCESSED": {
+            "label": "Enlace compartido visualizado",
+            "description": "Alguien abre un enlace compartido que creó con notificación al ver habilitada."
+          },
+          "AI_STEPS_DERIVED": {
+            "label": "Pasos derivados de IA",
+            "description": "Un trabajo de derivación de pasos de IA que inició ha escrito pasos."
+          },
+          "INTEGRATION_AUTH_EXPIRED": {
+            "label": "La integración necesita reautorización",
+            "description": "Su conexión con una integración expiró o fue revocada y debe reconectarse."
+          },
+          "SYSTEM_ANNOUNCEMENT": {
+            "label": "Anuncios administrativos",
+            "description": "Un administrador envía una notificación del sistema a todos los usuarios."
+          },
+          "WHATS_NEW": {
+            "label": "Novedades después de una actualización",
+            "description": "Un resumen de las nuevas características en su primera visita después de que TestPlanIt se actualiza."
+          },
+          "USER_REGISTERED": {
+            "label": "Nuevos registros de usuarios",
+            "description": "Un nuevo usuario se registra a través del formulario, SSO o SAML."
+          },
+          "LLM_BUDGET_ALERT": {
+            "label": "Alertas de presupuesto de IA",
+            "description": "El gasto de LLM cruza un umbral de presupuesto para el período de facturación."
           }
         },
         "success": {
@@ -3127,6 +3238,13 @@
       "modifierHintMac": "Mantén pulsado ⇧ para mover o ⌥ para copiar mientras arrastras para saltarte este menú.",
       "modifierHintWin": "Mantén pulsada la tecla Mayús para mover o la tecla Ctrl para copiar mientras arrastras para saltarte este menú.",
       "dropZoneReorder": "Soltar para reordenar",
+      "dropZoneReorderBlockedSort": "Elimine la clasificación para reordenar casos dentro de esta carpeta",
+      "dropZoneReorderBlockedSortMac": "Elimine la clasificación para reordenar — mantenga presionado ⌥ para copiar en esta carpeta",
+      "dropZoneReorderBlockedSortWin": "Elimine la clasificación para reordenar — mantenga presionado Ctrl para copiar en esta carpeta",
+      "dropZoneReorderBlockedSearch": "Borre la búsqueda para reordenar casos dentro de esta carpeta",
+      "dropZoneReorderBlockedSearchMac": "Borre la búsqueda para reordenar — mantenga presionado ⌥ para copiar en esta carpeta",
+      "dropZoneReorderBlockedSearchWin": "Borre la búsqueda para reordenar — mantenga presionado Ctrl para copiar en esta carpeta",
+      "dropZoneCopyHere": "Suelte para copiar en esta carpeta",
       "dropZoneFolder": "Suelte sobre una carpeta para anidar, o entre carpetas para reordenar",
       "dropZoneTreeMac": "Soltar en una carpeta — mantener ⇧ para mover, ⌥ para copiar",
       "dropZoneTreeWin": "Soltar en una carpeta — mantener Shift para mover, Ctrl para copiar",
@@ -4087,6 +4205,13 @@
       "lockError": "No se pudo bloquear la composición de la ejecución",
       "unlockError": "No se pudo desbloquear la composición de la ejecución",
       "addBlocked": "La composición de esta ejecución está bloqueada, por lo que no se pueden agregar casos de prueba. Desbloquéela primero para cambiar el conjunto de casos."
+    },
+    "dependencies": {
+      "blocked": "Bloqueado",
+      "blockedBy": "Bloqueado hasta que {count, plural, one {este caso pase} other {estos # casos pasen}} en esta ejecución:",
+      "blockedNotice": "Este caso de prueba no se puede ejecutar hasta que {count, plural, one {el caso del que depende haya} other {todos los # casos de los que depende hayan}} pasado en esta ejecución.",
+      "notInRun": "{count, plural, one {# caso del que este depende es} other {# casos de los que este depende son}} no están en esta ejecución y no bloquearán la ejecución:",
+      "unblocked": "Todos los casos de los que este depende han pasado en esta ejecución."
     },
     "distribute": {
       "title": "Distribuir asignaciones",
@@ -6202,6 +6327,10 @@
         "mantisbt": {
           "name": "MantisBT",
           "description": "Conéctese a una instancia autohospedada de MantisBT para el seguimiento de incidencias"
+        },
+        "clickup": {
+          "name": "ClickUp",
+          "description": "Conéctate a ClickUp para seguimiento de tareas y gestión de proyectos"
         }
       },
       "filterPlaceholder": "Integraciones de filtros...",
@@ -6312,7 +6441,13 @@
         "mantisBTApiKeyHelp": "Cree uno en la configuración de su cuenta de MantisBT → Tokens de API",
         "mantisBTUrl": "URL de MantisBT",
         "mantisBTUrlPlaceholder": "https://mantisbt.example.com",
-        "mantisBTUrlHelp": "La URL base de su instancia de MantisBT"
+        "mantisBTUrlHelp": "La URL base de su instancia de MantisBT",
+        "clickupTeamId": "ID de Equipo ClickUp (Espacio de trabajo)",
+        "clickupTeamIdPlaceholder": "p. ej. 9013456789",
+        "clickupTeamIdHelp": "Se encuentra en la URL de ClickUp después de app.clickup.com/",
+        "clickupListId": "ID de Lista de ClickUp Predeterminada",
+        "clickupListIdPlaceholder": "p. ej. 901234567",
+        "clickupListIdHelp": "La Lista en la que se crean las tareas de forma predeterminada; se puede anular por incidencia"
       },
       "authType": {
         "api_key": "Clave API",
@@ -6820,10 +6955,6 @@
         "userRegisteredMessageSso": "{userName} ({userEmail}) se ha registrado mediante SSO",
         "userRegisteredMessageForm": "{userName} ({userEmail}) se ha registrado a través del formulario de registro",
         "viewUserList": "Ver lista de usuarios",
-        "reviewGeneratedCases": "Revisar los casos de prueba generados",
-        "generateFromUrlCompleteTitle": "Las páginas se han indexado correctamente.",
-        "generateFromUrlCompleteMessage": "{pages, plural, one {# página} other {# páginas}} rastreadas desde {url} en el proyecto \"{projectName}\". Haga clic para revisar y generar casos de prueba.",
-        "generateFromUrlFailedTitle": "Falló el rastreo de URL",
         "reviewRequestedTitle": "Se solicita revisión",
         "reviewApprovedTitle": "Revisión aprobada",
         "reviewChangesRequestedTitle": "Cambios solicitados",
@@ -6864,7 +6995,12 @@
         "runReadyToCompleteTitle": "Ejecución de prueba lista para completar",
         "runReadyToCompleteExecuted": "{count, plural, one {# caso se ha} =2 {Ambos casos se han} other {Todos los # casos se han}} ejecutado.",
         "runReadyToCompleteEmailMessage": "{caseCount, plural, one {# caso se ha} =2 {Ambos casos se han} other {Todos los # casos se han}} ejecutado en la ejecución de prueba \"{testRunName}\" (proyecto \"{projectName}\"). La ejecución está lista para marcarse como completada.",
-        "runReadyToCompleteReason": "Recibe esto porque puede completar ejecuciones de prueba en este proyecto."
+        "runReadyToCompleteReason": "Recibe esto porque puede completar ejecuciones de prueba en este proyecto.",
+        "runCaseUnblockedTitle": "Caso de Prueba Listo para Ejecutar",
+        "runCaseUnblockedPrerequisitePassed": "{prerequisiteName} pasó, por lo que este caso asignado a ti ya no está bloqueado:",
+        "runCaseUnblockedEmailMessage": "\"{testCaseName}\" en la prueba \"{testRunName}\" (proyecto \"{projectName}\") ya no está bloqueado: \"{prerequisiteName}\" pasó. Te está asignado y está listo para ejecutar.",
+        "runCaseUnblockedReason": "Estás recibiendo esto porque el caso de prueba te está asignado.",
+        "inTestRun": "en la prueba"
       }
     },
     "issues": {
@@ -7477,6 +7613,11 @@
     "alreadyLinked": "Este caso ya está vinculado.",
     "cannotLinkSelf": "No se puede vincular un caso a sí mismo.",
     "circularLink": "Enlace circular detectado.",
+    "dependsOn": "Depende del",
+    "blocks": "Bloquea",
+    "dependsOnOption": "Depende de — este caso requiere que el caso seleccionado tenga éxito primero",
+    "blocksOption": "Bloquea — el caso seleccionado requiere que este caso tenga éxito primero",
+    "dependencyHint": "Con la aplicación de dependencias activada, un caso en una ejecución de prueba no puede ejecutarse hasta que los casos de los que depende hayan pasado en esa ejecución.",
     "failedToCreate": "No se pudo crear el enlace.",
     "confirmRemoveLink": "¿Está seguro que desea eliminar este enlace?",
     "DEPENDS_ON": "Dependencia",
@@ -7741,6 +7882,8 @@
       "redmineUrl": "## URL de Redmine\nLa URL base de su instancia de Redmine.\n\n- Formato: https://redmine.example.com\n- No incluya /issues ni otras rutas\n- Debe ser accesible desde este servidor",
       "mantisBTApiKey": "## Token de API de MantisBT\nSu token personal de la API REST.\n\n- Créelo en la configuración de su cuenta de MantisBT → Tokens de API\n- Limitado a los permisos de su usuario; use una cuenta de servicio para integraciones compartidas",
       "mantisBTUrl": "## URL de MantisBT\nLa URL base de su instancia de MantisBT.\n\n- Formato: https://mantisbt.example.com\n- No incluya /api/rest ni otras rutas\n- Debe ser accesible desde este servidor",
+      "clickupTeamId": "## ID del equipo de ClickUp (Workspace)\nEl ID numérico del equipo de ClickUp (también llamado Workspace) al que pertenecen las tareas.\n\n- Se encuentra en la URL de ClickUp: app.clickup.com/{teamId}/...\n- Obligatorio para examinar espacios/carpetas/listas al seleccionar un proyecto",
+      "clickupListId": "## ID de lista de ClickUp predeterminada\nLa lista en la que se crean nuevas tareas de forma predeterminada.\n\n- Se encuentra en la URL de ClickUp, o mediante la opción \"Copiar enlace\" de la lista\n- Opcional — se puede elegir una lista específica por problema en su lugar",
       "githubBaseUrl": "## URL Base de la API\nRuta raíz completa de la API de GitHub para GitHub Enterprise Server.\n\n- Normalmente termina en /api/v3\n- Déjelo en blanco para usar api.github.com\n- Debe ser accesible desde este servidor"
     },
     "config": {
@@ -8370,7 +8513,7 @@
           "description": "Análisis de creación, resolución y impacto de problemas"
         },
         "automationTrends": {
-          "label": "Tendencias de automatización",
+          "label": "Tendencia de casos de prueba automatizados",
           "description": "Seguimiento del progreso de la automatización semana a semana por prioridad"
         },
         "flakyTests": {
@@ -8416,6 +8559,10 @@
         "codePinCoverage": {
           "label": "Cobertura de fijación de código",
           "description": "Dónde están las fijaciones de código, por repositorio y directorio, y dónde los cambios recientes pasaron sin cubrir"
+        },
+        "resultsTrend": {
+          "label": "Tendencia de tasa de fallos de resultados de prueba",
+          "description": "Tasas de aprobación y fallo de resultados de prueba a lo largo del tiempo, y si la tasa de fallo está mejorando o empeorando"
         }
       },
       "flakyTests": {
@@ -8735,7 +8882,7 @@
           "description": "Uso de tokens, costo y fiabilidad de las funciones de LLM en todos los proyectos"
         },
         "automationTrends": {
-          "label": "Tendencias de automatización entre proyectos",
+          "label": "Tendencia de casos de prueba automatizados entre proyectos",
           "description": "Realizar un seguimiento semanal del progreso de la automatización por prioridad en todos los proyectos."
         },
         "flakyTests": {
@@ -8769,6 +8916,10 @@
         "codePinCoverage": {
           "label": "Cobertura de fijación de código entre proyectos",
           "description": "Cobertura de fijación de código en todos los proyectos con análisis de impacto habilitado"
+        },
+        "resultsTrend": {
+          "label": "Tendencia de tasa de fallos de resultados de prueba entre proyectos",
+          "description": "Tasas de aprobación y fallo de resultados de prueba a lo largo del tiempo por proyecto, y si la tasa de fallo está mejorando o empeorando"
         }
       },
       "folderDescendants": {
@@ -8832,6 +8983,79 @@
         },
         "chart": {
           "byDirectory": "Fijaciones y archivos sin cobertura por directorio"
+        }
+      },
+      "resultsTrend": {
+        "period": "Período",
+        "runSource": "Tipos de resultado",
+        "runSources": {
+          "automated": "Automatizado",
+          "manual": "Manual"
+        },
+        "showPassRate": "Mostrar tasa de aprobación",
+        "showPassRateHelp": "Dibuja la tasa de aprobación en el eje derecho del gráfico, con su propia tendencia ajustada, y añádela a las cifras principales. Desactivado de forma predeterminada: el informe trata sobre la tasa de fallo.",
+        "showFailRate": "Mostrar tasa de fallo",
+        "showFailRateHelp": "Dibuja la tasa de fallo en el eje derecho del gráfico, con su tendencia ajustada, y muéstralo en las cifras principales. Activado de forma predeterminada.",
+        "showCounts": "Mostrar totales de resultados",
+        "showCountsHelp": "Dibuja los totales de aprobados, fallidos, omitidos y otros como barras apiladas en el gráfico junto a las tasas. Desactivado de forma predeterminada: el informe trata sobre las tasas.",
+        "countSkipped": "Contar resultados omitidos en tasas",
+        "countSkippedHelp": "Los resultados omitidos se dejan fuera del denominador de la tasa de aprobación y fallo a menos que esto esté activado. Los otros estados siempre permanecen.",
+        "includeAborted": "Incluir ejecuciones abortadas",
+        "includeAbortedHelp": "Las ejecuciones en el estado de ejecución abandonada del proyecto se cuentan a menos que esto esté desactivado.",
+        "latestAttemptOnly": "Solo último intento",
+        "latestAttemptOnlyHelp": "Contar un resultado por caso por ejecución, su último intento, en lugar de cada intento importado.",
+        "failRate": "Tasa de fallo",
+        "skipped": "Omitido",
+        "other": "Otro",
+        "inProgress": "en progreso",
+        "verdict": {
+          "better": "La tasa de fallo está mejorando",
+          "worse": "La tasa de fallo está empeorando",
+          "steady": "La tasa de fallo se mantiene estable",
+          "notEnough": "No hay suficientes períodos completos para determinar una tendencia aún.",
+          "notEnoughDetail": "La tendencia necesita al menos dos períodos completos con resultados.",
+          "detail": "La línea de tendencia va desde {start} hasta {end}, un cambio de {change} puntos en {count} {grouping, select, daily {días} weekly {semanas} monthly {meses} quarterly {trimestres} other {años}} completos."
+        },
+        "stats": {
+          "lastComplete": "Último período completo ({period}), comparado con el promedio de los períodos completos anteriores.",
+          "results": "Resultados ejecutados",
+          "runs": "Ejecuciones",
+          "deltaPoints": "{change} pts. en comparación con el {count, plural, one {período anterior} other {# períodos anteriores}}",
+          "deltaPercent": "{change}% en comparación con el {count, plural, one {período anterior} other {# períodos anteriores}}",
+          "noBaseline": "Nada anterior para comparar"
+        },
+        "chart": {
+          "allProjects": "Todos los proyectos seleccionados",
+          "period": "{grouping, select, weekly {Semana del {date}} other {{date}}}",
+          "partialPeriod": "{grouping, select, weekly {Semana del {period}} other {{period}}} (en progreso)",
+          "rateTrend": "Tendencia de {rate}"
+        },
+        "heatmap": {
+          "title": "Tasa de fallo por proyecto y período",
+          "help": "Cada celda es la tasa de fallo del proyecto para el período; el sombreado alcanza intensidad total al 35%. La columna de tendencia es el cambio en la línea de tasa de fallo ajustada durante los períodos completos. * marca el período en progreso.",
+          "trend": "Tendencia"
+        },
+        "trend": {
+          "points": "{change} pts"
+        },
+        "detail": {
+          "title": "Resultados y tasas por período"
+        },
+        "method": {
+          "title": "Cómo se cuenta esto",
+          "runSource": {
+            "automated": "Solo ejecuciones automatizadas: cada tipo de ejecución excepto manual, con sus resultados importados. Una ejecución pertenece al período en que fue creada.",
+            "manual": "Solo ejecuciones manuales, con los resultados registrados en ellas. Una ejecución pertenece al período en que fue creada.",
+            "both": "Cada ejecución: ejecuciones automatizadas con sus resultados importados y ejecuciones manuales con los resultados registrados en ellas. Una ejecución pertenece al período en que fue creada."
+          },
+          "periods": "{grouping, select, daily {Días} weekly {Semanas (comenzando el lunes)} monthly {Meses} quarterly {Trimestres} other {Años}} se cortan en {timezone}. El actual está en progreso y se excluye de la tendencia y las cifras principales.",
+          "everyAttempt": "Una prueba reintenada se cuenta una vez por intento.",
+          "latestAttempt": "Solo se cuenta el último intento de cada caso en una ejecución.",
+          "skippedExcluded": "Los resultados omitidos (un estado que se completa sin un aprobado o un fallo) se dejan fuera de las tasas de aprobación y fallo; otros estados permanecen.",
+          "skippedCounted": "Los resultados omitidos se cuentan en las tasas de aprobación y fallo.",
+          "abortedIncluded": "Se incluyen las ejecuciones en estado de ejecución abandonada.",
+          "abortedExcluded": "Se excluyen las ejecuciones en estado de ejecución abandonada.",
+          "trend": "La tendencia es una línea recta ajustada a la tasa de fallo durante períodos completos con resultados. Un cambio de más de un punto en cualquier dirección lo califica como mejor o peor."
         }
       }
     },

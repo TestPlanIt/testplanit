@@ -540,6 +540,7 @@ enum NotificationType {
     INTEGRATION_AUTH_EXPIRED
     RUN_READY_TO_COMPLETE
     WHATS_NEW
+    RUN_CASE_UNBLOCKED
 
     @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')
@@ -710,6 +711,7 @@ model Projects {
     excludeNotStartedFromRuns        Boolean                               @default(false)
     requirementsEnabled              Boolean                               @default(false)
     autoLockCompositionOnInProgress  Boolean                               @default(false)
+    enforceCaseDependencies          Boolean                               @default(false)
     abandonedRunIdleMinutes          Int?
     abandonedRunStateId              Int?
     abandonedRunState                Workflows?                            @relation("ProjectAbandonedRunState", fields: [abandonedRunStateId], references: [id], onDelete: SetNull)

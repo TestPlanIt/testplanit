@@ -496,6 +496,62 @@ CREATE TRIGGER tpl_composition_lock_guard_upd BEFORE UPDATE OF "order", "isDelet
 `;
 
 /**
+ * Dependency gate (#645) — the authoritative DB-level guard. When the run's
+ * project has "enforceCaseDependencies" on, a TestRunResults row may not be
+ * inserted for a run case while any DEPENDS_ON prerequisite that is ALSO in the
+ * same run (live TestRunCases row) carries a status without "isSuccess" — or no
+ * status at all. Prerequisites outside the run never block.
+ *
+ * Mirrors lib/services/dependencyGate.ts, which runs first on the app paths
+ * (submit-result, bulk-skip, the model RPC preflight) and produces the
+ * structured 409. This trigger holds for everything else: nested creates
+ * through another model, createMany batches, raw SQL and rawClient writers.
+ * BEFORE INSERT only — editing or deleting a result never adds one, and the
+ * gate is about recording new attempts. Distinct tpl_dependency_gate_* prefix
+ * keeps it out of every drift self-check.
+ */
+export const DEPENDENCY_GATE_GUARD_SQL = `
+CREATE OR REPLACE FUNCTION tpl_dependency_gate_guard() RETURNS TRIGGER AS $$
+DECLARE
+  enforce boolean;
+  dependant_case_id integer;
+  blocker_case_id integer;
+BEGIN
+  SELECT p."enforceCaseDependencies", trc."repositoryCaseId"
+    INTO enforce, dependant_case_id
+  FROM "TestRunCases" trc
+  JOIN "TestRuns" tr ON tr."id" = trc."testRunId"
+  JOIN "Projects" p ON p."id" = tr."projectId"
+  WHERE trc."id" = NEW."testRunCaseId";
+  IF enforce IS NOT TRUE THEN
+    RETURN NEW;
+  END IF;
+  SELECT pre."repositoryCaseId" INTO blocker_case_id
+  FROM "RepositoryCaseLink" l
+  JOIN "TestRunCases" pre
+    ON pre."testRunId" = NEW."testRunId"
+   AND pre."repositoryCaseId" = l."caseBId"
+   AND pre."isDeleted" = false
+  LEFT JOIN "Status" s ON s."id" = pre."statusId"
+  WHERE l."caseAId" = dependant_case_id
+    AND l."type" = 'DEPENDS_ON'
+    AND l."isDeleted" = false
+    AND s."isSuccess" IS DISTINCT FROM true
+  LIMIT 1;
+  IF blocker_case_id IS NOT NULL THEN
+    RAISE EXCEPTION 'Test case % in run % is blocked until its prerequisites pass (case % has not passed)',
+      dependant_case_id, NEW."testRunId", blocker_case_id USING ERRCODE = 'check_violation'; -- 23514
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS tpl_dependency_gate_guard_ins ON "TestRunResults";
+CREATE TRIGGER tpl_dependency_gate_guard_ins BEFORE INSERT ON "TestRunResults"
+  FOR EACH ROW EXECUTE FUNCTION tpl_dependency_gate_guard();
+`;
+
+/**
  * Seeded-status guard — the authoritative DB-level guarantee that the `untested`
  * Status row keeps its identity and keeps existing.
  *
@@ -1037,6 +1093,13 @@ async function applyAuditTriggersOnce(
     //     DROP/CREATE TRIGGER pair. Distinct tpl_issue_version_* prefix keeps
     //     it out of every drift self-check below.
     await client.query(ISSUE_VERSION_CAPTURE_TRIGGER_SQL);
+
+    // 3g. Dependency gate (#645) — no result row for a run case whose
+    //     DEPENDS_ON prerequisites in the same run have not passed, when the
+    //     project enforces dependencies. Idempotent CREATE OR REPLACE +
+    //     DROP/CREATE TRIGGER pair. Distinct tpl_dependency_gate_* prefix keeps
+    //     it out of every drift self-check below.
+    await client.query(DEPENDENCY_GATE_GUARD_SQL);
 
     // 4. GRANT/REVOKE defense-in-depth: the connecting role keeps INSERT/SELECT/UPDATE/DELETE (the
     //    worker cursor + retention purge need UPDATE/DELETE); UPDATE/DELETE revoked from PUBLIC. The

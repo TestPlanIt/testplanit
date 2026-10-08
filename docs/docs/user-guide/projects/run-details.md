@@ -185,7 +185,7 @@ This table lists all the test cases included in the current test run:
 - **State**: The workflow state of the test case version included in the run.
 - **Priority**: The priority of the test case version.
 - **Assignee**: The user assigned to execute this test case within this run. Can often be assigned/changed here.
-- **Status**: The current execution status for this case _within this run_ (e.g., Not Started, Passed, Failed). This often acts as a link to start or view the execution.
+- **Status**: The current execution status for this case _within this run_ (e.g., Not Started, Passed, Failed). This often acts as a link to start or view the execution. When the project [enforces test case dependencies](./settings/advanced.md#enforce-test-case-dependencies-in-test-runs), a case whose prerequisites haven't passed in this run shows a **Blocked** badge next to its status, and the status control is disabled until they do; hover the badge to see which cases it is waiting on.
 - **Last Result**: Sometimes shows the status of the most recent execution attempt if multiple attempts are allowed.
 - **Tags**: Tags associated with the test case version.
 - **Actions** (Ellipsis Menu):

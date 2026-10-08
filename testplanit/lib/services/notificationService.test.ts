@@ -128,6 +128,47 @@ describe("NotificationService", () => {
     });
   });
 
+  describe("createRunCaseUnblockedNotification", () => {
+    it("queues a RUN_CASE_UNBLOCKED notification pointing at the case in its run", async () => {
+      mockQueue.add.mockResolvedValue({ id: "job-unblocked" } as any);
+
+      await NotificationService.createRunCaseUnblockedNotification({
+        userId: "prov",
+        testRunId: 50,
+        testRunName: "Order to billing",
+        projectId: 3,
+        projectName: "Telco",
+        testRunCaseId: 20,
+        testCaseId: 2,
+        testCaseName: "Verify provisioning",
+        prerequisiteCaseName: "Create order",
+        unblockedById: "crm",
+      });
+
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        "create-notification",
+        expect.objectContaining({
+          userId: "prov",
+          type: NotificationType.RUN_CASE_UNBLOCKED,
+          relatedEntityId: "20",
+          relatedEntityType: "TestRunCase",
+          data: {
+            testRunId: 50,
+            testRunName: "Order to billing",
+            projectId: 3,
+            projectName: "Telco",
+            testRunCaseId: 20,
+            testCaseId: 2,
+            testCaseName: "Verify provisioning",
+            prerequisiteCaseName: "Create order",
+            unblockedById: "crm",
+          },
+        }),
+        expect.anything()
+      );
+    });
+  });
+
   describe("createWorkAssignmentNotification", () => {
     it("should create a notification for test run case assignment", async () => {
       const mockJobId = "job-456";

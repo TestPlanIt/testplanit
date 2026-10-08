@@ -129,6 +129,10 @@ const processor = async (job: Job) => {
           if (data.projectId && data.testRunId) {
             notificationUrl = `${baseUrl}/${urlLocale}/projects/runs/${data.projectId}/${data.testRunId}`;
           }
+        } else if (notification.type === "RUN_CASE_UNBLOCKED") {
+          if (data.projectId && data.testRunId && data.testCaseId) {
+            notificationUrl = `${baseUrl}/${urlLocale}/projects/runs/${data.projectId}/${data.testRunId}?selectedCase=${data.testCaseId}`;
+          }
         } else if (
           notification.type === "REVIEW_REQUESTED" ||
           notification.type === "REVIEW_APPROVED" ||
@@ -454,6 +458,21 @@ const processor = async (job: Job) => {
               projectName: data.projectName ?? "",
             }
           );
+        } else if (notification.type === "RUN_CASE_UNBLOCKED") {
+          translatedTitle = await getServerTranslation(
+            userLocale,
+            "components.notifications.content.runCaseUnblockedTitle"
+          );
+          translatedMessage = await getServerTranslation(
+            userLocale,
+            "components.notifications.content.runCaseUnblockedEmailMessage",
+            {
+              testCaseName: data.testCaseName ?? "",
+              testRunName: data.testRunName ?? "",
+              projectName: data.projectName ?? "",
+              prerequisiteName: data.prerequisiteCaseName ?? "",
+            }
+          );
         }
 
         // Get email template translations
@@ -485,6 +504,11 @@ const processor = async (job: Job) => {
           additionalInfo = await getServerTranslation(
             userLocale,
             "components.notifications.content.runReadyToCompleteReason"
+          );
+        } else if (notification.type === "RUN_CASE_UNBLOCKED") {
+          additionalInfo = await getServerTranslation(
+            userLocale,
+            "components.notifications.content.runCaseUnblockedReason"
           );
         }
 
@@ -561,8 +585,9 @@ const processor = async (job: Job) => {
             let url: string | undefined;
 
             if (
-              notification.type === "WORK_ASSIGNED" &&
-              !data.isBulkAssignment
+              (notification.type === "WORK_ASSIGNED" &&
+                !data.isBulkAssignment) ||
+              notification.type === "RUN_CASE_UNBLOCKED"
             ) {
               if (data.projectId && data.testRunId && data.testCaseId) {
                 url = `${baseUrl}/${urlLocale}/projects/runs/${data.projectId}/${data.testRunId}?selectedCase=${data.testCaseId}`;

@@ -221,6 +221,52 @@ export class NotificationService {
   }
 
   /**
+   * Tell a run case's assignee that the case is no longer blocked: the last of
+   * its `DEPENDS_ON` prerequisites in the run has passed. This is the handoff
+   * in dependency gating (see lib/services/dependencyGate.ts).
+   *
+   * Like RUN_READY_TO_COMPLETE, the stored `title`/`message` are an English
+   * fallback; the bell and the email worker render localized copy from `data`.
+   */
+  static async createRunCaseUnblockedNotification(params: {
+    userId: string;
+    testRunId: number;
+    testRunName: string;
+    projectId: number;
+    projectName: string;
+    testRunCaseId: number;
+    testCaseId: number;
+    testCaseName: string;
+    prerequisiteCaseName: string;
+    unblockedById: string;
+    tenantId?: string;
+  }) {
+    const title = "Test case ready to execute";
+    const message = `"${params.testCaseName}" in test run "${params.testRunName}" (project "${params.projectName}") is no longer blocked: "${params.prerequisiteCaseName}" passed.`;
+
+    return this.createNotification({
+      userId: params.userId,
+      type: NotificationType.RUN_CASE_UNBLOCKED,
+      title,
+      message,
+      relatedEntityId: params.testRunCaseId.toString(),
+      relatedEntityType: "TestRunCase",
+      tenantId: params.tenantId,
+      data: {
+        testRunId: params.testRunId,
+        testRunName: params.testRunName,
+        projectId: params.projectId,
+        projectName: params.projectName,
+        testRunCaseId: params.testRunCaseId,
+        testCaseId: params.testCaseId,
+        testCaseName: params.testCaseName,
+        prerequisiteCaseName: params.prerequisiteCaseName,
+        unblockedById: params.unblockedById,
+      },
+    });
+  }
+
+  /**
    * Create a user registration notification for all System Admins
    */
   static async createUserRegistrationNotification(

@@ -41,6 +41,7 @@ import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import {
   isIssueRequiredOnFailureSubmitResultError,
+  isDependenciesNotPassedSubmitResultError,
   isJustificationRequiredSubmitResultError,
   isPermissionDeniedSubmitResultError,
   submitTestRunResult,
@@ -1573,6 +1574,12 @@ export function AddResultModal({
         // Surface inline by the Issues section so the tester links one and
         // resubmits, keeping the modal open.
         setShowIssueRequiredError(true);
+      } else if (isDependenciesNotPassedSubmitResultError(error)) {
+        toast.error(tCommon("errors.dependenciesNotPassed"), {
+          description: tCommon("errors.dependenciesNotPassedDescription", {
+            count: error.blockedBy?.length ?? 0,
+          }),
+        });
       } else {
         toast.error(tCommon("errors.error"), {
           description: tCommon("errors.somethingWentWrong"),

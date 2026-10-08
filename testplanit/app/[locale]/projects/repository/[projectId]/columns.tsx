@@ -69,6 +69,10 @@ import type {
   Workflows,
 } from "~/zenstack/models";
 import {
+  isBlockedByDependencies,
+  type CaseDependencyState,
+} from "~/utils/caseDependencies";
+import {
   Activity,
   ArrowRight,
   ArrowRightLeft,
@@ -108,6 +112,8 @@ import { DeleteCaseModal } from "./DeleteCase";
 
 export interface ExtendedCases extends RepositoryCases {
   className: string | null;
+  /** Run mode, with dependency enforcement on: this case's gate state. */
+  dependencyState?: CaseDependencyState;
   source: RepositoryCaseSource;
   state: Pick<Workflows, "id" | "name"> & {
     icon: Pick<FieldIcon, "name">;
@@ -540,6 +546,7 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
   onOpenAddResultModal,
   onOpenAssignModal,
   totalIterations,
+  dependencyState,
 }: {
   status: ExtendedCases["testRunStatus"];
   caseId: number;
@@ -578,6 +585,8 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
     selectedCases?: ExtendedCases[];
   }) => void;
   totalIterations?: number;
+  /** Dependency gate state; a blocked case cannot open the result form. */
+  dependencyState?: CaseDependencyState;
 }) {
   // For parameterized cases, the status is derived from the iteration
   // rollup (no per-case-level result writes). Render a click-to-open-sheet
@@ -648,8 +657,14 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
     router.replace(`${pathname}?${params.toString()}`);
   };
 
+  // A case blocked by an unpassed dependency in this run cannot take a
+  // result (the server refuses one); the cell shows why instead. Assigning
+  // it must keep working — the handoff notifies the assignee.
+  const isBlocked = isBlockedByDependencies(dependencyState);
+
   // Combine isCompleted with isSoftDeletedInRun for disabling logic
   const isDisabled = isCompleted || isSoftDeletedInRun;
+  const isResultDisabled = isDisabled || isBlocked;
 
   const rowSelection = table?.store?.state.rowSelection;
   const selectedCount = rowSelection ? Object.keys(rowSelection).length : 0;
@@ -708,7 +723,7 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
   };
 
   const handleStatusChange = (statusId: string) => {
-    if (isCompleted) return;
+    if (isCompleted || isBlocked) return;
     if (isInitialRender) return;
     if (onOpenAddResultModal) {
       onOpenAddResultModal({
@@ -742,7 +757,7 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
   };
 
   const handleSingleResult = () => {
-    if (isCompleted) return;
+    if (isCompleted || isBlocked) return;
     if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur();
     }
@@ -766,10 +781,57 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
     return "color" in s && s.color !== undefined;
   };
 
+  // Blocked: the status control becomes a read-only lock with the blockers
+  // in its tooltip. A plain element rather than a disabled button, because a
+  // disabled button swallows the hover the tooltip needs.
+  const blockedControl =
+    isBlocked && dependencyState ? (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div
+              role="status"
+              className="flex-1 min-w-0 h-8 inline-flex items-center gap-1.5 rounded-md border border-dashed px-3 text-sm text-muted-foreground overflow-hidden"
+              data-testid={`testrun-status-cell-blocked-${caseId}`}
+              aria-label={t("runs.dependencies.blocked")}
+            >
+              <Lock className="h-3.5 w-3.5 shrink-0" />
+              <StatusDisplay
+                name={displayStatus.name}
+                color={
+                  hasColor(displayStatus)
+                    ? displayStatus.color.value
+                    : undefined
+                }
+                className="flex items-center space-x-1 min-w-0 overflow-hidden"
+                nameClassName="truncate"
+              />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="left" className="max-w-xs">
+            <p>
+              {t("runs.dependencies.blockedBy", {
+                count: dependencyState.blockedBy.length,
+              })}
+            </p>
+            <ul className="mt-1 list-disc ps-4">
+              {dependencyState.blockedBy.map((prerequisite) => (
+                <li key={prerequisite.testRunCaseId}>
+                  {prerequisite.name ?? `#${prerequisite.repositoryCaseId}`}
+                </li>
+              ))}
+            </ul>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    ) : null;
+
   return (
     <>
       <div className="flex items-center justify-between w-full">
-        {isParameterized ? (
+        {blockedControl ? (
+          blockedControl
+        ) : isParameterized ? (
           <Button
             variant="outline"
             className="flex-1 min-w-0 h-8 bg-transparent hover:bg-muted hover:text-foreground justify-between gap-1 overflow-hidden"
@@ -794,7 +856,7 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
               <Button
                 variant="outline"
                 className="flex-1 min-w-0 h-8 bg-transparent hover:bg-muted hover:text-foreground justify-start overflow-hidden"
-                disabled={isDisabled}
+                disabled={isResultDisabled}
               >
                 <StatusDisplay
                   name={displayStatus.name}
@@ -864,10 +926,10 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
                 </DropdownMenuItem>
                 {!isParameterized && (
                   <DropdownMenuItem
-                    className={`flex items-center ${isDisabled ? "cursor-not-allowed" : "cursor-pointer"}`}
+                    className={`flex items-center ${isResultDisabled ? "cursor-not-allowed" : "cursor-pointer"}`}
                     onClick={handleBulkResult}
-                    disabled={isDisabled}
-                    style={{ opacity: isDisabled ? 0.5 : 1 }}
+                    disabled={isResultDisabled}
+                    style={{ opacity: isResultDisabled ? 0.5 : 1 }}
                   >
                     <Plus className="me-2 h-4 w-4" />
                     <span>
@@ -891,10 +953,10 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
                 </DropdownMenuItem>
                 {!isParameterized && (
                   <DropdownMenuItem
-                    className={`flex items-center ${isDisabled ? "cursor-not-allowed" : "cursor-pointer"}`}
+                    className={`flex items-center ${isResultDisabled ? "cursor-not-allowed" : "cursor-pointer"}`}
                     onClick={handleSingleResult}
-                    disabled={isDisabled}
-                    style={{ opacity: isDisabled ? 0.5 : 1 }}
+                    disabled={isResultDisabled}
+                    style={{ opacity: isResultDisabled ? 0.5 : 1 }}
                   >
                     <Plus className="me-2 h-4 w-4" />
                     <span>{t("common.actions.addResult")}</span>
@@ -2420,6 +2482,7 @@ export const getColumns = (
             }
             onOpenAssignModal={onOpenAssignModal}
             totalIterations={row.original.totalIterations}
+            dependencyState={row.original.dependencyState}
           />
         );
       },

@@ -782,6 +782,65 @@ export function NotificationContent({
     );
   }
 
+  if (notification.type === "RUN_CASE_UNBLOCKED") {
+    if (data.projectId && data.testRunId && data.testCaseId) {
+      const caseLink = `/projects/runs/${data.projectId}/${data.testRunId}?selectedCase=${data.testCaseId}`;
+      return (
+        <div
+          className="space-y-2"
+          data-testid="notification-run-case-unblocked"
+        >
+          <h4 className="font-medium text-sm">{t("runCaseUnblockedTitle")}</h4>
+          <div className="text-sm text-muted-foreground space-y-1">
+            <p>
+              {t("runCaseUnblockedPrerequisitePassed", {
+                prerequisiteName: data.prerequisiteCaseName ?? "",
+              })}
+            </p>
+            <div className="flex items-center gap-1">
+              <Link
+                href={caseLink}
+                data-testid="notification-run-case-unblocked-link"
+                className="font-medium text-primary hover:underline inline-flex items-center gap-1"
+              >
+                <CaseDisplay
+                  testCase={{
+                    id: data.testCaseId,
+                    name: data.testCaseName || data.entityName,
+                  }}
+                  showIcon={true}
+                />
+                <ExternalLink className="h-3 w-3" />
+              </Link>
+            </div>
+            <div className="flex items-center gap-1 flex-wrap">
+              <span>{t("inTestRun")}</span>
+              <TestRunNameDisplay
+                testRun={{ id: data.testRunId, name: data.testRunName }}
+                showIcon={true}
+              />
+            </div>
+            <div className="flex items-center gap-1 flex-wrap">
+              <span>{t("inProject")}</span>
+              <ProjectNameCell
+                projectId={data.projectId}
+                value={data.projectName}
+                size="sm"
+              />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-1">
+        <h4 className="font-medium text-sm">{notification.title}</h4>
+        <p className="text-sm text-muted-foreground">{notification.message}</p>
+      </div>
+    );
+  }
+
   if (notification.type === "RUN_READY_TO_COMPLETE") {
     if (data.projectId && data.testRunId) {
       const runLink = `/projects/runs/${data.projectId}/${data.testRunId}`;

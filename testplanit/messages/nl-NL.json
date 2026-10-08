@@ -694,6 +694,8 @@
       "failedToDeleteRepository": "Het verwijderen van de repository is mislukt.",
       "permissionDenied": "U hebt geen toestemming om deze pagina te bezoeken.",
       "resultSubmitPermissionDenied": "Je kunt voor deze zaak geen resultaten indienen. Vraag een projectbeheerder om deze zaak aan je toe te wijzen.",
+      "dependenciesNotPassed": "Geblokkeerd door afhankelijkheden",
+      "dependenciesNotPassedDescription": "Dit testgeval kan niet worden uitgevoerd totdat {count, plural, =0 {de gevallen waarvan het afhangt zijn} one {het geval waarvan het afhangt is} other {alle # gevallen waarvan het afhangt zijn}} in deze uitvoering zijn geslaagd.",
       "justificationRequired": "Rechtvaardiging vereist",
       "justificationRequiredDescription": "Om een voltooid resultaat om te zetten naar een andere uitkomst, zijn resultaatdetails nodig die de wijziging toelichten.",
       "requiredFieldMissing": "Een verplicht resultaatveld mist een waarde.",
@@ -1573,6 +1575,9 @@
           },
           "mantisbt": {
             "description": "Maak verbinding met een zelfgehoste MantisBT-instantie voor het bijhouden van problemen."
+          },
+          "clickup": {
+            "description": "Maak verbinding met ClickUp voor taakbeheer en projectbeheer."
           }
         }
       },
@@ -1844,6 +1849,15 @@
         "setupStepsMantisbtStep2": "Selecteer in de plugin-configuratie de events voor het aanmaken en bijwerken van issues.",
         "setupStepsMantisbtStep3": "Plak de URL hierboven als webhookdoel en sla op.",
         "setupStepsMantisbtStep4": "Maak of update een issue in MantisBT; de status van het gekoppelde issue wordt hier gesynchroniseerd.",
+        "inboundChooserClickup": "ClickUp",
+        "inboundClickupTitle": "ClickUp inkomende webhook",
+        "inboundClickupScopeHint": "ClickUp <code>taskStatusUpdated</code> gebeurtenissen werken gekoppelde TestPlanIt-problemen bij. Andere taakgebeurtenissen worden geaccepteerd, maar werken de problemen niet bij.",
+        "inboundClickupRegisterHint": "ClickUp heeft geen webhooksinstellingenpagina: webhooks worden gemaakt via de API en ClickUp kiest het ondertekeningsgeheim. Laat het geheim leeg en TestPlanIt registreert deze webhook in ClickUp voor de gekoppelde Lijst met behulp van uw ClickUp-autorisatie.",
+        "inboundClickupSecret": "Webhookgeheim (optioneel)",
+        "inboundClickupSecretHelp": "Alleen nodig als u de webhook zelf hebt gemaakt met ClickUp's Create Webhook API: plak het geheim dat ClickUp heeft geretourneerd. Opgeslagen versleuteld in rust.",
+        "setupStepsClickupStep1": "Als u het geheim leeg hebt gelaten, heeft TestPlanIt deze webhook al geregistreerd in ClickUp voor de gekoppelde Lijst — er is niets in te stellen in ClickUp.",
+        "setupStepsClickupStep2": "Als u de webhook zelf hebt geregistreerd via ClickUp's Create Webhook API, zorg er dan voor dat het eindpunt de onderstaande URL is en abonneer het op de taskStatusUpdated-gebeurtenis.",
+        "setupStepsClickupStep3": "Gebruik \"Testwebhook verzenden\" hieronder om de pijplijn te verifiëren. Het draaien van het geheim registreert een verse webhook in ClickUp.",
         "codeRepos": {
           "empty": "Geen repositories zijn verbonden voor Impact Analysis. <link>Verbind er eerst één</link>.",
           "unsupported": "{provider} repositories kunnen geen webhooks naar TestPlanIt verzenden.",
@@ -2087,7 +2101,7 @@
           "pathLabel": "Pad",
           "patternLabel": "Patroon",
           "previewFiles": "Voorbeeldbestanden",
-          "rootHint": "Laat het pad leeg, of voer . in, om te beginnen bij de repositorywortels; padtype . met patroon **/* bevat elk bestand.",
+          "rootHint": "Laat het pad leeg of voer in . om te starten in de repository-root; pad . met patroon **/* bevat elk bestand.",
           "scanningRepo": "Bestanden in de repository scannen… ({seconds}s)",
           "title": "Padpatronen",
           "truncatedBadge": "De resultaten kunnen onvolledig zijn (beperkingen van de aanbieder)"
@@ -2179,6 +2193,13 @@
           "disabledToast": "Testruns vergrendelen hun samenstelling niet langer automatisch",
           "saveError": "De instelling voor automatisch vergrendelen van de samenstelling kon niet worden bijgewerkt"
         },
+        "caseDependencies": {
+          "label": "Testgeval-afhankelijkheden in testruns afdwingen",
+          "description": "Wanneer ingeschakeld, is een testgeval in een run geblokkeerd totdat elk geval waarvan het afhangt (een \"Hangt af van\"-koppeling) in diezelfde run is geslaagd. Geblokkeerde gevallen zijn gemarkeerd in de run en resultaten ervoor worden geweigerd. Wanneer de laatste afhankelijkheid slaagt, wordt de toegewezen persoon van het geval op de hoogte gesteld dat het klaar is. Afhankelijkheden die niet in de run zitten, blokkeren niet.",
+          "enabledToast": "Testgeval-afhankelijkheden worden in testruns afgedwongen",
+          "disabledToast": "Testgeval-afhankelijkheden worden niet langer afgedwongen",
+          "saveError": "Het bijwerken van de afhankelijkheidsaforzettingsinstelling is mislukt"
+        },
         "editWindow": {
           "label": "Resultaatbewerkingsvenster",
           "description": "Een resultaat kan nog steeds direct na het vastleggen worden bewerkt. Na het sluiten van het venster is een nieuwe poging nodig om een correctie door te voeren. Systeembeheerders kunnen de resultaten altijd bewerken.",
@@ -2233,7 +2254,7 @@
           "branchesFallbackHint": "Typ in plaats daarvan de naam van de branch."
         },
         "pathPatterns": {
-          "description": "Welke toepassingsbestanden u wilt opnemen. Elke rij combineert een basispad en een glob-patroon. Voorbeeld: pad=src + patroon=**/* bevat alles onder src.",
+          "description": "Welke toepassingsbestanden moeten worden opgenomen. Elke regel combineert een basispad met een glob-patroon. Voorbeeld: path=src + pattern=**/* bevat alles onder src.",
           "pathPlaceholder": "src"
         },
         "cache": {
@@ -2876,11 +2897,101 @@
           "label": "Meldingsmodus",
           "useGlobal": "Gebruik algemene instellingen"
         },
-        "options": {
-          "title": "Extra opties",
-          "email": {
-            "label": "E-mailmeldingen",
-            "description": "Ontvang meldingen via e-mail"
+        "typeSection": {
+          "title": "Waarover ik meldingen wil ontvangen",
+          "description": "Standaard zijn alle soorten meldingen ingeschakeld. Schakel de meldingen uit die u niet wilt ontvangen. De bovenstaande meldingsmode bepaalt nog steeds hoe u wordt bereikt.",
+          "modeNoneNote": "Er worden geen meldingen afgeleverd terwijl uw meldingsmode Geen is. Uw keuzes hier zijn van toepassing zodra u een ander mode kiest.",
+          "locked": "Altijd aan",
+          "resetToDefaults": "Standaardinstellingen herstellen",
+          "adminOnly": "Verzonden naar beheerders"
+        },
+        "groups": {
+          "assignments": "Opdrachten",
+          "comments": "Reacties",
+          "reviews": "Beoordelingen",
+          "runsAndMilestones": "Runs en mijlpalen",
+          "sharing": "Delen",
+          "aiAndJobs": "AI en taken",
+          "integrations": "Integraties",
+          "system": "Systeem",
+          "administration": "Administratie"
+        },
+        "types": {
+          "WORK_ASSIGNED": {
+            "label": "Werk toegewezen aan mij",
+            "description": "Een testrun-case wordt u toegewezen, afzonderlijk of in bulk."
+          },
+          "SESSION_ASSIGNED": {
+            "label": "Sessie toegewezen aan mij",
+            "description": "Een sessie wordt gemaakt met u als toegewezen persoon, of opnieuw aan u toegewezen."
+          },
+          "RUN_CASE_UNBLOCKED": {
+            "label": "Toegewezen case gedeblokkeerd",
+            "description": "Een testcase die u in een run is toegewezen, wordt uitvoerbaar omdat de cases waarvan deze afhangt, zijn geslaagd."
+          },
+          "COMMENT_MENTION": {
+            "label": "Vermeldingen in reacties",
+            "description": "Iemand @-vermeldt u in een reactie op een case, run, sessie, mijlpaal of beoordeling."
+          },
+          "REVIEW_REQUESTED": {
+            "label": "Beoordeling aangevraagd",
+            "description": "Een beoordeling wordt van u of van een rol die u vervult, aangevraagd."
+          },
+          "REVIEW_APPROVED": {
+            "label": "Beoordeling goedgekeurd",
+            "description": "Een reviewer keurt uw verzoek goed."
+          },
+          "REVIEW_CHANGES_REQUESTED": {
+            "label": "Wijzigingen aangevraagd",
+            "description": "Een reviewer vraagt wijzigingen op uw verzoek aan."
+          },
+          "REVIEW_REJECTED": {
+            "label": "Beoordeling afgewezen",
+            "description": "Een reviewer wijst uw verzoek af."
+          },
+          "REVIEW_CANCELLED": {
+            "label": "Beoordeling geannuleerd",
+            "description": "Een verzoek dat u moest beoordelen, wordt geannuleerd, of het item dat u moet beoordelen, wordt verwijderd."
+          },
+          "REVIEW_REMINDER": {
+            "label": "Herinneringen voor beoordelingen",
+            "description": "Een beoordeling die u verschuldigd bent, is ouder dan de drempel voor herinneringen, of de aanvrager duwt u aan."
+          },
+          "RUN_READY_TO_COMPLETE": {
+            "label": "Testrun gereed om af te ronden",
+            "description": "Elke case in een run die u kunt afronden, heeft een resultaat."
+          },
+          "MILESTONE_DUE_REMINDER": {
+            "label": "Herinneringen voor vervaldatum van mijlpaal",
+            "description": "Een mijlpaal waar u bij betrokken bent, vervalt binnenkort of is verlopen."
+          },
+          "SHARE_LINK_ACCESSED": {
+            "label": "Deellink geopend",
+            "description": "Iemand opent een deellink die u hebt gemaakt met meldingen-op-weergave ingeschakeld."
+          },
+          "AI_STEPS_DERIVED": {
+            "label": "AI-stappen afgeleid",
+            "description": "Een AI-stapafleiding-taak die u hebt gestart, heeft stappen geschreven."
+          },
+          "INTEGRATION_AUTH_EXPIRED": {
+            "label": "Integratie moet opnieuw worden geautoriseerd",
+            "description": "Uw verbinding met een integratie is verlopen of ingetrokken en moet opnieuw verbonden worden."
+          },
+          "SYSTEM_ANNOUNCEMENT": {
+            "label": "Aankondigingen voor beheerders",
+            "description": "Een beheerder stuurt een systeemmelding naar elke gebruiker."
+          },
+          "WHATS_NEW": {
+            "label": "Wat is er nieuw na een upgrade",
+            "description": "Een samenvatting van nieuwe functies op uw eerste bezoek nadat TestPlanIt is bijgewerkt."
+          },
+          "USER_REGISTERED": {
+            "label": "Nieuwe gebruikersregistraties",
+            "description": "Een nieuwe gebruiker meldt zich aan via het formulier, SSO of SAML."
+          },
+          "LLM_BUDGET_ALERT": {
+            "label": "AI-budgetwaarschuwingen",
+            "description": "LLM-uitgaven overschrijden een budgetdrempel voor de factureringsperiode."
           }
         },
         "success": {
@@ -3127,6 +3238,13 @@
       "modifierHintMac": "Houd ⇧ ingedrukt om te verplaatsen of ⌥ om te kopiëren terwijl u sleept om dit menu over te slaan.",
       "modifierHintWin": "Houd Shift ingedrukt om te verplaatsen of Ctrl om te kopiëren tijdens het slepen om dit menu over te slaan.",
       "dropZoneReorder": "Neerzetten om te herschikken",
+      "dropZoneReorderBlockedSort": "Verwijder de sortering om cases in deze map opnieuw in te delen",
+      "dropZoneReorderBlockedSortMac": "Verwijder de sortering om opnieuw in te delen — houd ⌥ ingedrukt om in deze map te kopiëren",
+      "dropZoneReorderBlockedSortWin": "Verwijder de sortering om opnieuw in te delen — houd Ctrl ingedrukt om in deze map te kopiëren",
+      "dropZoneReorderBlockedSearch": "Wis de zoekopdracht om cases in deze map opnieuw in te delen",
+      "dropZoneReorderBlockedSearchMac": "Wis de zoekopdracht om opnieuw in te delen — houd ⌥ ingedrukt om in deze map te kopiëren",
+      "dropZoneReorderBlockedSearchWin": "Wis de zoekopdracht om opnieuw in te delen — houd Ctrl ingedrukt om in deze map te kopiëren",
+      "dropZoneCopyHere": "Zet neer om in deze map te kopiëren",
       "dropZoneFolder": "Sleep op een map om te nesten, of tussen mappen om te herschikken",
       "dropZoneTreeMac": "Zet neer op een map — houd ⇧ ingedrukt om te verplaatsen, ⌥ om te kopiëren",
       "dropZoneTreeWin": "Zet neer op een map — houd Shift ingedrukt om te verplaatsen, Ctrl om te kopiëren",
@@ -4087,6 +4205,13 @@
       "lockError": "De runsamenstelling kon niet worden vergrendeld",
       "unlockError": "De runsamenstelling kon niet worden ontgrendeld",
       "addBlocked": "De samenstelling van deze run is vergrendeld, dus testgevallen kunnen niet worden toegevoegd. Ontgrendel deze eerst om de gevallenset te wijzigen."
+    },
+    "dependencies": {
+      "blocked": "Geblokkeerd",
+      "blockedBy": "Geblokkeerd totdat {count, plural, one {deze case geslaagd is} other {deze cases zijn geslaagd}} in deze run:",
+      "blockedNotice": "Deze testcase kan pas worden uitgevoerd als {count, plural, one {de case waarvan deze afhangt, is} other {alle # cases waarvan deze afhangt, zijn}} geslaagd in deze run.",
+      "notInRun": "{count, plural, one {# case waarvan deze afhangt, is} other {# cases waarvan deze afhangt, zijn}} niet in deze run en blokkeert de uitvoering niet:",
+      "unblocked": "Alle cases waarvan deze afhangt, zijn in deze run geslaagd."
     },
     "distribute": {
       "title": "Toewijzingen verdelen",
@@ -6202,6 +6327,10 @@
         "mantisbt": {
           "name": "MantisBT",
           "description": "Maak verbinding met een zelfgehoste MantisBT-instantie voor het bijhouden van problemen"
+        },
+        "clickup": {
+          "name": "ClickUp",
+          "description": "Maak verbinding met ClickUp voor taakbeheer en projectmanagement"
         }
       },
       "filterPlaceholder": "Integraties filteren...",
@@ -6312,7 +6441,13 @@
         "mantisBTApiKeyHelp": "Maak er een aan bij uw MantisBT-accountinstellingen → API-tokens",
         "mantisBTUrl": "MantisBT-URL",
         "mantisBTUrlPlaceholder": "https://mantisbt.example.com",
-        "mantisBTUrlHelp": "De basis-URL van uw MantisBT-instantie"
+        "mantisBTUrlHelp": "De basis-URL van uw MantisBT-instantie",
+        "clickupTeamId": "ClickUp Team (Workspace) ID",
+        "clickupTeamIdPlaceholder": "bijv. 9013456789",
+        "clickupTeamIdHelp": "Te vinden in de ClickUp URL na app.clickup.com/",
+        "clickupListId": "Standaard ClickUp Lijsten-ID",
+        "clickupListIdPlaceholder": "bijv. 901234567",
+        "clickupListIdHelp": "De Lijst waarin taken standaard worden gemaakt; kan per issue worden overschreven"
       },
       "authType": {
         "api_key": "API-sleutel",
@@ -6820,10 +6955,6 @@
         "userRegisteredMessageSso": "{userName} ({userEmail}) heeft zich geregistreerd via SSO",
         "userRegisteredMessageForm": "{userName} ({userEmail}) heeft zich geregistreerd via het registratieformulier",
         "viewUserList": "Gebruikerslijst bekijken",
-        "reviewGeneratedCases": "Review gegenereerde testgevallen",
-        "generateFromUrlCompleteTitle": "Pagina's succesvol gecrawld",
-        "generateFromUrlCompleteMessage": "{pages, plural, one {# pagina} other {# pagina's}} gecrawld vanuit {url} in project \"{projectName}\". Klik om te bekijken en testgevallen te genereren.",
-        "generateFromUrlFailedTitle": "URL-crawl mislukt",
         "reviewRequestedTitle": "Beoordeling aangevraagd",
         "reviewApprovedTitle": "Beoordeling goedgekeurd",
         "reviewChangesRequestedTitle": "Gevraagde wijzigingen",
@@ -6864,7 +6995,12 @@
         "runReadyToCompleteTitle": "Testrun Gereed om te Voltooien",
         "runReadyToCompleteExecuted": "{count, plural, one {# testgeval is} =2 {Beide testgevallen zijn} other {Alle # testgevallen zijn}} uitgevoerd.",
         "runReadyToCompleteEmailMessage": "{caseCount, plural, one {# testgeval is} =2 {Beide testgevallen zijn} other {Alle # testgevallen zijn}} uitgevoerd in testrun \"{testRunName}\" (project \"{projectName}\"). De run is klaar om als voltooid gemarkeerd te worden.",
-        "runReadyToCompleteReason": "Je ontvangt dit omdat je testruns in dit project kunt voltooien."
+        "runReadyToCompleteReason": "Je ontvangt dit omdat je testruns in dit project kunt voltooien.",
+        "runCaseUnblockedTitle": "Testgeval klaar om uit te voeren",
+        "runCaseUnblockedPrerequisitePassed": "{prerequisiteName} geslaagd, dus dit geval dat aan u is toegewezen, is niet langer geblokkeerd:",
+        "runCaseUnblockedEmailMessage": "\"{testCaseName}\" in testronde \"{testRunName}\" (project \"{projectName}\") is niet langer geblokkeerd: \"{prerequisiteName}\" geslaagd. Het is aan u toegewezen en klaar om uit te voeren.",
+        "runCaseUnblockedReason": "U ontvangt dit omdat de testcase aan u is toegewezen.",
+        "inTestRun": "in testronde"
       }
     },
     "issues": {
@@ -7477,6 +7613,11 @@
     "alreadyLinked": "Deze zaak is al gelinkt.",
     "cannotLinkSelf": "Kan een zaak niet aan zichzelf koppelen.",
     "circularLink": "Er is een cirkelvormige verbinding gedetecteerd.",
+    "dependsOn": "Hangt af van",
+    "blocks": "Blokkeert",
+    "dependsOnOption": "Afhankelijk van — deze case vereist dat de geselecteerde case eerst geslaagd is",
+    "blocksOption": "Blokkeert — de geselecteerde case vereist dat deze case eerst geslaagd is",
+    "dependencyHint": "Met afhankelrijkheidshandhaving ingeschakeld, kan een case in een testronde pas worden uitgevoerd nadat de cases waarvan deze afhangt in die ronde zijn geslaagd.",
     "failedToCreate": "Het is niet gelukt om de link te maken.",
     "confirmRemoveLink": "Weet u zeker dat u deze link wilt verwijderen?",
     "DEPENDS_ON": "Afhankelijkheid",
@@ -7741,6 +7882,8 @@
       "redmineUrl": "## Redmine URL\nDe basis-URL van uw Redmine-instantie.\n\n- Formaat: https://redmine.example.com\n- Voeg geen /issues of andere paden toe\n- Moet toegankelijk zijn vanaf deze server",
       "mantisBTApiKey": "## MantisBT API-token\nUw persoonlijke REST API-token.\n\n- Maak er een aan bij uw MantisBT-accountinstellingen → API-tokens\n- Beperkt tot de rechten van uw gebruiker; gebruik een serviceaccount voor gedeelde integraties",
       "mantisBTUrl": "## MantisBT URL\nDe basis-URL van uw MantisBT-instantie.\n\n- Formaat: https://mantisbt.example.com\n- Voeg geen /api/rest of andere paden toe\n- Moet toegankelijk zijn vanaf deze server",
+      "clickupTeamId": "## ClickUp Team (Workspace) ID\nDe numerieke ID van het ClickUp Team (ook wel Workspace genoemd) waartoe taken behoren.\n\n- Te vinden in de ClickUp URL: app.clickup.com/{teamId}/...\n- Vereist om Spaces/Folders/Lists te doorzoeken bij het selecteren van een project",
+      "clickupListId": "## Standaard ClickUp List ID\nDe List waarin nieuwe taken standaard worden gemaakt.\n\n- Te vinden in de ClickUp URL of via de optie \"Link kopiëren\" van de List\n- Optioneel — per uitgave kan een specifieke List worden gekozen",
       "githubBaseUrl": "## API-basis-URL\nVolledige GitHub API-root voor GitHub Enterprise Server.\n\n- Eindigt doorgaans op /api/v3\n- Laat dit veld leeg om api.github.com te gebruiken\n- Moet toegankelijk zijn vanaf deze server"
     },
     "config": {
@@ -8370,7 +8513,7 @@
           "description": "Probleemcreatie, oplossing en impactanalyse"
         },
         "automationTrends": {
-          "label": "Automatiseringstrends",
+          "label": "Trend geautomatiseerde testcases",
           "description": "Volg de voortgang van de automatisering week na week op basis van prioriteit."
         },
         "flakyTests": {
@@ -8416,6 +8559,10 @@
         "codePinCoverage": {
           "label": "Code Pin-dekking",
           "description": "Waar Code Pins zijn, per repository en directory, en waar recente wijzigingen zonder dekking gingen"
+        },
+        "resultsTrend": {
+          "label": "Trend van faalpercentage testresultaten",
+          "description": "Slag- en faalpercentages van testresultaten in de loop van de tijd, en of het faalpercentage beter of slechter wordt"
         }
       },
       "flakyTests": {
@@ -8735,7 +8882,7 @@
           "description": "Tokengebruik, kosten en betrouwbaarheid van LLM-functies over alle projecten"
         },
         "automationTrends": {
-          "label": "Trends in projectoverstijgende automatisering",
+          "label": "Trend geautomatiseerde testcases over projecten heen",
           "description": "Volg de voortgang van de automatisering wekelijks per prioriteit binnen de verschillende projecten."
         },
         "flakyTests": {
@@ -8769,6 +8916,10 @@
         "codePinCoverage": {
           "label": "Projectoverkoepelende Code Pin-dekking",
           "description": "Code Pin-dekking in alle projecten waarvoor Impact Analysis is ingeschakeld"
+        },
+        "resultsTrend": {
+          "label": "Trend van faalpercentage testresultaten over projecten heen",
+          "description": "Slag- en faalpercentages van testresultaten in de loop van de tijd per project, en of het faalpercentage beter of slechter wordt"
         }
       },
       "folderDescendants": {
@@ -8832,6 +8983,79 @@
         },
         "chart": {
           "byDirectory": "Spelden en ongedekte bestanden per directory"
+        }
+      },
+      "resultsTrend": {
+        "period": "Periode",
+        "runSource": "Resultaattypes",
+        "runSources": {
+          "automated": "Geautomatiseerd",
+          "manual": "Handmatig"
+        },
+        "showPassRate": "Slagingspercentage weergeven",
+        "showPassRateHelp": "Teken het slagingspercentage op de rechter as van het diagram, met een eigen aangepaste trend, en voeg het toe aan de kopfiguren. Standaard uit: het rapport gaat over het faalpercentage.",
+        "showFailRate": "Faalpercentage weergeven",
+        "showFailRateHelp": "Teken het faalpercentage op de rechter as van het diagram, met zijn aangepaste trend, en toon het in de kopfiguren. Standaard aan.",
+        "showCounts": "Resultatentotalen weergeven",
+        "showCountsHelp": "Teken de totalen voor geslaagd, mislukt, overgeslagen en overig als gestapelde balken op het diagram naast de percentages. Standaard uit: het rapport gaat over de percentages.",
+        "countSkipped": "Overgeslagen resultaten in percentages meenemen",
+        "countSkippedHelp": "Overgeslagen resultaten worden uitgesloten van de noemer van het slag- en faalpercentage tenzij dit ingeschakeld is. Overige statussen blijven altijd in.",
+        "includeAborted": "Afgebroken runs opnemen",
+        "includeAbortedHelp": "Runs die zich in de afgebroken-run-status van het project bevinden, worden geteld tenzij dit uit is.",
+        "latestAttemptOnly": "Alleen laatste poging",
+        "latestAttemptOnlyHelp": "Tel één resultaat per case per run, de laatste poging ervan, in plaats van elke geïmporteerde poging.",
+        "failRate": "Faalpercentage",
+        "skipped": "Overgeslagen",
+        "other": "Overig",
+        "inProgress": "in behandeling",
+        "verdict": {
+          "better": "Faalpercentage wordt beter",
+          "worse": "Faalpercentage wordt slechter",
+          "steady": "Faalpercentage blijft stabiel",
+          "notEnough": "Niet genoeg volledige perioden om nog een trend in te stellen.",
+          "notEnoughDetail": "De trend heeft minstens twee volledige perioden met resultaten nodig.",
+          "detail": "De trendlijn loopt van {start} tot {end}, een verandering van {change} punten over {count} volledige {grouping, select, daily {dagen} weekly {weken} monthly {maanden} quarterly {kwartalen} other {jaren}}."
+        },
+        "stats": {
+          "lastComplete": "Laatste volledige periode ({period}), vergeleken met het gemiddelde van de volledige perioden ervoor.",
+          "results": "Resultaten uitgevoerd",
+          "runs": "Uitvoeringen",
+          "deltaPoints": "{change} pts ten opzichte van de vorige {count, plural, one {# periode} other {# perioden}}",
+          "deltaPercent": "{change}% ten opzichte van de vorige {count, plural, one {# periode} other {# perioden}}",
+          "noBaseline": "Niets eerder om tegen af te zetten"
+        },
+        "chart": {
+          "allProjects": "Alle geselecteerde projecten",
+          "period": "{grouping, select, weekly {Week van {date}} other {{date}}}",
+          "partialPeriod": "{grouping, select, weekly {Week van {period}} other {{period}}} (in behandeling)",
+          "rateTrend": "{rate} trend"
+        },
+        "heatmap": {
+          "title": "Faalpercentage per project en periode",
+          "help": "Elke cel is het faalpercentage van het project voor de periode; kleurintensiteit bereikt volledige intensiteit bij 35%. De trendkolom is de verandering in de aangepaste faalpercentagelijn over de volledige perioden. * markeert de periode in behandeling.",
+          "trend": "Trend"
+        },
+        "trend": {
+          "points": "{change} ptn"
+        },
+        "detail": {
+          "title": "Resultaten en percentages per periode"
+        },
+        "method": {
+          "title": "Hoe dit wordt geteld",
+          "runSource": {
+            "automated": "Alleen geautomatiseerde runs: elk runtype behalve handmatig, met hun geïmporteerde resultaten. Een run behoort tot de periode waarin deze is gemaakt.",
+            "manual": "Alleen handmatige runs, met de resultaten die ervan zijn geregistreerd. Een run behoort tot de periode waarin deze is gemaakt.",
+            "both": "Elke run: geautomatiseerde runs met hun geïmporteerde resultaten en handmatige runs met de resultaten die ervan zijn geregistreerd. Een run behoort tot de periode waarin deze is gemaakt."
+          },
+          "periods": "{grouping, select, daily {Dagen} weekly {Weken (beginnend maandag)} monthly {Maanden} quarterly {Kwartalen} other {Jaren}} worden afgesplitst in {timezone}. De huidige is in behandeling en wordt uitgesloten van de trend en de kopfiguren.",
+          "everyAttempt": "Een opnieuw geprobeerde test telt eenmaal per poging.",
+          "latestAttempt": "Alleen de laatste poging van elke case in een run wordt geteld.",
+          "skippedExcluded": "Overgeslagen resultaten (een status die is voltooid zonder slagen of falen) worden uitgesloten van de slag- en faalpercentages; overige statussen blijven in.",
+          "skippedCounted": "Overgeslagen resultaten worden meegeteld in de slag- en faalpercentages.",
+          "abortedIncluded": "Runs in de afgebroken-run-status worden opgenomen.",
+          "abortedExcluded": "Runs in de afgebroken-run-status worden uitgesloten.",
+          "trend": "De trend is een rechte lijn aangepast aan het faalpercentage over volledige perioden met resultaten. Een verandering van meer dan één punt in beide richtingen noemt het beter of slechter."
         }
       }
     },

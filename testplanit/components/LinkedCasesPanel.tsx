@@ -53,6 +53,12 @@ import { z } from "zod/v4";
 import { useLatestTestResults } from "~/hooks/useLatestTestResults";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 import { DateFormatter } from "./DateFormatter";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { UserNameCell } from "./tables/UserNameCell";
 
 interface LinkedCasesPanelProps {
@@ -213,9 +219,15 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
   const getOtherCase = (link: any) =>
     link.caseAId === caseId ? link.caseB : link.caseA;
 
-  // Helper to get the direction of the link
-  const _getLinkDirection = (link: any) =>
-    link.caseAId === caseId ? "outgoing" : "incoming";
+  // A DEPENDS_ON link reads "caseA depends on caseB", so from this case's
+  // side an outgoing link means "depends on" and an incoming one "blocks".
+  // Other link types are symmetric and keep their type label.
+  const linkTypeLabel = (link: { caseAId: number; type: LinkType }) => {
+    if (link.type !== LinkType.DEPENDS_ON) return tLinkedCases(link.type);
+    return link.caseAId === caseId
+      ? tLinkedCases("dependsOn")
+      : tLinkedCases("blocks");
+  };
 
   // State to control which popover is open for link removal
   const [openPopoverLinkId, setOpenPopoverLinkId] = useState<number | null>(
@@ -227,12 +239,14 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
   // on failure (for the dialog to display) or null on success.
   const handleAddLink = async (
     inputCase: CaseOption | null,
-    inputType: LinkType | null
+    inputChoice: LinkChoice | null
   ): Promise<string | null> => {
     // Zod validation
     const result = addLinkSchema.safeParse({
       selectedCaseId: inputCase?.id,
-      selectedType: inputType as LinkType,
+      selectedType: (inputChoice === BLOCKS_CHOICE
+        ? LinkType.DEPENDS_ON
+        : inputChoice) as LinkType,
     });
     if (!result.success) {
       return result.error.issues[0]?.message || tLinkedCases("failedToCreate");
@@ -242,6 +256,10 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
     if (validCaseId === caseId) {
       return tLinkedCases("cannotLinkSelf");
     }
+    // "Blocks" stores the same DEPENDS_ON edge from the other side: the
+    // selected case depends on this one.
+    const edgeAId = inputChoice === BLOCKS_CHOICE ? validCaseId : caseId;
+    const edgeBId = inputChoice === BLOCKS_CHOICE ? caseId : validCaseId;
     // Prevent circular: check if selectedCaseId links back to this case
     const selectedCaseLinks = links?.filter(
       (l: any) => l.caseAId === validCaseId || l.caseBId === validCaseId
@@ -257,8 +275,8 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
       await upsertLink({
         where: {
           caseAId_caseBId_type: {
-            caseAId: caseId,
-            caseBId: validCaseId,
+            caseAId: edgeAId,
+            caseBId: edgeBId,
             type: validType,
           },
         },
@@ -266,8 +284,8 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
           isDeleted: false,
         },
         create: {
-          caseA: { connect: { id: caseId } },
-          caseB: { connect: { id: validCaseId } },
+          caseA: { connect: { id: edgeAId } },
+          caseB: { connect: { id: edgeBId } },
           type: validType,
           createdBy: { connect: { id: session?.user.id } },
         },
@@ -279,7 +297,16 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
       void fetch(`/api/forecast/update?caseId=${validCaseId}`);
       return null;
     } catch (e: any) {
-      return e.message || tLinkedCases("failedToCreate");
+      // The server's link guard rejects a self-link or a DEPENDS_ON edge
+      // that would close a cycle (lib/caseLinkCycleGuard.ts). The query
+      // client wraps the response in a generic Error and keeps the server's
+      // body on `info`, so the real reason lives there, not on `message`.
+      const detail = String(
+        e?.info?.message ?? e?.info?.error?.message ?? e?.message ?? ""
+      );
+      if (/circular/i.test(detail)) return tLinkedCases("circularLink");
+      if (/itself/i.test(detail)) return tLinkedCases("cannotLinkSelf");
+      return detail || tLinkedCases("failedToCreate");
     }
   };
 
@@ -399,14 +426,18 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
                         />
                       </TableCell>
                       <TableCell>
-                        <Badge variant="secondary" className="max-w-full">
+                        <Badge
+                          variant="secondary"
+                          className="max-w-full"
+                          data-testid={`linked-case-type-${link.id}`}
+                        >
                           <span className="truncate">
-                            {tLinkedCases(link.type as LinkType)}
+                            {linkTypeLabel(link)}
                           </span>
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <div className="space-y-1">
+                        <div className="flex items-center gap-2 min-w-0">
                           <CaseResultStatus
                             caseId={otherCase.id}
                             statusName={latestResult?.statusName}
@@ -417,18 +448,35 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
                             nameClassName="truncate text-xs"
                           />
                           {latestResult && (
-                            <span className="ms-1 text-xs text-muted-foreground font-normal flex items-start gap-1">
-                              <Calendar className="w-4 h-4 shrink-0" />
-                              <DateFormatter
-                                date={latestResult.executedAt}
-                                formatString={
-                                  session?.user.preferences?.dateFormat +
-                                  " " +
-                                  session?.user.preferences?.timeFormat
-                                }
-                                timezone={session?.user.preferences?.timezone}
-                              />
-                            </span>
+                            // The execution time lives in a tooltip: the
+                            // column is narrow and the status is what the
+                            // reader scans for.
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span
+                                    className="text-muted-foreground shrink-0 inline-flex"
+                                    aria-label={tLinkedCases("at")}
+                                    data-testid={`linked-case-executed-at-${link.id}`}
+                                  >
+                                    <Calendar className="w-4 h-4" />
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent side="top">
+                                  <DateFormatter
+                                    date={latestResult.executedAt}
+                                    formatString={
+                                      session?.user.preferences?.dateFormat +
+                                      " " +
+                                      session?.user.preferences?.timeFormat
+                                    }
+                                    timezone={
+                                      session?.user.preferences?.timezone
+                                    }
+                                  />
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           )}
                         </div>
                       </TableCell>
@@ -504,6 +552,13 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
   );
 };
 
+/**
+ * The dialog offers the dependency in both directions; "blocks" is not a
+ * link type but the same DEPENDS_ON edge created from the other side.
+ */
+const BLOCKS_CHOICE = "BLOCKS" as const;
+type LinkChoice = LinkType | typeof BLOCKS_CHOICE;
+
 interface AddLinkDialogProps {
   open: boolean;
   onClose: () => void;
@@ -514,7 +569,7 @@ interface AddLinkDialogProps {
   ) => Promise<{ results: any[]; total: number }>;
   onSubmit: (
     selectedCase: CaseOption | null,
-    selectedType: LinkType | null
+    selectedChoice: LinkChoice | null
   ) => Promise<string | null>;
 }
 
@@ -527,8 +582,19 @@ function AddLinkDialog({
   const tLinkedCases = useTranslations("linkedCases");
   const tUpload = useTranslations("common.upload");
   const [selectedCase, setSelectedCase] = useState<CaseOption | null>(null);
-  const [selectedType, setSelectedType] = useState<LinkType | null>(null);
+  const [selectedType, setSelectedType] = useState<LinkChoice | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Every link type, with the dependency split into its two directions.
+  const choices = Object.values(LinkType).flatMap(
+    (type): Array<{ value: LinkChoice; label: string }> =>
+      type === LinkType.DEPENDS_ON
+        ? [
+            { value: type, label: tLinkedCases("dependsOnOption") },
+            { value: BLOCKS_CHOICE, label: tLinkedCases("blocksOption") },
+          ]
+        : [{ value: type, label: tLinkedCases(type) }]
+  );
 
   const handleSubmit = async () => {
     setError(null);
@@ -606,19 +672,25 @@ function AddLinkDialog({
             </label>
             <Select
               value={selectedType || ""}
-              onValueChange={(val) => setSelectedType(val as LinkType)}
+              onValueChange={(val) => setSelectedType(val as LinkChoice)}
             >
-              <SelectTrigger>
+              <SelectTrigger data-testid="linked-case-type-select">
                 <SelectValue placeholder={tLinkedCases("linkType")} />
               </SelectTrigger>
               <SelectContent>
-                {Object.values(LinkType).map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {tLinkedCases(type as LinkType)}
+                {choices.map((choice) => (
+                  <SelectItem key={choice.value} value={choice.value}>
+                    {choice.label}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {(selectedType === LinkType.DEPENDS_ON ||
+              selectedType === BLOCKS_CHOICE) && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                {tLinkedCases("dependencyHint")}
+              </p>
+            )}
           </div>
           {error && <div className="text-destructive text-sm">{error}</div>}
         </div>

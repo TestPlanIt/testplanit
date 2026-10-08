@@ -30,6 +30,7 @@ import {
   useTestRunExecutions,
   type TestRunExecutionRow,
 } from "~/hooks/useTestRunExecutions";
+import { useRunDependencyState } from "~/hooks/useRunDependencyState";
 import { RecordId } from "@/components/RecordId";
 import { ReviewStatusBanner } from "@/components/reviews/ReviewStatusBanner";
 import { TestRunCaseDetails } from "@/components/TestRunCaseDetails";
@@ -274,7 +275,8 @@ type TestRunWithRelations = {
   compositionLockedBy: { id: string; name: string } | null;
   forecastManual: number | null;
   forecastAutomated: number | null;
-  project: { id: number; name: string };
+  // `include: { project: true }` hydrates every scalar; the ones read here.
+  project: { id: number; name: string; enforceCaseDependencies: boolean };
   configuration: { id: number; name: string } | null;
   configurationGroupId: string | null;
   milestone: MilestoneWithType | null;
@@ -564,6 +566,14 @@ export default function TestRunPage() {
     data: (TestRunWithRelations & { testRunType?: string }) | null;
     refetch: () => void;
   };
+
+  // Dependency gating (opt-in per project): the side sheet shows a blocked
+  // notice and disables result entry for a case whose prerequisites in this
+  // run have not passed. Same resolver as the server gate and the list.
+  const runDependencyState = useRunDependencyState(
+    !isNaN(Number(runId)) ? Number(runId) : null,
+    testRunData?.project?.enforceCaseDependencies === true
+  );
 
   // Execution-start composition lock (BOR-1): freezes which cases are in the
   // run (add/remove/reorder) while execution & assignment continue. Locking is
@@ -2724,6 +2734,7 @@ export default function TestRunPage() {
                   repositoryCaseId: tc.repositoryCaseId,
                 })),
                 isCompleted: testRunData.isCompleted,
+                dependencyState: runDependencyState.get(selectedTestCaseId),
                 onEditCase: canAddEditCases
                   ? () => setIsEditingCase(true)
                   : undefined,

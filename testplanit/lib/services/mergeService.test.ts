@@ -462,6 +462,30 @@ describe("mergeService", () => {
       );
     });
 
+    it("drops a link between the two merging cases instead of turning it into a self-link", async () => {
+      // Victim (2) depends on survivor (1): rerouting would write 1 → 1,
+      // which the link guard rejects and would fail the whole merge.
+      mockTx.repositoryCaseLink.findMany.mockImplementation(
+        ({ where }: any) => {
+          if (where.caseAId === 2) {
+            return Promise.resolve([
+              { id: 52, caseBId: 1, type: "DEPENDS_ON" },
+            ]);
+          }
+          if (where.caseBId === 2) {
+            return Promise.resolve([
+              { id: 53, caseAId: 1, type: "SAME_TEST_DIFFERENT_SOURCE" },
+            ]);
+          }
+          return Promise.resolve([]);
+        }
+      );
+
+      await mergeCases(1, 2, "user-123");
+
+      expect(mockTx.repositoryCaseLink.createMany).not.toHaveBeenCalled();
+    });
+
     it("reroutes victim caseB links to survivor using createMany skipDuplicates", async () => {
       mockTx.repositoryCaseLink.findMany.mockImplementation(
         ({ where }: any) => {

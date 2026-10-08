@@ -41,6 +41,12 @@ export interface SubmitTestRunResultResponse {
 export type SubmitResultError = Error & {
   status?: number;
   code?: string;
+  /** `DEPENDENCIES_NOT_PASSED` only: the prerequisites keeping the case blocked. */
+  blockedBy?: Array<{
+    testRunCaseId: number;
+    repositoryCaseId: number;
+    name: string | null;
+  }>;
 };
 
 export function isPermissionDeniedSubmitResultError(
@@ -95,6 +101,20 @@ export function isIssueRequiredOnFailureSubmitResultError(
   }
 
   return (error as SubmitResultError).code === "ISSUE_REQUIRED_ON_FAILURE";
+}
+
+/**
+ * True when the server refused the result because the project enforces test
+ * case dependencies and a case this one depends on has not passed in the run.
+ */
+export function isDependenciesNotPassedSubmitResultError(
+  error: unknown
+): error is SubmitResultError {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  return (error as SubmitResultError).code === "DEPENDENCIES_NOT_PASSED";
 }
 
 /**
@@ -226,6 +246,7 @@ export async function submitTestRunResult(
   const payload = (await response.json().catch(() => null)) as {
     error?: string;
     code?: string;
+    blockedBy?: SubmitResultError["blockedBy"];
     result?: SubmitTestRunResultResponse["result"];
   } | null;
 
@@ -235,6 +256,7 @@ export async function submitTestRunResult(
     ) as SubmitResultError;
     error.status = response.status;
     error.code = payload?.code;
+    error.blockedBy = payload?.blockedBy;
     throw error;
   }
 

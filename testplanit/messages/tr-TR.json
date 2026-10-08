@@ -694,6 +694,8 @@
       "failedToDeleteRepository": "Depoyu silme işlemi başarısız oldu.",
       "permissionDenied": "Bu sayfaya erişim izniniz yok.",
       "resultSubmitPermissionDenied": "Bu vaka için sonuçları gönderemezsiniz. Lütfen bir proje yöneticisinden size atamasını isteyin.",
+      "dependenciesNotPassed": "Bağımlılıklar tarafından engellendi",
+      "dependenciesNotPassedDescription": "Bu test durumu {count, plural, =0 {bağlı olduğu durumlar bu çalıştırmada} one {bağlı olduğu durum bu çalıştırmada} other {bağlı olduğu tüm # durum bu çalıştırmada}} geçilinceye kadar yürütülemez.",
       "justificationRequired": "Gerekçe gerekli",
       "justificationRequiredDescription": "Tamamlanmış bir sonucu farklı bir sonuca dönüştürmek için, değişikliği açıklayan Sonuç Ayrıntıları gereklidir.",
       "requiredFieldMissing": "Gerekli sonuç alanlarından birinde değer eksik.",
@@ -1573,6 +1575,9 @@
           },
           "mantisbt": {
             "description": "Sorun takibi için kendi sunucunuzda barındırdığınız bir MantisBT örneğine bağlanın."
+          },
+          "clickup": {
+            "description": "Görev takibi ve proje yönetimi için ClickUp'a bağlanın."
           }
         }
       },
@@ -1844,6 +1849,15 @@
         "setupStepsMantisbtStep2": "Eklenti yapılandırmasında, sorun oluşturuldu ve sorun güncellendi olaylarını seçin.",
         "setupStepsMantisbtStep3": "Yukarıdaki URL'yi web kancası hedefi olarak yapıştırın ve kaydedin.",
         "setupStepsMantisbtStep4": "MantisBT'de bir sorun oluşturun veya güncelleyin; bağlantılı sorunun durumu burada senkronize edilecektir.",
+        "inboundChooserClickup": "ClickUp",
+        "inboundClickupTitle": "ClickUp gelen web kancası",
+        "inboundClickupScopeHint": "ClickUp <code>taskStatusUpdated</code> olayları, bağlantılı TestPlanIt sorunlarını günceller. Diğer görev olayları kabul edilir ancak sorunları güncellemez.",
+        "inboundClickupRegisterHint": "ClickUp'ın web kancası ayarları sayfası yoktur: web kancaları API'si aracılığıyla oluşturulur ve ClickUp imzalama gizli anahtarını seçer. Gizli anahtarı boş bırakın ve TestPlanIt, ClickUp yetkilendirmenizi kullanarak bu web kancasını ClickUp'ta bağlantılı Liste için kaydeder.",
+        "inboundClickupSecret": "Web kancası gizli anahtarı (isteğe bağlı)",
+        "inboundClickupSecretHelp": "Yalnızca ClickUp'ın Create Webhook API'si ile web kancasını kendiniz oluşturduysanız gereklidir: ClickUp'ın döndürdüğü gizli anahtarı yapıştırın. İstirahat halinde şifreli olarak depolanır.",
+        "setupStepsClickupStep1": "Gizli anahtarı boş bıraktıysanız, TestPlanIt zaten bu web kancasını ClickUp'ta bağlantılı Liste için kaydettmiştir — ClickUp'ta yapılandırılacak bir şey yoktur.",
+        "setupStepsClickupStep2": "ClickUp'ın Create Webhook API'si aracılığıyla web kancasını kendiniz kaydettiyseniz, bitiş noktasının aşağıdaki URL olduğundan ve taskStatusUpdated olayına abone olduğundan emin olun.",
+        "setupStepsClickupStep3": "İşlem hattını doğrulamak için aşağıdaki \"Test web kancası gönder\" seçeneğini kullanın. Gizli anahtarı döndürmek, ClickUp'ta yeni bir web kancası kaydeder.",
         "codeRepos": {
           "empty": "Etki Analizi için hiçbir depo bağlı değil. Önce <link>bir tane bağlayın</link>.",
           "unsupported": "{provider} depoları TestPlanIt'e web kancası gönderemez.",
@@ -2087,7 +2101,7 @@
           "pathLabel": "Yol",
           "patternLabel": "Model",
           "previewFiles": "Dosyaları Önizle",
-          "rootHint": "Depo kökünde başlamak için yolu boş bırakın veya . girin; . yolu **/* desenli tüm dosyaları içerir.",
+          "rootHint": "Yolu boş bırakın veya depo kökünde başlamak için . girin; . yolu pattern **/* ile her dosyayı içerir.",
           "scanningRepo": "Depo dosyaları taranıyor… ({seconds}s)",
           "title": "Yol Desenleri",
           "truncatedBadge": "Sonuçlar eksik olabilir (sağlayıcı sınırlaması)"
@@ -2179,6 +2193,13 @@
           "disabledToast": "Test Çalıştırmaları artık kompozisyonlarını otomatik olarak kilitlemeyecek",
           "saveError": "Kompozisyon otomatik kilitleme ayarı güncellenemedi"
         },
+        "caseDependencies": {
+          "label": "Test çalıştırmalarında test durumu bağımlılıklarını zorla",
+          "description": "Etkinleştirildiğinde, bir çalıştırmadaki test durumu, üzerinde bağlı olduğu her durumun (\"Bağlı olan\" bağlantısı) aynı çalıştırmada geçilinceye kadar engellenir. Engellenen durumlar çalıştırmada işaretlenir ve bunlar için sonuçlar reddedilir. Son bağımlılık geçtiğinde, durumun atanmış kişisine hazır olduğu bildirilir. Çalıştırmada olmayan bağımlılıklar engelleme yapmaz.",
+          "enabledToast": "Test durumu bağımlılıkları test çalıştırmalarında uygulanacak",
+          "disabledToast": "Test durumu bağımlılıkları artık uygulanmayacak",
+          "saveError": "Bağımlılık uygulama ayarı güncellenemedi"
+        },
         "editWindow": {
           "label": "Sonuç düzenleme penceresi",
           "description": "Sonuç kaydedildikten ne kadar süre sonra hala yerinde düzenleme yapılabilir? Pencere kapandıktan sonra düzeltmeler için yeni bir deneme gerekir. Sistem yöneticileri her zaman düzenleme yapabilir.",
@@ -2233,7 +2254,7 @@
           "branchesFallbackHint": "Bunun yerine dal adını yazın."
         },
         "pathPatterns": {
-          "description": "Hangi uygulama dosyalarının dahil edileceği. Her satır bir taban yolu ve bir glob deseni birleştirir. Örnek: path=src + pattern=**/* src altındaki her şeyi içerir.",
+          "description": "Dahil edilecek uygulama dosyaları. Her satır, temel bir yol ve bir glob deseni birleştirir. Örnek: path=src + pattern=**/* src'nin altındaki her şeyi içerir.",
           "pathPlaceholder": "src"
         },
         "cache": {
@@ -2876,11 +2897,101 @@
           "label": "Bildirim Modu",
           "useGlobal": "Genel Ayarları Kullanın"
         },
-        "options": {
-          "title": "Ek Seçenekler",
-          "email": {
-            "label": "E-posta Bildirimleri",
-            "description": "E-posta yoluyla bildirim alın"
+        "typeSection": {
+          "title": "Bana ne hakkında bilgi vermeli",
+          "description": "Her türlü bildirim varsayılan olarak açıktır. İstemediğiniz bildirimleri kapatın. Yukarıdaki bildirim modu yine de size nasıl ulaşılacağına karar verir.",
+          "modeNoneNote": "Bildirim modunuz Hiçbiri olduğu sürece hiçbir şey iletilmez. Buradaki seçimleriniz başka bir mod seçer seçmez geçerli olur.",
+          "locked": "Her zaman açık",
+          "resetToDefaults": "Varsayılanlara sıfırla",
+          "adminOnly": "Yöneticilere gönderildi"
+        },
+        "groups": {
+          "assignments": "Atamalar",
+          "comments": "Yorumlar",
+          "reviews": "İncelemeler",
+          "runsAndMilestones": "Çalıştırmalar ve kilometre taşları",
+          "sharing": "Paylaşım",
+          "aiAndJobs": "AI ve işler",
+          "integrations": "Entegrasyonlar",
+          "system": "Sistem",
+          "administration": "Yönetim"
+        },
+        "types": {
+          "WORK_ASSIGNED": {
+            "label": "Bana atanan iş",
+            "description": "Bir test çalışması vakası size tekil veya toplu olarak atanır."
+          },
+          "SESSION_ASSIGNED": {
+            "label": "Bana atanan oturum",
+            "description": "Sizin atanan kişi olarak bir oturum oluşturulur veya size yeniden atanır."
+          },
+          "RUN_CASE_UNBLOCKED": {
+            "label": "Atanan vaka kaldırılmış",
+            "description": "Bir çalıştırmada size atanan bir test vakası, bağlı olduğu vakalar geçtiğinde yürütülebilir duruma gelir."
+          },
+          "COMMENT_MENTION": {
+            "label": "Yorumlardaki bahisler",
+            "description": "Birisi sizi bir vaka, çalıştırma, oturum, kilometre taşı veya inceleme üzerindeki bir yorumda @-bahseder."
+          },
+          "REVIEW_REQUESTED": {
+            "label": "İnceleme talep edildi",
+            "description": "Sizden veya sahip olduğunuz bir rolden bir inceleme talep edildi."
+          },
+          "REVIEW_APPROVED": {
+            "label": "İnceleme onaylandı",
+            "description": "Bir gözden geçiren tarafından isteğiniz onaylanır."
+          },
+          "REVIEW_CHANGES_REQUESTED": {
+            "label": "Değişiklik talep edildi",
+            "description": "Bir gözden geçiren tarafından isteğiniz üzerinde değişiklikler talep edilir."
+          },
+          "REVIEW_REJECTED": {
+            "label": "İnceleme reddedildi",
+            "description": "Bir gözden geçiren tarafından isteğiniz reddedilir."
+          },
+          "REVIEW_CANCELLED": {
+            "label": "İnceleme iptal edildi",
+            "description": "İncelemenizi yapmanız istenen bir istek iptal edildi veya incelenen öğe silinir."
+          },
+          "REVIEW_REMINDER": {
+            "label": "İnceleme anımsatıcıları",
+            "description": "Borçlu olduğunuz bir inceleme anımsatıcı eşiğinden daha eskilir veya talep eden size bildirir."
+          },
+          "RUN_READY_TO_COMPLETE": {
+            "label": "Test çalışması tamamlanmaya hazır",
+            "description": "Tamamlayabileceğiniz bir çalıştırmadaki her vakada bir sonuç vardır."
+          },
+          "MILESTONE_DUE_REMINDER": {
+            "label": "Kilometre taşı son tarihi anımsatıcıları",
+            "description": "İçinde yer aldığınız bir kilometre taşı yakında veya gecikmiştir."
+          },
+          "SHARE_LINK_ACCESSED": {
+            "label": "Paylaşım bağlantısı görüntülendi",
+            "description": "Birisi bilgilendirme etkinleştirilmiş olarak oluşturduğunuz bir paylaşım bağlantısını açar."
+          },
+          "AI_STEPS_DERIVED": {
+            "label": "AI adımları türetildi",
+            "description": "Başladığınız bir AI adım-türetme işi adımlar yazmıştır."
+          },
+          "INTEGRATION_AUTH_EXPIRED": {
+            "label": "Entegrasyon yeniden yetkilendirme gerekiyor",
+            "description": "Bir entegrasyonla bağlantınız sona erdi veya iptal edildi ve yeniden bağlanması gerekir."
+          },
+          "SYSTEM_ANNOUNCEMENT": {
+            "label": "Yönetici duyuruları",
+            "description": "Yönetici her kullanıcıya sistem bildirimi gönderir."
+          },
+          "WHATS_NEW": {
+            "label": "Yükseltmeden sonra Yenilikleri",
+            "description": "TestPlanIt yükseltildikten sonra ilk ziyaretinizde yeni özelliklerin özeti."
+          },
+          "USER_REGISTERED": {
+            "label": "Yeni kullanıcı kayıtları",
+            "description": "Yeni bir kullanıcı form, SSO veya SAML aracılığıyla kaydolur."
+          },
+          "LLM_BUDGET_ALERT": {
+            "label": "AI bütçe uyarıları",
+            "description": "LLM harcaması fatura döneminin bir bütçe eşiğini aşar."
           }
         },
         "success": {
@@ -3127,6 +3238,13 @@
       "modifierHintMac": "Bu menüyü atlamak için sürüklerken ⇧ tuşunu basılı tutarak taşıyabilir veya ⌥ tuşunu basılı tutarak kopyalayabilirsiniz.",
       "modifierHintWin": "Bu menüyü atlamak için sürüklerken Shift tuşunu basılı tutarak taşıyın veya Ctrl tuşunu basılı tutarak kopyalayın.",
       "dropZoneReorder": "Yeniden sıralamak için bırakın",
+      "dropZoneReorderBlockedSort": "Sıralamayı kaldırarak bu klasör içindeki vakaları yeniden sıralayın",
+      "dropZoneReorderBlockedSortMac": "Sıralamayı kaldırarak yeniden sıralayın — bu klasöre kopyalamak için ⌥ tuşunu basılı tutun",
+      "dropZoneReorderBlockedSortWin": "Sıralamayı kaldırarak yeniden sıralayın — bu klasöre kopyalamak için Ctrl tuşunu basılı tutun",
+      "dropZoneReorderBlockedSearch": "Aramayı temizleyerek bu klasör içindeki vakaları yeniden sıralayın",
+      "dropZoneReorderBlockedSearchMac": "Aramayı temizleyerek yeniden sıralayın — bu klasöre kopyalamak için ⌥ tuşunu basılı tutun",
+      "dropZoneReorderBlockedSearchWin": "Aramayı temizleyerek yeniden sıralayın — bu klasöre kopyalamak için Ctrl tuşunu basılı tutun",
+      "dropZoneCopyHere": "Bu klasöre kopyalamak için bırakın",
       "dropZoneFolder": "İç içe yerleştirmek için bir klasörün üzerine, yeniden sıralamak için klasörler arasına bırakın",
       "dropZoneTreeMac": "Bir klasöre bırakın — taşımak için ⇧, kopyalamak için ⌥ tuşunu basılı tutun",
       "dropZoneTreeWin": "Bir klasöre bırakın — taşımak için Shift, kopyalamak için Ctrl tuşunu basılı tutun",
@@ -4087,6 +4205,13 @@
       "lockError": "Çalıştırma kompozisyonu kilitlenemedi",
       "unlockError": "Çalıştırma kompozisyonunun kilidi açılamadı",
       "addBlocked": "Bu çalıştırmanın kompozisyonu kilitli, bu nedenle test durumları eklenemez. Durum kümesini değiştirmek için önce kilidini açın."
+    },
+    "dependencies": {
+      "blocked": "Engellendi",
+      "blockedBy": "Bu çalıştırmada {count, plural, one {bu vaka geçene} other {bu # vaka geçene}} kadar engellendi:",
+      "blockedNotice": "Bu test vakası {count, plural, one {bağlı olduğu vaka geçene} other {bağlı olduğu tüm # vaka geçene}} kadar bu çalıştırmada yürütülemez.",
+      "notInRun": "{count, plural, one {Bu vakaya bağlı olan # vaka} other {Bu vakaya bağlı olan # vaka}} bu çalıştırmada değil ve yürütmeyi engellemeyecektir:",
+      "unblocked": "Bu vakaya bağlı olan tüm vakalar bu çalıştırmada geçmiştir."
     },
     "distribute": {
       "title": "Atamaları dağıt",
@@ -6202,6 +6327,10 @@
         "mantisbt": {
           "name": "MantisBT",
           "description": "Sorun takibi için kendi sunucunuzda barındırdığınız bir MantisBT örneğine bağlanın"
+        },
+        "clickup": {
+          "name": "ClickUp",
+          "description": "Görev takibi ve proje yönetimi için ClickUp'a bağlanın"
         }
       },
       "filterPlaceholder": "Filtre entegrasyonları...",
@@ -6312,7 +6441,13 @@
         "mantisBTApiKeyHelp": "MantisBT hesap ayarlarınız → API Belirteçleri altında bir tane oluşturun",
         "mantisBTUrl": "MantisBT URL'si",
         "mantisBTUrlPlaceholder": "https://mantisbt.example.com",
-        "mantisBTUrlHelp": "MantisBT örneğinizin temel URL'si"
+        "mantisBTUrlHelp": "MantisBT örneğinizin temel URL'si",
+        "clickupTeamId": "ClickUp Takım (Çalışma Alanı) Kimliği",
+        "clickupTeamIdPlaceholder": "örn. 9013456789",
+        "clickupTeamIdHelp": "ClickUp URL'sinde app.clickup.com/ sonrasında bulunur",
+        "clickupListId": "Varsayılan ClickUp Liste Kimliği",
+        "clickupListIdPlaceholder": "örn. 901234567",
+        "clickupListIdHelp": "Görevlerin varsayılan olarak oluşturulduğu Liste; sorun başına geçersiz kılınabilir"
       },
       "authType": {
         "api_key": "API Anahtarı",
@@ -6820,10 +6955,6 @@
         "userRegisteredMessageSso": "{userName} ({userEmail}) SSO aracılığıyla kaydoldu",
         "userRegisteredMessageForm": "{userName} ({userEmail}) kayıt formu aracılığıyla kayıt oldu.",
         "viewUserList": "Kullanıcı listesini görüntüle",
-        "reviewGeneratedCases": "Oluşturulan test senaryolarını inceleyin.",
-        "generateFromUrlCompleteTitle": "Sayfalar başarıyla tarandı.",
-        "generateFromUrlCompleteMessage": "{pages, plural, one {# sayfa} other {# sayfalar}} \"{projectName}\" projesindeki {url} adresinden tarandı. Test senaryolarını incelemek ve oluşturmak için tıklayın.",
-        "generateFromUrlFailedTitle": "URL taraması başarısız oldu",
         "reviewRequestedTitle": "İnceleme talep edildi.",
         "reviewApprovedTitle": "İnceleme onaylandı.",
         "reviewChangesRequestedTitle": "Talep edilen değişiklikler",
@@ -6864,7 +6995,12 @@
         "runReadyToCompleteTitle": "Test Çalıştırması Tamamlanmaya Hazır",
         "runReadyToCompleteExecuted": "{count, plural, one {# vaka} =2 {Her iki vaka da} other {# vakanın tümü}} yürütüldü.",
         "runReadyToCompleteEmailMessage": "{caseCount, plural, one {# vaka} =2 {Her iki vaka da} other {# vakanın tümü}} \"{testRunName}\" test çalıştırmasında (proje \"{projectName}\") yürütüldü. Çalıştırma tamamlandı olarak işaretlenmeye hazır.",
-        "runReadyToCompleteReason": "Bu projede test çalıştırmalarını tamamlayabildiğiniz için bu bildirimi alıyorsunuz."
+        "runReadyToCompleteReason": "Bu projede test çalıştırmalarını tamamlayabildiğiniz için bu bildirimi alıyorsunuz.",
+        "runCaseUnblockedTitle": "Test Senaryosu Yürütülmeye Hazır",
+        "runCaseUnblockedPrerequisitePassed": "{prerequisiteName} başarılı oldu, bu nedenle size atanan bu senaryo artık engellenmiş değildir:",
+        "runCaseUnblockedEmailMessage": "\"{testCaseName}\" test çalışması \"{testRunName}\" içinde (proje \"{projectName}\") artık engellenmiş değildir: \"{prerequisiteName}\" başarılı oldu. Size atanmış ve yürütülmeye hazırdır.",
+        "runCaseUnblockedReason": "Test senaryosu size atandığı için bu bildirimi alıyorsunuz.",
+        "inTestRun": "test çalışmasında"
       }
     },
     "issues": {
@@ -7477,6 +7613,11 @@
     "alreadyLinked": "Bu dava zaten bağlantılı.",
     "cannotLinkSelf": "Bir vakayı kendi kendine bağlayamazsınız.",
     "circularLink": "Dairesel bağlantı tespit edildi.",
+    "dependsOn": "Bağımlı",
+    "blocks": "Engeller",
+    "dependsOnOption": "Bağlıdır — bu durum seçili durumun önce geçmesini gerektirir",
+    "blocksOption": "Engeller — seçili durum bu durumun önce geçmesini gerektirir",
+    "dependencyHint": "Bağımlılık zorlaması etkinleştirildiğinde, bir test çalıştırmasındaki bir durum, bağlı olduğu durumlar o çalıştırmada geçene kadar yürütülemez.",
     "failedToCreate": "Bağlantı oluşturulamadı.",
     "confirmRemoveLink": "Bu bağlantıyı kaldırmak istediğinizden emin misiniz?",
     "DEPENDS_ON": "Bağımlılık",
@@ -7741,6 +7882,8 @@
       "redmineUrl": "## Redmine URL\nRedmine örneğinizin temel URL'si.\n\n- Biçim: https://redmine.example.com\n- /issues veya diğer yolları içermeyin\n- Bu sunucudan erişilebilir olmalıdır",
       "mantisBTApiKey": "## MantisBT API Belirteci\nKişisel REST API belirteciniz.\n\n- MantisBT hesap ayarlarınız → API Belirteçleri altında bir tane oluşturun\n- Kullanıcınızın izinleriyle sınırlıdır; paylaşılan entegrasyonlar için bir servis hesabı kullanın",
       "mantisBTUrl": "## MantisBT URL\nMantisBT örneğinizin temel URL'si.\n\n- Biçim: https://mantisbt.example.com\n- /api/rest veya diğer yolları içermeyin\n- Bu sunucudan erişilebilir olmalıdır",
+      "clickupTeamId": "## ClickUp Takımı (Çalışma Alanı) ID\nGorevlerin ait olduğu ClickUp Takımının (ayrıca Çalışma Alanı olarak da adlandırılır) sayısal ID'si.\n\n- ClickUp URL'sinde bulunur: app.clickup.com/{teamId}/...\n- Proje seçerken Boşlukları/Klasörleri/Listeleri taramak için gereklidir",
+      "clickupListId": "## Varsayılan ClickUp Liste ID'si\nYeni görevlerin varsayılan olarak oluşturulduğu Liste.\n\n- ClickUp URL'sinde bulunur veya Liste'nin \"Bağlantıyı Kopyala\" seçeneği aracılığıyla\n- İsteğe bağlı — bunun yerine soruna göre belirli bir Liste seçilebilir",
       "githubBaseUrl": "## API Temel URL'si\nGitHub Enterprise Server için tam GitHub API kök dizini.\n\n- Genellikle /api/v3 ile biter\n- api.github.com kullanmak için boş bırakın\n- Bu sunucudan erişilebilir olmalıdır"
     },
     "config": {
@@ -8370,7 +8513,7 @@
           "description": "Sorun oluşturma, çözme ve etki analizi"
         },
         "automationTrends": {
-          "label": "Otomasyon Trendleri",
+          "label": "Otomatikleştirilmiş Test Durumları Trendi",
           "description": "Otomasyon ilerlemesini haftadan haftaya öncelik sırasına göre takip edin."
         },
         "flakyTests": {
@@ -8416,6 +8559,10 @@
         "codePinCoverage": {
           "label": "Kod Sabitleme Kapsamı",
           "description": "Kod Sabitlemelerin nerede olduğu, depo ve dizine göre, ve son değişikliklerin nereye kapsamadığı"
+        },
+        "resultsTrend": {
+          "label": "Test Sonucu Başarısızlık Oranı Trendi",
+          "description": "Test sonuçlarının zaman içindeki başarı ve başarısızlık oranları ve başarısızlık oranının iyileşip iyileşmediği"
         }
       },
       "flakyTests": {
@@ -8735,7 +8882,7 @@
           "description": "Projeler arasında LLM özelliklerinin belirteç kullanımı, maliyeti ve güvenilirliği"
         },
         "automationTrends": {
-          "label": "Projeler Arası Otomasyon Trendleri",
+          "label": "Projeler Arası Otomatikleştirilmiş Test Durumları Trendi",
           "description": "Projeler genelinde öncelik sırasına göre otomasyon ilerlemesini haftalık olarak takip edin."
         },
         "flakyTests": {
@@ -8769,6 +8916,10 @@
         "codePinCoverage": {
           "label": "Projeler Arası Kod Sabitleme Kapsamı",
           "description": "Etki Analizi etkin olan her projedeki Kod Sabitleme kapsamı"
+        },
+        "resultsTrend": {
+          "label": "Projeler Arası Test Sonucu Başarısızlık Oranı Trendi",
+          "description": "Test sonuçlarının zaman içinde proje bazında başarı ve başarısızlık oranları ve başarısızlık oranının iyileşip iyileşmediği"
         }
       },
       "folderDescendants": {
@@ -8832,6 +8983,79 @@
         },
         "chart": {
           "byDirectory": "Dizine göre sabitlemeler ve kapsamadığı dosyalar"
+        }
+      },
+      "resultsTrend": {
+        "period": "Dönem",
+        "runSource": "Sonuç türleri",
+        "runSources": {
+          "automated": "Otomatik",
+          "manual": "Manuel"
+        },
+        "showPassRate": "Başarı oranını göster",
+        "showPassRateHelp": "Geçme oranını grafiğin sağ tarafındaki eksende çizin, kendi uydu trendi ile birlikte ve başlık rakamlarına ekleyin. Varsayılan olarak kapalı: rapor başarısızlık oranı hakkındadır.",
+        "showFailRate": "Başarısızlık oranını göster",
+        "showFailRateHelp": "Başarısızlık oranını grafiğin sağ tarafındaki eksende çizin, uydu trendini ile birlikte ve başlık rakamlarında gösterin. Varsayılan olarak açık.",
+        "showCounts": "Sonuç toplamlarını göster",
+        "showCountsHelp": "Geçen, başarısız olan, atlanan ve diğer toplamları grafiğin yanında yer alan yığılmış çubuklar olarak çizin. Varsayılan olarak kapalı: rapor oranlar hakkındadır.",
+        "countSkipped": "Atlanan sonuçları oranlar içinde say",
+        "countSkippedHelp": "Atlanan sonuçlar, bu açık olmadığı sürece başarı ve başarısızlık oranı paydasından çıkarılır. Diğer durumlar her zaman kalır.",
+        "includeAborted": "İptal edilen çalıştırmaları dahil et",
+        "includeAbortedHelp": "Projenin terk edilmiş çalıştırma durumunda olan çalıştırmalar, bu kapalı olmadığı sürece sayılır.",
+        "latestAttemptOnly": "Yalnızca en son girişim",
+        "latestAttemptOnlyHelp": "Her ithal edilen girişim yerine, çalıştırma başına durum başına bir sonuç, en son girişim sayın.",
+        "failRate": "Başarısızlık oranı",
+        "skipped": "Atlandı",
+        "other": "Diğer",
+        "inProgress": "devam etmekte",
+        "verdict": {
+          "better": "Başarısızlık oranı iyileşiyor",
+          "worse": "Başarısızlık oranı kötüleşiyor",
+          "steady": "Başarısızlık oranı sabit kalıyor",
+          "notEnough": "Henüz bir trendi belirtmek için yeterli tam dönem yok.",
+          "notEnoughDetail": "Trend, sonuçları olan en az iki tam dönem gerektirir.",
+          "detail": "Trend çizgisi {start} tarihinden {end} tarihine çalışır, {count} tam {grouping, select, daily {gün} weekly {hafta} monthly {ay} quarterly {çeyrek} other {yıl}} içinde {change} puan değişikliği."
+        },
+        "stats": {
+          "lastComplete": "Son tam dönem ({period}), bundan önceki tam dönemlerin ortalaması ile karşılaştırılır.",
+          "results": "Yürütülen sonuçlar",
+          "runs": "Koşular",
+          "deltaPoints": "{change} puan vs. önceki {count, plural, one {# dönem} other {# dönem}}",
+          "deltaPercent": "{change}% vs. önceki {count, plural, one {# dönem} other {# dönem}}",
+          "noBaseline": "Karşılaştırılacak daha eski hiçbir şey yok"
+        },
+        "chart": {
+          "allProjects": "Seçili tüm projeler",
+          "period": "{grouping, select, weekly {{date} tarihi haftası} other {{date}}}",
+          "partialPeriod": "{grouping, select, weekly {{period} tarihi haftası} other {{period}}} (devam etmekte)",
+          "rateTrend": "{rate} trendi"
+        },
+        "heatmap": {
+          "title": "Proje ve dönem bazında başarısızlık oranı",
+          "help": "Each cell is the project's fail rate for the period; shading reaches full intensity at 35%. The trend column is the change in the fitted fail-rate line over the complete periods. * marks the period in progress.",
+          "trend": "Eğilim"
+        },
+        "trend": {
+          "points": "{change} puan"
+        },
+        "detail": {
+          "title": "Dönem bazında sonuçlar ve oranlar"
+        },
+        "method": {
+          "title": "Bunun nasıl sayıldığı",
+          "runSource": {
+            "automated": "Yalnızca otomatikleştirilmiş çalıştırmalar: manuel dışındaki her çalıştırma türü, ithal edilen sonuçları ile birlikte. Bir çalıştırma, oluşturulduğu döneme aittir.",
+            "manual": "Yalnızca manuel çalıştırmalar, bunların üzerine kaydedilen sonuçlar ile birlikte. Bir çalıştırma, oluşturulduğu döneme aittir.",
+            "both": "Her çalıştırma: ithal edilen sonuçları olan otomatikleştirilmiş çalıştırmalar ve bunların üzerine kaydedilen sonuçları olan manuel çalıştırmalar. Bir çalıştırma, oluşturulduğu döneme aittir."
+          },
+          "periods": "{grouping, select, daily {Günler} weekly {Haftalar (Pazartesi'den başlayarak)} monthly {Aylar} quarterly {Çeyrekler} other {Yıllar}} {timezone} içinde kesilir. Mevcut olan devam etmektedir ve trendten ve başlık rakamlarından çıkarılır.",
+          "everyAttempt": "Yeniden denenen bir test, girişim başına bir kez sayılır.",
+          "latestAttempt": "Bir çalıştırmada her durumun yalnızca en son girişimi sayılır.",
+          "skippedExcluded": "Atlanan sonuçlar (başarısız olmayan veya başarısız olmayan tamamlanmış bir durum) başarı ve başarısızlık oranlarından çıkarılır; diğer durumlar kalır.",
+          "skippedCounted": "Atlanan sonuçlar başarı ve başarısızlık oranlarında sayılır.",
+          "abortedIncluded": "Terk edilmiş çalıştırma durumundaki çalıştırmalar dahil edilir.",
+          "abortedExcluded": "Terk edilmiş çalıştırma durumundaki çalıştırmalar çıkarılır.",
+          "trend": "Trend, sonuçları olan tam dönemler üzerinde başarısızlık oranına uydu edilen düz bir çizgidir. Her iki yöne doğru bir puandan daha fazla bir değişiklik bunu daha iyi veya daha kötü olarak adlandırır."
         }
       }
     },

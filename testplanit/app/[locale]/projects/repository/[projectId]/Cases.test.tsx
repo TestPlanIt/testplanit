@@ -138,6 +138,10 @@ vi.mock("~/hooks/useLatestTestResults", () => ({
   useLatestTestResults: () => ({}),
 }));
 
+vi.mock("~/hooks/useRunDependencyState", () => ({
+  useRunDependencyState: () => new Map(),
+}));
+
 // Plain holders rather than vi.fn: afterEach's vi.clearAllMocks() would strip
 // a mock implementation, and these hooks are read on every render.
 const idSortHolder = vi.hoisted(() => ({

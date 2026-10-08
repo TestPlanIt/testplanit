@@ -694,6 +694,8 @@
       "failedToDeleteRepository": "刪除儲存庫失敗",
       "permissionDenied": "您沒有權限存取此頁面。",
       "resultSubmitPermissionDenied": "您無法提交此案例的結果。請聯絡專案管理員將其分配給您。",
+      "dependenciesNotPassed": "被依賴項阻止",
+      "dependenciesNotPassedDescription": "此測試案例必須等到 {count, plural, =0 {其依賴的案例已} one {其依賴的案例已} other {其依賴的全部 # 個案例都}} 在此執行中通過後才能執行。",
       "justificationRequired": "需要提供理由",
       "justificationRequiredDescription": "將已完成的結果變更為不同的結果需要結果詳情來解釋變更。",
       "requiredFieldMissing": "必填結果欄位缺少值。",
@@ -1573,6 +1575,9 @@
           },
           "mantisbt": {
             "description": "連接到自架的 MantisBT 實例進行問題追蹤。"
+          },
+          "clickup": {
+            "description": "連接到 ClickUp 進行任務追蹤和專案管理。"
           }
         }
       },
@@ -1844,6 +1849,15 @@
         "setupStepsMantisbtStep2": "在外掛程式設定中，選擇「問題建立」和「問題更新」事件。",
         "setupStepsMantisbtStep3": "將上方的 URL 貼上作為 webhook 目標並儲存。",
         "setupStepsMantisbtStep4": "在 MantisBT 中建立或更新問題；已連結問題的狀態將同步至此處。",
+        "inboundChooserClickup": "ClickUp",
+        "inboundClickupTitle": "ClickUp 入站 webhook",
+        "inboundClickupScopeHint": "ClickUp <code>taskStatusUpdated</code> 事件會更新相關的 TestPlanIt 問題。其他任務事件會被接受，但不會更新問題。",
+        "inboundClickupRegisterHint": "ClickUp 沒有 webhook 設定頁面：webhook 是通過其 API 建立的，ClickUp 選擇簽署密鑰。將密鑰留空，TestPlanIt 將使用您的 ClickUp 授權在 ClickUp 中為連結的清單註冊此 webhook。",
+        "inboundClickupSecret": "Webhook 密鑰（可選）",
+        "inboundClickupSecretHelp": "僅在您使用 ClickUp 的建立 Webhook API 自己建立 webhook 時才需要：貼上 ClickUp 返回的密鑰。儲存時加密。",
+        "setupStepsClickupStep1": "如果您將密鑰留空，TestPlanIt 已經為連結的清單在 ClickUp 中註冊了此 webhook — 無需在 ClickUp 中進行任何設定。",
+        "setupStepsClickupStep2": "如果您透過 ClickUp 的建立 Webhook API 自己註冊了 webhook，請確保其端點是下面的 URL，並將其訂閱到 taskStatusUpdated 事件。",
+        "setupStepsClickupStep3": "使用下方的「傳送測試 webhook」來驗證管道。輪換密鑰會在 ClickUp 中註冊新的 webhook。",
         "codeRepos": {
           "empty": "未連接任何儲存庫以進行影響分析。<link>請先連接一個</link>。",
           "unsupported": "{provider} 儲存庫無法向 TestPlanIt 發送 Webhook。",
@@ -2025,7 +2039,7 @@
           "branchPlaceholder": "留空則使用倉庫預設分支"
         },
         "pathPatterns": {
-          "description": "指定要包含的檔案。每一行都包含一個基本路徑和一個 glob 模式。例如：`path=tests/e2e/pages + pattern=*` 直接包含該資料夾中的所有檔案；`path=src + pattern=**/*.test.ts` 遞歸包含所有測試檔案。",
+          "description": "指定要包含的檔案。每一行都包含一個基本路徑和一個 glob 模式。例如：path=tests/e2e/pages + pattern=* 直接包含該資料夾中的所有檔案；path=src + pattern=**/*.test.ts 遞歸包含所有測試檔案。",
           "pathPlaceholder": "測試/端到端/頁面",
           "exceedsLimit": "總大小超出 AI 情境限制 {overflow}。在匯出過程中，文件會根據與待匯出測試案例的相關性進行排序——相關性最高的文件優先導出，當達到預算上限時，相關性較低的文件將被跳過。如果您希望更精確地控制要匯出的文件，請縮小路徑模式。"
         },
@@ -2087,7 +2101,7 @@
           "pathLabel": "路徑",
           "patternLabel": "圖案",
           "previewFiles": "預覽檔案",
-          "rootHint": "將路徑留白或輸入 . 以從儲存庫根目錄開始；使用路徑 . 和圖案 **/* 包含每個檔案。",
+          "rootHint": "將路徑留空或輸入 . 以從存放庫根目錄開始；路徑 . 搭配模式 **/* 包含每個檔案。",
           "scanningRepo": "正在掃描儲存庫檔案… ({seconds}s)",
           "title": "路徑模式",
           "truncatedBadge": "結果可能不完整（提供者限制）"
@@ -2179,6 +2193,13 @@
           "disabledToast": "測試執行將不再自動鎖定其組成",
           "saveError": "更新組成自動鎖定設定失敗"
         },
+        "caseDependencies": {
+          "label": "在測試執行中強制執行測試案例依賴項",
+          "description": "啟用時，執行中的測試案例必須等到它依賴的每個案例（「依賴於」連結）在同一執行中通過後才會被阻止。被阻止的案例在執行中會標記，並拒絕接受它們的結果。當最後一個依賴項通過時，案例的指派人會收到通知，表示已準備好。不在執行中的依賴項不會造成阻止。",
+          "enabledToast": "將在測試執行中強制執行測試案例依賴項",
+          "disabledToast": "將不再強制執行測試案例依賴項",
+          "saveError": "更新依賴項強制執行設定失敗"
+        },
         "editWindow": {
           "label": "結果編輯視窗",
           "description": "結果記錄後，仍可在一段時間內進行編輯。視窗關閉後，修改需要重新嘗試。系統管理員始終可以進行編輯。",
@@ -2233,7 +2254,7 @@
           "branchesFallbackHint": "改為輸入分支名稱。"
         },
         "pathPatterns": {
-          "description": "要包含哪些應用程式檔案。每一列結合基本路徑和 glob 圖案。範例：路徑 = src + 圖案 = **/* 包含 src 下的所有內容。",
+          "description": "要包含的應用程式檔案。每一行都包含一個基本路徑和一個 glob 模式。例如：path=src + pattern=**/* 包含 src 下的所有內容。",
           "pathPlaceholder": "src"
         },
         "cache": {
@@ -2876,11 +2897,101 @@
           "label": "通知模式",
           "useGlobal": "使用全域設定"
         },
-        "options": {
-          "title": "其他選項",
-          "email": {
-            "label": "電子郵件通知",
-            "description": "透過電子郵件接收通知"
+        "typeSection": {
+          "title": "通知我有關什麼",
+          "description": "預設情況下，所有類型的通知都已啟用。關閉您不想要的通知。上面的通知模式仍然決定您如何收到通知。",
+          "modeNoneNote": "當您的通知模式為「無」時，不會傳遞任何內容。您在這裡的選擇會在您選擇另一種模式後立即適用。",
+          "locked": "始終開啟",
+          "resetToDefaults": "重設為預設值",
+          "adminOnly": "已傳送給管理員"
+        },
+        "groups": {
+          "assignments": "指派",
+          "comments": "評論",
+          "reviews": "評論",
+          "runsAndMilestones": "執行和里程碑",
+          "sharing": "分享",
+          "aiAndJobs": "AI 和工作",
+          "integrations": "整合",
+          "system": "系統",
+          "administration": "管理"
+        },
+        "types": {
+          "WORK_ASSIGNED": {
+            "label": "指派給我的工作",
+            "description": "測試執行案例以單個或批量方式指派給您。"
+          },
+          "SESSION_ASSIGNED": {
+            "label": "指派給我的工作階段",
+            "description": "工作階段以您為受指派人的身分建立，或重新指派給您。"
+          },
+          "RUN_CASE_UNBLOCKED": {
+            "label": "指派的案例已解除封鎖",
+            "description": "當指派給您的測試案例在執行中變成可執行狀態，因為其相依的案例已通過。"
+          },
+          "COMMENT_MENTION": {
+            "label": "評論中的提及",
+            "description": "某人在案例、執行、工作階段、里程碑或評論的評論中 @-提及您。"
+          },
+          "REVIEW_REQUESTED": {
+            "label": "請求審查",
+            "description": "從您或您擔任的角色要求審查。"
+          },
+          "REVIEW_APPROVED": {
+            "label": "審查已批准",
+            "description": "審查者批准您的請求。"
+          },
+          "REVIEW_CHANGES_REQUESTED": {
+            "label": "請求變更",
+            "description": "審查者要求變更您的請求。"
+          },
+          "REVIEW_REJECTED": {
+            "label": "審查被拒絕",
+            "description": "審查者拒絕您的請求。"
+          },
+          "REVIEW_CANCELLED": {
+            "label": "審查已取消",
+            "description": "您被要求審查的請求已取消，或要審查的項目已刪除。"
+          },
+          "REVIEW_REMINDER": {
+            "label": "審查提醒",
+            "description": "您欠的審查早於提醒閾值，或請求者提醒您。"
+          },
+          "RUN_READY_TO_COMPLETE": {
+            "label": "測試執行已準備好完成",
+            "description": "您可以完成的執行中的每個案例都有一個結果。"
+          },
+          "MILESTONE_DUE_REMINDER": {
+            "label": "里程碑截止日期提醒",
+            "description": "您所參與的里程碑即將到期或已逾期。"
+          },
+          "SHARE_LINK_ACCESSED": {
+            "label": "分享連結已檢視",
+            "description": "某人開啟您建立的且啟用了檢視時通知的分享連結。"
+          },
+          "AI_STEPS_DERIVED": {
+            "label": "AI 步驟已衍生",
+            "description": "您啟動的 AI 步驟衍生工作已寫入步驟。"
+          },
+          "INTEGRATION_AUTH_EXPIRED": {
+            "label": "整合需要重新授權",
+            "description": "與整合的連線已過期或被撤銷，需要重新連線。"
+          },
+          "SYSTEM_ANNOUNCEMENT": {
+            "label": "管理員公告",
+            "description": "管理員向每個用戶發送系統通知。"
+          },
+          "WHATS_NEW": {
+            "label": "升級後的新增功能",
+            "description": "TestPlanIt 升級後首次造訪時的新功能摘要。"
+          },
+          "USER_REGISTERED": {
+            "label": "新用戶註冊",
+            "description": "新用戶透過表單、SSO 或 SAML 註冊。"
+          },
+          "LLM_BUDGET_ALERT": {
+            "label": "AI 預算警報",
+            "description": "LLM 支出超過計費期間的預算閾值。"
           }
         },
         "success": {
@@ -3127,6 +3238,13 @@
       "modifierHintMac": "按住 ⇧ 移動或按住 ⌥ 複製，拖曳即可跳過此選單。",
       "modifierHintWin": "按住Shift鍵移動或按住Ctrl鍵複製，拖曳即可跳過此選單。",
       "dropZoneReorder": "放置以重新排序",
+      "dropZoneReorderBlockedSort": "移除排序以在此資料夾中重新排序案例",
+      "dropZoneReorderBlockedSortMac": "移除排序以重新排序 — 按住 ⌥ 複製到此資料夾",
+      "dropZoneReorderBlockedSortWin": "移除排序以重新排序 — 按住 Ctrl 複製到此資料夾",
+      "dropZoneReorderBlockedSearch": "清除搜尋以在此資料夾中重新排序案例",
+      "dropZoneReorderBlockedSearchMac": "清除搜尋以重新排序 — 按住 ⌥ 複製到此資料夾",
+      "dropZoneReorderBlockedSearchWin": "清除搜尋以重新排序 — 按住 Ctrl 複製到此資料夾",
+      "dropZoneCopyHere": "拖放以複製到此資料夾",
       "dropZoneFolder": "拖放至資料夾以巢狀化，或拖放至資料夾之間以重新排序",
       "dropZoneTreeMac": "放置到資料夾 — 按住 ⇧ 移動，按住 ⌥ 複製",
       "dropZoneTreeWin": "放置到資料夾 — 按住 Shift 移動，按住 Ctrl 複製",
@@ -4087,6 +4205,13 @@
       "lockError": "鎖定執行組成失敗",
       "unlockError": "解鎖執行組成失敗",
       "addBlocked": "此執行的組成已鎖定，因此無法新增測試案例。請先解鎖以變更案例集。"
+    },
+    "dependencies": {
+      "blocked": "已屏蔽",
+      "blockedBy": "被屏蔽直到 {count, plural, one {此案例通過} other {這些案例通過}}在此執行中：",
+      "blockedNotice": "此測試案例無法執行，直到 {count, plural, one {其相依的案例已} other {其所有 # 個相依的案例都}} 在此執行中通過。",
+      "notInRun": "{count, plural, one {此案例相依的 # 個案例不在} other {此案例相依的 # 個案例不在}}此執行中且不會屏蔽執行：",
+      "unblocked": "此案例相依的所有案例都已在此執行中通過。"
     },
     "distribute": {
       "title": "分配任務",
@@ -6202,6 +6327,10 @@
         "mantisbt": {
           "name": "MantisBT",
           "description": "連接到自架的 MantisBT 實例以進行問題追蹤"
+        },
+        "clickup": {
+          "name": "ClickUp",
+          "description": "連接到 ClickUp 進行任務追蹤和專案管理"
         }
       },
       "filterPlaceholder": "過濾器整合…",
@@ -6312,7 +6441,13 @@
         "mantisBTApiKeyHelp": "在您的 MantisBT 帳戶設定 →「API 權杖」下建立一個",
         "mantisBTUrl": "MantisBT URL",
         "mantisBTUrlPlaceholder": "https://mantisbt.example.com",
-        "mantisBTUrlHelp": "您的 MantisBT 實例的基本 URL"
+        "mantisBTUrlHelp": "您的 MantisBT 實例的基本 URL",
+        "clickupTeamId": "ClickUp 團隊 (工作區) ID",
+        "clickupTeamIdPlaceholder": "例如 9013456789",
+        "clickupTeamIdHelp": "在 ClickUp URL 中 app.clickup.com/ 之後找到",
+        "clickupListId": "預設 ClickUp 清單 ID",
+        "clickupListIdPlaceholder": "例如 901234567",
+        "clickupListIdHelp": "預設情況下建立任務的清單；可按問題逐一覆蓋"
       },
       "authType": {
         "api_key": "API金鑰",
@@ -6820,10 +6955,6 @@
         "userRegisteredMessageSso": "{userName} ({userEmail}) 已透過 SSO 註冊",
         "userRegisteredMessageForm": "{userName} ({userEmail}) 已透過註冊表單註冊",
         "viewUserList": "查看使用者列表",
-        "reviewGeneratedCases": "審查產生的測試用例",
-        "generateFromUrlCompleteTitle": "頁面抓取成功",
-        "generateFromUrlCompleteMessage": "已從 {url} 爬取 {pages, plural, other {# 頁}}，位於專案「{projectName}」中。按一下以檢閱並產生測試案例。",
-        "generateFromUrlFailedTitle": "URL 抓取失敗",
         "reviewRequestedTitle": "請求審查",
         "reviewApprovedTitle": "審核已獲批准",
         "reviewChangesRequestedTitle": "請求更改",
@@ -6864,7 +6995,12 @@
         "runReadyToCompleteTitle": "測試執行已準備好完成",
         "runReadyToCompleteExecuted": "{count, plural, =2 {兩個測試案例均已執行完成。} other {所有 # 個測試案例均已執行完成。}}",
         "runReadyToCompleteEmailMessage": "測試執行「{testRunName}」（專案「{projectName}」）中的{caseCount, plural, one {# 個案例已} =2 {兩個案例皆已} other {全部 # 個案例皆已}}執行完畢。此執行已可標記為完成。",
-        "runReadyToCompleteReason": "您收到此通知是因為您可以完成此專案中的測試執行。"
+        "runReadyToCompleteReason": "您收到此通知是因為您可以完成此專案中的測試執行。",
+        "runCaseUnblockedTitle": "測試案例已準備好執行",
+        "runCaseUnblockedPrerequisitePassed": "{prerequisiteName} 已通過，因此分配給您的此案例不再被阻止：",
+        "runCaseUnblockedEmailMessage": "測試運行 \"{testRunName}\" 中的 \"{testCaseName}\"（專案 \"{projectName}\") 不再被阻止：\"{prerequisiteName}\" 已通過。已分配給您且已準備好執行。",
+        "runCaseUnblockedReason": "您收到此訊息是因為測試案例已分配給您。",
+        "inTestRun": "在測試運行中"
       }
     },
     "issues": {
@@ -7477,6 +7613,11 @@
     "alreadyLinked": "此案已關聯。",
     "cannotLinkSelf": "無法將案件與其自身關聯。",
     "circularLink": "偵測到環狀連結。",
+    "dependsOn": "依賴於",
+    "blocks": "阻止",
+    "dependsOnOption": "取決於 — 此案例需要所選案例先通過",
+    "blocksOption": "阻止 — 所選案例需要此案例先通過",
+    "dependencyHint": "啟用相依性強制執行時，測試回合中的案例在該回合中它所依賴的案例通過之前無法執行。",
     "failedToCreate": "連結建立失敗。",
     "confirmRemoveLink": "您確定要刪除此連結嗎？",
     "DEPENDS_ON": "依賴性",
@@ -7741,6 +7882,8 @@
       "redmineUrl": "## Redmine URL\n您的 Redmine 實例的基本 URL。\n\n- 格式：https://redmine.example.com\n- 請勿包含 /issues 或其他路徑\n- 必須可從此伺服器存取",
       "mantisBTApiKey": "## MantisBT API 權杖\n您的個人 REST API 權杖。\n\n- 在您的 MantisBT 帳戶設定 →「API 權杖」下建立一個\n- 範圍限於您使用者的權限；共用整合請使用服務帳戶",
       "mantisBTUrl": "## MantisBT URL\n您的 MantisBT 實例的基本 URL。\n\n- 格式：https://mantisbt.example.com\n- 請勿包含 /api/rest 或其他路徑\n- 必須可從此伺服器存取",
+      "clickupTeamId": "## ClickUp 團隊（工作區）ID\n工作區中任務所屬的 ClickUp 團隊（也稱為工作區）的數字 ID。\n\n- 在 ClickUp URL 中找到：app.clickup.com/{teamId}/...\n- 選擇項目時需要瀏覽空間/資料夾/清單",
+      "clickupListId": "## 預設 ClickUp 清單 ID\n預設情況下建立新工作的清單。\n\n- 在 ClickUp URL 中找到，或透過清單的「複製連結」選項\n- 可選 — 可以改為針對每個問題選擇特定清單",
       "githubBaseUrl": "## API 基本 URL\nGitHub Enterprise Server 的完整 GitHub API 根目錄。\n\n- 通常以 /api/v3 結尾\n- 留空則使用 api.github.com\n- 必須可從此伺服器存取"
     },
     "config": {
@@ -8370,7 +8513,7 @@
           "description": "問題產生、解決與影響分析"
         },
         "automationTrends": {
-          "label": "自動化趨勢",
+          "label": "自動化測試案例趨勢",
           "description": "按優先順序每週追蹤自動化進度"
         },
         "flakyTests": {
@@ -8416,6 +8559,10 @@
         "codePinCoverage": {
           "label": "程式碼釘選覆蓋",
           "description": "程式碼釘選的位置（依儲存庫和目錄），以及最近變更未涵蓋的位置"
+        },
+        "resultsTrend": {
+          "label": "測試結果失敗率趨勢",
+          "description": "測試結果隨著時間的通過和失敗率，以及失敗率是否在改善或惡化"
         }
       },
       "flakyTests": {
@@ -8735,7 +8882,7 @@
           "description": "跨專案的 LLM 功能權杖使用量、成本與可靠性"
         },
         "automationTrends": {
-          "label": "跨專案自動化趨勢",
+          "label": "跨專案自動化測試案例趨勢",
           "description": "按優先順序逐週追蹤各專案的自動化進度"
         },
         "flakyTests": {
@@ -8769,6 +8916,10 @@
         "codePinCoverage": {
           "label": "跨專案程式碼釘選覆蓋",
           "description": "啟用影響分析的每個專案中的程式碼釘選覆蓋"
+        },
+        "resultsTrend": {
+          "label": "跨專案測試結果失敗率趨勢",
+          "description": "測試結果按專案隨著時間的通過和失敗率，以及失敗率是否在改善或惡化"
         }
       },
       "folderDescendants": {
@@ -8832,6 +8983,79 @@
         },
         "chart": {
           "byDirectory": "按目錄劃分的釘選和未涵蓋檔案"
+        }
+      },
+      "resultsTrend": {
+        "period": "期間",
+        "runSource": "結果類型",
+        "runSources": {
+          "automated": "自動化",
+          "manual": "手動"
+        },
+        "showPassRate": "顯示通過率",
+        "showPassRateHelp": "在圖表右軸上繪製通過率，附帶其自己的擬合趨勢，並將其添加到標題數字中。預設為關閉：報告涉及失敗率。",
+        "showFailRate": "顯示失敗率",
+        "showFailRateHelp": "在圖表右軸上繪製失敗率及其擬合趨勢，並在標題數字中顯示。預設為開啟。",
+        "showCounts": "顯示結果總計",
+        "showCountsHelp": "將已通過、已失敗、已跳過和其他總計繪製為圖表旁邊的堆疊長條圖。預設為關閉：報告涉及比率。",
+        "countSkipped": "在比率中計算跳過的結果",
+        "countSkippedHelp": "除非啟用此項，否則跳過的結果會被排除在通過率和失敗率分母之外。其他狀態始終包括在內。",
+        "includeAborted": "包括已中止的回合",
+        "includeAbortedHelp": "除非關閉此項，否則位於專案放棄回合狀態中的回合會被計數。",
+        "latestAttemptOnly": "僅最新嘗試",
+        "latestAttemptOnlyHelp": "計算每個回合中每個案例的結果，即其最新嘗試，而不是每個匯入的嘗試。",
+        "failRate": "失敗率",
+        "skipped": "跳過",
+        "other": "其他",
+        "inProgress": "進行中",
+        "verdict": {
+          "better": "失敗率正在改善",
+          "worse": "失敗率正在惡化",
+          "steady": "失敗率保持穩定",
+          "notEnough": "尚未有足夠的完整期間來判斷趨勢。",
+          "notEnoughDetail": "趨勢需要至少兩個具有結果的完整期間。",
+          "detail": "趨勢線從 {start} 到 {end}，在 {count} 個完整的 {grouping, select, daily {天} weekly {週} monthly {月} quarterly {季} other {年}} 內變化 {change} 個百分點。"
+        },
+        "stats": {
+          "lastComplete": "最後完整期間 ({period})，與其之前完整期間的平均值進行比較。",
+          "results": "已執行的結果",
+          "runs": "回合",
+          "deltaPoints": "{change} 個百分點，與之前的 {count, plural, one {# 個期間} other {# 個期間}} 相比",
+          "deltaPercent": "{change}%，與之前的 {count, plural, one {# 個期間} other {# 個期間}} 相比",
+          "noBaseline": "沒有更早的資料可供比較"
+        },
+        "chart": {
+          "allProjects": "所有選定的專案",
+          "period": "{grouping, select, weekly {週 {date}} other {{date}}}",
+          "partialPeriod": "{grouping, select, weekly {週 {period}} other {{period}}} (進行中)",
+          "rateTrend": "{rate} 趨勢"
+        },
+        "heatmap": {
+          "title": "按專案和期間分類的失敗率",
+          "help": "每個儲存格是該期間專案的失敗率；陰影在 35% 時達到完全強度。趨勢列是在完整期間內擬合失敗率線的變化。* 標記進行中的期間。",
+          "trend": "趨勢"
+        },
+        "trend": {
+          "points": "{change} 個百分點"
+        },
+        "detail": {
+          "title": "按期間分類的結果和比率"
+        },
+        "method": {
+          "title": "如何計算此項",
+          "runSource": {
+            "automated": "僅自動化回合：除手動外的每種回合類型，附帶其匯入的結果。回合所屬的期間是其建立時所在的期間。",
+            "manual": "僅手動回合，附帶在其上記錄的結果。回合所屬的期間是其建立時所在的期間。",
+            "both": "每個回合：自動化回合附帶其匯入的結果，手動回合附帶在其上記錄的結果。回合所屬的期間是其建立時所在的期間。"
+          },
+          "periods": "{grouping, select, daily {天} weekly {週（從星期一開始）} monthly {月} quarterly {季} other {年}} 在 {timezone} 中切割。目前的是進行中的，會被排除在趨勢和標題數字之外。",
+          "everyAttempt": "重試的測試每次嘗試計算一次。",
+          "latestAttempt": "僅計算回合中每個案例的最新嘗試。",
+          "skippedExcluded": "跳過的結果（完成但沒有通過或失敗的狀態）會被排除在通過率和失敗率之外；其他狀態包括在內。",
+          "skippedCounted": "跳過的結果計入通過率和失敗率。",
+          "abortedIncluded": "包括處於放棄回合狀態的回合。",
+          "abortedExcluded": "排除處於放棄回合狀態的回合。",
+          "trend": "趨勢是在具有結果的完整期間內擬合到失敗率的直線。任何一方超過一個百分點的變化都會判斷為改善或惡化。"
         }
       }
     },

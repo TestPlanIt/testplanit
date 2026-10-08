@@ -152,6 +152,7 @@ const testProject: ExtendedProjects = {
   excludeNotStartedFromRuns: false,
   requirementsEnabled: false,
   autoLockCompositionOnInProgress: false,
+  enforceCaseDependencies: false,
   abandonedRunIdleMinutes: null,
   abandonedRunStateId: null,
   creator: {

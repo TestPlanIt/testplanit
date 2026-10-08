@@ -1,7 +1,7 @@
 ---
 sidebar_label: 'Advanced'
 title: 'Advanced (Project Settings)'
-description: Per-project toggles for review gating, requirements, result governance, draft-case handling, composition locking, and the result edit window
+description: Per-project toggles for review gating, requirements, result governance, draft-case handling, composition locking, dependency enforcement, and the result edit window
 ---
 
 # Advanced
@@ -64,6 +64,12 @@ When enabled, test cases in a *Not Started* workflow state are hidden from the *
 When enabled, a test run's case composition is **automatically locked** the moment the run moves into an *In Progress* workflow state. A locked run's case set is frozen — no adding, removing, or reordering cases — while assigning and executing cases continue to work. See [Composition lock](../run-details.md#composition-lock) for how the lock behaves and who can unlock it.
 
 This is off by default; existing projects are unaffected on upgrade. Even with the toggle off, a run's composition can still be locked manually from the run itself.
+
+### Enforce test case dependencies in test runs
+
+When enabled, a test case in a run is **blocked** until every case it depends on — a *Depends on* [test case link](../test-case-links.md#depends-on) — has **passed** in that same run. Blocked cases are marked in the run's case table and execution panel, and results for them are refused by the server (web app, API and MCP alike). When the last dependency passes, the case's assignee is notified that it is ready to execute. Dependencies that are not in the run don't block.
+
+Off by default; existing projects are unaffected on upgrade. Turning it on gates new results only and never changes results already recorded; turning it off re-opens every case immediately. Automated results imported from CI are not gated. See [Enforcing dependencies in test runs](../test-case-links.md#enforcing-dependencies-in-test-runs) for the full rules, including parameterized cases and multi-configuration runs.
 
 ### Result edit window
 

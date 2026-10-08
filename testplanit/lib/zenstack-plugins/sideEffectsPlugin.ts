@@ -48,6 +48,10 @@ import {
   type FolderReader,
 } from "~/lib/folderParentGuard";
 import {
+  assertValidCaseLink,
+  type CaseLinkReader,
+} from "~/lib/caseLinkCycleGuard";
+import {
   assertRestrictedFieldWrite,
   type RestrictedFieldReader,
 } from "~/lib/restrictedFieldGuard";
@@ -509,6 +513,15 @@ export const sideEffectsPlugin = definePlugin(schema, {
         operation,
         args,
         client.$unuseAll() as unknown as FolderReader
+      );
+    }
+
+    if (model === "RepositoryCaseLink") {
+      await assertValidCaseLink(
+        model,
+        operation,
+        args,
+        client.$unuseAll() as unknown as CaseLinkReader
       );
     }
 

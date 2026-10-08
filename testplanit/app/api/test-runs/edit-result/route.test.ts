@@ -32,7 +32,7 @@ vi.mock("~/lib/services/resultGuards", async (importOriginal) => {
 const { txMock } = vi.hoisted(() => ({
   txMock: {
     testRunResults: { update: vi.fn(), findFirst: vi.fn() },
-    testRunCases: { update: vi.fn() },
+    testRunCases: { update: vi.fn(), findUnique: vi.fn() },
     testRunCaseIteration: { update: vi.fn(), findMany: vi.fn() },
     resultFieldValues: { update: vi.fn(), create: vi.fn() },
     status: { findMany: vi.fn() },
@@ -42,6 +42,18 @@ vi.mock("~/lib/audit/auditedTransaction", () => ({
   auditedTransaction: vi.fn((fn: (tx: unknown) => Promise<unknown>) =>
     fn(txMock)
   ),
+}));
+// Dependency handoff: the edit route evaluates it only on a not-passed →
+// passed transition in an enforcing project, inside the transaction.
+const dependencyMocks = vi.hoisted(() => ({
+  findUnblockedDependants: vi.fn(),
+  notifyUnblockedDependants: vi.fn(),
+}));
+vi.mock("~/lib/services/dependencyGate", () => ({
+  findUnblockedDependants: dependencyMocks.findUnblockedDependants,
+}));
+vi.mock("~/lib/services/dependencyHandoff", () => ({
+  notifyUnblockedDependants: dependencyMocks.notifyUnblockedDependants,
 }));
 
 import { getServerSession } from "next-auth";
@@ -111,6 +123,118 @@ describe("Edit Result API Route — run-case status sync", () => {
     } as never);
     vi.mocked(hasMissingRequiredResultField).mockResolvedValue(false);
     txMock.testRunResults.update.mockResolvedValue({ id: 468927 });
+    dependencyMocks.findUnblockedDependants.mockReset();
+    dependencyMocks.findUnblockedDependants.mockResolvedValue([]);
+    dependencyMocks.notifyUnblockedDependants.mockReset();
+    dependencyMocks.notifyUnblockedDependants.mockResolvedValue(undefined);
+  });
+
+  describe("dependency handoff", () => {
+    const enforcingExisting = (priorPassed: boolean) => ({
+      ...baseExisting,
+      testRunCase: {
+        ...baseExisting.testRunCase,
+        repositoryCaseId: 55,
+        status: { isSuccess: priorPassed },
+        repositoryCase: { templateId: 7, name: "Create order" },
+        testRun: {
+          ...baseExisting.testRunCase.testRun,
+          id: 1,
+          project: {
+            ...baseExisting.testRunCase.testRun.project,
+            name: "Telco",
+            enforceCaseDependencies: true,
+          },
+        },
+      },
+    });
+
+    it("hands off when an edit moves the case from not-passed to passed", async () => {
+      vi.mocked(baseDb.testRunResults.findFirst).mockResolvedValue(
+        enforcingExisting(false) as never
+      );
+      txMock.testRunResults.findFirst.mockResolvedValue({ id: 468927 });
+      txMock.testRunCases.findUnique.mockResolvedValue({
+        status: { isSuccess: true },
+      });
+      const dependants = [
+        {
+          testRunCaseId: 20,
+          repositoryCaseId: 56,
+          name: "Verify provisioning",
+          assignedToId: "prov",
+        },
+      ];
+      dependencyMocks.findUnblockedDependants.mockResolvedValue(dependants);
+
+      const res = await POST(createRequest({ resultId: 468927, statusId: 2 }));
+
+      expect(res.status).toBe(200);
+      expect(dependencyMocks.findUnblockedDependants).toHaveBeenCalledWith(
+        txMock,
+        { testRunId: 1, repositoryCaseId: 55 }
+      );
+      expect(dependencyMocks.notifyUnblockedDependants).toHaveBeenCalledWith({
+        dependants,
+        actorUserId: "user-1",
+        testRunId: 1,
+        testRunName: "ABT-38594",
+        projectId: 2,
+        projectName: "Telco",
+        prerequisiteCaseName: "Create order",
+      });
+    });
+
+    it("does nothing when the case was already passed before the edit", async () => {
+      vi.mocked(baseDb.testRunResults.findFirst).mockResolvedValue(
+        enforcingExisting(true) as never
+      );
+      txMock.testRunResults.findFirst.mockResolvedValue({ id: 468927 });
+
+      const res = await POST(createRequest({ resultId: 468927, statusId: 2 }));
+
+      expect(res.status).toBe(200);
+      expect(txMock.testRunCases.findUnique).not.toHaveBeenCalled();
+      expect(dependencyMocks.notifyUnblockedDependants).not.toHaveBeenCalled();
+    });
+
+    it("does nothing when the edit leaves the case not passed", async () => {
+      vi.mocked(baseDb.testRunResults.findFirst).mockResolvedValue(
+        enforcingExisting(false) as never
+      );
+      txMock.testRunResults.findFirst.mockResolvedValue({ id: 468927 });
+      txMock.testRunCases.findUnique.mockResolvedValue({
+        status: { isSuccess: false },
+      });
+
+      const res = await POST(createRequest({ resultId: 468927, statusId: 3 }));
+
+      expect(res.status).toBe(200);
+      expect(dependencyMocks.findUnblockedDependants).not.toHaveBeenCalled();
+    });
+
+    it("never evaluates the handoff when the project does not enforce dependencies", async () => {
+      vi.mocked(baseDb.testRunResults.findFirst).mockResolvedValue({
+        ...enforcingExisting(false),
+        testRunCase: {
+          ...enforcingExisting(false).testRunCase,
+          testRun: {
+            ...enforcingExisting(false).testRunCase.testRun,
+            project: {
+              ...enforcingExisting(false).testRunCase.testRun.project,
+              enforceCaseDependencies: false,
+            },
+          },
+        },
+      } as never);
+      txMock.testRunResults.findFirst.mockResolvedValue({ id: 468927 });
+
+      const res = await POST(createRequest({ resultId: 468927, statusId: 2 }));
+
+      expect(res.status).toBe(200);
+      expect(txMock.testRunCases.findUnique).not.toHaveBeenCalled();
+      expect(dependencyMocks.findUnblockedDependants).not.toHaveBeenCalled();
+    });
   });
 
   it("writes the edited status onto the run case when the edited result is the latest", async () => {

@@ -27,10 +27,17 @@ import {
   type RollupStatus,
 } from "~/lib/services/iterationRollup";
 import { assertReviewGatePasses } from "~/lib/services/reviewGate";
+import {
+  assertDependencyGateOpen,
+  findUnblockedDependants,
+  type UnblockedDependant,
+} from "~/lib/services/dependencyGate";
+import { notifyUnblockedDependants } from "~/lib/services/dependencyHandoff";
 import { createTestCaseVersionInTransaction } from "~/lib/services/testCaseVersionService";
 import { emitIterationResultRecorded } from "~/lib/webhooks/event-emitters/iterationEvents";
 import {
   isAlreadyPendingError,
+  isDependencyGateError,
   isNotFoundError,
   isReviewGateError,
   ReviewGateError,
@@ -216,8 +223,11 @@ export const POST = withAuditContext(async (req: NextRequest) => {
         id: true,
         assignedToId: true,
         repositoryCaseId: true,
+        // Pre-write pass state, so the handoff below fires only on a
+        // not-passed → passed transition.
+        status: { select: { isSuccess: true } },
         repositoryCase: {
-          select: { automated: true, templateId: true },
+          select: { automated: true, templateId: true, name: true },
         },
         testRun: {
           select: {
@@ -229,6 +239,8 @@ export const POST = withAuditContext(async (req: NextRequest) => {
             isCompleted: true,
             project: {
               select: {
+                name: true,
+                enforceCaseDependencies: true,
                 createdBy: true,
                 defaultAccessType: true,
                 requireResultFlipJustification: true,
@@ -505,6 +517,20 @@ export const POST = withAuditContext(async (req: NextRequest) => {
 
     const txOutcome = await auditedTransaction(async (tx) => {
       let auditPayload: AuditPayload | null = null;
+
+      // Dependency gate (opt-in per project). Inside the transaction and
+      // before the result row exists, so a blocked case never gets a result
+      // and the prerequisites' status is read under the same snapshot as the
+      // write — the same preflight position as the review gate below.
+      const enforceDependencies =
+        runCase.testRun.project.enforceCaseDependencies === true;
+      if (enforceDependencies) {
+        await assertDependencyGateOpen(tx, {
+          testRunId: input.testRunId,
+          repositoryCaseId: runCase.repositoryCaseId,
+        });
+      }
+
       const createdResult = await tx.testRunResults.create({
         data: {
           testRunId: input.testRunId,
@@ -806,10 +832,32 @@ export const POST = withAuditContext(async (req: NextRequest) => {
         }
       }
 
-      return { createdResult, auditPayload };
+      // Handoff: when this result moves the case from not-passed to passed,
+      // the dependants in this run whose prerequisites are now all passed
+      // have their gate opened. Resolved here so it sees the status just
+      // written; delivered after commit.
+      let unblockedDependants: UnblockedDependant[] = [];
+      if (enforceDependencies && runCase.status?.isSuccess !== true) {
+        const now = await tx.testRunCases.findUnique({
+          where: { id: input.testRunCaseId },
+          select: { status: { select: { isSuccess: true } } },
+        });
+        if (now?.status?.isSuccess === true) {
+          unblockedDependants = await findUnblockedDependants(tx, {
+            testRunId: input.testRunId,
+            repositoryCaseId: runCase.repositoryCaseId,
+          });
+        }
+      }
+
+      return { createdResult, auditPayload, unblockedDependants };
     });
 
-    const { createdResult: result, auditPayload } = txOutcome;
+    const {
+      createdResult: result,
+      auditPayload,
+      unblockedDependants,
+    } = txOutcome;
 
     // Post-commit audit emission. Best-effort — never block the response
     // on the audit pipeline (matches the captureAuditEvent contract; the
@@ -845,8 +893,35 @@ export const POST = withAuditContext(async (req: NextRequest) => {
       );
     }
 
+    // Handoff notifications — post-commit and best-effort, like the audit
+    // emission above: the result is already recorded, and a notification
+    // hiccup must not fail the response.
+    if (unblockedDependants.length > 0) {
+      void notifyUnblockedDependants({
+        dependants: unblockedDependants,
+        actorUserId: user.id,
+        testRunId: input.testRunId,
+        testRunName: runCase.testRun.name,
+        projectId: runCase.testRun.projectId,
+        projectName: runCase.testRun.project.name,
+        prerequisiteCaseName: runCase.repositoryCase.name,
+      });
+    }
+
     return NextResponse.json({ result });
   } catch (error) {
+    if (isDependencyGateError(error)) {
+      return NextResponse.json(
+        {
+          error:
+            "This test case is blocked until its prerequisites in this run have passed",
+          code: error.code,
+          blockedBy: error.blockedBy,
+        },
+        { status: 409 }
+      );
+    }
+
     if (error instanceof IterationNotFoundError) {
       return NextResponse.json(
         { error: "Iteration not found", code: "ITERATION_NOT_FOUND" },

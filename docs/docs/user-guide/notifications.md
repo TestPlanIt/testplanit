@@ -23,6 +23,7 @@ Every notification TestPlanIt sends belongs to one of the types below. They are 
 | ------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------- |
 | Assignments         | **Work assigned to me**                            | A test run case is assigned to you, singly or in bulk (including automatic distribution)         | The assignee                                                         |
 | Assignments         | **Session assigned to me**                         | A session is created with you as its assignee, or reassigned to you                              | The assignee                                                         |
+| Assignments         | **Assigned case unblocked**                        | A case assigned to you in a run becomes executable because the cases it depends on have passed      | The assignee, unless they recorded the result themselves             |
 | Comments            | **Mentions in comments**                           | Someone @-mentions you in a comment on a case, run, session or milestone, or in a review comment | Each mentioned user except the author                                |
 | Reviews             | **Review requested**                               | A review is requested from you or from a role you hold, singly or in bulk                        | The reviewer or role holders, minus the requester                    |
 | Reviews             | **Review approved**                                | A reviewer approves your request                                                                 | The requester                                                        |
@@ -252,6 +253,20 @@ When the last outstanding piece of work in a test run receives a final result, e
 :::note Very broad recipient lists are skipped
 If a project is configured so that its **default access** role can close test runs, every active user in the deployment becomes a recipient. Above 100 recipients the notification stops being a signal, so it is skipped for that run and a warning is written to the server logs instead. If your team expects these notifications and never receives them, check whether the project's default role grants **canClose** on Test Runs — see the [Permissions Guide](./permissions-guide.md).
 :::
+
+#### Assigned Case Unblocked Notifications
+
+In a project that [enforces test case dependencies](./projects/settings/advanced.md#enforce-test-case-dependencies-in-test-runs), a case in a run is blocked until the cases it depends on have passed in that run. When the last of them passes, the blocked case's assignee is told it is ready to execute. This is the handoff between testers in a multi-step scenario.
+
+**Recipients**: The user assigned to the case that just became executable. Unassigned cases notify nobody, and the tester whose result opened the gate is not notified about their own cases.
+
+**Features**:
+
+- The notification names the prerequisite that passed and links straight to the case in the run.
+- It fires once per opening: a prerequisite that is resubmitted as passed again does not notify again. If a prerequisite later fails and then passes once more, the case is blocked and re-opened, and the assignee is told again.
+- Editing a prerequisite's existing result to a pass opens the gate and notifies in the same way. Deleting a result never notifies, even if the case it belonged to becomes unblocked as a consequence.
+- Switch it off under **Assignments → Assigned case unblocked** in your notification preferences.
+- The project setting is required; projects that don't enforce dependencies never send it.
 
 ## User Preferences
 

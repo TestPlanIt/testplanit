@@ -62,6 +62,12 @@ export const NOTIFICATION_CATALOGUE: readonly NotificationCatalogueEntry[] = [
     audience: "everyone",
     optional: true,
   },
+  {
+    type: NotificationType.RUN_CASE_UNBLOCKED,
+    group: "assignments",
+    audience: "everyone",
+    optional: true,
+  },
   // Comments
   {
     type: NotificationType.COMMENT_MENTION,

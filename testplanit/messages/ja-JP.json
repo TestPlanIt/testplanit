@@ -694,6 +694,8 @@
       "failedToDeleteRepository": "リポジトリの削除に失敗しました",
       "permissionDenied": "このページにアクセスする権限がありません。",
       "resultSubmitPermissionDenied": "この案件については、結果を提出できません。プロジェクト管理者に依頼して、あなたに割り当ててもらってください。",
+      "dependenciesNotPassed": "依存関係によってブロックされています",
+      "dependenciesNotPassedDescription": "このテストケースは、{count, plural, =0 {依存している全てのケースが} one {依存しているケースが} other {依存している全て # つのケースが}}このラン内でパスするまで実行できません。",
       "justificationRequired": "正当化が必要",
       "justificationRequiredDescription": "完了した結果を別の結果に変更するには、変更内容を説明する結果の詳細が必要です。",
       "requiredFieldMissing": "必須項目である結果フィールドに値が入力されていません。",
@@ -1573,6 +1575,9 @@
           },
           "mantisbt": {
             "description": "課題追跡のために、自己ホスト型のMantisBTインスタンスに接続します。"
+          },
+          "clickup": {
+            "description": "タスク追跡とプロジェクト管理のため ClickUp に接続します。"
           }
         }
       },
@@ -1844,6 +1849,15 @@
         "setupStepsMantisbtStep2": "プラグインの設定で、課題作成イベントと課題更新イベントを選択してください。",
         "setupStepsMantisbtStep3": "上記のURLをウェブフックの送信先として貼り付けて保存してください。",
         "setupStepsMantisbtStep4": "MantisBTで課題を作成または更新すると、リンクされた課題のステータスがここに同期されます。",
+        "inboundChooserClickup": "ClickUp",
+        "inboundClickupTitle": "ClickUp インバウンド Webhook",
+        "inboundClickupScopeHint": "ClickUp <code>taskStatusUpdated</code> イベントは、リンクされた TestPlanIt の課題を更新します。その他のタスクイベントは受け入れられますが、課題は更新されません。",
+        "inboundClickupRegisterHint": "ClickUp には Webhook 設定ページがありません。Webhook はその API を通じて作成され、ClickUp が署名シークレットを選択します。シークレットを空のままにすると、TestPlanIt がこの Webhook を ClickUp に登録し、ClickUp 認可を使用してリンクされたリストに登録します。",
+        "inboundClickupSecret": "Webhook シークレット (オプション)",
+        "inboundClickupSecretHelp": "ClickUp の Create Webhook API を使用して自分で Webhook を作成した場合にのみ必要です。ClickUp が返したシークレットを貼り付けてください。保存時に暗号化されます。",
+        "setupStepsClickupStep1": "シークレットを空のままにした場合、TestPlanIt はすでにこの Webhook を ClickUp に登録していますため、ClickUp で設定する必要はありません。",
+        "setupStepsClickupStep2": "ClickUp の Create Webhook API を使用して自分で Webhook を登録した場合は、そのエンドポイントが以下の URL であることを確認し、taskStatusUpdated イベントにサブスクライブしてください。",
+        "setupStepsClickupStep3": "以下の「テスト Webhook を送信」を使用してパイプラインを確認してください。シークレットをローテーションすると、ClickUp に新しい Webhook が登録されます。",
         "codeRepos": {
           "empty": "影響分析用に接続されたリポジトリがありません。最初に<link>接続してください</link>。",
           "unsupported": "{provider}リポジトリはTestPlanItにウェブフックを送信できません。",
@@ -2087,7 +2101,7 @@
           "pathLabel": "パス",
           "patternLabel": "パターン",
           "previewFiles": "プレビューファイル",
-          "rootHint": "パスを空白のままにするか、.を入力してリポジトリルートから開始します。パス.とパターン**/*を使用すると、すべてのファイルが含まれます。",
+          "rootHint": "パスを空のままにするか、. を入力してリポジトリルートから開始します。path . と pattern **/* は、すべてのファイルを含めます。",
           "scanningRepo": "リポジトリファイルをスキャンしています… ({seconds}秒)",
           "title": "パスパターン",
           "truncatedBadge": "結果は不完全な場合があります(プロバイダーの制限による)"
@@ -2179,6 +2193,13 @@
           "disabledToast": "テスト実行は、構成が自動的にロックされなくなります",
           "saveError": "構成の自動ロック設定の更新に失敗しました"
         },
+        "caseDependencies": {
+          "label": "テストランでテストケースの依存関係を強制する",
+          "description": "有効にすると、ラン内のテストケースは、依存する全てのケース (「依存」リンク) が同じラン内でパスするまでブロックされます。ブロックされたケースはランで表示され、それらの結果は拒否されます。最後の依存関係がパスすると、ケースの担当者にそれが準備できたことが通知されます。ラン内にない依存関係はブロックしません。",
+          "enabledToast": "テストケースの依存関係はテストランで強制されます",
+          "disabledToast": "テストケースの依存関係は強制されなくなります",
+          "saveError": "依存関係の強制設定の更新に失敗しました"
+        },
         "editWindow": {
           "label": "結果編集ウィンドウ",
           "description": "結果が記録されてから一定期間内であれば、その場で編集できます。期間が終了すると、修正には再入力が必要になります。システム管理者はいつでも編集できます。",
@@ -2233,7 +2254,7 @@
           "branchesFallbackHint": "代わりにブランチ名を入力してください。"
         },
         "pathPatterns": {
-          "description": "含めるアプリケーションファイル。各行はベースパスとグロブパターンを組み合わせます。例: path=src + pattern=**/*はsrcの下のすべてを含めます。",
+          "description": "含める application ファイル。各行は、ベースパスとグロブパターンを組み合わせたものです。例：path=src + pattern=**/* は、src 配下のすべてを含めます。",
           "pathPlaceholder": "src"
         },
         "cache": {
@@ -2876,11 +2897,101 @@
           "label": "通知モード",
           "useGlobal": "グローバル設定を使用する"
         },
-        "options": {
-          "title": "追加オプション",
-          "email": {
-            "label": "メール通知",
-            "description": "メールで通知を受け取る"
+        "typeSection": {
+          "title": "何について通知を受け取るか",
+          "description": "すべての種類の通知はデフォルトでオンになっています。不要な通知をオフに切り替えてください。上記の通知モードはどのように通知を受け取るかを決定します。",
+          "modeNoneNote": "通知モードが「なし」の場合、何も配信されません。ここでの選択は、別のモードを選択するとすぐに適用されます。",
+          "locked": "常にオン",
+          "resetToDefaults": "デフォルトにリセット",
+          "adminOnly": "管理者に送信"
+        },
+        "groups": {
+          "assignments": "割り当て",
+          "comments": "コメント",
+          "reviews": "レビュー",
+          "runsAndMilestones": "実行とマイルストーン",
+          "sharing": "共有",
+          "aiAndJobs": "AIとジョブ",
+          "integrations": "統合",
+          "system": "システム",
+          "administration": "管理"
+        },
+        "types": {
+          "WORK_ASSIGNED": {
+            "label": "割り当てられた作業",
+            "description": "テスト実行ケースが個別または一括で割り当てられます。"
+          },
+          "SESSION_ASSIGNED": {
+            "label": "割り当てられたセッション",
+            "description": "セッションがあなたを割り当て担当者として作成されるか、あなたに再割り当てされます。"
+          },
+          "RUN_CASE_UNBLOCKED": {
+            "label": "割り当てられたケースがブロック解除されました",
+            "description": "依存するケースがパスしたため、実行中にあなたに割り当てられたテストケースが実行可能になります。"
+          },
+          "COMMENT_MENTION": {
+            "label": "コメントでの言及",
+            "description": "誰かがケース、実行、セッション、マイルストーン、またはレビューのコメントであなたを@メンションします。"
+          },
+          "REVIEW_REQUESTED": {
+            "label": "レビュー依頼",
+            "description": "あなたまたはあなたが保有するロールからレビューがリクエストされます。"
+          },
+          "REVIEW_APPROVED": {
+            "label": "レビュー承認済み",
+            "description": "レビュアーがあなたのリクエストを承認します。"
+          },
+          "REVIEW_CHANGES_REQUESTED": {
+            "label": "変更依頼",
+            "description": "レビュアーがあなたのリクエストに対する変更をリクエストします。"
+          },
+          "REVIEW_REJECTED": {
+            "label": "レビュー却下",
+            "description": "レビュアーがあなたのリクエストを却下します。"
+          },
+          "REVIEW_CANCELLED": {
+            "label": "レビューキャンセル",
+            "description": "レビューをするようにリクエストされたリクエストがキャンセルされるか、レビュー対象のアイテムが削除されます。"
+          },
+          "REVIEW_REMINDER": {
+            "label": "レビューリマインダー",
+            "description": "あなたが負っているレビューがリマインダー閾値より古いか、リクエスター者があなたにプッシュします。"
+          },
+          "RUN_READY_TO_COMPLETE": {
+            "label": "テスト実行完了の準備完了",
+            "description": "完了できる実行内のすべてのケースに結果があります。"
+          },
+          "MILESTONE_DUE_REMINDER": {
+            "label": "マイルストーン期限リマインダー",
+            "description": "関係しているマイルストーンが近く期限切れまたは期限切れです。"
+          },
+          "SHARE_LINK_ACCESSED": {
+            "label": "共有リンク表示",
+            "description": "誰かが通知オン表示が有効になっている、あなたが作成した共有リンクを開きます。"
+          },
+          "AI_STEPS_DERIVED": {
+            "label": "AIステップ派生",
+            "description": "開始したAIステップ派生ジョブがステップを書き込みました。"
+          },
+          "INTEGRATION_AUTH_EXPIRED": {
+            "label": "統合の再認可が必要",
+            "description": "統合への接続が期限切れまたは取り消されたため、再接続する必要があります。"
+          },
+          "SYSTEM_ANNOUNCEMENT": {
+            "label": "管理者のお知らせ",
+            "description": "管理者がすべてのユーザーにシステム通知を送信します。"
+          },
+          "WHATS_NEW": {
+            "label": "アップグレード後の新機能",
+            "description": "TestPlanItがアップグレードされた後の最初の訪問時に新機能の概要が表示されます。"
+          },
+          "USER_REGISTERED": {
+            "label": "新規ユーザー登録",
+            "description": "新しいユーザーがフォーム、SSO、またはSAMLを通じてサインアップします。"
+          },
+          "LLM_BUDGET_ALERT": {
+            "label": "AI予算アラート",
+            "description": "LLM支出が請求期間の予算しきい値を超えます。"
           }
         },
         "success": {
@@ -3127,6 +3238,13 @@
       "modifierHintMac": "⇧キーを押しながらドラッグすると移動、⌥キーを押しながらドラッグするとコピーできます。このメニューをスキップするには、⇧キーを押しながらドラッグしてください。",
       "modifierHintWin": "このメニューをスキップするには、ドラッグ中にShiftキーを押しながら移動するか、Ctrlキーを押しながらドラッグしてコピーしてください。",
       "dropZoneReorder": "ドロップして並べ替え",
+      "dropZoneReorderBlockedSort": "並び替えを削除して、このフォルダ内のケースを並び替えます",
+      "dropZoneReorderBlockedSortMac": "並び替えを削除して並び替えます - ⌥を押してこのフォルダにコピーします",
+      "dropZoneReorderBlockedSortWin": "並び替えを削除して並び替えます - Ctrlを押してこのフォルダにコピーします",
+      "dropZoneReorderBlockedSearch": "検索をクリアして、このフォルダ内のケースを並び替えます",
+      "dropZoneReorderBlockedSearchMac": "検索をクリアして並び替えます - ⌥を押してこのフォルダにコピーします",
+      "dropZoneReorderBlockedSearchWin": "検索をクリアして並び替えます - Ctrlを押してこのフォルダにコピーします",
+      "dropZoneCopyHere": "このフォルダにコピーするためにドロップします",
       "dropZoneFolder": "フォルダにドロップしてネストするか、フォルダ間にドロップして並べ替えます",
       "dropZoneTreeMac": "フォルダにドロップ — ⇧を押しながらで移動、⌥を押しながらでコピー",
       "dropZoneTreeWin": "フォルダにドロップ — Shiftを押しながらで移動、Ctrlを押しながらでコピー",
@@ -3561,7 +3679,7 @@
         "title": "要件ソースを選択",
         "description": "問題からテスト ケースを生成するか、要件ドキュメントから生成するかを選択します。",
         "folderContextTip": "重複を避けるため、「{folderName}」およびその親/子フォルダにある既存のテストケースがコンテキストとして使用されます。続行する前に、正しいフォルダを選択していることを確認してください。",
-        "folderContextCount": "{count, plural, =1 {# existing test case} other {# existing test cases}} in \"{folderName}\" and its parent/child folders will be used as context to match your project's style and avoid duplicates.",
+        "folderContextCount": "{count, plural, =1 {# 個の既存テストケース} other {# 個の既存テストケース}}が\"{folderName}\"およびその親フォルダ/子フォルダ内で、コンテキストとして使用され、プロジェクトのスタイルに合わせて重複を避けます。",
         "folderContextEmptyTitle": "コンテキストとして使用する既存テストケースがありません",
         "folderContextEmpty": "\"{folderName}\"とその親/子フォルダにテストケースがないため、AIがプロジェクトのスタイルや既存のカバレッジの例がありません。より良い結果を得るために、これらのテストケースが属するフォルダから、関連するケースの隣でジェネレータを開始してください。",
         "currentFolder": "現在のフォルダ",
@@ -3616,7 +3734,7 @@
         "quantity": "生成するテストケースの数",
         "placeholder": "テストケース生成のための具体的な指示を追加します...\n\n例:\n• セキュリティテストに重点を置く\n• エッジケースと境界条件を含める\n• ハッピーパスとエラーシナリオの両方をテストする\n• モバイルとデスクトップのシナリオを考慮する\n• APIテストに重点を置く",
         "linksIgnoredTitle": "メモ内のリンクは開かれません",
-        "linksIgnored": "{count, plural, =1 {The link} other {The # links}} in your notes will be sent as plain text only. To use a document or spreadsheet, paste the relevant content (scenarios, test data, expected results) into the notes.",
+        "linksIgnored": "{count, plural, =1 {メモ内のリンク} other {メモ内の# 個のリンク}}はプレーンテキストのみで送信されます。ドキュメントまたはスプレッドシートを使用するには、関連するコンテンツ(シナリオ、テストデータ、期待される結果)をメモに貼り付けてください。",
         "suggestions": "簡単な提案:",
         "quantityOptions": {
           "justOne": "たった一つ",
@@ -4087,6 +4205,13 @@
       "lockError": "実行構成のロックに失敗しました",
       "unlockError": "実行構成のロック解除に失敗しました",
       "addBlocked": "この実行の構成はロックされているため、テストケースを追加できません。ケースセットを変更するには、まずロックを解除してください。"
+    },
+    "dependencies": {
+      "blocked": "ブロックされました",
+      "blockedBy": "{count, plural, one {このケースがパスする} other {これらのケースがパスする}}までブロックされています。この実行では:",
+      "blockedNotice": "このテストケースは、{count, plural, one {依存するケースがこの実行でパスするまで} other {依存するすべての # ケースがこの実行でパスするまで}}実行できません。",
+      "notInRun": "{count, plural, one {これが依存する # ケースはこの実行内にありません} other {これが依存する # ケースはこの実行内にありません}}、実行をブロックしません:",
+      "unblocked": "このケースが依存するすべてのケースがこの実行でパスしました。"
     },
     "distribute": {
       "title": "割り当てを分配",
@@ -6202,6 +6327,10 @@
         "mantisbt": {
           "name": "MantisBT",
           "description": "課題追跡のために、自己ホスト型のMantisBTインスタンスに接続します"
+        },
+        "clickup": {
+          "name": "ClickUp",
+          "description": "タスク追跡とプロジェクト管理のために ClickUp に接続します"
         }
       },
       "filterPlaceholder": "フィルター統合...",
@@ -6312,7 +6441,13 @@
         "mantisBTApiKeyHelp": "MantisBTのアカウント設定 → [APIトークン] で作成してください",
         "mantisBTUrl": "MantisBT URL",
         "mantisBTUrlPlaceholder": "https://mantisbt.example.com",
-        "mantisBTUrlHelp": "MantisBTインスタンスのベースURL"
+        "mantisBTUrlHelp": "MantisBTインスタンスのベースURL",
+        "clickupTeamId": "ClickUp チーム (ワークスペース) ID",
+        "clickupTeamIdPlaceholder": "例：9013456789",
+        "clickupTeamIdHelp": "ClickUp URL の app.clickup.com/ の後に記載されています",
+        "clickupListId": "デフォルト ClickUp リスト ID",
+        "clickupListIdPlaceholder": "例：901234567",
+        "clickupListIdHelp": "デフォルトでタスクが作成されるリスト。問題ごとにオーバーライドできます"
       },
       "authType": {
         "api_key": "APIキー",
@@ -6820,10 +6955,6 @@
         "userRegisteredMessageSso": "{userName} ({userEmail}) は SSO 経由で登録されました",
         "userRegisteredMessageForm": "{userName} ({userEmail}) が登録フォームから登録しました",
         "viewUserList": "ユーザーリストを表示",
-        "reviewGeneratedCases": "生成されたテストケースを確認する",
-        "generateFromUrlCompleteTitle": "ページのクロールは正常に完了しました。",
-        "generateFromUrlCompleteMessage": "{pages, plural, one {# ページ} other {# ページ}} はプロジェクト \"{projectName}\" の {url} からクロールされました。クリックして確認し、テストケースを生成してください。",
-        "generateFromUrlFailedTitle": "URLクロールに失敗しました",
         "reviewRequestedTitle": "レビュー依頼",
         "reviewApprovedTitle": "レビュー承認済み",
         "reviewChangesRequestedTitle": "変更依頼",
@@ -6864,7 +6995,12 @@
         "runReadyToCompleteTitle": "テスト実行の完了準備が整いました",
         "runReadyToCompleteExecuted": "{count, plural, =2 {両方のケースが}other {すべての#件のケースが}}実行されました。",
         "runReadyToCompleteEmailMessage": "{caseCount, plural, =2 {両方のケースが}other {すべての#件のケースが}}テストラン「{testRunName}」（プロジェクト「{projectName}」）で実行されました。このテストランは完了としてマークする準備ができています。",
-        "runReadyToCompleteReason": "このプロジェクトでテスト実行を完了する権限があるため、この通知を受信しています。"
+        "runReadyToCompleteReason": "このプロジェクトでテスト実行を完了する権限があるため、この通知を受信しています。",
+        "runCaseUnblockedTitle": "テスト ケース実行準備完了",
+        "runCaseUnblockedPrerequisitePassed": "{prerequisiteName} が成功したため、割り当てられたこのケースはブロック解除されました:",
+        "runCaseUnblockedEmailMessage": "\"{testCaseName}\" (プロジェクト \"{projectName}\") のテスト実行 \"{testRunName}\" は、ブロック解除されました: \"{prerequisiteName}\" が成功しました。あなたに割り当てられており、実行準備ができています。",
+        "runCaseUnblockedReason": "テスト ケースがあなたに割り当てられているため、このメッセージを受け取っています。",
+        "inTestRun": "テスト実行内"
       }
     },
     "issues": {
@@ -7477,6 +7613,11 @@
     "alreadyLinked": "このケースはすでにリンクされています。",
     "cannotLinkSelf": "ケースをそれ自身にリンクすることはできません。",
     "circularLink": "循環リンクが検出されました。",
+    "dependsOn": "依存",
+    "blocks": "ブロック",
+    "dependsOnOption": "依存 — このケースは選択されたケースが最初に合格することを必要とします",
+    "blocksOption": "ブロック — 選択されたケースは、このケースが最初に合格することを必要とします",
+    "dependencyHint": "依存関係の強制がオンの場合、テスト実行内のケースは、依存しているケースがその実行で合格するまで実行できません。",
     "failedToCreate": "リンクの作成に失敗しました。",
     "confirmRemoveLink": "このリンクを削除してもよろしいですか?",
     "DEPENDS_ON": "依存",
@@ -7741,6 +7882,8 @@
       "redmineUrl": "## Redmine URL\nRedmineインスタンスのベースURL。\n\n- 形式: https://redmine.example.com\n- /issuesやその他のパスを含めないでください\n- このサーバーからアクセスできる必要があります",
       "mantisBTApiKey": "## MantisBT APIトークン\nあなたの個人用REST APIトークンです。\n\n- MantisBTのアカウント設定 → [APIトークン] で作成してください\n- ユーザーの権限に応じたスコープになります。共有インテグレーションにはサービスアカウントを使用してください",
       "mantisBTUrl": "## MantisBT URL\nMantisBTインスタンスのベースURL。\n\n- 形式: https://mantisbt.example.com\n- /api/restやその他のパスを含めないでください\n- このサーバーからアクセスできる必要があります",
+      "clickupTeamId": "## ClickUp Team（Workspace）ID\nClickUp Team（Workspaceとも呼ばれます）のタスクが属する数値ID。\n\n- ClickUp URLで見つかります：app.clickup.com/{teamId}/...\n- プロジェクトを選択する際にSpaces/Folders/Listsを閲覧するために必要です",
+      "clickupListId": "## デフォルトのClickUp List ID\n新しいタスクがデフォルトで作成されるList。\n\n- ClickUp URLまたはListの「リンクをコピー」オプションを使用して見つかります\n- オプション — 代わりに問題ごとに特定のListを選択できます",
       "githubBaseUrl": "## APIベースURL\nGitHub Enterprise Serverの完全なGitHub APIルート。\n\n- 通常は/api/v3で終わります\n- api.github.comを使用する場合は空白のままにしてください\n- このサーバーからアクセスできる必要があります"
     },
     "config": {
@@ -8370,7 +8513,7 @@
           "description": "問題の作成、解決、影響分析"
         },
         "automationTrends": {
-          "label": "自動化のトレンド",
+          "label": "自動テストケースのトレンド",
           "description": "優先順位ごとに自動化の進捗状況を週ごとに追跡"
         },
         "flakyTests": {
@@ -8416,6 +8559,10 @@
         "codePinCoverage": {
           "label": "コードピンカバレッジ",
           "description": "コードピンがある場所：リポジトリとディレクトリ、および最近の変更がカバーされなかった場所"
+        },
+        "resultsTrend": {
+          "label": "テスト結果の失敗率のトレンド",
+          "description": "テスト結果の合格率と失敗率の時系列変化、および失敗率が改善または悪化しているかどうか"
         }
       },
       "flakyTests": {
@@ -8735,7 +8882,7 @@
           "description": "プロジェクト全体におけるLLM機能のトークン使用量、コスト、信頼性"
         },
         "automationTrends": {
-          "label": "プロジェクト間自動化のトレンド",
+          "label": "クロスプロジェクト自動テストケースのトレンド",
           "description": "プロジェクト全体の優先度別に自動化の進捗状況を週ごとに追跡"
         },
         "flakyTests": {
@@ -8769,6 +8916,10 @@
         "codePinCoverage": {
           "label": "プロジェクト横断的コードピンカバレッジ",
           "description": "インパクト分析が有効なすべてのプロジェクトにおけるコードピンカバレッジ"
+        },
+        "resultsTrend": {
+          "label": "クロスプロジェクトテスト結果の失敗率のトレンド",
+          "description": "プロジェクト別のテスト結果の合格率と失敗率の時系列変化、および失敗率が改善または悪化しているかどうか"
         }
       },
       "folderDescendants": {
@@ -8832,6 +8983,79 @@
         },
         "chart": {
           "byDirectory": "ディレクトリ別のピンと未カバーファイル"
+        }
+      },
+      "resultsTrend": {
+        "period": "期間",
+        "runSource": "結果のタイプ",
+        "runSources": {
+          "automated": "自動化",
+          "manual": "手動"
+        },
+        "showPassRate": "合格率を表示",
+        "showPassRateHelp": "グラフの右軸に合格率をその適合トレンドで描画し、それをヘッドラインの数字に追加します。デフォルトではオフです：レポートは失敗率についてです。",
+        "showFailRate": "失敗率を表示",
+        "showFailRateHelp": "グラフの右軸に失敗率をその適合トレンドで描画し、ヘッドラインの数字に表示します。デフォルトではオンです。",
+        "showCounts": "結果の合計を表示",
+        "showCountsHelp": "合格、失敗、スキップ、その他の合計を積み上げ棒としてグラフの横に描画します。デフォルトではオフです：レポートは率についてです。",
+        "countSkipped": "スキップされた結果を率に数える",
+        "countSkippedHelp": "スキップされた結果は、これがオンでない限り、合格率と失敗率の分母から除外されます。その他のステータスは常に含まれます。",
+        "includeAborted": "中止されたランを含める",
+        "includeAbortedHelp": "プロジェクトの中止されたラン状態にあるランはこれがオフでない限りカウントされます。",
+        "latestAttemptOnly": "最新の試行のみ",
+        "latestAttemptOnlyHelp": "すべてのインポートされた試行ではなく、実行ごとにケースあたり1つの結果、その最新の試行をカウントします。",
+        "failRate": "失敗率",
+        "skipped": "スキップしました",
+        "other": "その他",
+        "inProgress": "進行中",
+        "verdict": {
+          "better": "失敗率が改善しています",
+          "worse": "失敗率が悪化しています",
+          "steady": "失敗率は一定に保たれています",
+          "notEnough": "トレンドをまだ呼び出すには、完全な期間が十分ではありません。",
+          "notEnoughDetail": "トレンドは、結果のある少なくとも2つの完全な期間が必要です。",
+          "detail": "トレンドラインは{start}から{end}に実行され、{count}の完全な{grouping, select, daily{日}weekly{週}monthly{月}quarterly{四半期}other{年}}にわたって{change}ポイントの変更です。"
+        },
+        "stats": {
+          "lastComplete": "最後の完全な期間（{period}）は、その前の完全な期間の平均と比較されます。",
+          "results": "実行された結果",
+          "runs": "ラン",
+          "deltaPoints": "{change}ポイント対。以前の{count, plural, one {# 期間} other {# 期間}}",
+          "deltaPercent": "{change}％対。以前の{count, plural, one {# 期間} other {# 期間}}",
+          "noBaseline": "比較する以前のデータはありません"
+        },
+        "chart": {
+          "allProjects": "選択されたすべてのプロジェクト",
+          "period": "{grouping, select, weekly{週{date}}other{{date}}}",
+          "partialPeriod": "{grouping, select, weekly{週{period}}other{{period}}}（進行中）",
+          "rateTrend": "{rate}トレンド"
+        },
+        "heatmap": {
+          "title": "プロジェクトと期間別の失敗率",
+          "help": "各セルはその期間のプロジェクトの失敗率です。陰影は35％で最大強度に達します。トレンド列は、完全な期間にわたる適合失敗率線の変更です。*は進行中の期間をマークします。",
+          "trend": "トレンド"
+        },
+        "trend": {
+          "points": "{change}ポイント"
+        },
+        "detail": {
+          "title": "期間別の結果と率"
+        },
+        "method": {
+          "title": "これはどのようにカウントされるか",
+          "runSource": {
+            "automated": "自動化されたランのみ：手動を除くすべてのラン型。ランはそれが作成された期間に属しています。",
+            "manual": "手動ランのみで、それらに記録された結果があります。ランはそれが作成された期間に属しています。",
+            "both": "すべてのラン：インポートされた結果のある自動化されたラン、および記録された結果のある手動ラン。ランはそれが作成された期間に属しています。"
+          },
+          "periods": "{grouping, select, daily{日}weekly{週（月曜日から開始）}monthly{月}quarterly{四半期}other{年}}は{timezone}で切られます。現在のものは進行中で、トレンドとヘッドラインの数字から除外されます。",
+          "everyAttempt": "再試行されたテストは試行ごとに1回カウントされます。",
+          "latestAttempt": "各ランのケースの最新の試行のみがカウントされます。",
+          "skippedExcluded": "スキップされた結果（合格または失敗なしで完了するステータス）は合格率と失敗率から除外されます。その他のステータスは含まれたままです。",
+          "skippedCounted": "スキップされた結果は合格率と失敗率でカウントされます。",
+          "abortedIncluded": "中止されたラン状態のランが含まれます。",
+          "abortedExcluded": "中止されたラン状態のランは除外されます。",
+          "trend": "トレンドは、完全な期間にわたる失敗率に適合する直線です。どちらの方向でも1ポイント以上の変更は、改善または悪化と呼びます。"
         }
       }
     },

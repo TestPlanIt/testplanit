@@ -158526,7 +158526,8 @@
           "AI_STEPS_DERIVED",
           "INTEGRATION_AUTH_EXPIRED",
           "RUN_READY_TO_COMPLETE",
-          "WHATS_NEW"
+          "WHATS_NEW",
+          "RUN_CASE_UNBLOCKED"
         ]
       },
       "EnumNotificationTypeNullableListFilter": {
@@ -367971,6 +367972,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -368043,7 +368047,8 @@
           "requireIssueOnFailure",
           "excludeNotStartedFromRuns",
           "requirementsEnabled",
-          "autoLockCompositionOnInProgress"
+          "autoLockCompositionOnInProgress",
+          "enforceCaseDependencies"
         ]
       },
       "ProjectsSelect": {
@@ -368545,6 +368550,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -369734,6 +369742,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/BoolFilter"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -370247,6 +370265,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/BoolFilter"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -370621,6 +370649,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/BoolFilter"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -370961,6 +370999,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/BoolWithAggregatesFilter"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "$ref": "#/components/schemas/BoolWithAggregatesFilter"
@@ -371325,6 +371373,9 @@
           "autoLockCompositionOnInProgress": {
             "$ref": "#/components/schemas/SortOrder"
           },
+          "enforceCaseDependencies": {
+            "$ref": "#/components/schemas/SortOrder"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -371399,6 +371450,7 @@
           "excludeNotStartedFromRuns",
           "requirementsEnabled",
           "autoLockCompositionOnInProgress",
+          "enforceCaseDependencies",
           "abandonedRunIdleMinutes",
           "abandonedRunStateId"
         ]
@@ -371522,6 +371574,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "type": "boolean"
           },
@@ -371614,6 +371669,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "integer"
           },
+          "enforceCaseDependencies": {
+            "type": "integer"
+          },
           "abandonedRunIdleMinutes": {
             "type": "integer"
           },
@@ -371651,6 +371709,7 @@
           "excludeNotStartedFromRuns",
           "requirementsEnabled",
           "autoLockCompositionOnInProgress",
+          "enforceCaseDependencies",
           "abandonedRunIdleMinutes",
           "abandonedRunStateId",
           "_all"
@@ -371732,6 +371791,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -371998,6 +372060,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -372096,6 +372168,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -372353,6 +372428,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "null"
@@ -372779,6 +372864,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -372865,7 +372953,8 @@
           "requireIssueOnFailure",
           "excludeNotStartedFromRuns",
           "requirementsEnabled",
-          "autoLockCompositionOnInProgress"
+          "autoLockCompositionOnInProgress",
+          "enforceCaseDependencies"
         ]
       },
       "ProjectsCreateInput": {
@@ -372994,6 +373083,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -373384,6 +373476,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -373789,6 +373891,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -373968,6 +374080,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -374120,6 +374235,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -374434,6 +374552,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -374818,6 +374939,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -375269,6 +375400,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -375604,6 +375745,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -376133,6 +376277,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -376583,6 +376737,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -376899,6 +377056,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -377281,6 +377441,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -377742,6 +377912,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -378154,6 +378334,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -378470,6 +378653,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -378852,6 +379038,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -379313,6 +379509,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -379725,6 +379931,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -380041,6 +380250,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -380423,6 +380635,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -380884,6 +381106,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -381296,6 +381528,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -381612,6 +381847,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -381994,6 +382232,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -382455,6 +382703,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -382867,6 +383125,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -383183,6 +383444,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -383565,6 +383829,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -384026,6 +384300,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -384438,6 +384722,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -384754,6 +385041,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -385136,6 +385426,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -385597,6 +385897,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -386009,6 +386319,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -386325,6 +386638,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -386707,6 +387023,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -387168,6 +387494,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -387580,6 +387916,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -387896,6 +388235,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -388278,6 +388620,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -388739,6 +389091,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -389151,6 +389513,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -389467,6 +389832,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -389849,6 +390217,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -390310,6 +390688,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -390722,6 +391110,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -391038,6 +391429,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -391420,6 +391814,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -391881,6 +392285,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -392293,6 +392707,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -392609,6 +393026,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -392991,6 +393411,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -393452,6 +393882,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -393864,6 +394304,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -394180,6 +394623,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -394562,6 +395008,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -395023,6 +395479,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -395435,6 +395901,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -395751,6 +396220,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -396133,6 +396605,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -396594,6 +397076,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -397006,6 +397498,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -397322,6 +397817,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -397704,6 +398202,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -398165,6 +398673,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -398577,6 +399095,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -398883,6 +399404,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -399268,6 +399792,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -399716,6 +400250,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -400044,6 +400588,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -400571,6 +401118,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -401021,6 +401578,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -401337,6 +401897,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -401719,6 +402282,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -402180,6 +402753,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -402592,6 +403175,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -402908,6 +403494,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -403290,6 +403879,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -403751,6 +404350,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -404163,6 +404772,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -404479,6 +405091,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -404861,6 +405476,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -405322,6 +405947,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -405734,6 +406369,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -406050,6 +406688,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -406432,6 +407073,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -406893,6 +407544,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -407305,6 +407966,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -407621,6 +408285,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -408003,6 +408670,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -408464,6 +409141,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -408876,6 +409563,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -409192,6 +409882,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -409574,6 +410267,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -410035,6 +410738,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -410447,6 +411160,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -410763,6 +411479,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -411145,6 +411864,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -411606,6 +412335,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -412018,6 +412757,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -412334,6 +413076,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -412716,6 +413461,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -413177,6 +413932,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -413589,6 +414354,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -413905,6 +414673,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -414287,6 +415058,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -414748,6 +415529,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -415160,6 +415951,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -415476,6 +416270,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -415858,6 +416655,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -416319,6 +417126,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -416731,6 +417548,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -417047,6 +417867,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -417429,6 +418252,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -417890,6 +418723,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -418302,6 +419145,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -418618,6 +419464,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -419000,6 +419849,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -419461,6 +420320,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -419873,6 +420742,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -420189,6 +421061,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -420571,6 +421446,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -421032,6 +421917,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -421444,6 +422339,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -421750,6 +422648,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -422135,6 +423036,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -422583,6 +423494,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -422911,6 +423832,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -423438,6 +424362,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -423888,6 +424822,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -424204,6 +425141,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -424586,6 +425526,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -425047,6 +425997,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -425479,6 +426439,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -425795,6 +426758,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -426177,6 +427143,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -426638,6 +427614,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -427070,6 +428056,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -427386,6 +428375,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -427768,6 +428760,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -428229,6 +429231,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -428641,6 +429653,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -428957,6 +429972,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -429339,6 +430357,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -429800,6 +430828,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -430232,6 +431270,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -430548,6 +431589,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -430930,6 +431974,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -431391,6 +432445,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -431803,6 +432867,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -432119,6 +433186,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -432501,6 +433571,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -432962,6 +434042,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -433374,6 +434464,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -433690,6 +434783,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -434072,6 +435168,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -434533,6 +435639,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -434945,6 +436061,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -435261,6 +436380,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -435643,6 +436765,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -436104,6 +437236,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -436536,6 +437678,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -436852,6 +437997,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -437234,6 +438382,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -437695,6 +438853,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -438127,6 +439295,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -438443,6 +439614,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -438825,6 +439999,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -439286,6 +440470,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -439718,6 +440912,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -440034,6 +441231,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -440416,6 +441616,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -440877,6 +442087,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -441289,6 +442509,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -441595,6 +442818,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -441980,6 +443206,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -442428,6 +443664,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -442756,6 +444002,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -443283,6 +444532,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -443733,6 +444992,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -444049,6 +445311,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -444424,6 +445689,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -444885,6 +446160,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -445210,6 +446495,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -445740,6 +447028,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -446177,6 +447475,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -446493,6 +447794,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -446875,6 +448179,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -447336,6 +448650,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -447748,6 +449072,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -448064,6 +449391,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -448446,6 +449776,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -448907,6 +450247,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -449319,6 +450669,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -449635,6 +450988,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -450017,6 +451373,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -450478,6 +451844,16 @@
               }
             ]
           },
+          "enforceCaseDependencies": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -450890,6 +452266,9 @@
           "autoLockCompositionOnInProgress": {
             "type": "boolean"
           },
+          "enforceCaseDependencies": {
+            "type": "boolean"
+          },
           "abandonedRunIdleMinutes": {
             "oneOf": [
               {
@@ -451206,6 +452585,9 @@
             "type": "boolean"
           },
           "autoLockCompositionOnInProgress": {
+            "type": "boolean"
+          },
+          "enforceCaseDependencies": {
             "type": "boolean"
           },
           "abandonedRunIdleMinutes": {
@@ -451588,6 +452970,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -452040,6 +453432,16 @@
             ]
           },
           "autoLockCompositionOnInProgress": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "enforceCaseDependencies": {
             "oneOf": [
               {
                 "type": "boolean"

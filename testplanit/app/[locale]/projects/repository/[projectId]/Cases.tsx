@@ -1,5 +1,6 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { useRunDependencyState } from "~/hooks/useRunDependencyState";
 import AddTestRunModal from "@/[locale]/projects/runs/[projectId]/AddTestRunModal";
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { Button } from "@/components/ui/button";
@@ -832,6 +833,7 @@ export default function Cases({
       select: {
         quickScriptEnabled: true,
         excludeNotStartedFromRuns: true,
+        enforceCaseDependencies: true,
       },
     },
     { enabled: isValidProjectId }
@@ -839,6 +841,15 @@ export default function Cases({
   const quickScriptEnabled = projectSettings?.quickScriptEnabled ?? false;
   const excludeNotStartedFromRuns =
     projectSettings?.excludeNotStartedFromRuns ?? false;
+
+  // Run mode: which cases are blocked by an unpassed dependency in this run.
+  // Fetched only when the project enforces dependencies; each row carries its
+  // own state so the status cell can badge it and refuse to open the result
+  // form (the server refuses the result anyway — this keeps the two agreeing).
+  const runDependencyState = useRunDependencyState(
+    isRunMode ? runId : null,
+    projectSettings?.enforceCaseDependencies === true
+  );
 
   // Check if project has an active LLM integration (for auto-tag)
   const { data: projectLlmIntegrations } = useClientQueries(
@@ -1859,6 +1870,7 @@ export default function Cases({
         // Phase 3 — surface the iteration count so the status cell can
         // detect parameterized cases and render read-only.
         totalIterations: (trc as { totalIterations?: number }).totalIterations,
+        dependencyState: runDependencyState.get(trc.repositoryCaseId),
       }));
     }
     // Not in isRunMode. Use 'data' directly (already server-side paginated and filtered).
@@ -1883,7 +1895,14 @@ export default function Cases({
       return mapped;
     }
     return [];
-  }, [isRunMode, testRunCasesData, data, optimisticReorder, sortedPageIds]);
+  }, [
+    isRunMode,
+    testRunCasesData,
+    data,
+    optimisticReorder,
+    sortedPageIds,
+    runDependencyState,
+  ]);
 
   // Bulk-fetch PENDING ReviewRequests for the visible page (D-06; one round
   // trip per page render — never per-row, per RESEARCH §"Pitfall 6").

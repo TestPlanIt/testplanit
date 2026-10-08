@@ -369,6 +369,53 @@ describe("TestRunCaseDetails", () => {
     expect(addResultBtn).toBeDisabled();
   });
 
+  describe("dependency gate", () => {
+    const blockedState = {
+      blockedBy: [
+        { testRunCaseId: 100, repositoryCaseId: 41, name: "Create order" },
+      ],
+      notInRun: [],
+    };
+
+    it("shows the blocked notice with the prerequisite and disables Add Result", () => {
+      renderWithQueryClient(
+        <TestRunCaseDetails {...defaultProps} dependencyState={blockedState} />
+      );
+
+      const notice = screen.getByTestId("run-case-dependency-notice");
+      expect(notice).toBeInTheDocument();
+      expect(notice).toHaveTextContent("Create order");
+      expect(
+        screen.getByRole("button", { name: /actions\.addResult/i })
+      ).toBeDisabled();
+    });
+
+    it("warns about prerequisites outside the run without blocking", () => {
+      renderWithQueryClient(
+        <TestRunCaseDetails
+          {...defaultProps}
+          dependencyState={{
+            blockedBy: [],
+            notInRun: [{ repositoryCaseId: 77, name: "Elsewhere" }],
+          }}
+        />
+      );
+
+      const notice = screen.getByTestId("run-case-dependency-notice");
+      expect(notice).toHaveTextContent("Elsewhere");
+      expect(
+        screen.getByRole("button", { name: /actions\.addResult/i })
+      ).not.toBeDisabled();
+    });
+
+    it("renders no notice when the case has no dependency state", () => {
+      renderWithQueryClient(<TestRunCaseDetails {...defaultProps} />);
+      expect(
+        screen.queryByTestId("run-case-dependency-notice")
+      ).not.toBeInTheDocument();
+    });
+  });
+
   it("renders navigation arrows (prev and next)", () => {
     renderWithQueryClient(<TestRunCaseDetails {...defaultProps} />);
     const prevBtn = screen.getByRole("button", {

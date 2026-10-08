@@ -213,9 +213,18 @@ export async function mergeCases(
         select: { caseAId: true, type: true, createdById: true },
       });
 
-      if (victimLinksFrom.length > 0) {
+      // A link between the two merging cases would become a self-link on the
+      // survivor, which the link guard rejects; drop those.
+      const linksFromOthers = victimLinksFrom.filter(
+        (link: { caseBId: number }) => link.caseBId !== survivorId
+      );
+      const linksToOthers = victimLinksTo.filter(
+        (link: { caseAId: number }) => link.caseAId !== survivorId
+      );
+
+      if (linksFromOthers.length > 0) {
         await tx.repositoryCaseLink.createMany({
-          data: victimLinksFrom.map(
+          data: linksFromOthers.map(
             (link: {
               caseBId: number;
               type: LinkType;
@@ -230,9 +239,9 @@ export async function mergeCases(
           skipDuplicates: true,
         });
       }
-      if (victimLinksTo.length > 0) {
+      if (linksToOthers.length > 0) {
         await tx.repositoryCaseLink.createMany({
-          data: victimLinksTo.map(
+          data: linksToOthers.map(
             (link: {
               caseAId: number;
               type: LinkType;

@@ -942,6 +942,85 @@ describe("EmailWorker", () => {
       );
     });
   });
+  describe("RUN_CASE_UNBLOCKED email", () => {
+    const unblockedNotification = {
+      ...baseNotification,
+      id: "notif-unblocked",
+      type: "RUN_CASE_UNBLOCKED",
+      title: "Test case ready to execute",
+      message: "English fallback persisted on the row",
+      data: {
+        testRunId: "run-1",
+        testRunName: "Order to billing",
+        projectId: "proj-1",
+        projectName: "Telco",
+        testRunCaseId: 20,
+        testCaseId: "case-2",
+        testCaseName: "Verify provisioning",
+        prerequisiteCaseName: "Create order",
+        unblockedById: "crm",
+      },
+    };
+
+    it("immediate path: links straight to the case in its run", async () => {
+      mockDb.notification.findUnique.mockResolvedValue(unblockedNotification);
+
+      const { processor } = await import("./emailWorker");
+
+      await processor({
+        id: "job-unblocked-url",
+        name: "send-notification-email",
+        data: {
+          notificationId: "notif-unblocked",
+          userId: "user-1",
+          immediate: true,
+        },
+      } as Job);
+
+      const callArgs = mockSendNotificationEmail.mock.calls[0][0];
+      expect(callArgs.notificationUrl).toBe(
+        "http://localhost:3000/en-US/projects/runs/proj-1/run-1?selectedCase=case-2"
+      );
+    });
+
+    it("immediate path: resolves the title, message and reason keys with the case names", async () => {
+      mockDb.notification.findUnique.mockResolvedValue(unblockedNotification);
+
+      const { processor } = await import("./emailWorker");
+      const { getServerTranslation } =
+        await import("../lib/server-translations");
+
+      await processor({
+        id: "job-unblocked-i18n",
+        name: "send-notification-email",
+        data: {
+          notificationId: "notif-unblocked",
+          userId: "user-1",
+          immediate: true,
+        },
+      } as Job);
+
+      expect(getServerTranslation).toHaveBeenCalledWith(
+        expect.anything(),
+        "components.notifications.content.runCaseUnblockedTitle"
+      );
+      expect(getServerTranslation).toHaveBeenCalledWith(
+        expect.anything(),
+        "components.notifications.content.runCaseUnblockedEmailMessage",
+        {
+          testCaseName: "Verify provisioning",
+          testRunName: "Order to billing",
+          projectName: "Telco",
+          prerequisiteName: "Create order",
+        }
+      );
+      expect(getServerTranslation).toHaveBeenCalledWith(
+        expect.anything(),
+        "components.notifications.content.runCaseUnblockedReason"
+      );
+    });
+  });
+
   describe("RUN_READY_TO_COMPLETE email", () => {
     const readyNotification = {
       ...baseNotification,
