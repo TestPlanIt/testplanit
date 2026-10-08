@@ -79,6 +79,7 @@ export function registerCasesUpdate(
           id: number;
           projectId: number;
           templateId: number;
+          caseTags: { tagId: number }[];
         } | null>(
           "repositoryCases",
           "findUnique",
@@ -88,6 +89,7 @@ export function registerCasesUpdate(
               id: true,
               projectId: true,
               templateId: true,
+              caseTags: { select: { tagId: true } },
             } satisfies RepositoryCasesSelect,
           },
           deps.env,
@@ -121,22 +123,39 @@ export function registerCasesUpdate(
           );
           data.state = { connect: { id: state.id } };
         }
+        let changed = false;
+
         if (input.tags !== undefined) {
           const tagIds = await resolveTagIds(input.tags, deps.env);
-          // Tags live on the explicit RepositoryCaseTag join model. "set"
-          // (replace-all) semantics map to: clear the existing join rows,
-          // then create one per requested tag (nested caseTags.tag.connect).
-          // The implicit `tags` relation no longer exists and would 422.
-          data.caseTags = {
-            deleteMany: {},
-            create: tagIds.map((id) => ({ tag: { connect: { id } } })),
-          };
+          // Tags live on the explicit RepositoryCaseTag join model, so
+          // "replace the set" is a nested deleteMany + create on caseTags.
+          // The host runs nested relation operations in its own fixed
+          // order, create before deleteMany, so `deleteMany: {}` paired
+          // with the new links wiped the links it had just created (#668).
+          // Diffing against the current links keeps the two operations on
+          // disjoint rows, so their order no longer matters.
+          const current = new Set(head.caseTags.map((ct) => ct.tagId));
+          const wanted = new Set(tagIds);
+          const toCreate = tagIds.filter((id) => !current.has(id));
+          const toDelete = [...current].filter((id) => !wanted.has(id));
+          const caseTags: Record<string, unknown> = {};
+          if (toDelete.length > 0) {
+            caseTags.deleteMany = { tagId: { in: toDelete } };
+          }
+          if (toCreate.length > 0) {
+            caseTags.create = toCreate.map((id) => ({ tag: { connect: { id } } }));
+          }
+          if (Object.keys(caseTags).length > 0) {
+            data.caseTags = caseTags;
+          }
+          // A tag set that already matches still counts as an edit, as a
+          // web UI save does, so the version bump below is not skipped.
+          changed = true;
         }
 
         // Steps and field values first: they don't touch the case row, so
         // the one case write below can carry the version bump with every
         // other change, as a web UI save does.
-        let changed = false;
 
         // Steps replacement: soft-delete existing + create new (T-06-06).
         if (input.steps !== undefined) {
