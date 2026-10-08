@@ -1,3 +1,9 @@
+## [1.1.0-beta.40](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.39...v1.1.0-beta.40) (2026-10-08)
+
+### Bug Fixes
+
+* **profile:** render comments whose project was deleted instead of crashing ([e4bf9bb](https://github.com/TestPlanIt/testplanit/commit/e4bf9bbe0a9957de73d7c87ca1a09911feebba1f)), closes [#667](https://github.com/TestPlanIt/testplanit/issues/667)
+
 ## [1.1.0-beta.39](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.38...v1.1.0-beta.39) (2026-10-07)
 
 ### Features
