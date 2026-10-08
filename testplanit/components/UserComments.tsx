@@ -127,10 +127,13 @@ interface CommentDisplayProps {
       id: number;
       name: string;
     } | null;
+    // Null when the project was soft-deleted: the Projects model denies all
+    // reads of deleted rows, so the include comes back empty while the
+    // comment itself is still returned.
     project: {
       id: number;
       name: string;
-    };
+    } | null;
   };
 }
 
@@ -170,6 +173,7 @@ function CommentDisplay({ comment }: CommentDisplayProps) {
   // Determine the entity type and details
   let entityLink = "";
   let entityNameDisplay = null;
+  const projectDeleted = comment.project === null;
 
   if (comment.repositoryCaseId && comment.repositoryCase) {
     const isDeleted = comment.repositoryCase.isDeleted;
@@ -225,6 +229,12 @@ function CommentDisplay({ comment }: CommentDisplayProps) {
     );
   }
 
+  // Every entity link routes through the project, so none of them resolve
+  // once the project is gone; show the entity name as plain text instead.
+  if (projectDeleted) {
+    entityLink = "";
+  }
+
   return (
     <Card className="p-4">
       <div className="space-y-3">
@@ -234,7 +244,7 @@ function CommentDisplay({ comment }: CommentDisplayProps) {
             <MessageSquare className="h-8 w-8 text-muted-foreground shrink-0" />
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
-                {entityLink && (
+                {entityLink ? (
                   <Link
                     href={entityLink}
                     className="font-medium text-primary hover:underline inline-flex items-center gap-1"
@@ -242,13 +252,21 @@ function CommentDisplay({ comment }: CommentDisplayProps) {
                     {entityNameDisplay}
                     <ExternalLink className="h-3 w-3" />
                   </Link>
+                ) : (
+                  entityNameDisplay
                 )}
               </div>
               <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1 flex-wrap">
                 <span>
                   {tGlobal("components.notifications.content.inProject")}
                 </span>
-                <span className="font-medium">{comment.project.name}</span>
+                {comment.project ? (
+                  <span className="font-medium">{comment.project.name}</span>
+                ) : (
+                  <span className="font-medium line-through">
+                    {tGlobal("common.status.deleted")}
+                  </span>
+                )}
               </div>
             </div>
           </div>
