@@ -45,7 +45,7 @@ const createCaseVersionMock = vi.mocked(apiModule.createCaseVersion);
 
 const env: EnvConfig = { apiUrl: "https://host.example.com", apiToken: "tpi_testtoken" };
 
-const HEAD_CASE = { id: 99, projectId: 7, templateId: 22 };
+const HEAD_CASE = { id: 99, projectId: 7, templateId: 22, caseTags: [] };
 
 const FULL_DETAIL = {
   id: 99,
@@ -144,24 +144,93 @@ describe("testplanit_cases_update", () => {
     expect(createCaseVersionMock).toHaveBeenCalledWith(99, {}, env);
   });
 
-  it("updates tags via the caseTags join (replace-all = deleteMany + create)", async () => {
-    await callTool({ caseId: 99, tags: [4, 5] });
+  describe("tags (#668)", () => {
+    function headWithTags(tagIds: number[]) {
+      zenstackMock.mockImplementation(async (_model, operation) => {
+        if (operation === "findUnique") {
+          return { ...HEAD_CASE, caseTags: tagIds.map((tagId) => ({ tagId })) };
+        }
+        if (operation === "update") return HEAD_CASE;
+        return {};
+      });
+    }
 
-    const updateCall = zenstackMock.mock.calls.find(
-      (c) => c[0] === "repositoryCases" && c[1] === "update",
-    );
-    expect(updateCall).toBeDefined();
-    const data = (updateCall![2] as { data: Record<string, unknown> }).data;
-    // Tags live on the explicit RepositoryCaseTag join model; "set"
-    // (replace-all) maps to deleteMany {} + create per requested tag.
-    expect(data).toMatchObject({
-      caseTags: {
-        deleteMany: {},
-        create: [
-          { tag: { connect: { id: 4 } } },
-          { tag: { connect: { id: 5 } } },
-        ],
-      },
+    function caseWriteData() {
+      const updateCall = zenstackMock.mock.calls.find(
+        (c) => c[0] === "repositoryCases" && c[1] === "update",
+      );
+      expect(updateCall).toBeDefined();
+      return (updateCall![2] as { data: Record<string, unknown> }).data;
+    }
+
+    it("reads the current tag links with the case head", async () => {
+      await callTool({ caseId: 99, tags: [4] });
+
+      const headCall = zenstackMock.mock.calls.find(
+        (c) => c[0] === "repositoryCases" && c[1] === "findUnique",
+      );
+      expect(headCall![2]).toMatchObject({
+        select: { caseTags: { select: { tagId: true } } },
+      });
+    });
+
+    it("adds tags to an untagged case with create only, never a blanket deleteMany", async () => {
+      await callTool({ caseId: 99, tags: [4, 5] });
+
+      // The host runs a nested create before a nested deleteMany, so
+      // `deleteMany: {}` beside the new links deleted them (#668).
+      expect(caseWriteData()).toEqual({
+        caseTags: {
+          create: [
+            { tag: { connect: { id: 4 } } },
+            { tag: { connect: { id: 5 } } },
+          ],
+        },
+        currentVersion: { increment: 1 },
+      });
+    });
+
+    it("replaces one tag by another: deletes only the old link, creates only the new one", async () => {
+      headWithTags([4, 7]);
+
+      await callTool({ caseId: 99, tags: [7, 9] });
+
+      expect(caseWriteData()).toEqual({
+        caseTags: {
+          deleteMany: { tagId: { in: [4] } },
+          create: [{ tag: { connect: { id: 9 } } }],
+        },
+        currentVersion: { increment: 1 },
+      });
+    });
+
+    it("clears tags with a deleteMany scoped to the current links", async () => {
+      headWithTags([4, 7]);
+
+      await callTool({ caseId: 99, tags: [] });
+
+      expect(caseWriteData()).toEqual({
+        caseTags: { deleteMany: { tagId: { in: [4, 7] } } },
+        currentVersion: { increment: 1 },
+      });
+    });
+
+    it("leaves matching links alone but still records a version", async () => {
+      headWithTags([4, 7]);
+
+      await callTool({ caseId: 99, tags: [7, 4] });
+
+      expect(caseWriteData()).toEqual({ currentVersion: { increment: 1 } });
+      expect(createCaseVersionMock).toHaveBeenCalledWith(99, {}, env);
+    });
+
+    it("links a tag given twice once", async () => {
+      await callTool({ caseId: 99, tags: [4, 4] });
+
+      expect(caseWriteData()).toEqual({
+        caseTags: { create: [{ tag: { connect: { id: 4 } } }] },
+        currentVersion: { increment: 1 },
+      });
     });
   });
 
