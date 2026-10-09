@@ -223,6 +223,7 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
     (field === "canDelete" &&
       area !== ApplicationArea.Documentation &&
       area !== ApplicationArea.AutomatedExecution &&
+      area !== ApplicationArea.Alerts &&
       area !== ApplicationArea.TestCaseRestrictedFields &&
       area !== ApplicationArea.TestRunResultRestrictedFields &&
       area !== ApplicationArea.SessionsRestrictedFields &&
@@ -508,6 +509,7 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
                       let showDelete =
                         area !== ApplicationArea.Documentation &&
                         area !== ApplicationArea.AutomatedExecution &&
+                        area !== ApplicationArea.Alerts &&
                         area !== ApplicationArea.TestCaseRestrictedFields &&
                         area !==
                           ApplicationArea.TestRunResultRestrictedFields &&

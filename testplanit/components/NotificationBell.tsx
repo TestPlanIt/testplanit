@@ -2,7 +2,7 @@
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
-import { DateFormatter } from "@/components/DateFormatter";
+import { RelativeTimeTooltip } from "@/components/RelativeTimeTooltip";
 import { NotificationContent } from "@/components/NotificationContent";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Bell, EyeIcon, Trash } from "lucide-react";
+import { Bell, BellRing, EyeIcon, Trash } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
@@ -41,7 +41,7 @@ import {
   markNotificationAsUnread,
 } from "~/app/actions/notifications";
 import { createDeferredEventSource } from "~/hooks/deferredEventSource";
-import { usePathname, useRouter } from "~/lib/navigation";
+import { Link, usePathname, useRouter } from "~/lib/navigation";
 import { cn } from "~/utils";
 
 interface NotificationItemProps {
@@ -108,15 +108,14 @@ function NotificationItem({
       onMouseLeave={handleMouseLeave}
     >
       <div className="flex justify-between items-start gap-2">
-        <div className="flex-1">
+        <div className="min-w-0 flex-1">
           <NotificationContent notification={notification} />
-          <p className="text-xs text-muted-foreground">
-            <DateFormatter
-              date={notification.createdAt}
-              formatString={userPreferences?.dateFormat}
-              timezone={userPreferences?.timezone}
-            />
-          </p>
+          <RelativeTimeTooltip
+            date={notification.createdAt}
+            dateFormat={userPreferences?.dateFormat}
+            timezone={userPreferences?.timezone}
+            className="mt-1.5 ms-auto w-fit text-end text-xs text-muted-foreground"
+          />
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -374,6 +373,16 @@ export function NotificationBell({
           </div>
         )}
       </ScrollArea>
+      <div className="border-t px-4 py-2 flex">
+        <Link
+          href={`/users/profile/${session?.user?.id ?? ""}/alerts`}
+          className="inline-flex items-center gap-1 text-sm font-medium text-primary no-underline hover:underline"
+          data-testid="notification-panel-alerts-link"
+        >
+          <BellRing className="h-4 w-4" />
+          {t("actions.manageAlerts")}
+        </Link>
+      </div>
     </>
   );
 

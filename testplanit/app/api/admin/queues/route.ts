@@ -68,6 +68,7 @@ export async function GET(request: NextRequest) {
       "iteration-generation": 1,
       "webhook-dispatch": 5,
       "scim-access-recompute": 1,
+      alerts: 2,
     };
 
     // Get configured concurrency from environment (or use defaults)
@@ -157,6 +158,10 @@ export async function GET(request: NextRequest) {
         10
       ),
       "scim-access-recompute": defaultConcurrency["scim-access-recompute"],
+      alerts: parseInt(
+        process.env.ALERT_CONCURRENCY || String(defaultConcurrency["alerts"]),
+        10
+      ),
     };
 
     // Build the display list dynamically from EVERY registered queue rather

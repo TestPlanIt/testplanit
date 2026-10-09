@@ -263,4 +263,9 @@ export const softDeletedItemTypes: TrashItemTypeDisplay[] = [
     translationKey: "admin.trash.itemTypes.stepSequenceMatchCases",
     iconName: "list-tree",
   },
+  {
+    name: "AlertRule",
+    translationKey: "admin.trash.itemTypes.alertRules",
+    iconName: "bell-ring",
+  },
 ];

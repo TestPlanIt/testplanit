@@ -6,13 +6,17 @@ import {
   getRepoCacheQueue,
   getWebhookDispatchQueue,
   getExecutionDispatchQueue,
+  getAlertQueue,
   EXECUTION_DISPATCH_QUEUE_NAME,
+  ALERT_QUEUE_NAME,
   NOTIFICATION_QUEUE_NAME,
   REPO_CACHE_QUEUE_NAME,
   WEBHOOK_DISPATCH_QUEUE_NAME,
 } from "./lib/queues";
 import {
   JOB_AUTO_COMPLETE_MILESTONES,
+  JOB_EVALUATE_SCHEDULED_ALERTS,
+  JOB_EVALUATE_HOURLY_ALERTS,
   JOB_MILESTONE_DUE_NOTIFICATIONS,
   JOB_POLL_ACTIVE_EXECUTIONS,
   JOB_PURGE_STALE_CASE_DRAFTS,
@@ -387,6 +391,49 @@ async function scheduleJobs() {
     } else {
       console.warn(
         `[scheduler] executionDispatchQueue unavailable — execution status poll NOT registered`
+      );
+    }
+
+    // Alerts (#651): milestone metrics are aggregate and cheap
+    // to miss by an hour, so they run once a day alongside the milestone
+    // due reminders. Result and run metrics are event-driven and never here.
+    const alertQueue = getAlertQueue();
+    if (alertQueue) {
+      for (const tenantId of tenantIds) {
+        const jobId = tenantId
+          ? `${JOB_EVALUATE_SCHEDULED_ALERTS}-${tenantId}`
+          : JOB_EVALUATE_SCHEDULED_ALERTS;
+        await alertQueue.upsertJobScheduler(
+          jobId,
+          { pattern: CRON_SCHEDULE_DAILY_6AM },
+          {
+            name: JOB_EVALUATE_SCHEDULED_ALERTS,
+            data: { tenantId },
+          }
+        );
+        console.log(
+          `Upserted job scheduler "${JOB_EVALUATE_SCHEDULED_ALERTS}"${tenantId ? ` for tenant ${tenantId}` : ""} with pattern "${CRON_SCHEDULE_DAILY_6AM}" on queue "${ALERT_QUEUE_NAME}".`
+        );
+        // Stalled runs and webhook failure rates move within the day, so
+        // their metrics get an hourly pass.
+        const hourlyJobId = tenantId
+          ? `${JOB_EVALUATE_HOURLY_ALERTS}-${tenantId}`
+          : JOB_EVALUATE_HOURLY_ALERTS;
+        await alertQueue.upsertJobScheduler(
+          hourlyJobId,
+          { pattern: CRON_SCHEDULE_HOURLY },
+          {
+            name: JOB_EVALUATE_HOURLY_ALERTS,
+            data: { tenantId },
+          }
+        );
+        console.log(
+          `Upserted job scheduler "${JOB_EVALUATE_HOURLY_ALERTS}"${tenantId ? ` for tenant ${tenantId}` : ""} with pattern "${CRON_SCHEDULE_HOURLY}" on queue "${ALERT_QUEUE_NAME}".`
+        );
+      }
+    } else {
+      console.warn(
+        `[scheduler] alertQueue unavailable — scheduled alert evaluation NOT registered`
       );
     }
 

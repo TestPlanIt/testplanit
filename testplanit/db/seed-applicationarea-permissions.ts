@@ -99,6 +99,11 @@ export const getComprehensiveRolePermissions = () => {
         canDelete: true,
         canClose: true,
       },
+      [ApplicationArea.Alerts]: {
+        canAddEdit: false,
+        canDelete: false,
+        canClose: false,
+      },
     },
 
     // Manager - Can manage most areas but limited in some
@@ -193,6 +198,11 @@ export const getComprehensiveRolePermissions = () => {
         canDelete: false,
         canClose: false,
       }, // No settings access
+      [ApplicationArea.Alerts]: {
+        canAddEdit: false,
+        canDelete: false,
+        canClose: false,
+      },
     },
 
     // Tester - Focused on test execution
@@ -287,6 +297,11 @@ export const getComprehensiveRolePermissions = () => {
         canDelete: false,
         canClose: false,
       },
+      [ApplicationArea.Alerts]: {
+        canAddEdit: false,
+        canDelete: false,
+        canClose: false,
+      },
     },
 
     // Contributor - Can contribute content in specific areas
@@ -377,6 +392,11 @@ export const getComprehensiveRolePermissions = () => {
         canClose: false,
       },
       [ApplicationArea.Settings]: {
+        canAddEdit: false,
+        canDelete: false,
+        canClose: false,
+      },
+      [ApplicationArea.Alerts]: {
         canAddEdit: false,
         canDelete: false,
         canClose: false,
@@ -476,6 +496,11 @@ export const getComprehensiveRolePermissions = () => {
         canDelete: false,
         canClose: false,
       },
+      [ApplicationArea.Alerts]: {
+        canAddEdit: false,
+        canDelete: false,
+        canClose: false,
+      },
     },
   };
 };
@@ -515,6 +540,11 @@ export const getSpecialAreaRules = () => {
       allowSystemAdmin: true,
       allowProjectAdmin: true,
       description: "Project settings management",
+    },
+    [ApplicationArea.Alerts]: {
+      canAddEdit: false,
+      canDelete: false,
+      canClose: false,
     },
 
     // Reporting might have special visibility rules

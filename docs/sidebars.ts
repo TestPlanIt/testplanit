@@ -217,6 +217,7 @@ const sidebars: SidebarsConfig = {
         'user-guide/issues-list', // Renamed from global-issues
         'user-guide/users-list', // Corresponds to users-list.md
         'user-guide/user-profile', // Corresponds to user-profile.md
+        'user-guide/alerts', // Metric alerts the user follows, managed from the profile
         'user-guide/user-menu', // Corresponds to user-menu.md
         'user-guide/notifications-inbox', // User-facing notification center + preferences
         'user-guide/reviews-inbox', // Reviewer inbox for Review & Approval

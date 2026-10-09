@@ -49,6 +49,7 @@ const userPermissions: {
   [ApplicationArea.ClosedSessions]: { canDelete: false }, // View only closed
   [ApplicationArea.SessionResults]: { canAddEdit: true, canDelete: true }, // Add/edit/delete results
   [ApplicationArea.Tags]: { canAddEdit: true }, // Allow adding tags
+  [ApplicationArea.Alerts]: { canAddEdit: true }, // Create and manage your own alerts
 };
 
 // Helper function to get default user permission for an area

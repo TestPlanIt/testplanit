@@ -118,6 +118,13 @@ import {
 } from "~/lib/services/auditLog";
 import { invalidateApiTokenCache } from "~/lib/api-token-cache";
 import { enqueueRunReadyCheck } from "~/lib/services/runReadyCheck";
+import {
+  enqueueAlertJUnitResultEvaluation,
+  enqueueAlertResultEvaluation,
+  enqueueAlertRunEvaluation,
+  enqueueAlertSessionEvaluation,
+  projectHasActiveAlertRules,
+} from "~/lib/services/alertEnqueue";
 import { snapshotAutomatedFlip } from "~/lib/services/caseAutomatedVersioning";
 
 // Models whose standalone hooked-client writes set the app.audit_context GUC so
@@ -673,6 +680,25 @@ export const sideEffectsPlugin = definePlugin(schema, {
             if (!row?.id) continue;
             if (row.projectId != null) {
               if (old) await emitTestRunUpdateEvents(old, row, tx);
+              // Alerts (#651): run metrics that wait for
+              // completion are evaluated when the run first completes.
+              if (
+                old &&
+                row.isCompleted === true &&
+                old.isCompleted !== true &&
+                typeof tx.alertRule?.count === "function"
+              ) {
+                if (await projectHasActiveAlertRules(tx, row.projectId)) {
+                  const { getCurrentTenantId } =
+                    await import("~/lib/multiTenantDb");
+                  void enqueueAlertRunEvaluation({
+                    runId: row.id,
+                    projectId: row.projectId,
+                    trigger: "completion",
+                    tenantId: getCurrentTenantId(),
+                  });
+                }
+              }
               // A duplicate carries the source run id — emit the richer
               // test_run.duplicated event instead of the generic .created.
               else if (row.duplicatedFromId != null)
@@ -737,6 +763,24 @@ export const sideEffectsPlugin = definePlugin(schema, {
             if (!row?.id) continue;
             if (row.projectId != null) {
               if (old) await emitSessionUpdateEvents(old, row, tx);
+              // Alerts: the session overrun metric is evaluated when a
+              // session first completes.
+              if (
+                old &&
+                row.isCompleted === true &&
+                old.isCompleted !== true &&
+                typeof tx.alertRule?.count === "function"
+              ) {
+                if (await projectHasActiveAlertRules(tx, row.projectId)) {
+                  const { getCurrentTenantId } =
+                    await import("~/lib/multiTenantDb");
+                  void enqueueAlertSessionEvaluation({
+                    sessionId: row.id,
+                    projectId: row.projectId,
+                    tenantId: getCurrentTenantId(),
+                  });
+                }
+              }
               // A duplicate carries the source session id — emit the richer
               // session.duplicated event instead of the generic .created.
               else if (row.duplicatedFromId != null)
@@ -804,6 +848,10 @@ export const sideEffectsPlugin = definePlugin(schema, {
               await emitJUnitResultAdded(row, tx);
             }
           }
+          await enqueueAlertEvaluationsForJUnitResults(tx, after).catch(
+            (error) =>
+              console.error("[alerts] automated result enqueue failed:", error)
+          );
           break;
         }
 
@@ -813,6 +861,9 @@ export const sideEffectsPlugin = definePlugin(schema, {
             if (row?.id && row.testRunId != null)
               await emitTestRunResultAdded(row, tx);
           }
+          await enqueueAlertEvaluationsForResults(tx, after).catch((error) =>
+            console.error("[alerts] result enqueue failed:", error)
+          );
           break;
         }
 
@@ -960,3 +1011,101 @@ export const sideEffectsPlugin = definePlugin(schema, {
     },
   },
 });
+
+/**
+ * Alerts (#651): hand each new manual result, and its run, to
+ * the evaluation worker. One indexed count per project gates the enqueue so
+ * projects without rules pay nothing; the enqueues are detached because this
+ * runs inside the writer's transaction. Results from a CI import share one
+ * run, so the run job is deduplicated by the enqueue helper.
+ */
+async function enqueueAlertEvaluationsForResults(
+  tx: TxClient,
+  rows: any[]
+): Promise<void> {
+  const created = rows.filter((row) => row?.id && row.testRunId != null);
+  if (created.length === 0 || typeof tx.alertRule?.count !== "function") {
+    return;
+  }
+  const runIds = [...new Set(created.map((row) => Number(row.testRunId)))];
+  const runs = await tx.testRuns.findMany({
+    where: { id: { in: runIds } },
+    select: { id: true, projectId: true },
+  });
+  const projectByRun = new Map(runs.map((r) => [r.id, r.projectId]));
+  const activeByProject = new Map<number, boolean>();
+  const { getCurrentTenantId } = await import("~/lib/multiTenantDb");
+  const tenantId = getCurrentTenantId();
+  const runJobs = new Set<number>();
+  for (const row of created) {
+    const projectId = projectByRun.get(Number(row.testRunId));
+    if (projectId == null) continue;
+    let active = activeByProject.get(projectId);
+    if (active === undefined) {
+      active = await projectHasActiveAlertRules(tx, projectId);
+      activeByProject.set(projectId, active);
+    }
+    if (!active) continue;
+    void enqueueAlertResultEvaluation({
+      resultId: Number(row.id),
+      projectId,
+      tenantId,
+    });
+    if (!runJobs.has(Number(row.testRunId))) {
+      runJobs.add(Number(row.testRunId));
+      void enqueueAlertRunEvaluation({
+        runId: Number(row.testRunId),
+        projectId,
+        trigger: "result",
+        tenantId,
+      });
+    }
+  }
+}
+
+/** Same as above for reporter (JUnit) results, which reach the run via their suite. */
+async function enqueueAlertEvaluationsForJUnitResults(
+  tx: TxClient,
+  rows: any[]
+): Promise<void> {
+  const created = rows.filter((row) => row?.id && row.testSuiteId != null);
+  if (created.length === 0 || typeof tx.alertRule?.count !== "function") {
+    return;
+  }
+  const suiteIds = [...new Set(created.map((row) => Number(row.testSuiteId)))];
+  const suites = await tx.jUnitTestSuite.findMany({
+    where: { id: { in: suiteIds } },
+    select: { id: true, testRun: { select: { id: true, projectId: true } } },
+  });
+  const runBySuite = new Map(
+    suites.map((s) => [s.id, s.testRun as { id: number; projectId: number }])
+  );
+  const activeByProject = new Map<number, boolean>();
+  const { getCurrentTenantId } = await import("~/lib/multiTenantDb");
+  const tenantId = getCurrentTenantId();
+  const runJobs = new Set<number>();
+  for (const row of created) {
+    const run = runBySuite.get(Number(row.testSuiteId));
+    if (!run) continue;
+    let active = activeByProject.get(run.projectId);
+    if (active === undefined) {
+      active = await projectHasActiveAlertRules(tx, run.projectId);
+      activeByProject.set(run.projectId, active);
+    }
+    if (!active) continue;
+    void enqueueAlertJUnitResultEvaluation({
+      junitResultId: Number(row.id),
+      projectId: run.projectId,
+      tenantId,
+    });
+    if (!runJobs.has(run.id)) {
+      runJobs.add(run.id);
+      void enqueueAlertRunEvaluation({
+        runId: run.id,
+        projectId: run.projectId,
+        trigger: "result",
+        tenantId,
+      });
+    }
+  }
+}

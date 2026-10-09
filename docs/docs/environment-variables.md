@@ -158,6 +158,7 @@ See [Background Processes](background-processes.md). Each variable sets how many
 | `ELASTICSEARCH_REINDEX_CONCURRENCY` | `2`     | Search reindex               |
 | `AUDIT_LOG_CONCURRENCY`             | `10`    | Audit log                    |
 | `BUDGET_ALERT_CONCURRENCY`          | `2`     | AI budget alerts             |
+| `ALERT_CONCURRENCY`             | `2`     | Alerts           |
 | `AUTO_TAG_CONCURRENCY`              | `3`     | Auto-tag                     |
 | `DERIVE_CASE_STEPS_CONCURRENCY`     | `2`     | Derive case steps            |
 | `WEBHOOK_DISPATCH_CONCURRENCY`      | `5`     | Webhook dispatch             |

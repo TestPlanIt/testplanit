@@ -128,6 +128,80 @@ describe("NotificationService", () => {
     });
   });
 
+  describe("createAlertTriggeredNotification", () => {
+    it("queues one ALERT_TRIGGERED notification per subscriber with the full payload", async () => {
+      mockQueue.add.mockResolvedValue({ id: "job-threshold" } as any);
+
+      await NotificationService.createAlertTriggeredNotification({
+        targetUserIds: ["u1", "u2"],
+        eventId: 101,
+        ruleId: 4,
+        ruleName: "Slow checkout",
+        metric: "RESULT_DURATION_DEVIATION",
+        projectId: 7,
+        projectName: "Shop",
+        subjectType: "CASE",
+        subjectId: 9,
+        subjectName: "Checkout",
+        observedValue: 81.25,
+        baselineValue: 11,
+        thresholdValue: 50,
+        testRunId: 42,
+        details: { elapsed: 20 },
+        tenantId: "acme",
+      });
+
+      expect(mockQueue.add).toHaveBeenCalledTimes(2);
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        "create-notification",
+        expect.objectContaining({
+          userId: "u2",
+          type: NotificationType.ALERT_TRIGGERED,
+          title: "Alert fired: Slow checkout",
+          relatedEntityId: "101",
+          relatedEntityType: "AlertEvent",
+          tenantId: "acme",
+          data: {
+            eventId: 101,
+            ruleId: 4,
+            ruleName: "Slow checkout",
+            metric: "RESULT_DURATION_DEVIATION",
+            projectId: 7,
+            projectName: "Shop",
+            subjectType: "CASE",
+            subjectId: 9,
+            subjectName: "Checkout",
+            observedValue: 81.25,
+            baselineValue: 11,
+            thresholdValue: 50,
+            testRunId: 42,
+            details: { elapsed: 20 },
+          },
+        }),
+        expect.anything()
+      );
+    });
+
+    it("does nothing with no recipients", async () => {
+      await NotificationService.createAlertTriggeredNotification({
+        targetUserIds: [],
+        eventId: 1,
+        ruleId: 1,
+        ruleName: "r",
+        metric: "MILESTONE_OVERDUE",
+        projectId: 1,
+        projectName: "p",
+        subjectType: "MILESTONE",
+        subjectId: 1,
+        subjectName: "m",
+        observedValue: 1,
+        baselineValue: null,
+        thresholdValue: 0,
+      });
+      expect(mockQueue.add).not.toHaveBeenCalled();
+    });
+  });
+
   describe("createRunCaseUnblockedNotification", () => {
     it("queues a RUN_CASE_UNBLOCKED notification pointing at the case in its run", async () => {
       mockQueue.add.mockResolvedValue({ id: "job-unblocked" } as any);

@@ -30,6 +30,16 @@ export const EXECUTION_DISPATCH_QUEUE_NAME = "execution-dispatch";
 export const JOB_DISPATCH_EXECUTION = "dispatch-execution";
 export const JOB_POLL_ACTIVE_EXECUTIONS = "poll-active-executions";
 export const SCIM_ACCESS_RECOMPUTE_QUEUE_NAME = "scim-access-recompute";
+// Alerts (#651): rule evaluation runs here, never in the request
+// that recorded the result.
+export const ALERT_QUEUE_NAME = "alerts";
+export const JOB_EVALUATE_ALERT_RESULT = "evaluate-alert-result";
+export const JOB_EVALUATE_ALERT_JUNIT_RESULT = "evaluate-alert-junit-result";
+export const JOB_EVALUATE_ALERT_RUN = "evaluate-alert-run";
+export const JOB_EVALUATE_ALERT_EXECUTION = "evaluate-alert-execution";
+export const JOB_EVALUATE_ALERT_SESSION = "evaluate-alert-session";
+export const JOB_EVALUATE_SCHEDULED_ALERTS = "evaluate-scheduled-alerts";
+export const JOB_EVALUATE_HOURLY_ALERTS = "evaluate-hourly-alerts";
 
 // Job names shared between enqueue sites and the workers that process them.
 // They live here rather than in the worker modules so that app code, services

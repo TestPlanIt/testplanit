@@ -476,5 +476,17 @@ module.exports = {
         NODE_ENV: "production",
       },
     },
+    {
+      name: "alert-worker",
+      script: isDev ? "tsx" : "node",
+      args: isDev ? "workers/alertWorker.ts" : "dist/workers/alertWorker.js",
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      ...memoryLimits("512M", { shared: true }),
+      env: {
+        NODE_ENV: "production",
+      },
+    },
   ],
 };

@@ -83,22 +83,11 @@ async function openShareLink(
   expect(response.ok(), await response.text()).toBeTruthy();
 }
 
-/**
- * The per-type section lives inside the Preferences accordion, which is
- * collapsed by default and remembers its state in localStorage. Read the
- * trigger's expanded state rather than clicking blindly: a click on an
- * already-open section closes it, and the closing content stays visible
- * for the length of its animation.
- */
+/** The per-type section sits in the Notification Preferences card on the Notifications & Alerts page. */
 async function openTypePreferences(page: Page): Promise<void> {
-  const trigger = page.getByRole("button", {
-    name: "Preferences",
-    exact: true,
+  await expect(page.getByTestId("notification-preferences-card")).toBeVisible({
+    timeout: 15000,
   });
-  await expect(trigger).toBeVisible({ timeout: 15000 });
-  if ((await trigger.getAttribute("aria-expanded")) !== "true") {
-    await trigger.click();
-  }
   await expect(page.getByTestId("notification-type-preferences")).toBeVisible({
     timeout: 15000,
   });
@@ -164,7 +153,7 @@ test.describe("Per-type notification preferences", () => {
     );
     try {
       const page = await context.newPage();
-      await page.goto(`${url}/en-US/users/profile/${userId}`);
+      await page.goto(`${url}/en-US/users/profile/${userId}/alerts`);
       await openTypePreferences(page);
 
       const shareSwitch = page.getByTestId(
@@ -183,7 +172,7 @@ test.describe("Per-type notification preferences", () => {
       });
 
       await test.step("edit mode enables the optional switches but not the locked ones", async () => {
-        await page.getByRole("button", { name: "Edit Profile" }).click();
+        await page.getByTestId("notification-preferences-edit").click();
         await expect(shareSwitch).toBeEnabled();
         await expect(
           page.getByTestId("notification-type-switch-SYSTEM_ANNOUNCEMENT")
@@ -202,10 +191,10 @@ test.describe("Per-type notification preferences", () => {
         await expect(
           page.getByTestId("notification-types-reset")
         ).toBeEnabled();
-        // Nothing is written until the profile is saved.
+        // Nothing is written until the card is saved.
         expect(await mutedTypes(request, url, userId)).toEqual([]);
 
-        await page.getByTestId("profile-submit-button").click();
+        await page.getByTestId("notification-preferences-save").click();
         await expect
           .poll(() => mutedTypes(request, url, userId), { timeout: 15000 })
           .toEqual(["SHARE_LINK_ACCESSED"]);
@@ -229,10 +218,10 @@ test.describe("Per-type notification preferences", () => {
       });
 
       await test.step("reset to defaults, then save, turns the type back on", async () => {
-        await page.getByRole("button", { name: "Edit Profile" }).click();
+        await page.getByTestId("notification-preferences-edit").click();
         await page.getByTestId("notification-types-reset").click();
         await expect(shareSwitch).toHaveAttribute("aria-checked", "true");
-        await page.getByTestId("profile-submit-button").click();
+        await page.getByTestId("notification-preferences-save").click();
         await expect
           .poll(() => mutedTypes(request, url, userId), { timeout: 15000 })
           .toEqual([]);

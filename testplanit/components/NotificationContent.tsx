@@ -6,6 +6,7 @@ import { SessionNameDisplay } from "@/components/SessionNameDisplay";
 import { ProjectNameCell } from "@/components/tables/ProjectNameCell";
 import { UserNameCell } from "@/components/tables/UserNameCell";
 import { TestRunNameDisplay } from "@/components/TestRunNameDisplay";
+import { AlertTriggeredNotification } from "@/components/notifications/AlertTriggeredNotification";
 import TextFromJson from "@/components/TextFromJson";
 import { ExternalLink, Megaphone } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -839,6 +840,10 @@ export function NotificationContent({
         <p className="text-sm text-muted-foreground">{notification.message}</p>
       </div>
     );
+  }
+
+  if (notification.type === "ALERT_TRIGGERED") {
+    return <AlertTriggeredNotification data={data} />;
   }
 
   if (notification.type === "RUN_READY_TO_COMPLETE") {

@@ -737,7 +737,8 @@
       "adminSamlConfig": "Admin - SAML Configuration",
       "apiDocumentation": "API Documentation",
       "sharedContent": "Shared Content",
-      "impact": "Impact Analysis"
+      "impact": "Impact Analysis",
+      "alerts": "Notifications & Alerts"
     },
     "aria": {
       "userMenu": "User menu",
@@ -1659,7 +1660,8 @@
           "scimGroupMemberAdded": "Members added",
           "scimGroupMemberRemoved": "Members removed",
           "scimGroupDeleted": "Group deleted",
-          "scimGroupMemberAddedSummary": "Members added (bulk-sync summary)"
+          "scimGroupMemberAddedSummary": "Members added (bulk-sync summary)",
+          "triggered": "Triggered"
         },
         "iterationResultHelp": "Fires every time an iteration result is recorded — pass, fail, skip, or any other status. Use sparingly on long automation runs (one event per iteration).",
         "events": {
@@ -1889,7 +1891,8 @@
           "sourceRepositoryHelp": "Start an Impact analysis and compose a test run when a pull request is opened or commits are pushed.",
           "noRepositoryAvailable": "Every connected repository already has a webhook or cannot send webhooks.",
           "repositoryPlaceholder": "Choose a repository"
-        }
+        },
+        "outboundSubsAlerts": "Alerts"
       },
       "aiModels": {
         "description": "Configure AI models for intelligent test case generation and analysis",
@@ -2864,7 +2867,9 @@
         "detailsDisplayMode": {
           "docked": "Docked panel",
           "newWindow": "New window"
-        }
+        },
+        "notificationsLabel": "Notifications",
+        "notificationsMoved": "Manage Notifications & Alerts"
       },
       "assignments": {
         "title": "Assignments",
@@ -2992,6 +2997,10 @@
           "LLM_BUDGET_ALERT": {
             "label": "AI budget alerts",
             "description": "LLM spend crosses a budget threshold for the billing period."
+          },
+          "ALERT_TRIGGERED": {
+            "label": "Alerts",
+            "description": "An alert you are subscribed to fires because a testing metric crossed the line it watches."
           }
         },
         "success": {
@@ -3116,7 +3125,8 @@
       "orange": "Orange",
       "accessible": "Accessible",
       "accessibledark": "Accessible (Dark)"
-    }
+    },
+    "myAlerts": "Notifications & Alerts"
   },
   "repository": {
     "version": {
@@ -6172,7 +6182,8 @@
         "stepSequenceMatchCases": "Step Sequence Match Cases",
         "testRunCases": "Test Run Cases",
         "testRunCaseDataSetSnapshots": "Test Run Dataset Snapshots",
-        "testRunCaseIterations": "Test Run Iterations"
+        "testRunCaseIterations": "Test Run Iterations",
+        "alertRules": "Alerts"
       },
       "table": {
         "title": "Deleted {itemType}",
@@ -6902,7 +6913,8 @@
         "markRead": "Mark as read",
         "markUnread": "Mark as unread",
         "markAllRead": "Mark all as read",
-        "deleteAll": "Delete all"
+        "deleteAll": "Delete all",
+        "manageAlerts": "Manage Notifications & Alerts"
       },
       "success": {
         "deleted": "Notification deleted",
@@ -7000,7 +7012,40 @@
         "runCaseUnblockedPrerequisitePassed": "{prerequisiteName} passed, so this case assigned to you is no longer blocked:",
         "runCaseUnblockedEmailMessage": "\"{testCaseName}\" in test run \"{testRunName}\" (project \"{projectName}\") is no longer blocked: \"{prerequisiteName}\" passed. It is assigned to you and ready to execute.",
         "runCaseUnblockedReason": "You are receiving this because the test case is assigned to you.",
-        "inTestRun": "in test run"
+        "inTestRun": "in test run",
+        "alertTriggeredTitle": "Alert fired",
+        "alertTriggeredRule": "Rule: {ruleName}",
+        "alertTriggeredEmailMessage": "Alert \"{ruleName}\" fired for {subjectLabel} \"{subjectName}\" in project \"{projectName}\": {detail}",
+        "alertTriggeredReason": "You are receiving this because you are subscribed to this alert.",
+        "alertSubject": {
+          "CASE": "test case",
+          "RUN": "test run",
+          "MILESTONE": "milestone",
+          "SESSION": "session",
+          "PROJECT": "project",
+          "WEBHOOK": "webhook"
+        },
+        "alertMetric": {
+          "RESULT_DURATION_DEVIATION": "The result took {elapsed}, {deviation}% away from the baseline of {baseline} (more than {threshold}% allowed).",
+          "CASE_REGRESSED": "The case failed after passing {passedBefore, plural, one {its last result} other {its last # results}}.",
+          "CASE_RECOVERED": "The case passed after failing {failedBefore, plural, one {its last result} other {its last # results}}.",
+          "RUN_DURATION_DEVIATION": "The run took {elapsed}, {deviation}% away from the baseline of {baseline} (more than {threshold}% allowed).",
+          "RUN_NOT_PROGRESSING": "The run has had no new result for {idleHours, plural, one {# hour} other {# hours}} (threshold {threshold}).",
+          "AUTOMATED_EXECUTION_FAILED": "The automated execution on {target} ended with {status}{error, select, other {: {error}}}",
+          "RUN_UNTESTED_SHARE": "{untestedPercent}% of the run's cases have no result with {daysRemaining, plural, one {# day} other {# days}} before its milestone is due (threshold {threshold}%).",
+          "RUN_ISSUES_OPENED": "{issues, plural, one {# issue is} other {# issues are}} linked to the run's results (threshold {threshold}).",
+          "SESSION_OVERRUN": "The session took {elapsed} against an estimate of {estimate}, {overrun}% over (more than {threshold}% allowed).",
+          "REQUIREMENT_COVERAGE_BELOW": "{covered} of {total} requirements ({coverage}%) {basis, select, PASSING {have a passing latest result} other {are linked to a test case}} (threshold {threshold}%).",
+          "STALE_CASES": "{stale, plural, one {# case has} other {# cases have}} had no result in {days, plural, one {# day} other {# days}} (threshold {threshold}).",
+          "AUTOMATION_SHARE_BELOW": "{automated} of {total} cases ({automatedPercent}%) are automated (threshold {threshold}%).",
+          "WEBHOOK_FAILURE_RATE": "{failed} of the last {sampleCount} deliveries failed ({failureRate}%, threshold {threshold}%).",
+          "CONSECUTIVE_FAILURES": "The case has failed {streak, plural, one {# time} other {# times}} in a row (threshold {threshold}).",
+          "CASE_FLAKY": "The outcome flipped {flips, plural, one {# time} other {# times}} across the last {sampleCount} results (threshold {threshold}).",
+          "RUN_PASS_RATE_BELOW": "The pass rate is {passRate}% across {sampleCount} results (threshold {threshold}%).",
+          "RUN_FAILURE_COUNT": "{failed, plural, one {# result has} other {# results have}} failed (threshold {threshold}).",
+          "MILESTONE_BEHIND": "The milestone is {completion}% complete with {daysRemaining, plural, one {# day} other {# days}} remaining (threshold {threshold}%).",
+          "MILESTONE_OVERDUE": "The milestone is {daysOverdue, plural, one {# day} other {# days}} past its due date."
+        }
       }
     },
     "issues": {
@@ -7579,7 +7624,8 @@
       "SharedSteps": "Shared Steps",
       "Issues": "Issues",
       "Reporting": "Reporting",
-      "Settings": "Project Settings"
+      "Settings": "Project Administration",
+      "Alerts": "Alerts"
     },
     "WorkflowType": {
       "NOT_STARTED": "Not Started",
@@ -7819,7 +7865,7 @@
       "name": "## Role Name\nA clear, concise, descriptive name or keyword(s) that is used across all projects.\n\n- Helps team members quickly find related test cases, test runs and sessions.",
       "isDefault": "## Default Role\nIndicates whether this role is the default for your project.\n\n- Default role is pre-selected for new users\n- Can be changed at any time",
       "permissions": {
-        "canAddEdit": "## Add/Edit\nIndicates whether this role can add and edit the related application area.\n\n- **Automated Execution** grants the right to start, retry, and cancel automated executions on a CI provider. Recording the results still needs **Test Run Results** Add/Edit, and starting one from the repository also needs **Test Runs** Add/Edit because it creates or extends a run.",
+        "canAddEdit": "## Add/Edit\nIndicates whether this role can add and edit the related application area.\n\n- **Automated Execution** grants the right to start, retry, and cancel automated executions on a CI provider. Recording the results still needs **Test Run Results** Add/Edit, and starting one from the repository also needs **Test Runs** Add/Edit because it creates or extends a run.\n- **Alerts** grants the right to create alerts in the project and to edit, pause and delete the ones you created. Project administrators manage every alert and other users' subscriptions; anyone can follow or leave an alert.",
         "canDelete": "## Delete\nIndicates whether this role can delete the related application area.",
         "canClose": "## Close\nIndicates whether this role can close the related application area.",
         "canApprove": "## Approve\nIndicates whether this role can approve review requests for the related application area. Applies only to Test Case Repository, Test Runs, and Sessions.",
@@ -8379,7 +8425,8 @@
     "projectRunsFilters": "## Filtering test runs\n\nToggle a chip to narrow the list. Chips apply to both the Active and Completed tabs, and are remembered on this device for this project.\n\n- **Manual** / **Automated** — limit the list to that kind of run. Turning both on (or both off) shows every run.\n- **My Test Runs** — only runs you take part in: you created the run, you are assigned a test case in it, or you recorded a test result in it.",
     "projectSessionsFilters": "## Filtering sessions\n\nToggle a chip to narrow the list. Chips apply to both the Active and Completed tabs, and are remembered on this device for this project.\n\n- **My Sessions** — only sessions you take part in: you created the session, or it is assigned to you.",
     "projectImpact": "## Impact\nConnect the repository of the application under test so this project can run test impact analysis: pick two commits to see which test cases the changes affect, and pin test cases to the code they cover.",
-    "projectAutomation": "## Automated Execution\nExecution targets tell TestPlanIt where to execute this project's automated cases: a GitHub Actions workflow, a GitLab CI pipeline, or a signed webhook for any other system. When a run is executed, TestPlanIt starts the job with the run id and a plan URL; the job reads the plan, runs the matching tests, and reports results back with a reporter or the CLI pinned to that run. Targets can be disabled without being deleted."
+    "projectAutomation": "## Automated Execution\nExecution targets tell TestPlanIt where to execute this project's automated cases: a GitHub Actions workflow, a GitLab CI pipeline, or a signed webhook for any other system. When a run is executed, TestPlanIt starts the job with the run id and a plan URL; the job reads the plan, runs the matching tests, and reports results back with a reporter or the CLI pinned to that run. Targets can be disabled without being deleted.",
+    "userAlerts": "## Notifications & Alerts\n**Notification Preferences** decide how you are reached (in-app, email, digest) and which notification types you receive at all.\n\n**Alerts** watch a testing metric and notify their subscribers when it crosses a line, for example a result that takes 50% longer than the case's usual duration, a case that fails three times in a row, a run whose pass rate drops under 90%, or a milestone that is behind with days to go. The list shows every alert in your projects; the **Notify me** switch follows or leaves one. **Add Alert** creates your own in any project where your role has **Alerts** Add/Edit; project administrators manage every alert in their project and other people's subscriptions. An alert fires at most once per subject within its cooldown and stays silent until it has enough results."
   },
   "reports": {
     "ui": {
@@ -10168,5 +10215,341 @@
     "update": "Update with current mapping",
     "updateConfirm": "“{name}” will be updated with the current column mapping and settings.",
     "savePrompt": "Save this column mapping for next time?"
+  },
+  "alerts": {
+    "title": "Alerts",
+    "description": "Alerts you follow across your projects, and the alerts in those projects you could follow.",
+    "addRule": "Add Alert",
+    "editRule": "Edit Alert",
+    "deleteRule": "Delete Alert",
+    "deleteConfirm": "Delete the alert \"{name}\"? Its subscribers stop receiving notifications and it can be restored from the trash.",
+    "pauseTitle": "Pause this alert for everyone?",
+    "pauseConfirm": "\"{name}\" stops firing for {count, plural, =0 {everyone} one {its only subscriber} =2 {both of its subscribers} other {all # of its subscribers}}, not just you, until someone enables it again. To stop your own notifications only, turn off Notify me instead.",
+    "columns": {
+      "name": "Rule",
+      "condition": "Condition",
+      "scope": "Scope",
+      "subscribers": "Subscribers",
+      "lastFired": "Last fired",
+      "enabled": "Enabled",
+      "notifyMe": "Notify me",
+      "actions": "Actions",
+      "project": "Project"
+    },
+    "neverFired": "Never",
+    "paused": "Paused",
+    "filters": {
+      "label": "Filter alerts",
+      "on": "On",
+      "off": "Off"
+    },
+    "history": "History",
+    "subscribers": "Subscribers",
+    "subscriberCount": "{count, plural, =0 {No subscribers} one {# subscriber} other {# subscribers}}",
+    "toasts": {
+      "created": "Rule created.",
+      "updated": "Rule updated.",
+      "deleted": "Rule deleted.",
+      "enabled": "Rule enabled.",
+      "disabled": "Rule paused.",
+      "subscribed": "You will be notified when this rule fires.",
+      "unsubscribed": "You will no longer be notified by this rule.",
+      "subscriberAdded": "{name} subscribed.",
+      "subscriberRemoved": "{name} unsubscribed.",
+      "saveError": "Could not save the rule.",
+      "subscriptionError": "Could not update the subscription."
+    },
+    "form": {
+      "name": "Name",
+      "namePlaceholder": "e.g. Checkout flow slowdowns",
+      "description": "Description",
+      "descriptionPlaceholder": "Optional note for other subscribers",
+      "metric": "Metric",
+      "metricLocked": "The metric cannot be changed after the alert is created. Create a new alert instead.",
+      "condition": "Condition",
+      "scope": "Scope",
+      "scopeType": "Watch",
+      "scopeFolder": "Folder",
+      "scopeTag": "Tag",
+      "scopeCase": "Test case",
+      "scopeMilestone": "Milestone",
+      "scopeRunName": "Run name contains",
+      "scopeRunNamePlaceholder": "e.g. Nightly",
+      "scopePickFolder": "Select a folder",
+      "scopePickTag": "Select a tag",
+      "scopePickCase": "Select a test case",
+      "scopePickMilestone": "Select a milestone",
+      "scopeWebhook": "Webhook",
+      "scopePickWebhook": "Select a webhook",
+      "coverageBasis": "Count as covered",
+      "coverageBasisOptions": {
+        "LINKED": "Linked to at least one test case",
+        "PASSING": "Latest result passed"
+      },
+      "windowLabels": {
+        "RUN_DURATION_DEVIATION": "Baseline window (runs)",
+        "WEBHOOK_FAILURE_RATE": "Last deliveries"
+      },
+      "minSamplesLabels": {
+        "RUN_DURATION_DEVIATION": "Minimum runs",
+        "WEBHOOK_FAILURE_RATE": "Minimum deliveries"
+      },
+      "secondaryLabels": {
+        "RUN_UNTESTED_SHARE": "Days before the milestone is due",
+        "STALE_CASES": "Days without a result"
+      },
+      "scopeCaseSearch": "Search by name or ID",
+      "direction": "Direction",
+      "baselineType": "Baseline",
+      "baselineWindow": "Baseline window (results)",
+      "minSamples": "Minimum results",
+      "resultSource": "Results to watch",
+      "evaluateOn": "Evaluate",
+      "daysRemaining": "Days remaining",
+      "cooldown": "Cooldown (minutes)",
+      "cooldownHelp": "After the rule fires for a subject, it stays silent for that subject this long. 0 disables the cooldown.",
+      "emitWebhook": "Send an alert.triggered webhook event",
+      "emitWebhookHelp": "Outbound webhooks subscribed to Alerts receive the same payload, so Slack or other tools can post it.",
+      "enabled": "Enabled",
+      "audience": "Audience",
+      "audienceHelp": "Who is notified when the alert fires. You are added by default to alerts you create; anyone can leave or re-join.",
+      "searchMembers": "Search project members",
+      "you": "you",
+      "cannotManageSubscribers": "You can subscribe or unsubscribe yourself. Subscribing other members needs project administration rights.",
+      "validation": {
+        "nameRequired": "Enter a name.",
+        "scopeRequired": "Choose what the rule watches.",
+        "runNameRequired": "Enter part of a run name.",
+        "percentRange": "Enter a percentage between {min} and {max}.",
+        "countRange": "Enter a whole number between {min} and {max}.",
+        "windowRange": "Enter a window between {min} and {max} results.",
+        "minSamplesRange": "Enter a value between {min} and {max}.",
+        "minSamplesWindow": "Minimum results cannot exceed the baseline window.",
+        "cooldownRange": "Enter minutes between {min} and {max}.",
+        "daysRange": "Enter days between {min} and {max}.",
+        "windowBelowMinSamples": "Baseline window cannot be smaller than minimum results."
+      },
+      "project": "Project",
+      "projectPlaceholder": "Select a project",
+      "projectHelp": "Only projects where your role may create alerts are listed.",
+      "dialogDescription": "Watch one testing metric and notify the audience when it crosses the line you set.",
+      "metricSearch": "Search metrics",
+      "metricNoMatch": "No metric matches.",
+      "checkedDaily": "Checked daily",
+      "checkedHourly": "Checked hourly",
+      "needsProject": "Select a project first.",
+      "followAlert": "Notify me",
+      "leaveAlert": "Stop notifying me",
+      "delivery": "Delivery",
+      "thresholdLabels": {
+        "RESULT_DURATION_DEVIATION": "Deviation (%)",
+        "CASE_REGRESSED": "Threshold",
+        "CONSECUTIVE_FAILURES": "Failures in a row",
+        "CASE_FLAKY": "Flips",
+        "RUN_PASS_RATE_BELOW": "Pass rate under (%)",
+        "RUN_FAILURE_COUNT": "Failed results, more than",
+        "RUN_DURATION_DEVIATION": "Deviation (%)",
+        "RUN_NOT_PROGRESSING": "Idle for more than (hours)",
+        "AUTOMATED_EXECUTION_FAILED": "Threshold",
+        "RUN_UNTESTED_SHARE": "Untested cases over (%)",
+        "RUN_ISSUES_OPENED": "Linked issues, more than",
+        "SESSION_OVERRUN": "Over the estimate by more than (%)",
+        "MILESTONE_BEHIND": "Completion under (%)",
+        "MILESTONE_OVERDUE": "Threshold",
+        "REQUIREMENT_COVERAGE_BELOW": "Coverage under (%)",
+        "STALE_CASES": "Stale cases, more than",
+        "AUTOMATION_SHARE_BELOW": "Automated share under (%)",
+        "WEBHOOK_FAILURE_RATE": "Failure rate over (%)"
+      }
+    },
+    "direction": {
+      "ABOVE": "Above (slower)",
+      "BELOW": "Below (faster)",
+      "EITHER": "Above or below"
+    },
+    "baseline": {
+      "MEAN": "Mean",
+      "MEDIAN": "Median"
+    },
+    "resultSource": {
+      "MANUAL": "Manual results",
+      "AUTOMATED": "Automated results",
+      "BOTH": "Manual and automated"
+    },
+    "evaluateOn": {
+      "RUN_COMPLETION": "When the run completes",
+      "AS_RESULTS_ARRIVE": "As results arrive"
+    },
+    "scopeType": {
+      "PROJECT": "Whole project",
+      "FOLDER": "Cases in a folder",
+      "TAG": "Cases with a tag",
+      "CASE": "One test case",
+      "RUN_NAME": "Runs whose name contains",
+      "MILESTONE": "One milestone",
+      "WEBHOOK": "One webhook"
+    },
+    "scopeTypeSessions": {
+      "PROJECT": "All sessions",
+      "TAG": "Sessions with a tag"
+    },
+    "scopeTypeWebhooks": {
+      "PROJECT": "All outbound webhooks",
+      "WEBHOOK": "One webhook"
+    },
+    "scopeTypeRuns": {
+      "PROJECT": "All runs",
+      "TAG": "Runs with a tag",
+      "RUN_NAME": "Runs whose name contains"
+    },
+    "scopeTypeMilestones": {
+      "PROJECT": "All milestones",
+      "MILESTONE": "One milestone"
+    },
+    "scopeDisplay": {
+      "PROJECT": "Whole project",
+      "FOLDER": "Folder: {name}",
+      "TAG": "Tag: {name}",
+      "CASE": "Case: {name}",
+      "RUN_NAME": "Runs containing \"{text}\"",
+      "MILESTONE": "Milestone: {name}",
+      "WEBHOOK": "Webhook: {name}",
+      "missing": "(removed)"
+    },
+    "subjectType": {
+      "CASE": "Test case",
+      "RUN": "Test run",
+      "MILESTONE": "Milestone",
+      "SESSION": "Session",
+      "PROJECT": "Project",
+      "WEBHOOK": "Webhook"
+    },
+    "metrics": {
+      "RESULT_DURATION_DEVIATION": {
+        "label": "Result duration deviates from baseline",
+        "description": "A result takes much longer or shorter than the case's recent results. Results without an elapsed time are ignored.",
+        "summary": "A result's duration is more than {threshold}% {direction, select, ABOVE {above} BELOW {below} other {above or below}} the {baseline, select, MEAN {mean} other {median}} of the case's last {window} results, after at least {minSamples} results"
+      },
+      "CASE_REGRESSED": {
+        "label": "Case regressed",
+        "description": "A case that passed its recent results now fails. Catches a fresh failure on a stable case.",
+        "summary": "A case fails after passing its last {window} results"
+      },
+      "CASE_RECOVERED": {
+        "label": "Case recovered",
+        "description": "A case passes after failing every one of its last results.",
+        "summary": "A case passes after failing its last {window, plural, one {# result} other {# results}}"
+      },
+      "CONSECUTIVE_FAILURES": {
+        "label": "Consecutive failures",
+        "description": "A case fails a given number of times in a row.",
+        "summary": "A case fails {threshold, plural, one {# time} other {# times}} in a row"
+      },
+      "CASE_FLAKY": {
+        "label": "Case became flaky",
+        "description": "A case flips between pass and fail repeatedly within its recent results. Uses the same inputs as the Flaky Tests report.",
+        "summary": "A case flips between pass and fail at least {threshold, plural, one {# time} other {# times}} across its last {window} results"
+      },
+      "RUN_PASS_RATE_BELOW": {
+        "label": "Run pass rate below threshold",
+        "description": "A run's pass rate, counted over results with a pass or fail verdict, drops under a percentage.",
+        "summary": "A run's pass rate is under {threshold}% once at least {minSamples} results have a verdict, {evaluateOn, select, AS_RESULTS_ARRIVE {evaluated as results arrive} other {evaluated when the run completes}}"
+      },
+      "RUN_FAILURE_COUNT": {
+        "label": "Run failure count",
+        "description": "A run has more than a given number of failed results.",
+        "summary": "A run has more than {threshold, plural, one {# failed result} other {# failed results}}, {evaluateOn, select, AS_RESULTS_ARRIVE {evaluated as results arrive} other {evaluated when the run completes}}"
+      },
+      "RUN_DURATION_DEVIATION": {
+        "label": "Run duration deviates from baseline",
+        "description": "A completed run's total duration deviates from the runs its scope groups together (same tag or name fragment).",
+        "summary": "A completed run's duration is more than {threshold}% {direction, select, ABOVE {above} BELOW {below} other {above or below}} the {baseline, select, MEAN {mean} other {median}} of the last {window} runs, after at least {minSamples} runs"
+      },
+      "RUN_NOT_PROGRESSING": {
+        "label": "Run not progressing",
+        "description": "An open run has had no new result for a given number of hours. Checked hourly.",
+        "summary": "An open run has had no new result for more than {threshold, plural, one {# hour} other {# hours}}"
+      },
+      "AUTOMATED_EXECUTION_FAILED": {
+        "label": "Automated execution failed",
+        "description": "An automated execution of a run fails, cannot be dispatched, or times out.",
+        "summary": "An automated execution fails, cannot be dispatched, or times out"
+      },
+      "RUN_UNTESTED_SHARE": {
+        "label": "Run untested share",
+        "description": "Too many of a run's cases still have no result with few days left before its milestone is due. Checked daily.",
+        "summary": "More than {threshold}% of a run's cases have no result with {days, plural, one {# day} other {# days}} or fewer before its milestone is due"
+      },
+      "RUN_ISSUES_OPENED": {
+        "label": "Issues opened from a run",
+        "description": "More than a given number of issues are linked to a run's results.",
+        "summary": "More than {threshold, plural, one {# issue is} other {# issues are}} linked to a run's results, {evaluateOn, select, AS_RESULTS_ARRIVE {evaluated as results arrive} other {evaluated when the run completes}}"
+      },
+      "SESSION_OVERRUN": {
+        "label": "Session overran its estimate",
+        "description": "A completed session's elapsed time exceeds its estimate by a percentage.",
+        "summary": "A completed session's elapsed time is more than {threshold}% over its estimate"
+      },
+      "MILESTONE_BEHIND": {
+        "label": "Milestone completion behind",
+        "description": "A milestone's run cases are not completed enough with few days left before its due date. Checked daily.",
+        "summary": "A milestone is under {threshold}% complete with {days, plural, one {# day} other {# days}} or fewer remaining"
+      },
+      "MILESTONE_OVERDUE": {
+        "label": "Milestone overdue",
+        "description": "A milestone's due date has passed and it is not completed. Checked daily.",
+        "summary": "A milestone passes its due date without being completed"
+      },
+      "REQUIREMENT_COVERAGE_BELOW": {
+        "label": "Requirement coverage below threshold",
+        "description": "Fewer than a given share of the project's requirements count as covered. Checked daily.",
+        "summary": "Fewer than {threshold}% of requirements {basis, select, PASSING {have a passing latest result} other {are linked to at least one test case}}"
+      },
+      "STALE_CASES": {
+        "label": "Stale cases",
+        "description": "More than a given number of cases have gone without a result for a number of days. Checked daily.",
+        "summary": "More than {threshold, plural, one {# case has} other {# cases have}} had no result in {days, plural, one {# day} other {# days}}"
+      },
+      "AUTOMATION_SHARE_BELOW": {
+        "label": "Automation share below threshold",
+        "description": "Fewer than a given share of the cases in scope are automated. Checked daily.",
+        "summary": "Fewer than {threshold}% of cases are automated"
+      },
+      "WEBHOOK_FAILURE_RATE": {
+        "label": "Webhook failure rate",
+        "description": "Too many of an outbound webhook's recent deliveries failed. Checked hourly.",
+        "summary": "More than {threshold}% of an outbound webhook's last {window} deliveries failed, after at least {minSamples} deliveries"
+      }
+    },
+    "sourceSummary": "Results: {source, select, MANUAL {manual} AUTOMATED {automated} other {manual and automated}}",
+    "historyDialog": {
+      "title": "History: {name}",
+      "empty": "This rule has not fired yet.",
+      "columns": {
+        "firedAt": "Fired",
+        "subject": "Subject",
+        "observed": "Observed",
+        "threshold": "Threshold",
+        "notified": "Notified"
+      },
+      "webhookSent": "Webhook sent"
+    },
+    "descriptionFor": "Alerts {name} follows, and the other alerts in their projects.",
+    "empty": "There are no alerts in your projects yet.",
+    "emptyCanCreate": "There are no alerts in your projects yet. Add one to get started.",
+    "pageDescription": "How you are notified, what you are told about, and the alerts you follow.",
+    "pageDescriptionFor": "How {name} is notified and the alerts they follow.",
+    "pageTabs": {
+      "alerts": "Alerts",
+      "notifications": "Notifications"
+    },
+    "metricGroups": {
+      "CASE": "Test case results",
+      "RUN": "Test runs",
+      "SESSION": "Sessions",
+      "MILESTONE": "Milestones",
+      "PROJECT": "Project health",
+      "WEBHOOK": "Webhooks"
+    }
   }
 }

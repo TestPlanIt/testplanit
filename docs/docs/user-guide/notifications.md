@@ -17,29 +17,30 @@ The notification system consists of:
 
 ## Notification Types
 
-Every notification TestPlanIt sends belongs to one of the types below. They are grouped the way they appear under **What to notify me about** on your profile, where each one has a switch that is on by default (see [Choosing which notifications you receive](#choosing-which-notifications-you-receive)). Two types are **always on** and cannot be switched off; two are sent to **administrators** only.
+Every notification TestPlanIt sends belongs to one of the types below. They are grouped the way they appear under **What to notify me about** on your [Notifications & Alerts](./alerts.md) page, where each one has a switch that is on by default (see [Choosing which notifications you receive](#choosing-which-notifications-you-receive)). Two types are **always on** and cannot be switched off; two are sent to **administrators** only.
 
-| Group               | Notification                                       | Sent when                                                                                        | Sent to                                                              |
-| ------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------- |
-| Assignments         | **Work assigned to me**                            | A test run case is assigned to you, singly or in bulk (including automatic distribution)         | The assignee                                                         |
-| Assignments         | **Session assigned to me**                         | A session is created with you as its assignee, or reassigned to you                              | The assignee                                                         |
-| Assignments         | **Assigned case unblocked**                        | A case assigned to you in a run becomes executable because the cases it depends on have passed      | The assignee, unless they recorded the result themselves             |
-| Comments            | **Mentions in comments**                           | Someone @-mentions you in a comment on a case, run, session or milestone, or in a review comment | Each mentioned user except the author                                |
-| Reviews             | **Review requested**                               | A review is requested from you or from a role you hold, singly or in bulk                        | The reviewer or role holders, minus the requester                    |
-| Reviews             | **Review approved**                                | A reviewer approves your request                                                                 | The requester                                                        |
-| Reviews             | **Changes requested**                              | A reviewer asks for changes on your request                                                      | The requester                                                        |
-| Reviews             | **Review rejected**                                | A reviewer rejects your request                                                                  | The requester                                                        |
-| Reviews             | **Review cancelled**                               | A request you were asked to review is cancelled, or the item under review is deleted             | The pending reviewers, minus whoever cancelled                       |
-| Reviews             | **Review reminders**                               | A review you owe is older than the reminder threshold (hourly), or the requester nudges you      | The pending reviewers                                                |
-| Runs and milestones | **Test run ready to complete**                     | Every case in a run has a result; includes a **Review and complete** link                        | Users who can close the run, plus admins and project admins          |
-| Runs and milestones | **Milestone due reminders**                        | A milestone is inside its reminder window or overdue (daily)                                     | The milestone creator and everyone involved in its runs and sessions |
-| Sharing             | **Share link viewed**                              | Someone opens a share link you created with notify-on-view enabled                               | The link creator                                                     |
-| AI and jobs         | **AI steps derived**                               | An AI step-derivation job you started has written steps                                          | The user who started the job                                         |
-| Integrations        | **Integration needs re-authorization** (always on) | Your OAuth connection to an integration expired or was revoked; includes a **Reconnect** link    | The connection owner                                                 |
-| System              | **Admin announcements** (always on)                | An administrator sends a system notification from **Admin → Notifications**                      | Every active user                                                    |
-| System              | **What's New after an upgrade**                    | Your first page load after TestPlanIt is upgraded to a version with release notes                | The current user                                                     |
-| Administration      | **New user registrations** (admins)                | A new user signs up through the form, SSO or SAML                                                | All administrators                                                   |
-| Administration      | **AI budget alerts** (admins)                      | LLM spend crosses a budget threshold for the billing period                                      | All administrators                                                   |
+| Group               | Notification                                       | Sent when                                                                                                     | Sent to                                                              |
+| ------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Assignments         | **Work assigned to me**                            | A test run case is assigned to you, singly or in bulk (including automatic distribution)                      | The assignee                                                         |
+| Assignments         | **Session assigned to me**                         | A session is created with you as its assignee, or reassigned to you                                           | The assignee                                                         |
+| Assignments         | **Assigned case unblocked**                        | A case assigned to you in a run becomes executable because the cases it depends on have passed                | The assignee, unless they recorded the result themselves             |
+| Comments            | **Mentions in comments**                           | Someone @-mentions you in a comment on a case, run, session or milestone, or in a review comment              | Each mentioned user except the author                                |
+| Reviews             | **Review requested**                               | A review is requested from you or from a role you hold, singly or in bulk                                     | The reviewer or role holders, minus the requester                    |
+| Reviews             | **Review approved**                                | A reviewer approves your request                                                                              | The requester                                                        |
+| Reviews             | **Changes requested**                              | A reviewer asks for changes on your request                                                                   | The requester                                                        |
+| Reviews             | **Review rejected**                                | A reviewer rejects your request                                                                               | The requester                                                        |
+| Reviews             | **Review cancelled**                               | A request you were asked to review is cancelled, or the item under review is deleted                          | The pending reviewers, minus whoever cancelled                       |
+| Reviews             | **Review reminders**                               | A review you owe is older than the reminder threshold (hourly), or the requester nudges you                   | The pending reviewers                                                |
+| Runs and milestones | **Test run ready to complete**                     | Every case in a run has a result; includes a **Review and complete** link                                     | Users who can close the run, plus admins and project admins          |
+| Runs and milestones | **Milestone due reminders**                        | A milestone is inside its reminder window or overdue (daily)                                                  | The milestone creator and everyone involved in its runs and sessions |
+| Runs and milestones | **Alerts**                                         | An [alert](./alerts.md) you follow fires because a metric crossed its line; links to the subject and its project | The rule's subscribers who can see the project                       |
+| Sharing             | **Share link viewed**                              | Someone opens a share link you created with notify-on-view enabled                                            | The link creator                                                     |
+| AI and jobs         | **AI steps derived**                               | An AI step-derivation job you started has written steps                                                       | The user who started the job                                         |
+| Integrations        | **Integration needs re-authorization** (always on) | Your OAuth connection to an integration expired or was revoked; includes a **Reconnect** link                 | The connection owner                                                 |
+| System              | **Admin announcements** (always on)                | An administrator sends a system notification from **Admin → Notifications**                                   | Every active user                                                    |
+| System              | **What's New after an upgrade**                    | Your first page load after TestPlanIt is upgraded to a version with release notes                             | The current user                                                     |
+| Administration      | **New user registrations** (admins)                | A new user signs up through the form, SSO or SAML                                                             | All administrators                                                   |
+| Administration      | **AI budget alerts** (admins)                      | LLM spend crosses a budget threshold for the billing period                                                   | All administrators                                                   |
 
 A type added in a future release is on for everyone automatically; nothing needs to be changed after an upgrade.
 
@@ -270,7 +271,7 @@ In a project that [enforces test case dependencies](./projects/settings/advanced
 
 ## User Preferences
 
-Two settings on your profile control notifications. The **notification mode** decides _how_ you are reached; the per-type switches decide _what_ you are told about.
+Two settings on your [Notifications & Alerts](./alerts.md) page (**Notifications & Alerts** in the user menu, or the link in your profile's Preferences section) control notifications. The **notification mode** decides _how_ you are reached; the per-type switches decide _what_ you are told about.
 
 ### Notification Modes
 
@@ -286,7 +287,7 @@ Users can configure their notification preferences with these modes:
 
 Below the notification mode, the **What to notify me about** section lists every notification type you can receive, grouped as in the [table above](#notification-types), each with a switch:
 
-- Every switch is **on by default**. Switch a type off to stop it on every channel: the bell, immediate email and the daily digest. The change saves as soon as you flip the switch.
+- Every switch is **on by default**. Switch a type off to stop it on every channel: the bell, immediate email and the daily digest. Click **Edit** on the Notifications tab, flip the switches, then **Save**.
 - **Always on** types (integration re-authorization, admin announcements) are shown switched on and cannot be changed.
 - Types sent only to administrators appear only on an administrator's profile.
 - **Reset to defaults** turns every type back on.
@@ -296,12 +297,12 @@ Muting a type affects only what _you_ receive. A review request to a role you ho
 
 ### Configuring Preferences
 
-Users can manage their notification preferences in their profile:
+Users manage their notification preferences on their Notifications & Alerts page:
 
-1. Navigate to your user profile
-2. Open the **Preferences** section and click **Edit**
-3. Select your preferred notification mode and save
-4. Under **What to notify me about**, switch off any type you do not want
+1. Open **Notifications & Alerts** from the user menu (or the link in your profile's Preferences section)
+2. Open the **Notifications** tab and click **Edit**
+3. Select your preferred notification mode
+4. Under **What to notify me about**, switch off any type you do not want, then **Save**
 
 ## Email Templates
 

@@ -34,9 +34,9 @@ The Roles page displays a table listing all defined roles (excluding those marke
 1. Locate the Role you wish to modify in the table.
 2. Click the **Edit** icon in the **Actions** column.
 3. A modal dialog will appear. You can modify:
-    - **Name**: Change the name of the Role.
-    - **Default**: Change the default status (cannot be unset directly if it is the current default; set another role as default instead).
-    - **Per-area permissions**: For every Application Area (see the list below), toggle which actions the role can perform — **Add/Edit**, **Delete**, **Complete**, **Read Sensitive**, and **Approve**. Not every column is meaningful on every row; the UI hides toggles that don't apply (for example, **Approve** only shows on Test Case Repository, Test Runs, and Sessions, and **Read Sensitive** only shows on the two Restricted Fields areas).
+   - **Name**: Change the name of the Role.
+   - **Default**: Change the default status (cannot be unset directly if it is the current default; set another role as default instead).
+   - **Per-area permissions**: For every Application Area (see the list below), toggle which actions the role can perform — **Add/Edit**, **Delete**, **Complete**, **Read Sensitive**, and **Approve**. Not every column is meaningful on every row; the UI hides toggles that don't apply (for example, **Approve** only shows on Test Case Repository, Test Runs, and Sessions, and **Read Sensitive** only shows on the two Restricted Fields areas).
 4. Click **Submit**. Changes apply immediately to every user who effectively holds this role on a project.
 
 ## Deleting a Role
@@ -87,7 +87,8 @@ When a user is assigned to a project, they are also assigned a project-specific 
 - **Closed Sessions**: Deleting completed/archived test sessions.
 - **Session Results**: Recording and Managing results for test cases within a session.
 - **Tags**: Creating new tags.
-:::
+- **Alerts**: Subscribing other project members to a [alert](./alerts.md) rule (Add/Edit only). Anyone can follow or leave a rule themselves; project administrators manage the rules.
+  :::
 
 Each role defines specific permissions (e.g., Add/Edit, Delete, Complete, Read Sensitive, Approve) for these areas.
 
@@ -103,14 +104,14 @@ The specific permissions granted by each role are configured when the role is cr
 
 A user's final permissions within a specific project are determined by a hierarchy, ensuring the most specific assignment takes precedence:
 
-1. **User-Specific Project Role:** If a user has been explicitly assigned a specific role *for that project* (on the **Users** tab of **Administration -> Projects -> Edit**), that role's permissions are used, overriding all other settings.
+1. **User-Specific Project Role:** If a user has been explicitly assigned a specific role _for that project_ (on the **Users** tab of **Administration -> Projects -> Edit**), that role's permissions are used, overriding all other settings.
 
-2. **Group-Specific Project Role(s):** If the user hasn't been assigned a specific role directly, the system checks the groups they belong to. If one or more of their groups have been assigned a specific role *for that project* (on the **Groups** tab of **Administration -> Projects -> Edit**), the role providing the *highest level of access* (most permissions) among those group assignments is used.
+2. **Group-Specific Project Role(s):** If the user hasn't been assigned a specific role directly, the system checks the groups they belong to. If one or more of their groups have been assigned a specific role _for that project_ (on the **Groups** tab of **Administration -> Projects -> Edit**), the role providing the _highest level of access_ (most permissions) among those group assignments is used.
 
 3. **Project Default Role:** If neither the user nor their groups have a specific role assigned for the project, the system checks the project's **Default Project Access** (on the **Details** tab of **Administration -> Projects -> Edit**):
-    - If the default access is set to a role, that role is used.
+   - If the default access is set to a role, that role is used.
 
-4. **User's Global Role:** If none of the above apply (e.g., the project's default access is set to **"Use Global Role"**, the default for new projects), the user's *global* role (assigned in **Administration -> Users**) determines their permissions within the project.
+4. **User's Global Role:** If none of the above apply (e.g., the project's default access is set to **"Use Global Role"**, the default for new projects), the user's _global_ role (assigned in **Administration -> Users**) determines their permissions within the project.
 
 5. **No Access:** If the project's default access is set to **"No Access"** and the user hasn't been granted access via steps 1 or 2, they will not have access to the project.
 
