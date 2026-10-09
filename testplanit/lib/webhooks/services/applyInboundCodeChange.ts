@@ -8,6 +8,7 @@ import {
   CODE_EVENT_BRANCH_PUSH,
   CODE_EVENT_PULL_REQUEST,
   CODE_EVENT_PUSH,
+  codeChangeEventLinks,
   describeCodeChangeEvent,
   extractCodeChangeEvent,
   isSyntheticCodeChangeEvent,
@@ -204,7 +205,9 @@ export async function applyInboundCodeChange(
     if ("ignore" in range) return ignore(range.ignore);
 
     const label = describeCodeChangeEvent(event!);
-    const url = event!.url;
+    const links = codeChangeEventLinks(event!);
+    const url =
+      (event!.kind === "push" ? event!.pullRequest?.url : null) ?? event!.url;
     const started = await startImpactAnalysis(
       baseDb,
       loaded,
@@ -214,7 +217,9 @@ export async function applyInboundCodeChange(
         base: range.base,
         head: range.head,
         createdById: project.createdBy,
-        notes: url ? `${label}\n${url}` : label,
+        notes: links
+          .map((link) => (link.url ? `${link.label}\n${link.url}` : link.label))
+          .join("\n"),
         tenantId: getCurrentTenantId(),
         trigger: event!.kind,
         triggerLabel: label,
@@ -223,6 +228,7 @@ export async function applyInboundCodeChange(
           trigger: event!.kind,
           label,
           url,
+          links,
           deliveryId,
           webhookConfigId,
         },

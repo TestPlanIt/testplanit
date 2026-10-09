@@ -263,6 +263,12 @@ export interface ImpactAutoRun {
   /** Run name and analysis label, e.g. "PR #12: Fix checkout". */
   label: string;
   url?: string | null;
+  /**
+   * What the run's note links to, one paragraph each: the pull request, or
+   * a push's compare page and the pull request its head commit merged.
+   * Older jobs carry only `label` and `url`.
+   */
+  links?: { label: string; url: string | null }[];
   /** The inbound delivery row to annotate with the run outcome. */
   deliveryId?: string;
   /** The repository webhook whose auto-execute setting applies to the run. */

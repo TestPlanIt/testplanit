@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  codeChangeEventLinks,
   describeCodeChangeEvent,
   extractCodeChangeEvent,
+  mergedPullRequestFromMessage,
 } from "./codeChangeEvents";
 
 const SHA_A = "a".repeat(40);
@@ -202,5 +204,200 @@ describe("extractCodeChangeEvent", () => {
       extractCodeChangeEvent("BITBUCKET", "repo:commit_comment_created", {})
     ).toBeNull();
     expect(extractCodeChangeEvent("JIRA", "jira:issue_updated", {})).toBeNull();
+  });
+});
+
+describe("mergedPullRequestFromMessage", () => {
+  it("reads each provider's merge and squash commit subjects", () => {
+    expect(
+      mergedPullRequestFromMessage(
+        "Merge pull request #12 from acme/feature/x\n\nFix checkout"
+      )
+    ).toEqual({ number: 12, title: "Fix checkout" });
+    expect(mergedPullRequestFromMessage("Fix checkout (#12)\n\n* wip")).toEqual(
+      { number: 12, title: "Fix checkout" }
+    );
+    expect(
+      mergedPullRequestFromMessage(
+        "Merge pull request 'Fix checkout' (#12) from feature/x into main"
+      )
+    ).toEqual({ number: 12, title: "Fix checkout" });
+    expect(mergedPullRequestFromMessage("Merged PR 123: Fix checkout")).toEqual(
+      { number: 123, title: "Fix checkout" }
+    );
+    expect(
+      mergedPullRequestFromMessage(
+        "Merged in feature/x (pull request #45)\n\nFix checkout\n\nApproved-by: Ada"
+      )
+    ).toEqual({ number: 45, title: "Fix checkout" });
+    expect(
+      mergedPullRequestFromMessage("Fix checkout (pull request #45)")
+    ).toEqual({ number: 45, title: "Fix checkout" });
+    expect(
+      mergedPullRequestFromMessage(
+        "Merge branch 'feature/x' into 'main'\n\nFix checkout\n\nSee merge request acme/app!7"
+      )
+    ).toEqual({ number: 7, title: "Fix checkout" });
+    expect(
+      mergedPullRequestFromMessage(
+        "Fix checkout\n\nSquashed.\n\nSee merge request !7"
+      )
+    ).toEqual({ number: 7, title: "Fix checkout" });
+  });
+
+  it("leaves a title out when only trailers follow the merge subject", () => {
+    expect(
+      mergedPullRequestFromMessage(
+        "Merged in feature/x (pull request #45)\n\nApproved-by: Ada"
+      )
+    ).toEqual({ number: 45, title: null });
+  });
+
+  it("ignores ordinary commits", () => {
+    expect(mergedPullRequestFromMessage("Fix checkout")).toBeNull();
+    expect(mergedPullRequestFromMessage("Bump #12 handling")).toBeNull();
+    expect(mergedPullRequestFromMessage(null)).toBeNull();
+  });
+});
+
+describe("pushes that merged a pull request", () => {
+  it("links a Bitbucket merge push to its pull request", () => {
+    const push = extractCodeChangeEvent("BITBUCKET", "repo:push", {
+      repository: {
+        links: { html: { href: "https://bitbucket.org/acme/app" } },
+      },
+      push: {
+        changes: [
+          {
+            old: { type: "branch", name: "master", target: { hash: SHA_A } },
+            new: {
+              type: "branch",
+              name: "master",
+              target: {
+                hash: SHA_B,
+                message:
+                  "Merged in feature/x (pull request #45)\n\nFix checkout\n\nApproved-by: Ada",
+              },
+            },
+            links: {
+              html: {
+                href: `https://bitbucket.org/acme/app/branches/compare/${SHA_B}..${SHA_A}`,
+              },
+            },
+            commits: [{}],
+          },
+        ],
+      },
+    });
+    expect(push).toMatchObject({
+      kind: "push",
+      pullRequest: {
+        number: 45,
+        title: "Fix checkout",
+        url: "https://bitbucket.org/acme/app/pull-requests/45",
+      },
+    });
+    expect(describeCodeChangeEvent(push!)).toBe(
+      "master aaaaaaa…bbbbbbb (PR #45: Fix checkout)"
+    );
+    expect(codeChangeEventLinks(push!)).toEqual([
+      {
+        label: "master aaaaaaa…bbbbbbb",
+        url: `https://bitbucket.org/acme/app/branches/compare/${SHA_B}..${SHA_A}`,
+      },
+      {
+        label: "PR #45: Fix checkout",
+        url: "https://bitbucket.org/acme/app/pull-requests/45",
+      },
+    ]);
+  });
+
+  it("links GitHub and Gitea merge pushes under each provider's path", () => {
+    const payload = {
+      ref: "refs/heads/main",
+      before: SHA_A,
+      after: SHA_B,
+      commits: [{}],
+      compare: "https://example.com/acme/app/compare/a...b",
+      repository: { html_url: "https://example.com/acme/app" },
+      head_commit: {
+        message: "Merge pull request #12 from acme/feature/x\n\nFix checkout",
+      },
+    };
+    expect(extractCodeChangeEvent("GITHUB", "push", payload)).toMatchObject({
+      pullRequest: {
+        number: 12,
+        title: "Fix checkout",
+        url: "https://example.com/acme/app/pull/12",
+      },
+    });
+    expect(extractCodeChangeEvent("GITEA", "push", payload)).toMatchObject({
+      pullRequest: { url: "https://example.com/acme/app/pulls/12" },
+    });
+  });
+
+  it("finds the head commit in GitLab and Azure DevOps commit lists", () => {
+    expect(
+      extractCodeChangeEvent("GITLAB", "Push Hook", {
+        object_kind: "push",
+        ref: "refs/heads/main",
+        before: SHA_A,
+        after: SHA_B,
+        project: { web_url: "https://gitlab.com/acme/app" },
+        commits: [
+          { id: "c".repeat(40), message: "wip" },
+          {
+            id: SHA_B,
+            message:
+              "Merge branch 'feature/x' into 'main'\n\nFix checkout\n\nSee merge request acme/app!7",
+          },
+        ],
+      })
+    ).toMatchObject({
+      pullRequest: {
+        number: 7,
+        title: "Fix checkout",
+        url: "https://gitlab.com/acme/app/-/merge_requests/7",
+      },
+    });
+    expect(
+      extractCodeChangeEvent("AZURE_DEVOPS", "git.push", {
+        resource: {
+          refUpdates: [
+            { name: "refs/heads/main", oldObjectId: SHA_A, newObjectId: SHA_B },
+          ],
+          repository: {
+            remoteUrl: "https://dev.azure.com/acme/app/_git/app",
+          },
+          commits: [
+            { commitId: SHA_B, comment: "Merged PR 123: Fix checkout" },
+          ],
+        },
+      })
+    ).toMatchObject({
+      pullRequest: {
+        number: 123,
+        title: "Fix checkout",
+        url: "https://dev.azure.com/acme/app/_git/app/pullrequest/123",
+      },
+    });
+  });
+
+  it("leaves a plain push without a pull request and with its compare link only", () => {
+    const push = extractCodeChangeEvent("GITHUB", "push", {
+      ref: "refs/heads/main",
+      before: SHA_A,
+      after: SHA_B,
+      commits: [{}],
+      compare: "https://github.com/acme/app/compare/a...b",
+      head_commit: { message: "Fix checkout" },
+    });
+    expect(push).toMatchObject({ pullRequest: null });
+    expect(codeChangeEventLinks(push!)).toEqual([
+      {
+        label: "main aaaaaaa…bbbbbbb",
+        url: "https://github.com/acme/app/compare/a...b",
+      },
+    ]);
   });
 });

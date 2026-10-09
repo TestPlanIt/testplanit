@@ -105,7 +105,7 @@ When nothing matches, the step says **No affected tests found** and suggests pin
 
 ## Analyses started by the repository
 
-With a [repository webhook](webhooks.md#repository-webhooks) configured, the repository starts analyses itself: opening a pull request analyzes it against its target branch, a push to the webhook's base branch analyzes the pushed commits, and, when switched on, a push to any other branch is analyzed against the base branch. Each completed analysis becomes a test run holding the pinned and affected tests, named after the pull request or the commit range, with the event's link in the run's note. The analysis records what started it and appears in the run's history like one started by hand.
+With a [repository webhook](webhooks.md#repository-webhooks) configured, the repository starts analyses itself: opening a pull request analyzes it against its target branch, a push to the webhook's base branch analyzes the pushed commits, and, when switched on, a push to any other branch is analyzed against the base branch. Each completed analysis becomes a test run holding the pinned and affected tests, named after the pull request or the commit range, with the event's links in the run's note. A push whose head commit is the provider's merge or squash of a pull request is named after both (`main abc1234…def5678 (PR #12: Fix checkout)`), and its note links to the pull request as well as to the compare page, so a run that came from a merged pull request is told apart from one started by two arbitrary commits. The analysis records what started it and appears in the run's history like one started by hand.
 
 ## What the reasons mean
 
