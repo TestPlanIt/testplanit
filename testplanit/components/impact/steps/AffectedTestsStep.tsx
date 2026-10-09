@@ -1,5 +1,6 @@
 "use client";
 
+import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { DataTable } from "@/components/tables/DataTable";
 import type { SortConfig } from "@/components/tables/dataTableShared";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -32,7 +33,6 @@ import type {
   ImpactAnalysisCaseRow,
   ImpactAnalysisResultPayload,
 } from "~/hooks/useImpactAnalysis";
-import { Link } from "~/lib/navigation";
 import type {
   AnalysisWarning,
   CaseTier,
@@ -495,14 +495,16 @@ export function AffectedTestsStep({
         meta: { wrap: true },
         cell: ({ row }) => (
           <div className="min-w-0">
-            <Link
-              href={`/projects/repository/${projectId}/${row.original.caseId}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block truncate text-sm font-medium hover:underline"
-            >
-              {row.original.case.name}
-            </Link>
+            <CaseDisplay
+              id={row.original.caseId}
+              name={row.original.case.name}
+              automated={row.original.case.automated}
+              isDeleted={row.original.case.isDeleted}
+              projectId={projectId}
+              linkTarget="_blank"
+              maxLines={1}
+              className="text-sm font-medium"
+            />
             {row.original.case.folder && (
               <p className="truncate text-xs text-muted-foreground">
                 {row.original.case.folder.name}

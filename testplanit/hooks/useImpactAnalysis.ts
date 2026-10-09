@@ -69,6 +69,7 @@ export interface ImpactAnalysisCaseRow {
     id: number;
     name: string;
     automated: boolean;
+    isDeleted?: boolean;
     folder: { id: number; name: string } | null;
   };
 }
