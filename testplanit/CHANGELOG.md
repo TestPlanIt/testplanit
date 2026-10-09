@@ -1,3 +1,13 @@
+## [1.1.0-beta.41](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.40...v1.1.0-beta.41) (2026-10-09)
+
+### Bug Fixes
+
+* **mcp-server:** keep the tags cases_update sets instead of clearing them ([8b10df1](https://github.com/TestPlanIt/testplanit/commit/8b10df16fd4d6d629ed5c18882d9bbdc1a67a066)), closes [#668](https://github.com/TestPlanIt/testplanit/issues/668)
+
+### Enhancements
+
+* **impact:** name and link the pull request a webhook merge push came from ([5dcef31](https://github.com/TestPlanIt/testplanit/commit/5dcef315b1d44279577ce36a77196e36f533c5e4))
+
 ## [1.1.0-beta.40](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.39...v1.1.0-beta.40) (2026-10-08)
 
 ### Bug Fixes
