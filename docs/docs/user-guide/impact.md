@@ -86,7 +86,7 @@ If the same two commits were analyzed within the last 24 hours, the completed an
 The header counts the selection ("Selected 12 of 40 affected test cases"), and a line under it names the score at which tests start selected. The list is sorted by score, highest first; click the **Test case**, **Score**, or **Affected** header to sort by it, and drag a column edge to resize it. Each row shows:
 
 - a checkbox — pinned and affected rows are checked to start with, related rows are not; the header checkbox checks or clears every row the filters currently show;
-- the test case name, linked to the case;
+- the test case name with its manual or automated icon, linked to the case, as in every other case list;
 - the **Score** (0–100) with a tier badge:
   - **Pinned** — a Code Pin on the case intersects the change. Pins always rank first.
   - **Affected** — the other signals put the case at or above the affected threshold.
