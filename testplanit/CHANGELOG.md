@@ -1,3 +1,13 @@
+## [1.1.0-beta.42](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.41...v1.1.0-beta.42) (2026-10-09)
+
+### Bug Fixes
+
+* **impact:** show affected tests with the standard case display and icon ([e0945f3](https://github.com/TestPlanIt/testplanit/commit/e0945f3915b3c1c53125d0d9eb8ec814ccf4894a))
+
+### Enhancements
+
+* **impact:** let a repository webhook set the minimum score its composed runs take cases from ([01dbea9](https://github.com/TestPlanIt/testplanit/commit/01dbea9f89606efd1e8db6eb17ada8f8f8da6f9f))
+
 ## [1.1.0-beta.41](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.40...v1.1.0-beta.41) (2026-10-09)
 
 ### Bug Fixes
