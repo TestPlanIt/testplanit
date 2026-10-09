@@ -30,7 +30,19 @@ export type CodeChangeEvent =
       deleted: boolean;
       commitCount: number;
       url: string | null;
+      /**
+       * The pull request the pushed head commit merged, read from the
+       * provider's merge or squash commit message. Null when the push was
+       * not a merge the provider made.
+       */
+      pullRequest: MergedPullRequest | null;
     };
+
+export interface MergedPullRequest {
+  number: number;
+  title: string | null;
+  url: string | null;
+}
 
 /** Which subscribed-event key an event falls under. */
 export const CODE_EVENT_PULL_REQUEST = "code:pull_request";
@@ -101,7 +113,107 @@ function shaOrNull(value: unknown): string | null {
   return s && !NULL_SHA.test(s) ? s : null;
 }
 
-function githubLike(eventType: string, data: any): CodeChangeEvent | null {
+const TRAILER_LINE = /^[A-Za-z-]+:\s/;
+
+/**
+ * The pull request a provider-made merge or squash commit names in its
+ * message, in the formats GitHub, Gitea, GitLab, Azure DevOps and Bitbucket
+ * write. The title is the line the provider puts it on: the subject for a
+ * squash, the first body line for a merge commit.
+ */
+export function mergedPullRequestFromMessage(
+  message: string | null | undefined
+): { number: number; title: string | null } | null {
+  if (!message) return null;
+  const lines = message.split(/\r?\n/).map((line) => line.trim());
+  const subject = lines[0] ?? "";
+  const bodyLine =
+    lines
+      .slice(1)
+      .find((line) => line.length > 0 && !TRAILER_LINE.test(line)) ?? null;
+  const title = (value: string | null) => {
+    const t = value?.trim() ?? "";
+    return t.length > 0 ? t : null;
+  };
+  let m: RegExpExecArray | null;
+  if ((m = /^Merge pull request #(\d+) from \S+/.exec(subject))) {
+    return { number: Number(m[1]), title: title(bodyLine) };
+  }
+  if ((m = /^Merge pull request '(.+)' \(#(\d+)\) from /.exec(subject))) {
+    return { number: Number(m[2]), title: title(m[1]) };
+  }
+  if ((m = /^Merged PR (\d+): (.*)$/.exec(subject))) {
+    return { number: Number(m[1]), title: title(m[2]) };
+  }
+  if ((m = /^Merged in .+ \(pull request #(\d+)\)$/.exec(subject))) {
+    return { number: Number(m[1]), title: title(bodyLine) };
+  }
+  if ((m = /^(.*?) \(pull request #(\d+)\)$/.exec(subject))) {
+    return { number: Number(m[2]), title: title(m[1]) };
+  }
+  if ((m = /See merge request \S*?!(\d+)/.exec(message))) {
+    const isMergeCommit = /^Merge branch '.+' into '.+'$/.test(subject);
+    return {
+      number: Number(m[1]),
+      title: title(isMergeCommit ? bodyLine : subject),
+    };
+  }
+  if ((m = /^(.*?) \(#(\d+)\)$/.exec(subject))) {
+    return { number: Number(m[2]), title: title(m[1]) };
+  }
+  return null;
+}
+
+/** `base/path/<number>` under the repository's web URL, or null without one. */
+function pullRequestUrl(
+  repoWebUrl: unknown,
+  path: string,
+  number: number
+): string | null {
+  const base = str(repoWebUrl)
+    ?.replace(/\/+$/, "")
+    .replace(/\.git$/, "");
+  return base ? `${base}/${path}/${number}` : null;
+}
+
+function mergedPullRequest(
+  message: unknown,
+  repoWebUrl: unknown,
+  path: string
+): MergedPullRequest | null {
+  const found = mergedPullRequestFromMessage(str(message));
+  if (!found) return null;
+  return { ...found, url: pullRequestUrl(repoWebUrl, path, found.number) };
+}
+
+/**
+ * The message of the pushed head commit out of a payload's commit list: the
+ * commit whose id is the push's `after`, else the list's newest end.
+ */
+function headCommitMessage(
+  commits: unknown,
+  idKey: string,
+  headSha: string | null,
+  messageKey: string,
+  newest: "first" | "last"
+): string | null {
+  if (!Array.isArray(commits) || commits.length === 0) return null;
+  const head =
+    (headSha &&
+      commits.find(
+        (c: any) =>
+          typeof c?.[idKey] === "string" &&
+          (c[idKey] === headSha || headSha.startsWith(c[idKey]))
+      )) ??
+    (newest === "first" ? commits[0] : commits[commits.length - 1]);
+  return str(head?.[messageKey]);
+}
+
+function githubLike(
+  provider: "GITHUB" | "GITEA",
+  eventType: string,
+  data: any
+): CodeChangeEvent | null {
   if (eventType === "pull_request") {
     const pr = data?.pull_request;
     const number = num(data?.number ?? pr?.number);
@@ -130,6 +242,11 @@ function githubLike(eventType: string, data: any): CodeChangeEvent | null {
       deleted: data?.deleted === true || after === null,
       commitCount: Array.isArray(data?.commits) ? data.commits.length : 0,
       url: str(data?.compare) ?? str(data?.compare_url),
+      pullRequest: mergedPullRequest(
+        data?.head_commit?.message,
+        data?.repository?.html_url,
+        provider === "GITEA" ? "pulls" : "pull"
+      ),
     };
   }
   return null;
@@ -177,6 +294,11 @@ function gitlab(eventType: string, data: any): CodeChangeEvent | null {
         num(data?.total_commits_count) ??
         (Array.isArray(data?.commits) ? data.commits.length : 0),
       url: null,
+      pullRequest: mergedPullRequest(
+        headCommitMessage(data?.commits, "id", after, "message", "last"),
+        data?.project?.web_url,
+        "-/merge_requests"
+      ),
     };
   }
   return null;
@@ -226,6 +348,17 @@ function azureDevops(eventType: string, data: any): CodeChangeEvent | null {
         ? resource.commits.length
         : 0,
       url: str(resource?._links?.web?.href) ?? str(resource?.url),
+      pullRequest: mergedPullRequest(
+        headCommitMessage(
+          resource?.commits,
+          "commitId",
+          after,
+          "comment",
+          "first"
+        ),
+        resource?.repository?.remoteUrl ?? resource?.repository?.webUrl,
+        "pullrequest"
+      ),
     };
   }
   return null;
@@ -273,6 +406,18 @@ function bitbucket(eventType: string, data: any): CodeChangeEvent | null {
       deleted: change.closed === true || !newRef,
       commitCount: Array.isArray(change.commits) ? change.commits.length : 0,
       url: str(change.links?.html?.href),
+      pullRequest: mergedPullRequest(
+        newRef?.target?.message ??
+          headCommitMessage(
+            change.commits,
+            "hash",
+            newRef?.target?.hash,
+            "message",
+            "first"
+          ),
+        data?.repository?.links?.html?.href,
+        "pull-requests"
+      ),
     };
   }
   return null;
@@ -290,8 +435,9 @@ export function extractCodeChangeEvent(
 ): CodeChangeEvent | null {
   switch (adapterType) {
     case "GITHUB":
+      return githubLike("GITHUB", eventType, data);
     case "GITEA":
-      return githubLike(eventType, data);
+      return githubLike("GITEA", eventType, data);
     case "GITLAB":
       return gitlab(eventType, data);
     case "AZURE_DEVOPS":
@@ -308,7 +454,42 @@ export function describeCodeChangeEvent(event: CodeChangeEvent): string {
   if (event.kind === "pull_request") {
     return `PR #${event.number}: ${event.title}`;
   }
+  const range = describePushRange(event);
+  return event.pullRequest
+    ? `${range} (${describeMergedPullRequest(event.pullRequest)})`
+    : range;
+}
+
+function describePushRange(
+  event: Extract<CodeChangeEvent, { kind: "push" }>
+): string {
   const from = event.before ? event.before.slice(0, 7) : "start";
   const to = event.after ? event.after.slice(0, 7) : "";
   return `${event.branch ?? "push"} ${from}…${to}`;
+}
+
+/** "PR #12: Fix checkout", or "PR #12" when the message carried no title. */
+export function describeMergedPullRequest(pr: MergedPullRequest): string {
+  return pr.title ? `PR #${pr.number}: ${pr.title}` : `PR #${pr.number}`;
+}
+
+/**
+ * The links an event leaves on what it starts: the pull request for a pull
+ * request event; for a push, the provider's compare page and, when the head
+ * commit merged a pull request, that pull request too.
+ */
+export function codeChangeEventLinks(
+  event: CodeChangeEvent
+): { label: string; url: string | null }[] {
+  if (event.kind === "pull_request") {
+    return [{ label: describeCodeChangeEvent(event), url: event.url }];
+  }
+  const links = [{ label: describePushRange(event), url: event.url }];
+  if (event.pullRequest) {
+    links.push({
+      label: describeMergedPullRequest(event.pullRequest),
+      url: event.pullRequest.url,
+    });
+  }
+  return links;
 }

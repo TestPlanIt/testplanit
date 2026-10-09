@@ -62,9 +62,27 @@ describe("createRunFromAnalysis", () => {
       select: { id: true },
     });
     const note = db.testRuns.create.mock.calls[0][0].data.note;
-    expect(JSON.stringify(note)).toContain(
-      "https://github.com/acme/app/pull/12"
-    );
+    expect(note).toEqual({
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [
+            { type: "text", text: "PR #12: Fix checkout — " },
+            {
+              type: "text",
+              text: "https://github.com/acme/app/pull/12",
+              marks: [
+                {
+                  type: "link",
+                  attrs: { href: "https://github.com/acme/app/pull/12" },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
     expect(db.impactAnalysis.update).toHaveBeenCalledWith({
       where: { id: 77 },
       data: { testRunId: 300 },
@@ -81,6 +99,53 @@ describe("createRunFromAnalysis", () => {
     expect(db.webhookDelivery.update).toHaveBeenLastCalledWith({
       where: { id: "del-1" },
       data: { subjectRef: "run:300", error: null },
+    });
+  });
+
+  it("writes one linked paragraph per event link, so a merge push names its pull request", async () => {
+    const db = makeDb(analysis);
+    await createRunFromAnalysis(db, 77, {
+      trigger: "push",
+      label: "main aaaaaaa…bbbbbbb (PR #12: Fix checkout)",
+      url: "https://github.com/acme/app/pull/12",
+      links: [
+        {
+          label: "main aaaaaaa…bbbbbbb",
+          url: "https://github.com/acme/app/compare/a...b",
+        },
+        {
+          label: "PR #12: Fix checkout",
+          url: "https://github.com/acme/app/pull/12",
+        },
+      ],
+    });
+    const { name, note } = db.testRuns.create.mock.calls[0][0].data;
+    expect(name).toBe("main aaaaaaa…bbbbbbb (PR #12: Fix checkout)");
+    expect(note.content).toHaveLength(2);
+    expect(note.content[0].content[1]).toEqual({
+      type: "text",
+      text: "https://github.com/acme/app/compare/a...b",
+      marks: [
+        {
+          type: "link",
+          attrs: { href: "https://github.com/acme/app/compare/a...b" },
+        },
+      ],
+    });
+    expect(note.content[1].content[0].text).toBe("PR #12: Fix checkout — ");
+    expect(note.content[1].content[1].marks[0].attrs.href).toBe(
+      "https://github.com/acme/app/pull/12"
+    );
+  });
+
+  it("writes the label alone when the event had no link", async () => {
+    const db = makeDb(analysis);
+    await createRunFromAnalysis(db, 77, { trigger: "push", label: "main a…b" });
+    expect(db.testRuns.create.mock.calls[0][0].data.note).toEqual({
+      type: "doc",
+      content: [
+        { type: "paragraph", content: [{ type: "text", text: "main a…b" }] },
+      ],
     });
   });
 

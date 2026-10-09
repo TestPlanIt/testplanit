@@ -23,13 +23,31 @@ export type AutoRunResult =
 
 const RUN_NAME_MAX = 200;
 
+/**
+ * The run's note: one paragraph per link the event left, the label as text
+ * and the URL as a link mark, so the run shows where it came from and the
+ * reader can get there.
+ */
 function runNote(autoRun: ImpactAutoRun) {
-  const text = autoRun.url
-    ? `${autoRun.label} — ${autoRun.url}`
-    : autoRun.label;
+  const links =
+    autoRun.links && autoRun.links.length > 0
+      ? autoRun.links
+      : [{ label: autoRun.label, url: autoRun.url ?? null }];
   return {
     type: "doc",
-    content: [{ type: "paragraph", content: [{ type: "text", text }] }],
+    content: links.map(({ label, url }) => ({
+      type: "paragraph",
+      content: url
+        ? [
+            { type: "text", text: `${label} — ` },
+            {
+              type: "text",
+              text: url,
+              marks: [{ type: "link", attrs: { href: url } }],
+            },
+          ]
+        : [{ type: "text", text: label }],
+    })),
   };
 }
 

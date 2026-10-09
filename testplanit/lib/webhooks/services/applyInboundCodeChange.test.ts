@@ -170,6 +170,45 @@ describe("applyInboundCodeChange", () => {
     );
   });
 
+  it("names and links the pull request a push to the base branch merged", async () => {
+    const result = await applyInboundCodeChange(
+      makeInput("push", {
+        ...pushPayload("main"),
+        compare: "https://github.com/acme/app/compare/a...b",
+        repository: { html_url: "https://github.com/acme/app" },
+        head_commit: {
+          message: "Merge pull request #12 from acme/feature\n\nFix checkout",
+        },
+      })
+    );
+    expect(result.outcome).toBe("queued");
+    expect(startImpactAnalysis).toHaveBeenCalledWith(
+      db,
+      expect.anything(),
+      expect.anything(),
+      expect.objectContaining({
+        trigger: "push",
+        triggerLabel: "main aaaaaaa…bbbbbbb (PR #12: Fix checkout)",
+        triggerUrl: "https://github.com/acme/app/pull/12",
+        notes:
+          "main aaaaaaa…bbbbbbb\nhttps://github.com/acme/app/compare/a...b\nPR #12: Fix checkout\nhttps://github.com/acme/app/pull/12",
+        autoRun: expect.objectContaining({
+          label: "main aaaaaaa…bbbbbbb (PR #12: Fix checkout)",
+          links: [
+            {
+              label: "main aaaaaaa…bbbbbbb",
+              url: "https://github.com/acme/app/compare/a...b",
+            },
+            {
+              label: "PR #12: Fix checkout",
+              url: "https://github.com/acme/app/pull/12",
+            },
+          ],
+        }),
+      })
+    );
+  });
+
   it("compares before with after for a push to the connection's branch", async () => {
     const result = await applyInboundCodeChange(
       makeInput("push", pushPayload("main"))
