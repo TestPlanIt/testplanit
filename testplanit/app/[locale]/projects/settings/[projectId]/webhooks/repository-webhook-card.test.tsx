@@ -100,6 +100,7 @@ const hook = {
   autoExecuteTargetId: null,
   autoExecuteRef: null,
   autoExecuteInputs: {},
+  autoRunMinScore: null,
   endpointHealth: "HEALTHY" as const,
   lastReceivedAt: null,
   codeRepositoryConfig: {
@@ -172,6 +173,54 @@ describe("RepositoryWebhookCard", () => {
         projectId: 42,
         webhookConfigId: "whc-1",
         baseBranch: "develop",
+      })
+    );
+  });
+
+  it("saves a minimum score, clears it when emptied, and refuses one outside 0–100", async () => {
+    mockUpdateEvents.mockResolvedValue({ success: true });
+    const { rerender } = render(
+      <RepositoryWebhookCard projectId={42} hook={hook} onChanged={onChanged} />
+    );
+    expect(
+      screen.queryByTestId("webhook-repository-min-score-save")
+    ).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByTestId("webhook-repository-min-score"), {
+      target: { value: "70" },
+    });
+    fireEvent.click(screen.getByTestId("webhook-repository-min-score-save"));
+    await waitFor(() =>
+      expect(mockUpdateEvents).toHaveBeenCalledWith({
+        projectId: 42,
+        webhookConfigId: "whc-1",
+        autoRunMinScore: 70,
+      })
+    );
+
+    fireEvent.change(screen.getByTestId("webhook-repository-min-score"), {
+      target: { value: "101" },
+    });
+    fireEvent.click(screen.getByTestId("webhook-repository-min-score-save"));
+    expect(mockToastError).toHaveBeenCalledWith("codeRepos.minScoreInvalid");
+    expect(mockUpdateEvents).toHaveBeenCalledTimes(1);
+
+    rerender(
+      <RepositoryWebhookCard
+        projectId={42}
+        hook={{ ...hook, autoRunMinScore: 70 }}
+        onChanged={onChanged}
+      />
+    );
+    fireEvent.change(screen.getByTestId("webhook-repository-min-score"), {
+      target: { value: "" },
+    });
+    fireEvent.click(screen.getByTestId("webhook-repository-min-score-save"));
+    await waitFor(() =>
+      expect(mockUpdateEvents).toHaveBeenLastCalledWith({
+        projectId: 42,
+        webhookConfigId: "whc-1",
+        autoRunMinScore: null,
       })
     );
   });

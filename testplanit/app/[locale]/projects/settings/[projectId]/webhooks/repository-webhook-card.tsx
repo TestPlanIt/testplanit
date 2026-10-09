@@ -73,6 +73,8 @@ export interface RepositoryWebhookRow {
   autoExecuteTargetId: number | null;
   autoExecuteRef: string | null;
   autoExecuteInputs: unknown;
+  /** Score the composed run takes cases from; null = the pinned and affected tiers. */
+  autoRunMinScore: number | null;
   endpointHealth: EndpointHealth;
   lastReceivedAt: Date | string | null;
   codeRepositoryConfig: {
@@ -108,6 +110,7 @@ export function RepositoryWebhookCard({
   const tActions = useTranslations("common.actions");
   const tCommon = useTranslations("common");
   const tAutomation = useTranslations("automation.settings");
+  const tImpact = useTranslations("runs.impact.affected");
   const { data: session } = useSession();
   const preferences = session?.user?.preferences;
   const dateTimeFormat = preferences?.dateFormat
@@ -119,6 +122,9 @@ export function RepositoryWebhookCard({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [baseBranchDraft, setBaseBranchDraft] = useState(hook.baseBranch ?? "");
+  const [minScoreDraft, setMinScoreDraft] = useState(
+    hook.autoRunMinScore === null ? "" : String(hook.autoRunMinScore)
+  );
   const [testPending, setTestPending] = useState(false);
   const [testResult, setTestResult] = useState<SendTestWebhookResult | null>(
     null
@@ -134,6 +140,9 @@ export function RepositoryWebhookCard({
   const effectiveBranch =
     baseBranchDraft.trim() || hook.baseBranch || connection.branch || null;
   const baseBranchDirty = baseBranchDraft.trim() !== (hook.baseBranch ?? "");
+  const minScoreDirty =
+    minScoreDraft.trim() !==
+    (hook.autoRunMinScore === null ? "" : String(hook.autoRunMinScore));
   const setupKey = REPOSITORY_SETUP_KEY[hook.adapterType];
 
   async function copy(value: string, message: string) {
@@ -166,6 +175,28 @@ export function RepositoryWebhookCard({
       projectId,
       webhookConfigId: hook.id,
       baseBranch: baseBranchDraft.trim() || null,
+    });
+    if (!result.success) {
+      toast.error(result.error ?? t("saveError"));
+      return;
+    }
+    await onChanged();
+  }
+
+  async function saveMinScore() {
+    const trimmed = minScoreDraft.trim();
+    const parsed = trimmed === "" ? null : Number(trimmed);
+    if (
+      parsed !== null &&
+      (!Number.isInteger(parsed) || parsed < 0 || parsed > 100)
+    ) {
+      toast.error(t("codeRepos.minScoreInvalid"));
+      return;
+    }
+    const result = await updateCodeRepositoryWebhookEvents({
+      projectId,
+      webhookConfigId: hook.id,
+      autoRunMinScore: parsed,
     });
     if (!result.success) {
       toast.error(result.error ?? t("saveError"));
@@ -409,6 +440,42 @@ export function RepositoryWebhookCard({
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {t("codeRepos.baseBranchHelp")}
+                </p>
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor={`webhook-repository-min-score-${hook.id}`}>
+                  {tImpact("minScore")}
+                </Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id={`webhook-repository-min-score-${hook.id}`}
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    max={100}
+                    step={1}
+                    className="w-28"
+                    data-testid="webhook-repository-min-score"
+                    value={minScoreDraft}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setMinScoreDraft(e.target.value)
+                    }
+                    placeholder={tCommon("fields.default")}
+                  />
+                  {minScoreDirty && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => void saveMinScore()}
+                      data-testid="webhook-repository-min-score-save"
+                    >
+                      <Save className="h-4 w-4" />
+                      <span>{tActions("save")}</span>
+                    </Button>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {t("codeRepos.minScoreHelp")}
                 </p>
               </div>
               <Label className="flex items-start gap-3">

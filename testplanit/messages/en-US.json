@@ -1863,6 +1863,8 @@
           "eventBranchPushHelp": "Analyze every push to any other branch against the base branch, like a pull request, and compose a run for each.",
           "baseBranch": "Base branch",
           "baseBranchHelp": "Pushes to this branch are analyzed on their own; pull requests and other branches are compared against it. Leave empty to use the connection's branch.",
+          "minScoreHelp": "Each composed run takes every test case the analysis scores at least this (0–100). Leave empty to take the pinned and affected tests, as a run started by hand does.",
+          "minScoreInvalid": "Enter a whole number from 0 to 100, or leave it empty",
           "autoExecute": "Execute automated cases",
           "autoExecuteHelp": "After the run is composed, request automated execution of its automated cases on this target. Manual cases stay in the run for testers.",
           "autoExecuteNoTargets": "No execution target is configured for this project. <link>Add one</link> to execute runs automatically.",

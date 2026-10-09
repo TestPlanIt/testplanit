@@ -2064,23 +2064,48 @@ function normalizeBranch(branch: string | null | undefined): string | null {
   return trimmed.length > 0 ? trimmed.slice(0, 255) : null;
 }
 
+/** A webhook's minimum score: a whole number from 0 to 100, or null for the default tiers. */
+function normalizeMinScore(
+  value: number | null | undefined
+): number | null | "invalid" {
+  if (value === null || value === undefined) return null;
+  if (!Number.isInteger(value) || value < 0 || value > 100) return "invalid";
+  return value;
+}
+
 /**
- * Change which events a repository webhook handles and which branch its
- * pushes compare against. A field left out stays as it is.
+ * Change which events a repository webhook handles, which branch its pushes
+ * compare against, and the minimum score its composed runs take cases from.
+ * A field left out stays as it is.
  */
 export async function updateCodeRepositoryWebhookEvents(input: {
   projectId: number;
   webhookConfigId: string;
   subscribedEvents?: string[];
   baseBranch?: string | null;
+  autoRunMinScore?: number | null;
 }): Promise<{ success: boolean; error?: string }> {
   const { projectId, webhookConfigId } = input;
-  const data: { subscribedEvents?: string[]; baseBranch?: string | null } = {};
+  const data: {
+    subscribedEvents?: string[];
+    baseBranch?: string | null;
+    autoRunMinScore?: number | null;
+  } = {};
   if (input.subscribedEvents) {
     data.subscribedEvents = filterCodeEvents(input.subscribedEvents);
   }
   if ("baseBranch" in input) {
     data.baseBranch = normalizeBranch(input.baseBranch);
+  }
+  if ("autoRunMinScore" in input) {
+    const minScore = normalizeMinScore(input.autoRunMinScore);
+    if (minScore === "invalid") {
+      return {
+        success: false,
+        error: "Minimum score must be a whole number from 0 to 100",
+      };
+    }
+    data.autoRunMinScore = minScore;
   }
   const session = await getServerAuthSession();
   if (!session?.user) {

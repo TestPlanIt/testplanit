@@ -2562,6 +2562,41 @@ describe("webhook-config server actions", () => {
       });
     });
 
+    it("stores the minimum score, clears it with null, and rejects anything outside 0–100", async () => {
+      mockWebhookConfigUpdateMany.mockResolvedValue({ count: 1 });
+
+      await updateCodeRepositoryWebhookEvents({
+        projectId: 42,
+        webhookConfigId: "whc-1",
+        autoRunMinScore: 70,
+      });
+      expect(mockWebhookConfigUpdateMany.mock.calls[0][0].data).toEqual({
+        autoRunMinScore: 70,
+      });
+
+      await updateCodeRepositoryWebhookEvents({
+        projectId: 42,
+        webhookConfigId: "whc-1",
+        autoRunMinScore: null,
+      });
+      expect(mockWebhookConfigUpdateMany.mock.calls[1][0].data).toEqual({
+        autoRunMinScore: null,
+      });
+
+      for (const bad of [101, -1, 12.5, Number.NaN]) {
+        const result = await updateCodeRepositoryWebhookEvents({
+          projectId: 42,
+          webhookConfigId: "whc-1",
+          autoRunMinScore: bad,
+        });
+        expect(result).toEqual({
+          success: false,
+          error: "Minimum score must be a whole number from 0 to 100",
+        });
+      }
+      expect(mockWebhookConfigUpdateMany).toHaveBeenCalledTimes(2);
+    });
+
     it("reports a webhook that is not one of the project's repository webhooks", async () => {
       mockWebhookConfigUpdateMany.mockResolvedValueOnce({ count: 0 });
 

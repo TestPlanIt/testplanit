@@ -263,6 +263,7 @@ describe("POST /api/webhooks/[token]", () => {
       codeRepositoryConfigId: 9,
       subscribedEvents: ["code:pull_request"],
       baseBranch: "develop",
+      autoRunMinScore: 70,
     });
     const payload = {
       eventType: "pull_request",
@@ -293,6 +294,7 @@ describe("POST /api/webhooks/[token]", () => {
       codeRepositoryConfigId: 9,
       subscribedEvents: ["code:pull_request"],
       baseBranch: "develop",
+      autoRunMinScore: 70,
       adapterType: "GITHUB",
       eventType: "pull_request",
       payload,

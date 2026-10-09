@@ -5796,6 +5796,9 @@ model WebhookConfig {
     autoExecuteTargetId     Int?
     autoExecuteRef          String?
     autoExecuteInputs       Json                         @default("{}")
+    // Repository webhook only: the composed run takes every case scoring at
+    // least this (0-100); empty = the pinned and affected tiers.
+    autoRunMinScore         Int?
     endpointHealth          EndpointHealth               @default(HEALTHY)
     url                     String?
     name                    String?

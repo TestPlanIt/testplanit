@@ -149,6 +149,36 @@ describe("createRunFromAnalysis", () => {
     });
   });
 
+  it("takes every suggested case at or above the webhook's minimum score instead of the tiers", async () => {
+    const db = makeDb(analysis);
+
+    const result = await createRunFromAnalysis(db, 77, {
+      ...autoRun,
+      minScore: 70,
+    });
+
+    expect(result).toEqual({ created: true, testRunId: 300, caseCount: 2 });
+    expect(db.impactAnalysis.findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({
+        select: expect.objectContaining({
+          cases: expect.objectContaining({
+            where: { suggested: true, score: { gte: 70 } },
+          }),
+        }),
+      })
+    );
+  });
+
+  it("keeps the pinned and affected tiers when the webhook leaves the minimum score empty", async () => {
+    const db = makeDb(analysis);
+
+    await createRunFromAnalysis(db, 77, { ...autoRun, minScore: null });
+
+    expect(
+      db.impactAnalysis.findUnique.mock.calls[0][0].select.cases.where
+    ).toEqual({ suggested: true, tier: { in: ["pinned", "affected"] } });
+  });
+
   it("makes no run when the analysis found no affected cases, and says so on the delivery", async () => {
     const db = makeDb({ ...analysis, cases: [] });
 

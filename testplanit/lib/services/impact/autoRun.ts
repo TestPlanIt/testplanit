@@ -51,13 +51,23 @@ function runNote(autoRun: ImpactAutoRun) {
   };
 }
 
+/** Which of the analysis's suggestions the run takes: the webhook's minimum score, else the pinned and affected tiers. */
+function suggestionFilter(autoRun: ImpactAutoRun) {
+  const minScore = autoRun.minScore;
+  if (typeof minScore === "number" && Number.isFinite(minScore)) {
+    return { suggested: true, score: { gte: minScore } };
+  }
+  return { suggested: true, tier: { in: ["pinned", "affected"] } };
+}
+
 /**
  * Compose the test run a repository webhook asked for: every case the
- * completed analysis put in the pinned or affected tier, in score order,
- * under the project's default run workflow state, created by the project's
- * creator. The analysis is linked to the run and its suggestions marked
- * accepted, exactly as the dialog records a reviewer's acceptance. With no
- * affected cases no run is made; the delivery says so.
+ * completed analysis put in the pinned or affected tier, or, when the
+ * webhook sets a minimum score, every case scoring at least that, in score
+ * order, under the project's default run workflow state, created by the
+ * project's creator. The analysis is linked to the run and its suggestions
+ * marked accepted, exactly as the dialog records a reviewer's acceptance.
+ * With no affected cases no run is made; the delivery says so.
  */
 export async function createRunFromAnalysis(
   db: AutoRunDb,
@@ -82,7 +92,7 @@ export async function createRunFromAnalysis(
       testRunId: true,
       project: { select: { createdBy: true } },
       cases: {
-        where: { suggested: true, tier: { in: ["pinned", "affected"] } },
+        where: suggestionFilter(autoRun),
         orderBy: [{ score: "desc" }, { caseId: "asc" }],
         select: { caseId: true },
       },

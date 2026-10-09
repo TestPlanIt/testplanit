@@ -23,6 +23,8 @@ export interface ApplyInboundCodeChangeInput {
   subscribedEvents: string[];
   /** Branch pushes compare against; null = the connection's branch. */
   baseBranch: string | null;
+  /** Score the composed run takes cases from; null = the pinned and affected tiers. */
+  autoRunMinScore?: number | null;
   adapterType: AdapterType;
   eventType: string;
   payload: ParsedWebhookPayload;
@@ -231,6 +233,7 @@ export async function applyInboundCodeChange(
           links,
           deliveryId,
           webhookConfigId,
+          minScore: input.autoRunMinScore ?? null,
         },
       }
     );
