@@ -36,6 +36,7 @@ vi.mock("~/lib/db", () => ({
     userIntegrationAuth: {
       findFirst: (...args: unknown[]) =>
         mockUserIntegrationAuthFindFirst(...args),
+    },
     executionTarget: {
       findFirst: (...args: unknown[]) => mockExecutionTargetFindFirst(...args),
     },
