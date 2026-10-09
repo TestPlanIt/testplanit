@@ -273,6 +273,11 @@ export interface ImpactAutoRun {
   deliveryId?: string;
   /** The repository webhook whose auto-execute setting applies to the run. */
   webhookConfigId?: string;
+  /**
+   * The webhook's minimum score (0-100): the run takes every suggested case
+   * scoring at least this. Unset (or null) = the pinned and affected tiers.
+   */
+  minScore?: number | null;
 }
 
 export interface ImpactAnalysisJobData {

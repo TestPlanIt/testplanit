@@ -209,6 +209,31 @@ describe("applyInboundCodeChange", () => {
     );
   });
 
+  it("hands the webhook's minimum score to the run the analysis composes", async () => {
+    await applyInboundCodeChange({
+      ...makeInput("pull_request", prPayload),
+      autoRunMinScore: 70,
+    });
+    expect(startImpactAnalysis).toHaveBeenLastCalledWith(
+      db,
+      expect.anything(),
+      expect.anything(),
+      expect.objectContaining({
+        autoRun: expect.objectContaining({ minScore: 70 }),
+      })
+    );
+
+    await applyInboundCodeChange(makeInput("pull_request", prPayload));
+    expect(startImpactAnalysis).toHaveBeenLastCalledWith(
+      db,
+      expect.anything(),
+      expect.anything(),
+      expect.objectContaining({
+        autoRun: expect.objectContaining({ minScore: null }),
+      })
+    );
+  });
+
   it("compares before with after for a push to the connection's branch", async () => {
     const result = await applyInboundCodeChange(
       makeInput("push", pushPayload("main"))

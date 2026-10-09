@@ -101,6 +101,7 @@ interface InboundConfig {
   autoExecuteTargetId: number | null;
   autoExecuteRef: string | null;
   autoExecuteInputs: unknown;
+  autoRunMinScore: number | null;
   codeRepositoryConfigId: number | null;
   codeRepositoryConfig: RepositoryWebhookRow["codeRepositoryConfig"] | null;
 }
@@ -168,6 +169,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
       autoExecuteTargetId: true,
       autoExecuteRef: true,
       autoExecuteInputs: true,
+      autoRunMinScore: true,
       codeRepositoryConfigId: true,
       codeRepositoryConfig: {
         select: {
@@ -734,6 +736,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
             autoExecuteTargetId: config.autoExecuteTargetId,
             autoExecuteRef: config.autoExecuteRef,
             autoExecuteInputs: config.autoExecuteInputs,
+            autoRunMinScore: config.autoRunMinScore ?? null,
             endpointHealth: config.endpointHealth,
             lastReceivedAt: config.lastReceivedAt,
             codeRepositoryConfig: config.codeRepositoryConfig,

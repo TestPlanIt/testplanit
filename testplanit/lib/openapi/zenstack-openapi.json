@@ -1091264,6 +1091264,16 @@
             ]
           },
           "autoExecuteInputs": {},
+          "autoRunMinScore": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
           "endpointHealth": {
             "$ref": "#/components/schemas/EndpointHealth"
           },
@@ -1091445,6 +1091455,9 @@
             "type": "boolean"
           },
           "autoExecuteInputs": {
+            "type": "boolean"
+          },
+          "autoRunMinScore": {
             "type": "boolean"
           },
           "endpointHealth": {
@@ -1091826,6 +1091839,19 @@
           "autoExecuteInputs": {
             "$ref": "#/components/schemas/JsonFilter"
           },
+          "autoRunMinScore": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntNullableFilter"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "endpointHealth": {
             "oneOf": [
               {
@@ -1092156,6 +1092182,19 @@
           "autoExecuteInputs": {
             "$ref": "#/components/schemas/JsonFilter"
           },
+          "autoRunMinScore": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntNullableFilter"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "endpointHealth": {
             "oneOf": [
               {
@@ -1092477,6 +1092516,19 @@
           "autoExecuteInputs": {
             "$ref": "#/components/schemas/JsonFilter"
           },
+          "autoRunMinScore": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntNullableFilter"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "endpointHealth": {
             "oneOf": [
               {
@@ -1092789,6 +1092841,19 @@
           "autoExecuteInputs": {
             "$ref": "#/components/schemas/JsonWithAggregatesFilter"
           },
+          "autoRunMinScore": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntNullableWithAggregatesFilter"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "endpointHealth": {
             "oneOf": [
               {
@@ -1093054,6 +1093119,16 @@
           "autoExecuteInputs": {
             "$ref": "#/components/schemas/SortOrder"
           },
+          "autoRunMinScore": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SortOrder"
+              },
+              {
+                "$ref": "#/components/schemas/SortOrderInput"
+              }
+            ]
+          },
           "endpointHealth": {
             "$ref": "#/components/schemas/SortOrder"
           },
@@ -1093163,6 +1093238,7 @@
           "autoExecuteTargetId",
           "autoExecuteRef",
           "autoExecuteInputs",
+          "autoRunMinScore",
           "endpointHealth",
           "url",
           "name",
@@ -1093261,6 +1093337,9 @@
           "autoExecuteInputs": {
             "type": "boolean"
           },
+          "autoRunMinScore": {
+            "type": "boolean"
+          },
           "endpointHealth": {
             "type": "boolean"
           },
@@ -1093344,6 +1093423,9 @@
           "autoExecuteInputs": {
             "type": "integer"
           },
+          "autoRunMinScore": {
+            "type": "integer"
+          },
           "endpointHealth": {
             "type": "integer"
           },
@@ -1093394,6 +1093476,7 @@
           "autoExecuteTargetId",
           "autoExecuteRef",
           "autoExecuteInputs",
+          "autoRunMinScore",
           "endpointHealth",
           "url",
           "name",
@@ -1093447,6 +1093530,9 @@
             "type": "boolean"
           },
           "autoExecuteRef": {
+            "type": "boolean"
+          },
+          "autoRunMinScore": {
             "type": "boolean"
           },
           "endpointHealth": {
@@ -1093614,6 +1093700,16 @@
               }
             ]
           },
+          "autoRunMinScore": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
           "endpointHealth": {
             "oneOf": [
               {
@@ -1093762,6 +1093858,9 @@
             "type": "boolean"
           },
           "autoExecuteRef": {
+            "type": "boolean"
+          },
+          "autoRunMinScore": {
             "type": "boolean"
           },
           "endpointHealth": {
@@ -1093929,6 +1094028,16 @@
               }
             ]
           },
+          "autoRunMinScore": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
           "endpointHealth": {
             "oneOf": [
               {
@@ -1094049,6 +1094158,9 @@
           "autoExecuteTargetId": {
             "type": "boolean"
           },
+          "autoRunMinScore": {
+            "type": "boolean"
+          },
           "consecutiveFailureCount": {
             "type": "boolean"
           }
@@ -1094064,6 +1094176,9 @@
             "type": "boolean"
           },
           "autoExecuteTargetId": {
+            "type": "boolean"
+          },
+          "autoRunMinScore": {
             "type": "boolean"
           },
           "consecutiveFailureCount": {
@@ -1094095,6 +1094210,16 @@
             ]
           },
           "autoExecuteTargetId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "autoRunMinScore": {
             "oneOf": [
               {
                 "type": "null"
@@ -1094140,6 +1094265,16 @@
             ]
           },
           "autoExecuteTargetId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          },
+          "autoRunMinScore": {
             "oneOf": [
               {
                 "type": "null"
@@ -1094307,6 +1094442,16 @@
             ]
           },
           "autoExecuteInputs": {},
+          "autoRunMinScore": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
           "endpointHealth": {
             "$ref": "#/components/schemas/EndpointHealth"
           },
@@ -1094535,6 +1094680,16 @@
                 "$ref": "#/components/schemas/JsonNullValueInput"
               },
               {}
+            ]
+          },
+          "autoRunMinScore": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
             ]
           },
           "endpointHealth": {
@@ -1094783,6 +1094938,19 @@
                 "$ref": "#/components/schemas/JsonNullValueInput"
               },
               {}
+            ]
+          },
+          "autoRunMinScore": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "endpointHealth": {
@@ -1095072,6 +1095240,19 @@
               {}
             ]
           },
+          "autoRunMinScore": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "endpointHealth": {
             "oneOf": [
               {
@@ -1095296,6 +1095477,16 @@
               {}
             ]
           },
+          "autoRunMinScore": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
           "endpointHealth": {
             "$ref": "#/components/schemas/EndpointHealth"
           },
@@ -1095466,6 +1095657,16 @@
                 "$ref": "#/components/schemas/JsonNullValueInput"
               },
               {}
+            ]
+          },
+          "autoRunMinScore": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
             ]
           },
           "endpointHealth": {
@@ -1095659,6 +1095860,16 @@
                 "$ref": "#/components/schemas/JsonNullValueInput"
               },
               {}
+            ]
+          },
+          "autoRunMinScore": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
             ]
           },
           "endpointHealth": {
@@ -1095900,6 +1096111,19 @@
                 "$ref": "#/components/schemas/JsonNullValueInput"
               },
               {}
+            ]
+          },
+          "autoRunMinScore": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "endpointHealth": {
@@ -1096199,6 +1096423,19 @@
               {}
             ]
           },
+          "autoRunMinScore": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "endpointHealth": {
             "oneOf": [
               {
@@ -1096449,6 +1096686,16 @@
                 "$ref": "#/components/schemas/JsonNullValueInput"
               },
               {}
+            ]
+          },
+          "autoRunMinScore": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
             ]
           },
           "endpointHealth": {
@@ -1096907,6 +1097154,19 @@
                 "$ref": "#/components/schemas/JsonNullValueInput"
               },
               {}
+            ]
+          },
+          "autoRunMinScore": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "endpointHealth": {
@@ -1097414,6 +1097674,16 @@
               {}
             ]
           },
+          "autoRunMinScore": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
           "endpointHealth": {
             "$ref": "#/components/schemas/EndpointHealth"
           },
@@ -1097599,6 +1097869,16 @@
                 "$ref": "#/components/schemas/JsonNullValueInput"
               },
               {}
+            ]
+          },
+          "autoRunMinScore": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
             ]
           },
           "endpointHealth": {
@@ -1097841,6 +1098121,19 @@
                 "$ref": "#/components/schemas/JsonNullValueInput"
               },
               {}
+            ]
+          },
+          "autoRunMinScore": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "endpointHealth": {
@@ -1098137,6 +1098430,19 @@
               {}
             ]
           },
+          "autoRunMinScore": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "endpointHealth": {
             "oneOf": [
               {
@@ -1098380,6 +1098686,16 @@
                 "$ref": "#/components/schemas/JsonNullValueInput"
               },
               {}
+            ]
+          },
+          "autoRunMinScore": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
             ]
           },
           "endpointHealth": {
@@ -1098836,6 +1099152,19 @@
                 "$ref": "#/components/schemas/JsonNullValueInput"
               },
               {}
+            ]
+          },
+          "autoRunMinScore": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "endpointHealth": {
@@ -1099343,6 +1099672,16 @@
               {}
             ]
           },
+          "autoRunMinScore": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
           "endpointHealth": {
             "$ref": "#/components/schemas/EndpointHealth"
           },
@@ -1099538,6 +1099877,16 @@
                 "$ref": "#/components/schemas/JsonNullValueInput"
               },
               {}
+            ]
+          },
+          "autoRunMinScore": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
             ]
           },
           "endpointHealth": {
@@ -1099777,6 +1100126,19 @@
                 "$ref": "#/components/schemas/JsonNullValueInput"
               },
               {}
+            ]
+          },
+          "autoRunMinScore": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "endpointHealth": {
@@ -1100084,6 +1100446,19 @@
                 "$ref": "#/components/schemas/JsonNullValueInput"
               },
               {}
+            ]
+          },
+          "autoRunMinScore": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "endpointHealth": {
@@ -1100456,6 +1100831,16 @@
               {}
             ]
           },
+          "autoRunMinScore": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
           "endpointHealth": {
             "$ref": "#/components/schemas/EndpointHealth"
           },
@@ -1100651,6 +1101036,16 @@
                 "$ref": "#/components/schemas/JsonNullValueInput"
               },
               {}
+            ]
+          },
+          "autoRunMinScore": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
             ]
           },
           "endpointHealth": {
@@ -1100890,6 +1101285,19 @@
                 "$ref": "#/components/schemas/JsonNullValueInput"
               },
               {}
+            ]
+          },
+          "autoRunMinScore": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "endpointHealth": {
@@ -1101197,6 +1101605,19 @@
                 "$ref": "#/components/schemas/JsonNullValueInput"
               },
               {}
+            ]
+          },
+          "autoRunMinScore": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "endpointHealth": {
@@ -1101549,6 +1101970,16 @@
               {}
             ]
           },
+          "autoRunMinScore": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
           "endpointHealth": {
             "$ref": "#/components/schemas/EndpointHealth"
           },
@@ -1101744,6 +1102175,16 @@
                 "$ref": "#/components/schemas/JsonNullValueInput"
               },
               {}
+            ]
+          },
+          "autoRunMinScore": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
             ]
           },
           "endpointHealth": {
@@ -1101983,6 +1102424,19 @@
                 "$ref": "#/components/schemas/JsonNullValueInput"
               },
               {}
+            ]
+          },
+          "autoRunMinScore": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "endpointHealth": {
@@ -1102290,6 +1102744,19 @@
                 "$ref": "#/components/schemas/JsonNullValueInput"
               },
               {}
+            ]
+          },
+          "autoRunMinScore": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "endpointHealth": {
