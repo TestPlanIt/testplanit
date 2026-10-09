@@ -492,6 +492,7 @@ export const SOFT_DELETE_REGISTRY: SoftDeleteConfig[] = [
   { table: "Integration" },
   { table: "CodeRepository" },
   { table: "ExecutionTarget" },
+  { table: "AlertRule" },
   { table: "ImpactAnalysis" },
   { table: "LlmIntegration" },
   { table: "SharedStepGroup" },

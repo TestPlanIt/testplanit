@@ -127,6 +127,9 @@ const PROJECT_EVENT_CATALOG = {
     "case.review_requested",
     "case.review_completed",
   ],
+  // Emitted by the alert worker when a rule with "send a webhook event"
+  // fires; subscribing here is the second half of that opt-in.
+  alerts: ["alert.triggered"],
 } as const;
 
 const PROJECT_SECTION_LIST = [
@@ -134,6 +137,7 @@ const PROJECT_SECTION_LIST = [
   { key: "issues", label: "outboundSubsIssues" },
   { key: "testRuns", label: "outboundSubsTestRuns" },
   { key: "sessions", label: "outboundSubsSessions" },
+  { key: "alerts", label: "outboundSubsAlerts" },
 ] as const;
 
 /**
@@ -256,6 +260,7 @@ const EVENT_VERB_I18N_PATH: Record<string, string> = {
   "result.recorded": "projects.settings.webhooks.eventVerbs.resultRecorded",
   review_requested: "projects.settings.webhooks.eventVerbs.reviewRequested",
   review_completed: "projects.settings.webhooks.eventVerbs.reviewCompleted",
+  triggered: "projects.settings.webhooks.eventVerbs.triggered",
   // SCIM verbs (system scope). The splitter returns "user.created",
   // "group.member_added", etc. for "scim.user.created" and the like.
   "user.created": "projects.settings.webhooks.eventVerbs.scimUserCreated",

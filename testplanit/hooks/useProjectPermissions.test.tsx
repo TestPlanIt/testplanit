@@ -27,6 +27,7 @@ enum ApplicationArea {
   Issues = "Issues",
   Reporting = "Reporting",
   Settings = "Settings",
+  Alerts = "Alerts",
 }
 
 // Mock next-auth/react entirely within the factory
@@ -182,6 +183,11 @@ const mockAllAreaPermissions: AllAreaPermissions = {
   },
   [ApplicationArea.Settings]: {
     canAddEdit: true,
+    canDelete: false,
+    canClose: false,
+  },
+  [ApplicationArea.Alerts]: {
+    canAddEdit: false,
     canDelete: false,
     canClose: false,
   },

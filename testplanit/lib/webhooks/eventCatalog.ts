@@ -32,6 +32,7 @@ export interface WebhookEventDefinition {
     | "issue"
     | "review"
     | "dataset"
+    | "threshold"
     | "system";
   /** One-sentence human-readable description. */
   description: string;
@@ -307,6 +308,30 @@ export const WEBHOOK_EVENT_CATALOG: WebhookEventDefinition[] = [
       "leasedById",
       "leaseExpiresAt",
       "reason",
+    ],
+  },
+
+  // --- Alerts ---
+  {
+    name: "alert.triggered",
+    category: "threshold",
+    description:
+      "An alert rule fired: a watched metric crossed the line the rule set (opt-in per rule).",
+    payloadKeys: [
+      "eventId",
+      "ruleId",
+      "ruleName",
+      "metric",
+      "projectId",
+      "subjectType",
+      "subjectId",
+      "subjectName",
+      "subjectUrl",
+      "observedValue",
+      "baselineValue",
+      "thresholdValue",
+      "details",
+      "firedAt",
     ],
   },
 

@@ -21,6 +21,7 @@ import {
   WEBHOOK_DISPATCH_QUEUE_NAME,
   EXECUTION_DISPATCH_QUEUE_NAME,
   SCIM_ACCESS_RECOMPUTE_QUEUE_NAME,
+  ALERT_QUEUE_NAME,
 } from "./queueNames";
 import valkeyConnection from "./valkey";
 import { BULLMQ_PREFIX } from "./bullPrefix";
@@ -48,6 +49,7 @@ export {
   WEBHOOK_DISPATCH_QUEUE_NAME,
   EXECUTION_DISPATCH_QUEUE_NAME,
   SCIM_ACCESS_RECOMPUTE_QUEUE_NAME,
+  ALERT_QUEUE_NAME,
 };
 
 const STANDARD_RETRY: JobsOptions = {
@@ -90,6 +92,7 @@ let _generateFromUrlQueue: Queue | null = null;
 let _iterationGenerationQueue: Queue | null = null;
 let _webhookDispatchQueue: Queue | null = null;
 let _scimAccessRecomputeQueue: Queue | null = null;
+let _alertQueue: Queue | null = null;
 
 /**
  * Get the forecast queue instance (lazy initialization)
@@ -718,6 +721,35 @@ export function getExecutionDispatchQueue(): Queue | null {
   return _executionDispatchQueue;
 }
 
+/**
+ * Threshold-trigger evaluation queue (#651). Jobs are enqueued from the
+ * result/run side-effect hooks and the scheduler; the alert worker
+ * evaluates rules and notifies subscribers.
+ */
+export function getAlertQueue(): Queue | null {
+  if (_alertQueue) return _alertQueue;
+  if (!valkeyConnection) {
+    console.warn(
+      `Valkey connection not available, Queue "${ALERT_QUEUE_NAME}" not initialized.`
+    );
+    return null;
+  }
+
+  _alertQueue = new Queue(ALERT_QUEUE_NAME, {
+    connection: valkeyConnection as any,
+    prefix: BULLMQ_PREFIX,
+    defaultJobOptions: { ...STANDARD_RETRY },
+  });
+
+  console.log(`Queue "${ALERT_QUEUE_NAME}" initialized.`);
+
+  _alertQueue.on("error", (error) => {
+    console.error(`Queue ${ALERT_QUEUE_NAME} error:`, error);
+  });
+
+  return _alertQueue;
+}
+
 export function getAllQueues() {
   return {
     forecastQueue: getForecastQueue(),
@@ -741,5 +773,6 @@ export function getAllQueues() {
     webhookDispatchQueue: getWebhookDispatchQueue(),
     executionDispatchQueue: getExecutionDispatchQueue(),
     scimAccessRecomputeQueue: getScimAccessRecomputeQueue(),
+    alertQueue: getAlertQueue(),
   };
 }

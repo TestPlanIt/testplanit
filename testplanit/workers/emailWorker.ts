@@ -18,6 +18,10 @@ import {
   getServerTranslation,
   getServerTranslations,
 } from "../lib/server-translations";
+import {
+  alertMetricMessage,
+  alertSubjectPath,
+} from "../lib/alerts/notificationParams";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
 import { BULLMQ_PREFIX } from "../lib/bullPrefix";
@@ -133,6 +137,9 @@ const processor = async (job: Job) => {
           if (data.projectId && data.testRunId && data.testCaseId) {
             notificationUrl = `${baseUrl}/${urlLocale}/projects/runs/${data.projectId}/${data.testRunId}?selectedCase=${data.testCaseId}`;
           }
+        } else if (notification.type === "ALERT_TRIGGERED") {
+          const path = alertSubjectPath(data);
+          if (path) notificationUrl = `${baseUrl}/${urlLocale}${path}`;
         } else if (
           notification.type === "REVIEW_REQUESTED" ||
           notification.type === "REVIEW_APPROVED" ||
@@ -458,6 +465,32 @@ const processor = async (job: Job) => {
               projectName: data.projectName ?? "",
             }
           );
+        } else if (notification.type === "ALERT_TRIGGERED") {
+          translatedTitle = await getServerTranslation(
+            userLocale,
+            "components.notifications.content.alertTriggeredTitle"
+          );
+          const metricMessage = alertMetricMessage(data, urlLocale);
+          const detail = await getServerTranslation(
+            userLocale,
+            `components.notifications.content.${metricMessage.key}`,
+            metricMessage.params
+          );
+          const subjectLabel = await getServerTranslation(
+            userLocale,
+            `components.notifications.content.alertSubject.${data.subjectType ?? "CASE"}`
+          );
+          translatedMessage = await getServerTranslation(
+            userLocale,
+            "components.notifications.content.alertTriggeredEmailMessage",
+            {
+              ruleName: data.ruleName ?? "",
+              subjectLabel,
+              subjectName: data.subjectName ?? "",
+              projectName: data.projectName ?? "",
+              detail,
+            }
+          );
         } else if (notification.type === "RUN_CASE_UNBLOCKED") {
           translatedTitle = await getServerTranslation(
             userLocale,
@@ -629,6 +662,9 @@ const processor = async (job: Job) => {
               if (data.projectId && data.testRunId) {
                 url = `${baseUrl}/${urlLocale}/projects/runs/${data.projectId}/${data.testRunId}`;
               }
+            } else if (notification.type === "ALERT_TRIGGERED") {
+              const alertPath = alertSubjectPath(data);
+              if (alertPath) url = `${baseUrl}/${urlLocale}${alertPath}`;
             } else if (
               notification.type === "REVIEW_REQUESTED" ||
               notification.type === "REVIEW_APPROVED" ||
@@ -807,6 +843,32 @@ const processor = async (job: Job) => {
                   caseCount: Number(data.caseCount ?? 0),
                   testRunName: data.testRunName ?? "",
                   projectName: data.projectName ?? "",
+                }
+              );
+            } else if (notification.type === "ALERT_TRIGGERED") {
+              translatedTitle = await getServerTranslation(
+                userLocale,
+                "components.notifications.content.alertTriggeredTitle"
+              );
+              const metricMessage = alertMetricMessage(data, urlLocale);
+              const detail = await getServerTranslation(
+                userLocale,
+                `components.notifications.content.${metricMessage.key}`,
+                metricMessage.params
+              );
+              const subjectLabel = await getServerTranslation(
+                userLocale,
+                `components.notifications.content.alertSubject.${data.subjectType ?? "CASE"}`
+              );
+              translatedMessage = await getServerTranslation(
+                userLocale,
+                "components.notifications.content.alertTriggeredEmailMessage",
+                {
+                  ruleName: data.ruleName ?? "",
+                  subjectLabel,
+                  subjectName: data.subjectName ?? "",
+                  projectName: data.projectName ?? "",
+                  detail,
                 }
               );
             }

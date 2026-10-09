@@ -267,6 +267,67 @@ export class NotificationService {
   }
 
   /**
+   * Alert fired (#651): one notification per subscriber. The
+   * stored `title`/`message` are the English fallback; the bell and the
+   * email worker render localized copy from `data`, which carries every
+   * number and id the renderers need (ids for links, names for display).
+   */
+  static async createAlertTriggeredNotification(params: {
+    targetUserIds: string[];
+    eventId: number;
+    ruleId: number;
+    ruleName: string;
+    metric: string;
+    projectId: number;
+    projectName: string;
+    subjectType: "CASE" | "RUN" | "MILESTONE";
+    subjectId: number;
+    subjectName: string;
+    observedValue: number;
+    baselineValue: number | null;
+    thresholdValue: number;
+    /** The run the triggering result belongs to, for CASE subjects. */
+    testRunId?: number | null;
+    details?: Record<string, unknown>;
+    tenantId?: string;
+  }) {
+    if (params.targetUserIds.length === 0) return;
+
+    const title = `Alert fired: ${params.ruleName}`;
+    const message = `"${params.ruleName}" fired for ${params.subjectType.toLowerCase()} "${params.subjectName}" in project "${params.projectName}" (observed ${formatNumber(params.observedValue)}, threshold ${formatNumber(params.thresholdValue)}).`;
+
+    await Promise.all(
+      params.targetUserIds.map((userId) =>
+        this.createNotification({
+          userId,
+          type: NotificationType.ALERT_TRIGGERED,
+          title,
+          message,
+          relatedEntityId: params.eventId.toString(),
+          relatedEntityType: "AlertEvent",
+          tenantId: params.tenantId,
+          data: {
+            eventId: params.eventId,
+            ruleId: params.ruleId,
+            ruleName: params.ruleName,
+            metric: params.metric,
+            projectId: params.projectId,
+            projectName: params.projectName,
+            subjectType: params.subjectType,
+            subjectId: params.subjectId,
+            subjectName: params.subjectName,
+            observedValue: params.observedValue,
+            baselineValue: params.baselineValue,
+            thresholdValue: params.thresholdValue,
+            testRunId: params.testRunId ?? null,
+            details: params.details ?? null,
+          },
+        })
+      )
+    );
+  }
+
+  /**
    * Create a user registration notification for all System Admins
    */
   static async createUserRegistrationNotification(
@@ -812,4 +873,8 @@ export class NotificationService {
       },
     });
   }
+}
+
+function formatNumber(value: number): string {
+  return Number.isInteger(value) ? String(value) : value.toFixed(2);
 }

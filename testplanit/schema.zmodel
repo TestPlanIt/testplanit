@@ -205,6 +205,9 @@ model User {
     reviewedImpactAnalysisCases              ImpactAnalysisCase[]              @relation("ImpactAnalysisCaseReviewedBy")
     createdSharedStepGroups                  SharedStepGroup[]
     notifications                            Notification[]
+    alertRulesCreated                        AlertRule[]                       @relation("AlertRuleCreatedBy")
+    alertSubscriptions                       AlertSubscriber[]                 @relation("AlertSubscriberUser")
+    alertSubscriptionsAdded                  AlertSubscriber[]                 @relation("AlertSubscriberAddedBy")
     userIntegrationAuths                     UserIntegrationAuth[]
     createdEmailDomains                      AllowedEmailDomain[]
     lastActiveAt                             DateTime?
@@ -541,6 +544,7 @@ enum NotificationType {
     RUN_READY_TO_COMPLETE
     WHATS_NEW
     RUN_CASE_UNBLOCKED
+    ALERT_TRIGGERED
 
     @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')
@@ -719,6 +723,8 @@ model Projects {
     stepSequenceMatches              StepSequenceMatch[]
     reviewRequests                   ReviewRequest[]
     caseDrafts                       CaseDraft[]
+    alertRules                       AlertRule[]
+    alertEvents                      AlertEvent[]
 
     @@index([isDeleted, isCompleted])
     @@index([createdBy])
@@ -4416,6 +4422,7 @@ enum ApplicationArea {
     Issues
     Reporting
     Settings
+    Alerts
 
 
     @@deny('all', auth() == null)
@@ -6907,19 +6914,205 @@ model AuditLog {
     )
 }
 
-// Append-only change-data-capture substrate. The generic audit_row_change()
-// trigger (db/audit_row_change.sql) writes one row here per
-// INSERT/UPDATE/DELETE on every allowlisted table; a downstream correlation
-// worker reads it via the raw prismaBase client.
-//
-// COLUMN-NAME RECONCILIATION (load-bearing): every field is @map-ed so the
-// Postgres columns this model produces match EXACTLY the snake_case/reserved
-// columns the trigger INSERTs into:
-//   "table", op, pk, changed_cols, actor, operation_id, tenant, txid, ts,
-//   processed, seq
-// If any column drifts (e.g. Prisma emits "changedCols" instead of
-// "changed_cols"), the trigger's INSERT targets a non-existent column and
-// every capture fails at runtime.
+
+// ---------------------------------------------------------------------------
+// Alerts (#651): user-defined rules that watch a testing metric
+// and notify an audience when it crosses a line.
+// ---------------------------------------------------------------------------
+
+enum AlertMetric {
+    RESULT_DURATION_DEVIATION
+    CASE_REGRESSED
+    CONSECUTIVE_FAILURES
+    CASE_FLAKY
+    RUN_PASS_RATE_BELOW
+    RUN_FAILURE_COUNT
+    MILESTONE_BEHIND
+    MILESTONE_OVERDUE
+
+    @@deny('all', auth() == null)
+    @@allow('read', auth().access != null)
+}
+
+enum AlertScopeType {
+    PROJECT
+    FOLDER
+    TAG
+    CASE
+    RUN_NAME
+    MILESTONE
+
+    @@deny('all', auth() == null)
+    @@allow('read', auth().access != null)
+}
+
+enum AlertDirection {
+    ABOVE
+    BELOW
+    EITHER
+
+    @@deny('all', auth() == null)
+    @@allow('read', auth().access != null)
+}
+
+enum AlertBaseline {
+    MEAN
+    MEDIAN
+
+    @@deny('all', auth() == null)
+    @@allow('read', auth().access != null)
+}
+
+enum AlertResultSource {
+    MANUAL
+    AUTOMATED
+    BOTH
+
+    @@deny('all', auth() == null)
+    @@allow('read', auth().access != null)
+}
+
+enum AlertEvaluateOn {
+    RUN_COMPLETION
+    AS_RESULTS_ARRIVE
+
+    @@deny('all', auth() == null)
+    @@allow('read', auth().access != null)
+}
+
+enum AlertSubjectType {
+    CASE
+    RUN
+    MILESTONE
+
+    @@deny('all', auth() == null)
+    @@allow('read', auth().access != null)
+}
+
+model AlertRule {
+    id              Int               @id @default(autoincrement())
+    projectId       Int               @deny('update', true)
+    project         Projects          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    name            String            @length(1, 200)
+    description     String?
+    metric          AlertMetric       @deny('update', true)
+    // What the rule watches. scopeId holds a folder, tag, case or milestone
+    // id depending on scopeType; scopeText holds the run-name fragment.
+    scopeType       AlertScopeType    @default(PROJECT)
+    scopeId         Int?
+    scopeText       String?
+    // The number on the right-hand side of the condition: a percentage for
+    // deviation, rate and completion metrics, a count for the others.
+    thresholdValue  Float             @default(0)
+    // Second number for metrics that need one (days remaining on
+    // MILESTONE_BEHIND).
+    secondaryValue  Int?
+    direction       AlertDirection    @default(EITHER)
+    baselineType    AlertBaseline     @default(MEDIAN)
+    // Number of previous results the baseline is built from.
+    baselineWindow  Int               @default(10)
+    // The rule stays silent until this many samples exist.
+    minSamples      Int               @default(5)
+    resultSource    AlertResultSource @default(BOTH)
+    evaluateOn      AlertEvaluateOn   @default(RUN_COMPLETION)
+    // Once fired for a subject, the rule is silent for it until this passes.
+    cooldownMinutes Int               @default(1440)
+    emitWebhook     Boolean           @default(false)
+    isEnabled       Boolean           @default(true)
+    isDeleted       Boolean           @default(false)
+    deletedAt       DateTime?         @db.Timestamptz(6)
+    lastFiredAt     DateTime?         @db.Timestamptz(6) @deny('update', true)
+    createdAt       DateTime          @default(now()) @db.Timestamptz(6)
+    updatedAt       DateTime          @updatedAt
+    createdById     String            @deny('update', true)
+    createdBy       User              @relation("AlertRuleCreatedBy", fields: [createdById], references: [id])
+    subscribers     AlertSubscriber[]
+    events          AlertEvent[]
+
+    @@index([projectId, isDeleted, isEnabled])
+    @@index([projectId, metric])
+    @@deny('all', auth() == null)
+    @@deny('all', auth().access == 'NONE')
+    @@allow('read', projectId in auth().accessibleProjectIds)
+    // Project admins manage every alert in the project.
+    @@allow('create,update,delete', projectId in auth().adminProjectIds)
+    // A role with Alerts Add/Edit creates its own alerts and manages those.
+    @@allow('create,update,delete',
+        createdById == auth().id &&
+        projectId in auth().accessibleProjectIds &&
+        (project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
+                                 role.rolePermissions?[area == 'Alerts' && canAddEdit]] ||
+        project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' && auth().role != null &&
+                                 auth().role.rolePermissions?[area == 'Alerts' && canAddEdit]] ||
+        project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
+                                  ((accessType == 'SPECIFIC_ROLE' &&
+                                    role.rolePermissions?[area == 'Alerts' && canAddEdit]) ||
+                                   (accessType == 'GLOBAL_ROLE' && auth().role != null &&
+                                    auth().role.rolePermissions?[area == 'Alerts' && canAddEdit]))] ||
+        (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
+         auth().role.rolePermissions?[area == 'Alerts' && canAddEdit]) ||
+        (project.defaultAccessType == 'SPECIFIC_ROLE' && auth().access != 'NONE' &&
+         project.defaultRole.rolePermissions?[area == 'Alerts' && canAddEdit]))
+    )
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+// The audience of an alert. The creator is subscribed when the alert is
+// made; anyone can leave or re-join; adding other people takes project-admin
+// authority.
+model AlertSubscriber {
+    id        Int       @id @default(autoincrement())
+    ruleId    Int
+    rule      AlertRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+    userId    String
+    user      User      @relation("AlertSubscriberUser", fields: [userId], references: [id], onDelete: Cascade)
+    addedById String?
+    addedBy   User?     @relation("AlertSubscriberAddedBy", fields: [addedById], references: [id], onDelete: SetNull)
+    createdAt DateTime  @default(now()) @db.Timestamptz(6)
+
+    @@unique([ruleId, userId])
+    @@index([userId])
+    @@deny('all', auth() == null)
+    @@deny('all', auth().access == 'NONE')
+    @@deny('update', true)
+    @@allow('read', rule.projectId in auth().accessibleProjectIds)
+    // Self-service: follow or leave any alert you can see.
+    @@allow('create,delete', userId == auth().id && rule.projectId in auth().accessibleProjectIds)
+    // Project admins manage other people's subscriptions.
+    @@allow('create,delete', rule.projectId in auth().adminProjectIds)
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+// One row per firing: backs the notification, the webhook payload and the
+// rule's history. Written only by the evaluation worker on the raw client.
+model AlertEvent {
+    id             Int              @id @default(autoincrement())
+    ruleId         Int
+    rule           AlertRule        @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+    projectId      Int
+    project        Projects         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    subjectType    AlertSubjectType
+    subjectId      Int
+    subjectName    String
+    observedValue  Float
+    baselineValue  Float?
+    thresholdValue Float
+    details        Json?
+    notifiedCount  Int              @default(0)
+    recipientIds   String[]         @default([])
+    webhookEmitted Boolean          @default(false)
+    firedAt        DateTime         @default(now()) @db.Timestamptz(6)
+
+    @@index([ruleId, subjectType, subjectId, firedAt(sort: Desc)])
+    @@index([ruleId, firedAt(sort: Desc)])
+    @@index([projectId, firedAt(sort: Desc)])
+    @@deny('all', auth() == null)
+    @@deny('all', auth().access == 'NONE')
+    @@allow('read', projectId in auth().accessibleProjectIds)
+    @@allow('read', auth().access == 'ADMIN')
+    @@deny('create,update,delete', true)
+}
+
 model DataChangeLog {
     // Stable row identity (BIGSERIAL PK).
     id          BigInt   @id @default(autoincrement())

@@ -203,7 +203,7 @@ Every user except those with access level `NONE` (or an explicit NO_ACCESS permi
 1. Go to **Administration > Projects** and click **Edit** on the project
 2. On the **Details** tab, select **Default Project Access**:
    - **Use Global Role** (`GLOBAL_ROLE`, the default — everyone uses their own global role)
-   - A role name, such as *Tester* (`SPECIFIC_ROLE` — everyone uses that role)
+   - A role name, such as _Tester_ (`SPECIFIC_ROLE` — everyone uses that role)
    - **No Access** (`NO_ACCESS` — private, explicit grants only)
 3. Click **Save**
 
@@ -242,7 +242,8 @@ Permissions are granted per application area. The complete list of areas is:
 - **SharedSteps** - Managing shared test step groups
 - **Issues** - Issue tracking and management
 - **Reporting** - Reports and analytics
-- **Project Settings** - Project settings. **Add/Edit** on this area makes the role a *project admin* role — see [Project admins](#project-admins).
+- **Project Administration** (`Settings`) - Project administration. **Add/Edit** on this area makes the role a _project admin_ role — see [Project admins](#project-admins).
+- **Alerts** - Subscribing other project members to a [alert](./alerts.md) rule and removing them. Creating and editing the rules themselves is project-admin work; every user can follow or leave a rule on their own
 
 :::note Unlocking a run's composition requires the creator or project admin
 Any user with the `TestRuns` **Add/Edit** permission can **lock** a run's composition, but **unlocking** is restricted to the run's **creator** or a [project admin](#project-admins). See [Composition lock](./projects/run-details.md#composition-lock).
@@ -284,7 +285,7 @@ This has three consequences worth knowing:
 TestPlanIt does not ship with pre-configured roles — administrators create them in **Administration** > **Roles**. Two role concepts carry special behavior:
 
 - **The default role** - one role can be marked as the default. Newly provisioned users (including SCIM-provisioned accounts) receive it automatically, and it cannot be deleted while it is the default.
-- **Project admin roles** - any role with **Add/Edit** on the **Project Settings** area. See [Project admins](#project-admins).
+- **Project admin roles** - any role with **Add/Edit** on the **Project Administration** area. See [Project admins](#project-admins).
 
 ### Project admins
 
@@ -293,13 +294,13 @@ A user is a **project admin** of a project when any of these hold:
 - They have `ADMIN` system access.
 - They have `PROJECTADMIN` system access and are assigned to the project.
 - They created the project.
-- Their effective role on the project has **Add/Edit** on the **Project Settings** area.
+- Their effective role on the project has **Add/Edit** on the **Project Administration** area.
 
-The effective role is whatever the [precedence ladder](#resolution-order) resolves for that user on that project — a user-specific role, a group's role, the user's global role, or the project's default role. So a role with **Project Settings** Add/Edit grants project-admin authority however it reaches the user, including through a group.
+The effective role is whatever the [precedence ladder](#resolution-order) resolves for that user on that project — a user-specific role, a group's role, the user's global role, or the project's default role. So a role with **Project Administration** Add/Edit grants project-admin authority however it reaches the user, including through a group.
 
 Project admins hold every permission on every application area of that project, see **Settings** and the project audit log in the project menu, and can perform the admin-gated actions: managing project members, milestone sync, unlocking a run's composition, managing share links and webhooks, and editing project settings.
 
-This is how a user with `USER` system access administers one project while holding an ordinary role on others: give them a role with **Project Settings** Add/Edit on the project they administer, and any other role elsewhere.
+This is how a user with `USER` system access administers one project while holding an ordinary role on others: give them a role with **Project Administration** Add/Edit on the project they administer, and any other role elsewhere.
 
 ### Example Role Patterns
 
@@ -307,7 +308,7 @@ Roles you may want to create:
 
 #### Project Admin
 
-- **Add/Edit** on **Project Settings**, which makes the role a [project admin](#project-admins) role
+- **Add/Edit** on **Project Administration**, which makes the role a [project admin](#project-admins) role
 - Full access to all application areas
 - Can manage project members
 - Recommended for project leads
@@ -410,7 +411,7 @@ Groups provide an efficient way to manage permissions for teams.
 - **Groups with SPECIFIC_ROLE** - All group members share the same assigned role for that project; if a member also belongs to a GLOBAL_ROLE-granted group, the SPECIFIC_ROLE grant decides their role
 
 :::note
-The project permissions described here are assigned **per project** in **Project Settings > Members**. The **Admin > Groups** page can also grant a group access on specific projects — see [Per-project access](./groups.md#per-project-access) — which materializes into the same group permission rows described above and resolves through the same precedence ladder. Separately, a group's **Mapped Access Tier** drives members' *global* access level (see [Role mapping](./scim.md#role-mapping)) rather than any per-project role.
+The project permissions described here are assigned **per project** in **Project Settings > Members**. The **Admin > Groups** page can also grant a group access on specific projects — see [Per-project access](./groups.md#per-project-access) — which materializes into the same group permission rows described above and resolves through the same precedence ladder. Separately, a group's **Mapped Access Tier** drives members' _global_ access level (see [Role mapping](./scim.md#role-mapping)) rather than any per-project role.
 :::
 
 ### Use Cases
@@ -462,7 +463,7 @@ Understanding how TestPlanIt resolves permissions when multiple rules apply:
 4. **Project Creator Check**
    - If user created the project → Full project access
 
-   The effective role resolved by the remaining steps is then checked for **Add/Edit** on **Project Settings**; if it has it, the user is a [project admin](#project-admins) with full permissions on that project.
+   The effective role resolved by the remaining steps is then checked for **Add/Edit** on **Project Administration**; if it has it, the user is a [project admin](#project-admins) with full permissions on that project.
 
 5. **Explicit User Permission**
    - Check user-specific project permission
@@ -497,7 +498,7 @@ Result: John can access, with Tester permissions
 ```text
 User: Sarah (access level: USER)
 Global Role: Tester
-Project: Sarah explicitly assigned a role with Project Settings Add/Edit
+Project: Sarah explicitly assigned a role with Project Administration Add/Edit
 
 Result: Sarah is a project admin of this project (overrides global role)
 ```

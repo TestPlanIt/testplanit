@@ -43,6 +43,7 @@ const entryPoints = [
   "workers/dataChangeLogRetentionWorker.ts",
   "workers/datasetLeaseSweepWorker.ts",
   "workers/executionDispatchWorker.ts",
+  "workers/alertWorker.ts",
   "scheduler.ts",
 ];
 

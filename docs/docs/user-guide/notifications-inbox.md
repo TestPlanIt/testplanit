@@ -59,19 +59,19 @@ Notifications arrive in the bell in **near-real time** over a live server-sent e
 
 Two settings on your **profile page**, under **Preferences**, control notifications. The **Notification Mode** decides how you are reached:
 
-| Mode | Behavior |
-| --- | --- |
-| **Use Global Settings** | Inherit the system-wide default an administrator set. |
-| **None** | No notifications. |
-| **In-App Only** | Bell notifications only. |
-| **In-App + Email (Immediate)** | Bell plus an email per notification. |
-| **In-App + Email (Daily Digest)** | Bell plus a single daily summary email. |
+| Mode                              | Behavior                                              |
+| --------------------------------- | ----------------------------------------------------- |
+| **Use Global Settings**           | Inherit the system-wide default an administrator set. |
+| **None**                          | No notifications.                                     |
+| **In-App Only**                   | Bell notifications only.                              |
+| **In-App + Email (Immediate)**    | Bell plus an email per notification.                  |
+| **In-App + Email (Daily Digest)** | Bell plus a single daily summary email.               |
 
 :::info
 The email options appear only when an email server is configured for your deployment.
 :::
 
-**What to notify me about** lists every notification type, grouped, each with a switch that is **on by default**. Switch a type off to stop it everywhere — bell, immediate email and daily digest — for you alone; the change saves immediately. **Always on** types cannot be switched off, administrator-only types appear only for administrators, and **Reset to defaults** turns everything back on. Types added in a future release are on automatically.
+**What to notify me about** (on the **Notifications** tab of your [Notifications & Alerts](./alerts.md) page, below the notification mode) lists every notification type, grouped, each with a switch that is **on by default**. Click **Edit**, switch a type off to stop it everywhere — bell, immediate email and daily digest — for you alone, then **Save**. **Always on** types cannot be switched off, administrator-only types appear only for administrators, and **Reset to defaults** turns everything back on. Types added in a future release are on automatically.
 
 ## Related pages
 

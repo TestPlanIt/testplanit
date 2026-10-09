@@ -942,6 +942,79 @@ describe("EmailWorker", () => {
       );
     });
   });
+  describe("ALERT_TRIGGERED email", () => {
+    const thresholdNotification = {
+      ...baseNotification,
+      id: "notif-threshold",
+      type: "ALERT_TRIGGERED",
+      title: "Alert fired: Slow checkout",
+      message: "English fallback persisted on the row",
+      data: {
+        eventId: 101,
+        ruleId: 4,
+        ruleName: "Slow checkout",
+        metric: "CONSECUTIVE_FAILURES",
+        projectId: 7,
+        projectName: "Shop",
+        subjectType: "CASE",
+        subjectId: 9,
+        subjectName: "Checkout",
+        observedValue: 3,
+        baselineValue: null,
+        thresholdValue: 3,
+        testRunId: 42,
+        details: { streak: 3 },
+      },
+    };
+
+    it("immediate path: links to the case in its run and composes the message from the metric", async () => {
+      mockDb.notification.findUnique.mockResolvedValue(thresholdNotification);
+
+      const { processor } = await import("./emailWorker");
+      const { getServerTranslation } =
+        await import("../lib/server-translations");
+
+      await processor({
+        id: "job-threshold",
+        name: "send-notification-email",
+        data: {
+          notificationId: "notif-threshold",
+          userId: "user-1",
+          immediate: true,
+        },
+      } as Job);
+
+      const callArgs = mockSendNotificationEmail.mock.calls[0][0];
+      expect(callArgs.notificationUrl).toBe(
+        "http://localhost:3000/en-US/projects/runs/7/42?selectedCase=9"
+      );
+      expect(getServerTranslation).toHaveBeenCalledWith(
+        expect.anything(),
+        "components.notifications.content.alertTriggeredTitle"
+      );
+      expect(getServerTranslation).toHaveBeenCalledWith(
+        expect.anything(),
+        "components.notifications.content.alertMetric.CONSECUTIVE_FAILURES",
+        { streak: 3, threshold: 3 }
+      );
+      expect(getServerTranslation).toHaveBeenCalledWith(
+        expect.anything(),
+        "components.notifications.content.alertSubject.CASE"
+      );
+      expect(getServerTranslation).toHaveBeenCalledWith(
+        expect.anything(),
+        "components.notifications.content.alertTriggeredEmailMessage",
+        expect.objectContaining({
+          ruleName: "Slow checkout",
+          subjectName: "Checkout",
+          projectName: "Shop",
+          detail:
+            "components.notifications.content.alertMetric.CONSECUTIVE_FAILURES",
+        })
+      );
+    });
+  });
+
   describe("RUN_CASE_UNBLOCKED email", () => {
     const unblockedNotification = {
       ...baseNotification,

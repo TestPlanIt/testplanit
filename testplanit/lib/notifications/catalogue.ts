@@ -125,6 +125,12 @@ export const NOTIFICATION_CATALOGUE: readonly NotificationCatalogueEntry[] = [
     audience: "everyone",
     optional: true,
   },
+  {
+    type: NotificationType.ALERT_TRIGGERED,
+    group: "runsAndMilestones",
+    audience: "everyone",
+    optional: true,
+  },
   // Sharing
   {
     type: NotificationType.SHARE_LINK_ACCESSED,

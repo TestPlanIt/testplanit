@@ -11,6 +11,7 @@ import {
   Sun,
   SunMoon,
   User,
+  BellRing,
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -318,6 +319,15 @@ export function UserDropdownMenu() {
           <DropdownMenuItem onClick={onViewProfile}>
             <User className="h-4 w-4 me-2" />
             {t("viewProfile")}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() =>
+              router.push("/users/profile/" + session?.user?.id + "/alerts")
+            }
+            data-testid="user-menu-alerts"
+          >
+            <BellRing className="h-4 w-4 me-2" />
+            {t("myAlerts")}
           </DropdownMenuItem>
           <DropdownMenuSub>
             <DropdownMenuSubTrigger data-testid="theme-submenu-trigger">
