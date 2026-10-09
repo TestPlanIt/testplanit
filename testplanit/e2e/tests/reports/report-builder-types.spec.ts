@@ -42,10 +42,13 @@ test.describe("Report Builder - Multiple Report Types", () => {
     projectId: number,
     reportType: string,
     dimensions?: string[],
-    metrics?: string[]
+    metrics?: string[],
+    // Pre-built reports keep their settings (lookback, grouping, toggles) on
+    // the Reports tab; the Report Builder tab's form is the custom one.
+    tab: "builder" | "reports" = "builder"
   ) {
     const params = new URLSearchParams({
-      tab: "builder",
+      tab,
       reportType,
     });
 
@@ -383,7 +386,14 @@ test.describe("Report Builder - Multiple Report Types", () => {
     });
 
     await test.step("Open the results-trend pre-built report", async () => {
-      await navigateToReport(page, projectId, "results-trend");
+      await navigateToReport(
+        page,
+        projectId,
+        "results-trend",
+        undefined,
+        undefined,
+        "reports"
+      );
       await expect(page.getByTestId("results-trend-settings")).toBeVisible({
         timeout: 10000,
       });
