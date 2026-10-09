@@ -28,24 +28,38 @@ import { NotificationService } from "~/lib/services/notificationService";
 import { resolveAlertRecipients } from "~/lib/services/alertRecipients";
 import {
   caseEventAlertMetrics,
+  executionEventAlertMetrics,
+  metricUsesField,
   runEventAlertMetrics,
   scheduledAlertMetrics,
+  sessionEventAlertMetrics,
+  type AlertSchedule,
 } from "~/lib/alerts/catalogue";
 import {
   cooldownElapsed,
   evaluateConsecutiveFailures,
+  evaluateCountAbove,
   evaluateDurationDeviation,
   evaluateFailureCount,
+  evaluateFailureRate,
   evaluateFlakiness,
+  evaluateIssueCount,
   evaluateMilestoneBehind,
   evaluateMilestoneOverdue,
+  evaluateNotProgressing,
   evaluatePassRate,
+  evaluateRecovery,
   evaluateRegression,
+  evaluateSessionOverrun,
+  evaluateShareBelow,
+  evaluateUntestedShare,
   type ResultSample,
   type RunCounts,
 } from "~/lib/alerts/metrics";
 import { webhookEvents } from "~/lib/webhooks/events";
 import { getMilestoneCaseCompletion } from "~/lib/services/effectiveCaseStatus";
+import { getRequirementCoverage } from "~/lib/services/requirementCoverage";
+import { DEFECT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { subjectPath } from "~/lib/alerts/subjectPath";
 
 export const ALERT_WEBHOOK_EVENT = "alert.triggered";
@@ -69,6 +83,7 @@ export interface AlertRuleRow {
   minSamples: number;
   resultSource: AlertResultSource;
   evaluateOn: AlertEvaluateOn;
+  coverageBasis: "LINKED" | "PASSING";
   cooldownMinutes: number;
   emitWebhook: boolean;
 }
@@ -103,6 +118,7 @@ interface RunSubject {
   projectName: string;
   testRunType: string;
   isCompleted: boolean;
+  elapsed: number | null;
 }
 
 interface MilestoneSubject {
@@ -231,6 +247,7 @@ export class AlertEvaluationService {
         testRunType: true,
         isCompleted: true,
         isDeleted: true,
+        elapsed: true,
         project: { select: { name: true } },
       },
     });
@@ -238,11 +255,13 @@ export class AlertEvaluationService {
 
     const rules = (await this.loadRules(run.projectId, runEventAlertMetrics()))
       // A completion-time rule waits for the run to finish; an as-results-arrive
-      // rule evaluates on every trigger.
+      // rule evaluates on every trigger. Metrics without the choice (run
+      // duration) only make sense once the run is done.
       .filter(
         (rule) =>
           trigger === "completion" ||
-          rule.evaluateOn === AlertEvaluateOn.AS_RESULTS_ARRIVE
+          (metricUsesField(rule.metric, "evaluateOn") &&
+            rule.evaluateOn === AlertEvaluateOn.AS_RESULTS_ARRIVE)
       );
     if (rules.length === 0) return [];
 
@@ -253,6 +272,7 @@ export class AlertEvaluationService {
       projectName: run.project?.name ?? "",
       testRunType: run.testRunType,
       isCompleted: run.isCompleted,
+      elapsed: run.elapsed == null ? null : Number(run.elapsed),
     };
 
     const matching: AlertRuleRow[] = [];
@@ -261,10 +281,51 @@ export class AlertEvaluationService {
     }
     if (matching.length === 0) return [];
 
-    const counts = await this.loadRunCounts(subject);
+    let counts: RunCounts | null = null;
+    let issues: number | null = null;
     const fired: FiredAlert[] = [];
     for (const rule of matching) {
-      const outcome = this.evaluateRunRule(rule, counts);
+      let outcome: {
+        observed: number;
+        baseline?: number | null;
+        details: Record<string, unknown>;
+      } | null = null;
+      if (rule.metric === AlertMetric.RUN_DURATION_DEVIATION) {
+        const previous = await this.loadPreviousRunDurations(rule, subject);
+        const verdict = evaluateDurationDeviation({
+          current: subject.elapsed,
+          previous,
+          window: rule.baselineWindow,
+          minSamples: rule.minSamples,
+          baselineType: rule.baselineType,
+          thresholdPercent: rule.thresholdValue,
+          direction: rule.direction,
+        });
+        if (verdict.fired) {
+          outcome = {
+            observed: verdict.deviationPercent,
+            baseline: verdict.baseline,
+            details: {
+              elapsed: subject.elapsed,
+              baselineSeconds: verdict.baseline,
+              baselineType: rule.baselineType,
+              sampleCount: verdict.sampleCount,
+            },
+          };
+        }
+      } else if (rule.metric === AlertMetric.RUN_ISSUES_OPENED) {
+        issues ??= await this.loadRunIssueCount(subject.runId);
+        const verdict = evaluateIssueCount({
+          issues,
+          count: rule.thresholdValue,
+        });
+        if (verdict.fired) {
+          outcome = { observed: verdict.issues, details: { issues } };
+        }
+      } else {
+        counts ??= await this.loadRunCounts(subject);
+        outcome = this.evaluateRunRule(rule, counts);
+      }
       if (!outcome) continue;
       const event = await this.fire({
         rule,
@@ -274,7 +335,7 @@ export class AlertEvaluationService {
         projectId: subject.projectId,
         projectName: subject.projectName,
         observedValue: outcome.observed,
-        baselineValue: null,
+        baselineValue: outcome.baseline ?? null,
         thresholdValue: rule.thresholdValue,
         details: { ...outcome.details, trigger, testRunId: subject.runId },
         testRunId: subject.runId,
@@ -285,9 +346,162 @@ export class AlertEvaluationService {
     return fired;
   }
 
-  /** The daily pass over milestone metrics, every project at once. */
-  async evaluateScheduled(tenantId?: string): Promise<FiredAlert[]> {
-    const rules = await this.loadRules(undefined, scheduledAlertMetrics());
+  /** An automated execution reached a terminal failure, dispatch failure or timeout. */
+  async evaluateExecution(
+    executionId: number,
+    tenantId?: string
+  ): Promise<FiredAlert[]> {
+    const execution = await this.db.testRunExecution.findUnique({
+      where: { id: executionId },
+      select: {
+        id: true,
+        status: true,
+        error: true,
+        testRunId: true,
+        projectId: true,
+        target: { select: { name: true } },
+        testRun: {
+          select: {
+            id: true,
+            name: true,
+            testRunType: true,
+            isCompleted: true,
+            isDeleted: true,
+            elapsed: true,
+            project: { select: { name: true } },
+          },
+        },
+      },
+    });
+    if (!execution || !execution.testRun || execution.testRun.isDeleted) {
+      return [];
+    }
+    if (
+      execution.status !== "FAILED" &&
+      execution.status !== "DISPATCH_FAILED" &&
+      execution.status !== "TIMED_OUT"
+    ) {
+      return [];
+    }
+    const rules = await this.loadRules(
+      execution.projectId,
+      executionEventAlertMetrics()
+    );
+    if (rules.length === 0) return [];
+
+    const run = execution.testRun;
+    const subject: RunSubject = {
+      runId: run.id,
+      runName: run.name,
+      projectId: execution.projectId,
+      projectName: run.project?.name ?? "",
+      testRunType: run.testRunType,
+      isCompleted: run.isCompleted,
+      elapsed: run.elapsed == null ? null : Number(run.elapsed),
+    };
+    const fired: FiredAlert[] = [];
+    for (const rule of rules) {
+      if (!(await this.runMatchesScope(rule, subject))) continue;
+      const event = await this.fire({
+        rule,
+        subjectType: AlertSubjectType.RUN,
+        subjectId: subject.runId,
+        subjectName: subject.runName,
+        projectId: subject.projectId,
+        projectName: subject.projectName,
+        observedValue: 1,
+        baselineValue: null,
+        thresholdValue: 0,
+        details: {
+          executionId: execution.id,
+          status: execution.status,
+          error: execution.error ?? null,
+          targetName: execution.target?.name ?? null,
+          testRunId: subject.runId,
+        },
+        testRunId: subject.runId,
+        tenantId,
+      });
+      if (event) fired.push(event);
+    }
+    return fired;
+  }
+
+  /** A session was completed. */
+  async evaluateSession(
+    sessionId: number,
+    tenantId?: string
+  ): Promise<FiredAlert[]> {
+    const session = await this.db.sessions.findUnique({
+      where: { id: sessionId },
+      select: {
+        id: true,
+        name: true,
+        projectId: true,
+        elapsed: true,
+        estimate: true,
+        isDeleted: true,
+        project: { select: { name: true } },
+      },
+    });
+    if (!session || session.isDeleted) return [];
+    const rules = await this.loadRules(
+      session.projectId,
+      sessionEventAlertMetrics()
+    );
+    if (rules.length === 0) return [];
+
+    const fired: FiredAlert[] = [];
+    for (const rule of rules) {
+      if (rule.scopeType === AlertScopeType.TAG) {
+        if (rule.scopeId == null) continue;
+        const rows: any[] = await this.db.$queryRaw`
+          SELECT 1 FROM "_SessionsToTags" WHERE "A" = ${session.id} AND "B" = ${rule.scopeId} LIMIT 1
+        `;
+        if (rows.length === 0) continue;
+      } else if (rule.scopeType !== AlertScopeType.PROJECT) {
+        continue;
+      }
+      const verdict = evaluateSessionOverrun({
+        elapsed: session.elapsed == null ? null : Number(session.elapsed),
+        estimate: session.estimate == null ? null : Number(session.estimate),
+        thresholdPercent: rule.thresholdValue,
+      });
+      if (!verdict.fired) continue;
+      const event = await this.fire({
+        rule,
+        subjectType: AlertSubjectType.SESSION,
+        subjectId: session.id,
+        subjectName: session.name,
+        projectId: session.projectId,
+        projectName: session.project?.name ?? "",
+        observedValue: verdict.overrunPercent,
+        baselineValue: Number(session.estimate),
+        thresholdValue: rule.thresholdValue,
+        details: {
+          elapsed: Number(session.elapsed),
+          estimate: Number(session.estimate),
+          overrunPercent: verdict.overrunPercent,
+        },
+        tenantId,
+      });
+      if (event) fired.push(event);
+    }
+    return fired;
+  }
+
+  /**
+   * The scheduled pass, every project at once: milestone metrics daily,
+   * stalled runs and webhook failure rates hourly, project-wide health daily.
+   */
+  async evaluateScheduled(
+    tenantId?: string,
+    schedule: AlertSchedule = "daily"
+  ): Promise<FiredAlert[]> {
+    const rules = await this.loadRules(
+      undefined,
+      scheduledAlertMetrics(schedule)
+    );
     if (rules.length === 0) return [];
 
     const byProject = new Map<number, AlertRuleRow[]>();
@@ -299,6 +513,47 @@ export class AlertEvaluationService {
 
     const fired: FiredAlert[] = [];
     for (const [projectId, projectRules] of byProject) {
+      const milestoneRules = projectRules.filter(
+        (r) =>
+          r.metric === AlertMetric.MILESTONE_BEHIND ||
+          r.metric === AlertMetric.MILESTONE_OVERDUE
+      );
+      const runRules = projectRules.filter(
+        (r) =>
+          r.metric === AlertMetric.RUN_NOT_PROGRESSING ||
+          r.metric === AlertMetric.RUN_UNTESTED_SHARE
+      );
+      const projectRulesOnly = projectRules.filter(
+        (r) =>
+          r.metric === AlertMetric.REQUIREMENT_COVERAGE_BELOW ||
+          r.metric === AlertMetric.STALE_CASES ||
+          r.metric === AlertMetric.AUTOMATION_SHARE_BELOW
+      );
+      const webhookRules = projectRules.filter(
+        (r) => r.metric === AlertMetric.WEBHOOK_FAILURE_RATE
+      );
+      if (runRules.length > 0) {
+        fired.push(...(await this.evaluateScheduledRuns(runRules, tenantId)));
+      }
+      if (projectRulesOnly.length > 0) {
+        fired.push(
+          ...(await this.evaluateProjectRules(
+            projectId,
+            projectRulesOnly,
+            tenantId
+          ))
+        );
+      }
+      if (webhookRules.length > 0) {
+        fired.push(
+          ...(await this.evaluateWebhookRules(
+            projectId,
+            webhookRules,
+            tenantId
+          ))
+        );
+      }
+      if (milestoneRules.length === 0) continue;
       const milestones: any[] = await this.db.milestones.findMany({
         where: {
           projectId,
@@ -322,7 +577,7 @@ export class AlertEvaluationService {
           dueAt: new Date(milestone.completedAt),
         };
         let completion: { completed: number; total: number } | null = null;
-        for (const rule of projectRules) {
+        for (const rule of milestoneRules) {
           if (
             rule.scopeType === AlertScopeType.MILESTONE &&
             rule.scopeId !== subject.milestoneId
@@ -518,6 +773,20 @@ export class AlertEvaluationService {
           details: { passedBefore: verdict.passedBefore },
         };
       }
+      case AlertMetric.CASE_RECOVERED: {
+        const verdict = evaluateRecovery({
+          current,
+          previous,
+          window: rule.baselineWindow,
+          minSamples: Math.min(rule.minSamples, rule.baselineWindow),
+        });
+        if (!verdict.fired) return null;
+        return {
+          observed: verdict.failedBefore,
+          baseline: null,
+          details: { failedBefore: verdict.failedBefore },
+        };
+      }
       case AlertMetric.CONSECUTIVE_FAILURES: {
         const verdict = evaluateConsecutiveFailures({
           current,
@@ -666,6 +935,51 @@ export class AlertEvaluationService {
     };
   }
 
+  /**
+   * Durations of the earlier completed runs the rule's scope groups together
+   * (same tag, same name fragment, or every run), newest first.
+   */
+  private async loadPreviousRunDurations(
+    rule: AlertRuleRow,
+    run: RunSubject
+  ): Promise<ResultSample[]> {
+    const fragment =
+      rule.scopeType === AlertScopeType.RUN_NAME
+        ? `%${(rule.scopeText ?? "").trim()}%`
+        : null;
+    const tagId = rule.scopeType === AlertScopeType.TAG ? rule.scopeId : null;
+    const rows: any[] = await this.db.$queryRaw`
+      SELECT tr.elapsed::double precision AS elapsed
+      FROM "TestRuns" tr
+      WHERE tr."projectId" = ${run.projectId}
+        AND tr.id <> ${run.runId}
+        AND tr."isCompleted" = true
+        AND tr."isDeleted" = false
+        AND tr.elapsed IS NOT NULL
+        AND (${fragment == null} OR tr.name ILIKE ${fragment ?? ""})
+        AND (${tagId == null} OR EXISTS (
+          SELECT 1 FROM "_TagsToTestRuns" x WHERE x."A" = ${tagId ?? -1} AND x."B" = tr.id))
+      ORDER BY tr."completedAt" DESC NULLS LAST, tr.id DESC
+      LIMIT ${MAX_HISTORY}
+    `;
+    return rows.map((r) => ({
+      elapsed: r.elapsed == null ? null : Number(r.elapsed),
+      isSuccess: false,
+      isFailure: false,
+    }));
+  }
+
+  /** Distinct live defects linked to any result in the run. */
+  private async loadRunIssueCount(runId: number): Promise<number> {
+    return this.db.issue.count({
+      where: {
+        ...DEFECT_SCOPE_WHERE,
+        isDeleted: false,
+        testRunResults: { some: { testRunId: runId, isDeleted: false } },
+      },
+    });
+  }
+
   private evaluateRunRule(
     rule: AlertRuleRow,
     counts: RunCounts
@@ -721,6 +1035,376 @@ export class AlertEvaluationService {
   }
 
   // ---------------------------------------------------------------------
+  // Scheduled run metrics
+  // ---------------------------------------------------------------------
+
+  /**
+   * Open runs of a project with their last activity and, when linked to a
+   * milestone, its due date and untested share. One statement per project.
+   */
+  private async evaluateScheduledRuns(
+    rules: AlertRuleRow[],
+    tenantId?: string
+  ): Promise<FiredAlert[]> {
+    const projectId = rules[0].projectId;
+    const rows: any[] = await this.db.$queryRaw`
+      SELECT tr.id, tr.name, tr."testRunType", tr.elapsed, p.name AS "projectName",
+             m."completedAt" AS "milestoneDueAt", m."isCompleted" AS "milestoneCompleted",
+             (SELECT MAX(e."executedAt") FROM "EffectiveCaseStatus" e
+               WHERE e."testRunId" = tr.id) AS "lastActivityAt",
+             (SELECT COUNT(*)::int FROM "EffectiveCaseStatus" e
+               WHERE e."testRunId" = tr.id) AS total,
+             (SELECT COUNT(*)::int FROM "EffectiveCaseStatus" e
+               WHERE e."testRunId" = tr.id AND e."hasResult" = false) AS untested
+      FROM "TestRuns" tr
+      JOIN "Projects" p ON p.id = tr."projectId"
+      LEFT JOIN "Milestones" m ON m.id = tr."milestoneId" AND m."isDeleted" = false
+      WHERE tr."projectId" = ${projectId}
+        AND tr."isCompleted" = false
+        AND tr."isDeleted" = false
+    `;
+    const fired: FiredAlert[] = [];
+    const now = this.now();
+    for (const row of rows) {
+      const subject: RunSubject = {
+        runId: Number(row.id),
+        runName: row.name,
+        projectId,
+        projectName: row.projectName ?? "",
+        testRunType: row.testRunType,
+        isCompleted: false,
+        elapsed: row.elapsed == null ? null : Number(row.elapsed),
+      };
+      for (const rule of rules) {
+        if (!(await this.runMatchesScope(rule, subject))) continue;
+        let outcome: {
+          observed: number;
+          details: Record<string, unknown>;
+        } | null = null;
+        if (rule.metric === AlertMetric.RUN_NOT_PROGRESSING) {
+          const verdict = evaluateNotProgressing({
+            lastActivityAt: row.lastActivityAt
+              ? new Date(row.lastActivityAt)
+              : null,
+            now,
+            hours: rule.thresholdValue,
+          });
+          if (verdict.fired) {
+            outcome = {
+              observed: verdict.idleHours,
+              details: {
+                idleHours: verdict.idleHours,
+                lastActivityAt: new Date(row.lastActivityAt).toISOString(),
+              },
+            };
+          }
+        } else if (rule.metric === AlertMetric.RUN_UNTESTED_SHARE) {
+          if (!row.milestoneDueAt || row.milestoneCompleted) continue;
+          const verdict = evaluateUntestedShare({
+            untested: Number(row.untested ?? 0),
+            total: Number(row.total ?? 0),
+            dueAt: new Date(row.milestoneDueAt),
+            now,
+            thresholdPercent: rule.thresholdValue,
+            daysRemaining: rule.secondaryValue ?? 0,
+          });
+          if (verdict.fired) {
+            outcome = {
+              observed: verdict.untestedPercent,
+              details: {
+                untestedPercent: verdict.untestedPercent,
+                untested: Number(row.untested ?? 0),
+                total: Number(row.total ?? 0),
+                daysRemaining: verdict.daysRemaining,
+                dueAt: new Date(row.milestoneDueAt).toISOString(),
+              },
+            };
+          }
+        }
+        if (!outcome) continue;
+        const event = await this.fire({
+          rule,
+          subjectType: AlertSubjectType.RUN,
+          subjectId: subject.runId,
+          subjectName: subject.runName,
+          projectId,
+          projectName: subject.projectName,
+          observedValue: outcome.observed,
+          baselineValue: null,
+          thresholdValue: rule.thresholdValue,
+          details: { ...outcome.details, testRunId: subject.runId },
+          testRunId: subject.runId,
+          tenantId,
+        });
+        if (event) fired.push(event);
+      }
+    }
+    return fired;
+  }
+
+  // ---------------------------------------------------------------------
+  // Project-wide metrics
+  // ---------------------------------------------------------------------
+
+  private async evaluateProjectRules(
+    projectId: number,
+    rules: AlertRuleRow[],
+    tenantId?: string
+  ): Promise<FiredAlert[]> {
+    const project = await this.db.projects.findUnique({
+      where: { id: projectId },
+      select: { id: true, name: true, isDeleted: true },
+    });
+    if (!project || project.isDeleted) return [];
+    const fired: FiredAlert[] = [];
+    let coverage: Map<
+      number,
+      { linkedCaseCount: number; status: string }
+    > | null = null;
+    for (const rule of rules) {
+      let outcome: {
+        observed: number;
+        details: Record<string, unknown>;
+      } | null = null;
+      if (rule.metric === AlertMetric.REQUIREMENT_COVERAGE_BELOW) {
+        coverage ??= await getRequirementCoverage(
+          projectId,
+          { accessibleProjectIds: null },
+          undefined,
+          this.db
+        );
+        const total = coverage.size;
+        let covered = 0;
+        for (const breakdown of coverage.values()) {
+          if (
+            rule.coverageBasis === "PASSING"
+              ? breakdown.status === "PASSED"
+              : breakdown.linkedCaseCount > 0
+          ) {
+            covered += 1;
+          }
+        }
+        const verdict = evaluateShareBelow({
+          part: covered,
+          total,
+          thresholdPercent: rule.thresholdValue,
+        });
+        if (verdict.fired) {
+          outcome = {
+            observed: verdict.percent,
+            details: {
+              coveragePercent: verdict.percent,
+              covered,
+              total,
+              basis: rule.coverageBasis,
+            },
+          };
+        }
+      } else if (rule.metric === AlertMetric.STALE_CASES) {
+        const days = Math.max(0, rule.secondaryValue ?? 0);
+        const stale = await this.countStaleCases(projectId, rule, days);
+        const verdict = evaluateCountAbove({
+          observed: stale,
+          count: rule.thresholdValue,
+        });
+        if (verdict.fired) {
+          outcome = { observed: stale, details: { stale, days } };
+        }
+      } else if (rule.metric === AlertMetric.AUTOMATION_SHARE_BELOW) {
+        const { automated, total } = await this.countAutomationShare(
+          projectId,
+          rule
+        );
+        const verdict = evaluateShareBelow({
+          part: automated,
+          total,
+          thresholdPercent: rule.thresholdValue,
+        });
+        if (verdict.fired) {
+          outcome = {
+            observed: verdict.percent,
+            details: { automatedPercent: verdict.percent, automated, total },
+          };
+        }
+      }
+      if (!outcome) continue;
+      const event = await this.fire({
+        rule,
+        subjectType: AlertSubjectType.PROJECT,
+        subjectId: projectId,
+        subjectName: project.name,
+        projectId,
+        projectName: project.name,
+        observedValue: outcome.observed,
+        baselineValue: null,
+        thresholdValue: rule.thresholdValue,
+        details: outcome.details,
+        tenantId,
+      });
+      if (event) fired.push(event);
+    }
+    return fired;
+  }
+
+  /** The rule's case-set scope as query inputs; nulls mean the whole project. */
+  private async caseSetFilter(
+    rule: AlertRuleRow
+  ): Promise<{ folderIds: number[] | null; tagId: number | null }> {
+    if (rule.scopeType === AlertScopeType.FOLDER && rule.scopeId != null) {
+      return {
+        folderIds: [...(await this.loadFolderSubtree(rule.scopeId))],
+        tagId: null,
+      };
+    }
+    if (rule.scopeType === AlertScopeType.TAG && rule.scopeId != null) {
+      return { folderIds: null, tagId: rule.scopeId };
+    }
+    return { folderIds: null, tagId: null };
+  }
+
+  /**
+   * Live cases in scope, older than `days`, with no result (manual or
+   * automated) newer than `days`.
+   */
+  private async countStaleCases(
+    projectId: number,
+    rule: AlertRuleRow,
+    days: number
+  ): Promise<number> {
+    const { folderIds, tagId } = await this.caseSetFilter(rule);
+    const since = new Date(this.now().getTime() - days * 24 * 60 * 60 * 1000);
+    const rows: any[] = await this.db.$queryRaw`
+      SELECT COUNT(*)::int AS stale
+      FROM "RepositoryCases" rc
+      WHERE rc."projectId" = ${projectId}
+        AND rc."isDeleted" = false
+        AND rc."createdAt" < ${since}
+        AND (${folderIds == null} OR rc."folderId" = ANY(${folderIds ?? []}::int[]))
+        AND (${tagId == null} OR EXISTS (
+          SELECT 1 FROM "RepositoryCaseTag" t
+          WHERE t."caseId" = rc.id AND t."tagId" = ${tagId ?? -1}))
+        AND NOT EXISTS (
+          SELECT 1 FROM "TestRunResults" r
+          JOIN "TestRunCases" trc ON trc.id = r."testRunCaseId"
+          WHERE trc."repositoryCaseId" = rc.id
+            AND r."isDeleted" = false
+            AND r."executedAt" >= ${since})
+        AND NOT EXISTS (
+          SELECT 1 FROM "JUnitTestResult" jr
+          WHERE jr."repositoryCaseId" = rc.id
+            AND COALESCE(jr."executedAt", jr."createdAt") >= ${since})
+    `;
+    return Number(rows?.[0]?.stale ?? 0);
+  }
+
+  private async countAutomationShare(
+    projectId: number,
+    rule: AlertRuleRow
+  ): Promise<{ automated: number; total: number }> {
+    const { folderIds, tagId } = await this.caseSetFilter(rule);
+    const rows: any[] = await this.db.$queryRaw`
+      SELECT COUNT(*)::int AS total,
+             COUNT(*) FILTER (WHERE rc.automated)::int AS automated
+      FROM "RepositoryCases" rc
+      WHERE rc."projectId" = ${projectId}
+        AND rc."isDeleted" = false
+        AND (${folderIds == null} OR rc."folderId" = ANY(${folderIds ?? []}::int[]))
+        AND (${tagId == null} OR EXISTS (
+          SELECT 1 FROM "RepositoryCaseTag" t
+          WHERE t."caseId" = rc.id AND t."tagId" = ${tagId ?? -1}))
+    `;
+    return {
+      automated: Number(rows?.[0]?.automated ?? 0),
+      total: Number(rows?.[0]?.total ?? 0),
+    };
+  }
+
+  // ---------------------------------------------------------------------
+  // Webhook metrics
+  // ---------------------------------------------------------------------
+
+  /**
+   * Failure rate over the last N outbound deliveries of each active webhook
+   * in scope. A delivery failed when the dispatcher recorded an error.
+   */
+  private async evaluateWebhookRules(
+    projectId: number,
+    rules: AlertRuleRow[],
+    tenantId?: string
+  ): Promise<FiredAlert[]> {
+    const configs: any[] = await this.db.webhookConfig.findMany({
+      where: {
+        projectId,
+        direction: "OUTBOUND",
+        isActive: true,
+      },
+      select: {
+        id: true,
+        name: true,
+        url: true,
+        project: { select: { name: true } },
+      },
+    });
+    const fired: FiredAlert[] = [];
+    for (const config of configs) {
+      const label = config.name || config.url || config.id;
+      for (const rule of rules) {
+        if (
+          rule.scopeType === AlertScopeType.WEBHOOK &&
+          rule.scopeText !== config.id
+        ) {
+          continue;
+        }
+        if (
+          rule.scopeType !== AlertScopeType.WEBHOOK &&
+          rule.scopeType !== AlertScopeType.PROJECT
+        ) {
+          continue;
+        }
+        const rows: any[] = await this.db.$queryRaw`
+          SELECT COUNT(*)::int AS total,
+                 COUNT(*) FILTER (WHERE d.error IS NOT NULL)::int AS failed
+          FROM (
+            SELECT d.error FROM "WebhookDelivery" d
+            WHERE d."webhookConfigId" = ${config.id}
+              AND d.direction = 'OUTBOUND'
+            ORDER BY d."receivedAt" DESC
+            LIMIT ${rule.baselineWindow}
+          ) d
+        `;
+        const verdict = evaluateFailureRate({
+          failed: Number(rows?.[0]?.failed ?? 0),
+          total: Number(rows?.[0]?.total ?? 0),
+          thresholdPercent: rule.thresholdValue,
+          minSamples: rule.minSamples,
+        });
+        if (!verdict.fired) continue;
+        const event = await this.fire({
+          rule,
+          subjectType: AlertSubjectType.WEBHOOK,
+          subjectId: 0,
+          subjectRef: config.id,
+          subjectName: label,
+          projectId,
+          projectName: config.project?.name ?? "",
+          observedValue: verdict.failureRate,
+          baselineValue: null,
+          thresholdValue: rule.thresholdValue,
+          details: {
+            failureRate: verdict.failureRate,
+            failed: Number(rows?.[0]?.failed ?? 0),
+            sampleCount: verdict.sampleCount,
+            webhookConfigId: config.id,
+          },
+          tenantId,
+        });
+        if (event) fired.push(event);
+      }
+    }
+    return fired;
+  }
+
+  // ---------------------------------------------------------------------
   // Shared
   // ---------------------------------------------------------------------
 
@@ -753,6 +1437,7 @@ export class AlertEvaluationService {
         minSamples: true,
         resultSource: true,
         evaluateOn: true,
+        coverageBasis: true,
         cooldownMinutes: true,
         emitWebhook: true,
       },
@@ -770,6 +1455,8 @@ export class AlertEvaluationService {
     rule: AlertRuleRow;
     subjectType: AlertSubjectType;
     subjectId: number;
+    /** String key for subjects without an integer id (webhook configs). */
+    subjectRef?: string | null;
     subjectName: string;
     projectId: number;
     projectName: string;
@@ -788,6 +1475,7 @@ export class AlertEvaluationService {
         ruleId: rule.id,
         subjectType: params.subjectType,
         subjectId: params.subjectId,
+        ...(params.subjectRef ? { subjectRef: params.subjectRef } : {}),
       },
       orderBy: { firedAt: "desc" },
       select: { firedAt: true },
@@ -802,6 +1490,7 @@ export class AlertEvaluationService {
         projectId: params.projectId,
         subjectType: params.subjectType,
         subjectId: params.subjectId,
+        subjectRef: params.subjectRef ?? null,
         subjectName: params.subjectName,
         observedValue: params.observedValue,
         baselineValue: params.baselineValue,
@@ -867,6 +1556,7 @@ export class AlertEvaluationService {
               projectName: params.projectName,
               subjectType: params.subjectType,
               subjectId: params.subjectId,
+              subjectRef: params.subjectRef ?? null,
               subjectName: params.subjectName,
               subjectUrl: subjectUrl(
                 params.subjectType,

@@ -1,6 +1,7 @@
 import { z } from "zod/v4";
 import {
   AlertBaseline,
+  AlertCoverageBasis,
   AlertDirection,
   AlertEvaluateOn,
   AlertMetric,
@@ -42,6 +43,7 @@ export const alertRuleFormSchema = z
       .max(ALERT_RULE_LIMITS.minSamples.max),
     resultSource: z.enum(AlertResultSource),
     evaluateOn: z.enum(AlertEvaluateOn),
+    coverageBasis: z.enum(AlertCoverageBasis),
     cooldownMinutes: z
       .number()
       .int()
@@ -56,6 +58,7 @@ export const alertRuleFormSchema = z
     if (
       values.scopeType !== AlertScopeType.PROJECT &&
       values.scopeType !== AlertScopeType.RUN_NAME &&
+      values.scopeType !== AlertScopeType.WEBHOOK &&
       !values.scopeId
     ) {
       ctx.addIssue({
@@ -72,6 +75,16 @@ export const alertRuleFormSchema = z
         code: "custom",
         path: ["scopeText"],
         message: "runNameRequired",
+      });
+    }
+    if (
+      values.scopeType === AlertScopeType.WEBHOOK &&
+      !(values.scopeText ?? "").trim()
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["scopeText"],
+        message: "scopeRequired",
       });
     }
     if (metricUsesField(values.metric, "thresholdValue")) {
@@ -143,6 +156,7 @@ export interface AlertRuleLike {
   minSamples: number;
   resultSource: AlertResultSource;
   evaluateOn: AlertEvaluateOn;
+  coverageBasis?: AlertCoverageBasis;
   cooldownMinutes: number;
   emitWebhook: boolean;
   isEnabled: boolean;
@@ -167,6 +181,7 @@ export function defaultAlertRuleValues(
     minSamples: definition?.defaults.minSamples ?? 5,
     resultSource: AlertResultSource.BOTH,
     evaluateOn: AlertEvaluateOn.RUN_COMPLETION,
+    coverageBasis: AlertCoverageBasis.LINKED,
     cooldownMinutes: 1440,
     emitWebhook: false,
     isEnabled: true,
@@ -210,6 +225,7 @@ export function ruleToFormValues(rule: AlertRuleLike): AlertRuleFormValues {
     minSamples: rule.minSamples,
     resultSource: rule.resultSource,
     evaluateOn: rule.evaluateOn,
+    coverageBasis: rule.coverageBasis ?? AlertCoverageBasis.LINKED,
     cooldownMinutes: rule.cooldownMinutes,
     emitWebhook: rule.emitWebhook,
     isEnabled: rule.isEnabled,
@@ -220,19 +236,18 @@ export function ruleToFormValues(rule: AlertRuleLike): AlertRuleFormValues {
 export function formValuesToRuleData(
   values: AlertRuleFormValues
 ): Omit<AlertRuleLike, "metric"> & { metric: AlertMetric } {
+  const usesScopeText =
+    values.scopeType === AlertScopeType.RUN_NAME ||
+    values.scopeType === AlertScopeType.WEBHOOK;
   const usesScopeId =
-    values.scopeType !== AlertScopeType.PROJECT &&
-    values.scopeType !== AlertScopeType.RUN_NAME;
+    values.scopeType !== AlertScopeType.PROJECT && !usesScopeText;
   return {
     name: values.name.trim(),
     description: values.description?.trim() ? values.description.trim() : null,
     metric: values.metric,
     scopeType: values.scopeType,
     scopeId: usesScopeId && values.scopeId ? Number(values.scopeId) : null,
-    scopeText:
-      values.scopeType === AlertScopeType.RUN_NAME
-        ? (values.scopeText ?? "").trim()
-        : null,
+    scopeText: usesScopeText ? (values.scopeText ?? "").trim() : null,
     thresholdValue: metricUsesField(values.metric, "thresholdValue")
       ? values.thresholdValue
       : 0,
@@ -245,6 +260,7 @@ export function formValuesToRuleData(
     minSamples: values.minSamples,
     resultSource: values.resultSource,
     evaluateOn: values.evaluateOn,
+    coverageBasis: values.coverageBasis,
     cooldownMinutes: values.cooldownMinutes,
     emitWebhook: values.emitWebhook,
     isEnabled: values.isEnabled,

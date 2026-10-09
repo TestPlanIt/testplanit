@@ -168757,12 +168757,23 @@
         "enum": [
           "RESULT_DURATION_DEVIATION",
           "CASE_REGRESSED",
+          "CASE_RECOVERED",
           "CONSECUTIVE_FAILURES",
           "CASE_FLAKY",
           "RUN_PASS_RATE_BELOW",
           "RUN_FAILURE_COUNT",
+          "RUN_DURATION_DEVIATION",
+          "RUN_NOT_PROGRESSING",
+          "AUTOMATED_EXECUTION_FAILED",
+          "RUN_UNTESTED_SHARE",
+          "RUN_ISSUES_OPENED",
+          "SESSION_OVERRUN",
           "MILESTONE_BEHIND",
-          "MILESTONE_OVERDUE"
+          "MILESTONE_OVERDUE",
+          "REQUIREMENT_COVERAGE_BELOW",
+          "STALE_CASES",
+          "AUTOMATION_SHARE_BELOW",
+          "WEBHOOK_FAILURE_RATE"
         ]
       },
       "EnumAlertMetricFilter": {
@@ -168919,7 +168930,8 @@
           "TAG",
           "CASE",
           "RUN_NAME",
-          "MILESTONE"
+          "MILESTONE",
+          "WEBHOOK"
         ]
       },
       "EnumAlertScopeTypeFilter": {
@@ -169682,12 +169694,168 @@
           }
         }
       },
+      "AlertCoverageBasis": {
+        "type": "string",
+        "enum": [
+          "LINKED",
+          "PASSING"
+        ]
+      },
+      "EnumAlertCoverageBasisFilter": {
+        "type": "object",
+        "properties": {
+          "equals": {
+            "$ref": "#/components/schemas/AlertCoverageBasis"
+          },
+          "in": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AlertCoverageBasis"
+            }
+          },
+          "notIn": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AlertCoverageBasis"
+            }
+          },
+          "not": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AlertCoverageBasis"
+              },
+              {
+                "$ref": "#/components/schemas/NestedEnumAlertCoverageBasisFilter"
+              }
+            ]
+          }
+        }
+      },
+      "NestedEnumAlertCoverageBasisFilter": {
+        "type": "object",
+        "properties": {
+          "equals": {
+            "$ref": "#/components/schemas/AlertCoverageBasis"
+          },
+          "in": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AlertCoverageBasis"
+            }
+          },
+          "notIn": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AlertCoverageBasis"
+            }
+          },
+          "not": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AlertCoverageBasis"
+              },
+              {
+                "$ref": "#/components/schemas/NestedEnumAlertCoverageBasisFilter"
+              }
+            ]
+          }
+        }
+      },
+      "EnumAlertCoverageBasisWithAggregatesFilter": {
+        "type": "object",
+        "properties": {
+          "equals": {
+            "$ref": "#/components/schemas/AlertCoverageBasis"
+          },
+          "in": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AlertCoverageBasis"
+            }
+          },
+          "notIn": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AlertCoverageBasis"
+            }
+          },
+          "not": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AlertCoverageBasis"
+              },
+              {
+                "$ref": "#/components/schemas/NestedEnumAlertCoverageBasisWithAggregatesFilter"
+              }
+            ]
+          },
+          "_count": {
+            "$ref": "#/components/schemas/NestedIntFilter"
+          },
+          "_min": {
+            "$ref": "#/components/schemas/NestedEnumAlertCoverageBasisFilter"
+          },
+          "_max": {
+            "$ref": "#/components/schemas/NestedEnumAlertCoverageBasisFilter"
+          }
+        }
+      },
+      "NestedEnumAlertCoverageBasisWithAggregatesFilter": {
+        "type": "object",
+        "properties": {
+          "equals": {
+            "$ref": "#/components/schemas/AlertCoverageBasis"
+          },
+          "in": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AlertCoverageBasis"
+            }
+          },
+          "notIn": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AlertCoverageBasis"
+            }
+          },
+          "not": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AlertCoverageBasis"
+              },
+              {
+                "$ref": "#/components/schemas/NestedEnumAlertCoverageBasisWithAggregatesFilter"
+              }
+            ]
+          },
+          "_count": {
+            "$ref": "#/components/schemas/NestedIntFilter"
+          },
+          "_min": {
+            "$ref": "#/components/schemas/NestedEnumAlertCoverageBasisFilter"
+          },
+          "_max": {
+            "$ref": "#/components/schemas/NestedEnumAlertCoverageBasisFilter"
+          }
+        }
+      },
+      "EnumAlertCoverageBasisFieldUpdateOperationsInput": {
+        "type": "object",
+        "properties": {
+          "set": {
+            "$ref": "#/components/schemas/AlertCoverageBasis"
+          }
+        }
+      },
       "AlertSubjectType": {
         "type": "string",
         "enum": [
           "CASE",
           "RUN",
-          "MILESTONE"
+          "MILESTONE",
+          "SESSION",
+          "PROJECT",
+          "WEBHOOK"
         ]
       },
       "EnumAlertSubjectTypeFilter": {
@@ -1216176,6 +1216344,9 @@
           "evaluateOn": {
             "$ref": "#/components/schemas/AlertEvaluateOn"
           },
+          "coverageBasis": {
+            "$ref": "#/components/schemas/AlertCoverageBasis"
+          },
           "cooldownMinutes": {
             "type": "integer"
           },
@@ -1216251,6 +1216422,7 @@
           "minSamples",
           "resultSource",
           "evaluateOn",
+          "coverageBasis",
           "cooldownMinutes",
           "emitWebhook",
           "isEnabled",
@@ -1216320,6 +1216492,9 @@
             "type": "boolean"
           },
           "evaluateOn": {
+            "type": "boolean"
+          },
+          "coverageBasis": {
             "type": "boolean"
           },
           "cooldownMinutes": {
@@ -1216693,6 +1216868,16 @@
               }
             ]
           },
+          "coverageBasis": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/EnumAlertCoverageBasisFilter"
+              },
+              {
+                "$ref": "#/components/schemas/AlertCoverageBasis"
+              }
+            ]
+          },
           "cooldownMinutes": {
             "oneOf": [
               {
@@ -1217021,6 +1217206,16 @@
               }
             ]
           },
+          "coverageBasis": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/EnumAlertCoverageBasisFilter"
+              },
+              {
+                "$ref": "#/components/schemas/AlertCoverageBasis"
+              }
+            ]
+          },
           "cooldownMinutes": {
             "oneOf": [
               {
@@ -1217346,6 +1217541,16 @@
               }
             ]
           },
+          "coverageBasis": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/EnumAlertCoverageBasisFilter"
+              },
+              {
+                "$ref": "#/components/schemas/AlertCoverageBasis"
+              }
+            ]
+          },
           "cooldownMinutes": {
             "oneOf": [
               {
@@ -1217655,6 +1217860,16 @@
               }
             ]
           },
+          "coverageBasis": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/EnumAlertCoverageBasisWithAggregatesFilter"
+              },
+              {
+                "$ref": "#/components/schemas/AlertCoverageBasis"
+              }
+            ]
+          },
           "cooldownMinutes": {
             "oneOf": [
               {
@@ -1217864,6 +1218079,9 @@
           "evaluateOn": {
             "$ref": "#/components/schemas/SortOrder"
           },
+          "coverageBasis": {
+            "$ref": "#/components/schemas/SortOrder"
+          },
           "cooldownMinutes": {
             "$ref": "#/components/schemas/SortOrder"
           },
@@ -1217943,6 +1218161,7 @@
           "minSamples",
           "resultSource",
           "evaluateOn",
+          "coverageBasis",
           "cooldownMinutes",
           "emitWebhook",
           "isEnabled",
@@ -1218003,6 +1218222,9 @@
             "type": "boolean"
           },
           "evaluateOn": {
+            "type": "boolean"
+          },
+          "coverageBasis": {
             "type": "boolean"
           },
           "cooldownMinutes": {
@@ -1218088,6 +1218310,9 @@
           "evaluateOn": {
             "type": "integer"
           },
+          "coverageBasis": {
+            "type": "integer"
+          },
           "cooldownMinutes": {
             "type": "integer"
           },
@@ -1218136,6 +1218361,7 @@
           "minSamples",
           "resultSource",
           "evaluateOn",
+          "coverageBasis",
           "cooldownMinutes",
           "emitWebhook",
           "isEnabled",
@@ -1218197,6 +1218423,9 @@
             "type": "boolean"
           },
           "evaluateOn": {
+            "type": "boolean"
+          },
+          "coverageBasis": {
             "type": "boolean"
           },
           "cooldownMinutes": {
@@ -1218391,6 +1218620,16 @@
               }
             ]
           },
+          "coverageBasis": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/AlertCoverageBasis"
+              }
+            ]
+          },
           "cooldownMinutes": {
             "oneOf": [
               {
@@ -1218536,6 +1218775,9 @@
             "type": "boolean"
           },
           "evaluateOn": {
+            "type": "boolean"
+          },
+          "coverageBasis": {
             "type": "boolean"
           },
           "cooldownMinutes": {
@@ -1218727,6 +1218969,16 @@
               },
               {
                 "$ref": "#/components/schemas/AlertEvaluateOn"
+              }
+            ]
+          },
+          "coverageBasis": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/AlertCoverageBasis"
               }
             ]
           },
@@ -1219188,6 +1219440,9 @@
           "evaluateOn": {
             "$ref": "#/components/schemas/AlertEvaluateOn"
           },
+          "coverageBasis": {
+            "$ref": "#/components/schemas/AlertCoverageBasis"
+          },
           "cooldownMinutes": {
             "type": "integer"
           },
@@ -1219297,6 +1219552,7 @@
           "minSamples",
           "resultSource",
           "evaluateOn",
+          "coverageBasis",
           "cooldownMinutes",
           "emitWebhook",
           "isEnabled",
@@ -1219378,6 +1219634,9 @@
           },
           "evaluateOn": {
             "$ref": "#/components/schemas/AlertEvaluateOn"
+          },
+          "coverageBasis": {
+            "$ref": "#/components/schemas/AlertCoverageBasis"
           },
           "cooldownMinutes": {
             "type": "integer"
@@ -1219593,6 +1219852,16 @@
               },
               {
                 "$ref": "#/components/schemas/EnumAlertEvaluateOnFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "coverageBasis": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AlertCoverageBasis"
+              },
+              {
+                "$ref": "#/components/schemas/EnumAlertCoverageBasisFieldUpdateOperationsInput"
               }
             ]
           },
@@ -1219855,6 +1220124,16 @@
               }
             ]
           },
+          "coverageBasis": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AlertCoverageBasis"
+              },
+              {
+                "$ref": "#/components/schemas/EnumAlertCoverageBasisFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "cooldownMinutes": {
             "oneOf": [
               {
@@ -1220026,6 +1220305,9 @@
           "evaluateOn": {
             "$ref": "#/components/schemas/AlertEvaluateOn"
           },
+          "coverageBasis": {
+            "$ref": "#/components/schemas/AlertCoverageBasis"
+          },
           "cooldownMinutes": {
             "type": "integer"
           },
@@ -1220151,6 +1220433,9 @@
           },
           "evaluateOn": {
             "$ref": "#/components/schemas/AlertEvaluateOn"
+          },
+          "coverageBasis": {
+            "$ref": "#/components/schemas/AlertCoverageBasis"
           },
           "cooldownMinutes": {
             "type": "integer"
@@ -1220285,6 +1220570,9 @@
           },
           "evaluateOn": {
             "$ref": "#/components/schemas/AlertEvaluateOn"
+          },
+          "coverageBasis": {
+            "$ref": "#/components/schemas/AlertCoverageBasis"
           },
           "cooldownMinutes": {
             "type": "integer"
@@ -1220496,6 +1220784,16 @@
               },
               {
                 "$ref": "#/components/schemas/EnumAlertEvaluateOnFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "coverageBasis": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AlertCoverageBasis"
+              },
+              {
+                "$ref": "#/components/schemas/EnumAlertCoverageBasisFieldUpdateOperationsInput"
               }
             ]
           },
@@ -1220765,6 +1221063,16 @@
               }
             ]
           },
+          "coverageBasis": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AlertCoverageBasis"
+              },
+              {
+                "$ref": "#/components/schemas/EnumAlertCoverageBasisFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "cooldownMinutes": {
             "oneOf": [
               {
@@ -1220970,6 +1221278,9 @@
           },
           "evaluateOn": {
             "$ref": "#/components/schemas/AlertEvaluateOn"
+          },
+          "coverageBasis": {
+            "$ref": "#/components/schemas/AlertCoverageBasis"
           },
           "cooldownMinutes": {
             "type": "integer"
@@ -1221398,6 +1221709,16 @@
               },
               {
                 "$ref": "#/components/schemas/EnumAlertEvaluateOnFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "coverageBasis": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AlertCoverageBasis"
+              },
+              {
+                "$ref": "#/components/schemas/EnumAlertCoverageBasisFieldUpdateOperationsInput"
               }
             ]
           },
@@ -1221870,6 +1222191,9 @@
           "evaluateOn": {
             "$ref": "#/components/schemas/AlertEvaluateOn"
           },
+          "coverageBasis": {
+            "$ref": "#/components/schemas/AlertCoverageBasis"
+          },
           "cooldownMinutes": {
             "type": "integer"
           },
@@ -1222006,6 +1222330,9 @@
           },
           "evaluateOn": {
             "$ref": "#/components/schemas/AlertEvaluateOn"
+          },
+          "coverageBasis": {
+            "$ref": "#/components/schemas/AlertCoverageBasis"
           },
           "cooldownMinutes": {
             "type": "integer"
@@ -1222214,6 +1222541,16 @@
               },
               {
                 "$ref": "#/components/schemas/EnumAlertEvaluateOnFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "coverageBasis": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AlertCoverageBasis"
+              },
+              {
+                "$ref": "#/components/schemas/EnumAlertCoverageBasisFieldUpdateOperationsInput"
               }
             ]
           },
@@ -1222493,6 +1222830,16 @@
               }
             ]
           },
+          "coverageBasis": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AlertCoverageBasis"
+              },
+              {
+                "$ref": "#/components/schemas/EnumAlertCoverageBasisFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "cooldownMinutes": {
             "oneOf": [
               {
@@ -1222691,6 +1223038,9 @@
           },
           "evaluateOn": {
             "$ref": "#/components/schemas/AlertEvaluateOn"
+          },
+          "coverageBasis": {
+            "$ref": "#/components/schemas/AlertCoverageBasis"
           },
           "cooldownMinutes": {
             "type": "integer"
@@ -1223126,6 +1223476,16 @@
               },
               {
                 "$ref": "#/components/schemas/EnumAlertEvaluateOnFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "coverageBasis": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AlertCoverageBasis"
+              },
+              {
+                "$ref": "#/components/schemas/EnumAlertCoverageBasisFieldUpdateOperationsInput"
               }
             ]
           },
@@ -1223588,6 +1223948,9 @@
           "evaluateOn": {
             "$ref": "#/components/schemas/AlertEvaluateOn"
           },
+          "coverageBasis": {
+            "$ref": "#/components/schemas/AlertCoverageBasis"
+          },
           "cooldownMinutes": {
             "type": "integer"
           },
@@ -1223725,6 +1224088,9 @@
           },
           "evaluateOn": {
             "$ref": "#/components/schemas/AlertEvaluateOn"
+          },
+          "coverageBasis": {
+            "$ref": "#/components/schemas/AlertCoverageBasis"
           },
           "cooldownMinutes": {
             "type": "integer"
@@ -1223934,6 +1224300,16 @@
               },
               {
                 "$ref": "#/components/schemas/EnumAlertEvaluateOnFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "coverageBasis": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AlertCoverageBasis"
+              },
+              {
+                "$ref": "#/components/schemas/EnumAlertCoverageBasisFieldUpdateOperationsInput"
               }
             ]
           },
@@ -1224210,6 +1224586,16 @@
               },
               {
                 "$ref": "#/components/schemas/EnumAlertEvaluateOnFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "coverageBasis": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AlertCoverageBasis"
+              },
+              {
+                "$ref": "#/components/schemas/EnumAlertCoverageBasisFieldUpdateOperationsInput"
               }
             ]
           },
@@ -1224524,6 +1224910,9 @@
           "evaluateOn": {
             "$ref": "#/components/schemas/AlertEvaluateOn"
           },
+          "coverageBasis": {
+            "$ref": "#/components/schemas/AlertCoverageBasis"
+          },
           "cooldownMinutes": {
             "type": "integer"
           },
@@ -1224661,6 +1225050,9 @@
           },
           "evaluateOn": {
             "$ref": "#/components/schemas/AlertEvaluateOn"
+          },
+          "coverageBasis": {
+            "$ref": "#/components/schemas/AlertCoverageBasis"
           },
           "cooldownMinutes": {
             "type": "integer"
@@ -1224870,6 +1225262,16 @@
               },
               {
                 "$ref": "#/components/schemas/EnumAlertEvaluateOnFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "coverageBasis": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AlertCoverageBasis"
+              },
+              {
+                "$ref": "#/components/schemas/EnumAlertCoverageBasisFieldUpdateOperationsInput"
               }
             ]
           },
@@ -1225146,6 +1225548,16 @@
               },
               {
                 "$ref": "#/components/schemas/EnumAlertEvaluateOnFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "coverageBasis": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AlertCoverageBasis"
+              },
+              {
+                "$ref": "#/components/schemas/EnumAlertCoverageBasisFieldUpdateOperationsInput"
               }
             ]
           },
@@ -1229383,6 +1229795,16 @@
           "subjectId": {
             "type": "integer"
           },
+          "subjectRef": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "subjectName": {
             "type": "string"
           },
@@ -1229480,6 +1229902,9 @@
             "type": "boolean"
           },
           "subjectId": {
+            "type": "boolean"
+          },
+          "subjectRef": {
             "type": "boolean"
           },
           "subjectName": {
@@ -1229638,6 +1230063,19 @@
               },
               {
                 "type": "integer"
+              }
+            ]
+          },
+          "subjectRef": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -1229821,6 +1230259,19 @@
               }
             ]
           },
+          "subjectRef": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "subjectName": {
             "oneOf": [
               {
@@ -1229985,6 +1230436,19 @@
               },
               {
                 "type": "integer"
+              }
+            ]
+          },
+          "subjectRef": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -1230155,6 +1230619,19 @@
               }
             ]
           },
+          "subjectRef": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StringNullableWithAggregatesFilter"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "subjectName": {
             "oneOf": [
               {
@@ -1230275,6 +1230752,16 @@
           "subjectId": {
             "$ref": "#/components/schemas/SortOrder"
           },
+          "subjectRef": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SortOrder"
+              },
+              {
+                "$ref": "#/components/schemas/SortOrderInput"
+              }
+            ]
+          },
           "subjectName": {
             "$ref": "#/components/schemas/SortOrder"
           },
@@ -1230334,6 +1230821,7 @@
           "projectId",
           "subjectType",
           "subjectId",
+          "subjectRef",
           "subjectName",
           "observedValue",
           "baselineValue",
@@ -1230401,6 +1230889,9 @@
           "subjectId": {
             "type": "boolean"
           },
+          "subjectRef": {
+            "type": "boolean"
+          },
           "subjectName": {
             "type": "boolean"
           },
@@ -1230451,6 +1230942,9 @@
           "subjectId": {
             "type": "integer"
           },
+          "subjectRef": {
+            "type": "integer"
+          },
           "subjectName": {
             "type": "integer"
           },
@@ -1230488,6 +1230982,7 @@
           "projectId",
           "subjectType",
           "subjectId",
+          "subjectRef",
           "subjectName",
           "observedValue",
           "baselineValue",
@@ -1230516,6 +1231011,9 @@
             "type": "boolean"
           },
           "subjectId": {
+            "type": "boolean"
+          },
+          "subjectRef": {
             "type": "boolean"
           },
           "subjectName": {
@@ -1230591,6 +1231089,16 @@
               },
               {
                 "type": "integer"
+              }
+            ]
+          },
+          "subjectRef": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
               }
             ]
           },
@@ -1230685,6 +1231193,9 @@
           "subjectId": {
             "type": "boolean"
           },
+          "subjectRef": {
+            "type": "boolean"
+          },
           "subjectName": {
             "type": "boolean"
           },
@@ -1230758,6 +1231269,16 @@
               },
               {
                 "type": "integer"
+              }
+            ]
+          },
+          "subjectRef": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
               }
             ]
           },
@@ -1231135,6 +1231656,16 @@
           "subjectId": {
             "type": "integer"
           },
+          "subjectRef": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "subjectName": {
             "type": "string"
           },
@@ -1231259,6 +1231790,16 @@
           "subjectId": {
             "type": "integer"
           },
+          "subjectRef": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "subjectName": {
             "type": "string"
           },
@@ -1231346,6 +1231887,19 @@
               },
               {
                 "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "subjectRef": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -1231475,6 +1232029,19 @@
               }
             ]
           },
+          "subjectRef": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "subjectName": {
             "oneOf": [
               {
@@ -1231590,6 +1232157,16 @@
           "subjectId": {
             "type": "integer"
           },
+          "subjectRef": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "subjectName": {
             "type": "string"
           },
@@ -1231659,6 +1232236,16 @@
           },
           "subjectId": {
             "type": "integer"
+          },
+          "subjectRef": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "subjectName": {
             "type": "string"
@@ -1231737,6 +1232324,16 @@
           },
           "subjectId": {
             "type": "integer"
+          },
+          "subjectRef": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "subjectName": {
             "type": "string"
@@ -1231818,6 +1232415,19 @@
               },
               {
                 "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "subjectRef": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -1231964,6 +1232574,19 @@
               }
             ]
           },
+          "subjectRef": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "subjectName": {
             "oneOf": [
               {
@@ -1232097,6 +1232720,16 @@
           },
           "subjectId": {
             "type": "integer"
+          },
+          "subjectRef": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "subjectName": {
             "type": "string"
@@ -1232411,6 +1233044,19 @@
               },
               {
                 "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "subjectRef": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -1232814,6 +1233460,16 @@
           "subjectId": {
             "type": "integer"
           },
+          "subjectRef": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "subjectName": {
             "type": "string"
           },
@@ -1232891,6 +1233547,16 @@
           },
           "subjectId": {
             "type": "integer"
+          },
+          "subjectRef": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "subjectName": {
             "type": "string"
@@ -1232972,6 +1233638,19 @@
               },
               {
                 "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "subjectRef": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -1233118,6 +1233797,19 @@
               }
             ]
           },
+          "subjectRef": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "subjectName": {
             "oneOf": [
               {
@@ -1233251,6 +1233943,16 @@
           },
           "subjectId": {
             "type": "integer"
+          },
+          "subjectRef": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "subjectName": {
             "type": "string"
@@ -1233565,6 +1234267,19 @@
               },
               {
                 "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "subjectRef": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NullableStringFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },

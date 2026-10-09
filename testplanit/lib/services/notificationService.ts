@@ -280,7 +280,8 @@ export class NotificationService {
     metric: string;
     projectId: number;
     projectName: string;
-    subjectType: "CASE" | "RUN" | "MILESTONE";
+    subjectType:
+      "CASE" | "RUN" | "MILESTONE" | "SESSION" | "PROJECT" | "WEBHOOK";
     subjectId: number;
     subjectName: string;
     observedValue: number;

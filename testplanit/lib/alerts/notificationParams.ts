@@ -15,7 +15,8 @@ export interface AlertNotificationData {
   metric?: string;
   projectId?: number;
   projectName?: string;
-  subjectType?: "CASE" | "RUN" | "MILESTONE" | string;
+  subjectType?:
+    "CASE" | "RUN" | "MILESTONE" | "SESSION" | "PROJECT" | "WEBHOOK" | string;
   subjectId?: number;
   subjectName?: string;
   observedValue?: number;
@@ -75,6 +76,13 @@ export function alertMetricMessage(
           passedBefore: int(details.passedBefore ?? data.observedValue),
         },
       };
+    case "CASE_RECOVERED":
+      return {
+        key: "alertMetric.CASE_RECOVERED",
+        params: {
+          failedBefore: int(details.failedBefore ?? data.observedValue),
+        },
+      };
     case "CONSECUTIVE_FAILURES":
       return {
         key: "alertMetric.CONSECUTIVE_FAILURES",
@@ -109,6 +117,103 @@ export function alertMetricMessage(
           threshold: int(threshold),
         },
       };
+    case "RUN_DURATION_DEVIATION":
+      return {
+        key: "alertMetric.RUN_DURATION_DEVIATION",
+        params: {
+          elapsed: duration(details.elapsed, locale),
+          deviation: num(Math.abs(data.observedValue ?? 0)),
+          baseline: duration(
+            data.baselineValue ?? details.baselineSeconds,
+            locale
+          ),
+          threshold: num(threshold),
+        },
+      };
+    case "RUN_NOT_PROGRESSING":
+      return {
+        key: "alertMetric.RUN_NOT_PROGRESSING",
+        params: {
+          idleHours: int(details.idleHours ?? data.observedValue),
+          threshold: int(threshold),
+        },
+      };
+    case "AUTOMATED_EXECUTION_FAILED":
+      return {
+        key: "alertMetric.AUTOMATED_EXECUTION_FAILED",
+        params: {
+          status: String(details.status ?? "FAILED"),
+          target: String(details.targetName ?? ""),
+          error: String(details.error ?? ""),
+        },
+      };
+    case "RUN_UNTESTED_SHARE":
+      return {
+        key: "alertMetric.RUN_UNTESTED_SHARE",
+        params: {
+          untestedPercent: num(details.untestedPercent ?? data.observedValue),
+          daysRemaining: int(details.daysRemaining),
+          threshold: num(threshold),
+        },
+      };
+    case "RUN_ISSUES_OPENED":
+      return {
+        key: "alertMetric.RUN_ISSUES_OPENED",
+        params: {
+          issues: int(details.issues ?? data.observedValue),
+          threshold: int(threshold),
+        },
+      };
+    case "SESSION_OVERRUN":
+      return {
+        key: "alertMetric.SESSION_OVERRUN",
+        params: {
+          elapsed: duration(details.elapsed, locale),
+          estimate: duration(details.estimate ?? data.baselineValue, locale),
+          overrun: num(details.overrunPercent ?? data.observedValue),
+          threshold: num(threshold),
+        },
+      };
+    case "REQUIREMENT_COVERAGE_BELOW":
+      return {
+        key: "alertMetric.REQUIREMENT_COVERAGE_BELOW",
+        params: {
+          coverage: num(details.coveragePercent ?? data.observedValue),
+          covered: int(details.covered),
+          total: int(details.total),
+          basis: String(details.basis ?? "LINKED"),
+          threshold: num(threshold),
+        },
+      };
+    case "STALE_CASES":
+      return {
+        key: "alertMetric.STALE_CASES",
+        params: {
+          stale: int(details.stale ?? data.observedValue),
+          days: int(details.days),
+          threshold: int(threshold),
+        },
+      };
+    case "AUTOMATION_SHARE_BELOW":
+      return {
+        key: "alertMetric.AUTOMATION_SHARE_BELOW",
+        params: {
+          automatedPercent: num(details.automatedPercent ?? data.observedValue),
+          automated: int(details.automated),
+          total: int(details.total),
+          threshold: num(threshold),
+        },
+      };
+    case "WEBHOOK_FAILURE_RATE":
+      return {
+        key: "alertMetric.WEBHOOK_FAILURE_RATE",
+        params: {
+          failureRate: num(details.failureRate ?? data.observedValue),
+          failed: int(details.failed),
+          sampleCount: int(details.sampleCount),
+          threshold: num(threshold),
+        },
+      };
     case "MILESTONE_BEHIND":
       return {
         key: "alertMetric.MILESTONE_BEHIND",
@@ -133,11 +238,14 @@ export function alertMetricMessage(
 
 /** In-app path (no locale prefix) of the fired subject. */
 export function alertSubjectPath(data: AlertNotificationData): string | null {
-  if (!data.projectId || !data.subjectType || !data.subjectId) return null;
+  if (!data.projectId || !data.subjectType) return null;
+  // Webhook subjects carry no integer id; their path is the project's
+  // Webhooks page, so the id is not needed.
+  if (data.subjectType !== "WEBHOOK" && !data.subjectId) return null;
   return subjectPath(
     data.subjectType,
     data.projectId,
-    data.subjectId,
+    data.subjectId ?? 0,
     data.testRunId ?? null
   );
 }

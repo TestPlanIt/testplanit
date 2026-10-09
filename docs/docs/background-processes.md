@@ -26,7 +26,7 @@ The application uses the following background processes:
 14. **Webhook Retention Worker** - Daily purge of webhook delivery / dedup / outbox rows older than 30 days
 15. **DataChangeLog Retention Worker** - Daily purge of processed audit change-capture rows older than 30 days
 16. **Dataset Lease Sweep Worker** - Reaps expired dataset-row leases (test-data reservations) roughly once a minute
-17. **Alert Worker** - Evaluates alert rules when results land, when runs complete, and on a daily milestone pass
+17. **Alert Worker** - Evaluates alert rules when results land, when runs complete, when automated executions fail and sessions complete, and on hourly and daily scheduled passes
 18. **Scheduler** - Sets up recurring jobs (cron jobs)
 
 ## Workers
@@ -177,7 +177,7 @@ The application uses the following background processes:
 
 ### Alert Worker
 
-- Evaluates [alert](./user-guide/alerts.md) rules: one job per recorded result (manual and automated), one deduplicated job per run when results arrive or the run completes, and one daily job per tenant for the milestone metrics
+- Evaluates [alert](./user-guide/alerts.md) rules: one job per recorded result (manual and automated), one deduplicated job per run when results arrive or the run completes, one job per failed or timed-out automated execution, one per completed session, an hourly job per tenant for stalled runs and webhook failure rates, and a daily job per tenant for the milestone, untested-share and project health metrics
 - Records a `AlertEvent` row per firing, notifies the rule's subscribers through the notification worker, and optionally writes a `alert.triggered` outbox event for webhooks
 - Default concurrency: 2 (`ALERT_CONCURRENCY`)
 - Location: `workers/alertWorker.ts`

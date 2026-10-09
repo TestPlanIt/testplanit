@@ -6923,12 +6923,23 @@ model AuditLog {
 enum AlertMetric {
     RESULT_DURATION_DEVIATION
     CASE_REGRESSED
+    CASE_RECOVERED
     CONSECUTIVE_FAILURES
     CASE_FLAKY
     RUN_PASS_RATE_BELOW
     RUN_FAILURE_COUNT
+    RUN_DURATION_DEVIATION
+    RUN_NOT_PROGRESSING
+    AUTOMATED_EXECUTION_FAILED
+    RUN_UNTESTED_SHARE
+    RUN_ISSUES_OPENED
+    SESSION_OVERRUN
     MILESTONE_BEHIND
     MILESTONE_OVERDUE
+    REQUIREMENT_COVERAGE_BELOW
+    STALE_CASES
+    AUTOMATION_SHARE_BELOW
+    WEBHOOK_FAILURE_RATE
 
     @@deny('all', auth() == null)
     @@allow('read', auth().access != null)
@@ -6941,6 +6952,7 @@ enum AlertScopeType {
     CASE
     RUN_NAME
     MILESTONE
+    WEBHOOK
 
     @@deny('all', auth() == null)
     @@allow('read', auth().access != null)
@@ -6980,52 +6992,65 @@ enum AlertEvaluateOn {
     @@allow('read', auth().access != null)
 }
 
+enum AlertCoverageBasis {
+    LINKED
+    PASSING
+
+    @@deny('all', auth() == null)
+    @@allow('read', auth().access != null)
+}
+
 enum AlertSubjectType {
     CASE
     RUN
     MILESTONE
+    SESSION
+    PROJECT
+    WEBHOOK
 
     @@deny('all', auth() == null)
     @@allow('read', auth().access != null)
 }
 
 model AlertRule {
-    id              Int               @id @default(autoincrement())
-    projectId       Int               @deny('update', true)
-    project         Projects          @relation(fields: [projectId], references: [id], onDelete: Cascade)
-    name            String            @length(1, 200)
+    id              Int                @id @default(autoincrement())
+    projectId       Int                @deny('update', true)
+    project         Projects           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    name            String             @length(1, 200)
     description     String?
-    metric          AlertMetric       @deny('update', true)
+    metric          AlertMetric        @deny('update', true)
     // What the rule watches. scopeId holds a folder, tag, case or milestone
     // id depending on scopeType; scopeText holds the run-name fragment.
-    scopeType       AlertScopeType    @default(PROJECT)
+    scopeType       AlertScopeType     @default(PROJECT)
     scopeId         Int?
     scopeText       String?
     // The number on the right-hand side of the condition: a percentage for
     // deviation, rate and completion metrics, a count for the others.
-    thresholdValue  Float             @default(0)
+    thresholdValue  Float              @default(0)
     // Second number for metrics that need one (days remaining on
     // MILESTONE_BEHIND).
     secondaryValue  Int?
-    direction       AlertDirection    @default(EITHER)
-    baselineType    AlertBaseline     @default(MEDIAN)
+    direction       AlertDirection     @default(EITHER)
+    baselineType    AlertBaseline      @default(MEDIAN)
     // Number of previous results the baseline is built from.
-    baselineWindow  Int               @default(10)
+    baselineWindow  Int                @default(10)
     // The rule stays silent until this many samples exist.
-    minSamples      Int               @default(5)
-    resultSource    AlertResultSource @default(BOTH)
-    evaluateOn      AlertEvaluateOn   @default(RUN_COMPLETION)
+    minSamples      Int                @default(5)
+    resultSource    AlertResultSource  @default(BOTH)
+    evaluateOn      AlertEvaluateOn    @default(RUN_COMPLETION)
+    // What counts a requirement as covered (REQUIREMENT_COVERAGE_BELOW).
+    coverageBasis   AlertCoverageBasis @default(LINKED)
     // Once fired for a subject, the rule is silent for it until this passes.
-    cooldownMinutes Int               @default(1440)
-    emitWebhook     Boolean           @default(false)
-    isEnabled       Boolean           @default(true)
-    isDeleted       Boolean           @default(false)
-    deletedAt       DateTime?         @db.Timestamptz(6)
-    lastFiredAt     DateTime?         @db.Timestamptz(6) @deny('update', true)
-    createdAt       DateTime          @default(now()) @db.Timestamptz(6)
-    updatedAt       DateTime          @updatedAt
-    createdById     String            @deny('update', true)
-    createdBy       User              @relation("AlertRuleCreatedBy", fields: [createdById], references: [id])
+    cooldownMinutes Int                @default(1440)
+    emitWebhook     Boolean            @default(false)
+    isEnabled       Boolean            @default(true)
+    isDeleted       Boolean            @default(false)
+    deletedAt       DateTime?          @db.Timestamptz(6)
+    lastFiredAt     DateTime?          @db.Timestamptz(6) @deny('update', true)
+    createdAt       DateTime           @default(now()) @db.Timestamptz(6)
+    updatedAt       DateTime           @updatedAt
+    createdById     String             @deny('update', true)
+    createdBy       User               @relation("AlertRuleCreatedBy", fields: [createdById], references: [id])
     subscribers     AlertSubscriber[]
     events          AlertEvent[]
 
@@ -7093,6 +7118,8 @@ model AlertEvent {
     project        Projects         @relation(fields: [projectId], references: [id], onDelete: Cascade)
     subjectType    AlertSubjectType
     subjectId      Int
+    // String key for subjects without an integer id (webhook configs).
+    subjectRef     String?
     subjectName    String
     observedValue  Float
     baselineValue  Float?

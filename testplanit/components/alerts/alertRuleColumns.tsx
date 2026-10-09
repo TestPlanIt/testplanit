@@ -14,6 +14,7 @@ import {
 } from "@/components/alerts/AlertScopeLabel";
 import { ProjectNameCell } from "@/components/tables/ProjectNameCell";
 import { UserListDisplay } from "@/components/tables/UserListDisplay";
+import { UserNameCell } from "@/components/tables/UserNameCell";
 import type { ColumnDef } from "@/components/tables/tableFeatures";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ import {
 export type AlertRow = AlertRuleDialogRule & {
   projectId: number;
   createdById: string;
+  createdBy?: { id: string; name: string; email?: string | null } | null;
   project: { id: number; name: string; iconUrl?: string | null };
 };
 
@@ -38,6 +40,7 @@ export const ALERT_SORT_COLUMNS = [
   "description",
   "condition",
   "scope",
+  "createdBy",
   "subscribers",
   "lastFired",
   "notifyMe",
@@ -87,6 +90,11 @@ export function sortAlertRows(
         return (
           a.scopeType.localeCompare(b.scopeType) ||
           (a.scopeText ?? "").localeCompare(b.scopeText ?? "") ||
+          byName(a, b)
+        );
+      case "createdBy":
+        return (
+          (a.createdBy?.name ?? "").localeCompare(b.createdBy?.name ?? "") ||
           byName(a, b)
         );
       case "subscribers":
@@ -268,6 +276,20 @@ export function useAlertRuleColumns({
               scopeText={row.original.scopeText}
               names={scopeNames}
             />
+          </div>
+        ),
+      },
+      {
+        id: "createdBy",
+        accessorKey: "createdBy",
+        accessorFn: (row) => row.createdBy?.name ?? "",
+        header: tCommon("fields.createdBy"),
+        enableSorting: true,
+        enableResizing: true,
+        size: 170,
+        cell: ({ row }) => (
+          <div className="min-w-0 truncate">
+            <UserNameCell userId={row.original.createdById} />
           </div>
         ),
       },

@@ -22,7 +22,7 @@ Alerts deliver through the ordinary [notification](./notifications.md) pipeline,
 | Edit, pause or delete anyone's alert              | [Project admins](./permissions-guide.md#project-admins)                                                    |
 | Subscribe or unsubscribe _other_ members          | Project admins                                                                                             |
 
-The person who creates an alert is subscribed to it automatically. Nobody is ever locked into an alert: the **Notify me** switch on the Notifications & Alerts page leaves it, and turns it back on.
+The person who creates an alert is added to its audience by default and can remove themselves before saving. Nobody is ever locked into an alert: the **Notify me** switch on the Notifications & Alerts page leaves it, and turns it back on.
 
 ## Metrics
 
@@ -36,6 +36,7 @@ These evaluate every time a result is recorded on a case, manual or automated. E
 | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Result duration deviates from baseline** | The new result's elapsed time is more than X% above, below, or either side of the mean or median of the case's last Y results. Results with no elapsed time are ignored, and the rule waits until at least the minimum number of samples exist. |
 | **Case regressed**                         | A case fails after passing every one of its last Y results.                                                                                                                                                                                     |
+| **Case recovered**                         | A case passes after failing every one of its last Y results.                                                                                                                                                                                    |
 | **Consecutive failures**                   | A case has failed N times in a row (skipped or blocked results do not break the streak).                                                                                                                                                        |
 | **Case became flaky**                      | The outcome flipped between pass and fail at least N times across the case's last Y results. Same inputs as the [Flaky Tests](./projects/reports/flaky-tests.md) report.                                                                        |
 
@@ -43,14 +44,27 @@ Scope a case metric to the whole project, to the cases in a folder (subfolders i
 
 ### Run metrics
 
-These evaluate when a run completes, or, if the rule says **As results arrive**, on every result as well.
+These evaluate when a run completes, or, if the rule says **As results arrive**, on every result as well. Two are checked on a schedule instead.
 
-| Metric                            | Fires when                                                                                                 |
-| --------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| **Run pass rate below threshold** | Passed results divided by results with a pass or fail verdict is under X%, once at least N verdicts exist. |
-| **Run failure count**             | More than N results in the run have failed.                                                                |
+| Metric                                  | Fires when                                                                                                                                                                                                     |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Run pass rate below threshold**       | Passed results divided by results with a pass or fail verdict is under X%, once at least N verdicts exist.                                                                                                     |
+| **Run failure count**                   | More than N results in the run have failed.                                                                                                                                                                    |
+| **Run duration deviates from baseline** | A completed run's total duration is more than X% above, below, or either side of the mean or median of the last Y completed runs its scope groups together (the same tag or name fragment, or every run). |
+| **Run not progressing**                 | An open run with at least one result has had no new result for more than X hours. Checked hourly.                                                                                                              |
+| **Automated execution failed**          | An automated execution of a run fails, cannot be dispatched, or times out.                                                                                                                                     |
+| **Run untested share**                  | More than X% of a run's cases still have no result with Y or fewer days left before the run's milestone is due. Checked daily.                                                                                 |
+| **Issues opened from a run**            | More than N issues are linked to the run's results.                                                                                                                                                            |
 
 Scope a run metric to all runs, to runs carrying a tag, or to runs whose name contains a fragment such as `Nightly`.
+
+### Session metrics
+
+| Metric                           | Fires when                                                                                  |
+| -------------------------------- | ------------------------------------------------------------------------------------------- |
+| **Session overran its estimate** | A session is completed with an elapsed time more than X% over its estimate.                 |
+
+Scope a session metric to all sessions or to sessions carrying a tag.
 
 ### Milestone metrics
 
@@ -62,6 +76,26 @@ These are checked once a day.
 | **Milestone overdue**           | The milestone's due date has passed and it is not completed.                                              |
 
 Scope a milestone metric to all milestones in the project or to one milestone.
+
+### Project health metrics
+
+These are checked once a day and fire for the project itself.
+
+| Metric                                    | Fires when                                                                                                                                     |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Requirement coverage below threshold**  | Fewer than X% of the project's requirements count as covered. **Count as covered** picks the basis: linked to at least one test case, or a passing latest result. |
+| **Stale cases**                           | More than N cases, older than Y days, have had no result (manual or automated) in the last Y days.                                             |
+| **Automation share below threshold**      | Fewer than X% of the cases in scope are automated.                                                                                             |
+
+Stale cases and automation share can be scoped to the whole project, a folder (subfolders included), or a tag.
+
+### Webhook metrics
+
+| Metric                   | Fires when                                                                                                                           |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| **Webhook failure rate** | More than X% of an outbound webhook's last N deliveries failed, once at least M deliveries exist. Checked hourly. |
+
+Scope it to every active outbound webhook in the project or to one webhook.
 
 ## Keeping rules quiet
 
@@ -80,4 +114,4 @@ Switch on **Send an alert.triggered webhook event** on a rule, then subscribe an
 
 ## How it works
 
-Evaluation never runs in the request that records a result. Results and run changes queue a job for the alert worker, which reads the committed data, decides which rules fire, writes a history row, and hands the notifications to the notification worker. The daily milestone pass is a scheduled job. See [Background Processes](../background-processes.md).
+Evaluation never runs in the request that records a result. Results, run completion, finished automated executions and completed sessions queue a job for the alert worker, which reads the committed data, decides which rules fire, writes a history row, and hands the notifications to the notification worker. Milestone, project health and untested-share metrics run in a daily scheduled job; stalled runs and webhook failure rates in an hourly one. See [Background Processes](../background-processes.md).

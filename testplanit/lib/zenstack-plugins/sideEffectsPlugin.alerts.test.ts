@@ -27,6 +27,12 @@ vi.mock("~/services/sessionSearch", () => ({
 vi.mock("~/services/testRunSearch", () => ({
   syncTestRunToElasticsearch: vi.fn(() => Promise.resolve()),
 }));
+vi.mock("~/lib/webhooks/event-emitters/sessionEvents", () => ({
+  emitSessionUpdateEvents: vi.fn(async () => undefined),
+  emitSessionCreated: vi.fn(async () => undefined),
+  emitSessionDuplicated: vi.fn(async () => undefined),
+  emitSessionResultAdded: vi.fn(async () => undefined),
+}));
 vi.mock("~/lib/webhooks/event-emitters/testRunEvents", () => ({
   emitTestRunCreated: vi.fn(() => Promise.resolve()),
   emitTestRunDuplicated: vi.fn(() => Promise.resolve()),
@@ -48,6 +54,7 @@ import {
   JOB_EVALUATE_ALERT_JUNIT_RESULT,
   JOB_EVALUATE_ALERT_RESULT,
   JOB_EVALUATE_ALERT_RUN,
+  JOB_EVALUATE_ALERT_SESSION,
 } from "~/lib/queueNames";
 
 const afterEntityMutation = (sideEffectsPlugin as any).onEntityMutation
@@ -191,5 +198,25 @@ describe("sideEffectsPlugin — threshold enqueue", () => {
     });
     await flush();
     expect(jobsByName(JOB_EVALUATE_ALERT_RUN)).toHaveLength(0);
+  });
+
+  it("queues a session evaluation when a session first completes", async () => {
+    const tx = txWith(1);
+    const base = { id: 15, projectId: 7, stateId: 1, isDeleted: false };
+    await afterEntityMutation({
+      model: "Sessions",
+      action: "update",
+      client: tx,
+      loadAfterMutationEntities: async () => [{ ...base, isCompleted: true }],
+      beforeMutationEntities: [{ ...base, isCompleted: false }],
+    });
+    await flush();
+    const jobs = jobsByName(JOB_EVALUATE_ALERT_SESSION);
+    expect(jobs).toHaveLength(1);
+    expect(jobs[0][1]).toEqual({
+      sessionId: 15,
+      projectId: 7,
+      tenantId: undefined,
+    });
   });
 });

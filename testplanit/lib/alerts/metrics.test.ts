@@ -3,13 +3,21 @@ import {
   cooldownElapsed,
   daysBetween,
   evaluateConsecutiveFailures,
+  evaluateCountAbove,
   evaluateDurationDeviation,
   evaluateFailureCount,
+  evaluateFailureRate,
   evaluateFlakiness,
+  evaluateIssueCount,
   evaluateMilestoneBehind,
   evaluateMilestoneOverdue,
+  evaluateNotProgressing,
   evaluatePassRate,
+  evaluateRecovery,
   evaluateRegression,
+  evaluateSessionOverrun,
+  evaluateShareBelow,
+  evaluateUntestedShare,
   mean,
   median,
   type ResultSample,
@@ -360,5 +368,169 @@ describe("cooldownElapsed", () => {
     expect(cooldownElapsed(new Date("2026-10-08T11:00:00Z"), 60, now)).toBe(
       true
     );
+  });
+});
+
+describe("evaluateRecovery", () => {
+  it("fires when a pass follows a window of failures, with enough of them", () => {
+    expect(
+      evaluateRecovery({
+        current: pass(),
+        previous: [fail(), fail(), fail(), pass()],
+        window: 3,
+        minSamples: 3,
+      })
+    ).toEqual({ fired: true, failedBefore: 3 });
+    expect(
+      evaluateRecovery({
+        current: pass(),
+        previous: [fail(), pass(), fail()],
+        window: 3,
+        minSamples: 3,
+      }).fired
+    ).toBe(false);
+    expect(
+      evaluateRecovery({
+        current: pass(),
+        previous: [fail(), fail()],
+        window: 3,
+        minSamples: 3,
+      }).fired
+    ).toBe(false);
+    expect(
+      evaluateRecovery({
+        current: fail(),
+        previous: [fail(), fail(), fail()],
+        window: 3,
+        minSamples: 3,
+      }).fired
+    ).toBe(false);
+  });
+
+  it("ignores results without a verdict in the window", () => {
+    expect(
+      evaluateRecovery({
+        current: pass(),
+        previous: [skip(), fail(), skip(), fail()],
+        window: 2,
+        minSamples: 2,
+      })
+    ).toEqual({ fired: true, failedBefore: 2 });
+  });
+});
+
+describe("run, session and project metrics", () => {
+  it("counts linked issues and stale cases against a threshold", () => {
+    expect(evaluateIssueCount({ issues: 4, count: 3 }).fired).toBe(true);
+    expect(evaluateIssueCount({ issues: 3, count: 3 }).fired).toBe(false);
+    expect(evaluateCountAbove({ observed: 11, count: 10 })).toEqual({
+      fired: true,
+      count: 11,
+    });
+  });
+
+  it("flags a run idle for longer than the limit, never one without results", () => {
+    const now = new Date("2026-10-09T12:00:00Z");
+    expect(
+      evaluateNotProgressing({
+        lastActivityAt: new Date("2026-10-08T10:30:00Z"),
+        now,
+        hours: 24,
+      })
+    ).toEqual({ fired: true, idleHours: 25 });
+    expect(
+      evaluateNotProgressing({
+        lastActivityAt: new Date("2026-10-09T00:00:00Z"),
+        now,
+        hours: 24,
+      }).fired
+    ).toBe(false);
+    expect(
+      evaluateNotProgressing({ lastActivityAt: null, now, hours: 1 }).fired
+    ).toBe(false);
+  });
+
+  it("flags an untested share only inside the days-remaining window", () => {
+    const now = new Date("2026-10-09T12:00:00Z");
+    const soon = new Date("2026-10-11T12:00:00Z");
+    expect(
+      evaluateUntestedShare({
+        untested: 6,
+        total: 10,
+        dueAt: soon,
+        now,
+        thresholdPercent: 50,
+        daysRemaining: 3,
+      })
+    ).toEqual({ fired: true, untestedPercent: 60, daysRemaining: 2 });
+    expect(
+      evaluateUntestedShare({
+        untested: 6,
+        total: 10,
+        dueAt: new Date("2026-10-20T12:00:00Z"),
+        now,
+        thresholdPercent: 50,
+        daysRemaining: 3,
+      }).fired
+    ).toBe(false);
+    expect(
+      evaluateUntestedShare({
+        untested: 0,
+        total: 0,
+        dueAt: soon,
+        now,
+        thresholdPercent: 50,
+        daysRemaining: 3,
+      }).fired
+    ).toBe(false);
+  });
+
+  it("measures a session's overrun against its estimate", () => {
+    expect(
+      evaluateSessionOverrun({
+        elapsed: 3900,
+        estimate: 3000,
+        thresholdPercent: 25,
+      })
+    ).toEqual({ fired: true, overrunPercent: 30 });
+    expect(
+      evaluateSessionOverrun({
+        elapsed: 3600,
+        estimate: 3000,
+        thresholdPercent: 25,
+      }).fired
+    ).toBe(false);
+    expect(
+      evaluateSessionOverrun({
+        elapsed: 3600,
+        estimate: null,
+        thresholdPercent: 25,
+      }).fired
+    ).toBe(false);
+  });
+
+  it("compares a share and a failure rate against their thresholds", () => {
+    expect(
+      evaluateShareBelow({ part: 3, total: 10, thresholdPercent: 50 })
+    ).toEqual({ fired: true, percent: 30 });
+    expect(
+      evaluateShareBelow({ part: 0, total: 0, thresholdPercent: 50 }).fired
+    ).toBe(false);
+    expect(
+      evaluateFailureRate({
+        failed: 4,
+        total: 10,
+        thresholdPercent: 25,
+        minSamples: 10,
+      })
+    ).toEqual({ fired: true, failureRate: 40, sampleCount: 10 });
+    expect(
+      evaluateFailureRate({
+        failed: 4,
+        total: 5,
+        thresholdPercent: 25,
+        minSamples: 10,
+      }).fired
+    ).toBe(false);
   });
 });

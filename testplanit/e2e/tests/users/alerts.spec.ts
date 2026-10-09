@@ -119,20 +119,15 @@ test.describe("alerts", () => {
     await test.step("the second failure fires the rule", async () => {
       await api.createTestResult(runId, testRunCaseId, failedId);
 
+      // The event row lands before its subscribers are notified, so wait
+      // for the notified count rather than for the row alone.
       await expect
         .poll(
           async () =>
             (
               await findMany(request, baseURL, "alertEvent", {
-                where: { ruleId },
-                select: {
-                  id: true,
-                  subjectType: true,
-                  subjectId: true,
-                  observedValue: true,
-                  thresholdValue: true,
-                  notifiedCount: true,
-                },
+                where: { ruleId, notifiedCount: { gt: 0 } },
+                select: { id: true },
               })
             ).length,
           { timeout: 60_000, intervals: [1000, 2000, 3000] }

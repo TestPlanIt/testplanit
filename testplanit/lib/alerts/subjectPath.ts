@@ -3,7 +3,8 @@
  * the webhook payload, the bell and the email worker all link through it.
  */
 export function subjectPath(
-  subjectType: "CASE" | "RUN" | "MILESTONE" | string,
+  subjectType:
+    "CASE" | "RUN" | "MILESTONE" | "SESSION" | "PROJECT" | "WEBHOOK" | string,
   projectId: number,
   subjectId: number,
   testRunId?: number | null
@@ -17,6 +18,11 @@ export function subjectPath(
       return `/projects/runs/${projectId}/${subjectId}`;
     case "MILESTONE":
       return `/projects/milestones/${projectId}/${subjectId}`;
+    case "SESSION":
+      return `/projects/sessions/${projectId}/${subjectId}`;
+    case "WEBHOOK":
+      return `/projects/settings/${projectId}/webhooks`;
+    case "PROJECT":
     default:
       return `/projects/overview/${projectId}`;
   }

@@ -16,6 +16,7 @@ import {
 import {
   JOB_AUTO_COMPLETE_MILESTONES,
   JOB_EVALUATE_SCHEDULED_ALERTS,
+  JOB_EVALUATE_HOURLY_ALERTS,
   JOB_MILESTONE_DUE_NOTIFICATIONS,
   JOB_POLL_ACTIVE_EXECUTIONS,
   JOB_PURGE_STALE_CASE_DRAFTS,
@@ -412,6 +413,22 @@ async function scheduleJobs() {
         );
         console.log(
           `Upserted job scheduler "${JOB_EVALUATE_SCHEDULED_ALERTS}"${tenantId ? ` for tenant ${tenantId}` : ""} with pattern "${CRON_SCHEDULE_DAILY_6AM}" on queue "${ALERT_QUEUE_NAME}".`
+        );
+        // Stalled runs and webhook failure rates move within the day, so
+        // their metrics get an hourly pass.
+        const hourlyJobId = tenantId
+          ? `${JOB_EVALUATE_HOURLY_ALERTS}-${tenantId}`
+          : JOB_EVALUATE_HOURLY_ALERTS;
+        await alertQueue.upsertJobScheduler(
+          hourlyJobId,
+          { pattern: CRON_SCHEDULE_HOURLY },
+          {
+            name: JOB_EVALUATE_HOURLY_ALERTS,
+            data: { tenantId },
+          }
+        );
+        console.log(
+          `Upserted job scheduler "${JOB_EVALUATE_HOURLY_ALERTS}"${tenantId ? ` for tenant ${tenantId}` : ""} with pattern "${CRON_SCHEDULE_HOURLY}" on queue "${ALERT_QUEUE_NAME}".`
         );
       }
     } else {

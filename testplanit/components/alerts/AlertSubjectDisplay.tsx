@@ -2,7 +2,12 @@
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { useMemo } from "react";
+import { Webhook } from "lucide-react";
 import { MilestoneIconAndName } from "@/components/MilestoneIconAndName";
+import { ProjectIcon } from "@/components/ProjectIcon";
+import { SessionNameDisplay } from "@/components/SessionNameDisplay";
+import { ProjectNameCell } from "@/components/tables/ProjectNameCell";
+import { Link } from "~/lib/navigation";
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { TestRunNameDisplay } from "@/components/TestRunNameDisplay";
 import { subjectPath } from "~/lib/alerts/subjectPath";
@@ -22,12 +27,16 @@ export interface AlertSubjectMeta {
   >;
   runs: Map<number, { isDeleted: boolean }>;
   milestones: Map<number, { iconName?: string; isDeleted: boolean }>;
+  sessions: Map<number, { isDeleted: boolean }>;
+  projects: Map<number, { iconUrl: string | null }>;
 }
 
 const EMPTY_META: AlertSubjectMeta = {
   cases: new Map(),
   runs: new Map(),
   milestones: new Map(),
+  sessions: new Map(),
+  projects: new Map(),
 };
 
 /**
@@ -47,6 +56,8 @@ export function useAlertSubjectMeta(events: SubjectRef[]): AlertSubjectMeta {
       cases: collect(AlertSubjectType.CASE),
       runs: collect(AlertSubjectType.RUN),
       milestones: collect(AlertSubjectType.MILESTONE),
+      sessions: collect(AlertSubjectType.SESSION),
+      projects: collect(AlertSubjectType.PROJECT),
     };
   }, [events]);
 
@@ -76,8 +87,25 @@ export function useAlertSubjectMeta(events: SubjectRef[]): AlertSubjectMeta {
     { enabled: ids.milestones.length > 0 }
   );
 
+  const { data: sessions } = client.sessions.useFindMany(
+    {
+      where: { id: { in: ids.sessions } },
+      select: { id: true, isDeleted: true },
+    },
+    { enabled: ids.sessions.length > 0 }
+  );
+  const { data: projects } = client.projects.useFindMany(
+    {
+      where: { id: { in: ids.projects } },
+      select: { id: true, iconUrl: true },
+    },
+    { enabled: ids.projects.length > 0 }
+  );
+
   return useMemo(() => {
-    if (!cases && !runs && !milestones) return EMPTY_META;
+    if (!cases && !runs && !milestones && !sessions && !projects) {
+      return EMPTY_META;
+    }
     return {
       cases: new Map(
         (cases ?? []).map((c) => [
@@ -97,8 +125,14 @@ export function useAlertSubjectMeta(events: SubjectRef[]): AlertSubjectMeta {
           },
         ])
       ),
+      sessions: new Map(
+        (sessions ?? []).map((x) => [x.id, { isDeleted: x.isDeleted }])
+      ),
+      projects: new Map(
+        (projects ?? []).map((x) => [x.id, { iconUrl: x.iconUrl ?? null }])
+      ),
     };
-  }, [cases, runs, milestones]);
+  }, [cases, runs, milestones, sessions, projects]);
 }
 
 /**
@@ -164,6 +198,46 @@ export function AlertSubjectDisplay({
         />
       );
     }
+    case AlertSubjectType.SESSION:
+      return (
+        <Link href={href} className="text-primary hover:underline">
+          <SessionNameDisplay
+            session={{
+              id: subjectId,
+              name: subjectName,
+              isDeleted: meta.sessions.get(subjectId)?.isDeleted,
+            }}
+            className="truncate"
+          />
+        </Link>
+      );
+    case AlertSubjectType.PROJECT:
+      return (
+        <div className="flex items-start gap-1.5">
+          <span className="mt-0.5 shrink-0">
+            <ProjectIcon
+              iconUrl={meta.projects.get(subjectId)?.iconUrl}
+              width={16}
+              height={16}
+            />
+          </span>
+          <ProjectNameCell
+            projectId={projectId}
+            value={subjectName}
+            size="sm"
+          />
+        </div>
+      );
+    case AlertSubjectType.WEBHOOK:
+      return (
+        <Link
+          href={href}
+          className="inline-flex min-w-0 items-center gap-1 text-primary hover:underline"
+        >
+          <Webhook className="h-4 w-4 shrink-0" />
+          <span className="truncate">{subjectName}</span>
+        </Link>
+      );
     default:
       return <span>{subjectName}</span>;
   }

@@ -29,7 +29,10 @@ import { cn } from "~/utils";
 const GROUP_ORDER: AlertSubjectType[] = [
   AlertSubjectType.CASE,
   AlertSubjectType.RUN,
+  AlertSubjectType.SESSION,
   AlertSubjectType.MILESTONE,
+  AlertSubjectType.PROJECT,
+  AlertSubjectType.WEBHOOK,
 ];
 
 /**
@@ -102,6 +105,9 @@ export function AlertMetricPicker({
             value={query}
             onValueChange={setQuery}
             placeholder={t("form.metricSearch")}
+            // Room for the focus ring: the popover clips its overflow and
+            // the input otherwise sits flush against its top edge.
+            className="my-0.5"
             data-testid="alert-metric-search"
           />
           <CommandList className="max-h-[360px]">
@@ -129,13 +135,18 @@ export function AlertMetricPicker({
                       )}
                     />
                     <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-start justify-between gap-2">
                         <span className="font-medium">
                           {t(`metrics.${entry.metric}.label` as never)}
                         </span>
                         {entry.path === "scheduled" && (
-                          <Badge variant="outline" className="text-[10px]">
-                            {t("form.checkedDaily")}
+                          <Badge
+                            variant="outline"
+                            className="shrink-0 whitespace-nowrap text-[10px]"
+                          >
+                            {entry.schedule === "hourly"
+                              ? t("form.checkedHourly")
+                              : t("form.checkedDaily")}
                           </Badge>
                         )}
                       </div>

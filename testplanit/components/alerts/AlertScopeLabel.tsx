@@ -9,6 +9,8 @@ export interface AlertScopeNames {
   tags: Map<number, string>;
   cases: Map<number, string>;
   milestones: Map<number, string>;
+  /** Outbound webhook configs by their string id. */
+  webhooks: Map<string, string>;
 }
 
 export function AlertScopeLabel({
@@ -38,6 +40,16 @@ export function AlertScopeLabel({
       return <span>{t("MILESTONE", { name: nameOf(names.milestones) })}</span>;
     case AlertScopeType.RUN_NAME:
       return <span>{t("RUN_NAME", { text: scopeText ?? "" })}</span>;
+    case AlertScopeType.WEBHOOK:
+      return (
+        <span>
+          {t("WEBHOOK", {
+            name: scopeText
+              ? (names.webhooks.get(scopeText) ?? missing)
+              : missing,
+          })}
+        </span>
+      );
     default:
       return <span>{t("PROJECT")}</span>;
   }

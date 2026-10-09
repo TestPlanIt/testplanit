@@ -78,6 +78,26 @@ describe("AlertTriggeredNotification", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("names a webhook subject even though it has no integer id", () => {
+    render(
+      <AlertTriggeredNotification
+        data={{
+          ...data,
+          metric: "WEBHOOK_FAILURE_RATE",
+          subjectType: "WEBHOOK",
+          subjectId: 0,
+          subjectName: "Slack hook",
+          testRunId: null,
+          details: { failed: 4, sampleCount: 12, failureRate: 33.3 },
+        }}
+      />
+    );
+    expect(screen.getByText("Slack hook")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("notification-alert-subject-link")
+    ).toHaveAttribute("href", "/projects/settings/7/webhooks");
+  });
+
   it("renders run and milestone subjects with their own links", () => {
     const { rerender } = render(
       <AlertTriggeredNotification

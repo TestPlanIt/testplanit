@@ -212,6 +212,12 @@ const SCOPED_FILES = [
   // way, so it would still pass if the spread were dropped — the threshold
   // entry further down is the real guard.
   "lib/services/importIssueKeyResolution.ts",
+  // The alert evaluator's "issues opened from a run" metric counts the
+  // defects linked to a run's results; a requirement linked to a result
+  // (traceability) is not something that was opened from the run, so the
+  // single count call spreads DEFECT_SCOPE_WHERE. Its unit test mocks the
+  // count, so the occurrence floor further down is the guard.
+  "lib/services/alertEvaluation.ts",
   // 26-08's traceability matrix loader spreads REQUIREMENT_SCOPE_WHERE (the
   // other half of this module's mirror pair, not DEFECT_SCOPE_WHERE) into
   // its single findMany call reading requirement names and parents for
@@ -608,6 +614,12 @@ describe("Issue read-scope containment (HYG-01, structural)", () => {
           minimum: 3,
           reason:
             "1 import + 2 uses (issue-creator distribution, issue-date series) — this route has no test file of its own, so this is the only guard against a silent regression",
+        },
+        {
+          file: "lib/services/alertEvaluation.ts",
+          minimum: 2,
+          reason:
+            "1 import + 1 use in the run-issue count behind the 'issues opened from a run' alert metric — its unit test mocks issue.count, so only this floor keeps the defect scope on the query",
         },
         {
           file: "components/issues/requirement-reference-search-dialog.tsx",

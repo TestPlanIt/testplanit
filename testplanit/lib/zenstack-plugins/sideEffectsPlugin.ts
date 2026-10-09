@@ -122,6 +122,7 @@ import {
   enqueueAlertJUnitResultEvaluation,
   enqueueAlertResultEvaluation,
   enqueueAlertRunEvaluation,
+  enqueueAlertSessionEvaluation,
   projectHasActiveAlertRules,
 } from "~/lib/services/alertEnqueue";
 import { snapshotAutomatedFlip } from "~/lib/services/caseAutomatedVersioning";
@@ -762,6 +763,24 @@ export const sideEffectsPlugin = definePlugin(schema, {
             if (!row?.id) continue;
             if (row.projectId != null) {
               if (old) await emitSessionUpdateEvents(old, row, tx);
+              // Alerts: the session overrun metric is evaluated when a
+              // session first completes.
+              if (
+                old &&
+                row.isCompleted === true &&
+                old.isCompleted !== true &&
+                typeof tx.alertRule?.count === "function"
+              ) {
+                if (await projectHasActiveAlertRules(tx, row.projectId)) {
+                  const { getCurrentTenantId } =
+                    await import("~/lib/multiTenantDb");
+                  void enqueueAlertSessionEvaluation({
+                    sessionId: row.id,
+                    projectId: row.projectId,
+                    tenantId: getCurrentTenantId(),
+                  });
+                }
+              }
               // A duplicate carries the source session id — emit the richer
               // session.duplicated event instead of the generic .created.
               else if (row.duplicatedFromId != null)

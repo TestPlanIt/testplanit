@@ -39,6 +39,17 @@ describe("alertMetricMessage", () => {
       "RUN_FAILURE_COUNT",
       "MILESTONE_BEHIND",
       "MILESTONE_OVERDUE",
+      "CASE_RECOVERED",
+      "RUN_DURATION_DEVIATION",
+      "RUN_NOT_PROGRESSING",
+      "AUTOMATED_EXECUTION_FAILED",
+      "RUN_UNTESTED_SHARE",
+      "RUN_ISSUES_OPENED",
+      "SESSION_OVERRUN",
+      "REQUIREMENT_COVERAGE_BELOW",
+      "STALE_CASES",
+      "AUTOMATION_SHARE_BELOW",
+      "WEBHOOK_FAILURE_RATE",
     ];
     const keys = content.alertMetric as Record<string, string>;
     for (const metric of metrics) {
@@ -102,5 +113,21 @@ describe("alertSubjectPath", () => {
       })
     ).toBe("/projects/milestones/3/9");
     expect(alertSubjectPath({})).toBeNull();
+  });
+});
+
+describe("alertSubjectPath", () => {
+  it("links a webhook subject to the project's webhooks page without an integer id", () => {
+    expect(
+      alertSubjectPath({
+        projectId: 7,
+        subjectType: "WEBHOOK",
+        subjectId: 0,
+        subjectName: "Slack",
+      })
+    ).toBe("/projects/settings/7/webhooks");
+    expect(
+      alertSubjectPath({ projectId: 7, subjectType: "RUN", subjectId: 0 })
+    ).toBeNull();
   });
 });

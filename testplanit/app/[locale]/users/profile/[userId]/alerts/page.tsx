@@ -93,6 +93,7 @@ export default function UserAlertsPage() {
   const include = {
     project: { select: { id: true, name: true, iconUrl: true } },
     subscribers: { select: { id: true, userId: true } },
+    createdBy: { select: { id: true, name: true, email: true } },
   } as const;
   // One list of every alert in the projects this user can see; the Notify
   // me switch toggles a subscription in place so rows never move.
@@ -176,6 +177,15 @@ export default function UserAlertsPage() {
       tags: collect(AlertScopeType.TAG),
       cases: collect(AlertScopeType.CASE),
       milestones: collect(AlertScopeType.MILESTONE),
+      webhooks: [
+        ...new Set(
+          allRows
+            .filter(
+              (r) => r.scopeType === AlertScopeType.WEBHOOK && r.scopeText
+            )
+            .map((r) => r.scopeText as string)
+        ),
+      ],
     };
   }, [allRows]);
   const { data: folderRows } = client.repositoryFolders.useFindMany(
@@ -206,14 +216,24 @@ export default function UserAlertsPage() {
     },
     { enabled: idsByScope.milestones.length > 0 }
   );
+  const { data: webhookRows } = client.webhookConfig.useFindMany(
+    {
+      where: { id: { in: idsByScope.webhooks } },
+      select: { id: true, name: true, url: true },
+    },
+    { enabled: idsByScope.webhooks.length > 0 }
+  );
   const scopeNames: AlertScopeNames = useMemo(
     () => ({
       folders: new Map((folderRows ?? []).map((r) => [r.id, r.name])),
       tags: new Map((tagRows ?? []).map((r) => [r.id, r.name])),
       cases: new Map((caseRows ?? []).map((r) => [r.id, r.name])),
       milestones: new Map((milestoneRows ?? []).map((r) => [r.id, r.name])),
+      webhooks: new Map(
+        (webhookRows ?? []).map((r) => [r.id, r.name || r.url || r.id])
+      ),
     }),
-    [folderRows, tagRows, caseRows, milestoneRows]
+    [folderRows, tagRows, caseRows, milestoneRows, webhookRows]
   );
 
   const updateRule = client.alertRule.useUpdate();
@@ -295,6 +315,20 @@ export default function UserAlertsPage() {
     [following, canManage, canToggleFollow, busyRuleId, metricLabel]
   );
 
+  // Only people who created a listed alert are offered in the filter.
+  const creators = useMemo(() => {
+    const byId = new Map<
+      string,
+      { id: string; name: string; email?: string | null }
+    >();
+    for (const rule of allRows) {
+      if (rule.createdBy && !byId.has(rule.createdBy.id)) {
+        byId.set(rule.createdBy.id, rule.createdBy);
+      }
+    }
+    return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name));
+  }, [allRows]);
+
   const rows = useMemo(() => {
     const needle = searchString.trim().toLowerCase();
     const matching = applyAlertFilters(allRows, listFilters, following).filter(
@@ -303,6 +337,7 @@ export default function UserAlertsPage() {
         rule.name.toLowerCase().includes(needle) ||
         (rule.description ?? "").toLowerCase().includes(needle) ||
         rule.project.name.toLowerCase().includes(needle) ||
+        (rule.createdBy?.name ?? "").toLowerCase().includes(needle) ||
         metricLabel(rule).toLowerCase().includes(needle) ||
         (rule.scopeText ?? "").toLowerCase().includes(needle)
     );
@@ -525,6 +560,7 @@ export default function UserAlertsPage() {
                     <AlertListFilters
                       filters={listFilters}
                       onChange={handleListFiltersChange}
+                      creators={creators}
                     />
                   </div>
                   <div className="m-2">

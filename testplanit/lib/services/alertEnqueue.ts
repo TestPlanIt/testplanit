@@ -8,9 +8,11 @@
  */
 
 import {
+  JOB_EVALUATE_ALERT_EXECUTION,
   JOB_EVALUATE_ALERT_JUNIT_RESULT,
   JOB_EVALUATE_ALERT_RESULT,
   JOB_EVALUATE_ALERT_RUN,
+  JOB_EVALUATE_ALERT_SESSION,
 } from "~/lib/queueNames";
 import { getAlertQueue } from "~/lib/queues";
 
@@ -38,6 +40,18 @@ export interface AlertRunJobData {
   runId: number;
   projectId: number;
   trigger: AlertRunTrigger;
+  tenantId?: string;
+}
+
+export interface AlertExecutionJobData {
+  executionId: number;
+  projectId: number;
+  tenantId?: string;
+}
+
+export interface AlertSessionJobData {
+  sessionId: number;
+  projectId: number;
   tenantId?: string;
 }
 
@@ -139,6 +153,44 @@ export async function enqueueAlertRunEvaluation(
   } catch (error) {
     console.error(
       `[alertEnqueue] failed to queue run evaluation for run ${data.runId}:`,
+      error
+    );
+  }
+}
+
+/** An automated execution ended in failure, dispatch failure or timeout. */
+export async function enqueueAlertExecutionEvaluation(
+  data: AlertExecutionJobData
+): Promise<void> {
+  const queue = getAlertQueue();
+  if (!queue) return;
+  try {
+    await queue.add(JOB_EVALUATE_ALERT_EXECUTION, data, {
+      delay: ALERT_EVALUATION_DELAY_MS,
+      removeOnComplete: true,
+    });
+  } catch (error) {
+    console.error(
+      `[alertEnqueue] failed to queue execution evaluation for execution ${data.executionId}:`,
+      error
+    );
+  }
+}
+
+/** A session was completed. */
+export async function enqueueAlertSessionEvaluation(
+  data: AlertSessionJobData
+): Promise<void> {
+  const queue = getAlertQueue();
+  if (!queue) return;
+  try {
+    await queue.add(JOB_EVALUATE_ALERT_SESSION, data, {
+      delay: ALERT_EVALUATION_DELAY_MS,
+      removeOnComplete: true,
+    });
+  } catch (error) {
+    console.error(
+      `[alertEnqueue] failed to queue session evaluation for session ${data.sessionId}:`,
       error
     );
   }

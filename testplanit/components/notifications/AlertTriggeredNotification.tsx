@@ -1,9 +1,10 @@
 "use client";
 
-import { BellRing, ExternalLink } from "lucide-react";
+import { BellRing, ExternalLink, Webhook } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { MilestoneNameDisplay } from "@/components/MilestoneNameDisplay";
+import { SessionNameDisplay } from "@/components/SessionNameDisplay";
 import { ProjectNameCell } from "@/components/tables/ProjectNameCell";
 import { TestRunNameDisplay } from "@/components/TestRunNameDisplay";
 import { Link } from "~/lib/navigation";
@@ -30,6 +31,16 @@ export function AlertTriggeredNotification({
   const path = alertSubjectPath(data);
 
   const subject = (() => {
+    // A webhook subject is keyed by its config id, not an integer, so it
+    // carries subjectId 0 and is identified by its name instead.
+    if (data.subjectType === "WEBHOOK") {
+      return data.subjectName ? (
+        <span className="inline-flex items-center gap-1">
+          <Webhook className="h-4 w-4 shrink-0" />
+          {data.subjectName}
+        </span>
+      ) : null;
+    }
     if (!data.subjectId) return null;
     if (data.subjectType === "CASE") {
       return (
@@ -55,6 +66,17 @@ export function AlertTriggeredNotification({
         />
       );
     }
+    if (data.subjectType === "SESSION") {
+      return (
+        <SessionNameDisplay
+          session={{ id: data.subjectId, name: data.subjectName ?? "" }}
+          showIcon={true}
+        />
+      );
+    }
+    // A project-wide metric's subject is the project, which the card already
+    // names below; nothing to repeat here.
+    if (data.subjectType === "PROJECT") return null;
     return <span>{data.subjectName}</span>;
   })();
 

@@ -137,6 +137,34 @@ export function evaluateRegression(params: {
   };
 }
 
+export interface RecoveryVerdict {
+  fired: boolean;
+  failedBefore: number;
+}
+
+/**
+ * Metric 3: the new result passed and every one of the previous `window`
+ * verdict results failed. Needs at least `minSamples` of them.
+ */
+export function evaluateRecovery(params: {
+  current: ResultSample;
+  previous: readonly ResultSample[];
+  window: number;
+  minSamples: number;
+}): RecoveryVerdict {
+  if (!params.current.isSuccess) return { fired: false, failedBefore: 0 };
+  const history = withVerdict(params.previous).slice(
+    0,
+    Math.max(1, params.window)
+  );
+  const failedBefore = history.filter((s) => s.isFailure).length;
+  const allFailed = history.length > 0 && failedBefore === history.length;
+  return {
+    fired: allFailed && history.length >= Math.max(1, params.minSamples),
+    failedBefore,
+  };
+}
+
 export interface ConsecutiveFailuresVerdict {
   fired: boolean;
   streak: number;
@@ -237,6 +265,165 @@ export function evaluateFailureCount(params: {
   return {
     fired: params.counts.failed > Math.max(0, params.count),
     failed: params.counts.failed,
+  };
+}
+
+export interface IssueCountVerdict {
+  fired: boolean;
+  issues: number;
+}
+
+/** Metric 18: more than `count` issues are linked to the run's results. */
+export function evaluateIssueCount(params: {
+  issues: number;
+  count: number;
+}): IssueCountVerdict {
+  return {
+    fired: params.issues > Math.max(0, params.count),
+    issues: params.issues,
+  };
+}
+
+export interface NotProgressingVerdict {
+  fired: boolean;
+  idleHours: number;
+}
+
+/**
+ * Metric 10: an open run has had no new result for more than `hours`. A run
+ * with no result at all is left alone; it has not started, not stalled.
+ */
+export function evaluateNotProgressing(params: {
+  lastActivityAt: Date | null;
+  now: Date;
+  hours: number;
+}): NotProgressingVerdict {
+  if (!params.lastActivityAt) return { fired: false, idleHours: 0 };
+  const idleHours =
+    (params.now.getTime() - params.lastActivityAt.getTime()) / (1000 * 60 * 60);
+  return {
+    fired: idleHours > Math.max(0, params.hours),
+    idleHours: Math.max(0, Math.floor(idleHours)),
+  };
+}
+
+export interface UntestedShareVerdict {
+  fired: boolean;
+  untestedPercent: number;
+  daysRemaining: number;
+}
+
+/**
+ * Metric 12: more than `thresholdPercent` of a run's cases still have no
+ * result with `daysRemaining` or fewer days left before its milestone is due.
+ */
+export function evaluateUntestedShare(params: {
+  untested: number;
+  total: number;
+  dueAt: Date;
+  now: Date;
+  thresholdPercent: number;
+  daysRemaining: number;
+}): UntestedShareVerdict {
+  const untestedPercent =
+    params.total > 0 ? (params.untested / params.total) * 100 : 0;
+  const daysLeft = daysBetween(params.now, params.dueAt);
+  const fired =
+    params.total > 0 &&
+    daysLeft >= 0 &&
+    daysLeft <= Math.max(0, params.daysRemaining) &&
+    untestedPercent > params.thresholdPercent;
+  return { fired, untestedPercent, daysRemaining: daysLeft };
+}
+
+export interface SessionOverrunVerdict {
+  fired: boolean;
+  overrunPercent: number;
+}
+
+/**
+ * Metric 19: a session's elapsed time exceeds its estimate by more than
+ * `thresholdPercent`. Sessions without an estimate or a duration are left alone.
+ */
+export function evaluateSessionOverrun(params: {
+  elapsed: number | null;
+  estimate: number | null;
+  thresholdPercent: number;
+}): SessionOverrunVerdict {
+  if (
+    params.elapsed == null ||
+    params.estimate == null ||
+    params.estimate <= 0
+  ) {
+    return { fired: false, overrunPercent: 0 };
+  }
+  const overrunPercent =
+    ((params.elapsed - params.estimate) / params.estimate) * 100;
+  return {
+    fired: overrunPercent > params.thresholdPercent,
+    overrunPercent,
+  };
+}
+
+export interface ShareVerdict {
+  fired: boolean;
+  percent: number;
+}
+
+/**
+ * Metrics 15 and 17: a share (covered requirements, automated cases) is
+ * under `thresholdPercent`. An empty population never fires.
+ */
+export function evaluateShareBelow(params: {
+  part: number;
+  total: number;
+  thresholdPercent: number;
+}): ShareVerdict {
+  if (params.total <= 0) return { fired: false, percent: 0 };
+  const percent = (params.part / params.total) * 100;
+  return { fired: percent < params.thresholdPercent, percent };
+}
+
+export interface CountAboveVerdict {
+  fired: boolean;
+  count: number;
+}
+
+/** Metric 16: more than `count` stale cases. */
+export function evaluateCountAbove(params: {
+  observed: number;
+  count: number;
+}): CountAboveVerdict {
+  return {
+    fired: params.observed > Math.max(0, params.count),
+    count: params.observed,
+  };
+}
+
+export interface FailureRateVerdict {
+  fired: boolean;
+  failureRate: number;
+  sampleCount: number;
+}
+
+/**
+ * Webhook failure rate: failed deliveries over the last `sampleCount`
+ * deliveries exceed `thresholdPercent`, once at least `minSamples` exist.
+ */
+export function evaluateFailureRate(params: {
+  failed: number;
+  total: number;
+  thresholdPercent: number;
+  minSamples: number;
+}): FailureRateVerdict {
+  if (params.total <= 0 || params.total < Math.max(1, params.minSamples)) {
+    return { fired: false, failureRate: 0, sampleCount: params.total };
+  }
+  const failureRate = (params.failed / params.total) * 100;
+  return {
+    fired: failureRate > params.thresholdPercent,
+    failureRate,
+    sampleCount: params.total,
   };
 }
 

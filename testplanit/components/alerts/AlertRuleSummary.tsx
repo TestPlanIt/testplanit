@@ -16,6 +16,7 @@ type SummaryInput = Pick<
   | "minSamples"
   | "resultSource"
   | "evaluateOn"
+  | "coverageBasis"
 >;
 
 /**
@@ -42,6 +43,7 @@ export function AlertRuleSummary({
       minSamples: rule.minSamples,
       evaluateOn: rule.evaluateOn,
       days: rule.secondaryValue ?? 0,
+      basis: rule.coverageBasis ?? "LINKED",
     } as never
   );
   const showSource = definition.subjectType === AlertSubjectType.CASE;

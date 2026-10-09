@@ -104,6 +104,7 @@ describe("form <-> rule conversions", () => {
       minSamples: 5,
       resultSource: "BOTH" as const,
       evaluateOn: "AS_RESULTS_ARRIVE" as const,
+      coverageBasis: "LINKED" as const,
       cooldownMinutes: 30,
       emitWebhook: true,
       isEnabled: false,
@@ -112,6 +113,25 @@ describe("form <-> rule conversions", () => {
     expect(values.scopeText).toBe("Nightly");
     expect(values.scopeId).toBe("");
     expect(formValuesToRuleData(values)).toEqual(rule);
+  });
+
+  it("keeps a webhook scope's config id in scopeText and requires one", () => {
+    const base = defaultAlertRuleValues("WEBHOOK_FAILURE_RATE");
+    const missing = alertRuleFormSchema.safeParse({
+      ...base,
+      name: "Hooks",
+      scopeType: "WEBHOOK",
+    });
+    expect(missing.success).toBe(false);
+    const data = formValuesToRuleData({
+      ...base,
+      name: "Hooks",
+      scopeType: "WEBHOOK",
+      scopeText: "cfg_1",
+      scopeId: "9",
+    });
+    expect(data.scopeText).toBe("cfg_1");
+    expect(data.scopeId).toBeNull();
   });
 
   it("normalises unused fields when writing", () => {

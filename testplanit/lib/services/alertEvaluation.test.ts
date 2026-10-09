@@ -48,6 +48,7 @@ function rule(overrides: Partial<AlertRuleRow> = {}): AlertRuleRow {
     minSamples: 3,
     resultSource: "BOTH",
     evaluateOn: "RUN_COMPLETION",
+    coverageBasis: "LINKED",
     cooldownMinutes: 60,
     emitWebhook: false,
     ...overrides,
@@ -67,6 +68,17 @@ interface MockDbOptions {
   completion?: { completed: number; total: number };
   lastEvent?: { firedAt: Date } | null;
   tagged?: number;
+  execution?: Record<string, unknown> | null;
+  session?: Record<string, unknown> | null;
+  sessionTag?: boolean;
+  openRuns?: Array<Record<string, unknown>>;
+  project?: Record<string, unknown> | null;
+  caseCounts?: { total: number; automated: number };
+  stale?: number;
+  webhookConfigs?: Array<Record<string, unknown>>;
+  deliveries?: { total: number; failed: number };
+  previousRunDurations?: number[];
+  issueCount?: number;
 }
 
 /** A client whose raw queries are routed by the SQL they carry. */
@@ -90,9 +102,26 @@ function mockDb(options: MockDbOptions) {
       if (sql.includes("WITH RECURSIVE tree")) {
         return (options.folderTree ?? []).map((id) => ({ id }));
       }
-      if (sql.includes('"_TagsToTestRuns"')) return options.runTag ? [{}] : [];
+      if (sql.includes('"_TagsToTestRuns" WHERE')) {
+        return options.runTag ? [{}] : [];
+      }
+      if (sql.includes('"_SessionsToTags"'))
+        return options.sessionTag ? [{}] : [];
       if (sql.includes("AS passed")) {
         return [options.runCounts ?? { passed: 0, failed: 0 }];
+      }
+      if (sql.includes('AS "lastActivityAt"')) return options.openRuns ?? [];
+      if (sql.includes("AS stale")) return [{ stale: options.stale ?? 0 }];
+      if (sql.includes("AS automated")) {
+        return [options.caseCounts ?? { total: 0, automated: 0 }];
+      }
+      if (sql.includes('FROM "WebhookDelivery" d')) {
+        return [options.deliveries ?? { total: 0, failed: 0 }];
+      }
+      if (sql.includes("tr.elapsed::double precision AS elapsed")) {
+        return (options.previousRunDurations ?? []).map((elapsed) => ({
+          elapsed,
+        }));
       }
       if (sql.includes("AS completed")) {
         const milestoneId = Number((values[0] as number[])?.[0]);
@@ -126,6 +155,15 @@ function mockDb(options: MockDbOptions) {
     repositoryCaseTag: { count: vi.fn(async () => options.tagged ?? 0) },
     testRuns: { findUnique: vi.fn(async () => options.run ?? null) },
     milestones: { findMany: vi.fn(async () => options.milestones ?? []) },
+    testRunExecution: {
+      findUnique: vi.fn(async () => options.execution ?? null),
+    },
+    sessions: { findUnique: vi.fn(async () => options.session ?? null) },
+    projects: { findUnique: vi.fn(async () => options.project ?? null) },
+    webhookConfig: {
+      findMany: vi.fn(async () => options.webhookConfigs ?? []),
+    },
+    issue: { count: vi.fn(async () => options.issueCount ?? 0) },
   };
   return db;
 }
@@ -611,5 +649,260 @@ describe("AlertEvaluationService — scheduled milestone pass", () => {
       now: () => NOW,
     });
     expect(await service.evaluateScheduled()).toEqual([]);
+  });
+});
+
+describe("AlertEvaluationService — round two metrics", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    resolveRecipients.mockResolvedValue(["u1"]);
+  });
+
+  const openRun = {
+    id: 42,
+    name: "Nightly",
+    projectId: 7,
+    testRunType: "MANUAL",
+    isCompleted: true,
+    isDeleted: false,
+    elapsed: 600,
+    project: { name: "Shop" },
+  };
+
+  it("fires a run duration deviation on completion from earlier runs in scope", async () => {
+    const db = mockDb({
+      rules: [
+        rule({
+          id: 3,
+          metric: "RUN_DURATION_DEVIATION",
+          thresholdValue: 50,
+          direction: "ABOVE",
+          baselineWindow: 5,
+          minSamples: 3,
+        }),
+      ],
+      run: openRun,
+      previousRunDurations: [300, 320, 280],
+    });
+    const service = new AlertEvaluationService(db, { now: () => NOW });
+    expect(await service.evaluateRun(42, "result")).toEqual([]);
+    const fired = await service.evaluateRun(42, "completion");
+    expect(fired).toHaveLength(1);
+    expect(createAlertTriggeredNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        subjectType: "RUN",
+        observedValue: 100,
+        baselineValue: 300,
+        details: expect.objectContaining({ elapsed: 600, sampleCount: 3 }),
+      })
+    );
+  });
+
+  it("counts issues linked to the run's results", async () => {
+    const db = mockDb({
+      rules: [
+        rule({
+          id: 4,
+          metric: "RUN_ISSUES_OPENED",
+          thresholdValue: 2,
+          evaluateOn: "AS_RESULTS_ARRIVE",
+        }),
+      ],
+      run: { ...openRun, isCompleted: false },
+      issueCount: 3,
+    });
+    const service = new AlertEvaluationService(db, { now: () => NOW });
+    const fired = await service.evaluateRun(42, "result");
+    expect(fired.map((f) => f.ruleId)).toEqual([4]);
+    expect(db.issue.count).toHaveBeenCalledWith({
+      where: {
+        isRequirement: false,
+        isDeleted: false,
+        testRunResults: { some: { testRunId: 42, isDeleted: false } },
+      },
+    });
+  });
+
+  it("fires for a failed or timed-out execution on a run in scope, not for success", async () => {
+    const execution = {
+      id: 9,
+      status: "TIMED_OUT",
+      error: "no report",
+      testRunId: 42,
+      projectId: 7,
+      target: { name: "GitHub Actions" },
+      testRun: openRun,
+    };
+    const db = mockDb({
+      rules: [
+        rule({
+          id: 5,
+          metric: "AUTOMATED_EXECUTION_FAILED",
+          scopeType: "RUN_NAME",
+          scopeText: "night",
+        }),
+      ],
+      execution,
+    });
+    const service = new AlertEvaluationService(db, { now: () => NOW });
+    const fired = await service.evaluateExecution(9, "acme");
+    expect(fired.map((f) => [f.ruleId, f.subjectId])).toEqual([[5, 42]]);
+    expect(createAlertTriggeredNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        subjectType: "RUN",
+        details: expect.objectContaining({
+          executionId: 9,
+          status: "TIMED_OUT",
+          targetName: "GitHub Actions",
+        }),
+      })
+    );
+
+    const ok = mockDb({
+      rules: [rule({ id: 5, metric: "AUTOMATED_EXECUTION_FAILED" })],
+      execution: { ...execution, status: "SUCCEEDED" },
+    });
+    expect(
+      await new AlertEvaluationService(ok, {
+        now: () => NOW,
+      }).evaluateExecution(9)
+    ).toEqual([]);
+  });
+
+  it("fires a session overrun against its estimate, honouring a tag scope", async () => {
+    const session = {
+      id: 15,
+      name: "Charter A",
+      projectId: 7,
+      elapsed: 3900,
+      estimate: 3000,
+      isDeleted: false,
+      project: { name: "Shop" },
+    };
+    const db = mockDb({
+      rules: [
+        rule({ id: 6, metric: "SESSION_OVERRUN", thresholdValue: 25 }),
+        rule({
+          id: 7,
+          metric: "SESSION_OVERRUN",
+          thresholdValue: 25,
+          scopeType: "TAG",
+          scopeId: 3,
+        }),
+      ],
+      session,
+      sessionTag: false,
+    });
+    const service = new AlertEvaluationService(db, { now: () => NOW });
+    const fired = await service.evaluateSession(15);
+    expect(fired.map((f) => f.ruleId)).toEqual([6]);
+    expect(createAlertTriggeredNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        subjectType: "SESSION",
+        subjectId: 15,
+        observedValue: 30,
+        baselineValue: 3000,
+      })
+    );
+  });
+
+  it("runs the hourly pass over stalled runs and webhook failure rates", async () => {
+    const db = mockDb({
+      rules: [
+        rule({ id: 8, metric: "RUN_NOT_PROGRESSING", thresholdValue: 24 }),
+        rule({
+          id: 9,
+          metric: "WEBHOOK_FAILURE_RATE",
+          thresholdValue: 25,
+          baselineWindow: 50,
+          minSamples: 10,
+          scopeType: "WEBHOOK",
+          scopeText: "cfg_1",
+        }),
+      ],
+      openRuns: [
+        {
+          id: 42,
+          name: "Nightly",
+          testRunType: "MANUAL",
+          elapsed: null,
+          projectName: "Shop",
+          lastActivityAt: new Date("2026-10-06T12:00:00Z"),
+          total: 10,
+          untested: 4,
+          milestoneDueAt: null,
+          milestoneCompleted: null,
+        },
+        {
+          id: 43,
+          name: "Fresh",
+          testRunType: "MANUAL",
+          elapsed: null,
+          projectName: "Shop",
+          lastActivityAt: null,
+          total: 0,
+          untested: 0,
+          milestoneDueAt: null,
+          milestoneCompleted: null,
+        },
+      ],
+      webhookConfigs: [
+        { id: "cfg_1", name: "Slack", url: null, project: { name: "Shop" } },
+        { id: "cfg_2", name: "Teams", url: null, project: { name: "Shop" } },
+      ],
+      deliveries: { total: 20, failed: 8 },
+    });
+    const service = new AlertEvaluationService(db, { now: () => NOW });
+    const fired = await service.evaluateScheduled(undefined, "hourly");
+    expect(fired.map((f) => [f.ruleId, f.subjectType, f.subjectId])).toEqual([
+      [8, "RUN", 42],
+      [9, "WEBHOOK", 0],
+    ]);
+    expect(db.alertEvent.create).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          subjectRef: "cfg_1",
+          subjectName: "Slack",
+          observedValue: 40,
+        }),
+      })
+    );
+  });
+
+  it("runs the daily pass over project health with the case-set scope", async () => {
+    const db = mockDb({
+      rules: [
+        rule({
+          id: 10,
+          metric: "AUTOMATION_SHARE_BELOW",
+          thresholdValue: 50,
+          scopeType: "FOLDER",
+          scopeId: 3,
+        }),
+        rule({
+          id: 11,
+          metric: "STALE_CASES",
+          thresholdValue: 5,
+          secondaryValue: 30,
+        }),
+      ],
+      folderTree: [3, 4],
+      project: { id: 7, name: "Shop", isDeleted: false },
+      caseCounts: { total: 10, automated: 2 },
+      stale: 5,
+    });
+    const service = new AlertEvaluationService(db, { now: () => NOW });
+    const fired = await service.evaluateScheduled(undefined, "daily");
+    expect(fired.map((f) => [f.ruleId, f.subjectType, f.subjectId])).toEqual([
+      [10, "PROJECT", 7],
+    ]);
+    expect(createAlertTriggeredNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        subjectType: "PROJECT",
+        subjectName: "Shop",
+        observedValue: 20,
+        details: expect.objectContaining({ automated: 2, total: 10 }),
+      })
+    );
   });
 });

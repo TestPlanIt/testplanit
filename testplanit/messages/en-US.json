@@ -7020,11 +7020,25 @@
         "alertSubject": {
           "CASE": "test case",
           "RUN": "test run",
-          "MILESTONE": "milestone"
+          "MILESTONE": "milestone",
+          "SESSION": "session",
+          "PROJECT": "project",
+          "WEBHOOK": "webhook"
         },
         "alertMetric": {
           "RESULT_DURATION_DEVIATION": "The result took {elapsed}, {deviation}% away from the baseline of {baseline} (more than {threshold}% allowed).",
           "CASE_REGRESSED": "The case failed after passing {passedBefore, plural, one {its last result} other {its last # results}}.",
+          "CASE_RECOVERED": "The case passed after failing {failedBefore, plural, one {its last result} other {its last # results}}.",
+          "RUN_DURATION_DEVIATION": "The run took {elapsed}, {deviation}% away from the baseline of {baseline} (more than {threshold}% allowed).",
+          "RUN_NOT_PROGRESSING": "The run has had no new result for {idleHours, plural, one {# hour} other {# hours}} (threshold {threshold}).",
+          "AUTOMATED_EXECUTION_FAILED": "The automated execution on {target} ended with {status}{error, select, other {: {error}}}",
+          "RUN_UNTESTED_SHARE": "{untestedPercent}% of the run's cases have no result with {daysRemaining, plural, one {# day} other {# days}} before its milestone is due (threshold {threshold}%).",
+          "RUN_ISSUES_OPENED": "{issues, plural, one {# issue is} other {# issues are}} linked to the run's results (threshold {threshold}).",
+          "SESSION_OVERRUN": "The session took {elapsed} against an estimate of {estimate}, {overrun}% over (more than {threshold}% allowed).",
+          "REQUIREMENT_COVERAGE_BELOW": "{covered} of {total} requirements ({coverage}%) {basis, select, PASSING {have a passing latest result} other {are linked to a test case}} (threshold {threshold}%).",
+          "STALE_CASES": "{stale, plural, one {# case has} other {# cases have}} had no result in {days, plural, one {# day} other {# days}} (threshold {threshold}).",
+          "AUTOMATION_SHARE_BELOW": "{automated} of {total} cases ({automatedPercent}%) are automated (threshold {threshold}%).",
+          "WEBHOOK_FAILURE_RATE": "{failed} of the last {sampleCount} deliveries failed ({failureRate}%, threshold {threshold}%).",
           "CONSECUTIVE_FAILURES": "The case has failed {streak, plural, one {# time} other {# times}} in a row (threshold {threshold}).",
           "CASE_FLAKY": "The outcome flipped {flips, plural, one {# time} other {# times}} across the last {sampleCount} results (threshold {threshold}).",
           "RUN_PASS_RATE_BELOW": "The pass rate is {passRate}% across {sampleCount} results (threshold {threshold}%).",
@@ -10265,6 +10279,25 @@
       "scopePickTag": "Select a tag",
       "scopePickCase": "Select a test case",
       "scopePickMilestone": "Select a milestone",
+      "scopeWebhook": "Webhook",
+      "scopePickWebhook": "Select a webhook",
+      "coverageBasis": "Count as covered",
+      "coverageBasisOptions": {
+        "LINKED": "Linked to at least one test case",
+        "PASSING": "Latest result passed"
+      },
+      "windowLabels": {
+        "RUN_DURATION_DEVIATION": "Baseline window (runs)",
+        "WEBHOOK_FAILURE_RATE": "Last deliveries"
+      },
+      "minSamplesLabels": {
+        "RUN_DURATION_DEVIATION": "Minimum runs",
+        "WEBHOOK_FAILURE_RATE": "Minimum deliveries"
+      },
+      "secondaryLabels": {
+        "RUN_UNTESTED_SHARE": "Days before the milestone is due",
+        "STALE_CASES": "Days without a result"
+      },
       "scopeCaseSearch": "Search by name or ID",
       "direction": "Direction",
       "baselineType": "Baseline",
@@ -10279,7 +10312,7 @@
       "emitWebhookHelp": "Outbound webhooks subscribed to Alerts receive the same payload, so Slack or other tools can post it.",
       "enabled": "Enabled",
       "audience": "Audience",
-      "audienceHelp": "Who is notified when the alert fires. You are subscribed to alerts you create; anyone can leave or re-join.",
+      "audienceHelp": "Who is notified when the alert fires. You are added by default to alerts you create; anyone can leave or re-join.",
       "searchMembers": "Search project members",
       "you": "you",
       "cannotManageSubscribers": "You can subscribe or unsubscribe yourself. Subscribing other members needs project administration rights.",
@@ -10303,6 +10336,7 @@
       "metricSearch": "Search metrics",
       "metricNoMatch": "No metric matches.",
       "checkedDaily": "Checked daily",
+      "checkedHourly": "Checked hourly",
       "needsProject": "Select a project first.",
       "followAlert": "Notify me",
       "leaveAlert": "Stop notifying me",
@@ -10314,8 +10348,18 @@
         "CASE_FLAKY": "Flips",
         "RUN_PASS_RATE_BELOW": "Pass rate under (%)",
         "RUN_FAILURE_COUNT": "Failed results, more than",
+        "RUN_DURATION_DEVIATION": "Deviation (%)",
+        "RUN_NOT_PROGRESSING": "Idle for more than (hours)",
+        "AUTOMATED_EXECUTION_FAILED": "Threshold",
+        "RUN_UNTESTED_SHARE": "Untested cases over (%)",
+        "RUN_ISSUES_OPENED": "Linked issues, more than",
+        "SESSION_OVERRUN": "Over the estimate by more than (%)",
         "MILESTONE_BEHIND": "Completion under (%)",
-        "MILESTONE_OVERDUE": "Threshold"
+        "MILESTONE_OVERDUE": "Threshold",
+        "REQUIREMENT_COVERAGE_BELOW": "Coverage under (%)",
+        "STALE_CASES": "Stale cases, more than",
+        "AUTOMATION_SHARE_BELOW": "Automated share under (%)",
+        "WEBHOOK_FAILURE_RATE": "Failure rate over (%)"
       }
     },
     "direction": {
@@ -10342,7 +10386,16 @@
       "TAG": "Cases with a tag",
       "CASE": "One test case",
       "RUN_NAME": "Runs whose name contains",
-      "MILESTONE": "One milestone"
+      "MILESTONE": "One milestone",
+      "WEBHOOK": "One webhook"
+    },
+    "scopeTypeSessions": {
+      "PROJECT": "All sessions",
+      "TAG": "Sessions with a tag"
+    },
+    "scopeTypeWebhooks": {
+      "PROJECT": "All outbound webhooks",
+      "WEBHOOK": "One webhook"
     },
     "scopeTypeRuns": {
       "PROJECT": "All runs",
@@ -10360,12 +10413,16 @@
       "CASE": "Case: {name}",
       "RUN_NAME": "Runs containing \"{text}\"",
       "MILESTONE": "Milestone: {name}",
+      "WEBHOOK": "Webhook: {name}",
       "missing": "(removed)"
     },
     "subjectType": {
       "CASE": "Test case",
       "RUN": "Test run",
-      "MILESTONE": "Milestone"
+      "MILESTONE": "Milestone",
+      "SESSION": "Session",
+      "PROJECT": "Project",
+      "WEBHOOK": "Webhook"
     },
     "metrics": {
       "RESULT_DURATION_DEVIATION": {
@@ -10377,6 +10434,11 @@
         "label": "Case regressed",
         "description": "A case that passed its recent results now fails. Catches a fresh failure on a stable case.",
         "summary": "A case fails after passing its last {window} results"
+      },
+      "CASE_RECOVERED": {
+        "label": "Case recovered",
+        "description": "A case passes after failing every one of its last results.",
+        "summary": "A case passes after failing its last {window, plural, one {# result} other {# results}}"
       },
       "CONSECUTIVE_FAILURES": {
         "label": "Consecutive failures",
@@ -10398,6 +10460,36 @@
         "description": "A run has more than a given number of failed results.",
         "summary": "A run has more than {threshold, plural, one {# failed result} other {# failed results}}, {evaluateOn, select, AS_RESULTS_ARRIVE {evaluated as results arrive} other {evaluated when the run completes}}"
       },
+      "RUN_DURATION_DEVIATION": {
+        "label": "Run duration deviates from baseline",
+        "description": "A completed run's total duration deviates from the runs its scope groups together (same tag or name fragment).",
+        "summary": "A completed run's duration is more than {threshold}% {direction, select, ABOVE {above} BELOW {below} other {above or below}} the {baseline, select, MEAN {mean} other {median}} of the last {window} runs, after at least {minSamples} runs"
+      },
+      "RUN_NOT_PROGRESSING": {
+        "label": "Run not progressing",
+        "description": "An open run has had no new result for a given number of hours. Checked hourly.",
+        "summary": "An open run has had no new result for more than {threshold, plural, one {# hour} other {# hours}}"
+      },
+      "AUTOMATED_EXECUTION_FAILED": {
+        "label": "Automated execution failed",
+        "description": "An automated execution of a run fails, cannot be dispatched, or times out.",
+        "summary": "An automated execution fails, cannot be dispatched, or times out"
+      },
+      "RUN_UNTESTED_SHARE": {
+        "label": "Run untested share",
+        "description": "Too many of a run's cases still have no result with few days left before its milestone is due. Checked daily.",
+        "summary": "More than {threshold}% of a run's cases have no result with {days, plural, one {# day} other {# days}} or fewer before its milestone is due"
+      },
+      "RUN_ISSUES_OPENED": {
+        "label": "Issues opened from a run",
+        "description": "More than a given number of issues are linked to a run's results.",
+        "summary": "More than {threshold, plural, one {# issue is} other {# issues are}} linked to a run's results, {evaluateOn, select, AS_RESULTS_ARRIVE {evaluated as results arrive} other {evaluated when the run completes}}"
+      },
+      "SESSION_OVERRUN": {
+        "label": "Session overran its estimate",
+        "description": "A completed session's elapsed time exceeds its estimate by a percentage.",
+        "summary": "A completed session's elapsed time is more than {threshold}% over its estimate"
+      },
       "MILESTONE_BEHIND": {
         "label": "Milestone completion behind",
         "description": "A milestone's run cases are not completed enough with few days left before its due date. Checked daily.",
@@ -10407,6 +10499,26 @@
         "label": "Milestone overdue",
         "description": "A milestone's due date has passed and it is not completed. Checked daily.",
         "summary": "A milestone passes its due date without being completed"
+      },
+      "REQUIREMENT_COVERAGE_BELOW": {
+        "label": "Requirement coverage below threshold",
+        "description": "Fewer than a given share of the project's requirements count as covered. Checked daily.",
+        "summary": "Fewer than {threshold}% of requirements {basis, select, PASSING {have a passing latest result} other {are linked to at least one test case}}"
+      },
+      "STALE_CASES": {
+        "label": "Stale cases",
+        "description": "More than a given number of cases have gone without a result for a number of days. Checked daily.",
+        "summary": "More than {threshold, plural, one {# case has} other {# cases have}} had no result in {days, plural, one {# day} other {# days}}"
+      },
+      "AUTOMATION_SHARE_BELOW": {
+        "label": "Automation share below threshold",
+        "description": "Fewer than a given share of the cases in scope are automated. Checked daily.",
+        "summary": "Fewer than {threshold}% of cases are automated"
+      },
+      "WEBHOOK_FAILURE_RATE": {
+        "label": "Webhook failure rate",
+        "description": "Too many of an outbound webhook's recent deliveries failed. Checked hourly.",
+        "summary": "More than {threshold}% of an outbound webhook's last {window} deliveries failed, after at least {minSamples} deliveries"
       }
     },
     "sourceSummary": "Results: {source, select, MANUAL {manual} AUTOMATED {automated} other {manual and automated}}",
@@ -10434,7 +10546,10 @@
     "metricGroups": {
       "CASE": "Test case results",
       "RUN": "Test runs",
-      "MILESTONE": "Milestones"
+      "SESSION": "Sessions",
+      "MILESTONE": "Milestones",
+      "PROJECT": "Project health",
+      "WEBHOOK": "Webhooks"
     }
   }
 }

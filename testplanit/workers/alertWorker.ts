@@ -7,17 +7,22 @@ import {
 } from "../lib/multiTenantDb";
 import {
   JOB_EVALUATE_SCHEDULED_ALERTS,
+  JOB_EVALUATE_HOURLY_ALERTS,
+  JOB_EVALUATE_ALERT_EXECUTION,
   JOB_EVALUATE_ALERT_JUNIT_RESULT,
   JOB_EVALUATE_ALERT_RESULT,
   JOB_EVALUATE_ALERT_RUN,
+  JOB_EVALUATE_ALERT_SESSION,
   ALERT_QUEUE_NAME,
 } from "../lib/queueNames";
 import { AlertEvaluationService } from "../lib/services/alertEvaluation";
 import type {
+  AlertExecutionJobData,
   AlertJUnitResultJobData,
   AlertResultJobData,
   AlertRunJobData,
   AlertScheduledJobData,
+  AlertSessionJobData,
 } from "../lib/services/alertEnqueue";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
@@ -79,11 +84,40 @@ const processor = async (job: Job<ThresholdJobData>) => {
       }
       break;
     }
+    case JOB_EVALUATE_ALERT_EXECUTION: {
+      const data = job.data as AlertExecutionJobData;
+      const fired = await service.evaluateExecution(data.executionId, tenantId);
+      if (fired.length > 0) {
+        console.log(
+          `[AlertWorker] execution ${data.executionId}: ${fired.length} rule(s) fired`
+        );
+      }
+      break;
+    }
+    case JOB_EVALUATE_ALERT_SESSION: {
+      const data = job.data as AlertSessionJobData;
+      const fired = await service.evaluateSession(data.sessionId, tenantId);
+      if (fired.length > 0) {
+        console.log(
+          `[AlertWorker] session ${data.sessionId}: ${fired.length} rule(s) fired`
+        );
+      }
+      break;
+    }
     case JOB_EVALUATE_SCHEDULED_ALERTS: {
-      const fired = await service.evaluateScheduled(tenantId);
+      const fired = await service.evaluateScheduled(tenantId, "daily");
       console.log(
-        `[AlertWorker] scheduled pass${tenantId ? ` (tenant ${tenantId})` : ""}: ${fired.length} rule(s) fired`
+        `[AlertWorker] daily pass${tenantId ? ` (tenant ${tenantId})` : ""}: ${fired.length} rule(s) fired`
       );
+      break;
+    }
+    case JOB_EVALUATE_HOURLY_ALERTS: {
+      const fired = await service.evaluateScheduled(tenantId, "hourly");
+      if (fired.length > 0) {
+        console.log(
+          `[AlertWorker] hourly pass${tenantId ? ` (tenant ${tenantId})` : ""}: ${fired.length} rule(s) fired`
+        );
+      }
       break;
     }
     default:

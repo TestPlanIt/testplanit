@@ -1,13 +1,21 @@
 import type { Job } from "bullmq";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { evaluateResult, evaluateJUnitResult, evaluateRun, evaluateScheduled } =
-  vi.hoisted(() => ({
-    evaluateResult: vi.fn(async () => []),
-    evaluateJUnitResult: vi.fn(async () => []),
-    evaluateRun: vi.fn(async () => []),
-    evaluateScheduled: vi.fn(async () => []),
-  }));
+const {
+  evaluateResult,
+  evaluateJUnitResult,
+  evaluateRun,
+  evaluateScheduled,
+  evaluateExecution,
+  evaluateSession,
+} = vi.hoisted(() => ({
+  evaluateResult: vi.fn(async () => []),
+  evaluateJUnitResult: vi.fn(async () => []),
+  evaluateRun: vi.fn(async () => []),
+  evaluateScheduled: vi.fn(async () => []),
+  evaluateExecution: vi.fn(async () => []),
+  evaluateSession: vi.fn(async () => []),
+}));
 
 vi.mock("../lib/valkey", () => ({ default: null }));
 vi.mock("../lib/multiTenantDb", () => ({
@@ -25,14 +33,19 @@ vi.mock("../lib/services/alertEvaluation", () => ({
     evaluateJUnitResult = evaluateJUnitResult;
     evaluateRun = evaluateRun;
     evaluateScheduled = evaluateScheduled;
+    evaluateExecution = evaluateExecution;
+    evaluateSession = evaluateSession;
   },
 }));
 
 import {
   JOB_EVALUATE_SCHEDULED_ALERTS,
+  JOB_EVALUATE_HOURLY_ALERTS,
+  JOB_EVALUATE_ALERT_EXECUTION,
   JOB_EVALUATE_ALERT_JUNIT_RESULT,
   JOB_EVALUATE_ALERT_RESULT,
   JOB_EVALUATE_ALERT_RUN,
+  JOB_EVALUATE_ALERT_SESSION,
 } from "../lib/queueNames";
 import { processor } from "./alertWorker";
 
@@ -70,7 +83,24 @@ describe("alertWorker processor", () => {
     expect(evaluateRun).toHaveBeenCalledWith(42, "completion", undefined);
 
     await processor(job(JOB_EVALUATE_SCHEDULED_ALERTS, { tenantId: "t" }));
-    expect(evaluateScheduled).toHaveBeenCalledWith("t");
+    expect(evaluateScheduled).toHaveBeenCalledWith("t", "daily");
+
+    await processor(job(JOB_EVALUATE_HOURLY_ALERTS, { tenantId: "t" }));
+    expect(evaluateScheduled).toHaveBeenCalledWith("t", "hourly");
+
+    await processor(
+      job(JOB_EVALUATE_ALERT_EXECUTION, {
+        executionId: 9,
+        projectId: 7,
+        tenantId: "t",
+      })
+    );
+    expect(evaluateExecution).toHaveBeenCalledWith(9, "t");
+
+    await processor(
+      job(JOB_EVALUATE_ALERT_SESSION, { sessionId: 5, projectId: 7 })
+    );
+    expect(evaluateSession).toHaveBeenCalledWith(5, undefined);
   });
 
   it("rejects an unknown job name", async () => {

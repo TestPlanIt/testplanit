@@ -36,7 +36,10 @@ export const ALERT_QUEUE_NAME = "alerts";
 export const JOB_EVALUATE_ALERT_RESULT = "evaluate-alert-result";
 export const JOB_EVALUATE_ALERT_JUNIT_RESULT = "evaluate-alert-junit-result";
 export const JOB_EVALUATE_ALERT_RUN = "evaluate-alert-run";
+export const JOB_EVALUATE_ALERT_EXECUTION = "evaluate-alert-execution";
+export const JOB_EVALUATE_ALERT_SESSION = "evaluate-alert-session";
 export const JOB_EVALUATE_SCHEDULED_ALERTS = "evaluate-scheduled-alerts";
+export const JOB_EVALUATE_HOURLY_ALERTS = "evaluate-hourly-alerts";
 
 // Job names shared between enqueue sites and the workers that process them.
 // They live here rather than in the worker modules so that app code, services

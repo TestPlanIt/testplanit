@@ -57,6 +57,7 @@ import {
   AlertEvaluateOn,
   AlertResultSource,
   AlertScopeType,
+  AlertCoverageBasis,
   AlertSubjectType,
 } from "~/zenstack/models";
 import { schema } from "~/zenstack/schema";
@@ -159,7 +160,6 @@ export function AlertRuleDialog({
   const definition = getAlertMetricDefinition(metric);
   const uses = (field: Parameters<typeof metricUsesField>[1]) =>
     metricUsesField(metric, field);
-  const isRunMetric = definition?.subjectType === AlertSubjectType.RUN;
 
   // Staged audience on create; the live subscriber list on edit.
   const [stagedSubscribers, setStagedSubscribers] = useState<SubscriberEntry[]>(
@@ -208,6 +208,18 @@ export function AlertRuleDialog({
       include: { milestoneType: { include: { icon: true } } },
     },
     { enabled: open && hasProject && scopeType === AlertScopeType.MILESTONE }
+  );
+  const { data: webhooks } = client.webhookConfig.useFindMany(
+    {
+      where: {
+        projectId: projectId ?? -1,
+        direction: "OUTBOUND",
+        isActive: true,
+      },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, url: true },
+    },
+    { enabled: open && hasProject && scopeType === AlertScopeType.WEBHOOK }
   );
   const scopeId = useWatch({ control, name: "scopeId" });
   const { data: scopedTag } = client.tags.useFindUnique(
@@ -416,12 +428,29 @@ export function AlertRuleDialog({
   };
 
   const scopeOptions = definition?.scopes ?? [AlertScopeType.PROJECT];
-  const scopeLabel = (type: AlertScopeType) =>
-    isRunMetric
-      ? t(`scopeTypeRuns.${type}` as never)
-      : definition?.subjectType === AlertSubjectType.MILESTONE
-        ? t(`scopeTypeMilestones.${type}` as never)
-        : t(`scopeType.${type}` as never);
+  const scopeLabel = (type: AlertScopeType) => {
+    switch (definition?.subjectType) {
+      case AlertSubjectType.RUN:
+        return t(`scopeTypeRuns.${type}` as never);
+      case AlertSubjectType.MILESTONE:
+        return t(`scopeTypeMilestones.${type}` as never);
+      case AlertSubjectType.SESSION:
+        return t(`scopeTypeSessions.${type}` as never);
+      case AlertSubjectType.WEBHOOK:
+        return t(`scopeTypeWebhooks.${type}` as never);
+      default:
+        return t(`scopeType.${type}` as never);
+    }
+  };
+  // Per-metric wording for the shared numeric fields, with the generic label
+  // as the fallback.
+  const fieldLabel = (
+    group: "windowLabels" | "minSamplesLabels" | "secondaryLabels",
+    fallback: string
+  ) =>
+    tForm.has(`${group}.${metric}` as never)
+      ? tForm(`${group}.${metric}` as never)
+      : tForm(fallback as never);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -694,7 +723,9 @@ export function AlertRuleDialog({
                       name="baselineWindow"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{tForm("baselineWindow")}</FormLabel>
+                          <FormLabel>
+                            {fieldLabel("windowLabels", "baselineWindow")}
+                          </FormLabel>
                           <FormControl>
                             <NumberInput
                               name={field.name}
@@ -719,7 +750,9 @@ export function AlertRuleDialog({
                       name="minSamples"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{tForm("minSamples")}</FormLabel>
+                          <FormLabel>
+                            {fieldLabel("minSamplesLabels", "minSamples")}
+                          </FormLabel>
                           <FormControl>
                             <NumberInput
                               name={field.name}
@@ -744,7 +777,9 @@ export function AlertRuleDialog({
                       name="secondaryValue"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{tForm("daysRemaining")}</FormLabel>
+                          <FormLabel>
+                            {fieldLabel("secondaryLabels", "daysRemaining")}
+                          </FormLabel>
                           <FormControl>
                             <NumberInput
                               name={field.name}
@@ -759,6 +794,38 @@ export function AlertRuleDialog({
                             />
                           </FormControl>
                           <FieldError name="secondaryValue" />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                  {uses("coverageBasis") && (
+                    <FormField
+                      control={control}
+                      name="coverageBasis"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{tForm("coverageBasis")}</FormLabel>
+                          <Select
+                            value={field.value}
+                            onValueChange={field.onChange}
+                          >
+                            <FormControl>
+                              <SelectTrigger data-testid="alert-rule-coverage-basis">
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {Object.values(AlertCoverageBasis).map(
+                                (value) => (
+                                  <SelectItem key={value} value={value}>
+                                    {tForm(
+                                      `coverageBasisOptions.${value}` as never
+                                    )}
+                                  </SelectItem>
+                                )
+                              )}
+                            </SelectContent>
+                          </Select>
                         </FormItem>
                       )}
                     />
@@ -966,6 +1033,37 @@ export function AlertRuleDialog({
                               />
                             </FormControl>
                             <FieldError name="scopeId" />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                    {scopeType === AlertScopeType.WEBHOOK && (
+                      <FormField
+                        control={control}
+                        name="scopeText"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{tForm("scopeWebhook")}</FormLabel>
+                            <Select
+                              value={field.value || ""}
+                              onValueChange={field.onChange}
+                            >
+                              <FormControl>
+                                <SelectTrigger data-testid="alert-rule-scope-webhook">
+                                  <SelectValue
+                                    placeholder={tForm("scopePickWebhook")}
+                                  />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {(webhooks ?? []).map((config) => (
+                                  <SelectItem key={config.id} value={config.id}>
+                                    {config.name || config.url || config.id}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FieldError name="scopeText" />
                           </FormItem>
                         )}
                       />
