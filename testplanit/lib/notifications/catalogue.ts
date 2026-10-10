@@ -172,13 +172,16 @@ export const NOTIFICATION_CATALOGUE: readonly NotificationCatalogueEntry[] = [
     audience: "admin",
     optional: true,
   },
+  // Retired
+  // AI budget alerts are raised by AI-budget alert rules (ALERT_TRIGGERED)
+  // since the #651 follow-up; rows of this type only predate it.
   {
     type: NotificationType.LLM_BUDGET_ALERT,
     group: "administration",
     audience: "admin",
     optional: true,
+    retired: true,
   },
-  // Retired
   {
     type: NotificationType.COPY_MOVE_COMPLETE,
     group: "aiAndJobs",

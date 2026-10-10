@@ -182,7 +182,7 @@ export function defaultAlertRuleValues(
     resultSource: AlertResultSource.BOTH,
     evaluateOn: AlertEvaluateOn.RUN_COMPLETION,
     coverageBasis: AlertCoverageBasis.LINKED,
-    cooldownMinutes: 1440,
+    cooldownMinutes: definition?.defaults.cooldownMinutes ?? 1440,
     emitWebhook: false,
     isEnabled: true,
   };
@@ -196,12 +196,17 @@ export function valuesForMetricChange(
   const next = defaultAlertRuleValues(metric);
   const definition = getAlertMetricDefinition(metric);
   const keepScope = definition?.scopes.includes(current.scopeType) ?? false;
+  const wasSystem = getAlertMetricDefinition(current.metric)?.system === true;
+  const isSystem = definition?.system === true;
   return {
     ...next,
     name: current.name,
     description: current.description,
-    cooldownMinutes: current.cooldownMinutes,
-    emitWebhook: current.emitWebhook,
+    // Crossing between a project and a system metric takes that metric's
+    // own cooldown; otherwise the user's choice stands.
+    cooldownMinutes:
+      wasSystem === isSystem ? current.cooldownMinutes : next.cooldownMinutes,
+    emitWebhook: isSystem ? false : current.emitWebhook,
     isEnabled: current.isEnabled,
     scopeType: keepScope ? current.scopeType : AlertScopeType.PROJECT,
     scopeId: keepScope ? current.scopeId : "",

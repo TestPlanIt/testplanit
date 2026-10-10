@@ -2,7 +2,7 @@
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { useMemo } from "react";
-import { Webhook } from "lucide-react";
+import { Sparkles, Webhook } from "lucide-react";
 import { MilestoneIconAndName } from "@/components/MilestoneIconAndName";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import { SessionNameDisplay } from "@/components/SessionNameDisplay";
@@ -149,11 +149,18 @@ export function AlertSubjectDisplay({
   meta,
 }: SubjectRef & {
   subjectName: string;
-  projectId: number;
+  /** Null for a system alert's subject. */
+  projectId: number | null;
   testRunId?: number | null;
   meta: AlertSubjectMeta;
 }) {
   const href = subjectPath(subjectType, projectId, subjectId, testRunId);
+  if (projectId == null && subjectType !== AlertSubjectType.LLM_INTEGRATION) {
+    return <span>{subjectName}</span>;
+  }
+  // Only the AI integration branch runs without a project, and it never
+  // reads this.
+  const ownerProjectId = projectId ?? 0;
   switch (subjectType) {
     case AlertSubjectType.CASE: {
       const info = meta.cases.get(subjectId);
@@ -178,7 +185,7 @@ export function AlertSubjectDisplay({
             name: subjectName,
             isDeleted: meta.runs.get(subjectId)?.isDeleted,
           }}
-          projectId={projectId}
+          projectId={ownerProjectId}
           className="truncate"
         />
       );
@@ -193,7 +200,7 @@ export function AlertSubjectDisplay({
               icon: info?.iconName ? { name: info.iconName } : null,
             },
           }}
-          projectId={projectId}
+          projectId={ownerProjectId}
           size="sm"
         />
       );
@@ -222,7 +229,7 @@ export function AlertSubjectDisplay({
             />
           </span>
           <ProjectNameCell
-            projectId={projectId}
+            projectId={ownerProjectId}
             value={subjectName}
             size="sm"
           />
@@ -235,6 +242,16 @@ export function AlertSubjectDisplay({
           className="inline-flex min-w-0 items-center gap-1 text-primary hover:underline"
         >
           <Webhook className="h-4 w-4 shrink-0" />
+          <span className="truncate">{subjectName}</span>
+        </Link>
+      );
+    case AlertSubjectType.LLM_INTEGRATION:
+      return (
+        <Link
+          href={href}
+          className="inline-flex min-w-0 items-center gap-1 text-primary hover:underline"
+        >
+          <Sparkles className="h-4 w-4 shrink-0" />
           <span className="truncate">{subjectName}</span>
         </Link>
       );

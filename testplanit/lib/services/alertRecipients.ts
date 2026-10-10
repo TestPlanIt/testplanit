@@ -5,7 +5,8 @@
  * still see the project: a subscriber who lost access, was deactivated or
  * was deleted is dropped, so a rule never leaks a subject to someone who
  * cannot open it. System ADMINs can open every project and are kept
- * regardless of membership.
+ * regardless of membership. A system alert (no project) reaches only its
+ * ADMIN subscribers: its subject is administration-level.
  */
 
 import { getProjectEffectiveMemberIds } from "~/lib/services/projectMembers";
@@ -24,7 +25,7 @@ interface RecipientDb {
 export async function resolveAlertRecipients(
   db: RecipientDb,
   ruleId: number,
-  projectId: number
+  projectId: number | null
 ): Promise<string[]> {
   const subscribers = await db.alertSubscriber.findMany({
     where: { ruleId },
@@ -34,7 +35,7 @@ export async function resolveAlertRecipients(
 
   const subscriberIds = [...new Set(subscribers.map((s) => s.userId))];
   const [members, users] = await Promise.all([
-    getProjectEffectiveMemberIds(projectId),
+    projectId == null ? [] : getProjectEffectiveMemberIds(projectId),
     db.user.findMany({
       where: {
         id: { in: subscriberIds },

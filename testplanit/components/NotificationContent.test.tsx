@@ -80,14 +80,6 @@ describe("NotificationContent", () => {
         moveCompleteMessage: "{count} cases moved successfully",
         copyMoveErrorsAppend: ", {errorCount} failed",
         viewTargetRepository: "View target repository",
-        llmBudgetExceededTitle: "LLM Budget Exceeded",
-        llmBudgetThresholdTitle: "LLM Budget {threshold}% Used",
-        llmBudgetExceededMessage:
-          "{providerName} has exceeded its monthly budget: {spend} spent of {budget} budget.",
-        llmBudgetThresholdMessage:
-          "{providerName} has used {threshold}% of its monthly budget: {spend} of {budget}.",
-        budgetDisclaimer:
-          "Budget limits are informational only and do not prevent usage.",
         userRegisteredTitle: "New User Registration",
         userRegisteredMessageSso:
           "{userName} ({userEmail}) has registered via SSO",
@@ -725,79 +717,6 @@ describe("NotificationContent", () => {
         screen.getByText("New User Registration (legacy)")
       ).toBeInTheDocument();
       expect(screen.getByText("User registered")).toBeInTheDocument();
-    });
-  });
-
-  describe("LLM Budget Alert", () => {
-    it("should render localized 'threshold crossed' message with currency formatting", () => {
-      const notification = {
-        id: "19",
-        type: "LLM_BUDGET_ALERT",
-        title: "LLM Budget 90% Used",
-        message:
-          "OpenAI has used 90% of its monthly budget: $90.00 of $100.00.",
-        data: {
-          providerName: "OpenAI",
-          currentSpend: 90,
-          budgetLimit: 100,
-          threshold: 90,
-        },
-      };
-
-      render(<NotificationContent notification={notification} />);
-
-      // Title goes through the "below 100%" branch.
-      expect(screen.getByText("LLM Budget 90% Used")).toBeInTheDocument();
-      // Body interpolates spend/budget formatted via Intl.NumberFormat.
-      // The exact currency string is locale-dependent; assert on the
-      // provider name + threshold + the formatted dollar amounts so
-      // the test stays stable across Node Intl variants.
-      expect(
-        screen.getByText(/OpenAI has used 90% of its monthly budget/)
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText(/budget limits are informational/i)
-      ).toBeInTheDocument();
-    });
-
-    it("should render localized 'exceeded' message when threshold >= 100", () => {
-      const notification = {
-        id: "19b",
-        type: "LLM_BUDGET_ALERT",
-        title: "LLM Budget Exceeded",
-        message:
-          "OpenAI has exceeded its monthly budget: $110.00 spent of $100.00 budget.",
-        data: {
-          providerName: "OpenAI",
-          currentSpend: 110,
-          budgetLimit: 100,
-          threshold: 100,
-        },
-      };
-
-      render(<NotificationContent notification={notification} />);
-
-      expect(screen.getByText("LLM Budget Exceeded")).toBeInTheDocument();
-      expect(
-        screen.getByText(/OpenAI has exceeded its monthly budget/)
-      ).toBeInTheDocument();
-    });
-
-    it("should fall back when providerName / threshold absent (legacy data shape)", () => {
-      const notification = {
-        id: "19c",
-        type: "LLM_BUDGET_ALERT",
-        title: "Budget Alert",
-        message: "You have reached 90% of your LLM budget",
-        data: {}, // legacy row
-      };
-
-      render(<NotificationContent notification={notification} />);
-
-      expect(screen.getByText("Budget Alert")).toBeInTheDocument();
-      expect(
-        screen.getByText("You have reached 90% of your LLM budget")
-      ).toBeInTheDocument();
     });
   });
 

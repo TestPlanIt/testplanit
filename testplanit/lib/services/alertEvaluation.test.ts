@@ -79,6 +79,8 @@ interface MockDbOptions {
   deliveries?: { total: number; failed: number };
   previousRunDurations?: number[];
   issueCount?: number;
+  llmConfig?: Record<string, unknown> | null;
+  llmSpend?: number;
 }
 
 /** A client whose raw queries are routed by the SQL they carry. */
@@ -164,6 +166,14 @@ function mockDb(options: MockDbOptions) {
       findMany: vi.fn(async () => options.webhookConfigs ?? []),
     },
     issue: { count: vi.fn(async () => options.issueCount ?? 0) },
+    llmProviderConfig: {
+      findUnique: vi.fn(async () => options.llmConfig ?? null),
+    },
+    llmUsage: {
+      aggregate: vi.fn(async () => ({
+        _sum: { totalCost: options.llmSpend ?? 0 },
+      })),
+    },
   };
   return db;
 }
@@ -904,5 +914,162 @@ describe("AlertEvaluationService — round two metrics", () => {
         details: expect.objectContaining({ automated: 2, total: 10 }),
       })
     );
+  });
+});
+
+describe("AlertEvaluationService — AI budget (system alerts)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  const budgetRule = (overrides: Partial<AlertRuleRow> = {}) =>
+    rule({
+      id: 20,
+      projectId: null,
+      name: "AI budget 80%",
+      metric: "LLM_BUDGET_USED",
+      thresholdValue: 80,
+      cooldownMinutes: 0,
+      emitWebhook: true,
+      ...overrides,
+    });
+  const openAi = {
+    monthlyBudget: "100.00",
+    billingPeriodStartDay: 1,
+    budgetAlertResetAt: null,
+    llmIntegration: { name: "OpenAI", isDeleted: false },
+  };
+
+  it("fires every rule whose threshold the period's spend reaches, without a project or webhook", async () => {
+    const db = mockDb({
+      rules: [
+        budgetRule(),
+        budgetRule({ id: 21, name: "AI budget 90%", thresholdValue: 90 }),
+        budgetRule({
+          id: 22,
+          scopeType: "LLM_INTEGRATION",
+          scopeId: 99, // another integration
+        }),
+      ],
+      llmConfig: openAi,
+      llmSpend: 85.5,
+    });
+    const service = new AlertEvaluationService(db, { now: () => NOW });
+    const fired = await service.evaluateLlmIntegration(4, "acme");
+    expect(fired.map((f) => [f.ruleId, f.subjectType, f.subjectId])).toEqual([
+      [20, "LLM_INTEGRATION", 4],
+    ]);
+    expect(db.llmUsage.aggregate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          llmIntegrationId: 4,
+          createdAt: { gte: new Date(2026, 9, 1, 0, 0, 0, 0) },
+        }),
+      })
+    );
+    expect(db.alertEvent.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          projectId: null,
+          subjectType: "LLM_INTEGRATION",
+          subjectId: 4,
+          subjectName: "OpenAI",
+          observedValue: 85.5,
+          baselineValue: null,
+          details: expect.objectContaining({
+            percent: 85.5,
+            spend: 85.5,
+            budget: 100,
+            periodKey: "2026-10-01",
+          }),
+        }),
+      })
+    );
+    expect(resolveRecipients).toHaveBeenCalledWith(db, 20, null);
+    expect(createAlertTriggeredNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        projectId: null,
+        subjectType: "LLM_INTEGRATION",
+        tenantId: "acme",
+      })
+    );
+    // No project, so no project webhook even though the rule asks for one.
+    expect(webhookEmit).not.toHaveBeenCalled();
+  });
+
+  it("fires once per billing period, and again after a budget-alert reset", async () => {
+    const quiet = mockDb({
+      rules: [budgetRule()],
+      llmConfig: openAi,
+      llmSpend: 90,
+      lastEvent: { firedAt: new Date("2026-10-03T00:00:00Z") },
+    });
+    expect(
+      await new AlertEvaluationService(quiet, {
+        now: () => NOW,
+      }).evaluateLlmIntegration(4)
+    ).toEqual([]);
+
+    const reset = mockDb({
+      rules: [budgetRule()],
+      llmConfig: { ...openAi, budgetAlertResetAt: "2026-10-05T00:00:00Z" },
+      llmSpend: 90,
+      lastEvent: { firedAt: new Date("2026-10-03T00:00:00Z") },
+    });
+    expect(
+      (
+        await new AlertEvaluationService(reset, {
+          now: () => NOW,
+        }).evaluateLlmIntegration(4)
+      ).map((f) => f.ruleId)
+    ).toEqual([20]);
+  });
+
+  it("stays quiet under the threshold, without a budget, or for a deleted integration", async () => {
+    const under = mockDb({
+      rules: [budgetRule()],
+      llmConfig: openAi,
+      llmSpend: 79.99,
+    });
+    expect(
+      await new AlertEvaluationService(under, {
+        now: () => NOW,
+      }).evaluateLlmIntegration(4)
+    ).toEqual([]);
+
+    const noBudget = mockDb({
+      rules: [budgetRule()],
+      llmConfig: { ...openAi, monthlyBudget: null },
+      llmSpend: 500,
+    });
+    expect(
+      await new AlertEvaluationService(noBudget, {
+        now: () => NOW,
+      }).evaluateLlmIntegration(4)
+    ).toEqual([]);
+    expect(noBudget.llmUsage.aggregate).not.toHaveBeenCalled();
+
+    const deleted = mockDb({
+      rules: [budgetRule()],
+      llmConfig: {
+        ...openAi,
+        llmIntegration: { name: "Old", isDeleted: true },
+      },
+      llmSpend: 500,
+    });
+    expect(
+      await new AlertEvaluationService(deleted, {
+        now: () => NOW,
+      }).evaluateLlmIntegration(4)
+    ).toEqual([]);
+  });
+
+  it("leaves system alerts out of the scheduled passes", async () => {
+    const db = mockDb({
+      rules: [budgetRule({ metric: "MILESTONE_OVERDUE" })],
+    });
+    const service = new AlertEvaluationService(db, { now: () => NOW });
+    expect(await service.evaluateScheduled(undefined, "daily")).toEqual([]);
+    expect(db.milestones.findMany).not.toHaveBeenCalled();
   });
 });

@@ -88,9 +88,13 @@ describe("notification catalogue", () => {
     expect(isLockedNotificationType("NOT_A_TYPE")).toBe(true);
   });
 
-  it("retires the two job-complete types that are never created", () => {
+  it("retires the types that are never created any more", () => {
     expect(retiredEntries.map((e) => e.type).sort()).toEqual(
-      ["COPY_MOVE_COMPLETE", "GENERATE_FROM_URL_COMPLETE"].sort()
+      [
+        "COPY_MOVE_COMPLETE",
+        "GENERATE_FROM_URL_COMPLETE",
+        "LLM_BUDGET_ALERT",
+      ].sort()
     );
     expect(isRetiredNotificationType("COPY_MOVE_COMPLETE")).toBe(true);
     expect(isRetiredNotificationType("WORK_ASSIGNED")).toBe(false);
@@ -117,7 +121,7 @@ describe("notification catalogue", () => {
         (e) => e.type
       );
       expect(types).toContain("USER_REGISTERED");
-      expect(types).toContain("LLM_BUDGET_ALERT");
+      expect(types).not.toContain("LLM_BUDGET_ALERT");
       expect(types).not.toContain("COPY_MOVE_COMPLETE");
       expect(types.length).toBe(liveEntries.length);
     });

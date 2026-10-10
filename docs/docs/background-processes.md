@@ -18,7 +18,7 @@ The application uses the following background processes:
 6. **Elasticsearch Reindex Worker** - Reindexes entities for search functionality
 7. **Auto Tag Worker** - Runs AI-powered automatic tagging on test cases and other entities
 8. **Audit Log Worker** - Persists audit log entries for user and system actions
-9. **Budget Alert Worker** - Checks and sends alerts for AI model budget thresholds
+9. **Budget Alert Worker** - Evaluates the AI budget alert rules after AI usage
 10. **Repo Cache Worker** - Automatically refreshes expired code repository caches for QuickScript
 11. **Magic Select Worker** - Processes AI-powered test case selection jobs for test runs
 12. **Webhook Dispatch Worker** - Delivers outbound webhooks to subscribed external endpoints
@@ -100,7 +100,7 @@ The application uses the following background processes:
 
 ### Budget Alert Worker
 
-- Checks AI model budget thresholds and sends alerts
+- Runs after each recorded AI usage on an integration with a monthly budget and evaluates the **AI budget used** [alert rules](./user-guide/alerts.md#system-alerts-ai-budget) against the period's spend
 - Default concurrency: 2
 - Location: `workers/budgetAlertWorker.ts`
 

@@ -29,12 +29,17 @@ import { resolveAlertRecipients } from "~/lib/services/alertRecipients";
 import {
   caseEventAlertMetrics,
   executionEventAlertMetrics,
+  llmUsageAlertMetrics,
   metricUsesField,
   runEventAlertMetrics,
   scheduledAlertMetrics,
   sessionEventAlertMetrics,
   type AlertSchedule,
 } from "~/lib/alerts/catalogue";
+import {
+  getBillingPeriodKey,
+  getBillingPeriodStart,
+} from "~/lib/utils/billingPeriod";
 import {
   cooldownElapsed,
   evaluateConsecutiveFailures,
@@ -69,7 +74,8 @@ const MAX_HISTORY = 200;
 
 export interface AlertRuleRow {
   id: number;
-  projectId: number;
+  /** Null for a system alert (AI budget), which belongs to no project. */
+  projectId: number | null;
   name: string;
   metric: AlertMetric;
   scopeType: AlertScopeType;
@@ -506,6 +512,8 @@ export class AlertEvaluationService {
 
     const byProject = new Map<number, AlertRuleRow[]>();
     for (const rule of rules) {
+      // System alerts are event-driven; none is scheduled.
+      if (rule.projectId == null) continue;
       const list = byProject.get(rule.projectId) ?? [];
       list.push(rule);
       byProject.set(rule.projectId, list);
@@ -1047,6 +1055,7 @@ export class AlertEvaluationService {
     tenantId?: string
   ): Promise<FiredAlert[]> {
     const projectId = rules[0].projectId;
+    if (projectId == null) return [];
     const rows: any[] = await this.db.$queryRaw`
       SELECT tr.id, tr.name, tr."testRunType", tr.elapsed, p.name AS "projectName",
              m."completedAt" AS "milestoneDueAt", m."isCompleted" AS "milestoneCompleted",
@@ -1405,6 +1414,88 @@ export class AlertEvaluationService {
   }
 
   // ---------------------------------------------------------------------
+  // AI budget (system alerts)
+  // ---------------------------------------------------------------------
+
+  /**
+   * An AI model integration recorded usage. Spend for its billing period is
+   * measured against its monthly budget and every enabled AI-budget rule
+   * whose scope includes the integration fires when the share reaches its
+   * threshold, once per period: a rule that fired after the period began
+   * (or after the last budget-alert reset) stays quiet.
+   */
+  async evaluateLlmIntegration(
+    llmIntegrationId: number,
+    tenantId?: string
+  ): Promise<FiredAlert[]> {
+    const rules = (
+      await this.loadRules(undefined, llmUsageAlertMetrics())
+    ).filter(
+      (rule) =>
+        rule.projectId == null &&
+        (rule.scopeType === AlertScopeType.PROJECT ||
+          (rule.scopeType === AlertScopeType.LLM_INTEGRATION &&
+            rule.scopeId === llmIntegrationId))
+    );
+    if (rules.length === 0) return [];
+
+    const config = await this.db.llmProviderConfig.findUnique({
+      where: { llmIntegrationId },
+      select: {
+        monthlyBudget: true,
+        billingPeriodStartDay: true,
+        budgetAlertResetAt: true,
+        llmIntegration: { select: { name: true, isDeleted: true } },
+      },
+    });
+    if (!config?.llmIntegration || config.llmIntegration.isDeleted) return [];
+    const budget = Number(config.monthlyBudget ?? 0);
+    if (!(budget > 0)) return [];
+
+    const now = this.now();
+    const periodStart = getBillingPeriodStart(
+      config.billingPeriodStartDay ?? 1,
+      now
+    );
+    const aggregate = await this.db.llmUsage.aggregate({
+      where: { llmIntegrationId, createdAt: { gte: periodStart } },
+      _sum: { totalCost: true },
+    });
+    const spend = Number(aggregate?._sum?.totalCost ?? 0);
+    const percent = (spend / budget) * 100;
+    const resetAt = config.budgetAlertResetAt
+      ? new Date(config.budgetAlertResetAt)
+      : null;
+    const notBefore = resetAt && resetAt > periodStart ? resetAt : periodStart;
+
+    const fired: FiredAlert[] = [];
+    for (const rule of rules) {
+      if (percent < rule.thresholdValue) continue;
+      const event = await this.fire({
+        rule,
+        subjectType: AlertSubjectType.LLM_INTEGRATION,
+        subjectId: llmIntegrationId,
+        subjectName: config.llmIntegration.name,
+        projectId: null,
+        projectName: "",
+        observedValue: Number(percent.toFixed(2)),
+        baselineValue: null,
+        thresholdValue: rule.thresholdValue,
+        details: {
+          percent: Number(percent.toFixed(2)),
+          spend: Number(spend.toFixed(2)),
+          budget: Number(budget.toFixed(2)),
+          periodKey: getBillingPeriodKey(periodStart),
+        },
+        notBefore,
+        tenantId,
+      });
+      if (event) fired.push(event);
+    }
+    return fired;
+  }
+
+  // ---------------------------------------------------------------------
   // Shared
   // ---------------------------------------------------------------------
 
@@ -1419,7 +1510,8 @@ export class AlertEvaluationService {
         isEnabled: true,
         isDeleted: false,
         metric: { in: metrics },
-        project: { isDeleted: false },
+        // A system alert has no project to be deleted with.
+        OR: [{ projectId: null }, { project: { isDeleted: false } }],
       },
       select: {
         id: true,
@@ -1458,13 +1550,16 @@ export class AlertEvaluationService {
     /** String key for subjects without an integer id (webhook configs). */
     subjectRef?: string | null;
     subjectName: string;
-    projectId: number;
+    /** Null for a system alert. */
+    projectId: number | null;
     projectName: string;
     observedValue: number;
     baselineValue: number | null;
     thresholdValue: number;
     details: Record<string, unknown>;
     testRunId?: number;
+    /** A firing at or after this instant means the subject already fired this period. */
+    notBefore?: Date;
     tenantId?: string;
   }): Promise<FiredAlert | null> {
     const { rule } = params;
@@ -1481,6 +1576,13 @@ export class AlertEvaluationService {
       select: { firedAt: true },
     });
     if (!cooldownElapsed(last?.firedAt ?? null, rule.cooldownMinutes, now)) {
+      return null;
+    }
+    if (
+      params.notBefore &&
+      last?.firedAt &&
+      new Date(last.firedAt).getTime() >= params.notBefore.getTime()
+    ) {
       return null;
     }
 
@@ -1542,7 +1644,9 @@ export class AlertEvaluationService {
     }
 
     let webhookEmitted = false;
-    if (rule.emitWebhook) {
+    // Outbound webhooks belong to projects; a system alert has none to reach.
+    if (rule.emitWebhook && params.projectId != null) {
+      const webhookProjectId = params.projectId;
       try {
         await this.db.$transaction(async (tx: any) => {
           await webhookEvents.emit(
@@ -1570,7 +1674,7 @@ export class AlertEvaluationService {
               details: params.details,
               firedAt: now.toISOString(),
             },
-            { projectId: params.projectId, tx, actorUserId: null }
+            { projectId: webhookProjectId, tx, actorUserId: null }
           );
         });
         webhookEmitted = true;
@@ -1610,7 +1714,7 @@ function sourceAccepts(
 
 function subjectUrl(
   subjectType: AlertSubjectType,
-  projectId: number,
+  projectId: number | null,
   subjectId: number,
   testRunId?: number | null
 ): string {

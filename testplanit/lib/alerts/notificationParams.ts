@@ -16,7 +16,14 @@ export interface AlertNotificationData {
   projectId?: number;
   projectName?: string;
   subjectType?:
-    "CASE" | "RUN" | "MILESTONE" | "SESSION" | "PROJECT" | "WEBHOOK" | string;
+    | "CASE"
+    | "RUN"
+    | "MILESTONE"
+    | "SESSION"
+    | "PROJECT"
+    | "WEBHOOK"
+    | "LLM_INTEGRATION"
+    | string;
   subjectId?: number;
   subjectName?: string;
   observedValue?: number;
@@ -24,6 +31,24 @@ export interface AlertNotificationData {
   thresholdValue?: number;
   testRunId?: number | null;
   details?: Record<string, unknown> | null;
+}
+
+/**
+ * AI providers bill in USD; the code is fixed on purpose (see the matching
+ * note in NotificationContent.tsx). The recipient's locale still decides
+ * the grouping and decimal separators.
+ */
+function usd(value: unknown, locale: string): string {
+  const n = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(n)) return "";
+  try {
+    return new Intl.NumberFormat(locale.replace("_", "-"), {
+      style: "currency",
+      currency: "USD",
+    }).format(n);
+  } catch {
+    return `$${n.toFixed(2)}`;
+  }
 }
 
 export interface AlertMetricMessage {
@@ -228,6 +253,16 @@ export function alertMetricMessage(
         key: "alertMetric.MILESTONE_OVERDUE",
         params: { daysOverdue: int(details.daysOverdue ?? data.observedValue) },
       };
+    case "LLM_BUDGET_USED":
+      return {
+        key: "alertMetric.LLM_BUDGET_USED",
+        params: {
+          percent: num(details.percent ?? data.observedValue),
+          spend: usd(details.spend, locale),
+          budget: usd(details.budget, locale),
+          threshold: num(threshold),
+        },
+      };
     default:
       return {
         key: "alertTriggeredRule",
@@ -238,7 +273,12 @@ export function alertMetricMessage(
 
 /** In-app path (no locale prefix) of the fired subject. */
 export function alertSubjectPath(data: AlertNotificationData): string | null {
-  if (!data.projectId || !data.subjectType) return null;
+  if (!data.subjectType) return null;
+  // A system alert's subject lives outside any project.
+  if (data.subjectType === "LLM_INTEGRATION") {
+    return subjectPath(data.subjectType, null, data.subjectId ?? 0);
+  }
+  if (!data.projectId) return null;
   // Webhook subjects carry no integer id; their path is the project's
   // Webhooks page, so the id is not needed.
   if (data.subjectType !== "WEBHOOK" && !data.subjectId) return null;

@@ -9,7 +9,8 @@
  *
  * Prerequisites:
  *   - Workers must be running: pnpm workers
- *   - Insert LlmUsage records first to simulate spend (see .planning docs)
+ *   - An enabled "AI budget used" alert rule and LlmUsage rows that put the
+ *     integration over its threshold (see docs/user-guide/alerts.md)
  */
 
 import { Queue } from "bullmq";

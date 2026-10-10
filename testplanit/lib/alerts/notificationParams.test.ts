@@ -50,6 +50,7 @@ describe("alertMetricMessage", () => {
       "STALE_CASES",
       "AUTOMATION_SHARE_BELOW",
       "WEBHOOK_FAILURE_RATE",
+      "LLM_BUDGET_USED",
     ];
     const keys = content.alertMetric as Record<string, string>;
     for (const metric of metrics) {
@@ -66,6 +67,27 @@ describe("alertMetricMessage", () => {
         );
       }
     }
+  });
+
+  it("formats the AI budget spend as currency in the recipient's locale", () => {
+    const message = alertMetricMessage(
+      {
+        metric: "LLM_BUDGET_USED",
+        observedValue: 85.123,
+        thresholdValue: 80,
+        details: { percent: 85.123, spend: 1234.5, budget: 1450 },
+      },
+      "en_US"
+    );
+    expect(message).toEqual({
+      key: "alertMetric.LLM_BUDGET_USED",
+      params: {
+        percent: 85.1,
+        spend: "$1,234.50",
+        budget: "$1,450.00",
+        threshold: 80,
+      },
+    });
   });
 
   it("falls back to the rule name for an unknown metric", () => {
@@ -90,6 +112,13 @@ describe("alertMetricMessage", () => {
 });
 
 describe("alertSubjectPath", () => {
+  it("sends an AI integration subject to the AI Models admin page without a project", () => {
+    expect(
+      alertSubjectPath({ subjectType: "LLM_INTEGRATION", subjectId: 4 })
+    ).toBe("/admin/llm");
+    expect(alertSubjectPath({ subjectType: "RUN", subjectId: 4 })).toBeNull();
+  });
+
   it("links a case into the run it fired from, and plainly otherwise", () => {
     expect(
       alertSubjectPath({

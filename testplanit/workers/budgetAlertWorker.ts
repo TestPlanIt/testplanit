@@ -7,7 +7,7 @@ import {
   type MultiTenantJobData,
 } from "../lib/multiTenantDb";
 import { BUDGET_ALERT_QUEUE_NAME } from "../lib/queues";
-import { BudgetAlertService } from "../lib/services/budgetAlertService";
+import { AlertEvaluationService } from "../lib/services/alertEvaluation";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
 import { BULLMQ_PREFIX } from "../lib/bullPrefix";
@@ -17,8 +17,9 @@ interface BudgetCheckJobData extends MultiTenantJobData {
 }
 
 /**
- * Process a budget alert check job.
- * Checks if any budget thresholds have been crossed and notifies admins.
+ * Process a budget check job, queued after every recorded AI usage on an
+ * integration with a budget. The AI budget alert rules (LLM_BUDGET_USED)
+ * decide whether anything fires.
  */
 const processor = async (job: Job<BudgetCheckJobData>) => {
   console.log(
@@ -29,9 +30,17 @@ const processor = async (job: Job<BudgetCheckJobData>) => {
 
   validateMultiTenantJobData(job.data);
   const db = getDbClientForJob(job.data);
-  const service = new BudgetAlertService(db);
+  const service = new AlertEvaluationService(db);
 
-  await service.checkAndAlert(job.data.llmIntegrationId, job.data.tenantId);
+  const fired = await service.evaluateLlmIntegration(
+    job.data.llmIntegrationId,
+    job.data.tenantId
+  );
+  if (fired.length > 0) {
+    console.log(
+      `[BudgetAlertWorker] integration ${job.data.llmIntegrationId}: ${fired.length} rule(s) fired`
+    );
+  }
 };
 
 let worker: Worker | null = null;

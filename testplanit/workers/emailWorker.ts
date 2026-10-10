@@ -121,9 +121,6 @@ const processor = async (job: Job) => {
           // Surface the admin user list so the recipient can find the
           // newly-registered user without an extra search step.
           notificationUrl = `${baseUrl}/${urlLocale}/admin/users`;
-        } else if (notification.type === "LLM_BUDGET_ALERT") {
-          // Same destination as the bell-icon link (`data.link`) — admin LLM page.
-          notificationUrl = `${baseUrl}/${urlLocale}${data.link ?? "/admin/llm"}`;
         } else if (notification.type === "INTEGRATION_AUTH_EXPIRED") {
           // OAuth re-auth kickoff is an API route — deliberately no locale prefix.
           if (data.provider && data.integrationId) {
@@ -287,54 +284,6 @@ const processor = async (job: Job) => {
               shareTitle: data.shareTitle ?? "",
             }
           );
-        } else if (notification.type === "LLM_BUDGET_ALERT") {
-          // LLM providers bill in USD; currency code is hardcoded
-          // intentionally — see the matching note in NotificationContent.tsx.
-          // Use the recipient's locale for grouping/decimal separators
-          // (`Intl.NumberFormat` accepts BCP-47, so swap the
-          // `en_US` underscore form to `en-US`).
-          const intlLocale = userLocale.replace("_", "-");
-          const formatAmount = (n: unknown): string => {
-            if (typeof n !== "number") return String(n ?? "");
-            return new Intl.NumberFormat(intlLocale, {
-              style: "currency",
-              currency: "USD",
-            }).format(n);
-          };
-          const threshold = data.threshold;
-          const isExceeded = typeof threshold === "number" && threshold >= 100;
-          const spend = formatAmount(data.currentSpend);
-          const budget = formatAmount(data.budgetLimit);
-          translatedTitle = isExceeded
-            ? await getServerTranslation(
-                userLocale,
-                "components.notifications.content.llmBudgetExceededTitle"
-              )
-            : await getServerTranslation(
-                userLocale,
-                "components.notifications.content.llmBudgetThresholdTitle",
-                { threshold }
-              );
-          translatedMessage = isExceeded
-            ? await getServerTranslation(
-                userLocale,
-                "components.notifications.content.llmBudgetExceededMessage",
-                {
-                  providerName: data.providerName ?? "",
-                  spend,
-                  budget,
-                }
-              )
-            : await getServerTranslation(
-                userLocale,
-                "components.notifications.content.llmBudgetThresholdMessage",
-                {
-                  providerName: data.providerName ?? "",
-                  threshold,
-                  spend,
-                  budget,
-                }
-              );
         } else if (
           notification.type === "REVIEW_REQUESTED" ||
           notification.type === "REVIEW_APPROVED" ||
@@ -482,7 +431,10 @@ const processor = async (job: Job) => {
           );
           translatedMessage = await getServerTranslation(
             userLocale,
-            "components.notifications.content.alertTriggeredEmailMessage",
+            // A system alert (AI budget) names no project.
+            data.projectId
+              ? "components.notifications.content.alertTriggeredEmailMessage"
+              : "components.notifications.content.alertTriggeredEmailMessageSystem",
             {
               ruleName: data.ruleName ?? "",
               subjectLabel,
@@ -862,7 +814,9 @@ const processor = async (job: Job) => {
               );
               translatedMessage = await getServerTranslation(
                 userLocale,
-                "components.notifications.content.alertTriggeredEmailMessage",
+                data.projectId
+                  ? "components.notifications.content.alertTriggeredEmailMessage"
+                  : "components.notifications.content.alertTriggeredEmailMessageSystem",
                 {
                   ruleName: data.ruleName ?? "",
                   subjectLabel,

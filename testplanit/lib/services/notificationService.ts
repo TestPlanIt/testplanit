@@ -278,10 +278,17 @@ export class NotificationService {
     ruleId: number;
     ruleName: string;
     metric: string;
-    projectId: number;
+    /** Null for a system alert, whose subject lives outside any project. */
+    projectId: number | null;
     projectName: string;
     subjectType:
-      "CASE" | "RUN" | "MILESTONE" | "SESSION" | "PROJECT" | "WEBHOOK";
+      | "CASE"
+      | "RUN"
+      | "MILESTONE"
+      | "SESSION"
+      | "PROJECT"
+      | "WEBHOOK"
+      | "LLM_INTEGRATION";
     subjectId: number;
     subjectName: string;
     observedValue: number;
@@ -295,7 +302,9 @@ export class NotificationService {
     if (params.targetUserIds.length === 0) return;
 
     const title = `Alert fired: ${params.ruleName}`;
-    const message = `"${params.ruleName}" fired for ${params.subjectType.toLowerCase()} "${params.subjectName}" in project "${params.projectName}" (observed ${formatNumber(params.observedValue)}, threshold ${formatNumber(params.thresholdValue)}).`;
+    const where =
+      params.projectId == null ? "" : ` in project "${params.projectName}"`;
+    const message = `"${params.ruleName}" fired for ${params.subjectType.toLowerCase().replace("_", " ")} "${params.subjectName}"${where} (observed ${formatNumber(params.observedValue)}, threshold ${formatNumber(params.thresholdValue)}).`;
 
     await Promise.all(
       params.targetUserIds.map((userId) =>

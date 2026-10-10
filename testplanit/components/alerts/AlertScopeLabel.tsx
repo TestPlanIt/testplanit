@@ -11,17 +11,22 @@ export interface AlertScopeNames {
   milestones: Map<number, string>;
   /** Outbound webhook configs by their string id. */
   webhooks: Map<string, string>;
+  /** AI model integrations by id (system alerts). */
+  llmIntegrations: Map<number, string>;
 }
 
 export function AlertScopeLabel({
   scopeType,
   scopeId,
   scopeText,
+  system = false,
   names,
 }: {
   scopeType: AlertScopeType;
   scopeId: number | null | undefined;
   scopeText: string | null | undefined;
+  /** A system alert: its whole-scope wording names the AI integrations, not a project. */
+  system?: boolean;
   names: AlertScopeNames;
 }) {
   const t = useTranslations("alerts.scopeDisplay");
@@ -50,7 +55,13 @@ export function AlertScopeLabel({
           })}
         </span>
       );
+    case AlertScopeType.LLM_INTEGRATION:
+      return (
+        <span>
+          {t("LLM_INTEGRATION", { name: nameOf(names.llmIntegrations) })}
+        </span>
+      );
     default:
-      return <span>{t("PROJECT")}</span>;
+      return <span>{t(system ? "ALL_LLM_INTEGRATIONS" : "PROJECT")}</span>;
   }
 }

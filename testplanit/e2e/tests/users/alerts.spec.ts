@@ -270,6 +270,61 @@ test.describe("alerts", () => {
     await expect(table).toContainText(`Nightly pass rate ${ts}`);
   });
 
+  test("an administrator creates a system AI-budget alert with no project", async ({
+    page,
+    request,
+    baseURL,
+  }) => {
+    await page.goto(`/users/profile/${userId}/alerts?tab=alerts`);
+    await page.getByTestId("alert-add-rule").click();
+    const dialog = page.getByTestId("alert-rule-dialog");
+    await expect(dialog).toBeVisible();
+    await dialog.getByTestId("alert-rule-project").click();
+    await page.getByTestId("alert-project-system").click();
+
+    // System narrows the metric list to the system metrics and picks the
+    // first one, whose condition reads back at its default.
+    await expect(dialog.getByTestId("alert-rule-metric")).toContainText(
+      "AI budget used"
+    );
+    await expect(dialog.getByTestId("alert-rule-live-summary")).toContainText(
+      "80% of the integration's monthly budget"
+    );
+    await dialog.getByTestId("alert-rule-metric").click();
+    await expect(
+      page.getByTestId("alert-metric-LLM_BUDGET_USED")
+    ).toBeVisible();
+    await expect(
+      page.getByTestId("alert-metric-RUN_PASS_RATE_BELOW")
+    ).toHaveCount(0);
+    await page.keyboard.press("Escape");
+    // No project webhooks to send.
+    await expect(dialog.getByTestId("alert-rule-webhook")).toHaveCount(0);
+
+    await dialog.getByTestId("alert-rule-name").fill(`AI budget ${ts}`);
+    await dialog.getByTestId("alert-rule-threshold").fill("95");
+    await expect(dialog.getByTestId("alert-rule-live-summary")).toContainText(
+      "95% of the integration's monthly budget"
+    );
+    await dialog.getByTestId("alert-rule-submit").click();
+    await expect(dialog).toBeHidden();
+
+    const [created] = await findMany(request, baseURL, "alertRule", {
+      where: { name: `AI budget ${ts}` },
+      select: { id: true, projectId: true, metric: true, thresholdValue: true },
+    });
+    expect(created).toMatchObject({
+      projectId: null,
+      metric: "LLM_BUDGET_USED",
+      thresholdValue: 95,
+    });
+    const row = page.getByTestId(`alert-rule-row-${created.id}`);
+    await expect(row).toContainText(`AI budget ${ts}`);
+    await expect(
+      page.getByTestId(`alert-rule-system-${created.id}`)
+    ).toContainText("System");
+  });
+
   test.afterAll(async ({ request, baseURL }) => {
     if (subscriberId) {
       await request.delete(

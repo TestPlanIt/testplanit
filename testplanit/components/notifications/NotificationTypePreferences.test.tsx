@@ -67,7 +67,10 @@ describe("NotificationTypePreferences", () => {
 
     renderEditable([], true);
     expect(switchFor("USER_REGISTERED")).toBeInTheDocument();
-    expect(switchFor("LLM_BUDGET_ALERT")).toBeInTheDocument();
+    // Retired: AI budget alerts now arrive as ALERT_TRIGGERED.
+    expect(
+      screen.queryByTestId("notification-type-switch-LLM_BUDGET_ALERT")
+    ).toBeNull();
     expect(screen.getByText("groups.administration")).toBeInTheDocument();
   });
 

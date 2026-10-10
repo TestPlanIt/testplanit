@@ -573,8 +573,9 @@ export function EditLlmIntegration({
             streamingEnabled: values.streamingEnabled,
             isDefault: values.isDefault,
             settings: mergedSettings as JsonValue,
-            // Reset budget alert thresholds when config is saved — allows re-alerting against updated budget
-            alertThresholdsFired: {},
+            // Saving the config lets the AI budget alerts fire again in
+            // this period, against the updated budget.
+            budgetAlertResetAt: new Date(),
           },
         });
       }
@@ -622,6 +623,13 @@ export function EditLlmIntegration({
           createdAt: { gte: periodStart },
         },
       });
+      // Spend starts over, so the AI budget alerts may fire again.
+      if (integration.llmProviderConfig) {
+        await updateLlmProviderConfig({
+          where: { id: integration.llmProviderConfig.id },
+          data: { budgetAlertResetAt: new Date() },
+        });
+      }
 
       toast.success(tBudgetAlert("spendReset"));
     } catch (error: any) {

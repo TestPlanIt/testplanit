@@ -2,7 +2,7 @@
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { Loader2 } from "lucide-react";
+import { Loader2, Server } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
@@ -47,7 +47,9 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  alertMetricsForScope,
   getAlertMetricDefinition,
+  isSystemAlertMetric,
   metricUsesField,
   ALERT_RULE_LIMITS,
 } from "~/lib/alerts/catalogue";
@@ -55,6 +57,7 @@ import {
   AlertBaseline,
   AlertDirection,
   AlertEvaluateOn,
+  AlertMetric,
   AlertResultSource,
   AlertScopeType,
   AlertCoverageBasis,
@@ -95,27 +98,37 @@ interface AlertRuleDialogProps {
   projectId: number | null;
   /** Projects the user may create alerts in; shown as a picker on create. */
   projectOptions?: Array<{ id: number; name: string; iconUrl?: string | null }>;
+  /**
+   * Offer "System" beside the projects on create: a system alert watches an
+   * administration-level subject (an AI budget) and belongs to no project.
+   */
+  allowSystem?: boolean;
   /** Null creates a new rule. */
   rule: AlertRuleDialogRule | null;
   canSubscribeOthers: boolean;
-  /** Per-project answer used while the project is still being picked. */
-  canSubscribeOthersFor?: (projectId: number) => boolean;
+  /** Per-project answer used while the project is still being picked; null asks about a system alert. */
+  canSubscribeOthersFor?: (projectId: number | null) => boolean;
   /** The visitor may change the audience but not the rule itself. */
   readOnlyRule?: boolean;
   onSaved?: () => void;
 }
 
+/** The project picker's value for a system alert. */
+const SYSTEM_PROJECT_VALUE = "system";
+
 /**
- * Create or edit an alert. The project is picked first on create, then the metric and decides
- * which condition fields and scopes appear; the condition is echoed back as
- * a sentence while editing. The audience is edited here as well: staged
- * until the rule exists on create, applied immediately on edit.
+ * Create or edit an alert. The project (or System) is picked first on
+ * create, then the metric decides which condition fields and scopes appear;
+ * the condition is echoed back as a sentence while editing. The audience is
+ * edited here as well: staged until the rule exists on create, applied
+ * immediately on edit.
  */
 export function AlertRuleDialog({
   open,
   onOpenChange,
   projectId: projectIdProp,
   projectOptions,
+  allowSystem = false,
   rule,
   canSubscribeOthers: canSubscribeOthersProp,
   canSubscribeOthersFor,
@@ -138,12 +151,23 @@ export function AlertRuleDialog({
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(
     projectIdProp
   );
-  const projectId: number | null = rule
-    ? ((rule as { projectId?: number }).projectId ?? projectIdProp ?? null)
-    : selectedProjectId;
+  const [selectedSystem, setSelectedSystem] = useState(false);
+  // A rule without a project is a system alert.
+  const isSystem = rule
+    ? (rule as { projectId?: number | null }).projectId == null
+    : selectedSystem;
+  const projectId: number | null = isSystem
+    ? null
+    : rule
+      ? ((rule as { projectId?: number | null }).projectId ??
+        projectIdProp ??
+        null)
+      : selectedProjectId;
   const hasProject = projectId != null;
+  // Everything below the project row waits for a project or System.
+  const hasTarget = isSystem || hasProject;
   const canSubscribeOthers =
-    projectId != null && canSubscribeOthersFor
+    hasTarget && canSubscribeOthersFor
       ? canSubscribeOthersFor(projectId)
       : canSubscribeOthersProp;
 
@@ -172,6 +196,7 @@ export function AlertRuleDialog({
     if (!open) return;
     reset(rule ? ruleToFormValues(rule) : defaultAlertRuleValues());
     setSelectedProjectId(projectIdProp);
+    setSelectedSystem(false);
     setStagedSubscribers(
       rule
         ? []
@@ -220,6 +245,14 @@ export function AlertRuleDialog({
       select: { id: true, name: true, url: true },
     },
     { enabled: open && hasProject && scopeType === AlertScopeType.WEBHOOK }
+  );
+  const { data: llmIntegrations } = client.llmIntegration.useFindMany(
+    {
+      where: { isDeleted: false },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    },
+    { enabled: open && scopeType === AlertScopeType.LLM_INTEGRATION }
   );
   const scopeId = useWatch({ control, name: "scopeId" });
   const { data: scopedTag } = client.tags.useFindUnique(
@@ -303,11 +336,15 @@ export function AlertRuleDialog({
         });
         toast.success(t("toasts.updated"));
       } else {
-        if (!currentUserId || projectId == null) return;
+        if (!currentUserId || (!isSystem && projectId == null)) return;
         const created = await createRule.mutateAsync({
           data: {
             ...data,
-            project: { connect: { id: projectId } },
+            // A system alert has no project, and no project webhooks.
+            emitWebhook: isSystem ? false : data.emitWebhook,
+            ...(isSystem || projectId == null
+              ? {}
+              : { project: { connect: { id: projectId } } }),
             createdBy: { connect: { id: currentUserId } },
           },
         });
@@ -438,10 +475,32 @@ export function AlertRuleDialog({
         return t(`scopeTypeSessions.${type}` as never);
       case AlertSubjectType.WEBHOOK:
         return t(`scopeTypeWebhooks.${type}` as never);
+      case AlertSubjectType.LLM_INTEGRATION:
+        return t(`scopeTypeLlm.${type}` as never);
       default:
         return t(`scopeType.${type}` as never);
     }
   };
+  // Picking System (or leaving it) swaps to that side's metrics; the
+  // metric then resets the condition and scope to its own defaults.
+  const handleTargetChange = (value: string) => {
+    const nextSystem = value === SYSTEM_PROJECT_VALUE;
+    setSelectedSystem(nextSystem);
+    setSelectedProjectId(nextSystem ? null : Number(value));
+    const current = getValues();
+    if (isSystemAlertMetric(current.metric) !== nextSystem) {
+      const nextMetric = nextSystem
+        ? (alertMetricsForScope(true)[0] ?? current.metric)
+        : AlertMetric.RESULT_DURATION_DEVIATION;
+      reset(valuesForMetricChange(current, nextMetric));
+    } else {
+      setValue("scopeType", AlertScopeType.PROJECT);
+      setValue("scopeId", "");
+      setValue("scopeText", "");
+    }
+  };
+  const showTargetPicker = isEdit ? isSystem || !!projectChoices : true;
+  const offerSystem = isEdit ? isSystem : allowSystem;
   // Per-metric wording for the shared numeric fields, with the generic label
   // as the fallback.
   const fieldLabel = (
@@ -470,20 +529,21 @@ export function AlertRuleDialog({
               data-testid="alert-rule-fields"
             >
               <div className="flex flex-col gap-4 md:flex-row md:items-start">
-                {projectChoices && (
+                {showTargetPicker && (
                   <div className="flex-1 space-y-2">
                     <Label htmlFor="alert-rule-project">
                       {tForm("project")}
                     </Label>
                     <Select
-                      value={projectId != null ? String(projectId) : ""}
+                      value={
+                        isSystem
+                          ? SYSTEM_PROJECT_VALUE
+                          : projectId != null
+                            ? String(projectId)
+                            : ""
+                      }
                       disabled={isEdit}
-                      onValueChange={(value) => {
-                        setSelectedProjectId(Number(value));
-                        setValue("scopeType", AlertScopeType.PROJECT);
-                        setValue("scopeId", "");
-                        setValue("scopeText", "");
-                      }}
+                      onValueChange={handleTargetChange}
                     >
                       <SelectTrigger
                         id="alert-rule-project"
@@ -494,7 +554,18 @@ export function AlertRuleDialog({
                         />
                       </SelectTrigger>
                       <SelectContent>
-                        {projectChoices.map((project) => (
+                        {offerSystem && (
+                          <SelectItem
+                            value={SYSTEM_PROJECT_VALUE}
+                            data-testid="alert-project-system"
+                          >
+                            <span className="inline-flex items-center gap-2">
+                              <Server className="h-4 w-4 text-muted-foreground" />
+                              {tForm("systemScope")}
+                            </span>
+                          </SelectItem>
+                        )}
+                        {(projectChoices ?? []).map((project) => (
                           <SelectItem
                             key={project.id}
                             value={String(project.id)}
@@ -510,7 +581,9 @@ export function AlertRuleDialog({
                     </Select>
                     {!isEdit && (
                       <p className="text-xs text-muted-foreground">
-                        {tForm("projectHelp")}
+                        {isSystem
+                          ? tForm("systemScopeHelp")
+                          : tForm("projectHelp")}
                       </p>
                     )}
                   </div>
@@ -562,6 +635,7 @@ export function AlertRuleDialog({
                         <AlertMetricPicker
                           value={field.value}
                           disabled={isEdit}
+                          system={isSystem}
                           onChange={(next) =>
                             reset(valuesForMetricChange(getValues(), next))
                           }
@@ -892,12 +966,12 @@ export function AlertRuleDialog({
               {/* Scope */}
               <fieldset
                 className="space-y-3 rounded-md border p-4"
-                disabled={!hasProject}
+                disabled={!hasTarget}
               >
                 <legend className="px-1 text-sm font-medium">
                   {tForm("scope")}
                 </legend>
-                {!hasProject && (
+                {!hasTarget && (
                   <p
                     className="text-sm text-muted-foreground"
                     data-testid="alert-rule-scope-needs-project"
@@ -905,7 +979,7 @@ export function AlertRuleDialog({
                     {tForm("needsProject")}
                   </p>
                 )}
-                {hasProject && (
+                {hasTarget && (
                   <div className="grid gap-4 md:grid-cols-2">
                     <FormField
                       control={control}
@@ -1068,6 +1142,44 @@ export function AlertRuleDialog({
                         )}
                       />
                     )}
+                    {scopeType === AlertScopeType.LLM_INTEGRATION && (
+                      <FormField
+                        control={control}
+                        name="scopeId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>
+                              {tForm("scopeLlmIntegration")}
+                            </FormLabel>
+                            <Select
+                              value={field.value || ""}
+                              onValueChange={field.onChange}
+                            >
+                              <FormControl>
+                                <SelectTrigger data-testid="alert-rule-scope-llm-integration">
+                                  <SelectValue
+                                    placeholder={tForm(
+                                      "scopePickLlmIntegration"
+                                    )}
+                                  />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {(llmIntegrations ?? []).map((integration) => (
+                                  <SelectItem
+                                    key={integration.id}
+                                    value={String(integration.id)}
+                                  >
+                                    {integration.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FieldError name="scopeId" />
+                          </FormItem>
+                        )}
+                      />
+                    )}
                     {scopeType === AlertScopeType.RUN_NAME && (
                       <FormField
                         control={control}
@@ -1127,27 +1239,30 @@ export function AlertRuleDialog({
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={control}
-                    name="emitWebhook"
-                    render={({ field }) => (
-                      <FormItem className="flex items-center gap-2 space-y-0">
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                            data-testid="alert-rule-webhook"
-                          />
-                        </FormControl>
-                        <FormLabel className="flex items-center gap-1 font-medium">
-                          {tForm("emitWebhook")}
-                          <HelpPopover
-                            helpKey={`## ${tForm("emitWebhook")}\n${tForm("emitWebhookHelp")}`}
-                          />
-                        </FormLabel>
-                      </FormItem>
-                    )}
-                  />
+                  {/* Outbound webhooks are a project's; a system alert has none. */}
+                  {!isSystem && (
+                    <FormField
+                      control={control}
+                      name="emitWebhook"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center gap-2 space-y-0">
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              data-testid="alert-rule-webhook"
+                            />
+                          </FormControl>
+                          <FormLabel className="flex items-center gap-1 font-medium">
+                            {tForm("emitWebhook")}
+                            <HelpPopover
+                              helpKey={`## ${tForm("emitWebhook")}\n${tForm("emitWebhookHelp")}`}
+                            />
+                          </FormLabel>
+                        </FormItem>
+                      )}
+                    />
+                  )}
                 </div>
               </fieldset>
             </fieldset>
@@ -1155,21 +1270,21 @@ export function AlertRuleDialog({
             {/* Audience */}
             <fieldset
               className="space-y-3 rounded-md border p-4"
-              disabled={!hasProject}
+              disabled={!hasTarget}
             >
               <legend className="px-1 text-sm font-medium">
                 {tForm("audience")}
               </legend>
               <p className="text-sm text-muted-foreground">
-                {tForm("audienceHelp")}
+                {isSystem ? tForm("audienceHelpSystem") : tForm("audienceHelp")}
               </p>
-              {!hasProject ? (
+              {!hasTarget ? (
                 <p className="text-sm text-muted-foreground">
                   {tForm("needsProject")}
                 </p>
               ) : (
                 <AlertSubscribersEditor
-                  projectId={projectId ?? -1}
+                  projectId={isSystem ? null : (projectId ?? -1)}
                   creatorId={
                     rule
                       ? ((rule as { createdById?: string }).createdById ?? null)
@@ -1197,7 +1312,7 @@ export function AlertRuleDialog({
               {!readOnlyRule && (
                 <Button
                   type="submit"
-                  disabled={saving || !hasProject}
+                  disabled={saving || !hasTarget}
                   data-testid="alert-rule-submit"
                 >
                   {saving && <Loader2 className="animate-spin" />}

@@ -33,22 +33,26 @@ const GROUP_ORDER: AlertSubjectType[] = [
   AlertSubjectType.MILESTONE,
   AlertSubjectType.PROJECT,
   AlertSubjectType.WEBHOOK,
+  AlertSubjectType.LLM_INTEGRATION,
 ];
 
 /**
  * Searchable, grouped metric picker. Metrics are grouped by the subject
  * they watch, straight from the catalogue, so a new metric needs no change
  * here. Each row shows the label and its one-line description; scheduled
- * metrics carry a "checked daily" badge.
+ * metrics carry a "checked daily" badge. `system` narrows the list to the
+ * system metrics (a system alert) or to the project ones.
  */
 export function AlertMetricPicker({
   value,
   onChange,
   disabled,
+  system = false,
 }: {
   value: AlertMetric;
   onChange: (metric: AlertMetric) => void;
   disabled?: boolean;
+  system?: boolean;
 }) {
   const t = useTranslations("alerts");
   const [open, setOpen] = useState(false);
@@ -67,10 +71,13 @@ export function AlertMetricPicker({
     return GROUP_ORDER.map((subject) => ({
       subject,
       entries: ALERT_METRIC_CATALOGUE.filter(
-        (entry) => entry.subjectType === subject && matches(entry)
+        (entry) =>
+          entry.subjectType === subject &&
+          (entry.system === true) === system &&
+          matches(entry)
       ),
     })).filter((group) => group.entries.length > 0);
-  }, [query, t]);
+  }, [query, t, system]);
 
   return (
     <Popover

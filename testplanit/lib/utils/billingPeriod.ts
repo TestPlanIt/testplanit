@@ -8,8 +8,8 @@
  * 00:00:00.000 local time relative to `now`.
  *
  * `getBillingPeriodKey` formats the period start as a `YYYY-MM-DD` ISO
- * date string, used as a key in `LlmProviderConfig.alertThresholdsFired`
- * so threshold firing resets per period (not per calendar month).
+ * date string, recorded on AI budget alert events so a firing can be read
+ * back against its period (not the calendar month).
  */
 
 /**
@@ -54,7 +54,6 @@ export function getBillingPeriodStart(
 
 /**
  * Formats a billing-period start `Date` as a `YYYY-MM-DD` ISO date string.
- * Used as the per-period key inside `LlmProviderConfig.alertThresholdsFired`.
  */
 export function getBillingPeriodKey(start: Date): string {
   const y = start.getFullYear();

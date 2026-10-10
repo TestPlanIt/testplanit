@@ -97,6 +97,16 @@ Stale cases and automation share can be scoped to the whole project, a folder (s
 
 Scope it to every active outbound webhook in the project or to one webhook.
 
+### System alerts: AI budget
+
+A system alert belongs to no project. It watches something administered for the whole installation, so only [administrators](./permissions-guide.md) see, create and follow it: choose **System** instead of a project in **Add Alert**, and the metric list narrows to the system metrics. The Project column reads **System**, the audience can only hold administrators, and no webhook event is sent (outbound webhooks belong to projects).
+
+| Metric             | Fires when                                                                                                                                                                                                                                       |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **AI budget used** | An [AI model integration](./llm-integrations.md)'s spend for its billing period reaches X% of its **Monthly Budget**. Evaluated each time the integration records usage, and fires once per billing period for each integration. Saving the integration or using **Reset Spend** lets it fire again in the same period. |
+
+Scope it to every AI model integration or to one integration. Integrations without a budget never fire. Installations that already had a budget when they upgraded start with three such alerts, at 80%, 90% and 100%, subscribed by every administrator; edit or delete them like any other alert.
+
 ## Keeping rules quiet
 
 - **Cooldown.** Once a rule fires for a subject (a case, a run, a milestone), it stays silent for that subject until the cooldown passes. The default is one day; set it to 0 to fire on every evaluation.
@@ -114,4 +124,4 @@ Switch on **Send an alert.triggered webhook event** on a rule, then subscribe an
 
 ## How it works
 
-Evaluation never runs in the request that records a result. Results, run completion, finished automated executions and completed sessions queue a job for the alert worker, which reads the committed data, decides which rules fire, writes a history row, and hands the notifications to the notification worker. Milestone, project health and untested-share metrics run in a daily scheduled job; stalled runs and webhook failure rates in an hourly one. See [Background Processes](../background-processes.md).
+Evaluation never runs in the request that records a result. Results, run completion, finished automated executions and completed sessions queue a job for the alert worker, which reads the committed data, decides which rules fire, writes a history row, and hands the notifications to the notification worker. Milestone, project health and untested-share metrics run in a daily scheduled job; stalled runs and webhook failure rates in an hourly one. AI usage queues a job for the budget alert worker, which evaluates the AI budget alerts the same way. See [Background Processes](../background-processes.md).

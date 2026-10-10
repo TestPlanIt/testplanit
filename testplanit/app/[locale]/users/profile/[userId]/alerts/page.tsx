@@ -115,15 +115,26 @@ export default function UserAlertsPage() {
 
   // A rule whose project relation resolves to null belongs to a project the
   // viewer can no longer read (deleted, or access revoked while the cached
-  // accessible-project list still lists it); it has nothing to show.
+  // accessible-project list still lists it); it has nothing to show. A
+  // system alert has no project by design and stays.
   const allRows = useMemo(
-    () => ((rules ?? []) as AlertRow[]).filter((r) => r.project != null),
+    () =>
+      ((rules ?? []) as AlertRow[]).filter(
+        (r) => r.projectId == null || r.project != null
+      ),
     [rules]
   );
 
   // Permissions per project, one round trip for everything on the page.
   const projectIds = useMemo(
-    () => [...new Set(allRows.map((r) => r.projectId))].sort((a, b) => a - b),
+    () =>
+      [
+        ...new Set(
+          allRows
+            .map((r) => r.projectId)
+            .filter((id): id is number => id != null)
+        ),
+      ].sort((a, b) => a - b),
     [allRows]
   );
   const { data: projectPermissions } = useQuery({
@@ -186,6 +197,7 @@ export default function UserAlertsPage() {
             .map((r) => r.scopeText as string)
         ),
       ],
+      llmIntegrations: collect(AlertScopeType.LLM_INTEGRATION),
     };
   }, [allRows]);
   const { data: folderRows } = client.repositoryFolders.useFindMany(
@@ -223,6 +235,13 @@ export default function UserAlertsPage() {
     },
     { enabled: idsByScope.webhooks.length > 0 }
   );
+  const { data: llmIntegrationRows } = client.llmIntegration.useFindMany(
+    {
+      where: { id: { in: idsByScope.llmIntegrations } },
+      select: { id: true, name: true },
+    },
+    { enabled: idsByScope.llmIntegrations.length > 0 }
+  );
   const scopeNames: AlertScopeNames = useMemo(
     () => ({
       folders: new Map((folderRows ?? []).map((r) => [r.id, r.name])),
@@ -232,8 +251,18 @@ export default function UserAlertsPage() {
       webhooks: new Map(
         (webhookRows ?? []).map((r) => [r.id, r.name || r.url || r.id])
       ),
+      llmIntegrations: new Map(
+        (llmIntegrationRows ?? []).map((r) => [r.id, r.name])
+      ),
     }),
-    [folderRows, tagRows, caseRows, milestoneRows, webhookRows]
+    [
+      folderRows,
+      tagRows,
+      caseRows,
+      milestoneRows,
+      webhookRows,
+      llmIntegrationRows,
+    ]
   );
 
   const updateRule = client.alertRule.useUpdate();
@@ -286,12 +315,14 @@ export default function UserAlertsPage() {
   // control (the visibility owner) so persistence and its checkboxes agree.
   const hideColumnRef = useRef<((columnId: string) => void) | null>(null);
 
+  // System alerts (no project) are managed by system administrators only.
   const canManage = useCallback(
     (rule: AlertRow) =>
       isAdmin ||
-      mergedPermissions[rule.projectId]?.isProjectAdmin === true ||
-      (rule.createdById === viewerId &&
-        mergedPermissions[rule.projectId]?.canCreate === true),
+      (rule.projectId != null &&
+        (mergedPermissions[rule.projectId]?.isProjectAdmin === true ||
+          (rule.createdById === viewerId &&
+            mergedPermissions[rule.projectId]?.canCreate === true))),
     [isAdmin, mergedPermissions, viewerId]
   );
   const canToggleFollow = isOwn || isAdmin;
@@ -336,7 +367,9 @@ export default function UserAlertsPage() {
         needle.length === 0 ||
         rule.name.toLowerCase().includes(needle) ||
         (rule.description ?? "").toLowerCase().includes(needle) ||
-        rule.project.name.toLowerCase().includes(needle) ||
+        (rule.project?.name ?? t("systemScope"))
+          .toLowerCase()
+          .includes(needle) ||
         (rule.createdBy?.name ?? "").toLowerCase().includes(needle) ||
         metricLabel(rule).toLowerCase().includes(needle) ||
         (rule.scopeText ?? "").toLowerCase().includes(needle)
@@ -345,7 +378,15 @@ export default function UserAlertsPage() {
       following,
       metricLabel,
     });
-  }, [allRows, searchString, listFilters, sortConfig, following, metricLabel]);
+  }, [
+    allRows,
+    searchString,
+    listFilters,
+    sortConfig,
+    following,
+    metricLabel,
+    t,
+  ]);
 
   const isSortColumn = (column: string): column is AlertSortColumn =>
     (ALERT_SORT_COLUMNS as readonly string[]).includes(column);
@@ -489,8 +530,10 @@ export default function UserAlertsPage() {
     ? (allRows.find((r) => r.id === editing.id) ?? editing)
     : null;
 
+  // Administrators can always add a system alert.
+  const canCreate = creatableProjects.length > 0 || isAdmin;
   const addAlertButton =
-    isOwn && creatableProjects.length > 0 ? (
+    isOwn && canCreate ? (
       <Button
         onClick={() => {
           setEditing(null);
@@ -601,7 +644,7 @@ export default function UserAlertsPage() {
                   emptyMessage={
                     searchString.trim() || isAnyAlertFilterActive(listFilters)
                       ? tCommon("labels.noResults")
-                      : creatableProjects.length > 0
+                      : canCreate
                         ? t("emptyCanCreate")
                         : t("empty")
                   }
@@ -623,15 +666,20 @@ export default function UserAlertsPage() {
         }}
         projectId={editingRule?.projectId ?? null}
         projectOptions={creatableProjects}
+        allowSystem={isAdmin}
         rule={editingRule}
         canSubscribeOthers={
           editingRule
             ? isAdmin ||
-              mergedPermissions[editingRule.projectId]?.isProjectAdmin === true
+              (editingRule.projectId != null &&
+                mergedPermissions[editingRule.projectId]?.isProjectAdmin ===
+                  true)
             : false
         }
         canSubscribeOthersFor={(projectId) =>
-          isAdmin || mergedPermissions[projectId]?.isProjectAdmin === true
+          isAdmin ||
+          (projectId != null &&
+            mergedPermissions[projectId]?.isProjectAdmin === true)
         }
         onSaved={refetch}
       />

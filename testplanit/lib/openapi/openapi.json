@@ -170541,7 +170541,8 @@
           "REQUIREMENT_COVERAGE_BELOW",
           "STALE_CASES",
           "AUTOMATION_SHARE_BELOW",
-          "WEBHOOK_FAILURE_RATE"
+          "WEBHOOK_FAILURE_RATE",
+          "LLM_BUDGET_USED"
         ]
       },
       "EnumAlertMetricFilter": {
@@ -170699,7 +170700,8 @@
           "CASE",
           "RUN_NAME",
           "MILESTONE",
-          "WEBHOOK"
+          "WEBHOOK",
+          "LLM_INTEGRATION"
         ]
       },
       "EnumAlertScopeTypeFilter": {
@@ -171623,7 +171625,8 @@
           "MILESTONE",
           "SESSION",
           "PROJECT",
-          "WEBHOOK"
+          "WEBHOOK",
+          "LLM_INTEGRATION"
         ]
       },
       "EnumAlertSubjectTypeFilter": {
@@ -472271,7 +472274,7 @@
           "data"
         ]
       },
-      "ProjectsUpdateOneRequiredWithoutAlertRulesNestedInput": {
+      "ProjectsUpdateOneWithoutAlertRulesNestedInput": {
         "type": "object",
         "properties": {
           "create": {
@@ -472289,6 +472292,26 @@
           },
           "upsert": {
             "$ref": "#/components/schemas/ProjectsUpsertWithoutAlertRulesInput"
+          },
+          "disconnect": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/ProjectsWhereInput"
+              }
+            ]
+          },
+          "delete": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/ProjectsWhereInput"
+              }
+            ]
           },
           "connect": {
             "$ref": "#/components/schemas/ProjectsWhereUniqueInput"
@@ -473892,7 +473915,7 @@
           "data"
         ]
       },
-      "ProjectsUpdateOneRequiredWithoutAlertEventsNestedInput": {
+      "ProjectsUpdateOneWithoutAlertEventsNestedInput": {
         "type": "object",
         "properties": {
           "create": {
@@ -473910,6 +473933,26 @@
           },
           "upsert": {
             "$ref": "#/components/schemas/ProjectsUpsertWithoutAlertEventsInput"
+          },
+          "disconnect": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/ProjectsWhereInput"
+              }
+            ]
+          },
+          "delete": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/ProjectsWhereInput"
+              }
+            ]
           },
           "connect": {
             "$ref": "#/components/schemas/ProjectsWhereUniqueInput"
@@ -1118834,12 +1118877,15 @@
               {}
             ]
           },
-          "alertThresholdsFired": {
+          "budgetAlertResetAt": {
             "oneOf": [
               {
                 "type": "null"
               },
-              {}
+              {
+                "type": "string",
+                "format": "date-time"
+              }
             ]
           },
           "createdAt": {
@@ -1118937,7 +1118983,7 @@
           "settings": {
             "type": "boolean"
           },
-          "alertThresholdsFired": {
+          "budgetAlertResetAt": {
             "type": "boolean"
           },
           "createdAt": {
@@ -1119218,8 +1119264,19 @@
           "settings": {
             "$ref": "#/components/schemas/JsonNullableFilter"
           },
-          "alertThresholdsFired": {
-            "$ref": "#/components/schemas/JsonNullableFilter"
+          "budgetAlertResetAt": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DateTimeNullableFilter"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "createdAt": {
             "oneOf": [
@@ -1119472,8 +1119529,19 @@
           "settings": {
             "$ref": "#/components/schemas/JsonNullableFilter"
           },
-          "alertThresholdsFired": {
-            "$ref": "#/components/schemas/JsonNullableFilter"
+          "budgetAlertResetAt": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DateTimeNullableFilter"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "createdAt": {
             "oneOf": [
@@ -1119730,8 +1119798,19 @@
           "settings": {
             "$ref": "#/components/schemas/JsonNullableWithAggregatesFilter"
           },
-          "alertThresholdsFired": {
-            "$ref": "#/components/schemas/JsonNullableWithAggregatesFilter"
+          "budgetAlertResetAt": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DateTimeNullableWithAggregatesFilter"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "createdAt": {
             "oneOf": [
@@ -1119870,7 +1119949,7 @@
               }
             ]
           },
-          "alertThresholdsFired": {
+          "budgetAlertResetAt": {
             "oneOf": [
               {
                 "$ref": "#/components/schemas/SortOrder"
@@ -1119909,7 +1119988,7 @@
           "streamingEnabled",
           "isDefault",
           "settings",
-          "alertThresholdsFired",
+          "budgetAlertResetAt",
           "createdAt",
           "updatedAt"
         ]
@@ -1119971,7 +1120050,7 @@
           "settings": {
             "type": "boolean"
           },
-          "alertThresholdsFired": {
+          "budgetAlertResetAt": {
             "type": "boolean"
           },
           "createdAt": {
@@ -1120042,7 +1120121,7 @@
           "settings": {
             "type": "integer"
           },
-          "alertThresholdsFired": {
+          "budgetAlertResetAt": {
             "type": "integer"
           },
           "createdAt": {
@@ -1120074,7 +1120153,7 @@
           "streamingEnabled",
           "isDefault",
           "settings",
-          "alertThresholdsFired",
+          "budgetAlertResetAt",
           "createdAt",
           "updatedAt",
           "_all"
@@ -1120129,6 +1120208,9 @@
             "type": "boolean"
           },
           "isDefault": {
+            "type": "boolean"
+          },
+          "budgetAlertResetAt": {
             "type": "boolean"
           },
           "createdAt": {
@@ -1120311,6 +1120393,17 @@
               }
             ]
           },
+          "budgetAlertResetAt": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
+              }
+            ]
+          },
           "createdAt": {
             "oneOf": [
               {
@@ -1120384,6 +1120477,9 @@
             "type": "boolean"
           },
           "isDefault": {
+            "type": "boolean"
+          },
+          "budgetAlertResetAt": {
             "type": "boolean"
           },
           "createdAt": {
@@ -1120563,6 +1120659,17 @@
               },
               {
                 "type": "boolean"
+              }
+            ]
+          },
+          "budgetAlertResetAt": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "format": "date-time"
               }
             ]
           },
@@ -1121119,12 +1121226,15 @@
               {}
             ]
           },
-          "alertThresholdsFired": {
+          "budgetAlertResetAt": {
             "oneOf": [
               {
                 "type": "null"
               },
-              {}
+              {
+                "type": "string",
+                "format": "date-time"
+              }
             ]
           },
           "createdAt": {
@@ -1121297,12 +1121407,15 @@
               {}
             ]
           },
-          "alertThresholdsFired": {
+          "budgetAlertResetAt": {
             "oneOf": [
               {
-                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+                "type": "null"
               },
-              {}
+              {
+                "type": "string",
+                "format": "date-time"
+              }
             ]
           },
           "createdAt": {
@@ -1121510,12 +1121623,18 @@
               {}
             ]
           },
-          "alertThresholdsFired": {
+          "budgetAlertResetAt": {
             "oneOf": [
               {
-                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+                "type": "string",
+                "format": "date-time"
               },
-              {}
+              {
+                "$ref": "#/components/schemas/NullableDateTimeFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "createdAt": {
@@ -1121731,12 +1121850,18 @@
               {}
             ]
           },
-          "alertThresholdsFired": {
+          "budgetAlertResetAt": {
             "oneOf": [
               {
-                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+                "type": "string",
+                "format": "date-time"
               },
-              {}
+              {
+                "$ref": "#/components/schemas/NullableDateTimeFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "createdAt": {
@@ -1121868,12 +1121993,15 @@
               {}
             ]
           },
-          "alertThresholdsFired": {
+          "budgetAlertResetAt": {
             "oneOf": [
               {
-                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+                "type": "null"
               },
-              {}
+              {
+                "type": "string",
+                "format": "date-time"
+              }
             ]
           },
           "createdAt": {
@@ -1121984,12 +1122112,15 @@
               {}
             ]
           },
-          "alertThresholdsFired": {
+          "budgetAlertResetAt": {
             "oneOf": [
               {
-                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+                "type": "null"
               },
-              {}
+              {
+                "type": "string",
+                "format": "date-time"
+              }
             ]
           },
           "createdAt": {
@@ -1122103,12 +1122234,15 @@
               {}
             ]
           },
-          "alertThresholdsFired": {
+          "budgetAlertResetAt": {
             "oneOf": [
               {
-                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+                "type": "null"
               },
-              {}
+              {
+                "type": "string",
+                "format": "date-time"
+              }
             ]
           },
           "createdAt": {
@@ -1122313,12 +1122447,18 @@
               {}
             ]
           },
-          "alertThresholdsFired": {
+          "budgetAlertResetAt": {
             "oneOf": [
               {
-                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+                "type": "string",
+                "format": "date-time"
               },
-              {}
+              {
+                "$ref": "#/components/schemas/NullableDateTimeFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "createdAt": {
@@ -1122541,12 +1122681,18 @@
               {}
             ]
           },
-          "alertThresholdsFired": {
+          "budgetAlertResetAt": {
             "oneOf": [
               {
-                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+                "type": "string",
+                "format": "date-time"
               },
-              {}
+              {
+                "$ref": "#/components/schemas/NullableDateTimeFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "createdAt": {
@@ -1220553,10 +1220699,24 @@
             "type": "integer"
           },
           "projectId": {
-            "type": "integer"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
           },
           "project": {
-            "$ref": "#/components/schemas/Projects"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Projects"
+              }
+            ]
           },
           "name": {
             "type": "string"
@@ -1220694,8 +1220854,6 @@
         },
         "required": [
           "id",
-          "projectId",
-          "project",
           "name",
           "metric",
           "scopeType",
@@ -1220983,20 +1221141,26 @@
           "projectId": {
             "oneOf": [
               {
-                "$ref": "#/components/schemas/IntFilter"
+                "$ref": "#/components/schemas/IntNullableFilter"
               },
               {
                 "type": "integer"
+              },
+              {
+                "type": "null"
               }
             ]
           },
           "project": {
             "oneOf": [
               {
-                "$ref": "#/components/schemas/ProjectsScalarRelationFilter"
+                "$ref": "#/components/schemas/ProjectsNullableScalarRelationFilter"
               },
               {
                 "$ref": "#/components/schemas/ProjectsWhereInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -1221321,20 +1221485,26 @@
           "projectId": {
             "oneOf": [
               {
-                "$ref": "#/components/schemas/IntFilter"
+                "$ref": "#/components/schemas/IntNullableFilter"
               },
               {
                 "type": "integer"
+              },
+              {
+                "type": "null"
               }
             ]
           },
           "project": {
             "oneOf": [
               {
-                "$ref": "#/components/schemas/ProjectsScalarRelationFilter"
+                "$ref": "#/components/schemas/ProjectsNullableScalarRelationFilter"
               },
               {
                 "$ref": "#/components/schemas/ProjectsWhereInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -1221666,10 +1221836,13 @@
           "projectId": {
             "oneOf": [
               {
-                "$ref": "#/components/schemas/IntFilter"
+                "$ref": "#/components/schemas/IntNullableFilter"
               },
               {
                 "type": "integer"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -1221985,10 +1222158,13 @@
           "projectId": {
             "oneOf": [
               {
-                "$ref": "#/components/schemas/IntWithAggregatesFilter"
+                "$ref": "#/components/schemas/IntNullableWithAggregatesFilter"
               },
               {
                 "type": "integer"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -1222288,7 +1222464,14 @@
             "$ref": "#/components/schemas/SortOrder"
           },
           "projectId": {
-            "$ref": "#/components/schemas/SortOrder"
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SortOrder"
+              },
+              {
+                "$ref": "#/components/schemas/SortOrderInput"
+              }
+            ]
           },
           "project": {
             "$ref": "#/components/schemas/ProjectsOrderByWithRelationInput"
@@ -1223652,7 +1223835,14 @@
             "type": "integer"
           },
           "projectId": {
-            "type": "integer"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
           },
           "name": {
             "type": "string"
@@ -1223825,7 +1224015,6 @@
         },
         "required": [
           "id",
-          "projectId",
           "name",
           "metric",
           "scopeType",
@@ -1223980,7 +1224169,6 @@
         "required": [
           "name",
           "metric",
-          "project",
           "createdBy"
         ]
       },
@@ -1224240,7 +1224428,7 @@
             ]
           },
           "project": {
-            "$ref": "#/components/schemas/ProjectsUpdateOneRequiredWithoutAlertRulesNestedInput"
+            "$ref": "#/components/schemas/ProjectsUpdateOneWithoutAlertRulesNestedInput"
           },
           "createdBy": {
             "$ref": "#/components/schemas/UserUpdateOneRequiredWithoutAlertRulesCreatedNestedInput"
@@ -1224517,7 +1224705,14 @@
             "type": "integer"
           },
           "projectId": {
-            "type": "integer"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
           },
           "name": {
             "type": "string"
@@ -1224639,7 +1224834,6 @@
           }
         },
         "required": [
-          "projectId",
           "name",
           "metric",
           "createdById"
@@ -1226532,8 +1226726,7 @@
         },
         "required": [
           "name",
-          "metric",
-          "project"
+          "metric"
         ]
       },
       "AlertRuleUncheckedCreateWithoutCreatedByInput": {
@@ -1226543,7 +1226736,14 @@
             "type": "integer"
           },
           "projectId": {
-            "type": "integer"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
           },
           "name": {
             "type": "string"
@@ -1226668,7 +1226868,6 @@
           }
         },
         "required": [
-          "projectId",
           "name",
           "metric"
         ]
@@ -1226929,7 +1227128,7 @@
             ]
           },
           "project": {
-            "$ref": "#/components/schemas/ProjectsUpdateOneRequiredWithoutAlertRulesNestedInput"
+            "$ref": "#/components/schemas/ProjectsUpdateOneWithoutAlertRulesNestedInput"
           },
           "subscribers": {
             "$ref": "#/components/schemas/AlertSubscriberUpdateManyWithoutRuleNestedInput"
@@ -1226958,7 +1227157,10 @@
                 "type": "integer"
               },
               {
-                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -1227251,7 +1227453,14 @@
             "type": "integer"
           },
           "projectId": {
-            "type": "integer"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
           },
           "name": {
             "type": "string"
@@ -1227370,7 +1227579,6 @@
           }
         },
         "required": [
-          "projectId",
           "name",
           "metric"
         ]
@@ -1227607,7 +1227815,10 @@
                 "type": "integer"
               },
               {
-                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -1228290,7 +1228501,6 @@
         "required": [
           "name",
           "metric",
-          "project",
           "createdBy"
         ]
       },
@@ -1228301,7 +1228511,14 @@
             "type": "integer"
           },
           "projectId": {
-            "type": "integer"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
           },
           "name": {
             "type": "string"
@@ -1228426,7 +1228643,6 @@
           }
         },
         "required": [
-          "projectId",
           "name",
           "metric",
           "createdById"
@@ -1228688,7 +1228904,7 @@
             ]
           },
           "project": {
-            "$ref": "#/components/schemas/ProjectsUpdateOneRequiredWithoutAlertRulesNestedInput"
+            "$ref": "#/components/schemas/ProjectsUpdateOneWithoutAlertRulesNestedInput"
           },
           "createdBy": {
             "$ref": "#/components/schemas/UserUpdateOneRequiredWithoutAlertRulesCreatedNestedInput"
@@ -1228717,7 +1228933,10 @@
                 "type": "integer"
               },
               {
-                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -1229252,7 +1229471,6 @@
         "required": [
           "name",
           "metric",
-          "project",
           "createdBy"
         ]
       },
@@ -1229263,7 +1229481,14 @@
             "type": "integer"
           },
           "projectId": {
-            "type": "integer"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
           },
           "name": {
             "type": "string"
@@ -1229388,7 +1229613,6 @@
           }
         },
         "required": [
-          "projectId",
           "name",
           "metric",
           "createdById"
@@ -1229650,7 +1229874,7 @@
             ]
           },
           "project": {
-            "$ref": "#/components/schemas/ProjectsUpdateOneRequiredWithoutAlertRulesNestedInput"
+            "$ref": "#/components/schemas/ProjectsUpdateOneWithoutAlertRulesNestedInput"
           },
           "createdBy": {
             "$ref": "#/components/schemas/UserUpdateOneRequiredWithoutAlertRulesCreatedNestedInput"
@@ -1229679,7 +1229903,10 @@
                 "type": "integer"
               },
               {
-                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -1234068,10 +1234295,24 @@
             "$ref": "#/components/schemas/AlertRule"
           },
           "projectId": {
-            "type": "integer"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
           },
           "project": {
-            "$ref": "#/components/schemas/Projects"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Projects"
+              }
+            ]
           },
           "subjectType": {
             "$ref": "#/components/schemas/AlertSubjectType"
@@ -1234137,8 +1234378,6 @@
           "id",
           "ruleId",
           "rule",
-          "projectId",
-          "project",
           "subjectType",
           "subjectId",
           "subjectName",
@@ -1234313,20 +1234552,26 @@
           "projectId": {
             "oneOf": [
               {
-                "$ref": "#/components/schemas/IntFilter"
+                "$ref": "#/components/schemas/IntNullableFilter"
               },
               {
                 "type": "integer"
+              },
+              {
+                "type": "null"
               }
             ]
           },
           "project": {
             "oneOf": [
               {
-                "$ref": "#/components/schemas/ProjectsScalarRelationFilter"
+                "$ref": "#/components/schemas/ProjectsNullableScalarRelationFilter"
               },
               {
                 "$ref": "#/components/schemas/ProjectsWhereInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -1234506,20 +1234751,26 @@
           "projectId": {
             "oneOf": [
               {
-                "$ref": "#/components/schemas/IntFilter"
+                "$ref": "#/components/schemas/IntNullableFilter"
               },
               {
                 "type": "integer"
+              },
+              {
+                "type": "null"
               }
             ]
           },
           "project": {
             "oneOf": [
               {
-                "$ref": "#/components/schemas/ProjectsScalarRelationFilter"
+                "$ref": "#/components/schemas/ProjectsNullableScalarRelationFilter"
               },
               {
                 "$ref": "#/components/schemas/ProjectsWhereInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -1234696,10 +1234947,13 @@
           "projectId": {
             "oneOf": [
               {
-                "$ref": "#/components/schemas/IntFilter"
+                "$ref": "#/components/schemas/IntNullableFilter"
               },
               {
                 "type": "integer"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -1234876,10 +1235130,13 @@
           "projectId": {
             "oneOf": [
               {
-                "$ref": "#/components/schemas/IntWithAggregatesFilter"
+                "$ref": "#/components/schemas/IntNullableWithAggregatesFilter"
               },
               {
                 "type": "integer"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -1235025,7 +1235282,14 @@
             "$ref": "#/components/schemas/AlertRuleOrderByWithRelationInput"
           },
           "projectId": {
-            "$ref": "#/components/schemas/SortOrder"
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SortOrder"
+              },
+              {
+                "$ref": "#/components/schemas/SortOrderInput"
+              }
+            ]
           },
           "project": {
             "$ref": "#/components/schemas/ProjectsOrderByWithRelationInput"
@@ -1235932,7 +1236196,14 @@
             "type": "integer"
           },
           "projectId": {
-            "type": "integer"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
           },
           "subjectType": {
             "$ref": "#/components/schemas/AlertSubjectType"
@@ -1236054,7 +1236325,6 @@
         "required": [
           "id",
           "ruleId",
-          "projectId",
           "subjectType",
           "subjectId",
           "subjectName",
@@ -1236147,8 +1236417,7 @@
           "subjectName",
           "observedValue",
           "thresholdValue",
-          "rule",
-          "project"
+          "rule"
         ]
       },
       "AlertEventUpdateInput": {
@@ -1236286,7 +1236555,7 @@
             "$ref": "#/components/schemas/AlertRuleUpdateOneRequiredWithoutEventsNestedInput"
           },
           "project": {
-            "$ref": "#/components/schemas/ProjectsUpdateOneRequiredWithoutAlertEventsNestedInput"
+            "$ref": "#/components/schemas/ProjectsUpdateOneWithoutAlertEventsNestedInput"
           }
         }
       },
@@ -1236433,7 +1236702,14 @@
             "type": "integer"
           },
           "projectId": {
-            "type": "integer"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
           },
           "subjectType": {
             "$ref": "#/components/schemas/AlertSubjectType"
@@ -1236504,7 +1236780,6 @@
         },
         "required": [
           "ruleId",
-          "projectId",
           "subjectType",
           "subjectId",
           "subjectName",
@@ -1236590,8 +1236865,7 @@
           "subjectId",
           "subjectName",
           "observedValue",
-          "thresholdValue",
-          "project"
+          "thresholdValue"
         ]
       },
       "AlertEventUncheckedCreateWithoutRuleInput": {
@@ -1236601,7 +1236875,14 @@
             "type": "integer"
           },
           "projectId": {
-            "type": "integer"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
           },
           "subjectType": {
             "$ref": "#/components/schemas/AlertSubjectType"
@@ -1236671,7 +1236952,6 @@
           }
         },
         "required": [
-          "projectId",
           "subjectType",
           "subjectId",
           "subjectName",
@@ -1236811,7 +1237091,7 @@
             ]
           },
           "project": {
-            "$ref": "#/components/schemas/ProjectsUpdateOneRequiredWithoutAlertEventsNestedInput"
+            "$ref": "#/components/schemas/ProjectsUpdateOneWithoutAlertEventsNestedInput"
           }
         }
       },
@@ -1236834,7 +1237114,10 @@
                 "type": "integer"
               },
               {
-                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -1236997,7 +1237280,14 @@
             "type": "integer"
           },
           "projectId": {
-            "type": "integer"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
           },
           "subjectType": {
             "$ref": "#/components/schemas/AlertSubjectType"
@@ -1237067,7 +1237357,6 @@
           }
         },
         "required": [
-          "projectId",
           "subjectType",
           "subjectId",
           "subjectName",
@@ -1237307,7 +1237596,10 @@
                 "type": "integer"
               },
               {
-                "$ref": "#/components/schemas/IntFieldUpdateOperationsInput"
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
               }
             ]
           },

@@ -63,7 +63,7 @@ const makeConfig = (
     streamingEnabled: false,
     isDefault: false,
     settings: null,
-    alertThresholdsFired: null,
+    budgetAlertResetAt: null,
     billingPeriodStartDay: 1,
     createdAt: new Date(),
     updatedAt: new Date(),

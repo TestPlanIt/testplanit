@@ -1,6 +1,6 @@
 "use client";
 
-import { History, SquarePen, Trash2 } from "lucide-react";
+import { History, Server, SquarePen, Trash2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
@@ -27,10 +27,11 @@ import {
 
 /** One alert as the Notifications & Alerts table lists it. */
 export type AlertRow = AlertRuleDialogRule & {
-  projectId: number;
+  /** Null for a system alert (AI budget), which belongs to no project. */
+  projectId: number | null;
   createdById: string;
   createdBy?: { id: string; name: string; email?: string | null } | null;
-  project: { id: number; name: string; iconUrl?: string | null };
+  project?: { id: number; name: string; iconUrl?: string | null } | null;
 };
 
 export const ALERT_SORT_COLUMNS = [
@@ -136,6 +137,7 @@ export function useAlertRuleColumns({
   const tCommon = useTranslations("common");
   const { data: session } = useSession();
   const preferences = session?.user?.preferences;
+  const systemLabel = t("systemScope");
 
   return useMemo<ColumnDef<AlertRow>[]>(
     () => [
@@ -190,27 +192,37 @@ export function useAlertRuleColumns({
       {
         id: "project",
         accessorKey: "project",
-        accessorFn: (row) => row.project.name,
+        accessorFn: (row) => row.project?.name ?? systemLabel,
         header: t("columns.project"),
         enableSorting: true,
         enableResizing: true,
         size: 200,
-        cell: ({ row }) => (
-          <div className="flex items-start gap-1.5">
-            <span className="mt-0.5 shrink-0">
-              <ProjectIcon
-                iconUrl={row.original.project.iconUrl}
-                width={16}
-                height={16}
+        cell: ({ row }) =>
+          row.original.projectId == null || !row.original.project ? (
+            // A system alert: administration-level, no project.
+            <div
+              className="flex items-center gap-1.5 text-sm"
+              data-testid={`alert-rule-system-${row.original.id}`}
+            >
+              <Server className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <span>{systemLabel}</span>
+            </div>
+          ) : (
+            <div className="flex items-start gap-1.5">
+              <span className="mt-0.5 shrink-0">
+                <ProjectIcon
+                  iconUrl={row.original.project.iconUrl}
+                  width={16}
+                  height={16}
+                />
+              </span>
+              <ProjectNameCell
+                projectId={row.original.projectId}
+                value={row.original.project.name}
+                size="sm"
               />
-            </span>
-            <ProjectNameCell
-              projectId={row.original.projectId}
-              value={row.original.project.name}
-              size="sm"
-            />
-          </div>
-        ),
+            </div>
+          ),
       },
       {
         id: "name",
@@ -274,6 +286,7 @@ export function useAlertRuleColumns({
               scopeType={row.original.scopeType}
               scopeId={row.original.scopeId}
               scopeText={row.original.scopeText}
+              system={row.original.projectId == null}
               names={scopeNames}
             />
           </div>
@@ -412,6 +425,7 @@ export function useAlertRuleColumns({
       t,
       tCommon,
       preferences,
+      systemLabel,
       ctx,
       scopeNames,
       onToggleEnabled,

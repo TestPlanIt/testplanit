@@ -7,6 +7,7 @@ import { useCallback, useMemo } from "react";
 import { Avatar } from "@/components/Avatar";
 import { Button } from "@/components/ui/button";
 import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
+import { searchAdminUsers } from "~/app/actions/searchAdminUsers";
 import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
 import { schema } from "~/zenstack/schema";
 
@@ -25,7 +26,8 @@ interface MemberOption {
 /**
  * The audience of an alert as one multi-select of project members. Project
  * admins add and remove anyone; everyone else sees the list and a button to
- * follow or leave it themselves.
+ * follow or leave it themselves. A system alert (no project) offers the
+ * system administrators instead.
  */
 export function AlertSubscribersEditor({
   projectId,
@@ -37,7 +39,8 @@ export function AlertSubscribersEditor({
   onAdd,
   onRemove,
 }: {
-  projectId: number;
+  /** Null for a system alert. */
+  projectId: number | null;
   subscribers: SubscriberEntry[];
   currentUserId: string | undefined;
   /** Shown with a star; the creator is in the audience by default. */
@@ -74,12 +77,10 @@ export function AlertSubscribersEditor({
 
   const fetchOptions = useCallback(
     async (query: string, page: number, pageSize: number) => {
-      const result = await searchProjectMembers(
-        projectId,
-        query,
-        page,
-        pageSize
-      );
+      const result =
+        projectId == null
+          ? await searchAdminUsers(query, page, pageSize)
+          : await searchProjectMembers(projectId, query, page, pageSize);
       return { results: result.results, total: result.total };
     },
     [projectId]

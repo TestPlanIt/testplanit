@@ -5997,11 +5997,10 @@ model LlmProviderConfig {
     // Ollama-specific settings (stored in settings Json)
     settings              Json?     // Contains baseUrl, keepAlive, numGpu, etc.
 
-    // Budget alert tracking - which thresholds have fired per billing period.
-    // Key is the period-start ISO date `YYYY-MM-DD` (derived from
-    // `billingPeriodStartDay`); e.g., {"2026-03-15": [80, 90]} means 80% and
-    // 90% alerts fired for the period starting March 15 2026.
-    alertThresholdsFired  Json?
+    // Budget alerts (LLM_BUDGET_USED rules) fire once per billing period;
+    // saving the config or resetting spend stamps this so they may fire
+    // again in the same period.
+    budgetAlertResetAt    DateTime?       @db.Timestamptz(6)
 
     createdAt             DateTime        @default(now()) @db.Timestamptz(6)
     updatedAt             DateTime        @updatedAt
@@ -6965,6 +6964,7 @@ enum AlertMetric {
     STALE_CASES
     AUTOMATION_SHARE_BELOW
     WEBHOOK_FAILURE_RATE
+    LLM_BUDGET_USED
 
     @@deny('all', auth() == null)
     @@allow('read', auth().access != null)
@@ -6978,6 +6978,7 @@ enum AlertScopeType {
     RUN_NAME
     MILESTONE
     WEBHOOK
+    LLM_INTEGRATION
 
     @@deny('all', auth() == null)
     @@allow('read', auth().access != null)
@@ -7032,6 +7033,7 @@ enum AlertSubjectType {
     SESSION
     PROJECT
     WEBHOOK
+    LLM_INTEGRATION
 
     @@deny('all', auth() == null)
     @@allow('read', auth().access != null)
@@ -7039,8 +7041,11 @@ enum AlertSubjectType {
 
 model AlertRule {
     id              Int                @id @default(autoincrement())
-    projectId       Int                @deny('update', true)
-    project         Projects           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    // Null for a system alert (an administration-level subject such as an
+    // AI model budget): no project policy matches it, so only system
+    // administrators read or manage it.
+    projectId       Int?               @deny('update', true)
+    project         Projects?          @relation(fields: [projectId], references: [id], onDelete: Cascade)
     name            String             @length(1, 200)
     description     String?
     metric          AlertMetric        @deny('update', true)
@@ -7139,8 +7144,9 @@ model AlertEvent {
     id             Int              @id @default(autoincrement())
     ruleId         Int
     rule           AlertRule        @relation(fields: [ruleId], references: [id], onDelete: Cascade)
-    projectId      Int
-    project        Projects         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    // Null when the rule is a system alert.
+    projectId      Int?
+    project        Projects?        @relation(fields: [projectId], references: [id], onDelete: Cascade)
     subjectType    AlertSubjectType
     subjectId      Int
     // String key for subjects without an integer id (webhook configs).

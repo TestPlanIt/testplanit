@@ -2,9 +2,12 @@ import { AlertMetric, AlertScopeType } from "~/zenstack/models";
 import { describe, expect, it } from "vitest";
 import enUS from "../../messages/en-US.json";
 import {
+  alertMetricsForScope,
   caseEventAlertMetrics,
   executionEventAlertMetrics,
   getAlertMetricDefinition,
+  isSystemAlertMetric,
+  llmUsageAlertMetrics,
   metricUsesField,
   runEventAlertMetrics,
   scheduledAlertMetrics,
@@ -94,6 +97,20 @@ describe("threshold metric catalogue", () => {
       AlertMetric.AUTOMATED_EXECUTION_FAILED,
     ]);
     expect(sessionEventAlertMetrics()).toEqual([AlertMetric.SESSION_OVERRUN]);
+    expect(llmUsageAlertMetrics()).toEqual([AlertMetric.LLM_BUDGET_USED]);
+  });
+
+  it("keeps the AI budget metric on the system side, apart from the project metrics", () => {
+    expect(isSystemAlertMetric(AlertMetric.LLM_BUDGET_USED)).toBe(true);
+    expect(isSystemAlertMetric(AlertMetric.RUN_FAILURE_COUNT)).toBe(false);
+    expect(alertMetricsForScope(true)).toEqual([AlertMetric.LLM_BUDGET_USED]);
+    expect(alertMetricsForScope(false)).toHaveLength(
+      ALERT_METRIC_CATALOGUE.length - 1
+    );
+    expect(
+      getAlertMetricDefinition(AlertMetric.LLM_BUDGET_USED)?.defaults
+        .cooldownMinutes
+    ).toBe(0);
   });
 
   it("gives every event metric a trigger and every scheduled metric a cadence", () => {

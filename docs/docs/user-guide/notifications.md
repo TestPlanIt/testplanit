@@ -40,7 +40,6 @@ Every notification TestPlanIt sends belongs to one of the types below. They are 
 | System              | **Admin announcements** (always on)                | An administrator sends a system notification from **Admin → Notifications**                                   | Every active user                                                    |
 | System              | **What's New after an upgrade**                    | Your first page load after TestPlanIt is upgraded to a version with release notes                             | The current user                                                     |
 | Administration      | **New user registrations** (admins)                | A new user signs up through the form, SSO or SAML                                                             | All administrators                                                   |
-| Administration      | **AI budget alerts** (admins)                      | LLM spend crosses a budget threshold for the billing period                                                   | All administrators                                                   |
 
 A type added in a future release is on for everyone automatically; nothing needs to be changed after an upgrade.
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { BellRing, ExternalLink, Webhook } from "lucide-react";
+import { BellRing, ExternalLink, Sparkles, Webhook } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { MilestoneNameDisplay } from "@/components/MilestoneNameDisplay";
@@ -42,6 +42,15 @@ export function AlertTriggeredNotification({
       ) : null;
     }
     if (!data.subjectId) return null;
+    // An AI model integration (system alert): named, linked to AI Models.
+    if (data.subjectType === "LLM_INTEGRATION") {
+      return (
+        <span className="inline-flex items-center gap-1">
+          <Sparkles className="h-4 w-4 shrink-0" />
+          {data.subjectName}
+        </span>
+      );
+    }
     if (data.subjectType === "CASE") {
       return (
         <CaseDisplay

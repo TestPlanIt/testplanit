@@ -21,7 +21,8 @@ import {
 export type AlertEvaluationPath = "event" | "scheduled";
 
 /** What starts an event-driven evaluation. */
-export type AlertEventTrigger = "result" | "run" | "execution" | "session";
+export type AlertEventTrigger =
+  "result" | "run" | "execution" | "session" | "llmUsage";
 
 /** How often the scheduler visits a scheduled metric. */
 export type AlertSchedule = "hourly" | "daily";
@@ -54,12 +55,19 @@ export interface AlertMetricDefinition {
   /** The rule fields the condition uses, in sentence order. */
   fields: readonly AlertRuleField[];
   valueKind: AlertValueKind;
+  /**
+   * The subject is administration-level (an AI model budget), not a
+   * project's: rules carry no project, only system administrators create,
+   * see or follow them, and they never emit project webhooks.
+   */
+  system?: boolean;
   /** Form defaults; also the values the evaluator assumes when a field is unused. */
   defaults: {
     thresholdValue: number;
     secondaryValue?: number;
     baselineWindow?: number;
     minSamples?: number;
+    cooldownMinutes?: number;
   };
 }
 
@@ -96,6 +104,12 @@ const WEBHOOK_SCOPES = [
 ] as const;
 
 const PROJECT_ONLY = [AlertScopeType.PROJECT] as const;
+
+/** Every AI model integration, or one of them. */
+const LLM_SCOPES = [
+  AlertScopeType.PROJECT,
+  AlertScopeType.LLM_INTEGRATION,
+] as const;
 
 export const ALERT_METRIC_CATALOGUE: readonly AlertMetricDefinition[] = [
   {
@@ -301,6 +315,18 @@ export const ALERT_METRIC_CATALOGUE: readonly AlertMetricDefinition[] = [
     valueKind: "percent",
     defaults: { thresholdValue: 25, baselineWindow: 50, minSamples: 10 },
   },
+  {
+    metric: AlertMetric.LLM_BUDGET_USED,
+    subjectType: AlertSubjectType.LLM_INTEGRATION,
+    path: "event",
+    trigger: "llmUsage",
+    scopes: LLM_SCOPES,
+    fields: ["thresholdValue"],
+    valueKind: "percent",
+    system: true,
+    // Once per billing period is the natural cadence, so no cooldown.
+    defaults: { thresholdValue: 80, cooldownMinutes: 0 },
+  },
 ];
 
 const byMetric = new Map<string, AlertMetricDefinition>(
@@ -351,6 +377,23 @@ export function executionEventAlertMetrics(): AlertMetric[] {
 /** Metrics evaluated when a session is completed. */
 export function sessionEventAlertMetrics(): AlertMetric[] {
   return eventMetrics("session");
+}
+
+/** Metrics evaluated when an AI model integration records usage. */
+export function llmUsageAlertMetrics(): AlertMetric[] {
+  return eventMetrics("llmUsage");
+}
+
+/** Whether rules on this metric are system alerts (no project). */
+export function isSystemAlertMetric(metric: string): boolean {
+  return byMetric.get(metric)?.system === true;
+}
+
+/** The metrics offered for a system alert, or for a project alert. */
+export function alertMetricsForScope(system: boolean): AlertMetric[] {
+  return ALERT_METRIC_CATALOGUE.filter(
+    (m) => (m.system === true) === system
+  ).map((m) => m.metric);
 }
 
 /** Bounds applied by the form and by the server-side validation. */

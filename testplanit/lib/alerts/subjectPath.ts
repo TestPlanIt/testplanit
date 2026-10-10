@@ -4,11 +4,21 @@
  */
 export function subjectPath(
   subjectType:
-    "CASE" | "RUN" | "MILESTONE" | "SESSION" | "PROJECT" | "WEBHOOK" | string,
-  projectId: number,
+    | "CASE"
+    | "RUN"
+    | "MILESTONE"
+    | "SESSION"
+    | "PROJECT"
+    | "WEBHOOK"
+    | "LLM_INTEGRATION"
+    | string,
+  projectId: number | null,
   subjectId: number,
   testRunId?: number | null
 ): string {
+  // AI model integrations are administered system-wide; no project is
+  // involved, so the path ignores it.
+  if (subjectType === "LLM_INTEGRATION") return "/admin/llm";
   switch (subjectType) {
     case "CASE":
       return testRunId

@@ -39,6 +39,18 @@ describe("resolveAlertRecipients", () => {
     expect(getProjectEffectiveMemberIds).not.toHaveBeenCalled();
   });
 
+  it("reaches only the administrators among a system alert's subscribers", async () => {
+    const client = db(
+      ["u1", "admin"],
+      [
+        { id: "u1", access: "USER" },
+        { id: "admin", access: "ADMIN" },
+      ]
+    );
+    expect(await resolveAlertRecipients(client, 1, null)).toEqual(["admin"]);
+    expect(getProjectEffectiveMemberIds).not.toHaveBeenCalled();
+  });
+
   it("keeps subscribers who are active members or admins, drops the rest", async () => {
     const client = db(
       ["u1", "u2", "u3", "admin", "gone"],
