@@ -53,14 +53,6 @@ const config: Config = {
       innerHTML:
         'window.plausible = window.plausible || function() { (window.plausible.q = window.plausible.q || []).push(arguments) }',
     },
-    {
-      tagName: 'script',
-      attributes: {
-        async: 'async',
-        src: 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5495974118426429',
-        crossorigin: 'anonymous',
-      },
-    },
   ],
 
   plugins: [
