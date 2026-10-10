@@ -78,7 +78,7 @@ Anywhere the key can't apply — a project with no code, a record type without a
 Because the number inside a key is the real ID, TestPlanIt accepts **either form anywhere it accepts an ID**:
 
 - **URLs** — opening `…/repository/5/BANKING-TC-1234` redirects to the canonical `…/repository/5/1234`. Pasted links, bookmarks, and shared URLs with a key all resolve.
-- **Global search** — typing a key (`BANKING-TC-1234`) or a bare ID (`1234`) surfaces the matching record as a normal search result you can click through to. A bare number is type-agnostic, so search checks every record type and shows a result for each match.
+- **Global search** — typing a key (`BANKING-TC-1234`) or a bare ID (`1234`) surfaces the matching record as a normal search result you can click through to. A bare number is type-agnostic, so search checks every record type and shows a result for each match. Several keys or IDs can be listed at once, separated by `OR`, commas, or spaces (`BANKING-TC-1234 OR 5678`); the matches appear together in a collapsible **records matched by ID** section above the other results. See [Searching by ID](./advanced-search.md#searching-by-id).
 
 This symmetry means teams can adopt keys in their tickets, reports, and conversations without breaking any existing numeric references.
 

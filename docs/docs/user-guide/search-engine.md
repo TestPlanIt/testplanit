@@ -49,6 +49,8 @@ Reindexing rebuilds search indices — for example after changing index mappings
 
 Progress, a live log, and a completion summary appear while the job runs.
 
+Reindex **Repository Cases** after upgrading to 1.2 or later from an earlier release: test cases indexed before 1.2 do not carry their creator, so until they are reindexed the **Created By** filter and its counts in [Advanced Search](./advanced-search.md) leave test cases out.
+
 :::warning
 Reindexing **deletes and recreates** each target index before repopulating it, so search results may be incomplete while the job runs. A reindex can take several minutes depending on data volume. Run it during a maintenance window when possible.
 :::

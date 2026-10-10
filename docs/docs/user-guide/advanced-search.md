@@ -66,7 +66,7 @@ Options in the Projects, States, Tags, Created By, Folders, Templates, Configura
 
 **Repository Cases:**
 
-- Folders - Filter by repository folder
+- Folders - Filter by repository folder. Type to narrow the tree; matching folders stay under their parent folders so you can tell same-named folders apart
 - Templates - Filter by test case template
 - Automation Status - Show only automated or manual tests
 - Estimate Range - Filter by time estimates
@@ -125,6 +125,7 @@ When searching multiple entity types, results are organized into tabs:
 ### Navigation
 
 - Click on any result to navigate directly to that item
+- Click the open-in-new-tab icon at the right of a result, after its type badge, to open the item in a new browser tab and keep your place in the search
 - Results load continuously as you scroll — there are no pages to click through. More results are fetched automatically as you near the bottom of the list, and a "Showing X of Y" count above the list tracks how many of the total matches have loaded so far
 - Results are sorted by relevance by default
 
@@ -166,6 +167,8 @@ Search is performed across multiple fields including names, descriptions, and co
 ### Searching by ID
 
 Enter a record's numeric ID, with or without a leading `#`, to find it directly: `1234` or `#1234`. A bare number matches every record type that has that ID. To find several records at once, separate the IDs with `OR`, commas, or spaces: `1234 OR 5678 OR 9012`. When [Record Keys](./record-keys.md) are enabled, keys such as `WEB-TC-1234` work the same way and can be mixed into the same list.
+
+With Record Keys enabled, the records found by ID appear in a **records matched by ID** section above the result list. Click its heading to collapse or expand it; when it holds many records it scrolls on its own. The result list below does not repeat records already shown there, so what remains in the list are other items whose text contains those numbers.
 
 ### Advanced Search Operators
 
