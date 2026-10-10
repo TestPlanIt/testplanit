@@ -65,6 +65,14 @@ export function registerMilestonesCreate(
           .string()
           .optional()
           .describe("Note for the milestone. Markdown is formatted."),
+        startedAt: z
+          .iso.date()
+          .optional()
+          .describe("Planned start date, YYYY-MM-DD."),
+        completedAt: z
+          .iso.date()
+          .optional()
+          .describe("Due date, YYYY-MM-DD (becomes the completion date when the milestone completes)."),
       },
     },
     async (input) => {
@@ -102,6 +110,9 @@ export function registerMilestonesCreate(
                 ? { parent: { connect: { id: input.parentId } } }
                 : {}),
               ...(input.note !== undefined ? { note: input.note } : {}),
+              // Calendar days pinned to UTC midnight, the app's date shape.
+              ...(input.startedAt ? { startedAt: `${input.startedAt}T00:00:00.000Z` } : {}),
+              ...(input.completedAt ? { completedAt: `${input.completedAt}T00:00:00.000Z` } : {}),
             },
             include: CREATED_MILESTONE_INCLUDE,
           },
