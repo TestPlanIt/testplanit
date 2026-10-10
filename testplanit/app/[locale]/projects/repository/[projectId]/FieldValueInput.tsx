@@ -416,7 +416,8 @@ export function FieldValueInput({
           value={value ?? ""}
           onChange={(e) => {
             const val = e.target.value;
-            onChange(val === "" ? null : parseInt(val, 10) || null); // Parse as int
+            const parsed = parseInt(val, 10);
+            onChange(val === "" || Number.isNaN(parsed) ? null : parsed);
           }}
           step="1"
           disabled={isDisabled}

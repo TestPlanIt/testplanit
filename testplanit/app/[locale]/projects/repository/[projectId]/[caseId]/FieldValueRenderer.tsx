@@ -442,7 +442,11 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
                 className="mx-1"
                 type="number"
                 value={value ?? ""}
-                onChange={(e) => onChange(Number(e.target.value))}
+                onChange={(e) =>
+                  onChange(
+                    e.target.value === "" ? null : Number(e.target.value)
+                  )
+                }
                 disabled={isSubmitting}
               />
             )}

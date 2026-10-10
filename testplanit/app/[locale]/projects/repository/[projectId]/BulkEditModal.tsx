@@ -1715,12 +1715,13 @@ export function BulkEditModal({
         valueToSet = newValue;
       }
 
-      // For bulk operations, we update or create for each case
-      // The API will handle checking existence
+      // For bulk operations, we update or create for each case; the API
+      // checks existence. A cleared value removes the row, as Add Case stores
+      // no row for an empty field.
       customFieldUpdates.push({
         fieldId,
         value: valueToSet,
-        operation: "update", // API will handle create vs update
+        operation: valueToSet === null ? "delete" : "update",
       });
     }
 

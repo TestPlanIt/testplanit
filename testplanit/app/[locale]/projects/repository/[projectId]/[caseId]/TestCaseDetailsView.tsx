@@ -1286,6 +1286,8 @@ export function TestCaseDetailsView({
     useClientQueries(schema).repositoryCases.useUpdate();
   const { mutateAsync: updateCaseFieldValues } =
     useClientQueries(schema).caseFieldValues.useUpdate();
+  const { mutateAsync: deleteCaseFieldValues } =
+    useClientQueries(schema).caseFieldValues.useDelete();
   const { mutateAsync: createCaseFieldVersionValues } =
     useClientQueries(schema).caseFieldVersionValues.useCreate();
   const { mutateAsync: createAttachments } =
@@ -2048,17 +2050,30 @@ export function TestCaseDetailsView({
         })
         .filter(({ fieldId }) => !isNaN(fieldId));
 
-      const createCaseFieldVersionValuesPromises = formFields.map(
-        async ({ displayName, value }: { displayName: string; value: any }) => {
-          await createCaseFieldVersionValues({
-            data: {
-              version: { connect: { id: newCaseVersion.id } },
-              field: displayName,
-              value: value,
-            },
-          });
-        }
-      );
+      // A cleared field has no value row and no version row, as Add Case
+      // stores it; "" and null both mean cleared.
+      const isCleared = (value: unknown) =>
+        value === undefined || value === null || value === "";
+
+      const createCaseFieldVersionValuesPromises = formFields
+        .filter(({ value }) => !isCleared(value))
+        .map(
+          async ({
+            displayName,
+            value,
+          }: {
+            displayName: string;
+            value: any;
+          }) => {
+            await createCaseFieldVersionValues({
+              data: {
+                version: { connect: { id: newCaseVersion.id } },
+                field: displayName,
+                value: value,
+              },
+            });
+          }
+        );
       await Promise.all(createCaseFieldVersionValuesPromises);
 
       // Sync CaseFieldValues (the main table that's displayed on the details page)
@@ -2069,13 +2084,18 @@ export function TestCaseDetailsView({
             (cfv) => cfv.fieldId === fieldId
           );
 
-          if (existingValue) {
+          if (existingValue && isCleared(value)) {
+            // Cleared: remove the row rather than storing null or 0
+            await deleteCaseFieldValues({
+              where: { id: existingValue.id },
+            });
+          } else if (existingValue) {
             // Update existing field value
             await updateCaseFieldValues({
               where: { id: existingValue.id },
-              data: { value: value ?? null },
+              data: { value },
             });
-          } else if (value !== undefined && value !== null && value !== "") {
+          } else if (!isCleared(value)) {
             // Create new field value only if there's an actual value
             await createCaseFieldValues({
               data: {
