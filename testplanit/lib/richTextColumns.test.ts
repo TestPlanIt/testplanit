@@ -41,10 +41,13 @@ describe("normalizeRichTextWrite", () => {
     );
   });
 
-  it("keeps null and undefined, which mean cleared rather than empty", () => {
+  it("stores the empty document for null, as the editors do, and leaves undefined alone", () => {
     const args: any = { data: { step: null, expectedResult: undefined } };
     normalizeRichTextWrite("Steps", args);
-    expect(args.data.step).toBeNull();
+    expect(args.data.step).toEqual({
+      type: "doc",
+      content: [{ type: "paragraph" }],
+    });
     expect(args.data.expectedResult).toBeUndefined();
   });
 
@@ -61,7 +64,10 @@ describe("normalizeRichTextWrite", () => {
     normalizeRichTextWrite("Steps", args);
     expect(args.data[0].step).toEqual(doc);
     expect(args.data[1].step).toBe(doc);
-    expect(args.data[2].step).toBeNull();
+    expect(args.data[2].step).toEqual({
+      type: "doc",
+      content: [{ type: "paragraph" }],
+    });
   });
 
   it("normalizes both branches of an upsert", () => {
