@@ -122,7 +122,7 @@ describe("resolveCustomFields (template-scoped)", () => {
       expect(err.statusCode).toBe(422);
       expect(err.message).toContain("Phantom");
       expect(err.message).toContain("not part of the selected template");
-      // T-06-05: error message MUST NOT contain the value
+      // error message MUST NOT contain the value
       expect(err.message).not.toContain(inputValue);
       return true;
     });
@@ -165,7 +165,7 @@ describe("resolveCustomFields (template-scoped)", () => {
     });
   });
 
-  it("error message for an out-of-template field does not contain the input value (T-06-05)", async () => {
+  it("error message for an out-of-template field does not contain the input value", async () => {
     const secretValue = "SENSITIVE_DATA_12345";
     zenstackMock.mockResolvedValueOnce(asTemplate([]));
 
@@ -178,9 +178,9 @@ describe("resolveCustomFields (template-scoped)", () => {
     });
   });
 
-  // ── WR-01 / WR-02: Dropdown / Multi-Select round-trip ────────────────────
+  // ── Dropdown / Multi-Select round-trip ────────────────────
 
-  it("WR-02: Dropdown by option NAME resolves to canonical option ID (round-trip from read path)", async () => {
+  it("Dropdown by option NAME resolves to canonical option ID (round-trip from read path)", async () => {
     zenstackMock.mockResolvedValueOnce(
       asTemplate([
         makeField({
@@ -201,7 +201,7 @@ describe("resolveCustomFields (template-scoped)", () => {
     ]);
   });
 
-  it("WR-02: Dropdown by option ID stays as ID", async () => {
+  it("Dropdown by option ID stays as ID", async () => {
     zenstackMock.mockResolvedValueOnce(
       asTemplate([
         makeField({
@@ -222,7 +222,7 @@ describe("resolveCustomFields (template-scoped)", () => {
     ]);
   });
 
-  it("WR-02: Dropdown with unknown option name throws 422 with field name only (T-06-05)", async () => {
+  it("Dropdown with unknown option name throws 422 with field name only", async () => {
     const secretValue = "Phantom_OPTION_VALUE";
     zenstackMock.mockResolvedValueOnce(
       asTemplate([
@@ -246,7 +246,7 @@ describe("resolveCustomFields (template-scoped)", () => {
     });
   });
 
-  it("WR-02: Multi-Select by option names resolves to canonical option ID array", async () => {
+  it("Multi-Select by option names resolves to canonical option ID array", async () => {
     zenstackMock.mockResolvedValueOnce(
       asTemplate([
         makeField({
@@ -392,7 +392,68 @@ describe("resolveCustomFields (global, no template)", () => {
 
 // ── writeCustomFieldValues ────────────────────────────────────────────────────
 
+describe("resolveCustomFields clearing", () => {
+  it("resolves null to a clear for an optional field", async () => {
+    zenstackMock.mockResolvedValueOnce(
+      asTemplate([makeField({ id: 1, displayName: "Estimate", type: "Number" })]),
+    );
+    const resolved = await resolveCustomFields({ Estimate: null }, TEMPLATE_ID, env);
+    expect(resolved).toEqual([{ fieldId: 1, value: null, name: "Estimate", clear: true }]);
+  });
+
+  it("treats an empty string as a clear for a non-text field but as text for a text field", async () => {
+    zenstackMock.mockResolvedValueOnce(
+      asTemplate([
+        makeField({ id: 1, displayName: "Estimate", type: "Integer" }),
+        makeField({ id: 2, displayName: "Notes", type: "Text String" }),
+      ]),
+    );
+    const resolved = await resolveCustomFields(
+      { Estimate: "", Notes: "" },
+      TEMPLATE_ID,
+      env,
+    );
+    expect(resolved).toEqual([
+      { fieldId: 1, value: null, name: "Estimate", clear: true },
+      { fieldId: 2, value: "", name: "Notes" },
+    ]);
+  });
+
+  it("refuses to clear a required field, naming the field only", async () => {
+    zenstackMock.mockResolvedValueOnce(
+      asTemplate([
+        { ...makeField({ id: 1, displayName: "Priority", type: "Dropdown", options: [{ id: 9, name: "High" }] }), isRequired: true },
+      ]),
+    );
+    await expect(
+      resolveCustomFields({ Priority: null }, TEMPLATE_ID, env),
+    ).rejects.toThrow("Custom field 'Priority' is required and cannot be cleared.");
+  });
+});
+
 describe("writeCustomFieldValues", () => {
+  it("deletes the stored row for a clear and does nothing when there is none", async () => {
+    zenstackMock.mockResolvedValueOnce({ id: 55 });
+    zenstackMock.mockResolvedValueOnce({});
+    zenstackMock.mockResolvedValueOnce(null);
+
+    await writeCustomFieldValues(
+      42,
+      [
+        { fieldId: 1, value: null, name: "Estimate", clear: true },
+        { fieldId: 2, value: null, name: "Other", clear: true },
+      ],
+      env,
+    );
+
+    expect(zenstackMock.mock.calls.map((c) => c[1])).toEqual([
+      "findFirst",
+      "delete",
+      "findFirst",
+    ]);
+    expect(zenstackMock.mock.calls[1][2]).toEqual({ where: { id: 55 } });
+  });
+
   it("updates existing row when findFirst returns a record", async () => {
     // findFirst returns existing record
     zenstackMock.mockResolvedValueOnce({ id: 55 });

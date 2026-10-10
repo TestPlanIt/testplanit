@@ -27,7 +27,7 @@ export function registerCasesUpdate(
     "testplanit_cases_update",
     {
       description:
-        "Update a test case (partial). Provide only the fields to change: name, automated, steps (replaces all current steps), tags (replaces the tag set), customFields (upserts each), stateName, folderId. Returns the full denormalized case detail (same shape as testplanit_cases_get).",
+        "Update a test case (partial). Provide only the fields to change: name, automated, steps (replaces all current steps), tags (replaces the tag set), customFields (upserts each; null clears a field, which a required field refuses), stateName, folderId. Returns the full denormalized case detail (same shape as testplanit_cases_get).",
       inputSchema: {
         caseId: z.number().int().positive().describe("ID of the test case to update."),
         name: z.string().min(1).max(2000).optional().describe("New test case name."),
@@ -157,7 +157,7 @@ export function registerCasesUpdate(
         // the one case write below can carry the version bump with every
         // other change, as a web UI save does.
 
-        // Steps replacement: soft-delete existing + create new (T-06-06).
+        // Steps replacement: soft-delete existing + create new.
         if (input.steps !== undefined) {
           await replaceStepsForCase(
             input.caseId,
@@ -199,7 +199,7 @@ export function registerCasesUpdate(
           await createCaseVersion(input.caseId, {}, deps.env);
         }
 
-        // Re-fetch with full D-10 denormalized shape.
+        // Re-fetch with the full denormalized shape.
         const detail = await fetchCaseDetail(input.caseId, deps.env);
         return {
           content: [{ type: "text", text: JSON.stringify(detail) }],

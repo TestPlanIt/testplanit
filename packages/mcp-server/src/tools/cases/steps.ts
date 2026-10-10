@@ -31,7 +31,9 @@ export async function createStepsForCase(
           testCase: { connect: { id: caseId } },
           order: step.order ?? index,
           step: step.text ?? "",
-          expectedResult: step.expectedResult ?? null,
+          // An empty string stores the empty document, as the web UI does for a
+          // step without an expected result.
+          expectedResult: step.expectedResult ?? "",
         },
       },
       env,
@@ -40,9 +42,11 @@ export async function createStepsForCase(
 }
 
 /**
- * Replace ALL non-deleted steps for a case. Soft-deletes existing steps via
- * `updateMany` (T-06-06: the `delete` and `deleteMany` operations are NEVER
- * used — soft-delete invariant), then creates the new ordered set.
+ * Replace ALL non-deleted steps for a case: create the new ordered set first,
+ * then soft-delete the steps that were there before (by id, via `updateMany`;
+ * the `delete` and `deleteMany` operations are NEVER used — soft-delete
+ * invariant). Creating first means a rejected step leaves the case with its
+ * old steps intact instead of half-replaced.
  *
  * This is called by the update tool when `steps` is provided in the update
  * input — the full replacement strategy ensures ordering is always consistent.
@@ -52,16 +56,28 @@ export async function replaceStepsForCase(
   steps: StepInput[],
   env: EnvConfig,
 ): Promise<void> {
-  // Soft-delete all non-deleted steps for this case.
-  await zenstack(
-    "steps",
-    "updateMany",
-    {
-      where: { testCaseId: caseId, isDeleted: false },
-      data: { isDeleted: true },
-    },
-    env,
-  );
+  const existing =
+    (await zenstack<Array<{ id: number }>>(
+      "steps",
+      "findMany",
+      {
+        where: { testCaseId: caseId, isDeleted: false },
+        select: { id: true },
+      },
+      env,
+    )) ?? [];
   // Create the new ordered step set.
   await createStepsForCase(caseId, steps, env);
+  // Then retire the previous set.
+  if (existing.length > 0) {
+    await zenstack(
+      "steps",
+      "updateMany",
+      {
+        where: { id: { in: existing.map((s) => s.id) } },
+        data: { isDeleted: true },
+      },
+      env,
+    );
+  }
 }

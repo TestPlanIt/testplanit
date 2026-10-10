@@ -14,11 +14,14 @@ export interface ResolvedField {
   fieldId: number;
   value: unknown;
   name: string;
+  /** The agent sent null (or "" for a non-text field): remove the stored value. */
+  clear?: true;
 }
 
 interface RawCaseField {
   id: number;
   displayName: string;
+  isRequired?: boolean;
   minValue?: number | null;
   maxValue?: number | null;
   type: { type: string | null } | null;
@@ -36,6 +39,7 @@ interface RawTemplateFieldAssignment {
 const CASE_FIELD_RESOLVE_SELECT = {
   id: true,
   displayName: true,
+  isRequired: true,
   minValue: true,
   maxValue: true,
   type: { select: { type: true } },
@@ -57,6 +61,7 @@ const TEMPLATE_FIELD_RESOLVE_SELECT = {
     select: {
       id: true,
       displayName: true,
+      isRequired: true,
       minValue: true,
       maxValue: true,
       type: { select: { type: true } },
@@ -89,10 +94,10 @@ function coerceOptionId(v: unknown): number | null {
  * option ID stored in caseFieldValues.value. Accepts either:
  *   - a numeric option ID (already canonical), OR
  *   - an option name string (the shape denormalizeCustomFields returns
- *     on the read path — closes the WR-01/WR-02 round-trip gap).
+ *     on the read path — closes the round-trip gap).
  *
  * Returns null when the value cannot be resolved to a valid option ID;
- * caller throws a 422 with the field name (NEVER the value, T-06-05).
+ * caller throws a 422 with the field name (NEVER the value).
  */
 function resolveOptionValue(
   value: unknown,
@@ -113,7 +118,7 @@ function resolveOptionValue(
 }
 
 function invalid(name: string, why: string): never {
-  // T-06-05: message names the field, NEVER the value.
+  // message names the field, NEVER the value.
   throw new TestPlanItHttpError(`Custom field '${name}' ${why}`, {
     statusCode: 422,
   });
@@ -212,12 +217,12 @@ function coerceScalar(field: RawCaseField, name: string, value: unknown): unknow
  *
  * A name that isn't in scope, or that is ambiguous within scope, throws
  * TestPlanItHttpError 422 — the message names the offending field but NEVER
- * includes the input value (T-06-05).
+ * includes the input value.
  *
  * For Dropdown / Multi-Select fields, the agent may pass either the
  * option ID (canonical) OR the option name (the read-path shape). We
  * resolve to the canonical option ID so caseFieldValues.value matches
- * what the UI / other consumers expect (closes WR-01 / WR-02).
+ * what the UI / other consumers expect.
  */
 export async function resolveCustomFields(
   input: Record<string, unknown> | undefined,
@@ -276,7 +281,7 @@ export async function resolveCustomFields(
   for (const name of names) {
     const matches = byName.get(name);
     if (!matches || matches.length === 0) {
-      // T-06-05: message contains the FIELD NAME only, never the value.
+      // message contains the FIELD NAME only, never the value.
       throw new TestPlanItHttpError(
         templateId != null
           ? `Custom field '${name}' is not part of the selected template.`
@@ -301,11 +306,26 @@ export async function resolveCustomFields(
       .map((a) => a.fieldOption)
       .filter((o): o is { id: number; name: string } => o != null);
 
+    // Clearing: null, or an empty string for a field that is not free text,
+    // removes the stored value — Add Case stores no row for an empty field.
+    // A required field cannot be cleared, as the web UI refuses to save it.
+    const isTextField = fieldType === "Text String" || fieldType === "Text Long";
+    if (rawValue === null || (rawValue === "" && !isTextField)) {
+      if (field.isRequired) {
+        throw new TestPlanItHttpError(
+          `Custom field '${name}' is required and cannot be cleared.`,
+          { statusCode: 422 },
+        );
+      }
+      resolved.push({ fieldId: field.id, value: null, name, clear: true });
+      continue;
+    }
+
     let resolvedValue: unknown = rawValue;
     if (fieldType === "Dropdown") {
       const id = resolveOptionValue(rawValue, options);
       if (id == null) {
-        // T-06-05: message names the field, NEVER the value.
+        // message names the field, NEVER the value.
         throw new TestPlanItHttpError(
           `Custom field '${name}' expects a valid Dropdown option (by id or name).`,
           { statusCode: 422 },
@@ -356,6 +376,19 @@ export async function writeCustomFieldValues(
       },
       env,
     );
+    if (r.clear) {
+      // CaseFieldValues rows are not soft-deleted: a cleared field has no row,
+      // which is what Add Case and the bulk editor store.
+      if (existing) {
+        await zenstack(
+          "caseFieldValues",
+          "delete",
+          { where: { id: existing.id } },
+          env,
+        );
+      }
+      continue;
+    }
     if (existing) {
       await zenstack(
         "caseFieldValues",
