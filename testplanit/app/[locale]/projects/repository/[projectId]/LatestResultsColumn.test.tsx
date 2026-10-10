@@ -22,10 +22,6 @@ vi.mock("~/app/actions/test-run", () => ({
   getMaxOrderInTestRun: vi.fn(),
 }));
 
-vi.mock("~/app/actions/test-run-notifications", () => ({
-  notifyTestCaseAssignment: vi.fn(),
-}));
-
 vi.mock("~/app/actions/searchProjectMembers", () => ({
   searchProjectMembers: vi.fn(),
 }));

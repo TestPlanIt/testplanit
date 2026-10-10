@@ -135,7 +135,9 @@ describe("registerRunsCreate", () => {
     // 1. resolveRunState
     mockZenstack.mockResolvedValueOnce([MOCK_STATE]);
     mockResolveTagIds.mockResolvedValueOnce([]);
-    // 2. testRuns.create (cases nested)
+    // 2. the project's Not Started rule
+    mockZenstack.mockResolvedValueOnce({ excludeNotStartedFromRuns: false });
+    // 3. testRuns.create (cases nested)
     mockZenstack.mockResolvedValueOnce(MOCK_CREATED_RUN);
     // 3. testRuns.findUnique
     mockZenstack.mockResolvedValueOnce({ ...MOCK_RUN_RAW, testCases: [] });
@@ -153,7 +155,7 @@ describe("registerRunsCreate", () => {
     });
     expect(result.isError).toBeFalsy();
 
-    const create = (mockZenstack.mock.calls[1]?.[2] as any).data;
+    const create = (mockZenstack.mock.calls[2]?.[2] as any).data;
     expect(create.testCases.create).toEqual([
       { repositoryCase: { connect: { id: 10 } }, order: 1 },
       { repositoryCase: { connect: { id: 20 } }, order: 2 },
@@ -174,9 +176,38 @@ describe("registerRunsCreate", () => {
     });
   });
 
+  it("leaves out Not Started cases when the project excludes them, and says which", async () => {
+    mockZenstack.mockResolvedValueOnce([MOCK_STATE]);
+    mockResolveTagIds.mockResolvedValueOnce([]);
+    mockZenstack.mockResolvedValueOnce({ excludeNotStartedFromRuns: true });
+    mockZenstack.mockResolvedValueOnce([{ id: 20 }]); // the Not Started one
+    mockZenstack.mockResolvedValueOnce(MOCK_CREATED_RUN);
+    mockZenstack.mockResolvedValueOnce({ ...MOCK_RUN_RAW, testCases: [] });
+    mockZenstack.mockResolvedValueOnce([]);
+    vi.mocked(postHostJson).mockResolvedValueOnce({ async: false, iterationCount: 0 });
+
+    const { client } = await setupClient();
+    const result = await client.callTool({
+      name: "testplanit_runs_create",
+      arguments: { projectId: 1, name: "Smoke Suite", caseIds: [10, 20, 30] },
+    });
+    expect(result.isError).toBeFalsy();
+
+    const draftProbe = mockZenstack.mock.calls[2]!;
+    expect(draftProbe[0]).toBe("repositoryCases");
+    expect((draftProbe[2] as any).where).toEqual({
+      id: { in: [10, 20, 30] },
+      state: { workflowType: "NOT_STARTED" },
+    });
+    const create = (mockZenstack.mock.calls[3]?.[2] as any).data;
+    expect(create.testCases.create.map((c: any) => c.repositoryCase.connect.id)).toEqual([10, 30]);
+    expect(JSON.parse((result.content[0] as any).text).skippedNotStartedCaseIds).toEqual([20]);
+  });
+
   it("keeps the run and reports why when iterations cannot be generated", async () => {
     mockZenstack.mockResolvedValueOnce([MOCK_STATE]);
     mockResolveTagIds.mockResolvedValueOnce([]);
+    mockZenstack.mockResolvedValueOnce({ excludeNotStartedFromRuns: false });
     mockZenstack.mockResolvedValueOnce(MOCK_CREATED_RUN);
     mockZenstack.mockResolvedValueOnce({ ...MOCK_RUN_RAW, testCases: [] });
     mockZenstack.mockResolvedValueOnce([]);

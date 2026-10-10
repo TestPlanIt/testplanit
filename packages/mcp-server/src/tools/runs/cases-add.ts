@@ -6,6 +6,7 @@ import type {
 } from "@db/input";
 import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
+import { splitNotStartedCases } from "./notStartedCases.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
 import { generateRunIterations } from "./shared.js";
@@ -42,6 +43,18 @@ export function registerRunsCasesAdd(
     },
     async (input) => {
       try {
+        const run = await zenstack<{ projectId?: number } | null>(
+          "testRuns",
+          "findUnique",
+          { where: { id: input.runId }, select: { projectId: true } },
+          deps.env,
+        );
+        const { caseIds, skippedNotStartedCaseIds } = await splitNotStartedCases(
+          run?.projectId,
+          input.caseIds,
+          deps.env,
+        );
+
         // Get the current max order for this run so new cases are appended.
         const agg = await zenstack<{ _max: { order: number | null } }>(
           "testRunCases",
@@ -58,7 +71,7 @@ export function registerRunsCasesAdd(
           "testRunCases",
           "createMany",
           {
-            data: input.caseIds.map((caseId, i) => ({
+            data: caseIds.map((caseId, i) => ({
               testRunId: input.runId,
               repositoryCaseId: caseId,
               order: baseOrder + i,
@@ -80,7 +93,7 @@ export function registerRunsCasesAdd(
           {
             where: {
               testRunId: input.runId,
-              repositoryCaseId: { in: input.caseIds },
+              repositoryCaseId: { in: caseIds },
               isDeleted: true,
             },
             select: { id: true },
@@ -144,6 +157,7 @@ export function registerRunsCasesAdd(
         const result = {
           runId: input.runId,
           requested: input.caseIds.length,
+          skippedNotStartedCaseIds,
           restored: restored?.count ?? 0,
           total: total ?? 0,
           iterations,

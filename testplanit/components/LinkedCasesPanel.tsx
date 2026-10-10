@@ -292,9 +292,6 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
       });
       setIsModalOpen(false);
       void refetch();
-      // --- Trigger forecast update for both cases ---
-      void fetch(`/api/forecast/update?caseId=${caseId}`);
-      void fetch(`/api/forecast/update?caseId=${validCaseId}`);
       return null;
     } catch (e: any) {
       // The server's link guard rejects a self-link or a DEPENDS_ON edge
@@ -313,22 +310,12 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
   // Unlink handler (soft-delete)
   const handleUnlink = async (linkId: number) => {
     try {
-      // Find the other case ID for forecast update
-      const link = links?.find((l: any) => l.id === linkId);
-      const otherCaseId = link
-        ? link.caseAId === caseId
-          ? link.caseBId
-          : link.caseAId
-        : null;
       await updateLink({
         where: { id: linkId },
         data: { isDeleted: true },
       });
       setOpenPopoverLinkId(null);
       void refetch();
-      // --- Trigger forecast update for both cases ---
-      void fetch(`/api/forecast/update?caseId=${caseId}`);
-      if (otherCaseId) void fetch(`/api/forecast/update?caseId=${otherCaseId}`);
     } catch {
       // Optionally show error
     }

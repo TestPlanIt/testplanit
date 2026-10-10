@@ -17,6 +17,7 @@ import {
   JOB_SWEEP_ABANDONED_RUNS,
   JOB_SWEEP_REPORT_BUILDER_STATES,
   JOB_UPDATE_ALL_CASES,
+  JOB_UPDATE_RUN_FORECAST,
   JOB_UPDATE_SINGLE_CASE,
 } from "../lib/queueNames";
 import {
@@ -45,6 +46,10 @@ import {
 // Define expected job data structures with multi-tenant support
 interface UpdateSingleCaseJobData extends MultiTenantJobData {
   repositoryCaseId: number;
+}
+
+interface UpdateRunForecastJobData extends MultiTenantJobData {
+  testRunId: number;
 }
 
 interface _UpdateAllCasesJobData extends MultiTenantJobData {
@@ -276,6 +281,21 @@ export const processor = async (job: Job<ForecastJobDataBase>) =>
           throw error; // Re-throw to mark job as failed
         }
         break;
+
+      case JOB_UPDATE_RUN_FORECAST: {
+        const runData = job.data as UpdateRunForecastJobData;
+        if (!runData || typeof runData.testRunId !== "number") {
+          throw new Error(
+            `Invalid data for job ${job.id}: testRunId missing or not a number.`
+          );
+        }
+        await updateTestRunForecast(runData.testRunId, { dbClient: db });
+        successCount = 1;
+        console.log(
+          `Job ${job.id} completed: Updated forecast for run ${runData.testRunId}`
+        );
+        break;
+      }
 
       case JOB_UPDATE_ALL_CASES:
         console.log(`Job ${job.id}: Starting update for all active cases.`);

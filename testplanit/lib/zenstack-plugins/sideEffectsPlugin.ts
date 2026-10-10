@@ -56,6 +56,27 @@ import {
   type AttemptReader,
 } from "~/lib/resultAttemptNumbering";
 import {
+  applyRunCaseEligibility,
+  type EligibilityClient,
+} from "~/lib/runCaseEligibilityGuard";
+import {
+  prepareRunCaseRestore,
+  type RunCaseRestoreClient,
+} from "~/lib/runCaseRestoreReset";
+import {
+  prepareRunCaseAssignment,
+  type AssigneeReader,
+} from "~/lib/runCaseAssignmentHook";
+import {
+  notifyRunCaseAssignment,
+  notifySessionAssignment,
+  type AssignmentActor,
+} from "~/lib/services/assignmentNotifications";
+import {
+  enqueueCaseForecastUpdate,
+  enqueueRunForecastUpdate,
+} from "~/lib/services/forecastEnqueue";
+import {
   assertValidCaseLink,
   type CaseLinkReader,
 } from "~/lib/caseLinkCycleGuard";
@@ -480,6 +501,13 @@ export async function encryptCodeRepositoryCredentials(
   }
 }
 
+/** Who is making the assignment, from the request's audit context. */
+function assignmentActor(): AssignmentActor | null {
+  const ctx = getAuditContext();
+  if (!ctx?.userId) return null;
+  return { id: ctx.userId, name: ctx.userName };
+}
+
 export const sideEffectsPlugin = definePlugin(schema, {
   id: "testplanit-side-effects",
 
@@ -578,7 +606,56 @@ export const sideEffectsPlugin = definePlugin(schema, {
         data.completedAt = new Date();
       }
     }
-    return proceed(args as never);
+
+    // Run membership: keep Not Started cases out where the project says so,
+    // bring restored cases back untested, and tell new assignees. All three
+    // used to live in the browser, so API clients skipped them.
+    let afterRestore: (() => Promise<void>) | null = null;
+    let pendingAssignment: Awaited<
+      ReturnType<typeof prepareRunCaseAssignment>
+    > = null;
+    if (model === "TestRunCases" || model === "TestRuns") {
+      const raw = client.$unuseAll();
+      await applyRunCaseEligibility(
+        model,
+        operation,
+        args,
+        raw as unknown as EligibilityClient
+      );
+      afterRestore = await prepareRunCaseRestore(
+        model,
+        operation,
+        args,
+        raw as unknown as RunCaseRestoreClient
+      );
+      pendingAssignment = await prepareRunCaseAssignment(
+        model,
+        operation,
+        args,
+        raw as unknown as AssigneeReader
+      );
+    }
+
+    const result = await proceed(args as never);
+
+    if (afterRestore) {
+      // Bookkeeping on rows the write just restored; never fails the write.
+      await afterRestore().catch((error) =>
+        console.error("[runCaseRestore] iteration restore failed:", error)
+      );
+    }
+    if (pendingAssignment) {
+      const actor = assignmentActor();
+      if (actor) {
+        void notifyRunCaseAssignment(client.$unuseAll() as any, {
+          ...pendingAssignment,
+          actor,
+        }).catch((error) =>
+          console.error("[assignment] notification failed:", error)
+        );
+      }
+    }
+    return result;
   },
 
   onEntityMutation: {
@@ -787,6 +864,22 @@ export const sideEffectsPlugin = definePlugin(schema, {
             const row = after[i];
             const old = before[i] ?? null;
             if (!row?.id) continue;
+            if (
+              typeof row.assignedToId === "string" &&
+              row.assignedToId &&
+              row.assignedToId !== old?.assignedToId
+            ) {
+              const actor = assignmentActor();
+              if (actor) {
+                void notifySessionAssignment(tx as any, {
+                  sessionId: row.id,
+                  assignedToId: row.assignedToId,
+                  actor,
+                }).catch((error) =>
+                  console.error("[assignment] notification failed:", error)
+                );
+              }
+            }
             if (row.projectId != null) {
               if (old) await emitSessionUpdateEvents(old, row, tx);
               // Alerts: the session overrun metric is evaluated when a
@@ -886,6 +979,26 @@ export const sideEffectsPlugin = definePlugin(schema, {
           for (const row of after) {
             if (row?.id && row.testRunId != null)
               await emitTestRunResultAdded(row, tx);
+          }
+          // A recorded elapsed time feeds the case's forecast (and, through
+          // it, every run holding the case) — what the web UI's result dialog
+          // asked for from the browser.
+          const timedCaseIds = new Set<number>();
+          for (const row of after) {
+            if (row?.elapsed == null || typeof row.testRunCaseId !== "number")
+              continue;
+            const runCase = await tx.testRunCases.findUnique({
+              where: { id: row.testRunCaseId },
+              select: { repositoryCaseId: true },
+            });
+            if (runCase) timedCaseIds.add(runCase.repositoryCaseId);
+          }
+          if (timedCaseIds.size > 0) {
+            const { getCurrentTenantId } = await import("~/lib/multiTenantDb");
+            const tenantId = getCurrentTenantId();
+            for (const caseId of timedCaseIds) {
+              void enqueueCaseForecastUpdate(caseId, tenantId);
+            }
           }
           await enqueueAlertEvaluationsForResults(tx, after).catch((error) =>
             console.error("[alerts] result enqueue failed:", error)
@@ -1026,6 +1139,56 @@ export const sideEffectsPlugin = definePlugin(schema, {
               // Detached: this hook body runs inside the writer's transaction
               // and must never hold it open or fail it.
               void enqueueRunReadyCheck(runId, tenantId);
+              // The run's forecast sums its live cases; any membership change
+              // moves it.
+              void enqueueRunForecastUpdate(runId, tenantId);
+            }
+          }
+          // Cases created already assigned (a duplicated run that copies
+          // assignments, an API client): the assignee is told, as for an
+          // assignment made later. Updates are handled in onQuery, where
+          // the previous assignee can still be read.
+          if (action === "create") {
+            const byAssignee = new Map<string, number[]>();
+            for (const row of after) {
+              if (typeof row?.assignedToId === "string" && row.assignedToId) {
+                byAssignee.set(row.assignedToId, [
+                  ...(byAssignee.get(row.assignedToId) ?? []),
+                  row.id,
+                ]);
+              }
+            }
+            const actor = byAssignee.size > 0 ? assignmentActor() : null;
+            if (actor) {
+              for (const [assignedToId, testRunCaseIds] of byAssignee) {
+                void notifyRunCaseAssignment(tx as any, {
+                  testRunCaseIds,
+                  assignedToId,
+                  actor,
+                }).catch((error) =>
+                  console.error("[assignment] notification failed:", error)
+                );
+              }
+            }
+          }
+          break;
+        }
+
+        case "RepositoryCaseLink": {
+          // Linked cases share a forecast group; a link change moves both
+          // ends' forecasts (the browser used to ask for this).
+          const linkedCaseIds = new Set<number>();
+          for (const row of [...before, ...after]) {
+            if (typeof row?.caseAId === "number")
+              linkedCaseIds.add(row.caseAId);
+            if (typeof row?.caseBId === "number")
+              linkedCaseIds.add(row.caseBId);
+          }
+          if (linkedCaseIds.size > 0) {
+            const { getCurrentTenantId } = await import("~/lib/multiTenantDb");
+            const tenantId = getCurrentTenantId();
+            for (const caseId of linkedCaseIds) {
+              void enqueueCaseForecastUpdate(caseId, tenantId);
             }
           }
           break;

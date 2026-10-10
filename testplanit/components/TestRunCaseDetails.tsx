@@ -59,7 +59,6 @@ import { useTranslations } from "next-intl";
 import React, { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
-import { notifyTestCaseAssignment } from "~/app/actions/test-run-notifications";
 import { emptyEditorContent } from "~/app/constants";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
@@ -473,9 +472,6 @@ export function TestRunCaseDetails({
       });
       await invalidateAfterSubmit();
 
-      // --- Trigger forecast update for this case ---
-      void fetch(`/api/forecast/update?caseId=${caseId}`);
-
       toast.success(tCommon("actions.resultAdded"), {
         description: tCommon("actions.resultAddedDescription"),
       });
@@ -570,10 +566,9 @@ export function TestRunCaseDetails({
     setIsAssigning(true);
 
     try {
-      const previousAssigneeId =
-        testcase?.testRuns?.[0]?.assignedTo?.id || null;
       const userId = user?.id || null;
 
+      // The server notifies the new assignee.
       await updateTestRunCase({
         where: {
           id: testRunCaseId,
@@ -582,15 +577,6 @@ export function TestRunCaseDetails({
           assignedToId: userId,
         },
       });
-
-      // Send notification for the assignment
-      if (userId && userId !== previousAssigneeId) {
-        await notifyTestCaseAssignment(
-          testRunCaseId,
-          userId,
-          previousAssigneeId
-        );
-      }
 
       toast.success(
         userId ? tCommon("success.assigned") : tCommon("success.unassigned")

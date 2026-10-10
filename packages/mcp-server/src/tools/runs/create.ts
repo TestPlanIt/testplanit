@@ -2,6 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { WorkflowsFindManyArgs, WorkflowsWhereInput } from "@db/input";
 import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
+import { splitNotStartedCases } from "./notStartedCases.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
 import { TestPlanItHttpError } from "../../http.js";
@@ -83,7 +84,7 @@ export function registerRunsCreate(
           .max(MAX_CASE_IDS)
           .optional()
           .describe(
-            `Repository case IDs to add to the run (max ${MAX_CASE_IDS}). Order is preserved.`,
+            `Repository case IDs to add to the run (max ${MAX_CASE_IDS}). Order is preserved. When the project keeps Not Started cases out of runs, those are left out and listed in skippedNotStartedCaseIds.`,
           ),
         milestoneId: z
           .number()
@@ -120,6 +121,11 @@ export function registerRunsCreate(
           input.stateName,
         );
         const tagIds = await resolveTagIds(input.tags, deps.env);
+        const { caseIds, skippedNotStartedCaseIds } = await splitNotStartedCases(
+          input.projectId,
+          input.caseIds ?? [],
+          deps.env,
+        );
 
         const created = await zenstack<{ id: number }>(
           "testRuns",
@@ -141,10 +147,10 @@ export function registerRunsCreate(
                 : {}),
               // In the same create, as the web UI does: a bad case id fails
               // the whole call instead of leaving an empty run behind.
-              ...(input.caseIds && input.caseIds.length > 0
+              ...(caseIds.length > 0
                 ? {
                     testCases: {
-                      create: input.caseIds.map((caseId, i) => ({
+                      create: caseIds.map((caseId, i) => ({
                         repositoryCase: { connect: { id: caseId } },
                         order: i + 1,
                       })),
@@ -158,7 +164,7 @@ export function registerRunsCreate(
         );
 
         const iterations =
-          input.caseIds && input.caseIds.length > 0
+          caseIds.length > 0
             ? await generateRunIterations(created.id, deps.env)
             : undefined;
 
@@ -202,6 +208,9 @@ export function registerRunsCreate(
           testCases,
           testCasesNextCursor,
           ...(iterations ? { iterations } : {}),
+          ...(skippedNotStartedCaseIds.length > 0
+            ? { skippedNotStartedCaseIds }
+            : {}),
         };
 
         return {

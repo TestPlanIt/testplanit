@@ -97,7 +97,6 @@ import {
   UserCog,
 } from "lucide-react";
 import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
-import { notifyTestCaseAssignment } from "~/app/actions/test-run-notifications";
 import { ForecastDisplay } from "~/components/ForecastDisplay";
 import { useDetailsDisplayMode } from "~/hooks/useDetailsDisplayMode";
 import LoadingSpinner from "~/components/LoadingSpinner";
@@ -1320,9 +1319,9 @@ const AssigneeCell = React.memo(function AssigneeCell({
     setIsAssigning(true);
 
     try {
-      const previousAssigneeId = row.original.assignedTo?.id || null;
       const userId = user?.id || null;
 
+      // The server notifies the new assignee.
       await updateTestRunCase({
         where: {
           id: row.original.testRunCaseId,
@@ -1331,15 +1330,6 @@ const AssigneeCell = React.memo(function AssigneeCell({
           assignedToId: userId,
         },
       });
-
-      // Send notification for the assignment
-      if (userId && userId !== previousAssigneeId) {
-        await notifyTestCaseAssignment(
-          row.original.testRunCaseId,
-          userId,
-          previousAssigneeId
-        );
-      }
 
       toast.success(
         userId ? t("common.success.assigned") : t("common.success.unassigned")

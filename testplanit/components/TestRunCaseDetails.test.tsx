@@ -105,10 +105,6 @@ vi.mock("~/app/actions/searchProjectMembers", () => ({
   searchProjectMembers: vi.fn(() => Promise.resolve({ items: [], total: 0 })),
 }));
 
-vi.mock("~/app/actions/test-run-notifications", () => ({
-  notifyTestCaseAssignment: vi.fn(() => Promise.resolve()),
-}));
-
 vi.mock("@/components/TestResultHistory", () => ({
   default: ({ caseId }: { caseId: number }) => (
     <div data-testid="test-result-history">History for case {caseId}</div>

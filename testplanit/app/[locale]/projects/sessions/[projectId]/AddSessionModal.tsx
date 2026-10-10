@@ -57,7 +57,6 @@ import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
 import { z } from "zod/v4";
-import { notifySessionAssignment } from "~/app/actions/session-notifications";
 import { searchConfigurations } from "~/app/actions/searchConfigurations";
 import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
 import { emptyEditorContent, MAX_DURATION } from "~/app/constants";
@@ -800,11 +799,6 @@ export function AddSessionModal({
               // Non-critical: continue if field value copy fails
             }
           }
-        }
-
-        // Send notification if session was assigned during creation
-        if (data.assignedToId) {
-          await notifySessionAssignment(newSession.id, data.assignedToId, null);
         }
 
         createdSessions.push(newSession);

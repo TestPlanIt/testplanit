@@ -1251,10 +1251,6 @@ export function AddResultModal({
           ) {
             await uploadFiles(result.id);
           }
-
-          // --- Trigger forecast update for this case ---
-          if (selectedCase.id && hasSubmittedElapsedTime)
-            void fetch(`/api/forecast/update?caseId=${selectedCase.id}`);
         });
 
         // Each case is its own submission: report the ones the server refused
@@ -1487,10 +1483,6 @@ export function AddResultModal({
         if ((selectedFiles.length > 0 || selectedLinks.length > 0) && result) {
           await uploadFiles(result.id);
         }
-
-        // --- Trigger forecast update for this case ---
-        if (repositoryCase?.id && hasSubmittedElapsedTime)
-          void fetch(`/api/forecast/update?caseId=${repositoryCase.id}`);
       }
 
       // Reset form with current status and default values

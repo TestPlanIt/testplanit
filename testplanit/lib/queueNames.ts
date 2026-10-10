@@ -52,6 +52,8 @@ export const JOB_SEND_DAILY_DIGEST = "send-daily-digest";
 export const BUDGET_ALERT_JOB_CHECK = "check-budget";
 export const JOB_REFRESH_EXPIRED_CACHES = "refresh-expired-repo-caches";
 export const JOB_UPDATE_SINGLE_CASE = "update-single-case-forecast";
+/** Recompute one run's forecast after its case list changed. */
+export const JOB_UPDATE_RUN_FORECAST = "update-run-forecast";
 export const JOB_UPDATE_ALL_CASES = "update-all-cases-forecast";
 export const JOB_AUTO_COMPLETE_MILESTONES = "auto-complete-milestones";
 export const JOB_MILESTONE_DUE_NOTIFICATIONS = "milestone-due-notifications";

@@ -66,6 +66,23 @@ describe("testplanit_runs_cases_add", () => {
     expect((result.structuredContent as any).restored).toBe(1);
   });
 
+  it("leaves out the cases the project keeps out of runs and says which", async () => {
+    mockZenstack.mockImplementation(async (model: string, op: string) => {
+      if (model === "testRuns" && op === "findUnique") return { projectId: 3 };
+      if (model === "projects" && op === "findUnique") return { excludeNotStartedFromRuns: true };
+      if (model === "repositoryCases" && op === "findMany") return [{ id: 2 }];
+      if (op === "aggregate") return { _max: { order: 4 } };
+      if (model === "testRunCases" && op === "findMany") return [];
+      if (op === "count") return 6;
+      return { count: 1 };
+    });
+    const result = await call({ runId: 9, caseIds: [1, 2, 3] });
+    const [createMany] = byOp("testRunCases", "createMany");
+    expect((createMany![2] as any).data.map((r: any) => r.repositoryCaseId)).toEqual([1, 3]);
+    expect((result.structuredContent as any).skippedNotStartedCaseIds).toEqual([2]);
+    expect((result.structuredContent as any).requested).toBe(3);
+  });
+
   it("generates iterations for data-driven cases and reports them", async () => {
     const result = await call({ runId: 9, caseIds: [1] });
     expect(vi.mocked(postHostJson).mock.calls[0]![0]).toBe(

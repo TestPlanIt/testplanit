@@ -24,7 +24,6 @@ import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useSession } from "next-auth/react";
 import { FormProvider, useForm, useFormContext } from "react-hook-form";
 import { z } from "zod/v4";
-import { notifySessionAssignment } from "~/app/actions/session-notifications";
 import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
 import { CommentsSection } from "~/components/comments/CommentsSection";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
@@ -1716,15 +1715,6 @@ export default function SessionPage() {
       const params = new URLSearchParams(searchParams);
       params.delete("edit");
       router.replace(`?${params.toString()}`);
-
-      // Send notification if assignment changed
-      if (transformedData.assignedToId !== sessionData?.assignedToId) {
-        await notifySessionAssignment(
-          Number(sessionId),
-          transformedData.assignedToId ?? null,
-          sessionData?.assignedToId ?? null
-        );
-      }
     } catch (err: any) {
       console.error("Submit error:", err);
       form.setError("root", {
