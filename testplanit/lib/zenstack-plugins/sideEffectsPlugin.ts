@@ -48,6 +48,10 @@ import {
   type FolderReader,
 } from "~/lib/folderParentGuard";
 import {
+  assertValidMilestoneParent,
+  type MilestoneReader,
+} from "~/lib/milestoneParentGuard";
+import {
   assertValidCaseLink,
   type CaseLinkReader,
 } from "~/lib/caseLinkCycleGuard";
@@ -520,6 +524,15 @@ export const sideEffectsPlugin = definePlugin(schema, {
         operation,
         args,
         client.$unuseAll() as unknown as FolderReader
+      );
+    }
+
+    if (model === "Milestones") {
+      await assertValidMilestoneParent(
+        model,
+        operation,
+        args,
+        client.$unuseAll() as unknown as MilestoneReader
       );
     }
 
