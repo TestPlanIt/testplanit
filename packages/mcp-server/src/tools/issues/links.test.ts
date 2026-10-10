@@ -261,11 +261,10 @@ describe("registerIssuesListLinks", () => {
     });
   });
 
-  // 11. Outbound: target=testRunStepResults — R2 stepStatus, isDeleted PRESENT
-  // (Rule 1 deviation: schema.zmodel:2443 confirms TestRunStepResults DOES
-  // carry isDeleted; Phase 7 runs/shared.ts:151 already filters on it. The
-  // plan's claim that the column is absent is a factual error.)
-  it("outbound target=testRunStepResults → model=testRunStepResults, R2 stepStatus, isDeleted=false present", async () => {
+  // 11. Outbound: target=testRunStepResults — stepStatus, isDeleted PRESENT
+  // (schema.zmodel confirms TestRunStepResults DOES carry isDeleted;
+  // runs/shared.ts already filters on it.)
+  it("outbound target=testRunStepResults → model=testRunStepResults, stepStatus, isDeleted=false present", async () => {
     mockZenstack.mockResolvedValueOnce([
       {
         id: 60,
@@ -288,7 +287,7 @@ describe("registerIssuesListLinks", () => {
     expect(where.issues?.some?.id).toBe(42);
     expect(where.issues?.some?.isDeleted).toBe(false);
     const select = body?.select as Record<string, unknown>;
-    // R2: stepStatus relation, NOT status — Phase 7 invariant
+    // stepStatus relation, NOT status
     expect(select.stepStatus).toBeDefined();
     expect(select.status).toBeUndefined();
     const data = structured(result);
@@ -340,8 +339,7 @@ describe("registerIssuesListLinks", () => {
   });
 
   // 13. Inbound runStepResultId — schema HAS isDeleted, so filter is present
-  // (Rule 1 deviation: see Test 11 comment. Plan asserted absence; schema
-  // and Phase 7 prove presence.)
+  // (see the test 11 comment).
   it("inbound runStepResultId → model=issue, where.testRunStepResults.some carries isDeleted:false (schema reality)", async () => {
     mockZenstack.mockResolvedValueOnce([
       {
@@ -400,7 +398,7 @@ describe("registerIssuesListLinks", () => {
   });
 
   // 15. Soft-delete grep guard
-  it("NEVER calls delete or deleteMany (T-08-SOFT-DELETE invariant)", async () => {
+  it("NEVER calls delete or deleteMany", async () => {
     mockZenstack.mockResolvedValueOnce([]);
     const { client } = await setupClient();
     await client.callTool({

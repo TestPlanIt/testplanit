@@ -16,11 +16,11 @@ export interface IssuesFindByKeyDeps {
   env: EnvConfig;
 }
 
-// D8-04: hard cap on the multi-match probe. The schema constraint is only
+// hard cap on the multi-match probe. The schema constraint is only
 // @@unique([externalId, integrationId]); externalKey is NOT globally unique.
 // In practice 0–2 rows match a `(externalKey, externalSystem, projectId)`
 // tuple. Cap at 5 so a corrupt or pathological dataset can't fan out an
-// unbounded probe (T-08-DoS).
+// unbounded probe.
 const MULTI_MATCH_TAKE = 5;
 
 export function registerIssuesFindByKey(

@@ -33,7 +33,7 @@ const TESTCASES_INLINE_LIMIT = 50;
  *
  * Cases beyond the 50-cap are paginated via `testplanit_test_runs_cases_list`.
  * The include shape is `as const satisfies TestRunsInclude` — adding
- * an unknown column produces TS2353 at compile time (Phase 6 WR-09).
+ * an unknown column produces TS2353 at compile time.
  */
 export function runDetailInclude(runId: number) {
   return {
@@ -41,7 +41,7 @@ export function runDetailInclude(runId: number) {
     testCases: {
       // R1 (revised): exclude soft-removed run cases.
       where: { isDeleted: false },
-      // BL-04 deterministic ordering carried into the inline include.
+      // Deterministic ordering carried into the inline include.
       orderBy: [{ order: "asc" }, { id: "asc" }],
       take: TESTCASES_INLINE_LIMIT,
       include: runDetailTestCaseInclude(runId),
@@ -89,7 +89,7 @@ export function registerRunsGet(
           };
         }
 
-        // R3 — total summed from groupBy results in computeStatusRollup;
+        // total summed from groupBy results in computeStatusRollup;
         // never derived from a separate count call. Source splits on
         // testRunType: REGULAR counts TestRunCases.statusId; automated runs
         // count JUnitTestResult rows (attempts — web-UI semantics; their
@@ -101,7 +101,7 @@ export function registerRunsGet(
         const rollup = computeStatusRollup(groups, nameById);
 
         const testCases = (raw.testCases ?? []).map(mapRunDetailTestCase);
-        // D7-05: if the run has more cases than fit inline AND the inline
+        // if the run has more cases than fit inline AND the inline
         // page hit its cap, surface the last inline id as the cursor for
         // testplanit_test_runs_cases_list. For automated runs rollup.total
         // counts result attempts, not cases, so the cap check stands alone —

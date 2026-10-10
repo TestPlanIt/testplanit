@@ -152,7 +152,7 @@ describe("registerRunResultsList", () => {
     expect(where.isDeleted).toBe(false);
   });
 
-  it("filter: caseIds [EXEC-06 back-half]: where.testRunCase.repositoryCaseId.in", async () => {
+  it("filter: caseIds: where.testRunCase.repositoryCaseId.in", async () => {
     mockZenstack.mockResolvedValueOnce([]);
     const { client } = await setupClient();
     await client.callTool({
@@ -267,7 +267,7 @@ describe("registerRunResultsList", () => {
 
   // ── orderBy / determinism ────────────────────────────────────────────────
 
-  it("deterministic orderBy: [{executedAt:'desc'},{id:'desc'}] (D7-02 + BL-04)", async () => {
+  it("deterministic orderBy: [{executedAt:'desc'},{id:'desc'}]", async () => {
     mockZenstack.mockResolvedValueOnce([]);
     const { client } = await setupClient();
     await client.callTool({

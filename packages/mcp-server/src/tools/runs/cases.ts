@@ -57,7 +57,7 @@ export function registerRunsCasesList(
           // scope the JUnit half (JUnitTestResult reaches the run only via
           // testSuite.testRunId).
           include: runDetailTestCaseInclude(input.runId),
-          // BL-04 deterministic ordering. `order` is the user-facing sort
+          // Deterministic ordering. `order` is the user-facing sort
           // index; `id` breaks ties for cases inserted with the same order.
           orderBy: [{ order: "asc" }, { id: "asc" }],
           take: limit + 1,

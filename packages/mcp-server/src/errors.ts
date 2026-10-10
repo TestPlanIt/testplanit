@@ -8,7 +8,6 @@ import { TestPlanItHttpError } from "./http.js";
  * tool handlers control the agent-visible message verbatim — no SDK
  * stack-trace leakage and no opaque "An error occurred" wrappers.
  *
- * Reference: 05-RESEARCH.md § Don't Hand-Roll row "Tool error formatting".
  */
 export interface ToolErrorResult {
   isError: true;
@@ -21,11 +20,11 @@ export interface ToolErrorResult {
 
 /**
  * Friendly translations for every known errorCode emitted by
- * `lib/api-token-auth.ts` (host side, post plan 05-01).
+ * `lib/api-token-auth.ts` (host side).
  *
- * The READ_ONLY_TOKEN message is the T-05-01 mitigation surface — it MUST
+ * The READ_ONLY_TOKEN message is how agents learn their token is read-only — it MUST
  * name both the scope (`mode:read`) and the human concept (`read-only`) so
- * agents can self-correct when a Phase 6+ write tool returns 403.
+ * agents can self-correct when a write tool returns 403.
  */
 const ERROR_CODE_MESSAGES: Record<string, string> = {
   NO_TOKEN:
@@ -48,8 +47,8 @@ const ERROR_CODE_MESSAGES: Record<string, string> = {
 
 /**
  * Defense-in-depth scrub: redact any `tpi_<token>` substring that may have
- * leaked into an error message before we hand the text to the agent
- * (WR-03 / T-05-06b). The api.ts layer already avoids interpolating
+ * leaked into an error message before we hand the text to the agent.
+ * The api.ts layer already avoids interpolating
  * env.apiToken into messages, but a future regression — or a host echoing
  * a header verbatim — would otherwise leak through `mapHttpErrorToToolResult`.
  *
@@ -76,9 +75,9 @@ function redactTokens(text: string): string {
  *
  * The friendly templates are fixed strings, NOT echoes of `err.message`,
  * so a token-bearing message accidentally constructed upstream cannot leak
- * the raw token through this layer (T-05-06 defense in depth). The fallback
+ * the raw token through this layer. The fallback
  * paths DO interpolate `err.message`, so the final text is run through
- * `redactTokens` as a belt-and-suspenders scrub (WR-03).
+ * `redactTokens` as a belt-and-suspenders scrub.
  */
 export function mapHttpErrorToToolResult(err: unknown): ToolErrorResult {
   if (err instanceof TestPlanItHttpError) {

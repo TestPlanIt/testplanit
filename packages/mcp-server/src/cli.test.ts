@@ -97,7 +97,7 @@ describe("runServer", () => {
     expect(log.order.filter((s) => s === "connectImpl")).toHaveLength(1);
   });
 
-  it("invokes parse → validate → createServer → connect in strict serial order on a happy path (Pitfall 6)", async () => {
+  it("invokes parse → validate → createServer → connect in strict serial order on a happy path", async () => {
     const { deps, log } = makeDeps();
     await runServer(deps);
     expect(log.order).toEqual([
@@ -108,7 +108,7 @@ describe("runServer", () => {
     ]);
   });
 
-  it("does NOT call createServer when validateToken returns ok:false (Pitfall 6)", async () => {
+  it("does NOT call createServer when validateToken returns ok:false", async () => {
     const localOrder: string[] = [];
     const { deps, log } = makeDeps({
       validateImpl: async () => {
@@ -123,7 +123,7 @@ describe("runServer", () => {
     expect(log.order).not.toContain("connectImpl");
   });
 
-  it("never logs the raw token value in any errLog call (T-05-06)", async () => {
+  it("never logs the raw token value in any errLog call", async () => {
     const { deps, errLog } = makeDeps({
       validateImpl: async () => ({
         ok: false,

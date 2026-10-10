@@ -178,7 +178,7 @@ describe("registerSessionsGet", () => {
     }
   });
 
-  // ── Truncation marker (D7-12) ────────────────────────────────────────────
+  // ── Truncation marker ────────────────────────────────────────────
 
   it("truncated false when sessionResults <= 100 (50 inline)", async () => {
     const sessionResults = Array.from({ length: 50 }, (_, i) =>
@@ -373,7 +373,7 @@ describe("registerSessionsGet", () => {
 
   // ── Wire-shape: include sent to zenstack carries take:101 ────────────────
 
-  it("wire shape: include.sessionResults.take === 101 (D7-12 verification)", async () => {
+  it("wire shape: include.sessionResults.take === 101", async () => {
     mockZenstack.mockResolvedValueOnce(makeRawSessionDetail());
     const { client } = await setupClient();
     await client.callTool({

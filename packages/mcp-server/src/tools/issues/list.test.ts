@@ -190,7 +190,7 @@ describe("registerIssuesList", () => {
 
   // ── soft-delete grep guard ──────────────────────────────────────────────
 
-  it("NEVER calls delete or deleteMany (T-08-SOFT-DELETE invariant)", async () => {
+  it("NEVER calls delete or deleteMany", async () => {
     mockZenstack.mockResolvedValueOnce([makeRawIssue(1)]);
     const { client } = await setupClient();
     await client.callTool({

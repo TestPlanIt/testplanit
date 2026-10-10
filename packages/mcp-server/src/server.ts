@@ -8,9 +8,9 @@ import { registerAll } from "./tools/index.js";
  * `createServer`.
  *
  * `user` is the `WhoamiUser` resolved by the bootstrap probe; it is
- * intentionally retained on the deps contract even though Phase 5's
+ * intentionally retained on the deps contract even though the
  * production tools (`whoami`) re-fetch live data on every call. Future
- * tools may use `user` for static-shape decisions (e.g., gating Phase 6+
+ * tools may use `user` for static-shape decisions (e.g., gating
  * write tools on `!user.readOnly` at registration time).
  */
 export interface ServerDeps {
@@ -21,11 +21,9 @@ export interface ServerDeps {
 /**
  * Create an MCP server instance for TestPlanIt.
  *
- * Plan 05-06 registered a placeholder smoke tool so the
- * `InMemoryTransport` handshake test had something to find. Plan 05-07
- * replaces that with the production `whoami` tool, registered through the
- * central `registerAll` registry — Phase 6+ tools plug into the registry
- * without further edits to this file.
+ * The production `whoami` tool is registered through the central
+ * `registerAll` registry — new tools plug into the registry without
+ * further edits to this file.
  */
 export function createServer(deps: ServerDeps): McpServer {
   const server = new McpServer({

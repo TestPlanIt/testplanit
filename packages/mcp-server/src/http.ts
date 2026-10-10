@@ -2,7 +2,7 @@ import type { EnvConfig } from "./env.js";
 
 /**
  * Response shape from `GET /api/auth/whoami` — locked in lockstep with
- * plan 05-02. Field semantics (frozen contract):
+ * the CLI. Field semantics (frozen contract):
  *  - `readOnly === scopes.includes("mode:read")`
  *  - `isAgent  === scopes.includes("client:mcp")`
  */
@@ -20,10 +20,10 @@ export interface WhoamiUser {
  *
  * The failure variant carries `code` (upstream errorCode such as
  * `READ_ONLY_TOKEN`, `EXPIRED_TOKEN`) and `statusCode` (HTTP status) so
- * downstream tools — plan 05-07's `whoami` and Phase 6+ write tools —
+ * downstream tools — `whoami` and the write tools —
  * can construct `TestPlanItHttpError` without re-parsing the message
- * string. This shape is locked at plan 05-06 and consumed directly by
- * plan 05-07; do NOT widen retroactively.
+ * string. This shape is locked and consumed directly by
+ * `whoami`; do NOT widen retroactively.
  */
 export type ValidateResult =
   | { ok: true; user: WhoamiUser }
@@ -31,7 +31,7 @@ export type ValidateResult =
 
 /**
  * Error class carrying upstream HTTP status + errorCode for tool handlers.
- * Plan 05-07 throws this from the `whoami` tool when validateToken returns
+ * The `whoami` tool throws this when validateToken returns
  * `ok: false` so the MCP error mapping retains the upstream codes.
  */
 export class TestPlanItHttpError extends Error {
@@ -50,7 +50,7 @@ export class TestPlanItHttpError extends Error {
 
 /**
  * Returns at most the `tpi_xxxx`-style 8-character prefix of the token for
- * safe diagnostics. Never returns the full token. T-05-06 mitigation.
+ * safe diagnostics. Never returns the full token.
  */
 export function redactToken(token: string): string {
   return token.slice(0, 8) + "...";
@@ -64,7 +64,7 @@ const TIMEOUT_MS = 10000;
  * Returns `{ ok: true, user }` on a 200 response with a valid JSON body.
  * Returns `{ ok: false, message, code?, statusCode? }` on any non-2xx,
  * unparseable body, or transport failure. The error message NEVER contains
- * the raw token — only the redacted prefix appears (T-05-06).
+ * the raw token — only the redacted prefix appears.
  */
 export async function validateToken(
   env: EnvConfig,

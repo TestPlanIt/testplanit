@@ -204,7 +204,7 @@ describe("denormalizeCustomFields", () => {
     expect(denormalizeCustomFields(rows)).toEqual({ Priority: 999 });
   });
 
-  it("WR-06: Dropdown with non-integer numeric value (147.5) does NOT misroute to FieldOption 147", () => {
+  it("Dropdown with non-integer numeric value (147.5) does NOT misroute to FieldOption 147", () => {
     const rows = [
       {
         value: 147.5,
@@ -220,7 +220,7 @@ describe("denormalizeCustomFields", () => {
     expect(denormalizeCustomFields(rows)).toEqual({ Priority: 147.5 });
   });
 
-  it("WR-06: Dropdown with negative or zero numeric value falls back to raw", () => {
+  it("Dropdown with negative or zero numeric value falls back to raw", () => {
     const rows = [
       {
         value: -1,
@@ -356,7 +356,7 @@ describe("mapCaseRow", () => {
     ],
   };
 
-  it("returns the D-09 shape with correct field mapping (Phase-8 widened: + lastUpdatedAt + latestResult)", () => {
+  it("returns the case row shape with correct field mapping", () => {
     const result = mapCaseRow(rawRow);
     expect(result).toEqual({
       id: 101,
@@ -372,7 +372,7 @@ describe("mapCaseRow", () => {
         { id: 1, name: "smoke" },
         { id: 2, name: "auth" },
       ],
-      // Phase-8 D8-02 additive fields. The Phase-6 rawRow fixture
+      // Additive fields. The rawRow fixture
       // doesn't seed repositoryCaseVersions / junitResults / testRuns,
       // so both new fields default to null per the optional-include
       // contract documented on RawCaseRow.
@@ -437,7 +437,7 @@ describe("mapCaseRow", () => {
     expect(miss.folder).toEqual({ id: 12, name: "Auth" });
   });
 
-  it("WR-04: folder is required (schema invariant — folderId is non-nullable)", () => {
+  it("folder is required (schema invariant — folderId is non-nullable)", () => {
     // The schema makes folderId non-nullable; mapCaseRow trusts this and
     // dereferences raw.folder directly. A future schema change that
     // relaxes the constraint would surface here as a TypeError, which is
@@ -517,7 +517,7 @@ describe("mapCaseDetail", () => {
     { id: 12, name: "Auth" },
   ];
 
-  it("returns D-10 full detail shape with breadcrumb, steps, custom fields, issues, linked automated tests", () => {
+  it("returns the full detail shape with breadcrumb, steps, custom fields, issues, linked automated tests", () => {
     const result = mapCaseDetail(rawDetail, breadcrumb);
 
     // Base row fields
@@ -549,7 +549,7 @@ describe("mapCaseDetail", () => {
   });
 });
 
-// ── lastUpdatedAtFromRaw (Phase 8 / D8-02) ─────────────────────────────────
+// ── lastUpdatedAtFromRaw ─────────────────────────────────
 
 describe("lastUpdatedAtFromRaw", () => {
   it("returns repositoryCaseVersions[0].createdAt when present", () => {
@@ -570,7 +570,7 @@ describe("lastUpdatedAtFromRaw", () => {
   });
 });
 
-// ── resolveLatestResult (Phase 8 / D8-02) ──────────────────────────────────
+// ── resolveLatestResult ──────────────────────────────────
 
 describe("resolveLatestResult", () => {
   const junitStatus = { id: 5, name: "Passed" };
@@ -635,9 +635,9 @@ describe("resolveLatestResult", () => {
   });
 });
 
-// ── mapCaseRow Phase-8 extensions ──────────────────────────────────────────
+// ── mapCaseRow extensions ──────────────────────────────────────────
 
-describe("mapCaseRow Phase-8 extensions", () => {
+describe("mapCaseRow extensions", () => {
   function makeRow(overrides: Record<string, unknown> = {}) {
     return {
       id: 101,
@@ -745,9 +745,9 @@ describe("mapCaseRow Phase-8 extensions", () => {
   });
 });
 
-// ── mapCaseDetail Phase-8 codeRepository extension (D8-02) ─────────────────
+// ── mapCaseDetail codeRepository extension ─────────────────
 
-describe("mapCaseDetail Phase-8 codeRepository extension", () => {
+describe("mapCaseDetail codeRepository extension", () => {
   function makeDetail(overrides: Record<string, unknown> = {}) {
     return {
       id: 101,

@@ -258,7 +258,7 @@ describe("lookup()", () => {
     );
   });
 
-  it("WR-08: lookup non-2xx surfaces the host-side error message in TestPlanItHttpError", async () => {
+  it("lookup non-2xx surfaces the host-side error message in TestPlanItHttpError", async () => {
     fetchMock.mockResolvedValueOnce(
       jsonResponse(400, {
         error: { message: "tag name length exceeds limit", code: "VALIDATION" },
@@ -279,7 +279,7 @@ describe("lookup()", () => {
     });
   });
 
-  it("WR-08: lookup non-2xx with string error envelope still surfaces the message", async () => {
+  it("lookup non-2xx with string error envelope still surfaces the message", async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse(422, { error: "invalid type" }));
     await expect(lookup({ type: "tag", name: "x" }, ENV)).rejects.toSatisfy(
       (err: unknown) => {
@@ -439,7 +439,7 @@ describe("resolveDefaultTemplate()", () => {
     expect(result).toBe(5);
   });
 
-  it("BL-04: prefers the Default template, then id asc (take 1), so concurrent calls pick the same template", async () => {
+  it("prefers the Default template, then id asc (take 1), so concurrent calls pick the same template", async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse(200, { data: [{ id: 5 }] }));
     await resolveDefaultTemplate(7, ENV);
     const call = fetchMock.mock.calls[0];

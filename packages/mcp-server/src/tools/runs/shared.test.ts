@@ -37,7 +37,7 @@ beforeEach(() => {
 // ── computeStatusRollup ────────────────────────────────────────────────────
 
 describe("computeStatusRollup", () => {
-  it("R3: counts sum to total — total computed from groups, not a separate count call", () => {
+  it("counts sum to total — total computed from groups, not a separate count call", () => {
     const groups = [
       { statusId: 1, _count: { id: 10 } },
       { statusId: 2, _count: { id: 3 } },
@@ -56,7 +56,7 @@ describe("computeStatusRollup", () => {
       untested: 5,
       total: 18,
     });
-    // Critical: total === sum of group counts (R3)
+    // Critical: total === sum of group counts
     expect(result.total).toBe(groups.reduce((s, g) => s + g._count.id, 0));
   });
 
@@ -318,7 +318,7 @@ describe("mapRunRow", () => {
     ],
   };
 
-  it("D7-06: enumerates exactly the documented keys (no extra fields, T-07-03 mitigation)", () => {
+  it("enumerates exactly the documented keys (no extra fields)", () => {
     const result = mapRunRow(baseRaw);
     const keys = Object.keys(result).sort();
     expect(keys).toEqual(
@@ -429,7 +429,7 @@ describe("mapStepResult", () => {
     ],
   });
 
-  it("R2 / Pitfall 2: reads from raw.stepStatus, NOT raw.status", () => {
+  it("reads from raw.stepStatus, NOT raw.status", () => {
     const raw = {
       id: 1,
       statusId: 5,
@@ -447,7 +447,7 @@ describe("mapStepResult", () => {
     expect(result.status).toEqual({ id: 5, name: "Failed" });
   });
 
-  it("R2: a raw row with raw.status set but raw.stepStatus undefined → output status is null", () => {
+  it("a raw row with raw.status set but raw.stepStatus undefined → output status is null", () => {
     const raw = {
       id: 1,
       statusId: 5,
@@ -490,7 +490,7 @@ describe("mapStepResult", () => {
     expect(result.notes).toBe("My notes");
   });
 
-  it("D7-08: evidence Json passes through as-is (no truncation)", () => {
+  it("evidence Json passes through as-is (no truncation)", () => {
     const evidence = { url: "x", note: "y", screenshots: ["a", "b"] };
     const raw = {
       id: 1,

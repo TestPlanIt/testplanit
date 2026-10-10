@@ -11,13 +11,13 @@ import { proseMirrorToMarkdown } from "../../richText.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Typed includes — every literal carries `as const satisfies Prisma.<Model><Include|Select>`.
-// Reintroducing an unknown column produces TS2353 (Phase 6 WR-09 invariant).
+// Reintroducing an unknown column produces TS2353.
 //
 // CRITICAL invariants:
-//   R4 — SessionResults has NO `testCaseId` FK; sessions are exploratory and
+//   SessionResults has NO `testCaseId` FK; sessions are exploratory and
 //        not case-linked. Filtering by testCaseId is impossible and any
 //        attempt to do so trips SessionResultsWhereInput's TS2353.
-//   D7-12 — sessions inline up to 100 sessionResults; cap take at 101 so the
+//   sessions inline up to 100 sessionResults; cap take at 101 so the
 //        tool layer can detect overflow and surface truncated:true.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -35,11 +35,11 @@ export const SESSION_ROW_INCLUDE = {
   tags: { select: { id: true, name: true } },
 } as const satisfies SessionsInclude;
 
-// SESS-02 full include — sessionFieldValues use `field.type.type` +
+// Full session include — sessionFieldValues use `field.type.type` +
 // `field.fieldOptions[].fieldOption` shape identical to caseFieldValues
 // (SessionFieldValues.fieldId points to CaseFields per schema.zmodel:2132,
 // not a separate SessionFields model). sessionResults capped at take:101
-// so the tool can detect overflow per D7-12.
+// so the tool can detect overflow.
 export const SESSION_DETAIL_INCLUDE = {
   project: { select: { id: true, name: true } },
   state: { select: { id: true, name: true } },
@@ -64,7 +64,7 @@ export const SESSION_DETAIL_INCLUDE = {
   sessionResults: {
     where: { isDeleted: false },
     orderBy: [{ createdAt: "asc" }, { id: "asc" }],
-    take: 101, // D7-12 cap — tool layer detects overflow when length > 100
+    take: 101, // cap — tool layer detects overflow when length > 100
     select: {
       id: true,
       createdAt: true,
@@ -129,7 +129,7 @@ export const SESSION_RESULT_DETAIL_INCLUDE = {
   },
 } as const satisfies SessionResultsInclude;
 
-// FINDING_INCLUDE — for SESS-05 sessionId mode; per-Issue row shape
+// FINDING_INCLUDE — for sessionId mode; per-Issue row shape
 export const FINDING_INCLUDE = {
   integration: { select: { provider: true } },
 } as const satisfies IssueInclude;
@@ -151,12 +151,12 @@ interface RawResultFieldValueRow {
 
 /**
  * Convert raw `resultFieldValues` rows into the flat `{ <displayName>: value }`
- * dict per D-08. Delegates to the Phase 6 `denormalizeCustomFields` helper:
+ * dict. Delegates to the shared `denormalizeCustomFields` helper:
  * ResultFields and CaseFields surface the same nested option-resolution shape
  * on read (`field.displayName / field.type.type / field.fieldOptions[].fieldOption`),
  * even though the join tables differ (`ResultFieldAssignment` vs.
- * `CaseFieldAssignment`). Verified A3 — both shapes match exactly at the
- * include level used here.
+ * `CaseFieldAssignment`). Both shapes match exactly at the include level
+ * used here.
  */
 export function denormalizeResultFieldValues(
   rows: RawResultFieldValueRow[] | null | undefined,
@@ -165,7 +165,7 @@ export function denormalizeResultFieldValues(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Mappers — every output field enumerated explicitly (T-07-03 mitigation)
+// Mappers — every output field enumerated explicitly
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface RawIssue {

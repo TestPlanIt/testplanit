@@ -36,7 +36,7 @@ function bearerHeaders(env: EnvConfig): Record<string, string> {
  * Internal ZenStack RPC client.
  *
  * Replicates the dispatch pattern from `packages/api/src/client.ts` so
- * `@testplanit/mcp-server` has NO dependency on `@testplanit/api` (D-01).
+ * `@testplanit/mcp-server` has NO dependency on `@testplanit/api`.
  *
  * Read operations use GET with `?q=encodeURIComponent(JSON.stringify(body))`.
  * Create/update operations use POST/PATCH with the JSON body; delete
@@ -51,7 +51,7 @@ function bearerHeaders(env: EnvConfig): Record<string, string> {
  *  - 2xx with `data` → returns `data` unwrapped.
  *
  * Soft-delete invariant: callers MUST use `update` with `{ data: { isDeleted: true } }`
- * for soft-delete, NEVER the `delete` or `deleteMany` operations (T-06-06).
+ * for soft-delete, NEVER the `delete` or `deleteMany` operations.
  */
 export async function zenstack<T>(
   model: string,
@@ -125,7 +125,7 @@ export async function zenstack<T>(
     } catch {
       // body is not JSON; code stays undefined
     }
-    // NEVER include the bearer token in error messages (T-06-05 / T-05-06b).
+    // NEVER include the bearer token in error messages.
     // We refer to the path + status only — no env.apiToken interpolation.
     throw new TestPlanItHttpError(
       `HTTP ${response.status} from /api/model/${model}/${operation}${parsedMessage ? `: ${parsedMessage}` : ""}`,
@@ -165,7 +165,7 @@ export async function zenstack<T>(
  * report failures the same way, so the error parsing here mirrors
  * `zenstack()`'s exactly — a `READ_ONLY_TOKEN` 403 or a validation message
  * reaches the agent with its `code` intact, and the bearer token never
- * appears in an error string (T-06-05 / T-05-06b).
+ * appears in an error string.
  */
 export async function postHostJson<T>(
   path: string,
@@ -290,7 +290,7 @@ export async function resolveIssueKeys(
 }
 
 /**
- * Name → ID lookup via `/api/cli/lookup` (D-02).
+ * Name → ID lookup via `/api/cli/lookup`.
  *
  * NOT all entity types are supported — see VERIFIED type union below. Notably,
  * `CaseField` is NOT a lookup type; resolve custom fields via
@@ -334,7 +334,7 @@ export async function lookup(
   });
   const text = await response.text();
   if (!response.ok) {
-    // WR-08: mirror the zenstack() error parser so a host-side
+    // mirror the zenstack() error parser so a host-side
     // validation message ("tag name length exceeds limit") reaches the
     // agent instead of a generic `HTTP 400 from /api/cli/lookup`.
     let code: string | undefined;
@@ -353,7 +353,7 @@ export async function lookup(
     } catch {
       // body is not JSON; leave parsedMessage / code undefined
     }
-    // T-06-05 / T-05-06b: NEVER include the bearer token in error
+    // NEVER include the bearer token in error
     // messages — we only echo the parsed envelope `message`, never the
     // raw body or env.apiToken.
     throw new TestPlanItHttpError(
@@ -437,7 +437,7 @@ export async function generateQuickScript(
     } catch {
       // body is not JSON; leave parsedMessage / code undefined
     }
-    // T-06-05 / T-05-06b: NEVER include the bearer token in error messages.
+    // NEVER include the bearer token in error messages.
     throw new TestPlanItHttpError(
       `HTTP ${response.status} from /api/export/quickscript${parsedMessage ? `: ${parsedMessage}` : ""}`,
       { statusCode: response.status, code },
@@ -515,7 +515,7 @@ export async function createCaseVersion(
     const hint = hostTooOld
       ? " — this TestPlanIt host cannot record case versions for API clients. Upgrade the host, or pin an @testplanit/mcp-server matching it."
       : "";
-    // T-06-05 / T-05-06b: NEVER include the bearer token in error messages.
+    // NEVER include the bearer token in error messages.
     throw new TestPlanItHttpError(
       `HTTP ${response.status} from ${path}${parsedMessage ? `: ${parsedMessage}` : ""}${hint}`,
       { statusCode: response.status, code },

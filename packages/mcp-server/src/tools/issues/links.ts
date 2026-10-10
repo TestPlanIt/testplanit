@@ -36,9 +36,9 @@ interface OutboundDescriptor {
 // All 6 outbound targets carry `isDeleted` in their schema (verified against
 // schema.zmodel: RepositoryCases, Sessions, SessionResults, TestRuns,
 // TestRunResults, TestRunStepResults all declare `isDeleted Boolean`). We
-// filter consistently. R2: TestRunStepResults uses the `stepStatus` relation
+// filter consistently. TestRunStepResults uses the `stepStatus` relation
 // to Status (NOT `status`); reintroducing `status: true` would TS2353 against
-// Prisma.TestRunStepResultsSelect (Phase 7 invariant).
+// Prisma.TestRunStepResultsSelect.
 const OUTBOUND_MAP: Record<Target, OutboundDescriptor> = {
   cases: {
     model: "repositoryCases",
@@ -121,8 +121,8 @@ const OUTBOUND_MAP: Record<Target, OutboundDescriptor> = {
     }),
   },
   testRunStepResults: {
-    // R2: relation to Status is named `stepStatus` (NOT `status`) per
-    // schema.zmodel:2437 — Phase 7 runs/shared.ts:79 already established
+    // relation to Status is named `stepStatus` (NOT `status`) per
+    // schema.zmodel — runs/shared.ts already established
     // this. TestRunStepResults DOES carry isDeleted (schema.zmodel:2443),
     // so we filter consistently with the other 5 targets.
     model: "testRunStepResults",
@@ -179,7 +179,7 @@ export function registerIssuesListLinks(
     },
     async (input) => {
       try {
-        // Symmetric XOR validation per D7-11 — raw-shape inputSchema doesn't
+        // Symmetric XOR validation — raw-shape inputSchema doesn't
         // compose with zod refine, so the gate lives in the handler.
         const inboundEntries: Array<[string, number]> = [];
         for (const key of Object.keys(INBOUND_KEY_TO_RELATION)) {

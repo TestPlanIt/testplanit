@@ -6,13 +6,13 @@ import { proseMirrorToMarkdown } from "../../richText.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Typed includes — every literal carries `as const satisfies IssueInclude`.
-// Adding an unknown column produces TS2353 at compile time (Phase 6 WR-09).
+// Adding an unknown column produces TS2353 at compile time.
 //
-// Pitfall 7 (Phase 6 retrofit): `externalSystem` is NOT a column on Issue —
+// `externalSystem` is NOT a column on Issue —
 // it is derived from `integration.provider` at the mapper boundary. Reintroducing
 // the externalSystem column in the select trips IssueSelect's TS2353 wall.
 //
-// D8-06 / D7-12: each linked-array include declares `take: 101` so the get
+// each linked-array include declares `take: 101` so the get
 // handler can detect overflow and stamp `truncated.<key>: true`. The cap is
 // expressed as `LINKED_ARRAYS_INLINE_CAP_PLUS_ONE` so the +1 is intentional,
 // not a magic number.

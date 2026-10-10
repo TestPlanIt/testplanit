@@ -193,7 +193,7 @@ describe("registerIssuesFindByKey", () => {
 
   // ── mapper resolves externalSystem ──────────────────────────────────────
 
-  it("mapper resolves externalSystem from integration.provider (Pitfall 7)", async () => {
+  it("mapper resolves externalSystem from integration.provider", async () => {
     mockZenstack.mockResolvedValueOnce([
       makeRawIssue(1, {
         integration: { id: 11, name: "GH", provider: "GITHUB" },
@@ -215,7 +215,7 @@ describe("registerIssuesFindByKey", () => {
 
   // ── soft-delete invariant grep guard ────────────────────────────────────
 
-  it("NEVER calls delete or deleteMany (T-08-SOFT-DELETE invariant)", async () => {
+  it("NEVER calls delete or deleteMany", async () => {
     mockZenstack.mockResolvedValueOnce([makeRawIssue(1)]);
     const { client } = await setupClient();
     await client.callTool({

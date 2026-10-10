@@ -19,7 +19,7 @@ const CASE_DELETE_SELECT = {
 /**
  * Soft-delete a test case.
  *
- * Implementation invariant (T-06-06): this handler ONLY uses
+ * Implementation invariant: this handler ONLY uses
  * `zenstack("repositoryCases", "update", { data: { isDeleted: true } })`.
  * The ZenStack `delete` and `deleteMany` operations are NEVER invoked — the
  * soft-delete invariant is enforced at the package layer as defense in depth

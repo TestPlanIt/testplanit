@@ -323,7 +323,7 @@ describe("registerCasesList", () => {
     expect(textContent.text).toContain("422");
   });
 
-  it("D7-03: issueId filter — happy path; where.caseIssues = { some: { issue: { id, isDeleted: false } } }", async () => {
+  it("issueId filter — happy path; where.caseIssues = { some: { issue: { id, isDeleted: false } } }", async () => {
     mockZenstack.mockResolvedValueOnce([makeRawRow({}, 1)]);
     const { client } = await setupClient();
     await client.callTool({
@@ -341,7 +341,7 @@ describe("registerCasesList", () => {
     });
   });
 
-  it("D7-03: issueId filter coexists with folderId / tagIds / name / stateId / customField", async () => {
+  it("issueId filter coexists with folderId / tagIds / name / stateId / customField", async () => {
     mockZenstack.mockResolvedValueOnce([]);
     const { client } = await setupClient();
     await client.callTool({
@@ -371,7 +371,7 @@ describe("registerCasesList", () => {
     });
   });
 
-  it("D7-03: issueId rejects 0 / negative / non-integer values via zod", async () => {
+  it("issueId rejects 0 / negative / non-integer values via zod", async () => {
     const { client } = await setupClient();
     const zero = await client.callTool({
       name: "testplanit_cases_list",
@@ -410,9 +410,9 @@ describe("registerCasesList", () => {
     expect(tool?.description).toMatch(/^List test cases/);
   });
 
-  // ── Phase 8 (D8-02) maintenance filters + new row fields ─────────────────
+  // ── maintenance filters + new row fields ─────────────────
 
-  // Helper: build a Phase-8-shaped raw row with the new sub-include fields.
+  // Helper: build a raw row with the new sub-include fields.
   function makeRawRowP8(
     overrides: Record<string, unknown> = {},
     id = 1,
@@ -542,7 +542,7 @@ describe("registerCasesList", () => {
     expect(versions.some.createdAt.lte).toBeInstanceOf(Date);
   });
 
-  it("CASE_ROW_INCLUDE: sub-includes carry deterministic orderBy (Pitfall 5 / MED-02)", async () => {
+  it("CASE_ROW_INCLUDE: sub-includes carry deterministic orderBy", async () => {
     mockZenstack.mockResolvedValueOnce([]);
     const { client } = await setupClient();
     await client.callTool({
@@ -723,7 +723,7 @@ describe("registerCasesList", () => {
     expect(structured.truncated).toBeUndefined();
   });
 
-  it("Phase-8 row mapper: items carry lastUpdatedAt + latestResult", async () => {
+  it("row mapper: items carry lastUpdatedAt + latestResult", async () => {
     const row = makeRawRowP8(
       {
         repositoryCaseVersions: [
@@ -757,12 +757,12 @@ describe("registerCasesList", () => {
     });
   });
 
-  // MED-03 invariant: cases/list.ts uses Prisma.RepositoryCasesWhereInput;
+  // cases/list.ts uses Prisma.RepositoryCasesWhereInput;
   // reintroducing Record<string, unknown> would TS2353 the new
   // automated/source filters at compile time. Verified by `pnpm typecheck`
   // against the source file (no runtime test possible without a fixture
   // that exercises the type system at the call site).
-  it("MED-03 typed-where guard: automated rejects non-boolean via zod", async () => {
+  it("automated rejects non-boolean via zod", async () => {
     const { client } = await setupClient();
     const result = await client.callTool({
       name: "testplanit_cases_list",

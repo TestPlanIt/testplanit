@@ -16,7 +16,7 @@ import { proseMirrorToMarkdown } from "../../richText.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Typed includes — every literal carries `as const satisfies Prisma.<Model><Include|Select>`.
-// Reintroducing an unknown column produces TS2353 (Phase 6 WR-09 invariant).
+// Reintroducing an unknown column produces TS2353.
 //
 // CRITICAL invariants:
 //   R1 (REVISED) — TestRunCases HAS `isDeleted` now (added with the run-case
@@ -24,10 +24,10 @@ import { proseMirrorToMarkdown } from "../../richText.js";
 //        `isDeleted: false` in every TestRunCases list/count/groupBy, matching
 //        the web UI (lib/services/testRunSummary.ts). JUnitTestResult /
 //        JUnitTestSuite still have NO isDeleted (Cascade deletes only).
-//   R2 — TestRunStepResults relation to Status is named `stepStatus` (NOT `status`).
-//   R3 — Status rollup total is summed FROM groupBy results, never from a
+//   TestRunStepResults relation to Status is named `stepStatus` (NOT `status`).
+//   Status rollup total is summed FROM groupBy results, never from a
 //        separate count call (counts must always sum to total).
-//   D7-02 — "latest result per case" = `executedAt` desc, take 1.
+//   "latest result per case" = `executedAt` desc, take 1.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const RUN_ROW_INCLUDE = {
@@ -49,7 +49,7 @@ export const RUN_ROW_INCLUDE = {
   },
 } as const satisfies TestRunsInclude;
 
-// EXEC-02 / EXEC-03 inline test-case shape (latest result via take:1 nested include).
+// Inline test-case shape (latest result via take:1 nested include).
 // A function (not a constant) because the JUnit half of the latestResult union
 // must be scoped to THIS run: JUnitTestResult has no testRunCaseId — it hangs
 // off repositoryCaseId and reaches the run only via testSuite.testRunId, so the
@@ -84,7 +84,7 @@ export function runDetailTestCaseInclude(runId: number) {
     status: { select: { id: true, name: true } },
     results: {
       where: { isDeleted: false },
-      orderBy: { executedAt: "desc" }, // D7-02 — matches @@index([testRunCaseId, executedAt(sort: Desc)])
+      orderBy: { executedAt: "desc" }, // matches @@index([testRunCaseId, executedAt(sort: Desc)])
       take: 1,
       select: {
         id: true,
@@ -97,7 +97,7 @@ export function runDetailTestCaseInclude(runId: number) {
   } as const satisfies TestRunCasesInclude;
 }
 
-// EXEC-04 list rows
+// List rows
 export const RUN_RESULT_LIST_INCLUDE = {
   status: { select: { id: true, name: true } },
   executedBy: { select: { id: true, name: true, email: true } },
@@ -142,7 +142,7 @@ export const JUNIT_RESULT_DETAIL_INCLUDE = {
   },
 } as const satisfies JUnitTestResultInclude;
 
-// EXEC-05 step-result shape — R2: relation field on TestRunStepResults is
+// Step-result shape — the relation field on TestRunStepResults is
 // `stepStatus` NOT `status` (schema.zmodel:2437). Reintroducing `status` here
 // produces TS2353 against TestRunStepResultsSelect.
 export const STEP_RESULT_SELECT = {
@@ -150,7 +150,7 @@ export const STEP_RESULT_SELECT = {
   statusId: true,
   stepStatus: { select: { id: true, name: true } },
   notes: true, // Json? -> proseMirrorToMarkdown
-  evidence: true, // Json? -> as-is per D7-08
+  evidence: true, // Json? -> as-is
   executedAt: true,
   elapsed: true,
   step: {
@@ -221,14 +221,14 @@ export const RUN_RESULT_DETAIL_INCLUDE = {
     // R5 fallback: nested-relation orderBy (`step: { order: 'asc' }`) generates
     // the broken `TestRunStepResults$orderBy$0` alias under ZenStack v3. `stepId`
     // ordering approximates step order (steps are created sequentially) and the
-    // `id` tiebreaker keeps it deterministic (BL-04 invariant from Phase 6).
+    // `id` tiebreaker keeps it deterministic.
     orderBy: [{ stepId: "asc" }, { id: "asc" }],
     select: STEP_RESULT_SELECT,
   },
 } as const satisfies TestRunResultsInclude;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Status rollup (D7-04 statusCounts shape; R3 — total computed FROM groups)
+// Status rollup
 //
 // TWO rollup sources, keyed on TestRuns.testRunType:
 //   REGULAR   → groupBy TestRunCases.statusId (manual execution state).
@@ -270,7 +270,7 @@ export function computeStatusRollup(
   nameById: Map<number, string>,
 ): StatusRollup {
   const untested = groups.find((g) => g.statusId === null)?._count.id ?? 0;
-  // R3: total summed from groups, NEVER a separate count call. Splitting these
+  // total summed from groups, NEVER a separate count call. Splitting these
   // two queries (rollup + count) lets them disagree on race; keep the source
   // of truth as the groupBy result.
   const total = groups.reduce((s, g) => s + g._count.id, 0);
@@ -375,7 +375,7 @@ export async function extractJunitStatusNames(
 /**
  * Batched JUnit rollup for the runs LIST page: one JUnitTestSuite.findMany
  * (suite id → run id) + one JUnitTestResult.groupBy across every suite —
- * never a per-run call (D7-06 stays two calls per source, not N).
+ * never a per-run call.
  * groupBy can only key on JUnitTestResult's own scalars and the run id lives
  * on the suite, so the suite lookup is what re-attaches groups to runs.
  * Returns per-run StatusGroups with per-status counts summed across suites.
@@ -436,9 +436,9 @@ export async function extractJunitStatusGroupsByRun(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Mappers — every output field enumerated explicitly (T-07-03 mitigation:
-// never `...spread` raw rows; the include shape and the mapper output must
-// stay in sync explicitly so a schema drift can't leak new columns).
+// Mappers — every output field enumerated explicitly (never `...spread`
+// raw rows; the include shape and the mapper output must stay in sync
+// explicitly so a schema drift can't leak new columns).
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface RawIssue {
@@ -494,7 +494,7 @@ export function mapRunRow(raw: RawRunRow) {
     isCompleted: raw.isCompleted,
     completedAt: raw.completedAt ?? null,
     createdAt: raw.createdAt,
-    testRunType: raw.testRunType, // surface enum verbatim (RESEARCH discretion 5)
+    testRunType: raw.testRunType, // surface enum verbatim
     project: raw.project
       ? { id: raw.project.id, name: raw.project.name }
       : null,
@@ -888,7 +888,7 @@ export function mergeResultsPage<TR extends MergeEntry, JU extends MergeEntry>(
 export interface RawStepResult {
   id: number;
   statusId: number;
-  // R2: relation name is `stepStatus` (NOT `status`). Output uses `status` for
+  // relation name is `stepStatus` (NOT `status`). Output uses `status` for
   // agent friendliness, but input source is raw.stepStatus.
   stepStatus: { id: number; name: string } | null;
   notes: unknown;
@@ -916,7 +916,7 @@ export function mapStepResult(raw: RawStepResult) {
     stepText: proseMirrorToMarkdown(raw.step?.step),
     expectedResultText: proseMirrorToMarkdown(raw.step?.expectedResult),
     notes: proseMirrorToMarkdown(raw.notes),
-    evidence: raw.evidence, // D7-08 — surface as-is, no truncation
+    evidence: raw.evidence, // surface as-is, no truncation
     executedAt: raw.executedAt,
     elapsed: raw.elapsed ?? null,
     attachments: (raw.attachments ?? []).map(mapAttachment),
@@ -955,7 +955,7 @@ export function mapRunResultDetail(raw: RawRunResultDetail) {
     editedAt: raw.editedAt,
     elapsed: raw.elapsed ?? null,
     notes: proseMirrorToMarkdown(raw.notes),
-    evidence: raw.evidence, // D7-08
+    evidence: raw.evidence,
     status: raw.status ? { id: raw.status.id, name: raw.status.name } : null,
     executedBy: raw.executedBy
       ? {
@@ -991,8 +991,8 @@ export function mapRunResultDetail(raw: RawRunResultDetail) {
         }
       : null,
     // ResultFieldValues input shape matches CaseFieldValues input shape — both
-    // surface `field.displayName / field.type.type / field.fieldOptions[].fieldOption`
-    // (A3 verified in Phase 7 RESEARCH). We delegate to the Phase 6 helper to
+    // surface `field.displayName / field.type.type / field.fieldOptions[].fieldOption`.
+    // We delegate to the shared `denormalizeCustomFields` helper to
     // keep the option-id resolution path identical.
     customFields: denormalizeCustomFields(raw.resultFieldValues as never),
     stepResults: (raw.stepResults ?? []).map(mapStepResult),

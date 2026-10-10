@@ -150,7 +150,7 @@ describe("registerRunsList", () => {
     expect(items[1].untested).toBe(0);
   });
 
-  it("R3 invariant: counts SUM to total for every row", async () => {
+  it("counts SUM to total for every row", async () => {
     mockSequence(
       [makeRawRun(10), makeRawRun(20)],
       [

@@ -5,8 +5,8 @@ import { CASE_DETAIL_INCLUDE } from "./get.js";
 import { buildFolderBreadcrumb, mapCaseDetail } from "./shared.js";
 
 /**
- * Re-fetch a case by ID with full D-10 denormalized detail.
- * Used by create.ts and update.ts after a write to return the CASE-02 shape.
+ * Re-fetch a case by ID with full denormalized detail.
+ * Used by create.ts and update.ts after a write to return the cases_get shape.
  *
  * Reuses CASE_DETAIL_INCLUDE from get.ts so create/update/get always return
  * the identical shape — and any drift gets caught by the satisfies clause there.
@@ -29,7 +29,7 @@ export async function fetchCaseDetail(
   );
 
   if (!raw) {
-    // BL-03: surface the orphan caseId via a TestPlanItHttpError so the
+    // surface the orphan caseId via a TestPlanItHttpError so the
     // create/update outer catch can compensate (soft-delete the case)
     // and the error mapper passes the structured 404 through to the
     // agent rather than the generic "Network or runtime error" branch.

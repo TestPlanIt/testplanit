@@ -116,9 +116,9 @@ describe("registerSessionsFindings", () => {
     expect(data.truncated).toBe(false);
   });
 
-  // ── sessionId mode: where.OR contains both branches (D7-11) ─────────────
+  // ── sessionId mode: where.OR contains both branches ─────────────
 
-  it("sessionId mode: where.OR contains [{sessions.some.id}, {sessionResults.some.session.id}] per D7-11", async () => {
+  it("sessionId mode: where.OR contains [{sessions.some.id}, {sessionResults.some.session.id}]", async () => {
     mockZenstack.mockResolvedValueOnce([]);
     mockZenstack.mockResolvedValueOnce({ id: 7, name: "Test session" });
 
@@ -151,9 +151,9 @@ describe("registerSessionsFindings", () => {
     expect(body?.orderBy).toEqual([{ createdAt: "desc" }, { id: "desc" }]);
   });
 
-  // ── sessionId mode truncated marker (T-07-06) ────────────────────────────
+  // ── sessionId mode truncated marker ────────────────────────────
 
-  it("sessionId mode: truncated:true when issue findMany returns more than 500 (T-07-06 cap)", async () => {
+  it("sessionId mode: truncated:true when issue findMany returns more than 500", async () => {
     // Mock returns 501 — overflow detected via take:501 cap.
     const findings = Array.from({ length: 501 }, (_, i) => makeRawFinding(i + 1));
     mockZenstack.mockResolvedValueOnce(findings);

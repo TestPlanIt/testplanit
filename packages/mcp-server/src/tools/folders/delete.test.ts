@@ -38,7 +38,7 @@ beforeEach(() => {
 
 describe("testplanit_folders_delete", () => {
   it("happy path: soft-deletes an empty folder and renames it aside, as the web UI does", async () => {
-    // BL-01: pre-check returns empty arrays (no active cases, no children).
+    // pre-check returns empty arrays (no active cases, no children).
     zenstackMock.mockResolvedValueOnce([]); // active cases
     zenstackMock.mockResolvedValueOnce([]); // active children
     zenstackMock.mockResolvedValueOnce({ name: "Login" }); // current name
@@ -60,7 +60,7 @@ describe("testplanit_folders_delete", () => {
     expect(body.data.name).toMatch(/^Login_deleted_\d+$/);
   });
 
-  it("BL-01 pre-check: queries repositoryCases findMany filtered by folderId and isDeleted:false", async () => {
+  it("queries repositoryCases findMany filtered by folderId and isDeleted:false", async () => {
     zenstackMock.mockResolvedValueOnce([]); // active cases
     zenstackMock.mockResolvedValueOnce([]); // active children
     zenstackMock.mockResolvedValueOnce({ id: 42, isDeleted: true });
@@ -87,7 +87,7 @@ describe("testplanit_folders_delete", () => {
     );
   });
 
-  it("NEVER calls 'delete' or 'deleteMany' (T-06-06 invariant)", async () => {
+  it("NEVER calls 'delete' or 'deleteMany'", async () => {
     zenstackMock.mockResolvedValueOnce([]); // active cases
     zenstackMock.mockResolvedValueOnce([]); // active children
     zenstackMock.mockResolvedValueOnce({ id: 42, isDeleted: true });
@@ -112,7 +112,7 @@ describe("testplanit_folders_delete", () => {
     );
   });
 
-  it("BL-01: non-empty folder (active cases) rejected with 422 'not empty'; no soft-delete PATCH issued", async () => {
+  it("non-empty folder (active cases) rejected with 422 'not empty'; no soft-delete PATCH issued", async () => {
     // Pre-check finds an active case in the folder.
     zenstackMock.mockResolvedValueOnce([{ id: 7 }]); // active cases (non-empty)
     zenstackMock.mockResolvedValueOnce([]); // active children
@@ -130,11 +130,11 @@ describe("testplanit_folders_delete", () => {
       expect.anything(),
       expect.anything(),
     );
-    // T-06-05: no token in error
+    // no token in error
     expect(text).not.toMatch(/tpi_/);
   });
 
-  it("BL-01: non-empty folder (active sub-folders) rejected with 422 'not empty'; no soft-delete PATCH issued", async () => {
+  it("non-empty folder (active sub-folders) rejected with 422 'not empty'; no soft-delete PATCH issued", async () => {
     zenstackMock.mockResolvedValueOnce([]); // active cases
     zenstackMock.mockResolvedValueOnce([{ id: 13 }]); // active children (non-empty)
 
@@ -152,7 +152,7 @@ describe("testplanit_folders_delete", () => {
     );
   });
 
-  it("WR-03: tool-result error text never leaks the bearer token (T-06-05 defense in depth)", async () => {
+  it("tool-result error text never leaks the bearer token", async () => {
     zenstackMock.mockRejectedValueOnce(
       new TestPlanItHttpError(
         `upstream regression message containing ${env.apiToken}`,

@@ -16,15 +16,15 @@ export interface WhoamiDeps {
  * cached from the bootstrap probe) so scope changes — particularly the
  * read-only flag — reflect immediately.
  *
- * On failure, the handler consumes the wider `ValidateResult` shape locked
- * in plan 05-06 by reading `probe.code` and `probe.statusCode` directly,
+ * On failure, the handler consumes the wider `ValidateResult` shape
+ * by reading `probe.code` and `probe.statusCode` directly,
  * NOT by string-parsing `probe.message`. The constructed
  * `TestPlanItHttpError` is then translated by `mapHttpErrorToToolResult`
- * which knows how to format `READ_ONLY_TOKEN` (T-05-01 mitigation) and the
+ * which knows how to format `READ_ONLY_TOKEN` and the
  * other 7 host errorCodes.
  *
  * The description starts with `"Debug:"` so well-behaved agents
- * deprioritize this tool versus the data tools shipping in Phase 6+.
+ * deprioritize this tool versus the data tools.
  */
 export function registerWhoami(server: McpServer, deps: WhoamiDeps): void {
   server.registerTool(
@@ -32,7 +32,7 @@ export function registerWhoami(server: McpServer, deps: WhoamiDeps): void {
     {
       description:
         "Debug: returns the authenticated user (token owner) and scopes.",
-      // RAW zod shape per SDK Pitfall 4 — NOT z.object({}).
+      // RAW zod shape, as the SDK expects — NOT z.object({}).
       inputSchema: {},
       outputSchema: {
         id: z.string(),
@@ -47,7 +47,7 @@ export function registerWhoami(server: McpServer, deps: WhoamiDeps): void {
       try {
         const probe = await validateToken(deps.env);
         if (!probe.ok) {
-          // Consume the wider ValidateResult shape locked in plan 05-06.
+          // Consume the wider ValidateResult shape.
           // probe.code and probe.statusCode flow through unchanged — no
           // string-includes parsing of probe.message.
           throw new TestPlanItHttpError(probe.message, {
@@ -56,7 +56,7 @@ export function registerWhoami(server: McpServer, deps: WhoamiDeps): void {
           });
         }
         // The MCP SDK's tool-result `structuredContent` is typed as
-        // `Record<string, unknown>`. WhoamiUser is locked at plan 05-06 and
+        // `Record<string, unknown>`. WhoamiUser
         // does not carry an index signature, so we widen here at the
         // boundary — the runtime shape is unchanged, the cast only
         // satisfies TS's structural compatibility check against the SDK's

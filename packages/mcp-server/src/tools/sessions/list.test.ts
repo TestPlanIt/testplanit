@@ -252,7 +252,7 @@ describe("registerSessionsList", () => {
 
   // ── Determinism + soft-delete ─────────────────────────────────────────────
 
-  it("BL-04 deterministic orderBy: [{createdAt:'desc'},{id:'desc'}]", async () => {
+  it("deterministic orderBy: [{createdAt:'desc'},{id:'desc'}]", async () => {
     mockZenstack.mockResolvedValueOnce([]);
     const { client } = await setupClient();
     await client.callTool({

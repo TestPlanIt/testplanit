@@ -11,8 +11,8 @@ import { deriveWebUrl, stripSettings } from "../code-repositories/shared.js";
  * Resolve tag IDs from a mixed array of existing IDs (numbers) and tag
  * names (strings). Names are resolved via lookup with createIfMissing:true,
  * so the first reference to a new tag name lazily creates it. Empty string
- * tags are rejected (Pitfall 5). Shared between cases/create.ts and
- * cases/update.ts to avoid divergent copies (WR-07).
+ * tags are rejected. Shared between cases/create.ts and
+ * cases/update.ts to avoid divergent copies.
  */
 export async function resolveTagIds(
   tags: Array<number | string> | undefined,
@@ -70,7 +70,7 @@ interface RawCaseFieldValueRow {
 
 /**
  * Convert raw `caseFieldValues` rows into the flat `{ <displayName>: value }`
- * dict per D-08. For Dropdown / Multi-Select fields, resolve the stored
+ * dict. For Dropdown / Multi-Select fields, resolve the stored
  * FieldOption IDs to the option's `name` so agents see the human label
  * instead of a raw FK. Other field types pass the raw value through.
  *
@@ -127,7 +127,7 @@ function resolveCustomFieldValue(
 }
 
 function coerceOptionId(v: unknown): number | null {
-  // WR-06: option IDs are positive integers — reject non-integer numerics
+  // option IDs are positive integers — reject non-integer numerics
   // (147.5 would have silently misrouted to FieldOption 147 via the
   // byId lookup) and reject 0 / negatives.
   if (typeof v === "number" && Number.isInteger(v) && v > 0) return v;
@@ -194,7 +194,7 @@ export function fullPathFromBreadcrumb(
 
 // ── Row & detail mappers ──────────────────────────────────────────────────
 
-// Phase-8 D8-02: latest junit + test-run result shapes used by
+// Latest junit + test-run result shapes used by
 // resolveLatestResult to surface a unified `latestResult` field on each
 // case row. Junit's status is nullable on the schema (statusId Int?);
 // TestRunResults.statusId is required, so its status is non-null.
@@ -211,7 +211,7 @@ export interface RawLatestRunResult {
 }
 
 /**
- * Phase-8 D8-02 lastUpdatedAt source: walk the latest version row
+ * lastUpdatedAt source: walk the latest version row
  * (orderBy version desc, take:1) and read its createdAt. Returns null
  * when no version exists (defensive — should not happen for hydrated
  * cases, but the include shape uses `take: 1` which returns an empty
@@ -225,11 +225,11 @@ export function lastUpdatedAtFromRaw(raw: {
 }
 
 /**
- * Phase-8 D8-02 latestResult union: takes the latest junit result and
+ * latestResult union: takes the latest junit result and
  * the latest test-run result (both `take:1` from the include shape) and
  * picks whichever has the greater executedAt. Source label distinguishes
  * the two ("JUnit" | "TestRun"). Returns null when neither has a usable
- * executedAt + status. Verbatim from RESEARCH § Example 3.
+ * executedAt + status.
  */
 export function resolveLatestResult(
   junit: RawLatestJunit | undefined,
@@ -284,10 +284,9 @@ interface RawCaseRow {
   source: string;
   automated: boolean;
   createdAt: string | Date;
-  // Phase-8 (D8-02) widens project to optionally carry the
-  // codeRepositoryConfigs chain. Phase-6 row callers don't include this
-  // sub-select so the field is optional; Phase-8 cases_get adds it via
-  // CASE_DETAIL_INCLUDE.
+  // project optionally carries the codeRepositoryConfigs chain. Row
+  // callers don't include this sub-select so the field is optional;
+  // cases_get adds it via CASE_DETAIL_INCLUDE.
   project: {
     id: number;
     name: string;
@@ -302,7 +301,7 @@ interface RawCaseRow {
       } | null;
     }>;
   };
-  // WR-04: folderId is non-nullable in schema.zmodel — folder is always
+  // folderId is non-nullable in schema.zmodel — folder is always
   // present on a hydrated row. Call sites in get.ts / fetchDetail.ts
   // dereference raw.folder.id without a null check, so widening the
   // type here would create a runtime / compile-time mismatch.
@@ -312,7 +311,7 @@ interface RawCaseRow {
   // RepositoryCases tags now arrive through the explicit RepositoryCaseTag
   // join model: caseTags[].tag rather than a flat tags[] relation.
   caseTags: Array<{ tag: { id: number; name: string } }>;
-  // Phase-8 D8-02 sub-includes for lastUpdatedAt + latestResult.
+  // Sub-includes for lastUpdatedAt + latestResult.
   // All three are optional; rows fetched without the new include shape
   // (e.g. existing call sites in fetchDetail.ts) read undefined and
   // get null mappings.
@@ -405,7 +404,7 @@ export function mapCaseDetail(
     .filter((c) => c && c.source !== "MANUAL")
     .map((c) => ({ id: c.id, name: c.name, source: c.source }));
 
-  // Phase-8 D8-02: derive inline codeRepository from the chained
+  // Derive inline codeRepository from the chained
   // project.codeRepositoryConfigs[0].repository select. Reuses the 08-01
   // helpers (SETTINGS_ALLOW_LIST + stripSettings + deriveWebUrl) — never
   // forks them — so the per-provider public-key allow-list and URL
