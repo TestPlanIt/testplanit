@@ -53,7 +53,9 @@ const submitResultSchema = z.object({
   notes: z.unknown().optional(),
   evidence: z.unknown().optional(),
   elapsed: z.number().int().nonnegative().nullable().optional(),
-  attempt: z.number().int().positive(),
+  // Optional: the server numbers the attempt when it is missing or already
+  // taken for the run case (and iteration).
+  attempt: z.number().int().positive().optional(),
   testRunCaseVersion: z.number().int().positive(),
   issueIds: z.array(z.number().int().positive()).optional(),
   // Count of issues the client is linking at the step / shared-step level for
@@ -544,7 +546,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
           evidence: evidenceInput,
           elapsed: input.elapsed ?? null,
           executedById: user.id,
-          attempt: input.attempt,
+          ...(input.attempt !== undefined ? { attempt: input.attempt } : {}),
           testRunCaseVersion: input.testRunCaseVersion,
           issues:
             input.issueIds && input.issueIds.length > 0

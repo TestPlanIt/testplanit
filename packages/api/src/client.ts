@@ -1895,8 +1895,10 @@ export class TestPlanItClient {
       testRun: { connect: { id: options.testRunId } },
       testRunCase: { connect: { id: options.testRunCaseId } },
       status: { connect: { id: options.statusId } },
-      attempt: options.attempt ?? 1,
     };
+    if (options.attempt !== undefined) {
+      data.attempt = options.attempt;
+    }
     if (options.elapsed !== undefined) {
       data.elapsed = options.elapsed;
     }

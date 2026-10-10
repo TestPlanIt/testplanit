@@ -52,6 +52,10 @@ import {
   type MilestoneReader,
 } from "~/lib/milestoneParentGuard";
 import {
+  assignResultAttempts,
+  type AttemptReader,
+} from "~/lib/resultAttemptNumbering";
+import {
   assertValidCaseLink,
   type CaseLinkReader,
 } from "~/lib/caseLinkCycleGuard";
@@ -542,6 +546,15 @@ export const sideEffectsPlugin = definePlugin(schema, {
         operation,
         args,
         client.$unuseAll() as unknown as CaseLinkReader
+      );
+    }
+
+    if (model === "TestRunResults") {
+      await assignResultAttempts(
+        model,
+        operation,
+        args,
+        client.$unuseAll() as unknown as AttemptReader
       );
     }
 
