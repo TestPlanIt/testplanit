@@ -28,8 +28,6 @@ const createTestConfig = (
     defaultModel: "deepseek-v4-flash",
     availableModels: ["deepseek-v4-flash"],
     maxTokensPerRequest: 65536,
-    maxRequestsPerMinute: 60,
-    maxRequestsPerDay: null,
     costPerInputToken: new Decimal("0.00044"),
     costPerOutputToken: new Decimal("0.00132"),
     monthlyBudget: null,

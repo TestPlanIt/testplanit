@@ -4362,7 +4362,6 @@ model LlmIntegration {
     llmFeatureConfigs      LlmFeatureConfig[]
     llmResponseCaches      LlmResponseCache[]
     projectLlmIntegrations ProjectLlmIntegration[]
-    llmRateLimits          LlmRateLimit[]
     promptConfigPrompts    PromptConfigPrompt[]
     llmReportSnapshots     LlmReportSnapshot[]
 
@@ -5971,10 +5970,8 @@ model LlmProviderConfig {
     defaultModel          String   // e.g., "gpt-4", "claude-3-opus", "llama2"
     availableModels       Json     // Array of available models with their configs
 
-    // Rate limiting
+    // Request size
     maxTokensPerRequest   Int             @default(4096)
-    maxRequestsPerMinute  Int             @default(60)
-    maxRequestsPerDay     Int?      // Optional daily limit
 
     // Cost tracking (0 for Ollama since it's local)
     costPerInputToken     Decimal         @db.Decimal(10, 8)
@@ -6203,55 +6200,6 @@ model LlmResponseCache {
     @@allow('all', auth().access == 'ADMIN')
 }
 
-model LlmRateLimit {
-    id               String          @id @default(cuid())
-
-    // Relation to LLM Integration (optional - only for integration-scoped limits)
-    llmIntegrationId Int?
-    llmIntegration   LlmIntegration? @relation(fields: [llmIntegrationId], references: [id])
-
-    // Scope of rate limiting
-    scope            String   // "global", "integration", "project", "user"
-    scopeId          String?  // ID of the scoped entity
-    feature          String?  // Optional: limit specific features
-
-    // Rate limit configuration
-    windowType       String   // "sliding", "fixed"
-    windowSize       Int      // Window size in seconds
-    maxRequests      Int      // Maximum requests per window
-    maxTokens        Int?     // Maximum tokens per window
-
-    // Current state
-    currentRequests  Int             @default(0)
-    currentTokens    Int             @default(0)
-    windowStart      DateTime        @default(now()) @db.Timestamptz(6)
-
-    // Actions when limit exceeded
-    blockOnExceed    Boolean         @default(true)
-    queueOnExceed    Boolean         @default(false)
-    alertOnExceed    Boolean         @default(false)
-
-    // Priority and overrides
-    priority         Int             @default(0) // Higher priority limits apply first
-    isActive         Boolean         @default(true)
-
-    createdAt        DateTime        @default(now()) @db.Timestamptz(6)
-    updatedAt        DateTime        @updatedAt
-
-    @@unique([scope, scopeId, feature])
-    @@index([scope, isActive])
-    @@index([windowStart])
-    @@deny('all', auth() == null)
-    @@allow('read', auth().access != null)
-    @@allow('create,update,delete', auth().access == 'ADMIN')
-}
-
-/// Materialized, shared snapshot of an LLM-generated report (e.g. Automation
-/// Candidates). Reports here are persisted on generate and rendered as-is for
-/// every viewer until someone explicitly regenerates — the snapshot IS the
-/// report, not a cache. `reportType` is the discriminator so future shared
-/// LLM reports drop into the same table; `output` is validated per type in
-/// consumer code.
 model LlmReportSnapshot {
     id               Int             @id @default(autoincrement())
     projectId        Int             @deny('update', true)

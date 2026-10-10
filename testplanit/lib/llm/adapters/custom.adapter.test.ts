@@ -33,8 +33,6 @@ const createTestConfig = (
     defaultModel: "custom-model",
     availableModels: ["custom-model", "custom-model-v2"],
     maxTokensPerRequest: 4096,
-    maxRequestsPerMinute: 60,
-    maxRequestsPerDay: null,
     costPerInputToken: new Decimal("0.00001"),
     costPerOutputToken: new Decimal("0.00002"),
     monthlyBudget: null,

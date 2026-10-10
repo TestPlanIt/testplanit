@@ -86,7 +86,6 @@ const createFormSchema = (
     deploymentName: z.string().optional(),
     defaultModel: z.string().min(1, t("validation.defaultModelRequired")),
     maxTokensPerRequest: z.number().min(1).max(1048576),
-    maxRequestsPerMinute: z.number().min(1).max(10000),
     costPerInputToken: z.number().min(0),
     costPerOutputToken: z.number().min(0),
     monthlyBudget: z.number().min(0).optional(),
@@ -125,7 +124,6 @@ const FIELD_TO_SECTION: Record<string, string> = {
   deploymentName: "provider",
   defaultModel: "provider",
   maxTokensPerRequest: "provider",
-  maxRequestsPerMinute: "provider",
   costPerInputToken: "cost-and-budget",
   costPerOutputToken: "cost-and-budget",
   monthlyBudget: "cost-and-budget",
@@ -207,7 +205,6 @@ export function EditLlmIntegration({
       provider: "OPENAI",
       defaultModel: "",
       maxTokensPerRequest: 4096,
-      maxRequestsPerMinute: 60,
       costPerInputToken: 0,
       costPerOutputToken: 0,
       monthlyBudget: 0,
@@ -381,8 +378,6 @@ export function EditLlmIntegration({
         defaultModel: integration.llmProviderConfig?.defaultModel || "",
         maxTokensPerRequest:
           integration.llmProviderConfig?.maxTokensPerRequest || 4096,
-        maxRequestsPerMinute:
-          integration.llmProviderConfig?.maxRequestsPerMinute || 60,
         costPerInputToken:
           Number(integration.llmProviderConfig?.costPerInputToken) || 0,
         costPerOutputToken:
@@ -562,7 +557,6 @@ export function EditLlmIntegration({
           data: {
             defaultModel: values.defaultModel,
             maxTokensPerRequest: values.maxTokensPerRequest,
-            maxRequestsPerMinute: values.maxRequestsPerMinute,
             costPerInputToken: new Decimal(values.costPerInputToken),
             costPerOutputToken: new Decimal(values.costPerOutputToken),
             monthlyBudget: new Decimal(values.monthlyBudget || 0),
@@ -996,29 +990,6 @@ export function EditLlmIntegration({
                               <FormLabel className="flex items-center">
                                 {tAdd("defaultMaxTokens")}
                                 <HelpPopover helpKey="llm.defaultMaxTokens" />
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  {...field}
-                                  onChange={(e) =>
-                                    field.onChange(parseInt(e.target.value))
-                                  }
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="maxRequestsPerMinute"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="flex items-center">
-                                {tAdd("maxRequestsPerMinute")}
-                                <HelpPopover helpKey="llm.maxRequestsPerMinute" />
                               </FormLabel>
                               <FormControl>
                                 <Input

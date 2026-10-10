@@ -107,8 +107,6 @@ const createTestConfig = (
     defaultModel: "gpt-4",
     availableModels: ["gpt-4", "gpt-3.5-turbo"],
     maxTokensPerRequest: 4096,
-    maxRequestsPerMinute: 60,
-    maxRequestsPerDay: null,
     costPerInputToken: new Decimal("0.00003"),
     costPerOutputToken: new Decimal("0.00006"),
     monthlyBudget: null,

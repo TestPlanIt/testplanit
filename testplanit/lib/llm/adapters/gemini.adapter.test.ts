@@ -27,8 +27,6 @@ const createTestConfig = (
     defaultModel: "gemini-1.5-flash",
     availableModels: ["gemini-1.5-flash", "gemini-1.5-pro"],
     maxTokensPerRequest: 8192,
-    maxRequestsPerMinute: 60,
-    maxRequestsPerDay: null,
     costPerInputToken: new Decimal("0.000075"),
     costPerOutputToken: new Decimal("0.0003"),
     monthlyBudget: null,

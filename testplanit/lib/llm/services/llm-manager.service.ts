@@ -577,51 +577,6 @@ export class LlmManager {
     return await adapter.getAvailableModels();
   }
 
-  async checkRateLimit(
-    llmIntegrationId: number,
-    userId: string
-  ): Promise<boolean> {
-    const rateLimit = await this.db.llmRateLimit.findFirst({
-      where: {
-        llmIntegrationId,
-        scope: "user",
-        scopeId: userId,
-        isActive: true,
-      },
-    });
-
-    if (!rateLimit) {
-      return true;
-    }
-
-    // Check if the current window is still valid
-    const now = new Date();
-    const windowEnd = new Date(
-      rateLimit.windowStart.getTime() + rateLimit.windowSize * 1000
-    );
-
-    if (now > windowEnd) {
-      // Window expired, reset counters
-      await this.db.llmRateLimit.update({
-        where: { id: rateLimit.id },
-        data: {
-          currentRequests: 0,
-          currentTokens: 0,
-          windowStart: now,
-        },
-      });
-      return true;
-    }
-
-    if (rateLimit.currentRequests >= rateLimit.maxRequests) {
-      if (rateLimit.blockOnExceed) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
   private async trackUsage(
     llmIntegrationId: number,
     request: LlmRequest,
@@ -656,8 +611,6 @@ export class LlmManager {
         success: true,
       },
     });
-
-    await this.updateRateLimit(llmIntegrationId, request.userId);
 
     this.enqueueAlertCheck(llmIntegrationId);
   }
@@ -697,8 +650,6 @@ export class LlmManager {
         success: true,
       },
     });
-
-    await this.updateRateLimit(llmIntegrationId, request.userId);
 
     this.enqueueAlertCheck(llmIntegrationId);
   }
@@ -748,38 +699,6 @@ export class LlmManager {
       },
     });
     this.enqueueAlertCheck(llmIntegrationId);
-  }
-
-  private async updateRateLimit(
-    llmIntegrationId: number,
-    userId: string
-  ): Promise<void> {
-    const now = new Date();
-
-    await this.db.llmRateLimit.upsert({
-      where: {
-        scope_scopeId_feature: {
-          scope: "user",
-          scopeId: userId,
-          feature: `llm_integration_${llmIntegrationId}`,
-        },
-      },
-      update: {
-        currentRequests: {
-          increment: 1,
-        },
-      },
-      create: {
-        scope: "user",
-        scopeId: userId,
-        feature: `llm_integration_${llmIntegrationId}`,
-        windowType: "sliding",
-        windowSize: 60,
-        maxRequests: 60,
-        currentRequests: 1,
-        windowStart: now,
-      },
-    });
   }
 
   clearCache(llmIntegrationId?: number): void {

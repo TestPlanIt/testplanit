@@ -27,8 +27,6 @@ const createTestConfig = (
     defaultModel: "llama3",
     availableModels: ["llama3", "mistral", "codellama"],
     maxTokensPerRequest: 4096,
-    maxRequestsPerMinute: 60,
-    maxRequestsPerDay: null,
     costPerInputToken: new Decimal("0"),
     costPerOutputToken: new Decimal("0"),
     monthlyBudget: null,

@@ -27,8 +27,6 @@ const createTestConfig = (
     defaultModel: "claude-3-5-sonnet-20241022",
     availableModels: ["claude-3-5-sonnet-20241022", "claude-3-haiku-20240307"],
     maxTokensPerRequest: 4096,
-    maxRequestsPerMinute: 60,
-    maxRequestsPerDay: null,
     costPerInputToken: new Decimal("0.003"),
     costPerOutputToken: new Decimal("0.015"),
     monthlyBudget: null,

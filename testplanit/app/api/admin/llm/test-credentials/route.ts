@@ -64,8 +64,6 @@ export async function POST(request: NextRequest) {
         defaultModel: defaultModel || "test",
         availableModels: {},
         maxTokensPerRequest: 4096,
-        maxRequestsPerMinute: 60,
-        maxRequestsPerDay: null,
         costPerInputToken: new Decimal(0),
         costPerOutputToken: new Decimal(0),
         defaultTemperature: 0.7,

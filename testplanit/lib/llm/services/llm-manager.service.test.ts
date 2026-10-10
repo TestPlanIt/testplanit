@@ -146,11 +146,6 @@ const createMockDb = () => ({
   llmUsage: {
     create: vi.fn(),
   },
-  llmRateLimit: {
-    findFirst: vi.fn(),
-    update: vi.fn(),
-    upsert: vi.fn(),
-  },
   llmFeatureConfig: {
     findUnique: vi.fn(),
   },
@@ -179,8 +174,6 @@ describe("LlmManager", () => {
       defaultModel: "gpt-4",
       availableModels: ["gpt-4", "gpt-3.5-turbo"],
       maxTokensPerRequest: 4096,
-      maxRequestsPerMinute: 60,
-      maxRequestsPerDay: null,
       costPerInputToken: new Decimal("0.00003"),
       costPerOutputToken: new Decimal("0.00006"),
       monthlyBudget: null,
@@ -403,7 +396,6 @@ describe("LlmManager", () => {
         mockLlmIntegration.llmProviderConfig
       );
       mockDb.llmUsage.create.mockResolvedValue({});
-      mockDb.llmRateLimit.upsert.mockResolvedValue({});
 
       const request: LlmRequest = {
         messages: [{ role: "user", content: "Hello" }],
@@ -438,7 +430,6 @@ describe("LlmManager", () => {
         mockLlmIntegration.llmProviderConfig
       );
       mockDb.llmUsage.create.mockResolvedValue({});
-      mockDb.llmRateLimit.upsert.mockResolvedValue({});
 
       await manager.chat(1, {
         messages: [{ role: "user", content: "Hello" }],
@@ -489,7 +480,6 @@ describe("LlmManager", () => {
         mockLlmIntegration.llmProviderConfig
       );
       mockDb.llmUsage.create.mockResolvedValue({});
-      mockDb.llmRateLimit.upsert.mockResolvedValue({});
 
       const request: LlmRequest = {
         messages: [{ role: "user", content: "Hello" }],
@@ -522,7 +512,6 @@ describe("LlmManager", () => {
         mockLlmIntegration.llmProviderConfig
       );
       mockDb.llmUsage.create.mockResolvedValue({});
-      mockDb.llmRateLimit.upsert.mockResolvedValue({});
 
       const request: LlmRequest = {
         // 400 chars → 100 estimated prompt tokens (chars/4).
@@ -554,7 +543,6 @@ describe("LlmManager", () => {
         mockLlmIntegration.llmProviderConfig
       );
       mockDb.llmUsage.create.mockResolvedValue({});
-      mockDb.llmRateLimit.upsert.mockResolvedValue({});
 
       const request: LlmRequest = {
         messages: [
@@ -676,82 +664,6 @@ describe("LlmManager", () => {
       const result = await manager.getAvailableModels(1);
 
       expect(result).toEqual([{ id: "gpt-4", name: "GPT-4" }]);
-    });
-  });
-
-  describe("checkRateLimit", () => {
-    it("should return true when no rate limit exists", async () => {
-      mockDb.llmRateLimit.findFirst.mockResolvedValue(null);
-
-      const result = await manager.checkRateLimit(1, "user-123");
-
-      expect(result).toBe(true);
-    });
-
-    it("should return true when rate limit window expired", async () => {
-      const expiredWindow = new Date(Date.now() - 120000); // 2 minutes ago
-      mockDb.llmRateLimit.findFirst.mockResolvedValue({
-        id: 1,
-        windowStart: expiredWindow,
-        windowSize: 60,
-        currentRequests: 100,
-        maxRequests: 60,
-        blockOnExceed: true,
-      });
-      mockDb.llmRateLimit.update.mockResolvedValue({});
-
-      const result = await manager.checkRateLimit(1, "user-123");
-
-      expect(result).toBe(true);
-      expect(mockDb.llmRateLimit.update).toHaveBeenCalled();
-    });
-
-    it("should return false when rate limit exceeded and blocking", async () => {
-      const recentWindow = new Date(Date.now() - 30000); // 30 seconds ago
-      mockDb.llmRateLimit.findFirst.mockResolvedValue({
-        id: 1,
-        windowStart: recentWindow,
-        windowSize: 60,
-        currentRequests: 60,
-        maxRequests: 60,
-        blockOnExceed: true,
-      });
-
-      const result = await manager.checkRateLimit(1, "user-123");
-
-      expect(result).toBe(false);
-    });
-
-    it("should return true when rate limit exceeded but not blocking", async () => {
-      const recentWindow = new Date(Date.now() - 30000);
-      mockDb.llmRateLimit.findFirst.mockResolvedValue({
-        id: 1,
-        windowStart: recentWindow,
-        windowSize: 60,
-        currentRequests: 60,
-        maxRequests: 60,
-        blockOnExceed: false,
-      });
-
-      const result = await manager.checkRateLimit(1, "user-123");
-
-      expect(result).toBe(true);
-    });
-
-    it("should return true when under rate limit", async () => {
-      const recentWindow = new Date(Date.now() - 30000);
-      mockDb.llmRateLimit.findFirst.mockResolvedValue({
-        id: 1,
-        windowStart: recentWindow,
-        windowSize: 60,
-        currentRequests: 30,
-        maxRequests: 60,
-        blockOnExceed: true,
-      });
-
-      const result = await manager.checkRateLimit(1, "user-123");
-
-      expect(result).toBe(true);
     });
   });
 
