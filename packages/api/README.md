@@ -36,7 +36,7 @@ await client.createTestResult({
   testRunId: testRun.id,
   testRunCaseId: 123,
   statusId: passedStatusId!,
-  elapsed: 1500, // milliseconds
+  elapsed: 15, // seconds
 });
 
 // Complete the test run
@@ -129,13 +129,27 @@ const { data, totalCount, pageCount } = await client.listTestRuns({
 // Create a test case
 const testCase = await client.createTestCase({
   projectId: 1,
-  repositoryId: 1,
   folderId: 1,
   templateId: 1,
   name: 'Login should work',
   className: 'AuthTests',
   source: 'API',
   automated: true,
+});
+
+// Create many test cases in one request (steps, tags and custom fields
+// included); returns a per-case result so partial failures are visible
+const bulk = await client.createTestCases({
+  projectId: 1,
+  folderId: 1,
+  cases: [
+    {
+      name: 'Login with valid credentials',
+      steps: [{ text: 'Open /login', expectedResult: 'Form renders' }],
+      tags: ['regression'],
+      customFields: { Priority: 'High' },
+    },
+  ],
 });
 
 // Find test cases
@@ -148,7 +162,6 @@ const cases = await client.findTestCases({
 // Find or create a test case
 const testCase = await client.findOrCreateTestCase({
   projectId: 1,
-  repositoryId: 1,
   folderId: 1,
   templateId: 1,
   name: 'Login should work',
@@ -170,10 +183,9 @@ const result = await client.createTestResult({
   testRunId: 123,
   testRunCaseId: testRunCase.id,
   statusId: 1, // Use getStatusId() to get the correct ID
-  elapsed: 1500,
-  notes: { comment: 'Test passed' },
+  elapsed: 15, // seconds
+  notes: 'Test passed', // plain text, or a Tiptap document object
   evidence: { logs: ['Step 1 completed'] },
-  attempt: 1,
 });
 
 // Get test results for a run
@@ -245,6 +257,19 @@ user ID needs to be supplied.
 > Using WebdriverIO? The `@testplanit/wdio-reporter` service exposes all of
 > this declaratively (`runLinks`, `runAttachments`, `runMetadata` options) and
 > at runtime via `browser.testplanit` — no direct use of this client needed.
+
+### More Helpers
+
+The client also covers folders (`listFolders`, `createFolder`,
+`findOrCreateFolderPath`), templates and tags (`findTemplateByName`,
+`findOrCreateTag`, `resolveTagIds`), authored steps (`createSteps`,
+`softDeleteCaseSteps`, `requestStepDerivation`), name lookups
+(`findConfigurationByName`, `findMilestoneByName`, `findWorkflowStateByName`,
+`findTestRunByName`), QuickScript generation (`generateQuickScript`), the
+automation plan a CI job executes (`getAutomationPlan`, `finishExecution`) and
+JUnit suites and results (`createJUnitTestSuite`, `createJUnitTestResult`,
+`uploadJUnitAttachment`). Every call is documented with examples in the
+[API client guide](https://docs.testplanit.com/docs/sdk/api-client).
 
 ### Bulk Import
 

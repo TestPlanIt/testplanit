@@ -135,6 +135,48 @@ const { data, totalCount, pageCount } = await client.listTestRuns({
   search: 'smoke',           // Optional: search term
   runType: 'automated',      // Optional: 'manual', 'automated', or 'both'
 });
+
+// Resolve a run by name (undefined when nothing matches)
+const nightly = await client.findTestRunByName(1, 'Nightly');
+```
+
+### Lookups by Name
+
+Resolve the IDs the create calls take without hard-coding them. Each finder
+returns `undefined` when nothing matches.
+
+```typescript
+const config = await client.findConfigurationByName(1, 'Chrome/macOS');
+const milestone = await client.findMilestoneByName(1, 'Sprint 10');
+const state = await client.findWorkflowStateByName(1, 'In Progress');
+
+// The lists behind them
+const configurations = await client.listConfigurations();
+const milestones = await client.listMilestones(1);
+const states = await client.listWorkflowStates(1);   // the run workflow's states
+
+// The raw lookup endpoint the finders call. `createIfMissing` applies to tags
+// and folders.
+const { id } = await client.lookup({ projectId: 1, type: 'tag', name: 'regression', createIfMissing: true });
+```
+
+### Automation Plan
+
+When a run is executed from TestPlanIt (an execution target, a repository
+webhook, or **Execute** in the app), the CI job asks for the plan: the run's
+automated cases with the identifiers a runner filter can match on. Read-only
+tokens are accepted.
+
+```typescript
+// executionId narrows the plan to an execution's subset and ref
+const plan = await client.getAutomationPlan(123, executionId);
+for (const c of plan.cases) {
+  console.log(c.selector.fullName, c.selector.idTokens.brackets, c.tags);
+}
+
+// Report the execution's outcome. Required for generic-webhook targets, which
+// TestPlanIt cannot poll; harmless for the others.
+await client.finishExecution(123, executionId, 'success'); // 'success' | 'failure' | 'cancelled'
 ```
 
 ### Test Cases
@@ -189,6 +231,81 @@ const testCase = await client.findOrCreateTestCase({
   templateId: 1,
   name: 'Login should work',
   className: 'AuthTests',
+});
+
+// Find a case by a custom field value, e.g. an external ID. The value is
+// matched in both its string and number forms, so it works for Text and
+// Integer fields alike. Returns undefined when nothing matches.
+const byExternalId = await client.findTestCaseByCustomField({
+  projectId: 1,
+  fieldName: 'External ID',
+  value: 'ADM-649',
+});
+
+// Flip a manually authored case to automated once it receives automated results
+await client.updateTestCase(456, { automated: true });
+```
+
+### Folders
+
+```typescript
+// List a project's folders, or find one by name (undefined when missing)
+const folders = await client.listFolders(1);
+const smoke = await client.findFolderByName(1, 'Smoke');
+
+// Create a folder (parentId optional)
+const folder = await client.createFolder({ projectId: 1, name: 'Checkout', parentId: 10 });
+
+// Walk a nested path, creating the folders that are missing; returns the last one.
+// Concurrent calls for the same path share one create per folder.
+const leaf = await client.findOrCreateFolderPath(1, ['Web', 'Checkout', '@smoke'], 10);
+```
+
+### Templates and Tags
+
+```typescript
+// Templates the token can see; names match case-insensitively
+const templates = await client.listTemplates();
+const template = await client.findTemplateByName(1, 'Default');
+
+// Tags are global, not per project
+const tags = await client.listTags();
+const tag = await client.findTagByName(1, 'regression');       // undefined when missing
+const ensured = await client.findOrCreateTag(1, 'regression');  // creates it when missing
+const created = await client.createTag({ name: 'nightly' });
+
+// Mixed IDs and names → IDs (names are created when missing)
+const tagIds = await client.resolveTagIds(1, ['regression', 5]);
+```
+
+### Steps
+
+```typescript
+// Authored steps are stored as rich text, the same shape the in-app step
+// editor writes. `order` is zero-based.
+await client.createSteps({
+  testCaseId: 456,
+  steps: [
+    { step: 'Open /login', expectedResult: 'The form renders', order: 0 },
+    { step: 'Submit valid credentials', expectedResult: 'The dashboard loads', order: 1 },
+  ],
+});
+await client.createStep({ testCaseId: 456, step: 'Sign out', order: 2 });
+
+// Replace a case's steps: soft-delete the existing ones first.
+// Returns how many steps were removed.
+const removed = await client.softDeleteCaseSteps(456);
+
+// Opt in to background AI step derivation for cases that have no steps
+// (e.g. Mocha/Jasmine tests, which carry no step structure). Runs only when
+// an AI provider is configured for the project; otherwise nothing is enqueued.
+const { enqueued } = await client.requestStepDerivation({
+  projectId: 1,
+  testRunId: 123,            // the "steps ready" notification links here
+  cases: [
+    { testCaseId: 456, name: 'checkout > pays with a saved card', className: 'Checkout' },
+  ],
+  overwrite: false,          // true re-derives cases that already have steps (destructive)
 });
 ```
 
@@ -256,7 +373,7 @@ const result = await client.createTestResult({
   evidence: {                 // Optional: test evidence/logs
     logs: ['Step 1 completed', 'Step 2 completed']
   },
-  attempt: 1,                 // Optional: retry attempt number
+  // attempt is numbered by the server per run case; pass one only to pick a free number
 });
 
 // Get all results for a test run
@@ -366,6 +483,40 @@ const { testRunId } = await client.importTestResults(
     }
   }
 );
+```
+
+### JUnit Suites and Results
+
+Automated runs store their results in JUnit suites rather than as manual
+results. The reporters use these calls to write results directly instead of
+uploading an XML report; `importTestResults` above is the file-based route.
+
+```typescript
+const suite = await client.createJUnitTestSuite({
+  testRunId: 123,
+  name: 'checkout.spec.ts',
+  file: 'tests/checkout.spec.ts',  // Optional
+});
+
+const junitResult = await client.createJUnitTestResult({
+  testSuiteId: suite.id,
+  repositoryCaseId: 456,
+  type: 'PASSED',            // 'PASSED' | 'FAILURE' | 'ERROR' | 'SKIPPED'
+  time: 1.5,                 // Optional: seconds, as in a JUnit report
+  message: undefined,        // Optional: failure message
+  content: undefined,        // Optional: stack trace or details
+  worker: '2',               // Optional: worker/thread id the test ran on
+});
+
+// Attach a file to a JUnit result
+await client.uploadJUnitAttachment(junitResult.id, screenshot, 'checkout.png', 'image/png');
+
+// Update the suite's totals once every result is in
+await client.updateJUnitTestSuite(suite.id, { tests: 1, failures: 0, errors: 0, skipped: 0, time: 1.5 });
+
+// Read them back
+const suites = await client.getJUnitTestSuites(123);
+const results = await client.getJUnitTestResults(suite.id);
 ```
 
 ### Connection Testing
