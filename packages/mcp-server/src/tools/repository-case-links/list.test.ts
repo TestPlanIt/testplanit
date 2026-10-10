@@ -191,6 +191,18 @@ describe("registerRepositoryCaseLinksList", () => {
     expect(body.where.type).toBe("SAME_TEST_DIFFERENT_SOURCE");
   });
 
+  it("accepts the DUPLICATED_FROM provenance link type", async () => {
+    mockZenstack.mockResolvedValueOnce([]);
+    const { client } = await setupClient();
+    const result = await client.callTool({
+      name: "testplanit_repository_case_links_list",
+      arguments: { caseId: 42, linkType: "DUPLICATED_FROM" },
+    });
+    expect(result.isError).toBeFalsy();
+    const body = getCallBody(0) as { where: Record<string, unknown> };
+    expect(body.where.type).toBe("DUPLICATED_FROM");
+  });
+
   it("always filters where.isDeleted: false", async () => {
     mockZenstack.mockResolvedValueOnce([]);
     const { client } = await setupClient();
@@ -314,7 +326,7 @@ describe("registerRepositoryCaseLinksList", () => {
 
   // ── Soft-delete invariant (test 15) ────────────────────────────────────────
 
-  it("NEVER calls delete or deleteMany (T-08-SOFT-DELETE)", async () => {
+  it("NEVER calls delete or deleteMany", async () => {
     mockZenstack.mockResolvedValueOnce([]);
     const { client } = await setupClient();
     await client.callTool({
@@ -346,7 +358,7 @@ describe("registerRepositoryCaseLinksList", () => {
     expect(text).not.toContain("tpi_test_secret");
   });
 
-  // ── Pitfall 4 regression (test 17) ─────────────────────────────────────────
+  // ── No project-id leak into the query ───────────────────────────────────────
 
   it("never includes a project-id field in the zenstack call body", async () => {
     mockZenstack.mockResolvedValueOnce([]);

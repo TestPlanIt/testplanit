@@ -1,6 +1,7 @@
 import type {
   RepositoryCaseLinkInclude,
 } from "@db/input";
+import type { LinkType } from "@db/models";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LINK_INCLUDE — typed include literal for RepositoryCaseLink reads.
@@ -110,3 +111,15 @@ export function mapLinkRowOtherCase(raw: RawLinkRow, queriedCaseId: number) {
     otherCase,
   };
 }
+
+// Every RepositoryCaseLink.type the schema knows. Typed against the generated
+// enum so adding a value to the schema without listing it here fails to
+// compile.
+export const LINK_TYPES = [
+  "SAME_TEST_DIFFERENT_SOURCE",
+  "DEPENDS_ON",
+  "DUPLICATED_FROM",
+] as const satisfies readonly LinkType[];
+type MissingLinkType = Exclude<LinkType, (typeof LINK_TYPES)[number]>;
+const _everyLinkTypeListed: MissingLinkType extends never ? true : never = true;
+void _everyLinkTypeListed;

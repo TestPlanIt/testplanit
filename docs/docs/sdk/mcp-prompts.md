@@ -121,7 +121,7 @@ Show me the manual test cases linked to automated test case #7.
 
 **Tool calls (1):**
 
-1. `testplanit_repository_case_links_list({ caseId: 7 })` → each row's `otherCase` carries the counterpart denormalized; optional `linkType` filter (e.g., `SAME_TEST_DIFFERENT_SOURCE`).
+1. `testplanit_repository_case_links_list({ caseId: 7 })` → each row's `otherCase` carries the counterpart denormalized; optional `linkType` filter (`SAME_TEST_DIFFERENT_SOURCE`, `DEPENDS_ON` or `DUPLICATED_FROM`).
 
 **What comes back:** a list of links each with `otherCase: { id, name, source, automated }` so the agent can describe the manual side-by-side coverage.
 
