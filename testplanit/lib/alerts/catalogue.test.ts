@@ -11,6 +11,7 @@ import {
   metricUsesField,
   runEventAlertMetrics,
   scheduledAlertMetrics,
+  scheduledSystemAlertMetrics,
   sessionEventAlertMetrics,
   ALERT_METRIC_CATALOGUE,
 } from "./catalogue";
@@ -74,12 +75,24 @@ describe("threshold metric catalogue", () => {
       AlertMetric.REQUIREMENT_COVERAGE_BELOW,
       AlertMetric.STALE_CASES,
       AlertMetric.AUTOMATION_SHARE_BELOW,
+      AlertMetric.INTEGRATION_REAUTH_NEEDED,
+      AlertMetric.NO_AUTOMATED_RESULTS,
     ]);
     expect(scheduledAlertMetrics("hourly")).toEqual([
       AlertMetric.RUN_NOT_PROGRESSING,
       AlertMetric.WEBHOOK_FAILURE_RATE,
+      AlertMetric.CODE_REPOSITORY_CACHE_FAILING,
+      AlertMetric.QUEUE_FAILED_JOBS,
+      AlertMetric.QUEUE_BACKLOG,
+      AlertMetric.AUDIT_BACKLOG,
+      AlertMetric.ACCOUNT_LOCKOUTS,
     ]);
-    expect(scheduledAlertMetrics()).toHaveLength(8);
+    expect(scheduledAlertMetrics()).toHaveLength(15);
+    expect(scheduledSystemAlertMetrics("daily")).toEqual([
+      AlertMetric.INTEGRATION_REAUTH_NEEDED,
+      AlertMetric.NO_AUTOMATED_RESULTS,
+    ]);
+    expect(scheduledSystemAlertMetrics()).toHaveLength(7);
     expect(caseEventAlertMetrics()).toEqual([
       AlertMetric.RESULT_DURATION_DEVIATION,
       AlertMetric.CASE_REGRESSED,
@@ -97,15 +110,30 @@ describe("threshold metric catalogue", () => {
       AlertMetric.AUTOMATED_EXECUTION_FAILED,
     ]);
     expect(sessionEventAlertMetrics()).toEqual([AlertMetric.SESSION_OVERRUN]);
-    expect(llmUsageAlertMetrics()).toEqual([AlertMetric.LLM_BUDGET_USED]);
+    expect(llmUsageAlertMetrics()).toEqual([
+      AlertMetric.LLM_BUDGET_USED,
+      AlertMetric.LLM_ERROR_RATE,
+      AlertMetric.LLM_RATE_LIMITED,
+    ]);
   });
 
   it("keeps the AI budget metric on the system side, apart from the project metrics", () => {
     expect(isSystemAlertMetric(AlertMetric.LLM_BUDGET_USED)).toBe(true);
     expect(isSystemAlertMetric(AlertMetric.RUN_FAILURE_COUNT)).toBe(false);
-    expect(alertMetricsForScope(true)).toEqual([AlertMetric.LLM_BUDGET_USED]);
+    expect(alertMetricsForScope(true)).toEqual([
+      AlertMetric.LLM_BUDGET_USED,
+      AlertMetric.LLM_ERROR_RATE,
+      AlertMetric.LLM_RATE_LIMITED,
+      AlertMetric.CODE_REPOSITORY_CACHE_FAILING,
+      AlertMetric.INTEGRATION_REAUTH_NEEDED,
+      AlertMetric.QUEUE_FAILED_JOBS,
+      AlertMetric.QUEUE_BACKLOG,
+      AlertMetric.AUDIT_BACKLOG,
+      AlertMetric.ACCOUNT_LOCKOUTS,
+      AlertMetric.NO_AUTOMATED_RESULTS,
+    ]);
     expect(alertMetricsForScope(false)).toHaveLength(
-      ALERT_METRIC_CATALOGUE.length - 1
+      ALERT_METRIC_CATALOGUE.length - 10
     );
     expect(
       getAlertMetricDefinition(AlertMetric.LLM_BUDGET_USED)?.defaults

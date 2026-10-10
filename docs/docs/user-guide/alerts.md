@@ -97,15 +97,44 @@ Stale cases and automation share can be scoped to the whole project, a folder (s
 
 Scope it to every active outbound webhook in the project or to one webhook.
 
-### System alerts: AI budget
+### System alerts
 
 A system alert belongs to no project. It watches something administered for the whole installation, so only [administrators](./permissions-guide.md) see, create and follow it: choose **System** instead of a project in **Add Alert**, and the metric list narrows to the system metrics. The Project column reads **System**, the audience can only hold administrators, and no webhook event is sent (outbound webhooks belong to projects).
 
-| Metric             | Fires when                                                                                                                                                                                                                                       |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **AI budget used** | An [AI model integration](./llm-integrations.md)'s spend for its billing period reaches X% of its **Monthly Budget**. Evaluated each time the integration records usage, and fires once per billing period for each integration. Saving the integration or using **Reset Spend** lets it fire again in the same period. |
+#### AI models
 
-Scope it to every AI model integration or to one integration. Integrations without a budget never fire. Installations that already had a budget when they upgraded start with three such alerts, at 80%, 90% and 100%, subscribed by every administrator; edit or delete them like any other alert.
+These evaluate each time an [AI model integration](./llm-integrations.md) records a request or a failure. Scope them to every integration or to one.
+
+| Metric                        | Fires when                                                                                                                                                                                                                                                                                  |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **AI budget used**            | The integration's spend for its billing period reaches X% of its **Monthly Budget**. Fires once per billing period for each integration; saving the integration or using **Reset Spend** lets it fire again in the same period. Integrations without a budget never fire.                   |
+| **AI request error rate**     | More than X% of the integration's last N requests failed, once at least M requests exist.                                                                                                                                                                                                   |
+| **AI provider rate limiting** | The provider throttled at least N of the integration's requests within the last X hours (failures the provider reported as a rate limit, quota, or "too many requests").                                                                                                                   |
+
+Installations that already had a budget when they upgraded start with three **AI budget used** alerts, at 80%, 90% and 100%, subscribed by every administrator; edit or delete them like any other alert.
+
+#### Code repositories, integrations and queues
+
+| Metric                                 | Fires when                                                                                                                                                                                                                     |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Repository cache failing**           | A code repository connection (QuickScript or Impact Analysis) has had its cache refresh failing for at least X hours, counted from its last successful fetch. Checked hourly. Links to the project settings page that owns it. |
+| **Integration re-authorization needed** | At least N users of an issue-tracker integration have lost their connection and need to re-authorize. Checked daily.                                                                                                           |
+| **Queue failed jobs**                  | A background [queue](./queues.md) holds more than N failed jobs. Checked hourly.                                                                                                                                               |
+| **Queue backlog**                      | A queue's oldest waiting job has waited more than X minutes, the sign of a stopped worker. Delayed jobs do not count. Checked hourly.                                                                                           |
+
+Scope each to every connection, integration or queue, or to one of them.
+
+#### Installation
+
+These watch the installation as a whole and offer no narrower scope.
+
+| Metric                   | Fires when                                                                                                                                                 |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Audit log backlog**    | The oldest captured change not yet written to the [audit log](./audit-logs.md) is older than X minutes, the sign of a stopped audit worker. Checked hourly. |
+| **Account lockouts**     | At least N accounts are currently locked after failed sign-ins, a sign of credential stuffing. Checked hourly.                                              |
+| **No automated results** | No automated test result has arrived from any pipeline for X hours. Never fires on an installation that has not received automated results. Checked daily.  |
+
+System alerts use the ordinary cooldown (one day by default) to stay quiet while a condition persists.
 
 ## Keeping rules quiet
 
@@ -124,4 +153,4 @@ Switch on **Send an alert.triggered webhook event** on a rule, then subscribe an
 
 ## How it works
 
-Evaluation never runs in the request that records a result. Results, run completion, finished automated executions and completed sessions queue a job for the alert worker, which reads the committed data, decides which rules fire, writes a history row, and hands the notifications to the notification worker. Milestone, project health and untested-share metrics run in a daily scheduled job; stalled runs and webhook failure rates in an hourly one. AI usage queues a job for the budget alert worker, which evaluates the AI budget alerts the same way. See [Background Processes](../background-processes.md).
+Evaluation never runs in the request that records a result. Results, run completion, finished automated executions and completed sessions queue a job for the alert worker, which reads the committed data, decides which rules fire, writes a history row, and hands the notifications to the notification worker. Milestone, project health and untested-share metrics run in a daily scheduled job; stalled runs and webhook failure rates in an hourly one. AI usage and failures queue a job for the budget alert worker, which evaluates the AI model alerts the same way; the other system alerts run in the hourly and daily jobs. See [Background Processes](../background-processes.md).

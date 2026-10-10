@@ -51,6 +51,15 @@ describe("alertMetricMessage", () => {
       "AUTOMATION_SHARE_BELOW",
       "WEBHOOK_FAILURE_RATE",
       "LLM_BUDGET_USED",
+      "LLM_ERROR_RATE",
+      "LLM_RATE_LIMITED",
+      "CODE_REPOSITORY_CACHE_FAILING",
+      "INTEGRATION_REAUTH_NEEDED",
+      "QUEUE_FAILED_JOBS",
+      "QUEUE_BACKLOG",
+      "AUDIT_BACKLOG",
+      "ACCOUNT_LOCKOUTS",
+      "NO_AUTOMATED_RESULTS",
     ];
     const keys = content.alertMetric as Record<string, string>;
     for (const metric of metrics) {
@@ -117,6 +126,57 @@ describe("alertSubjectPath", () => {
       alertSubjectPath({ subjectType: "LLM_INTEGRATION", subjectId: 4 })
     ).toBe("/admin/llm");
     expect(alertSubjectPath({ subjectType: "RUN", subjectId: 4 })).toBeNull();
+  });
+
+  it("links the other system subjects into Administration, and a repository into its project settings", () => {
+    expect(
+      alertSubjectPath({
+        subjectType: "CODE_REPOSITORY",
+        subjectId: 9,
+        details: { projectId: 12, purpose: "IMPACT" },
+      })
+    ).toBe("/projects/settings/12/impact");
+    expect(
+      alertSubjectPath({
+        subjectType: "CODE_REPOSITORY",
+        subjectId: 9,
+        details: { projectId: 12, purpose: "QUICKSCRIPT" },
+      })
+    ).toBe("/projects/settings/12/quickscript");
+    expect(
+      alertSubjectPath({ subjectType: "CODE_REPOSITORY", subjectId: 9 })
+    ).toBe("/admin/code-repositories");
+    expect(alertSubjectPath({ subjectType: "INTEGRATION", subjectId: 2 })).toBe(
+      "/admin/integrations"
+    );
+    expect(
+      alertSubjectPath({
+        subjectType: "QUEUE",
+        subjectId: 0,
+        subjectRef: "emails",
+      })
+    ).toBe("/admin/queues");
+    expect(
+      alertSubjectPath({
+        subjectType: "SYSTEM",
+        subjectId: 0,
+        subjectRef: "audit",
+      })
+    ).toBe("/admin/audit-logs");
+    expect(
+      alertSubjectPath({
+        subjectType: "SYSTEM",
+        subjectId: 0,
+        subjectRef: "lockouts",
+      })
+    ).toBe("/admin/users");
+    expect(
+      alertSubjectPath({
+        subjectType: "SYSTEM",
+        subjectId: 0,
+        subjectRef: "automated-results",
+      })
+    ).toBe("/admin/reports");
   });
 
   it("links a case into the run it fired from, and plainly otherwise", () => {

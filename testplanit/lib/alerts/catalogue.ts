@@ -111,6 +111,21 @@ const LLM_SCOPES = [
   AlertScopeType.LLM_INTEGRATION,
 ] as const;
 
+/** Every code repository connection, or one of them. */
+const CODE_REPOSITORY_SCOPES = [
+  AlertScopeType.PROJECT,
+  AlertScopeType.CODE_REPOSITORY,
+] as const;
+
+/** Every issue-tracker integration, or one of them. */
+const INTEGRATION_SCOPES = [
+  AlertScopeType.PROJECT,
+  AlertScopeType.INTEGRATION,
+] as const;
+
+/** Every background queue, or one of them (its name in scopeText). */
+const QUEUE_SCOPES = [AlertScopeType.PROJECT, AlertScopeType.QUEUE] as const;
+
 export const ALERT_METRIC_CATALOGUE: readonly AlertMetricDefinition[] = [
   {
     metric: AlertMetric.RESULT_DURATION_DEVIATION,
@@ -327,6 +342,105 @@ export const ALERT_METRIC_CATALOGUE: readonly AlertMetricDefinition[] = [
     // Once per billing period is the natural cadence, so no cooldown.
     defaults: { thresholdValue: 80, cooldownMinutes: 0 },
   },
+  {
+    metric: AlertMetric.LLM_ERROR_RATE,
+    subjectType: AlertSubjectType.LLM_INTEGRATION,
+    path: "event",
+    trigger: "llmUsage",
+    scopes: LLM_SCOPES,
+    fields: ["thresholdValue", "baselineWindow", "minSamples"],
+    valueKind: "percent",
+    system: true,
+    defaults: { thresholdValue: 25, baselineWindow: 20, minSamples: 5 },
+  },
+  {
+    metric: AlertMetric.LLM_RATE_LIMITED,
+    subjectType: AlertSubjectType.LLM_INTEGRATION,
+    path: "event",
+    trigger: "llmUsage",
+    scopes: LLM_SCOPES,
+    fields: ["thresholdValue", "secondaryValue"],
+    valueKind: "count",
+    system: true,
+    defaults: { thresholdValue: 5, secondaryValue: 24 },
+  },
+  {
+    metric: AlertMetric.CODE_REPOSITORY_CACHE_FAILING,
+    subjectType: AlertSubjectType.CODE_REPOSITORY,
+    path: "scheduled",
+    schedule: "hourly",
+    scopes: CODE_REPOSITORY_SCOPES,
+    fields: ["thresholdValue"],
+    valueKind: "count",
+    system: true,
+    defaults: { thresholdValue: 24 },
+  },
+  {
+    metric: AlertMetric.INTEGRATION_REAUTH_NEEDED,
+    subjectType: AlertSubjectType.INTEGRATION,
+    path: "scheduled",
+    schedule: "daily",
+    scopes: INTEGRATION_SCOPES,
+    fields: ["thresholdValue"],
+    valueKind: "count",
+    system: true,
+    defaults: { thresholdValue: 5 },
+  },
+  {
+    metric: AlertMetric.QUEUE_FAILED_JOBS,
+    subjectType: AlertSubjectType.QUEUE,
+    path: "scheduled",
+    schedule: "hourly",
+    scopes: QUEUE_SCOPES,
+    fields: ["thresholdValue"],
+    valueKind: "count",
+    system: true,
+    defaults: { thresholdValue: 10 },
+  },
+  {
+    metric: AlertMetric.QUEUE_BACKLOG,
+    subjectType: AlertSubjectType.QUEUE,
+    path: "scheduled",
+    schedule: "hourly",
+    scopes: QUEUE_SCOPES,
+    fields: ["thresholdValue"],
+    valueKind: "count",
+    system: true,
+    defaults: { thresholdValue: 30 },
+  },
+  {
+    metric: AlertMetric.AUDIT_BACKLOG,
+    subjectType: AlertSubjectType.SYSTEM,
+    path: "scheduled",
+    schedule: "hourly",
+    scopes: PROJECT_ONLY,
+    fields: ["thresholdValue"],
+    valueKind: "count",
+    system: true,
+    defaults: { thresholdValue: 30 },
+  },
+  {
+    metric: AlertMetric.ACCOUNT_LOCKOUTS,
+    subjectType: AlertSubjectType.SYSTEM,
+    path: "scheduled",
+    schedule: "hourly",
+    scopes: PROJECT_ONLY,
+    fields: ["thresholdValue"],
+    valueKind: "count",
+    system: true,
+    defaults: { thresholdValue: 3 },
+  },
+  {
+    metric: AlertMetric.NO_AUTOMATED_RESULTS,
+    subjectType: AlertSubjectType.SYSTEM,
+    path: "scheduled",
+    schedule: "daily",
+    scopes: PROJECT_ONLY,
+    fields: ["thresholdValue"],
+    valueKind: "count",
+    system: true,
+    defaults: { thresholdValue: 48 },
+  },
 ];
 
 const byMetric = new Map<string, AlertMetricDefinition>(
@@ -350,6 +464,18 @@ export function metricUsesField(
 export function scheduledAlertMetrics(schedule?: AlertSchedule): AlertMetric[] {
   return ALERT_METRIC_CATALOGUE.filter(
     (m) => m.path === "scheduled" && (!schedule || m.schedule === schedule)
+  ).map((m) => m.metric);
+}
+
+/** The scheduled metrics that are system alerts (no project). */
+export function scheduledSystemAlertMetrics(
+  schedule?: AlertSchedule
+): AlertMetric[] {
+  return ALERT_METRIC_CATALOGUE.filter(
+    (m) =>
+      m.system === true &&
+      m.path === "scheduled" &&
+      (!schedule || m.schedule === schedule)
   ).map((m) => m.metric);
 }
 

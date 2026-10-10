@@ -133,6 +133,10 @@ export function AlertRuleHistoryDialog({
                 subjectType={event.subjectType}
                 subjectId={event.subjectId}
                 subjectName={event.subjectName}
+                subjectRef={event.subjectRef}
+                details={
+                  (event.details as Record<string, unknown> | null) ?? null
+                }
                 projectId={projectId}
                 testRunId={testRunId}
                 meta={subjectMeta}

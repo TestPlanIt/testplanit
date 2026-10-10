@@ -198,6 +198,8 @@ export default function UserAlertsPage() {
         ),
       ],
       llmIntegrations: collect(AlertScopeType.LLM_INTEGRATION),
+      codeRepositories: collect(AlertScopeType.CODE_REPOSITORY),
+      integrations: collect(AlertScopeType.INTEGRATION),
     };
   }, [allRows]);
   const { data: folderRows } = client.repositoryFolders.useFindMany(
@@ -242,6 +244,25 @@ export default function UserAlertsPage() {
     },
     { enabled: idsByScope.llmIntegrations.length > 0 }
   );
+  const { data: codeRepositoryRows } =
+    client.projectCodeRepositoryConfig.useFindMany(
+      {
+        where: { id: { in: idsByScope.codeRepositories } },
+        select: {
+          id: true,
+          repository: { select: { name: true } },
+          project: { select: { name: true } },
+        },
+      },
+      { enabled: idsByScope.codeRepositories.length > 0 }
+    );
+  const { data: integrationRows } = client.integration.useFindMany(
+    {
+      where: { id: { in: idsByScope.integrations } },
+      select: { id: true, name: true },
+    },
+    { enabled: idsByScope.integrations.length > 0 }
+  );
   const scopeNames: AlertScopeNames = useMemo(
     () => ({
       folders: new Map((folderRows ?? []).map((r) => [r.id, r.name])),
@@ -254,6 +275,13 @@ export default function UserAlertsPage() {
       llmIntegrations: new Map(
         (llmIntegrationRows ?? []).map((r) => [r.id, r.name])
       ),
+      codeRepositories: new Map(
+        (codeRepositoryRows ?? []).map((r) => [
+          r.id,
+          `${r.repository?.name ?? r.id} · ${r.project?.name ?? ""}`,
+        ])
+      ),
+      integrations: new Map((integrationRows ?? []).map((r) => [r.id, r.name])),
     }),
     [
       folderRows,
@@ -262,6 +290,8 @@ export default function UserAlertsPage() {
       milestoneRows,
       webhookRows,
       llmIntegrationRows,
+      codeRepositoryRows,
+      integrationRows,
     ]
   );
 

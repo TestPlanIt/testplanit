@@ -659,24 +659,7 @@ export class LlmManager {
 
     await this.updateRateLimit(llmIntegrationId, request.userId);
 
-    // Fire-and-forget budget check — never blocks LLM response (CHCK-01, CHCK-03)
-    if (config.monthlyBudget && Number(config.monthlyBudget) > 0) {
-      try {
-        const { getBudgetAlertQueue } = await import("~/lib/queues");
-        const { BUDGET_ALERT_JOB_CHECK } = await import("~/lib/queueNames");
-        const { getCurrentTenantId } = await import("~/lib/multiTenantDb");
-        getBudgetAlertQueue()
-          ?.add(BUDGET_ALERT_JOB_CHECK, {
-            llmIntegrationId,
-            tenantId: this.tenantId ?? getCurrentTenantId(),
-          })
-          .catch((err: unknown) => {
-            console.error("[BudgetAlert] Failed to enqueue budget check:", err);
-          });
-      } catch (err) {
-        console.error("[BudgetAlert] Failed to enqueue budget check:", err);
-      }
-    }
+    this.enqueueAlertCheck(llmIntegrationId);
   }
 
   private async trackStreamUsage(
@@ -717,24 +700,28 @@ export class LlmManager {
 
     await this.updateRateLimit(llmIntegrationId, request.userId);
 
-    // Fire-and-forget budget check — never blocks LLM response (CHCK-01, CHCK-03)
-    if (config.monthlyBudget && Number(config.monthlyBudget) > 0) {
+    this.enqueueAlertCheck(llmIntegrationId);
+  }
+
+  /**
+   * Fire-and-forget: the AI alert rules (budget, error rate, provider rate
+   * limiting) are evaluated by the budget-alert worker after every recorded
+   * usage or failure. Never blocks the LLM response (CHCK-01, CHCK-03).
+   */
+  private enqueueAlertCheck(llmIntegrationId: number): void {
+    void (async () => {
       try {
         const { getBudgetAlertQueue } = await import("~/lib/queues");
         const { BUDGET_ALERT_JOB_CHECK } = await import("~/lib/queueNames");
         const { getCurrentTenantId } = await import("~/lib/multiTenantDb");
-        getBudgetAlertQueue()
-          ?.add(BUDGET_ALERT_JOB_CHECK, {
-            llmIntegrationId,
-            tenantId: this.tenantId ?? getCurrentTenantId(),
-          })
-          .catch((err: unknown) => {
-            console.error("[BudgetAlert] Failed to enqueue budget check:", err);
-          });
+        await getBudgetAlertQueue()?.add(BUDGET_ALERT_JOB_CHECK, {
+          llmIntegrationId,
+          tenantId: this.tenantId ?? getCurrentTenantId(),
+        });
       } catch (err) {
-        console.error("[BudgetAlert] Failed to enqueue budget check:", err);
+        console.error("[BudgetAlert] Failed to enqueue alert check:", err);
       }
-    }
+    })();
   }
 
   private async trackError(
@@ -760,6 +747,7 @@ export class LlmManager {
         error: error.message || "Unknown error",
       },
     });
+    this.enqueueAlertCheck(llmIntegrationId);
   }
 
   private async updateRateLimit(

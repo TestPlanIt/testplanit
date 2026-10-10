@@ -40,6 +40,7 @@ import {
   getBillingPeriodKey,
   getBillingPeriodStart,
 } from "~/lib/utils/billingPeriod";
+import type { QueueStat } from "~/lib/alerts/queueStats";
 import {
   cooldownElapsed,
   evaluateConsecutiveFailures,
@@ -137,16 +138,41 @@ interface MilestoneSubject {
 
 export interface AlertEvaluationOptions {
   now?: () => Date;
+  /** Queue counts for the queue alerts; defaults to reading BullMQ. */
+  queueStats?: (
+    tenantId: string | undefined,
+    now: Date
+  ) => Promise<QueueStat[]>;
 }
+
+/** Keys of the installation-wide subjects (`AlertEvent.subjectRef`). */
+export const SYSTEM_SUBJECT_REFS = {
+  audit: "audit",
+  lockouts: "lockouts",
+  automatedResults: "automated-results",
+} as const;
+
+/** A provider's own throttling, as the adapters report it. */
+const RATE_LIMIT_ERROR_PATTERN = "(rate.?limit|429|too many requests|quota)";
 
 export class AlertEvaluationService {
   private readonly now: () => Date;
+  private readonly queueStats: (
+    tenantId: string | undefined,
+    now: Date
+  ) => Promise<QueueStat[]>;
 
   constructor(
     private db: any,
     options: AlertEvaluationOptions = {}
   ) {
     this.now = options.now ?? (() => new Date());
+    this.queueStats =
+      options.queueStats ??
+      (async (tenantId, now) => {
+        const { readQueueStats } = await import("~/lib/alerts/queueStats");
+        return readQueueStats(tenantId, now);
+      });
   }
 
   // ---------------------------------------------------------------------
@@ -511,15 +537,21 @@ export class AlertEvaluationService {
     if (rules.length === 0) return [];
 
     const byProject = new Map<number, AlertRuleRow[]>();
+    const systemRules: AlertRuleRow[] = [];
     for (const rule of rules) {
-      // System alerts are event-driven; none is scheduled.
-      if (rule.projectId == null) continue;
+      if (rule.projectId == null) {
+        systemRules.push(rule);
+        continue;
+      }
       const list = byProject.get(rule.projectId) ?? [];
       list.push(rule);
       byProject.set(rule.projectId, list);
     }
 
     const fired: FiredAlert[] = [];
+    if (systemRules.length > 0) {
+      fired.push(...(await this.evaluateSystemRules(systemRules, tenantId)));
+    }
     for (const [projectId, projectRules] of byProject) {
       const milestoneRules = projectRules.filter(
         (r) =>
@@ -1418,11 +1450,11 @@ export class AlertEvaluationService {
   // ---------------------------------------------------------------------
 
   /**
-   * An AI model integration recorded usage. Spend for its billing period is
-   * measured against its monthly budget and every enabled AI-budget rule
-   * whose scope includes the integration fires when the share reaches its
-   * threshold, once per period: a rule that fired after the period began
-   * (or after the last budget-alert reset) stays quiet.
+   * An AI model integration recorded usage or a failure. The AI rules that
+   * include the integration are evaluated against its period spend (budget),
+   * its last requests (error rate) and its recent provider throttling.
+   * The budget rule fires once per period: a firing after the period began
+   * (or after the last budget-alert reset) keeps it quiet.
    */
   async evaluateLlmIntegration(
     llmIntegrationId: number,
@@ -1439,59 +1471,367 @@ export class AlertEvaluationService {
     );
     if (rules.length === 0) return [];
 
-    const config = await this.db.llmProviderConfig.findUnique({
-      where: { llmIntegrationId },
-      select: {
-        monthlyBudget: true,
-        billingPeriodStartDay: true,
-        budgetAlertResetAt: true,
-        llmIntegration: { select: { name: true, isDeleted: true } },
-      },
+    const integration = await this.db.llmIntegration.findUnique({
+      where: { id: llmIntegrationId },
+      select: { name: true, isDeleted: true },
     });
-    if (!config?.llmIntegration || config.llmIntegration.isDeleted) return [];
-    const budget = Number(config.monthlyBudget ?? 0);
-    if (!(budget > 0)) return [];
+    if (!integration || integration.isDeleted) return [];
 
     const now = this.now();
-    const periodStart = getBillingPeriodStart(
-      config.billingPeriodStartDay ?? 1,
-      now
-    );
-    const aggregate = await this.db.llmUsage.aggregate({
-      where: { llmIntegrationId, createdAt: { gte: periodStart } },
-      _sum: { totalCost: true },
-    });
-    const spend = Number(aggregate?._sum?.totalCost ?? 0);
-    const percent = (spend / budget) * 100;
-    const resetAt = config.budgetAlertResetAt
-      ? new Date(config.budgetAlertResetAt)
-      : null;
-    const notBefore = resetAt && resetAt > periodStart ? resetAt : periodStart;
-
     const fired: FiredAlert[] = [];
-    for (const rule of rules) {
-      if (percent < rule.thresholdValue) continue;
+    const subject = {
+      subjectType: AlertSubjectType.LLM_INTEGRATION,
+      subjectId: llmIntegrationId,
+      subjectName: integration.name as string,
+      projectId: null,
+      projectName: "",
+      baselineValue: null,
+      tenantId,
+    };
+
+    const budgetRules = rules.filter(
+      (r) => r.metric === AlertMetric.LLM_BUDGET_USED
+    );
+    if (budgetRules.length > 0) {
+      const config = await this.db.llmProviderConfig.findUnique({
+        where: { llmIntegrationId },
+        select: {
+          monthlyBudget: true,
+          billingPeriodStartDay: true,
+          budgetAlertResetAt: true,
+        },
+      });
+      const budget = Number(config?.monthlyBudget ?? 0);
+      if (config && budget > 0) {
+        const periodStart = getBillingPeriodStart(
+          config.billingPeriodStartDay ?? 1,
+          now
+        );
+        const aggregate = await this.db.llmUsage.aggregate({
+          where: { llmIntegrationId, createdAt: { gte: periodStart } },
+          _sum: { totalCost: true },
+        });
+        const spend = Number(aggregate?._sum?.totalCost ?? 0);
+        const percent = (spend / budget) * 100;
+        const resetAt = config.budgetAlertResetAt
+          ? new Date(config.budgetAlertResetAt)
+          : null;
+        const notBefore =
+          resetAt && resetAt > periodStart ? resetAt : periodStart;
+        for (const rule of budgetRules) {
+          if (percent < rule.thresholdValue) continue;
+          const event = await this.fire({
+            ...subject,
+            rule,
+            observedValue: Number(percent.toFixed(2)),
+            thresholdValue: rule.thresholdValue,
+            details: {
+              percent: Number(percent.toFixed(2)),
+              spend: Number(spend.toFixed(2)),
+              budget: Number(budget.toFixed(2)),
+              periodKey: getBillingPeriodKey(periodStart),
+            },
+            notBefore,
+          });
+          if (event) fired.push(event);
+        }
+      }
+    }
+
+    for (const rule of rules.filter(
+      (r) => r.metric === AlertMetric.LLM_ERROR_RATE
+    )) {
+      const recent: Array<{ success: boolean }> =
+        await this.db.llmUsage.findMany({
+          where: { llmIntegrationId },
+          orderBy: { createdAt: "desc" },
+          take: Math.max(1, rule.baselineWindow),
+          select: { success: true },
+        });
+      const failed = recent.filter((r) => !r.success).length;
+      const verdict = evaluateFailureRate({
+        failed,
+        total: recent.length,
+        thresholdPercent: rule.thresholdValue,
+        minSamples: rule.minSamples,
+      });
+      if (!verdict.fired) continue;
       const event = await this.fire({
+        ...subject,
         rule,
-        subjectType: AlertSubjectType.LLM_INTEGRATION,
-        subjectId: llmIntegrationId,
-        subjectName: config.llmIntegration.name,
-        projectId: null,
-        projectName: "",
-        observedValue: Number(percent.toFixed(2)),
-        baselineValue: null,
+        observedValue: verdict.failureRate,
         thresholdValue: rule.thresholdValue,
         details: {
-          percent: Number(percent.toFixed(2)),
-          spend: Number(spend.toFixed(2)),
-          budget: Number(budget.toFixed(2)),
-          periodKey: getBillingPeriodKey(periodStart),
+          failureRate: verdict.failureRate,
+          failed,
+          sampleCount: verdict.sampleCount,
         },
-        notBefore,
-        tenantId,
       });
       if (event) fired.push(event);
     }
+
+    for (const rule of rules.filter(
+      (r) => r.metric === AlertMetric.LLM_RATE_LIMITED
+    )) {
+      const hours = Math.max(1, rule.secondaryValue ?? 24);
+      const since = new Date(now.getTime() - hours * 3_600_000);
+      const rows: any[] = await this.db.$queryRaw`
+        SELECT COUNT(*)::int AS blocked
+        FROM "LlmUsage" u
+        WHERE u."llmIntegrationId" = ${llmIntegrationId}
+          AND u.success = false
+          AND u."createdAt" >= ${since}
+          AND u.error ~* ${RATE_LIMIT_ERROR_PATTERN}
+      `;
+      const blocked = Number(rows?.[0]?.blocked ?? 0);
+      if (blocked < rule.thresholdValue) continue;
+      const event = await this.fire({
+        ...subject,
+        rule,
+        observedValue: blocked,
+        thresholdValue: rule.thresholdValue,
+        details: { blocked, hours },
+      });
+      if (event) fired.push(event);
+    }
+    return fired;
+  }
+
+  // ---------------------------------------------------------------------
+  // Installation health (system alerts, scheduled)
+  // ---------------------------------------------------------------------
+
+  /**
+   * The scheduled system alerts: repository caches that keep failing,
+   * integrations whose users need to re-authorize, queue failures and
+   * backlog, the audit correlation backlog, account lockouts and a silent
+   * automated-results feed. None has a project; each reads one
+   * installation-wide signal.
+   */
+  private async evaluateSystemRules(
+    rules: AlertRuleRow[],
+    tenantId?: string
+  ): Promise<FiredAlert[]> {
+    const now = this.now();
+    const fired: FiredAlert[] = [];
+    const ofMetric = (metric: AlertMetric) =>
+      rules.filter((r) => r.metric === metric);
+    const system = {
+      projectId: null,
+      projectName: "",
+      baselineValue: null,
+      tenantId,
+    };
+
+    const cacheRules = ofMetric(AlertMetric.CODE_REPOSITORY_CACHE_FAILING);
+    if (cacheRules.length > 0) {
+      const configs: any[] = await this.db.projectCodeRepositoryConfig.findMany(
+        {
+          where: {
+            cacheEnabled: true,
+            cacheStatus: "error",
+            repository: { isDeleted: false },
+            project: { isDeleted: false },
+          },
+          select: {
+            id: true,
+            projectId: true,
+            purpose: true,
+            cacheLastFetchedAt: true,
+            cacheError: true,
+            updatedAt: true,
+            repository: { select: { name: true } },
+            project: { select: { name: true } },
+          },
+        }
+      );
+      for (const config of configs) {
+        // The last good fetch (kept as the live cache) or, failing that, the
+        // first failed one: how long the connection has been unhealthy.
+        const since = new Date(config.cacheLastFetchedAt ?? config.updatedAt);
+        const hours = (now.getTime() - since.getTime()) / 3_600_000;
+        for (const rule of cacheRules) {
+          if (
+            rule.scopeType === AlertScopeType.CODE_REPOSITORY &&
+            rule.scopeId !== config.id
+          ) {
+            continue;
+          }
+          if (hours < rule.thresholdValue) continue;
+          const event = await this.fire({
+            ...system,
+            rule,
+            subjectType: AlertSubjectType.CODE_REPOSITORY,
+            subjectId: config.id,
+            subjectName: `${config.repository?.name ?? config.id} · ${config.project?.name ?? ""}`,
+            observedValue: Number(hours.toFixed(1)),
+            thresholdValue: rule.thresholdValue,
+            details: {
+              hours: Number(hours.toFixed(1)),
+              error: config.cacheError ?? "",
+              projectId: config.projectId,
+              projectName: config.project?.name ?? "",
+              purpose: config.purpose,
+              repositoryName: config.repository?.name ?? "",
+            },
+          });
+          if (event) fired.push(event);
+        }
+      }
+    }
+
+    const reauthRules = ofMetric(AlertMetric.INTEGRATION_REAUTH_NEEDED);
+    if (reauthRules.length > 0) {
+      const rows: any[] = await this.db.$queryRaw`
+        SELECT i.id, i.name, COUNT(a.id)::int AS users
+        FROM "Integration" i
+        JOIN "UserIntegrationAuth" a ON a."integrationId" = i.id
+        WHERE i."isDeleted" = false
+          AND a."isActive" = true
+          AND a."needsReauthAt" IS NOT NULL
+        GROUP BY i.id, i.name
+      `;
+      for (const row of rows) {
+        const users = Number(row.users);
+        for (const rule of reauthRules) {
+          if (
+            rule.scopeType === AlertScopeType.INTEGRATION &&
+            rule.scopeId !== Number(row.id)
+          ) {
+            continue;
+          }
+          if (users < rule.thresholdValue) continue;
+          const event = await this.fire({
+            ...system,
+            rule,
+            subjectType: AlertSubjectType.INTEGRATION,
+            subjectId: Number(row.id),
+            subjectName: row.name,
+            observedValue: users,
+            thresholdValue: rule.thresholdValue,
+            details: { users },
+          });
+          if (event) fired.push(event);
+        }
+      }
+    }
+
+    const failedRules = ofMetric(AlertMetric.QUEUE_FAILED_JOBS);
+    const backlogRules = ofMetric(AlertMetric.QUEUE_BACKLOG);
+    if (failedRules.length > 0 || backlogRules.length > 0) {
+      const stats = await this.queueStats(tenantId, now);
+      for (const stat of stats) {
+        const inScope = (rule: AlertRuleRow) =>
+          rule.scopeType !== AlertScopeType.QUEUE ||
+          rule.scopeText === stat.name;
+        for (const rule of failedRules.filter(inScope)) {
+          if (stat.failed <= rule.thresholdValue) continue;
+          const event = await this.fire({
+            ...system,
+            rule,
+            subjectType: AlertSubjectType.QUEUE,
+            subjectId: 0,
+            subjectRef: stat.name,
+            subjectName: stat.name,
+            observedValue: stat.failed,
+            thresholdValue: rule.thresholdValue,
+            details: { failed: stat.failed, waiting: stat.waiting },
+          });
+          if (event) fired.push(event);
+        }
+        for (const rule of backlogRules.filter(inScope)) {
+          const minutes = stat.oldestWaitingMinutes;
+          if (minutes == null || minutes <= rule.thresholdValue) continue;
+          const event = await this.fire({
+            ...system,
+            rule,
+            subjectType: AlertSubjectType.QUEUE,
+            subjectId: 0,
+            subjectRef: stat.name,
+            subjectName: stat.name,
+            observedValue: Number(minutes.toFixed(1)),
+            thresholdValue: rule.thresholdValue,
+            details: {
+              minutes: Number(minutes.toFixed(1)),
+              waiting: stat.waiting,
+            },
+          });
+          if (event) fired.push(event);
+        }
+      }
+    }
+
+    for (const rule of ofMetric(AlertMetric.AUDIT_BACKLOG)) {
+      const rows: any[] = await this.db.$queryRaw`
+        SELECT ts FROM "DataChangeLog"
+        WHERE processed = false
+        ORDER BY seq ASC
+        LIMIT 1
+      `;
+      const oldest = rows?.[0]?.ts ? new Date(rows[0].ts) : null;
+      if (!oldest) continue;
+      const minutes = (now.getTime() - oldest.getTime()) / 60_000;
+      if (minutes <= rule.thresholdValue) continue;
+      const event = await this.fire({
+        ...system,
+        rule,
+        subjectType: AlertSubjectType.SYSTEM,
+        subjectId: 0,
+        subjectRef: SYSTEM_SUBJECT_REFS.audit,
+        subjectName: "Audit log",
+        observedValue: Number(minutes.toFixed(1)),
+        thresholdValue: rule.thresholdValue,
+        details: { minutes: Number(minutes.toFixed(1)) },
+      });
+      if (event) fired.push(event);
+    }
+
+    for (const rule of ofMetric(AlertMetric.ACCOUNT_LOCKOUTS)) {
+      const locked: number = await this.db.user.count({
+        where: { lockedUntil: { gt: now }, isDeleted: false },
+      });
+      if (locked < rule.thresholdValue) continue;
+      const event = await this.fire({
+        ...system,
+        rule,
+        subjectType: AlertSubjectType.SYSTEM,
+        subjectId: 0,
+        subjectRef: SYSTEM_SUBJECT_REFS.lockouts,
+        subjectName: "User accounts",
+        observedValue: locked,
+        thresholdValue: rule.thresholdValue,
+        details: { locked },
+      });
+      if (event) fired.push(event);
+    }
+
+    for (const rule of ofMetric(AlertMetric.NO_AUTOMATED_RESULTS)) {
+      const rows: any[] = await this.db.$queryRaw`
+        SELECT MAX("createdAt") AS last FROM "JUnitTestResult"
+      `;
+      // An installation that never received automated results has nothing
+      // to miss.
+      const last = rows?.[0]?.last ? new Date(rows[0].last) : null;
+      if (!last) continue;
+      const hours = (now.getTime() - last.getTime()) / 3_600_000;
+      if (hours < rule.thresholdValue) continue;
+      const event = await this.fire({
+        ...system,
+        rule,
+        subjectType: AlertSubjectType.SYSTEM,
+        subjectId: 0,
+        subjectRef: SYSTEM_SUBJECT_REFS.automatedResults,
+        subjectName: "Automated results",
+        observedValue: Number(hours.toFixed(1)),
+        thresholdValue: rule.thresholdValue,
+        details: {
+          hours: Number(hours.toFixed(1)),
+          lastAt: last.toISOString(),
+        },
+      });
+      if (event) fired.push(event);
+    }
+
     return fired;
   }
 
@@ -1626,6 +1966,7 @@ export class AlertEvaluationService {
         projectName: params.projectName,
         subjectType: params.subjectType,
         subjectId: params.subjectId,
+        subjectRef: params.subjectRef ?? null,
         subjectName: params.subjectName,
         observedValue: params.observedValue,
         baselineValue: params.baselineValue,
@@ -1666,7 +2007,9 @@ export class AlertEvaluationService {
                 params.subjectType,
                 params.projectId,
                 params.subjectId,
-                params.testRunId
+                params.testRunId,
+                params.subjectRef,
+                params.details
               ),
               observedValue: params.observedValue,
               baselineValue: params.baselineValue,
@@ -1716,8 +2059,10 @@ function subjectUrl(
   subjectType: AlertSubjectType,
   projectId: number | null,
   subjectId: number,
-  testRunId?: number | null
+  testRunId?: number | null,
+  subjectRef?: string | null,
+  details?: Record<string, unknown> | null
 ): string {
   const base = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
-  return `${base}${subjectPath(subjectType, projectId, subjectId, testRunId)}`;
+  return `${base}${subjectPath(subjectType, projectId, subjectId, testRunId, { subjectRef, details })}`;
 }

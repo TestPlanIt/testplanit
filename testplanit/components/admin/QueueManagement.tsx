@@ -1,6 +1,7 @@
 "use client";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useQueueDisplayName } from "@/components/admin/useQueueDisplayName";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -155,35 +156,8 @@ export function QueueManagement() {
     }
   };
 
-  const getQueueDisplayName = (name: string) => {
-    const queueNames: Record<string, string> = {
-      "forecast-updates": t("queueNames.forecast-updates"),
-      notifications: tGlobal("common.fields.notificationMode"),
-      emails: t("queueNames.emails"),
-      "issue-sync": t("queueNames.issue-sync"),
-      "testmo-imports": t("queueNames.testmo-imports"),
-      "elasticsearch-reindex": t("queueNames.elasticsearch-reindex"),
-      "audit-logs": t("queueNames.audit-logs"),
-      "budget-alerts": t("queueNames.budget-alerts"),
-      "auto-tag": t("queueNames.auto-tag"),
-      "repo-cache": t("queueNames.repo-cache"),
-      "copy-move": t("queueNames.copy-move"),
-      "duplicate-scan": t("queueNames.duplicate-scan"),
-      "magic-select": t("queueNames.magic-select"),
-      "step-scan": t("queueNames.step-scan"),
-    };
-    // Queues without a curated localized label (e.g. ones added after this
-    // map) fall back to a humanized version of their name — "webhook-dispatch"
-    // -> "Webhook Dispatch" — so the dynamically-listed queues still read
-    // cleanly instead of showing a raw kebab-case key.
-    return (
-      queueNames[name] ||
-      name
-        .split(/[-_]/)
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(" ")
-    );
-  };
+  // Shared with the queue alerts, so both name a queue the same way.
+  const getQueueDisplayName = useQueueDisplayName();
 
   const _getTotalJobs = (counts: QueueCounts | null) => {
     if (!counts) return 0;

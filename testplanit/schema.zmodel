@@ -6965,6 +6965,15 @@ enum AlertMetric {
     AUTOMATION_SHARE_BELOW
     WEBHOOK_FAILURE_RATE
     LLM_BUDGET_USED
+    LLM_ERROR_RATE
+    LLM_RATE_LIMITED
+    CODE_REPOSITORY_CACHE_FAILING
+    INTEGRATION_REAUTH_NEEDED
+    QUEUE_FAILED_JOBS
+    QUEUE_BACKLOG
+    AUDIT_BACKLOG
+    ACCOUNT_LOCKOUTS
+    NO_AUTOMATED_RESULTS
 
     @@deny('all', auth() == null)
     @@allow('read', auth().access != null)
@@ -6979,6 +6988,9 @@ enum AlertScopeType {
     MILESTONE
     WEBHOOK
     LLM_INTEGRATION
+    CODE_REPOSITORY
+    INTEGRATION
+    QUEUE
 
     @@deny('all', auth() == null)
     @@allow('read', auth().access != null)
@@ -7034,6 +7046,10 @@ enum AlertSubjectType {
     PROJECT
     WEBHOOK
     LLM_INTEGRATION
+    CODE_REPOSITORY
+    INTEGRATION
+    QUEUE
+    SYSTEM
 
     @@deny('all', auth() == null)
     @@allow('read', auth().access != null)

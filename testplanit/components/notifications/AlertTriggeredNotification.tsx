@@ -1,6 +1,15 @@
 "use client";
 
-import { BellRing, ExternalLink, Sparkles, Webhook } from "lucide-react";
+import {
+  BellRing,
+  ExternalLink,
+  GitBranch,
+  ListChecks,
+  Plug,
+  Server,
+  Sparkles,
+  Webhook,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { MilestoneNameDisplay } from "@/components/MilestoneNameDisplay";
@@ -13,6 +22,8 @@ import {
   alertSubjectPath,
   type AlertNotificationData,
 } from "~/lib/alerts/notificationParams";
+import { isSystemSubjectType } from "~/lib/alerts/subjectPath";
+import { useQueueDisplayName } from "@/components/admin/useQueueDisplayName";
 
 /**
  * Bell rendering of a ALERT_TRIGGERED notification: the rule, what was
@@ -25,6 +36,8 @@ export function AlertTriggeredNotification({
   data: AlertNotificationData;
 }) {
   const t = useTranslations("components.notifications.content");
+  const tSystem = useTranslations("alerts.systemSubjects");
+  const queueLabel = useQueueDisplayName();
   const locale = useLocale();
 
   const message = alertMetricMessage(data, locale);
@@ -41,16 +54,33 @@ export function AlertTriggeredNotification({
         </span>
       ) : null;
     }
-    if (!data.subjectId) return null;
-    // An AI model integration (system alert): named, linked to AI Models.
-    if (data.subjectType === "LLM_INTEGRATION") {
-      return (
+    // A system alert's subject: named, linked into Administration.
+    if (isSystemSubjectType(data.subjectType)) {
+      const Icon =
+        data.subjectType === "LLM_INTEGRATION"
+          ? Sparkles
+          : data.subjectType === "CODE_REPOSITORY"
+            ? GitBranch
+            : data.subjectType === "INTEGRATION"
+              ? Plug
+              : data.subjectType === "QUEUE"
+                ? ListChecks
+                : Server;
+      const ref = data.subjectRef ?? "";
+      const label =
+        data.subjectType === "SYSTEM" && ref && tSystem.has(ref as never)
+          ? tSystem(ref as never)
+          : data.subjectType === "QUEUE" && ref
+            ? queueLabel(ref)
+            : data.subjectName;
+      return label ? (
         <span className="inline-flex items-center gap-1">
-          <Sparkles className="h-4 w-4 shrink-0" />
-          {data.subjectName}
+          <Icon className="h-4 w-4 shrink-0" />
+          {label}
         </span>
-      );
+      ) : null;
     }
+    if (!data.subjectId) return null;
     if (data.subjectType === "CASE") {
       return (
         <CaseDisplay

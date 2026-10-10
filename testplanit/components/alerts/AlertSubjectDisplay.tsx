@@ -2,7 +2,16 @@
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { useMemo } from "react";
-import { Sparkles, Webhook } from "lucide-react";
+import {
+  GitBranch,
+  ListChecks,
+  Plug,
+  Server,
+  Sparkles,
+  Webhook,
+} from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useQueueDisplayName } from "@/components/admin/useQueueDisplayName";
 import { MilestoneIconAndName } from "@/components/MilestoneIconAndName";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import { SessionNameDisplay } from "@/components/SessionNameDisplay";
@@ -10,7 +19,7 @@ import { ProjectNameCell } from "@/components/tables/ProjectNameCell";
 import { Link } from "~/lib/navigation";
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { TestRunNameDisplay } from "@/components/TestRunNameDisplay";
-import { subjectPath } from "~/lib/alerts/subjectPath";
+import { isSystemSubjectType, subjectPath } from "~/lib/alerts/subjectPath";
 import { AlertSubjectType } from "~/zenstack/models";
 import { schema } from "~/zenstack/schema";
 
@@ -144,18 +153,56 @@ export function AlertSubjectDisplay({
   subjectType,
   subjectId,
   subjectName,
+  subjectRef,
+  details,
   projectId,
   testRunId,
   meta,
 }: SubjectRef & {
   subjectName: string;
+  subjectRef?: string | null;
+  details?: Record<string, unknown> | null;
   /** Null for a system alert's subject. */
   projectId: number | null;
   testRunId?: number | null;
   meta: AlertSubjectMeta;
 }) {
-  const href = subjectPath(subjectType, projectId, subjectId, testRunId);
-  if (projectId == null && subjectType !== AlertSubjectType.LLM_INTEGRATION) {
+  const tSystem = useTranslations("alerts.systemSubjects");
+  const queueLabel = useQueueDisplayName();
+  const href = subjectPath(subjectType, projectId, subjectId, testRunId, {
+    subjectRef,
+    details,
+  });
+  if (isSystemSubjectType(subjectType)) {
+    const Icon =
+      subjectType === AlertSubjectType.LLM_INTEGRATION
+        ? Sparkles
+        : subjectType === AlertSubjectType.CODE_REPOSITORY
+          ? GitBranch
+          : subjectType === AlertSubjectType.INTEGRATION
+            ? Plug
+            : subjectType === AlertSubjectType.QUEUE
+              ? ListChecks
+              : Server;
+    const label =
+      subjectType === AlertSubjectType.SYSTEM &&
+      subjectRef &&
+      tSystem.has(subjectRef as never)
+        ? tSystem(subjectRef as never)
+        : subjectType === AlertSubjectType.QUEUE && subjectRef
+          ? queueLabel(subjectRef)
+          : subjectName;
+    return (
+      <Link
+        href={href}
+        className="inline-flex min-w-0 items-center gap-1 text-primary hover:underline"
+      >
+        <Icon className="h-4 w-4 shrink-0" />
+        <span className="truncate">{label}</span>
+      </Link>
+    );
+  }
+  if (projectId == null) {
     return <span>{subjectName}</span>;
   }
   // Only the AI integration branch runs without a project, and it never
@@ -242,16 +289,6 @@ export function AlertSubjectDisplay({
           className="inline-flex min-w-0 items-center gap-1 text-primary hover:underline"
         >
           <Webhook className="h-4 w-4 shrink-0" />
-          <span className="truncate">{subjectName}</span>
-        </Link>
-      );
-    case AlertSubjectType.LLM_INTEGRATION:
-      return (
-        <Link
-          href={href}
-          className="inline-flex min-w-0 items-center gap-1 text-primary hover:underline"
-        >
-          <Sparkles className="h-4 w-4 shrink-0" />
           <span className="truncate">{subjectName}</span>
         </Link>
       );

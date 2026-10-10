@@ -168927,7 +168927,16 @@
           "STALE_CASES",
           "AUTOMATION_SHARE_BELOW",
           "WEBHOOK_FAILURE_RATE",
-          "LLM_BUDGET_USED"
+          "LLM_BUDGET_USED",
+          "LLM_ERROR_RATE",
+          "LLM_RATE_LIMITED",
+          "CODE_REPOSITORY_CACHE_FAILING",
+          "INTEGRATION_REAUTH_NEEDED",
+          "QUEUE_FAILED_JOBS",
+          "QUEUE_BACKLOG",
+          "AUDIT_BACKLOG",
+          "ACCOUNT_LOCKOUTS",
+          "NO_AUTOMATED_RESULTS"
         ]
       },
       "EnumAlertMetricFilter": {
@@ -169086,7 +169095,10 @@
           "RUN_NAME",
           "MILESTONE",
           "WEBHOOK",
-          "LLM_INTEGRATION"
+          "LLM_INTEGRATION",
+          "CODE_REPOSITORY",
+          "INTEGRATION",
+          "QUEUE"
         ]
       },
       "EnumAlertScopeTypeFilter": {
@@ -170011,7 +170023,11 @@
           "SESSION",
           "PROJECT",
           "WEBHOOK",
-          "LLM_INTEGRATION"
+          "LLM_INTEGRATION",
+          "CODE_REPOSITORY",
+          "INTEGRATION",
+          "QUEUE",
+          "SYSTEM"
         ]
       },
       "EnumAlertSubjectTypeFilter": {

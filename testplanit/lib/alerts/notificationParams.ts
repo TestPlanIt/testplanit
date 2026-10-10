@@ -1,5 +1,5 @@
 import { toHumanReadable } from "~/utils/duration";
-import { subjectPath } from "~/lib/alerts/subjectPath";
+import { isSystemSubjectType, subjectPath } from "~/lib/alerts/subjectPath";
 
 /**
  * Turns a ALERT_TRIGGERED notification's `data` into the translation key
@@ -23,8 +23,14 @@ export interface AlertNotificationData {
     | "PROJECT"
     | "WEBHOOK"
     | "LLM_INTEGRATION"
+    | "CODE_REPOSITORY"
+    | "INTEGRATION"
+    | "QUEUE"
+    | "SYSTEM"
     | string;
   subjectId?: number;
+  /** String key of a subject without an integer id (webhooks, queues, system). */
+  subjectRef?: string | null;
   subjectName?: string;
   observedValue?: number;
   baselineValue?: number | null;
@@ -263,6 +269,83 @@ export function alertMetricMessage(
           threshold: num(threshold),
         },
       };
+    case "LLM_ERROR_RATE":
+      return {
+        key: "alertMetric.LLM_ERROR_RATE",
+        params: {
+          failureRate: num(details.failureRate ?? data.observedValue),
+          failed: int(details.failed),
+          sampleCount: int(details.sampleCount),
+          threshold: num(threshold),
+        },
+      };
+    case "LLM_RATE_LIMITED":
+      return {
+        key: "alertMetric.LLM_RATE_LIMITED",
+        params: {
+          blocked: int(details.blocked ?? data.observedValue),
+          hours: int(details.hours),
+          threshold: int(threshold),
+        },
+      };
+    case "CODE_REPOSITORY_CACHE_FAILING":
+      return {
+        key: "alertMetric.CODE_REPOSITORY_CACHE_FAILING",
+        params: {
+          hours: int(details.hours ?? data.observedValue),
+          error: String(details.error ?? ""),
+          threshold: int(threshold),
+        },
+      };
+    case "INTEGRATION_REAUTH_NEEDED":
+      return {
+        key: "alertMetric.INTEGRATION_REAUTH_NEEDED",
+        params: {
+          users: int(details.users ?? data.observedValue),
+          threshold: int(threshold),
+        },
+      };
+    case "QUEUE_FAILED_JOBS":
+      return {
+        key: "alertMetric.QUEUE_FAILED_JOBS",
+        params: {
+          failed: int(details.failed ?? data.observedValue),
+          threshold: int(threshold),
+        },
+      };
+    case "QUEUE_BACKLOG":
+      return {
+        key: "alertMetric.QUEUE_BACKLOG",
+        params: {
+          minutes: int(details.minutes ?? data.observedValue),
+          waiting: int(details.waiting),
+          threshold: int(threshold),
+        },
+      };
+    case "AUDIT_BACKLOG":
+      return {
+        key: "alertMetric.AUDIT_BACKLOG",
+        params: {
+          minutes: int(details.minutes ?? data.observedValue),
+          threshold: int(threshold),
+        },
+      };
+    case "ACCOUNT_LOCKOUTS":
+      return {
+        key: "alertMetric.ACCOUNT_LOCKOUTS",
+        params: {
+          locked: int(details.locked ?? data.observedValue),
+          threshold: int(threshold),
+        },
+      };
+    case "NO_AUTOMATED_RESULTS":
+      return {
+        key: "alertMetric.NO_AUTOMATED_RESULTS",
+        params: {
+          hours: int(details.hours ?? data.observedValue),
+          threshold: int(threshold),
+        },
+      };
     default:
       return {
         key: "alertTriggeredRule",
@@ -275,8 +358,11 @@ export function alertMetricMessage(
 export function alertSubjectPath(data: AlertNotificationData): string | null {
   if (!data.subjectType) return null;
   // A system alert's subject lives outside any project.
-  if (data.subjectType === "LLM_INTEGRATION") {
-    return subjectPath(data.subjectType, null, data.subjectId ?? 0);
+  if (isSystemSubjectType(data.subjectType)) {
+    return subjectPath(data.subjectType, null, data.subjectId ?? 0, null, {
+      subjectRef: data.subjectRef,
+      details: data.details,
+    });
   }
   if (!data.projectId) return null;
   // Webhook subjects carry no integer id; their path is the project's

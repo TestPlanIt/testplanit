@@ -288,8 +288,14 @@ export class NotificationService {
       | "SESSION"
       | "PROJECT"
       | "WEBHOOK"
-      | "LLM_INTEGRATION";
+      | "LLM_INTEGRATION"
+      | "CODE_REPOSITORY"
+      | "INTEGRATION"
+      | "QUEUE"
+      | "SYSTEM";
     subjectId: number;
+    /** String key of a subject without an integer id (webhooks, queues, system). */
+    subjectRef?: string | null;
     subjectName: string;
     observedValue: number;
     baselineValue: number | null;
@@ -325,6 +331,7 @@ export class NotificationService {
             projectName: params.projectName,
             subjectType: params.subjectType,
             subjectId: params.subjectId,
+            subjectRef: params.subjectRef ?? null,
             subjectName: params.subjectName,
             observedValue: params.observedValue,
             baselineValue: params.baselineValue,

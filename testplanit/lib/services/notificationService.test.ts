@@ -170,6 +170,7 @@ describe("NotificationService", () => {
             projectName: "Shop",
             subjectType: "CASE",
             subjectId: 9,
+            subjectRef: null,
             subjectName: "Checkout",
             observedValue: 81.25,
             baselineValue: 11,

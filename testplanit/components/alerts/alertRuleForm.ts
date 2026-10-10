@@ -59,6 +59,7 @@ export const alertRuleFormSchema = z
       values.scopeType !== AlertScopeType.PROJECT &&
       values.scopeType !== AlertScopeType.RUN_NAME &&
       values.scopeType !== AlertScopeType.WEBHOOK &&
+      values.scopeType !== AlertScopeType.QUEUE &&
       !values.scopeId
     ) {
       ctx.addIssue({
@@ -78,7 +79,8 @@ export const alertRuleFormSchema = z
       });
     }
     if (
-      values.scopeType === AlertScopeType.WEBHOOK &&
+      (values.scopeType === AlertScopeType.WEBHOOK ||
+        values.scopeType === AlertScopeType.QUEUE) &&
       !(values.scopeText ?? "").trim()
     ) {
       ctx.addIssue({
@@ -243,7 +245,8 @@ export function formValuesToRuleData(
 ): Omit<AlertRuleLike, "metric"> & { metric: AlertMetric } {
   const usesScopeText =
     values.scopeType === AlertScopeType.RUN_NAME ||
-    values.scopeType === AlertScopeType.WEBHOOK;
+    values.scopeType === AlertScopeType.WEBHOOK ||
+    values.scopeType === AlertScopeType.QUEUE;
   const usesScopeId =
     values.scopeType !== AlertScopeType.PROJECT && !usesScopeText;
   return {

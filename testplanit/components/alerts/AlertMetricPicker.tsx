@@ -34,6 +34,10 @@ const GROUP_ORDER: AlertSubjectType[] = [
   AlertSubjectType.PROJECT,
   AlertSubjectType.WEBHOOK,
   AlertSubjectType.LLM_INTEGRATION,
+  AlertSubjectType.CODE_REPOSITORY,
+  AlertSubjectType.INTEGRATION,
+  AlertSubjectType.QUEUE,
+  AlertSubjectType.SYSTEM,
 ];
 
 /**

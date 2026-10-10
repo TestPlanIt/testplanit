@@ -64,6 +64,8 @@ import {
   AlertSubjectType,
 } from "~/zenstack/models";
 import { schema } from "~/zenstack/schema";
+import { ALL_QUEUE_NAMES } from "~/lib/queueNames";
+import { useQueueDisplayName } from "@/components/admin/useQueueDisplayName";
 import { AlertMetricPicker } from "./AlertMetricPicker";
 import { CaseSearchSelect } from "./CaseSearchSelect";
 import { TagSearchSelect } from "./TagSearchSelect";
@@ -139,6 +141,7 @@ export function AlertRuleDialog({
   const tForm = useTranslations("alerts.form");
   const tActions = useTranslations("common.actions");
   const tCommon = useTranslations("common");
+  const queueLabel = useQueueDisplayName();
   const { data: session } = useSession();
   const currentUserId = session?.user?.id;
   const isEdit = rule != null;
@@ -253,6 +256,30 @@ export function AlertRuleDialog({
       select: { id: true, name: true },
     },
     { enabled: open && scopeType === AlertScopeType.LLM_INTEGRATION }
+  );
+  const { data: codeRepositories } =
+    client.projectCodeRepositoryConfig.useFindMany(
+      {
+        where: {
+          repository: { isDeleted: false },
+          project: { isDeleted: false },
+        },
+        select: {
+          id: true,
+          purpose: true,
+          repository: { select: { name: true } },
+          project: { select: { name: true } },
+        },
+      },
+      { enabled: open && scopeType === AlertScopeType.CODE_REPOSITORY }
+    );
+  const { data: integrations } = client.integration.useFindMany(
+    {
+      where: { isDeleted: false },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    },
+    { enabled: open && scopeType === AlertScopeType.INTEGRATION }
   );
   const scopeId = useWatch({ control, name: "scopeId" });
   const { data: scopedTag } = client.tags.useFindUnique(
@@ -477,10 +504,19 @@ export function AlertRuleDialog({
         return t(`scopeTypeWebhooks.${type}` as never);
       case AlertSubjectType.LLM_INTEGRATION:
         return t(`scopeTypeLlm.${type}` as never);
+      case AlertSubjectType.CODE_REPOSITORY:
+        return t(`scopeTypeCodeRepositories.${type}` as never);
+      case AlertSubjectType.INTEGRATION:
+        return t(`scopeTypeIntegrations.${type}` as never);
+      case AlertSubjectType.QUEUE:
+        return t(`scopeTypeQueues.${type}` as never);
+      case AlertSubjectType.SYSTEM:
+        return t(`scopeTypeSystem.${type}` as never);
       default:
         return t(`scopeType.${type}` as never);
     }
   };
+
   // Picking System (or leaving it) swaps to that side's metrics; the
   // metric then resets the condition and scope to its own defaults.
   const handleTargetChange = (value: string) => {
@@ -1176,6 +1212,109 @@ export function AlertRuleDialog({
                               </SelectContent>
                             </Select>
                             <FieldError name="scopeId" />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                    {scopeType === AlertScopeType.CODE_REPOSITORY && (
+                      <FormField
+                        control={control}
+                        name="scopeId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>
+                              {tForm("scopeCodeRepository")}
+                            </FormLabel>
+                            <Select
+                              value={field.value || ""}
+                              onValueChange={field.onChange}
+                            >
+                              <FormControl>
+                                <SelectTrigger data-testid="alert-rule-scope-code-repository">
+                                  <SelectValue
+                                    placeholder={tForm(
+                                      "scopePickCodeRepository"
+                                    )}
+                                  />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {(codeRepositories ?? []).map((config) => (
+                                  <SelectItem
+                                    key={config.id}
+                                    value={String(config.id)}
+                                  >
+                                    {`${config.repository?.name ?? config.id} · ${config.project?.name ?? ""} (${config.purpose})`}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FieldError name="scopeId" />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                    {scopeType === AlertScopeType.INTEGRATION && (
+                      <FormField
+                        control={control}
+                        name="scopeId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{tForm("scopeIntegration")}</FormLabel>
+                            <Select
+                              value={field.value || ""}
+                              onValueChange={field.onChange}
+                            >
+                              <FormControl>
+                                <SelectTrigger data-testid="alert-rule-scope-integration">
+                                  <SelectValue
+                                    placeholder={tForm("scopePickIntegration")}
+                                  />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {(integrations ?? []).map((integration) => (
+                                  <SelectItem
+                                    key={integration.id}
+                                    value={String(integration.id)}
+                                  >
+                                    {integration.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FieldError name="scopeId" />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                    {scopeType === AlertScopeType.QUEUE && (
+                      <FormField
+                        control={control}
+                        name="scopeText"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{tForm("scopeQueue")}</FormLabel>
+                            <Select
+                              value={field.value || ""}
+                              onValueChange={field.onChange}
+                            >
+                              <FormControl>
+                                <SelectTrigger data-testid="alert-rule-scope-queue">
+                                  <SelectValue
+                                    placeholder={tForm("scopePickQueue")}
+                                  />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {ALL_QUEUE_NAMES.map((name) => (
+                                  <SelectItem key={name} value={name}>
+                                    {queueLabel(name)}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FieldError name="scopeText" />
                           </FormItem>
                         )}
                       />

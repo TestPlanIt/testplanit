@@ -81,6 +81,14 @@ interface MockDbOptions {
   issueCount?: number;
   llmConfig?: Record<string, unknown> | null;
   llmSpend?: number;
+  llmIntegration?: Record<string, unknown> | null;
+  llmRecent?: Array<{ success: boolean }>;
+  llmRateLimited?: number;
+  repoConfigs?: Array<Record<string, unknown>>;
+  reauthRows?: Array<Record<string, unknown>>;
+  auditOldest?: Date | null;
+  lockedUsers?: number;
+  lastAutomatedAt?: Date | null;
 }
 
 /** A client whose raw queries are routed by the SQL they carry. */
@@ -119,6 +127,18 @@ function mockDb(options: MockDbOptions) {
       }
       if (sql.includes('FROM "WebhookDelivery" d')) {
         return [options.deliveries ?? { total: 0, failed: 0 }];
+      }
+      if (sql.includes('FROM "LlmUsage" u')) {
+        return [{ blocked: options.llmRateLimited ?? 0 }];
+      }
+      if (sql.includes('JOIN "UserIntegrationAuth" a')) {
+        return options.reauthRows ?? [];
+      }
+      if (sql.includes('FROM "DataChangeLog"')) {
+        return options.auditOldest ? [{ ts: options.auditOldest }] : [];
+      }
+      if (sql.includes('MAX("createdAt") AS last')) {
+        return [{ last: options.lastAutomatedAt ?? null }];
       }
       if (sql.includes("tr.elapsed::double precision AS elapsed")) {
         return (options.previousRunDurations ?? []).map((elapsed) => ({
@@ -169,11 +189,23 @@ function mockDb(options: MockDbOptions) {
     llmProviderConfig: {
       findUnique: vi.fn(async () => options.llmConfig ?? null),
     },
+    llmIntegration: {
+      findUnique: vi.fn(async () =>
+        options.llmIntegration === undefined
+          ? { name: "OpenAI", isDeleted: false }
+          : options.llmIntegration
+      ),
+    },
     llmUsage: {
       aggregate: vi.fn(async () => ({
         _sum: { totalCost: options.llmSpend ?? 0 },
       })),
+      findMany: vi.fn(async () => options.llmRecent ?? []),
     },
+    projectCodeRepositoryConfig: {
+      findMany: vi.fn(async () => options.repoConfigs ?? []),
+    },
+    user: { count: vi.fn(async () => options.lockedUsers ?? 0) },
   };
   return db;
 }
@@ -937,7 +969,6 @@ describe("AlertEvaluationService — AI budget (system alerts)", () => {
     monthlyBudget: "100.00",
     billingPeriodStartDay: 1,
     budgetAlertResetAt: null,
-    llmIntegration: { name: "OpenAI", isDeleted: false },
   };
 
   it("fires every rule whose threshold the period's spend reaches, without a project or webhook", async () => {
@@ -1051,10 +1082,8 @@ describe("AlertEvaluationService — AI budget (system alerts)", () => {
 
     const deleted = mockDb({
       rules: [budgetRule()],
-      llmConfig: {
-        ...openAi,
-        llmIntegration: { name: "Old", isDeleted: true },
-      },
+      llmConfig: openAi,
+      llmIntegration: { name: "Old", isDeleted: true },
       llmSpend: 500,
     });
     expect(
@@ -1071,5 +1100,270 @@ describe("AlertEvaluationService — AI budget (system alerts)", () => {
     const service = new AlertEvaluationService(db, { now: () => NOW });
     expect(await service.evaluateScheduled(undefined, "daily")).toEqual([]);
     expect(db.milestones.findMany).not.toHaveBeenCalled();
+  });
+});
+
+describe("AlertEvaluationService — AI error rate and provider rate limiting", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("fires the error-rate rule on the last requests and the rate-limit rule on recent throttling", async () => {
+    const db = mockDb({
+      rules: [
+        rule({
+          id: 30,
+          projectId: null,
+          metric: "LLM_ERROR_RATE",
+          thresholdValue: 25,
+          baselineWindow: 10,
+          minSamples: 4,
+          cooldownMinutes: 0,
+        }),
+        rule({
+          id: 31,
+          projectId: null,
+          metric: "LLM_RATE_LIMITED",
+          thresholdValue: 3,
+          secondaryValue: 24,
+          cooldownMinutes: 0,
+        }),
+      ],
+      llmRecent: [
+        { success: false },
+        { success: false },
+        { success: true },
+        { success: true },
+        { success: true },
+      ],
+      llmRateLimited: 4,
+    });
+    const service = new AlertEvaluationService(db, { now: () => NOW });
+    const fired = await service.evaluateLlmIntegration(4);
+    expect(fired.map((f) => f.ruleId)).toEqual([30, 31]);
+    expect(db.llmUsage.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { llmIntegrationId: 4 }, take: 10 })
+    );
+    expect(db.alertEvent.create).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        data: expect.objectContaining({
+          subjectType: "LLM_INTEGRATION",
+          observedValue: 40,
+          details: { failureRate: 40, failed: 2, sampleCount: 5 },
+        }),
+      })
+    );
+    expect(db.alertEvent.create).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        data: expect.objectContaining({
+          observedValue: 4,
+          details: { blocked: 4, hours: 24 },
+        }),
+      })
+    );
+    // Budget rules absent: the provider config is never read.
+    expect(db.llmProviderConfig.findUnique).not.toHaveBeenCalled();
+  });
+
+  it("stays quiet below the minimum sample count or under the thresholds", async () => {
+    const db = mockDb({
+      rules: [
+        rule({
+          id: 30,
+          projectId: null,
+          metric: "LLM_ERROR_RATE",
+          thresholdValue: 25,
+          baselineWindow: 10,
+          minSamples: 4,
+        }),
+        rule({
+          id: 31,
+          projectId: null,
+          metric: "LLM_RATE_LIMITED",
+          thresholdValue: 3,
+          secondaryValue: 24,
+        }),
+      ],
+      llmRecent: [{ success: false }, { success: false }],
+      llmRateLimited: 2,
+    });
+    const service = new AlertEvaluationService(db, { now: () => NOW });
+    expect(await service.evaluateLlmIntegration(4)).toEqual([]);
+  });
+});
+
+describe("AlertEvaluationService — installation health (system alerts)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  const systemRule = (overrides: Partial<AlertRuleRow>) =>
+    rule({ projectId: null, cooldownMinutes: 0, ...overrides });
+
+  it("checks repository caches, integrations, queues, the audit backlog and lockouts on the hourly pass", async () => {
+    const db = mockDb({
+      rules: [
+        systemRule({
+          id: 40,
+          metric: "CODE_REPOSITORY_CACHE_FAILING",
+          thresholdValue: 24,
+        }),
+        systemRule({
+          id: 41,
+          metric: "CODE_REPOSITORY_CACHE_FAILING",
+          thresholdValue: 1,
+          scopeType: "CODE_REPOSITORY",
+          scopeId: 99,
+        }),
+        systemRule({ id: 42, metric: "QUEUE_FAILED_JOBS", thresholdValue: 10 }),
+        systemRule({
+          id: 43,
+          metric: "QUEUE_BACKLOG",
+          thresholdValue: 30,
+          scopeType: "QUEUE",
+          scopeText: "emails",
+        }),
+        systemRule({ id: 44, metric: "AUDIT_BACKLOG", thresholdValue: 30 }),
+        systemRule({ id: 45, metric: "ACCOUNT_LOCKOUTS", thresholdValue: 3 }),
+      ],
+      repoConfigs: [
+        {
+          id: 5,
+          projectId: 7,
+          purpose: "IMPACT",
+          cacheLastFetchedAt: new Date("2026-10-06T12:00:00Z"), // 48h ago
+          cacheError: "boom",
+          updatedAt: new Date("2026-10-08T11:00:00Z"),
+          repository: { name: "shop-web" },
+          project: { name: "Shop" },
+        },
+      ],
+      auditOldest: new Date("2026-10-08T11:00:00Z"), // 60 minutes
+      lockedUsers: 3,
+    });
+    const queueStats = vi.fn(async () => [
+      { name: "emails", failed: 12, waiting: 3, oldestWaitingMinutes: 45 },
+      { name: "alerts", failed: 0, waiting: 1, oldestWaitingMinutes: 90 },
+    ]);
+    const service = new AlertEvaluationService(db, {
+      now: () => NOW,
+      queueStats,
+    });
+    const fired = await service.evaluateScheduled("acme", "hourly");
+    expect(fired.map((f) => [f.ruleId, f.subjectType, f.subjectId])).toEqual([
+      [40, "CODE_REPOSITORY", 5],
+      [42, "QUEUE", 0],
+      [43, "QUEUE", 0],
+      [44, "SYSTEM", 0],
+      [45, "SYSTEM", 0],
+    ]);
+    expect(queueStats).toHaveBeenCalledWith("acme", NOW);
+    expect(db.alertEvent.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          projectId: null,
+          subjectType: "CODE_REPOSITORY",
+          subjectName: "shop-web · Shop",
+          observedValue: 48,
+          details: expect.objectContaining({
+            projectId: 7,
+            purpose: "IMPACT",
+            error: "boom",
+          }),
+        }),
+      })
+    );
+    expect(db.alertEvent.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          subjectType: "QUEUE",
+          subjectRef: "emails",
+          observedValue: 12,
+        }),
+      })
+    );
+    expect(db.alertEvent.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          subjectType: "SYSTEM",
+          subjectRef: "audit",
+          observedValue: 60,
+        }),
+      })
+    );
+    expect(createAlertTriggeredNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        subjectType: "SYSTEM",
+        subjectRef: "lockouts",
+        projectId: null,
+        details: { locked: 3 },
+      })
+    );
+  });
+
+  it("checks re-authorization counts and the automated-results feed on the daily pass", async () => {
+    const db = mockDb({
+      rules: [
+        systemRule({
+          id: 50,
+          metric: "INTEGRATION_REAUTH_NEEDED",
+          thresholdValue: 5,
+        }),
+        systemRule({
+          id: 51,
+          metric: "INTEGRATION_REAUTH_NEEDED",
+          thresholdValue: 1,
+          scopeType: "INTEGRATION",
+          scopeId: 2,
+        }),
+        systemRule({
+          id: 52,
+          metric: "NO_AUTOMATED_RESULTS",
+          thresholdValue: 48,
+        }),
+      ],
+      reauthRows: [
+        { id: 1, name: "Jira", users: 6 },
+        { id: 3, name: "GitHub", users: 2 },
+      ],
+      lastAutomatedAt: new Date("2026-10-05T12:00:00Z"), // 72h ago
+    });
+    const service = new AlertEvaluationService(db, { now: () => NOW });
+    const fired = await service.evaluateScheduled(undefined, "daily");
+    expect(fired.map((f) => [f.ruleId, f.subjectType, f.subjectId])).toEqual([
+      [50, "INTEGRATION", 1],
+      [52, "SYSTEM", 0],
+    ]);
+    expect(db.alertEvent.create).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          subjectRef: "automated-results",
+          observedValue: 72,
+        }),
+      })
+    );
+  });
+
+  it("never fires the automated-results rule on an installation without any, nor the audit rule without a backlog", async () => {
+    const db = mockDb({
+      rules: [
+        systemRule({
+          id: 52,
+          metric: "NO_AUTOMATED_RESULTS",
+          thresholdValue: 48,
+        }),
+        systemRule({ id: 44, metric: "AUDIT_BACKLOG", thresholdValue: 30 }),
+      ],
+      lastAutomatedAt: null,
+      auditOldest: null,
+    });
+    const service = new AlertEvaluationService(db, {
+      now: () => NOW,
+      queueStats: async () => [],
+    });
+    expect(await service.evaluateScheduled(undefined, "daily")).toEqual([]);
+    expect(await service.evaluateScheduled(undefined, "hourly")).toEqual([]);
   });
 });

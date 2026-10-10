@@ -100,7 +100,7 @@ The application uses the following background processes:
 
 ### Budget Alert Worker
 
-- Runs after each recorded AI usage on an integration with a monthly budget and evaluates the **AI budget used** [alert rules](./user-guide/alerts.md#system-alerts-ai-budget) against the period's spend
+- Runs after each recorded AI usage or failure and evaluates the AI model [alert rules](./user-guide/alerts.md#system-alerts) (budget used, request error rate, provider rate limiting)
 - Default concurrency: 2
 - Location: `workers/budgetAlertWorker.ts`
 

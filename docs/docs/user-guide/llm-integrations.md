@@ -209,7 +209,7 @@ If your provider invoices on a different cycle, set the **Billing Period Start D
 The setting affects three behaviors:
 
 - **Spend aggregation** — the cost shown on the admin LLM page totals usage from the period start through today
-- **Budget alerts** — [AI budget used](./alerts.md#system-alerts-ai-budget) alerts fire once per period and reset on each new one
+- **Budget alerts** — [AI budget used](./alerts.md#system-alerts) alerts fire once per period and reset on each new one
 - **Reset Spend** — the manual reset action on the Edit dialog clears usage from the current period start onward (older periods remain in the audit trail)
 
 For a historical breakdown of spend by feature, model, user, or project — beyond the current billing period — use the [LLM Usage report](./llm-usage-report.md) under **Administration → Reports**.

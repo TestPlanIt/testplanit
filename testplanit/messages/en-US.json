@@ -7029,7 +7029,11 @@
           "SESSION": "session",
           "PROJECT": "project",
           "WEBHOOK": "webhook",
-          "LLM_INTEGRATION": "AI model integration"
+          "LLM_INTEGRATION": "AI model integration",
+          "CODE_REPOSITORY": "repository connection",
+          "INTEGRATION": "integration",
+          "QUEUE": "queue",
+          "SYSTEM": "installation"
         },
         "alertMetric": {
           "RESULT_DURATION_DEVIATION": "The result took {elapsed}, {deviation}% away from the baseline of {baseline} (more than {threshold}% allowed).",
@@ -7051,7 +7055,16 @@
           "RUN_FAILURE_COUNT": "{failed, plural, one {# result has} other {# results have}} failed (threshold {threshold}).",
           "MILESTONE_BEHIND": "The milestone is {completion}% complete with {daysRemaining, plural, one {# day} other {# days}} remaining (threshold {threshold}%).",
           "MILESTONE_OVERDUE": "The milestone is {daysOverdue, plural, one {# day} other {# days}} past its due date.",
-          "LLM_BUDGET_USED": "Spend for the billing period is {spend} of the {budget} monthly budget ({percent}%, threshold {threshold}%)."
+          "LLM_BUDGET_USED": "Spend for the billing period is {spend} of the {budget} monthly budget ({percent}%, threshold {threshold}%).",
+          "LLM_ERROR_RATE": "{failed} of the last {sampleCount} requests failed ({failureRate}%, threshold {threshold}%).",
+          "LLM_RATE_LIMITED": "The provider rate-limited {blocked, plural, one {# request} other {# requests}} in the last {hours, plural, one {# hour} other {# hours}} (threshold {threshold}).",
+          "CODE_REPOSITORY_CACHE_FAILING": "The repository cache has been failing for {hours, plural, one {# hour} other {# hours}} (threshold {threshold}){error, select, other {: {error}}}",
+          "INTEGRATION_REAUTH_NEEDED": "{users, plural, one {# user needs} other {# users need}} to re-authorize the integration (threshold {threshold}).",
+          "QUEUE_FAILED_JOBS": "{failed, plural, one {# job has} other {# jobs have}} failed in the queue (threshold {threshold}).",
+          "QUEUE_BACKLOG": "The oldest of {waiting, plural, one {# waiting job} other {# waiting jobs}} has waited {minutes, plural, one {# minute} other {# minutes}} (threshold {threshold}).",
+          "AUDIT_BACKLOG": "The oldest unprocessed audit change is {minutes, plural, one {# minute} other {# minutes}} old (threshold {threshold}).",
+          "ACCOUNT_LOCKOUTS": "{locked, plural, one {# account is} other {# accounts are}} locked after failed sign-ins (threshold {threshold}).",
+          "NO_AUTOMATED_RESULTS": "No automated result has arrived for {hours, plural, one {# hour} other {# hours}} (threshold {threshold})."
         }
       }
     },
@@ -10246,6 +10259,11 @@
     },
     "neverFired": "Never",
     "systemScope": "System",
+    "systemSubjects": {
+      "audit": "Audit log",
+      "lockouts": "User accounts",
+      "automated-results": "Automated results"
+    },
     "paused": "Paused",
     "filters": {
       "label": "Filter alerts",
@@ -10292,6 +10310,12 @@
       "scopePickWebhook": "Select a webhook",
       "scopeLlmIntegration": "Integration",
       "scopePickLlmIntegration": "Select an integration",
+      "scopeCodeRepository": "Repository connection",
+      "scopePickCodeRepository": "Select a repository connection",
+      "scopeIntegration": "Integration",
+      "scopePickIntegration": "Select an integration",
+      "scopeQueue": "Queue",
+      "scopePickQueue": "Select a queue",
       "systemScope": "System",
       "systemScopeHelp": "A system alert watches something administered for the whole installation, such as an AI model budget. Only administrators see it.",
       "coverageBasis": "Count as covered",
@@ -10301,15 +10325,18 @@
       },
       "windowLabels": {
         "RUN_DURATION_DEVIATION": "Baseline window (runs)",
-        "WEBHOOK_FAILURE_RATE": "Last deliveries"
+        "WEBHOOK_FAILURE_RATE": "Last deliveries",
+        "LLM_ERROR_RATE": "Last requests"
       },
       "minSamplesLabels": {
         "RUN_DURATION_DEVIATION": "Minimum runs",
-        "WEBHOOK_FAILURE_RATE": "Minimum deliveries"
+        "WEBHOOK_FAILURE_RATE": "Minimum deliveries",
+        "LLM_ERROR_RATE": "Minimum requests"
       },
       "secondaryLabels": {
         "RUN_UNTESTED_SHARE": "Days before the milestone is due",
-        "STALE_CASES": "Days without a result"
+        "STALE_CASES": "Days without a result",
+        "LLM_RATE_LIMITED": "Within the last (hours)"
       },
       "scopeCaseSearch": "Search by name or ID",
       "direction": "Direction",
@@ -10374,7 +10401,16 @@
         "STALE_CASES": "Stale cases, more than",
         "AUTOMATION_SHARE_BELOW": "Automated share under (%)",
         "WEBHOOK_FAILURE_RATE": "Failure rate over (%)",
-        "LLM_BUDGET_USED": "Budget used (%)"
+        "LLM_BUDGET_USED": "Budget used (%)",
+        "LLM_ERROR_RATE": "Failed requests over (%)",
+        "LLM_RATE_LIMITED": "Rate-limited requests, at least",
+        "CODE_REPOSITORY_CACHE_FAILING": "Failing for at least (hours)",
+        "INTEGRATION_REAUTH_NEEDED": "Users needing re-authorization, at least",
+        "QUEUE_FAILED_JOBS": "Failed jobs, more than",
+        "QUEUE_BACKLOG": "Oldest waiting job older than (minutes)",
+        "AUDIT_BACKLOG": "Oldest unprocessed change older than (minutes)",
+        "ACCOUNT_LOCKOUTS": "Locked accounts, at least",
+        "NO_AUTOMATED_RESULTS": "No automated results for (hours)"
       }
     },
     "direction": {
@@ -10416,6 +10452,21 @@
       "PROJECT": "All AI model integrations",
       "LLM_INTEGRATION": "One integration"
     },
+    "scopeTypeCodeRepositories": {
+      "PROJECT": "All repository connections",
+      "CODE_REPOSITORY": "One repository connection"
+    },
+    "scopeTypeIntegrations": {
+      "PROJECT": "All integrations",
+      "INTEGRATION": "One integration"
+    },
+    "scopeTypeQueues": {
+      "PROJECT": "All queues",
+      "QUEUE": "One queue"
+    },
+    "scopeTypeSystem": {
+      "PROJECT": "Whole installation"
+    },
     "scopeTypeRuns": {
       "PROJECT": "All runs",
       "TAG": "Runs with a tag",
@@ -10435,6 +10486,13 @@
       "WEBHOOK": "Webhook: {name}",
       "LLM_INTEGRATION": "Integration: {name}",
       "ALL_LLM_INTEGRATIONS": "All AI model integrations",
+      "CODE_REPOSITORY": "Repository: {name}",
+      "ALL_CODE_REPOSITORIES": "All repository connections",
+      "INTEGRATION": "Integration: {name}",
+      "ALL_INTEGRATIONS": "All integrations",
+      "QUEUE": "Queue: {name}",
+      "ALL_QUEUES": "All queues",
+      "WHOLE_INSTALLATION": "Whole installation",
       "missing": "(removed)"
     },
     "subjectType": {
@@ -10545,6 +10603,51 @@
         "label": "AI budget used",
         "description": "An AI model integration's spend for its billing period reaches a share of its monthly budget. Fires once per period for each integration.",
         "summary": "Spend reaches {threshold}% of the integration's monthly budget"
+      },
+      "LLM_ERROR_RATE": {
+        "label": "AI request error rate",
+        "description": "Too many of an AI model integration's recent requests failed.",
+        "summary": "More than {threshold}% of the integration's last {window} requests failed, after at least {minSamples} requests"
+      },
+      "LLM_RATE_LIMITED": {
+        "label": "AI provider rate limiting",
+        "description": "The provider throttled an AI model integration's requests repeatedly.",
+        "summary": "The provider rate-limited at least {threshold, plural, one {# request} other {# requests}} within {days, plural, one {# hour} other {# hours}}"
+      },
+      "CODE_REPOSITORY_CACHE_FAILING": {
+        "label": "Repository cache failing",
+        "description": "A code repository connection has not refreshed its cache successfully for a while. Checked hourly.",
+        "summary": "A repository connection's cache has been failing for at least {threshold, plural, one {# hour} other {# hours}}"
+      },
+      "INTEGRATION_REAUTH_NEEDED": {
+        "label": "Integration re-authorization needed",
+        "description": "Many users have lost their connection to an integration and need to re-authorize. Checked daily.",
+        "summary": "At least {threshold, plural, one {# user needs} other {# users need}} to re-authorize an integration"
+      },
+      "QUEUE_FAILED_JOBS": {
+        "label": "Queue failed jobs",
+        "description": "A background queue holds too many failed jobs. Checked hourly.",
+        "summary": "More than {threshold, plural, one {# job has} other {# jobs have}} failed in a queue"
+      },
+      "QUEUE_BACKLOG": {
+        "label": "Queue backlog",
+        "description": "A background queue's oldest waiting job has waited too long, the sign of a stopped worker. Checked hourly.",
+        "summary": "A queue's oldest waiting job is older than {threshold, plural, one {# minute} other {# minutes}}"
+      },
+      "AUDIT_BACKLOG": {
+        "label": "Audit log backlog",
+        "description": "Captured changes are not being written to the audit log, the sign of a stopped audit worker. Checked hourly.",
+        "summary": "The oldest unprocessed audit change is older than {threshold, plural, one {# minute} other {# minutes}}"
+      },
+      "ACCOUNT_LOCKOUTS": {
+        "label": "Account lockouts",
+        "description": "Several accounts are locked after failed sign-ins at once, a sign of credential stuffing. Checked hourly.",
+        "summary": "At least {threshold, plural, one {# account is} other {# accounts are}} locked after failed sign-ins"
+      },
+      "NO_AUTOMATED_RESULTS": {
+        "label": "No automated results",
+        "description": "No automated test result has arrived from any pipeline for a while. Checked daily.",
+        "summary": "No automated result has arrived for {threshold, plural, one {# hour} other {# hours}}"
       }
     },
     "sourceSummary": "Results: {source, select, MANUAL {manual} AUTOMATED {automated} other {manual and automated}}",
@@ -10576,7 +10679,11 @@
       "MILESTONE": "Milestones",
       "PROJECT": "Project health",
       "WEBHOOK": "Webhooks",
-      "LLM_INTEGRATION": "AI models"
+      "LLM_INTEGRATION": "AI models",
+      "CODE_REPOSITORY": "Code repositories",
+      "INTEGRATION": "Integrations",
+      "QUEUE": "Background queues",
+      "SYSTEM": "Installation"
     }
   }
 }

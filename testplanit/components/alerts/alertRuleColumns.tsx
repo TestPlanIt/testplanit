@@ -286,7 +286,7 @@ export function useAlertRuleColumns({
               scopeType={row.original.scopeType}
               scopeId={row.original.scopeId}
               scopeText={row.original.scopeText}
-              system={row.original.projectId == null}
+              metric={row.original.metric}
               names={scopeNames}
             />
           </div>

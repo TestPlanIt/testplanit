@@ -5,8 +5,10 @@ import { QueueManagement } from "./QueueManagement";
 
 // Mock next-intl
 vi.mock("next-intl", () => ({
-  useTranslations: (namespace?: string) => (key: string) =>
-    namespace ? `${namespace}.${key}` : key,
+  useTranslations: (namespace?: string) =>
+    Object.assign((key: string) => (namespace ? `${namespace}.${key}` : key), {
+      has: () => true,
+    }),
 }));
 
 // Mock sonner
