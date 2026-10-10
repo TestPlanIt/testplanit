@@ -210,8 +210,10 @@ export const convertHtmlToTipTapJSON = (html: string): JSONContent => {
   try {
     return generateJSON(sanitized, tiptapConversionExtensions) as JSONContent;
   } catch (error) {
+    // Keep the text rather than storing an empty document: a conversion
+    // failure must never erase what the caller wrote.
     console.error("Failed to convert HTML to TipTap JSON:", error);
-    return emptyEditorContent as JSONContent;
+    return convertTextToTipTapJSON(sanitized.replace(/<[^>]+>/g, " "));
   }
 };
 
