@@ -23,7 +23,8 @@ vi.mock("~/services/unifiedElasticsearchService", () => ({
 }));
 
 vi.mock("~/lib/services/searchQueryBuilder", () => ({
-  buildElasticsearchQuery: vi.fn(),
+  buildSearchQueryParts: vi.fn(),
+  withFacetFilters: vi.fn((query: any) => query),
   buildSearchAggregations: vi.fn(),
   buildSort: vi.fn(),
   getEntityTypeCounts: vi.fn(),
@@ -34,7 +35,7 @@ vi.mock("~/lib/services/searchQueryBuilder", () => ({
 import { getServerSession } from "next-auth/next";
 import { getCurrentTenantId } from "~/lib/multiTenantDb";
 import {
-  buildElasticsearchQuery,
+  buildSearchQueryParts,
   buildSearchAggregations,
   buildSort,
   getEntityTypeCounts,
@@ -74,7 +75,10 @@ describe("Search Route", () => {
     (getIndicesForEntityTypes as any).mockReturnValue([
       "testplanit-repository-cases",
     ]);
-    (buildElasticsearchQuery as any).mockResolvedValue({ match_all: {} });
+    (buildSearchQueryParts as any).mockResolvedValue({
+      query: { match_all: {} },
+      facetFilters: [],
+    });
     (buildSort as any).mockReturnValue([]);
     (buildSearchAggregations as any).mockReturnValue({});
     (getEntityTypeFromIndex as any).mockReturnValue("repositoryCases");
@@ -213,17 +217,57 @@ describe("Search Route", () => {
       );
     });
 
-    it("passes user to buildElasticsearchQuery for access filtering", async () => {
+    it("passes user to the query builder for access filtering", async () => {
       (getServerSession as any).mockResolvedValue({ user: mockUser });
       setupEsClient();
 
       const request = createMockRequest(defaultSearchOptions);
       await POST(request);
 
-      expect(buildElasticsearchQuery).toHaveBeenCalledWith(
+      expect(buildSearchQueryParts).toHaveBeenCalledWith(
         defaultSearchOptions.filters,
         mockUser
       );
+    });
+
+    it("applies facet selections as a post_filter and scopes the facets by them", async () => {
+      (getServerSession as any).mockResolvedValue({ user: mockUser });
+      const mockEsClient = setupEsClient();
+      const facetFilters = [
+        { facet: "projects", clause: { terms: { projectId: [1] } } },
+      ];
+      (buildSearchQueryParts as any).mockResolvedValue({
+        query: { match_all: {} },
+        facetFilters,
+      });
+
+      const request = createMockRequest({
+        ...defaultSearchOptions,
+        facets: ["projects", "states"],
+      });
+      await POST(request);
+
+      expect(mockEsClient.search).toHaveBeenCalledWith(
+        expect.objectContaining({
+          query: { match_all: {} },
+          post_filter: { bool: { filter: [{ terms: { projectId: [1] } }] } },
+        })
+      );
+      expect(buildSearchAggregations).toHaveBeenCalledWith(
+        ["projects", "states"],
+        defaultSearchOptions.filters.entityTypes,
+        facetFilters
+      );
+    });
+
+    it("sends no post_filter when nothing is selected in a facet", async () => {
+      (getServerSession as any).mockResolvedValue({ user: mockUser });
+      const mockEsClient = setupEsClient();
+
+      await POST(createMockRequest(defaultSearchOptions));
+
+      const call = mockEsClient.search.mock.calls[0][0];
+      expect(call.post_filter).toBeUndefined();
     });
 
     it("returns empty result when search throws (graceful degradation)", async () => {
@@ -260,7 +304,8 @@ describe("Search Route", () => {
 
       expect(buildSearchAggregations).toHaveBeenCalledWith(
         searchOptionsWithFacets.facets,
-        searchOptionsWithFacets.filters.entityTypes
+        searchOptionsWithFacets.filters.entityTypes,
+        []
       );
     });
 

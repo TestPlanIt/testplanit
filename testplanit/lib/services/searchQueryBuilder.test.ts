@@ -13,6 +13,9 @@ import {
   buildCustomFieldQuery,
   buildElasticsearchQuery,
   buildSearchAggregations,
+  buildSearchQueryParts,
+  facetForClause,
+  withFacetFilters,
   buildSort,
   getEntityTypeCounts,
   getEntityTypeFromIndex,
@@ -448,9 +451,124 @@ describe("buildCustomFieldQuery", () => {
 });
 
 // ============================================================
+// buildSearchQueryParts — facet selections split out of the query
+// ============================================================
+describe("buildSearchQueryParts", () => {
+  it("keeps facet selections apart from the other filters", async () => {
+    const { query, facetFilters } = await buildSearchQueryParts(
+      {
+        query: "login",
+        repositoryCase: {
+          projectIds: [1],
+          stateIds: [2],
+          tagIds: [3],
+          creatorIds: ["u1"],
+          folderIds: [4],
+          templateIds: [5],
+          automated: true,
+        },
+        testRun: { configurationIds: [6], milestoneIds: [7] },
+        session: { assignedToIds: ["u2"] },
+      },
+      { access: "ADMIN" }
+    );
+
+    expect(facetFilters.map((f) => f.facet).sort()).toEqual(
+      [
+        "projects",
+        "states",
+        "creators",
+        "folders",
+        "templates",
+        "tags",
+        "configurations",
+        "milestones",
+        "assignedTo",
+      ].sort()
+    );
+    // Non-facet entity filters and the standing filters stay in the query
+    expect(query.bool.filter).toContainEqual({ term: { automated: true } });
+    expect(query.bool.filter).toContainEqual({ term: { isDeleted: false } });
+    expect(query.bool.filter).not.toContainEqual({ terms: { projectId: [1] } });
+  });
+
+  it("folds the facet selections back in for the full query", async () => {
+    const parts = await buildSearchQueryParts(
+      { query: "login", repositoryCase: { stateIds: [2] } },
+      { access: "ADMIN" }
+    );
+    const full = withFacetFilters(parts.query, parts.facetFilters);
+
+    expect(full.bool.filter).toContainEqual({ terms: { stateId: [2] } });
+    expect(parts.query.bool.filter).not.toContainEqual({
+      terms: { stateId: [2] },
+    });
+    expect(withFacetFilters(parts.query, [])).toBe(parts.query);
+  });
+
+  it("does not treat the access-control project clause as a facet", async () => {
+    const { facetForClause: classify } = { facetForClause };
+    expect(classify({ terms: { projectId: [1, 2] } })).toBe("projects");
+    expect(classify({ term: { isDeleted: false } })).toBeNull();
+    expect(classify({ terms: { id: [5] } })).toBeNull();
+    expect(
+      classify({
+        nested: { path: "tags", query: { terms: { "tags.id": [1] } } },
+      })
+    ).toBe("tags");
+    expect(classify({ nested: { path: "steps" } })).toBeNull();
+  });
+});
+
+// ============================================================
 // buildSearchAggregations
 // ============================================================
 describe("buildSearchAggregations", () => {
+  it("scopes each facet by the other facets' selections, never its own", () => {
+    const facetFilters = [
+      { facet: "projects", clause: { terms: { projectId: [1] } } },
+      { facet: "states", clause: { terms: { stateId: [2] } } },
+      {
+        facet: "tags",
+        clause: {
+          nested: { path: "tags", query: { terms: { "tags.id": [3] } } },
+        },
+      },
+    ];
+    const aggs = buildSearchAggregations(
+      ["projects", "states", "tags", "folders"],
+      [SearchableEntityType.REPOSITORY_CASE],
+      facetFilters
+    );
+
+    // projects: narrowed by states + tags, counted on projectId
+    expect(aggs.projects.filter.bool.filter).toEqual([
+      facetFilters[1].clause,
+      facetFilters[2].clause,
+    ]);
+    expect(aggs.projects.aggs.projects.terms.field).toBe("projectId");
+    // states: narrowed by projects + tags
+    expect(aggs.states.filter.bool.filter).toEqual([
+      facetFilters[0].clause,
+      facetFilters[2].clause,
+    ]);
+    // tags keeps its nested shape inside the scope
+    expect(aggs.tags.filter.bool.filter).toEqual([
+      facetFilters[0].clause,
+      facetFilters[1].clause,
+    ]);
+    expect(aggs.tags.aggs.tags.nested).toEqual({ path: "tags" });
+    // folders has no selection of its own, so it is narrowed by all three
+    expect(aggs.folders.filter.bool.filter).toHaveLength(3);
+  });
+
+  it("leaves facets unscoped when nothing is selected", () => {
+    const aggs = buildSearchAggregations(["projects"], [], []);
+    expect(aggs.projects).toEqual({
+      terms: { field: "projectId", size: 500 },
+    });
+  });
+
   it("includes tags nested aggregation when entity types include repository cases", () => {
     const aggs = buildSearchAggregations(
       ["tags"],
@@ -490,8 +608,36 @@ describe("buildSearchAggregations", () => {
 
   it("builds terms aggregation for standard facets", () => {
     const aggs = buildSearchAggregations(["projectId", "stateId"], []);
-    expect(aggs.projectId).toEqual({ terms: { field: "projectId", size: 50 } });
-    expect(aggs.stateId).toEqual({ terms: { field: "stateId", size: 50 } });
+    expect(aggs.projectId).toEqual({
+      terms: { field: "projectId", size: 500 },
+    });
+    expect(aggs.stateId).toEqual({ terms: { field: "stateId", size: 500 } });
+  });
+
+  it("aggregates each filter-panel facet on the field the index stores", () => {
+    const aggs = buildSearchAggregations(
+      [
+        "projects",
+        "states",
+        "creators",
+        "folders",
+        "templates",
+        "configurations",
+        "milestones",
+        "assignedTo",
+      ],
+      []
+    );
+    expect(aggs.projects.terms.field).toBe("projectId");
+    expect(aggs.states.terms.field).toBe("stateId");
+    expect(aggs.creators.terms.field).toBe("createdById");
+    expect(aggs.folders.terms.field).toBe("folderId");
+    expect(aggs.templates.terms.field).toBe("templateId");
+    expect(aggs.configurations.terms.field).toBe("configId");
+    expect(aggs.milestones.terms.field).toBe("milestoneId");
+    expect(aggs.assignedTo.terms.field).toBe("assignedToId");
+    // Aggregation names stay the facet names the client reads back
+    expect(Object.keys(aggs)).toHaveLength(8);
   });
 
   it("handles mix of tags and standard facets", () => {
@@ -501,7 +647,9 @@ describe("buildSearchAggregations", () => {
     );
     expect(aggs.tags).toBeDefined();
     expect(aggs.tags.nested).toEqual({ path: "tags" });
-    expect(aggs.projectId).toEqual({ terms: { field: "projectId", size: 50 } });
+    expect(aggs.projectId).toEqual({
+      terms: { field: "projectId", size: 500 },
+    });
   });
 
   it("returns empty object for empty facets array", () => {
@@ -527,11 +675,11 @@ describe("processFacets", () => {
     };
 
     const result = processFacets(aggregations, ["tags"]);
-    expect(result.tags).toEqual({
-      field: "tags",
+    expect(result?.tags).toEqual({
+      field: "tags.id",
       buckets: [
-        { key: 1, count: 10 },
-        { key: 2, count: 5 },
+        { key: "1", count: 10 },
+        { key: "2", count: 5 },
       ],
     });
   });
@@ -547,12 +695,49 @@ describe("processFacets", () => {
     };
 
     const result = processFacets(aggregations, ["projectId"]);
-    expect(result.projectId).toEqual({
+    expect(result?.projectId).toEqual({
       field: "projectId",
       buckets: [
-        { key: 1, count: 100 },
-        { key: 2, count: 50 },
+        { key: "1", count: 100 },
+        { key: "2", count: 50 },
       ],
+    });
+  });
+
+  it("reads a facet scoped by the other selections from its nested level", () => {
+    const aggregations = {
+      projects: {
+        doc_count: 9,
+        projects: { buckets: [{ key: 1, doc_count: 9 }] },
+      },
+      tags: {
+        doc_count: 4,
+        tags: {
+          doc_count: 4,
+          tag_ids: { buckets: [{ key: 3, doc_count: 4 }] },
+        },
+      },
+    };
+
+    expect(processFacets(aggregations, ["projects", "tags"])).toEqual({
+      projects: { field: "projectId", buckets: [{ key: "1", count: 9 }] },
+      tags: { field: "tags.id", buckets: [{ key: "3", count: 4 }] },
+    });
+  });
+
+  it("keys named facets by the facet name and reports the indexed field", () => {
+    const aggregations = {
+      states: { buckets: [{ key: 7, doc_count: 3 }] },
+      creators: { buckets: [{ key: "user-1", doc_count: 2 }] },
+    };
+
+    const result = processFacets(aggregations, ["states", "creators"]);
+    expect(result).toEqual({
+      states: { field: "stateId", buckets: [{ key: "7", count: 3 }] },
+      creators: {
+        field: "createdById",
+        buckets: [{ key: "user-1", count: 2 }],
+      },
     });
   });
 
@@ -1044,6 +1229,24 @@ describe("buildElasticsearchQuery", () => {
     const idTerm = shouldClauses.find((s: any) => s.term?.id);
     expect(idTerm).toBeDefined();
     expect(idTerm.term.id.value).toBe(87778);
+  });
+
+  it("matches every id of an OR / comma separated id list", async () => {
+    const result = await buildElasticsearchQuery(
+      { query: "#87778 OR 12, 34 99999999999" },
+      { access: "ADMIN" }
+    );
+
+    const shouldClauses = result.bool.must[0].bool.should;
+    const idTerms = shouldClauses.find((s: any) => s.terms?.id);
+    expect(idTerms).toBeDefined();
+    // Out-of-range ids are dropped, the rest keep their order
+    expect(idTerms.terms.id).toEqual([87778, 12, 34]);
+    expect(idTerms.terms.boost).toBeGreaterThan(1);
+    expect(shouldClauses.find((s: any) => s.term?.id)).toBeUndefined();
+
+    // Text search still runs alongside the id match
+    expect(shouldClauses.find((s: any) => s.query_string)).toBeDefined();
   });
 
   it("does not add an id term clause for text queries", async () => {

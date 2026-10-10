@@ -9667,9 +9667,12 @@
       "exists": "Exists",
       "not_exists": "Does not exist"
     },
+    "recordMatches": "{count, plural, one {# record matched by ID} other {# records matched by ID}}",
     "help": {
       "exactPhrases": "Exact Phrases",
       "exactPhrasesDesc": "Wrap terms in quotes to match exact phrases:",
+      "ids": "IDs",
+      "idsDesc": "Enter an ID, with or without #, to find a record directly. Separate several with OR, commas, or spaces to find them all:",
       "proximity": "Proximity Search",
       "proximityDesc": "words within N positions of each other",
       "booleanOperators": "Boolean Operators",

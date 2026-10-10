@@ -173,9 +173,9 @@ export interface SearchHit {
 }
 
 export interface SearchFacetBucket {
-  key: any;
+  /** Bucket key as a string, whatever the indexed field type */
+  key: string;
   count: number;
-  doc_count?: number; // Elasticsearch uses doc_count
   label?: string; // Optional display label
 }
 

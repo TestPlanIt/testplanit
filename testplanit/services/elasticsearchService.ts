@@ -111,6 +111,9 @@ export const repositoryCaseMapping = {
         keyword: { type: "keyword" as const },
       },
     },
+    createdById: { type: "keyword" as const },
+    createdByName: { type: "keyword" as const },
+    createdByImage: { type: "keyword" as const },
     tags: {
       type: "nested" as const,
       properties: {
@@ -253,6 +256,9 @@ export interface RepositoryCaseDocument {
   creatorId: string;
   creatorName: string;
   creatorImage?: string | null;
+  createdById?: string;
+  createdByName?: string;
+  createdByImage?: string | null;
   tags?: Array<{ id: number; name: string }>;
   customFields?: Array<{
     fieldId: number;

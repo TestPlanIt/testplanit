@@ -1,15 +1,90 @@
 import { ProjectAccessType } from "~/zenstack/models";
-import { CustomFieldFilter, SearchableEntityType } from "~/types/search";
+import { parseIdListQuery } from "~/lib/recordKey";
+import {
+  CustomFieldFilter,
+  SearchableEntityType,
+  SearchFacet,
+  SearchFacetBucket,
+} from "~/types/search";
 
 /**
  * Build Elasticsearch query from unified filters
  */
+/**
+ * Indexed field behind each facet the filter panel asks for. A facet name that
+ * is not listed here is used as the field name as-is.
+ */
+export const SEARCH_FACET_FIELDS: Record<string, string> = {
+  projects: "projectId",
+  states: "stateId",
+  creators: "createdById",
+  folders: "folderId",
+  templates: "templateId",
+  configurations: "configId",
+  milestones: "milestoneId",
+  assignedTo: "assignedToId",
+};
+
+const FIELD_TO_FACET: Record<string, string> = Object.fromEntries(
+  Object.entries(SEARCH_FACET_FIELDS).map(([facet, field]) => [field, facet])
+);
+
+/** A filter clause that is one facet's own selection. */
+export interface FacetFilterClause {
+  facet: string;
+  clause: any;
+}
+
+/**
+ * The facet a filter clause belongs to, or null for clauses that are not a
+ * facet selection (date ranges, flags, access control, ...).
+ */
+export function facetForClause(clause: any): string | null {
+  if (clause?.nested?.path === "tags") return "tags";
+  const field = clause?.terms ? Object.keys(clause.terms)[0] : undefined;
+  return field ? (FIELD_TO_FACET[field] ?? null) : null;
+}
+
+/**
+ * The search query with the facet selections folded back into its filter.
+ * Used wherever a plain, fully narrowed query is wanted (entity-type counts).
+ */
+export function withFacetFilters(
+  query: any,
+  facetFilters: FacetFilterClause[]
+): any {
+  if (facetFilters.length === 0) return query;
+  return {
+    ...query,
+    bool: {
+      ...query.bool,
+      filter: [...query.bool.filter, ...facetFilters.map((f) => f.clause)],
+    },
+  };
+}
+
+/** The full search query, every filter included. */
 export async function buildElasticsearchQuery(
   filters: any,
   user: any
 ): Promise<any> {
+  const { query, facetFilters } = await buildSearchQueryParts(filters, user);
+  return withFacetFilters(query, facetFilters);
+}
+
+/**
+ * The search query split in two: `query` carries the text search and every
+ * non-facet filter; `facetFilters` carries each dropdown's own selection. The
+ * route applies the latter as a post_filter so a facet's counts can leave its
+ * own selection out and show what picking another option would add.
+ */
+export async function buildSearchQueryParts(
+  filters: any,
+  user: any
+): Promise<{ query: any; facetFilters: FacetFilterClause[] }> {
   const must: any[] = [];
   const filter: any[] = [];
+  const entityFilter: any[] = [];
 
   // Add query string search with support for operators
   if (filters.query) {
@@ -31,17 +106,19 @@ export async function buildElasticsearchQuery(
     // Use bool query with should clauses to search both regular and nested fields
     const searchQueries: any[] = [];
 
-    // A bare numeric query (optionally "#"-prefixed) also matches entities by
-    // exact ID, boosted above text matches. The id mapping is a 32-bit
-    // integer, so out-of-range values are skipped to avoid a query error.
-    const idQueryMatch = filters.query.trim().match(/^#?(\d+)$/);
-    if (idQueryMatch) {
-      const idValue = parseInt(idQueryMatch[1], 10);
-      if (idValue <= 2147483647) {
-        searchQueries.push({
-          term: { id: { value: idValue, boost: 100 } },
-        });
-      }
+    // A query made only of ids (optionally "#"-prefixed, several joined by
+    // OR, commas or spaces) also matches entities by exact ID, boosted above
+    // text matches. The id mapping is a 32-bit integer, so out-of-range values
+    // are skipped to avoid a query error.
+    const idValues = (parseIdListQuery(filters.query) ?? []).filter(
+      (id) => id <= 2147483647
+    );
+    if (idValues.length === 1) {
+      searchQueries.push({
+        term: { id: { value: idValues[0], boost: 100 } },
+      });
+    } else if (idValues.length > 1) {
+      searchQueries.push({ terms: { id: idValues, boost: 100 } });
     }
 
     // Search regular (non-nested) fields
@@ -196,25 +273,36 @@ export async function buildElasticsearchQuery(
 
   // Add entity-specific filters
   if (filters.repositoryCase) {
-    addRepositoryCaseFilters(filter, filters.repositoryCase);
+    addRepositoryCaseFilters(entityFilter, filters.repositoryCase);
   }
   if (filters.testRun) {
-    addTestRunFilters(filter, filters.testRun);
+    addTestRunFilters(entityFilter, filters.testRun);
   }
   if (filters.session) {
-    addSessionFilters(filter, filters.session);
+    addSessionFilters(entityFilter, filters.session);
   }
   if (filters.sharedStep) {
-    addSharedStepFilters(filter, filters.sharedStep);
+    addSharedStepFilters(entityFilter, filters.sharedStep);
   }
   if (filters.project) {
-    addProjectFilters(filter, filters.project);
+    addProjectFilters(entityFilter, filters.project);
   }
   if (filters.issue) {
-    addIssueFilters(filter, filters.issue);
+    addIssueFilters(entityFilter, filters.issue);
   }
   if (filters.milestone) {
-    addMilestoneFilters(filter, filters.milestone);
+    addMilestoneFilters(entityFilter, filters.milestone);
+  }
+
+  // Facet selections are kept apart from the rest of the filters
+  const facetFilters: FacetFilterClause[] = [];
+  for (const clause of entityFilter) {
+    const facet = facetForClause(clause);
+    if (facet) {
+      facetFilters.push({ facet, clause });
+    } else {
+      filter.push(clause);
+    }
   }
 
   // Add user access control
@@ -289,10 +377,13 @@ export async function buildElasticsearchQuery(
   filter.push({ exists: { field: "projectId" } });
 
   return {
-    bool: {
-      must,
-      filter,
+    query: {
+      bool: {
+        must,
+        filter,
+      },
     },
+    facetFilters,
   };
 }
 
@@ -686,13 +777,30 @@ export function buildSort(sort: any[]) {
 }
 
 /**
- * Build aggregations for facets
+ * Bucket limit per facet. Large enough that every option a filter dropdown
+ * lists gets a count, so a missing bucket means zero matches.
+ */
+const FACET_BUCKET_SIZE = 500;
+
+/**
+ * Build aggregations for facets. With `facetFilters`, each facet's aggregation
+ * is narrowed by every OTHER facet's selection but not its own, so its counts
+ * say what each option would add to the results.
  */
 export function buildSearchAggregations(
   facets: string[],
-  entityTypes?: SearchableEntityType[]
+  entityTypes?: SearchableEntityType[],
+  facetFilters: FacetFilterClause[] = []
 ) {
   const aggs: any = {};
+
+  const scoped = (facet: string, agg: any) => {
+    const others = facetFilters
+      .filter((f) => f.facet !== facet)
+      .map((f) => f.clause);
+    if (others.length === 0) return agg;
+    return { filter: { bool: { filter: others } }, aggs: { [facet]: agg } };
+  };
 
   const hasTagsMapping =
     !entityTypes ||
@@ -705,25 +813,25 @@ export function buildSearchAggregations(
     if (facet === "tags") {
       // Tags nested aggregation only works on indices with a "tags" nested mapping
       if (hasTagsMapping) {
-        aggs.tags = {
+        aggs.tags = scoped("tags", {
           nested: { path: "tags" },
           aggs: {
             tag_ids: {
               terms: {
                 field: "tags.id",
-                size: 50,
+                size: FACET_BUCKET_SIZE,
               },
             },
           },
-        };
+        });
       }
     } else {
-      aggs[facet] = {
+      aggs[facet] = scoped(facet, {
         terms: {
-          field: facet,
-          size: 50,
+          field: SEARCH_FACET_FIELDS[facet] ?? facet,
+          size: FACET_BUCKET_SIZE,
         },
-      };
+      });
     }
   });
 
@@ -731,32 +839,32 @@ export function buildSearchAggregations(
 }
 
 /**
- * Process aggregation results into facets
+ * Process aggregation results into facets. Bucket keys are returned as strings
+ * so numeric ids (states, folders) and user ids compare the same way.
  */
 export function processFacets(
   aggregations: any,
   requestedFacets?: string[]
-): any {
+): Record<string, SearchFacet> | undefined {
   if (!aggregations || !requestedFacets) return undefined;
 
-  const facets: any = {};
+  const facets: Record<string, SearchFacet> = {};
+  const toBuckets = (buckets: any[]): SearchFacetBucket[] =>
+    buckets.map((b: any) => ({ key: String(b.key), count: b.doc_count }));
 
   requestedFacets.forEach((facet) => {
-    if (facet === "tags" && aggregations.tags) {
+    // A facet scoped by the other facets' selections is nested one level down
+    const agg = aggregations[facet]?.[facet] ?? aggregations[facet];
+    if (!agg) return;
+    if (facet === "tags") {
       facets.tags = {
-        field: "tags",
-        buckets: aggregations.tags.tag_ids.buckets.map((b: any) => ({
-          key: b.key,
-          count: b.doc_count,
-        })),
+        field: "tags.id",
+        buckets: toBuckets(agg.tag_ids.buckets),
       };
-    } else if (aggregations[facet]) {
+    } else {
       facets[facet] = {
-        field: facet,
-        buckets: aggregations[facet].buckets.map((b: any) => ({
-          key: b.key,
-          count: b.doc_count,
-        })),
+        field: SEARCH_FACET_FIELDS[facet] ?? facet,
+        buckets: toBuckets(agg.buckets),
       };
     }
   });

@@ -4,6 +4,10 @@ import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import DynamicIcon from "@/components/DynamicIcon";
 import {
+  FolderMultiSelect,
+  transformFolders,
+} from "@/components/forms/FolderSelect";
+import {
   Accordion,
   AccordionContent,
   AccordionItem,
@@ -136,6 +140,12 @@ function mergeSelectedIds<Id, T>(
   return [...preserved, ...selected.map(getId)];
 }
 
+/** A facet count in parentheses, when the search returned one. */
+function FacetCount({ count }: { count?: number }) {
+  if (count === undefined) return null;
+  return <span className="text-muted-foreground shrink-0">{`(${count})`}</span>;
+}
+
 /** Option label plus its facet count, when the search returned one. */
 function OptionLabel({
   children,
@@ -147,9 +157,7 @@ function OptionLabel({
   return (
     <span className="flex items-center gap-1 min-w-0">
       <span className="truncate">{children}</span>
-      {count !== undefined && (
-        <span className="text-muted-foreground shrink-0">{`(${count})`}</span>
-      )}
+      <FacetCount count={count} />
     </span>
   );
 }
@@ -724,9 +732,13 @@ export function FacetedSearchFilters({
     };
   };
 
-  // Facet count for an option, when the current search produced one
-  const getFacetCount = (facet: string, key: string | number) =>
-    facetCounts?.[facet]?.buckets.find((b) => b.key === String(key))?.doc_count;
+  // Facet count for an option once the search has returned that facet; an
+  // option with no bucket matched nothing, so it reads 0 rather than blank.
+  const getFacetCount = (facet: string, key: string | number) => {
+    const buckets = facetCounts?.[facet]?.buckets;
+    if (!buckets) return undefined;
+    return buckets.find((b) => b.key === String(key))?.count ?? 0;
+  };
 
   // Option fetchers — memoized so the comboboxes don't refetch on every render
   const fetchProjects = useMemo(
@@ -753,8 +765,8 @@ export function FacetedSearchFilters({
     () => localOptionFetcher(users ?? [], (u) => u.name ?? ""),
     [users]
   );
-  const fetchFolders = useMemo(
-    () => localOptionFetcher(folders ?? [], (f) => f.name),
+  const folderOptions = useMemo(
+    () => transformFolders(folders ?? []),
     [folders]
   );
   const fetchTemplates = useMemo(
@@ -786,9 +798,6 @@ export function FacetedSearchFilters({
   );
   const selectedCreators = (users ?? []).filter((u) =>
     baseFilters.creatorIds?.includes(u.id)
-  );
-  const selectedFolders = (folders ?? []).filter((f) =>
-    localFilters.repositoryCase?.folderIds?.includes(f.id)
   );
   const selectedCaseTemplates = (templates ?? []).filter((tpl) =>
     localFilters.repositoryCase?.templateIds?.includes(tpl.id)
@@ -1239,33 +1248,31 @@ export function FacetedSearchFilters({
                         <FolderTree className="h-4 w-4" />
                         {t("repository.folders")}
                       </Label>
-                      <MultiAsyncCombobox
-                        value={selectedFolders}
-                        onValueChange={(selected) =>
+                      <FolderMultiSelect
+                        value={localFilters.repositoryCase?.folderIds ?? []}
+                        onChange={(ids) => {
+                          const picked = new Set(ids);
                           updateEntityFilters(
                             SearchableEntityType.REPOSITORY_CASE,
                             {
                               folderIds: mergeSelectedIds(
                                 localFilters.repositoryCase?.folderIds,
                                 folders,
-                                selected,
+                                (folders ?? []).filter((folder) =>
+                                  picked.has(String(folder.id))
+                                ),
                                 (folder) => folder.id
                               ),
                             }
-                          )
-                        }
-                        fetchOptions={fetchFolders}
-                        renderOption={(folder) => (
-                          <OptionLabel
-                            count={getFacetCount("folders", folder.id)}
-                          >
-                            {folder.name}
-                          </OptionLabel>
+                          );
+                        }}
+                        folders={folderOptions}
+                        ariaLabel={t("repository.folders")}
+                        renderOptionSuffix={(option) => (
+                          <FacetCount
+                            count={getFacetCount("folders", option.value)}
+                          />
                         )}
-                        getOptionValue={(folder) => folder.id}
-                        getOptionLabel={(folder) => folder.name}
-                        placeholder={t("common.placeholders.selectFolders")}
-                        pageSize={OPTION_PAGE_SIZE}
                       />
                     </div>
                   )}

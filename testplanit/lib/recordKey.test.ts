@@ -6,13 +6,63 @@ import {
   isValidProjectKey,
   isValidTypeToken,
   normalizeProjectKey,
+  parseIdListQuery,
   parseRecordId,
   parseRecordKey,
   recordTypeForToken,
   resolveTypeTokens,
   sanitizeKeyInput,
+  splitRecordQueryTerms,
   suggestProjectKey,
 } from "./recordKey";
+
+describe("splitRecordQueryTerms", () => {
+  it("splits on OR, commas and whitespace, in any mix", () => {
+    expect(splitRecordQueryTerms(" 12 OR 34, 56 78 ")).toEqual([
+      "12",
+      "34",
+      "56",
+      "78",
+    ]);
+    expect(splitRecordQueryTerms("WEB-TC-1 or web-tc-2")).toEqual([
+      "WEB-TC-1",
+      "web-tc-2",
+    ]);
+  });
+
+  it("returns nothing for an empty query", () => {
+    expect(splitRecordQueryTerms("")).toEqual([]);
+    expect(splitRecordQueryTerms("   ")).toEqual([]);
+    expect(splitRecordQueryTerms(null)).toEqual([]);
+  });
+});
+
+describe("parseIdListQuery", () => {
+  it("parses a single id with or without the # prefix", () => {
+    expect(parseIdListQuery("1234")).toEqual([1234]);
+    expect(parseIdListQuery(" #1234 ")).toEqual([1234]);
+  });
+
+  it("parses several ids joined by OR, commas or spaces, de-duplicated", () => {
+    expect(parseIdListQuery("12 OR 34 OR #12")).toEqual([12, 34]);
+    expect(parseIdListQuery("12, 34,56")).toEqual([12, 34, 56]);
+    expect(parseIdListQuery("12 34")).toEqual([12, 34]);
+  });
+
+  it("leaves text and mixed queries alone", () => {
+    expect(parseIdListQuery("login bug")).toBeNull();
+    expect(parseIdListQuery("12 login")).toBeNull();
+    expect(parseIdListQuery("12 orange")).toBeNull();
+    expect(parseIdListQuery("WEB-TC-12")).toBeNull();
+    expect(parseIdListQuery("")).toBeNull();
+  });
+
+  it("rejects zero and unsafe integers", () => {
+    expect(parseIdListQuery("0")).toBeNull();
+    expect(parseIdListQuery("12 OR 0")).toBeNull();
+    expect(parseIdListQuery("99999999999999999999")).toBeNull();
+  });
+});
 
 describe("normalizeProjectKey", () => {
   it("trims and uppercases", () => {

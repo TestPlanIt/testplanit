@@ -45,7 +45,8 @@ interface MultiAsyncComboboxProps<T> {
   value: T[];
   onValueChange: (value: T[]) => void;
   fetchOptions: AsyncOptionsFetcher<T>;
-  renderOption: (option: T) => React.ReactNode;
+  /** Renders a list entry; `search` is the text the listed options were fetched for. */
+  renderOption: (option: T, search: string) => React.ReactNode;
   renderSelectedOption?: (option: T) => React.ReactNode;
   getOptionValue: (option: T) => string | number;
   getOptionLabel: (option: T) => string;
@@ -203,7 +204,7 @@ export function MultiAsyncCombobox<T>({
       onSelect={() => toggleOption(option)}
     >
       <div className="flex items-center w-full [&_a]:no-underline [&_a]:text-inherit [&_a:hover]:text-inherit">
-        {renderOption(option)}
+        {renderOption(option, debouncedSearch)}
         {!hideSelected && isSelected(option) ? (
           <Check className="ms-auto h-4 w-4" />
         ) : (

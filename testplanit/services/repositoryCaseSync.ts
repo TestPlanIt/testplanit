@@ -122,6 +122,9 @@ export async function buildRepositoryCaseDocument(
     creatorId: repoCase.creatorId,
     creatorName: repoCase.creator.name,
     creatorImage: repoCase.creator.image,
+    createdById: repoCase.creatorId,
+    createdByName: repoCase.creator.name,
+    createdByImage: repoCase.creator.image,
     tags: repoCase.caseTags.map((ct) => ({
       id: ct.tag.id,
       name: ct.tag.name,

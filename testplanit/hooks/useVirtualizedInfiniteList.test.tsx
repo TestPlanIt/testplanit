@@ -261,3 +261,60 @@ describe("useVirtualizedInfiniteList", () => {
     expect(onLoadMore).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("layoutKey", () => {
+  it("re-measures the viewport-bound height when the list's top edge moves", () => {
+    let top = 100;
+    const rectSpy = vi
+      .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+      .mockImplementation(
+        () =>
+          ({
+            top,
+            bottom: 0,
+            left: 0,
+            right: 0,
+            width: 0,
+            height: 0,
+          }) as DOMRect
+      );
+    try {
+      function Harness({ layoutKey }: { layoutKey: string }) {
+        const { scrollRef, maxHeight } = useVirtualizedInfiniteList({
+          count: 3,
+          hasMore: false,
+          isLoading: false,
+          onLoadMore: () => {},
+          bottomMargin: 16,
+          layoutKey,
+        });
+        return (
+          <div ref={scrollRef}>
+            <span data-testid="max-height">{String(maxHeight)}</span>
+          </div>
+        );
+      }
+
+      const { rerender } = render(<Harness layoutKey="open" />);
+      const initial = window.innerHeight - 100 - 16;
+      expect(screen.getByTestId("max-height").textContent).toBe(
+        String(initial)
+      );
+
+      // The section above folds away: the list sits higher, but nothing
+      // re-measures until the caller says the layout changed.
+      top = 40;
+      rerender(<Harness layoutKey="open" />);
+      expect(screen.getByTestId("max-height").textContent).toBe(
+        String(initial)
+      );
+
+      rerender(<Harness layoutKey="closed" />);
+      expect(screen.getByTestId("max-height").textContent).toBe(
+        String(window.innerHeight - 40 - 16)
+      );
+    } finally {
+      rectSpy.mockRestore();
+    }
+  });
+});

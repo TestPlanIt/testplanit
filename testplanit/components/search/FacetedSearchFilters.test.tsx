@@ -148,6 +148,7 @@ vi.mock("@/components/ui/multi-async-combobox", () => ({
     fetchOptions,
     getOptionValue,
     getOptionLabel,
+    renderOption,
     placeholder,
   }: any) => {
     const [options, setOptions] = React.useState<any[]>([]);
@@ -171,7 +172,7 @@ vi.mock("@/components/ui/multi-async-combobox", () => ({
             type="button"
             onClick={() => onValueChange([...value, option])}
           >
-            {getOptionLabel(option)}
+            {renderOption ? renderOption(option, "") : getOptionLabel(option)}
           </button>
         ))}
       </div>
@@ -244,6 +245,50 @@ describe("FacetedSearchFilters", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows the facet count next to options the search returned", async () => {
+    mockProjectsData.data = [
+      { id: 1, name: "Project A", isCompleted: false },
+      { id: 2, name: "Project B", isCompleted: false },
+    ];
+    mockUsersData.data = [{ id: "user-1", name: "Ada" }];
+    mockFoldersData.data = [{ id: 21, name: "Smoke", parentId: null }];
+
+    render(
+      <FacetedSearchFilters
+        {...defaultProps}
+        facetCounts={{
+          projects: {
+            field: "projectId",
+            buckets: [{ key: "1", count: 12 }],
+          },
+          creators: {
+            field: "createdById",
+            buckets: [{ key: "user-1", count: 4 }],
+          },
+          folders: {
+            field: "folderId",
+            buckets: [{ key: "21", count: 9 }],
+          },
+        }}
+      />
+    );
+
+    expect(
+      await screen.findByRole("button", { name: /^Smoke\s*\(9\)$/ })
+    ).toBeInTheDocument();
+
+    expect(
+      await screen.findByRole("button", { name: /^Project A\s*\(12\)$/ })
+    ).toBeInTheDocument();
+    // No bucket for this option: it matched nothing, so it reads 0
+    expect(
+      screen.getByRole("button", { name: /^Project B\s*\(0\)$/ })
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByRole("button", { name: /^Ada\s*\(4\)$/ })
+    ).toBeInTheDocument();
+  });
+
   it("calls onFiltersChange when a project is selected", async () => {
     const onFiltersChange = vi.fn();
     mockProjectsData.data = [{ id: 1, name: "Project A", isCompleted: false }];
@@ -312,7 +357,7 @@ describe("FacetedSearchFilters", () => {
       />
     );
 
-    fireEvent.click(await screen.findByRole("button", { name: "AB-5" }));
+    fireEvent.click(await screen.findByRole("button", { name: /^AB-5/ }));
 
     expect(onFiltersChange.mock.calls[0][0].issue?.issueIds).toEqual([5]);
   });

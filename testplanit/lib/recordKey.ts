@@ -208,6 +208,45 @@ export function parseRecordId(input: string | null | undefined): number | null {
   return Number.isSafeInteger(n) && n > 0 ? n : null;
 }
 
+/**
+ * Separators that let one search box name several records at once:
+ * `12 OR 34`, `12, 34` or `12 34`.
+ */
+const RECORD_QUERY_SEPARATOR = /\s+or\s+|\s*,\s*|\s+/i;
+
+/** Split a search query into the record references it names, in order. */
+export function splitRecordQueryTerms(
+  input: string | null | undefined
+): string[] {
+  if (input == null) return [];
+  return String(input)
+    .trim()
+    .split(RECORD_QUERY_SEPARATOR)
+    .map((term) => term.trim())
+    .filter(Boolean);
+}
+
+/**
+ * The numeric ids named by an id-list query such as `1234`, `#1234` or
+ * `1234 OR 5678, #9012`, de-duplicated and in order. Returns `null` as soon as
+ * one term is not a plain id, so ordinary text searches are left alone.
+ */
+export function parseIdListQuery(
+  input: string | null | undefined
+): number[] | null {
+  const terms = splitRecordQueryTerms(input);
+  if (terms.length === 0) return null;
+  const ids = new Set<number>();
+  for (const term of terms) {
+    const match = term.match(/^#?(\d+)$/);
+    if (!match) return null;
+    const id = Number(match[1]);
+    if (!Number.isSafeInteger(id) || id <= 0) return null;
+    ids.add(id);
+  }
+  return Array.from(ids);
+}
+
 export interface ParsedRecordKey {
   /** The canonical numeric id (authoritative). */
   id: number;

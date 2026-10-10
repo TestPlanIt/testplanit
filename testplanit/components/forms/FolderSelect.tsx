@@ -1,6 +1,7 @@
 import DynamicIcon from "@/components/DynamicIcon";
 import { HighlightedMatch } from "@/components/HighlightedMatch";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
+import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
 import { CaretSortIcon } from "@radix-ui/react-icons";
 import { FolderOpen } from "lucide-react"; // Default folder icon
 import { useTranslations } from "next-intl";
@@ -112,6 +113,44 @@ export const filterFolderOptions = (
   return flat.filter((option) => keep.has(option.value));
 };
 
+/**
+ * One folder in a dropdown list: indented by depth, with its icon and the
+ * matched part of its name highlighted. Shared by the single and multi select
+ * so a folder looks the same wherever it is picked.
+ */
+function renderFolderOption(
+  option: FlatFolderOption,
+  query: string,
+  suffix?: React.ReactNode
+) {
+  return (
+    <div
+      className="flex items-center gap-1 min-w-0"
+      data-testid={`folder-select-option-${option.value}`}
+      style={{
+        paddingInlineStart: option.level * INDENT_PER_LEVEL + INDENT_BASE,
+      }}
+    >
+      {option.icon?.name ? (
+        <DynamicIcon
+          className="w-4 h-4 shrink-0"
+          name={option.icon.name as IconName}
+        />
+      ) : (
+        <FolderOpen className="w-4 h-4 shrink-0 text-muted-foreground" />
+      )}
+      <span className="truncate">
+        <HighlightedMatch
+          text={option.label}
+          query={query}
+          testId="folder-filter-match"
+        />
+      </span>
+      {suffix}
+    </div>
+  );
+}
+
 export interface FolderSelectProps {
   value: string | number | null | undefined;
   onChange: (value: string | number | null | undefined) => void;
@@ -181,31 +220,7 @@ export const FolderSelect: React.FC<FolderSelectProps> = ({
       disabled={disabled || isLoading || flatOptions.length === 0}
       showPagination={false}
       minDropdownWidth={320}
-      renderOption={(option, query) => (
-        <div
-          className="flex items-center gap-1 min-w-0"
-          data-testid={`folder-select-option-${option.value}`}
-          style={{
-            paddingInlineStart: option.level * INDENT_PER_LEVEL + INDENT_BASE,
-          }}
-        >
-          {option.icon?.name ? (
-            <DynamicIcon
-              className="w-4 h-4 shrink-0"
-              name={option.icon.name as IconName}
-            />
-          ) : (
-            <FolderOpen className="w-4 h-4 shrink-0 text-muted-foreground" />
-          )}
-          <span className="truncate">
-            <HighlightedMatch
-              text={option.label}
-              query={query}
-              testId="folder-filter-match"
-            />
-          </span>
-        </div>
-      )}
+      renderOption={(option, query) => renderFolderOption(option, query)}
       renderTrigger={() => (
         <button
           type="button"
@@ -222,6 +237,81 @@ export const FolderSelect: React.FC<FolderSelectProps> = ({
           <CaretSortIcon className="h-4 w-4 shrink-0 opacity-50" />
         </button>
       )}
+    />
+  );
+};
+
+export interface FolderMultiSelectProps {
+  /** Ids of the selected folders. */
+  value: Array<string | number>;
+  /** Called with the ids of every selected folder, as strings. */
+  onChange: (folderIds: string[]) => void;
+  folders: FolderSelectOption[];
+  isLoading?: boolean;
+  placeholder?: string;
+  disabled?: boolean;
+  className?: string;
+  /** Accessible name for the trigger; defaults to "Folders". */
+  ariaLabel?: string;
+  /** Extra content after a folder's name in the list, such as a match count. */
+  renderOptionSuffix?: (option: FlatFolderOption) => React.ReactNode;
+}
+
+/**
+ * The multi-select counterpart of {@link FolderSelect}: the same indented,
+ * searchable folder tree, with any number of folders checked.
+ */
+export const FolderMultiSelect: React.FC<FolderMultiSelectProps> = ({
+  value,
+  onChange,
+  folders,
+  isLoading = false,
+  placeholder,
+  disabled = false,
+  className,
+  ariaLabel,
+  renderOptionSuffix,
+}) => {
+  const tCommon = useTranslations("common");
+  const tRepository = useTranslations("repository");
+
+  const flatOptions = useMemo(
+    () => flattenFolderOptions(folders ?? []),
+    [folders]
+  );
+
+  // The whole filtered tree is returned as one page so ancestors always sit
+  // above their children; the fetcher must stay referentially stable.
+  const fetchOptions = useCallback(
+    async (query: string) => {
+      const results = filterFolderOptions(flatOptions, query);
+      return { results, total: results.length };
+    },
+    [flatOptions]
+  );
+
+  const selected = useMemo(() => {
+    const wanted = new Set(value.map(String));
+    return flatOptions.filter((option) => wanted.has(option.value));
+  }, [flatOptions, value]);
+
+  return (
+    <MultiAsyncCombobox<FlatFolderOption>
+      value={selected}
+      onValueChange={(options) => onChange(options.map((o) => o.value))}
+      fetchOptions={fetchOptions}
+      getOptionValue={(option) => option.value}
+      getOptionLabel={(option) => option.label}
+      renderOption={(option, query) =>
+        renderFolderOption(option, query, renderOptionSuffix?.(option))
+      }
+      renderSelectedOption={(option) => (
+        <span className="truncate">{option.label}</span>
+      )}
+      placeholder={placeholder || tCommon("placeholders.selectFolders")}
+      ariaLabel={ariaLabel ?? tRepository("folders")}
+      disabled={disabled || isLoading || flatOptions.length === 0}
+      className={className}
     />
   );
 };

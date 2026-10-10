@@ -2,7 +2,8 @@ import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentTenantId } from "~/lib/multiTenantDb";
 import {
-  buildElasticsearchQuery,
+  buildSearchQueryParts,
+  withFacetFilters,
   buildSearchAggregations,
   buildSort,
   getEntityTypeCounts,
@@ -48,11 +49,22 @@ export async function POST(request: NextRequest) {
     const indices = getIndicesForEntityTypes(filters.entityTypes, tenantId);
 
     // Build the Elasticsearch query
-    const esQuery = await buildElasticsearchQuery(filters, session.user);
+    const { query: esQuery, facetFilters } = await buildSearchQueryParts(
+      filters,
+      session.user
+    );
+    const fullQuery = withFacetFilters(esQuery, facetFilters);
+
+    // Facet selections narrow the hits as a post_filter, so each facet's
+    // aggregation can be scoped by the other facets' selections only.
+    const postFilter =
+      facetFilters.length > 0
+        ? { bool: { filter: facetFilters.map((f) => f.clause) } }
+        : undefined;
 
     // Build aggregations for facets
     const aggs = facets
-      ? buildSearchAggregations(facets, filters.entityTypes)
+      ? buildSearchAggregations(facets, filters.entityTypes, facetFilters)
       : undefined;
 
     // Execute search
@@ -86,6 +98,7 @@ export async function POST(request: NextRequest) {
       searchResponse = await client.search({
         index: existingIndices,
         query: esQuery,
+        ...(postFilter && { post_filter: postFilter }),
         ...(aggs && { aggs }),
         ...(trackTotalHits && { track_total_hits: true }),
         ...(sort && { sort: buildSort(sort) }),
@@ -198,7 +211,7 @@ export async function POST(request: NextRequest) {
     // Get entity type counts
     const entityTypeCounts =
       existingIndices.length > 1
-        ? await getEntityTypeCounts(client, existingIndices, esQuery)
+        ? await getEntityTypeCounts(client, existingIndices, fullQuery)
         : undefined;
 
     // Process facets

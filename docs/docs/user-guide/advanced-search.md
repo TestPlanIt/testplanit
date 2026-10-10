@@ -52,6 +52,8 @@ Click the filter icon to access advanced filtering options:
 
 ![Advanced Filters Interface](../assets/advanced-filters.gif)
 
+Options in the Projects, States, Tags, Created By, Folders, Templates, Configurations, Milestones, and Assigned To dropdowns show, in parentheses, how many results you would see with that option selected. Within one dropdown the selected options are combined, so an option's count takes into account the search text and the filters in every other dropdown, but not the other options selected in its own; picking one project, for example, does not zero out the counts on the rest. An option with no matching results shows (0). Counts update as you refine the search.
+
 #### Common Filters
 
 - **Projects** - Filter by specific projects
@@ -108,6 +110,7 @@ Each search result shows:
 
 - **Icon** - Visual indicator of the entity type
 - **Title** - The name of the item (with search term highlighting)
+- **ID** - The item's ID, or its [Record Key](./record-keys.md) when Record Keys are enabled, with a button that copies it
 - **Entity Badge** - Shows what type of item it is
 - **Metadata** - Relevant information like project, state, creator, dates
 - **Highlights** - Snippets showing where your search terms were found
@@ -159,6 +162,10 @@ Each saved search in the menu has two actions:
 ### Text Search
 
 Search is performed across multiple fields including names, descriptions, and content. Search terms are highlighted in yellow in the results.
+
+### Searching by ID
+
+Enter a record's numeric ID, with or without a leading `#`, to find it directly: `1234` or `#1234`. A bare number matches every record type that has that ID. To find several records at once, separate the IDs with `OR`, commas, or spaces: `1234 OR 5678 OR 9012`. When [Record Keys](./record-keys.md) are enabled, keys such as `WEB-TC-1234` work the same way and can be mixed into the same list.
 
 ### Advanced Search Operators
 
