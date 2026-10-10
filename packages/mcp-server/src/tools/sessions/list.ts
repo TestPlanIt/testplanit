@@ -3,6 +3,7 @@ import type {
   SessionsWhereInput,
 } from "@db/input";
 import * as z from "zod/v4";
+import { dateBoundSchema, DATE_BOUND_HELP, parseDateBound } from "../../dateBounds.js";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
@@ -27,14 +28,14 @@ export function registerSessionsList(
     "testplanit_sessions_list",
     {
       description:
-        "List sessions scoped to a project. Filters: stateId, isCompleted, createdById (user id, string), from/to (createdAt date range, ISO 8601). Cursor pagination ordered by createdAt DESC then id DESC. Each row carries denormalized state/createdBy/assignedTo/template/configuration/milestone/tags + mission and note as Markdown.",
+        "List sessions scoped to a project. Filters: stateId, isCompleted, createdById (user id, string), from/to (createdAt range; YYYY-MM-DD or an ISO 8601 timestamp — a date-only `to` covers that whole UTC day). Cursor pagination ordered by createdAt DESC then id DESC. Each row carries denormalized state/createdBy/assignedTo/template/configuration/milestone/tags + mission and note as Markdown.",
       inputSchema: {
         projectId: z.number().int().positive(),
         stateId: z.number().int().positive().optional(),
         isCompleted: z.boolean().optional(),
         createdById: z.string().min(1).optional(),
-        from: z.string().datetime({ offset: true }).optional(),
-        to: z.string().datetime({ offset: true }).optional(),
+        from: dateBoundSchema.optional(),
+        to: dateBoundSchema.optional(),
         cursor: z.number().int().positive().optional(),
         limit: z.number().int().positive().max(MAX_LIMIT).optional(),
       },
@@ -53,15 +54,15 @@ export function registerSessionsList(
         if (input.createdById) where.createdById = input.createdById;
         if (input.from || input.to) {
           where.createdAt = {
-            ...(input.from ? { gte: new Date(input.from) } : {}),
-            ...(input.to ? { lte: new Date(input.to) } : {}),
+            ...(input.from ? { gte: parseDateBound(input.from, "start") } : {}),
+            ...(input.to ? { lte: parseDateBound(input.to, "end") } : {}),
           };
         }
 
         const body: Record<string, unknown> = {
           where,
           include: SESSION_ROW_INCLUDE,
-          // BL-04: deterministic page ordering. Newest session first; id breaks
+          // deterministic page ordering. Newest session first; id breaks
           // ties for sessions created in the same millisecond.
           orderBy: [{ createdAt: "desc" }, { id: "desc" }],
           take: limit + 1,

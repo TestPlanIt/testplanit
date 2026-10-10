@@ -6,6 +6,7 @@ import type {
   TestRunCasesGroupByArgs,
 } from "@db/input";
 import * as z from "zod/v4";
+import { dateBoundSchema, DATE_BOUND_HELP, parseDateBound } from "../../dateBounds.js";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
@@ -53,15 +54,15 @@ export function registerMilestonesList(
     "testplanit_milestones_list",
     {
       description:
-        "List milestones scoped to a project, with POOLED statusCounts rollup inline on every row (merged across linked test runs AND linked sessions). Filters: isCompleted, isStarted, milestoneTypeId, createdById (single string), from/to (ISO 8601 createdAt range), parentId (null = root-only, number = direct children of, omitted = all). Cursor pagination via the `cursor` returned in `nextCursor`. Each row carries denormalized milestoneType {id,name}, creator, parentId, directChildrenCount, totalDescendants (recursive CTE), commentCount inline, plus statusCounts:[{id,name,count}] + untested + total (counts SUM to total). Two batched groupBy calls per page (testRunCases + sessionResults), never per-row. No icon field — schema only carries an icon class identifier, deliberately dropped for v1.",
+        "List milestones scoped to a project, with POOLED statusCounts rollup inline on every row (merged across linked test runs AND linked sessions). Filters: isCompleted, isStarted, milestoneTypeId, createdById (single string), from/to (createdAt range; YYYY-MM-DD or an ISO 8601 timestamp — a date-only `to` covers that whole UTC day), parentId (null = root-only, number = direct children of, omitted = all). Cursor pagination via the `cursor` returned in `nextCursor`. Each row carries denormalized milestoneType {id,name}, creator, parentId, directChildrenCount, totalDescendants (recursive CTE), commentCount inline, plus statusCounts:[{id,name,count}] + untested + total (counts SUM to total). Two batched groupBy calls per page (testRunCases + sessionResults), never per-row. No icon field — schema only carries an icon class identifier, deliberately dropped for v1.",
       inputSchema: {
         projectId: z.number().int().positive(),
         isCompleted: z.boolean().optional(),
         isStarted: z.boolean().optional(),
         milestoneTypeId: z.number().int().positive().optional(),
         createdById: z.string().trim().min(1).optional(),
-        from: z.string().datetime({ offset: true }).optional(),
-        to: z.string().datetime({ offset: true }).optional(),
+        from: dateBoundSchema.optional(),
+        to: dateBoundSchema.optional(),
         // Three states — null (root-only), number (children-of), undefined (all)
         parentId: z
           .union([z.number().int().positive(), z.null()])
@@ -94,8 +95,8 @@ export function registerMilestonesList(
         }
         if (input.from || input.to) {
           where.createdAt = {
-            ...(input.from ? { gte: new Date(input.from) } : {}),
-            ...(input.to ? { lte: new Date(input.to) } : {}),
+            ...(input.from ? { gte: parseDateBound(input.from, "start") } : {}),
+            ...(input.to ? { lte: parseDateBound(input.to, "end") } : {}),
           };
         }
         // Three-branch parentId — explicit null check distinguishes

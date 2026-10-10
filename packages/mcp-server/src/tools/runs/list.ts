@@ -4,6 +4,7 @@ import type {
   TestRunsWhereInput,
 } from "@db/input";
 import * as z from "zod/v4";
+import { dateBoundSchema, DATE_BOUND_HELP, parseDateBound } from "../../dateBounds.js";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
@@ -29,7 +30,7 @@ const MAX_LIMIT = 100;
  * Per-page batched groupBy result row for REGULAR runs. The handler issues
  * ONE groupBy across the page's REGULAR ids (`testRunId.in: [...regularIds]`)
  * and fans the rollup out per row via `computeStatusRollup` — never N per-row
- * groupBy calls (D7-06 + RESEARCH Q1/Q2 RESOLVED). Automated runs roll up via
+ * groupBy calls. Automated runs roll up via
  * extractJunitStatusGroupsByRun (suite lookup + one JUnitTestResult groupBy),
  * equally batched.
  */
@@ -45,14 +46,14 @@ export function registerRunsList(
     "testplanit_test_runs_list",
     {
       description:
-        "List test runs scoped to a project, with statusCounts rollup inline on every row. Filters: stateId, isCompleted, createdById (user id, string), from/to (createdAt date range, ISO 8601). Cursor pagination via the `cursor` returned in `nextCursor`. Each row carries denormalized project/state/createdBy/configuration/milestone/tags/issues + testRunType + `statusCounts: [{id,name,count}]` + `untested` + `total` (counts SUM to total). Rollup source depends on testRunType: REGULAR runs count TestRunCases by execution status (`untested` = cases with no result, `total` = case count); automated runs (JUNIT/TESTNG/XUNIT/NUNIT/MSTEST/MOCHA/CUCUMBER) count imported JUnit result ROWS by status — attempts, so retries count once per row and `total` is the attempt count, matching the web UI. Rollups are fetched via batched groupBy calls per page, NOT per-row — agents can list 100 runs in one tool call without N+1 cost.",
+        "List test runs scoped to a project, with statusCounts rollup inline on every row. Filters: stateId, isCompleted, createdById (user id, string), from/to (createdAt range; YYYY-MM-DD or an ISO 8601 timestamp — a date-only `to` covers that whole UTC day). Cursor pagination via the `cursor` returned in `nextCursor`. Each row carries denormalized project/state/createdBy/configuration/milestone/tags/issues + testRunType + `statusCounts: [{id,name,count}]` + `untested` + `total` (counts SUM to total). Rollup source depends on testRunType: REGULAR runs count TestRunCases by execution status (`untested` = cases with no result, `total` = case count); automated runs (JUNIT/TESTNG/XUNIT/NUNIT/MSTEST/MOCHA/CUCUMBER) count imported JUnit result ROWS by status — attempts, so retries count once per row and `total` is the attempt count, matching the web UI. Rollups are fetched via batched groupBy calls per page, NOT per-row — agents can list 100 runs in one tool call without N+1 cost.",
       inputSchema: {
         projectId: z.number().int().positive(),
         stateId: z.number().int().positive().optional(),
         isCompleted: z.boolean().optional(),
         createdById: z.string().min(1).optional(),
-        from: z.string().datetime({ offset: true }).optional(),
-        to: z.string().datetime({ offset: true }).optional(),
+        from: dateBoundSchema.optional(),
+        to: dateBoundSchema.optional(),
         cursor: z.number().int().positive().optional(),
         limit: z.number().int().positive().max(MAX_LIMIT).optional(),
       },
@@ -70,15 +71,15 @@ export function registerRunsList(
         if (input.createdById) where.createdById = input.createdById;
         if (input.from || input.to) {
           where.createdAt = {
-            ...(input.from ? { gte: new Date(input.from) } : {}),
-            ...(input.to ? { lte: new Date(input.to) } : {}),
+            ...(input.from ? { gte: parseDateBound(input.from, "start") } : {}),
+            ...(input.to ? { lte: parseDateBound(input.to, "end") } : {}),
           };
         }
 
         const body: Record<string, unknown> = {
           where,
           include: RUN_ROW_INCLUDE,
-          // BL-04: deterministic page ordering. Newest run first; id breaks ties
+          // deterministic page ordering. Newest run first; id breaks ties
           // for runs created in the same millisecond.
           orderBy: [{ createdAt: "desc" }, { id: "desc" }],
           take: limit + 1,
@@ -110,7 +111,7 @@ export function registerRunsList(
           .filter((r) => isAutomatedRunType(r.testRunType))
           .map((r) => r.id);
 
-        // Call 2 — batched per source, in parallel (D7-06: never per-row).
+        // Call 2 — batched per source, in parallel.
         //   REGULAR    → one testRunCases.groupBy over the regular page ids.
         //   automated  → one jUnitTestSuite.findMany + one
         //                jUnitTestResult.groupBy over the automated page ids.

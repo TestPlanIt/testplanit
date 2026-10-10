@@ -22,11 +22,11 @@ export interface CasesListDeps {
 
 const DEFAULT_LIMIT = 25;
 const MAX_LIMIT = 100;
-// Phase 8 D8-02: handler-side post-filter for staleSinceUpdate cannot be
+// Handler-side post-filter for staleSinceUpdate cannot be
 // expressed as a `where` clause (per-row arithmetic across two relation
 // timestamps + the versioned lastUpdatedAt). Bound the scan at 400 rows
 // (4× MAX_LIMIT) and surface `truncated: true` on the result envelope when
-// the cap is hit, so agents know they may need to page (RESEARCH § Pitfall 8).
+// the cap is hit, so agents know they may need to page.
 const POST_FILTER_SCAN_CAP = 400;
 
 const CASE_ROW_INCLUDE = {
@@ -38,9 +38,9 @@ const CASE_ROW_INCLUDE = {
   // model — select through caseTags.tag (the implicit `tags` relation no
   // longer exists and would 422).
   caseTags: { select: { tag: { select: { id: true, name: true } } } },
-  // Phase 8 D8-02: latest version for lastUpdatedAt + sub-orderings for
+  // Latest version for lastUpdatedAt + sub-orderings for
   // latestResult union. Each take:1 sub-include carries deterministic
-  // orderBy (Pitfall 5 / Phase 7 MED-02).
+  // orderBy.
   repositoryCaseVersions: {
     orderBy: [{ version: "desc" }, { id: "desc" }],
     take: 1,
@@ -86,9 +86,9 @@ export function registerCasesList(server: McpServer, deps: CasesListDeps): void 
     {
       description:
         "List test cases scoped to a project. Filters: folderId (exact folder; add includeDescendants:true to cover the folder's entire subtree), tagIds, name (case-insensitive substring), stateId, customField, issueId (linked Issue numeric id — see issues_list for resolution from external keys). customField takes {name} to match cases that have the field set, or {name, value} to match by value (Dropdown/Multi-Select accept the option name or id; an unknown field name or option returns a validation error rather than unfiltered results). Cursor pagination via the `cursor` returned in `nextCursor`. " +
-        "Maintenance filters: automated (user-controlled intent flag), source (single or array of RepositoryCaseSource), repositoryId, hasNeverExecuted (no junitResults AND no TestRunResults via TestRunCases), staleSinceUpdate (handler-side post-filter — bounded scan of POST_FILTER_SCAN_CAP=400; surfaces truncated:true when scan cap hit), updatedAfter/updatedBefore (filter via the repositoryCaseVersions relation since RepositoryCases has no updatedAt column). Each row carries lastUpdatedAt, latestResult (union of latest junitResults / TestRunResults), plus the automation-reality pair hasAutomatedResults / lastAutomatedResultAt (JUnit result rows — execution evidence, distinct from the user-set `automated` flag). " +
-        "Automation-reality filters: hasAutomatedResults (a JUnit result row exists), automatedResultSince (has a JUnit result at/after the ISO timestamp), noAutomatedResultSince (NO JUnit result at/after the timestamp — with automated:true this finds flagged-automated cases whose automation has gone quiet). " +
-        "Creator and date filters: creatorIds (array of user ids — matches any; deliberately array-shaped while runs_list/sessions_list use single-string createdById), from/to (ISO 8601 createdAt range). " +
+        "Maintenance filters: automated (user-controlled intent flag), source (single or array of RepositoryCaseSource), repositoryId, hasNeverExecuted (no junitResults AND no TestRunResults via TestRunCases), staleSinceUpdate (handler-side post-filter — bounded scan of POST_FILTER_SCAN_CAP=400; surfaces truncated:true when scan cap hit), updatedAfter/updatedBefore (filter via the repositoryCaseVersions relation since RepositoryCases has no updatedAt column; YYYY-MM-DD or ISO 8601 — a date-only updatedBefore covers that whole UTC day). Each row carries lastUpdatedAt, latestResult (union of latest junitResults / TestRunResults), plus the automation-reality pair hasAutomatedResults / lastAutomatedResultAt (JUnit result rows — execution evidence, distinct from the user-set `automated` flag). " +
+        "Automation-reality filters: hasAutomatedResults (a JUnit result row exists), automatedResultSince (has a JUnit result at/after the timestamp; YYYY-MM-DD means the start of that UTC day), noAutomatedResultSince (NO JUnit result at/after the timestamp — with automated:true this finds flagged-automated cases whose automation has gone quiet). " +
+        "Creator and date filters: creatorIds (array of user ids — matches any; deliberately array-shaped while runs_list/sessions_list use single-string createdById), from/to (createdAt range; YYYY-MM-DD or an ISO 8601 timestamp — a date-only `to` covers that whole UTC day). " +
         "Set includeFolderPath:true to expand each row's folder to {id, name, path, ancestorIds, rootId, rootName} — a full leaf-to-area mapping with no extra folders_get calls. For counts and per-folder rollups use testplanit_cases_count instead of paginating this tool.",
       inputSchema: {
         ...CASES_FILTER_SHAPE,
@@ -148,7 +148,7 @@ export function registerCasesList(server: McpServer, deps: CasesListDeps): void 
 
         // staleSinceUpdate over-fetches up to POST_FILTER_SCAN_CAP+1 rows so
         // the handler can detect when more rows existed than the post-filter
-        // could consider (Pitfall 8). Otherwise default cursor pagination.
+        // could consider. Otherwise default cursor pagination.
         const fetchTake = input.staleSinceUpdate
           ? Math.min(POST_FILTER_SCAN_CAP, limit * 4) + 1
           : limit + 1;
@@ -187,7 +187,7 @@ export function registerCasesList(server: McpServer, deps: CasesListDeps): void 
             const lastUpdated = row.repositoryCaseVersions?.[0]?.createdAt;
             if (!lastUpdated) {
               // No version row → cannot compute staleness. Treat as
-              // never-executed/stale per RESEARCH § 3 (the safer default
+              // never-executed/stale (the safer default
               // for a maintenance dashboard).
               return true;
             }

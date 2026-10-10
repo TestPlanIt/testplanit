@@ -1,6 +1,7 @@
 import type { RepositoryCasesWhereInput } from "@db/input";
 import type { JsonValue } from "@zenstackhq/orm";
 import * as z from "zod/v4";
+import { dateBoundSchema, DATE_BOUND_HELP, parseDateBound } from "../../dateBounds.js";
 import type { EnvConfig } from "../../env.js";
 import { resolveCustomFields } from "./customFields.js";
 
@@ -66,16 +67,16 @@ export const CASES_FILTER_SHAPE = {
         .optional(),
     })
     .optional(),
-  // D7-03: filter cases linked to a specific issue. Pass the internal
-  // numeric Issue.id (the Phase-8 `issues_list` / `issues_get` `id`
+  // filter cases linked to a specific issue. Pass the internal
+  // numeric Issue.id (the `issues_list` / `issues_get` `id`
   // field), NOT the externalKey. `externalKey` (e.g. "JIRA-123") is
   // intentionally NOT a filter dimension here because it is not
   // globally unique on the schema (`@@unique([externalId,
   // integrationId])` is the only constraint — multiple integrations
-  // can have the same external key). Phase 8 ships proper issueKey
-  // resolution scoped by integration.
+  // can have the same external key); resolve a key to an id with the
+  // issue tools first.
   issueId: z.number().int().positive().optional(),
-  // Phase-8 D8-02 maintenance filters.
+  // Maintenance filters.
   automated: z.boolean().optional(),
   source: z
     .union([z.enum(SOURCE_VALUES), z.array(z.enum(SOURCE_VALUES))])
@@ -85,13 +86,13 @@ export const CASES_FILTER_SHAPE = {
   // Automation-reality filters: `automated` is a user-set intent flag, these
   // three interrogate execution evidence (JUnit result rows).
   hasAutomatedResults: z.boolean().optional(),
-  automatedResultSince: z.string().datetime({ offset: true }).optional(),
-  noAutomatedResultSince: z.string().datetime({ offset: true }).optional(),
-  updatedAfter: z.string().datetime({ offset: true }).optional(),
-  updatedBefore: z.string().datetime({ offset: true }).optional(),
+  automatedResultSince: dateBoundSchema.optional(),
+  noAutomatedResultSince: dateBoundSchema.optional(),
+  updatedAfter: dateBoundSchema.optional(),
+  updatedBefore: dateBoundSchema.optional(),
   creatorIds: z.array(z.string().trim().min(1)).optional(),
-  from: z.string().datetime({ offset: true }).optional(),
-  to: z.string().datetime({ offset: true }).optional(),
+  from: dateBoundSchema.optional(),
+  to: dateBoundSchema.optional(),
 };
 
 const casesFilterObject = z.object(CASES_FILTER_SHAPE);
@@ -101,7 +102,7 @@ export async function buildCasesWhere(
   input: CasesFilterInput,
   env: EnvConfig,
 ): Promise<RepositoryCasesWhereInput> {
-  // REVIEW MED-03 fix: use the typed where so reintroducing an unknown
+  // Use the typed where so reintroducing an unknown
   // column or forgetting a relation accessor TS2353s at compile time.
   const where: RepositoryCasesWhereInput = {
     projectId: input.projectId,
@@ -153,7 +154,7 @@ export async function buildCasesWhere(
     }
   }
   if (input.issueId !== undefined) {
-    // D7-03: RepositoryCases issues now live on the explicit
+    // RepositoryCases issues now live on the explicit
     // RepositoryCaseIssue join model — filter through caseIssues.issue.
     // `issue: { isDeleted: false }` excludes soft-deleted issue links
     // from matching, consistent with the soft-delete invariant.
@@ -161,7 +162,7 @@ export async function buildCasesWhere(
       some: { issue: { id: input.issueId, isDeleted: false } },
     };
   }
-  // Phase-8 D8-02 filter appends.
+  // Maintenance filter appends.
   if (input.automated !== undefined) where.automated = input.automated;
   if (input.source !== undefined) {
     where.source = Array.isArray(input.source)
@@ -172,7 +173,7 @@ export async function buildCasesWhere(
     where.repositoryId = input.repositoryId;
   }
   if (input.hasNeverExecuted) {
-    // Pure-where (RESEARCH § 3.1) — no execution exists when
+    // Pure-where — no execution exists when
     // junitResults has no rows AND no TestRunCases junction has any
     // associated results.
     where.junitResults = { none: {} };
@@ -193,7 +194,7 @@ export async function buildCasesWhere(
   if (input.automatedResultSince !== undefined) {
     junitConds.push({
       junitResults: {
-        some: { executedAt: { gte: new Date(input.automatedResultSince) } },
+        some: { executedAt: { gte: parseDateBound(input.automatedResultSince, "start") } },
       },
     });
   }
@@ -204,7 +205,7 @@ export async function buildCasesWhere(
     // run since" (the safe default for a maintenance report).
     junitConds.push({
       junitResults: {
-        none: { executedAt: { gte: new Date(input.noAutomatedResultSince) } },
+        none: { executedAt: { gte: parseDateBound(input.noAutomatedResultSince, "start") } },
       },
     });
   }
@@ -213,15 +214,15 @@ export async function buildCasesWhere(
     input.updatedAfter !== undefined ||
     input.updatedBefore !== undefined
   ) {
-    // Pitfall 1: RepositoryCases has no updatedAt column — go through
+    // RepositoryCases has no updatedAt column — go through
     // the repositoryCaseVersions relation (the row matching
     // currentVersion carries the canonical lastUpdatedAt).
     const createdAt: { gte?: Date; lte?: Date } = {};
     if (input.updatedAfter !== undefined) {
-      createdAt.gte = new Date(input.updatedAfter);
+      createdAt.gte = parseDateBound(input.updatedAfter, "start");
     }
     if (input.updatedBefore !== undefined) {
-      createdAt.lte = new Date(input.updatedBefore);
+      createdAt.lte = parseDateBound(input.updatedBefore, "end");
     }
     where.repositoryCaseVersions = { some: { createdAt } };
   }
@@ -230,8 +231,8 @@ export async function buildCasesWhere(
   }
   if (input.from || input.to) {
     where.createdAt = {
-      ...(input.from ? { gte: new Date(input.from) } : {}),
-      ...(input.to ? { lte: new Date(input.to) } : {}),
+      ...(input.from ? { gte: parseDateBound(input.from, "start") } : {}),
+      ...(input.to ? { lte: parseDateBound(input.to, "end") } : {}),
     };
   }
   return where;
