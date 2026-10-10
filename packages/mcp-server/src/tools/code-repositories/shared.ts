@@ -6,8 +6,7 @@ import type {
 // Typed include — `as const satisfies ProjectCodeRepositoryConfigInclude`
 // makes reintroduction of an unknown field a TS2353 at compile time. The
 // `repository` join is `select`-only; `credentials` is INTENTIONALLY ABSENT so
-// the secrets column never crosses the wire (defense-in-depth — REPO-01 /
-// T-08-CRED-LEAK).
+// the secrets column never crosses the wire (defense in depth).
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const PROJECT_REPO_CONFIG_INCLUDE = {
@@ -24,13 +23,18 @@ export const PROJECT_REPO_CONFIG_INCLUDE = {
   },
 } as const satisfies ProjectCodeRepositoryConfigInclude;
 
-// Per-provider allow-list for the wholesale `settings` JSON. Keys outside this
-// list are stripped at the mapper boundary (T-08-CRED-LEAK mitigation #2).
-// Verified against testplanit/lib/integrations/adapters/*RepoAdapter.ts.
+// Per-provider allow-list for the wholesale `settings` JSON: exactly the keys
+// each adapter in testplanit/lib/integrations/adapters/*RepoAdapter.ts reads.
+// Keys outside this list are stripped at the mapper boundary, so anything
+// else that was ever stored under settings never reaches an agent.
 export const SETTINGS_ALLOW_LIST = {
-  GITHUB: ["owner", "repo"],
-  GITLAB: ["baseUrl", "owner", "repo"],
-  BITBUCKET: ["baseUrl", "owner", "repo"],
+  // baseUrl is the API root of a GitHub Enterprise Server install
+  // (e.g. "https://ghes.example.com/api/v3"); absent for github.com.
+  GITHUB: ["owner", "repo", "baseUrl"],
+  // projectPath is the namespaced path ("group/subgroup/project").
+  GITLAB: ["baseUrl", "projectPath"],
+  // Bitbucket Cloud: workspace + repository slug.
+  BITBUCKET: ["workspace", "repoSlug"],
   AZURE_DEVOPS: ["organizationUrl", "project", "repositoryId"],
   GITEA: ["baseUrl", "owner", "repo"],
 } as const;
@@ -55,6 +59,20 @@ export function stripSettings(
   return out;
 }
 
+function trimTrailingSlash(url: string): string {
+  return url.replace(/\/+$/, "");
+}
+
+// The GitHub adapter stores the API root, not the web host: nothing for
+// github.com, or "https://ghes.example.com/api/v3" for GitHub Enterprise
+// Server. The web host is that root without its API path.
+function githubWebHost(baseUrl: string | undefined): string {
+  if (!baseUrl) return "https://github.com";
+  const root = trimTrailingSlash(baseUrl);
+  if (/^https?:\/\/api\.github\.com$/i.test(root)) return "https://github.com";
+  return root.replace(/\/api\/v3$/i, "");
+}
+
 export function deriveWebUrl(
   provider: string,
   settings: Record<string, string>,
@@ -62,19 +80,25 @@ export function deriveWebUrl(
   switch (provider) {
     case "GITHUB":
       return settings.owner && settings.repo
-        ? `https://github.com/${settings.owner}/${settings.repo}`
+        ? `${githubWebHost(settings.baseUrl)}/${settings.owner}/${settings.repo}`
         : null;
     case "GITLAB":
+      return settings.projectPath
+        ? `${trimTrailingSlash(settings.baseUrl || "https://gitlab.com")}/${settings.projectPath.replace(/^\/+/, "")}`
+        : null;
     case "BITBUCKET":
+      return settings.workspace && settings.repoSlug
+        ? `https://bitbucket.org/${settings.workspace}/${settings.repoSlug}`
+        : null;
     case "GITEA":
       return settings.baseUrl && settings.owner && settings.repo
-        ? `${settings.baseUrl.replace(/\/$/, "")}/${settings.owner}/${settings.repo}`
+        ? `${trimTrailingSlash(settings.baseUrl)}/${settings.owner}/${settings.repo}`
         : null;
     case "AZURE_DEVOPS":
       return settings.organizationUrl &&
         settings.project &&
         settings.repositoryId
-        ? `${settings.organizationUrl.replace(/\/$/, "")}/${settings.project}/_git/${settings.repositoryId}`
+        ? `${trimTrailingSlash(settings.organizationUrl)}/${settings.project}/_git/${settings.repositoryId}`
         : null;
     default:
       return null;
@@ -84,6 +108,9 @@ export function deriveWebUrl(
 export interface RawCodeRepoConfigRow {
   id: number;
   projectId: number;
+  // "QUICKSCRIPT" (the repository holding the project's automated tests) or
+  // "IMPACT" (the application code impact analysis reads).
+  purpose: string;
   branch: string | null;
   pathPatterns: unknown;
   cacheEnabled: boolean;
@@ -91,6 +118,7 @@ export interface RawCodeRepoConfigRow {
   cacheStatus: string | null;
   cacheLastFetchedAt: Date | string | null;
   cacheFileCount: number | null;
+  cacheContentFileCount?: number | null;
   cacheTotalSize: bigint | number | null;
   cacheError: string | null;
   repository: {
@@ -108,6 +136,7 @@ export function mapCodeRepoConfig(raw: RawCodeRepoConfigRow) {
   return {
     id: raw.id,
     projectId: raw.projectId,
+    purpose: raw.purpose,
     branch: raw.branch ?? null,
     pathPatterns: Array.isArray(raw.pathPatterns) ? raw.pathPatterns : [],
     cacheEnabled: raw.cacheEnabled,
@@ -115,10 +144,11 @@ export function mapCodeRepoConfig(raw: RawCodeRepoConfigRow) {
     cacheStatus: raw.cacheStatus ?? null,
     cacheLastFetchedAt: raw.cacheLastFetchedAt ?? null,
     cacheFileCount: raw.cacheFileCount ?? null,
-    // BigInt → Number coercion (RESEARCH § Pitfall 6) — JSON.stringify rejects
-    // BigInt, so the cache size column must be widened to a regular number at
-    // the mapper boundary. PostgreSQL int8 fits in a JS number when the
-    // logical value is bytes (Number.MAX_SAFE_INTEGER ≈ 9 PiB).
+    cacheContentFileCount: raw.cacheContentFileCount ?? null,
+    // BigInt → Number coercion — JSON.stringify rejects BigInt, so the cache
+    // size column must be widened to a regular number at the mapper
+    // boundary. PostgreSQL int8 fits in a JS number when the logical value
+    // is bytes (Number.MAX_SAFE_INTEGER ≈ 9 PiB).
     cacheTotalSize:
       raw.cacheTotalSize != null ? Number(raw.cacheTotalSize) : null,
     cacheError: raw.cacheError ?? null,

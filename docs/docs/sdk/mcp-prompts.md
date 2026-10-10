@@ -110,7 +110,7 @@ List the automated test cases in our `playwright-suite` repository.
 
 **Tool calls (2):**
 
-1. `testplanit_code_repositories_list({ projectId: <P> })` → resolves repository ids; credentials are never returned. Note: this lists repositories that hold TestPlanIt's automated test code, not application code.
+1. `testplanit_code_repositories_list({ projectId: <P>, purpose: "QUICKSCRIPT" })` → resolves repository ids; credentials are never returned. `QUICKSCRIPT` bindings hold the project's automated test code; `IMPACT` bindings point at application code, so leave the filter off only when you want both.
 2. `testplanit_cases_list({ projectId: <P>, repositoryId: <id from step 1>, automated: true })` → cases imported from that test repo, with `lastUpdatedAt` + `latestResult` inline.
 
 ## "What manual cases cover this automated test?"

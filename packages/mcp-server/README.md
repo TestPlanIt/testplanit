@@ -171,22 +171,22 @@ Your MCP client discovers each tool's full parameters automatically, so the list
 | `testplanit_milestones_list` | List milestones in a project. |
 | `testplanit_milestones_get` | Get a single milestone with progress. |
 | `testplanit_milestones_create` | Create a milestone. |
-| `testplanit_milestones_update` | Update a milestone. |
+| `testplanit_milestones_update` | Update a milestone. Dates are calendar days; completing it works the way the app does — the due date becomes the completion date, child milestones complete with it, and active runs and sessions complete only when asked. Synced milestones keep their tracker-owned fields. |
 | `testplanit_milestone_types_list` | List the available milestone types. |
 
 ### Reviews
 
 | Tool | Description |
 | --- | --- |
-| `testplanit_reviews_list` | List the review requests assigned to *you* — the same queue as the Review inbox in the app, covering both direct assignment and assignment to a role you hold. `view: "pending"` (default) is the work awaiting your decision; `view: "decided"` is your own decision history. Rows resolve the polymorphic subject to a name, carry the workflow transition being requested, and include the requester's submit-time note. |
+| `testplanit_reviews_list` | List the review requests assigned to *you* — what the Review inbox shows as waiting on you, covering direct assignment and assignment to the role you hold in each project, limited to what that role may approve. `view: "pending"` (default) is the work awaiting your decision; `view: "decided"` is your own decision history. Rows resolve the polymorphic subject to a name, carry the workflow transition being requested, and include the requester's submit-time note. |
 | `testplanit_reviews_decide` | Approve, request changes on, or reject a review request assigned to you. Decisions are append-only and notify the requester, and **approving applies the requested workflow transition** — agents should confirm with you before calling. A comment is required for `CHANGES_REQUESTED` and `REJECTED`. Blocked for read-only (`mode:read`) tokens, and refused unless you are the assignee with approve permission for the entity's area. **Requires a TestPlanIt instance that accepts API-token review decisions** (shipped alongside `@testplanit/mcp-server` 1.0.0-beta.2); against an older instance the tool says so and `testplanit_reviews_list` still works. |
 
 ### Code repositories
 
 | Tool | Description |
 | --- | --- |
-| `testplanit_code_repositories_list` | List code repositories linked to a project. |
-| `testplanit_repository_case_links_list` | List links between test cases and repository code. |
+| `testplanit_code_repositories_list` | List the code repositories bound to a project, one row per binding with its `purpose`: `QUICKSCRIPT` (the repository holding the project's automated tests) or `IMPACT` (the application code impact analysis reads). Settings are reduced to the provider's public keys and a derived web url; credentials are never returned. |
+| `testplanit_repository_case_links_list` | List the links between test cases: the same test in two sources, a dependency, or the case a copy was duplicated from. |
 
 ## Diagnostics
 
