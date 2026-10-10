@@ -1,5 +1,10 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import {
+  StepLayoutToggle,
+  stepLayoutClasses,
+} from "@/components/steps/StepLayoutToggle";
+import { cn } from "~/utils";
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { DurationDisplay } from "@/components/DurationDisplay";
 import DynamicIcon from "@/components/DynamicIcon";
@@ -1222,10 +1227,16 @@ export function TestRunCaseDetails({
                   return null;
                 }
 
+                const isStepsField = field.caseField.type.type === "Steps";
+
                 return (
-                  <div key={field.caseField.id} className="">
-                    <div className="font-medium text-sm text-primary border-b mb-1 border-muted-foreground/50">
+                  <div
+                    key={field.caseField.id}
+                    className={cn(isStepsField && stepLayoutClasses.container)}
+                  >
+                    <div className="flex items-end justify-between font-medium text-sm text-primary border-b mb-1 border-muted-foreground/50">
                       {field.caseField.displayName}
+                      {isStepsField && <StepLayoutToggle className="mb-0.5" />}
                     </div>
                     <FieldValueRenderer
                       fieldValue={fieldValue}
@@ -1243,6 +1254,7 @@ export function TestRunCaseDetails({
                       isRunMode={true}
                       stepsForDisplay={testcase.steps}
                       parameters={stepParameters}
+                      hideStepLayoutToggle={isStepsField}
                     />
                   </div>
                 );

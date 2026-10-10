@@ -1,6 +1,12 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import type { JsonValue } from "@zenstackhq/orm";
 import { schema } from "~/zenstack/schema";
+import {
+  StepLayoutToggle,
+  stepLayoutClasses,
+} from "@/components/steps/StepLayoutToggle";
+import { useStepLayout } from "~/hooks/useStepLayout";
+import { cn } from "~/utils";
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
 import { TimeTracker, TimeTrackerRef } from "@/components/TimeTracker";
@@ -301,6 +307,7 @@ export function AddResultModal({
 }: AddResultModalProps) {
   const t = useTranslations();
   const tCommon = useTranslations("common");
+  const { layout: stepLayout, isSideBySide } = useStepLayout();
   const locale = useLocale();
   const { data: session } = useSession();
   const queryClient = useQueryClient();
@@ -2141,8 +2148,14 @@ export function AddResultModal({
 
             {/* Step results */}
             {steps.length > 0 && (
-              <div className="space-y-4">
-                <div className="font-bold -mb-2">{tCommon("fields.steps")}</div>
+              <div
+                className={cn("space-y-4", stepLayoutClasses.container)}
+                data-step-layout={stepLayout}
+              >
+                <div className="font-bold -mb-2 flex items-center justify-between">
+                  {tCommon("fields.steps")}
+                  <StepLayoutToggle />
+                </div>
                 <ol className="space-y-4">
                   {steps.map((step, index) => {
                     const stepId = step.id.toString();
@@ -2218,30 +2231,43 @@ export function AddResultModal({
                         key={step.id}
                         className="space-y-2 border-2 border-primary/20 rounded-lg p-2"
                       >
-                        <div className="flex gap-2 shrink-0 w-full ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground rounded-b-none">
-                          <div className="font-bold flex items-center justify-center p-2 text-primary-foreground bg-primary border-2 border-primary rounded-full w-8 h-8">
-                            {index + 1}
+                        <div className={stepLayoutClasses.pair(isSideBySide)}>
+                          <div
+                            className={cn(
+                              "flex gap-2 w-full min-w-0 ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground",
+                              stepLayoutClasses.stepBlock(isSideBySide)
+                            )}
+                          >
+                            <div className="font-bold flex items-center justify-center p-2 text-primary-foreground bg-primary border-2 border-primary rounded-full w-8 h-8">
+                              {index + 1}
+                            </div>
+                            <div className="flex-1">
+                              <TipTapEditor
+                                content={stepContent}
+                                readOnly={true}
+                                projectId={`step_${step.id}`}
+                                className="prose-sm"
+                                parameters={parameters}
+                              />
+                            </div>
                           </div>
-                          <div className="flex-1">
-                            <TipTapEditor
-                              content={stepContent}
-                              readOnly={true}
-                              projectId={`step_${step.id}`}
-                              className="prose-sm"
-                              parameters={parameters}
-                            />
-                          </div>
-                        </div>
-                        <div className="flex gap-1 shrink-0 w-full ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground rounded-t-none">
-                          <SearchCheck className="text-primary h-7 w-7 shrink-0 mt-1" />
-                          <div className="flex-1">
-                            <TipTapEditor
-                              content={expectedResultContent}
-                              readOnly={true}
-                              projectId={`step_${step.id}_expected`}
-                              className="prose-sm"
-                              parameters={parameters}
-                            />
+                          <div
+                            className={cn(
+                              "flex gap-1 w-full min-w-0 ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground",
+                              stepLayoutClasses.expectedBlock(isSideBySide)
+                            )}
+                            data-testid={`expected-result-${index}`}
+                          >
+                            <SearchCheck className="text-primary h-7 w-7 shrink-0 mt-1" />
+                            <div className="flex-1">
+                              <TipTapEditor
+                                content={expectedResultContent}
+                                readOnly={true}
+                                projectId={`step_${step.id}_expected`}
+                                className="prose-sm"
+                                parameters={parameters}
+                              />
+                            </div>
                           </div>
                         </div>
                         <div className="pt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2470,6 +2496,7 @@ const SharedStepGroupInputs: React.FC<SharedStepGroupInputsProps> = ({
   // Explicitly set return type to React.ReactNode
   const t = useTranslations();
   const tCommon = useTranslations("common");
+  const { isSideBySide } = useStepLayout();
   const { data: items, isLoading } = useClientQueries(
     schema
   ).sharedStepItem.useFindMany({
@@ -2581,30 +2608,42 @@ const SharedStepGroupInputs: React.FC<SharedStepGroupInputsProps> = ({
             key={item.id}
             className="space-y-2 border rounded-md p-3 bg-muted/30"
           >
-            <div className="flex gap-2 shrink-0 w-full ring-1 ring-primary/30 p-2 rounded-lg bg-primary-foreground rounded-b-none">
-              <div className="font-bold flex items-center justify-center p-1 text-primary-foreground bg-primary border border-primary rounded-full w-6 h-6 text-xs">
-                {index + 1}
+            <div className={stepLayoutClasses.pair(isSideBySide)}>
+              <div
+                className={cn(
+                  "flex gap-2 w-full min-w-0 ring-1 ring-primary/30 p-2 rounded-lg bg-primary-foreground",
+                  stepLayoutClasses.stepBlock(isSideBySide)
+                )}
+              >
+                <div className="font-bold flex items-center justify-center p-1 text-primary-foreground bg-primary border border-primary rounded-full w-6 h-6 text-xs">
+                  {index + 1}
+                </div>
+                <div className="flex-1">
+                  <TipTapEditor
+                    content={stepContent}
+                    readOnly
+                    projectId={`shared_item_step_${item.id}`}
+                    className="prose-sm"
+                    parameters={parameters}
+                  />
+                </div>
               </div>
-              <div className="flex-1">
-                <TipTapEditor
-                  content={stepContent}
-                  readOnly
-                  projectId={`shared_item_step_${item.id}`}
-                  className="prose-sm"
-                  parameters={parameters}
-                />
-              </div>
-            </div>
-            <div className="flex gap-1 shrink-0 w-full ring-1 ring-primary/30 p-2 rounded-lg bg-primary-foreground rounded-t-none">
-              <SearchCheck className="text-primary h-6 w-6 shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <TipTapEditor
-                  content={expectedResultContent}
-                  readOnly
-                  projectId={`shared_item_expected_${item.id}`}
-                  className="prose-sm"
-                  parameters={parameters}
-                />
+              <div
+                className={cn(
+                  "flex gap-1 w-full min-w-0 ring-1 ring-primary/30 p-2 rounded-lg bg-primary-foreground",
+                  stepLayoutClasses.expectedBlock(isSideBySide)
+                )}
+              >
+                <SearchCheck className="text-primary h-6 w-6 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <TipTapEditor
+                    content={expectedResultContent}
+                    readOnly
+                    projectId={`shared_item_expected_${item.id}`}
+                    className="prose-sm"
+                    parameters={parameters}
+                  />
+                </div>
               </div>
             </div>
 

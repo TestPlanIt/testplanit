@@ -58,6 +58,8 @@ interface FieldValueRendererProps {
   projectId?: number;
   onSharedStepCreated?: () => void;
   stepsForDisplay?: DisplayStep[];
+  /** The surface renders the step layout toggle beside its own field label. */
+  hideStepLayoutToggle?: boolean;
   explicitFieldNameForSteps?: string;
   parameters?: ParameterChipMeta[];
   onOpenParametersSheet?: () => void;
@@ -77,6 +79,7 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
   errors,
   previousFieldValue,
   isRunMode = false,
+  hideStepLayoutToggle = false,
   canEditRestricted = true,
   projectId,
   onSharedStepCreated,
@@ -589,6 +592,7 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
               steps={stepsForDisplay || fieldValue || []}
               projectId={projectId}
               parameters={parameters}
+              hideLayoutToggle={hideStepLayoutToggle}
             />
           );
         } else {

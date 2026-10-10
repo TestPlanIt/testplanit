@@ -1,5 +1,12 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import {
+  StepLayoutToggle,
+  stepLayoutClasses,
+} from "@/components/steps/StepLayoutToggle";
+import { useStepLayout } from "~/hooks/useStepLayout";
+import { cn } from "~/utils";
+import { ensureTipTapJSON } from "~/utils/tiptapConversion";
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
 import { TimeTracker, TimeTrackerRef } from "@/components/TimeTracker";
@@ -271,17 +278,26 @@ interface EditResultModalProps {
   steps?: StepsWithExpectedResult[];
 }
 
-// Helper function to parse TipTap content
+// Notes on older results are stored as HTML or plain text rather than TipTap
+// JSON; the shared converter turns any of those string shapes into a document.
+// Objects are already documents and pass through as before.
 const parseTipTapContent = (content: any) => {
   if (!content) return emptyEditorContent;
-  if (typeof content === "string") {
+  if (typeof content === "string") return ensureTipTapJSON(content);
+  return content;
+};
+
+// Evidence predates the JSON shape on some rows; anything unparseable is empty.
+const parseEvidence = (evidence: any) => {
+  if (!evidence) return {};
+  if (typeof evidence === "string") {
     try {
-      return JSON.parse(content);
+      return JSON.parse(evidence);
     } catch {
-      return emptyEditorContent;
+      return {};
     }
   }
-  return content;
+  return evidence;
 };
 
 export function EditResultModal({
@@ -296,6 +312,7 @@ export function EditResultModal({
 }: EditResultModalProps) {
   const tCommon: ReturnType<typeof useTranslationsType<"common">> =
     useTranslations("common");
+  const { layout: stepLayout, isSideBySide } = useStepLayout();
   const locale = useLocale();
   const { data: session } = useSession();
   const queryClient = useQueryClient();
@@ -609,14 +626,8 @@ export function EditResultModal({
         const stepFields = result.stepResults?.reduce(
           (acc: Record<string, any>, step) => {
             acc[`step_${step.stepId}_statusId`] = step.statusId;
-            acc[`step_${step.stepId}_notes`] =
-              typeof step.notes === "string"
-                ? JSON.parse(step.notes)
-                : step.notes || emptyEditorContent;
-            acc[`step_${step.stepId}_evidence`] =
-              typeof step.evidence === "string"
-                ? JSON.parse(step.evidence)
-                : step.evidence || {};
+            acc[`step_${step.stepId}_notes`] = parseTipTapContent(step.notes);
+            acc[`step_${step.stepId}_evidence`] = parseEvidence(step.evidence);
             acc[`step_${step.stepId}_elapsed`] = step.elapsed
               ? toHumanReadable(step.elapsed, { isSeconds: true, locale })
               : "";
@@ -633,14 +644,8 @@ export function EditResultModal({
 
         const parsedData = {
           statusId: result.statusId,
-          notes:
-            typeof result.notes === "string"
-              ? JSON.parse(result.notes)
-              : result.notes || emptyEditorContent,
-          evidence:
-            typeof result.evidence === "string"
-              ? JSON.parse(result.evidence)
-              : result.evidence || {},
+          notes: parseTipTapContent(result.notes),
+          evidence: parseEvidence(result.evidence),
           elapsed: result.elapsed
             ? toHumanReadable(result.elapsed, { isSeconds: true, locale })
             : "",
@@ -1448,10 +1453,7 @@ export function EditResultModal({
               name={fieldId}
               render={({ field: formField }) => {
                 // Parse the content if it's a string, otherwise use it as is
-                const content =
-                  typeof formField.value === "string"
-                    ? JSON.parse(formField.value)
-                    : formField.value || emptyEditorContent;
+                const content = parseTipTapContent(formField.value);
 
                 return (
                   <FormItem>
@@ -1739,8 +1741,14 @@ export function EditResultModal({
 
             {/* Step results */}
             {steps.length > 0 && (
-              <div className="space-y-4">
-                <div className="font-bold">{tCommon("fields.steps")}</div>
+              <div
+                className={cn("space-y-4", stepLayoutClasses.container)}
+                data-step-layout={stepLayout}
+              >
+                <div className="font-bold flex items-center justify-between">
+                  {tCommon("fields.steps")}
+                  <StepLayoutToggle />
+                </div>
                 <ol className="space-y-4">
                   {steps.map((step, index) => {
                     const _stepId = step.id.toString();
@@ -1779,30 +1787,43 @@ export function EditResultModal({
 
                     return (
                       <li key={step.id} className="space-y-2">
-                        <div className="flex gap-2 shrink-0 w-full ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground rounded-b-none">
-                          <div className="font-bold flex items-center justify-center p-2 text-primary-foreground bg-primary border-2 border-primary rounded-full w-8 h-8">
-                            {index + 1}
+                        <div className={stepLayoutClasses.pair(isSideBySide)}>
+                          <div
+                            className={cn(
+                              "flex gap-2 w-full min-w-0 ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground",
+                              stepLayoutClasses.stepBlock(isSideBySide)
+                            )}
+                          >
+                            <div className="font-bold flex items-center justify-center p-2 text-primary-foreground bg-primary border-2 border-primary rounded-full w-8 h-8">
+                              {index + 1}
+                            </div>
+                            <div className="flex-1">
+                              <TipTapEditor
+                                content={stepContent}
+                                readOnly={true}
+                                projectId={`step_${step.id}`}
+                                className="prose-sm"
+                                parameters={stepParameters}
+                              />
+                            </div>
                           </div>
-                          <div className="flex-1">
-                            <TipTapEditor
-                              content={stepContent}
-                              readOnly={true}
-                              projectId={`step_${step.id}`}
-                              className="prose-sm"
-                              parameters={stepParameters}
-                            />
-                          </div>
-                        </div>
-                        <div className="flex gap-1 shrink-0 w-full ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground rounded-t-none">
-                          <SearchCheck className="text-primary h-7 w-7 shrink-0 mt-1" />
-                          <div className="flex-1">
-                            <TipTapEditor
-                              content={expectedResultContent}
-                              readOnly={true}
-                              projectId={`step_${step.id}_expected`}
-                              className="prose-sm"
-                              parameters={stepParameters}
-                            />
+                          <div
+                            className={cn(
+                              "flex gap-1 w-full min-w-0 ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground",
+                              stepLayoutClasses.expectedBlock(isSideBySide)
+                            )}
+                            data-testid={`expected-result-${index}`}
+                          >
+                            <SearchCheck className="text-primary h-7 w-7 shrink-0 mt-1" />
+                            <div className="flex-1">
+                              <TipTapEditor
+                                content={expectedResultContent}
+                                readOnly={true}
+                                projectId={`step_${step.id}_expected`}
+                                className="prose-sm"
+                                parameters={stepParameters}
+                              />
+                            </div>
                           </div>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

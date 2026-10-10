@@ -37,6 +37,7 @@ const mockSession: Session = {
       notificationMode: NotificationMode.USE_GLOBAL,
       mutedNotificationTypes: [],
       detailsDisplayMode: "DOCKED",
+      stepLayout: "STACKED",
       hasCompletedWelcomeTour: false,
       hasCompletedInitialPreferencesSetup: false,
     },

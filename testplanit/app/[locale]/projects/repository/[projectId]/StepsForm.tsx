@@ -1,5 +1,9 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import {
+  StepLayoutToggle,
+  stepLayoutClasses,
+} from "@/components/steps/StepLayoutToggle";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import {
   AlertDialog,
@@ -59,7 +63,9 @@ import {
 } from "react-hook-form";
 import { toast } from "sonner";
 import { emptyEditorContent } from "~/app/constants";
+import { useStepLayout } from "~/hooks/useStepLayout";
 import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
+import { cn } from "~/utils";
 import SortableStep from "./SortableStep";
 
 // Define a type that includes the count for AsyncCombobox
@@ -156,6 +162,7 @@ interface StepItemProps {
   hideCheckboxes?: boolean;
   parameters?: ParameterChipMeta[];
   onOpenParametersSheet?: () => void;
+  sideBySide: boolean;
 }
 
 const StepItem: React.FC<StepItemProps> = ({
@@ -172,6 +179,7 @@ const StepItem: React.FC<StepItemProps> = ({
   hideCheckboxes,
   parameters,
   onOpenParametersSheet,
+  sideBySide,
 }) => {
   const t = useTranslations("repository.steps");
   const tCommon = useTranslations("common");
@@ -221,7 +229,7 @@ const StepItem: React.FC<StepItemProps> = ({
         {({ attributes, listeners, setNodeRef }) => (
           <div
             ref={setNodeRef}
-            className="flex flex-col items-start min-w-[650px] bg-muted/75 p-2 rounded-lg mb-2 border-2 border-primary/30"
+            className="flex flex-col items-start w-full bg-muted/75 p-2 rounded-lg mb-2 border-2 border-primary/30"
           >
             <div className="flex items-center justify-between pb-2 space-x-2 cursor-default w-full">
               <div className="flex items-center">
@@ -345,27 +353,42 @@ const StepItem: React.FC<StepItemProps> = ({
                       key={item.id || itemIndex}
                       className="ms-6 mt-1 p-2 border-s-2 border-dashed border-primary/20"
                     >
-                      <Label className="mb-1 flex items-center font-semibold">
-                        <ListOrdered className="me-1 h-5 w-5 shrink-0" />
-                        {tCommon("fields.step")} {item.order + 1}
-                      </Label>
-
-                      <TipTapEditor
-                        content={stepContentToRender}
-                        readOnly={true}
-                        projectId={projectId.toString()}
-                        className="min-h-10 bg-background/50 p-1 rounded text-sm"
-                      />
-                      <Label className="mt-4 mb-1 flex items-center font-semibold">
-                        <SearchCheck className="me-1 h-5 w-5 shrink-0" />
-                        {tCommon("fields.expectedResult")}
-                      </Label>
-                      <TipTapEditor
-                        content={expectedResultContentToRender}
-                        readOnly={true}
-                        projectId={projectId.toString()}
-                        className="min-h-10 bg-background/50 p-1 rounded text-sm"
-                      />
+                      <div
+                        className={cn(
+                          "gap-x-4",
+                          stepLayoutClasses.pair(sideBySide)
+                        )}
+                      >
+                        <div className="min-w-0">
+                          <Label className="mb-1 flex items-center font-semibold">
+                            <ListOrdered className="me-1 h-5 w-5 shrink-0" />
+                            {tCommon("fields.step")} {item.order + 1}
+                          </Label>
+                          <TipTapEditor
+                            content={stepContentToRender}
+                            readOnly={true}
+                            projectId={projectId.toString()}
+                            className="min-h-10 bg-background/50 p-1 rounded text-sm"
+                          />
+                        </div>
+                        <div className="min-w-0">
+                          <Label
+                            className={cn(
+                              "mt-4 mb-1 flex items-center font-semibold",
+                              sideBySide && "@2xl:mt-0"
+                            )}
+                          >
+                            <SearchCheck className="me-1 h-5 w-5 shrink-0" />
+                            {tCommon("fields.expectedResult")}
+                          </Label>
+                          <TipTapEditor
+                            content={expectedResultContentToRender}
+                            readOnly={true}
+                            projectId={projectId.toString()}
+                            className="min-h-10 bg-background/50 p-1 rounded text-sm"
+                          />
+                        </div>
+                      </div>
                       <Separator className="my-2 bg-primary/30 w-full" />
                     </div>
                   );
@@ -390,9 +413,16 @@ const StepItem: React.FC<StepItemProps> = ({
       {({ attributes, listeners, setNodeRef }) => (
         <div
           ref={setNodeRef}
-          className="flex flex-col items-start min-w-[650px] bg-muted p-2 pb-1 rounded-lg mb-2"
+          className="flex flex-col items-start w-full bg-muted p-2 pb-1 rounded-lg mb-2"
         >
-          <div className="flex items-center justify-between pb-2 space-x-2 cursor-default w-full">
+          <div
+            className={cn(
+              "flex items-center justify-between pb-2 space-x-2 cursor-default w-full",
+              // Side by side, the header mirrors the two columns below it so
+              // the expected result label sits over its own editor.
+              sideBySide && "@2xl:grid @2xl:grid-cols-2 @2xl:space-x-0"
+            )}
+          >
             <div className="flex items-center">
               {!readOnly && !hideCheckboxes && (
                 <Checkbox
@@ -419,86 +449,113 @@ const StepItem: React.FC<StepItemProps> = ({
                 {tCommon("fields.step")} {index + 1}
               </FormLabel>
             </div>
-            {!readOnly && (
-              <Popover
-                open={
-                  openPopovers[index] === undefined
-                    ? false
-                    : openPopovers[index]
-                }
-                onOpenChange={(isOpen) =>
-                  handlePopoverOpenChange(index, isOpen)
-                }
+            <div className="flex items-center justify-between min-w-0">
+              {sideBySide && (
+                <FormLabel className="hidden @2xl:flex font-bold items-center ps-1">
+                  <SearchCheck className="h-5 w-5 me-1" />
+                  {tCommon("fields.expectedResult")}
+                </FormLabel>
+              )}
+              {!readOnly && (
+                <Popover
+                  open={
+                    openPopovers[index] === undefined
+                      ? false
+                      : openPopovers[index]
+                  }
+                  onOpenChange={(isOpen) =>
+                    handlePopoverOpenChange(index, isOpen)
+                  }
+                >
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      className="ms-auto"
+                      data-testid={`delete-step-${index}`}
+                    >
+                      <Trash className="h-5 w-5" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-fit" side="bottom">
+                    {t("confirmDelete", { number: index + 1 })}
+                    <div className="flex items-start justify-between gap-4 mt-2">
+                      <div className="flex items-center mb-2">
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          className="ms-auto"
+                          onClick={() => handlePopoverOpenChange(index, false)}
+                        >
+                          <CircleSlash2 className="h-4 w-4" />
+                          {tCommon("cancel")}
+                        </Button>
+                      </div>
+                      <div className="flex items-center">
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          onClick={() => {
+                            handleRemove(index);
+                            handlePopoverOpenChange(index, false);
+                          }}
+                          className="ms-auto"
+                        >
+                          <Trash className="h-4 w-4" /> {t("delete")}
+                        </Button>
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              )}
+            </div>
+          </div>
+          <div
+            className={cn("w-full mb-2", stepLayoutClasses.pair(sideBySide))}
+          >
+            <div
+              className={cn(
+                "w-full min-w-0 ring-2 ring-primary/50 p-1 rounded-lg bg-primary-foreground",
+                stepLayoutClasses.stepBlock(sideBySide)
+              )}
+            >
+              <FormControl>
+                <TipTapEditorWrapper
+                  name={`${namePrefix}.${index}.step`}
+                  initialContent={memoizedStepContent}
+                  readOnly={readOnly}
+                  projectId={projectId}
+                  parameters={parameters}
+                  onOpenParametersSheet={onOpenParametersSheet}
+                />
+              </FormControl>
+            </div>
+            <div
+              className={cn(
+                "w-full min-w-0 ring-2 ring-primary/50 p-1 rounded-lg bg-primary-foreground",
+                stepLayoutClasses.expectedBlock(sideBySide)
+              )}
+            >
+              <FormLabel
+                className={cn(
+                  "font-bold flex items-center",
+                  stepLayoutClasses.stackedOnly(sideBySide)
+                )}
               >
-                <PopoverTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    className="ms-auto"
-                    data-testid={`delete-step-${index}`}
-                  >
-                    <Trash className="h-5 w-5" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-fit" side="bottom">
-                  {t("confirmDelete", { number: index + 1 })}
-                  <div className="flex items-start justify-between gap-4 mt-2">
-                    <div className="flex items-center mb-2">
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        className="ms-auto"
-                        onClick={() => handlePopoverOpenChange(index, false)}
-                      >
-                        <CircleSlash2 className="h-4 w-4" />
-                        {tCommon("cancel")}
-                      </Button>
-                    </div>
-                    <div className="flex items-center">
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        onClick={() => {
-                          handleRemove(index);
-                          handlePopoverOpenChange(index, false);
-                        }}
-                        className="ms-auto"
-                      >
-                        <Trash className="h-4 w-4" /> {t("delete")}
-                      </Button>
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
-            )}
-          </div>
-          <div className="w-full ring-2 ring-primary/50 p-1 rounded-md bg-primary-foreground rounded-b-none">
-            <FormControl>
-              <TipTapEditorWrapper
-                name={`${namePrefix}.${index}.step`}
-                initialContent={memoizedStepContent}
-                readOnly={readOnly}
-                projectId={projectId}
-                parameters={parameters}
-                onOpenParametersSheet={onOpenParametersSheet}
-              />
-            </FormControl>
-          </div>
-          <div className="w-full ring-2 ring-primary/50 p-1 rounded-md bg-primary-foreground mb-2 rounded-t-none">
-            <FormLabel className="font-bold flex items-center">
-              <SearchCheck className="h-5 w-5 me-1" />
-              {tCommon("fields.expectedResult")}
-            </FormLabel>
-            <FormControl>
-              <TipTapEditorWrapper
-                name={`${namePrefix}.${index}.expectedResult`}
-                initialContent={memoizedExpectedResultContent}
-                readOnly={readOnly}
-                projectId={projectId}
-                parameters={parameters}
-                onOpenParametersSheet={onOpenParametersSheet}
-              />
-            </FormControl>
+                <SearchCheck className="h-5 w-5 me-1" />
+                {tCommon("fields.expectedResult")}
+              </FormLabel>
+              <FormControl>
+                <TipTapEditorWrapper
+                  name={`${namePrefix}.${index}.expectedResult`}
+                  initialContent={memoizedExpectedResultContent}
+                  readOnly={readOnly}
+                  projectId={projectId}
+                  parameters={parameters}
+                  onOpenParametersSheet={onOpenParametersSheet}
+                />
+              </FormControl>
+            </div>
           </div>
           <FormMessage />
         </div>
@@ -521,6 +578,7 @@ function StepsForm<T extends FieldValues = FieldValues>({
   const tCommon = useTranslations("common");
   const tRepoSteps = useTranslations("repository.steps");
   const { data: session } = useSession();
+  const { layout, isSideBySide } = useStepLayout();
   const {
     fields,
     append,
@@ -883,7 +941,16 @@ function StepsForm<T extends FieldValues = FieldValues>({
         items={fields.map((field) => field.id!)} // Added non-null assertion for field.id
         strategy={verticalListSortingStrategy}
       >
-        <div className="space-y-3 mb-4" data-testid="steps-form">
+        <div
+          className={cn("space-y-3 mb-4", stepLayoutClasses.container)}
+          data-testid="steps-form"
+          data-step-layout={layout}
+        >
+          {fields.length > 0 && (
+            <div className="flex justify-end">
+              <StepLayoutToggle />
+            </div>
+          )}
           {fields.map((field, index) => {
             const stepField = field as StepFormField; // Type assertion
             return (
@@ -902,6 +969,7 @@ function StepsForm<T extends FieldValues = FieldValues>({
                   hideCheckboxes={hideSharedStepsButtons}
                   parameters={parameters}
                   onOpenParametersSheet={onOpenParametersSheet}
+                  sideBySide={isSideBySide}
                 />
               </div>
             );

@@ -4301,6 +4301,7 @@ export class ApiHelper {
         timezone?: string;
         notificationMode?: string;
         mutedNotificationTypes?: string[];
+        stepLayout?: string;
       };
     };
   }): Promise<{ data: any }> {
@@ -4423,6 +4424,7 @@ export class ApiHelper {
     theme?: string;
     locale?: string;
     itemsPerPage?: string;
+    stepLayout?: string;
   }): Promise<void> {
     const response = await this.request.patch(
       `${this.baseURL}/api/model/userPreferences/update`,
@@ -4434,6 +4436,7 @@ export class ApiHelper {
             theme: options.theme,
             locale: options.locale,
             itemsPerPage: options.itemsPerPage,
+            stepLayout: options.stepLayout,
           },
         },
       }

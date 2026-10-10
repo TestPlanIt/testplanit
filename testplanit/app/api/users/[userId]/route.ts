@@ -8,6 +8,7 @@ import {
   Locale,
   NotificationMode,
   NotificationType,
+  StepLayout,
   Theme,
   TimeFormat,
 } from "~/zenstack/models";
@@ -54,6 +55,7 @@ const updateUserSchema = z.object({
       notificationMode: z.enum(NotificationMode).optional(),
       mutedNotificationTypes: z.array(z.enum(NotificationType)).optional(),
       detailsDisplayMode: z.enum(DetailsDisplayMode).optional(),
+      stepLayout: z.enum(StepLayout).optional(),
     })
     .optional(),
 });

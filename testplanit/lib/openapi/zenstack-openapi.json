@@ -162155,6 +162155,159 @@
           }
         }
       },
+      "StepLayout": {
+        "type": "string",
+        "enum": [
+          "STACKED",
+          "SIDE_BY_SIDE"
+        ]
+      },
+      "EnumStepLayoutFilter": {
+        "type": "object",
+        "properties": {
+          "equals": {
+            "$ref": "#/components/schemas/StepLayout"
+          },
+          "in": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StepLayout"
+            }
+          },
+          "notIn": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StepLayout"
+            }
+          },
+          "not": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StepLayout"
+              },
+              {
+                "$ref": "#/components/schemas/NestedEnumStepLayoutFilter"
+              }
+            ]
+          }
+        }
+      },
+      "NestedEnumStepLayoutFilter": {
+        "type": "object",
+        "properties": {
+          "equals": {
+            "$ref": "#/components/schemas/StepLayout"
+          },
+          "in": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StepLayout"
+            }
+          },
+          "notIn": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StepLayout"
+            }
+          },
+          "not": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StepLayout"
+              },
+              {
+                "$ref": "#/components/schemas/NestedEnumStepLayoutFilter"
+              }
+            ]
+          }
+        }
+      },
+      "EnumStepLayoutWithAggregatesFilter": {
+        "type": "object",
+        "properties": {
+          "equals": {
+            "$ref": "#/components/schemas/StepLayout"
+          },
+          "in": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StepLayout"
+            }
+          },
+          "notIn": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StepLayout"
+            }
+          },
+          "not": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StepLayout"
+              },
+              {
+                "$ref": "#/components/schemas/NestedEnumStepLayoutWithAggregatesFilter"
+              }
+            ]
+          },
+          "_count": {
+            "$ref": "#/components/schemas/NestedIntFilter"
+          },
+          "_min": {
+            "$ref": "#/components/schemas/NestedEnumStepLayoutFilter"
+          },
+          "_max": {
+            "$ref": "#/components/schemas/NestedEnumStepLayoutFilter"
+          }
+        }
+      },
+      "NestedEnumStepLayoutWithAggregatesFilter": {
+        "type": "object",
+        "properties": {
+          "equals": {
+            "$ref": "#/components/schemas/StepLayout"
+          },
+          "in": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StepLayout"
+            }
+          },
+          "notIn": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StepLayout"
+            }
+          },
+          "not": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StepLayout"
+              },
+              {
+                "$ref": "#/components/schemas/NestedEnumStepLayoutWithAggregatesFilter"
+              }
+            ]
+          },
+          "_count": {
+            "$ref": "#/components/schemas/NestedIntFilter"
+          },
+          "_min": {
+            "$ref": "#/components/schemas/NestedEnumStepLayoutFilter"
+          },
+          "_max": {
+            "$ref": "#/components/schemas/NestedEnumStepLayoutFilter"
+          }
+        }
+      },
+      "EnumStepLayoutFieldUpdateOperationsInput": {
+        "type": "object",
+        "properties": {
+          "set": {
+            "$ref": "#/components/schemas/StepLayout"
+          }
+        }
+      },
       "IdpName": {
         "type": "string",
         "enum": [
@@ -346322,6 +346475,9 @@
           "detailsDisplayMode": {
             "$ref": "#/components/schemas/DetailsDisplayMode"
           },
+          "stepLayout": {
+            "$ref": "#/components/schemas/StepLayout"
+          },
           "hasCompletedWelcomeTour": {
             "type": "boolean"
           },
@@ -346342,6 +346498,7 @@
           "notificationMode",
           "mutedNotificationTypes",
           "detailsDisplayMode",
+          "stepLayout",
           "hasCompletedWelcomeTour",
           "hasCompletedInitialPreferencesSetup"
         ]
@@ -346390,6 +346547,9 @@
             "type": "boolean"
           },
           "detailsDisplayMode": {
+            "type": "boolean"
+          },
+          "stepLayout": {
             "type": "boolean"
           },
           "hasCompletedWelcomeTour": {
@@ -346574,6 +346734,16 @@
               }
             ]
           },
+          "stepLayout": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/EnumStepLayoutFilter"
+              },
+              {
+                "$ref": "#/components/schemas/StepLayout"
+              }
+            ]
+          },
           "hasCompletedWelcomeTour": {
             "oneOf": [
               {
@@ -346727,6 +346897,16 @@
               },
               {
                 "$ref": "#/components/schemas/DetailsDisplayMode"
+              }
+            ]
+          },
+          "stepLayout": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/EnumStepLayoutFilter"
+              },
+              {
+                "$ref": "#/components/schemas/StepLayout"
               }
             ]
           },
@@ -346890,6 +347070,16 @@
               }
             ]
           },
+          "stepLayout": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/EnumStepLayoutWithAggregatesFilter"
+              },
+              {
+                "$ref": "#/components/schemas/StepLayout"
+              }
+            ]
+          },
           "hasCompletedWelcomeTour": {
             "oneOf": [
               {
@@ -346976,6 +347166,9 @@
           "detailsDisplayMode": {
             "$ref": "#/components/schemas/SortOrder"
           },
+          "stepLayout": {
+            "$ref": "#/components/schemas/SortOrder"
+          },
           "hasCompletedWelcomeTour": {
             "$ref": "#/components/schemas/SortOrder"
           },
@@ -346998,6 +347191,7 @@
           "notificationMode",
           "mutedNotificationTypes",
           "detailsDisplayMode",
+          "stepLayout",
           "hasCompletedWelcomeTour",
           "hasCompletedInitialPreferencesSetup"
         ]
@@ -347076,6 +347270,9 @@
           "detailsDisplayMode": {
             "type": "boolean"
           },
+          "stepLayout": {
+            "type": "boolean"
+          },
           "hasCompletedWelcomeTour": {
             "type": "boolean"
           },
@@ -347123,6 +347320,9 @@
           "detailsDisplayMode": {
             "type": "integer"
           },
+          "stepLayout": {
+            "type": "integer"
+          },
           "hasCompletedWelcomeTour": {
             "type": "integer"
           },
@@ -347145,6 +347345,7 @@
           "notificationMode",
           "mutedNotificationTypes",
           "detailsDisplayMode",
+          "stepLayout",
           "hasCompletedWelcomeTour",
           "hasCompletedInitialPreferencesSetup",
           "_all"
@@ -347181,6 +347382,9 @@
             "type": "boolean"
           },
           "detailsDisplayMode": {
+            "type": "boolean"
+          },
+          "stepLayout": {
             "type": "boolean"
           },
           "hasCompletedWelcomeTour": {
@@ -347294,6 +347498,16 @@
               }
             ]
           },
+          "stepLayout": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/StepLayout"
+              }
+            ]
+          },
           "hasCompletedWelcomeTour": {
             "oneOf": [
               {
@@ -347347,6 +347561,9 @@
             "type": "boolean"
           },
           "detailsDisplayMode": {
+            "type": "boolean"
+          },
+          "stepLayout": {
             "type": "boolean"
           },
           "hasCompletedWelcomeTour": {
@@ -347460,6 +347677,16 @@
               }
             ]
           },
+          "stepLayout": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/StepLayout"
+              }
+            ]
+          },
           "hasCompletedWelcomeTour": {
             "oneOf": [
               {
@@ -347563,6 +347790,9 @@
           "detailsDisplayMode": {
             "$ref": "#/components/schemas/DetailsDisplayMode"
           },
+          "stepLayout": {
+            "$ref": "#/components/schemas/StepLayout"
+          },
           "hasCompletedWelcomeTour": {
             "type": "boolean"
           },
@@ -347611,6 +347841,7 @@
           "timezone",
           "notificationMode",
           "detailsDisplayMode",
+          "stepLayout",
           "hasCompletedWelcomeTour",
           "hasCompletedInitialPreferencesSetup"
         ]
@@ -347657,6 +347888,9 @@
           },
           "detailsDisplayMode": {
             "$ref": "#/components/schemas/DetailsDisplayMode"
+          },
+          "stepLayout": {
+            "$ref": "#/components/schemas/StepLayout"
           },
           "hasCompletedWelcomeTour": {
             "type": "boolean"
@@ -347775,6 +348009,16 @@
               },
               {
                 "$ref": "#/components/schemas/EnumDetailsDisplayModeFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "stepLayout": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StepLayout"
+              },
+              {
+                "$ref": "#/components/schemas/EnumStepLayoutFieldUpdateOperationsInput"
               }
             ]
           },
@@ -347909,6 +348153,16 @@
               }
             ]
           },
+          "stepLayout": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StepLayout"
+              },
+              {
+                "$ref": "#/components/schemas/EnumStepLayoutFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "hasCompletedWelcomeTour": {
             "oneOf": [
               {
@@ -347977,6 +348231,9 @@
           "detailsDisplayMode": {
             "$ref": "#/components/schemas/DetailsDisplayMode"
           },
+          "stepLayout": {
+            "$ref": "#/components/schemas/StepLayout"
+          },
           "hasCompletedWelcomeTour": {
             "type": "boolean"
           },
@@ -348031,6 +348288,9 @@
           "detailsDisplayMode": {
             "$ref": "#/components/schemas/DetailsDisplayMode"
           },
+          "stepLayout": {
+            "$ref": "#/components/schemas/StepLayout"
+          },
           "hasCompletedWelcomeTour": {
             "type": "boolean"
           },
@@ -348081,6 +348341,9 @@
           },
           "detailsDisplayMode": {
             "$ref": "#/components/schemas/DetailsDisplayMode"
+          },
+          "stepLayout": {
+            "$ref": "#/components/schemas/StepLayout"
           },
           "hasCompletedWelcomeTour": {
             "type": "boolean"
@@ -348193,6 +348456,16 @@
               },
               {
                 "$ref": "#/components/schemas/EnumDetailsDisplayModeFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "stepLayout": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StepLayout"
+              },
+              {
+                "$ref": "#/components/schemas/EnumStepLayoutFieldUpdateOperationsInput"
               }
             ]
           },
@@ -348321,6 +348594,16 @@
               },
               {
                 "$ref": "#/components/schemas/EnumDetailsDisplayModeFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "stepLayout": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StepLayout"
+              },
+              {
+                "$ref": "#/components/schemas/EnumStepLayoutFieldUpdateOperationsInput"
               }
             ]
           },

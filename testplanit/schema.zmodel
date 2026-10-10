@@ -293,6 +293,7 @@ model UserPreferences {
     notificationMode                    NotificationMode   @default(USE_GLOBAL)
     mutedNotificationTypes              NotificationType[] @default([])
     detailsDisplayMode                  DetailsDisplayMode @default(DOCKED)
+    stepLayout                          StepLayout         @default(STACKED)
     hasCompletedWelcomeTour             Boolean            @default(false)
     hasCompletedInitialPreferencesSetup Boolean            @default(false)
 
@@ -484,6 +485,15 @@ enum TimeFormat {
 enum DetailsDisplayMode {
     DOCKED
     NEW_WINDOW
+
+    @@deny('all', auth() == null)
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', true) // Allow reads for signup
+}
+
+enum StepLayout {
+    STACKED
+    SIDE_BY_SIDE
 
     @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')

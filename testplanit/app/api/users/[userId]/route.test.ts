@@ -394,6 +394,37 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
       expect(data.data.userPreferences.theme).toBe("Dark");
     });
 
+    it("updates the step layout preference", async () => {
+      const updatedUser = {
+        ...mockExistingUser,
+        userPreferences: {
+          ...mockExistingUser.userPreferences,
+          stepLayout: "SIDE_BY_SIDE",
+        },
+      };
+      (baseDb.$transaction as any).mockResolvedValue(updatedUser);
+
+      const request = createRequest({
+        userPreferences: { stepLayout: "SIDE_BY_SIDE" },
+      });
+      const context = createContext("user-123");
+      const response = await PATCH(request, context);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.data.userPreferences.stepLayout).toBe("SIDE_BY_SIDE");
+    });
+
+    it("rejects an unknown step layout", async () => {
+      const request = createRequest({
+        userPreferences: { stepLayout: "DIAGONAL" },
+      });
+      const context = createContext("user-123");
+      const response = await PATCH(request, context);
+
+      expect(response.status).toBe(400);
+    });
+
     it("updates locale preference", async () => {
       const updatedUser = {
         ...mockExistingUser,

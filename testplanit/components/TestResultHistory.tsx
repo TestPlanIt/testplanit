@@ -1,5 +1,11 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import {
+  StepLayoutToggle,
+  stepLayoutClasses,
+} from "@/components/steps/StepLayoutToggle";
+import { useStepLayout } from "~/hooks/useStepLayout";
+import { cn } from "~/utils";
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { DateFormatter } from "@/components/DateFormatter";
 import { formatSeconds } from "@/components/DurationDisplay";
@@ -442,6 +448,8 @@ const StepResultsDisplay = ({
   const locale = useLocale();
   const tRepository = useTranslations("repository"); // For repository level translations
 
+  const { layout: stepLayout, isSideBySide } = useStepLayout();
+
   if (!stepResults || stepResults.length === 0) {
     return null;
   }
@@ -450,9 +458,13 @@ const StepResultsDisplay = ({
   let stepCounter = 0; // Initialize step counter
 
   return (
-    <div className="px-4 py-2">
-      <div className="text-xs font-medium text-muted-foreground mb-2">
+    <div
+      className={cn("px-4 py-2", stepLayoutClasses.container)}
+      data-step-layout={stepLayout}
+    >
+      <div className="text-xs font-medium text-muted-foreground mb-2 flex items-center justify-between">
         {tCommon("fields.steps")}
+        <StepLayoutToggle />
       </div>
       <div className="space-y-4">
         {stepResults.map((stepResult, index) => {
@@ -528,37 +540,63 @@ const StepResultsDisplay = ({
                 key={`result-${resultId}-step-${stepResult.id}-${index}`}
                 className="space-y-2 border rounded-lg p-4"
               >
-                <div className="flex items-center justify-between">
+                <div
+                  className={cn(
+                    "flex items-center justify-between",
+                    // Side by side, the header mirrors the two columns below
+                    // so the expected result label sits over its own box.
+                    isSideBySide && "@2xl:grid @2xl:grid-cols-2 @2xl:gap-2"
+                  )}
+                >
                   <div className="font-bold text-sm flex items-center gap-2">
                     <ListOrdered className="h-4 w-4 shrink-0" />
                     {tCommon("fields.step")} {stepCounter}
                   </div>
-                  <StatusDisplay
-                    variant="filled"
-                    name={stepResult.status.name}
-                    color={stepResult.status.color.value}
-                    className="shrink-0"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <div className="bg-muted/30 rounded-lg p-2">
-                    <TipTapEditor
-                      content={stepContent as object}
-                      readOnly={true}
-                      projectId={projectId ? String(projectId) : undefined}
-                      className="prose-sm"
+                  <div className="flex items-center justify-between min-w-0">
+                    {isSideBySide && (
+                      <div className="hidden @2xl:block text-xs text-muted-foreground ps-2">
+                        {tCommon("fields.expectedResult")}
+                      </div>
+                    )}
+                    <StatusDisplay
+                      variant="filled"
+                      name={stepResult.status.name}
+                      color={stepResult.status.color.value}
+                      className="shrink-0 ms-auto"
                     />
                   </div>
-                  <div className="bg-muted/30 rounded-lg p-2">
-                    <div className="text-xs text-muted-foreground mb-1">
-                      {tCommon("fields.expectedResult")}
+                </div>
+                <div className="space-y-2">
+                  <div
+                    className={cn(
+                      "gap-2",
+                      stepLayoutClasses.pair(isSideBySide)
+                    )}
+                  >
+                    <div className="bg-muted/30 rounded-lg p-2 min-w-0">
+                      <TipTapEditor
+                        content={stepContent as object}
+                        readOnly={true}
+                        projectId={projectId ? String(projectId) : undefined}
+                        className="prose-sm"
+                      />
                     </div>
-                    <TipTapEditor
-                      content={expectedResultContent as object}
-                      readOnly={true}
-                      projectId={projectId ? String(projectId) : undefined}
-                      className="prose-sm"
-                    />
+                    <div className="bg-muted/30 rounded-lg p-2 min-w-0">
+                      <div
+                        className={cn(
+                          "text-xs text-muted-foreground mb-1",
+                          stepLayoutClasses.stackedOnly(isSideBySide)
+                        )}
+                      >
+                        {tCommon("fields.expectedResult")}
+                      </div>
+                      <TipTapEditor
+                        content={expectedResultContent as object}
+                        readOnly={true}
+                        projectId={projectId ? String(projectId) : undefined}
+                        className="prose-sm"
+                      />
+                    </div>
                   </div>
                   {stepResult.notes && !isTiptapEmpty(stepResult.notes) && (
                     <div className="bg-muted/30 rounded-lg p-2">

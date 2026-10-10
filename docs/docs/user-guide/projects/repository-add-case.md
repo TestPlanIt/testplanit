@@ -38,7 +38,7 @@ The Add Case dialog uses a resizable two-panel layout:
   - Date pickers
   - Number/Integer fields
   - Link fields
-  - **Steps**: A dedicated field for defining the test steps, including Action and Expected Result for each step.
+  - **Steps**: A dedicated field for defining the test steps, including Action and Expected Result for each step. The layout icon above the steps puts the two editors side by side instead of one above the other; the choice is saved to your profile and shared with the case details and run execution views.
 
 ## Right Panel Fields
 

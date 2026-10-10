@@ -3206,7 +3206,12 @@
       "noStepsInSelectedGroup": "The selected group has no steps.",
       "sharedGroupSuffix": "(Shared Steps)",
       "unnamedSharedGroup": "Unnamed Shared Steps",
-      "noStepsInSelectedSharedGroup": "The selected shared group has no steps."
+      "noStepsInSelectedSharedGroup": "The selected shared group has no steps.",
+      "layout": {
+        "label": "Step layout",
+        "stacked": "Stacked",
+        "sideBySide": "Side by side"
+      }
     },
     "testCase": {
       "toggleAutomated": "Toggle automated testing",

@@ -33,6 +33,7 @@ This view typically includes:
     - **Step Number/Order**.
     - **Action/Description**: The instruction for the step.
     - **Expected Result**: What should happen after performing the action.
+    - **Layout**: The icon above the steps switches between the expected result sitting under its step (the default) and the two side by side. The choice is saved to your profile and is shared with the case details view and editor. On a narrow panel, steps stack regardless.
     - **Step Result Controls**: Individual Pass/Fail/Block/Skip buttons _for each step_. Setting a step result often updates the overall case result automatically (e.g., failing one step fails the case).
     - **Step Comment Area**: An optional field to add notes specific to the execution of that step.
     - **Step Attachments**: An option to attach files (screenshots, logs) directly related to the result of that specific step.

@@ -1,5 +1,9 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import {
+  StepLayoutToggle,
+  stepLayoutClasses,
+} from "@/components/steps/StepLayoutToggle";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import type { Steps as DbSteps } from "~/zenstack/models";
 import { Layers, SearchCheck } from "lucide-react";
@@ -7,7 +11,9 @@ import { useTranslations } from "next-intl";
 import React from "react";
 import { emptyEditorContent } from "~/app/constants";
 import { Separator } from "~/components/ui/separator";
+import { useStepLayout } from "~/hooks/useStepLayout";
 import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
+import { cn } from "~/utils";
 
 interface DisplayStep extends DbSteps {
   isShared?: boolean;
@@ -19,17 +25,30 @@ interface StepsResultsProps {
   steps: DisplayStep[];
   projectId?: number;
   parameters?: ParameterChipMeta[];
+  /** Set when the surrounding surface renders the toggle on its own header. */
+  hideLayoutToggle?: boolean;
 }
 
 interface RenderSharedGroupItemsForResultsProps {
   sharedStepGroupId: number;
   projectId?: number;
   parameters?: ParameterChipMeta[];
+  sideBySide: boolean;
 }
+
+const parseContent = (value: unknown) => {
+  try {
+    return typeof value === "string"
+      ? JSON.parse(value)
+      : value || emptyEditorContent;
+  } catch {
+    return emptyEditorContent;
+  }
+};
 
 const RenderSharedGroupItemsForResults: React.FC<
   RenderSharedGroupItemsForResultsProps
-> = ({ sharedStepGroupId, projectId, parameters }) => {
+> = ({ sharedStepGroupId, projectId, parameters, sideBySide }) => {
   const t = useTranslations("repository.steps");
   const { data: items, isLoading } = useClientQueries(
     schema
@@ -62,66 +81,48 @@ const RenderSharedGroupItemsForResults: React.FC<
 
   return (
     <div className="ms-8 mt-1 space-y-2 border-s-2 border-dashed border-primary/20 ps-3 py-1 w-full pe-8">
-      {items.map((item, itemIndex) => {
-        let stepContent, expectedResultContent;
-        try {
-          stepContent =
-            typeof item.step === "string"
-              ? JSON.parse(item.step)
-              : item.step || emptyEditorContent;
-        } catch {
-          stepContent = emptyEditorContent;
-        }
-        try {
-          expectedResultContent =
-            typeof item.expectedResult === "string"
-              ? JSON.parse(item.expectedResult)
-              : item.expectedResult || emptyEditorContent;
-        } catch {
-          expectedResultContent = emptyEditorContent;
-        }
-
-        return (
-          <div
-            key={`shared-group-${sharedStepGroupId}-item-${item.id || itemIndex}`}
-            className="space-y-2 w-full"
-          >
-            <div className="flex">
-              <div className="shrink-0 pt-[0.4rem]">
-                <div className="text-sm font-bold flex items-center justify-center p-2 text-primary-foreground bg-primary border-2 border-primary rounded-full w-6 h-6">
-                  {item.order + 1}
-                </div>
-              </div>
-              <div className="grow min-w-0 -mt-1">
-                <TipTapEditor
-                  content={stepContent}
-                  readOnly={true}
-                  projectId={projectId?.toString()}
-                  className="bg-muted/30 p-1 rounded"
-                  parameters={parameters}
-                />
+      {items.map((item, itemIndex) => (
+        <div
+          key={`shared-group-${sharedStepGroupId}-item-${item.id || itemIndex}`}
+          className={cn("w-full gap-2", stepLayoutClasses.pair(sideBySide))}
+        >
+          <div className="flex min-w-0">
+            <div className="shrink-0 pt-[0.4rem]">
+              <div className="text-sm font-bold flex items-center justify-center p-2 text-primary-foreground bg-primary border-2 border-primary rounded-full w-6 h-6">
+                {item.order + 1}
               </div>
             </div>
-            <Separator className="my-2" />
-            <div className="flex">
-              <div className="shrink-0 pt-0.5">
-                <div className="flex items-center justify-center text-primary rounded-full w-8 h-8 -mx-1">
-                  <SearchCheck className="text-primary h-7 w-7 shrink-0" />
-                </div>
-              </div>
-              <div className="grow min-w-0 -mt-1">
-                <TipTapEditor
-                  content={expectedResultContent}
-                  readOnly={true}
-                  projectId={projectId?.toString()}
-                  className="bg-muted/30 p-1 rounded"
-                  parameters={parameters}
-                />
-              </div>
+            <div className="grow min-w-0 -mt-1">
+              <TipTapEditor
+                content={parseContent(item.step)}
+                readOnly={true}
+                projectId={projectId?.toString()}
+                className="bg-muted/30 p-1 rounded"
+                parameters={parameters}
+              />
             </div>
           </div>
-        );
-      })}
+          <Separator
+            className={cn("my-0", stepLayoutClasses.stackedOnly(sideBySide))}
+          />
+          <div className="flex min-w-0">
+            <div className="shrink-0 pt-0.5">
+              <div className="flex items-center justify-center text-primary rounded-full w-8 h-8 -mx-1">
+                <SearchCheck className="text-primary h-7 w-7 shrink-0" />
+              </div>
+            </div>
+            <div className="grow min-w-0 -mt-1">
+              <TipTapEditor
+                content={parseContent(item.expectedResult)}
+                readOnly={true}
+                projectId={projectId?.toString()}
+                className="bg-muted/30 p-1 rounded"
+                parameters={parameters}
+              />
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   );
 };
@@ -130,15 +131,26 @@ export const StepsResults: React.FC<StepsResultsProps> = ({
   steps,
   projectId,
   parameters,
+  hideLayoutToggle = false,
 }) => {
   const t_repo_steps = useTranslations("repository.steps");
+  const { layout, isSideBySide } = useStepLayout();
 
   if (!steps || steps.length === 0) {
     return null;
   }
 
   return (
-    <div className="mt-2" data-testid="steps-results">
+    <div
+      className={cn("mt-2", stepLayoutClasses.container)}
+      data-testid="steps-results"
+      data-step-layout={layout}
+    >
+      {!hideLayoutToggle && (
+        <div className="flex justify-end me-6 -mt-1 mb-1">
+          <StepLayoutToggle />
+        </div>
+      )}
       <ol className="ms-1 me-6 min-w-[200px]">
         {steps.map((step, index) => {
           if (step.sharedStepGroupId) {
@@ -172,46 +184,34 @@ export const StepsResults: React.FC<StepsResultsProps> = ({
                     sharedStepGroupId={step.sharedStepGroupId}
                     projectId={projectId}
                     parameters={parameters}
+                    sideBySide={isSideBySide}
                   />
                 </div>
               </li>
             );
           }
 
-          let stepContent;
-          try {
-            stepContent =
-              typeof step.step === "string" ? JSON.parse(step.step) : step.step;
-          } catch {
-            stepContent = emptyEditorContent;
-          }
-
-          let expectedResultContent;
-          try {
-            expectedResultContent =
-              typeof step.expectedResult === "string"
-                ? JSON.parse(step.expectedResult)
-                : step.expectedResult || emptyEditorContent;
-          } catch {
-            expectedResultContent = emptyEditorContent;
-          }
-
           return (
             <li
               key={`step-result-${step.id}-${index}`}
-              className="mb-4"
+              className={cn("mb-4", stepLayoutClasses.pair(isSideBySide))}
               data-testid={`step-container-${index}`}
             >
-              <div className="flex gap-2 shrink-0 w-full ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground rounded-b-none">
+              <div
+                className={cn(
+                  "flex gap-2 w-full min-w-0 ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground",
+                  stepLayoutClasses.stepBlock(isSideBySide)
+                )}
+              >
                 <div
                   className="mt-2 font-bold flex items-center justify-center p-1 text-primary-foreground bg-primary border-2 border-primary rounded-full w-6 h-6 text-sm"
                   data-testid={`step-badge-${index}`}
                 >
                   {index + 1}
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <TipTapEditor
-                    content={stepContent}
+                    content={parseContent(step.step)}
                     readOnly={true}
                     projectId={`step_result_${step.id}`}
                     className="prose-sm"
@@ -219,11 +219,17 @@ export const StepsResults: React.FC<StepsResultsProps> = ({
                   />
                 </div>
               </div>
-              <div className="flex gap-1 shrink-0 w-full ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground rounded-t-none">
+              <div
+                className={cn(
+                  "flex gap-1 w-full min-w-0 ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground",
+                  stepLayoutClasses.expectedBlock(isSideBySide)
+                )}
+                data-testid={`expected-result-${index}`}
+              >
                 <SearchCheck className="text-primary h-7 w-7 shrink-0 mt-1" />
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <TipTapEditor
-                    content={expectedResultContent}
+                    content={parseContent(step.expectedResult)}
                     readOnly={true}
                     projectId={`step_result_${step.id}_expected`}
                     className="prose-sm"
