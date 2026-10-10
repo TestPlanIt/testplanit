@@ -66,7 +66,7 @@ import {
 } from "~/components/reviews/ReviewDecisionDialogs";
 import { cancelReviewRequest } from "~/app/actions/reviews";
 import { useDetailsDisplayMode } from "~/hooks/useDetailsDisplayMode";
-import { useReviewAssigneeRoleIds } from "~/hooks/useReviewAssigneeRoleIds";
+import { useReviewAssigneeScope } from "~/hooks/useReviewAssigneeScope";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
 import { usePathname, useRouter } from "~/lib/navigation";
 
@@ -325,9 +325,10 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
     );
   }, [view]);
 
-  // Role IDs the viewer can be reached through as an assignee (global +
-  // SPECIFIC_ROLE), flattened by the shared hook the header badge also uses.
-  const currentUserRoleIds = useReviewAssigneeRoleIds(userId);
+  // How the viewer can be reached as an assignee — directly, or through the
+  // role they hold in each project — from the shared scope the header badge
+  // also uses.
+  const { assigneeOr, isAssignee } = useReviewAssigneeScope(userId);
 
   // Base scope of the current tab — everything the tab can show BEFORE the
   // five UI filters narrow it. Shared by the rows query (which appends the
@@ -347,11 +348,7 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
               // request you submitted was invisible here until it was
               // decided and surfaced on the Decided tab. Per-row actions
               // (see ./columns) keep the two straight.
-              OR: [
-                { assigneeUserId: userId },
-                { assigneeRoleId: { in: currentUserRoleIds } },
-                { requestedByUserId: userId },
-              ],
+              OR: [...assigneeOr, { requestedByUserId: userId }],
             },
           ]
         : [
@@ -362,7 +359,7 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
             { isDeleted: false },
             { project: { reviewWorkflowEnabled: true } },
           ],
-    [view, userId, currentUserRoleIds]
+    [view, userId, assigneeOr]
   );
 
   // --- Filter combobox option sources --------------------------------------
@@ -801,7 +798,7 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
     view,
     actions,
     viewerUserId: userId,
-    viewerRoleIds: currentUserRoleIds,
+    isAssignee,
     caseById,
     testRunById,
     sessionById,

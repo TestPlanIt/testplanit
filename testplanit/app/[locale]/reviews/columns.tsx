@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import type { ReviewAssigneeRow } from "~/hooks/useReviewAssigneeScope";
 import { ReviewDecisionBadge } from "@/components/comments/CommentTypeBadge";
 import {
   Tooltip,
@@ -152,7 +153,7 @@ interface UseColumnsArgs {
    */
   viewerUserId: string;
   /** Roles the viewer can be reached through as an assignee (global + SPECIFIC_ROLE). */
-  viewerRoleIds: number[];
+  isAssignee: (row: ReviewAssigneeRow) => boolean;
   caseById: Map<number, InboxCaseRow>;
   testRunById: Map<number, InboxTestRunRow>;
   sessionById: Map<number, InboxSessionRow>;
@@ -233,7 +234,7 @@ export const useColumns = ({
   view,
   actions,
   viewerUserId,
-  viewerRoleIds,
+  isAssignee: isViewerAssignee,
   caseById,
   testRunById,
   sessionById,
@@ -511,20 +512,12 @@ export const useColumns = ({
             size: 122,
             meta: { isPinned: "right" } satisfies CustomColumnMeta,
             cell: ({ row }) => {
-              const {
-                id,
-                assigneeUserId,
-                assigneeRoleId,
-                requestedByUserId,
-                lastRemindedAt,
-              } = row.original;
+              const { id, requestedByUserId, lastRemindedAt } = row.original;
 
               // Same predicate the Pending where-clause reaches these rows
-              // by: direct assignee, or holder of the assigned role.
-              const isAssignee =
-                assigneeUserId === viewerUserId ||
-                (assigneeRoleId !== null &&
-                  viewerRoleIds.includes(assigneeRoleId));
+              // by: direct assignee, or holder of the assigned role in this
+              // project for this kind of entity.
+              const isAssignee = isViewerAssignee(row.original);
 
               // Deciding beats chasing: a viewer who is both the requester
               // and an eligible role-holder can resolve the row outright, so
@@ -609,7 +602,7 @@ export const useColumns = ({
     view,
     actions,
     viewerUserId,
-    viewerRoleIds,
+    isViewerAssignee,
     caseById,
     testRunById,
     sessionById,

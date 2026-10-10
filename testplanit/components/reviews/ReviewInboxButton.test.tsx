@@ -35,6 +35,12 @@ vi.mock("~/hooks/deferredEventSource", () => ({
 
 // feature flag (system-level — no projectId)
 const mockUseReviewFeatureEnabled = vi.fn();
+const mockUseReviewAssigneeScope = vi.fn();
+vi.mock("~/hooks/useReviewAssigneeScope", () => ({
+  useReviewAssigneeScope: (userId: string | null | undefined) =>
+    mockUseReviewAssigneeScope(userId),
+}));
+
 vi.mock("~/hooks/useReviewFeatureEnabled", () => ({
   useReviewFeatureEnabled: (...args: unknown[]) =>
     mockUseReviewFeatureEnabled(...args),
@@ -127,6 +133,21 @@ function setupDefaults({
           })),
         }
       : undefined,
+  });
+
+  // The per-project assignee scope the hook resolves server-side: the viewer
+  // directly, plus one branch per role they hold.
+  mockUseReviewAssigneeScope.mockReturnValue({
+    assigneeOr: [
+      { assigneeUserId: "user-1" },
+      ...roleIds.map((roleId) => ({
+        projectId: 1,
+        assigneeRoleId: roleId,
+        entityType: { in: ["CASE", "RUN", "SESSION"] },
+      })),
+    ],
+    isAssignee: () => false,
+    isLoading: false,
   });
 
   mockUseCountReviewRequest.mockReturnValue({ data: count });
@@ -243,7 +264,7 @@ describe("ReviewInboxButton", () => {
     expect(button.getAttribute("aria-label")).toBe("reviews.inbox.iconAria");
   });
 
-  it("(i) passes role IDs (global + SPECIFIC_ROLE project permissions) to useCountReviewRequest", () => {
+  it("(i) passes the viewer's per-project role branches to useCountReviewRequest", () => {
     setupDefaults({ count: 0, roleIds: [7, 12, 18] });
     render(<ReviewInboxButton />);
 
@@ -254,9 +275,9 @@ describe("ReviewInboxButton", () => {
     expect(firstCallArgs.where?.OR).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ assigneeUserId: "user-1" }),
-        expect.objectContaining({
-          assigneeRoleId: { in: expect.arrayContaining([7, 12, 18]) },
-        }),
+        expect.objectContaining({ projectId: 1, assigneeRoleId: 7 }),
+        expect.objectContaining({ projectId: 1, assigneeRoleId: 12 }),
+        expect.objectContaining({ projectId: 1, assigneeRoleId: 18 }),
       ])
     );
   });

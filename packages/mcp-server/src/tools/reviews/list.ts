@@ -41,12 +41,12 @@ const DECIDED_STATUSES = [
  * per-row):
  *   1. GET /api/config/review-feature — system kill switch; short-circuits
  *      to an empty page when off, matching the inbox.
- *   2. GET /api/auth/whoami — the caller's user id.
- *   3. user.findUnique — the role ids the caller can be reached through.
- *   4. reviewRequest.findMany — the page itself.
- *   5-7. repositoryCases / testRuns / sessions findMany — one call per
+ *   2. GET /api/reviews/assignee-scope — the caller's id and the branches
+ *      that reach them as an assignee.
+ *   3. reviewRequest.findMany — the page itself.
+ *   4-6. repositoryCases / testRuns / sessions findMany — one call per
  *      entity type present on the page, for entity names.
- *   8. comment.findMany — the requesters' submit-time prose.
+ *   7. comment.findMany — the requesters' submit-time prose.
  */
 export function registerReviewsList(
   server: McpServer,
@@ -56,7 +56,7 @@ export function registerReviewsList(
     "testplanit_reviews_list",
     {
       description:
-        "List the review requests assigned to the authenticated user — the same queue as the Review inbox in the app. This is work assigned TO the caller, so there is no user filter: rows are scoped to the token owner, covering both direct assignment and assignment to a role the caller holds. `view` selects the tab: 'pending' (default) = PENDING requests awaiting the caller's decision, oldest first; 'decided' = requests the caller has already approved / requested changes on / rejected, most recently decided first. Filters: projectId, entityType (CASE | RUN | SESSION). Each row carries the polymorphic subject resolved to entityName (plus entityDeleted — a request can outlive its subject), the workflow transition being requested as transition:{from,to}, the requester, assignedTo:{via:'USER'|'ROLE',...}, requestNote (the requester's submit-time prose, as Markdown), and — on the decided view — decision:{status,comment,decidedBy,decidedAt}. Use entityType+entityId with testplanit_cases_get / testplanit_test_runs_get / testplanit_sessions_get to inspect what is being reviewed. Requests from projects with the review workflow turned off are excluded, and `reviewFeatureEnabled:false` distinguishes 'the feature is off system-wide' from 'nothing is assigned to you'. Cursor pagination via the `cursor` returned in `nextCursor`. Pass a row's `id` to testplanit_reviews_decide to record a decision.",
+        "List the review requests assigned to the authenticated user — the work the Review inbox in the app shows as waiting on them (the inbox also lists requests they made themselves; this tool does not). There is no user filter: rows are scoped to the token owner, covering direct assignment and assignment to the role the caller holds in each project, limited to the entity types that role may approve — exactly the rows the caller can decide. `view` selects the tab: 'pending' (default) = PENDING requests awaiting the caller's decision, oldest first; 'decided' = requests the caller has already approved / requested changes on / rejected, most recently decided first. Filters: projectId, entityType (CASE | RUN | SESSION). Each row carries the polymorphic subject resolved to entityName (plus entityDeleted — a request can outlive its subject), the workflow transition being requested as transition:{from,to}, the requester, assignedTo:{via:'USER'|'ROLE',...}, requestNote (the requester's submit-time prose, as Markdown), and — on the decided view — decision:{status,comment,decidedBy,decidedAt}. Use entityType+entityId with testplanit_cases_get / testplanit_test_runs_get / testplanit_sessions_get to inspect what is being reviewed. Requests from projects with the review workflow turned off are excluded, and `reviewFeatureEnabled:false` distinguishes 'the feature is off system-wide' from 'nothing is assigned to you'. Cursor pagination via the `cursor` returned in `nextCursor`. Pass a row's `id` to testplanit_reviews_decide to record a decision.",
       inputSchema: {
         view: z.enum(["pending", "decided"]).optional(),
         projectId: z.number().int().positive().optional(),
@@ -87,8 +87,8 @@ export function registerReviewsList(
           };
         }
 
-        // Calls 2-3 — who the caller is and which roles reach them.
-        const { userId, roleIds } = await resolveViewerScope(deps.env);
+        // Call 2 — who the caller is and the branches that reach them.
+        const { userId, assigneeWhere } = await resolveViewerScope(deps.env);
 
         // The two scopes are mutually exclusive by construction, so the
         // pending queue and the decided history never double-count a row.
@@ -98,16 +98,7 @@ export function registerReviewsList(
                 { status: "PENDING" },
                 { isDeleted: false },
                 { project: { reviewWorkflowEnabled: true } },
-                {
-                  OR: [
-                    { assigneeUserId: userId },
-                    // Omitted entirely when the caller holds no roles —
-                    // `{ in: [] }` would be dead weight in the query plan.
-                    ...(roleIds.length > 0
-                      ? [{ assigneeRoleId: { in: roleIds } }]
-                      : []),
-                  ],
-                },
+                { OR: assigneeWhere },
               ]
             : [
                 { decidedByUserId: userId },

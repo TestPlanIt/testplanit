@@ -2,13 +2,13 @@ import type {
   CommentFindManyArgs,
   RepositoryCasesFindManyArgs,
   ReviewRequestInclude,
+  ReviewRequestWhereInput,
   SessionsFindManyArgs,
   TestRunsFindManyArgs,
-  UserFindUniqueArgs,
 } from "@db/input";
-import { zenstack } from "../../api.js";
+import { getHostJson, zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
-import { TestPlanItHttpError, validateToken } from "../../http.js";
+import { TestPlanItHttpError } from "../../http.js";
 import { proseMirrorToMarkdown } from "../../richText.js";
 
 const FETCH_TIMEOUT_MS = 10000;
@@ -125,58 +125,26 @@ export function mapReviewRow(
 
 export interface ViewerScope {
   userId: string;
-  roleIds: number[];
+  /** OR branches that reach the caller as an assignee. */
+  assigneeWhere: ReviewRequestWhereInput[];
 }
 
 /**
- * Resolve "who am I, and which roles can reach me as a review assignee".
- *
- * The token holder does not know its own user id (it only holds the token),
- * so identity comes from `GET /api/auth/whoami` — the same probe the
- * `whoami` tool uses. Role reach mirrors `useReviewAssigneeRoleIds`: the
- * user's global `roleId` plus the `roleId` of every SPECIFIC_ROLE
- * UserProjectPermission row, deduped.
+ * Who the caller is, and the where-branches that reach them as a review
+ * assignee: direct assignment, the role they hold in each project (limited
+ * to the entity types that role may approve), and their global role where a
+ * project applies it by default. `GET /api/reviews/assignee-scope` resolves
+ * this with the same per-project ladder the decide route checks, so the
+ * list never shows a row the caller cannot decide.
  */
 export async function resolveViewerScope(
   env: EnvConfig,
 ): Promise<ViewerScope> {
-  const probe = await validateToken(env);
-  if (!probe.ok) {
-    throw new TestPlanItHttpError(probe.message, {
-      statusCode: probe.statusCode,
-      code: probe.code,
-    });
-  }
-  const userId = probe.user.id;
-
-  const user = await zenstack<{
-    roleId: number | null;
-    projectPermissions: Array<{
-      roleId: number | null;
-      accessType: string;
-    }> | null;
-  } | null>(
-    "user",
-    "findUnique",
-    {
-      where: { id: userId },
-      select: {
-        roleId: true,
-        projectPermissions: { select: { roleId: true, accessType: true } },
-      },
-    } satisfies UserFindUniqueArgs,
-    env,
-  );
-
-  const roleIds = new Set<number>();
-  if (typeof user?.roleId === "number") roleIds.add(user.roleId);
-  for (const perm of user?.projectPermissions ?? []) {
-    if (perm.accessType === "SPECIFIC_ROLE" && typeof perm.roleId === "number") {
-      roleIds.add(perm.roleId);
-    }
-  }
-
-  return { userId, roleIds: Array.from(roleIds) };
+  const scope = await getHostJson<{
+    userId: string;
+    where: ReviewRequestWhereInput[];
+  }>("/api/reviews/assignee-scope", env);
+  return { userId: scope.userId, assigneeWhere: scope.where };
 }
 
 /**

@@ -214,6 +214,26 @@ vi.mock("next-auth/react", async (importOriginal) => {
 });
 
 const mockUseReviewFeatureEnabled = vi.fn();
+// The per-project assignee scope: reach the viewer directly, and through
+// role 12 (which one fixture row is assigned to).
+vi.mock("~/hooks/useReviewAssigneeScope", () => ({
+  useReviewAssigneeScope: (userId: string | null | undefined) => ({
+    assigneeOr: [
+      { assigneeUserId: userId ?? "" },
+      {
+        projectId: 1,
+        assigneeRoleId: 12,
+        entityType: { in: ["CASE", "RUN", "SESSION"] },
+      },
+    ],
+    isAssignee: (row: {
+      assigneeUserId: string | null;
+      assigneeRoleId: number | null;
+    }) => row.assigneeUserId === userId || row.assigneeRoleId === 12,
+    isLoading: false,
+  }),
+}));
+
 vi.mock("~/hooks/useReviewFeatureEnabled", () => ({
   useReviewFeatureEnabled: (...args: unknown[]) =>
     mockUseReviewFeatureEnabled(...args),
@@ -570,11 +590,11 @@ describe("ReviewsInboxPage (/reviews)", () => {
       mockUseColumns.mock.calls.length - 1
     ]![0] as {
       viewerUserId?: string;
-      viewerRoleIds?: number[];
+      isAssignee?: (row: unknown) => boolean;
       actions?: Record<string, unknown>;
     };
     expect(args.viewerUserId).toBe("user-1");
-    expect(Array.isArray(args.viewerRoleIds)).toBe(true);
+    expect(typeof args.isAssignee).toBe("function");
     // Requester-side handlers ride alongside the reviewer's three.
     expect(typeof args.actions?.onCancel).toBe("function");
     expect(typeof args.actions?.onNudged).toBe("function");

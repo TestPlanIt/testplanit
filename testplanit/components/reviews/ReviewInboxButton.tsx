@@ -14,7 +14,7 @@ import { useEffect } from "react";
 
 import { createDeferredEventSource } from "~/hooks/deferredEventSource";
 import { pendingReviewsForViewerWhere } from "~/hooks/usePendingReviewRequests";
-import { useReviewAssigneeRoleIds } from "~/hooks/useReviewAssigneeRoleIds";
+import { useReviewAssigneeScope } from "~/hooks/useReviewAssigneeScope";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
 import { Link } from "~/lib/navigation";
 
@@ -52,16 +52,13 @@ export function ReviewInboxButton({
   const queryClient = useQueryClient();
   const { enabled, isLoading: featureLoading } = useReviewFeatureEnabled();
 
-  // Role memberships (global + SPECIFIC_ROLE) — feeds the role-holder branch
-  // of the count query's OR clause.
-  const currentUserRoleIds = useReviewAssigneeRoleIds(session?.user?.id);
+  // The roles the viewer holds per project — the role-holder branches of the
+  // count query's OR clause.
+  const { assigneeOr } = useReviewAssigneeScope(session?.user?.id);
 
   const { data: count } = useClientQueries(schema).reviewRequest.useCount(
     {
-      where: pendingReviewsForViewerWhere(
-        session?.user?.id,
-        currentUserRoleIds
-      ),
+      where: pendingReviewsForViewerWhere(assigneeOr),
     },
     { enabled: !!session?.user?.id && enabled === true }
   );

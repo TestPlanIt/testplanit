@@ -8,7 +8,7 @@ import {
   PENDING_REVIEW_SUMMARY_INCLUDE,
   type PendingReviewSummaryRequest,
 } from "~/components/reviews/types";
-import { useReviewAssigneeRoleIds } from "./useReviewAssigneeRoleIds";
+import { useReviewAssigneeScope } from "./useReviewAssigneeScope";
 import { useReviewFeatureEnabled } from "./useReviewFeatureEnabled";
 
 export interface UsePendingReviewRequestsOptions {
@@ -46,14 +46,13 @@ export interface UsePendingReviewRequestsResult {
  * the dashboard's `totalCount` dedupe into a single request.
  */
 export function pendingReviewsForViewerWhere(
-  userId: string | null | undefined,
-  roleIds: number[]
+  assigneeOr: ReviewRequestWhereInput[]
 ): ReviewRequestWhereInput {
   return {
     status: "PENDING",
     isDeleted: false,
     project: { reviewWorkflowEnabled: true },
-    OR: [{ assigneeUserId: userId ?? "" }, { assigneeRoleId: { in: roleIds } }],
+    OR: assigneeOr,
   };
 }
 
@@ -88,9 +87,9 @@ export function usePendingReviewRequests(
 ): UsePendingReviewRequestsResult {
   const { take } = options;
   const { enabled, isLoading: featureLoading } = useReviewFeatureEnabled();
-  const roleIds = useReviewAssigneeRoleIds(userId);
+  const { assigneeOr } = useReviewAssigneeScope(userId);
   const queryEnabled = !!userId && enabled === true;
-  const where = pendingReviewsForViewerWhere(userId, roleIds);
+  const where = pendingReviewsForViewerWhere(assigneeOr);
 
   const { data, isLoading: rowsLoading } = useClientQueries(
     schema

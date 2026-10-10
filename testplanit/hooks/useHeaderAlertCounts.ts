@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 import { useEffect } from "react";
 import { schema } from "~/zenstack/schema";
 import { createDeferredEventSource } from "~/hooks/deferredEventSource";
-import { useReviewAssigneeRoleIds } from "~/hooks/useReviewAssigneeRoleIds";
+import { useReviewAssigneeScope } from "~/hooks/useReviewAssigneeScope";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
 
 export interface HeaderAlertCounts {
@@ -45,7 +45,7 @@ export function useHeaderAlertCounts(enabled: boolean): HeaderAlertCounts {
   // System-level review flag + the roles the viewer can be reached through,
   // mirroring ReviewInboxButton's count gating.
   const { enabled: reviewEnabled } = useReviewFeatureEnabled();
-  const roleIds = useReviewAssigneeRoleIds(userId);
+  const { assigneeOr } = useReviewAssigneeScope(userId);
 
   const { data: notificationCount, refetch: refetchNotifications } =
     useClientQueries(schema).notification.useCount(
@@ -61,10 +61,7 @@ export function useHeaderAlertCounts(enabled: boolean): HeaderAlertCounts {
         status: "PENDING",
         isDeleted: false,
         project: { reviewWorkflowEnabled: true },
-        OR: [
-          { assigneeUserId: userId ?? "" },
-          { assigneeRoleId: { in: roleIds } },
-        ],
+        OR: assigneeOr,
       },
     },
     { enabled: enabled && !!userId && reviewEnabled === true }

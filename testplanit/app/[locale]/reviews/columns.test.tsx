@@ -83,6 +83,14 @@ function row(overrides: Partial<InboxTableRow> = {}): InboxTableRow {
   } as unknown as InboxTableRow;
 }
 
+// The viewer is reached directly, or through any of `viewerRoleIds` — the
+// shape the per-project assignee scope resolves to for a single project.
+const assigneeOf =
+  (viewerRoleIds: number[]) =>
+  (r: { assigneeUserId: string | null; assigneeRoleId: number | null }) =>
+    r.assigneeUserId === VIEWER_ID ||
+    (r.assigneeRoleId !== null && viewerRoleIds.includes(r.assigneeRoleId));
+
 function pendingColumns(viewerRoleIds: number[] = []) {
   const { result } = renderHook(() =>
     useColumns({
@@ -90,7 +98,7 @@ function pendingColumns(viewerRoleIds: number[] = []) {
       view: "pending",
       actions: noopActions,
       viewerUserId: VIEWER_ID,
-      viewerRoleIds,
+      isAssignee: assigneeOf(viewerRoleIds),
       caseById: new Map(),
       testRunById: new Map(),
       sessionById: new Map(),
@@ -243,7 +251,7 @@ describe("reviews inbox columns — Assignee column", () => {
         t,
         view: "decided",
         viewerUserId: VIEWER_ID,
-        viewerRoleIds: [],
+        isAssignee: assigneeOf([]),
         caseById: new Map(),
         testRunById: new Map(),
         sessionById: new Map(),
