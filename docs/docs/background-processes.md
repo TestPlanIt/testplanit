@@ -25,9 +25,10 @@ The application uses the following background processes:
 13. **Webhook Outbox Worker** - Polls the outbox table and fans events out to webhook configs
 14. **Webhook Retention Worker** - Daily purge of webhook delivery / dedup / outbox rows older than 30 days
 15. **DataChangeLog Retention Worker** - Daily purge of processed audit change-capture rows older than 30 days
-16. **Dataset Lease Sweep Worker** - Reaps expired dataset-row leases (test-data reservations) roughly once a minute
-17. **Alert Worker** - Evaluates alert rules when results land, when runs complete, when automated executions fail and sessions complete, and on hourly and daily scheduled passes
-18. **Scheduler** - Sets up recurring jobs (cron jobs)
+16. **Audit Log Retention Worker** - Daily archive or deletion of audit log entries older than `AUDIT_LOG_RETENTION_DAYS` (off unless set)
+17. **Dataset Lease Sweep Worker** - Reaps expired dataset-row leases (test-data reservations) roughly once a minute
+18. **Alert Worker** - Evaluates alert rules when results land, when runs complete, when automated executions fail and sessions complete, and on hourly and daily scheduled passes
+19. **Scheduler** - Sets up recurring jobs (cron jobs)
 
 ## Workers
 
@@ -166,6 +167,16 @@ The application uses the following background processes:
 - Standalone daily loop (no BullMQ queue) — self-schedules internally rather than via the scheduler
 - Location: `workers/dataChangeLogRetentionWorker.ts`
 
+### Audit Log Retention Worker
+
+- Off unless `AUDIT_LOG_RETENTION_DAYS` (or a tenant's `auditLogRetentionDays`) is set; see [Retention](user-guide/audit-logs.md#retention)
+- Wakes once per day and removes `AuditLog` rows older than the window
+- `archive` mode (default): writes them to object storage as gzipped NDJSON, one calendar month (UTC) at a time, up to 25,000 rows per file. Each file is read back and its SHA-256 checked before anything is deleted; the file's manifest row and the deletion of its rows commit in one transaction. Emits one `AUDIT_LOG_ARCHIVED` event per run
+- `delete` mode: batched `LIMIT 1000` deletes, nothing kept. Emits one `AUDIT_LOG_PURGED` event per run
+- Multi-tenant aware: applies each tenant's own retention per cycle and skips tenants with none; archives go under a per-tenant key prefix
+- Standalone daily loop (no BullMQ queue) — self-schedules internally rather than via the scheduler
+- Location: `workers/auditLogRetentionWorker.ts`
+
 ### Dataset Lease Sweep Worker
 
 - Wakes roughly once a minute and clears dataset-row leases (the [test-data reservation](./test-data-reservation.md) API) whose TTL has lapsed
@@ -285,6 +296,7 @@ Every worker's `--max-old-space-size` is 75% of its `max_memory_restart` ceiling
 | Webhook Outbox Worker          | 3G                   | 2304M                  | Same heavy dependency tree as dispatch; caches one Prisma client per tenant in multi-tenant mode                                                                                                                                                                                                                                                                                                                                                 |
 | Webhook Retention Worker       | 3G                   | 2304M                  | Iterates every tenant's database per pass; headroom protects against batched-delete loops on tenants with large retention backlogs. Tenant Prisma clients are disconnected after each pass to release Rust query engine buffers, so steady-state should drop substantially after the first few passes — these ceilings can be lowered once production telemetry confirms it.                                                                     |
 | DataChangeLog Retention Worker | 3G                   | 2304M                  | Loads the audit log service plus the raw Prisma base client and runs a batched-delete loop over the high-volume change-capture table; headroom mirrors the webhook retention worker so a large purge backlog (e.g. after a heavy import) does not trip the ceiling mid-pass.                                                                                                                                                                     |
+| Audit Log Retention Worker     | 3G                   | 2304M                  | Holds one 25,000-row batch and its compressed file in memory while uploading and verifying it; headroom mirrors the retention workers.                                                                                                                                                                                                                                                                                                           |
 
 The Repo Cache Worker stays on the default 512 MB tier, but a cache refresh holds a repository's whole archive and its cached file contents in memory at once. Caching a very large repository can push it over the ceiling: PM2 restarts the worker, BullMQ redelivers the refresh job, and it starts over on the same repository. Override via `REPO_CACHE_MAX_MEMORY_RESTART` (e.g. `2G`), host RAM permitting, or exclude binaries and build output from the configuration's path patterns.
 
@@ -352,7 +364,7 @@ You can monitor worker health and performance using:
 
 ### Memory issues
 
-- Most workers run with a 512 MB ceiling; the sync worker runs with a 1 GB ceiling; the forecast, SCIM access recompute, and Elasticsearch reindex workers run with a 2 GB ceiling; the audit log worker, the three webhook workers (dispatch, outbox, retention), and the DataChangeLog retention worker run with a 3 GB ceiling. See the **Worker memory tiers** table above for the rationale on each elevated tier.
+- Most workers run with a 512 MB ceiling; the sync worker runs with a 1 GB ceiling; the forecast, SCIM access recompute, and Elasticsearch reindex workers run with a 2 GB ceiling; the audit log worker, the three webhook workers (dispatch, outbox, retention), the DataChangeLog retention worker, and the audit log retention worker run with a 3 GB ceiling. See the **Worker memory tiers** table above for the rationale on each elevated tier.
 - If a worker is being killed and restarted by PM2 in a tight loop (visible as repeated `restart` events in `pm2 status`), raise its ceiling before assuming there is a real leak: `TESTMO_IMPORT_MAX_MEMORY_RESTART`, `ELASTICSEARCH_REINDEX_MAX_MEMORY_RESTART` or `REPO_CACHE_MAX_MEMORY_RESTART` for those workers, or `WORKER_MAX_MEMORY_RESTART` for the 512 MB tier. Other elevated workers are set in `ecosystem.config.js`.
 - Monitor with `pm2 monit`
 

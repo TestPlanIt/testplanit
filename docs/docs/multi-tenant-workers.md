@@ -87,7 +87,9 @@ TENANT_CONFIGS='{
   "tenant-b": {
     "databaseUrl": "postgresql://user:pass@host:5432/tenant_b_db",
     "elasticsearchNode": "http://elasticsearch:9200",
-    "elasticsearchIndex": "tenant_b"
+    "elasticsearchIndex": "tenant_b",
+    "auditLogRetentionDays": 90,
+    "auditLogRetentionMode": "delete"
   }
 }'
 
@@ -99,7 +101,11 @@ TENANT_TENANT_A_ELASTICSEARCH_INDEX="tenant_a"
 TENANT_TENANT_B_DATABASE_URL="postgresql://user:pass@host:5432/tenant_b_db"
 TENANT_TENANT_B_ELASTICSEARCH_NODE="http://elasticsearch:9200"
 TENANT_TENANT_B_ELASTICSEARCH_INDEX="tenant_b"
+TENANT_TENANT_B_AUDIT_LOG_RETENTION_DAYS="90"
+TENANT_TENANT_B_AUDIT_LOG_RETENTION_MODE="delete"
 ```
+
+`auditLogRetentionDays` and `auditLogRetentionMode` are optional and give a tenant its own [audit log retention](user-guide/audit-logs.md#retention); without them the tenant uses the global `AUDIT_LOG_RETENTION_DAYS` and `AUDIT_LOG_RETENTION_MODE`. The application instance reads the same values to report retention in the archive API, so give it the tenant configuration too if you want that to be accurate.
 
 ## Environment Variables Reference
 

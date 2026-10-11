@@ -202,6 +202,16 @@ See [Import from Testmo](import-testmo.md). Chunk sizes are rows per batch write
 | `TESTMO_AUTOMATION_RUN_TEST_FIELD_CHUNK_SIZE` | `500`                  |
 | `TESTMO_AUTOMATION_RUN_TAG_CHUNK_SIZE`        | `500`                  |
 
+## Audit Log Retention
+
+See [Retention](user-guide/audit-logs.md#retention). In multi-tenant deployments, a tenant's `auditLogRetentionDays` and `auditLogRetentionMode` override the first two.
+
+| Variable                   | Default           | Description                                                                                                |
+| -------------------------- | ----------------- | ---------------------------------------------------------------------------------------------------------- |
+| `AUDIT_LOG_RETENTION_DAYS` | unset             | Keep this many days of audit log entries in the database. Unset, retention is off and every entry is kept. |
+| `AUDIT_LOG_RETENTION_MODE` | `archive`         | What happens to older entries: `archive` moves them to object storage, `delete` removes them permanently.  |
+| `AUDIT_LOG_ARCHIVE_BUCKET` | `AWS_BUCKET_NAME` | Bucket for archive files. Uses the same endpoint and credentials as file storage.                          |
+
 ## Parameterized Test Runs
 
 | Variable                      | Default | Description                                                       |
@@ -281,8 +291,8 @@ See [Multi-Tenant Workers](multi-tenant-workers.md).
 | `MULTI_TENANT_MODE`                                  | `false`                         | Set to `true` to serve several tenants from one worker process, each with its own database.                                                                                                               |
 | `INSTANCE_TENANT_ID`                                 | `default`                       | Pins an application pod to one tenant.                                                                                                                                                                    |
 | `TENANT_CONFIG_FILE`                                 | `/config/tenants.json`          | JSON file of tenant configurations. Re-read when it changes.                                                                                                                                              |
-| `TENANT_CONFIGS`                                     | unset                           | JSON object of tenant configurations keyed by tenant id, with `databaseUrl`, `replicaUrls`, `elasticsearchNode`, `elasticsearchIndex`, and `baseUrl`. Overrides the file.                                 |
-| `TENANT_<ID>_DATABASE_URL`                           | unset                           | Per-tenant database, as an alternative to the file or JSON. Companions: `TENANT_<ID>_DATABASE_REPLICA_URLS`, `TENANT_<ID>_ELASTICSEARCH_NODE`, `TENANT_<ID>_ELASTICSEARCH_INDEX`, `TENANT_<ID>_BASE_URL`. |
+| `TENANT_CONFIGS`                                     | unset                           | JSON object of tenant configurations keyed by tenant id, with `databaseUrl`, `replicaUrls`, `elasticsearchNode`, `elasticsearchIndex`, `baseUrl`, `auditLogRetentionDays`, and `auditLogRetentionMode`. Overrides the file.                                 |
+| `TENANT_<ID>_DATABASE_URL`                           | unset                           | Per-tenant database, as an alternative to the file or JSON. Companions: `TENANT_<ID>_DATABASE_REPLICA_URLS`, `TENANT_<ID>_ELASTICSEARCH_NODE`, `TENANT_<ID>_ELASTICSEARCH_INDEX`, `TENANT_<ID>_BASE_URL`, `TENANT_<ID>_AUDIT_LOG_RETENTION_DAYS`, `TENANT_<ID>_AUDIT_LOG_RETENTION_MODE`. |
 | `TENANT_SECRETS_NAMESPACE`                           | pod namespace                   | Kubernetes namespace holding per-tenant secrets.                                                                                                                                                          |
 | `TENANT_SECRET_NAME_TEMPLATE`                        | `tpi-{tenant}-env`              | Name of each tenant's Kubernetes secret; `{tenant}` is replaced by the tenant id.                                                                                                                         |
 | `TENANT_SECRETS_CACHE_TTL_MS`                        | `600000`                        | How long a tenant secret is cached before it is read again.                                                                                                                                               |

@@ -449,6 +449,20 @@ module.exports = {
       },
     },
     {
+      name: "audit-log-retention-worker",
+      script: isDev ? "tsx" : "node",
+      args: isDev
+        ? "workers/auditLogRetentionWorker.ts"
+        : "dist/workers/auditLogRetentionWorker.js",
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      ...memoryLimits("3G"),
+      env: {
+        NODE_ENV: "production",
+      },
+    },
+    {
       name: "dataset-lease-sweep-worker",
       script: isDev ? "tsx" : "node",
       args: isDev

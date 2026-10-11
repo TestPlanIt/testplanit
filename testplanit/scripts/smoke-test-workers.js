@@ -61,6 +61,7 @@ const WORKERS = [
   "webhookOutboxWorker",
   "webhookRetentionWorker",
   "dataChangeLogRetentionWorker",
+  "auditLogRetentionWorker",
   "datasetLeaseSweepWorker",
   "executionDispatchWorker",
 ];

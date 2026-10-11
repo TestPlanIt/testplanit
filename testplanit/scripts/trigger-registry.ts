@@ -357,6 +357,7 @@ export const TRIGGER_REGISTRY: TriggerConfig[] = [
 export const REGISTRY_PROHIBITED = [
   "DataChangeLog", // append-only audit substrate — recursion + tamper risk
   "AuditLog", // semantic audit log (app-layer captureAuditEvent)
+  "AuditLogArchive", // cold-storage manifest for archived AuditLog rows
   // BullMQ job tables are managed by BullMQ, not the application schema, and are likewise excluded.
 ];
 

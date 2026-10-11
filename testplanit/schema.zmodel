@@ -6821,6 +6821,8 @@ enum AuditAction {
     EXECUTION_DISPATCHED
     EXECUTION_COMPLETED
     EXECUTION_CANCELLED
+    AUDIT_LOG_ARCHIVED
+    AUDIT_LOG_PURGED
 }
 
 model AuditLog {
@@ -6884,6 +6886,26 @@ model AuditLog {
              project.defaultAccessType == 'SPECIFIC_ROLE' && project.defaultRole != null)
         )
     )
+}
+
+// One gzipped NDJSON object in cold storage holding AuditLog rows moved out of Postgres.
+model AuditLogArchive {
+    id             Int      @id @default(autoincrement())
+    bucket         String   @db.Text
+    key            String   @unique @db.Text
+    periodStart    DateTime @db.Timestamptz(6)
+    firstTimestamp DateTime @db.Timestamptz(6)
+    lastTimestamp  DateTime @db.Timestamptz(6)
+    rowCount       Int
+    byteSize       Int
+    sha256         String   @db.VarChar(64)
+    createdAt      DateTime @default(now()) @db.Timestamptz(6)
+
+    @@index([periodStart])
+    @@index([lastTimestamp])
+
+    @@deny('all', auth() == null)
+    @@allow('read', auth().access == 'ADMIN')
 }
 
 
