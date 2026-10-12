@@ -333,7 +333,12 @@ export default function UploadAttachments({
       );
     } else if (file.type.startsWith("video/")) {
       return (
-        <video src={fileURL} controls className="w-full h-full rounded-lg" />
+        <video
+          src={fileURL}
+          preload="metadata"
+          muted
+          className="w-full h-full object-cover rounded-lg"
+        />
       );
     } else if (file.type.startsWith("audio/")) {
       return (
