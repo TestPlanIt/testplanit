@@ -261,9 +261,7 @@ describe("POST /api/webhooks/[token]", () => {
       ...VALID_CONFIG,
       adapterType: "GITHUB",
       codeRepositoryConfigId: 9,
-      subscribedEvents: ["code:pull_request"],
       baseBranch: "develop",
-      autoRunMinScore: 70,
     });
     const payload = {
       eventType: "pull_request",
@@ -292,14 +290,18 @@ describe("POST /api/webhooks/[token]", () => {
       webhookConfigId: "cfg-id-1",
       projectId: 42,
       codeRepositoryConfigId: 9,
-      subscribedEvents: ["code:pull_request"],
       baseBranch: "develop",
-      autoRunMinScore: 70,
       adapterType: "GITHUB",
       eventType: "pull_request",
       payload,
       statusCode: 200,
     });
+    const forwarded = mocks.applyInboundCodeChange.mock.calls[0]?.[0] as any;
+    expect(forwarded).not.toHaveProperty("subscribedEvents");
+    expect(forwarded).not.toHaveProperty("autoRunMinScore");
+    expect(
+      mocks.baseDb.webhookConfig.findUnique.mock.calls[0]?.[0].select
+    ).not.toHaveProperty("subscribedEvents");
     expect(mocks.applyInboundIssueUpdate).not.toHaveBeenCalled();
     expect(mocks.applyInboundMilestoneEvent).not.toHaveBeenCalled();
   });

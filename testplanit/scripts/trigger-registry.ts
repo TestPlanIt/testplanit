@@ -330,6 +330,12 @@ export const TRIGGER_REGISTRY: TriggerConfig[] = [
     nameCol: "name",
     projectCol: "projectId",
   },
+  // Inbound webhook rules (trigger → action). Their run log is machine-written and stays out.
+  {
+    table: "WebhookAction",
+    denylist: ["createdAt", "updatedAt"],
+    projectCol: "projectId",
+  },
 
   // ── COV-04: Group F — Composite-PK permission/assignment tables ─────────────
   // These tables have @@id([colA, colB]) — no scalar id. pkCol = first column of the composite key.

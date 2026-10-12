@@ -5,6 +5,8 @@
 
 import type { ChangedFileStatus } from "~/lib/integrations/adapters/GitRepoAdapter";
 import type { DiffHunk } from "~/lib/integrations/diff/parseUnifiedDiff";
+import type { AutoExecuteOptions } from "~/lib/webhooks/actions/schemas";
+import type { WebhookActionTrigger } from "~/zenstack/models";
 import type { CodePinKind } from "./pinMatcher";
 
 // ---------------------------------------------------------------------------
@@ -271,13 +273,27 @@ export interface ImpactAutoRun {
   links?: { label: string; url: string | null }[];
   /** The inbound delivery row to annotate with the run outcome. */
   deliveryId?: string;
-  /** The repository webhook whose auto-execute setting applies to the run. */
+  /** The repository webhook whose rules asked for the run. */
   webhookConfigId?: string;
   /**
-   * The webhook's minimum score (0-100): the run takes every suggested case
-   * scoring at least this. Unset (or null) = the pinned and affected tiers.
+   * The webhook's Create test run rules that matched the event, one run
+   * each. Jobs queued before rules existed carry only `minScore`.
+   */
+  actions?: ImpactAutoRunAction[];
+  /**
+   * Older jobs: the minimum score (0-100) the run takes cases from. Unset
+   * (or null) = the pinned and affected tiers.
    */
   minScore?: number | null;
+}
+
+export interface ImpactAutoRunAction {
+  actionId: string;
+  /** What the rule fired on and, for a push, the branch: named in the run's description. */
+  trigger?: WebhookActionTrigger;
+  branch?: string | null;
+  minScore?: number | null;
+  autoExecute?: AutoExecuteOptions | null;
 }
 
 export interface ImpactAnalysisJobData {

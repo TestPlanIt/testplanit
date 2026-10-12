@@ -196,14 +196,9 @@ vi.mock("../lib/services/impact/fileAtCommit", () => ({
   getFileAtCommit: (...args: any[]) => mockGetFileAtCommit(...args),
 }));
 
-const mockCreateRunFromAnalysis = vi.fn();
+const mockRunAnalysisActions = vi.fn();
 vi.mock("../lib/services/impact/autoRun", () => ({
-  createRunFromAnalysis: (...args: any[]) => mockCreateRunFromAnalysis(...args),
-}));
-
-const mockExecuteAutoRun = vi.fn();
-vi.mock("../lib/services/impact/autoExecute", () => ({
-  executeAutoRun: (...args: any[]) => mockExecuteAutoRun(...args),
+  runAnalysisActions: (...args: any[]) => mockRunAnalysisActions(...args),
 }));
 
 vi.mock("../lib/services/impact/persistence", () => ({
@@ -590,79 +585,99 @@ describe("impactAnalysisWorker", () => {
     ]);
   });
 
-  it("composes the requested run after saving a webhook-started analysis and survives a run failure", async () => {
+  it("keeps a webhook-started analysis complete when its rules throw", async () => {
+    const { processor } = await loadWorker();
+    mockRunAnalysisActions.mockRejectedValueOnce(new Error("boom"));
+    const autoRun = {
+      trigger: "pull_request",
+      label: "PR #12: Fix login",
+      webhookConfigId: "whc-1",
+      actions: [{ actionId: "act-1" }],
+    };
+
+    const out = await processor(
+      makeJob({ data: { ...jobData, autoRun } as any })
+    );
+
+    expect(out.status).toBe("complete");
+    expect(mockSaveResult).toHaveBeenCalled();
+  });
+
+  it("performs the webhook's rules after saving a webhook-started analysis", async () => {
     const { processor } = await loadWorker();
     const autoRun = {
       trigger: "pull_request",
       label: "PR #12: Fix login",
       url: "https://github.com/acme/app/pull/12",
       deliveryId: "del-1",
+      webhookConfigId: "whc-1",
+      actions: [{ actionId: "act-1", minScore: 70, autoExecute: null }],
     };
 
-    await processor(makeJob({ data: { ...jobData, autoRun } }));
-    expect(mockCreateRunFromAnalysis).toHaveBeenCalledWith(
+    const out = await processor(
+      makeJob({ data: { ...jobData, autoRun, tenantId: "t-1" } as any })
+    );
+
+    expect(out.status).toBe("complete");
+    expect(mockRunAnalysisActions).toHaveBeenCalledWith(
       mockDb,
       ANALYSIS_ID,
-      autoRun
+      jobData.projectId,
+      autoRun,
+      "t-1"
     );
     expect(mockSaveResult.mock.invocationCallOrder[0]).toBeLessThan(
-      mockCreateRunFromAnalysis.mock.invocationCallOrder[0]
+      mockRunAnalysisActions.mock.invocationCallOrder[0]
     );
-
-    mockCreateRunFromAnalysis.mockRejectedValueOnce(new Error("no workflow"));
-    const out = await processor(makeJob({ data: { ...jobData, autoRun } }));
-    expect(out.status).toBe("complete");
     expect(mockMarkFailed).not.toHaveBeenCalled();
-  });
-
-  it("requests the webhook's automated execution once the run exists", async () => {
-    const { processor } = await loadWorker();
-    const autoRun = {
-      trigger: "push",
-      label: "master abc1234…def5678",
-      deliveryId: "del-2",
-      webhookConfigId: "whc-1",
-    };
-    mockCreateRunFromAnalysis.mockResolvedValueOnce({
-      created: true,
-      testRunId: 300,
-      caseCount: 4,
-    });
-
-    await processor(makeJob({ data: { ...jobData, autoRun } }));
-
-    expect(mockExecuteAutoRun).toHaveBeenCalledWith(mockDb, {
-      webhookConfigId: "whc-1",
-      testRunId: 300,
-      projectId: jobData.projectId,
-      deliveryId: "del-2",
-      tenantId: undefined,
-    });
-  });
-
-  it("requests no execution when no run was composed", async () => {
-    const { processor } = await loadWorker();
-    mockCreateRunFromAnalysis.mockResolvedValueOnce({
-      created: false,
-      reason: "no_cases",
-    });
-
-    await processor(
-      makeJob({
-        data: {
-          ...jobData,
-          autoRun: { trigger: "push", label: "x", webhookConfigId: "whc-1" },
-        },
-      })
-    );
-
-    expect(mockExecuteAutoRun).not.toHaveBeenCalled();
   });
 
   it("does not compose a run for an analysis a user started", async () => {
     const { processor } = await loadWorker();
     await processor(makeJob());
-    expect(mockCreateRunFromAnalysis).not.toHaveBeenCalled();
+    expect(mockRunAnalysisActions).not.toHaveBeenCalled();
+  });
+
+  it("only performs the rules for a compose job on an analysis already complete", async () => {
+    const { processor } = await loadWorker();
+    const autoRun = {
+      trigger: "push",
+      label: "main a…b",
+      deliveryId: "del-2",
+      webhookConfigId: "whc-1",
+      actions: [{ actionId: "act-1" }],
+    };
+
+    const out = await processor({
+      ...makeJob({ data: { ...jobData, autoRun } as any }),
+      name: "compose",
+    } as any);
+
+    expect(out).toMatchObject({
+      analysisId: ANALYSIS_ID,
+      status: "complete",
+      caseCount: 0,
+    });
+    expect(mockRunAnalysisActions).toHaveBeenCalledWith(
+      mockDb,
+      ANALYSIS_ID,
+      jobData.projectId,
+      autoRun,
+      undefined
+    );
+    expect(mockMarkRunning).not.toHaveBeenCalled();
+    expect(mockGetOrComputeCompare).not.toHaveBeenCalled();
+    expect(mockSaveResult).not.toHaveBeenCalled();
+  });
+
+  it("does nothing for a compose job without a webhook's rules", async () => {
+    const { processor } = await loadWorker();
+
+    const out = await processor({ ...makeJob(), name: "compose" } as any);
+
+    expect(out.status).toBe("complete");
+    expect(mockRunAnalysisActions).not.toHaveBeenCalled();
+    expect(mockMarkRunning).not.toHaveBeenCalled();
   });
 
   it("selects a case whose FILE pin the diff touches at score 100 in the pinned tier", async () => {

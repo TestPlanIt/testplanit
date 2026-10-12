@@ -3,6 +3,7 @@ import type { JsonValue } from "@zenstackhq/orm";
 
 import type {
   AdapterType,
+  WebhookActionTrigger,
   WebhookDelivery,
   WebhookDirection,
 } from "~/zenstack/models";
@@ -555,4 +556,101 @@ export async function waitForDeliveries(
   throw new Error(
     `waitForDeliveries: timed out after ${timeoutMs}ms; where=${JSON.stringify(args.where)}`
   );
+}
+
+export interface SeededRepositoryWebhook {
+  configId: string;
+  /** Rule ids in the order they were seeded (`order` 0..n-1). */
+  actionIds: string[];
+}
+
+/**
+ * Seed an inbound webhook bound to an Impact repository connection, with one
+ * Create test run rule per entry in `actions`. Mirrors the create branch of
+ * `createOrRotateCodeRepositoryWebhook` in `app/actions/webhook-config.ts`.
+ * The config cascades away with the connection on cleanup.
+ */
+export async function seedRepositoryWebhook(
+  db: DbClient,
+  args: {
+    projectId: number;
+    codeRepositoryConfigId: number;
+    adapterType?: AdapterType;
+    actions: Array<{
+      trigger: WebhookActionTrigger;
+      isEnabled?: boolean;
+      options?: Record<string, JsonValue>;
+    }>;
+  }
+): Promise<SeededRepositoryWebhook> {
+  const config = await db.webhookConfig.create({
+    data: {
+      projectId: args.projectId,
+      adapterType: args.adapterType ?? "GITHUB",
+      direction: "INBOUND",
+      token: generateToken(),
+      secret: await encrypt(generateSecret()),
+      isActive: true,
+      codeRepositoryConfigId: args.codeRepositoryConfigId,
+    },
+    select: { id: true },
+  });
+
+  const actionIds: string[] = [];
+  for (const [index, action] of args.actions.entries()) {
+    const row = await db.webhookAction.create({
+      data: {
+        webhookConfigId: config.id,
+        projectId: args.projectId,
+        order: index,
+        isEnabled: action.isEnabled ?? true,
+        trigger: action.trigger,
+        action: "CREATE_RUN",
+        options: action.options ?? {},
+      },
+      select: { id: true },
+    });
+    actionIds.push(row.id);
+  }
+
+  return { configId: config.id, actionIds };
+}
+
+/**
+ * Seed an enabled Generic webhook execution target. Targets are written only
+ * by `app/actions/execution-targets.ts` (the model API denies writes), so the
+ * seed goes straight to the database. Remove it with
+ * `softDeleteExecutionTarget`, the way the settings page deletes one.
+ */
+export async function seedExecutionTarget(
+  db: DbClient,
+  args: {
+    projectId: number;
+    name: string;
+    createdById: string;
+    url?: string;
+  }
+): Promise<number> {
+  const target = await db.executionTarget.create({
+    data: {
+      projectId: args.projectId,
+      name: args.name,
+      provider: "GENERIC_WEBHOOK",
+      url: args.url ?? "https://ci.example.com/e2e-hook",
+      createdById: args.createdById,
+      isEnabled: true,
+    },
+    select: { id: true },
+  });
+  return target.id;
+}
+
+export async function softDeleteExecutionTarget(
+  db: DbClient,
+  args: { targetId: number }
+): Promise<void> {
+  await db.executionTarget.update({
+    where: { id: args.targetId },
+    data: { isDeleted: true, isEnabled: false, deletedAt: new Date() },
+  });
 }

@@ -1860,6 +1860,27 @@
         "setupStepsClickupStep1": "If you left the secret blank, TestPlanIt has already registered this webhook with ClickUp for the linked List — there is nothing to configure in ClickUp.",
         "setupStepsClickupStep2": "If you registered the webhook yourself through ClickUp's Create Webhook API, make sure its endpoint is the URL below and subscribe it to the taskStatusUpdated event.",
         "setupStepsClickupStep3": "Use \"Send test webhook\" below to verify the pipeline. Rotating the secret registers a fresh webhook in ClickUp.",
+        "actions": {
+          "description": "What TestPlanIt does when this webhook receives an event. Actions run in the order listed.",
+          "empty": "No actions. Events are recorded, but nothing happens.",
+          "addTitle": "Add action",
+          "editTitle": "Edit action",
+          "dialogDescription": "Choose the event that triggers this action and what it does.",
+          "trigger": {
+            "ISSUE_EVENT": "Any issue event",
+            "ISSUE_STATUS_ENTERED": "Issue status changes"
+          },
+          "triggerHelp": {
+            "ISSUE_EVENT": "Any event the tracker sends about an issue.",
+            "ISSUE_CREATED": "An issue TestPlanIt hasn't seen before.",
+            "ISSUE_STATUS_ENTERED": "An issue moves into one of the chosen statuses."
+          },
+          "outcome": {
+            "already_composed": "Run already created for this change",
+            "execute_failed": "Execution not requested"
+          },
+          "dragToReorder": "Drag to reorder"
+        },
         "codeRepos": {
           "empty": "No repositories are connected for Impact Analysis. <link>Connect one</link> first.",
           "unsupported": "{provider} repositories cannot send webhooks to TestPlanIt.",
@@ -5521,6 +5542,7 @@
       "scimProvisionerBadge": "SCIM Provisioner",
       "scimManagedBadge": "SCIM",
       "scimManagedTooltip": "Managed by SCIM. Manage from the SCIM admin page.",
+      "systemUserTooltip": "Built-in user for work TestPlanIt does automatically, such as webhook actions. It can't sign in or be edited.",
       "scimColumnHeader": "SCIM",
       "scimColumnYes": "Yes",
       "scimUserLockedTitle": "User is managed by SCIM",

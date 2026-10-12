@@ -9,6 +9,10 @@ import {
   SCIM_SYSTEM_USER_ID,
   SYSTEM_PROJECT_ID,
 } from "../lib/scim/constants";
+import {
+  SYSTEM_AUTOMATION_USER_EMAIL,
+  SYSTEM_AUTOMATION_USER_ID,
+} from "../lib/automationUser";
 import { seedDemoProject } from "./seedDemoProject";
 import { seedFieldIcons } from "./seedFieldIcons";
 import { seedDefaultPromptConfig } from "./seedPromptConfig";
@@ -547,6 +551,33 @@ async function seedCoreData() {
     );
   }
   console.log("Ensured synthetic SCIM Provisioner user exists.");
+
+  // --- Synthetic System user ---
+  // Webhook actions create runs, cases and issues as this inactive user. Same
+  // sentinel-email approach as the SCIM Provisioner above.
+  const existingSystemUser = await db.user.findUnique({
+    where: { id: SYSTEM_AUTOMATION_USER_ID },
+    select: { id: true },
+  });
+  if (!existingSystemUser) {
+    await db.user.create({
+      data: {
+        id: SYSTEM_AUTOMATION_USER_ID,
+        email: `${SYSTEM_AUTOMATION_USER_ID}@example.com`,
+        name: "System",
+        access: "USER",
+        authMethod: "INTERNAL",
+        isActive: false,
+        isDeleted: false,
+        isApi: false,
+        roleId: userRole.id,
+      },
+    });
+    await sql`UPDATE "User" SET email = ${SYSTEM_AUTOMATION_USER_EMAIL} WHERE id = ${SYSTEM_AUTOMATION_USER_ID}`.execute(
+      db.$qb
+    );
+  }
+  console.log("Ensured synthetic System user exists.");
 
   // --- Sentinel __system__ Projects row ---
   // Tenant-wide SCIM webhook events (no natural project scope) FK to this row

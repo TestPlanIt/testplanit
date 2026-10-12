@@ -693,6 +693,7 @@ model Projects {
     dataSets                         DataSet[]
     projectIntegrations              ProjectIntegration[]
     webhookConfigs                   WebhookConfig[]
+    webhookActions                   WebhookAction[]
     webhookOutboxEvents              WebhookOutboxEvent[]
     projectLlmIntegrations           ProjectLlmIntegration[]
     codeRepositoryConfigs            ProjectCodeRepositoryConfig[]
@@ -5811,18 +5812,6 @@ model WebhookConfig {
     // created it through the tracker API (ClickUp), so it can be removed
     // again when this config is deleted or rotated.
     externalWebhookId       String?
-    // Repository webhook only: request automated execution of the run each
-    // analysis composes, on this target with this ref and these parameter
-    // inputs (empty ref = the target's default). Kept when the target is
-    // deleted or disabled later; the request is then skipped and the
-    // delivery says so.
-    autoExecuteEnabled      Boolean                      @default(false)
-    autoExecuteTargetId     Int?
-    autoExecuteRef          String?
-    autoExecuteInputs       Json                         @default("{}")
-    // Repository webhook only: the composed run takes every case scoring at
-    // least this (0-100); empty = the pinned and affected tiers.
-    autoRunMinScore         Int?
     endpointHealth          EndpointHealth               @default(HEALTHY)
     url                     String?
     name                    String?
@@ -5836,6 +5825,8 @@ model WebhookConfig {
     deliveries              WebhookDelivery[]
     eventDedups             WebhookEventDedup[]
     secrets                 WebhookConfigSecret[]
+    actions                 WebhookAction[]
+    actionLogs              WebhookActionLog[]
 
     @@index([projectId, adapterType, direction])
     @@index([projectId])
@@ -5857,9 +5848,9 @@ model WebhookConfig {
 }
 
 model WebhookDelivery {
-    id                     String            @id @default(cuid())
+    id                     String             @id @default(cuid())
     webhookConfigId        String?
-    webhookConfig          WebhookConfig?    @relation(fields: [webhookConfigId], references: [id], onDelete: SetNull)
+    webhookConfig          WebhookConfig?     @relation(fields: [webhookConfigId], references: [id], onDelete: SetNull)
     direction              WebhookDirection
     adapterType            AdapterType
     eventType              String?
@@ -5869,11 +5860,12 @@ model WebhookDelivery {
     latencyMs              Int?
     payloadDigest          String
     error                  String?
-    attempt                Int               @default(1)
+    attempt                Int                @default(1)
     replayedFromDeliveryId String?
-    replayedFrom           WebhookDelivery?  @relation("WebhookDeliveryReplay", fields: [replayedFromDeliveryId], references: [id], onDelete: SetNull)
-    replays                WebhookDelivery[] @relation("WebhookDeliveryReplay")
-    receivedAt             DateTime          @default(now()) @db.Timestamptz(6)
+    replayedFrom           WebhookDelivery?   @relation("WebhookDeliveryReplay", fields: [replayedFromDeliveryId], references: [id], onDelete: SetNull)
+    replays                WebhookDelivery[]  @relation("WebhookDeliveryReplay")
+    actionLogs             WebhookActionLog[]
+    receivedAt             DateTime           @default(now()) @db.Timestamptz(6)
 
     @@index([webhookConfigId, receivedAt])
     @@index([webhookConfigId, eventId])
@@ -5923,6 +5915,92 @@ model WebhookConfigSecret {
 
     @@index([webhookConfigId, activatedAt])
     @@index([retiredAt, autoRetireAt])
+
+    @@deny('all', auth() == null)
+    @@deny('create, update, delete', true)
+    @@allow('read', auth().access == 'ADMIN')
+    @@allow('read',
+        webhookConfig.project.creator.id == auth().id ||
+        webhookConfig.projectId in auth().adminProjectIds ||
+        webhookConfig.project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN']
+    )
+}
+
+enum WebhookActionTrigger {
+    ISSUE_EVENT
+    ISSUE_CREATED
+    ISSUE_STATUS_ENTERED
+    CODE_PULL_REQUEST
+    CODE_PUSH
+    CODE_BRANCH_PUSH
+
+    @@deny('all', auth() == null)
+    @@allow('read', auth().access != null)
+}
+
+enum WebhookActionType {
+    IMPORT_ISSUE
+    CREATE_RUN
+    DRAFT_CASES
+
+    @@deny('all', auth() == null)
+    @@allow('read', auth().access != null)
+}
+
+// One rule on an inbound webhook: when the trigger fires and the filter
+// matches, perform the action with its options. Evaluated in `order`.
+model WebhookAction {
+    id              String               @id @default(cuid())
+    webhookConfigId String
+    webhookConfig   WebhookConfig        @relation(fields: [webhookConfigId], references: [id], onDelete: Cascade)
+    projectId       Int
+    project         Projects             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    order           Int                  @default(0)
+    isEnabled       Boolean              @default(true)
+    trigger         WebhookActionTrigger
+    action          WebhookActionType
+    filter          Json                 @default("{}")
+    options         Json                 @default("{}")
+    createdAt       DateTime             @default(now()) @db.Timestamptz(6)
+    updatedAt       DateTime             @updatedAt
+    logs            WebhookActionLog[]
+
+    @@index([webhookConfigId, order])
+    @@index([projectId])
+
+    @@deny('all', auth() == null)
+    @@deny('read', project.userPermissions?[user.id == auth().id && accessType == 'NO_ACCESS'])
+    @@allow('read',
+        project.creator.id == auth().id ||
+        projectId in auth().adminProjectIds ||
+        project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN']
+    )
+    @@allow('read', auth().access == 'ADMIN')
+    @@deny('create, update, delete', true)
+}
+
+// What one webhook action did for one delivery.
+model WebhookActionLog {
+    id              String           @id @default(cuid())
+    webhookActionId String?
+    webhookAction   WebhookAction?   @relation(fields: [webhookActionId], references: [id], onDelete: SetNull)
+    webhookConfigId String
+    webhookConfig   WebhookConfig    @relation(fields: [webhookConfigId], references: [id], onDelete: Cascade)
+    deliveryId      String?
+    delivery        WebhookDelivery? @relation(fields: [deliveryId], references: [id], onDelete: SetNull)
+    projectId       Int
+    issueId         Int?
+    analysisId      Int?
+    testRunId       Int?
+    caseCount       Int?
+    outcome         String
+    detail          String?
+    createdAt       DateTime         @default(now()) @db.Timestamptz(6)
+
+    @@index([webhookActionId, createdAt])
+    @@index([webhookConfigId, createdAt])
+    @@index([webhookActionId, analysisId])
+    @@index([deliveryId])
 
     @@deny('all', auth() == null)
     @@deny('create, update, delete', true)

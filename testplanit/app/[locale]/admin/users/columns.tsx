@@ -22,6 +22,7 @@ import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import type { AccessibleProject } from "~/app/actions/getUserAccessibleProjects";
 import { LastActiveDisplay } from "~/components/LastActiveDisplay";
+import { SYSTEM_AUTOMATION_USER_EMAIL } from "~/lib/automationUser";
 import { SCIM_SYSTEM_USER_EMAIL } from "~/lib/scim/constants";
 export interface ExtendedUser extends User {
   createdBy: {
@@ -52,6 +53,7 @@ export const useColumns = (
     userPreferences.user.preferences?.dateFormat || "MM_DD_YYYY_DASH";
   const timezone = userPreferences.user.preferences?.timezone || "Etc/UTC";
   const currentUserId = userPreferences.user.id;
+  const tAuditLogs = useTranslations("admin.auditLogs");
 
   return useMemo(
     () => [
@@ -69,9 +71,21 @@ export const useColumns = (
             row.original.email === SCIM_SYSTEM_USER_EMAIL;
           const isScimManaged =
             !isScimProvisioner && row.original.scimGivenName !== null;
+          const isSystemUser =
+            row.original.email === SYSTEM_AUTOMATION_USER_EMAIL;
           return (
             <div className="bg-primary-foreground flex items-center gap-1">
               <UserNameCell userId={row.original.id} />
+              {isSystemUser && (
+                <Badge
+                  variant="secondary"
+                  className="ms-1"
+                  title={tAdmin("systemUserTooltip")}
+                  data-testid="system-user-badge"
+                >
+                  {tAuditLogs("systemActor")}
+                </Badge>
+              )}
               {isScimProvisioner && (
                 <Badge
                   variant="secondary"
@@ -133,14 +147,26 @@ export const useColumns = (
           const isScimManaged =
             row.original.email === SCIM_SYSTEM_USER_EMAIL ||
             row.original.scimGivenName !== null;
+          const isSystemUser =
+            row.original.email === SYSTEM_AUTOMATION_USER_EMAIL;
           return (
             <div className="text-center">
               <Switch
                 data-testid={`user-active-toggle-${row.original.id}`}
                 aria-label={tCommon("aria.toggleActive")}
                 checked={row.original.isActive}
-                disabled={row.original.id === currentUserId || isScimManaged}
-                title={isScimManaged ? tAdmin("scimManagedTooltip") : undefined}
+                disabled={
+                  row.original.id === currentUserId ||
+                  isScimManaged ||
+                  isSystemUser
+                }
+                title={
+                  isSystemUser
+                    ? tAdmin("systemUserTooltip")
+                    : isScimManaged
+                      ? tAdmin("scimManagedTooltip")
+                      : undefined
+                }
                 onCheckedChange={(checked) =>
                   handleToggle(row.original.id, "isActive", checked)
                 }
@@ -306,10 +332,14 @@ export const useColumns = (
         size: 60,
         meta: { isPinned: "right" },
         cell: ({ row }) => {
+          const isSystemUser =
+            row.original.email === SYSTEM_AUTOMATION_USER_EMAIL;
           const isScimProvisioner =
             row.original.email === SCIM_SYSTEM_USER_EMAIL;
           const isScimManaged =
-            isScimProvisioner || row.original.scimGivenName !== null;
+            isScimProvisioner ||
+            isSystemUser ||
+            row.original.scimGivenName !== null;
           return (
             <div className="flex justify-center">
               <DropdownMenu>
@@ -324,11 +354,13 @@ export const useColumns = (
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem
-                    disabled={isScimProvisioner}
+                    disabled={isScimProvisioner || isSystemUser}
                     title={
-                      isScimProvisioner
-                        ? tAdmin("scimManagedTooltip")
-                        : undefined
+                      isSystemUser
+                        ? tAdmin("systemUserTooltip")
+                        : isScimProvisioner
+                          ? tAdmin("scimManagedTooltip")
+                          : undefined
                     }
                     onClick={() => onEditUser?.(row.original)}
                   >
@@ -377,6 +409,7 @@ export const useColumns = (
       handleToggle,
       tCommon,
       tAdmin,
+      tAuditLogs,
       onEditUser,
       onDeleteUser,
       onForceChangePassword,

@@ -304,7 +304,7 @@ describe("InboundWebhookWizard", () => {
         projectId: 42,
         codeRepositoryConfigId: 9,
         secretInput: undefined,
-        subscribedEvents: ["code:pull_request", "code:branch_push"],
+        triggers: ["CODE_PULL_REQUEST", "CODE_BRANCH_PUSH"],
         baseBranch: "develop",
       })
     );

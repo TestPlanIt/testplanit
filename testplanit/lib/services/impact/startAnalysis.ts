@@ -2,7 +2,7 @@ import { RefNotFoundError, resolveRefToSha } from "./compareService";
 import { impactConfig } from "./config";
 import { excludeGlobsOf } from "~/lib/integrations/repoPathPatterns";
 import { excludedPathsHash } from "./excludedPaths";
-import { impactJobId } from "./jobKeys";
+import { IMPACT_COMPOSE_JOB, impactComposeJobId, impactJobId } from "./jobKeys";
 import type { LoadedRepo } from "./repoAccess";
 import type { ImpactAnalysisJobData, ImpactAutoRun } from "./types";
 
@@ -109,6 +109,32 @@ export async function startImpactAnalysis(
       select: { id: true, jobId: true },
     });
     if (reusable) {
+      // A webhook still wants its runs from the analysis it reused.
+      if (input.autoRun && queue) {
+        const composeData: ImpactAnalysisJobData = {
+          analysisId: reusable.id,
+          projectId: input.projectId,
+          configId,
+          baseSha,
+          headSha,
+          userId: input.createdById,
+          tenantId: input.tenantId,
+          autoRun: input.autoRun,
+        };
+        await queue
+          .add(IMPACT_COMPOSE_JOB, composeData, {
+            jobId: impactComposeJobId(
+              reusable.id,
+              input.autoRun.deliveryId ?? String(Date.now())
+            ),
+          })
+          .catch((error) =>
+            console.error(
+              `[impact] compose job for analysis ${reusable.id} failed to enqueue`,
+              error
+            )
+          );
+      }
       return {
         ok: true,
         analysisId: reusable.id,

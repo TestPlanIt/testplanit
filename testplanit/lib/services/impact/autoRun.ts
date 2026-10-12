@@ -1,17 +1,9 @@
-import { emptyEditorContent } from "~/app/constants/backend";
-import type { ImpactAutoRun } from "./types";
-
-/** Raw client surface for composing a run from a completed analysis. */
-export interface AutoRunDb {
-  impactAnalysis: {
-    findUnique: (args: any) => Promise<any>;
-    update: (args: any) => Promise<any>;
-  };
-  impactAnalysisCase: { updateMany: (args: any) => Promise<any> };
-  workflows: { findFirst: (args: any) => Promise<any> };
-  testRuns: { create: (args: any) => Promise<any> };
-  webhookDelivery: { update: (args: any) => Promise<any> };
-}
+import { webhookActorId } from "~/lib/webhooks/actions/actor";
+import { composeRunFromCases } from "~/lib/webhooks/actions/composeRun";
+import { logWebhookAction } from "~/lib/webhooks/actions/log";
+import { describeCreateRunRule } from "~/lib/webhooks/actions/ruleSummary";
+import { executeAutoRun } from "./autoExecute";
+import type { ImpactAutoRun, ImpactAutoRunAction } from "./types";
 
 export type AutoRunResult =
   | { created: true; testRunId: number; caseCount: number }
@@ -19,41 +11,11 @@ export type AutoRunResult =
       created: false;
       reason:
         "already_linked" | "no_cases" | "no_workflow" | "analysis_missing";
+      testRunId?: number;
     };
 
-const RUN_NAME_MAX = 200;
-
-/**
- * The run's note: one paragraph per link the event left, the label as text
- * and the URL as a link mark, so the run shows where it came from and the
- * reader can get there.
- */
-function runNote(autoRun: ImpactAutoRun) {
-  const links =
-    autoRun.links && autoRun.links.length > 0
-      ? autoRun.links
-      : [{ label: autoRun.label, url: autoRun.url ?? null }];
-  return {
-    type: "doc",
-    content: links.map(({ label, url }) => ({
-      type: "paragraph",
-      content: url
-        ? [
-            { type: "text", text: `${label} — ` },
-            {
-              type: "text",
-              text: url,
-              marks: [{ type: "link", attrs: { href: url } }],
-            },
-          ]
-        : [{ type: "text", text: label }],
-    })),
-  };
-}
-
-/** Which of the analysis's suggestions the run takes: the webhook's minimum score, else the pinned and affected tiers. */
-function suggestionFilter(autoRun: ImpactAutoRun) {
-  const minScore = autoRun.minScore;
+/** Which of the analysis's suggestions the run takes: the rule's minimum score, else the pinned and affected tiers. */
+function suggestionFilter(minScore: number | null | undefined) {
   if (typeof minScore === "number" && Number.isFinite(minScore)) {
     return { suggested: true, score: { gte: minScore } };
   }
@@ -61,29 +23,24 @@ function suggestionFilter(autoRun: ImpactAutoRun) {
 }
 
 /**
- * Compose the test run a repository webhook asked for: every case the
- * completed analysis put in the pinned or affected tier, or, when the
- * webhook sets a minimum score, every case scoring at least that, in score
- * order, under the project's default run workflow state, created by the
- * project's creator. The analysis is linked to the run and its suggestions
- * marked accepted, exactly as the dialog records a reviewer's acceptance.
- * With no affected cases no run is made; the delivery says so.
+ * Compose the test run one Create test run rule asked for: every case the
+ * completed analysis put in the pinned or affected tier, or, when the rule
+ * sets a minimum score, every case scoring at least that, in score order,
+ * created by the System user. The first run made from an analysis is linked
+ * to it and its suggestions marked accepted, exactly as the dialog records a
+ * reviewer's acceptance. A rule composes one run per analysis, so a repeat
+ * of the same change reports the run it already made.
  */
 export async function createRunFromAnalysis(
-  db: AutoRunDb,
+  db: any,
   analysisId: number,
-  autoRun: ImpactAutoRun
+  autoRun: ImpactAutoRun,
+  action: Pick<ImpactAutoRunAction, "trigger" | "branch" | "autoExecute"> & {
+    actionId: string | null;
+    minScore?: number | null;
+  },
+  tenantId?: string
 ): Promise<AutoRunResult> {
-  const annotate = async (subjectRef: string | null, error: string | null) => {
-    if (!autoRun.deliveryId) return;
-    await db.webhookDelivery
-      .update({
-        where: { id: autoRun.deliveryId },
-        data: { ...(subjectRef ? { subjectRef } : {}), error },
-      })
-      .catch(() => {});
-  };
-
   const analysis = await db.impactAnalysis.findUnique({
     where: { id: analysisId },
     select: {
@@ -92,95 +49,196 @@ export async function createRunFromAnalysis(
       testRunId: true,
       project: { select: { createdBy: true } },
       cases: {
-        where: suggestionFilter(autoRun),
+        where: suggestionFilter(action.minScore),
         orderBy: [{ score: "desc" }, { caseId: "asc" }],
         select: { caseId: true },
       },
     },
   });
-  if (!analysis) {
-    await annotate(null, "run:analysis_missing");
-    return { created: false, reason: "analysis_missing" };
+  if (!analysis) return { created: false, reason: "analysis_missing" };
+
+  if (action.actionId) {
+    const prior = await db.webhookActionLog.findFirst({
+      where: {
+        webhookActionId: action.actionId,
+        analysisId,
+        testRunId: { not: null },
+      },
+      select: { testRunId: true },
+    });
+    if (prior?.testRunId) {
+      return {
+        created: false,
+        reason: "already_linked",
+        testRunId: prior.testRunId,
+      };
+    }
   }
-  if (analysis.testRunId) {
-    await annotate(`run:${analysis.testRunId}`, null);
-    return { created: false, reason: "already_linked" };
+  // A run someone composed from the analysis by hand stands for every rule;
+  // runs other rules composed from it don't.
+  if (
+    analysis.testRunId &&
+    !(
+      action.actionId &&
+      (await db.webhookActionLog.findFirst({
+        where: {
+          analysisId,
+          testRunId: analysis.testRunId,
+          outcome: "run_created",
+          webhookActionId: { not: null },
+        },
+        select: { id: true },
+      }))
+    )
+  ) {
+    return {
+      created: false,
+      reason: "already_linked",
+      testRunId: analysis.testRunId,
+    };
   }
-  const caseIds: number[] = [
-    ...new Set<number>(analysis.cases.map((c: { caseId: number }) => c.caseId)),
+
+  const actorId = await webhookActorId(db, analysis.project.createdBy);
+  const rule = await describeCreateRunRule(db, action);
+  const composed = await composeRunFromCases(db, {
+    projectId: analysis.projectId,
+    name: autoRun.label,
+    caseIds: analysis.cases.map((c: { caseId: number }) => c.caseId),
+    links: [
+      ...(autoRun.links && autoRun.links.length > 0
+        ? autoRun.links
+        : [{ label: autoRun.label, url: autoRun.url ?? null }]),
+      ...(rule ? [{ label: rule, url: null }] : []),
+    ],
+    createdById: actorId,
+    tenantId,
+  });
+  if (!composed.created) return composed;
+
+  if (!analysis.testRunId) {
+    const caseIds = analysis.cases.map((c: { caseId: number }) => c.caseId);
+    const reviewedAt = new Date();
+    await db.impactAnalysis.update({
+      where: { id: analysisId },
+      data: { testRunId: composed.testRunId },
+    });
+    await db.impactAnalysisCase.updateMany({
+      where: { analysisId, suggested: true, caseId: { in: caseIds } },
+      data: { accepted: true, reviewedAt, reviewedById: actorId },
+    });
+    await db.impactAnalysisCase.updateMany({
+      where: { analysisId, suggested: true, caseId: { notIn: caseIds } },
+      data: { accepted: false, reviewedAt, reviewedById: actorId },
+    });
+  }
+  return composed;
+}
+
+/**
+ * Perform every Create test run rule that matched a repository webhook's
+ * event once its analysis is complete: compose each rule's run, request its
+ * automated execution when the rule says to, and record what happened on
+ * the rule's log and the delivery. Jobs queued before rules existed compose
+ * the single run they asked for, with no execution.
+ */
+export async function runAnalysisActions(
+  db: any,
+  analysisId: number,
+  projectId: number,
+  autoRun: ImpactAutoRun,
+  tenantId?: string
+): Promise<void> {
+  const actions: (
+    | ImpactAutoRunAction
+    | { actionId: null; minScore?: number | null; autoExecute?: null }
+  )[] = autoRun.actions ?? [
+    { actionId: null, minScore: autoRun.minScore ?? null, autoExecute: null },
   ];
-  if (caseIds.length === 0) {
-    await annotate(`analysis:${analysisId}`, "run:no_affected_cases");
-    return { created: false, reason: "no_cases" };
+
+  let subjectRef: string | null = null;
+  let deliveryError: string | null = null;
+  for (const action of actions) {
+    const log = (entry: {
+      outcome: string;
+      testRunId?: number | null;
+      caseCount?: number | null;
+      detail?: string | null;
+    }) =>
+      autoRun.webhookConfigId
+        ? logWebhookAction(db, {
+            webhookActionId: action.actionId,
+            webhookConfigId: autoRun.webhookConfigId,
+            deliveryId: autoRun.deliveryId ?? null,
+            projectId,
+            analysisId,
+            ...entry,
+          })
+        : Promise.resolve();
+    try {
+      const run = await createRunFromAnalysis(
+        db,
+        analysisId,
+        autoRun,
+        action,
+        tenantId
+      );
+      if (!run.created) {
+        if (run.reason === "already_linked" && run.testRunId) {
+          subjectRef ??= `run:${run.testRunId}`;
+          await log({ outcome: "already_composed", testRunId: run.testRunId });
+        } else {
+          deliveryError ??=
+            run.reason === "no_cases"
+              ? "run:no_affected_cases"
+              : `run:${run.reason}`;
+          await log({ outcome: run.reason });
+        }
+        continue;
+      }
+      subjectRef ??= `run:${run.testRunId}`;
+      await log({
+        outcome: "run_created",
+        testRunId: run.testRunId,
+        caseCount: run.caseCount,
+      });
+      if (action.autoExecute) {
+        const executed = await executeAutoRun(db, {
+          autoExecute: action.autoExecute,
+          testRunId: run.testRunId,
+          projectId,
+          tenantId,
+        });
+        if (!executed.requested) {
+          deliveryError ??= `execute:${executed.code.toLowerCase()}`;
+          await log({
+            outcome: "execute_failed",
+            testRunId: run.testRunId,
+            detail: executed.code,
+          });
+        }
+      }
+    } catch (error) {
+      console.error(
+        `[impact] auto-run for analysis ${analysisId} failed:`,
+        error
+      );
+      deliveryError ??= "run:error";
+      await log({
+        outcome: "error",
+        detail: error instanceof Error ? error.message : "failed",
+      });
+    }
   }
 
-  const projectId: number = analysis.projectId;
-  const workflow =
-    (await db.workflows.findFirst({
-      where: {
-        scope: "RUNS",
-        isDefault: true,
-        isEnabled: true,
-        isDeleted: false,
-        projects: { some: { projectId } },
-      },
-      select: { id: true },
-    })) ??
-    (await db.workflows.findFirst({
-      where: {
-        scope: "RUNS",
-        isEnabled: true,
-        isDeleted: false,
-        projects: { some: { projectId } },
-      },
-      orderBy: { order: "asc" },
-      select: { id: true },
-    }));
-  if (!workflow) {
-    await annotate(`analysis:${analysisId}`, "run:no_workflow");
-    return { created: false, reason: "no_workflow" };
+  if (autoRun.deliveryId) {
+    await db.webhookDelivery
+      .update({
+        where: { id: autoRun.deliveryId },
+        data: {
+          subjectRef: subjectRef ?? `analysis:${analysisId}`,
+          error: deliveryError,
+        },
+      })
+      .catch(() => {});
   }
-
-  const run = await db.testRuns.create({
-    data: {
-      projectId,
-      name: autoRun.label.slice(0, RUN_NAME_MAX),
-      stateId: workflow.id,
-      createdById: analysis.project.createdBy,
-      note: runNote(autoRun),
-      docs: emptyEditorContent,
-      testRunType: "REGULAR",
-      testCases: {
-        create: caseIds.map((caseId, index) => ({
-          repositoryCase: { connect: { id: caseId } },
-          order: index,
-        })),
-      },
-    },
-    select: { id: true },
-  });
-
-  const reviewedAt = new Date();
-  await db.impactAnalysis.update({
-    where: { id: analysisId },
-    data: { testRunId: run.id },
-  });
-  await db.impactAnalysisCase.updateMany({
-    where: { analysisId, suggested: true, caseId: { in: caseIds } },
-    data: {
-      accepted: true,
-      reviewedAt,
-      reviewedById: analysis.project.createdBy,
-    },
-  });
-  await db.impactAnalysisCase.updateMany({
-    where: { analysisId, suggested: true, caseId: { notIn: caseIds } },
-    data: {
-      accepted: false,
-      reviewedAt,
-      reviewedById: analysis.project.createdBy,
-    },
-  });
-  await annotate(`run:${run.id}`, null);
-  return { created: true, testRunId: run.id, caseCount: caseIds.length };
 }

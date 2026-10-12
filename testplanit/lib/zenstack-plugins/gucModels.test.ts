@@ -18,6 +18,8 @@ describe("GUC_MODELS — audit actor-context coverage", () => {
       "SharedStepGroup",
       "Issue",
       "ImpactAnalysis",
+      "WebhookConfig",
+      "WebhookAction",
     ]) {
       expect(GUC_MODELS.has(model)).toBe(true);
     }

@@ -1,13 +1,12 @@
-import type { AdapterType } from "~/zenstack/models";
+import type { AdapterType, WebhookActionTrigger } from "~/zenstack/models";
 import { baseDb } from "~/lib/db";
 import { getCurrentTenantId } from "~/lib/multiTenantDb";
 import { getImpactAnalysisQueue } from "~/lib/queues";
 import { loadRepoConfigForWorker } from "~/lib/services/impact/repoAccess";
 import { startImpactAnalysis } from "~/lib/services/impact/startAnalysis";
+import { webhookActorId } from "~/lib/webhooks/actions/actor";
+import { readCreateRunOptions } from "~/lib/webhooks/actions/schemas";
 import {
-  CODE_EVENT_BRANCH_PUSH,
-  CODE_EVENT_PULL_REQUEST,
-  CODE_EVENT_PUSH,
   codeChangeEventLinks,
   describeCodeChangeEvent,
   extractCodeChangeEvent,
@@ -20,11 +19,8 @@ export interface ApplyInboundCodeChangeInput {
   webhookConfigId: string;
   projectId: number;
   codeRepositoryConfigId: number;
-  subscribedEvents: string[];
   /** Branch pushes compare against; null = the connection's branch. */
   baseBranch: string | null;
-  /** Score the composed run takes cases from; null = the pinned and affected tiers. */
-  autoRunMinScore?: number | null;
   adapterType: AdapterType;
   eventType: string;
   payload: ParsedWebhookPayload;
@@ -61,7 +57,8 @@ type IgnoreReason =
 
 /**
  * Turn a repository's pull request or push webhook into an Impact analysis
- * for the bound connection, with a test run composed when it completes.
+ * for the bound connection, with a test run composed when it completes for
+ * each enabled Create test run rule whose trigger the event matches.
  *
  * Pull requests start an analysis when opened or reopened, comparing the
  * merge base of the target branch with the pull request head. A push to the
@@ -79,7 +76,6 @@ export async function applyInboundCodeChange(
     webhookConfigId,
     projectId,
     codeRepositoryConfigId,
-    subscribedEvents,
     baseBranch,
     adapterType,
     eventType,
@@ -176,13 +172,25 @@ export async function applyInboundCodeChange(
   }
 
   try {
-    const wanted =
+    const candidates: WebhookActionTrigger[] =
       event!.kind === "pull_request"
-        ? [CODE_EVENT_PULL_REQUEST]
-        : [CODE_EVENT_PUSH, CODE_EVENT_BRANCH_PUSH];
-    if (!wanted.some((key) => subscribedEvents.includes(key))) {
-      return ignore("event_disabled");
-    }
+        ? ["CODE_PULL_REQUEST"]
+        : ["CODE_PUSH", "CODE_BRANCH_PUSH"];
+    const rules: {
+      id: string;
+      trigger: WebhookActionTrigger;
+      options: unknown;
+    }[] = await baseDb.webhookAction.findMany({
+      where: {
+        webhookConfigId,
+        isEnabled: true,
+        action: "CREATE_RUN",
+        trigger: { in: candidates },
+      },
+      orderBy: [{ order: "asc" }, { createdAt: "asc" }],
+      select: { id: true, trigger: true, options: true },
+    });
+    if (rules.length === 0) return ignore("event_disabled");
 
     const project = await baseDb.projects.findUnique({
       where: { id: projectId },
@@ -201,10 +209,22 @@ export async function applyInboundCodeChange(
     if (!loaded) return ignore("config_missing");
 
     const range = await resolveRange(event!, loaded, {
-      subscribedEvents,
+      triggers: new Set(rules.map((rule) => rule.trigger)),
       baseBranch,
     });
     if ("ignore" in range) return ignore(range.ignore);
+    const actions = rules
+      .filter((rule) => rule.trigger === range.trigger)
+      .map((rule) => {
+        const options = readCreateRunOptions(rule.options);
+        return {
+          actionId: rule.id,
+          trigger: rule.trigger,
+          branch: event!.kind === "push" ? event!.branch : null,
+          minScore: options.minScore ?? null,
+          autoExecute: options.autoExecute ?? null,
+        };
+      });
 
     const label = describeCodeChangeEvent(event!);
     const links = codeChangeEventLinks(event!);
@@ -218,7 +238,7 @@ export async function applyInboundCodeChange(
         projectId,
         base: range.base,
         head: range.head,
-        createdById: project.createdBy,
+        createdById: await webhookActorId(baseDb, project.createdBy),
         notes: links
           .map((link) => (link.url ? `${link.label}\n${link.url}` : link.label))
           .join("\n"),
@@ -233,7 +253,7 @@ export async function applyInboundCodeChange(
           links,
           deliveryId,
           webhookConfigId,
-          minScore: input.autoRunMinScore ?? null,
+          actions,
         },
       }
     );
@@ -276,8 +296,11 @@ export async function applyInboundCodeChange(
 async function resolveRange(
   event: CodeChangeEvent,
   loaded: Awaited<ReturnType<typeof loadRepoConfigForWorker>> & object,
-  webhook: { subscribedEvents: string[]; baseBranch: string | null }
-): Promise<{ base: string; head: string } | { ignore: IgnoreReason }> {
+  webhook: { triggers: Set<WebhookActionTrigger>; baseBranch: string | null }
+): Promise<
+  | { base: string; head: string; trigger: WebhookActionTrigger }
+  | { ignore: IgnoreReason }
+> {
   if (event.kind === "pull_request") {
     if (event.action !== "opened" && event.action !== "reopened") {
       return { ignore: "pull_request_not_opened" };
@@ -291,7 +314,7 @@ async function resolveRange(
     }
     base = base ?? event.baseSha ?? event.targetBranch;
     if (!base) return { ignore: "pull_request_incomplete" };
-    return { base, head: event.headSha };
+    return { base, head: event.headSha, trigger: "CODE_PULL_REQUEST" };
   }
   if (event.created || event.deleted || !event.before || !event.after) {
     return { ignore: "push_no_range" };
@@ -302,16 +325,20 @@ async function resolveRange(
     loaded.config.branch ??
     (await loaded.adapter.getDefaultBranch().catch(() => null));
   if (!baseBranch || event.branch === baseBranch) {
-    if (!webhook.subscribedEvents.includes(CODE_EVENT_PUSH)) {
+    if (!webhook.triggers.has("CODE_PUSH")) {
       return { ignore: "event_disabled" };
     }
-    return { base: event.before, head: event.after };
+    return { base: event.before, head: event.after, trigger: "CODE_PUSH" };
   }
-  if (!webhook.subscribedEvents.includes(CODE_EVENT_BRANCH_PUSH)) {
+  if (!webhook.triggers.has("CODE_BRANCH_PUSH")) {
     return { ignore: "push_other_branch" };
   }
   const mergeBase = await loaded.adapter
     .getMergeBase(baseBranch, event.after)
     .catch(() => null);
-  return { base: mergeBase ?? baseBranch, head: event.after };
+  return {
+    base: mergeBase ?? baseBranch,
+    head: event.after,
+    trigger: "CODE_BRANCH_PUSH",
+  };
 }

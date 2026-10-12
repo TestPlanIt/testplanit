@@ -1,26 +1,21 @@
 "use server";
 
 import { createHmac, randomBytes } from "node:crypto";
-import {
-  CODE_EVENT_DEFAULTS,
-  CODE_REPOSITORY_WEBHOOK_EVENTS,
-  inboundAdapterForCodeRepository,
-} from "~/lib/webhooks/codeChangeEvents";
+import { inboundAdapterForCodeRepository } from "~/lib/webhooks/codeChangeEvents";
 
-import type { AdapterType } from "~/zenstack/models";
+import type { AdapterType, WebhookActionTrigger } from "~/zenstack/models";
 import type { IssueAdapter } from "~/lib/integrations/adapters/IssueAdapter";
 
 import { runWithAuditContext } from "~/lib/auditContext";
 import { baseDb } from "~/lib/db";
-import {
-  describeInputError,
-  normalizeInputs,
-  validateCustomInputs,
-} from "~/lib/execution/inputs";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { isUniqueConstraintError } from "~/lib/utils/errors";
 import { SYNTHETIC_TASK_ID } from "~/lib/webhooks/adapters/clickup";
 import { SYNTHETIC_ISSUE_KEY } from "~/lib/webhooks/adapters/jira";
+import {
+  DEFAULT_REPOSITORY_TRIGGERS,
+  REPOSITORY_TRIGGERS,
+} from "~/lib/webhooks/actions/schemas";
 import { canManageWebhookConfig } from "~/lib/webhooks/auth";
 import { webhookEvents } from "~/lib/webhooks/events";
 import { redactToken } from "~/lib/webhooks/redaction";
@@ -694,6 +689,16 @@ export async function createOrRotateInboundWebhook(input: {
               secret: encryptedSecret,
               isActive: true,
               externalWebhookId,
+              actions: {
+                create: [
+                  {
+                    project: { connect: { id: projectId } },
+                    order: 0,
+                    trigger: "ISSUE_EVENT",
+                    action: "IMPORT_ISSUE",
+                  },
+                ],
+              },
             },
             select: { id: true },
           });
@@ -2169,14 +2174,16 @@ export async function createOrRotateCodeRepositoryWebhook(input: {
   projectId: number;
   codeRepositoryConfigId: number;
   secretInput?: AdapterSecretInput;
-  /** Events to handle on create; a rotation keeps the existing ones. */
-  subscribedEvents?: string[];
+  /** Events that get a Create test run rule on create; a rotation keeps the rules. */
+  triggers?: WebhookActionTrigger[];
   /** Branch pushes compare against on create; empty = connection branch. */
   baseBranch?: string | null;
 }): Promise<CreateOrRotateResult> {
   const { projectId, codeRepositoryConfigId, secretInput } = input;
-  const subscribedEvents = filterCodeEvents(
-    input.subscribedEvents ?? [...CODE_EVENT_DEFAULTS]
+  const triggers = (
+    REPOSITORY_TRIGGERS as readonly WebhookActionTrigger[]
+  ).filter((trigger) =>
+    (input.triggers ?? DEFAULT_REPOSITORY_TRIGGERS).includes(trigger)
   );
   const baseBranch = normalizeBranch(input.baseBranch);
   const session = await getServerAuthSession();
@@ -2274,8 +2281,15 @@ export async function createOrRotateCodeRepositoryWebhook(input: {
               secret: encryptedSecret,
               isActive: true,
               codeRepositoryConfigId,
-              subscribedEvents,
               baseBranch,
+              actions: {
+                create: triggers.map((trigger, index) => ({
+                  project: { connect: { id: projectId } },
+                  order: index,
+                  trigger,
+                  action: "CREATE_RUN" as const,
+                })),
+              },
             },
             select: { id: true },
           });
@@ -2301,60 +2315,18 @@ export async function createOrRotateCodeRepositoryWebhook(input: {
   );
 }
 
-function filterCodeEvents(events: string[]): string[] {
-  return events.filter((event) =>
-    (CODE_REPOSITORY_WEBHOOK_EVENTS as readonly string[]).includes(event)
-  );
-}
-
 function normalizeBranch(branch: string | null | undefined): string | null {
   const trimmed = branch?.trim() ?? "";
   return trimmed.length > 0 ? trimmed.slice(0, 255) : null;
 }
 
-/** A webhook's minimum score: a whole number from 0 to 100, or null for the default tiers. */
-function normalizeMinScore(
-  value: number | null | undefined
-): number | null | "invalid" {
-  if (value === null || value === undefined) return null;
-  if (!Number.isInteger(value) || value < 0 || value > 100) return "invalid";
-  return value;
-}
-
-/**
- * Change which events a repository webhook handles, which branch its pushes
- * compare against, and the minimum score its composed runs take cases from.
- * A field left out stays as it is.
- */
-export async function updateCodeRepositoryWebhookEvents(input: {
+/** Change which branch a repository webhook's pushes compare against. */
+export async function updateCodeRepositoryWebhookBaseBranch(input: {
   projectId: number;
   webhookConfigId: string;
-  subscribedEvents?: string[];
-  baseBranch?: string | null;
-  autoRunMinScore?: number | null;
+  baseBranch: string | null;
 }): Promise<{ success: boolean; error?: string }> {
   const { projectId, webhookConfigId } = input;
-  const data: {
-    subscribedEvents?: string[];
-    baseBranch?: string | null;
-    autoRunMinScore?: number | null;
-  } = {};
-  if (input.subscribedEvents) {
-    data.subscribedEvents = filterCodeEvents(input.subscribedEvents);
-  }
-  if ("baseBranch" in input) {
-    data.baseBranch = normalizeBranch(input.baseBranch);
-  }
-  if ("autoRunMinScore" in input) {
-    const minScore = normalizeMinScore(input.autoRunMinScore);
-    if (minScore === "invalid") {
-      return {
-        success: false,
-        error: "Minimum score must be a whole number from 0 to 100",
-      };
-    }
-    data.autoRunMinScore = minScore;
-  }
   const session = await getServerAuthSession();
   if (!session?.user) {
     return { success: false, error: "Unauthorized" };
@@ -2384,102 +2356,14 @@ export async function updateCodeRepositoryWebhookEvents(input: {
             direction: "INBOUND",
             codeRepositoryConfigId: { not: null },
           },
-          data,
+          data: { baseBranch: normalizeBranch(input.baseBranch) },
         });
         if (updated.count === 0) {
           return { success: false, error: "Webhook not found" };
         }
         return { success: true };
       } catch (err) {
-        console.error("[webhook-config] event update failed", err);
-        return { success: false, error: "Failed to update webhook" };
-      }
-    }
-  );
-}
-
-/**
- * Turn a repository webhook's automated execution on or off and choose what
- * it requests: the target, the ref (empty = the target's default) and the
- * target's parameter inputs. Turning it on needs a live, enabled target of
- * the project; the choices are kept when it is turned off.
- */
-export async function updateCodeRepositoryWebhookAutoExecute(input: {
-  projectId: number;
-  webhookConfigId: string;
-  enabled: boolean;
-  targetId: number | null;
-  ref?: string | null;
-  inputs?: Record<string, string>;
-}): Promise<{ success: boolean; error?: string }> {
-  const { projectId, webhookConfigId, enabled } = input;
-  const targetId =
-    typeof input.targetId === "number" &&
-    Number.isInteger(input.targetId) &&
-    input.targetId > 0
-      ? input.targetId
-      : null;
-  if (enabled && targetId === null) {
-    return { success: false, error: "Choose an execution target" };
-  }
-  const inputError = validateCustomInputs(input.inputs);
-  if (inputError) {
-    return { success: false, error: describeInputError(inputError) };
-  }
-  const session = await getServerAuthSession();
-  if (!session?.user) {
-    return { success: false, error: "Unauthorized" };
-  }
-  return runWithAuditContext(
-    {
-      userId: session.user.id,
-      userName: session.user.name ?? undefined,
-      userEmail: session.user.email ?? undefined,
-    },
-    async () => {
-      let authorized: boolean;
-      try {
-        authorized = await canManageWebhookConfig(session, projectId);
-      } catch (err) {
-        console.error("[webhook-config] auth check failed", err);
-        return { success: false, error: "Failed to update webhook" };
-      }
-      if (!authorized) {
-        return { success: false, error: "Forbidden" };
-      }
-      try {
-        if (enabled && targetId !== null) {
-          const target = await baseDb.executionTarget.findFirst({
-            where: { id: targetId, projectId, isDeleted: false },
-            select: { isEnabled: true },
-          });
-          if (!target) {
-            return { success: false, error: "Execution target not found" };
-          }
-          if (!target.isEnabled) {
-            return { success: false, error: "Execution target is disabled" };
-          }
-        }
-        const updated = await baseDb.webhookConfig.updateMany({
-          where: {
-            id: webhookConfigId,
-            projectId,
-            direction: "INBOUND",
-            codeRepositoryConfigId: { not: null },
-          },
-          data: {
-            autoExecuteEnabled: enabled,
-            autoExecuteTargetId: targetId,
-            autoExecuteRef: normalizeBranch(input.ref),
-            autoExecuteInputs: normalizeInputs(input.inputs),
-          },
-        });
-        if (updated.count === 0) {
-          return { success: false, error: "Webhook not found" };
-        }
-        return { success: true };
-      } catch (err) {
-        console.error("[webhook-config] auto-execute update failed", err);
+        console.error("[webhook-config] base branch update failed", err);
         return { success: false, error: "Failed to update webhook" };
       }
     }

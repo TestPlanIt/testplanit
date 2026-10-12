@@ -95,13 +95,7 @@ interface InboundConfig {
   lastFailureAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
-  subscribedEvents: string[];
   baseBranch: string | null;
-  autoExecuteEnabled: boolean;
-  autoExecuteTargetId: number | null;
-  autoExecuteRef: string | null;
-  autoExecuteInputs: unknown;
-  autoRunMinScore: number | null;
   codeRepositoryConfigId: number | null;
   codeRepositoryConfig: RepositoryWebhookRow["codeRepositoryConfig"] | null;
 }
@@ -163,13 +157,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
       lastFailureAt: true,
       createdAt: true,
       updatedAt: true,
-      subscribedEvents: true,
       baseBranch: true,
-      autoExecuteEnabled: true,
-      autoExecuteTargetId: true,
-      autoExecuteRef: true,
-      autoExecuteInputs: true,
-      autoRunMinScore: true,
       codeRepositoryConfigId: true,
       codeRepositoryConfig: {
         select: {
@@ -730,13 +718,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
             adapterType:
               config.adapterType as RepositoryWebhookRow["adapterType"],
             isActive: config.isActive,
-            subscribedEvents: config.subscribedEvents,
             baseBranch: config.baseBranch ?? null,
-            autoExecuteEnabled: config.autoExecuteEnabled,
-            autoExecuteTargetId: config.autoExecuteTargetId,
-            autoExecuteRef: config.autoExecuteRef,
-            autoExecuteInputs: config.autoExecuteInputs,
-            autoRunMinScore: config.autoRunMinScore ?? null,
             endpointHealth: config.endpointHealth,
             lastReceivedAt: config.lastReceivedAt,
             codeRepositoryConfig: config.codeRepositoryConfig,

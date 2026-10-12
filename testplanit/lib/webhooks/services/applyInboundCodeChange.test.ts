@@ -12,11 +12,16 @@ const { db, tx } = vi.hoisted(() => {
     ),
     webhookDelivery: { update: vi.fn() },
     projects: { findUnique: vi.fn() },
+    webhookAction: { findMany: vi.fn() },
   };
   return { db, tx };
 });
 vi.mock("~/lib/db", () => ({ baseDb: db }));
 vi.mock("~/lib/multiTenantDb", () => ({ getCurrentTenantId: () => undefined }));
+const mockActorId = vi.fn(async () => "system-automation-user");
+vi.mock("~/lib/webhooks/actions/actor", () => ({
+  webhookActorId: (...args: unknown[]) => mockActorId(...(args as [])),
+}));
 vi.mock("~/lib/queues", () => ({
   getImpactAnalysisQueue: () => ({ add: vi.fn() }),
 }));
@@ -35,17 +40,35 @@ const SHA_A = "a".repeat(40);
 const SHA_B = "b".repeat(40);
 const SHA_M = "c".repeat(40);
 
+type Rule = {
+  id: string;
+  trigger: string;
+  action?: string;
+  isEnabled?: boolean;
+  options?: unknown;
+};
+let rules: Rule[] = [];
+
+/** The webhook's rules: enabled Create test run rules, one per trigger by default. */
+function setRules(triggers: string[]) {
+  rules = triggers.map((trigger, i) => ({
+    id: `act-${i + 1}`,
+    trigger,
+    options: {},
+  }));
+}
+
 function makeInput(
   eventType: string,
   data: unknown,
-  events = ["code:pull_request", "code:push"],
+  triggers: string[] | null = ["CODE_PULL_REQUEST", "CODE_PUSH"],
   baseBranch: string | null = null
 ) {
+  if (triggers) setRules(triggers);
   return {
     webhookConfigId: "whc-1",
     projectId: 3,
     codeRepositoryConfigId: 9,
-    subscribedEvents: events,
     baseBranch,
     adapterType: "GITHUB" as const,
     eventType,
@@ -89,6 +112,17 @@ describe("applyInboundCodeChange", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.spyOn(console, "error").mockImplementation(() => {});
+    rules = [];
+    db.webhookAction.findMany.mockImplementation(async ({ where }: any) =>
+      rules
+        .filter(
+          (r) =>
+            (r.isEnabled ?? true) === where.isEnabled &&
+            (r.action ?? "CREATE_RUN") === where.action &&
+            where.trigger.in.includes(r.trigger)
+        )
+        .map(({ id, trigger, options }) => ({ id, trigger, options }))
+    );
     tx.webhookDelivery.create.mockResolvedValue({ id: "del-1" });
     tx.webhookDelivery.update.mockResolvedValue({});
     tx.webhookConfig.update.mockResolvedValue({});
@@ -135,7 +169,7 @@ describe("applyInboundCodeChange", () => {
         projectId: 3,
         base: SHA_M,
         head: SHA_B,
-        createdById: "owner-1",
+        createdById: "system-automation-user",
         trigger: "pull_request",
         triggerLabel: "PR #12: Fix checkout",
         triggerUrl: "https://github.com/acme/app/pull/12",
@@ -157,6 +191,7 @@ describe("applyInboundCodeChange", () => {
         }),
       })
     );
+    expect(mockActorId).toHaveBeenCalledWith(db, "owner-1");
   });
 
   it("falls back to the target sha when the provider has no merge base", async () => {
@@ -209,29 +244,105 @@ describe("applyInboundCodeChange", () => {
     );
   });
 
-  it("hands the webhook's minimum score to the run the analysis composes", async () => {
-    await applyInboundCodeChange({
-      ...makeInput("pull_request", prPayload),
-      autoRunMinScore: 70,
-    });
-    expect(startImpactAnalysis).toHaveBeenLastCalledWith(
-      db,
-      expect.anything(),
-      expect.anything(),
-      expect.objectContaining({
-        autoRun: expect.objectContaining({ minScore: 70 }),
-      })
-    );
+  it("hands each matching rule's minimum score and execution to the analysis, one run each", async () => {
+    rules = [
+      { id: "act-1", trigger: "CODE_PULL_REQUEST", options: { minScore: 70 } },
+      {
+        id: "act-2",
+        trigger: "CODE_PULL_REQUEST",
+        options: { autoExecute: { targetId: 4, ref: "main" } },
+      },
+      { id: "act-3", trigger: "CODE_PUSH", options: { minScore: 10 } },
+      {
+        id: "act-4",
+        trigger: "CODE_PULL_REQUEST",
+        options: { minScore: "bad" },
+      },
+    ];
+    await applyInboundCodeChange(makeInput("pull_request", prPayload, null));
 
-    await applyInboundCodeChange(makeInput("pull_request", prPayload));
-    expect(startImpactAnalysis).toHaveBeenLastCalledWith(
-      db,
-      expect.anything(),
-      expect.anything(),
-      expect.objectContaining({
-        autoRun: expect.objectContaining({ minScore: null }),
-      })
+    expect(db.webhookAction.findMany).toHaveBeenCalledWith({
+      where: {
+        webhookConfigId: "whc-1",
+        isEnabled: true,
+        action: "CREATE_RUN",
+        trigger: { in: ["CODE_PULL_REQUEST"] },
+      },
+      orderBy: [{ order: "asc" }, { createdAt: "asc" }],
+      select: { id: true, trigger: true, options: true },
+    });
+    const autoRun = (startImpactAnalysis as any).mock.calls[0][3].autoRun;
+    expect(autoRun.webhookConfigId).toBe("whc-1");
+    expect(autoRun.minScore).toBeUndefined();
+    expect(autoRun.actions).toEqual([
+      {
+        actionId: "act-1",
+        trigger: "CODE_PULL_REQUEST",
+        branch: null,
+        minScore: 70,
+        autoExecute: null,
+      },
+      {
+        actionId: "act-2",
+        trigger: "CODE_PULL_REQUEST",
+        branch: null,
+        minScore: null,
+        autoExecute: { targetId: 4, ref: "main" },
+      },
+      // unreadable options act with none
+      {
+        actionId: "act-4",
+        trigger: "CODE_PULL_REQUEST",
+        branch: null,
+        minScore: null,
+        autoExecute: null,
+      },
+    ]);
+  });
+
+  it("hands only the rules for the push's own trigger", async () => {
+    rules = [
+      { id: "act-1", trigger: "CODE_PUSH" },
+      { id: "act-2", trigger: "CODE_BRANCH_PUSH" },
+    ];
+    await applyInboundCodeChange(makeInput("push", pushPayload("main"), null));
+    expect(
+      (startImpactAnalysis as any).mock.calls[0][3].autoRun.actions
+    ).toEqual([
+      {
+        actionId: "act-1",
+        trigger: "CODE_PUSH",
+        branch: "main",
+        minScore: null,
+        autoExecute: null,
+      },
+    ]);
+
+    await applyInboundCodeChange(
+      makeInput("push", pushPayload("feature"), null)
     );
+    expect(
+      (startImpactAnalysis as any).mock.calls[1][3].autoRun.actions
+    ).toEqual([
+      {
+        actionId: "act-2",
+        trigger: "CODE_BRANCH_PUSH",
+        branch: "feature",
+        minScore: null,
+        autoExecute: null,
+      },
+    ]);
+  });
+
+  it("ignores the event when its only rules are disabled or not Create test run", async () => {
+    rules = [
+      { id: "act-1", trigger: "CODE_PULL_REQUEST", isEnabled: false },
+      { id: "act-2", trigger: "CODE_PULL_REQUEST", action: "DRAFT_CASES" },
+    ];
+    expect(
+      await applyInboundCodeChange(makeInput("pull_request", prPayload, null))
+    ).toMatchObject({ outcome: "ignored", reason: "event_disabled" });
+    expect(startImpactAnalysis).not.toHaveBeenCalled();
   });
 
   it("compares before with after for a push to the connection's branch", async () => {
@@ -269,8 +380,8 @@ describe("applyInboundCodeChange", () => {
     expect(
       await applyInboundCodeChange(
         makeInput("push", pushPayload("feature"), [
-          "code:push",
-          "code:branch_push",
+          "CODE_PUSH",
+          "CODE_BRANCH_PUSH",
         ])
       )
     ).toMatchObject({ outcome: "queued" });
@@ -283,7 +394,7 @@ describe("applyInboundCodeChange", () => {
     // Without a merge base the branch name itself is the base.
     adapter.getMergeBase.mockRejectedValueOnce(new Error("unsupported"));
     await applyInboundCodeChange(
-      makeInput("push", pushPayload("feature"), ["code:branch_push"], "release")
+      makeInput("push", pushPayload("feature"), ["CODE_BRANCH_PUSH"], "release")
     );
     expect((startImpactAnalysis as any).mock.calls[1][3]).toMatchObject({
       base: "release",
@@ -293,7 +404,7 @@ describe("applyInboundCodeChange", () => {
     // Branch pushes alone do not cover the base branch itself.
     expect(
       await applyInboundCodeChange(
-        makeInput("push", pushPayload("main"), ["code:branch_push"])
+        makeInput("push", pushPayload("main"), ["CODE_BRANCH_PUSH"])
       )
     ).toMatchObject({ outcome: "ignored", reason: "event_disabled" });
   });
@@ -347,7 +458,7 @@ describe("applyInboundCodeChange", () => {
   it("ignores an event the webhook has switched off, and a project with Impact off", async () => {
     expect(
       await applyInboundCodeChange(
-        makeInput("push", pushPayload("main"), ["code:pull_request"])
+        makeInput("push", pushPayload("main"), ["CODE_PULL_REQUEST"])
       )
     ).toMatchObject({ outcome: "ignored", reason: "event_disabled" });
     db.projects.findUnique.mockResolvedValue({

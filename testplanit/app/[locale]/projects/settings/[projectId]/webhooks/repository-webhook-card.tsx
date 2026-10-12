@@ -45,13 +45,8 @@ import {
   deleteInboundWebhook,
   sendTestWebhook,
   setWebhookActive,
-  updateCodeRepositoryWebhookEvents,
+  updateCodeRepositoryWebhookBaseBranch,
 } from "~/app/actions/webhook-config";
-import {
-  CODE_EVENT_BRANCH_PUSH,
-  CODE_EVENT_PULL_REQUEST,
-  CODE_EVENT_PUSH,
-} from "~/lib/webhooks/codeChangeEvents";
 import { redactWebhookUrl } from "~/lib/webhooks/redaction";
 import type { AdapterType } from "~/zenstack/models";
 import {
@@ -60,21 +55,14 @@ import {
   healthBadgeVariant,
   type EndpointHealth,
 } from "./inbound-adapters";
-import { RepositoryWebhookAutoExecute } from "./repository-webhook-auto-execute";
+import { WebhookActionsSection } from "./webhook-actions-section";
 
 export interface RepositoryWebhookRow {
   id: string;
   token: string;
   adapterType: AdapterType;
   isActive: boolean;
-  subscribedEvents: string[];
   baseBranch: string | null;
-  autoExecuteEnabled: boolean;
-  autoExecuteTargetId: number | null;
-  autoExecuteRef: string | null;
-  autoExecuteInputs: unknown;
-  /** Score the composed run takes cases from; null = the pinned and affected tiers. */
-  autoRunMinScore: number | null;
   endpointHealth: EndpointHealth;
   lastReceivedAt: Date | string | null;
   codeRepositoryConfig: {
@@ -98,8 +86,8 @@ interface Revealed {
 
 /**
  * One inbound webhook bound to an Impact repository connection. The
- * repository's pull requests and pushes start analyses; the switches turn
- * each event on or off, and rotation hands out a fresh URL and secret.
+ * repository's pull requests and pushes start analyses for the webhook's
+ * Create test run actions; rotation hands out a fresh URL and secret.
  */
 export function RepositoryWebhookCard({
   projectId,
@@ -110,7 +98,6 @@ export function RepositoryWebhookCard({
   const tActions = useTranslations("common.actions");
   const tCommon = useTranslations("common");
   const tAutomation = useTranslations("automation.settings");
-  const tImpact = useTranslations("runs.impact.affected");
   const { data: session } = useSession();
   const preferences = session?.user?.preferences;
   const dateTimeFormat = preferences?.dateFormat
@@ -122,9 +109,6 @@ export function RepositoryWebhookCard({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [baseBranchDraft, setBaseBranchDraft] = useState(hook.baseBranch ?? "");
-  const [minScoreDraft, setMinScoreDraft] = useState(
-    hook.autoRunMinScore === null ? "" : String(hook.autoRunMinScore)
-  );
   const [testPending, setTestPending] = useState(false);
   const [testResult, setTestResult] = useState<SendTestWebhookResult | null>(
     null
@@ -132,17 +116,8 @@ export function RepositoryWebhookCard({
 
   const connection = hook.codeRepositoryConfig;
   const origin = typeof window !== "undefined" ? window.location.origin : "";
-  const pullRequestsOn = hook.subscribedEvents.includes(
-    CODE_EVENT_PULL_REQUEST
-  );
-  const pushesOn = hook.subscribedEvents.includes(CODE_EVENT_PUSH);
-  const branchPushesOn = hook.subscribedEvents.includes(CODE_EVENT_BRANCH_PUSH);
-  const effectiveBranch =
-    baseBranchDraft.trim() || hook.baseBranch || connection.branch || null;
+  const effectiveBranch = hook.baseBranch || connection.branch || null;
   const baseBranchDirty = baseBranchDraft.trim() !== (hook.baseBranch ?? "");
-  const minScoreDirty =
-    minScoreDraft.trim() !==
-    (hook.autoRunMinScore === null ? "" : String(hook.autoRunMinScore));
   const setupKey = REPOSITORY_SETUP_KEY[hook.adapterType];
 
   async function copy(value: string, message: string) {
@@ -154,49 +129,11 @@ export function RepositoryWebhookCard({
     }
   }
 
-  async function toggleEvent(event: string, on: boolean) {
-    const next = on
-      ? [...new Set([...hook.subscribedEvents, event])]
-      : hook.subscribedEvents.filter((item) => item !== event);
-    const result = await updateCodeRepositoryWebhookEvents({
-      projectId,
-      webhookConfigId: hook.id,
-      subscribedEvents: next,
-    });
-    if (!result.success) {
-      toast.error(result.error ?? t("saveError"));
-      return;
-    }
-    await onChanged();
-  }
-
   async function saveBaseBranch() {
-    const result = await updateCodeRepositoryWebhookEvents({
+    const result = await updateCodeRepositoryWebhookBaseBranch({
       projectId,
       webhookConfigId: hook.id,
       baseBranch: baseBranchDraft.trim() || null,
-    });
-    if (!result.success) {
-      toast.error(result.error ?? t("saveError"));
-      return;
-    }
-    await onChanged();
-  }
-
-  async function saveMinScore() {
-    const trimmed = minScoreDraft.trim();
-    const parsed = trimmed === "" ? null : Number(trimmed);
-    if (
-      parsed !== null &&
-      (!Number.isInteger(parsed) || parsed < 0 || parsed > 100)
-    ) {
-      toast.error(t("codeRepos.minScoreInvalid"));
-      return;
-    }
-    const result = await updateCodeRepositoryWebhookEvents({
-      projectId,
-      webhookConfigId: hook.id,
-      autoRunMinScore: parsed,
     });
     if (!result.success) {
       toast.error(result.error ?? t("saveError"));
@@ -442,105 +379,16 @@ export function RepositoryWebhookCard({
                   {t("codeRepos.baseBranchHelp")}
                 </p>
               </div>
-              <div className="space-y-1">
-                <Label htmlFor={`webhook-repository-min-score-${hook.id}`}>
-                  {tImpact("minScore")}
-                </Label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    id={`webhook-repository-min-score-${hook.id}`}
-                    type="number"
-                    inputMode="numeric"
-                    min={0}
-                    max={100}
-                    step={1}
-                    className="w-28"
-                    data-testid="webhook-repository-min-score"
-                    value={minScoreDraft}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      setMinScoreDraft(e.target.value)
-                    }
-                    placeholder={tCommon("fields.default")}
-                  />
-                  {minScoreDirty && (
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={() => void saveMinScore()}
-                      data-testid="webhook-repository-min-score-save"
-                    >
-                      <Save className="h-4 w-4" />
-                      <span>{tActions("save")}</span>
-                    </Button>
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {t("codeRepos.minScoreHelp")}
-                </p>
-              </div>
-              <Label className="flex items-start gap-3">
-                <Switch
-                  checked={pullRequestsOn}
-                  onCheckedChange={(on) =>
-                    void toggleEvent(CODE_EVENT_PULL_REQUEST, on)
-                  }
-                  data-testid="webhook-repository-event-pull-request"
-                />
-                <span className="space-y-0.5">
-                  <span className="block font-medium">
-                    {t("codeRepos.eventPullRequest")}
-                  </span>
-                  <span className="block text-xs text-muted-foreground">
-                    {t("codeRepos.eventPullRequestHelp")}
-                  </span>
-                </span>
-              </Label>
-              <Label className="flex items-start gap-3">
-                <Switch
-                  checked={pushesOn}
-                  onCheckedChange={(on) =>
-                    void toggleEvent(CODE_EVENT_PUSH, on)
-                  }
-                  data-testid="webhook-repository-event-push"
-                />
-                <span className="space-y-0.5">
-                  <span className="block font-medium">
-                    {effectiveBranch
-                      ? t("codeRepos.eventPush", { branch: effectiveBranch })
-                      : t("codeRepos.eventPushDefault")}
-                  </span>
-                  <span className="block text-xs text-muted-foreground">
-                    {t("codeRepos.eventPushHelp")}
-                  </span>
-                </span>
-              </Label>
-              <Label className="flex items-start gap-3">
-                <Switch
-                  checked={branchPushesOn}
-                  onCheckedChange={(on) =>
-                    void toggleEvent(CODE_EVENT_BRANCH_PUSH, on)
-                  }
-                  data-testid="webhook-repository-event-branch-push"
-                />
-                <span className="space-y-0.5">
-                  <span className="block font-medium">
-                    {t("codeRepos.eventBranchPush")}
-                  </span>
-                  <span className="block text-xs text-muted-foreground">
-                    {t("codeRepos.eventBranchPushHelp")}
-                  </span>
-                </span>
-              </Label>
             </div>
           </div>
         )}
 
         {!revealed && (
-          <RepositoryWebhookAutoExecute
+          <WebhookActionsSection
             projectId={projectId}
             webhookConfigId={hook.id}
-            settings={hook}
-            onChanged={onChanged}
+            source="repository"
+            baseBranch={effectiveBranch}
           />
         )}
 

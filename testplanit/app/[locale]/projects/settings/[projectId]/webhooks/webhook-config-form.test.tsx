@@ -52,8 +52,14 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
 
 // The wizard has its own suite; here it is a probe that records its props
 // and lets a test fire `onCreated`.
-vi.mock("./repository-webhook-auto-execute", () => ({
-  RepositoryWebhookAutoExecute: () => null,
+vi.mock("./webhook-actions-section", () => ({
+  WebhookActionsSection: (props: any) => (
+    <div
+      data-testid="webhook-actions-section"
+      data-webhook={props.webhookConfigId}
+      data-source={props.source}
+    />
+  ),
 }));
 vi.mock("./inbound-webhook-wizard", () => ({
   InboundWebhookWizard: (props: any) => {
@@ -395,7 +401,6 @@ const repositoryConfig = {
   ...githubConfig,
   id: "cfg-repo",
   token: "whk_" + "d".repeat(64),
-  subscribedEvents: ["code:pull_request", "code:push"],
   baseBranch: null,
   codeRepositoryConfigId: 9,
   codeRepositoryConfig: {
@@ -517,7 +522,7 @@ describe("WebhookConfigForm (multi-adapter)", () => {
     });
   });
 
-  it("Test 3a: a repository-bound webhook renders as a repository card with its event switches", () => {
+  it("Test 3a: a repository-bound webhook renders as a repository card with its rules", () => {
     setConfigs([jiraConfig, repositoryConfig]);
     mockFindManyConnections.mockReturnValue({
       data: [
@@ -533,9 +538,18 @@ describe("WebhookConfigForm (multi-adapter)", () => {
     expect(screen.getByTestId("webhook-inbound-card-jira")).toBeInTheDocument();
     const repoCard = screen.getByTestId("webhook-inbound-card-repository-9");
     expect(repoCard).toHaveTextContent("acme/app");
-    expect(
-      within(repoCard).getByTestId("webhook-repository-event-pull-request")
-    ).toBeChecked();
+    const section = within(repoCard).getByTestId("webhook-actions-section");
+    expect(section).toHaveAttribute("data-webhook", "cfg-repo");
+    expect(section).toHaveAttribute("data-source", "repository");
+    const select = mockFindManyWebhookConfig.mock.calls.at(-1)![0].select;
+    for (const removed of [
+      "subscribedEvents",
+      "autoRunMinScore",
+      "autoExecuteEnabled",
+      "autoExecuteTargetId",
+    ]) {
+      expect(select).not.toHaveProperty(removed);
+    }
     expect(
       screen.queryByTestId("webhook-inbound-card-github")
     ).not.toBeInTheDocument();

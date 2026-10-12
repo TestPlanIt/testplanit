@@ -26,7 +26,6 @@ const mockAuditLogFindMany = vi.fn();
 const mockProjectIntegrationFindFirst = vi.fn();
 const mockUserIntegrationAuthFindFirst = vi.fn();
 const mockTransaction = vi.fn();
-const mockExecutionTargetFindFirst = vi.fn();
 vi.mock("~/lib/db", () => ({
   baseDb: {
     projectIntegration: {
@@ -36,9 +35,6 @@ vi.mock("~/lib/db", () => ({
     userIntegrationAuth: {
       findFirst: (...args: unknown[]) =>
         mockUserIntegrationAuthFindFirst(...args),
-    },
-    executionTarget: {
-      findFirst: (...args: unknown[]) => mockExecutionTargetFindFirst(...args),
     },
     webhookConfig: {
       findFirst: (...args: unknown[]) => mockWebhookConfigFindFirst(...args),
@@ -142,8 +138,7 @@ import {
   deleteInboundWebhook,
   deleteJiraWebhook,
   sendTestWebhook,
-  updateCodeRepositoryWebhookAutoExecute,
-  updateCodeRepositoryWebhookEvents,
+  updateCodeRepositoryWebhookBaseBranch,
 } from "./webhook-config";
 
 // The byte-identical synthetic payload literal — copy of the constant in the
@@ -386,6 +381,16 @@ describe("webhook-config server actions", () => {
           isActive: true,
           token: expect.stringMatching(/^whk_[0-9a-f]{64}$/),
           secret: `enc:${result.secret}`,
+          actions: {
+            create: [
+              {
+                project: { connect: { id: 42 } },
+                order: 0,
+                trigger: "ISSUE_EVENT",
+                action: "IMPORT_ISSUE",
+              },
+            ],
+          },
         }),
         select: { id: true },
       });
@@ -2675,14 +2680,29 @@ describe("webhook-config server actions", () => {
           direction: "INBOUND",
           isActive: true,
           codeRepositoryConfigId: 9,
-          subscribedEvents: ["code:pull_request", "code:push"],
+          actions: {
+            create: [
+              {
+                project: { connect: { id: 42 } },
+                order: 0,
+                trigger: "CODE_PULL_REQUEST",
+                action: "CREATE_RUN",
+              },
+              {
+                project: { connect: { id: 42 } },
+                order: 1,
+                trigger: "CODE_PUSH",
+                action: "CREATE_RUN",
+              },
+            ],
+          },
           secret: `enc:${result.secret}`,
         }),
         select: { id: true },
       });
     });
 
-    it("stores the chosen events and a trimmed base branch on create", async () => {
+    it("creates a Create test run rule for each chosen event, in trigger order, and a trimmed base branch", async () => {
       mockProjectCodeRepositoryConfigFindFirst.mockResolvedValueOnce({
         id: 9,
         repository: { provider: "GITHUB" },
@@ -2693,13 +2713,28 @@ describe("webhook-config server actions", () => {
       await createOrRotateCodeRepositoryWebhook({
         projectId: 42,
         codeRepositoryConfigId: 9,
-        subscribedEvents: ["code:branch_push", "jira:issue_updated"],
+        triggers: ["CODE_BRANCH_PUSH", "ISSUE_EVENT", "CODE_PULL_REQUEST"],
         baseBranch: "  develop ",
       });
 
       expect(mockWebhookConfigCreate).toHaveBeenCalledWith({
         data: expect.objectContaining({
-          subscribedEvents: ["code:branch_push"],
+          actions: {
+            create: [
+              {
+                project: { connect: { id: 42 } },
+                order: 0,
+                trigger: "CODE_PULL_REQUEST",
+                action: "CREATE_RUN",
+              },
+              {
+                project: { connect: { id: 42 } },
+                order: 1,
+                trigger: "CODE_BRANCH_PUSH",
+                action: "CREATE_RUN",
+              },
+            ],
+          },
           baseBranch: "develop",
         }),
         select: { id: true },
@@ -2728,6 +2763,28 @@ describe("webhook-config server actions", () => {
           isActive: true,
         }),
         select: { id: true },
+      });
+      expect(
+        mockWebhookConfigUpdate.mock.calls[0][0].data.actions
+      ).toBeUndefined();
+    });
+
+    it("creates no rules when no events are chosen", async () => {
+      mockProjectCodeRepositoryConfigFindFirst.mockResolvedValueOnce({
+        id: 9,
+        repository: { provider: "GITHUB" },
+      });
+      mockWebhookConfigFindFirst.mockResolvedValueOnce(null);
+      mockWebhookConfigCreate.mockResolvedValueOnce({ id: "whc-3" });
+
+      await createOrRotateCodeRepositoryWebhook({
+        projectId: 42,
+        codeRepositoryConfigId: 9,
+        triggers: [],
+      });
+
+      expect(mockWebhookConfigCreate.mock.calls[0][0].data.actions).toEqual({
+        create: [],
       });
     });
 
@@ -2801,18 +2858,18 @@ describe("webhook-config server actions", () => {
     });
   });
 
-  describe("updateCodeRepositoryWebhookEvents", () => {
+  describe("updateCodeRepositoryWebhookBaseBranch", () => {
     beforeEach(() => {
       mockWebhookConfigUpdateMany.mockReset();
     });
 
-    it("stores only known code events on a repository-bound inbound webhook", async () => {
-      mockWebhookConfigUpdateMany.mockResolvedValueOnce({ count: 1 });
+    it("stores a trimmed base branch on a repository-bound inbound webhook, clearing it when blank", async () => {
+      mockWebhookConfigUpdateMany.mockResolvedValue({ count: 1 });
 
-      const result = await updateCodeRepositoryWebhookEvents({
+      const result = await updateCodeRepositoryWebhookBaseBranch({
         projectId: 42,
         webhookConfigId: "whc-1",
-        subscribedEvents: ["code:push", "jira:issue_updated"],
+        baseBranch: " release/1.1 ",
       });
 
       expect(result).toEqual({ success: true });
@@ -2823,23 +2880,10 @@ describe("webhook-config server actions", () => {
           direction: "INBOUND",
           codeRepositoryConfigId: { not: null },
         },
-        data: { subscribedEvents: ["code:push"] },
-      });
-    });
-
-    it("updates only the base branch when the events are left out, clearing it when blank", async () => {
-      mockWebhookConfigUpdateMany.mockResolvedValue({ count: 1 });
-
-      await updateCodeRepositoryWebhookEvents({
-        projectId: 42,
-        webhookConfigId: "whc-1",
-        baseBranch: " release/1.1 ",
-      });
-      expect(mockWebhookConfigUpdateMany.mock.calls[0][0].data).toEqual({
-        baseBranch: "release/1.1",
+        data: { baseBranch: "release/1.1" },
       });
 
-      await updateCodeRepositoryWebhookEvents({
+      await updateCodeRepositoryWebhookBaseBranch({
         projectId: 42,
         webhookConfigId: "whc-1",
         baseBranch: "",
@@ -2847,174 +2891,68 @@ describe("webhook-config server actions", () => {
       expect(mockWebhookConfigUpdateMany.mock.calls[1][0].data).toEqual({
         baseBranch: null,
       });
-    });
 
-    it("stores the minimum score, clears it with null, and rejects anything outside 0–100", async () => {
-      mockWebhookConfigUpdateMany.mockResolvedValue({ count: 1 });
-
-      await updateCodeRepositoryWebhookEvents({
+      await updateCodeRepositoryWebhookBaseBranch({
         projectId: 42,
         webhookConfigId: "whc-1",
-        autoRunMinScore: 70,
+        baseBranch: null,
       });
-      expect(mockWebhookConfigUpdateMany.mock.calls[0][0].data).toEqual({
-        autoRunMinScore: 70,
+      expect(mockWebhookConfigUpdateMany.mock.calls[2][0].data).toEqual({
+        baseBranch: null,
       });
-
-      await updateCodeRepositoryWebhookEvents({
-        projectId: 42,
-        webhookConfigId: "whc-1",
-        autoRunMinScore: null,
-      });
-      expect(mockWebhookConfigUpdateMany.mock.calls[1][0].data).toEqual({
-        autoRunMinScore: null,
-      });
-
-      for (const bad of [101, -1, 12.5, Number.NaN]) {
-        const result = await updateCodeRepositoryWebhookEvents({
-          projectId: 42,
-          webhookConfigId: "whc-1",
-          autoRunMinScore: bad,
-        });
-        expect(result).toEqual({
-          success: false,
-          error: "Minimum score must be a whole number from 0 to 100",
-        });
-      }
-      expect(mockWebhookConfigUpdateMany).toHaveBeenCalledTimes(2);
     });
 
     it("reports a webhook that is not one of the project's repository webhooks", async () => {
       mockWebhookConfigUpdateMany.mockResolvedValueOnce({ count: 0 });
 
-      const result = await updateCodeRepositoryWebhookEvents({
+      const result = await updateCodeRepositoryWebhookBaseBranch({
         projectId: 42,
         webhookConfigId: "whc-other",
-        subscribedEvents: [],
+        baseBranch: "main",
       });
 
       expect(result).toEqual({ success: false, error: "Webhook not found" });
     });
 
-    it("returns Forbidden without touching the database when not authorized", async () => {
-      mockCanManageWebhookConfig.mockResolvedValueOnce(false);
+    it("reports a failed write", async () => {
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      mockWebhookConfigUpdateMany.mockRejectedValueOnce(new Error("db"));
 
-      const result = await updateCodeRepositoryWebhookEvents({
+      const result = await updateCodeRepositoryWebhookBaseBranch({
         projectId: 42,
         webhookConfigId: "whc-1",
-        subscribedEvents: ["code:push"],
+        baseBranch: "main",
       });
 
-      expect(result).toEqual({ success: false, error: "Forbidden" });
+      expect(result).toEqual({
+        success: false,
+        error: "Failed to update webhook",
+      });
+    });
+
+    it("returns Unauthorized without a session", async () => {
+      mockGetServerAuthSession.mockResolvedValueOnce(null);
+
+      const result = await updateCodeRepositoryWebhookBaseBranch({
+        projectId: 42,
+        webhookConfigId: "whc-1",
+        baseBranch: "main",
+      });
+
+      expect(result).toEqual({ success: false, error: "Unauthorized" });
       expect(mockWebhookConfigUpdateMany).not.toHaveBeenCalled();
-    });
-  });
-
-  describe("updateCodeRepositoryWebhookAutoExecute", () => {
-    beforeEach(() => {
-      mockWebhookConfigUpdateMany.mockReset();
-      mockExecutionTargetFindFirst.mockReset();
-    });
-
-    it("saves the target, ref and inputs after checking the target is the project's and enabled", async () => {
-      mockExecutionTargetFindFirst.mockResolvedValueOnce({ isEnabled: true });
-      mockWebhookConfigUpdateMany.mockResolvedValueOnce({ count: 1 });
-
-      const result = await updateCodeRepositoryWebhookAutoExecute({
-        projectId: 42,
-        webhookConfigId: "whc-1",
-        enabled: true,
-        targetId: 4,
-        ref: " main ",
-        inputs: { browser: "chrome" },
-      });
-
-      expect(result).toEqual({ success: true });
-      expect(mockExecutionTargetFindFirst).toHaveBeenCalledWith({
-        where: { id: 4, projectId: 42, isDeleted: false },
-        select: { isEnabled: true },
-      });
-      expect(mockWebhookConfigUpdateMany).toHaveBeenCalledWith({
-        where: {
-          id: "whc-1",
-          projectId: 42,
-          direction: "INBOUND",
-          codeRepositoryConfigId: { not: null },
-        },
-        data: {
-          autoExecuteEnabled: true,
-          autoExecuteTargetId: 4,
-          autoExecuteRef: "main",
-          autoExecuteInputs: { browser: "chrome" },
-        },
-      });
-    });
-
-    it("refuses to turn it on without a target", async () => {
-      const result = await updateCodeRepositoryWebhookAutoExecute({
-        projectId: 42,
-        webhookConfigId: "whc-1",
-        enabled: true,
-        targetId: null,
-      });
-
-      expect(result.success).toBe(false);
-      expect(mockWebhookConfigUpdateMany).not.toHaveBeenCalled();
-    });
-
-    it.each([
-      [null, "Execution target not found"],
-      [{ isEnabled: false }, "Execution target is disabled"],
-    ])(
-      "refuses a target that is deleted, foreign or disabled (%o)",
-      async (target, error) => {
-        mockExecutionTargetFindFirst.mockResolvedValueOnce(target);
-
-        const result = await updateCodeRepositoryWebhookAutoExecute({
-          projectId: 42,
-          webhookConfigId: "whc-1",
-          enabled: true,
-          targetId: 4,
-        });
-
-        expect(result).toEqual({ success: false, error });
-        expect(mockWebhookConfigUpdateMany).not.toHaveBeenCalled();
-      }
-    );
-
-    it("turns it off keeping the choices, without checking the target", async () => {
-      mockWebhookConfigUpdateMany.mockResolvedValueOnce({ count: 1 });
-
-      const result = await updateCodeRepositoryWebhookAutoExecute({
-        projectId: 42,
-        webhookConfigId: "whc-1",
-        enabled: false,
-        targetId: 4,
-        ref: "",
-      });
-
-      expect(result).toEqual({ success: true });
-      expect(mockExecutionTargetFindFirst).not.toHaveBeenCalled();
-      expect(mockWebhookConfigUpdateMany.mock.calls[0][0].data).toEqual({
-        autoExecuteEnabled: false,
-        autoExecuteTargetId: 4,
-        autoExecuteRef: null,
-        autoExecuteInputs: {},
-      });
     });
 
     it("returns Forbidden without touching the database when not authorized", async () => {
       mockCanManageWebhookConfig.mockResolvedValueOnce(false);
 
-      const result = await updateCodeRepositoryWebhookAutoExecute({
+      const result = await updateCodeRepositoryWebhookBaseBranch({
         projectId: 42,
         webhookConfigId: "whc-1",
-        enabled: true,
-        targetId: 4,
+        baseBranch: "main",
       });
 
       expect(result).toEqual({ success: false, error: "Forbidden" });
-      expect(mockExecutionTargetFindFirst).not.toHaveBeenCalled();
       expect(mockWebhookConfigUpdateMany).not.toHaveBeenCalled();
     });
   });

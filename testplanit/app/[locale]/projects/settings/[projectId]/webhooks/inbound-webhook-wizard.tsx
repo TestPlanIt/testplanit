@@ -32,11 +32,6 @@ import {
   createOrRotateInboundWebhook,
 } from "~/app/actions/webhook-config";
 import { Link } from "~/lib/navigation";
-import {
-  CODE_EVENT_BRANCH_PUSH,
-  CODE_EVENT_PULL_REQUEST,
-  CODE_EVENT_PUSH,
-} from "~/lib/webhooks/codeChangeEvents";
 import type { AdapterType } from "~/zenstack/models";
 import { cn } from "~/utils";
 import {
@@ -176,10 +171,10 @@ function WizardBody({
               projectId,
               codeRepositoryConfigId: repository!.id,
               secretInput,
-              subscribedEvents: [
-                ...(pullRequestsOn ? [CODE_EVENT_PULL_REQUEST] : []),
-                ...(pushesOn ? [CODE_EVENT_PUSH] : []),
-                ...(branchPushesOn ? [CODE_EVENT_BRANCH_PUSH] : []),
+              triggers: [
+                ...(pullRequestsOn ? (["CODE_PULL_REQUEST"] as const) : []),
+                ...(pushesOn ? (["CODE_PUSH"] as const) : []),
+                ...(branchPushesOn ? (["CODE_BRANCH_PUSH"] as const) : []),
               ],
               baseBranch: baseBranch.trim() || null,
             });
