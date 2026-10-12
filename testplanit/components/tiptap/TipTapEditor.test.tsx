@@ -181,6 +181,44 @@ describe("TipTapEditor", () => {
     });
   });
 
+  describe("Accessible name", () => {
+    let editorOptions: any;
+
+    beforeEach(() => {
+      editorOptions = undefined;
+      vi.doMock("@tiptap/react", () => ({
+        useEditor: (options: any) => {
+          editorOptions = options;
+          return mockEditor;
+        },
+        EditorContent: () => <div data-testid="editor-content" />,
+      }));
+      vi.resetModules();
+    });
+
+    const ariaLabelFor = async (props: Record<string, unknown>) => {
+      const TipTapEditorComponent = (await import("./TipTapEditor")).default;
+      render(<TipTapEditorComponent {...defaultProps} {...props} />);
+      return editorOptions?.editorProps?.attributes?.["aria-label"];
+    };
+
+    it("names the editing area with the ariaLabel prop", async () => {
+      expect(
+        await ariaLabelFor({ ariaLabel: "Steps", placeholder: "Add steps" })
+      ).toBe("Steps");
+    });
+
+    it("falls back to the placeholder", async () => {
+      expect(await ariaLabelFor({ placeholder: "Add a comment" })).toBe(
+        "Add a comment"
+      );
+    });
+
+    it("falls back to a generic rich text label", async () => {
+      expect(await ariaLabelFor({})).toBe("ui.issues.richTextContent");
+    });
+  });
+
   describe("Props Handling", () => {
     beforeEach(async () => {
       // Mock useEditor to return our mock editor for these tests

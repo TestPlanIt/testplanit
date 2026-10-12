@@ -51,6 +51,8 @@ export function CommentEditor({
     content: initialContent,
     editorProps: {
       attributes: {
+        // Tiptap gives the editing area role="textbox", which needs a name.
+        "aria-label": placeholder,
         class: cn(
           "tiptap",
           "min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2",
