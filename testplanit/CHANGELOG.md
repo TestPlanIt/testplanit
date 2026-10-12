@@ -1,3 +1,9 @@
+## [1.0.14](https://github.com/TestPlanIt/testplanit/compare/v1.0.13...v1.0.14) (2026-10-12)
+
+### Bug Fixes
+
+* **integrations:** create GitHub issues in the linked repository ([#671](https://github.com/TestPlanIt/testplanit/issues/671)) ([#673](https://github.com/TestPlanIt/testplanit/issues/673)) ([a82ff34](https://github.com/TestPlanIt/testplanit/commit/a82ff347013df5f86d149d839a06dd8c1c805265))
+
 ## [1.0.13](https://github.com/TestPlanIt/testplanit/compare/v1.0.12...v1.0.13) (2026-10-12)
 
 ### Bug Fixes
