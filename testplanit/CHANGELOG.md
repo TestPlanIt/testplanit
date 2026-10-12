@@ -1,3 +1,9 @@
+## [1.0.13](https://github.com/TestPlanIt/testplanit/compare/v1.0.12...v1.0.13) (2026-10-12)
+
+### Bug Fixes
+
+* **attachments:** make video attachments playable everywhere ([#672](https://github.com/TestPlanIt/testplanit/issues/672)) ([ae55745](https://github.com/TestPlanIt/testplanit/commit/ae55745dda2ba1caaca7dce6f5d48de5d8bd7c8f))
+
 ## [1.0.12](https://github.com/TestPlanIt/testplanit/compare/v1.0.11...v1.0.12) (2026-10-02)
 
 ### Bug Fixes
