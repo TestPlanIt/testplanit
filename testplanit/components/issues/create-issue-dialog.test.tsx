@@ -241,6 +241,79 @@ describe("CreateIssueDialog", () => {
     });
   });
 
+  it("sends the linked repository's owner/repo and shows why creation failed (#671)", async () => {
+    const { toast } = await import("sonner");
+    mockUseFindManyProjectIntegration.mockReturnValue({
+      data: [
+        {
+          id: 10,
+          integrationId: 5,
+          isActive: true,
+          config: {},
+          integration: { id: 5, name: "My GitHub", provider: "GITHUB" },
+        },
+      ],
+    });
+    mockUseFindManyIntegrationProject.mockReturnValue({
+      data: [
+        {
+          id: "ip-1",
+          externalProjectId: "testowner/testrepo",
+          externalProjectKey: "testrepo",
+          externalProjectName: "testowner/testrepo",
+          isDefault: true,
+        },
+      ],
+    });
+
+    let createBody: Record<string, unknown> | undefined;
+    global.fetch = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.includes("/create-issue")) {
+        createBody = JSON.parse(String(init?.body));
+        return {
+          ok: false,
+          status: 500,
+          json: async () => ({
+            error: "Failed to create issue",
+            details: "GitHub API error: 404 Not Found",
+          }),
+        };
+      }
+      if (url.includes("/auth")) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ authenticated: true }),
+        };
+      }
+      return { ok: true, status: 200, json: async () => [] };
+    }) as any;
+
+    render(<CreateIssueDialog {...defaultProps} />);
+
+    fireEvent.change(screen.getAllByRole("textbox")[0], {
+      target: { value: "Broken login" },
+    });
+    const form = document.querySelector("form");
+    if (form) {
+      fireEvent.submit(form);
+    }
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          description:
+            "Failed to create issue: GitHub API error: 404 Not Found",
+        })
+      );
+    });
+    expect(createBody).toMatchObject({
+      projectId: "testrepo",
+      externalProjectId: "testowner/testrepo",
+    });
+  });
+
   it("calls onIssueCreated and onOpenChange after successful creation", async () => {
     const onIssueCreated = vi.fn();
     const onOpenChange = vi.fn();
