@@ -2,7 +2,7 @@ import { LinkFavicon } from "@/components/LinkFavicon";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { OfficeDocumentPreview } from "@/components/OfficeDocumentPreview";
 import type { Attachments } from "~/zenstack/models";
-import { ExternalLink, File } from "lucide-react";
+import { ExternalLink, File, Play } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import type { Components } from "react-markdown";
@@ -355,13 +355,39 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
         />
       );
     }
-    const { height } = getSizeClasses(32);
+    if (size === "small") {
+      // Thumbnail for compact lists: native controls would swallow the click
+      // and keep the parent's onClick (which opens the viewer) from firing.
+      const { height, width } = getSizeClasses(100);
+      return (
+        <div
+          className="relative flex justify-center items-center"
+          style={{ height, width }}
+          data-testid="attachment-video-thumbnail"
+        >
+          <video
+            src={fileURL}
+            preload="metadata"
+            muted
+            className="h-full w-full object-cover rounded-lg pointer-events-none"
+          />
+          <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <span className="rounded-full bg-black/60 p-1.5">
+              <Play className="w-4 h-4 text-white fill-white" />
+            </span>
+          </span>
+        </div>
+      );
+    }
     return (
       <video
         src={fileURL}
         controls
-        className="w-full max-h-full rounded-lg"
-        style={{ height: `${height}px` }}
+        preload="metadata"
+        onClick={(e) => e.stopPropagation()}
+        className={`w-full h-auto object-contain rounded-lg ${
+          size === "large" ? "max-h-96" : "max-h-48"
+        }`}
       />
     );
   } else if (fileType.startsWith("audio/")) {
