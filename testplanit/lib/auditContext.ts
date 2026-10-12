@@ -108,8 +108,18 @@ export interface AuditContext {
  * AsyncLocalStorage instance for audit context.
  * This allows us to access request context from anywhere in the call stack
  * without explicitly passing it through function parameters.
+ *
+ * Kept on globalThis like the database clients: Next.js can load this module
+ * once per server layer, and the client's plugins must read the same store the
+ * server action wrote, or their writes lose the acting user.
  */
-export const auditContextStorage = new AsyncLocalStorage<AuditContext>();
+const globalForAuditContext = globalThis as unknown as {
+  __tpiAuditContextStorage?: AsyncLocalStorage<AuditContext>;
+};
+export const auditContextStorage =
+  globalForAuditContext.__tpiAuditContextStorage ??
+  (globalForAuditContext.__tpiAuditContextStorage =
+    new AsyncLocalStorage<AuditContext>());
 
 /**
  * Get the current audit context from AsyncLocalStorage.
