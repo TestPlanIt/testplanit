@@ -249,6 +249,25 @@ describe("POST /api/integrations/[id]/create-issue", () => {
       expect(mockAdapter.createIssue).toHaveBeenCalledOnce();
     });
 
+    it("passes the linked project's full external ID to the adapter", async () => {
+      const response = await POST(
+        createRequest({
+          title: "GitHub Issue",
+          projectId: "testrepo",
+          externalProjectId: "testowner/testrepo",
+        }),
+        params
+      );
+
+      expect(response.status).toBe(200);
+      expect(mockAdapter.createIssue).toHaveBeenCalledWith(
+        expect.objectContaining({
+          projectId: "testrepo",
+          externalProjectId: "testowner/testrepo",
+        })
+      );
+    });
+
     it("passes the requesting user id to getAdapter so the issue is reported as that user", async () => {
       const mockGetAdapter = vi.fn().mockResolvedValue(mockAdapter);
       (IntegrationManager.getInstance as any).mockReturnValue({

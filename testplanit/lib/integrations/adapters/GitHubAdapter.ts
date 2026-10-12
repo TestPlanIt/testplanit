@@ -55,6 +55,8 @@ export class GitHubAdapter extends BaseAdapter {
 
   // OAuth client credentials, plumbed per-integration by IntegrationManager.
   private clientId?: string;
+  // Short repository names resolved to owner/repo by resolveRepository().
+  private resolvedRepos = new Map<string, { owner: string; repo: string }>();
   private clientSecret?: string;
   private redirectUri?: string;
 
@@ -216,18 +218,13 @@ export class GitHubAdapter extends BaseAdapter {
   }
 
   async createIssue(data: CreateIssueData): Promise<IssueData> {
-    // Ensure we have owner/repo from either config or projectId
-    if (!this.owner || !this.repo) {
-      if (data.projectId.includes("/")) {
-        const [owner, repo] = data.projectId.split("/");
-        this.owner = owner;
-        this.repo = repo;
-      } else {
-        throw new Error(
-          "GitHub repository not configured. Expected format: owner/repo"
-        );
-      }
-    }
+    // Resolved per call: the adapter is cached per integration and shared by
+    // every project linked to it, each of which may target its own repository.
+    const { owner, repo } = await this.resolveRepository(
+      data.externalProjectId?.includes("/")
+        ? data.externalProjectId
+        : data.projectId
+    );
 
     // INT-05: description may arrive as a TipTap doc (e.g. failed-iteration
     // body builder). Render to GFM markdown before posting to GitHub.
@@ -239,7 +236,7 @@ export class GitHubAdapter extends BaseAdapter {
     };
 
     const response = await this.makeRequest<any>(
-      this.buildUrl(`/repos/{owner}/{repo}/issues`),
+      `${this.baseUrl}/repos/${owner}/${repo}/issues`,
       {
         method: "POST",
         body: JSON.stringify(githubPayload),
@@ -467,6 +464,81 @@ export class GitHubAdapter extends BaseAdapter {
       key: repo.name,
       name: repo.full_name,
     }));
+  }
+
+  /**
+   * Resolves the {owner, repo} pair a repository-scoped read should hit.
+   * Mapped tracker projects carry either the full name ("owner/repo" —
+   * `getProjects` returns `repo.full_name` as the id) or the short repo
+   * name (the same call's `key`); a short name borrows the owner from the
+   * integration's configured repository. No argument falls back to the
+   * configured repository whole.
+   */
+  private resolveRepoRef(projectKey?: string): {
+    owner: string;
+    repo: string;
+  } {
+    if (projectKey?.includes("/")) {
+      const [owner, repo] = projectKey.split("/");
+      if (owner && repo) {
+        return { owner, repo };
+      }
+    }
+    if (this.owner && projectKey) {
+      return { owner: this.owner, repo: projectKey };
+    }
+    if (this.owner && this.repo) {
+      return { owner: this.owner, repo: this.repo };
+    }
+    throw new Error("Repository not configured");
+  }
+
+  /**
+   * Like `resolveRepoRef`, but a short repository name with no configured
+   * owner is looked up among the repositories this connection can access —
+   * the same list a project's linked repository was chosen from.
+   */
+  private async resolveRepository(
+    projectKey?: string
+  ): Promise<{ owner: string; repo: string }> {
+    if (!projectKey || projectKey.includes("/") || this.owner) {
+      return this.resolveRepoRef(projectKey);
+    }
+
+    const cached = this.resolvedRepos.get(projectKey.toLowerCase());
+    if (cached) {
+      return cached;
+    }
+
+    const matches: string[] = [];
+    for (let page = 1; page <= 10; page++) {
+      const repos = await this.makeRequest<any[]>(
+        `${this.baseUrl}/user/repos?per_page=100&page=${page}`
+      );
+      for (const repo of repos) {
+        if (repo.name?.toLowerCase() === projectKey.toLowerCase()) {
+          matches.push(repo.full_name);
+        }
+      }
+      if (repos.length < 100) {
+        break;
+      }
+    }
+
+    if (matches.length === 1) {
+      const [owner, repo] = matches[0].split("/");
+      const ref = { owner, repo };
+      this.resolvedRepos.set(projectKey.toLowerCase(), ref);
+      return ref;
+    }
+    if (matches.length > 1) {
+      throw new Error(
+        `More than one accessible GitHub repository is named "${projectKey}" (${matches.join(", ")}), so it cannot be identified by name alone.`
+      );
+    }
+    throw new Error(
+      `GitHub repository "${projectKey}" was not found among the repositories this connection can access.`
+    );
   }
 
   /**
