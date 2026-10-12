@@ -134,7 +134,10 @@ export function EditMilestoneType({
       });
 
       await deleteManyMilestoneTypesAssignment({
-        where: { milestoneTypeId: milestoneType.id },
+        where: {
+          milestoneTypeId: milestoneType.id,
+          project: { isDeleted: false },
+        },
       });
 
       if (Array.isArray(data.projects) && data.isDefault === false) {

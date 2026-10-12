@@ -112,7 +112,10 @@ export function EditConfiguration({
       });
 
       await deleteManyProjectConfigurationAssignment({
-        where: { configurationId: configuration.id },
+        where: {
+          configurationId: configuration.id,
+          project: { isDeleted: false },
+        },
       });
 
       if (Array.isArray(data.projects) && data.projects.length > 0) {

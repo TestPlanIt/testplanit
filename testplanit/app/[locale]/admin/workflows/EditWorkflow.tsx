@@ -123,7 +123,7 @@ export function EditWorkflows({
   const { data: currentAssignments } = useClientQueries(
     schema
   ).projectWorkflowAssignment.useFindMany({
-    where: { workflowId: workflows.id },
+    where: { workflowId: workflows.id, project: { isDeleted: false } },
     select: { projectId: true },
   });
   const assignmentsLoaded = currentAssignments !== undefined;
@@ -233,7 +233,7 @@ export function EditWorkflows({
       });
 
       await deleteManyProjectWorkflowAssignment({
-        where: { workflowId: workflows.id },
+        where: { workflowId: workflows.id, project: { isDeleted: false } },
       });
 
       if (data.isDefault) {

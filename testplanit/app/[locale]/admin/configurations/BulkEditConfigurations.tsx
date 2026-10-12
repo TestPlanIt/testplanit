@@ -149,7 +149,10 @@ export function BulkEditConfigurations({
       // enabled state.
       if (data.applyProjects) {
         await deleteManyProjectConfigurationAssignment({
-          where: { configurationId: { in: configurationIds } },
+          where: {
+            configurationId: { in: configurationIds },
+            project: { isDeleted: false },
+          },
         });
 
         if (data.projects.length > 0) {
