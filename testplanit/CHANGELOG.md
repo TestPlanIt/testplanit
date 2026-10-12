@@ -1,3 +1,9 @@
+## [1.1.0-beta.45](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.44...v1.1.0-beta.45) (2026-10-12)
+
+### Bug Fixes
+
+* **a11y:** name rich text editors now that Tiptap marks them as text boxes ([b656145](https://github.com/TestPlanIt/testplanit/commit/b656145d157f108b003376e12234625a149e24da))
+
 ## [1.1.0-beta.44](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.43...v1.1.0-beta.44) (2026-10-12)
 
 ### Bug Fixes
