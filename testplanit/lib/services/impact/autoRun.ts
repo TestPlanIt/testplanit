@@ -156,7 +156,9 @@ export async function runAnalysisActions(
   ];
 
   let subjectRef: string | null = null;
+  // A failure outranks a note that a rule acted on nothing.
   let deliveryError: string | null = null;
+  let deliveryNote: string | null = null;
   for (const action of actions) {
     const log = (entry: {
       outcome: string;
@@ -187,10 +189,11 @@ export async function runAnalysisActions(
           subjectRef ??= `run:${run.testRunId}`;
           await log({ outcome: "already_composed", testRunId: run.testRunId });
         } else {
-          deliveryError ??=
-            run.reason === "no_cases"
-              ? "run:no_affected_cases"
-              : `run:${run.reason}`;
+          if (run.reason === "no_cases") {
+            deliveryNote ??= "ignored:no_affected_cases";
+          } else {
+            deliveryError ??= `run:${run.reason}`;
+          }
           await log({ outcome: run.reason });
         }
         continue;
@@ -236,7 +239,7 @@ export async function runAnalysisActions(
         where: { id: autoRun.deliveryId },
         data: {
           subjectRef: subjectRef ?? `analysis:${analysisId}`,
-          error: deliveryError,
+          error: deliveryError ?? deliveryNote,
         },
       })
       .catch(() => {});

@@ -482,7 +482,24 @@ describe("runAnalysisActions", () => {
     });
     expect(db.webhookDelivery.update).toHaveBeenCalledWith({
       where: { id: "del-1" },
-      data: { subjectRef: "analysis:77", error: "run:no_affected_cases" },
+      data: { subjectRef: "analysis:77", error: "ignored:no_affected_cases" },
+    });
+  });
+
+  it("notes a failure on the delivery over a rule that found no cases", async () => {
+    mockCompose
+      .mockResolvedValueOnce({ created: false, reason: "no_cases" })
+      .mockResolvedValueOnce({ created: false, reason: "no_workflow" });
+    const db = makeDb(analysis);
+
+    await runAnalysisActions(db, 77, 3, {
+      ...autoRun,
+      actions: [{ actionId: "act-1" }, { actionId: "act-2" }],
+    });
+
+    expect(db.webhookDelivery.update).toHaveBeenCalledWith({
+      where: { id: "del-1" },
+      data: { subjectRef: "analysis:77", error: "run:no_workflow" },
     });
   });
 

@@ -4,6 +4,7 @@ import { createRawDbClient } from "~/lib/rawDbClient";
 import type { ApiHelper } from "../../fixtures/api.fixture";
 import { expect, test } from "../../fixtures/index";
 import {
+  seedDeliveries,
   seedExecutionTarget,
   seedInboundConfig,
   seedRepositoryWebhook,
@@ -21,6 +22,8 @@ import {
  *   target; deleting the chosen target flags the rule and the dialog.
  * - An issue tracker webhook lists its Import issues rule; a status rule
  *   can't be saved until it names a status, and saves its filter.
+ * - A delivery the rules handled without acting reads as succeeded, not
+ *   failed, on the Deliveries tab.
  * - The seeded System user is badged and locked on the admin Users page.
  *
  * Repository connections come from the `api` fixture (cleaned up with the
@@ -643,6 +646,58 @@ test.describe("Issue tracker webhook actions", () => {
         statuses: ["closed"],
         labels: ["qa"],
       });
+    });
+  });
+
+  test("a delivery the rules ignored counts as succeeded, not failed", async ({
+    page,
+    api,
+  }) => {
+    const { projectId, configId } = await seedTrackerWebhook(
+      api,
+      `Deliveries ${uid()}`
+    );
+    const [ignored] = await seedDeliveries(db, {
+      webhookConfigId: configId,
+      direction: "INBOUND",
+      adapterType: "GITHUB",
+      eventType: "issues",
+      count: 1,
+      statusPattern: "all-failure",
+      errorSentinel: "ignored:not_imported",
+    });
+    const [failed] = await seedDeliveries(db, {
+      webhookConfigId: configId,
+      direction: "INBOUND",
+      adapterType: "GITHUB",
+      eventType: "issues",
+      count: 1,
+      statusPattern: "all-failure",
+      errorSentinel: "run:no_workflow",
+    });
+    const deliveries = (status: string) =>
+      page.goto(
+        `/en-US/projects/settings/${projectId}/webhooks?tab=deliveries&configIds=${configId}&status=${status}`
+      );
+    const ignoredRow = page.getByTestId(`webhook-delivery-row-${ignored.id}`);
+    const failedRow = page.getByTestId(`webhook-delivery-row-${failed.id}`);
+
+    await test.step("Failed lists only the real failure", async () => {
+      await deliveries("failed");
+      await expect(failedRow).toBeVisible({ timeout: 15000 });
+      await expect(failedRow.getByText("run:no_workflow")).toHaveClass(
+        /text-destructive/
+      );
+      await expect(ignoredRow).toHaveCount(0);
+    });
+
+    await test.step("Succeeded lists the ignored delivery, muted", async () => {
+      await deliveries("success");
+      await expect(ignoredRow).toBeVisible({ timeout: 15000 });
+      await expect(ignoredRow.getByText("ignored:not_imported")).toHaveClass(
+        /text-muted-foreground/
+      );
+      await expect(failedRow).toHaveCount(0);
     });
   });
 });

@@ -524,7 +524,24 @@ describe("runTrackerActions", () => {
     ]);
     expect(db.webhookDelivery.update).toHaveBeenCalledWith({
       where: { id: "del-1" },
-      data: { error: "run:no_cases" },
+      data: { error: "ignored:no_cases" },
+    });
+  });
+
+  it("notes a failure on the delivery over a rule that found no cases", async () => {
+    mocks.composeRunFromCases
+      .mockResolvedValueOnce({ created: false, reason: "no_cases" })
+      .mockResolvedValueOnce({ created: false, reason: "no_workflow" });
+    const db = makeDb([
+      rule({ id: "run-1", trigger: "ISSUE_EVENT" }),
+      rule({ id: "run-2", trigger: "ISSUE_EVENT" }),
+    ]);
+
+    await runTrackerActions(db, job);
+
+    expect(db.webhookDelivery.update).toHaveBeenCalledWith({
+      where: { id: "del-1" },
+      data: { error: "run:no_workflow" },
     });
   });
 

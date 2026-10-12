@@ -196,7 +196,9 @@ export async function runTrackerActions(
   }
 
   const runIds: number[] = [];
+  // A failure outranks a note that a rule acted on nothing.
   let deliveryError: string | null = null;
+  let deliveryNote: string | null = null;
   for (const rule of runRules) {
     if (!trackerRuleFires(rule, change, facts)) continue;
     try {
@@ -236,7 +238,11 @@ export async function runTrackerActions(
         tenantId: job.tenantId,
       });
       if (!composed.created) {
-        deliveryError ??= `run:${composed.reason}`;
+        if (composed.reason === "no_cases") {
+          deliveryNote ??= "ignored:no_cases";
+        } else {
+          deliveryError ??= `run:${composed.reason}`;
+        }
         await log(rule, { outcome: composed.reason });
         continue;
       }
@@ -275,10 +281,11 @@ export async function runTrackerActions(
     }
   }
 
-  if (runIds.length > 0 || deliveryError) {
+  const note = deliveryError ?? deliveryNote;
+  if (runIds.length > 0 || note) {
     await annotate({
       ...(runIds.length > 0 ? { subjectRef: `run:${runIds[0]}` } : {}),
-      error: deliveryError,
+      error: note,
     });
   }
   return { outcome: "done", issueId: issue.issueId, runIds };

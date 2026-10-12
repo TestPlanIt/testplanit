@@ -36,6 +36,11 @@ import { toast } from "sonner";
 
 import { bulkReplayFailedDeliveries } from "~/app/actions/webhook-config";
 import { usePathname, useRouter } from "~/lib/navigation";
+import {
+  FAILED_DELIVERY_WHERE,
+  SUCCEEDED_DELIVERY_WHERE,
+  isIgnoredDeliveryNote,
+} from "~/lib/webhooks/deliveryNotes";
 
 import { adapterLabelKey } from "./inbound-adapters";
 import { WebhookDeliveryDrawer } from "./webhook-delivery-drawer";
@@ -114,6 +119,10 @@ interface FilterState {
   eventType: string | null;
   since: Date | null;
   until: Date | null;
+}
+
+function failed(error: string | null): boolean {
+  return error !== null && !isIgnoredDeliveryNote(error);
 }
 
 function defaultSince(): Date {
@@ -267,8 +276,10 @@ function WebhookDeliveriesTabContent({ projectId }: WebhookDeliveriesTabProps) {
       if (filter.until) receivedAt.lte = filter.until;
       w.receivedAt = receivedAt;
     }
-    if (filter.status === "failed") w.error = { not: null };
-    if (filter.status === "success") w.error = null;
+    if (filter.status === "failed") Object.assign(w, FAILED_DELIVERY_WHERE);
+    if (filter.status === "success") {
+      Object.assign(w, SUCCEEDED_DELIVERY_WHERE);
+    }
     if (filter.eventType) w.eventType = filter.eventType;
     if (filter.configIds.length > 0) {
       w.webhookConfigId = { in: filter.configIds };
@@ -365,10 +376,10 @@ function WebhookDeliveriesTabContent({ projectId }: WebhookDeliveriesTabProps) {
 
   // ─── Outbound-only bulk-replay gating (D-17a / Blocker 4) ───────────
   const outboundFailedCount = deliveries.filter(
-    (r) => r.direction === "OUTBOUND" && r.error !== null
+    (r) => r.direction === "OUTBOUND" && failed(r.error)
   ).length;
   const inboundFailedCount = deliveries.filter(
-    (r) => r.direction === "INBOUND" && r.error !== null
+    (r) => r.direction === "INBOUND" && failed(r.error)
   ).length;
   const showBulkReplay =
     filter.configIds.length === 1 &&
@@ -676,7 +687,7 @@ function WebhookDeliveriesTabContent({ projectId }: WebhookDeliveriesTabProps) {
         size: 100,
         cell: ({ row }) => {
           const value = row.original.statusCode ?? "—";
-          return row.original.error ? (
+          return failed(row.original.error) ? (
             <span className="text-destructive">{value}</span>
           ) : (
             <span>{value}</span>
@@ -693,7 +704,15 @@ function WebhookDeliveriesTabContent({ projectId }: WebhookDeliveriesTabProps) {
         cell: ({ row }) => {
           return (
             row.original.error && (
-              <span className="text-destructive">{row.original.error}</span>
+              <span
+                className={
+                  failed(row.original.error)
+                    ? "text-destructive"
+                    : "text-muted-foreground"
+                }
+              >
+                {row.original.error}
+              </span>
             )
           );
         },

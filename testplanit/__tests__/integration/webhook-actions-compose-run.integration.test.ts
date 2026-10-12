@@ -797,7 +797,7 @@ describeIntegration("Webhook actions: composed runs (live DB)", () => {
       });
       expect(delivery).toEqual({
         subjectRef: `analysis:${analysisId}`,
-        error: "run:no_affected_cases",
+        error: "ignored:no_affected_cases",
       });
     });
   });

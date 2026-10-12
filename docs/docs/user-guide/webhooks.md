@@ -132,7 +132,7 @@ The run is then requested on that target, covering its automated cases; manual c
 
 ### Deliveries
 
-Repository deliveries appear on the **Deliveries** tab like any other. The subject moves from the event (`pull_request:12`, `push:main`) to the analysis (`analysis:77`) and then to the run (`run:300`); a delivery that was received but not acted on carries the reason (`ignored:push_other_branch`, `ignored:event_disabled`, `run:no_affected_cases`, `execute:target_not_found`, `duplicate`). A change with nothing to compare, such as a pull request whose head is already on its target branch, is recorded as `ignored:same_commit` (or `ignored:ref_not_found` when a commit can't be found) and answered with success, so the repository doesn't keep retrying it.
+Repository deliveries appear on the **Deliveries** tab like any other. The subject moves from the event (`pull_request:12`, `push:main`) to the analysis (`analysis:77`) and then to the run (`run:300`); a delivery that was received but not acted on carries the reason (`ignored:push_other_branch`, `ignored:event_disabled`, `ignored:no_affected_cases`, `execute:target_not_found`, `duplicate`). A change with nothing to compare, such as a pull request whose head is already on its target branch, is recorded as `ignored:same_commit` (or `ignored:ref_not_found` when a commit can't be found) and answered with success, so the repository doesn't keep retrying it.
 
 ### Provider setup
 
@@ -221,6 +221,8 @@ The Webhooks page includes a **Deliveries** tab listing each dispatched attempt 
 - Event name, direction (inbound or outbound), and webhook config.
 - HTTP status code and outcome.
 - Timestamp.
+
+A delivery that was handled but acted on nothing carries a reason starting with `ignored:` (for example `ignored:not_imported` for an issue no Import issues action takes, or `ignored:no_cases` for a run with no linked cases). These appear in muted text and count as succeeded in the status filter. Any other reason, such as `run:no_workflow` or `execute:target_disabled`, is a failure and appears in red.
 - A drawer with the request payload preview and response details for diagnostics.
 
 ### Replay

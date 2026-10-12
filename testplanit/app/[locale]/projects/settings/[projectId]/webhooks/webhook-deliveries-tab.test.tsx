@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -786,6 +792,44 @@ describe("WebhookDeliveriesTab", () => {
     const url = mockRouterReplace.mock.calls.at(-1)?.[0] as string;
     const params = new URLSearchParams(url.split("?")[1]);
     expect(params.get("eventType")).toBeNull();
+  });
+
+  it("Test 22: the status filter counts ignored notes as handled, not failed", () => {
+    mockSearchParams.current = "status=failed";
+    const { unmount } = render(<WebhookDeliveriesTab projectId={42} />);
+    expect(
+      mockInfiniteWebhookDelivery.mock.calls.at(-1)?.[0].where
+    ).toMatchObject({
+      error: { not: null },
+      NOT: { error: { startsWith: "ignored:" } },
+    });
+    unmount();
+
+    mockSearchParams.current = "status=success";
+    render(<WebhookDeliveriesTab projectId={42} />);
+    expect(
+      mockInfiniteWebhookDelivery.mock.calls.at(-1)?.[0].where
+    ).toMatchObject({
+      OR: [{ error: null }, { error: { startsWith: "ignored:" } }],
+    });
+  });
+
+  it("Test 23: an ignored note reads as muted, a failure as destructive", () => {
+    setDeliveries([
+      { ...inboundDelivery, id: "d_ignored", error: "ignored:not_imported" },
+      { ...inboundDelivery, id: "d_failed", error: "run:no_workflow" },
+    ]);
+    render(<WebhookDeliveriesTab projectId={42} />);
+    expect(
+      within(screen.getByTestId("webhook-delivery-row-d_ignored")).getByText(
+        "ignored:not_imported"
+      )
+    ).toHaveClass("text-muted-foreground");
+    expect(
+      within(screen.getByTestId("webhook-delivery-row-d_failed")).getByText(
+        "run:no_workflow"
+      )
+    ).toHaveClass("text-destructive");
   });
 
   it("Test 17: defensive — inbound replay rejection toast surfaces when action returns reason", async () => {
