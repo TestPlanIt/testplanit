@@ -468,6 +468,15 @@ const EXEMPT_SEARCH_INDEX_FILES = [
   "scripts/reindexAllEntities.ts",
 ];
 
+// EXEMPT — reads a tracker's status vocabulary, not rows: the distinct
+// status names the project's synced issues carry, offered as suggestions for
+// a webhook action's status filter. Actions act on tracker issues of either
+// row kind (a "requirements only" filter narrows them later), so a
+// defect-only read would hide the statuses requirements use.
+const EXEMPT_TRACKER_VOCABULARY_FILES = [
+  "app/[locale]/projects/settings/[projectId]/webhooks/webhook-action-tracker-filter.tsx",
+];
+
 const ALL_ALLOWED_FILES = [
   ...SCOPED_FILES,
   ...ROLE_AWARE_BY_DESIGN_FILES,
@@ -478,6 +487,7 @@ const ALL_ALLOWED_FILES = [
   ...EXEMPT_REQUIREMENT_SCOPED_FILES,
   ...EXEMPT_CALLER_SCOPED_FILES,
   ...EXEMPT_SEARCH_INDEX_FILES,
+  ...EXEMPT_TRACKER_VOCABULARY_FILES,
 ];
 
 describe("Issue read-scope containment (HYG-01, structural)", () => {
