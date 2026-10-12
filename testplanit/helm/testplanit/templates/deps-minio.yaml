@@ -57,17 +57,27 @@ spec:
         runAsGroup: 1000
         runAsNonRoot: true
       containers:
+        # S3-compatible storage (RustFS). It keeps the "minio" names and secret
+        # keys so existing values, Services and ingress paths keep working, and
+        # serves the existing MinIO data on the same volume.
         - name: minio
           image: {{ $mc.image }}
           imagePullPolicy: {{ $mc.imagePullPolicy }}
-          args: ["server", "/data", "--console-address", ":9001", "--address", ":9000"]
           env:
-            - name: MINIO_ROOT_USER
+            - name: RUSTFS_VOLUMES
+              value: /data
+            - name: RUSTFS_ADDRESS
+              value: ":9000"
+            - name: RUSTFS_CONSOLE_ENABLE
+              value: "true"
+            - name: RUSTFS_CONSOLE_ADDRESS
+              value: ":9001"
+            - name: RUSTFS_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
                   name: {{ include "testplanit.secretName" . }}
                   key: MINIO_ROOT_USER
-            - name: MINIO_ROOT_PASSWORD
+            - name: RUSTFS_SECRET_KEY
               valueFrom:
                 secretKeyRef:
                   name: {{ include "testplanit.secretName" . }}
@@ -79,14 +89,14 @@ spec:
               containerPort: 9001
           readinessProbe:
             httpGet:
-              path: /minio/health/ready
+              path: /health
               port: api
             initialDelaySeconds: 10
             periodSeconds: 10
             timeoutSeconds: 5
           livenessProbe:
             httpGet:
-              path: /minio/health/live
+              path: /health
               port: api
             initialDelaySeconds: 20
             periodSeconds: 20
@@ -96,8 +106,13 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
-      {{- if not $mc.persistence.enabled }}
+            - name: logs
+              mountPath: /logs
       volumes:
+        # The image's /logs is not writable by the pod's non-root user.
+        - name: logs
+          emptyDir: {}
+      {{- if not $mc.persistence.enabled }}
         - name: data
           emptyDir: {}
       {{- end }}
@@ -115,8 +130,9 @@ spec:
             storage: {{ $mc.persistence.size | quote }}
   {{- end }}
 ---
-# One-shot job: wait for MinIO, create the bucket, allow public downloads so
-# the browser can fetch attachments via the ingress path.
+# One-shot job: wait for the storage, create the bucket, allow public
+# downloads so the browser can fetch attachments via the ingress path, and
+# allow cross-origin presigned uploads.
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -139,27 +155,32 @@ spec:
     spec:
       restartPolicy: OnFailure
       containers:
-        - name: mc
-          image: minio/mc:latest
+        - name: init
+          image: {{ $mc.initImage }}
           command:
             - /bin/sh
             - -c
             - |
               set -eu
-              echo "Waiting for MinIO..."
-              until mc alias set tp "http://{{ $name }}:9000" "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD" >/dev/null 2>&1; do
+              s3api() { aws --endpoint-url "http://{{ $name }}:9000" s3api "$@"; }
+              echo "Waiting for storage..."
+              until s3api list-buckets >/dev/null 2>&1; do
                 sleep 3
               done
-              mc mb --ignore-existing "tp/{{ $mc.bucket }}"
-              mc anonymous set download "tp/{{ $mc.bucket }}" || true
-              echo "MinIO bucket ready: {{ $mc.bucket }}"
+              s3api head-bucket --bucket "{{ $mc.bucket }}" >/dev/null 2>&1 ||
+                s3api create-bucket --bucket "{{ $mc.bucket }}" >/dev/null
+              s3api put-bucket-policy --bucket "{{ $mc.bucket }}" --policy '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"AWS":["*"]},"Action":["s3:GetObject"],"Resource":["arn:aws:s3:::{{ $mc.bucket }}/*"]}]}'
+              s3api put-bucket-cors --bucket "{{ $mc.bucket }}" --cors-configuration '{"CORSRules":[{"AllowedOrigins":["*"],"AllowedMethods":["GET","PUT","HEAD"],"AllowedHeaders":["*"],"ExposeHeaders":["ETag"]}]}'
+              echo "Storage bucket ready: {{ $mc.bucket }}"
           env:
-            - name: MINIO_ROOT_USER
+            - name: AWS_REGION
+              value: us-east-1
+            - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
                   name: {{ include "testplanit.secretName" . }}
                   key: MINIO_ROOT_USER
-            - name: MINIO_ROOT_PASSWORD
+            - name: AWS_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
                   name: {{ include "testplanit.secretName" . }}
@@ -170,5 +191,5 @@ spec:
               memory: 32Mi
             limits:
               cpu: 250m
-              memory: 128Mi
+              memory: 256Mi
 {{- end }}

@@ -21,7 +21,8 @@ The chart lives in the repository at [`testplanit/helm/testplanit`](https://gith
   authoritative schema owner; the app and worker pods wait for it and never
   migrate on boot.
 - **Bundled datastores (optional, on by default)** — PostgreSQL, Valkey,
-  Elasticsearch, and MinIO, so a first install works out of the box. Each can be
+  Elasticsearch, and S3-compatible file storage (RustFS, configured under
+  `objectStorage.minio`), so a first install works out of the box. Each can be
   turned off and pointed at a managed service (Amazon RDS / ElastiCache /
   OpenSearch / S3).
 
@@ -261,6 +262,9 @@ helm upgrade testplanit ./testplanit/helm/testplanit \
 The migrate/seed job re-runs on every upgrade (idempotent) and applies any new
 migrations before the new app pods take traffic. The web tier rolls with zero
 downtime (surge-up + a 15s pre-stop drain behind ingress-nginx).
+
+If you are upgrading from a chart release that bundled MinIO, snapshot the
+storage volume first. See [Migrating from MinIO to RustFS](/docs/migrating-from-minio#kubernetes-helm).
 
 ## Scaling
 

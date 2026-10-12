@@ -50,7 +50,7 @@ At minimum set `DATABASE_URL`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, and
 ## Build and run
 
 The production compose file builds the image from the `Dockerfile` and starts
-the full stack (app, workers, Postgres, Valkey, Elasticsearch, MinIO):
+the full stack (app, workers, Postgres, Valkey, Elasticsearch, RustFS file storage):
 
 ```bash
 docker compose -f testplanit/docker-compose.prod.yml up -d --build

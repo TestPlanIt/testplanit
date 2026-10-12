@@ -28,7 +28,7 @@ TestPlanIt requires:
 - **PostgreSQL** 14 or later
 - **Redis/Valkey** for background job processing
 - **Elasticsearch** for advanced search
-- **S3-compatible storage** for file attachments (AWS, Minio or other S3-compatible storage solutions)
+- **S3-compatible storage** for file attachments (AWS S3, RustFS, MinIO, or other S3-compatible storage solutions)
 
 For Docker deployments, you just need Docker and Docker Compose installed.
 

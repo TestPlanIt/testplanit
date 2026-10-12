@@ -29,7 +29,7 @@ The application will run without these services, but certain features will be di
 
 - **[Elasticsearch](https://www.elastic.co/elasticsearch/)** - Search and indexing
   - *Without it:* Search functionality will be unavailable, but the application will function normally otherwise
-- **[MinIO](https://min.io/)** or AWS S3 - File storage for attachments
+- **[RustFS](https://github.com/rustfs/rustfs)**, AWS S3, or another S3-compatible service - File storage for attachments
   - *Without it:* File uploads (attachments, avatars, project icons) will fail with an error message
 - **SMTP Email Server** - Email notifications and Magic Link authentication
   - *Without it:* In-app notifications will still work, but email delivery will fail; Magic Link authentication will be unavailable (use password authentication instead)

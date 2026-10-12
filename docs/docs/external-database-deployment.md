@@ -161,7 +161,7 @@ VALKEY_URL="valkey://valkey:6379"
 # Docker Elasticsearch
 ELASTICSEARCH_NODE="http://elasticsearch:9200"
 
-# Docker MinIO
+# Bundled storage (RustFS)
 AWS_ACCESS_KEY_ID="minioadmin"
 AWS_SECRET_ACCESS_KEY="minioadmin123"
 AWS_BUCKET_NAME="testplanit"
@@ -220,7 +220,7 @@ TestPlanIt uses Docker Compose profiles to enable/disable services. The included
 - `with-postgres` - PostgreSQL database container
 - `with-valkey` - Valkey/Redis cache container
 - `with-elasticsearch` - Elasticsearch search container
-- `with-minio` - MinIO storage + Nginx proxy
+- `with-minio` - RustFS storage + Nginx proxy
 
 **Deployment Examples:**
 
