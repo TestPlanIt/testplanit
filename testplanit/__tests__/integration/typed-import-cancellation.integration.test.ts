@@ -215,6 +215,8 @@ describeIntegration("typed import cooperative cancellation (live DB)", () => {
   describe("a cancel request written between pages of a running import", () => {
     let mappingId: string;
     let searchIssues: ReturnType<typeof vi.fn>;
+    // Read in beforeAll: mock calls are cleared before each test runs.
+    let searchCalls: number;
     let result: { imported: number; cancelled: boolean };
     const importedExternalIds = [
       `${STAMP}-inflight-1`,
@@ -281,6 +283,7 @@ describeIntegration("typed import cooperative cancellation (live DB)", () => {
       await db2.$disconnect();
 
       result = await importPromise;
+      searchCalls = searchIssues.mock.calls.length;
 
       const importedRows = await db.issue.findMany({
         where: { externalId: { in: importedExternalIds }, integrationId },
@@ -290,7 +293,7 @@ describeIntegration("typed import cooperative cancellation (live DB)", () => {
     });
 
     it("stops a paged-to-completion import within one page of a cancel request", () => {
-      expect(searchIssues).toHaveBeenCalledTimes(1);
+      expect(searchCalls).toBe(1);
       expect(result.cancelled).toBe(true);
       expect(result.imported).toBe(importedExternalIds.length);
     });
