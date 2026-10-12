@@ -159,6 +159,7 @@ See [Background Processes](background-processes.md). Each variable sets how many
 | `AUDIT_LOG_CONCURRENCY`             | `10`    | Audit log                    |
 | `BUDGET_ALERT_CONCURRENCY`          | `2`     | AI budget alerts             |
 | `ALERT_CONCURRENCY`             | `2`     | Alerts           |
+| `WEBHOOK_ACTIONS_CONCURRENCY`   | `2`     | Inbound webhook actions |
 | `AUTO_TAG_CONCURRENCY`              | `3`     | Auto-tag                     |
 | `DERIVE_CASE_STEPS_CONCURRENCY`     | `2`     | Derive case steps            |
 | `WEBHOOK_DISPATCH_CONCURRENCY`      | `5`     | Webhook dispatch             |

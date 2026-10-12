@@ -292,6 +292,113 @@ describe("WebhookActionsSection", () => {
     expect(within(last).queryByRole("link")).toBeNull();
   });
 
+  it("labels an imported issue's outcome as an issue created", () => {
+    mockLogs.mockReturnValue({
+      data: [
+        {
+          webhookActionId: "act-2",
+          outcome: "issue_imported",
+          testRunId: null,
+          createdAt: new Date(),
+        },
+      ],
+    });
+    renderSection();
+    expect(screen.getByTestId("webhook-action-last-act-2")).toHaveTextContent(
+      "projects.settings.webhooks.events.issueCreated"
+    );
+  });
+
+  describe("tracker rules", () => {
+    const statusRule = {
+      id: "trk-1",
+      order: 0,
+      isEnabled: true,
+      trigger: "ISSUE_STATUS_ENTERED",
+      action: "CREATE_RUN",
+      filter: {
+        statuses: ["Ready for QA", "In Review"],
+        issueTypeIds: ["10001", "10002"],
+        issueTypeNames: { "10001": "Story" },
+        labels: ["qa", "backend"],
+        requirementsOnly: true,
+      },
+      options: { includeChildIssues: true },
+    };
+    const importRule = {
+      id: "trk-2",
+      order: 1,
+      isEnabled: true,
+      trigger: "ISSUE_EVENT",
+      action: "IMPORT_ISSUE",
+      filter: {},
+      // An import rule never shows run options, even stored ones.
+      options: { includeChildIssues: true },
+    };
+
+    function renderTracker() {
+      return render(
+        <WebhookActionsSection
+          projectId={42}
+          webhookConfigId="whc-2"
+          source="tracker"
+          baseBranch={null}
+          integration={{ id: 3, provider: "JIRA" }}
+        />
+      );
+    }
+
+    beforeEach(() => {
+      mockRules.mockReturnValue({
+        data: [statusRule, importRule],
+        refetch: mockRefetch,
+      });
+      mockLogs.mockReturnValue({ data: [] });
+    });
+
+    it("shows the filter and child-issue badges, naming issue types where it can", () => {
+      renderTracker();
+
+      const row = screen.getByTestId("webhook-action-row-trk-1");
+      expect(row).toHaveTextContent(
+        "projects.settings.webhooks.actions.trigger.ISSUE_STATUS_ENTERED"
+      );
+      expect(row).toHaveTextContent(
+        "common.labels.statuses: Ready for QA, In Review"
+      );
+      expect(row).toHaveTextContent(
+        "projects.settings.integrations.integration.requirementsConfig.issueTypesLabel: Story, 10002"
+      );
+      expect(row).toHaveTextContent(
+        "projects.settings.integrations.integration.requirementsConfig.labelsLabel: qa, backend"
+      );
+      expect(row).toHaveTextContent(
+        "projects.settings.webhooks.actions.requirementsOnly"
+      );
+      expect(row).toHaveTextContent(
+        "projects.settings.webhooks.actions.includeChildIssues"
+      );
+    });
+
+    it("shows no badges for an unfiltered import rule", () => {
+      renderTracker();
+      const row = screen.getByTestId("webhook-action-row-trk-2");
+      expect(row).not.toHaveTextContent("includeChildIssues");
+      expect(row).not.toHaveTextContent("common.labels.statuses");
+    });
+
+    it("hands the dialog the tracker source and the integration", () => {
+      renderTracker();
+      fireEvent.click(screen.getByTestId("webhook-action-edit-trk-1"));
+      expect(mockDialog.mock.calls.at(-1)![0]).toMatchObject({
+        webhookConfigId: "whc-2",
+        source: "tracker",
+        integration: { id: 3, provider: "JIRA" },
+        rule: expect.objectContaining({ id: "trk-1" }),
+      });
+    });
+  });
+
   it("shows the empty state when the webhook has no rules", () => {
     mockRules.mockReturnValue({ data: [], refetch: mockRefetch });
     mockLogs.mockReturnValue({ data: undefined });

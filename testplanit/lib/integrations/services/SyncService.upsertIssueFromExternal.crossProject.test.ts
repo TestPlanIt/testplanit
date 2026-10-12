@@ -135,7 +135,7 @@ describe("SyncService.upsertIssueFromExternal cross-project guard (PROV-05)", ()
       makeIssueData({ id: "ext-shared" })
     );
 
-    expect(result).toEqual({ id: 555, created: false });
+    expect(result).toEqual({ id: 555, created: false, isRequirement: false });
     expect(mockIssueUpsert).toHaveBeenCalledTimes(1);
   });
 
@@ -158,7 +158,7 @@ describe("SyncService.upsertIssueFromExternal cross-project guard (PROV-05)", ()
       makeIssueData({ id: "ext-shared" })
     );
 
-    expect(result).toEqual({ id: 555, created: false });
+    expect(result).toEqual({ id: 555, created: false, isRequirement: false });
     expect(mockIssueUpsert).toHaveBeenCalledTimes(1);
   });
 });

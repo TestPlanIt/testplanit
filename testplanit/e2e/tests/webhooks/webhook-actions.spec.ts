@@ -5,6 +5,7 @@ import type { ApiHelper } from "../../fixtures/api.fixture";
 import { expect, test } from "../../fixtures/index";
 import {
   seedExecutionTarget,
+  seedInboundConfig,
   seedRepositoryWebhook,
   softDeleteExecutionTarget,
 } from "../../fixtures/webhooks-seed";
@@ -18,6 +19,8 @@ import {
  *   survives a reload.
  * - A rule's "Execute automated cases" option needs an enabled execution
  *   target; deleting the chosen target flags the rule and the dialog.
+ * - An issue tracker webhook lists its Import issues rule; a status rule
+ *   can't be saved until it names a status, and saves its filter.
  * - The seeded System user is badged and locked on the admin Users page.
  *
  * Repository connections come from the `api` fixture (cleaned up with the
@@ -536,6 +539,111 @@ test.describe("Inbound webhook actions", () => {
         await softDeleteExecutionTarget(db, { targetId }).catch(() => {});
       }
     }
+  });
+});
+
+test.describe("Issue tracker webhook actions", () => {
+  let db: ReturnType<typeof createRawDbClient>;
+
+  test.beforeAll(() => {
+    db = createRawDbClient();
+  });
+
+  test.afterAll(async () => {
+    await db?.$disconnect();
+  });
+
+  async function seedTrackerWebhook(api: ApiHelper, label: string) {
+    const projectId = await api.createProject(`E2E Tracker Actions ${label}`);
+    await api.setupProjectIssueIntegration(projectId, "GITHUB");
+    const { configId } = await seedInboundConfig(db, {
+      projectId,
+      adapterType: "GITHUB",
+    });
+    const importRule = await db.webhookAction.create({
+      data: {
+        webhookConfigId: configId,
+        projectId,
+        order: 0,
+        trigger: "ISSUE_EVENT",
+        action: "IMPORT_ISSUE",
+      },
+      select: { id: true },
+    });
+    return { projectId, configId, importRuleId: importRule.id };
+  }
+
+  test("a status rule needs a status, then saves its filter", async ({
+    page,
+    api,
+  }) => {
+    const { projectId, configId, importRuleId } = await seedTrackerWebhook(
+      api,
+      `Status ${uid()}`
+    );
+    const section = actionsSection(page, configId);
+    const dialog = page.getByTestId("webhook-action-dialog");
+
+    await test.step("The card lists the Import issues rule", async () => {
+      await openWebhooksPage(page, projectId);
+      const row = section.getByTestId(`webhook-action-row-${importRuleId}`);
+      await expect(row).toContainText("Any issue event");
+      await expect(row).toContainText("Import Issues");
+    });
+
+    await test.step("Choose Issue status changes → Create Test Run; Save waits for a status", async () => {
+      await section.getByTestId("webhook-action-add").click();
+      await expect(dialog).toBeVisible();
+      await dialog.getByTestId("webhook-action-trigger").click();
+      await page.getByRole("option", { name: "Issue status changes" }).click();
+      await dialog.getByTestId("webhook-action-type").click();
+      await page.getByRole("option", { name: "Create Test Run" }).click();
+      await expect(dialog.getByTestId("webhook-action-type")).toContainText(
+        "Create Test Run"
+      );
+      await expect(dialog.getByTestId("webhook-action-save")).toBeDisabled();
+    });
+
+    await test.step("Pick the tracker's closed status and add a label", async () => {
+      await dialog.getByRole("combobox", { name: "Statuses" }).click();
+      await page.getByRole("option", { name: "closed", exact: true }).click();
+      await page.keyboard.press("Escape");
+      await expect(dialog).toBeVisible();
+
+      const labels = dialog.getByTestId("webhook-action-labels-values-input");
+      await labels.fill("qa");
+      await labels.press("Enter");
+      await expect(
+        dialog.getByTestId("webhook-action-labels-value")
+      ).toHaveText("qa");
+
+      await expect(dialog.getByTestId("webhook-action-save")).toBeEnabled();
+      await dialog.getByTestId("webhook-action-save").click();
+      await expect(dialog).toBeHidden();
+    });
+
+    await test.step("The rule lists its filter and is stored after the import rule", async () => {
+      const added = section
+        .locator(ROW_SELECTOR)
+        .filter({ hasText: "Issue status changes" });
+      await expect(added).toContainText("Create Test Run");
+      await expect(added).toContainText("Statuses: closed");
+      await expect(added).toContainText("Labels: qa");
+
+      const saved = await db.webhookAction.findMany({
+        where: { webhookConfigId: configId },
+        orderBy: { order: "asc" },
+        select: { trigger: true, action: true, filter: true },
+      });
+      expect(saved.map((row) => [row.trigger, row.action])).toEqual([
+        ["ISSUE_EVENT", "IMPORT_ISSUE"],
+        ["ISSUE_STATUS_ENTERED", "CREATE_RUN"],
+      ]);
+      expect(saved[1].filter).toMatchObject({
+        statuses: ["closed"],
+        labels: ["qa"],
+      });
+    });
   });
 });
 

@@ -61,7 +61,32 @@ export interface SyncServiceOptions {
    * issue must NOT silently mint a row in a different project, and the
    * legacy throw surfaces the misconfiguration loudly.
    */
-  createIfMissing?: { projectId: number };
+  createIfMissing?: CreateIfMissing;
+}
+
+export interface CreateIfMissing {
+  projectId: number;
+  /** Who the new Issue is created by; defaults to the project's creator. */
+  createdById?: string;
+  /** Only create when this says so (an inbound webhook's import rules). */
+  shouldCreate?: (issueData: IssueData) => boolean | Promise<boolean>;
+}
+
+/** What a single-issue refresh did to the local row. */
+export interface IssueRefreshOutcome {
+  issueId: number;
+  projectId: number | null;
+  /** The row was created by this refresh. */
+  created: boolean;
+  /** The tracker status before this refresh (null for a created row). */
+  previousStatus: string | null;
+  status: string | null;
+  issueTypeId: string | null;
+  labels: string[];
+  isRequirement: boolean;
+  key: string;
+  title: string;
+  url: string | null;
 }
 
 /**
@@ -76,7 +101,16 @@ export interface IssueRefreshResult {
   error?: string;
   cached?: boolean;
   locked?: boolean;
+  /** The local row the refresh wrote, when it wrote one. */
+  issue?: IssueRefreshOutcome;
+  /** The issue was unknown and `createIfMissing.shouldCreate` declined it. */
+  notImported?: boolean;
 }
+
+type InnerRefreshResult = Pick<
+  IssueRefreshResult,
+  "success" | "error" | "issue" | "notImported"
+>;
 
 /**
  * The shape Issue.data takes for synced rows. Distinct from externalData
@@ -1652,7 +1686,7 @@ export class SyncService {
     integrationId: number,
     externalIssueId: string,
     serviceOptions: SyncServiceOptions,
-    inner: () => Promise<{ success: boolean; error?: string }>
+    inner: () => Promise<InnerRefreshResult>
   ): Promise<IssueRefreshResult> {
     const db = serviceOptions.dbClient || defaultDb;
     const minFreshnessSeconds = serviceOptions.minFreshnessSeconds ?? 0;
@@ -1706,7 +1740,7 @@ export class SyncService {
     integrationId: number,
     externalIssueId: string,
     serviceOptions: SyncServiceOptions = {}
-  ): Promise<{ success: boolean; error?: string }> {
+  ): Promise<InnerRefreshResult> {
     const db = serviceOptions.dbClient || defaultDb;
     try {
       // Get user for auth validation
@@ -1817,7 +1851,7 @@ export class SyncService {
     integrationId: number,
     externalIssueId: string,
     serviceOptions: SyncServiceOptions = {}
-  ): Promise<{ success: boolean; error?: string }> {
+  ): Promise<InnerRefreshResult> {
     const db = serviceOptions.dbClient || defaultDb;
     try {
       const integration = await db.integration.findUnique({
@@ -1890,8 +1924,8 @@ export class SyncService {
     db: DbClient,
     integration: { id: number; provider: string },
     externalIssueId: string,
-    createIfMissing?: { projectId: number }
-  ): Promise<{ success: boolean; error?: string }> {
+    createIfMissing?: CreateIfMissing
+  ): Promise<InnerRefreshResult> {
     const integrationId = integration.id;
 
     const adapter = await integrationManager.getAdapter(
@@ -1944,20 +1978,41 @@ export class SyncService {
     });
 
     if (existingIssue) {
-      await this.updateExistingIssue(db, integrationId, issueData);
-      return { success: true };
+      const issue = await this.updateExistingIssue(
+        db,
+        integrationId,
+        issueData
+      );
+      return { success: true, issue };
     }
 
     // No local issue — caller must have opted into create-if-missing
     // (inbound webhook handler does, manual sync button does not).
     if (createIfMissing) {
-      await this.upsertIssueFromExternal(
+      if (
+        createIfMissing.shouldCreate &&
+        !(await createIfMissing.shouldCreate(issueData))
+      ) {
+        return { success: true, notImported: true };
+      }
+      const created = await this.upsertIssueFromExternal(
         db,
         integrationId,
         createIfMissing.projectId,
-        issueData
+        issueData,
+        { createdById: createIfMissing.createdById }
       );
-      return { success: true };
+      return {
+        success: true,
+        issue: {
+          ...issueOutcomeFields(issueData),
+          issueId: created.id,
+          projectId: createIfMissing.projectId,
+          created: created.created,
+          previousStatus: null,
+          isRequirement: created.isRequirement,
+        },
+      };
     }
 
     throw new Error(
@@ -2045,8 +2100,14 @@ export class SyncService {
     db: any,
     integrationId: number,
     projectId: number,
-    issueData: IssueData
-  ): Promise<{ id: number; created: boolean; parentUnresolved?: boolean }> {
+    issueData: IssueData,
+    options: { createdById?: string } = {}
+  ): Promise<{
+    id: number;
+    created: boolean;
+    isRequirement: boolean;
+    parentUnresolved?: boolean;
+  }> {
     // `Projects.createdBy` is the User.id string; the `creator` relation
     // joins to the User row. We just need the FK value here.
     const project = await db.projects.findUnique({
@@ -2198,7 +2259,7 @@ export class SyncService {
         ...issueFields,
         externalId: issueData.id,
         integrationId,
-        createdById: project.createdBy,
+        createdById: options.createdById ?? project.createdBy,
       },
       update: updateFields,
     });
@@ -2237,6 +2298,7 @@ export class SyncService {
     return {
       id: upserted.id,
       created: !existing,
+      isRequirement: upserted.isRequirement === true,
       ...(parentUnresolved ? { parentUnresolved: true } : {}),
     };
   }
@@ -2248,7 +2310,7 @@ export class SyncService {
     db: any,
     integrationId: number,
     issueData: IssueData
-  ): Promise<void> {
+  ): Promise<IssueRefreshOutcome> {
     // Try to find the issue by externalId or externalKey
     // This handles cases where the database might store either the ID or key
     const existingIssue = await db.issue.findFirst({
@@ -2417,7 +2479,37 @@ export class SyncService {
         tenantId: getCurrentTenantId() ?? "default",
       });
     }
+
+    return {
+      ...issueOutcomeFields(issueData),
+      issueId: existingIssue.id,
+      projectId: existingIssue.projectId ?? null,
+      created: false,
+      previousStatus:
+        existingIssue.externalStatus ?? existingIssue.status ?? null,
+      isRequirement:
+        typeof resolvedIsRequirement === "boolean"
+          ? resolvedIsRequirement
+          : existingIssue.isRequirement === true,
+    };
   }
+}
+
+/** The tracker-side facts a refresh outcome reports, from the fetched issue. */
+function issueOutcomeFields(
+  issueData: IssueData
+): Pick<
+  IssueRefreshOutcome,
+  "status" | "issueTypeId" | "labels" | "key" | "title" | "url"
+> {
+  return {
+    status: issueData.status ?? null,
+    issueTypeId: issueData.issueType?.id ?? null,
+    labels: issueData.labels ?? [],
+    key: issueData.key || issueData.id,
+    title: issueData.title,
+    url: issueData.url ?? null,
+  };
 }
 
 export const syncService = new SyncService();

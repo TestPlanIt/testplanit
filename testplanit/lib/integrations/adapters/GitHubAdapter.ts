@@ -1,3 +1,4 @@
+import { FIXED_TRACKER_STATUSES } from "../fixedTrackerStatuses";
 import { tiptapToMarkdown } from "~/lib/tiptap/tiptapToMarkdown";
 import { BaseAdapter } from "./BaseAdapter";
 import {
@@ -570,6 +571,11 @@ export class GitHubAdapter extends BaseAdapter {
       title: milestone.title,
       state: milestone.state,
     }));
+  }
+
+  /** Its issues are only ever open or closed. */
+  async getStatuses(): Promise<Array<{ id: string; name: string }>> {
+    return [...FIXED_TRACKER_STATUSES.GITHUB];
   }
 
   private mapStatusToGitHub(status: string): string {

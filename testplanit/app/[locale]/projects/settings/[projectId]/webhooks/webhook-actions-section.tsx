@@ -59,6 +59,7 @@ import { Link } from "~/lib/navigation";
 import { dateFnsLocaleFor } from "~/lib/utils/dateFnsLocale";
 import {
   readCreateRunOptions,
+  readWebhookActionFilter,
   type WebhookActionSource,
 } from "~/lib/webhooks/actions/schemas";
 import { schema } from "~/zenstack/schema";
@@ -73,6 +74,8 @@ interface Props {
   webhookConfigId: string;
   source: WebhookActionSource;
   baseBranch: string | null;
+  /** Tracker webhooks: the project's issue integration, for the filter pickers. */
+  integration?: { id: number; provider: string } | null;
 }
 
 /** One rule row that can be dragged by its handle; the row's own controls stay clickable. */
@@ -136,6 +139,7 @@ export function WebhookActionsSection({
   webhookConfigId,
   source,
   baseBranch,
+  integration = null,
 }: Props) {
   const t = useTranslations("projects.settings.webhooks.actions");
   const tActions = useTranslations("common.actions");
@@ -145,6 +149,9 @@ export function WebhookActionsSection({
   const tLabels = useTranslations("common.labels");
   const tExecute = useTranslations("automation.execute");
   const tCodeRepos = useTranslations("projects.settings.webhooks.codeRepos");
+  const tRequirements = useTranslations(
+    "projects.settings.integrations.integration.requirementsConfig"
+  );
   const tDuplicates = useTranslations("repository.duplicates");
   const tMapping = useTranslations("admin.imports.testmo.mapping");
   const locale = useLocale();
@@ -250,9 +257,31 @@ export function WebhookActionsSection({
   function details(
     rule: WebhookActionRow
   ): { label: string; problem?: string }[] {
-    if (rule.action !== "CREATE_RUN") return [];
-    const options = readCreateRunOptions(rule.options);
     const out: { label: string; problem?: string }[] = [];
+    const filter = readWebhookActionFilter(rule.filter);
+    if (filter.statuses?.length) {
+      out.push({
+        label: `${tCommon("labels.statuses")}: ${filter.statuses.join(", ")}`,
+      });
+    }
+    if (filter.issueTypeIds?.length) {
+      out.push({
+        label: `${tRequirements("issueTypesLabel")}: ${filter.issueTypeIds
+          .map((id) => filter.issueTypeNames?.[id] ?? id)
+          .join(", ")}`,
+      });
+    }
+    if (filter.labels?.length) {
+      out.push({
+        label: `${tRequirements("labelsLabel")}: ${filter.labels.join(", ")}`,
+      });
+    }
+    if (filter.requirementsOnly) out.push({ label: t("requirementsOnly") });
+    if (rule.action !== "CREATE_RUN") return out;
+    const options = readCreateRunOptions(rule.options);
+    if (options.includeChildIssues) {
+      out.push({ label: t("includeChildIssues") });
+    }
     if (options.minScore !== undefined) {
       out.push({ label: `${tImpact("minScore")}: ${options.minScore}` });
     }
@@ -276,6 +305,8 @@ export function WebhookActionsSection({
     switch (outcome) {
       case "run_created":
         return tWebhooks("events.testRunCreated");
+      case "issue_imported":
+        return tWebhooks("events.issueCreated");
       case "no_cases":
         return tLabels("noCases");
       case "no_workflow":
@@ -459,6 +490,7 @@ export function WebhookActionsSection({
         source={source}
         rule={dialogRule}
         baseBranch={baseBranch}
+        integration={integration}
         onSaved={refetch}
       />
 

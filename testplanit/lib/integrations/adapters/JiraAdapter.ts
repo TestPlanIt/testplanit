@@ -2262,6 +2262,43 @@ export class JiraAdapter extends BaseAdapter {
     }
   }
 
+  /**
+   * The statuses a project's workflows use, or every status on the site when
+   * no project is given. Jira lists a project's statuses per issue type, so
+   * the same status appears once per type; it is returned once.
+   */
+  async getStatuses(
+    projectKey?: string
+  ): Promise<Array<{ id: string; name: string }>> {
+    const byName = new Map<string, { id: string; name: string }>();
+    const add = (status: any) => {
+      const name = typeof status?.name === "string" ? status.name : null;
+      if (name && !byName.has(name.toLowerCase())) {
+        byName.set(name.toLowerCase(), { id: String(status.id ?? name), name });
+      }
+    };
+    if (projectKey) {
+      try {
+        const perType = await this.makeRequest<any[]>(
+          this.buildUrl(
+            `/rest/api/${this.apiVersion}/project/${encodeURIComponent(projectKey)}/statuses`
+          )
+        );
+        for (const issueType of perType ?? []) {
+          for (const status of issueType?.statuses ?? []) add(status);
+        }
+        if (byName.size > 0) return [...byName.values()];
+      } catch (error) {
+        console.error("Failed to fetch project statuses:", error);
+      }
+    }
+    const all = await this.makeRequest<any[]>(
+      this.buildUrl(`/rest/api/${this.apiVersion}/status`)
+    );
+    for (const status of all ?? []) add(status);
+    return [...byName.values()];
+  }
+
   async getIssueTypeFields(
     projectKey: string,
     issueTypeId: string

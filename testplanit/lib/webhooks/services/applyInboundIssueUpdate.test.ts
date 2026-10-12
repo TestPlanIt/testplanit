@@ -60,12 +60,19 @@ const mocks = vi.hoisted(() => {
     incr: vi.fn(async (..._args: any[]): Promise<number> => 1),
     expire: vi.fn(async (..._args: any[]): Promise<number> => 1),
   };
+  // Tracker rules: a webhook with Import issues / Create test run rules
+  // hands the event to the webhook-actions worker instead of syncing inline.
+  const hasTrackerRules = vi.fn(async (..._args: any[]) => false);
+  const enqueueTrackerActions = vi.fn(async (..._args: any[]) => undefined);
   return {
     tx,
     valkey,
+    hasTrackerRules,
+    enqueueTrackerActions,
     baseDb: {
       $transaction,
       projectIntegration: { findFirst: projectIntegrationFindFirst },
+      webhookDelivery: { update: vi.fn(async () => ({})) },
     },
     captureAuditEvent: vi.fn(async () => undefined),
     isUniqueConstraintError: vi.fn((err: unknown) => {
@@ -103,6 +110,14 @@ vi.mock("~/lib/integrations/services/SyncService", () => ({
   syncService: mocks.syncService,
 }));
 
+vi.mock("~/lib/webhooks/actions/runTrackerActions", () => ({
+  hasTrackerRules: mocks.hasTrackerRules,
+}));
+
+vi.mock("~/lib/webhooks/actions/enqueueTrackerActions", () => ({
+  enqueueTrackerActions: mocks.enqueueTrackerActions,
+}));
+
 // Defer the import of the SUT until after the mocks are wired up so that the
 // service's module-level imports resolve to the mocked modules.
 const importSut = async () =>
@@ -137,6 +152,7 @@ const resetTxMocks = () => {
     }
   }
   mocks.baseDb.$transaction.mockClear();
+  mocks.baseDb.webhookDelivery.update.mockClear();
   mocks.baseDb.$transaction.mockImplementation(async (fn: any) => fn(mocks.tx));
   mocks.captureAuditEvent.mockReset();
   mocks.captureAuditEvent.mockResolvedValue(undefined);
@@ -162,6 +178,10 @@ const resetTxMocks = () => {
   mocks.valkey.expire.mockReset();
   mocks.valkey.expire.mockResolvedValue(1);
   mocks.performIssueRefreshSystem.mockResolvedValue({ success: true });
+  mocks.hasTrackerRules.mockReset();
+  mocks.hasTrackerRules.mockResolvedValue(false);
+  mocks.enqueueTrackerActions.mockReset();
+  mocks.enqueueTrackerActions.mockResolvedValue(undefined);
   mocks.isUniqueConstraintError.mockImplementation((err: unknown) => {
     return err instanceof ORMError && err.dbErrorCode === "23505";
   });
@@ -334,14 +354,12 @@ describe("applyInboundIssueUpdate", () => {
     );
   });
 
-  it("Test 3: linked-but-missing Issue triggers auto-create — dedup INSERTED, outcome 'updated' with wasAutoCreated metadata, post-commit sync called with createIfMissing", async () => {
-    // The legacy "no-link skip-dedup, retry-after-manual-link" semantics
-    // retired in favor of auto-create. When the adapter extracts
-    // a linkedRef and the local Issue lookup misses, the receiver now
-    // creates the Issue row from upstream state on this first receipt.
+  it("Test 3: linked-but-missing Issue without tracker rules — dedup INSERTED, outcome 'updated' with wasAutoCreated metadata, nothing imported, delivery marked ignored", async () => {
+    // An issue TestPlanIt doesn't have is only imported by an Import issues
+    // rule. With no rules, the receipt is still recorded (and deduped) but
+    // no sync runs, so nothing is created.
     const applyInboundIssueUpdate = await importSut();
     const input = baseInput();
-    // Tx-side lookup returns null (Issue doesn't exist locally).
     mocks.tx.issue.findFirst.mockResolvedValue(null);
     mocks.projectIntegrationFindFirst.mockResolvedValueOnce({
       integrationId: 42,
@@ -351,11 +369,9 @@ describe("applyInboundIssueUpdate", () => {
     const result = await applyInboundIssueUpdate(input);
 
     expect(result.outcome).toBe("updated");
-    // Dedup IS written so the next redelivery of the same payload
-    // resolves as 'duplicate' rather than re-creating.
+    expect(result).not.toHaveProperty("issueId");
     expect(mocks.tx.webhookEventDedup.create).toHaveBeenCalledTimes(1);
     expect(mocks.tx.webhookEventDedup.delete).not.toHaveBeenCalled();
-    // Delivery row finalized with error=null (apply succeeded).
     expect(mocks.tx.webhookDelivery.update).toHaveBeenCalledWith({
       where: { id: "del_1" },
       data: {
@@ -364,8 +380,6 @@ describe("applyInboundIssueUpdate", () => {
         error: null,
       },
     });
-    // Audit metadata records the auto-create distinction so the
-    // Deliveries tab / report layer can differentiate later.
     expect(mocks.captureAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         action: "WEBHOOK_RECEIVED",
@@ -376,15 +390,77 @@ describe("applyInboundIssueUpdate", () => {
         }),
       })
     );
-    // Post-commit sync called with createIfMissing scoped to the project.
-    expect(mocks.performIssueRefreshSystem).toHaveBeenCalledWith(
-      42,
-      "DEMO-42",
+    expect(mocks.hasTrackerRules).toHaveBeenCalledWith(mocks.baseDb, "wc_demo");
+    expect(mocks.baseDb.webhookDelivery.update).toHaveBeenCalledWith({
+      where: { id: "del_1" },
+      data: { error: "ignored:not_imported" },
+    });
+    expect(mocks.performIssueRefreshSystem).not.toHaveBeenCalled();
+    expect(mocks.projectIntegrationFindFirst).not.toHaveBeenCalled();
+    expect(mocks.enqueueTrackerActions).not.toHaveBeenCalled();
+  });
+
+  it("Test 3b: a webhook with tracker rules hands an unknown issue to the webhook-actions worker", async () => {
+    const applyInboundIssueUpdate = await importSut();
+    mocks.tx.issue.findFirst.mockResolvedValue(null);
+    mocks.hasTrackerRules.mockResolvedValue(true);
+
+    const result = await applyInboundIssueUpdate(baseInput());
+
+    expect(result.outcome).toBe("updated");
+    expect(mocks.enqueueTrackerActions).toHaveBeenCalledTimes(1);
+    expect(mocks.enqueueTrackerActions).toHaveBeenCalledWith({
+      deliveryId: "del_1",
+      webhookConfigId: "wc_demo",
+      projectId: 7,
+      adapterType: "JIRA",
+      externalKey: "DEMO-42",
+      tenantId: undefined,
+    });
+    expect(mocks.performIssueRefreshSystem).not.toHaveBeenCalled();
+  });
+
+  it("Test 3c: a webhook with tracker rules hands a known issue to the worker too, with no inline sync", async () => {
+    const applyInboundIssueUpdate = await importSut();
+    mocks.tx.issue.findFirst.mockResolvedValue({ id: 100 });
+    mocks.hasTrackerRules.mockResolvedValue(true);
+    mocks.projectIntegrationFindFirst.mockResolvedValue({
+      integrationId: 42,
+      integration: { id: 42 },
+    } as any);
+
+    const result = await applyInboundIssueUpdate(
+      baseInput({ adapterType: "GITHUB" })
+    );
+
+    expect(result).toEqual({
+      outcome: "updated",
+      deliveryId: "del_1",
+      issueId: 100,
+    });
+    expect(mocks.enqueueTrackerActions).toHaveBeenCalledWith(
       expect.objectContaining({
-        minFreshnessSeconds: 0,
-        createIfMissing: { projectId: input.projectId },
+        deliveryId: "del_1",
+        adapterType: "GITHUB",
+        externalKey: "DEMO-42",
       })
     );
+    expect(mocks.performIssueRefreshSystem).not.toHaveBeenCalled();
+    expect(mocks.projectIntegrationFindFirst).not.toHaveBeenCalled();
+  });
+
+  it("Test 3d: an enqueue failure is swallowed — the receipt stays 'updated'", async () => {
+    const applyInboundIssueUpdate = await importSut();
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    mocks.tx.issue.findFirst.mockResolvedValue({ id: 100 });
+    mocks.hasTrackerRules.mockResolvedValue(true);
+    mocks.enqueueTrackerActions.mockRejectedValueOnce(new Error("valkey down"));
+
+    const result = await applyInboundIssueUpdate(baseInput());
+
+    expect(result.outcome).toBe("updated");
+    expect(errorSpy).toHaveBeenCalled();
+    errorSpy.mockRestore();
   });
 
   it("Test 4: happy path — Issue lookup uses externalKey+projectId+isDeleted (NO externalSystem filter), getAdapter called with adapterType, all six writes present", async () => {
@@ -499,6 +575,11 @@ describe("applyInboundIssueUpdate", () => {
       "DEMO-42", // linkedRef.externalKey
       { minFreshnessSeconds: 0 } // inside the burst allowance
     );
+    // Update only: the inline path never passes createIfMissing.
+    expect(
+      (mocks.performIssueRefreshSystem.mock.calls[0] as any[])[2]
+    ).not.toHaveProperty("createIfMissing");
+    expect(mocks.enqueueTrackerActions).not.toHaveBeenCalled();
     // Counted per ISSUE, not per webhook config or project — a storm against
     // one issue must not suppress a quiet neighbour's first event.
     expect(mocks.valkey.incr).toHaveBeenCalledWith(

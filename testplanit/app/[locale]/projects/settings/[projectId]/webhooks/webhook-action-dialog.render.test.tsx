@@ -38,6 +38,14 @@ vi.mock("~/lib/navigation", () => ({
 vi.mock("@/components/automation/ExecutionParamFields", () => ({
   ExecutionParamFields: () => null,
 }));
+// The filter's own data loading is covered by its render test; here only
+// its presence and the draft it starts from matter.
+vi.mock("./webhook-action-tracker-filter", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./webhook-action-tracker-filter")>()),
+  WebhookActionTrackerFilter: () => (
+    <div data-testid="webhook-action-tracker-filter" />
+  ),
+}));
 vi.mock("@/components/ui/dialog", () => ({
   Dialog: ({ children, open }: any) => (open ? <div>{children}</div> : null),
   DialogContent: ({ children, ...rest }: any) => (
@@ -179,18 +187,25 @@ describe("WebhookActionDialog", () => {
     fireEvent.change(screen.getByTestId("webhook-action-trigger"), {
       target: { value: "ISSUE_CREATED" },
     });
+    // Drafting cases isn't available in this version, so it isn't offered.
     expect(optionValues("webhook-action-type")).toEqual([
       "IMPORT_ISSUE",
       "CREATE_RUN",
-      "DRAFT_CASES",
     ]);
+    expect(screen.queryByTestId("webhook-action-include-children")).toBeNull();
     fireEvent.change(screen.getByTestId("webhook-action-type"), {
       target: { value: "CREATE_RUN" },
     });
-    // tracker rules have no minimum score but can execute
+    // tracker rules have no minimum score but can execute and take children
     expect(screen.queryByTestId("webhook-action-min-score")).toBeNull();
     expect(
       screen.getByTestId("webhook-action-auto-execute")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("webhook-action-include-children")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("webhook-action-tracker-filter")
     ).toBeInTheDocument();
 
     fireEvent.change(screen.getByTestId("webhook-action-trigger"), {
@@ -316,16 +331,60 @@ describe("WebhookActionDialog", () => {
     );
   });
 
-  it("keeps the stored filter and the options it doesn't edit", async () => {
+  it("round-trips a tracker rule's stored filter and keeps the options it doesn't edit", async () => {
     renderDialog({
+      source: "tracker",
+      integration: { id: 3, provider: "JIRA" },
       rule: {
         id: "act-2",
+        order: 0,
+        isEnabled: true,
+        trigger: "ISSUE_STATUS_ENTERED",
+        action: "CREATE_RUN",
+        filter: {
+          statuses: ["Ready"],
+          issueTypeIds: ["10001"],
+          issueTypeNames: { "10001": "Story" },
+          labels: ["qa"],
+          requirementsOnly: true,
+        },
+        options: { minScore: 10, includeChildIssues: true, future: "kept" },
+      },
+    });
+
+    expect(screen.getByTestId("webhook-action-include-children")).toBeChecked();
+    fireEvent.click(screen.getByTestId("webhook-action-save"));
+
+    await waitFor(() =>
+      expect(mockSave).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: "act-2",
+          trigger: "ISSUE_STATUS_ENTERED",
+          action: "CREATE_RUN",
+          filter: {
+            statuses: ["Ready"],
+            issueTypeIds: ["10001"],
+            issueTypeNames: { "10001": "Story" },
+            labels: ["qa"],
+            requirementsOnly: true,
+          },
+          // a tracker rule carries no minimum score
+          options: { includeChildIssues: true, future: "kept" },
+        })
+      )
+    );
+  });
+
+  it("saves a repository rule with no filter, whatever was stored", async () => {
+    renderDialog({
+      rule: {
+        id: "act-3",
         order: 0,
         isEnabled: true,
         trigger: "CODE_PUSH",
         action: "CREATE_RUN",
         filter: { statuses: ["Ready"] },
-        options: { minScore: 10, includeChildIssues: true },
+        options: { minScore: 10, future: "kept" },
       },
     });
 
@@ -334,12 +393,69 @@ describe("WebhookActionDialog", () => {
     await waitFor(() =>
       expect(mockSave).toHaveBeenCalledWith(
         expect.objectContaining({
-          id: "act-2",
-          filter: { statuses: ["Ready"] },
-          options: { minScore: 10, includeChildIssues: true },
+          id: "act-3",
+          filter: {},
+          options: { minScore: 10, future: "kept" },
         })
       )
     );
+  });
+
+  it("saves include child issues on a tracker Create test run rule", async () => {
+    renderDialog({ source: "tracker" });
+
+    fireEvent.change(screen.getByTestId("webhook-action-trigger"), {
+      target: { value: "ISSUE_CREATED" },
+    });
+    fireEvent.change(screen.getByTestId("webhook-action-type"), {
+      target: { value: "CREATE_RUN" },
+    });
+    fireEvent.click(screen.getByTestId("webhook-action-include-children"));
+    fireEvent.click(screen.getByTestId("webhook-action-save"));
+
+    await waitFor(() =>
+      expect(mockSave).toHaveBeenCalledWith({
+        projectId: 42,
+        webhookConfigId: "whc-1",
+        id: undefined,
+        trigger: "ISSUE_CREATED",
+        action: "CREATE_RUN",
+        filter: {
+          statuses: [],
+          issueTypeIds: [],
+          issueTypeNames: {},
+          labels: [],
+          requirementsOnly: false,
+        },
+        options: { includeChildIssues: true },
+      })
+    );
+  });
+
+  it("can't save a status rule until a status is chosen", () => {
+    renderDialog({ source: "tracker" });
+
+    expect(screen.getByTestId("webhook-action-save")).toBeEnabled();
+    fireEvent.change(screen.getByTestId("webhook-action-trigger"), {
+      target: { value: "ISSUE_STATUS_ENTERED" },
+    });
+    expect(screen.getByTestId("webhook-action-save")).toBeDisabled();
+  });
+
+  it("can save a status rule that already has statuses", () => {
+    renderDialog({
+      source: "tracker",
+      rule: {
+        id: "act-4",
+        order: 0,
+        isEnabled: true,
+        trigger: "ISSUE_STATUS_ENTERED",
+        action: "IMPORT_ISSUE",
+        filter: { statuses: ["Done"] },
+        options: {},
+      },
+    });
+    expect(screen.getByTestId("webhook-action-save")).toBeEnabled();
   });
 
   it("keeps the dialog open and toasts the server's error", async () => {

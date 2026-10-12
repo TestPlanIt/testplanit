@@ -260,10 +260,10 @@ describeIntegration("Webhook actions: composed runs (live DB)", () => {
       });
       expect(run.issues.map((i: { id: number }) => i.id)).toEqual([fx.issueId]);
       expect(noteTexts(run.note)).toEqual([
-        "PR #12: Fix checkout — https://git.example/pr/12",
+        "PR #12: Fix checkout",
         "Pull requests → Create Test Run",
       ]);
-      const link = run.note.content[0].content[1];
+      const link = run.note.content[0].content[0];
       expect(link.marks).toEqual([
         { type: "link", attrs: { href: "https://git.example/pr/12" } },
       ]);
@@ -580,7 +580,7 @@ describeIntegration("Webhook actions: composed runs (live DB)", () => {
       expect(strictRun.createdById).toBe(SYSTEM_AUTOMATION_USER_ID);
       expect(strictRun.name).toBe(`PR #7: Rules ${STAMP}`);
       const texts = noteTexts(strictRun.note);
-      expect(texts[0]).toBe(`PR #7: Rules ${STAMP} — https://git.example/pr/7`);
+      expect(texts[0]).toBe(`PR #7: Rules ${STAMP}`);
       expect(texts[texts.length - 1]).toBe(
         "Pull requests → Create Test Run · Minimum score: 90"
       );

@@ -42,4 +42,9 @@ export async function register() {
   const { ensureCodeRepositoryCredentialsEncrypted } =
     await import("~/lib/integrations/ensureCodeRepositoryCredentialsEncrypted");
   await ensureCodeRepositoryCredentialsEncrypted();
+
+  // The same for issue-integration credentials saved in an older shape.
+  const { ensureIntegrationCredentialsEncrypted } =
+    await import("~/lib/integrations/ensureIntegrationCredentialsEncrypted");
+  await ensureIntegrationCredentialsEncrypted();
 }

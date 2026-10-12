@@ -1879,7 +1879,11 @@
             "already_composed": "Run already created for this change",
             "execute_failed": "Execution not requested"
           },
-          "dragToReorder": "Drag to reorder"
+          "dragToReorder": "Drag to reorder",
+          "requirementsOnly": "Requirements only",
+          "requirementsOnlyHelp": "Only issues the project classifies as requirements.",
+          "includeChildIssues": "Include child issues",
+          "includeChildIssuesHelp": "Also take the test cases linked to the issue's child issues."
         },
         "codeRepos": {
           "empty": "No repositories are connected for Impact Analysis. <link>Connect one</link> first.",
@@ -7724,6 +7728,9 @@
     "businessHours": "{hours, number, ::.0} business hours"
   },
   "help": {
+    "webhookAction": {
+      "labels": "## Labels\nThe tags the issue carries in your tracker. The action only takes an issue that has at least one of these; leave it empty to take issues whatever their labels.\n\n- Jira, GitHub, GitLab and Gitea: the issue's labels\n- Azure DevOps, ClickUp and MantisBT: the issue's tags\n- Redmine: the issue's category\n- Matching ignores upper and lower case"
+    },
     "auditLogs": "## Audit Logs\nView system-wide audit trail for security and compliance tracking",
     "statuses": "## Statuses\nManage the statuses testers assign when recording a test result, such as Passed, Failed, and Blocked.",
     "configurations": "## Configurations\nConfigurations are a combination of categories and variants used to define a test environment. For example, OS/Browser, Test Server, Language, etc.",

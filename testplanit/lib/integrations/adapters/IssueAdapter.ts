@@ -407,9 +407,12 @@ export interface IssueAdapter {
   getPriorities?(): Promise<Array<{ id: string; name: string }>>;
 
   /**
-   * Get available statuses
+   * Get available statuses. `projectKey` scopes them to one tracker project
+   * where the tracker defines statuses per project (Jira); others ignore it.
    */
-  getStatuses?(): Promise<Array<{ id: string; name: string }>>;
+  getStatuses?(
+    projectKey?: string
+  ): Promise<Array<{ id: string; name: string }>>;
 
   /**
    * Search for users with pagination support

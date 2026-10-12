@@ -28,7 +28,8 @@ The application uses the following background processes:
 16. **Audit Log Retention Worker** - Daily archive or deletion of audit log entries older than `AUDIT_LOG_RETENTION_DAYS` (off unless set)
 17. **Dataset Lease Sweep Worker** - Reaps expired dataset-row leases (test-data reservations) roughly once a minute
 18. **Alert Worker** - Evaluates alert rules when results land, when runs complete, when automated executions fail and sessions complete, and on hourly and daily scheduled passes
-19. **Scheduler** - Sets up recurring jobs (cron jobs)
+19. **Webhook Actions Worker** - Runs an issue-tracker webhook's [actions](./user-guide/webhooks.md#issue-tracker-actions) (importing the issue, creating test runs) after the webhook has been answered
+20. **Scheduler** - Sets up recurring jobs (cron jobs)
 
 ## Workers
 
@@ -192,6 +193,13 @@ The application uses the following background processes:
 - Records a `AlertEvent` row per firing, notifies the rule's subscribers through the notification worker, and optionally writes a `alert.triggered` outbox event for webhooks
 - Default concurrency: 2 (`ALERT_CONCURRENCY`)
 - Location: `workers/alertWorker.ts`
+
+### Webhook Actions Worker
+
+- Runs the [actions](./user-guide/webhooks.md#issue-tracker-actions) of an issue-tracker inbound webhook, one job per delivery: refreshes the issue from the tracker, imports it when an **Import Issues** action takes it, and creates a test run for each **Create Test Run** action the event triggers
+- A job whose issue is being synced by another process retries with backoff
+- Default concurrency: 2 (`WEBHOOK_ACTIONS_CONCURRENCY`)
+- Location: `workers/webhookActionsWorker.ts`
 
 ### Scheduler
 

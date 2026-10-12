@@ -23,7 +23,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { saveWebhookAction } from "~/app/actions/webhook-actions";
 import {
-  ACTIONS_BY_TRIGGER,
+  availableActionsFor,
   readCreateRunOptions,
   triggersFor,
   type WebhookActionSource,
@@ -39,6 +39,13 @@ import {
   type AutoExecuteDraft,
 } from "./webhook-auto-execute-fields";
 import { useWebhookActionLabels } from "./webhook-action-labels";
+import {
+  WebhookActionTrackerFilter,
+  trackerFilterDraftFrom,
+  trackerFilterFromDraft,
+  type TrackerFilterDraft,
+} from "./webhook-action-tracker-filter";
+import { Switch } from "@/components/ui/switch";
 
 export interface WebhookActionRow {
   id: string;
@@ -60,6 +67,8 @@ interface Props {
   rule: WebhookActionRow | null;
   /** The branch the webhook's pushes compare against, for the push label. */
   baseBranch: string | null;
+  /** Tracker webhooks: the project's issue integration, for the filter pickers. */
+  integration?: { id: number; provider: string } | null;
   onSaved: () => Promise<unknown> | void;
 }
 
@@ -78,6 +87,7 @@ function WebhookActionDialogBody({
   source,
   rule,
   baseBranch,
+  integration = null,
   onSaved,
 }: Props) {
   const t = useTranslations("projects.settings.webhooks.actions");
@@ -95,7 +105,7 @@ function WebhookActionDialogBody({
     rule?.trigger ?? triggers[0]
   );
   const [action, setAction] = useState<WebhookActionType>(
-    rule?.action ?? ACTIONS_BY_TRIGGER[rule?.trigger ?? triggers[0]][0]
+    rule?.action ?? availableActionsFor(rule?.trigger ?? triggers[0])[0]
   );
   const [minScore, setMinScore] = useState(
     savedRun.minScore === undefined ? "" : String(savedRun.minScore)
@@ -103,15 +113,21 @@ function WebhookActionDialogBody({
   const [autoExecute, setAutoExecute] = useState<AutoExecuteDraft>(
     autoExecuteDraftFrom(savedRun.autoExecute)
   );
+  const [filter, setFilter] = useState<TrackerFilterDraft>(
+    trackerFilterDraftFrom(rule?.filter)
+  );
+  const [includeChildIssues, setIncludeChildIssues] = useState(
+    savedRun.includeChildIssues === true
+  );
   const [saving, setSaving] = useState(false);
 
-  const actions = ACTIONS_BY_TRIGGER[trigger];
+  const actions = availableActionsFor(trigger);
   const isRepository = source === "repository";
 
   function chooseTrigger(next: WebhookActionTrigger) {
     setTrigger(next);
-    if (!ACTIONS_BY_TRIGGER[next].includes(action)) {
-      setAction(ACTIONS_BY_TRIGGER[next][0]);
+    if (!availableActionsFor(next).includes(action)) {
+      setAction(availableActionsFor(next)[0]);
     }
   }
 
@@ -128,6 +144,10 @@ function WebhookActionDialogBody({
     if (action === "CREATE_RUN") {
       delete options.minScore;
       delete options.autoExecute;
+      delete options.includeChildIssues;
+      if (!isRepository && includeChildIssues) {
+        options.includeChildIssues = true;
+      }
       if (isRepository && minScore.trim() !== "") {
         const parsed = Number(minScore.trim());
         if (!Number.isInteger(parsed) || parsed < 0 || parsed > 100) {
@@ -147,7 +167,7 @@ function WebhookActionDialogBody({
         id: rule?.id,
         trigger,
         action,
-        filter: rule?.filter ?? {},
+        filter: isRepository ? {} : trackerFilterFromDraft(filter),
         options,
       });
       if (!result.success) {
@@ -162,7 +182,11 @@ function WebhookActionDialogBody({
   }
 
   const executeIncomplete =
-    autoExecute.enabled && autoExecute.targetId === null;
+    action === "CREATE_RUN" &&
+    autoExecute.enabled &&
+    autoExecute.targetId === null;
+  const statusesMissing =
+    trigger === "ISSUE_STATUS_ENTERED" && filter.statuses.length === 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -220,6 +244,33 @@ function WebhookActionDialogBody({
             </Select>
           </div>
 
+          {!isRepository && (
+            <WebhookActionTrackerFilter
+              projectId={projectId}
+              integration={integration}
+              value={filter}
+              onChange={setFilter}
+            />
+          )}
+
+          {action === "CREATE_RUN" && !isRepository && (
+            <Label className="flex items-start gap-3">
+              <Switch
+                checked={includeChildIssues}
+                onCheckedChange={setIncludeChildIssues}
+                data-testid="webhook-action-include-children"
+              />
+              <span className="space-y-0.5">
+                <span className="block font-medium">
+                  {t("includeChildIssues")}
+                </span>
+                <span className="block text-xs text-muted-foreground">
+                  {t("includeChildIssuesHelp")}
+                </span>
+              </span>
+            </Label>
+          )}
+
           {action === "CREATE_RUN" && isRepository && (
             <div className="space-y-1">
               <Label htmlFor="webhook-action-min-score">
@@ -266,7 +317,7 @@ function WebhookActionDialogBody({
           <Button
             type="button"
             onClick={() => void save()}
-            disabled={saving || executeIncomplete}
+            disabled={saving || executeIncomplete || statusesMissing}
             data-testid="webhook-action-save"
           >
             {tActions("save")}

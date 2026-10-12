@@ -69,6 +69,7 @@ export async function GET(request: NextRequest) {
       "webhook-dispatch": 5,
       "scim-access-recompute": 1,
       alerts: 2,
+      "webhook-actions": 2,
     };
 
     // Get configured concurrency from environment (or use defaults)
@@ -160,6 +161,11 @@ export async function GET(request: NextRequest) {
       "scim-access-recompute": defaultConcurrency["scim-access-recompute"],
       alerts: parseInt(
         process.env.ALERT_CONCURRENCY || String(defaultConcurrency["alerts"]),
+        10
+      ),
+      "webhook-actions": parseInt(
+        process.env.WEBHOOK_ACTIONS_CONCURRENCY ||
+          String(defaultConcurrency["webhook-actions"]),
         10
       ),
     };

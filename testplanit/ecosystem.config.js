@@ -502,5 +502,19 @@ module.exports = {
         NODE_ENV: "production",
       },
     },
+    {
+      name: "webhook-actions-worker",
+      script: isDev ? "tsx" : "node",
+      args: isDev
+        ? "workers/webhookActionsWorker.ts"
+        : "dist/workers/webhookActionsWorker.js",
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      ...memoryLimits("512M", { shared: true }),
+      env: {
+        NODE_ENV: "production",
+      },
+    },
   ],
 };

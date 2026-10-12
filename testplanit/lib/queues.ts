@@ -22,6 +22,7 @@ import {
   EXECUTION_DISPATCH_QUEUE_NAME,
   SCIM_ACCESS_RECOMPUTE_QUEUE_NAME,
   ALERT_QUEUE_NAME,
+  WEBHOOK_ACTIONS_QUEUE_NAME,
 } from "./queueNames";
 import valkeyConnection from "./valkey";
 import { BULLMQ_PREFIX } from "./bullPrefix";
@@ -50,6 +51,7 @@ export {
   EXECUTION_DISPATCH_QUEUE_NAME,
   SCIM_ACCESS_RECOMPUTE_QUEUE_NAME,
   ALERT_QUEUE_NAME,
+  WEBHOOK_ACTIONS_QUEUE_NAME,
 };
 
 const STANDARD_RETRY: JobsOptions = {
@@ -93,6 +95,7 @@ let _iterationGenerationQueue: Queue | null = null;
 let _webhookDispatchQueue: Queue | null = null;
 let _scimAccessRecomputeQueue: Queue | null = null;
 let _alertQueue: Queue | null = null;
+let _webhookActionsQueue: Queue | null = null;
 
 /**
  * Get the forecast queue instance (lazy initialization)
@@ -750,6 +753,34 @@ export function getAlertQueue(): Queue | null {
   return _alertQueue;
 }
 
+/**
+ * Inbound webhook actions queue: the receiver enqueues an issue-tracker
+ * delivery's rules here; the webhook-actions worker runs them.
+ */
+export function getWebhookActionsQueue(): Queue | null {
+  if (_webhookActionsQueue) return _webhookActionsQueue;
+  if (!valkeyConnection) {
+    console.warn(
+      `Valkey connection not available, Queue "${WEBHOOK_ACTIONS_QUEUE_NAME}" not initialized.`
+    );
+    return null;
+  }
+
+  _webhookActionsQueue = new Queue(WEBHOOK_ACTIONS_QUEUE_NAME, {
+    connection: valkeyConnection as any,
+    prefix: BULLMQ_PREFIX,
+    defaultJobOptions: { ...STANDARD_RETRY },
+  });
+
+  console.log(`Queue "${WEBHOOK_ACTIONS_QUEUE_NAME}" initialized.`);
+
+  _webhookActionsQueue.on("error", (error) => {
+    console.error(`Queue ${WEBHOOK_ACTIONS_QUEUE_NAME} error:`, error);
+  });
+
+  return _webhookActionsQueue;
+}
+
 export function getAllQueues() {
   return {
     forecastQueue: getForecastQueue(),
@@ -774,5 +805,6 @@ export function getAllQueues() {
     executionDispatchQueue: getExecutionDispatchQueue(),
     scimAccessRecomputeQueue: getScimAccessRecomputeQueue(),
     alertQueue: getAlertQueue(),
+    webhookActionsQueue: getWebhookActionsQueue(),
   };
 }

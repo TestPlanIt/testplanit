@@ -30,22 +30,19 @@ export type ComposeRunResult =
   | { created: true; testRunId: number; caseCount: number }
   | { created: false; reason: "no_cases" | "no_workflow" };
 
-/** The run's note: one paragraph per link, the URL as a link mark. */
+/** The run's note: one paragraph per link, its label linked to the URL. */
 export function runNote(links: RunNoteLink[]) {
   return {
     type: "doc",
     content: links.map(({ label, url }) => ({
       type: "paragraph",
-      content: url
-        ? [
-            { type: "text", text: `${label} — ` },
-            {
-              type: "text",
-              text: url,
-              marks: [{ type: "link", attrs: { href: url } }],
-            },
-          ]
-        : [{ type: "text", text: label }],
+      content: [
+        {
+          type: "text",
+          text: label,
+          ...(url ? { marks: [{ type: "link", attrs: { href: url } }] } : {}),
+        },
+      ],
     })),
   };
 }

@@ -57,7 +57,6 @@ import { dateFnsLocaleFor } from "~/lib/utils/dateFnsLocale";
 import { inboundAdapterForCodeRepository } from "~/lib/webhooks/codeChangeEvents";
 import { redactWebhookUrl } from "~/lib/webhooks/redaction";
 import {
-  ISSUE_SCOPE_HINT,
   ISSUE_SETUP_STEP_KEYS,
   adapterSlug,
   adapterTitleKey,
@@ -75,6 +74,7 @@ import {
   RepositoryWebhookCard,
   type RepositoryWebhookRow,
 } from "./repository-webhook-card";
+import { WebhookActionsSection } from "./webhook-actions-section";
 
 interface WebhookConfigFormProps {
   projectId: number;
@@ -515,7 +515,6 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
   function renderIssueCard(config: IssueConfig) {
     const slug = adapterSlug(config.adapterType);
     const titleKey = adapterTitleKey(config.adapterType);
-    const hint = ISSUE_SCOPE_HINT[config.adapterType];
     const isRevealedHere = revealed?.configId === config.id;
     const url = `${
       typeof window !== "undefined" ? window.location.origin : ""
@@ -570,20 +569,6 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {hint && (
-            <p className="text-xs text-muted-foreground">
-              {hint.rich
-                ? t.rich(hint.key as any, {
-                    code: (chunks) => (
-                      <code className="rounded bg-muted px-1 font-mono text-[0.95em]">
-                        {chunks}
-                      </code>
-                    ),
-                  })
-                : t(hint.key as any)}
-            </p>
-          )}
-
           {isRevealedHere &&
             revealed &&
             renderRevealedBox(revealed, config.adapterType)}
@@ -644,6 +629,16 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
                 {renderActivityRow("activityLastFailure", config.lastFailureAt)}
               </div>
             </div>
+          )}
+
+          {!isRevealedHere && (
+            <WebhookActionsSection
+              projectId={projectId}
+              webhookConfigId={config.id}
+              source="tracker"
+              baseBranch={null}
+              integration={activeIntegration?.integration ?? null}
+            />
           )}
 
           <div className="flex flex-wrap items-center gap-2">

@@ -34,7 +34,7 @@ Both kinds are added with the same **Add inbound webhook** button on the **Inbou
 1. Navigate to **Project Settings** → **Webhooks**.
 2. Click **Add inbound webhook**. A three-step wizard opens.
 3. **Source** — choose **Issue tracker** or **Code repository**. An option that cannot be used yet says why: the project has no issue integration (or its provider has no webhook surface, such as **Simple URL**), the issue-tracker webhook already exists, no repository is connected for Impact Analysis, or every connected repository already has a webhook.
-4. **Configure** — for an issue tracker, the wizard names the provider the webhook will verify. For a repository, choose the repository (when several are connected), optionally set the base branch pushes compare against, and switch the **Pull requests**, **Pushes** and **Pushes to other branches** events on or off; each event switched on becomes a **Create a test run** action on the new webhook. Azure DevOps, for either source, asks for the username and password (typically a Personal Access Token as the password) that the Service Hook will send via Basic authentication. ClickUp offers an optional secret field: leave it blank to have TestPlanIt register the webhook in ClickUp for you, or paste the secret ClickUp returned if you created the webhook yourself. Click **Create webhook**.
+4. **Configure** — for an issue tracker, the wizard names the provider the webhook will verify. For a repository, choose the repository (when several are connected), optionally set the base branch pushes compare against, and switch the **Pull requests**, **Pushes** and **Pushes to other branches** events on or off; each event switched on becomes a **Create Test Run** action on the new webhook. Azure DevOps, for either source, asks for the username and password (typically a Personal Access Token as the password) that the Service Hook will send via Basic authentication. ClickUp offers an optional secret field: leave it blank to have TestPlanIt register the webhook in ClickUp for you, or paste the secret ClickUp returned if you created the webhook yourself. Click **Create webhook**.
 5. **Connect** — the webhook URL and, for providers that sign requests, the secret are shown once, together with setup steps for the provider. Copy them before clicking **Done**; they are not shown again.
 
 For Jira, GitHub, GitLab, Gitea/Forgejo/Gogs and Bitbucket, TestPlanIt mints a random HMAC secret on the server. For ClickUp the secret is minted by ClickUp when the webhook is registered; TestPlanIt stores it encrypted and never shows it. Redmine and MantisBT webhooks have **no secret** — their webhook plugins cannot sign requests, so the unguessable webhook URL itself is the credential. Treat the URL as a secret and rotate it (delete + recreate) if it leaks.
@@ -58,9 +58,24 @@ A project can have at most one issue-tracker webhook, and that webhook is locked
 
 When the project's integration is switched to a different provider, or removed entirely, the inbound webhook is removed automatically. The confirmation dialog on the **Issue Integrations** page surfaces an extra bullet warning of this whenever an inbound webhook exists, so administrators see the consequence before confirming. After the change, configure a fresh inbound webhook for the new provider if you still want event-driven sync.
 
-### Auto-import of upstream issues
+### Issue tracker actions
 
-When an inbound event references an external issue that does not yet exist in TestPlanIt, the system imports it automatically as a new local issue. The project's creator (or its current owner of record) is recorded as the issue creator. This means issues filed directly in your external tracker can appear in TestPlanIt's Issues list without any manual import step.
+The issue-tracker webhook's card lists its **Actions**, which say what TestPlanIt does when the tracker reports an issue event. They work like a [repository webhook's actions](#actions): **Add** one, change it with the pencil, turn it off with its switch, and drag the handle to reorder. Each action shows what it last did. Actions run in the background once the webhook has been answered.
+
+Every action has a **Trigger**:
+
+- **Any issue event** — any event the tracker sends about an issue.
+- **Issue created** — an issue TestPlanIt hasn't seen before.
+- **Issue status changes** — an issue moves into one of the action's statuses. Choose at least one status; an issue created directly in one of them counts too.
+
+and an **Action**:
+
+- **Import Issues** — add the issue to the project, so issues filed in the tracker appear in TestPlanIt's Issues list (and on Requirements, when the project classifies them as requirements) without a manual import. An issue TestPlanIt already has is always kept up to date, with or without an import action.
+- **Create Test Run** — create a test run of the test cases linked to the issue, named after it (`DEMO-42: Checkout with saved card`) and linked to it, with the issue and the action in its description. Turn on **Include child issues** to also take the cases linked to the issue's child issues. A run is only created when there are cases to take; drafts are left out when the project excludes them. The run can also be [executed automatically](#executing-automated-cases).
+
+**Filters** narrow which issues an action takes: **Statuses** (the tracker's own status names, suggested from the issues the project already holds; type a name to add one it doesn't), **Issue types**, **Labels** (an issue with any of them matches), and **Requirements only**. An empty filter matches every issue.
+
+New issue-tracker webhooks start with an **Any issue event → Import Issues** action, so issues the tracker reports are imported as before; delete it, or add filters, to import fewer. Imported issues and created runs are recorded as made by the built-in **System** user.
 
 ### Milestone sync events (version/sprint)
 
@@ -90,7 +105,7 @@ A second kind of inbound webhook comes from the application's **code repositorie
 
 1. Navigate to **Project Settings** → **Webhooks**, **Inbound** tab, and click **Add inbound webhook**.
 2. Choose **Code repository** as the source. A project with several repositories gets one webhook per connection; the wizard lists the connections that do not have one yet.
-3. Pick the repository, optionally set the **base branch**, switch the **Pull requests**, **Pushes** and **Pushes to other branches** events on or off, and click **Create webhook**. Each event switched on becomes a **Create a test run** action. GitHub, GitLab, Gitea and Bitbucket webhooks get a server-minted secret; Azure DevOps asks for the username and password the Service Hook will send.
+3. Pick the repository, optionally set the **base branch**, switch the **Pull requests**, **Pushes** and **Pushes to other branches** events on or off, and click **Create webhook**. Each event switched on becomes a **Create Test Run** action. GitHub, GitLab, Gitea and Bitbucket webhooks get a server-minted secret; Azure DevOps asks for the username and password the Service Hook will send.
 4. Copy the URL (and secret) from the Connect step; they are shown once. The step names the events to enable on the provider side.
 
 ### Events
@@ -103,15 +118,15 @@ The **base branch** is set on the webhook's card and defaults to the connection'
 
 ### Actions
 
-The **Actions** list on the webhook's card says what TestPlanIt does with each event. Every action has a trigger (**When**) and what it does (**Do**); a repository webhook's actions create a test run. Click **Add action** to add one, the pencil to change one, and the switch to turn one off without removing it. Actions run in the order listed; the arrows reorder them. Each action shows what it last did, with a link to the run it created.
+The **Actions** list on the webhook's card says what TestPlanIt does with each event. Every action has a **Trigger** and an **Action**; a repository webhook's actions create a test run. Click **Add** to add one, the pencil to change one, and the switch to turn one off without removing it. Actions run in the order listed; drag an action's handle to reorder them. Each action shows what it last did, with a link to the run it created.
 
-A **Create a test run** action takes the tests the analysis puts in the **pinned** and **affected** tiers, the same tests a run started by hand selects to begin with. To take more or fewer, set a **Minimum score**: the run then holds every test the analysis scores at or above that number (0–100), whatever its tier, so a low value also pulls in related tests and a high one keeps only the strongest matches. Leave it empty to use the tiers. The score each test received stays visible on the run's analysis, so a threshold can be tuned from the analyses the webhook has already produced. When the project excludes draft cases from runs, drafts are left out.
+A **Create Test Run** action takes the tests the analysis puts in the **pinned** and **affected** tiers, the same tests a run started by hand selects to begin with. To take more or fewer, set a **Minimum score**: the run then holds every test the analysis scores at or above that number (0–100), whatever its tier, so a low value also pulls in related tests and a high one keeps only the strongest matches. Leave it empty to use the tiers. The score each test received stays visible on the run's analysis, so a threshold can be tuned from the analyses the webhook has already produced. When the project excludes draft cases from runs, drafts are left out.
 
 A run is only created when the analysis finds at least one test to take; otherwise the action and the delivery say so. The run is created by the built-in **System** user, in the project's default run state, with the event's links in its note (the pull request, or a push's compare page and the pull request it merged), and the first run made from an analysis is linked to it as if a reviewer had accepted every affected test. Each action creates one run per analysis: when the same change arrives again (a reopened pull request, or a commit range analyzed recently), the action reports the run it already made instead of creating another. Two actions triggered by the same event each create their own run, which lets one event produce, say, a narrow run of the strongest matches and a broader one.
 
 ### Executing automated cases
 
-A **Create a test run** action can also send its run for [automated execution](automated-execution.md) as soon as it exists, the way **Execute automated cases** on the run would. In the action, turn on **Execute automated cases**, choose the [execution target](automated-execution.md), optionally a branch or ref (blank uses the target's default branch), and the values of the target's parameters. The option is unavailable until the project has an enabled execution target.
+A **Create Test Run** action can also send its run for [automated execution](automated-execution.md) as soon as it exists, the way **Execute automated cases** on the run would. In the action, turn on **Execute automated cases**, choose the [execution target](automated-execution.md), optionally a branch or ref (blank uses the target's default branch), and the values of the target's parameters. The option is unavailable until the project has an enabled execution target, and is turned off when the target it used is deleted or disabled and no other enabled target remains. An action whose target is gone shows its target badge in red; hover it to see why.
 
 The run is then requested on that target, covering its automated cases; manual cases stay in the run for testers. Nothing is requested when the run has no automated cases, or when the target has been deleted or disabled since the action was saved; the action keeps the target and warns that it is gone until you choose another. When no execution is requested, the delivery records the reason (`execute:no_automated_cases`, `execute:target_not_found`, `execute:target_disabled`). The request also follows the same limits as the run's **Execute** button: a run that is already completed or already executing records `execute:run_completed` or `execute:execution_in_progress`, and a project past its execution rate limit records `execute:rate_limited`.
 

@@ -77,7 +77,7 @@ const input = {
 let currentTx: any;
 
 describe("runNote", () => {
-  it("writes one paragraph per link, the URL as a link mark, or the label alone", () => {
+  it("writes one paragraph per link, the label linked to its URL, or the label alone", () => {
     expect(
       runNote([
         { label: "PR #12", url: "https://x/pull/12" },
@@ -89,10 +89,9 @@ describe("runNote", () => {
         {
           type: "paragraph",
           content: [
-            { type: "text", text: "PR #12 — " },
             {
               type: "text",
-              text: "https://x/pull/12",
+              text: "PR #12",
               marks: [{ type: "link", attrs: { href: "https://x/pull/12" } }],
             },
           ],

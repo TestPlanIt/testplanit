@@ -50,6 +50,21 @@ export const ACTIONS_BY_TRIGGER: Record<
   CODE_BRANCH_PUSH: ["CREATE_RUN"],
 };
 
+/** The actions this version can perform; a rule can only be saved with one. */
+export const AVAILABLE_ACTIONS: readonly WebhookActionType[] = [
+  "IMPORT_ISSUE",
+  "CREATE_RUN",
+];
+
+/** The actions a trigger offers that this version can perform. */
+export function availableActionsFor(
+  trigger: WebhookActionTrigger
+): WebhookActionType[] {
+  return ACTIONS_BY_TRIGGER[trigger].filter((action) =>
+    AVAILABLE_ACTIONS.includes(action)
+  );
+}
+
 export function isRepositoryTrigger(trigger: WebhookActionTrigger): boolean {
   return (REPOSITORY_TRIGGERS as readonly string[]).includes(trigger);
 }
@@ -63,6 +78,8 @@ const filterValues = z
 export const webhookActionFilterSchema = z.object({
   statuses: filterValues.optional(),
   issueTypeIds: filterValues.optional(),
+  /** Display names for the chosen issue type ids; never matched on. */
+  issueTypeNames: z.record(z.string(), z.string().max(255)).optional(),
   labels: filterValues.optional(),
   requirementsOnly: z.boolean().optional(),
 });
@@ -159,6 +176,13 @@ function compactFilter(filter: WebhookActionFilter): WebhookActionFilter {
   for (const key of ["statuses", "issueTypeIds", "labels"] as const) {
     const values = [...new Set(filter[key] ?? [])];
     if (values.length > 0) out[key] = values;
+  }
+  if (out.issueTypeIds && filter.issueTypeNames) {
+    const names: Record<string, string> = {};
+    for (const id of out.issueTypeIds) {
+      if (filter.issueTypeNames[id]) names[id] = filter.issueTypeNames[id];
+    }
+    if (Object.keys(names).length > 0) out.issueTypeNames = names;
   }
   if (filter.requirementsOnly) out.requirementsOnly = true;
   return out;

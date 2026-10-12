@@ -39,6 +39,33 @@ describe("describeCreateRunRule", () => {
     ).toBe("Pushes to other branches → Create Test Run · Target: 9");
   });
 
+  it("names a tracker rule's trigger and the statuses the issue entered", async () => {
+    expect(
+      await describeCreateRunRule(db, {
+        trigger: "ISSUE_STATUS_ENTERED",
+        statuses: ["Ready for QA"],
+      })
+    ).toBe("Issue status changes → Create Test Run · Ready for QA");
+    expect(
+      await describeCreateRunRule(db, {
+        trigger: "ISSUE_STATUS_ENTERED",
+        statuses: ["Ready", "In Review"],
+        autoExecute: { targetId: 4 },
+      })
+    ).toBe(
+      "Issue status changes → Create Test Run · Ready, In Review · Target: Nightly CI"
+    );
+  });
+
+  it("names the other tracker triggers, leaving out an empty status list", async () => {
+    expect(await describeCreateRunRule(db, { trigger: "ISSUE_CREATED" })).toBe(
+      "Issue created → Create Test Run"
+    );
+    expect(
+      await describeCreateRunRule(db, { trigger: "ISSUE_EVENT", statuses: [] })
+    ).toBe("Any issue event → Create Test Run");
+  });
+
   it("says nothing for a job queued before rules carried their trigger", async () => {
     expect(await describeCreateRunRule(db, {})).toBeNull();
   });

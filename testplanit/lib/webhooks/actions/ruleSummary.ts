@@ -17,6 +17,8 @@ export async function describeCreateRunRule(
     branch?: string | null;
     minScore?: number | null;
     autoExecute?: AutoExecuteOptions | null;
+    /** Tracker rules: the statuses an issue entered. */
+    statuses?: string[];
   }
 ): Promise<string | null> {
   if (!rule.trigger) return null;
@@ -33,9 +35,19 @@ export async function describeCreateRunRule(
           : await t("projects.settings.webhooks.codeRepos.eventPushDefault")
         : rule.trigger === "CODE_BRANCH_PUSH"
           ? await t("projects.settings.webhooks.codeRepos.eventBranchPush")
-          : null;
+          : rule.trigger === "ISSUE_CREATED"
+            ? await t("projects.settings.webhooks.events.issueCreated")
+            : rule.trigger === "ISSUE_STATUS_ENTERED" ||
+                rule.trigger === "ISSUE_EVENT"
+              ? await t(
+                  `projects.settings.webhooks.actions.trigger.${rule.trigger}`
+                )
+              : null;
   if (!trigger) return null;
   const parts = [`${trigger} → ${await t("repository.cases.createTestRun")}`];
+  if (rule.statuses && rule.statuses.length > 0) {
+    parts.push(rule.statuses.join(", "));
+  }
   if (typeof rule.minScore === "number") {
     parts.push(`${await t("runs.impact.affected.minScore")}: ${rule.minScore}`);
   }

@@ -1,3 +1,4 @@
+import { FIXED_TRACKER_STATUSES } from "../fixedTrackerStatuses";
 import { BaseAdapter } from "./BaseAdapter";
 import {
   AuthenticationData,
@@ -500,6 +501,11 @@ export class GitLabAdapter extends BaseAdapter {
     throw new Error(
       `Cannot resolve GitLab issue reference without project context: ${issueId}`
     );
+  }
+
+  /** Its issues are only ever open or closed. */
+  async getStatuses(): Promise<Array<{ id: string; name: string }>> {
+    return [...FIXED_TRACKER_STATUSES.GITLAB];
   }
 
   private mapStatusToGitLab(status: string): string {

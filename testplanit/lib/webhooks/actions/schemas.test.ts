@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   ACTIONS_BY_TRIGGER,
+  AVAILABLE_ACTIONS,
   DEFAULT_REPOSITORY_TRIGGERS,
   REPOSITORY_TRIGGERS,
   TRACKER_TRIGGERS,
+  availableActionsFor,
   isRepositoryTrigger,
   parseWebhookAction,
   readCreateRunOptions,
@@ -32,6 +34,26 @@ describe("webhook action triggers", () => {
       expect(ACTIONS_BY_TRIGGER[trigger]).toEqual(["CREATE_RUN"]);
     }
     expect(ACTIONS_BY_TRIGGER.ISSUE_EVENT).toEqual(["IMPORT_ISSUE"]);
+  });
+});
+
+describe("availableActionsFor", () => {
+  it("offers only the actions this version performs", () => {
+    expect([...AVAILABLE_ACTIONS]).toEqual(["IMPORT_ISSUE", "CREATE_RUN"]);
+    expect(availableActionsFor("ISSUE_EVENT")).toEqual(["IMPORT_ISSUE"]);
+    expect(availableActionsFor("ISSUE_CREATED")).toEqual([
+      "IMPORT_ISSUE",
+      "CREATE_RUN",
+    ]);
+    expect(availableActionsFor("ISSUE_STATUS_ENTERED")).toEqual([
+      "IMPORT_ISSUE",
+      "CREATE_RUN",
+    ]);
+    for (const trigger of REPOSITORY_TRIGGERS) {
+      expect(availableActionsFor(trigger)).toEqual(["CREATE_RUN"]);
+    }
+    // Drafting cases is a trigger's action, just not available yet.
+    expect(ACTIONS_BY_TRIGGER.ISSUE_CREATED).toContain("DRAFT_CASES");
   });
 });
 
@@ -90,6 +112,41 @@ describe("parseWebhookAction", () => {
         filter: { requirementsOnly: true },
       })
     ).toMatchObject({ ok: true, filter: { requirementsOnly: true } });
+  });
+
+  it("keeps issue type names only for the chosen issue types", () => {
+    const result = parseWebhookAction("tracker", {
+      trigger: "ISSUE_CREATED",
+      action: "CREATE_RUN",
+      filter: {
+        issueTypeIds: ["10001", "10001", "10002"],
+        issueTypeNames: { "10001": "Story", "10003": "Bug" },
+      },
+    });
+    expect(result).toEqual({
+      ok: true,
+      filter: {
+        issueTypeIds: ["10001", "10002"],
+        issueTypeNames: { "10001": "Story" },
+      },
+      options: {},
+    });
+
+    // Names without any chosen type are dropped.
+    expect(
+      parseWebhookAction("tracker", {
+        trigger: "ISSUE_CREATED",
+        action: "IMPORT_ISSUE",
+        filter: { issueTypeIds: [], issueTypeNames: { "10001": "Story" } },
+      })
+    ).toEqual({ ok: true, filter: {}, options: {} });
+    expect(
+      parseWebhookAction("tracker", {
+        trigger: "ISSUE_CREATED",
+        action: "IMPORT_ISSUE",
+        filter: { issueTypeIds: ["9"], issueTypeNames: { "10001": "Story" } },
+      })
+    ).toEqual({ ok: true, filter: { issueTypeIds: ["9"] }, options: {} });
   });
 
   it("refuses an invalid tracker filter", () => {

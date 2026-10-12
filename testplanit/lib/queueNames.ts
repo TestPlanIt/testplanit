@@ -33,6 +33,10 @@ export const SCIM_ACCESS_RECOMPUTE_QUEUE_NAME = "scim-access-recompute";
 // Alerts (#651): rule evaluation runs here, never in the request
 // that recorded the result.
 export const ALERT_QUEUE_NAME = "alerts";
+// Inbound webhook actions: a tracker delivery's rules run here, after the
+// receiver has answered.
+export const WEBHOOK_ACTIONS_QUEUE_NAME = "webhook-actions";
+export const JOB_RUN_TRACKER_ACTIONS = "run-tracker-actions";
 export const JOB_EVALUATE_ALERT_RESULT = "evaluate-alert-result";
 export const JOB_EVALUATE_ALERT_JUNIT_RESULT = "evaluate-alert-junit-result";
 export const JOB_EVALUATE_ALERT_RUN = "evaluate-alert-run";
@@ -86,4 +90,5 @@ export const ALL_QUEUE_NAMES = [
   EXECUTION_DISPATCH_QUEUE_NAME,
   SCIM_ACCESS_RECOMPUTE_QUEUE_NAME,
   ALERT_QUEUE_NAME,
+  WEBHOOK_ACTIONS_QUEUE_NAME,
 ] as const;

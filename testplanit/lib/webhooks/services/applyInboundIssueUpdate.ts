@@ -5,6 +5,10 @@ import { syncService } from "~/lib/integrations/services/SyncService";
 import { baseDb } from "~/lib/db";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { getAdapter } from "~/lib/webhooks/adapters";
+import { getCurrentTenantId } from "~/lib/multiTenantDb";
+import { enqueueTrackerActions } from "~/lib/webhooks/actions/enqueueTrackerActions";
+import { hasTrackerRules } from "~/lib/webhooks/actions/runTrackerActions";
+import { inboundProviderForAdapter } from "~/lib/webhooks/inboundProviders";
 
 import { webhookFreshnessWindow } from "./webhookFreshness";
 
@@ -12,48 +16,6 @@ import type {
   ApplyInboundIssueUpdateInput,
   ApplyInboundIssueUpdateResult,
 } from "./types";
-
-/**
- * Map webhook adapter type → Integration provider value. The webhook
- * carries `WebhookConfig.adapterType` (JIRA / GITHUB / AZURE_DEVOPS); the
- * Integration model uses `IntegrationProvider` (JIRA / GITHUB / AZURE_DEVOPS).
- * They line up 1:1 today but `inboundProviderForAdapter` documents the
- * mapping so a future adapter without a corresponding integration provider
- * (e.g. SLACK inbound, hypothetical) can return null and skip system sync.
- */
-function inboundProviderForAdapter(
-  adapterType: AdapterType
-):
-  | "JIRA"
-  | "GITHUB"
-  | "AZURE_DEVOPS"
-  | "GITLAB"
-  | "GITEA"
-  | "REDMINE"
-  | "MANTISBT"
-  | "CLICKUP"
-  | null {
-  switch (adapterType) {
-    case "JIRA":
-      return "JIRA";
-    case "GITHUB":
-      return "GITHUB";
-    case "AZURE_DEVOPS":
-      return "AZURE_DEVOPS";
-    case "GITLAB":
-      return "GITLAB";
-    case "GITEA":
-      return "GITEA";
-    case "REDMINE":
-      return "REDMINE";
-    case "MANTISBT":
-      return "MANTISBT";
-    case "CLICKUP":
-      return "CLICKUP";
-    default:
-      return null;
-  }
-}
 
 /**
  * After an inbound webhook commits the dedup row for a linked issue,
@@ -72,13 +34,6 @@ async function triggerSystemSyncForInboundEvent(args: {
   projectId: number;
   adapterType: AdapterType;
   externalKey: string;
-  /**
-   * When true, the post-commit sync creates a fresh local Issue row if
-   * one doesn't already exist (auto-create on linked-but-missing). When
-   * false (default), the sync only updates an existing row and throws
-   * if missing — matching the legacy manual-sync contract.
-   */
-  createIfMissing?: boolean;
 }): Promise<void> {
   const provider = inboundProviderForAdapter(args.adapterType);
   if (!provider) {
@@ -119,13 +74,6 @@ async function triggerSystemSyncForInboundEvent(args: {
       minFreshnessSeconds: await webhookFreshnessWindow(
         `issue:${projectIntegration.integration.id}:${args.projectId}:${args.externalKey}`
       ),
-      // Only the auto-create branch threads `createIfMissing` through —
-      // the regular update branch is fine throwing on missing (it would
-      // mean an Issue was deleted between the dedup INSERT and this call,
-      // which is a real anomaly worth surfacing).
-      ...(args.createIfMissing
-        ? { createIfMissing: { projectId: args.projectId } }
-        : {}),
     }
   );
 
@@ -356,12 +304,9 @@ export async function applyInboundIssueUpdate(
         });
 
         if (!linkedIssue) {
-          // Step 7: Linked-via-payload but no local Issue yet — auto-create
-          // path. The webhook carries enough info (externalKey + upstream
-          // signal that the issue exists) for us to mirror it locally
-          // instead of requiring manual import. The post-commit sync calls
-          // `performIssueRefreshSystem({ createIfMissing: { projectId } })`
-          // which pulls full upstream state and INSERTs a new Issue row.
+          // Step 7: Linked-via-payload but no local Issue yet. The webhook's
+          // Import issues rules decide, in the webhook-actions worker,
+          // whether to mirror it locally from full upstream state.
           //
           // Dedup IS written here (in contrast to the no-link skip-dedup
           // behavior): the auto-create acts on this payload, so a redelivery
@@ -493,8 +438,7 @@ export async function applyInboundIssueUpdate(
   // explicitly skip syncing.
   //
   // Auto-create variant: if the local Issue doesn't exist yet (`wasAutoCreated`
-  // flag), the sync uses `createIfMissing: { projectId }` so the system path
-  // INSERTs a new Issue row populated from upstream state.
+  // flag), only an Import issues rule can mint it.
   //
   // Defensive try/catch: the dedup row is already committed at this point.
   // Any throw here would propagate to the route handler and surface as a
@@ -504,14 +448,34 @@ export async function applyInboundIssueUpdate(
   // Issue permanently un-created. Better to log + drop the throw; the
   // next webhook event for this issue (different payloadDigest) will
   // retry the sync naturally.
+  //
+  // A webhook with Import issues / Create test run rules hands the event to
+  // the webhook-actions worker, which refreshes (or imports) the issue and
+  // runs the rules. Without rules only an issue TestPlanIt already has is
+  // refreshed; importing is a rule.
   if (txResult.outcome === "updated" && linkedRef) {
     try {
-      await triggerSystemSyncForInboundEvent({
-        projectId,
-        adapterType,
-        externalKey: linkedRef.externalKey,
-        createIfMissing: txResult.wasAutoCreated === true,
-      });
+      if (await hasTrackerRules(baseDb, webhookConfigId)) {
+        await enqueueTrackerActions({
+          deliveryId: txResult.deliveryId,
+          webhookConfigId,
+          projectId,
+          adapterType,
+          externalKey: linkedRef.externalKey,
+          tenantId: getCurrentTenantId(),
+        });
+      } else if (txResult.wasAutoCreated === true) {
+        await baseDb.webhookDelivery.update({
+          where: { id: txResult.deliveryId },
+          data: { error: "ignored:not_imported" },
+        });
+      } else {
+        await triggerSystemSyncForInboundEvent({
+          projectId,
+          adapterType,
+          externalKey: linkedRef.externalKey,
+        });
+      }
     } catch (err) {
       console.error(
         `[applyInboundIssueUpdate] post-commit sync trigger threw for ${linkedRef.externalKey}:`,

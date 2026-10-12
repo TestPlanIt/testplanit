@@ -12,9 +12,11 @@ import {
   validateCustomInputs,
 } from "~/lib/execution/inputs";
 import {
+  AVAILABLE_ACTIONS,
   parseWebhookAction,
   type AutoExecuteOptions,
 } from "~/lib/webhooks/actions/schemas";
+import { readRequirementTypeConfig } from "~/lib/integrations/requirementTypeConfig";
 import { canManageWebhookConfig } from "~/lib/webhooks/auth";
 import { getServerAuthSession } from "~/server/auth";
 
@@ -78,6 +80,25 @@ async function checkAutoExecute(
   return null;
 }
 
+/**
+ * Whether the project's tracker issues can be requirements: requirements
+ * are on for the project and its integration names the requirement types.
+ */
+async function classifiesRequirements(projectId: number): Promise<boolean> {
+  const project = await baseDb.projects.findUnique({
+    where: { id: projectId },
+    select: { requirementsEnabled: true },
+  });
+  if (!project?.requirementsEnabled) return false;
+  const integrations = await baseDb.projectIntegration.findMany({
+    where: { projectId, isActive: true },
+    select: { config: true },
+  });
+  return integrations.some(
+    (integration) => readRequirementTypeConfig(integration.config).enabled
+  );
+}
+
 const VALIDATION_MESSAGES = {
   trigger_not_allowed: "This webhook can't use that trigger",
   action_not_allowed: "That action isn't available for this trigger",
@@ -105,12 +126,24 @@ export async function saveWebhookAction(input: {
   return asWebhookManager(projectId, async () => {
     const config = await findInboundConfig(projectId, webhookConfigId);
     if (!config) return { success: false, error: "Webhook not found" };
+    if (!AVAILABLE_ACTIONS.includes(input.action)) {
+      return { success: false, error: VALIDATION_MESSAGES.action_not_allowed };
+    }
     const parsed = parseWebhookAction(
       config.codeRepositoryConfigId != null ? "repository" : "tracker",
       input
     );
     if (!parsed.ok) {
       return { success: false, error: VALIDATION_MESSAGES[parsed.error] };
+    }
+    if (
+      parsed.filter.requirementsOnly &&
+      !(await classifiesRequirements(projectId))
+    ) {
+      return {
+        success: false,
+        error: "This project doesn't classify issues as requirements",
+      };
     }
     const targetError = await checkAutoExecute(
       projectId,

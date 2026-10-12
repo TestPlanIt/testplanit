@@ -9,6 +9,8 @@ const { mockSession, mockCanManage, db, tx } = vi.hoisted(() => {
     db: {
       webhookConfig: { findFirst: vi.fn() },
       executionTarget: { findFirst: vi.fn() },
+      projects: { findUnique: vi.fn() },
+      projectIntegration: { findMany: vi.fn() },
       webhookAction: {
         findFirst: vi.fn(),
         create: vi.fn(),
@@ -47,6 +49,54 @@ const base = {
   trigger: "CODE_PULL_REQUEST" as const,
   action: "CREATE_RUN" as const,
 };
+
+describe("saveWebhookAction — requirements only", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockSession.mockResolvedValue({
+      user: { id: "u1", name: "Admin", email: "a@x" },
+    });
+    mockCanManage.mockResolvedValue(true);
+    db.webhookConfig.findFirst.mockResolvedValue(trackerHook);
+    db.webhookAction.findFirst.mockResolvedValue(null);
+    db.webhookAction.create.mockResolvedValue({ id: "act-new" });
+  });
+
+  const save = () =>
+    saveWebhookAction({
+      projectId: 42,
+      webhookConfigId: "whc-2",
+      trigger: "ISSUE_EVENT",
+      action: "IMPORT_ISSUE",
+      filter: { requirementsOnly: true },
+    });
+  const refused = {
+    success: false,
+    error: "This project doesn't classify issues as requirements",
+  };
+
+  it("refuses it when the project has requirements off", async () => {
+    db.projects.findUnique.mockResolvedValue({ requirementsEnabled: false });
+    expect(await save()).toEqual(refused);
+    expect(db.webhookAction.create).not.toHaveBeenCalled();
+  });
+
+  it("refuses it when no integration names requirement types", async () => {
+    db.projects.findUnique.mockResolvedValue({ requirementsEnabled: true });
+    db.projectIntegration.findMany.mockResolvedValue([
+      { config: { requirements: { enabled: false } } },
+    ]);
+    expect(await save()).toEqual(refused);
+  });
+
+  it("saves it when the project classifies requirements", async () => {
+    db.projects.findUnique.mockResolvedValue({ requirementsEnabled: true });
+    db.projectIntegration.findMany.mockResolvedValue([
+      { config: { requirements: { enabled: true, issueTypeIds: ["1"] } } },
+    ]);
+    expect(await save()).toEqual({ success: true, id: "act-new" });
+  });
+});
 
 describe("webhook-actions server actions", () => {
   beforeEach(() => {
@@ -169,14 +219,42 @@ describe("webhook-actions server actions", () => {
           ...base,
           webhookConfigId: "whc-2",
           trigger: "ISSUE_CREATED",
-          action: "DRAFT_CASES",
-          options: { quantity: 500 },
+          action: "CREATE_RUN",
+          options: { autoExecute: { targetId: "x" } },
         })
       ).toEqual({
         success: false,
         error: "The action's options are not valid",
       });
+      // Drafting cases arrives in a later version; it can't be saved yet.
+      expect(
+        await saveWebhookAction({
+          ...base,
+          webhookConfigId: "whc-2",
+          trigger: "ISSUE_CREATED",
+          action: "DRAFT_CASES",
+          options: { quantity: 5 },
+        })
+      ).toEqual({
+        success: false,
+        error: "That action isn't available for this trigger",
+      });
+      // Nor can an existing rule be switched to it.
+      expect(
+        await saveWebhookAction({
+          ...base,
+          id: "act-1",
+          webhookConfigId: "whc-2",
+          trigger: "ISSUE_STATUS_ENTERED",
+          action: "DRAFT_CASES",
+          filter: { statuses: ["Ready"] },
+        })
+      ).toEqual({
+        success: false,
+        error: "That action isn't available for this trigger",
+      });
       expect(db.webhookAction.create).not.toHaveBeenCalled();
+      expect(db.webhookAction.updateMany).not.toHaveBeenCalled();
     });
 
     it("creates a rule at the end of the webhook's list", async () => {

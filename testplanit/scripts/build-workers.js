@@ -45,6 +45,7 @@ const entryPoints = [
   "workers/datasetLeaseSweepWorker.ts",
   "workers/executionDispatchWorker.ts",
   "workers/alertWorker.ts",
+  "workers/webhookActionsWorker.ts",
   "scheduler.ts",
 ];
 
