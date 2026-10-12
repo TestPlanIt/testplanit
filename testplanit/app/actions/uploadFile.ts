@@ -1,46 +1,12 @@
 "use server";
 
-import { PutObjectCommand } from "@aws-sdk/client-s3";
-import { getS3Client } from "~/lib/s3Client";
-
-// Attachment and inline-image ceilings are per-deployment. The bundled nginx
-// caps request bodies at 10 MB and operators raise that from nginx-local/, so
-// the app's own ceiling has to be able to move with it -- otherwise raising the
-// proxy limit alone does nothing. UPLOAD_MAX_MB is the single knob:
-// next.config.ts derives the server-action body limit from the same variable.
-//
-// Project icons and avatars are deliberately NOT covered: they are UI
-// thumbnails with fixed dimensions, not operator-sized user payloads.
-const DEFAULT_UPLOAD_MAX_MB = 10;
-
-function uploadMaxBytes(): number {
-  const parsed = Number(process.env.UPLOAD_MAX_MB);
-  const mb =
-    Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_UPLOAD_MAX_MB;
-  return mb * 1024 * 1024;
-}
-
-// Supported upload types and their configurations
-const UPLOAD_CONFIGS = {
-  "project-icon": {
-    folder: "uploads/project-icons",
-    maxSize: 4 * 1024 * 1024, // 4MB
-  },
-  avatar: {
-    folder: "uploads/avatars",
-    maxSize: 2 * 1024 * 1024, // 2MB
-  },
-  docimage: {
-    folder: "uploads/document-images",
-    maxSize: uploadMaxBytes(),
-  },
-  attachment: {
-    folder: "uploads/attachments",
-    maxSize: uploadMaxBytes(),
-  },
-} as const;
-
-type UploadType = keyof typeof UPLOAD_CONFIGS;
+import {
+  isUploadType,
+  putUpload,
+  StorageNotConfiguredError,
+  validateUpload,
+  type UploadType,
+} from "~/lib/storageUploads";
 
 interface UploadResult {
   success?: {
@@ -59,55 +25,41 @@ export async function uploadFile(
   uploadType: UploadType
 ): Promise<UploadResult> {
   try {
-    const file = formData.get("file") as File;
-    const prependString = (formData.get("prependString") as string) || "";
+    // Loaded here, not at module scope: client components import this action
+    // through fetchSignedUrl, and the auth module pulls in the whole server.
+    const { getServerAuthSession } = await import("~/server/auth");
+    const session = await getServerAuthSession();
+    if (!session?.user?.id) {
+      return { error: "Unauthorized" };
+    }
 
-    if (!file) {
+    const file = formData.get("file");
+    const prependString = formData.get("prependString");
+
+    if (!(file instanceof File)) {
       return { error: "No file provided" };
     }
 
-    const config = UPLOAD_CONFIGS[uploadType];
-    if (!config) {
+    if (!isUploadType(uploadType)) {
       return { error: `Invalid upload type: ${uploadType}` };
     }
 
-    // Validate file size
-    if (file.size > config.maxSize) {
-      return {
-        error: `File is too large. Maximum size is ${config.maxSize / (1024 * 1024)}MB.`,
-      };
+    const validationError = validateUpload(file, uploadType);
+    if (validationError) {
+      return { error: validationError };
     }
-
-    const bucketName = process.env.AWS_BUCKET_NAME;
-    if (!bucketName) {
-      return { error: "Storage bucket not configured" };
-    }
-
-    // Create S3 client
-    const s3Client = getS3Client();
-
-    const objectKey = `${config.folder}/${prependString}${prependString ? "_" : ""}${Date.now()}_${file.name}`;
-    const buffer = Buffer.from(await file.arrayBuffer());
-
-    const command = new PutObjectCommand({
-      Bucket: bucketName,
-      Key: objectKey,
-      Body: buffer,
-      ContentType: file.type,
-      ContentLength: buffer.length,
-    });
-
-    await s3Client.send(command);
-
-    const objectUrl = `/api/storage/${objectKey}`;
 
     return {
-      success: {
-        url: objectUrl,
-        key: objectKey,
-      },
+      success: await putUpload(
+        file,
+        uploadType,
+        typeof prependString === "string" ? prependString : null
+      ),
     };
   } catch (error: unknown) {
+    if (error instanceof StorageNotConfiguredError) {
+      return { error: error.message };
+    }
     console.error("Upload error:", error);
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";

@@ -1,9 +1,12 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockSend } = vi.hoisted(() => ({
-  mockSend: vi.fn(),
-}));
+const { mockSend, mockGetServerAuthSession, mockAuthenticateRequest } =
+  vi.hoisted(() => ({
+    mockSend: vi.fn(),
+    mockGetServerAuthSession: vi.fn(),
+    mockAuthenticateRequest: vi.fn(),
+  }));
 
 vi.mock("@aws-sdk/client-s3", () => {
   const S3Client = vi.fn(function (this: any) {
@@ -15,6 +18,14 @@ vi.mock("@aws-sdk/client-s3", () => {
   return { S3Client, PutObjectCommand };
 });
 
+vi.mock("~/server/auth", () => ({
+  getServerAuthSession: mockGetServerAuthSession,
+}));
+
+vi.mock("~/lib/api-token-auth", () => ({
+  authenticateRequest: mockAuthenticateRequest,
+}));
+
 import { POST } from "./route";
 
 function createUploadRequest(file: File | null): NextRequest {
@@ -23,6 +34,7 @@ function createUploadRequest(file: File | null): NextRequest {
     formData.set("file", file);
   }
   return {
+    headers: new Headers(),
     formData: async () => formData,
   } as unknown as NextRequest;
 }
@@ -35,6 +47,11 @@ describe("POST /api/upload-project-icon", () => {
     process.env.AWS_SECRET_ACCESS_KEY = "test-secret";
     process.env.AWS_REGION = "us-east-1";
     mockSend.mockResolvedValue({});
+    mockGetServerAuthSession.mockResolvedValue({ user: { id: "user-1" } });
+    mockAuthenticateRequest.mockResolvedValue({
+      authenticated: true,
+      user: { userId: "user-1" },
+    });
   });
 
   it("returns 400 when no file in form data", async () => {

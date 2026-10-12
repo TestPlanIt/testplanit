@@ -1,9 +1,12 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockSend } = vi.hoisted(() => ({
-  mockSend: vi.fn(),
-}));
+const { mockSend, mockGetServerAuthSession, mockAuthenticateRequest } =
+  vi.hoisted(() => ({
+    mockSend: vi.fn(),
+    mockGetServerAuthSession: vi.fn(),
+    mockAuthenticateRequest: vi.fn(),
+  }));
 
 vi.mock("@aws-sdk/client-s3", () => {
   const S3Client = vi.fn(function (this: any) {
@@ -14,6 +17,14 @@ vi.mock("@aws-sdk/client-s3", () => {
   });
   return { S3Client, PutObjectCommand };
 });
+
+vi.mock("~/server/auth", () => ({
+  getServerAuthSession: mockGetServerAuthSession,
+}));
+
+vi.mock("~/lib/api-token-auth", () => ({
+  authenticateRequest: mockAuthenticateRequest,
+}));
 
 import { POST } from "./route";
 
@@ -29,6 +40,7 @@ function createUploadRequest(
     formData.set("prependString", prependString);
   }
   return {
+    headers: new Headers(),
     formData: async () => formData,
   } as unknown as NextRequest;
 }
@@ -41,6 +53,11 @@ describe("POST /api/upload-avatar", () => {
     process.env.AWS_SECRET_ACCESS_KEY = "test-secret";
     process.env.AWS_REGION = "us-east-1";
     mockSend.mockResolvedValue({});
+    mockGetServerAuthSession.mockResolvedValue({ user: { id: "user-1" } });
+    mockAuthenticateRequest.mockResolvedValue({
+      authenticated: true,
+      user: { userId: "user-1" },
+    });
   });
 
   it("returns 400 when no file in form data", async () => {
@@ -83,5 +100,17 @@ describe("POST /api/upload-avatar", () => {
 
     expect(response.status).toBe(200);
     expect(data.success.key).toContain("user123_");
+  });
+
+  it("rejects non-image files", async () => {
+    const file = new File(["<script></script>"], "avatar.html", {
+      type: "text/html",
+    });
+    const response = await POST(createUploadRequest(file));
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBe("Only image files are allowed.");
+    expect(mockSend).not.toHaveBeenCalled();
   });
 });

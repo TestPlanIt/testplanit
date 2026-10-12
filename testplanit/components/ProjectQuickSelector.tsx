@@ -116,6 +116,7 @@ export const ProjectQuickSelector = () => {
                 >
                   {project.iconUrl ? (
                     <Image
+                      unoptimized
                       src={project.iconUrl}
                       alt={`${project.name} icon`}
                       width={16}

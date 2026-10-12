@@ -1,62 +1,12 @@
-import { PutObjectCommand } from "@aws-sdk/client-s3";
-import { getS3Client } from "~/lib/s3Client";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import { handleUploadRequest } from "~/lib/storageRoutes";
 
 /**
  * POST /api/upload-docimage
- * Server-side file upload proxy for documentation images
+ *
+ * Server-side upload proxy for instances whose storage is not publicly
+ * reachable. Form fields: `file` (required), `prependString` (optional).
  */
 export async function POST(req: NextRequest) {
-  try {
-    // Create S3 client inside the request handler to ensure env vars are available
-    const s3Client = getS3Client();
-    const formData = await req.formData();
-    const file = formData.get("file") as File;
-    const prependString = (formData.get("prependString") as string) || "";
-
-    if (!file) {
-      return NextResponse.json({ error: "No file provided" }, { status: 400 });
-    }
-
-    const bucketName = process.env.AWS_BUCKET_NAME;
-    if (!bucketName) {
-      return NextResponse.json(
-        { error: "Storage bucket not configured" },
-        { status: 500 }
-      );
-    }
-
-    const objectKey = `uploads/docimages/${prependString}${prependString ? "_" : ""}${Date.now()}_${file.name}`;
-    const buffer = Buffer.from(await file.arrayBuffer());
-
-    const command = new PutObjectCommand({
-      Bucket: bucketName,
-      Key: objectKey,
-      Body: buffer,
-      ContentType: file.type,
-      ContentLength: buffer.length,
-    });
-
-    await s3Client.send(command);
-
-    const objectUrl = `/api/storage/${objectKey}`;
-
-    return NextResponse.json({
-      success: {
-        url: objectUrl,
-        key: objectKey,
-      },
-    });
-  } catch (error: any) {
-    console.error("Upload error:", error);
-    console.error("Error details:", {
-      message: error.message,
-      stack: error.stack,
-      name: error.name,
-    });
-    return NextResponse.json(
-      { error: `Failed to upload file: ${error.message || "Unknown error"}` },
-      { status: 500 }
-    );
-  }
+  return handleUploadRequest(req, "docimage");
 }

@@ -32,6 +32,7 @@ const FileThumbnail: React.FC<FileThumbnailProps> = ({ attachment }) => {
           />
         ) : (
           <Image
+            unoptimized
             src={attachment.url}
             alt={attachment.name}
             sizes="100vw"

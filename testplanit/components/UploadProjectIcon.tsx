@@ -127,6 +127,7 @@ export default function UploadProjectIcon({
         >
           {previewUrl ? (
             <Image
+              unoptimized
               src={previewUrl}
               alt="Project Icon Preview"
               width={64}

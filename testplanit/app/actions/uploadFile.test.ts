@@ -6,7 +6,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // happened to satisfy a "no size error" assertion while making the suite
 // network-dependent. Mocking the transport lets those cases assert the upload
 // actually succeeded instead.
-const { mockSend } = vi.hoisted(() => ({ mockSend: vi.fn() }));
+const { mockSend, mockGetServerAuthSession } = vi.hoisted(() => ({
+  mockSend: vi.fn(),
+  mockGetServerAuthSession: vi.fn(),
+}));
+
+vi.mock("~/server/auth", () => ({
+  getServerAuthSession: mockGetServerAuthSession,
+}));
 
 // Both are invoked with `new`, so the implementations must be constructable --
 // vitest 4 rejects an arrow function here ("is not a constructor").
@@ -39,6 +46,7 @@ describe("uploadFile validation", () => {
     delete process.env.UPLOAD_MAX_MB;
     mockSend.mockReset();
     mockSend.mockResolvedValue({});
+    mockGetServerAuthSession.mockResolvedValue({ user: { id: "user-1" } });
   });
 
   afterEach(() => {
@@ -53,6 +61,35 @@ describe("uploadFile validation", () => {
   }
 
   describe("input validation", () => {
+    it("should reject an unauthenticated caller without uploading", async () => {
+      mockGetServerAuthSession.mockResolvedValue(null);
+      const uploadFile = await getUploadFile();
+      const formData = new FormData();
+      formData.append(
+        "file",
+        new File(["poc"], "poc.txt", { type: "text/plain" })
+      );
+
+      const result = await uploadFile(formData, "attachment");
+
+      expect(result).toEqual({ error: "Unauthorized" });
+      expect(mockSend).not.toHaveBeenCalled();
+    });
+
+    it("should reject non-image files for image upload types", async () => {
+      const uploadFile = await getUploadFile();
+      const formData = new FormData();
+      formData.append(
+        "file",
+        new File(["<svg/>"], "page.html", { type: "text/html" })
+      );
+
+      const result = await uploadFile(formData, "docimage");
+
+      expect(result).toEqual({ error: "Only image files are allowed." });
+      expect(mockSend).not.toHaveBeenCalled();
+    });
+
     it("should return error when no file is provided", async () => {
       const uploadFile = await getUploadFile();
       const formData = new FormData();

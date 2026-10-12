@@ -116,6 +116,7 @@ export default function UploadAvatar({ onUpload }: UploadAvatarProps) {
         >
           {previewUrl ? (
             <Image
+              unoptimized
               src={previewUrl}
               alt="Preview"
               width={64}

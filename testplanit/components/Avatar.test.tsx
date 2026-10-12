@@ -10,7 +10,15 @@ describe("Avatar Component", () => {
     render(<Avatar image={defaultImage} alt={defaultAlt} />);
     const img = screen.getByRole("img", { name: defaultAlt });
     expect(img).toBeInTheDocument();
-    expect(img.getAttribute("src")).toContain(encodeURIComponent(defaultImage));
+    expect(img.getAttribute("src")).toBe(defaultImage);
+  });
+
+  it("loads storage avatars directly so the browser sends the session cookie", () => {
+    const storageImage = "/api/storage/uploads/avatars/u1_123_me.png";
+    render(<Avatar image={storageImage} alt={defaultAlt} />);
+    const img = screen.getByRole("img", { name: defaultAlt });
+    expect(img.getAttribute("src")).toBe(storageImage);
+    expect(img.getAttribute("srcset")).toBeNull();
   });
 
   it("should render text fallback when image prop is null", () => {
