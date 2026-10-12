@@ -359,8 +359,11 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
     return (
       <video
         src={fileURL}
-        controls
-        className="w-full max-h-full rounded-lg"
+        preload="metadata"
+        muted
+        // Thumbnail only: native controls would swallow the click and keep the
+        // parent's onClick (which opens the attachment viewer) from firing.
+        className="w-full max-h-full rounded-lg pointer-events-none"
         style={{ height: `${height}px` }}
       />
     );
