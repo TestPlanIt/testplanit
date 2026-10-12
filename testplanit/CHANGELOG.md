@@ -1,3 +1,10 @@
+## [1.1.0-beta.43](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.42...v1.1.0-beta.43) (2026-10-12)
+
+### Bug Fixes
+
+* **admin:** keep admin pages working after a project with assignments is soft-deleted ([edfecd8](https://github.com/TestPlanIt/testplanit/commit/edfecd834b79758050cbb1e3cc19f2e2372560a1)), closes [#669](https://github.com/TestPlanIt/testplanit/issues/669) [#669](https://github.com/TestPlanIt/testplanit/issues/669)
+* **storage:** require sign-in to upload or read stored files ([2c4777f](https://github.com/TestPlanIt/testplanit/commit/2c4777fbea7191dc6a55b9027ef33bca9ade4108))
+
 ## [1.1.0-beta.42](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.41...v1.1.0-beta.42) (2026-10-09)
 
 ### Bug Fixes
