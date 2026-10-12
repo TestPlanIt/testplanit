@@ -40,6 +40,7 @@ docker-compose.*.yml
 !docker-compose.yml
 !docker-compose.prod.yml
 !docker-compose.e2e.yml
+!docker-compose.minio-migration.yml
 nginx.*.conf
 !nginx.conf
 

@@ -5,14 +5,14 @@ title: File Storage & Attachments
 
 # File Storage & Attachments
 
-TestPlanIt supports file attachments across test cases, test runs, sessions, and other entities. The system supports both AWS S3 and MinIO (S3-compatible) storage backends for secure, scalable file management.
+TestPlanIt supports file attachments across test cases, test runs, sessions, and other entities. The system supports AWS S3 and S3-compatible storage backends (such as the bundled RustFS) for secure, scalable file management.
 
 ## Overview
 
 The file storage system provides:
 
 - **Secure file uploads** with signed URL generation
-- **Multiple storage backends** (AWS S3, MinIO)
+- **Multiple storage backends** (AWS S3, RustFS, and other S3-compatible services)
 - **File type validation** and size limits
 - **Attachment management** across all entities
 - **Access control** based on user permissions
@@ -76,8 +76,8 @@ Grant the permissions below to that **role** instead of to an IAM user. Omit
 both variables or set both: supplying only one is treated as supplying neither,
 and the container will fail to reach storage.
 
-This applies to AWS only. MinIO authenticates with static keys, so a MinIO
-deployment always sets both.
+This applies to AWS only. RustFS and other S3-compatible services authenticate
+with static keys, so those deployments always set both.
 
 #### Required AWS Permissions
 
@@ -110,56 +110,30 @@ Your AWS user — or the role, if you are using the provider chain above — nee
 }
 ```
 
-### MinIO Setup
+### Bundled Storage (RustFS)
 
-TestPlanIt supports MinIO as an S3-compatible alternative:
+The Docker Compose files and the Helm chart include [RustFS](https://github.com/rustfs/rustfs), an open-source (Apache-2.0) S3-compatible server, as the bundled file storage. For compatibility with existing configurations, the service is still named `minio` and is enabled with the `with-minio` profile of `docker-compose.prod.yml` (or the `prod` profile of `docker-compose.yml`):
 
 ```env
-# MinIO Configuration
+# Bundled storage (RustFS)
 AWS_ACCESS_KEY_ID=minioadmin
-AWS_SECRET_ACCESS_KEY=minioadmin
+AWS_SECRET_ACCESS_KEY=minioadmin123
 AWS_REGION=us-east-1
-AWS_S3_BUCKET_NAME=testplanit
-AWS_S3_ENDPOINT=http://localhost:9000
+AWS_BUCKET_NAME=testplanit
+AWS_ENDPOINT_URL=http://minio:9000
 ```
 
-#### Docker Compose MinIO Setup
+The `minio-init` service creates the bucket on startup, allows anonymous read-only access to its files, and sets the CORS rules browsers need for presigned uploads. Files are stored in `./docker-data/rustfs`.
 
-Add MinIO to your Docker setup:
+The RustFS console is available at `http://localhost:9001` (set with `DOCKER_MINIO_CONSOLE_PORT`). Sign in with the access key and secret above.
 
-```yaml
-version: '3.8'
-services:
-  minio:
-    image: minio/minio:latest
-    container_name: testplanit-minio
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
-    command: server /data --console-address ":9001"
-    volumes:
-      - minio_data:/data
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 30s
-      timeout: 20s
-      retries: 3
+:::warning Upgrading from MinIO
+Earlier releases bundled MinIO, which no longer publishes Docker images. Existing Docker Compose installs must migrate their files to RustFS, and TestPlanIt will not start until they do. Helm installs need a volume snapshot before upgrading. See [Migrating from MinIO to RustFS](/docs/migrating-from-minio).
+:::
 
-volumes:
-  minio_data:
-```
+### Other S3-Compatible Services
 
-#### MinIO Bucket Creation
-
-Create the required bucket:
-
-1. Access MinIO console at `http://localhost:9001`
-2. Login with your credentials
-3. Create a bucket named `testplanit` (or your configured bucket name)
-4. Set bucket policy to allow read/write access
+Any S3-compatible service works, including a MinIO server you run yourself. Set `AWS_ENDPOINT_URL` to the service's S3 API URL, provide its access key and secret, and create the bucket (`testplanit` or your configured `AWS_BUCKET_NAME`). See [Storage Modes](#storage-modes) to choose between direct and proxy access.
 
 ## File Upload Process
 
@@ -176,7 +150,7 @@ Users can attach files in several ways:
 
 Anywhere you can upload a file as an attachment — test cases, test runs, results, exploratory sessions — you can also attach an **external link** instead of a file. Click **Add Link** next to the file picker, paste the URL, optionally give it a display name and a short description, and click Add. The link appears in the attachment list alongside any uploaded files.
 
-External-link attachments are stored as regular `Attachments` rows with `mimeType: "text/uri-list"` — no file is uploaded to S3/MinIO, the URL itself is the payload. The attachment list renders them with a link icon (instead of a file thumbnail) and opens them in a new tab when clicked. Display, edit, and delete behave the same as for file attachments.
+External-link attachments are stored as regular `Attachments` rows with `mimeType: "text/uri-list"` — no file is uploaded to storage, the URL itself is the payload. The attachment list renders them with a link icon (instead of a file thumbnail) and opens them in a new tab when clicked. Display, edit, and delete behave the same as for file attachments.
 
 Use this when the evidence lives in another system — a Jira ticket, a CI build, a Looker dashboard, a Confluence runbook, a recorded session — rather than as a downloadable file.
 
@@ -189,7 +163,7 @@ TestPlanIt supports two upload modes depending on your deployment:
 Used when storage is publicly accessible from the browser:
 
 1. Frontend requests a presigned URL from the API
-2. Browser uploads directly to S3/MinIO using the presigned URL
+2. Browser uploads directly to storage using the presigned URL
 3. No file data passes through the Next.js server
 
 This is the most efficient mode as files upload directly to storage.
@@ -218,12 +192,12 @@ object) while the file is unreadable afterwards, returning:
 Used when storage is not publicly accessible from the browser. That covers two
 common setups:
 
-- MinIO running inside a Docker network, reachable only as `http://minio:9000`
+- The bundled storage running inside a Docker network, reachable only as `http://minio:9000`
 - **A private S3 bucket** — any bucket with Block Public Access enabled, which
   is the recommended configuration
 
 1. Browser sends file to a Next.js server action
-2. Server action uploads the file to S3/MinIO internally
+2. Server action uploads the file to storage internally
 3. Server returns a proxy URL (`/api/storage/...`) for accessing the file
 
 Enable proxy mode by setting `IS_HOSTED=true` in your environment:
@@ -235,7 +209,7 @@ IS_HOSTED=true
 :::tip When to use Proxy Mode
 Enable proxy mode if **either** is true:
 
-- Your MinIO instance is reachable only inside the Docker network
+- Your storage is reachable only inside the Docker network
   (`http://minio:9000`). Without proxy mode the app hands the browser presigned
   URLs pointing at an internal hostname, causing **mixed content errors** and
   **upload failures**.
@@ -254,13 +228,13 @@ Proxy mode uses Next.js Server Actions instead of Route Handlers. This is becaus
 
 #### Alternative: Public Endpoint URL
 
-If you prefer direct browser-to-storage uploads (better performance for large files), you can expose MinIO publicly and set `AWS_PUBLIC_ENDPOINT_URL` instead:
+If you prefer direct browser-to-storage uploads (better performance for large files), you can expose the storage publicly and set `AWS_PUBLIC_ENDPOINT_URL` instead:
 
 ```env
 AWS_PUBLIC_ENDPOINT_URL=https://yourdomain.com
 ```
 
-This tells the app to generate presigned URLs using your public domain instead of the internal MinIO hostname. The Nginx reverse proxy included in the Docker setup routes `/testplanit/` requests to MinIO automatically. This approach avoids the need for `IS_HOSTED=true` but requires MinIO to be reachable through your reverse proxy.
+This tells the app to generate presigned URLs using your public domain instead of the internal storage hostname. The Nginx reverse proxy included in the Docker setup routes `/testplanit/` requests to the bundled storage automatically. This approach avoids the need for `IS_HOSTED=true` but requires the storage to be reachable through your reverse proxy.
 
 #### Direct mode against AWS S3 requires a CORS policy
 
@@ -294,8 +268,8 @@ origin.
 2. **Validation**: System checks file type and size limits
 3. **Mode Detection**: System determines direct vs proxy mode
 4. **Upload**:
-   - *Direct mode*: Frontend requests presigned URL, uploads directly to S3/MinIO
-   - *Proxy mode*: Frontend calls server action, which uploads to S3/MinIO
+   - *Direct mode*: Frontend requests presigned URL, uploads directly to storage
+   - *Proxy mode*: Frontend calls server action, which uploads to storage
 5. **Metadata Storage**: File information stored in database
 6. **Attachment Link**: File linked to parent entity
 
@@ -424,11 +398,11 @@ Response:
 
 ### File Downloads
 
-Files are accessed directly through signed URLs generated during upload. The system does not provide a separate download API endpoint - instead, files are downloaded directly from S3/MinIO using the signed URLs provided during the upload process.
+Files are accessed directly through signed URLs generated during upload. The system does not provide a separate download API endpoint - instead, files are downloaded directly from storage using the signed URLs provided during the upload process.
 
 **Direct Download:**
 
-- Files are accessed via signed URLs from S3/MinIO
+- Files are accessed via signed URLs from storage
 - URLs are generated with appropriate expiration times
 - Access is controlled through the original upload permissions
 
@@ -491,9 +465,9 @@ returns `400`. Components that render through `<ProjectIcon>` (Admin) set
 **Solutions**:
 
 - Verify environment variables are set
-- Test S3/MinIO connectivity
+- Test storage connectivity
 - Check bucket exists and is accessible
-- Review AWS/MinIO credentials
+- Review storage credentials
 
 ### Performance Issues
 

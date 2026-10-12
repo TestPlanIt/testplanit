@@ -20,6 +20,8 @@ The `@testplanit/*` packages are themselves first-party and not listed here, but
 
 The `demo/` workspace is a private internal recording tool. It is never published or distributed, so its dependencies are out of scope.
 
+The Docker Compose files and Helm chart also pull third-party container images from their publishers at install time. TestPlanIt does not redistribute these images; the file storage images are listed under [Container Images](#container-images) for reference.
+
 ---
 
 ## Frontend Dependencies
@@ -1366,6 +1368,36 @@ The `@testplanit/*` packages under `packages/*` are published to npm separately 
 - **Repository**: <https://github.com/webdriverio/webdriverio>
 - **Copyright**: Copyright (c) OpenJS Foundation and other contributors
 - **Note**: Peer dependencies of `@testplanit/wdio-reporter`. They are not bundled; the consuming project supplies them with its WebdriverIO installation.
+
+---
+
+## Container Images
+
+Images pulled by `docker-compose.prod.yml`, `docker-compose.yml` and the Helm chart for the bundled file storage. They run as separate containers and are not compiled into or distributed with TestPlanIt.
+
+### RustFS
+
+- **Version**: 1.0.0 (`rustfs/rustfs:1.0.0`)
+- **License**: Apache-2.0
+- **Repository**: <https://github.com/rustfs/rustfs>
+- **Copyright**: Copyright 2024 RustFS Team
+- **Note**: S3-compatible file storage for attachments, images, avatars and project icons. Replaces MinIO, which no longer publishes Docker images.
+
+### AWS CLI
+
+- **Version**: 2.37.4 (`amazon/aws-cli:2.37.4`)
+- **License**: Apache-2.0
+- **Repository**: <https://github.com/aws/aws-cli>
+- **Copyright**: Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+- **Note**: Runs once at startup to create the storage bucket and its access rules.
+
+### rclone
+
+- **Version**: 1.75.1 (`rclone/rclone:1.75.1`)
+- **License**: MIT
+- **Repository**: <https://github.com/rclone/rclone>
+- **Copyright**: Copyright (C) 2012 by Nick Craig-Wood
+- **Note**: Used only by `scripts/migrate-minio-to-rustfs.sh` to copy files from an existing MinIO storage into RustFS.
 
 ---
 

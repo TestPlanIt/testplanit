@@ -497,7 +497,7 @@ System administrators can update the default template:
 ### File Uploads
 
 - Images and videos are uploaded to project file storage
-- S3 or MinIO backend (configurable)
+- S3 or S3-compatible backend such as RustFS (configurable)
 - Files are associated with the project
 - URLs are embedded in the documentation JSON
 - Deleted documentation doesn't auto-delete uploaded files

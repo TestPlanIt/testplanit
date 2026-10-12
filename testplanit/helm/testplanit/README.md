@@ -11,9 +11,9 @@ The chart deploys:
   initial admin),
 
 and — optionally, enabled by default — bundled **PostgreSQL**, **Valkey**,
-**Elasticsearch**, and **MinIO** so `helm install` yields a working instance out
-of the box. Each bundled datastore can be turned off and swapped for a managed
-service (RDS / ElastiCache / OpenSearch / S3).
+**Elasticsearch**, and **RustFS** (S3-compatible file storage) so `helm install`
+yields a working instance out of the box. Each bundled datastore can be turned
+off and swapped for a managed service (RDS / ElastiCache / OpenSearch / S3).
 
 > This chart is **single-tenant**: one organization, one instance. It is not a
 > multi-tenant / SaaS deployment.
@@ -137,6 +137,29 @@ Generate one with:
 ```bash
 openssl rand -hex 32
 ```
+
+## Upgrading from a chart that bundled MinIO
+
+MinIO no longer publishes Docker images, so the bundled file storage now runs
+[RustFS](https://github.com/rustfs/rustfs), an S3-compatible server. It keeps
+the same `objectStorage.minio` values, Service, secret keys and ingress path,
+and serves your existing files from the same volume, so no copy is needed.
+
+RustFS writes its own metadata next to MinIO's, and MinIO cannot read the
+volume afterwards. **Snapshot the storage volume before you upgrade** so you
+can roll back:
+
+```bash
+# The storage volume is data-<release>-testplanit-minio-0 by default:
+kubectl -n <namespace> get pvc | grep minio
+# Snapshot that PVC with your storage provider's VolumeSnapshot or backup tool.
+helm upgrade <release> testplanit/testplanit -f my-values.yaml
+```
+
+If you pinned `objectStorage.minio.image` to a MinIO image in your values,
+remove that override. See the
+[migration guide](https://docs.testplanit.com/docs/migrating-from-minio) for
+details.
 
 ## Secrets management (Vault / External Secrets / SOPS)
 

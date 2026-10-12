@@ -30,7 +30,7 @@ spec:
       http:
         paths:
           {{- if and $minioEnabled $minioPath }}
-          # Browser access to attachments stored in bundled MinIO.
+          # Browser access to attachments stored in the bundled storage.
           - path: {{ $minioPath }}
             pathType: Prefix
             backend:
