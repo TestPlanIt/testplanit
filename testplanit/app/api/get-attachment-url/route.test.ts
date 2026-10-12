@@ -1,10 +1,12 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockGetSignedUrl, mockPutObjectCommand } = vi.hoisted(() => ({
-  mockGetSignedUrl: vi.fn(),
-  mockPutObjectCommand: vi.fn(),
-}));
+const { mockGetSignedUrl, mockPutObjectCommand, mockGetServerAuthSession } =
+  vi.hoisted(() => ({
+    mockGetServerAuthSession: vi.fn(),
+    mockGetSignedUrl: vi.fn(),
+    mockPutObjectCommand: vi.fn(),
+  }));
 
 vi.mock("@aws-sdk/client-s3", () => {
   const S3Client = vi.fn(function (this: any) {});
@@ -19,6 +21,10 @@ vi.mock("@aws-sdk/s3-request-presigner", () => ({
   getSignedUrl: mockGetSignedUrl,
 }));
 
+vi.mock("~/server/auth", () => ({
+  getServerAuthSession: mockGetServerAuthSession,
+}));
+
 import { GET } from "./route";
 
 function createRequest(searchParams: Record<string, string>): NextRequest {
@@ -26,7 +32,7 @@ function createRequest(searchParams: Record<string, string>): NextRequest {
   for (const [key, value] of Object.entries(searchParams)) {
     url.searchParams.set(key, value);
   }
-  return { url: url.toString() } as unknown as NextRequest;
+  return { url: url.toString(), nextUrl: url } as unknown as NextRequest;
 }
 
 describe("GET /api/get-attachment-url", () => {
@@ -36,6 +42,7 @@ describe("GET /api/get-attachment-url", () => {
     process.env.AWS_ACCESS_KEY_ID = "test-key-id";
     process.env.AWS_SECRET_ACCESS_KEY = "test-secret";
     process.env.AWS_REGION = "us-east-1";
+    mockGetServerAuthSession.mockResolvedValue({ user: { id: "user-1" } });
     mockGetSignedUrl.mockResolvedValue(
       "https://s3.example.com/presigned-url?sig=abc"
     );
@@ -62,7 +69,7 @@ describe("GET /api/get-attachment-url", () => {
     );
   });
 
-  it("uses 'unknown' as prependString when not provided", async () => {
+  it("omits the prefix when prependString is not provided", async () => {
     const request = createRequest({});
     const response = await GET(request);
     const data = await response.json();
@@ -72,7 +79,26 @@ describe("GET /api/get-attachment-url", () => {
 
     expect(mockPutObjectCommand).toHaveBeenCalledWith(
       expect.objectContaining({
-        Key: expect.stringMatching(/^uploads\/attachments\/unknown_/),
+        Key: expect.stringMatching(/^uploads\/attachments\/\d+$/),
+      })
+    );
+  });
+
+  it("returns 401 without a session and mints nothing", async () => {
+    mockGetServerAuthSession.mockResolvedValue(null);
+
+    const response = await GET(createRequest({ prependString: "ATTACK" }));
+
+    expect(response.status).toBe(401);
+    expect(mockGetSignedUrl).not.toHaveBeenCalled();
+  });
+
+  it("strips path and special characters from prependString", async () => {
+    await GET(createRequest({ prependString: "../../evil/../x y" }));
+
+    expect(mockPutObjectCommand).toHaveBeenCalledWith(
+      expect.objectContaining({
+        Key: expect.stringMatching(/^uploads\/attachments\/evilxy_\d+$/),
       })
     );
   });

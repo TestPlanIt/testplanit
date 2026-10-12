@@ -56,6 +56,7 @@ const Avatar: React.FC<AvatarProps> = ({
         }}
       >
         <Image
+          unoptimized
           priority
           src={image}
           alt={alt}

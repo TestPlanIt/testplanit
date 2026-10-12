@@ -140,9 +140,7 @@ describe("UserDropdownMenu", () => {
     // Check for avatar image within the button
     const avatarImg = screen.getByRole("img", { name: mockSession.user.name! });
     expect(avatarImg).toBeInTheDocument();
-    expect(avatarImg.getAttribute("src")).toContain(
-      encodeURIComponent(mockSession.user.image!)
-    );
+    expect(avatarImg.getAttribute("src")).toBe(mockSession.user.image);
   });
 
   it("should open the menu on trigger click", async () => {

@@ -119,6 +119,7 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
             />
           ) : (
             <Image
+              unoptimized
               src={fileURL}
               alt={attachment.name}
               fill
@@ -146,6 +147,7 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
           />
         ) : (
           <Image
+            unoptimized
             src={fileURL}
             alt={attachment.name}
             height={height}

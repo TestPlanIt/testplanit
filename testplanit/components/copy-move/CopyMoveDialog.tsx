@@ -541,6 +541,7 @@ export function CopyMoveDialog({
                     >
                       {p.iconUrl ? (
                         <Image
+                          unoptimized
                           src={p.iconUrl}
                           alt={`${p.name} icon`}
                           width={16}
