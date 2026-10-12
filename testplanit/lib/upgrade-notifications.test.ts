@@ -14,14 +14,33 @@ describe("upgrade-notifications", () => {
     });
 
     it("should have title and message for each notification", () => {
-      for (const [_version, notification] of Object.entries(
-        upgradeNotifications
-      )) {
+      for (const notification of Object.values(upgradeNotifications).flat()) {
         expect(notification.title).toBeDefined();
         expect(notification.title.length).toBeGreaterThan(0);
         expect(notification.message).toBeDefined();
         expect(notification.message.length).toBeGreaterThan(0);
       }
+    });
+
+    it("should deliver every notification listed under one version, filtered by access", () => {
+      const forAdmin = getUpgradeNotificationsBetweenVersions(
+        "1.0.0",
+        "1.1.0",
+        Access.ADMIN
+      ).filter((n) => n.version === "1.1.0");
+      const forUser = getUpgradeNotificationsBetweenVersions(
+        "1.0.0",
+        "1.1.0",
+        Access.USER
+      ).filter((n) => n.version === "1.1.0");
+
+      expect(forAdmin.map((n) => n.notification.title)).toEqual([
+        "What's New in TestPlanIt 1.1",
+        "File storage now runs on RustFS",
+      ]);
+      expect(forUser.map((n) => n.notification.title)).toEqual([
+        "What's New in TestPlanIt 1.1",
+      ]);
     });
 
     it("should have valid version format keys", () => {
@@ -36,7 +55,9 @@ describe("upgrade-notifications", () => {
     describe("with null lastSeenVersion", () => {
       it("should return all notifications up to current version", () => {
         const result = getUpgradeNotificationsBetweenVersions(null, "99.99.99");
-        expect(result.length).toBe(Object.keys(upgradeNotifications).length);
+        expect(result.length).toBe(
+          Object.values(upgradeNotifications).flat().length
+        );
       });
 
       it("should return notifications in version order", () => {
@@ -44,13 +65,14 @@ describe("upgrade-notifications", () => {
         for (let i = 1; i < result.length; i++) {
           const prevParts = result[i - 1].version.split(".").map(Number);
           const currParts = result[i].version.split(".").map(Number);
-          const prevIsLess =
+          // Notifications listed under the same version stay adjacent.
+          const prevIsNotGreater =
             prevParts[0] < currParts[0] ||
             (prevParts[0] === currParts[0] && prevParts[1] < currParts[1]) ||
             (prevParts[0] === currParts[0] &&
               prevParts[1] === currParts[1] &&
-              prevParts[2] < currParts[2]);
-          expect(prevIsLess).toBe(true);
+              prevParts[2] <= currParts[2]);
+          expect(prevIsNotGreater).toBe(true);
         }
       });
 
@@ -270,24 +292,24 @@ describe("upgrade-notifications", () => {
 
   describe("getUpgradeNotificationsBetweenVersions access filtering", () => {
     it("delivers each access-restricted notification only to the levels it targets", () => {
-      const restricted = Object.entries(upgradeNotifications).filter(
-        ([, notification]) => notification.access
-      );
+      const restricted = Object.values(upgradeNotifications)
+        .flat()
+        .filter((notification) => notification.access);
       // The shipped config restricts at least one notification (e.g. SCIM is
       // ADMIN-only); this also guards against the feature being dropped.
       expect(restricted.length).toBeGreaterThan(0);
 
-      for (const [version, notification] of restricted) {
+      for (const notification of restricted) {
         for (const access of Object.values(Access)) {
-          const versions = getUpgradeNotificationsBetweenVersions(
+          const delivered = getUpgradeNotificationsBetweenVersions(
             null,
             "99.99.99",
             access
-          ).map((n) => n.version);
+          ).map((n) => n.notification);
           if (notification.access!.includes(access)) {
-            expect(versions).toContain(version);
+            expect(delivered).toContain(notification);
           } else {
-            expect(versions).not.toContain(version);
+            expect(delivered).not.toContain(notification);
           }
         }
       }
@@ -308,7 +330,9 @@ describe("upgrade-notifications", () => {
 
     it("returns all notifications when access is omitted (backward compatible)", () => {
       const result = getUpgradeNotificationsBetweenVersions(null, "99.99.99");
-      expect(result.length).toBe(Object.keys(upgradeNotifications).length);
+      expect(result.length).toBe(
+        Object.values(upgradeNotifications).flat().length
+      );
     });
   });
 
@@ -324,9 +348,7 @@ describe("upgrade-notifications", () => {
     };
 
     it("should produce non-empty plain text when HTML is stripped from messages", () => {
-      for (const [_version, notification] of Object.entries(
-        upgradeNotifications
-      )) {
+      for (const notification of Object.values(upgradeNotifications).flat()) {
         const plainText = stripHtml(notification.message);
         expect(plainText.length).toBeGreaterThan(0);
         // Should not contain any HTML tags
@@ -335,9 +357,7 @@ describe("upgrade-notifications", () => {
     });
 
     it("should not contain raw HTML entities after stripping", () => {
-      for (const [_version, notification] of Object.entries(
-        upgradeNotifications
-      )) {
+      for (const notification of Object.values(upgradeNotifications).flat()) {
         const plainText = stripHtml(notification.message);
         expect(plainText).not.toContain("<strong>");
         expect(plainText).not.toContain("<p>");
@@ -348,7 +368,7 @@ describe("upgrade-notifications", () => {
 
     it("should preserve meaningful content after stripping HTML", () => {
       // Test with a known notification that has HTML
-      const notification = upgradeNotifications["0.5.0"]; // Audit Logs has HTML
+      const notification = [upgradeNotifications["0.5.0"]].flat()[0]; // Audit Logs has HTML
       if (notification) {
         const plainText = stripHtml(notification.message);
         expect(plainText).toContain("audit");
