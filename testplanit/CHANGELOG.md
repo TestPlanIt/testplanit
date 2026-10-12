@@ -1,3 +1,12 @@
+## [1.1.0-beta.44](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.43...v1.1.0-beta.44) (2026-10-12)
+
+### Bug Fixes
+
+* **attachments:** make video attachments playable everywhere ([144ee95](https://github.com/TestPlanIt/testplanit/commit/144ee95810d654825f496c5eba4ede3778048848))
+* **deploy:** replace the bundled MinIO storage with RustFS ([593f777](https://github.com/TestPlanIt/testplanit/commit/593f7770260ee7f60554533e4cb223a4d7137394))
+* **deploy:** tell admins about the RustFS storage switch after upgrading ([16ded85](https://github.com/TestPlanIt/testplanit/commit/16ded85c41f25532a18bba11321b06b1aeb75d6a))
+* **integrations:** create GitHub issues in the linked repository ([#671](https://github.com/TestPlanIt/testplanit/issues/671)) ([073408b](https://github.com/TestPlanIt/testplanit/commit/073408bd36ec6a08c76d058a31db4926ed9efa1f))
+
 ## [1.1.0-beta.43](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.42...v1.1.0-beta.43) (2026-10-12)
 
 ### Bug Fixes
