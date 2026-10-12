@@ -7,14 +7,14 @@ This directory contains Playwright end-to-end tests for TestPlanIt.
 ### 1. Start the E2E Services
 
 The E2E tests run against **separate services** from your development stack:
-PostgreSQL, Valkey, Elasticsearch and MinIO (file storage). Start them with
+PostgreSQL, Valkey, Elasticsearch and S3-compatible file storage (RustFS). Start them with
 Docker:
 
 ```bash
 docker compose -f docker-compose.e2e.yml up -d
 ```
 
-The ports (Postgres 5433, Valkey 6377, Elasticsearch 9221, MinIO 9100) don't
+The ports (Postgres 5433, Valkey 6377, Elasticsearch 9221, storage 9100) don't
 clash with `docker-compose.dev.yml`, so both stacks can run at once.
 
 ### 2. Configure Environment
@@ -38,8 +38,9 @@ pnpm test:e2e:setup-db
 ```
 
 `pnpm test:e2e` runs this automatically. Setup stops with an error if the
-storage bucket is not writable with the configured credentials. With a local
-MinIO it also creates the bucket and allows public reads.
+storage bucket is not writable with the configured credentials. With the local
+storage service it also creates the bucket and sets its public-read and CORS
+rules.
 
 ### 4. Install Playwright Browsers
 

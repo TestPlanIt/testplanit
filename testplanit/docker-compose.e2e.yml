@@ -47,18 +47,17 @@ services:
       timeout: 10s
       retries: 12
 
-  # e2e/setup-db.ts creates the bucket and its public-read policy.
-  minio:
-    image: minio/minio:latest
-    command: server /data --address ":9000" --console-address ":9001"
+  # S3-compatible storage. e2e/setup-db.ts creates the bucket and its
+  # public-read and CORS rules.
+  storage:
+    image: rustfs/rustfs:1.0.0
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin123
+      RUSTFS_ACCESS_KEY: e2e-access-key
+      RUSTFS_SECRET_KEY: e2e-secret-key
     ports:
       - "9100:9000"
-      - "9101:9001"
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      test: ["CMD", "curl", "-sf", "http://localhost:9000/health"]
       interval: 5s
       timeout: 5s
       retries: 10
