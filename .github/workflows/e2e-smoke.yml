@@ -16,7 +16,7 @@ name: E2E Smoke
 on:
   workflow_dispatch:
   push:
-    branches: [main, 'release/**']
+    branches: [main, "release/**"]
     paths:
       - "testplanit/app/**"
       - "testplanit/components/**"
@@ -89,6 +89,11 @@ jobs:
       ADMIN_NAME: "Administrator Account"
       ADMIN_PASSWORD: "admin"
       TEST_REGULAR_USER_PASSWORD: "password123"
+      AWS_ACCESS_KEY_ID: "minioadmin"
+      AWS_SECRET_ACCESS_KEY: "minioadmin123"
+      AWS_REGION: "us-east-1"
+      AWS_BUCKET_NAME: "testplanit-e2e"
+      AWS_ENDPOINT_URL: "http://localhost:9100"
       E2E_PROD: "on"
       E2E_PORT: "3002"
       NODE_OPTIONS: "--max-old-space-size=8192"
@@ -114,6 +119,20 @@ jobs:
 
       - name: Production build
         run: pnpm build
+
+      # Service containers cannot pass MinIO its `server` command, so start it
+      # here. e2e/setup-db.ts creates the bucket and verifies it is writable.
+      - name: Start MinIO
+        run: |
+          docker run -d --name minio -p 9100:9000 \
+            -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin123 \
+            minio/minio:latest server /data
+          for i in $(seq 1 30); do
+            curl -sf -o /dev/null http://localhost:9100/minio/health/live && exit 0
+            sleep 2
+          done
+          echo "MinIO did not become ready on :9100" >&2
+          exit 1
 
       # Seed BEFORE the server starts: the app installs its audit triggers at
       # boot and needs the schema to exist.
@@ -145,6 +164,7 @@ jobs:
           e2e/tests/admin/statuses/status-management.spec.ts
           e2e/tests/test-runs/test-run-creation-wizard.spec.ts
           e2e/tests/sessions/session-lifecycle.spec.ts
+          e2e/tests/storage/storage-access.spec.ts
 
       - name: Upload Playwright artifacts
         if: failure()

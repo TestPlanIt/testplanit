@@ -324,11 +324,101 @@ async function reindexElasticsearch() {
   }
 }
 
+function isLocalStorageEndpoint(endpoint: string | undefined): boolean {
+  if (!endpoint) return false;
+  try {
+    const { hostname } = new URL(endpoint);
+    return ["localhost", "127.0.0.1", "::1", "minio"].includes(hostname);
+  } catch {
+    return false;
+  }
+}
+
+async function ensureStorage() {
+  // Upload specs need a writable bucket. A misconfigured one used to surface
+  // only as scattered upload failures deep in the run, so check it up front.
+  const bucket = process.env.AWS_BUCKET_NAME;
+  if (!bucket) {
+    console.warn("\n⚠️  AWS_BUCKET_NAME is not set — upload specs will fail.");
+    console.warn(
+      "   Start the E2E stack (docker compose -f docker-compose.e2e.yml up -d)"
+    );
+    console.warn("   and copy the storage settings from .env.e2e.example.\n");
+    return;
+  }
+
+  const {
+    CreateBucketCommand,
+    DeleteObjectCommand,
+    HeadBucketCommand,
+    PutBucketPolicyCommand,
+    PutObjectCommand,
+  } = await import("@aws-sdk/client-s3");
+  const { getS3Client } = await import("~/lib/s3Client");
+  const s3 = getS3Client();
+  const endpoint = process.env.AWS_ENDPOINT_URL;
+  const local = isLocalStorageEndpoint(endpoint);
+
+  console.log(`🪣 Checking storage bucket "${bucket}"...`);
+  try {
+    try {
+      await s3.send(new HeadBucketCommand({ Bucket: bucket }));
+    } catch (error) {
+      const status = (error as { $metadata?: { httpStatusCode?: number } })
+        .$metadata?.httpStatusCode;
+      if (!local || status !== 404) throw error;
+      await s3.send(new CreateBucketCommand({ Bucket: bucket }));
+      console.log("   Created bucket");
+    }
+
+    // Direct-mode pages load uploads straight from the bucket, so the local
+    // E2E bucket must be publicly readable (as in docker-compose.yml). Never
+    // touch the policy of a real cloud bucket.
+    if (local) {
+      await s3.send(
+        new PutBucketPolicyCommand({
+          Bucket: bucket,
+          Policy: JSON.stringify({
+            Version: "2012-10-17",
+            Statement: [
+              {
+                Effect: "Allow",
+                Principal: { AWS: ["*"] },
+                Action: ["s3:GetObject"],
+                Resource: [`arn:aws:s3:::${bucket}/*`],
+              },
+            ],
+          }),
+        })
+      );
+    }
+
+    const probeKey = "uploads/e2e-setup-probe.txt";
+    await s3.send(
+      new PutObjectCommand({ Bucket: bucket, Key: probeKey, Body: "ok" })
+    );
+    await s3.send(new DeleteObjectCommand({ Bucket: bucket, Key: probeKey }));
+    console.log("   Storage is writable");
+  } catch (error) {
+    throw new Error(
+      `Storage bucket "${bucket}" at ${endpoint ?? "AWS S3"} is not writable ` +
+        `with the configured credentials. Start the E2E stack with ` +
+        `"docker compose -f docker-compose.e2e.yml up -d" and use the storage ` +
+        `settings from .env.e2e.example. Cause: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+    );
+  }
+}
+
 async function main() {
   console.log("\n🚀 E2E Test Database Setup\n");
   console.log("=" + "=".repeat(50) + "\n");
 
   try {
+    // Fail fast on unusable storage before spending time on the database.
+    await ensureStorage();
+
     // Step 0: Clear stale data first. The push below cannot drop enum values
     // or columns that existing rows (seeded by an older schema) still use.
     await resetDatabase();

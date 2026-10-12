@@ -4,39 +4,42 @@ This directory contains Playwright end-to-end tests for TestPlanIt.
 
 ## Setup
 
-### 1. Create E2E Test Database
+### 1. Start the E2E Services
 
-The E2E tests require a **separate database** from your development database. This ensures tests run on clean, predictable data.
+The E2E tests run against **separate services** from your development stack:
+PostgreSQL, Valkey, Elasticsearch and MinIO (file storage). Start them with
+Docker:
 
 ```bash
-# Create a new PostgreSQL database for E2E tests
-createdb testplanit_e2e
-
-# Or via psql
-psql -c "CREATE DATABASE testplanit_e2e;"
+docker compose -f docker-compose.e2e.yml up -d
 ```
+
+The ports (Postgres 5433, Valkey 6377, Elasticsearch 9221, MinIO 9100) don't
+clash with `docker-compose.dev.yml`, so both stacks can run at once.
 
 ### 2. Configure Environment
 
-Copy the example environment file and configure it:
+Copy the example environment file. Its defaults match the services above:
 
 ```bash
 cp .env.e2e.example .env.e2e
 ```
 
-Edit `.env.e2e` to point to your E2E test database:
-
-```
-DATABASE_URL="postgresql://user:password@localhost:5432/testplanit_e2e?schema=public"
-```
+To use your own services instead, point `DATABASE_URL`, `VALKEY_URL`,
+`ELASTICSEARCH_NODE` and the `AWS_*` storage settings at them. The database
+is wiped on every run, so never point it at a database you want to keep.
 
 ### 3. Setup the E2E Database
 
-Run migrations and seed the E2E database:
+Reset and seed the E2E database, and check that file storage is writable:
 
 ```bash
 pnpm test:e2e:setup-db
 ```
+
+`pnpm test:e2e` runs this automatically. Setup stops with an error if the
+storage bucket is not writable with the configured credentials. With a local
+MinIO it also creates the bucket and allows public reads.
 
 ### 4. Install Playwright Browsers
 
@@ -78,7 +81,7 @@ pnpm test:e2e:report
 
 ## Project Structure
 
-```
+```monospace
 e2e/
 ├── playwright.config.ts     # Playwright configuration
 ├── global-setup.ts          # Authentication setup (runs once before all tests)
