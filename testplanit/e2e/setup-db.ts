@@ -328,7 +328,7 @@ function isLocalStorageEndpoint(endpoint: string | undefined): boolean {
   if (!endpoint) return false;
   try {
     const { hostname } = new URL(endpoint);
-    return ["localhost", "127.0.0.1", "::1", "minio"].includes(hostname);
+    return ["localhost", "127.0.0.1", "::1", "storage"].includes(hostname);
   } catch {
     return false;
   }
@@ -351,6 +351,7 @@ async function ensureStorage() {
     CreateBucketCommand,
     DeleteObjectCommand,
     HeadBucketCommand,
+    PutBucketCorsCommand,
     PutBucketPolicyCommand,
     PutObjectCommand,
   } = await import("@aws-sdk/client-s3");
@@ -371,10 +372,26 @@ async function ensureStorage() {
       console.log("   Created bucket");
     }
 
-    // Direct-mode pages load uploads straight from the bucket, so the local
-    // E2E bucket must be publicly readable (as in docker-compose.yml). Never
-    // touch the policy of a real cloud bucket.
+    // Direct-mode pages upload to the bucket with presigned PUTs and load
+    // files straight from it, so the local E2E bucket must accept cross-origin
+    // requests and be publicly readable (as in docker-compose.yml). Never
+    // touch the rules of a real cloud bucket.
     if (local) {
+      await s3.send(
+        new PutBucketCorsCommand({
+          Bucket: bucket,
+          CORSConfiguration: {
+            CORSRules: [
+              {
+                AllowedOrigins: ["*"],
+                AllowedMethods: ["GET", "PUT", "HEAD"],
+                AllowedHeaders: ["*"],
+                ExposeHeaders: ["ETag"],
+              },
+            ],
+          },
+        })
+      );
       await s3.send(
         new PutBucketPolicyCommand({
           Bucket: bucket,

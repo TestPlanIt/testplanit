@@ -10,44 +10,41 @@ This guide covers how to run and write end-to-end (E2E) tests for TestPlanIt usi
 ## Prerequisites
 
 - Node.js 24+ and pnpm installed
-- PostgreSQL database available
+- Docker, to run the E2E services
 - TestPlanIt development environment set up
 
 ## Setup
 
-### 1. Create E2E Test Database
+### 1. Start the E2E Services
 
-E2E tests require a **separate database** from your development database. This ensures tests run on clean, predictable data.
-
-```bash
-# Create a new PostgreSQL database for E2E tests
-createdb testplanit_e2e
-
-# Or via psql
-psql -c "CREATE DATABASE testplanit_e2e;"
-```
-
-### 2. Configure Environment
-
-From the `testplanit/` directory, copy the example environment file:
+E2E tests run against **separate services** from your development stack:
+PostgreSQL, Valkey, Elasticsearch and S3-compatible file storage
+([RustFS](https://github.com/rustfs/rustfs)). From the `testplanit/` directory,
+start them with Docker:
 
 ```bash
 cd testplanit
+docker compose -f docker-compose.e2e.yml up -d
+```
+
+The ports (Postgres 5433, Valkey 6377, Elasticsearch 9221, storage 9100) don't
+clash with `docker-compose.dev.yml`, so both stacks can run at once.
+
+### 2. Configure Environment
+
+Copy the example environment file. Its defaults match the services above:
+
+```bash
 cp .env.e2e.example .env.e2e
 ```
 
-Edit `.env.e2e` and update the database connection:
+To use your own services instead, point `DATABASE_URL`, `VALKEY_URL`,
+`ELASTICSEARCH_NODE` and the `AWS_*` storage settings at them. The database is
+wiped on every run, so never point it at a database you want to keep.
 
-```bash
-DATABASE_URL="postgresql://user:password@localhost:5432/testplanit_e2e?schema=public"
-```
-
-The example file includes sensible defaults for:
-
-- NextAuth configuration
-- Valkey/Redis connection
-- MinIO/S3 storage
-- Default admin credentials for tests
+Setup stops with an error if the storage bucket is not writable with the
+configured credentials. With the local storage service it also creates the
+bucket and sets its public-read and CORS rules.
 
 #### Optional: Email Server Configuration
 
