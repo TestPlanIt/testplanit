@@ -482,11 +482,36 @@ describe("applyInboundCodeChange", () => {
     expect(startImpactAnalysis).not.toHaveBeenCalled();
   });
 
-  it("reports an analysis that could not start as an error on the delivery", async () => {
+  it.each(["same_commit", "ref_not_found"])(
+    "ignores a change the analysis refuses as %s, so the provider doesn't retry",
+    async (code) => {
+      (startImpactAnalysis as any).mockResolvedValue({
+        ok: false,
+        code,
+        message: "nothing to compare",
+      });
+      const result = await applyInboundCodeChange(
+        makeInput("pull_request", prPayload)
+      );
+      expect(result).toEqual({
+        outcome: "ignored",
+        deliveryId: "del-1",
+        reason: code,
+      });
+      expect(db.webhookDelivery.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ error: `ignored:${code}` }),
+        })
+      );
+    }
+  );
+
+  it("reports a queue failure as an error so the provider retries", async () => {
     (startImpactAnalysis as any).mockResolvedValue({
       ok: false,
-      code: "ref_not_found",
-      message: "Ref not found: x",
+      code: "enqueue_failed",
+      message: "Failed to enqueue analysis",
+      analysisId: 5,
     });
     const result = await applyInboundCodeChange(
       makeInput("pull_request", prPayload)
@@ -494,7 +519,7 @@ describe("applyInboundCodeChange", () => {
     expect(result).toMatchObject({ outcome: "error", deliveryId: "del-1" });
     expect(db.webhookDelivery.update).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({ error: "analysis:ref_not_found" }),
+        data: expect.objectContaining({ error: "analysis:enqueue_failed" }),
       })
     );
   });

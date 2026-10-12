@@ -117,7 +117,7 @@ The run is then requested on that target, covering its automated cases; manual c
 
 ### Deliveries
 
-Repository deliveries appear on the **Deliveries** tab like any other. The subject moves from the event (`pull_request:12`, `push:main`) to the analysis (`analysis:77`) and then to the run (`run:300`); a delivery that was received but not acted on carries the reason (`ignored:push_other_branch`, `ignored:event_disabled`, `run:no_affected_cases`, `execute:target_not_found`, `duplicate`).
+Repository deliveries appear on the **Deliveries** tab like any other. The subject moves from the event (`pull_request:12`, `push:main`) to the analysis (`analysis:77`) and then to the run (`run:300`); a delivery that was received but not acted on carries the reason (`ignored:push_other_branch`, `ignored:event_disabled`, `run:no_affected_cases`, `execute:target_not_found`, `duplicate`). A change with nothing to compare, such as a pull request whose head is already on its target branch, is recorded as `ignored:same_commit` (or `ignored:ref_not_found` when a commit can't be found) and answered with success, so the repository doesn't keep retrying it.
 
 ### Provider setup
 

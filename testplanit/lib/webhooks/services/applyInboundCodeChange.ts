@@ -53,7 +53,9 @@ type IgnoreReason =
   | "pull_request_not_opened"
   | "pull_request_incomplete"
   | "push_other_branch"
-  | "push_no_range";
+  | "push_no_range"
+  | "same_commit"
+  | "ref_not_found";
 
 /**
  * Turn a repository's pull request or push webhook into an Impact analysis
@@ -258,6 +260,16 @@ export async function applyInboundCodeChange(
       }
     );
     if (!started.ok) {
+      // A change with nothing to compare will never succeed; answer 200 so
+      // the provider doesn't retry it. Queue failures stay errors to retry.
+      if (started.code === "same_commit" || started.code === "ref_not_found") {
+        await finish(`ignored:${started.code}`);
+        return {
+          outcome: "ignored" as const,
+          deliveryId,
+          reason: started.code,
+        };
+      }
       await finish(`analysis:${started.code}`);
       return {
         outcome: "error",
