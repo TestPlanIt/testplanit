@@ -16,7 +16,10 @@ When releasing a new version with notable features, add an entry to the upgrade 
 **File:** `testplanit/lib/upgrade-notifications.ts`
 
 ```typescript
-export const upgradeNotifications: Record<string, UpgradeNotification> = {
+export const upgradeNotifications: Record<
+  string,
+  UpgradeNotification | UpgradeNotification[]
+> = {
   "0.3.43": {
     title: "New Feature: Dark Mode",
     message: "You can now switch to dark mode in your user preferences. Go to Settings > Preferences to try it out."
@@ -40,6 +43,16 @@ export const upgradeNotifications: Record<string, UpgradeNotification> = {
 - **Key**: The version number (must match `package.json` version format, e.g., `"0.3.43"`)
 - **title**: Short title for the notification (max 100 characters)
 - **message**: Description of the new feature(s). Supports HTML tags for rich text formatting (e.g., `<strong>`, `<ul>`, `<a>`, `<p>`). Plain text also works.
+- **access** (optional): The user access levels that receive the notification, for example `[Access.ADMIN]`. Omit it to notify everyone.
+
+To send more than one notification for the same version (for example a release announcement for everyone and an administrator-only notice), use a list:
+
+```typescript
+"1.1.0": [
+  { title: "What's New in TestPlanIt 1.1", message: "..." },
+  { title: "File storage now runs on RustFS", access: [Access.ADMIN], message: "..." },
+],
+```
 
 ## Behavior
 
