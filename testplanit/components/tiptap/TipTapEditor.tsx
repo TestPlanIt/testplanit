@@ -122,6 +122,8 @@ interface TipTapEditorProps {
   style?: React.CSSProperties;
   projectId?: string; // Made optional - AI features only work when valid project ID provided
   placeholder?: string;
+  /** Accessible name for the editing area; falls back to the placeholder. */
+  ariaLabel?: string;
   parameters?: ParameterChipMeta[];
   onOpenParametersSheet?: () => void;
 }
@@ -134,6 +136,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
   style,
   projectId,
   placeholder,
+  ariaLabel,
   parameters,
   onOpenParametersSheet,
 }) => {
@@ -361,6 +364,9 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
           class:
             "prose prose-xs sm:prose-sm lg:prose max-w-none w-full focus:outline-none p-1",
           style: "width: 100%; max-width: none;",
+          // Tiptap gives the editing area role="textbox", which needs a name.
+          "aria-label":
+            ariaLabel || placeholder || tCommon("ui.issues.richTextContent"),
         },
         handlePaste: (view, event) => {
           const text = event.clipboardData?.getData("text/plain");

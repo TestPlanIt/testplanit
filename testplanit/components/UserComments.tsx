@@ -159,6 +159,8 @@ function CommentDisplay({ comment }: CommentDisplayProps) {
     editable: false,
     editorProps: {
       attributes: {
+        // Read-only display, not the role="textbox" Tiptap adds by default.
+        role: "presentation",
         class: "tiptap text-foreground focus:outline-none break-words",
       },
     },
