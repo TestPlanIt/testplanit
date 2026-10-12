@@ -19,7 +19,8 @@ const createIssueSchema = z.object({
       }),
     ])
     .optional(),
-  projectId: z.string(), // External project ID (e.g., "owner/repo" for GitHub, project key for Jira)
+  projectId: z.string(), // External project key (e.g., the repository name for GitHub, project key for Jira)
+  externalProjectId: z.string().optional(), // Full external ID when it differs from the key (e.g., "owner/repo" for GitHub)
   testplanitProjectId: z.number().optional(), // Internal TestPlanIt project ID for database storage
   issueType: z.string().optional(),
   priority: z.string().optional(),
@@ -333,6 +334,7 @@ export async function POST(
       title: validatedData.title,
       description: validatedData.description,
       projectId: validatedData.projectId,
+      externalProjectId: validatedData.externalProjectId,
       issueType: validatedData.issueType,
       priority: validatedData.priority,
       assigneeId: validatedData.assigneeId,

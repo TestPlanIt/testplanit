@@ -172,7 +172,11 @@ export class GiteaAdapter extends BaseAdapter {
   }
 
   async createIssue(data: CreateIssueData): Promise<IssueData> {
-    const { owner, repo } = this.resolveRepo(data.projectId);
+    const { owner, repo } = this.resolveRepo(
+      data.externalProjectId?.includes("/")
+        ? data.externalProjectId
+        : data.projectId
+    );
     const payload: Record<string, any> = {
       title: data.title,
       body: typeof data.description === "string" ? data.description : "",

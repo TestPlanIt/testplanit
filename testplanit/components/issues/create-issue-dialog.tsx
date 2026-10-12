@@ -599,6 +599,15 @@ export function CreateIssueDialog({
         // Use the effective project key — from selected IntegrationProject when available,
         // falling back to config fields for backward compatibility
         payload.projectId = effectiveProjectKey;
+        // The full external ID (e.g. GitHub's owner/repo) when it differs
+        // from the key, so adapters can address the exact project.
+        const externalProjectId =
+          selectedProject?.externalProjectId ||
+          (activeIntegration?.config as Record<string, any> | null)
+            ?.externalProjectId;
+        if (externalProjectId && externalProjectId !== effectiveProjectKey) {
+          payload.externalProjectId = externalProjectId;
+        }
         // Use the selected issue type (only for providers that support it)
         if (selectedIssueType) {
           payload.issueType = selectedIssueType.id;
@@ -656,8 +665,10 @@ export function CreateIssueDialog({
             setAuthError(error.message);
             return;
           }
+          const summary =
+            error.error || error.message || "Failed to create issue";
           throw new Error(
-            error.error || error.message || "Failed to create issue"
+            error.details ? `${summary}: ${error.details}` : summary
           );
         }
 

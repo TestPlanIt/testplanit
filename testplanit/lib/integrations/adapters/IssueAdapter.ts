@@ -160,6 +160,11 @@ export interface CreateIssueData {
   title: string;
   description?: string | { type: "doc"; content: any[] };
   projectId: string;
+  /**
+   * The linked project's full external ID when it differs from `projectId`
+   * (e.g. GitHub's "owner/repo" while `projectId` is the repository name).
+   */
+  externalProjectId?: string;
   issueType?: string;
   priority?: string;
   assigneeId?: string;

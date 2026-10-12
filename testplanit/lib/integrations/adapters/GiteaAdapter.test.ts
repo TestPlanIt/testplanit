@@ -224,6 +224,24 @@ describe("GiteaAdapter", () => {
       expect(result.key).toBe("testowner/testrepo#7");
       expect(result.title).toBe("Test Issue");
     });
+
+    it("uses the linked project's owner/repo when the key is the short name", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockGiteaIssue),
+      });
+
+      await adapter.createIssue({
+        title: "Test Issue",
+        projectId: "otherrepo",
+        externalProjectId: "otherowner/otherrepo",
+      });
+
+      expect(mockFetch).toHaveBeenLastCalledWith(
+        "https://gitea.example.com/api/v1/repos/otherowner/otherrepo/issues",
+        expect.objectContaining({ method: "POST" })
+      );
+    });
   });
 
   describe("getIssue", () => {

@@ -465,23 +465,107 @@ describe("GitHubAdapter", () => {
       );
     });
 
-    it("should throw error when repository not configured", async () => {
-      const adapterNoRepo = new GitHubAdapter({ provider: "GITHUB" });
-      mockFetch.mockResolvedValueOnce({
+    describe("without a configured repository (#671)", () => {
+      let adapterNoRepo: GitHubAdapter;
+
+      const respond = (body: unknown) => ({
         ok: true,
-        json: () => Promise.resolve({ login: "testuser" }),
-      });
-      await adapterNoRepo.authenticate({
-        type: "api_key",
-        apiKey: "ghp_test_token",
+        json: () => Promise.resolve(body),
       });
 
-      await expect(
-        adapterNoRepo.createIssue({
+      beforeEach(async () => {
+        adapterNoRepo = new GitHubAdapter({ provider: "GITHUB" });
+        mockFetch.mockResolvedValueOnce(respond({ login: "testuser" }));
+        await adapterNoRepo.authenticate({
+          type: "api_key",
+          apiKey: "ghp_test_token",
+        });
+        mockFetch.mockClear();
+      });
+
+      it("creates the issue in the linked project's owner/repo", async () => {
+        mockFetch.mockResolvedValueOnce(respond(mockGitHubIssue));
+
+        await adapterNoRepo.createIssue({
           title: "Test Issue",
-          projectId: "invalid",
-        })
-      ).rejects.toThrow("GitHub repository not configured");
+          projectId: "testrepo",
+          externalProjectId: "testowner/testrepo",
+        });
+
+        expect(mockFetch).toHaveBeenCalledTimes(1);
+        expect(mockFetch.mock.calls[0][0]).toBe(
+          "https://api.github.com/repos/testowner/testrepo/issues"
+        );
+      });
+
+      it("keeps each project's repository separate on a shared adapter", async () => {
+        mockFetch
+          .mockResolvedValueOnce(respond(mockGitHubIssue))
+          .mockResolvedValueOnce(respond(mockGitHubIssue));
+
+        await adapterNoRepo.createIssue({
+          title: "First",
+          projectId: "repo-a",
+          externalProjectId: "owner/repo-a",
+        });
+        await adapterNoRepo.createIssue({
+          title: "Second",
+          projectId: "repo-b",
+          externalProjectId: "owner/repo-b",
+        });
+
+        expect(mockFetch.mock.calls.map((call) => call[0])).toEqual([
+          "https://api.github.com/repos/owner/repo-a/issues",
+          "https://api.github.com/repos/owner/repo-b/issues",
+        ]);
+      });
+
+      it("finds a short repository name among the accessible repositories", async () => {
+        mockFetch
+          .mockResolvedValueOnce(
+            respond([
+              { name: "other", full_name: "testowner/other" },
+              { name: "TestRepo", full_name: "testowner/TestRepo" },
+            ])
+          )
+          .mockResolvedValueOnce(respond(mockGitHubIssue));
+
+        await adapterNoRepo.createIssue({
+          title: "Test Issue",
+          projectId: "testrepo",
+        });
+
+        expect(mockFetch.mock.calls[0][0]).toContain("/user/repos?");
+        expect(mockFetch.mock.calls[1][0]).toBe(
+          "https://api.github.com/repos/testowner/TestRepo/issues"
+        );
+      });
+
+      it("reports a short name that matches no accessible repository", async () => {
+        mockFetch.mockResolvedValueOnce(respond([]));
+
+        await expect(
+          adapterNoRepo.createIssue({
+            title: "Test Issue",
+            projectId: "missing",
+          })
+        ).rejects.toThrow(
+          'GitHub repository "missing" was not found among the repositories this connection can access.'
+        );
+      });
+
+      it("reports a short name shared by several accessible repositories", async () => {
+        mockFetch.mockResolvedValueOnce(
+          respond([
+            { name: "app", full_name: "me/app" },
+            { name: "app", full_name: "my-org/app" },
+          ])
+        );
+
+        await expect(
+          adapterNoRepo.createIssue({ title: "Test Issue", projectId: "app" })
+        ).rejects.toThrow("(me/app, my-org/app)");
+      });
     });
   });
 
