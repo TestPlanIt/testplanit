@@ -14,7 +14,6 @@ import { DraggableList } from "@/components/DraggableFieldOptions";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { emptyEditorContent } from "~/app/constants";
 
@@ -859,7 +858,7 @@ export function AddResultFieldModal({
               name="typeId"
               render={({ field }) => (
                 <FormItem>
-                  <Label className="whitespace-nowrap items-center flex space-x-2">
+                  <FormLabel className="whitespace-nowrap items-center flex space-x-2">
                     <div className="flex items-center">
                       <span>{tCommon("fields.fieldType")}</span>
                       <HelpPopover helpKey="resultField.fieldType" />
@@ -867,7 +866,7 @@ export function AddResultFieldModal({
                     <div className="text-muted-foreground text-sm">
                       {tCommon("fields.hints.fieldType")}
                     </div>
-                  </Label>
+                  </FormLabel>
                   <FormControl>
                     <Select
                       onValueChange={(value) => {
