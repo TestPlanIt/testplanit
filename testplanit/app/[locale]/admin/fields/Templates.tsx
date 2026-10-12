@@ -82,7 +82,7 @@ export default function TemplateComponent() {
       include: {
         caseFields: true,
         resultFields: true,
-        projects: true,
+        projects: { where: { project: { isDeleted: false } } },
       },
     },
     {
@@ -123,7 +123,10 @@ export default function TemplateComponent() {
         });
 
         await deleteManyTemplateProjectAssignment({
-          where: { templateId: selectedTemplateId },
+          where: {
+            templateId: selectedTemplateId,
+            project: { isDeleted: false },
+          },
         });
 
         if (Array.isArray(projects)) {

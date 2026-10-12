@@ -98,7 +98,11 @@ function WorkflowComponent() {
         // Projects column's ProjectListDisplay when its popover opens. Eagerly
         // including every assignment made this query fetch tens of thousands of
         // nested rows and stalled the page.
-        _count: { select: { projects: true } },
+        _count: {
+          select: {
+            projects: { where: { project: { isDeleted: false } } },
+          },
+        },
       },
     },
     {
@@ -196,7 +200,10 @@ function WorkflowComponent() {
         });
 
         await deleteManyProjectWorkflowAssignment({
-          where: { workflowId: selectedWorkflowId },
+          where: {
+            workflowId: selectedWorkflowId,
+            project: { isDeleted: false },
+          },
         });
 
         if (Array.isArray(projects)) {

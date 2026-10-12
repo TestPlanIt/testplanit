@@ -75,6 +75,7 @@ function Configurations(): React.ReactElement | null {
           },
         },
         projects: {
+          where: { project: { isDeleted: false } },
           select: {
             projectId: true,
             project: { select: { id: true, name: true, iconUrl: true } },

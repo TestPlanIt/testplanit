@@ -136,11 +136,13 @@ function TagDetail() {
   const baseWhere = useMemo(() => {
     const conditions: any = {
       isDeleted: false,
+      project: { isDeleted: false },
     };
 
     // Add project filter for non-admin users
     if (!isAdmin && userId) {
       conditions.project = {
+        isDeleted: false,
         assignedUsers: {
           some: {
             userId: userId,
