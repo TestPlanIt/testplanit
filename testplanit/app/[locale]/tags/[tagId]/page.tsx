@@ -553,8 +553,8 @@ function TagDetail() {
                 </Label>
                 <Select
                   value={filters.caseType}
-                  onValueChange={(value: CaseTypeFilter) =>
-                    updateFilters({ caseType: value })
+                  onValueChange={(value) =>
+                    updateFilters({ caseType: value as CaseTypeFilter })
                   }
                 >
                   <SelectTrigger

@@ -295,8 +295,8 @@ export function ExportModal({
                 <div className="w-[180px] shrink-0">
                   <Select
                     value={delimiter}
-                    onValueChange={(value: "," | ";" | ":" | "|") =>
-                      setDelimiter(value)
+                    onValueChange={(value) =>
+                      setDelimiter(value as "," | ";" | ":" | "|")
                     }
                     data-testid="export-delimiter-select"
                   >
