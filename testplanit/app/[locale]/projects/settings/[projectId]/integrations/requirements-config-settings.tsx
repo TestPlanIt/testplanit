@@ -16,6 +16,8 @@ import { toast } from "sonner";
 import {
   LABEL_MODE_PROVIDERS,
   isIssueTypeCapable,
+  issueTypesFromSaved,
+  savedIssueTypes,
   useTrackerIssueTypes,
   type TrackerIssueType,
 } from "@/components/integrations/useTrackerIssueTypes";
@@ -47,10 +49,7 @@ type IssueType = TrackerIssueType;
 /** Saved chips render without a tracker round trip: seed from the stored
  *  ids plus the display-only issueTypeNames map. */
 function seedSelectedIssueTypes(config: RequirementTypeConfig): IssueType[] {
-  return config.issueTypeIds.map((id) => ({
-    id,
-    name: config.issueTypeNames?.[id] ?? id,
-  }));
+  return issueTypesFromSaved(config.issueTypeIds, config.issueTypeNames);
 }
 
 export function RequirementsConfigSettings({
@@ -100,7 +99,7 @@ export function RequirementsConfigSettings({
     effectiveRequirementTypeIds(savedConfig),
     effectiveRequirementTypeIds({
       enabled,
-      issueTypeIds: selected.map((issueType) => issueType.id),
+      issueTypeIds: savedIssueTypes(selected).issueTypeIds,
     })
   );
   const hasChanges = diff.added.length > 0 || diff.removed.length > 0;
@@ -167,10 +166,7 @@ export function RequirementsConfigSettings({
     // would silently mean the offer never fires.
     const addedTypesAtSaveTime = diff.added;
     try {
-      const issueTypeIds = selected.map((issueType) => issueType.id);
-      const issueTypeNames = Object.fromEntries(
-        selected.map((issueType) => [issueType.id, issueType.name])
-      );
+      const { issueTypeIds, issueTypeNames } = savedIssueTypes(selected);
       const response = await fetch(
         `/api/integrations/${integration.id}/requirements-config`,
         {

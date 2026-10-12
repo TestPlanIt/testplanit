@@ -1,6 +1,8 @@
 "use client";
 
 import {
+  issueTypesFromSaved,
+  savedIssueTypes,
   useTrackerIssueTypes,
   useTrackerStatuses,
   type TrackerIssueType,
@@ -31,10 +33,10 @@ export function trackerFilterDraftFrom(saved: unknown): TrackerFilterDraft {
   const filter = readWebhookActionFilter(saved);
   return {
     statuses: filter.statuses ?? [],
-    issueTypes: (filter.issueTypeIds ?? []).map((id) => ({
-      id,
-      name: filter.issueTypeNames?.[id] ?? id,
-    })),
+    issueTypes: issueTypesFromSaved(
+      filter.issueTypeIds ?? [],
+      filter.issueTypeNames
+    ),
     labels: filter.labels ?? [],
     requirementsOnly: filter.requirementsOnly === true,
   };
@@ -45,10 +47,7 @@ export function trackerFilterFromDraft(
 ): WebhookActionFilter {
   return {
     statuses: draft.statuses,
-    issueTypeIds: draft.issueTypes.map((type) => type.id),
-    issueTypeNames: Object.fromEntries(
-      draft.issueTypes.map((type) => [type.id, type.name])
-    ),
+    ...savedIssueTypes(draft.issueTypes),
     labels: draft.labels,
     requirementsOnly: draft.requirementsOnly,
   };

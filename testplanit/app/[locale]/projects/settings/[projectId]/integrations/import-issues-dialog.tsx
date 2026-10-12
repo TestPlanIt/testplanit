@@ -316,7 +316,9 @@ export function ImportIssuesDialog({
                 className="text-sm"
                 data-testid="import-configured-issue-types"
               >
-                {selectedTypes.map((issueType) => issueType.name).join(", ")}
+                {[
+                  ...new Set(selectedTypes.map((issueType) => issueType.name)),
+                ].join(", ")}
               </p>
             </div>
           ) : null}

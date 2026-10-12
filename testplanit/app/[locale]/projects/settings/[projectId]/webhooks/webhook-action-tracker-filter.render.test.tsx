@@ -115,8 +115,8 @@ describe("tracker filter draft helpers", () => {
     ).toEqual({
       statuses: ["Ready"],
       issueTypes: [
-        { id: "10001", name: "Story" },
-        { id: "10002", name: "10002" },
+        { id: "story", name: "Story", ids: ["10001"] },
+        { id: "10002", name: "10002", ids: ["10002"] },
       ],
       labels: ["qa"],
       requirementsOnly: true,
@@ -239,7 +239,7 @@ describe("WebhookActionTrackerFilter", () => {
       <Harness
         initial={{
           ...emptyDraft,
-          issueTypes: [{ id: "1", name: "Story" }],
+          issueTypes: [{ id: "story", name: "Story", ids: ["1"] }],
         }}
       />
     );
@@ -247,11 +247,13 @@ describe("WebhookActionTrackerFilter", () => {
       "Story"
     );
     React.act(() =>
-      comboboxes.get(ISSUE_TYPES).onValueChange([{ id: "2", name: "Bug" }])
+      comboboxes
+        .get(ISSUE_TYPES)
+        .onValueChange([{ id: "bug", name: "Bug", ids: ["2"] }])
     );
     expect(onChange).toHaveBeenLastCalledWith({
       ...emptyDraft,
-      issueTypes: [{ id: "2", name: "Bug" }],
+      issueTypes: [{ id: "bug", name: "Bug", ids: ["2"] }],
     });
   });
 

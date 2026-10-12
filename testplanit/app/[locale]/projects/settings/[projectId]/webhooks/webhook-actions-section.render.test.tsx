@@ -318,8 +318,8 @@ describe("WebhookActionsSection", () => {
       action: "CREATE_RUN",
       filter: {
         statuses: ["Ready for QA", "In Review"],
-        issueTypeIds: ["10001", "10002"],
-        issueTypeNames: { "10001": "Story" },
+        issueTypeIds: ["10001", "10002", "10011"],
+        issueTypeNames: { "10001": "Story", "10011": "Story" },
         labels: ["qa", "backend"],
         requirementsOnly: true,
       },

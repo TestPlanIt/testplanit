@@ -9,6 +9,7 @@ import {
   useSensors,
   type DragEndEvent,
 } from "@dnd-kit/core";
+import { issueTypesFromSaved } from "@/components/integrations/useTrackerIssueTypes";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import {
   arrayMove,
@@ -266,8 +267,11 @@ export function WebhookActionsSection({
     }
     if (filter.issueTypeIds?.length) {
       out.push({
-        label: `${tRequirements("issueTypesLabel")}: ${filter.issueTypeIds
-          .map((id) => filter.issueTypeNames?.[id] ?? id)
+        label: `${tRequirements("issueTypesLabel")}: ${issueTypesFromSaved(
+          filter.issueTypeIds,
+          filter.issueTypeNames
+        )
+          .map((type) => type.name)
           .join(", ")}`,
       });
     }

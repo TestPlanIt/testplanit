@@ -24,6 +24,8 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
 
 import {
   isIssueTypeCapable,
+  issueTypesFromSaved,
+  savedIssueTypes,
   useTrackerIssueTypes,
   useTrackerStatuses,
 } from "./useTrackerIssueTypes";
@@ -224,7 +226,7 @@ describe("useTrackerIssueTypes", () => {
     );
   });
 
-  it("merges issue types across mappings by id, then searches and pages", async () => {
+  it("merges issue types across mappings by name, then searches and pages", async () => {
     mappingsState.data = [mapping("m1", "1", "A"), mapping("m2", "2", "B")];
     mockFetch.mockImplementation(async (url: string) => {
       if (url.endsWith("=A")) {
@@ -239,6 +241,7 @@ describe("useTrackerIssueTypes", () => {
         return okJson({
           issueTypes: [
             { id: "2", name: "Story" },
+            { id: "7", name: "bug" },
             { id: "3", name: "Big Epic" },
           ],
         });
@@ -255,7 +258,11 @@ describe("useTrackerIssueTypes", () => {
       all = await result.current.fetchIssueTypes("", 0, 10);
     });
     expect(all!.total).toBe(3);
-    expect(all!.results.map((t) => t.id).sort()).toEqual(["1", "2", "3"]);
+    expect(all!.results).toEqual([
+      { id: "bug", name: "Bug", ids: ["1", "7"] },
+      { id: "story", name: "Story", ids: ["2"] },
+      { id: "big epic", name: "Big Epic", ids: ["3"] },
+    ]);
     expect(urls().sort()).toEqual([
       "/api/integrations/9/issue-types?projectKey=A",
       "/api/integrations/9/issue-types?projectKey=B",
@@ -284,7 +291,7 @@ describe("useTrackerIssueTypes", () => {
       useTrackerIssueTypes(5, { id: 9, provider: "JIRA" })
     );
     expect(await result.current.fetchIssueTypes("", 0, 10)).toEqual({
-      results: [{ id: "1", name: "Bug" }],
+      results: [{ id: "bug", name: "Bug", ids: ["1"] }],
       total: 1,
     });
 
@@ -295,5 +302,22 @@ describe("useTrackerIssueTypes", () => {
       total: 0,
     });
     expect(mockFetch).not.toHaveBeenCalled();
+  });
+});
+
+describe("saved issue types", () => {
+  it("groups saved ids by name and saves every id back", () => {
+    const types = issueTypesFromSaved(["10035", "10007", "42"], {
+      "10035": "Bug",
+      "10007": "Bug",
+    });
+    expect(types).toEqual([
+      { id: "bug", name: "Bug", ids: ["10035", "10007"] },
+      { id: "42", name: "42", ids: ["42"] },
+    ]);
+    expect(savedIssueTypes(types)).toEqual({
+      issueTypeIds: ["10035", "10007", "42"],
+      issueTypeNames: { "10035": "Bug", "10007": "Bug", "42": "42" },
+    });
   });
 });

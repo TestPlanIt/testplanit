@@ -5,9 +5,51 @@ import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { useCallback } from "react";
 import { schema } from "~/zenstack/schema";
 
+/**
+ * One issue type as a picker shows it. Tracker projects that each define
+ * their own types (Jira team-managed projects) repeat a name under different
+ * ids, so a type is keyed on its name and carries every id behind it.
+ */
 export interface TrackerIssueType {
+  /** The picker key: the lowercased name. */
   id: string;
   name: string;
+  /** The tracker's ids for this name, across every mapped project. */
+  ids: string[];
+}
+
+function issueTypeKey(name: string) {
+  return name.toLowerCase();
+}
+
+/** Picker values for saved ids, grouped by their saved names. */
+export function issueTypesFromSaved(
+  ids: string[],
+  names: Record<string, string> | undefined
+): TrackerIssueType[] {
+  const byKey = new Map<string, TrackerIssueType>();
+  for (const id of ids) {
+    const name = names?.[id] ?? id;
+    const existing = byKey.get(issueTypeKey(name));
+    if (existing) existing.ids.push(id);
+    else
+      byKey.set(issueTypeKey(name), {
+        id: issueTypeKey(name),
+        name,
+        ids: [id],
+      });
+  }
+  return [...byKey.values()];
+}
+
+/** The tracker ids and display names to save for picked types. */
+export function savedIssueTypes(types: TrackerIssueType[]) {
+  const issueTypeIds = [...new Set(types.flatMap((type) => type.ids))];
+  const issueTypeNames: Record<string, string> = {};
+  for (const type of types) {
+    for (const id of type.ids) issueTypeNames[id] = type.name;
+  }
+  return { issueTypeIds, issueTypeNames };
 }
 
 export interface TrackerProjectMapping {
@@ -87,7 +129,7 @@ function projectRefFor(provider: string, mapping: TrackerProjectMapping) {
 
 /**
  * A project's tracker issue types across every external project it maps,
- * paged and searched for a MultiAsyncCombobox. Shared by the requirement
+ * one per name, paged and searched for a MultiAsyncCombobox. Shared by the requirement
  * type settings and the webhook action filters.
  */
 export function useTrackerIssueTypes(
@@ -106,29 +148,40 @@ export function useTrackerIssueTypes(
   const fetchIssueTypes = useCallback(
     async (query: string, page: number, pageSize: number) => {
       if (!integration) return { results: [], total: 0 };
-      const byId = new Map<string, TrackerIssueType>();
-      await Promise.all(
-        (mappings ?? []).map(async (mapping) => {
-          try {
-            const projectRef = projectRefFor(integration.provider, mapping);
-            const response = await fetch(
-              `/api/integrations/${integration.id}/issue-types?projectKey=${encodeURIComponent(projectRef)}`
-            );
-            if (response.ok) {
+      // Fetched together, merged in mapping order so the list is stable.
+      const lists = await Promise.all(
+        (mappings ?? []).map(
+          async (mapping): Promise<{ id: string; name: string }[]> => {
+            try {
+              const projectRef = projectRefFor(integration.provider, mapping);
+              const response = await fetch(
+                `/api/integrations/${integration.id}/issue-types?projectKey=${encodeURIComponent(projectRef)}`
+              );
+              if (!response.ok) return [];
               const data = await response.json();
-              const issueTypes: TrackerIssueType[] = data.issueTypes || [];
-              for (const issueType of issueTypes) {
-                if (!byId.has(issueType.id)) {
-                  byId.set(issueType.id, issueType);
-                }
-              }
+              return data.issueTypes || [];
+            } catch (error) {
+              console.error("Failed to fetch issue types:", error);
+              return [];
             }
-          } catch (error) {
-            console.error("Failed to fetch issue types:", error);
           }
-        })
+        )
       );
-      const all = Array.from(byId.values());
+      const byKey = new Map<string, TrackerIssueType>();
+      for (const { id, name } of lists.flat()) {
+        if (!id || !name) continue;
+        const existing = byKey.get(issueTypeKey(name));
+        if (!existing) {
+          byKey.set(issueTypeKey(name), {
+            id: issueTypeKey(name),
+            name,
+            ids: [id],
+          });
+        } else if (!existing.ids.includes(id)) {
+          existing.ids.push(id);
+        }
+      }
+      const all = Array.from(byKey.values());
       const filtered = query
         ? all.filter((issueType) =>
             issueType.name.toLowerCase().includes(query.toLowerCase())

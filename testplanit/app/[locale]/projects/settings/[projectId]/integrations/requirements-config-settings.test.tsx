@@ -94,7 +94,10 @@ vi.mock("@/components/ui/multi-async-combobox", () => ({
         data-testid="mock-add-type"
         disabled={disabled}
         onClick={() =>
-          onValueChange?.([...value, { id: "type-new", name: "Story" }])
+          onValueChange?.([
+            ...value,
+            { id: "story", name: "Story", ids: ["type-new"] },
+          ])
         }
       >
         Add type
