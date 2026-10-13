@@ -125,6 +125,7 @@ jobs:
           pr-title: 'chore(packages): version packages'
           commit-message: 'chore(packages): version packages'
           create-github-releases: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           # No NPM_TOKEN — publishing authenticates via OIDC trusted publishing
           # (id-token: write above + the trusted publisher configured on npm).
 

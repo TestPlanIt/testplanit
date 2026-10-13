@@ -98,6 +98,9 @@ importers:
       '@changesets/cli':
         specifier: ^3.0.3
         version: 3.0.3
+      prettier:
+        specifier: ^3.9.10
+        version: 3.9.10
       vite:
         specifier: ^8.1.0
         version: 8.3.2(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)
