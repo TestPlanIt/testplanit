@@ -3,7 +3,22 @@ import { Color } from "@tiptap/extension-color";
 import { Link } from "@tiptap/extension-link";
 import { TextStyle } from "@tiptap/extension-text-style";
 import { Underline } from "@tiptap/extension-underline";
-import { generateJSON } from "@tiptap/html";
+import { generateJSON as generateJSONInBrowser } from "@tiptap/html";
+
+/**
+ * The HTML parser for this runtime. `@tiptap/html`'s default entry refuses
+ * to run outside a browser, which a worker started with tsx (no bundler
+ * alias) and the Next server both are, so Node takes the server build.
+ */
+const generateJSON: typeof generateJSONInBrowser = (html, extensions) => {
+  if (typeof window === "undefined") {
+    const server = require("@tiptap/html/server") as {
+      generateJSON: typeof generateJSONInBrowser;
+    };
+    return server.generateJSON(html, extensions);
+  }
+  return generateJSONInBrowser(html, extensions);
+};
 import { StarterKit } from "@tiptap/starter-kit";
 import { marked } from "marked";
 import { emptyEditorContent } from "~/app/constants/backend";
@@ -211,9 +226,18 @@ export const convertHtmlToTipTapJSON = (html: string): JSONContent => {
     return generateJSON(sanitized, tiptapConversionExtensions) as JSONContent;
   } catch (error) {
     // Keep the text rather than storing an empty document: a conversion
-    // failure must never erase what the caller wrote.
+    // failure must never erase what the caller wrote. Built as plain
+    // paragraphs, since the text converter parses HTML through this very
+    // function and would recurse into the same failure.
     console.error("Failed to convert HTML to TipTap JSON:", error);
-    return convertTextToTipTapJSON(sanitized.replace(/<[^>]+>/g, " "));
+    return convertPlainTextToTipTapJSON(
+      sanitized
+        .replace(/<br\s*\/?>/gi, "\n")
+        .replace(/<[^>]+>/g, " ")
+        .split("\n")
+        .map((line) => line.replace(/\s+/g, " ").trim())
+        .join("\n")
+    );
   }
 };
 
