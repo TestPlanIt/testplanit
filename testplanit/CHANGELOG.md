@@ -1,3 +1,9 @@
+## [1.1.0](https://github.com/TestPlanIt/testplanit/compare/v1.0.14...v1.1.0) (2026-10-13)
+
+### Features
+
+* TestPlanIt 1.1 ([#675](https://github.com/TestPlanIt/testplanit/issues/675)) ([92e88b4](https://github.com/TestPlanIt/testplanit/commit/92e88b4e0e02aa9608330228ce1c316a8bb4cbf7))
+
 ## [1.0.14](https://github.com/TestPlanIt/testplanit/compare/v1.0.13...v1.0.14) (2026-10-12)
 
 ### Bug Fixes
