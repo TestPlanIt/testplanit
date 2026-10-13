@@ -1,3 +1,13 @@
+## [1.1.0-beta.46](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.45...v1.1.0-beta.46) (2026-10-13)
+
+### Bug Fixes
+
+* **attachments:** make video attachments playable everywhere ([#672](https://github.com/TestPlanIt/testplanit/issues/672)) ([ae55745](https://github.com/TestPlanIt/testplanit/commit/ae55745dda2ba1caaca7dce6f5d48de5d8bd7c8f))
+* **integrations:** create GitHub issues in the linked repository ([#671](https://github.com/TestPlanIt/testplanit/issues/671)) ([#673](https://github.com/TestPlanIt/testplanit/issues/673)) ([a82ff34](https://github.com/TestPlanIt/testplanit/commit/a82ff347013df5f86d149d839a06dd8c1c805265))
+* **projects:** state that only No Access restricts a project ([#653](https://github.com/TestPlanIt/testplanit/issues/653)) ([e06d338](https://github.com/TestPlanIt/testplanit/commit/e06d338224349f762877922f7681bcf780104ac6))
+* **reports:** keep Report Builder selections out of the URL and add the missing cs_CZ locale migration ([#660](https://github.com/TestPlanIt/testplanit/issues/660)) ([8d4ccad](https://github.com/TestPlanIt/testplanit/commit/8d4ccadda60d57a1fbe34dcbdbaaca2abd1b2520))
+* **security:** close privilege escalation and identity reassignment paths ([#662](https://github.com/TestPlanIt/testplanit/issues/662)) ([3319c75](https://github.com/TestPlanIt/testplanit/commit/3319c759ebfb47572c80ae6832dc072ffc582d58))
+
 ## [1.1.0-beta.45](https://github.com/TestPlanIt/testplanit/compare/v1.1.0-beta.44...v1.1.0-beta.45) (2026-10-12)
 
 ### Bug Fixes
