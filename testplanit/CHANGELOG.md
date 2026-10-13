@@ -1275,6 +1275,36 @@
 * **runs:** move case-detail fetch off ACL-policy path for Pass & Next ([120fc67](https://github.com/TestPlanIt/testplanit/commit/120fc6759c0baf8912a92057fc9dacbc80568b49))
 * **users:** load the user lists on scroll and resolve accessible projects in batches ([2e93685](https://github.com/TestPlanIt/testplanit/commit/2e936857eaf8533bf3d16da5c682d18e6d542718))
 * **workflows:** stop eager-fetching every project assignment in admin table ([6262e30](https://github.com/TestPlanIt/testplanit/commit/6262e30bb42c96a3e953736aa70360a8c5d92764))
+## [1.0.14](https://github.com/TestPlanIt/testplanit/compare/v1.0.13...v1.0.14) (2026-10-12)
+
+### Bug Fixes
+
+* **integrations:** create GitHub issues in the linked repository ([#671](https://github.com/TestPlanIt/testplanit/issues/671)) ([#673](https://github.com/TestPlanIt/testplanit/issues/673)) ([a82ff34](https://github.com/TestPlanIt/testplanit/commit/a82ff347013df5f86d149d839a06dd8c1c805265))
+
+## [1.0.13](https://github.com/TestPlanIt/testplanit/compare/v1.0.12...v1.0.13) (2026-10-12)
+
+### Bug Fixes
+
+* **attachments:** make video attachments playable everywhere ([#672](https://github.com/TestPlanIt/testplanit/issues/672)) ([ae55745](https://github.com/TestPlanIt/testplanit/commit/ae55745dda2ba1caaca7dce6f5d48de5d8bd7c8f))
+
+## [1.0.12](https://github.com/TestPlanIt/testplanit/compare/v1.0.11...v1.0.12) (2026-10-02)
+
+### Bug Fixes
+
+* **security:** close privilege escalation and identity reassignment paths ([#662](https://github.com/TestPlanIt/testplanit/issues/662)) ([3319c75](https://github.com/TestPlanIt/testplanit/commit/3319c759ebfb47572c80ae6832dc072ffc582d58))
+
+## [1.0.11](https://github.com/TestPlanIt/testplanit/compare/v1.0.10...v1.0.11) (2026-10-01)
+
+### Bug Fixes
+
+* **reports:** keep Report Builder selections out of the URL and add the missing cs_CZ locale migration ([#660](https://github.com/TestPlanIt/testplanit/issues/660)) ([8d4ccad](https://github.com/TestPlanIt/testplanit/commit/8d4ccadda60d57a1fbe34dcbdbaaca2abd1b2520))
+
+## [1.0.10](https://github.com/TestPlanIt/testplanit/compare/v1.0.9...v1.0.10) (2026-09-25)
+
+### Bug Fixes
+
+* **projects:** state that only No Access restricts a project ([#653](https://github.com/TestPlanIt/testplanit/issues/653)) ([e06d338](https://github.com/TestPlanIt/testplanit/commit/e06d338224349f762877922f7681bcf780104ac6))
+
 ## [1.0.9](https://github.com/TestPlanIt/testplanit/compare/v1.0.8...v1.0.9) (2026-09-12)
 
 ### Bug Fixes
