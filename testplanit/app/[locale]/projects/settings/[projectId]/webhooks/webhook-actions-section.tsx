@@ -31,6 +31,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { TemplateNameDisplay } from "@/components/TemplateNameDisplay";
+import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -60,6 +62,7 @@ import { Link } from "~/lib/navigation";
 import { dateFnsLocaleFor } from "~/lib/utils/dateFnsLocale";
 import {
   readCreateRunOptions,
+  readDraftCasesOptions,
   readWebhookActionFilter,
   type WebhookActionSource,
 } from "~/lib/webhooks/actions/schemas";
@@ -68,7 +71,10 @@ import {
   WebhookActionDialog,
   type WebhookActionRow,
 } from "./webhook-action-dialog";
-import { useWebhookActionLabels } from "./webhook-action-labels";
+import {
+  QUANTITY_LABEL_KEYS,
+  useWebhookActionLabels,
+} from "./webhook-action-labels";
 
 interface Props {
   projectId: number;
@@ -127,6 +133,7 @@ interface LogRow {
   webhookActionId: string | null;
   outcome: string;
   testRunId: number | null;
+  folderId: number | null;
   createdAt: Date | string;
 }
 
@@ -155,6 +162,8 @@ export function WebhookActionsSection({
   );
   const tDuplicates = useTranslations("repository.duplicates");
   const tMapping = useTranslations("admin.imports.testmo.mapping");
+  const tFields = useTranslations("common.fields");
+  const tGenerate = useTranslations("repository.generateTestCases");
   const locale = useLocale();
   const labels = useWebhookActionLabels(baseBranch);
 
@@ -180,10 +189,29 @@ export function WebhookActionsSection({
       webhookActionId: true,
       outcome: true,
       testRunId: true,
+      folderId: true,
       createdAt: true,
     },
   });
   const { data: targets } = useExecutionTargetChoices(projectId, true);
+  // Named on a Draft test cases rule's badges.
+  const { data: draftTemplates } = queries.templates.useFindMany({
+    where: { isDeleted: false, projects: { some: { projectId } } },
+    select: { id: true, templateName: true },
+  });
+  const { data: draftStates } = queries.workflows.useFindMany({
+    where: {
+      isDeleted: false,
+      scope: "CASES",
+      projects: { some: { projectId } },
+    },
+    select: {
+      id: true,
+      name: true,
+      icon: { select: { name: true } },
+      color: { select: { value: true } },
+    },
+  });
 
   const savedRules = (rulesData ?? []) as WebhookActionRow[];
   // The dropped order shows at once; the saved order takes over after refetch.
@@ -257,8 +285,8 @@ export function WebhookActionsSection({
 
   function details(
     rule: WebhookActionRow
-  ): { label: string; problem?: string }[] {
-    const out: { label: string; problem?: string }[] = [];
+  ): { label: string; node?: ReactNode; problem?: string }[] {
+    const out: { label: string; node?: ReactNode; problem?: string }[] = [];
     const filter = readWebhookActionFilter(rule.filter);
     if (filter.statuses?.length) {
       out.push({
@@ -281,6 +309,66 @@ export function WebhookActionsSection({
       });
     }
     if (filter.requirementsOnly) out.push({ label: t("requirementsOnly") });
+    if (rule.action === "DRAFT_CASES") {
+      const draft = readDraftCasesOptions(rule.options);
+      if (draft.templateId !== undefined) {
+        const template = draftTemplates?.find((x) => x.id === draft.templateId);
+        out.push({
+          label: `${tFields("template")}: ${template?.templateName ?? "—"}`,
+          node: (
+            <>
+              {tFields("template")}:{" "}
+              {template ? (
+                <TemplateNameDisplay name={template.templateName} size="sm" />
+              ) : (
+                "—"
+              )}
+            </>
+          ),
+        });
+      }
+      if (draft.stateId !== undefined) {
+        const state = draftStates?.find((x) => x.id === draft.stateId);
+        out.push({
+          label: `${tFields("state")}: ${state?.name ?? "—"}`,
+          node: (
+            <>
+              {tFields("state")}:{" "}
+              {state ? (
+                <WorkflowStateDisplay
+                  state={{
+                    name: state.name,
+                    icon: { name: state.icon.name as never },
+                    color: { value: state.color.value },
+                  }}
+                  size="sm"
+                />
+              ) : (
+                "—"
+              )}
+            </>
+          ),
+        });
+      }
+      if (draft.quantity !== undefined) {
+        out.push({
+          label: `${tGenerate("addNotes.quantity")}: ${tGenerate(
+            `addNotes.quantityOptions.${QUANTITY_LABEL_KEYS[draft.quantity]}`
+          )}`,
+        });
+      }
+      if (draft.notifyUserIds?.length) {
+        out.push({
+          label: `${tFields("users")}: ${draft.notifyUserIds.length}`,
+        });
+      }
+      if (draft.notifyGroupIds?.length) {
+        out.push({
+          label: `${tFields("groups")}: ${draft.notifyGroupIds.length}`,
+        });
+      }
+      return out;
+    }
     if (rule.action !== "CREATE_RUN") return out;
     const options = readCreateRunOptions(rule.options);
     if (options.includeChildIssues) {
@@ -319,6 +407,13 @@ export function WebhookActionsSection({
         return tWebhooks("filterStatusFailed");
       case "already_composed":
       case "execute_failed":
+      case "cases_drafted":
+      case "draft_queued":
+      case "has_cases":
+      case "no_llm":
+      case "no_template":
+      case "no_target":
+      case "draft_failed":
         return t(`outcome.${outcome}`);
       default:
         return outcome;
@@ -349,6 +444,17 @@ export function WebhookActionsSection({
                   className="underline"
                 >
                   {tLabels("viewTestRunDetails")}
+                </Link>
+              </>
+            )}
+            {log.folderId && (
+              <>
+                {" · "}
+                <Link
+                  href={`/projects/repository/${projectId}/?node=${log.folderId}`}
+                  className="underline"
+                >
+                  {t("viewFolder")}
                 </Link>
               </>
             )}
@@ -448,8 +554,12 @@ export function WebhookActionsSection({
                               </TooltipContent>
                             </Tooltip>
                           ) : (
-                            <Badge key={detail.label} variant="secondary">
-                              {detail.label}
+                            <Badge
+                              key={detail.label}
+                              variant="secondary"
+                              className="inline-flex items-center gap-1"
+                            >
+                              {detail.node ?? detail.label}
                             </Badge>
                           )
                         )}

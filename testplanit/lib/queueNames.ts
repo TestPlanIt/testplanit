@@ -37,6 +37,7 @@ export const ALERT_QUEUE_NAME = "alerts";
 // receiver has answered.
 export const WEBHOOK_ACTIONS_QUEUE_NAME = "webhook-actions";
 export const JOB_RUN_TRACKER_ACTIONS = "run-tracker-actions";
+export const JOB_DRAFT_CASES = "draft-cases";
 export const JOB_EVALUATE_ALERT_RESULT = "evaluate-alert-result";
 export const JOB_EVALUATE_ALERT_JUNIT_RESULT = "evaluate-alert-junit-result";
 export const JOB_EVALUATE_ALERT_RUN = "evaluate-alert-run";

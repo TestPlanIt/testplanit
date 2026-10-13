@@ -38,21 +38,26 @@ describe("webhook action triggers", () => {
 });
 
 describe("availableActionsFor", () => {
-  it("offers only the actions this version performs", () => {
-    expect([...AVAILABLE_ACTIONS]).toEqual(["IMPORT_ISSUE", "CREATE_RUN"]);
+  it("offers every action a trigger can perform", () => {
+    expect([...AVAILABLE_ACTIONS]).toEqual([
+      "IMPORT_ISSUE",
+      "CREATE_RUN",
+      "DRAFT_CASES",
+    ]);
     expect(availableActionsFor("ISSUE_EVENT")).toEqual(["IMPORT_ISSUE"]);
     expect(availableActionsFor("ISSUE_CREATED")).toEqual([
       "IMPORT_ISSUE",
       "CREATE_RUN",
+      "DRAFT_CASES",
     ]);
     expect(availableActionsFor("ISSUE_STATUS_ENTERED")).toEqual([
       "IMPORT_ISSUE",
       "CREATE_RUN",
+      "DRAFT_CASES",
     ]);
     for (const trigger of REPOSITORY_TRIGGERS) {
       expect(availableActionsFor(trigger)).toEqual(["CREATE_RUN"]);
     }
-    // Drafting cases is a trigger's action, just not available yet.
     expect(ACTIONS_BY_TRIGGER.ISSUE_CREATED).toContain("DRAFT_CASES");
   });
 });
@@ -244,8 +249,8 @@ describe("parseWebhookAction", () => {
     }
     for (const options of [
       { quantity: 0 },
-      { quantity: 21 },
-      { folderName: "" },
+      { quantity: "lots" },
+      { stateId: 0 },
       { templateId: -1 },
       { notifyUserIds: [""] },
     ]) {
@@ -266,8 +271,8 @@ describe("parseWebhookAction", () => {
         action: "DRAFT_CASES",
         options: {
           templateId: 2,
-          folderName: " Drafts ",
-          quantity: 5,
+          stateId: 9,
+          quantity: "few",
           autoGenerateTags: true,
           notifyUserIds: ["u1"],
           notifyGroupIds: [3],
@@ -279,8 +284,8 @@ describe("parseWebhookAction", () => {
       filter: {},
       options: {
         templateId: 2,
-        folderName: "Drafts",
-        quantity: 5,
+        stateId: 9,
+        quantity: "few",
         autoGenerateTags: true,
         notifyUserIds: ["u1"],
         notifyGroupIds: [3],
@@ -296,7 +301,9 @@ describe("read* helpers", () => {
     expect(readCreateRunOptions({ minScore: "high" })).toEqual({});
     expect(readCreateRunOptions("garbage")).toEqual({});
 
-    expect(readDraftCasesOptions({ quantity: 3 })).toEqual({ quantity: 3 });
+    expect(readDraftCasesOptions({ quantity: "few" })).toEqual({
+      quantity: "few",
+    });
     expect(readDraftCasesOptions({ quantity: 99 })).toEqual({});
     expect(readDraftCasesOptions(undefined)).toEqual({});
 

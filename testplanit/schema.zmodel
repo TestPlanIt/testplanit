@@ -555,6 +555,7 @@ enum NotificationType {
     WHATS_NEW
     RUN_CASE_UNBLOCKED
     ALERT_TRIGGERED
+    CASES_DRAFTED
 
     @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')
@@ -5992,6 +5993,7 @@ model WebhookActionLog {
     issueId         Int?
     analysisId      Int?
     testRunId       Int?
+    folderId        Int?
     caseCount       Int?
     outcome         String
     detail          String?

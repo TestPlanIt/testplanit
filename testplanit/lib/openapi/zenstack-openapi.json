@@ -163998,7 +163998,8 @@
           "RUN_READY_TO_COMPLETE",
           "WHATS_NEW",
           "RUN_CASE_UNBLOCKED",
-          "ALERT_TRIGGERED"
+          "ALERT_TRIGGERED",
+          "CASES_DRAFTED"
         ]
       },
       "EnumNotificationTypeNullableListFilter": {
@@ -1124063,6 +1124064,16 @@
               }
             ]
           },
+          "folderId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
           "caseCount": {
             "oneOf": [
               {
@@ -1124155,6 +1124166,9 @@
             "type": "boolean"
           },
           "testRunId": {
+            "type": "boolean"
+          },
+          "folderId": {
             "type": "boolean"
           },
           "caseCount": {
@@ -1124360,6 +1124374,19 @@
             ]
           },
           "testRunId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntNullableFilter"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "folderId": {
             "oneOf": [
               {
                 "$ref": "#/components/schemas/IntNullableFilter"
@@ -1124580,6 +1124607,19 @@
               }
             ]
           },
+          "folderId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntNullableFilter"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "caseCount": {
             "oneOf": [
               {
@@ -1124747,6 +1124787,19 @@
             ]
           },
           "testRunId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntNullableFilter"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "folderId": {
             "oneOf": [
               {
                 "$ref": "#/components/schemas/IntNullableFilter"
@@ -1124938,6 +1124991,19 @@
               }
             ]
           },
+          "folderId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IntNullableWithAggregatesFilter"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "caseCount": {
             "oneOf": [
               {
@@ -1125072,6 +1125138,16 @@
               }
             ]
           },
+          "folderId": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SortOrder"
+              },
+              {
+                "$ref": "#/components/schemas/SortOrderInput"
+              }
+            ]
+          },
           "caseCount": {
             "oneOf": [
               {
@@ -1125119,6 +1125195,7 @@
           "issueId",
           "analysisId",
           "testRunId",
+          "folderId",
           "caseCount",
           "outcome",
           "detail",
@@ -1125150,6 +1125227,9 @@
             "type": "boolean"
           },
           "testRunId": {
+            "type": "boolean"
+          },
+          "folderId": {
             "type": "boolean"
           },
           "caseCount": {
@@ -1125196,6 +1125276,9 @@
           "testRunId": {
             "type": "integer"
           },
+          "folderId": {
+            "type": "integer"
+          },
           "caseCount": {
             "type": "integer"
           },
@@ -1125221,6 +1125304,7 @@
           "issueId",
           "analysisId",
           "testRunId",
+          "folderId",
           "caseCount",
           "outcome",
           "detail",
@@ -1125253,6 +1125337,9 @@
             "type": "boolean"
           },
           "testRunId": {
+            "type": "boolean"
+          },
+          "folderId": {
             "type": "boolean"
           },
           "caseCount": {
@@ -1125352,6 +1125439,16 @@
               }
             ]
           },
+          "folderId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
           "caseCount": {
             "oneOf": [
               {
@@ -1125420,6 +1125517,9 @@
             "type": "boolean"
           },
           "testRunId": {
+            "type": "boolean"
+          },
+          "folderId": {
             "type": "boolean"
           },
           "caseCount": {
@@ -1125519,6 +1125619,16 @@
               }
             ]
           },
+          "folderId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
           "caseCount": {
             "oneOf": [
               {
@@ -1125577,6 +1125687,9 @@
           "testRunId": {
             "type": "boolean"
           },
+          "folderId": {
+            "type": "boolean"
+          },
           "caseCount": {
             "type": "boolean"
           }
@@ -1125595,6 +1125708,9 @@
             "type": "boolean"
           },
           "testRunId": {
+            "type": "boolean"
+          },
+          "folderId": {
             "type": "boolean"
           },
           "caseCount": {
@@ -1125636,6 +1125752,16 @@
             ]
           },
           "testRunId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "folderId": {
             "oneOf": [
               {
                 "type": "null"
@@ -1125691,6 +1125817,16 @@
             ]
           },
           "testRunId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          },
+          "folderId": {
             "oneOf": [
               {
                 "type": "null"
@@ -1125829,6 +1125965,16 @@
               }
             ]
           },
+          "folderId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
           "caseCount": {
             "oneOf": [
               {
@@ -1125954,6 +1126100,16 @@
               }
             ]
           },
+          "folderId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
           "caseCount": {
             "oneOf": [
               {
@@ -1126047,6 +1126203,19 @@
             ]
           },
           "testRunId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "folderId": {
             "oneOf": [
               {
                 "type": "integer"
@@ -1126179,6 +1126348,19 @@
               }
             ]
           },
+          "folderId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "caseCount": {
             "oneOf": [
               {
@@ -1126290,6 +1126472,16 @@
               }
             ]
           },
+          "folderId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
           "caseCount": {
             "oneOf": [
               {
@@ -1126354,6 +1126546,16 @@
             ]
           },
           "testRunId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "folderId": {
             "oneOf": [
               {
                 "type": "null"
@@ -1126455,6 +1126657,16 @@
               }
             ]
           },
+          "folderId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
           "caseCount": {
             "oneOf": [
               {
@@ -1126539,6 +1126751,19 @@
             ]
           },
           "testRunId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "folderId": {
             "oneOf": [
               {
                 "type": "integer"
@@ -1126691,6 +1126916,19 @@
               }
             ]
           },
+          "folderId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "caseCount": {
             "oneOf": [
               {
@@ -1126805,6 +1127043,16 @@
             ]
           },
           "testRunId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "folderId": {
             "oneOf": [
               {
                 "type": "null"
@@ -1127134,6 +1127382,19 @@
             ]
           },
           "testRunId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "folderId": {
             "oneOf": [
               {
                 "type": "integer"
@@ -1127528,6 +1127789,16 @@
               }
             ]
           },
+          "folderId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
           "caseCount": {
             "oneOf": [
               {
@@ -1127626,6 +1127897,16 @@
               }
             ]
           },
+          "folderId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
           "caseCount": {
             "oneOf": [
               {
@@ -1127709,6 +1127990,19 @@
             ]
           },
           "testRunId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "folderId": {
             "oneOf": [
               {
                 "type": "integer"
@@ -1127864,6 +1128158,19 @@
               }
             ]
           },
+          "folderId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "caseCount": {
             "oneOf": [
               {
@@ -1127985,6 +1128292,16 @@
             ]
           },
           "testRunId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "folderId": {
             "oneOf": [
               {
                 "type": "null"
@@ -1128316,6 +1128633,19 @@
             ]
           },
           "testRunId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "folderId": {
             "oneOf": [
               {
                 "type": "integer"
@@ -1128710,6 +1129040,16 @@
               }
             ]
           },
+          "folderId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
           "caseCount": {
             "oneOf": [
               {
@@ -1128793,6 +1129133,16 @@
             ]
           },
           "testRunId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "folderId": {
             "oneOf": [
               {
                 "type": "null"
@@ -1128886,6 +1129236,19 @@
             ]
           },
           "testRunId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "folderId": {
             "oneOf": [
               {
                 "type": "integer"
@@ -1129038,6 +1129401,19 @@
               }
             ]
           },
+          "folderId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "caseCount": {
             "oneOf": [
               {
@@ -1129152,6 +1129528,16 @@
             ]
           },
           "testRunId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "folderId": {
             "oneOf": [
               {
                 "type": "null"
@@ -1129481,6 +1129867,19 @@
             ]
           },
           "testRunId": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NullableIntFieldUpdateOperationsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "folderId": {
             "oneOf": [
               {
                 "type": "integer"

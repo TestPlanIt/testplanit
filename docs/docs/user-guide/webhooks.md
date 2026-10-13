@@ -72,10 +72,11 @@ and an **Action**:
 
 - **Import Issues** — add the issue to the project, so issues filed in the tracker appear in TestPlanIt's Issues list (and on Requirements, when the project classifies them as requirements) without a manual import. An issue TestPlanIt already has is always kept up to date, with or without an import action.
 - **Create Test Run** — create a test run of the test cases linked to the issue, named after it (`DEMO-42: Checkout with saved card`) and linked to it, with the issue and the action in its description. Turn on **Include child issues** to also take the cases linked to the issue's child issues. A run is only created when there are cases to take; drafts are left out when the project excludes them. The run can also be [executed automatically](#executing-automated-cases).
+- **Generate Test Cases with AI** — draft test cases for the issue with the project's [AI model](./llm-integrations.md), the way the repository's Generate wizard does, from the issue's title, description, status and priority. Choose the **Template** and **State** the drafts take (the project's defaults when unset), how many to draft (the Generate wizard's ranges), whether to auto-generate tags (on unless switched off), and the **Users** and **Groups** to tell when the drafts are ready; each person's notification preferences still apply. The drafts go in a top-level folder named after the action (`Issue status changes → Generate Test Cases with AI · To Do`), one folder per action, whose note records the webhook, trigger, filters, template and state that fill it. Drafting runs as its own background job, so a slow model never holds up the other actions. An issue that already has linked test cases is left alone, so a status action never drafts twice for the same issue, and the action can't be saved for a project without an active AI model.
 
 **Filters** narrow which issues an action takes: **Statuses** (the tracker's own status names, suggested from the issues the project already holds; type a name to add one it doesn't), **Issue types**, **Labels** (an issue with any of them matches), and **Requirements only**. An empty filter matches every issue.
 
-New issue-tracker webhooks start with an **Any issue event → Import Issues** action, so issues the tracker reports are imported as before; delete it, or add filters, to import fewer. Imported issues and created runs are recorded as made by the built-in **System** user.
+New issue-tracker webhooks start with an **Any issue event → Import Issues** action, so issues the tracker reports are imported as before; delete it, or add filters, to import fewer. Imported issues, created runs and drafted test cases are recorded as made by the built-in **System** user; drafts link to the issue they came from, and each reviewer named on the action gets an **AI-drafted test cases** notification linking to the folder.
 
 ### Milestone sync events (version/sprint)
 
@@ -223,6 +224,7 @@ The Webhooks page includes a **Deliveries** tab listing each dispatched attempt 
 - Timestamp.
 
 A delivery that was handled but acted on nothing carries a reason starting with `ignored:` (for example `ignored:not_imported` for an issue no Import issues action takes, or `ignored:no_cases` for a run with no linked cases). These appear in muted text and count as succeeded in the status filter. Any other reason, such as `run:no_workflow` or `execute:target_disabled`, is a failure and appears in red.
+
 - A drawer with the request payload preview and response details for diagnostics.
 
 ### Replay

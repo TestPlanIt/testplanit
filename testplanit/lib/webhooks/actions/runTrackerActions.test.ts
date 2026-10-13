@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   executeAutoRun: vi.fn(),
   getIssueSubtreeIds: vi.fn(),
   webhookActorId: vi.fn(),
+  enqueueDraftCases: vi.fn(),
 }));
 
 vi.mock("~/lib/integrations/services/SyncService", () => ({
@@ -20,6 +21,9 @@ vi.mock("~/lib/services/requirementHierarchy", () => ({
   getIssueSubtreeIds: mocks.getIssueSubtreeIds,
 }));
 vi.mock("./actor", () => ({ webhookActorId: mocks.webhookActorId }));
+vi.mock("./enqueueDraftCases", () => ({
+  enqueueDraftCases: mocks.enqueueDraftCases,
+}));
 vi.mock("./composeRun", () => ({
   composeRunFromCases: mocks.composeRunFromCases,
 }));
@@ -92,6 +96,7 @@ function makeDb(rules: Rule[], opts: { integration?: boolean } = {}) {
     webhookDelivery: { update: vi.fn().mockResolvedValue({}) },
     repositoryCaseIssue: {
       findMany: vi.fn().mockResolvedValue([{ caseId: 11 }, { caseId: 12 }]),
+      count: vi.fn().mockResolvedValue(0),
     },
     webhookActionLog: { create: vi.fn().mockResolvedValue({}) },
     executionTarget: { findUnique: vi.fn().mockResolvedValue(null) },
@@ -120,7 +125,7 @@ describe("runTrackerActions", () => {
     mocks.executeAutoRun.mockResolvedValue({ requested: true });
   });
 
-  it("loads only enabled tracker rules that import issues or create runs, in order", async () => {
+  it("loads only enabled tracker rules that import issues, create runs or draft cases, in order", async () => {
     const db = makeDb([]);
     await runTrackerActions(db, job);
     expect(db.webhookAction.findMany).toHaveBeenCalledWith(
@@ -131,7 +136,7 @@ describe("runTrackerActions", () => {
           trigger: {
             in: ["ISSUE_EVENT", "ISSUE_CREATED", "ISSUE_STATUS_ENTERED"],
           },
-          action: { in: ["IMPORT_ISSUE", "CREATE_RUN"] },
+          action: { in: ["IMPORT_ISSUE", "CREATE_RUN", "DRAFT_CASES"] },
         },
         orderBy: [{ order: "asc" }, { createdAt: "asc" }],
       })
@@ -545,6 +550,55 @@ describe("runTrackerActions", () => {
     });
   });
 
+  it("hands a Draft test cases rule to its own job and notes it as queued", async () => {
+    mocks.enqueueDraftCases.mockResolvedValue(undefined);
+    const db = makeDb([
+      rule({ id: "draft-1", trigger: "ISSUE_EVENT", action: "DRAFT_CASES" }),
+    ]);
+
+    expect(await runTrackerActions(db, job)).toEqual({
+      outcome: "done",
+      issueId: 100,
+      runIds: [],
+    });
+    expect(logged(db)).toEqual([
+      expect.objectContaining({
+        webhookActionId: "draft-1",
+        outcome: "draft_queued",
+      }),
+    ]);
+    expect(mocks.enqueueDraftCases).toHaveBeenCalledWith({
+      deliveryId: "del-1",
+      webhookConfigId: "whc-1",
+      webhookActionId: "draft-1",
+      projectId: 7,
+      issueId: 100,
+      tenantId: "tenant-a",
+    });
+    expect(mocks.composeRunFromCases).not.toHaveBeenCalled();
+  });
+
+  it("leaves an issue that already has test cases alone instead of drafting", async () => {
+    const db = makeDb([
+      rule({ id: "draft-1", trigger: "ISSUE_EVENT", action: "DRAFT_CASES" }),
+    ]);
+    db.repositoryCaseIssue.count.mockResolvedValue(2);
+
+    await runTrackerActions(db, job);
+
+    expect(logged(db)).toEqual([
+      expect.objectContaining({
+        webhookActionId: "draft-1",
+        outcome: "has_cases",
+      }),
+    ]);
+    expect(mocks.enqueueDraftCases).not.toHaveBeenCalled();
+    expect(db.webhookDelivery.update).toHaveBeenCalledWith({
+      where: { id: "del-1" },
+      data: { error: "ignored:has_cases" },
+    });
+  });
+
   it("executes the run when the rule says so, and logs a refused execution", async () => {
     mocks.executeAutoRun.mockResolvedValue({
       requested: false,
@@ -665,7 +719,7 @@ describe("runTrackerActions", () => {
 });
 
 describe("hasTrackerRules", () => {
-  it("counts enabled tracker rules that import issues or create runs", async () => {
+  it("counts enabled tracker rules that import issues, create runs or draft cases", async () => {
     const db = { webhookAction: { count: vi.fn().mockResolvedValue(2) } };
     expect(await hasTrackerRules(db, "whc-1")).toBe(true);
     expect(db.webhookAction.count).toHaveBeenCalledWith({
@@ -675,7 +729,7 @@ describe("hasTrackerRules", () => {
         trigger: {
           in: ["ISSUE_EVENT", "ISSUE_CREATED", "ISSUE_STATUS_ENTERED"],
         },
-        action: { in: ["IMPORT_ISSUE", "CREATE_RUN"] },
+        action: { in: ["IMPORT_ISSUE", "CREATE_RUN", "DRAFT_CASES"] },
       },
     });
   });

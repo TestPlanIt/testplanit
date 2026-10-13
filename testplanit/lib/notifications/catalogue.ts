@@ -145,6 +145,12 @@ export const NOTIFICATION_CATALOGUE: readonly NotificationCatalogueEntry[] = [
     audience: "everyone",
     optional: true,
   },
+  {
+    type: NotificationType.CASES_DRAFTED,
+    group: "aiAndJobs",
+    audience: "everyone",
+    optional: true,
+  },
   // Integrations — an expired credential blocks the user's own syncs.
   {
     type: NotificationType.INTEGRATION_AUTH_EXPIRED,

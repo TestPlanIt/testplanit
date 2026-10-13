@@ -21,7 +21,9 @@ import {
  * - A rule's "Execute automated cases" option needs an enabled execution
  *   target; deleting the chosen target flags the rule and the dialog.
  * - An issue tracker webhook lists its Import issues rule; a status rule
- *   can't be saved until it names a status, and saves its filter.
+ *   can't be saved until it names a status, and saves its filter. A
+ *   Generate Test Cases with AI rule needs an active AI model and saves
+ *   its drafting options.
  * - A delivery the rules handled without acting reads as succeeded, not
  *   failed, on the Deliveries tab.
  * - The seeded System user is badged and locked on the admin Users page.
@@ -645,6 +647,65 @@ test.describe("Issue tracker webhook actions", () => {
       expect(saved[1].filter).toMatchObject({
         statuses: ["closed"],
         labels: ["qa"],
+      });
+    });
+  });
+
+  test("a Generate Test Cases with AI rule needs an AI model and saves its drafting options", async ({
+    page,
+    api,
+  }) => {
+    const { projectId, configId } = await seedTrackerWebhook(
+      api,
+      `Draft ${uid()}`
+    );
+    const section = actionsSection(page, configId);
+    const dialog = page.getByTestId("webhook-action-dialog");
+
+    await test.step("Without an AI model the rule is refused", async () => {
+      await openWebhooksPage(page, projectId);
+      await section.getByTestId("webhook-action-add").click();
+      await expect(dialog).toBeVisible();
+      await dialog.getByTestId("webhook-action-trigger").click();
+      await page.getByRole("option", { name: "Issue created" }).click();
+      await dialog.getByTestId("webhook-action-type").click();
+      await page
+        .getByRole("option", { name: "Generate Test Cases with AI" })
+        .click();
+      await expect(
+        dialog.getByTestId("webhook-action-draft-fields")
+      ).toBeVisible();
+      await dialog.getByTestId("webhook-action-save").click();
+      await expect(
+        page
+          .locator("[data-sonner-toast]")
+          .filter({ hasText: "no active AI model" })
+      ).toBeVisible();
+      await expect(dialog).toBeVisible();
+    });
+
+    await test.step("With one, the rule saves its count", async () => {
+      await api.createLlmIntegration(`E2E Draft Model ${uid()}`);
+      await dialog.getByTestId("webhook-action-draft-quantity").click();
+      await page.getByRole("option", { name: "A few (2-3)" }).click();
+      await dialog.getByTestId("webhook-action-save").click();
+      await expect(dialog).toBeHidden();
+
+      const added = section
+        .locator(ROW_SELECTOR)
+        .filter({ hasText: "Generate Test Cases with AI" });
+      await expect(added).toContainText("Issue created");
+      await expect(added).toContainText(
+        "Number of test cases to generate: A few (2-3)"
+      );
+
+      const saved = await db.webhookAction.findFirst({
+        where: { webhookConfigId: configId, action: "DRAFT_CASES" },
+        select: { trigger: true, options: true },
+      });
+      expect(saved).toEqual({
+        trigger: "ISSUE_CREATED",
+        options: { quantity: "few", autoGenerateTags: true },
       });
     });
   });

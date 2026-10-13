@@ -54,6 +54,7 @@ export const ACTIONS_BY_TRIGGER: Record<
 export const AVAILABLE_ACTIONS: readonly WebhookActionType[] = [
   "IMPORT_ISSUE",
   "CREATE_RUN",
+  "DRAFT_CASES",
 ];
 
 /** The actions a trigger offers that this version can perform. */
@@ -101,10 +102,22 @@ export const createRunOptionsSchema = z.object({
 });
 export type CreateRunOptions = z.infer<typeof createRunOptionsSchema>;
 
+/** How many cases to draft, in the Generate wizard's terms. */
+export const DRAFT_QUANTITIES = [
+  "just_one",
+  "couple",
+  "few",
+  "several",
+  "many",
+  "all",
+] as const;
+export type DraftQuantity = (typeof DRAFT_QUANTITIES)[number];
+
 export const draftCasesOptionsSchema = z.object({
   templateId: z.number().int().positive().optional(),
-  folderName: z.string().trim().min(1).max(255).optional(),
-  quantity: z.number().int().min(1).max(20).optional(),
+  /** The case workflow state the drafts start in; the project's default when unset. */
+  stateId: z.number().int().positive().optional(),
+  quantity: z.enum(DRAFT_QUANTITIES).optional(),
   autoGenerateTags: z.boolean().optional(),
   notifyUserIds: z.array(z.string().min(1)).max(100).optional(),
   notifyGroupIds: z.array(z.number().int().positive()).max(100).optional(),

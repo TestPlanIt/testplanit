@@ -53,6 +53,21 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
     webhookAction: { useFindMany: (...a: unknown[]) => mockRules(...a) },
     webhookActionLog: { useFindMany: (...a: unknown[]) => mockLogs(...a) },
+    templates: {
+      useFindMany: () => ({ data: [{ id: 4, templateName: "Functional" }] }),
+    },
+    workflows: {
+      useFindMany: () => ({
+        data: [
+          {
+            id: 8,
+            name: "Review",
+            icon: { name: "Eye" },
+            color: { value: "#123456" },
+          },
+        ],
+      }),
+    },
   }),
 }));
 vi.mock("@/components/runs/ExecuteAutomationButton", () => ({
@@ -76,6 +91,16 @@ vi.mock("~/lib/navigation", () => ({
     <a href={href} {...rest}>
       {children}
     </a>
+  ),
+}));
+vi.mock("@/components/TemplateNameDisplay", () => ({
+  TemplateNameDisplay: ({ name }: any) => (
+    <span data-testid="template-display">{name}</span>
+  ),
+}));
+vi.mock("@/components/WorkflowStateDisplay", () => ({
+  WorkflowStateDisplay: ({ state }: any) => (
+    <span data-testid="state-display">{state.name}</span>
   ),
 }));
 vi.mock("@/components/ui/switch", () => ({
@@ -274,6 +299,10 @@ describe("WebhookActionsSection", () => {
       "execute_failed",
       "projects.settings.webhooks.actions.outcome.execute_failed",
     ],
+    ["draft_queued", "projects.settings.webhooks.actions.outcome.draft_queued"],
+    ["has_cases", "projects.settings.webhooks.actions.outcome.has_cases"],
+    ["no_llm", "projects.settings.webhooks.actions.outcome.no_llm"],
+    ["draft_failed", "projects.settings.webhooks.actions.outcome.draft_failed"],
     ["something_new", "something_new"],
   ])("labels a %s outcome", (outcome, label) => {
     mockLogs.mockReturnValue({
@@ -335,6 +364,21 @@ describe("WebhookActionsSection", () => {
       // An import rule never shows run options, even stored ones.
       options: { includeChildIssues: true },
     };
+    const draftRule = {
+      id: "trk-3",
+      order: 2,
+      isEnabled: true,
+      trigger: "ISSUE_CREATED",
+      action: "DRAFT_CASES",
+      filter: {},
+      options: {
+        templateId: 4,
+        stateId: 8,
+        quantity: "few",
+        notifyUserIds: ["u1", "u2"],
+        notifyGroupIds: [3],
+      },
+    };
 
     function renderTracker() {
       return render(
@@ -350,10 +394,28 @@ describe("WebhookActionsSection", () => {
 
     beforeEach(() => {
       mockRules.mockReturnValue({
-        data: [statusRule, importRule],
+        data: [statusRule, importRule, draftRule],
         refetch: mockRefetch,
       });
       mockLogs.mockReturnValue({ data: [] });
+    });
+
+    it("shows a draft rule's template and state through the shared displays, its count and its recipients", () => {
+      renderTracker();
+
+      const row = screen.getByTestId("webhook-action-row-trk-3");
+      expect(row).toHaveTextContent("repository.generateTestCases.title");
+      expect(within(row).getByTestId("template-display")).toHaveTextContent(
+        "Functional"
+      );
+      expect(within(row).getByTestId("state-display")).toHaveTextContent(
+        "Review"
+      );
+      expect(row).toHaveTextContent(
+        "repository.generateTestCases.addNotes.quantity: repository.generateTestCases.addNotes.quantityOptions.few"
+      );
+      expect(row).toHaveTextContent("common.fields.users: 2");
+      expect(row).toHaveTextContent("common.fields.groups: 1");
     });
 
     it("shows the filter and child-issue badges, naming issue types where it can", () => {

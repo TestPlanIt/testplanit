@@ -577,6 +577,7 @@
       "addFieldTo": "Add a field to {section}",
       "selectTemplates": "Select templates",
       "selectUsers": "Select users",
+      "selectGroups": "Select groups",
       "selectOption": "Select an option",
       "date": "Select a date",
       "selectEncoding": "Select encoding...",
@@ -1876,6 +1877,13 @@
             "ISSUE_STATUS_ENTERED": "An issue moves into one of the chosen statuses."
           },
           "outcome": {
+            "cases_drafted": "Test cases drafted",
+            "draft_queued": "Drafting test cases",
+            "has_cases": "Issue already has test cases",
+            "no_llm": "No active AI model",
+            "no_template": "No template",
+            "no_target": "No repository or default state",
+            "draft_failed": "Drafting failed",
             "already_composed": "Run already created for this change",
             "execute_failed": "Execution not requested"
           },
@@ -1883,7 +1891,11 @@
           "requirementsOnly": "Requirements only",
           "requirementsOnlyHelp": "Only issues the project classifies as requirements.",
           "includeChildIssues": "Include child issues",
-          "includeChildIssuesHelp": "Also take the test cases linked to the issue's child issues."
+          "includeChildIssuesHelp": "Also take the test cases linked to the issue's child issues.",
+          "notifyHelp": "Who is told when the drafts are ready to review. Each person's notification preferences still apply.",
+          "draftFolderNote": "Test cases drafted automatically by the {webhook} webhook.",
+          "draftFolderNoteCases": "Drafted by the System user; each case is linked to the issue it was drafted from.",
+          "viewFolder": "View folder"
         },
         "codeRepos": {
           "empty": "No repositories are connected for Impact Analysis. <link>Connect one</link> first.",
@@ -3009,6 +3021,10 @@
           "AI_STEPS_DERIVED": {
             "label": "AI steps derived",
             "description": "An AI step-derivation job you started has written steps."
+          },
+          "CASES_DRAFTED": {
+            "label": "AI-drafted test cases",
+            "description": "A webhook action drafted test cases for an issue and named you as a reviewer."
           },
           "INTEGRATION_AUTH_EXPIRED": {
             "label": "Integration needs re-authorization",
@@ -7030,6 +7046,9 @@
         "aiStepsDerivedTitle": "AI-Derived Test Steps Ready",
         "aiStepsDerivedMessage": "{count, plural, one {# test case was} other {# test cases were}} given AI-derived steps — review for accuracy.",
         "aiStepsDerivedReviewLink": "Review test run",
+        "casesDraftedTitle": "AI-Drafted Test Cases Ready",
+        "casesDraftedMessage": "{count, plural, one {# test case was} other {# test cases were}} drafted for {issueKey} — review for accuracy.",
+        "casesDraftedReviewLink": "Review in {folderName}",
         "integrationAuthExpiredTitle": "Integration Connection Expired",
         "integrationAuthExpiredMessage": "Your connection to \"{integrationName}\" has expired. Reconnect to resume issue syncing.",
         "integrationAuthExpiredReconnect": "Reconnect",

@@ -203,6 +203,48 @@ describe("NotificationService", () => {
     });
   });
 
+  describe("createCasesDraftedNotification", () => {
+    it("queues a CASES_DRAFTED notification pointing at the folder", async () => {
+      mockQueue.add.mockResolvedValue({ id: "job-drafted" } as any);
+
+      await NotificationService.createCasesDraftedNotification({
+        userId: "rev",
+        projectId: 3,
+        projectName: "Telco",
+        folderId: 55,
+        folderName: "Drafted from issues",
+        issueId: 100,
+        issueKey: "DEMO-42",
+        issueTitle: "Checkout totals",
+        caseCount: 2,
+      });
+
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        "create-notification",
+        expect.objectContaining({
+          userId: "rev",
+          type: NotificationType.CASES_DRAFTED,
+          title: "AI-drafted test cases ready for review",
+          message:
+            '2 test cases drafted for DEMO-42 "Checkout totals" in project "Telco" — review them in "Drafted from issues".',
+          relatedEntityId: "55",
+          relatedEntityType: "RepositoryFolder",
+          data: {
+            projectId: 3,
+            projectName: "Telco",
+            folderId: 55,
+            folderName: "Drafted from issues",
+            issueId: 100,
+            issueKey: "DEMO-42",
+            issueTitle: "Checkout totals",
+            caseCount: 2,
+          },
+        }),
+        expect.anything()
+      );
+    });
+  });
+
   describe("createRunCaseUnblockedNotification", () => {
     it("queues a RUN_CASE_UNBLOCKED notification pointing at the case in its run", async () => {
       mockQueue.add.mockResolvedValue({ id: "job-unblocked" } as any);

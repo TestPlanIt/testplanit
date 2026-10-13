@@ -9,6 +9,7 @@ import { getIssueSubtreeIds } from "~/lib/services/requirementHierarchy";
 import { inboundProviderForAdapter } from "~/lib/webhooks/inboundProviders";
 import { webhookActorId } from "./actor";
 import { composeRunFromCases } from "./composeRun";
+import { enqueueDraftCases } from "./enqueueDraftCases";
 import { logWebhookAction } from "./log";
 import { describeCreateRunRule } from "./ruleSummary";
 import { TRACKER_TRIGGERS, readCreateRunOptions } from "./schemas";
@@ -71,7 +72,7 @@ export async function runTrackerActions(
       webhookConfigId: job.webhookConfigId,
       isEnabled: true,
       trigger: { in: [...TRACKER_TRIGGERS] },
-      action: { in: ["IMPORT_ISSUE", "CREATE_RUN"] },
+      action: { in: ["IMPORT_ISSUE", "CREATE_RUN", "DRAFT_CASES"] },
     },
     orderBy: [{ order: "asc" }, { createdAt: "asc" }],
     select: {
@@ -84,6 +85,7 @@ export async function runTrackerActions(
   });
   const importRules = rules.filter((rule) => rule.action === "IMPORT_ISSUE");
   const runRules = rules.filter((rule) => rule.action === "CREATE_RUN");
+  const draftRules = rules.filter((rule) => rule.action === "DRAFT_CASES");
 
   const provider = inboundProviderForAdapter(job.adapterType);
   const projectIntegration = provider
@@ -281,6 +283,32 @@ export async function runTrackerActions(
     }
   }
 
+  // Drafting calls the project's AI model, so each firing rule gets its own
+  // job; an issue that already has cases, including ones a rule above just
+  // composed a run from, is left alone.
+  if (draftRules.some((rule) => trackerRuleFires(rule, change, facts))) {
+    const linked = await db.repositoryCaseIssue.count({
+      where: { issueId: issue.issueId, case: { isDeleted: false } },
+    });
+    for (const rule of draftRules) {
+      if (!trackerRuleFires(rule, change, facts)) continue;
+      if (linked > 0) {
+        await log(rule, { outcome: "has_cases" });
+        deliveryNote ??= "ignored:has_cases";
+        continue;
+      }
+      await log(rule, { outcome: "draft_queued" });
+      await enqueueDraftCases({
+        deliveryId: job.deliveryId,
+        webhookConfigId: job.webhookConfigId,
+        webhookActionId: rule.id,
+        projectId: job.projectId,
+        issueId: issue.issueId,
+        tenantId: job.tenantId,
+      });
+    }
+  }
+
   const note = deliveryError ?? deliveryNote;
   if (runIds.length > 0 || note) {
     await annotate({
@@ -301,7 +329,7 @@ export async function hasTrackerRules(
       webhookConfigId,
       isEnabled: true,
       trigger: { in: [...TRACKER_TRIGGERS] },
-      action: { in: ["IMPORT_ISSUE", "CREATE_RUN"] },
+      action: { in: ["IMPORT_ISSUE", "CREATE_RUN", "DRAFT_CASES"] },
     },
   });
   return count > 0;

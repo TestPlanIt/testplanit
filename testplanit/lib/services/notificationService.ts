@@ -266,6 +266,43 @@ export class NotificationService {
     });
   }
 
+  /** Test cases a webhook action drafted with AI are ready for review. */
+  static async createCasesDraftedNotification(params: {
+    userId: string;
+    projectId: number;
+    projectName: string;
+    folderId: number;
+    folderName: string;
+    issueId: number;
+    issueKey: string;
+    issueTitle: string;
+    caseCount: number;
+    tenantId?: string;
+  }) {
+    const title = "AI-drafted test cases ready for review";
+    const message = `${params.caseCount} test case${params.caseCount === 1 ? "" : "s"} drafted for ${params.issueKey} "${params.issueTitle}" in project "${params.projectName}" — review them in "${params.folderName}".`;
+
+    return this.createNotification({
+      userId: params.userId,
+      type: NotificationType.CASES_DRAFTED,
+      title,
+      message,
+      relatedEntityId: params.folderId.toString(),
+      relatedEntityType: "RepositoryFolder",
+      tenantId: params.tenantId,
+      data: {
+        projectId: params.projectId,
+        projectName: params.projectName,
+        folderId: params.folderId,
+        folderName: params.folderName,
+        issueId: params.issueId,
+        issueKey: params.issueKey,
+        issueTitle: params.issueTitle,
+        caseCount: params.caseCount,
+      },
+    });
+  }
+
   /**
    * Alert fired (#651): one notification per subscriber. The
    * stored `title`/`message` are the English fallback; the bell and the

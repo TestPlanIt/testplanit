@@ -29,6 +29,14 @@ vi.mock("~/lib/webhooks/auth", () => ({
   canManageWebhookConfig: (...a: unknown[]) => mockCanManage(...a),
 }));
 vi.mock("~/lib/db", () => ({ baseDb: db }));
+const { mockReadiness, mockTemplateBelongs } = vi.hoisted(() => ({
+  mockReadiness: vi.fn(),
+  mockTemplateBelongs: vi.fn(),
+}));
+vi.mock("~/lib/services/jira-panel-generation", () => ({
+  getProjectReadiness: (...a: unknown[]) => mockReadiness(...a),
+  templateBelongsToProject: (...a: unknown[]) => mockTemplateBelongs(...a),
+}));
 vi.mock("~/lib/auditContext", () => ({
   runWithAuditContext: (_ctx: unknown, fn: () => unknown) => fn(),
 }));
@@ -226,20 +234,31 @@ describe("webhook-actions server actions", () => {
         success: false,
         error: "The action's options are not valid",
       });
-      // Drafting cases arrives in a later version; it can't be saved yet.
+      // Drafting cases needs an AI model the project can call.
+      mockReadiness.mockResolvedValueOnce({
+        hasRepository: true,
+        hasDefaultWorkflow: true,
+        hasActiveLlm: false,
+      });
       expect(
         await saveWebhookAction({
           ...base,
           webhookConfigId: "whc-2",
           trigger: "ISSUE_CREATED",
           action: "DRAFT_CASES",
-          options: { quantity: 5 },
+          options: { quantity: "few" },
         })
       ).toEqual({
         success: false,
-        error: "That action isn't available for this trigger",
+        error: "This project has no active AI model to draft test cases with",
       });
-      // Nor can an existing rule be switched to it.
+      // And its template must be the project's.
+      mockReadiness.mockResolvedValueOnce({
+        hasRepository: true,
+        hasDefaultWorkflow: true,
+        hasActiveLlm: true,
+      });
+      mockTemplateBelongs.mockResolvedValueOnce(false);
       expect(
         await saveWebhookAction({
           ...base,
@@ -248,11 +267,10 @@ describe("webhook-actions server actions", () => {
           trigger: "ISSUE_STATUS_ENTERED",
           action: "DRAFT_CASES",
           filter: { statuses: ["Ready"] },
+          options: { templateId: 9 },
         })
-      ).toEqual({
-        success: false,
-        error: "That action isn't available for this trigger",
-      });
+      ).toEqual({ success: false, error: "Template not found" });
+      expect(mockTemplateBelongs).toHaveBeenCalledWith(9, base.projectId);
       expect(db.webhookAction.create).not.toHaveBeenCalled();
       expect(db.webhookAction.updateMany).not.toHaveBeenCalled();
     });

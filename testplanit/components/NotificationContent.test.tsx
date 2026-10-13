@@ -86,6 +86,10 @@ describe("NotificationContent", () => {
         userRegisteredMessageForm:
           "{userName} ({userEmail}) has registered via the registration form",
         viewUserList: "View user list",
+        casesDraftedTitle: "AI-Drafted Test Cases Ready",
+        casesDraftedMessage:
+          "{count} test cases were drafted for {issueKey} — review for accuracy.",
+        casesDraftedReviewLink: "Review in {folderName}",
         aiStepsDerivedTitle: "AI-Derived Test Steps Ready",
         aiStepsDerivedMessage:
           "{count} test cases were given AI-derived steps — review for accuracy.",
@@ -270,6 +274,42 @@ describe("NotificationContent", () => {
       expect(screen.getByText("assigned you 5 test cases")).toBeInTheDocument();
       expect(screen.getByText("Sprint 1 Tests")).toBeInTheDocument();
       expect(screen.getByText("2 cases in")).toBeInTheDocument();
+    });
+  });
+
+  describe("AI-Drafted Cases", () => {
+    it("renders the folder review link, the count and the issue", () => {
+      const notification = {
+        id: "dc-1",
+        type: "CASES_DRAFTED",
+        title: "stored title",
+        message: "stored message",
+        data: {
+          projectId: 456,
+          folderId: 55,
+          folderName: "Drafted from issues",
+          issueKey: "DEMO-42",
+          issueTitle: "Checkout totals",
+          caseCount: 2,
+        },
+      };
+
+      render(<NotificationContent notification={notification} />);
+
+      expect(
+        screen.getByText("AI-Drafted Test Cases Ready")
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(/2 test cases were drafted for DEMO-42/)
+      ).toBeInTheDocument();
+      expect(screen.getByRole("link")).toHaveAttribute(
+        "href",
+        "/projects/repository/456/?node=55"
+      );
+      expect(
+        screen.getByText("Review in Drafted from issues")
+      ).toBeInTheDocument();
+      expect(screen.getByText("Checkout totals")).toBeInTheDocument();
     });
   });
 

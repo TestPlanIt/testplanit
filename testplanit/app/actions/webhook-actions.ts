@@ -15,7 +15,12 @@ import {
   AVAILABLE_ACTIONS,
   parseWebhookAction,
   type AutoExecuteOptions,
+  type DraftCasesOptions,
 } from "~/lib/webhooks/actions/schemas";
+import {
+  getProjectReadiness,
+  templateBelongsToProject,
+} from "~/lib/services/jira-panel-generation";
 import { readRequirementTypeConfig } from "~/lib/integrations/requirementTypeConfig";
 import { canManageWebhookConfig } from "~/lib/webhooks/auth";
 import { getServerAuthSession } from "~/server/auth";
@@ -84,6 +89,61 @@ async function checkAutoExecute(
  * Whether the project's tracker issues can be requirements: requirements
  * are on for the project and its integration names the requirement types.
  */
+/**
+ * A Draft test cases rule needs an AI model to call, and its template,
+ * state, users and groups must be the project's own.
+ */
+async function checkDraftCases(
+  projectId: number,
+  action: WebhookActionType,
+  options: DraftCasesOptions
+): Promise<string | null> {
+  if (action !== "DRAFT_CASES") return null;
+  const readiness = await getProjectReadiness(projectId);
+  if (!readiness.hasActiveLlm) {
+    return "This project has no active AI model to draft test cases with";
+  }
+  if (!readiness.hasRepository || !readiness.hasDefaultWorkflow) {
+    return "This project needs a repository and a default case state";
+  }
+  if (
+    options.templateId !== undefined &&
+    !(await templateBelongsToProject(options.templateId, projectId))
+  ) {
+    return "Template not found";
+  }
+  if (options.stateId !== undefined) {
+    const state = await baseDb.workflows.findFirst({
+      where: {
+        id: options.stateId,
+        scope: "CASES",
+        isEnabled: true,
+        isDeleted: false,
+        projects: { some: { projectId } },
+      },
+      select: { id: true },
+    });
+    if (!state) return "Case state not found";
+  }
+  if (options.notifyUserIds?.length) {
+    const users = await baseDb.user.count({
+      where: { id: { in: options.notifyUserIds }, isDeleted: false },
+    });
+    if (users !== new Set(options.notifyUserIds).size) {
+      return "User not found";
+    }
+  }
+  if (options.notifyGroupIds?.length) {
+    const groups = await baseDb.groups.count({
+      where: { id: { in: options.notifyGroupIds }, isDeleted: false },
+    });
+    if (groups !== new Set(options.notifyGroupIds).size) {
+      return "Group not found";
+    }
+  }
+  return null;
+}
+
 async function classifiesRequirements(projectId: number): Promise<boolean> {
   const project = await baseDb.projects.findUnique({
     where: { id: projectId },
@@ -150,6 +210,12 @@ export async function saveWebhookAction(input: {
       parsed.options.autoExecute as AutoExecuteOptions | undefined
     );
     if (targetError) return { success: false, error: targetError };
+    const draftError = await checkDraftCases(
+      projectId,
+      input.action,
+      parsed.options as DraftCasesOptions
+    );
+    if (draftError) return { success: false, error: draftError };
 
     const data = {
       trigger: input.trigger,

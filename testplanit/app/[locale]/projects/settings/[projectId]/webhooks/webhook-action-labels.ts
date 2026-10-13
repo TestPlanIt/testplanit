@@ -5,6 +5,17 @@ import type {
   WebhookActionTrigger,
   WebhookActionType,
 } from "~/zenstack/models";
+import type { DraftQuantity } from "~/lib/webhooks/actions/schemas";
+
+/** The Generate wizard's label key for each draft count. */
+export const QUANTITY_LABEL_KEYS: Record<DraftQuantity, string> = {
+  just_one: "justOne",
+  couple: "couple",
+  few: "few",
+  several: "several",
+  many: "many",
+  all: "maximum",
+};
 
 /** Display text for rule triggers and actions, shared by the list and the dialog. */
 export function useWebhookActionLabels(baseBranch: string | null) {

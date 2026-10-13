@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { describeCreateRunRule } from "./ruleSummary";
+import {
+  describeCreateRunRule,
+  describeDraftCasesRule,
+  draftFolderNote,
+} from "./ruleSummary";
 
 const db = {
   executionTarget: {
@@ -68,5 +72,66 @@ describe("describeCreateRunRule", () => {
 
   it("says nothing for a job queued before rules carried their trigger", async () => {
     expect(await describeCreateRunRule(db, {})).toBeNull();
+  });
+});
+
+describe("describeDraftCasesRule", () => {
+  it("names the trigger, the action and the statuses", async () => {
+    expect(
+      await describeDraftCasesRule({
+        trigger: "ISSUE_STATUS_ENTERED",
+        statuses: ["Ready", "In Test"],
+      })
+    ).toBe(
+      "Issue status changes → Generate Test Cases with AI · Ready, In Test"
+    );
+    expect(await describeDraftCasesRule({ trigger: "ISSUE_CREATED" })).toBe(
+      "Issue created → Generate Test Cases with AI"
+    );
+    expect(await describeDraftCasesRule({ trigger: null })).toBeNull();
+  });
+});
+
+describe("draftFolderNote", () => {
+  it("says which webhook and rule fill the folder, what it filters on, and what the drafts take", async () => {
+    const note = await draftFolderNote({
+      webhook: { name: null, adapterType: "JIRA" },
+      ruleLine: "Issue status changes → Generate Test Cases with AI · Ready",
+      filter: {
+        statuses: ["Ready"],
+        issueTypeIds: ["1", "2"],
+        issueTypeNames: { "1": "Bug", "2": "Bug" },
+        labels: ["qa"],
+        requirementsOnly: true,
+      },
+      templateName: "Functional",
+      stateName: "Review",
+    });
+    expect(
+      note.content?.map((p) => p.content?.map((n) => n.text).join(""))
+    ).toEqual([
+      "Test cases drafted automatically by the Jira inbound webhook webhook.",
+      "Action: Issue status changes → Generate Test Cases with AI · Ready",
+      "Statuses: Ready",
+      "Issue types: Bug",
+      "Labels: qa",
+      "Requirements only",
+      "Template: Functional · State: Review",
+      "Drafted by the System user; each case is linked to the issue it was drafted from.",
+    ]);
+  });
+
+  it("uses the webhook's own name when it has one", async () => {
+    const note = await draftFolderNote({
+      webhook: { name: "Tracker hook", adapterType: "GITHUB" },
+      ruleLine: "Issue created → Generate Test Cases with AI",
+      filter: {},
+      templateName: "Functional",
+      stateName: "Active",
+    });
+    expect(note.content?.[0]?.content?.[0]?.text).toBe(
+      "Test cases drafted automatically by the Tracker hook webhook."
+    );
+    expect(note.content).toHaveLength(4);
   });
 });

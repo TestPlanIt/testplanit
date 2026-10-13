@@ -10,6 +10,7 @@ export async function logWebhookAction(
     issueId?: number | null;
     analysisId?: number | null;
     testRunId?: number | null;
+    folderId?: number | null;
     caseCount?: number | null;
     detail?: string | null;
   }
@@ -25,6 +26,7 @@ export async function logWebhookAction(
         issueId: entry.issueId ?? null,
         analysisId: entry.analysisId ?? null,
         testRunId: entry.testRunId ?? null,
+        folderId: entry.folderId ?? null,
         caseCount: entry.caseCount ?? null,
         detail: entry.detail ? entry.detail.slice(0, 500) : null,
       },

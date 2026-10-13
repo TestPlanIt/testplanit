@@ -45,6 +45,12 @@ import {
   trackerFilterFromDraft,
   type TrackerFilterDraft,
 } from "./webhook-action-tracker-filter";
+import {
+  WebhookActionDraftFields,
+  draftCasesDraftFrom,
+  draftCasesOptionsFromDraft,
+  type DraftCasesDraft,
+} from "./webhook-action-draft-fields";
 import { Switch } from "@/components/ui/switch";
 
 export interface WebhookActionRow {
@@ -119,6 +125,9 @@ function WebhookActionDialogBody({
   const [includeChildIssues, setIncludeChildIssues] = useState(
     savedRun.includeChildIssues === true
   );
+  const [draft, setDraft] = useState<DraftCasesDraft>(
+    draftCasesDraftFrom(rule?.action === "DRAFT_CASES" ? rule.options : null)
+  );
   const [saving, setSaving] = useState(false);
 
   const actions = availableActionsFor(trigger);
@@ -159,6 +168,10 @@ function WebhookActionDialogBody({
       const execute = autoExecuteFromDraft(autoExecute);
       if (execute) options.autoExecute = execute;
     }
+    if (action === "DRAFT_CASES") {
+      for (const key of Object.keys(options)) delete options[key];
+      Object.assign(options, draftCasesOptionsFromDraft(draft));
+    }
     setSaving(true);
     try {
       const result = await saveWebhookAction({
@@ -187,7 +200,6 @@ function WebhookActionDialogBody({
     autoExecute.targetId === null;
   const statusesMissing =
     trigger === "ISSUE_STATUS_ENTERED" && filter.statuses.length === 0;
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -269,6 +281,14 @@ function WebhookActionDialogBody({
                 </span>
               </span>
             </Label>
+          )}
+
+          {action === "DRAFT_CASES" && !isRepository && (
+            <WebhookActionDraftFields
+              projectId={projectId}
+              value={draft}
+              onChange={setDraft}
+            />
           )}
 
           {action === "CREATE_RUN" && isRepository && (

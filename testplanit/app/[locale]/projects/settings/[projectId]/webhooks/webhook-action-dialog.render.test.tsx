@@ -40,6 +40,12 @@ vi.mock("@/components/automation/ExecutionParamFields", () => ({
 }));
 // The filter's own data loading is covered by its render test; here only
 // its presence and the draft it starts from matter.
+vi.mock("./webhook-action-draft-fields", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./webhook-action-draft-fields")>()),
+  WebhookActionDraftFields: () => (
+    <div data-testid="webhook-action-draft-fields" />
+  ),
+}));
 vi.mock("./webhook-action-tracker-filter", async (importOriginal) => ({
   ...(await importOriginal<typeof import("./webhook-action-tracker-filter")>()),
   WebhookActionTrackerFilter: () => (
@@ -187,10 +193,10 @@ describe("WebhookActionDialog", () => {
     fireEvent.change(screen.getByTestId("webhook-action-trigger"), {
       target: { value: "ISSUE_CREATED" },
     });
-    // Drafting cases isn't available in this version, so it isn't offered.
     expect(optionValues("webhook-action-type")).toEqual([
       "IMPORT_ISSUE",
       "CREATE_RUN",
+      "DRAFT_CASES",
     ]);
     expect(screen.queryByTestId("webhook-action-include-children")).toBeNull();
     fireEvent.change(screen.getByTestId("webhook-action-type"), {

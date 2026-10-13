@@ -5,10 +5,14 @@ import {
   isMultiTenantMode,
   validateMultiTenantJobData,
 } from "../lib/multiTenantDb";
-import { WEBHOOK_ACTIONS_QUEUE_NAME } from "../lib/queueNames";
+import { JOB_DRAFT_CASES, WEBHOOK_ACTIONS_QUEUE_NAME } from "../lib/queueNames";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
 import { BULLMQ_PREFIX } from "../lib/bullPrefix";
+import {
+  runDraftCases,
+  type DraftCasesJob,
+} from "../lib/webhooks/actions/draftCases";
 import {
   runTrackerActions,
   type TrackerActionsJob,
@@ -19,10 +23,19 @@ import {
  * issue, create test runs) run here, after the receiver has recorded and
  * answered the delivery. A job whose issue is mid-sync throws and retries.
  */
-const processor = async (job: Job<TrackerActionsJob>) => {
+const processor = async (job: Job<TrackerActionsJob | DraftCasesJob>) => {
   validateMultiTenantJobData(job.data);
   const db = getDbClientForJob(job.data);
-  const result = await runTrackerActions(db, job.data);
+  if (job.name === JOB_DRAFT_CASES) {
+    const drafted = await runDraftCases(db, job.data as DraftCasesJob);
+    if (drafted.outcome === "cases_drafted") {
+      console.log(
+        `[WebhookActionsWorker] delivery ${job.data.deliveryId}: ${drafted.caseCount} case(s) drafted`
+      );
+    }
+    return drafted;
+  }
+  const result = await runTrackerActions(db, job.data as TrackerActionsJob);
   if (result.outcome === "done" && result.runIds.length > 0) {
     console.log(
       `[WebhookActionsWorker] delivery ${job.data.deliveryId}: ${result.runIds.length} run(s) created`

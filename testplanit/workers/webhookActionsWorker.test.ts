@@ -1,12 +1,17 @@
 import type { Job } from "bullmq";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { runTrackerActions, getDbClientForJob, validateMultiTenantJobData } =
-  vi.hoisted(() => ({
-    runTrackerActions: vi.fn(),
-    getDbClientForJob: vi.fn(() => ({ tag: "db" })),
-    validateMultiTenantJobData: vi.fn(),
-  }));
+const {
+  runTrackerActions,
+  runDraftCases,
+  getDbClientForJob,
+  validateMultiTenantJobData,
+} = vi.hoisted(() => ({
+  runTrackerActions: vi.fn(),
+  runDraftCases: vi.fn(),
+  getDbClientForJob: vi.fn(() => ({ tag: "db" })),
+  validateMultiTenantJobData: vi.fn(),
+}));
 
 vi.mock("../lib/valkey", () => ({ default: null }));
 vi.mock("../lib/multiTenantDb", () => ({
@@ -21,8 +26,9 @@ vi.mock("../lib/tenantContext", () => ({
 vi.mock("../lib/webhooks/actions/runTrackerActions", () => ({
   runTrackerActions,
 }));
+vi.mock("../lib/webhooks/actions/draftCases", () => ({ runDraftCases }));
 
-import { JOB_RUN_TRACKER_ACTIONS } from "../lib/queueNames";
+import { JOB_DRAFT_CASES, JOB_RUN_TRACKER_ACTIONS } from "../lib/queueNames";
 import { processor } from "./webhookActionsWorker";
 
 const data = {
@@ -61,6 +67,25 @@ describe("webhookActionsWorker processor", () => {
     });
     expect(log).not.toHaveBeenCalled();
     log.mockRestore();
+  });
+
+  it("drafts cases for a draft-cases job on the job's tenant database", async () => {
+    const data = {
+      deliveryId: "del-1",
+      webhookConfigId: "whc-1",
+      webhookActionId: "draft-1",
+      projectId: 7,
+      issueId: 100,
+      tenantId: "t",
+    };
+    const drafted = { outcome: "cases_drafted", caseCount: 2, folderId: 5 };
+    runDraftCases.mockResolvedValue(drafted);
+    await expect(
+      processor({ id: "j2", name: JOB_DRAFT_CASES, data } as unknown as Job)
+    ).resolves.toBe(drafted);
+    expect(validateMultiTenantJobData).toHaveBeenCalledWith(data);
+    expect(runDraftCases).toHaveBeenCalledWith({ tag: "db" }, data);
+    expect(runTrackerActions).not.toHaveBeenCalled();
   });
 
   it("lets a failure throw so BullMQ retries", async () => {

@@ -6,6 +6,7 @@ import {
   loadTemplateData,
   resolveImportTarget,
   templateBelongsToProject,
+  toImportCases,
 } from "@/lib/services/jira-panel-generation";
 import {
   persistGeneratedTestCases,
@@ -117,34 +118,9 @@ export async function POST(request: NextRequest) {
     }
 
     // The LLM emits steps inside the Steps field of fieldValues; the
-    // persistence core wants them as a top-level `steps` array (it skips the
-    // Steps field when writing field values). Lift them out here using the
-    // template definition so the panel can send generated cases verbatim.
-    const stepsField = loaded.template.fields.find(
-      (f) =>
-        f.type.toLowerCase() === "steps" ||
-        f.name.toLowerCase().includes("step")
-    );
-
-    const inputCases: ImportInput["testCases"] = testCases.map((tc) => {
-      const rawSteps = stepsField
-        ? (tc.fieldValues?.[stepsField.name] as unknown)
-        : undefined;
-      const steps =
-        Array.isArray(rawSteps) && rawSteps.length > 0
-          ? rawSteps.map((s: any) => ({
-              step: s?.step,
-              expectedResult: s?.expectedResult,
-            }))
-          : undefined;
-      return {
-        id: tc.id,
-        name: tc.name,
-        fieldValues: (tc.fieldValues ?? {}) as Record<string, any>,
-        ...(tc.tags && tc.tags.length > 0 ? { tags: tc.tags } : {}),
-        ...(steps ? { steps } : {}),
-      };
-    });
+    // persistence core wants them as a top-level `steps` array. The shared
+    // mapping lifts them out using the template definition.
+    const inputCases = toImportCases(loaded.template, testCases);
 
     const externalId = issueId || issueKey!;
     const input: ImportInput = {

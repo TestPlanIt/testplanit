@@ -10,6 +10,7 @@
 import { baseDb as db } from "@/lib/db";
 import { IntegrationProvider, WorkflowScope } from "~/zenstack/models";
 import type { TemplateData } from "@/api/llm/generate-test-cases/shared";
+import type { ImportInput } from "@/lib/services/testCaseImport";
 
 /** Folder the panel drops generated cases into (created on first use). */
 export const GENERATED_FOLDER_NAME = "Generated from Jira";
@@ -320,6 +321,47 @@ export async function suggestFolderForIssue(
     select: { folderId: true },
   });
   return linkedCase?.folderId ?? null;
+}
+
+/** A generated case as a client or the generator hands it over. */
+export interface GeneratedCaseInput {
+  id: string;
+  name: string;
+  fieldValues?: Record<string, unknown>;
+  tags?: string[];
+}
+
+/**
+ * Generated cases as the importer takes them: the template's steps field,
+ * when the generator filled one, becomes the case's steps.
+ */
+export function toImportCases(
+  template: TemplateData,
+  cases: GeneratedCaseInput[]
+): ImportInput["testCases"] {
+  const stepsField = template.fields.find(
+    (f) =>
+      f.type.toLowerCase() === "steps" || f.name.toLowerCase().includes("step")
+  );
+  return cases.map((tc) => {
+    const rawSteps = stepsField
+      ? (tc.fieldValues?.[stepsField.name] as unknown)
+      : undefined;
+    const steps =
+      Array.isArray(rawSteps) && rawSteps.length > 0
+        ? rawSteps.map((s: any) => ({
+            step: s?.step,
+            expectedResult: s?.expectedResult,
+          }))
+        : undefined;
+    return {
+      id: tc.id,
+      name: tc.name,
+      fieldValues: (tc.fieldValues ?? {}) as Record<string, any>,
+      ...(tc.tags && tc.tags.length > 0 ? { tags: tc.tags } : {}),
+      ...(steps ? { steps } : {}),
+    };
+  });
 }
 
 export interface ImportTarget {
