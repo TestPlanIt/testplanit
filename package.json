@@ -15,6 +15,7 @@
     "devDependencies": {
         "@changesets/changelog-github": "^1.0.1",
         "@changesets/cli": "^3.0.3",
+        "prettier": "^3.9.10",
         "vite": "^8.2.2"
     }
 }
