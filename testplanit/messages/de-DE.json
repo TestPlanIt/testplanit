@@ -1863,10 +1863,12 @@
           "eventBranchPushHelp": "Analysieren Sie jeden Push zu einem anderen Zweig gegen den Basiszweig, wie einen Pull-Request, und verfassen Sie einen Testlauf für jeden.",
           "baseBranch": "Basis-Zweig",
           "baseBranchHelp": "Pushes zu diesem Zweig werden von selbst analysiert; Pull-Anfragen und andere Zweige werden damit verglichen. Leer lassen, um den Standard-Zweig der Verbindung zu verwenden.",
+          "minScoreHelp": "Jede zusammengesetzte Testabfolge enthält alle Testfälle, deren Analyseergebnis mindestens diese Punktzahl aufweist (0–100). Lassen Sie dieses Feld leer, um die angehefteten und betroffenen Tests wie bei einer manuell gestarteten Abfolge zu übernehmen.",
+          "minScoreInvalid": "Geben Sie eine ganze Zahl von 0 bis 100 ein, oder lassen Sie das Feld leer",
           "autoExecute": "Automatisierte Fälle ausführen",
-          "autoExecuteHelp": "Nachdem der Lauf erstellt wurde, fordern Sie die automatisierte Ausführung seiner automatisierten Fälle auf diesem Ziel an. Manuelle Fälle bleiben im Lauf für Tester.",
-          "autoExecuteNoTargets": "Für dieses Projekt ist kein Ausführungsziel konfiguriert. <link>Fügen Sie eines hinzu</link>, um Läufe automatisch auszuführen.",
-          "autoExecuteTargetMissing": "Das gewählte Ausführungsziel wurde gelöscht oder deaktiviert. Läufe werden immer noch erstellt, aber keine Ausführung wird angefordert, bis Sie ein anderes Ziel wählen.",
+          "autoExecuteHelp": "Nach dem Erstellen der Testabfolge wird die automatisierte Ausführung ihrer automatisierten Fälle auf diesem Ziel angefordert. Manuelle Fälle bleiben in der Abfolge für Tester.",
+          "autoExecuteNoTargets": "Für dieses Projekt ist kein Ausführungsziel konfiguriert. <link>Fügen Sie eines hinzu</link>, um Testabfolgen automatisch auszuführen.",
+          "autoExecuteTargetMissing": "Das ausgewählte Ausführungsziel wurde gelöscht oder deaktiviert. Testabfolgen werden weiterhin erstellt, aber es wird keine Ausführung angefordert, bis Sie ein anderes Ziel auswählen.",
           "autoExecuteSaveError": "Die Einstellungen für die automatisierte Ausführung konnten nicht gespeichert werden"
         },
         "inboundEmptyState": "Noch keine eingehenden Webhooks. <link>Fügen Sie eines hinzu</link>, um Problemupdates von Ihrem Issue-Tracker oder Pull-Anfragen und Pushes aus einem verbundenen Repository zu erhalten.",
@@ -2238,7 +2240,7 @@
           "branchesFallbackHint": "Geben Sie stattdessen den Namen des Zweigs ein."
         },
         "pathPatterns": {
-          "description": "Welche Anwendungsdateien Impact liest: den Code Pin Dateibrowser, den Cache, Repository-Marker und welche geänderten Dateien eine Analyse ignoriert.",
+          "description": "Welche Anwendungsdateien Impact liest: die Code-Pin-Dateiauswahl, den Cache, Repository-Marker und welche geänderten Dateien eine Analyse ignoriert.",
           "pathPlaceholder": "src"
         },
         "cache": {
@@ -3566,7 +3568,7 @@
         "title": "Anforderungsquelle auswählen",
         "description": "Wählen Sie aus, ob Testfälle aus einem Ticket oder einem Anforderungsdokument generiert werden sollen.",
         "folderContextTip": "Vorhandene Testfälle aus \"{folderName}\" und dessen übergeordneten/untergeordneten Ordnern werden als Kontext verwendet, um Duplikate zu vermeiden. Stellen Sie sicher, dass Sie den richtigen Ordner ausgewählt haben, bevor Sie fortfahren.",
-        "folderContextCount": "{count, plural, =1 {# existing test case} other {# existing test cases}} in \"{folderName}\" and its parent/child folders will be used as context to match your project's style and avoid duplicates.",
+        "folderContextCount": "\"{folderName}\" and its parent/child folders contain {count, plural, =1 {# existing test case} other {# existing test cases}}. The AI uses as many as fit in its context to match your project's style and avoid duplicates.",
         "folderContextEmptyTitle": "Keine vorhandenen Testfälle als Kontext verfügbar",
         "folderContextEmpty": "\"{folderName}\" und dessen übergeordnete/untergeordnete Ordner enthalten keine Testfälle, daher hat die KI keine Beispiele für den Stil oder die vorhandene Abdeckung Ihres Projekts. Starten Sie den Generator für bessere Ergebnisse im Ordner, in dem diese Testfälle gehören, neben verwandten Fällen.",
         "currentFolder": "aktueller Ordner",
@@ -8242,7 +8244,7 @@
     "projectRunsFilters": "## Testläufe filtern\n\nAktivieren Sie ein Chip, um die Liste einzugrenzen. Chips gelten sowohl für die Tabs „Aktiv“ als auch „Abgeschlossen“ und werden auf diesem Gerät für dieses Projekt gespeichert.\n\n- **Manuell** / **Automatisiert** — beschränkt die Liste auf diese Art von Testlauf. Wenn beide aktiviert (oder beide deaktiviert) sind, werden alle Testläufe angezeigt.\n- **Meine Testläufe** — nur Testläufe, an denen Sie beteiligt sind: Sie haben den Testlauf erstellt, Ihnen ist ein Testfall darin zugewiesen, oder Sie haben ein Testergebnis darin erfasst.",
     "projectSessionsFilters": "## Sitzungen filtern\n\nAktivieren Sie einen Chip, um die Liste einzugrenzen. Chips gelten sowohl für die Registerkarten \"Aktiv\" als auch \"Abgeschlossen\" und werden auf diesem Gerät für dieses Projekt gespeichert.\n\n- **Meine Sitzungen** — nur Sitzungen, an denen Sie beteiligt sind: Sie haben die Sitzung erstellt oder sie wurde Ihnen zugewiesen.",
     "projectImpact": "## Impact\nVerbinden Sie das Repository der zu testenden Anwendung, damit dieses Projekt Testauswirkungsanalysen ausführen kann: Wählen Sie zwei Commits aus, um zu sehen, welche Testfälle die Änderungen betreffen, und heften Sie Testfälle an den von ihnen abgedeckten Code.",
-    "pathPatterns": "## Pfadmuster\nJede Zeile kombiniert einen Basis-**Pfad** mit einem Glob-**Muster**. Zeilen addieren sich: Eine Datei wird einbezogen, wenn eine Zeile sie erfasst.\n\n- `src` + `**/*` — alles unter `src`\n- leer oder `.` + `**/*` — jede Datei im Repository\n- `src` + `**/!(*.test|*.spec).ts` — `.ts`-Dateien außer Tests\n\n### Ausschließen\nAktivieren Sie **Ausschließen** in einer Zeile, um ihre Dateien zu entfernen, auch wenn eine andere Zeile sie einbezieht. Ausschlüsse gelten für die Dateiauswahl und den Cache, und für Impact auf die geänderten Dateien einer Analyse, sodass eine Datei, die sich bei fast jedem Pull Request ändert, keine unrelated Test Cases einzieht. Mindestens eine Zeile muss deaktiviert bleiben.\n\n- leer + `**/CHANGELOG*` — jedes Changelog in beliebiger Tiefe\n- `app` + `build.gradle.kts` — eine Build-Datei, die nur die Version erhöht",
+    "pathPatterns": "## Pfadmuster\nJede Zeile kombiniert einen Basis-**Pfad** mit einem Glob-**Muster**. Zeilen addieren sich: Eine Datei wird eingebunden, wenn ein beliebiges Muster darauf passt.\n\n- `src` + `**/*` — alles unter `src`\n- leer oder `.` + `**/*` — jede Datei im Repository\n- `src` + `**/!(*.test|*.spec).ts` — `.ts`-Dateien außer Tests\n\n### Ausschließen\nAktivieren Sie **Ausschließen** in einer Zeile, um ihre Dateien zu entfernen, auch wenn eine andere Zeile sie einbindet. Ausschlüsse gelten für die Dateiauswahl und den Cache und für Impact auf die geänderten Dateien einer Analyse, sodass eine Datei, die sich bei fast jedem Pull Request ändert, keine unabhängigen Testfälle einbezieht. Mindestens eine Zeile muss deaktiviert bleiben.\n\n- leer + `**/CHANGELOG*` — jedes Changelog, in jeder Tiefe\n- `app` + `build.gradle.kts` — eine Build-Datei, die nur die Version erhöht",
     "projectAutomation": "## Automatisierte Ausführung\nAusführungsziele teilen TestPlanIt mit, wo die automatisierten Fälle dieses Projekts ausgeführt werden sollen: ein GitHub Actions-Workflow, eine GitLab CI-Pipeline oder ein signierter Webhook für jedes andere System. Wenn ein Lauf ausgeführt wird, startet TestPlanIt den Auftrag mit der Laufkennung und einer Plan-URL; der Auftrag liest den Plan, führt die passenden Tests aus und meldet die Ergebnisse mit einem Reporter oder der an diesen Lauf angehefteten CLI zurück. Ziele können deaktiviert werden, ohne gelöscht zu werden."
   },
   "reports": {

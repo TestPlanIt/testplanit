@@ -1863,10 +1863,12 @@
           "eventBranchPushHelp": "Analisa cada push em qualquer outra ramificação em relação à ramificação base, como um pull request, e compõe uma run para cada.",
           "baseBranch": "Ramificação base",
           "baseBranchHelp": "Pushes para esta ramificação são analisados sozinhos; pull requests e outras ramificações são comparados com ela. Deixe vazio para usar a ramificação da conexão.",
+          "minScoreHelp": "Cada execução composta leva todos os casos de teste que a análise pontua em pelo menos isto (0–100). Deixe em branco para levar os testes fixos e afetados, como faz uma execução iniciada manualmente.",
+          "minScoreInvalid": "Digite um número inteiro de 0 a 100, ou deixe em branco",
           "autoExecute": "Executar casos automatizados",
-          "autoExecuteHelp": "Após a execução ser composta, solicite a execução automatizada de seus casos automatizados neste destino. Os casos manuais permanecem na execução para os testadores.",
-          "autoExecuteNoTargets": "Nenhum destino de execução está configurado para este projeto. <link>Adicione um</link> para executar execuções automaticamente.",
-          "autoExecuteTargetMissing": "O destino de execução escolhido foi deletado ou desabilitado. As execuções ainda são compostas, mas nenhuma execução é solicitada até que você escolha outro destino.",
+          "autoExecuteHelp": "Após a execução ser composta, solicite a execução automatizada de seus casos automatizados neste alvo. Os casos manuais permanecem na execução para os testadores.",
+          "autoExecuteNoTargets": "Nenhum alvo de execução está configurado para este projeto. <link>Adicione um</link> para executar as execuções automaticamente.",
+          "autoExecuteTargetMissing": "O alvo de execução escolhido foi excluído ou desabilitado. As execuções ainda são compostas, mas nenhuma execução é solicitada até que você escolha outro alvo.",
           "autoExecuteSaveError": "Não foi possível salvar as configurações de execução automatizada"
         },
         "inboundEmptyState": "Ainda não há webhooks de entrada. <link>Adicione um</link> para receber atualizações de problemas do seu rastreador de problemas, ou pull requests e pushes de um repositório conectado.",
@@ -2238,7 +2240,7 @@
           "branchesFallbackHint": "Digite o nome da ramificação em vez disso."
         },
         "pathPatterns": {
-          "description": "Quais arquivos da aplicação o Impact lê: o seletor de arquivo do Code Pin, o cache, marcadores de repositório e quais arquivos alterados uma análise ignora.",
+          "description": "Quais arquivos da aplicação o Impact lê: o seletor de arquivo Code Pin, o cache, marcadores de repositório e quais arquivos alterados uma análise ignora.",
           "pathPlaceholder": "src"
         },
         "cache": {
@@ -3566,7 +3568,7 @@
         "title": "Selecione a fonte de requisitos",
         "description": "Escolha se deseja gerar casos de teste a partir de um problema ou de um documento de requisitos.",
         "folderContextTip": "Os casos de teste existentes de \"{folderName}\" e suas pastas pai/filho serão usados como contexto para evitar duplicatas. Certifique-se de ter selecionado a pasta correta antes de prosseguir.",
-        "folderContextCount": "{count, plural, =1 {# existing test case} other {# existing test cases}} in \"{folderName}\" and its parent/child folders will be used as context to match your project's style and avoid duplicates.",
+        "folderContextCount": "\"{folderName}\" and its parent/child folders contain {count, plural, =1 {# existing test case} other {# existing test cases}}. The AI uses as many as fit in its context to match your project's style and avoid duplicates.",
         "folderContextEmptyTitle": "Nenhum caso de teste existente para usar como contexto",
         "folderContextEmpty": "\"{folderName}\" e suas pastas pai/filha não possuem casos de teste, então a IA não tem exemplos do estilo do seu projeto ou cobertura existente. Para melhores resultados, inicie o gerador a partir da pasta onde esses casos de teste pertencem, próximo aos casos relacionados.",
         "currentFolder": "pasta atual",
@@ -4431,7 +4433,7 @@
         "no_candidates": "Nenhum caso de teste foi correspondido.",
         "anchor_fetch_capped": "Alguns arquivos fixados foram correspondidos apenas pelo caminho (limite de busca atingido).",
         "issue_commit_fetch_capped": "Alguns commits que nomeiam tíquetes não foram lidos arquivo por arquivo (limite de busca atingido); seus casos não cobrem arquivos específicos.",
-        "paths_excluded_by_settings": "{count, plural, one {# arquivo alterado foi} other {# arquivos alterados foram}} ignorado porque os caminhos excluídos do repositório."
+        "paths_excluded_by_settings": "{count, plural, one {# arquivo alterado foi ignorado} other {# arquivos alterados foram ignorados}} por causa dos caminhos excluídos do repositório."
       },
       "actions": {
         "analyze": "Analisar",
@@ -6827,9 +6829,9 @@
         "userRegisteredMessageForm": "{userName} ({userEmail}) se registrou através do formulário de inscrição",
         "viewUserList": "Ver lista de usuários",
         "reviewGeneratedCases": "Análise dos casos de teste gerados",
-        "generateFromUrlCompleteTitle": "As páginas foram rastreadas com sucesso.",
+        "generateFromUrlCompleteTitle": "Páginas rastreadas com sucesso",
         "generateFromUrlCompleteMessage": "{pages, plural, one {# página} other {# páginas}} rastreadas de {url} no projeto \"{projectName}\". Clique para revisar e gerar casos de teste.",
-        "generateFromUrlFailedTitle": "falha na indexação da URL",
+        "generateFromUrlFailedTitle": "Falha na rastreamento da URL",
         "reviewRequestedTitle": "Revisão solicitada",
         "reviewApprovedTitle": "Revisão aprovada",
         "reviewChangesRequestedTitle": "Alterações solicitadas",
@@ -8242,7 +8244,7 @@
     "projectRunsFilters": "## Filtragem de execuções de teste\n\nAtive ou desative um chip para restringir a lista. Os chips se aplicam tanto às abas Ativas quanto Concluídas e são lembrados neste dispositivo para este projeto.\n\n- **Manual** / **Automatizado** — limita a lista a esse tipo de execução. Ativar ambos (ou desativar ambos) mostra todas as execuções.\n- **Minhas execuções de teste** — apenas execuções em que você participa: você criou a execução, você está designado a um caso de teste nela, ou você registrou um resultado de teste nela.",
     "projectSessionsFilters": "## Filtrando sessões\n\nAlterne um chip para restringir a lista. Os chips se aplicam tanto às abas Ativas quanto Concluídas, e são lembrados neste dispositivo para este projeto.\n\n- **Minhas Sessões** — apenas sessões das quais você participa: você criou a sessão, ou ela está atribuída a você.",
     "projectImpact": "## Impacto\nConecte o repositório da aplicação em teste para que este projeto possa executar análise de impacto de testes: escolha dois commits para ver quais casos de teste as alterações afetam e fixe casos de teste ao código que cobrem.",
-    "pathPatterns": "## Padrões de Caminho\nCada linha combina um **caminho** base com um **padrão** glob. As linhas se acumulam: um arquivo é incluído quando qualquer linha o corresponde.\n\n- `src` + `**/*` — tudo sob `src`\n- em branco ou `.` + `**/*` — cada arquivo no repositório\n- `src` + `**/!(*.test|*.spec).ts` — arquivos `.ts` exceto testes\n\n### Excluir\nMarque **Excluir** em uma linha para remover seus arquivos mesmo quando outra linha os inclui. As exclusões se aplicam ao seletor de arquivos e cache, e para Impacto aos arquivos alterados de uma análise, portanto um arquivo que muda em quase todas as solicitações de pull para de puxar casos de teste não relacionados. Pelo menos uma linha deve permanecer desmarcada.\n\n- em branco + `**/CHANGELOG*` — cada changelog, em qualquer profundidade\n- `app` + `build.gradle.kts` — um arquivo de compilação que apenas incrementa a versão",
+    "pathPatterns": "## Padrões de Caminho\nCada linha combina um **caminho** base com um **padrão** glob. As linhas se acumulam: um arquivo é incluído quando qualquer linha corresponde a ele.\n\n- `src` + `**/*` — tudo sob `src`\n- em branco ou `.` + `**/*` — cada arquivo no repositório\n- `src` + `**/!(*.test|*.spec).ts` — arquivos `.ts` exceto testes\n\n### Excluir\nMarque **Excluir** em uma linha para remover seus arquivos mesmo quando outra linha os inclui. As exclusões se aplicam ao seletor de arquivos e ao cache, e para Impacto aos arquivos alterados de uma análise, portanto, um arquivo que muda em quase todos os pull requests deixa de incluir casos de teste não relacionados. Pelo menos uma linha deve permanecer desmarcada.\n\n- em branco + `**/CHANGELOG*` — cada changelog, em qualquer profundidade\n- `app` + `build.gradle.kts` — um arquivo de compilação que apenas atualiza a versão",
     "projectAutomation": "## Execução Automatizada\nOs destinos de execução dizem ao TestPlanIt onde executar os casos automatizados deste projeto: um workflow GitHub Actions, um pipeline GitLab CI ou um webhook assinado para qualquer outro sistema. Quando uma execução é executada, o TestPlanIt inicia o trabalho com a ID da execução e uma URL do plano; o trabalho lê o plano, executa os testes correspondentes e relata os resultados de volta com um reporter ou o CLI fixado nessa execução. Os destinos podem ser desabilitados sem serem excluídos."
   },
   "reports": {
@@ -8742,7 +8744,7 @@
           "description": "Uso de tokens, custo e confiabilidade dos recursos de LLM entre projetos"
         },
         "automationTrends": {
-          "label": "Tendências de automação entre projetos",
+          "label": "Tendências de Automação entre Projetos",
           "description": "Acompanhe o progresso da automação semana a semana, priorizando os projetos."
         },
         "flakyTests": {

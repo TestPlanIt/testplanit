@@ -1863,11 +1863,13 @@
           "eventBranchPushHelp": "Przeanalizuj każde wciśnięcie do innej gałęzi względem gałęzi bazowej, jak żądanie ściągnięcia, i skomponuj przebieg dla każdego.",
           "baseBranch": "Gałąź bazowa",
           "baseBranchHelp": "Wciśnięcia do tej gałęzi są analizowane samodzielnie; żądania ściągnięcia i inne gałęzie są porównywane z nią. Zostaw puste, aby użyć gałęzi połączenia.",
+          "minScoreHelp": "Każdy skomponowany przebieg bierze każdy przypadek testowy, który analiza ocenia co najmniej tym (0–100). Pozostaw puste, aby wziąć przypięte i dotknięte testy, tak jak robi to przebieg rozpoczęty ręcznie.",
+          "minScoreInvalid": "Wpisz liczbę całkowitą od 0 do 100 lub zostaw to puste",
           "autoExecute": "Wykonaj zautomatyzowane przypadki",
-          "autoExecuteHelp": "Po skomponowaniu przebiegu poproś o zautomatyzowane wykonanie jego zautomatyzowanych przypadków na tym celu. Przypadki ręczne pozostają w przebiegu dla testerów.",
-          "autoExecuteNoTargets": "Brak skonfigurowanego celu wykonania dla tego projektu. <link>Dodaj jeden</link> aby automatycznie wykonywać przebiegi.",
-          "autoExecuteTargetMissing": "Wybrany cel wykonania został usunięty lub wyłączony. Przebiegi są nadal komponowane, ale brak żądania wykonania do czasu wybrania innego celu.",
-          "autoExecuteSaveError": "Nie można zapisać ustawień zautomatyzowanego wykonania"
+          "autoExecuteHelp": "Po skomponowaniu przebiegu zażądaj zautomatyzowanego wykonania jego zautomatyzowanych przypadków na tym celu. Przypadki ręczne pozostają w przebiegu dla testerów.",
+          "autoExecuteNoTargets": "Żaden cel wykonania nie jest skonfigurowany dla tego projektu. <link>Dodaj jeden</link>, aby automatycznie wykonywać przebiegi.",
+          "autoExecuteTargetMissing": "Wybrany cel wykonania został usunięty lub wyłączony. Przebiegi są nadal komponowane, ale żadne wykonanie nie jest żądane, dopóki nie wybierzesz innego celu.",
+          "autoExecuteSaveError": "Nie można zapisać ustawień automatycznego wykonania"
         },
         "inboundEmptyState": "Brak przychodzących webhoków jeszcze. <link>Dodaj jeden</link>, aby otrzymać aktualizacje problemów z systemu śledzenia problemów, lub żądania ściągnięcia i wciśnięcia z podłączonego repozytorium.",
         "inboundChooserBitbucket": "Bitbucket",
@@ -2030,7 +2032,7 @@
           "branchPlaceholder": "Pozostaw puste, aby użyć domyślnej gałęzi repozytorium"
         },
         "pathPatterns": {
-          "description": "Pliki repozytorium, które QuickScript może odczytać jako kontekst AI.",
+          "description": "Które pliki repozytorium QuickScript może czytać jako kontekst AI.",
           "pathPlaceholder": "testy/e2e/strony",
           "exceedsLimit": "Całkowity rozmiar przekracza limit kontekstu AI o {overflow}. Podczas eksportu pliki są klasyfikowane według istotności dla eksportowanego przypadku testowego — pliki najbardziej istotne są uwzględniane jako pierwsze, a pliki o niższej randze są pomijane po osiągnięciu budżetu. Zawęź wzorce ścieżek, jeśli chcesz mieć większą kontrolę nad tym, które pliki są uwzględniane."
         },
@@ -2238,7 +2240,7 @@
           "branchesFallbackHint": "Zamiast tego wpisz nazwę gałęzi."
         },
         "pathPatterns": {
-          "description": "Pliki aplikacji, które odczytuje Impact: selektor pliku Code Pin, pamięć podręczna, markery repozytorium i które zmienione pliki analiza ignoruje.",
+          "description": "Które pliki aplikacji czyta Impact: selektor pliku Code Pin, pamięć podręczna, markery repozytorium i które zmienione pliki analiza ignoruje.",
           "pathPlaceholder": "src"
         },
         "cache": {
@@ -3566,7 +3568,7 @@
         "title": "Wybierz źródło wymagań",
         "description": "Wybierz, czy chcesz generować przypadki testowe na podstawie zgłoszenia czy dokumentu wymagań.",
         "folderContextTip": "Istniejące przypadki testowe z folderu „{folderName}” i jego folderów nadrzędnych/podrzędnych zostaną użyte jako kontekst, aby uniknąć duplikatów. Przed kontynuowaniem upewnij się, że wybrałeś właściwy folder.",
-        "folderContextCount": "{count, plural, =1 {# existing test case} other {# existing test cases}} in \"{folderName}\" and its parent/child folders will be used as context to match your project's style and avoid duplicates.",
+        "folderContextCount": "\"{folderName}\" and its parent/child folders contain {count, plural, =1 {# existing test case} other {# existing test cases}}. The AI uses as many as fit in its context to match your project's style and avoid duplicates.",
         "folderContextEmptyTitle": "Brak istniejących przypadków testowych do użycia jako kontekst",
         "folderContextEmpty": "\"{folderName}\" i jego foldery nadrzędne/podrzędne nie zawierają przypadków testowych, więc AI nie ma przykładów stylu projektu ani istniejącego zakresu. Aby uzyskać lepsze wyniki, uruchom generator z folderu, w którym znajdują się te przypadki testowe, obok powiązanych przypadków.",
         "currentFolder": "bieżący folder",
@@ -4431,7 +4433,7 @@
         "no_candidates": "Żaden przypadek testowy nie pasował.",
         "anchor_fetch_capped": "Niektóre przypięte pliki były dopasowywane tylko ścieżką (osiągnięty limit pobierania).",
         "issue_commit_fetch_capped": "Niektóre commity nazywające bilety nie były przeczytane plik po pliku (osiągnięty limit pobierania); ich przypadki nie obejmują żadnych konkretnych plików.",
-        "paths_excluded_by_settings": "{count, plural, one {# zmieniony plik został} few {# zmienione pliki zostały} many {# zmienionych plików zostało} other {# zmienionych plików zostało}} zignorowany ze względu na ścieżki wykluczone repozytorium."
+        "paths_excluded_by_settings": "{count, plural, one {# zmieniony plik został zignorowany} few {# zmienione pliki zostały zignorowane} many {# zmienionych plików zostało zignorowanych} other {# zmienionych plików zostało zignorowanych}} z powodu wykluczonych ścieżek repozytorium."
       },
       "actions": {
         "analyze": "Analizuj",
@@ -6828,7 +6830,7 @@
         "viewUserList": "Wyświetl listę użytkowników",
         "reviewGeneratedCases": "Przejrzyj wygenerowane przypadki testowe",
         "generateFromUrlCompleteTitle": "Strony przeszukane pomyślnie",
-        "generateFromUrlCompleteMessage": "{pages, plural, one {# strona} other {# strony}} pobrane z {url} w projekcie „{projectName}”. Kliknij, aby przejrzeć i wygenerować przypadki testowe.",
+        "generateFromUrlCompleteMessage": "{pages, plural, one {# strona} few {# strony} many {# stron} other {# stron}} pobrane z {url} w projekcie \"{projectName}\". Kliknij, aby przejrzeć i wygenerować przypadki testowe.",
         "generateFromUrlFailedTitle": "Nie udało się przeszukać adresu URL",
         "reviewRequestedTitle": "Poproszono o recenzję",
         "reviewApprovedTitle": "Recenzja zatwierdzona",
@@ -8242,7 +8244,7 @@
     "projectRunsFilters": "## Filtrowanie przebiegów testowych\n\nPrzełącz etykietę, aby zawęzić listę. Etykiety mają zastosowanie zarówno do kart Aktywne, jak i Zakończone, i są zapamiętywane na tym urządzeniu dla tego projektu.\n\n- **Ręczne** / **Automatyczne** — ogranicz listę do danego typu przebiegu. Włączenie obu (lub wyłączenie obu) pokazuje wszystkie przebiegi.\n- **Moje przebiegi testowe** — tylko przebiegi, w których uczestniczysz: utworzyłeś przebieg, przypisano Ci w nim przypadek testowy lub zarejestrowałeś w nim wynik testu.",
     "projectSessionsFilters": "## Filtrowanie sesji\n\nPrzełącz etykietę, aby zawęzić listę. Etykiety mają zastosowanie zarówno do kart Aktywne, jak i Zakończone, i są zapamiętywane na tym urządzeniu dla tego projektu.\n\n- **Moje sesje** — tylko sesje, w których uczestniczysz: utworzyłeś sesję lub została ona Ci przypisana.",
     "projectImpact": "## Wpływ\nPołącz repozytorium aplikacji poddawanej testom, aby ten projekt mógł uruchamiać analizę wpływu testów: wybierz dwa commity, aby zobaczyć, które przypadki testowe są przez zmiany dotknięte, i przypinaj przypadki testowe do kodu, który obejmują.",
-    "pathPatterns": "## Wzorce ścieżek\nKażdy wiersz łączy bazową **ścieżkę** ze wzorcem glob **pattern**. Wiersze się sumują: plik jest dołączany, gdy dowolny wiersz go dopasuje.\n\n- `src` + `**/*` — wszystko pod `src`\n- puste lub `.` + `**/*` — każdy plik w repozytorium\n- `src` + `**/!(*.test|*.spec).ts` — pliki `.ts` z wyjątkiem testów\n\n### Wyklucz\nZaznacz **Wyklucz** w wierszu, aby usunąć jego pliki, nawet jeśli inny wiersz je dołącza. Wykluczenia dotyczą selektora plików i pamięci podręcznej, a dla Impact dotyczy zmienonych plików analizy, więc plik, który zmienia się niemal przy każdym pull requeście, przestaje wciągać niepowiązane przypadki testowe. Co najmniej jeden wiersz musi pozostać niezaznaczony.\n\n- puste + `**/CHANGELOG*` — każdy dziennik zmian, na dowolnej głębokości\n- `app` + `build.gradle.kts` — plik kompilacji, który tylko aktualizuje wersję",
+    "pathPatterns": "## Wzorce ścieżek\nKażdy wiersz łączy bazową **ścieżkę** ze **wzorem** glob. Wiersze się sumują: plik jest uwzględniany, gdy pasuje do niego dowolny wiersz.\n\n- `src` + `**/*` — wszystko w `src`\n- puste lub `.` + `**/*` — każdy plik w repozytorium\n- `src` + `**/!(*.test|*.spec).ts` — pliki `.ts` z wyjątkiem testów\n\n### Wyklucz\nZaznacz **Wyklucz** w wierszu, aby usunąć jego pliki, nawet jeśli inny wiersz je uwzględnia. Wykluczenia dotyczą selektora plików i pamięci podręcznej, a w przypadku Impact — zmienionych plików analizy, więc plik, który zmienia się przy prawie każdym pull requeście, przestaje ściągać niepowiązane przypadki testowe. Co najmniej jeden wiersz musi pozostać niezaznaczony.\n\n- puste + `**/CHANGELOG*` — każdy changelog, na dowolnej głębokości\n- `app` + `build.gradle.kts` — plik kompilacji, który tylko podnosi wersję",
     "projectAutomation": "## Zautomatyzowane wykonanie\nCele wykonania informują TestPlanIt, gdzie wykonać zautomatyzowane przypadki testowe tego projektu: przepływ pracy GitHub Actions, potok GitLab CI lub podpisany webhook dla każdego innego systemu. Gdy przebieg jest wykonywany, TestPlanIt uruchamia zadanie z ID przebiegu i adresem URL planu; zadanie odczytuje plan, uruchamia pasujące testy i raportuje wyniki z powrotem za pomocą reportera lub CLI przypiętego do tego przebiegu. Cele mogą być wyłączone bez usuwania."
   },
   "reports": {

@@ -1863,10 +1863,12 @@
           "eventBranchPushHelp": "Analizza ogni push su qualsiasi altro ramo rispetto al ramo base, come una richiesta pull, e componi un run per ognuno.",
           "baseBranch": "Ramo base",
           "baseBranchHelp": "I push su questo ramo vengono analizzati da soli; le richieste pull e altri rami vengono confrontati con esso. Lascia vuoto per utilizzare il ramo della connessione.",
+          "minScoreHelp": "Ogni esecuzione composta prende ogni test case che l'analisi assegna un punteggio almeno questo (0–100). Lasciare vuoto per prendere i test bloccati e interessati, come farebbe un'esecuzione avviata manualmente.",
+          "minScoreInvalid": "Inserire un numero intero da 0 a 100, o lasciare vuoto",
           "autoExecute": "Esegui casi automatizzati",
-          "autoExecuteHelp": "Dopo la composizione della sessione di test, richiedi l'esecuzione automatizzata dei suoi casi automatizzati su questo target. I casi manuali rimangono nella sessione per i tester.",
-          "autoExecuteNoTargets": "Nessun target di esecuzione è configurato per questo progetto. <link>Aggiungine uno</link> per eseguire le sessioni di test automaticamente.",
-          "autoExecuteTargetMissing": "Il target di esecuzione scelto è stato eliminato o disabilitato. Le sessioni di test vengono ancora composte, ma nessuna esecuzione viene richiesta finché non scegli un altro target.",
+          "autoExecuteHelp": "Dopo che l'esecuzione è composta, richiedi l'esecuzione automatizzata dei suoi casi automatizzati su questo target. I casi manuali rimangono nell'esecuzione per i tester.",
+          "autoExecuteNoTargets": "Nessun target di esecuzione è configurato per questo progetto. <link>Aggiungine uno</link> per eseguire le esecuzioni automaticamente.",
+          "autoExecuteTargetMissing": "Il target di esecuzione scelto è stato eliminato o disabilitato. Le esecuzioni sono ancora composte, ma nessuna esecuzione viene richiesta finché non scegli un altro target.",
           "autoExecuteSaveError": "Impossibile salvare le impostazioni di esecuzione automatizzata"
         },
         "inboundEmptyState": "Nessun webhook in entrata ancora. <link>Aggiungine uno</link> per ricevere aggiornamenti sui problemi dal tuo tracker di problemi, o richieste pull e push da un repository connesso.",
@@ -2238,7 +2240,7 @@
           "branchesFallbackHint": "Digita il nome del ramo."
         },
         "pathPatterns": {
-          "description": "Quali file dell'applicazione Impact legge: il file picker del Code Pin, la cache, i marcatori del repository e quali file modificati un'analisi ignora.",
+          "description": "Quali file dell'applicazione legge Impact: il selettore file Code Pin, la cache, i marcatori del repository e quali file modificati un'analisi ignora.",
           "pathPlaceholder": "src"
         },
         "cache": {
@@ -3566,7 +3568,7 @@
         "title": "Seleziona la fonte dei requisiti",
         "description": "Scegliere se generare casi di test da un problema o da un documento di requisiti.",
         "folderContextTip": "I casi di test esistenti in \"{folderName}\" e nelle relative cartelle padre/figlio verranno utilizzati come contesto per evitare duplicati. Assicurati di aver selezionato la cartella corretta prima di procedere.",
-        "folderContextCount": "{count, plural, =1 {# existing test case} other {# existing test cases}} in \"{folderName}\" and its parent/child folders will be used as context to match your project's style and avoid duplicates.",
+        "folderContextCount": "\"{folderName}\" and its parent/child folders contain {count, plural, =1 {# existing test case} other {# existing test cases}}. The AI uses as many as fit in its context to match your project's style and avoid duplicates.",
         "folderContextEmptyTitle": "Nessun caso di test esistente da utilizzare come contesto",
         "folderContextEmpty": "\"{folderName}\" e le relative cartelle padre/figlie non hanno casi di test, quindi l'IA non ha esempi dello stile del tuo progetto o della copertura esistente. Per risultati migliori, avvia il generatore dalla cartella dove appartengono questi casi di test, accanto ai casi correlati.",
         "currentFolder": "cartella corrente",
@@ -3621,7 +3623,7 @@
         "quantity": "Numero di casi di test da generare",
         "placeholder": "Aggiungi istruzioni specifiche per la generazione di casi di test...\n\nAd esempio:\n• Concentrati sui test di sicurezza\n• Includi casi limite e condizioni al contorno\n• Testa sia scenari di percorso felice che di errore\n• Considera scenari mobili e desktop\n• Concentrati sui test API",
         "linksIgnoredTitle": "I link nelle note non vengono aperti",
-        "linksIgnored": "{count, plural, =1 {The link} other {The # links}} in your notes will be sent as plain text only. To use a document or spreadsheet, paste the relevant content (scenarios, test data, expected results) into the notes.",
+        "linksIgnored": "{count, plural, =1 {Il collegamento} other {I # collegamenti}} nelle tue note verranno inviati come testo semplice. Per utilizzare un documento o un foglio di calcolo, incolla il contenuto rilevante (scenari, dati di test, risultati attesi) nelle note.",
         "suggestions": "Suggerimenti rapidi:",
         "quantityOptions": {
           "justOne": "Solo uno",
@@ -4431,7 +4433,7 @@
         "no_candidates": "Nessun caso di test trovato.",
         "anchor_fetch_capped": "Alcuni file agganciati sono stati abbinati solo per percorso (limite di recupero raggiunto).",
         "issue_commit_fetch_capped": "Alcuni commit che denominano ticket non sono stati letti file per file (limite di recupero raggiunto); i loro casi non coprono file specifici.",
-        "paths_excluded_by_settings": "{count, plural, one {# file modificato è stato} other {# file modificati sono stati}} ignorato/i a causa dei percorsi esclusi del repository."
+        "paths_excluded_by_settings": "{count, plural, one {# file modificato è stato ignorato} other {# file modificati sono stati ignorati}} a causa dei percorsi esclusi del repository."
       },
       "actions": {
         "analyze": "Analizzare",
@@ -8242,7 +8244,7 @@
     "projectRunsFilters": "## Filtraggio delle esecuzioni test\n\nAttiva o disattiva un chip per restringere l'elenco. I chip si applicano sia alla scheda Attive che a quella Completate e vengono memorizzati su questo dispositivo per questo progetto.\n\n- **Manuale** / **Automatizzato** — limita l'elenco a quel tipo di esecuzione. Attivando entrambi (o disattivandoli entrambi) vengono mostrate tutte le esecuzioni.\n- **Le mie esecuzioni test** — solo le esecuzioni a cui partecipi: hai creato l'esecuzione, ti è stato assegnato un caso di prova al suo interno, oppure hai registrato un risultato di test al suo interno.",
     "projectSessionsFilters": "## Filtraggio delle sessioni\n\nAttiva un filtro per restringere l'elenco. I filtri si applicano sia alla scheda Attive che a quella Completate e vengono memorizzati su questo dispositivo per questo progetto.\n\n- **Le mie sessioni** — solo le sessioni a cui partecipi: quelle che hai creato o che ti sono state assegnate.",
     "projectImpact": "## Impatto\nCollegare il repository dell'applicazione in prova in modo che questo progetto possa eseguire l'analisi di impatto del test: scegli due commit per vedere quali casi di test i cambiamenti interessano e blocca i casi di test al codice che coprono.",
-    "pathPatterns": "## Modelli di Percorso\nOgni riga combina un **percorso** di base con un **modello** glob. Le righe si sommano: un file è incluso quando corrisponde a una riga.\n\n- `src` + `**/*` — tutto sotto `src`\n- vuoto o `.` + `**/*` — ogni file nel repository\n- `src` + `**/!(*.test|*.spec).ts` — file `.ts` eccetto i test\n\n### Esclusione\nSeleziona **Esclusione** su una riga per rimuovere i suoi file anche quando un'altra riga li include. Le esclusioni si applicano al selettore di file e alla cache, e per Impact ai file modificati di un'analisi, quindi un file che cambia in quasi ogni pull request smette di includere casi di test non correlati. Almeno una riga deve rimanere deselezionata.\n\n- vuoto + `**/CHANGELOG*` — ogni changelog, a qualsiasi profondità\n- `app` + `build.gradle.kts` — un file di build che aumenta solo la versione",
+    "pathPatterns": "## Modelli di Percorso\nOgni riga combina un **percorso** di base con un **modello** glob. Le righe si sommano: un file è incluso quando corrisponde a una qualsiasi riga.\n\n- `src` + `**/*` — tutto sotto `src`\n- vuoto o `.` + `**/*` — ogni file nel repository\n- `src` + `**/!(*.test|*.spec).ts` — file `.ts` tranne i test\n\n### Escludi\nSpunta **Escludi** su una riga per rimuovere i suoi file anche quando un'altra riga li include. Le esclusioni si applicano al selettore di file e alla cache e, per Impact, ai file modificati di un'analisi, in modo che un file che cambia quasi ad ogni pull request smetta di richiamare i casi di test non correlati. Almeno una riga deve rimanere deselezionata.\n\n- vuoto + `**/CHANGELOG*` — ogni changelog, a qualsiasi profondità\n- `app` + `build.gradle.kts` — un file di build che incrementa solo la versione",
     "projectAutomation": "## Esecuzione automatizzata\nI bersagli di esecuzione indicano a TestPlanIt dove eseguire i casi automatizzati di questo progetto: un workflow di GitHub Actions, una pipeline di GitLab CI, o un webhook firmato per qualsiasi altro sistema. Quando un'esecuzione viene eseguita, TestPlanIt avvia il lavoro con l'ID dell'esecuzione e un URL del piano; il lavoro legge il piano, esegue i test corrispondenti e segnala i risultati con un reporter o la CLI bloccati su quella esecuzione. I bersagli possono essere disabilitati senza essere eliminati."
   },
   "reports": {

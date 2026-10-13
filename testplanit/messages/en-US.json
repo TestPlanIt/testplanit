@@ -3568,7 +3568,7 @@
         "title": "Select Requirements Source",
         "description": "Choose whether to generate test cases from an issue or a requirements document.",
         "folderContextTip": "Existing test cases from \"{folderName}\" and its parent/child folders will be used as context to avoid duplicates. Make sure you have selected the correct folder before proceeding.",
-        "folderContextCount": "{count, plural, =1 {# existing test case} other {# existing test cases}} in \"{folderName}\" and its parent/child folders will be used as context to match your project's style and avoid duplicates.",
+        "folderContextCount": "\"{folderName}\" and its parent/child folders contain {count, plural, =1 {# existing test case} other {# existing test cases}}. The AI uses as many as fit in its context to match your project's style and avoid duplicates.",
         "folderContextEmptyTitle": "No existing test cases to use as context",
         "folderContextEmpty": "\"{folderName}\" and its parent/child folders have no test cases, so the AI has no examples of your project's style or existing coverage. For better results, start the generator from the folder where these test cases belong, next to related cases.",
         "currentFolder": "current folder",
