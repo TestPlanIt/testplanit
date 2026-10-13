@@ -293,12 +293,26 @@ export async function applyInboundIssueUpdate(
         // Step 6: Linked-Issue lookup (tenant-scoped). NO `externalSystem`
         // filter — Issue.externalSystem is not a DB column.
         // linkedRef.externalSystem is informational only and surfaces in
-        // audit metadata.
+        // audit metadata. A tracker whose payload key differs from the key
+        // the sync stores (GitHub's "owner/repo#12" against "#12", a
+        // ClickUp custom task id) still matches on the tracker's own id,
+        // within that tracker's integrations.
+        const provider = inboundProviderForAdapter(adapterType);
         const linkedIssue = await tx.issue.findFirst({
           where: {
-            externalKey: linkedRef.externalKey,
             isDeleted: false,
             project: { id: projectId },
+            OR: [
+              { externalKey: linkedRef.externalKey },
+              ...(linkedRef.externalId && provider
+                ? [
+                    {
+                      externalId: linkedRef.externalId,
+                      integration: { provider },
+                    },
+                  ]
+                : []),
+            ],
           },
           select: { id: true },
         });

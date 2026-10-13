@@ -23,12 +23,41 @@ interface AdoCredentials {
   password: string;
 }
 
+/** A work item field as a resource carries it: the value itself, or, on an
+ *  update's list of changed fields, the value before and after. */
+type AdoFieldValue = string | { oldValue?: string; newValue?: string };
+
 interface AdoWorkItemPayload {
   eventType?: string;
   resource?: {
+    /** The work item's id on workitem.created; on workitem.updated, the
+     *  update's own number, with the work item's id in `workItemId`. */
     id?: number;
-    fields?: { "System.State"?: string };
+    workItemId?: number;
+    fields?: { "System.State"?: AdoFieldValue };
+    /** On workitem.updated, the work item as it stands after the update. */
+    revision?: { id?: number; fields?: { "System.State"?: string } };
   };
+}
+
+/** The work item events that are about one work item's own fields. */
+const ISSUE_EVENTS = new Set(["workitem.created", "workitem.updated"]);
+
+function workItemIdOf(p: AdoWorkItemPayload): number | undefined {
+  const r = p.resource;
+  for (const id of [r?.workItemId, r?.revision?.id, r?.id]) {
+    if (typeof id === "number") return id;
+  }
+  return undefined;
+}
+
+function stateOf(p: AdoWorkItemPayload): string | null {
+  const current = p.resource?.revision?.fields?.["System.State"];
+  if (typeof current === "string") return current;
+  const state = p.resource?.fields?.["System.State"];
+  if (typeof state === "string") return state;
+  if (typeof state?.newValue === "string") return state.newValue;
+  return null;
 }
 
 /**
@@ -107,10 +136,9 @@ export const azureDevopsAdapter: WebhookAdapter = {
       return { valid: false, reason: "missing-required-field" };
     }
 
-    const id = parsed.resource?.id;
+    const id = workItemIdOf(parsed);
     const issueKey = typeof id === "number" ? String(id) : "";
-    const state = parsed.resource?.fields?.["System.State"];
-    const externalStatus = typeof state === "string" ? state : "";
+    const externalStatus = stateOf(parsed) ?? "";
     const synthetic = id === SYNTHETIC_RESOURCE_ID;
 
     const payload: ParsedWebhookPayload = {
@@ -125,20 +153,20 @@ export const azureDevopsAdapter: WebhookAdapter = {
 
   extractLinkedIssueRef(payload) {
     const raw = (payload as ParsedWebhookPayload).data ?? payload;
-    const p = raw as AdoWorkItemPayload;
-    const id = p.resource?.id;
+    const id = workItemIdOf(raw as AdoWorkItemPayload);
     if (typeof id !== "number") return null;
     return {
       externalKey: String(id),
       externalSystem: "AZURE_DEVOPS" satisfies AdapterType,
+      externalId: String(id),
     };
   },
 
   extractExternalStatus(payload, eventType) {
-    if (eventType !== "workitem.updated") return null;
+    if (!ISSUE_EVENTS.has(eventType)) return null;
     const raw = (payload as ParsedWebhookPayload).data ?? payload;
-    const p = raw as AdoWorkItemPayload;
-    const state = p.resource?.fields?.["System.State"];
-    return typeof state === "string" ? state : null;
+    // An update that leaves the state alone is still an event about the
+    // work item; the sync reads its current state from Azure DevOps.
+    return stateOf(raw as AdoWorkItemPayload) ?? "";
   },
 };

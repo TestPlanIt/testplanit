@@ -1322,7 +1322,7 @@ describe("ClickUpAdapter", () => {
         mockFetch.mock.calls[mockFetch.mock.calls.length - 1][1].body
       );
       expect(body.list_id).toBe(901234567);
-      expect(body.events).toEqual(["taskStatusUpdated"]);
+      expect(body.events).toEqual(["taskCreated", "taskStatusUpdated"]);
     });
 
     it("registerWebhook rejects a response without a secret", async () => {

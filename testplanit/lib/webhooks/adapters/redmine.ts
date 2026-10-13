@@ -83,6 +83,7 @@ export const redmineAdapter: WebhookAdapter = {
     return {
       externalKey: issueKeyFor(id),
       externalSystem: "REDMINE" satisfies AdapterType,
+      externalId: String(id),
     };
   },
 

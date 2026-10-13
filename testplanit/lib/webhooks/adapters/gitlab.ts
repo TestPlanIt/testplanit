@@ -89,6 +89,7 @@ export const gitlabAdapter: WebhookAdapter = {
     return {
       externalKey: `${namespace}#${iid}`,
       externalSystem: "GITLAB" satisfies AdapterType,
+      externalId: String(iid),
     };
   },
 

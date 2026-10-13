@@ -500,7 +500,7 @@ describe("webhook-config server actions", () => {
         expect.stringMatching(
           /^https:\/\/app\.example\.test\/api\/webhooks\/whk_[0-9a-f]{64}$/
         ),
-        ["taskStatusUpdated"],
+        ["taskCreated", "taskStatusUpdated"],
         undefined,
         { listId: "901" }
       );
@@ -546,7 +546,7 @@ describe("webhook-config server actions", () => {
       expect(mockUnregisterWebhook).toHaveBeenCalledWith("wh-old");
       expect(mockRegisterWebhook).toHaveBeenCalledWith(
         expect.any(String),
-        ["taskStatusUpdated"],
+        ["taskCreated", "taskStatusUpdated"],
         undefined,
         { listId: undefined }
       );

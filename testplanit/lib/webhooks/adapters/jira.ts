@@ -189,10 +189,15 @@ export const jiraAdapter: WebhookAdapter = {
 
   extractLinkedIssueRef(payload) {
     const raw = (payload as ParsedWebhookPayload).data ?? payload;
-    const p = raw as { issue?: { key?: unknown } };
+    const p = raw as { issue?: { key?: unknown; id?: unknown } };
     const key = p.issue?.key;
     if (typeof key !== "string" || key.length === 0) return null;
-    return { externalKey: key, externalSystem: "JIRA" satisfies AdapterType };
+    const id = p.issue?.id;
+    return {
+      externalKey: key,
+      externalSystem: "JIRA" satisfies AdapterType,
+      ...(typeof id === "string" && id.length > 0 ? { externalId: id } : {}),
+    };
   },
 
   extractExternalStatus(payload, eventType) {

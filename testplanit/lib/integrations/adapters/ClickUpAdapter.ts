@@ -62,12 +62,14 @@ const CLICKUP_TASK_PAGE_SIZE = 100;
 const MAX_QUERY_SCAN_PAGES = 20;
 
 /**
- * Task events an inbound ClickUp webhook subscribes to. The receiver acts
- * on a delivery only when it carries the task's new status, and
- * `taskStatusUpdated` is the one ClickUp event that does; every other task
- * event would be accepted and then dropped as unhandled.
+ * Task events an inbound ClickUp webhook subscribes to: a new task, and a
+ * task's status changing. The receiver drops every other task event as
+ * unhandled.
  */
-export const CLICKUP_WEBHOOK_EVENTS = ["taskStatusUpdated"] as const;
+export const CLICKUP_WEBHOOK_EVENTS = [
+  "taskCreated",
+  "taskStatusUpdated",
+] as const;
 
 /**
  * Custom field types a task form can collect and this adapter can write.

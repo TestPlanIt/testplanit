@@ -110,12 +110,17 @@ export const clickupAdapter: WebhookAdapter = {
     return {
       externalKey: taskId,
       externalSystem: "CLICKUP" satisfies AdapterType,
+      externalId: taskId,
     };
   },
 
   extractExternalStatus(payload, eventType) {
-    if (eventType !== "taskStatusUpdated") return null;
     const raw = (payload as ParsedWebhookPayload).data ?? payload;
-    return statusFromHistory(raw as ClickUpWebhookPayload);
+    const status = statusFromHistory(raw as ClickUpWebhookPayload);
+    // A new task's delivery carries its first status as a history item;
+    // it is an issue event even when that item is missing.
+    if (eventType === "taskCreated") return status ?? "";
+    if (eventType !== "taskStatusUpdated") return null;
+    return status;
   },
 };

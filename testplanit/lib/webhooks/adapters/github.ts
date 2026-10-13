@@ -99,6 +99,7 @@ export const githubAdapter: WebhookAdapter = {
     return {
       externalKey: `${repo}#${num}`,
       externalSystem: "GITHUB" satisfies AdapterType,
+      externalId: String(num),
     };
   },
 

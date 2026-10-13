@@ -200,6 +200,15 @@ describe("jiraAdapter — widened interface", () => {
     });
   });
 
+  it("extractLinkedIssueRef: carries the issue id, which survives a move to another project", () => {
+    const payload = { issue: { key: "DEMO-42", id: "10042" } };
+    expect(jiraAdapter.extractLinkedIssueRef(payload)).toEqual({
+      externalKey: "DEMO-42",
+      externalSystem: "JIRA",
+      externalId: "10042",
+    });
+  });
+
   it("extractLinkedIssueRef: returns null when payload.issue is missing", () => {
     const payload = { webhookEvent: "jira:issue_updated" };
     expect(jiraAdapter.extractLinkedIssueRef(payload)).toBeNull();

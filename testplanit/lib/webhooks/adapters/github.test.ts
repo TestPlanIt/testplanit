@@ -250,6 +250,7 @@ describe("githubAdapter — extractLinkedIssueRef", () => {
     expect(ref).toEqual({
       externalKey: "octocat/Hello-World#42",
       externalSystem: "GITHUB",
+      externalId: "42",
     });
   });
 
@@ -364,6 +365,7 @@ describe("githubAdapter — extractExternalStatus", () => {
     expect(linkedRef).toEqual({
       externalKey: "octocat/Hello-World#42",
       externalSystem: "GITHUB",
+      externalId: "42",
     });
 
     const status = githubAdapter.extractExternalStatus(

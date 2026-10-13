@@ -105,6 +105,7 @@ export const mantisbtAdapter: WebhookAdapter = {
     return {
       externalKey: issueKeyFor(id),
       externalSystem: "MANTISBT" satisfies AdapterType,
+      externalId: String(id),
     };
   },
 

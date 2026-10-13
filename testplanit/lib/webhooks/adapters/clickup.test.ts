@@ -148,6 +148,7 @@ describe("clickupAdapter (inbound webhook)", () => {
       expect(clickupAdapter.extractLinkedIssueRef(parsed)).toEqual({
         externalKey: "86c0xyz12",
         externalSystem: "CLICKUP",
+        externalId: "86c0xyz12",
       });
     });
 
@@ -162,6 +163,33 @@ describe("clickupAdapter (inbound webhook)", () => {
   });
 
   describe("extractExternalStatus", () => {
+    it("reads a new task's first status from taskCreated", () => {
+      const created = {
+        event: "taskCreated",
+        task_id: "1vj37mc",
+        history_items: [
+          {
+            field: "status",
+            before: { status: null },
+            after: { status: "to do" },
+          },
+          { field: "task_creation", before: null, after: null },
+        ],
+      };
+      expect(clickupAdapter.extractExternalStatus(created, "taskCreated")).toBe(
+        "to do"
+      );
+    });
+
+    it("treats taskCreated as an issue event even without a status item", () => {
+      expect(
+        clickupAdapter.extractExternalStatus(
+          { event: "taskCreated", task_id: "1vj37mc", history_items: [] },
+          "taskCreated"
+        )
+      ).toBe("");
+    });
+
     it("returns the new status for taskStatusUpdated", () => {
       expect(
         clickupAdapter.extractExternalStatus(STATUS_EVENT, "taskStatusUpdated")

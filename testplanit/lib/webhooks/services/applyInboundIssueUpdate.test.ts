@@ -489,9 +489,9 @@ describe("applyInboundIssueUpdate", () => {
     // 2. Linked Issue lookup with tenant scope — NO externalSystem filter.
     expect(mocks.tx.issue.findFirst).toHaveBeenCalledWith({
       where: {
-        externalKey: "DEMO-42",
         isDeleted: false,
         project: { id: input.projectId },
+        OR: [{ externalKey: "DEMO-42" }],
       },
       select: { id: true },
     });
@@ -754,6 +754,7 @@ describe("applyInboundIssueUpdate", () => {
     (mocks.adapter.extractLinkedIssueRef as Mock).mockReturnValueOnce({
       externalKey: "octocat/Hello-World#42",
       externalSystem: "GITHUB",
+      externalId: "42",
     });
     (mocks.adapter.extractExternalStatus as Mock).mockReturnValueOnce("open");
     mocks.tx.issue.findFirst.mockResolvedValue({ id: 99 });
@@ -789,11 +790,16 @@ describe("applyInboundIssueUpdate", () => {
       })
     );
     // Issue lookup uses externalKey from adapter.extractLinkedIssueRef (NOT payload.issueKey).
+    // GitHub's sync stores the key as "#42", so the issue also matches on
+    // the tracker's own id within GitHub integrations.
     expect(mocks.tx.issue.findFirst).toHaveBeenCalledWith({
       where: {
-        externalKey: "octocat/Hello-World#42",
         isDeleted: false,
         project: { id: input.projectId },
+        OR: [
+          { externalKey: "octocat/Hello-World#42" },
+          { externalId: "42", integration: { provider: "GITHUB" } },
+        ],
       },
       select: { id: true },
     });

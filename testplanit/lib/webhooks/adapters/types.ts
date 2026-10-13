@@ -93,6 +93,10 @@ export interface WebhookAdapter {
   extractLinkedIssueRef(payload: unknown): {
     externalKey: string;
     externalSystem: AdapterType;
+    /** The tracker's own id for the issue, as the sync stores it in
+     *  `Issue.externalId`, when the payload carries it. Matches an issue
+     *  whose stored key is written differently from the payload's. */
+    externalId?: string;
   } | null;
 
   extractExternalStatus(payload: unknown, eventType: string): string | null;
